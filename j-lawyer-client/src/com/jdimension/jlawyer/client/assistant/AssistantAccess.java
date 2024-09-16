@@ -674,6 +674,7 @@ import com.jdimension.jlawyer.ai.ParameterData;
 import com.jdimension.jlawyer.ai.Prompt;
 import com.jdimension.jlawyer.client.editors.EditorsRegistry;
 import com.jdimension.jlawyer.client.utils.FrameUtils;
+import com.jdimension.jlawyer.persistence.ArchiveFileBean;
 import com.jdimension.jlawyer.persistence.AssistantPrompt;
 import java.awt.event.ActionEvent;
 import java.util.ArrayList;
@@ -861,7 +862,7 @@ public class AssistantAccess {
 
     }
 
-    public void populateMenu(JPopupMenu menu, Map<AssistantConfig, List<AiCapability>> capabilities, AssistantInputAdapter adapter) {
+    public void populateMenu(JPopupMenu menu, Map<AssistantConfig, List<AiCapability>> capabilities, AssistantInputAdapter adapter, ArchiveFileBean selectedCase) {
 
         for (AssistantConfig config : capabilities.keySet()) {
             for (AiCapability c : capabilities.get(config)) {
@@ -869,7 +870,7 @@ public class AssistantAccess {
                 mi.setText(c.getName());
                 mi.setToolTipText(c.getDescription() + " (" + config.getName() + ")");
                 mi.addActionListener((ActionEvent e) -> {
-                    AssistantGenericDialog dlg = new AssistantGenericDialog(config, c, adapter, !c.hasParameters(), EditorsRegistry.getInstance().getMainWindow(), false);
+                    AssistantGenericDialog dlg = new AssistantGenericDialog(selectedCase, config, c, adapter, !c.hasParameters(), EditorsRegistry.getInstance().getMainWindow(), false);
                     dlg.setVisible(true);
                 });
                 menu.add(mi);
@@ -878,7 +879,7 @@ public class AssistantAccess {
 
     }
 
-    public void populateMenu(JMenu menu, Map<AssistantConfig, List<AiCapability>> capabilities, AssistantInputAdapter adapter) {
+    public void populateMenu(JMenu menu, Map<AssistantConfig, List<AiCapability>> capabilities, AssistantInputAdapter adapter, ArchiveFileBean selectedCase) {
 
         for (AssistantConfig config : capabilities.keySet()) {
             for (AiCapability c : capabilities.get(config)) {
@@ -886,7 +887,7 @@ public class AssistantAccess {
                 mi.setText(c.getName());
                 mi.setToolTipText(c.getDescription() + " (" + config.getName() + ")");
                 mi.addActionListener((ActionEvent e) -> {
-                    AssistantGenericDialog dlg = new AssistantGenericDialog(config, c, adapter, !c.hasParameters(), EditorsRegistry.getInstance().getMainWindow(), false);
+                    AssistantGenericDialog dlg = new AssistantGenericDialog(selectedCase, config, c, adapter, !c.hasParameters(), EditorsRegistry.getInstance().getMainWindow(), false);
                     dlg.setVisible(true);
                 });
                 menu.add(mi);

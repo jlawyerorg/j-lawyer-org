@@ -2506,15 +2506,15 @@ public class SendEmailDialog extends javax.swing.JDialog implements SendCommunic
         try {
             this.popAssistant.removeAll();
             Map<AssistantConfig, List<AiCapability>> capabilitiesGenerate = ingo.filterCapabilities(AiCapability.REQUESTTYPE_GENERATE, AiCapability.INPUTTYPE_STRING);
-            ingo.populateMenu(this.popAssistant, capabilitiesGenerate, (AssistantInputAdapter)this);
+            ingo.populateMenu(this.popAssistant, capabilitiesGenerate, (AssistantInputAdapter)this, this.contextArchiveFile);
             Map<AssistantConfig, List<AiCapability>> capabilitiesGenerate2 = ingo.filterCapabilities(AiCapability.REQUESTTYPE_GENERATE, AiCapability.INPUTTYPE_NONE);
-            ingo.populateMenu(this.popAssistant, capabilitiesGenerate2, (AssistantInputAdapter)this);
+            ingo.populateMenu(this.popAssistant, capabilitiesGenerate2, (AssistantInputAdapter)this, this.contextArchiveFile);
             Map<AssistantConfig, List<AiCapability>> capabilities = ingo.filterCapabilities(AiCapability.REQUESTTYPE_EXPLAIN, AiCapability.INPUTTYPE_STRING);
-            ingo.populateMenu(this.popAssistant, capabilities, (AssistantInputAdapter)this);
+            ingo.populateMenu(this.popAssistant, capabilities, (AssistantInputAdapter)this, this.contextArchiveFile);
             Map<AssistantConfig, List<AiCapability>> capabilities2 = ingo.filterCapabilities(AiCapability.REQUESTTYPE_SUMMARIZE, AiCapability.INPUTTYPE_STRING);
-            ingo.populateMenu(this.popAssistant, capabilities2, (AssistantInputAdapter)this);
+            ingo.populateMenu(this.popAssistant, capabilities2, (AssistantInputAdapter)this, this.contextArchiveFile);
             Map<AssistantConfig, List<AiCapability>> capabilities3 = ingo.filterCapabilities(AiCapability.REQUESTTYPE_TRANSLATE, AiCapability.INPUTTYPE_STRING);
-            ingo.populateMenu(this.popAssistant, capabilities3, (AssistantInputAdapter)this);
+            ingo.populateMenu(this.popAssistant, capabilities3, (AssistantInputAdapter)this, this.contextArchiveFile);
             
             JMenuItem mi = new JMenuItem();
             mi.setText("Text generieren (Diktat, Prompting)");

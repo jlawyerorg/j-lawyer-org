@@ -761,6 +761,7 @@ public class AssistantPromptSetupDialog extends javax.swing.JDialog {
         jScrollPane2 = new javax.swing.JScrollPane();
         taPrompt = new javax.swing.JTextArea();
         cmbRequestType = new javax.swing.JComboBox<>();
+        jLabel2 = new javax.swing.JLabel();
 
         setDefaultCloseOperation(javax.swing.WindowConstants.DISPOSE_ON_CLOSE);
         setTitle("Assistent Ingo - eigene Prompts");
@@ -872,6 +873,9 @@ public class AssistantPromptSetupDialog extends javax.swing.JDialog {
 
         cmbRequestType.setModel(new javax.swing.DefaultComboBoxModel<>(new String[] { "Item 1", "Item 2", "Item 3", "Item 4" }));
 
+        jLabel2.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/info.png"))); // NOI18N
+        jLabel2.setToolTipText("Es werden die Platzhalter des Vorlagensystems unterstützt.\nAktenbezogene Platzhalter (bspw. {{AKTE_ZEICHEN}}) werden nur dann ersetzt,\nwenn der Prompt aus einer Akte heraus verwendet wird.");
+
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(getContentPane());
         getContentPane().setLayout(layout);
         layout.setHorizontalGroup(
@@ -884,9 +888,12 @@ public class AssistantPromptSetupDialog extends javax.swing.JDialog {
                     .addGroup(layout.createSequentialGroup()
                         .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                             .addComponent(jLabel1)
-                            .addComponent(jLabel11)
-                            .addComponent(jLabel3))
-                        .addGap(22, 22, 22)
+                            .addComponent(jLabel3)
+                            .addGroup(layout.createSequentialGroup()
+                                .addComponent(jLabel11)
+                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                                .addComponent(jLabel2)))
+                        .addGap(10, 10, 10)
                         .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                             .addComponent(txtName)
                             .addComponent(jScrollPane2)
@@ -919,10 +926,12 @@ public class AssistantPromptSetupDialog extends javax.swing.JDialog {
                             .addComponent(cmbRequestType, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                         .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                            .addComponent(jScrollPane2)
                             .addGroup(layout.createSequentialGroup()
-                                .addComponent(jLabel11)
-                                .addGap(0, 0, Short.MAX_VALUE))
-                            .addComponent(jScrollPane2))
+                                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                                    .addComponent(jLabel11)
+                                    .addComponent(jLabel2))
+                                .addGap(0, 0, Short.MAX_VALUE)))
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                         .addComponent(cmdSave)
                         .addGap(18, 18, 18)
@@ -1115,6 +1124,7 @@ public class AssistantPromptSetupDialog extends javax.swing.JDialog {
     private javax.swing.JButton cmdSave;
     private javax.swing.JLabel jLabel1;
     private javax.swing.JLabel jLabel11;
+    private javax.swing.JLabel jLabel2;
     private javax.swing.JLabel jLabel3;
     private javax.swing.JLabel jLabel5;
     private javax.swing.JPanel jPanel1;

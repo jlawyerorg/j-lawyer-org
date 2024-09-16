@@ -674,7 +674,15 @@ import com.jdimension.jlawyer.client.settings.ClientSettings;
 import com.jdimension.jlawyer.client.utils.AttachmentListCellRenderer;
 import com.jdimension.jlawyer.client.utils.ComponentUtils;
 import com.jdimension.jlawyer.client.utils.FrameUtils;
+import com.jdimension.jlawyer.client.utils.TemplatesUtil;
+import com.jdimension.jlawyer.client.utils.ThreadUtils;
+import com.jdimension.jlawyer.persistence.AppUserBean;
+import com.jdimension.jlawyer.persistence.ArchiveFileAddressesBean;
+import com.jdimension.jlawyer.persistence.ArchiveFileBean;
+import com.jdimension.jlawyer.persistence.ArchiveFileDocumentsBean;
 import com.jdimension.jlawyer.persistence.AssistantConfig;
+import com.jdimension.jlawyer.persistence.PartyTypeBean;
+import com.jdimension.jlawyer.pojo.PartiesTriplet;
 import com.jdimension.jlawyer.services.JLawyerServiceLocator;
 import java.awt.Component;
 import java.awt.Toolkit;
@@ -682,6 +690,8 @@ import java.awt.datatransfer.Clipboard;
 import java.awt.datatransfer.StringSelection;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collection;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Vector;
 import java.util.concurrent.atomic.AtomicReference;
@@ -709,6 +719,15 @@ public class AssistantGenericDialog extends javax.swing.JDialog {
     private AiRequestStatus result=null;
     
     private boolean interrupted=false;
+    
+    // variables used for placeholder support in prompts
+    private List<PartyTypeBean> allPartyTypes = null;
+    private Collection<String> formPlaceHolders = null;
+    private HashMap<String, String> formPlaceHolderValues = null;
+    private AppUserBean caseLawyer = null;
+    private AppUserBean caseAssistant = null;
+    private List<PartiesTriplet> parties = new ArrayList<>();
+    private ArchiveFileBean selectedCase = null;
 
     /**
      * Creates new form GenericAssistantDialog
@@ -720,7 +739,7 @@ public class AssistantGenericDialog extends javax.swing.JDialog {
      * @param parent
      * @param modal
      */
-    public AssistantGenericDialog(AssistantConfig config, AiCapability c, AssistantInputAdapter inputAdapter, boolean autoExecute, java.awt.Frame parent, boolean modal) {
+    public AssistantGenericDialog(ArchiveFileBean selectedCase, AssistantConfig config, AiCapability c, AssistantInputAdapter inputAdapter, boolean autoExecute, java.awt.Frame parent, boolean modal) {
         super(parent, modal);
         initComponents();
 
@@ -731,10 +750,52 @@ public class AssistantGenericDialog extends javax.swing.JDialog {
         this.config = config;
         this.capability = c;
         this.inputAdapter = inputAdapter;
+        
+        this.selectedCase = selectedCase;
+        if (this.selectedCase != null) {
+            try {
+                ClientSettings settings = ClientSettings.getInstance();
+                JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
+
+                this.allPartyTypes = locator.lookupSystemManagementRemote().getPartyTypes();
+                try {
+                    this.caseAssistant = locator.lookupSystemManagementRemote().getUser(this.selectedCase.getAssistant());
+                } catch (Exception ex) {
+                }
+                try {
+                    this.caseLawyer = locator.lookupSystemManagementRemote().getUser(this.selectedCase.getLawyer());
+                } catch (Exception ex) {
+                }
+                this.formPlaceHolders = locator.lookupFormsServiceRemote().getPlaceHoldersForCase(this.selectedCase.getId());
+                this.formPlaceHolderValues = locator.lookupFormsServiceRemote().getPlaceHolderValuesForCase(this.selectedCase.getId());
+
+                try {
+                    List<ArchiveFileAddressesBean> involved = locator.lookupArchiveFileServiceRemote().getInvolvementDetailsForCase(this.selectedCase.getId(), false);
+                    for (ArchiveFileAddressesBean aab : involved) {
+                        parties.add(new PartiesTriplet(aab.getAddressKey(), aab.getReferenceType(), aab));
+                    }
+                } catch (Exception ex) {
+                    log.error("Could not load involvements for case " + this.selectedCase.getId(), ex);
+                }
+
+            } catch (Exception ex) {
+                log.error("Error getting data for case " + selectedCase.getId(), ex);
+                ThreadUtils.showErrorDialog(this, "Fehler beim Laden der Akteninformationen", "Akteninformationen laden");
+            }
+        }
 
         this.taPrompt.setEnabled(false);
         if (c.getDefaultPrompt() != null && c.getDefaultPrompt().getDefaultPrompt() != null) {
-            this.taPrompt.setText(c.getDefaultPrompt().getDefaultPrompt());
+            if(!c.getDefaultPrompt().getDefaultPrompt().contains("{{")) {
+                // no placeholders in prompt
+                this.taPrompt.setText(c.getDefaultPrompt().getDefaultPrompt());
+            } else {
+                // placeholders present in prompt
+                
+                HashMap<String, Object> placeHolders = TemplatesUtil.getPlaceHolderValues(c.getDefaultPrompt().getDefaultPrompt(), selectedCase, this.parties, null, null, this.allPartyTypes, this.formPlaceHolders, this.formPlaceHolderValues, this.caseLawyer, this.caseAssistant);
+                String promptWithValues = TemplatesUtil.replacePlaceHolders(c.getDefaultPrompt().getDefaultPrompt(), placeHolders);
+                this.taPrompt.setText(promptWithValues);
+            }
             this.taPrompt.setEnabled(true);
         } else {
             //this.getContentPane().remove(this.jScrollPane1);
@@ -745,7 +806,7 @@ public class AssistantGenericDialog extends javax.swing.JDialog {
         for(Parameter p: this.capability.getParameters()) {
             this.pnlParameters.add(new JLabel(p.getName()));
             if(p.getList()!=null && p.getList().length()>0) {
-                Vector<String> v=new Vector<String>(Arrays.asList(p.getList().split(",")));
+                Vector<String> v=new Vector<>(Arrays.asList(p.getList().split(",")));
                 JComboBox<String> combo=new JComboBox<>(v);
                 combo.setEditable(false);
                 combo.setSelectedItem(p.getDefaultValue());
@@ -1265,7 +1326,7 @@ public class AssistantGenericDialog extends javax.swing.JDialog {
 
         /* Create and display the dialog */
         java.awt.EventQueue.invokeLater(() -> {
-            AssistantGenericDialog dialog = new AssistantGenericDialog(null, null, null, false, new javax.swing.JFrame(), true);
+            AssistantGenericDialog dialog = new AssistantGenericDialog(null, null, null, null, false, new javax.swing.JFrame(), true);
             dialog.addWindowListener(new java.awt.event.WindowAdapter() {
                 @Override
                 public void windowClosing(java.awt.event.WindowEvent e) {

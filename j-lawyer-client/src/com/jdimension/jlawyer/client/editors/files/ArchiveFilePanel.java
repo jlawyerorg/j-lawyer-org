@@ -1054,7 +1054,7 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
         AssistantAccess ingo = AssistantAccess.getInstance();
         try {
             Map<AssistantConfig, List<AiCapability>> capabilities2 = ingo.filterCapabilities(AiCapability.REQUESTTYPE_SUMMARIZE, AiCapability.INPUTTYPE_STRING);
-            ingo.populateMenu(this.mnuAssistant, capabilities2, (AssistantInputAdapter)this);
+            ingo.populateMenu(this.mnuAssistant, capabilities2, (AssistantInputAdapter)this, this.dto);
         } catch (Exception ex) {
             log.error(ex);
         }
