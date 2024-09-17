@@ -685,8 +685,11 @@ public interface MessagingServiceRemote {
     List<InstantMessage> getMessagesSince(Date since, int maxNumberOfMessages) throws Exception;
 
     List<InstantMessage> getMessagesForCase(String caseId) throws Exception;
+    List<InstantMessage> getMessagesForCase(String caseId, boolean withOpenMentionsOnly) throws Exception;
 
     boolean markMentionDone(String mentionId, boolean done) throws Exception;
+    boolean markMentionDone(String mentionId, boolean done, boolean skipNotification) throws Exception;
+    boolean markAllMentionsDone(List<String> messageIds, boolean skipNotifications) throws Exception;
 
     InstantMessage getMessage(String id) throws Exception;
 

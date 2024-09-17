@@ -47,6 +47,7 @@
                               <Group type="103" groupAlignment="0" attributes="0">
                                   <Component id="lblEscrow" alignment="0" min="-2" max="-2" attributes="0"/>
                                   <Component id="lblExpenditures" alignment="0" min="-2" max="-2" attributes="0"/>
+                                  <Component id="lblMessages" alignment="0" min="-2" max="-2" attributes="0"/>
                               </Group>
                               <EmptySpace max="32767" attributes="0"/>
                           </Group>
@@ -59,6 +60,7 @@
                               <Component id="chkCalendar" max="32767" attributes="0"/>
                           </Group>
                           <Component id="chkExpenditures" alignment="0" min="-2" max="-2" attributes="0"/>
+                          <Component id="chkMessages" alignment="0" min="-2" max="-2" attributes="0"/>
                       </Group>
                   </Group>
               </Group>
@@ -93,6 +95,11 @@
               <Group type="103" groupAlignment="3" attributes="0">
                   <Component id="chkExpenditures" alignment="3" min="-2" max="-2" attributes="0"/>
                   <Component id="lblExpenditures" alignment="3" min="-2" max="-2" attributes="0"/>
+              </Group>
+              <EmptySpace max="-2" attributes="0"/>
+              <Group type="103" groupAlignment="3" attributes="0">
+                  <Component id="chkMessages" alignment="3" min="-2" max="-2" attributes="0"/>
+                  <Component id="lblMessages" alignment="3" min="-2" max="-2" attributes="0"/>
               </Group>
               <EmptySpace max="32767" attributes="0"/>
               <Group type="103" groupAlignment="3" attributes="0">
@@ -230,6 +237,19 @@
     <Component class="javax.swing.JLabel" name="lblExpenditures">
       <Properties>
         <Property name="text" type="java.lang.String" value="Aktenkonto: Auslagen nicht ausgeglichen"/>
+      </Properties>
+    </Component>
+    <Component class="javax.swing.JCheckBox" name="chkMessages">
+      <Properties>
+        <Property name="text" type="java.lang.String" value="auf erledigt setzen"/>
+      </Properties>
+      <Events>
+        <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="chkMessagesActionPerformed"/>
+      </Events>
+    </Component>
+    <Component class="javax.swing.JLabel" name="lblMessages">
+      <Properties>
+        <Property name="text" type="java.lang.String" value="Nachrichten: unerledigte Erw&#xe4;hnungen"/>
       </Properties>
     </Component>
   </SubComponents>

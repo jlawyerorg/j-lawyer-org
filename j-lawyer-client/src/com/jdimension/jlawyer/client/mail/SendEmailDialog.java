@@ -2615,7 +2615,7 @@ public class SendEmailDialog extends javax.swing.JDialog implements SendCommunic
             }
 
             if (selectedMixerInfo == null) {
-                System.err.println("Selected mixer device not found.");
+                log.error("Selected mixer device not found.");
                 return;
             }
 
@@ -2670,7 +2670,6 @@ public class SendEmailDialog extends javax.swing.JDialog implements SendCommunic
         
         this.cmdTranscribe.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons16/material/baseline_hourglass_top_black_48dp.png")));
         this.cmdTranscribe.setForeground(Color.ORANGE);
-        AssistantAccess ingo = AssistantAccess.getInstance();
         try {
 
             List<ParameterData> params = new ArrayList<>();
@@ -2679,8 +2678,6 @@ public class SendEmailDialog extends javax.swing.JDialog implements SendCommunic
             }
 
             final List<ParameterData> fParams = params;
-
-            //this.progress.setIndeterminate(true);
 
             AtomicReference<AiRequestStatus> resultRef = new AtomicReference<>();
 
@@ -2716,7 +2713,6 @@ public class SendEmailDialog extends javax.swing.JDialog implements SendCommunic
                     if (status != null) {
                         String resultText="";
                         if (status.getStatus().equalsIgnoreCase("error")) {
-                            //taResult.setText(status.getStatus() + ": " + status.getStatusDetails());
                             resultText=status.getStatus() + ": " + status.getStatusDetails();
                         } else {
                             StringBuilder resultString = new StringBuilder();
@@ -2726,20 +2722,16 @@ public class SendEmailDialog extends javax.swing.JDialog implements SendCommunic
                                 }
 
                             }
-                            //taResult.insert(resultString.toString(), taResult.getCaretPosition());
                             resultText=resultString.toString();
                         }
                         
                         
                         tp.insert(resultText, tp.getCaretPosition());
-                        //this.tp.setCaretPosition(Math.max(0, cursorIndex));
                         hp.insert(resultText, hp.getCaretPosition());
                                 
                         
                         
                     }
-
-                    //progress.setIndeterminate(false);
                 }
             };
 
