@@ -709,33 +709,15 @@ public class CalendarSelectionButton extends javax.swing.JPanel {
     public void restrictToType(int eventType, CalendarSetup preSelected, ArchiveFileBean caseDto, boolean suppressWarnings) {
         this.popCalendarSetups.removeAll();
         this.selectedSetup = null;
-        UserSettings uSettings=UserSettings.getInstance();
-        String lastSelectedCalendarSetup=uSettings.getSetting(UserSettings.CONF_CALENDAR_LASTSELECTED + eventType, null);
+        
+        
+        List<CalendarSetup> typedSetups=new ArrayList<>();
         for (CalendarSetup cs : allSetups) {
             if (cs.getEventType() != eventType) {
                 continue;
             }
             
-            
-            // not set at all - use whatever comes first
-            if (this.getSelectedSetup() == null) {
-                this.updateSelection(cs);
-            }
-            
-            if (preSelected != null && preSelected.getId().equals(cs.getId())) {
-                // preselection was provided - use it
-                this.updateSelection(cs);
-            } else {
-                if (caseDto != null && caseDto.getLastCalendarSetup(eventType) != null && caseDto.getLastCalendarSetup(eventType).equals(cs.getId())) {
-                    // case has a default
-                    this.updateSelection(cs);
-                } else {
-                    if (preSelected == null && lastSelectedCalendarSetup != null && cs.getId().equals(lastSelectedCalendarSetup)) {
-                        // no preselection was provided - use whatever the user last used
-                        this.updateSelection(cs);
-                    }
-                }
-            }
+            typedSetups.add(cs);
             
             JMenuItem mi = new JMenuItem();
             mi.setText(cs.getDisplayName());
@@ -749,11 +731,56 @@ public class CalendarSelectionButton extends javax.swing.JPanel {
             this.popCalendarSetups.add(mi);
         }
         
-        if(this.selectedSetup==null && !suppressWarnings) {
-            JOptionPane.showMessageDialog(this, "Kalenderkonfiguration ist ungültig - Kalender für diesen Typ existiert nicht, oder Nutzer hat keinen Zugriff.", com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
+        CalendarSetup foundSetup=null;
+        // FIRST: if preselection is forced, use it
+        if(preSelected!=null) {
+            // preselection was provided - use it
+            for(CalendarSetup cs: typedSetups) {
+                if(cs.getId().equals(preSelected.getId())) {
+                    foundSetup=cs;
+                    break;
+                }
+            }
         }
         
-        this.updateSelection(getSelectedSetup());
+        // SECOND: use the calendar that was last used in the case
+        if (foundSetup == null) {
+            if (caseDto != null && caseDto.getLastCalendarSetup(eventType) != null) {
+                for (CalendarSetup cs : typedSetups) {
+                    if (cs.getId().equals(caseDto.getLastCalendarSetup(eventType))) {
+                        foundSetup = cs;
+                        break;
+                    }
+                }
+            }
+        }
+        
+        // THIRD: use the calendar that was last used by the user, independent of case
+        if (foundSetup == null) {
+            UserSettings uSettings=UserSettings.getInstance();
+            String lastSelectedCalendarSetup=uSettings.getSetting(UserSettings.CONF_CALENDAR_LASTSELECTED + eventType, null);
+            if (lastSelectedCalendarSetup != null) {
+                for (CalendarSetup cs : typedSetups) {
+                    if (cs.getId().equals(lastSelectedCalendarSetup)) {
+                        foundSetup = cs;
+                        break;
+                    }
+                }
+            }
+        }
+        
+        // FOURTH: if no rule applies, use the first that has the correct type
+        if(foundSetup==null && !typedSetups.isEmpty())
+            foundSetup=typedSetups.get(0);
+        
+        if(foundSetup!=null) {
+            this.updateSelection(foundSetup);
+        } else {
+            if (!suppressWarnings) {
+                JOptionPane.showMessageDialog(this, "Kalenderkonfiguration ist ungültig - Kalender für diesen Typ existiert nicht, oder Nutzer hat keinen Zugriff.", com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
+            }
+        }
+        
     }
     
     public void restrictToType(int eventType, ArchiveFileBean caseDto) {
