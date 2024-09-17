@@ -736,6 +736,7 @@ import javax.sound.sampled.Mixer;
 import javax.sound.sampled.TargetDataLine;
 import javax.swing.*;
 import org.apache.log4j.Logger;
+import themes.colors.DefaultColorTheme;
 
 /**
  *
@@ -2629,6 +2630,7 @@ public class SendEmailDialog extends javax.swing.JDialog implements SendCommunic
             
             isRecording = true;
             this.recordingStarted=System.currentTimeMillis();
+            cmdTranscribe.setForeground(DefaultColorTheme.COLOR_LOGO_GREEN);
 
             new Thread(() -> {
                 try {
@@ -2667,6 +2669,7 @@ public class SendEmailDialog extends javax.swing.JDialog implements SendCommunic
 
         
         this.cmdTranscribe.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons16/material/baseline_hourglass_top_black_48dp.png")));
+        this.cmdTranscribe.setForeground(Color.ORANGE);
         AssistantAccess ingo = AssistantAccess.getInstance();
         try {
 
@@ -2685,6 +2688,9 @@ public class SendEmailDialog extends javax.swing.JDialog implements SendCommunic
 
                 @Override
                 protected Void doInBackground() throws Exception {
+                    cmdTranscribe.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons16/material/baseline_hourglass_top_black_48dp.png")));
+                    cmdTranscribe.setForeground(Color.ORANGE);
+                    
                     List<InputData> inputs = getTranscribeInputs(AudioUtils.generateWAV(dictatePart));
 
                     ClientSettings settings = ClientSettings.getInstance();
@@ -2704,6 +2710,8 @@ public class SendEmailDialog extends javax.swing.JDialog implements SendCommunic
                 protected void done() {
                     // Task completion actions
                     cmdTranscribe.setText("00:00");
+                    cmdTranscribe.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons16/material/baseline_mic_black_48dp.png"))); // NOI18N
+                    cmdTranscribe.setForeground(Color.BLACK);
                     AiRequestStatus status = resultRef.get();
                     if (status != null) {
                         String resultText="";
@@ -2741,7 +2749,7 @@ public class SendEmailDialog extends javax.swing.JDialog implements SendCommunic
             log.error(ex);
             JOptionPane.showMessageDialog(this, "" + ex.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
         }
-        this.cmdTranscribe.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons16/material/baseline_mic_black_48dp.png"))); // NOI18N
+        
 
     }
     

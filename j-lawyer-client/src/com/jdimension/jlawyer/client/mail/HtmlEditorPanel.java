@@ -804,14 +804,15 @@ public class HtmlEditorPanel extends javax.swing.JPanel implements EditorImpleme
         for (Component child : c.getComponents()) {
             if (child instanceof JEditorPane) {
                 try {
-//                    String pre = ((JEditorPane) child).getText(0, pos);
-//                    String post = ((JEditorPane) child).getText(pos + 1, ((JEditorPane) child).getText().length());
-//                    String newText = pre + t + post;
-                    this.setText(t + this.getText());
+                    if(child.getClass().getName().equals(JEditorPane.class.getName())) {
+                        // the html source is an instance of SourceCodeEditor, which is a subclass of JEditorPane
+                        int caretPos=((JEditorPane) child).getCaretPosition();
+                        ((JEditorPane) child).getDocument().insertString(caretPos, t, null);
+                        return true;
+                    }
                 } catch (Throwable th) {
                     log.warn("unable to insert text", th);
                 }
-                return true;
             } else if (child instanceof Container) {
                 boolean inserted = insertToEditorPane((Container) child, t, pos);
                 if (inserted) {
