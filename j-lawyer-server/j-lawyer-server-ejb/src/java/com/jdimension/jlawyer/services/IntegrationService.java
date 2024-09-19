@@ -670,6 +670,7 @@ import com.jdimension.jlawyer.ai.AssistantAPI;
 import com.jdimension.jlawyer.ai.AssistantException;
 import com.jdimension.jlawyer.ai.ConfigurationData;
 import com.jdimension.jlawyer.ai.InputData;
+import com.jdimension.jlawyer.ai.Message;
 import com.jdimension.jlawyer.ai.ParameterData;
 import com.jdimension.jlawyer.documents.TikaConfigurator;
 import com.jdimension.jlawyer.email.EmailTemplate;
@@ -1442,7 +1443,7 @@ public class IntegrationService implements IntegrationServiceRemote, Integration
     @Override
     @RolesAllowed(value = {"loginRole"})
     @TransactionTimeout(value = 60, unit = TimeUnit.MINUTES)
-    public AiRequestStatus submitAssistantRequest(AssistantConfig config, String requestType, String modelType, String prompt, List<ParameterData> params, List<InputData> inputs) throws Exception {
+    public AiRequestStatus submitAssistantRequest(AssistantConfig config, String requestType, String modelType, String prompt, List<ParameterData> params, List<InputData> inputs, List<Message> messages) throws Exception {
         List<AssistantConfig> configs=this.assistantFacade.findAll();
         CachingCrypto crypto=CryptoProvider.newCrypto();
         for(AssistantConfig c: configs) {
@@ -1458,7 +1459,7 @@ public class IntegrationService implements IntegrationServiceRemote, Integration
             String rawConfigs=c.getConfiguration();
             if(!ServerStringUtils.isEmpty(rawConfigs))
                 configurations=parseConfiguration(rawConfigs);
-            return api.submitRequest(requestType, modelType, prompt, configurations, params, inputs);
+            return api.submitRequest(requestType, modelType, prompt, configurations, params, inputs, messages);
         }
         throw new AssistantException("Kein Assistent für diese Anfrage gefunden.");
     }

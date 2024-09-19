@@ -666,6 +666,7 @@ package com.jdimension.jlawyer.client.editors.documents.viewer;
 import com.jdimension.jlawyer.ai.AiCapability;
 import com.jdimension.jlawyer.ai.AiRequestStatus;
 import com.jdimension.jlawyer.ai.InputData;
+import com.jdimension.jlawyer.ai.Message;
 import com.jdimension.jlawyer.ai.OutputData;
 import com.jdimension.jlawyer.ai.ParameterData;
 import com.jdimension.jlawyer.client.assistant.AssistantAccess;
@@ -972,6 +973,11 @@ public class SoundplayerPanel extends javax.swing.JPanel implements PreviewPanel
     @Override
     public void processError(AiCapability c, AiRequestStatus status) {
         status.getResponse();
+    }
+
+    @Override
+    public List<Message> getMessages(AiCapability c) {
+        return null;
     }
 
 }

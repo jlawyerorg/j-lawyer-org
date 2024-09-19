@@ -715,7 +715,7 @@ public class AssistantAPI {
         return encoder.encode(authString.getBytes());
     }
 
-    public AiRequestStatus submitRequest(String requestType, String modelType, String prompt, List<ConfigurationData> configurations, List<ParameterData> params, List<InputData> inputs) throws AssistantException {
+    public AiRequestStatus submitRequest(String requestType, String modelType, String prompt, List<ConfigurationData> configurations, List<ParameterData> params, List<InputData> inputs, List<Message> messages) throws AssistantException {
         log.info("submitting j-lawyer.AI request");
 
 
@@ -792,6 +792,21 @@ public class AssistantAPI {
                 jsonQuery.append("\"value\": \"").append(Jsoner.escape(configurations.get(i).getValue())).append("\"");
                 jsonQuery.append("}");
                 if (i < configurations.size() - 1) {
+                    jsonQuery.append(",");
+                }
+            }
+
+            jsonQuery.append("],");
+        }
+        if (messages != null && !messages.isEmpty()) {
+            jsonQuery.append("\"messages\": [");
+
+            for (int i = 0; i < messages.size(); i++) {
+                jsonQuery.append("{");
+                jsonQuery.append("\"content\": \"").append(Jsoner.escape(messages.get(i).getContent())).append("\",");
+                jsonQuery.append("\"role\": \"").append(Jsoner.escape(messages.get(i).getRole())).append("\"");
+                jsonQuery.append("}");
+                if (i < messages.size() - 1) {
                     jsonQuery.append(",");
                 }
             }

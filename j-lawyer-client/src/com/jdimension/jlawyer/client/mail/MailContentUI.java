@@ -2220,4 +2220,9 @@ public class MailContentUI extends javax.swing.JPanel implements HyperlinkListen
         log.error("Error executing AI request: " + status.getStatusDetails());
         JOptionPane.showMessageDialog(this, "Fehler beim Ausführen der Ingo-Anfrage: " + status.getStatusDetails(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
     }
+
+    @Override
+    public List<com.jdimension.jlawyer.ai.Message> getMessages(AiCapability c) {
+        return null;
+    }
 }

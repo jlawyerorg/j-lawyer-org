@@ -667,6 +667,7 @@ import com.jdimension.jlawyer.ai.AiCapability;
 import com.jdimension.jlawyer.ai.AiRequestStatus;
 import com.jdimension.jlawyer.ai.AiResponse;
 import com.jdimension.jlawyer.ai.InputData;
+import com.jdimension.jlawyer.ai.Message;
 import com.jdimension.jlawyer.ai.OutputData;
 import com.jdimension.jlawyer.ai.Parameter;
 import com.jdimension.jlawyer.ai.ParameterData;
@@ -679,7 +680,6 @@ import com.jdimension.jlawyer.client.utils.ThreadUtils;
 import com.jdimension.jlawyer.persistence.AppUserBean;
 import com.jdimension.jlawyer.persistence.ArchiveFileAddressesBean;
 import com.jdimension.jlawyer.persistence.ArchiveFileBean;
-import com.jdimension.jlawyer.persistence.ArchiveFileDocumentsBean;
 import com.jdimension.jlawyer.persistence.AssistantConfig;
 import com.jdimension.jlawyer.persistence.PartyTypeBean;
 import com.jdimension.jlawyer.pojo.PartiesTriplet;
@@ -708,9 +708,9 @@ import themes.colors.DefaultColorTheme;
  *
  * @author jens
  */
-public class AssistantGenericDialog extends javax.swing.JDialog {
+public class AssistantChatDialog extends javax.swing.JDialog {
 
-    private static final Logger log = Logger.getLogger(AssistantGenericDialog.class.getName());
+    private static final Logger log = Logger.getLogger(AssistantChatDialog.class.getName());
 
     private AssistantConfig config = null;
     private AiCapability capability = null;
@@ -728,6 +728,9 @@ public class AssistantGenericDialog extends javax.swing.JDialog {
     private AppUserBean caseAssistant = null;
     private List<PartiesTriplet> parties = new ArrayList<>();
     private ArchiveFileBean selectedCase = null;
+    
+    // cache incoming and outgoing messages
+    private List<Message> messages=new ArrayList<>();
 
     /**
      * Creates new form GenericAssistantDialog
@@ -736,11 +739,10 @@ public class AssistantGenericDialog extends javax.swing.JDialog {
      * @param config
      * @param c
      * @param inputAdapter
-     * @param autoExecute
      * @param parent
      * @param modal
      */
-    public AssistantGenericDialog(ArchiveFileBean selectedCase, AssistantConfig config, AiCapability c, AssistantInputAdapter inputAdapter, boolean autoExecute, java.awt.Frame parent, boolean modal) {
+    public AssistantChatDialog(ArchiveFileBean selectedCase, AssistantConfig config, AiCapability c, AssistantInputAdapter inputAdapter, java.awt.Frame parent, boolean modal) {
         super(parent, modal);
         initComponents();
 
@@ -856,13 +858,6 @@ public class AssistantGenericDialog extends javax.swing.JDialog {
         ComponentUtils.restoreSplitPane(this.splitInputOutput, this.getClass(), "splitInputOutput");
         ComponentUtils.persistSplitPane(this.splitInputOutput, this.getClass(), "splitInputOutput");
         
-        
-        if (autoExecute) {
-            //this.cmdSubmitActionPerformed(null);
-            // Display the dialog first, then start the background task
-            SwingUtilities.invokeLater(this::startBackgroundTask);
-        }
-
     }
 
     /**
@@ -1101,70 +1096,14 @@ public class AssistantGenericDialog extends javax.swing.JDialog {
     }// </editor-fold>//GEN-END:initComponents
 
     private void cmdSubmitActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdSubmitActionPerformed
-
-        
         
         SwingUtilities.invokeLater(this::startBackgroundTask);
-        
-//        List<ParameterData> params = new ArrayList<>();
-//        if (capability.getParameters() != null && !capability.getParameters().isEmpty()) {
-//            params = getParameters();
-//            if (params == null) {
-//                // user cancelled parameters dialog
-//                return;
-//            }
-//        }
-//
-//        final List<ParameterData> fParams = params;
-//
-//        this.progress.setIndeterminate(true);
-//        AtomicReference<AiRequestStatus> resultRef = new AtomicReference<>();
-//
-//        CountDownLatch latch = new CountDownLatch(1);
-//        new Thread(() -> {
-//            ClientSettings settings = ClientSettings.getInstance();
-//            try {
-//                JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
-//
-//                AiRequestStatus status = locator.lookupIntegrationServiceRemote().submitAssistantRequest(config, capability.getRequestType(), capability.getModelType(), this.taPrompt.getText(), fParams, this.inputAdapter.getInputs(capability));
-//                resultRef.set(status);
-//
-//            } catch (Throwable t) {
-//                log.error("Error processing AI request", t);
-//            } finally {
-//                latch.countDown(); // Signal that the task is done
-//            }
-//        }).start();
-//
-//        try {
-//            latch.await(); // Wait until the task is finished
-//        } catch (InterruptedException e) {
-//            // Handle interruption
-//        }
-//
-//        AiRequestStatus status = resultRef.get();
-//        if (status != null) {
-//            if (status.getStatus().equalsIgnoreCase("error")) {
-//                this.taResult.setText(status.getStatus() + ": " + status.getStatusDetails());
-//            } else {
-//                StringBuilder result = new StringBuilder();
-//                for (OutputData o : status.getResponse().getOutputData()) {
-//                    if (o.getType().equalsIgnoreCase("string")) {
-//                        result.append(o.getStringData()).append(System.lineSeparator()).append(System.lineSeparator());
-//                    }
-//
-//                }
-//                this.taResult.setText(result.toString());
-//            }
-//        }
-//
-//        this.progress.setIndeterminate(false);
 
     }//GEN-LAST:event_cmdSubmitActionPerformed
 
     private void startBackgroundTask() {
 
-        this.taResult.setText("");
+        //this.taResult.setText("");
         this.interrupted=false;
         
         this.cmdSubmit.setEnabled(false);
@@ -1182,23 +1121,37 @@ public class AssistantGenericDialog extends javax.swing.JDialog {
         this.progress.setIndeterminate(true);
 
         AtomicReference<AiRequestStatus> resultRef = new AtomicReference<>();
+        AtomicReference<Message> incomingMessageRef = new AtomicReference<>();
 
         SwingWorker<Void, Void> worker = new SwingWorker<>() {
+            
+            Message incomingMessage=new Message();
 
             @Override
             protected Void doInBackground() throws Exception {
-                List<InputData> inputs=inputAdapter.getInputs(capability);
-                for (InputData i : inputs) {
-                    if (InputData.TYPE_STRING.equalsIgnoreCase(i.getType())) {
-                        i.setStringData(taInputString.getText());
-                    }
-                }
-                
                 ClientSettings settings = ClientSettings.getInstance();
+                incomingMessage.setRole("assistant");
                 try {
                     JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
 
-                    AiRequestStatus status = locator.lookupIntegrationServiceRemote().submitAssistantRequest(config, capability.getRequestType(), capability.getModelType(), taPrompt.getText(), fParams, inputs, null);
+                    if(!(taResult.getText().trim().length()==0)) {
+                        taResult.append(System.lineSeparator());
+                        taResult.append(System.lineSeparator());
+                        taResult.append("*****************************");
+                        taResult.append(System.lineSeparator());
+                        taResult.append(System.lineSeparator());
+                    }
+                    
+                    Message outgoingMessage=new Message();
+                    outgoingMessage.setRole("user");
+                    //if(messages.isEmpty()) {
+                    //    outgoingMessage.setContent(taPrompt.getText() + System.lineSeparator() + System.lineSeparator() + taInputString.getText());
+                    //} else {
+                        outgoingMessage.setContent(taPrompt.getText());
+                    //}
+                    messages.add(outgoingMessage);
+                    
+                    AiRequestStatus status = locator.lookupIntegrationServiceRemote().submitAssistantRequest(config, capability.getRequestType(), capability.getModelType(), taPrompt.getText(), fParams, null, messages);
                     if(status.isAsync()) {
                         Thread.sleep(1000);
                         // poll until final result is available
@@ -1213,14 +1166,17 @@ public class AssistantGenericDialog extends javax.swing.JDialog {
                                 }
 
                             }
-                            taResult.setText(resultString.toString());
+                            taResult.append(resultString.toString());
+                            incomingMessage.setContent(resultString.toString());
                             if(interrupted)
                                 break;
                         }
                         status.setResponse(res);
                         resultRef.set(status);
+                        incomingMessageRef.set(incomingMessage);
                     } else {
                         resultRef.set(status);
+                        incomingMessageRef.set(incomingMessage);
                     }
 
                 } catch (Throwable t) {
@@ -1229,6 +1185,7 @@ public class AssistantGenericDialog extends javax.swing.JDialog {
                     status.setStatus("ERROR");
                     status.setStatusDetails(t.getMessage());
                     resultRef.set(status);
+                    incomingMessageRef.set(incomingMessage);
                 }
                 cmdSubmit.setEnabled(true);
                 cmdInterrupt.setEnabled(false);
@@ -1254,6 +1211,10 @@ public class AssistantGenericDialog extends javax.swing.JDialog {
                         taResult.setText(resultString.toString());
                     }
                 }
+                
+                Message m=incomingMessageRef.get();
+                if(m!=null)
+                    messages.add(m);
 
                 progress.setIndeterminate(false);
             }
@@ -1314,20 +1275,22 @@ public class AssistantGenericDialog extends javax.swing.JDialog {
                 }
             }
         } catch (ClassNotFoundException ex) {
-            java.util.logging.Logger.getLogger(AssistantGenericDialog.class.getName()).log(java.util.logging.Level.SEVERE, null, ex);
+            java.util.logging.Logger.getLogger(AssistantChatDialog.class.getName()).log(java.util.logging.Level.SEVERE, null, ex);
         } catch (InstantiationException ex) {
-            java.util.logging.Logger.getLogger(AssistantGenericDialog.class.getName()).log(java.util.logging.Level.SEVERE, null, ex);
+            java.util.logging.Logger.getLogger(AssistantChatDialog.class.getName()).log(java.util.logging.Level.SEVERE, null, ex);
         } catch (IllegalAccessException ex) {
-            java.util.logging.Logger.getLogger(AssistantGenericDialog.class.getName()).log(java.util.logging.Level.SEVERE, null, ex);
+            java.util.logging.Logger.getLogger(AssistantChatDialog.class.getName()).log(java.util.logging.Level.SEVERE, null, ex);
         } catch (javax.swing.UnsupportedLookAndFeelException ex) {
-            java.util.logging.Logger.getLogger(AssistantGenericDialog.class.getName()).log(java.util.logging.Level.SEVERE, null, ex);
+            java.util.logging.Logger.getLogger(AssistantChatDialog.class.getName()).log(java.util.logging.Level.SEVERE, null, ex);
         }
+        //</editor-fold>
+        //</editor-fold>
         //</editor-fold>
         //</editor-fold>
 
         /* Create and display the dialog */
         java.awt.EventQueue.invokeLater(() -> {
-            AssistantGenericDialog dialog = new AssistantGenericDialog(null, null, null, null, false, new javax.swing.JFrame(), true);
+            AssistantChatDialog dialog = new AssistantChatDialog(null, null, null, null, new javax.swing.JFrame(), true);
             dialog.addWindowListener(new java.awt.event.WindowAdapter() {
                 @Override
                 public void windowClosing(java.awt.event.WindowEvent e) {

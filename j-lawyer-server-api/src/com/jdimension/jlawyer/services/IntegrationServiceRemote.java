@@ -667,6 +667,7 @@ import com.jdimension.jlawyer.ai.AiCapability;
 import com.jdimension.jlawyer.ai.AiRequestStatus;
 import com.jdimension.jlawyer.ai.AiResponse;
 import com.jdimension.jlawyer.ai.InputData;
+import com.jdimension.jlawyer.ai.Message;
 import com.jdimension.jlawyer.ai.ParameterData;
 import com.jdimension.jlawyer.email.EmailTemplate;
 import com.jdimension.jlawyer.persistence.AssistantConfig;
@@ -743,7 +744,7 @@ public interface IntegrationServiceRemote {
 
     Map<AssistantConfig,List<AiCapability>> getAssistantCapabilities() throws Exception;
 
-    AiRequestStatus submitAssistantRequest(AssistantConfig config, String requestType, String modelType, String prompt, List<ParameterData> params, List<InputData> inputs) throws Exception;
+    AiRequestStatus submitAssistantRequest(AssistantConfig config, String requestType, String modelType, String prompt, List<ParameterData> params, List<InputData> inputs, List<Message> messages) throws Exception;
     
     AiResponse getAssistantRequestStatus(AssistantConfig config, String requestId) throws Exception;
 

@@ -665,6 +665,7 @@ package com.jdimension.jlawyer.client.assistant;
 
 import com.jdimension.jlawyer.ai.AiCapability;
 import com.jdimension.jlawyer.ai.InputData;
+import com.jdimension.jlawyer.ai.Message;
 import java.util.List;
 
 /**
@@ -674,6 +675,7 @@ import java.util.List;
 public interface AssistantInputAdapter {
     
     public List<InputData> getInputs(AiCapability c);
+    public List<Message> getMessages(AiCapability c);
     
     
 }

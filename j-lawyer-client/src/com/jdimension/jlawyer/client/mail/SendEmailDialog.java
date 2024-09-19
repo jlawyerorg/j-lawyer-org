@@ -667,6 +667,7 @@ import com.jdimension.jlawyer.client.utils.TemplatesUtil;
 import com.jdimension.jlawyer.ai.AiCapability;
 import com.jdimension.jlawyer.ai.AiRequestStatus;
 import com.jdimension.jlawyer.ai.InputData;
+import com.jdimension.jlawyer.ai.Message;
 import com.jdimension.jlawyer.ai.OutputData;
 import com.jdimension.jlawyer.ai.ParameterData;
 import com.jdimension.jlawyer.client.assistant.AssistantAccess;
@@ -1228,6 +1229,10 @@ public class SendEmailDialog extends javax.swing.JDialog implements SendCommunic
 
     @Override
     public List<ParameterData> getParameters(AiCapability c) {
+        return null;
+    }
+    
+    public List<Message> getMessages(AiCapability c) {
         return null;
     }
 
@@ -2694,7 +2699,7 @@ public class SendEmailDialog extends javax.swing.JDialog implements SendCommunic
                     try {
                         JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
 
-                        AiRequestStatus status = locator.lookupIntegrationServiceRemote().submitAssistantRequest(transcribeConfig, transcribeCapability.getRequestType(), transcribeCapability.getModelType(), "", fParams, inputs);
+                        AiRequestStatus status = locator.lookupIntegrationServiceRemote().submitAssistantRequest(transcribeConfig, transcribeCapability.getRequestType(), transcribeCapability.getModelType(), "", fParams, inputs, null);
                         resultRef.set(status);
 
                     } catch (Throwable t) {

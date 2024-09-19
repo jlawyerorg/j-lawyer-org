@@ -845,7 +845,7 @@ public class AssistantAccess {
                             }
                         }
 
-                        AiRequestStatus status = locator.lookupIntegrationServiceRemote().submitAssistantRequest(config, c.getRequestType(), c.getModelType(), adapter.getPrompt(c), params, adapter.getInputs(c));
+                        AiRequestStatus status = locator.lookupIntegrationServiceRemote().submitAssistantRequest(config, c.getRequestType(), c.getModelType(), adapter.getPrompt(c), params, adapter.getInputs(c), adapter.getMessages(c));
                         if (status.getStatus().equalsIgnoreCase("error")) {
                             adapter.processError(c, status);
                         } else {
@@ -870,8 +870,13 @@ public class AssistantAccess {
                 mi.setText(c.getName());
                 mi.setToolTipText(c.getDescription() + " (" + config.getName() + ")");
                 mi.addActionListener((ActionEvent e) -> {
-                    AssistantGenericDialog dlg = new AssistantGenericDialog(selectedCase, config, c, adapter, !c.hasParameters(), EditorsRegistry.getInstance().getMainWindow(), false);
-                    dlg.setVisible(true);
+                    if(AiCapability.REQUESTTYPE_CHAT.equals(c.getRequestType())) {
+                        AssistantChatDialog dlg = new AssistantChatDialog(selectedCase, config, c, adapter, EditorsRegistry.getInstance().getMainWindow(), false);
+                        dlg.setVisible(true);
+                    } else {
+                        AssistantGenericDialog dlg = new AssistantGenericDialog(selectedCase, config, c, adapter, !c.hasParameters(), EditorsRegistry.getInstance().getMainWindow(), false);
+                        dlg.setVisible(true);
+                    }
                 });
                 menu.add(mi);
             }
@@ -887,8 +892,13 @@ public class AssistantAccess {
                 mi.setText(c.getName());
                 mi.setToolTipText(c.getDescription() + " (" + config.getName() + ")");
                 mi.addActionListener((ActionEvent e) -> {
-                    AssistantGenericDialog dlg = new AssistantGenericDialog(selectedCase, config, c, adapter, !c.hasParameters(), EditorsRegistry.getInstance().getMainWindow(), false);
-                    dlg.setVisible(true);
+                    if(AiCapability.REQUESTTYPE_CHAT.equals(c.getRequestType())) {
+                        AssistantChatDialog dlg = new AssistantChatDialog(selectedCase, config, c, adapter, EditorsRegistry.getInstance().getMainWindow(), false);
+                        dlg.setVisible(true);
+                    } else {
+                        AssistantGenericDialog dlg = new AssistantGenericDialog(selectedCase, config, c, adapter, !c.hasParameters(), EditorsRegistry.getInstance().getMainWindow(), false);
+                        dlg.setVisible(true);
+                    }
                 });
                 menu.add(mi);
             }

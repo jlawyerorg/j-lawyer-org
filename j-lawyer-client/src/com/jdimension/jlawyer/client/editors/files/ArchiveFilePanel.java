@@ -665,6 +665,7 @@ package com.jdimension.jlawyer.client.editors.files;
 
 import com.jdimension.jlawyer.ai.AiCapability;
 import com.jdimension.jlawyer.ai.InputData;
+import com.jdimension.jlawyer.ai.Message;
 import com.jdimension.jlawyer.client.assistant.AssistantAccess;
 import com.jdimension.jlawyer.client.assistant.AssistantGenerateDialog;
 import com.jdimension.jlawyer.client.assistant.AssistantInputAdapter;
@@ -1055,6 +1056,8 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
         try {
             Map<AssistantConfig, List<AiCapability>> capabilities2 = ingo.filterCapabilities(AiCapability.REQUESTTYPE_SUMMARIZE, AiCapability.INPUTTYPE_STRING);
             ingo.populateMenu(this.mnuAssistant, capabilities2, (AssistantInputAdapter)this, this.dto);
+            Map<AssistantConfig, List<AiCapability>> capabilities3 = ingo.filterCapabilities(AiCapability.REQUESTTYPE_CHAT, AiCapability.INPUTTYPE_NONE);
+            ingo.populateMenu(this.mnuAssistant, capabilities3, (AssistantInputAdapter)this, this.dto);
         } catch (Exception ex) {
             log.error(ex);
         }
@@ -7424,6 +7427,11 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
             JOptionPane.showMessageDialog(this, "Fehler bei der Textextraktion: " + ioe.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
             return null;
         }
+    }
+
+    @Override
+    public List<Message> getMessages(AiCapability c) {
+        return null;
     }
 
     protected class DropTargetHandler implements DropTargetListener {
