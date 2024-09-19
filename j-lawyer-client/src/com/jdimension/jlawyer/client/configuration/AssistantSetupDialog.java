@@ -1043,8 +1043,8 @@ public class AssistantSetupDialog extends javax.swing.JDialog {
             AssistantConfig ac = new AssistantConfig();
             ac.setName(newNameObject.toString());
             ac.setUrl("");
-            ac.setConnectionTimeout(3);
-            ac.setReadTimeout(5);
+            ac.setConnectionTimeout(5);
+            ac.setReadTimeout(60);
             ac.setUserName(null);
             ac.setPassword(null);
             ac.setConfiguration("");
