@@ -1356,6 +1356,7 @@ public class PdfImageScrollingPanel extends javax.swing.JPanel implements Previe
 
         this.tabs.setEnabledAt(1, false);
         this.tabs.setEnabledAt(2, false);
+        long start=System.currentTimeMillis();
         try {
             ZUGFeRDInvoiceImporter zii = new ZUGFeRDInvoiceImporter(new ByteArrayInputStream(content));
             if (zii.canParse()) {
@@ -1404,6 +1405,7 @@ public class PdfImageScrollingPanel extends javax.swing.JPanel implements Previe
         } catch (Exception ex) {
             log.error("Error rendering e-invoice", ex);
         }
+        log.debug("invoice checking / rendering took " + (System.currentTimeMillis()-start));
 
     }
 

@@ -671,6 +671,9 @@ import com.jdimension.jlawyer.persistence.InstantMessage;
 import com.jdimension.jlawyer.persistence.InstantMessageMention;
 import java.util.ArrayList;
 import java.util.Date;
+import java.util.logging.Level;
+import java.util.logging.Logger;
+import javax.swing.SwingUtilities;
 
 /**
  *
@@ -723,6 +726,30 @@ public class MessengerTestFrame extends javax.swing.JFrame implements NewMessage
         im2list.add(im2m1);
         im2.setMentions(im2list);
         pnlMessages.add(new MessagePanel(principals, "Hausmeister Krause", false, im2));
+        
+        new Thread(new Runnable() {
+            @Override
+            public void run() {
+                for(int i=0;i<100;i++) {
+                SwingUtilities.invokeLater(new Runnable() {
+                    @Override
+                    public void run() {
+                        im2.setContent(im2.getContent() + " bla");
+                        //pnlMessages.validate();
+                        //pnlMessages.doLayout();
+                        pnlMessages.repaint();
+                    }
+                    
+                });
+                    try {
+                        Thread.sleep(1000);
+                    } catch (InterruptedException ex) {
+                        Logger.getLogger(MessengerTestFrame.class.getName()).log(Level.SEVERE, null, ex);
+                    }
+                }
+            }
+            
+        }).start();
         
         
     }
