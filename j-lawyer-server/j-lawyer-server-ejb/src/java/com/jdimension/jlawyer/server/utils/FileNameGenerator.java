@@ -663,12 +663,8 @@
  */
 package com.jdimension.jlawyer.server.utils;
 
-import java.text.DecimalFormat;
 import java.text.SimpleDateFormat;
 import java.util.Date;
-import java.util.Random;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
 /**
  *
@@ -694,10 +690,6 @@ public class FileNameGenerator {
         }
         if (pattern.contains("ddd")) {
             throw new InvalidSchemaPatternException("d muss als d oder dd enthalten sein");
-        }
-
-        if (pattern.indexOf('n') > -1 && !pattern.contains("nnn")) {
-            throw new InvalidSchemaPatternException("n muss mindestens als nnn (999 Rechnungen pro Jahr) enthalten sein");
         }
 
         return true;
