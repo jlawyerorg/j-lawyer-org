@@ -1217,6 +1217,8 @@ public class AssistantGenericDialog extends javax.swing.JDialog {
                             if(interrupted)
                                 break;
                         }
+                        status.setStatus(res.getStatus());
+                        status.setStatusDetails(res.getStatusMessage());
                         status.setResponse(res);
                         resultRef.set(status);
                     } else {
@@ -1241,7 +1243,7 @@ public class AssistantGenericDialog extends javax.swing.JDialog {
                 AiRequestStatus status = resultRef.get();
                 result=status;
                 if (status != null) {
-                    if (status.getStatus().equalsIgnoreCase("error")) {
+                    if (status.getStatus().equalsIgnoreCase("failed")) {
                         taResult.setText(status.getStatus() + ": " + status.getStatusDetails());
                     } else {
                         StringBuilder resultString = new StringBuilder();

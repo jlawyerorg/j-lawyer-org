@@ -1227,6 +1227,8 @@ public class AssistantGenerateDialog extends javax.swing.JDialog implements Assi
                                 if(interrupted)
                                     break;
                             }
+                            status.setStatus(res.getStatus());
+                            status.setStatusDetails(res.getStatusMessage());
                             status.setResponse(res);
                         } else {
                             resultRef.set(status);
@@ -1249,7 +1251,7 @@ public class AssistantGenerateDialog extends javax.swing.JDialog implements Assi
                     // Task completion actions
                     AiRequestStatus status = resultRef.get();
                     if (status != null) {
-                        if (status.getStatus().equalsIgnoreCase("error")) {
+                        if (status.getStatus().equalsIgnoreCase("failed")) {
                             taResult.insert(status.getStatus() + ": " + status.getStatusDetails(), taResult.getCaretPosition());
                         } else {
                             StringBuilder resultString = new StringBuilder();
@@ -1318,7 +1320,7 @@ public class AssistantGenerateDialog extends javax.swing.JDialog implements Assi
                     // Task completion actions
                     AiRequestStatus status = resultRef.get();
                     if (status != null) {
-                        if (status.getStatus().equalsIgnoreCase("error")) {
+                        if (status.getStatus().equalsIgnoreCase("failed")) {
                             taResult.insert(status.getStatus() + ": " + status.getStatusDetails(), taResult.getCaretPosition());
                         } else {
                             StringBuilder resultString = new StringBuilder();
@@ -1487,7 +1489,7 @@ public class AssistantGenerateDialog extends javax.swing.JDialog implements Assi
                     // Task completion actions
                     AiRequestStatus status = resultRef.get();
                     if (status != null) {
-                        if (status.getStatus().equalsIgnoreCase("error")) {
+                        if (status.getStatus().equalsIgnoreCase("failed")) {
                             taResult.setText(status.getStatus() + ": " + status.getStatusDetails());
                         } else {
                             StringBuilder resultString = new StringBuilder();

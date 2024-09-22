@@ -891,6 +891,8 @@ public class AssistantChatDialog extends javax.swing.JDialog {
         jScrollPane2 = new javax.swing.JScrollPane();
         taResult = new javax.swing.JTextArea();
         cmdProcessOutput = new javax.swing.JButton();
+        jScrollPane6 = new javax.swing.JScrollPane();
+        pnlMessages = new javax.swing.JPanel();
 
         setDefaultCloseOperation(javax.swing.WindowConstants.DISPOSE_ON_CLOSE);
         setTitle("Assistent Ingo");
@@ -1048,6 +1050,9 @@ public class AssistantChatDialog extends javax.swing.JDialog {
             }
         });
 
+        pnlMessages.setLayout(new javax.swing.BoxLayout(pnlMessages, javax.swing.BoxLayout.Y_AXIS));
+        jScrollPane6.setViewportView(pnlMessages);
+
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(getContentPane());
         getContentPane().setLayout(layout);
         layout.setHorizontalGroup(
@@ -1065,8 +1070,11 @@ public class AssistantChatDialog extends javax.swing.JDialog {
                         .addComponent(cmdProcessOutput)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                         .addComponent(cmdCopy))
-                    .addComponent(splitInputOutput)
-                    .addComponent(jScrollPane3))
+                    .addComponent(jScrollPane3)
+                    .addGroup(layout.createSequentialGroup()
+                        .addComponent(splitInputOutput, javax.swing.GroupLayout.PREFERRED_SIZE, 351, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addComponent(jScrollPane6)))
                 .addContainerGap())
         );
         layout.setVerticalGroup(
@@ -1080,7 +1088,9 @@ public class AssistantChatDialog extends javax.swing.JDialog {
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(pnlParameters, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(splitInputOutput)
+                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
+                    .addComponent(splitInputOutput)
+                    .addComponent(jScrollPane6))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(jScrollPane3, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
@@ -1171,6 +1181,8 @@ public class AssistantChatDialog extends javax.swing.JDialog {
                             if(interrupted)
                                 break;
                         }
+                        status.setStatus(res.getStatus());
+                        status.setStatusDetails(res.getStatusMessage());
                         status.setResponse(res);
                         resultRef.set(status);
                         incomingMessageRef.set(incomingMessage);
@@ -1198,7 +1210,7 @@ public class AssistantChatDialog extends javax.swing.JDialog {
                 AiRequestStatus status = resultRef.get();
                 result=status;
                 if (status != null) {
-                    if (status.getStatus().equalsIgnoreCase("error")) {
+                    if (status.getStatus().equalsIgnoreCase("failed")) {
                         taResult.setText(status.getStatus() + ": " + status.getStatusDetails());
                     } else {
                         StringBuilder resultString = new StringBuilder();
@@ -1313,9 +1325,11 @@ public class AssistantChatDialog extends javax.swing.JDialog {
     private javax.swing.JScrollPane jScrollPane3;
     private javax.swing.JScrollPane jScrollPane4;
     private javax.swing.JScrollPane jScrollPane5;
+    private javax.swing.JScrollPane jScrollPane6;
     private javax.swing.JLabel lblRequestType;
     private javax.swing.JList<String> lstInputFiles;
     private javax.swing.JList<String> lstOutputFiles;
+    private javax.swing.JPanel pnlMessages;
     private javax.swing.JPanel pnlParameters;
     private javax.swing.JPanel pnlTitle;
     private javax.swing.JProgressBar progress;

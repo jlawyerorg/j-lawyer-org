@@ -2717,7 +2717,7 @@ public class SendEmailDialog extends javax.swing.JDialog implements SendCommunic
                     AiRequestStatus status = resultRef.get();
                     if (status != null) {
                         String resultText="";
-                        if (status.getStatus().equalsIgnoreCase("error")) {
+                        if (status.getStatus().equalsIgnoreCase("failed")) {
                             resultText=status.getStatus() + ": " + status.getStatusDetails();
                         } else {
                             StringBuilder resultString = new StringBuilder();
