@@ -6981,6 +6981,11 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
                 dlg.setVisible(true);
             });
             this.popAssistantNoContext.add(mi);
+            
+            AssistantAccess ingo = AssistantAccess.getInstance();
+            Map<AssistantConfig, List<AiCapability>> capabilities3 = ingo.filterCapabilities(AiCapability.REQUESTTYPE_CHAT, AiCapability.INPUTTYPE_NONE);
+            ingo.populateMenu(this.popAssistantNoContext, capabilities3, (AssistantInputAdapter)this, this.dto);
+            
             this.popAssistantNoContext.show(this.cmdAssistantGenerate, evt.getX(), evt.getY());
             
         } catch (Exception ex) {

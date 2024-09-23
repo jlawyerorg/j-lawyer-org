@@ -667,7 +667,6 @@ import com.jdimension.jlawyer.ai.Message;
 import com.jdimension.jlawyer.client.settings.UserSettings;
 import java.awt.Color;
 import java.awt.Dimension;
-import javax.swing.ImageIcon;
 import javax.swing.UIManager;
 import org.apache.log4j.Logger;
 import themes.colors.DefaultColorTheme;
@@ -680,11 +679,8 @@ public class AiChatMessagePanel extends javax.swing.JPanel {
 
     private static final Logger log = Logger.getLogger(AiChatMessagePanel.class.getName());
 
-    private ImageIcon caseIcon = new javax.swing.ImageIcon(getClass().getResource("/icons/folder.png"));
     private Message msg = null;
 
-    protected boolean showCaseContext = true;
-    protected Color contextForeground = Color.WHITE;
     protected int maxDocumentChars = Integer.MAX_VALUE;
 
     /**
@@ -708,7 +704,7 @@ public class AiChatMessagePanel extends javax.swing.JPanel {
         if(Message.ROLE_USER.equals(aiMessage.getRole())) {
             this.lblUser.setIcon(UserSettings.getInstance().getCurrentUserBigIcon());
         } else {
-            
+            this.lblUser.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons32/material/j-lawyer-ai.png")));
         }
         this.lblUser.setText("");
         //this.lblUser.setToolTipText("von: " + aiMessage.getSender());
@@ -771,7 +767,7 @@ public class AiChatMessagePanel extends javax.swing.JPanel {
         aiCalloutComponent1.setLayout(aiCalloutComponent1Layout);
         aiCalloutComponent1Layout.setHorizontalGroup(
             aiCalloutComponent1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGap(0, 250, Short.MAX_VALUE)
+            .addGap(0, 244, Short.MAX_VALUE)
         );
         aiCalloutComponent1Layout.setVerticalGroup(
             aiCalloutComponent1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
@@ -784,95 +780,21 @@ public class AiChatMessagePanel extends javax.swing.JPanel {
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(layout.createSequentialGroup()
                 .addContainerGap()
-                .addComponent(aiCalloutComponent1, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                .addComponent(lblUser))
+                .addComponent(lblUser)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addComponent(aiCalloutComponent1, javax.swing.GroupLayout.DEFAULT_SIZE, 244, Short.MAX_VALUE)
+                .addContainerGap())
         );
         layout.setVerticalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(layout.createSequentialGroup()
                 .addContainerGap()
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addComponent(lblUser, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                    .addGroup(layout.createSequentialGroup()
-                        .addComponent(aiCalloutComponent1, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                        .addGap(0, 0, Short.MAX_VALUE)))
-                .addContainerGap())
+                    .addComponent(lblUser)
+                    .addComponent(aiCalloutComponent1, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
+                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
         );
     }// </editor-fold>//GEN-END:initComponents
-
-    private void contextClicked(boolean toDocument) {
-
-//        if (EditorsRegistry.getInstance().getCurrentEditor() instanceof ArchiveFilePanel && toDocument) {
-//            // clicked from within a case
-//            ((ArchiveFilePanel)EditorsRegistry.getInstance().getCurrentEditor()).selectDocument(this.lblDocumentContext.getToolTipText());
-//        } else {
-//            // clicked from within the message center
-//            try {
-//
-//                Object editor = null;
-//                if (UserSettings.getInstance().isCurrentUserInRole(UserSettings.ROLE_WRITECASE)) {
-//                    editor = EditorsRegistry.getInstance().getEditor(EditArchiveFileDetailsPanel.class.getName());
-//                } else {
-//                    editor = EditorsRegistry.getInstance().getEditor(ViewArchiveFileDetailsPanel.class.getName());
-//                }
-//                Object desktop = EditorsRegistry.getInstance().getEditor(MessagingCenterPanel.class.getName());
-//                Image bgi = ((MessagingCenterPanel) desktop).getBackgroundImage();
-//
-//                if (editor instanceof ThemeableEditor) {
-//                    // inherit the background to newly created child editors
-//                    ((ThemeableEditor) editor).setBackgroundImage(bgi);
-//                }
-//
-//                if (editor instanceof PopulateOptionsEditor) {
-//                    ((PopulateOptionsEditor) editor).populateOptions();
-//                }
-//
-//                ArchiveFileBean aFile = null;
-//                try {
-//                    JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(ClientSettings.getInstance().getLookupProperties());
-//                    ArchiveFileServiceRemote fileService = locator.lookupArchiveFileServiceRemote();
-//
-//                    aFile = fileService.getArchiveFile(this.msg.getCaseContext().getId());
-//                } catch (Exception ex) {
-//                    log.error("Error loading archive file from server", ex);
-//                    JOptionPane.showMessageDialog(this, java.text.MessageFormat.format(java.util.ResourceBundle.getBundle("com/jdimension/jlawyer/client/desktop/TaggedEntryPanel").getString("error.loadingcase"), new Object[]{ex.getMessage()}), java.util.ResourceBundle.getBundle("com/jdimension/jlawyer/client/desktop/TaggedEntryPanel").getString("dialog.error"), JOptionPane.ERROR_MESSAGE);
-//                }
-//
-//                if (aFile == null) {
-//                    return;
-//                }
-//
-//                if (this.lblDocumentContext.getText() != null && !"".equals(this.lblDocumentContext.getText()) && toDocument) {
-//                    ((ArchiveFilePanel) editor).setArchiveFileDTO(aFile, this.lblDocumentContext.getToolTipText());
-//                } else {
-//                    ((ArchiveFilePanel) editor).setArchiveFileDTO(aFile);
-//                }
-//                ((ArchiveFilePanel) editor).setOpenedFromEditorClass(MessagingCenterPanel.class.getName());
-//                EditorsRegistry.getInstance().setMainEditorsPaneView((Component) editor);
-//            } catch (Exception ex) {
-//                log.error("Error creating editor from class " + this.getClass().getName(), ex);
-//                JOptionPane.showMessageDialog(this, java.text.MessageFormat.format(java.util.ResourceBundle.getBundle("com/jdimension/jlawyer/client/desktop/TaggedEntryPanel").getString("error.loadingeditor"), new Object[]{ex.getMessage()}), java.util.ResourceBundle.getBundle("com/jdimension/jlawyer/client/desktop/TaggedEntryPanel").getString("dialog.error"), JOptionPane.ERROR_MESSAGE);
-//            }
-//        }
-    }
-    
-    public void mentionUpdated(String messageId, String mentionId, boolean done) {
-//        if(this.aiCalloutComponent1.getMessage()!=null && this.aiCalloutComponent1.getMessage().getId()!=null && this.aiCalloutComponent1.getMessage().getId().equals(messageId)) {
-//            InstantMessage msg=this.aiCalloutComponent1.getMessage();
-//            for(InstantMessageMention imm: msg.getMentions()) {
-//                if(imm.getId()!=null && imm.getId().equals(mentionId)) {
-//                    imm.setDone(done);
-//                    
-//                    // triggers resetting the "read" status
-//                    this.aiCalloutComponent1.setMessage(this.aiCalloutComponent1.getMessage());
-//                    this.aiCalloutComponent1.repaint();
-//                    break;
-//                }
-//                    
-//            }
-//        }
-    }
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private com.jdimension.jlawyer.client.assistant.AiCalloutComponent aiCalloutComponent1;

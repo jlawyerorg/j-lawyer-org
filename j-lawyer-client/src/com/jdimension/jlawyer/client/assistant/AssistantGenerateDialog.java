@@ -749,6 +749,7 @@ public class AssistantGenerateDialog extends javax.swing.JDialog implements Assi
     /**
      * Creates new form AssistantGenerateDialog
      *
+     * @param caseView
      * @param selectedCase
      * @param parent
      * @param modal

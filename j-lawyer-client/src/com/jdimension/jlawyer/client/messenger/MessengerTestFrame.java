@@ -735,8 +735,6 @@ public class MessengerTestFrame extends javax.swing.JFrame implements NewMessage
                     @Override
                     public void run() {
                         im2.setContent(im2.getContent() + " bla");
-                        //pnlMessages.validate();
-                        //pnlMessages.doLayout();
                         pnlMessages.repaint();
                     }
                     

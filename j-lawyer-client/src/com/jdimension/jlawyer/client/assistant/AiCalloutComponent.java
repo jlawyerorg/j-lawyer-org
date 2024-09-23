@@ -664,18 +664,6 @@ For more information on this, and how to apply and follow the GNU AGPL, see
 package com.jdimension.jlawyer.client.assistant;
 
 import com.jdimension.jlawyer.ai.Message;
-import com.jdimension.jlawyer.client.messenger.*;
-import com.jdimension.jlawyer.client.editors.EditorsRegistry;
-import com.jdimension.jlawyer.client.events.EventBroker;
-import com.jdimension.jlawyer.client.events.InstantMessageDeletedEvent;
-import com.jdimension.jlawyer.client.events.InstantMessageMentionChangedEvent;
-import com.jdimension.jlawyer.client.settings.ClientSettings;
-import com.jdimension.jlawyer.client.utils.DateUtils;
-import com.jdimension.jlawyer.client.utils.UserUtils;
-import com.jdimension.jlawyer.persistence.AppUserBean;
-import com.jdimension.jlawyer.persistence.InstantMessage;
-import com.jdimension.jlawyer.persistence.InstantMessageMention;
-import com.jdimension.jlawyer.services.JLawyerServiceLocator;
 import java.awt.Color;
 import java.awt.Cursor;
 import java.awt.Dimension;
@@ -689,12 +677,7 @@ import java.awt.datatransfer.Clipboard;
 import java.awt.datatransfer.StringSelection;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
-import java.text.SimpleDateFormat;
-import java.util.ArrayList;
-import java.util.Date;
-import java.util.List;
 import javax.swing.ImageIcon;
-import javax.swing.JOptionPane;
 import javax.swing.UIManager;
 import org.apache.log4j.Logger;
 import themes.colors.DefaultColorTheme;
@@ -707,18 +690,10 @@ public class AiCalloutComponent extends javax.swing.JPanel {
 
     private static final Logger log = Logger.getLogger(AiCalloutComponent.class.getName());
     private static final ImageIcon ICON_COPY=new javax.swing.ImageIcon(AiCalloutComponent.class.getResource("/icons16/material/baseline_content_copy_lightgrey_48dp.png"));
-    private static final ImageIcon ICON_DELETE=new javax.swing.ImageIcon(AiCalloutComponent.class.getResource("/icons16/material/baseline_delete_lightgrey_48dp.png"));
-    private static final ImageIcon ICON_MARKREAD=new javax.swing.ImageIcon(AiCalloutComponent.class.getResource("/icons16/material/mark_chat_read_20dp.png"));
-
-    private int indicatorX = 10;
-    private int indicatorY = 10;
-    private int indicatorSize = 15;
+    
     private int deleteX=1000;
-    private int deleteY=10;
     private int copyX=1000;
     private int copyY=10;
-    private int markReadX=1000;
-    private int markReadY=10;
     private Font defaultFont = null;
     private Font defaultFontBold = null;
     private Font miniFont = null;
@@ -727,8 +702,6 @@ public class AiCalloutComponent extends javax.swing.JPanel {
     protected boolean ownMessage = false;
     protected String ownPrincipal = null;
 
-    private SimpleDateFormat dfSent = new SimpleDateFormat("dd.MM.yyyy HH:mm");
-    
     private String tooltipText="";
     
     /**
@@ -759,109 +732,32 @@ public class AiCalloutComponent extends javax.swing.JPanel {
 
         this.setPreferredSize(new Dimension(250, 70)); // Adjust size as needed´
 
-//        addMouseListener(new MouseAdapter() {
-//            @Override
-//            public void mouseClicked(MouseEvent e) {
-//
-//                // 10, 10+(metrics.getHeight()-10), 15, 15
-//                if (e.getX() >= indicatorX && e.getX() <= indicatorX + indicatorSize
-//                        && e.getY() >= indicatorY && e.getY() <= indicatorY + indicatorSize) {
-//                    if (message.hasMentionFor(getOwnPrincipal())) {
-//                        if (message.getMentionFor(getOwnPrincipal()).isDone()) {
-//                            message.getMentionFor(getOwnPrincipal()).setDone(false);
-//                            markMentionDone(message.getId(), message.getMentionFor(getOwnPrincipal()).getId(), false);
-//                            setRead(UNREAD);
-//                        } else {
-//                            message.getMentionFor(getOwnPrincipal()).setDone(true);
-//                            markMentionDone(message.getId(), message.getMentionFor(getOwnPrincipal()).getId(), true);
-//                            setRead(READ);
-//                        }
-//                        updateTooltip();
-//
-//                    } else {
-//                        setRead(READ_NOTAPPLICABLE);
-//                    }
-//                    // do not evaluate the deletion button coordinates
-//                    return;
-//
-//                }
-//                if (e.getX() >= (deleteX) && e.getX() <= deleteX + 20
-//                        && e.getY() >= (deleteY) && e.getY() <= deleteY + 20) {
-//                    deleteMessage(message.getId());
-//
-//                }
-//                if (e.getX() >= (copyX) && e.getX() <= copyX + 20
-//                        && e.getY() >= (copyY) && e.getY() <= copyY + 20) {
-//                    copyMessageToClipboard();
-//                }
-//                if (e.getX() >= (markReadX) && e.getX() <= markReadX + 20
-//                        && e.getY() >= (markReadY) && e.getY() <= markReadY + 20) {
-//                    if(message.getMentions()!=null) {
-//                        List<String> mentionIds=new ArrayList<>();
-//                        for(InstantMessageMention mention: message.getMentions()) {
-//                            if(!mention.isDone()) {
-//                                mentionIds.add(mention.getId());
-//                            }
-//                        }
-//                        markAllMentionsDone(message.getId(), mentionIds, true);
-//                        if(!mentionIds.isEmpty()) {
-//                            setRead(READ);
-//                            updateTooltip();
-//                        }
-//                    }
-//                }
-//            }
-//            
-//            @Override
-//            public void mousePressed(MouseEvent e) {
-//                // Start selection
-//                selectionStart = e.getX();
-//                selecting = true;
-//            }
-//
-//            @Override
-//            public void mouseReleased(MouseEvent e) {
-//                // End selection
-//                selectionEnd = e.getX();
-//                selecting = false;
-//                repaint();  // Redraw to show selection
-//            }
-//
-//            
-//        });
+        addMouseListener(new MouseAdapter() {
+            @Override
+            public void mouseClicked(MouseEvent e) {
+
+                if (e.getX() >= (copyX) && e.getX() <= copyX + 20
+                        && e.getY() >= (copyY) && e.getY() <= copyY + 20) {
+                    copyMessageToClipboard();
+                }
+            }
+            
+        });
         
-//        addMouseMotionListener(new MouseAdapter() {
-//            @Override
-//            public void mouseMoved(MouseEvent e) {
-//                super.mouseMoved(e);
-//                if (e.getX() >= indicatorX && e.getX() <= indicatorX + indicatorSize
-//                        && e.getY() >= indicatorY && e.getY() <= indicatorY + indicatorSize) {
-//                    setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
-//                    setToolTipText("als erledigt markieren");
-//                    return;
-//                }
-//                if (e.getX() >= (deleteX) && e.getX() <= deleteX + 20
-//                        && e.getY() >= (deleteY) && e.getY() <= deleteY + 20) {
-//                    setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
-//                    setToolTipText("Nachricht löschen");
-//                    return;
-//                }
-//                if (e.getX() >= (copyX) && e.getX() <= copyX + 20
-//                        && e.getY() >= (copyY) && e.getY() <= copyY + 20) {
-//                    setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
-//                    setToolTipText("Nachrichtentext kopieren");
-//                    return;
-//                }
-//                if (e.getX() >= (markReadX) && e.getX() <= markReadX + 20
-//                        && e.getY() >= (markReadY) && e.getY() <= markReadY + 20) {
-//                    setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
-//                    setToolTipText("für alle als erledigt markieren");
-//                    return;
-//                }
-//                setCursor(new java.awt.Cursor(java.awt.Cursor.DEFAULT_CURSOR));
-//                setToolTipText(tooltipText);
-//            }
-//        });
+        addMouseMotionListener(new MouseAdapter() {
+            @Override
+            public void mouseMoved(MouseEvent e) {
+                super.mouseMoved(e);
+                if (e.getX() >= (copyX) && e.getX() <= copyX + 20
+                        && e.getY() >= (copyY) && e.getY() <= copyY + 20) {
+                    setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
+                    setToolTipText("Text kopieren");
+                    return;
+                }
+                setCursor(new java.awt.Cursor(java.awt.Cursor.DEFAULT_CURSOR));
+                setToolTipText(tooltipText);
+            }
+        });
     }
     
     private void copyMessageToClipboard() {
@@ -869,28 +765,6 @@ public class AiCalloutComponent extends javax.swing.JPanel {
         Clipboard clipboard = toolkit.getSystemClipboard();
         StringSelection strSel = new StringSelection(this.message.getContent());
         clipboard.setContents(strSel, null);
-    }
-
-    private void updateTooltip() {
-        StringBuilder sb = new StringBuilder();
-//        if (this.message != null && this.message.getSent() != null) {
-//            sb.append("gesendet: ").append(dfSent.format(this.message.getSent())).append(" (").append(DateUtils.getHumanReadableTimeInPast(this.message.getSent())).append(")");
-//        }
-//        if (this.message != null && this.message.getMentions() != null && !this.message.getMentions().isEmpty()) {
-//            sb.append(System.lineSeparator()).append(System.lineSeparator());
-//            sb.append("Folgende Nutzer und Nutzerinnen wurden in dieser Nachricht erwähnt:").append(System.lineSeparator());
-//            for (InstantMessageMention imm : this.message.getMentions()) {
-//                sb.append("- ").append(imm.getPrincipal());
-//                if (imm.isDone()) {
-//                    sb.append(" hat die Nachricht bestätigt");
-//                } else {
-//                    sb.append(" hat die Nachricht noch nicht bestätigt");
-//                }
-//                sb.append(System.lineSeparator());
-//            }
-//        }
-//        this.tooltipText=sb.toString();
-//        this.setToolTipText(this.tooltipText);
     }
 
     @Override
@@ -913,22 +787,6 @@ public class AiCalloutComponent extends javax.swing.JPanel {
         }
 
         g2d.fillRect(0, 0, width, height);
-
-//        if (this.message != null && this.message.hasMentions()) {
-//            if (this.message.hasOpenMentions()) {
-//                if(this.message.getMentions().size()==this.message.getOpenMentionsCount())
-//                    // all open
-//                    g2d.setColor(DefaultColorTheme.COLOR_LOGO_RED);
-//                else
-//                    // partially open
-//                    g2d.setColor(Color.ORANGE);
-//            } else {
-//                g2d.setColor(DefaultColorTheme.COLOR_LOGO_GREEN);
-//            }
-//
-//            g2d.fillRect(0, 0, 5, height);
-//        }
-
         g2d.setColor(DefaultColorTheme.COLOR_DARK_GREY);
         g2d.setFont(defaultFont);
 
@@ -972,22 +830,12 @@ public class AiCalloutComponent extends javax.swing.JPanel {
         // delete button
         this.deleteX=width-70;
         
-        // delete icon
-        ICON_DELETE.paintIcon(this, g2d, this.deleteX, this.deleteY);
         // copy icon
         this.copyX=this.deleteX-20;
         ICON_COPY.paintIcon(this, g2d, this.copyX, this.copyY);
         
-        if(this.ownMessage || UserUtils.isCurrentUserAdmin()) {
-            // mark read icon
-            this.markReadX = this.copyX - 20;
-            ICON_MARKREAD.paintIcon(this, g2d, this.markReadX, this.markReadY);
-        }
-
         this.setPreferredSize(new Dimension(width, yOffset + lineSpacing));
         
-        // Draw the text content
-        drawTextContent(g2d);
     }
 
     private void drawWithHighlights(String line, Graphics2D g2d, int x, int y, Font defaultFont, Font defaultFontBold) {
@@ -996,18 +844,6 @@ public class AiCalloutComponent extends javax.swing.JPanel {
         boolean magicTextIsMe = false;
         String magicText = null;
         int magicIndex = Integer.MAX_VALUE;
-//        if (this.getPrincipals() != null) {
-//            for (AppUserBean u : this.getPrincipals()) {
-//                int pIndex = line.indexOf("@" + u.getPrincipalId());
-//                if (pIndex > -1 && pIndex < magicIndex) {
-//                    magicText = "@" + u.getPrincipalId();
-//                    magicIndex = pIndex;
-//                    if (u.getPrincipalId().equals(this.ownPrincipal)) {
-//                        magicTextIsMe = true;
-//                    }
-//                }
-//            }
-//        }
 
         g2d.setColor(Color.WHITE);
         if (magicText != null) {
@@ -1091,17 +927,6 @@ public class AiCalloutComponent extends javax.swing.JPanel {
      */
     public void setMessage(Message message) {
         this.message = message;
-
-//        if (message.hasMentionFor(ownPrincipal)) {
-//            if (message.getMentionFor(ownPrincipal).isDone()) {
-//                setRead(READ);
-//            } else {
-//                setRead(UNREAD);
-//            }
-//        } else {
-//            setRead(READ_NOTAPPLICABLE);
-//        }
-        this.updateTooltip();
     }
 
     /**
