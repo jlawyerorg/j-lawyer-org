@@ -667,6 +667,7 @@ import com.jdimension.jlawyer.client.messenger.*;
 import com.formdev.flatlaf.FlatIntelliJLaf;
 import com.formdev.flatlaf.FlatLaf;
 import com.formdev.flatlaf.fonts.inter.FlatInterFont;
+import com.jdimension.jlawyer.ai.Message;
 import com.jdimension.jlawyer.persistence.AppUserBean;
 import com.jdimension.jlawyer.persistence.InstantMessage;
 import com.jdimension.jlawyer.persistence.InstantMessageMention;
@@ -680,7 +681,7 @@ import javax.swing.SwingUtilities;
  *
  * @author jens
  */
-public class AiChatTestFrame extends javax.swing.JFrame implements NewMessageConsumer {
+public class AiChatTestFrame extends javax.swing.JFrame {
 
     private ArrayList<AppUserBean> principals=new ArrayList<>();
     
@@ -697,36 +698,16 @@ public class AiChatTestFrame extends javax.swing.JFrame implements NewMessageCon
         principals.add(new AppUserBean("Tommie"));
         
         this.messageSendPanel1.setUsers(principals);
-        this.messageSendPanel1.setMessageConsumer(this);
+        //this.messageSendPanel1.setMessageConsumer(this);
         
         
-        InstantMessage im1=new InstantMessage();
-        im1.setSender("Hausmeister Krause");
+        Message im1=new Message();
         im1.setContent("@Präsident in einer halben Stunde Sitzung bei mir!\n@Bodo's Geburtstag!");
-        im1.setSent(new Date());
-        ArrayList<InstantMessageMention> im1list=new ArrayList<>(); 
-        InstantMessageMention im1m1=new InstantMessageMention();
-        im1m1.setDone(false);
-        im1m1.setPrincipal("Präsident");
-        im1list.add(im1m1);
-        InstantMessageMention im1m2=new InstantMessageMention();
-        im1m2.setDone(false);
-        im1m2.setPrincipal("Bodo");
-        im1list.add(im1m2);
-        im1.setMentions(im1list);
-        pnlMessages.add(new AiChatMessagePanel(principals, "Hausmeister Krause", true, im1));
+        pnlMessages.add(new AiChatMessagePanel(im1));
         
-        InstantMessage im2=new InstantMessage();
-        im2.setSender("Präsident");
+        Message im2=new Message();
         im2.setContent("@Hausmeister Krause alles für den Dackel, alles für den Club!");
-        im2.setSent(new Date());
-        ArrayList<InstantMessageMention> im2list=new ArrayList<>(); 
-        InstantMessageMention im2m1=new InstantMessageMention();
-        im2m1.setDone(false);
-        im2m1.setPrincipal("Hausmeister Krause");
-        im2list.add(im2m1);
-        im2.setMentions(im2list);
-        pnlMessages.add(new AiChatMessagePanel(principals, "Hausmeister Krause", false, im2));
+        pnlMessages.add(new AiChatMessagePanel(im2));
         
 //        new Thread(new Runnable() {
 //            @Override
@@ -830,11 +811,11 @@ public class AiChatTestFrame extends javax.swing.JFrame implements NewMessageCon
     private javax.swing.JPanel pnlMessages;
     // End of variables declaration//GEN-END:variables
 
-    @Override
-    public void newMessageForSubmission(InstantMessage msg) {
-        pnlMessages.add(new AiChatMessagePanel(principals, "Hausmeister Krause", true, msg));
-        this.pnlMessages.revalidate();
-        this.pnlMessages.doLayout();
-        this.pnlMessages.repaint();
-    }
+//    @Override
+//    public void newMessageForSubmission(Message msg) {
+//        pnlMessages.add(new AiChatMessagePanel(msg));
+//        this.pnlMessages.revalidate();
+//        this.pnlMessages.doLayout();
+//        this.pnlMessages.repaint();
+//    }
 }
