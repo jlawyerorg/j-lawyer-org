@@ -2577,6 +2577,8 @@ public class SendEmailDialog extends javax.swing.JDialog implements SendCommunic
             ingo.populateMenu(this.popAssistant, capabilities2, (AssistantInputAdapter)this, this.contextArchiveFile);
             Map<AssistantConfig, List<AiCapability>> capabilities3 = ingo.filterCapabilities(AiCapability.REQUESTTYPE_TRANSLATE, AiCapability.INPUTTYPE_STRING);
             ingo.populateMenu(this.popAssistant, capabilities3, (AssistantInputAdapter)this, this.contextArchiveFile);
+            Map<AssistantConfig, List<AiCapability>> capabilities4 = ingo.filterCapabilities(AiCapability.REQUESTTYPE_CHAT, AiCapability.INPUTTYPE_NONE);
+            ingo.populateMenu(this.popAssistant, capabilities4, (AssistantInputAdapter) this, this.contextArchiveFile);
             
             JMenuItem mi = new JMenuItem();
             mi.setText("Text generieren (Diktat, Prompting)");

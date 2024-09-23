@@ -1294,6 +1294,7 @@ public class AssistantChatDialog extends javax.swing.JDialog {
     private void cmdResetChatActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdResetChatActionPerformed
         this.messages.clear();
         this.pnlMessages.removeAll();
+        ComponentUtils.bumpSplitPane(splitInputOutput);
 
     }//GEN-LAST:event_cmdResetChatActionPerformed
 
