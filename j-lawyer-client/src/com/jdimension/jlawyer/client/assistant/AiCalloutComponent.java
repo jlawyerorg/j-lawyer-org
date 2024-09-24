@@ -678,6 +678,7 @@ import java.awt.datatransfer.StringSelection;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import javax.swing.ImageIcon;
+import javax.swing.JDialog;
 import javax.swing.UIManager;
 import org.apache.log4j.Logger;
 import themes.colors.DefaultColorTheme;
@@ -690,17 +691,21 @@ public class AiCalloutComponent extends javax.swing.JPanel {
 
     private static final Logger log = Logger.getLogger(AiCalloutComponent.class.getName());
     private static final ImageIcon ICON_COPY=new javax.swing.ImageIcon(AiCalloutComponent.class.getResource("/icons16/material/baseline_content_copy_lightgrey_48dp.png"));
+    private static final ImageIcon ICON_SELECT=new javax.swing.ImageIcon(AiCalloutComponent.class.getResource("/icons16/material/select_all_20dp_FFFFFF.png"));
+    
+    private JDialog owner=null;
     
     private int deleteX=1000;
     private int copyX=1000;
     private int copyY=10;
+    private int markReadX=1000;
+    private int markReadY=10;
     private Font defaultFont = null;
     private Font defaultFontBold = null;
     private Font miniFont = null;
 
     protected Message message = null;
     protected boolean ownMessage = false;
-    protected String ownPrincipal = null;
 
     private String tooltipText="";
     
@@ -708,12 +713,14 @@ public class AiCalloutComponent extends javax.swing.JPanel {
      * Creates new form AiCalloutComponent
      */
     public AiCalloutComponent() {
-        this("admin", new Message(), true);
+        this(null, new Message(), true);
     }
 
-    public AiCalloutComponent(String ownPrincipal, Message m, boolean ownMessage) {
+    public AiCalloutComponent(JDialog ownerDialog, Message m, boolean ownMessage) {
         initComponents();
 
+        this.owner=ownerDialog;
+        
         this.defaultFont = UIManager.getFont("defaultFont");
         if (this.defaultFont == null) {
             this.defaultFont = new Font("Arial", Font.PLAIN, 12);
@@ -726,9 +733,8 @@ public class AiCalloutComponent extends javax.swing.JPanel {
             miniFont = new Font("Arial", Font.PLAIN, 8);
         }
 
-        this.ownPrincipal = ownPrincipal;
         this.ownMessage = ownMessage;
-        this.setMessage(m);
+        this.setMessage(m, this.owner);
 
         this.setPreferredSize(new Dimension(250, 70)); // Adjust size as needed´
 
@@ -739,6 +745,14 @@ public class AiCalloutComponent extends javax.swing.JPanel {
                 if (e.getX() >= (copyX) && e.getX() <= copyX + 20
                         && e.getY() >= (copyY) && e.getY() <= copyY + 20) {
                     copyMessageToClipboard();
+                }
+                if (e.getX() >= (markReadX) && e.getX() <= markReadX + 20
+                        && e.getY() >= (markReadY) && e.getY() <= markReadY + 20) {
+                    if(owner!=null) {
+                        AiChatMessageTextSelection selDlg=new AiChatMessageTextSelection(owner, true, message.getContent());
+                        selDlg.setLocation(e.getLocationOnScreen());
+                        selDlg.setVisible(true);
+                    }
                 }
             }
             
@@ -751,7 +765,13 @@ public class AiCalloutComponent extends javax.swing.JPanel {
                 if (e.getX() >= (copyX) && e.getX() <= copyX + 20
                         && e.getY() >= (copyY) && e.getY() <= copyY + 20) {
                     setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
-                    setToolTipText("Text kopieren");
+                    setToolTipText("gesamten Text in die Zwischenablage kopieren");
+                    return;
+                }
+                if (e.getX() >= (markReadX) && e.getX() <= markReadX + 20
+                        && e.getY() >= (markReadY) && e.getY() <= markReadY + 20) {
+                    setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
+                    setToolTipText("Text auswählen und in die Zwischenablage kopieren");
                     return;
                 }
                 setCursor(new java.awt.Cursor(java.awt.Cursor.DEFAULT_CURSOR));
@@ -833,6 +853,9 @@ public class AiCalloutComponent extends javax.swing.JPanel {
         // copy icon
         this.copyX=this.deleteX-20;
         ICON_COPY.paintIcon(this, g2d, this.copyX, this.copyY);
+        
+        this.markReadX = this.copyX - 25;
+        ICON_SELECT.paintIcon(this, g2d, this.markReadX, this.markReadY);
         
         this.setPreferredSize(new Dimension(width, yOffset + lineSpacing));
         
@@ -924,9 +947,11 @@ public class AiCalloutComponent extends javax.swing.JPanel {
 
     /**
      * @param message the message to set
+     * @param owner
      */
-    public void setMessage(Message message) {
+    public void setMessage(Message message, JDialog owner) {
         this.message = message;
+        this.owner=owner;
     }
 
     /**
@@ -943,22 +968,6 @@ public class AiCalloutComponent extends javax.swing.JPanel {
         this.ownMessage = ownMessage;
     }
 
-    /**
-     * @return the ownPrincipal
-     */
-    public String getOwnPrincipal() {
-        return ownPrincipal;
-    }
-
-    /**
-     * @param ownPrincipal the ownPrincipal to set
-     */
-    public void setOwnPrincipal(String ownPrincipal) {
-        this.ownPrincipal = ownPrincipal;
-
-        // need to retrigger calculation of the READ member
-        this.setMessage(this.message);
-    }
 
 
     // Variables declaration - do not modify//GEN-BEGIN:variables

@@ -663,216 +663,21 @@ For more information on this, and how to apply and follow the GNU AGPL, see
  */
 package com.jdimension.jlawyer.client.assistant;
 
-import com.jdimension.jlawyer.ai.AiCapability;
-import com.jdimension.jlawyer.ai.AiRequestStatus;
-import com.jdimension.jlawyer.ai.AiResponse;
-import com.jdimension.jlawyer.ai.InputData;
-import com.jdimension.jlawyer.ai.Message;
-import com.jdimension.jlawyer.ai.OutputData;
-import com.jdimension.jlawyer.ai.Parameter;
-import com.jdimension.jlawyer.ai.ParameterData;
-import com.jdimension.jlawyer.client.editors.files.ArchiveFilePanel;
-import com.jdimension.jlawyer.client.settings.ClientSettings;
-import com.jdimension.jlawyer.client.utils.ComponentUtils;
-import com.jdimension.jlawyer.client.utils.FrameUtils;
-import com.jdimension.jlawyer.client.utils.TemplatesUtil;
-import com.jdimension.jlawyer.client.utils.ThreadUtils;
-import com.jdimension.jlawyer.persistence.AppUserBean;
-import com.jdimension.jlawyer.persistence.ArchiveFileAddressesBean;
-import com.jdimension.jlawyer.persistence.ArchiveFileBean;
-import com.jdimension.jlawyer.persistence.AssistantConfig;
-import com.jdimension.jlawyer.persistence.PartyTypeBean;
-import com.jdimension.jlawyer.pojo.PartiesTriplet;
-import com.jdimension.jlawyer.services.JLawyerServiceLocator;
-import java.awt.Component;
+import java.awt.Dialog;
 import java.awt.Toolkit;
 import java.awt.datatransfer.Clipboard;
 import java.awt.datatransfer.StringSelection;
-import java.awt.event.ActionEvent;
-import java.awt.event.MouseEvent;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Vector;
-import java.util.concurrent.atomic.AtomicReference;
-import javax.swing.AbstractAction;
-import javax.swing.JComboBox;
-import javax.swing.JComponent;
-import javax.swing.JDialog;
-import javax.swing.JLabel;
-import javax.swing.JScrollBar;
-import javax.swing.JTextField;
-import javax.swing.KeyStroke;
-import javax.swing.SwingUtilities;
-import javax.swing.SwingWorker;
-import org.apache.log4j.Logger;
-import themes.colors.DefaultColorTheme;
 
 /**
  *
  * @author jens
  */
-public class AssistantChatDialog extends javax.swing.JDialog {
+public class AiChatMessageTextSelection extends javax.swing.JDialog {
 
-    private static final Logger log = Logger.getLogger(AssistantChatDialog.class.getName());
-
-    private AssistantConfig config = null;
-    private AiCapability capability = null;
-    private AssistantInputAdapter inputAdapter = null;
-
-    private AiRequestStatus result = null;
-
-    private boolean interrupted = false;
-
-    // variables used for placeholder support in prompts
-    private List<PartyTypeBean> allPartyTypes = null;
-    private Collection<String> formPlaceHolders = null;
-    private HashMap<String, String> formPlaceHolderValues = null;
-    private AppUserBean caseLawyer = null;
-    private AppUserBean caseAssistant = null;
-    private List<PartiesTriplet> parties = new ArrayList<>();
-    private ArchiveFileBean selectedCase = null;
-    
-    // used for calling document creation dialog
-    private ArchiveFilePanel caseView=null;
-
-    // cache incoming and outgoing messages
-    private List<Message> messages = new ArrayList<>();
-
-    /**
-     * Creates new form GenericAssistantDialog
-     *
-     * @param selectedCase
-     * @param config
-     * @param c
-     * @param inputAdapter
-     * @param parent
-     * @param modal
-     */
-    public AssistantChatDialog(ArchiveFileBean selectedCase, AssistantConfig config, AiCapability c, AssistantInputAdapter inputAdapter, java.awt.Frame parent, boolean modal) {
-        super(parent, modal);
+    public AiChatMessageTextSelection(Dialog owner, boolean modal, String text) {
+        super(owner, modal);
         initComponents();
-     
-        if(inputAdapter!=null && inputAdapter instanceof ArchiveFilePanel) {
-            this.caseView=(ArchiveFilePanel)inputAdapter;
-        }
-        this.cmdNewDocument.setEnabled(this.caseView!=null);
-
-        this.pnlTitle.setBackground(DefaultColorTheme.COLOR_DARK_GREY);
-        this.progress.setIndeterminate(false);
-        this.progress.setForeground(DefaultColorTheme.COLOR_LOGO_GREEN);
-
-        this.config = config;
-        this.capability = c;
-        this.inputAdapter = inputAdapter;
-
-        this.selectedCase = selectedCase;
-        if (this.selectedCase != null) {
-            try {
-                ClientSettings settings = ClientSettings.getInstance();
-                JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
-
-                this.allPartyTypes = locator.lookupSystemManagementRemote().getPartyTypes();
-                try {
-                    this.caseAssistant = locator.lookupSystemManagementRemote().getUser(this.selectedCase.getAssistant());
-                } catch (Exception ex) {
-                }
-                try {
-                    this.caseLawyer = locator.lookupSystemManagementRemote().getUser(this.selectedCase.getLawyer());
-                } catch (Exception ex) {
-                }
-                this.formPlaceHolders = locator.lookupFormsServiceRemote().getPlaceHoldersForCase(this.selectedCase.getId());
-                this.formPlaceHolderValues = locator.lookupFormsServiceRemote().getPlaceHolderValuesForCase(this.selectedCase.getId());
-
-                try {
-                    List<ArchiveFileAddressesBean> involved = locator.lookupArchiveFileServiceRemote().getInvolvementDetailsForCase(this.selectedCase.getId(), false);
-                    for (ArchiveFileAddressesBean aab : involved) {
-                        parties.add(new PartiesTriplet(aab.getAddressKey(), aab.getReferenceType(), aab));
-                    }
-                } catch (Exception ex) {
-                    log.error("Could not load involvements for case " + this.selectedCase.getId(), ex);
-                }
-
-            } catch (Exception ex) {
-                log.error("Error getting data for case " + selectedCase.getId(), ex);
-                ThreadUtils.showErrorDialog(this, "Fehler beim Laden der Akteninformationen", "Akteninformationen laden");
-            }
-        }
-
-        this.taPrompt.setEnabled(false);
-        if (c.getDefaultPrompt() != null && c.getDefaultPrompt().getDefaultPrompt() != null) {
-            if (!c.getDefaultPrompt().getDefaultPrompt().contains("{{")) {
-                // no placeholders in prompt
-                this.taPrompt.setText(c.getDefaultPrompt().getDefaultPrompt());
-            } else {
-                // placeholders present in prompt
-
-                HashMap<String, Object> placeHolders = TemplatesUtil.getPlaceHolderValues(c.getDefaultPrompt().getDefaultPrompt(), selectedCase, this.parties, null, null, this.allPartyTypes, this.formPlaceHolders, this.formPlaceHolderValues, this.caseLawyer, this.caseAssistant);
-                String promptWithValues = TemplatesUtil.replacePlaceHolders(c.getDefaultPrompt().getDefaultPrompt(), placeHolders);
-                this.taPrompt.setText(promptWithValues);
-            }
-            this.taPrompt.setEnabled(true);
-        } else {
-            this.taPrompt.setEnabled(false);
-        }
-
-        this.pnlParameters.setLayout(new java.awt.GridLayout(this.capability.getParameters().size(), 2, 6, 6));
-        for (Parameter p : this.capability.getParameters()) {
-            this.pnlParameters.add(new JLabel(p.getName()));
-            if (p.getList() != null && p.getList().length() > 0) {
-                Vector<String> v = new Vector<>(Arrays.asList(p.getList().split(",")));
-                JComboBox<String> combo = new JComboBox<>(v);
-                combo.setEditable(false);
-                combo.setSelectedItem(p.getDefaultValue());
-                this.pnlParameters.add(combo);
-            } else {
-                JTextField tf = new JTextField();
-                tf.setText(p.getDefaultValue());
-                this.pnlParameters.add(tf);
-            }
-        }
-
-        this.lblRequestType.setText(c.getName() + " (" + c.getDescription() + ")");
-
-        this.taInputString.setText("");
-
-        for (InputData i : inputAdapter.getInputs(c)) {
-            if (InputData.TYPE_STRING.equalsIgnoreCase(i.getType())) {
-                this.taInputString.append(i.getStringData());
-                this.taInputString.append(System.lineSeparator());
-            }
-        }
-
-        // Custom action for Enter (when not pressing Ctrl)
-        this.taPrompt.getInputMap(JComponent.WHEN_FOCUSED).put(KeyStroke.getKeyStroke("ENTER"), "enterKeyAction");
-        this.taPrompt.getActionMap().put("enterKeyAction", new AbstractAction() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                if (!((e.getModifiers() & ActionEvent.SHIFT_MASK) == ActionEvent.SHIFT_MASK)) {
-                    // Call a method when Enter is pressed (without Ctrl)
-                    cmdSubmitActionPerformed(null);
-                }
-            }
-        });
-
-        // Custom action for Ctrl+Enter (interpreted as a line break)
-        this.taPrompt.getInputMap(JComponent.WHEN_FOCUSED).put(KeyStroke.getKeyStroke("shift ENTER"), "shiftEnterKeyAction");
-        this.taPrompt.getActionMap().put("shiftEnterKeyAction", new AbstractAction() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                // Insert a line break (Ctrl+Enter)
-                taPrompt.append("\n");
-            }
-        });
-
-        ComponentUtils.restoreDialogSize(this);
-
-        ComponentUtils.decorateSplitPane(this.splitInputOutput);
-        ComponentUtils.restoreSplitPane(this.splitInputOutput, this.getClass(), "splitInputOutput");
-        ComponentUtils.persistSplitPane(this.splitInputOutput, this.getClass(), "splitInputOutput");
-
+        this.taText.setText(text);
     }
 
     /**
@@ -884,182 +689,27 @@ public class AssistantChatDialog extends javax.swing.JDialog {
     // <editor-fold defaultstate="collapsed" desc="Generated Code">//GEN-BEGIN:initComponents
     private void initComponents() {
 
-        popInputText = new javax.swing.JPopupMenu();
-        mnuPromptAll = new javax.swing.JMenuItem();
-        mnuPromptSelection = new javax.swing.JMenuItem();
         jScrollPane1 = new javax.swing.JScrollPane();
-        taPrompt = new javax.swing.JTextArea();
+        taText = new javax.swing.JTextArea();
         cmdCopy = new javax.swing.JButton();
-        cmdClose = new javax.swing.JButton();
-        pnlTitle = new javax.swing.JPanel();
-        lblRequestType = new javax.swing.JLabel();
-        cmdSubmit = new javax.swing.JButton();
-        cmdInterrupt = new javax.swing.JButton();
-        cmdResetChat = new javax.swing.JButton();
-        progress = new javax.swing.JProgressBar();
-        pnlParameters = new javax.swing.JPanel();
-        splitInputOutput = new javax.swing.JSplitPane();
-        jScrollPane5 = new javax.swing.JScrollPane();
-        taInputString = new javax.swing.JTextArea();
-        scrollMessages = new javax.swing.JScrollPane();
-        pnlMessages = new javax.swing.JPanel();
-        cmdProcessOutput = new javax.swing.JButton();
-        cmdNewDocument = new javax.swing.JButton();
-
-        mnuPromptAll.setText("in Prompt übernehmen");
-        mnuPromptAll.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                mnuPromptAllActionPerformed(evt);
-            }
-        });
-        popInputText.add(mnuPromptAll);
-
-        mnuPromptSelection.setText("Auswahl in Prompt übernehmen");
-        mnuPromptSelection.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                mnuPromptSelectionActionPerformed(evt);
-            }
-        });
-        popInputText.add(mnuPromptSelection);
 
         setDefaultCloseOperation(javax.swing.WindowConstants.DISPOSE_ON_CLOSE);
-        setTitle("Assistent Ingo");
-        addComponentListener(new java.awt.event.ComponentAdapter() {
-            public void componentResized(java.awt.event.ComponentEvent evt) {
-                formComponentResized(evt);
-            }
-            public void componentShown(java.awt.event.ComponentEvent evt) {
-                formComponentShown(evt);
+        setTitle("Textauswahl kopieren");
+
+        taText.setColumns(20);
+        taText.setRows(5);
+        taText.addMouseListener(new java.awt.event.MouseAdapter() {
+            public void mouseReleased(java.awt.event.MouseEvent evt) {
+                taTextMouseReleased(evt);
             }
         });
-
-        taPrompt.setColumns(20);
-        taPrompt.setLineWrap(true);
-        taPrompt.setRows(5);
-        taPrompt.setWrapStyleWord(true);
-        jScrollPane1.setViewportView(taPrompt);
+        jScrollPane1.setViewportView(taText);
 
         cmdCopy.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons16/editpaste.png"))); // NOI18N
         cmdCopy.setText("Kopieren");
-        cmdCopy.setToolTipText("Text in Zwischenablage kopieren");
         cmdCopy.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 cmdCopyActionPerformed(evt);
-            }
-        });
-
-        cmdClose.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/cancel.png"))); // NOI18N
-        cmdClose.setText("Schliessen");
-        cmdClose.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                cmdCloseActionPerformed(evt);
-            }
-        });
-
-        lblRequestType.setFont(lblRequestType.getFont().deriveFont(lblRequestType.getFont().getStyle() | java.awt.Font.BOLD, lblRequestType.getFont().getSize()+2));
-        lblRequestType.setForeground(new java.awt.Color(255, 255, 255));
-        lblRequestType.setText("Transkribieren");
-
-        cmdSubmit.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons16/material/baseline_slideshow_black_48dp.png"))); // NOI18N
-        cmdSubmit.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                cmdSubmitActionPerformed(evt);
-            }
-        });
-
-        cmdInterrupt.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons16/material/stop_circle_24dp_0E72B5.png"))); // NOI18N
-        cmdInterrupt.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                cmdInterruptActionPerformed(evt);
-            }
-        });
-
-        cmdResetChat.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons16/material/restart_alt_24dp_0E72B5.png"))); // NOI18N
-        cmdResetChat.setToolTipText("Chat-Historie zurücksetzen und neuen Chat beginnen");
-        cmdResetChat.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                cmdResetChatActionPerformed(evt);
-            }
-        });
-
-        javax.swing.GroupLayout pnlTitleLayout = new javax.swing.GroupLayout(pnlTitle);
-        pnlTitle.setLayout(pnlTitleLayout);
-        pnlTitleLayout.setHorizontalGroup(
-            pnlTitleLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(pnlTitleLayout.createSequentialGroup()
-                .addContainerGap()
-                .addComponent(lblRequestType, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(cmdSubmit)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(cmdInterrupt)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(cmdResetChat)
-                .addContainerGap())
-        );
-        pnlTitleLayout.setVerticalGroup(
-            pnlTitleLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(pnlTitleLayout.createSequentialGroup()
-                .addContainerGap()
-                .addGroup(pnlTitleLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addComponent(lblRequestType, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                    .addGroup(pnlTitleLayout.createSequentialGroup()
-                        .addGroup(pnlTitleLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                            .addComponent(cmdResetChat)
-                            .addGroup(pnlTitleLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                                .addComponent(cmdInterrupt)
-                                .addComponent(cmdSubmit, javax.swing.GroupLayout.Alignment.TRAILING)))
-                        .addGap(0, 0, Short.MAX_VALUE)))
-                .addContainerGap())
-        );
-
-        progress.setFont(progress.getFont().deriveFont(progress.getFont().getStyle() | java.awt.Font.BOLD, progress.getFont().getSize()+2));
-        progress.setIndeterminate(true);
-        progress.setOpaque(true);
-        progress.setString("Transkribieren");
-
-        javax.swing.GroupLayout pnlParametersLayout = new javax.swing.GroupLayout(pnlParameters);
-        pnlParameters.setLayout(pnlParametersLayout);
-        pnlParametersLayout.setHorizontalGroup(
-            pnlParametersLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGap(0, 0, Short.MAX_VALUE)
-        );
-        pnlParametersLayout.setVerticalGroup(
-            pnlParametersLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGap(0, 0, Short.MAX_VALUE)
-        );
-
-        taInputString.setColumns(20);
-        taInputString.setLineWrap(true);
-        taInputString.setRows(5);
-        taInputString.setWrapStyleWord(true);
-        taInputString.addMouseListener(new java.awt.event.MouseAdapter() {
-            public void mousePressed(java.awt.event.MouseEvent evt) {
-                taInputStringMousePressed(evt);
-            }
-        });
-        jScrollPane5.setViewportView(taInputString);
-
-        splitInputOutput.setLeftComponent(jScrollPane5);
-
-        pnlMessages.setLayout(new javax.swing.BoxLayout(pnlMessages, javax.swing.BoxLayout.Y_AXIS));
-        scrollMessages.setViewportView(pnlMessages);
-
-        splitInputOutput.setRightComponent(scrollMessages);
-
-        cmdProcessOutput.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/agt_action_success.png"))); // NOI18N
-        cmdProcessOutput.setText("Übernehmen");
-        cmdProcessOutput.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                cmdProcessOutputActionPerformed(evt);
-            }
-        });
-
-        cmdNewDocument.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/editcopy.png"))); // NOI18N
-        cmdNewDocument.setText("neues Dokument");
-        cmdNewDocument.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                cmdNewDocumentActionPerformed(evt);
             }
         });
 
@@ -1067,262 +717,36 @@ public class AssistantChatDialog extends javax.swing.JDialog {
         getContentPane().setLayout(layout);
         layout.setHorizontalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addComponent(pnlTitle, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-            .addGroup(layout.createSequentialGroup()
-                .addContainerGap()
-                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addComponent(jScrollPane1, javax.swing.GroupLayout.DEFAULT_SIZE, 788, Short.MAX_VALUE)
-                    .addComponent(progress, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                    .addComponent(pnlParameters, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                    .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
-                        .addComponent(cmdClose)
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                        .addComponent(cmdProcessOutput)
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addComponent(cmdNewDocument)
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addComponent(cmdCopy))
-                    .addComponent(splitInputOutput))
+            .addComponent(jScrollPane1, javax.swing.GroupLayout.DEFAULT_SIZE, 700, Short.MAX_VALUE)
+            .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
+                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                .addComponent(cmdCopy)
                 .addContainerGap())
         );
         layout.setVerticalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(layout.createSequentialGroup()
-                .addComponent(pnlTitle, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addComponent(jScrollPane1, javax.swing.GroupLayout.DEFAULT_SIZE, 517, Short.MAX_VALUE)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(progress, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(jScrollPane1, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(pnlParameters, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(splitInputOutput, javax.swing.GroupLayout.DEFAULT_SIZE, 391, Short.MAX_VALUE)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
-                    .addComponent(cmdClose)
-                    .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                        .addComponent(cmdCopy, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                        .addComponent(cmdNewDocument)
-                        .addComponent(cmdProcessOutput)))
+                .addComponent(cmdCopy)
                 .addContainerGap())
         );
 
         pack();
     }// </editor-fold>//GEN-END:initComponents
 
-    private void cmdSubmitActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdSubmitActionPerformed
-
-        SwingUtilities.invokeLater(this::startBackgroundTask);
-
-    }//GEN-LAST:event_cmdSubmitActionPerformed
-
-    private void startBackgroundTask() {
-
-        this.interrupted = false;
-
-        this.cmdSubmit.setEnabled(false);
-        this.cmdInterrupt.setEnabled(true);
-
-        List<ParameterData> params = new ArrayList<>();
-        if (capability.getParameters() != null && !capability.getParameters().isEmpty()) {
-            params = getParameters();
-        }
-
-        final List<ParameterData> fParams = params;
-
-        this.progress.setIndeterminate(true);
-
-        AtomicReference<AiRequestStatus> resultRef = new AtomicReference<>();
-        AtomicReference<AiChatMessagePanel> incomingMessageRef = new AtomicReference<>();
-
-        JDialog owner=this;
-        
-        SwingWorker<Void, Void> worker = new SwingWorker<>() {
-
-            @Override
-            protected Void doInBackground() throws Exception {
-                ClientSettings settings = ClientSettings.getInstance();
-
-                Message incomingMsg = new Message();
-                incomingMsg.setRole("assistant");
-                incomingMsg.setContent("...");
-                AiChatMessagePanel incomingMsgPanel = new AiChatMessagePanel(incomingMsg, owner);
-                try {
-                    JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
-
-                    Message outgoingMessage = new Message();
-                    outgoingMessage.setRole(Message.ROLE_USER);
-                    outgoingMessage.setContent(taPrompt.getText());
-                    messages.add(outgoingMessage);
-                    SwingUtilities.invokeAndWait(() -> {
-                        AiChatMessagePanel outGoingMsgPanel = new AiChatMessagePanel(outgoingMessage, owner);
-                        pnlMessages.add(outGoingMsgPanel);
-                        pnlMessages.add(incomingMsgPanel);
-                        JScrollBar verticalBar = scrollMessages.getVerticalScrollBar();
-                        verticalBar.setValue(verticalBar.getMaximum());
-                    });
-
-                    AiRequestStatus status = locator.lookupIntegrationServiceRemote().submitAssistantRequest(config, capability.getRequestType(), capability.getModelType(), taPrompt.getText(), fParams, null, messages);
-
-                    if (status.isAsync()) {
-                        Thread.sleep(1000);
-                        // poll until final result is available
-                        AiResponse res = locator.lookupIntegrationServiceRemote().getAssistantRequestStatus(config, status.getRequestId());
-                        while (res.getStatus().equals(AiResponse.STATUS_EXECUTING)) {
-                            Thread.sleep(1000);
-                            res = locator.lookupIntegrationServiceRemote().getAssistantRequestStatus(config, status.getRequestId());
-                            StringBuilder resultString = new StringBuilder();
-                            for (OutputData o : res.getOutputData()) {
-                                if (o.getType().equalsIgnoreCase(OutputData.TYPE_STRING)) {
-                                    resultString.append(o.getStringData()).append(System.lineSeparator()).append(System.lineSeparator());
-                                }
-
-                            }
-                            SwingUtilities.invokeAndWait(() -> {
-                                incomingMsgPanel.getMessage().setContent(resultString.toString());
-                                incomingMsgPanel.setMessage(incomingMsgPanel.getMessage(), owner);
-                                incomingMsgPanel.repaint();
-                                incomingMsgPanel.updateUI();
-                                JScrollBar verticalBar = scrollMessages.getVerticalScrollBar();
-                                verticalBar.setValue(verticalBar.getMaximum());
-                            });
-
-                            if (interrupted) {
-                                break;
-                            }
-                        }
-                        status.setStatus(res.getStatus());
-                        status.setStatusDetails(res.getStatusMessage());
-                        status.setResponse(res);
-                        resultRef.set(status);
-                        incomingMessageRef.set(incomingMsgPanel);
-                    } else {
-                        resultRef.set(status);
-                        incomingMessageRef.set(incomingMsgPanel);
-                    }
-
-                } catch (Throwable t) {
-                    log.error("Error processing AI request", t);
-                    AiRequestStatus status = new AiRequestStatus();
-                    status.setStatus("ERROR");
-                    status.setStatusDetails(t.getMessage());
-                    resultRef.set(status);
-                    incomingMessageRef.set(incomingMsgPanel);
-                    JScrollBar verticalBar = scrollMessages.getVerticalScrollBar();
-                    verticalBar.setValue(verticalBar.getMaximum());
-                }
-                cmdSubmit.setEnabled(true);
-                cmdInterrupt.setEnabled(false);
-                return null;
-            }
-
-            @Override
-            protected void done() {
-                // Task completion actions
-                AiRequestStatus status = resultRef.get();
-
-                result = status;
-                if (status != null) {
-                    if (status.getStatus().equalsIgnoreCase("failed")) {
-                        Message errorMsg = new Message();
-                        errorMsg.setContent(status.getStatus() + ": " + status.getStatusDetails());
-                        errorMsg.setRole(Message.ROLE_ASSISTANT);
-                        AiChatMessagePanel msgPanel = new AiChatMessagePanel(errorMsg, owner);
-                        pnlMessages.add(msgPanel);
-                        JScrollBar verticalBar = scrollMessages.getVerticalScrollBar();
-                        verticalBar.setValue(verticalBar.getMaximum());
-                    } else {
-                        StringBuilder resultString = new StringBuilder();
-                        for (OutputData o : status.getResponse().getOutputData()) {
-                            if (o.getType().equalsIgnoreCase(OutputData.TYPE_STRING)) {
-                                resultString.append(o.getStringData()).append(System.lineSeparator()).append(System.lineSeparator());
-                            }
-
-                        }
-                        AiChatMessagePanel msgPanel = incomingMessageRef.get();
-                        msgPanel.getMessage().setContent(resultString.toString());
-                        msgPanel.setMessage(msgPanel.getMessage(), owner);
-                        msgPanel.repaint();
-                        msgPanel.updateUI();
-                        JScrollBar verticalBar = scrollMessages.getVerticalScrollBar();
-                        verticalBar.setValue(verticalBar.getMaximum());
-                    }
-                }
-
-                progress.setIndeterminate(false);
-                taPrompt.setText("");
-            }
-        };
-
-        worker.execute();
-
-    }
-
-    private void cmdCloseActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdCloseActionPerformed
+    private void cmdCopyActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdCopyActionPerformed
+        Toolkit toolkit = Toolkit.getDefaultToolkit();
+        Clipboard clipboard = toolkit.getSystemClipboard();
+        StringSelection strSel = new StringSelection(this.taText.getSelectedText());
+        clipboard.setContents(strSel, null);
         this.setVisible(false);
         this.dispose();
-    }//GEN-LAST:event_cmdCloseActionPerformed
-
-    private void formComponentResized(java.awt.event.ComponentEvent evt) {//GEN-FIRST:event_formComponentResized
-        ComponentUtils.storeDialogSize(this);
-    }//GEN-LAST:event_formComponentResized
-
-    private void formComponentShown(java.awt.event.ComponentEvent evt) {//GEN-FIRST:event_formComponentShown
-        FrameUtils.centerDialogOnParentMonitor(this, this.getOwner().getLocation());
-    }//GEN-LAST:event_formComponentShown
-
-    private void cmdCopyActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdCopyActionPerformed
-        if (this.pnlMessages.getComponentCount() > 0) {
-            AiChatMessagePanel p = (AiChatMessagePanel) this.pnlMessages.getComponent(this.pnlMessages.getComponentCount() - 1);
-            Toolkit toolkit = Toolkit.getDefaultToolkit();
-            Clipboard clipboard = toolkit.getSystemClipboard();
-            StringSelection strSel = new StringSelection(p.getMessage().getContent());
-            clipboard.setContents(strSel, null);
-        }
     }//GEN-LAST:event_cmdCopyActionPerformed
 
-    private void cmdProcessOutputActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdProcessOutputActionPerformed
-        if (this.inputAdapter instanceof AssistantFlowAdapter && this.result != null) {
-            // caller is capable of handling results
-            ((AssistantFlowAdapter) this.inputAdapter).processOutput(capability, this.result);
-        }
-        this.setVisible(false);
-        this.dispose();
-    }//GEN-LAST:event_cmdProcessOutputActionPerformed
-
-    private void cmdInterruptActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdInterruptActionPerformed
-        this.interrupted = true;
-    }//GEN-LAST:event_cmdInterruptActionPerformed
-
-    private void cmdResetChatActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdResetChatActionPerformed
-        this.messages.clear();
-        this.pnlMessages.removeAll();
-        ComponentUtils.bumpSplitPane(splitInputOutput);
-
-    }//GEN-LAST:event_cmdResetChatActionPerformed
-
-    private void cmdNewDocumentActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdNewDocumentActionPerformed
-        if (this.caseView != null) {
-            if (this.pnlMessages.getComponentCount() > 0) {
-                AiChatMessagePanel p = (AiChatMessagePanel) this.pnlMessages.getComponent(this.pnlMessages.getComponentCount() - 1);
-                this.caseView.newDocumentDialog(null, null, null, null, null, null, p.getMessage().getContent());
-            }
-        }
-    }//GEN-LAST:event_cmdNewDocumentActionPerformed
-
-    private void mnuPromptAllActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_mnuPromptAllActionPerformed
-        this.taPrompt.insert(this.taInputString.getText(), this.taPrompt.getCaretPosition());
-    }//GEN-LAST:event_mnuPromptAllActionPerformed
-
-    private void mnuPromptSelectionActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_mnuPromptSelectionActionPerformed
-        this.taPrompt.insert(this.taInputString.getSelectedText(), this.taPrompt.getCaretPosition());
-    }//GEN-LAST:event_mnuPromptSelectionActionPerformed
-
-    private void taInputStringMousePressed(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_taInputStringMousePressed
-        if(evt.getClickCount()==1 && evt.getButton()==MouseEvent.BUTTON3) {
-            this.popInputText.show(this.taInputString, evt.getX(), evt.getY());
-        }
-    }//GEN-LAST:event_taInputStringMousePressed
+    private void taTextMouseReleased(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_taTextMouseReleased
+        this.cmdCopyActionPerformed(null);
+    }//GEN-LAST:event_taTextMouseReleased
 
     /**
      * @param args the command line arguments
@@ -1341,22 +765,19 @@ public class AssistantChatDialog extends javax.swing.JDialog {
                 }
             }
         } catch (ClassNotFoundException ex) {
-            java.util.logging.Logger.getLogger(AssistantChatDialog.class.getName()).log(java.util.logging.Level.SEVERE, null, ex);
+            java.util.logging.Logger.getLogger(AiChatMessageTextSelection.class.getName()).log(java.util.logging.Level.SEVERE, null, ex);
         } catch (InstantiationException ex) {
-            java.util.logging.Logger.getLogger(AssistantChatDialog.class.getName()).log(java.util.logging.Level.SEVERE, null, ex);
+            java.util.logging.Logger.getLogger(AiChatMessageTextSelection.class.getName()).log(java.util.logging.Level.SEVERE, null, ex);
         } catch (IllegalAccessException ex) {
-            java.util.logging.Logger.getLogger(AssistantChatDialog.class.getName()).log(java.util.logging.Level.SEVERE, null, ex);
+            java.util.logging.Logger.getLogger(AiChatMessageTextSelection.class.getName()).log(java.util.logging.Level.SEVERE, null, ex);
         } catch (javax.swing.UnsupportedLookAndFeelException ex) {
-            java.util.logging.Logger.getLogger(AssistantChatDialog.class.getName()).log(java.util.logging.Level.SEVERE, null, ex);
+            java.util.logging.Logger.getLogger(AiChatMessageTextSelection.class.getName()).log(java.util.logging.Level.SEVERE, null, ex);
         }
-        //</editor-fold>
-        //</editor-fold>
-        //</editor-fold>
         //</editor-fold>
 
         /* Create and display the dialog */
         java.awt.EventQueue.invokeLater(() -> {
-            AssistantChatDialog dialog = new AssistantChatDialog(null, null, null, null, new javax.swing.JFrame(), true);
+            AiChatMessageTextSelection dialog = new AiChatMessageTextSelection(null, true, "");
             dialog.addWindowListener(new java.awt.event.WindowAdapter() {
                 @Override
                 public void windowClosing(java.awt.event.WindowEvent e) {
@@ -1368,47 +789,8 @@ public class AssistantChatDialog extends javax.swing.JDialog {
     }
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
-    private javax.swing.JButton cmdClose;
     private javax.swing.JButton cmdCopy;
-    private javax.swing.JButton cmdInterrupt;
-    private javax.swing.JButton cmdNewDocument;
-    private javax.swing.JButton cmdProcessOutput;
-    private javax.swing.JButton cmdResetChat;
-    private javax.swing.JButton cmdSubmit;
     private javax.swing.JScrollPane jScrollPane1;
-    private javax.swing.JScrollPane jScrollPane5;
-    private javax.swing.JLabel lblRequestType;
-    private javax.swing.JMenuItem mnuPromptAll;
-    private javax.swing.JMenuItem mnuPromptSelection;
-    private javax.swing.JPanel pnlMessages;
-    private javax.swing.JPanel pnlParameters;
-    private javax.swing.JPanel pnlTitle;
-    private javax.swing.JPopupMenu popInputText;
-    private javax.swing.JProgressBar progress;
-    private javax.swing.JScrollPane scrollMessages;
-    private javax.swing.JSplitPane splitInputOutput;
-    private javax.swing.JTextArea taInputString;
-    private javax.swing.JTextArea taPrompt;
+    private javax.swing.JTextArea taText;
     // End of variables declaration//GEN-END:variables
-
-    private List<ParameterData> getParameters() {
-
-        List<ParameterData> parameters = new ArrayList<>();
-        for (int i = 0; i < this.capability.getParameters().size(); i++) {
-            ParameterData d = new ParameterData();
-            d.setId(this.capability.getParameters().get(i).getId());
-            Component component = this.pnlParameters.getComponent(2 * i + 1);
-            if (component instanceof JTextField) {
-                String value = ((JTextField) component).getText();
-                d.setValue(value);
-            } else if (component instanceof JComboBox) {
-                String value = ((JComboBox) component).getEditor().getItem().toString();
-                d.setValue(value);
-            }
-            parameters.add(d);
-        }
-        return parameters;
-
-    }
-
 }

@@ -703,11 +703,11 @@ public class AiChatTestFrame extends javax.swing.JFrame {
         
         Message im1=new Message();
         im1.setContent("@Präsident in einer halben Stunde Sitzung bei mir!\n@Bodo's Geburtstag!");
-        pnlMessages.add(new AiChatMessagePanel(im1));
+        pnlMessages.add(new AiChatMessagePanel(im1, null));
         
         Message im2=new Message();
         im2.setContent("@Hausmeister Krause alles für den Dackel, alles für den Club!");
-        pnlMessages.add(new AiChatMessagePanel(im2));
+        pnlMessages.add(new AiChatMessagePanel(im2, null));
         
 //        new Thread(new Runnable() {
 //            @Override

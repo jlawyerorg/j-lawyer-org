@@ -667,6 +667,7 @@ import com.jdimension.jlawyer.ai.Message;
 import com.jdimension.jlawyer.client.settings.UserSettings;
 import java.awt.Color;
 import java.awt.Dimension;
+import javax.swing.JDialog;
 import javax.swing.UIManager;
 import org.apache.log4j.Logger;
 import themes.colors.DefaultColorTheme;
@@ -679,6 +680,7 @@ public class AiChatMessagePanel extends javax.swing.JPanel {
 
     private static final Logger log = Logger.getLogger(AiChatMessagePanel.class.getName());
 
+    private JDialog owner=null;
     private Message msg = null;
 
     protected int maxDocumentChars = Integer.MAX_VALUE;
@@ -689,12 +691,13 @@ public class AiChatMessagePanel extends javax.swing.JPanel {
     public AiChatMessagePanel() {
         initComponents();
 
-        this.aiCalloutComponent1.setMessage(new Message());
+        this.aiCalloutComponent1.setMessage(new Message(), null);
     }
 
-    public AiChatMessagePanel(Message aiMessage) {
+    public AiChatMessagePanel(Message aiMessage, JDialog owner) {
         initComponents();
 
+        this.owner=owner;
         this.msg = aiMessage;
 
         this.lblUser.setForeground(Color.WHITE);
@@ -715,14 +718,14 @@ public class AiChatMessagePanel extends javax.swing.JPanel {
             this.lblUser.setBackground(DefaultColorTheme.COLOR_DARK_GREY);
         }
 
-        this.aiCalloutComponent1.setMessage(aiMessage);
+        this.aiCalloutComponent1.setMessage(aiMessage, owner);
         this.aiCalloutComponent1.setOwnMessage(ownMessage);
         
     }
     
-    public void setMessage(Message m) {
+    public void setMessage(Message m, JDialog owner) {
         this.msg=m;
-        this.aiCalloutComponent1.setMessage(msg);
+        this.aiCalloutComponent1.setMessage(msg, owner);
     }
 
     public Message getMessage() {
