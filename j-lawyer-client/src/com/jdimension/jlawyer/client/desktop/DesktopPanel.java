@@ -810,8 +810,8 @@ public class DesktopPanel extends javax.swing.JPanel implements ThemeableEditor,
         this.buildUsersPopup();
         
         Timer timer1 = new Timer();
-        TimerTask systemStateTask = new SystemStateTimerTask(this, this.lblAddressCount, this.lblArchiveFileCount, this.lblArchiveFileArchivedCount, this.lblDocumentCount, this.lblVoipBalance);
-        timer1.schedule(systemStateTask, 5000, 600000);
+        TimerTask systemStateTask = new SystemStateTimerTask(this, this.lblAddressCount, this.lblArchiveFileCount, this.lblArchiveFileArchivedCount, this.lblDocumentCount, this.lblVoipBalance, this.lblAssistant);
+        timer1.schedule(systemStateTask, 5000, 1800000);
 
         BoxLayout boxLayout=new BoxLayout(this.pnlLastChanged, BoxLayout.Y_AXIS);
         this.pnlLastChanged.setLayout(boxLayout);
@@ -849,15 +849,15 @@ public class DesktopPanel extends javax.swing.JPanel implements ThemeableEditor,
         try {
             Timer timer9 = new Timer();
             TimerTask tagsTask = new UpdateArchiveFileTagsTask(this, (EditArchiveFilePanel) EditorsRegistry.getInstance().getEditor(EditArchiveFilePanel.class.getName()));
-            timer9.schedule(tagsTask, 4500, 60000);
+            timer9.schedule(tagsTask, 4500, 180000);
 
             Timer timer10 = new Timer();
             TimerTask tagsTask2 = new UpdateAddressTagsTask(this, (EditAddressPanel) EditorsRegistry.getInstance().getEditor(EditAddressPanel.class.getName()));
-            timer10.schedule(tagsTask2, 5500, 60000);
+            timer10.schedule(tagsTask2, 5500, 180000);
             
             Timer timer11 = new Timer();
             TimerTask tagsTask3 = new UpdateDocumentTagsTask(this, (EditArchiveFilePanel) EditorsRegistry.getInstance().getEditor(EditArchiveFilePanel.class.getName()));
-            timer11.schedule(tagsTask3, 6500, 60000);
+            timer11.schedule(tagsTask3, 6500, 180000);
         } catch (Throwable t) {
             log.error("Could not set up timer task for automatic tag updates", t);
         }
@@ -1026,6 +1026,7 @@ public class DesktopPanel extends javax.swing.JPanel implements ThemeableEditor,
         lblAddressCount = new javax.swing.JLabel();
         lblDocumentCount = new javax.swing.JLabel();
         lblVoipBalance = new javax.swing.JLabel();
+        lblAssistant = new javax.swing.JLabel();
         desktopWidgetPanel2 = new com.jdimension.jlawyer.client.desktop.DesktopWidgetPanel();
         lblUserIcon = new javax.swing.JLabel();
         lblUserName = new javax.swing.JLabel();
@@ -1441,28 +1442,37 @@ public class DesktopPanel extends javax.swing.JPanel implements ThemeableEditor,
         lblArchiveFileCount.setFont(lblArchiveFileCount.getFont().deriveFont(lblArchiveFileCount.getFont().getStyle() | java.awt.Font.BOLD));
         lblArchiveFileCount.setForeground(java.awt.Color.white);
         lblArchiveFileCount.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons16/material/baseline_folder_white_36dp.png"))); // NOI18N
-        lblArchiveFileCount.setText(bundle.getString("totals.cases")); // NOI18N
+        lblArchiveFileCount.setText("0");
+        lblArchiveFileCount.setToolTipText("0 Akten");
 
         lblArchiveFileArchivedCount.setFont(lblArchiveFileArchivedCount.getFont().deriveFont(lblArchiveFileArchivedCount.getFont().getStyle() | java.awt.Font.BOLD));
         lblArchiveFileArchivedCount.setForeground(java.awt.Color.white);
         lblArchiveFileArchivedCount.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons16/material/baseline_folder_white_36dp.png"))); // NOI18N
-        lblArchiveFileArchivedCount.setText(bundle.getString("totals.cases.archive")); // NOI18N
+        lblArchiveFileArchivedCount.setText("0");
+        lblArchiveFileArchivedCount.setToolTipText("0 Akten im Archiv");
 
         lblAddressCount.setFont(lblAddressCount.getFont().deriveFont(lblAddressCount.getFont().getStyle() | java.awt.Font.BOLD));
         lblAddressCount.setForeground(java.awt.Color.white);
         lblAddressCount.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons16/material/baseline_perm_contact_calendar_white_36dp.png"))); // NOI18N
-        lblAddressCount.setText(bundle.getString("totals.addresses")); // NOI18N
+        lblAddressCount.setText("0");
+        lblAddressCount.setToolTipText("0 Adressbucheinträge");
 
         lblDocumentCount.setFont(lblDocumentCount.getFont().deriveFont(lblDocumentCount.getFont().getStyle() | java.awt.Font.BOLD));
         lblDocumentCount.setForeground(java.awt.Color.white);
         lblDocumentCount.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons16/material/baseline_insert_drive_file_white_36dp.png"))); // NOI18N
-        lblDocumentCount.setText(bundle.getString("totals.documents")); // NOI18N
+        lblDocumentCount.setText("0");
+        lblDocumentCount.setToolTipText("0 Dokumente");
 
         lblVoipBalance.setFont(lblVoipBalance.getFont().deriveFont(lblVoipBalance.getFont().getStyle() | java.awt.Font.BOLD));
         lblVoipBalance.setForeground(java.awt.Color.white);
         lblVoipBalance.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons16/material/baseline_print_white_36dp.png"))); // NOI18N
-        lblVoipBalance.setText(bundle.getString("voip.balance")); // NOI18N
+        lblVoipBalance.setText("0.00 EUR");
         lblVoipBalance.setToolTipText(bundle.getString("label.voipbalance.tooltip")); // NOI18N
+
+        lblAssistant.setFont(lblAssistant.getFont().deriveFont(lblAssistant.getFont().getStyle() | java.awt.Font.BOLD));
+        lblAssistant.setForeground(new java.awt.Color(255, 255, 255));
+        lblAssistant.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons16/material/j-lawyer-ai-white.png"))); // NOI18N
+        lblAssistant.setText("0");
 
         org.jdesktop.layout.GroupLayout systemInformationWidgetLayout = new org.jdesktop.layout.GroupLayout(systemInformationWidget);
         systemInformationWidget.setLayout(systemInformationWidgetLayout);
@@ -1478,6 +1488,8 @@ public class DesktopPanel extends javax.swing.JPanel implements ThemeableEditor,
                 .add(lblDocumentCount)
                 .add(18, 18, 18)
                 .add(lblVoipBalance)
+                .add(18, 18, 18)
+                .add(lblAssistant)
                 .addContainerGap(org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
         );
         systemInformationWidgetLayout.setVerticalGroup(
@@ -1489,7 +1501,8 @@ public class DesktopPanel extends javax.swing.JPanel implements ThemeableEditor,
                     .add(lblArchiveFileArchivedCount)
                     .add(lblAddressCount)
                     .add(lblDocumentCount)
-                    .add(lblVoipBalance)))
+                    .add(lblVoipBalance)
+                    .add(lblAssistant)))
         );
 
         lblUserIcon.setHorizontalAlignment(javax.swing.SwingConstants.CENTER);
@@ -1687,6 +1700,7 @@ public class DesktopPanel extends javax.swing.JPanel implements ThemeableEditor,
     private javax.swing.JLabel lblAddressCount;
     private javax.swing.JLabel lblArchiveFileArchivedCount;
     private javax.swing.JLabel lblArchiveFileCount;
+    private javax.swing.JLabel lblAssistant;
     private javax.swing.JLabel lblDay;
     private javax.swing.JLabel lblDocumentCount;
     private javax.swing.JLabel lblMailingStatus;

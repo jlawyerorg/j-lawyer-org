@@ -663,17 +663,20 @@
  */
 package com.jdimension.jlawyer.client.desktop;
 
+import com.jdimension.jlawyer.ai.AiUser;
 import com.jdimension.jlawyer.client.settings.ClientSettings;
 import com.jdimension.jlawyer.client.utils.ThreadUtils;
 import com.jdimension.jlawyer.fax.BalanceInformation;
 import com.jdimension.jlawyer.fax.SipgateException;
+import com.jdimension.jlawyer.persistence.AssistantConfig;
 import com.jdimension.jlawyer.services.AddressServiceRemote;
 import com.jdimension.jlawyer.services.ArchiveFileServiceRemote;
+import com.jdimension.jlawyer.services.IntegrationServiceRemote;
 import com.jdimension.jlawyer.services.JLawyerServiceLocator;
 import com.jdimension.jlawyer.services.VoipServiceRemote;
 import java.awt.Component;
-import java.text.DecimalFormat;
 import java.text.NumberFormat;
+import java.util.Map;
 import javax.swing.JLabel;
 import javax.swing.SwingUtilities;
 import org.apache.log4j.Logger;
@@ -685,13 +688,13 @@ import org.apache.log4j.Logger;
 public class SystemStateTimerTask extends java.util.TimerTask {
     
     private static final Logger log=Logger.getLogger(SystemStateTimerTask.class.getName());
-    private Component owner;
-    private JLabel addressCountLabel;
-    private JLabel archiveFileCountLabel;
-    private JLabel archiveFileArchivedLabel;
-    private JLabel documentLabel;
-    private JLabel voipLabel;
-    private DecimalFormat dfCurrency=new DecimalFormat("0.00");
+    private final Component owner;
+    private final JLabel addressCountLabel;
+    private final JLabel archiveFileCountLabel;
+    private final JLabel archiveFileArchivedLabel;
+    private final JLabel documentLabel;
+    private final JLabel voipLabel;
+    private final JLabel assistantLabel;
     
     /** Creates a new instance of SystemStateTimerTask
      * @param owner
@@ -699,8 +702,9 @@ public class SystemStateTimerTask extends java.util.TimerTask {
      * @param archiveFileCountLabel
      * @param archiveFileArchivedLabel
      * @param documentLabel
-     * @param voipLabel */
-    public SystemStateTimerTask(Component owner, JLabel addressCountLabel, JLabel archiveFileCountLabel, JLabel archiveFileArchivedLabel, JLabel documentLabel, JLabel voipLabel) {
+     * @param voipLabel
+     * @param assistantLabel */
+    public SystemStateTimerTask(Component owner, JLabel addressCountLabel, JLabel archiveFileCountLabel, JLabel archiveFileArchivedLabel, JLabel documentLabel, JLabel voipLabel, JLabel assistantLabel) {
         super();
         this.owner=owner;
         this.addressCountLabel=addressCountLabel;
@@ -708,8 +712,10 @@ public class SystemStateTimerTask extends java.util.TimerTask {
         this.archiveFileArchivedLabel=archiveFileArchivedLabel;
         this.documentLabel=documentLabel;
         this.voipLabel=voipLabel;
+        this.assistantLabel=assistantLabel;
     }
 
+    @Override
     public void run() {
         int addressCount=0;
         int archiveFileCount=0;
@@ -721,22 +727,33 @@ public class SystemStateTimerTask extends java.util.TimerTask {
             
             AddressServiceRemote addressService = locator.lookupAddressServiceRemote();
             addressCount=addressService.getAddressCount();
-            ThreadUtils.updateLabel(this.addressCountLabel, java.text.MessageFormat.format(java.util.ResourceBundle.getBundle("com/jdimension/jlawyer/client/desktop/SystemStateTimerTask").getString("totals.addresses"), new Object[] {addressCount}));
+            ThreadUtils.updateLabel(this.addressCountLabel, "" + addressCount, "" + addressCount + " Adressen");
             
             ArchiveFileServiceRemote fileService = locator.lookupArchiveFileServiceRemote();
             archiveFileCount=fileService.getArchiveFileCount();
-            ThreadUtils.updateLabel(this.archiveFileCountLabel, java.text.MessageFormat.format(java.util.ResourceBundle.getBundle("com/jdimension/jlawyer/client/desktop/SystemStateTimerTask").getString("totals.cases"), new Object[] {archiveFileCount}));
+            ThreadUtils.updateLabel(this.archiveFileCountLabel, "" + archiveFileCount, "" + archiveFileCount + " Akten");
             
             archiveFileArchivedCount=fileService.getArchiveFileArchivedCount();
-            ThreadUtils.updateLabel(this.archiveFileArchivedLabel, java.text.MessageFormat.format(java.util.ResourceBundle.getBundle("com/jdimension/jlawyer/client/desktop/SystemStateTimerTask").getString("totals.casesonarchive"), new Object[] {archiveFileArchivedCount}));
+            ThreadUtils.updateLabel(this.archiveFileArchivedLabel, "" + archiveFileArchivedCount, "" + archiveFileArchivedCount + " Akten im Archiv");
             
             docCount=fileService.getDocumentCount();
-            ThreadUtils.updateLabel(this.documentLabel, java.text.MessageFormat.format(java.util.ResourceBundle.getBundle("com/jdimension/jlawyer/client/desktop/SystemStateTimerTask").getString("totals.documents"), new Object[] {docCount}));
+            ThreadUtils.updateLabel(this.documentLabel, "" + docCount, "" + docCount + " Dokumente");
             
             VoipServiceRemote voipService=locator.lookupVoipServiceRemote();
             BalanceInformation bi=voipService.getBalance();
             NumberFormat nf=NumberFormat.getCurrencyInstance();
             ThreadUtils.updateLabel(voipLabel, nf.format(bi.getTotal()));
+            
+            IntegrationServiceRemote integrationService=locator.lookupIntegrationServiceRemote();
+            Map<AssistantConfig,AiUser> userInfos=integrationService.getAssistantUserInformation();
+            StringBuilder sb=new StringBuilder();
+            int totalTokens=0;
+            for(AssistantConfig config: userInfos.keySet()) {
+                AiUser u=userInfos.get(config);
+                totalTokens+=u.getTokens();
+                sb.append("Nutzer '").append(u.getUserName()).append("' auf Server ").append(config.getUrl()).append(" verfügt über ein Guthaben von ").append(u.getTokens()).append(" Token").append(System.lineSeparator());
+            }
+            ThreadUtils.updateLabel(assistantLabel, "" + totalTokens, sb.toString());
             
             if(this.owner instanceof DesktopPanel) {
                 SwingUtilities.invokeLater(() -> {

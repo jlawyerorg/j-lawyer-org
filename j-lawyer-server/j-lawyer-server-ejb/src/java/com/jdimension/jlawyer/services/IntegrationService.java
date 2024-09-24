@@ -666,6 +666,7 @@ package com.jdimension.jlawyer.services;
 import com.jdimension.jlawyer.ai.AiCapability;
 import com.jdimension.jlawyer.ai.AiRequestStatus;
 import com.jdimension.jlawyer.ai.AiResponse;
+import com.jdimension.jlawyer.ai.AiUser;
 import com.jdimension.jlawyer.ai.AssistantAPI;
 import com.jdimension.jlawyer.ai.AssistantException;
 import com.jdimension.jlawyer.ai.ConfigurationData;
@@ -1570,6 +1571,30 @@ public class IntegrationService implements IntegrationServiceRemote, Integration
     @RolesAllowed(value = {"adminRole"})
     public void removeAssistantPrompt(AssistantPrompt ap) throws Exception {
         this.assistantPromptFacade.remove(ap);
+    }
+
+    @Override
+    @RolesAllowed(value = {"loginRole"})
+    @TransactionTimeout(value = 10, unit = TimeUnit.SECONDS)
+    public Map<AssistantConfig,AiUser> getAssistantUserInformation() throws Exception {
+        List<AssistantConfig> configs=this.assistantFacade.findAll();
+        CachingCrypto crypto=CryptoProvider.newCrypto();
+        Map<AssistantConfig,AiUser> userInfos=new HashMap<>();
+        for(AssistantConfig c: configs) {
+            try {
+                String pwd = c.getPassword();
+                if (pwd != null) {
+                    pwd = crypto.decrypt(c.getPassword());
+                }
+
+                AssistantAPI api = new AssistantAPI(c.getUrl(), c.getUserName(), pwd, c.getConnectionTimeout(), c.getReadTimeout());
+                AiUser user = api.getUserInformation();
+                userInfos.put(c, user);
+            } catch (Exception ex) {
+                log.error("Unable to query user information for assistant at " + c.getUrl() + " with username " + c.getUserName());
+            }
+        }
+        return userInfos;
     }
 
 }

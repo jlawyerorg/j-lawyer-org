@@ -833,6 +833,19 @@ public class ThreadUtils {
 
     }
     
+    public static void updateLabel(final JLabel label, final String text, final String tooltip) {
+
+        if (label == null) {
+            log.warn("Label to be updated is null", new Exception());
+        } else {
+            SwingUtilities.invokeLater(() -> {
+                label.setText(text);
+                label.setToolTipText(tooltip);
+            });
+        }
+
+    }
+    
     public static void updateButton(final JButton button, final String text) {
 
         if (button == null) {
