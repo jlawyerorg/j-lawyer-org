@@ -680,7 +680,6 @@ public class AiChatMessagePanel extends javax.swing.JPanel {
 
     private static final Logger log = Logger.getLogger(AiChatMessagePanel.class.getName());
 
-    private JDialog owner=null;
     private Message msg = null;
 
     protected int maxDocumentChars = Integer.MAX_VALUE;
@@ -697,7 +696,6 @@ public class AiChatMessagePanel extends javax.swing.JPanel {
     public AiChatMessagePanel(Message aiMessage, JDialog owner) {
         initComponents();
 
-        this.owner=owner;
         this.msg = aiMessage;
 
         this.lblUser.setForeground(Color.WHITE);

@@ -905,18 +905,6 @@ public class AiCalloutComponent extends javax.swing.JPanel {
         return super.getPreferredSize();
     }
    
-    private void drawTextContent(Graphics2D g2d) {
-        // Custom rendering for chat content
-        String content = (this.message == null || this.message.getContent() == null) ? "" : this.message.getContent();
-        String[] lines = content.split("\n");
-
-        int yOffset = 10 + g2d.getFontMetrics().getHeight();
-        for (String line : lines) {
-            g2d.drawString(line, 40, yOffset);
-            yOffset += g2d.getFontMetrics().getHeight();
-        }
-    }
-
     /**
      * This method is called from within the constructor to initialize the form.
      * WARNING: Do NOT modify this code. The content of this method is always
