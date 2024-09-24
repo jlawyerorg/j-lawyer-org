@@ -697,7 +697,9 @@ public class AiChatMessageTextSelection extends javax.swing.JDialog {
         setTitle("Textauswahl kopieren");
 
         taText.setColumns(20);
+        taText.setLineWrap(true);
         taText.setRows(5);
+        taText.setWrapStyleWord(true);
         taText.addMouseListener(new java.awt.event.MouseAdapter() {
             public void mouseReleased(java.awt.event.MouseEvent evt) {
                 taTextMouseReleased(evt);
