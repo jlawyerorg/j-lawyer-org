@@ -2725,7 +2725,7 @@ public class SendEmailDialog extends javax.swing.JDialog implements SendCommunic
                             StringBuilder resultString = new StringBuilder();
                             for (OutputData o : status.getResponse().getOutputData()) {
                                 if (o.getType().equalsIgnoreCase(OutputData.TYPE_STRING)) {
-                                    resultString.append(o.getStringData()).append(System.lineSeparator()).append(System.lineSeparator());
+                                    resultString.append(o.getStringData());
                                 }
 
                             }
