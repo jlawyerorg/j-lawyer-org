@@ -885,7 +885,7 @@ public class HTMLExport {
             sb.append("</p></td></tr>");
         }
         try {
-            sContent = sContent.replaceAll("\\{\\{history\\}\\}", sb.toString());
+            sContent = sContent.replace("{{history}}", sb.toString());
         } catch (Exception t) {
             log.error("failed to add history to export, replacement string was " + sb.toString(), t);
         }
@@ -905,9 +905,9 @@ public class HTMLExport {
                 sb.append("</p></td></tr>");
             }
         }
-        sContent = sContent.replaceAll("\\{\\{reviews\\}\\}", sb.toString());
+        sContent = sContent.replace("{{reviews}}", sb.toString());
 
-        sContent = sContent.replaceAll("\\{\\{parties\\}\\}", this.getPartiesList(parties));
+        sContent = sContent.replace("{{parties}}", this.getPartiesList(parties));
 
         ArrayList docList = new ArrayList(documents);
         Collections.sort(docList, new DocumentsComparator());
@@ -978,7 +978,7 @@ public class HTMLExport {
                 sb.append("</tr>");
             }
         }
-        sContent = sContent.replaceAll("\\{\\{documents\\}\\}", sb.toString());
+        sContent = sContent.replace("{{documents}}", sb.toString());
 
         try (FileWriter fw = new FileWriter(indexFile)) {
             fw.write(sContent);
