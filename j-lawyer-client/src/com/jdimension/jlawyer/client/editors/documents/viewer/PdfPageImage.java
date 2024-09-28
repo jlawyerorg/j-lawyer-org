@@ -665,6 +665,7 @@ package com.jdimension.jlawyer.client.editors.documents.viewer;
 
 import java.awt.Color;
 import javax.swing.ImageIcon;
+import javax.swing.JOptionPane;
 import javax.swing.SwingConstants;
 import javax.swing.border.LineBorder;
 import themes.colors.DefaultColorTheme;
@@ -726,6 +727,7 @@ public class PdfPageImage extends javax.swing.JPanel {
         lblPage = new javax.swing.JLabel();
         cmdRotateLeft = new javax.swing.JButton();
         cmdRotateRight = new javax.swing.JButton();
+        cmdDeletePage = new javax.swing.JButton();
         lblPageNumber = new javax.swing.JLabel();
 
         lblPage.setText("jLabel1");
@@ -755,6 +757,14 @@ public class PdfPageImage extends javax.swing.JPanel {
             }
         });
 
+        cmdDeletePage.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons16/material/outline_backspace_black_48dp.png"))); // NOI18N
+        cmdDeletePage.setToolTipText("Ausgewählte Seite entfernen");
+        cmdDeletePage.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                cmdDeletePageActionPerformed(evt);
+            }
+        });
+
         lblPageNumber.setFont(lblPageNumber.getFont().deriveFont(lblPageNumber.getFont().getStyle() | java.awt.Font.BOLD));
         lblPageNumber.setForeground(new java.awt.Color(255, 255, 255));
         lblPageNumber.setText("1");
@@ -766,9 +776,11 @@ public class PdfPageImage extends javax.swing.JPanel {
             .addGroup(layout.createSequentialGroup()
                 .addContainerGap()
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addComponent(cmdRotateLeft)
-                    .addComponent(cmdRotateRight)
-                    .addComponent(lblPageNumber, javax.swing.GroupLayout.Alignment.TRAILING))
+                    .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                        .addComponent(cmdRotateLeft)
+                        .addComponent(cmdRotateRight)
+                        .addComponent(lblPageNumber, javax.swing.GroupLayout.Alignment.TRAILING))
+                    .addComponent(cmdDeletePage))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(lblPage)
                 .addContainerGap(38, Short.MAX_VALUE))
@@ -785,7 +797,9 @@ public class PdfPageImage extends javax.swing.JPanel {
                         .addComponent(cmdRotateLeft)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                         .addComponent(cmdRotateRight)
-                        .addContainerGap(82, Short.MAX_VALUE))))
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addComponent(cmdDeletePage)
+                        .addContainerGap(50, Short.MAX_VALUE))))
         );
     }// </editor-fold>//GEN-END:initComponents
 
@@ -805,8 +819,16 @@ public class PdfPageImage extends javax.swing.JPanel {
         this.highlightPage(false);
     }//GEN-LAST:event_lblPageMouseExited
 
+    private void cmdDeletePageActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdDeletePageActionPerformed
+        int response = JOptionPane.showConfirmDialog(this, "Möchten Sie die Seite wirklich entfernen?", "Bestätigung", JOptionPane.YES_NO_OPTION);
+        if (response == JOptionPane.YES_OPTION) {
+            this.documentContainer.removePages(new int[]{this.pageIndex}, 90);
+        }
+    }//GEN-LAST:event_cmdDeletePageActionPerformed
+
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
+    private javax.swing.JButton cmdDeletePage;
     private javax.swing.JButton cmdRotateLeft;
     private javax.swing.JButton cmdRotateRight;
     private javax.swing.JLabel lblPage;

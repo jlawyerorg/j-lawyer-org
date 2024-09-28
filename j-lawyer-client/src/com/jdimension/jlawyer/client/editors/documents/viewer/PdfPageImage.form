@@ -19,9 +19,12 @@
           <Group type="102" attributes="0">
               <EmptySpace max="-2" attributes="0"/>
               <Group type="103" groupAlignment="0" attributes="0">
-                  <Component id="cmdRotateLeft" alignment="0" min="-2" max="-2" attributes="0"/>
-                  <Component id="cmdRotateRight" alignment="0" min="-2" max="-2" attributes="0"/>
-                  <Component id="lblPageNumber" alignment="1" min="-2" max="-2" attributes="0"/>
+                  <Group type="103" groupAlignment="0" attributes="0">
+                      <Component id="cmdRotateLeft" alignment="0" min="-2" max="-2" attributes="0"/>
+                      <Component id="cmdRotateRight" alignment="0" min="-2" max="-2" attributes="0"/>
+                      <Component id="lblPageNumber" alignment="1" min="-2" max="-2" attributes="0"/>
+                  </Group>
+                  <Component id="cmdDeletePage" alignment="0" min="-2" max="-2" attributes="0"/>
               </Group>
               <EmptySpace max="-2" attributes="0"/>
               <Component id="lblPage" min="-2" max="-2" attributes="0"/>
@@ -41,7 +44,9 @@
                       <Component id="cmdRotateLeft" min="-2" max="-2" attributes="0"/>
                       <EmptySpace max="-2" attributes="0"/>
                       <Component id="cmdRotateRight" min="-2" max="-2" attributes="0"/>
-                      <EmptySpace pref="82" max="32767" attributes="0"/>
+                      <EmptySpace max="-2" attributes="0"/>
+                      <Component id="cmdDeletePage" min="-2" max="-2" attributes="0"/>
+                      <EmptySpace pref="50" max="32767" attributes="0"/>
                   </Group>
               </Group>
           </Group>
@@ -79,6 +84,17 @@
       </Properties>
       <Events>
         <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="cmdRotateRightActionPerformed"/>
+      </Events>
+    </Component>
+    <Component class="javax.swing.JButton" name="cmdDeletePage">
+      <Properties>
+        <Property name="icon" type="javax.swing.Icon" editor="org.netbeans.modules.form.editors2.IconEditor">
+          <Image iconType="3" name="/icons16/material/outline_backspace_black_48dp.png"/>
+        </Property>
+        <Property name="toolTipText" type="java.lang.String" value="Ausgew&#xe4;hlte Seite entfernen"/>
+      </Properties>
+      <Events>
+        <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="cmdDeletePageActionPerformed"/>
       </Events>
     </Component>
     <Component class="javax.swing.JLabel" name="lblPageNumber">

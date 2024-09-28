@@ -678,6 +678,7 @@ import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.IOException;
+import java.util.Arrays;
 import java.util.HashMap;
 import javax.imageio.ImageIO;
 import javax.swing.ImageIcon;
@@ -1535,5 +1536,42 @@ public class PdfImageScrollingPanel extends javax.swing.JPanel implements Previe
 
         return rotatedImage;
     }
+    
+    public void removePages(int[] pageIndexes, int par1) {
+
+        try {
+            PDDocument inputPDF = PDDocument.load(new ByteArrayInputStream(content));
+
+            // Remove pages from highest index to lowest to avoid index shifting
+            Arrays.sort(pageIndexes);
+            for (int i = pageIndexes.length - 1; i >= 0; i--) {
+                int pageNumber = pageIndexes[i];
+                inputPDF.removePage(pageNumber);
+            }
+
+            ByteArrayOutputStream bout = new ByteArrayOutputStream();
+            inputPDF.save(bout);
+            inputPDF.close();
+            this.content = bout.toByteArray();
+            if (this.saveCallback != null) {
+                this.saveCallback.savePreview(documentId, fileName, content);
+            }
+
+        } catch (Exception ex) {
+            log.error("Could not remove PDF pages", ex);
+            JOptionPane.showMessageDialog(this, "Fehler beim Aktualisieren des PDFs: " + ex.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
+            return;
+        }
+
+        // Clear and re-render the content
+        this.orgImage.clear();
+        this.pnlPages.removeAll();
+        this.renderedPages = 0;
+        this.totalPages = 0;
+        this.currentPage = 0;
+        this.renderContent(0, 0, MAX_RENDER_PAGES - 1, this.zoomFactor);
+
+    }
+
 
 }
