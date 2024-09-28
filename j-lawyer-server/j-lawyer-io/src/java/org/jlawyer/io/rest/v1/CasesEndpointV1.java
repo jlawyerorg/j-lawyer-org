@@ -755,12 +755,10 @@ public class CasesEndpointV1 implements CasesEndpointLocalV1 {
                 rco.setDateChanged(afb.getDateChanged());
                 rcoList.add(rco);
             }
-            Response res = Response.ok(rcoList).build();
-            return res;
+            return Response.ok(rcoList).build();
         } catch (Exception ex) {
             log.error("Can not list cases", ex);
-            Response res = Response.serverError().build();
-            return res;
+            return Response.serverError().build();
         }
 
     }
