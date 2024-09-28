@@ -740,6 +740,8 @@ public class AssistantChatDialog extends javax.swing.JDialog {
 
     // cache incoming and outgoing messages
     private List<Message> messages = new ArrayList<>();
+    
+    private String initialPrompt="";
 
     /**
      * Creates new form GenericAssistantDialog
@@ -813,6 +815,7 @@ public class AssistantChatDialog extends javax.swing.JDialog {
                 String promptWithValues = TemplatesUtil.replacePlaceHolders(c.getDefaultPrompt().getDefaultPrompt(), placeHolders);
                 this.taPrompt.setText(promptWithValues);
             }
+            this.initialPrompt=this.taPrompt.getText();
             this.taPrompt.setEnabled(true);
         } else {
             this.taPrompt.setEnabled(false);
@@ -1297,6 +1300,7 @@ public class AssistantChatDialog extends javax.swing.JDialog {
     private void cmdResetChatActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdResetChatActionPerformed
         this.messages.clear();
         this.pnlMessages.removeAll();
+        this.taPrompt.setText(this.initialPrompt);
         ComponentUtils.bumpSplitPane(splitInputOutput);
 
     }//GEN-LAST:event_cmdResetChatActionPerformed
