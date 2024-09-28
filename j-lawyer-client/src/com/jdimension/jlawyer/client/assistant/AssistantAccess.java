@@ -817,9 +817,9 @@ public class AssistantAccess {
                 }
                 
                 // Sort the list of AiCapabilities by name for each AssistantConfig
-                List<AiCapability> capabilities = filtered.get(config);
-                if (capabilities != null) {
-                    capabilities.sort(Comparator.comparing(AiCapability::getName));
+                List<AiCapability> sortedCapabilities = filtered.get(config);
+                if (sortedCapabilities != null) {
+                    sortedCapabilities.sort(Comparator.comparing(AiCapability::getName));
                 }
             }
         }
