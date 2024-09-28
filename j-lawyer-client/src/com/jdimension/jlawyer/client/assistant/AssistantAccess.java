@@ -678,6 +678,7 @@ import com.jdimension.jlawyer.persistence.ArchiveFileBean;
 import com.jdimension.jlawyer.persistence.AssistantPrompt;
 import java.awt.event.ActionEvent;
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -813,6 +814,12 @@ public class AssistantAccess {
                         clone.setDefaultPrompt(cp);
                         filtered.get(config).add(clone);
                     }
+                }
+                
+                // Sort the list of AiCapabilities by name for each AssistantConfig
+                List<AiCapability> capabilities = filtered.get(config);
+                if (capabilities != null) {
+                    capabilities.sort(Comparator.comparing(AiCapability::getName));
                 }
             }
         }

@@ -1056,6 +1056,7 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
         try {
             Map<AssistantConfig, List<AiCapability>> capabilities2 = ingo.filterCapabilities(AiCapability.REQUESTTYPE_SUMMARIZE, AiCapability.INPUTTYPE_STRING);
             ingo.populateMenu(this.mnuAssistant, capabilities2, (AssistantInputAdapter)this, this.dto);
+            this.mnuAssistant.add(new JSeparator());
             Map<AssistantConfig, List<AiCapability>> capabilities3 = ingo.filterCapabilities(AiCapability.REQUESTTYPE_CHAT, AiCapability.INPUTTYPE_NONE);
             ingo.populateMenu(this.mnuAssistant, capabilities3, (AssistantInputAdapter)this, this.dto);
         } catch (Exception ex) {
@@ -6981,11 +6982,12 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
                 dlg.setVisible(true);
             });
             this.popAssistantNoContext.add(mi);
+            this.popAssistantNoContext.add(new JSeparator()); 
             
             AssistantAccess ingo = AssistantAccess.getInstance();
             Map<AssistantConfig, List<AiCapability>> capabilities3 = ingo.filterCapabilities(AiCapability.REQUESTTYPE_CHAT, AiCapability.INPUTTYPE_NONE);
             ingo.populateMenu(this.popAssistantNoContext, capabilities3, (AssistantInputAdapter)this, this.dto);
-            
+                      
             this.popAssistantNoContext.show(this.cmdAssistantGenerate, evt.getX(), evt.getY());
             
         } catch (Exception ex) {
