@@ -893,6 +893,7 @@ public class DocumentNameTemplatesSetupDialog extends javax.swing.JDialog {
 
         jLabel10.setFont(jLabel10.getFont());
         jLabel10.setText("y m d (y...Jahr m...Monat d...Tag)");
+        jLabel10.setToolTipText("Platzhalter für Jahr / Monat / Tag sind in eckigen Klammern anzugeben:\n\n[yy] - zweistellige Jahreszahl\n[yyyy] - vierstellige Jahreszahl\n[mm] - Monat\n[dd] - Tag");
 
         jLabel11.setFont(jLabel11.getFont());
         jLabel11.setText("weitere Zeichen als fixe Bestandteile");

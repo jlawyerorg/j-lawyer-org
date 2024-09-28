@@ -678,17 +678,17 @@ public class FileNameGenerator {
 
     public static boolean compilePattern(String pattern) throws InvalidSchemaPatternException {
 
-        if (pattern.contains("yyy") && !pattern.contains("yyyy")) {
+        if (pattern.contains("[yyy]") && !pattern.contains("[yyyy]")) {
             throw new InvalidSchemaPatternException("y muss als yy oder yyyy enthalten sein");
         }
-        if (pattern.contains("yyyyy")) {
+        if (pattern.contains("[yyyyy]")) {
             throw new InvalidSchemaPatternException("y muss als yy oder yyyy enthalten sein");
         }
 
-        if (pattern.contains("mmm")) {
+        if (pattern.contains("[mmm]")) {
             throw new InvalidSchemaPatternException("m muss als m oder mm enthalten sein");
         }
-        if (pattern.contains("ddd")) {
+        if (pattern.contains("[ddd]")) {
             throw new InvalidSchemaPatternException("d muss als d oder dd enthalten sein");
         }
 
@@ -730,27 +730,27 @@ public class FileNameGenerator {
         }
 
         // fixed values
-        while (pattern.contains("yyyy")) {
-            pattern = pattern.replace("yyyy", longYear.format(current));
+        while (pattern.contains("[yyyy]")) {
+            pattern = pattern.replace("[yyyy]", longYear.format(current));
         }
-        while (pattern.contains("yy")) {
-            pattern = pattern.replace("yy", shortYear.format(current));
-        }
-
-        while (pattern.contains("mm")) {
-            pattern = pattern.replace("mm", longMonth.format(current));
-        }
-        while (pattern.contains("m")) {
-            pattern = pattern.replace("m", shortMonth.format(current));
+        while (pattern.contains("[yy")) {
+            pattern = pattern.replace("[yy]", shortYear.format(current));
         }
 
-        while (pattern.contains("dd")) {
-            pattern = pattern.replace("dd", longDay.format(current));
+        while (pattern.contains("[mm]")) {
+            pattern = pattern.replace("[mm]", longMonth.format(current));
         }
-        while (pattern.contains("d")) {
-            pattern = pattern.replace("d", shortDay.format(current));
+        while (pattern.contains("[m]")) {
+            pattern = pattern.replace("[m]", shortMonth.format(current));
         }
-
+        
+        while (pattern.contains("[dd]")) {
+            pattern = pattern.replace("[dd]", longDay.format(current));
+        }
+        while (pattern.contains("[d]")) {
+            pattern = pattern.replace("[d]", shortDay.format(current));
+        }
+        
         // variable values
         pattern = pattern.replace("DATEINAME", fileName);
         

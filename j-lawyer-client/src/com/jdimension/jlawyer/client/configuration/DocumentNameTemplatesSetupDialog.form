@@ -366,6 +366,7 @@
           </FontInfo>
         </Property>
         <Property name="text" type="java.lang.String" value="y m d (y...Jahr m...Monat d...Tag)"/>
+        <Property name="toolTipText" type="java.lang.String" value="Platzhalter f&#xfc;r Jahr / Monat / Tag sind in eckigen Klammern anzugeben:&#xa;&#xa;[yy] - zweistellige Jahreszahl&#xa;[yyyy] - vierstellige Jahreszahl&#xa;[mm] - Monat&#xa;[dd] - Tag"/>
       </Properties>
     </Component>
     <Component class="javax.swing.JLabel" name="jLabel11">
