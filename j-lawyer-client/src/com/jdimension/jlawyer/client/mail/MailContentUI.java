@@ -2018,31 +2018,47 @@ public class MailContentUI extends javax.swing.JPanel implements HyperlinkListen
 
         AssistantAccess ingo = AssistantAccess.getInstance();
         try {
-            this.popAssistant.removeAll();
+           this.popAssistant.removeAll();
+
+            // Erste Kategorie
             Map<AssistantConfig, List<AiCapability>> capabilitiesGenerate = ingo.filterCapabilities(AiCapability.REQUESTTYPE_GENERATE, AiCapability.INPUTTYPE_STRING);
             ingo.populateMenu(this.popAssistant, capabilitiesGenerate, (AssistantInputAdapter) this, this.caseContext);
-            this.popAssistant.add(new JSeparator()); 
+            if (!capabilitiesGenerate.isEmpty()) {
+                this.popAssistant.add(new JSeparator());
+            }
 
+            // Zweite Kategorie
             Map<AssistantConfig, List<AiCapability>> capabilitiesGenerate2 = ingo.filterCapabilities(AiCapability.REQUESTTYPE_GENERATE, AiCapability.INPUTTYPE_NONE);
             ingo.populateMenu(this.popAssistant, capabilitiesGenerate2, (AssistantInputAdapter) this, this.caseContext);
-            this.popAssistant.add(new JSeparator()); 
+            if (!capabilitiesGenerate2.isEmpty()) {
+                this.popAssistant.add(new JSeparator());
+            }
 
+            // Dritte Kategorie
             Map<AssistantConfig, List<AiCapability>> capabilities = ingo.filterCapabilities(AiCapability.REQUESTTYPE_EXPLAIN, AiCapability.INPUTTYPE_STRING);
             ingo.populateMenu(this.popAssistant, capabilities, (AssistantInputAdapter) this, this.caseContext);
-            this.popAssistant.add(new JSeparator()); 
+            if (!capabilities.isEmpty()) {
+                this.popAssistant.add(new JSeparator());
+            }
 
+            // Vierte Kategorie
             Map<AssistantConfig, List<AiCapability>> capabilities2 = ingo.filterCapabilities(AiCapability.REQUESTTYPE_SUMMARIZE, AiCapability.INPUTTYPE_STRING);
             ingo.populateMenu(this.popAssistant, capabilities2, (AssistantInputAdapter) this, this.caseContext);
-            this.popAssistant.add(new JSeparator()); 
+            if (!capabilities2.isEmpty()) {
+                this.popAssistant.add(new JSeparator());
+            }
 
             // Fünfte Kategorie
             Map<AssistantConfig, List<AiCapability>> capabilities3 = ingo.filterCapabilities(AiCapability.REQUESTTYPE_TRANSLATE, AiCapability.INPUTTYPE_STRING);
             ingo.populateMenu(this.popAssistant, capabilities3, (AssistantInputAdapter) this, this.caseContext);
-            this.popAssistant.add(new JSeparator()); 
+            if (!capabilities3.isEmpty()) {
+                this.popAssistant.add(new JSeparator());
+            }
 
             // Sechste Kategorie
             Map<AssistantConfig, List<AiCapability>> capabilities4 = ingo.filterCapabilities(AiCapability.REQUESTTYPE_CHAT, AiCapability.INPUTTYPE_NONE);
             ingo.populateMenu(this.popAssistant, capabilities4, (AssistantInputAdapter) this, this.caseContext);
+            
 
             this.popAssistant.show(this.cmdAssistant, evt.getX(), evt.getY());
         } catch (Exception ex) {
