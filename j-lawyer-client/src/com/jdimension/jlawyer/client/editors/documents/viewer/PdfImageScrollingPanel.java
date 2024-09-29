@@ -1537,7 +1537,7 @@ public class PdfImageScrollingPanel extends javax.swing.JPanel implements Previe
         return rotatedImage;
     }
     
-    public void removePages(int[] pageIndexes, int par1) {
+    public void removePages(int[] pageIndexes) {
 
         try {
             PDDocument inputPDF = PDDocument.load(new ByteArrayInputStream(content));

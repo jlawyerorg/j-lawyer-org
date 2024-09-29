@@ -820,9 +820,9 @@ public class PdfPageImage extends javax.swing.JPanel {
     }//GEN-LAST:event_lblPageMouseExited
 
     private void cmdDeletePageActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdDeletePageActionPerformed
-        int response = JOptionPane.showConfirmDialog(this, "Möchten Sie die Seite wirklich entfernen?", "Bestätigung", JOptionPane.YES_NO_OPTION);
+        int response = JOptionPane.showConfirmDialog(this, "Soll die Seite wirklich entfernt werden?", "Bestätigung", JOptionPane.YES_NO_OPTION);
         if (response == JOptionPane.YES_OPTION) {
-            this.documentContainer.removePages(new int[]{this.pageIndex}, 90);
+            this.documentContainer.removePages(new int[]{this.pageIndex});
         }
     }//GEN-LAST:event_cmdDeletePageActionPerformed
 
