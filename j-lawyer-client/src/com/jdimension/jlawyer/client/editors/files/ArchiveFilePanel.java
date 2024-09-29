@@ -1052,17 +1052,6 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
         htrs.setComparator(0, dtComparator);
         this.tblAccountEntries.setRowSorter(htrs);
         
-        AssistantAccess ingo = AssistantAccess.getInstance();
-        try {
-            Map<AssistantConfig, List<AiCapability>> capabilities2 = ingo.filterCapabilities(AiCapability.REQUESTTYPE_SUMMARIZE, AiCapability.INPUTTYPE_STRING);
-            ingo.populateMenu(this.mnuAssistant, capabilities2, (AssistantInputAdapter)this, this.dto);
-            this.mnuAssistant.add(new JSeparator());
-            Map<AssistantConfig, List<AiCapability>> capabilities3 = ingo.filterCapabilities(AiCapability.REQUESTTYPE_CHAT, AiCapability.INPUTTYPE_NONE);
-            ingo.populateMenu(this.mnuAssistant, capabilities3, (AssistantInputAdapter)this, this.dto);
-        } catch (Exception ex) {
-            log.error(ex);
-        }
-        
         EventBroker b = EventBroker.getInstance();
         b.subscribeConsumer(this, Event.TYPE_DOCUMENTADDED);
         b.subscribeConsumer(this, Event.TYPE_REVIEWADDED);
@@ -4199,6 +4188,19 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
             this.mnuOpenDocumentMicrosoftOffice.setEnabled(false);
             this.mnuUseDocumentAsTemplate.setEnabled(true);
         }
+        
+        AssistantAccess ingo = AssistantAccess.getInstance();
+        try {
+            this.mnuAssistant.removeAll();
+            Map<AssistantConfig, List<AiCapability>> capabilities2 = ingo.filterCapabilities(AiCapability.REQUESTTYPE_SUMMARIZE, AiCapability.INPUTTYPE_STRING);
+            ingo.populateMenu(this.mnuAssistant, capabilities2, (AssistantInputAdapter)this, this.dto);
+            this.mnuAssistant.add(new JSeparator());
+            Map<AssistantConfig, List<AiCapability>> capabilities3 = ingo.filterCapabilities(AiCapability.REQUESTTYPE_CHAT, AiCapability.INPUTTYPE_NONE);
+            ingo.populateMenu(this.mnuAssistant, capabilities3, (AssistantInputAdapter)this, this.dto);
+        } catch (Exception ex) {
+            log.error(ex);
+        }
+        
         this.documentsPopup.show(evt.getComponent(), evt.getX(), evt.getY());
 
     }
