@@ -930,6 +930,16 @@ public class UserSettings extends UserSettingsKeys {
         return allUsers;
     }
     
+    public AppUserBean getUser(String principalId) {
+        if(allUsers != null) {
+            for (AppUserBean u : allUsers) {
+                if(u.getPrincipalId().equals(principalId))
+                    return u;
+            }
+        }
+        return null;
+    }
+    
     // updates any cached objects for this user
     public void applyChangedUser(AppUserBean user) {
         
