@@ -682,6 +682,8 @@ public class AddressFromClipboardDialog extends javax.swing.JDialog {
 
     /**
      * Creates new form AddressFromClipboardDialog
+     * @param parent
+     * @param modal
      */
     public AddressFromClipboardDialog(java.awt.Frame parent, boolean modal) {
         super(parent, modal);
@@ -692,9 +694,6 @@ public class AddressFromClipboardDialog extends javax.swing.JDialog {
             int mark = e.getMark();
             
             if (dot != mark) {
-                System.out.println("Selection Start: " + Math.min(dot, mark));
-                System.out.println("Selection End: " + Math.max(dot, mark));
-                
                 try {
                     String text = this.taBody.getText(Math.min(dot, mark), Math.max(dot, mark) - Math.min(dot, mark));
                     text = text.replace(", ", "\n");
@@ -703,8 +702,6 @@ public class AddressFromClipboardDialog extends javax.swing.JDialog {
                     log.error("Unable to extract attributes", ex);
                 }
                 
-            } else {
-                System.out.println("Caret Position: " + dot);
             }
         });
 
@@ -719,8 +716,6 @@ public class AddressFromClipboardDialog extends javax.swing.JDialog {
 
         DefaultTableModel tm = (DefaultTableModel) this.tblAttributes.getModel();
         tm.setRowCount(0);
-        
-        boolean addressProvided=false;
         
         String[] lines = text.split("\n");
         for (String line : lines) {
@@ -739,7 +734,6 @@ public class AddressFromClipboardDialog extends javax.swing.JDialog {
                 line=line.replace("(dot)", ".");
                 line=line.replace(":", "");
                 line=line.trim();
-                addressProvided=true;
             } else if (line.toLowerCase().contains("telefon") || line.toLowerCase().contains("tel:") || line.toLowerCase().contains("tel.")) {
                 field=AttributeCellEditor.ATTRIBUTE_TEL;
                 line=line.replace("Telefonnummer", "");
@@ -750,6 +744,15 @@ public class AddressFromClipboardDialog extends javax.swing.JDialog {
                 line=line.replace("tel", "");
                 line=line.replace("Tel.", "");
                 line=line.replace("tel.", "");
+                line=line.replace(":", "");
+                line=line.replace(".", "");
+                line=line.trim();
+            } else if (line.toLowerCase().contains("mobil")) {
+                field=AttributeCellEditor.ATTRIBUTE_MOBIL;
+                line=line.replace("Mobil", "");
+                line=line.replace("Mobilnummer", "");
+                line=line.replace("Handy", "");
+                line=line.replace("handy", "");
                 line=line.replace(":", "");
                 line=line.replace(".", "");
                 line=line.trim();
