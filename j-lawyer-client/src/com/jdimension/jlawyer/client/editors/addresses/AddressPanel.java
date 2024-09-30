@@ -1134,6 +1134,7 @@ public class AddressPanel extends javax.swing.JPanel implements BeaLoginCallback
         chart.getStyler().setLegendVisible(true);
         chart.getStyler().setLegendPosition(Styler.LegendPosition.InsideNE);
         chart.getStyler().setSumVisible(true);
+        chart.getStyler().setDecimalPattern("#,##0.00");
 
         chart.getStyler().setLabelType(PieStyler.LabelType.NameAndValue);
         chart.getStyler().setLabelsVisible(false);
@@ -4362,10 +4363,4 @@ public class AddressPanel extends javax.swing.JPanel implements BeaLoginCallback
         //throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
     }
 
-    final class OptionsComboBoxModel extends DefaultComboBoxModel {
-
-        public OptionsComboBoxModel(Object[] items) {
-            super(items);
-        }
-    }
 }
