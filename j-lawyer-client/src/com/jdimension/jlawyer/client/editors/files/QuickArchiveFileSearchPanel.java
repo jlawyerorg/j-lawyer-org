@@ -1257,6 +1257,8 @@ public class QuickArchiveFileSearchPanel extends javax.swing.JPanel implements T
                 source.setArchived(false);
                 source.setClaimNumber("");
                 source.setClaimValue(0f);
+                // reset external IDs
+                source.setExternalId(null);
                
                 ArchiveFileBean target=fileService.createArchiveFile(source);
                 
@@ -1270,7 +1272,7 @@ public class QuickArchiveFileSearchPanel extends javax.swing.JPanel implements T
                     newAab.setCustom2(aab.getCustom2());
                     newAab.setCustom3(aab.getCustom3());
                     newAab.setReferenceType(aab.getReferenceType());
-                    target.addParty(newAab);
+                    fileService.addAddressToCase(newAab);
                      
                 }
                 
