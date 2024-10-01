@@ -739,7 +739,9 @@ public class MessageSendPanel extends javax.swing.JPanel {
         jSeparator1.setForeground(new java.awt.Color(255, 255, 255));
 
         taMessage.setColumns(20);
+        taMessage.setLineWrap(true);
         taMessage.setRows(5);
+        taMessage.setWrapStyleWord(true);
         taMessage.addKeyListener(new java.awt.event.KeyAdapter() {
             public void keyReleased(java.awt.event.KeyEvent evt) {
                 taMessageKeyReleased(evt);
