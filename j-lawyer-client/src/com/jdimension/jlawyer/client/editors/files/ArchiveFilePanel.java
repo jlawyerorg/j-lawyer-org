@@ -4670,7 +4670,7 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
         } else {
             ArchiveFileDocumentsBean value = selectedDocs.get(0);
 
-            new Thread(new LoadDocumentPreviewThread(this.dto, value, this.readOnly, this.pnlPreview, false, this)).start();
+            new Thread(new LoadDocumentPreviewThread(this.splitDocumentsMain, this.dto, value, this.readOnly, this.pnlPreview, false, this)).start();
         }
     }
 

@@ -732,6 +732,7 @@ public class PdfImageScrollingPanel extends javax.swing.JPanel implements Previe
      *
      * @param fileName
      * @param content
+     * @param saveCallback
      */
     public PdfImageScrollingPanel(String fileName, byte[] content, DocumentPreviewSaveCallback saveCallback) {
         initComponents();
