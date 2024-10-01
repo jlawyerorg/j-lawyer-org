@@ -705,10 +705,10 @@ public class ServerTemplatesUtil extends CommonTemplatesUtil {
             }
 
             if(formPlaceHolders==null && contextArchiveFile != null) {
-                formPlaceHolders = forms.getPlaceHoldersForCase(contextArchiveFile.getId());
+                formPlaceHolders = forms.getPlaceHoldersForCaseUnrestricted(contextArchiveFile.getId());
             }
             if(formPlaceHolderValues==null && contextArchiveFile != null) {
-                formPlaceHolderValues = forms.getPlaceHolderValuesForCase(contextArchiveFile.getId());
+                formPlaceHolderValues = forms.getPlaceHolderValuesForCaseUnrestricted(contextArchiveFile.getId());
             }
 
             ArrayList<String> placeHolderNames = getPlaceHoldersInTemplate(content, allPartyTypesPlaceholders, formPlaceHolders);
@@ -720,13 +720,13 @@ public class ServerTemplatesUtil extends CommonTemplatesUtil {
             if (contextArchiveFile != null) {
                 try {
                     if(caseLawyer==null && !ServerStringUtils.isEmpty(contextArchiveFile.getLawyer()))
-                        caseLawyer = sys.getUser(contextArchiveFile.getLawyer());
+                        caseLawyer = sys.getUserUnrestricted(contextArchiveFile.getLawyer());
                 } catch (Exception ex) {
                     log.warn("Unable to load lawyer with id " + contextArchiveFile.getLawyer());
                 }
                 try {
                     if(caseAssistant==null && !ServerStringUtils.isEmpty(contextArchiveFile.getAssistant()))
-                        caseAssistant = sys.getUser(contextArchiveFile.getAssistant());
+                        caseAssistant = sys.getUserUnrestricted(contextArchiveFile.getAssistant());
                 } catch (Exception ex) {
                     log.warn("Unable to load assistant with id " + contextArchiveFile.getAssistant());
                 }
@@ -737,7 +737,7 @@ public class ServerTemplatesUtil extends CommonTemplatesUtil {
                 parties.add(new PartiesTriplet(aab.getAddressKey(), aab.getReferenceType(), aab));
             }
             
-            return sys.getPlaceHolderValues(ht, contextArchiveFile, parties, "", null, formPlaceHolderValues, caseLawyer, caseAssistant, null, invoice, invoiceSender, null, null, null, null);
+            return sys.getPlaceHolderValuesUnrestricted(ht, contextArchiveFile, parties, "", null, formPlaceHolderValues, caseLawyer, caseAssistant, null, invoice, invoiceSender, null, null, null, null);
 
         } catch (Exception ex) {
             log.error("Error getting placeholder values", ex);

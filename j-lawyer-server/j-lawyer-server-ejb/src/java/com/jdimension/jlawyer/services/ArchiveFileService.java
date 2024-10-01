@@ -2002,15 +2002,22 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
     }
 
     @Override
+    public String getNewDocumentNameUnrestricted(String fileName, Date date, DocumentNameTemplate tpl) throws Exception {
+        return getNewDocumentNameImpl(fileName, date, tpl);
+    }
+    
+    @Override
     @RolesAllowed({"loginRole"})
     public String getNewDocumentName(String fileName, Date date, DocumentNameTemplate tpl) throws Exception {
-
+        return getNewDocumentNameImpl(fileName, date, tpl);
+    }
+    
+    private String getNewDocumentNameImpl(String fileName, Date date, DocumentNameTemplate tpl) throws Exception {
         try {
             return FileNameGenerator.getFileName(tpl.getPattern(), date, fileName);
         } catch (InvalidSchemaPatternException isp) {
             throw new Exception(isp.getMessage());
         }
-
     }
     
     @Override
@@ -3737,6 +3744,11 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
     @Override
     public List<ArchiveFileAddressesBean> getInvolvementDetailsForCaseUnrestricted(String archiveFileKey) {
         return this.getInvolvementDetailsForCaseImpl(archiveFileKey, true);
+    }
+    
+    @Override
+    public List<ArchiveFileAddressesBean> getInvolvementDetailsForCaseUnrestricted(String archiveFileKey, boolean includeCases) {
+        return this.getInvolvementDetailsForCaseImpl(archiveFileKey, includeCases);
     }
 
     @Override

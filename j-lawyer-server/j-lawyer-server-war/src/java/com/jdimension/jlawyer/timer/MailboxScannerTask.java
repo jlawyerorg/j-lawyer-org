@@ -1225,19 +1225,19 @@ public class MailboxScannerTask extends java.util.TimerTask {
 
             ServerTemplatesUtil serverTemplates = new ServerTemplatesUtil(sysSvc, formsSvc);
 
-            List<ArchiveFileAddressesBean> involved = caseSvc.getInvolvementDetailsForCase(toCase.getId(), false);
+            List<ArchiveFileAddressesBean> involved = caseSvc.getInvolvementDetailsForCaseUnrestricted(toCase.getId(), false);
             AppUserBean caseLawyer = null;
             try {
-                caseLawyer = sysSvc.getUser(toCase.getLawyer());
+                caseLawyer = sysSvc.getUserUnrestricted(toCase.getLawyer());
             } catch (Exception ex) {
             }
             AppUserBean caseAssistant = null;
             try {
-                caseAssistant = sysSvc.getUser(toCase.getAssistant());
+                caseAssistant = sysSvc.getUserUnrestricted(toCase.getAssistant());
             } catch (Exception ex) {
             }
-            Collection<String> formPlaceHolders = formsSvc.getPlaceHoldersForCase(toCase.getId());
-            HashMap<String, String> formPlaceHolderValues = formsSvc.getPlaceHolderValuesForCase(toCase.getId());
+            Collection<String> formPlaceHolders = formsSvc.getPlaceHoldersForCaseUnrestricted(toCase.getId());
+            HashMap<String, String> formPlaceHolderValues = formsSvc.getPlaceHolderValuesForCaseUnrestricted(toCase.getId());
 
             String newNameMsg = msg.getSubject();
             if (newNameMsg == null) {
@@ -1246,7 +1246,7 @@ public class MailboxScannerTask extends java.util.TimerTask {
             newNameMsg = newNameMsg + ".eml";
             newNameMsg = ServerFileUtils.sanitizeFileName(newNameMsg);
             String extension = ServerFileUtils.getExtension(newNameMsg);
-            String docName = caseSvc.getNewDocumentName(newNameMsg, received, nameTemplate);
+            String docName = caseSvc.getNewDocumentNameUnrestricted(newNameMsg, received, nameTemplate);
             HashMap<String, Object> placeHolders = serverTemplates.getPlaceHolderValues(docName, toCase, involved, null, null, allPartyTypes, formPlaceHolders, formPlaceHolderValues, caseLawyer, caseAssistant);
             docName = ServerTemplatesUtil.replacePlaceHolders(docName, placeHolders);
             docName = ServerFileUtils.sanitizeFileName(docName);
@@ -1305,7 +1305,7 @@ public class MailboxScannerTask extends java.util.TimerTask {
                 }
                 newName = ServerFileUtils.sanitizeFileName(newName);
                 extension = ServerFileUtils.getExtension(newName);
-                docName = caseSvc.getNewDocumentName(newName, received, nameTemplate);
+                docName = caseSvc.getNewDocumentNameUnrestricted(newName, received, nameTemplate);
                 placeHolders = serverTemplates.getPlaceHolderValues(docName, toCase, involved, null, null, allPartyTypes, formPlaceHolders, formPlaceHolderValues, caseLawyer, caseAssistant);
                 docName = ServerTemplatesUtil.replacePlaceHolders(docName, placeHolders);
                 docName = ServerFileUtils.sanitizeFileName(docName);
@@ -1331,8 +1331,10 @@ public class MailboxScannerTask extends java.util.TimerTask {
         } catch (Exception ex) {
             try {
                 log.error("Unable to save message with subject '" + msg.getSubject() + "'", ex);
+                return false;
             } catch (Exception t) {
                 log.error("Unable to save message with subject '" + msg.toString() + "'", ex);
+                return false;
             }
         }
         return true;

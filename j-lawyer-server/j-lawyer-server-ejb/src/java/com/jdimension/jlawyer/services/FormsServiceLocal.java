@@ -688,7 +688,7 @@ public interface FormsServiceLocal {
     ArchiveFileFormsBean addForm(String caseId, ArchiveFileFormsBean form) throws Exception;
 
     List<ArchiveFileFormsBean> getFormsForCase(String caseId);
-
+    
     void removeFormType(String formTypeId) throws Exception;
 
     void removeForm(String formId) throws Exception;
@@ -700,8 +700,10 @@ public interface FormsServiceLocal {
     ArchiveFileFormsBean getForm(String id) throws Exception;
 
     Collection<String> getPlaceHoldersForCase(String caseId) throws Exception;
+    Collection<String> getPlaceHoldersForCaseUnrestricted(String caseId) throws Exception;
     
     HashMap<String, String> getPlaceHolderValuesForCase(String caseId) throws Exception;
+    HashMap<String, String> getPlaceHolderValuesForCaseUnrestricted(String caseId) throws Exception;
     
     boolean installRepositoryPlugin(ServerFormPlugin plugin) throws Exception;
     Map<String, ServerFormPlugin> getPluginsInRepository(String clientVersion) throws Exception;

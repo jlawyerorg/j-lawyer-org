@@ -1043,8 +1043,17 @@ public class FormsService implements FormsServiceRemote, FormsServiceLocal {
     }
 
     @Override
+    public Collection<String> getPlaceHoldersForCaseUnrestricted(String caseId) throws Exception {
+        return getPlaceHoldersForCaseImpl(caseId);
+    }
+    
+    @Override
     @RolesAllowed({"loginRole"})
     public Collection<String> getPlaceHoldersForCase(String caseId) throws Exception {
+        return getPlaceHoldersForCaseImpl(caseId);
+    }
+    
+    private Collection<String> getPlaceHoldersForCaseImpl(String caseId) throws Exception {
         ArchiveFileBean caseBean = this.caseFacade.find(caseId);
         if (caseBean == null) {
             throw new Exception("Akte " + caseId + " ist nicht vorhanden!");
@@ -1068,12 +1077,20 @@ public class FormsService implements FormsServiceRemote, FormsServiceLocal {
             }
         }
         return placeHolders;
-
     }
 
     @Override
+    public HashMap<String, String> getPlaceHolderValuesForCaseUnrestricted(String caseId) throws Exception {
+        return this.getPlaceHolderValuesForCaseImpl(caseId);
+    }
+    
+    @Override
     @RolesAllowed({"readArchiveFileRole"})
     public HashMap<String, String> getPlaceHolderValuesForCase(String caseId) throws Exception {
+        return this.getPlaceHolderValuesForCaseImpl(caseId);
+    }
+    
+    private HashMap<String, String> getPlaceHolderValuesForCaseImpl(String caseId) throws Exception {
         ArchiveFileBean caseBean = this.caseFacade.find(caseId);
         if (caseBean == null) {
             throw new Exception("Akte " + caseId + " ist nicht vorhanden!");

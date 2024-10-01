@@ -733,6 +733,7 @@ public interface ArchiveFileServiceLocal {
     public List<ArchiveFileAddressesBean> getInvolvementDetailsForCase(String archiveFileKey, boolean includeCases);
     
     public List<ArchiveFileAddressesBean> getInvolvementDetailsForCaseUnrestricted(String archiveFileKey);
+    public List<ArchiveFileAddressesBean> getInvolvementDetailsForCaseUnrestricted(String archiveFileKey, boolean includeCases);
 
     boolean doesDocumentExist(String caseId, String documentName);
     boolean doesDocumentExistUnrestricted(String caseId, String documentName);
@@ -741,6 +742,7 @@ public interface ArchiveFileServiceLocal {
 
     ArchiveFileDocumentsBean getDocument(String id) throws Exception;
     String getNewDocumentName(String fileName, Date date, DocumentNameTemplate tpl) throws Exception;
+    String getNewDocumentNameUnrestricted(String fileName, Date date, DocumentNameTemplate tpl) throws Exception;
     
     Collection<DocumentTagsBean> getDocumentTags(String documentId) throws Exception;
     

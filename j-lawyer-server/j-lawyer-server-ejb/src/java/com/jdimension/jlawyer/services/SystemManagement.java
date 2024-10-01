@@ -1225,6 +1225,11 @@ public class SystemManagement implements SystemManagementRemote, SystemManagemen
     public AppUserBean getUser(String principalId) {
         return this.userBeanFacade.findByPrincipalId(principalId);
     }
+    
+    @Override
+    public AppUserBean getUserUnrestricted(String principalId) {
+        return this.userBeanFacade.findByPrincipalIdUnrestricted(principalId);
+    }
 
     @Override
     @RolesAllowed({"loginRole"})
@@ -2377,6 +2382,11 @@ public class SystemManagement implements SystemManagementRemote, SystemManagemen
         return getTemplatesBaseDir(templateType, null);
     }
 
+    @Override
+    public HashMap<String, Object> getPlaceHolderValuesUnrestricted(HashMap<String, Object> placeHolders, ArchiveFileBean aFile, List<PartiesTriplet> selectedParties, String dictateSign, GenericCalculationTable calculationTable, HashMap<String, String> formsPlaceHolderValues, AppUserBean caseLawyer, AppUserBean caseAssistant, AppUserBean author, Invoice invoice, AppUserBean invoiceSender, GenericCalculationTable invoiceTable, GenericCalculationTable timesheetsTable, byte[] giroCode, String ingoText) throws Exception {
+        return PlaceHolderServerUtils.getPlaceHolderValues(placeHolders, aFile, selectedParties, dictateSign, calculationTable, formsPlaceHolderValues, caseLawyer, caseAssistant, author, invoice, invoiceSender, invoiceTable, timesheetsTable, giroCode, ingoText);
+    }
+    
     @Override
     @RolesAllowed({"loginRole"})
     public HashMap<String, Object> getPlaceHolderValues(HashMap<String, Object> placeHolders, ArchiveFileBean aFile, List<PartiesTriplet> selectedParties, String dictateSign, GenericCalculationTable calculationTable, HashMap<String, String> formsPlaceHolderValues, AppUserBean caseLawyer, AppUserBean caseAssistant, AppUserBean author, Invoice invoice, AppUserBean invoiceSender, GenericCalculationTable invoiceTable, GenericCalculationTable timesheetsTable, byte[] giroCode, String ingoText) throws Exception {
