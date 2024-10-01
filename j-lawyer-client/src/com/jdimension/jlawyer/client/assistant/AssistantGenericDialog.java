@@ -1383,7 +1383,8 @@ public class AssistantGenericDialog extends javax.swing.JDialog {
                 String value=((JTextField) component).getText();
                 d.setValue(value);
             } else if (component instanceof JComboBox) {
-                String value=((JComboBox) component).getEditor().getItem().toString();
+                //String value=((JComboBox) component).getEditor().getItem().toString();
+                String value=((JComboBox) component).getSelectedItem().toString();
                 d.setValue(value);
             }
             parameters.add(d);
