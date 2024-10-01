@@ -776,11 +776,11 @@ public class PdfImageScrollingPanel extends javax.swing.JPanel implements Previe
                 int extent = scrollBar.getModel().getExtent();
                 int value = scrollBar.getValue();
                 if (value + extent >= max) {
-                    this.renderContent(labelIndex, renderedPages, renderedPages + MAX_RENDER_PAGES, zoomFactor);
+                    this.renderContent(labelIndex, renderedPages, renderedPages + MAX_RENDER_PAGES, zoomFactor, false);
                 }
 
                 currentPage = labelIndex;
-                this.setCurrentPage(labelIndex);
+                this.setCurrentPage(labelIndex, false);
 
             }
         });
@@ -802,14 +802,14 @@ public class PdfImageScrollingPanel extends javax.swing.JPanel implements Previe
 
     }
 
-    private void setCurrentPage(int pageIndex) {
+    private void setCurrentPage(int pageIndex, boolean requestFocus) {
         lblCurrentPage.setText("" + (pageIndex + 1) + "/" + renderedPages);
         cmdFirstPage.setEnabled(currentPage > 0);
         cmdPageBackward.setEnabled(currentPage > 0);
         cmdLastPage.setEnabled((currentPage + 1) < renderedPages);
         cmdPageForward.setEnabled((currentPage + 1) < renderedPages);
 
-        if (!this.cmdPageForward.isEnabled()) {
+        if (!this.cmdPageForward.isEnabled() && requestFocus) {
             this.cmdPageBackward.requestFocus();
         }
     }
@@ -1014,7 +1014,7 @@ public class PdfImageScrollingPanel extends javax.swing.JPanel implements Previe
         );
     }// </editor-fold>//GEN-END:initComponents
 
-    private void scrollToPage(int page) {
+    private void scrollToPage(int page, boolean requestFocus) {
 
         int totalHeight = 0;
         Component[] components = pnlPages.getComponents();
@@ -1025,7 +1025,7 @@ public class PdfImageScrollingPanel extends javax.swing.JPanel implements Previe
             if (i == page) {
                 this.currentPage = page;
                 this.jScrollPane1.getViewport().setViewPosition(new Point(0, totalHeight));
-                this.setCurrentPage(page);
+                this.setCurrentPage(page, requestFocus);
                 break;
             }
             totalHeight += components[i].getHeight();
@@ -1034,19 +1034,19 @@ public class PdfImageScrollingPanel extends javax.swing.JPanel implements Previe
     }
 
     private void cmdPageBackwardActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdPageBackwardActionPerformed
-        this.scrollToPage(this.currentPage - 1);
+        this.scrollToPage(this.currentPage - 1, true);
     }//GEN-LAST:event_cmdPageBackwardActionPerformed
 
     private void cmdPageForwardActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdPageForwardActionPerformed
-        this.scrollToPage(this.currentPage + 1);
+        this.scrollToPage(this.currentPage + 1, true);
     }//GEN-LAST:event_cmdPageForwardActionPerformed
 
     private void cmdFirstPageActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdFirstPageActionPerformed
-        this.scrollToPage(0);
+        this.scrollToPage(0, true);
     }//GEN-LAST:event_cmdFirstPageActionPerformed
 
     private void cmdLastPageActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdLastPageActionPerformed
-        this.scrollToPage(this.renderedPages - 1);
+        this.scrollToPage(this.renderedPages - 1, true);
     }//GEN-LAST:event_cmdLastPageActionPerformed
 
     private void sliderZoomStateChanged(javax.swing.event.ChangeEvent evt) {//GEN-FIRST:event_sliderZoomStateChanged
@@ -1183,7 +1183,7 @@ public class PdfImageScrollingPanel extends javax.swing.JPanel implements Previe
         ThreadUtils.updateLabel(this.lblContent, text);
     }
 
-    private synchronized void renderContent(int currentIndex, int fromPageIndex, int toPageIndex, int zoomFactor) {
+    private synchronized void renderContent(int currentIndex, int fromPageIndex, int toPageIndex, int zoomFactor, boolean requestFocus) {
         if (rendering) {
             log.info("PDFs are currently being rendered - skipping concurrent rendering");
             return;
@@ -1279,7 +1279,7 @@ public class PdfImageScrollingPanel extends javax.swing.JPanel implements Previe
                     try {
                         this.sliderZoom.setEnabled(true);
                         this.cmdFitToScreen.setEnabled(true);
-                        this.setCurrentPage(currentIndex);
+                        this.setCurrentPage(currentIndex, requestFocus);
                         inputPDF.close();
 
                     } catch (Throwable t) {
@@ -1354,7 +1354,7 @@ public class PdfImageScrollingPanel extends javax.swing.JPanel implements Previe
         this.content = content;
         this.currentPage = 0;
         this.pnlPages.removeAll();
-        this.renderContent(0, 0, 9, this.zoomFactor);
+        this.renderContent(0, 0, 9, this.zoomFactor, false);
 
         this.tabs.setEnabledAt(1, false);
         this.tabs.setEnabledAt(2, false);
@@ -1570,7 +1570,7 @@ public class PdfImageScrollingPanel extends javax.swing.JPanel implements Previe
         this.renderedPages = 0;
         this.totalPages = 0;
         this.currentPage = 0;
-        this.renderContent(0, 0, MAX_RENDER_PAGES - 1, this.zoomFactor);
+        this.renderContent(0, 0, MAX_RENDER_PAGES - 1, this.zoomFactor, true);
 
     }
 
