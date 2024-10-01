@@ -1447,7 +1447,7 @@ public class DesktopPanel extends javax.swing.JPanel implements ThemeableEditor,
 
         lblArchiveFileArchivedCount.setFont(lblArchiveFileArchivedCount.getFont().deriveFont(lblArchiveFileArchivedCount.getFont().getStyle() | java.awt.Font.BOLD));
         lblArchiveFileArchivedCount.setForeground(java.awt.Color.white);
-        lblArchiveFileArchivedCount.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons16/material/baseline_folder_white_36dp.png"))); // NOI18N
+        lblArchiveFileArchivedCount.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons16/material/inventory_24dp_FFFFFF.png"))); // NOI18N
         lblArchiveFileArchivedCount.setText("0");
         lblArchiveFileArchivedCount.setToolTipText("0 Akten im Archiv");
 

@@ -672,7 +672,12 @@ import com.jdimension.jlawyer.ai.ParameterData;
 import com.jdimension.jlawyer.client.assistant.AssistantAccess;
 import com.jdimension.jlawyer.client.assistant.AssistantFlowAdapter;
 import com.jdimension.jlawyer.client.assistant.AssistantInputAdapter;
+import com.jdimension.jlawyer.client.editors.EditorsRegistry;
+import com.jdimension.jlawyer.client.settings.ClientSettings;
+import com.jdimension.jlawyer.client.utils.ThreadUtils;
+import com.jdimension.jlawyer.client.utils.WavAudioUtils;
 import com.jdimension.jlawyer.persistence.AssistantConfig;
+import com.jdimension.jlawyer.services.JLawyerServiceLocator;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import javax.sound.sampled.AudioInputStream;
@@ -683,6 +688,7 @@ import javax.sound.sampled.UnsupportedAudioFileException;
 import javax.swing.Timer;
 import java.awt.event.ActionEvent;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import javax.sound.sampled.LineEvent;
@@ -699,14 +705,21 @@ public class SoundplayerPanel extends javax.swing.JPanel implements PreviewPanel
 
     private String documentId = null;
     private byte[] content=null;
+    private String initialComment = null;
 
     private Clip clip;
     private Timer timer;
+    
+    private boolean readOnly = true;
 
     /**
-     * Creates new form PlaintextPanel
+     * Creates new form SoundplayerPanel
+     * @param docId
+     * @param readOnly
      */
-    public SoundplayerPanel() {
+    public SoundplayerPanel(String docId, boolean readOnly) {
+        this.documentId = docId;
+        this.readOnly = readOnly;
         initComponents();
     }
 
@@ -859,13 +872,41 @@ public class SoundplayerPanel extends javax.swing.JPanel implements PreviewPanel
     public void removeNotify() {
         super.removeNotify();
         stop(); // Stop the sound when the panel is removed or no longer displayed
+        
+        if (this.documentId != null && !this.readOnly) {
+
+            String currentComment = this.taTranscription.getText();
+            if (currentComment!=null && !currentComment.equals(this.initialComment)) {
+                try {
+                    
+                    byte[] newWav=WavAudioUtils.addOrUpdateCommentInWav(this.content, this.taTranscription.getText());
+                    
+                    ClientSettings settings = ClientSettings.getInstance();
+                    JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
+                    locator.lookupArchiveFileServiceRemote().setDocumentContent(this.documentId, newWav);
+                    this.content=newWav;
+                } catch (Throwable t) {
+                    log.error("Error saving document with id " + this.documentId, t);
+                    ThreadUtils.showErrorDialog(EditorsRegistry.getInstance().getMainWindow(), "Fehler beim Speichern: " + t.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR);
+
+                }
+            }
+        }
     }
 
     @Override
     public void showContent(String documentId, byte[] content) {
         this.documentId = documentId;
         this.content=content;
-
+        
+        this.initialComment=WavAudioUtils.getInfoChunk(this.content);
+        if(this.initialComment!=null) {
+            this.initialComment=this.initialComment.replace("ICMT: ", "");
+            this.taTranscription.setText(this.initialComment);
+        } else {
+            this.taTranscription.setText("");
+        }
+        
         try {
             AudioInputStream audioInputStream = AudioSystem.getAudioInputStream(new ByteArrayInputStream(content));
             clip = AudioSystem.getClip();
