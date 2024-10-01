@@ -680,6 +680,7 @@ import java.io.File;
 import java.io.IOException;
 import java.util.Arrays;
 import java.util.HashMap;
+import java.util.logging.Level;
 import javax.imageio.ImageIO;
 import javax.swing.ImageIcon;
 import javax.swing.JOptionPane;
@@ -1265,6 +1266,9 @@ public class PdfImageScrollingPanel extends javax.swing.JPanel implements Previe
                                 pnlPage.setBorder(new EmptyBorder(0, 0, 10, 0));
                                 pnlPage.setPage(iIndex, new ImageIcon(scaledImage));
                                 pnlPages.add(pnlPage);
+                                pnlPages.invalidate();
+                                pnlPages.revalidate();
+                                pnlPages.repaint();
 
                             });
 
@@ -1288,6 +1292,7 @@ public class PdfImageScrollingPanel extends javax.swing.JPanel implements Previe
                     try {
                         SwingUtilities.invokeAndWait(() -> {
                             pnlPages.invalidate();
+                            pnlPages.revalidate();
                             pnlPages.repaint();
                         });
                     } catch (Throwable t) {
@@ -1358,7 +1363,7 @@ public class PdfImageScrollingPanel extends javax.swing.JPanel implements Previe
 
         this.tabs.setEnabledAt(1, false);
         this.tabs.setEnabledAt(2, false);
-        long start=System.currentTimeMillis();
+        long start = System.currentTimeMillis();
         try {
             ZUGFeRDInvoiceImporter zii = new ZUGFeRDInvoiceImporter(new ByteArrayInputStream(content));
             if (zii.canParse()) {
@@ -1407,7 +1412,25 @@ public class PdfImageScrollingPanel extends javax.swing.JPanel implements Previe
         } catch (Exception ex) {
             log.error("Error rendering e-invoice", ex);
         }
-        log.debug("invoice checking / rendering took " + (System.currentTimeMillis()-start));
+        log.debug("invoice checking / rendering took " + (System.currentTimeMillis() - start));
+
+//        new Thread(() -> {
+//            try {
+//                Thread.sleep(200);
+//            } catch (InterruptedException ex) {
+//                log.error(ex);
+//            }
+//            if (getParent() != null) {
+//                // component has been added to a container
+//                SwingUtilities.invokeLater(() -> {
+//                    getParent().revalidate();
+//                    getParent().repaint();
+//                });
+//                
+//            } else {
+//                log.info("not added to parent yet");
+//            }
+//        }).start();
 
     }
 
@@ -1537,7 +1560,7 @@ public class PdfImageScrollingPanel extends javax.swing.JPanel implements Previe
 
         return rotatedImage;
     }
-    
+
     public void removePages(int[] pageIndexes) {
 
         try {
@@ -1573,6 +1596,5 @@ public class PdfImageScrollingPanel extends javax.swing.JPanel implements Previe
         this.renderContent(0, 0, MAX_RENDER_PAGES - 1, this.zoomFactor, true);
 
     }
-
 
 }
