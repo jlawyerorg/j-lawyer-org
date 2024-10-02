@@ -1433,7 +1433,9 @@ public class BulkSaveDialog extends javax.swing.JDialog {
             BulkSaveDialog dialog = new BulkSaveDialog(TYPE_MAIL, new javax.swing.JFrame(), true);
 
             for (int i = 0; i < 10; i++) {
-                dialog.addEntry(new BulkSaveEntry());
+                BulkSaveEntry e = new BulkSaveEntry();
+                e.setDocumentFilename("test.pdf");
+                dialog.addEntry(e);
             }
 
             dialog.addWindowListener(new java.awt.event.WindowAdapter() {
@@ -1532,24 +1534,23 @@ public class BulkSaveDialog extends javax.swing.JDialog {
         ArrayList<String> conflictNames = new ArrayList<>();
         checkedNames.addAll(this.existingFileNames);
         for (BulkSaveEntry e : this.entryList) {
-            String newName = e.getDocumentFilenameNew().toLowerCase();
-            if (!checkedNames.contains(newName)) {
-                checkedNames.add(newName);
-            } else {
-                conflictNames.add(newName);
+            if (e.isSelected()) {
+                String newName = e.getDocumentFilenameNew().toLowerCase();
+                if (!checkedNames.contains(newName)) {
+                    checkedNames.add(newName);
+                } else {
+                    conflictNames.add(newName);
+                }
             }
         }
 
         // there may be conflicts, but the user decided not to save them
-        boolean activeConflicts = false;
+        boolean activeConflicts = !conflictNames.isEmpty();
 
         for (BulkSaveEntry e : this.entryList) {
             String newName = e.getDocumentFilenameNew().toLowerCase();
             if (conflictNames.contains(newName)) {
                 e.setDocumentFilenameNewOutline(FlatClientProperties.OUTLINE_ERROR);
-                if (e.isSelected()) {
-                    activeConflicts = true;
-                }
             } else {
                 e.setDocumentFilenameNewOutline(null);
             }

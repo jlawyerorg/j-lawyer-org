@@ -365,8 +365,8 @@
             <Font component="jLabel10" property="font" relativeSize="true" size="0"/>
           </FontInfo>
         </Property>
-        <Property name="text" type="java.lang.String" value="y m d (y...Jahr m...Monat d...Tag)"/>
-        <Property name="toolTipText" type="java.lang.String" value="Platzhalter f&#xfc;r Jahr / Monat / Tag sind in eckigen Klammern anzugeben:&#xa;&#xa;[yy] - zweistellige Jahreszahl&#xa;[yyyy] - vierstellige Jahreszahl&#xa;[mm] - Monat&#xa;[dd] - Tag"/>
+        <Property name="text" type="java.lang.String" value="y m d (y...Jahr m...Monat d...Tag H...Stunde M...Minute)"/>
+        <Property name="toolTipText" type="java.lang.String" value="Platzhalter f&#xfc;r Jahr / Monat / Tag sind in eckigen Klammern anzugeben:&#xa;&#xa;[yy] - zweistellige Jahreszahl&#xa;[yyyy] - vierstellige Jahreszahl&#xa;[mm] - Monat&#xa;[dd] - Tag&#xa;[HH] - Stunde&#xa;[MM] - Minute"/>
       </Properties>
     </Component>
     <Component class="javax.swing.JLabel" name="jLabel11">

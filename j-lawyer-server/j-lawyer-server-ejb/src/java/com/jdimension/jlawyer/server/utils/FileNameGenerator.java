@@ -691,6 +691,14 @@ public class FileNameGenerator {
         if (pattern.contains("[ddd]")) {
             throw new InvalidSchemaPatternException("d muss als d oder dd enthalten sein");
         }
+        
+        if (pattern.contains("[MMM]")) {
+            throw new InvalidSchemaPatternException("M muss als M oder MM enthalten sein");
+        }
+        
+        if (pattern.contains("[HHH]")) {
+            throw new InvalidSchemaPatternException("H muss als H oder HH enthalten sein");
+        }
 
         return true;
     }
@@ -723,6 +731,12 @@ public class FileNameGenerator {
 
         SimpleDateFormat shortDay = new SimpleDateFormat("d");
         SimpleDateFormat longDay = new SimpleDateFormat("dd");
+        
+        SimpleDateFormat shortHour = new SimpleDateFormat("H");
+        SimpleDateFormat longHour = new SimpleDateFormat("HH");
+        
+        SimpleDateFormat shortMinute = new SimpleDateFormat("m");
+        SimpleDateFormat longMinute = new SimpleDateFormat("mm");
 
         Date current = date;
         if (current == null) {
@@ -749,6 +763,20 @@ public class FileNameGenerator {
         }
         while (pattern.contains("[d]")) {
             pattern = pattern.replace("[d]", shortDay.format(current));
+        }
+        
+        while (pattern.contains("[HH]")) {
+            pattern = pattern.replace("[HH]", longHour.format(current));
+        }
+        while (pattern.contains("[H]")) {
+            pattern = pattern.replace("[H]", shortHour.format(current));
+        }
+        
+        while (pattern.contains("[MM]")) {
+            pattern = pattern.replace("[MM]", longMinute.format(current));
+        }
+        while (pattern.contains("[M]")) {
+            pattern = pattern.replace("[M]", shortMinute.format(current));
         }
         
         // variable values

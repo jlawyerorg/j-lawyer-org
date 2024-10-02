@@ -723,6 +723,10 @@ public class ServerFileUtils {
             currentExt = ".bea";
         } else if (currentFileName.toLowerCase().endsWith(".xml")) {
             currentExt = ".xml";
+        } else if (currentFileName.toLowerCase().endsWith(".pkcs7")) {
+            currentExt = ".pkcs7";
+        } else if (currentFileName.toLowerCase().endsWith(".ps7s")) {
+            currentExt = ".p7s";
         }
 
         if (!newFileName.endsWith(currentExt)) {
