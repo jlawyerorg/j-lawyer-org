@@ -1414,24 +1414,6 @@ public class PdfImageScrollingPanel extends javax.swing.JPanel implements Previe
         }
         log.debug("invoice checking / rendering took " + (System.currentTimeMillis() - start));
 
-//        new Thread(() -> {
-//            try {
-//                Thread.sleep(200);
-//            } catch (InterruptedException ex) {
-//                log.error(ex);
-//            }
-//            if (getParent() != null) {
-//                // component has been added to a container
-//                SwingUtilities.invokeLater(() -> {
-//                    getParent().revalidate();
-//                    getParent().repaint();
-//                });
-//                
-//            } else {
-//                log.info("not added to parent yet");
-//            }
-//        }).start();
-
     }
 
     private static void highlightXML(StyledDocument doc, String xml, Style tagStyle, Style attributeStyle, Style valueStyle) {

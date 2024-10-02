@@ -695,7 +695,6 @@ public class LoadDocumentPreviewThread implements Runnable {
 
     private static boolean running = false;
 
-    private JSplitPane previewContainer=null;
     private JPanel pnlPreview = null;
     private boolean readOnly = false;
     private ArchiveFileBean caseDto=null;
@@ -703,14 +702,13 @@ public class LoadDocumentPreviewThread implements Runnable {
     private boolean forceAnyDocumentSize=false;
     private DocumentPreviewSaveCallback saveCallback=null;
 
-    public LoadDocumentPreviewThread(JSplitPane previewContainer, ArchiveFileBean caseDto, ArchiveFileDocumentsBean value, boolean readOnly, JPanel pnlPreview, boolean forceAnyDocumentSize, DocumentPreviewSaveCallback saveCallback) {
+    public LoadDocumentPreviewThread(ArchiveFileBean caseDto, ArchiveFileDocumentsBean value, boolean readOnly, JPanel pnlPreview, boolean forceAnyDocumentSize, DocumentPreviewSaveCallback saveCallback) {
         this.docDto=value;
         this.pnlPreview = pnlPreview;
         this.readOnly = readOnly;
         this.caseDto=caseDto;
         this.forceAnyDocumentSize=forceAnyDocumentSize;
         this.saveCallback=saveCallback;
-        this.previewContainer=previewContainer;
     }
 
     public static boolean isRunning() {
@@ -785,13 +783,6 @@ public class LoadDocumentPreviewThread implements Runnable {
                     ((GifJpegPngImageWithTextPanel) prev).intelligentScrolling();
                 });
             }
-            
-//            SwingUtilities.invokeLater(() -> {
-//                if (this.previewContainer != null) {
-//                    ComponentUtils.bumpSplitPane(this.previewContainer);
-//                    this.previewContainer.doLayout();
-//                }
-//            });
             
             running = false;
         } catch (Exception ex) {
