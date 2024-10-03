@@ -688,6 +688,7 @@ import java.awt.Component;
 import java.awt.Toolkit;
 import java.awt.datatransfer.Clipboard;
 import java.awt.datatransfer.StringSelection;
+import java.awt.event.MouseEvent;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -874,6 +875,9 @@ public class AssistantGenericDialog extends javax.swing.JDialog {
     // <editor-fold defaultstate="collapsed" desc="Generated Code">//GEN-BEGIN:initComponents
     private void initComponents() {
 
+        popInputText = new javax.swing.JPopupMenu();
+        mnuPromptAll = new javax.swing.JMenuItem();
+        mnuPromptSelection = new javax.swing.JMenuItem();
         jScrollPane1 = new javax.swing.JScrollPane();
         taPrompt = new javax.swing.JTextArea();
         jScrollPane3 = new javax.swing.JScrollPane();
@@ -896,6 +900,22 @@ public class AssistantGenericDialog extends javax.swing.JDialog {
         jScrollPane2 = new javax.swing.JScrollPane();
         taResult = new javax.swing.JTextArea();
         cmdProcessOutput = new javax.swing.JButton();
+
+        mnuPromptAll.setText("in Prompt übernehmen");
+        mnuPromptAll.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                mnuPromptAllActionPerformed(evt);
+            }
+        });
+        popInputText.add(mnuPromptAll);
+
+        mnuPromptSelection.setText("Auswahl in Prompt übernehmen");
+        mnuPromptSelection.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                mnuPromptSelectionActionPerformed(evt);
+            }
+        });
+        popInputText.add(mnuPromptSelection);
 
         setDefaultCloseOperation(javax.swing.WindowConstants.DISPOSE_ON_CLOSE);
         setTitle("Assistent Ingo");
@@ -1016,6 +1036,11 @@ public class AssistantGenericDialog extends javax.swing.JDialog {
         taInputString.setLineWrap(true);
         taInputString.setRows(5);
         taInputString.setWrapStyleWord(true);
+        taInputString.addMouseListener(new java.awt.event.MouseAdapter() {
+            public void mousePressed(java.awt.event.MouseEvent evt) {
+                taInputStringMousePressed(evt);
+            }
+        });
         jScrollPane5.setViewportView(taInputString);
 
         javax.swing.GroupLayout jPanel1Layout = new javax.swing.GroupLayout(jPanel1);
@@ -1306,6 +1331,20 @@ public class AssistantGenericDialog extends javax.swing.JDialog {
         this.interrupted=true;
     }//GEN-LAST:event_cmdInterruptActionPerformed
 
+    private void mnuPromptAllActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_mnuPromptAllActionPerformed
+        this.taPrompt.insert(this.taInputString.getText(), this.taPrompt.getCaretPosition());
+    }//GEN-LAST:event_mnuPromptAllActionPerformed
+
+    private void mnuPromptSelectionActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_mnuPromptSelectionActionPerformed
+        this.taPrompt.insert(this.taInputString.getSelectedText(), this.taPrompt.getCaretPosition());
+    }//GEN-LAST:event_mnuPromptSelectionActionPerformed
+
+    private void taInputStringMousePressed(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_taInputStringMousePressed
+        if(evt.getClickCount()==1 && evt.getButton()==MouseEvent.BUTTON3) {
+            this.popInputText.show(this.taInputString, evt.getX(), evt.getY());
+        }
+    }//GEN-LAST:event_taInputStringMousePressed
+
     /**
      * @param args the command line arguments
      */
@@ -1362,8 +1401,11 @@ public class AssistantGenericDialog extends javax.swing.JDialog {
     private javax.swing.JLabel lblRequestType;
     private javax.swing.JList<String> lstInputFiles;
     private javax.swing.JList<String> lstOutputFiles;
+    private javax.swing.JMenuItem mnuPromptAll;
+    private javax.swing.JMenuItem mnuPromptSelection;
     private javax.swing.JPanel pnlParameters;
     private javax.swing.JPanel pnlTitle;
+    private javax.swing.JPopupMenu popInputText;
     private javax.swing.JProgressBar progress;
     private javax.swing.JSplitPane splitInputOutput;
     private javax.swing.JTextArea taInputString;
