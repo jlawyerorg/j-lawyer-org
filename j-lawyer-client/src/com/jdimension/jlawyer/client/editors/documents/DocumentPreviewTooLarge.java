@@ -761,7 +761,7 @@ public class DocumentPreviewTooLarge extends javax.swing.JPanel {
     }// </editor-fold>//GEN-END:initComponents
 
     private void cmdForcePreviewActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdForcePreviewActionPerformed
-        new Thread(new LoadDocumentPreviewThread(null, this.caseDto, this.docDto, this.readOnly, this.pnlPreview, true, this.saveCallback)).start();
+        new Thread(new LoadDocumentPreviewThread(this.caseDto, this.docDto, this.readOnly, this.pnlPreview, true, this.saveCallback)).start();
     }//GEN-LAST:event_cmdForcePreviewActionPerformed
 
     private void cmdPreviewSettingsActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdPreviewSettingsActionPerformed
