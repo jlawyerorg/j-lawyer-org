@@ -735,7 +735,7 @@ public class DocumentViewerFactory {
             }
             return ptp;
         } else if (lFileName.endsWith(".wav") || lFileName.endsWith(".ogg") || lFileName.endsWith(".mp3")) {
-            SoundplayerPanel spp=new SoundplayerPanel(id, readOnly);
+            SoundplayerPanel spp=new SoundplayerPanel(id, readOnly, saveCallback);
             spp.setSize(new Dimension(width, height));
             spp.setMaximumSize(new Dimension(width, height));
             spp.setPreferredSize(new Dimension(width, height));

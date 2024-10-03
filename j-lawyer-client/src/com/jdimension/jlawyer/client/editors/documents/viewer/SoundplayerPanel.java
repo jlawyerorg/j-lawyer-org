@@ -673,11 +673,15 @@ import com.jdimension.jlawyer.client.assistant.AssistantAccess;
 import com.jdimension.jlawyer.client.assistant.AssistantFlowAdapter;
 import com.jdimension.jlawyer.client.assistant.AssistantInputAdapter;
 import com.jdimension.jlawyer.client.editors.EditorsRegistry;
+import com.jdimension.jlawyer.client.editors.files.EditArchiveFileDetailsPanel;
 import com.jdimension.jlawyer.client.settings.ClientSettings;
 import com.jdimension.jlawyer.client.utils.ThreadUtils;
 import com.jdimension.jlawyer.client.utils.WavAudioUtils;
 import com.jdimension.jlawyer.persistence.AssistantConfig;
 import com.jdimension.jlawyer.services.JLawyerServiceLocator;
+import java.awt.Toolkit;
+import java.awt.datatransfer.Clipboard;
+import java.awt.datatransfer.StringSelection;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import javax.sound.sampled.AudioInputStream;
@@ -704,22 +708,27 @@ public class SoundplayerPanel extends javax.swing.JPanel implements PreviewPanel
     private static final Logger log = Logger.getLogger(SoundplayerPanel.class.getName());
 
     private String documentId = null;
-    private byte[] content=null;
+    private byte[] content = null;
     private String initialComment = null;
 
     private Clip clip;
     private Timer timer;
-    
+
     private boolean readOnly = true;
+
+    private DocumentPreviewSaveCallback saveCallback = null;
 
     /**
      * Creates new form SoundplayerPanel
+     *
      * @param docId
      * @param readOnly
+     * @param saveCallback
      */
-    public SoundplayerPanel(String docId, boolean readOnly) {
+    public SoundplayerPanel(String docId, boolean readOnly, DocumentPreviewSaveCallback saveCallback) {
         this.documentId = docId;
         this.readOnly = readOnly;
+        this.saveCallback = saveCallback;
         initComponents();
     }
 
@@ -742,6 +751,8 @@ public class SoundplayerPanel extends javax.swing.JPanel implements PreviewPanel
         jSeparator1 = new javax.swing.JSeparator();
         jScrollPane1 = new javax.swing.JScrollPane();
         taTranscription = new javax.swing.JTextArea();
+        cmdNewDocument = new javax.swing.JButton();
+        cmdCopy = new javax.swing.JButton();
 
         cmdPlayPause.setFont(cmdPlayPause.getFont());
         cmdPlayPause.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons32/material/baseline_play_circle_black_48dp.png"))); // NOI18N
@@ -780,6 +791,22 @@ public class SoundplayerPanel extends javax.swing.JPanel implements PreviewPanel
         taTranscription.setRows(5);
         jScrollPane1.setViewportView(taTranscription);
 
+        cmdNewDocument.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/edit.png"))); // NOI18N
+        cmdNewDocument.setText("neues Dokument");
+        cmdNewDocument.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                cmdNewDocumentActionPerformed(evt);
+            }
+        });
+
+        cmdCopy.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons16/editpaste.png"))); // NOI18N
+        cmdCopy.setText("Kopieren");
+        cmdCopy.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                cmdCopyActionPerformed(evt);
+            }
+        });
+
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(this);
         this.setLayout(layout);
         layout.setHorizontalGroup(
@@ -795,13 +822,16 @@ public class SoundplayerPanel extends javax.swing.JPanel implements PreviewPanel
                         .addGap(34, 34, 34))
                     .addComponent(jSeparator1, javax.swing.GroupLayout.Alignment.LEADING)
                     .addGroup(javax.swing.GroupLayout.Alignment.LEADING, layout.createSequentialGroup()
-                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                            .addGroup(layout.createSequentialGroup()
-                                .addComponent(cmdPlayPause)
-                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                                .addComponent(cmdStop))
-                            .addComponent(cmdAssistant))
-                        .addGap(0, 0, Short.MAX_VALUE)))
+                        .addComponent(cmdPlayPause)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addComponent(cmdStop)
+                        .addGap(0, 0, Short.MAX_VALUE))
+                    .addGroup(javax.swing.GroupLayout.Alignment.LEADING, layout.createSequentialGroup()
+                        .addComponent(cmdAssistant)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                        .addComponent(cmdNewDocument)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addComponent(cmdCopy)))
                 .addContainerGap())
         );
         layout.setVerticalGroup(
@@ -820,7 +850,11 @@ public class SoundplayerPanel extends javax.swing.JPanel implements PreviewPanel
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(jSeparator1, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(cmdAssistant)
+                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addComponent(cmdAssistant)
+                    .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                        .addComponent(cmdCopy)
+                        .addComponent(cmdNewDocument)))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(jScrollPane1, javax.swing.GroupLayout.DEFAULT_SIZE, 214, Short.MAX_VALUE)
                 .addContainerGap())
@@ -836,12 +870,12 @@ public class SoundplayerPanel extends javax.swing.JPanel implements PreviewPanel
     }//GEN-LAST:event_cmdStopActionPerformed
 
     private void cmdAssistantMouseReleased(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_cmdAssistantMouseReleased
-        AssistantAccess ingo=AssistantAccess.getInstance();
+        AssistantAccess ingo = AssistantAccess.getInstance();
         try {
-            Map<AssistantConfig,List<AiCapability>> capabilities=ingo.filterCapabilities(AiCapability.REQUESTTYPE_TRANSCRIBE, AiCapability.INPUTTYPE_FILE);
+            Map<AssistantConfig, List<AiCapability>> capabilities = ingo.filterCapabilities(AiCapability.REQUESTTYPE_TRANSCRIBE, AiCapability.INPUTTYPE_FILE);
             this.popAssistant.removeAll();
             //ingo.populateMenu(this.popAssistant, capabilities, this);
-            ingo.populateMenu(this.popAssistant, capabilities, (AssistantInputAdapter)this, null);
+            ingo.populateMenu(this.popAssistant, capabilities, (AssistantInputAdapter) this, null);
             this.popAssistant.show(this.cmdAssistant, evt.getX(), evt.getY());
         } catch (Exception ex) {
             log.error(ex);
@@ -849,9 +883,28 @@ public class SoundplayerPanel extends javax.swing.JPanel implements PreviewPanel
         }
     }//GEN-LAST:event_cmdAssistantMouseReleased
 
+    private void cmdNewDocumentActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdNewDocumentActionPerformed
+        if (this.saveCallback != null) {
+            if (this.saveCallback instanceof EditArchiveFileDetailsPanel) {
+                ((EditArchiveFileDetailsPanel) this.saveCallback).newDocumentDialog(null, null, null, null, null, null, this.taTranscription.getText());
+            }
+        }
+    }//GEN-LAST:event_cmdNewDocumentActionPerformed
+
+    private void cmdCopyActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdCopyActionPerformed
+
+        Toolkit toolkit = Toolkit.getDefaultToolkit();
+        Clipboard clipboard = toolkit.getSystemClipboard();
+        StringSelection strSel = new StringSelection(this.taTranscription.getText());
+        clipboard.setContents(strSel, null);
+
+    }//GEN-LAST:event_cmdCopyActionPerformed
+
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JButton cmdAssistant;
+    private javax.swing.JButton cmdCopy;
+    private javax.swing.JButton cmdNewDocument;
     private javax.swing.JButton cmdPlayPause;
     private javax.swing.JButton cmdStop;
     private javax.swing.JScrollPane jScrollPane1;
@@ -872,19 +925,19 @@ public class SoundplayerPanel extends javax.swing.JPanel implements PreviewPanel
     public void removeNotify() {
         super.removeNotify();
         stop(); // Stop the sound when the panel is removed or no longer displayed
-        
+
         if (this.documentId != null && !this.readOnly) {
 
             String currentComment = this.taTranscription.getText();
-            if (currentComment!=null && !currentComment.equals(this.initialComment)) {
+            if (currentComment != null && !currentComment.equals(this.initialComment)) {
                 try {
-                    
-                    byte[] newWav=WavAudioUtils.addOrUpdateCommentInWav(this.content, this.taTranscription.getText());
-                    
+
+                    byte[] newWav = WavAudioUtils.addOrUpdateCommentInWav(this.content, this.taTranscription.getText());
+
                     ClientSettings settings = ClientSettings.getInstance();
                     JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
                     locator.lookupArchiveFileServiceRemote().setDocumentContent(this.documentId, newWav);
-                    this.content=newWav;
+                    this.content = newWav;
                 } catch (Throwable t) {
                     log.error("Error saving document with id " + this.documentId, t);
                     ThreadUtils.showErrorDialog(EditorsRegistry.getInstance().getMainWindow(), "Fehler beim Speichern: " + t.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR);
@@ -897,23 +950,23 @@ public class SoundplayerPanel extends javax.swing.JPanel implements PreviewPanel
     @Override
     public void showContent(String documentId, byte[] content) {
         this.documentId = documentId;
-        this.content=content;
-        
-        this.initialComment=WavAudioUtils.getInfoChunk(this.content);
-        if(this.initialComment!=null) {
-            this.initialComment=this.initialComment.replace("ICMT: ", "");
+        this.content = content;
+
+        this.initialComment = WavAudioUtils.getInfoChunk(this.content);
+        if (this.initialComment != null) {
+            this.initialComment = this.initialComment.replace("ICMT: ", "");
             this.taTranscription.setText(this.initialComment);
         } else {
             this.taTranscription.setText("");
         }
-        
+
         try {
             AudioInputStream audioInputStream = AudioSystem.getAudioInputStream(new ByteArrayInputStream(content));
             clip = AudioSystem.getClip();
             clip.open(audioInputStream);
 
             clip.addLineListener((LineEvent event) -> {
-                if (event.getType() == LineEvent.Type.STOP && (clip.getMicrosecondPosition()==clip.getMicrosecondLength())) {
+                if (event.getType() == LineEvent.Type.STOP && (clip.getMicrosecondPosition() == clip.getMicrosecondLength())) {
                     clip.setMicrosecondPosition(0);
                     timer.stop();
                     updateTimeLabel();
@@ -983,14 +1036,14 @@ public class SoundplayerPanel extends javax.swing.JPanel implements PreviewPanel
 
     @Override
     public List<ParameterData> getParameters(AiCapability c) {
-        
+
         return null;
     }
 
     @Override
     public List<InputData> getInputs(AiCapability c) {
-        ArrayList<InputData> inputs=new ArrayList<>();
-        InputData i=new InputData();
+        ArrayList<InputData> inputs = new ArrayList<>();
+        InputData i = new InputData();
         i.setFileName("Sounddatei.wav");
         i.setType("file");
         i.setBase64(true);
@@ -1002,11 +1055,12 @@ public class SoundplayerPanel extends javax.swing.JPanel implements PreviewPanel
     @Override
     public void processOutput(AiCapability c, AiRequestStatus status) {
         status.getResponse();
-        StringBuilder result=new StringBuilder();
-        for(OutputData o: status.getResponse().getOutputData()) {
-            if(o.getType().equalsIgnoreCase(OutputData.TYPE_STRING))
+        StringBuilder result = new StringBuilder();
+        for (OutputData o : status.getResponse().getOutputData()) {
+            if (o.getType().equalsIgnoreCase(OutputData.TYPE_STRING)) {
                 result.append(o.getStringData()).append(System.lineSeparator()).append(System.lineSeparator());
-            
+            }
+
         }
         taTranscription.setText(result.toString());
     }
