@@ -727,7 +727,21 @@ public class ServerFileUtils {
             currentExt = ".pkcs7";
         } else if (currentFileName.toLowerCase().endsWith(".ps7s")) {
             currentExt = ".p7s";
+        } else if (currentFileName.toLowerCase().endsWith(".zip")) {
+            currentExt = ".zip";
         }
+        
+        if("".equals(currentExt)) {
+            // fallback solution for unkown file types
+            int dotIndex = currentFileName.lastIndexOf('.');
+            if (dotIndex > 0 && dotIndex < currentFileName.length() - 1) {
+                String extension = currentFileName.substring(dotIndex);
+                if (extension.length() <= 6) {
+                    currentExt = extension;
+                }
+            }
+        }
+        
 
         if (!newFileName.endsWith(currentExt)) {
             newFileName = newFileName + currentExt;
