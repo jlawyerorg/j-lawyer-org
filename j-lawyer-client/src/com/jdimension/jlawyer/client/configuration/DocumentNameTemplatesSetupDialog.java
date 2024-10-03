@@ -892,7 +892,7 @@ public class DocumentNameTemplatesSetupDialog extends javax.swing.JDialog {
         lblError.setText(" ");
 
         jLabel10.setFont(jLabel10.getFont());
-        jLabel10.setText("y m d (y...Jahr m...Monat d...Tag H...Stunde M...Minute)");
+        jLabel10.setText("y m d in eckigen Klammern (y=Jahr m=Monat d=Tag H=Stunde M=Minute)");
         jLabel10.setToolTipText("Platzhalter für Jahr / Monat / Tag sind in eckigen Klammern anzugeben:\n\n[yy] - zweistellige Jahreszahl\n[yyyy] - vierstellige Jahreszahl\n[mm] - Monat\n[dd] - Tag\n[HH] - Stunde\n[MM] - Minute");
 
         jLabel11.setFont(jLabel11.getFont());
@@ -940,7 +940,7 @@ public class DocumentNameTemplatesSetupDialog extends javax.swing.JDialog {
                                             .addComponent(jLabel14)
                                             .addComponent(jLabel11)
                                             .addComponent(jLabel3))
-                                        .addGap(0, 55, Short.MAX_VALUE))
+                                        .addGap(0, 0, Short.MAX_VALUE))
                                     .addComponent(jScrollPane2))))))
                 .addContainerGap())
         );
@@ -1029,7 +1029,7 @@ public class DocumentNameTemplatesSetupDialog extends javax.swing.JDialog {
             DocumentNameTemplate tpl = new DocumentNameTemplate();
             tpl.setDisplayName(newNameObject.toString());
             tpl.setDefaultTemplate(false);
-            tpl.setPattern("yyyy-mm-dd_DATEINAME");
+            tpl.setPattern("[yyyy]-[mm]-[dd]_DATEINAME");
             DocumentNameTemplate savedTpl = locator.lookupSystemManagementRemote().addDocumentNameTemplate(tpl);
 
             ((DefaultTableModel) this.tblTemplates.getModel()).addRow(new Object[]{savedTpl, savedTpl.getPattern()});

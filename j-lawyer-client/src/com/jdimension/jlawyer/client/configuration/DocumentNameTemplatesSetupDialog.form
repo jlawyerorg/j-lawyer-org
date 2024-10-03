@@ -62,7 +62,7 @@
                                           <Component id="jLabel11" alignment="0" min="-2" max="-2" attributes="0"/>
                                           <Component id="jLabel3" alignment="0" min="-2" max="-2" attributes="0"/>
                                       </Group>
-                                      <EmptySpace min="0" pref="55" max="32767" attributes="0"/>
+                                      <EmptySpace min="0" pref="0" max="32767" attributes="0"/>
                                   </Group>
                                   <Component id="jScrollPane2" alignment="0" max="32767" attributes="0"/>
                               </Group>
@@ -365,7 +365,7 @@
             <Font component="jLabel10" property="font" relativeSize="true" size="0"/>
           </FontInfo>
         </Property>
-        <Property name="text" type="java.lang.String" value="y m d (y...Jahr m...Monat d...Tag H...Stunde M...Minute)"/>
+        <Property name="text" type="java.lang.String" value="y m d in eckigen Klammern (y=Jahr m=Monat d=Tag H=Stunde M=Minute)"/>
         <Property name="toolTipText" type="java.lang.String" value="Platzhalter f&#xfc;r Jahr / Monat / Tag sind in eckigen Klammern anzugeben:&#xa;&#xa;[yy] - zweistellige Jahreszahl&#xa;[yyyy] - vierstellige Jahreszahl&#xa;[mm] - Monat&#xa;[dd] - Tag&#xa;[HH] - Stunde&#xa;[MM] - Minute"/>
       </Properties>
     </Component>
