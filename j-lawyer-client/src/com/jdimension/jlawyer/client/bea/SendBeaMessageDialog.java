@@ -701,6 +701,7 @@ import com.jdimension.jlawyer.persistence.PartyTypeBean;
 import com.jdimension.jlawyer.services.JLawyerServiceLocator;
 import com.jdimension.jlawyer.pojo.PartiesTriplet;
 import java.awt.Color;
+import java.awt.Point;
 import java.awt.datatransfer.DataFlavor;
 import java.awt.datatransfer.Transferable;
 import java.awt.dnd.DnDConstants;
@@ -1179,7 +1180,23 @@ public class SendBeaMessageDialog extends javax.swing.JDialog implements SendCom
         contentPanel = new javax.swing.JPanel();
         jLabel9 = new javax.swing.JLabel();
         jScrollPane1 = new javax.swing.JScrollPane();
-        tblAttachments = new javax.swing.JTable();
+        tblAttachments = new JTable() {
+            @Override
+            public String getToolTipText(MouseEvent event) {
+                Point point = event.getPoint();
+                int row = rowAtPoint(point);
+                int column = columnAtPoint(point);
+
+                if (row >= 0 && column >= 0) {
+                    Object value = getValueAt(row, column);
+                    if(value instanceof Boolean)
+                    return null;
+                    else
+                    return "" + value;
+                }
+                return null;  // No tooltip
+            }
+        };
         jLabel8 = new javax.swing.JLabel();
         jToolBar1 = new javax.swing.JToolBar();
         cmdSend = new javax.swing.JButton();
@@ -1358,11 +1375,11 @@ public class SendBeaMessageDialog extends javax.swing.JDialog implements SendCom
         });
         tblAttachments.setDragEnabled(true);
         tblAttachments.addMouseListener(new java.awt.event.MouseAdapter() {
-            public void mousePressed(java.awt.event.MouseEvent evt) {
-                tblAttachmentsMousePressed(evt);
-            }
             public void mouseClicked(java.awt.event.MouseEvent evt) {
                 tblAttachmentsMouseClicked(evt);
+            }
+            public void mousePressed(java.awt.event.MouseEvent evt) {
+                tblAttachmentsMousePressed(evt);
             }
         });
         jScrollPane1.setViewportView(tblAttachments);
