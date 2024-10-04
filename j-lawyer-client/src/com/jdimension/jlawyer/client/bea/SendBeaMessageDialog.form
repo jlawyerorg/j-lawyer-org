@@ -399,9 +399,12 @@
                     <Property name="dragEnabled" type="boolean" value="true"/>
                   </Properties>
                   <Events>
-                    <EventHandler event="mousePressed" listener="java.awt.event.MouseListener" parameters="java.awt.event.MouseEvent" handler="tblAttachmentsMousePressed"/>
                     <EventHandler event="mouseClicked" listener="java.awt.event.MouseListener" parameters="java.awt.event.MouseEvent" handler="tblAttachmentsMouseClicked"/>
+                    <EventHandler event="mousePressed" listener="java.awt.event.MouseListener" parameters="java.awt.event.MouseEvent" handler="tblAttachmentsMousePressed"/>
                   </Events>
+                  <AuxValues>
+                    <AuxValue name="JavaCodeGenerator_CreateCodeCustom" type="java.lang.String" value="new JTable() {&#xa;@Override&#xa;                public String getToolTipText(MouseEvent event) {&#xa;                    Point point = event.getPoint();&#xa;                    int row = rowAtPoint(point);&#xa;                    int column = columnAtPoint(point);&#xa;                    &#xa;                    if (row &gt;= 0 &amp;&amp; column &gt;= 0) {&#xa;                        Object value = getValueAt(row, column);&#xa;                        if(value instanceof Boolean)&#xa;                            return null;&#xa;                        else&#xa;                            return &quot;&quot; + value;&#xa;                    }&#xa;                    return null;  // No tooltip&#xa;                }&#xa;};"/>
+                  </AuxValues>
                 </Component>
               </SubComponents>
             </Container>
