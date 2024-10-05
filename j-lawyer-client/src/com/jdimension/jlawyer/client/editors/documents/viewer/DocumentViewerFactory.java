@@ -734,6 +734,17 @@ public class DocumentViewerFactory {
                 ptp.showContent(id, ("FEHLER: " + ex.getMessage()).getBytes());
             }
             return ptp;
+        } else if (lFileName.endsWith(".md")) {
+            MarkdownPanel mdp = new MarkdownPanel(id, readOnly);
+            mdp.setSize(new Dimension(width, height));
+            mdp.setMaximumSize(new Dimension(width, height));
+            mdp.setPreferredSize(new Dimension(width, height));
+            try {
+                mdp.showContent(id, previewProvider.getPreview().getBytes());
+            } catch (Exception ex) {
+                mdp.showContent(id, ("FEHLER: " + ex.getMessage()).getBytes());
+            }
+            return mdp;
         } else if (lFileName.endsWith(".wav") || lFileName.endsWith(".ogg") || lFileName.endsWith(".mp3")) {
             SoundplayerPanel spp=new SoundplayerPanel(id, readOnly, saveCallback);
             spp.setSize(new Dimension(width, height));
