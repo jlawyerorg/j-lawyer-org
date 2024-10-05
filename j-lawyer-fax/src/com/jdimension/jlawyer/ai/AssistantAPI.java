@@ -1033,6 +1033,9 @@ public class AssistantAPI {
 
                     stringKey = Jsoner.mintJsonKey("requestType", null);
                     capability.setRequestType(c.getString(stringKey));
+                    
+                    stringKey = Jsoner.mintJsonKey("usageTypes", null);
+                    capability.setUsageTypes(c.getString(stringKey));
 
                     allCapabilities.add(capability);
 
