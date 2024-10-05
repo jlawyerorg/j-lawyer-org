@@ -663,9 +663,21 @@
  */
 package com.jdimension.jlawyer.client.mail.sidebar;
 
+import com.jdimension.jlawyer.ai.AiCapability;
+import com.jdimension.jlawyer.ai.AiRequestStatus;
+import com.jdimension.jlawyer.ai.InputData;
+import com.jdimension.jlawyer.ai.OutputData;
+import com.jdimension.jlawyer.client.assistant.AssistantAccess;
+import com.jdimension.jlawyer.client.settings.ClientSettings;
 import com.jdimension.jlawyer.client.utils.ComponentUtils;
 import com.jdimension.jlawyer.client.wizard.*;
+import com.jdimension.jlawyer.persistence.AssistantConfig;
+import com.jdimension.jlawyer.services.JLawyerServiceLocator;
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import javax.swing.JOptionPane;
 import javax.swing.event.CaretEvent;
 import javax.swing.table.DefaultTableModel;
 import org.apache.log4j.Logger;
@@ -679,6 +691,9 @@ public class CreateAddressStep extends javax.swing.JPanel implements WizardStepI
     private static final Logger log = Logger.getLogger(CreateAddressStep.class.getName());
     
     private WizardDataContainer data = null;
+    
+    private AiCapability extractCapability = null;
+    private AssistantConfig extractConfig = null;
 
     /**
      * Creates new form CreateAddressStep
@@ -712,6 +727,21 @@ public class CreateAddressStep extends javax.swing.JPanel implements WizardStepI
         this.tblAttributes.setDefaultEditor(Object.class, new AttributeCellEditor());
         
         ComponentUtils.decorateSplitPane(jSplitPane1);
+        
+        AssistantAccess ingo = AssistantAccess.getInstance();
+        try {
+            Map<AssistantConfig, List<AiCapability>> capabilities = ingo.filterCapabilities(AiCapability.REQUESTTYPE_EXTRACT, AiCapability.INPUTTYPE_STRING, AiCapability.USAGETYPE_AUTOMATED);
+
+            if (!capabilities.isEmpty()) {
+                // use first capability that can transcribe
+                this.extractCapability = capabilities.get(capabilities.keySet().iterator().next()).get(0);
+                this.extractConfig = capabilities.keySet().iterator().next();
+                this.cmdExtract.setEnabled(true);
+            }
+        } catch (Exception ex) {
+            log.error(ex);
+            JOptionPane.showMessageDialog(this, "" + ex.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
+        }
         
     }
     
@@ -766,6 +796,7 @@ public class CreateAddressStep extends javax.swing.JPanel implements WizardStepI
         jScrollPane2 = new javax.swing.JScrollPane();
         tblAttributes = new javax.swing.JTable();
         chkGenerateAddress = new javax.swing.JCheckBox();
+        cmdExtract = new javax.swing.JButton();
 
         setName("Beteiligte aus Signatur erstellen"); // NOI18N
 
@@ -776,7 +807,9 @@ public class CreateAddressStep extends javax.swing.JPanel implements WizardStepI
         jLabel1.setOpaque(true);
 
         taBody.setColumns(20);
+        taBody.setLineWrap(true);
         taBody.setRows(5);
+        taBody.setWrapStyleWord(true);
         jScrollPane1.setViewportView(taBody);
 
         jSplitPane1.setLeftComponent(jScrollPane1);
@@ -812,6 +845,13 @@ public class CreateAddressStep extends javax.swing.JPanel implements WizardStepI
             }
         });
 
+        cmdExtract.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons16/material/j-lawyer-ai.png"))); // NOI18N
+        cmdExtract.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                cmdExtractActionPerformed(evt);
+            }
+        });
+
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(this);
         this.setLayout(layout);
         layout.setHorizontalGroup(
@@ -822,7 +862,8 @@ public class CreateAddressStep extends javax.swing.JPanel implements WizardStepI
                     .addComponent(jLabel1, javax.swing.GroupLayout.DEFAULT_SIZE, 876, Short.MAX_VALUE)
                     .addGroup(layout.createSequentialGroup()
                         .addComponent(chkGenerateAddress)
-                        .addGap(0, 0, Short.MAX_VALUE))
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                        .addComponent(cmdExtract))
                     .addComponent(jSplitPane1))
                 .addContainerGap())
         );
@@ -832,9 +873,11 @@ public class CreateAddressStep extends javax.swing.JPanel implements WizardStepI
                 .addContainerGap()
                 .addComponent(jLabel1, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-                .addComponent(chkGenerateAddress)
+                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                    .addComponent(chkGenerateAddress)
+                    .addComponent(cmdExtract))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(jSplitPane1, javax.swing.GroupLayout.DEFAULT_SIZE, 524, Short.MAX_VALUE)
+                .addComponent(jSplitPane1, javax.swing.GroupLayout.DEFAULT_SIZE, 522, Short.MAX_VALUE)
                 .addContainerGap())
         );
     }// </editor-fold>//GEN-END:initComponents
@@ -844,8 +887,91 @@ public class CreateAddressStep extends javax.swing.JPanel implements WizardStepI
         this.tblAttributes.setEnabled(this.chkGenerateAddress.isSelected());
     }//GEN-LAST:event_chkGenerateAddressActionPerformed
 
+    private void cmdExtractActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdExtractActionPerformed
+        DefaultTableModel tm = (DefaultTableModel) this.tblAttributes.getModel();
+        tm.setRowCount(0);
+
+        String text = this.taBody.getSelectedText();
+        if (text == null) {
+            text = this.taBody.getText();
+        }
+
+        List<InputData> inputs = new ArrayList();
+        InputData stringInput = new InputData();
+        stringInput.setStringData(text);
+        stringInput.setType(InputData.TYPE_STRING);
+        inputs.add(stringInput);
+
+        ClientSettings settings = ClientSettings.getInstance();
+        try {
+            JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
+
+            AiRequestStatus status = locator.lookupIntegrationServiceRemote().submitAssistantRequest(extractConfig, extractCapability.getRequestType(), extractCapability.getModelType(), "", null, inputs, null);
+            if (status != null) {
+                String resultText = "";
+                if (status.getStatus().equalsIgnoreCase("failed")) {
+                    resultText = status.getStatus() + ": " + status.getStatusDetails();
+                } else {
+                    StringBuilder resultString = new StringBuilder();
+                    for (OutputData o : status.getResponse().getOutputData()) {
+                        if (o.getType().equalsIgnoreCase(OutputData.TYPE_STRING)) {
+                            resultString.append(o.getStringData());
+                        }
+
+                    }
+                    resultText = resultString.toString();
+                }
+
+                log.info("Ingo extracted contacts and responde: ");
+                log.info(resultText);
+                
+                Map<String,String> contactAttributes=AssistantAccess.jsonStringToMap(resultText);
+                
+                for(String key: contactAttributes.keySet()) {
+                    String mappingKey=null;
+                    if(key.equalsIgnoreCase("company")) {
+                        mappingKey=AttributeCellEditor.ATTRIBUTE_UNTERNEHMEN;
+                    } else if(key.equalsIgnoreCase("firstName")) {
+                        mappingKey=AttributeCellEditor.ATTRIBUTE_VORNAME;
+                    } else if(key.equalsIgnoreCase("name")) {
+                        mappingKey=AttributeCellEditor.ATTRIBUTE_NAME;
+                    } else if(key.equalsIgnoreCase("city")) {
+                        mappingKey=AttributeCellEditor.ATTRIBUTE_ORT;
+                    } else if(key.equalsIgnoreCase("phone")) {
+                        mappingKey=AttributeCellEditor.ATTRIBUTE_TEL;
+                    } else if(key.equalsIgnoreCase("mobile")) {
+                        mappingKey=AttributeCellEditor.ATTRIBUTE_MOBIL;
+                    } else if(key.equalsIgnoreCase("zip")) {
+                        mappingKey=AttributeCellEditor.ATTRIBUTE_PLZ;
+                    } else if(key.equalsIgnoreCase("country")) {
+                        mappingKey=AttributeCellEditor.ATTRIBUTE_LAND;
+                    } else if(key.equalsIgnoreCase("street")) {
+                        mappingKey=AttributeCellEditor.ATTRIBUTE_STRASSE;
+                    } else if(key.equalsIgnoreCase("streetNo")) {
+                        mappingKey=AttributeCellEditor.ATTRIBUTE_HAUSNR;
+                    } else if(key.equalsIgnoreCase("email")) {
+                        mappingKey=AttributeCellEditor.ATTRIBUTE_EMAIL;
+                    } else if(key.equalsIgnoreCase("fax")) {
+                        mappingKey=AttributeCellEditor.ATTRIBUTE_FAX;
+                    }
+                    if(mappingKey!=null) {
+                        String value=contactAttributes.get(key);
+                        tm.addRow(new String[]{value, mappingKey});
+                    }
+                    
+                }
+
+            }
+
+        } catch (Throwable t) {
+            log.error("Error processing AI request", t);
+            JOptionPane.showMessageDialog(this, "Kontaktdaten konnten nicht extrahiert werden: " + t.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
+        }
+    }//GEN-LAST:event_cmdExtractActionPerformed
+
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JCheckBox chkGenerateAddress;
+    private javax.swing.JButton cmdExtract;
     private javax.swing.JLabel jLabel1;
     private javax.swing.JScrollPane jScrollPane1;
     private javax.swing.JScrollPane jScrollPane2;

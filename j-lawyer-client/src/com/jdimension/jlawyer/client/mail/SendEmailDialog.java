@@ -811,7 +811,7 @@ public class SendEmailDialog extends javax.swing.JDialog implements SendCommunic
         
         AssistantAccess ingo = AssistantAccess.getInstance();
         try {
-            Map<AssistantConfig, List<AiCapability>> capabilities = ingo.filterCapabilities(AiCapability.REQUESTTYPE_TRANSCRIBE, AiCapability.INPUTTYPE_FILE);
+            Map<AssistantConfig, List<AiCapability>> capabilities = ingo.filterCapabilities(AiCapability.REQUESTTYPE_TRANSCRIBE, AiCapability.INPUTTYPE_FILE, AiCapability.USAGETYPE_AUTOMATED);
             
             if (!capabilities.isEmpty()) {
                 // use first capability that can transcribe

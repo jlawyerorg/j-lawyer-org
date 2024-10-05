@@ -663,9 +663,21 @@ For more information on this, and how to apply and follow the GNU AGPL, see
  */
 package com.jdimension.jlawyer.client.editors.addresses;
 
+import com.jdimension.jlawyer.ai.AiCapability;
+import com.jdimension.jlawyer.ai.AiRequestStatus;
+import com.jdimension.jlawyer.ai.InputData;
+import com.jdimension.jlawyer.ai.OutputData;
+import com.jdimension.jlawyer.client.assistant.AssistantAccess;
 import com.jdimension.jlawyer.client.mail.sidebar.AttributeCellEditor;
+import com.jdimension.jlawyer.client.settings.ClientSettings;
 import com.jdimension.jlawyer.client.utils.ComponentUtils;
+import com.jdimension.jlawyer.persistence.AssistantConfig;
+import com.jdimension.jlawyer.services.JLawyerServiceLocator;
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import javax.swing.JOptionPane;
 import javax.swing.event.CaretEvent;
 import javax.swing.table.DefaultTableModel;
 import org.apache.log4j.Logger;
@@ -675,24 +687,28 @@ import org.apache.log4j.Logger;
  * @author jens
  */
 public class AddressFromClipboardDialog extends javax.swing.JDialog {
-    
-    private static final Logger log=Logger.getLogger(AddressFromClipboardDialog.class.getName());
-    
-    private HashMap<String, String> attributes=new HashMap<>();
+
+    private static final Logger log = Logger.getLogger(AddressFromClipboardDialog.class.getName());
+
+    private HashMap<String, String> attributes = new HashMap<>();
+
+    private AiCapability extractCapability = null;
+    private AssistantConfig extractConfig = null;
 
     /**
      * Creates new form AddressFromClipboardDialog
+     *
      * @param parent
      * @param modal
      */
     public AddressFromClipboardDialog(java.awt.Frame parent, boolean modal) {
         super(parent, modal);
         initComponents();
-        
+
         this.taBody.addCaretListener((CaretEvent e) -> {
             int dot = e.getDot();
             int mark = e.getMark();
-            
+
             if (dot != mark) {
                 try {
                     String text = this.taBody.getText(Math.min(dot, mark), Math.max(dot, mark) - Math.min(dot, mark));
@@ -701,83 +717,98 @@ public class AddressFromClipboardDialog extends javax.swing.JDialog {
                 } catch (Exception ex) {
                     log.error("Unable to extract attributes", ex);
                 }
-                
+
             }
         });
 
         DefaultTableModel tm = (DefaultTableModel) this.tblAttributes.getModel();
         tm.setRowCount(0);
         this.tblAttributes.setDefaultEditor(Object.class, new AttributeCellEditor());
-        
+
         ComponentUtils.decorateSplitPane(jSplitPane1);
+
+        AssistantAccess ingo = AssistantAccess.getInstance();
+        try {
+            Map<AssistantConfig, List<AiCapability>> capabilities = ingo.filterCapabilities(AiCapability.REQUESTTYPE_EXTRACT, AiCapability.INPUTTYPE_STRING, AiCapability.USAGETYPE_AUTOMATED);
+
+            if (!capabilities.isEmpty()) {
+                // use first capability that can transcribe
+                this.extractCapability = capabilities.get(capabilities.keySet().iterator().next()).get(0);
+                this.extractConfig = capabilities.keySet().iterator().next();
+                this.cmdExtract.setEnabled(true);
+            }
+        } catch (Exception ex) {
+            log.error(ex);
+            JOptionPane.showMessageDialog(this, "" + ex.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
+        }
     }
 
     private void extractAttributes(String text) {
 
         DefaultTableModel tm = (DefaultTableModel) this.tblAttributes.getModel();
         tm.setRowCount(0);
-        
+
         String[] lines = text.split("\n");
         for (String line : lines) {
-            line=line.trim();
-            if(line.isEmpty())
+            line = line.trim();
+            if (line.isEmpty()) {
                 continue;
-            
-            
-            String field="";
-            if(line.contains("@") || line.contains("(at)")) {
-                field=AttributeCellEditor.ATTRIBUTE_EMAIL;
-                line=line.replace("E-Mail:", "");
-                line=line.replace("Email:", "");
-                line=line.replace("Mail:", "");
-                line=line.replace("(at)", "@");
-                line=line.replace("(dot)", ".");
-                line=line.replace(":", "");
-                line=line.trim();
-            } else if (line.toLowerCase().contains("telefon") || line.toLowerCase().contains("tel:") || line.toLowerCase().contains("tel.")) {
-                field=AttributeCellEditor.ATTRIBUTE_TEL;
-                line=line.replace("Telefonnummer", "");
-                line=line.replace("telefonnummer", "");
-                line=line.replace("Telefon", "");
-                line=line.replace("telefon", "");
-                line=line.replace("Tel", "");
-                line=line.replace("tel", "");
-                line=line.replace("Tel.", "");
-                line=line.replace("tel.", "");
-                line=line.replace(":", "");
-                line=line.replace(".", "");
-                line=line.trim();
-            } else if (line.toLowerCase().contains("mobil")) {
-                field=AttributeCellEditor.ATTRIBUTE_MOBIL;
-                line=line.replace("Mobil", "");
-                line=line.replace("Mobilnummer", "");
-                line=line.replace("Handy", "");
-                line=line.replace("handy", "");
-                line=line.replace(":", "");
-                line=line.replace(".", "");
-                line=line.trim();
-            } else if (line.toLowerCase().contains("fax") || line.toLowerCase().contains("fax:") || line.toLowerCase().contains("telefax") || line.toLowerCase().contains("telefax:")) {
-                field=AttributeCellEditor.ATTRIBUTE_FAX;
-                line=line.replace("Telefax", "");
-                line=line.replace("telefax", "");
-                line=line.replace("Fax", "");
-                line=line.replace("fax", "");
-                line=line.replace(":", "");
-                line=line.replace(".", "");
-                line=line.trim();
-            } else if(line.matches("\\d{5}")) {
-                field=AttributeCellEditor.ATTRIBUTE_PLZ;
-            } else if(line.toLowerCase().contains("strasse") || line.toLowerCase().contains("straße") || line.toLowerCase().contains("allee")) {
-                field=AttributeCellEditor.ATTRIBUTE_STRASSE;
-            } else if(line.matches("\\d{1,3}[abc]?")) {
-                field=AttributeCellEditor.ATTRIBUTE_HAUSNR;
             }
-            
+
+            String field = "";
+            if (line.contains("@") || line.contains("(at)")) {
+                field = AttributeCellEditor.ATTRIBUTE_EMAIL;
+                line = line.replace("E-Mail:", "");
+                line = line.replace("Email:", "");
+                line = line.replace("Mail:", "");
+                line = line.replace("(at)", "@");
+                line = line.replace("(dot)", ".");
+                line = line.replace(":", "");
+                line = line.trim();
+            } else if (line.toLowerCase().contains("telefon") || line.toLowerCase().contains("tel:") || line.toLowerCase().contains("tel.")) {
+                field = AttributeCellEditor.ATTRIBUTE_TEL;
+                line = line.replace("Telefonnummer", "");
+                line = line.replace("telefonnummer", "");
+                line = line.replace("Telefon", "");
+                line = line.replace("telefon", "");
+                line = line.replace("Tel", "");
+                line = line.replace("tel", "");
+                line = line.replace("Tel.", "");
+                line = line.replace("tel.", "");
+                line = line.replace(":", "");
+                line = line.replace(".", "");
+                line = line.trim();
+            } else if (line.toLowerCase().contains("mobil")) {
+                field = AttributeCellEditor.ATTRIBUTE_MOBIL;
+                line = line.replace("Mobil", "");
+                line = line.replace("Mobilnummer", "");
+                line = line.replace("Handy", "");
+                line = line.replace("handy", "");
+                line = line.replace(":", "");
+                line = line.replace(".", "");
+                line = line.trim();
+            } else if (line.toLowerCase().contains("fax") || line.toLowerCase().contains("fax:") || line.toLowerCase().contains("telefax") || line.toLowerCase().contains("telefax:")) {
+                field = AttributeCellEditor.ATTRIBUTE_FAX;
+                line = line.replace("Telefax", "");
+                line = line.replace("telefax", "");
+                line = line.replace("Fax", "");
+                line = line.replace("fax", "");
+                line = line.replace(":", "");
+                line = line.replace(".", "");
+                line = line.trim();
+            } else if (line.matches("\\d{5}")) {
+                field = AttributeCellEditor.ATTRIBUTE_PLZ;
+            } else if (line.toLowerCase().contains("strasse") || line.toLowerCase().contains("straße") || line.toLowerCase().contains("allee")) {
+                field = AttributeCellEditor.ATTRIBUTE_STRASSE;
+            } else if (line.matches("\\d{1,3}[abc]?")) {
+                field = AttributeCellEditor.ATTRIBUTE_HAUSNR;
+            }
+
             tm.addRow(new String[]{line, field});
         }
-        
+
     }
-    
+
     /**
      * This method is called from within the constructor to initialize the form.
      * WARNING: Do NOT modify this code. The content of this method is always
@@ -794,12 +825,15 @@ public class AddressFromClipboardDialog extends javax.swing.JDialog {
         tblAttributes = new javax.swing.JTable();
         cmdClose = new javax.swing.JButton();
         cmdConfirm = new javax.swing.JButton();
+        cmdExtract = new javax.swing.JButton();
 
         setDefaultCloseOperation(javax.swing.WindowConstants.DISPOSE_ON_CLOSE);
 
         taBody.setColumns(20);
+        taBody.setLineWrap(true);
         taBody.setRows(5);
         taBody.setToolTipText("<html><p>Erstellung einer Adresse aus Text in der Zwischenablage<br/>Die relevante Textpassage - bspw. eine Signatur oder ein Impressum - hier einfügen und so angepassen, dass jedes Attribut auf einer eigenen Zeile steht.<br/>Anschlie&szlig;end die relevanten Zeilen markieren und im rechten Teil des Dialogs eine Zuordnung vornehmen.</html>");
+        taBody.setWrapStyleWord(true);
         jScrollPane1.setViewportView(taBody);
 
         jSplitPane1.setLeftComponent(jScrollPane1);
@@ -843,6 +877,13 @@ public class AddressFromClipboardDialog extends javax.swing.JDialog {
             }
         });
 
+        cmdExtract.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons16/material/j-lawyer-ai.png"))); // NOI18N
+        cmdExtract.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                cmdExtractActionPerformed(evt);
+            }
+        });
+
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(getContentPane());
         getContentPane().setLayout(layout);
         layout.setHorizontalGroup(
@@ -852,7 +893,8 @@ public class AddressFromClipboardDialog extends javax.swing.JDialog {
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                     .addComponent(jSplitPane1, javax.swing.GroupLayout.DEFAULT_SIZE, 857, Short.MAX_VALUE)
                     .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
-                        .addGap(0, 0, Short.MAX_VALUE)
+                        .addComponent(cmdExtract)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                         .addComponent(cmdConfirm)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                         .addComponent(cmdClose)))
@@ -866,7 +908,8 @@ public class AddressFromClipboardDialog extends javax.swing.JDialog {
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                     .addComponent(cmdClose)
-                    .addComponent(cmdConfirm))
+                    .addComponent(cmdConfirm)
+                    .addComponent(cmdExtract))
                 .addContainerGap())
         );
 
@@ -874,22 +917,106 @@ public class AddressFromClipboardDialog extends javax.swing.JDialog {
     }// </editor-fold>//GEN-END:initComponents
 
     private void cmdConfirmActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdConfirmActionPerformed
-    
+
         this.attributes.clear();
-        for(int i=0;i<this.tblAttributes.getRowCount();i++) {
-            if(!this.tblAttributes.getValueAt(i, 1).toString().isEmpty())
+        for (int i = 0; i < this.tblAttributes.getRowCount(); i++) {
+            if (!this.tblAttributes.getValueAt(i, 1).toString().isEmpty()) {
                 getAttributes().put(this.tblAttributes.getValueAt(i, 1).toString(), this.tblAttributes.getValueAt(i, 0).toString());
+            }
         }
-        
+
         this.setVisible(false);
         this.dispose();
-        
+
     }//GEN-LAST:event_cmdConfirmActionPerformed
 
     private void cmdCloseActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdCloseActionPerformed
         this.setVisible(false);
         this.dispose();
     }//GEN-LAST:event_cmdCloseActionPerformed
+
+    private void cmdExtractActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdExtractActionPerformed
+        DefaultTableModel tm = (DefaultTableModel) this.tblAttributes.getModel();
+        tm.setRowCount(0);
+
+        String text = this.taBody.getSelectedText();
+        if (text == null) {
+            text = this.taBody.getText();
+        }
+
+        List<InputData> inputs = new ArrayList();
+        InputData stringInput = new InputData();
+        stringInput.setStringData(text);
+        stringInput.setType(InputData.TYPE_STRING);
+        inputs.add(stringInput);
+
+        ClientSettings settings = ClientSettings.getInstance();
+        try {
+            JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
+
+            AiRequestStatus status = locator.lookupIntegrationServiceRemote().submitAssistantRequest(extractConfig, extractCapability.getRequestType(), extractCapability.getModelType(), "", null, inputs, null);
+            if (status != null) {
+                String resultText = "";
+                if (status.getStatus().equalsIgnoreCase("failed")) {
+                    resultText = status.getStatus() + ": " + status.getStatusDetails();
+                } else {
+                    StringBuilder resultString = new StringBuilder();
+                    for (OutputData o : status.getResponse().getOutputData()) {
+                        if (o.getType().equalsIgnoreCase(OutputData.TYPE_STRING)) {
+                            resultString.append(o.getStringData());
+                        }
+
+                    }
+                    resultText = resultString.toString();
+                }
+
+                log.info("Ingo extracted contacts and responde: ");
+                log.info(resultText);
+                
+                Map<String,String> contactAttributes=AssistantAccess.jsonStringToMap(resultText);
+                
+                for(String key: contactAttributes.keySet()) {
+                    String mappingKey=null;
+                    if(key.equalsIgnoreCase("company")) {
+                        mappingKey=AttributeCellEditor.ATTRIBUTE_UNTERNEHMEN;
+                    } else if(key.equalsIgnoreCase("firstName")) {
+                        mappingKey=AttributeCellEditor.ATTRIBUTE_VORNAME;
+                    } else if(key.equalsIgnoreCase("name")) {
+                        mappingKey=AttributeCellEditor.ATTRIBUTE_NAME;
+                    } else if(key.equalsIgnoreCase("city")) {
+                        mappingKey=AttributeCellEditor.ATTRIBUTE_ORT;
+                    } else if(key.equalsIgnoreCase("phone")) {
+                        mappingKey=AttributeCellEditor.ATTRIBUTE_TEL;
+                    } else if(key.equalsIgnoreCase("mobile")) {
+                        mappingKey=AttributeCellEditor.ATTRIBUTE_MOBIL;
+                    } else if(key.equalsIgnoreCase("zip")) {
+                        mappingKey=AttributeCellEditor.ATTRIBUTE_PLZ;
+                    } else if(key.equalsIgnoreCase("country")) {
+                        mappingKey=AttributeCellEditor.ATTRIBUTE_LAND;
+                    } else if(key.equalsIgnoreCase("street")) {
+                        mappingKey=AttributeCellEditor.ATTRIBUTE_STRASSE;
+                    } else if(key.equalsIgnoreCase("streetNo")) {
+                        mappingKey=AttributeCellEditor.ATTRIBUTE_HAUSNR;
+                    } else if(key.equalsIgnoreCase("email")) {
+                        mappingKey=AttributeCellEditor.ATTRIBUTE_EMAIL;
+                    } else if(key.equalsIgnoreCase("fax")) {
+                        mappingKey=AttributeCellEditor.ATTRIBUTE_FAX;
+                    }
+                    if(mappingKey!=null) {
+                        String value=contactAttributes.get(key);
+                        tm.addRow(new String[]{value, mappingKey});
+                    }
+                    
+                }
+
+            }
+
+        } catch (Throwable t) {
+            log.error("Error processing AI request", t);
+            JOptionPane.showMessageDialog(this, "Kontaktdaten konnten nicht extrahiert werden: " + t.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
+        }
+
+    }//GEN-LAST:event_cmdExtractActionPerformed
 
     /**
      * @param args the command line arguments
@@ -934,6 +1061,7 @@ public class AddressFromClipboardDialog extends javax.swing.JDialog {
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JButton cmdClose;
     private javax.swing.JButton cmdConfirm;
+    private javax.swing.JButton cmdExtract;
     private javax.swing.JScrollPane jScrollPane1;
     private javax.swing.JScrollPane jScrollPane2;
     private javax.swing.JSplitPane jSplitPane1;

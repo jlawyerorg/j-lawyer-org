@@ -24,6 +24,9 @@ public class AiCapability implements Serializable {
     public static final String REQUESTTYPE_GENERATE="generate";
     public static final String REQUESTTYPE_EXTRACT="extract";
     
+    public static final String USAGETYPE_INTERACTIVE="interactive";
+    public static final String USAGETYPE_AUTOMATED="automated";
+    
     public static final String INPUTTYPE_STRING="STRING";
     public static final String INPUTTYPE_FILE="FILE";
     public static final String INPUTTYPE_NONE="NONE";
