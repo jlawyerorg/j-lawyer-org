@@ -46,19 +46,19 @@ public class HtmlPane extends JEditorPane {
 		
 		stylesheet.importStyleSheet(HtmlPane.class.getResource("/org/jmarkdownviewer/jmdviewer/resources/github.css"));
 
-		String imgsrc = HtmlPane.class.getResource("/org/jmarkdownviewer/jmdviewer/resources/markdown.png").toString();
+		//String imgsrc = HtmlPane.class.getResource("/org/jmarkdownviewer/jmdviewer/resources/markdown.png").toString();
 		// create some simple html as a string
-		String htmlString = "<html>\n" + "<body>\n" + "<h1>"
-				+ "<img src=\"" + imgsrc + "\">" 
-				+ "&nbsp; Markdown Viewer</h1>\n" 
-				+ "<h2>Select a file</h2>\n"
-				+ "<p>This is some sample text</p>\n"				
-				+ "</body>\n</html>";
+//		String htmlString = "<html>\n" + "<body>\n" + "<h1>"
+//				+ "<img src=\"" + imgsrc + "\">" 
+//				+ "&nbsp; Markdown Viewer</h1>\n" 
+//				+ "<h2>Select a file</h2>\n"
+//				+ "<p>This is some sample text</p>\n"				
+//				+ "</body>\n</html>";
 		
 		// create a document, set it on the jeditorpane, then add the html
 		Document doc = kit.createDefaultDocument();
 		setDocument(doc);
-		setText(htmlString);
+//		setText(htmlString);
 
 	}
 

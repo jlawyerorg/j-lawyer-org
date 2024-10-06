@@ -944,7 +944,7 @@ public class AddressFromClipboardDialog extends javax.swing.JDialog {
             text = this.taBody.getText();
         }
 
-        List<InputData> inputs = new ArrayList();
+        List<InputData> inputs = new ArrayList<>();
         InputData stringInput = new InputData();
         stringInput.setStringData(text);
         stringInput.setType(InputData.TYPE_STRING);
