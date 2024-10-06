@@ -42,9 +42,10 @@ public class HtmlPane extends JEditorPane {
 		setEditorKit(kit);
 
 		// add some styles to the html
+//		StyleSheet stylesheet = kit.getStyleSheet();
+//		stylesheet.importStyleSheet(getClass().getResource("/org/jmarkdownviewer/jmdviewer/resources/github.css"));
 		StyleSheet stylesheet = kit.getStyleSheet();
-		
-		stylesheet.importStyleSheet(HtmlPane.class.getResource("/org/jmarkdownviewer/jmdviewer/resources/github.css"));
+		stylesheet.importStyleSheet(getClass().getResource("/org/jmarkdownviewer/jmdviewer/resources/github-reduced.css"));
 
 		//String imgsrc = HtmlPane.class.getResource("/org/jmarkdownviewer/jmdviewer/resources/markdown.png").toString();
 		// create some simple html as a string
@@ -70,6 +71,7 @@ public class HtmlPane extends JEditorPane {
             document = parser.getDocument();
             //parser.updatefileimages(parent);
             String html = parser.getHTML();
+            html=html.replace("�", "");
             if (html != null) {
 //                try {
 //                    URL url = new URL("file", "", parent);

@@ -761,10 +761,12 @@ public class MarkdownPanel extends javax.swing.JPanel implements PreviewPanel {
     @Override
     public void showStatus(String text) {
         
-        SwingUtilities.invokeLater(() -> {
-            markdownPane.setMarkdownText(text);
-            taEdit.setText(text);
-        });
+        //SwingUtilities.invokeLater(() -> {
+            
+            
+            markdownPane.setMarkdownText(text.trim());
+            taEdit.setText(text.trim());
+        //});
     }
 
     @Override
@@ -772,22 +774,24 @@ public class MarkdownPanel extends javax.swing.JPanel implements PreviewPanel {
         this.id = documentId;
         this.initialContent = content;
         
-        SwingUtilities.invokeLater(() -> {
-            markdownPane.setMarkdownText(new String(content));
-            taEdit.setText(new String(content));
-        });
+        //SwingUtilities.invokeLater(() -> {
+            
+            
+            markdownPane.setMarkdownText(new String(content).trim());
+            taEdit.setText(new String(content).trim());
+        //});
     }
 
     @Override
     public void removeNotify() {
         if (this.id != null && !this.readOnly) {
 
-            byte[] currentBytes = this.taEdit.getText().getBytes();
+            byte[] currentBytes = this.taEdit.getText().trim().getBytes();
             if (this.initialContent!=null && !Arrays.equals(this.initialContent, currentBytes)) {
                 try {
                     ClientSettings settings = ClientSettings.getInstance();
                     JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
-                    locator.lookupArchiveFileServiceRemote().setDocumentContent(this.id, this.taEdit.getText().getBytes());
+                    locator.lookupArchiveFileServiceRemote().setDocumentContent(this.id, currentBytes);
                 } catch (Throwable t) {
                     log.error("Error saving document with id " + this.id, t);
                     ThreadUtils.showErrorDialog(EditorsRegistry.getInstance().getMainWindow(), "Fehler beim Speichern: " + t.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR);
