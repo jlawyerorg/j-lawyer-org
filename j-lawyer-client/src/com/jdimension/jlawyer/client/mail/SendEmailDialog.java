@@ -697,6 +697,7 @@ import com.jdimension.jlawyer.client.utils.FileUtils;
 import com.jdimension.jlawyer.client.utils.FrameUtils;
 import com.jdimension.jlawyer.client.utils.SelectAttachmentDialog;
 import com.jdimension.jlawyer.client.utils.StringUtils;
+import com.jdimension.jlawyer.client.utils.SystemUtils;
 import com.jdimension.jlawyer.client.utils.ThreadUtils;
 import com.jdimension.jlawyer.email.EmailTemplate;
 import com.jdimension.jlawyer.persistence.AddressBean;
@@ -1529,7 +1530,7 @@ public class SendEmailDialog extends javax.swing.JDialog implements SendCommunic
         });
         jToolBar1.add(cmdSaveDraft);
 
-        cmdOpenTb.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons32/mail_forward.png"))); // NOI18N
+        cmdOpenTb.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons32/openInThunderbird.png"))); // NOI18N
         cmdOpenTb.setToolTipText("Mit Thunderbird versenden");
         cmdOpenTb.setFocusable(false);
         cmdOpenTb.setHorizontalTextPosition(javax.swing.SwingConstants.CENTER);
@@ -2697,25 +2698,25 @@ public class SendEmailDialog extends javax.swing.JDialog implements SendCommunic
         try {
             ProcessBuilder processBuilder = new ProcessBuilder(command);
             processBuilder.start();  
-        } catch (IOException e) {
-            e.printStackTrace();
-            JOptionPane.showMessageDialog(this, "Fehler beim Öffnen von Thunderbird: " + e.getMessage());
+        } catch (Throwable t) {
+            log.error("Error opening Thunderbird", t);
+            JOptionPane.showMessageDialog(this, "Fehler beim Öffnen von Thunderbird: " + t);
         }  
     }//GEN-LAST:event_cmdOpenTbActionPerformed
     
     private String getThunderbirdExecutablePath() {
-        String os = System.getProperty("os.name").toLowerCase();
-        if (os.contains("win")) {
+        if (SystemUtils.isWindows()) {
             String path = getThunderbirdExecutablePathWindows();
             if (path == null) {
                 path = getThunderbirdExecutablePathWindowsFallback();
             }
             return path;
-        } else if (os.contains("mac")) {
+        } else if (SystemUtils.isMacOs()) {
             return getThunderbirdExecutablePathMac();
-        } else if (os.contains("nix") || os.contains("nux")) {
+        } else if (SystemUtils.isLinux()) {
             return getThunderbirdExecutablePathLinux();
         }
+        log.error("Error finding Thunderbird Installation: unknown OS");
         return null; // Unbekanntes Betriebssystem
     }
     
@@ -2730,9 +2731,9 @@ public class SendEmailDialog extends javax.swing.JDialog implements SendCommunic
             } else {
                 throw new IOException("Thunderbird wurde nicht gefunden.");
             }
-        } catch (IOException e) {
-            e.printStackTrace();
-            return null; // Thunderbird wurde nicht gefunden
+        } catch (Throwable t) {
+            log.error("Error finding Thunderbird installation", t);
+            return null; 
         }
     }
 
@@ -2751,8 +2752,8 @@ public class SendEmailDialog extends javax.swing.JDialog implements SendCommunic
                     return path + "\\thunderbird.exe";
                 }
             }
-        } catch (IOException e) {
-            e.printStackTrace();
+        } catch (Throwable t) {
+            log.error("Error finding Thunderbird installation", t);
         }
         return null;
     }
