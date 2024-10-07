@@ -697,6 +697,7 @@ import com.jdimension.jlawyer.client.utils.FileUtils;
 import com.jdimension.jlawyer.client.utils.FrameUtils;
 import com.jdimension.jlawyer.client.utils.SelectAttachmentDialog;
 import com.jdimension.jlawyer.client.utils.StringUtils;
+import com.jdimension.jlawyer.client.utils.SystemUtils;
 import com.jdimension.jlawyer.client.utils.ThreadUtils;
 import com.jdimension.jlawyer.email.EmailTemplate;
 import com.jdimension.jlawyer.persistence.AddressBean;
@@ -719,8 +720,11 @@ import java.awt.Color;
 import java.awt.event.ActionEvent;
 import java.awt.event.KeyEvent;
 import java.awt.event.MouseEvent;
+import java.io.BufferedReader;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
+import java.io.IOException;
+import java.io.InputStreamReader;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -1330,6 +1334,7 @@ public class SendEmailDialog extends javax.swing.JDialog implements SendCommunic
         cmdAttach = new javax.swing.JButton();
         jSeparator5 = new javax.swing.JToolBar.Separator();
         cmdSaveDraft = new javax.swing.JButton();
+        cmdOpenTb = new javax.swing.JButton();
         txtCc = new javax.swing.JTextField();
         jLabel9 = new javax.swing.JLabel();
         txtTo = new javax.swing.JTextField();
@@ -1455,7 +1460,7 @@ public class SendEmailDialog extends javax.swing.JDialog implements SendCommunic
         jPanel5.setLayout(jPanel5Layout);
         jPanel5Layout.setHorizontalGroup(
             jPanel5Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addComponent(jScrollPane2, javax.swing.GroupLayout.Alignment.TRAILING, javax.swing.GroupLayout.DEFAULT_SIZE, 579, Short.MAX_VALUE)
+            .addComponent(jScrollPane2, javax.swing.GroupLayout.Alignment.TRAILING)
             .addComponent(contentPanel, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
         );
         jPanel5Layout.setVerticalGroup(
@@ -1524,6 +1529,18 @@ public class SendEmailDialog extends javax.swing.JDialog implements SendCommunic
             }
         });
         jToolBar1.add(cmdSaveDraft);
+
+        cmdOpenTb.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons32/openInThunderbird.png"))); // NOI18N
+        cmdOpenTb.setToolTipText("Mit Thunderbird versenden");
+        cmdOpenTb.setFocusable(false);
+        cmdOpenTb.setHorizontalTextPosition(javax.swing.SwingConstants.CENTER);
+        cmdOpenTb.setVerticalTextPosition(javax.swing.SwingConstants.BOTTOM);
+        cmdOpenTb.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                cmdOpenTbActionPerformed(evt);
+            }
+        });
+        jToolBar1.add(cmdOpenTb);
 
         jLabel9.setText("BCC:");
 
@@ -2604,6 +2621,170 @@ public class SendEmailDialog extends javax.swing.JDialog implements SendCommunic
         }
     }//GEN-LAST:event_cmdTranscribeActionPerformed
 
+    private void cmdOpenTbActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdOpenTbActionPerformed
+        
+        // Pfad der Thunderbird-Executable abhängig vom Betriebssystem ermitteln
+        String thunderbirdPath = getThunderbirdExecutablePath();
+        if (thunderbirdPath == null) {
+            JOptionPane.showMessageDialog(this, "Thunderbird wurde nicht gefunden.");
+            return;
+        }
+        
+        // Empfänger, CC, BCC und Betreff aus den Textfeldern holen
+        String to = this.txtTo.getText().trim();
+        String cc = this.txtCc.getText().trim();
+        String bcc = this.txtBcc.getText().trim();
+        String subject = this.txtSubject.getText().trim();
+
+        // Text des Editors holen
+        EditorImplementation ed = (EditorImplementation) this.contentPanel.getComponent(0);
+        String body = ed.getText().trim();
+
+        // Überprüfen, ob Anhänge in der attachments-Map vorhanden sind
+        List<String> attachmentList = new ArrayList<>();
+        if (!this.attachments.isEmpty()) {
+            for (String path : this.attachments.values()) {
+                attachmentList.add("file://" + path.replace("\\", "/"));
+            }
+        }
+
+        // Thunderbird-Aufruf zusammenstellen
+        List<String> command = new ArrayList<>();
+        
+        // hier ggfs. Pfad vom Nutzer am Profil gespeichert
+        command.add(thunderbirdPath);
+        command.add("-compose");
+
+        StringBuilder composeCommand = new StringBuilder();
+
+        if (!to.isEmpty()) {
+            composeCommand.append("to='").append(to).append("'");
+        } else {
+            JOptionPane.showMessageDialog(this, "Empfänger ist erforderlich.");
+            return;
+        }
+
+        if (!cc.isEmpty()) {
+            composeCommand.append(",cc='").append(cc).append("'");
+        }        
+
+        if (!bcc.isEmpty()) {
+            composeCommand.append(",bcc='").append(bcc).append("'");
+        }
+
+        if (!subject.isEmpty()) {
+            composeCommand.append(",subject='").append(subject).append("'");
+        }
+
+        // Wenn "body" vorhanden ist, escapen
+//        if (!body.isEmpty()) {
+//            composeCommand.append(",body='").append(escapeBody(body)).append("'");
+//        }
+        
+        // Wenn "body" vorhanden ist
+        if (!body.isEmpty()) {
+            composeCommand.append(",body='").append(body).append("'");
+        }
+
+        // Wenn mehrere Anhänge vorhanden sind, diese als kommagetrennte Liste hinzufügen
+        if (!attachmentList.isEmpty()) {
+            composeCommand.append(",attachment='").append(String.join(",", attachmentList)).append("'");
+        }
+
+        // Füge den zusammengesetzten Compose-Befehl hinzu
+        command.add(composeCommand.toString());
+
+        // Thunderbird mit ProcessBuilder aufrufen
+        try {
+            ProcessBuilder processBuilder = new ProcessBuilder(command);
+            processBuilder.start();  
+        } catch (Throwable t) {
+            log.error("Error opening Thunderbird", t);
+            JOptionPane.showMessageDialog(this, "Fehler beim Öffnen von Thunderbird: " + t);
+        }  
+    }//GEN-LAST:event_cmdOpenTbActionPerformed
+    
+    private String getThunderbirdExecutablePath() {
+        if (SystemUtils.isWindows()) {
+            String path = getThunderbirdExecutablePathWindows();
+            if (path == null) {
+                path = getThunderbirdExecutablePathWindowsFallback();
+            }
+            return path;
+        } else if (SystemUtils.isMacOs()) {
+            return getThunderbirdExecutablePathMac();
+        } else if (SystemUtils.isLinux()) {
+            return getThunderbirdExecutablePathLinux();
+        }
+        log.error("Error finding Thunderbird Installation: unknown OS");
+        return null; // Unbekanntes Betriebssystem
+    }
+    
+    private String getThunderbirdExecutablePathLinux() {
+        try {
+            ProcessBuilder processBuilder = new ProcessBuilder("which", "thunderbird");
+            Process process = processBuilder.start();
+            BufferedReader reader = new BufferedReader(new InputStreamReader(process.getInputStream()));
+            String path = reader.readLine();
+            if (path != null && !path.isEmpty()) {
+                return path; // Der gefundene Pfad von Thunderbird
+            } else {
+                throw new IOException("Thunderbird wurde nicht gefunden.");
+            }
+        } catch (Throwable t) {
+            log.error("Error finding Thunderbird installation", t);
+            return null; 
+        }
+    }
+
+    
+    private String getThunderbirdExecutablePathWindows() {
+        try {
+            ProcessBuilder processBuilder = new ProcessBuilder("reg", "query",
+                    "HKEY_LOCAL_MACHINE\\SOFTWARE\\Clients\\Mail\\Mozilla Thunderbird\\InstallPath");
+            Process process = processBuilder.start();
+            BufferedReader reader = new BufferedReader(new InputStreamReader(process.getInputStream()));
+            String line;
+            while ((line = reader.readLine()) != null) {
+                if (line.trim().startsWith("HKEY_LOCAL_MACHINE")) {
+                    // Dies ist der Pfad zur Thunderbird-Installation
+                    String path = line.split("\\s{4,}")[1].trim();
+                    return path + "\\thunderbird.exe";
+                }
+            }
+        } catch (Throwable t) {
+            log.error("Error finding Thunderbird installation", t);
+        }
+        return null;
+    }
+    
+    
+    private String getThunderbirdExecutablePathWindowsFallback() {
+        String[] possiblePaths = {
+            "C:\\Program Files\\Mozilla Thunderbird\\thunderbird.exe",
+            "C:\\Program Files (x86)\\Mozilla Thunderbird\\thunderbird.exe"
+        };
+
+        for (String path : possiblePaths) {
+            File file = new File(path);
+            if (file.exists() && file.isFile()) {
+                return path; // Gefundene Thunderbird-Executable
+            }
+        }
+        return null; // Thunderbird wurde nicht gefunden
+    }
+
+
+    private String getThunderbirdExecutablePathMac() {
+        String defaultPath = "/Applications/Thunderbird.app/Contents/MacOS/thunderbird";
+        File file = new File(defaultPath);
+        if (file.exists() && file.isFile()) {
+            return defaultPath; // Gefundene Thunderbird-Executable
+        }
+        return null; // Thunderbird wurde nicht gefunden
+    }
+    
+    
     private void startRecording() {
         try {
             AudioFormat audioFormat = AudioUtils.getAudioFormat();
@@ -2838,6 +3019,7 @@ public class SendEmailDialog extends javax.swing.JDialog implements SendCommunic
     private javax.swing.JComboBox cmbTemplates;
     private javax.swing.JButton cmdAssistant;
     private javax.swing.JButton cmdAttach;
+    private javax.swing.JButton cmdOpenTb;
     private javax.swing.JButton cmdRecipients;
     private javax.swing.JButton cmdRecipientsBcc;
     private javax.swing.JButton cmdRecipientsCc;
