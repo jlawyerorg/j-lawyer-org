@@ -2676,11 +2676,6 @@ public class SendEmailDialog extends javax.swing.JDialog implements SendCommunic
             composeCommand.append(",subject='").append(subject).append("'");
         }
 
-        // Wenn "body" vorhanden ist, escapen
-//        if (!body.isEmpty()) {
-//            composeCommand.append(",body='").append(escapeBody(body)).append("'");
-//        }
-        
         // Wenn "body" vorhanden ist
         if (!body.isEmpty()) {
             composeCommand.append(",body='").append(body).append("'");
