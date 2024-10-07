@@ -2659,6 +2659,9 @@ public class SendEmailDialog extends javax.swing.JDialog implements SendCommunic
 
         if (!to.isEmpty()) {
             composeCommand.append("to='").append(to).append("'");
+        } else {
+            JOptionPane.showMessageDialog(this, "Empfänger ist erforderlich.");
+            return;
         }
 
         if (!cc.isEmpty()) {
