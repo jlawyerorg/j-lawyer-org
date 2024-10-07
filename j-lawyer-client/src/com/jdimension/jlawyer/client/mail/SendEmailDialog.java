@@ -2691,9 +2691,6 @@ public class SendEmailDialog extends javax.swing.JDialog implements SendCommunic
         // Füge den zusammengesetzten Compose-Befehl hinzu
         command.add(composeCommand.toString());
 
-        // Den vollständigen Befehl in der Konsole ausgeben
-        System.out.println("Thunderbird Command: " + String.join(" ", command));
-
         // Thunderbird mit ProcessBuilder aufrufen
         try {
             ProcessBuilder processBuilder = new ProcessBuilder(command);
