@@ -2629,6 +2629,12 @@ public class SendEmailDialog extends javax.swing.JDialog implements SendCommunic
             JOptionPane.showMessageDialog(this, "Thunderbird wurde nicht gefunden.");
             return;
         }
+        // Absender ermitteln
+        String from = "";
+        MailboxSetup fromMailbox = getSelectedMailbox();
+        if (fromMailbox != null) {
+            from = fromMailbox.getEmailAddress();
+        }
         
         // Empfänger, CC, BCC und Betreff aus den Textfeldern holen
         String to = this.txtTo.getText().trim();
@@ -2656,9 +2662,11 @@ public class SendEmailDialog extends javax.swing.JDialog implements SendCommunic
         command.add("-compose");
 
         StringBuilder composeCommand = new StringBuilder();
+        
+        composeCommand.append("from='").append(from).append("'");
 
         if (!to.isEmpty()) {
-            composeCommand.append("to='").append(to).append("'");
+            composeCommand.append(",to='").append(to).append("'");
         } else {
             JOptionPane.showMessageDialog(this, "Empfänger ist erforderlich.");
             return;
