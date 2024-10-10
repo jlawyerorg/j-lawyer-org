@@ -755,13 +755,33 @@ public class LoadDocumentPreviewThread implements Runnable {
             
             
 
-            JComponent preview = null;
-            if(this.docDto.getSize()>maxPreviewBytes && !this.forceAnyDocumentSize) {
-                preview=new DocumentPreviewTooLarge(this.caseDto, this.docDto, this.readOnly, this.pnlPreview, this.saveCallback);
-            } else {
-                byte[] data=CachingDocumentLoader.getInstance().getDocument(this.docDto.getId());
-                preview=DocumentViewerFactory.getDocumentViewer(this.caseDto, this.docDto.getId(), this.docDto.getName(), readOnly, new CaseDocumentPreviewProvider(afs, this.docDto.getId()), data, this.pnlPreview.getWidth(), this.pnlPreview.getHeight(), this.saveCallback);
-            }
+//            JComponent preview = null;
+//            if(this.docDto.getSize()>maxPreviewBytes && !this.forceAnyDocumentSize) {
+//                preview=new DocumentPreviewTooLarge(this.caseDto, this.docDto, this.readOnly, this.pnlPreview, this.saveCallback);
+//            } else {
+//                byte[] data=CachingDocumentLoader.getInstance().getDocument(this.docDto.getId());
+//                preview=DocumentViewerFactory.getDocumentViewer(this.caseDto, this.docDto.getId(), this.docDto.getName(), readOnly, new CaseDocumentPreviewProvider(afs, this.docDto.getId()), data, this.pnlPreview.getWidth(), this.pnlPreview.getHeight(), this.saveCallback);
+//            }
+            
+            final long maxPreviewBytesFinal = maxPreviewBytes;
+            JComponent[] previewWrapper = new JComponent[1];  // Use an array as a mutable container
+            SwingUtilities.invokeAndWait(() -> {
+                if (this.docDto.getSize() > maxPreviewBytesFinal && !this.forceAnyDocumentSize) {
+                    previewWrapper[0] = new DocumentPreviewTooLarge(this.caseDto, this.docDto, this.readOnly, this.pnlPreview, this.saveCallback);
+                } else {
+                    try {
+                        byte[] data = CachingDocumentLoader.getInstance().getDocument(this.docDto.getId());
+                        previewWrapper[0] = DocumentViewerFactory.getDocumentViewer(this.caseDto, this.docDto.getId(), this.docDto.getName(), readOnly, new CaseDocumentPreviewProvider(afs, this.docDto.getId()), data, this.pnlPreview.getWidth(), this.pnlPreview.getHeight(), this.saveCallback);
+                    } catch (Exception ex) {
+                        log.error("Could not get document preview for " + this.docDto.getName() + "[" + this.docDto.getId() + "]", ex);
+                        previewWrapper[0] = new JLabel("Fehler beim Laden der Dokumentvorschau: " + ex.getMessage());
+                    }
+                }
+            });
+            // Use the component
+            JComponent preview = previewWrapper[0];
+
+
             
             
             ThreadUtils.setVisible(pnlPreview, false);

@@ -678,6 +678,7 @@ import java.util.zip.ZipInputStream;
 import javax.mail.Flags.Flag;
 import javax.mail.internet.MimeMessage;
 import javax.swing.JComponent;
+import javax.swing.SwingUtilities;
 import org.apache.log4j.Logger;
 import org.simplejavamail.outlookmessageparser.OutlookMessageParser;
 import org.simplejavamail.outlookmessageparser.model.OutlookMessage;
@@ -689,8 +690,8 @@ import org.simplejavamail.outlookmessageparser.model.OutlookMessage;
 public class DocumentViewerFactory {
 
     private static final Logger log = Logger.getLogger(DocumentViewerFactory.class.getName());
-    
-    private static final String STR_PREVIEWFAIL="Vorschau kann nicht geladen werden.";
+
+    private static final String STR_PREVIEWFAIL = "Vorschau kann nicht geladen werden.";
 
     public static JComponent getDocumentViewer(String id, String fileName, boolean readOnly, DocumentPreviewProvider previewProvider, byte[] content, int width, int height, DocumentPreviewSaveCallback saveCallback) {
         return getDocumentViewer(null, id, fileName, readOnly, previewProvider, content, width, height, saveCallback);
@@ -698,8 +699,8 @@ public class DocumentViewerFactory {
 
     public static JComponent getDocumentViewer(ArchiveFileBean caseDto, String id, String fileName, boolean readOnly, DocumentPreviewProvider previewProvider, byte[] content, int width, int height, DocumentPreviewSaveCallback saveCallback) {
 
-        String lFileName=fileName.toLowerCase();
-        
+        String lFileName = fileName.toLowerCase();
+
         if (lFileName.endsWith(".pdf")) {
             PdfImageScrollingPanel pdfP = new PdfImageScrollingPanel(fileName, content, saveCallback);
             pdfP.setSize(new Dimension(width, height));
@@ -734,8 +735,19 @@ public class DocumentViewerFactory {
                 ptp.showContent(id, ("FEHLER: " + ex.getMessage()).getBytes());
             }
             return ptp;
+        } else if (lFileName.endsWith(".md")) {
+            MarkdownPanel mdp = new MarkdownPanel(id, readOnly);
+            mdp.setSize(new Dimension(width, height));
+            mdp.setMaximumSize(new Dimension(width, height));
+            mdp.setPreferredSize(new Dimension(width, height));
+            try {
+                mdp.showContent(id, previewProvider.getPreview().getBytes());
+            } catch (Exception ex) {
+                mdp.showContent(id, ("FEHLER: " + ex.getMessage()).getBytes());
+            }
+            return mdp;
         } else if (lFileName.endsWith(".wav") || lFileName.endsWith(".ogg") || lFileName.endsWith(".mp3")) {
-            SoundplayerPanel spp=new SoundplayerPanel(id, readOnly, saveCallback);
+            SoundplayerPanel spp = new SoundplayerPanel(id, readOnly, saveCallback);
             spp.setSize(new Dimension(width, height));
             spp.setMaximumSize(new Dimension(width, height));
             spp.setPreferredSize(new Dimension(width, height));
@@ -798,17 +810,15 @@ public class DocumentViewerFactory {
             }
         } else if (lFileName.endsWith(".msg")) {
             try {
-                
-                
+
                 InputStream source = new ByteArrayInputStream(content);
-                OutlookMessage om=new OutlookMessageParser().parseMsg(source);
-                
-                
+                OutlookMessage om = new OutlookMessageParser().parseMsg(source);
+
                 OutlookMessagePanel op = new OutlookMessagePanel();
                 op.setSize(new Dimension(width, height));
                 op.setMaximumSize(new Dimension(width, height));
                 op.setPreferredSize(new Dimension(width, height));
-                
+
                 //MailboxSetup ms = EmailUtils.getMailboxSetup(message);
                 op.setMessage(id, om);
                 op.setCaseContext(caseDto);

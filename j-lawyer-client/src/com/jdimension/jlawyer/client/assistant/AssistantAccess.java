@@ -677,11 +677,15 @@ import com.jdimension.jlawyer.client.utils.FrameUtils;
 import com.jdimension.jlawyer.persistence.ArchiveFileBean;
 import com.jdimension.jlawyer.persistence.AssistantPrompt;
 import java.awt.event.ActionEvent;
+import java.io.StringReader;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import javax.json.Json;
+import javax.json.JsonObject;
+import javax.json.JsonReader;
 import javax.swing.JMenu;
 import javax.swing.JMenuItem;
 import javax.swing.JPopupMenu;
@@ -773,6 +777,21 @@ public class AssistantAccess {
      * @throws Exception
      */
     public Map<AssistantConfig, List<AiCapability>> filterCapabilities(String requestType, String inputType) throws Exception {
+        return this.filterCapabilities(requestType, inputType, AiCapability.USAGETYPE_INTERACTIVE);
+    }
+    
+    /**
+     * Filters available capabilities of the backends to match what the client
+     * requests, e.g. it might only have a STRING instead of a FILE and only
+     * wants to transcribe instead of summarize
+     *
+     * @param requestType
+     * @param inputType
+     * @param usageType the usage type, either automated or interactive
+     * @return
+     * @throws Exception
+     */
+    public Map<AssistantConfig, List<AiCapability>> filterCapabilities(String requestType, String inputType, String usageType) throws Exception {
         
         Map<String, List<AssistantPrompt>> prompts=this.getCustomPrompts();
         
@@ -781,6 +800,9 @@ public class AssistantAccess {
         for (AssistantConfig config : all.keySet()) {
             for (AiCapability c : all.get(config)) {
                 if (requestType != null && !c.getRequestType().equals(requestType)) {
+                    continue;
+                }
+                if (usageType != null && !c.getUsageTypes().toLowerCase().contains(usageType.toLowerCase())) {
                     continue;
                 }
 
@@ -911,6 +933,24 @@ public class AssistantAccess {
             }
         }
 
+    }
+    
+    public static Map<String, String> jsonStringToMap(String jsonString) throws Exception {
+        Map<String, String> resultMap = new HashMap<>();
+
+        // Create a JsonReader from the JSON string
+        try (JsonReader jsonReader = Json.createReader(new StringReader(jsonString))) {
+            // Parse the JSON string into a JsonObject
+            JsonObject jsonObject = jsonReader.readObject();
+            
+            // Iterate through the key-value pairs in the JSON object
+            for (String key : jsonObject.keySet()) {
+                // Assuming all values are of type String, otherwise handle differently
+                resultMap.put(key, jsonObject.getString(key));
+            }
+        }
+
+        return resultMap;
     }
 
 }

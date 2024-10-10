@@ -22,6 +22,10 @@ public class AiCapability implements Serializable {
     public static final String REQUESTTYPE_EXPLAIN="explain";
     public static final String REQUESTTYPE_CHAT="chat";
     public static final String REQUESTTYPE_GENERATE="generate";
+    public static final String REQUESTTYPE_EXTRACT="extract";
+    
+    public static final String USAGETYPE_INTERACTIVE="interactive";
+    public static final String USAGETYPE_AUTOMATED="automated";
     
     public static final String INPUTTYPE_STRING="STRING";
     public static final String INPUTTYPE_FILE="FILE";
@@ -30,6 +34,7 @@ public class AiCapability implements Serializable {
     private String name;
     private String description;
     private String requestType;
+    private String usageTypes;
     private String modelType;
     private boolean async=false;
     private boolean customPrompts=false;
@@ -231,6 +236,20 @@ public class AiCapability implements Serializable {
      */
     public void setConfigurations(List<Configuration> configurations) {
         this.configurations = configurations;
+    }
+
+    /**
+     * @return the usageTypes
+     */
+    public String getUsageTypes() {
+        return usageTypes;
+    }
+
+    /**
+     * @param usageTypes the usageTypes to set
+     */
+    public void setUsageTypes(String usageTypes) {
+        this.usageTypes = usageTypes;
     }
     
     

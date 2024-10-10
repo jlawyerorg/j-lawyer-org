@@ -28,7 +28,8 @@
               <Group type="103" groupAlignment="0" attributes="0">
                   <Component id="jSplitPane1" alignment="0" pref="857" max="32767" attributes="0"/>
                   <Group type="102" alignment="1" attributes="0">
-                      <EmptySpace min="0" pref="0" max="32767" attributes="0"/>
+                      <Component id="cmdExtract" min="-2" max="-2" attributes="0"/>
+                      <EmptySpace max="32767" attributes="0"/>
                       <Component id="cmdConfirm" min="-2" max="-2" attributes="0"/>
                       <EmptySpace max="-2" attributes="0"/>
                       <Component id="cmdClose" min="-2" max="-2" attributes="0"/>
@@ -47,6 +48,7 @@
               <Group type="103" groupAlignment="3" attributes="0">
                   <Component id="cmdClose" alignment="3" min="-2" max="-2" attributes="0"/>
                   <Component id="cmdConfirm" alignment="3" min="-2" max="-2" attributes="0"/>
+                  <Component id="cmdExtract" alignment="3" min="-2" max="-2" attributes="0"/>
               </Group>
               <EmptySpace max="-2" attributes="0"/>
           </Group>
@@ -73,8 +75,10 @@
             <Component class="javax.swing.JTextArea" name="taBody">
               <Properties>
                 <Property name="columns" type="int" value="20"/>
+                <Property name="lineWrap" type="boolean" value="true"/>
                 <Property name="rows" type="int" value="5"/>
                 <Property name="toolTipText" type="java.lang.String" value="&lt;html&gt;&lt;p&gt;Erstellung einer Adresse aus Text in der Zwischenablage&lt;br/&gt;Die relevante Textpassage - bspw. eine Signatur oder ein Impressum - hier einf&#xfc;gen und so angepassen, dass jedes Attribut auf einer eigenen Zeile steht.&lt;br/&gt;Anschlie&amp;szlig;end die relevanten Zeilen markieren und im rechten Teil des Dialogs eine Zuordnung vornehmen.&lt;/html&gt;"/>
+                <Property name="wrapStyleWord" type="boolean" value="true"/>
               </Properties>
             </Component>
           </SubComponents>
@@ -125,6 +129,16 @@
       </Properties>
       <Events>
         <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="cmdConfirmActionPerformed"/>
+      </Events>
+    </Component>
+    <Component class="javax.swing.JButton" name="cmdExtract">
+      <Properties>
+        <Property name="icon" type="javax.swing.Icon" editor="org.netbeans.modules.form.editors2.IconEditor">
+          <Image iconType="3" name="/icons16/material/j-lawyer-ai.png"/>
+        </Property>
+      </Properties>
+      <Events>
+        <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="cmdExtractActionPerformed"/>
       </Events>
     </Component>
   </SubComponents>

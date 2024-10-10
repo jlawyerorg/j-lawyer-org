@@ -25,7 +25,8 @@
                   <Component id="jLabel1" pref="876" max="32767" attributes="0"/>
                   <Group type="102" alignment="0" attributes="0">
                       <Component id="chkGenerateAddress" min="-2" max="-2" attributes="0"/>
-                      <EmptySpace min="0" pref="0" max="32767" attributes="0"/>
+                      <EmptySpace max="32767" attributes="0"/>
+                      <Component id="cmdExtract" min="-2" max="-2" attributes="0"/>
                   </Group>
                   <Component id="jSplitPane1" alignment="0" max="32767" attributes="0"/>
               </Group>
@@ -39,9 +40,12 @@
               <EmptySpace max="-2" attributes="0"/>
               <Component id="jLabel1" min="-2" max="-2" attributes="0"/>
               <EmptySpace type="unrelated" max="-2" attributes="0"/>
-              <Component id="chkGenerateAddress" min="-2" max="-2" attributes="0"/>
+              <Group type="103" groupAlignment="3" attributes="0">
+                  <Component id="chkGenerateAddress" alignment="3" min="-2" max="-2" attributes="0"/>
+                  <Component id="cmdExtract" alignment="3" min="-2" max="-2" attributes="0"/>
+              </Group>
               <EmptySpace max="-2" attributes="0"/>
-              <Component id="jSplitPane1" pref="524" max="32767" attributes="0"/>
+              <Component id="jSplitPane1" pref="522" max="32767" attributes="0"/>
               <EmptySpace max="-2" attributes="0"/>
           </Group>
       </Group>
@@ -84,7 +88,9 @@
             <Component class="javax.swing.JTextArea" name="taBody">
               <Properties>
                 <Property name="columns" type="int" value="20"/>
+                <Property name="lineWrap" type="boolean" value="true"/>
                 <Property name="rows" type="int" value="5"/>
+                <Property name="wrapStyleWord" type="boolean" value="true"/>
               </Properties>
             </Component>
           </SubComponents>
@@ -122,6 +128,16 @@
       </Properties>
       <Events>
         <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="chkGenerateAddressActionPerformed"/>
+      </Events>
+    </Component>
+    <Component class="javax.swing.JButton" name="cmdExtract">
+      <Properties>
+        <Property name="icon" type="javax.swing.Icon" editor="org.netbeans.modules.form.editors2.IconEditor">
+          <Image iconType="3" name="/icons16/material/j-lawyer-ai.png"/>
+        </Property>
+      </Properties>
+      <Events>
+        <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="cmdExtractActionPerformed"/>
       </Events>
     </Component>
   </SubComponents>
