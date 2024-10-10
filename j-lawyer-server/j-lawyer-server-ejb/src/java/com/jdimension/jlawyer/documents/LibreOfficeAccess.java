@@ -1666,11 +1666,11 @@ public class LibreOfficeAccess {
         } else if (file.toLowerCase().endsWith(EXT_DOCX)) {
 
             HashMap<Integer, CTR> tfCache = new HashMap<>();
-            return new ArrayList(MicrosoftOfficeAccess.getPlaceHolders(file, allPartyTypesPlaceHolders, formsPlaceHolders, tfCache));
+            return new ArrayList<>(MicrosoftOfficeAccess.getPlaceHolders(file, allPartyTypesPlaceHolders, formsPlaceHolders, tfCache));
 
         } else if (file.toLowerCase().endsWith(EXT_PDF)) {
 
-            return new ArrayList(PdfFormsAccess.getPlaceHolders(file, allPartyTypesPlaceHolders, formsPlaceHolders));
+            return new ArrayList<>(PdfFormsAccess.getPlaceHolders(file, allPartyTypesPlaceHolders, formsPlaceHolders));
 
         }
 
