@@ -728,6 +728,7 @@ public class LibreOfficeAccess {
     private static final Logger log = Logger.getLogger(LibreOfficeAccess.class.getName());
     private static final String ERROR_MAYBE_HEADLESS = "Failure setting content of table cell - when running on a headless Linux system, please install xvfb libxext6 libxi6 libxtst6 libxrender1 libongoft2-1.0.0";
     private static final String EXT_DOCX = ".docx";
+    private static final String EXT_PDF = ".pdf";
 
     public static void mergeDocuments(String intoDocument, String mergeDocument) throws Exception {
         // note: intoDocument is just an ID as filename, does not have an .odt / .docx extension
@@ -1528,6 +1529,8 @@ public class LibreOfficeAccess {
             outputOds.close();
         } else if (fileName.toLowerCase().endsWith(EXT_DOCX)) {
             MicrosoftOfficeAccess.setPlaceHolders(caseId, fileInFileSystem, fileName, values, formsPrefixes);
+        } else if (fileName.toLowerCase().endsWith(EXT_PDF)) {
+            PdfFormsAccess.setPlaceHolders(caseId, fileInFileSystem, fileName, values, formsPrefixes);
         }
 
     }
@@ -1664,6 +1667,10 @@ public class LibreOfficeAccess {
 
             HashMap<Integer, CTR> tfCache = new HashMap<>();
             return new ArrayList(MicrosoftOfficeAccess.getPlaceHolders(file, allPartyTypesPlaceHolders, formsPlaceHolders, tfCache));
+
+        } else if (file.toLowerCase().endsWith(EXT_PDF)) {
+
+            return new ArrayList(PdfFormsAccess.getPlaceHolders(file, allPartyTypesPlaceHolders, formsPlaceHolders));
 
         }
 
