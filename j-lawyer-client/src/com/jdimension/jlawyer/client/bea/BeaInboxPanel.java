@@ -1730,7 +1730,7 @@ public class BeaInboxPanel extends javax.swing.JPanel implements SaveToCaseExecu
         int sortCol = -1;
         List<? extends SortKey> sortKeys = this.tblMails.getRowSorter().getSortKeys();
         if (sortKeys != null) {
-            if (sortKeys.size() > 0) {
+            if (!sortKeys.isEmpty()) {
                 sortCol = sortKeys.get(0).getColumn();
             }
         }
@@ -1993,7 +1993,7 @@ public class BeaInboxPanel extends javax.swing.JPanel implements SaveToCaseExecu
         int sortCol = -1;
         List<? extends SortKey> sortKeys = this.tblMails.getRowSorter().getSortKeys();
         if (sortKeys != null) {
-            if (sortKeys.size() > 0) {
+            if (!sortKeys.isEmpty()) {
                 sortCol = sortKeys.get(0).getColumn();
             }
         }
@@ -2143,7 +2143,7 @@ public class BeaInboxPanel extends javax.swing.JPanel implements SaveToCaseExecu
                 sp.setEntry(cce, this);
                 actionPanelEntries.add(sp);
 
-                if (phoneNumbers.size() > 0) {
+                if (!phoneNumbers.isEmpty()) {
                     ExtractedPhoneNumbersPanel pnp = new ExtractedPhoneNumbersPanel();
                     pnp.setPhoneNumbers(phoneNumbers);
                     actionPanelEntries.add(pnp);
@@ -2327,7 +2327,7 @@ public class BeaInboxPanel extends javax.swing.JPanel implements SaveToCaseExecu
             int sortCol = -1;
             List<? extends SortKey> sortKeys = this.tblMails.getRowSorter().getSortKeys();
             if (sortKeys != null) {
-                if (sortKeys.size() > 0) {
+                if (!sortKeys.isEmpty()) {
                     sortCol = sortKeys.get(0).getColumn();
                 }
             }
@@ -2480,7 +2480,7 @@ public class BeaInboxPanel extends javax.swing.JPanel implements SaveToCaseExecu
                 bulkSaveDlg.setCaseFolder(rootFolder, targetFolder);
                 bulkSaveDlg.setSelectedCase(targetCase);
 
-                if (attachmentsOnly && targetCase != null) {
+                if (attachmentsOnly) {
 
                     for (Attachment att : m.getAttachments()) {
 
@@ -2540,7 +2540,7 @@ public class BeaInboxPanel extends javax.swing.JPanel implements SaveToCaseExecu
                     }
                 }
 
-                if (targetCase != null && !attachmentsOnly) {
+                if (!attachmentsOnly) {
 
                     String newName = export.getFileName();
                     if (newName == null) {
@@ -2564,7 +2564,7 @@ public class BeaInboxPanel extends javax.swing.JPanel implements SaveToCaseExecu
 
                 }
 
-                if (targetCase != null && separateAttachments && !attachmentsOnly) {
+                if (separateAttachments && !attachmentsOnly) {
                     for (Attachment att : m.getAttachments()) {
                         String attachmentName = att.getFileName();
                         byte[] attachmentData = att.getContent();
@@ -2625,12 +2625,12 @@ public class BeaInboxPanel extends javax.swing.JPanel implements SaveToCaseExecu
                 bulkSaveDlg.setVisible(true);
 
                 String temp = ClientSettings.getInstance().getConfiguration(ClientSettings.CONF_BEA_MOVETOIMPORTEDENABLED, "false");
-                if (targetCase != null && "true".equalsIgnoreCase(temp) && !bulkSaveDlg.isFailedOrCancelled()) {
+                if ("true".equalsIgnoreCase(temp) && !bulkSaveDlg.isFailedOrCancelled()) {
                     int scrollToRow = tblMails.getSelectedRow();
                     int sortCol = -1;
                     List<? extends SortKey> sortKeys = this.tblMails.getRowSorter().getSortKeys();
                     if (sortKeys != null) {
-                        if (sortKeys.size() > 0) {
+                        if (!sortKeys.isEmpty()) {
                             sortCol = sortKeys.get(0).getColumn();
                         }
                     }
