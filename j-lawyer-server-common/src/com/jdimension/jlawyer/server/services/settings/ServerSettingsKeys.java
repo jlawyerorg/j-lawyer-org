@@ -776,6 +776,7 @@ public class ServerSettingsKeys {
     public static final String SERVERCONF_SECURITY_FORCE_PASSWORDCOMPLEXITY="jlawyer.server.security.forcepasswordcomplexity";
     
     public static final String SERVERCONF_CLOUDSYNC_ADDRESSBOOK_ENABLED="jlawyer.server.cloudsync.addressbook.enabled";
+    public static final String SERVERCONF_CLOUDSYNC_ADDRESSBOOK_BIRTHDAYSYNC="jlawyer.server.cloudsync.addressbook.birthdaysync";
     public static final String SERVERCONF_CLOUDSYNC_ADDRESSBOOK_HOST="jlawyer.server.cloudsync.addressbook.host";
     public static final String SERVERCONF_CLOUDSYNC_ADDRESSBOOK_PORT="jlawyer.server.cloudsync.addressbook.port";
     public static final String SERVERCONF_CLOUDSYNC_ADDRESSBOOK_SSL="jlawyer.server.cloudsync.addressbook.ssl";

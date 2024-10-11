@@ -694,7 +694,6 @@ import org.apache.jackrabbit.webdav.property.DavPropertyIterator;
 import org.apache.jackrabbit.webdav.property.DavPropertySet;
 import org.jlawyer.cloud.contacts.CloudAddressBook;
 import org.jlawyer.cloud.contacts.CloudContact;
-//import org.osaf.caldav4j.methods.GetMethod;
 import org.apache.commons.httpclient.methods.GetMethod;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -713,6 +712,8 @@ public class NextcloudContactsConnector {
     protected int port = 443;
     protected String userName = null;
     protected String password = null;
+    
+    private boolean synchronizeBirthdays=false;
 
     public NextcloudContactsConnector(String serverName, boolean useHTTPS, int port, String userName, String password) {
         this.serverName = serverName;
@@ -916,7 +917,7 @@ public class NextcloudContactsConnector {
         n.setGiven(c.getFirstName());
 //n.getPrefixes().add("Mr");
 
-        if (c.getBirthDate() != null && !("".equals(c.getBirthDate()))) {
+        if (this.synchronizeBirthdays && c.getBirthDate() != null && !("".equals(c.getBirthDate()))) {
             try {
                 SimpleDateFormat df = new SimpleDateFormat("dd.MM.yyyy");
                 Date d = df.parse(c.getBirthDate());
@@ -1176,6 +1177,20 @@ public class NextcloudContactsConnector {
      */
     public void setPassword(String password) {
         this.password = password;
+    }
+
+    /**
+     * @return the synchronizeBirthdays
+     */
+    public boolean isSynchronizeBirthdays() {
+        return synchronizeBirthdays;
+    }
+
+    /**
+     * @param synchronizeBirthdays the synchronizeBirthdays to set
+     */
+    public void setSynchronizeBirthdays(boolean synchronizeBirthdays) {
+        this.synchronizeBirthdays = synchronizeBirthdays;
     }
 
 }

@@ -757,6 +757,16 @@ public class ContactSyncService implements ContactSyncServiceLocal {
                     return null;
                 }
             }
+            
+            boolean synchronizeBirthdays=true;
+            s = this.settings.find(ServerSettingsKeys.SERVERCONF_CLOUDSYNC_ADDRESSBOOK_BIRTHDAYSYNC);
+            if (s != null) {
+                if ("on".equalsIgnoreCase(s.getSettingValue()) || "1".equalsIgnoreCase(s.getSettingValue()) || "true".equalsIgnoreCase(s.getSettingValue())) {
+                    synchronizeBirthdays=true;
+                } else {
+                    synchronizeBirthdays=false;
+                }
+            }
 
             String host = null;
             s = this.settings.find(ServerSettingsKeys.SERVERCONF_CLOUDSYNC_ADDRESSBOOK_HOST);
@@ -808,6 +818,7 @@ public class ContactSyncService implements ContactSyncServiceLocal {
             NextcloudContactsConnector nc = new NextcloudContactsConnector(host, ssl, port, user, pwd);
             if(subPath!=null && !ServerStringUtils.isEmpty(subPath))
                 nc.setSubpathPrefix(subPath);
+            nc.setSynchronizeBirthdays(synchronizeBirthdays);
             return nc;
         } catch (Throwable t) {
             log.error("Unable to get Nextcloud CardDAV connector", t);
