@@ -663,6 +663,7 @@
  */
 package com.jdimension.jlawyer.client.editors.files;
 
+import com.iradraconis.shrinkify.Shrinkify;
 import com.jdimension.jlawyer.ai.AiCapability;
 import com.jdimension.jlawyer.ai.InputData;
 import com.jdimension.jlawyer.ai.Message;
@@ -1768,6 +1769,7 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
         mnuCopyDocumentToOtherCase = new javax.swing.JMenuItem();
         mnuMoveDocumentToOtherCase = new javax.swing.JMenuItem();
         mnuRenameDocument = new javax.swing.JMenuItem();
+        mnuShrinkPdf = new javax.swing.JMenuItem();
         mnuSetDocumentDate = new javax.swing.JMenuItem();
         mnuDocumentHighlights = new javax.swing.JMenu();
         mnuDocumentHighlight1 = new javax.swing.JMenuItem();
@@ -2145,6 +2147,16 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
             }
         });
         documentsPopup.add(mnuRenameDocument);
+
+        mnuShrinkPdf.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/edit.png"))); // NOI18N
+        mnuShrinkPdf.setText("PDF verkleinern");
+        mnuShrinkPdf.setToolTipText("");
+        mnuShrinkPdf.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                mnuShrinkPdfActionPerformed(evt);
+            }
+        });
+        documentsPopup.add(mnuShrinkPdf);
 
         mnuSetDocumentDate.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/schedule.png"))); // NOI18N
         mnuSetDocumentDate.setText("Erstellungsdatum anpassen");
@@ -7004,6 +7016,84 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
         }
     }//GEN-LAST:event_cmdAssistantGenerateMouseReleased
 
+    private void mnuShrinkPdfActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_mnuShrinkPdfActionPerformed
+        ArrayList<ArchiveFileDocumentsBean> selectedDocs = this.caseFolderPanel1.getSelectedDocuments();
+        ArrayList<String> open = this.getDocumentsOpenForWrite(selectedDocs);
+        if (selectedDocs.isEmpty()) {
+            return;
+        }
+
+        ArrayList<String> tempFiles = new ArrayList<>();
+
+        try {
+            // Iterate over the selected documents
+            for (ArchiveFileDocumentsBean doc : selectedDocs) {
+                // Load document content
+                byte[] content = CachingDocumentLoader.getInstance().getDocument(doc.getId());
+                // Save as temporary file
+                String tempPath = FileUtils.createTempFile(doc.getName(), content);
+                tempFiles.add(tempPath);
+            }
+
+            // Convert ArrayList to array for Shrinkify
+            String[] documentArray = tempFiles.toArray(new String[0]);
+            System.out.println(Arrays.toString(documentArray));
+
+            // Start Shrinkify with the temporary file paths
+            Shrinkify app = new Shrinkify(documentArray);
+            app.setVisible(true);
+
+            // Wait for Shrinkify to finish in a separate thread
+            new Thread(() -> {
+                try {
+                    while (!app.isFinished()) {
+                        Thread.sleep(1000);
+                    }
+
+                    // After Shrinkify finishes, read the modified files and update the server
+                    SwingUtilities.invokeLater(() -> {
+                        try {
+                            for (int i = 0; i < selectedDocs.size(); i++) {
+                                ArchiveFileDocumentsBean doc = selectedDocs.get(i);
+                                String tempPath = tempFiles.get(i);
+
+                                // Read changes from the temporary file
+                                byte[] fileContent = FileUtils.readFile(new File(tempPath));
+
+                                // Save modified data back to the server
+                                ClientSettings settings = ClientSettings.getInstance();
+                                JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
+                                locator.lookupArchiveFileServiceRemote().setDocumentContent(doc.getId(), fileContent);
+
+                                // Delete temporary file
+                                FileUtils.cleanupTempFile(tempPath);
+                            }
+                        } catch (Exception ex) {
+                            log.error(ex);
+                            JOptionPane.showMessageDialog(null, "Error processing shrinkified files: " + ex.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
+                        } finally {
+                            // Ensure all temporary files are cleaned up
+                            for (String tempFile : tempFiles) {
+                                FileUtils.cleanupTempFile(tempFile);
+                            }
+                        }
+                    });
+                } catch (InterruptedException ex) {
+                    log.error(ex);
+                }
+            }).start();
+
+        } catch (Exception ex) {
+            log.error(ex);
+            JOptionPane.showMessageDialog(null, "Error starting Shrinkify: " + ex.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
+            // Clean up temp files in case of error
+            for (String tempFile : tempFiles) {
+                FileUtils.cleanupTempFile(tempFile);
+            }
+        }
+    }//GEN-LAST:event_mnuShrinkPdfActionPerformed
+
+
     public void exportSelectedDocumentsAsPdf() {
         
 
@@ -7721,6 +7811,7 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
     private javax.swing.JMenuItem mnuSetReviewDone;
     private javax.swing.JMenuItem mnuSetReviewOpen;
     private javax.swing.JMenuItem mnuShareNextcloud;
+    private javax.swing.JMenuItem mnuShrinkPdf;
     private javax.swing.JMenuItem mnuToggleFavorite;
     private javax.swing.JMenuItem mnuUseDocumentAsTemplate;
     private com.jdimension.jlawyer.client.editors.files.NewEventPanel newEventPanel;
