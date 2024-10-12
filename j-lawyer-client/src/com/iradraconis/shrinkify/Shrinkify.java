@@ -663,19 +663,52 @@
  */
 package com.iradraconis.shrinkify;
 
-import java.awt.*;
-import java.awt.event.*;
+import java.awt.BorderLayout;
+import java.awt.Component;
+import java.awt.Desktop;
+import java.awt.Dimension;
+import java.awt.Graphics2D;
+import java.awt.GridBagConstraints;
+import java.awt.GridBagLayout;
+import java.awt.Insets;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
 import java.awt.image.BufferedImage;
-import java.io.*;
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
+import java.io.File;
+import java.io.IOException;
+import java.io.InputStream;
 import java.nio.file.Files;
 import java.nio.file.StandardCopyOption;
 import java.text.DecimalFormat;
 import java.util.ArrayList;
-import java.util.logging.Level;
-import java.util.logging.Logger;
-import javax.imageio.*;
+import javax.imageio.IIOImage;
+import javax.imageio.ImageIO;
+import javax.imageio.ImageWriteParam;
+import javax.imageio.ImageWriter;
 import javax.imageio.stream.ImageOutputStream;
-import javax.swing.*;
+import javax.swing.BorderFactory;
+import javax.swing.Box;
+import javax.swing.BoxLayout;
+import javax.swing.DefaultListCellRenderer;
+import javax.swing.DefaultListModel;
+import javax.swing.JButton;
+import javax.swing.JCheckBox;
+import javax.swing.JComboBox;
+import javax.swing.JFileChooser;
+import javax.swing.JFrame;
+import javax.swing.JLabel;
+import javax.swing.JList;
+import javax.swing.JMenuItem;
+import javax.swing.JOptionPane;
+import javax.swing.JPanel;
+import javax.swing.JPopupMenu;
+import javax.swing.JProgressBar;
+import javax.swing.JScrollPane;
+import javax.swing.JTextArea;
+import javax.swing.SwingUtilities;
+import org.apache.log4j.Logger;
 
 
 
@@ -689,6 +722,8 @@ import org.apache.pdfbox.pdmodel.graphics.image.JPEGFactory;
 import org.apache.pdfbox.pdmodel.graphics.image.PDImageXObject;
 
 public class Shrinkify extends JFrame {
+    
+    private static final Logger log=Logger.getLogger(Shrinkify.class.getName());
 
     private File[] pdfFiles;
     private JComboBox<String> qualityComboBox;
@@ -706,7 +741,7 @@ public class Shrinkify extends JFrame {
    
 
     public Shrinkify(String[] args) throws IOException {
-        setTitle("Shrinkify - PDF Kompressor");
+        setTitle("PDF komprimieren");
         setSize(900, 600);
         setLocationRelativeTo(null);
         initComponents();
@@ -755,12 +790,9 @@ public class Shrinkify extends JFrame {
         fileList.setFixedCellWidth(500);
         filePanel.add(fileScrollPane, BorderLayout.CENTER);
 
-//        // Drag-and-Drop-Funktionalität - im Client nicht benötigt
-//        fileList.setDropMode(DropMode.INSERT);
-//        fileList.setTransferHandler(new FileTransferHandler());
-
         // MouseListener für Rechtsklick-Menü
         fileList.addMouseListener(new MouseAdapter() {
+            @Override
             public void mouseClicked(MouseEvent e) {
                 if (SwingUtilities.isRightMouseButton(e)) {
                     int index = fileList.locationToIndex(e.getPoint());
@@ -972,7 +1004,7 @@ public class Shrinkify extends JFrame {
                     }
     
                 } catch (IOException ex) {
-                    ex.printStackTrace();
+                    log.error("Unable to generate compressed PDF preview", ex);
                     JOptionPane.showMessageDialog(this, "Fehler beim Erstellen der Vorschau für Datei: " + inputFile.getName());
                 }
             }
@@ -1028,7 +1060,7 @@ public class Shrinkify extends JFrame {
                         outputFile = File.createTempFile("temp_compressed_", ".pdf");
                         outputFile.deleteOnExit();
                     } catch (IOException e) {
-                        e.printStackTrace();
+                        log.error("unable to create temporary file", e);
                         JOptionPane.showMessageDialog(this, "Fehler beim Erstellen der temporären Datei für: " + inputFile.getName());
                         continue;
                     }
@@ -1059,7 +1091,7 @@ public class Shrinkify extends JFrame {
                     results.add(result);
 
                 } catch (IOException ex) {
-                    ex.printStackTrace();
+                    log.error("Error processing file " + inputFile.getName(), ex);
                     JOptionPane.showMessageDialog(this, "Fehler beim Verarbeiten der Datei: " + inputFile.getName());
                 }
 
@@ -1242,7 +1274,7 @@ public class Shrinkify extends JFrame {
                             IOUtils.closeQuietly(in);
                             IOUtils.closeQuietly(ios);
                         } catch (Exception e) {
-                            e.printStackTrace();
+                            log.error(e);
                         }
                     }
                 }
@@ -1262,7 +1294,7 @@ public class Shrinkify extends JFrame {
             try {
                 app = new Shrinkify(args);
             } catch (IOException ex) {
-                Logger.getLogger(Shrinkify.class.getName()).log(Level.SEVERE, null, ex);
+                log.error(ex);
             }
             if (app != null) {
                 app.setVisible(true);
