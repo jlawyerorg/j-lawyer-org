@@ -7024,6 +7024,16 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
         }
 
         ArrayList<String> tempFiles = new ArrayList<>();
+        
+        // check, ob die Dateien ALLE die Endung .pdf haben
+        boolean allPdf = true;
+        for (ArchiveFileDocumentsBean doc : selectedDocs) {
+            if (!doc.getName().toLowerCase().endsWith(".pdf")) {
+                allPdf = false;
+                JOptionPane.showMessageDialog(null, "Es können nur PDF-Dateien verkleinert werden", "Fehler", JOptionPane.ERROR_MESSAGE);
+                return;
+            }
+        }
 
         try {
             // Iterate over the selected documents
@@ -7037,7 +7047,7 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
 
             // Convert ArrayList to array for Shrinkify
             String[] documentArray = tempFiles.toArray(new String[0]);
-            System.out.println(Arrays.toString(documentArray));
+            
 
             // Start Shrinkify with the temporary file paths
             Shrinkify app = new Shrinkify(documentArray);
