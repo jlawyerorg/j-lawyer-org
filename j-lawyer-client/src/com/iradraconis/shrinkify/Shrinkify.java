@@ -664,7 +664,6 @@
 package com.iradraconis.shrinkify;
 
 import java.awt.*;
-import java.awt.datatransfer.*;
 import java.awt.event.*;
 import java.awt.image.BufferedImage;
 import java.io.*;
@@ -672,7 +671,6 @@ import java.nio.file.Files;
 import java.nio.file.StandardCopyOption;
 import java.text.DecimalFormat;
 import java.util.ArrayList;
-import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import javax.imageio.*;
@@ -696,6 +694,7 @@ public class Shrinkify extends JFrame {
     private JComboBox<String> qualityComboBox;
     private JComboBox<String> resolutionComboBox;
     private JCheckBox bwCheckBox;
+    private JCheckBox greyscaleCheckBox;
     private JCheckBox overwriteCheckBox;
     private JButton saveButton;
     private JProgressBar progressBar;
@@ -808,11 +807,30 @@ public class Shrinkify extends JFrame {
         settingsPanel.add(resolutionLabel);
         settingsPanel.add(resolutionComboBox);
 
-        // Schwarz/Weiß Checkbox
+        // Checkbox für Schwarz/Weiß-Konvertierung
         bwCheckBox = new JCheckBox("In Schwarz/Weiß konvertieren");
         bwCheckBox.setAlignmentX(Component.LEFT_ALIGNMENT);
         settingsPanel.add(Box.createVerticalStrut(10));
         settingsPanel.add(bwCheckBox);
+
+        // Checkbox für Graustufen-Konvertierung
+        greyscaleCheckBox = new JCheckBox("In Graustufen konvertieren");
+        greyscaleCheckBox.setAlignmentX(Component.LEFT_ALIGNMENT);
+        settingsPanel.add(Box.createVerticalStrut(10));
+        settingsPanel.add(greyscaleCheckBox);
+        
+        // nur eine der beiden Checkboxen kann aktiviert sein kann
+        bwCheckBox.addActionListener(e -> {
+            if (bwCheckBox.isSelected()) {
+                greyscaleCheckBox.setSelected(false);  
+            }
+        });
+
+        greyscaleCheckBox.addActionListener(e -> {
+            if (greyscaleCheckBox.isSelected()) {
+                bwCheckBox.setSelected(false);  
+            }
+        });
 
         // Überschreiben Checkbox
         overwriteCheckBox = new JCheckBox("Urspr. Dateien überschreiben");
@@ -916,9 +934,10 @@ public class Shrinkify extends JFrame {
         }
     
         float imageQuality = getImageQuality();
-        boolean convertBW = bwCheckBox.isSelected();
         float resolutionScale = getResolutionScale();
-    
+        boolean convertBW = bwCheckBox.isSelected();
+        boolean convertGreyScale = greyscaleCheckBox.isSelected();
+
         new Thread(() -> {
             StringBuilder compressionInfo = new StringBuilder();
             for (int i = 0; i < fileListModel.size(); i++) {
@@ -932,7 +951,7 @@ public class Shrinkify extends JFrame {
                     long originalSize = inputFile.length();  // Ursprüngliche Dateigröße
     
                     // PDF komprimieren
-                    compressPDFWithPDFBox(inputFile, tempFile, imageQuality, convertBW, resolutionScale);
+                    compressPDFWithPDFBox(inputFile, tempFile, imageQuality, convertBW, convertGreyScale, resolutionScale);
     
                     long compressedSize = tempFile.length();  // Komprimierte Dateigröße
     
@@ -971,6 +990,7 @@ public class Shrinkify extends JFrame {
 
         float imageQuality = getImageQuality();
         boolean convertBW = bwCheckBox.isSelected();
+        boolean convertGreyScale = greyscaleCheckBox.isSelected();
         float resolutionScale = getResolutionScale();
         boolean overwriteFiles = overwriteCheckBox.isSelected();
 
@@ -1018,7 +1038,7 @@ public class Shrinkify extends JFrame {
 
                 try {
                     long originalSize = inputFile.length();
-                    compressPDFWithPDFBox(inputFile, outputFile, imageQuality, convertBW, resolutionScale);
+                    compressPDFWithPDFBox(inputFile, outputFile, imageQuality, convertBW, convertGreyScale, resolutionScale);
 
                     if (overwriteFiles) {
                         // Originaldatei durch komprimierte Datei ersetzen
@@ -1112,8 +1132,8 @@ public class Shrinkify extends JFrame {
         }
     }
 
-    private void compressPDFWithPDFBox(File inputFile, File outputFile, float imageQuality, boolean convertBW, float resolutionScale) throws IOException {
-        // Änderung: Verwenden von PDDocument.load() statt Loader.loadPDF() in PDFBox 2.x
+    private void compressPDFWithPDFBox(File inputFile, File outputFile, float imageQuality, boolean convertBW, boolean convertGreyScale, float resolutionScale) throws IOException {
+        // Änderung zu PdfBox 3: Verwenden von PDDocument.load() statt Loader.loadPDF() in PDFBox 2.x 
         try (PDDocument document = PDDocument.load(inputFile)) {
             for (PDPage page : document.getPages()) {
                 PDResources resources = page.getResources();
@@ -1152,13 +1172,39 @@ public class Shrinkify extends JFrame {
 
                         // In Schwarz-Weiß konvertieren, falls ausgewählt
                         if (convertBW) {
-                            BufferedImage bwImage = new BufferedImage(image.getWidth(), image.getHeight(), BufferedImage.TYPE_BYTE_GRAY);
-                            Graphics2D g = bwImage.createGraphics();
+                        BufferedImage bwImage = new BufferedImage(image.getWidth(), image.getHeight(), BufferedImage.TYPE_BYTE_BINARY);
+                        int threshold = 128;  // Schwellenwert für Schwarz-Weiß
+
+                        for (int y = 0; y < image.getHeight(); y++) {
+                            for (int x = 0; x < image.getWidth(); x++) {
+                                // Holen des RGB-Werts des Pixels
+                                int rgb = image.getRGB(x, y);
+                                int r = (rgb >> 16) & 0xFF;
+                                int g = (rgb >> 8) & 0xFF;
+                                int b = rgb & 0xFF;
+
+                                // Berechnung des durchschnittlichen Helligkeitswertes
+                                int gray = (r + g + b) / 3;
+
+                                // Setzen auf Schwarz oder Weiß basierend auf dem Schwellenwert
+                                int bw = (gray < threshold) ? 0x000000 : 0xFFFFFF;
+                                bwImage.setRGB(x, y, bw);
+                            }
+                        }
+                            
+                        
+
+                            image = bwImage; // Überschreiben des Bildes mit der Schwarz/Weiß-Version
+                        }
+                        
+                        if (convertGreyScale) {
+                            BufferedImage greyScaleImage = new BufferedImage(image.getWidth(), image.getHeight(), BufferedImage.TYPE_BYTE_GRAY);
+                            Graphics2D g = greyScaleImage.createGraphics();
                             g.drawImage(image, 0, 0, null);
                             g.dispose();
-                            image = bwImage;
+                            image = greyScaleImage;
                         }
-
+                        
                         // Auflösung skalieren, falls ausgewählt
                         if (resolutionScale != 1.0f) {
                             int newWidth = (int) (image.getWidth() * resolutionScale);
