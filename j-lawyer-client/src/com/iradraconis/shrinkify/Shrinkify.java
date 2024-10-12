@@ -693,6 +693,7 @@ import javax.swing.Box;
 import javax.swing.BoxLayout;
 import javax.swing.DefaultListCellRenderer;
 import javax.swing.DefaultListModel;
+import javax.swing.ImageIcon;
 import javax.swing.JButton;
 import javax.swing.JCheckBox;
 import javax.swing.JComboBox;
@@ -760,6 +761,9 @@ public class Shrinkify extends JFrame {
     }
 
     private void initComponents() {
+        
+        setIconImage(new ImageIcon(getClass().getResource("/icons/windowicon.png")).getImage());
+        
         // Hauptpanel
         JPanel panel = new JPanel(new GridBagLayout());
         GridBagConstraints gbc = new GridBagConstraints();
