@@ -736,7 +736,8 @@ public class FileConverter {
             throw new Exception("Diesem Dokument ist mit mehreren Rechnungen verknüpft, elektronische Rechnung kann nicht erstellt werden.");
         }
         
-        if (invoices.size() == 1) {
+        // only create e-invoice if the invoice type indicates a turnover / flow of money
+        if (invoices.size() == 1 && invoices.get(0).getInvoiceType()!=null && invoices.get(0).getInvoiceType().isTurnOver()) {
             // generate electronic invoice
             Invoice sourceInvoice = invoices.get(0);
             if (StringUtils.isEmpty(sourceInvoice.getSender())) {
