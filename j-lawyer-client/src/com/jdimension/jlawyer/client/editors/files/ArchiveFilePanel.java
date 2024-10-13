@@ -663,7 +663,7 @@
  */
 package com.jdimension.jlawyer.client.editors.files;
 
-import com.iradraconis.shrinkify.Shrinkify;
+import com.iradraconis.shrinkify.ShrinkifyGui;
 import com.jdimension.jlawyer.ai.AiCapability;
 import com.jdimension.jlawyer.ai.InputData;
 import com.jdimension.jlawyer.ai.Message;
@@ -7059,7 +7059,7 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
             
 
             // Start Shrinkify with the temporary file paths
-            Shrinkify app = new Shrinkify(documentArray);
+            ShrinkifyGui app = new ShrinkifyGui(documentArray);
             app.setVisible(true);
 
             // Wait for Shrinkify to finish in a separate thread
