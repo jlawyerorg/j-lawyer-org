@@ -305,7 +305,6 @@
                   <Image iconType="3" name="/icons16/pdf.png"/>
                 </Property>
                 <Property name="text" type="java.lang.String" value="als PDF zur Akte speichern"/>
-                <Property name="actionCommand" type="java.lang.String" value="als PDF zur Akte speichern"/>
               </Properties>
               <Events>
                 <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="mnuDuplicateDocumentAsPdfActionPerformed"/>
@@ -320,6 +319,17 @@
               </Properties>
               <Events>
                 <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="mnuSaveDocumentsLocallyPdfActionPerformed"/>
+              </Events>
+            </MenuItem>
+            <MenuItem class="javax.swing.JMenuItem" name="mnuSaveDocumentEncrypted">
+              <Properties>
+                <Property name="icon" type="javax.swing.Icon" editor="org.netbeans.modules.form.editors2.IconEditor">
+                  <Image iconType="3" name="/icons16/gpg.png"/>
+                </Property>
+                <Property name="text" type="java.lang.String" value="verschl&#xfc;sseltes PDF exportieren"/>
+              </Properties>
+              <Events>
+                <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="mnuSaveDocumentEncryptedActionPerformed"/>
               </Events>
             </MenuItem>
           </SubComponents>
@@ -357,19 +367,6 @@
           </Properties>
           <Events>
             <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="mnuOpenInExternalMailerActionPerformed"/>
-          </Events>
-        </MenuItem>
-        <Component class="javax.swing.JPopupMenu$Separator" name="jSeparator6">
-        </Component>
-        <MenuItem class="javax.swing.JMenuItem" name="mnuSaveDocumentEncrypted">
-          <Properties>
-            <Property name="icon" type="javax.swing.Icon" editor="org.netbeans.modules.form.editors2.IconEditor">
-              <Image iconType="3" name="/icons16/gpg.png"/>
-            </Property>
-            <Property name="text" type="java.lang.String" value="verschl&#xfc;sseltes PDF exportieren"/>
-          </Properties>
-          <Events>
-            <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="mnuSaveDocumentEncryptedActionPerformed"/>
           </Events>
         </MenuItem>
         <Component class="javax.swing.JPopupMenu$Separator" name="jSeparator2">

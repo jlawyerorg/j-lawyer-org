@@ -1779,12 +1779,11 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
         mnuShrinkPdf = new javax.swing.JMenuItem();
         mnuDuplicateDocumentAsPdf = new javax.swing.JMenuItem();
         mnuSaveDocumentsLocallyPdf = new javax.swing.JMenuItem();
+        mnuSaveDocumentEncrypted = new javax.swing.JMenuItem();
         jSeparator1 = new javax.swing.JPopupMenu.Separator();
         mnuSendDocument = new javax.swing.JMenuItem();
         mnuSendDocumentPDF = new javax.swing.JMenuItem();
         mnuOpenInExternalMailer = new javax.swing.JMenuItem();
-        jSeparator6 = new javax.swing.JPopupMenu.Separator();
-        mnuSaveDocumentEncrypted = new javax.swing.JMenuItem();
         jSeparator2 = new javax.swing.JPopupMenu.Separator();
         mnuSendBeaDocument = new javax.swing.JMenuItem();
         mnuSendBeaDocumentPDF = new javax.swing.JMenuItem();
@@ -2205,7 +2204,6 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
 
         mnuDuplicateDocumentAsPdf.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons16/pdf.png"))); // NOI18N
         mnuDuplicateDocumentAsPdf.setText("als PDF zur Akte speichern");
-        mnuDuplicateDocumentAsPdf.setActionCommand("als PDF zur Akte speichern");
         mnuDuplicateDocumentAsPdf.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 mnuDuplicateDocumentAsPdfActionPerformed(evt);
@@ -2221,6 +2219,15 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
             }
         });
         mnuPdfActions.add(mnuSaveDocumentsLocallyPdf);
+
+        mnuSaveDocumentEncrypted.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons16/gpg.png"))); // NOI18N
+        mnuSaveDocumentEncrypted.setText("verschlüsseltes PDF exportieren");
+        mnuSaveDocumentEncrypted.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                mnuSaveDocumentEncryptedActionPerformed(evt);
+            }
+        });
+        mnuPdfActions.add(mnuSaveDocumentEncrypted);
 
         documentsPopup.add(mnuPdfActions);
         documentsPopup.add(jSeparator1);
@@ -2251,16 +2258,6 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
             }
         });
         documentsPopup.add(mnuOpenInExternalMailer);
-        documentsPopup.add(jSeparator6);
-
-        mnuSaveDocumentEncrypted.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons16/gpg.png"))); // NOI18N
-        mnuSaveDocumentEncrypted.setText("verschlüsseltes PDF exportieren");
-        mnuSaveDocumentEncrypted.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                mnuSaveDocumentEncryptedActionPerformed(evt);
-            }
-        });
-        documentsPopup.add(mnuSaveDocumentEncrypted);
         documentsPopup.add(jSeparator2);
 
         mnuSendBeaDocument.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons16/bea16.png"))); // NOI18N
@@ -7763,7 +7760,6 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
     private javax.swing.JPopupMenu.Separator jSeparator3;
     private javax.swing.JPopupMenu.Separator jSeparator4;
     private javax.swing.JPopupMenu.Separator jSeparator5;
-    private javax.swing.JPopupMenu.Separator jSeparator6;
     private javax.swing.JSeparator jSeparator7;
     private javax.swing.JPopupMenu.Separator jSeparator8;
     private javax.swing.JPopupMenu.Separator jSeparator9;
