@@ -761,6 +761,9 @@ public class ShrinkifyGui extends javax.swing.JFrame {
             }
         });
         
+        
+        
+        
     }
     
     
@@ -859,6 +862,16 @@ public class ShrinkifyGui extends javax.swing.JFrame {
 
         fileScrollPane.setHorizontalScrollBarPolicy(javax.swing.ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
 
+        fileList.setSelectionMode(javax.swing.ListSelectionModel.SINGLE_SELECTION);
+        fileList.setVisibleRowCount(15);
+        fileList.addMouseListener(new java.awt.event.MouseAdapter() {
+            public void mousePressed(java.awt.event.MouseEvent evt) {
+                fileListMousePressed(evt);
+            }
+            public void mouseReleased(java.awt.event.MouseEvent evt) {
+                fileListMouseReleased(evt);
+            }
+        });
         jScrollPane1.setViewportView(fileList);
 
         javax.swing.GroupLayout filePanelLayout = new javax.swing.GroupLayout(filePanel);
@@ -972,6 +985,26 @@ public class ShrinkifyGui extends javax.swing.JFrame {
     private void closeButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_closeButtonActionPerformed
         dispose();
     }//GEN-LAST:event_closeButtonActionPerformed
+
+    private void fileListMousePressed(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_fileListMousePressed
+        if (evt.isPopupTrigger()) {
+            int index = fileList.locationToIndex(evt.getPoint());
+            if (index != -1) {
+                fileList.setSelectedIndex(index);
+                showContextMenu(evt.getX(), evt.getY());
+            }
+        }
+    }//GEN-LAST:event_fileListMousePressed
+
+    private void fileListMouseReleased(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_fileListMouseReleased
+        if (evt.isPopupTrigger()) {
+            int index = fileList.locationToIndex(evt.getPoint());
+            if (index != -1) {
+                fileList.setSelectedIndex(index);
+                showContextMenu(evt.getX(), evt.getY());
+            }
+        }
+    }//GEN-LAST:event_fileListMouseReleased
 
     /**
      * @param args the command line arguments
