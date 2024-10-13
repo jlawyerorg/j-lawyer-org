@@ -44,7 +44,7 @@
                           <Component id="bwCheckBox" min="-2" max="-2" attributes="0"/>
                           <Component id="greyscaleCheckBox" min="-2" max="-2" attributes="0"/>
                           <Component id="overwriteCheckBox" min="-2" max="-2" attributes="0"/>
-                          <Component id="testButton" alignment="0" pref="250" max="32767" attributes="0"/>
+                          <Component id="testButton" alignment="0" max="32767" attributes="0"/>
                           <Component id="saveButton" alignment="0" max="32767" attributes="0"/>
                           <Component id="progressBar" alignment="0" max="32767" attributes="0"/>
                       </Group>
