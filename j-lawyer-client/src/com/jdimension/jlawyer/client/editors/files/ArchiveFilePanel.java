@@ -7024,7 +7024,6 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
 
     private void mnuShrinkPdfActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_mnuShrinkPdfActionPerformed
         ArrayList<ArchiveFileDocumentsBean> selectedDocs = this.caseFolderPanel1.getSelectedDocuments();
-        ArrayList<String> open = this.getDocumentsOpenForWrite(selectedDocs);
         if (selectedDocs.isEmpty()) {
             return;
         }
@@ -7032,10 +7031,8 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
         ArrayList<String> tempFiles = new ArrayList<>();
         
         // check, ob die Dateien ALLE die Endung .pdf haben
-        boolean allPdf = true;
         for (ArchiveFileDocumentsBean doc : selectedDocs) {
             if (!doc.getName().toLowerCase().endsWith(".pdf")) {
-                allPdf = false;
                 JOptionPane.showMessageDialog(null, "Es können nur PDF-Dateien verkleinert werden", "Fehler", JOptionPane.ERROR_MESSAGE);
                 return;
             }
