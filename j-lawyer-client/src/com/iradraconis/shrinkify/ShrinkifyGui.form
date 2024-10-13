@@ -28,12 +28,12 @@
   <Layout>
     <DimensionLayout dim="0">
       <Group type="103" groupAlignment="0" attributes="0">
-          <Group type="102" alignment="0" attributes="0">
+          <Group type="102" alignment="1" attributes="0">
               <EmptySpace min="-2" pref="19" max="-2" attributes="0"/>
-              <Group type="103" groupAlignment="0" max="-2" attributes="0">
-                  <Component id="scrollPane" max="32767" attributes="0"/>
+              <Group type="103" groupAlignment="1" attributes="0">
+                  <Component id="scrollPane" pref="752" max="32767" attributes="0"/>
                   <Group type="102" attributes="0">
-                      <Component id="fileScrollPane" min="-2" pref="433" max="-2" attributes="0"/>
+                      <Component id="fileScrollPane" pref="0" max="32767" attributes="0"/>
                       <EmptySpace type="separate" max="-2" attributes="0"/>
                       <Group type="103" groupAlignment="0" max="-2" attributes="0">
                           <Component id="closeButton" max="32767" attributes="0"/>
@@ -46,11 +46,11 @@
                           <Component id="overwriteCheckBox" min="-2" max="-2" attributes="0"/>
                           <Component id="testButton" alignment="0" max="32767" attributes="0"/>
                           <Component id="saveButton" alignment="0" max="32767" attributes="0"/>
-                          <Component id="progressBar" alignment="0" max="32767" attributes="0"/>
+                          <Component id="progressBar" alignment="0" min="-2" pref="284" max="-2" attributes="0"/>
                       </Group>
                   </Group>
               </Group>
-              <EmptySpace pref="19" max="32767" attributes="0"/>
+              <EmptySpace min="-2" pref="19" max="-2" attributes="0"/>
           </Group>
       </Group>
     </DimensionLayout>
@@ -59,7 +59,7 @@
           <Group type="102" alignment="0" attributes="0">
               <EmptySpace min="-2" pref="18" max="-2" attributes="0"/>
               <Group type="103" groupAlignment="0" max="-2" attributes="0">
-                  <Group type="102" attributes="0">
+                  <Group type="102" alignment="1" attributes="0">
                       <Component id="jLabel1" min="-2" max="-2" attributes="0"/>
                       <EmptySpace max="-2" attributes="0"/>
                       <Component id="qualityComboBox" min="-2" max="-2" attributes="0"/>
@@ -84,9 +84,9 @@
                   </Group>
                   <Component id="fileScrollPane" max="32767" attributes="0"/>
               </Group>
-              <EmptySpace min="-2" pref="35" max="-2" attributes="0"/>
-              <Component id="scrollPane" min="-2" pref="126" max="-2" attributes="0"/>
-              <EmptySpace pref="21" max="32767" attributes="0"/>
+              <EmptySpace type="unrelated" max="-2" attributes="0"/>
+              <Component id="scrollPane" max="32767" attributes="0"/>
+              <EmptySpace min="-2" pref="19" max="-2" attributes="0"/>
           </Group>
       </Group>
     </DimensionLayout>
@@ -167,7 +167,11 @@
     </Component>
     <Component class="javax.swing.JButton" name="testButton">
       <Properties>
-        <Property name="text" type="java.lang.String" value="Vorschau der Komprimierung"/>
+        <Property name="icon" type="javax.swing.Icon" editor="org.netbeans.modules.form.editors2.IconEditor">
+          <Image iconType="3" name="/icons16/material/preview_24dp_0E72B5.png"/>
+        </Property>
+        <Property name="text" type="java.lang.String" value="Vorschau"/>
+        <Property name="toolTipText" type="java.lang.String" value="Vorschau der Komprimierung"/>
       </Properties>
       <Events>
         <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="testButtonActionPerformed"/>
@@ -175,7 +179,11 @@
     </Component>
     <Component class="javax.swing.JButton" name="saveButton">
       <Properties>
-        <Property name="text" type="java.lang.String" value="Komprimieren und Speichern"/>
+        <Property name="icon" type="javax.swing.Icon" editor="org.netbeans.modules.form.editors2.IconEditor">
+          <Image iconType="3" name="/icons16/material/compress_24dp_0E72B5.png"/>
+        </Property>
+        <Property name="text" type="java.lang.String" value="Komprimieren"/>
+        <Property name="toolTipText" type="java.lang.String" value="Komprimieren und Speichern"/>
       </Properties>
       <Events>
         <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="saveButtonActionPerformed"/>
@@ -185,6 +193,9 @@
     </Component>
     <Component class="javax.swing.JButton" name="closeButton">
       <Properties>
+        <Property name="icon" type="javax.swing.Icon" editor="org.netbeans.modules.form.editors2.IconEditor">
+          <Image iconType="3" name="/icons/agt_action_success.png"/>
+        </Property>
         <Property name="text" type="java.lang.String" value="Schlie&#xdf;en"/>
         <Property name="enabled" type="boolean" value="false"/>
       </Properties>
@@ -217,12 +228,12 @@
           <Layout>
             <DimensionLayout dim="0">
               <Group type="103" groupAlignment="0" attributes="0">
-                  <Component id="jScrollPane1" alignment="0" pref="431" max="32767" attributes="0"/>
+                  <Component id="jScrollPane1" alignment="0" pref="576" max="32767" attributes="0"/>
               </Group>
             </DimensionLayout>
             <DimensionLayout dim="1">
               <Group type="103" groupAlignment="0" attributes="0">
-                  <Component id="jScrollPane1" alignment="0" pref="360" max="32767" attributes="0"/>
+                  <Component id="jScrollPane1" alignment="0" max="32767" attributes="0"/>
               </Group>
             </DimensionLayout>
           </Layout>
