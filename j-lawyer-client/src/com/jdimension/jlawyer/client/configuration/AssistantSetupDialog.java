@@ -663,10 +663,13 @@ For more information on this, and how to apply and follow the GNU AGPL, see
  */
 package com.jdimension.jlawyer.client.configuration;
 
+import com.jdimension.jlawyer.ai.AiRequestLog;
 import com.jdimension.jlawyer.client.assistant.AssistantAccess;
+import com.jdimension.jlawyer.client.editors.EditorsRegistry;
 import com.jdimension.jlawyer.client.settings.ClientSettings;
 import com.jdimension.jlawyer.client.utils.CaseInsensitiveStringComparator;
 import com.jdimension.jlawyer.client.utils.ComponentUtils;
+import com.jdimension.jlawyer.client.utils.FrameUtils;
 import com.jdimension.jlawyer.persistence.AssistantConfig;
 import com.jdimension.jlawyer.security.CryptoProvider;
 import com.jdimension.jlawyer.services.JLawyerServiceLocator;
@@ -1159,6 +1162,19 @@ public class AssistantSetupDialog extends javax.swing.JDialog {
         if (row >= 0) {
 
             AssistantConfig ac = (AssistantConfig) this.tblAssistants.getValueAt(row, 0);
+            ClientSettings settings = ClientSettings.getInstance();
+            try {
+                JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
+
+                List<AiRequestLog> requests=locator.lookupIntegrationServiceRemote().getAssistantRequestLog(ac);
+                AssistantRequestLogDialog dlg=new AssistantRequestLogDialog(this, true, requests);
+                FrameUtils.centerDialog(dlg, EditorsRegistry.getInstance().getMainWindow());
+                dlg.setVisible(true);
+                
+            } catch (Exception ex) {
+                log.error("Error getting assistant request log", ex);
+                JOptionPane.showMessageDialog(this, ex.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
+            }
             
         }
     }//GEN-LAST:event_cmdRequestLogActionPerformed

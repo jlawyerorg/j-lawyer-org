@@ -664,6 +664,7 @@
 package com.jdimension.jlawyer.services;
 
 import com.jdimension.jlawyer.ai.AiCapability;
+import com.jdimension.jlawyer.ai.AiRequestLog;
 import com.jdimension.jlawyer.ai.AiRequestStatus;
 import com.jdimension.jlawyer.ai.AiResponse;
 import com.jdimension.jlawyer.ai.AiUser;
@@ -760,5 +761,7 @@ public interface IntegrationServiceRemote {
     void removeAssistantPrompt(AssistantPrompt ap) throws Exception;
 
     Map<AssistantConfig,AiUser> getAssistantUserInformation() throws Exception;
+    
+    List<AiRequestLog> getAssistantRequestLog(AssistantConfig config) throws Exception;
     
 }
