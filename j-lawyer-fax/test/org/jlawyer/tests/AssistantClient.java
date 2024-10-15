@@ -688,8 +688,10 @@ public class AssistantClient {
 //            inputs.add(i);
 //            api.submitRequest("explain", "occiglot-short", "Erläutere den folgenden Begriff oder Sachverhalt: ", null, inputs);
 
-            AiResponse response=api.getRequestStatus("23399496688198");
-            System.out.println(response.getRequestId());
+            //AiResponse response=api.getRequestStatus("23399496688198");
+            Object result=api.getUserRequestLog();
+            System.out.println(result.toString());
+            //System.out.println(response.getRequestId());
         } catch (Exception ex) {
             ex.printStackTrace();
         }
