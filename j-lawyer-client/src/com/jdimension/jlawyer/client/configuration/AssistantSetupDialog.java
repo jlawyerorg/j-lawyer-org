@@ -735,7 +735,7 @@ public class AssistantSetupDialog extends javax.swing.JDialog {
         this.txtUser.setText("");
         this.txtConfigurations.setText("");
         this.spnConnectTimeout.setValue(3);
-        this.spnReadTimeout.setValue(5);
+        this.spnReadTimeout.setValue(120);
 
     }
 
@@ -891,7 +891,7 @@ public class AssistantSetupDialog extends javax.swing.JDialog {
 
         spnConnectTimeout.setModel(new javax.swing.SpinnerNumberModel(3, 1, 10, 1));
 
-        spnReadTimeout.setModel(new javax.swing.SpinnerNumberModel(5, 1, 60, 1));
+        spnReadTimeout.setModel(new javax.swing.SpinnerNumberModel(120, 1, 300, 1));
 
         jLabel10.setText("lesen");
 
@@ -1062,7 +1062,7 @@ public class AssistantSetupDialog extends javax.swing.JDialog {
             ac.setName(newNameObject.toString());
             ac.setUrl("");
             ac.setConnectionTimeout(5);
-            ac.setReadTimeout(60);
+            ac.setReadTimeout(120);
             ac.setUserName(null);
             ac.setPassword(null);
             ac.setConfiguration("");

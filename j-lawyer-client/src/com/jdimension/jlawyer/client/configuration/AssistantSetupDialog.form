@@ -61,7 +61,7 @@
                                       <Component id="jLabel12" min="-2" max="-2" attributes="0"/>
                                   </Group>
                               </Group>
-                              <EmptySpace min="0" pref="200" max="32767" attributes="0"/>
+                              <EmptySpace min="0" pref="185" max="32767" attributes="0"/>
                           </Group>
                           <Group type="102" alignment="1" attributes="0">
                               <Group type="103" groupAlignment="0" attributes="0">
@@ -375,7 +375,7 @@
     <Component class="javax.swing.JSpinner" name="spnReadTimeout">
       <Properties>
         <Property name="model" type="javax.swing.SpinnerModel" editor="org.netbeans.modules.form.editors2.SpinnerModelEditor">
-          <SpinnerModel initial="5" maximum="60" minimum="1" numberType="java.lang.Integer" stepSize="1" type="number"/>
+          <SpinnerModel initial="120" maximum="300" minimum="1" numberType="java.lang.Integer" stepSize="1" type="number"/>
         </Property>
       </Properties>
     </Component>
