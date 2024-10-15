@@ -838,6 +838,7 @@ public class ViewEmailDialog extends javax.swing.JDialog {
             dlg = EmailUtils.reply(this.outlookMsg, this.content.getBody(), this.content.getContentType());
         }
         dlg.setArchiveFile(this.contextArchiveFile, this.contextFolder);
+        this.setPartiesToSendDialog(dlg);
         FrameUtils.centerDialog(dlg, null);
         dlg.setVisible(true);
 
@@ -851,6 +852,7 @@ public class ViewEmailDialog extends javax.swing.JDialog {
     private void cmdReplyAllActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdReplyAllActionPerformed
         SendEmailDialog dlg = new SendEmailDialog(true, EditorsRegistry.getInstance().getMainWindow(), false);
         dlg.setArchiveFile(this.contextArchiveFile, this.contextFolder);
+        this.setPartiesToSendDialog(dlg);
 
         if (this.emlMsg != null) {
             MessageContainer msgC = this.emlMsg;
@@ -951,9 +953,7 @@ public class ViewEmailDialog extends javax.swing.JDialog {
 
     }//GEN-LAST:event_cmdReplyAllActionPerformed
 
-    private void cmdForwardActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdForwardActionPerformed
-        SendEmailDialog dlg = new SendEmailDialog(true, EditorsRegistry.getInstance().getMainWindow(), false);
-        dlg.setArchiveFile(this.contextArchiveFile, this.contextFolder);
+    private void setPartiesToSendDialog(SendEmailDialog dlg) {
         if (this.contextArchiveFile != null) {
             try {
                 ClientSettings settings = ClientSettings.getInstance();
@@ -967,6 +967,12 @@ public class ViewEmailDialog extends javax.swing.JDialog {
                 log.error("Unable to add recipient candidates", t);
             }
         }
+    }
+    
+    private void cmdForwardActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdForwardActionPerformed
+        SendEmailDialog dlg = new SendEmailDialog(true, EditorsRegistry.getInstance().getMainWindow(), false);
+        dlg.setArchiveFile(this.contextArchiveFile, this.contextFolder);
+        this.setPartiesToSendDialog(dlg);
 
         if (this.emlMsg != null) {
             MessageContainer msgC = this.emlMsg;

@@ -698,6 +698,7 @@ public class AddressBookSetupDialog extends javax.swing.JDialog {
         try {
 
             this.chkBookSync.setSelected(s.getSettingAsBoolean(ServerSettings.SERVERCONF_CLOUDSYNC_ADDRESSBOOK_ENABLED, false));
+            this.chkBirthdaySync.setSelected(s.getSettingAsBoolean(ServerSettings.SERVERCONF_CLOUDSYNC_ADDRESSBOOK_BIRTHDAYSYNC, true));
             this.pnlCloud.setCloudHost(s.getSetting(ServerSettings.SERVERCONF_CLOUDSYNC_ADDRESSBOOK_HOST, ""));
 
             this.pnlCloud.setCloudPath(s.getSetting(ServerSettings.SERVERCONF_CLOUDSYNC_ADDRESSBOOK_PATH, ""));
@@ -773,6 +774,7 @@ public class AddressBookSetupDialog extends javax.swing.JDialog {
         cmbAddressBook = new javax.swing.JComboBox<>();
         cmdSave = new javax.swing.JButton();
         cmdGetAdressBooks = new javax.swing.JButton();
+        chkBirthdaySync = new javax.swing.JCheckBox();
 
         setDefaultCloseOperation(javax.swing.WindowConstants.DISPOSE_ON_CLOSE);
         setTitle("Adressbuch-Synchronisation");
@@ -805,6 +807,8 @@ public class AddressBookSetupDialog extends javax.swing.JDialog {
             }
         });
 
+        chkBirthdaySync.setText("Geburtsdaten synchronisieren");
+
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(getContentPane());
         getContentPane().setLayout(layout);
         layout.setHorizontalGroup(
@@ -812,9 +816,6 @@ public class AddressBookSetupDialog extends javax.swing.JDialog {
             .addGroup(layout.createSequentialGroup()
                 .addContainerGap()
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addGroup(layout.createSequentialGroup()
-                        .addComponent(chkBookSync)
-                        .addGap(0, 0, Short.MAX_VALUE))
                     .addGroup(layout.createSequentialGroup()
                         .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                             .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
@@ -828,15 +829,24 @@ public class AddressBookSetupDialog extends javax.swing.JDialog {
                                 .addComponent(cmbAddressBook, 0, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                                 .addComponent(cmdGetAdressBooks))
-                            .addComponent(nextcloudTeaserPanel1, javax.swing.GroupLayout.Alignment.TRAILING, javax.swing.GroupLayout.DEFAULT_SIZE, 576, Short.MAX_VALUE)
+                            .addComponent(nextcloudTeaserPanel1, javax.swing.GroupLayout.Alignment.TRAILING, javax.swing.GroupLayout.PREFERRED_SIZE, 576, Short.MAX_VALUE)
                             .addComponent(pnlCloud, javax.swing.GroupLayout.Alignment.TRAILING, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
-                        .addContainerGap())))
+                        .addContainerGap())
+                    .addGroup(layout.createSequentialGroup()
+                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                            .addGroup(layout.createSequentialGroup()
+                                .addGap(27, 27, 27)
+                                .addComponent(chkBirthdaySync))
+                            .addComponent(chkBookSync))
+                        .addGap(0, 0, Short.MAX_VALUE))))
         );
         layout.setVerticalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
                 .addContainerGap()
                 .addComponent(chkBookSync)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addComponent(chkBirthdaySync)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
                 .addComponent(pnlCloud, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
@@ -871,6 +881,7 @@ public class AddressBookSetupDialog extends javax.swing.JDialog {
         try {
             ServerSettings s = ServerSettings.getInstance();
             s.setSettingAsBoolean(ServerSettings.SERVERCONF_CLOUDSYNC_ADDRESSBOOK_ENABLED, this.chkBookSync.isSelected());
+            s.setSettingAsBoolean(ServerSettings.SERVERCONF_CLOUDSYNC_ADDRESSBOOK_BIRTHDAYSYNC, this.chkBirthdaySync.isSelected());
             s.setSetting(ServerSettings.SERVERCONF_CLOUDSYNC_ADDRESSBOOK_HOST, this.pnlCloud.getCloudHost());
             s.setSetting(ServerSettings.SERVERCONF_CLOUDSYNC_ADDRESSBOOK_HREF, ((CloudAddressBook) this.cmbAddressBook.getSelectedItem()).getHref());
             s.setSetting(ServerSettings.SERVERCONF_CLOUDSYNC_ADDRESSBOOK_PATH, this.pnlCloud.getCloudPath());
@@ -958,6 +969,7 @@ public class AddressBookSetupDialog extends javax.swing.JDialog {
     }
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
+    private javax.swing.JCheckBox chkBirthdaySync;
     private javax.swing.JCheckBox chkBookSync;
     private javax.swing.JComboBox<String> cmbAddressBook;
     private javax.swing.JButton cmdClose;

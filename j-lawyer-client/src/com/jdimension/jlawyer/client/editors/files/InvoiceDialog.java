@@ -2483,25 +2483,34 @@ public class InvoiceDialog extends javax.swing.JDialog implements EventConsumer 
                 JOptionPane.showMessageDialog(this, "Es ist kein Rechnungssender definiert, E-Rechnung kann nicht erstellt werden.", com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_WARNING, JOptionPane.WARNING_MESSAGE);
                 return;
             }
+            
+            
+            // by default, create document from document template
+            int choice=0;
+            
+            // if the invoice type indicates a real invoice where there is a turnover, we need to create an electronic invoice
+            if(this.currentEntry.getInvoiceType().isTurnOver()) {
+                // Options to display
+                String[] options = {"Elektronische Rechnung (an Unternehmen)", "XRechnung (an öffentliche Auftraggeber)"};
 
-            // Options to display
-            String[] options = {"Elektronische Rechnung (an Unternehmen)", "XRechnung (an öffentliche Auftraggeber)"};
+                // Show option dialog
+                choice = JOptionPane.showOptionDialog(
+                        this, // Parent component (null for no parent)
+                        "Rechnung erstellen als:", // Message to display
+                        "Rechnungsdokument erstellen", // Title of the dialog
+                        JOptionPane.DEFAULT_OPTION, // Option type (default for custom buttons)
+                        JOptionPane.QUESTION_MESSAGE, // Message type (question icon)
+                        null, // Icon (null for default icon)
+                        options, // Options array
+                        options[0] // Initial value (default selection)
+                );
 
-            // Show option dialog
-            int choice = JOptionPane.showOptionDialog(
-                    this, // Parent component (null for no parent)
-                    "Rechnung erstellen als:", // Message to display
-                    "Rechnungsdokument erstellen", // Title of the dialog
-                    JOptionPane.DEFAULT_OPTION, // Option type (default for custom buttons)
-                    JOptionPane.QUESTION_MESSAGE, // Message type (question icon)
-                    null, // Icon (null for default icon)
-                    options, // Options array
-                    options[0] // Initial value (default selection)
-            );
-
-            if (choice < 0) {
-                return;
+                if (choice < 0) {
+                    return;
+                }
             }
+
+            
 
             AppUserBean senderUser = null;
             try {

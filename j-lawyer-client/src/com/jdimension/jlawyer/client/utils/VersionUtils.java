@@ -748,7 +748,7 @@ public class VersionUtils {
     }
     
     public static String getClientVersion() {
-        return "2.7";
+        return "3.0";
     }
 
     public static String getPatchLevel() {
