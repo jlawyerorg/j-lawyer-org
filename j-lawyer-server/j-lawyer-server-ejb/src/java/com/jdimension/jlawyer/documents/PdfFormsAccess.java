@@ -782,6 +782,9 @@ public class PdfFormsAccess {
         //List<PDField> fields=document.getDocumentCatalog().getAcroForm().getFields();
         PDDocumentCatalog cat = document.getDocumentCatalog();
         PDAcroForm form = cat.getAcroForm();
+        if(form==null)
+            return;
+        
         List<PDField> fields = form.getFields();
 
         for (PDField field : fields) {
@@ -814,11 +817,12 @@ public class PdfFormsAccess {
         //List<PDField> fields=document.getDocumentCatalog().getAcroForm().getFields();
         PDDocumentCatalog cat = document.getDocumentCatalog();
         PDAcroForm form = cat.getAcroForm();
+        if(form==null)
+            return document;
+        
         List<PDField> fields = form.getFields();
 
         for (PDField field : fields) {
-            System.out.println("Feld (Name = Wert): " + field.getFullyQualifiedName() + " = " + field.getValueAsString());
-
             for (String key : values.keySet()) {
                 if (values.get(key) == null) {
                     values.put(key, "");
