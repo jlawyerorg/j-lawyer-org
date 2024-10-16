@@ -3207,7 +3207,7 @@ public class AddressPanel extends javax.swing.JPanel implements BeaLoginCallback
             // we do not know what role this person has - so put it as all three types
             List<PartyTypeBean> allPartyTypes = locator.lookupSystemManagementRemote().getPartyTypes();
             for (PartyTypeBean ptb : allPartyTypes) {
-                dlg.addParty(dto, ptb);
+                dlg.addParty(dto, ptb, true);
             }
         } catch (Exception ex) {
             JOptionPane.showMessageDialog(this, "Fehler beim Ermitteln der Beteiligtentypen: " + ex.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);

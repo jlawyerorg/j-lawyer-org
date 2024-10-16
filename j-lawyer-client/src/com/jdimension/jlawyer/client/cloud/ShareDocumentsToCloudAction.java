@@ -815,7 +815,7 @@ public class ShareDocumentsToCloudAction extends ProgressableAction {
                     if (parties != null) {
                         ArrayList<ArchiveFileAddressesBean> involved = parties;
                         for (ArchiveFileAddressesBean aab : involved) {
-                            dlg.addParty(aab);
+                            dlg.addParty(aab, true);
                         }
                     }
 

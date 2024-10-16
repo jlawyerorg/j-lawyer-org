@@ -678,7 +678,6 @@ import javax.swing.JLabel;
 import javax.swing.JOptionPane;
 import javax.swing.JTable;
 import javax.swing.event.TableModelEvent;
-import javax.swing.event.TableModelListener;
 import javax.swing.table.DefaultTableCellRenderer;
 import javax.swing.table.TableCellRenderer;
 import org.apache.log4j.Logger;
@@ -810,7 +809,11 @@ public class PartiesPanel extends javax.swing.JPanel {
         }
     }
     
-    public void addParty(PartiesPanelEntry entry) {
+    public void addParty(PartiesPanelEntry entry, boolean evaluateTemplates) {
+        boolean currentIgnoreTableChanges=this.ignoreTableChanges;
+        if(!evaluateTemplates)
+            ignoreTableChanges=true;
+            
         PartiesPanelTableModel model = (PartiesPanelTableModel) this.tblParties.getModel();
         ArrayList row = new ArrayList();
         row.add(entry);
@@ -825,6 +828,7 @@ public class PartiesPanel extends javax.swing.JPanel {
         Object[] rowArray = row.toArray();
         model.addRow(rowArray);
 
+        ignoreTableChanges=currentIgnoreTableChanges;
     }
 
     public PartiesPanelEntry getSelectedParty(PartyTypeBean ptb) {

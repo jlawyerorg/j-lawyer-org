@@ -1046,7 +1046,7 @@ public class FreeTextStep extends javax.swing.JPanel implements WizardStepInterf
             
             List<ArchiveFileAddressesBean> involved=locator.lookupArchiveFileServiceRemote().getInvolvementDetailsForCase(caseId);
             for(ArchiveFileAddressesBean aab: involved) {
-                this.partiesPanel.addParty(new PartiesPanelEntry(aab));
+                this.partiesPanel.addParty(new PartiesPanelEntry(aab), true);
             }
 
             this.formPlaceHolders = locator.lookupFormsServiceRemote().getPlaceHoldersForCase(contextArchiveFile.getId());

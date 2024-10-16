@@ -775,6 +775,7 @@ public class SendEmailDialog extends javax.swing.JDialog implements SendCommunic
     private AssistantConfig transcribeConfig = null;
     
     private boolean replyOrForward=false;
+    private boolean initializing=false;
 
     // can be set by code that constructs the SendEmailDialog to "inject" a recently created link to a Nextcloud share
     // will be made available as a placeholder
@@ -793,8 +794,10 @@ public class SendEmailDialog extends javax.swing.JDialog implements SendCommunic
      */
     public SendEmailDialog(boolean replyOrForward, JDialog parent, boolean modal) {
         super(parent, modal);
+        this.initializing=true;
         this.replyOrForward=replyOrForward;
         this.initialize();
+        this.initializing=false;
     }
 
     /**
@@ -806,8 +809,10 @@ public class SendEmailDialog extends javax.swing.JDialog implements SendCommunic
      */
     public SendEmailDialog(boolean replyOrForward, JFrame parent, boolean modal) {
         super(parent, modal);
+        this.initializing=true;
         this.replyOrForward=replyOrForward;
         this.initialize();
+        this.initializing=false;
     }
 
     private void initialize() {
@@ -1107,20 +1112,20 @@ public class SendEmailDialog extends javax.swing.JDialog implements SendCommunic
         }
     }
 
-    public void addParty(AddressBean addr, PartyTypeBean ptb) {
+    public void addParty(AddressBean addr, PartyTypeBean ptb, boolean evaluateTemplates) {
 
-        this.pnlParties.addParty(new PartiesPanelEntry(addr, ptb));
+        this.pnlParties.addParty(new PartiesPanelEntry(addr, ptb), evaluateTemplates);
 
         this.addRecipientCandidate(addr, ptb);
 
     }
 
-    public void addParty(ArchiveFileAddressesBean p) {
+    public void addParty(ArchiveFileAddressesBean p, boolean evaluateTemplates) {
         if (p == null) {
             return;
         }
 
-        this.pnlParties.addParty(new PartiesPanelEntry(p));
+        this.pnlParties.addParty(new PartiesPanelEntry(p), evaluateTemplates);
 
         this.addRecipientCandidate(p.getAddressKey(), p.getReferenceType());
 
@@ -2201,6 +2206,10 @@ public class SendEmailDialog extends javax.swing.JDialog implements SendCommunic
     }//GEN-LAST:event_cmdRecipientsActionPerformed
 
     private void cmbTemplatesActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmbTemplatesActionPerformed
+        // when performing a reply, do not evaluate the template
+        if(this.initializing && this.replyOrForward)
+            return;
+        
         MailboxSetup ms = this.getSelectedMailbox();
 
         Object selected = this.cmbTemplates.getSelectedItem();

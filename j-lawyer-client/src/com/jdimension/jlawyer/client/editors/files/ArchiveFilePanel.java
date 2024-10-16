@@ -5057,7 +5057,7 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
 
         dlg.setArchiveFile(dto, caseFolder);
         for (ArchiveFileAddressesBean aab : this.pnlInvolvedParties.getInvolvedParties()) {
-            dlg.addParty(aab);
+            dlg.addParty(aab, true);
         }
 
         try {
@@ -5119,7 +5119,7 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
 
         dlg.setArchiveFile(dto, caseFolder);
         for (ArchiveFileAddressesBean aab : this.pnlInvolvedParties.getInvolvedParties()) {
-            dlg.addParty(aab);
+            dlg.addParty(aab, true);
         }
 
         ProgressIndicator pi = new ProgressIndicator(EditorsRegistry.getInstance().getMainWindow(), true);

@@ -1073,7 +1073,7 @@ public class SendBeaMessageDialog extends javax.swing.JDialog implements SendCom
 
     public void addParty(AddressBean addr, PartyTypeBean ptb) {
 
-        this.pnlParties.addParty(new PartiesPanelEntry(addr, ptb));
+        this.pnlParties.addParty(new PartiesPanelEntry(addr, ptb), true);
 
         this.addRecipientCandidate(addr, ptb);
 
@@ -1084,7 +1084,7 @@ public class SendBeaMessageDialog extends javax.swing.JDialog implements SendCom
             return;
         }
 
-        this.pnlParties.addParty(new PartiesPanelEntry(aab));
+        this.pnlParties.addParty(new PartiesPanelEntry(aab), true);
 
         this.addRecipientCandidate(aab.getAddressKey(), aab.getReferenceType());
 
