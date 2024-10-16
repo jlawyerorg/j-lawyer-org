@@ -886,8 +886,8 @@ public class MailboxScannerTask extends java.util.TimerTask {
             for (Message msg : allMessages) {
 
                 if (msg.getReceivedDate() != null) {
-                    if (msg.getReceivedDate().getTime() < (currentTimeStamp - (1000l * 60l * 60l * 24l * 31l * 3l))) {
-                        log.info("Message '" + msg.getSubject() + "' is older than three months and will not be processed");
+                    if (msg.getReceivedDate().getTime() < (currentTimeStamp - (1000l * 60l * 60l * 24l * 31l * 2l))) {
+                        log.info("Message '" + msg.getSubject() + "' is older than two months and will not be processed");
                         continue;
                     }
                 }
