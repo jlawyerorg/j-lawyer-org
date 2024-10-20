@@ -16,11 +16,11 @@
   <Layout>
     <DimensionLayout dim="0">
       <Group type="103" groupAlignment="0" attributes="0">
-          <Component id="jScrollPane1" pref="0" max="32767" attributes="0"/>
+          <Component id="jScrollPane1" pref="600" max="32767" attributes="0"/>
           <Group type="102" alignment="0" attributes="0">
               <EmptySpace max="-2" attributes="0"/>
-              <Component id="lblFileName" min="-2" pref="196" max="-2" attributes="0"/>
-              <EmptySpace max="32767" attributes="0"/>
+              <Component id="lblFileName" max="32767" attributes="0"/>
+              <EmptySpace max="-2" attributes="0"/>
               <Component id="cmbDevices" min="-2" max="-2" attributes="0"/>
               <EmptySpace max="-2" attributes="0"/>
               <Component id="cmdTranscribe" min="-2" max="-2" attributes="0"/>
@@ -31,12 +31,12 @@
     <DimensionLayout dim="1">
       <Group type="103" groupAlignment="0" attributes="0">
           <Group type="102" alignment="1" attributes="0">
-              <Group type="103" groupAlignment="3" attributes="0">
-                  <Component id="lblFileName" alignment="3" min="-2" pref="28" max="-2" attributes="0"/>
-                  <Group type="103" alignment="3" groupAlignment="3" attributes="0">
+              <Group type="103" groupAlignment="0" attributes="0">
+                  <Group type="103" alignment="0" groupAlignment="3" attributes="0">
                       <Component id="cmdTranscribe" alignment="3" min="-2" max="-2" attributes="0"/>
                       <Component id="cmbDevices" alignment="3" min="-2" max="-2" attributes="0"/>
                   </Group>
+                  <Component id="lblFileName" min="-2" pref="28" max="-2" attributes="0"/>
               </Group>
               <EmptySpace max="-2" attributes="0"/>
               <Component id="jScrollPane1" max="32767" attributes="0"/>
