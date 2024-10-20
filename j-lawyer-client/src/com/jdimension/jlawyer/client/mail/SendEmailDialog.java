@@ -827,6 +827,7 @@ public class SendEmailDialog extends javax.swing.JDialog implements SendCommunic
                 this.transcribeCapability = capabilities.get(capabilities.keySet().iterator().next()).get(0);
                 this.transcribeConfig = capabilities.keySet().iterator().next();
                 this.cmdTranscribe.setEnabled(true);
+                this.cmdTranscribe.setToolTipText(this.transcribeCapability.getDescription());
             }
         } catch (Exception ex) {
             log.error(ex);
