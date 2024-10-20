@@ -866,21 +866,21 @@ public class AddNoteDialog extends javax.swing.JDialog implements AssistantFlowA
     @Override
     public List<InputData> getInputs(AiCapability c) {
 
-        EditorImplementation ed = (EditorImplementation) this.htmlEditorPanel1.getComponent(0);
-        String contentText=ed.getSelectedText();
-        if(StringUtils.isEmpty(ed.getSelectedText()))
-            contentText=ed.getText();
-        if(ed.getContentType().toLowerCase().contains("html"))
-            contentText=EmailUtils.html2Text(contentText);
-        
+        // EditorImplementation ed = (EditorImplementation) this.htmlEditorPanel1.getComponent(0);
+        // String contentText = ed.getSelectedText();
+        // if (StringUtils.isEmpty(ed.getSelectedText()))
+        //     contentText = ed.getText();
+        // if (ed.getContentType().toLowerCase().contains("html"))
+        //     contentText = EmailUtils.html2Text(contentText);
 
-        ArrayList<InputData> inputs = new ArrayList<>();
-        InputData i = new InputData();
-        i.setType(InputData.TYPE_STRING);
-        i.setBase64(false);
-        i.setStringData(contentText);
-        inputs.add(i);
-        return inputs;
+        // ArrayList<InputData> inputs = new ArrayList<>();
+        // InputData i = new InputData();
+        // i.setType(InputData.TYPE_STRING);
+        // i.setBase64(false);
+        // i.setStringData(contentText);
+        // inputs.add(i);
+
+        return new ArrayList<>();  // Leere Liste zurückgeben
     }
 
     @Override

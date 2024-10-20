@@ -909,22 +909,21 @@ public class HtmlPanel extends javax.swing.JPanel implements PreviewPanel, Assis
 
     @Override
     public List<InputData> getInputs(AiCapability c) {
+        // EditorImplementation ed = (EditorImplementation) this.html.getComponent(0);
+        // String contentText = ed.getSelectedText();
+        // if (StringUtils.isEmpty(ed.getSelectedText()))
+        //     contentText = ed.getText();
+        // if (ed.getContentType().toLowerCase().contains("html"))
+        //     contentText = EmailUtils.html2Text(contentText);
 
-        EditorImplementation ed = (EditorImplementation) this.html.getComponent(0);
-        String contentText=ed.getSelectedText();
-        if(StringUtils.isEmpty(ed.getSelectedText()))
-            contentText=ed.getText();
-        if(ed.getContentType().toLowerCase().contains("html"))
-            contentText=EmailUtils.html2Text(contentText);
-        
+        // ArrayList<InputData> inputs = new ArrayList<>();
+        // InputData i = new InputData();
+        // i.setType(InputData.TYPE_STRING);
+        // i.setBase64(false);
+        // i.setStringData(contentText);
+        // inputs.add(i);
 
-        ArrayList<InputData> inputs = new ArrayList<>();
-        InputData i = new InputData();
-        i.setType(InputData.TYPE_STRING);
-        i.setBase64(false);
-        i.setStringData(contentText);
-        inputs.add(i);
-        return inputs;
+        return new ArrayList<>();
     }
 
     @Override
