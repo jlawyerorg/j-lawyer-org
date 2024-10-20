@@ -683,16 +683,46 @@ import javax.swing.DefaultComboBoxModel;
 import javax.swing.JOptionPane;
 import org.apache.log4j.Logger;
 
+import com.jdimension.jlawyer.ai.AiCapability;
+import com.jdimension.jlawyer.ai.AiRequestStatus;
+import com.jdimension.jlawyer.ai.InputData;
+import com.jdimension.jlawyer.ai.Message;
+import com.jdimension.jlawyer.ai.OutputData;
+import com.jdimension.jlawyer.ai.ParameterData;
+import com.jdimension.jlawyer.client.assistant.AssistantAccess;
+import com.jdimension.jlawyer.client.assistant.AssistantFlowAdapter;
+import com.jdimension.jlawyer.client.assistant.AssistantInputAdapter;
+import com.jdimension.jlawyer.client.mail.EditorImplementation;
+import com.jdimension.jlawyer.client.mail.EmailUtils;
+import com.jdimension.jlawyer.client.utils.AudioUtils;
+import com.jdimension.jlawyer.client.utils.ThreadUtils;
+import com.jdimension.jlawyer.services.IntegrationServiceRemote;
+import javax.sound.sampled.*;
+import java.io.ByteArrayOutputStream;
+import java.awt.Color;
+import java.io.IOException;
+import java.util.concurrent.atomic.AtomicReference;
+import java.util.logging.Level;
+import javax.swing.SwingWorker;
+import themes.colors.DefaultColorTheme;
+
 /**
  *
  * @author jens
  */
-public class AddNoteDialog extends javax.swing.JDialog {
+public class AddNoteDialog extends javax.swing.JDialog implements AssistantFlowAdapter {
 
     private static final Logger log = Logger.getLogger(AddNoteDialog.class.getName());
     private CaseFolderPanel targetTable = null;
     private ArchiveFileBean aFile = null;
     private boolean initializing = true;
+    
+    private boolean isRecording = false;
+    private long recordingStarted = -1;
+    private AiCapability transcribeCapability = null;
+    private AssistantConfig transcribeConfig = null;
+    private TargetDataLine targetDataLine;
+    private ByteArrayOutputStream byteArrayOutputStream;
 
     /**
      * Creates new form AddNoteDialog
@@ -778,7 +808,25 @@ public class AddNoteDialog extends javax.swing.JDialog {
         this.calendarSelectionButton1.refreshCalendarSetups();
         this.calendarSelectionButton1.setEnabled(false);
 
+        // Initialize transcription capabilities
+        AssistantAccess ingo = AssistantAccess.getInstance();
+        try {
+            Map<AssistantConfig, List<AiCapability>> capabilities = ingo.filterCapabilities(AiCapability.REQUESTTYPE_TRANSCRIBE, AiCapability.INPUTTYPE_FILE, AiCapability.USAGETYPE_AUTOMATED);
+
+            if (!capabilities.isEmpty()) {
+                // use first capability that can transcribe
+                this.transcribeCapability = capabilities.get(capabilities.keySet().iterator().next()).get(0);
+                this.transcribeConfig = capabilities.keySet().iterator().next();
+                this.cmdTranscribe.setEnabled(true);
+            }
+        } catch (Exception ex) {
+            log.error(ex);
+            JOptionPane.showMessageDialog(this, "" + ex.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
+        }        
         
+        this.cmbDevices.removeAllItems();
+        AudioUtils.populateMicrophoneDevices(this.cmbDevices);
+
         
         this.initializing = false;
 
@@ -787,7 +835,84 @@ public class AddNoteDialog extends javax.swing.JDialog {
     public void setFocusToBody() {
         this.htmlEditorPanel1.requestFocus();
     }
+    
+   
+    public List<InputData> getTranscribeInputs(byte[] wavContent) {
+        ArrayList<InputData> inputs = new ArrayList<>();
+        InputData i = new InputData();
+        i.setFileName("Sounddatei.wav");
+        i.setType("file");
+        i.setBase64(true);
+        i.setData(wavContent);
+        inputs.add(i);
+        return inputs;
+    }
 
+    
+    @Override
+    public String getPrompt(AiCapability c) {
+        return null;
+    }
+
+    @Override
+    public List<ParameterData> getParameters(AiCapability c) {
+        return null;
+    }
+    
+    public List<Message> getMessages(AiCapability c) {
+        return null;
+    }
+
+    @Override
+    public List<InputData> getInputs(AiCapability c) {
+
+        // EditorImplementation ed = (EditorImplementation) this.htmlEditorPanel1.getComponent(0);
+        // String contentText = ed.getSelectedText();
+        // if (StringUtils.isEmpty(ed.getSelectedText()))
+        //     contentText = ed.getText();
+        // if (ed.getContentType().toLowerCase().contains("html"))
+        //     contentText = EmailUtils.html2Text(contentText);
+
+        // ArrayList<InputData> inputs = new ArrayList<>();
+        // InputData i = new InputData();
+        // i.setType(InputData.TYPE_STRING);
+        // i.setBase64(false);
+        // i.setStringData(contentText);
+        // inputs.add(i);
+
+        return new ArrayList<>();  // Leere Liste zurückgeben
+    }
+
+    @Override
+    public void processOutput(AiCapability c, AiRequestStatus status) {
+        String prependText = "";
+        if (status != null) {
+            if (status.getStatus().equalsIgnoreCase("error")) {
+                // ignore output
+            } else {
+                StringBuilder result = new StringBuilder();
+                for (OutputData o : status.getResponse().getOutputData()) {
+                    if (o.getType().equalsIgnoreCase(OutputData.TYPE_STRING)) {
+                        result.append(o.getStringData()).append(System.lineSeparator()).append(System.lineSeparator());
+                    }
+
+                }
+                prependText = result.toString();
+            }
+        }
+
+        EditorImplementation ed = (EditorImplementation) this.htmlEditorPanel1.getComponent(0);
+        ed.setText(prependText + System.lineSeparator() + System.lineSeparator() + ed.getText());
+        
+        
+    }
+
+    @Override
+    public void processError(AiCapability c, AiRequestStatus status) {
+        log.error("Error executing AI request: " + status.getStatusDetails());
+        JOptionPane.showMessageDialog(this, "Fehler beim Ausführen der Ingo-Anfrage: " + status.getStatusDetails(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
+    }
+    
     /**
      * This method is called from within the constructor to initialize the form.
      * WARNING: Do NOT modify this code. The content of this method is always
@@ -820,6 +945,8 @@ public class AddNoteDialog extends javax.swing.JDialog {
         cmbCaseTag = new javax.swing.JComboBox<>();
         chkDocumentTagging = new javax.swing.JCheckBox();
         cmbDocumentTag = new javax.swing.JComboBox<>();
+        cmdTranscribe = new javax.swing.JButton();
+        cmbDevices = new javax.swing.JComboBox<>();
 
         setDefaultCloseOperation(javax.swing.WindowConstants.DISPOSE_ON_CLOSE);
 
@@ -1028,6 +1155,17 @@ public class AddNoteDialog extends javax.swing.JDialog {
                     .add(cmbDocumentTag, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)))
         );
 
+        cmdTranscribe.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons16/material/baseline_mic_black_48dp.png"))); // NOI18N
+        cmdTranscribe.setText("00:00");
+        cmdTranscribe.setEnabled(false);
+        cmdTranscribe.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                cmdTranscribeActionPerformed(evt);
+            }
+        });
+
+        cmbDevices.setModel(new javax.swing.DefaultComboBoxModel<>(new String[] { "Item 1", "Item 2", "Item 3", "Item 4" }));
+
         org.jdesktop.layout.GroupLayout layout = new org.jdesktop.layout.GroupLayout(getContentPane());
         getContentPane().setLayout(layout);
         layout.setHorizontalGroup(
@@ -1040,7 +1178,10 @@ public class AddNoteDialog extends javax.swing.JDialog {
                     .add(jPanel4, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                     .add(org.jdesktop.layout.GroupLayout.TRAILING, htmlEditorPanel1, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 956, Short.MAX_VALUE)
                     .add(org.jdesktop.layout.GroupLayout.TRAILING, layout.createSequentialGroup()
-                        .add(0, 0, Short.MAX_VALUE)
+                        .add(cmbDevices, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
+                        .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
+                        .add(cmdTranscribe)
+                        .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                         .add(cmdAddDocument)
                         .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
                         .add(cmdCancel)))
@@ -1057,9 +1198,13 @@ public class AddNoteDialog extends javax.swing.JDialog {
                 .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
                 .add(jPanel1, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
                 .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
-                .add(layout.createParallelGroup(org.jdesktop.layout.GroupLayout.BASELINE)
-                    .add(cmdCancel)
-                    .add(cmdAddDocument))
+                .add(layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
+                    .add(layout.createParallelGroup(org.jdesktop.layout.GroupLayout.BASELINE)
+                        .add(cmdTranscribe)
+                        .add(cmbDevices, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE))
+                    .add(layout.createParallelGroup(org.jdesktop.layout.GroupLayout.BASELINE)
+                        .add(cmdCancel)
+                        .add(cmdAddDocument)))
                 .addContainerGap())
         );
 
@@ -1200,6 +1345,19 @@ public class AddNoteDialog extends javax.swing.JDialog {
         }
     }//GEN-LAST:event_txtReviewDateFieldMouseClicked
 
+    private void cmdTranscribeActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdTranscribeActionPerformed
+        if (!isRecording) {
+            startRecording();
+            ClientSettings.getInstance().setConfiguration(ClientSettings.CONF_SOUND_LASTRECORDINGDEVICE, (String) this.cmbDevices.getSelectedItem());
+        } else {
+            try {
+                stopRecording();
+            } catch (IOException ex) {
+                java.util.logging.Logger.getLogger(AddNoteDialog.class.getName()).log(Level.SEVERE, null, ex);
+            }
+        }
+    }//GEN-LAST:event_cmdTranscribeActionPerformed
+
     private void enableReviewElements(boolean enable) {
         this.cmbReviewAssignee.setEnabled(enable);
         this.cmbReviewReason.setEnabled(enable);
@@ -1213,7 +1371,166 @@ public class AddNoteDialog extends javax.swing.JDialog {
             this.txtReviewDateField.setText(null);
         }
     }
+    
+    private void startRecording() {
+        try {
+            AudioFormat audioFormat = AudioUtils.getAudioFormat();
 
+            // Get selected mixer device name from dropdown
+            String selectedDeviceName = (String) this.cmbDevices.getSelectedItem();
+
+            Mixer.Info[] mixerInfos = AudioSystem.getMixerInfo();
+            Mixer.Info selectedMixerInfo = null;
+            for (Mixer.Info mixerInfo : mixerInfos) {
+                if (mixerInfo.getName().equals(selectedDeviceName)) {
+                    selectedMixerInfo = mixerInfo;
+                    break;
+                }
+            }
+
+            if (selectedMixerInfo == null) {
+                log.error("Selected mixer device not found.");
+                return;
+            }
+
+            Mixer mixer = AudioSystem.getMixer(selectedMixerInfo);
+
+            DataLine.Info dataLineInfo = new DataLine.Info(TargetDataLine.class, audioFormat);
+            targetDataLine = (TargetDataLine) mixer.getLine(dataLineInfo);
+            targetDataLine.open(audioFormat);
+            targetDataLine.start();
+
+            byteArrayOutputStream = new ByteArrayOutputStream();
+
+            isRecording = true;
+            this.recordingStarted = System.currentTimeMillis();
+            cmdTranscribe.setForeground(DefaultColorTheme.COLOR_LOGO_GREEN);
+
+            new Thread(() -> {
+                try {
+                    byte[] buffer = new byte[4096];
+                    while (isRecording) {
+                        int bytesRead = targetDataLine.read(buffer, 0, buffer.length);
+                        byteArrayOutputStream.write(buffer, 0, bytesRead);
+
+                        long totalSeconds = (System.currentTimeMillis() - recordingStarted) / 1000;
+                        // Calculate minutes and seconds
+                        long minutes = totalSeconds / 60;
+                        long seconds = totalSeconds % 60;
+                        // Format the result as mm:ss
+                        ThreadUtils.updateButton(cmdTranscribe, String.format("%02d:%02d", minutes, seconds));
+                    }
+                } catch (Exception e) {
+                    log.error("Unable to read microphone audio stream", e);
+                    ThreadUtils.showErrorDialog(this, "Aufnahmefehler: " + e.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR);
+                }
+            }).start();
+        } catch (Exception ex) {
+            log.error("Unable to start recording microphone audio stream", ex);
+            JOptionPane.showMessageDialog(this, "Aufnahme konnte nicht gestartet werden: " + ex.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
+        }
+    }
+
+    // Stop recording method
+    private void stopRecording() throws IOException {
+        isRecording = false;
+
+        if (targetDataLine != null) {
+            targetDataLine.stop();
+            targetDataLine.close();
+        }
+        byteArrayOutputStream.flush();
+        byte[] dictatePart = byteArrayOutputStream.toByteArray();
+
+        this.cmdTranscribe.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons16/material/baseline_hourglass_top_black_48dp.png")));
+        this.cmdTranscribe.setForeground(Color.ORANGE);
+        try {
+
+            List<ParameterData> params = new ArrayList<>();
+            if (transcribeCapability.getParameters() != null && !transcribeCapability.getParameters().isEmpty()) {
+                params = getParameters(transcribeCapability);
+            }
+
+            final List<ParameterData> fParams = params;
+
+            AtomicReference<AiRequestStatus> resultRef = new AtomicReference<>();
+
+            SwingWorker<Void, Void> worker = new SwingWorker<>() {
+
+                @Override
+                protected Void doInBackground() throws Exception {
+                    cmdTranscribe.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons16/material/baseline_hourglass_top_black_48dp.png")));
+                    cmdTranscribe.setForeground(Color.ORANGE);
+
+                    List<InputData> inputs = getTranscribeInputs(AudioUtils.generateWAV(dictatePart));
+
+                    ClientSettings settings = ClientSettings.getInstance();
+                    try {
+                        JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
+
+                        IntegrationServiceRemote integrationService = locator.lookupIntegrationServiceRemote();
+                        AiRequestStatus status = integrationService.submitAssistantRequest(
+                            transcribeConfig,
+                            transcribeCapability.getRequestType(),
+                            transcribeCapability.getModelType(),
+                            getPrompt(transcribeCapability),
+                            fParams,
+                            inputs,
+                            null // Assuming no conversation
+                        );
+
+                        resultRef.set(status);
+
+                    } catch (Throwable t) {
+                        log.error("Error processing AI request", t);
+                        AiRequestStatus status = new AiRequestStatus();
+                        status.setStatus("failed");
+                        status.setStatusDetails(t.getMessage());
+                        resultRef.set(status);
+                    }
+                    return null;
+                }
+
+                @Override
+                protected void done() {
+                    // Reset the UI elements
+                    cmdTranscribe.setText("00:00");
+                    cmdTranscribe.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons16/material/baseline_mic_black_48dp.png"))); // NOI18N
+                    cmdTranscribe.setForeground(Color.BLACK);
+
+                    AiRequestStatus status = resultRef.get();
+                    if (status != null) {
+                        String resultText = "";
+                        if (status.getStatus().equalsIgnoreCase("failed")) {
+                            resultText = status.getStatus() + ": " + status.getStatusDetails();
+                        } else {
+                            StringBuilder resultString = new StringBuilder();
+                            for (OutputData o : status.getResponse().getOutputData()) {
+                                if (o.getType().equalsIgnoreCase(OutputData.TYPE_STRING)) {
+                                    resultString.append(o.getStringData());
+                                }
+                            }
+                            resultText = resultString.toString();
+                        }
+
+                        // Insert transcribed text at the caret position
+                        htmlEditorPanel1.insert(resultText, -1);
+                    }
+                }
+            };
+
+            worker.execute();
+
+        } catch (Exception ex) {
+            log.error(ex);
+            JOptionPane.showMessageDialog(this, "" + ex.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
+        }
+
+    }
+
+
+    
+    
     /**
      * @param args the command line arguments
      */
@@ -1228,12 +1545,14 @@ public class AddNoteDialog extends javax.swing.JDialog {
     private javax.swing.JCheckBox chkCaseTagging;
     private javax.swing.JCheckBox chkDocumentTagging;
     private javax.swing.JComboBox<String> cmbCaseTag;
+    private javax.swing.JComboBox<String> cmbDevices;
     private javax.swing.JComboBox<String> cmbDocumentTag;
     private javax.swing.JComboBox cmbReviewAssignee;
     private javax.swing.JComboBox cmbReviewReason;
     private javax.swing.JButton cmdAddDocument;
     private javax.swing.JButton cmdCancel;
     private javax.swing.JButton cmdShowReviewSelector;
+    private javax.swing.JButton cmdTranscribe;
     private com.jdimension.jlawyer.client.mail.HtmlEditorPanel htmlEditorPanel1;
     private javax.swing.JLabel jLabel1;
     private javax.swing.JLabel jLabel12;
