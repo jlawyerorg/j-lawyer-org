@@ -684,20 +684,17 @@ import com.jdimension.jlawyer.persistence.InvoiceTypeFacadeLocal;
 import com.jdimension.jlawyer.persistence.ServerSettingsBean;
 import com.jdimension.jlawyer.persistence.ServerSettingsBeanFacadeLocal;
 import com.jdimension.jlawyer.persistence.utils.StringGenerator;
+import com.jdimension.jlawyer.server.services.settings.ServerSettingsKeys;
 import com.jdimension.jlawyer.server.services.settings.UserSettingsKeys;
 import com.jdimension.jlawyer.server.utils.InvalidSchemaPatternException;
 import com.jdimension.jlawyer.server.utils.InvoiceNumberGenerator;
 import com.jdimension.jlawyer.server.utils.ServerStringUtils;
 import java.io.ByteArrayOutputStream;
-import java.io.File;
-import java.nio.file.Files;
-import java.nio.file.Path;
 import java.text.DecimalFormat;
 import java.text.DecimalFormatSymbols;
 import java.text.NumberFormat;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
-import java.util.Base64;
 import java.util.Collections;
 import java.util.Date;
 import java.util.List;
@@ -1081,6 +1078,16 @@ public class InvoiceService implements InvoiceServiceRemote, InvoiceServiceLocal
         String iban=sender.getBankIban().trim();
         iban=iban.replace(" ", "");
         
+        ServerSettingsBean pixelSetting = this.settingsFacade.find(ServerSettingsKeys.SERVERCONF_FINANCE_GIROCODEPX);
+        int pixels=150;
+        if (pixelSetting != null) {
+            try {
+                pixels=Integer.parseInt(pixelSetting.getSettingValue());
+            } catch (Exception ex) {
+                log.warn("invalid pixel setting for Girocode: " + pixelSetting.getSettingValue());
+            }
+        }
+        
         try {
 
             // Encode invoice data as a Girocode string
@@ -1090,7 +1097,7 @@ public class InvoiceService implements InvoiceServiceRemote, InvoiceServiceLocal
 
             // Generate QR code from Girocode string
             QRCodeWriter qrWriter = new QRCodeWriter();
-            BitMatrix matrix = qrWriter.encode(girocodeData, BarcodeFormat.QR_CODE, 150, 150, getHints());
+            BitMatrix matrix = qrWriter.encode(girocodeData, BarcodeFormat.QR_CODE, pixels, pixels, getHints());
 
             ByteArrayOutputStream pngStream=new ByteArrayOutputStream();
             MatrixToImageWriter.writeToStream(matrix, "PNG", pngStream);
