@@ -692,7 +692,6 @@ import javax.sound.sampled.UnsupportedAudioFileException;
 import javax.swing.Timer;
 import java.awt.event.ActionEvent;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import javax.sound.sampled.LineEvent;
@@ -788,7 +787,9 @@ public class SoundplayerPanel extends javax.swing.JPanel implements PreviewPanel
         });
 
         taTranscription.setColumns(20);
+        taTranscription.setLineWrap(true);
         taTranscription.setRows(5);
+        taTranscription.setWrapStyleWord(true);
         jScrollPane1.setViewportView(taTranscription);
 
         cmdNewDocument.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/edit.png"))); // NOI18N
