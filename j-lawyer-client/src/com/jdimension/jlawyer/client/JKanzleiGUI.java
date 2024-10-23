@@ -736,24 +736,22 @@ import themes.colors.DefaultColorTheme;
 public class JKanzleiGUI extends javax.swing.JFrame implements com.jdimension.jlawyer.client.events.EventConsumer {
 
     private static final Logger log = Logger.getLogger(JKanzleiGUI.class.getName());
-    
-    
-    
+
     private boolean initializing = false;
-    private long initialized=Long.MIN_VALUE;
+    private long initialized = Long.MIN_VALUE;
 
     /**
      * Creates new form JKanzleiGUI
      */
     public JKanzleiGUI() {
         this.initializing = true;
-        
+
         this.restoreWindowSize();
-        
-        this.initialized=System.currentTimeMillis();
+
+        this.initialized = System.currentTimeMillis();
         // for some reason, initComponents resets the bounds
         initComponents();
-        
+
         this.initializing = false;
 
         EventBroker b = EventBroker.getInstance();
@@ -774,7 +772,7 @@ public class JKanzleiGUI extends javax.swing.JFrame implements com.jdimension.jl
         } else {
             this.mnuChkRandomBackground.setSelected(true);
         }
-        
+
         EditorsRegistry registry = EditorsRegistry.getInstance();
         registry.setMainEditorsPane(this.jPanel1);
 
@@ -788,11 +786,11 @@ public class JKanzleiGUI extends javax.swing.JFrame implements com.jdimension.jl
         Timer timer = new Timer();
         TimerTask monitorStateTask = new MonitoringStateTimerTask();
         timer.schedule(monitorStateTask, 5500l, 60000l * 10l);
-        
+
         Timer timer2 = new Timer();
         TimerTask timesheetsTask = new TimesheetsTimerTask();
         timer2.schedule(timesheetsTask, 7000l, 60000l);
-        
+
         Timer timer3 = new Timer();
         TimerTask timesheetsHintTask = new TimesheetsHintTimerTask(this.lblTimesheetStatus);
         timer3.schedule(timesheetsHintTask, 7500l, 1000l);
@@ -827,7 +825,7 @@ public class JKanzleiGUI extends javax.swing.JFrame implements com.jdimension.jl
                 try {
                     ClientSettings settings1 = ClientSettings.getInstance();
                     settings1.saveConfiguration();
-                }catch (Throwable t) {
+                } catch (Throwable t) {
                     log.error("Error storing client settings", t);
                 }
             }));
@@ -844,8 +842,49 @@ public class JKanzleiGUI extends javax.swing.JFrame implements com.jdimension.jl
         }));
 
     }
-    
+
     public void restoreWindowSize() {
+//        ClientSettings cs=ClientSettings.getInstance();
+//        Rectangle lastBounds = null;
+//        String lastBoundsString = cs.getConfiguration(ClientSettings.CONF_FRAME_BOUNDS, null);
+//        log.info("restoring windows size (x,y,w,h) to " + lastBoundsString);
+//        if (lastBoundsString != null) {
+//            lastBounds = this.rectangleFromBoundsString(lastBoundsString);
+//        }
+//
+//        try {
+//            GraphicsEnvironment ge = GraphicsEnvironment.getLocalGraphicsEnvironment();
+//            GraphicsDevice[] gds = ge.getScreenDevices();
+//            if (gds != null && gds.length == 1) {
+//                // only one monitor connected - there MUST NOT be any negative coordinates, it could render the window in an invisible location
+//                if (lastBounds != null) {
+//                    if (lastBounds.x < 0 || lastBounds.y < 0) {
+//                        lastBounds = null;
+//                    }
+//                }
+//            }
+//        } catch (Throwable t) {
+//            log.error("Error determining monitor setup", t);
+//            lastBounds = null;
+//        }
+//        
+//        if (lastBounds != null) {
+//            Dimension screenSize=Toolkit.getDefaultToolkit().getScreenSize();
+//            if(lastBounds.x>screenSize.width)
+//                lastBounds.x=0;
+//            if(lastBounds.y>screenSize.height)
+//                lastBounds.y=0;
+//            if(lastBounds.width>screenSize.width)
+//                lastBounds.width=screenSize.width;
+//            if(lastBounds.height>screenSize.height)
+//                lastBounds.height=screenSize.height;
+//            this.setBounds(lastBounds);
+//            this.setSize(lastBounds.width, lastBounds.height);
+//        } else {
+//            // Otherwise, maximize window
+//            setExtendedState(java.awt.Frame.MAXIMIZED_BOTH);
+//        }
+
         ClientSettings cs=ClientSettings.getInstance();
         Rectangle lastBounds = null;
         String lastBoundsString = cs.getConfiguration(ClientSettings.CONF_FRAME_BOUNDS, null);
@@ -857,46 +896,58 @@ public class JKanzleiGUI extends javax.swing.JFrame implements com.jdimension.jl
         try {
             GraphicsEnvironment ge = GraphicsEnvironment.getLocalGraphicsEnvironment();
             GraphicsDevice[] gds = ge.getScreenDevices();
-            if (gds != null && gds.length == 1) {
-                // only one monitor connected - there MUST NOT be any negative coordinates, it could render the window in an invisible location
-                if (lastBounds != null) {
-                    if (lastBounds.x < 0 || lastBounds.y < 0) {
-                        lastBounds = null;
+
+            if (lastBounds != null) {
+                boolean isVisibleOnAnyScreen = false;
+
+                for (GraphicsDevice gd : gds) {
+                    // Get screen bounds for each monitor
+                    Rectangle screenBounds = gd.getDefaultConfiguration().getBounds();
+
+                    // Check if the window is at least partially visible on this screen
+                    if (lastBounds.intersects(screenBounds)) {
+                        isVisibleOnAnyScreen = true;
+                        break;
                     }
+                }
+
+                if (!isVisibleOnAnyScreen) {
+                    // If the window is not visible on any screen, reset to default bounds
+                    lastBounds = null;
                 }
             }
         } catch (Throwable t) {
             log.error("Error determining monitor setup", t);
             lastBounds = null;
         }
-        
+
         if (lastBounds != null) {
-            Dimension screenSize=Toolkit.getDefaultToolkit().getScreenSize();
-            if(lastBounds.x>screenSize.width)
-                lastBounds.x=0;
-            if(lastBounds.y>screenSize.height)
-                lastBounds.y=0;
-            if(lastBounds.width>screenSize.width)
-                lastBounds.width=screenSize.width;
-            if(lastBounds.height>screenSize.height)
-                lastBounds.height=screenSize.height;
+            Dimension screenSize = Toolkit.getDefaultToolkit().getScreenSize();
+
+            // Ensure that the width and height don't exceed the primary screen size
+            if (lastBounds.width > screenSize.width) {
+                lastBounds.width = screenSize.width;
+            }
+            if (lastBounds.height > screenSize.height) {
+                lastBounds.height = screenSize.height;
+            }
+
             this.setBounds(lastBounds);
             this.setSize(lastBounds.width, lastBounds.height);
         } else {
-            // Otherwise, maximize window
+            // Maximize window if bounds are invalid or not visible on any screen
             setExtendedState(java.awt.Frame.MAXIMIZED_BOTH);
         }
-        
 
     }
-    
+
     private void saveFrameBounds() {
-        ClientSettings cs=ClientSettings.getInstance();
+        ClientSettings cs = ClientSettings.getInstance();
         Rectangle bounds = this.getBounds();
         String boundsString = bounds.x + "," + bounds.y + "," + bounds.width + "," + bounds.height;
         cs.setConfiguration(ClientSettings.CONF_FRAME_BOUNDS, boundsString);
     }
-    
+
     private Rectangle rectangleFromBoundsString(String boundsStr) {
         try {
             String[] boundsParts = boundsStr.split(",");
@@ -933,7 +984,7 @@ public class JKanzleiGUI extends javax.swing.JFrame implements com.jdimension.jl
 
     @Override
     public void onEvent(Event e) {
-        if(e instanceof ServicesEvent) {
+        if (e instanceof ServicesEvent) {
             this.mnuServices.removeAll();
             for (ServiceMenuItem si : ((ServicesEvent) e).getServices().values()) {
                 if ("---".equals(si.getName())) {
@@ -1055,7 +1106,7 @@ public class JKanzleiGUI extends javax.swing.JFrame implements com.jdimension.jl
             }
         } else if (e instanceof OpenTimesheetPositionsEvent) {
             OpenTimesheetPositionsEvent ope = (OpenTimesheetPositionsEvent) e;
-            if (ope.getOpenPositions()>0) {
+            if (ope.getOpenPositions() > 0) {
                 this.lblTimesheetStatus.setToolTipText("" + ope.getOpenPositions() + " laufende Zeiterfassung(en)");
                 this.lblTimesheetStatus.setText("Zeit läuft");
             } else {
@@ -2059,7 +2110,7 @@ public class JKanzleiGUI extends javax.swing.JFrame implements com.jdimension.jl
         CalendarEntryTemplatesDialog dlg = new CalendarEntryTemplatesDialog(this, true);
         FrameUtils.centerDialog(dlg, this);
         dlg.setVisible(true);
-        
+
     }//GEN-LAST:event_mnuCalendarEntryTemplatesActionPerformed
 
     private void mnuArchiveFileOptionsDictateSignActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_mnuArchiveFileOptionsDictateSignActionPerformed
@@ -2071,20 +2122,20 @@ public class JKanzleiGUI extends javax.swing.JFrame implements com.jdimension.jl
     }//GEN-LAST:event_mnuArchiveFileOptionsDictateSignActionPerformed
 
     private void mnuZipCodeImportActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_mnuZipCodeImportActionPerformed
-        if(checkAdmin()) {
-        ImportZipCodesDialog dlg = new ImportZipCodesDialog(this, true);
-        dlg.setTitle(java.util.ResourceBundle.getBundle("com/jdimension/jlawyer/client/JKanzleiGUI").getString("dialog.title.importzipcodes"));
-        FrameUtils.centerDialog(dlg, this);
-        dlg.setVisible(true);
+        if (checkAdmin()) {
+            ImportZipCodesDialog dlg = new ImportZipCodesDialog(this, true);
+            dlg.setTitle(java.util.ResourceBundle.getBundle("com/jdimension/jlawyer/client/JKanzleiGUI").getString("dialog.title.importzipcodes"));
+            FrameUtils.centerDialog(dlg, this);
+            dlg.setVisible(true);
         }
     }//GEN-LAST:event_mnuZipCodeImportActionPerformed
 
     private void mnuBankImportActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_mnuBankImportActionPerformed
-        if(checkAdmin()) {
-        ImportBanksDialog dlg = new ImportBanksDialog(this, true);
-        dlg.setTitle(java.util.ResourceBundle.getBundle("com/jdimension/jlawyer/client/JKanzleiGUI").getString("dialog.title.importbanks"));
-        FrameUtils.centerDialog(dlg, this);
-        dlg.setVisible(true);
+        if (checkAdmin()) {
+            ImportBanksDialog dlg = new ImportBanksDialog(this, true);
+            dlg.setTitle(java.util.ResourceBundle.getBundle("com/jdimension/jlawyer/client/JKanzleiGUI").getString("dialog.title.importbanks"));
+            FrameUtils.centerDialog(dlg, this);
+            dlg.setVisible(true);
         }
     }//GEN-LAST:event_mnuBankImportActionPerformed
 
@@ -2098,11 +2149,11 @@ public class JKanzleiGUI extends javax.swing.JFrame implements com.jdimension.jl
 
     private void mnuUsersActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_mnuUsersActionPerformed
 
-            if (checkAdmin()) {
-                UserAdministrationDialog dlg = new UserAdministrationDialog(this, true);
-                FrameUtils.centerDialog(dlg, this);
-                dlg.setVisible(true);
-            }
+        if (checkAdmin()) {
+            UserAdministrationDialog dlg = new UserAdministrationDialog(this, true);
+            FrameUtils.centerDialog(dlg, this);
+            dlg.setVisible(true);
+        }
 
     }//GEN-LAST:event_mnuUsersActionPerformed
 
@@ -2137,7 +2188,7 @@ public class JKanzleiGUI extends javax.swing.JFrame implements com.jdimension.jl
 
         // check for open timesheet positions
         this.confirmOpenTimesheetPositions();
-        
+
         // check for open documents
         DocumentObserver observer = DocumentObserver.getInstance();
         boolean cancelled = false;
@@ -2180,7 +2231,7 @@ public class JKanzleiGUI extends javax.swing.JFrame implements com.jdimension.jl
         try {
             JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
             int openPositions = locator.lookupArchiveFileServiceRemote().hasOpenTimesheetPositions(UserSettings.getInstance().getCurrentUser().getPrincipalId());
-            if (openPositions>0) {
+            if (openPositions > 0) {
                 TimesheetLogDialog tsld = new TimesheetLogDialog(EditorsRegistry.getInstance().getMainWindow(), true, null);
                 FrameUtils.centerDialog(tsld, EditorsRegistry.getInstance().getMainWindow());
                 tsld.setVisible(true);
@@ -2189,7 +2240,7 @@ public class JKanzleiGUI extends javax.swing.JFrame implements com.jdimension.jl
             log.error("Error checking for open timesheet positions", ex);
         }
     }
-    
+
     private void mnuExitActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_mnuExitActionPerformed
 
         this.formWindowClosing(null);
@@ -2199,19 +2250,18 @@ public class JKanzleiGUI extends javax.swing.JFrame implements com.jdimension.jl
     private boolean checkAdmin() {
         return UserUtils.isCurrentUserAdmin(this, true);
     }
-    
-    
-    
+
+
     private void mnuAdminConsoleActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_mnuAdminConsoleActionPerformed
-        
-            if (checkAdmin()) {
-                AdminConsoleFrame frm = new AdminConsoleFrame();
-                frm.setVisible(true);
-            }
+
+        if (checkAdmin()) {
+            AdminConsoleFrame frm = new AdminConsoleFrame();
+            frm.setVisible(true);
+        }
     }//GEN-LAST:event_mnuAdminConsoleActionPerformed
 
     private void formComponentResized(java.awt.event.ComponentEvent evt) {//GEN-FIRST:event_formComponentResized
-        if (!this.initializing && ((System.currentTimeMillis()-this.initialized)>2000l)) {
+        if (!this.initializing && ((System.currentTimeMillis() - this.initialized) > 2000l)) {
             saveFrameBounds();
         }
     }//GEN-LAST:event_formComponentResized
@@ -2245,21 +2295,21 @@ public class JKanzleiGUI extends javax.swing.JFrame implements com.jdimension.jl
     }//GEN-LAST:event_mnuArchiveFileOptionsSubjectFieldsActionPerformed
 
     private void mnuProfileInfoActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_mnuProfileInfoActionPerformed
-        
-            if (checkAdmin()) {
-                ProfileDialog dlg = new ProfileDialog(this, true);
-                FrameUtils.centerDialog(dlg, this);
-                dlg.setVisible(true);
-            }
+
+        if (checkAdmin()) {
+            ProfileDialog dlg = new ProfileDialog(this, true);
+            FrameUtils.centerDialog(dlg, this);
+            dlg.setVisible(true);
+        }
     }//GEN-LAST:event_mnuProfileInfoActionPerformed
 
     private void mnuBackupConfigurationActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_mnuBackupConfigurationActionPerformed
-        
-            if (checkAdmin()) {
-                BackupConfigurationDialog dlg = new BackupConfigurationDialog(this, true);
-                FrameUtils.centerDialog(dlg, this);
-                dlg.setVisible(true);
-            }
+
+        if (checkAdmin()) {
+            BackupConfigurationDialog dlg = new BackupConfigurationDialog(this, true);
+            FrameUtils.centerDialog(dlg, this);
+            dlg.setVisible(true);
+        }
     }//GEN-LAST:event_mnuBackupConfigurationActionPerformed
 
     private void mnuServerMonitorActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_mnuServerMonitorActionPerformed
@@ -2283,50 +2333,50 @@ public class JKanzleiGUI extends javax.swing.JFrame implements com.jdimension.jl
     }//GEN-LAST:event_mnuForumActionPerformed
 
     private void mnuScanOptionsActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_mnuScanOptionsActionPerformed
-        
-            if (checkAdmin()) {
-                ScanOptionsDialog dlg = new ScanOptionsDialog(this, true);
-                FrameUtils.centerDialog(dlg, this);
-                dlg.setVisible(true);
-            }
+
+        if (checkAdmin()) {
+            ScanOptionsDialog dlg = new ScanOptionsDialog(this, true);
+            FrameUtils.centerDialog(dlg, this);
+            dlg.setVisible(true);
+        }
     }//GEN-LAST:event_mnuScanOptionsActionPerformed
 
     private void mnuDrebisSettingsActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_mnuDrebisSettingsActionPerformed
-        
-            if (checkAdmin()) {
-                DrebisConfigurationDialog dlg = new DrebisConfigurationDialog(this, true);
-                FrameUtils.centerDialog(dlg, this);
-                dlg.setVisible(true);
-            }
+
+        if (checkAdmin()) {
+            DrebisConfigurationDialog dlg = new DrebisConfigurationDialog(this, true);
+            FrameUtils.centerDialog(dlg, this);
+            dlg.setVisible(true);
+        }
     }//GEN-LAST:event_mnuDrebisSettingsActionPerformed
 
     private void mnuAddressImportActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_mnuAddressImportActionPerformed
         if (checkAdmin()) {
-                ImportContactsDialog dlg = new ImportContactsDialog(this, true);
-                FrameUtils.centerDialog(dlg, this);
-                dlg.setVisible(true);
-            }
+            ImportContactsDialog dlg = new ImportContactsDialog(this, true);
+            FrameUtils.centerDialog(dlg, this);
+            dlg.setVisible(true);
+        }
     }//GEN-LAST:event_mnuAddressImportActionPerformed
 
     private void mnuArchiveFileTagsActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_mnuArchiveFileTagsActionPerformed
         if (checkAdmin()) {
-                OptionGroupCaseTagRename ren = new OptionGroupCaseTagRename();
-                OptionGroupConfigurationDialog dlg = new OptionGroupConfigurationDialog(this, ren, true);
-                dlg.setTitle(java.util.ResourceBundle.getBundle("com/jdimension/jlawyer/client/JKanzleiGUI").getString("dialog.title.casetags"));
-                dlg.setOptionGroup(OptionConstants.OPTIONGROUP_ARCHIVEFILETAGS);
-                FrameUtils.centerDialog(dlg, this);
-                dlg.setVisible(true);
+            OptionGroupCaseTagRename ren = new OptionGroupCaseTagRename();
+            OptionGroupConfigurationDialog dlg = new OptionGroupConfigurationDialog(this, ren, true);
+            dlg.setTitle(java.util.ResourceBundle.getBundle("com/jdimension/jlawyer/client/JKanzleiGUI").getString("dialog.title.casetags"));
+            dlg.setOptionGroup(OptionConstants.OPTIONGROUP_ARCHIVEFILETAGS);
+            FrameUtils.centerDialog(dlg, this);
+            dlg.setVisible(true);
 
-                try {
-                    Timer timer = new Timer();
-                    TimerTask tagsTask = new UpdateArchiveFileTagsTask(this, (EditArchiveFilePanel) EditorsRegistry.getInstance().getEditor(EditArchiveFilePanel.class.getName()));
-                    timer.schedule(tagsTask, 500);
+            try {
+                Timer timer = new Timer();
+                TimerTask tagsTask = new UpdateArchiveFileTagsTask(this, (EditArchiveFilePanel) EditorsRegistry.getInstance().getEditor(EditArchiveFilePanel.class.getName()));
+                timer.schedule(tagsTask, 500);
 
-                } catch (Throwable t) {
-                    log.error("Could not set up timer task for tag updates", t);
-                }
-
+            } catch (Throwable t) {
+                log.error("Could not set up timer task for tag updates", t);
             }
+
+        }
 
     }//GEN-LAST:event_mnuArchiveFileTagsActionPerformed
 
@@ -2339,31 +2389,31 @@ public class JKanzleiGUI extends javax.swing.JFrame implements com.jdimension.jl
     }//GEN-LAST:event_mnuAddressOptionsTitleActionPerformed
 
     private void mnuSearchIndexActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_mnuSearchIndexActionPerformed
-        
-            if (checkAdmin()) {
-                SearchIndexOptionsDialog dlg = new SearchIndexOptionsDialog(this, true);
-                FrameUtils.centerDialog(dlg, this);
-                dlg.setVisible(true);
-            }
+
+        if (checkAdmin()) {
+            SearchIndexOptionsDialog dlg = new SearchIndexOptionsDialog(this, true);
+            FrameUtils.centerDialog(dlg, this);
+            dlg.setVisible(true);
+        }
     }//GEN-LAST:event_mnuSearchIndexActionPerformed
 
     private void mnuAddressTagsActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_mnuAddressTagsActionPerformed
-        
-            if (checkAdmin()) {
-                OptionGroupAddressTagRename ren = new OptionGroupAddressTagRename();
-                OptionGroupConfigurationDialog dlg = new OptionGroupConfigurationDialog(this, ren, true);
-                dlg.setTitle(java.util.ResourceBundle.getBundle("com/jdimension/jlawyer/client/JKanzleiGUI").getString("dialog.title.addresstags"));
-                dlg.setOptionGroup(OptionConstants.OPTIONGROUP_ADDRESSTAGS);
-                FrameUtils.centerDialog(dlg, this);
-                dlg.setVisible(true);
-                try {
-                    Timer timer = new Timer();
-                    TimerTask tagsTask2 = new UpdateAddressTagsTask(this, (EditAddressPanel) EditorsRegistry.getInstance().getEditor(EditAddressPanel.class.getName()));
-                    timer.schedule(tagsTask2, 500);
-                } catch (Throwable t) {
-                    log.error("Could not set up timer task for tag updates", t);
-                }
+
+        if (checkAdmin()) {
+            OptionGroupAddressTagRename ren = new OptionGroupAddressTagRename();
+            OptionGroupConfigurationDialog dlg = new OptionGroupConfigurationDialog(this, ren, true);
+            dlg.setTitle(java.util.ResourceBundle.getBundle("com/jdimension/jlawyer/client/JKanzleiGUI").getString("dialog.title.addresstags"));
+            dlg.setOptionGroup(OptionConstants.OPTIONGROUP_ADDRESSTAGS);
+            FrameUtils.centerDialog(dlg, this);
+            dlg.setVisible(true);
+            try {
+                Timer timer = new Timer();
+                TimerTask tagsTask2 = new UpdateAddressTagsTask(this, (EditAddressPanel) EditorsRegistry.getInstance().getEditor(EditAddressPanel.class.getName()));
+                timer.schedule(tagsTask2, 500);
+            } catch (Throwable t) {
+                log.error("Could not set up timer task for tag updates", t);
             }
+        }
     }//GEN-LAST:event_mnuAddressTagsActionPerformed
 
     private void mnuCustomLauncherOptionsActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_mnuCustomLauncherOptionsActionPerformed
@@ -2373,25 +2423,25 @@ public class JKanzleiGUI extends javax.swing.JFrame implements com.jdimension.jl
     }//GEN-LAST:event_mnuCustomLauncherOptionsActionPerformed
 
     private void mnuAddressCustomFieldsActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_mnuAddressCustomFieldsActionPerformed
-        
-            if (checkAdmin()) {
-                CustomFieldConfigurationDialog dlg = new CustomFieldConfigurationDialog(this, true);
-                dlg.setTitle(java.util.ResourceBundle.getBundle("com/jdimension/jlawyer/client/JKanzleiGUI").getString("dialog.title.addresscustomfields"));
-                dlg.setConfigCategoryPrefix(ServerSettings.DATA_CUSTOMFIELD_ADDRESS_PREFIX);
-                FrameUtils.centerDialog(dlg, this);
-                dlg.setVisible(true);
-            }
+
+        if (checkAdmin()) {
+            CustomFieldConfigurationDialog dlg = new CustomFieldConfigurationDialog(this, true);
+            dlg.setTitle(java.util.ResourceBundle.getBundle("com/jdimension/jlawyer/client/JKanzleiGUI").getString("dialog.title.addresscustomfields"));
+            dlg.setConfigCategoryPrefix(ServerSettings.DATA_CUSTOMFIELD_ADDRESS_PREFIX);
+            FrameUtils.centerDialog(dlg, this);
+            dlg.setVisible(true);
+        }
     }//GEN-LAST:event_mnuAddressCustomFieldsActionPerformed
 
     private void mnuArchiveFileCustomFieldsActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_mnuArchiveFileCustomFieldsActionPerformed
-        
-            if (checkAdmin()) {
-                CustomFieldConfigurationDialog dlg = new CustomFieldConfigurationDialog(this, true);
-                dlg.setTitle(java.util.ResourceBundle.getBundle("com/jdimension/jlawyer/client/JKanzleiGUI").getString("dialog.title.casecustomfields"));
-                dlg.setConfigCategoryPrefix(ServerSettings.DATA_CUSTOMFIELD_ARCHIVEFILE_PREFIX);
-                FrameUtils.centerDialog(dlg, this);
-                dlg.setVisible(true);
-            }
+
+        if (checkAdmin()) {
+            CustomFieldConfigurationDialog dlg = new CustomFieldConfigurationDialog(this, true);
+            dlg.setTitle(java.util.ResourceBundle.getBundle("com/jdimension/jlawyer/client/JKanzleiGUI").getString("dialog.title.casecustomfields"));
+            dlg.setConfigCategoryPrefix(ServerSettings.DATA_CUSTOMFIELD_ARCHIVEFILE_PREFIX);
+            FrameUtils.centerDialog(dlg, this);
+            dlg.setVisible(true);
+        }
     }//GEN-LAST:event_mnuArchiveFileCustomFieldsActionPerformed
 
     private void mnuUserProfileActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_mnuUserProfileActionPerformed
@@ -2403,12 +2453,12 @@ public class JKanzleiGUI extends javax.swing.JFrame implements com.jdimension.jl
     }//GEN-LAST:event_mnuUserProfileActionPerformed
 
     private void mnuArchiveFileOptionsCaseNumberingActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_mnuArchiveFileOptionsCaseNumberingActionPerformed
-        
-            if (checkAdmin()) {
-                CaseNumberingConfigurationDialog dlg = new CaseNumberingConfigurationDialog(this, true);
-                FrameUtils.centerDialog(dlg, this);
-                dlg.setVisible(true);
-            }
+
+        if (checkAdmin()) {
+            CaseNumberingConfigurationDialog dlg = new CaseNumberingConfigurationDialog(this, true);
+            FrameUtils.centerDialog(dlg, this);
+            dlg.setVisible(true);
+        }
     }//GEN-LAST:event_mnuArchiveFileOptionsCaseNumberingActionPerformed
 
     private void mnuDocumentMonitorActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_mnuDocumentMonitorActionPerformed
@@ -2418,81 +2468,81 @@ public class JKanzleiGUI extends javax.swing.JFrame implements com.jdimension.jl
     }//GEN-LAST:event_mnuDocumentMonitorActionPerformed
 
     private void mnuBeaSettingsActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_mnuBeaSettingsActionPerformed
-        
-            if (checkAdmin()) {
-                BeaConfigurationDialog dlg = new BeaConfigurationDialog(this, true);
-                FrameUtils.centerDialog(dlg, this);
-                dlg.setVisible(true);
-            }
+
+        if (checkAdmin()) {
+            BeaConfigurationDialog dlg = new BeaConfigurationDialog(this, true);
+            FrameUtils.centerDialog(dlg, this);
+            dlg.setVisible(true);
+        }
     }//GEN-LAST:event_mnuBeaSettingsActionPerformed
 
     private void mnuArchiveFileCustomFieldsInvolvementsActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_mnuArchiveFileCustomFieldsInvolvementsActionPerformed
-        
-            if (checkAdmin()) {
-                CustomFieldConfigurationDialog dlg = new CustomFieldConfigurationDialog(this, true);
-                dlg.setTitle(java.util.ResourceBundle.getBundle("com/jdimension/jlawyer/client/JKanzleiGUI").getString("dialog.title.casecustomfields"));
-                dlg.setConfigCategoryPrefix(ServerSettings.DATA_CUSTOMFIELD_ARCHIVEFILE_INVOLVED_PREFIX);
-                FrameUtils.centerDialog(dlg, this);
-                dlg.setVisible(true);
-            }
+
+        if (checkAdmin()) {
+            CustomFieldConfigurationDialog dlg = new CustomFieldConfigurationDialog(this, true);
+            dlg.setTitle(java.util.ResourceBundle.getBundle("com/jdimension/jlawyer/client/JKanzleiGUI").getString("dialog.title.casecustomfields"));
+            dlg.setConfigCategoryPrefix(ServerSettings.DATA_CUSTOMFIELD_ARCHIVEFILE_INVOLVED_PREFIX);
+            FrameUtils.centerDialog(dlg, this);
+            dlg.setVisible(true);
+        }
     }//GEN-LAST:event_mnuArchiveFileCustomFieldsInvolvementsActionPerformed
 
     private void mnuDocumentTagsActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_mnuDocumentTagsActionPerformed
-        
-            if (checkAdmin()) {
-                OptionGroupCaseDocumentTagRename ren = new OptionGroupCaseDocumentTagRename();
-                OptionGroupConfigurationDialog dlg = new OptionGroupConfigurationDialog(this, ren, true);
-                dlg.setTitle("Dokumenten-Etiketten");
-                dlg.setOptionGroup(OptionConstants.OPTIONGROUP_DOCUMENTTAGS);
-                FrameUtils.centerDialog(dlg, this);
-                dlg.setVisible(true);
 
-                try {
-                    Timer timer = new Timer();
-                    TimerTask tagsTask = new UpdateDocumentTagsTask(this, (EditArchiveFilePanel) EditorsRegistry.getInstance().getEditor(EditArchiveFilePanel.class.getName()));
-                    timer.schedule(tagsTask, 500);
+        if (checkAdmin()) {
+            OptionGroupCaseDocumentTagRename ren = new OptionGroupCaseDocumentTagRename();
+            OptionGroupConfigurationDialog dlg = new OptionGroupConfigurationDialog(this, ren, true);
+            dlg.setTitle("Dokumenten-Etiketten");
+            dlg.setOptionGroup(OptionConstants.OPTIONGROUP_DOCUMENTTAGS);
+            FrameUtils.centerDialog(dlg, this);
+            dlg.setVisible(true);
 
-                } catch (Throwable t) {
-                    log.error("Could not set up timer task for tag updates", t);
-                }
+            try {
+                Timer timer = new Timer();
+                TimerTask tagsTask = new UpdateDocumentTagsTask(this, (EditArchiveFilePanel) EditorsRegistry.getInstance().getEditor(EditArchiveFilePanel.class.getName()));
+                timer.schedule(tagsTask, 500);
 
+            } catch (Throwable t) {
+                log.error("Could not set up timer task for tag updates", t);
             }
+
+        }
     }//GEN-LAST:event_mnuDocumentTagsActionPerformed
 
     private void mnuBeaCourtAddressImportActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_mnuBeaCourtAddressImportActionPerformed
-        
-            if (checkAdmin()) {
-                ImportCourtsFromBeaDialog dlg = new ImportCourtsFromBeaDialog(this, true);
-                FrameUtils.centerDialog(dlg, this);
-                dlg.setVisible(true);
-            }
+
+        if (checkAdmin()) {
+            ImportCourtsFromBeaDialog dlg = new ImportCourtsFromBeaDialog(this, true);
+            FrameUtils.centerDialog(dlg, this);
+            dlg.setVisible(true);
+        }
     }//GEN-LAST:event_mnuBeaCourtAddressImportActionPerformed
 
     private void mnuPartyTypesActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_mnuPartyTypesActionPerformed
-        
-            if (checkAdmin()) {
-                PartyTypesDialog dlg = new PartyTypesDialog(this, true);
-                FrameUtils.centerDialog(dlg, this);
-                dlg.setVisible(true);
-            }
+
+        if (checkAdmin()) {
+            PartyTypesDialog dlg = new PartyTypesDialog(this, true);
+            FrameUtils.centerDialog(dlg, this);
+            dlg.setVisible(true);
+        }
     }//GEN-LAST:event_mnuPartyTypesActionPerformed
 
     private void mnuFormsManagerActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_mnuFormsManagerActionPerformed
-        
-            if (checkAdmin()) {
-                FormsManagementDialog dlg = new FormsManagementDialog(this, true);
-                FrameUtils.centerDialog(dlg, this);
-                dlg.setVisible(true);
-            }
+
+        if (checkAdmin()) {
+            FormsManagementDialog dlg = new FormsManagementDialog(this, true);
+            FrameUtils.centerDialog(dlg, this);
+            dlg.setVisible(true);
+        }
     }//GEN-LAST:event_mnuFormsManagerActionPerformed
 
     private void mnuGroupsActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_mnuGroupsActionPerformed
-        
-            if (checkAdmin()) {
-                GroupAdministrationDialog dlg = new GroupAdministrationDialog(this, true);
-                FrameUtils.centerDialog(dlg, this);
-                dlg.setVisible(true);
-            }
+
+        if (checkAdmin()) {
+            GroupAdministrationDialog dlg = new GroupAdministrationDialog(this, true);
+            FrameUtils.centerDialog(dlg, this);
+            dlg.setVisible(true);
+        }
     }//GEN-LAST:event_mnuGroupsActionPerformed
 
     private void mnuWordProcessorActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_mnuWordProcessorActionPerformed
@@ -2577,52 +2627,52 @@ public class JKanzleiGUI extends javax.swing.JFrame implements com.jdimension.jl
     }//GEN-LAST:event_mnuAddressOptionsTitleInAddressActionPerformed
 
     private void mnuDocumentFolderTemplatesActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_mnuDocumentFolderTemplatesActionPerformed
-        
-            if (checkAdmin()) {
-                DocumentFolderTemplatesDialog dlg = new DocumentFolderTemplatesDialog(this, true);
-                FrameUtils.centerDialog(dlg, this);
-                dlg.setVisible(true);
-            }
+
+        if (checkAdmin()) {
+            DocumentFolderTemplatesDialog dlg = new DocumentFolderTemplatesDialog(this, true);
+            FrameUtils.centerDialog(dlg, this);
+            dlg.setVisible(true);
+        }
     }//GEN-LAST:event_mnuDocumentFolderTemplatesActionPerformed
 
     private void mnuDocumentsBinActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_mnuDocumentsBinActionPerformed
-        DocumentsBinDialog dlg=new DocumentsBinDialog(this, true);
+        DocumentsBinDialog dlg = new DocumentsBinDialog(this, true);
         FrameUtils.centerDialog(dlg, this);
-                dlg.setVisible(true);
+        dlg.setVisible(true);
     }//GEN-LAST:event_mnuDocumentsBinActionPerformed
 
     private void mnuVoipSoftphoneSettingsActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_mnuVoipSoftphoneSettingsActionPerformed
-            VoipSoftphoneConfigurationDialog dlg = new VoipSoftphoneConfigurationDialog(this, true);
-                FrameUtils.centerDialog(dlg, this);
-                dlg.setVisible(true);
-            
+        VoipSoftphoneConfigurationDialog dlg = new VoipSoftphoneConfigurationDialog(this, true);
+        FrameUtils.centerDialog(dlg, this);
+        dlg.setVisible(true);
+
     }//GEN-LAST:event_mnuVoipSoftphoneSettingsActionPerformed
 
     private void mnuSecurityActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_mnuSecurityActionPerformed
-        
-            if (checkAdmin()) {
-                SecurityConfigurationDialog dlg = new SecurityConfigurationDialog(this, true);
-                FrameUtils.centerDialog(dlg, this);
-                dlg.setVisible(true);
-            }
+
+        if (checkAdmin()) {
+            SecurityConfigurationDialog dlg = new SecurityConfigurationDialog(this, true);
+            FrameUtils.centerDialog(dlg, this);
+            dlg.setVisible(true);
+        }
     }//GEN-LAST:event_mnuSecurityActionPerformed
 
     private void mnuCalendarSetupActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_mnuCalendarSetupActionPerformed
-        
-            if (checkAdmin()) {
-                CalendarSetupDialog dlg = new CalendarSetupDialog(this, true);
-                FrameUtils.centerDialog(dlg, this);
-                dlg.setVisible(true);
-            }
+
+        if (checkAdmin()) {
+            CalendarSetupDialog dlg = new CalendarSetupDialog(this, true);
+            FrameUtils.centerDialog(dlg, this);
+            dlg.setVisible(true);
+        }
     }//GEN-LAST:event_mnuCalendarSetupActionPerformed
 
     private void mnuAddressBookSyncActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_mnuAddressBookSyncActionPerformed
-        
-            if (checkAdmin()) {
-                AddressBookSetupDialog dlg = new AddressBookSetupDialog(this, true);
-                FrameUtils.centerDialog(dlg, this);
-                dlg.setVisible(true);
-            }
+
+        if (checkAdmin()) {
+            AddressBookSetupDialog dlg = new AddressBookSetupDialog(this, true);
+            FrameUtils.centerDialog(dlg, this);
+            dlg.setVisible(true);
+        }
     }//GEN-LAST:event_mnuAddressBookSyncActionPerformed
 
     private void mnuCalendarSyncNowActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_mnuCalendarSyncNowActionPerformed
@@ -2686,25 +2736,25 @@ public class JKanzleiGUI extends javax.swing.JFrame implements com.jdimension.jl
     }//GEN-LAST:event_mnuWebHooksActionPerformed
 
     private void mnuDocumentPreviewActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_mnuDocumentPreviewActionPerformed
-        DocumentPreviewConfigurationDialog dlg=new DocumentPreviewConfigurationDialog(this, true);
+        DocumentPreviewConfigurationDialog dlg = new DocumentPreviewConfigurationDialog(this, true);
         FrameUtils.centerDialog(dlg, this);
         dlg.setVisible(true);
     }//GEN-LAST:event_mnuDocumentPreviewActionPerformed
 
     private void mnuInvoicePoolsActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_mnuInvoicePoolsActionPerformed
         if (checkAdmin()) {
-                InvoicePoolsSetupDialog dlg = new InvoicePoolsSetupDialog(this, true);
-                FrameUtils.centerDialog(dlg, this);
-                dlg.setVisible(true);
-            }
+            InvoicePoolsSetupDialog dlg = new InvoicePoolsSetupDialog(this, true);
+            FrameUtils.centerDialog(dlg, this);
+            dlg.setVisible(true);
+        }
     }//GEN-LAST:event_mnuInvoicePoolsActionPerformed
 
     private void mnuInvoiceTypesActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_mnuInvoiceTypesActionPerformed
         if (checkAdmin()) {
-                InvoiceTypesSetupDialog dlg = new InvoiceTypesSetupDialog(this, true);
-                FrameUtils.centerDialog(dlg, this);
-                dlg.setVisible(true);
-            }
+            InvoiceTypesSetupDialog dlg = new InvoiceTypesSetupDialog(this, true);
+            FrameUtils.centerDialog(dlg, this);
+            dlg.setVisible(true);
+        }
     }//GEN-LAST:event_mnuInvoiceTypesActionPerformed
 
     private void mnuInvoiceCurrenciesActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_mnuInvoiceCurrenciesActionPerformed
@@ -2716,7 +2766,7 @@ public class JKanzleiGUI extends javax.swing.JFrame implements com.jdimension.jl
     }//GEN-LAST:event_mnuInvoiceCurrenciesActionPerformed
 
     private void formComponentMoved(java.awt.event.ComponentEvent evt) {//GEN-FIRST:event_formComponentMoved
-        if (!this.initializing && ((System.currentTimeMillis()-this.initialized)>2000l)) {
+        if (!this.initializing && ((System.currentTimeMillis() - this.initialized) > 2000l)) {
             saveFrameBounds();
         }
     }//GEN-LAST:event_formComponentMoved
@@ -2733,10 +2783,10 @@ public class JKanzleiGUI extends javax.swing.JFrame implements com.jdimension.jl
 
     private void mnuInvoicePositionTemplatesActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_mnuInvoicePositionTemplatesActionPerformed
         if (checkAdmin()) {
-                InvoicePositionTemplatesSetupDialog dlg = new InvoicePositionTemplatesSetupDialog(this, true);
-                FrameUtils.centerDialog(dlg, this);
-                dlg.setVisible(true);
-            }
+            InvoicePositionTemplatesSetupDialog dlg = new InvoicePositionTemplatesSetupDialog(this, true);
+            FrameUtils.centerDialog(dlg, this);
+            dlg.setVisible(true);
+        }
     }//GEN-LAST:event_mnuInvoicePositionTemplatesActionPerformed
 
     private void mnuTimesheetIntervalsActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_mnuTimesheetIntervalsActionPerformed
@@ -2765,17 +2815,17 @@ public class JKanzleiGUI extends javax.swing.JFrame implements com.jdimension.jl
 
     private void mnuParallelTimesheetLogsActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_mnuParallelTimesheetLogsActionPerformed
         if (checkAdmin()) {
-                TimesheetParallelConfigurationDialog dlg = new TimesheetParallelConfigurationDialog(this, true);
-                FrameUtils.centerDialog(dlg, this);
-                dlg.setVisible(true);
-            }
+            TimesheetParallelConfigurationDialog dlg = new TimesheetParallelConfigurationDialog(this, true);
+            FrameUtils.centerDialog(dlg, this);
+            dlg.setVisible(true);
+        }
     }//GEN-LAST:event_mnuParallelTimesheetLogsActionPerformed
 
     private void mnuBugReportActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_mnuBugReportActionPerformed
         try {
             ClientSettings settings = ClientSettings.getInstance();
-            JLawyerServiceLocator locator=null;
-            if(UserUtils.isCurrentUserAdmin(this, false)) {
+            JLawyerServiceLocator locator = null;
+            if (UserUtils.isCurrentUserAdmin(this, false)) {
                 // user is admin
                 locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
             } else {
@@ -2783,16 +2833,16 @@ public class JKanzleiGUI extends javax.swing.JFrame implements com.jdimension.jl
                 UserCredentialsDialog dlg = new UserCredentialsDialog(this, true, "Administratoren-Login erforderlich");
                 FrameUtils.centerDialog(dlg, this);
                 dlg.setVisible(true);
-                
-                if(!StringUtils.isEmpty(dlg.getUsername()) && !StringUtils.isEmpty(dlg.getPassword())) {
+
+                if (!StringUtils.isEmpty(dlg.getUsername()) && !StringUtils.isEmpty(dlg.getPassword())) {
                     locator = JLawyerServiceLocator.getTemporaryInstanceFor(dlg.getUsername(), dlg.getPassword(), settings.getLookupProperties());
                 }
             }
-            
-            BugReportDialog dlg=new BugReportDialog(this, false, locator);
+
+            BugReportDialog dlg = new BugReportDialog(this, false, locator);
             FrameUtils.centerDialog(dlg, this);
             dlg.setVisible(true);
-            
+
         } catch (Exception ex) {
             log.error(ex);
             JOptionPane.showMessageDialog(this, "Fehlerprotokolle können nicht bereitgestellt werden: " + ex.getMessage(), java.util.ResourceBundle.getBundle("com/jdimension/jlawyer/client/JKanzleiGUI").getString("msg.title.error"), JOptionPane.ERROR_MESSAGE);
@@ -2844,7 +2894,7 @@ public class JKanzleiGUI extends javax.swing.JFrame implements com.jdimension.jl
      * @param args the command line arguments
      */
     public static void main(String args[]) {
-        
+
     }
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JMenuBar jMenuBar1;
