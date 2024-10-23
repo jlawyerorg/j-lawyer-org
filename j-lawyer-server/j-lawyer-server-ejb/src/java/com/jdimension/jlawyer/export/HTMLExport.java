@@ -727,8 +727,7 @@ public class HTMLExport {
             afs = dto.getId();
         }
         afs = ServerStringUtils.removeSonderzeichen(afs);
-        File newDir = new File(this.targetDirectory.getAbsolutePath() + File.separator + afs);
-        return newDir;
+        return new File(this.targetDirectory.getAbsolutePath() + File.separator + afs);
     }
 
     private static String escape(Object cell) {
