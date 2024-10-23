@@ -722,7 +722,7 @@ public class PdfFormsAccess {
 
         for (String ph : searchStrings) {
             // placeholders may be VALUES of a form field or may be the NAME of a form field
-            if (field.getValueAsString() != null && field.getValueAsString().equals(ph)) {
+            if (field.getValueAsString() != null && field.getValueAsString().contains(ph)) {
                 foundStrings.add(ph);
             } else {
                 if (field.getCOSObject().containsKey("TU")) {
@@ -751,9 +751,9 @@ public class PdfFormsAccess {
             }
 
             // placeholders may be VALUES of a form field or may be the NAME of a form field
-            if (field.getValueAsString() != null && field.getValueAsString().equals(key)) {
+            if (field.getValueAsString() != null && field.getValueAsString().contains(key)) {
                 try {
-                    field.setValue(values.get(key).toString());
+                    field.setValue(field.getValueAsString().replace(key, values.get(key).toString()));
                 } catch (IOException ex) {
                     log.error("Error setting placeholder " + key + " in PDF form", ex);
                 }
@@ -788,11 +788,9 @@ public class PdfFormsAccess {
         List<PDField> fields = form.getFields();
 
         for (PDField field : fields) {
-            System.out.println("Feld (Name = Wert): " + field.getFullyQualifiedName() + " = " + field.getValueAsString());
-
             for (String ph : searchStrings) {
                 // placeholders may be VALUES of a form field or may be the NAME of a form field
-                if (field.getValueAsString() != null && field.getValueAsString().equals(ph)) {
+                if (field.getValueAsString() != null && field.getValueAsString().contains(ph)) {
                     foundStrings.add(ph);
                 } else {
                     if (field.getCOSObject().containsKey("TU")) {
@@ -829,9 +827,9 @@ public class PdfFormsAccess {
                 }
 
                 // placeholders may be VALUES of a form field or may be the NAME of a form field
-                if (field.getValueAsString() != null && field.getValueAsString().equals(key)) {
+                if (field.getValueAsString() != null && field.getValueAsString().contains(key)) {
                     try {
-                        field.setValue(values.get(key).toString());
+                        field.setValue(field.getValueAsString().replace(key, values.get(key).toString()));
                     } catch (IOException ex) {
                         log.error("Error setting placeholder " + key + " in PDF form", ex);
                     }

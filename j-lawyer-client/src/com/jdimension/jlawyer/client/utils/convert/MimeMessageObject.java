@@ -29,10 +29,13 @@ import static java.util.Objects.nonNull;
 import static java.util.Optional.ofNullable;
 import static javax.print.DocFlavor.CHAR_ARRAY.TEXT_PLAIN;
 import static org.apache.commons.lang3.StringUtils.isBlank;
+import org.apache.log4j.Logger;
 //import static org.apache.tika.mime.MediaType.TEXT_HTML;
 
 
 class MimeMessageObject {
+    
+    private static final Logger log=Logger.getLogger(MimeMessageObject.class.getName());
 
     private String entry;
     private ContentType contentType;
@@ -137,8 +140,17 @@ class MimeMessageObject {
         walkMimeStructure(part, 0, (p, level) -> {
             String[] header = p.getHeader(CONTENT_ID);
             if (p.isMimeType(IMAGE_TYPE) && nonNull(header)) {
-                String imageBase64 = Base64.getEncoder().encodeToString(IOUtils.toByteArray((BASE64DecoderStream) p.getContent()));
-                result.put(header[0], new MimeMessageObject(imageBase64, new ContentType(p.getContentType())));
+                if (p.getContent() != null && !(p.getContent() instanceof BASE64DecoderStream)) {
+                    log.warn("inline image has content of instance " + p.getContent().getClass().getName());
+                } else {
+                    try {
+                        String imageBase64 = Base64.getEncoder().encodeToString(IOUtils.toByteArray((BASE64DecoderStream) p.getContent()));
+                        result.put(header[0], new MimeMessageObject(imageBase64, new ContentType(p.getContentType())));
+                    } catch (Throwable t) {
+                        log.error("unable to get content of inline image - skipping", t);
+                    }
+                }
+
             }
         });
         return result;

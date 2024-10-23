@@ -1756,6 +1756,7 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
         mnuEditReview = new javax.swing.JMenuItem();
         mnuRemoveReview = new javax.swing.JMenuItem();
         documentsPopup = new javax.swing.JPopupMenu();
+        mnuDuplicateDocumentAsPdf = new javax.swing.JMenuItem();
         mnuCopyFilesToClipboard = new javax.swing.JMenuItem();
         mnuOpenDocument = new javax.swing.JMenuItem();
         mnuOpenDocumentWith = new javax.swing.JMenu();
@@ -1763,7 +1764,6 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
         mnuOpenDocumentLibreOffice = new javax.swing.JMenuItem();
         mnuSaveDocumentsLocally = new javax.swing.JMenuItem();
         mnuDuplicateDocument = new javax.swing.JMenuItem();
-        mnuDuplicateDocumentAs = new javax.swing.JMenuItem();
         mnuCopyDocumentToOtherCase = new javax.swing.JMenuItem();
         mnuMoveDocumentToOtherCase = new javax.swing.JMenuItem();
         mnuRenameDocument = new javax.swing.JMenuItem();
@@ -1775,11 +1775,11 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
         mnuSendMessageForDocument = new javax.swing.JMenuItem();
         mnuRemoveDocument = new javax.swing.JMenuItem();
         jSeparator11 = new javax.swing.JPopupMenu.Separator();
-        mnuPdfActions = new javax.swing.JMenu();
+        mnuPdfAndConvertActions = new javax.swing.JMenu();
         mnuShrinkPdf = new javax.swing.JMenuItem();
-        mnuDuplicateDocumentAsPdf = new javax.swing.JMenuItem();
         mnuSaveDocumentsLocallyPdf = new javax.swing.JMenuItem();
         mnuSaveDocumentEncrypted = new javax.swing.JMenuItem();
+        mnuDuplicateDocumentAs = new javax.swing.JMenuItem();
         jSeparator1 = new javax.swing.JPopupMenu.Separator();
         mnuSendDocument = new javax.swing.JMenuItem();
         mnuSendDocumentPDF = new javax.swing.JMenuItem();
@@ -2035,6 +2035,15 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
         });
         reviewsPopup.add(mnuRemoveReview);
 
+        mnuDuplicateDocumentAsPdf.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons16/pdf.png"))); // NOI18N
+        mnuDuplicateDocumentAsPdf.setText("als PDF zur Akte speichern");
+        mnuDuplicateDocumentAsPdf.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                mnuDuplicateDocumentAsPdfActionPerformed(evt);
+            }
+        });
+        documentsPopup.add(mnuDuplicateDocumentAsPdf);
+
         mnuCopyFilesToClipboard.setFont(mnuCopyFilesToClipboard.getFont());
         mnuCopyFilesToClipboard.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons16/editpaste.png"))); // NOI18N
         mnuCopyFilesToClipboard.setText("in Zwischenablage kopieren");
@@ -2094,15 +2103,6 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
             }
         });
         documentsPopup.add(mnuDuplicateDocument);
-
-        mnuDuplicateDocumentAs.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/filesave.png"))); // NOI18N
-        mnuDuplicateDocumentAs.setText("ablegen als ...");
-        mnuDuplicateDocumentAs.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                mnuDuplicateDocumentAsActionPerformed(evt);
-            }
-        });
-        documentsPopup.add(mnuDuplicateDocumentAs);
 
         mnuCopyDocumentToOtherCase.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/editcopy.png"))); // NOI18N
         mnuCopyDocumentToOtherCase.setText("in andere Akte kopieren");
@@ -2189,8 +2189,8 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
         documentsPopup.add(mnuRemoveDocument);
         documentsPopup.add(jSeparator11);
 
-        mnuPdfActions.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons16/pdf.png"))); // NOI18N
-        mnuPdfActions.setText("PDF-Aktionen");
+        mnuPdfAndConvertActions.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons16/pdf.png"))); // NOI18N
+        mnuPdfAndConvertActions.setText("PDF und Konvertierung");
 
         mnuShrinkPdf.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons16/material/compress_24dp_0E72B5.png"))); // NOI18N
         mnuShrinkPdf.setText("PDF verkleinern");
@@ -2200,16 +2200,7 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
                 mnuShrinkPdfActionPerformed(evt);
             }
         });
-        mnuPdfActions.add(mnuShrinkPdf);
-
-        mnuDuplicateDocumentAsPdf.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons16/pdf.png"))); // NOI18N
-        mnuDuplicateDocumentAsPdf.setText("als PDF zur Akte speichern");
-        mnuDuplicateDocumentAsPdf.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                mnuDuplicateDocumentAsPdfActionPerformed(evt);
-            }
-        });
-        mnuPdfActions.add(mnuDuplicateDocumentAsPdf);
+        mnuPdfAndConvertActions.add(mnuShrinkPdf);
 
         mnuSaveDocumentsLocallyPdf.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/filesave.png"))); // NOI18N
         mnuSaveDocumentsLocallyPdf.setText("als PDF lokal speichern");
@@ -2218,7 +2209,7 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
                 mnuSaveDocumentsLocallyPdfActionPerformed(evt);
             }
         });
-        mnuPdfActions.add(mnuSaveDocumentsLocallyPdf);
+        mnuPdfAndConvertActions.add(mnuSaveDocumentsLocallyPdf);
 
         mnuSaveDocumentEncrypted.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons16/gpg.png"))); // NOI18N
         mnuSaveDocumentEncrypted.setText("verschlüsseltes PDF exportieren");
@@ -2227,9 +2218,18 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
                 mnuSaveDocumentEncryptedActionPerformed(evt);
             }
         });
-        mnuPdfActions.add(mnuSaveDocumentEncrypted);
+        mnuPdfAndConvertActions.add(mnuSaveDocumentEncrypted);
 
-        documentsPopup.add(mnuPdfActions);
+        mnuDuplicateDocumentAs.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/filesave.png"))); // NOI18N
+        mnuDuplicateDocumentAs.setText("ablegen als ...");
+        mnuDuplicateDocumentAs.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                mnuDuplicateDocumentAsActionPerformed(evt);
+            }
+        });
+        mnuPdfAndConvertActions.add(mnuDuplicateDocumentAs);
+
+        documentsPopup.add(mnuPdfAndConvertActions);
         documentsPopup.add(jSeparator1);
 
         mnuSendDocument.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/mail_send_2.png"))); // NOI18N
@@ -7803,7 +7803,7 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
     private javax.swing.JMenuItem mnuOpenDocumentMicrosoftOffice;
     private javax.swing.JMenu mnuOpenDocumentWith;
     private javax.swing.JMenuItem mnuOpenInExternalMailer;
-    private javax.swing.JMenu mnuPdfActions;
+    private javax.swing.JMenu mnuPdfAndConvertActions;
     private javax.swing.JMenuItem mnuPostponeReview;
     private javax.swing.JMenuItem mnuRemoveDocument;
     private javax.swing.JMenuItem mnuRemoveReview;

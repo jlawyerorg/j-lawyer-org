@@ -1197,6 +1197,7 @@ public class JKanzleiGUI extends javax.swing.JFrame implements com.jdimension.jl
         mnuInvoiceCurrencies = new javax.swing.JMenuItem();
         mnuInvoiceTaxRates = new javax.swing.JMenuItem();
         mnuInvoicePositionTemplates = new javax.swing.JMenuItem();
+        mnuGiroCodes = new javax.swing.JMenuItem();
         mnuTimesheet = new javax.swing.JMenu();
         mnuTimesheetIntervals = new javax.swing.JMenuItem();
         mnuTimesheetPositions = new javax.swing.JMenuItem();
@@ -1829,6 +1830,15 @@ public class JKanzleiGUI extends javax.swing.JFrame implements com.jdimension.jl
             }
         });
         mnuFinance.add(mnuInvoicePositionTemplates);
+
+        mnuGiroCodes.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons16/material/baseline_qr_code_2_black_48dp.png"))); // NOI18N
+        mnuGiroCodes.setText("Girocodes");
+        mnuGiroCodes.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                mnuGiroCodesActionPerformed(evt);
+            }
+        });
+        mnuFinance.add(mnuGiroCodes);
 
         mnuOptions.add(mnuFinance);
 
@@ -2890,6 +2900,14 @@ public class JKanzleiGUI extends javax.swing.JFrame implements com.jdimension.jl
         }
     }//GEN-LAST:event_mnuImportFromSheetActionPerformed
 
+    private void mnuGiroCodesActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_mnuGiroCodesActionPerformed
+        if (checkAdmin()) {
+            GirocodeConfigurationDialog dlg = new GirocodeConfigurationDialog(this, true);
+            FrameUtils.centerDialog(dlg, this);
+            dlg.setVisible(true);
+        }
+    }//GEN-LAST:event_mnuGiroCodesActionPerformed
+
     /**
      * @param args the command line arguments
      */
@@ -2968,6 +2986,7 @@ public class JKanzleiGUI extends javax.swing.JFrame implements com.jdimension.jl
     private javax.swing.JMenuItem mnuFontSize;
     private javax.swing.JMenuItem mnuFormsManager;
     private javax.swing.JMenuItem mnuForum;
+    private javax.swing.JMenuItem mnuGiroCodes;
     private javax.swing.JMenuItem mnuGroups;
     private javax.swing.JMenu mnuHelp;
     private javax.swing.JMenuItem mnuImportFromSheet;

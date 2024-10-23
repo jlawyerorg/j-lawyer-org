@@ -670,7 +670,6 @@ import com.jdimension.jlawyer.pojo.imports.ImportLogEntry;
 import com.jdimension.jlawyer.services.JLawyerServiceLocator;
 import com.jdimension.jlawyer.services.SystemManagementRemote;
 import java.io.File;
-import java.io.IOException;
 import java.util.List;
 import javax.swing.JFileChooser;
 import javax.swing.JOptionPane;
