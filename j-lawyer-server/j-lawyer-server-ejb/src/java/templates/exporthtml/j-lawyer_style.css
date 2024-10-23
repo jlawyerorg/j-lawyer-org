@@ -242,6 +242,12 @@ h3 {
 	font-weight: normal;
 }
 
+.content_box .folder_info {
+	font-size: 9px;
+	color: #666666;
+        font-weight: bold;
+}
+
 .news_box a{
 	color: #000000;
 	font-weight: normal;

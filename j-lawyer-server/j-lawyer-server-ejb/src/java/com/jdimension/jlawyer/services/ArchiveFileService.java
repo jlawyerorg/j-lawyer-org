@@ -4559,6 +4559,31 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
     public DocumentFolderTemplate getFolderTemplateById(String id) {
         return this.folderTemplateFacade.find(id);
     }
+    
+    /**
+     * Returns a list of folder representing a hierarchy. First element in the list is the root folder.
+     * @param folderId
+     * @return 
+     */
+    @Override
+    @RolesAllowed({"loginRole"})
+    public List<CaseFolder> getFolderHierarchy(String folderId) {
+        List<CaseFolder> hierarchy=new ArrayList<>();
+        if(folderId==null)
+            return hierarchy;
+        
+        CaseFolder cf=this.caseFolderFacade.find(folderId);
+        if(cf!=null) {
+            hierarchy.add(cf);
+            while(!cf.isRoot()) {
+                cf=this.caseFolderFacade.find(cf.getParentId());
+                hierarchy.add(cf);
+                
+            }
+        }
+        Collections.reverse(hierarchy);
+        return hierarchy;
+    }
 
     @Override
     @RolesAllowed({"readArchiveFileRole"})
