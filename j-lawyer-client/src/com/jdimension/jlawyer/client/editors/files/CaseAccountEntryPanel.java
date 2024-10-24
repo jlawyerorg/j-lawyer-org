@@ -695,7 +695,6 @@ public class CaseAccountEntryPanel extends javax.swing.JPanel {
 
     /**
      * Creates new form CaseAccountEntryPanel
-     * @param parent
      */
     public CaseAccountEntryPanel() {
         initComponents();
