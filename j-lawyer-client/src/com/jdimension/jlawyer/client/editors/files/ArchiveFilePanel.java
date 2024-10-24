@@ -4743,7 +4743,7 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
         this.uploadDocument(null);
     }//GEN-LAST:event_cmdUploadDocumentActionPerformed
 
-    public void uploadDocument(Invoice invoice) {
+    public boolean uploadDocument(Invoice invoice) {
         JFileChooser chooser = new JFileChooser();
         chooser.setMultiSelectionEnabled(invoice == null);
 
@@ -4800,6 +4800,9 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
                 log.error("Error uploading document", ioe);
                 JOptionPane.showMessageDialog(this, "Fehler beim Laden der Datei: " + ioe.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
             }
+            return true;
+        } else {
+            return false;
         }
     }
 

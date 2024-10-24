@@ -2701,7 +2701,10 @@ public class InvoiceDialog extends javax.swing.JDialog implements EventConsumer 
             if (this.currentEntry != null) {
                 this.save();
             }
-            this.caseView.uploadDocument(currentEntry);
+            boolean uploaded=this.caseView.uploadDocument(currentEntry);
+            if(!uploaded)
+                return;
+            
             if (this.currentEntry != null) {
                 this.save();
                 try {
