@@ -791,6 +791,8 @@ public interface ArchiveFileServiceLocal {
     CaseFolder applyFolderTemplateById(String id, String templateId) throws Exception;
 
     DocumentFolderTemplate getFolderTemplateById(String id);
+    
+    List<CaseFolder> getFolderHierarchy(String folderId);
 
     void purgeDocumentBin() throws Exception;
     

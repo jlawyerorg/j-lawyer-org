@@ -687,6 +687,8 @@ import java.io.FileInputStream;
 import java.nio.file.attribute.FileTime;
 import java.text.NumberFormat;
 import java.util.Date;
+import java.util.HashMap;
+import java.util.List;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipOutputStream;
 import org.apache.log4j.Logger;
@@ -725,8 +727,7 @@ public class HTMLExport {
             afs = dto.getId();
         }
         afs = ServerStringUtils.removeSonderzeichen(afs);
-        File newDir = new File(this.targetDirectory.getAbsolutePath() + System.getProperty("file.separator") + afs);
-        return newDir;
+        return new File(this.targetDirectory.getAbsolutePath() + File.separator + afs);
     }
 
     private static String escape(Object cell) {
@@ -743,7 +744,7 @@ public class HTMLExport {
             this.targetDirectory.mkdirs();
         }
 
-        File revCsv = new File(this.targetDirectory.getAbsolutePath() + System.getProperty("file.separator") + "wiedervorlagen-fristen.csv");
+        File revCsv = new File(this.targetDirectory.getAbsolutePath() + File.separator + "wiedervorlagen-fristen.csv");
         if (revCsv.exists()) {
             revCsv.delete();
         }
@@ -831,7 +832,7 @@ public class HTMLExport {
         copyToLocal("templates/exporthtml/index.html", "index.html", newDir, "");
         copyToLocal("templates/exporthtml/j-lawyer_style.css", "j-lawyer_style.css", newDir, "");
 
-        File newDir2 = new File(newDir.getAbsolutePath() + System.getProperty("file.separator") + "images");
+        File newDir2 = new File(newDir.getAbsolutePath() + File.separator + "images");
         newDir2.mkdirs();
 
         copyToLocal("templates/exporthtml/images/j-lawyer_body.jpg", "j-lawyer_body.jpg", newDir, "images/");
@@ -842,10 +843,7 @@ public class HTMLExport {
         copyToLocal("templates/exporthtml/images/j-lawyer_menu_hover.jpg", "j-lawyer_menu_hover.jpg", newDir, "images/");
         copyToLocal("templates/exporthtml/images/j-lawyer_sidebar_section_bottom.jpg", "j-lawyer_sidebar_section_bottom.jpg", newDir, "images/");
 
-        File newDir3 = new File(newDir.getAbsolutePath() + System.getProperty("file.separator") + "documents");
-        newDir3.mkdirs();
-
-        File indexFile = new File(newDir.getAbsolutePath() + System.getProperty("file.separator") + "index.html");
+        File indexFile = new File(newDir.getAbsolutePath() + File.separator + "index.html");
         byte[] content = ServerFileUtils.readFile(indexFile);
         String sContent = new String(content, "UTF-8");
         sContent = sContent.replaceAll("\\{\\{filenumber\\}\\}", dto.getFileNumber());
@@ -912,42 +910,38 @@ public class HTMLExport {
         ArrayList docList = new ArrayList(documents);
         Collections.sort(docList, new DocumentsComparator());
         sb = new StringBuffer();
+        HashMap<String,List<CaseFolder>> folderHierarchies=new HashMap<>();
         for (Object d : docList) {
             if (d instanceof ArchiveFileDocumentsBean) {
                 ArchiveFileDocumentsBean db = (ArchiveFileDocumentsBean) d;
 
                 String dbNewName = removeSonderzeichen(db.getName());
-
-                dbNewName = dbNewName.replace(",", "");
-                dbNewName = dbNewName.replace("\"", "");
-                dbNewName = dbNewName.replace("§", "");
-                dbNewName = dbNewName.replace("%", "");
-                dbNewName = dbNewName.replace("&", "");
-                dbNewName = dbNewName.replace("/", "");
-                dbNewName = dbNewName.replace("=", "");
-                dbNewName = dbNewName.replace("\\?", "");
-                dbNewName = dbNewName.replace("\\{", "");
-                dbNewName = dbNewName.replace("\\}", "");
-                dbNewName = dbNewName.replace("\\[", "");
-                dbNewName = dbNewName.replace("\\]", "");
-                dbNewName = dbNewName.replace("\\\\", "");
-                dbNewName = dbNewName.replace("\\*", "");
-                dbNewName = dbNewName.replace("#", "");
-                dbNewName = dbNewName.replace("'", "");
-                dbNewName = dbNewName.replace(":", "");
-                dbNewName = dbNewName.replace(";", "");
+                dbNewName=ServerFileUtils.sanitizeFileName(dbNewName);
                 
                 if(dbNewName.length()==0) {
                     log.warn("invalid file name: " + dbNewName);
                     dbNewName=""+System.currentTimeMillis();
                 }
+                
+                
+                List<CaseFolder> hierarchy = new ArrayList<>();
+                if (db.getFolder() != null) {
+                    if(!folderHierarchies.containsKey(db.getFolder().getId())) {
+                        hierarchy=caseFacade.getFolderHierarchy(db.getFolder().getId());
+                        folderHierarchies.put(db.getFolder().getId(), hierarchy);
+                    }
+                    hierarchy=folderHierarchies.get(db.getFolder().getId());
+                }
 
+                String subPath=toFilePath(hierarchy);
                 try {
                     byte[] docContent = caseFacade.getDocumentContentUnrestricted(db.getId());
-                    try (FileOutputStream docOut = new FileOutputStream(newDir3.getAbsolutePath() + System.getProperty("file.separator") + dbNewName)) {
+                    File docFolders=new File(newDir.getAbsolutePath() + subPath);
+                    docFolders.mkdirs();
+                    try (FileOutputStream docOut = new FileOutputStream(newDir.getAbsolutePath() + subPath + File.separator + dbNewName)) {
                         docOut.write(docContent);
                     }
-                    File docOutFile = new File(newDir3.getAbsolutePath() + System.getProperty("file.separator") + dbNewName);
+                    File docOutFile = new File(newDir.getAbsolutePath() + subPath + File.separator + dbNewName);
                     if (db.getChangeDate() != null) {
                         docOutFile.setLastModified(db.getChangeDate().getTime());
                     }
@@ -957,9 +951,16 @@ public class HTMLExport {
                 }
 
                 // <tr><td><p class="post_info">01.01.2013</p></td><td><p class="post_info">dings</p></td></tr>
+                
+                
                 sb.append("<tr valign=\"top\"><td><p class=\"post_info\">");
                 sb.append(toDate(df, db.getChangeDate()));
-                sb.append("</p></td><td><p class=\"post_info\"><a href=\"documents/");
+                subPath=subPath.replace(File.separator, "/");
+                if(subPath.startsWith("/") && subPath.length()>1)
+                    subPath=subPath.substring(1);
+                sb.append("</p></td><td><p class=\"post_info\"><a href=\"").append(subPath);
+                if(!subPath.isEmpty())
+                    sb.append(File.separator);
                 sb.append(dbNewName);
                 sb.append("\">");
                 sb.append(dbNewName);
@@ -967,14 +968,10 @@ public class HTMLExport {
                 if (db.getDictateSign() != null) {
                     sb.append(db.getDictateSign());
                 }
-                sb.append("</p></td>");
-                sb.append("<td><p class=\"post_info\">");
-                if (db.getFolder() != null) {
-                    sb.append("Ordner: ").append(removeSonderzeichen(db.getFolder().getName()));
-                } else {
-                    sb.append("");
-                }
-                sb.append("</p></td>");
+                sb.append("</p></td></tr><tr>");
+                sb.append("<td></td><td><p class=\"folder_info\"><nobr>");
+                sb.append(toFolderPath(hierarchy));
+                sb.append("</nobr></p></td>");
                 sb.append("</tr>");
             }
         }
@@ -992,6 +989,28 @@ public class HTMLExport {
 
         return newDir.getAbsolutePath();
 
+    }
+    
+    private String toFolderPath(List<CaseFolder> hierarchy) {
+        StringBuilder sb=new StringBuilder();
+        for(CaseFolder f: hierarchy) {
+            sb.append(" > ").append(f.getName());
+        }
+        String path=sb.toString().trim();
+        if(path.isEmpty())
+            path=">";
+        return path;
+    }
+    
+    private String toFilePath(List<CaseFolder> hierarchy) {
+        StringBuilder sb=new StringBuilder();
+        for(CaseFolder f: hierarchy) {
+            String fName=ServerFileUtils.sanitizeFileName(f.getName());
+            if(fName.isEmpty())
+                fName="---";
+            sb.append(File.separator).append(fName);
+        }
+        return sb.toString();
     }
 
     private String toDate(SimpleDateFormat dateFormat, Date d) {
@@ -1078,7 +1097,7 @@ public class HTMLExport {
     }
 
     private void copyToLocal(String resource, String name, File dir, String subDir) throws Exception {
-        try (InputStream is = this.getClass().getClassLoader().getResourceAsStream(resource); FileOutputStream fOut = new FileOutputStream(dir.getAbsolutePath() + System.getProperty("file.separator") + subDir + name);) {
+        try (InputStream is = this.getClass().getClassLoader().getResourceAsStream(resource); FileOutputStream fOut = new FileOutputStream(dir.getAbsolutePath() + File.separator + subDir + name);) {
             byte[] buffer = new byte[256];
             int len = 0;
             while ((len = is.read(buffer)) > 0) {
