@@ -695,7 +695,6 @@ public class CaseAccountEntryPanel extends javax.swing.JPanel {
 
     /**
      * Creates new form CaseAccountEntryPanel
-     * @param parent
      */
     public CaseAccountEntryPanel() {
         initComponents();
@@ -756,9 +755,7 @@ public class CaseAccountEntryPanel extends javax.swing.JPanel {
         this.cmbInvoice.removeAllItems();
         this.cmbInvoice.addItem("");
         for (Invoice i : invoices) {
-            if (i.getInvoiceType().isTurnOver()) {
-                this.cmbInvoice.addItem(i);
-            }
+            this.cmbInvoice.addItem(i);
         }
         this.cmbInvoice.setSelectedIndex(0);
 

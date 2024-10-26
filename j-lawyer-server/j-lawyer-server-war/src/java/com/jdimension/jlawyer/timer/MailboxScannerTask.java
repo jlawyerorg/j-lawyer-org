@@ -1312,6 +1312,9 @@ public class MailboxScannerTask extends java.util.TimerTask {
 
                 // remove any extension, because of the template it might be somewhere in the middle of the new name
                 docName = docName.replace("." + extension, "");
+                
+                // add back extension
+                docName = ServerFileUtils.preserveExtension(newName, docName);
 
                 if (caseSvc.doesDocumentExistUnrestricted(toCase.getId(), docName)) {
                     log.error("There is already a document '" + docName + "' in case " + toCase.getFileNumber() + " - skipping this attachment");
