@@ -700,6 +700,7 @@ import java.util.Enumeration;
 import java.util.HashMap;
 import java.util.Hashtable;
 import java.util.List;
+import java.util.Map;
 import java.util.Properties;
 import javax.annotation.Resource;
 import javax.annotation.security.PermitAll;
@@ -995,10 +996,13 @@ public class SystemManagement implements SystemManagementRemote, SystemManagemen
     }
 
     private String getTypedFolderName(int templateType) {
-        if (templateType == SystemManagementRemote.TEMPLATE_TYPE_HEAD) {
-            return "letterheads";
-        } else {
-            return "templates";
+        switch(templateType) {
+            case SystemManagementLocal.TEMPLATE_TYPE_HEAD:
+                return "letterheads";
+            case SystemManagementLocal.TEMPLATE_TYPE_EMAIL:
+                return "emailtemplates";
+            default:
+                return "templates";
         }
     }
 
@@ -2548,5 +2552,44 @@ public class SystemManagement implements SystemManagementRemote, SystemManagemen
         return importer.importSheets(sheetNames, dryRun);
 
     }
+    
+    // eMail Templates
+    @Override
+    public String getTemplateContent(int templateType, String folder, String templateName) throws Exception {
+        String localBaseDir = this.getTemplatesBaseDir(templateType, folder);
+        String templatePath = localBaseDir + File.separator + templateName;
 
+        File templateFile = new File(templatePath);
+        if (!templateFile.exists()) {
+            throw new Exception("Template not found: " + templatePath);
+        }
+
+        return new String(ServerFileUtils.readFile(templateFile), "UTF-8");
+    }
+
+    @Override
+    public String fillPlaceholdersInContent(String content, HashMap<String, Object> placeholders) throws Exception {
+        if (content == null || placeholders == null) {
+            return content;
+        }
+
+        String result = content;
+        for (Map.Entry<String, Object> entry : placeholders.entrySet()) {
+            String key = entry.getKey();
+            Object value = entry.getValue();
+
+            if (value != null) {
+                if (!key.startsWith("{{")) {
+                    key = "{{" + key;
+                }
+                if (!key.endsWith("}}")) {
+                    key = key + "}}";
+                }
+
+                result = result.replace(key, value.toString());
+            }
+        }
+
+        return result;
+    }
 }

@@ -674,7 +674,9 @@ import com.jdimension.jlawyer.services.SystemManagementLocal;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 import javax.annotation.security.RolesAllowed;
 import javax.ejb.Stateless;
 import javax.naming.InitialContext;
@@ -690,7 +692,12 @@ import org.jboss.logging.Logger;
 import org.jlawyer.data.tree.GenericNode;
 import org.jlawyer.io.rest.v1.pojo.RestfulDocumentV1;
 import org.jlawyer.io.rest.v6.pojo.RestfulPlaceholderV6;
-
+import java.io.ByteArrayInputStream;
+import java.util.*;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+import javax.xml.parsers.DocumentBuilderFactory;
+import org.w3c.dom.Document;
 /**
  *
  * http://localhost:8080/j-lawyer-io/rest/cases/list
@@ -904,4 +911,108 @@ public class TemplatesEndpointV6 implements TemplatesEndpointLocalV6 {
         }
     }
 
+    @Override
+    @GET
+    @Path("email/{caseId}")  
+    @Produces(MediaType.APPLICATION_JSON + ";charset=utf-8")
+    @RolesAllowed({"loginRole"})
+    public Response getEmailTemplates(@PathParam("caseId") String caseId) {
+        try {
+            InitialContext ic = new InitialContext();
+            SystemManagementLocal system = (SystemManagementLocal) ic.lookup(LOOKUP_SYSMAN);
+            ArchiveFileServiceLocal caseService = (ArchiveFileServiceLocal) ic.lookup(LOOKUP_CASESVC);
+
+            ArchiveFileBean aFile = caseService.getArchiveFile(caseId);
+            if (aFile == null) {
+                log.error("Case not found: " + caseId);
+                return Response.status(Response.Status.NOT_FOUND)
+                             .entity("Case not found: " + caseId)
+                             .build();
+            }
+
+            List<String> templates = system.getTemplatesByPath(SystemManagementLocal.TEMPLATE_TYPE_EMAIL, "/");
+            List<Map<String, Object>> resultList = new ArrayList<>();
+
+            // Get case parties
+            List<PartiesTriplet> parties = new ArrayList<>();
+            List<ArchiveFileAddressesBean> addresses = caseService.getInvolvementDetailsForCase(caseId);
+            for (ArchiveFileAddressesBean aab : addresses) {
+                parties.add(new PartiesTriplet(aab.getAddressKey(), aab.getReferenceType(), aab));
+            }
+
+            for (String templateName : templates) {
+                Map<String, Object> template = new LinkedHashMap<>();
+                template.put("name", templateName);
+
+                try {
+                    String content = system.getTemplateContent(SystemManagementLocal.TEMPLATE_TYPE_EMAIL, "/", templateName);
+
+                    // XML parsen
+                    Document doc = DocumentBuilderFactory.newInstance().newDocumentBuilder()
+                        .parse(new ByteArrayInputStream(content.getBytes("UTF-8")));
+
+                    // Subject und Body CDATA extrahieren
+                    String subject = doc.getElementsByTagName("subject").item(0).getTextContent();
+                    String body = doc.getElementsByTagName("body").item(0).getTextContent();
+
+                    // Originale Version speichern
+                    template.put("originalSubject", subject.trim());
+                    template.put("originalBody", body);
+
+                    // Platzhalter aus Subject und Body sammeln
+                    Set<String> placeholders = new HashSet<>();
+                    Matcher m = Pattern.compile("\\{\\{([^}]+)\\}\\}").matcher(subject + body);
+                    while (m.find()) {
+                        placeholders.add(m.group(1));
+                    }
+
+                    // Platzhalter-Map erstellen und füllen
+                    HashMap<String, Object> placeholderMap = new HashMap<>();
+                    for (String placeholder : placeholders) {
+                        placeholderMap.put("{{" + placeholder + "}}", "");
+                    }
+
+                    // Platzhalter mit Werten füllen
+                    placeholderMap = system.getPlaceHolderValues(
+                        placeholderMap, aFile, parties, "", null, new HashMap<>(),
+                        system.getUser(aFile.getLawyer()),
+                        system.getUser(aFile.getAssistant()),
+                        null, null, null, null, null, null, null
+                    );
+
+                    // Platzhalter-Werte-Map erstellen
+                    Map<String, String> placeholderValues = new LinkedHashMap<>();
+                    for (String placeholder : placeholders) {
+                        String fullPlaceholder = "{{" + placeholder + "}}";
+                        Object value = placeholderMap.get(fullPlaceholder);
+                        placeholderValues.put(placeholder, value != null ? value.toString() : "");
+                    }
+                    template.put("placeholderValues", placeholderValues);
+
+                    // Platzhalter ersetzen
+                    for (Map.Entry<String, Object> entry : placeholderMap.entrySet()) {
+                        if (entry.getValue() != null) {
+                            subject = subject.replace(entry.getKey(), entry.getValue().toString());
+                            body = body.replace(entry.getKey(), entry.getValue().toString());
+                        }
+                    }
+
+                    template.put("subject", subject.trim());
+                    template.put("body", body);
+
+                } catch (Exception e) {
+                    log.error("Error processing template " + templateName, e);
+                    template.put("error", e.getMessage());
+                }
+
+                resultList.add(template);
+            }
+
+            return Response.ok(resultList).build();
+
+        } catch (Exception ex) {
+            log.error("Cannot get email templates for case " + caseId, ex);
+            return Response.serverError().build();
+        }
+    }
 }

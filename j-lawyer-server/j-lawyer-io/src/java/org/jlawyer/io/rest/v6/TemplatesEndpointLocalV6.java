@@ -664,6 +664,7 @@ For more information on this, and how to apply and follow the GNU AGPL, see
 package org.jlawyer.io.rest.v6;
 
 import java.util.List;
+import java.util.Map;
 import javax.ejb.Local;
 import javax.ws.rs.core.Response;
 import org.jlawyer.io.rest.v6.pojo.RestfulPlaceholderV6;
@@ -682,5 +683,6 @@ public interface TemplatesEndpointLocalV6 {
     Response getPlaceHoldersForTemplate(String folder, String template, String caseId);
     
     Response addDocumentFromTemplate(String caseId, String fileName, String templateFolder, String template, List<RestfulPlaceholderV6> placeHolderValues) throws Exception;
-    
+      
+    Response getEmailTemplates(String caseId); 
 }

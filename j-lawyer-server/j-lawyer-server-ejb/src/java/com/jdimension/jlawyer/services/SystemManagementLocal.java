@@ -688,6 +688,7 @@ public interface SystemManagementLocal {
     
     public static final int TEMPLATE_TYPE_BODY=10;
     public static final int TEMPLATE_TYPE_HEAD=20;
+    public static final int TEMPLATE_TYPE_EMAIL=30;
     
     public String getServerVersion();
     public void statusMail(String subject, String body);
@@ -734,4 +735,10 @@ public interface SystemManagementLocal {
     HashMap<String,Object> getPlaceHolderValuesUnrestricted(HashMap<String,Object> placeHolders, ArchiveFileBean aFile, List<PartiesTriplet> selectedParties, String dictateSign, GenericCalculationTable calculationTable, HashMap<String,String> formsPlaceHolderValues, AppUserBean caseLawyer, AppUserBean caseAssistant, AppUserBean author, Invoice invoice, AppUserBean invoiceSender, GenericCalculationTable invoiceTable, GenericCalculationTable timesheetsTable, byte[] giroCode, String ingoText) throws Exception;
     
     DocumentNameTemplate getDefaultDocumentNameTemplate() throws Exception;
+    
+    String getTemplateContent(int templateType, String folder, String templateName) throws Exception;
+    
+    String fillPlaceholdersInContent(String content, HashMap<String, Object> placeholders) throws Exception;
+
+
 }
