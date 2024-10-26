@@ -794,6 +794,7 @@ public class SoundplayerPanel extends javax.swing.JPanel implements PreviewPanel
 
         cmdNewDocument.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/edit.png"))); // NOI18N
         cmdNewDocument.setText("neues Dokument");
+        cmdNewDocument.setToolTipText("Neues Dokument aus Vorlage erstellen und das Ergebnis dieses Dialogs übergeben. \nDie Vorlage benötigt den Platzhalter {{INGO_TEXT}}.");
         cmdNewDocument.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 cmdNewDocumentActionPerformed(evt);
