@@ -1133,7 +1133,7 @@ public class AssistantAPI {
                     try {
                         // Parse the formatted date string to a Date object
                         Date date = dateFormat.parse(formattedDateString);
-                        req.setTimestamp(date);;
+                        req.setTimestamp(date);
                     } catch (ParseException e) {
                         log.error("Failed to parse date: " + e.getMessage());
                         req.setTimestamp(new Date(0));
