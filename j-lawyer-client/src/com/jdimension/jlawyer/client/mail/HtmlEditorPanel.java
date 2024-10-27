@@ -666,10 +666,17 @@ package com.jdimension.jlawyer.client.mail;
 import com.jdimension.jlawyer.server.utils.ContentTypes;
 import java.awt.Component;
 import java.awt.Container;
+import java.awt.Toolkit;
+import java.awt.event.ActionEvent;
+import java.awt.event.KeyEvent;
+import javax.swing.AbstractAction;
 import javax.swing.JButton;
 import javax.swing.JComboBox;
+import javax.swing.JComponent;
 import javax.swing.JEditorPane;
+import javax.swing.KeyStroke;
 import org.apache.log4j.Logger;
+import javax.swing.undo.UndoManager;
 
 /**
  *
@@ -677,6 +684,7 @@ import org.apache.log4j.Logger;
  */
 public class HtmlEditorPanel extends javax.swing.JPanel implements EditorImplementation {
     
+    private final UndoManager undoManager;
     private static final Logger log=Logger.getLogger(HtmlEditorPanel.class.getName());
 
     /**
@@ -684,7 +692,9 @@ public class HtmlEditorPanel extends javax.swing.JPanel implements EditorImpleme
      */
     public HtmlEditorPanel() {
         initComponents();
-    }
+        
+        undoManager = new UndoManager();
+        setupUndoRedoForEditorPane(htmlPane);    }
 
     /**
      * This method is called from within the constructor to initialize the form.
@@ -821,6 +831,55 @@ public class HtmlEditorPanel extends javax.swing.JPanel implements EditorImpleme
             }
         }
         return false;
+    }
+    
+    private void setupUndoRedoForEditorPane(Container container) {
+        for (Component comp : container.getComponents()) {
+            if (comp instanceof JEditorPane) {
+                JEditorPane editorPane = (JEditorPane) comp;
+                editorPane.getDocument().addUndoableEditListener(e -> undoManager.addEdit(e.getEdit()));
+                
+                // Setup key bindings for undo
+                KeyStroke undoKeystroke = KeyStroke.getKeyStroke(
+                    KeyEvent.VK_Z, 
+                    Toolkit.getDefaultToolkit().getMenuShortcutKeyMaskEx()
+                );
+                
+                // Setup key bindings for redo
+                KeyStroke redoKeystroke = KeyStroke.getKeyStroke(
+                    KeyEvent.VK_Y, 
+                    Toolkit.getDefaultToolkit().getMenuShortcutKeyMaskEx()
+                );
+                
+                editorPane.getInputMap(JComponent.WHEN_FOCUSED).put(undoKeystroke, "Undo");
+                editorPane.getActionMap().put("Undo", new AbstractAction("Undo") {
+                    @Override
+                    public void actionPerformed(ActionEvent evt) {
+                        if (undoManager.canUndo()) {
+                            undoManager.undo();
+                        }
+                    }
+                });
+                
+                editorPane.getInputMap(JComponent.WHEN_FOCUSED).put(redoKeystroke, "Redo");
+                editorPane.getActionMap().put("Redo", new AbstractAction("Redo") {
+                    @Override
+                    public void actionPerformed(ActionEvent evt) {
+                        if (undoManager.canRedo()) {
+                            undoManager.redo();
+                        }
+                    }
+                });
+                
+                break;  // Found the editor pane, no need to continue
+            } else if (comp instanceof Container) {
+                setupUndoRedoForEditorPane((Container) comp);
+            }
+        }
+    }
+    
+    public UndoManager getUndoManager() {
+        return undoManager;
     }
 
 }

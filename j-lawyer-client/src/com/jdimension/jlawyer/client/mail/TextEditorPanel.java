@@ -664,19 +664,63 @@
 package com.jdimension.jlawyer.client.mail;
 
 import com.jdimension.jlawyer.server.utils.ContentTypes;
+import java.awt.Toolkit;
+import java.awt.event.ActionEvent;
+import java.awt.event.KeyEvent;
+import javax.swing.AbstractAction;
+import javax.swing.JComponent;
 import javax.swing.KeyStroke;
+import javax.swing.undo.UndoManager;
 
 /**
  *
  * @author Kutschke
  */
 public class TextEditorPanel extends javax.swing.JPanel implements EditorImplementation {
-
+    
+    private final UndoManager undoManager;
+    
     /**
      * Creates new form TextEditorPanel
      */
     public TextEditorPanel() {
         initComponents();
+        
+        // Initialize UndoManager
+        undoManager = new UndoManager();
+        taText.getDocument().addUndoableEditListener(e -> undoManager.addEdit(e.getEdit()));
+        
+        // Setup key bindings for undo
+        KeyStroke undoKeystroke = KeyStroke.getKeyStroke(
+            KeyEvent.VK_Z, 
+            Toolkit.getDefaultToolkit().getMenuShortcutKeyMaskEx()
+        );
+        
+        // Setup key bindings for redo
+        KeyStroke redoKeystroke = KeyStroke.getKeyStroke(
+            KeyEvent.VK_Y, 
+            Toolkit.getDefaultToolkit().getMenuShortcutKeyMaskEx()
+        );
+        
+        taText.getInputMap(JComponent.WHEN_FOCUSED).put(undoKeystroke, "Undo");
+        taText.getActionMap().put("Undo", new AbstractAction("Undo") {
+            @Override
+            public void actionPerformed(ActionEvent evt) {
+                if (undoManager.canUndo()) {
+                    undoManager.undo();
+                }
+            }
+        });
+        
+        taText.getInputMap(JComponent.WHEN_FOCUSED).put(redoKeystroke, "Redo");
+        taText.getActionMap().put("Redo", new AbstractAction("Redo") {
+            @Override
+            public void actionPerformed(ActionEvent evt) {
+                if (undoManager.canRedo()) {
+                    undoManager.redo();
+                }
+            }
+        });
         
         // this is required because the scroll pane was stealing those key strokes from its jtextarea, making it impossible to scroll using the keys
         this.jScrollPane2.getInputMap().put(KeyStroke.getKeyStroke("UP"), "none");
@@ -763,5 +807,10 @@ public class TextEditorPanel extends javax.swing.JPanel implements EditorImpleme
     @Override
     public void insert(String t, int pos) {
         this.taText.insert(t, pos);
+    }
+    
+
+    public UndoManager getUndoManager() {
+        return undoManager;
     }
 }

@@ -663,6 +663,8 @@
  */
 package com.jdimension.jlawyer.services;
 
+import com.jdimension.jlawyer.email.EmailTemplate;
+import java.util.Collection;
 import javax.ejb.Local;
 
 /**
@@ -671,5 +673,8 @@ import javax.ejb.Local;
  */
 @Local
 public interface IntegrationServiceLocal {
+    
+    Collection<String> getAllEmailTemplateNames();
+    EmailTemplate getEmailTemplate(String fileName) throws Exception;
     
 }

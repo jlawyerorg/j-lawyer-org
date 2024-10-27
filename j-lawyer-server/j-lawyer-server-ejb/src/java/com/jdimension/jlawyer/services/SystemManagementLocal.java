@@ -734,4 +734,5 @@ public interface SystemManagementLocal {
     HashMap<String,Object> getPlaceHolderValuesUnrestricted(HashMap<String,Object> placeHolders, ArchiveFileBean aFile, List<PartiesTriplet> selectedParties, String dictateSign, GenericCalculationTable calculationTable, HashMap<String,String> formsPlaceHolderValues, AppUserBean caseLawyer, AppUserBean caseAssistant, AppUserBean author, Invoice invoice, AppUserBean invoiceSender, GenericCalculationTable invoiceTable, GenericCalculationTable timesheetsTable, byte[] giroCode, String ingoText) throws Exception;
     
     DocumentNameTemplate getDefaultDocumentNameTemplate() throws Exception;
+    
 }
