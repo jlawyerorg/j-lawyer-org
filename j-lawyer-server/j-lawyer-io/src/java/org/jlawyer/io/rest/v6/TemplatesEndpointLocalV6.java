@@ -684,5 +684,7 @@ public interface TemplatesEndpointLocalV6 {
     
     Response addDocumentFromTemplate(String caseId, String fileName, String templateFolder, String template, List<RestfulPlaceholderV6> placeHolderValues) throws Exception;
       
-    Response getEmailTemplates(String caseId); 
+    Response listEmailTemplates();
+    
+    Response getEmailTemplate(String caseId, String templateName);
 }
