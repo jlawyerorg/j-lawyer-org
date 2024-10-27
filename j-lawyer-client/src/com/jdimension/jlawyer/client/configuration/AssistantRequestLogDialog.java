@@ -711,6 +711,8 @@ public class AssistantRequestLogDialog extends javax.swing.JDialog {
 
         // Convert the difference from milliseconds to days
         long days=TimeUnit.MILLISECONDS.toDays(diffInMillis);
+        if(days==0)
+            days=1;
         
         this.lblStats.setText("" + tokens + " Token insgesamt in " + days + " Tagen. Durchschnittlich " + (tokens/days) + " Token pro Tag.");
         
