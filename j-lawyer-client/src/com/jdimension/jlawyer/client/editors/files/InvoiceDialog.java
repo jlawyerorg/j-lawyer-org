@@ -2551,7 +2551,7 @@ public class InvoiceDialog extends javax.swing.JDialog implements EventConsumer 
                 }
 
                 ArchiveFileDocumentsBean invoiceDoc = this.caseView.newDocumentDialog(null, currentEntry, senderUser, this.getInvoicePositionsAsTable(this.cmbTableHeadersLanguage.getSelectedItem().toString()), timesheetPosTable, giroCode, null);
-                if (this.currentEntry != null) {
+                if (invoiceDoc!=null && this.currentEntry != null) {
                     this.save();
                     try {
                         JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(ClientSettings.getInstance().getLookupProperties());

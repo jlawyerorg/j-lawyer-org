@@ -1062,18 +1062,18 @@ public class InvoiceService implements InvoiceServiceRemote, InvoiceServiceLocal
         }
         
         if (ServerStringUtils.isEmpty(sender.getCompany())) {
-            throw new Exception("Girocode kann nicht erstellt werden - Unternehmensname des Absenders leer");
+            throw new Exception("Girocode kann nicht erstellt werden - Unternehmensname des Absenders leer. Korrektur unter 'Administration' - 'Nutzer'.");
         }
         String name=sender.getCompany().trim();
         
         if (ServerStringUtils.isEmpty(sender.getBankBic())) {
-            throw new Exception("Girocode kann nicht erstellt werden - BIC des Absenders ist leer");
+            throw new Exception("Girocode kann nicht erstellt werden - BIC des Absenders ist leer. Korrektur unter 'Administration' - 'Nutzer'.");
         }
         String bic=sender.getBankBic().trim();
         bic=bic.replace(" ", "");
         
         if (ServerStringUtils.isEmpty(sender.getBankIban())) {
-            throw new Exception("Girocode kann nicht erstellt werden - IBAN des Absenders ist leer");
+            throw new Exception("Girocode kann nicht erstellt werden - IBAN des Absenders ist leer. Korrektur unter 'Administration' - 'Nutzer'.");
         }
         String iban=sender.getBankIban().trim();
         iban=iban.replace(" ", "");

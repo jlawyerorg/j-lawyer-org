@@ -176,6 +176,7 @@
           <Image iconType="3" name="/icons/edit.png"/>
         </Property>
         <Property name="text" type="java.lang.String" value="neues Dokument"/>
+        <Property name="toolTipText" type="java.lang.String" value="Neues Dokument aus Vorlage erstellen und das Ergebnis dieses Dialogs &#xfc;bergeben. &#xa;Die Vorlage ben&#xf6;tigt den Platzhalter {{INGO_TEXT}}."/>
       </Properties>
       <Events>
         <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="cmdNewDocumentActionPerformed"/>
