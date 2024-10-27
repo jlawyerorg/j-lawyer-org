@@ -911,6 +911,15 @@ public class TemplatesEndpointV6 implements TemplatesEndpointLocalV6 {
         }
     }
 
+    /**
+    * Lists all available email templates.
+    * 
+    * @return List of available email templates with their names
+    * @response 200 List of templates successfully retrieved
+    * @response 401 User not authorized
+    * @response 403 User not authenticated
+    * @response 500 Server error while retrieving templates
+    */
     @Override
     @GET
     @Path("email/templates")  
@@ -938,6 +947,18 @@ public class TemplatesEndpointV6 implements TemplatesEndpointLocalV6 {
         }
     }
 
+    /**
+    * Returns a specific email template with all placeholders filled with case data.
+    * 
+    * @param caseId The ID of the case to fill placeholders from
+    * @param templateName Name of the template to retrieve
+    * @return Email template with original content, filled content and placeholder values
+    * @response 200 Template successfully retrieved with filled placeholders
+    * @response 401 User not authorized
+    * @response 403 User not authenticated
+    * @response 404 Case or template not found
+    * @response 500 Server error while processing template
+    */
     @Override
     @GET
     @Path("email/{caseId}/{templateName}")  
