@@ -7126,7 +7126,7 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
 
     private void mnuSplitPdfActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_mnuSplitPdfActionPerformed
         if (LoadDocumentPreviewThread.isRunning()) {
-            JOptionPane.showMessageDialog(this, "Bitte warten Sie bis die Dokumentvorschau abgeschlossen ist.", "Hinweis", JOptionPane.PLAIN_MESSAGE);
+            JOptionPane.showMessageDialog(this, "Bitte warten bis die Dokumentvorschau abgeschlossen ist.", "Hinweis", JOptionPane.PLAIN_MESSAGE);
             return;
         }
 
@@ -7157,7 +7157,7 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
 
         // Eingabedialog für Seitenzahlen
         String pageInput = JOptionPane.showInputDialog(this,
-                "Bitte geben Sie die Seitenzahlen zum Splitten ein (kommagetrennt):",
+                "Bitte Seitenzahlen zum Splitten eingeben (kommagetrennt):",
                 "PDF Splitten",
                 JOptionPane.QUESTION_MESSAGE);
 
