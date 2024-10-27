@@ -781,6 +781,8 @@ import java.awt.event.ActionListener;
 import java.awt.event.AdjustmentEvent;
 import java.awt.event.AdjustmentListener;
 import java.awt.event.MouseEvent;
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.text.DecimalFormat;
 import java.text.NumberFormat;
@@ -800,6 +802,8 @@ import net.sf.jasperreports.engine.data.JRBeanCollectionDataSource;
 import net.sf.jasperreports.engine.util.JRLoader;
 import net.sf.jasperreports.view.JRViewer;
 import org.apache.log4j.Logger;
+import org.apache.pdfbox.pdmodel.PDDocument;
+import org.apache.pdfbox.pdmodel.PDPage;
 import org.jlawyer.data.tree.GenericNode;
 import org.jlawyer.plugins.calculation.GenericCalculationTable;
 import org.jlawyer.plugins.calculation.StyledCalculationTable;
@@ -1777,6 +1781,7 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
         jSeparator11 = new javax.swing.JPopupMenu.Separator();
         mnuPdfAndConvertActions = new javax.swing.JMenu();
         mnuShrinkPdf = new javax.swing.JMenuItem();
+        mnuSplitPdf = new javax.swing.JMenuItem();
         mnuSaveDocumentsLocallyPdf = new javax.swing.JMenuItem();
         mnuSaveDocumentEncrypted = new javax.swing.JMenuItem();
         mnuDuplicateDocumentAs = new javax.swing.JMenuItem();
@@ -2201,6 +2206,16 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
             }
         });
         mnuPdfAndConvertActions.add(mnuShrinkPdf);
+
+        mnuSplitPdf.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons16/material/baseline_splitscreen_black_48dp.png"))); // NOI18N
+        mnuSplitPdf.setText("PDF aufteilen ");
+        mnuSplitPdf.setToolTipText("PDF aufteilen anhand Seitenzahl(en)");
+        mnuSplitPdf.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                mnuSplitPdfActionPerformed(evt);
+            }
+        });
+        mnuPdfAndConvertActions.add(mnuSplitPdf);
 
         mnuSaveDocumentsLocallyPdf.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/filesave.png"))); // NOI18N
         mnuSaveDocumentsLocallyPdf.setText("als PDF lokal speichern");
@@ -7109,6 +7124,180 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
         }
     }//GEN-LAST:event_mnuShrinkPdfActionPerformed
 
+    private void mnuSplitPdfActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_mnuSplitPdfActionPerformed
+        if (LoadDocumentPreviewThread.isRunning()) {
+            JOptionPane.showMessageDialog(this, "Bitte warten bis die Dokumentvorschau abgeschlossen ist.", "Hinweis", JOptionPane.PLAIN_MESSAGE);
+            return;
+        }
+
+        ArrayList<ArchiveFileDocumentsBean> selectedDocs = this.caseFolderPanel1.getSelectedDocuments();
+        if (selectedDocs.isEmpty()) {
+            return;
+        }
+
+        for (ArchiveFileDocumentsBean doc : selectedDocs) {
+            if (!doc.getName().toLowerCase().endsWith(".pdf")) {
+                JOptionPane.showMessageDialog(null, "Es können nur PDF-Dateien gesplittet werden", "Fehler", JOptionPane.ERROR_MESSAGE);
+                return;
+            }
+        }
+
+        ArrayList<String> open = this.getDocumentsOpenForWrite(selectedDocs);
+        if (!open.isEmpty()) {
+            String question = "<html>Soll die Aktion auf geöffnete Dokumente ausgeführt werden? Es besteht das Risiko fehlender / inkonsistenter Inhalte.<br/><ul>";
+            for (String o : open) {
+                question = question + "<li>" + o + "</li>";
+            }
+            question = question + "</ul></html>";
+            int response = JOptionPane.showConfirmDialog(this, question, "Aktion auf offene Dokumente ausführen", JOptionPane.YES_NO_OPTION);
+            if (response == JOptionPane.NO_OPTION) {
+                return;
+            }
+        }
+
+        // Eingabedialog für Seitenzahlen
+        String pageInput = JOptionPane.showInputDialog(this,
+                "Bitte Seitenzahlen zum Splitten eingeben (kommagetrennt):",
+                "PDF Splitten",
+                JOptionPane.QUESTION_MESSAGE);
+
+        if (pageInput == null || pageInput.trim().isEmpty()) {
+            return;
+        }
+
+        List<Integer> splitPages = new ArrayList<>();
+        try {
+            for (String page : pageInput.split(",")) {
+                splitPages.add(Integer.parseInt(page.trim()));
+            }
+            Collections.sort(splitPages);
+        } catch (NumberFormatException e) {
+            JOptionPane.showMessageDialog(this, "Ungültige Seitenzahlen eingegeben", "Fehler", JOptionPane.ERROR_MESSAGE);
+            return;
+        }
+
+        try {
+            for (ArchiveFileDocumentsBean doc : selectedDocs) {
+                byte[] content = CachingDocumentLoader.getInstance().getDocument(doc.getId());
+                String tempPath = FileUtils.createTempFile(doc.getName(), content);
+                List<String> tempFiles = new ArrayList<>();
+                tempFiles.add(tempPath);
+
+                try {
+                    PDDocument document = PDDocument.load(new File(tempPath));
+                    int pageCount = document.getNumberOfPages();
+                    document.close();
+
+                    for (int page : splitPages) {
+                        if (page <= 0 || page >= pageCount) {
+                            JOptionPane.showMessageDialog(this, 
+                                "Ungültige Seitenzahl: " + page + ". Das Dokument hat " + pageCount + " Seiten.",
+                                "Fehler",
+                                JOptionPane.ERROR_MESSAGE);
+                            return;
+                        }
+                    }
+                
+                    List<Integer> allSplitPoints = new ArrayList<>();
+                    allSplitPoints.add(0);
+                    allSplitPoints.addAll(splitPages);
+                    allSplitPoints.add(pageCount);
+
+                    ClientSettings settings = ClientSettings.getInstance();
+                    JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
+                    ArchiveFileServiceRemote remote = locator.lookupArchiveFileServiceRemote();
+
+                    // Erstelle für jeden Abschnitt ein neues temporäres Dokument
+                    for (int i = 0; i < allSplitPoints.size() - 1; i++) {
+                        int startPage = allSplitPoints.get(i);
+                        int endPage = allSplitPoints.get(i + 1);
+
+                        // Erstelle eine neue temporäre Datei für diesen Teil
+                        String partTempPath = FileUtils.createTempFile("part_" + (i + 1) + "_" + doc.getName(), new byte[0]);
+                        tempFiles.add(partTempPath);
+
+                        PDDocument sourceDoc = PDDocument.load(new File(tempPath));
+                        PDDocument newDoc = new PDDocument();
+
+                        // Kopiere die relevanten Seiten
+                        for (int pageNum = startPage; pageNum < endPage; pageNum++) {
+                            newDoc.importPage(sourceDoc.getPage(pageNum));
+                        }
+
+                        // Speichere den Teil
+                        newDoc.save(new File(partTempPath));
+                        newDoc.close();
+                        sourceDoc.close();
+
+                        // Generiere Namen für das neue Dokument
+                        String baseName = doc.getName();
+                        if (baseName.toLowerCase().endsWith(".pdf")) {
+                            baseName = baseName.substring(0, baseName.length() - 4);
+                        }
+                        String newName = baseName + "_Teil" + (i + 1) + ".pdf";
+                     
+                        boolean documentExists = remote.doesDocumentExist(dto.getId(), newName);  // Hier brauchen wir noch die richtige ID
+                        if (documentExists) {
+                            int response = JOptionPane.showOptionDialog(
+                                EditorsRegistry.getInstance().getMainWindow(),
+                                "Eine Datei mit dem Namen '" + newName + "' existiert bereits, soll diese ersetzt werden?",
+                                "Datei ersetzen?",
+                                JOptionPane.YES_NO_OPTION,
+                                JOptionPane.WARNING_MESSAGE,
+                                null,
+                                new String[]{"Ja", "Nein"},
+                                "Nein");
+
+                            if (response != JOptionPane.YES_OPTION) {
+                                continue;  
+                            }
+
+                            // Finde und lösche existierendes Dokument
+                            final String searchName = newName;
+                            ArchiveFileDocumentsBean existingDoc = this.caseFolderPanel1.getDocuments().stream()
+                                .filter(iterDoc -> searchName.equals(iterDoc.getName()))
+                                .findAny()
+                                .orElse(null);
+
+                            if (existingDoc != null) {
+                                remote.removeDocument(existingDoc.getId());
+                                remote.removeDocumentFromBin(existingDoc.getId());
+                                caseFolderPanel1.removeDocument(existingDoc);
+                            }
+                        }
+
+                        // Lese den Inhalt der temporären Datei
+                        byte[] newContent = FileUtils.readFile(new File(partTempPath));
+
+                        // Füge neues Dokument hinzu
+                        ArchiveFileDocumentsBean newDocument = remote.addDocument(dto.getId(), newName, newContent, doc.getDictateSign(), null);
+
+                        // Setze zusätzliche Eigenschaften
+                        newDocument.setSize(newContent.length);
+                        if (doc.getFolder() != null) {
+                            newDocument.setFolder(doc.getFolder());
+                            ArrayList<String> documentIds = new ArrayList<>();
+                            documentIds.add(newDocument.getId());
+                            remote.moveDocumentsToFolder(documentIds, doc.getFolder().getId());
+                        }
+
+                        // Füge Dokument zur Ansicht hinzu
+                        caseFolderPanel1.addDocument(newDocument, null);
+                    }
+                } finally {
+                    for (String tempFile : tempFiles) {
+                        FileUtils.cleanupTempFile(tempFile);
+                    }
+                }
+            }
+        } catch (Exception ex) {
+            log.error("Error splitting PDF", ex);
+            JOptionPane.showMessageDialog(this, 
+                "Fehler beim Splitten des Dokuments: " + ex.getMessage(),
+                com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR,
+                JOptionPane.ERROR_MESSAGE);
+        }
+    }//GEN-LAST:event_mnuSplitPdfActionPerformed
 
     public void exportSelectedDocumentsAsPdf() {
         
@@ -7829,6 +8018,7 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
     private javax.swing.JMenuItem mnuSetReviewOpen;
     private javax.swing.JMenuItem mnuShareNextcloud;
     private javax.swing.JMenuItem mnuShrinkPdf;
+    private javax.swing.JMenuItem mnuSplitPdf;
     private javax.swing.JMenuItem mnuToggleFavorite;
     private javax.swing.JMenuItem mnuUseDocumentAsTemplate;
     private com.jdimension.jlawyer.client.editors.files.NewEventPanel newEventPanel;
