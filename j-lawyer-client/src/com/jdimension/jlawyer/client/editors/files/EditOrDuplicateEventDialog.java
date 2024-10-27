@@ -893,7 +893,9 @@ public class EditOrDuplicateEventDialog extends javax.swing.JDialog {
         jLabel6.setText("Ort:");
 
         taEventDescription.setColumns(20);
+        taEventDescription.setLineWrap(true);
         taEventDescription.setRows(5);
+        taEventDescription.setWrapStyleWord(true);
         jScrollPane2.setViewportView(taEventDescription);
 
         cmbEventBeginTime.setEditable(true);
