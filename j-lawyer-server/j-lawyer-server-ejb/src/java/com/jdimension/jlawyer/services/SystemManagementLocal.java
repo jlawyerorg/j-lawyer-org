@@ -688,7 +688,6 @@ public interface SystemManagementLocal {
     
     public static final int TEMPLATE_TYPE_BODY=10;
     public static final int TEMPLATE_TYPE_HEAD=20;
-    public static final int TEMPLATE_TYPE_EMAIL=30;
     
     public String getServerVersion();
     public void statusMail(String subject, String body);
@@ -736,9 +735,4 @@ public interface SystemManagementLocal {
     
     DocumentNameTemplate getDefaultDocumentNameTemplate() throws Exception;
     
-    String getTemplateContent(int templateType, String folder, String templateName) throws Exception;
-    
-    String fillPlaceholdersInContent(String content, HashMap<String, Object> placeholders) throws Exception;
-
-
 }
