@@ -663,15 +663,19 @@ For more information on this, and how to apply and follow the GNU AGPL, see
  */
 package org.jlawyer.io.rest.v6;
 
+import com.jdimension.jlawyer.documents.CommonTemplatesUtil;
+import com.jdimension.jlawyer.email.EmailTemplate;
 import com.jdimension.jlawyer.persistence.AppUserBean;
 import com.jdimension.jlawyer.persistence.ArchiveFileAddressesBean;
 import com.jdimension.jlawyer.persistence.ArchiveFileBean;
 import com.jdimension.jlawyer.persistence.ArchiveFileDocumentsBean;
+import com.jdimension.jlawyer.persistence.PartyTypeBean;
 import com.jdimension.jlawyer.services.ArchiveFileServiceLocal;
 import com.jdimension.jlawyer.services.FormsServiceLocal;
 import com.jdimension.jlawyer.pojo.PartiesTriplet;
 import com.jdimension.jlawyer.services.IntegrationServiceLocal;
 import com.jdimension.jlawyer.services.SystemManagementLocal;
+import java.security.Principal;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
@@ -693,12 +697,10 @@ import org.jboss.logging.Logger;
 import org.jlawyer.data.tree.GenericNode;
 import org.jlawyer.io.rest.v1.pojo.RestfulDocumentV1;
 import org.jlawyer.io.rest.v6.pojo.RestfulPlaceholderV6;
-import java.io.ByteArrayInputStream;
 import java.util.*;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
-import javax.xml.parsers.DocumentBuilderFactory;
-import org.w3c.dom.Document;
+import javax.ws.rs.core.Context;
+import javax.ws.rs.core.SecurityContext;
+
 /**
  *
  * http://localhost:8080/j-lawyer-io/rest/cases/list
@@ -710,30 +712,33 @@ import org.w3c.dom.Document;
 public class TemplatesEndpointV6 implements TemplatesEndpointLocalV6 {
 
     private static final Logger log = Logger.getLogger(TemplatesEndpointV6.class.getName());
-    private static final String LOOKUP_SYSMAN="java:global/j-lawyer-server/j-lawyer-server-ejb/SystemManagement!com.jdimension.jlawyer.services.SystemManagementLocal";
-    private static final String LOOKUP_CASESVC="java:global/j-lawyer-server/j-lawyer-server-ejb/ArchiveFileService!com.jdimension.jlawyer.services.ArchiveFileServiceLocal";
-    private static final String LOOKUP_FORMSSVC="java:global/j-lawyer-server/j-lawyer-server-ejb/FormsService!com.jdimension.jlawyer.services.FormsServiceLocal";
-    private static final String LOOKUP_INTEGRATIONSVC="java:global/j-lawyer-server/j-lawyer-server-ejb/IntegrationService!com.jdimension.jlawyer.services.IntegrationServiceLocal";
-    
+    private static final String LOOKUP_SYSMAN = "java:global/j-lawyer-server/j-lawyer-server-ejb/SystemManagement!com.jdimension.jlawyer.services.SystemManagementLocal";
+    private static final String LOOKUP_CASESVC = "java:global/j-lawyer-server/j-lawyer-server-ejb/ArchiveFileService!com.jdimension.jlawyer.services.ArchiveFileServiceLocal";
+    private static final String LOOKUP_FORMSSVC = "java:global/j-lawyer-server/j-lawyer-server-ejb/FormsService!com.jdimension.jlawyer.services.FormsServiceLocal";
+    private static final String LOOKUP_INTEGRATIONSVC = "java:global/j-lawyer-server/j-lawyer-server-ejb/IntegrationService!com.jdimension.jlawyer.services.IntegrationServiceLocal";
+
+    @Context
+    private SecurityContext securityContext;
+
     /**
      * Returns the folder structure holding document templates.
-     * 
+     *
      * @return entire folder structure for document templates
      * @response 401 User not authorized
      * @response 403 User not authenticated
      */
     @Override
     @GET
-    @Produces(MediaType.APPLICATION_JSON+";charset=utf-8")
+    @Produces(MediaType.APPLICATION_JSON + ";charset=utf-8")
     @Path("/documents/folders")
     @RolesAllowed({"loginRole"})
     public Response getTemplateFolders() {
         try {
             InitialContext ic = new InitialContext();
             SystemManagementLocal system = (SystemManagementLocal) ic.lookup(LOOKUP_SYSMAN);
-            GenericNode rootNode=system.getAllTemplatesTree(SystemManagementLocal.TEMPLATE_TYPE_BODY);
-            String baseDir=system.getTemplatesBaseDir(SystemManagementLocal.TEMPLATE_TYPE_BODY);
-            ArrayList<String> nodeIds=new ArrayList<>();
+            GenericNode rootNode = system.getAllTemplatesTree(SystemManagementLocal.TEMPLATE_TYPE_BODY);
+            String baseDir = system.getTemplatesBaseDir(SystemManagementLocal.TEMPLATE_TYPE_BODY);
+            ArrayList<String> nodeIds = new ArrayList<>();
             collectFolders(rootNode, baseDir, nodeIds);
             Collections.sort(nodeIds, String.CASE_INSENSITIVE_ORDER);
             return Response.ok(nodeIds).build();
@@ -744,12 +749,13 @@ public class TemplatesEndpointV6 implements TemplatesEndpointLocalV6 {
     }
 
     private void collectFolders(Object startNode, String stripPrefix, ArrayList<String> resultList) {
-        GenericNode node=(GenericNode)startNode;
-        String id=node.getId();
-        if(id.startsWith(stripPrefix))
-            id=id.replace(stripPrefix, "/");
+        GenericNode node = (GenericNode) startNode;
+        String id = node.getId();
+        if (id.startsWith(stripPrefix)) {
+            id = id.replace(stripPrefix, "/");
+        }
         resultList.add(id);
-        for(GenericNode c: node.getChildren()) {
+        for (GenericNode c : node.getChildren()) {
             collectFolders(c, stripPrefix, resultList);
         }
     }
@@ -763,15 +769,15 @@ public class TemplatesEndpointV6 implements TemplatesEndpointLocalV6 {
      */
     @Override
     @GET
-    @Produces(MediaType.APPLICATION_JSON+";charset=utf-8")
+    @Produces(MediaType.APPLICATION_JSON + ";charset=utf-8")
     @Path("/documents/{folder}")
     @RolesAllowed({"loginRole"})
     public Response getTemplatesInFolder(@PathParam("folder") String folder) {
         try {
             InitialContext ic = new InitialContext();
             SystemManagementLocal system = (SystemManagementLocal) ic.lookup(LOOKUP_SYSMAN);
-            
-            List<String> resultList=system.getTemplatesByPath(SystemManagementLocal.TEMPLATE_TYPE_BODY, folder);
+
+            List<String> resultList = system.getTemplatesByPath(SystemManagementLocal.TEMPLATE_TYPE_BODY, folder);
             Collections.sort(resultList, String.CASE_INSENSITIVE_ORDER);
             return Response.ok(resultList).build();
         } catch (Exception ex) {
@@ -781,7 +787,9 @@ public class TemplatesEndpointV6 implements TemplatesEndpointLocalV6 {
     }
 
     /**
-     * Returns all placeholders keys for a given template in a given folder, using the given case. Case is needed to resolve potential forms placeholders (AKA Falldaten).
+     * Returns all placeholders keys for a given template in a given folder,
+     * using the given case. Case is needed to resolve potential forms
+     * placeholders (AKA Falldaten).
      *
      * @param folder the folder hierarchy starting with /
      * @param template the file name of the template
@@ -791,20 +799,20 @@ public class TemplatesEndpointV6 implements TemplatesEndpointLocalV6 {
      */
     @Override
     @GET
-    @Produces(MediaType.APPLICATION_JSON+";charset=utf-8")
+    @Produces(MediaType.APPLICATION_JSON + ";charset=utf-8")
     @Path("/documents/{folder}/{template}/{caseId}")
     @RolesAllowed({"loginRole"})
     public Response getPlaceHoldersForTemplate(@PathParam("folder") String folder, @PathParam("template") String template, @PathParam("caseId") String caseId) {
         try {
             InitialContext ic = new InitialContext();
             SystemManagementLocal system = (SystemManagementLocal) ic.lookup(LOOKUP_SYSMAN);
-            
-            List<String> resultList=system.getPlaceHoldersForTemplate(SystemManagementLocal.TEMPLATE_TYPE_BODY, folder, template, caseId);
+
+            List<String> resultList = system.getPlaceHoldersForTemplate(SystemManagementLocal.TEMPLATE_TYPE_BODY, folder, template, caseId);
             Collections.sort(resultList, String.CASE_INSENSITIVE_ORDER);
-            Object[] oArray=resultList.stream().filter(ph -> !ph.startsWith("[[")).toArray();
-            String[] resultArray=new String[oArray.length];
-            for(int i=0;i<oArray.length;i++) {
-                resultArray[i]=oArray[i].toString();
+            Object[] oArray = resultList.stream().filter(ph -> !ph.startsWith("[[")).toArray();
+            String[] resultArray = new String[oArray.length];
+            for (int i = 0; i < oArray.length; i++) {
+                resultArray[i] = oArray[i].toString();
             }
             return Response.ok(resultArray).build();
         } catch (Exception ex) {
@@ -814,86 +822,92 @@ public class TemplatesEndpointV6 implements TemplatesEndpointLocalV6 {
     }
 
     /**
-     * Creates a new document based on a template.Any place holders are automatically populated, but a client may override them. Invoice creation not supported.
+     * Creates a new document based on a template.Any place holders are
+     * automatically populated, but a client may override them. Invoice creation
+     * not supported.
      *
      * @param caseId the id of the case
-     * @param fileName file name of the document to be created, without file extension (server will enforce same extension as template)
+     * @param fileName file name of the document to be created, without file
+     * extension (server will enforce same extension as template)
      * @param folder the template folder hierarchy starting with /
      * @param template the file name of the template
-     * @param placeHolderValues key-value pairs holding placeholder values, used for overriding defaults / existing values
+     * @param placeHolderValues key-value pairs holding placeholder values, used
+     * for overriding defaults / existing values
      * @response 401 User not authorized
      * @response 403 User not authenticated
      */
     @Override
     @PUT
-    @Produces(MediaType.APPLICATION_JSON+";charset=utf-8")
+    @Produces(MediaType.APPLICATION_JSON + ";charset=utf-8")
     @Path("/documents/{folder}/{template}/{caseId}/{fileName}")
     @RolesAllowed({"loginRole"})
     public Response addDocumentFromTemplate(@PathParam("caseId") String caseId, @PathParam("fileName") String fileName, @PathParam("folder") String folder, @PathParam("template") String template, List<RestfulPlaceholderV6> placeHolderValues) throws Exception {
-        
-        if(folder==null || "".equals(folder))
-            folder="/";
-        
-        if(!folder.startsWith("/"))
-            folder="/" + folder;
-        
+
+        if (folder == null || "".equals(folder)) {
+            folder = "/";
+        }
+
+        if (!folder.startsWith("/")) {
+            folder = "/" + folder;
+        }
+
         try {
             InitialContext ic = new InitialContext();
             ArchiveFileServiceLocal casesvc = (ArchiveFileServiceLocal) ic.lookup(LOOKUP_CASESVC);
-            
+
             SystemManagementLocal system = (SystemManagementLocal) ic.lookup(LOOKUP_SYSMAN);
-            List<String> placeHoldersInTemplate=system.getPlaceHoldersForTemplate(SystemManagementLocal.TEMPLATE_TYPE_BODY, folder, template, caseId);
+            List<String> placeHoldersInTemplate = system.getPlaceHoldersForTemplate(SystemManagementLocal.TEMPLATE_TYPE_BODY, folder, template, caseId);
             Collections.sort(placeHoldersInTemplate, String.CASE_INSENSITIVE_ORDER);
-            Object[] placeHoldersInTemplateArray=placeHoldersInTemplate.stream().filter(ph -> !ph.startsWith("[[")).toArray();
-            HashMap<String,Object> placeHoldersInTemplateMap=new HashMap<>();
-            for(Object o: placeHoldersInTemplateArray) {
+            Object[] placeHoldersInTemplateArray = placeHoldersInTemplate.stream().filter(ph -> !ph.startsWith("[[")).toArray();
+            HashMap<String, Object> placeHoldersInTemplateMap = new HashMap<>();
+            for (Object o : placeHoldersInTemplateArray) {
                 placeHoldersInTemplateMap.put(o.toString(), "");
             }
-            
-            ArchiveFileBean aFile=casesvc.getArchiveFile(caseId);
-            if(aFile==null) {
+
+            ArchiveFileBean aFile = casesvc.getArchiveFile(caseId);
+            if (aFile == null) {
                 log.error("can not create document with template " + template + " in folder " + folder + " for case " + caseId + " - case does not exist");
                 return Response.serverError().build();
             }
-            
+
             FormsServiceLocal forms = (FormsServiceLocal) ic.lookup(LOOKUP_FORMSSVC);
-            HashMap<String,String> formsPlaceHolders=forms.getPlaceHolderValuesForCase(caseId);
-            
-            List<PartiesTriplet> parties=new ArrayList<>();
-            List<ArchiveFileAddressesBean> aabList=casesvc.getInvolvementDetailsForCase(caseId);
-            for(ArchiveFileAddressesBean aab: aabList) {
-                PartiesTriplet pt=new PartiesTriplet(aab.getAddressKey(), aab.getReferenceType(), aab);
+            HashMap<String, String> formsPlaceHolders = forms.getPlaceHolderValuesForCase(caseId);
+
+            List<PartiesTriplet> parties = new ArrayList<>();
+            List<ArchiveFileAddressesBean> aabList = casesvc.getInvolvementDetailsForCase(caseId);
+            for (ArchiveFileAddressesBean aab : aabList) {
+                PartiesTriplet pt = new PartiesTriplet(aab.getAddressKey(), aab.getReferenceType(), aab);
                 parties.add(pt);
             }
             //placeHoldersInTemplateMap = system.getPlaceHolderValues(placeHoldersInTemplateMap, aFile, parties, "", null, formsPlaceHolders, system.getUser(aFile.getLawyer()), system.getUser(aFile.getAssistant()), system.getUser(context.getCallerPrincipal().getName()));
-            
-            AppUserBean userLawyer=null;
+
+            AppUserBean userLawyer = null;
             try {
-                userLawyer=system.getUser(aFile.getLawyer());
+                userLawyer = system.getUser(aFile.getLawyer());
             } catch (Throwable t) {
                 log.warn("Unable to find lawyer " + aFile.getLawyer(), t);
             }
-            AppUserBean userAssistant=null;
+            AppUserBean userAssistant = null;
             try {
-                userAssistant=system.getUser(aFile.getAssistant());
+                userAssistant = system.getUser(aFile.getAssistant());
             } catch (Throwable t) {
                 log.warn("Unable to find assistant " + aFile.getLawyer(), t);
             }
-            
-            
+
             placeHoldersInTemplateMap = system.getPlaceHolderValues(placeHoldersInTemplateMap, aFile, parties, "", null, formsPlaceHolders, userLawyer, userAssistant, null, null, null, null, null, null, null);
-                        
-            
-            for(RestfulPlaceholderV6 rph: placeHolderValues) {
-                String key=rph.getPlaceHolderKey();
-                if(!key.startsWith("{{"))
-                    key="{{"+key;
-                if(!key.endsWith("}}"))
-                    key=key+"}}";
+
+            for (RestfulPlaceholderV6 rph : placeHolderValues) {
+                String key = rph.getPlaceHolderKey();
+                if (!key.startsWith("{{")) {
+                    key = "{{" + key;
+                }
+                if (!key.endsWith("}}")) {
+                    key = key + "}}";
+                }
                 placeHoldersInTemplateMap.put(key, rph.getPlaceHolderValue());
             }
-            ArchiveFileDocumentsBean newDoc=casesvc.addDocumentFromTemplate(caseId, fileName, null, folder, template, placeHoldersInTemplateMap, "", null);
-            RestfulDocumentV1 rdoc=new RestfulDocumentV1();
+            ArchiveFileDocumentsBean newDoc = casesvc.addDocumentFromTemplate(caseId, fileName, null, folder, template, placeHoldersInTemplateMap, "", null);
+            RestfulDocumentV1 rdoc = new RestfulDocumentV1();
             rdoc.setCreationDate(newDoc.getCreationDate());
             rdoc.setChangeDate(newDoc.getChangeDate());
             rdoc.setFavorite(rdoc.isFavorite());
@@ -905,7 +919,7 @@ public class TemplatesEndpointV6 implements TemplatesEndpointLocalV6 {
             rdoc.setSize(newDoc.getSize());
             rdoc.setHighlight1(newDoc.getHighlight1());
             rdoc.setHighlight2(newDoc.getHighlight2());
-            
+
             return Response.ok(rdoc).build();
         } catch (Exception ex) {
             log.error("can not create document with template " + template + " in folder " + folder + " for case " + caseId, ex);
@@ -914,17 +928,17 @@ public class TemplatesEndpointV6 implements TemplatesEndpointLocalV6 {
     }
 
     /**
-    * Lists all available email templates.
-    * 
-    * @return List of available email templates with their names
-    * @response 200 List of templates successfully retrieved
-    * @response 401 User not authorized
-    * @response 403 User not authenticated
-    * @response 500 Server error while retrieving templates
-    */
+     * Lists all available email templates.
+     *
+     * @return List of available email templates with their names
+     * @response 200 List of templates successfully retrieved
+     * @response 401 User not authorized
+     * @response 403 User not authenticated
+     * @response 500 Server error while retrieving templates
+     */
     @Override
     @GET
-    @Path("email")  
+    @Path("email")
     @Produces(MediaType.APPLICATION_JSON + ";charset=utf-8")
     @RolesAllowed({"loginRole"})
     public Response listEmailTemplates() {
@@ -950,47 +964,77 @@ public class TemplatesEndpointV6 implements TemplatesEndpointLocalV6 {
     }
 
     /**
-    * Returns a specific email template with all placeholders filled with case data.
-    * 
-    * @param caseId The ID of the case to fill placeholders from
-    * @param templateName Name of the template to retrieve
-    * @return Email template with original content, filled content and placeholder values
-    * @response 200 Template successfully retrieved with filled placeholders
-    * @response 401 User not authorized
-    * @response 403 User not authenticated
-    * @response 404 Case or template not found
-    * @response 500 Server error while processing template
-    */
+     * Returns a specific email template with all placeholders filled with case
+     * data. Default parties will be used.
+     *
+     * @param caseId The ID of the case to fill placeholders from
+     * @param templateName Name of the template to retrieve
+     * @return Email template with original content, filled content and
+     * placeholder values
+     * @response 200 Template successfully retrieved with filled placeholders
+     * @response 401 User not authorized
+     * @response 403 User not authenticated
+     * @response 404 Case or template not found
+     * @response 500 Server error while processing template
+     */
     @Override
     @GET
-    @Path("email/{caseId}/{templateName}")  
+    @Path("email/{templateName}/{caseId}")
     @Produces(MediaType.APPLICATION_JSON + ";charset=utf-8")
     @RolesAllowed({"loginRole"})
-    public Response getEmailTemplate(@PathParam("caseId") String caseId, @PathParam("templateName") String templateName) {
+    public Response getEmailFromTemplate(@PathParam("templateName") String templateName, @PathParam("caseId") String caseId) {
         try {
             InitialContext ic = new InitialContext();
             SystemManagementLocal system = (SystemManagementLocal) ic.lookup(LOOKUP_SYSMAN);
             ArchiveFileServiceLocal caseService = (ArchiveFileServiceLocal) ic.lookup(LOOKUP_CASESVC);
+            IntegrationServiceLocal intSvc = (IntegrationServiceLocal) ic.lookup(LOOKUP_INTEGRATIONSVC);
+
+            Principal principal = securityContext.getUserPrincipal();
+
+            AppUserBean author = null;
+            if (principal != null) {
+                author = system.getUser(principal.getName());
+            }
+
+            EmailTemplate tpl = intSvc.getEmailTemplate(templateName);
 
             ArchiveFileBean aFile = caseService.getArchiveFile(caseId);
             if (aFile == null) {
                 return Response.status(Response.Status.NOT_FOUND)
-                             .entity("Case not found: " + caseId)
-                             .build();
+                        .entity("Case not found: " + caseId)
+                        .build();
             }
 
-            String content = system.getTemplateContent(SystemManagementLocal.TEMPLATE_TYPE_EMAIL, "/", templateName);
-            Document doc = DocumentBuilderFactory.newInstance().newDocumentBuilder()
-                .parse(new ByteArrayInputStream(content.getBytes("UTF-8")));
+            List<PartyTypeBean> allPartyTypes = system.getPartyTypes();
+            List<String> allPartyTypesPlaceholders = new ArrayList<>();
+            for (PartyTypeBean ptb : allPartyTypes) {
+                allPartyTypesPlaceholders.add(ptb.getPlaceHolder());
+            }
 
-            String subject = doc.getElementsByTagName("subject").item(0).getTextContent();
-            String body = doc.getElementsByTagName("body").item(0).getTextContent();
+            FormsServiceLocal forms = (FormsServiceLocal) ic.lookup(LOOKUP_FORMSSVC);
+            Collection<String> formPlaceHolders = forms.getPlaceHoldersForCase(caseId);
+            HashMap<String, String> formPlaceHolderValues = forms.getPlaceHolderValuesForCase(caseId);
 
-            // Originale Version speichern
-            Map<String, Object> result = new LinkedHashMap<>();
-            result.put("name", templateName);
-            result.put("originalSubject", subject.trim());
-            result.put("originalBody", body);
+            // get a list of placeholders
+            ArrayList<String> placeHolderNames = CommonTemplatesUtil.getPlaceHoldersInTemplate(tpl.getSubject(), allPartyTypesPlaceholders, formPlaceHolders);
+            HashMap<String, Object> ht = new HashMap<>();
+            for (String ph : placeHolderNames) {
+                ht.put(ph, "");
+            }
+
+            // get user objects for this case
+            AppUserBean caseLawyer = null;
+            AppUserBean caseAssistant = null;
+            try {
+                caseLawyer = system.getUser(aFile.getLawyer());
+            } catch (Exception ex) {
+                log.warn("Unable to load lawyer with id " + aFile.getLawyer());
+            }
+            try {
+                caseAssistant = system.getUser(aFile.getAssistant());
+            } catch (Exception ex) {
+                log.warn("Unable to load assistant with id " + aFile.getAssistant());
+            }
 
             // Platzhalter sammeln und füllen
             List<PartiesTriplet> parties = new ArrayList<>();
@@ -999,46 +1043,24 @@ public class TemplatesEndpointV6 implements TemplatesEndpointLocalV6 {
                 parties.add(new PartiesTriplet(aab.getAddressKey(), aab.getReferenceType(), aab));
             }
 
-            // Platzhalter aus Subject und Body sammeln
-            Set<String> placeholders = new HashSet<>();
-            Matcher m = Pattern.compile("\\{\\{([^}]+)\\}\\}").matcher(subject + body);
-            while (m.find()) {
-                placeholders.add(m.group(1));
+            // get all placeholder values for the given set of placeholders
+            HashMap<String, Object> htValues = system.getPlaceHolderValues(ht, aFile, parties, "", null, formPlaceHolderValues, caseLawyer, caseAssistant, author, null, null, null, null, null, null);
+            String subject = CommonTemplatesUtil.replacePlaceHolders(tpl.getSubject(), htValues);
+
+            placeHolderNames = CommonTemplatesUtil.getPlaceHoldersInTemplate(tpl.getBody(), allPartyTypesPlaceholders, formPlaceHolders);
+            ht = new HashMap<>();
+            for (String ph : placeHolderNames) {
+                ht.put(ph, "");
             }
+            htValues = system.getPlaceHolderValues(ht, aFile, parties, "", null, formPlaceHolderValues, caseLawyer, caseAssistant, author, null, null, null, null, null, null);
 
-            // Platzhalter-Map erstellen und füllen
-            HashMap<String, Object> placeholderMap = new HashMap<>();
-            for (String placeholder : placeholders) {
-                placeholderMap.put("{{" + placeholder + "}}", "");
-            }
+            htValues.put("{{CLOUD_LINK}}", "");
 
-            // Platzhalter mit Werten füllen
-            placeholderMap = system.getPlaceHolderValues(
-                placeholderMap, aFile, parties, "", null, new HashMap<>(),
-                system.getUser(aFile.getLawyer()),
-                system.getUser(aFile.getAssistant()),
-                null, null, null, null, null, null, null
-            );
-
-            // Platzhalter-Werte-Map erstellen
-            Map<String, String> placeholderValues = new LinkedHashMap<>();
-            for (String placeholder : placeholders) {
-                String fullPlaceholder = "{{" + placeholder + "}}";
-                Object value = placeholderMap.get(fullPlaceholder);
-                placeholderValues.put(placeholder, value != null ? value.toString() : "");
-            }
-            result.put("placeholderValues", placeholderValues);
-
-            // Gefüllte Version
-            for (Map.Entry<String, Object> entry : placeholderMap.entrySet()) {
-                if (entry.getValue() != null) {
-                    subject = subject.replace(entry.getKey(), entry.getValue().toString());
-                    body = body.replace(entry.getKey(), entry.getValue().toString());
-                }
-            }
-
+            String body = CommonTemplatesUtil.replacePlaceHolders(tpl.getBody(), htValues);
+            Map<String, Object> result = new LinkedHashMap<>();
             result.put("subject", subject.trim());
             result.put("body", body);
+            result.put("mimeType", tpl.getFormat());
 
             return Response.ok(result).build();
 
@@ -1047,5 +1069,5 @@ public class TemplatesEndpointV6 implements TemplatesEndpointLocalV6 {
             return Response.serverError().build();
         }
     }
-    
+
 }
