@@ -670,6 +670,7 @@ import com.jdimension.jlawyer.persistence.ArchiveFileDocumentsBean;
 import com.jdimension.jlawyer.services.ArchiveFileServiceLocal;
 import com.jdimension.jlawyer.services.FormsServiceLocal;
 import com.jdimension.jlawyer.pojo.PartiesTriplet;
+import com.jdimension.jlawyer.services.IntegrationServiceLocal;
 import com.jdimension.jlawyer.services.SystemManagementLocal;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -712,6 +713,7 @@ public class TemplatesEndpointV6 implements TemplatesEndpointLocalV6 {
     private static final String LOOKUP_SYSMAN="java:global/j-lawyer-server/j-lawyer-server-ejb/SystemManagement!com.jdimension.jlawyer.services.SystemManagementLocal";
     private static final String LOOKUP_CASESVC="java:global/j-lawyer-server/j-lawyer-server-ejb/ArchiveFileService!com.jdimension.jlawyer.services.ArchiveFileServiceLocal";
     private static final String LOOKUP_FORMSSVC="java:global/j-lawyer-server/j-lawyer-server-ejb/FormsService!com.jdimension.jlawyer.services.FormsServiceLocal";
+    private static final String LOOKUP_INTEGRATIONSVC="java:global/j-lawyer-server/j-lawyer-server-ejb/IntegrationService!com.jdimension.jlawyer.services.IntegrationServiceLocal";
     
     /**
      * Returns the folder structure holding document templates.
@@ -922,15 +924,15 @@ public class TemplatesEndpointV6 implements TemplatesEndpointLocalV6 {
     */
     @Override
     @GET
-    @Path("email/templates")  
+    @Path("email")  
     @Produces(MediaType.APPLICATION_JSON + ";charset=utf-8")
     @RolesAllowed({"loginRole"})
     public Response listEmailTemplates() {
         try {
             InitialContext ic = new InitialContext();
-            SystemManagementLocal system = (SystemManagementLocal) ic.lookup(LOOKUP_SYSMAN);
+            IntegrationServiceLocal intSvc = (IntegrationServiceLocal) ic.lookup(LOOKUP_INTEGRATIONSVC);
 
-            List<String> templates = system.getTemplatesByPath(SystemManagementLocal.TEMPLATE_TYPE_EMAIL, "/");
+            Collection<String> templates = intSvc.getAllEmailTemplateNames();
             List<Map<String, String>> resultList = new ArrayList<>();
 
             for (String templateName : templates) {
