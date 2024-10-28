@@ -878,6 +878,7 @@ public class CasesEndpointV7 implements CasesEndpointLocalV7 {
                     rco.setId(afb.getId());
                     rco.setExternalId(afb.getExternalId());
                     rco.setName(afb.getName());
+                    rco.setReason(afb.getReason());
                     rco.setFileNumber(afb.getFileNumber());
                     rco.setDateChanged(afb.getDateChanged());
                     rcoList.add(rco);

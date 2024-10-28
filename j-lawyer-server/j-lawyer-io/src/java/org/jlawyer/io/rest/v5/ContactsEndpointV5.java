@@ -838,6 +838,7 @@ public class ContactsEndpointV5 implements ContactsEndpointLocalV5 {
                 rco.setId(afb.getId());
                 rco.setExternalId(afb.getExternalId());
                 rco.setName(afb.getName());
+                rco.setReason(afb.getReason());
                 rco.setFileNumber(afb.getFileNumber());
                 rco.setDateChanged(afb.getDateChanged());
                 caseList.add(rco);

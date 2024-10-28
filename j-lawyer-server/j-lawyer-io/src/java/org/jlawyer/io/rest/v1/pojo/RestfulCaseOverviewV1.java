@@ -676,6 +676,7 @@ public class RestfulCaseOverviewV1 {
     private String name=null;
     private String fileNumber=null;
     private Date dateChanged=null;
+    private String reason=null;
 
     public RestfulCaseOverviewV1() {
     }
@@ -748,6 +749,20 @@ public class RestfulCaseOverviewV1 {
      */
     public void setDateChanged(Date dateChanged) {
         this.dateChanged = dateChanged;
+    }
+
+    /**
+     * @return the reason
+     */
+    public String getReason() {
+        return reason;
+    }
+
+    /**
+     * @param reason the reason to set
+     */
+    public void setReason(String reason) {
+        this.reason = reason;
     }
 
 

@@ -751,6 +751,7 @@ public class CasesEndpointV1 implements CasesEndpointLocalV1 {
                 rco.setId(id);
                 rco.setExternalId(afb.getExternalId());
                 rco.setName(afb.getName());
+                rco.setReason(afb.getReason());
                 rco.setFileNumber(afb.getFileNumber());
                 rco.setDateChanged(afb.getDateChanged());
                 rcoList.add(rco);
