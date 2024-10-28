@@ -1515,6 +1515,7 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
         this.lblCaseCreated.setText("");
         this.closeInvolvedPartyEntryPanelSubscriptions();
         this.pnlInvolvedParties.removeAll();
+        this.pnlMessages.removeAll();
         //this.cmbDictateSign.setSelectedItem("");
         this.cmbLawyer.setSelectedItem("");
         this.cmbAssistant.setSelectedItem("");
