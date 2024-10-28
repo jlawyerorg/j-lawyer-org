@@ -1749,7 +1749,7 @@ public class EmailInboxPanel extends javax.swing.JPanel implements SaveToCaseExe
                 this.mnuRemoveFolder.setEnabled(true);
             }
 
-            this.mnuEmptyTrash.setEnabled(CommonMailUtils.TRASH.equalsIgnoreCase(f.getName()));
+            this.mnuEmptyTrash.setEnabled(CommonMailUtils.TRASH.equalsIgnoreCase(f.getName()) || CommonMailUtils.isTrash(f.getName()));
 
             if (f instanceof POP3Folder) {
                 this.mnuNewFolder.setEnabled(false);
@@ -1815,7 +1815,7 @@ public class EmailInboxPanel extends javax.swing.JPanel implements SaveToCaseExe
                 this.mnuRemoveFolder.setEnabled(true);
             }
 
-            this.mnuEmptyTrash.setEnabled(CommonMailUtils.TRASH.equalsIgnoreCase(f.getName()));
+            this.mnuEmptyTrash.setEnabled(CommonMailUtils.TRASH.equalsIgnoreCase(f.getName()) || CommonMailUtils.isTrash(f.getName()) || CommonMailUtils.isTrash(f.getName()));
             
             if (f instanceof POP3Folder) {
                 this.mnuNewFolder.setEnabled(false);
