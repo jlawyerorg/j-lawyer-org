@@ -4566,8 +4566,22 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
      * @return 
      */
     @Override
+    public List<CaseFolder> getFolderHierarchyUnrestricted(String folderId) {
+        return getFolderHierarchyImpl(folderId);
+    }
+    
+    /**
+     * Returns a list of folder representing a hierarchy. First element in the list is the root folder.
+     * @param folderId
+     * @return 
+     */
+    @Override
     @RolesAllowed({"loginRole"})
     public List<CaseFolder> getFolderHierarchy(String folderId) {
+        return getFolderHierarchyImpl(folderId);
+    }
+    
+    private List<CaseFolder> getFolderHierarchyImpl(String folderId) {
         List<CaseFolder> hierarchy=new ArrayList<>();
         if(folderId==null)
             return hierarchy;
