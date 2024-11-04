@@ -664,8 +664,14 @@
 package com.jdimension.jlawyer.client.editors.documents;
 
 import com.jdimension.jlawyer.client.mail.SaveToCaseExecutor;
+import com.jdimension.jlawyer.client.settings.ClientSettings;
+import com.jdimension.jlawyer.pojo.FileMetadata;
+import com.jdimension.jlawyer.services.IntegrationServiceRemote;
+import com.jdimension.jlawyer.services.JLawyerServiceLocator;
 import java.awt.Color;
+import java.util.ArrayList;
 import java.util.List;
+import org.apache.log4j.Logger;
 
 /**
  *
@@ -673,9 +679,13 @@ import java.util.List;
  */
 public class EditScanPanel extends javax.swing.JPanel {
 
+    private static final Logger log = Logger.getLogger(EditScanPanel.class.getName());
+
     private SaveToCaseExecutor executor = null;
 
     private String openedFromEditorClass = null;
+
+    private ArrayList<FileMetadata> noOcrFiles = new ArrayList<>();
 
     /**
      * Creates new form EditScanPanel
@@ -707,6 +717,33 @@ public class EditScanPanel extends javax.swing.JPanel {
             }
         }
 
+        this.cmdOcr.setEnabled(false);
+        this.cmdOcr.setToolTipText(null);
+        this.noOcrFiles.clear();
+        try {
+
+            ClientSettings settings = ClientSettings.getInstance();
+            JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
+            IntegrationServiceRemote isr = locator.lookupIntegrationServiceRemote();
+
+            for (String f : selectedDocuments) {
+                if (f.toLowerCase().endsWith(".pdf")) {
+                    FileMetadata meta = isr.getObservedFileMetadata(f);
+                    if (meta!=null && meta.getOcrStatus()==FileMetadata.OCRSTATUS_WITHOUTOCR) {
+                        noOcrFiles.add(meta);
+                    }
+                }
+            }
+            if (!noOcrFiles.isEmpty()) {
+                this.cmdOcr.setEnabled(true);
+                this.cmdOcr.setToolTipText(noOcrFiles.size() + " PDF-Dokumente sind nicht durchsuchbar - Klick für OCR/Texterkennung");
+            }
+
+        } catch (Exception ex) {
+            log.error(ex);
+
+        }
+
     }
 
     /**
@@ -722,6 +759,7 @@ public class EditScanPanel extends javax.swing.JPanel {
         cmdDeleteScan = new javax.swing.JButton();
         cmdRenameScan = new javax.swing.JButton();
         cmdSplitPdf = new javax.swing.JButton();
+        cmdOcr = new javax.swing.JButton();
 
         lblDescription.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/folder_documents.png"))); // NOI18N
         java.util.ResourceBundle bundle = java.util.ResourceBundle.getBundle("com/jdimension/jlawyer/client/editors/addresses/CaseForContactEntryPanel"); // NOI18N
@@ -753,6 +791,13 @@ public class EditScanPanel extends javax.swing.JPanel {
             }
         });
 
+        cmdOcr.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons16/material/baseline_font_download_off_red_48dp.png"))); // NOI18N
+        cmdOcr.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                cmdOcrActionPerformed(evt);
+            }
+        });
+
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(this);
         this.setLayout(layout);
         layout.setHorizontalGroup(
@@ -766,7 +811,9 @@ public class EditScanPanel extends javax.swing.JPanel {
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                         .addComponent(cmdRenameScan)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addComponent(cmdSplitPdf)))
+                        .addComponent(cmdSplitPdf)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addComponent(cmdOcr)))
                 .addContainerGap(115, Short.MAX_VALUE))
         );
         layout.setVerticalGroup(
@@ -778,7 +825,8 @@ public class EditScanPanel extends javax.swing.JPanel {
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                     .addComponent(cmdDeleteScan)
                     .addComponent(cmdRenameScan)
-                    .addComponent(cmdSplitPdf))
+                    .addComponent(cmdSplitPdf)
+                    .addComponent(cmdOcr))
                 .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
         );
     }// </editor-fold>//GEN-END:initComponents
@@ -807,8 +855,28 @@ public class EditScanPanel extends javax.swing.JPanel {
         this.executor.splitPdfCallback();
     }//GEN-LAST:event_cmdSplitPdfActionPerformed
 
+    private void cmdOcrActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdOcrActionPerformed
+        try {
+
+            ClientSettings settings = ClientSettings.getInstance();
+            JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
+            IntegrationServiceRemote isr = locator.lookupIntegrationServiceRemote();
+
+            for (FileMetadata meta : this.noOcrFiles) {
+                isr.performOcrForObservedFile(meta.getFileName());
+            }
+
+        } catch (Exception ex) {
+            log.error(ex);
+
+        }
+
+
+    }//GEN-LAST:event_cmdOcrActionPerformed
+
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JButton cmdDeleteScan;
+    private javax.swing.JButton cmdOcr;
     private javax.swing.JButton cmdRenameScan;
     private javax.swing.JButton cmdSplitPdf;
     private javax.swing.JLabel lblDescription;

@@ -663,8 +663,28 @@
  */
 package com.jdimension.jlawyer.client.utils;
 
+import com.jdimension.jlawyer.client.settings.ClientSettings;
+import com.jdimension.jlawyer.client.settings.UserSettings;
+import com.jdimension.jlawyer.persistence.AppOptionGroupBean;
+import com.jdimension.jlawyer.persistence.AppUserBean;
+import com.jdimension.jlawyer.persistence.ArchiveFileAddressesBean;
+import com.jdimension.jlawyer.persistence.ArchiveFileBean;
+import com.jdimension.jlawyer.persistence.ArchiveFileDocumentsBean;
+import com.jdimension.jlawyer.persistence.DocumentNameTemplate;
+import com.jdimension.jlawyer.persistence.PartyTypeBean;
+import com.jdimension.jlawyer.services.JLawyerServiceLocator;
+import com.jdimension.jlawyer.pojo.PartiesTriplet;
 import java.awt.Container;
+import java.awt.event.ActionEvent;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Date;
+import java.util.HashMap;
+import java.util.List;
 import javax.swing.JDialog;
+import javax.swing.JMenuItem;
+import javax.swing.SwingUtilities;
+import org.apache.log4j.Logger;
 
 /**
  *
@@ -672,21 +692,189 @@ import javax.swing.JDialog;
  */
 public class NewFilenameOptionPanel extends javax.swing.JPanel {
 
+    private static final Logger log = Logger.getLogger(NewFilenameOptionPanel.class.getName());
+
+    private ArrayList<String> existingFileNames = new ArrayList<>();
+
+    private DocumentNameTemplate nameTemplate = null;
+
+    // caching for data that is required to build the file name if it contains place holders
+    private List<PartyTypeBean> allPartyTypes = null;
+    private Collection<String> formPlaceHolders = null;
+    private HashMap<String, String> formPlaceHolderValues = null;
+    private AppUserBean caseLawyer = null;
+    private AppUserBean caseAssistant = null;
+    private List<PartiesTriplet> parties = new ArrayList<>();
+
+    private ArchiveFileBean selectedCase = null;
+    private Date documentDate = null;
+    private String documentFilename = null;
+    private String documentFilenameNew = null;
+
     /**
      * Creates new form NewFilenameOptionPanel
      */
     public NewFilenameOptionPanel() {
         initComponents();
+
+        initializeOptions();
     }
-    
-    public void setFilename(String name) {
-        this.txtNewName.setText(name);
+
+    public NewFilenameOptionPanel(ArchiveFileBean selectedCase) {
+        initComponents();
+
+        initializeOptions();
+
+        this.selectedCase = selectedCase;
+        if (this.selectedCase != null) {
+            try {
+                ClientSettings settings = ClientSettings.getInstance();
+                JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
+
+                Collection<ArchiveFileDocumentsBean> docs = locator.lookupArchiveFileServiceRemote().getDocuments(selectedCase.getId());
+                for (ArchiveFileDocumentsBean d : docs) {
+                    existingFileNames.add(d.getName().toLowerCase());
+                }
+
+                // cached and passed to BulkSaveEntry to avoid loading for each entry
+                this.allPartyTypes = locator.lookupSystemManagementRemote().getPartyTypes();
+                if (this.selectedCase != null) {
+                    try {
+                        this.caseAssistant = locator.lookupSystemManagementRemote().getUser(this.selectedCase.getAssistant());
+                    } catch (Exception ex) {
+                    }
+                    try {
+                        this.caseLawyer = locator.lookupSystemManagementRemote().getUser(this.selectedCase.getLawyer());
+                    } catch (Exception ex) {
+                    }
+                    this.formPlaceHolders = locator.lookupFormsServiceRemote().getPlaceHoldersForCase(this.selectedCase.getId());
+                    this.formPlaceHolderValues = locator.lookupFormsServiceRemote().getPlaceHolderValuesForCase(this.selectedCase.getId());
+
+                    try {
+                        List<ArchiveFileAddressesBean> involved = locator.lookupArchiveFileServiceRemote().getInvolvementDetailsForCase(this.selectedCase.getId(), false);
+                        for (ArchiveFileAddressesBean aab : involved) {
+                            parties.add(new PartiesTriplet(aab.getAddressKey(), aab.getReferenceType(), aab));
+                        }
+                    } catch (Exception ex) {
+                        log.error("Could not load involvements for case " + this.selectedCase.getId(), ex);
+                    }
+                }
+
+            } catch (Exception ex) {
+                log.error("Error getting docments for case " + selectedCase.getId(), ex);
+                ThreadUtils.showErrorDialog(this, "Fehler beim Laden der Dokumente der Akte", "Dokumente speichern");
+            }
+        }
+    }
+
+    private void initializeOptions() {
+        try {
+            ClientSettings settings = ClientSettings.getInstance();
+            JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
+            List<DocumentNameTemplate> allNameTemplates = locator.lookupSystemManagementRemote().getDocumentNameTemplates();
+            DocumentNameTemplate defaultNameTemplate = locator.lookupSystemManagementRemote().getDefaultDocumentNameTemplate();
+
+            this.popNameTemplates.removeAll();
+
+            for (DocumentNameTemplate t : allNameTemplates) {
+                JMenuItem mi = new JMenuItem(t.getDisplayName());
+                mi.addActionListener((ActionEvent e) -> {
+                    setNameTemplate(t);
+                });
+                popNameTemplates.add(mi);
+
+            }
+            this.nameTemplate = defaultNameTemplate;
+        } catch (Exception ex) {
+            log.error("Error connecting to server", ex);
+            ThreadUtils.showErrorDialog(this, "Fehler beim Laden der Dateinamenvorlagen", "Dateinamen");
+        }
+    }
+
+    public void setNameTemplate(DocumentNameTemplate nameTemplate) {
+        this.nameTemplate = nameTemplate;
+        try {
+            ClientSettings settings = ClientSettings.getInstance();
+            JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
+
+            String extension = FileUtils.getExtension(this.documentFilename);
+            String docName = locator.lookupArchiveFileServiceRemote().getNewDocumentName(this.documentFilename, this.documentDate, this.nameTemplate);
+
+            HashMap<String, Object> placeHolders = TemplatesUtil.getPlaceHolderValues(docName, selectedCase, this.parties, null, null, this.allPartyTypes, this.formPlaceHolders, this.formPlaceHolderValues, this.caseLawyer, this.caseAssistant);
+            docName = TemplatesUtil.replacePlaceHolders(docName, placeHolders);
+            docName = FileUtils.sanitizeFileName(docName);
+
+            // remove any extension, because of the template it might be somewhere in the middle of the new name
+            docName = docName.replace("." + extension, "");
+
+            // add back extension
+            docName = FileUtils.preserveExtension(this.documentFilename, docName);
+
+            this.setDocumentFilenameNew(docName);
+
+        } catch (Exception ex) {
+            log.error("Error getting new document name", ex);
+            ThreadUtils.showErrorDialog(this, "Fehler beim Anwenden der Dateinamensvorschrift", "Dateinamen");
+        }
+    }
+
+    private void setDocumentFilenameNew(String documentFilenameNew) {
+        this.documentFilenameNew = documentFilenameNew;
+        this.txtNewName.setText(documentFilenameNew);
+        this.fileNameChanged();
+    }
+
+    private void fileNameChanged() {
+        this.documentFilenameNew = this.txtNewName.getText();
+        String oldExt = FileUtils.getExtension(this.documentFilename);
+        String newExt = FileUtils.getExtension(this.documentFilenameNew);
+        if (!oldExt.equalsIgnoreCase(newExt)) {
+            int caretPosition = this.txtNewName.getCaretPosition();
+            this.documentFilenameNew = FileUtils.preserveExtension(this.documentFilename, this.documentFilenameNew);
+            this.txtNewName.setText(this.documentFilenameNew);
+            if (this.txtNewName.getText().length() >= caretPosition) {
+                this.txtNewName.setCaretPosition(caretPosition);
+            }
+        }
+
+        // use may have typed invalid characters
+        String checkedName = FileUtils.sanitizeFileName(this.documentFilenameNew);
+        if (!checkedName.equals(this.txtNewName.getText())) {
+            int caretPosition = this.txtNewName.getCaretPosition();
+            this.txtNewName.setText(checkedName);
+            this.documentFilenameNew = checkedName;
+            if (this.txtNewName.getText().length() >= caretPosition) {
+                this.txtNewName.setCaretPosition(caretPosition);
+            }
+        }
+
+    }
+
+    public void setFilename(String name, Date documentDate, boolean applyNameTemplate) {
+
+        if (documentDate == null) {
+            this.documentDate = new Date();
+        } else {
+            this.documentDate = documentDate;
+        }
+
+        this.documentFilename = name;
+        if (applyNameTemplate) {
+            this.setNameTemplate(this.nameTemplate);
+        } else {
+            this.setDocumentFilenameNew(name);
+        }
+
         this.lblIcon.setIcon(FileUtils.getInstance().getFileTypeIcon(name));
-        
+
     }
-    
+
     public String getFilename() {
-        return this.txtNewName.getText();
+        if (StringUtils.isEmpty(this.txtNewName.getText())) {
+            return null;
+        } else {
+            return FileUtils.preserveExtension(this.documentFilename, this.txtNewName.getText());
+        }
     }
 
     /**
@@ -698,10 +886,12 @@ public class NewFilenameOptionPanel extends javax.swing.JPanel {
     // <editor-fold defaultstate="collapsed" desc="Generated Code">//GEN-BEGIN:initComponents
     private void initComponents() {
 
+        popNameTemplates = new javax.swing.JPopupMenu();
         lblIcon = new javax.swing.JLabel();
         jLabel1 = new javax.swing.JLabel();
         txtNewName = new javax.swing.JTextField();
-        lblCancel = new javax.swing.JButton();
+        cmdCancel = new javax.swing.JButton();
+        cmdNameTemplate = new javax.swing.JButton();
 
         setPreferredSize(new java.awt.Dimension(600, 81));
 
@@ -709,10 +899,23 @@ public class NewFilenameOptionPanel extends javax.swing.JPanel {
 
         jLabel1.setText("neuer Dateiname:");
 
-        lblCancel.setText("Abbrechen");
-        lblCancel.addActionListener(new java.awt.event.ActionListener() {
+        txtNewName.addFocusListener(new java.awt.event.FocusAdapter() {
+            public void focusGained(java.awt.event.FocusEvent evt) {
+                txtNewNameFocusGained(evt);
+            }
+        });
+
+        cmdCancel.setText("Abbrechen");
+        cmdCancel.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
-                lblCancelActionPerformed(evt);
+                cmdCancelActionPerformed(evt);
+            }
+        });
+
+        cmdNameTemplate.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/edit.png"))); // NOI18N
+        cmdNameTemplate.addMouseListener(new java.awt.event.MouseAdapter() {
+            public void mouseReleased(java.awt.event.MouseEvent evt) {
+                cmdNameTemplateMouseReleased(evt);
             }
         });
 
@@ -726,11 +929,15 @@ public class NewFilenameOptionPanel extends javax.swing.JPanel {
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                     .addGroup(layout.createSequentialGroup()
                         .addComponent(jLabel1)
-                        .addGap(0, 414, Short.MAX_VALUE))
-                    .addComponent(txtNewName)))
-            .addGroup(layout.createSequentialGroup()
-                .addGap(0, 0, Short.MAX_VALUE)
-                .addComponent(lblCancel))
+                        .addGap(0, 0, Short.MAX_VALUE))
+                    .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
+                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
+                            .addGroup(layout.createSequentialGroup()
+                                .addGap(0, 534, Short.MAX_VALUE)
+                                .addComponent(cmdCancel))
+                            .addComponent(txtNewName))
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addComponent(cmdNameTemplate))))
         );
         layout.setVerticalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
@@ -739,30 +946,47 @@ public class NewFilenameOptionPanel extends javax.swing.JPanel {
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                     .addComponent(txtNewName, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addComponent(lblIcon))
+                    .addComponent(lblIcon)
+                    .addComponent(cmdNameTemplate))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(lblCancel)
+                .addComponent(cmdCancel)
                 .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
         );
     }// </editor-fold>//GEN-END:initComponents
 
-    private void lblCancelActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_lblCancelActionPerformed
+    private void cmdCancelActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdCancelActionPerformed
         this.txtNewName.setText("");
-        Container dialog=this.findDialog(this);
+        Container dialog = this.findDialog(this);
         dialog.setVisible(false);
-    }//GEN-LAST:event_lblCancelActionPerformed
+    }//GEN-LAST:event_cmdCancelActionPerformed
+
+    private void cmdNameTemplateMouseReleased(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_cmdNameTemplateMouseReleased
+        this.popNameTemplates.show(this.cmdNameTemplate, evt.getX(), evt.getY());
+    }//GEN-LAST:event_cmdNameTemplateMouseReleased
+
+    private void txtNewNameFocusGained(java.awt.event.FocusEvent evt) {//GEN-FIRST:event_txtNewNameFocusGained
+        int dotPos = this.txtNewName.getText().lastIndexOf(".");
+        this.txtNewName.requestFocusInWindow();
+        if (dotPos > -1) {
+            this.txtNewName.setSelectionStart(0);
+            this.txtNewName.setSelectionEnd(dotPos);
+        }
+    }//GEN-LAST:event_txtNewNameFocusGained
 
     private Container findDialog(Container c) {
-        while(!(c.getParent() instanceof JDialog) && c.getParent()!=null)
-            c=c.getParent();
-        
+        while (!(c.getParent() instanceof JDialog) && c.getParent() != null) {
+            c = c.getParent();
+        }
+
         return c.getParent();
     }
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
+    private javax.swing.JButton cmdCancel;
+    private javax.swing.JButton cmdNameTemplate;
     private javax.swing.JLabel jLabel1;
-    private javax.swing.JButton lblCancel;
     private javax.swing.JLabel lblIcon;
+    private javax.swing.JPopupMenu popNameTemplates;
     private javax.swing.JTextField txtNewName;
     // End of variables declaration//GEN-END:variables
 }

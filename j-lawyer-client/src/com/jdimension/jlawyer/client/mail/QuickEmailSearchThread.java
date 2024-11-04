@@ -672,6 +672,7 @@ import com.jdimension.jlawyer.services.AddressServiceRemote;
 import com.jdimension.jlawyer.services.JLawyerServiceLocator;
 import java.awt.Component;
 import javax.swing.JTable;
+import org.apache.commons.lang3.StringUtils;
 import org.apache.log4j.Logger;
 
 /**
@@ -687,7 +688,11 @@ public class QuickEmailSearchThread implements Runnable {
     private JTable target;
     private String[] tag;
     
-    /** Creates a new instance of QuickEmailSearchThread */
+    /** Creates a new instance of QuickEmailSearchThread
+     * @param owner
+     * @param query
+     * @param tag
+     * @param target */
     public QuickEmailSearchThread(Component owner, String query, String[] tag, JTable target) {
         this.query=query;
         this.owner=owner;
@@ -695,28 +700,24 @@ public class QuickEmailSearchThread implements Runnable {
         this.tag=tag;
     }
 
+    @Override
     public void run() {
         AddressBean[] dtos=null;
         try {
             ClientSettings settings=ClientSettings.getInstance();
             JLawyerServiceLocator locator=JLawyerServiceLocator.getInstance(settings.getLookupProperties());
-            
-            //AddressServiceRemoteHome home = (AddressServiceRemoteHome)locator.getRemoteHome("ejb/AddressServiceBean", AddressServiceRemoteHome.class);
             AddressServiceRemote addressService = locator.lookupAddressServiceRemote();
-            //dtos=addressService.searchSimple(query);
             dtos=addressService.searchEnhanced(query, tag);
-            //addressService.remove();
         } catch (Exception ex) {
             log.error("Error connecting to server", ex);
-            //JOptionPane.showMessageDialog(this.owner, "Verbindungsfehler: " + ex.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
             ThreadUtils.showErrorDialog(this.owner, ex.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR);
             return;
         }
         
-        String[] colNames=new String[] {"Name", "Vorname", "Unternehmen", "PLZ", "Ort", "E-Mail", "SafeID"};
+        String[] colNames=new String[] {"Name", "Vorname", "Unternehmen", "PLZ", "Ort", "E-Mail", "", "SafeID"};
         QuickAddressSearchTableModel model=new QuickAddressSearchTableModel(colNames, 0);
         for(int i=0;i<dtos.length;i++) {
-            Object[] row=new Object[]{new QuickAddressSearchRowIdentifier(dtos[i]), dtos[i].getFirstName(), dtos[i].getCompany(), dtos[i].getZipCode(), dtos[i].getCity(), dtos[i].getEmail(), dtos[i].getBeaSafeId()};
+            Object[] row=new Object[]{new QuickAddressSearchRowIdentifier(dtos[i]), dtos[i].getFirstName(), dtos[i].getCompany(), dtos[i].getZipCode(), dtos[i].getCity(), dtos[i].getEmail(), !StringUtils.isEmpty(dtos[i].getEncryptionPwd()) && !StringUtils.isEmpty(dtos[i].getEmail()), dtos[i].getBeaSafeId()};
             model.addRow(row);
         }
         if(dtos.length>0) {

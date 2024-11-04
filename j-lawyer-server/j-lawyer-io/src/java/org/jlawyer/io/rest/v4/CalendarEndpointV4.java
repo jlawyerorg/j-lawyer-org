@@ -674,6 +674,7 @@ import javax.naming.InitialContext;
 import javax.ws.rs.Consumes;
 import javax.ws.rs.GET;
 import javax.ws.rs.Path;
+import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
@@ -735,12 +736,57 @@ public class CalendarEndpointV4 implements CalendarEndpointLocalV4 {
                 ddList.add(dd);
             }
 
-            Response res = Response.ok(ddList).build();
-            return res;
+            return Response.ok(ddList).build();
         } catch (Exception ex) {
             log.error("can not get calendars", ex);
-            Response res = Response.serverError().build();
-            return res;
+            return Response.serverError().build();
+        }
+    }
+    
+    /**
+     * Returns all calendars accessible by the given user
+     *
+     * @param principalId user id as used e.g. when logging in
+     * @response 401 User not authorized
+     * @response 403 User not authenticated
+     */
+    @Override
+    @GET
+    @Produces(MediaType.APPLICATION_JSON+";charset=utf-8")
+    @Path("/list/{principalId}")
+    @RolesAllowed({"loginRole"})
+    public Response getAllCalendarsForUser(@PathParam("principalId") String principalId) {
+        try {
+
+            InitialContext ic = new InitialContext();
+            CalendarServiceLocal cal = (CalendarServiceLocal) ic.lookup("java:global/j-lawyer-server/j-lawyer-server-ejb/CalendarService!com.jdimension.jlawyer.services.CalendarServiceLocal");
+
+            Collection<CalendarSetup> setups = cal.getCalendarSetupsForUser(principalId);
+            ArrayList<RestfulCalendarV4> ddList = new ArrayList<>();
+            for (CalendarSetup cs : setups) {
+                RestfulCalendarV4 dd = new RestfulCalendarV4();
+                dd.setId(cs.getId());
+                dd.setBackground(cs.getBackground());
+                dd.setCloudHost(cs.getCloudHost());
+                dd.setCloudPath(cs.getCloudPath());
+                dd.setCloudPort(cs.getCloudPort());
+                dd.setCloudSsl(cs.isCloudSsl());
+                dd.setDisplayName(cs.getDisplayName());
+                dd.setEventType(RestfulDueDateV4.TYPE_RESPITE);
+                if (cs.getEventType() == ArchiveFileReviewsBean.EVENTTYPE_FOLLOWUP) {
+                    dd.setEventType(RestfulDueDateV4.TYPE_FOLLOWUP);
+                } else if (cs.getEventType() == ArchiveFileReviewsBean.EVENTTYPE_EVENT) {
+                    dd.setEventType(RestfulDueDateV4.TYPE_EVENT);
+                }
+                dd.setHref(cs.getHref());
+                
+                ddList.add(dd);
+            }
+
+            return Response.ok(ddList).build();
+        } catch (Exception ex) {
+            log.error("can not get calendars", ex);
+            return Response.serverError().build();
         }
     }
 

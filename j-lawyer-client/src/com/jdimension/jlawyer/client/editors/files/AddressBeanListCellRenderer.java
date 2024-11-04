@@ -664,7 +664,6 @@
 package com.jdimension.jlawyer.client.editors.files;
 
 import com.jdimension.jlawyer.persistence.AddressBean;
-import com.jdimension.jlawyer.persistence.AppOptionGroupBean;
 import java.awt.Component;
 import javax.swing.DefaultListCellRenderer;
 import javax.swing.JLabel;
@@ -707,6 +706,5 @@ public class AddressBeanListCellRenderer extends DefaultListCellRenderer {
             ((JLabel) ret).setText(returnValue);
         }
         return ret;
-        //throw new UnsupportedOperationException("Not supported yet.");
     }
 }

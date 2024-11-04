@@ -1276,7 +1276,7 @@ public class BackupConfigurationDialog extends javax.swing.JDialog {
         String password=p.getPassword();
 
         try {
-            URL backupUrl = new java.net.URL(protocol + "://" + server + ":" + port + "/j-lawyer-server-war/autostart?action=backup.adhoc");
+            URL backupUrl = new java.net.URL(protocol + "://" + server + ":" + port + "/j-lawyer-server-war/autostart?action=backup.adhoc&jobid=" + System.currentTimeMillis());
             
             URLConnection urlConnection = backupUrl.openConnection();
             String userpass = principalId + ":" + password;

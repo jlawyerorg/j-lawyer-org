@@ -93,6 +93,18 @@
             <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="mnuDeleteTemplateActionPerformed"/>
           </Events>
         </MenuItem>
+        <MenuItem class="javax.swing.JMenuItem" name="mnuEpostValidation">
+          <Properties>
+            <Property name="icon" type="javax.swing.Icon" editor="org.netbeans.modules.form.editors2.IconEditor">
+              <Image iconType="3" name="/icons/printer.png"/>
+            </Property>
+            <Property name="text" type="java.lang.String" value="E-POST-Eignung pr&#xfc;fen"/>
+            <Property name="toolTipText" type="java.lang.String" value="&#xfc;bermittelt das Dokument f&#xfc;r eine Layoutpr&#xfc;fung an die E-POST-Schnittstelle"/>
+          </Properties>
+          <Events>
+            <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="mnuEpostValidationActionPerformed"/>
+          </Events>
+        </MenuItem>
       </SubComponents>
     </Container>
   </NonVisualComponents>

@@ -710,7 +710,7 @@ public class PreviewGenerator {
             throw new Exception("Dokumentvorschau für " + db.getName() + " existiert nicht!");
         }
 
-        return SystemManagement.readTextFile(dstFile);
+        return ServerFileUtils.readTextFile(dstFile);
     }
 
     public boolean previewExists(String archiveFileId, String docId, String fileName) {
@@ -784,7 +784,7 @@ public class PreviewGenerator {
         dstDir.mkdirs();
         dst = dst + docId;
 
-        Tika tika = new Tika();
+        Tika tika = TikaConfigurator.newTika(fileName);
         try {
             Reader r = tika.parse(fSrcFile);
             try ( BufferedReader br = new BufferedReader(r);  FileWriter fw = new FileWriter(dst);  BufferedWriter bw = new BufferedWriter(fw)) {

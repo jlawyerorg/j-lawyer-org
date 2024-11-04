@@ -116,7 +116,7 @@ Component, and (b) serves only to enable use of the work with that
 Major Component, or to implement a Standard Interface for which an
 implementation is available to the public in source code form.  A
 "Major Component", in this context, means a major essential component
-(kernel, window system, and so on) of the specific operating system
+(kernel, window security, and so on) of the specific operating security
 (if any) on which the executable work runs, or a compiler used to
 produce the work, or an object code interpreter used to run it.
 
@@ -664,18 +664,25 @@ For more information on this, and how to apply and follow the GNU AGPL, see
 package org.jlawyer.io.rest.v6;
 
 import com.jdimension.jlawyer.persistence.AppUserBean;
+import com.jdimension.jlawyer.persistence.Group;
 import com.jdimension.jlawyer.services.SecurityServiceLocal;
+import com.jdimension.jlawyer.services.SystemManagementLocal;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
+import javax.annotation.security.RolesAllowed;
 import javax.ejb.Stateless;
 import javax.naming.InitialContext;
 import javax.ws.rs.Consumes;
 import javax.ws.rs.GET;
+import javax.ws.rs.PUT;
 import javax.ws.rs.Path;
+import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import org.jboss.logging.Logger;
+import org.jlawyer.io.rest.v6.pojo.RestfulGroupV6;
 import org.jlawyer.io.rest.v6.pojo.RestfulUserV6;
 
 /**
@@ -687,11 +694,15 @@ import org.jlawyer.io.rest.v6.pojo.RestfulUserV6;
 @Consumes({"application/json"})
 @Produces({"application/json"})
 public class SecurityEndpointV6 implements SecurityEndpointLocalV6 {
-    
+
     private static final Logger log = Logger.getLogger(SecurityEndpointV6.class.getName());
+    
+    private static final String LOOKUP_SYSMAN="java:global/j-lawyer-server/j-lawyer-server-ejb/SystemManagement!com.jdimension.jlawyer.services.SystemManagementLocal";
+    private static final String LOOKUP_SECSVC="java:global/j-lawyer-server/j-lawyer-server-ejb/SecurityService!com.jdimension.jlawyer.services.SecurityServiceLocal";
 
     /**
-     * Returns all user available in the system who have at least the permission to log in
+     * Returns all user available in the security who have at least the permission
+ to log in
      *
      * @response 401 User not authorized
      * @response 403 User not authenticated
@@ -699,34 +710,160 @@ public class SecurityEndpointV6 implements SecurityEndpointLocalV6 {
     @Override
     @Path("/users")
     @GET
-    @Produces(MediaType.APPLICATION_JSON+";charset=utf-8")
+    @Produces(MediaType.APPLICATION_JSON + ";charset=utf-8")
     public Response getEnabledUsers() {
 
         try {
 
             InitialContext ic = new InitialContext();
-            SecurityServiceLocal security = (SecurityServiceLocal) ic.lookup("java:global/j-lawyer-server/j-lawyer-server-ejb/SecurityService!com.jdimension.jlawyer.services.SecurityServiceLocal");
-            List<AppUserBean> enabledUsers=security.getUsersHavingRole("loginRole");
-            ArrayList<RestfulUserV6> resultList=new ArrayList<>();
-            for(AppUserBean au: enabledUsers) {
-                RestfulUserV6 u=new RestfulUserV6();
-                u.setAbbreviation(au.getAbbreviation());
-                u.setAreaCode(au.getAreaCode());
-                u.setCountryCode(au.getCountryCode());
-                u.setDisplayName(au.getDisplayName());
-                u.setLawyer(u.isLawyer());
-                u.setPrincipalId(au.getPrincipalId());
+            SecurityServiceLocal security = (SecurityServiceLocal) ic.lookup(LOOKUP_SECSVC);
+            List<AppUserBean> enabledUsers = security.getUsersHavingRole("loginRole");
+            ArrayList<RestfulUserV6> resultList = new ArrayList<>();
+            for (AppUserBean au : enabledUsers) {
+                RestfulUserV6 u = RestfulUserV6.fromAppUserBean(au);
                 resultList.add(u);
             }
 
-            Response res = Response.ok(resultList).build();
-            return res;
+            return Response.ok(resultList).build();
         } catch (Exception ex) {
             log.error("can not determine enabled users", ex);
-            Response res = Response.serverError().build();
-            return res;
+            return Response.serverError().build();
         }
 
+    }
+
+    /**
+     * Lists all users, including ones without login permission
+     *
+     * @response 401 User not authorized
+     * @response 403 User not authenticated
+     */
+    @Override
+    @GET
+    @Produces(MediaType.APPLICATION_JSON + ";charset=utf-8")
+    @Path("/users/list")
+    @RolesAllowed({"loginRole"})
+    public Response listUsers() {
+        try {
+            InitialContext ic = new InitialContext();
+            SystemManagementLocal system = (SystemManagementLocal) ic.lookup(LOOKUP_SYSMAN);
+            List<AppUserBean> allUsers=system.getUsers();
+            ArrayList<RestfulUserV6> resultList = new ArrayList<>();
+            for (AppUserBean au : allUsers) {
+                RestfulUserV6 u = RestfulUserV6.fromAppUserBean(au);
+                resultList.add(u);
+            }
+
+            return Response.ok(resultList).build();
+        } catch (Exception ex) {
+            log.error("can not get document template folder structure ", ex);
+            return Response.serverError().build();
+        }
+
+    }
+    
+    /**
+     * Returns all security groups set up in the security
+     * @response 401 User not authorized
+     * @response 403 User not authenticated
+     */
+    @Override
+    @Path("/groups")
+    @GET
+    @Produces(MediaType.APPLICATION_JSON+";charset=utf-8")
+    public Response listGroups() {
+
+        try {
+
+            InitialContext ic = new InitialContext();
+            SecurityServiceLocal security = (SecurityServiceLocal) ic.lookup(LOOKUP_SECSVC);
+            Collection<Group> groups = security.getAllGroups();
+            ArrayList<RestfulGroupV6> resultList = new ArrayList<>();
+            for (Group g : groups) {
+                RestfulGroupV6 group = RestfulGroupV6.fromGroup(g);
+                resultList.add(group);
+            }
+
+            return Response.ok(resultList).build();
+        } catch (Exception ex) {
+            log.error("can not determine enabled users", ex);
+            return Response.serverError().build();
+        }
+
+    }
+    
+        /**
+     * Returns a users metadata given its external ID
+     *
+     * @param extId the users external ID
+     * @response 401 User not authorized
+     * @response 403 User not authenticated
+     * @response 404 No user found with this external ID
+     */
+    @Override
+    @GET
+    @Produces(MediaType.APPLICATION_JSON+";charset=utf-8")
+    @Path("/users/byexternalid/{extId}")
+    @RolesAllowed({"loginRole"})
+    public Response getUserByExternalId(@PathParam("extId") String extId) {
+        try {
+            InitialContext ic = new InitialContext();
+            SecurityServiceLocal security = (SecurityServiceLocal) ic.lookup(LOOKUP_SECSVC);
+            AppUserBean au=security.getUserByExternalId(extId);
+            
+            if(au!=null) {
+                
+                RestfulUserV6 u = RestfulUserV6.fromAppUserBean(au);
+                return Response.ok(u).build();
+            } else {
+                return Response.status(Response.Status.NOT_FOUND).build();
+            }
+        } catch (Exception ex) {
+            log.error("can not get user by external id " + extId, ex);
+            return Response.serverError().build();
+        }
+        
+    }
+    
+    /**
+     * Creates a new user. No permissions will be granted. Does currently not support all attributes.
+     *
+     * @param userData user data
+     * @response 401 User not authorized
+     * @response 403 User not authenticated
+     */
+    @Override
+    @PUT
+    @Produces(MediaType.APPLICATION_JSON+";charset=utf-8")
+    @Path("/users/create")
+    @RolesAllowed({"adminRole"})
+    public Response createUser(RestfulUserV6 userData) {
+
+        // curl -u admin:a -X PUT -H "Content-Type: application/json" -d '{"name":"via REST", "reason":"wegen REST", "subjectField":"Familienrecht", "notice":"notiz REST","assistant":"user", "lawyer":"admin", "claimNumber":"RESTcn","claimValue":"3.44","custom1":"RESTc1","custom2":"RESTc2","custom3":"RESTc3"}' http://localhost:8080/j-lawyer-io/rest/cases/create
+        try {
+
+            if (userData.getPrincipalId() == null || "".equals(userData.getPrincipalId())) {
+                log.error("Can not create new user - no principal ID given");
+                return Response.serverError().build();
+            }
+
+            InitialContext ic = new InitialContext();
+            SystemManagementLocal system = (SystemManagementLocal) ic.lookup(LOOKUP_SYSMAN);
+            
+            AppUserBean u = new AppUserBean();
+            u = userData.toAppUserBean(u);
+            
+            // apply dummy password - not an issue, because the user will not have any login permission anyways
+            u.setPassword(""+System.currentTimeMillis());
+            u=system.createUser(u, new ArrayList<>());
+            
+            userData = RestfulUserV6.fromAppUserBean(u);
+
+            return Response.ok(userData).build();
+        } catch (Exception ex) {
+            log.error("can not create new user " + userData.getPrincipalId(), ex);
+            return Response.serverError().build();
+        }
     }
 
 }

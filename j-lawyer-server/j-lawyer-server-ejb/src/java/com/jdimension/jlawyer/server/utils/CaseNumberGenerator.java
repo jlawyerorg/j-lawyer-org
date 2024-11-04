@@ -683,6 +683,10 @@ public class CaseNumberGenerator {
 
     public static boolean compilePattern(String pattern) throws InvalidSchemaPatternException {
 
+        if(pattern.equals("C") || pattern.equals("CC") || pattern.equals("CCC")) {
+            throw new InvalidSchemaPatternException("C muss mindestens als CCCC (4 Zeichen) enthalten sein oder in Verbindung mit anderen Parametern genutzt werden");
+        }
+        
         if (pattern.contains("YYY") && !pattern.contains("YYYY")) {
             throw new InvalidSchemaPatternException("Y muss als YY oder YYYY enthalten sein");
         }
@@ -704,8 +708,8 @@ public class CaseNumberGenerator {
         if (pattern.indexOf('R') > -1 && !pattern.contains("RRR")) {
             throw new InvalidSchemaPatternException("R muss mindestens als RRR (max. 999 Akten) enthalten sein");
         }
-        if (pattern.indexOf('N') > -1 && !pattern.contains("NNNNN")) {
-            throw new InvalidSchemaPatternException("N muss mindestens als NNNNN (max. 99999 Akten)");
+        if (pattern.indexOf('N') > -1 && !pattern.contains("NNNN")) {
+            throw new InvalidSchemaPatternException("N muss mindestens als NNNN (max. 9999 Akten)");
         }
 
         int allNumberComponents = 0;
@@ -761,18 +765,18 @@ public class CaseNumberGenerator {
         return true;
     }
 
-    public static String getNextCaseNumber(ArrayList<String> allExisting, String pattern, int startFromIndex) throws InvalidSchemaPatternException {
+    public static String getNextCaseNumber(ArrayList<String> allExisting, String pattern, int startFromIndex, int increment) throws InvalidSchemaPatternException {
 
         compilePattern(pattern);
 
-        return next(allExisting, pattern, startFromIndex);
+        return next(allExisting, pattern, startFromIndex, increment);
     }
 
-    public static String getNextCaseNumber(ArrayList<String> allExisting, String pattern, Date date, int startFromIndex) throws InvalidSchemaPatternException {
+    public static String getNextCaseNumber(ArrayList<String> allExisting, String pattern, Date date, int startFromIndex, int increment) throws InvalidSchemaPatternException {
 
         compilePattern(pattern);
 
-        return next(allExisting, pattern, date, startFromIndex);
+        return next(allExisting, pattern, date, startFromIndex, increment);
     }
 
     public static String getExtension(boolean extension, String dividerMain, String dividerExt, boolean bPrefix, String prefix, boolean bSuffix, String suffix, boolean bUserAbbr, String userAbbr, boolean bGroupAbbr, String groupAbbr) throws Exception {
@@ -821,11 +825,11 @@ public class CaseNumberGenerator {
         return "";
     }
 
-    private static synchronized String next(ArrayList<String> allExisting, String pattern, int startFromIndex) throws InvalidSchemaPatternException {
-        return next(allExisting, pattern, new Date(), startFromIndex);
+    private static synchronized String next(ArrayList<String> allExisting, String pattern, int startFromIndex, int increment) throws InvalidSchemaPatternException {
+        return next(allExisting, pattern, new Date(), startFromIndex, increment);
     }
 
-    private static synchronized String next(ArrayList<String> allExisting, String pattern, Date date, int startFromIndex) throws InvalidSchemaPatternException {
+    private static synchronized String next(ArrayList<String> allExisting, String pattern, Date date, int startFromIndex, int increment) throws InvalidSchemaPatternException {
 
         SimpleDateFormat shortYear = new SimpleDateFormat("yy");
         SimpleDateFormat longYear = new SimpleDateFormat("yyyy");
@@ -892,6 +896,9 @@ public class CaseNumberGenerator {
         } while (allExisting.contains(new String(patternChar)));
         pattern = new String(patternChar);
 
+        if(increment<1 || increment>10)
+            increment=1;
+        
         int globalIndex = 1;
         if (startFromIndex != -1) {
             globalIndex = startFromIndex;
@@ -935,7 +942,7 @@ public class CaseNumberGenerator {
                     if (DBG) {
                         System.out.println("80");
                     }
-                    globalIndex++;
+                    globalIndex=globalIndex+increment;
                     dfs = df.format(globalIndex);
                 }
 
@@ -991,8 +998,8 @@ public class CaseNumberGenerator {
             }
             currentPattern = new String(nPatternChar);
 
-            localIndex++;
-            globalIndex++;
+            localIndex=localIndex+increment;
+            globalIndex=globalIndex+increment;
 
         } while (allExisting.contains(currentPattern));
 

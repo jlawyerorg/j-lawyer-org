@@ -686,11 +686,13 @@ public class ArchiveFileReviewsOverviewPanel extends javax.swing.JPanel implemen
     
     private String detailsEditorClass;
     private Image backgroundImage=null;
+    private boolean initializing=false;
     
     /**
      * Creates new form ArchiveFileReviewsOverviewPanel
      */
     public ArchiveFileReviewsOverviewPanel() {
+        this.initializing=true;
         initComponents();
         if (UserSettings.getInstance().isCurrentUserInRole(UserSettings.ROLE_WRITECASE)) {
             this.detailsEditorClass = EditArchiveFileDetailsPanel.class.getName();
@@ -703,6 +705,15 @@ public class ArchiveFileReviewsOverviewPanel extends javax.swing.JPanel implemen
         this.tblResults.setModel(model);
         
         this.cmdRefreshActionPerformed(null);
+        
+        String lastTab=UserSettings.getInstance().getSetting(UserSettings.CONF_CALENDAR_DEFAULTTAB, jTabbedPane1.getTitleAt(0));
+        for(int i=0;i<this.jTabbedPane1.getTabCount();i++) {
+            if(this.jTabbedPane1.getTitleAt(i).equals(lastTab)) {
+                this.jTabbedPane1.setSelectedIndex(i);
+                break;
+            }
+        }
+        this.initializing=false;
         
     }
     
@@ -795,6 +806,12 @@ public class ArchiveFileReviewsOverviewPanel extends javax.swing.JPanel implemen
                 .addContainerGap())
         );
 
+        jTabbedPane1.addChangeListener(new javax.swing.event.ChangeListener() {
+            public void stateChanged(javax.swing.event.ChangeEvent evt) {
+                jTabbedPane1StateChanged(evt);
+            }
+        });
+
         tblResults.setModel(new javax.swing.table.DefaultTableModel(
             new Object [][] {
                 {null, null, null, null},
@@ -833,7 +850,7 @@ public class ArchiveFileReviewsOverviewPanel extends javax.swing.JPanel implemen
                         .add(jLabel18)
                         .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
                         .add(lblPanelTitle, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
-                    .add(jTabbedPane1, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 879, Short.MAX_VALUE))
+                    .add(jTabbedPane1, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 879, Short.MAX_VALUE))
                 .addContainerGap())
         );
         layout.setVerticalGroup(
@@ -933,6 +950,11 @@ public class ArchiveFileReviewsOverviewPanel extends javax.swing.JPanel implemen
     private void tblResultsMousePressed(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_tblResultsMousePressed
         TableUtils.handleRowClick(tblResults, evt);
     }//GEN-LAST:event_tblResultsMousePressed
+
+    private void jTabbedPane1StateChanged(javax.swing.event.ChangeEvent evt) {//GEN-FIRST:event_jTabbedPane1StateChanged
+        if(!this.initializing)
+            UserSettings.getInstance().setSetting(UserSettings.CONF_CALENDAR_DEFAULTTAB, jTabbedPane1.getTitleAt(jTabbedPane1.getSelectedIndex()));
+    }//GEN-LAST:event_jTabbedPane1StateChanged
     
     
     // Variables declaration - do not modify//GEN-BEGIN:variables

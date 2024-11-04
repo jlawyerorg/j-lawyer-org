@@ -699,6 +699,7 @@ public class PlaceHolders {
 
     public static final String _NAME = "{{###_NAME}}";
     public static final String _VORNAME = "{{###_VORNAME}}";
+    public static final String _VORNAME2 = "{{###_VORNAME2}}";
     public static final String _FIRMA_ALIAS = "{{###_FIRMA}}"; // Alias for UNTERNEHMEN
     public static final String _UNTERNEHMEN = "{{###_UNTERNEHMEN}}";
     public static final String _ABTLG = "{{###_ABTLG}}";
@@ -719,6 +720,8 @@ public class PlaceHolders {
     public static final String _BANK = "{{###_BANK}}";
     public static final String _BLZ = "{{###_BLZ}}";
     public static final String _KONTONR = "{{###_KONTONR}}";
+    public static final String _SEPAREF = "{{###_SEPAREF}}";
+    public static final String _SEPASEIT = "{{###_SEPASEIT}}";
     public static final String _RECHTSSCHUTZ = "{{###_RECHTSSCHUTZ}}";
     public static final String _VRECHTSSCHUTZ = "{{###_VRECHTSSCHUTZ}}";
     public static final String _KFZVERS = "{{###_KFZVERS}}";
@@ -760,19 +763,49 @@ public class PlaceHolders {
     public static final String AKTE_SCHADENNR = "{{AKTE_SCHADENNR}}";
     public static final String AKTE_GEGENSTANDSWERT = "{{AKTE_GEGENSTANDSWERT}}";
     public static final String AKTE_WEGEN = "{{AKTE_WEGEN}}";
-    public static final String AKTE_ANWALT = "{{AKTE_ANWALT}}";
     public static final String AKTE_ERSTELLT = "{{AKTE_ERSTELLT}}";
+    
     // Anzeigename
     public static final String AKTE_ANWALT_AN = "{{AKTE_ANWALT_AN}}";
-    public static final String AKTE_SACHBEARBEITER = "{{AKTE_SACHBEARBEITER}}";
-    // Anzeigename
     public static final String AKTE_SACHBEARBEITER_AN = "{{AKTE_SACHBEARBEITER_AN}}";
+    
+    //Nutzernamen
+    public static final String AKTE_SACHBEARBEITER = "{{AKTE_SACHBEARBEITER}}";
+    public static final String AKTE_ANWALT = "{{AKTE_ANWALT}}";
+    
+    // Kürzel
+    public static final String AKTE_SACHBEARBEITER_KRZ = "{{AKTE_SACHBEARBEITER_KRZ}}";
+    public static final String AKTE_ANWALT_KRZ = "{{AKTE_ANWALT_KRZ}}";
+    
+    
     public static final String DOK_DZ = "{{DOK_DZ}}";
     public static final String AKTE_EIGENE1 = "{{AKTE_EIGENE1}}";
     public static final String AKTE_EIGENE2 = "{{AKTE_EIGENE2}}";
     public static final String AKTE_EIGENE3 = "{{AKTE_EIGENE3}}";
     
-    public static final String AUTOR_AN = "{{AUTOR_AN}}";
+    // user / author
+    public static final String USER_AN = "{{USER_AN}}";
+    public static final String USER_EMAIL = "{{USER_EMAIL}}";
+    public static final String USER_KRZ = "{{USER_KRZ}}";
+    public static final String USER_VORNAME = "{{USER_VORNAME}}";
+    public static final String USER_NAME = "{{USER_NAME}}";
+    public static final String USER_UNTERNEHMEN = "{{USER_UNTERNEHMEN}}";
+    public static final String USER_FKT = "{{USER_FKT}}";
+    public static final String USER_STRASSE = "{{USER_STRASSE}}";
+    public static final String USER_ZUSATZ = "{{USER_ZUSATZ}}";
+    public static final String USER_PLZ = "{{USER_PLZ}}";
+    public static final String USER_ORT = "{{USER_ORT}}";
+    public static final String USER_LAND = "{{USER_LAND}}";
+    public static final String USER_TEL = "{{USER_TEL}}";
+    public static final String USER_FAX = "{{USER_FAX}}";
+    public static final String USER_MOBIL = "{{USER_MOBIL}}";
+    public static final String USER_WWW = "{{USER_WWW}}";
+    public static final String USER_BANK = "{{USER_BANK}}";
+    public static final String USER_BIC = "{{USER_BIC}}";
+    public static final String USER_IBAN = "{{USER_IBAN}}";
+    public static final String USER_STEUERNR = "{{USER_STEUERNR}}";
+    public static final String USER_USTIDNR = "{{USER_USTIDNR}}";
+    
 
     public static final String TABELLE_1 = "{{TABELLE_1}}";
     
@@ -788,15 +821,41 @@ public class PlaceHolders {
     public static final String BEL_TOTAL = "{{BEL_TOTAL}}";
     public static final String BEL_WHRG = "{{BEL_WHRG}}";
     public static final String BEL_TABELLE = "{{BEL_TABELLE}}";
+    public static final String BEL_GIROCODE = "{{BEL_GIROCODE}}";
+    // invoice sender
+    public static final String BEL_ABSAN = "{{BEL_ABSAN}}";
+    public static final String BEL_ABSEMAIL = "{{BEL_ABSEMAIL}}";
+    public static final String BEL_ABSKRZ = "{{BEL_ABSKRZ}}";
+    public static final String BEL_ABSVORNAME = "{{BEL_ABSVORNAME}}";
+    public static final String BEL_ABSNAME = "{{BEL_ABSNAME}}";
+    public static final String BEL_ABSUNTERNEHMEN = "{{BEL_ABSUNTERNEHMEN}}";
+    public static final String BEL_ABSFKT = "{{BEL_ABSFKT}}";
+    public static final String BEL_ABSSTRASSE = "{{BEL_ABSSTRASSE}}";
+    public static final String BEL_ABSZUSATZ = "{{BEL_ABSZUSATZ}}";
+    public static final String BEL_ABSPLZ = "{{BEL_ABSPLZ}}";
+    public static final String BEL_ABSORT = "{{BEL_ABSORT}}";
+    public static final String BEL_ABSLAND = "{{BEL_ABSLAND}}";
+    public static final String BEL_ABSTEL = "{{BEL_ABSTEL}}";
+    public static final String BEL_ABSFAX = "{{BEL_ABSFAX}}";
+    public static final String BEL_ABSMOBIL = "{{BEL_ABSMOBIL}}";
+    public static final String BEL_ABSWWW = "{{BEL_ABSWWW}}";
+    public static final String BEL_ABSBANK = "{{BEL_ABSBANK}}";
+    public static final String BEL_ABSBIC = "{{BEL_ABSBIC}}";
+    public static final String BEL_ABSIBAN = "{{BEL_ABSIBAN}}";
+    public static final String BEL_ABSSTEUERNR = "{{BEL_ABSSTEUERNR}}";
+    public static final String BEL_ABSUSTIDNR = "{{BEL_ABSUSTIDNR}}";
     
     public static final String ZE_TABELLE = "{{ZE_TABELLE}}";
     
+    public static final String INGO_TEXT = "{{INGO_TEXT}}";
+    
 
-    public static final ArrayList<String> ALLTABLEPLACEHOLDERS = new ArrayList<String>();
+    public static final ArrayList<String> ALLTABLEPLACEHOLDERS = new ArrayList<>();
     
     static {
         ALLTABLEPLACEHOLDERS.add(TABELLE_1);
         ALLTABLEPLACEHOLDERS.add(BEL_TABELLE);
+        ALLTABLEPLACEHOLDERS.add(BEL_GIROCODE);
         ALLTABLEPLACEHOLDERS.add(ZE_TABELLE);
     }
     
@@ -815,14 +874,15 @@ public class PlaceHolders {
     }
     
     public static String getPlaceHolderForType(String genericPlaceHolder, String typeSpecificPrefix) {
-        return genericPlaceHolder.replaceAll("###", typeSpecificPrefix);
+        return genericPlaceHolder.replace("###", typeSpecificPrefix);
     }
 
     public static ArrayList<String> getAllPlaceHolders(List<String> allPartyTypesPlaceHolders, Collection<String> formsPlaceHolders) {
         
         ArrayList<String> ALLPLACEHOLDERS = new ArrayList<>();
         
-        ALLPLACEHOLDERS.addAll(formsPlaceHolders);
+        if(formsPlaceHolders!=null)
+            ALLPLACEHOLDERS.addAll(formsPlaceHolders);
 
         ALLPLACEHOLDERS.add(PROFIL_FIRMA);
         ALLPLACEHOLDERS.add(PROFIL_STRASSE);
@@ -849,61 +909,64 @@ public class PlaceHolders {
 
         for (String typePlaceHolder : allPartyTypesPlaceHolders) {
 
-            ALLPLACEHOLDERS.add(_NAME.replaceAll("###", typePlaceHolder));
-            ALLPLACEHOLDERS.add(_VORNAME.replaceAll("###", typePlaceHolder));
-            ALLPLACEHOLDERS.add(_FIRMA_ALIAS.replaceAll("###", typePlaceHolder));
-            ALLPLACEHOLDERS.add(_UNTERNEHMEN.replaceAll("###", typePlaceHolder));
-            ALLPLACEHOLDERS.add(_ABTLG.replaceAll("###", typePlaceHolder));
-            ALLPLACEHOLDERS.add(_TITEL_ALIAS.replaceAll("###", typePlaceHolder));
-            ALLPLACEHOLDERS.add(_ANREDE1.replaceAll("###", typePlaceHolder));
-            ALLPLACEHOLDERS.add(_ANREDE_ALIAS.replaceAll("###", typePlaceHolder));
-            ALLPLACEHOLDERS.add(_BEGRUESSUNG.replaceAll("###", typePlaceHolder));
-            ALLPLACEHOLDERS.add(_NACHTEXT.replaceAll("###", typePlaceHolder));
-            ALLPLACEHOLDERS.add(_STRASSE.replaceAll("###", typePlaceHolder));
-            ALLPLACEHOLDERS.add(_ORT.replaceAll("###", typePlaceHolder));
-            ALLPLACEHOLDERS.add(_PLZ.replaceAll("###", typePlaceHolder));
-            ALLPLACEHOLDERS.add(_LAND.replaceAll("###", typePlaceHolder));
-            ALLPLACEHOLDERS.add(_TEL.replaceAll("###", typePlaceHolder));
-            ALLPLACEHOLDERS.add(_MOBIL.replaceAll("###", typePlaceHolder));
-            ALLPLACEHOLDERS.add(_FAX.replaceAll("###", typePlaceHolder));
-            ALLPLACEHOLDERS.add(_EMAIL.replaceAll("###", typePlaceHolder));
-            ALLPLACEHOLDERS.add(_WWW.replaceAll("###", typePlaceHolder));
-            ALLPLACEHOLDERS.add(_BANK.replaceAll("###", typePlaceHolder));
-            ALLPLACEHOLDERS.add(_BLZ.replaceAll("###", typePlaceHolder));
-            ALLPLACEHOLDERS.add(_KONTONR.replaceAll("###", typePlaceHolder));
-            ALLPLACEHOLDERS.add(_RECHTSSCHUTZ.replaceAll("###", typePlaceHolder));
-            ALLPLACEHOLDERS.add(_VRECHTSSCHUTZ.replaceAll("###", typePlaceHolder));
-            ALLPLACEHOLDERS.add(_KFZVERS.replaceAll("###", typePlaceHolder));
-            ALLPLACEHOLDERS.add(_EIGENE1.replaceAll("###", typePlaceHolder));
-            ALLPLACEHOLDERS.add(_EIGENE2.replaceAll("###", typePlaceHolder));
-            ALLPLACEHOLDERS.add(_EIGENE3.replaceAll("###", typePlaceHolder));
-            ALLPLACEHOLDERS.add(_GEB.replaceAll("###", typePlaceHolder));
-            ALLPLACEHOLDERS.add(_AKTE_EIGENE1.replaceAll("###", typePlaceHolder));
-            ALLPLACEHOLDERS.add(_AKTE_EIGENE2.replaceAll("###", typePlaceHolder));
-            ALLPLACEHOLDERS.add(_AKTE_EIGENE3.replaceAll("###", typePlaceHolder));
-            ALLPLACEHOLDERS.add(_AKTE_ZEICHEN.replaceAll("###", typePlaceHolder));
-            ALLPLACEHOLDERS.add(_AKTE_KONTAKT.replaceAll("###", typePlaceHolder));
-            ALLPLACEHOLDERS.add(_ORTSTEIL.replaceAll("###", typePlaceHolder));
-            ALLPLACEHOLDERS.add(_NOTIZ.replaceAll("###", typePlaceHolder));
-            ALLPLACEHOLDERS.add(_STA.replaceAll("###", typePlaceHolder));
-            ALLPLACEHOLDERS.add(_GEBNAME.replaceAll("###", typePlaceHolder));
-            ALLPLACEHOLDERS.add(_GEBORT.replaceAll("###", typePlaceHolder));
-            ALLPLACEHOLDERS.add(_GEST.replaceAll("###", typePlaceHolder));
-            ALLPLACEHOLDERS.add(_USTIDNR.replaceAll("###", typePlaceHolder));
-            ALLPLACEHOLDERS.add(_STEUERNR.replaceAll("###", typePlaceHolder));
-            ALLPLACEHOLDERS.add(_RFORM.replaceAll("###", typePlaceHolder));
-            ALLPLACEHOLDERS.add(_REGNR.replaceAll("###", typePlaceHolder));
-            ALLPLACEHOLDERS.add(_REGGERICHT.replaceAll("###", typePlaceHolder));
-            ALLPLACEHOLDERS.add(_GESCHLECHT.replaceAll("###", typePlaceHolder));
-            ALLPLACEHOLDERS.add(_HAUSNR.replaceAll("###", typePlaceHolder));
-            ALLPLACEHOLDERS.add(_INITIAL.replaceAll("###", typePlaceHolder));
-            ALLPLACEHOLDERS.add(_AGRAD1.replaceAll("###", typePlaceHolder));
-            ALLPLACEHOLDERS.add(_AGRAD2.replaceAll("###", typePlaceHolder));
-            ALLPLACEHOLDERS.add(_BERUF.replaceAll("###", typePlaceHolder));
-            ALLPLACEHOLDERS.add(_FKT.replaceAll("###", typePlaceHolder));
-            ALLPLACEHOLDERS.add(_ZUSATZ.replaceAll("###", typePlaceHolder));
-            ALLPLACEHOLDERS.add(_ANREDE2.replaceAll("###", typePlaceHolder));
-            ALLPLACEHOLDERS.add(_ALTER.replaceAll("###", typePlaceHolder));
+            ALLPLACEHOLDERS.add(_NAME.replace("###", typePlaceHolder));
+            ALLPLACEHOLDERS.add(_VORNAME.replace("###", typePlaceHolder));
+            ALLPLACEHOLDERS.add(_VORNAME2.replace("###", typePlaceHolder));
+            ALLPLACEHOLDERS.add(_FIRMA_ALIAS.replace("###", typePlaceHolder));
+            ALLPLACEHOLDERS.add(_UNTERNEHMEN.replace("###", typePlaceHolder));
+            ALLPLACEHOLDERS.add(_ABTLG.replace("###", typePlaceHolder));
+            ALLPLACEHOLDERS.add(_TITEL_ALIAS.replace("###", typePlaceHolder));
+            ALLPLACEHOLDERS.add(_ANREDE1.replace("###", typePlaceHolder));
+            ALLPLACEHOLDERS.add(_ANREDE_ALIAS.replace("###", typePlaceHolder));
+            ALLPLACEHOLDERS.add(_BEGRUESSUNG.replace("###", typePlaceHolder));
+            ALLPLACEHOLDERS.add(_NACHTEXT.replace("###", typePlaceHolder));
+            ALLPLACEHOLDERS.add(_STRASSE.replace("###", typePlaceHolder));
+            ALLPLACEHOLDERS.add(_ORT.replace("###", typePlaceHolder));
+            ALLPLACEHOLDERS.add(_PLZ.replace("###", typePlaceHolder));
+            ALLPLACEHOLDERS.add(_LAND.replace("###", typePlaceHolder));
+            ALLPLACEHOLDERS.add(_TEL.replace("###", typePlaceHolder));
+            ALLPLACEHOLDERS.add(_MOBIL.replace("###", typePlaceHolder));
+            ALLPLACEHOLDERS.add(_FAX.replace("###", typePlaceHolder));
+            ALLPLACEHOLDERS.add(_EMAIL.replace("###", typePlaceHolder));
+            ALLPLACEHOLDERS.add(_WWW.replace("###", typePlaceHolder));
+            ALLPLACEHOLDERS.add(_BANK.replace("###", typePlaceHolder));
+            ALLPLACEHOLDERS.add(_BLZ.replace("###", typePlaceHolder));
+            ALLPLACEHOLDERS.add(_KONTONR.replace("###", typePlaceHolder));
+            ALLPLACEHOLDERS.add(_SEPAREF.replace("###", typePlaceHolder));
+            ALLPLACEHOLDERS.add(_SEPASEIT.replace("###", typePlaceHolder));
+            ALLPLACEHOLDERS.add(_RECHTSSCHUTZ.replace("###", typePlaceHolder));
+            ALLPLACEHOLDERS.add(_VRECHTSSCHUTZ.replace("###", typePlaceHolder));
+            ALLPLACEHOLDERS.add(_KFZVERS.replace("###", typePlaceHolder));
+            ALLPLACEHOLDERS.add(_EIGENE1.replace("###", typePlaceHolder));
+            ALLPLACEHOLDERS.add(_EIGENE2.replace("###", typePlaceHolder));
+            ALLPLACEHOLDERS.add(_EIGENE3.replace("###", typePlaceHolder));
+            ALLPLACEHOLDERS.add(_GEB.replace("###", typePlaceHolder));
+            ALLPLACEHOLDERS.add(_AKTE_EIGENE1.replace("###", typePlaceHolder));
+            ALLPLACEHOLDERS.add(_AKTE_EIGENE2.replace("###", typePlaceHolder));
+            ALLPLACEHOLDERS.add(_AKTE_EIGENE3.replace("###", typePlaceHolder));
+            ALLPLACEHOLDERS.add(_AKTE_ZEICHEN.replace("###", typePlaceHolder));
+            ALLPLACEHOLDERS.add(_AKTE_KONTAKT.replace("###", typePlaceHolder));
+            ALLPLACEHOLDERS.add(_ORTSTEIL.replace("###", typePlaceHolder));
+            ALLPLACEHOLDERS.add(_NOTIZ.replace("###", typePlaceHolder));
+            ALLPLACEHOLDERS.add(_STA.replace("###", typePlaceHolder));
+            ALLPLACEHOLDERS.add(_GEBNAME.replace("###", typePlaceHolder));
+            ALLPLACEHOLDERS.add(_GEBORT.replace("###", typePlaceHolder));
+            ALLPLACEHOLDERS.add(_GEST.replace("###", typePlaceHolder));
+            ALLPLACEHOLDERS.add(_USTIDNR.replace("###", typePlaceHolder));
+            ALLPLACEHOLDERS.add(_STEUERNR.replace("###", typePlaceHolder));
+            ALLPLACEHOLDERS.add(_RFORM.replace("###", typePlaceHolder));
+            ALLPLACEHOLDERS.add(_REGNR.replace("###", typePlaceHolder));
+            ALLPLACEHOLDERS.add(_REGGERICHT.replace("###", typePlaceHolder));
+            ALLPLACEHOLDERS.add(_GESCHLECHT.replace("###", typePlaceHolder));
+            ALLPLACEHOLDERS.add(_HAUSNR.replace("###", typePlaceHolder));
+            ALLPLACEHOLDERS.add(_INITIAL.replace("###", typePlaceHolder));
+            ALLPLACEHOLDERS.add(_AGRAD1.replace("###", typePlaceHolder));
+            ALLPLACEHOLDERS.add(_AGRAD2.replace("###", typePlaceHolder));
+            ALLPLACEHOLDERS.add(_BERUF.replace("###", typePlaceHolder));
+            ALLPLACEHOLDERS.add(_FKT.replace("###", typePlaceHolder));
+            ALLPLACEHOLDERS.add(_ZUSATZ.replace("###", typePlaceHolder));
+            ALLPLACEHOLDERS.add(_ANREDE2.replace("###", typePlaceHolder));
+            ALLPLACEHOLDERS.add(_ALTER.replace("###", typePlaceHolder));
 
         }
 
@@ -918,12 +981,35 @@ public class PlaceHolders {
         ALLPLACEHOLDERS.add(AKTE_SACHBEARBEITER);
         ALLPLACEHOLDERS.add(AKTE_ANWALT_AN);
         ALLPLACEHOLDERS.add(AKTE_SACHBEARBEITER_AN);
+        ALLPLACEHOLDERS.add(AKTE_SACHBEARBEITER_KRZ);
+        ALLPLACEHOLDERS.add(AKTE_ANWALT_KRZ);
         ALLPLACEHOLDERS.add(AKTE_EIGENE1);
         ALLPLACEHOLDERS.add(AKTE_EIGENE2);
         ALLPLACEHOLDERS.add(AKTE_EIGENE3);
         ALLPLACEHOLDERS.add(AKTE_ERSTELLT);
         
-        ALLPLACEHOLDERS.add(AUTOR_AN);
+        
+        ALLPLACEHOLDERS.add(USER_AN);
+        ALLPLACEHOLDERS.add(USER_KRZ);
+        ALLPLACEHOLDERS.add(USER_EMAIL);
+        ALLPLACEHOLDERS.add(USER_VORNAME);
+        ALLPLACEHOLDERS.add(USER_NAME);
+        ALLPLACEHOLDERS.add(USER_UNTERNEHMEN);
+        ALLPLACEHOLDERS.add(USER_FKT);
+        ALLPLACEHOLDERS.add(USER_STRASSE);
+        ALLPLACEHOLDERS.add(USER_ZUSATZ);
+        ALLPLACEHOLDERS.add(USER_PLZ);
+        ALLPLACEHOLDERS.add(USER_ORT);
+        ALLPLACEHOLDERS.add(USER_LAND);
+        ALLPLACEHOLDERS.add(USER_TEL);
+        ALLPLACEHOLDERS.add(USER_FAX);
+        ALLPLACEHOLDERS.add(USER_MOBIL);
+        ALLPLACEHOLDERS.add(USER_WWW);
+        ALLPLACEHOLDERS.add(USER_BANK);
+        ALLPLACEHOLDERS.add(USER_BIC);
+        ALLPLACEHOLDERS.add(USER_IBAN);
+        ALLPLACEHOLDERS.add(USER_STEUERNR);
+        ALLPLACEHOLDERS.add(USER_USTIDNR);
 
         ALLPLACEHOLDERS.add(DOK_DZ);
         
@@ -937,6 +1023,30 @@ public class PlaceHolders {
         ALLPLACEHOLDERS.add(BEL_DTERSTELLT);
         ALLPLACEHOLDERS.add(BEL_TOTAL);
         ALLPLACEHOLDERS.add(BEL_WHRG);
+        // invoice sender
+        ALLPLACEHOLDERS.add(BEL_ABSAN);
+        ALLPLACEHOLDERS.add(BEL_ABSKRZ);
+        ALLPLACEHOLDERS.add(BEL_ABSEMAIL);
+        ALLPLACEHOLDERS.add(BEL_ABSVORNAME);
+        ALLPLACEHOLDERS.add(BEL_ABSNAME);
+        ALLPLACEHOLDERS.add(BEL_ABSUNTERNEHMEN);
+        ALLPLACEHOLDERS.add(BEL_ABSFKT);
+        ALLPLACEHOLDERS.add(BEL_ABSSTRASSE);
+        ALLPLACEHOLDERS.add(BEL_ABSZUSATZ);
+        ALLPLACEHOLDERS.add(BEL_ABSPLZ);
+        ALLPLACEHOLDERS.add(BEL_ABSORT);
+        ALLPLACEHOLDERS.add(BEL_ABSLAND);
+        ALLPLACEHOLDERS.add(BEL_ABSTEL);
+        ALLPLACEHOLDERS.add(BEL_ABSFAX);
+        ALLPLACEHOLDERS.add(BEL_ABSMOBIL);
+        ALLPLACEHOLDERS.add(BEL_ABSWWW);
+        ALLPLACEHOLDERS.add(BEL_ABSBANK);
+        ALLPLACEHOLDERS.add(BEL_ABSBIC);
+        ALLPLACEHOLDERS.add(BEL_ABSIBAN);
+        ALLPLACEHOLDERS.add(BEL_ABSSTEUERNR);
+        ALLPLACEHOLDERS.add(BEL_ABSUSTIDNR);
+        
+        ALLPLACEHOLDERS.add(INGO_TEXT);
 
         return ALLPLACEHOLDERS;
     }

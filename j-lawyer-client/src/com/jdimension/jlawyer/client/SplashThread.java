@@ -678,6 +678,7 @@ import com.jdimension.jlawyer.client.settings.ThemeSettings;
 import com.jdimension.jlawyer.client.settings.UserSettings;
 import com.jdimension.jlawyer.client.utils.FrameUtils;
 import com.jdimension.jlawyer.client.utils.ThreadUtils;
+import com.jdimension.jlawyer.client.utils.UserUtils;
 import com.jdimension.jlawyer.client.utils.VersionUtils;
 import com.jdimension.jlawyer.persistence.AppOptionGroupBean;
 import com.jdimension.jlawyer.persistence.AppUserBean;
@@ -799,6 +800,7 @@ public class SplashThread implements Runnable {
         AppUserBean[] assistUsers = null;
         AppUserBean[] allUsers = null;
         List<AppUserBean> loginEnabledUsers=null;
+        List<AppUserBean> messagingEnabledUsers=null;
         try {
             SystemManagementRemote mgmt = locator.lookupSystemManagementRemote();
             ArchiveFileServiceRemote afs = locator.lookupArchiveFileServiceRemote();
@@ -818,15 +820,16 @@ public class SplashThread implements Runnable {
             subjectFieldDtos = mgmt.getOptionGroup(OptionConstants.OPTIONGROUP_SUBJECTFIELDS);
             this.updateProgress(false, 9, 5, "");
             updateStatus(java.util.ResourceBundle.getBundle("com/jdimension/jlawyer/client/SplashThread").getString("status.option.5"), true);
-            reviewReasonDtos = mgmt.getOptionGroup(OptionConstants.OPTIONGROUP_REVIEWREASONS);
+            settings.setCalendarEntryTemplates(locator.lookupCalendarServiceRemote().getCalendarEntryTemplates());
             List<String> tagsInUse = afs.searchTagsInUse();
             settings.setArchiveFileTagsInUse(tagsInUse);
             List<String> docTagsInUse = afs.searchDocumentTagsInUse();
             settings.setDocumentTagsInUse(docTagsInUse);
             this.updateProgress(false, 9, 6, "");
             updateStatus(java.util.ResourceBundle.getBundle("com/jdimension/jlawyer/client/SplashThread").getString("status.option.6"), true);
-
+            
             loginEnabledUsers = security.getUsersHavingRole(UserSettings.ROLE_LOGIN);
+            messagingEnabledUsers = security.getMessagingEnabledUsers();
             
             List<AppUserBean> users = mgmt.getUsers();
             List<AppUserBean> lawyers = new ArrayList<>();
@@ -869,7 +872,6 @@ public class SplashThread implements Runnable {
         settings.setComplimentaryCloseDtos(complimentaryCloseDtos);
         settings.setSalutationDtos(salutationDtos);
         settings.setDictateSignDtos(dictateSignDtos);
-        settings.setReviewReasonDtos(reviewReasonDtos);
         settings.setSubjectFieldDtos(subjectFieldDtos);
         settings.setArchiveFileTagDtos(afTagDtos);
         settings.setAddressTagDtos(adrTagDtos);
@@ -879,6 +881,7 @@ public class SplashThread implements Runnable {
         UserSettings.getInstance().setAssistantUsers(assistUsers);
         UserSettings.getInstance().setAllUsers(allUsers);
         UserSettings.getInstance().setLoginEnabledUsers(loginEnabledUsers);
+        UserSettings.getInstance().setMessagingEnabledUsers(messagingEnabledUsers);
         settings.setTitles(titles);
         settings.setTitlesInAddress(titlesInAddress);
         settings.setCountries(countries);
@@ -1062,9 +1065,7 @@ public class SplashThread implements Runnable {
 
     private void openProfileInformationDialog() {
         try {
-            JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
-            boolean currentlyAdmin = locator.lookupSecurityServiceRemote().isAdmin();
-            if (currentlyAdmin) {
+            if (UserUtils.isCurrentUserAdmin()) {
                 ProfileDialog dlg = new ProfileDialog(EditorsRegistry.getInstance().getMainWindow(), true);
                 FrameUtils.centerDialog(dlg, EditorsRegistry.getInstance().getMainWindow());
                 dlg.setVisible(true);
@@ -1079,9 +1080,7 @@ public class SplashThread implements Runnable {
 
     private void openBackupConfigurationDialog() {
         try {
-            JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
-            boolean currentlyAdmin = locator.lookupSecurityServiceRemote().isAdmin();
-            if (currentlyAdmin) {
+            if (UserUtils.isCurrentUserAdmin()) {
                 BackupConfigurationDialog dlg = new BackupConfigurationDialog(EditorsRegistry.getInstance().getMainWindow(), true);
                 FrameUtils.centerDialog(dlg, EditorsRegistry.getInstance().getMainWindow());
                 dlg.setVisible(true);

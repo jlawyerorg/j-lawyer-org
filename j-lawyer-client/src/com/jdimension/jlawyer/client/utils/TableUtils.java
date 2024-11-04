@@ -667,6 +667,8 @@ import com.jdimension.jlawyer.client.editors.EditorsRegistry;
 import com.jdimension.jlawyer.client.launcher.Launcher;
 import com.jdimension.jlawyer.client.launcher.LauncherFactory;
 import com.jdimension.jlawyer.client.launcher.ReadOnlyDocumentStore;
+import com.jdimension.jlawyer.persistence.AddressBean;
+import com.jdimension.jlawyer.persistence.Invoice;
 import java.awt.Point;
 import java.awt.event.InputEvent;
 import java.awt.event.MouseEvent;
@@ -716,6 +718,10 @@ public class TableUtils {
                 } else if(cellValue instanceof Float || cellValue instanceof Double || cellValue instanceof BigDecimal) {
                     if(df!=null)
                         cellValue=df.format(cellValue);
+                } else if(cellValue instanceof AddressBean) {
+                    cellValue=((AddressBean)cellValue).toDisplayName();
+                } else if(cellValue instanceof Invoice) {
+                    cellValue=((Invoice)cellValue).getInvoiceNumber();
                 }
                 excelStr.append(escape(cellValue));
                 if (j < numCols - 1) {
@@ -792,6 +798,13 @@ public class TableUtils {
 
     public static void moveDownwards(JTable table) {
         moveRowBy(table, 1);
+    }
+    
+    public static void clearModel(JTable table) {
+        DefaultTableModel model = (DefaultTableModel) table.getModel();
+        for(int i=model.getRowCount()-1;i>-1;i--) {
+            model.removeRow(i);
+        }
     }
 
     private static void moveRowBy(JTable table, int by) {

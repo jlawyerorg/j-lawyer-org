@@ -664,6 +664,7 @@
 package com.jdimension.jlawyer.client.editors.files;
 
 import com.jdimension.jlawyer.client.editors.EditorsRegistry;
+import com.jdimension.jlawyer.client.editors.documents.CachingDocumentLoader;
 import com.jdimension.jlawyer.client.processing.ProgressIndicator;
 import com.jdimension.jlawyer.client.processing.ProgressableAction;
 import com.jdimension.jlawyer.client.settings.ClientSettings;
@@ -736,7 +737,8 @@ public class DownloadDocumentsAction extends ProgressableAction {
                         if (document.getName().equals(f)) {
                             this.progress("Bereitstellen von " + f + "...");
 
-                            byte[] docContent = caseSvc.getDocumentContent(document.getId());
+                            //byte[] docContent = caseSvc.getDocumentContent(document.getId());
+                            byte[] docContent=CachingDocumentLoader.getInstance().getDocument(document.getId());
                             String newFileName = this.targetDir.getAbsolutePath();
                             if (!newFileName.endsWith(File.separator)) {
                                 newFileName = newFileName + File.separator;

@@ -670,6 +670,7 @@ import com.jdimension.jlawyer.client.editors.ThemeableEditor;
 import com.jdimension.jlawyer.client.editors.files.ArchiveFilePanel;
 import com.jdimension.jlawyer.client.editors.files.EditArchiveFileDetailsPanel;
 import com.jdimension.jlawyer.client.editors.files.ViewArchiveFileDetailsPanel;
+import com.jdimension.jlawyer.client.editors.reporting.ReportingPanel;
 import com.jdimension.jlawyer.client.settings.ClientSettings;
 import com.jdimension.jlawyer.client.settings.UserSettings;
 import com.jdimension.jlawyer.persistence.ArchiveFileBean;
@@ -795,8 +796,8 @@ public class DayCaseHistoryDetailsPanel extends javax.swing.JPanel {
             } else {
                 editor = EditorsRegistry.getInstance().getEditor(ViewArchiveFileDetailsPanel.class.getName());
             }
-            Object historyeditor = EditorsRegistry.getInstance().getCurrentEditor();
-            Image bgi=((HistoryPanel)historyeditor).getBackgroundImage();
+            Object reportingeditor = EditorsRegistry.getInstance().getCurrentEditor();
+            Image bgi=((ReportingPanel)reportingeditor).getBackgroundImage();
             
             if (editor instanceof ThemeableEditor) {
                 // inherit the background to newly created child editors
@@ -823,7 +824,7 @@ public class DayCaseHistoryDetailsPanel extends javax.swing.JPanel {
             }
 
             ((ArchiveFilePanel) editor).setArchiveFileDTO(aFile);
-            ((ArchiveFilePanel) editor).setOpenedFromEditorClass(historyeditor.getClass().getName());
+            ((ArchiveFilePanel) editor).setOpenedFromEditorClass(reportingeditor.getClass().getName());
             EditorsRegistry.getInstance().setMainEditorsPaneView((Component) editor);
         } catch (Exception ex) {
             log.error("Error creating editor from class " + this.getClass().getName(), ex);

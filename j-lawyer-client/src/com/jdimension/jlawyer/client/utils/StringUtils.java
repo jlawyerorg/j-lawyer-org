@@ -700,6 +700,12 @@ public class StringUtils extends ServerStringUtils {
             s="";
         return s;
     }
+
+    public static String cutoff(String name, int maxLength) {
+        if(name.length()>maxLength)
+            name=name.substring(0,maxLength-1) + "...";
+        return name;
+    }
     
     static class SortIgnoreCase implements Comparator<Object> {
         public int compare(Object o1, Object o2) {

@@ -665,15 +665,13 @@ package org.jlawyer.io.rest.v2;
 
 import com.jdimension.jlawyer.persistence.ArchiveFileAddressesBean;
 import com.jdimension.jlawyer.persistence.ArchiveFileBean;
-import com.jdimension.jlawyer.persistence.ArchiveFileHistoryBean;
 import com.jdimension.jlawyer.persistence.ArchiveFileReviewsBean;
 import com.jdimension.jlawyer.persistence.Group;
+import com.jdimension.jlawyer.server.utils.ServerStringUtils;
 import com.jdimension.jlawyer.services.ArchiveFileServiceLocal;
 import com.jdimension.jlawyer.services.CalendarServiceLocal;
 import com.jdimension.jlawyer.services.SecurityServiceLocal;
-import java.util.Arrays;
 import java.util.Collection;
-import java.util.Date;
 import java.util.List;
 import javax.annotation.security.RolesAllowed;
 import javax.ejb.Stateless;
@@ -700,6 +698,8 @@ import org.jlawyer.io.rest.v1.pojo.RestfulCaseV2;
 public class CasesEndpointV2 implements CasesEndpointLocalV2 {
 
     private static final Logger log = Logger.getLogger(CasesEndpointV2.class.getName());
+    
+    private static final String LOOKUP_SECSVC="java:global/j-lawyer-server/j-lawyer-server-ejb/SecurityService!com.jdimension.jlawyer.services.SecurityServiceLocal";
 
     // when seeing something like
     //  com.fasterxml.jackson.databind.JsonMappingException: failed to lazily initialize a collection of role: com.jdimension.jlawyer.persistence.ArchiveFileBean.archiveFileFormsBeanList, could not initialize proxy - no Session
@@ -730,7 +730,10 @@ public class CasesEndpointV2 implements CasesEndpointLocalV2 {
                 return res;
             }
             RestfulCaseV2 c = new RestfulCaseV2();
-            c.setArchived(afb.getArchived());
+            if(afb.isArchived())
+                c.setArchived((short)1);
+            else
+                c.setArchived((short)0);
             c.setAssistant(afb.getAssistant());
             c.setClaimNumber(afb.getClaimNumber());
             c.setClaimValue(afb.getClaimValue());
@@ -751,6 +754,7 @@ public class CasesEndpointV2 implements CasesEndpointLocalV2 {
 
             c.setDateCreated(afb.getDateCreated());
             c.setDateUpdated(afb.getDateChanged());
+            c.setExternalId(afb.getExternalId());
             Response res = Response.ok(c).build();
             return res;
         } catch (Exception ex) {
@@ -785,7 +789,7 @@ public class CasesEndpointV2 implements CasesEndpointLocalV2 {
 
             InitialContext ic = new InitialContext();
             ArchiveFileServiceLocal cases = (ArchiveFileServiceLocal) ic.lookup("java:global/j-lawyer-server/j-lawyer-server-ejb/ArchiveFileService!com.jdimension.jlawyer.services.ArchiveFileServiceLocal");
-            SecurityServiceLocal security = (SecurityServiceLocal) ic.lookup("java:global/j-lawyer-server/j-lawyer-server-ejb/SecurityService!com.jdimension.jlawyer.services.SecurityServiceLocal");
+            SecurityServiceLocal security = (SecurityServiceLocal) ic.lookup(LOOKUP_SECSVC);
 
             ArchiveFileBean c = new ArchiveFileBean();
             c = caseData.toArchiveFileBean(c);
@@ -839,7 +843,7 @@ public class CasesEndpointV2 implements CasesEndpointLocalV2 {
             ArchiveFileServiceLocal cases = (ArchiveFileServiceLocal) ic.lookup("java:global/j-lawyer-server/j-lawyer-server-ejb/ArchiveFileService!com.jdimension.jlawyer.services.ArchiveFileServiceLocal");
             CalendarServiceLocal cal = (CalendarServiceLocal) ic.lookup("java:global/j-lawyer-server/j-lawyer-server-ejb/CalendarService!com.jdimension.jlawyer.services.CalendarServiceLocal");
 
-            SecurityServiceLocal security = (SecurityServiceLocal) ic.lookup("java:global/j-lawyer-server/j-lawyer-server-ejb/SecurityService!com.jdimension.jlawyer.services.SecurityServiceLocal");
+            SecurityServiceLocal security = (SecurityServiceLocal) ic.lookup(LOOKUP_SECSVC);
 
             ArchiveFileBean currentCase = cases.getArchiveFile(caseData.getId());
             if (currentCase == null) {
@@ -851,9 +855,15 @@ public class CasesEndpointV2 implements CasesEndpointLocalV2 {
             currentCase.setArchiveFileReviewsBeanList((List<ArchiveFileReviewsBean>) reviews);
             List<ArchiveFileAddressesBean> adds = cases.getInvolvementDetailsForCase(caseData.getId());
             currentCase.setArchiveFileAddressesBeanList(adds);
+            
+            // only overwrite external ID if the client provided one
+            if(!ServerStringUtils.isEmpty(caseData.getExternalId())) {
+                currentCase.setExternalId(caseData.getExternalId());
+            }
+            
             // file number must not be changed
 
-            currentCase.setArchived(caseData.getArchived());
+            currentCase.setArchived(caseData.getArchived()==1);
             currentCase.setAssistant(caseData.getAssistant());
             currentCase.setClaimNumber(caseData.getClaimNumber());
             currentCase.setClaimValue(caseData.getClaimValue());

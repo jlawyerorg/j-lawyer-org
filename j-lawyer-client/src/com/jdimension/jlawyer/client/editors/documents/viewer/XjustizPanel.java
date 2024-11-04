@@ -728,6 +728,7 @@ public class XjustizPanel extends javax.swing.JPanel implements PreviewPanel {
         cmdOpenXjustizViewer.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons16/fileicons/file_type_xml.png"))); // NOI18N
         cmdOpenXjustizViewer.setText("XJustiz-Viewer");
         cmdOpenXjustizViewer.setToolTipText("XJustiz-Viewer öffnen");
+        cmdOpenXjustizViewer.setEnabled(false);
         cmdOpenXjustizViewer.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 cmdOpenXjustizViewerActionPerformed(evt);
@@ -812,7 +813,8 @@ public class XjustizPanel extends javax.swing.JPanel implements PreviewPanel {
     }
 
     @Override
-    public void showContent(byte[] content) {
+    public void showContent(String documentId, byte[] content) {
+        this.docId=documentId;
         this.xml = new String(content);
 
         String html = null;
@@ -837,6 +839,11 @@ public class XjustizPanel extends javax.swing.JPanel implements PreviewPanel {
             editorPane.setText(htmlContent);
         });
 
+    }
+
+    @Override
+    public String getDocumentId() {
+        return this.docId;
     }
 
 }

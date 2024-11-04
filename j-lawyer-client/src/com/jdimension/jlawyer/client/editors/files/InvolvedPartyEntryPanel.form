@@ -108,6 +108,80 @@
             <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="mnuCopyActionPerformed"/>
           </Events>
         </MenuItem>
+        <Menu class="javax.swing.JMenu" name="mnuFindAddress">
+          <Properties>
+            <Property name="icon" type="javax.swing.Icon" editor="org.netbeans.modules.form.editors2.IconEditor">
+              <Image iconType="3" name="/icons16/place_20dp_0E72B5.png"/>
+            </Property>
+            <Property name="text" type="java.lang.String" value="Adresse auf Karte zeigen"/>
+          </Properties>
+          <SubComponents>
+            <MenuItem class="javax.swing.JMenuItem" name="mnuFindAddressOSM">
+              <Properties>
+                <Property name="icon" type="javax.swing.Icon" editor="org.netbeans.modules.form.editors2.IconEditor">
+                  <Image iconType="3" name="/icons16/place_20dp_0E72B5.png"/>
+                </Property>
+                <Property name="text" type="java.lang.String" value="OpenStreetMap"/>
+                <Property name="toolTipText" type="java.lang.String" value="Karte zur Adresse im Browser &#xf6;ffnen"/>
+              </Properties>
+              <Events>
+                <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="mnuFindAddressOSMActionPerformed"/>
+              </Events>
+              <AuxValues>
+                <AuxValue name="JavaCodeGenerator_SerializeTo" type="java.lang.String" value="InvolvedPartyEntryPanel_mnuFindAddress"/>
+              </AuxValues>
+            </MenuItem>
+            <MenuItem class="javax.swing.JMenuItem" name="mnuFindAddressGoogle">
+              <Properties>
+                <Property name="icon" type="javax.swing.Icon" editor="org.netbeans.modules.form.editors2.IconEditor">
+                  <Image iconType="3" name="/icons16/place_20dp_0E72B5.png"/>
+                </Property>
+                <Property name="text" type="java.lang.String" value="Google Maps"/>
+                <Property name="toolTipText" type="java.lang.String" value="Karte zur Adresse im Browser &#xf6;ffnen"/>
+              </Properties>
+              <Events>
+                <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="mnuFindAddressGoogleActionPerformed"/>
+              </Events>
+              <AuxValues>
+                <AuxValue name="JavaCodeGenerator_SerializeTo" type="java.lang.String" value="InvolvedPartyEntryPanel_mnuFindAddress"/>
+              </AuxValues>
+            </MenuItem>
+          </SubComponents>
+        </Menu>
+        <Menu class="javax.swing.JMenu" name="mnuFindRoute">
+          <Properties>
+            <Property name="icon" type="javax.swing.Icon" editor="org.netbeans.modules.form.editors2.IconEditor">
+              <Image iconType="3" name="/icons16/assistant_direction_20dp_0E72B5.png"/>
+            </Property>
+            <Property name="text" type="java.lang.String" value="Route anzeigen"/>
+          </Properties>
+          <SubComponents>
+            <MenuItem class="javax.swing.JMenuItem" name="mnuFindRouteToAddressOSM">
+              <Properties>
+                <Property name="icon" type="javax.swing.Icon" editor="org.netbeans.modules.form.editors2.IconEditor">
+                  <Image iconType="3" name="/icons16/assistant_direction_20dp_0E72B5.png"/>
+                </Property>
+                <Property name="text" type="java.lang.String" value="OpenStreetMap"/>
+                <Property name="toolTipText" type="java.lang.String" value="Route zur Adresse im Browser &#xf6;ffnen"/>
+              </Properties>
+              <Events>
+                <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="mnuFindRouteToAddressOSMActionPerformed"/>
+              </Events>
+            </MenuItem>
+            <MenuItem class="javax.swing.JMenuItem" name="mnuFindRouteToAddressGoogle">
+              <Properties>
+                <Property name="icon" type="javax.swing.Icon" editor="org.netbeans.modules.form.editors2.IconEditor">
+                  <Image iconType="3" name="/icons16/assistant_direction_20dp_0E72B5.png"/>
+                </Property>
+                <Property name="text" type="java.lang.String" value="Google Maps"/>
+                <Property name="toolTipText" type="java.lang.String" value="Route zur Adresse im Browser &#xf6;ffnen"/>
+              </Properties>
+              <Events>
+                <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="mnuFindRouteToAddressGoogleActionPerformed"/>
+              </Events>
+            </MenuItem>
+          </SubComponents>
+        </Menu>
       </SubComponents>
     </Container>
   </NonVisualComponents>
@@ -239,6 +313,9 @@
       <Events>
         <EventHandler event="mousePressed" listener="java.awt.event.MouseListener" parameters="java.awt.event.MouseEvent" handler="cmdActionsMousePressed"/>
       </Events>
+      <AuxValues>
+        <AuxValue name="JavaCodeGenerator_SerializeTo" type="java.lang.String" value="InvolvedPartyEntryPanel_cmdActions"/>
+      </AuxValues>
     </Component>
     <Component class="javax.swing.JButton" name="cmdToAddress">
       <Properties>

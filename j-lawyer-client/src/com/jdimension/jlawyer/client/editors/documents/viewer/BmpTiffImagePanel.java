@@ -677,6 +677,8 @@ import org.apache.log4j.Logger;
 public class BmpTiffImagePanel extends javax.swing.JPanel implements PreviewPanel {
 
     private static final Logger log = Logger.getLogger(BmpTiffImagePanel.class.getName());
+    
+    private String documentId=null;
 
     /**
      * Creates new form PlaintextPanel
@@ -685,6 +687,7 @@ public class BmpTiffImagePanel extends javax.swing.JPanel implements PreviewPane
      */
     public BmpTiffImagePanel(byte[] content) {
         initComponents();
+        
         ThreadUtils.updateLabel(this.lblContent, "");
 
     }
@@ -730,8 +733,8 @@ public class BmpTiffImagePanel extends javax.swing.JPanel implements PreviewPane
     }
 
     @Override
-    public void showContent(byte[] content) {
-
+    public void showContent(String documentId, byte[] content) {
+        this.documentId=documentId;
         try {
 
             Image image = ImageIO.read(new ByteArrayInputStream(content));
@@ -755,6 +758,11 @@ public class BmpTiffImagePanel extends javax.swing.JPanel implements PreviewPane
             log.error("Errors loading image");
             ThreadUtils.updateLabel(lblContent, "Vorschau nicht verfügbar");
         }
+    }
+
+    @Override
+    public String getDocumentId() {
+        return this.documentId;
     }
 
 }

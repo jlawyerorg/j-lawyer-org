@@ -36,22 +36,22 @@ receive widespread use, become available for other developers to
 incorporate.  Many developers of free software are heartened and
 encouraged by the resulting cooperation.  However, in the case of
 software used on network servers, this result may fail to come about.
-The GNU General Public License permits making a modified version and
+The GNU General Public License permits making a modified versionInRepository and
 letting the public access it on a server without ever releasing its
 source code to the public.
 
   The GNU Affero General Public License is designed specifically to
 ensure that, in such cases, the modified source code becomes available
 to the community.  It requires the operator of a network server to
-provide the source code of the modified version running there to the
-users of that server.  Therefore, public use of a modified version, on
+provide the source code of the modified versionInRepository running there to the
+users of that server.  Therefore, public use of a modified versionInRepository, on
 a publicly accessible server, gives the public access to the source
-code of the modified version.
+code of the modified versionInRepository.
 
   An older license, called the Affero General Public License and
 published by Affero, was designed to accomplish similar goals.  This is
-a different license, not a version of the Affero GPL, but Affero has
-released a new version of the Affero GPL which permits relicensing under
+a different license, not a versionInRepository of the Affero GPL, but Affero has
+released a new versionInRepository of the Affero GPL which permits relicensing under
 this license.
 
   The precise terms and conditions for copying, distribution and
@@ -61,7 +61,7 @@ modification follow.
 
   0. Definitions.
 
-  "This License" refers to version 3 of the GNU Affero General Public License.
+  "This License" refers to versionInRepository 3 of the GNU Affero General Public License.
 
   "Copyright" also means copyright-like laws that apply to other kinds of
 works, such as semiconductor masks.
@@ -72,7 +72,7 @@ License.  Each licensee is addressed as "you".  "Licensees" and
 
   To "modify" a work means to copy from or adapt all or part of the work
 in a fashion requiring copyright permission, other than the making of an
-exact copy.  The resulting work is called a "modified version" of the
+exact copy.  The resulting work is called a "modified versionInRepository" of the
 earlier work or a work "based on" the earlier work.
 
   A "covered work" means either the unmodified Program or a work based
@@ -299,7 +299,7 @@ the only significant mode of use of the product.
   "Installation Information" for a User Product means any methods,
 procedures, authorization keys, or other information required to install
 and execute modified versions of a covered work in that User Product from
-a modified version of its Corresponding Source.  The information must
+a modified versionInRepository of its Corresponding Source.  The information must
 suffice to ensure that the continued functioning of the modified object
 code is in no case prevented or interfered with solely because
 modification has been made.
@@ -360,7 +360,7 @@ that material) supplement the terms of this License with terms:
 
     c) Prohibiting misrepresentation of the origin of that material, or
     requiring that modified versions of such material be marked in
-    reasonable ways as different from the original version; or
+    reasonable ways as different from the original versionInRepository; or
 
     d) Limiting the use for publicity purposes of names of licensors or
     authors of the material; or
@@ -461,14 +461,14 @@ sale, or importing the Program or any portion of it.
 
   A "contributor" is a copyright holder who authorizes use under this
 License of the Program or a work on which the Program is based.  The
-work thus licensed is called the contributor's "contributor version".
+work thus licensed is called the contributor's "contributor versionInRepository".
 
   A contributor's "essential patent claims" are all patent claims
 owned or controlled by the contributor, whether already acquired or
 hereafter acquired, that would be infringed by some manner, permitted
-by this License, of making, using, or selling its contributor version,
+by this License, of making, using, or selling its contributor versionInRepository,
 but do not include claims that would be infringed only as a
-consequence of further modification of the contributor version.  For
+consequence of further modification of the contributor versionInRepository.  For
 purposes of this definition, "control" includes the right to grant
 patent sublicenses in a manner consistent with the requirements of
 this License.
@@ -476,7 +476,7 @@ this License.
   Each contributor grants you a non-exclusive, worldwide, royalty-free
 patent license under the contributor's essential patent claims, to
 make, use, sell, offer for sale, import and otherwise run, modify and
-propagate the contents of its contributor version.
+propagate the contents of its contributor versionInRepository.
 
   In the following three paragraphs, a "patent license" is any express
 agreement or commitment, however denominated, not to enforce a patent
@@ -541,49 +541,49 @@ License would be to refrain entirely from conveying the Program.
   13. Remote Network Interaction; Use with the GNU General Public License.
 
   Notwithstanding any other provision of this License, if you modify the
-Program, your modified version must prominently offer all users
-interacting with it remotely through a computer network (if your version
+Program, your modified versionInRepository must prominently offer all users
+interacting with it remotely through a computer network (if your versionInRepository
 supports such interaction) an opportunity to receive the Corresponding
-Source of your version by providing access to the Corresponding Source
+Source of your versionInRepository by providing access to the Corresponding Source
 from a network server at no charge, through some standard or customary
 means of facilitating copying of software.  This Corresponding Source
-shall include the Corresponding Source for any work covered by version 3
+shall include the Corresponding Source for any work covered by versionInRepository 3
 of the GNU General Public License that is incorporated pursuant to the
 following paragraph.
 
   Notwithstanding any other provision of this License, you have
 permission to link or combine any covered work with a work licensed
-under version 3 of the GNU General Public License into a single
+under versionInRepository 3 of the GNU General Public License into a single
 combined work, and to convey the resulting work.  The terms of this
 License will continue to apply to the part which is the covered work,
-but the work with which it is combined will remain governed by version
+but the work with which it is combined will remain governed by versionInRepository
 3 of the GNU General Public License.
 
   14. Revised Versions of this License.
 
   The Free Software Foundation may publish revised and/or new versions of
 the GNU Affero General Public License from time to time.  Such new versions
-will be similar in spirit to the present version, but may differ in detail to
+will be similar in spirit to the present versionInRepository, but may differ in detail to
 address new problems or concerns.
 
-  Each version is given a distinguishing version number.  If the
-Program specifies that a certain numbered version of the GNU Affero General
-Public License "or any later version" applies to it, you have the
+  Each versionInRepository is given a distinguishing versionInRepository number.  If the
+Program specifies that a certain numbered versionInRepository of the GNU Affero General
+Public License "or any later versionInRepository" applies to it, you have the
 option of following the terms and conditions either of that numbered
-version or of any later version published by the Free Software
-Foundation.  If the Program does not specify a version number of the
-GNU Affero General Public License, you may choose any version ever published
+versionInRepository or of any later versionInRepository published by the Free Software
+Foundation.  If the Program does not specify a versionInRepository number of the
+GNU Affero General Public License, you may choose any versionInRepository ever published
 by the Free Software Foundation.
 
   If the Program specifies that a proxy can decide which future
 versions of the GNU Affero General Public License can be used, that proxy's
-public statement of acceptance of a version permanently authorizes you
-to choose that version for the Program.
+public statement of acceptance of a versionInRepository permanently authorizes you
+to choose that versionInRepository for the Program.
 
   Later license versions may give you additional or different
 permissions.  However, no additional obligations are imposed on any
 author or copyright holder as a result of your choosing to follow a
-later version.
+later versionInRepository.
 
   15. Disclaimer of Warranty.
 
@@ -635,8 +635,8 @@ the "copyright" line and a pointer to where the full notice is found.
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU Affero General Public License as published by
-    the Free Software Foundation, either version 3 of the License, or
-    (at your option) any later version.
+    the Free Software Foundation, either versionInRepository 3 of the License, or
+    (at your option) any later versionInRepository.
 
     This program is distributed in the hope that it will be useful,
     but WITHOUT ANY WARRANTY; without even the implied warranty of
@@ -663,12 +663,14 @@ For more information on this, and how to apply and follow the GNU AGPL, see
  */
 package com.jdimension.jlawyer.client.plugins.form;
 
+import com.jdimension.jlawyer.pojo.FormPluginSetting;
 import com.jdimension.jlawyer.client.settings.ClientSettings;
 import com.jdimension.jlawyer.client.utils.FileUtils;
 import com.jdimension.jlawyer.client.utils.VersionUtils;
 import com.jdimension.jlawyer.persistence.ArchiveFileBean;
 import com.jdimension.jlawyer.persistence.FormTypeArtefactBean;
 import com.jdimension.jlawyer.persistence.FormTypeBean;
+import com.jdimension.jlawyer.pojo.ServerFormPlugin;
 import com.jdimension.jlawyer.services.FormsServiceRemote;
 import com.jdimension.jlawyer.services.JLawyerServiceLocator;
 import groovy.util.GroovyScriptEngine;
@@ -687,32 +689,40 @@ import org.apache.log4j.Logger;
  *
  * @author jens
  */
-public class FormPlugin implements Comparable {
+public class FormPlugin extends ServerFormPlugin implements Comparable {
 
+    public static final int STATE_INSTALLED = 10;
+    public static final int STATE_INSTALLING = 11;
+    public static final int STATE_NOT_INSTALLED = 20;
+    public static final int STATE_INSTALLED_UPDATEAVAILABLE = 30;
+    
     private static final Logger log = Logger.getLogger(FormPlugin.class.getName());
 
-    public static final String TYPE_PLUGIN = "plugin";
-    public static final String TYPE_LIBRARY = "library";
-
-    private String name = null;
-    private String id = null;
     private ArchiveFileBean caseDto = null;
-    private String version = null;
-    private String url = null;
-    private String forVersion = null;
-    private String description = null;
-    private String placeHolder = null;
-    private String type = null;
-    private String[] dependsOn = new String[0];
-    private ArrayList<String> files = new ArrayList<String>();
+    private int state=STATE_NOT_INSTALLED;
+    private String versionInstalled=null;
     
-    protected ArrayList<FormPluginSetting> settings=new ArrayList<>();
-
     Class scriptClass = null;
     Object scriptInstance = null;
     private JPanel ui = null;
 
     public FormPlugin() {
+        super();
+    }
+    
+    public FormPlugin(ServerFormPlugin sfp) {
+        super();
+        this.dependsOn=sfp.getDependsOn();
+        this.description=sfp.getDescription();
+        this.files=sfp.getFiles();
+        this.forVersion=sfp.getForVersion();
+        this.id=sfp.getId();
+        this.name=sfp.getName();
+        this.placeHolder=sfp.getPlaceHolder();
+        this.settings=sfp.getSettings();
+        this.type=sfp.getType();
+        this.url=sfp.getUrl();
+        this.versionInRepository=sfp.getVersionInRepository();
     }
 
     public ArrayList<String> getPlaceHolders() {
@@ -795,16 +805,6 @@ public class FormPlugin implements Comparable {
         return null;
     }
 
-    private FormTypeBean toFormTypeBean() {
-        FormTypeBean ftb = new FormTypeBean();
-        ftb.setId(this.id);
-        ftb.setPlaceHolder(this.placeHolder);
-        ftb.setVersion(this.version);
-        ftb.setName(this.name);
-        ftb.setUsageType(this.type);
-        return ftb;
-    }
-
     public void update() throws Exception {
         try {
             ClientSettings cSettings = ClientSettings.getInstance();
@@ -814,7 +814,7 @@ public class FormPlugin implements Comparable {
             FormTypeBean newFormType = forms.getFormType(this.id);
             newFormType.setName(this.name);
             newFormType.setPlaceHolder(this.placeHolder);
-            newFormType.setVersion(this.version);
+            newFormType.setVersion(this.versionInRepository);
             newFormType = forms.updateFormType(newFormType);
 
             forms.removeFormTypeArtefacts(this.id);
@@ -940,93 +940,6 @@ public class FormPlugin implements Comparable {
         return this.getName();
     }
 
-    /**
-     * @return the name
-     */
-    public String getName() {
-        return name;
-    }
-
-    /**
-     * @param name the name to set
-     */
-    public void setName(String name) {
-        this.name = name;
-    }
-
-    /**
-     * @return the version
-     */
-    public String getVersion() {
-        return version;
-    }
-
-    /**
-     * @param version the version to set
-     */
-    public void setVersion(String version) {
-        this.version = version;
-    }
-
-    /**
-     * @return the forVersion
-     */
-    public String getForVersion() {
-        return forVersion;
-    }
-
-    /**
-     * @param forVersion the forVersion to set
-     */
-    public void setForVersion(String forVersion) {
-        this.forVersion = forVersion;
-    }
-
-    /**
-     * @return the files
-     */
-    public ArrayList<String> getFiles() {
-        return files;
-    }
-
-    /**
-     * @param files the files to set
-     */
-    public void setFiles(ArrayList<String> files) {
-        this.files = files;
-    }
-
-    /**
-     * @return the url
-     */
-    public String getUrl() {
-        return url;
-    }
-
-    /**
-     * @param url the url to set
-     */
-    public void setUrl(String url) {
-        this.url = url;
-        if (!this.url.endsWith("/")) {
-            this.url = this.url + "/";
-        }
-    }
-
-    /**
-     * @return the description
-     */
-    public String getDescription() {
-        return description;
-    }
-
-    /**
-     * @param description the description to set
-     */
-    public void setDescription(String description) {
-        this.description = description;
-    }
-
     @Override
     public int compareTo(Object o) {
         if (o instanceof FormPlugin) {
@@ -1034,62 +947,6 @@ public class FormPlugin implements Comparable {
         } else {
             return -1;
         }
-    }
-
-    /**
-     * @return the id
-     */
-    public String getId() {
-        return id;
-    }
-
-    /**
-     * @param id the id to set
-     */
-    public void setId(String id) {
-        this.id = id;
-    }
-
-    /**
-     * @return the placeHolder
-     */
-    public String getPlaceHolder() {
-        return placeHolder;
-    }
-
-    /**
-     * @param placeHolder the placeHolder to set
-     */
-    public void setPlaceHolder(String placeHolder) {
-        this.placeHolder = placeHolder;
-    }
-
-    /**
-     * @return the type
-     */
-    public String getType() {
-        return type;
-    }
-
-    /**
-     * @param type the type to set
-     */
-    public void setType(String type) {
-        this.type = type;
-    }
-
-    /**
-     * @return the dependsOn
-     */
-    public String[] getDependsOn() {
-        return dependsOn;
-    }
-
-    /**
-     * @param dependsOn the dependsOn to set
-     */
-    public void setDependsOn(String[] dependsOn) {
-        this.dependsOn = dependsOn;
     }
 
     /**
@@ -1107,21 +964,31 @@ public class FormPlugin implements Comparable {
     }
 
     /**
-     * @return the settings
+     * @return the state
      */
-    public ArrayList<FormPluginSetting> getSettings() {
-        return settings;
-    }
-    
-    public boolean hasSettings() {
-        return !(this.settings.isEmpty());
+    public int getState() {
+        return state;
     }
 
     /**
-     * @param settings the settings to set
+     * @param state the state to set
      */
-    public void setSettings(ArrayList<FormPluginSetting> settings) {
-        this.settings = settings;
+    public void setState(int state) {
+        this.state = state;
+    }
+
+    /**
+     * @return the versionInstalled
+     */
+    public String getVersionInstalled() {
+        return versionInstalled;
+    }
+
+    /**
+     * @param versionInRepository the versionInstalled to set
+     */
+    public void setVersionInstalled(String versionInRepository) {
+        this.versionInstalled = versionInRepository;
     }
 
 }

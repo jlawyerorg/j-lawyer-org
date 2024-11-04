@@ -664,9 +664,9 @@ For more information on this, and how to apply and follow the GNU AGPL, see
 package com.jdimension.jlawyer.client.editors.files;
 
 import com.jdimension.jlawyer.client.utils.StringUtils;
+import com.jdimension.jlawyer.client.utils.TimesheetUtils;
 import com.jdimension.jlawyer.persistence.ArchiveFileBean;
 import com.jdimension.jlawyer.persistence.Timesheet;
-import java.text.DecimalFormat;
 
 /**
  *
@@ -678,7 +678,7 @@ public class TimesheetDialogEntryPanel extends javax.swing.JPanel {
     private Timesheet entry=null;
     
     /**
-     * Creates new form TimesheetLogEntryPanel
+     * Creates new form TimesheetDialogEntryPanel
      * @param parent
      */
     public TimesheetDialogEntryPanel(TimesheetLogDialog parent) {
@@ -686,22 +686,21 @@ public class TimesheetDialogEntryPanel extends javax.swing.JPanel {
         this.parent=parent;
     }
     
+    public Timesheet getEntry() {
+        return this.entry;
+    }
+    
     public void setEntry(Timesheet ts) {
         this.entry=ts;
         
-        this.chkLimited.setSelected(ts.isLimited());
-        if(ts.isLimited()) {
-            this.chkLimited.setText("Limit (netto): " + new DecimalFormat("0.00").format(ts.getLimit()));
-        } else {
-            this.chkLimited.setText("nicht limitiert");
-        }
+        TimesheetUtils.renderPieChartLabel(pieChart, ts);
         if(ts.getArchiveFileKey()!=null) {
             ArchiveFileBean dto=ts.getArchiveFileKey();
             this.lblCase.setText(dto.getFileNumber() + " " + StringUtils.nonEmpty(dto.getName()) + " " + StringUtils.nonEmpty(dto.getReason()));
         }
         this.lblName.setText(ts.getName());
-        this.taDescription.setText(ts.getDescription());
-        this.taDescription.setToolTipText(ts.getDescription());
+        this.lblName.setToolTipText(ts.getDescription());
+        this.lblCase.setToolTipText(ts.getDescription());
     }
 
     /**
@@ -716,9 +715,7 @@ public class TimesheetDialogEntryPanel extends javax.swing.JPanel {
         lblCase = new javax.swing.JLabel();
         cmdAddLog = new javax.swing.JButton();
         lblName = new javax.swing.JLabel();
-        jScrollPane1 = new javax.swing.JScrollPane();
-        taDescription = new javax.swing.JTextArea();
-        chkLimited = new javax.swing.JCheckBox();
+        pieChart = new com.jdimension.jlawyer.ui.charts.PieChartLabel();
 
         lblCase.setFont(lblCase.getFont().deriveFont(lblCase.getFont().getStyle() | java.awt.Font.BOLD, lblCase.getFont().getSize()+2));
         lblCase.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/folder.png"))); // NOI18N
@@ -733,13 +730,7 @@ public class TimesheetDialogEntryPanel extends javax.swing.JPanel {
         lblName.setFont(lblName.getFont());
         lblName.setText("jLabel2");
 
-        taDescription.setEditable(false);
-        taDescription.setColumns(20);
-        taDescription.setRows(5);
-        jScrollPane1.setViewportView(taDescription);
-
-        chkLimited.setText("jCheckBox1");
-        chkLimited.setEnabled(false);
+        pieChart.setText("pieChartLabel1");
 
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(this);
         this.setLayout(layout);
@@ -747,15 +738,13 @@ public class TimesheetDialogEntryPanel extends javax.swing.JPanel {
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(layout.createSequentialGroup()
                 .addContainerGap()
+                .addComponent(pieChart, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                     .addGroup(layout.createSequentialGroup()
-                        .addComponent(chkLimited)
-                        .addGap(0, 0, Short.MAX_VALUE))
-                    .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
                         .addComponent(cmdAddLog)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addComponent(lblName, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
-                    .addComponent(jScrollPane1, javax.swing.GroupLayout.Alignment.TRAILING, javax.swing.GroupLayout.DEFAULT_SIZE, 272, Short.MAX_VALUE)
+                        .addComponent(lblName, javax.swing.GroupLayout.DEFAULT_SIZE, 212, Short.MAX_VALUE))
                     .addComponent(lblCase, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
                 .addContainerGap())
         );
@@ -763,15 +752,13 @@ public class TimesheetDialogEntryPanel extends javax.swing.JPanel {
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(layout.createSequentialGroup()
                 .addContainerGap()
-                .addComponent(lblCase, javax.swing.GroupLayout.PREFERRED_SIZE, 24, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
+                    .addComponent(lblCase, javax.swing.GroupLayout.DEFAULT_SIZE, 24, Short.MAX_VALUE)
+                    .addComponent(pieChart, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
                     .addComponent(lblName, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                     .addComponent(cmdAddLog, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(jScrollPane1, javax.swing.GroupLayout.PREFERRED_SIZE, 47, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-                .addComponent(chkLimited)
                 .addContainerGap())
         );
     }// </editor-fold>//GEN-END:initComponents
@@ -782,11 +769,15 @@ public class TimesheetDialogEntryPanel extends javax.swing.JPanel {
 
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
-    private javax.swing.JCheckBox chkLimited;
     private javax.swing.JButton cmdAddLog;
-    private javax.swing.JScrollPane jScrollPane1;
     private javax.swing.JLabel lblCase;
     private javax.swing.JLabel lblName;
-    private javax.swing.JTextArea taDescription;
+    private com.jdimension.jlawyer.ui.charts.PieChartLabel pieChart;
     // End of variables declaration//GEN-END:variables
+
+    void updatePercentageDone(float percentageDone) {
+        if(this.entry!=null)
+            this.entry.setPercentageDone(percentageDone);
+        TimesheetUtils.renderPieChartLabel(pieChart, this.entry);
+    }
 }

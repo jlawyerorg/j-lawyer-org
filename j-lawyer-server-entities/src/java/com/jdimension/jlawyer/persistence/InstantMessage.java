@@ -690,8 +690,8 @@ import javax.xml.bind.annotation.XmlRootElement;
 @XmlRootElement
 @NamedQueries({
     @NamedQuery(name = "InstantMessage.findAll", query = "SELECT p FROM InstantMessage p"),
-    @NamedQuery(name = "InstantMessage.findSince", query = "SELECT a FROM InstantMessage a WHERE a.sent >= :since order by a.sent desc"),
-    @NamedQuery(name = "InstantMessage.findByCaseContext", query = "SELECT a FROM InstantMessage a WHERE a.caseContext = :caseContext order by a.sent desc"),
+    @NamedQuery(name = "InstantMessage.findSince", query = "SELECT a FROM InstantMessage a WHERE a.sent > :since order by a.sent asc"),
+    @NamedQuery(name = "InstantMessage.findByCaseContext", query = "SELECT a FROM InstantMessage a WHERE a.caseContext = :caseContext order by a.sent asc"),
     @NamedQuery(name = "InstantMessage.findByDocumentContext", query = "SELECT a FROM InstantMessage a WHERE a.documentContext = :documentContext"),
     @NamedQuery(name = "InstantMessage.findById", query = "SELECT p FROM InstantMessage p WHERE p.id = :id")})
 public class InstantMessage implements Serializable {
@@ -840,6 +840,33 @@ public class InstantMessage implements Serializable {
                 return m;
         }
         return null;
+    }
+    
+    public boolean hasMentions() {
+        return this.mentions!=null && !this.mentions.isEmpty();
+    }
+    
+    public boolean hasOpenMentions() {
+        if(this.mentions != null && !this.mentions.isEmpty()) {
+            for (InstantMessageMention m : this.getMentions()) {
+                if (!m.isDone()) {
+                    return true;
+                }
+            }
+        }
+        return false;
+    }
+    
+    public int getOpenMentionsCount() {
+        int open=0;
+        if(this.mentions != null && !this.mentions.isEmpty()) {
+            for (InstantMessageMention m : this.getMentions()) {
+                if (!m.isDone()) {
+                    open++;
+                }
+            }
+        }
+        return open;
     }
     
     public boolean hasMentionFor(String principalId) {

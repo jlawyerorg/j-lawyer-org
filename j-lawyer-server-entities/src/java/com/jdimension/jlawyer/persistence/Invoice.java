@@ -681,7 +681,9 @@ import javax.xml.bind.annotation.XmlRootElement;
     @NamedQuery(name = "Invoice.findAll", query = "SELECT a FROM Invoice a"),
     @NamedQuery(name = "Invoice.findById", query = "SELECT a FROM Invoice a WHERE a.id = :id"),
     @NamedQuery(name = "Invoice.findByArchiveFileKey", query = "SELECT a FROM Invoice a WHERE a.archiveFileKey = :archiveFileKey order by a.creationDate desc"),
+    @NamedQuery(name = "Invoice.findByStatus", query = "SELECT a FROM Invoice a WHERE a.status = :status order by a.dueDate desc"),
     @NamedQuery(name = "Invoice.findByInvoiceDocument", query = "SELECT a FROM Invoice a WHERE a.invoiceDocument = :invoiceDocument"),
+    @NamedQuery(name = "Invoice.findByInvoiceNumber", query = "SELECT a FROM Invoice a WHERE a.invoiceNumber = :invoiceNumber"),
     @NamedQuery(name = "Invoice.findByAddress", query = "SELECT a FROM Invoice a WHERE a.contact = :contact")})
 public class Invoice implements Serializable {
     
@@ -702,6 +704,13 @@ public class Invoice implements Serializable {
     public static final int STATUS_PAID=30;
     // cancelled
     public static final int STATUS_CANCELLED=40;
+    
+    public static final String PAYMENTTYPE_DIRECTDEBIT="DIRECTDEBIT";
+    public static final String PAYMENTTYPE_BANKTRANSFER="BANKTRANSFER";
+    public static final String PAYMENTTYPE_OTHER="OTHER";
+    
+    public static final List<String> PAYMENTTYPES=List.of(PAYMENTTYPE_BANKTRANSFER, PAYMENTTYPE_DIRECTDEBIT, PAYMENTTYPE_OTHER);
+    
     
     protected static long serialVersionUID = 1L;
     
@@ -740,26 +749,41 @@ public class Invoice implements Serializable {
     @ManyToOne
     protected ArchiveFileBean archiveFileKey;
     
-    @Column(name = "small_business", columnDefinition = "TINYINT")
+    @Column(name = "small_business")
     protected boolean smallBusiness=true;
     
+    // invoice recipient
     @JoinColumn(name = "contact_id", referencedColumnName = "id")
     @ManyToOne(fetch = FetchType.EAGER)
     protected AddressBean contact;
     
+    // invoice sender
+    @Column(name = "sender_id")
+    private String sender;
+    
     @Column(name = "total")
     protected float total=0f;
+    
+    @Column(name = "total_gross")
+    private float totalGross=0f;
     
     @JoinColumn(name = "invoice_document", referencedColumnName = "id")
     @OneToOne(fetch = FetchType.EAGER)
     protected ArchiveFileDocumentsBean invoiceDocument;
+    
+    @JoinColumn(name = "einvoice_document", referencedColumnName = "id")
+    @OneToOne(fetch = FetchType.EAGER)
+    private ArchiveFileDocumentsBean electronicInvoiceDocument;
     
     @Column(name = "currency")
     protected String currency="EUR";
     
     @Column(name = "last_pool_id")
     protected String lastPoolId;
-
+    
+    @Column(name = "payment_type")
+    private String paymentType;
+    
     public Invoice() {
     }
 
@@ -1079,6 +1103,80 @@ public class Invoice implements Serializable {
      */
     public void setLastPoolId(String lastPoolId) {
         this.lastPoolId = lastPoolId;
+    }
+
+    /**
+     * @return the totalGross
+     */
+    public float getTotalGross() {
+        return totalGross;
+    }
+
+    /**
+     * @param totalGross the totalGross to set
+     */
+    public void setTotalGross(float totalGross) {
+        this.totalGross = totalGross;
+    }
+
+    /**
+     * @return the sender
+     */
+    public String getSender() {
+        return sender;
+    }
+
+    /**
+     * @param sender the sender to set
+     */
+    public void setSender(String sender) {
+        this.sender = sender;
+    }
+
+    /**
+     * @return the electronicInvoiceDocument
+     */
+    public ArchiveFileDocumentsBean getElectronicInvoiceDocument() {
+        return electronicInvoiceDocument;
+    }
+
+    /**
+     * @param electronicInvoiceDocument the electronicInvoiceDocument to set
+     */
+    public void setElectronicInvoiceDocument(ArchiveFileDocumentsBean electronicInvoiceDocument) {
+        this.electronicInvoiceDocument = electronicInvoiceDocument;
+    }
+
+    /**
+     * @return the paymentType
+     */
+    public String getPaymentType() {
+        return paymentType;
+    }
+
+    /**
+     * @param paymentType the paymentType to set
+     */
+    public void setPaymentType(String paymentType) {
+        this.paymentType = paymentType;
+    }
+    
+    public static String paymentTypeForDisplayValue(String dv) {
+        if("Überweisung".equals(dv))
+            return PAYMENTTYPE_BANKTRANSFER;
+        else if("Lastschrift".equals(dv))
+            return PAYMENTTYPE_DIRECTDEBIT;
+        else
+            return PAYMENTTYPE_OTHER;
+    }
+    
+    public static String paymentTypeDisplayValueForType(String type) {
+        if(PAYMENTTYPE_BANKTRANSFER.equals(type))
+            return "Überweisung";
+        else if(PAYMENTTYPE_DIRECTDEBIT.equals(type))
+            return "Lastschrift";
+        else
+            return "Sonstige";
     }
     
 }

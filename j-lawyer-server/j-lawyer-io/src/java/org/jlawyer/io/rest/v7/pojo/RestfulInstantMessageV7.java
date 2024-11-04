@@ -701,6 +701,7 @@ public class RestfulInstantMessageV7 implements Serializable {
                 imm.setDone(rimm.isDone());
                 imm.setId(rimm.getId());
                 imm.setPrincipal(rimm.getPrincipal());
+                imm.setStatusChanged(rimm.getStatusChanged());
                 immList.add(imm);
             }
             im.setMentions(immList);
@@ -726,6 +727,8 @@ public class RestfulInstantMessageV7 implements Serializable {
                 rimm.setDone(imm.isDone());
                 rimm.setId(imm.getId());
                 rimm.setPrincipal(imm.getPrincipal());
+                if(imm.getStatusChanged()!=null)
+                    rimm.setStatusChanged(imm.getStatusChanged());
                 immList.add(rimm);
             }
             m.setMentions(immList);

@@ -663,7 +663,9 @@
  */
 package com.jdimension.jlawyer.services;
 
+import com.jdimension.jlawyer.pojo.PartiesTriplet;
 import com.jdimension.jlawyer.persistence.*;
+import com.jdimension.jlawyer.pojo.imports.ImportLogEntry;
 import com.jdimension.jlawyer.server.services.MonitoringSnapshot;
 import com.jdimension.jlawyer.server.services.ServerInformation;
 import java.io.File;
@@ -794,7 +796,7 @@ public interface SystemManagementRemote {
 
     void removePartyType(PartyTypeBean partyType) throws Exception;
 
-    void addObservedFile(String fileName, byte[] content) throws Exception;
+    void addObservedFile(String fileName, byte[] content, String source) throws Exception;
 
     boolean updatePassword(String newPassword) throws Exception;
 
@@ -812,6 +814,32 @@ public interface SystemManagementRemote {
 
     MappingTable updateMappingTable(MappingTable mt) throws Exception;
 
-    HashMap<String,Object> getPlaceHolderValues(HashMap<String,Object> placeHolders, ArchiveFileBean aFile, List<PartiesTriplet> selectedParties, String dictateSign, GenericCalculationTable calculationTable, HashMap<String,String> formsPlaceHolderValues, AppUserBean caseLawyer, AppUserBean caseAssistant, AppUserBean author, Invoice invoice, GenericCalculationTable invoiceTable, GenericCalculationTable timesheetsTable) throws Exception;
+    HashMap<String,Object> getPlaceHolderValues(HashMap<String,Object> placeHolders, ArchiveFileBean aFile, List<PartiesTriplet> selectedParties, String dictateSign, GenericCalculationTable calculationTable, HashMap<String,String> formsPlaceHolderValues, AppUserBean caseLawyer, AppUserBean caseAssistant, AppUserBean author, Invoice invoice, AppUserBean invoiceSender, GenericCalculationTable invoiceTable, GenericCalculationTable timesheetsTable, byte[] giroCode, String ingoText) throws Exception;
+
+    List<AssistantConfig> getAssistants();
+
+    AssistantConfig addAssistant(AssistantConfig assistant) throws Exception;
+
+    AssistantConfig updateAssistant(AssistantConfig assistant) throws Exception;
+    
+    DocumentNameTemplate addDocumentNameTemplate(DocumentNameTemplate template) throws Exception;
+    
+    DocumentNameTemplate updateDocumentNameTemplate(DocumentNameTemplate template) throws Exception;
+    
+    void removeDocumentNameTemplate(DocumentNameTemplate template) throws Exception;
+    
+    List<DocumentNameTemplate> getDocumentNameTemplates() throws Exception;
+    
+    DocumentNameTemplate getDefaultDocumentNameTemplate() throws Exception;
+    
+    List<String> previewDocumentNamesForTemplate(DocumentNameTemplate template, String fileName) throws Exception;
+    
+    DocumentNameTemplate getDocumentNameTemplate(String templateId) throws Exception;
+
+    byte[] getImportTemplateOds(boolean exportCurrentData, String fullClientVersion) throws Exception;
+
+    List<String> listImportSheets(byte[] odsData, String fullClientVersion) throws Exception;
+
+    List<ImportLogEntry> importSheets(byte[] odsData, List<String> sheetNames, boolean dryRun, String fullClientVersion) throws Exception;
     
 }

@@ -1,0 +1,126 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+    <groupId>org.jlawyer.invoicing</groupId>
+    <artifactId>j-lawyer-invoicing</artifactId>
+    <version>1.0-SNAPSHOT</version>
+    <packaging>jar</packaging>
+    <properties>
+        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+        <maven.compiler.source>11</maven.compiler.source>
+        <maven.compiler.target>11</maven.compiler.target>
+        <exec.mainClass>org.jlawyer.invoicing.JLawyerInvoicing</exec.mainClass>
+    </properties>
+    
+    <dependencies>
+        <dependency>
+            <groupId>org.mustangproject</groupId>
+            <artifactId>validator</artifactId>
+            <classifier>shaded</classifier>
+            <version>2.12.0</version>
+        </dependency>
+    </dependencies>
+    
+    <build>
+        <plugins>
+            <!-- plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-dependency-plugin</artifactId>
+                <version>3.1.2</version>
+                <executions>
+                    <execution>
+                        <id>copy-dependencies</id>
+                        <phase>package</phase>
+                        <goals>
+                            <goal>copy-dependencies</goal>
+                        </goals>
+                        <configuration>
+                            <outputDirectory>${project.basedir}/../j-lawyer-client/lib/j-lawyer-cloud</outputDirectory>
+                            <overWriteReleases>false</overWriteReleases>
+                            <overWriteSnapshots>false</overWriteSnapshots>
+                            <overWriteIfNewer>true</overWriteIfNewer>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin -->
+            <plugin>
+                <artifactId>maven-antrun-plugin</artifactId>
+                <version>1.7</version>
+                <executions>
+                    <execution>
+                        <phase>install</phase>
+                        <configuration>
+                            <target>
+ 
+                                <copy file="${project.build.directory}/j-lawyer-invoicing-${project.version}.jar" tofile="${project.basedir}/../j-lawyer-client/lib/j-lawyer-invoicing/j-lawyer-invoicing.jar"/>
+                                <!-- copy file="${project.build.directory}/j-lawyer-invoicing-${project.version}.jar" tofile="${project.basedir}/../j-lawyer-server/j-lawyer-server-ejb/lib/j-lawyer-invoicing.jar"/ -->
+                                
+                            </target>
+                        </configuration>
+                        <goals>
+                            <goal>run</goal>
+                        </goals>
+                    </execution>
+                </executions>
+            </plugin>
+            
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-shade-plugin</artifactId>
+                <version>3.6.0</version>
+                <executions>
+                    <execution>
+                        <phase>package</phase>
+                        <goals>
+                            <goal>shade</goal>
+                        </goals>
+                        <configuration>
+                            <artifactSet>
+                                <excludes>
+                                    <exclude>org.codehaus.groovy:groovy-all</exclude>
+                                </excludes>
+                            </artifactSet>
+                            <relocations>
+                                <relocation>
+                                    <pattern>com</pattern>
+                                    <shadedPattern>shaded.com</shadedPattern>
+                                    <excludes>
+                                        <!-- exclude>junit.*</exclude -->
+                                        
+                                    </excludes>
+                                </relocation>
+                                <relocation>
+                                    <pattern>jakarta</pattern>
+                                    <shadedPattern>shaded.jakarta</shadedPattern>
+                                </relocation>
+                                <relocation>
+                                    <pattern>org</pattern>
+                                    <shadedPattern>shaded.org</shadedPattern>
+                                    <excludes>
+                                        <exclude>org.jlawyer.**</exclude>
+                                        <!-- Exclude the org.xml package to prevent relocation -->
+                                        <exclude>org.xml.**</exclude>
+                                        <exclude>org.w3c.**</exclude>
+                                        <exclude>org.mustangproject.**</exclude>
+                                    </excludes>
+                                </relocation>
+                            </relocations>
+                            <filters>
+                                <filter>
+                                    <artifact>*:*</artifact>
+                                    <excludes>
+                                        <!-- Exclude all signature files -->
+                                        <exclude>META-INF/*.SF</exclude>
+                                        <exclude>META-INF/*.DSA</exclude>
+                                        <exclude>META-INF/*.RSA</exclude>
+                                    </excludes>
+                                </filter>
+                            </filters>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
+        </plugins>
+    </build>
+    
+</project>

@@ -663,12 +663,33 @@ For more information on this, and how to apply and follow the GNU AGPL, see
  */
 package com.jdimension.jlawyer.client.messenger;
 
+import com.jdimension.jlawyer.client.configuration.PopulateOptionsEditor;
+import com.jdimension.jlawyer.client.editors.EditorsRegistry;
+import com.jdimension.jlawyer.client.editors.ThemeableEditor;
+import com.jdimension.jlawyer.client.editors.files.ArchiveFilePanel;
+import com.jdimension.jlawyer.client.editors.files.EditArchiveFileDetailsPanel;
+import com.jdimension.jlawyer.client.editors.files.ViewArchiveFileDetailsPanel;
+import com.jdimension.jlawyer.client.settings.ClientSettings;
+import com.jdimension.jlawyer.client.settings.UserSettings;
+import com.jdimension.jlawyer.client.utils.FileUtils;
 import com.jdimension.jlawyer.client.utils.StringUtils;
 import com.jdimension.jlawyer.persistence.AppUserBean;
+import com.jdimension.jlawyer.persistence.ArchiveFileBean;
 import com.jdimension.jlawyer.persistence.InstantMessage;
+import com.jdimension.jlawyer.persistence.InstantMessageMention;
+import com.jdimension.jlawyer.services.ArchiveFileServiceRemote;
+import com.jdimension.jlawyer.services.JLawyerServiceLocator;
 import java.awt.Color;
+import java.awt.Component;
+import java.awt.Dimension;
+import java.awt.Image;
 import java.util.List;
+import javax.swing.Icon;
+import javax.swing.ImageIcon;
+import javax.swing.JOptionPane;
 import javax.swing.UIManager;
+import org.apache.log4j.Logger;
+import themes.colors.DefaultColorTheme;
 
 /**
  *
@@ -676,55 +697,104 @@ import javax.swing.UIManager;
  */
 public class MessagePanel extends javax.swing.JPanel {
 
+    private static final Logger log = Logger.getLogger(MessagePanel.class.getName());
+
+    private ImageIcon caseIcon = new javax.swing.ImageIcon(getClass().getResource("/icons/folder.png"));
+    private InstantMessage im = null;
+
+    protected boolean showCaseContext = true;
+    protected Color contextForeground = Color.WHITE;
+    protected int maxDocumentChars = Integer.MAX_VALUE;
+
     /**
      * Creates new form MessagePanel
      */
     public MessagePanel() {
         initComponents();
-        
+
         this.calloutPanelComponent1.setMessage(new InstantMessage());
     }
-    
+
     public MessagePanel(List<AppUserBean> principals, String ownPrincipal, boolean ownMessage, InstantMessage im) {
         initComponents();
-        
-        String sender=im.getSender();
-        if(StringUtils.isEmpty(sender))
-            sender="?";
-        
-        if(sender.length()>0)
-            sender=sender.substring(0,1);
-        
-        sender=sender.toUpperCase();
-        
+
+        this.im = im;
+
         this.lblUser.setForeground(Color.WHITE);
-        this.lblUser.putClientProperty( "JComponent.roundRect", true );
-        this.lblUser.setFont(UIManager.getFont( "h1.font" ));
-        if(ownMessage)
-            this.lblUser.setText("<html><table><tr><td>" + "<p style=\"color:white; background-color:#0E72B5; \">&nbsp;" + sender +"&nbsp;</p></td></tr></table></html>");
-        else
-            this.lblUser.setText("<html><table><tr><td>" + "<p style=\"color:white; background-color:#666666; \">&nbsp;" + sender +"&nbsp;</p></td></tr></table></html>");
-        
-        
-        
+        this.lblUser.putClientProperty("JComponent.roundRect", true);
+        this.lblUser.setFont(UIManager.getFont("h1.font"));
+
+        this.lblUser.setIcon(UserSettings.getInstance().getUserBigIcon(im.getSender()));
+        this.lblUser.setText("");
+        this.lblUser.setToolTipText("von: " + im.getSender());
+        if (ownMessage) {
+            this.lblUser.setBackground(DefaultColorTheme.COLOR_LOGO_BLUE);
+        } else {
+            this.lblUser.setBackground(DefaultColorTheme.COLOR_DARK_GREY);
+        }
+
         this.calloutPanelComponent1.setMessage(im);
         this.calloutPanelComponent1.setOwnMessage(ownMessage);
         this.calloutPanelComponent1.setPrincipals(principals);
         this.calloutPanelComponent1.setOwnPrincipal(ownPrincipal);
+
+        if (im.getCaseContext() != null) {
+            this.lblCaseContext.setText(im.getCaseContext().getFileNumber());
+            this.lblCaseContext.setToolTipText(im.getCaseContext().getFileNumber() + System.lineSeparator() + im.getCaseContext().getName() + System.lineSeparator() + im.getCaseContext().getReason());
+            this.lblCaseContext.setIcon(this.caseIcon);
+        } else {
+            this.lblCaseContext.setText("");
+            this.lblCaseContext.setToolTipText("");
+            this.lblCaseContext.setIcon(null);
+        }
+        this.displayDocumentContext();
     }
 
-//    @Override
-//    public Dimension getMaximumSize() {
-//        return this.calloutPanelComponent1.getPreferredSize(); //To change body of generated methods, choose Tools | Templates.
-//    }
-//
-//    @Override
-//    public Dimension getPreferredSize() {
-//        return this.calloutPanelComponent1.getPreferredSize(); //To change body of generated methods, choose Tools | Templates.
-//    }
+    private void displayDocumentContext() {
+        if (im.getDocumentContext() != null) {
 
-    
-    
+            String docContextValue = im.getDocumentContext().getName();
+            if (docContextValue.length() > this.maxDocumentChars) {
+                docContextValue = docContextValue.substring(0, this.maxDocumentChars - 1) + "...";
+            }
+
+            this.lblDocumentContext.setText(docContextValue);
+            FileUtils fu = FileUtils.getInstance();
+            Icon icon = fu.getFileTypeIcon(im.getDocumentContext().getName());
+            this.lblDocumentContext.setIcon(icon);
+            this.lblDocumentContext.setToolTipText(im.getDocumentContext().getName());
+        } else {
+            this.lblDocumentContext.setText("");
+            this.lblDocumentContext.setToolTipText("");
+            this.lblDocumentContext.setIcon(null);
+
+        }
+    }
+
+    public InstantMessage getMessage() {
+        return this.calloutPanelComponent1.getMessage();
+    }
+
+    public int getCalloutWidth() {
+        return this.getParent().getWidth() - this.lblUser.getWidth() - 30;
+        //return this.getParent().getWidth() - this.calloutPanelComponent1.getX() - this.lblUser.getWidth();
+        //return this.calloutPanelComponent1.getWidth();
+    }
+
+    @Override
+    public Dimension getMaximumSize() {
+        Dimension calloutPreferred = this.calloutPanelComponent1.getPreferredSize(); //To change body of generated methods, choose Tools | Templates.
+        calloutPreferred.setSize(calloutPreferred.getWidth(), calloutPreferred.getHeight() + 8 + 18 + this.lblCaseContext.getPreferredSize().getHeight());
+        return calloutPreferred;
+    }
+
+    @Override
+    public Dimension getPreferredSize() {
+        Dimension calloutPreferred = this.calloutPanelComponent1.getPreferredSize(); //To change body of generated methods, choose Tools | Templates.
+        calloutPreferred.setSize(calloutPreferred.getWidth(), calloutPreferred.getHeight() + 8 + 18 + this.lblCaseContext.getPreferredSize().getHeight());
+        return calloutPreferred;
+    }
+
     /**
      * This method is called from within the constructor to initialize the form.
      * WARNING: Do NOT modify this code. The content of this method is always
@@ -736,20 +806,43 @@ public class MessagePanel extends javax.swing.JPanel {
 
         calloutPanelComponent1 = new com.jdimension.jlawyer.client.messenger.CalloutPanelComponent();
         lblUser = new javax.swing.JLabel();
+        lblCaseContext = new javax.swing.JLabel();
+        lblDocumentContext = new javax.swing.JLabel();
+
+        setOpaque(false);
 
         javax.swing.GroupLayout calloutPanelComponent1Layout = new javax.swing.GroupLayout(calloutPanelComponent1);
         calloutPanelComponent1.setLayout(calloutPanelComponent1Layout);
         calloutPanelComponent1Layout.setHorizontalGroup(
             calloutPanelComponent1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGap(0, 329, Short.MAX_VALUE)
+            .addGap(0, 0, Short.MAX_VALUE)
         );
         calloutPanelComponent1Layout.setVerticalGroup(
             calloutPanelComponent1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGap(0, 0, Short.MAX_VALUE)
+            .addGap(0, 63, Short.MAX_VALUE)
         );
 
         lblUser.setText("jLabel1");
-        lblUser.setOpaque(true);
+
+        lblCaseContext.setFont(lblCaseContext.getFont().deriveFont(lblCaseContext.getFont().getSize()-2f));
+        lblCaseContext.setForeground(new java.awt.Color(255, 255, 255));
+        lblCaseContext.setText("jLabel1");
+        lblCaseContext.setCursor(new java.awt.Cursor(java.awt.Cursor.HAND_CURSOR));
+        lblCaseContext.addMouseListener(new java.awt.event.MouseAdapter() {
+            public void mouseClicked(java.awt.event.MouseEvent evt) {
+                lblCaseContextMouseClicked(evt);
+            }
+        });
+
+        lblDocumentContext.setFont(lblDocumentContext.getFont().deriveFont(lblDocumentContext.getFont().getSize()-2f));
+        lblDocumentContext.setForeground(new java.awt.Color(255, 255, 255));
+        lblDocumentContext.setText("jLabel2");
+        lblDocumentContext.setCursor(new java.awt.Cursor(java.awt.Cursor.HAND_CURSOR));
+        lblDocumentContext.addMouseListener(new java.awt.event.MouseAdapter() {
+            public void mouseClicked(java.awt.event.MouseEvent evt) {
+                lblDocumentContextMouseClicked(evt);
+            }
+        });
 
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(this);
         this.setLayout(layout);
@@ -757,25 +850,164 @@ public class MessagePanel extends javax.swing.JPanel {
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(layout.createSequentialGroup()
                 .addContainerGap()
-                .addComponent(calloutPanelComponent1, javax.swing.GroupLayout.DEFAULT_SIZE, 329, Short.MAX_VALUE)
+                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addComponent(calloutPanelComponent1, javax.swing.GroupLayout.DEFAULT_SIZE, 213, Short.MAX_VALUE)
+                    .addGroup(layout.createSequentialGroup()
+                        .addComponent(lblCaseContext)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                        .addComponent(lblDocumentContext, javax.swing.GroupLayout.DEFAULT_SIZE, 159, Short.MAX_VALUE)))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(lblUser)
-                .addContainerGap())
+                .addComponent(lblUser))
         );
         layout.setVerticalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(layout.createSequentialGroup()
                 .addContainerGap()
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addComponent(calloutPanelComponent1, javax.swing.GroupLayout.DEFAULT_SIZE, 92, Short.MAX_VALUE)
-                    .addComponent(lblUser, javax.swing.GroupLayout.DEFAULT_SIZE, 92, Short.MAX_VALUE))
-                .addContainerGap())
+                    .addComponent(calloutPanelComponent1, javax.swing.GroupLayout.DEFAULT_SIZE, 63, Short.MAX_VALUE)
+                    .addComponent(lblUser, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                    .addComponent(lblCaseContext)
+                    .addComponent(lblDocumentContext))
+                .addGap(6, 6, 6))
         );
     }// </editor-fold>//GEN-END:initComponents
 
+    private void lblCaseContextMouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_lblCaseContextMouseClicked
+        this.contextClicked(false);
+    }//GEN-LAST:event_lblCaseContextMouseClicked
+
+    private void lblDocumentContextMouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_lblDocumentContextMouseClicked
+        this.contextClicked(true);
+    }//GEN-LAST:event_lblDocumentContextMouseClicked
+
+    private void contextClicked(boolean toDocument) {
+
+        if (EditorsRegistry.getInstance().getCurrentEditor() instanceof ArchiveFilePanel && toDocument) {
+            // clicked from within a case
+            ((ArchiveFilePanel)EditorsRegistry.getInstance().getCurrentEditor()).selectDocument(this.lblDocumentContext.getToolTipText());
+        } else {
+            // clicked from within the message center
+            try {
+
+                Object editor = null;
+                if (UserSettings.getInstance().isCurrentUserInRole(UserSettings.ROLE_WRITECASE)) {
+                    editor = EditorsRegistry.getInstance().getEditor(EditArchiveFileDetailsPanel.class.getName());
+                } else {
+                    editor = EditorsRegistry.getInstance().getEditor(ViewArchiveFileDetailsPanel.class.getName());
+                }
+                Object desktop = EditorsRegistry.getInstance().getEditor(MessagingCenterPanel.class.getName());
+                Image bgi = ((MessagingCenterPanel) desktop).getBackgroundImage();
+
+                if (editor instanceof ThemeableEditor) {
+                    // inherit the background to newly created child editors
+                    ((ThemeableEditor) editor).setBackgroundImage(bgi);
+                }
+
+                if (editor instanceof PopulateOptionsEditor) {
+                    ((PopulateOptionsEditor) editor).populateOptions();
+                }
+
+                ArchiveFileBean aFile = null;
+                try {
+                    JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(ClientSettings.getInstance().getLookupProperties());
+                    ArchiveFileServiceRemote fileService = locator.lookupArchiveFileServiceRemote();
+
+                    aFile = fileService.getArchiveFile(this.im.getCaseContext().getId());
+                } catch (Exception ex) {
+                    log.error("Error loading archive file from server", ex);
+                    JOptionPane.showMessageDialog(this, java.text.MessageFormat.format(java.util.ResourceBundle.getBundle("com/jdimension/jlawyer/client/desktop/TaggedEntryPanel").getString("error.loadingcase"), new Object[]{ex.getMessage()}), java.util.ResourceBundle.getBundle("com/jdimension/jlawyer/client/desktop/TaggedEntryPanel").getString("dialog.error"), JOptionPane.ERROR_MESSAGE);
+                }
+
+                if (aFile == null) {
+                    return;
+                }
+
+                if (this.lblDocumentContext.getText() != null && !"".equals(this.lblDocumentContext.getText()) && toDocument) {
+                    ((ArchiveFilePanel) editor).setArchiveFileDTO(aFile, this.lblDocumentContext.getToolTipText());
+                } else {
+                    ((ArchiveFilePanel) editor).setArchiveFileDTO(aFile);
+                }
+                ((ArchiveFilePanel) editor).setOpenedFromEditorClass(MessagingCenterPanel.class.getName());
+                EditorsRegistry.getInstance().setMainEditorsPaneView((Component) editor);
+            } catch (Exception ex) {
+                log.error("Error creating editor from class " + this.getClass().getName(), ex);
+                JOptionPane.showMessageDialog(this, java.text.MessageFormat.format(java.util.ResourceBundle.getBundle("com/jdimension/jlawyer/client/desktop/TaggedEntryPanel").getString("error.loadingeditor"), new Object[]{ex.getMessage()}), java.util.ResourceBundle.getBundle("com/jdimension/jlawyer/client/desktop/TaggedEntryPanel").getString("dialog.error"), JOptionPane.ERROR_MESSAGE);
+            }
+        }
+    }
+    
+    public void mentionUpdated(String messageId, String mentionId, boolean done) {
+        if(this.calloutPanelComponent1.getMessage()!=null && this.calloutPanelComponent1.getMessage().getId()!=null && this.calloutPanelComponent1.getMessage().getId().equals(messageId)) {
+            InstantMessage msg=this.calloutPanelComponent1.getMessage();
+            for(InstantMessageMention imm: msg.getMentions()) {
+                if(imm.getId()!=null && imm.getId().equals(mentionId)) {
+                    imm.setDone(done);
+                    
+                    // triggers resetting the "read" status
+                    this.calloutPanelComponent1.setMessage(this.calloutPanelComponent1.getMessage());
+                    this.calloutPanelComponent1.repaint();
+                    break;
+                }
+                    
+            }
+        }
+    }
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private com.jdimension.jlawyer.client.messenger.CalloutPanelComponent calloutPanelComponent1;
+    private javax.swing.JLabel lblCaseContext;
+    private javax.swing.JLabel lblDocumentContext;
     private javax.swing.JLabel lblUser;
     // End of variables declaration//GEN-END:variables
+
+    /**
+     * @return the showCaseContext
+     */
+    public boolean isShowCaseContext() {
+        return showCaseContext;
+    }
+
+    /**
+     * @param showCaseContext the showCaseContext to set
+     */
+    public void setShowCaseContext(boolean showCaseContext) {
+        this.showCaseContext = showCaseContext;
+        if (!this.showCaseContext) {
+            this.lblCaseContext.setText("");
+            this.lblCaseContext.setIcon(null);
+        }
+    }
+
+    /**
+     * @return the contextForeground
+     */
+    public Color getContextForeground() {
+        return contextForeground;
+    }
+
+    /**
+     * @param contextForeground the contextForeground to set
+     */
+    public void setContextForeground(Color contextForeground) {
+        this.contextForeground = contextForeground;
+        this.lblCaseContext.setForeground(contextForeground);
+        this.lblDocumentContext.setForeground(contextForeground);
+    }
+
+    /**
+     * @return the maxDocumentChars
+     */
+    public int getMaxDocumentChars() {
+        return maxDocumentChars;
+    }
+
+    /**
+     * @param maxDocumentChars the maxDocumentChars to set
+     */
+    public void setMaxDocumentChars(int maxDocumentChars) {
+        this.maxDocumentChars = maxDocumentChars;
+        this.displayDocumentContext();
+    }
 }

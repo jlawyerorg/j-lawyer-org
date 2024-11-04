@@ -685,6 +685,7 @@ import javax.xml.bind.annotation.XmlRootElement;
 public class MailboxSetup implements Serializable, EventTypes {
 
     protected static long serialVersionUID = 1L;
+    private static final String ARRAY_DELIMITER = "#####";
     
     @Id
     @Basic(optional = false)
@@ -714,13 +715,13 @@ public class MailboxSetup implements Serializable, EventTypes {
     protected String emailOutPort;
     @Column(name = "emailSenderName")
     protected String emailSenderName;
-    @Column(name = "emailSignature")
+    @Column(name = "emailSignature", columnDefinition = "TEXT")
     protected String emailSignature;
-    @Column(name = "emailInSsl", columnDefinition = "TINYINT")
+    @Column(name = "emailInSsl")
     protected boolean emailInSsl;
-    @Column(name = "emailOutSsl", columnDefinition = "TINYINT")
+    @Column(name = "emailOutSsl")
     protected boolean emailOutSsl;
-    @Column(name = "emailStartTls", columnDefinition = "TINYINT")
+    @Column(name = "emailStartTls")
     protected boolean emailStartTls;
     
     // Office 365 / Exchange
@@ -728,10 +729,24 @@ public class MailboxSetup implements Serializable, EventTypes {
     protected String clientId;
     @Column(name = "client_secret")
     protected String clientSecret;
-    @Column(name = "msexchange", columnDefinition = "TINYINT")
+    @Column(name = "msexchange")
     protected boolean msExchange;
     @Column(name = "tenant_id")
     protected String tenantId;
+    
+    // for mailbox scanner
+    @Column(name = "scan_inbox")
+    private boolean scanInbox=false;
+    @Column(name = "scan_documenttags")
+    private String scanDocumentTags="Posteingang";
+    @Column(name = "scan_blacklistedtypes")
+    private String scanBlacklistedTypes="bas,bat,com,exe,html,jar,jnlp,js,lnk,msi,pl,reg,vbs";
+    @Column(name = "scan_excludeadresses")
+    private String scanExclusionList="";
+    @Column(name = "scan_ignoreinline")
+    private boolean scanIgnoreInline=true;
+    @Column(name = "scan_minattachmentsize", columnDefinition = "INTEGER DEFAULT 5000")
+    private int scanMinAttachmentSize=0;
 
     public String getId() {
         return id;
@@ -1045,6 +1060,112 @@ public class MailboxSetup implements Serializable, EventTypes {
      */
     public void setTenantId(String tenantId) {
         this.tenantId = tenantId;
+    }
+
+    /**
+     * @return the scanInbox
+     */
+    public boolean isScanInbox() {
+        return scanInbox;
+    }
+
+    /**
+     * @param scanInbox the scanInbox to set
+     */
+    public void setScanInbox(boolean scanInbox) {
+        this.scanInbox = scanInbox;
+    }
+
+    /**
+     * @return the scanDocumentTags
+     */
+    public String getScanDocumentTags() {
+        return scanDocumentTags;
+    }
+    
+    public String[] getScanDocumentTagsArray() {
+        if (scanDocumentTags == null) {
+            scanDocumentTags="";
+        }
+
+        return scanDocumentTags.split(ARRAY_DELIMITER);
+
+    }
+
+    /**
+     * @param scanDocumentTags the scanDocumentTags to set
+     */
+    public void setScanDocumentTags(String scanDocumentTags) {
+        this.scanDocumentTags = scanDocumentTags;
+    }
+    
+    public void setScanDocumentTagsArray(String[] value) {
+        StringBuilder sb = new StringBuilder();
+        if (value == null) {
+            value = new String[]{""};
+        }
+        for (String v : value) {
+            sb.append(v).append(ARRAY_DELIMITER);
+        }
+        this.scanDocumentTags=sb.toString();
+    }
+
+    /**
+     * @return the scanBlacklistedTypes
+     */
+    public String getScanBlacklistedTypes() {
+        if(scanBlacklistedTypes==null)
+            scanBlacklistedTypes="";
+        return scanBlacklistedTypes;
+    }
+
+    /**
+     * @param scanBlacklistedTypes the scanBlacklistedTypes to set
+     */
+    public void setScanBlacklistedTypes(String scanBlacklistedTypes) {
+        this.scanBlacklistedTypes = scanBlacklistedTypes;
+    }
+
+    /**
+     * @return the scanExclusionList
+     */
+    public String getScanExclusionList() {
+        return scanExclusionList;
+    }
+
+    /**
+     * @param scanExclusionList the scanExclusionList to set
+     */
+    public void setScanExclusionList(String scanExclusionList) {
+        this.scanExclusionList = scanExclusionList;
+    }
+
+    /**
+     * @return the scanIgnoreInline
+     */
+    public boolean isScanIgnoreInline() {
+        return scanIgnoreInline;
+    }
+
+    /**
+     * @param scanIgnoreInline the scanIgnoreInline to set
+     */
+    public void setScanIgnoreInline(boolean scanIgnoreInline) {
+        this.scanIgnoreInline = scanIgnoreInline;
+    }
+
+    /**
+     * @return the minAttachmentSize
+     */
+    public int getScanMinAttachmentSize() {
+        return scanMinAttachmentSize;
+    }
+
+    /**
+     * @param minAttachmentSize the minAttachmentSize to set
+     */
+    public void setScanMinAttachmentSize(int minAttachmentSize) {
+        this.scanMinAttachmentSize = minAttachmentSize;
     }
 
     

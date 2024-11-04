@@ -666,21 +666,35 @@ package com.jdimension.jlawyer.client.mail;
 import com.jdimension.jlawyer.server.utils.ContentTypes;
 import java.awt.Component;
 import java.awt.Container;
+import java.awt.Toolkit;
+import java.awt.event.ActionEvent;
+import java.awt.event.KeyEvent;
+import javax.swing.AbstractAction;
 import javax.swing.JButton;
 import javax.swing.JComboBox;
+import javax.swing.JComponent;
+import javax.swing.JEditorPane;
+import javax.swing.KeyStroke;
+import org.apache.log4j.Logger;
+import javax.swing.undo.UndoManager;
 
 /**
  *
  * @author Kutschke
  */
 public class HtmlEditorPanel extends javax.swing.JPanel implements EditorImplementation {
+    
+    private final UndoManager undoManager;
+    private static final Logger log=Logger.getLogger(HtmlEditorPanel.class.getName());
 
     /**
      * Creates new form HtmlEditorPanel
      */
     public HtmlEditorPanel() {
         initComponents();
-    }
+        
+        undoManager = new UndoManager();
+        setupUndoRedoForEditorPane(htmlPane);    }
 
     /**
      * This method is called from within the constructor to initialize the form.
@@ -716,6 +730,33 @@ public class HtmlEditorPanel extends javax.swing.JPanel implements EditorImpleme
     @Override
     public String getText() {
         return this.htmlPane.getText();
+    }
+
+    @Override
+    public String getSelectedText() {
+        String sel = getSelectedTextFromEditorPane(this.htmlPane);
+        if (sel == null) {
+            return this.htmlPane.getText();
+        }
+        return sel;
+    }
+
+    // This is more of a hack - SHEF does not give access to the selected text 
+    // and also not to the underlying editor pane
+    // so - browse the component graph and look for the editor pane
+    private String getSelectedTextFromEditorPane(Container c) {
+
+        for (Component child : c.getComponents()) {
+            if (child instanceof JEditorPane) {
+                return ((JEditorPane) child).getSelectedText();
+            } else if (child instanceof Container) {
+                String sel = getSelectedTextFromEditorPane((Container) child);
+                if (sel != null) {
+                    return sel;
+                }
+            }
+        }
+        return null;
     }
 
     @Override
@@ -762,4 +803,83 @@ public class HtmlEditorPanel extends javax.swing.JPanel implements EditorImpleme
         super.requestFocus();
         this.htmlPane.requestFocus();
     }
+
+    @Override
+    public void insert(String t, int pos) {
+        this.insertToEditorPane(this.htmlPane, t, pos);
+    }
+
+    private boolean insertToEditorPane(Container c, String t, int pos) {
+
+        for (Component child : c.getComponents()) {
+            if (child instanceof JEditorPane) {
+                try {
+                    if(child.getClass().getName().equals(JEditorPane.class.getName())) {
+                        // the html source is an instance of SourceCodeEditor, which is a subclass of JEditorPane
+                        int caretPos=((JEditorPane) child).getCaretPosition();
+                        ((JEditorPane) child).getDocument().insertString(caretPos, t, null);
+                        return true;
+                    }
+                } catch (Throwable th) {
+                    log.warn("unable to insert text", th);
+                }
+            } else if (child instanceof Container) {
+                boolean inserted = insertToEditorPane((Container) child, t, pos);
+                if (inserted) {
+                    return true;
+                }
+            }
+        }
+        return false;
+    }
+    
+    private void setupUndoRedoForEditorPane(Container container) {
+        for (Component comp : container.getComponents()) {
+            if (comp instanceof JEditorPane) {
+                JEditorPane editorPane = (JEditorPane) comp;
+                editorPane.getDocument().addUndoableEditListener(e -> undoManager.addEdit(e.getEdit()));
+                
+                // Setup key bindings for undo
+                KeyStroke undoKeystroke = KeyStroke.getKeyStroke(
+                    KeyEvent.VK_Z, 
+                    Toolkit.getDefaultToolkit().getMenuShortcutKeyMaskEx()
+                );
+                
+                // Setup key bindings for redo
+                KeyStroke redoKeystroke = KeyStroke.getKeyStroke(
+                    KeyEvent.VK_Y, 
+                    Toolkit.getDefaultToolkit().getMenuShortcutKeyMaskEx()
+                );
+                
+                editorPane.getInputMap(JComponent.WHEN_FOCUSED).put(undoKeystroke, "Undo");
+                editorPane.getActionMap().put("Undo", new AbstractAction("Undo") {
+                    @Override
+                    public void actionPerformed(ActionEvent evt) {
+                        if (undoManager.canUndo()) {
+                            undoManager.undo();
+                        }
+                    }
+                });
+                
+                editorPane.getInputMap(JComponent.WHEN_FOCUSED).put(redoKeystroke, "Redo");
+                editorPane.getActionMap().put("Redo", new AbstractAction("Redo") {
+                    @Override
+                    public void actionPerformed(ActionEvent evt) {
+                        if (undoManager.canRedo()) {
+                            undoManager.redo();
+                        }
+                    }
+                });
+                
+                break;  // Found the editor pane, no need to continue
+            } else if (comp instanceof Container) {
+                setupUndoRedoForEditorPane((Container) comp);
+            }
+        }
+    }
+    
+    public UndoManager getUndoManager() {
+        return undoManager;
+    }
+
 }

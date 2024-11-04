@@ -663,6 +663,8 @@ For more information on this, and how to apply and follow the GNU AGPL, see
  */
 package org.jlawyer.io.rest.v1.pojo;
 
+import java.util.Date;
+
 /**
  *
  * @author jens
@@ -670,8 +672,11 @@ package org.jlawyer.io.rest.v1.pojo;
 public class RestfulCaseOverviewV1 {
     
     private String id=null;
+    private String externalId=null;
     private String name=null;
     private String fileNumber=null;
+    private Date dateChanged=null;
+    private String reason=null;
 
     public RestfulCaseOverviewV1() {
     }
@@ -717,7 +722,49 @@ public class RestfulCaseOverviewV1 {
     public void setFileNumber(String fileNumber) {
         this.fileNumber = fileNumber;
     }
-    
-    
+
+    /**
+     * @return the externalId
+     */
+    public String getExternalId() {
+        return externalId;
+    }
+
+    /**
+     * @param externalId the externalId to set
+     */
+    public void setExternalId(String externalId) {
+        this.externalId = externalId;
+    }
+
+    /**
+     * @return the dateChanged
+     */
+    public Date getDateChanged() {
+        return dateChanged;
+    }
+
+    /**
+     * @param dateChanged the dateChanged to set
+     */
+    public void setDateChanged(Date dateChanged) {
+        this.dateChanged = dateChanged;
+    }
+
+    /**
+     * @return the reason
+     */
+    public String getReason() {
+        return reason;
+    }
+
+    /**
+     * @param reason the reason to set
+     */
+    public void setReason(String reason) {
+        this.reason = reason;
+    }
+
+
     
 }

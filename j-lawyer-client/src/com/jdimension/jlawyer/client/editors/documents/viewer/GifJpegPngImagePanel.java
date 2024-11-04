@@ -673,6 +673,8 @@ import javax.swing.ImageIcon;
  */
 public class GifJpegPngImagePanel extends javax.swing.JPanel implements PreviewPanel {
 
+    private String documentId=null;
+    
     /**
      * Creates new form PlaintextPanel
      * @param content
@@ -726,7 +728,9 @@ public class GifJpegPngImagePanel extends javax.swing.JPanel implements PreviewP
     }
 
     @Override
-    public void showContent(byte[] content) {
+    public void showContent(String documentId, byte[] content) {
+        
+        this.documentId=documentId;
         
         ImageIcon imageIcon = new ImageIcon(content); // load the image to a imageIcon
         Image image = imageIcon.getImage(); // transform it
@@ -743,6 +747,11 @@ public class GifJpegPngImagePanel extends javax.swing.JPanel implements PreviewP
         
         this.lblContent.setSize(this.getWidth(),this.lblContent.getHeight());
         ThreadUtils.updateLabelIcon(this.lblContent, imageIcon);
+    }
+
+    @Override
+    public String getDocumentId() {
+        return this.documentId;
     }
     
     

@@ -664,15 +664,18 @@
 package com.jdimension.jlawyer.client.editors.addresses;
 
 import com.jdimension.jlawyer.client.configuration.CitySearchDialog;
+import com.jdimension.jlawyer.client.configuration.OptionGroupListCellRenderer;
 import com.jdimension.jlawyer.client.editors.EditorsRegistry;
 import com.jdimension.jlawyer.client.settings.ClientSettings;
 import com.jdimension.jlawyer.client.utils.ComponentUtils;
 import com.jdimension.jlawyer.client.utils.FrameUtils;
+import com.jdimension.jlawyer.client.utils.JTextFieldLimit;
 import com.jdimension.jlawyer.client.utils.StringUtils;
 import com.jdimension.jlawyer.persistence.AddressBean;
 import com.jdimension.jlawyer.persistence.AppOptionGroupBean;
 import com.jdimension.jlawyer.services.AddressServiceRemote;
 import com.jdimension.jlawyer.services.JLawyerServiceLocator;
+import java.util.List;
 import javax.swing.DefaultComboBoxModel;
 import javax.swing.JOptionPane;
 import org.apache.log4j.Logger;
@@ -700,7 +703,6 @@ public class QuickCreateAddressDialog extends javax.swing.JDialog {
         ClientSettings settings = ClientSettings.getInstance();
         AppOptionGroupBean[] titles = settings.getTitles();
         String[] titleItems = new String[titles.length + 1];
-
         titleItems[0] = "";
         for (int i = 0; i < titles.length; i++) {
             AppOptionGroupBean aogb = (AppOptionGroupBean) titles[i];
@@ -708,10 +710,43 @@ public class QuickCreateAddressDialog extends javax.swing.JDialog {
 
         }
         StringUtils.sortIgnoreCase(titleItems);
-
-        DefaultComboBoxModel titleModel = new DefaultComboBoxModel(titleItems);
+        DefaultComboBoxModel<String> titleModel = new DefaultComboBoxModel<>(titleItems);
         this.cmbTitle.setModel(titleModel);
         
+        
+        AppOptionGroupBean[] titlesInAddress = settings.getTitlesInAddress();
+        String[] titleInAddressItems = new String[titlesInAddress.length + 1];
+        titleInAddressItems[0] = "";
+        for (int i = 0; i < titlesInAddress.length; i++) {
+            AppOptionGroupBean aogb = (AppOptionGroupBean) titlesInAddress[i];
+            titleInAddressItems[i + 1] = aogb.getValue();
+
+        }
+        StringUtils.sortIgnoreCase(titleInAddressItems);
+        DefaultComboBoxModel<String> titleInAddressModel = new DefaultComboBoxModel<>(titleInAddressItems);
+        this.cmbTitleInAddress.setModel(titleInAddressModel);
+        
+        this.txtPlaceOfBirth.setDocument(new JTextFieldLimit(249));
+        
+        this.cmbLegalForm.setRenderer(new OptionGroupListCellRenderer());
+        AppOptionGroupBean[] legalForms = settings.getLegalForms();
+        ComponentUtils.populateOptionsCombobox(legalForms, this.cmbLegalForm);
+        ComponentUtils.addAutoComplete(this.cmbLegalForm);
+        this.cmbLegalForm.setSelectedItem("");
+        
+        this.txtRegNr.setDocument(new JTextFieldLimit(249));
+        this.txtRegCourt.setDocument(new JTextFieldLimit(249));
+        
+        this.cmbSalutation.setRenderer(new OptionGroupListCellRenderer());
+        this.cmbComplimentaryClose.setRenderer(new OptionGroupListCellRenderer());
+        ComponentUtils.populateOptionsCombobox(settings.getSalutationDtos(), this.cmbSalutation);
+        ComponentUtils.populateOptionsCombobox(settings.getComplimentaryCloseDtos(), this.cmbComplimentaryClose);
+        ComponentUtils.addAutoComplete(this.cmbSalutation);
+        ComponentUtils.addAutoComplete(this.cmbComplimentaryClose);
+        this.cmbSalutation.setSelectedItem("");
+        this.cmbComplimentaryClose.setSelectedItem("");
+        
+        this.txtNotice.setDocument(new JTextFieldLimit(2499));
         
         ComponentUtils.restoreDialogSize(this);
     }
@@ -724,6 +759,7 @@ public class QuickCreateAddressDialog extends javax.swing.JDialog {
     // <editor-fold defaultstate="collapsed" desc="Generated Code">//GEN-BEGIN:initComponents
     private void initComponents() {
 
+        btnGroupGender = new javax.swing.ButtonGroup();
         cmdCancel = new javax.swing.JButton();
         cmdUseSelection = new javax.swing.JButton();
         jPanel1 = new javax.swing.JPanel();
@@ -737,6 +773,21 @@ public class QuickCreateAddressDialog extends javax.swing.JDialog {
         cmbTitle = new javax.swing.JComboBox();
         txtBirthDate = new javax.swing.JTextField();
         jLabel29 = new javax.swing.JLabel();
+        rdGenderFemale = new javax.swing.JRadioButton();
+        rdGenderMale = new javax.swing.JRadioButton();
+        rdGenderDivers = new javax.swing.JRadioButton();
+        rdGenderOrg = new javax.swing.JRadioButton();
+        rdGenderUndefined = new javax.swing.JRadioButton();
+        jLabel36 = new javax.swing.JLabel();
+        cmbLegalForm = new javax.swing.JComboBox<>();
+        jLabel37 = new javax.swing.JLabel();
+        txtRegNr = new javax.swing.JTextField();
+        jLabel38 = new javax.swing.JLabel();
+        txtRegCourt = new javax.swing.JTextField();
+        jLabel11 = new javax.swing.JLabel();
+        txtPlaceOfBirth = new javax.swing.JTextField();
+        cmbTitleInAddress = new javax.swing.JComboBox<>();
+        jLabel13 = new javax.swing.JLabel();
         jPanel2 = new javax.swing.JPanel();
         jLabel4 = new javax.swing.JLabel();
         jLabel5 = new javax.swing.JLabel();
@@ -756,10 +807,16 @@ public class QuickCreateAddressDialog extends javax.swing.JDialog {
         txtFax = new javax.swing.JTextField();
         txtPhone = new javax.swing.JTextField();
         txtEmail = new javax.swing.JTextField();
-        jLabel11 = new javax.swing.JLabel();
-        txtWebsite = new javax.swing.JTextField();
         txtMobile = new javax.swing.JTextField();
         jLabel19 = new javax.swing.JLabel();
+        jPanel4 = new javax.swing.JPanel();
+        cmbSalutation = new javax.swing.JComboBox();
+        cmbComplimentaryClose = new javax.swing.JComboBox();
+        jLabel16 = new javax.swing.JLabel();
+        jLabel17 = new javax.swing.JLabel();
+        jPanel19 = new javax.swing.JPanel();
+        txtNoticePane = new javax.swing.JScrollPane();
+        txtNotice = new javax.swing.JTextArea();
 
         setDefaultCloseOperation(javax.swing.WindowConstants.DISPOSE_ON_CLOSE);
         setTitle("neuer Kontakt (Schnellerfassung)");
@@ -800,38 +857,114 @@ public class QuickCreateAddressDialog extends javax.swing.JDialog {
 
         jLabel29.setText("geboren:");
 
+        btnGroupGender.add(rdGenderFemale);
+        rdGenderFemale.setText("weiblich");
+
+        btnGroupGender.add(rdGenderMale);
+        rdGenderMale.setText("männlich");
+
+        btnGroupGender.add(rdGenderDivers);
+        rdGenderDivers.setText("divers");
+
+        btnGroupGender.add(rdGenderOrg);
+        rdGenderOrg.setText("juristische Person");
+
+        btnGroupGender.add(rdGenderUndefined);
+        rdGenderUndefined.setSelected(true);
+        rdGenderUndefined.setText("nicht definiert");
+
+        jLabel36.setText("Rechtsform:");
+
+        cmbLegalForm.setEditable(true);
+        cmbLegalForm.setModel(new javax.swing.DefaultComboBoxModel<>(new String[] { "Item 1", "Item 2", "Item 3", "Item 4" }));
+
+        jLabel37.setText("Registernr.:");
+
+        jLabel38.setText("Registerger.:");
+
+        jLabel11.setText("in:");
+
+        cmbTitleInAddress.setModel(new javax.swing.DefaultComboBoxModel<>(new String[] { "Item 1", "Item 2", "Item 3", "Item 4" }));
+
+        jLabel13.setText("Briefkopf:");
+
         org.jdesktop.layout.GroupLayout jPanel1Layout = new org.jdesktop.layout.GroupLayout(jPanel1);
         jPanel1.setLayout(jPanel1Layout);
         jPanel1Layout.setHorizontalGroup(
             jPanel1Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
-            .add(jPanel1Layout.createSequentialGroup()
-                .add(jPanel1Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
-                    .add(jLabel2)
-                    .add(jLabel1)
-                    .add(jLabel3)
-                    .add(jLabel25))
-                .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
-                .add(jPanel1Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
-                    .add(txtName, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 532, Short.MAX_VALUE)
-                    .add(txtFirstName)
-                    .add(txtCompany)
+            .add(org.jdesktop.layout.GroupLayout.TRAILING, jPanel1Layout.createSequentialGroup()
+                .addContainerGap()
+                .add(jPanel1Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.TRAILING)
+                    .add(org.jdesktop.layout.GroupLayout.LEADING, jPanel1Layout.createSequentialGroup()
+                        .add(jPanel1Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
+                            .add(jLabel2)
+                            .add(jLabel1))
+                        .add(37, 37, 37)
+                        .add(jPanel1Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
+                            .add(jPanel1Layout.createSequentialGroup()
+                                .add(27, 27, 27)
+                                .add(rdGenderOrg)
+                                .addPreferredGap(org.jdesktop.layout.LayoutStyle.UNRELATED)
+                                .add(rdGenderUndefined)
+                                .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED, 14, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE))
+                            .add(jPanel1Layout.createSequentialGroup()
+                                .add(rdGenderFemale)
+                                .addPreferredGap(org.jdesktop.layout.LayoutStyle.UNRELATED)
+                                .add(rdGenderMale)
+                                .addPreferredGap(org.jdesktop.layout.LayoutStyle.UNRELATED)
+                                .add(rdGenderDivers)
+                                .add(0, 0, Short.MAX_VALUE))
+                            .add(txtName)
+                            .add(txtFirstName)))
                     .add(jPanel1Layout.createSequentialGroup()
-                        .add(cmbTitle, 0, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                        .addPreferredGap(org.jdesktop.layout.LayoutStyle.UNRELATED)
                         .add(jLabel29)
+                        .add(43, 43, 43)
+                        .add(txtBirthDate)
                         .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
-                        .add(txtBirthDate, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 125, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)))
-                .addContainerGap())
+                        .add(jLabel11)
+                        .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
+                        .add(txtPlaceOfBirth, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 150, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE))
+                    .add(org.jdesktop.layout.GroupLayout.LEADING, jPanel1Layout.createSequentialGroup()
+                        .add(jLabel3)
+                        .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
+                        .add(txtCompany))
+                    .add(org.jdesktop.layout.GroupLayout.LEADING, jPanel1Layout.createSequentialGroup()
+                        .add(jPanel1Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
+                            .add(jLabel37)
+                            .add(jLabel36)
+                            .add(jLabel38))
+                        .add(21, 21, 21)
+                        .add(jPanel1Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
+                            .add(txtRegCourt)
+                            .add(cmbLegalForm, 0, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                            .add(txtRegNr)))
+                    .add(org.jdesktop.layout.GroupLayout.LEADING, jPanel1Layout.createSequentialGroup()
+                        .add(jPanel1Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
+                            .add(jLabel25)
+                            .add(jLabel13))
+                        .add(36, 36, 36)
+                        .add(jPanel1Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
+                            .add(cmbTitleInAddress, 0, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                            .add(cmbTitle, 0, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))))
+                .add(13, 13, 13))
         );
         jPanel1Layout.setVerticalGroup(
             jPanel1Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
             .add(org.jdesktop.layout.GroupLayout.TRAILING, jPanel1Layout.createSequentialGroup()
                 .add(jPanel1Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.BASELINE)
                     .add(cmbTitle, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
-                    .add(jLabel25)
+                    .add(jLabel25))
+                .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
+                .add(jPanel1Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.BASELINE)
+                    .add(cmbTitleInAddress, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
+                    .add(jLabel13))
+                .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
+                .add(jPanel1Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.BASELINE)
+                    .add(jLabel11)
+                    .add(txtPlaceOfBirth, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
                     .add(txtBirthDate, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
                     .add(jLabel29))
-                .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
+                .addPreferredGap(org.jdesktop.layout.LayoutStyle.UNRELATED)
                 .add(jPanel1Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.BASELINE)
                     .add(jLabel1)
                     .add(txtName, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE))
@@ -841,14 +974,35 @@ public class QuickCreateAddressDialog extends javax.swing.JDialog {
                     .add(txtFirstName, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE))
                 .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
                 .add(jPanel1Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.BASELINE)
+                    .add(rdGenderFemale)
+                    .add(rdGenderMale)
+                    .add(rdGenderDivers))
+                .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
+                .add(jPanel1Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.BASELINE)
+                    .add(rdGenderOrg)
+                    .add(rdGenderUndefined))
+                .addPreferredGap(org.jdesktop.layout.LayoutStyle.UNRELATED)
+                .add(jPanel1Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.BASELINE)
                     .add(jLabel3)
                     .add(txtCompany, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE))
+                .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
+                .add(jPanel1Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.BASELINE)
+                    .add(cmbLegalForm, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
+                    .add(jLabel36))
+                .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
+                .add(jPanel1Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.BASELINE)
+                    .add(txtRegNr, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
+                    .add(jLabel37))
+                .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
+                .add(jPanel1Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.BASELINE)
+                    .add(jLabel38)
+                    .add(txtRegCourt, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE))
                 .addContainerGap(org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
         );
 
         jPanel2.setBorder(javax.swing.BorderFactory.createTitledBorder(javax.swing.BorderFactory.createTitledBorder("Adresse")));
 
-        jLabel4.setText("Strasse:");
+        jLabel4.setText("Straße:");
 
         jLabel5.setText("PLZ:");
 
@@ -870,18 +1024,19 @@ public class QuickCreateAddressDialog extends javax.swing.JDialog {
         jPanel2Layout.setHorizontalGroup(
             jPanel2Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
             .add(jPanel2Layout.createSequentialGroup()
+                .addContainerGap()
                 .add(jPanel2Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
-                    .add(jLabel5)
                     .add(jLabel4)
+                    .add(jLabel5)
                     .add(jLabel6)
                     .add(jLabel7))
                 .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
                 .add(jPanel2Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.TRAILING)
-                    .add(org.jdesktop.layout.GroupLayout.LEADING, txtZipCode, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 513, Short.MAX_VALUE)
+                    .add(org.jdesktop.layout.GroupLayout.LEADING, txtZipCode)
                     .add(org.jdesktop.layout.GroupLayout.LEADING, txtCity)
                     .add(txtCountry)
                     .add(org.jdesktop.layout.GroupLayout.LEADING, jPanel2Layout.createSequentialGroup()
-                        .add(txtStreet)
+                        .add(txtStreet, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 287, Short.MAX_VALUE)
                         .addPreferredGap(org.jdesktop.layout.LayoutStyle.UNRELATED)
                         .add(jLabel12)
                         .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
@@ -922,8 +1077,6 @@ public class QuickCreateAddressDialog extends javax.swing.JDialog {
 
         jLabel10.setText("E-Mail:");
 
-        jLabel11.setText("Homepage:");
-
         jLabel19.setText("Mobil:");
 
         org.jdesktop.layout.GroupLayout jPanel3Layout = new org.jdesktop.layout.GroupLayout(jPanel3);
@@ -931,17 +1084,16 @@ public class QuickCreateAddressDialog extends javax.swing.JDialog {
         jPanel3Layout.setHorizontalGroup(
             jPanel3Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
             .add(jPanel3Layout.createSequentialGroup()
+                .addContainerGap()
                 .add(jPanel3Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
-                    .add(jLabel9)
                     .add(jLabel8)
-                    .add(jLabel10)
-                    .add(jLabel11)
-                    .add(jLabel19))
-                .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
+                    .add(jLabel9)
+                    .add(jLabel19)
+                    .add(jLabel10))
+                .add(28, 28, 28)
                 .add(jPanel3Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
                     .add(txtFax)
                     .add(org.jdesktop.layout.GroupLayout.TRAILING, txtPhone)
-                    .add(txtWebsite)
                     .add(org.jdesktop.layout.GroupLayout.TRAILING, txtEmail)
                     .add(org.jdesktop.layout.GroupLayout.TRAILING, txtMobile))
                 .addContainerGap())
@@ -964,11 +1116,75 @@ public class QuickCreateAddressDialog extends javax.swing.JDialog {
                 .add(jPanel3Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.BASELINE)
                     .add(jLabel10)
                     .add(txtEmail, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE))
-                .add(13, 13, 13)
-                .add(jPanel3Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.BASELINE)
-                    .add(jLabel11)
-                    .add(txtWebsite, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE))
-                .addContainerGap(20, Short.MAX_VALUE))
+                .addContainerGap(org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+        );
+
+        jPanel4.setBorder(javax.swing.BorderFactory.createTitledBorder("Textbausteine"));
+
+        cmbSalutation.setEditable(true);
+        cmbSalutation.setMaximumRowCount(30);
+        cmbSalutation.setModel(new javax.swing.DefaultComboBoxModel(new String[] { "Item 1", "Item 2", "Item 3", "Item 4" }));
+
+        cmbComplimentaryClose.setEditable(true);
+        cmbComplimentaryClose.setMaximumRowCount(30);
+        cmbComplimentaryClose.setModel(new javax.swing.DefaultComboBoxModel(new String[] { "Item 1", "Item 2", "Item 3", "Item 4" }));
+
+        jLabel16.setText("Begrüßung:");
+
+        jLabel17.setText("Grußformel:");
+
+        org.jdesktop.layout.GroupLayout jPanel4Layout = new org.jdesktop.layout.GroupLayout(jPanel4);
+        jPanel4.setLayout(jPanel4Layout);
+        jPanel4Layout.setHorizontalGroup(
+            jPanel4Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
+            .add(jPanel4Layout.createSequentialGroup()
+                .addContainerGap()
+                .add(jPanel4Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
+                    .add(jLabel16)
+                    .add(jLabel17))
+                .add(14, 14, 14)
+                .add(jPanel4Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
+                    .add(cmbSalutation, 0, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                    .add(cmbComplimentaryClose, 0, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                .addContainerGap())
+        );
+        jPanel4Layout.setVerticalGroup(
+            jPanel4Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
+            .add(jPanel4Layout.createSequentialGroup()
+                .add(jPanel4Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.BASELINE)
+                    .add(jLabel16)
+                    .add(cmbSalutation, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE))
+                .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
+                .add(jPanel4Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.BASELINE)
+                    .add(jLabel17)
+                    .add(cmbComplimentaryClose, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE))
+                .addContainerGap(12, Short.MAX_VALUE))
+        );
+
+        jPanel19.setBorder(javax.swing.BorderFactory.createTitledBorder("Notizen"));
+
+        txtNoticePane.setHorizontalScrollBarPolicy(javax.swing.ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
+
+        txtNotice.setColumns(20);
+        txtNotice.setLineWrap(true);
+        txtNotice.setRows(5);
+        txtNotice.setWrapStyleWord(true);
+        txtNoticePane.setViewportView(txtNotice);
+
+        org.jdesktop.layout.GroupLayout jPanel19Layout = new org.jdesktop.layout.GroupLayout(jPanel19);
+        jPanel19.setLayout(jPanel19Layout);
+        jPanel19Layout.setHorizontalGroup(
+            jPanel19Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
+            .add(jPanel19Layout.createSequentialGroup()
+                .addContainerGap()
+                .add(txtNoticePane)
+                .addContainerGap())
+        );
+        jPanel19Layout.setVerticalGroup(
+            jPanel19Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
+            .add(jPanel19Layout.createSequentialGroup()
+                .add(txtNoticePane, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 129, Short.MAX_VALUE)
+                .addContainerGap())
         );
 
         org.jdesktop.layout.GroupLayout layout = new org.jdesktop.layout.GroupLayout(getContentPane());
@@ -978,26 +1194,36 @@ public class QuickCreateAddressDialog extends javax.swing.JDialog {
             .add(layout.createSequentialGroup()
                 .addContainerGap()
                 .add(layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
-                    .add(layout.createSequentialGroup()
-                        .add(0, 379, Short.MAX_VALUE)
+                    .add(org.jdesktop.layout.GroupLayout.TRAILING, layout.createSequentialGroup()
+                        .add(0, 0, Short.MAX_VALUE)
                         .add(cmdUseSelection)
                         .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
                         .add(cmdCancel))
-                    .add(org.jdesktop.layout.GroupLayout.TRAILING, jPanel2, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                    .add(org.jdesktop.layout.GroupLayout.TRAILING, jPanel1, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                    .add(jPanel3, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                    .add(jPanel19, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                    .add(layout.createSequentialGroup()
+                        .add(jPanel1, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
+                        .addPreferredGap(org.jdesktop.layout.LayoutStyle.UNRELATED)
+                        .add(layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
+                            .add(jPanel2, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                            .add(jPanel3, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)))
+                    .add(jPanel4, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
                 .addContainerGap())
         );
         layout.setVerticalGroup(
             layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
             .add(layout.createSequentialGroup()
                 .addContainerGap()
-                .add(jPanel1, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
+                .add(layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING, false)
+                    .add(layout.createSequentialGroup()
+                        .add(jPanel2, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
+                        .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
+                        .add(jPanel3, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                    .add(jPanel1, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE))
                 .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
-                .add(jPanel2, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
+                .add(jPanel4, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
                 .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
-                .add(jPanel3, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
-                .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                .add(jPanel19, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
+                .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
                 .add(layout.createParallelGroup(org.jdesktop.layout.GroupLayout.BASELINE)
                     .add(cmdCancel)
                     .add(cmdUseSelection))
@@ -1025,6 +1251,11 @@ public class QuickCreateAddressDialog extends javax.swing.JDialog {
             } else {
                 adr.setTitle("");
             }
+            if (this.cmbTitleInAddress.getSelectedItem() != null) {
+                adr.setTitleInAddress(this.cmbTitleInAddress.getSelectedItem().toString());
+            } else {
+                adr.setTitleInAddress("");
+            }
             adr.setCountry(this.txtCountry.getText());
             adr.setEmail(this.txtEmail.getText());
             adr.setFax(this.txtFax.getText());
@@ -1035,17 +1266,51 @@ public class QuickCreateAddressDialog extends javax.swing.JDialog {
             adr.setMobile(this.txtMobile.getText());
             adr.setStreet(this.txtStreet.getText());
             adr.setStreetNumber(this.txtStreetNr.getText());
-            adr.setWebsite(this.txtWebsite.getText());
             adr.setZipCode(this.txtZipCode.getText());
 
             adr.setBirthDate(this.txtBirthDate.getText());
+            adr.setPlaceOfBirth(this.txtPlaceOfBirth.getText());
+            
+            String g = AddressBean.GENDER_UNDEFINED;
+        if (this.rdGenderFemale.isSelected()) {
+            g = AddressBean.GENDER_FEMALE;
+        } else if (this.rdGenderMale.isSelected()) {
+            g = AddressBean.GENDER_MALE;
+        } else if (this.rdGenderDivers.isSelected()) {
+            g = AddressBean.GENDER_OTHER;
+        } else if (this.rdGenderOrg.isSelected()) {
+            g = AddressBean.GENDER_LEGALENTITY;
+        }
+        adr.setGender(g);
+        
+        if (this.cmbLegalForm.getSelectedItem() != null) {
+            adr.setLegalForm(this.cmbLegalForm.getSelectedItem().toString());
+        } else {
+            adr.setLegalForm("");
+        }
+        
+        adr.setCompanyRegistrationCourt(this.txtRegCourt.getText());
+        adr.setCompanyRegistrationNumber(this.txtRegNr.getText());
+        
+        if (this.cmbSalutation.getSelectedItem() != null) {
+            adr.setSalutation(this.cmbSalutation.getSelectedItem().toString());
+        } else {
+            adr.setSalutation("");
+        }
+        if (this.cmbComplimentaryClose.getSelectedItem() != null) {
+            adr.setComplimentaryClose(this.cmbComplimentaryClose.getSelectedItem().toString());
+        } else {
+            adr.setComplimentaryClose("");
+        }
+        
+        adr.setNotice(this.txtNotice.getText());
             
     }
     
     
     private void cmdUseSelectionActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdUseSelectionActionPerformed
         if ((this.txtName.getText() == null || "".equals(this.txtName.getText())) && (this.txtCompany.getText() == null || "".equals(this.txtCompany.getText()))) {
-            JOptionPane.showMessageDialog(this, "Es muß mindestens ein Name oder ein Firmenname angegeben werden, um eine Adresse zu speichern.", "Adressen - Gültigkeitsprüfung", JOptionPane.INFORMATION_MESSAGE);
+            JOptionPane.showMessageDialog(this, "Es muss mindestens ein Name oder ein Firmenname angegeben werden, um eine Adresse zu speichern.", "Adressen - Gültigkeitsprüfung", JOptionPane.INFORMATION_MESSAGE);
             return;
         }
 
@@ -1061,10 +1326,26 @@ public class QuickCreateAddressDialog extends javax.swing.JDialog {
             
             this.fillDTO(this.result);
 
+            List<AddressBean> similarAddresses = addressService.similaritySearch(this.result, 0.85f);
+                if (!similarAddresses.isEmpty()) {
+                    StringBuilder html = new StringBuilder();
+                    html.append("<html>Es wurden &auml;hnliche Eintr&auml;ge gefunden - trotzdem speichern?<br/>");
+                    html.append("<ul>");
+                    for (AddressBean s : similarAddresses) {
+                        html.append("<li>").append(s.toShortHtml(false)).append("</li>");
+                    }
+                    html.append("</ul>");
+                    html.append("</html>");
+                    int simResponse = JOptionPane.showConfirmDialog(this, html.toString(), "Ähnlichkeitssuche", JOptionPane.YES_NO_OPTION);
+                    if (simResponse == JOptionPane.NO_OPTION) {
+                        this.result=null;
+                    }
+                }
             
+            if(this.result!=null) {
                 this.result=addressService.createAddress(this.result);
-            
-            EditorsRegistry.getInstance().updateStatus("Adresse gespeichert.", 5000);
+                EditorsRegistry.getInstance().updateStatus("Adresse gespeichert.", 5000);
+            }
 
         } catch (Exception ex) {
             log.error("Error saving address", ex);
@@ -1074,7 +1355,7 @@ public class QuickCreateAddressDialog extends javax.swing.JDialog {
         }
         
         this.setVisible(false);
-            this.dispose();
+        this.dispose();
         
     }//GEN-LAST:event_cmdUseSelectionActionPerformed
 
@@ -1093,7 +1374,12 @@ public class QuickCreateAddressDialog extends javax.swing.JDialog {
         });
     }
     // Variables declaration - do not modify//GEN-BEGIN:variables
+    private javax.swing.ButtonGroup btnGroupGender;
+    protected javax.swing.JComboBox cmbComplimentaryClose;
+    private javax.swing.JComboBox<String> cmbLegalForm;
+    protected javax.swing.JComboBox cmbSalutation;
     protected javax.swing.JComboBox cmbTitle;
+    private javax.swing.JComboBox<String> cmbTitleInAddress;
     private javax.swing.JButton cmdCancel;
     private javax.swing.JButton cmdChooseCity;
     private javax.swing.JButton cmdUseSelection;
@@ -1101,11 +1387,17 @@ public class QuickCreateAddressDialog extends javax.swing.JDialog {
     private javax.swing.JLabel jLabel10;
     private javax.swing.JLabel jLabel11;
     private javax.swing.JLabel jLabel12;
+    private javax.swing.JLabel jLabel13;
+    private javax.swing.JLabel jLabel16;
+    private javax.swing.JLabel jLabel17;
     private javax.swing.JLabel jLabel19;
     private javax.swing.JLabel jLabel2;
     private javax.swing.JLabel jLabel25;
     private javax.swing.JLabel jLabel29;
     private javax.swing.JLabel jLabel3;
+    private javax.swing.JLabel jLabel36;
+    private javax.swing.JLabel jLabel37;
+    private javax.swing.JLabel jLabel38;
     private javax.swing.JLabel jLabel4;
     private javax.swing.JLabel jLabel5;
     private javax.swing.JLabel jLabel6;
@@ -1113,8 +1405,15 @@ public class QuickCreateAddressDialog extends javax.swing.JDialog {
     private javax.swing.JLabel jLabel8;
     private javax.swing.JLabel jLabel9;
     private javax.swing.JPanel jPanel1;
+    private javax.swing.JPanel jPanel19;
     private javax.swing.JPanel jPanel2;
     private javax.swing.JPanel jPanel3;
+    private javax.swing.JPanel jPanel4;
+    private javax.swing.JRadioButton rdGenderDivers;
+    private javax.swing.JRadioButton rdGenderFemale;
+    private javax.swing.JRadioButton rdGenderMale;
+    private javax.swing.JRadioButton rdGenderOrg;
+    private javax.swing.JRadioButton rdGenderUndefined;
     protected javax.swing.JTextField txtBirthDate;
     protected javax.swing.JTextField txtCity;
     protected javax.swing.JTextField txtCompany;
@@ -1124,10 +1423,14 @@ public class QuickCreateAddressDialog extends javax.swing.JDialog {
     protected javax.swing.JTextField txtFirstName;
     protected javax.swing.JTextField txtMobile;
     protected javax.swing.JTextField txtName;
+    protected javax.swing.JTextArea txtNotice;
+    private javax.swing.JScrollPane txtNoticePane;
     protected javax.swing.JTextField txtPhone;
+    private javax.swing.JTextField txtPlaceOfBirth;
+    private javax.swing.JTextField txtRegCourt;
+    private javax.swing.JTextField txtRegNr;
     protected javax.swing.JTextField txtStreet;
     private javax.swing.JTextField txtStreetNr;
-    protected javax.swing.JTextField txtWebsite;
     protected javax.swing.JTextField txtZipCode;
     // End of variables declaration//GEN-END:variables
 

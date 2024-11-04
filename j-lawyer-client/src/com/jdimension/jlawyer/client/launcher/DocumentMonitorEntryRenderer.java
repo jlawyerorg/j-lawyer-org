@@ -663,11 +663,8 @@
  */
 package com.jdimension.jlawyer.client.launcher;
 
-import com.jdimension.jlawyer.client.configuration.*;
-import com.jdimension.jlawyer.persistence.AppOptionGroupBean;
 import java.awt.Component;
 import javax.swing.DefaultListCellRenderer;
-import javax.swing.JLabel;
 import javax.swing.JList;
 
 /**
@@ -682,9 +679,6 @@ public class DocumentMonitorEntryRenderer extends DefaultListCellRenderer {
 
     @Override
     public Component getListCellRendererComponent(JList jlist, Object o, int i, boolean bln, boolean bln1) {
-        DocumentMonitorEntry e=new DocumentMonitorEntry((ObservedDocument)o);
-        
-        return e;
-        //throw new UnsupportedOperationException("Not supported yet.");
+        return new DocumentMonitorEntry((ObservedDocument)o);
     }
 }

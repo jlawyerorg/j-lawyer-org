@@ -702,6 +702,7 @@ public class SaveBeaMessageAction extends ProgressableAction {
     private List<BeaAttachmentMetadata> attachments = null;
     private boolean readReceipt = false;
     private BeaListItem authority = null;
+    private BeaListItem priority = null;
     private Identity to = null;
     private String subject = "";
     private String body = "";
@@ -714,7 +715,7 @@ public class SaveBeaMessageAction extends ProgressableAction {
 
     private CaseFolder folder = null;
 
-    public SaveBeaMessageAction(ProgressIndicator i, JDialog cleanAfter, String fromSafeId, List<BeaAttachmentMetadata> attachmentMetadata, AppUserBean cu, boolean readReceipt, BeaListItem authority, Identity to, String subject, String body, String documentTag, String azSender, String azRecipient) {
+    public SaveBeaMessageAction(ProgressIndicator i, JDialog cleanAfter, String fromSafeId, List<BeaAttachmentMetadata> attachmentMetadata, AppUserBean cu, boolean readReceipt, BeaListItem authority, Identity to, String subject, String body, String documentTag, String azSender, String azRecipient, BeaListItem priority) {
         super(i, false, cleanAfter);
         this.attachments = attachmentMetadata;
         this.readReceipt = readReceipt;
@@ -727,10 +728,11 @@ public class SaveBeaMessageAction extends ProgressableAction {
         this.authority = authority;
         this.azSender = azSender;
         this.azRecipient = azRecipient;
+        this.priority=priority;
     }
 
-    public SaveBeaMessageAction(ProgressIndicator i, JDialog cleanAfter, String fromSafeId, List<BeaAttachmentMetadata> attachmentMetadata, AppUserBean cu, boolean readReceipt, BeaListItem authority, Identity to, String subject, String body, ArchiveFileBean af, String documentTag, String azSender, String azRecipient, CaseFolder folder) {
-        this(i, cleanAfter, fromSafeId, attachmentMetadata, cu, readReceipt, authority, to, subject, body, documentTag, azSender, azRecipient);
+    public SaveBeaMessageAction(ProgressIndicator i, JDialog cleanAfter, String fromSafeId, List<BeaAttachmentMetadata> attachmentMetadata, AppUserBean cu, boolean readReceipt, BeaListItem authority, Identity to, String subject, String body, ArchiveFileBean af, String documentTag, String azSender, String azRecipient, CaseFolder folder, BeaListItem priority) {
+        this(i, cleanAfter, fromSafeId, attachmentMetadata, cu, readReceipt, authority, to, subject, body, documentTag, azSender, azRecipient, priority);
         this.archiveFile = af;
         this.folder = folder;
     }
@@ -793,7 +795,7 @@ public class SaveBeaMessageAction extends ProgressableAction {
             String toSafeId=null;
             if(this.to!=null)
                 toSafeId=this.to.getSafeId();
-            sentId = bea.saveMessageToDrafts(msg, senderSafeId, toSafeId, this.authority);
+            sentId = bea.saveMessageToDrafts(msg, senderSafeId, toSafeId, this.authority, this.priority);
 
         } catch (BeaWrapperException ex) {
             log.error(ex);
@@ -818,7 +820,7 @@ public class SaveBeaMessageAction extends ProgressableAction {
                 if (receivedPrefix == null) {
                     receivedPrefix = new java.util.Date();
                 }
-                String newName = com.jdimension.jlawyer.client.utils.FileUtils.getNewFileName(mex.getFileName(), true, receivedPrefix, this.indicator);
+                String newName = com.jdimension.jlawyer.client.utils.FileUtils.getNewFileName(this.archiveFile, mex.getFileName(), receivedPrefix, true, this.indicator);
                 if (newName == null) {
                     return false;
                 }
@@ -826,15 +828,15 @@ public class SaveBeaMessageAction extends ProgressableAction {
                 if (newName.trim().length() == 0) {
                     newName = "beA-Nachricht";
                 }
-                if (newName.length() > 230) {
-                    newName = newName.substring(0, 229);
+                if (newName.length() > 228) {
+                    newName = newName.substring(0, 227);
                 }
 
                 if (!newName.toLowerCase().endsWith(".bea")) {
                     newName = newName + ".bea";
                 }
 
-                ArchiveFileDocumentsBean newDoc = afs.addDocument(this.archiveFile.getId(), newName, mex.getContent(), "");
+                ArchiveFileDocumentsBean newDoc = afs.addDocument(this.archiveFile.getId(), newName, mex.getContent(), "", null);
 
                 if (this.documentTag != null && !("".equals(this.documentTag))) {
                     afs.setDocumentTag(newDoc.getId(), new DocumentTagsBean(newDoc.getId(), this.documentTag), true);

@@ -663,6 +663,7 @@
  */
 package com.jdimension.jlawyer.client.bea;
 
+import com.jdimension.jlawyer.client.components.GenericTextViewer;
 import com.jdimension.jlawyer.client.mail.*;
 import com.jdimension.jlawyer.client.editors.EditorsRegistry;
 import com.jdimension.jlawyer.client.editors.documents.SearchAndAssignDialog;
@@ -864,7 +865,7 @@ public class BeaMessageContentUI extends javax.swing.JPanel implements Hyperlink
             lblSentDate.setText(df2.format(msg.getReceptionTime()));
         }
         String shortened=msg.getSubject();
-        shortened=shortened.substring(0,Math.min(150, shortened.length()));
+        shortened=shortened.substring(0,Math.min(90, shortened.length()));
         lblSubject.setText(shortened);
         lblSubject.setToolTipText(msg.getSubject());
         lblFrom.setText(msg.getSenderName());
@@ -879,7 +880,7 @@ public class BeaMessageContentUI extends javax.swing.JPanel implements Hyperlink
         }
 
         String to = "";
-        if (msg.getRecipients().size() > 0) {
+        if (!msg.getRecipients().isEmpty()) {
             to = msg.getRecipients().get(0).getName();
             for (int i = 1; i < msg.getRecipients().size(); i++) {
                 to = to + ", " + msg.getRecipients().get(i).getName();
@@ -920,7 +921,7 @@ public class BeaMessageContentUI extends javax.swing.JPanel implements Hyperlink
         processCardTable.setModel(tm2);
         tabs.setIconAt(2, null);
         if (msg.getProcessCard() != null) {
-            if (msg.getProcessCard().getEntries().size() > 0 || !StringUtils.isEmpty(msg.getProcessCard().getExceptionMessage())) {
+            if (!msg.getProcessCard().getEntries().isEmpty() || !StringUtils.isEmpty(msg.getProcessCard().getExceptionMessage())) {
                 tabs.setIconAt(2, new javax.swing.ImageIcon(BeaMessageContentUI.class.getResource("/icons/messagebox_warning.png")));
             }
             if(!StringUtils.isEmpty(msg.getProcessCard().getExceptionMessage())) {
@@ -1113,7 +1114,6 @@ public class BeaMessageContentUI extends javax.swing.JPanel implements Hyperlink
         );
 
         jSplitPane1.setBackground(new java.awt.Color(255, 255, 255));
-        jSplitPane1.setBorder(null);
         jSplitPane1.setDividerLocation(200);
         jSplitPane1.setOrientation(javax.swing.JSplitPane.VERTICAL_SPLIT);
 
@@ -1143,7 +1143,6 @@ public class BeaMessageContentUI extends javax.swing.JPanel implements Hyperlink
             public int getSize() { return strings.length; }
             public Object getElementAt(int i) { return strings[i]; }
         });
-        lstAttachments.setSelectionMode(javax.swing.ListSelectionModel.SINGLE_INTERVAL_SELECTION);
         lstAttachments.setLayoutOrientation(javax.swing.JList.HORIZONTAL_WRAP);
         lstAttachments.setVisibleRowCount(-1);
         lstAttachments.addMouseListener(new java.awt.event.MouseAdapter() {
@@ -1169,7 +1168,6 @@ public class BeaMessageContentUI extends javax.swing.JPanel implements Hyperlink
             public int getSize() { return strings.length; }
             public String getElementAt(int i) { return strings[i]; }
         });
-        lstAttachmentsTechnical.setSelectionMode(javax.swing.ListSelectionModel.SINGLE_INTERVAL_SELECTION);
         lstAttachmentsTechnical.setLayoutOrientation(javax.swing.JList.HORIZONTAL_WRAP);
         lstAttachmentsTechnical.setVisibleRowCount(-1);
         lstAttachmentsTechnical.addMouseListener(new java.awt.event.MouseAdapter() {
@@ -1458,7 +1456,7 @@ public class BeaMessageContentUI extends javax.swing.JPanel implements Hyperlink
 
         } catch (Exception ex) {
             log.error("Error saving attachment", ex);
-            JOptionPane.showMessageDialog(this, "Fehler beim Speichern des Anhangs: " + ex.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
+            JOptionPane.showMessageDialog(this, "Fehler beim Speichern des Anhangs (fehlende Berechtigungen oder unzulässige Zeichen im Namen): " + ex.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
 
         }
     }//GEN-LAST:event_mnuSaveAsFileActionPerformed
@@ -1503,12 +1501,12 @@ public class BeaMessageContentUI extends javax.swing.JPanel implements Hyperlink
 
                     byte[] data = ((Attachment) selected).getContent();
 
-                    String newName = FileUtils.getNewFileName(selected.toString(), true);
+                    String newName = FileUtils.getNewFileName(sel, selected.toString(), true);
                     if (newName == null) {
                         return;
                     }
 
-                    ArchiveFileDocumentsBean newDoc = afs.addDocument(sel.getId(), newName, data, "");
+                    ArchiveFileDocumentsBean newDoc = afs.addDocument(sel.getId(), newName, data, "", null);
 
                     if (folder != null) {
                         ArrayList<String> docList = new ArrayList<>();
@@ -1621,7 +1619,7 @@ public class BeaMessageContentUI extends javax.swing.JPanel implements Hyperlink
 
     private void cmdShowProcessCardActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdShowProcessCardActionPerformed
         String osciMsg = this.msgContainer.getProcessCard().getOsciMessage();
-        OsciMessageViewer v = new OsciMessageViewer(EditorsRegistry.getInstance().getMainWindow(), true, "" + this.msgContainer.getProcessCard().getMessageId(), osciMsg);
+        GenericTextViewer v = new GenericTextViewer(EditorsRegistry.getInstance().getMainWindow(), true, "Nachrichten-ID:", "" + this.msgContainer.getProcessCard().getMessageId(), osciMsg);
         FrameUtils.centerDialog(v, EditorsRegistry.getInstance().getMainWindow());
         v.setVisible(true);
     }//GEN-LAST:event_cmdShowProcessCardActionPerformed

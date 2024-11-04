@@ -663,12 +663,16 @@
  */
 package com.jdimension.jlawyer.server.utils;
 
+import com.jdimension.jlawyer.documents.FileTypes;
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
 import java.io.FileReader;
 import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
 import java.io.RandomAccessFile;
 import org.apache.log4j.Logger;
 
@@ -693,7 +697,86 @@ public class ServerFileUtils {
         
 
     }
+    
+    public static String getExtension(String fileName) {
+        int index = fileName.lastIndexOf('.');
+        if (index > -1 && index < fileName.length()) {
+            return fileName.substring(index + 1);
+        }
+        return "url-with-no-extension";
+    }
+    
+    public static String preserveExtension(String currentFileName, String newFileName) {
 
+        String currentExt = "";
+        for (String ext : FileTypes.LO_OFFICEFILETYPES) {
+            ext = ext.toLowerCase();
+            if (currentFileName.toLowerCase().endsWith(ext)) {
+                currentExt = ext;
+            }
+        }
+        if (currentFileName.toLowerCase().endsWith(".pdf")) {
+            currentExt = ".pdf";
+        } else if (currentFileName.toLowerCase().endsWith(".eml")) {
+            currentExt = ".eml";
+        } else if (currentFileName.toLowerCase().endsWith(".bea")) {
+            currentExt = ".bea";
+        } else if (currentFileName.toLowerCase().endsWith(".xml")) {
+            currentExt = ".xml";
+        } else if (currentFileName.toLowerCase().endsWith(".pkcs7")) {
+            currentExt = ".pkcs7";
+        } else if (currentFileName.toLowerCase().endsWith(".ps7s")) {
+            currentExt = ".p7s";
+        } else if (currentFileName.toLowerCase().endsWith(".zip")) {
+            currentExt = ".zip";
+        }
+        
+        if("".equals(currentExt)) {
+            // fallback solution for unkown file types
+            int dotIndex = currentFileName.lastIndexOf('.');
+            if (dotIndex > 0 && dotIndex < currentFileName.length() - 1) {
+                String extension = currentFileName.substring(dotIndex);
+                if (extension.length() <= 6) {
+                    currentExt = extension;
+                }
+            }
+        }
+        
+
+        if (!newFileName.endsWith(currentExt)) {
+            newFileName = newFileName + currentExt;
+        }
+
+        return newFileName;
+
+    }
+    
+    public static String sanitizeFileName(String fileName) {
+        String name = fileName;
+        name = name.replace(",", " ");
+        name = name.replace("\"", "");
+        name = name.replace("§", " ");
+        name = name.replace("%", " ");
+        name = name.replace("&", "_");
+        name = name.replace("/", "_");
+        name = name.replace("=", "_");
+        name = name.replace("?", " ");
+        name = name.replace("{", "(");
+        name = name.replace("}", ")");
+        name = name.replace("[", "(");
+        name = name.replace("]", ")");
+        name = name.replace("\\", "_");
+        name = name.replace("*", "-");
+        name = name.replace("#", "-");
+        name = name.replace("'", "");
+        name = name.replace(":", " ");
+        name = name.replace(";", " ");
+        name = name.replace(">", "");
+        name = name.replace("<", "");
+        name = name.replace("|", "_");
+        return name.trim();
+    }
+    
     public static byte[] readFile(File file) throws Exception {
         try (FileInputStream fileInputStream = new FileInputStream(file);) {
             if(file.length()>Integer.MAX_VALUE) {
@@ -719,6 +802,54 @@ public class ServerFileUtils {
             return sb.toString();
         }
         
+    }
+    
+    public static String readTextFile(File file) throws Exception {
+        try ( FileReader fr = new FileReader(file)) {
+
+            char[] data = new char[(int) file.length()];
+            fr.read(data);
+            return new String(data);
+        }
+    }
+    
+    public static void writeFile(File file, byte[] content) throws Exception {
+        try ( FileOutputStream fileOutputStream = new FileOutputStream(file, false);) {
+            fileOutputStream.write(content);
+            fileOutputStream.flush();
+        }
+    }
+    
+    public static void createFile(String file, byte[] data) throws Exception {
+        try ( FileOutputStream fos = new FileOutputStream(file)) {
+            fos.write(data);
+
+        }
+
+    }
+    
+    public static void copyFile(String srFile, String dtFile) throws Exception {
+        copyFile(srFile, dtFile, false);
+    }
+    
+    public static void copyFile(String srFile, String dtFile, boolean overwrite) throws Exception {
+
+        File f1 = new File(srFile);
+        File f2 = new File(dtFile);
+
+        if (f2.exists() && !overwrite) {
+            throw new Exception("Zieldatei existiert bereits!");
+        }
+
+        try ( InputStream in = new FileInputStream(f1);  OutputStream out = new FileOutputStream(f2)) {
+
+            byte[] buf = new byte[1024];
+            int len;
+            while ((len = in.read(buf)) > 0) {
+                out.write(buf, 0, len);
+            }
+        }
+
     }
     
     public static String readLinesFromEnd(File file, int numberOfLines) throws Exception {

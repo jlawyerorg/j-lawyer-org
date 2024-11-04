@@ -663,7 +663,9 @@
  */
 package com.jdimension.jlawyer.client.utils;
 
+import com.jdimension.jlawyer.client.editors.files.OptionsComboBoxModel;
 import com.jdimension.jlawyer.client.settings.ClientSettings;
+import com.jdimension.jlawyer.persistence.AppOptionGroupBean;
 import java.awt.Color;
 import java.awt.Component;
 import java.awt.Container;
@@ -671,7 +673,6 @@ import java.awt.Graphics;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseMotionAdapter;
 import java.beans.PropertyChangeEvent;
-import java.beans.PropertyChangeListener;
 import java.util.ArrayList;
 import java.util.List;
 import javax.swing.ComboBoxModel;
@@ -690,11 +691,9 @@ import javax.swing.plaf.basic.BasicSplitPaneDivider;
 import javax.swing.plaf.basic.BasicSplitPaneUI;
 import javax.swing.table.TableCellRenderer;
 import javax.swing.table.TableColumn;
-import javax.swing.tree.TreePath;
 import org.apache.log4j.Logger;
 import org.jdesktop.swingx.autocomplete.AutoCompleteDecorator;
 import org.jdesktop.swingx.autocomplete.AutoCompleteDocument;
-import org.jdesktop.swingx.autocomplete.ComboBoxAdaptor;
 import org.jdesktop.swingx.autocomplete.ListAdaptor;
 import themes.colors.DefaultColorTheme;
 
@@ -712,15 +711,15 @@ public class ComponentUtils {
             tree.expandRow(i);
         }
     }
-    
+
     public static void addDropRenderer(JTree tree) {
         tree.addMouseMotionListener(new MouseMotionAdapter() {
             @Override
             public void mouseDragged(MouseEvent e) {
                 int x = (int) e.getPoint().getX();
                 int y = (int) e.getPoint().getY();
-                int row=tree.getRowForLocation(x, y);
-                
+                int row = tree.getRowForLocation(x, y);
+
                 JTree.DropLocation dropLocation = tree.getDropLocation();
                 if (dropLocation != null
                         && dropLocation.getChildIndex() == -1
@@ -730,7 +729,7 @@ public class ComponentUtils {
                     tree.getComponentAt(x, y).setForeground(Color.GREEN);
 
                 }
-                
+
 //                int x = (int) e.getPoint().getX();
 //                int y = (int) e.getPoint().getY();
 //                //TreePath path = tree.getPathForLocation(x, y);
@@ -760,17 +759,18 @@ public class ComponentUtils {
     }
 
     public static boolean containsItem(JComboBox cmb, Object item) {
-        ComboBoxModel cmbModel=cmb.getModel();
-        for(int i=0;i<cmbModel.getSize();i++) {
-            if(cmbModel.getElementAt(i).equals(item))
+        ComboBoxModel cmbModel = cmb.getModel();
+        for (int i = 0; i < cmbModel.getSize(); i++) {
+            if (cmbModel.getElementAt(i).equals(item)) {
                 return true;
+            }
         }
         return false;
     }
-    
+
     public static void addAllItemsToCombobox(JComboBox cmb, Object[] objects) {
-        for (int i = 0; i < objects.length; i++) {
-            cmb.addItem(objects[i]);
+        for (Object object : objects) {
+            cmb.addItem(object);
         }
     }
 
@@ -789,22 +789,26 @@ public class ComponentUtils {
             }
         }
     }
-    
+
     public static void addComboboxItemIfNecessary(JComboBox cmb, Object newItem) {
-        boolean contained=false;
+        boolean contained = false;
         for (int i = 0; i < cmb.getItemCount(); i++) {
             Object current = cmb.getItemAt(i);
             if (current.equals(newItem)) {
-                contained=true;
+                contained = true;
                 break;
             }
         }
-        if(!contained) {
+        if (!contained) {
             cmb.addItem(newItem);
         }
     }
 
     public static void autoSizeColumns(JTable table) {
+        autoSizeColumns(table, -1);
+    }
+
+    public static void autoSizeColumns(JTable table, int mostFlexibleColumnIndex) {
 
         if (table.getRowCount() == 0) {
             return;
@@ -847,18 +851,23 @@ public class ComponentUtils {
                 Object headerValue = tableColumn.getHeaderValue();
                 Component headerComp = headerRenderer.getTableCellRendererComponent(table, headerValue, false, false, 0, column);
                 int maxHeaderWidth = Math.max(preferredWidth, headerComp.getPreferredSize().width);
-                // note some extra padding
-                //tableColumn.setPreferredWidth(maxWidth + 6);//IntercellSpacing * 2 + 2 * 2 pixel instead of taking this value from Borders
-
+                
                 preferredWidth = Math.max(preferredWidth, maxHeaderWidth + 6) + 15;
 
                 tableColumn.setPreferredWidth(preferredWidth);
                 totalColWidth = totalColWidth + preferredWidth;
             }
 
-            if (totalColWidth < table.getParent().getWidth()) {
-                TableColumn tableColumn = table.getColumnModel().getColumn(table.getColumnCount() - 1);
-                tableColumn.setPreferredWidth(tableColumn.getPreferredWidth() + (table.getParent().getWidth() - totalColWidth));
+            if (mostFlexibleColumnIndex < 0) {
+                if (totalColWidth < table.getParent().getWidth()) {
+                    TableColumn tableColumn = table.getColumnModel().getColumn(table.getColumnCount() - 1);
+                    tableColumn.setPreferredWidth(tableColumn.getPreferredWidth() + (table.getParent().getWidth() - totalColWidth));
+                }
+            } else {
+                if (totalColWidth < table.getParent().getWidth()) {
+                    TableColumn tableColumn = table.getColumnModel().getColumn(mostFlexibleColumnIndex);
+                    tableColumn.setPreferredWidth(tableColumn.getPreferredWidth() + (table.getParent().getWidth() - totalColWidth));
+                }
             }
 
         } catch (Throwable t) {
@@ -918,7 +927,7 @@ public class ComponentUtils {
                 }
             }
         }
-        return list.toArray(new String[list.size()]);
+        return list.toArray(String[]::new);
     }
 
     public static void unSelectMenuItems(JPopupMenu pop) {
@@ -929,9 +938,9 @@ public class ComponentUtils {
             }
         }
     }
-    
+
     public static List<String> getPopupMenuItems(JPopupMenu pop) {
-        ArrayList<String> items=new ArrayList<>();
+        ArrayList<String> items = new ArrayList<>();
         for (MenuElement me : pop.getSubElements()) {
             if (me.getComponent() instanceof JCheckBoxMenuItem) {
                 JCheckBoxMenuItem mi = ((JCheckBoxMenuItem) me.getComponent());
@@ -940,39 +949,38 @@ public class ComponentUtils {
         }
         return items;
     }
-    
+
     public static List<String> getSelectedPopupMenuItems(JPopupMenu pop) {
-        ArrayList<String> items=new ArrayList<>();
+        ArrayList<String> items = new ArrayList<>();
         for (MenuElement me : pop.getSubElements()) {
             if (me.getComponent() instanceof JCheckBoxMenuItem) {
                 JCheckBoxMenuItem mi = ((JCheckBoxMenuItem) me.getComponent());
-                if(mi.isSelected())
+                if (mi.isSelected()) {
                     items.add(mi.getText());
+                }
             }
         }
         return items;
     }
-    
+
     public static String getSelectedPopupMenuItemsAsString(JPopupMenu pop) {
-        List<String> items=getSelectedPopupMenuItems(pop);
-        StringBuilder sb=new StringBuilder();
-        for (String i: items) {
+        List<String> items = getSelectedPopupMenuItems(pop);
+        StringBuilder sb = new StringBuilder();
+        for (String i : items) {
             sb.append(i).append(", ");
         }
-        String result=sb.toString();
-        if(result.endsWith(", "))
-            result=result.substring(0, result.length()-2);
+        String result = sb.toString();
+        if (result.endsWith(", ")) {
+            result = result.substring(0, result.length() - 2);
+        }
         return result;
     }
-    
+
     public static void selectPopupMenuItems(JPopupMenu pop, List<String> selectedItems) {
         for (MenuElement me : pop.getSubElements()) {
             if (me.getComponent() instanceof JCheckBoxMenuItem) {
                 JCheckBoxMenuItem mi = ((JCheckBoxMenuItem) me.getComponent());
-                if(selectedItems.contains(mi.getText()))
-                    mi.setSelected(true);
-                else
-                    mi.setSelected(false);
+                mi.setSelected(selectedItems.contains(mi.getText()));
             }
         }
     }
@@ -991,7 +999,7 @@ public class ComponentUtils {
             log.error("Could not set divider location for " + componentName + " in " + container.getName(), t);
         }
     }
-    
+
     public static void persistSplitPane(JSplitPane split, Class container, String componentName) {
         split.addPropertyChangeListener((PropertyChangeEvent evt) -> {
             if (evt.getPropertyName().equals(JSplitPane.DIVIDER_LOCATION_PROPERTY)) {
@@ -1001,6 +1009,26 @@ public class ComponentUtils {
                 }
             }
         });
+    }
+
+    // causes a re-layout of the splitpanes components
+    public static void bumpSplitPane(JSplitPane split) {
+        int dl = split.getDividerLocation();
+        split.setDividerLocation(dl + 1);
+        split.setDividerLocation(dl);
+    }
+
+    public static void populateOptionsCombobox(AppOptionGroupBean[] options, JComboBox cmb) {
+        String[] items = new String[options.length + 1];
+        items[0] = "";
+        for (int i = 0; i < options.length; i++) {
+            AppOptionGroupBean aogb = (AppOptionGroupBean) options[i];
+            items[i + 1] = aogb.getValue();
+
+        }
+        StringUtils.sortIgnoreCase(items);
+        OptionsComboBoxModel cModel = new OptionsComboBoxModel(items);
+        cmb.setModel(cModel);
     }
 
     public static void decorateSplitPane(JSplitPane split, Color dividerColor) {
@@ -1032,14 +1060,14 @@ public class ComponentUtils {
         split.setBorder(null);
 
     }
-    
+
     public static void addAutoComplete(JComboBox cmb) {
 //        ComboBoxAdaptor cmbAdaptor = new ComboBoxAdaptor(cmb);
 //        AutoCompleteDocument autoCompDoc = new AutoCompleteDocument(cmbAdaptor, false);
 //        AutoCompleteDecorator.decorate(cmb);
         AutoCompleteDecorator.decorate(cmb);
     }
-    
+
     public static void addAutoComplete(JTextField txt, String[] candidates) {
         JList dataList = new JList(candidates);
         ListAdaptor listAdaptor = new ListAdaptor(dataList, txt);

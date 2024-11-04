@@ -664,8 +664,10 @@
 package com.jdimension.jlawyer.client.editors.documents;
 
 import com.jdimension.jlawyer.client.editors.documents.viewer.CaseDocumentPreviewProvider;
+import com.jdimension.jlawyer.client.editors.documents.viewer.DocumentPreviewSaveCallback;
 import com.jdimension.jlawyer.client.editors.documents.viewer.DocumentViewerFactory;
 import com.jdimension.jlawyer.client.editors.documents.viewer.GifJpegPngImageWithTextPanel;
+import com.jdimension.jlawyer.client.editors.documents.viewer.PreviewPanel;
 import com.jdimension.jlawyer.client.settings.ClientSettings;
 import com.jdimension.jlawyer.client.utils.ThreadUtils;
 import com.jdimension.jlawyer.persistence.ArchiveFileBean;
@@ -673,11 +675,13 @@ import com.jdimension.jlawyer.persistence.ArchiveFileDocumentsBean;
 import com.jdimension.jlawyer.services.ArchiveFileServiceRemote;
 import com.jdimension.jlawyer.services.JLawyerServiceLocator;
 import java.awt.BorderLayout;
+import java.awt.Component;
 import java.awt.FlowLayout;
 import javax.swing.JComponent;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JProgressBar;
+import javax.swing.JSplitPane;
 import javax.swing.SwingUtilities;
 import org.apache.log4j.Logger;
 
@@ -696,13 +700,15 @@ public class LoadDocumentPreviewThread implements Runnable {
     private ArchiveFileBean caseDto=null;
     ArchiveFileDocumentsBean docDto=null;
     private boolean forceAnyDocumentSize=false;
+    private DocumentPreviewSaveCallback saveCallback=null;
 
-    public LoadDocumentPreviewThread(ArchiveFileBean caseDto, ArchiveFileDocumentsBean value, boolean readOnly, JPanel pnlPreview, boolean forceAnyDocumentSize) {
+    public LoadDocumentPreviewThread(ArchiveFileBean caseDto, ArchiveFileDocumentsBean value, boolean readOnly, JPanel pnlPreview, boolean forceAnyDocumentSize, DocumentPreviewSaveCallback saveCallback) {
         this.docDto=value;
         this.pnlPreview = pnlPreview;
         this.readOnly = readOnly;
         this.caseDto=caseDto;
         this.forceAnyDocumentSize=forceAnyDocumentSize;
+        this.saveCallback=saveCallback;
     }
 
     public static boolean isRunning() {
@@ -713,7 +719,20 @@ public class LoadDocumentPreviewThread implements Runnable {
     public void run() {
 
         try {
+            
             running = true;
+            
+            if(pnlPreview.getComponentCount()>0) {
+                Component child=pnlPreview.getComponent(0);
+                if(child instanceof PreviewPanel) {
+                    if(((PreviewPanel)child).getDocumentId()!=null && this.docDto.getId().equals(((PreviewPanel)child).getDocumentId())) {
+                        // a preview was requested for a document that is already displayed
+                        running=false;
+                        return;
+                    }
+                }
+            }
+            
             ThreadUtils.setVisible(pnlPreview, false);
             ThreadUtils.removeAll(pnlPreview);
             ThreadUtils.setLayout(pnlPreview, new FlowLayout());
@@ -736,13 +755,33 @@ public class LoadDocumentPreviewThread implements Runnable {
             
             
 
-            JComponent preview = null;
-            if(this.docDto.getSize()>maxPreviewBytes && !this.forceAnyDocumentSize) {
-                preview=new DocumentPreviewTooLarge(this.caseDto, this.docDto, this.readOnly, this.pnlPreview);
-            } else {
-                byte[] data = afs.getDocumentContent(this.docDto.getId());
-                preview=DocumentViewerFactory.getDocumentViewer(this.caseDto, this.docDto.getId(), this.docDto.getName(), readOnly, new CaseDocumentPreviewProvider(afs, this.docDto.getId()), data, this.pnlPreview.getWidth(), this.pnlPreview.getHeight());
-            }
+//            JComponent preview = null;
+//            if(this.docDto.getSize()>maxPreviewBytes && !this.forceAnyDocumentSize) {
+//                preview=new DocumentPreviewTooLarge(this.caseDto, this.docDto, this.readOnly, this.pnlPreview, this.saveCallback);
+//            } else {
+//                byte[] data=CachingDocumentLoader.getInstance().getDocument(this.docDto.getId());
+//                preview=DocumentViewerFactory.getDocumentViewer(this.caseDto, this.docDto.getId(), this.docDto.getName(), readOnly, new CaseDocumentPreviewProvider(afs, this.docDto.getId()), data, this.pnlPreview.getWidth(), this.pnlPreview.getHeight(), this.saveCallback);
+//            }
+            
+            final long maxPreviewBytesFinal = maxPreviewBytes;
+            JComponent[] previewWrapper = new JComponent[1];  // Use an array as a mutable container
+            SwingUtilities.invokeAndWait(() -> {
+                if (this.docDto.getSize() > maxPreviewBytesFinal && !this.forceAnyDocumentSize) {
+                    previewWrapper[0] = new DocumentPreviewTooLarge(this.caseDto, this.docDto, this.readOnly, this.pnlPreview, this.saveCallback);
+                } else {
+                    try {
+                        byte[] data = CachingDocumentLoader.getInstance().getDocument(this.docDto.getId());
+                        previewWrapper[0] = DocumentViewerFactory.getDocumentViewer(this.caseDto, this.docDto.getId(), this.docDto.getName(), readOnly, new CaseDocumentPreviewProvider(afs, this.docDto.getId()), data, this.pnlPreview.getWidth(), this.pnlPreview.getHeight(), this.saveCallback);
+                    } catch (Exception ex) {
+                        log.error("Could not get document preview for " + this.docDto.getName() + "[" + this.docDto.getId() + "]", ex);
+                        previewWrapper[0] = new JLabel("Fehler beim Laden der Dokumentvorschau: " + ex.getMessage());
+                    }
+                }
+            });
+            // Use the component
+            JComponent preview = previewWrapper[0];
+
+
             
             
             ThreadUtils.setVisible(pnlPreview, false);
@@ -764,6 +803,7 @@ public class LoadDocumentPreviewThread implements Runnable {
                     ((GifJpegPngImageWithTextPanel) prev).intelligentScrolling();
                 });
             }
+            
             running = false;
         } catch (Exception ex) {
             running = false;

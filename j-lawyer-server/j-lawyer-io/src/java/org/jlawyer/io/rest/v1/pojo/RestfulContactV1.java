@@ -674,6 +674,7 @@ public class RestfulContactV1 {
     
     private String id=null;
     private String firstName=null;
+    private String firstName2=null;
     private String name=null;
     private String company=null;
     private String department=null;
@@ -738,11 +739,12 @@ public class RestfulContactV1 {
         ad.setEncryptionPwd(this.getEncryptionPwd());
         ad.setFax(this.getFax());
         ad.setFirstName(this.getFirstName());
+        ad.setFirstName2(this.getFirstName2());
         ad.setId(this.getId());
         ad.setInsuranceName(this.getInsuranceName());
         ad.setInsuranceNumber(this.getInsuranceNumber());
         ad.setLastModifier(this.getLastModifier());
-        ad.setLegalProtection(this.getLegalProtection());
+        ad.setLegalProtection(this.getLegalProtection()==1);
         ad.setMobile(this.getMobile());
         ad.setModificationDate(this.getModificationDate());
         ad.setMotorInsuranceName(this.getMotorInsuranceName());
@@ -754,7 +756,7 @@ public class RestfulContactV1 {
         ad.setTitle(this.getTitle());
         ad.setTrafficInsuranceName(this.getTrafficInsuranceName());
         ad.setTrafficInsuranceNumber(this.getTrafficInsuranceNumber());
-        ad.setTrafficLegalProtection(this.getTrafficLegalProtection());
+        ad.setTrafficLegalProtection(this.getTrafficLegalProtection()==1);
         ad.setWebsite(this.getWebsite());
         ad.setZipCode(this.getZipCode());
         return ad;
@@ -780,11 +782,15 @@ public class RestfulContactV1 {
         ad.setEncryptionPwd(a.getEncryptionPwd());
         ad.setFax(a.getFax());
         ad.setFirstName(a.getFirstName());
+        ad.setFirstName2(a.getFirstName2());
         ad.setId(a.getId());
         ad.setInsuranceName(a.getInsuranceName());
         ad.setInsuranceNumber(a.getInsuranceNumber());
         ad.setLastModifier(a.getLastModifier());
-        ad.setLegalProtection(a.getLegalProtection());
+        if(a.isLegalProtection())
+            ad.setLegalProtection((short)1);
+        else
+            ad.setLegalProtection((short)0);
         ad.setMobile(a.getMobile());
         ad.setModificationDate(a.getModificationDate());
         ad.setMotorInsuranceName(a.getMotorInsuranceName());
@@ -796,7 +802,10 @@ public class RestfulContactV1 {
         ad.setTitle(a.getTitle());
         ad.setTrafficInsuranceName(a.getTrafficInsuranceName());
         ad.setTrafficInsuranceNumber(a.getTrafficInsuranceNumber());
-        ad.setTrafficLegalProtection(a.getTrafficLegalProtection());
+        if(a.isTrafficLegalProtection())
+            ad.setTrafficLegalProtection((short)1);
+        else
+            ad.setTrafficLegalProtection((short)0);
         ad.setWebsite(a.getWebsite());
         ad.setZipCode(a.getZipCode());
         return ad;
@@ -1332,6 +1341,20 @@ public class RestfulContactV1 {
      */
     public void setEncryptionPwd(String encryptionPwd) {
         this.encryptionPwd = encryptionPwd;
+    }
+
+    /**
+     * @return the firstName2
+     */
+    public String getFirstName2() {
+        return firstName2;
+    }
+
+    /**
+     * @param firstName2 the firstName2 to set
+     */
+    public void setFirstName2(String firstName2) {
+        this.firstName2 = firstName2;
     }
     
     

@@ -663,6 +663,7 @@ For more information on this, and how to apply and follow the GNU AGPL, see
  */
 package com.jdimension.jlawyer.client.plugins.form;
 
+import com.jdimension.jlawyer.pojo.FormPluginSetting;
 import com.jdimension.jlawyer.client.settings.ServerSettings;
 import java.util.ArrayList;
 import javax.swing.JLabel;

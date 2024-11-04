@@ -28,6 +28,9 @@
               <EmptySpace max="-2" attributes="0"/>
               <Component id="lblCurrentPage" min="-2" max="-2" attributes="0"/>
               <EmptySpace max="32767" attributes="0"/>
+              <Component id="sliderZoom" min="-2" max="-2" attributes="0"/>
+              <EmptySpace max="-2" attributes="0"/>
+              <Component id="cmdFitToScreen" min="-2" max="-2" attributes="0"/>
           </Group>
       </Group>
     </DimensionLayout>
@@ -39,12 +42,16 @@
                       <Component id="cmdFirstPage" alignment="0" min="-2" max="-2" attributes="0"/>
                       <Component id="cmdPageBackward" min="-2" max="-2" attributes="0"/>
                       <Component id="cmdPageForward" min="-2" max="-2" attributes="0"/>
-                      <Component id="lblCurrentPage" alignment="1" min="-2" max="-2" attributes="0"/>
+                      <Group type="103" alignment="1" groupAlignment="3" attributes="0">
+                          <Component id="lblCurrentPage" alignment="3" min="-2" max="-2" attributes="0"/>
+                          <Component id="sliderZoom" alignment="3" min="-2" max="-2" attributes="0"/>
+                          <Component id="cmdFitToScreen" alignment="3" min="-2" max="-2" attributes="0"/>
+                      </Group>
                   </Group>
                   <Component id="cmdLastPage" min="-2" max="-2" attributes="0"/>
               </Group>
               <EmptySpace max="-2" attributes="0"/>
-              <Component id="jScrollPane1" pref="22" max="32767" attributes="0"/>
+              <Component id="jScrollPane1" pref="26" max="32767" attributes="0"/>
           </Group>
       </Group>
     </DimensionLayout>
@@ -60,6 +67,9 @@
             <Property name="text" type="java.lang.String" value="Lade..."/>
             <Property name="verticalAlignment" type="int" value="1"/>
           </Properties>
+          <Events>
+            <EventHandler event="mouseWheelMoved" listener="java.awt.event.MouseWheelListener" parameters="java.awt.event.MouseWheelEvent" handler="lblContentMouseWheelMoved"/>
+          </Events>
         </Component>
       </SubComponents>
     </Container>
@@ -106,6 +116,29 @@
       </Properties>
       <Events>
         <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="cmdLastPageActionPerformed"/>
+      </Events>
+    </Component>
+    <Component class="javax.swing.JSlider" name="sliderZoom">
+      <Properties>
+        <Property name="maximum" type="int" value="300"/>
+        <Property name="minimum" type="int" value="25"/>
+        <Property name="paintLabels" type="boolean" value="true"/>
+        <Property name="toolTipText" type="java.lang.String" value="Zoom 25% .. 300%"/>
+        <Property name="value" type="int" value="100"/>
+      </Properties>
+      <Events>
+        <EventHandler event="stateChanged" listener="javax.swing.event.ChangeListener" parameters="javax.swing.event.ChangeEvent" handler="sliderZoomStateChanged"/>
+      </Events>
+    </Component>
+    <Component class="javax.swing.JButton" name="cmdFitToScreen">
+      <Properties>
+        <Property name="icon" type="javax.swing.Icon" editor="org.netbeans.modules.form.editors2.IconEditor">
+          <Image iconType="3" name="/icons16/material/baseline_fit_screen_black_48dp.png"/>
+        </Property>
+        <Property name="toolTipText" type="java.lang.String" value="auf Seitenh&#xf6;he einpassen"/>
+      </Properties>
+      <Events>
+        <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="cmdFitToScreenActionPerformed"/>
       </Events>
     </Component>
   </SubComponents>

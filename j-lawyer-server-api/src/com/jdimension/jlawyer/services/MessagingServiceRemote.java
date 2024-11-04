@@ -664,6 +664,7 @@ For more information on this, and how to apply and follow the GNU AGPL, see
 package com.jdimension.jlawyer.services;
 
 import com.jdimension.jlawyer.persistence.InstantMessage;
+import com.jdimension.jlawyer.persistence.InstantMessageMention;
 import java.util.Date;
 import java.util.List;
 import javax.ejb.Remote;
@@ -680,9 +681,23 @@ public interface MessagingServiceRemote {
     boolean deleteMessage(String messageId) throws Exception;
 
     List<InstantMessage> getMessagesSince(Date since) throws Exception;
+    
+    List<InstantMessage> getMessagesSince(Date since, int maxNumberOfMessages) throws Exception;
 
     List<InstantMessage> getMessagesForCase(String caseId) throws Exception;
+    List<InstantMessage> getMessagesForCase(String caseId, boolean withOpenMentionsOnly) throws Exception;
 
     boolean markMentionDone(String mentionId, boolean done) throws Exception;
+    boolean markMentionDone(String mentionId, boolean done, boolean skipNotification) throws Exception;
+    boolean markAllMentionsDone(List<String> messageIds, boolean skipNotifications) throws Exception;
+
+    InstantMessage getMessage(String id) throws Exception;
+
+    int getNumberOfOpenMentions() throws Exception;
+    int getNumberOfOpenMentions(String principalId) throws Exception;
+
+    List<InstantMessageMention> getUpdatedMentionsSince(Date since) throws Exception;
+    
+    List<InstantMessage> getMessagesWithOpenMentions(String principalId) throws Exception;
     
 }

@@ -663,6 +663,8 @@ For more information on this, and how to apply and follow the GNU AGPL, see
  */
 package com.jdimension.jlawyer.client.editors.files;
 
+import com.jdimension.jlawyer.persistence.ArchiveFileBean;
+import com.jdimension.jlawyer.persistence.CalendarEntryTemplate;
 import com.jdimension.jlawyer.persistence.CalendarSetup;
 import java.util.Date;
 
@@ -672,7 +674,9 @@ import java.util.Date;
  */
 public interface NewEventPanelListener {
 
-    public void addReview(int eventType, String reason, String description, Date beginDate, Date endDate, String assignee, String location, CalendarSetup calSetup) throws Exception;
+    public void addReview(CalendarEntryTemplate template, int eventType, String reason, String description, Date beginDate, Date endDate, String assignee, String location, CalendarSetup calSetup) throws Exception;
 
     public void closeNewEventListener();
+    
+    public ArchiveFileBean getCase();
 }

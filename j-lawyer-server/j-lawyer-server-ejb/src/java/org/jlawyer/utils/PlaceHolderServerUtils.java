@@ -663,7 +663,7 @@
  */
 package org.jlawyer.utils;
 
-import com.jdimension.jlawyer.services.PartiesTriplet;
+import com.jdimension.jlawyer.pojo.PartiesTriplet;
 import com.jdimension.jlawyer.documents.PlaceHolders;
 import com.jdimension.jlawyer.persistence.AddressBean;
 import com.jdimension.jlawyer.persistence.AppUserBean;
@@ -674,8 +674,10 @@ import com.jdimension.jlawyer.persistence.PartyTypeBean;
 import com.jdimension.jlawyer.persistence.ServerSettingsBean;
 import com.jdimension.jlawyer.persistence.ServerSettingsBeanFacadeLocal;
 import com.jdimension.jlawyer.server.services.settings.ServerSettingsKeys;
-import java.text.NumberFormat;
+import java.text.DecimalFormat;
+import java.text.DecimalFormatSymbols;
 import java.text.SimpleDateFormat;
+import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
@@ -687,21 +689,21 @@ import org.jlawyer.plugins.calculation.GenericCalculationTable;
  *
  * @author jens
  */
-public class PlaceHolderServerUtils extends PlaceHolders  {
-    
-    private static final String DATE_FORMAT="dd.MM.yyyy";
+public class PlaceHolderServerUtils extends PlaceHolders {
 
-    public static HashMap<String,Object> getPlaceHolderValues(HashMap<String,Object> placeHolders, ArchiveFileBean aFile, List<PartiesTriplet> selectedParties, String dictateSign, GenericCalculationTable calculationTable, HashMap<String,String> formsPlaceHolderValues, AppUserBean caseLawyer, AppUserBean caseAssistant, AppUserBean author, Invoice invoice, GenericCalculationTable invoiceTable, GenericCalculationTable timesheetsTable) throws Exception {
+    private static final String DATE_FORMAT = "dd.MM.yyyy";
 
-        NumberFormat currencyFormat = NumberFormat.getNumberInstance();
-        currencyFormat.setMinimumFractionDigits(2);
-        currencyFormat.setMaximumFractionDigits(2);
+    public static HashMap<String, Object> getPlaceHolderValues(HashMap<String, Object> placeHolders, ArchiveFileBean aFile, List<PartiesTriplet> selectedParties, String dictateSign, GenericCalculationTable calculationTable, HashMap<String, String> formsPlaceHolderValues, AppUserBean caseLawyer, AppUserBean caseAssistant, AppUserBean author, Invoice invoice, AppUserBean invoiceSender, GenericCalculationTable invoiceTable, GenericCalculationTable timesheetsTable, byte[] giroCode, String ingoText) throws Exception {
+
+        DecimalFormatSymbols symbols = new DecimalFormatSymbols(Locale.GERMANY);
+        DecimalFormat currencyFormat = new DecimalFormat("#,##0.00", symbols);
 
         if (placeHolders.containsKey(TABELLE_1)) {
-            if(calculationTable!=null)
+            if (calculationTable != null) {
                 placeHolders.put(TABELLE_1, calculationTable);
+            }
         }
-        
+
         if (placeHolders.containsKey(KURZDATUM)) {
             SimpleDateFormat df = new SimpleDateFormat(DATE_FORMAT, Locale.GERMAN);
             placeHolders.put(KURZDATUM, df.format(new Date()));
@@ -718,7 +720,7 @@ public class PlaceHolderServerUtils extends PlaceHolders  {
 
         InitialContext ic = new InitialContext();
         ServerSettingsBeanFacadeLocal set = (ServerSettingsBeanFacadeLocal) ic.lookup("java:global/j-lawyer-server/j-lawyer-server-ejb/ServerSettingsBeanFacade!com.jdimension.jlawyer.persistence.ServerSettingsBeanFacadeLocal");
-        
+
         if (placeHolders.containsKey(PROFIL_FIRMA)) {
             placeHolders.put(PROFIL_FIRMA, getSetting(set, ServerSettingsKeys.PROFILE_COMPANYNAME, ""));
         }
@@ -777,23 +779,32 @@ public class PlaceHolderServerUtils extends PlaceHolders  {
         if (placeHolders.containsKey(PROFIL_KONTONR_AK)) {
             placeHolders.put(PROFIL_KONTONR_AK, getSetting(set, ServerSettingsKeys.PROFILE_COMPANYACCOUNTNO_AK, ""));
         }
-        
-        for(String formPh: formsPlaceHolderValues.keySet()) {
-            if(placeHolders.containsKey(formPh)) {
+
+        if (formsPlaceHolderValues == null) {
+            formsPlaceHolderValues = new HashMap<>();
+        }
+        for (String formPh : formsPlaceHolderValues.keySet()) {
+            if (placeHolders.containsKey(formPh)) {
                 placeHolders.put(formPh, formsPlaceHolderValues.get(formPh));
             }
         }
-        
 
-        for(PartiesTriplet ppe: selectedParties) {
-            AddressBean selected=ppe.getAddress();
-            PartyTypeBean ptb=ppe.getPartyType();
-            
+        if (selectedParties == null) {
+            selectedParties = new ArrayList<>();
+        }
+
+        for (PartiesTriplet ppe : selectedParties) {
+            AddressBean selected = ppe.getAddress();
+            PartyTypeBean ptb = ppe.getPartyType();
+
             if (placeHolders.containsKey(getPlaceHolderForType(_NAME, ptb.getPlaceHolder()))) {
                 placeHolders.put(getPlaceHolderForType(_NAME, ptb.getPlaceHolder()), val(selected.getName()));
             }
             if (placeHolders.containsKey(getPlaceHolderForType(_VORNAME, ptb.getPlaceHolder()))) {
                 placeHolders.put(getPlaceHolderForType(_VORNAME, ptb.getPlaceHolder()), val(selected.getFirstName()));
+            }
+            if (placeHolders.containsKey(getPlaceHolderForType(_VORNAME2, ptb.getPlaceHolder()))) {
+                placeHolders.put(getPlaceHolderForType(_VORNAME2, ptb.getPlaceHolder()), val(selected.getFirstName2()));
             }
             if (placeHolders.containsKey(getPlaceHolderForType(_FIRMA_ALIAS, ptb.getPlaceHolder()))) {
                 placeHolders.put(getPlaceHolderForType(_FIRMA_ALIAS, ptb.getPlaceHolder()), val(selected.getCompany()));
@@ -855,6 +866,12 @@ public class PlaceHolderServerUtils extends PlaceHolders  {
             if (placeHolders.containsKey(getPlaceHolderForType(_KONTONR, ptb.getPlaceHolder()))) {
                 placeHolders.put(getPlaceHolderForType(_KONTONR, ptb.getPlaceHolder()), val(selected.getBankAccount()));
             }
+            if (placeHolders.containsKey(getPlaceHolderForType(_SEPAREF, ptb.getPlaceHolder()))) {
+                placeHolders.put(getPlaceHolderForType(_SEPAREF, ptb.getPlaceHolder()), val(selected.getSepaReference()));
+            }
+            if (placeHolders.containsKey(getPlaceHolderForType(_SEPASEIT, ptb.getPlaceHolder()))) {
+                placeHolders.put(getPlaceHolderForType(_SEPASEIT, ptb.getPlaceHolder()), val(selected.getSepaSince()));
+            }
             if (placeHolders.containsKey(getPlaceHolderForType(_RECHTSSCHUTZ, ptb.getPlaceHolder()))) {
                 placeHolders.put(getPlaceHolderForType(_RECHTSSCHUTZ, ptb.getPlaceHolder()), val(selected.getInsuranceNumber()));
             }
@@ -876,7 +893,7 @@ public class PlaceHolderServerUtils extends PlaceHolders  {
             if (placeHolders.containsKey(getPlaceHolderForType(_GEB, ptb.getPlaceHolder()))) {
                 placeHolders.put(getPlaceHolderForType(_GEB, ptb.getPlaceHolder()), val(selected.getBirthDate()));
             }
-            
+
             if (placeHolders.containsKey(getPlaceHolderForType(_ORTSTEIL, ptb.getPlaceHolder()))) {
                 placeHolders.put(getPlaceHolderForType(_ORTSTEIL, ptb.getPlaceHolder()), val(selected.getDistrict()));
             }
@@ -938,16 +955,14 @@ public class PlaceHolderServerUtils extends PlaceHolders  {
                 placeHolders.put(getPlaceHolderForType(_ANREDE2, ptb.getPlaceHolder()), val(selected.getTitleInAddress()));
             }
             if (placeHolders.containsKey(getPlaceHolderForType(_ALTER, ptb.getPlaceHolder()))) {
-                int age=AddressBean.calculateAge(selected.getBirthDate());
-                if(age>-1)
+                int age = AddressBean.calculateAge(selected.getBirthDate());
+                if (age > -1) {
                     placeHolders.put(getPlaceHolderForType(_ALTER, ptb.getPlaceHolder()), val("" + age));
-                else
+                } else {
                     placeHolders.put(getPlaceHolderForType(_ALTER, ptb.getPlaceHolder()), val("?"));
+                }
             }
-            
-            
-            
-            
+
             ArchiveFileAddressesBean involvement = ppe.getInvolvement();
             if (involvement != null) {
                 if (placeHolders.containsKey(getPlaceHolderForType(_AKTE_KONTAKT, ptb.getPlaceHolder()))) {
@@ -966,8 +981,7 @@ public class PlaceHolderServerUtils extends PlaceHolders  {
                     placeHolders.put(getPlaceHolderForType(_AKTE_EIGENE3, ptb.getPlaceHolder()), val(involvement.getCustom3()));
                 }
             }
-            
-            
+
         }
 
         if (aFile != null) {
@@ -986,8 +1000,7 @@ public class PlaceHolderServerUtils extends PlaceHolders  {
             if (placeHolders.containsKey(AKTE_SCHADENNR)) {
                 placeHolders.put(AKTE_SCHADENNR, val(aFile.getClaimNumber()));
             }
-            if (placeHolders.containsKey(AKTE_GEGENSTANDSWERT))
-            {
+            if (placeHolders.containsKey(AKTE_GEGENSTANDSWERT)) {
                 placeHolders.put(AKTE_GEGENSTANDSWERT, val(currencyFormat.format(aFile.getClaimValue())));
             }
             if (placeHolders.containsKey(AKTE_WEGEN)) {
@@ -997,19 +1010,35 @@ public class PlaceHolderServerUtils extends PlaceHolders  {
                 placeHolders.put(AKTE_ANWALT, val(aFile.getLawyer()));
             }
             if (placeHolders.containsKey(AKTE_ANWALT_AN)) {
-                if(caseLawyer!=null)
+                if (caseLawyer != null) {
                     placeHolders.put(AKTE_ANWALT_AN, val(caseLawyer.getDisplayName()));
-                else
+                } else {
                     placeHolders.put(AKTE_ANWALT_AN, "");
+                }
+            }
+            if (placeHolders.containsKey(AKTE_ANWALT_KRZ)) {
+                if (caseLawyer != null) {
+                    placeHolders.put(AKTE_ANWALT_KRZ, val(caseLawyer.getAbbreviation()));
+                } else {
+                    placeHolders.put(AKTE_ANWALT_KRZ, "");
+                }
             }
             if (placeHolders.containsKey(AKTE_SACHBEARBEITER)) {
                 placeHolders.put(AKTE_SACHBEARBEITER, val(aFile.getAssistant()));
             }
             if (placeHolders.containsKey(AKTE_SACHBEARBEITER_AN)) {
-                if(caseAssistant!=null)
+                if (caseAssistant != null) {
                     placeHolders.put(AKTE_SACHBEARBEITER_AN, val(caseAssistant.getDisplayName()));
-                else
+                } else {
                     placeHolders.put(AKTE_SACHBEARBEITER_AN, "");
+                }
+            }
+            if (placeHolders.containsKey(AKTE_SACHBEARBEITER_KRZ)) {
+                if (caseAssistant != null) {
+                    placeHolders.put(AKTE_SACHBEARBEITER_KRZ, val(caseAssistant.getAbbreviation()));
+                } else {
+                    placeHolders.put(AKTE_SACHBEARBEITER_KRZ, "");
+                }
             }
             if (placeHolders.containsKey(AKTE_EIGENE1)) {
                 placeHolders.put(AKTE_EIGENE1, val(aFile.getCustom1()));
@@ -1021,7 +1050,7 @@ public class PlaceHolderServerUtils extends PlaceHolders  {
                 placeHolders.put(AKTE_EIGENE3, val(aFile.getCustom3()));
             }
             if (placeHolders.containsKey(AKTE_ERSTELLT)) {
-                if(aFile.getDateCreated()!=null) {
+                if (aFile.getDateCreated() != null) {
                     SimpleDateFormat df = new SimpleDateFormat(DATE_FORMAT, Locale.GERMAN);
                     placeHolders.put(AKTE_ERSTELLT, df.format(aFile.getDateCreated()));
                 } else {
@@ -1030,15 +1059,155 @@ public class PlaceHolderServerUtils extends PlaceHolders  {
             }
 
         }
-        
-        if (placeHolders.containsKey(AUTOR_AN)) {
+
+        if (placeHolders.containsKey(USER_AN)) {
             if (author != null) {
-                placeHolders.put(AUTOR_AN, val(author.getDisplayName()));
+                placeHolders.put(USER_AN, val(author.getDisplayName()));
             } else {
-                placeHolders.put(AUTOR_AN, "");
+                placeHolders.put(USER_AN, "");
             }
         }
-        
+        if (placeHolders.containsKey(USER_EMAIL)) {
+            if (author != null) {
+                placeHolders.put(USER_EMAIL, val(author.getEmail()));
+            } else {
+                placeHolders.put(USER_EMAIL, "");
+            }
+        }
+        if (placeHolders.containsKey(USER_KRZ)) {
+            if (author != null) {
+                placeHolders.put(USER_KRZ, val(author.getAbbreviation()));
+            } else {
+                placeHolders.put(USER_KRZ, "");
+            }
+        }
+        if (placeHolders.containsKey(USER_VORNAME)) {
+            if (author != null) {
+                placeHolders.put(USER_VORNAME, val(author.getFirstName()));
+            } else {
+                placeHolders.put(USER_VORNAME, "");
+            }
+        }
+        if (placeHolders.containsKey(USER_NAME)) {
+            if (author != null) {
+                placeHolders.put(USER_NAME, val(author.getName()));
+            } else {
+                placeHolders.put(USER_NAME, "");
+            }
+        }
+        if (placeHolders.containsKey(USER_UNTERNEHMEN)) {
+            if (author != null) {
+                placeHolders.put(USER_UNTERNEHMEN, val(author.getCompany()));
+            } else {
+                placeHolders.put(USER_UNTERNEHMEN, "");
+            }
+        }
+        if (placeHolders.containsKey(USER_FKT)) {
+            if (author != null) {
+                placeHolders.put(USER_FKT, val(author.getRole()));
+            } else {
+                placeHolders.put(USER_FKT, "");
+            }
+        }
+        if (placeHolders.containsKey(USER_STRASSE)) {
+            if (author != null) {
+                placeHolders.put(USER_STRASSE, val(author.getStreet()));
+            } else {
+                placeHolders.put(USER_STRASSE, "");
+            }
+        }
+        if (placeHolders.containsKey(USER_ZUSATZ)) {
+            if (author != null) {
+                placeHolders.put(USER_ZUSATZ, val(author.getAdjunct()));
+            } else {
+                placeHolders.put(USER_ZUSATZ, "");
+            }
+        }
+        if (placeHolders.containsKey(USER_PLZ)) {
+            if (author != null) {
+                placeHolders.put(USER_PLZ, val(author.getZipCode()));
+            } else {
+                placeHolders.put(USER_PLZ, "");
+            }
+        }
+        if (placeHolders.containsKey(USER_ORT)) {
+            if (author != null) {
+                placeHolders.put(USER_ORT, val(author.getCity()));
+            } else {
+                placeHolders.put(USER_ORT, "");
+            }
+        }
+        if (placeHolders.containsKey(USER_LAND)) {
+            if (author != null) {
+                placeHolders.put(USER_LAND, val(author.getCountryCode()));
+            } else {
+                placeHolders.put(USER_LAND, "");
+            }
+        }
+        if (placeHolders.containsKey(USER_TEL)) {
+            if (author != null) {
+                placeHolders.put(USER_TEL, val(author.getPhone()));
+            } else {
+                placeHolders.put(USER_TEL, "");
+            }
+        }
+        if (placeHolders.containsKey(USER_FAX)) {
+            if (author != null) {
+                placeHolders.put(USER_FAX, val(author.getFax()));
+            } else {
+                placeHolders.put(USER_FAX, "");
+            }
+        }
+        if (placeHolders.containsKey(USER_MOBIL)) {
+            if (author != null) {
+                placeHolders.put(USER_MOBIL, val(author.getMobile()));
+            } else {
+                placeHolders.put(USER_MOBIL, "");
+            }
+        }
+        if (placeHolders.containsKey(USER_WWW)) {
+            if (author != null) {
+                placeHolders.put(USER_WWW, val(author.getWebsite()));
+            } else {
+                placeHolders.put(USER_WWW, "");
+            }
+        }
+        if (placeHolders.containsKey(USER_BANK)) {
+            if (author != null) {
+                placeHolders.put(USER_BANK, val(author.getBankName()));
+            } else {
+                placeHolders.put(USER_BANK, "");
+            }
+        }
+        if (placeHolders.containsKey(USER_BIC)) {
+            if (author != null) {
+                placeHolders.put(USER_BIC, val(author.getBankBic()));
+            } else {
+                placeHolders.put(USER_BIC, "");
+            }
+        }
+        if (placeHolders.containsKey(USER_IBAN)) {
+            if (author != null) {
+                placeHolders.put(USER_IBAN, val(author.getBankIban()));
+            } else {
+                placeHolders.put(USER_IBAN, "");
+            }
+        }
+        if (placeHolders.containsKey(USER_STEUERNR)) {
+            if (author != null) {
+                placeHolders.put(USER_STEUERNR, val(author.getTaxNr()));
+            } else {
+                placeHolders.put(USER_STEUERNR, "");
+            }
+        }
+        if (placeHolders.containsKey(USER_USTIDNR)) {
+            if (author != null) {
+                placeHolders.put(USER_USTIDNR, val(author.getTaxVatId()));
+            } else {
+                placeHolders.put(USER_USTIDNR, "");
+            }
+        }
+
         if (invoice != null) {
             SimpleDateFormat df = new SimpleDateFormat(DATE_FORMAT, Locale.GERMAN);
             if (placeHolders.containsKey(BEL_BESCHR)) {
@@ -1060,37 +1229,196 @@ public class PlaceHolderServerUtils extends PlaceHolders  {
                 placeHolders.put(BEL_NAME, val(invoice.getName()));
             }
             if (placeHolders.containsKey(BEL_TYP)) {
-                if(invoice!=null && invoice.getInvoiceType()!=null)
+                if (invoice != null && invoice.getInvoiceType() != null) {
                     placeHolders.put(BEL_TYP, val(invoice.getInvoiceType().getDisplayName()));
+                }
             }
             if (placeHolders.containsKey(BEL_NR)) {
                 placeHolders.put(BEL_NR, val(invoice.getInvoiceNumber()));
             }
             if (placeHolders.containsKey(BEL_TOTAL)) {
-                placeHolders.put(BEL_TOTAL, currencyFormat.format(invoice.getTotal()));
+                placeHolders.put(BEL_TOTAL, currencyFormat.format(invoice.getTotalGross()));
             }
             if (placeHolders.containsKey(BEL_WHRG)) {
                 placeHolders.put(BEL_WHRG, val(invoice.getCurrency()));
             }
+
+            // invoice sender
+            if (placeHolders.containsKey(BEL_ABSAN)) {
+                if (invoiceSender != null) {
+                    placeHolders.put(BEL_ABSAN, val(invoiceSender.getDisplayName()));
+                } else {
+                    placeHolders.put(BEL_ABSAN, "");
+                }
+            }
+            if (placeHolders.containsKey(BEL_ABSEMAIL)) {
+                if (invoiceSender != null) {
+                    placeHolders.put(BEL_ABSEMAIL, val(invoiceSender.getEmail()));
+                } else {
+                    placeHolders.put(BEL_ABSEMAIL, "");
+                }
+            }
+            if (placeHolders.containsKey(BEL_ABSKRZ)) {
+                if (invoiceSender != null) {
+                    placeHolders.put(BEL_ABSKRZ, val(invoiceSender.getAbbreviation()));
+                } else {
+                    placeHolders.put(BEL_ABSKRZ, "");
+                }
+            }
+            if (placeHolders.containsKey(BEL_ABSVORNAME)) {
+                if (invoiceSender != null) {
+                    placeHolders.put(BEL_ABSVORNAME, val(invoiceSender.getFirstName()));
+                } else {
+                    placeHolders.put(BEL_ABSVORNAME, "");
+                }
+            }
+            if (placeHolders.containsKey(BEL_ABSNAME)) {
+                if (invoiceSender != null) {
+                    placeHolders.put(BEL_ABSNAME, val(invoiceSender.getName()));
+                } else {
+                    placeHolders.put(BEL_ABSNAME, "");
+                }
+            }
+            if (placeHolders.containsKey(BEL_ABSUNTERNEHMEN)) {
+                if (invoiceSender != null) {
+                    placeHolders.put(BEL_ABSUNTERNEHMEN, val(invoiceSender.getCompany()));
+                } else {
+                    placeHolders.put(BEL_ABSUNTERNEHMEN, "");
+                }
+            }
+            if (placeHolders.containsKey(BEL_ABSFKT)) {
+                if (invoiceSender != null) {
+                    placeHolders.put(BEL_ABSFKT, val(invoiceSender.getRole()));
+                } else {
+                    placeHolders.put(BEL_ABSFKT, "");
+                }
+            }
+            if (placeHolders.containsKey(BEL_ABSSTRASSE)) {
+                if (invoiceSender != null) {
+                    placeHolders.put(BEL_ABSSTRASSE, val(invoiceSender.getStreet()));
+                } else {
+                    placeHolders.put(BEL_ABSSTRASSE, "");
+                }
+            }
+            if (placeHolders.containsKey(BEL_ABSZUSATZ)) {
+                if (invoiceSender != null) {
+                    placeHolders.put(BEL_ABSZUSATZ, val(invoiceSender.getAdjunct()));
+                } else {
+                    placeHolders.put(BEL_ABSZUSATZ, "");
+                }
+            }
+            if (placeHolders.containsKey(BEL_ABSPLZ)) {
+                if (invoiceSender != null) {
+                    placeHolders.put(BEL_ABSPLZ, val(invoiceSender.getZipCode()));
+                } else {
+                    placeHolders.put(BEL_ABSPLZ, "");
+                }
+            }
+            if (placeHolders.containsKey(BEL_ABSORT)) {
+                if (invoiceSender != null) {
+                    placeHolders.put(BEL_ABSORT, val(invoiceSender.getCity()));
+                } else {
+                    placeHolders.put(BEL_ABSORT, "");
+                }
+            }
+            if (placeHolders.containsKey(BEL_ABSLAND)) {
+                if (invoiceSender != null) {
+                    placeHolders.put(BEL_ABSLAND, val(invoiceSender.getCountryCode()));
+                } else {
+                    placeHolders.put(BEL_ABSLAND, "");
+                }
+            }
+            if (placeHolders.containsKey(BEL_ABSTEL)) {
+                if (invoiceSender != null) {
+                    placeHolders.put(BEL_ABSTEL, val(invoiceSender.getPhone()));
+                } else {
+                    placeHolders.put(BEL_ABSTEL, "");
+                }
+            }
+            if (placeHolders.containsKey(BEL_ABSFAX)) {
+                if (invoiceSender != null) {
+                    placeHolders.put(BEL_ABSFAX, val(invoiceSender.getFax()));
+                } else {
+                    placeHolders.put(BEL_ABSFAX, "");
+                }
+            }
+            if (placeHolders.containsKey(BEL_ABSMOBIL)) {
+                if (invoiceSender != null) {
+                    placeHolders.put(BEL_ABSMOBIL, val(invoiceSender.getMobile()));
+                } else {
+                    placeHolders.put(BEL_ABSMOBIL, "");
+                }
+            }
+            if (placeHolders.containsKey(BEL_ABSWWW)) {
+                if (invoiceSender != null) {
+                    placeHolders.put(BEL_ABSWWW, val(invoiceSender.getWebsite()));
+                } else {
+                    placeHolders.put(BEL_ABSWWW, "");
+                }
+            }
+            if (placeHolders.containsKey(BEL_ABSBANK)) {
+                if (invoiceSender != null) {
+                    placeHolders.put(BEL_ABSBANK, val(invoiceSender.getBankName()));
+                } else {
+                    placeHolders.put(BEL_ABSBANK, "");
+                }
+            }
+            if (placeHolders.containsKey(BEL_ABSBIC)) {
+                if (invoiceSender != null) {
+                    placeHolders.put(BEL_ABSBIC, val(invoiceSender.getBankBic()));
+                } else {
+                    placeHolders.put(BEL_ABSBIC, "");
+                }
+            }
+            if (placeHolders.containsKey(BEL_ABSIBAN)) {
+                if (invoiceSender != null) {
+                    placeHolders.put(BEL_ABSIBAN, val(invoiceSender.getBankIban()));
+                } else {
+                    placeHolders.put(BEL_ABSIBAN, "");
+                }
+            }
+            if (placeHolders.containsKey(BEL_ABSSTEUERNR)) {
+                if (invoiceSender != null) {
+                    placeHolders.put(BEL_ABSSTEUERNR, val(invoiceSender.getTaxNr()));
+                } else {
+                    placeHolders.put(BEL_ABSSTEUERNR, "");
+                }
+            }
+            if (placeHolders.containsKey(BEL_ABSUSTIDNR)) {
+                if (invoiceSender != null) {
+                    placeHolders.put(BEL_ABSUSTIDNR, val(invoiceSender.getTaxVatId()));
+                } else {
+                    placeHolders.put(BEL_ABSUSTIDNR, "");
+                }
+            }
         }
-        
-        if (placeHolders.containsKey(BEL_TABELLE) && invoiceTable!=null) {
+
+        if (placeHolders.containsKey(BEL_TABELLE) && invoiceTable != null) {
             placeHolders.put(BEL_TABELLE, invoiceTable);
         }
-        
-        if (placeHolders.containsKey(ZE_TABELLE) && timesheetsTable!=null) {
+
+        if (placeHolders.containsKey(BEL_GIROCODE) && giroCode != null) {
+            placeHolders.put(BEL_GIROCODE, giroCode);
+        }
+
+        if (placeHolders.containsKey(ZE_TABELLE) && timesheetsTable != null) {
             placeHolders.put(ZE_TABELLE, timesheetsTable);
         }
         
+        if (placeHolders.containsKey(INGO_TEXT) && ingoText != null) {
+            placeHolders.put(INGO_TEXT, ingoText);
+        }
+
         return placeHolders;
     }
 
     public static String getSetting(ServerSettingsBeanFacadeLocal set, String key, String defaultValue) {
-        ServerSettingsBean b=set.find(key);
-        if(b==null)
+        ServerSettingsBean b = set.find(key);
+        if (b == null) {
             return defaultValue;
-        else
+        } else {
             return b.getSettingValue();
+        }
     }
 
 }

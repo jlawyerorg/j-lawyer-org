@@ -664,16 +664,27 @@
 package com.jdimension.jlawyer.client.utils;
 
 import com.jdimension.jlawyer.client.editors.EditorsRegistry;
-import com.jdimension.jlawyer.client.launcher.LauncherFactory;
 import com.jdimension.jlawyer.client.settings.ClientSettings;
+import com.jdimension.jlawyer.persistence.ArchiveFileBean;
 import com.jdimension.jlawyer.server.utils.ServerFileUtils;
 import java.awt.Component;
+import java.awt.Toolkit;
+import java.awt.datatransfer.Clipboard;
+import java.awt.datatransfer.DataFlavor;
+import java.awt.datatransfer.Transferable;
+import java.awt.datatransfer.UnsupportedFlavorException;
 import java.io.File;
 import java.io.FileOutputStream;
+import java.io.IOException;
+import java.nio.file.FileSystems;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.attribute.PosixFilePermission;
 import java.text.DecimalFormat;
-import java.text.SimpleDateFormat;
-import java.util.Date;
 import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
 import javax.swing.Icon;
 import javax.swing.ImageIcon;
 import javax.swing.JDialog;
@@ -706,14 +717,6 @@ public class FileUtils extends ServerFileUtils {
         iconCache = new HashMap<>();
         iconCache32 = new HashMap<>();
 
-    }
-
-    public static String getExtension(String fileName) {
-        int index = fileName.lastIndexOf('.');
-        if (index > -1 && index < fileName.length()) {
-            return fileName.substring(index + 1);
-        }
-        return "url-with-no-extension";
     }
 
     public Icon getFileTypeIcon(String fileName) {
@@ -828,78 +831,42 @@ public class FileUtils extends ServerFileUtils {
         }
     }
 
-    public static String getNewFileName(String currentFileName, boolean datetimePrefix) {
-        return getNewFileName(currentFileName, datetimePrefix, new java.util.Date());
+    public static String getNewFileName(ArchiveFileBean selectedCase, String currentFileName, boolean applyNameTemplate) {
+        return getNewFileName(selectedCase, currentFileName, new java.util.Date(), applyNameTemplate);
     }
 
-    public static String getNewFileName(String currentFileName, boolean datetimePrefix, java.util.Date d) {
+    public static String getNewFileName(ArchiveFileBean selectedCase, String currentFileName, java.util.Date d, boolean applyNameTemplate) {
 
-        return getNewFileName(currentFileName, datetimePrefix, d, EditorsRegistry.getInstance().getMainWindow(), "Datei benennen");
-
-    }
-
-    public static String getNewFileName(String currentFileName, boolean datetimePrefix, java.util.Date d, Component parent) {
-
-        return getNewFileName(currentFileName, datetimePrefix, d, parent, "Datei benennen");
+        return getNewFileName(selectedCase, currentFileName, d, applyNameTemplate, EditorsRegistry.getInstance().getMainWindow(), "Datei benennen");
 
     }
 
-    public static String sanitizeFileName(String fileName) {
-        String name = fileName;
-        name = name.replaceAll(",", " ");
-        name = name.replaceAll("\"", "");
-        name = name.replaceAll("§", " ");
-        name = name.replaceAll("%", " ");
-        name = name.replaceAll("&", "_");
-        name = name.replaceAll("/", "_");
-        name = name.replaceAll("=", "_");
-        name = name.replaceAll("\\?", " ");
-        name = name.replaceAll("\\{", "(");
-        name = name.replaceAll("\\}", ")");
-        name = name.replaceAll("\\[", "(");
-        name = name.replaceAll("\\]", ")");
-        name = name.replaceAll("\\\\", "_");
-        name = name.replaceAll("\\*", "-");
-        name = name.replaceAll("#", "-");
-        name = name.replaceAll("'", "");
-        name = name.replaceAll(":", " ");
-        name = name.replaceAll(";", " ");
-        name = name.replaceAll(">", "");
-        name = name.replaceAll("<", "");
-        name = name.replaceAll("\\|", "_");
-        return name.trim();
+    public static String getNewFileName(ArchiveFileBean selectedCase, String currentFileName, java.util.Date d, boolean applyNameTemplate, Component parent) {
+
+        return getNewFileName(selectedCase, currentFileName, d, applyNameTemplate, parent, "Datei benennen");
+
+    }
+
+    public static String sanitizeAttachmentName(String fileName) {
+        String name = sanitizeFileName(fileName);
+        name = name.replace("ä", "ae");
+        name = name.replace("ö", "oe");
+        name = name.replace("ü", "ue");
+        name = name.replace("Ä", "Ae");
+        name = name.replace("Ö", "Oe");
+        name = name.replace("Ü", "Ue");
+        name = name.replace("ß", "ss");
+        name=name.trim();
+        if(name.indexOf('.')==0)
+            name="Anhang_"+System.currentTimeMillis()+name;
+        return name;
     }
 
     public static String sanitizeFolderName(String folderName) {
         String sanitized = sanitizeFileName(folderName);
-        sanitized = sanitized.replaceAll("  ", " ");
-        sanitized = sanitized.replaceAll("  ", " ");
+        sanitized = sanitized.replace("  ", " ");
+        sanitized = sanitized.replace("  ", " ");
         return sanitized;
-    }
-
-    public static String preserveExtension(String currentFileName, String newFileName) {
-
-        String currentExt = "";
-        for (String ext : LauncherFactory.LO_OFFICEFILETYPES) {
-            ext = ext.toLowerCase();
-            if (currentFileName.toLowerCase().endsWith(ext)) {
-                currentExt = ext;
-            }
-        }
-        if (currentFileName.toLowerCase().endsWith(".pdf")) {
-            currentExt = ".pdf";
-        } else if (currentFileName.toLowerCase().endsWith(".eml")) {
-            currentExt = ".eml";
-        } else if (currentFileName.toLowerCase().endsWith(".bea")) {
-            currentExt = ".bea";
-        }
-
-        if (!newFileName.endsWith(currentExt)) {
-            newFileName = newFileName + currentExt;
-        }
-
-        return newFileName;
-
     }
 
     public static String createTempFile(String fileName, byte[] content) throws Exception {
@@ -1017,6 +984,33 @@ public class FileUtils extends ServerFileUtils {
 
         return tmpFile;
     }
+    
+    public static void copyFileListToClipboard(List<File> fileList) {
+        
+        Transferable transferable = new Transferable() {
+            @Override
+            public DataFlavor[] getTransferDataFlavors() {
+                return new DataFlavor[]{DataFlavor.javaFileListFlavor};
+            }
+
+            @Override
+            public boolean isDataFlavorSupported(DataFlavor flavor) {
+                return DataFlavor.javaFileListFlavor.equals(flavor);
+            }
+
+            @Override
+            public Object getTransferData(DataFlavor flavor) throws UnsupportedFlavorException, IOException {
+                return fileList;
+            }
+        };
+
+        Toolkit.getDefaultToolkit().getSystemClipboard().setContents(transferable, (Clipboard clipboard, Transferable contents) -> {
+            log.debug("lost ownership of system clipboard");
+        });
+        
+//        Clipboard clipboard = Toolkit.getDefaultToolkit().getSystemClipboard();
+//        clipboard.setContents(transferable, null);
+    }
 
     public static void cleanupTempFile(String url) {
         File f = new File(url);
@@ -1028,25 +1022,20 @@ public class FileUtils extends ServerFileUtils {
         remDir.deleteOnExit();
 
     }
-
-    public static String getNewFileNamePrefix(Date d) {
-        SimpleDateFormat datePrefix = new SimpleDateFormat("yyyy-MM-dd_HH-mm_");
-        return datePrefix.format(d);
-    }
     
-    public static String getNewFileName(String currentFileName, boolean datetimePrefix, java.util.Date d, Component parent, String title) {
-
-        String dtPrefix = "";
-        if (datetimePrefix) {
-            dtPrefix = getNewFileNamePrefix(d);
-        }
+    public static String getNewFileName(ArchiveFileBean selectedCase, String currentFileName, java.util.Date d, boolean applyNameTemplate, Component parent, String title) {
 
         if (parent == null) {
             parent = EditorsRegistry.getInstance().getMainWindow();
         }
 
-        NewFilenameOptionPanel p = new NewFilenameOptionPanel();
-        p.setFilename(dtPrefix + currentFileName);
+        NewFilenameOptionPanel p = null;
+        if(selectedCase==null)
+            p = new NewFilenameOptionPanel();
+        else
+            p = new NewFilenameOptionPanel(selectedCase);
+        
+        p.setFilename(currentFileName, d, applyNameTemplate);
         JOptionPane pane = new JOptionPane(p, JOptionPane.QUESTION_MESSAGE);
         JDialog dialog = pane.createDialog(parent, title);
         dialog.doLayout();
@@ -1068,5 +1057,34 @@ public class FileUtils extends ServerFileUtils {
         }
 
         return null;
+    }
+    
+    public static void setPosixFilePermissions(String absolutePathToFile, boolean read, boolean write, boolean execute) {
+        Path path = FileSystems.getDefault().getPath(absolutePathToFile);
+        
+        // Create a set of PosixFilePermission
+        Set<PosixFilePermission> perms = new HashSet<>();
+        if(read)
+            perms.add(PosixFilePermission.OWNER_READ);
+        if(write)
+            perms.add(PosixFilePermission.OWNER_WRITE);
+        if(execute)
+            perms.add(PosixFilePermission.OWNER_EXECUTE);
+
+        // You can also add permissions for group and others if needed
+        // perms.add(PosixFilePermission.GROUP_READ);
+        // perms.add(PosixFilePermission.GROUP_WRITE);
+        // perms.add(PosixFilePermission.GROUP_EXECUTE);
+        // perms.add(PosixFilePermission.OTHERS_READ);
+        // perms.add(PosixFilePermission.OTHERS_WRITE);
+        // perms.add(PosixFilePermission.OTHERS_EXECUTE);
+
+        try {
+            // Set the permissions on the file
+            Files.setPosixFilePermissions(path, perms);
+            log.info("Executable flag added to the file: " + path);
+        } catch (IOException e) {
+            log.error("Error adding executable flag: " + e.getMessage());
+        }
     }
 }

@@ -678,9 +678,7 @@ import com.jdimension.jlawyer.persistence.DocumentTagsBean;
 import com.jdimension.jlawyer.services.ArchiveFileServiceRemote;
 import com.jdimension.jlawyer.services.JLawyerServiceLocator;
 
-import java.awt.Color;
 import java.awt.Component;
-import java.awt.Dimension;
 import java.awt.event.ActionEvent;
 import java.nio.channels.ClosedChannelException;
 import java.util.*;
@@ -688,7 +686,6 @@ import javax.ejb.EJBException;
 import javax.swing.*;
 
 import org.apache.log4j.Logger;
-import themes.colors.DefaultColorTheme;
 
 /**
  * @author jens
@@ -811,6 +808,11 @@ public class TaggedTimerTask extends java.util.TimerTask {
         }
 
         running = true;
+        
+        String selectedTabTitle=null;
+        if(this.tagsPane.getSelectedIndex()>-1)
+            selectedTabTitle=this.tagsPane.getTitleAt(this.tagsPane.getSelectedIndex());
+                
 
         List<ArchiveFileBean> myNewList = null;
         List<ArchiveFileBean> filteredList = new ArrayList<>();
@@ -885,7 +887,8 @@ public class TaggedTimerTask extends java.util.TimerTask {
             if ("true".equalsIgnoreCase(temp)) {
                 String principalId = UserSettings.getInstance().getCurrentUser().getPrincipalId();
                 for (ArchiveFileBean x : myNewList) {
-                    if (principalId.equalsIgnoreCase(x.getLawyer()) || principalId.equalsIgnoreCase(x.getAssistant())) {
+                    boolean caseWithoutResponsibles=StringUtils.isEmpty(x.getLawyer()) && StringUtils.isEmpty(x.getAssistant());
+                    if (principalId.equalsIgnoreCase(x.getLawyer()) || principalId.equalsIgnoreCase(x.getAssistant()) || caseWithoutResponsibles) {
                         filteredList.add(x);
 
                     }
@@ -903,7 +906,8 @@ public class TaggedTimerTask extends java.util.TimerTask {
             if ("true".equalsIgnoreCase(temp)) {
                 String principalId = UserSettings.getInstance().getCurrentUser().getPrincipalId();
                 for (ArchiveFileDocumentsBean x : myNewDocumentList) {
-                    if (principalId.equalsIgnoreCase(x.getArchiveFileKey().getLawyer()) || principalId.equalsIgnoreCase(x.getArchiveFileKey().getAssistant())) {
+                    boolean caseWithoutResponsibles=StringUtils.isEmpty(x.getArchiveFileKey().getLawyer()) && StringUtils.isEmpty(x.getArchiveFileKey().getAssistant());
+                    if (principalId.equalsIgnoreCase(x.getArchiveFileKey().getLawyer()) || principalId.equalsIgnoreCase(x.getArchiveFileKey().getAssistant()) || caseWithoutResponsibles) {
                         filteredDocumentList.add(x);
 
                     }
@@ -941,6 +945,7 @@ public class TaggedTimerTask extends java.util.TimerTask {
             final List<ArchiveFileDocumentsBean> l2 = myNewDocumentList;
             final String[] caseTags = lastFilterTags.clone();
             final String[] docTags = lastFilterDocumentTags.clone();
+            final String reselectTabWithTitle=selectedTabTitle;
             SwingUtilities.invokeAndWait(
                     new Runnable() {
                         @Override
@@ -1045,6 +1050,21 @@ public class TaggedTimerTask extends java.util.TimerTask {
 
                             split.setDividerLocation(split.getDividerLocation() + 1);
                             split.setDividerLocation(split.getDividerLocation() - 1);
+                            
+                            // reselect the tab that was active before the refresh
+                            int selectTabIndex=-1;
+                            if(reselectTabWithTitle!=null) {
+                                for (int t = 0; t < tagsPane.getTabCount(); t++) {
+                                    if (tagsPane.getTitleAt(t).equals(reselectTabWithTitle)) {
+                                        selectTabIndex = t;
+                                        break;
+                                    }
+                                }
+                            }
+                            if(selectTabIndex>-1) {
+                                tagsPane.setSelectedIndex(selectTabIndex);
+                            }
+                            
                             running = false;
                         }
 

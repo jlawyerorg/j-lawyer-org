@@ -9,11 +9,11 @@
             <name>j-lawyer-io</name>
             <minimum-ant-version>1.6.5</minimum-ant-version>
             <web-module-libraries>
-                <library dirs="200">
-                    <file>${file.reference.jboss-jaxrs-api_2.0_spec-1.0.0.Final.jar}</file>
-                </library>
                 <library dirs="100">
                     <file>${reference.j-lawyer-server-entities.dist}</file>
+                </library>
+                <library dirs="200">
+                    <file>${file.reference.jboss-jaxrs-api_2.1_spec-2.0.2.Final.jar}</file>
                 </library>
                 <library dirs="100">
                     <file>${reference.j-lawyer-server-ejb.dist}</file>
@@ -27,6 +27,9 @@
                 </library>
                 <library dirs="200">
                     <file>${file.reference.jboss-client.jar}</file>
+                </library>
+                <library dirs="200">
+                    <file>${file.reference.jakarta.persistence-api-2.2.3.jar}</file>
                 </library>
                 <library dirs="200">
                     <file>${reference.j-lawyer-server-api.jar}</file>

@@ -675,8 +675,12 @@ public interface EditorImplementation {
     
     public void setText(String t);
     
+    public void insert(String t, int pos);
+    
     public void setCaretPosition(int pos);
     
     public int getCaretPosition();
+    
+    public String getSelectedText();
     
 }

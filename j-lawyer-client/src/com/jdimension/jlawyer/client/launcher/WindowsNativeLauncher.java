@@ -664,11 +664,8 @@
 package com.jdimension.jlawyer.client.launcher;
 
 import com.jdimension.jlawyer.client.editors.EditorsRegistry;
-import com.jdimension.jlawyer.persistence.ArchiveFileBean;
-import com.jdimension.jlawyer.persistence.ArchiveFileDocumentsBean;
 import java.awt.Desktop;
 import java.io.File;
-import java.io.IOException;
 import javax.swing.JOptionPane;
 import javax.swing.SwingUtilities;
 import org.apache.log4j.Logger;
@@ -694,49 +691,39 @@ public class WindowsNativeLauncher extends NativeLauncher {
 
         final Launcher thisLauncher = this;
 
-        new Thread(new Runnable() {
+        new Thread(() -> {
+            ObservedDocument odoc = new ObservedDocument(url, store, thisLauncher);
+            DocumentObserver observer = DocumentObserver.getInstance();
+            odoc.setStatus(ObservedDocument.STATUS_LAUNCHING);
+            odoc.setMonitoringMode(true);
+            observer.addDocument(odoc);
 
-            public void run() {
+            try {
+                Desktop d = null;
+                if (Desktop.isDesktopSupported()) {
+                    d = Desktop.getDesktop();
 
-                ObservedDocument odoc = null;
-//                    if (!readOnly) {
-                odoc = new ObservedDocument(url, store, thisLauncher);
-                DocumentObserver observer = DocumentObserver.getInstance();
-                odoc.setStatus(ObservedDocument.STATUS_LAUNCHING);
-                odoc.setMonitoringMode(true);
-                observer.addDocument(odoc);
-
-                try {
-                    Desktop d = null;
-                    if (Desktop.isDesktopSupported()) {
-                        d = Desktop.getDesktop();
-
-                    } else {
-                        odoc.setClosed(true);
-                        throw new Exception("Datei kann nicht geöffnet werden: Desktop API wird nicht unterstützt!");
-                    }
-                    odoc.setStatus(ObservedDocument.STATUS_MONITORING);
-                    long launched=System.currentTimeMillis();
-                    d.open(new File(url));
-                    long launchDuration=System.currentTimeMillis()-launched;
-                    if(launchDuration>30000)
-                        odoc.setClosed(true);
-
-                } catch (final Exception ex) {
-
+                } else {
                     odoc.setClosed(true);
-                    SwingUtilities.invokeLater(new Runnable() {
-
-                        public void run() {
-                            JOptionPane.showMessageDialog(EditorsRegistry.getInstance().getMainWindow(), "Fehler beim Öffnen des Dokuments: " + ex.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
-                        }
-                    });
-
+                    throw new Exception("Datei kann nicht geöffnet werden: Desktop API wird nicht unterstützt!");
+                }
+                odoc.setStatus(ObservedDocument.STATUS_MONITORING);
+                long launched = System.currentTimeMillis();
+                d.open(new File(url));
+                long launchDuration = System.currentTimeMillis() - launched;
+                if (launchDuration > 30000) {
+                    odoc.setClosed(true);
                 }
 
-                //odoc.setClosed(true);
+            } catch (final Exception ex) {
+
+                odoc.setClosed(true);
+                SwingUtilities.invokeLater(() -> {
+                    JOptionPane.showMessageDialog(EditorsRegistry.getInstance().getMainWindow(), "Fehler beim Öffnen des Dokuments: " + ex.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
+                });
 
             }
+
         }).start();
     }
 

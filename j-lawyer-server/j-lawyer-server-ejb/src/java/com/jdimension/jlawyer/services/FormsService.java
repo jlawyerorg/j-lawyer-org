@@ -676,12 +676,23 @@ import com.jdimension.jlawyer.persistence.FormTypeArtefactBeanFacadeLocal;
 import com.jdimension.jlawyer.persistence.FormTypeBean;
 import com.jdimension.jlawyer.persistence.FormTypeBeanFacadeLocal;
 import com.jdimension.jlawyer.persistence.utils.StringGenerator;
+import com.jdimension.jlawyer.pojo.FormPluginSetting;
+import com.jdimension.jlawyer.pojo.ServerFormPlugin;
 import com.jdimension.jlawyer.server.utils.ServerStringUtils;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.io.StringReader;
+import java.net.URL;
+import java.net.URLConnection;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
+import java.util.TreeMap;
 import javax.annotation.Resource;
 import javax.annotation.security.RolesAllowed;
 import javax.ejb.EJB;
@@ -689,15 +700,21 @@ import javax.ejb.SessionContext;
 import javax.ejb.Stateless;
 import javax.enterprise.event.Event;
 import javax.inject.Inject;
+import javax.xml.XMLConstants;
+import javax.xml.parsers.DocumentBuilder;
+import javax.xml.parsers.DocumentBuilderFactory;
 import org.apache.log4j.Logger;
-import org.jboss.ejb3.annotation.SecurityDomain;
+import org.w3c.dom.Document;
+import org.w3c.dom.Node;
+import org.w3c.dom.NodeList;
+import org.xml.sax.InputSource;
 
 /**
  *
  * @author jens
  */
 @Stateless
-@SecurityDomain("j-lawyer-security")
+//@SecurityDomain("j-lawyer-security")
 public class FormsService implements FormsServiceRemote, FormsServiceLocal {
 
     private static final Logger log = Logger.getLogger(FormsService.class.getName());
@@ -719,7 +736,7 @@ public class FormsService implements FormsServiceRemote, FormsServiceLocal {
     private FormTypeArtefactBeanFacadeLocal formArtefactsFacade;
     @EJB
     private ArchiveFileServiceLocal archiveFileService;
-    
+
     // custom hooks support
     @Inject
     Event<CaseFormUpdatedEvent> updatedCaseFormEvent;
@@ -858,7 +875,7 @@ public class FormsService implements FormsServiceRemote, FormsServiceLocal {
         }
 
         List<ArchiveFileFormsBean> existing = this.caseFormsFacade.findByFormType(ftb);
-        if (existing.size() > 0) {
+        if (!existing.isEmpty()) {
             throw new Exception("Falldatenblatt " + formTypeId + " kann nicht gelöscht werden, da es noch in Akten verwendet wird!");
         }
 
@@ -914,28 +931,29 @@ public class FormsService implements FormsServiceRemote, FormsServiceLocal {
         }
 
         List<ArchiveFileFormEntriesBean> existingEntries = this.caseFormEntriesFacade.findByForm(afb);
-        boolean entriesChanged=entriesChanged(existingEntries, formEntries);
-        
+        boolean entriesChanged = entriesChanged(existingEntries, formEntries);
+
         for (ArchiveFileFormEntriesBean existing : existingEntries) {
             this.caseFormEntriesFacade.remove(existing);
         }
 
         StringGenerator idGen = new StringGenerator();
-        long totalChars=0;
+        long totalChars = 0;
         for (ArchiveFileFormEntriesBean newEntry : formEntries) {
             newEntry.setForm(afb);
             newEntry.setArchiveFileKey(afb.getArchiveFileKey());
             newEntry.setId(idGen.getID().toString());
             newEntry.setEntryKey(newEntry.getPlaceHolder());
-            if(newEntry.getStringValue()!=null)
-                totalChars=totalChars+newEntry.getStringValue().length();
+            if (newEntry.getStringValue() != null) {
+                totalChars = totalChars + newEntry.getStringValue().length();
+            }
             this.caseFormEntriesFacade.create(newEntry);
         }
         log.info(context.getCallerPrincipal().getName() + " saved " + formEntries.size() + " entries with total " + totalChars + " chars to form " + formId);
-        
-        if(entriesChanged) {
+
+        if (entriesChanged) {
             try {
-                CaseFormUpdatedEvent evt=new CaseFormUpdatedEvent();
+                CaseFormUpdatedEvent evt = new CaseFormUpdatedEvent();
                 evt.setCaseId(afb.getArchiveFileKey().getId());
                 evt.setFormId(formId);
                 this.updatedCaseFormEvent.fireAsync(evt);
@@ -1025,8 +1043,17 @@ public class FormsService implements FormsServiceRemote, FormsServiceLocal {
     }
 
     @Override
+    public Collection<String> getPlaceHoldersForCaseUnrestricted(String caseId) throws Exception {
+        return getPlaceHoldersForCaseImpl(caseId);
+    }
+    
+    @Override
     @RolesAllowed({"loginRole"})
     public Collection<String> getPlaceHoldersForCase(String caseId) throws Exception {
+        return getPlaceHoldersForCaseImpl(caseId);
+    }
+    
+    private Collection<String> getPlaceHoldersForCaseImpl(String caseId) throws Exception {
         ArchiveFileBean caseBean = this.caseFacade.find(caseId);
         if (caseBean == null) {
             throw new Exception("Akte " + caseId + " ist nicht vorhanden!");
@@ -1050,12 +1077,20 @@ public class FormsService implements FormsServiceRemote, FormsServiceLocal {
             }
         }
         return placeHolders;
-
     }
 
     @Override
+    public HashMap<String, String> getPlaceHolderValuesForCaseUnrestricted(String caseId) throws Exception {
+        return this.getPlaceHolderValuesForCaseImpl(caseId);
+    }
+    
+    @Override
     @RolesAllowed({"readArchiveFileRole"})
     public HashMap<String, String> getPlaceHolderValuesForCase(String caseId) throws Exception {
+        return this.getPlaceHolderValuesForCaseImpl(caseId);
+    }
+    
+    private HashMap<String, String> getPlaceHolderValuesForCaseImpl(String caseId) throws Exception {
         ArchiveFileBean caseBean = this.caseFacade.find(caseId);
         if (caseBean == null) {
             throw new Exception("Akte " + caseId + " ist nicht vorhanden!");
@@ -1079,6 +1114,125 @@ public class FormsService implements FormsServiceRemote, FormsServiceLocal {
             }
         }
         return placeHolders;
+    }
+
+    @Override
+    @RolesAllowed({"loginRole"})
+    public Map<String, ServerFormPlugin> getPluginsInRepository(String clientVersion) throws Exception {
+        TreeMap<String, ServerFormPlugin> formPlugins = new TreeMap<>();
+
+        URL updateURL = new URL("https://www.j-lawyer.org/downloads/j-lawyer-forms.xml");
+        URLConnection urlCon = updateURL.openConnection();
+        urlCon.setConnectTimeout(5000);
+        urlCon.setReadTimeout(5000);
+        urlCon.setRequestProperty("User-Agent", "j-lawyer Client v" + clientVersion);
+
+        InputStream is = urlCon.getInputStream();
+        InputStreamReader reader = new InputStreamReader(is, StandardCharsets.UTF_8);
+
+        char[] buffer = new char[1024];
+        int len = 0;
+        StringBuilder sb = new StringBuilder();
+        while ((len = reader.read(buffer)) > -1) {
+            sb.append(buffer, 0, len);
+        }
+        reader.close();
+        is.close();
+        String formsContent = sb.toString();
+
+        DocumentBuilderFactory dbf = DocumentBuilderFactory.newInstance();
+        try {
+            dbf.setAttribute(XMLConstants.ACCESS_EXTERNAL_DTD, "");
+            dbf.setAttribute(XMLConstants.ACCESS_EXTERNAL_SCHEMA, "");
+        } catch (IllegalArgumentException iae) {
+            // only available from JAXP 1.5+, but Wildfly still ships 1.4
+            log.warn("Unable to set external entity restrictions in XML parser", iae);
+        }
+        DocumentBuilder remoteDb = dbf.newDocumentBuilder();
+        InputSource inSrc1 = new InputSource(new StringReader(formsContent));
+        inSrc1.setEncoding("UTF-8");
+        Document remoteDoc = remoteDb.parse(inSrc1);
+
+        NodeList remoteList = remoteDoc.getElementsByTagName("form");
+
+        for (int i = 0; i < remoteList.getLength(); i++) {
+            Node n = remoteList.item(i);
+            String forVersion = n.getAttributes().getNamedItem("for").getNodeValue();
+            if (forVersion.contains(clientVersion)) {
+                ServerFormPlugin fp = new ServerFormPlugin();
+                fp.setForVersion(n.getAttributes().getNamedItem("for").getNodeValue());
+                fp.setId(n.getAttributes().getNamedItem("id").getNodeValue());
+                fp.setType(n.getAttributes().getNamedItem("type").getNodeValue());
+                fp.setVersionInRepository(n.getAttributes().getNamedItem("version").getNodeValue());
+                fp.setDescription(n.getAttributes().getNamedItem("description").getNodeValue());
+                String depends = "";
+                if (n.getAttributes().getNamedItem("depends") != null) {
+                    depends = n.getAttributes().getNamedItem("depends").getNodeValue();
+                }
+                String[] dependencies = depends.split(",");
+                fp.setDependsOn(dependencies);
+                fp.setUrl(n.getAttributes().getNamedItem("url").getNodeValue());
+                fp.setName(n.getAttributes().getNamedItem("name").getNodeValue());
+                fp.setPlaceHolder(n.getAttributes().getNamedItem("placeholder").getNodeValue());
+                String files = n.getAttributes().getNamedItem("files").getNodeValue();
+                fp.getFiles().addAll(Arrays.asList(files.split(",")));
+                if (n.getChildNodes() != null) {
+                    NodeList settingsList = n.getChildNodes();
+                    for (int s = 0; s < settingsList.getLength(); s++) {
+                        Node setting = settingsList.item(s);
+                        if ("setting".equalsIgnoreCase(setting.getNodeName())) {
+                            FormPluginSetting ps = new FormPluginSetting();
+                            ps.setKey(setting.getAttributes().getNamedItem("key").getNodeValue());
+                            ps.setCaption(setting.getAttributes().getNamedItem("caption").getNodeValue());
+                            ps.setDefaultValue(setting.getAttributes().getNamedItem("default").getNodeValue());
+                            ps.setOrder(Integer.parseInt(setting.getAttributes().getNamedItem("order").getNodeValue()));
+                            fp.getSettings().add(ps);
+                        }
+                    }
+                }
+
+                formPlugins.put(fp.getName(), fp);
+            }
+        }
+
+        return formPlugins;
+    }
+
+    @Override
+    @RolesAllowed({"adminRole"})
+    public boolean installRepositoryPlugin(ServerFormPlugin plugin) throws Exception {
+        FormTypeBean newFormType = addFormType(plugin.toFormTypeBean());
+
+        for (String f : plugin.getFiles()) {
+
+            URL u = new URL(plugin.getUrl() + f);
+            URLConnection urlCon = u.openConnection();
+            //urlCon.setRequestProperty("User-Agent", "j-lawyer Client v" + VersionUtils.getFullClientVersion());
+            urlCon.setConnectTimeout(5000);
+            urlCon.setReadTimeout(5000);
+
+            InputStream is = urlCon.getInputStream();
+            InputStreamReader reader = new InputStreamReader(is);
+
+            char[] buffer = new char[1024];
+            int len = 0;
+            StringBuilder sb = new StringBuilder();
+            while ((len = reader.read(buffer)) > -1) {
+                sb.append(buffer, 0, len);
+            }
+            reader.close();
+            is.close();
+            String content = sb.toString();
+
+            FormTypeArtefactBean newArtefact = new FormTypeArtefactBean();
+            newArtefact.setContent(content.getBytes());
+            newArtefact.setFileName(f);
+            newArtefact.setFormType(newFormType);
+            newArtefact.setId(f);
+            addFormTypeArtefact(newArtefact);
+
+        }
+        return true;
     }
 
 }

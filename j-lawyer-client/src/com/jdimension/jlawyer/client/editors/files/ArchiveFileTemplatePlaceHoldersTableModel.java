@@ -673,17 +673,15 @@ public class ArchiveFileTemplatePlaceHoldersTableModel extends DefaultTableModel
     
     /**
      * Creates a new instance of ArchiveFileTemplatePlaceHoldersTableModel
+     * @param colNames
+     * @param rowCount
      */
     public ArchiveFileTemplatePlaceHoldersTableModel(Object[] colNames, int rowCount) {
         super(colNames, rowCount);
     }
 
+    @Override
     public boolean isCellEditable(int row, int col) {
-        /*boolean retValue;
-        
-        retValue = super.isCellEditable(i, i0);
-        return retValue;*/
-        
         if(col==0)
             return false;
         

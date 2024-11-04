@@ -705,7 +705,7 @@ public class BeaIdentitySearchDialog extends javax.swing.JDialog {
         this.nextFocus=nextFocus;
         this.selection=target;
         initComponents();
-        String[] colNames = new String[]{"Name", "Vorname", "Nutzername", "PLZ", "Ort", "Strasse", "Typ", "Kanzleiname", "E-Mail"};
+        String[] colNames = new String[]{"Name", "Vorname", "Nutzername", "PLZ", "Ort", "Straße", "Typ", "Kanzleiname", "E-Mail"};
         QuickAddressSearchTableModel model = new QuickAddressSearchTableModel(colNames, 0);
         this.tblResults.setModel(model);
 
@@ -749,7 +749,7 @@ public class BeaIdentitySearchDialog extends javax.swing.JDialog {
         this.nextFocus=nextFocus;
         this.selection=target;
         initComponents();
-        String[] colNames = new String[]{"Name", "Vorname", "Nutzername", "PLZ", "Ort", "Strasse", "Typ", "Kanzleiname", "E-Mail"};
+        String[] colNames = new String[]{"Name", "Vorname", "Nutzername", "PLZ", "Ort", "Straße", "Typ", "Kanzleiname", "E-Mail"};
         QuickAddressSearchTableModel model = new QuickAddressSearchTableModel(colNames, 0);
         this.tblResults.setModel(model);
 

@@ -663,13 +663,24 @@
  */
 package com.jdimension.jlawyer.services;
 
+import com.jdimension.jlawyer.ai.AiCapability;
+import com.jdimension.jlawyer.ai.AiRequestLog;
+import com.jdimension.jlawyer.ai.AiRequestStatus;
+import com.jdimension.jlawyer.ai.AiResponse;
+import com.jdimension.jlawyer.ai.AiUser;
+import com.jdimension.jlawyer.ai.InputData;
+import com.jdimension.jlawyer.ai.Message;
+import com.jdimension.jlawyer.ai.ParameterData;
 import com.jdimension.jlawyer.email.EmailTemplate;
+import com.jdimension.jlawyer.persistence.AssistantConfig;
+import com.jdimension.jlawyer.persistence.AssistantPrompt;
 import com.jdimension.jlawyer.persistence.IntegrationHook;
-import java.io.File;
+import com.jdimension.jlawyer.pojo.FileMetadata;
 import java.util.Collection;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import javax.ejb.Remote;
 
 /**
@@ -679,7 +690,7 @@ import javax.ejb.Remote;
 @Remote
 public interface IntegrationServiceRemote {
 
-    HashMap<File,Date> getObservedDirectoryContent();
+    HashMap<FileMetadata,Date> getObservedDirectoryContent();
 
     boolean removeObservedFile(String fileName);
 
@@ -689,7 +700,7 @@ public interface IntegrationServiceRemote {
 
     String assignObservedFile(String fileName, String archiveFileId, String renameTo) throws Exception;
 
-    Collection getAllEmailTemplateNames();
+    Collection<String> getAllEmailTemplateNames();
 
     void saveEmailTemplate(EmailTemplate template, boolean replace) throws Exception;
 
@@ -713,10 +724,44 @@ public interface IntegrationServiceRemote {
 
     boolean renameObservedFile(String fromName, String toName) throws Exception;
 
-    boolean addObservedFile(String fileName, byte[] data) throws Exception;
+    boolean addObservedFile(String fileName, byte[] data, String source) throws Exception;
 
     void renameEmailTemplate(String oldName, String newName) throws Exception;
 
     void duplicateEmailTemplate(String templateName, String duplicateName) throws Exception;
+
+    FileMetadata getObservedFileMetadata(String fileName) throws Exception;
+
+    List<FileMetadata> getObservedFilesMetadata(List<String> fileNames) throws Exception;
+
+    boolean performOcrForObservedFile(String fileName) throws Exception;
+
+    List<AssistantConfig> getAllAssistantConfigs() throws Exception;
+
+    AssistantConfig addAssistantConfig(AssistantConfig ac) throws Exception;
+
+    AssistantConfig updateAssistantConfig(AssistantConfig ac) throws Exception;
+
+    void removeAssistantConfig(AssistantConfig ac) throws Exception;
+
+    Map<AssistantConfig,List<AiCapability>> getAssistantCapabilities() throws Exception;
+
+    AiRequestStatus submitAssistantRequest(AssistantConfig config, String requestType, String modelType, String prompt, List<ParameterData> params, List<InputData> inputs, List<Message> messages) throws Exception;
+    
+    AiResponse getAssistantRequestStatus(AssistantConfig config, String requestId) throws Exception;
+
+    boolean updateObservedFile(String fileName, byte[] data) throws Exception;
+    
+    List<AssistantPrompt> getAllAssistantPrompts() throws Exception;
+
+    AssistantPrompt addAssistantPrompt(AssistantPrompt ap) throws Exception;
+
+    AssistantPrompt updateAssistantPrompt(AssistantPrompt ap) throws Exception;
+
+    void removeAssistantPrompt(AssistantPrompt ap) throws Exception;
+
+    Map<AssistantConfig,AiUser> getAssistantUserInformation() throws Exception;
+    
+    List<AiRequestLog> getAssistantRequestLog(AssistantConfig config) throws Exception;
     
 }

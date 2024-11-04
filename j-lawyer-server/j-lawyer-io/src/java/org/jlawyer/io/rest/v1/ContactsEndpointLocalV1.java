@@ -682,4 +682,6 @@ public interface ContactsEndpointLocalV1 {
 
     Response updateContact(RestfulContactV1 contact);
     
+    Response searchSimilarContacts(RestfulContactV1 contact);
+    
 }

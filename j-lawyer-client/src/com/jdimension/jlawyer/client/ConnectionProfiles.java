@@ -663,12 +663,14 @@ For more information on this, and how to apply and follow the GNU AGPL, see
  */
 package com.jdimension.jlawyer.client;
 
-import com.jdimension.jlawyer.security.Crypto;
+import com.jdimension.jlawyer.security.CachingCrypto;
+import com.jdimension.jlawyer.security.CryptoProvider;
 import java.awt.Component;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.StringReader;
+import java.security.GeneralSecurityException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -686,15 +688,17 @@ public class ConnectionProfiles {
     private static ConnectionProfiles instance = null;
 
     private final String connectionDir = System.getProperty("user.home") + File.separator + ".j-lawyer-client" + File.separator + "connections";
+    private CachingCrypto crypto=null;
 
-    private ConnectionProfiles() {
+    private ConnectionProfiles() throws GeneralSecurityException {
         File dir = new File(connectionDir);
         if (!dir.exists()) {
             dir.mkdirs();
         }
+        this.crypto=CryptoProvider.newCrypto(System.getProperty("user.name").toCharArray());
     }
 
-    public static synchronized ConnectionProfiles getInstance() {
+    public static synchronized ConnectionProfiles getInstance() throws GeneralSecurityException {
         if (instance == null) {
             instance = new ConnectionProfiles();
         }
@@ -756,7 +760,7 @@ public class ConnectionProfiles {
             String pwd = props.getProperty("sshpwd").trim();
             try {
                 if (pwd.length() > 0) {
-                    pwd = Crypto.decrypt(pwd, System.getProperty("user.name").toCharArray());
+                    pwd = getCrypto().decrypt(pwd);
                 }
             } catch (Throwable t) {
                 log.error("Unable to decrypt tunnel SSH password", t);
@@ -851,13 +855,20 @@ public class ConnectionProfiles {
         props.setProperty("securitymode", profile.getSecurityMode());
         props.setProperty("server", profile.getServer());
         props.setProperty("sshhost", profile.getSshHost());
-        String pwd=Crypto.encrypt(profile.getSshPassword(), System.getProperty("user.name").toCharArray());
+        String pwd=getCrypto().encrypt(profile.getSshPassword());
         props.setProperty("sshpwd", pwd);
         props.setProperty("sshport", profile.getSshPort());
         props.setProperty("sshtargetport", profile.getSshTargetPort());
         props.setProperty("sshuser", profile.getSshUser());
         props.setProperty("user", profile.getUser());
         return props;
+    }
+
+    /**
+     * @return the crypto
+     */
+    public CachingCrypto getCrypto() {
+        return crypto;
     }
 
 }

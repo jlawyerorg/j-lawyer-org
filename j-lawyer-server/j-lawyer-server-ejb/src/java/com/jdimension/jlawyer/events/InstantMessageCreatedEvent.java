@@ -666,7 +666,11 @@ package com.jdimension.jlawyer.events;
 import java.io.IOException;
 import java.io.StringWriter;
 import java.io.Writer;
+import java.text.SimpleDateFormat;
+import java.util.ArrayList;
+import java.util.Date;
 import org.apache.log4j.Logger;
+import org.json.simple.JSONArray;
 import org.json.simple.JsonObject;
 import org.json.simple.Jsonable;
 
@@ -676,9 +680,15 @@ import org.json.simple.Jsonable;
  */
 public class InstantMessageCreatedEvent extends CustomHook implements Jsonable {
     
-    private static final Logger log=Logger.getLogger(InstantMessageCreatedEvent.class.getName());
+    protected static Logger log=Logger.getLogger(InstantMessageCreatedEvent.class.getName());
     
     protected String messageId=null;
+    protected Date sent=null;
+    protected String sender=null;
+    protected String content=null;
+    protected ArrayList<String> mentioned=null;
+    protected String caseContext=null;
+    protected String documentContext=null;
     
     public InstantMessageCreatedEvent() {
         super(HookType.MESSAGE_CREATED);
@@ -690,7 +700,7 @@ public class InstantMessageCreatedEvent extends CustomHook implements Jsonable {
         try {
             this.toJson(writable);
         } catch (final IOException e) {
-            log.error("unable to serialize to JSON: ", e);
+            getLog().error("unable to serialize to JSON: ", e);
             return null;
         }
         return writable.toString();
@@ -698,9 +708,27 @@ public class InstantMessageCreatedEvent extends CustomHook implements Jsonable {
 
     @Override
     public void toJson(Writer writer) throws IOException {
+        SimpleDateFormat formatter = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+        
         final JsonObject json = new JsonObject();
         json.put("hookType", this.hookType.name());
-        json.put("messageId", this.messageId);
+        json.put("hookId", this.hookId);
+        json.put("messageId", this.getMessageId());
+        if(this.getSent()!=null)
+            json.put("sent", formatter.format(this.getSent()));
+        json.put("sender", this.getSender());
+        json.put("content", this.getContent());
+        if(this.getCaseContext()!=null)
+            json.put("caseContext", this.getCaseContext());
+        if(this.getDocumentContext()!=null)
+            json.put("documentContext", this.getDocumentContext());
+        if(this.getMentioned()!=null && !this.getMentioned().isEmpty()) {
+            JSONArray array=new JSONArray();
+            array.addAll(this.getMentioned());
+            json.put("mentioned", array);
+        }
+        
+        
         json.toJson(writer);
     }
 
@@ -716,6 +744,104 @@ public class InstantMessageCreatedEvent extends CustomHook implements Jsonable {
      */
     public void setMessageId(String messageId) {
         this.messageId = messageId;
+    }
+
+    /**
+     * @return the log
+     */
+    public static Logger getLog() {
+        return log;
+    }
+
+    /**
+     * @param aLog the log to set
+     */
+    public static void setLog(Logger aLog) {
+        log = aLog;
+    }
+
+    /**
+     * @return the sent
+     */
+    public Date getSent() {
+        return sent;
+    }
+
+    /**
+     * @param sent the sent to set
+     */
+    public void setSent(Date sent) {
+        this.sent = sent;
+    }
+
+    /**
+     * @return the sender
+     */
+    public String getSender() {
+        return sender;
+    }
+
+    /**
+     * @param sender the sender to set
+     */
+    public void setSender(String sender) {
+        this.sender = sender;
+    }
+
+    /**
+     * @return the content
+     */
+    public String getContent() {
+        return content;
+    }
+
+    /**
+     * @param content the content to set
+     */
+    public void setContent(String content) {
+        this.content = content;
+    }
+
+    /**
+     * @return the mentioned
+     */
+    public ArrayList<String> getMentioned() {
+        return mentioned;
+    }
+
+    /**
+     * @param mentioned the mentioned to set
+     */
+    public void setMentioned(ArrayList<String> mentioned) {
+        this.mentioned = mentioned;
+    }
+
+    /**
+     * @return the caseContext
+     */
+    public String getCaseContext() {
+        return caseContext;
+    }
+
+    /**
+     * @param caseContext the caseContext to set
+     */
+    public void setCaseContext(String caseContext) {
+        this.caseContext = caseContext;
+    }
+
+    /**
+     * @return the documentContext
+     */
+    public String getDocumentContext() {
+        return documentContext;
+    }
+
+    /**
+     * @param documentContext the documentContext to set
+     */
+    public void setDocumentContext(String documentContext) {
+        this.documentContext = documentContext;
     }
     
 }

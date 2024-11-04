@@ -669,11 +669,15 @@ import com.jdimension.jlawyer.client.editors.ThemeableEditor;
 import com.jdimension.jlawyer.client.settings.UserSettings;
 import com.jdimension.jlawyer.client.utils.TableUtils;
 import com.jdimension.jlawyer.client.utils.ThreadUtils;
+import com.jdimension.jlawyer.persistence.ArchiveFileReviewsBean;
 import java.awt.Component;
 import java.awt.Graphics;
 import java.awt.Image;
 import java.awt.event.MouseEvent;
+import java.util.Timer;
+import java.util.TimerTask;
 import javax.swing.JOptionPane;
+import javax.swing.JTable;
 import org.apache.log4j.Logger;
 
 /**
@@ -688,7 +692,7 @@ public class ArchiveFileReviewsMissingPanel extends javax.swing.JPanel implement
     private Image backgroundImage=null;
     
     /**
-     * Creates new form QuickArchiveFileSearchPanel
+     * Creates new form ArchiveFileReviewsMissingPanel
      */
     public ArchiveFileReviewsMissingPanel() {
         initComponents();
@@ -699,18 +703,22 @@ public class ArchiveFileReviewsMissingPanel extends javax.swing.JPanel implement
         }
         String[] colNames=new String[] {"Aktenzeichen", "Kurzrubrum", "wegen", "Anwalt"};
         QuickArchiveFileSearchTableModel model=new QuickArchiveFileSearchTableModel(colNames, 0);
-        this.tblResults.setModel(model);
+        this.tblResultsAny.setModel(model);
         
-        this.cmdRefreshActionPerformed(null);
+        QuickArchiveFileSearchTableModel model2=new QuickArchiveFileSearchTableModel(colNames, 0);
+        this.tblResultsFollowup.setModel(model2);
         
-        /*RowSorter<TableModel> sorter = new TableRowSorter<TableModel>(model);
-        this.tblResults.setRowSorter(sorter);*/
+        QuickArchiveFileSearchTableModel model3=new QuickArchiveFileSearchTableModel(colNames, 0);
+        this.tblResultsRespite.setModel(model3);
+        
+        this.refresh(15000);
+        
     }
     
     @Override
     public void setBackgroundImage(Image image) {
         this.backgroundImage=image;
-        this.tblResults.setOpaque(false);
+        this.tblResultsAny.setOpaque(false);
         
     }
     
@@ -731,13 +739,18 @@ public class ArchiveFileReviewsMissingPanel extends javax.swing.JPanel implement
 
         popupArchiveFileActions = new javax.swing.JPopupMenu();
         mnuOpenArchiveFile = new javax.swing.JMenuItem();
-        jScrollPane1 = new javax.swing.JScrollPane();
-        tblResults = new javax.swing.JTable();
         jLabel18 = new javax.swing.JLabel();
         lblPanelTitle = new javax.swing.JLabel();
         jPanel1 = new javax.swing.JPanel();
         cmdExport = new javax.swing.JButton();
         cmdRefresh = new javax.swing.JButton();
+        tabTables = new javax.swing.JTabbedPane();
+        jScrollPane1 = new javax.swing.JScrollPane();
+        tblResultsAny = new javax.swing.JTable();
+        jScrollPane2 = new javax.swing.JScrollPane();
+        tblResultsFollowup = new javax.swing.JTable();
+        jScrollPane3 = new javax.swing.JScrollPane();
+        tblResultsRespite = new javax.swing.JTable();
 
         mnuOpenArchiveFile.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/folder.png"))); // NOI18N
         mnuOpenArchiveFile.setText("Akte bearbeiten");
@@ -748,28 +761,6 @@ public class ArchiveFileReviewsMissingPanel extends javax.swing.JPanel implement
             }
         });
         popupArchiveFileActions.add(mnuOpenArchiveFile);
-
-        tblResults.setModel(new javax.swing.table.DefaultTableModel(
-            new Object [][] {
-                {null, null, null, null},
-                {null, null, null, null},
-                {null, null, null, null},
-                {null, null, null, null}
-            },
-            new String [] {
-                "Title 1", "Title 2", "Title 3", "Title 4"
-            }
-        ));
-        tblResults.getTableHeader().setReorderingAllowed(false);
-        tblResults.addMouseListener(new java.awt.event.MouseAdapter() {
-            public void mousePressed(java.awt.event.MouseEvent evt) {
-                tblResultsMousePressed(evt);
-            }
-            public void mouseClicked(java.awt.event.MouseEvent evt) {
-                tblResultsMouseClicked(evt);
-            }
-        });
-        jScrollPane1.setViewportView(tblResults);
 
         jLabel18.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/Icons2-14.png"))); // NOI18N
 
@@ -817,6 +808,84 @@ public class ArchiveFileReviewsMissingPanel extends javax.swing.JPanel implement
                 .addContainerGap())
         );
 
+        tabTables.addChangeListener(new javax.swing.event.ChangeListener() {
+            public void stateChanged(javax.swing.event.ChangeEvent evt) {
+                tabTablesStateChanged(evt);
+            }
+        });
+
+        tblResultsAny.setModel(new javax.swing.table.DefaultTableModel(
+            new Object [][] {
+                {null, null, null, null},
+                {null, null, null, null},
+                {null, null, null, null},
+                {null, null, null, null}
+            },
+            new String [] {
+                "Title 1", "Title 2", "Title 3", "Title 4"
+            }
+        ));
+        tblResultsAny.getTableHeader().setReorderingAllowed(false);
+        tblResultsAny.addMouseListener(new java.awt.event.MouseAdapter() {
+            public void mouseClicked(java.awt.event.MouseEvent evt) {
+                tblResultsAnyMouseClicked(evt);
+            }
+            public void mousePressed(java.awt.event.MouseEvent evt) {
+                tblResultsAnyMousePressed(evt);
+            }
+        });
+        jScrollPane1.setViewportView(tblResultsAny);
+
+        tabTables.addTab("ohne Wiedervorlage / Frist / Termin", jScrollPane1);
+
+        tblResultsFollowup.setModel(new javax.swing.table.DefaultTableModel(
+            new Object [][] {
+                {null, null, null, null},
+                {null, null, null, null},
+                {null, null, null, null},
+                {null, null, null, null}
+            },
+            new String [] {
+                "Title 1", "Title 2", "Title 3", "Title 4"
+            }
+        ));
+        tblResultsFollowup.getTableHeader().setReorderingAllowed(false);
+        tblResultsFollowup.addMouseListener(new java.awt.event.MouseAdapter() {
+            public void mouseClicked(java.awt.event.MouseEvent evt) {
+                tblResultsFollowupMouseClicked(evt);
+            }
+            public void mousePressed(java.awt.event.MouseEvent evt) {
+                tblResultsFollowupMousePressed(evt);
+            }
+        });
+        jScrollPane2.setViewportView(tblResultsFollowup);
+
+        tabTables.addTab("ohne Wiedervorlage", jScrollPane2);
+
+        tblResultsRespite.setModel(new javax.swing.table.DefaultTableModel(
+            new Object [][] {
+                {null, null, null, null},
+                {null, null, null, null},
+                {null, null, null, null},
+                {null, null, null, null}
+            },
+            new String [] {
+                "Title 1", "Title 2", "Title 3", "Title 4"
+            }
+        ));
+        tblResultsRespite.getTableHeader().setReorderingAllowed(false);
+        tblResultsRespite.addMouseListener(new java.awt.event.MouseAdapter() {
+            public void mouseClicked(java.awt.event.MouseEvent evt) {
+                tblResultsRespiteMouseClicked(evt);
+            }
+            public void mousePressed(java.awt.event.MouseEvent evt) {
+                tblResultsRespiteMousePressed(evt);
+            }
+        });
+        jScrollPane3.setViewportView(tblResultsRespite);
+
+        tabTables.addTab("ohne Frist", jScrollPane3);
+
         org.jdesktop.layout.GroupLayout layout = new org.jdesktop.layout.GroupLayout(this);
         this.setLayout(layout);
         layout.setHorizontalGroup(
@@ -824,13 +893,13 @@ public class ArchiveFileReviewsMissingPanel extends javax.swing.JPanel implement
             .add(layout.createSequentialGroup()
                 .addContainerGap()
                 .add(layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
-                    .add(jScrollPane1, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 896, Short.MAX_VALUE)
                     .add(layout.createSequentialGroup()
                         .add(jPanel1, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
                         .addPreferredGap(org.jdesktop.layout.LayoutStyle.UNRELATED)
                         .add(jLabel18)
                         .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
-                        .add(lblPanelTitle, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)))
+                        .add(lblPanelTitle, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                    .add(tabTables))
                 .addContainerGap())
         );
         layout.setVerticalGroup(
@@ -843,14 +912,26 @@ public class ArchiveFileReviewsMissingPanel extends javax.swing.JPanel implement
                         .add(org.jdesktop.layout.GroupLayout.LEADING, lblPanelTitle, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                         .add(org.jdesktop.layout.GroupLayout.LEADING, jLabel18, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)))
                 .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
-                .add(jScrollPane1, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 240, Short.MAX_VALUE)
+                .add(tabTables, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 240, Short.MAX_VALUE)
                 .addContainerGap())
         );
     }// </editor-fold>//GEN-END:initComponents
 
+    private JTable getActiveTable() {
+        JTable sourceTable=this.tblResultsAny;
+        if(tabTables.getSelectedIndex()==1)
+            sourceTable=this.tblResultsFollowup;
+        else if(tabTables.getSelectedIndex()==2)
+            sourceTable=this.tblResultsRespite;
+        return sourceTable;
+    }
+    
     private void mnuOpenArchiveFileActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_mnuOpenArchiveFileActionPerformed
-        int row=this.tblResults.getSelectedRow();
-            QuickArchiveFileSearchRowIdentifier id=(QuickArchiveFileSearchRowIdentifier)this.tblResults.getValueAt(row, 0);
+        
+        JTable sourceTable=this.getActiveTable();
+        
+        int row=sourceTable.getSelectedRow();
+            QuickArchiveFileSearchRowIdentifier id=(QuickArchiveFileSearchRowIdentifier)sourceTable.getValueAt(row, 0);
             Object editor=null;
             try {
                 editor=EditorsRegistry.getInstance().getEditor(this.detailsEditorClass);
@@ -872,10 +953,14 @@ public class ArchiveFileReviewsMissingPanel extends javax.swing.JPanel implement
             }
     }//GEN-LAST:event_mnuOpenArchiveFileActionPerformed
 
-    private void tblResultsMouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_tblResultsMouseClicked
+    private void tblResultsAnyMouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_tblResultsAnyMouseClicked
+        this.tableMouseClicked(evt, tblResultsAny);
+    }//GEN-LAST:event_tblResultsAnyMouseClicked
+
+    private void tableMouseClicked(java.awt.event.MouseEvent evt, JTable sourceTable) {
         if(evt.getClickCount()==2 && evt.getButton()==MouseEvent.BUTTON1) {
-            int row=this.tblResults.getSelectedRow();
-            QuickArchiveFileSearchRowIdentifier id=(QuickArchiveFileSearchRowIdentifier)this.tblResults.getValueAt(row, 0);
+            int row=sourceTable.getSelectedRow();
+            QuickArchiveFileSearchRowIdentifier id=(QuickArchiveFileSearchRowIdentifier)sourceTable.getValueAt(row, 0);
             Object editor=null;
             try {
                 editor=EditorsRegistry.getInstance().getEditor(this.detailsEditorClass);
@@ -897,34 +982,75 @@ public class ArchiveFileReviewsMissingPanel extends javax.swing.JPanel implement
             }
                 
         } else if(evt.getClickCount()==1 && evt.getButton()==MouseEvent.BUTTON3) {
-            if(this.tblResults.getSelectedRowCount()<1) {
+            if(sourceTable.getSelectedRowCount()<1) {
                 return;
             }
-            this.popupArchiveFileActions.show(this.tblResults, evt.getX(), evt.getY());
+            this.popupArchiveFileActions.show(sourceTable, evt.getX(), evt.getY());
         }
-        
-    }//GEN-LAST:event_tblResultsMouseClicked
-
+    }
+    
     private void cmdRefreshActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdRefreshActionPerformed
-        // perform search here
-        ThreadUtils.setWaitCursor(this);
-        //EditorsRegistry.getInstance().updateStatus("Suche Wiedervorlagen...");
-        new Thread(new ArchiveFileMissingReviewsSearchThread(this, this.tblResults)).start();
-        
+        this.refresh(0);
     }//GEN-LAST:event_cmdRefreshActionPerformed
 
+    private void refresh(long delay) {
+        if(delay>0) {
+            Component localOwner=this;
+            
+            Timer t=new Timer();
+            t.schedule(new TimerTask() {
+                @Override
+                public void run() {
+                    new Thread(new CaseMissingCalendarEntriesSearchThread(localOwner, tblResultsAny, -1)).start();
+                }
+                
+            }, delay);
+            
+        } else {
+            ThreadUtils.setWaitCursor(this);
+            new Thread(new CaseMissingCalendarEntriesSearchThread(this, this.tblResultsAny, -1)).start();
+        }
+    }
+    
     private void cmdExportActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdExportActionPerformed
         try {
-            TableUtils.exportAndLaunch("wiedervorlagen-export.csv", this.tblResults);
+            JTable sourceTable=this.getActiveTable();
+            TableUtils.exportAndLaunch("fehlende-kalendereintraege.csv", sourceTable);
         } catch (Exception ex) {
             log.error("Error exporting table to CSV", ex);
             JOptionPane.showMessageDialog(this, "Fehler beim Export: " + ex.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
         }
     }//GEN-LAST:event_cmdExportActionPerformed
 
-    private void tblResultsMousePressed(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_tblResultsMousePressed
-        TableUtils.handleRowClick(tblResults, evt);
-    }//GEN-LAST:event_tblResultsMousePressed
+    private void tblResultsAnyMousePressed(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_tblResultsAnyMousePressed
+        TableUtils.handleRowClick(tblResultsAny, evt);
+    }//GEN-LAST:event_tblResultsAnyMousePressed
+
+    private void tblResultsFollowupMouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_tblResultsFollowupMouseClicked
+        this.tableMouseClicked(evt, tblResultsFollowup);
+    }//GEN-LAST:event_tblResultsFollowupMouseClicked
+
+    private void tblResultsFollowupMousePressed(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_tblResultsFollowupMousePressed
+        TableUtils.handleRowClick(tblResultsFollowup, evt);
+    }//GEN-LAST:event_tblResultsFollowupMousePressed
+
+    private void tblResultsRespiteMouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_tblResultsRespiteMouseClicked
+        this.tableMouseClicked(evt, tblResultsRespite);
+    }//GEN-LAST:event_tblResultsRespiteMouseClicked
+
+    private void tblResultsRespiteMousePressed(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_tblResultsRespiteMousePressed
+        TableUtils.handleRowClick(tblResultsRespite, evt);
+    }//GEN-LAST:event_tblResultsRespiteMousePressed
+
+    private void tabTablesStateChanged(javax.swing.event.ChangeEvent evt) {//GEN-FIRST:event_tabTablesStateChanged
+        if(tabTables.getSelectedIndex()==1) {
+            ThreadUtils.setWaitCursor(this);
+            new Thread(new CaseMissingCalendarEntriesSearchThread(this, this.tblResultsFollowup, ArchiveFileReviewsBean.EVENTTYPE_FOLLOWUP)).start();
+        } else if(tabTables.getSelectedIndex()==2) {
+            ThreadUtils.setWaitCursor(this);
+            new Thread(new CaseMissingCalendarEntriesSearchThread(this, this.tblResultsRespite, ArchiveFileReviewsBean.EVENTTYPE_RESPITE)).start();
+        }
+    }//GEN-LAST:event_tabTablesStateChanged
     
     
     // Variables declaration - do not modify//GEN-BEGIN:variables
@@ -933,10 +1059,15 @@ public class ArchiveFileReviewsMissingPanel extends javax.swing.JPanel implement
     private javax.swing.JLabel jLabel18;
     private javax.swing.JPanel jPanel1;
     private javax.swing.JScrollPane jScrollPane1;
+    private javax.swing.JScrollPane jScrollPane2;
+    private javax.swing.JScrollPane jScrollPane3;
     protected javax.swing.JLabel lblPanelTitle;
     private javax.swing.JMenuItem mnuOpenArchiveFile;
     private javax.swing.JPopupMenu popupArchiveFileActions;
-    private javax.swing.JTable tblResults;
+    private javax.swing.JTabbedPane tabTables;
+    private javax.swing.JTable tblResultsAny;
+    private javax.swing.JTable tblResultsFollowup;
+    private javax.swing.JTable tblResultsRespite;
     // End of variables declaration//GEN-END:variables
 
     @Override

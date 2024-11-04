@@ -85,6 +85,18 @@
                 <pathelement path="${java.class.path}"/>
             </classpath>
         </java>
+        <java classname="org.jlawyer.io.rest.tools.AddBasicAuthToJson" 
+                  fork="true"
+                  failonerror="true"
+                  maxmemory="256m" 
+                  output="addbasicauth.log"
+                  error="addbasicauth-error.log">
+            <arg line="${basedir}/build/web/swagger-ui/swagger.json"/>
+            <classpath>
+                <pathelement path="${java.class.path}"/>
+                <pathelement path="${basedir}/build/web/WEB-INF/classes"/>
+            </classpath>
+        </java>
     </target>
     
 </project>

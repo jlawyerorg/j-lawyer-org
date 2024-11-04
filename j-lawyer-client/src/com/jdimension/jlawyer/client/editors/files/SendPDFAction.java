@@ -663,16 +663,14 @@
  */
 package com.jdimension.jlawyer.client.editors.files;
 
+import com.jdimension.jlawyer.client.editors.documents.CachingDocumentLoader;
 import com.jdimension.jlawyer.client.mail.SendCommunicationDialog;
 import com.jdimension.jlawyer.client.processing.ProgressIndicator;
 import com.jdimension.jlawyer.client.processing.ProgressableAction;
-import com.jdimension.jlawyer.client.settings.ClientSettings;
 import com.jdimension.jlawyer.client.utils.FileConverter;
 import com.jdimension.jlawyer.client.utils.FileUtils;
 import com.jdimension.jlawyer.client.utils.FrameUtils;
 import com.jdimension.jlawyer.persistence.ArchiveFileDocumentsBean;
-import com.jdimension.jlawyer.services.ArchiveFileServiceRemote;
-import com.jdimension.jlawyer.services.JLawyerServiceLocator;
 import com.jdimension.jlawyer.ui.folders.CaseFolderPanel;
 import java.io.File;
 import java.util.ArrayList;
@@ -711,10 +709,7 @@ public class SendPDFAction extends ProgressableAction {
     public boolean execute() throws Exception {
 
         try {
-            ClientSettings settings = ClientSettings.getInstance();
             FileConverter conv = FileConverter.getInstance();
-            JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
-            ArchiveFileServiceRemote remote = locator.lookupArchiveFileServiceRemote();
             ArrayList<ArchiveFileDocumentsBean> selectedDocs=this.table.getSelectedDocuments();
             for (ArchiveFileDocumentsBean doc: selectedDocs) {
                 if (this.isCancelled()) {
@@ -722,13 +717,13 @@ public class SendPDFAction extends ProgressableAction {
                 }
 
                 this.progress("Konvertiere zu PDF: " + doc.getName());
-                byte[] content = remote.getDocumentContent(doc.getId());
+                byte[] content=CachingDocumentLoader.getInstance().getDocument(doc.getId());
                 
-                String tmpUrl = FileUtils.createTempFile(doc.getName(), content);
+                String tmpUrl = FileUtils.createTempFile(FileUtils.sanitizeAttachmentName(doc.getName()), content);
                 if (doc.getName().toLowerCase().endsWith(".pdf") || !(conv.supportsInputFormat(doc.getName().toLowerCase()))) {
                     dlg.addAttachment(tmpUrl, doc.getDictateSign());
                 } else {
-                    String pdfUrl = conv.convertToPDF(tmpUrl);
+                    String pdfUrl = conv.convertToPDF(tmpUrl, doc);
                     try {
                         // give some more time to LibreOffice to shut down
                         Thread.sleep(2500);

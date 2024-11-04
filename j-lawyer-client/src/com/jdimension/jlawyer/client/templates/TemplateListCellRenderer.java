@@ -688,7 +688,6 @@ public class TemplateListCellRenderer extends DefaultListCellRenderer {
             this.setFileIcon((JLabel)ret, o.toString());
         }
         return ret;
-        //throw new UnsupportedOperationException("Not supported yet.");
     }
     
     private void setFileIcon(JLabel label, String fileName) {

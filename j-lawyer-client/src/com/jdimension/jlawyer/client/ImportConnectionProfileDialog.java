@@ -670,15 +670,18 @@ package com.jdimension.jlawyer.client;
 public class ImportConnectionProfileDialog extends javax.swing.JDialog {
     
     private ConnectionProfile profile=null;
-
+    ConnectionProfiles connections=null;
+    
     /**
      * Creates new form ImportConnectionProfileDialog
      * @param parent
      * @param modal
      */
-    public ImportConnectionProfileDialog(java.awt.Frame parent, boolean modal) {
+    public ImportConnectionProfileDialog(java.awt.Frame parent, boolean modal, ConnectionProfiles connections) {
         super(parent, modal);
+        this.connections=connections;
         initComponents();
+        
     }
 
     /**
@@ -754,8 +757,7 @@ public class ImportConnectionProfileDialog extends javax.swing.JDialog {
     }//GEN-LAST:event_cmdCancelActionPerformed
 
     private void cmdImportActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdImportActionPerformed
-        ConnectionProfiles connections=ConnectionProfiles.getInstance();
-        this.profile=connections.fromPropertiesString(this.jTextArea1.getText(), this);
+        this.profile=this.connections.fromPropertiesString(this.jTextArea1.getText(), this);
         this.setVisible(false);
         this.dispose();
     }//GEN-LAST:event_cmdImportActionPerformed
@@ -793,7 +795,7 @@ public class ImportConnectionProfileDialog extends javax.swing.JDialog {
 
         /* Create and display the dialog */
         java.awt.EventQueue.invokeLater(() -> {
-            ImportConnectionProfileDialog dialog = new ImportConnectionProfileDialog(new javax.swing.JFrame(), true);
+            ImportConnectionProfileDialog dialog = new ImportConnectionProfileDialog(new javax.swing.JFrame(), true, null);
             dialog.addWindowListener(new java.awt.event.WindowAdapter() {
                 @Override
                 public void windowClosing(java.awt.event.WindowEvent e) {

@@ -663,6 +663,8 @@
  */
 package org.jlawyer.io.rest.v7.pojo;
 
+import java.util.Date;
+
 /**
  *
  * @author jens
@@ -674,6 +676,8 @@ public class RestfulInstantMessageMentionV7 {
     protected String principal;
     
     protected boolean done;
+    
+    protected Date statusChanged=null;
     
 
     public RestfulInstantMessageMentionV7() {
@@ -720,6 +724,20 @@ public class RestfulInstantMessageMentionV7 {
      */
     public void setDone(boolean done) {
         this.done = done;
+    }
+
+    /**
+     * @return the statusChanged
+     */
+    public Date getStatusChanged() {
+        return statusChanged;
+    }
+
+    /**
+     * @param statusChanged the statusChanged to set
+     */
+    public void setStatusChanged(Date statusChanged) {
+        this.statusChanged = statusChanged;
     }
 
     

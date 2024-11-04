@@ -663,11 +663,14 @@
  */
 package com.jdimension.jlawyer.client.drebis.claim;
 
+import com.jdimension.jlawyer.client.settings.ServerSettings;
 import com.jdimension.jlawyer.client.utils.ComponentUtils;
 import com.jdimension.jlawyer.client.wizard.*;
 import com.jdimension.jlawyer.drebis.DrebisPerson;
 import com.jdimension.jlawyer.drebis.DrebisUtils;
 import com.jdimension.jlawyer.persistence.AddressBean;
+import com.jdimension.jlawyer.persistence.ArchiveFileAddressesBean;
+import com.jdimension.jlawyer.persistence.PartyTypeBean;
 import java.util.ArrayList;
 import java.util.Vector;
 import javax.swing.table.DefaultTableModel;
@@ -681,7 +684,7 @@ public class ClientSelectionStep extends javax.swing.JPanel implements WizardSte
     private WizardDataContainer data = null;
 
     /**
-     * Creates new form SampleStep1
+     * Creates new form ClientSelectionStep
      */
     public ClientSelectionStep() {
         initComponents();
@@ -692,15 +695,25 @@ public class ClientSelectionStep extends javax.swing.JPanel implements WizardSte
 
     @Override
     public void nextEvent() throws Exception {
-        //this.data.put("data1", this.txtFileNumber.getText());
         
         ArrayList<DrebisPerson> persons=new ArrayList<>();
+        ArrayList<AddressBean> clients = (ArrayList<AddressBean>) data.get("clients.addressbeans");
+        ArrayList<ArchiveFileAddressesBean> allParties=(ArrayList<ArchiveFileAddressesBean>) data.get("clients.allparties");
+        if(allParties==null)
+            allParties=new ArrayList<>();
         
         DefaultTableModel dm=(DefaultTableModel)this.tblClients.getModel();
         for(int i=0;i<dm.getRowCount();i++) {
             Boolean enabled = (Boolean)dm.getValueAt(i, 0);
             if(enabled) {
                 // user chose to submit this client
+                
+                AddressBean ab=clients.get(i);
+                PartyTypeBean ptb=com.jdimension.jlawyer.client.drebis.DrebisUtils.getType(ab, allParties);
+                if(ptb != null) {
+                    // will only store ONE type of party
+                    ServerSettings.getInstance().setSetting("drebis." + this.getClass().getName() + ".selectedtype", ptb.getId());
+                }
                 
                 // columns: 0 submit, 1 name, 2 firstname, 3 company, 4 street, 5 zip, 6 city, 7 countrycode, 8 phone, 9 fax, 10 email
                 DrebisPerson p=new DrebisPerson();
@@ -802,7 +815,7 @@ public class ClientSelectionStep extends javax.swing.JPanel implements WizardSte
 
         jLabel1.setBackground(new java.awt.Color(153, 153, 153));
         jLabel1.setForeground(new java.awt.Color(255, 255, 255));
-        jLabel1.setText("<html><p>Wählen Sie die zu übermittelnden Mandanten aus. Pflichtangaben:</p>  <ul> <li>Aktenzeichen und Kurzrubrum</li> <li>für jeden Mandant: Firma oder Vor- und Nachname, Strasse und Hausnr, PLZ, Ort und Länderkennzeichen</li> </ul>  Alle anderen Angaben sind optional. Daten k&ouml;nnen direkt in der Tabelle bearbeitet werden.</html>");
+        jLabel1.setText("<html><p>Wählen Sie die zu übermittelnden Mandanten aus. Pflichtangaben:</p>  <ul> <li>Aktenzeichen und Kurzrubrum</li> <li>für jeden Mandant: Firma oder Vor- und Nachname, Stra&szlig;e und Hausnr, PLZ, Ort und Länderkennzeichen</li> </ul>  Alle anderen Angaben sind optional. Daten k&ouml;nnen direkt in der Tabelle bearbeitet werden.</html>");
         jLabel1.setBorder(new javax.swing.border.LineBorder(new java.awt.Color(0, 0, 0), 1, true));
         jLabel1.setOpaque(true);
 
@@ -820,7 +833,7 @@ public class ClientSelectionStep extends javax.swing.JPanel implements WizardSte
 
             },
             new String [] {
-                "übertragen", "Nachname", "Vorname", "Unternehmen", "Strasse", "PLZ", "Ort", "LKZ", "Telefon", "Fax", "E-Mail"
+                "übertragen", "Nachname", "Vorname", "Unternehmen", "Straße", "PLZ", "Ort", "LKZ", "Telefon", "Fax", "E-Mail"
             }
         ) {
             Class[] types = new Class [] {
@@ -894,19 +907,28 @@ public class ClientSelectionStep extends javax.swing.JPanel implements WizardSte
     @Override
     public void display() {
 
+        ArrayList<ArchiveFileAddressesBean> allParties=(ArrayList<ArchiveFileAddressesBean>) data.get("clients.allparties");
+        if(allParties==null)
+            allParties=new ArrayList<>();
+        
         Object test = data.get("clients.drebispersons");
         if (test != null) {
             // user navigated back - do not reset but use what is there
         } else {
             // initial display
+            String enabledParty=ServerSettings.getInstance().getSetting("drebis." + this.getClass().getName() + ".selectedtype", null);
             
             ArrayList<AddressBean> clients = (ArrayList<AddressBean>) data.get("clients.addressbeans");
             for (int i = 0; i < clients.size(); i++) {
                 AddressBean cl = clients.get(i);
 
+                boolean selected=false;
+                PartyTypeBean ptb=com.jdimension.jlawyer.client.drebis.DrebisUtils.getType(cl, allParties);
+                if(ptb!=null)
+                    selected=ptb.getId().equals(enabledParty);
                 
                 Vector row = new Vector();
-                row.add(true);
+                row.add(selected);
                 row.add(cl.getName());
                 row.add(cl.getFirstName());
                 row.add(cl.getCompany());
@@ -936,5 +958,10 @@ public class ClientSelectionStep extends javax.swing.JPanel implements WizardSte
     @Override
     public void setData(WizardDataContainer data) {
         this.data = data;
+    }
+
+    @Override
+    public void setWizardPanel(WizardMainPanel wizard) {
+        
     }
 }

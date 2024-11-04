@@ -753,4 +753,11 @@ public class ServerStringUtils {
         return sb.toString();
     }
     
+    public static String[] toArray(String list, String delimiter) {
+        if (list == null) {
+            return new String[0];
+        }
+        return list.split(delimiter);
+    }
+    
 }

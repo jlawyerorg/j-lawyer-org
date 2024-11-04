@@ -744,7 +744,7 @@ public class BeaIdentitySearchThread implements Runnable {
             }
         }
 
-        String[] colNames = new String[]{"Name", "Vorname", "Nutzername", "PLZ", "Ort", "Strasse", "Typ", "Kanzleiname", "E-Mail"};
+        String[] colNames = new String[]{"Name", "Vorname", "Nutzername", "PLZ", "Ort", "Straße", "Typ", "Kanzleiname", "E-Mail"};
         QuickAddressSearchTableModel model = new QuickAddressSearchTableModel(colNames, 0);
         for (Identity i : fullDtos) {
             Object[] row = new Object[]{new BeaIdentitySearchRowIdentifier(i), i.getFirstName(), i.getUserName(), i.getZipCode(), i.getCity(), StringUtils.nonEmpty(i.getStreet()) + " " + StringUtils.nonEmpty(i.getStreetNumber()), i.getType(), StringUtils.nonEmpty(i.getOfficeName()), StringUtils.nonEmpty(i.getEmail())};

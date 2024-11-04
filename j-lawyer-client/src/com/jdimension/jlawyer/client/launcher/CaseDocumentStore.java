@@ -664,6 +664,7 @@
 package com.jdimension.jlawyer.client.launcher;
 
 import com.jdimension.jlawyer.client.editors.EditorsRegistry;
+import com.jdimension.jlawyer.client.editors.documents.CachingDocumentLoader;
 import com.jdimension.jlawyer.client.settings.ClientSettings;
 import com.jdimension.jlawyer.client.utils.FileUtils;
 import com.jdimension.jlawyer.client.utils.ThreadUtils;
@@ -745,7 +746,8 @@ public class CaseDocumentStore extends ObservedDocumentStore {
                 ArchiveFileServiceRemote afs = locator.lookupArchiveFileServiceRemote();
                 boolean docStillExists = afs.doesDocumentExist(doc.getId());
                 if (docStillExists) {
-                    byte[] currentContent = afs.getDocumentContent(doc.getId());
+                    //byte[] currentContent = afs.getDocumentContent(doc.getId());
+                    byte[] currentContent=CachingDocumentLoader.getInstance().getDocument(doc.getId());
 
                     if (currentContent == null) {
                         currentContent = new byte[0];

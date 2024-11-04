@@ -708,6 +708,9 @@ public class CaseNumberingConfigurationDialog extends javax.swing.JDialog {
         String startFrom=set.getSetting(ServerSettings.SERVERCONF_CASENUMBERING_STARTFROM, "1");
         this.txtStartFrom.setText(startFrom);
         
+        String increment=set.getSetting(ServerSettings.SERVERCONF_CASENUMBERING_INCREMENT, "1");
+        this.spnIncrement.setValue(Integer.valueOf(increment));
+        
         this.selectePattern=pattern;
         
         this.chkExtension.setSelected(set.getSettingAsBoolean(ServerSettings.SERVERCONF_CASENUMBERING_EXT_ENABLED, false));
@@ -726,10 +729,12 @@ public class CaseNumberingConfigurationDialog extends javax.swing.JDialog {
     }
     
     private void updatePreview() {
-        if(this.selectePattern.indexOf("NNNNN")>=0 || this.selectePattern.indexOf("nnn")>=0) {
+        if(this.selectePattern.contains("NNNN") || this.selectePattern.contains("nnn")) {
             this.txtStartFrom.setEnabled(true);
+            this.spnIncrement.setEnabled(true);
         } else {
             this.txtStartFrom.setEnabled(false);
+            this.spnIncrement.setEnabled(false);
         }
         this.lblError.setText(" ");
         DefaultListModel dm=new DefaultListModel();
@@ -751,7 +756,7 @@ public class CaseNumberingConfigurationDialog extends javax.swing.JDialog {
         ClientSettings settings = ClientSettings.getInstance();
         try {
             JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
-            String[] preview = locator.lookupArchiveFileServiceRemote().previewCaseNumbering(this.selectePattern, start,this.chkExtension.isSelected(), this.txtDividerMain.getText(), this.txtDividerExt.getText(), this.chkExtPrefix.isSelected(), this.txtExtPrefix.getText(), this.chkExtSuffix.isSelected(), this.txtExtSuffix.getText(), this.chkExtUserAbbrev.isSelected(), this.chkExtGroupAbbrev.isSelected());
+            String[] preview = locator.lookupArchiveFileServiceRemote().previewCaseNumbering(this.selectePattern, start, ((Number) this.spnIncrement.getValue()).intValue(),this.chkExtension.isSelected(), this.txtDividerMain.getText(), this.txtDividerExt.getText(), this.chkExtPrefix.isSelected(), this.txtExtPrefix.getText(), this.chkExtSuffix.isSelected(), this.txtExtSuffix.getText(), this.chkExtUserAbbrev.isSelected(), this.chkExtGroupAbbrev.isSelected());
             
             for(String p: preview) {
                 dm.addElement(p);
@@ -792,6 +797,8 @@ public class CaseNumberingConfigurationDialog extends javax.swing.JDialog {
         txtCustom = new javax.swing.JTextField();
         jLabel2 = new javax.swing.JLabel();
         txtStartFrom = new javax.swing.JTextField();
+        jLabel6 = new javax.swing.JLabel();
+        spnIncrement = new javax.swing.JSpinner();
         jPanel2 = new javax.swing.JPanel();
         chkExtension = new javax.swing.JCheckBox();
         jLabel3 = new javax.swing.JLabel();
@@ -899,6 +906,15 @@ public class CaseNumberingConfigurationDialog extends javax.swing.JDialog {
             }
         });
 
+        jLabel6.setText("Schrittweite:");
+
+        spnIncrement.setModel(new javax.swing.SpinnerNumberModel(1, 1, 10, 1));
+        spnIncrement.addChangeListener(new javax.swing.event.ChangeListener() {
+            public void stateChanged(javax.swing.event.ChangeEvent evt) {
+                spnIncrementStateChanged(evt);
+            }
+        });
+
         javax.swing.GroupLayout jPanel1Layout = new javax.swing.GroupLayout(jPanel1);
         jPanel1.setLayout(jPanel1Layout);
         jPanel1Layout.setHorizontalGroup(
@@ -915,14 +931,21 @@ public class CaseNumberingConfigurationDialog extends javax.swing.JDialog {
                     .addComponent(opt_nnnnnYY, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                     .addGroup(jPanel1Layout.createSequentialGroup()
                         .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
-                            .addGroup(jPanel1Layout.createSequentialGroup()
-                                .addComponent(opt_custom)
-                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                                .addComponent(txtCustom))
                             .addComponent(opt_CCCCC, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                             .addComponent(opt_YYMMDDRRRRR, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                             .addComponent(opt_NNNNNYYYY, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                            .addComponent(txtStartFrom, javax.swing.GroupLayout.PREFERRED_SIZE, 720, javax.swing.GroupLayout.PREFERRED_SIZE))
+                            .addGroup(jPanel1Layout.createSequentialGroup()
+                                .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                                    .addComponent(opt_custom)
+                                    .addComponent(txtStartFrom, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
+                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                                .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                                    .addGroup(jPanel1Layout.createSequentialGroup()
+                                        .addComponent(jLabel6)
+                                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                                        .addComponent(spnIncrement, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                                        .addGap(0, 0, Short.MAX_VALUE))
+                                    .addComponent(txtCustom))))
                         .addGap(0, 0, Short.MAX_VALUE)))
                 .addGap(4, 4, 4))
         );
@@ -946,7 +969,9 @@ public class CaseNumberingConfigurationDialog extends javax.swing.JDialog {
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
                 .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                     .addComponent(txtStartFrom, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addComponent(jLabel2))
+                    .addComponent(jLabel2)
+                    .addComponent(jLabel6)
+                    .addComponent(spnIncrement, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
                 .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
         );
 
@@ -956,11 +981,6 @@ public class CaseNumberingConfigurationDialog extends javax.swing.JDialog {
         chkExtension.addItemListener(new java.awt.event.ItemListener() {
             public void itemStateChanged(java.awt.event.ItemEvent evt) {
                 chkExtensionItemStateChanged(evt);
-            }
-        });
-        chkExtension.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                chkExtensionActionPerformed(evt);
             }
         });
 
@@ -986,11 +1006,6 @@ public class CaseNumberingConfigurationDialog extends javax.swing.JDialog {
                 chkExtPrefixItemStateChanged(evt);
             }
         });
-        chkExtPrefix.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                chkExtPrefixActionPerformed(evt);
-            }
-        });
 
         chkExtUserAbbrev.setText("Anwaltskürzel");
         chkExtUserAbbrev.addItemListener(new java.awt.event.ItemListener() {
@@ -1010,11 +1025,6 @@ public class CaseNumberingConfigurationDialog extends javax.swing.JDialog {
         chkExtSuffix.addItemListener(new java.awt.event.ItemListener() {
             public void itemStateChanged(java.awt.event.ItemEvent evt) {
                 chkExtSuffixItemStateChanged(evt);
-            }
-        });
-        chkExtSuffix.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                chkExtSuffixActionPerformed(evt);
             }
         });
 
@@ -1111,7 +1121,7 @@ public class CaseNumberingConfigurationDialog extends javax.swing.JDialog {
                         .addComponent(jPanel2, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                         .addComponent(jPanel1, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
                     .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
-                        .addGap(0, 569, Short.MAX_VALUE)
+                        .addGap(0, 0, Short.MAX_VALUE)
                         .addComponent(cmdSave)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                         .addComponent(cmdCancel)))
@@ -1159,6 +1169,9 @@ public class CaseNumberingConfigurationDialog extends javax.swing.JDialog {
         }
         
         set.setSetting(ServerSettings.SERVERCONF_CASENUMBERING_STARTFROM, ""+start);
+        
+        set.setSetting(ServerSettings.SERVERCONF_CASENUMBERING_INCREMENT, ""+((Number) this.spnIncrement.getValue()).intValue());
+        
         
         set.setSettingAsBoolean(ServerSettings.SERVERCONF_CASENUMBERING_EXT_ENABLED, this.chkExtension.isSelected());
         set.setSetting(ServerSettings.SERVERCONF_CASENUMBERING_EXT_DIVIDER_MAIN, this.txtDividerMain.getText());
@@ -1230,14 +1243,6 @@ public class CaseNumberingConfigurationDialog extends javax.swing.JDialog {
         this.updatePreview();
     }//GEN-LAST:event_txtStartFromKeyReleased
 
-    private void chkExtPrefixActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_chkExtPrefixActionPerformed
-        // TODO add your handling code here:
-    }//GEN-LAST:event_chkExtPrefixActionPerformed
-
-    private void chkExtSuffixActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_chkExtSuffixActionPerformed
-        // TODO add your handling code here:
-    }//GEN-LAST:event_chkExtSuffixActionPerformed
-
     private void chkExtensionItemStateChanged(java.awt.event.ItemEvent evt) {//GEN-FIRST:event_chkExtensionItemStateChanged
         this.chkExtGroupAbbrev.setEnabled(this.chkExtension.isSelected());
         this.chkExtPrefix.setEnabled(this.chkExtension.isSelected());
@@ -1251,10 +1256,6 @@ public class CaseNumberingConfigurationDialog extends javax.swing.JDialog {
         this.updatePreview();
         
     }//GEN-LAST:event_chkExtensionItemStateChanged
-
-    private void chkExtensionActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_chkExtensionActionPerformed
-        // TODO add your handling code here:
-    }//GEN-LAST:event_chkExtensionActionPerformed
 
     private void txtDividerMainKeyReleased(java.awt.event.KeyEvent evt) {//GEN-FIRST:event_txtDividerMainKeyReleased
         this.updatePreview();
@@ -1287,6 +1288,10 @@ public class CaseNumberingConfigurationDialog extends javax.swing.JDialog {
     private void chkExtSuffixItemStateChanged(java.awt.event.ItemEvent evt) {//GEN-FIRST:event_chkExtSuffixItemStateChanged
         this.updatePreview();
     }//GEN-LAST:event_chkExtSuffixItemStateChanged
+
+    private void spnIncrementStateChanged(javax.swing.event.ChangeEvent evt) {//GEN-FIRST:event_spnIncrementStateChanged
+        this.updatePreview();
+    }//GEN-LAST:event_spnIncrementStateChanged
 
     /**
      * @param args the command line arguments
@@ -1349,6 +1354,7 @@ public class CaseNumberingConfigurationDialog extends javax.swing.JDialog {
     private javax.swing.JLabel jLabel3;
     private javax.swing.JLabel jLabel4;
     private javax.swing.JLabel jLabel5;
+    private javax.swing.JLabel jLabel6;
     private javax.swing.JPanel jPanel1;
     private javax.swing.JPanel jPanel2;
     private javax.swing.JScrollPane jScrollPane1;
@@ -1360,6 +1366,7 @@ public class CaseNumberingConfigurationDialog extends javax.swing.JDialog {
     private javax.swing.JRadioButton opt_YYMMDDRRRRR;
     private javax.swing.JRadioButton opt_custom;
     private javax.swing.JRadioButton opt_nnnnnYY;
+    private javax.swing.JSpinner spnIncrement;
     private javax.swing.JTextField txtCustom;
     private javax.swing.JTextField txtDividerExt;
     private javax.swing.JTextField txtDividerMain;

@@ -669,7 +669,7 @@ import com.jdimension.jlawyer.persistence.ArchiveFileReviewsBeanFacadeLocal;
 import com.jdimension.jlawyer.persistence.CalendarSetup;
 import com.jdimension.jlawyer.persistence.ServerSettingsBean;
 import com.jdimension.jlawyer.persistence.ServerSettingsBeanFacadeLocal;
-import com.jdimension.jlawyer.security.Crypto;
+import com.jdimension.jlawyer.security.CryptoProvider;
 import com.jdimension.jlawyer.server.services.settings.ServerSettingsKeys;
 import com.jdimension.jlawyer.server.utils.ServerStringUtils;
 import java.util.List;
@@ -683,7 +683,6 @@ import javax.ejb.Startup;
 import org.jboss.ejb3.annotation.TransactionTimeout;
 import org.jboss.logging.Logger;
 import org.jlawyer.cloud.NextcloudCalendarConnector;
-import org.jlawyer.cloud.calendar.CloudCalendar;
 
 /**
  *
@@ -702,8 +701,8 @@ public class CalendarSyncService implements CalendarSyncServiceLocal {
     private ArchiveFileReviewsBeanFacadeLocal archiveFileReviewsFacade;
 
     @Override
-    @Schedule(dayOfWeek = "*", hour = "13,20", minute = "41", second = "0", persistent = false)
-    @TransactionTimeout(value = 45, unit = TimeUnit.MINUTES)
+    @Schedule(dayOfWeek = "1-5", hour = "12,23", minute = "21", second = "0", persistent = false)
+    @TransactionTimeout(value = 60, unit = TimeUnit.MINUTES)
     public void fullCalendarSync() {
 
         // interval syncs seem to cause duplicate display of events on iOS / macOS
@@ -776,7 +775,7 @@ public class CalendarSyncService implements CalendarSyncServiceLocal {
             return null;
         }
 
-        NextcloudCalendarConnector nc = new NextcloudCalendarConnector(cs.getCloudHost(), cs.isCloudSsl(), cs.getCloudPort(), cs.getCloudUser(), Crypto.decrypt(cs.getCloudPassword()));
+        NextcloudCalendarConnector nc = new NextcloudCalendarConnector(cs.getCloudHost(), cs.isCloudSsl(), cs.getCloudPort(), cs.getCloudUser(), CryptoProvider.newCrypto().decrypt(cs.getCloudPassword()));
         if (cs.getCloudPath() != null && !("".equals(cs.getCloudPath()))) {
             nc.setSubpathPrefix(cs.getCloudPath());
         }
@@ -792,7 +791,7 @@ public class CalendarSyncService implements CalendarSyncServiceLocal {
             log.info("Syncing updated event to cloud: " + event.getId());
 
             // remove anything that is done
-            if (event.getDoneBoolean()) {
+            if (event.isDone()) {
                 CalendarSetup cs = event.getCalendarSetup();
                 if(cs.isDeleteDone()) {
                     this.eventDeleted(event);
@@ -813,15 +812,6 @@ public class CalendarSyncService implements CalendarSyncServiceLocal {
                 }
             }
         }
-    }
-
-    @Override
-    @RolesAllowed({"loginRole"})
-    public List<CloudCalendar> listCalendars(String host, boolean ssl, int port, String user, String password, String path) throws Exception {
-        NextcloudCalendarConnector nc = new NextcloudCalendarConnector(host, ssl, port, user, password);
-            if(!ServerStringUtils.isEmpty(path))
-                nc.setSubpathPrefix(path);
-            return nc.getAllCalendars();
     }
 
     @Override

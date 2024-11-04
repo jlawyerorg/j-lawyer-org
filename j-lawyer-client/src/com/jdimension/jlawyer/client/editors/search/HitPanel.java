@@ -666,6 +666,7 @@ package com.jdimension.jlawyer.client.editors.search;
 import com.jdimension.jlawyer.client.configuration.PopulateOptionsEditor;
 import com.jdimension.jlawyer.client.editors.EditorsRegistry;
 import com.jdimension.jlawyer.client.editors.ThemeableEditor;
+import com.jdimension.jlawyer.client.editors.documents.CachingDocumentLoader;
 import com.jdimension.jlawyer.client.editors.files.ArchiveFilePanel;
 import com.jdimension.jlawyer.client.editors.files.EditArchiveFileDetailsPanel;
 import com.jdimension.jlawyer.client.editors.files.ViewArchiveFileDetailsPanel;
@@ -844,12 +845,10 @@ public class HitPanel extends javax.swing.JPanel {
 
     private void lblFileNameMouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_lblFileNameMouseClicked
 
-        ClientSettings settings = ClientSettings.getInstance();
-        JLawyerServiceLocator locator = null;
         byte[] content=null;
         try {
-            locator=JLawyerServiceLocator.getInstance(settings.getLookupProperties());
-            content = locator.lookupArchiveFileServiceRemote().getDocumentContent(this.hit.getId());
+            //content = locator.lookupArchiveFileServiceRemote().getDocumentContent(this.hit.getId());
+            content=CachingDocumentLoader.getInstance().getDocument(this.hit.getId());
         } catch (Exception ex) {
             JOptionPane.showMessageDialog(this, "Fehler beim Laden des Dokuments: " + ex.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
             return;

@@ -667,7 +667,7 @@ import com.jdimension.jlawyer.persistence.AddressBean;
 import com.jdimension.jlawyer.persistence.AddressBeanFacadeLocal;
 import com.jdimension.jlawyer.persistence.ServerSettingsBean;
 import com.jdimension.jlawyer.persistence.ServerSettingsBeanFacadeLocal;
-import com.jdimension.jlawyer.security.Crypto;
+import com.jdimension.jlawyer.security.CryptoProvider;
 import com.jdimension.jlawyer.server.services.settings.ServerSettingsKeys;
 import com.jdimension.jlawyer.server.utils.ServerStringUtils;
 import java.util.List;
@@ -700,8 +700,8 @@ public class ContactSyncService implements ContactSyncServiceLocal {
     private ServerSettingsBeanFacadeLocal settings;
 
     @Override
-    @Schedule(dayOfWeek = "*", hour = "12,20", minute = "11", second = "0", persistent = false)
-    @TransactionTimeout(value = 45, unit = TimeUnit.MINUTES)
+    @Schedule(dayOfWeek = "1-5", hour = "11,22", minute = "11", second = "0", persistent = false)
+    @TransactionTimeout(value = 60, unit = TimeUnit.MINUTES)
     public void fullAddressBookSync() {
         this.fullAddressBookSyncImpl();
 
@@ -757,6 +757,16 @@ public class ContactSyncService implements ContactSyncServiceLocal {
                     return null;
                 }
             }
+            
+            boolean synchronizeBirthdays=true;
+            s = this.settings.find(ServerSettingsKeys.SERVERCONF_CLOUDSYNC_ADDRESSBOOK_BIRTHDAYSYNC);
+            if (s != null) {
+                if ("on".equalsIgnoreCase(s.getSettingValue()) || "1".equalsIgnoreCase(s.getSettingValue()) || "true".equalsIgnoreCase(s.getSettingValue())) {
+                    synchronizeBirthdays=true;
+                } else {
+                    synchronizeBirthdays=false;
+                }
+            }
 
             String host = null;
             s = this.settings.find(ServerSettingsKeys.SERVERCONF_CLOUDSYNC_ADDRESSBOOK_HOST);
@@ -791,7 +801,7 @@ public class ContactSyncService implements ContactSyncServiceLocal {
             s = this.settings.find(ServerSettingsKeys.SERVERCONF_CLOUDSYNC_ADDRESSBOOK_PWD);
             if (s != null) {
                 pwd = s.getSettingValue();
-                pwd = Crypto.decrypt(pwd);
+                pwd = CryptoProvider.newCrypto().decrypt(pwd);
             }
             
             String subPath = null;
@@ -808,6 +818,7 @@ public class ContactSyncService implements ContactSyncServiceLocal {
             NextcloudContactsConnector nc = new NextcloudContactsConnector(host, ssl, port, user, pwd);
             if(subPath!=null && !ServerStringUtils.isEmpty(subPath))
                 nc.setSubpathPrefix(subPath);
+            nc.setSynchronizeBirthdays(synchronizeBirthdays);
             return nc;
         } catch (Throwable t) {
             log.error("Unable to get Nextcloud CardDAV connector", t);

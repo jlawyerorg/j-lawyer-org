@@ -680,7 +680,9 @@ import javax.xml.bind.annotation.XmlRootElement;
 @NamedQueries({
     @NamedQuery(name = "ArchiveFileDocumentsBean.findAll", query = "SELECT a FROM ArchiveFileDocumentsBean a"),
     @NamedQuery(name = "ArchiveFileDocumentsBean.findById", query = "SELECT a FROM ArchiveFileDocumentsBean a WHERE a.id = :id"),
+    @NamedQuery(name = "ArchiveFileDocumentsBean.findByExternalId", query = "SELECT a FROM ArchiveFileDocumentsBean a WHERE a.externalId = :externalId"),
     @NamedQuery(name = "ArchiveFileDocumentsBean.findByName", query = "SELECT a FROM ArchiveFileDocumentsBean a WHERE a.name = :name"),
+    @NamedQuery(name = "ArchiveFileDocumentsBean.findLocked", query = "SELECT a FROM ArchiveFileDocumentsBean a WHERE a.lockedBy is not null and a.lockedDate is not null"),
     @NamedQuery(name = "ArchiveFileDocumentsBean.findByCreationDate", query = "SELECT a FROM ArchiveFileDocumentsBean a WHERE a.creationDate = :creationDate")})
 public class ArchiveFileDocumentsBean implements Serializable {
     
@@ -710,7 +712,7 @@ public class ArchiveFileDocumentsBean implements Serializable {
     @JoinColumn(name = "archiveFileKey", referencedColumnName = "id")
     @ManyToOne
     private ArchiveFileBean archiveFileKey;
-    @Column(name = "favorite", columnDefinition = "TINYINT DEFAULT 0")
+    @Column(name = "favorite")
     private boolean favorite;
     
     @JoinColumn(name = "folder", referencedColumnName = "id")
@@ -722,17 +724,30 @@ public class ArchiveFileDocumentsBean implements Serializable {
     @Column(name = "deletion_date")
     @Temporal(TemporalType.TIMESTAMP)
     protected Date deletionDate;
-    @Column(name = "deleted", columnDefinition = "TINYINT DEFAULT 0")
+    @Column(name = "deleted")
     protected boolean deleted;
     @Column(name = "version", columnDefinition = "INTEGER DEFAULT 1")
-    protected long version=1;
+    protected int version=1;
     @Column(name = "highlight1", columnDefinition = "INTEGER DEFAULT -2147483648")
     protected int highlight1=Integer.MIN_VALUE;
     @Column(name = "highlight2", columnDefinition = "INTEGER DEFAULT -2147483648")
     protected int highlight2=Integer.MIN_VALUE;
     
     @Column(name = "document_type", columnDefinition = "INTEGER DEFAULT 10")
-    protected long documentType=TYPE_GENERIC;
+    protected int documentType=TYPE_GENERIC;
+    @Column(name = "date_changed")
+    @Temporal(TemporalType.TIMESTAMP)
+    private Date changeDate;
+    
+    @Column(name = "ext_id")
+    private String externalId;
+    
+    @Column(name = "date_locked")
+    @Temporal(TemporalType.TIMESTAMP)
+    private Date lockedDate;
+    
+    @Column(name = "locked_by")
+    private String lockedBy;
 
     public ArchiveFileDocumentsBean() {
     }
@@ -803,8 +818,6 @@ public class ArchiveFileDocumentsBean implements Serializable {
 
     @Override
     public String toString() {
-        // return "com.jdimension.jlawyer.persistence.ArchiveFileDocumentsBean[ id=" + id + " ]";
-        
         if(this.creationDate!=null) {
             SimpleDateFormat df=new SimpleDateFormat("dd.MM.yyyy, HH:mm", Locale.GERMAN);;
             return df.format(this.creationDate);
@@ -915,19 +928,21 @@ public class ArchiveFileDocumentsBean implements Serializable {
     /**
      * @return the version
      */
-    public long getVersion() {
+    public int getVersion() {
         return version;
     }
 
     /**
      * @param version the version to set
      */
-    public void setVersion(long version) {
+    public void setVersion(int version) {
         this.version = version;
     }
     
-    public void bumpVersion() {
+    public void bumpVersion(boolean updateChangeDate) {
         this.setVersion(this.version+1);
+        if(updateChangeDate)
+            this.setChangeDate(new Date());
     }
 
     /**
@@ -961,15 +976,75 @@ public class ArchiveFileDocumentsBean implements Serializable {
     /**
      * @return the documentType
      */
-    public long getDocumentType() {
+    public int getDocumentType() {
         return documentType;
     }
 
     /**
      * @param documentType the documentType to set
      */
-    public void setDocumentType(long documentType) {
+    public void setDocumentType(int documentType) {
         this.documentType = documentType;
+    }
+
+    /**
+     * @return the changeDate
+     */
+    public Date getChangeDate() {
+        return changeDate;
+    }
+
+    /**
+     * @param changeDate the changeDate to set
+     */
+    public void setChangeDate(Date changeDate) {
+        this.changeDate = changeDate;
+    }
+
+    /**
+     * @return the externalId
+     */
+    public String getExternalId() {
+        return externalId;
+    }
+
+    /**
+     * @param externalId the externalId to set
+     */
+    public void setExternalId(String externalId) {
+        this.externalId = externalId;
+    }
+
+    /**
+     * @return the lockedDate
+     */
+    public Date getLockedDate() {
+        return lockedDate;
+    }
+    
+    public boolean isLocked() {
+        return lockedDate!=null && lockedBy!=null;
+    }
+
+    /**
+     * @param lockedDate the lockedDate to set
+     */
+    public void setLockedDate(Date lockedDate) {
+        this.lockedDate = lockedDate;
+    }
+
+    /**
+     * @return the lockedBy
+     */
+    public String getLockedBy() {
+        return lockedBy;
+    }
+
+    /**
+     * @param lockedBy the lockedBy to set
+     */
+    public void setLockedBy(String lockedBy) {
+        this.lockedBy = lockedBy;
     }
     
 }

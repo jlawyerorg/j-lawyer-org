@@ -669,16 +669,19 @@ import com.jdimension.jlawyer.persistence.AppUserBean;
 import com.jdimension.jlawyer.persistence.AppUserBeanFacadeLocal;
 import com.jdimension.jlawyer.persistence.ArchiveFileBean;
 import com.jdimension.jlawyer.persistence.ArchiveFileBeanFacadeLocal;
-import com.jdimension.jlawyer.persistence.ArchiveFileHistoryBean;
 import com.jdimension.jlawyer.persistence.ArchiveFileReviewsBean;
 import com.jdimension.jlawyer.persistence.ArchiveFileReviewsBeanFacadeLocal;
 import com.jdimension.jlawyer.persistence.CalendarAccess;
 import com.jdimension.jlawyer.persistence.CalendarAccessFacadeLocal;
+import com.jdimension.jlawyer.persistence.CalendarEntryTemplate;
+import com.jdimension.jlawyer.persistence.CalendarEntryTemplateFacadeLocal;
 import com.jdimension.jlawyer.persistence.CalendarSetup;
 import com.jdimension.jlawyer.persistence.CalendarSetupFacadeLocal;
+import com.jdimension.jlawyer.persistence.EventTypes;
 import com.jdimension.jlawyer.persistence.utils.JDBCUtils;
 import com.jdimension.jlawyer.persistence.utils.StringGenerator;
 import com.jdimension.jlawyer.server.constants.ArchiveFileConstants;
+import com.jdimension.jlawyer.server.services.settings.UserSettingsKeys;
 import com.jdimension.jlawyer.server.utils.SecurityUtils;
 import com.jdimension.jlawyer.server.utils.ServerStringUtils;
 import de.jollyday.CalendarHierarchy;
@@ -695,18 +698,25 @@ import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Collection;
+import java.util.Comparator;
 import java.util.Date;
 import java.util.List;
 import java.util.Locale;
 import java.util.Set;
 import javax.annotation.Resource;
+import javax.annotation.security.PermitAll;
 import javax.annotation.security.RolesAllowed;
 import javax.ejb.EJB;
 import javax.ejb.EJBException;
 import javax.ejb.SessionContext;
 import javax.ejb.Stateless;
+import javax.inject.Inject;
+import javax.jms.JMSConnectionFactory;
+import javax.jms.JMSContext;
+import javax.jms.ObjectMessage;
 import org.apache.log4j.Logger;
-import org.jlawyer.cloud.calendar.CloudCalendar;
+import org.jlawyer.cloud.NextcloudCalendarConnector;
+import org.jlawyer.notification.OutgoingMailRequest;
 
 /**
  *
@@ -734,7 +744,16 @@ public class CalendarService implements CalendarServiceRemote, CalendarServiceLo
     @EJB
     private CalendarSetupFacadeLocal calendarSetups;
     @EJB
+    private CalendarEntryTemplateFacadeLocal calendarEntryTemplates;
+    @EJB
     private CalendarAccessFacadeLocal calendarAccess;
+    
+    @Inject
+    @JMSConnectionFactory("java:/JmsXA")
+    private JMSContext jmsContext;
+
+    @Resource(lookup = "java:/jms/queue/outgoingMailProcessorQueue")
+    private javax.jms.Queue outgoingMailQueue;
 
     @Override
     @RolesAllowed({"loginRole"})
@@ -856,14 +875,49 @@ public class CalendarService implements CalendarServiceRemote, CalendarServiceLo
         }
 
         this.archiveFileReviewsFacade.create(review);
+        
+        if(review.getCalendarSetup()!=null && review.getCalendarSetup().getId()!=null) {
+            if(review.getEventType()==review.getCalendarSetup().getEventType()) {
+                switch (review.getEventType()) {
+                    case EventTypes.EVENTTYPE_FOLLOWUP:
+                        aFile.setLastCalendarSetupFollowups(review.getCalendarSetup().getId());
+                        break;
+                    case EventTypes.EVENTTYPE_RESPITE:
+                        aFile.setLastCalendarSetupRespites(review.getCalendarSetup().getId());
+                        break;
+                    case EventTypes.EVENTTYPE_EVENT:
+                        aFile.setLastCalendarSetupEvents(review.getCalendarSetup().getId());
+                        break;
+                    default:
+                        break;
+                }
+                this.archiveFileFacade.edit(aFile);
+            }
+        }
 
-        ArchiveFileHistoryBean newHistEntry = new ArchiveFileHistoryBean();
-        newHistEntry.setId(idGen.getID().toString());
-        newHistEntry.setArchiveFileKey(aFile);
-        newHistEntry.setChangeDate(new Date());
-        newHistEntry.setChangeDescription(review.getEventTypeName() + " hinzugefügt: " + review.getSummary() + " (" + review.toString() + ")");
-        newHistEntry.setPrincipal(context.getCallerPrincipal().getName());
-        this.archiveFileService.addHistory(aFile.getId(), newHistEntry);
+        this.archiveFileService.addCaseHistory(idGen.getID().toString(), aFile, review.getEventTypeName() + " hinzugefügt: " + review.getSummary() + " (" + review.toString() + ")", context.getCallerPrincipal().getName(), new Date());
+        
+        if (!ServerStringUtils.isEmpty(review.getAssignee())) {
+            // only send notifications if ANOTHER person entered the review
+            if(!(review.getAssignee().equals(context.getCallerPrincipal().getName()))) {
+                AppUserBean assignee = this.userBeanFacade.find(review.getAssignee());
+                if (assignee != null) {
+                    boolean notificationEnabled = assignee.getSettingAsBoolean(UserSettingsKeys.NOTIFICATION_EVENT_CALENDARENTRY, true);
+                    if (notificationEnabled && assignee.getEmail() != null) {
+                        OutgoingMailRequest omr = new OutgoingMailRequest();
+                        omr.setTo(assignee.getEmail());
+                        omr.setSubject("Neuer Kalendereintrag für Dich");
+                        omr.setMainCaption("Es wurde ein(e) neue(r) " + review.getEventTypeName() + " für Dich erstellt");
+                        omr.setSubCaption(review.toString()  + " " + review.getSummary());
+                        StringBuilder body=new StringBuilder();
+                        body.append(ServerStringUtils.nonEmpty(review.getSummary())).append("\n").append(ServerStringUtils.nonEmpty(review.getDescription())).append("\nOrt: ").append(ServerStringUtils.nonEmpty(review.getLocation())).append("\nverantwortlich: ").append(ServerStringUtils.nonEmpty(review.getAssignee())).append("\neingetragen von: ").append(context.getCallerPrincipal().getName());
+                        body.append("\nAkte: ").append(aFile.getFileNumber()).append(" ").append(aFile.getName());
+                        omr.setBodyContent(body.toString());
+                        this.publishOutgoingMailRequest(omr);
+                    }
+                }
+            }
+        }
 
         try {
             this.calendarSync.eventAdded(aFile, review);
@@ -872,6 +926,16 @@ public class CalendarService implements CalendarServiceRemote, CalendarServiceLo
         }
 
         return this.archiveFileReviewsFacade.find(revId);
+    }
+    
+    private void publishOutgoingMailRequest(OutgoingMailRequest req) {
+        try {
+            ObjectMessage msg = this.jmsContext.createObjectMessage(req);
+            jmsContext.createProducer().send(outgoingMailQueue, msg);
+
+        } catch (Exception ex) {
+            log.error("could not publish outgoing mail request", ex);
+        }
     }
 
     @Override
@@ -967,14 +1031,8 @@ public class CalendarService implements CalendarServiceRemote, CalendarServiceLo
         ArchiveFileBean aFile = rb.getArchiveFileKey();
         SecurityUtils.checkGroupsForCase(context.getCallerPrincipal().getName(), aFile, this.securityFacade, this.archiveFileService.getAllowedGroups(aFile));
 
-        ArchiveFileHistoryBean newHistEntry = new ArchiveFileHistoryBean();
-        newHistEntry.setId(idGen.getID().toString());
-        newHistEntry.setArchiveFileKey(aFile);
-        newHistEntry.setChangeDate(new Date());
-        newHistEntry.setChangeDescription(rb.getEventTypeName() + " gelöscht: " + rb.getSummary() + " (" + rb.toString() + ")");
-        newHistEntry.setPrincipal(context.getCallerPrincipal().getName());
-        this.archiveFileService.addHistory(aFile.getId(), newHistEntry);
-
+        this.archiveFileService.addCaseHistory(idGen.getID().toString(), aFile, rb.getEventTypeName() + " gelöscht: " + rb.getSummary() + " (" + rb.toString() + ")", context.getCallerPrincipal().getName(), new Date());
+        
         this.archiveFileReviewsFacade.remove(rb);
 
         try {
@@ -1117,6 +1175,39 @@ public class CalendarService implements CalendarServiceRemote, CalendarServiceLo
 
     @Override
     @RolesAllowed({"writeArchiveFileRole"})
+    public void markReviewDone(String reviewId, boolean done) throws Exception {
+
+        ArchiveFileReviewsBean currentReview = this.archiveFileReviewsFacade.find(reviewId);
+        if(currentReview.isDone()==done) {
+            log.info("Calendar entry " + reviewId + " is already marked as done=" + done);
+            return;
+        }
+        
+        StringGenerator idGen = new StringGenerator();
+        ArchiveFileBean aFile = currentReview.getArchiveFileKey();
+        SecurityUtils.checkGroupsForCase(context.getCallerPrincipal().getName(), aFile, this.securityFacade, this.archiveFileService.getAllowedGroups(aFile));
+
+        currentReview.setDone(done);
+        this.archiveFileReviewsFacade.edit(currentReview);
+        
+        String status = "offen";
+        if (done) {
+            status = "erledigt";
+        }
+        this.archiveFileService.addCaseHistory(idGen.getID().toString(), aFile, currentReview.getEventTypeName() + " geändert: " + currentReview.getSummary() + " (" + currentReview.toString() + ", " + status + ")", context.getCallerPrincipal().getName(), new Date());
+        
+        this.publishUpdatedEventMail(currentReview, aFile);
+
+        try {
+            this.calendarSync.eventUpdated(aFile, currentReview);
+        } catch (Throwable ex) {
+            log.error("Failed to sync updated event to cloud", ex);
+        }
+
+    }
+    
+    @Override
+    @RolesAllowed({"writeArchiveFileRole"})
     public ArchiveFileReviewsBean updateReview(String archiveFileId, ArchiveFileReviewsBean review) throws Exception {
 
         this.validateCalendarSetup(review);
@@ -1138,18 +1229,6 @@ public class CalendarService implements CalendarServiceRemote, CalendarServiceLo
         ArchiveFileBean aFile = this.archiveFileFacade.find(archiveFileId);
         SecurityUtils.checkGroupsForCase(context.getCallerPrincipal().getName(), aFile, this.securityFacade, this.archiveFileService.getAllowedGroups(aFile));
 
-        ArchiveFileHistoryBean newHistEntry = new ArchiveFileHistoryBean();
-        newHistEntry.setId(idGen.getID().toString());
-        newHistEntry.setArchiveFileKey(aFile);
-        newHistEntry.setChangeDate(new Date());
-        String status = "offen";
-        if (review.getDoneBoolean()) {
-            status = "erledigt";
-        }
-        newHistEntry.setChangeDescription(review.getEventTypeName() + " geändert: " + review.getSummary() + " (" + review.toString() + ", " + status + ")");
-        newHistEntry.setPrincipal(context.getCallerPrincipal().getName());
-        this.archiveFileService.addHistory(aFile.getId(), newHistEntry);
-
         review.setArchiveFileKey(aFile);
         if (!review.hasEndDateAndTime() && review.getBeginDate() != null) {
             Date endDate = new Date(review.getBeginDate().getTime());
@@ -1159,6 +1238,33 @@ public class CalendarService implements CalendarServiceRemote, CalendarServiceLo
             review.setEndDate(endDate);
         }
         this.archiveFileReviewsFacade.edit(review);
+        
+        if(review.getCalendarSetup()!=null && review.getCalendarSetup().getId()!=null) {
+            if(review.getEventType()==review.getCalendarSetup().getEventType()) {
+                switch (review.getEventType()) {
+                    case EventTypes.EVENTTYPE_FOLLOWUP:
+                        aFile.setLastCalendarSetupFollowups(review.getCalendarSetup().getId());
+                        break;
+                    case EventTypes.EVENTTYPE_RESPITE:
+                        aFile.setLastCalendarSetupRespites(review.getCalendarSetup().getId());
+                        break;
+                    case EventTypes.EVENTTYPE_EVENT:
+                        aFile.setLastCalendarSetupEvents(review.getCalendarSetup().getId());
+                        break;
+                    default:
+                        break;
+                }
+                this.archiveFileFacade.edit(aFile);
+            }
+        }
+        
+        String status = "offen";
+        if (review.isDone()) {
+            status = "erledigt";
+        }
+        this.archiveFileService.addCaseHistory(idGen.getID().toString(), aFile, review.getEventTypeName() + " geändert: " + review.getSummary() + " (" + review.toString() + ", " + status + ")", context.getCallerPrincipal().getName(), new Date());
+        
+        this.publishUpdatedEventMail(review, aFile);
 
         try {
             this.calendarSync.eventUpdated(aFile, review);
@@ -1167,6 +1273,30 @@ public class CalendarService implements CalendarServiceRemote, CalendarServiceLo
         }
 
         return this.archiveFileReviewsFacade.find(review.getId());
+    }
+    
+    private void publishUpdatedEventMail(ArchiveFileReviewsBean review, ArchiveFileBean aFile) {
+        if (!ServerStringUtils.isEmpty(review.getAssignee())) {
+            // only send notifications if ANOTHER person entered the review
+            if(!(review.getAssignee().equals(context.getCallerPrincipal().getName()))) {
+                AppUserBean assignee = this.userBeanFacade.find(review.getAssignee());
+                if (assignee != null) {
+                    boolean notificationEnabled = assignee.getSettingAsBoolean(UserSettingsKeys.NOTIFICATION_EVENT_CALENDARENTRY, true);
+                    if (notificationEnabled && assignee.getEmail() != null) {
+                        OutgoingMailRequest omr = new OutgoingMailRequest();
+                        omr.setTo(assignee.getEmail());
+                        omr.setSubject("Geänderter Kalendereintrag für Dich");
+                        omr.setMainCaption("Es wurde ein(e) neue(r) " + review.getEventTypeName() + " geändert, für den Du verantwortlich bist");
+                        omr.setSubCaption(review.toString()  + " " + review.getSummary());
+                        StringBuilder body=new StringBuilder();
+                        body.append(ServerStringUtils.nonEmpty(review.getSummary())).append("\n").append(ServerStringUtils.nonEmpty(review.getDescription())).append("\nOrt: ").append(ServerStringUtils.nonEmpty(review.getLocation())).append("\nverantwortlich: ").append(ServerStringUtils.nonEmpty(review.getAssignee())).append("\neingetragen von: ").append(context.getCallerPrincipal().getName());
+                        body.append("\nAkte: ").append(aFile.getFileNumber()).append(" ").append(aFile.getName());
+                        omr.setBodyContent(body.toString());
+                        this.publishOutgoingMailRequest(omr);
+                    }
+                }
+            }
+        }
     }
 
     @Override
@@ -1179,6 +1309,26 @@ public class CalendarService implements CalendarServiceRemote, CalendarServiceLo
     public Collection<ArchiveFileReviewsBean> getReviews(String archiveFileKey) throws Exception {
 
         return getReviewsImpl(archiveFileKey, context.getCallerPrincipal().getName());
+
+    }
+    
+    @Override
+    @RolesAllowed({"readArchiveFileRole"})
+    public ArchiveFileReviewsBean getReview(String eventId) throws Exception {
+        // no security check, a client cannot know the event id without having access to the case
+        return this.archiveFileReviewsFacade.find(eventId);
+    }
+    
+    @Override
+    @RolesAllowed({"readArchiveFileRole"})
+    public Collection<ArchiveFileReviewsBean> getReviews(String archiveFileKey, boolean done) throws Exception {
+
+        ArchiveFileBean aFile = this.archiveFileFacade.find(archiveFileKey);
+        if (context.getCallerPrincipal().getName() != null) {
+            SecurityUtils.checkGroupsForCase(context.getCallerPrincipal().getName(), aFile, this.securityFacade, this.archiveFileService.getAllowedGroups(aFile));
+        }
+
+        return this.archiveFileReviewsFacade.findByArchiveFileKeyAndDone(aFile, done);
 
     }
 
@@ -1242,7 +1392,7 @@ public class CalendarService implements CalendarServiceRemote, CalendarServiceLo
     public void removeCalendarSetup(CalendarSetup cs) {
         this.calendarSetups.remove(cs);
     }
-
+    
     @Override
     @RolesAllowed({"adminRole"})
     public void runFullCalendarSync() {
@@ -1406,7 +1556,52 @@ public class CalendarService implements CalendarServiceRemote, CalendarServiceLo
     @Override
     @RolesAllowed({"loginRole"})
     public List listCalendars(String host, boolean ssl, int port, String user, String password, String path) throws Exception {
-        return this.calendarSync.listCalendars(host, ssl, port, user, password, path);
+        // need to bypass CalendarSyncService because it is a singleton
+        NextcloudCalendarConnector nc = new NextcloudCalendarConnector(host, ssl, port, user, password);
+            if(!ServerStringUtils.isEmpty(path))
+                nc.setSubpathPrefix(path);
+            return nc.getAllCalendars();
+    }
+    
+    @Override
+    @PermitAll
+    public void sendDailyAgenda() throws Exception {
+        
+    }
+
+    @Override
+    @RolesAllowed({"loginRole"})
+    public CalendarEntryTemplate addCalendarEntryTemplate(CalendarEntryTemplate template) throws Exception {
+        StringGenerator idGen=new StringGenerator();
+        String id=idGen.getID().toString();
+        template.setId(id);
+        this.calendarEntryTemplates.create(template);
+        return this.calendarEntryTemplates.find(id);
+    }
+    
+    @Override
+    @RolesAllowed({"loginRole"})
+    public CalendarEntryTemplate updateCalendarEntryTemplate(CalendarEntryTemplate template) throws Exception {
+        this.calendarEntryTemplates.edit(template);
+        return this.calendarEntryTemplates.find(template.getId());
+    }
+    
+    @Override
+    @RolesAllowed({"loginRole"})
+    public void removeCalendarEntryTemplate(CalendarEntryTemplate template) throws Exception {
+        this.calendarEntryTemplates.remove(template);
+    }
+    
+    @Override
+    @RolesAllowed({"loginRole"})
+    public List<CalendarEntryTemplate> getCalendarEntryTemplates() throws Exception {
+        
+        List<CalendarEntryTemplate> allTemplates=this.calendarEntryTemplates.findAll();
+        allTemplates.sort(Comparator.comparing(
+            entry -> entry.getName().toLowerCase()
+        ));
+        return allTemplates;
+        
     }
 
 }

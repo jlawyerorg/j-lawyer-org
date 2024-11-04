@@ -664,7 +664,6 @@
 package com.jdimension.jlawyer.timer;
 
 import java.util.Timer;
-import org.apache.log4j.Logger;
 
 /**
  *
@@ -672,7 +671,6 @@ import org.apache.log4j.Logger;
  */
 public class TransientTimer {
 
-    private static Logger log = Logger.getLogger(TransientTimer.class.getName());
     private static TransientTimer instance = null;
 
     private Timer timerBackup = null;
@@ -681,6 +679,7 @@ public class TransientTimer {
     private Timer timerMonitor = null;
     private Timer timerFax = null;
     private Timer timerPurgeBin = null;
+    private Timer timerMailScanner = null;
 
     private TransientTimer() {
 
@@ -716,7 +715,7 @@ public class TransientTimer {
             timerObserver = new Timer();
 
             // start after 20s and run every 12s
-            timerObserver.schedule(new DirectoryObserverTask(), 20000l, 12000l);
+            timerObserver.schedule(new DirectoryObserverTask(), 20000l, 10000l);
 
         }
 
@@ -742,11 +741,19 @@ public class TransientTimer {
             // start after 35s and run every 4hrs
             timerPurgeBin.schedule(new PurgeBinTask(), 35000l, 4l * 60l * 60l * 1000l);
         }
+        
+        if (timerMailScanner == null) {
+            timerMailScanner = new Timer();
+
+            // start after 3min and run every 10min
+            timerMailScanner.schedule(new MailboxScannerTask(), 180000l, 10l * 60l * 1000l);
+
+        }
     }
 
-    public void scheduleAdHocBackup() {
+    public void scheduleAdHocBackup(String jobId) {
         if (timerBackup != null) {
-            timerBackup.schedule(new IterativeBackupTask(true), 3000l);
+            timerBackup.schedule(new IterativeBackupTask(true, jobId), 3000l);
         }
     }
 
@@ -774,6 +781,7 @@ public class TransientTimer {
         if (timerPurgeBin != null) {
             timerPurgeBin.cancel();
         }
+        
     }
 
 }

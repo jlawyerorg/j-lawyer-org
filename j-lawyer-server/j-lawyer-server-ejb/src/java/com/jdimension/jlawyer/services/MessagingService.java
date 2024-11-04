@@ -667,12 +667,18 @@ import com.jdimension.jlawyer.events.InstantMessageCreatedEvent;
 import com.jdimension.jlawyer.persistence.AppUserBean;
 import com.jdimension.jlawyer.persistence.ArchiveFileBean;
 import com.jdimension.jlawyer.persistence.ArchiveFileBeanFacadeLocal;
+import com.jdimension.jlawyer.persistence.ArchiveFileDocumentsBean;
+import com.jdimension.jlawyer.persistence.ArchiveFileDocumentsBeanFacadeLocal;
 import com.jdimension.jlawyer.persistence.InstantMessage;
 import com.jdimension.jlawyer.persistence.InstantMessageFacadeLocal;
 import com.jdimension.jlawyer.persistence.InstantMessageMention;
 import com.jdimension.jlawyer.persistence.InstantMessageMentionFacadeLocal;
 import com.jdimension.jlawyer.persistence.utils.StringGenerator;
+import com.jdimension.jlawyer.server.services.settings.UserSettingsKeys;
 import com.jdimension.jlawyer.server.utils.InstantMessagingUtil;
+import java.text.SimpleDateFormat;
+import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.Date;
 import java.util.List;
 import javax.annotation.Resource;
@@ -682,7 +688,11 @@ import javax.ejb.SessionContext;
 import javax.ejb.Stateless;
 import javax.enterprise.event.Event;
 import javax.inject.Inject;
+import javax.jms.JMSConnectionFactory;
+import javax.jms.JMSContext;
+import javax.jms.ObjectMessage;
 import org.apache.log4j.Logger;
+import org.jlawyer.notification.OutgoingMailRequest;
 
 /**
  *
@@ -690,12 +700,15 @@ import org.apache.log4j.Logger;
  */
 @Stateless
 public class MessagingService implements MessagingServiceRemote, MessagingServiceLocal {
-    
+
     private static final Logger log = Logger.getLogger(MessagingService.class.getName());
+
+    SimpleDateFormat dfDate = new SimpleDateFormat("dd.MM.yyyy");
+    SimpleDateFormat dfTime = new SimpleDateFormat("HH:mm");
 
     @Resource
     private SessionContext context;
-    
+
     @EJB
     private InstantMessageFacadeLocal messageFacade;
     @EJB
@@ -703,79 +716,394 @@ public class MessagingService implements MessagingServiceRemote, MessagingServic
     @EJB
     private ArchiveFileBeanFacadeLocal caseFacade;
     @EJB
+    private ArchiveFileDocumentsBeanFacadeLocal docFacade;
+    @EJB
     private SecurityServiceLocal securityFacade;
-    
+    @EJB
+    private SystemManagementLocal systemManagement;
+    @EJB
+    private SingletonServiceLocal singleton;
+
     @Inject
     Event<InstantMessageCreatedEvent> newMessageEvent;
+
+    @Inject
+    @JMSConnectionFactory("java:/JmsXA")
+    private JMSContext jmsContext;
+
+    @Resource(lookup = "java:/jms/queue/outgoingMailProcessorQueue")
+    private javax.jms.Queue outgoingMailQueue;
 
     @Override
     @RolesAllowed({"loginRole"})
     public InstantMessage submitMessage(InstantMessage message) throws Exception {
+
+        if (message.getContent() == null || message.getContent().trim().isEmpty()) {
+            throw new Exception("Nachricht ohne Inhalt");
+        }
+
         StringGenerator idGen = new StringGenerator();
-        String messageId=idGen.getID().toString();
+        String messageId = idGen.getID().toString();
         message.setId(messageId);
+        Date sentDate = new Date();
+        message.setSent(sentDate);
+
+        if (message.getDocumentContext() != null) {
+            ArchiveFileDocumentsBean docContext = message.getDocumentContext();
+            String docId = docContext.getId();
+            if (docId != null) {
+                ArchiveFileDocumentsBean foundDoc = this.docFacade.find(docId);
+                if (foundDoc != null) {
+                    message.setCaseContext(foundDoc.getArchiveFileKey());
+                } else {
+                    throw new Exception("Nachricht wurde für ein Dokument übermittelt, das Dokument kann jedoch nicht gefunden werden!");
+                }
+            } else {
+                throw new Exception("Nachricht wurde für ein Dokument übermittelt, das Dokument hat jedoch keine ID!");
+            }
+        }
+
         this.messageFacade.create(message);
-        InstantMessage newMessage=this.messageFacade.find(messageId);
-        
-        List<AppUserBean> users=this.securityFacade.getUsersHavingRole("loginRole");
-        List<InstantMessageMention> mentions=InstantMessagingUtil.extractMentions(message, users);
-        for(InstantMessageMention m: mentions) {
+        InstantMessage newMessage = this.messageFacade.find(messageId);
+
+        List<AppUserBean> users = this.securityFacade.getUsersHavingRole("loginRole");
+        List<InstantMessageMention> mentions = InstantMessagingUtil.extractMentions(message, users);
+        for (InstantMessageMention m : mentions) {
             m.setId(idGen.getID().toString());
             m.setMessage(newMessage);
             m.setDone(false);
+            m.setStatusChanged(null);
             this.mentionFacade.create(m);
+            String principalId = m.getPrincipal();
+            AppUserBean notifyTo = this.systemManagement.getUser(principalId);
+            if (notifyTo != null) {
+                boolean notificationEnabled = notifyTo.getSettingAsBoolean(UserSettingsKeys.NOTIFICATION_EVENT_INSTANTMESSAGEMENTION, true);
+                if (notificationEnabled && notifyTo.getEmail() != null) {
+                    OutgoingMailRequest omr = new OutgoingMailRequest();
+                    omr.setTo(notifyTo.getEmail());
+                    omr.setSubject("Du wurdest in einer Nachricht erwähnt");
+                    omr.setMainCaption("Du wurdest in einer Sofortnachricht erwähnt");
+                    omr.setSubCaption(m.getMessage().getSender() + " schrieb am " + dfDate.format(m.getMessage().getSent()) + " um " + dfTime.format(m.getMessage().getSent()) + ":");
+                    StringBuilder body = new StringBuilder();
+                    body.append("\"").append(m.getMessage().getContent()).append("\"\n");
+                    if (m.getMessage().getCaseContext() != null) {
+                        body.append("\nAkte: ").append(m.getMessage().getCaseContext().getFileNumber()).append(" ").append(m.getMessage().getCaseContext().getName());
+                    }
+                    if (m.getMessage().getDocumentContext() != null) {
+                        body.append("\nDokument: ").append(m.getMessage().getDocumentContext().getName());
+                    }
+                    omr.setBodyContent(body.toString());
+                    this.publishOutgoingMailRequest(omr);
+                }
+            }
         }
-        
+
+        this.singleton.setLatestInstantMessageReceived(sentDate.getTime());
+
         InstantMessageCreatedEvent evt = new InstantMessageCreatedEvent();
         evt.setMessageId(messageId);
+        evt.setContent(newMessage.getContent());
+        if (newMessage.getCaseContext() != null) {
+            evt.setCaseContext(newMessage.getCaseContext().getId());
+        }
+        if (newMessage.getDocumentContext() != null) {
+            evt.setDocumentContext(newMessage.getDocumentContext().getId());
+        }
+        ArrayList<String> mentioned = new ArrayList<>();
+        for (int i = 0; i < mentions.size(); i++) {
+            mentioned.add(mentions.get(i).getPrincipal());
+        }
+        evt.setMentioned(mentioned);
+        evt.setSender(newMessage.getSender());
+        evt.setSent(newMessage.getSent());
         this.newMessageEvent.fireAsync(evt);
-        
+
         return this.messageFacade.find(messageId);
+    }
+
+    private void publishOutgoingMailRequest(OutgoingMailRequest req) {
+        try {
+            ObjectMessage msg = this.jmsContext.createObjectMessage(req);
+            jmsContext.createProducer().send(outgoingMailQueue, msg);
+
+        } catch (Exception ex) {
+            log.error("could not publish outgoing mail request", ex);
+        }
     }
 
     @Override
     @RolesAllowed({"loginRole"})
     public boolean deleteMessage(String messageId) throws Exception {
-        InstantMessage m=this.messageFacade.find(messageId);
-        if(m!=null)
+        InstantMessage m = this.messageFacade.find(messageId);
+        if (m != null) {
             this.messageFacade.remove(m);
-        else
+        } else {
             return false;
+        }
         return true;
     }
 
     @Override
     @RolesAllowed({"loginRole"})
     public List<InstantMessage> getMessagesSince(Date since) throws Exception {
-        return this.messageFacade.findSince(since);
+        return getMessagesSince(since, 750);
+    }
+
+    @Override
+    @RolesAllowed({"loginRole"})
+    public List<InstantMessage> getMessagesSince(Date since, int maxNumberOfMessages) throws Exception {
+        // only query the database if mentions are requested 
+        if (this.singleton.getLatestInstantMessageReceived() < 0) {
+            // after server startup
+            List<InstantMessage> messages = this.messageFacade.findSince(since);
+            if (messages != null && !messages.isEmpty()) {
+                this.singleton.setLatestInstantMessageReceived(messages.get(messages.size() - 1).getSent().getTime());
+            } else {
+                this.singleton.setLatestInstantMessageReceived(since.getTime());
+            }
+
+            return filterForRelevantMessages(messages, this.context.getCallerPrincipal().getName(), maxNumberOfMessages);
+        } else if (since.getTime() < this.singleton.getLatestInstantMessageReceived()) {
+            // new message have been received
+            List<InstantMessage> messages = this.messageFacade.findSince(since);
+            if (messages != null && !messages.isEmpty()) {
+                this.singleton.setLatestInstantMessageReceived(messages.get(messages.size() - 1).getSent().getTime());
+            } else {
+                this.singleton.setLatestInstantMessageReceived(since.getTime());
+            }
+            return filterForRelevantMessages(messages, this.context.getCallerPrincipal().getName(), maxNumberOfMessages);
+        } else {
+            return null;
+        }
+    }
+
+    private List<InstantMessage> filterForRelevantMessages(List<InstantMessage> unfiltered, String principalId, int maxNumberOfMessages) {
+        List<InstantMessage> relevantMessages = new ArrayList<>();
+        List<InstantMessage> openMentionMessages = new ArrayList<>();
+
+        // Separate the messages with open mentions, those will never be filtered out
+        for (InstantMessage m : unfiltered) {
+            if (messageRelevantForUser(m, principalId)) {
+                if (m.hasOpenMentions()) {
+                    openMentionMessages.add(m);
+                } else {
+                    relevantMessages.add(m);
+                }
+            }
+        }
+
+        // Restrict the number of relevant messages
+        int size = relevantMessages.size();
+        List<InstantMessage> limitedRelevantMessages = relevantMessages.subList(Math.max(0, size - maxNumberOfMessages), size);
+
+        // Combine both lists
+        List<InstantMessage> finalMessages = new ArrayList<>(openMentionMessages);
+        finalMessages.addAll(limitedRelevantMessages);
+
+        // Sort the combined list by sent date, handling nulls properly
+        finalMessages.sort(Comparator.comparing(InstantMessage::getSent, Comparator.nullsLast(Comparator.naturalOrder())));
+
+        return finalMessages;
+    }
+
+    private boolean messageRelevantForUser(InstantMessage m, String principalId) {
+        // message sent in a case context
+        if (m.getCaseContext() != null) {
+            return true;
+        }
+
+        // message sent by the user
+        if (m.getSender() != null && m.getSender().equals(principalId)) {
+            return true;
+        }
+
+        // user has been mentioned
+        if (m.getMentionFor(principalId) != null) {
+            return true;
+        }
+
+        // no case context, sent to all
+        if (m.getCaseContext() == null && !m.hasMentions()) {
+            return true;
+        }
+
+        return false;
+
     }
 
     @Override
     @RolesAllowed({"loginRole"})
     public List<InstantMessage> getMessagesForCase(String caseId) throws Exception {
-        ArchiveFileBean caseContext=this.caseFacade.find(caseId);
-        if(caseContext==null) {
+        ArchiveFileBean caseContext = this.caseFacade.find(caseId);
+        if (caseContext == null) {
             log.error("message requested for an invalid case id: " + caseId);
             throw new Exception("Akte mit ID " + caseId + " kann nicht gefunden werden!");
         }
         return this.messageFacade.findByCaseContext(caseContext);
     }
-    
-    
+
+    @Override
+    @RolesAllowed({"loginRole"})
+    public List<InstantMessage> getMessagesForCase(String caseId, boolean withOpenMentionsOnly) throws Exception {
+        ArchiveFileBean caseContext = this.caseFacade.find(caseId);
+        if (caseContext == null) {
+            log.error("message requested for an invalid case id: " + caseId);
+            throw new Exception("Akte mit ID " + caseId + " kann nicht gefunden werden!");
+        }
+        List<InstantMessage> messages = this.messageFacade.findByCaseContext(caseContext);
+        if (withOpenMentionsOnly) {
+            ArrayList<InstantMessage> filtered = new ArrayList<>();
+            for (InstantMessage m : messages) {
+                if (m.hasOpenMentions()) {
+                    filtered.add(m);
+                }
+            }
+            return filtered;
+        } else {
+            return messages;
+        }
+    }
+
+    @Override
+    @RolesAllowed({"loginRole"})
+    public List<InstantMessage> getMessagesWithOpenMentions(String principalId) throws Exception {
+        List<InstantMessageMention> openMentions = this.mentionFacade.findOpen(principalId);
+        ArrayList<InstantMessage> messages = new ArrayList<>();
+        if (openMentions != null) {
+            for (InstantMessageMention mention : openMentions) {
+                messages.add(mention.getMessage());
+            }
+        }
+        return messages;
+    }
+
+    @Override
+    @RolesAllowed({"loginRole"})
+    public boolean markAllMentionsDone(List<String> messageIds, boolean skipNotifications) throws Exception {
+        if (messageIds == null) {
+            messageIds = new ArrayList<>();
+        }
+
+        for (String messageId : messageIds) {
+            InstantMessage m = this.messageFacade.find(messageId);
+            if (m != null) {
+                for (InstantMessageMention mention : m.getMentions()) {
+                    if (!mention.isDone()) {
+                        this.markMentionDone(mention.getId(), true, skipNotifications);
+                    }
+                }
+            }
+        }
+
+        return true;
+
+    }
 
     @Override
     @RolesAllowed({"loginRole"})
     public boolean markMentionDone(String mentionId, boolean done) throws Exception {
-        
-        InstantMessageMention m=this.mentionFacade.find(mentionId);
-        if(m==null)
-            throw new Exception ("Mention " + mentionId + " existiert nicht!");
-        
+        return this.markMentionDone(mentionId, done, false);
+    }
+
+    @Override
+    @RolesAllowed({"loginRole"})
+    public boolean markMentionDone(String mentionId, boolean done, boolean skipNotification) throws Exception {
+
+        InstantMessageMention m = this.mentionFacade.find(mentionId);
+        if (m == null) {
+            throw new Exception("Mention " + mentionId + " existiert nicht!");
+        }
+
         m.setDone(done);
+        Date statusChanged = new Date();
+        m.setStatusChanged(statusChanged);
         this.mentionFacade.edit(m);
+
+        this.singleton.setLatestInstantMessageStatusUpdated(statusChanged.getTime());
+
+        if (!skipNotification) {
+            if (m.getPrincipal() != null && m.getMessage().getSender() != null && !(m.getPrincipal().equals(m.getMessage().getSender()))) {
+                // only notify if a user other than the sender marked the mention as done
+                AppUserBean notifyTo = this.systemManagement.getUser(m.getMessage().getSender());
+                if (notifyTo != null) {
+                    boolean notificationEnabled = notifyTo.getSettingAsBoolean(UserSettingsKeys.NOTIFICATION_EVENT_INSTANTMESSAGEMENTION_DONE, true);
+                    if (notificationEnabled && notifyTo.getEmail() != null) {
+                        OutgoingMailRequest omr = new OutgoingMailRequest();
+                        omr.setTo(notifyTo.getEmail());
+                        omr.setSubject("Deine Nachricht wurde als erledigt markiert");
+                        omr.setMainCaption("Deine Nachricht an eine andere Person wurde als erledigt markiert");
+                        omr.setSubCaption(m.getPrincipal() + " hat die folgende Nachricht vom " + dfDate.format(m.getMessage().getSent()) + " um " + dfTime.format(m.getMessage().getSent()) + " als erledigt markiert:");
+                        StringBuilder body = new StringBuilder();
+                        body.append("\"").append(m.getMessage().getContent()).append("\"\n");
+                        if (m.getMessage().getCaseContext() != null) {
+                            body.append("\nAkte: ").append(m.getMessage().getCaseContext().getFileNumber()).append(" ").append(m.getMessage().getCaseContext().getName());
+                        }
+                        if (m.getMessage().getDocumentContext() != null) {
+                            body.append("\nDokument: ").append(m.getMessage().getDocumentContext().getName());
+                        }
+                        omr.setBodyContent(body.toString());
+                        this.publishOutgoingMailRequest(omr);
+                    }
+                }
+            }
+        }
+
         return true;
     }
 
-    
-    
+    @Override
+    @RolesAllowed({"loginRole"})
+    public InstantMessage getMessage(String id) throws Exception {
+        return this.messageFacade.find(id);
+    }
+
+    @Override
+    @RolesAllowed({"loginRole"})
+    public int getNumberOfOpenMentions() throws Exception {
+        List<InstantMessageMention> open = this.mentionFacade.findOpen();
+        int openCount = 0;
+        if (open != null) {
+            openCount = open.size();
+        }
+        return openCount;
+    }
+
+    @Override
+    @RolesAllowed({"loginRole"})
+    public int getNumberOfOpenMentions(String principalId) throws Exception {
+        List<InstantMessageMention> open = this.mentionFacade.findOpen(principalId);
+        int openCount = 0;
+        if (open != null) {
+            openCount = open.size();
+        }
+        return openCount;
+    }
+
+    @Override
+    @RolesAllowed({"loginRole"})
+    public List<InstantMessageMention> getUpdatedMentionsSince(Date since) throws Exception {
+        // only query the database if mentions are requested 
+        if (this.singleton.getLatestInstantMessageStatusUpdated() < 0) {
+            // after server startup
+            List<InstantMessageMention> mentions = this.mentionFacade.findSince(since);
+            if (mentions != null && !mentions.isEmpty()) {
+                this.singleton.setLatestInstantMessageStatusUpdated(mentions.get(mentions.size() - 1).getStatusChanged().getTime());
+            } else {
+                this.singleton.setLatestInstantMessageStatusUpdated(since.getTime());
+            }
+            return mentions;
+        } else if (since.getTime() < this.singleton.getLatestInstantMessageStatusUpdated()) {
+            // new message have been received
+            List<InstantMessageMention> mentions = this.mentionFacade.findSince(since);
+            if (mentions != null && !mentions.isEmpty()) {
+                this.singleton.setLatestInstantMessageStatusUpdated(mentions.get(mentions.size() - 1).getStatusChanged().getTime());
+            } else {
+                this.singleton.setLatestInstantMessageStatusUpdated(since.getTime());
+            }
+            return mentions;
+        } else {
+            return null;
+        }
+    }
+
 }

@@ -800,6 +800,13 @@ public class ThreadUtils {
         });
     }
     
+    public static void updateTextPane(final JTextPane textPane, final String text) {
+        SwingUtilities.invokeLater(() -> {
+            textPane.setText(text);
+            textPane.setCaretPosition(0);
+        });
+    }
+    
     public static void updateEditorPane(final JEditorPane ep, final String text) {
         SwingUtilities.invokeLater(() -> {
             ep.setText(text);
@@ -825,9 +832,41 @@ public class ThreadUtils {
         }
 
     }
+    
+    public static void updateLabel(final JLabel label, final String text, final String tooltip) {
+
+        if (label == null) {
+            log.warn("Label to be updated is null", new Exception());
+        } else {
+            SwingUtilities.invokeLater(() -> {
+                label.setText(text);
+                label.setToolTipText(tooltip);
+            });
+        }
+
+    }
+    
+    public static void updateButton(final JButton button, final String text) {
+
+        if (button == null) {
+            log.warn("Button to be updated is null", new Exception());
+        } else {
+            SwingUtilities.invokeLater(() -> {
+                button.setText(text);
+            });
+        }
+
+    }
 
     public static void updateLabelIcon(final JLabel label, final ImageIcon icon) {
         SwingUtilities.invokeLater(() -> {
+            label.setIcon(icon);
+        });
+    }
+    
+    public static void updateLabelIcon(final JLabel label, final ImageIcon icon, final String text) {
+        SwingUtilities.invokeLater(() -> {
+            label.setText(text);
             label.setIcon(icon);
         });
     }

@@ -670,7 +670,7 @@ import com.jdimension.jlawyer.client.utils.CaseInsensitiveStringComparator;
 import com.jdimension.jlawyer.client.utils.ComponentUtils;
 import com.jdimension.jlawyer.client.utils.StringUtils;
 import com.jdimension.jlawyer.persistence.CalendarSetup;
-import com.jdimension.jlawyer.security.Crypto;
+import com.jdimension.jlawyer.security.CryptoProvider;
 import com.jdimension.jlawyer.services.JLawyerServiceLocator;
 import java.awt.Color;
 import java.util.ArrayList;
@@ -1165,7 +1165,7 @@ public class CalendarSetupDialog extends javax.swing.JDialog {
             cs.setBackground(this.cmdColor.getBackground().getRGB());
             cs.setCloudHost(this.pnlCloud.getCloudHost());
             try {
-                cs.setCloudPassword(Crypto.encrypt(this.pnlCloud.getCloudPassword()));
+                cs.setCloudPassword(CryptoProvider.defaultCrypto().encrypt(this.pnlCloud.getCloudPassword()));
             } catch (Exception ex) {
                 log.error("Error accessing cloud credentials", ex);
                 JOptionPane.showMessageDialog(this, "Fehler bzgl. Nextcloud-Zugangsdaten" + ex.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
@@ -1313,7 +1313,7 @@ public class CalendarSetupDialog extends javax.swing.JDialog {
             try {
                 JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
 
-                List cals = locator.lookupCalendarServiceRemote().listCalendars(cs.getCloudHost(), cs.isCloudSsl(), cs.getCloudPort(), cs.getCloudUser(), Crypto.decrypt(cs.getCloudPassword()), cs.getCloudPath());
+                List cals = locator.lookupCalendarServiceRemote().listCalendars(cs.getCloudHost(), cs.isCloudSsl(), cs.getCloudPort(), cs.getCloudUser(), CryptoProvider.defaultCrypto().decrypt(cs.getCloudPassword()), cs.getCloudPath());
                 CloudCalendar selected = null;
                 for (Object abO : cals) {
                     CloudCalendar ab=(CloudCalendar)abO;
@@ -1328,31 +1328,10 @@ public class CalendarSetupDialog extends javax.swing.JDialog {
                 log.error("Error connecting to server", ex);
                 JOptionPane.showMessageDialog(this, ex.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
             }
-            
-            
-//            try {
-//
-//                NextcloudCalendarConnector nc = new NextcloudCalendarConnector(cs.getCloudHost(), cs.isCloudSsl(), cs.getCloudPort(), cs.getCloudUser(), Crypto.decrypt(cs.getCloudPassword()));
-//                if(!StringUtils.isEmpty(cs.getCloudPath()))
-//                    nc.setSubpathPrefix(cs.getCloudPath());
-//                List<CloudCalendar> cals = nc.getAllCalendars();
-//                
-//                CloudCalendar selected = null;
-//                for (CloudCalendar ab : cals) {
-//                    ((DefaultComboBoxModel) this.cmbName.getModel()).addElement(ab);
-//                    if (ab.getHref().equals(cs.getHref())) {
-//                        selected = ab;
-//                    }
-//                }
-//                this.cmbName.setSelectedItem(selected);
-//            } catch (Exception ex) {
-//                log.error("Error connecting to server", ex);
-//                JOptionPane.showMessageDialog(this, "Kalender können nicht aus Nextcloud ermittelt werden: " + ex.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
-//            }
         }
 
         try {
-            this.pnlCloud.setCloudPassword(Crypto.decrypt(cs.getCloudPassword()));
+            this.pnlCloud.setCloudPassword(CryptoProvider.defaultCrypto().decrypt(cs.getCloudPassword()));
         } catch (Exception ex) {
             log.error("Error accessing cloud credentials", ex);
             this.pnlCloud.setCloudPassword("");

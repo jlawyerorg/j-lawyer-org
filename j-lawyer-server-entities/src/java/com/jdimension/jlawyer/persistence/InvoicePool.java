@@ -697,10 +697,10 @@ public class InvoicePool implements Serializable {
     @Column(name = "schema_syntax")
     protected String pattern;
     
-    @Column(name = "manual_adjust", columnDefinition = "TINYINT")
+    @Column(name = "manual_adjust")
     protected boolean manualAdjust=true;
     
-    @Column(name = "small_business", columnDefinition = "TINYINT")
+    @Column(name = "small_business")
     protected boolean smallBusiness=true;
     
     @Column(name = "index_start")

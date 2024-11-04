@@ -663,6 +663,14 @@
  */
 package com.jdimension.jlawyer.client.mail;
 
+import com.jdimension.jlawyer.ai.AiCapability;
+import com.jdimension.jlawyer.ai.AiRequestStatus;
+import com.jdimension.jlawyer.ai.InputData;
+import com.jdimension.jlawyer.ai.OutputData;
+import com.jdimension.jlawyer.ai.ParameterData;
+import com.jdimension.jlawyer.client.assistant.AssistantAccess;
+import com.jdimension.jlawyer.client.assistant.AssistantFlowAdapter;
+import com.jdimension.jlawyer.client.assistant.AssistantInputAdapter;
 import com.jdimension.jlawyer.client.editors.EditorsRegistry;
 import com.jdimension.jlawyer.client.editors.documents.SearchAndAssignDialog;
 import com.jdimension.jlawyer.client.editors.documents.viewer.html.cid.CidCache;
@@ -673,15 +681,21 @@ import com.jdimension.jlawyer.client.launcher.LauncherFactory;
 import com.jdimension.jlawyer.client.launcher.ReadOnlyDocumentStore;
 import com.jdimension.jlawyer.client.processing.ProgressIndicator;
 import com.jdimension.jlawyer.client.settings.ClientSettings;
+import com.jdimension.jlawyer.client.settings.UserSettings;
 import com.jdimension.jlawyer.client.utils.*;
 import com.jdimension.jlawyer.persistence.ArchiveFileBean;
 import com.jdimension.jlawyer.persistence.ArchiveFileDocumentsBean;
+import com.jdimension.jlawyer.persistence.AssistantConfig;
 import com.jdimension.jlawyer.persistence.CaseFolder;
 import com.jdimension.jlawyer.persistence.MailboxSetup;
 import com.jdimension.jlawyer.server.utils.ContentTypes;
 import com.jdimension.jlawyer.services.ArchiveFileServiceRemote;
 import com.jdimension.jlawyer.services.JLawyerServiceLocator;
 import java.awt.BorderLayout;
+import java.awt.Toolkit;
+import java.awt.datatransfer.StringSelection;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
 import java.awt.image.BufferedImage;
 import java.io.BufferedInputStream;
 import java.io.ByteArrayInputStream;
@@ -695,6 +709,8 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Properties;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.atomic.AtomicReference;
 import javafx.application.Platform;
 import javafx.beans.value.ChangeListener;
 import javafx.beans.value.ObservableValue;
@@ -731,7 +747,7 @@ import themes.colors.DefaultColorTheme;
  *
  * @author jens
  */
-public class MailContentUI extends javax.swing.JPanel implements HyperlinkListener {
+public class MailContentUI extends javax.swing.JPanel implements HyperlinkListener, AssistantFlowAdapter {
 
     private static final Logger log = Logger.getLogger(MailContentUI.class.getName());
     private static final String HTML_WARNING = "<html><head>\n"
@@ -771,7 +787,7 @@ public class MailContentUI extends javax.swing.JPanel implements HyperlinkListen
             + "        "
             + "</body></html>";
     private MessageContainer emlMsgContainer = null;
-    private OutlookMessage outlookMsgContainer=null;
+    private OutlookMessage outlookMsgContainer = null;
     private ArchiveFileBean caseContext = null;
     private String cachedHtml = null;
     private WebView webView = null;
@@ -797,6 +813,13 @@ public class MailContentUI extends javax.swing.JPanel implements HyperlinkListen
         this.lblSentDate.setText(" ");
         this.lstAttachments.setCellRenderer(new AttachmentListCellRenderer());
         this.lstAttachments.setModel(new DefaultListModel());
+
+        // Add mouse listeners to copy labels
+        addCopyFunctionality(lblSubject);
+        addCopyFunctionality(lblFrom);
+        addCopyFunctionality(lblTo);
+        addCopyFunctionality(lblCC);
+        addCopyFunctionality(lblBCC);
 
         WebViewRegister.getInstance();
 
@@ -896,6 +919,18 @@ public class MailContentUI extends javax.swing.JPanel implements HyperlinkListen
 
     }
 
+    // Method to add copy functionality to JLabels
+    private void addCopyFunctionality(JLabel label) {
+        label.addMouseListener(new MouseAdapter() {
+            @Override
+            public void mouseClicked(MouseEvent e) {
+                StringSelection stringSelection = new StringSelection(label.getText());
+                Toolkit.getDefaultToolkit().getSystemClipboard().setContents(stringSelection, null);
+                JOptionPane.showMessageDialog(null, "In Zwischenablage kopiert: " + label.getText());
+            }
+        });
+    }
+
     public void clear() {
         this.emlMsgContainer = null;
 
@@ -972,9 +1007,9 @@ public class MailContentUI extends javax.swing.JPanel implements HyperlinkListen
     }
 
     public void setMessage(OutlookMessage om) {
-        
-        this.outlookMsgContainer=om;
-        
+
+        this.outlookMsgContainer = om;
+
         try {
             setOutlookMessageImpl(this, om, lblSubject, lblSentDate, lblTo, lblCC, lblBCC, lblFrom, lstAttachments, webViewId);
 
@@ -982,11 +1017,16 @@ public class MailContentUI extends javax.swing.JPanel implements HyperlinkListen
             log.error("Error getting contents of Outlook message", ex);
             this.setErrorMessage("Fehler beim Laden der Outlook-Nachricht: " + ex.getMessage());
             this.lblBCC.setText("");
+            this.lblBCC.setToolTipText(null);
             this.lblCC.setText("");
+            this.lblCC.setToolTipText(null);
             this.lblFrom.setText("");
+            this.lblFrom.setToolTipText(null);
             this.lblSentDate.setText("");
             this.lblSubject.setText("");
+            this.lblSubject.setToolTipText(null);
             this.lblTo.setText("");
+            this.lblTo.setToolTipText(null);
         }
     }
 
@@ -1039,11 +1079,16 @@ public class MailContentUI extends javax.swing.JPanel implements HyperlinkListen
             log.error("Error getting contents of IMAP message", ex);
             this.setErrorMessage("Fehler beim Laden der Nachricht: " + ex.getMessage());
             this.lblBCC.setText("");
+            this.lblBCC.setToolTipText(null);
             this.lblCC.setText("");
+            this.lblCC.setToolTipText(null);
             this.lblFrom.setText("");
+            this.lblFrom.setToolTipText(null);
             this.lblSentDate.setText("");
             this.lblSubject.setText("");
+            this.lblSubject.setToolTipText(null);
             this.lblTo.setText("");
+            this.lblTo.setToolTipText(null);
         }
     }
 
@@ -1120,9 +1165,9 @@ public class MailContentUI extends javax.swing.JPanel implements HyperlinkListen
         }
         lblSentDate.setText(sentString);
         lblSubject.setText(copiedMsg.getSubject());
-        lblSubject.setToolTipText(lblSubject.getText());
+        lblSubject.setToolTipText("Klicken, um in Zwischenablage zu kopieren:" + System.lineSeparator() + lblSubject.getText());
         lblFrom.setText(MimeUtility.decodeText(copiedMsg.getFrom()[0].toString()));
-        lblFrom.setToolTipText(lblFrom.getText());
+        lblFrom.setToolTipText("Klicken, um in Zwischenablage zu kopieren:" + System.lineSeparator() + lblFrom.getText());
 
         String to = "";
         if (copiedMsg.getRecipients(RecipientType.TO) != null && copiedMsg.getRecipients(RecipientType.TO).length > 0) {
@@ -1132,7 +1177,7 @@ public class MailContentUI extends javax.swing.JPanel implements HyperlinkListen
             }
         }
         lblTo.setText(to);
-        lblTo.setToolTipText(to);
+        lblTo.setToolTipText("Klicken, um in Zwischenablage zu kopieren:" + System.lineSeparator() + to);
 
         String cc = "";
         if (copiedMsg.getRecipients(RecipientType.CC) != null && copiedMsg.getRecipients(RecipientType.CC).length > 0) {
@@ -1142,7 +1187,7 @@ public class MailContentUI extends javax.swing.JPanel implements HyperlinkListen
             }
         }
         lblCC.setText(cc);
-        lblCC.setToolTipText(cc);
+        lblCC.setToolTipText("Klicken, um in Zwischenablage zu kopieren:" + System.lineSeparator() + cc);
 
         String bcc = "";
         if (copiedMsg.getRecipients(RecipientType.BCC) != null && copiedMsg.getRecipients(RecipientType.BCC).length > 0) {
@@ -1152,7 +1197,7 @@ public class MailContentUI extends javax.swing.JPanel implements HyperlinkListen
             }
         }
         lblBCC.setText(bcc);
-        lblBCC.setToolTipText(bcc);
+        lblBCC.setToolTipText("Klicken, um in Zwischenablage zu kopieren:" + System.lineSeparator() + bcc);
 
         ((DefaultListModel) lstAttachments.getModel()).removeAllElements();
         if (copiedMsg.isMimeType("multipart/*")) {
@@ -1164,8 +1209,8 @@ public class MailContentUI extends javax.swing.JPanel implements HyperlinkListen
 
         if (copiedMsg.isMimeType("multipart/*")) {
             ArrayList<String> partsFound = new ArrayList<>();
-            recursiveFindPart(copiedMsg.getContent(), ContentTypes.TEXT_HTML, partsFound);
-            if (partsFound.size() > 0) {
+            EmailUtils.recursiveFindPart(copiedMsg.getContent(), ContentTypes.TEXT_HTML, partsFound);
+            if (!partsFound.isEmpty()) {
                 StringBuilder sb = new StringBuilder();
                 sb.append("<html>");
                 for (String p : partsFound) {
@@ -1202,10 +1247,15 @@ public class MailContentUI extends javax.swing.JPanel implements HyperlinkListen
 
                 html = html.replaceAll("font-size:.{1,7}pt", "font-size:13pt");
 
-                ClientSettings s = ClientSettings.getInstance();
-                String whitelist = s.getConfiguration(ClientSettings.CONF_MAIL_HTMLWHITELIST, "");
-                int index = whitelist.indexOf(getFromAddress(lblFrom.getText(), msg));
-                if (index > -1) {
+                boolean warn=UserSettings.getInstance().getSettingAsBoolean(UserSettings.CONF_MAIL_WARNSENDERUNKNOWN, true);
+                if(warn) {
+                    ClientSettings s = ClientSettings.getInstance();
+                    String whitelist = s.getConfiguration(ClientSettings.CONF_MAIL_HTMLWHITELIST, "");
+                    int index = whitelist.indexOf(getFromAddress(lblFrom.getText(), msg));
+                    if(index > -1)
+                        warn=false;
+                }
+                if (!warn) {
                     contentUI.setBody(html, ContentTypes.TEXT_HTML);
                 } else {
                     contentUI.setCachedHtml(html);
@@ -1213,8 +1263,8 @@ public class MailContentUI extends javax.swing.JPanel implements HyperlinkListen
                 }
 
             } else {
-                recursiveFindPart(copiedMsg.getContent(), ContentTypes.TEXT_PLAIN, partsFound);
-                if (partsFound.size() > 0) {
+                EmailUtils.recursiveFindPart(copiedMsg.getContent(), ContentTypes.TEXT_PLAIN, partsFound);
+                if (!partsFound.isEmpty()) {
                     String text = partsFound.get(0);
                     contentUI.setBody(text, ContentTypes.TEXT_PLAIN);
                 } else {
@@ -1247,10 +1297,15 @@ public class MailContentUI extends javax.swing.JPanel implements HyperlinkListen
                     log.warn(body);
                 }
 
-                ClientSettings s = ClientSettings.getInstance();
-                String whitelist = s.getConfiguration(ClientSettings.CONF_MAIL_HTMLWHITELIST, "");
-                int index = whitelist.indexOf(getFromAddress(lblFrom.getText(), copiedMsg));
-                if (index > -1) {
+                boolean warn=UserSettings.getInstance().getSettingAsBoolean(UserSettings.CONF_MAIL_WARNSENDERUNKNOWN, true);
+                if(warn) {
+                    ClientSettings s = ClientSettings.getInstance();
+                    String whitelist = s.getConfiguration(ClientSettings.CONF_MAIL_HTMLWHITELIST, "");
+                    int index = whitelist.indexOf(getFromAddress(lblFrom.getText(), copiedMsg));
+                    if(index > -1)
+                        warn=false;
+                }
+                if (!warn) {
                     contentUI.setBody(body, ContentTypes.TEXT_HTML);
                 } else {
                     contentUI.setCachedHtml(body);
@@ -1268,14 +1323,14 @@ public class MailContentUI extends javax.swing.JPanel implements HyperlinkListen
     }
 
     public static void setOutlookMessageImpl(MailContentUI contentUI, OutlookMessage msg, JLabel lblSubject, JLabel lblSentDate, JLabel lblTo, JLabel lblCC, JLabel lblBCC, JLabel lblFrom, JList lstAttachments, String webViewId) throws Exception {
-        
+
         CidCache cids = CidCache.getInstance();
-        cids.clear();       
-        Map<String,OutlookFileAttachment> cidAttachments=msg.fetchCIDMap();
-        for(OutlookFileAttachment ofa: cidAttachments.values()) {
+        cids.clear();
+        Map<String, OutlookFileAttachment> cidAttachments = msg.fetchCIDMap();
+        for (OutlookFileAttachment ofa : cidAttachments.values()) {
             cids.put(ofa.getContentId(), ofa.getData());
         }
-        
+
         String sentString = "";
         if (msg.getDate() != null) {
             SimpleDateFormat df2 = new SimpleDateFormat("dd.MM.yyyy HH:mm");
@@ -1283,9 +1338,9 @@ public class MailContentUI extends javax.swing.JPanel implements HyperlinkListen
         }
         lblSentDate.setText(sentString);
         lblSubject.setText(msg.getSubject());
-        lblSubject.setToolTipText(lblSubject.getText());
+        lblSubject.setToolTipText("Klicken, um in Zwischenablage zu kopieren:" + System.lineSeparator() + lblSubject.getText());
         lblFrom.setText(msg.getFromName() + "<" + msg.getFromEmail() + ">");
-        lblFrom.setToolTipText(lblFrom.getText());
+        lblFrom.setToolTipText("Klicken, um in Zwischenablage zu kopieren:" + System.lineSeparator() + lblFrom.getText());
 
         String to = "";
         if (msg.getRecipients() != null && msg.getRecipients().size() > 0) {
@@ -1295,7 +1350,7 @@ public class MailContentUI extends javax.swing.JPanel implements HyperlinkListen
             }
         }
         lblTo.setText(to);
-        lblTo.setToolTipText(to);
+        lblTo.setToolTipText("Klicken, um in Zwischenablage zu kopieren:" + System.lineSeparator() + to);
 
         String cc = "";
         if (msg.getCcRecipients() != null && msg.getCcRecipients().size() > 0) {
@@ -1305,7 +1360,7 @@ public class MailContentUI extends javax.swing.JPanel implements HyperlinkListen
             }
         }
         lblCC.setText(cc);
-        lblCC.setToolTipText(cc);
+        lblCC.setToolTipText("Klicken, um in Zwischenablage zu kopieren:" + System.lineSeparator() + cc);
 
         String bcc = "";
         if (msg.getBccRecipients() != null && msg.getBccRecipients().size() > 0) {
@@ -1315,22 +1370,29 @@ public class MailContentUI extends javax.swing.JPanel implements HyperlinkListen
             }
         }
         lblBCC.setText(bcc);
-        lblBCC.setToolTipText(bcc);
+        lblBCC.setToolTipText("Klicken, um in Zwischenablage zu kopieren:" + System.lineSeparator() + bcc);
 
         ((DefaultListModel) lstAttachments.getModel()).removeAllElements();
 
         List<OutlookFileAttachment> attachments = msg.fetchTrueAttachments();
         for (OutlookFileAttachment att : attachments) {
-            String attFileName=att.getFilename();
-            if(StringUtils.isEmpty(attFileName))
-                attFileName=att.getLongFilename();
-            if(!StringUtils.isEmpty(attFileName))
+            String attFileName = att.getLongFilename();
+            if (StringUtils.isEmpty(attFileName)) {
+                attFileName = att.getFilename();
+            }
+            if (!StringUtils.isEmpty(attFileName)) {
                 ((DefaultListModel) lstAttachments.getModel()).addElement(attFileName);
+            }
         }
 
         String htmlContent = msg.getBodyHTML();
         if (StringUtils.isEmpty(htmlContent)) {
             htmlContent = msg.getConvertedBodyHTML();
+        }
+
+        if (!htmlContent.toLowerCase().contains("<html") && !htmlContent.contains("/>") && !htmlContent.toLowerCase().contains("<p")) {
+            // getConvertedBodyHTML seems to return plain text in some cases
+            htmlContent = null;
         }
 
         if (htmlContent != null) {
@@ -1350,10 +1412,15 @@ public class MailContentUI extends javax.swing.JPanel implements HyperlinkListen
             contentUI.setContentType(ContentTypes.TEXT_HTML);
 
             if (msg.getFromEmail() != null) {
-                ClientSettings s = ClientSettings.getInstance();
-                String whitelist = s.getConfiguration(ClientSettings.CONF_MAIL_HTMLWHITELIST, "");
-                int index = whitelist.indexOf(msg.getFromEmail());
-                if (index > -1) {
+                boolean warn=UserSettings.getInstance().getSettingAsBoolean(UserSettings.CONF_MAIL_WARNSENDERUNKNOWN, true);
+                if(warn) {
+                    ClientSettings s = ClientSettings.getInstance();
+                    String whitelist = s.getConfiguration(ClientSettings.CONF_MAIL_HTMLWHITELIST, "");
+                    int index = whitelist.indexOf(msg.getFromEmail());
+                    if(index > -1)
+                        warn=false;
+                }
+                if (!warn) {
                     contentUI.setBody(htmlContent, ContentTypes.TEXT_HTML);
                 } else {
                     contentUI.setCachedHtml(htmlContent);
@@ -1385,46 +1452,6 @@ public class MailContentUI extends javax.swing.JPanel implements HyperlinkListen
         this.cachedHtml = html;
     }
 
-    private static void recursiveFindPart(Object partObject, String mimeType, ArrayList<String> resultList) throws Exception {
-        if (partObject instanceof Multipart) {
-            Multipart mp = (Multipart) partObject;
-            for (int i = 0; i < mp.getCount(); i++) {
-                Part childPart = mp.getBodyPart(i);
-                recursiveFindPart(childPart, mimeType, resultList);
-            }
-        } else {
-
-            Part part = (Part) partObject;
-            String disposition = part.getDisposition();
-
-            if (disposition == null) {
-                MimeBodyPart mimePart = (MimeBodyPart) part;
-
-                if (mimePart.getContent() instanceof Multipart) {
-                    recursiveFindPart(mimePart.getContent(), mimeType, resultList);
-                }
-
-                if (mimePart.getContentType().toLowerCase().startsWith(mimeType)) {
-                    resultList.add(mimePart.getContent().toString());
-                }
-
-            } else if (disposition.equalsIgnoreCase(Part.ATTACHMENT)) {
-                //Anhang wird in ein Verzeichnis gespeichert
-                //saveFile(part.getFileName(), part.getInputStream());
-            } else if (disposition.equalsIgnoreCase(Part.INLINE)) {
-                //Anhang wird in ein Verzeichnis gespeichert
-                //saveFile(part.getFileName(), part.getInputStream());
-
-                MimeBodyPart mimePart = (MimeBodyPart) part;
-
-                if (mimePart.isMimeType(mimeType)) {
-                    resultList.add(mimePart.getContent().toString());
-                }
-            }
-        }
-
-    }
-
     private static void recursiveLoadInlineImages(Object partObject, CidCache cids) throws Exception {
         if (partObject instanceof Multipart) {
             Multipart mp = (Multipart) partObject;
@@ -1444,47 +1471,58 @@ public class MailContentUI extends javax.swing.JPanel implements HyperlinkListen
             if (disposition == null) {
                 MimeBodyPart mimePart = (MimeBodyPart) part;
 
-                if (mimePart.getContent() instanceof Multipart) {
+                Object mimePartContent = null;
+                try {
+                    mimePartContent = mimePart.getContent();
+                } catch (Throwable t) {
+                    log.error("Unable to get content of MimeBodyPart", t);
+                }
+
+                if (mimePartContent instanceof Multipart) {
                     try {
-                        Object contentTest = mimePart.getContent();
+                        Object contentTest = mimePartContent;
                         recursiveLoadInlineImages(contentTest, cids);
                     } catch (Throwable t) {
                         log.error("Unable to load inline image(s)", t);
                     }
                 } else {
-                    if (mimePart.getContentID() != null) {
-                        if (mimePart.getContentType() != null && mimePart.getContentType().toLowerCase().contains("image")) {
-                            String contentId = mimePart.getContentID();
-                            if (contentId.startsWith("<")) {
-                                contentId = contentId.substring(1);
-                            }
-                            if (contentId.endsWith(">")) {
-                                contentId = contentId.substring(0, contentId.length() - 1);
-                            }
-                            InputStream inStream = part.getInputStream();
-                            ByteArrayOutputStream outStream = new ByteArrayOutputStream();
-                            byte[] tempBuffer = new byte[4096];// 4 KB
-                            int numRead;
-                            while ((numRead = inStream.read(tempBuffer)) != -1) {
-                                outStream.write(tempBuffer);
-                            }
-                            inStream.close();
-                            outStream.close();
-                            byte[] resultBytes = outStream.toByteArray();
+                    try {
+                        if (mimePart.getContentID() != null) {
+                            if (mimePart.getContentType() != null && mimePart.getContentType().toLowerCase().contains("image")) {
+                                String contentId = mimePart.getContentID();
+                                if (contentId.startsWith("<")) {
+                                    contentId = contentId.substring(1);
+                                }
+                                if (contentId.endsWith(">")) {
+                                    contentId = contentId.substring(0, contentId.length() - 1);
+                                }
+                                InputStream inStream = part.getInputStream();
+                                ByteArrayOutputStream outStream = new ByteArrayOutputStream();
+                                byte[] tempBuffer = new byte[4096];// 4 KB
+                                int numRead;
+                                while ((numRead = inStream.read(tempBuffer)) != -1) {
+                                    outStream.write(tempBuffer);
+                                }
+                                inStream.close();
+                                outStream.close();
+                                byte[] resultBytes = outStream.toByteArray();
 
-                            if (mimePart.getContentType() != null && (mimePart.getContentType().toLowerCase().contains("jpg") || mimePart.getContentType().toLowerCase().contains("jpeg"))) {
-                                // read a jpeg from a inputFile
-                                InputStream is = new ByteArrayInputStream(resultBytes);
-                                BufferedImage bufferedImage = ImageIO.read(is);
+                                if (mimePart.getContentType() != null && (mimePart.getContentType().toLowerCase().contains("jpg") || mimePart.getContentType().toLowerCase().contains("jpeg"))) {
+                                    // read a jpeg from a inputFile
+                                    InputStream is = new ByteArrayInputStream(resultBytes);
+                                    BufferedImage bufferedImage = ImageIO.read(is);
 
-                                // this writes the bufferedImage into a byte array called resultingBytes
-                                ByteArrayOutputStream byteArrayOut = new ByteArrayOutputStream();
-                                ImageIO.write(bufferedImage, "png", byteArrayOut);
-                                resultBytes = byteArrayOut.toByteArray();
+                                    // this writes the bufferedImage into a byte array called resultingBytes
+                                    ByteArrayOutputStream byteArrayOut = new ByteArrayOutputStream();
+                                    ImageIO.write(bufferedImage, "png", byteArrayOut);
+                                    resultBytes = byteArrayOut.toByteArray();
+                                }
+
+                                cids.put(contentId, resultBytes);
                             }
-
-                            cids.put(contentId, resultBytes);
                         }
+                    } catch (Throwable t) {
+                        log.error("could not load inline image by content ID", t);
                     }
                 }
 
@@ -1533,6 +1571,7 @@ public class MailContentUI extends javax.swing.JPanel implements HyperlinkListen
         mnuSearchSave = new javax.swing.JMenuItem();
         mnuSaveAsFile = new javax.swing.JMenuItem();
         jLabel5 = new javax.swing.JLabel();
+        popAssistant = new javax.swing.JPopupMenu();
         jPanel1 = new javax.swing.JPanel();
         jLabel1 = new javax.swing.JLabel();
         jLabel2 = new javax.swing.JLabel();
@@ -1546,6 +1585,7 @@ public class MailContentUI extends javax.swing.JPanel implements HyperlinkListen
         jLabel6 = new javax.swing.JLabel();
         lblBCC = new javax.swing.JLabel();
         jSeparator1 = new javax.swing.JSeparator();
+        cmdAssistant = new javax.swing.JButton();
         jPanel2 = new javax.swing.JPanel();
         jLabel7 = new javax.swing.JLabel();
         jScrollPane2 = new javax.swing.JScrollPane();
@@ -1596,20 +1636,38 @@ public class MailContentUI extends javax.swing.JPanel implements HyperlinkListen
         lblSentDate.setText("Datum");
 
         lblSubject.setText(" ");
+        lblSubject.setToolTipText("Klicken, um in Zwischenablage zu kopieren");
+        lblSubject.setCursor(new java.awt.Cursor(java.awt.Cursor.HAND_CURSOR));
 
         lblFrom.setText(" ");
+        lblFrom.setToolTipText("Klicken, um in Zwischenablage zu kopieren");
+        lblFrom.setCursor(new java.awt.Cursor(java.awt.Cursor.HAND_CURSOR));
 
         lblTo.setText(" ");
+        lblTo.setToolTipText("Klicken, um in Zwischenablage zu kopieren");
+        lblTo.setCursor(new java.awt.Cursor(java.awt.Cursor.HAND_CURSOR));
 
         jLabel4.setFont(jLabel4.getFont());
         jLabel4.setText("CC:");
 
         lblCC.setText(" ");
+        lblCC.setToolTipText("Klicken, um in Zwischenablage zu kopieren");
+        lblCC.setCursor(new java.awt.Cursor(java.awt.Cursor.HAND_CURSOR));
 
         jLabel6.setFont(jLabel6.getFont());
         jLabel6.setText("BCC:");
 
         lblBCC.setText(" ");
+        lblBCC.setToolTipText("Klicken, um in Zwischenablage zu kopieren");
+        lblBCC.setCursor(new java.awt.Cursor(java.awt.Cursor.HAND_CURSOR));
+
+        cmdAssistant.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons16/material/j-lawyer-ai.png"))); // NOI18N
+        cmdAssistant.setToolTipText("Assistent Ingo");
+        cmdAssistant.addMouseListener(new java.awt.event.MouseAdapter() {
+            public void mouseReleased(java.awt.event.MouseEvent evt) {
+                cmdAssistantMouseReleased(evt);
+            }
+        });
 
         javax.swing.GroupLayout jPanel1Layout = new javax.swing.GroupLayout(jPanel1);
         jPanel1.setLayout(jPanel1Layout);
@@ -1618,9 +1676,7 @@ public class MailContentUI extends javax.swing.JPanel implements HyperlinkListen
             .addGroup(jPanel1Layout.createSequentialGroup()
                 .addContainerGap()
                 .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addGroup(jPanel1Layout.createSequentialGroup()
-                        .addComponent(jSeparator1)
-                        .addContainerGap())
+                    .addComponent(jSeparator1)
                     .addGroup(jPanel1Layout.createSequentialGroup()
                         .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                             .addComponent(jLabel1)
@@ -1633,15 +1689,18 @@ public class MailContentUI extends javax.swing.JPanel implements HyperlinkListen
                             .addGroup(jPanel1Layout.createSequentialGroup()
                                 .addComponent(lblSubject, javax.swing.GroupLayout.PREFERRED_SIZE, 450, javax.swing.GroupLayout.PREFERRED_SIZE)
                                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                                .addComponent(lblSentDate, javax.swing.GroupLayout.DEFAULT_SIZE, 64, Short.MAX_VALUE))
+                                .addComponent(lblSentDate, javax.swing.GroupLayout.DEFAULT_SIZE, 70, Short.MAX_VALUE))
                             .addGroup(jPanel1Layout.createSequentialGroup()
                                 .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING, false)
                                     .addComponent(lblFrom, javax.swing.GroupLayout.Alignment.LEADING, javax.swing.GroupLayout.DEFAULT_SIZE, 514, Short.MAX_VALUE)
                                     .addComponent(lblTo, javax.swing.GroupLayout.Alignment.LEADING, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                                    .addComponent(lblCC, javax.swing.GroupLayout.Alignment.LEADING, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                                    .addComponent(lblBCC, javax.swing.GroupLayout.Alignment.LEADING, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
-                                .addGap(0, 0, Short.MAX_VALUE)))
-                        .addGap(12, 12, 12))))
+                                    .addComponent(lblCC, javax.swing.GroupLayout.Alignment.LEADING, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                                .addGap(0, 0, Short.MAX_VALUE))
+                            .addGroup(jPanel1Layout.createSequentialGroup()
+                                .addComponent(lblBCC, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                                .addComponent(cmdAssistant)))))
+                .addContainerGap())
         );
         jPanel1Layout.setVerticalGroup(
             jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
@@ -1666,7 +1725,8 @@ public class MailContentUI extends javax.swing.JPanel implements HyperlinkListen
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                     .addComponent(jLabel6)
-                    .addComponent(lblBCC))
+                    .addComponent(lblBCC)
+                    .addComponent(cmdAssistant))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(jSeparator1, javax.swing.GroupLayout.PREFERRED_SIZE, 10, javax.swing.GroupLayout.PREFERRED_SIZE))
         );
@@ -1684,7 +1744,6 @@ public class MailContentUI extends javax.swing.JPanel implements HyperlinkListen
             public int getSize() { return strings.length; }
             public Object getElementAt(int i) { return strings[i]; }
         });
-        lstAttachments.setSelectionMode(javax.swing.ListSelectionModel.SINGLE_INTERVAL_SELECTION);
         lstAttachments.setLayoutOrientation(javax.swing.JList.HORIZONTAL_WRAP);
         lstAttachments.setVisibleRowCount(-1);
         lstAttachments.addMouseListener(new java.awt.event.MouseAdapter() {
@@ -1737,7 +1796,7 @@ public class MailContentUI extends javax.swing.JPanel implements HyperlinkListen
         );
         fxContainerLayout.setVerticalGroup(
             fxContainerLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGap(0, 191, Short.MAX_VALUE)
+            .addGap(0, 183, Short.MAX_VALUE)
         );
 
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(this);
@@ -1777,16 +1836,18 @@ public class MailContentUI extends javax.swing.JPanel implements HyperlinkListen
     private void lstAttachmentsMouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_lstAttachmentsMouseClicked
         if (evt.getClickCount() == 2 && this.lstAttachments.getSelectedValue() != null) {
             try {
-                byte[] data=null;
-                if(this.emlMsgContainer!=null) {
+                byte[] data = null;
+                if (this.emlMsgContainer != null) {
                     data = EmailUtils.getAttachmentBytes(this.lstAttachments.getSelectedValue().toString(), this.emlMsgContainer);
                 } else {
-                    for(OutlookFileAttachment ofa: this.outlookMsgContainer.fetchTrueAttachments()) {
-                        if((ofa.getFilename()!=null && ofa.getFilename().equals(this.lstAttachments.getSelectedValue().toString())) || ((ofa.getLongFilename()!=null && ofa.getLongFilename().equals(this.lstAttachments.getSelectedValue().toString()))))
-                            data=ofa.getData();
+                    for (OutlookFileAttachment ofa : this.outlookMsgContainer.fetchTrueAttachments()) {
+                        if ((ofa.getFilename() != null && ofa.getFilename().equals(this.lstAttachments.getSelectedValue().toString())) || ((ofa.getLongFilename() != null && ofa.getLongFilename().equals(this.lstAttachments.getSelectedValue().toString())))) {
+                            data = ofa.getData();
+                            break;
+                        }
                     }
                 }
-                
+
                 ReadOnlyDocumentStore store = new ReadOnlyDocumentStore("mailattachment-" + this.lstAttachments.getSelectedValue().toString(), this.lstAttachments.getSelectedValue().toString());
                 Launcher launcher = LauncherFactory.getLauncher(this.lstAttachments.getSelectedValue().toString(), data, store, EditorsRegistry.getInstance().getMainWindow());
                 launcher.launch(false);
@@ -1817,7 +1878,17 @@ public class MailContentUI extends javax.swing.JPanel implements HyperlinkListen
             String selectedFolder = null;
             for (Object selected : this.lstAttachments.getSelectedValuesList()) {
 
-                byte[] data = EmailUtils.getAttachmentBytes(selected.toString(), this.emlMsgContainer);
+                byte[] data = null;
+                if (this.emlMsgContainer != null) {
+                    data = EmailUtils.getAttachmentBytes(selected.toString(), this.emlMsgContainer);
+                } else {
+                    for (OutlookFileAttachment ofa : this.outlookMsgContainer.fetchTrueAttachments()) {
+                        if ((ofa.getFilename() != null && ofa.getFilename().equals(selected.toString())) || ((ofa.getLongFilename() != null && ofa.getLongFilename().equals(selected.toString())))) {
+                            data = ofa.getData();
+                            break;
+                        }
+                    }
+                }
 
                 String useFolder = userHome;
                 if (selectedFolder != null) {
@@ -1859,7 +1930,7 @@ public class MailContentUI extends javax.swing.JPanel implements HyperlinkListen
                 }
                 selectedFolder = f.getParentFile().getAbsolutePath();
 
-                try ( FileOutputStream fOut = new FileOutputStream(f)) {
+                try (FileOutputStream fOut = new FileOutputStream(f)) {
                     fOut.write(data);
                 }
 
@@ -1903,14 +1974,24 @@ public class MailContentUI extends javax.swing.JPanel implements HyperlinkListen
 
                 for (Object selected : this.lstAttachments.getSelectedValuesList()) {
 
-                    byte[] data = EmailUtils.getAttachmentBytes(selected.toString(), this.emlMsgContainer);
+                    byte[] data = null;
+                    if (this.emlMsgContainer != null) {
+                        data = EmailUtils.getAttachmentBytes(selected.toString(), this.emlMsgContainer);
+                    } else {
+                        for (OutlookFileAttachment ofa : this.outlookMsgContainer.fetchTrueAttachments()) {
+                            if ((ofa.getFilename() != null && ofa.getFilename().equals(selected.toString())) || ((ofa.getLongFilename() != null && ofa.getLongFilename().equals(selected.toString())))) {
+                                data = ofa.getData();
+                                break;
+                            }
+                        }
+                    }
 
-                    String newName = FileUtils.getNewFileName(selected.toString(), true);
+                    String newName = FileUtils.getNewFileName(sel, selected.toString(), true);
                     if (newName == null) {
                         return;
                     }
 
-                    ArchiveFileDocumentsBean newDoc = afs.addDocument(sel.getId(), newName, data, "");
+                    ArchiveFileDocumentsBean newDoc = afs.addDocument(sel.getId(), newName, data, "", null);
 
                     if (folder != null) {
                         ArrayList<String> docList = new ArrayList<>();
@@ -1932,6 +2013,59 @@ public class MailContentUI extends javax.swing.JPanel implements HyperlinkListen
             }
         }
     }//GEN-LAST:event_mnuSearchSaveActionPerformed
+
+    private void cmdAssistantMouseReleased(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_cmdAssistantMouseReleased
+
+        AssistantAccess ingo = AssistantAccess.getInstance();
+        try {
+           this.popAssistant.removeAll();
+
+            // Erste Kategorie
+            Map<AssistantConfig, List<AiCapability>> capabilitiesGenerate = ingo.filterCapabilities(AiCapability.REQUESTTYPE_GENERATE, AiCapability.INPUTTYPE_STRING);
+            ingo.populateMenu(this.popAssistant, capabilitiesGenerate, (AssistantInputAdapter) this, this.caseContext);
+            if (!capabilitiesGenerate.isEmpty()) {
+                this.popAssistant.add(new JSeparator());
+            }
+
+            // Zweite Kategorie
+            Map<AssistantConfig, List<AiCapability>> capabilitiesGenerate2 = ingo.filterCapabilities(AiCapability.REQUESTTYPE_GENERATE, AiCapability.INPUTTYPE_NONE);
+            ingo.populateMenu(this.popAssistant, capabilitiesGenerate2, (AssistantInputAdapter) this, this.caseContext);
+            if (!capabilitiesGenerate2.isEmpty()) {
+                this.popAssistant.add(new JSeparator());
+            }
+
+            // Dritte Kategorie
+            Map<AssistantConfig, List<AiCapability>> capabilities = ingo.filterCapabilities(AiCapability.REQUESTTYPE_EXPLAIN, AiCapability.INPUTTYPE_STRING);
+            ingo.populateMenu(this.popAssistant, capabilities, (AssistantInputAdapter) this, this.caseContext);
+            if (!capabilities.isEmpty()) {
+                this.popAssistant.add(new JSeparator());
+            }
+
+            // Vierte Kategorie
+            Map<AssistantConfig, List<AiCapability>> capabilities2 = ingo.filterCapabilities(AiCapability.REQUESTTYPE_SUMMARIZE, AiCapability.INPUTTYPE_STRING);
+            ingo.populateMenu(this.popAssistant, capabilities2, (AssistantInputAdapter) this, this.caseContext);
+            if (!capabilities2.isEmpty()) {
+                this.popAssistant.add(new JSeparator());
+            }
+
+            // Fünfte Kategorie
+            Map<AssistantConfig, List<AiCapability>> capabilities3 = ingo.filterCapabilities(AiCapability.REQUESTTYPE_TRANSLATE, AiCapability.INPUTTYPE_STRING);
+            ingo.populateMenu(this.popAssistant, capabilities3, (AssistantInputAdapter) this, this.caseContext);
+            if (!capabilities3.isEmpty()) {
+                this.popAssistant.add(new JSeparator());
+            }
+
+            // Sechste Kategorie
+            Map<AssistantConfig, List<AiCapability>> capabilities4 = ingo.filterCapabilities(AiCapability.REQUESTTYPE_CHAT, AiCapability.INPUTTYPE_NONE);
+            ingo.populateMenu(this.popAssistant, capabilities4, (AssistantInputAdapter) this, this.caseContext);
+            
+
+            this.popAssistant.show(this.cmdAssistant, evt.getX(), evt.getY());
+        } catch (Exception ex) {
+            log.error(ex);
+            JOptionPane.showMessageDialog(this, "" + ex.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
+        }
+    }//GEN-LAST:event_cmdAssistantMouseReleased
 
     private static String getFromAddress(String from, Message msg) {
         String whiteListEntry = from;
@@ -1962,6 +2096,7 @@ public class MailContentUI extends javax.swing.JPanel implements HyperlinkListen
     }
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
+    private javax.swing.JButton cmdAssistant;
     private javax.swing.JPanel fxContainer;
     private javax.swing.JLabel jLabel1;
     private javax.swing.JLabel jLabel2;
@@ -1985,6 +2120,7 @@ public class MailContentUI extends javax.swing.JPanel implements HyperlinkListen
     private javax.swing.JMenu mnuSave;
     private javax.swing.JMenuItem mnuSaveAsFile;
     private javax.swing.JMenuItem mnuSearchSave;
+    private javax.swing.JPopupMenu popAssistant;
     private javax.swing.JPopupMenu popAttachments;
     // End of variables declaration//GEN-END:variables
 
@@ -2009,5 +2145,115 @@ public class MailContentUI extends javax.swing.JPanel implements HyperlinkListen
             }
         }
 
+    }
+
+    @Override
+    public String getPrompt(AiCapability c) {
+        return null;
+    }
+
+    @Override
+    public List<ParameterData> getParameters(AiCapability c) {
+        return null;
+    }
+
+    @Override
+    public List<InputData> getInputs(AiCapability c) {
+
+        AtomicReference<Object> selectionRef = new AtomicReference<>();
+
+        CountDownLatch latch = new CountDownLatch(1);
+        Platform.runLater(() -> {
+            try {
+                WebViewRegister reg = WebViewRegister.getInstance();
+                WebView webView1 = reg.get(webViewId);
+
+                Object selection = webView1.getEngine().executeScript("(function getSelectionText() {\n"
+                        + "    var text = \"\";\n"
+                        + "    if (window.getSelection) {\n"
+                        + "        text = window.getSelection().toString();\n"
+                        + "    } else if (document.selection && document.selection.type != \"Control\") {\n"
+                        + "        text = document.selection.createRange().text;\n"
+                        + "    }\n"
+                        + "    if (text === \"\") {\n"
+                        + "        text = document.body.innerText || document.body.textContent;\n"
+                        + "    }\n"
+                        + "    return text;\n"
+                        + "})()");
+
+                selectionRef.set(selection);
+
+            } catch (Throwable t) {
+                log.error("Unable to display mail content", t);
+            } finally {
+                latch.countDown(); // Signal that the task is done
+            }
+        });
+        try {
+            latch.await(); // Wait until the task is finished
+        } catch (InterruptedException e) {
+            // Handle interruption
+        }
+
+        Object selection = selectionRef.get();
+        String selectedText = null;
+        if (selection instanceof String) {
+            selectedText = selection.toString();
+        }
+
+        ArrayList<InputData> inputs = new ArrayList<>();
+        InputData i = new InputData();
+        //i.setFileName("sound.wav");
+        i.setType(InputData.TYPE_STRING);
+        i.setBase64(false);
+        //i.setData(selectedText);
+        i.setStringData(selectedText);
+        inputs.add(i);
+        return inputs;
+    }
+
+    @Override
+    public void processOutput(AiCapability c, AiRequestStatus status) {
+//        AssistantResultDialog dlg=new AssistantResultDialog(EditorsRegistry.getInstance().getMainWindow(), false, status);
+//        dlg.setVisible(true);
+
+        String prependText = "";
+        if (status != null) {
+            if (status.getStatus().equalsIgnoreCase("error")) {
+                // ignore output
+            } else {
+                StringBuilder result = new StringBuilder();
+                for (OutputData o : status.getResponse().getOutputData()) {
+                    if (o.getType().equalsIgnoreCase(InputData.TYPE_STRING)) {
+                        result.append(o.getStringData()).append(System.lineSeparator()).append(System.lineSeparator());
+                    }
+
+                }
+                prependText = result.toString();
+            }
+        }
+
+        SendEmailDialog dlg = null;
+        if (this.emlMsgContainer != null) {
+            Message m = emlMsgContainer.getMessage();
+            dlg = EmailUtils.reply(m, prependText, this.getBody(), this.getContentType());
+        } else {
+            dlg = EmailUtils.reply(this.outlookMsgContainer, prependText, this.getBody(), this.getContentType());
+        }
+        dlg.setArchiveFile(caseContext, null);
+        FrameUtils.centerDialog(dlg, null);
+        dlg.setVisible(true);
+
+    }
+
+    @Override
+    public void processError(AiCapability c, AiRequestStatus status) {
+        log.error("Error executing AI request: " + status.getStatusDetails());
+        JOptionPane.showMessageDialog(this, "Fehler beim Ausführen der Ingo-Anfrage: " + status.getStatusDetails(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
+    }
+
+    @Override
+    public List<com.jdimension.jlawyer.ai.Message> getMessages(AiCapability c) {
+        return null;
     }
 }

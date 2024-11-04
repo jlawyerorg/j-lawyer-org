@@ -664,6 +664,7 @@
 package com.jdimension.jlawyer.client.events;
 
 import com.jdimension.jlawyer.persistence.ArchiveFileDocumentsBean;
+import com.jdimension.jlawyer.persistence.Invoice;
 
 /**
  *
@@ -672,10 +673,18 @@ import com.jdimension.jlawyer.persistence.ArchiveFileDocumentsBean;
 public class DocumentAddedEvent extends Event {
 
     private ArchiveFileDocumentsBean document;
+    private Invoice invoice=null;
     
     public DocumentAddedEvent(ArchiveFileDocumentsBean newDoc) {
         super(Event.TYPE_DOCUMENTADDED);
         this.document=newDoc;
+        
+    }
+    
+    public DocumentAddedEvent(ArchiveFileDocumentsBean newDoc, Invoice invoice) {
+        super(Event.TYPE_DOCUMENTADDED);
+        this.document=newDoc;
+        this.invoice=invoice;
         
     }
 
@@ -698,6 +707,20 @@ public class DocumentAddedEvent extends Event {
      */
     public void setDocument(ArchiveFileDocumentsBean document) {
         this.document = document;
+    }
+
+    /**
+     * @return the invoice
+     */
+    public Invoice getInvoice() {
+        return invoice;
+    }
+
+    /**
+     * @param invoice the invoice to set
+     */
+    public void setInvoice(Invoice invoice) {
+        this.invoice = invoice;
     }
 
     

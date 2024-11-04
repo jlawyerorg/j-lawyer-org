@@ -53,7 +53,7 @@
               <Group type="103" groupAlignment="0" attributes="0">
                   <Group type="102" attributes="0">
                       <EmptySpace min="-2" pref="10" max="-2" attributes="0"/>
-                      <Component id="jScrollPane2" max="32767" attributes="0"/>
+                      <Component id="jScrollPane2" pref="128" max="32767" attributes="0"/>
                   </Group>
                   <Group type="102" attributes="0">
                       <EmptySpace max="-2" attributes="0"/>
@@ -156,7 +156,9 @@
                   <EmptySpace max="-2" attributes="0"/>
                   <Component id="cmdSelectNone1" min="-2" max="-2" attributes="0"/>
                   <EmptySpace type="unrelated" max="-2" attributes="0"/>
-                  <Component id="sortDate" min="-2" max="-2" attributes="0"/>
+                  <Component id="sortChangeDate" min="-2" max="-2" attributes="0"/>
+                  <EmptySpace min="-2" pref="2" max="-2" attributes="0"/>
+                  <Component id="sortCreationDate" min="-2" max="-2" attributes="0"/>
                   <EmptySpace min="-2" pref="2" max="-2" attributes="0"/>
                   <Component id="sortName" min="-2" max="-2" attributes="0"/>
                   <EmptySpace min="-2" pref="2" max="-2" attributes="0"/>
@@ -165,41 +167,50 @@
                   <Component id="sortSize" min="-2" max="-2" attributes="0"/>
                   <EmptySpace min="-2" pref="2" max="-2" attributes="0"/>
                   <Component id="sortFolder" min="-2" max="-2" attributes="0"/>
+                  <EmptySpace min="-2" pref="2" max="-2" attributes="0"/>
+                  <Component id="sortFileType" min="-2" max="-2" attributes="0"/>
                   <EmptySpace max="32767" attributes="0"/>
+                  <Component id="cmdExportSelectedAsPdf" min="-2" max="-2" attributes="0"/>
+                  <EmptySpace max="-2" attributes="0"/>
               </Group>
           </Group>
         </DimensionLayout>
         <DimensionLayout dim="1">
           <Group type="103" groupAlignment="0" attributes="0">
-              <Component id="cmdSelectAll1" alignment="0" max="32767" attributes="0"/>
-              <Group type="102" attributes="0">
-                  <Group type="103" groupAlignment="0" max="-2" attributes="0">
-                      <Component id="cmdActions" max="32767" attributes="0"/>
-                      <Group type="103" groupAlignment="3" attributes="0">
-                          <Component id="sortFolder" alignment="3" min="-2" max="-2" attributes="0"/>
-                          <Component id="sortDate" alignment="3" min="-2" max="-2" attributes="0"/>
-                          <Component id="sortName" alignment="3" min="-2" max="-2" attributes="0"/>
-                          <Component id="sortFavorite" alignment="3" min="-2" max="-2" attributes="0"/>
-                          <Component id="sortSize" alignment="3" min="-2" max="-2" attributes="0"/>
+              <Group type="102" alignment="0" attributes="0">
+                  <Group type="103" groupAlignment="1" max="-2" attributes="0">
+                      <Component id="cmdSelectAll1" alignment="0" max="32767" attributes="0"/>
+                      <Component id="cmdActions" alignment="0" max="32767" attributes="0"/>
+                      <Group type="103" alignment="0" groupAlignment="3" attributes="0">
+                          <Component id="sortChangeDate" alignment="3" min="-2" max="-2" attributes="0"/>
                           <Component id="cmdMoveToFolder" alignment="3" min="-2" max="-2" attributes="0"/>
                       </Group>
                       <Component id="cmdSelectNone1" alignment="0" max="32767" attributes="0"/>
+                      <Group type="103" alignment="0" groupAlignment="3" attributes="0">
+                          <Component id="sortFolder" alignment="3" min="-2" max="-2" attributes="0"/>
+                          <Component id="sortName" alignment="3" min="-2" max="-2" attributes="0"/>
+                          <Component id="sortFavorite" alignment="3" min="-2" max="-2" attributes="0"/>
+                          <Component id="sortSize" alignment="3" min="-2" max="-2" attributes="0"/>
+                      </Group>
+                      <Component id="sortFileType" alignment="0" max="32767" attributes="0"/>
+                      <Component id="sortCreationDate" alignment="0" max="32767" attributes="0"/>
+                      <Component id="cmdExportSelectedAsPdf" alignment="0" min="-2" max="-2" attributes="0"/>
                   </Group>
-                  <EmptySpace min="0" pref="0" max="32767" attributes="0"/>
+                  <EmptySpace max="32767" attributes="0"/>
               </Group>
           </Group>
         </DimensionLayout>
       </Layout>
       <SubComponents>
-        <Component class="com.jdimension.jlawyer.ui.folders.SortButton" name="sortDate">
+        <Component class="com.jdimension.jlawyer.ui.folders.SortButton" name="sortChangeDate">
           <Properties>
-            <Property name="text" type="java.lang.String" value="Datum"/>
-            <Property name="toolTipText" type="java.lang.String" value="nach Erstellungsdatum sortieren"/>
+            <Property name="text" type="java.lang.String" value="ge&#xe4;ndert"/>
+            <Property name="toolTipText" type="java.lang.String" value="nach &#xc4;nderungsdatum sortieren"/>
             <Property name="iconTextGap" type="int" value="2"/>
             <Property name="inheritsPopupMenu" type="boolean" value="true"/>
           </Properties>
           <Events>
-            <EventHandler event="mouseClicked" listener="java.awt.event.MouseListener" parameters="java.awt.event.MouseEvent" handler="sortDateMouseClicked"/>
+            <EventHandler event="mouseClicked" listener="java.awt.event.MouseListener" parameters="java.awt.event.MouseEvent" handler="sortChangeDateMouseClicked"/>
           </Events>
         </Component>
         <Component class="com.jdimension.jlawyer.ui.folders.SortButton" name="sortName">
@@ -239,9 +250,7 @@
             </Property>
           </Properties>
           <Events>
-            <EventHandler event="mousePressed" listener="java.awt.event.MouseListener" parameters="java.awt.event.MouseEvent" handler="cmdActionsMousePressed"/>
             <EventHandler event="mouseReleased" listener="java.awt.event.MouseListener" parameters="java.awt.event.MouseEvent" handler="cmdActionsMouseReleased"/>
-            <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="cmdActionsActionPerformed"/>
           </Events>
         </Component>
         <Component class="com.jdimension.jlawyer.ui.folders.SortButton" name="sortFolder">
@@ -299,6 +308,37 @@
             <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="cmdSelectNone1ActionPerformed"/>
           </Events>
         </Component>
+        <Component class="com.jdimension.jlawyer.ui.folders.SortButton" name="sortFileType">
+          <Properties>
+            <Property name="text" type="java.lang.String" value="Dateityp"/>
+            <Property name="toolTipText" type="java.lang.String" value="nach Dateityp sortieren"/>
+          </Properties>
+          <Events>
+            <EventHandler event="mouseClicked" listener="java.awt.event.MouseListener" parameters="java.awt.event.MouseEvent" handler="sortFileTypeMouseClicked"/>
+          </Events>
+        </Component>
+        <Component class="com.jdimension.jlawyer.ui.folders.SortButton" name="sortCreationDate">
+          <Properties>
+            <Property name="text" type="java.lang.String" value="erstellt"/>
+            <Property name="toolTipText" type="java.lang.String" value="nach Erstellungsdatum sortieren"/>
+            <Property name="iconTextGap" type="int" value="2"/>
+            <Property name="inheritsPopupMenu" type="boolean" value="true"/>
+          </Properties>
+          <Events>
+            <EventHandler event="mouseClicked" listener="java.awt.event.MouseListener" parameters="java.awt.event.MouseEvent" handler="sortCreationDateMouseClicked"/>
+          </Events>
+        </Component>
+        <Component class="javax.swing.JButton" name="cmdExportSelectedAsPdf">
+          <Properties>
+            <Property name="icon" type="javax.swing.Icon" editor="org.netbeans.modules.form.editors2.IconEditor">
+              <Image iconType="3" name="/icons16/pdf.png"/>
+            </Property>
+            <Property name="toolTipText" type="java.lang.String" value="alle selektierten Dokumente in ein PDF exportieren"/>
+          </Properties>
+          <Events>
+            <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="cmdExportSelectedAsPdfActionPerformed"/>
+          </Events>
+        </Component>
       </SubComponents>
     </Container>
     <Container class="javax.swing.JScrollPane" name="jScrollPane2">
@@ -329,6 +369,7 @@
         <Property name="border" type="javax.swing.border.Border" editor="org.netbeans.modules.form.editors2.BorderEditor">
           <Border info="null"/>
         </Property>
+        <Property name="horizontalScrollBarPolicy" type="int" value="31"/>
       </Properties>
 
       <Layout class="org.netbeans.modules.form.compat2.layouts.support.JScrollPaneSupportLayout"/>

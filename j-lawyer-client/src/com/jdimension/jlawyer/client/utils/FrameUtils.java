@@ -665,7 +665,10 @@ package com.jdimension.jlawyer.client.utils;
 
 import java.awt.Container;
 import java.awt.Dimension;
+import java.awt.GraphicsDevice;
+import java.awt.GraphicsEnvironment;
 import java.awt.Point;
+import java.awt.Rectangle;
 import java.awt.Toolkit;
 import java.awt.Window;
 import javax.swing.JDialog;
@@ -676,11 +679,11 @@ import javax.swing.JFrame;
  * @author jens
  */
 public class FrameUtils {
-    
+
     public static void centerFrame(JFrame frame, JFrame parent) {
         Dimension d = null; // size of what we're positioning against
-        Point     p = null;
-        
+        Point p = null;
+
         if (parent != null) // w is what we are positioning against, null means desktop
         {
             d = parent.getSize();
@@ -689,38 +692,60 @@ public class FrameUtils {
             d = Toolkit.getDefaultToolkit().getScreenSize();
             p = new Point();
         }
-        
-        double centreX = p.getX() + d.getWidth()  / 2;
+
+        double centreX = p.getX() + d.getWidth() / 2;
         double centreY = p.getY() + d.getHeight() / 2;
-        
+
         frame.getSize(d);
         p.setLocation(centreX - d.getWidth() / 2,
                 centreY - d.getHeight() / 2);
-        if (p.getX() < 0)
+        if (p.getX() < 0) {
             p.setLocation(0, p.getY());
-        
-        if (p.getY() < 0)
+        }
+
+        if (p.getY() < 0) {
             p.setLocation(p.getX(), 0);
-        
+        }
+
         frame.setLocation(p);
     }
-    
+
     public static void fitDialogToScreen(JDialog dlg, float percentOfScreen) {
-        
+
         Dimension d = null; // size of what we're positioning against
-        Point     p = null;
-        
-            d = Toolkit.getDefaultToolkit().getScreenSize();
-            
-            dlg.setSize((int)(d.getWidth()*(percentOfScreen/100f)), (int)(d.getHeight()*(percentOfScreen/100f)));
-        
+        Point p = null;
+
+        d = Toolkit.getDefaultToolkit().getScreenSize();
+
+        dlg.setSize((int) (d.getWidth() * (percentOfScreen / 100f)), (int) (d.getHeight() * (percentOfScreen / 100f)));
+
         centerDialog(dlg, null);
     }
-    
+
+    public static void centerDialogOnParentMonitor(JDialog dialog, Point parentLocation) {
+        GraphicsEnvironment ge = GraphicsEnvironment.getLocalGraphicsEnvironment();
+        GraphicsDevice[] screens = ge.getScreenDevices();
+
+        for (GraphicsDevice screen : screens) {
+            Rectangle screenBounds = screen.getDefaultConfiguration().getBounds();
+            if (screenBounds.contains(parentLocation)) {
+                int dialogX = parentLocation.x + (dialog.getParent().getWidth() - dialog.getWidth()) / 2;
+                int dialogY = parentLocation.y + (dialog.getParent().getHeight() - dialog.getHeight()) / 2;
+
+                // Adjust dialog position to ensure it's within the screen bounds
+                dialogX = Math.max(screenBounds.x, Math.min(dialogX, screenBounds.x + screenBounds.width - dialog.getWidth()));
+                dialogY = Math.max(screenBounds.y, Math.min(dialogY, screenBounds.y + screenBounds.height - dialog.getHeight()));
+
+                dialog.setLocation(dialogX, dialogY);
+                break;
+            }
+        }
+    }
+
     public static void centerDialog(JDialog dlg, Window parent) {
         Dimension d = null; // size of what we're positioning against
-        Point     p = null;
-        
+        Point p = null;
+
         if (parent != null) // w is what we are positioning against, null means desktop
         {
             d = parent.getSize();
@@ -729,28 +754,30 @@ public class FrameUtils {
             d = Toolkit.getDefaultToolkit().getScreenSize();
             p = new Point();
         }
-        
-        double centreX = p.getX() + d.getWidth()  / 2;
+
+        double centreX = p.getX() + d.getWidth() / 2;
         double centreY = p.getY() + d.getHeight() / 2;
-        
+
         dlg.getSize(d);
         p.setLocation(centreX - d.getWidth() / 2,
                 centreY - d.getHeight() / 2);
-        if (p.getX() < 0)
+        if (p.getX() < 0) {
             p.setLocation(0, p.getY());
-        
-        if (p.getY() < 0)
+        }
+
+        if (p.getY() < 0) {
             p.setLocation(p.getX(), 0);
-        
+        }
+
         dlg.setLocation(p);
     }
-    
+
     public static Container getDialogOfComponent(Container c) {
-        
-        while(!(c instanceof JDialog) && c.getParent()!=null) {
-            c=c.getParent();
+
+        while (!(c instanceof JDialog) && c.getParent() != null) {
+            c = c.getParent();
         }
         return c;
     }
-    
+
 }

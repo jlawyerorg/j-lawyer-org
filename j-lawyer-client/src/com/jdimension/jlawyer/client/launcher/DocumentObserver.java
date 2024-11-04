@@ -663,15 +663,10 @@
  */
 package com.jdimension.jlawyer.client.launcher;
 
-import com.jdimension.jlawyer.client.editors.EditorsRegistry;
 import com.jdimension.jlawyer.client.settings.ClientSettings;
-import com.jdimension.jlawyer.client.utils.FileUtils;
-import com.jdimension.jlawyer.client.utils.ThreadUtils;
-import com.jdimension.jlawyer.persistence.ArchiveFileBean;
-import com.jdimension.jlawyer.persistence.ArchiveFileDocumentsBean;
-import com.jdimension.jlawyer.services.ArchiveFileServiceRemote;
+import com.jdimension.jlawyer.client.settings.UserSettings;
+import com.jdimension.jlawyer.client.utils.CaseUtils;
 import com.jdimension.jlawyer.services.JLawyerServiceLocator;
-import java.io.File;
 import java.util.ArrayList;
 import org.apache.log4j.Logger;
 
@@ -684,9 +679,9 @@ public class DocumentObserver {
     private static final Logger log = Logger.getLogger(DocumentObserver.class.getName());
 
     private static DocumentObserver instance = null;
-    private ArrayList<ObservedDocument> docs = new ArrayList<ObservedDocument>();
+    private ArrayList<ObservedDocument> docs = new ArrayList<>();
 
-    private ArrayList<DocumentObserverListener> listeners = new ArrayList<DocumentObserverListener>();
+    private ArrayList<DocumentObserverListener> listeners = new ArrayList<>();
 
     private DocumentObserver() {
 
@@ -780,14 +775,12 @@ public class DocumentObserver {
 
     public synchronized void observe() {
 
-        ArrayList<ObservedDocument> closedDocs = new ArrayList<ObservedDocument>();
+        ArrayList<ObservedDocument> closedDocs = new ArrayList<>();
 
         for (ObservedDocument doc : docs) {
             boolean changed = doc.isChanged();
             boolean closed = doc.isClosed();
-            //System.out.println("" + System.currentTimeMillis() + " checking: " + doc.getPath() + "; changed=" + changed + "; closed=" + closed);
-
-            //if(closed || changed) {
+            
             if (changed) {
 
                 for (DocumentObserverListener l : listeners) {
@@ -807,13 +800,22 @@ public class DocumentObserver {
                 }
                 closedDocs.add(doc);
                 doc.getStore().documentClosed(doc.getPath());
+                
+                boolean locked = false;
+                try {
+                    ClientSettings settings = ClientSettings.getInstance();
+                    JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
+                    locked = locator.lookupArchiveFileServiceRemote().isDocumentLocked(doc.getStore().getDocumentIdentifier());
+
+                } catch (Throwable t) {
+                    log.error("Could not query lock status for document with id " + doc.getStore().getDocumentIdentifier(), t);
+                }
+
+                if (locked && UserSettings.getInstance().getCurrentUser().isAutoLockDocuments()) {
+                    CaseUtils.setDocumentLock(doc.getStore().getDocumentIdentifier(), false, false);
+                }
                             
             }
-
-//            System.out.println(doc.getName());
-//            System.out.println(doc.getStatus());
-//            System.out.println(doc.getLastSaved());
-//            System.out.println(doc.getLauncherType());
         }
 
         docs.removeAll(closedDocs);

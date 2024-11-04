@@ -836,8 +836,11 @@ public class ContactsEndpointV5 implements ContactsEndpointLocalV5 {
                 ArchiveFileBean afb=aab.getArchiveFileKey();
                 RestfulCaseOverviewV1 rco = new RestfulCaseOverviewV1();
                 rco.setId(afb.getId());
+                rco.setExternalId(afb.getExternalId());
                 rco.setName(afb.getName());
+                rco.setReason(afb.getReason());
                 rco.setFileNumber(afb.getFileNumber());
+                rco.setDateChanged(afb.getDateChanged());
                 caseList.add(rco);
             }
 

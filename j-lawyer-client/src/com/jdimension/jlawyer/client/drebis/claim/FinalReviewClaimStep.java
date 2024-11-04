@@ -860,4 +860,9 @@ public class FinalReviewClaimStep extends javax.swing.JPanel implements WizardSt
     public void setData(WizardDataContainer data) {
         this.data=data;
     }
+
+    @Override
+    public void setWizardPanel(WizardMainPanel wizard) {
+        
+    }
 }

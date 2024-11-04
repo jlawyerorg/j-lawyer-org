@@ -680,7 +680,7 @@ import javax.xml.bind.annotation.XmlRootElement;
     @NamedQuery(name = "Timesheet.findAll", query = "SELECT a FROM Timesheet a"),
     @NamedQuery(name = "Timesheet.findById", query = "SELECT a FROM Timesheet a WHERE a.id = :id"),
     @NamedQuery(name = "Timesheet.findByStatus", query = "SELECT a FROM Timesheet a WHERE a.status = :status"),
-    @NamedQuery(name = "Timesheet.findByArchiveFileKey", query = "SELECT a FROM Timesheet a WHERE a.archiveFileKey = :archiveFileKey")})
+    @NamedQuery(name = "Timesheet.findByArchiveFileKey", query = "SELECT a FROM Timesheet a WHERE a.archiveFileKey = :archiveFileKey order by a.status asc, a.name asc")})
 public class Timesheet implements Serializable {
        
     
@@ -704,10 +704,12 @@ public class Timesheet implements Serializable {
     @Column(name = "interval_minutes")
     protected int interval;
     
-    @Column(name = "limited", columnDefinition = "TINYINT")
+    @Column(name = "limited")
     protected boolean limited=true;
     @Column(name = "limit_net")
     protected float limit=0f;
+    @Column(name = "pct_done")
+    private float percentageDone=0f;
         
     @JoinColumn(name = "case_id", referencedColumnName = "id")
     @ManyToOne
@@ -886,6 +888,20 @@ public class Timesheet implements Serializable {
                 return STATUS_OPEN;
                 
         }
+    }
+
+    /**
+     * @return the percentageDone
+     */
+    public float getPercentageDone() {
+        return percentageDone;
+    }
+
+    /**
+     * @param percentageDone the percentageDone to set
+     */
+    public void setPercentageDone(float percentageDone) {
+        this.percentageDone = percentageDone;
     }
 
 }

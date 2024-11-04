@@ -663,21 +663,38 @@ For more information on this, and how to apply and follow the GNU AGPL, see
  */
 package com.jdimension.jlawyer.client.messenger;
 
+import com.jdimension.jlawyer.client.editors.EditorsRegistry;
+import com.jdimension.jlawyer.client.events.EventBroker;
+import com.jdimension.jlawyer.client.events.InstantMessageDeletedEvent;
+import com.jdimension.jlawyer.client.events.InstantMessageMentionChangedEvent;
+import com.jdimension.jlawyer.client.settings.ClientSettings;
+import com.jdimension.jlawyer.client.utils.DateUtils;
+import com.jdimension.jlawyer.client.utils.UserUtils;
 import com.jdimension.jlawyer.persistence.AppUserBean;
 import com.jdimension.jlawyer.persistence.InstantMessage;
+import com.jdimension.jlawyer.persistence.InstantMessageMention;
+import com.jdimension.jlawyer.services.JLawyerServiceLocator;
 import java.awt.Color;
+import java.awt.Cursor;
 import java.awt.Dimension;
 import java.awt.Font;
 import java.awt.FontMetrics;
 import java.awt.Graphics;
 import java.awt.Graphics2D;
 import java.awt.RenderingHints;
+import java.awt.Toolkit;
+import java.awt.datatransfer.Clipboard;
+import java.awt.datatransfer.StringSelection;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.text.SimpleDateFormat;
+import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
+import javax.swing.ImageIcon;
+import javax.swing.JOptionPane;
 import javax.swing.UIManager;
+import org.apache.log4j.Logger;
 import themes.colors.DefaultColorTheme;
 
 /**
@@ -686,9 +703,37 @@ import themes.colors.DefaultColorTheme;
  */
 public class CalloutPanelComponent extends javax.swing.JPanel {
 
+    private static final Logger log = Logger.getLogger(CalloutPanelComponent.class.getName());
+    private static final ImageIcon ICON_COPY=new javax.swing.ImageIcon(CalloutPanelComponent.class.getResource("/icons16/material/baseline_content_copy_lightgrey_48dp.png"));
+    private static final ImageIcon ICON_DELETE=new javax.swing.ImageIcon(CalloutPanelComponent.class.getResource("/icons16/material/baseline_delete_lightgrey_48dp.png"));
+    private static final ImageIcon ICON_MARKREAD=new javax.swing.ImageIcon(CalloutPanelComponent.class.getResource("/icons16/material/mark_chat_read_20dp.png"));
+
     private static int READ = 10;
     private static int UNREAD = 20;
     private static int READ_NOTAPPLICABLE = 30;
+
+    private int indicatorX = 10;
+    private int indicatorY = 10;
+    private int indicatorSize = 15;
+    private int deleteX=1000;
+    private int deleteY=10;
+    private int copyX=1000;
+    private int copyY=10;
+    private int markReadX=1000;
+    private int markReadY=10;
+    private Font defaultFont = null;
+    private Font defaultFontBold = null;
+    private Font miniFont = null;
+
+    protected InstantMessage message = null;
+    protected boolean ownMessage = false;
+    protected List<AppUserBean> principals = null;
+    protected String ownPrincipal = null;
+    protected int read = READ_NOTAPPLICABLE;
+
+    private SimpleDateFormat dfSent = new SimpleDateFormat("dd.MM.yyyy HH:mm");
+    
+    private String tooltipText="";
 
     /**
      * Creates new form CalloutPanelComponent
@@ -697,46 +742,188 @@ public class CalloutPanelComponent extends javax.swing.JPanel {
         this(null, "admin", new InstantMessage(), true);
     }
 
-    protected InstantMessage message = null;
-    protected boolean ownMessage = false;
-    protected List<AppUserBean> principals = null;
-    protected String ownPrincipal = null;
-    protected int read = READ_NOTAPPLICABLE;
-
     public CalloutPanelComponent(List<AppUserBean> principals, String ownPrincipal, InstantMessage im, boolean ownMessage) {
         initComponents();
 
+        this.defaultFont = UIManager.getFont("defaultFont");
+        if (this.defaultFont == null) {
+            this.defaultFont = new Font("Arial", Font.PLAIN, 12);
+        }
+
+        this.defaultFontBold = defaultFont.deriveFont(defaultFont.getStyle() | java.awt.Font.BOLD);
+
+        this.miniFont = UIManager.getFont("mini.font");
+        if (miniFont == null) {
+            miniFont = new Font("Arial", Font.PLAIN, 8);
+        }
+
         this.principals = principals;
-        this.ownPrincipal=ownPrincipal;
-        this.ownMessage=ownMessage;
+        this.ownPrincipal = ownPrincipal;
+        this.ownMessage = ownMessage;
         this.setMessage(im);
-        
+
         this.setPreferredSize(new Dimension(250, 70)); // Adjust size as needed´
 
         addMouseListener(new MouseAdapter() {
             @Override
             public void mouseClicked(MouseEvent e) {
-                int indicatorX = getWidth() - 25;
-                int indicatorY = 10;
-                int indicatorSize = 10;
 
+                // 10, 10+(metrics.getHeight()-10), 15, 15
                 if (e.getX() >= indicatorX && e.getX() <= indicatorX + indicatorSize
                         && e.getY() >= indicatorY && e.getY() <= indicatorY + indicatorSize) {
                     if (message.hasMentionFor(getOwnPrincipal())) {
                         if (message.getMentionFor(getOwnPrincipal()).isDone()) {
                             message.getMentionFor(getOwnPrincipal()).setDone(false);
+                            markMentionDone(message.getId(), message.getMentionFor(getOwnPrincipal()).getId(), false);
                             setRead(UNREAD);
                         } else {
                             message.getMentionFor(getOwnPrincipal()).setDone(true);
+                            markMentionDone(message.getId(), message.getMentionFor(getOwnPrincipal()).getId(), true);
                             setRead(READ);
                         }
+                        updateTooltip();
+
                     } else {
                         setRead(READ_NOTAPPLICABLE);
                     }
+                    // do not evaluate the deletion button coordinates
+                    return;
 
                 }
+                if (e.getX() >= (deleteX) && e.getX() <= deleteX + 20
+                        && e.getY() >= (deleteY) && e.getY() <= deleteY + 20) {
+                    deleteMessage(message.getId());
+
+                }
+                if (e.getX() >= (copyX) && e.getX() <= copyX + 20
+                        && e.getY() >= (copyY) && e.getY() <= copyY + 20) {
+                    copyMessageToClipboard();
+                }
+                if (e.getX() >= (markReadX) && e.getX() <= markReadX + 20
+                        && e.getY() >= (markReadY) && e.getY() <= markReadY + 20) {
+                    if(message.getMentions()!=null) {
+                        List<String> mentionIds=new ArrayList<>();
+                        for(InstantMessageMention mention: message.getMentions()) {
+                            if(!mention.isDone()) {
+                                mentionIds.add(mention.getId());
+                            }
+                        }
+                        markAllMentionsDone(message.getId(), mentionIds, true);
+                        if(!mentionIds.isEmpty()) {
+                            setRead(READ);
+                            updateTooltip();
+                        }
+                    }
+                }
+            }
+
+            
+        });
+        
+        addMouseMotionListener(new MouseAdapter() {
+            @Override
+            public void mouseMoved(MouseEvent e) {
+                super.mouseMoved(e);
+                if (e.getX() >= indicatorX && e.getX() <= indicatorX + indicatorSize
+                        && e.getY() >= indicatorY && e.getY() <= indicatorY + indicatorSize) {
+                    setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
+                    setToolTipText("als erledigt markieren");
+                    return;
+                }
+                if (e.getX() >= (deleteX) && e.getX() <= deleteX + 20
+                        && e.getY() >= (deleteY) && e.getY() <= deleteY + 20) {
+                    setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
+                    setToolTipText("Nachricht löschen");
+                    return;
+                }
+                if (e.getX() >= (copyX) && e.getX() <= copyX + 20
+                        && e.getY() >= (copyY) && e.getY() <= copyY + 20) {
+                    setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
+                    setToolTipText("Nachrichtentext kopieren");
+                    return;
+                }
+                if (e.getX() >= (markReadX) && e.getX() <= markReadX + 20
+                        && e.getY() >= (markReadY) && e.getY() <= markReadY + 20) {
+                    setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
+                    setToolTipText("für alle als erledigt markieren");
+                    return;
+                }
+                setCursor(new java.awt.Cursor(java.awt.Cursor.DEFAULT_CURSOR));
+                setToolTipText(tooltipText);
             }
         });
+    }
+    
+    private void copyMessageToClipboard() {
+        Toolkit toolkit = Toolkit.getDefaultToolkit();
+        Clipboard clipboard = toolkit.getSystemClipboard();
+        StringSelection strSel = new StringSelection(this.message.getContent());
+        clipboard.setContents(strSel, null);
+    }
+
+    private void updateTooltip() {
+        StringBuilder sb = new StringBuilder();
+        if (this.message != null && this.message.getSent() != null) {
+            sb.append("gesendet: ").append(dfSent.format(this.message.getSent())).append(" (").append(DateUtils.getHumanReadableTimeInPast(this.message.getSent())).append(")");
+        }
+        if (this.message != null && this.message.getMentions() != null && !this.message.getMentions().isEmpty()) {
+            sb.append(System.lineSeparator()).append(System.lineSeparator());
+            sb.append("Folgende Nutzer und Nutzerinnen wurden in dieser Nachricht erwähnt:").append(System.lineSeparator());
+            for (InstantMessageMention imm : this.message.getMentions()) {
+                sb.append("- ").append(imm.getPrincipal());
+                if (imm.isDone()) {
+                    sb.append(" hat die Nachricht bestätigt");
+                } else {
+                    sb.append(" hat die Nachricht noch nicht bestätigt");
+                }
+                sb.append(System.lineSeparator());
+            }
+        }
+        this.tooltipText=sb.toString();
+        this.setToolTipText(this.tooltipText);
+    }
+
+    public void markAllMentionsDone(String messageId, List<String> mentionIds, boolean done) {
+        
+        for(String mId: mentionIds) {
+            markMentionDone(messageId, mId, done);
+        }
+    }
+    
+    public void markMentionDone(String messageId, String mentionId, boolean done) {
+        try {
+
+            ClientSettings settings = ClientSettings.getInstance();
+            JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
+
+            locator.lookupMessagingServiceRemote().markMentionDone(mentionId, done);
+
+            EventBroker eb = EventBroker.getInstance();
+            InstantMessageMentionChangedEvent mce = new InstantMessageMentionChangedEvent(messageId, mentionId, done);
+            eb.publishEvent(mce);
+
+        } catch (Exception ex) {
+            log.error("Could not mark mention as done / undone", ex);
+            JOptionPane.showMessageDialog(EditorsRegistry.getInstance().getMainWindow(), "Erwähnung konnte nicht erledigt / unerledigt gesetzt werden: " + ex.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
+        }
+    }
+    
+    public void deleteMessage(String messageId) {
+        try {
+
+            ClientSettings settings = ClientSettings.getInstance();
+            JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
+
+            locator.lookupMessagingServiceRemote().deleteMessage(messageId);
+
+            EventBroker eb = EventBroker.getInstance();
+            InstantMessageDeletedEvent mde = new InstantMessageDeletedEvent(messageId);
+            eb.publishEvent(mde);
+
+        } catch (Exception ex) {
+            log.error("Could not delete message", ex);
+            JOptionPane.showMessageDialog(EditorsRegistry.getInstance().getMainWindow(), "Nachricht konnte nicht gelöscht werden: " + ex.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
+        }
     }
 
     public void setRead(int read) {
@@ -751,11 +938,11 @@ public class CalloutPanelComponent extends javax.swing.JPanel {
         Graphics2D g2d = (Graphics2D) g;
         g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
 
-        int width = getWidth();
+        if(!(getParent() instanceof MessagePanel))
+            return;
+        
+        int width = ((MessagePanel) getParent()).getCalloutWidth();
         int height = getHeight();
-
-        int arrowSize = 10;
-        int cornerRadius = 10;
 
         if (this.isOwnMessage()) {
             g2d.setColor(DefaultColorTheme.COLOR_LOGO_BLUE);
@@ -763,93 +950,102 @@ public class CalloutPanelComponent extends javax.swing.JPanel {
             g2d.setColor(DefaultColorTheme.COLOR_DARK_GREY);
         }
 
-        g2d.fillRoundRect(0, 0, width - arrowSize, height, cornerRadius, cornerRadius);
+        g2d.fillRect(0, 0, width, height);
 
-        int[] xPoints = {width - arrowSize, width, width - arrowSize};
-        int[] yPoints = {height / 2 - arrowSize, height / 2, height / 2 + arrowSize};
+        if (this.message != null && this.message.hasMentions()) {
+            if (this.message.hasOpenMentions()) {
+                if(this.message.getMentions().size()==this.message.getOpenMentionsCount())
+                    // all open
+                    g2d.setColor(DefaultColorTheme.COLOR_LOGO_RED);
+                else
+                    // partially open
+                    g2d.setColor(Color.ORANGE);
+            } else {
+                g2d.setColor(DefaultColorTheme.COLOR_LOGO_GREEN);
+            }
 
-        g2d.fillPolygon(xPoints, yPoints, 3);
+            g2d.fillRect(0, 0, 5, height);
+        }
 
         g2d.setColor(DefaultColorTheme.COLOR_DARK_GREY);
-        g2d.drawRoundRect(0, 0, width - arrowSize, height, cornerRadius, cornerRadius);
 
-        Font defaultFont = UIManager.getFont("defaultFont");
-        if(defaultFont==null)
-            defaultFont=new Font("Arial", Font.PLAIN, 12);
-        
-        Font defaultFontBold = defaultFont.deriveFont(defaultFont.getStyle() | java.awt.Font.BOLD);
         g2d.setFont(defaultFont);
 
         // Calculate wrapped text
         FontMetrics metrics = g2d.getFontMetrics();
-        int messageWidth = width - 40; // Adjusted for padding
-        int yOffset = height / 2;
+        int messageWidth = width - 130; // Adjusted for padding
+        //int yOffset = height / 2;
+        int yOffset = 10 + metrics.getHeight();
         int lineSpacing = metrics.getHeight();
 
         g2d.setColor(Color.WHITE);
-        String content=null;
-        if(this.message==null || this.message.getContent()==null)
-            content="";
-        else
-            content=this.message.getContent();
+        String content = null;
+        if (this.message == null || this.message.getContent() == null) {
+            content = "";
+        } else {
+            content = this.message.getContent();
+        }
         String[] lines = content.split("\n");
         for (String line : lines) {
             String[] words = line.split(" ");
-            StringBuilder currentLine = new StringBuilder(words[0]);
+            String initial="";
+            if(words.length>0)
+                initial=words[0];
+            StringBuilder currentLine = new StringBuilder(initial);
 
             for (int i = 1; i < words.length; i++) {
                 String testLine = currentLine.toString() + " " + words[i];
                 if (metrics.stringWidth(testLine) <= messageWidth) {
                     currentLine.append(" ").append(words[i]);
                 } else {
-//                    String currentLineString=currentLine.toString();
-//                    if(currentLineString.contains("@Matze")) {
-//                        g2d.setFont(defaultFontBold);
-//                    } else {
-//                        g2d.setFont(defaultFont);
-//                    }
-//                    g2d.drawString(currentLine.toString(), 10, yOffset);
-                    this.drawWithHighlights(currentLine.toString(), g2d, 10, yOffset, defaultFont, defaultFontBold);
+                    this.drawWithHighlights(currentLine.toString(), g2d, 40, yOffset, defaultFont, defaultFontBold);
                     currentLine = new StringBuilder(words[i]);
                     yOffset += lineSpacing;
                 }
             }
 
-//            if(currentLine.toString().contains("@Matze")) {
-//                g2d.setFont(defaultFontBold);
-//            } else {
-//                g2d.setFont(defaultFont);
-//            }
-//            g2d.drawString(currentLine.toString(), 10, yOffset);
-            this.drawWithHighlights(currentLine.toString(), g2d, 10, yOffset, defaultFont, defaultFontBold);
+            this.drawWithHighlights(currentLine.toString(), g2d, 40, yOffset, defaultFont, defaultFontBold);
             yOffset += lineSpacing;
         }
 
-        Font miniFont = UIManager.getFont("mini.font");
-        if(miniFont==null)
-            miniFont=new Font("Arial", Font.PLAIN, 8);
         g2d.setFont(miniFont);
         g2d.setColor(DefaultColorTheme.COLOR_LIGHT_GREY);
-        //g2d.drawString(timestamp, 10, yOffset + 15); // Timestamp position
-        Date sent=null;
-        if(this.message==null || this.message.getSent()==null)
-            sent=new Date();
-        else
-            sent=this.message.getSent();
-        g2d.drawString(getFormattedTimestamp(sent), 10, yOffset); // Timestamp position
+        Date sent = null;
+        if (this.message == null || this.message.getSent() == null) {
+            sent = new Date();
+        } else {
+            sent = this.message.getSent();
+        }
+        g2d.drawString(getFormattedTimestamp(sent), 34, yOffset); // Timestamp position
         if (this.read != READ_NOTAPPLICABLE) {
-            if (read==READ) {
+            indicatorY = 10 + (metrics.getHeight() - 10);
+            if (read == READ) {
                 // read
                 g2d.setColor(DefaultColorTheme.COLOR_LOGO_GREEN);
-                g2d.fillOval(width - 25, 10, 10, 10); // Unread indicator position
+                g2d.fillOval(10, indicatorY, 15, 15); // Unread indicator position
             } else {
                 // unread
                 g2d.setColor(DefaultColorTheme.COLOR_LOGO_RED);
-                g2d.fillOval(width - 25, 10, 10, 10); // Unread indicator position
+                g2d.fillOval(10, indicatorY, 15, 15); // Unread indicator position
             }
         }
+        
+        // delete button
+        this.deleteX=width-70;
+        
+        // delete icon
+        ICON_DELETE.paintIcon(this, g2d, this.deleteX, this.deleteY);
+        // copy icon
+        this.copyX=this.deleteX-20;
+        ICON_COPY.paintIcon(this, g2d, this.copyX, this.copyY);
+        
+        if(this.ownMessage || UserUtils.isCurrentUserAdmin()) {
+            // mark read icon
+            this.markReadX = this.copyX - 20;
+            ICON_MARKREAD.paintIcon(this, g2d, this.markReadX, this.markReadY);
+        }
 
-        this.setPreferredSize(new Dimension(getWidth(), yOffset + lineSpacing));
+        this.setPreferredSize(new Dimension(width, yOffset + lineSpacing));
     }
 
     private void drawWithHighlights(String line, Graphics2D g2d, int x, int y, Font defaultFont, Font defaultFontBold) {
@@ -905,12 +1101,11 @@ public class CalloutPanelComponent extends javax.swing.JPanel {
 
     @Override
     public Dimension getPreferredSize() {
-        return new Dimension(250, 20);
+        return super.getPreferredSize();
     }
 
     private String getFormattedTimestamp(Date d) {
-        SimpleDateFormat dateFormat = new SimpleDateFormat("HH:mm");
-        return dateFormat.format(d);
+        return DateUtils.getHumanReadableTimeInPast(d);
     }
 
     /**
@@ -926,11 +1121,11 @@ public class CalloutPanelComponent extends javax.swing.JPanel {
         this.setLayout(layout);
         layout.setHorizontalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGap(0, 400, Short.MAX_VALUE)
+            .addGap(0, 143, Short.MAX_VALUE)
         );
         layout.setVerticalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGap(0, 300, Short.MAX_VALUE)
+            .addGap(0, 45, Short.MAX_VALUE)
         );
     }// </editor-fold>//GEN-END:initComponents
 
@@ -946,7 +1141,7 @@ public class CalloutPanelComponent extends javax.swing.JPanel {
      */
     public void setMessage(InstantMessage message) {
         this.message = message;
-        
+
         if (message.hasMentionFor(ownPrincipal)) {
             if (message.getMentionFor(ownPrincipal).isDone()) {
                 setRead(READ);
@@ -956,6 +1151,7 @@ public class CalloutPanelComponent extends javax.swing.JPanel {
         } else {
             setRead(READ_NOTAPPLICABLE);
         }
+        this.updateTooltip();
     }
 
     /**
@@ -998,7 +1194,7 @@ public class CalloutPanelComponent extends javax.swing.JPanel {
      */
     public void setOwnPrincipal(String ownPrincipal) {
         this.ownPrincipal = ownPrincipal;
-        
+
         // need to retrigger calculation of the READ member
         this.setMessage(this.message);
     }

@@ -663,11 +663,26 @@
  */
 package com.jdimension.jlawyer.client.utils;
 
+import com.jdimension.jlawyer.client.bea.BeaAccess;
 import com.jdimension.jlawyer.client.settings.ClientSettings;
+import com.jdimension.jlawyer.client.settings.UserSettings;
+import com.jdimension.jlawyer.client.utils.einvoice.EInvoiceUtils;
+import com.jdimension.jlawyer.persistence.AppUserBean;
+import com.jdimension.jlawyer.persistence.ArchiveFileDocumentsBean;
+import com.jdimension.jlawyer.persistence.Invoice;
+import com.jdimension.jlawyer.services.JLawyerServiceLocator;
 import java.io.File;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import org.apache.log4j.Logger;
+import org.apache.pdfbox.io.MemoryUsageSetting;
+import org.apache.pdfbox.multipdf.PDFMergerUtility;
+import org.jlawyer.bea.model.Attachment;
+import org.jlawyer.bea.model.Message;
+import org.jlawyer.bea.model.MessageExport;
+import org.mustangproject.ZUGFeRD.IZUGFeRDExporter;
+import org.mustangproject.ZUGFeRD.ZUGFeRDExporterFromPDFA;
 
 /**
  *
@@ -701,16 +716,60 @@ public class FileConverter {
         return null;
     }
 
+    /**
+     * This method will check if the document is related to an invoice and
+     * generate a ZUGFerd electronic invoice.
+     *
+     * @param file
+     * @param doc
+     * @return
+     * @throws Exception
+     */
+    public String convertToPDF(String file, ArchiveFileDocumentsBean doc) throws Exception {
+
+        String pdfTempFile = convertToPDF(file);
+
+        ClientSettings settings = ClientSettings.getInstance();
+        JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
+        List<Invoice> invoices = locator.lookupArchiveFileServiceRemote().getInvoicesForDocument(doc.getId());
+        if (invoices.size() > 1) {
+            throw new Exception("Diesem Dokument ist mit mehreren Rechnungen verknüpft, elektronische Rechnung kann nicht erstellt werden.");
+        }
+        
+        // only create e-invoice if the invoice type indicates a turnover / flow of money
+        if (invoices.size() == 1 && invoices.get(0).getInvoiceType()!=null && invoices.get(0).getInvoiceType().isTurnOver()) {
+            // generate electronic invoice
+            Invoice sourceInvoice = invoices.get(0);
+            if (StringUtils.isEmpty(sourceInvoice.getSender())) {
+                throw new Exception("Die dem Dokument zugeordnete Rechnung hat keinen Absender, elektronische Rechnung kann nicht erstellt werden.");
+            }
+
+            AppUserBean sender = locator.lookupSystemManagementRemote().getUser(sourceInvoice.getSender());
+            if (sender == null) {
+                throw new Exception("Die dem Dokument zugeordnete Rechnung hat den unbekannten Absender '" + sourceInvoice.getSender() + "', elektronische Rechnung kann nicht erstellt werden.");
+            }
+
+            org.mustangproject.Invoice i = EInvoiceUtils.getEInvoice(sourceInvoice, sender);
+            
+        
+            IZUGFeRDExporter ze = new ZUGFeRDExporterFromPDFA().load(pdfTempFile).setProducer("j-lawyer.org " + VersionUtils.getFullClientVersion()).setCreator(UserSettings.getInstance().getCurrentUser().getDisplayName());
+            ze.setTransaction(i);
+            ze.export(pdfTempFile);
+        }
+
+        return pdfTempFile;
+    }
+
     public String convertTo(String file, String targetFileExtension) throws Exception {
         return null;
     }
 
     public boolean supportsInputFormat(String url) {
-        
+
         return supportsInputFormat(url, INPUTTYPES_LIBREOFFICE);
-        
+
     }
-    
+
     protected boolean supportsInputFormat(String url, List<String> supportedFormats) {
         String lUrl = url.toLowerCase();
         for (String s : supportedFormats) {
@@ -719,6 +778,87 @@ public class FileConverter {
             }
         }
         return false;
+    }
+
+    protected static String pdf2pdf(String url) throws Exception {
+        if (url.toLowerCase().endsWith(".pdf")) {
+            File inputFile = new File(url);
+            byte[] data = FileUtils.readFile(inputFile);
+            String tempFile = FileUtils.createTempFile(inputFile.getName(), data);
+            new File(tempFile).deleteOnExit();
+            return tempFile;
+        }
+        return url;
+    }
+
+    protected String bea2pdf(String url) throws Exception {
+        if (url.toLowerCase().endsWith(".bea")) {
+
+            File inputFile = new File(url);
+            byte[] data = FileUtils.readFile(inputFile);
+            MessageExport export = new MessageExport();
+            export.setContent(data);
+            Message msg = BeaAccess.getMessageFromExport(export);
+
+            byte[] pdf = msg.toPdf("j-lawyer.org " + VersionUtils.getFullClientVersion());
+            String beaPdf = FileUtils.createTempFile(inputFile.getName() + ".pdf", pdf);
+
+            ArrayList<Attachment> attachments = msg.getAttachments();
+            if (!attachments.isEmpty()) {
+                PDFMergerUtility merger = new PDFMergerUtility();
+
+                merger.addSource(new File(beaPdf));
+
+                for (Attachment att : attachments) {
+
+                    try {
+                        String attFile = FileUtils.createTempFile(att.getFileName(), att.getContent());
+                        String attFilePdf = convertToPDF(attFile);
+
+                        merger.addSource(new File(attFilePdf));
+
+                    } catch (Throwable t) {
+                        log.error("unable to convert attachment " + att.getFileName() + " of beA message " + url + " to PDF - skipping!", t);
+                    }
+                }
+
+                File outputFile = File.createTempFile(url, ".pdf");
+                merger.setDestinationFileName(outputFile.getAbsolutePath());
+                merger.mergeDocuments(MemoryUsageSetting.setupMainMemoryOnly());
+                return outputFile.getAbsolutePath();
+
+            } else {
+                return beaPdf;
+            }
+        }
+        return url;
+    }
+
+    protected static String eml2pdf(String url) throws Exception {
+        if (url.toLowerCase().endsWith(".eml")) {
+
+            String emlPdf = EmailToPDFConverter.convertToPdf(url);
+
+            List<String> attachmentsPdf = EmailToPDFConverter.convertAttachmentsToPdf(url);
+            if (!attachmentsPdf.isEmpty()) {
+                PDFMergerUtility merger = new PDFMergerUtility();
+
+                merger.addSource(new File(emlPdf));
+                for (String file : attachmentsPdf) {
+                    merger.addSource(new File(file));
+                }
+
+                File outputFile = File.createTempFile(url, ".pdf");
+                merger.setDestinationFileName(outputFile.getAbsolutePath());
+                merger.mergeDocuments(MemoryUsageSetting.setupMainMemoryOnly());
+                return outputFile.getAbsolutePath();
+
+            } else {
+                return emlPdf;
+            }
+
+        }
+        return url;
     }
 
     private FileConverter() {
@@ -791,6 +931,19 @@ public class FileConverter {
 
         @Override
         public String convertToPDF(String url) throws Exception {
+
+            if (url.toLowerCase().endsWith(".pdf")) {
+                return pdf2pdf(url);
+            }
+
+            if (url.toLowerCase().endsWith(".eml")) {
+                return eml2pdf(url);
+            }
+
+            if (url.toLowerCase().endsWith(".bea")) {
+                return bea2pdf(url);
+            }
+
             ClientSettings set = ClientSettings.getInstance();
             String wordProcessor = set.getConfiguration(ClientSettings.CONF_APPS_WORDPROCESSOR_KEY, ClientSettings.CONF_APPS_WORDPROCESSOR_VALUE_LO);
             boolean wordProcessorMicrosoft = ClientSettings.CONF_APPS_WORDPROCESSOR_VALUE_MSO.equalsIgnoreCase(wordProcessor);
@@ -863,7 +1016,7 @@ public class FileConverter {
 
             boolean isRetry = false;
             for (int i = 0; i < 2; i++) {
-                Process p = Runtime.getRuntime().exec(new String[]{"python.exe", clientLocation + "unoconv-master\\unoconv", "-eSelectPdfVersion=1", "-f", "pdf", url});
+                Process p = Runtime.getRuntime().exec(new String[]{"python.exe", clientLocation + "unoconv-master\\unoconv", "-eSelectPdfVersion=3", "-f", "pdf", url});
                 int exit = p.waitFor();
 
                 if (exit != 0) {
@@ -937,13 +1090,40 @@ public class FileConverter {
         @Override
         public String convertToPDF(String url) throws Exception {
 
+            if (url.toLowerCase().endsWith(".pdf")) {
+                return pdf2pdf(url);
+            }
+
+            if (url.toLowerCase().endsWith(".eml")) {
+                return eml2pdf(url);
+            }
+
+            if (url.toLowerCase().endsWith(".bea")) {
+                return bea2pdf(url);
+            }
+
             if (!this.supportsInputFormat(url)) {
                 throw new Exception("Format nicht unterstützt: " + new File(url).getName());
+            }
+            
+            File inputFile = new File(url);
+            File outputDir = inputFile.getParentFile();
+            String parentPath = null;
+            if (outputDir != null) {
+                parentPath = outputDir.getAbsolutePath();
+
+                // Remove trailing slash if it exists
+                if (parentPath.endsWith(File.separator)) {
+                    parentPath = parentPath.substring(0, parentPath.length() - 1);
+                }
             }
 
             boolean isRetry = false;
             for (int i = 0; i < 2; i++) {
-                Process p = Runtime.getRuntime().exec(new String[]{"unoconv", "-eSelectPdfVersion=1", "-f", "pdf", url});
+                //Process p = Runtime.getRuntime().exec(new String[]{"unoconv", "-eSelectPdfVersion=3", "-f", "pdf", url});
+                Process p = Runtime.getRuntime().exec(new String[]{"libreoffice", "--headless", "--convert-to", "pdf:writer_pdf_Export:{\n" +
+"  \"SelectPdfVersion\":{\"type\":\"long\",\"value\":3}\n" +
+"}", "--outdir", parentPath, url});
                 int exit = p.waitFor();
                 if (exit != 0) {
                     if (isRetry) {
@@ -1011,13 +1191,42 @@ public class FileConverter {
         @Override
         public String convertToPDF(String url) throws Exception {
 
+            if (url.toLowerCase().endsWith(".pdf")) {
+                return pdf2pdf(url);
+            }
+
+            if (url.toLowerCase().endsWith(".eml")) {
+                return eml2pdf(url);
+            }
+
+            if (url.toLowerCase().endsWith(".bea")) {
+                return bea2pdf(url);
+            }
+
             if (!this.supportsInputFormat(url)) {
                 throw new Exception("Format nicht unterstützt: " + new File(url).getName());
             }
 
+            File inputFile = new File(url);
+            File outputDir = inputFile.getParentFile();
+            String parentPath = null;
+            if (outputDir != null) {
+                parentPath = outputDir.getAbsolutePath();
+
+                // Remove trailing slash if it exists
+                if (parentPath.endsWith(File.separator)) {
+                    parentPath = parentPath.substring(0, parentPath.length() - 1);
+                }
+            }
+
             boolean isRetry = false;
             for (int i = 0; i < 2; i++) {
-                Process p = Runtime.getRuntime().exec(new String[]{"/Applications/LibreOffice.app/Contents/Resources/python", "unoconv-master/unoconv", "-eSelectPdfVersion=1", "-f", "pdf", url});
+                //Process p = Runtime.getRuntime().exec(new String[]{"/Applications/LibreOffice.app/Contents/Resources/python", "unoconv-master/unoconv", "-eSelectPdfVersion=1", "-f", "pdf", url});
+                //Process p = Runtime.getRuntime().exec(new String[]{"/Applications/LibreOffice.app/Contents/MacOS/soffice", "--headless", "--convert-to", "pdf:writer_pdf_Export", "--outdir", parentPath, url});
+                Process p = Runtime.getRuntime().exec(new String[]{"/Applications/LibreOffice.app/Contents/MacOS/soffice", "--headless", "--convert-to", "pdf:writer_pdf_Export:{\n" +
+"  \"SelectPdfVersion\":{\"type\":\"long\",\"value\":3}\n" +
+"}", "--outdir", parentPath, url});
+                
                 int exit = p.waitFor();
 
                 if (exit != 0) {

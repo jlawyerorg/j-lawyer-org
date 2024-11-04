@@ -808,7 +808,7 @@ public class FormsEndpointV1 implements FormsEndpointV1Local {
                 return res;
             }
 
-            if (formEntries.size() == 0) {
+            if (formEntries.isEmpty()) {
                 log.error("list of form entries to update must not be empty");
                 Response res = Response.serverError().build();
                 return res;

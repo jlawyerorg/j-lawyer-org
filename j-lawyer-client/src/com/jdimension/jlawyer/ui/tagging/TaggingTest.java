@@ -708,6 +708,16 @@ public class TaggingTest extends javax.swing.JFrame {
         ttb.setSize(ttb.getWidth(), ttb.getHeight()-18);
         this.tagPanel1.add(ttb);
         
+        MultiValueTag mvt=new MultiValueTag("Wert 1", new String []{"1", "2", "3", "4"});
+        this.tagPanel1.add(mvt);
+        
+        MultiValueTag mvt2=new MultiValueTag("Wert 2", new String []{"Entwurf", "Freigabe", "genehmigt", "abgelehnt"});
+        this.tagPanel1.add(mvt2);
+        
+        MultiValueTag mvt3=new MultiValueTag("Aktenstatus", new String []{"Übergabe/Versand Schadenakte", "Abgeschlossen SD", "Erfassung im Autohaus", "Bearbeitung SD", "Bearbeitung Rechtsanwalt", "Bearbeitung durch autoclaim", "Rückfrage SD an Autohaus", "Übergabe SD", "Fallübergabe Rechtsanwalt"});
+        this.tagPanel1.add(mvt3);
+        
+        
         this.tagPanel1.repaint();
     }
 
@@ -734,7 +744,7 @@ public class TaggingTest extends javax.swing.JFrame {
             }
         });
 
-        tagToggleButton2.setText("ei verbibbsch!!!");
+        tagToggleButton2.setText("Mahlzeit");
         tagToggleButton2.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 tagToggleButton2ActionPerformed(evt);
@@ -759,7 +769,7 @@ public class TaggingTest extends javax.swing.JFrame {
                         .addComponent(tagToggleButton1, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                         .addComponent(tagToggleButton2, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 121, Short.MAX_VALUE)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 176, Short.MAX_VALUE)
                         .addComponent(jToggleButton1, javax.swing.GroupLayout.PREFERRED_SIZE, 142, javax.swing.GroupLayout.PREFERRED_SIZE))
                     .addComponent(jScrollPane1))
                 .addContainerGap())
@@ -809,11 +819,8 @@ public class TaggingTest extends javax.swing.JFrame {
         /*
          * Create and display the form
          */
-        java.awt.EventQueue.invokeLater(new Runnable() {
-
-            public void run() {
-                new TaggingTest().setVisible(true);
-            }
+        java.awt.EventQueue.invokeLater(() -> {
+            new TaggingTest().setVisible(true);
         });
     }
     // Variables declaration - do not modify//GEN-BEGIN:variables

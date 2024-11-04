@@ -669,6 +669,7 @@ import com.jdimension.jlawyer.client.settings.ClientSettings;
 import com.jdimension.jlawyer.client.settings.ServerSettings;
 import com.jdimension.jlawyer.client.settings.UserSettings;
 import com.jdimension.jlawyer.client.utils.FrameUtils;
+import com.jdimension.jlawyer.client.utils.StringUtils;
 import com.jdimension.jlawyer.persistence.AppUserBean;
 import com.jdimension.jlawyer.services.JLawyerServiceLocator;
 import com.jdimension.jlawyer.services.SystemManagementRemote;
@@ -741,7 +742,31 @@ public class UserProfileDialog extends javax.swing.JDialog {
             "Mitarbeiter-Icons-22.png",
             "Mitarbeiter-Icons-23.png",
             "Mitarbeiter-Icons-24.png",
-            "Mitarbeiter-Icons-25.png"
+            "Mitarbeiter-Icons-25.png",
+            "MA1.png",
+            "MA2.png",
+            "MA3.png",
+            "MA4.png",
+            "MA5.png",
+            "MA6.png",
+            "MA7.png",
+            "MA8.png",
+            "MA9.png",
+            "MA10.png",
+            "MA11.png",
+            "MA12.png",
+            "MA13.png",
+            "MA14.png",
+            "MA15.png",
+            "MA16.png",
+            "MA17.png",
+            "MA18.png",
+            "MA19.png",
+            "MA20.png",
+            "MA21.png",
+            "MA22.png",
+            "MA23.png",
+            "MA24.png"
 
         };
 
@@ -785,7 +810,31 @@ public class UserProfileDialog extends javax.swing.JDialog {
                     new ImageIcon(getClass().getResource("/avatar32/Mitarbeiter-Icons-22.png")),
                     new ImageIcon(getClass().getResource("/avatar32/Mitarbeiter-Icons-23.png")),
                     new ImageIcon(getClass().getResource("/avatar32/Mitarbeiter-Icons-24.png")),
-                    new ImageIcon(getClass().getResource("/avatar32/Mitarbeiter-Icons-25.png"))
+                    new ImageIcon(getClass().getResource("/avatar32/Mitarbeiter-Icons-25.png")),
+                    new ImageIcon(getClass().getResource("/avatar32/MA1.png")),
+                    new ImageIcon(getClass().getResource("/avatar32/MA2.png")),
+                    new ImageIcon(getClass().getResource("/avatar32/MA3.png")),
+                    new ImageIcon(getClass().getResource("/avatar32/MA4.png")),
+                    new ImageIcon(getClass().getResource("/avatar32/MA5.png")),
+                    new ImageIcon(getClass().getResource("/avatar32/MA6.png")),
+                    new ImageIcon(getClass().getResource("/avatar32/MA7.png")),
+                    new ImageIcon(getClass().getResource("/avatar32/MA8.png")),
+                    new ImageIcon(getClass().getResource("/avatar32/MA9.png")),
+                    new ImageIcon(getClass().getResource("/avatar32/MA10.png")),
+                    new ImageIcon(getClass().getResource("/avatar32/MA11.png")),
+                    new ImageIcon(getClass().getResource("/avatar32/MA12.png")),
+                    new ImageIcon(getClass().getResource("/avatar32/MA13.png")),
+                    new ImageIcon(getClass().getResource("/avatar32/MA14.png")),
+                    new ImageIcon(getClass().getResource("/avatar32/MA15.png")),
+                    new ImageIcon(getClass().getResource("/avatar32/MA16.png")),
+                    new ImageIcon(getClass().getResource("/avatar32/MA17.png")),
+                    new ImageIcon(getClass().getResource("/avatar32/MA18.png")),
+                    new ImageIcon(getClass().getResource("/avatar32/MA19.png")),
+                    new ImageIcon(getClass().getResource("/avatar32/MA20.png")),
+                    new ImageIcon(getClass().getResource("/avatar32/MA21.png")),
+                    new ImageIcon(getClass().getResource("/avatar32/MA22.png")),
+                    new ImageIcon(getClass().getResource("/avatar32/MA23.png")),
+                    new ImageIcon(getClass().getResource("/avatar32/MA24.png"))
 
                 };
         this.cmbAvatar.setModel(new DefaultComboBoxModel(items));
@@ -824,6 +873,26 @@ public class UserProfileDialog extends javax.swing.JDialog {
         } else {
             this.lblGroup.setText("");
         }
+        
+        String email=cu.getEmail();
+        if(StringUtils.isEmpty(email)) {
+            this.lblEmail.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/cancel.png")));
+            this.lblEmail.setText("Es ist keine E-Mail-Adresse in der Nutzerverwaltung hinterlegt");
+        } else {
+            this.lblEmail.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/agt_action_success.png")));
+            this.lblEmail.setText("Versand erfolgt an: " + cu.getEmail());
+        }
+        
+        UserSettings uset=UserSettings.getInstance();
+        this.chkEventCalendarEntry.setSelected(uset.getSettingAsBoolean(UserSettings.NOTIFICATION_EVENT_CALENDARENTRY, true));
+        this.chkEventCalendarEntryReminder.setSelected(uset.getSettingAsBoolean(UserSettings.NOTIFICATION_EVENT_CALENDARENTRY_REMINDER, true));
+        this.chkEventInstantMessage.setSelected(uset.getSettingAsBoolean(UserSettings.NOTIFICATION_EVENT_INSTANTMESSAGEMENTION, true));
+        this.chkEventInstantMessageDone.setSelected(uset.getSettingAsBoolean(UserSettings.NOTIFICATION_EVENT_INSTANTMESSAGEMENTION_DONE, true));
+        this.chkEventInvoiceDue.setSelected(uset.getSettingAsBoolean(UserSettings.NOTIFICATION_EVENT_INVOICE_DUE, true));
+        this.chkScheduledDailyAgenda.setSelected(uset.getSettingAsBoolean(UserSettings.NOTIFICATION_SCHEDULED_DAILY_AGENDA, true));
+        this.chkScheduledWeeklyDigest.setSelected(uset.getSettingAsBoolean(UserSettings.NOTIFICATION_SCHEDULED_WEEKLY_DIGEST, true));
+        
+        this.chkWarnOnUnknownSenders.setSelected(uset.getSettingAsBoolean(UserSettings.CONF_MAIL_WARNSENDERUNKNOWN, true));
 
     }
 
@@ -838,6 +907,7 @@ public class UserProfileDialog extends javax.swing.JDialog {
 
         cmdClose = new javax.swing.JButton();
         cmdSave = new javax.swing.JButton();
+        jTabbedPane1 = new javax.swing.JTabbedPane();
         jPanel1 = new javax.swing.JPanel();
         jLabel16 = new javax.swing.JLabel();
         cmbAvatar = new javax.swing.JComboBox();
@@ -847,6 +917,19 @@ public class UserProfileDialog extends javax.swing.JDialog {
         lblAbbreviation = new javax.swing.JLabel();
         jLabel2 = new javax.swing.JLabel();
         cmdChangePassword = new javax.swing.JButton();
+        jPanel2 = new javax.swing.JPanel();
+        lblEmail = new javax.swing.JLabel();
+        jLabel4 = new javax.swing.JLabel();
+        chkEventInstantMessage = new javax.swing.JCheckBox();
+        chkEventCalendarEntry = new javax.swing.JCheckBox();
+        chkEventCalendarEntryReminder = new javax.swing.JCheckBox();
+        chkEventInvoiceDue = new javax.swing.JCheckBox();
+        jLabel5 = new javax.swing.JLabel();
+        chkScheduledDailyAgenda = new javax.swing.JCheckBox();
+        chkScheduledWeeklyDigest = new javax.swing.JCheckBox();
+        chkEventInstantMessageDone = new javax.swing.JCheckBox();
+        jPanel3 = new javax.swing.JPanel();
+        chkWarnOnUnknownSenders = new javax.swing.JCheckBox();
 
         setDefaultCloseOperation(javax.swing.WindowConstants.DISPOSE_ON_CLOSE);
         java.util.ResourceBundle bundle = java.util.ResourceBundle.getBundle("com/jdimension/jlawyer/client/configuration/UserProfileDialog"); // NOI18N
@@ -868,8 +951,6 @@ public class UserProfileDialog extends javax.swing.JDialog {
             }
         });
 
-        java.util.ResourceBundle bundle1 = java.util.ResourceBundle.getBundle("com/jdimension/jlawyer/client/JKanzleiGUI"); // NOI18N
-        jPanel1.setBorder(javax.swing.BorderFactory.createTitledBorder(bundle1.getString("menu.settings.userprofile"))); // NOI18N
         jPanel1.setName(""); // NOI18N
 
         jLabel16.setText(bundle.getString("label.avatar")); // NOI18N
@@ -907,14 +988,11 @@ public class UserProfileDialog extends javax.swing.JDialog {
                     .addComponent(jLabel2))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addComponent(cmbAvatar, 0, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                    .addGroup(jPanel1Layout.createSequentialGroup()
-                        .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                            .addComponent(cmdChangePassword)
-                            .addComponent(lblAbbreviation)
-                            .addComponent(lblGroup))
-                        .addGap(0, 0, Short.MAX_VALUE)))
-                .addContainerGap())
+                    .addComponent(cmdChangePassword)
+                    .addComponent(lblAbbreviation)
+                    .addComponent(lblGroup)
+                    .addComponent(cmbAvatar, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
+                .addContainerGap(497, Short.MAX_VALUE))
         );
         jPanel1Layout.setVerticalGroup(
             jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
@@ -935,30 +1013,124 @@ public class UserProfileDialog extends javax.swing.JDialog {
                 .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                     .addComponent(jLabel2)
                     .addComponent(cmdChangePassword))
-                .addContainerGap(30, Short.MAX_VALUE))
+                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
         );
+
+        jTabbedPane1.addTab("Nutzerprofil", jPanel1);
+
+        lblEmail.setText("test@test.com");
+
+        jLabel4.setText("Benachrichtigung senden wenn");
+
+        chkEventInstantMessage.setText("ich in einer Sofortnachricht erwähnt wurde");
+
+        chkEventCalendarEntry.setText("ein Kalendereintrag für mich erstellt oder geändert wurde");
+
+        chkEventCalendarEntryReminder.setText("einer meiner Termine in Kürze beginnt");
+        chkEventCalendarEntryReminder.setEnabled(false);
+
+        chkEventInvoiceDue.setText("eine Rechnung in einer meiner Akten fällig ist");
+
+        jLabel5.setText("Regelmäßige Informationen senden");
+
+        chkScheduledDailyAgenda.setText("tägliche Agenda");
+        chkScheduledDailyAgenda.setEnabled(false);
+
+        chkScheduledWeeklyDigest.setText("Wochenzusammenfassung");
+        chkScheduledWeeklyDigest.setEnabled(false);
+
+        chkEventInstantMessageDone.setText("eine von mir gesendete Sofortnachricht als erledigt markiert wurde");
+
+        javax.swing.GroupLayout jPanel2Layout = new javax.swing.GroupLayout(jPanel2);
+        jPanel2.setLayout(jPanel2Layout);
+        jPanel2Layout.setHorizontalGroup(
+            jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(jPanel2Layout.createSequentialGroup()
+                .addContainerGap()
+                .addGroup(jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addComponent(lblEmail)
+                    .addComponent(jLabel4)
+                    .addComponent(chkEventInstantMessage)
+                    .addComponent(chkEventCalendarEntry)
+                    .addComponent(chkEventCalendarEntryReminder)
+                    .addComponent(chkEventInvoiceDue)
+                    .addComponent(jLabel5)
+                    .addComponent(chkScheduledDailyAgenda)
+                    .addComponent(chkScheduledWeeklyDigest)
+                    .addComponent(chkEventInstantMessageDone))
+                .addContainerGap(169, Short.MAX_VALUE))
+        );
+        jPanel2Layout.setVerticalGroup(
+            jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(jPanel2Layout.createSequentialGroup()
+                .addContainerGap()
+                .addComponent(lblEmail)
+                .addGap(18, 18, 18)
+                .addComponent(jLabel4)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addComponent(chkEventInstantMessage)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addComponent(chkEventInstantMessageDone)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addComponent(chkEventCalendarEntry)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addComponent(chkEventCalendarEntryReminder)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addComponent(chkEventInvoiceDue)
+                .addGap(18, 18, 18)
+                .addComponent(jLabel5)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addComponent(chkScheduledDailyAgenda)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addComponent(chkScheduledWeeklyDigest)
+                .addContainerGap(143, Short.MAX_VALUE))
+        );
+
+        jTabbedPane1.addTab("Benachrichtigungen", jPanel2);
+
+        chkWarnOnUnknownSenders.setSelected(true);
+        chkWarnOnUnknownSenders.setText("vor dem Öffnen von E-Mails unbekannter Absender warnen");
+
+        javax.swing.GroupLayout jPanel3Layout = new javax.swing.GroupLayout(jPanel3);
+        jPanel3.setLayout(jPanel3Layout);
+        jPanel3Layout.setHorizontalGroup(
+            jPanel3Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(jPanel3Layout.createSequentialGroup()
+                .addContainerGap()
+                .addComponent(chkWarnOnUnknownSenders)
+                .addContainerGap(237, Short.MAX_VALUE))
+        );
+        jPanel3Layout.setVerticalGroup(
+            jPanel3Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(jPanel3Layout.createSequentialGroup()
+                .addContainerGap()
+                .addComponent(chkWarnOnUnknownSenders)
+                .addContainerGap(437, Short.MAX_VALUE))
+        );
+
+        jTabbedPane1.addTab("Sicherheit", jPanel3);
 
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(getContentPane());
         getContentPane().setLayout(layout);
         layout.setHorizontalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
+            .addGroup(layout.createSequentialGroup()
                 .addContainerGap()
-                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
-                    .addComponent(jPanel1, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                    .addGroup(layout.createSequentialGroup()
-                        .addGap(0, 157, Short.MAX_VALUE)
+                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
+                        .addGap(0, 0, Short.MAX_VALUE)
                         .addComponent(cmdSave)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addComponent(cmdClose)))
+                        .addComponent(cmdClose))
+                    .addComponent(jTabbedPane1))
                 .addContainerGap())
         );
         layout.setVerticalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
                 .addContainerGap()
-                .addComponent(jPanel1, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                .addComponent(jTabbedPane1, javax.swing.GroupLayout.PREFERRED_SIZE, 513, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                     .addComponent(cmdClose)
                     .addComponent(cmdSave))
@@ -973,7 +1145,17 @@ public class UserProfileDialog extends javax.swing.JDialog {
         UserSettings settings = UserSettings.getInstance();
         String avatar = this.names[this.cmbAvatar.getSelectedIndex()].toString();
         settings.setSetting(UserSettings.USER_AVATAR, avatar);
-
+        
+        settings.setSettingAsBoolean(UserSettings.NOTIFICATION_EVENT_CALENDARENTRY, this.chkEventCalendarEntry.isSelected());
+        settings.setSettingAsBoolean(UserSettings.NOTIFICATION_EVENT_CALENDARENTRY_REMINDER, this.chkEventCalendarEntryReminder.isSelected());
+        settings.setSettingAsBoolean(UserSettings.NOTIFICATION_EVENT_INSTANTMESSAGEMENTION, this.chkEventInstantMessage.isSelected());
+        settings.setSettingAsBoolean(UserSettings.NOTIFICATION_EVENT_INSTANTMESSAGEMENTION_DONE, this.chkEventInstantMessageDone.isSelected());
+        settings.setSettingAsBoolean(UserSettings.NOTIFICATION_EVENT_INVOICE_DUE, this.chkEventInvoiceDue.isSelected());
+        settings.setSettingAsBoolean(UserSettings.NOTIFICATION_SCHEDULED_DAILY_AGENDA, this.chkScheduledDailyAgenda.isSelected());
+        settings.setSettingAsBoolean(UserSettings.NOTIFICATION_SCHEDULED_WEEKLY_DIGEST, this.chkScheduledWeeklyDigest.isSelected());
+        
+        settings.setSettingAsBoolean(UserSettings.CONF_MAIL_WARNSENDERUNKNOWN, this.chkWarnOnUnknownSenders.isSelected());
+        
         try {
             Object desktop = EditorsRegistry.getInstance().getEditor(DesktopPanel.class.getName());
             ((DesktopPanel) desktop).updateUserIcon();
@@ -1072,6 +1254,14 @@ public class UserProfileDialog extends javax.swing.JDialog {
         });
     }
     // Variables declaration - do not modify//GEN-BEGIN:variables
+    private javax.swing.JCheckBox chkEventCalendarEntry;
+    private javax.swing.JCheckBox chkEventCalendarEntryReminder;
+    private javax.swing.JCheckBox chkEventInstantMessage;
+    private javax.swing.JCheckBox chkEventInstantMessageDone;
+    private javax.swing.JCheckBox chkEventInvoiceDue;
+    private javax.swing.JCheckBox chkScheduledDailyAgenda;
+    private javax.swing.JCheckBox chkScheduledWeeklyDigest;
+    private javax.swing.JCheckBox chkWarnOnUnknownSenders;
     private javax.swing.JComboBox cmbAvatar;
     private javax.swing.JButton cmdChangePassword;
     private javax.swing.JButton cmdClose;
@@ -1080,8 +1270,14 @@ public class UserProfileDialog extends javax.swing.JDialog {
     private javax.swing.JLabel jLabel16;
     private javax.swing.JLabel jLabel2;
     private javax.swing.JLabel jLabel3;
+    private javax.swing.JLabel jLabel4;
+    private javax.swing.JLabel jLabel5;
     private javax.swing.JPanel jPanel1;
+    private javax.swing.JPanel jPanel2;
+    private javax.swing.JPanel jPanel3;
+    private javax.swing.JTabbedPane jTabbedPane1;
     private javax.swing.JLabel lblAbbreviation;
+    private javax.swing.JLabel lblEmail;
     private javax.swing.JLabel lblGroup;
     // End of variables declaration//GEN-END:variables
 }

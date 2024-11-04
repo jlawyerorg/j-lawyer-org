@@ -666,12 +666,13 @@ package org.jlawyer.io.rest.v7;
 import com.jdimension.jlawyer.persistence.AppOptionGroupBean;
 import com.jdimension.jlawyer.services.SystemManagementLocal;
 import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
+import javax.annotation.security.RolesAllowed;
 import javax.ejb.Stateless;
 import javax.naming.InitialContext;
 import javax.ws.rs.Consumes;
+import javax.ws.rs.DELETE;
 import javax.ws.rs.GET;
+import javax.ws.rs.PUT;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
@@ -689,30 +690,26 @@ import org.jlawyer.io.rest.v7.pojo.RestfulOptionV7;
 @Consumes({"application/json"})
 @Produces({"application/json"})
 public class ConfigurationEndpointV7 implements ConfigurationEndpointLocalV7 {
-    
+
     private static final Logger log = Logger.getLogger(ConfigurationEndpointV7.class.getName());
+    
+    private static final String LOOKUP_SYSMAN="java:global/j-lawyer-server/j-lawyer-server-ejb/SystemManagement!com.jdimension.jlawyer.services.SystemManagementLocal";
 
     /**
-     * Returns all option groups available in the system who have at least one value configured.Some important option groups are:
-   address.country: all countries
-   address.degreeprefix: all degrees appearing before the name
-   address.degreesuffix: all degrees appearing after the name
-   address.profession: all professions
-   address.role: all roles, such as "CEO" etc.
-     * archiveFile.subjectField: all subject fields for cases
-   address.salutation: 
-   archiveFile.tags: all tags that can be attached to a case
-   address.tags: all tags that can be attached to an address
-   document.tags: all tags that can be attached to a document
-   address.title: 
-   archiveFile.reviewReason: all descriptions of calendar entries
-   timesheet.intervalminutes: all intervals usable for timesheets, in minutes
-   address.titleinaddress: 
-   address.complimentaryclose: 
-   address.legalform: all types of legal entities
-   address.nationality: all nationalities
-   invoice.currency: all currencies
-   invoice.taxrates: all tax rates as decimal numbers
+     * Returns all option groups available in the system who have at least one
+     * value configured.Some important option groups are: address.country: all
+     * countries address.degreeprefix: all degrees appearing before the name
+     * address.degreesuffix: all degrees appearing after the name
+     * address.profession: all professions address.role: all roles, such as
+     * "CEO" etc. archiveFile.subjectField: all subject fields for cases
+     * address.salutation: archiveFile.tags: all tags that can be attached to a
+     * case address.tags: all tags that can be attached to an address
+     * document.tags: all tags that can be attached to a document address.title:
+     * timesheet.intervalminutes: all intervals usable for timesheets, in
+     * minutes address.titleinaddress: address.complimentaryclose:
+     * address.legalform: all types of legal entities address.nationality: all
+     * nationalities invoice.currency: all currencies invoice.taxrates: all tax
+     * rates as decimal numbers
      *
      * @return a list of option groups as a string array
      * @response 401 User not authorized
@@ -721,47 +718,46 @@ public class ConfigurationEndpointV7 implements ConfigurationEndpointLocalV7 {
     @Override
     @Path("/optiongroups/list")
     @GET
-    @Produces(MediaType.APPLICATION_JSON+";charset=utf-8")
+    @Produces(MediaType.APPLICATION_JSON + ";charset=utf-8")
     public Response getOptionGroups() {
 
         try {
 
             InitialContext ic = new InitialContext();
-            SystemManagementLocal system = (SystemManagementLocal) ic.lookup("java:global/j-lawyer-server/j-lawyer-server-ejb/SystemManagement!com.jdimension.jlawyer.services.SystemManagementLocal");
-            ArrayList<String> allGroups=new ArrayList<>();
+            SystemManagementLocal system = (SystemManagementLocal) ic.lookup(LOOKUP_SYSMAN);
+            ArrayList<String> allGroups = new ArrayList<>();
             allGroups.addAll(system.getAllOptionGroups());
             Response res = Response.ok(allGroups).build();
             return res;
         } catch (Exception ex) {
             log.error("can not determine available option groups", ex);
-            Response res = Response.serverError().build();
-            return res;
+            return Response.serverError().build();
         }
 
     }
-    
+
     /**
      * Returns all options for an option group.
      *
      * @param optiongroup
-     * @return 
+     * @return
      * @response 401 User not authorized
      * @response 403 User not authenticated
      */
     @Override
     @Path("/optiongroups/{optiongroup}")
     @GET
-    @Produces(MediaType.APPLICATION_JSON+";charset=utf-8")
+    @Produces(MediaType.APPLICATION_JSON + ";charset=utf-8")
     public Response getOptionGroup(@PathParam("optiongroup") String optiongroup) {
 
         try {
 
             InitialContext ic = new InitialContext();
-            SystemManagementLocal system = (SystemManagementLocal) ic.lookup("java:global/j-lawyer-server/j-lawyer-server-ejb/SystemManagement!com.jdimension.jlawyer.services.SystemManagementLocal");
-            AppOptionGroupBean[] group=system.getOptionGroup(optiongroup);
-            ArrayList<RestfulOptionV7> resultList=new ArrayList<>();
-            for(AppOptionGroupBean aog: group) {
-                RestfulOptionV7 o=new RestfulOptionV7();
+            SystemManagementLocal system = (SystemManagementLocal) ic.lookup(LOOKUP_SYSMAN);
+            AppOptionGroupBean[] group = system.getOptionGroup(optiongroup);
+            ArrayList<RestfulOptionV7> resultList = new ArrayList<>();
+            for (AppOptionGroupBean aog : group) {
+                RestfulOptionV7 o = new RestfulOptionV7();
                 o.setId(aog.getId());
                 o.setOptionGroup(aog.getOptionGroup());
                 o.setValue(aog.getValue());
@@ -771,8 +767,125 @@ public class ConfigurationEndpointV7 implements ConfigurationEndpointLocalV7 {
             return res;
         } catch (Exception ex) {
             log.error("can not determine values for option group " + optiongroup, ex);
-            Response res = Response.serverError().build();
-            return res;
+            return Response.serverError().build();
+        }
+
+    }
+
+    /**
+     * Creates a new option within an existing option group. An ID supplied by
+     * the caller will be ignored.
+     *
+     * @param option
+     * @return
+     * @response 401 User not authorized
+     * @response 403 User not authenticated
+     */
+    @Override
+    @PUT
+    @Produces(MediaType.APPLICATION_JSON + ";charset=utf-8")
+    @Path("/options/create")
+    @RolesAllowed({"createOptionGroupRole"})
+    public Response createOption(RestfulOptionV7 option) {
+
+        try {
+
+            InitialContext ic = new InitialContext();
+            SystemManagementLocal system = (SystemManagementLocal) ic.lookup(LOOKUP_SYSMAN);
+            AppOptionGroupBean[] group = system.getOptionGroup(option.getOptionGroup());
+            for (AppOptionGroupBean aog : group) {
+                if (aog.getOptionGroup().equals(option.getOptionGroup()) && aog.getValue().equals(option.getValue())) {
+                    RestfulOptionV7 o = new RestfulOptionV7();
+                    o.setId(aog.getId());
+                    o.setOptionGroup(aog.getOptionGroup());
+                    o.setValue(aog.getValue());
+                    return Response.ok(o).build();
+                }
+            }
+            // create
+            AppOptionGroupBean newOption = new AppOptionGroupBean();
+            newOption.setOptionGroup(option.getOptionGroup());
+            newOption.setValue(option.getValue());
+            newOption = system.createOptionGroup(newOption);
+            RestfulOptionV7 o = new RestfulOptionV7();
+            o.setId(newOption.getId());
+            o.setOptionGroup(newOption.getOptionGroup());
+            o.setValue(newOption.getValue());
+            return Response.ok(o).build();
+        } catch (Exception ex) {
+            log.error("can not create option " + option.getValue() + " for option group " + option.getOptionGroup(), ex);
+            return Response.serverError().build();
+        }
+
+    }
+    
+    /**
+     * Creates a new option within an existing option group. An ID supplied by
+     * the caller will be ignored.
+     *
+     * @param option
+     * @return
+     * @response 401 User not authorized
+     * @response 403 User not authenticated
+     * @response 404 option not found
+     */
+    @Override
+    @DELETE
+    @Produces(MediaType.APPLICATION_JSON + ";charset=utf-8")
+    @Path("/options/delete")
+    @RolesAllowed({"deleteOptionGroupRole"})
+    public Response deleteOption(RestfulOptionV7 option) {
+
+        try {
+
+            InitialContext ic = new InitialContext();
+            SystemManagementLocal system = (SystemManagementLocal) ic.lookup(LOOKUP_SYSMAN);
+            AppOptionGroupBean[] group = system.getOptionGroup(option.getOptionGroup());
+            for (AppOptionGroupBean aog : group) {
+                if (aog.getId().equals(option.getId())) {
+                    system.removeOptionGroup(aog.getId());
+                    return Response.ok().build();
+                }
+            }
+            return Response.status(Response.Status.NOT_FOUND).build();
+        } catch (Exception ex) {
+            log.error("can not remove option " + option.getValue() + " from option group " + option.getOptionGroup(), ex);
+            return Response.serverError().build();
+        }
+
+    }
+    
+    /**
+     * Renames an existing option. This will only impact master data, e.g. it will not rename tags attached to a case / address / document. A client is supposed to submit an option that can be found by its ID. Other attributes (such as the name) will be updated.
+     *
+     * @param option
+     * @return
+     * @response 401 User not authorized
+     * @response 403 User not authenticated
+     * @response 404 option not found
+     */
+    @Override
+    @PUT
+    @Produces(MediaType.APPLICATION_JSON + ";charset=utf-8")
+    @Path("/options/update")
+    @RolesAllowed({"createOptionGroupRole"})
+    public Response renameOption(RestfulOptionV7 option) {
+
+        try {
+
+            InitialContext ic = new InitialContext();
+            SystemManagementLocal system = (SystemManagementLocal) ic.lookup(LOOKUP_SYSMAN);
+            AppOptionGroupBean[] group = system.getOptionGroup(option.getOptionGroup());
+            for (AppOptionGroupBean aog : group) {
+                if (aog.getId().equals(option.getId())) {
+                    system.removeOptionGroup(aog.getId());
+                    return this.createOption(option);
+                }
+            }
+            return Response.status(Response.Status.NOT_FOUND).build();
+        } catch (Exception ex) {
+            log.error("can not update option " + option.getValue() + " for option group " + option.getOptionGroup(), ex);
+            return Response.serverError().build();
         }
 
     }

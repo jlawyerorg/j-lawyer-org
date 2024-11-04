@@ -775,7 +775,6 @@ public class FinalReviewFreeTextStep extends javax.swing.JPanel implements Wizar
     @Override
     public void display() {
         this.taSummary.setText("");
-//        this.taLog.setText("");
         
         String lBreak=System.getProperty("line.separator");
         this.taSummary.append("Übermittelt werden folgende Daten:");
@@ -828,17 +827,15 @@ public class FinalReviewFreeTextStep extends javax.swing.JPanel implements Wizar
         this.taSummary.append(lBreak);
         this.taSummary.append(lBreak);
         
-        
-        
-        
-        
-        
-        
-        return;
     }
 
     @Override
     public void setData(WizardDataContainer data) {
         this.data=data;
+    }
+
+    @Override
+    public void setWizardPanel(WizardMainPanel wizard) {
+        
     }
 }

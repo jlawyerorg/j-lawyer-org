@@ -702,7 +702,12 @@ import javax.xml.bind.annotation.XmlTransient;
     @NamedQuery(name = "AddressBean.findByBankAccount", query = "SELECT a FROM AddressBean a WHERE a.bankAccount = :bankAccount"),
     @NamedQuery(name = "AddressBean.findByEmail", query = "SELECT a FROM AddressBean a WHERE a.email = :email"),
     @NamedQuery(name = "AddressBean.findByWebsite", query = "SELECT a FROM AddressBean a WHERE a.website = :website"),
-    @NamedQuery(name = "AddressBean.findByExternalId", query = "SELECT a FROM AddressBean a WHERE a.externalId = :externalId"),
+    @NamedQuery(name = "AddressBean.findByExternalId", query = "SELECT a FROM AddressBean a WHERE a.externalId1 = :externalId1 OR a.externalId2 = :externalId2 OR a.externalId3 = :externalId3 OR a.externalId4 = :externalId4 OR a.externalId5 = :externalId5"),
+    @NamedQuery(name = "AddressBean.findByExternalId1", query = "SELECT a FROM AddressBean a WHERE a.externalId1 = :externalId1"),
+    @NamedQuery(name = "AddressBean.findByExternalId2", query = "SELECT a FROM AddressBean a WHERE a.externalId2 = :externalId2"),
+    @NamedQuery(name = "AddressBean.findByExternalId3", query = "SELECT a FROM AddressBean a WHERE a.externalId3 = :externalId3"),
+    @NamedQuery(name = "AddressBean.findByExternalId4", query = "SELECT a FROM AddressBean a WHERE a.externalId4 = :externalId4"),
+    @NamedQuery(name = "AddressBean.findByExternalId5", query = "SELECT a FROM AddressBean a WHERE a.externalId5 = :externalId5"),
     @NamedQuery(name = "AddressBean.findByCreator", query = "SELECT a FROM AddressBean a WHERE a.creator = :creator"),
     @NamedQuery(name = "AddressBean.findByLastModifier", query = "SELECT a FROM AddressBean a WHERE a.lastModifier = :lastModifier"),
     @NamedQuery(name = "AddressBean.findByCreationDate", query = "SELECT a FROM AddressBean a WHERE a.creationDate = :creationDate"),
@@ -726,6 +731,8 @@ public class AddressBean implements Serializable {
     private String id;
     @Column(name = "firstName")
     private String firstName;
+    @Column(name = "firstName2")
+    private String firstName2;
     @Column(name = "name")
     private String name;
     @Column(name = "company")
@@ -733,16 +740,16 @@ public class AddressBean implements Serializable {
     @Column(name = "department")
     private String department;
     @Basic(optional = false)
-    @Column(name = "legalProtection", columnDefinition = "TINYINT NOT NULL")
-    private short legalProtection;
+    @Column(name = "legalProtection")
+    private boolean legalProtection;
     @Column(name = "insuranceNumber")
     private String insuranceNumber;
     @Column(name = "insuranceName")
     private String insuranceName;
     
     @Basic(optional = false)
-    @Column(name = "trafficLegalProtection", columnDefinition = "TINYINT NOT NULL")
-    private short trafficLegalProtection;
+    @Column(name = "trafficLegalProtection")
+    private boolean trafficLegalProtection;
     @Column(name = "trafficInsuranceNumber")
     private String trafficInsuranceNumber;
     @Column(name = "trafficInsuranceName")
@@ -779,6 +786,15 @@ public class AddressBean implements Serializable {
     private String bankCode;
     @Column(name = "bankAccount")
     private String bankAccount;
+    
+    @Column(name = "sepa_reference")
+    private String sepaReference;
+    @Column(name = "sepa_since")
+    private String sepaSince;
+    
+    @Column(name = "leitweg_id")
+    private String leitwegId;
+    
     @Column(name = "email")
     private String email;
     @Column(name = "website")
@@ -854,8 +870,20 @@ public class AddressBean implements Serializable {
     @Column(name = "default_role")
     protected String defaultRole;
     
-    @Column(name = "ext_id")
-    protected String externalId;
+    @Column(name = "ext_id_1")
+    protected String externalId1;
+    
+    @Column(name = "ext_id_2")
+    private String externalId2;
+    
+    @Column(name = "ext_id_3")
+    private String externalId3;
+    
+    @Column(name = "ext_id_4")
+    private String externalId4;
+    
+    @Column(name = "ext_id_5")
+    private String externalId5;
 
     public AddressBean() {
     }
@@ -864,7 +892,7 @@ public class AddressBean implements Serializable {
         this.id = id;
     }
 
-    public AddressBean(String id, short legalProtection) {
+    public AddressBean(String id, boolean legalProtection) {
         this.id = id;
         this.legalProtection = legalProtection;
     }
@@ -925,40 +953,12 @@ public class AddressBean implements Serializable {
         this.company = company;
     }
 
-    public short getLegalProtection() {
+    public boolean isLegalProtection() {
         return legalProtection;
     }
     
-    public boolean getLegalProtectionBoolean() {
-        if(legalProtection==0) {
-            return false;
-        }
-        return true;
-    }
-    
-    public boolean getTrafficLegalProtectionBoolean() {
-        if(trafficLegalProtection==0) {
-            return false;
-        }
-        return true;
-    }
-
-    public void setLegalProtection(short legalProtection) {
+    public void setLegalProtection(boolean legalProtection) {
         this.legalProtection = legalProtection;
-    }
-    
-    public void setLegalProtectionBoolean(boolean legalP) {
-        if(legalP)
-            this.legalProtection=1;
-        else
-            this.legalProtection=0;
-    }
-    
-    public void setTrafficLegalProtectionBoolean(boolean legalP) {
-        if(legalP)
-            this.trafficLegalProtection=1;
-        else
-            this.trafficLegalProtection=0;
     }
 
     public String getInsuranceNumber() {
@@ -1148,7 +1148,14 @@ public class AddressBean implements Serializable {
     }
     
     public String toShortHtml() {
-        String toolTip = "<html>";
+        return toShortHtml(true);
+    }
+    
+    public String toShortHtml(boolean includeHtmlRootTag) {
+        String toolTip = "";
+        if(includeHtmlRootTag) {
+            toolTip = "<html>";
+        }
         if (getName() != null && !("".equals(getName()))) {
             toolTip = toolTip + "<b>Name:</b> " + getName() + "<br>";
         }
@@ -1175,7 +1182,10 @@ public class AddressBean implements Serializable {
             toolTip = toolTip + "<b>Mobil:</b> " + getMobile() + "<br>";
         }
 
-        toolTip = toolTip + "</html>";
+        if(includeHtmlRootTag) {
+            toolTip = toolTip + "</html>";
+        }
+        
         return toolTip;
     }
     
@@ -1229,14 +1239,14 @@ public class AddressBean implements Serializable {
     /**
      * @return the trafficLegalProtection
      */
-    public short getTrafficLegalProtection() {
+    public boolean isTrafficLegalProtection() {
         return trafficLegalProtection;
     }
 
     /**
      * @param trafficLegalProtection the trafficLegalProtection to set
      */
-    public void setTrafficLegalProtection(short trafficLegalProtection) {
+    public void setTrafficLegalProtection(boolean trafficLegalProtection) {
         this.trafficLegalProtection = trafficLegalProtection;
     }
 
@@ -1726,17 +1736,129 @@ public class AddressBean implements Serializable {
     }
 
     /**
-     * @return the externalId
+     * @return the externalId1
      */
-    public String getExternalId() {
-        return externalId;
+    public String getExternalId1() {
+        return externalId1;
     }
 
     /**
      * @param externalId the externalId to set
      */
-    public void setExternalId(String externalId) {
-        this.externalId = externalId;
+    public void setExternalId1(String externalId) {
+        this.externalId1 = externalId;
+    }
+
+    /**
+     * @return the firstName2
+     */
+    public String getFirstName2() {
+        return firstName2;
+    }
+
+    /**
+     * @param firstName2 the firstName2 to set
+     */
+    public void setFirstName2(String firstName2) {
+        this.firstName2 = firstName2;
+    }
+
+    /**
+     * @return the externalId2
+     */
+    public String getExternalId2() {
+        return externalId2;
+    }
+
+    /**
+     * @param externalId2 the externalId2 to set
+     */
+    public void setExternalId2(String externalId2) {
+        this.externalId2 = externalId2;
+    }
+
+    /**
+     * @return the externalId3
+     */
+    public String getExternalId3() {
+        return externalId3;
+    }
+
+    /**
+     * @param externalId3 the externalId3 to set
+     */
+    public void setExternalId3(String externalId3) {
+        this.externalId3 = externalId3;
+    }
+
+    /**
+     * @return the externalId4
+     */
+    public String getExternalId4() {
+        return externalId4;
+    }
+
+    /**
+     * @param externalId4 the externalId4 to set
+     */
+    public void setExternalId4(String externalId4) {
+        this.externalId4 = externalId4;
+    }
+
+    /**
+     * @return the externalId5
+     */
+    public String getExternalId5() {
+        return externalId5;
+    }
+
+    /**
+     * @param externalId5 the externalId5 to set
+     */
+    public void setExternalId5(String externalId5) {
+        this.externalId5 = externalId5;
+    }
+
+    /**
+     * @return the sepaReference
+     */
+    public String getSepaReference() {
+        return sepaReference;
+    }
+
+    /**
+     * @param sepaReference the sepaReference to set
+     */
+    public void setSepaReference(String sepaReference) {
+        this.sepaReference = sepaReference;
+    }
+
+    /**
+     * @return the sepaSince
+     */
+    public String getSepaSince() {
+        return sepaSince;
+    }
+
+    /**
+     * @param sepaSince the sepaSince to set
+     */
+    public void setSepaSince(String sepaSince) {
+        this.sepaSince = sepaSince;
+    }
+
+    /**
+     * @return the leitwegId
+     */
+    public String getLeitwegId() {
+        return leitwegId;
+    }
+
+    /**
+     * @param leitwegId the leitwegId to set
+     */
+    public void setLeitwegId(String leitwegId) {
+        this.leitwegId = leitwegId;
     }
     
 }

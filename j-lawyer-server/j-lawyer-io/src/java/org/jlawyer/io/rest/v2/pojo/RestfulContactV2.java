@@ -674,7 +674,12 @@ public class RestfulContactV2 {
     
     private String id=null;
     protected String externalId=null;
+    private String externalId2=null;
+    private String externalId3=null;
+    private String externalId4=null;
+    private String externalId5=null;
     private String firstName=null;
+    private String firstName2=null;
     private String name=null;
     private String company=null;
     private String department=null;
@@ -703,6 +708,9 @@ public class RestfulContactV2 {
     private String bankName=null;
     private String bankCode=null;
     private String bankAccount=null;
+    private String sepaReference=null;
+    private String sepaSince=null;
+    private String leitwegId=null;
     private String email=null;
     private String website=null;
     private String creator=null;
@@ -745,6 +753,9 @@ public class RestfulContactV2 {
         ad.setBankAccount(this.getBankAccount());
         ad.setBankCode(this.getBankCode());
         ad.setBankName(this.getBankName());
+        ad.setSepaReference(this.getSepaReference());
+        ad.setSepaSince(this.getSepaSince());
+        ad.setLeitwegId(this.getLeitwegId());
         ad.setBeaSafeId(this.getBeaSafeId());
         ad.setBirthDate(this.getBirthDate());
         ad.setCity(this.getCity());
@@ -760,12 +771,17 @@ public class RestfulContactV2 {
         ad.setEncryptionPwd(this.getEncryptionPwd());
         ad.setFax(this.getFax());
         ad.setFirstName(this.getFirstName());
+        ad.setFirstName2(this.getFirstName2());
         ad.setId(this.getId());
-        ad.setExternalId(this.getExternalId());
+        ad.setExternalId1(this.getExternalId());
+        ad.setExternalId2(this.getExternalId2());
+        ad.setExternalId3(this.getExternalId3());
+        ad.setExternalId4(this.getExternalId4());
+        ad.setExternalId5(this.getExternalId5());
         ad.setInsuranceName(this.getInsuranceName());
         ad.setInsuranceNumber(this.getInsuranceNumber());
         ad.setLastModifier(this.getLastModifier());
-        ad.setLegalProtection(this.getLegalProtection());
+        ad.setLegalProtection(this.getLegalProtection()==1);
         ad.setMobile(this.getMobile());
         ad.setModificationDate(this.getModificationDate());
         ad.setMotorInsuranceName(this.getMotorInsuranceName());
@@ -777,7 +793,7 @@ public class RestfulContactV2 {
         ad.setTitle(this.getTitle());
         ad.setTrafficInsuranceName(this.getTrafficInsuranceName());
         ad.setTrafficInsuranceNumber(this.getTrafficInsuranceNumber());
-        ad.setTrafficLegalProtection(this.getTrafficLegalProtection());
+        ad.setTrafficLegalProtection(this.getTrafficLegalProtection()==1);
         ad.setWebsite(this.getWebsite());
         ad.setZipCode(this.getZipCode());
         ad.setDistrict(this.getDistrict());
@@ -808,6 +824,9 @@ public class RestfulContactV2 {
         ad.setBankAccount(a.getBankAccount());
         ad.setBankCode(a.getBankCode());
         ad.setBankName(a.getBankName());
+        ad.setSepaReference(a.getSepaReference());
+        ad.setSepaSince(a.getSepaSince());
+        ad.setLeitwegId(a.getLeitwegId());
         ad.setBeaSafeId(a.getBeaSafeId());
         ad.setBirthDate(a.getBirthDate());
         ad.setCity(a.getCity());
@@ -823,12 +842,20 @@ public class RestfulContactV2 {
         ad.setEncryptionPwd(a.getEncryptionPwd());
         ad.setFax(a.getFax());
         ad.setFirstName(a.getFirstName());
+        ad.setFirstName2(a.getFirstName2());
         ad.setId(a.getId());
-        ad.setExternalId(a.getExternalId());
+        ad.setExternalId(a.getExternalId1());
+        ad.setExternalId2(a.getExternalId2());
+        ad.setExternalId3(a.getExternalId3());
+        ad.setExternalId4(a.getExternalId4());
+        ad.setExternalId5(a.getExternalId5());
         ad.setInsuranceName(a.getInsuranceName());
         ad.setInsuranceNumber(a.getInsuranceNumber());
         ad.setLastModifier(a.getLastModifier());
-        ad.setLegalProtection(a.getLegalProtection());
+        if(a.isLegalProtection())
+            ad.setLegalProtection((short)1);
+        else
+            ad.setLegalProtection((short)0);
         ad.setMobile(a.getMobile());
         ad.setModificationDate(a.getModificationDate());
         ad.setMotorInsuranceName(a.getMotorInsuranceName());
@@ -840,7 +867,10 @@ public class RestfulContactV2 {
         ad.setTitle(a.getTitle());
         ad.setTrafficInsuranceName(a.getTrafficInsuranceName());
         ad.setTrafficInsuranceNumber(a.getTrafficInsuranceNumber());
-        ad.setTrafficLegalProtection(a.getTrafficLegalProtection());
+        if(a.isTrafficLegalProtection())
+            ad.setTrafficLegalProtection((short)1);
+        else
+            ad.setTrafficLegalProtection((short)0);
         ad.setWebsite(a.getWebsite());
         ad.setZipCode(a.getZipCode());
         ad.setDistrict(a.getDistrict());
@@ -1690,6 +1720,118 @@ public class RestfulContactV2 {
      */
     public void setExternalId(String externalId) {
         this.externalId = externalId;
+    }
+
+    /**
+     * @return the firstName2
+     */
+    public String getFirstName2() {
+        return firstName2;
+    }
+
+    /**
+     * @param firstName2 the firstName2 to set
+     */
+    public void setFirstName2(String firstName2) {
+        this.firstName2 = firstName2;
+    }
+
+    /**
+     * @return the externalId2
+     */
+    public String getExternalId2() {
+        return externalId2;
+    }
+
+    /**
+     * @param externalId2 the externalId2 to set
+     */
+    public void setExternalId2(String externalId2) {
+        this.externalId2 = externalId2;
+    }
+
+    /**
+     * @return the externalId3
+     */
+    public String getExternalId3() {
+        return externalId3;
+    }
+
+    /**
+     * @param externalId3 the externalId3 to set
+     */
+    public void setExternalId3(String externalId3) {
+        this.externalId3 = externalId3;
+    }
+
+    /**
+     * @return the externalId4
+     */
+    public String getExternalId4() {
+        return externalId4;
+    }
+
+    /**
+     * @param externalId4 the externalId4 to set
+     */
+    public void setExternalId4(String externalId4) {
+        this.externalId4 = externalId4;
+    }
+
+    /**
+     * @return the externalId5
+     */
+    public String getExternalId5() {
+        return externalId5;
+    }
+
+    /**
+     * @param externalId5 the externalId5 to set
+     */
+    public void setExternalId5(String externalId5) {
+        this.externalId5 = externalId5;
+    }
+
+    /**
+     * @return the sepaReference
+     */
+    public String getSepaReference() {
+        return sepaReference;
+    }
+
+    /**
+     * @param sepaReference the sepaReference to set
+     */
+    public void setSepaReference(String sepaReference) {
+        this.sepaReference = sepaReference;
+    }
+
+    /**
+     * @return the sepaSince
+     */
+    public String getSepaSince() {
+        return sepaSince;
+    }
+
+    /**
+     * @param sepaSince the sepaSince to set
+     */
+    public void setSepaSince(String sepaSince) {
+        this.sepaSince = sepaSince;
+    }
+
+    /**
+     * @return the leitwegId
+     */
+    public String getLeitwegId() {
+        return leitwegId;
+    }
+
+    /**
+     * @param leitwegId the leitwegId to set
+     */
+    public void setLeitwegId(String leitwegId) {
+        this.leitwegId = leitwegId;
     }
     
     

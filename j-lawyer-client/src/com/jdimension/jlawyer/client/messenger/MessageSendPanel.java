@@ -663,11 +663,13 @@ For more information on this, and how to apply and follow the GNU AGPL, see
  */
 package com.jdimension.jlawyer.client.messenger;
 
+import com.jdimension.jlawyer.client.settings.UserSettings;
 import com.jdimension.jlawyer.persistence.AppUserBean;
 import com.jdimension.jlawyer.persistence.InstantMessage;
 import com.jdimension.jlawyer.persistence.InstantMessageMention;
 import java.awt.Rectangle;
 import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
 import java.awt.event.KeyEvent;
 import java.util.ArrayList;
 import java.util.Date;
@@ -697,11 +699,10 @@ public class MessageSendPanel extends javax.swing.JPanel {
             mi.setText(u.getPrincipalId());
             mi.addActionListener((ActionEvent arg0) -> {
                 try {
-                    
-                    int caret = this.taMessage.getCaretPosition();
-                    this.taMessage.setText(this.taMessage.getText(0, caret) + u.getPrincipalId() + " " + this.taMessage.getText(caret, this.taMessage.getText().length() - caret));
-                    this.taMessage.setCaretPosition(caret + (u.getPrincipalId() + " ").length());
-                } catch (Throwable t) {
+                    int caret = MessageSendPanel.this.taMessage.getCaretPosition();
+                    MessageSendPanel.this.taMessage.setText(MessageSendPanel.this.taMessage.getText(0, caret) + u.getPrincipalId() + " " + MessageSendPanel.this.taMessage.getText(caret, MessageSendPanel.this.taMessage.getText().length() - caret));
+                    MessageSendPanel.this.taMessage.setCaretPosition(caret + (u.getPrincipalId() + " ").length());
+                }catch (Throwable t) {
                     t.printStackTrace();
                 }
             });
@@ -726,6 +727,8 @@ public class MessageSendPanel extends javax.swing.JPanel {
         jScrollPane1 = new javax.swing.JScrollPane();
         taMessage = new javax.swing.JTextArea();
 
+        setOpaque(false);
+
         cmdSend.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons32/mail_send.png"))); // NOI18N
         cmdSend.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
@@ -733,8 +736,12 @@ public class MessageSendPanel extends javax.swing.JPanel {
             }
         });
 
+        jSeparator1.setForeground(new java.awt.Color(255, 255, 255));
+
         taMessage.setColumns(20);
+        taMessage.setLineWrap(true);
         taMessage.setRows(5);
+        taMessage.setWrapStyleWord(true);
         taMessage.addKeyListener(new java.awt.event.KeyAdapter() {
             public void keyReleased(java.awt.event.KeyEvent evt) {
                 taMessageKeyReleased(evt);
@@ -746,26 +753,23 @@ public class MessageSendPanel extends javax.swing.JPanel {
         this.setLayout(layout);
         layout.setHorizontalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
-                .addContainerGap()
-                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
-                    .addComponent(jSeparator1)
-                    .addGroup(layout.createSequentialGroup()
-                        .addComponent(jScrollPane1)
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addComponent(cmdSend)))
-                .addContainerGap())
+            .addGroup(layout.createSequentialGroup()
+                .addComponent(jScrollPane1, javax.swing.GroupLayout.DEFAULT_SIZE, 247, Short.MAX_VALUE)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addComponent(cmdSend))
+            .addComponent(jSeparator1)
         );
         layout.setVerticalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(layout.createSequentialGroup()
-                .addContainerGap()
-                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
-                    .addComponent(cmdSend, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addGroup(layout.createSequentialGroup()
+                        .addComponent(cmdSend)
+                        .addGap(0, 23, Short.MAX_VALUE))
                     .addComponent(jScrollPane1, javax.swing.GroupLayout.PREFERRED_SIZE, 0, Short.MAX_VALUE))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(jSeparator1, javax.swing.GroupLayout.PREFERRED_SIZE, 13, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                .addComponent(jSeparator1, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addContainerGap())
         );
     }// </editor-fold>//GEN-END:initComponents
 
@@ -773,6 +777,7 @@ public class MessageSendPanel extends javax.swing.JPanel {
         try {
             if(evt.getKeyCode()==KeyEvent.VK_ENTER && evt.isShiftDown()) {
                 // just do the line break
+                this.taMessage.setText(this.taMessage.getText() + System.lineSeparator());
             } else if (evt.getKeyCode()==KeyEvent.VK_ENTER) {
                 // send message
                 this.sendMessage();
@@ -795,19 +800,9 @@ public class MessageSendPanel extends javax.swing.JPanel {
     
     private void sendMessage() {
         InstantMessage im1=new InstantMessage();
-        im1.setSender("Hausmeister Krause");
+        im1.setSender(UserSettings.getInstance().getCurrentUser().getPrincipalId());
         im1.setContent(this.taMessage.getText().trim());
         im1.setSent(new Date());
-        ArrayList<InstantMessageMention> im1list=new ArrayList<>(); 
-        InstantMessageMention im1m1=new InstantMessageMention();
-        im1m1.setDone(false);
-        im1m1.setPrincipal("Präsident");
-        im1list.add(im1m1);
-        InstantMessageMention im1m2=new InstantMessageMention();
-        im1m2.setDone(false);
-        im1m2.setPrincipal("Bodo");
-        im1list.add(im1m2);
-        im1.setMentions(im1list);
         
         if(this.messageConsumer!=null)
             this.messageConsumer.newMessageForSubmission(im1);

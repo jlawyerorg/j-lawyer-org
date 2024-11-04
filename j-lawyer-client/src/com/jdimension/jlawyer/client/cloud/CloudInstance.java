@@ -665,7 +665,7 @@ package com.jdimension.jlawyer.client.cloud;
 
 import com.jdimension.jlawyer.client.utils.FileUtils;
 import com.jdimension.jlawyer.persistence.AppUserBean;
-import com.jdimension.jlawyer.security.Crypto;
+import com.jdimension.jlawyer.security.CryptoProvider;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
@@ -734,7 +734,7 @@ public class CloudInstance {
 
             String pwd=null;
             try {
-                pwd=Crypto.decrypt(user.getCloudPassword());
+                pwd=CryptoProvider.defaultCrypto().decrypt(user.getCloudPassword());
             } catch(Throwable t) {
                 log.error("Unable to decrypt Nextcloud password", t);
                 return null;

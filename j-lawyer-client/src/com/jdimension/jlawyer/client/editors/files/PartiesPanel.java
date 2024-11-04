@@ -678,7 +678,6 @@ import javax.swing.JLabel;
 import javax.swing.JOptionPane;
 import javax.swing.JTable;
 import javax.swing.event.TableModelEvent;
-import javax.swing.event.TableModelListener;
 import javax.swing.table.DefaultTableCellRenderer;
 import javax.swing.table.TableCellRenderer;
 import org.apache.log4j.Logger;
@@ -719,18 +718,21 @@ public class PartiesPanel extends javax.swing.JPanel {
             if (c instanceof JLabel) {
                 if (value instanceof PartiesPanelEntry) {
                     ((JLabel) c).setText(((AddressBean) ((PartiesPanelEntry) value).getAddress()).toDisplayName());
-                    if(((PartiesPanelEntry)value).getInvolvement()!=null) {
-                        String s=((PartiesPanelEntry)value).getInvolvement().getReference();
-                        if(s!=null && s.length()>0)
-                            ((JLabel) c).setToolTipText("Zeichen: " + s);
+                    if (((PartiesPanelEntry) value).getInvolvement() != null) {
+                        String s = ((PartiesPanelEntry) value).getInvolvement().getReference();
+                        String name = ((PartiesPanelEntry) value).getAddress().toDisplayName();
+                        if (s != null && s.length() > 0) {
+                            s = s.concat(" ");
+                            ((JLabel) c).setToolTipText(name + " - Zeichen: " + s);
+                        } else if (name != null && name.length() > 0) {
+                            ((JLabel) c).setToolTipText(name);
+                        }
                     } else {
                         ((JLabel) c).setToolTipText(null);
                     }
                 }
-
             }
             return c;
-
         }
     }
 
@@ -807,7 +809,11 @@ public class PartiesPanel extends javax.swing.JPanel {
         }
     }
     
-    public void addParty(PartiesPanelEntry entry) {
+    public void addParty(PartiesPanelEntry entry, boolean evaluateTemplates) {
+        boolean currentIgnoreTableChanges=this.ignoreTableChanges;
+        if(!evaluateTemplates)
+            ignoreTableChanges=true;
+            
         PartiesPanelTableModel model = (PartiesPanelTableModel) this.tblParties.getModel();
         ArrayList row = new ArrayList();
         row.add(entry);
@@ -822,6 +828,7 @@ public class PartiesPanel extends javax.swing.JPanel {
         Object[] rowArray = row.toArray();
         model.addRow(rowArray);
 
+        ignoreTableChanges=currentIgnoreTableChanges;
     }
 
     public PartiesPanelEntry getSelectedParty(PartyTypeBean ptb) {

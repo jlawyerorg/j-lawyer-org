@@ -679,6 +679,10 @@ import org.xml.sax.InputSource;
  */
 public class EmailTemplate implements Serializable {
     
+    private static final long serialVersionUID = 1L;
+    
+    public static final String PLACEHOLDER_CURSOR = "{{CURSOR}}";
+    
     private static final Logger log=Logger.getLogger(EmailTemplate.class.getName());
 
     public static String[] SUPPORTED_FORMATS = new String[]{"text/plain", "text/html"};

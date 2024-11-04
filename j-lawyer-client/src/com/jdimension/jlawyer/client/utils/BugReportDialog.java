@@ -666,7 +666,6 @@ package com.jdimension.jlawyer.client.utils;
 import com.jdimension.jlawyer.client.bea.BeaAccess;
 import com.jdimension.jlawyer.client.editors.EditorsRegistry;
 import com.jdimension.jlawyer.client.mail.SendEmailDialog;
-import com.jdimension.jlawyer.client.settings.ClientSettings;
 import com.jdimension.jlawyer.server.services.ServerInformation;
 import com.jdimension.jlawyer.server.utils.ServerFileUtils;
 import com.jdimension.jlawyer.services.JLawyerServiceLocator;
@@ -712,8 +711,8 @@ public class BugReportDialog extends javax.swing.JDialog {
         this.locator=locator;
         
         this.buildSystemInformation();
-        this.loadServerLog(200);
-        this.loadClientLog(200);
+        this.loadServerLog(1000);
+        this.loadClientLog(1000);
     }
     
     @Override
@@ -894,7 +893,7 @@ public class BugReportDialog extends javax.swing.JDialog {
         jScrollPane2.setViewportView(taServerLog);
 
         spnServerLines.setFont(spnServerLines.getFont());
-        spnServerLines.setModel(new javax.swing.SpinnerNumberModel(200, 200, 5000, 50));
+        spnServerLines.setModel(new javax.swing.SpinnerNumberModel(1000, 200, 5000, 100));
 
         jLabel2.setText("Zeilen:");
 
@@ -944,7 +943,7 @@ public class BugReportDialog extends javax.swing.JDialog {
         jScrollPane3.setViewportView(taClientLog);
 
         spnClientLines.setFont(spnClientLines.getFont());
-        spnClientLines.setModel(new javax.swing.SpinnerNumberModel(200, 200, 5000, 50));
+        spnClientLines.setModel(new javax.swing.SpinnerNumberModel(1000, 200, 5000, 100));
 
         jLabel1.setFont(jLabel1.getFont());
         jLabel1.setText("Zeilen:");
@@ -1055,7 +1054,7 @@ public class BugReportDialog extends javax.swing.JDialog {
                     }
                 }
                 
-            }, 0, 2000);
+            }, 0, 5000);
         }
     }//GEN-LAST:event_togServerLogActionPerformed
 

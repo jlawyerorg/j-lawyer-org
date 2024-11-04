@@ -700,7 +700,6 @@ public class ServerSettingsKeys {
     public static final String SERVERCONF_DREBISTECHUSER="jlawyer.server.drebis.techuser";
     public static final String SERVERCONF_DREBISTECHPWD="jlawyer.server.drebis.techpwd";
     
-    
     public static final String SERVERCONF_BEAMODE="jlawyer.server.bea.beamode";
     public static final String SERVERCONF_BEAENDPOINT="jlawyer.server.bea.beaendpoint";
     public static final String SERVERCONF_BEAENABLEDVERSIONS="jlawyer.global.bea.enabledversions";
@@ -751,6 +750,7 @@ public class ServerSettingsKeys {
     
     public static final String SERVERCONF_CASENUMBERING_PATTERN="jlawyer.server.numbering.pattern";
     public static final String SERVERCONF_CASENUMBERING_STARTFROM="jlawyer.server.numbering.startfrom";
+    public static final String SERVERCONF_CASENUMBERING_INCREMENT="jlawyer.server.numbering.increment";
     
     public static final String SERVERCONF_CASENUMBERING_EXT_ENABLED="jlawyer.server.numbering.ext.enabled";
     public static final String SERVERCONF_CASENUMBERING_EXT_DIVIDER_MAIN="jlawyer.server.numbering.ext.divider.main";
@@ -763,6 +763,7 @@ public class ServerSettingsKeys {
     public static final String SERVERCONF_CASENUMBERING_EXT_LAWYER_ENABLED="jlawyer.server.numbering.ext.lawyer.enabled";
     
     public static final String SERVERCONF_SCANNER_SERVERDIR="jlawyer.server.observe.directory";
+    public static final String SERVERCONF_SCANNER_OCRCMD="jlawyer.server.observe.ocrcmd";
     
     public static final String DATA_CUSTOMFIELD_ADDRESS_PREFIX="data.customfields.address.";
     public static final String DATA_CUSTOMFIELD_ARCHIVEFILE_PREFIX="data.customfields.archivefile.";
@@ -774,7 +775,10 @@ public class ServerSettingsKeys {
     
     public static final String SERVERCONF_SECURITY_FORCE_PASSWORDCOMPLEXITY="jlawyer.server.security.forcepasswordcomplexity";
     
+    public static final String SERVERCONF_FINANCE_GIROCODEPX="jlawyer.server.finance.girocodepx";
+    
     public static final String SERVERCONF_CLOUDSYNC_ADDRESSBOOK_ENABLED="jlawyer.server.cloudsync.addressbook.enabled";
+    public static final String SERVERCONF_CLOUDSYNC_ADDRESSBOOK_BIRTHDAYSYNC="jlawyer.server.cloudsync.addressbook.birthdaysync";
     public static final String SERVERCONF_CLOUDSYNC_ADDRESSBOOK_HOST="jlawyer.server.cloudsync.addressbook.host";
     public static final String SERVERCONF_CLOUDSYNC_ADDRESSBOOK_PORT="jlawyer.server.cloudsync.addressbook.port";
     public static final String SERVERCONF_CLOUDSYNC_ADDRESSBOOK_SSL="jlawyer.server.cloudsync.addressbook.ssl";
@@ -790,5 +794,10 @@ public class ServerSettingsKeys {
     public static final String SERVERCONF_USAGELIMIT_MAXUSERS="jlawyer.server.usagelimit.maxusers";
     
     public static final String SERVERCONF_TIMESHEET_PARALLELLOGS_WARNING="jlawyer.server.timesheets.parallellogswarning";
+    
+    public static final String SERVERCONF_INSTANTMESSAGING_POLLING_ENABLED="jlawyer.server.instantmessaging.polling.enabled";
+    
+    public static final String SERVERCONF_INSTALLATION_ID="jlawyer.server.installation.id";
+    public static final String SERVERCONF_EPOSTVENDORID_ENCRYPTED="jlawyer.server.epost.vendorid";
     
 }

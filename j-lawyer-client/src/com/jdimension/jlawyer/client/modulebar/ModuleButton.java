@@ -671,7 +671,9 @@ import com.jdimension.jlawyer.client.events.EmailStatusEvent;
 import com.jdimension.jlawyer.client.events.Event;
 import com.jdimension.jlawyer.client.events.EventBroker;
 import com.jdimension.jlawyer.client.events.EventConsumer;
-import com.jdimension.jlawyer.client.events.FaxStatusEvent;
+import com.jdimension.jlawyer.client.events.MailingStatusEvent;
+import com.jdimension.jlawyer.client.events.MissingCalendarEntriesEvent;
+import com.jdimension.jlawyer.client.events.OpenMentionsEvent;
 import com.jdimension.jlawyer.client.events.ScannerStatusEvent;
 import com.jdimension.jlawyer.server.modules.ModuleMetadata;
 import java.awt.Color;
@@ -700,6 +702,7 @@ public class ModuleButton extends javax.swing.JPanel implements EventConsumer {
     private Icon rollOverIcon = null;
     
     private String indicatorValue="";
+    protected boolean resetIndicatorOnClick=false;
 
     /**
      * Creates new form ModuleButton
@@ -709,6 +712,7 @@ public class ModuleButton extends javax.swing.JPanel implements EventConsumer {
         initComponents();
         this.defaultBackColor=this.getBackground();
         this.module = m;
+        this.resetIndicatorOnClick=m.isResetIndicatorOnClick();
         
         
         if (m.getStatusEventType() > 0) {
@@ -915,6 +919,9 @@ public class ModuleButton extends javax.swing.JPanel implements EventConsumer {
                 
             }
             
+            if(this.resetIndicatorOnClick)
+                this.updateIndicator(0);
+            
             setForeground(this.defaultBackColor);
         } else {
             EditorsRegistry.getInstance().setMainEditorsPaneView(null);
@@ -971,15 +978,19 @@ public class ModuleButton extends javax.swing.JPanel implements EventConsumer {
         }
 
         if (e instanceof ScannerStatusEvent) {
-            updateIndicator(((ScannerStatusEvent) e).getFileNames().size());
-        } else if (e instanceof FaxStatusEvent) {
-            updateIndicator(((FaxStatusEvent) e).getFaxList().size());
+            updateIndicator(((ScannerStatusEvent) e).getFileMetadata().size());
+        } else if (e instanceof MailingStatusEvent) {
+            updateIndicator(((MailingStatusEvent) e).getMailingList().size());
         } else if (e instanceof EmailStatusEvent) {
             updateIndicator(((EmailStatusEvent) e).getUnread());
         } else if (e instanceof BeaStatusEvent) {
             updateIndicator(((BeaStatusEvent) e).getUnread());
+        } else if (e instanceof OpenMentionsEvent) {
+            updateIndicator(((OpenMentionsEvent) e).getOpenMentions());
         } else if (e instanceof DrebisStatusEvent) {
             updateIndicator(((DrebisStatusEvent) e).getMessages());
+        } else if (e instanceof MissingCalendarEntriesEvent) {
+            updateIndicator(((MissingCalendarEntriesEvent) e).getCasesWithoutEvent());
         }
     }
 
@@ -1008,6 +1019,20 @@ public class ModuleButton extends javax.swing.JPanel implements EventConsumer {
             indicatorValue=""+incomingValue;
         });
 
+    }
+
+    /**
+     * @return the resetIndicatorOnClick
+     */
+    public boolean isResetIndicatorOnClick() {
+        return resetIndicatorOnClick;
+    }
+
+    /**
+     * @param resetIndicatorOnClick the resetIndicatorOnClick to set
+     */
+    public void setResetIndicatorOnClick(boolean resetIndicatorOnClick) {
+        this.resetIndicatorOnClick = resetIndicatorOnClick;
     }
 
 }

@@ -730,6 +730,7 @@ public class StartupSplashFrame extends javax.swing.JFrame {
         lblCompany = new javax.swing.JLabel();
         lblDate = new javax.swing.JLabel();
         lblLogo = new javax.swing.JLabel();
+        jLabel2 = new javax.swing.JLabel();
         jLabel1 = new javax.swing.JLabel();
 
         setDefaultCloseOperation(javax.swing.WindowConstants.EXIT_ON_CLOSE);
@@ -793,6 +794,10 @@ public class StartupSplashFrame extends javax.swing.JFrame {
         getContentPane().add(lblLogo);
         lblLogo.setBounds(190, 50, 330, 310);
 
+        jLabel2.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons32/material/j-lawyer-ai.png"))); // NOI18N
+        getContentPane().add(jLabel2);
+        jLabel2.setBounds(40, 280, 130, 70);
+
         jLabel1.setIcon(new javax.swing.ImageIcon(getClass().getResource("/images/splash01.png"))); // NOI18N
         getContentPane().add(jLabel1);
         jLabel1.setBounds(0, 0, 700, 400);
@@ -855,6 +860,7 @@ public class StartupSplashFrame extends javax.swing.JFrame {
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JLabel jLabel1;
+    private javax.swing.JLabel jLabel2;
     private javax.swing.JLabel lblCompany;
     private javax.swing.JLabel lblDate;
     private javax.swing.JLabel lblFullClientVersion;

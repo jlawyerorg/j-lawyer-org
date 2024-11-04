@@ -663,11 +663,13 @@
  */
 package com.jdimension.jlawyer.client.mail;
 
-import java.util.Hashtable;
+import com.jdimension.jlawyer.email.CommonMailUtils;
+import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Set;
 import javax.mail.Folder;
 import javax.mail.MessagingException;
+import javax.mail.StoreClosedException;
 import org.apache.log4j.Logger;
 
 /**
@@ -676,25 +678,22 @@ import org.apache.log4j.Logger;
  */
 public class FolderContainer {
 
-    public static final String INBOX = "INBOX";
-    public static final String SENT = "Sent";
-    public static final String TRASH = "Trash";
-    public static final String DRAFTS = "Drafts";
-
     private long cachedToStringUpdated = -1;
     private String cachedToString = null;
-    
+
     private long cachedUnreadUpdated = -1;
     private int cachedUnread = -1;
 
     private static final Logger log = Logger.getLogger(FolderContainer.class.getName());
-    private static Hashtable<String, String> folderNameMapping = new Hashtable<>();
+    private static final HashMap<String, String> folderNameMapping = new HashMap<>();
+
+    double retentionTime = -1;
 
     static {
-        folderNameMapping.put(INBOX, "Posteingang");
-        folderNameMapping.put(SENT, "Gesendet");
-        folderNameMapping.put(TRASH, "Papierkorb");
-        folderNameMapping.put(DRAFTS, "Entwürfe");
+        folderNameMapping.put(CommonMailUtils.INBOX, "Posteingang");
+        folderNameMapping.put(CommonMailUtils.SENT, "Gesendet");
+        folderNameMapping.put(CommonMailUtils.TRASH, "Papierkorb");
+        folderNameMapping.put(CommonMailUtils.DRAFTS, "Entwürfe");
     }
 
     private Folder folder;
@@ -702,21 +701,45 @@ public class FolderContainer {
     public FolderContainer(Folder f) {
         this.folder = f;
     }
-    
+
     public void resetCaches() {
-        this.cachedToStringUpdated=-1;
-        this.cachedUnreadUpdated=-1;
+        this.cachedToStringUpdated = -1;
+        this.cachedUnreadUpdated = -1;
     }
-    
+
+    private double getRetentionTime() {
+
+        if (this.retentionTime == -1) {
+
+            // refresh unread message count frequently for inbox, trash, sent, drafts, not for others
+            // default 15mins plus up to 8hrs
+            this.retentionTime = ((15l * 60l * 1000l) + (Math.random() * 1000l * 60l * 60l * 8l));
+            if (this.folder != null && this.folder.getName() != null) {
+                String folderName = this.folder.getName();
+                if (EmailUtils.isInbox(folderName)) {
+                    // 5mins plus up to 5min for inbox
+                    retentionTime = ((5l * 60l * 1000l) + (Math.random() * 60000l * 5l));
+                } else if (EmailUtils.isDrafts(folderName) || EmailUtils.isSent(folderName) || EmailUtils.isTrash(folderName)) {
+                    // 15mins plus up to 45min for drafts, sent, trash
+                    retentionTime = ((15l * 60l * 1000l) + (Math.random() * 60000l * 45l));
+                }
+            }
+        }
+        return this.retentionTime;
+    }
+
     public int getUnreadMessageCount() {
-        if (this.cachedUnreadUpdated == -1 || ((System.currentTimeMillis() - cachedUnreadUpdated) > ((3l * 60l * 1000l)+(Math.random()*30000l)))) {
-            if(this.folder!=null) {
+
+        if (this.cachedUnreadUpdated == -1 || ((System.currentTimeMillis() - cachedUnreadUpdated) > this.getRetentionTime())) {
+            if (this.folder != null) {
                 try {
-                    this.cachedUnread=this.folder.getUnreadMessageCount();
+                    this.cachedUnread = this.folder.getUnreadMessageCount();
+                } catch (StoreClosedException stex) {
+                    log.warn("Unable to determine number of unread messages - folder is closed");
                 } catch (MessagingException ex) {
                     log.error("Unable to determine number of unread messages", ex);
                 }
-                this.cachedUnreadUpdated=System.currentTimeMillis();
+                this.cachedUnreadUpdated = System.currentTimeMillis();
             }
         }
         return cachedUnread;
@@ -724,12 +747,13 @@ public class FolderContainer {
 
     /*
     * Called e.g. by the email tree cell renderer, therefore it is performance critical
-    */
+     */
     @Override
     public String toString() {
-        // refresh after 3mins plus x (because not all folders should refresh at the same time)
-        if (this.cachedToStringUpdated == -1 || ((System.currentTimeMillis() - cachedToStringUpdated) > ((3l * 60l * 1000l)+(Math.random()*30000l)))) {
+
+        if (this.cachedToStringUpdated == -1 || ((System.currentTimeMillis() - cachedToStringUpdated) > this.getRetentionTime())) {
             try {
+                
                 String name = this.folder.getName();
 
                 Set mapKey = folderNameMapping.keySet();

@@ -663,6 +663,7 @@
  */
 package com.jdimension.jlawyer.client.wizard;
 
+import java.awt.Color;
 import java.awt.Window;
 import javax.swing.Icon;
 import javax.swing.JComponent;
@@ -677,34 +678,47 @@ public class WizardMainPanel extends javax.swing.JPanel {
     private WizardSteps steps=null;
     private Window parent=null;
     
-    
-//    public WizardMainPanel() {
-//        this(new WizardSteps());
-//    }
-    
     /**
      * Creates new form WizardMainPanel
      */
     public WizardMainPanel() {
         initComponents();
-        //setSteps(steps);
         
         
     }
     
     public void setLeftIcon(Icon icon) {
-        this.jLabel1.setIcon(icon);
+        this.lblPicture.setIcon(icon);
+    }
+    
+    public void setLeftColor(Color c) {
+        this.lblPicture.setBackground(c);
+        this.lblStepTitles.setBackground(c);
+        this.leftPanel.setBackground(c);
+        this.lblPicture.setOpaque(true);
+        this.lblPicture.setOpaque(true);
     }
     
     public void setParent(Window p) {
         this.parent=p;
     }
     
+    public boolean isFinalStep(WizardStepInterface s) {
+        return this.steps.isFinalStep(s);
+    }
+    
+    public boolean isFirstStep(WizardStepInterface s) {
+        return this.steps.isFirstStep(s);
+    }
+    
     public void setSteps(WizardSteps steps) {
         this.steps=steps;
-        this.cmdPrevious.setEnabled(false);
-        this.cmdNext.setEnabled(steps.stepCount()>0);
-        this.cmdDone.setEnabled(steps.stepCount()==1);
+        
+        this.toggleButtonState();
+        
+        for(WizardStepInterface i: steps.getSteps()) {
+            i.setWizardPanel(this);
+        }
         
         this.stepPanel.removeAll();
         this.stepPanel.add((JComponent)steps.current());
@@ -713,6 +727,8 @@ public class WizardMainPanel extends javax.swing.JPanel {
         
         this.lblStepTitles.setText(steps.stepTitlesHtml());
         this.lblTitle.setText(steps.current().getStepName());
+        
+        
     }
 
     /**
@@ -724,9 +740,9 @@ public class WizardMainPanel extends javax.swing.JPanel {
     // <editor-fold defaultstate="collapsed" desc="Generated Code">//GEN-BEGIN:initComponents
     private void initComponents() {
 
-        jPanel1 = new javax.swing.JPanel();
+        leftPanel = new javax.swing.JPanel();
         lblStepTitles = new javax.swing.JLabel();
-        jLabel1 = new javax.swing.JLabel();
+        lblPicture = new javax.swing.JLabel();
         jPanel2 = new javax.swing.JPanel();
         cmdCancel = new javax.swing.JButton();
         cmdNext = new javax.swing.JButton();
@@ -735,34 +751,34 @@ public class WizardMainPanel extends javax.swing.JPanel {
         stepPanel = new javax.swing.JPanel();
         lblTitle = new javax.swing.JLabel();
 
-        jPanel1.setBackground(new java.awt.Color(255, 255, 255));
-        jPanel1.setBorder(new javax.swing.border.LineBorder(new java.awt.Color(0, 0, 0), 1, true));
+        leftPanel.setBackground(new java.awt.Color(255, 255, 255));
+        leftPanel.setBorder(new javax.swing.border.LineBorder(new java.awt.Color(0, 0, 0), 1, true));
 
         lblStepTitles.setHorizontalAlignment(javax.swing.SwingConstants.LEFT);
         lblStepTitles.setText("jLabel1");
         lblStepTitles.setVerticalAlignment(javax.swing.SwingConstants.TOP);
 
-        jLabel1.setHorizontalAlignment(javax.swing.SwingConstants.CENTER);
-        jLabel1.setIcon(new javax.swing.ImageIcon(getClass().getResource("/images/drebis-vertical.jpg"))); // NOI18N
+        lblPicture.setHorizontalAlignment(javax.swing.SwingConstants.CENTER);
+        lblPicture.setIcon(new javax.swing.ImageIcon(getClass().getResource("/images/drebis-vertical.jpg"))); // NOI18N
 
-        javax.swing.GroupLayout jPanel1Layout = new javax.swing.GroupLayout(jPanel1);
-        jPanel1.setLayout(jPanel1Layout);
-        jPanel1Layout.setHorizontalGroup(
-            jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(jPanel1Layout.createSequentialGroup()
+        javax.swing.GroupLayout leftPanelLayout = new javax.swing.GroupLayout(leftPanel);
+        leftPanel.setLayout(leftPanelLayout);
+        leftPanelLayout.setHorizontalGroup(
+            leftPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(leftPanelLayout.createSequentialGroup()
                 .addContainerGap()
-                .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addComponent(jLabel1, javax.swing.GroupLayout.Alignment.TRAILING, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                .addGroup(leftPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addComponent(lblPicture, javax.swing.GroupLayout.Alignment.TRAILING, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                     .addComponent(lblStepTitles, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
                 .addContainerGap())
         );
-        jPanel1Layout.setVerticalGroup(
-            jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(jPanel1Layout.createSequentialGroup()
+        leftPanelLayout.setVerticalGroup(
+            leftPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(leftPanelLayout.createSequentialGroup()
                 .addContainerGap()
-                .addComponent(lblStepTitles, javax.swing.GroupLayout.DEFAULT_SIZE, 185, Short.MAX_VALUE)
+                .addComponent(lblStepTitles)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(jLabel1)
+                .addComponent(lblPicture, javax.swing.GroupLayout.DEFAULT_SIZE, 426, Short.MAX_VALUE)
                 .addContainerGap())
         );
 
@@ -847,7 +863,7 @@ public class WizardMainPanel extends javax.swing.JPanel {
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(layout.createSequentialGroup()
                 .addContainerGap()
-                .addComponent(jPanel1, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addComponent(leftPanel, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                     .addComponent(jPanel2, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
@@ -862,7 +878,7 @@ public class WizardMainPanel extends javax.swing.JPanel {
                 .addContainerGap()
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                     .addGroup(layout.createSequentialGroup()
-                        .addComponent(jPanel1, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                        .addComponent(leftPanel, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                         .addContainerGap())
                     .addGroup(layout.createSequentialGroup()
                         .addComponent(lblTitle)
@@ -903,6 +919,13 @@ public class WizardMainPanel extends javax.swing.JPanel {
         this.cmdPrevious.setEnabled(!steps.isFirstStep(steps.current()));
         this.cmdNext.setEnabled(!steps.isFinalStep(steps.current()));
         this.cmdDone.setEnabled(steps.isFinalStep(steps.current()));
+    }
+    
+    public void enableButtons(boolean previous, boolean next, boolean cancel, boolean done) {
+        this.cmdPrevious.setEnabled(previous);
+        this.cmdNext.setEnabled(next);
+        this.cmdCancel.setEnabled(cancel);
+        this.cmdDone.setEnabled(done);
     }
     
     private void stepPanelComponentResized(java.awt.event.ComponentEvent evt) {//GEN-FIRST:event_stepPanelComponentResized
@@ -967,11 +990,11 @@ public class WizardMainPanel extends javax.swing.JPanel {
     private javax.swing.JButton cmdDone;
     private javax.swing.JButton cmdNext;
     private javax.swing.JButton cmdPrevious;
-    private javax.swing.JLabel jLabel1;
-    private javax.swing.JPanel jPanel1;
     private javax.swing.JPanel jPanel2;
+    private javax.swing.JLabel lblPicture;
     private javax.swing.JLabel lblStepTitles;
     private javax.swing.JLabel lblTitle;
+    private javax.swing.JPanel leftPanel;
     private javax.swing.JPanel stepPanel;
     // End of variables declaration//GEN-END:variables
 }

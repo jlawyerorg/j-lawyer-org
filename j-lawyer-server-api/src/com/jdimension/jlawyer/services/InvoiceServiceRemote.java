@@ -698,5 +698,7 @@ public interface InvoiceServiceRemote {
     InvoiceType updateInvoiceType(InvoiceType invoiceType) throws Exception;
 
     void removeInvoiceType(InvoiceType invoiceType) throws Exception;
+
+    byte[] getGiroCode(String senderPrincipalId, float amount, String purpose) throws Exception;
     
 }

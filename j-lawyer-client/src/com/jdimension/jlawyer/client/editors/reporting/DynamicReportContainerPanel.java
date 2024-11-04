@@ -672,6 +672,7 @@ import com.jdimension.jlawyer.services.JLawyerServiceLocator;
 import com.jdimension.jlawyer.services.ReportServiceRemote;
 import java.text.SimpleDateFormat;
 import java.util.Date;
+import javax.swing.JTabbedPane;
 import org.apache.log4j.Logger;
 import org.jlawyer.reporting.ReportResult;
 import org.jlawyer.reporting.ReportResultBarChart;
@@ -701,7 +702,21 @@ public class DynamicReportContainerPanel extends javax.swing.JPanel implements R
         initComponents();
         
 
+        tabbedCharts.putClientProperty("JTabbedPane.tabClosable", true);
+        tabbedCharts.putClientProperty("JTabbedPane.tabCloseCallback",
+                (java.util.function.BiConsumer<JTabbedPane, Integer>) (tabbedPane, tabIndex) -> {
+                    // close tab here
+                    tabbedPane.removeTabAt(tabIndex);
+                });
+        tabbedCharts.putClientProperty( "JTabbedPane.tabCloseToolTipText", "Tab schließen" );
         
+        tabbedTables.putClientProperty("JTabbedPane.tabClosable", true);
+        tabbedTables.putClientProperty("JTabbedPane.tabCloseCallback",
+                (java.util.function.BiConsumer<JTabbedPane, Integer>) (tabbedPane, tabIndex) -> {
+                    // close tab here
+                    tabbedPane.removeTabAt(tabIndex);
+                });
+        tabbedTables.putClientProperty( "JTabbedPane.tabCloseToolTipText", "Tab schließen" );
 
 
     }
@@ -738,7 +753,11 @@ public class DynamicReportContainerPanel extends javax.swing.JPanel implements R
         });
 
         jSplitPane1.setOrientation(javax.swing.JSplitPane.VERTICAL_SPLIT);
+
+        tabbedCharts.setTabLayoutPolicy(javax.swing.JTabbedPane.SCROLL_TAB_LAYOUT);
         jSplitPane1.setLeftComponent(tabbedCharts);
+
+        tabbedTables.setTabLayoutPolicy(javax.swing.JTabbedPane.SCROLL_TAB_LAYOUT);
         jSplitPane1.setRightComponent(tabbedTables);
 
         dtFrom.setEditable(false);

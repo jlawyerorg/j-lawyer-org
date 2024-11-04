@@ -663,14 +663,24 @@
  */
 package com.jdimension.jlawyer.services;
 
+import com.jdimension.jlawyer.pojo.PartiesTriplet;
 import com.jdimension.jlawyer.documents.LibreOfficeAccess;
+import com.jdimension.jlawyer.documents.TikaConfigurator;
+import com.jdimension.jlawyer.imports.DefaultPersistence;
+import com.jdimension.jlawyer.imports.DummyPersistence;
+import com.jdimension.jlawyer.imports.ImporterPersistence;
+import com.jdimension.jlawyer.imports.OdfImporterExporter;
 import com.jdimension.jlawyer.persistence.*;
 import com.jdimension.jlawyer.persistence.utils.JDBCUtils;
 import com.jdimension.jlawyer.persistence.utils.StringGenerator;
+import com.jdimension.jlawyer.pojo.FileMetadata;
+import com.jdimension.jlawyer.pojo.imports.ImportLogEntry;
 import com.jdimension.jlawyer.security.PasswordsUtil;
 import com.jdimension.jlawyer.server.services.MonitoringSnapshot;
 import com.jdimension.jlawyer.server.services.ServerInformation;
 import com.jdimension.jlawyer.server.services.settings.ServerSettingsKeys;
+import com.jdimension.jlawyer.server.utils.FileNameGenerator;
+import com.jdimension.jlawyer.server.utils.InvalidSchemaPatternException;
 import com.jdimension.jlawyer.server.utils.ServerFileUtils;
 import com.jdimension.jlawyer.server.utils.ServerStringUtils;
 import com.jdimension.jlawyer.server.utils.StringUtils;
@@ -685,6 +695,7 @@ import java.sql.*;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.Enumeration;
 import java.util.HashMap;
 import java.util.Hashtable;
@@ -698,6 +709,10 @@ import javax.ejb.EJB;
 import javax.ejb.EJBException;
 import javax.ejb.SessionContext;
 import javax.ejb.Stateless;
+import javax.inject.Inject;
+import javax.jms.JMSConnectionFactory;
+import javax.jms.JMSContext;
+import javax.jms.ObjectMessage;
 import javax.mail.Folder;
 import javax.mail.Message;
 import javax.mail.PasswordAuthentication;
@@ -706,9 +721,6 @@ import javax.mail.Store;
 import javax.mail.Transport;
 import javax.mail.internet.InternetAddress;
 import javax.mail.internet.MimeMessage;
-import javax.management.MBeanServer;
-import javax.management.MBeanServerFactory;
-import javax.management.ObjectName;
 import javax.xml.XMLConstants;
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
@@ -722,11 +734,12 @@ import javax.xml.xpath.XPathExpression;
 import javax.xml.xpath.XPathFactory;
 import org.apache.log4j.Logger;
 import org.apache.tika.Tika;
-import org.jboss.ejb3.annotation.SecurityDomain;
 import org.jlawyer.data.tree.GenericNode;
 import org.jlawyer.data.tree.TreeNodeUtils;
 import org.jlawyer.plugins.calculation.GenericCalculationTable;
 import org.jlawyer.utils.PlaceHolderServerUtils;
+import org.jlawyer.utils.ocr.OcrRequest;
+import org.jlawyer.utils.ocr.OcrUtils;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 import org.w3c.dom.Node;
@@ -737,14 +750,14 @@ import org.w3c.dom.NodeList;
  * @author jens
  */
 @Stateless
-@SecurityDomain("j-lawyer-security")
+//@SecurityDomain("j-lawyer-security")
 public class SystemManagement implements SystemManagementRemote, SystemManagementLocal {
 
     private static final Logger log = Logger.getLogger(SystemManagement.class.getName());
     private static final String SSL_FACTORY = "javax.net.ssl.SSLSocketFactory";
-    
-    private static final String ROLE_LOGIN="loginRole";
-    
+
+    private static final String ROLE_LOGIN = "loginRole";
+
     @Resource
     private SessionContext context;
     @EJB
@@ -769,6 +782,21 @@ public class SystemManagement implements SystemManagementRemote, SystemManagemen
     private MappingEntryFacadeLocal mappingEntryFacade;
     @EJB
     private FormsServiceLocal formsService;
+    @EJB
+    private FormTypeBeanFacadeLocal formTypes;
+    @EJB
+    private AssistantConfigFacadeLocal assistantFacade;
+    @EJB
+    private DocumentNameTemplateFacadeLocal documentNameTemplates;
+    @EJB
+    private CalendarEntryTemplateFacadeLocal calendarEntryTemplates;
+
+    @Inject
+    @JMSConnectionFactory("java:/JmsXA")
+    private JMSContext jmsContext;
+
+    @Resource(lookup = "java:/jms/queue/searchIndexProcessorQueue")
+    private javax.jms.Queue searchIndexQueue;
 
     @Override
     @RolesAllowed({"loginRole"})
@@ -777,27 +805,28 @@ public class SystemManagement implements SystemManagementRemote, SystemManagemen
         return appOptionGroupBeanFacade.findByOptionGroup(optionGroup);
 
     }
-    
+
     @Override
     @RolesAllowed({"loginRole"})
     public List<String> getAllOptionGroups() {
-        List<AppOptionGroupBean> fullList=appOptionGroupBeanFacade.findAll();
-        List<String> optionGroups=new ArrayList<>();
-        for(AppOptionGroupBean aog: fullList) {
-            if(!optionGroups.contains(aog.getOptionGroup()))
+        List<AppOptionGroupBean> fullList = appOptionGroupBeanFacade.findAll();
+        List<String> optionGroups = new ArrayList<>();
+        for (AppOptionGroupBean aog : fullList) {
+            if (!optionGroups.contains(aog.getOptionGroup())) {
                 optionGroups.add(aog.getOptionGroup());
+            }
         }
         return optionGroups;
 
     }
-   
+
     @Override
     @RolesAllowed({"loginRole"})
     public BankDataBean[] searchBankData(String query) {
         JDBCUtils utils = new JDBCUtils();
         ResultSet rs = null;
         ArrayList<BankDataBean> list = new ArrayList<>();
-        try ( Connection con = utils.getConnection();  PreparedStatement st = con.prepareStatement("select id, name, bankCode from directory_banks where ucase(name) like ? or bankCode like ? order by bankCode, name")) {
+        try (Connection con = utils.getConnection(); PreparedStatement st = con.prepareStatement("select id, name, bankCode from directory_banks where ucase(name) like ? or bankCode like ? order by bankCode, name")) {
             String wildCard1 = StringUtils.germanToUpperCase(query) + "%";
             String wildCard2 = "%" + wildCard1;
             st.setString(1, wildCard2);
@@ -836,7 +865,7 @@ public class SystemManagement implements SystemManagementRemote, SystemManagemen
         JDBCUtils utils = new JDBCUtils();
         ResultSet rs = null;
         ArrayList<CityDataBean> list = new ArrayList<>();
-        try ( Connection con = utils.getConnection();  PreparedStatement st = con.prepareStatement("select id, city, zipCode from directory_cities where ucase(city) like ? or zipCode like ? order by zipCode")) {
+        try (Connection con = utils.getConnection(); PreparedStatement st = con.prepareStatement("select id, city, zipCode from directory_cities where ucase(city) like ? or zipCode like ? order by zipCode")) {
 
             String wildCard1 = StringUtils.germanToUpperCase(query) + "%";
             String wildCard2 = "%" + wildCard1;
@@ -898,7 +927,7 @@ public class SystemManagement implements SystemManagementRemote, SystemManagemen
     @RolesAllowed({"adminRole"})
     public void removeAllBankData() {
         JDBCUtils utils = new JDBCUtils();
-        try ( Connection con = utils.getConnection();  Statement st = con.createStatement()) {
+        try (Connection con = utils.getConnection(); Statement st = con.createStatement()) {
 
             st.execute("delete from directory_banks");
         } catch (SQLException sqle) {
@@ -927,7 +956,7 @@ public class SystemManagement implements SystemManagementRemote, SystemManagemen
     @RolesAllowed({"adminRole"})
     public void removeAllCityData() {
         JDBCUtils utils = new JDBCUtils();
-        try ( Connection con = utils.getConnection();  Statement st = con.createStatement()) {
+        try (Connection con = utils.getConnection(); Statement st = con.createStatement()) {
             st.execute("delete from directory_cities");
         } catch (SQLException sqle) {
             log.error("Error deleting city data", sqle);
@@ -966,12 +995,13 @@ public class SystemManagement implements SystemManagementRemote, SystemManagemen
     }
 
     private String getTypedFolderName(int templateType) {
-        if(templateType==SystemManagementRemote.TEMPLATE_TYPE_HEAD)
+        if (templateType == SystemManagementRemote.TEMPLATE_TYPE_HEAD) {
             return "letterheads";
-        else
+        } else {
             return "templates";
+        }
     }
-    
+
     @Override
     @RolesAllowed({"loginRole"})
     public boolean addFromMasterTemplate(int templateType, String fileName, String basedOnFileName) throws Exception {
@@ -987,61 +1017,9 @@ public class SystemManagement implements SystemManagementRemote, SystemManagemen
         String src = localBaseDirFrom + basedOnFileName;
         String dst = localBaseDirTo + fileName;
 
-        copyFile(src, dst);
+        ServerFileUtils.copyFile(src, dst);
 
         return true;
-    }
-
-    public static void createFile(String file, byte[] data) throws Exception {
-        try ( FileOutputStream fos = new FileOutputStream(file)) {
-            fos.write(data);
-
-        }
-
-    }
-
-    public static void copyFile(String srFile, String dtFile) throws Exception {
-
-        File f1 = new File(srFile);
-        File f2 = new File(dtFile);
-
-        if (f2.exists()) {
-            throw new Exception("Zieldatei existiert bereits!");
-        }
-
-        try ( InputStream in = new FileInputStream(f1);  OutputStream out = new FileOutputStream(f2)) {
-
-            byte[] buf = new byte[1024];
-            int len;
-            while ((len = in.read(buf)) > 0) {
-                out.write(buf, 0, len);
-            }
-        }
-
-    }
-
-    public static byte[] readFile(File file) throws Exception {
-        try ( FileInputStream fileInputStream = new FileInputStream(file);) {
-            byte[] data = new byte[(int) file.length()];
-            fileInputStream.read(data);
-            return data;
-        }
-    }
-
-    public static String readTextFile(File file) throws Exception {
-        try ( FileReader fr = new FileReader(file)) {
-
-            char[] data = new char[(int) file.length()];
-            fr.read(data);
-            return new String(data);
-        }
-    }
-
-    public static void writeFile(File file, byte[] content) throws Exception {
-        try ( FileOutputStream fileOutputStream = new FileOutputStream(file, false);) {
-            fileOutputStream.write(content);
-            fileOutputStream.flush();
-        }
     }
 
     @Override
@@ -1129,15 +1107,15 @@ public class SystemManagement implements SystemManagementRemote, SystemManagemen
             if (ROLE_LOGIN.equalsIgnoreCase(r.getRole())) {
 
                 List<AppRoleBean> currentRoles = this.roleBeanFacade.findByPrincipalId(user.getPrincipalId());
-                boolean currentlyActive=false;
+                boolean currentlyActive = false;
                 for (AppRoleBean cr : currentRoles) {
-                    if(ROLE_LOGIN.equalsIgnoreCase(cr.getRole())) {
-                        currentlyActive=true;
+                    if (ROLE_LOGIN.equalsIgnoreCase(cr.getRole())) {
+                        currentlyActive = true;
                         break;
                     }
                 }
 
-                if(currentlyActive) {
+                if (currentlyActive) {
                     // just a simple user update
                     this.checkUserLimit(true);
                 } else {
@@ -1170,16 +1148,17 @@ public class SystemManagement implements SystemManagementRemote, SystemManagemen
     }
 
     private void flushUserCache(String principalId) {
-        try {
-
-            ObjectName jaasMgr = new ObjectName("jboss.as:subsystem=security,security-domain=j-lawyer-security");
-            Object[] params = {principalId};
-            String[] signature = {"java.lang.String"};
-            MBeanServer server = (MBeanServer) MBeanServerFactory.findMBeanServer(null).get(0);
-            server.invoke(jaasMgr, "flushCache", params, signature);
-        } catch (Throwable ex) {
-            log.warn("Could not flush authorization cache", ex);
-        }
+// with Wildfly 26, this does not seem to be needed anymore.
+//        try {
+//
+//            ObjectName jaasMgr = new ObjectName("jboss.as:subsystem=security,security-domain=j-lawyer-security");
+//            Object[] params = {principalId};
+//            String[] signature = {"java.lang.String"};
+//            MBeanServer server = (MBeanServer) MBeanServerFactory.findMBeanServer(null).get(0);
+//            server.invoke(jaasMgr, "flushCache", params, signature);
+//        } catch (Throwable ex) {
+//            log.warn("Could not flush authorization cache", ex);
+//        }
     }
 
     @Override
@@ -1201,20 +1180,20 @@ public class SystemManagement implements SystemManagementRemote, SystemManagemen
         ServerInformation si = new ServerInformation();
         return si;
     }
-    
+
     @Override
     @RolesAllowed({"adminRole"})
     public Properties getSystemProperties() {
         return System.getProperties();
     }
-    
+
     @Override
     @RolesAllowed({"adminRole"})
     public String getServerLogs(int numberOfLines) throws Exception {
         File logDir = new File(System.getProperty("jboss.server.log.dir"));
         File wildFlyLog = new File(logDir.getAbsolutePath() + File.separator + "server.log");
         return ServerFileUtils.readLinesFromEnd(wildFlyLog, numberOfLines);
-        
+
     }
 
     @Override
@@ -1245,6 +1224,11 @@ public class SystemManagement implements SystemManagementRemote, SystemManagemen
     @RolesAllowed({"loginRole"})
     public AppUserBean getUser(String principalId) {
         return this.userBeanFacade.findByPrincipalId(principalId);
+    }
+    
+    @Override
+    public AppUserBean getUserUnrestricted(String principalId) {
+        return this.userBeanFacade.findByPrincipalIdUnrestricted(principalId);
     }
 
     @Override
@@ -1512,7 +1496,7 @@ public class SystemManagement implements SystemManagementRemote, SystemManagemen
 
         Session session = null;
         Store store = null;
-        if(isMsExchange) {
+        if (isMsExchange) {
             props.put("mail.imaps.sasl.enable", "true");
             props.put("mail.imaps.port", "993");
 
@@ -1564,7 +1548,7 @@ public class SystemManagement implements SystemManagementRemote, SystemManagemen
 
         String version = "unknown";
         JDBCUtils utils = new JDBCUtils();
-        try ( Connection con = utils.getConnection();  PreparedStatement st = con.prepareStatement("SELECT version FROM flyway_schema_history where success =1 order by installed_rank desc limit 1");  ResultSet rs = st.executeQuery()) {
+        try (Connection con = utils.getConnection(); PreparedStatement st = con.prepareStatement("SELECT version FROM flyway_schema_history where success =1 order by installed_rank desc limit 1"); ResultSet rs = st.executeQuery()) {
 
             if (rs.next()) {
                 version = rs.getString(1);
@@ -1703,7 +1687,7 @@ public class SystemManagement implements SystemManagementRemote, SystemManagemen
             throw new Exception("server configuration not found: " + wildFlyConf.getAbsolutePath());
         }
 
-        copyFile(wildFlyConf.getAbsolutePath(), new File(wildFlyConf.getAbsolutePath() + ".bak." + System.currentTimeMillis()).getAbsolutePath());
+        ServerFileUtils.copyFile(wildFlyConf.getAbsolutePath(), new File(wildFlyConf.getAbsolutePath() + ".bak." + System.currentTimeMillis()).getAbsolutePath());
 
         Document dom;
         // Make an  instance of the DocumentBuilderFactory
@@ -1759,7 +1743,7 @@ public class SystemManagement implements SystemManagementRemote, SystemManagemen
     @RolesAllowed({"loginRole"})
     public boolean addTemplate(int templateType, GenericNode folder, String fileName, byte[] data) throws Exception {
         String localBaseDir = this.getTemplatesBaseDir(templateType, TreeNodeUtils.buildNodePath(folder));
-        
+
         String dst = localBaseDir + File.separator + fileName;
 
         File f2 = new File(dst);
@@ -1768,7 +1752,7 @@ public class SystemManagement implements SystemManagementRemote, SystemManagemen
             throw new Exception("Zieldatei existiert bereits!");
         }
 
-        try ( OutputStream out = new FileOutputStream(f2)) {
+        try (OutputStream out = new FileOutputStream(f2)) {
 
             out.write(data);
 
@@ -1785,7 +1769,7 @@ public class SystemManagement implements SystemManagementRemote, SystemManagemen
         String src = localBaseDir + File.separator + basedOnTemplateFileName;
         String dst = localBaseDir + File.separator + fileName;
 
-        copyFile(src, dst);
+        ServerFileUtils.copyFile(src, dst);
 
         return true;
     }
@@ -1800,7 +1784,7 @@ public class SystemManagement implements SystemManagementRemote, SystemManagemen
         File f = new File(del);
         return f.delete();
     }
-    
+
     @Override
     @RolesAllowed({"loginRole"})
     public GenericNode getAllTemplatesTree(int templateType) throws Exception {
@@ -1857,7 +1841,7 @@ public class SystemManagement implements SystemManagementRemote, SystemManagemen
         String read = localBaseDir + File.separator + fileName;
 
         File f = new File(read);
-        return readFile(f);
+        return ServerFileUtils.readFile(f);
     }
 
     @Override
@@ -1868,7 +1852,7 @@ public class SystemManagement implements SystemManagementRemote, SystemManagemen
         String upd = localBaseDir + File.separator + fileName;
 
         File f = new File(upd);
-        writeFile(f, content);
+        ServerFileUtils.writeFile(f, content);
     }
 
     @Override
@@ -1901,10 +1885,11 @@ public class SystemManagement implements SystemManagementRemote, SystemManagemen
     @Override
     @RolesAllowed({"loginRole"})
     public List<String> getTemplatesByPath(int templateType, String templatesPath) throws Exception {
-        if(!templatesPath.startsWith(File.separator))
-            templatesPath=File.separator + templatesPath;
+        if (!templatesPath.startsWith(File.separator)) {
+            templatesPath = File.separator + templatesPath;
+        }
         String localBaseDir = this.getTemplatesBaseDir(templateType, templatesPath);
-        
+
         File f = new File(localBaseDir);
         File[] files = f.listFiles();
         ArrayList list = new ArrayList();
@@ -1917,7 +1902,7 @@ public class SystemManagement implements SystemManagementRemote, SystemManagemen
         Collections.sort(list, String.CASE_INSENSITIVE_ORDER);
         return list;
     }
-    
+
     @Override
     @RolesAllowed({"loginRole"})
     public List<String> getTemplatesInFolder(int templateType, GenericNode folder) throws Exception {
@@ -1939,7 +1924,7 @@ public class SystemManagement implements SystemManagementRemote, SystemManagemen
         String src = localBaseDirFrom + basedOnFileName;
         String dst = localBaseDirTo + fileName;
 
-        copyFile(src, dst);
+        ServerFileUtils.copyFile(src, dst);
 
         return true;
     }
@@ -1947,24 +1932,25 @@ public class SystemManagement implements SystemManagementRemote, SystemManagemen
     @Override
     @RolesAllowed({"loginRole"})
     public List<String> getPlaceHoldersForTemplate(int templateType, String templatePath, String templateName, String caseId) throws Exception {
-        
-        if(!templatePath.startsWith(File.separator))
-            templatePath=File.separator + templatePath;
+
+        if (!templatePath.startsWith(File.separator)) {
+            templatePath = File.separator + templatePath;
+        }
         String localBaseDir = this.getTemplatesBaseDir(templateType, templatePath);
-        
+
         String tpl = localBaseDir + File.separator + templateName;
-        
+
         List<PartyTypeBean> partyTypes = this.getPartyTypes();
         ArrayList<String> allPartyTypesPlaceholders = new ArrayList<>();
         for (PartyTypeBean ptb : partyTypes) {
             allPartyTypesPlaceholders.add(ptb.getPlaceHolder());
         }
-        
-        Collection<String> formsPlaceHolders=this.formsService.getPlaceHoldersForCase(caseId);
+
+        Collection<String> formsPlaceHolders = this.formsService.getPlaceHoldersForCase(caseId);
 
         return LibreOfficeAccess.getPlaceHolders(tpl, allPartyTypesPlaceholders, formsPlaceHolders);
     }
-    
+
     @Override
     @RolesAllowed({"loginRole"})
     public List<String> getPlaceHoldersForTemplate(int templateType, GenericNode folder, String templateName, Collection<String> formsPlaceHolders) throws Exception {
@@ -2001,7 +1987,7 @@ public class SystemManagement implements SystemManagementRemote, SystemManagemen
 
         String read = localBaseDir + File.separator + fileName;
 
-        Tika tika = new Tika();
+        Tika tika = TikaConfigurator.newTika(fileName);
         try {
             Reader r = tika.parse(new File(read));
             BufferedReader br = new BufferedReader(r);
@@ -2040,7 +2026,6 @@ public class SystemManagement implements SystemManagementRemote, SystemManagemen
     }
 
     @Override
-    @RolesAllowed({"loginRole"})
     public List<PartyTypeBean> getPartyTypes() {
         List<PartyTypeBean> all = this.partyTypesFacade.findAll();
         Collections.sort(all, (Object t, Object t1) -> {
@@ -2063,10 +2048,8 @@ public class SystemManagement implements SystemManagementRemote, SystemManagemen
             PartyTypeBean f1 = (PartyTypeBean) u1;
             PartyTypeBean f2 = (PartyTypeBean) u2;
 
-            
-
             int sequenceSortResult = Integer.compare(f1.getSequenceNumber(), f2.getSequenceNumber());
-            if(sequenceSortResult != 0) {
+            if (sequenceSortResult != 0) {
                 return sequenceSortResult;
             } else {
                 String f1name = "";
@@ -2135,7 +2118,7 @@ public class SystemManagement implements SystemManagementRemote, SystemManagemen
     public void removePartyType(PartyTypeBean partyType) throws Exception {
 
         List<ArchiveFileAddressesBean> list = this.archiveFileAddressesFacade.findByReferenceType(partyType);
-        if (list.size() > 0) {
+        if (!list.isEmpty()) {
             throw new Exception("Beteiligtentyp " + partyType.getName() + " wird noch benutzt und kann nicht gelöscht werden!");
         }
 
@@ -2171,11 +2154,12 @@ public class SystemManagement implements SystemManagementRemote, SystemManagemen
 
     @Override
     @RolesAllowed({"loginRole"})
-    public void addObservedFile(String fileName, byte[] content) throws Exception {
-        
-        if(fileName==null || "".equals(fileName))
+    public void addObservedFile(String fileName, byte[] content, String source) throws Exception {
+
+        if (fileName == null || "".equals(fileName)) {
             throw new Exception("Dokumentname darf nicht leer sein!");
-        
+        }
+
         ServerSettingsBean mode = settingsFacade.find("jlawyer.server.observe.directory");
         if (mode == null || "".equals(mode.getSettingValue())) {
             log.error("No server directory configured for scans");
@@ -2226,10 +2210,33 @@ public class SystemManagement implements SystemManagementRemote, SystemManagemen
             }
         }
 
-        try ( FileOutputStream fout = new FileOutputStream(uploadFile)) {
+        try (FileOutputStream fout = new FileOutputStream(uploadFile)) {
             fout.write(content);
         }
 
+        OcrRequest req = new OcrRequest();
+        if (!OcrUtils.hasMetadata(uploadFile)) {
+            FileMetadata newMetadata = OcrUtils.generateMetadata(uploadFile, context.getCallerPrincipal().getName(), source);
+            if (newMetadata.getOcrStatus() == FileMetadata.OCRSTATUS_OPEN) {
+                // send request to perform OCR
+                req.getAbsolutePaths().add(uploadFile.getAbsolutePath());
+
+            }
+        }
+        if (!req.getAbsolutePaths().isEmpty()) {
+            this.publishOcrRequest(req);
+        }
+
+    }
+
+    private void publishOcrRequest(OcrRequest req) {
+        try {
+            ObjectMessage msg = this.jmsContext.createObjectMessage(req);
+            jmsContext.createProducer().send(searchIndexQueue, msg);
+
+        } catch (Exception ex) {
+            log.error("could not publish OCR request", ex);
+        }
     }
 
     @Override
@@ -2362,13 +2369,13 @@ public class SystemManagement implements SystemManagementRemote, SystemManagemen
         }
 
         localBaseDir = localBaseDir + getTypedFolderName(templateType);
-        if(!ServerStringUtils.isEmpty(appendDirectories)) {
+        if (!ServerStringUtils.isEmpty(appendDirectories)) {
             return localBaseDir + appendDirectories;
         } else {
             return localBaseDir + System.getProperty("file.separator");
         }
     }
-    
+
     @Override
     @RolesAllowed({"loginRole"})
     public String getTemplatesBaseDir(int templateType) throws Exception {
@@ -2376,9 +2383,169 @@ public class SystemManagement implements SystemManagementRemote, SystemManagemen
     }
 
     @Override
+    public HashMap<String, Object> getPlaceHolderValuesUnrestricted(HashMap<String, Object> placeHolders, ArchiveFileBean aFile, List<PartiesTriplet> selectedParties, String dictateSign, GenericCalculationTable calculationTable, HashMap<String, String> formsPlaceHolderValues, AppUserBean caseLawyer, AppUserBean caseAssistant, AppUserBean author, Invoice invoice, AppUserBean invoiceSender, GenericCalculationTable invoiceTable, GenericCalculationTable timesheetsTable, byte[] giroCode, String ingoText) throws Exception {
+        return PlaceHolderServerUtils.getPlaceHolderValues(placeHolders, aFile, selectedParties, dictateSign, calculationTable, formsPlaceHolderValues, caseLawyer, caseAssistant, author, invoice, invoiceSender, invoiceTable, timesheetsTable, giroCode, ingoText);
+    }
+    
+    @Override
     @RolesAllowed({"loginRole"})
-    public HashMap<String,Object> getPlaceHolderValues(HashMap<String,Object> placeHolders, ArchiveFileBean aFile, List<PartiesTriplet> selectedParties, String dictateSign, GenericCalculationTable calculationTable, HashMap<String,String> formsPlaceHolderValues, AppUserBean caseLawyer, AppUserBean caseAssistant, AppUserBean author, Invoice invoice, GenericCalculationTable invoiceTable, GenericCalculationTable timesheetsTable) throws Exception {
-        return PlaceHolderServerUtils.getPlaceHolderValues(placeHolders, aFile, selectedParties, dictateSign, calculationTable, formsPlaceHolderValues, caseLawyer, caseAssistant, author, invoice, invoiceTable, timesheetsTable);
+    public HashMap<String, Object> getPlaceHolderValues(HashMap<String, Object> placeHolders, ArchiveFileBean aFile, List<PartiesTriplet> selectedParties, String dictateSign, GenericCalculationTable calculationTable, HashMap<String, String> formsPlaceHolderValues, AppUserBean caseLawyer, AppUserBean caseAssistant, AppUserBean author, Invoice invoice, AppUserBean invoiceSender, GenericCalculationTable invoiceTable, GenericCalculationTable timesheetsTable, byte[] giroCode, String ingoText) throws Exception {
+        return PlaceHolderServerUtils.getPlaceHolderValues(placeHolders, aFile, selectedParties, dictateSign, calculationTable, formsPlaceHolderValues, caseLawyer, caseAssistant, author, invoice, invoiceSender, invoiceTable, timesheetsTable, giroCode, ingoText);
     }
 
+    @Override
+    @RolesAllowed({"loginRole"})
+    public List<AssistantConfig> getAssistants() {
+        return this.assistantFacade.findAll();
+    }
+
+    @Override
+    @RolesAllowed({"adminRole"})
+    public AssistantConfig addAssistant(AssistantConfig assistant) throws Exception {
+        String id = new StringGenerator().getID().toString();
+        assistant.setId(id);
+        this.assistantFacade.create(assistant);
+        return this.assistantFacade.find(id);
+    }
+
+    @Override
+    @RolesAllowed({"adminRole"})
+    public AssistantConfig updateAssistant(AssistantConfig assistant) throws Exception {
+        this.assistantFacade.edit(assistant);
+        return this.assistantFacade.find(assistant.getId());
+    }
+
+    @Override
+    @RolesAllowed({"adminRole"})
+    public DocumentNameTemplate addDocumentNameTemplate(DocumentNameTemplate template) throws Exception {
+        StringGenerator idGen = new StringGenerator();
+        String id = idGen.getID().toString();
+        template.setId(id);
+        this.documentNameTemplates.create(template);
+        return this.documentNameTemplates.find(id);
+    }
+
+    @Override
+    @RolesAllowed({"adminRole"})
+    public DocumentNameTemplate updateDocumentNameTemplate(DocumentNameTemplate template) throws Exception {
+        this.documentNameTemplates.edit(template);
+
+        if (template.isDefaultTemplate()) {
+            // default template - remove default flag from any other templates
+            for (DocumentNameTemplate t : this.documentNameTemplates.findAll()) {
+                if (!t.equals(template)) {
+                    t.setDefaultTemplate(false);
+                    this.documentNameTemplates.edit(t);
+                }
+            }
+        }
+
+        return this.documentNameTemplates.find(template.getId());
+    }
+
+    @Override
+    @RolesAllowed({"loginRole"})
+    public DocumentNameTemplate getDocumentNameTemplate(String templateId) throws Exception {
+        return this.documentNameTemplates.find(templateId);
+    }
+
+    @Override
+    @RolesAllowed({"adminRole"})
+    public void removeDocumentNameTemplate(DocumentNameTemplate template) throws Exception {
+        this.documentNameTemplates.remove(template);
+    }
+
+    @Override
+    @RolesAllowed({"loginRole"})
+    public List<DocumentNameTemplate> getDocumentNameTemplates() throws Exception {
+
+        List<DocumentNameTemplate> allTemplates = this.documentNameTemplates.findAll();
+        allTemplates.sort(Comparator.comparing(
+                entry -> entry.getDisplayName().toLowerCase()
+        ));
+        return allTemplates;
+
+    }
+
+    @Override
+    public DocumentNameTemplate getDefaultDocumentNameTemplate() throws Exception {
+
+        return this.documentNameTemplates.findDefault();
+
+    }
+
+    @Override
+    @RolesAllowed({"loginRole"})
+    public List<String> previewDocumentNamesForTemplate(DocumentNameTemplate template, String fileName) throws Exception {
+        ArrayList<String> previews = new ArrayList<>();
+
+        try {
+
+            for (int i = 0; i < 10; i++) {
+                java.util.Date now = new Date(System.currentTimeMillis() + 24l * 60l * 60l * 1000l * i);
+                String next = FileNameGenerator.getFileName(template.getPattern(), now, fileName);
+                previews.add(next);
+            }
+
+            return previews;
+
+        } catch (InvalidSchemaPatternException isp) {
+            throw new Exception(isp.getMessage());
+        }
+    }
+
+    @Override
+    @RolesAllowed({"loginRole"})
+    public byte[] getImportTemplateOds(boolean exportCurrentData, String fullClientVersion) throws Exception {
+        try (InputStream is = SystemManagement.class.getResourceAsStream("/com/jdimension/jlawyer/imports/importtemplate.ods");) {
+            // Check if the InputStream is not null (file found)
+            if (is == null) {
+                throw new IOException("Import-Vorlage konnte nicht gefunden werden");
+            }
+
+            // Use a ByteArrayOutputStream to hold the bytes
+            ByteArrayOutputStream buffer = new ByteArrayOutputStream();
+            byte[] data = new byte[1024];
+            int nRead;
+
+            // Read the file in chunks of 1024 bytes and write them to the ByteArrayOutputStream
+            while ((nRead = is.read(data, 0, data.length)) != -1) {
+                buffer.write(data, 0, nRead);
+            }
+            byte[] templateBytes=buffer.toByteArray();
+
+            if (exportCurrentData) {
+                // export into the template
+                ImporterPersistence persister = new DefaultPersistence(this, this.settingsFacade, this.partyTypesFacade, this.calendarEntryTemplates, this.formTypes, this.formsService);
+                OdfImporterExporter importer = new OdfImporterExporter(templateBytes, persister, fullClientVersion);
+                return importer.exportSheets(importer.listSheets());
+            } else {
+                // Return the byte array
+                return templateBytes;
+            }
+
+        }
+    }
+
+    @Override
+    @RolesAllowed({"loginRole"})
+    public List<String> listImportSheets(byte[] odsData, String fullClientVersion) throws Exception {
+        ImporterPersistence persister = new DummyPersistence();
+        OdfImporterExporter importer = new OdfImporterExporter(odsData, persister, fullClientVersion);
+        return importer.listSheets();
+    }
+
+    @Override
+    @RolesAllowed({"adminRole"})
+    public List<ImportLogEntry> importSheets(byte[] odsData, List<String> sheetNames, boolean dryRun, String fullClientVersion) throws Exception {
+        ImporterPersistence persister = null;
+        if (dryRun) {
+            persister = new DummyPersistence();
+        } else {
+            persister = new DefaultPersistence(this, this.settingsFacade, this.partyTypesFacade, this.calendarEntryTemplates, this.formTypes, this.formsService);
+        }
+        OdfImporterExporter importer = new OdfImporterExporter(odsData, persister, fullClientVersion);
+        return importer.importSheets(sheetNames, dryRun);
+
+    }
 }

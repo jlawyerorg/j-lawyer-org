@@ -692,4 +692,8 @@ public interface InvoiceFacadeLocal {
 
     List<Invoice> findByAddress(AddressBean address);
     
+    List<Invoice> findByStatus(int status);
+    
+    Invoice findByInvoiceNumber(String invoiceNumber);
+    
 }

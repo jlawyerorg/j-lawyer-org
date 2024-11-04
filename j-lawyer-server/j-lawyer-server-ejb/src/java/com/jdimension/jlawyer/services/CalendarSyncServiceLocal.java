@@ -665,9 +665,7 @@ package com.jdimension.jlawyer.services;
 
 import com.jdimension.jlawyer.persistence.ArchiveFileBean;
 import com.jdimension.jlawyer.persistence.ArchiveFileReviewsBean;
-import java.util.List;
 import javax.ejb.Local;
-import org.jlawyer.cloud.calendar.CloudCalendar;
 
 /**
  *
@@ -686,6 +684,5 @@ public interface CalendarSyncServiceLocal {
     
     void eventDeleted(ArchiveFileReviewsBean event);
     
-    List<CloudCalendar> listCalendars(String host, boolean ssl, int port, String user, String password, String path) throws Exception;
     
 }

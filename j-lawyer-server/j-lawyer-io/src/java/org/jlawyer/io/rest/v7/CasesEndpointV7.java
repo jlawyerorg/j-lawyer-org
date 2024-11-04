@@ -666,11 +666,14 @@ package org.jlawyer.io.rest.v7;
 import com.jdimension.jlawyer.persistence.ArchiveFileBean;
 import com.jdimension.jlawyer.persistence.ArchiveFileDocumentsBean;
 import com.jdimension.jlawyer.persistence.ArchiveFileDocumentsBeanFacadeLocal;
+import com.jdimension.jlawyer.persistence.ArchiveFileGroupsBean;
+import com.jdimension.jlawyer.persistence.Group;
 import com.jdimension.jlawyer.persistence.InstantMessage;
 import com.jdimension.jlawyer.server.utils.ServerStringUtils;
 import com.jdimension.jlawyer.services.ArchiveFileServiceLocal;
 import com.jdimension.jlawyer.services.MessagingServiceLocal;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
 import javax.annotation.security.RolesAllowed;
 import javax.ejb.Stateless;
@@ -684,6 +687,10 @@ import javax.ws.rs.Produces;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import org.jboss.logging.Logger;
+import org.jlawyer.io.rest.v1.pojo.RestfulCaseOverviewV1;
+import org.jlawyer.io.rest.v1.pojo.RestfulCaseV2;
+import org.jlawyer.io.rest.v1.pojo.RestfulDocumentV1;
+import org.jlawyer.io.rest.v6.pojo.RestfulGroupV6;
 import org.jlawyer.io.rest.v7.pojo.RestfulDocumentValidationRequestV7;
 import org.jlawyer.io.rest.v7.pojo.RestfulInstantMessageV7;
 import org.jlawyer.io.rest.v7.pojo.RestfulStatusResponseV7;
@@ -699,66 +706,70 @@ import org.jlawyer.io.rest.v7.pojo.RestfulStatusResponseV7;
 public class CasesEndpointV7 implements CasesEndpointLocalV7 {
 
     private static final Logger log = Logger.getLogger(CasesEndpointV7.class.getName());
-    private static final String LOOKUP_CASES="java:global/j-lawyer-server/j-lawyer-server-ejb/ArchiveFileService!com.jdimension.jlawyer.services.ArchiveFileServiceLocal";
+    private static final String LOOKUP_CASES = "java:global/j-lawyer-server/j-lawyer-server-ejb/ArchiveFileService!com.jdimension.jlawyer.services.ArchiveFileServiceLocal";
 
     /**
-     * Checks whether or not a document (as specified in the request) may currently be added to the given case.
-     * Note that a client should then add the document directly after performing the check, otherwise there may
-     * be other clients who add same-named documents in the meantime.
-     * Checks are performed in a case-insensitive manner, even if some operating systems allow that.
+     * Checks whether or not a document (as specified in the request) may
+     * currently be added to the given case. Note that a client should then add
+     * the document directly after performing the check, otherwise there may be
+     * other clients who add same-named documents in the meantime. Checks are
+     * performed in a case-insensitive manner, even if some operating systems
+     * allow that.
      *
      * @param id case ID
-     * @param request the request object describing a document to be added to the case
-     * @return validation response as an instance of RestfulStatusResponseV7 - a JSON structure with "status" and "message" attributes. Status may have one of the values STATUS_OK, STATUS_WARNING, STATUS_ERROR.
+     * @param request the request object describing a document to be added to
+     * the case
+     * @return validation response as an instance of RestfulStatusResponseV7 - a
+     * JSON structure with "status" and "message" attributes. Status may have
+     * one of the values STATUS_OK, STATUS_WARNING, STATUS_ERROR.
      * @response 401 User not authorized
      * @response 403 User not authenticated
      */
     @Override
     @PUT
-    @Produces(MediaType.APPLICATION_JSON+";charset=utf-8")
+    @Produces(MediaType.APPLICATION_JSON + ";charset=utf-8")
     @Path("/{id}/documents/validate")
     @RolesAllowed({"readArchiveFileRole"})
     public Response validateDocumentName(@PathParam("id") String id, RestfulDocumentValidationRequestV7 request) {
         try {
             InitialContext ic = new InitialContext();
-            
+
             ArchiveFileServiceLocal cases = (ArchiveFileServiceLocal) ic.lookup(LOOKUP_CASES);
             ArchiveFileDocumentsBeanFacadeLocal docs = (ArchiveFileDocumentsBeanFacadeLocal) ic.lookup("java:global/j-lawyer-server/j-lawyer-server-ejb/ArchiveFileDocumentsBeanFacade!com.jdimension.jlawyer.persistence.ArchiveFileDocumentsBeanFacadeLocal");
-            
+
             RestfulStatusResponseV7 response = new RestfulStatusResponseV7();
-            
-            if(ServerStringUtils.isEmpty(request.getDocumentName())) {
+
+            if (ServerStringUtils.isEmpty(request.getDocumentName())) {
                 response.setStatus(RestfulStatusResponseV7.STATUS_ERROR);
                 response.setMessage("A document must have a non-empty file name!");
                 return Response.ok(response).build();
             }
-            
-            ArchiveFileBean afb=cases.getArchiveFile(id);
-            if(afb==null) {
+
+            ArchiveFileBean afb = cases.getArchiveFile(id);
+            if (afb == null) {
                 response.setStatus(RestfulStatusResponseV7.STATUS_ERROR);
                 response.setMessage("There is no case with id " + id);
                 return Response.ok(response).build();
             }
-            
-            String newNameLowerCase=request.getDocumentName().toLowerCase();
-            List<ArchiveFileDocumentsBean> activeDocs=docs.findByArchiveFileKey(afb, false);
-            for(ArchiveFileDocumentsBean d: activeDocs) {
-                if(d.getName().toLowerCase().equals(newNameLowerCase)) {
+
+            String newNameLowerCase = request.getDocumentName().toLowerCase();
+            List<ArchiveFileDocumentsBean> activeDocs = docs.findByArchiveFileKey(afb, false);
+            for (ArchiveFileDocumentsBean d : activeDocs) {
+                if (d.getName().toLowerCase().equals(newNameLowerCase)) {
                     response.setStatus(RestfulStatusResponseV7.STATUS_ERROR);
-                    response.setMessage("There is already a document with name " + request.getDocumentName() + " in case with ID "+ id);
+                    response.setMessage("There is already a document with name " + request.getDocumentName() + " in case with ID " + id);
                     return Response.ok(response).build();
                 }
             }
-            
-            List<ArchiveFileDocumentsBean> binDocs=docs.findByArchiveFileKey(afb, true);
-            for(ArchiveFileDocumentsBean d: binDocs) {
-                if(d.getName().toLowerCase().equals(newNameLowerCase)) {
+
+            List<ArchiveFileDocumentsBean> binDocs = docs.findByArchiveFileKey(afb, true);
+            for (ArchiveFileDocumentsBean d : binDocs) {
+                if (d.getName().toLowerCase().equals(newNameLowerCase)) {
                     response.setStatus(RestfulStatusResponseV7.STATUS_ERROR);
-                    response.setMessage("There is a deleted document with name " + request.getDocumentName() + " in the paper bin for case with ID "+ id);
+                    response.setMessage("There is a deleted document with name " + request.getDocumentName() + " in the paper bin for case with ID " + id);
                     return Response.ok(response).build();
                 }
             }
-            
 
             response.setStatus(RestfulStatusResponseV7.STATUS_OK);
             response.setMessage("A document with name " + request.getDocumentName() + " may currently be added to case with ID " + id);
@@ -768,7 +779,7 @@ public class CasesEndpointV7 implements CasesEndpointLocalV7 {
             return Response.serverError().build();
         }
     }
-    
+
     /**
      * Returns a list of instant messages for a given case
      *
@@ -778,7 +789,7 @@ public class CasesEndpointV7 implements CasesEndpointLocalV7 {
      */
     @Override
     @GET
-    @Produces(MediaType.APPLICATION_JSON+";charset=utf-8")
+    @Produces(MediaType.APPLICATION_JSON + ";charset=utf-8")
     @Consumes(MediaType.APPLICATION_JSON)
     @Path("/{id}/messages")
     @RolesAllowed({"readArchiveFileRole"})
@@ -792,9 +803,9 @@ public class CasesEndpointV7 implements CasesEndpointLocalV7 {
                 log.error("case with id " + id + " does not exist");
                 return Response.serverError().build();
             }
-            
+
             MessagingServiceLocal msgService = (MessagingServiceLocal) ic.lookup("java:global/j-lawyer-server/j-lawyer-server-ejb/MessagingService!com.jdimension.jlawyer.services.MessagingServiceLocal");
-            List<InstantMessage> messages=msgService.getMessagesForCase(id);
+            List<InstantMessage> messages = msgService.getMessagesForCase(id);
 
             ArrayList<RestfulInstantMessageV7> msgList = new ArrayList<>();
             for (InstantMessage im : messages) {
@@ -805,6 +816,219 @@ public class CasesEndpointV7 implements CasesEndpointLocalV7 {
             return Response.ok(msgList).build();
         } catch (Exception ex) {
             log.error("can not get message for case " + id, ex);
+            return Response.serverError().build();
+        }
+    }
+
+    /**
+     * Returns a cases metadata given its external ID
+     *
+     * @param extId the cases external ID
+     * @response 401 User not authorized
+     * @response 403 User not authenticated
+     * @response 404 No case found with this external ID
+     */
+    @Override
+    @GET
+    @Produces(MediaType.APPLICATION_JSON + ";charset=utf-8")
+    @Path("/byexternalid/{extId}")
+    @RolesAllowed({"readArchiveFileRole"})
+    public Response getCaseByExternalId(@PathParam("extId") String extId) {
+
+        try {
+
+            InitialContext ic = new InitialContext();
+            ArchiveFileServiceLocal cases = (ArchiveFileServiceLocal) ic.lookup(LOOKUP_CASES);
+            ArchiveFileBean afb = cases.getCaseByExternalId(extId);
+            if (afb != null) {
+                return Response.ok(RestfulCaseV2.fromArchiveFileBean(afb)).build();
+            } else {
+                return Response.status(Response.Status.NOT_FOUND).build();
+            }
+        } catch (Exception ex) {
+            log.error("can not get case by external id " + extId, ex);
+            return Response.serverError().build();
+        }
+
+    }
+
+    /**
+     * Returns cases that have a given tag applied to them
+     *
+     * @param tag the tag
+     * @response 401 User not authorized
+     * @response 403 User not authenticated
+     */
+    @Override
+    @GET
+    @Produces(MediaType.APPLICATION_JSON + ";charset=utf-8")
+    @Path("/bytag/{tag}")
+    @RolesAllowed({"readArchiveFileRole"})
+    public Response getCasesByTag(@PathParam("tag") String tag) {
+
+        try {
+
+            InitialContext ic = new InitialContext();
+            ArchiveFileServiceLocal cases = (ArchiveFileServiceLocal) ic.lookup(LOOKUP_CASES);
+            List<ArchiveFileBean> matches = cases.getTagged(new String[]{tag}, null, Integer.MAX_VALUE);
+            ArrayList<RestfulCaseOverviewV1> rcoList = new ArrayList<>();
+            if (matches != null) {
+                for (ArchiveFileBean afb : matches) {
+                    RestfulCaseOverviewV1 rco = new RestfulCaseOverviewV1();
+                    rco.setId(afb.getId());
+                    rco.setExternalId(afb.getExternalId());
+                    rco.setName(afb.getName());
+                    rco.setReason(afb.getReason());
+                    rco.setFileNumber(afb.getFileNumber());
+                    rco.setDateChanged(afb.getDateChanged());
+                    rcoList.add(rco);
+                }
+            }
+            return Response.ok(rcoList).build();
+        } catch (Exception ex) {
+            log.error("Can not list cases with tag " + tag, ex);
+            return Response.serverError().build();
+        }
+
+    }
+
+    @Override
+    @GET
+    @Produces(MediaType.APPLICATION_JSON + ";charset=utf-8")
+    @Path("/document/byexternalid/{extId}")
+    @RolesAllowed({"readArchiveFileRole"})
+    public Response getDocumentByExternalId(@PathParam("extId") String extId) {
+
+        try {
+            InitialContext ic = new InitialContext();
+            ArchiveFileServiceLocal cases = (ArchiveFileServiceLocal) ic.lookup(LOOKUP_CASES);
+            ArchiveFileDocumentsBean doc = cases.getDocumentByExternalId(extId);
+            if (doc == null) {
+                log.error("can not get document for external id " + extId);
+                return Response.serverError().build();
+            }
+
+            RestfulDocumentV1 d = new RestfulDocumentV1();
+            d.setId(doc.getId());
+            d.setExternalId(doc.getExternalId());
+            d.setVersion(doc.getVersion());
+            d.setName(doc.getName());
+            d.setCreationDate(doc.getCreationDate());
+            d.setChangeDate(doc.getChangeDate());
+            d.setFavorite(doc.isFavorite());
+            d.setSize(doc.getSize());
+            d.setHighlight1(doc.getHighlight1());
+            d.setHighlight2(doc.getHighlight2());
+            if (doc.getFolder() != null) {
+                d.setFolderId(doc.getFolder().getId());
+            }
+            return Response.ok(d).build();
+        } catch (Exception ex) {
+            log.error("can not get document for external id " + extId, ex);
+            return Response.serverError().build();
+        }
+
+    }
+
+    @Override
+    @GET
+    @Produces(MediaType.APPLICATION_JSON + ";charset=utf-8")
+    @Path("/documents/bytag/{tag}")
+    @RolesAllowed({"readArchiveFileRole"})
+    public Response getDocumentsByTag(@PathParam("tag") String tag) {
+        try {
+            InitialContext ic = new InitialContext();
+            ArchiveFileServiceLocal cases = (ArchiveFileServiceLocal) ic.lookup(LOOKUP_CASES);
+            List<ArchiveFileDocumentsBean> matches = cases.getTaggedDocuments(new String[]{tag}, Integer.MAX_VALUE);
+
+            ArrayList<RestfulDocumentV1> docList = new ArrayList<>();
+            if (matches != null) {
+                for (ArchiveFileDocumentsBean doc : matches) {
+                    RestfulDocumentV1 d = new RestfulDocumentV1();
+                    d.setId(doc.getId());
+                    d.setExternalId(doc.getExternalId());
+                    d.setVersion(doc.getVersion());
+                    d.setName(doc.getName());
+                    d.setCreationDate(doc.getCreationDate());
+                    d.setChangeDate(doc.getChangeDate());
+                    d.setFavorite(doc.isFavorite());
+                    d.setSize(doc.getSize());
+                    d.setHighlight1(doc.getHighlight1());
+                    d.setHighlight2(doc.getHighlight2());
+                    if (doc.getFolder() != null) {
+                        d.setFolderId(doc.getFolder().getId());
+                    }
+                    docList.add(d);
+                }
+            }
+            return Response.ok(docList).build();
+        } catch (Exception ex) {
+            log.error("can not get documents by tag " + tag, ex);
+            return Response.serverError().build();
+        }
+    }
+    
+    /**
+     * Updates a cases allowed groups. All allowed groups must be submitted in one request - existing permissions will be overwritten, not added to. This endpoint can also be used to reset security for a case by sending an empty list of groups. Providing the ID of a group is sufficient.
+     *
+     * @param id case ID
+     * @param allowedGroups the groups allowed to access the case
+     * @return
+     * @response 401 User not authorized
+     * @response 403 User not authenticated
+     */
+    @Override
+    @PUT
+    @Produces(MediaType.APPLICATION_JSON+";charset=utf-8")
+    @Consumes(MediaType.APPLICATION_JSON)
+    @Path("/{id}/groups")
+    @RolesAllowed({"writeArchiveFileRole"})
+    public Response updateAllowedGroups(@PathParam("id") String id, Collection<RestfulGroupV6> allowedGroups) {
+        try {
+
+            InitialContext ic = new InitialContext();
+            ArchiveFileServiceLocal cases = (ArchiveFileServiceLocal) ic.lookup(LOOKUP_CASES);
+            Collection<Group> groups=new ArrayList<>();
+            for(RestfulGroupV6 g: allowedGroups) {
+                groups.add(g.toGroup());
+            }
+            cases.updateAllowedGroups(id, groups);
+
+            return Response.ok().build();
+        } catch (Exception ex) {
+            log.error("can not create history entry " + id, ex);
+            return Response.serverError().build();
+        }
+    }
+    
+    /**
+     * Lists a cases allowed groups.
+     *
+     * @param id case ID
+     * @return
+     * @response 401 User not authorized
+     * @response 403 User not authenticated
+     */
+    @Override
+    @GET
+    @Produces(MediaType.APPLICATION_JSON+";charset=utf-8")
+    @Consumes(MediaType.APPLICATION_JSON)
+    @Path("/{id}/groups")
+    @RolesAllowed({"readArchiveFileRole"})
+    public Response getAllowedGroups(@PathParam("id") String id) {
+        try {
+
+            InitialContext ic = new InitialContext();
+            ArchiveFileServiceLocal cases = (ArchiveFileServiceLocal) ic.lookup(LOOKUP_CASES);
+            List<ArchiveFileGroupsBean> groups=cases.getAllowedGroups(id);
+            List<RestfulGroupV6> resultList=new ArrayList<>();
+            for(ArchiveFileGroupsBean g: groups) {
+                resultList.add(RestfulGroupV6.fromGroup(g.getAllowedGroup()));
+            }
+
+            return Response.ok(resultList).build();
+        } catch (Exception ex) {
+            log.error("can not create history entry " + id, ex);
             return Response.serverError().build();
         }
     }

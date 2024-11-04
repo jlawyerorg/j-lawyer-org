@@ -687,4 +687,6 @@ public interface TimesheetPositionTemplateFacadeLocal {
 
     int count();
     
+    List<TimesheetPositionTemplate> findByMultipleIds(List<String> ids);
+    
 }

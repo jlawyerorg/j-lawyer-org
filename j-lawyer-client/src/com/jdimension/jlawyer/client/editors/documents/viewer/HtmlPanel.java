@@ -663,39 +663,101 @@
  */
 package com.jdimension.jlawyer.client.editors.documents.viewer;
 
+import com.jdimension.jlawyer.ai.AiCapability;
+import com.jdimension.jlawyer.ai.AiRequestStatus;
+import com.jdimension.jlawyer.ai.InputData;
+import com.jdimension.jlawyer.ai.Message;
+import com.jdimension.jlawyer.ai.OutputData;
+import com.jdimension.jlawyer.ai.ParameterData;
+import com.jdimension.jlawyer.client.assistant.AssistantAccess;
+import com.jdimension.jlawyer.client.assistant.AssistantFlowAdapter;
 import com.jdimension.jlawyer.client.editors.EditorsRegistry;
+import com.jdimension.jlawyer.client.mail.EditorImplementation;
+import com.jdimension.jlawyer.client.mail.EmailUtils;
 import com.jdimension.jlawyer.client.settings.ClientSettings;
+import com.jdimension.jlawyer.client.utils.AudioUtils;
+import com.jdimension.jlawyer.client.utils.StringUtils;
 import com.jdimension.jlawyer.client.utils.ThreadUtils;
+import com.jdimension.jlawyer.persistence.AssistantConfig;
+import com.jdimension.jlawyer.services.IntegrationServiceRemote;
 import com.jdimension.jlawyer.services.JLawyerServiceLocator;
+import java.awt.Color;
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
+import java.util.Map;
+import java.util.concurrent.atomic.AtomicReference;
+import javax.sound.sampled.AudioFormat;
+import javax.sound.sampled.AudioSystem;
+import javax.sound.sampled.DataLine;
+import javax.sound.sampled.Mixer;
+import javax.sound.sampled.TargetDataLine;
+import javax.swing.JOptionPane;
+import javax.swing.SwingWorker;
 import org.apache.log4j.Logger;
+import themes.colors.DefaultColorTheme;
 
 /**
  *
  * @author jens
  */
-public class HtmlPanel extends javax.swing.JPanel implements PreviewPanel {
+public class HtmlPanel extends javax.swing.JPanel implements PreviewPanel, AssistantFlowAdapter {
 
-    private static final Logger log=Logger.getLogger(HtmlPanel.class.getName());
-    
+    private static final Logger log = Logger.getLogger(HtmlPanel.class.getName());
+
     private String id = null;
-    private boolean readOnly=true;
+    private byte[] initialContent = null;
+    private boolean readOnly = true;
+    
+    private boolean isRecording = false;
+    private long recordingStarted = -1;
+    private AiCapability transcribeCapability = null;
+    private AssistantConfig transcribeConfig = null;
+    private TargetDataLine targetDataLine;
+    private ByteArrayOutputStream byteArrayOutputStream;
+
 
     /**
      * Creates new form PlaintextPanel
+     *
+     * @param docId
+     * @param readOnly
      */
     public HtmlPanel(String docId, boolean readOnly) {
         initComponents();
         this.id = docId;
-        this.readOnly=readOnly;
-        this.cmdSave.setEnabled(!readOnly);
-        //ThreadUtils.updateEditorPane(this.edtContent, "");
+        this.readOnly = readOnly;
         ThreadUtils.updateHtmlEditor(this.html, "");
-        ThreadUtils.enableComponent(cmdSave, !readOnly);
-        
+
         ThreadUtils.enableComponent(this, !readOnly);
         ThreadUtils.enableComponent(this.html, !readOnly);
         
+        // Initialize transcription capabilities
+        AssistantAccess ingo = AssistantAccess.getInstance();
+        try {
+            Map<AssistantConfig, List<AiCapability>> capabilities = ingo.filterCapabilities(AiCapability.REQUESTTYPE_TRANSCRIBE, AiCapability.INPUTTYPE_FILE, AiCapability.USAGETYPE_AUTOMATED);
+
+            if (!capabilities.isEmpty()) {
+                // use first capability that can transcribe
+                this.transcribeCapability = capabilities.get(capabilities.keySet().iterator().next()).get(0);
+                this.transcribeConfig = capabilities.keySet().iterator().next();
+                this.cmdTranscribe.setEnabled(true);
+            }
+        } catch (Exception ex) {
+            log.error(ex);
+            JOptionPane.showMessageDialog(this, "" + ex.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
+        }        
+        
+        this.cmbDevices.removeAllItems();
+        AudioUtils.populateMicrophoneDevices(this.cmbDevices);
+
         this.setFileName("");
+    }
+
+    public void setFocusToBody() {
+        this.html.requestFocus();
     }
     
     public void setFileName(String fileName) {
@@ -713,62 +775,71 @@ public class HtmlPanel extends javax.swing.JPanel implements PreviewPanel {
 
         jScrollPane1 = new javax.swing.JScrollPane();
         html = new com.jdimension.jlawyer.client.mail.HtmlEditorPanel();
-        cmdSave = new javax.swing.JButton();
         lblFileName = new javax.swing.JLabel();
+        cmbDevices = new javax.swing.JComboBox<>();
+        cmdTranscribe = new javax.swing.JButton();
 
         html.setFocusable(false);
         jScrollPane1.setViewportView(html);
 
-        cmdSave.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/filesave.png"))); // NOI18N
-        cmdSave.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                cmdSaveActionPerformed(evt);
-            }
-        });
-
         lblFileName.setFont(lblFileName.getFont().deriveFont(lblFileName.getFont().getStyle() | java.awt.Font.BOLD));
         lblFileName.setText("Notizdatei.html");
+
+        cmbDevices.setModel(new javax.swing.DefaultComboBoxModel<>(new String[] { "Item 1", "Item 2", "Item 3", "Item 4" }));
+
+        cmdTranscribe.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons16/material/baseline_mic_black_48dp.png"))); // NOI18N
+        cmdTranscribe.setText("00:00");
+        cmdTranscribe.setEnabled(false);
+        cmdTranscribe.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                cmdTranscribeActionPerformed(evt);
+            }
+        });
 
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(this);
         this.setLayout(layout);
         layout.setHorizontalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addComponent(jScrollPane1, javax.swing.GroupLayout.DEFAULT_SIZE, 369, Short.MAX_VALUE)
+            .addComponent(jScrollPane1, javax.swing.GroupLayout.DEFAULT_SIZE, 600, Short.MAX_VALUE)
             .addGroup(layout.createSequentialGroup()
-                .addComponent(cmdSave)
+                .addContainerGap()
+                .addComponent(lblFileName, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(lblFileName, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                .addComponent(cmbDevices, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addComponent(cmdTranscribe)
+                .addContainerGap())
         );
         layout.setVerticalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
-                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
-                    .addComponent(cmdSave, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                    .addComponent(lblFileName, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                        .addComponent(cmdTranscribe)
+                        .addComponent(cmbDevices, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
+                    .addComponent(lblFileName, javax.swing.GroupLayout.PREFERRED_SIZE, 28, javax.swing.GroupLayout.PREFERRED_SIZE))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(jScrollPane1))
         );
     }// </editor-fold>//GEN-END:initComponents
 
-    private void cmdSaveActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdSaveActionPerformed
-        if (this.id != null) {
-            ThreadUtils.enableComponent(cmdSave, false);
+    private void cmdTranscribeActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdTranscribeActionPerformed
+        if (!isRecording) {
+            startRecording();
+            ClientSettings.getInstance().setConfiguration(ClientSettings.CONF_SOUND_LASTRECORDINGDEVICE, (String) this.cmbDevices.getSelectedItem());      
+        } else {
             try {
-                ClientSettings settings = ClientSettings.getInstance();
-                JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
-                locator.lookupArchiveFileServiceRemote().setDocumentContent(this.id, this.html.getText().getBytes());
-            } catch (Throwable t) {
-                log.error("Error saving document with id " + this.id, t);
-                ThreadUtils.showErrorDialog(EditorsRegistry.getInstance().getMainWindow(), "Fehler beim Speichern: " + t.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR);
-                
+                stopRecording();
+            } catch (IOException ex) {
+                log.error("Error transcribing: ", ex);
             }
-            ThreadUtils.enableComponent(cmdSave, true);
         }
-    }//GEN-LAST:event_cmdSaveActionPerformed
+    }//GEN-LAST:event_cmdTranscribeActionPerformed
 
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
-    private javax.swing.JButton cmdSave;
+    private javax.swing.JComboBox<String> cmbDevices;
+    private javax.swing.JButton cmdTranscribe;
     private com.jdimension.jlawyer.client.mail.HtmlEditorPanel html;
     private javax.swing.JScrollPane jScrollPane1;
     private javax.swing.JLabel lblFileName;
@@ -781,9 +852,263 @@ public class HtmlPanel extends javax.swing.JPanel implements PreviewPanel {
     }
 
     @Override
-    public void showContent(byte[] content) {
-        //ThreadUtils.updateEditorPane(this.edtContent, new String(content));
+    public void showContent(String documentId, byte[] content) {
+        this.id = documentId;
+        this.initialContent = content;
         ThreadUtils.updateHtmlEditor(html, new String(content));
     }
 
+    @Override
+    public void removeNotify() {
+        if (this.id != null && !this.readOnly) {
+
+            byte[] currentBytes = this.html.getText().getBytes();
+            if (this.initialContent!=null && !Arrays.equals(this.initialContent, currentBytes)) {
+                try {
+                    ClientSettings settings = ClientSettings.getInstance();
+                    JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
+                    locator.lookupArchiveFileServiceRemote().setDocumentContent(this.id, this.html.getText().getBytes());
+                } catch (Throwable t) {
+                    log.error("Error saving document with id " + this.id, t);
+                    ThreadUtils.showErrorDialog(EditorsRegistry.getInstance().getMainWindow(), "Fehler beim Speichern: " + t.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR);
+
+                }
+            }
+        }
+    }
+
+    @Override
+    public String getDocumentId() {
+        return this.id;
+    }
+
+    public List<InputData> getTranscribeInputs(byte[] wavContent) {
+        ArrayList<InputData> inputs = new ArrayList<>();
+        InputData i = new InputData();
+        i.setFileName("Sounddatei.wav");
+        i.setType("file");
+        i.setBase64(true);
+        i.setData(wavContent);
+        inputs.add(i);
+        return inputs;
+    }
+    
+    @Override
+    public String getPrompt(AiCapability c) {
+        return null;
+    }
+    
+    @Override
+    public List<ParameterData> getParameters(AiCapability c) {
+        return null;
+    }
+    
+    public List<Message> getMessages(AiCapability c) {
+        return null;
+    }
+
+    @Override
+    public List<InputData> getInputs(AiCapability c) {
+        // EditorImplementation ed = (EditorImplementation) this.html.getComponent(0);
+        // String contentText = ed.getSelectedText();
+        // if (StringUtils.isEmpty(ed.getSelectedText()))
+        //     contentText = ed.getText();
+        // if (ed.getContentType().toLowerCase().contains("html"))
+        //     contentText = EmailUtils.html2Text(contentText);
+
+        // ArrayList<InputData> inputs = new ArrayList<>();
+        // InputData i = new InputData();
+        // i.setType(InputData.TYPE_STRING);
+        // i.setBase64(false);
+        // i.setStringData(contentText);
+        // inputs.add(i);
+
+        return new ArrayList<>();
+    }
+
+    @Override
+    public void processOutput(AiCapability c, AiRequestStatus status) {
+        String prependText = "";
+        if (status != null) {
+            if (status.getStatus().equalsIgnoreCase("error")) {
+                // ignore output
+            } else {
+                StringBuilder result = new StringBuilder();
+                for (OutputData o : status.getResponse().getOutputData()) {
+                    if (o.getType().equalsIgnoreCase(OutputData.TYPE_STRING)) {
+                        result.append(o.getStringData()).append(System.lineSeparator()).append(System.lineSeparator());
+                    }
+
+                }
+                prependText = result.toString();
+            }
+        }
+        
+        EditorImplementation ed = (EditorImplementation) this.html.getComponent(0);
+        ed.setText(prependText + System.lineSeparator() + System.lineSeparator() + ed.getText());
+        
+        
+    }
+
+    @Override
+    public void processError(AiCapability c, AiRequestStatus status) {
+        log.error("Error executing AI request: " + status.getStatusDetails());
+        JOptionPane.showMessageDialog(this, "Fehler beim Ausführen der Ingo-Anfrage: " + status.getStatusDetails(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
+    }
+    
+    private void startRecording() {
+        try {
+            AudioFormat audioFormat = AudioUtils.getAudioFormat();
+
+            // Get selected mixer device name from dropdown
+            String selectedDeviceName = (String) this.cmbDevices.getSelectedItem();
+
+            Mixer.Info[] mixerInfos = AudioSystem.getMixerInfo();
+            Mixer.Info selectedMixerInfo = null;
+            for (Mixer.Info mixerInfo : mixerInfos) {
+                if (mixerInfo.getName().equals(selectedDeviceName)) {
+                    selectedMixerInfo = mixerInfo;
+                    break;
+                }
+            }
+
+            if (selectedMixerInfo == null) {
+                log.error("Selected mixer device not found.");
+                return;
+            }
+
+            Mixer mixer = AudioSystem.getMixer(selectedMixerInfo);
+
+            DataLine.Info dataLineInfo = new DataLine.Info(TargetDataLine.class, audioFormat);
+            targetDataLine = (TargetDataLine) mixer.getLine(dataLineInfo);
+            targetDataLine.open(audioFormat);
+            targetDataLine.start();
+
+            byteArrayOutputStream = new ByteArrayOutputStream();
+
+            isRecording = true;
+            this.recordingStarted = System.currentTimeMillis();
+            cmdTranscribe.setForeground(DefaultColorTheme.COLOR_LOGO_GREEN);
+
+            new Thread(() -> {
+                try {
+                    byte[] buffer = new byte[4096];
+                    while (isRecording) {
+                        int bytesRead = targetDataLine.read(buffer, 0, buffer.length);
+                        byteArrayOutputStream.write(buffer, 0, bytesRead);
+
+                        long totalSeconds = (System.currentTimeMillis() - recordingStarted) / 1000;
+                        // Calculate minutes and seconds
+                        long minutes = totalSeconds / 60;
+                        long seconds = totalSeconds % 60;
+                        // Format the result as mm:ss
+                        ThreadUtils.updateButton(cmdTranscribe, String.format("%02d:%02d", minutes, seconds));
+                    }
+                } catch (Exception e) {
+                    log.error("Unable to read microphone audio stream", e);
+                    ThreadUtils.showErrorDialog(this, "Aufnahmefehler: " + e.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR);
+                }
+            }).start();
+        } catch (Exception ex) {
+            log.error("Unable to start recording microphone audio stream", ex);
+            JOptionPane.showMessageDialog(this, "Aufnahme konnte nicht gestartet werden: " + ex.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
+        }
+    }
+
+    // Stop recording method
+    private void stopRecording() throws IOException {
+        isRecording = false;
+
+        if (targetDataLine != null) {
+            targetDataLine.stop();
+            targetDataLine.close();
+        }
+        byteArrayOutputStream.flush();
+        byte[] dictatePart = byteArrayOutputStream.toByteArray();
+
+        this.cmdTranscribe.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons16/material/baseline_hourglass_top_black_48dp.png")));
+        this.cmdTranscribe.setForeground(Color.ORANGE);
+        try {
+
+            List<ParameterData> params = new ArrayList<>();
+            if (transcribeCapability.getParameters() != null && !transcribeCapability.getParameters().isEmpty()) {
+                params = getParameters(transcribeCapability);
+            }
+
+            final List<ParameterData> fParams = params;
+
+            AtomicReference<AiRequestStatus> resultRef = new AtomicReference<>();
+
+            SwingWorker<Void, Void> worker = new SwingWorker<>() {
+
+                @Override
+                protected Void doInBackground() throws Exception {
+                    cmdTranscribe.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons16/material/baseline_hourglass_top_black_48dp.png")));
+                    cmdTranscribe.setForeground(Color.ORANGE);
+
+                    List<InputData> inputs = getTranscribeInputs(AudioUtils.generateWAV(dictatePart));
+
+                    ClientSettings settings = ClientSettings.getInstance();
+                    try {
+                        JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
+
+                        IntegrationServiceRemote integrationService = locator.lookupIntegrationServiceRemote();
+                        AiRequestStatus status = integrationService.submitAssistantRequest(
+                            transcribeConfig,
+                            transcribeCapability.getRequestType(),
+                            transcribeCapability.getModelType(),
+                            getPrompt(transcribeCapability),
+                            fParams,
+                            inputs,
+                            null // Assuming no conversation
+                        );
+
+                        resultRef.set(status);
+
+                    } catch (Throwable t) {
+                        log.error("Error processing AI request", t);
+                        AiRequestStatus status = new AiRequestStatus();
+                        status.setStatus("failed");
+                        status.setStatusDetails(t.getMessage());
+                        resultRef.set(status);
+                    }
+                    return null;
+                }
+
+                @Override
+                protected void done() {
+                    // Reset the UI elements
+                    cmdTranscribe.setText("00:00");
+                    cmdTranscribe.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons16/material/baseline_mic_black_48dp.png"))); // NOI18N
+                    cmdTranscribe.setForeground(Color.BLACK);
+
+                    AiRequestStatus status = resultRef.get();
+                    if (status != null) {
+                        String resultText = "";
+                        if (status.getStatus().equalsIgnoreCase("failed")) {
+                            resultText = status.getStatus() + ": " + status.getStatusDetails();
+                        } else {
+                            StringBuilder resultString = new StringBuilder();
+                            for (OutputData o : status.getResponse().getOutputData()) {
+                                if (o.getType().equalsIgnoreCase(OutputData.TYPE_STRING)) {
+                                    resultString.append(o.getStringData());
+                                }
+                            }
+                            resultText = resultString.toString();
+                        }
+
+                        // Insert transcribed text at the caret position
+                        html.insert(resultText, -1);
+                        
+                    }
+                }
+            };
+
+            worker.execute();
+
+        } catch (Exception ex) {
+            log.error(ex);
+            JOptionPane.showMessageDialog(this, "" + ex.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
+        }
+    }
 }

@@ -698,7 +698,13 @@ public class SendFaxDialog extends javax.swing.JDialog {
     }
 
     /**
-     * Creates new form SendSmsDialog
+     * Creates new form SendFaxDialog
+     * @param parent
+     * @param modal
+     * @param abList
+     * @param selected
+     * @param file
+     * @param archiveFileId
      */
     public SendFaxDialog(java.awt.Frame parent, boolean modal, ArrayList<AddressBean> abList, AddressBean selected, File file, String archiveFileId) {
         super(parent, modal);
@@ -764,7 +770,6 @@ public class SendFaxDialog extends javax.swing.JDialog {
                 });
             }catch (Exception ex) {
                 log.error(ex);
-                //ThreadUtils.showErrorDialog(this, "Fehler beim Ermitteln der eigenen SIP-Rufnummern: " + ex.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR);
             }
         }).start();
 

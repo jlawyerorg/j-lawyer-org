@@ -665,6 +665,7 @@ package org.jlawyer.io.rest.v6;
 
 import javax.ejb.Local;
 import javax.ws.rs.core.Response;
+import org.jlawyer.io.rest.v6.pojo.RestfulUserV6;
 
 /**
  *
@@ -674,5 +675,13 @@ import javax.ws.rs.core.Response;
 public interface SecurityEndpointLocalV6 {
 
     Response getEnabledUsers();
+    
+    Response listUsers();
+    
+    Response listGroups();
+    
+    Response getUserByExternalId(String extId);
+    
+    Response createUser(RestfulUserV6 userData);
     
 }

@@ -216,7 +216,7 @@ terms of section 4, provided that you also meet all of these conditions:
     permission to license the work in any other way, but it does not
     invalidate such permission if you have separately received it.
 
-    d) If the work has interactive user interfaces, each must display
+    doc) If the work has interactive user interfaces, each must display
     Appropriate Legal Notices; however, if the Program has interactive
     interfaces that do not display Appropriate Legal Notices, your
     work need not make them do so.
@@ -261,7 +261,7 @@ in one of these ways:
     only if you received the object code with such an offer, in accord
     with subsection 6b.
 
-    d) Convey the object code by offering access from a designated
+    doc) Convey the object code by offering access from a designated
     place (gratis or for a charge), and offer equivalent access to the
     Corresponding Source in the same way through the same place at no
     further charge.  You need not require recipients to copy the
@@ -362,7 +362,7 @@ that material) supplement the terms of this License with terms:
     requiring that modified versions of such material be marked in
     reasonable ways as different from the original version; or
 
-    d) Limiting the use for publicity purposes of names of licensors or
+    doc) Limiting the use for publicity purposes of names of licensors or
     authors of the material; or
 
     e) Declining to grant rights under trademark law for use of some
@@ -663,6 +663,7 @@ For more information on this, and how to apply and follow the GNU AGPL, see
  */
 package org.jlawyer.io.rest.v1.pojo;
 
+import com.jdimension.jlawyer.persistence.ArchiveFileDocumentsBean;
 import java.util.Date;
 
 /**
@@ -670,18 +671,38 @@ import java.util.Date;
  * @author jens
  */
 public class RestfulDocumentV1 {
-    
-    private String id=null;
-    private String name=null;
-    private Date creationDate=null;
-    private long size=0l;
-    private boolean favorite=false;
-    protected String folderId=null;
-    protected long version=1l;
-    protected int highlight1=-1;
-    protected int highlight2=-1;
+
+    private String id = null;
+    private String externalId = null;
+    private String name = null;
+    private Date creationDate = null;
+    private Date changeDate = null;
+    private long size = 0l;
+    private boolean favorite = false;
+    protected String folderId = null;
+    protected long version = 1l;
+    protected int highlight1 = -1;
+    protected int highlight2 = -1;
 
     public RestfulDocumentV1() {
+    }
+
+    public static RestfulDocumentV1 fromDocumentsBean(ArchiveFileDocumentsBean d) {
+        RestfulDocumentV1 doc = new RestfulDocumentV1();
+        doc.setId(d.getId());
+        doc.setExternalId(d.getExternalId());
+        doc.setVersion(d.getVersion());
+        doc.setName(d.getName());
+        doc.setCreationDate(d.getCreationDate());
+        doc.setChangeDate(d.getChangeDate());
+        doc.setFavorite(d.isFavorite());
+        doc.setSize(d.getSize());
+        doc.setHighlight1(d.getHighlight1());
+        doc.setHighlight2(d.getHighlight2());
+        if (d.getFolder() != null) {
+            doc.setFolderId(d.getFolder().getId());
+        }
+        return doc;
     }
 
     /**
@@ -809,7 +830,33 @@ public class RestfulDocumentV1 {
     public void setHighlight2(int highlight2) {
         this.highlight2 = highlight2;
     }
-    
-    
-    
+
+    /**
+     * @return the changeDate
+     */
+    public Date getChangeDate() {
+        return changeDate;
+    }
+
+    /**
+     * @param changeDate the changeDate to set
+     */
+    public void setChangeDate(Date changeDate) {
+        this.changeDate = changeDate;
+    }
+
+    /**
+     * @return the externalId
+     */
+    public String getExternalId() {
+        return externalId;
+    }
+
+    /**
+     * @param externalId the externalId to set
+     */
+    public void setExternalId(String externalId) {
+        this.externalId = externalId;
+    }
+
 }

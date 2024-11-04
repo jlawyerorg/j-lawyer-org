@@ -678,12 +678,14 @@ import javax.mail.internet.MimeMessage;
 public class EmailPanel extends javax.swing.JPanel implements PreviewPanel {
     
     protected MailboxSetup mailboxSetup=null;
+    private String documentId=null;
 
     /**
      * Creates new form EmailPanel
      */
     public EmailPanel() {
         initComponents();
+        
 
     }
 
@@ -691,7 +693,8 @@ public class EmailPanel extends javax.swing.JPanel implements PreviewPanel {
         this.content.setCase(a);
     }
     
-    public void setMessage(MessageContainer msgC, MailboxSetup ms) {
+    public void setMessage(String documentId, MessageContainer msgC, MailboxSetup ms) {
+        this.documentId=documentId;
         this.content.setMessage(msgC, ms);
 
     }
@@ -734,13 +737,14 @@ public class EmailPanel extends javax.swing.JPanel implements PreviewPanel {
     }
 
     @Override
-    public void showContent(byte[] content) {
+    public void showContent(String documentId, byte[] content) {
+        this.documentId=documentId;
         try {
             InputStream source = new ByteArrayInputStream(content);
             MimeMessage message = new MimeMessage(null, source);
             // need to set this to avoid sending read receipts
             message.setFlag(Flag.SEEN, true);
-            this.setMessage(new MessageContainer(message, message.getSubject(), true), this.mailboxSetup);
+            this.setMessage(documentId, new MessageContainer(message, message.getSubject(), true), this.mailboxSetup);
         } catch (Throwable t) {
             this.showStatus("Fehler beim Laden der Vorschau.");
         }
@@ -758,6 +762,11 @@ public class EmailPanel extends javax.swing.JPanel implements PreviewPanel {
      */
     public void setMailboxSetup(MailboxSetup mailboxSetup) {
         this.mailboxSetup = mailboxSetup;
+    }
+
+    @Override
+    public String getDocumentId() {
+        return this.documentId;
     }
 
 }

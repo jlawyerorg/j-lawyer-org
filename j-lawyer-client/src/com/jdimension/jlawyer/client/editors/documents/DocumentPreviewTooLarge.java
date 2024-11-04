@@ -665,6 +665,7 @@ package com.jdimension.jlawyer.client.editors.documents;
 
 import com.jdimension.jlawyer.client.configuration.DocumentPreviewConfigurationDialog;
 import com.jdimension.jlawyer.client.editors.EditorsRegistry;
+import com.jdimension.jlawyer.client.editors.documents.viewer.DocumentPreviewSaveCallback;
 import com.jdimension.jlawyer.client.utils.FrameUtils;
 import com.jdimension.jlawyer.persistence.ArchiveFileBean;
 import com.jdimension.jlawyer.persistence.ArchiveFileDocumentsBean;
@@ -680,6 +681,7 @@ public class DocumentPreviewTooLarge extends javax.swing.JPanel {
     private boolean readOnly = false;
     private ArchiveFileBean caseDto=null;
     private ArchiveFileDocumentsBean docDto=null;
+    private DocumentPreviewSaveCallback saveCallback=null;
     
     /**
      * Creates new form DocumentPreviewTooLarge
@@ -687,15 +689,16 @@ public class DocumentPreviewTooLarge extends javax.swing.JPanel {
      * @param value
      * @param readOnly
      * @param pnlPreview
+     * @param saveCallback
      */
-    public DocumentPreviewTooLarge(ArchiveFileBean caseDto, ArchiveFileDocumentsBean value, boolean readOnly, JPanel pnlPreview) {
+    public DocumentPreviewTooLarge(ArchiveFileBean caseDto, ArchiveFileDocumentsBean value, boolean readOnly, JPanel pnlPreview, DocumentPreviewSaveCallback saveCallback) {
         initComponents();
         this.docDto=value;
         this.pnlPreview = pnlPreview;
         this.readOnly = readOnly;
         this.caseDto=caseDto;
         this.lblHint.setText("<html><b>" + this.docDto.getName() + "</b><br/> ist zu gro&szlig; f&uuml;r eine Vorschau.</html>");
-        
+        this.saveCallback=saveCallback;
     }
 
     /**
@@ -758,7 +761,7 @@ public class DocumentPreviewTooLarge extends javax.swing.JPanel {
     }// </editor-fold>//GEN-END:initComponents
 
     private void cmdForcePreviewActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdForcePreviewActionPerformed
-        new Thread(new LoadDocumentPreviewThread(this.caseDto, this.docDto, this.readOnly, this.pnlPreview, true)).start();
+        new Thread(new LoadDocumentPreviewThread(this.caseDto, this.docDto, this.readOnly, this.pnlPreview, true, this.saveCallback)).start();
     }//GEN-LAST:event_cmdForcePreviewActionPerformed
 
     private void cmdPreviewSettingsActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdPreviewSettingsActionPerformed

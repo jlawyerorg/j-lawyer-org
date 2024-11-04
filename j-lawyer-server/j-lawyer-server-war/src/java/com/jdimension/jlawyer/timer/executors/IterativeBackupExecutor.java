@@ -683,7 +683,7 @@ import org.apache.tika.parser.txt.CharsetDetector;
 public class IterativeBackupExecutor {
 
     private static final Logger log = Logger.getLogger(IterativeBackupExecutor.class.getName());
-    
+
     // these directories will be zipped entirely with each backup run
     private final String[] fullBackupDirs = new String[]{"emailtemplates", "mastertemplates", "faxqueue", "templates", "letterheads"};
     // these directories will be zipped on a per subdirectory basis and only if there are changes
@@ -695,7 +695,7 @@ public class IterativeBackupExecutor {
     private String encryptionPassword = "";
     private String dataDirectory = null;
     private String backupDirectory = null;
-
+    
     public IterativeBackupExecutor(String dataDirectory, String backupDirectory, String dbUser, String dbPassword, String dbPort, String encryptionPassword) {
         this.dataDirectory = dataDirectory;
         this.backupDirectory = backupDirectory;
@@ -706,9 +706,8 @@ public class IterativeBackupExecutor {
     }
 
     public BackupResult execute() throws Exception {
-        
-        log.info("backup executor has been launched");
 
+        log.info("backup executor has been launched");
         BackupResult backupResult = new BackupResult();
 
         boolean encrypt = false;
@@ -789,12 +788,12 @@ public class IterativeBackupExecutor {
         try {
             for (String fullBackupDir : fullBackupDirs) {
                 List<File> fileList = new ArrayList<>();
-                
-                File checkAndCreate=new File(this.dataDirectory + File.separator + fullBackupDir);
+
+                File checkAndCreate = new File(this.dataDirectory + File.separator + fullBackupDir);
                 checkAndCreate.mkdirs();
                 log.info("Creating zip file for full backup dir " + this.dataDirectory + File.separator + fullBackupDir);
                 getAllFiles(new File(this.dataDirectory + File.separator + fullBackupDir), fileList);
-                
+
                 targetDir = new File(this.backupDirectory + File.separator + fullBackupDir);
                 targetDir.mkdirs();
                 this.clearDirectory(targetDir);
@@ -806,8 +805,9 @@ public class IterativeBackupExecutor {
                 }
             }
 
+            
             for (String itBackupDir : iterativeBackupDirs) {
-
+                
                 // remove files in backup dir that are no longer in the source
                 File currentBackupDir = new File(this.backupDirectory + File.separator + itBackupDir);
                 log.debug("Creating zip file for iterative backup dir " + this.backupDirectory + File.separator + itBackupDir);
@@ -911,8 +911,8 @@ public class IterativeBackupExecutor {
 
         String osName = System.getProperty("os.name").toLowerCase();
         String path = "";
-        String backupFilePath=backupDir + System.getProperty("file.separator") + "jlawyerdb-dump.sql";
-        
+        String backupFilePath = backupDir + System.getProperty("file.separator") + "jlawyerdb-dump.sql";
+
         if (osName.contains("win")) {
 
         } else if (osName.contains("linux")) {
@@ -949,7 +949,7 @@ public class IterativeBackupExecutor {
         Process process = null;
 
         File f = new File(backupFilePath);
-        int exitCode=0;
+        int exitCode = 0;
         try {
 
             if (f.exists()) {
@@ -957,21 +957,21 @@ public class IterativeBackupExecutor {
             }
 
             process = shell.exec(cmd);
-            exitCode=process.waitFor();
+            exitCode = process.waitFor();
 
             f.setLastModified(System.currentTimeMillis());
-            
+
         } catch (Exception ex) {
             //res = false;
             log.error(ex);
-            
+
         }
-        
-        if(exitCode!=0) {
+
+        if (exitCode != 0) {
             log.error("mysqldump returned with exit code " + exitCode);
             throw new Exception("Datenbank-Dump fehlgeschlagen - Rückgabewert " + exitCode);
         }
-        
+
         return f;
     }
 

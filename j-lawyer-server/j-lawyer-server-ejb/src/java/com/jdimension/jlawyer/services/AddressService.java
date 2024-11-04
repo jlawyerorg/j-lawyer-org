@@ -670,6 +670,7 @@ import com.jdimension.jlawyer.events.AddressUpdatedEvent;
 import com.jdimension.jlawyer.persistence.*;
 import com.jdimension.jlawyer.persistence.utils.JDBCUtils;
 import com.jdimension.jlawyer.persistence.utils.StringGenerator;
+import com.jdimension.jlawyer.server.utils.ServerStringUtils;
 import com.jdimension.jlawyer.server.utils.StringUtils;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
@@ -678,22 +679,23 @@ import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Date;
-import java.util.Hashtable;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import javax.annotation.Resource;
 import javax.annotation.security.RolesAllowed;
 import javax.ejb.*;
 import javax.enterprise.event.Event;
 import javax.inject.Inject;
 import org.apache.log4j.Logger;
-import org.jboss.ejb3.annotation.SecurityDomain;
+import org.jlawyer.text.similarity.JaroWinkler;
 
 /**
  *
  * @author jens
  */
 @Stateless
-@SecurityDomain("j-lawyer-security")
+//@SecurityDomain("j-lawyer-security")
 public class AddressService implements AddressServiceRemote, AddressServiceLocal {
 
     private static final Logger log = Logger.getLogger(AddressService.class.getName());
@@ -790,6 +792,7 @@ public class AddressService implements AddressServiceRemote, AddressServiceLocal
 
     }
 
+    
     @Override
     @RolesAllowed({"removeAddressRole"})
     public void removeAddress(String id) {
@@ -819,6 +822,11 @@ public class AddressService implements AddressServiceRemote, AddressServiceLocal
     @Override
     @RolesAllowed({"readAddressRole"})
     public AddressBean[] searchSimple(String query) {
+        return this.searchSimpleUnrestricted(query);
+    }
+    
+    @Override
+    public AddressBean[] searchSimpleUnrestricted(String query) {
 
         if (query == null) {
             query = "";
@@ -869,7 +877,7 @@ public class AddressService implements AddressServiceRemote, AddressServiceLocal
             }
         }
 
-        return (AddressBean[]) list.toArray(new AddressBean[list.size()]);
+        return (AddressBean[]) list.toArray(new AddressBean[0]);
     }
 
     @Override
@@ -910,8 +918,38 @@ public class AddressService implements AddressServiceRemote, AddressServiceLocal
     
     @Override
     @RolesAllowed({"readAddressRole"})
-    public AddressBean getAddressByExternalId(String extId) {
-        return this.addressFacade.findByExternalId(extId);
+    public AddressBean getAddressByAnyExternalId(String extId) {
+        return this.addressFacade.findByAnyExternalId(extId);
+    }
+    
+    @Override
+    @RolesAllowed({"readAddressRole"})
+    public AddressBean getAddressByExternalId1(String extId) {
+        return this.addressFacade.findByExternalId1(extId);
+    }
+    
+    @Override
+    @RolesAllowed({"readAddressRole"})
+    public AddressBean getAddressByExternalId2(String extId) {
+        return this.addressFacade.findByExternalId2(extId);
+    }
+    
+    @Override
+    @RolesAllowed({"readAddressRole"})
+    public AddressBean getAddressByExternalId3(String extId) {
+        return this.addressFacade.findByExternalId3(extId);
+    }
+    
+    @Override
+    @RolesAllowed({"readAddressRole"})
+    public AddressBean getAddressByExternalId4(String extId) {
+        return this.addressFacade.findByExternalId4(extId);
+    }
+    
+    @Override
+    @RolesAllowed({"readAddressRole"})
+    public AddressBean getAddressByExternalId5(String extId) {
+        return this.addressFacade.findByExternalId5(extId);
     }
 
     @Override
@@ -1085,7 +1123,7 @@ public class AddressService implements AddressServiceRemote, AddressServiceLocal
 
     @Override
     @RolesAllowed({"readAddressRole"})
-    public Hashtable<String, ArrayList<String>> searchTagsEnhanced(String query, String[] tagName) {
+    public Map<String, ArrayList<String>> searchTagsEnhanced(String query, String[] tagName) {
 
         if (query == null) {
             query = "";
@@ -1107,7 +1145,7 @@ public class AddressService implements AddressServiceRemote, AddressServiceLocal
 
         }
 
-        Hashtable<String, ArrayList<String>> list = new Hashtable<>();
+        HashMap<String, ArrayList<String>> list = new HashMap<>();
         try ( Connection con = utils.getConnection();) {
 
             if (withTag) {
@@ -1254,5 +1292,39 @@ public class AddressService implements AddressServiceRemote, AddressServiceLocal
             ab.setDefaultRole(defaultRole);
             this.addressFacade.edit(ab);
         }
+    }
+
+    @Override
+    @RolesAllowed({"readAddressRole"})
+    public List<AddressBean> similaritySearch(AddressBean candidate, float minimumSimilarityPercentage) throws Exception {
+        
+        ArrayList<AddressBean> resultList=new ArrayList<>();
+        if(ServerStringUtils.isEmpty(candidate.getZipCode())) {
+            log.info("similarity search requires at least a zip code - skipping!");
+            return resultList;
+        }
+        
+        AddressBean[] comparisonList=this.searchSimple(candidate.getZipCode());
+        if(comparisonList!=null) {
+            for(AddressBean c: comparisonList) {
+                double sim=calculateSimilarity(c, candidate);
+                if(sim>=minimumSimilarityPercentage)
+                    resultList.add(c);
+            }
+        }
+        return resultList;
+    }
+    
+    private static double calculateSimilarity(AddressBean c1, AddressBean c2) {
+        double firstNameSim = JaroWinkler.jaroWinklerDistance(ServerStringUtils.nonEmpty(c1.getFirstName()), ServerStringUtils.nonEmpty(c2.getFirstName()));
+        double lastNameSim = JaroWinkler.jaroWinklerDistance(ServerStringUtils.nonEmpty(c1.getName()), ServerStringUtils.nonEmpty(c2.getName()));
+        double streetSim = JaroWinkler.jaroWinklerDistance(ServerStringUtils.nonEmpty(c1.getStreet()), ServerStringUtils.nonEmpty(c2.getStreet()));
+        double streetNoSim = JaroWinkler.jaroWinklerDistance(ServerStringUtils.nonEmpty(c1.getStreetNumber()), ServerStringUtils.nonEmpty(c2.getStreetNumber()));
+        double zipCodeSim = JaroWinkler.jaroWinklerDistance(ServerStringUtils.nonEmpty(c1.getZipCode()), ServerStringUtils.nonEmpty(c2.getZipCode()));
+        double citySim = JaroWinkler.jaroWinklerDistance(ServerStringUtils.nonEmpty(c1.getCity()), ServerStringUtils.nonEmpty(c2.getCity()));
+        
+
+        // Weighted average or simple average of the similarities
+        return (firstNameSim + lastNameSim + streetSim + streetNoSim + zipCodeSim + citySim) / 6.0d;
     }
 }

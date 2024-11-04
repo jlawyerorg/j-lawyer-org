@@ -772,7 +772,7 @@ public class EmailTemplatesPanel extends javax.swing.JPanel implements Themeable
         try {
             JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
             
-              Collection fileNames=locator.lookupIntegrationServiceRemote().getAllEmailTemplateNames();  
+              Collection<String> fileNames=locator.lookupIntegrationServiceRemote().getAllEmailTemplateNames();  
                 
                 for(Object o:fileNames) {
                     model.addElement(o);
@@ -1258,7 +1258,7 @@ public class EmailTemplatesPanel extends javax.swing.JPanel implements Themeable
 
                             String oldName = selectedValue.toString();
 
-                            String newName = FileUtils.getNewFileName(oldName, false, new Date(), EditorsRegistry.getInstance().getMainWindow(), "Vorlage umbenennen");
+                            String newName = FileUtils.getNewFileName(null, oldName, new Date(), false, EditorsRegistry.getInstance().getMainWindow(), "Vorlage umbenennen");
                             if (newName==null || newName.isEmpty()) {
                                 JOptionPane.showMessageDialog(this, "Name darf nicht leer sein.", CommonStrings.HINT, JOptionPane.INFORMATION_MESSAGE);
                                 return;
@@ -1291,7 +1291,7 @@ public class EmailTemplatesPanel extends javax.swing.JPanel implements Themeable
 
                             String oldName = selectedValue.toString();
 
-                            String newName = FileUtils.getNewFileName(oldName, false, new Date(), EditorsRegistry.getInstance().getMainWindow(), "Vorlage duplizieren");
+                            String newName = FileUtils.getNewFileName(null, oldName, new Date(), false, EditorsRegistry.getInstance().getMainWindow(), "Vorlage duplizieren");
                             if (newName==null || newName.isEmpty()) {
                                 JOptionPane.showMessageDialog(this, "Name darf nicht leer sein.", CommonStrings.HINT, JOptionPane.INFORMATION_MESSAGE);
                                 return;

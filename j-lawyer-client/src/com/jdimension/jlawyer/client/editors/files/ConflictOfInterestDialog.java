@@ -666,7 +666,7 @@ package com.jdimension.jlawyer.client.editors.files;
 import com.jdimension.jlawyer.persistence.AddressBean;
 import com.jdimension.jlawyer.persistence.ArchiveFileBean;
 import com.jdimension.jlawyer.persistence.PartyTypeBean;
-import java.util.Hashtable;
+import java.util.HashMap;
 import java.util.List;
 import javax.swing.JFrame;
 
@@ -678,13 +678,18 @@ public class ConflictOfInterestDialog extends javax.swing.JDialog {
 
     /**
      * Creates new form ConflictOfInterestDialog
+     * @param parent
+     * @param modal
+     * @param address
+     * @param targetType
+     * @param casesWithDifferentPartyType
      */
-    public ConflictOfInterestDialog(java.awt.Dialog parent, boolean modal, AddressBean address, PartyTypeBean targetType, Hashtable<PartyTypeBean, List<ArchiveFileBean>> casesWithDifferentPartyType) {
+    public ConflictOfInterestDialog(java.awt.Dialog parent, boolean modal, AddressBean address, PartyTypeBean targetType, HashMap<PartyTypeBean, List<ArchiveFileBean>> casesWithDifferentPartyType) {
         super(parent, modal);
         initComponents();
         
         this.lblCurrentRequest.setText("<html><b>" + address.toDisplayName() + "</b> soll als <b>" + targetType.getName() + "</b> aufgenommen werden.");
-        StringBuffer sb=new StringBuffer();
+        StringBuilder sb=new StringBuilder();
         sb.append("<html>");
         for(PartyTypeBean ptb: casesWithDifferentPartyType.keySet()) {
             sb.append("<b>").append(ptb.getName()).append("</b> in:");
@@ -702,13 +707,18 @@ public class ConflictOfInterestDialog extends javax.swing.JDialog {
     
     /**
      * Creates new form ConflictOfInterestDialog
+     * @param parent
+     * @param modal
+     * @param address
+     * @param targetType
+     * @param casesWithDifferentPartyType
      */
-    public ConflictOfInterestDialog(JFrame parent, boolean modal, AddressBean address, PartyTypeBean targetType, Hashtable<PartyTypeBean, List<ArchiveFileBean>> casesWithDifferentPartyType) {
+    public ConflictOfInterestDialog(JFrame parent, boolean modal, AddressBean address, PartyTypeBean targetType, HashMap<PartyTypeBean, List<ArchiveFileBean>> casesWithDifferentPartyType) {
         super(parent, modal);
         initComponents();
         
         this.lblCurrentRequest.setText("<html><b>" + address.toDisplayName() + "</b> soll als <b>" + targetType.getName() + "</b> aufgenommen werden.");
-        StringBuffer sb=new StringBuffer();
+        StringBuilder sb=new StringBuilder();
         sb.append("<html>");
         for(PartyTypeBean ptb: casesWithDifferentPartyType.keySet()) {
             sb.append("<b>").append(ptb.getName()).append("</b> in:");
@@ -826,17 +836,15 @@ public class ConflictOfInterestDialog extends javax.swing.JDialog {
         //</editor-fold>
 
         /* Create and display the dialog */
-        java.awt.EventQueue.invokeLater(new Runnable() {
-            public void run() {
-                ConflictOfInterestDialog dialog = new ConflictOfInterestDialog((JFrame)null, true, null, null, null);
-                dialog.addWindowListener(new java.awt.event.WindowAdapter() {
-                    @Override
-                    public void windowClosing(java.awt.event.WindowEvent e) {
-                        System.exit(0);
-                    }
-                });
-                dialog.setVisible(true);
-            }
+        java.awt.EventQueue.invokeLater(() -> {
+            ConflictOfInterestDialog dialog = new ConflictOfInterestDialog((JFrame)null, true, null, null, null);
+            dialog.addWindowListener(new java.awt.event.WindowAdapter() {
+                @Override
+                public void windowClosing(java.awt.event.WindowEvent e) {
+                    System.exit(0);
+                }
+            });
+            dialog.setVisible(true);
         });
     }
 

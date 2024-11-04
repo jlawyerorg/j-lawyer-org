@@ -673,7 +673,9 @@ import com.jdimension.jlawyer.persistence.CaseFolder;
 import com.jdimension.jlawyer.persistence.CaseSyncSettings;
 import com.jdimension.jlawyer.persistence.DocumentFolder;
 import com.jdimension.jlawyer.persistence.DocumentFolderTemplate;
+import com.jdimension.jlawyer.persistence.DocumentNameTemplate;
 import com.jdimension.jlawyer.persistence.DocumentTagsBean;
+import com.jdimension.jlawyer.persistence.Group;
 import com.jdimension.jlawyer.pojo.DataBucket;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -689,8 +691,9 @@ import javax.ejb.Local;
 @Local
 public interface ArchiveFileServiceLocal {
 
-    public ArchiveFileDocumentsBean addDocument(String archiveFileId, String fileName, byte[] data, String dictateSign) throws Exception;
-    public ArchiveFileDocumentsBean addDocumentFromTemplate(String archiveFileId, String fileName, String letterHead, String templateFolder, String templateName, HashMap<String,Object> placeHolderValues, String dictateSign) throws Exception;
+    public ArchiveFileDocumentsBean addDocument(String archiveFileId, String fileName, byte[] data, String dictateSign, String externalId) throws Exception;
+    public ArchiveFileDocumentsBean addDocumentUnrestricted(String archiveFileId, String fileName, byte[] data, String dictateSign, String externalId) throws Exception;
+    public ArchiveFileDocumentsBean addDocumentFromTemplate(String archiveFileId, String fileName, String letterHead, String templateFolder, String templateName, HashMap<String,Object> placeHolderValues, String dictateSign, String externalId) throws Exception;
     
     public ArchiveFileBean createArchiveFile(ArchiveFileBean dto) throws Exception;
     public void updateArchiveFile(ArchiveFileBean dto) throws Exception;
@@ -699,10 +702,15 @@ public interface ArchiveFileServiceLocal {
     public ArchiveFileBean getArchiveFile(String id) throws Exception;
     public ArrayList<String> getAllArchiveFileIds();
     public Date getLastChangedForArchiveFile(String archiveFileKey);
+    public ArrayList<String> getAllArchiveFileNumbers() throws Exception;
+    public ArrayList<String> getAllArchiveFileNumbersUnrestricted() throws Exception;
+    public ArchiveFileBean getArchiveFileByFileNumber(String fileNumber) throws Exception;
+    public ArchiveFileBean getArchiveFileByFileNumberUnrestricted(String fileNumber) throws Exception;
     
     
     public int getDocumentCount();
     public Collection<ArchiveFileDocumentsBean> getDocuments(String archiveFileKey);
+    public Collection<ArchiveFileDocumentsBean> getDocuments(String archiveFileKey, boolean deleted);
     public byte[] getDocumentContent(String id) throws Exception;
     public DataBucket getDocumentContentBucket(String id) throws Exception;
     
@@ -722,14 +730,19 @@ public interface ArchiveFileServiceLocal {
     byte[] getDocumentContentUnrestricted(String id) throws Exception;
 
     public List<ArchiveFileAddressesBean> getInvolvementDetailsForCase(String archiveFileKey);
+    public List<ArchiveFileAddressesBean> getInvolvementDetailsForCase(String archiveFileKey, boolean includeCases);
     
     public List<ArchiveFileAddressesBean> getInvolvementDetailsForCaseUnrestricted(String archiveFileKey);
+    public List<ArchiveFileAddressesBean> getInvolvementDetailsForCaseUnrestricted(String archiveFileKey, boolean includeCases);
 
     boolean doesDocumentExist(String caseId, String documentName);
+    boolean doesDocumentExistUnrestricted(String caseId, String documentName);
     
     boolean doesDocumentExist(String id);
 
     ArchiveFileDocumentsBean getDocument(String id) throws Exception;
+    String getNewDocumentName(String fileName, Date date, DocumentNameTemplate tpl) throws Exception;
+    String getNewDocumentNameUnrestricted(String fileName, Date date, DocumentNameTemplate tpl) throws Exception;
     
     Collection<DocumentTagsBean> getDocumentTags(String documentId) throws Exception;
     
@@ -750,6 +763,8 @@ public interface ArchiveFileServiceLocal {
     List<ArchiveFileGroupsBean> getAllowedGroups(String caseId) throws Exception;
     
     List<ArchiveFileGroupsBean> getAllowedGroups(ArchiveFileBean archiveFile);
+    
+    void updateAllowedGroups(String caseId, Collection<Group> allowedGroups) throws Exception;
 
     List<DocumentFolderTemplate> getAllFolderTemplates();
 
@@ -776,6 +791,8 @@ public interface ArchiveFileServiceLocal {
     CaseFolder applyFolderTemplateById(String id, String templateId) throws Exception;
 
     DocumentFolderTemplate getFolderTemplateById(String id);
+    
+    List<CaseFolder> getFolderHierarchy(String folderId);
 
     void purgeDocumentBin() throws Exception;
     
@@ -786,9 +803,24 @@ public interface ArchiveFileServiceLocal {
     List<CaseSyncSettings> getCaseSyncsForUser(String principalId) throws Exception;
     
     Collection<ArchiveFileAddressesBean> getArchiveFileAddressesForAddress(String adressId);
+    Collection<ArchiveFileAddressesBean> getArchiveFileAddressesForAddressUnrestricted(String adressId);
     
     void setTag(String archiveFileId, ArchiveFileTagsBean tag, boolean active) throws Exception;
     
     void setDocumentTag(String documentId, DocumentTagsBean tag, boolean active) throws Exception;
+    void setDocumentTagUnrestricted(String documentId, DocumentTagsBean tag, boolean active) throws Exception;
+    
+    public ArchiveFileBean getCaseByExternalId(String extId);
+    public ArchiveFileDocumentsBean getDocumentByExternalId(String extId);
+
+    void updateDocumentExternalId(String id, String externalId) throws Exception;
+    
+    void addCaseHistory(String newHistoryId, ArchiveFileBean dto, String description);
+
+    void addCaseHistory(String newHistoryId, ArchiveFileBean dto, String description, String principalId, Date changeDate);
+    
+    ArchiveFileBean[] searchEnhanced(String query, boolean withArchive, String[] tagName, String[] documentTagNames);
+    List<ArchiveFileBean> getTagged(String[] tagName, String[] docTagName, int limit);
+    List<ArchiveFileDocumentsBean> getTaggedDocuments(java.lang.String[] docTagName, int limit);
     
 }

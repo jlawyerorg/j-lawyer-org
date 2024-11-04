@@ -697,7 +697,6 @@ import javax.annotation.security.RolesAllowed;
 import javax.ejb.EJB;
 import javax.ejb.Stateless;
 import org.apache.log4j.Logger;
-import org.jboss.ejb3.annotation.SecurityDomain;
 import org.jlawyer.data.tree.GenericNode;
 import org.jlawyer.data.tree.TreeNodeUtils;
 
@@ -706,7 +705,7 @@ import org.jlawyer.data.tree.TreeNodeUtils;
  * @author jens
  */
 @Stateless
-@SecurityDomain("j-lawyer-security")
+//@SecurityDomain("j-lawyer-security")
 public class CustomerRelationsService implements CustomerRelationsServiceRemote, CustomerRelationsServiceLocal {
     
     private static final Logger log=Logger.getLogger(CustomerRelationsService.class.getName());
@@ -809,7 +808,7 @@ public class CustomerRelationsService implements CustomerRelationsServiceRemote,
             throw new Exception("Dokument " + fileName + " existiert bereits - bitte einen anderen Namen wählen!");
         }
 
-        SystemManagement.copyFile(src, dst);
+        ServerFileUtils.copyFile(src, dst);
 
         LibreOfficeAccess.setPlaceHolders("", dst, dst, placeHolderValues, null);
 

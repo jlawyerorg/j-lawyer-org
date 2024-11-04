@@ -1161,7 +1161,7 @@ public class NextcloudCalendarConnector {
         }
     }
 
-    private String getBaseUrl() {
+    protected String getBaseUrl() {
         StringBuilder sb = new StringBuilder();
         sb.append("http");
         if (useHTTPS) {

@@ -21,5 +21,5 @@ jlversion=`echo "$jlversion" | tr _ .`
  
 # tadaaa! 
 # echo $jlversion
-echo 2.4.0.13
+echo 3.0.0.1
  

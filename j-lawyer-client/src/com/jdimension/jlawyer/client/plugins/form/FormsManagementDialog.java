@@ -663,34 +663,9 @@ For more information on this, and how to apply and follow the GNU AGPL, see
  */
 package com.jdimension.jlawyer.client.plugins.form;
 
-import com.jdimension.jlawyer.client.settings.ClientSettings;
 import com.jdimension.jlawyer.client.utils.DesktopUtils;
-import com.jdimension.jlawyer.client.utils.VersionUtils;
-import com.jdimension.jlawyer.persistence.FormTypeBean;
-import com.jdimension.jlawyer.services.FormsServiceRemote;
-import com.jdimension.jlawyer.services.JLawyerServiceLocator;
-import java.awt.Component;
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.InputStream;
-import java.io.InputStreamReader;
-import java.io.StringReader;
-import java.net.URL;
-import java.net.URLConnection;
-import java.nio.charset.StandardCharsets;
-import java.util.ArrayList;
-import java.util.Iterator;
-import java.util.List;
 import java.util.Map;
-import java.util.TreeMap;
-import javax.xml.XMLConstants;
-import javax.xml.parsers.DocumentBuilder;
-import javax.xml.parsers.DocumentBuilderFactory;
 import org.apache.log4j.Logger;
-import org.w3c.dom.Document;
-import org.w3c.dom.Node;
-import org.w3c.dom.NodeList;
-import org.xml.sax.InputSource;
 import themes.colors.DefaultColorTheme;
 
 /**
@@ -712,237 +687,23 @@ public class FormsManagementDialog extends javax.swing.JDialog implements FormAc
 
         lblGitHubLink.setForeground(DefaultColorTheme.COLOR_LOGO_BLUE);
 
-        List<FormTypeBean> serverFormPlugins = new ArrayList<>();
-        try {
-            ClientSettings settings = ClientSettings.getInstance();
-            JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
-            FormsServiceRemote forms = locator.lookupFormsServiceRemote();
-            serverFormPlugins = forms.getAllFormTypes();
-        } catch (Throwable t) {
-            log.error("Could not load forms plugins", t);
+        Map<String, FormPlugin> remotePlugins=FormPluginUtil.getAvailableRepositoryPlugins();
+        for (Map.Entry me : remotePlugins.entrySet()) {
+            FormPluginEntryPanel fpe = new FormPluginEntryPanel(this, this.formPluginsPanel, this);
+            fpe.setEntry((FormPlugin)me.getValue());
+            this.formPluginsPanel.add(fpe);
         }
-
-        try {
-            URL updateURL = new URL("https://www.j-lawyer.org/downloads/j-lawyer-forms.xml");
-            URLConnection urlCon = updateURL.openConnection();
-            urlCon.setRequestProperty("User-Agent", "j-lawyer Client v" + VersionUtils.getFullClientVersion());
-            urlCon.setConnectTimeout(5000);
-            urlCon.setReadTimeout(5000);
-
-            InputStream is = urlCon.getInputStream();
-            InputStreamReader reader = new InputStreamReader(is, StandardCharsets.UTF_8);
-
-            char[] buffer = new char[1024];
-            int len = 0;
-            StringBuilder sb = new StringBuilder();
-            while ((len = reader.read(buffer)) > -1) {
-                sb.append(buffer, 0, len);
-            }
-            reader.close();
-            is.close();
-            String formsContent = sb.toString();
-
-            DocumentBuilderFactory dbf = DocumentBuilderFactory.newInstance();
-            try {
-                dbf.setAttribute(XMLConstants.ACCESS_EXTERNAL_DTD, "");
-                dbf.setAttribute(XMLConstants.ACCESS_EXTERNAL_SCHEMA, "");
-            } catch (IllegalArgumentException iae) {
-                // only available from JAXP 1.5+, but Wildfly still ships 1.4
-                log.warn("Unable to set external entity restrictions in XML parser", iae);
-            }
-            DocumentBuilder remoteDb = dbf.newDocumentBuilder();
-            InputSource inSrc1 = new InputSource(new StringReader(formsContent));
-            inSrc1.setEncoding("UTF-8");
-            Document remoteDoc = remoteDb.parse(inSrc1);
-
-            NodeList remoteList = remoteDoc.getElementsByTagName("form");
-
-            // load from server when not in cache or when version has been updated
-            String formsDir = FormPluginUtil.getLocalDirectory();
-            File formDirFile = new File(formsDir);
-            if (!formDirFile.exists()) {
-                formDirFile.mkdirs();
-            }
-
-            TreeMap<String, FormPluginEntryPanel> formPlugins = new TreeMap<>();
-            for (int i = 0; i < remoteList.getLength(); i++) {
-                Node n = remoteList.item(i);
-                String forVersion = n.getAttributes().getNamedItem("for").getNodeValue();
-                if (forVersion.contains(VersionUtils.getFullClientVersion())) {
-                    FormPlugin fp = new FormPlugin();
-                    fp.setForVersion(n.getAttributes().getNamedItem("for").getNodeValue());
-                    fp.setId(n.getAttributes().getNamedItem("id").getNodeValue());
-                    fp.setType(n.getAttributes().getNamedItem("type").getNodeValue());
-                    fp.setVersion(n.getAttributes().getNamedItem("version").getNodeValue());
-                    fp.setDescription(n.getAttributes().getNamedItem("description").getNodeValue());
-                    String depends = "";
-                    if (n.getAttributes().getNamedItem("depends") != null) {
-                        depends = n.getAttributes().getNamedItem("depends").getNodeValue();
-                    }
-                    String[] dependencies = depends.split(",");
-                    fp.setDependsOn(dependencies);
-                    fp.setUrl(n.getAttributes().getNamedItem("url").getNodeValue());
-                    fp.setName(n.getAttributes().getNamedItem("name").getNodeValue());
-                    fp.setPlaceHolder(n.getAttributes().getNamedItem("placeholder").getNodeValue());
-                    String files = n.getAttributes().getNamedItem("files").getNodeValue();
-                    for (String f : files.split(",")) {
-                        fp.getFiles().add(f);
-                    }
-                    if (n.getChildNodes() != null) {
-                        NodeList settingsList = n.getChildNodes();
-                        for (int s = 0; s < settingsList.getLength(); s++) {
-                            Node setting = settingsList.item(s);
-                            if ("setting".equalsIgnoreCase(setting.getNodeName())) {
-                                FormPluginSetting ps = new FormPluginSetting();
-                                ps.setKey(setting.getAttributes().getNamedItem("key").getNodeValue());
-                                ps.setCaption(setting.getAttributes().getNamedItem("caption").getNodeValue());
-                                ps.setDefaultValue(setting.getAttributes().getNamedItem("default").getNodeValue());
-                                ps.setOrder(Integer.parseInt(setting.getAttributes().getNamedItem("order").getNodeValue()));
-                                fp.getSettings().add(ps);
-                            }
-                        }
-                    }
-                    FormPluginEntryPanel fpe = new FormPluginEntryPanel(this, fp, this.formPluginsPanel, this);
-
-                    FormTypeBean onServer = this.findPlugin(serverFormPlugins, fp.getId());
-
-                    if (onServer == null) {
-                        fpe.setState(FormPluginEntryPanel.STATE_NOT_INSTALLED);
-                        fpe.setVersionOnServer("");
-                    } else {
-                        fpe.setVersionOnServer(onServer.getVersion());
-                        if (onServer.getVersion().equals(fp.getVersion())) {
-                            fpe.setState(FormPluginEntryPanel.STATE_INSTALLED);
-                        } else {
-                            fpe.setState(FormPluginEntryPanel.STATE_INSTALLED_UPDATEAVAILABLE);
-                        }
-                    }
-                    formPlugins.put(fp.getName(), fpe);
-                }
-            }
-            Iterator i = formPlugins.entrySet().iterator();
-            while (i.hasNext()) {
-                Map.Entry me = (Map.Entry) i.next();
-                this.formPluginsPanel.add((Component) me.getValue());
-            }
-
-        } catch (Throwable t) {
-            log.error("Error downloading calculation plugins", t);
-        }
-
-        // check for local plugins
-        try {
-
-            File internalXml = new File(FormPluginUtil.getLocalDirectoryInternalPlugins() + File.separator + "j-lawyer-forms-internal.xml");
-            if (!internalXml.exists()) {
-                return;
-            }
-
-            StringBuilder sb = new StringBuilder();
-            try ( InputStream is = new FileInputStream(internalXml);  InputStreamReader reader = new InputStreamReader(is, StandardCharsets.UTF_8)) {
-
-                char[] buffer = new char[1024];
-                int len = 0;
-                while ((len = reader.read(buffer)) > -1) {
-                    sb.append(buffer, 0, len);
-                }
-            }
-            String formsContent = sb.toString();
-
-            DocumentBuilderFactory dbf = DocumentBuilderFactory.newInstance();
-            try {
-                dbf.setAttribute(XMLConstants.ACCESS_EXTERNAL_DTD, "");
-                dbf.setAttribute(XMLConstants.ACCESS_EXTERNAL_SCHEMA, "");
-            } catch (IllegalArgumentException iae) {
-                // only available from JAXP 1.5+, but Wildfly still ships 1.4
-                log.warn("Unable to set external entity restrictions in XML parser", iae);
-            }
-            DocumentBuilder remoteDb = dbf.newDocumentBuilder();
-            InputSource inSrc1 = new InputSource(new StringReader(formsContent));
-            inSrc1.setEncoding("UTF-8");
-            Document remoteDoc = remoteDb.parse(inSrc1);
-
-            NodeList remoteList = remoteDoc.getElementsByTagName("form");
-
-            // load from server when not in cache or when version has been updated
-            String formsDir = FormPluginUtil.getLocalDirectory();
-            File formDirFile = new File(formsDir);
-            if (!formDirFile.exists()) {
-                formDirFile.mkdirs();
-            }
-
-            for (int i = 0; i < remoteList.getLength(); i++) {
-                Node n = remoteList.item(i);
-                String forVersion = n.getAttributes().getNamedItem("for").getNodeValue();
-                if (forVersion.contains(VersionUtils.getFullClientVersion())) {
-                    FormPlugin fp = new FormPlugin();
-                    fp.setForVersion(n.getAttributes().getNamedItem("for").getNodeValue());
-                    fp.setId(n.getAttributes().getNamedItem("id").getNodeValue());
-                    fp.setType(n.getAttributes().getNamedItem("type").getNodeValue());
-                    fp.setVersion(n.getAttributes().getNamedItem("version").getNodeValue());
-                    fp.setDescription(n.getAttributes().getNamedItem("description").getNodeValue());
-                    String depends = "";
-                    if (n.getAttributes().getNamedItem("depends") != null) {
-                        depends = n.getAttributes().getNamedItem("depends").getNodeValue();
-                    }
-                    String[] dependencies = depends.split(",");
-                    fp.setDependsOn(dependencies);
-                    fp.setUrl(n.getAttributes().getNamedItem("url").getNodeValue());
-                    fp.setName(n.getAttributes().getNamedItem("name").getNodeValue());
-                    fp.setPlaceHolder(n.getAttributes().getNamedItem("placeholder").getNodeValue());
-                    String files = n.getAttributes().getNamedItem("files").getNodeValue();
-                    for (String f : files.split(",")) {
-                        fp.getFiles().add(f);
-                    }
-
-                    if (n.getChildNodes() != null) {
-                        NodeList settingsList = n.getChildNodes();
-                        for (int s = 0; s < settingsList.getLength(); s++) {
-                            Node setting = settingsList.item(s);
-                            if ("setting".equalsIgnoreCase(setting.getNodeName())) {
-                                FormPluginSetting ps = new FormPluginSetting();
-                                ps.setKey(setting.getAttributes().getNamedItem("key").getNodeValue());
-                                ps.setCaption(setting.getAttributes().getNamedItem("caption").getNodeValue());
-                                ps.setDefaultValue(setting.getAttributes().getNamedItem("default").getNodeValue());
-                                ps.setOrder(Integer.parseInt(setting.getAttributes().getNamedItem("order").getNodeValue()));
-                                fp.getSettings().add(ps);
-                            }
-                        }
-                    }
-
-                    FormPluginEntryPanel fpe = new FormPluginEntryPanel(this, fp, this.formPluginsPanel, this);
-
-                    FormTypeBean onServer = this.findPlugin(serverFormPlugins, fp.getId());
-
-                    if (onServer == null) {
-                        fpe.setState(FormPluginEntryPanel.STATE_NOT_INSTALLED);
-                        fpe.setVersionOnServer("");
-                    } else {
-                        fpe.setVersionOnServer(onServer.getVersion());
-                        if (onServer.getVersion().equals(fp.getVersion())) {
-                            fpe.setState(FormPluginEntryPanel.STATE_INSTALLED);
-                        } else {
-                            fpe.setState(FormPluginEntryPanel.STATE_INSTALLED_UPDATEAVAILABLE);
-                        }
-                    }
-                    this.formPluginsPanel.add(fpe);
-                }
-            }
-
-        } catch (Throwable t) {
-            log.error("Error downloading calculation plugins", t);
+        
+        Map<String, FormPlugin> localPlugins=FormPluginUtil.getAvailableLocalPlugins();
+        for (Map.Entry me : localPlugins.entrySet()) {
+            FormPluginEntryPanel fpe = new FormPluginEntryPanel(this, this.formPluginsPanel, this);
+            fpe.setEntry((FormPlugin)me.getValue());
+            this.formPluginsPanel.add(fpe);
         }
 
     }
 
-    private FormTypeBean findPlugin(List<FormTypeBean> plugins, String id) {
-        for (FormTypeBean fp : plugins) {
-            if (fp.getId().equals(id)) {
-                return fp;
-            }
-        }
-        return null;
-    }
+    
 
     /**
      * This method is called from within the constructor to initialize the form.

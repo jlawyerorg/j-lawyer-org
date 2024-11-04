@@ -956,7 +956,7 @@ public class MassMailPanel extends javax.swing.JPanel implements ThemeableEditor
     }//GEN-LAST:event_cmdAddCampaignActionPerformed
 
     private void cmbCampaignActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmbCampaignActionPerformed
-        String[] colNames = new String[]{"Name", "Vorname", "Unternehmen", "PLZ", "Ort", "Strasse", "Land", "Etiketten"};
+        String[] colNames = new String[]{"Name", "Vorname", "Unternehmen", "PLZ", "Ort", "Straße", "Land", "Etiketten"};
         QuickAddressSearchTableModel model = new QuickAddressSearchTableModel(colNames, 0);
         this.tblResults.setModel(model);
         ComponentUtils.autoSizeColumns(tblResults);

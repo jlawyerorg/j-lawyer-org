@@ -666,6 +666,7 @@ package com.jdimension.jlawyer.client.editors.documents.viewer;
 import com.jdimension.jlawyer.client.launcher.LauncherFactory;
 import com.jdimension.jlawyer.client.mail.EmailUtils;
 import com.jdimension.jlawyer.client.mail.MessageContainer;
+import com.jdimension.jlawyer.client.utils.einvoice.EInvoiceUtils;
 import com.jdimension.jlawyer.persistence.ArchiveFileBean;
 import com.jdimension.jlawyer.persistence.MailboxSetup;
 import java.awt.Dimension;
@@ -677,6 +678,7 @@ import java.util.zip.ZipInputStream;
 import javax.mail.Flags.Flag;
 import javax.mail.internet.MimeMessage;
 import javax.swing.JComponent;
+import javax.swing.SwingUtilities;
 import org.apache.log4j.Logger;
 import org.simplejavamail.outlookmessageparser.OutlookMessageParser;
 import org.simplejavamail.outlookmessageparser.model.OutlookMessage;
@@ -688,65 +690,103 @@ import org.simplejavamail.outlookmessageparser.model.OutlookMessage;
 public class DocumentViewerFactory {
 
     private static final Logger log = Logger.getLogger(DocumentViewerFactory.class.getName());
-    
-    private static final String STR_PREVIEWFAIL="Vorschau kann nicht geladen werden.";
 
-    public static JComponent getDocumentViewer(String id, String fileName, boolean readOnly, DocumentPreviewProvider previewProvider, byte[] content, int width, int height) {
-        return getDocumentViewer(null, id, fileName, readOnly, previewProvider, content, width, height);
+    private static final String STR_PREVIEWFAIL = "Vorschau kann nicht geladen werden.";
+
+    public static JComponent getDocumentViewer(String id, String fileName, boolean readOnly, DocumentPreviewProvider previewProvider, byte[] content, int width, int height, DocumentPreviewSaveCallback saveCallback) {
+        return getDocumentViewer(null, id, fileName, readOnly, previewProvider, content, width, height, saveCallback);
     }
 
-    public static JComponent getDocumentViewer(ArchiveFileBean caseDto, String id, String fileName, boolean readOnly, DocumentPreviewProvider previewProvider, byte[] content, int width, int height) {
+    public static JComponent getDocumentViewer(ArchiveFileBean caseDto, String id, String fileName, boolean readOnly, DocumentPreviewProvider previewProvider, byte[] content, int width, int height, DocumentPreviewSaveCallback saveCallback) {
 
-        if (fileName.toLowerCase().endsWith(".pdf")) {
-            PdfImagePanel pdfP = new PdfImagePanel(fileName, content);
+        String lFileName = fileName.toLowerCase();
+
+        if (lFileName.endsWith(".pdf")) {
+            PdfImageScrollingPanel pdfP = new PdfImageScrollingPanel(fileName, content, saveCallback);
             pdfP.setSize(new Dimension(width, height));
             pdfP.setMaximumSize(new Dimension(width, height));
             pdfP.setPreferredSize(new Dimension(width, height));
-            pdfP.showContent(content);
+            pdfP.showContent(id, content);
             return pdfP;
 
-        } else if (fileName.toLowerCase().endsWith(".jpg") || fileName.toLowerCase().endsWith(".jpeg") || fileName.toLowerCase().endsWith(".gif") || fileName.toLowerCase().endsWith(".png")) {
+        } else if (lFileName.endsWith(".jpg") || lFileName.endsWith(".jpeg") || lFileName.endsWith(".gif") || lFileName.endsWith(".png")) {
             GifJpegPngImagePanel ip = new GifJpegPngImagePanel(content);
             ip.setSize(width, height);
             ip.setMaximumSize(new Dimension(width, height));
             ip.setPreferredSize(new Dimension(width, height));
-            ip.showContent(content);
+            ip.showContent(id, content);
             return ip;
 
-        } else if (fileName.toLowerCase().endsWith(".bmp") || fileName.toLowerCase().endsWith(".tif") || fileName.toLowerCase().endsWith(".tiff")) {
+        } else if (lFileName.endsWith(".bmp") || lFileName.endsWith(".tif") || lFileName.endsWith(".tiff")) {
             BmpTiffImagePanel ip = new BmpTiffImagePanel(content);
             ip.setSize(width, height);
             ip.setMaximumSize(new Dimension(width, height));
             ip.setPreferredSize(new Dimension(width, height));
-            ip.showContent(content);
+            ip.showContent(id, content);
             return ip;
-        } else if (fileName.toLowerCase().endsWith(".txt")) {
+        } else if (lFileName.endsWith(".txt")) {
             PlaintextPanel ptp = new PlaintextPanel();
             ptp.setSize(new Dimension(width, height));
             ptp.setMaximumSize(new Dimension(width, height));
             ptp.setPreferredSize(new Dimension(width, height));
             try {
-                ptp.showContent(previewProvider.getPreview().getBytes());
+                ptp.showContent(id, previewProvider.getPreview().getBytes());
             } catch (Exception ex) {
-                ptp.showContent(("FEHLER: " + ex.getMessage()).getBytes());
+                ptp.showContent(id, ("FEHLER: " + ex.getMessage()).getBytes());
             }
             return ptp;
-        } else if (fileName.toLowerCase().endsWith(".html") || fileName.toLowerCase().endsWith(".htm")) {
+        } else if (lFileName.endsWith(".md")) {
+            MarkdownPanel mdp = new MarkdownPanel(id, readOnly);
+            mdp.setSize(new Dimension(width, height));
+            mdp.setMaximumSize(new Dimension(width, height));
+            mdp.setPreferredSize(new Dimension(width, height));
+            try {
+                mdp.showContent(id, previewProvider.getPreview().getBytes());
+            } catch (Exception ex) {
+                mdp.showContent(id, ("FEHLER: " + ex.getMessage()).getBytes());
+            }
+            return mdp;
+        } else if (lFileName.endsWith(".wav") || lFileName.endsWith(".ogg") || lFileName.endsWith(".mp3")) {
+            SoundplayerPanel spp = new SoundplayerPanel(id, readOnly, saveCallback);
+            spp.setSize(new Dimension(width, height));
+            spp.setMaximumSize(new Dimension(width, height));
+            spp.setPreferredSize(new Dimension(width, height));
+            try {
+                spp.showContent(id, content);
+            } catch (Exception ex) {
+                spp.showStatus("FEHLER: " + ex.getMessage());
+            }
+            return spp;
+        } else if (lFileName.endsWith(".html") || lFileName.endsWith(".htm")) {
             HtmlPanel hp = new HtmlPanel(id, readOnly);
             hp.setSize(new Dimension(width, height));
             hp.setFileName(fileName);
             hp.setMaximumSize(new Dimension(width, height));
             hp.setPreferredSize(new Dimension(width, height));
-            hp.showContent(content);
+            hp.showContent(id, content);
             return hp;
-        } else if (fileName.toLowerCase().endsWith(".xml") && (fileName.toLowerCase().contains("xjustiz"))) {
+        } else if (lFileName.endsWith(".xml") && (lFileName.contains("xjustiz"))) {
             XjustizPanel xjp = new XjustizPanel(id, fileName);
             xjp.setSize(new Dimension(width, height));
             xjp.setMaximumSize(new Dimension(width, height));
             xjp.setPreferredSize(new Dimension(width, height));
-            xjp.showContent(content);
+            xjp.showContent(id, content);
             return xjp;
-        } else if (fileName.toLowerCase().endsWith(".eml")) {
+        } else if (lFileName.endsWith(".xml") && EInvoiceUtils.isEInvoice(new String(content))) {
+            XRechnungPanel xmlp = new XRechnungPanel();
+            xmlp.setSize(new Dimension(width, height));
+            xmlp.setMaximumSize(new Dimension(width, height));
+            xmlp.setPreferredSize(new Dimension(width, height));
+            xmlp.showContent(id, content);
+            return xmlp;
+        } else if (lFileName.endsWith(".xml")) {
+            XmlPanel xmlp = new XmlPanel();
+            xmlp.setSize(new Dimension(width, height));
+            xmlp.setMaximumSize(new Dimension(width, height));
+            xmlp.setPreferredSize(new Dimension(width, height));
+            xmlp.showContent(id, content);
+            return xmlp;
+        } else if (lFileName.endsWith(".eml")) {
             try {
                 InputStream source = new ByteArrayInputStream(content);
                 MimeMessage message = new MimeMessage(null, source);
@@ -757,7 +797,7 @@ public class DocumentViewerFactory {
                 ep.setMaximumSize(new Dimension(width, height));
                 ep.setPreferredSize(new Dimension(width, height));
                 MailboxSetup ms = EmailUtils.getMailboxSetup(message);
-                ep.setMessage(new MessageContainer(message, message.getSubject(), true), ms);
+                ep.setMessage(id, new MessageContainer(message, message.getSubject(), true), ms);
                 ep.setCaseContext(caseDto);
                 return ep;
             } catch (Throwable t) {
@@ -768,21 +808,19 @@ public class DocumentViewerFactory {
                 ep.showStatus(STR_PREVIEWFAIL);
                 return ep;
             }
-        } else if (fileName.toLowerCase().endsWith(".msg")) {
+        } else if (lFileName.endsWith(".msg")) {
             try {
-                
-                
+
                 InputStream source = new ByteArrayInputStream(content);
-                OutlookMessage om=new OutlookMessageParser().parseMsg(source);
-                
-                
+                OutlookMessage om = new OutlookMessageParser().parseMsg(source);
+
                 OutlookMessagePanel op = new OutlookMessagePanel();
                 op.setSize(new Dimension(width, height));
                 op.setMaximumSize(new Dimension(width, height));
                 op.setPreferredSize(new Dimension(width, height));
-                
+
                 //MailboxSetup ms = EmailUtils.getMailboxSetup(message);
-                op.setMessage(om);
+                op.setMessage(id, om);
                 op.setCaseContext(caseDto);
                 return op;
             } catch (Throwable t) {
@@ -793,7 +831,7 @@ public class DocumentViewerFactory {
                 ep.showStatus(STR_PREVIEWFAIL);
                 return ep;
             }
-//        } else if (fileName.toLowerCase().endsWith(".odt") || fileName.toLowerCase().endsWith(".ods")) {
+//        } else if (lFileName.endsWith(".odt") || lFileName.endsWith(".ods")) {
 //            try {
 //                String tempPath=FileUtils.createTempFile(fileName, content);
 //                InputStream in = new FileInputStream(tempPath);
@@ -815,7 +853,7 @@ public class DocumentViewerFactory {
 //            } catch (Throwable t) {
 //                log.error("could not convert file to PDF: " + fileName, t);
 //            }
-        } else if (fileName.toLowerCase().endsWith(".odt") || fileName.toLowerCase().endsWith(".ods")) {
+        } else if (lFileName.endsWith(".odt") || lFileName.endsWith(".ods")) {
             try {
                 byte[] thumbBytes = null;
                 ZipInputStream zis
@@ -854,19 +892,19 @@ public class DocumentViewerFactory {
                     ip.setSize(width, height);
                     ip.setMaximumSize(new Dimension(width, height));
                     ip.setPreferredSize(new Dimension(width, height));
-                    ip.showContent(thumbBytes);
+                    ip.showContent(id, thumbBytes);
                     return ip;
                 }
             } catch (Throwable t) {
                 log.error("Error extracting thumbnail from " + fileName, t);
             }
-        } else if (fileName.toLowerCase().endsWith(".bea")) {
+        } else if (lFileName.endsWith(".bea")) {
             try {
                 BeaPanel bp = new BeaPanel(id);
                 bp.setSize(new Dimension(width, height));
                 bp.setMaximumSize(new Dimension(width, height));
                 bp.setPreferredSize(new Dimension(width, height));
-                bp.showContent(content);
+                bp.showContent(id, content);
                 bp.setCaseContext(caseDto);
                 return bp;
             } catch (Throwable t) {
@@ -915,9 +953,9 @@ public class DocumentViewerFactory {
         // we just reuse the showStatus method because it is doing the same thing
         //ptp.showStatus(previewContent);
         try {
-            ptp.showContent(previewProvider.getPreview().getBytes());
+            ptp.showContent(id, previewProvider.getPreview().getBytes());
         } catch (Exception ex) {
-            ptp.showContent(("FEHLER: " + ex.getMessage()).getBytes());
+            ptp.showContent(id, ("FEHLER: " + ex.getMessage()).getBytes());
         }
 
         return ptp;

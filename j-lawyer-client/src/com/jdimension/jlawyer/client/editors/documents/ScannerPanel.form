@@ -54,6 +54,32 @@
         </MenuItem>
       </SubComponents>
     </Container>
+    <Container class="javax.swing.JPopupMenu" name="popConfiguration">
+
+      <Layout class="org.netbeans.modules.form.compat2.layouts.DesignAbsoluteLayout">
+        <Property name="useNullLayout" type="boolean" value="true"/>
+      </Layout>
+      <SubComponents>
+        <MenuItem class="javax.swing.JMenuItem" name="mnuSelectLocalFolder">
+          <Properties>
+            <Property name="text" type="java.lang.String" value="konfigurieren"/>
+            <Property name="toolTipText" type="java.lang.String" value="lokalen Eingangsordner ausw&#xe4;hlen"/>
+          </Properties>
+          <Events>
+            <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="mnuSelectLocalFolderActionPerformed"/>
+          </Events>
+        </MenuItem>
+        <MenuItem class="javax.swing.JMenuItem" name="mnuDeactivateLocalFolder">
+          <Properties>
+            <Property name="text" type="java.lang.String" value="zur&#xfc;cksetzen"/>
+            <Property name="toolTipText" type="java.lang.String" value="deaktiviert den lokalen Eingangsordner"/>
+          </Properties>
+          <Events>
+            <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="mnuDeactivateLocalFolderActionPerformed"/>
+          </Events>
+        </MenuItem>
+      </SubComponents>
+    </Container>
   </NonVisualComponents>
   <AuxValues>
     <AuxValue name="FormSettings_autoResourcing" type="java.lang.Integer" value="0"/>
@@ -159,7 +185,7 @@
         <Property name="toolTipText" type="java.lang.String" value="Ordner auf diesem Ger&#xe4;t &#xfc;berwachen"/>
       </Properties>
       <Events>
-        <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="cmdLocalUploadDirActionPerformed"/>
+        <EventHandler event="mousePressed" listener="java.awt.event.MouseListener" parameters="java.awt.event.MouseEvent" handler="cmdLocalUploadDirMousePressed"/>
       </Events>
     </Component>
     <Component class="javax.swing.JLabel" name="lblLocalDir">

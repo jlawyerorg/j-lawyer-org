@@ -684,7 +684,7 @@ public class AutoUpdateEvent extends Event {
     
     
     public AutoUpdateEvent(String newVersion, String published, String changeLog) {
-        super(Event.TYPE_AUTOUPDATE);
+        super(Event.TYPE_UPDATE_APPLICATION);
         this.newVersion=newVersion;
         this.published=published;
         this.changeLog=changeLog;
@@ -725,7 +725,6 @@ public class AutoUpdateEvent extends Event {
 
                             @Override
                             public void mouseClicked(MouseEvent me) {
-//                                throw new UnsupportedOperationException("Not supported yet.");
                                 boolean browserSupport = true;
                                 if (Desktop.isDesktopSupported()) {
                                     Desktop desktop = Desktop.getDesktop();
@@ -735,7 +734,6 @@ public class AutoUpdateEvent extends Event {
                                             uri = new URI(changeLog);
                                             desktop.browse(uri);
                                         } catch (Throwable t) {
-                                            //JOptionPane.showMessageDialog(EditorsRegistry.getInstance().getMainWindow(), "Internetbrowser kann auf Ihrem System nicht automatisch gestartet werden. Die Information ist verfügbar unter " + url, "Hinweis", JOptionPane.INFORMATION_MESSAGE);
                                             ShowURLDialog dlg = new ShowURLDialog(EditorsRegistry.getInstance().getMainWindow(), true, changeLog);
                                             dlg.setVisible(true);
                                         }
@@ -750,7 +748,6 @@ public class AutoUpdateEvent extends Event {
                                 if (!browserSupport) {
                                     ShowURLDialog dlg = new ShowURLDialog(EditorsRegistry.getInstance().getMainWindow(), true, changeLog);
                                     dlg.setVisible(true);
-                                    //JOptionPane.showMessageDialog(EditorsRegistry.getInstance().getMainWindow(), java.text.MessageFormat.format(java.util.ResourceBundle.getBundle("com/jdimension/jlawyer/client/editors/EditorsRegistry").getString("launch.browser.error"), new Object[] {url}), "Hinweis", JOptionPane.INFORMATION_MESSAGE);
                                 }
                             }
 

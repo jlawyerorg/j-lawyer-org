@@ -663,6 +663,8 @@ For more information on this, and how to apply and follow the GNU AGPL, see
  */
 package com.jdimension.jlawyer.persistence;
 
+import java.util.Date;
+import java.util.List;
 import javax.ejb.Stateless;
 import javax.persistence.EntityManager;
 import javax.persistence.PersistenceContext;
@@ -684,6 +686,27 @@ public class InstantMessageMentionFacade extends AbstractFacade<InstantMessageMe
 
     public InstantMessageMentionFacade() {
         super(InstantMessageMention.class);
+    }
+    
+    @Override
+    public List<InstantMessageMention> findOpen() {
+        
+        return (List<InstantMessageMention>) em.createNamedQuery("InstantMessageMention.findOpen").getResultList();
+        
+    }
+    
+    @Override
+    public List<InstantMessageMention> findOpen(String principalId) {
+        
+        return (List<InstantMessageMention>) em.createNamedQuery("InstantMessageMention.findOpenByPrincipal").setParameter("principal", principalId).getResultList();
+        
+    }
+    
+    @Override
+    public List<InstantMessageMention> findSince(Date since) {
+        
+        return (List<InstantMessageMention>) em.createNamedQuery("InstantMessageMention.findSince").setParameter("since", since).getResultList();
+        
     }
     
 }

@@ -682,9 +682,6 @@ import org.apache.log4j.Logger;
 @WebServlet(name = "AutoStartServlet", urlPatterns = {"/autostart"})
 @ServletSecurity(@HttpConstraint(rolesAllowed = "loginRole"))
 public class AutoStartServlet extends HttpServlet {
-    
-//    @EJB
-//    private ServerSettingsBeanFacadeLocal serverSettingsBeanFacade;
 
     private static Logger log = Logger.getLogger(AutoStartServlet.class.getName());
 
@@ -750,8 +747,7 @@ public class AutoStartServlet extends HttpServlet {
     protected void processRequest(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
         response.setContentType("text/html;charset=UTF-8");
-        PrintWriter out = response.getWriter();
-        try {
+        try (PrintWriter out = response.getWriter()) {
             /*
              * TODO output your page here. You may use following sample code.
              */
@@ -763,11 +759,12 @@ public class AutoStartServlet extends HttpServlet {
             out.println("<h1>Servlet AutoStartServlet at " + request.getContextPath() + "</h1>");
             
             String action=request.getParameter("action");
+            String jobId=request.getParameter("jobid");
             if(action!=null) {
                 if("backup.adhoc".equalsIgnoreCase(action)) {
                     out.println("starting ad-hoc backup...<br/>");
                     TransientTimer timer=TransientTimer.getInstance();
-                    timer.scheduleAdHocBackup();
+                    timer.scheduleAdHocBackup(jobId);
                     out.println("ad-hoc backup has been scheduled.<br/>");
                 }
             }
@@ -775,8 +772,6 @@ public class AutoStartServlet extends HttpServlet {
             
             out.println("</body>");
             out.println("</html>");
-        } finally {
-            out.close();
         }
     }
 

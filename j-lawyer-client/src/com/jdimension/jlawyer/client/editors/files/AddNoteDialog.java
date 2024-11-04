@@ -665,7 +665,6 @@ package com.jdimension.jlawyer.client.editors.files;
 
 import com.jdimension.jlawyer.client.calendar.CalendarUtils;
 import com.jdimension.jlawyer.client.components.MultiCalDialog;
-import com.jdimension.jlawyer.client.configuration.OptionGroupListCellRenderer;
 import com.jdimension.jlawyer.client.configuration.UserListCellRenderer;
 import com.jdimension.jlawyer.client.editors.EditorsRegistry;
 import com.jdimension.jlawyer.client.settings.ClientSettings;
@@ -675,7 +674,6 @@ import com.jdimension.jlawyer.client.utils.FileUtils;
 import com.jdimension.jlawyer.client.utils.StringUtils;
 import com.jdimension.jlawyer.persistence.*;
 import com.jdimension.jlawyer.services.ArchiveFileServiceRemote;
-import com.jdimension.jlawyer.services.CalendarServiceRemote;
 import com.jdimension.jlawyer.services.JLawyerServiceLocator;
 import com.jdimension.jlawyer.ui.folders.CaseFolderPanel;
 import java.awt.event.KeyEvent;
@@ -683,20 +681,48 @@ import java.text.SimpleDateFormat;
 import java.util.*;
 import javax.swing.DefaultComboBoxModel;
 import javax.swing.JOptionPane;
-import javax.swing.JTable;
 import org.apache.log4j.Logger;
+
+import com.jdimension.jlawyer.ai.AiCapability;
+import com.jdimension.jlawyer.ai.AiRequestStatus;
+import com.jdimension.jlawyer.ai.InputData;
+import com.jdimension.jlawyer.ai.Message;
+import com.jdimension.jlawyer.ai.OutputData;
+import com.jdimension.jlawyer.ai.ParameterData;
+import com.jdimension.jlawyer.client.assistant.AssistantAccess;
+import com.jdimension.jlawyer.client.assistant.AssistantFlowAdapter;
+import com.jdimension.jlawyer.client.assistant.AssistantInputAdapter;
+import com.jdimension.jlawyer.client.mail.EditorImplementation;
+import com.jdimension.jlawyer.client.mail.EmailUtils;
+import com.jdimension.jlawyer.client.utils.AudioUtils;
+import com.jdimension.jlawyer.client.utils.ThreadUtils;
+import com.jdimension.jlawyer.services.IntegrationServiceRemote;
+import javax.sound.sampled.*;
+import java.io.ByteArrayOutputStream;
+import java.awt.Color;
+import java.io.IOException;
+import java.util.concurrent.atomic.AtomicReference;
+import java.util.logging.Level;
+import javax.swing.SwingWorker;
+import themes.colors.DefaultColorTheme;
 
 /**
  *
  * @author jens
  */
-public class AddNoteDialog extends javax.swing.JDialog {
+public class AddNoteDialog extends javax.swing.JDialog implements AssistantFlowAdapter {
 
     private static final Logger log = Logger.getLogger(AddNoteDialog.class.getName());
     private CaseFolderPanel targetTable = null;
     private ArchiveFileBean aFile = null;
     private boolean initializing = true;
-    private JTable tblReviewReasons = null;
+    
+    private boolean isRecording = false;
+    private long recordingStarted = -1;
+    private AiCapability transcribeCapability = null;
+    private AssistantConfig transcribeConfig = null;
+    private TargetDataLine targetDataLine;
+    private ByteArrayOutputStream byteArrayOutputStream;
 
     /**
      * Creates new form AddNoteDialog
@@ -705,19 +731,17 @@ public class AddNoteDialog extends javax.swing.JDialog {
      * @param modal
      * @param targetTable
      * @param aFile
-     * @param tblReviewReasons
      */
-    public AddNoteDialog(java.awt.Frame parent, boolean modal, CaseFolderPanel targetTable, ArchiveFileBean aFile, JTable tblReviewReasons) {
+    public AddNoteDialog(java.awt.Frame parent, boolean modal, CaseFolderPanel targetTable, ArchiveFileBean aFile) {
         super(parent, modal);
         this.initializing = true;
         this.targetTable = targetTable;
-        this.tblReviewReasons = tblReviewReasons;
         this.aFile = aFile;
         initComponents();
 
         this.quickDateSelectionPanel.setTarget(this.txtReviewDateField);
 
-        SimpleDateFormat df = new SimpleDateFormat("yyyy-MM-dd");
+        SimpleDateFormat df = new SimpleDateFormat("yyyy-MM-dd_HH-mm");
         this.txtFileName.setText(df.format(new Date()) + "_Notiz");
 
         SimpleDateFormat dtf = new SimpleDateFormat("dd.MM.yyyy HH:mm");
@@ -737,17 +761,8 @@ public class AddNoteDialog extends javax.swing.JDialog {
         this.htmlEditorPanel1.setText(html);
 
         ClientSettings settings = ClientSettings.getInstance();
-        this.cmbReviewReason.setRenderer(new OptionGroupListCellRenderer());
-        AppOptionGroupBean[] reviewReasons = settings.getReviewReasonDtos();
-        String[] reviewReasonItems = new String[reviewReasons.length + 1];
-        reviewReasonItems[0] = "";
-        for (int i = 0; i < reviewReasons.length; i++) {
-            AppOptionGroupBean aogb = (AppOptionGroupBean) reviewReasons[i];
-            reviewReasonItems[i + 1] = aogb.getValue();
-        }
-        StringUtils.sortIgnoreCase(reviewReasonItems);
-        OptionsComboBoxModel reviewReasonModel = new OptionsComboBoxModel(reviewReasonItems);
-        this.cmbReviewReason.setModel(reviewReasonModel);
+
+        CalendarUtils.populateCalendarEntryTemplatesDropdown(this.cmbReviewReason, true);
 
         List<AppUserBean> allUsers = UserSettings.getInstance().getLoginEnabledUsers();
         Object[] allUserItems = new Object[allUsers.size() + 1];
@@ -772,7 +787,7 @@ public class AddNoteDialog extends javax.swing.JDialog {
         for (AppOptionGroupBean tag : settings.getArchiveFileTagDtos()) {
             allTags.add(tag.getValue());
         }
-        Collections.sort(allTags);
+        StringUtils.sortIgnoreCase(allTags);
         for (String s : allTags) {
             dm.addElement(s);
         }
@@ -784,7 +799,7 @@ public class AddNoteDialog extends javax.swing.JDialog {
         for (AppOptionGroupBean tag : settings.getDocumentTagDtos()) {
             allTags2.add(tag.getValue());
         }
-        Collections.sort(allTags2);
+        StringUtils.sortIgnoreCase(allTags2);
         for (String s : allTags2) {
             dm2.addElement(s);
         }
@@ -793,7 +808,25 @@ public class AddNoteDialog extends javax.swing.JDialog {
         this.calendarSelectionButton1.refreshCalendarSetups();
         this.calendarSelectionButton1.setEnabled(false);
 
+        // Initialize transcription capabilities
+        AssistantAccess ingo = AssistantAccess.getInstance();
+        try {
+            Map<AssistantConfig, List<AiCapability>> capabilities = ingo.filterCapabilities(AiCapability.REQUESTTYPE_TRANSCRIBE, AiCapability.INPUTTYPE_FILE, AiCapability.USAGETYPE_AUTOMATED);
+
+            if (!capabilities.isEmpty()) {
+                // use first capability that can transcribe
+                this.transcribeCapability = capabilities.get(capabilities.keySet().iterator().next()).get(0);
+                this.transcribeConfig = capabilities.keySet().iterator().next();
+                this.cmdTranscribe.setEnabled(true);
+            }
+        } catch (Exception ex) {
+            log.error(ex);
+            JOptionPane.showMessageDialog(this, "" + ex.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
+        }        
         
+        this.cmbDevices.removeAllItems();
+        AudioUtils.populateMicrophoneDevices(this.cmbDevices);
+
         
         this.initializing = false;
 
@@ -802,7 +835,84 @@ public class AddNoteDialog extends javax.swing.JDialog {
     public void setFocusToBody() {
         this.htmlEditorPanel1.requestFocus();
     }
+    
+   
+    public List<InputData> getTranscribeInputs(byte[] wavContent) {
+        ArrayList<InputData> inputs = new ArrayList<>();
+        InputData i = new InputData();
+        i.setFileName("Sounddatei.wav");
+        i.setType("file");
+        i.setBase64(true);
+        i.setData(wavContent);
+        inputs.add(i);
+        return inputs;
+    }
 
+    
+    @Override
+    public String getPrompt(AiCapability c) {
+        return null;
+    }
+
+    @Override
+    public List<ParameterData> getParameters(AiCapability c) {
+        return null;
+    }
+    
+    public List<Message> getMessages(AiCapability c) {
+        return null;
+    }
+
+    @Override
+    public List<InputData> getInputs(AiCapability c) {
+
+        // EditorImplementation ed = (EditorImplementation) this.htmlEditorPanel1.getComponent(0);
+        // String contentText = ed.getSelectedText();
+        // if (StringUtils.isEmpty(ed.getSelectedText()))
+        //     contentText = ed.getText();
+        // if (ed.getContentType().toLowerCase().contains("html"))
+        //     contentText = EmailUtils.html2Text(contentText);
+
+        // ArrayList<InputData> inputs = new ArrayList<>();
+        // InputData i = new InputData();
+        // i.setType(InputData.TYPE_STRING);
+        // i.setBase64(false);
+        // i.setStringData(contentText);
+        // inputs.add(i);
+
+        return new ArrayList<>();  // Leere Liste zurückgeben
+    }
+
+    @Override
+    public void processOutput(AiCapability c, AiRequestStatus status) {
+        String prependText = "";
+        if (status != null) {
+            if (status.getStatus().equalsIgnoreCase("error")) {
+                // ignore output
+            } else {
+                StringBuilder result = new StringBuilder();
+                for (OutputData o : status.getResponse().getOutputData()) {
+                    if (o.getType().equalsIgnoreCase(OutputData.TYPE_STRING)) {
+                        result.append(o.getStringData()).append(System.lineSeparator()).append(System.lineSeparator());
+                    }
+
+                }
+                prependText = result.toString();
+            }
+        }
+
+        EditorImplementation ed = (EditorImplementation) this.htmlEditorPanel1.getComponent(0);
+        ed.setText(prependText + System.lineSeparator() + System.lineSeparator() + ed.getText());
+        
+        
+    }
+
+    @Override
+    public void processError(AiCapability c, AiRequestStatus status) {
+        log.error("Error executing AI request: " + status.getStatusDetails());
+        JOptionPane.showMessageDialog(this, "Fehler beim Ausführen der Ingo-Anfrage: " + status.getStatusDetails(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
+    }
+    
     /**
      * This method is called from within the constructor to initialize the form.
      * WARNING: Do NOT modify this code. The content of this method is always
@@ -817,6 +927,8 @@ public class AddNoteDialog extends javax.swing.JDialog {
         jPanel2 = new javax.swing.JPanel();
         txtFileName = new javax.swing.JTextField();
         jLabel1 = new javax.swing.JLabel();
+        cmdTranscribe = new javax.swing.JButton();
+        cmbDevices = new javax.swing.JComboBox<>();
         jPanel4 = new javax.swing.JPanel();
         cmbReviewReason = new javax.swing.JComboBox();
         jLabel12 = new javax.swing.JLabel();
@@ -868,6 +980,17 @@ public class AddNoteDialog extends javax.swing.JDialog {
         jLabel1.setForeground(new java.awt.Color(255, 255, 255));
         jLabel1.setText("Notiz:");
 
+        cmdTranscribe.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons16/material/baseline_mic_black_48dp.png"))); // NOI18N
+        cmdTranscribe.setText("00:00");
+        cmdTranscribe.setEnabled(false);
+        cmdTranscribe.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                cmdTranscribeActionPerformed(evt);
+            }
+        });
+
+        cmbDevices.setModel(new javax.swing.DefaultComboBoxModel<>(new String[] { "Item 1", "Item 2", "Item 3", "Item 4" }));
+
         org.jdesktop.layout.GroupLayout jPanel2Layout = new org.jdesktop.layout.GroupLayout(jPanel2);
         jPanel2.setLayout(jPanel2Layout);
         jPanel2Layout.setHorizontalGroup(
@@ -877,6 +1000,10 @@ public class AddNoteDialog extends javax.swing.JDialog {
                 .add(jLabel1)
                 .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
                 .add(txtFileName)
+                .addPreferredGap(org.jdesktop.layout.LayoutStyle.UNRELATED)
+                .add(cmbDevices, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
+                .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
+                .add(cmdTranscribe)
                 .addContainerGap())
         );
         jPanel2Layout.setVerticalGroup(
@@ -885,7 +1012,9 @@ public class AddNoteDialog extends javax.swing.JDialog {
                 .addContainerGap()
                 .add(jPanel2Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.BASELINE)
                     .add(txtFileName, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
-                    .add(jLabel1))
+                    .add(jLabel1)
+                    .add(cmdTranscribe)
+                    .add(cmbDevices, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE))
                 .addContainerGap(org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
         );
 
@@ -978,7 +1107,7 @@ public class AddNoteDialog extends javax.swing.JDialog {
                                 .add(cmdShowReviewSelector)
                                 .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
                                 .add(quickDateSelectionPanel, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
-                                .add(0, 0, Short.MAX_VALUE)))))
+                                .add(0, 131, Short.MAX_VALUE)))))
                 .addContainerGap())
         );
         jPanel4Layout.setVerticalGroup(
@@ -1053,7 +1182,7 @@ public class AddNoteDialog extends javax.swing.JDialog {
                 .add(layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
                     .add(jPanel1, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                     .add(jPanel4, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                    .add(org.jdesktop.layout.GroupLayout.TRAILING, htmlEditorPanel1, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 956, Short.MAX_VALUE)
+                    .add(org.jdesktop.layout.GroupLayout.TRAILING, htmlEditorPanel1, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                     .add(org.jdesktop.layout.GroupLayout.TRAILING, layout.createSequentialGroup()
                         .add(0, 0, Short.MAX_VALUE)
                         .add(cmdAddDocument)
@@ -1110,7 +1239,7 @@ public class AddNoteDialog extends javax.swing.JDialog {
         try {
             JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
             ArchiveFileServiceRemote afs = locator.lookupArchiveFileServiceRemote();
-            ArchiveFileDocumentsBean db = afs.addDocument(this.aFile.getId(), FileUtils.sanitizeFileName(fileName), this.htmlEditorPanel1.getText().getBytes(), "");
+            ArchiveFileDocumentsBean db = afs.addDocument(this.aFile.getId(), FileUtils.sanitizeFileName(fileName), this.htmlEditorPanel1.getText().getBytes(), "", null);
             this.targetTable.addDocument(db, null);
 
             if (this.chkCaseTagging.isSelected()) {
@@ -1153,33 +1282,19 @@ public class AddNoteDialog extends javax.swing.JDialog {
             if (this.radioReviewTypeRespite.isSelected()) {
                 reviewDto.setEventType(ArchiveFileReviewsBean.EVENTTYPE_RESPITE);
             }
-            reviewDto.setDoneBoolean(false);
+            reviewDto.setDone(false);
             reviewDto.setBeginDate(d);
             reviewDto.setAssignee(this.cmbReviewAssignee.getSelectedItem().toString());
-            reviewDto.setSummary(this.cmbReviewReason.getModel().getSelectedItem().toString());
+            reviewDto.setSummary(this.cmbReviewReason.getEditor().getItem().toString());
             reviewDto.setCalendarSetup(this.calendarSelectionButton1.getSelectedSetup());
 
             if (CalendarUtils.checkForConflicts(this, reviewDto)) {
-                EditorsRegistry.getInstance().updateStatus("Wiedervorlage/Frist wird gespeichert...");
                 try {
-                    JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
-                    CalendarServiceRemote calService = locator.lookupCalendarServiceRemote();
-
-                    reviewDto = calService.addReview(this.aFile.getId(), reviewDto);
-                    EditorsRegistry.getInstance().updateStatus("Wiedervorlage/Frist gespeichert.", 5000);
-
+                    CalendarUtils.getInstance().storeCalendarEntry(reviewDto, this.aFile, (CalendarEntryTemplate) this.cmbReviewReason.getItemAt(this.cmbReviewReason.getSelectedIndex()), this);
                 } catch (Exception ex) {
                     log.error("Error adding review", ex);
-                    JOptionPane.showMessageDialog(this, "Fehler beim Speichern der Wiedervorlage: " + ex.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
-                    EditorsRegistry.getInstance().clearStatus();
-                    return;
+                    JOptionPane.showMessageDialog(this, "Fehler beim Speichern des Kalendereintrages: " + ex.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
                 }
-
-                ArchiveFileReviewReasonsTableModel model = (ArchiveFileReviewReasonsTableModel) this.tblReviewReasons.getModel();
-                Object[] row = ArchiveFileReviewReasonsTableModel.eventToRow(reviewDto);
-
-                model.addRow(row);
-                ComponentUtils.autoSizeColumns(tblReviewReasons);
             }
 
         }
@@ -1208,13 +1323,13 @@ public class AddNoteDialog extends javax.swing.JDialog {
 
     private void radioReviewTypeFollowUpActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_radioReviewTypeFollowUpActionPerformed
         this.enableReviewElements(true);
-        this.calendarSelectionButton1.restrictToType(CalendarSetup.EVENTTYPE_FOLLOWUP);
+        this.calendarSelectionButton1.restrictToType(CalendarSetup.EVENTTYPE_FOLLOWUP, this.aFile);
         this.calendarSelectionButton1.setEnabled(true);
     }//GEN-LAST:event_radioReviewTypeFollowUpActionPerformed
 
     private void radioReviewTypeRespiteActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_radioReviewTypeRespiteActionPerformed
         this.enableReviewElements(true);
-        this.calendarSelectionButton1.restrictToType(CalendarSetup.EVENTTYPE_RESPITE);
+        this.calendarSelectionButton1.restrictToType(CalendarSetup.EVENTTYPE_RESPITE, this.aFile);
         this.calendarSelectionButton1.setEnabled(true);
     }//GEN-LAST:event_radioReviewTypeRespiteActionPerformed
 
@@ -1229,6 +1344,19 @@ public class AddNoteDialog extends javax.swing.JDialog {
         }
     }//GEN-LAST:event_txtReviewDateFieldMouseClicked
 
+    private void cmdTranscribeActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdTranscribeActionPerformed
+        if (!isRecording) {
+            startRecording();
+            ClientSettings.getInstance().setConfiguration(ClientSettings.CONF_SOUND_LASTRECORDINGDEVICE, (String) this.cmbDevices.getSelectedItem());
+        } else {
+            try {
+                stopRecording();
+            } catch (IOException ex) {
+                java.util.logging.Logger.getLogger(AddNoteDialog.class.getName()).log(Level.SEVERE, null, ex);
+            }
+        }
+    }//GEN-LAST:event_cmdTranscribeActionPerformed
+
     private void enableReviewElements(boolean enable) {
         this.cmbReviewAssignee.setEnabled(enable);
         this.cmbReviewReason.setEnabled(enable);
@@ -1242,13 +1370,172 @@ public class AddNoteDialog extends javax.swing.JDialog {
             this.txtReviewDateField.setText(null);
         }
     }
+    
+    private void startRecording() {
+        try {
+            AudioFormat audioFormat = AudioUtils.getAudioFormat();
 
+            // Get selected mixer device name from dropdown
+            String selectedDeviceName = (String) this.cmbDevices.getSelectedItem();
+
+            Mixer.Info[] mixerInfos = AudioSystem.getMixerInfo();
+            Mixer.Info selectedMixerInfo = null;
+            for (Mixer.Info mixerInfo : mixerInfos) {
+                if (mixerInfo.getName().equals(selectedDeviceName)) {
+                    selectedMixerInfo = mixerInfo;
+                    break;
+                }
+            }
+
+            if (selectedMixerInfo == null) {
+                log.error("Selected mixer device not found.");
+                return;
+            }
+
+            Mixer mixer = AudioSystem.getMixer(selectedMixerInfo);
+
+            DataLine.Info dataLineInfo = new DataLine.Info(TargetDataLine.class, audioFormat);
+            targetDataLine = (TargetDataLine) mixer.getLine(dataLineInfo);
+            targetDataLine.open(audioFormat);
+            targetDataLine.start();
+
+            byteArrayOutputStream = new ByteArrayOutputStream();
+
+            isRecording = true;
+            this.recordingStarted = System.currentTimeMillis();
+            cmdTranscribe.setForeground(DefaultColorTheme.COLOR_LOGO_GREEN);
+
+            new Thread(() -> {
+                try {
+                    byte[] buffer = new byte[4096];
+                    while (isRecording) {
+                        int bytesRead = targetDataLine.read(buffer, 0, buffer.length);
+                        byteArrayOutputStream.write(buffer, 0, bytesRead);
+
+                        long totalSeconds = (System.currentTimeMillis() - recordingStarted) / 1000;
+                        // Calculate minutes and seconds
+                        long minutes = totalSeconds / 60;
+                        long seconds = totalSeconds % 60;
+                        // Format the result as mm:ss
+                        ThreadUtils.updateButton(cmdTranscribe, String.format("%02d:%02d", minutes, seconds));
+                    }
+                } catch (Exception e) {
+                    log.error("Unable to read microphone audio stream", e);
+                    ThreadUtils.showErrorDialog(this, "Aufnahmefehler: " + e.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR);
+                }
+            }).start();
+        } catch (Exception ex) {
+            log.error("Unable to start recording microphone audio stream", ex);
+            JOptionPane.showMessageDialog(this, "Aufnahme konnte nicht gestartet werden: " + ex.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
+        }
+    }
+
+    // Stop recording method
+    private void stopRecording() throws IOException {
+        isRecording = false;
+
+        if (targetDataLine != null) {
+            targetDataLine.stop();
+            targetDataLine.close();
+        }
+        byteArrayOutputStream.flush();
+        byte[] dictatePart = byteArrayOutputStream.toByteArray();
+
+        this.cmdTranscribe.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons16/material/baseline_hourglass_top_black_48dp.png")));
+        this.cmdTranscribe.setForeground(Color.ORANGE);
+        try {
+
+            List<ParameterData> params = new ArrayList<>();
+            if (transcribeCapability.getParameters() != null && !transcribeCapability.getParameters().isEmpty()) {
+                params = getParameters(transcribeCapability);
+            }
+
+            final List<ParameterData> fParams = params;
+
+            AtomicReference<AiRequestStatus> resultRef = new AtomicReference<>();
+
+            SwingWorker<Void, Void> worker = new SwingWorker<>() {
+
+                @Override
+                protected Void doInBackground() throws Exception {
+                    cmdTranscribe.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons16/material/baseline_hourglass_top_black_48dp.png")));
+                    cmdTranscribe.setForeground(Color.ORANGE);
+
+                    List<InputData> inputs = getTranscribeInputs(AudioUtils.generateWAV(dictatePart));
+
+                    ClientSettings settings = ClientSettings.getInstance();
+                    try {
+                        JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
+
+                        IntegrationServiceRemote integrationService = locator.lookupIntegrationServiceRemote();
+                        AiRequestStatus status = integrationService.submitAssistantRequest(
+                            transcribeConfig,
+                            transcribeCapability.getRequestType(),
+                            transcribeCapability.getModelType(),
+                            getPrompt(transcribeCapability),
+                            fParams,
+                            inputs,
+                            null // Assuming no conversation
+                        );
+
+                        resultRef.set(status);
+
+                    } catch (Throwable t) {
+                        log.error("Error processing AI request", t);
+                        AiRequestStatus status = new AiRequestStatus();
+                        status.setStatus("failed");
+                        status.setStatusDetails(t.getMessage());
+                        resultRef.set(status);
+                    }
+                    return null;
+                }
+
+                @Override
+                protected void done() {
+                    // Reset the UI elements
+                    cmdTranscribe.setText("00:00");
+                    cmdTranscribe.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons16/material/baseline_mic_black_48dp.png"))); // NOI18N
+                    cmdTranscribe.setForeground(Color.BLACK);
+
+                    AiRequestStatus status = resultRef.get();
+                    if (status != null) {
+                        String resultText = "";
+                        if (status.getStatus().equalsIgnoreCase("failed")) {
+                            resultText = status.getStatus() + ": " + status.getStatusDetails();
+                        } else {
+                            StringBuilder resultString = new StringBuilder();
+                            for (OutputData o : status.getResponse().getOutputData()) {
+                                if (o.getType().equalsIgnoreCase(OutputData.TYPE_STRING)) {
+                                    resultString.append(o.getStringData());
+                                }
+                            }
+                            resultText = resultString.toString();
+                        }
+
+                        // Insert transcribed text at the caret position
+                        htmlEditorPanel1.insert(resultText, -1);
+                    }
+                }
+            };
+
+            worker.execute();
+
+        } catch (Exception ex) {
+            log.error(ex);
+            JOptionPane.showMessageDialog(this, "" + ex.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
+        }
+
+    }
+
+
+    
+    
     /**
      * @param args the command line arguments
      */
     public static void main(String args[]) {
         java.awt.EventQueue.invokeLater(() -> {
-            new AddNoteDialog(new javax.swing.JFrame(), true, null, null, null).setVisible(true);
+            new AddNoteDialog(new javax.swing.JFrame(), true, null, null).setVisible(true);
         });
     }
     // Variables declaration - do not modify//GEN-BEGIN:variables
@@ -1257,12 +1544,14 @@ public class AddNoteDialog extends javax.swing.JDialog {
     private javax.swing.JCheckBox chkCaseTagging;
     private javax.swing.JCheckBox chkDocumentTagging;
     private javax.swing.JComboBox<String> cmbCaseTag;
+    private javax.swing.JComboBox<String> cmbDevices;
     private javax.swing.JComboBox<String> cmbDocumentTag;
     private javax.swing.JComboBox cmbReviewAssignee;
     private javax.swing.JComboBox cmbReviewReason;
     private javax.swing.JButton cmdAddDocument;
     private javax.swing.JButton cmdCancel;
     private javax.swing.JButton cmdShowReviewSelector;
+    private javax.swing.JButton cmdTranscribe;
     private com.jdimension.jlawyer.client.mail.HtmlEditorPanel htmlEditorPanel1;
     private javax.swing.JLabel jLabel1;
     private javax.swing.JLabel jLabel12;

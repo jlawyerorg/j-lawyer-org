@@ -664,8 +664,6 @@
 package com.jdimension.jlawyer.client.cli;
 
 import com.jdimension.jlawyer.client.settings.ClientSettings;
-import com.jdimension.jlawyer.client.settings.ServerSettings;
-import com.jdimension.jlawyer.server.services.ServerInformation;
 import com.jdimension.jlawyer.services.JLawyerServiceLocator;
 import javax.swing.JTextArea;
 

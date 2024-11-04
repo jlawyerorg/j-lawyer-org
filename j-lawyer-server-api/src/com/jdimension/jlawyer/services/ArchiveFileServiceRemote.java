@@ -705,7 +705,7 @@ public interface ArchiveFileServiceRemote {
 
     ArchiveFileBean createArchiveFile(ArchiveFileBean dto, String id) throws Exception;
 
-    ArchiveFileDocumentsBean addDocument(String archiveFileId, String fileName, byte[] data, String dictateSign) throws Exception;
+    ArchiveFileDocumentsBean addDocument(String archiveFileId, String fileName, byte[] data, String dictateSign, String externalId) throws Exception;
 
     int getArchiveFileArchivedCount();
 
@@ -716,6 +716,8 @@ public interface ArchiveFileServiceRemote {
     boolean setDocumentContent(String id, byte[] content) throws Exception;
 
     byte[] getDocumentContent(String id) throws Exception;
+    
+    String getNewDocumentName(String fileName, Date date, DocumentNameTemplate tpl) throws Exception;
     
     ArchiveFileDocumentsBean getDocument(String id) throws Exception;
 
@@ -755,9 +757,10 @@ public interface ArchiveFileServiceRemote {
 
     List<ArchiveFileBean> getLastChanged(int limit);
 
-    String[] previewCaseNumbering(String pattern, int startFrom, boolean extension, String dividerMain, String dividerExt, boolean bPrefix, String prefix, boolean bSuffix, String suffix, boolean userAbbr, boolean groupAbbr) throws Exception;
+    String[] previewCaseNumbering(String pattern, int startFrom, int increment, boolean extension, String dividerMain, String dividerExt, boolean bPrefix, String prefix, boolean bSuffix, String suffix, boolean userAbbr, boolean groupAbbr) throws Exception;
 
-    Collection<ArchiveFileBean> getAllWithMissingReviews();
+    Collection<ArchiveFileBean> getAllWithMissingCalendarEntries();
+    Collection<ArchiveFileBean> getAllWithMissingCalendarEntries(int type) throws Exception;
 
     byte[] exportCaseToHtml(String caseId) throws Exception;
     
@@ -771,11 +774,13 @@ public interface ArchiveFileServiceRemote {
 
     HashMap<String,ArrayList<String>> searchTagsEnhanced(String query, boolean withArchive, String[] tagName, String[] documentTagName);
 
-    ArchiveFileDocumentsBean addDocumentFromTemplate(String archiveFileId, String fileName, String letterHead, GenericNode templateFolder, String templateName, HashMap<String,Object> placeHolderValues, String dictateSign) throws Exception;
+    ArchiveFileDocumentsBean addDocumentFromTemplate(String archiveFileId, String fileName, String letterHead, GenericNode templateFolder, String templateName, HashMap<String,Object> placeHolderValues, String dictateSign, String externalId) throws Exception;
 
     List<AddressBean> getAddressesForCase(String archiveFileKey) throws Exception;
 
     List<ArchiveFileAddressesBean> getInvolvementDetailsForCase(String archiveFileKey);
+    
+    List<ArchiveFileAddressesBean> getInvolvementDetailsForCase(String archiveFileKey, boolean includeCases);
 
     boolean udpateFileNumber(String from, String to) throws Exception;
 
@@ -812,6 +817,8 @@ public interface ArchiveFileServiceRemote {
     void removeFolderFromTemplate(String folderId) throws Exception;
 
     void cloneFolderTemplate(String sourceTemplateName, String targetTemplateName) throws Exception;
+    
+    DocumentFolder renameFolderInTemplate(String folderId, String newName) throws Exception;
 
     CaseFolder createCaseFolder(String parentId, String name) throws Exception;
 
@@ -858,6 +865,8 @@ public interface ArchiveFileServiceRemote {
     List<InvoicePosition> getInvoicePositions(String invoiceId) throws Exception;
     
     ArchiveFileDocumentsBean getInvoiceDocument(String invoiceId) throws Exception;
+    
+    List<Invoice> getInvoicesForDocument(String docId) throws Exception;
 
     InvoicePosition updateInvoicePosition(String invoiceId, InvoicePosition position) throws Exception;
 
@@ -884,6 +893,8 @@ public interface ArchiveFileServiceRemote {
     void removeTimesheet(String timesheetId) throws Exception;
 
     List<Timesheet> getTimesheets(String caseId) throws Exception;
+    
+    Timesheet getTimesheet(String timesheetId) throws Exception;
 
     List<TimesheetPosition> getTimesheetPositions(String timesheetId) throws Exception;
 
@@ -902,7 +913,7 @@ public interface ArchiveFileServiceRemote {
 
     void removeTimesheetPosition(String timesheetId, TimesheetPosition position) throws Exception;
 
-    TimesheetPosition updateTimesheetPosition(String timesheetId, TimesheetPosition position) throws Exception;
+    void updateTimesheetPositions(String timesheetId, List<TimesheetPosition> positions) throws Exception;
 
     void removeAllTimesheetPositions(String timesheetId) throws Exception;
 
@@ -911,4 +922,30 @@ public interface ArchiveFileServiceRemote {
     List<TimesheetPosition> getTimesheetPositionsForInvoice(String invoiceId) throws Exception;
 
     TimesheetPosition timesheetPositionAdd(String timesheetId, TimesheetPosition position) throws Exception;
+
+    ArrayList<String> getAllArchiveFileNumbers() throws Exception;
+
+    List<String> getCaseIdsSyncedForUser(String principalId) throws Exception;
+
+    List<CaseAccountEntry> getAccountEntries(String caseId) throws Exception;
+
+    CaseAccountEntry addAccountEntry(String caseId, CaseAccountEntry accountEntry) throws Exception;
+
+    CaseAccountEntry updateAccountEntry(String caseId, CaseAccountEntry accountEntry) throws Exception;
+
+    void removeAccountEntry(String entryId) throws Exception;
+
+    List<CaseAccountEntry> getAccountEntriesForInvoice(String invoiceId) throws Exception;
+
+    void setDocumentLock(String docId, boolean locked, boolean force) throws Exception;
+
+    boolean isDocumentLocked(String docId) throws Exception;
+    
+    int unlockDocuments() throws Exception;
+    
+    ArchiveFileAddressesBean addAddressToCase(ArchiveFileAddressesBean address) throws Exception;
+    
+    void removeParty(String id) throws Exception;
+    
+    ArchiveFileAddressesBean updateParty(String caseId, ArchiveFileAddressesBean party) throws Exception;
 }

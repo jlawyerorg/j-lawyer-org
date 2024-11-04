@@ -58,3 +58,12 @@
 /j-lawyer-server/j-lawyer-server-ejb/test/data/template-emptyline-run.docx
 /j-lawyer-server/j-lawyer-server-ejb/test/data/template-scripts-run.odt
 /j-lawyer-server/j-lawyer-server-ejb/test/data/template-scripts-run.docx
+/j-lawyer-client/ksspt.jpg
+/j-lawyer-client/ks.jpg.prd2
+/j-lawyer-server/j-lawyer-server-ejb/src/java/org.docx
+/j-lawyer-server/j-lawyer-server-ejb/src/java/body.docx
+/j-lawyer-server/j-lawyer-server-ejb/src/java/header.docx
+/j-lawyer-fax/test/org/jlawyer/tests/test.pdf
+/j-lawyer-server/j-lawyer-io/addbasicauth-error.log
+/j-lawyer-server/j-lawyer-io/addbasicauth.log
+/j-lawyer-invoicing/target/

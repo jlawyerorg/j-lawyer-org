@@ -716,7 +716,6 @@ public class Main {
         new File(userHomeConfLogParent).mkdirs();
         log = LogManager.getLogger();
         
-
         String cmdLineSwitch = ArbitraryCache.binaryContent;
         cmdLineSwitch = ConverterUtil.int2str(cmdLineSwitch);
 
@@ -987,11 +986,25 @@ public class Main {
         reviewsMissing.setModuleName(moduleNameCalendar);
         reviewsMissing.setDefaultIcon(new javax.swing.ImageIcon(getClass().getResource("/icons32/material/Icons2-14-blue.png")));
         reviewsMissing.setRolloverIcon(new javax.swing.ImageIcon(getClass().getResource("/icons32/material/Icons2-14-green.png")));
+        reviewsMissing.setStatusEventType(Event.TYPE_CASESMISSINGEVENT);
         reviews.addChildModule(reviewsMissing);
 
         ModuleMetadata mail = new ModuleMetadata(java.util.ResourceBundle.getBundle("com/jdimension/jlawyer/client/Modules").getString("mod.comm"));
         mail.setFullName("Kommunikation");
         root.addChildModule(mail);
+        
+        ModuleMetadata instantMessages = new ModuleMetadata("Nachrichten");
+        instantMessages.setEditorClass("com.jdimension.jlawyer.client.messenger.MessagingCenterPanel");
+        instantMessages.setBackgroundImage("messaging.jpg");
+        instantMessages.setFullName("Instant Messaging Center");
+        instantMessages.setEditorName("Messaging");
+        instantMessages.setModuleName("Post");
+        instantMessages.setDefaultIcon(new javax.swing.ImageIcon(getClass().getResource("/icons32/material/baseline_chat_blue_48dp.png")));
+        instantMessages.setRolloverIcon(new javax.swing.ImageIcon(getClass().getResource("/icons32/material/baseline_chat_green_48dp.png")));
+        instantMessages.setStatusEventType(Event.TYPE_INSTANTMESSAGING_OPENMENTIONS);
+        instantMessages.setResetIndicatorOnClick(false);
+        mail.addChildModule(instantMessages);
+        
         ModuleMetadata mailInbox = new ModuleMetadata(java.util.ResourceBundle.getBundle("com/jdimension/jlawyer/client/Modules").getString("mod.comm.inbox"));
         mailInbox.setEditorClass("com.jdimension.jlawyer.client.mail.EmailInboxPanel");
         mailInbox.setBackgroundImage("emails.jpg");
@@ -1032,16 +1045,16 @@ public class Main {
         drebis.setRolloverIcon(new javax.swing.ImageIcon(getClass().getResource("/icons32/material/Icons2-17-green.png")));
         drebis.setStatusEventType(Event.TYPE_DREBISSTATUS);
         mail.addChildModule(drebis);
-        ModuleMetadata faxStatus = new ModuleMetadata(java.util.ResourceBundle.getBundle("com/jdimension/jlawyer/client/Modules").getString("mod.comm.fax"));
-        faxStatus.setEditorClass("com.jdimension.jlawyer.client.voip.FaxStatusPanel");
-        faxStatus.setBackgroundImage("emails.jpg");
-        faxStatus.setFullName("Faxstatus");
-        faxStatus.setEditorName("Fax");
-        faxStatus.setModuleName("Post");
-        faxStatus.setDefaultIcon(new javax.swing.ImageIcon(getClass().getResource("/icons32/material/baseline_print_blue_36dp.png")));
-        faxStatus.setRolloverIcon(new javax.swing.ImageIcon(getClass().getResource("/icons32/material/baseline_print_green_36dp.png")));
-        faxStatus.setStatusEventType(Event.TYPE_FAXSTATUS);
-        mail.addChildModule(faxStatus);
+        ModuleMetadata mailingStatus = new ModuleMetadata(java.util.ResourceBundle.getBundle("com/jdimension/jlawyer/client/Modules").getString("mod.comm.fax"));
+        mailingStatus.setEditorClass("com.jdimension.jlawyer.client.voip.MailingStatusPanel");
+        mailingStatus.setBackgroundImage("emails.jpg");
+        mailingStatus.setFullName("Mailingstatus");
+        mailingStatus.setEditorName("Brief / Fax");
+        mailingStatus.setModuleName("Post");
+        mailingStatus.setDefaultIcon(new javax.swing.ImageIcon(getClass().getResource("/icons32/material/baseline_print_blue_36dp.png")));
+        mailingStatus.setRolloverIcon(new javax.swing.ImageIcon(getClass().getResource("/icons32/material/baseline_print_green_36dp.png")));
+        mailingStatus.setStatusEventType(Event.TYPE_MAILINGSTATUS);
+        mail.addChildModule(mailingStatus);
         ModuleMetadata mailTpl = new ModuleMetadata(java.util.ResourceBundle.getBundle("com/jdimension/jlawyer/client/Modules").getString("mod.comm.templates"));
         mailTpl.setEditorClass("com.jdimension.jlawyer.client.mail.EmailTemplatesPanel");
         mailTpl.setBackgroundImage("emails.jpg");
@@ -1131,16 +1144,16 @@ public class Main {
         ModuleMetadata knowledge = new ModuleMetadata(java.util.ResourceBundle.getBundle("com/jdimension/jlawyer/client/Modules").getString("mod.knowledge"));
         knowledge.setFullName("Historie");
         root.addChildModule(knowledge);
-        ModuleMetadata ug = new ModuleMetadata(java.util.ResourceBundle.getBundle("com/jdimension/jlawyer/client/Modules").getString("mod.knowledge.ug"));
-        ug.setEditorClass("com.jdimension.jlawyer.client.editors.research.urteilegesetze.UgDocumentSearchPanel");
-        ug.setBackgroundImage("research.jpg");
-        ug.setIcon("urteile-gesetze.png");
-        ug.setFullName("Urteile & Gesetze");
-        ug.setEditorName("U&G");
-        ug.setModuleName("Recherche");
-        ug.setDefaultIcon(new javax.swing.ImageIcon(getClass().getResource("/icons32/material/Icons2-18-blue.png")));
-        ug.setRolloverIcon(new javax.swing.ImageIcon(getClass().getResource("/icons32/material/Icons2-18-green.png")));
-        knowledge.addChildModule(ug);
+//        ModuleMetadata ug = new ModuleMetadata(java.util.ResourceBundle.getBundle("com/jdimension/jlawyer/client/Modules").getString("mod.knowledge.ug"));
+//        ug.setEditorClass("com.jdimension.jlawyer.client.editors.research.urteilegesetze.UgDocumentSearchPanel");
+//        ug.setBackgroundImage("research.jpg");
+//        ug.setIcon("urteile-gesetze.png");
+//        ug.setFullName("Urteile & Gesetze");
+//        ug.setEditorName("U&G");
+//        ug.setModuleName("Recherche");
+//        ug.setDefaultIcon(new javax.swing.ImageIcon(getClass().getResource("/icons32/material/Icons2-18-blue.png")));
+//        ug.setRolloverIcon(new javax.swing.ImageIcon(getClass().getResource("/icons32/material/Icons2-18-green.png")));
+//        knowledge.addChildModule(ug);
 
         settings.setRootModule(root);
 

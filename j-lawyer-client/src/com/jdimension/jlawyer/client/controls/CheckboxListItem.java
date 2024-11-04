@@ -684,6 +684,7 @@ public class CheckboxListItem {
         this.isSelected = isSelected;
     }
 
+    @Override
     public String toString() {
         return label;
     }

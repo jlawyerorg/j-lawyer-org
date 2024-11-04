@@ -665,14 +665,17 @@ package com.jdimension.jlawyer.client.editors;
 
 import com.jdimension.jlawyer.client.events.AutoUpdateEvent;
 import com.jdimension.jlawyer.client.events.EventBroker;
+import com.jdimension.jlawyer.client.events.FormPluginUpdateEvent;
 import com.jdimension.jlawyer.client.events.NewsEvent;
 import com.jdimension.jlawyer.client.events.ServicesEvent;
+import com.jdimension.jlawyer.client.plugins.form.FormPlugin;
+import com.jdimension.jlawyer.client.plugins.form.FormPluginUtil;
 import com.jdimension.jlawyer.client.settings.ClientSettings;
 import com.jdimension.jlawyer.client.settings.ServerSettings;
 import com.jdimension.jlawyer.client.settings.UserSettings;
 import com.jdimension.jlawyer.client.utils.StringUtils;
 import com.jdimension.jlawyer.client.utils.VersionUtils;
-import com.jdimension.jlawyer.security.Crypto;
+import com.jdimension.jlawyer.security.CryptoProvider;
 import com.jdimension.jlawyer.services.AddressServiceRemote;
 import com.jdimension.jlawyer.services.ArchiveFileServiceRemote;
 import com.jdimension.jlawyer.services.JLawyerServiceLocator;
@@ -683,6 +686,9 @@ import java.io.StringReader;
 import java.net.URL;
 import java.net.URLConnection;
 import java.net.URLEncoder;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
 import java.util.TreeMap;
 import javax.xml.XMLConstants;
 import javax.xml.parsers.DocumentBuilder;
@@ -703,7 +709,7 @@ public class AutoUpdateTimerTask extends java.util.TimerTask {
     private Component owner;
 
     /**
-     * Creates a new instance of SystemStateTimerTask
+     * Creates a new instance of AutoUpdateTimerTask
      * @param owner
      */
     public AutoUpdateTimerTask(Component owner) {
@@ -761,7 +767,7 @@ public class AutoUpdateTimerTask extends java.util.TimerTask {
 
             String csession = installationHash + ",user=" + userHash + ",java=" + javaVersion + ",os=" + osName + ",osversion=" + osVersion + ",adrc=" + addressCount + ",afc=" + archiveFileCount + ",docc=" + docCount + ",j-lawyer=" + VersionUtils.getFullClientVersion() + ",drebis=" + drebismode + ",voip=" + voipmode + ",backup=" + backupmode;
 
-            URL updateURL = new URL("https://www.j-lawyer.org/downloads/updatecheck.xml?csession=" + Crypto.encrypt(csession));
+            URL updateURL = new URL("https://www.j-lawyer.org/downloads/updatecheck.xml?csession=" + CryptoProvider.newCrypto().encrypt(csession));
             URLConnection urlCon = updateURL.openConnection();
             urlCon.setRequestProperty("User-Agent", "j-lawyer Client v" + VersionUtils.getFullClientVersion());
 
@@ -825,10 +831,6 @@ public class AutoUpdateTimerTask extends java.util.TimerTask {
             String urlHelp = nl.item(0).getTextContent();
             settings.setUrlHelp(urlHelp);
 
-            nl = doc.getElementsByTagName("urlxjustiz");
-            String urlXjustiz = nl.item(0).getTextContent();
-            settings.setUrlXjustiz(urlXjustiz);
-
             nl = doc.getElementsByTagName("bea-enabled-versions");
             String beaEnabledVersions = nl.item(0).getTextContent();
             set.setSetting(ServerSettings.SERVERCONF_BEAENABLEDVERSIONS, beaEnabledVersions);
@@ -854,6 +856,22 @@ public class AutoUpdateTimerTask extends java.util.TimerTask {
 
         } catch (Throwable t) {
             log.error("Error checking for updates on j-lawyer.org", t);
+        }
+        
+        try {
+            Map<String, FormPlugin> remotePlugins=FormPluginUtil.getAvailableRepositoryPlugins();
+            List<FormPlugin> updatable=new ArrayList<>();
+            for (Map.Entry me : remotePlugins.entrySet()) {
+                if(((FormPlugin)me.getValue()).getState()==FormPlugin.STATE_INSTALLED_UPDATEAVAILABLE) {
+                    updatable.add((FormPlugin)me.getValue());
+                }
+            }
+            if(!updatable.isEmpty()) {
+                EventBroker b = EventBroker.getInstance();
+                b.publishEvent(new FormPluginUpdateEvent(updatable));
+            }
+        } catch (Throwable t) {
+            log.error("Error checking for form plugin updates on j-lawyer.org", t);
         }
 
     }

@@ -665,18 +665,26 @@ package com.jdimension.jlawyer.events;
 
 import com.jdimension.jlawyer.persistence.IntegrationHook;
 import com.jdimension.jlawyer.persistence.IntegrationHookFacadeLocal;
-import com.jdimension.jlawyer.security.Crypto;
+import com.jdimension.jlawyer.persistence.IntegrationHookLog;
+import com.jdimension.jlawyer.persistence.IntegrationHookLogFacadeLocal;
+import com.jdimension.jlawyer.security.CryptoProvider;
+import java.util.Calendar;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 import javax.ejb.EJB;
+import javax.ejb.Schedule;
 import javax.ejb.Singleton;
 import javax.ejb.Startup;
 import javax.enterprise.event.ObservesAsync;
-import javax.ws.rs.client.Client;
-import javax.ws.rs.client.ClientBuilder;
-import javax.ws.rs.client.WebTarget;
+import javax.ws.rs.core.Response;
 import org.apache.log4j.Logger;
+import org.glassfish.jersey.client.ClientProperties;
+import org.glassfish.jersey.client.JerseyClient;
+import org.glassfish.jersey.client.JerseyClientBuilder;
+import org.glassfish.jersey.client.JerseyWebTarget;
+import org.jboss.ejb3.annotation.TransactionTimeout;
 import org.json.simple.Jsoner;
 
 /**
@@ -691,52 +699,122 @@ public class CustomHooksService implements CustomHooksServiceLocal {
 
     @EJB
     private IntegrationHookFacadeLocal hookFacade;
-    
+
+    @EJB
+    private IntegrationHookLogFacadeLocal hookLogsFacade;
+
     // cache: avoid going to the database for the hooks with each event
-    private List<IntegrationHook> allHooks=null;
+    private List<IntegrationHook> allHooks = null;
     // cache: crypto is expensive
-    private HashMap<String,String> hookPwd=new HashMap<>();
+    private HashMap<String, String> hookPwd = new HashMap<>();
 
     @Override
+    @TransactionTimeout(value = 10, unit = TimeUnit.MINUTES)
     public void onEvent(@ObservesAsync CustomHook evt) {
-        if(allHooks==null)
+        if (allHooks == null) {
             resetCache();
-        
-        for(IntegrationHook hook: allHooks) {
-            if(hook.getHookType().equals(evt.getHookType().name())) {
-                try {
-                    executeHook(hook, evt);
-                } catch (Exception ex) {
-                    log.error("failed to execute hook " + hook.getName(), ex);
-                }
+        }
+
+        String evtId=evt.getHookId();
+        int index=0;
+        for (IntegrationHook hook : allHooks) {
+            if (hook.getHookType().equals(evt.getHookType().name())) {
+                evt.setHookId(evtId + index);
+                executeHook(hook, evt);
+                index=index+1;
             }
         }
     }
     
-
-    private void executeHook(IntegrationHook hook, CustomHook evt) throws Exception {
-        log.info("Received custom hook event " + evt.getHookType().name());
-        String evtJson = Jsoner.serialize(evt);
-        log.debug("about to post the following event to custom hook: " + evtJson);
-
-        ClientBuilder clientBuilder = ClientBuilder.newBuilder();
-        clientBuilder.connectTimeout(hook.getConnectionTimeout(), TimeUnit.SECONDS);
-        clientBuilder.readTimeout(hook.getReadTimeout(), TimeUnit.SECONDS);
-
-        Client client = clientBuilder.build();
-        if(hook.getAuthenticationUser()!=null && !"".equalsIgnoreCase(hook.getAuthenticationUser())) {
-            if(!this.hookPwd.containsKey(hook.getName()))
-                this.hookPwd.put(hook.getName(), Crypto.decrypt(hook.getAuthenticationPwd()));
-            client.register(new HookAuthenticator(hook.getAuthenticationUser(), this.hookPwd.get(hook.getName())));
+    @Schedule(dayOfWeek = "1-7", hour = "12", minute = "31", second = "0", persistent = false)
+    // testing: @Schedule(hour = "*", minute = "*/2", persistent = false)
+    @TransactionTimeout(value = 10, unit = TimeUnit.MINUTES)
+    public void cleanupLogs() {
+        
+        log.info("cleaning up old web hook logs");
+        
+        Date currentDate = new Date();
+        Calendar calendar = Calendar.getInstance();
+        calendar.setTime(currentDate);
+        calendar.add(Calendar.DAY_OF_MONTH, -7);
+        Date sevenDaysAgo = calendar.getTime();
+        
+        List<IntegrationHookLog> logs=this.hookLogsFacade.findOlderThan(sevenDaysAgo);
+        long removed=0;
+        if(logs!=null) {
+            for(IntegrationHookLog l: logs) {
+                this.hookLogsFacade.remove(l);
+                removed++;
+            }
         }
-        WebTarget webTarget = client.target(hook.getUrl());
-        String returnValue = webTarget.request(javax.ws.rs.core.MediaType.APPLICATION_JSON).post(javax.ws.rs.client.Entity.entity(evtJson, javax.ws.rs.core.MediaType.APPLICATION_JSON), String.class);
-        log.debug("custom hook returned: " + returnValue);
+        if(removed>0)
+            log.info("removed " + removed + " old web hook logs");
+        
+    }
+
+    private void executeHook(IntegrationHook hook, CustomHook evt) {
+        IntegrationHookLog hookLog=new IntegrationHookLog();
+        hookLog.setAuthenticationUser(hook.getAuthenticationUser());
+        hookLog.setHookId(evt.getHookId());
+        hookLog.setHookType(hook.getHookType());
+        hookLog.setRequestDate(new Date());
+        hookLog.setUrl(hook.getUrl());
+        hookLog.setStatus(-1);
+        hookLog.setDuration(0);
+        hookLog.setPayloadSize(-1);
+        hookLog.setResponse(null);
+        
+        long start=System.currentTimeMillis();
+        try {
+            log.info("Received custom hook event " + evt.getHookType().name());
+            String evtJson = Jsoner.serialize(evt);
+            hookLog.setPayloadSize(evtJson.getBytes().length);
+            log.debug("about to post the following event to custom hook: " + evtJson);
+
+            JerseyClient client = (JerseyClient) JerseyClientBuilder.createClient();
+            int connectTimeout = (int) (1000 * hook.getConnectionTimeout());
+            int readTimeout = (int) (1000 * hook.getReadTimeout());
+            client.property(ClientProperties.CONNECT_TIMEOUT, connectTimeout);
+            client.property(ClientProperties.READ_TIMEOUT, readTimeout);
+
+            if (hook.getAuthenticationUser() != null && !"".equalsIgnoreCase(hook.getAuthenticationUser())) {
+                if (!this.hookPwd.containsKey(hook.getName())) {
+                    this.hookPwd.put(hook.getName(), CryptoProvider.newCrypto().decrypt(hook.getAuthenticationPwd()));
+                }
+                client.register(new HookAuthenticator(hook.getAuthenticationUser(), this.hookPwd.get(hook.getName())));
+            }
+
+            JerseyWebTarget webTarget = client.target(hook.getUrl());
+            Response response = webTarget.request(javax.ws.rs.core.MediaType.APPLICATION_JSON).post(javax.ws.rs.client.Entity.entity(evtJson, javax.ws.rs.core.MediaType.APPLICATION_JSON));
+
+            int statusCode = response.getStatus();
+            String returnValue = response.readEntity(String.class);
+
+            hookLog.setStatus(statusCode);
+            if(returnValue!=null) {
+                if(returnValue.length()>4500)
+                    returnValue=returnValue.substring(0,4499);
+            }
+            hookLog.setResponse(returnValue);
+            hookLog.setDuration(System.currentTimeMillis()-start);
+            hookLog.setFailed(statusCode!=200);
+            hookLog.setFailureMessage(null);
+            
+        } catch (Exception ex) {
+            log.error("failed to execute hook " + hook.getName(), ex);
+            
+            hookLog.setStatus(1000);
+            hookLog.setDuration(System.currentTimeMillis()-start);
+            hookLog.setFailed(true);
+            hookLog.setFailureMessage(ex.getMessage());
+        }
+        
+        this.hookLogsFacade.create(hookLog);
     }
 
     @Override
     public void resetCache() {
-        this.allHooks=this.hookFacade.findAll();
+        this.allHooks = this.hookFacade.findAll();
         this.hookPwd.clear();
     }
 }

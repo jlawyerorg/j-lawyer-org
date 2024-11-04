@@ -663,6 +663,7 @@ For more information on this, and how to apply and follow the GNU AGPL, see
  */
 package com.jdimension.jlawyer.persistence;
 
+import java.util.Date;
 import java.util.List;
 import javax.ejb.Local;
 
@@ -684,7 +685,12 @@ public interface InstantMessageMentionFacadeLocal {
     List<InstantMessageMention> findAll();
 
     List<InstantMessageMention> findRange(int[] range);
+    
+    List<InstantMessageMention> findOpen();
+    List<InstantMessageMention> findOpen(String principalId);
 
     int count();
+    
+    List<InstantMessageMention> findSince(Date since);
     
 }

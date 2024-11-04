@@ -681,8 +681,9 @@ import javax.xml.bind.annotation.XmlTransient;
 @NamedQueries({
     @NamedQuery(name = "ArchiveFileBean.findAll", query = "SELECT a FROM ArchiveFileBean a"),
     @NamedQuery(name = "ArchiveFileBean.findAllSortedByChangeDate", query = "SELECT a FROM ArchiveFileBean a ORDER BY a.dateChanged DESC"),
-    @NamedQuery(name = "ArchiveFileBean.findNonArchivedSortedByChangeDate", query = "SELECT a FROM ArchiveFileBean a WHERE a.archived = 0 ORDER BY a.dateChanged DESC"),
+    @NamedQuery(name = "ArchiveFileBean.findNonArchivedSortedByChangeDate", query = "SELECT a FROM ArchiveFileBean a WHERE a.archived = false ORDER BY a.dateChanged DESC"),
     @NamedQuery(name = "ArchiveFileBean.findById", query = "SELECT a FROM ArchiveFileBean a WHERE a.id = :id"),
+    @NamedQuery(name = "ArchiveFileBean.findByExternalId", query = "SELECT a FROM ArchiveFileBean a WHERE a.externalId = :externalId"),
     @NamedQuery(name = "ArchiveFileBean.findByName", query = "SELECT a FROM ArchiveFileBean a WHERE a.name = :name"),
     @NamedQuery(name = "ArchiveFileBean.findByGroup", query = "SELECT a FROM ArchiveFileBean a WHERE a.group = :group"),
     @NamedQuery(name = "ArchiveFileBean.findByFileNumber", query = "SELECT a FROM ArchiveFileBean a WHERE a.fileNumberMain = :fileNumber"),
@@ -691,6 +692,7 @@ import javax.xml.bind.annotation.XmlTransient;
     @NamedQuery(name = "ArchiveFileBean.findByArchived", query = "SELECT a FROM ArchiveFileBean a WHERE a.archived = :archived"),
     @NamedQuery(name = "ArchiveFileBean.findByNotice", query = "SELECT a FROM ArchiveFileBean a WHERE a.notice = :notice")})
 public class ArchiveFileBean implements Serializable {
+
     @OneToMany(cascade = CascadeType.REMOVE, mappedBy = "archiveFileKey")
     private List<ArchiveFileReviewsBean> archiveFileReviewsBeanList;
     private static final long serialVersionUID = 1L;
@@ -710,8 +712,8 @@ public class ArchiveFileBean implements Serializable {
     @Column(name = "claimValue")
     private float claimValue;
     @Basic(optional = false)
-    @Column(name = "archived", columnDefinition = "TINYINT NOT NULL")
-    private short archived;
+    @Column(name = "archived")
+    private boolean archived;
     @Column(name = "notice")
     private String notice;
     @Column(name = "lawyer")
@@ -728,7 +730,7 @@ public class ArchiveFileBean implements Serializable {
     private String custom2;
     @Column(name = "custom3")
     private String custom3;
-    
+
     @Column(name = "date_created")
     @Temporal(TemporalType.TIMESTAMP)
     protected Date dateCreated;
@@ -738,7 +740,10 @@ public class ArchiveFileBean implements Serializable {
     @Column(name = "date_archived")
     @Temporal(TemporalType.TIMESTAMP)
     protected Date dateArchived;
-    
+
+    @Column(name = "ext_id")
+    private String externalId;
+
     @OneToMany(cascade = CascadeType.REMOVE, mappedBy = "archiveFileKey")
     private List<ArchiveFileAddressesBean> archiveFileAddressesBeanList;
     @OneToMany(cascade = CascadeType.REMOVE, mappedBy = "archiveFileKey")
@@ -752,10 +757,17 @@ public class ArchiveFileBean implements Serializable {
     @JoinColumn(name = "owner_group", referencedColumnName = "id")
     @OneToOne(fetch = FetchType.EAGER)
     private Group group;
-    
+
     @JoinColumn(name = "root_folder", referencedColumnName = "id")
     @OneToOne(cascade = CascadeType.REMOVE)
     private CaseFolder rootFolder;
+    
+    @Column(name = "cal_followups")
+    private String lastCalendarSetupFollowups;
+    @Column(name = "cal_respites")
+    private String lastCalendarSetupRespites;
+    @Column(name = "cal_events")
+    private String lastCalendarSetupEvents;
 
     public ArchiveFileBean() {
     }
@@ -764,7 +776,7 @@ public class ArchiveFileBean implements Serializable {
         this.id = id;
     }
 
-    public ArchiveFileBean(String id, float claimValue, short archived) {
+    public ArchiveFileBean(String id, float claimValue, boolean archived) {
         this.id = id;
         this.claimValue = claimValue;
         this.archived = archived;
@@ -789,9 +801,9 @@ public class ArchiveFileBean implements Serializable {
     public String getFileNumberMain() {
         return fileNumberMain;
     }
-    
+
     public String getFileNumber() {
-        if(this.fileNumberExtension!=null && this.fileNumberExtension.length()>0) {
+        if (this.fileNumberExtension != null && this.fileNumberExtension.length() > 0) {
             return this.fileNumberMain + this.fileNumberExtension;
         } else {
             return this.fileNumberMain;
@@ -818,27 +830,12 @@ public class ArchiveFileBean implements Serializable {
         this.claimValue = claimValue;
     }
 
-    public short getArchived() {
+    public boolean isArchived() {
         return archived;
     }
-    
-    public boolean getArchivedBoolean() {
-        if(archived==1)
-            return true;
-        else
-            return false;
-                    
-    }
 
-    public void setArchived(short archived) {
+    public void setArchived(boolean archived) {
         this.archived = archived;
-    }
-    
-    public void setArchivedBoolean(boolean archived) {
-        if(archived)
-            this.archived=1;
-        else 
-            this.archived=0;
     }
 
     public String getNotice() {
@@ -885,9 +882,10 @@ public class ArchiveFileBean implements Serializable {
 
     @Override
     public boolean equals(Object object) {
-        if(object==null)
+        if (object == null) {
             return false;
-        
+        }
+
         // TODO: Warning - this method won't work in the case the id fields are not set
         if (!(object instanceof ArchiveFileBean)) {
             return false;
@@ -912,27 +910,28 @@ public class ArchiveFileBean implements Serializable {
     public void setArchiveFileReviewsBeanList(List<ArchiveFileReviewsBean> archiveFileReviewsBeanList) {
         this.archiveFileReviewsBeanList = archiveFileReviewsBeanList;
     }
-    
+
     public void addParty(ArchiveFileAddressesBean dto) {
-        if(this.archiveFileAddressesBeanList==null)
-            this.archiveFileAddressesBeanList=new ArrayList<>();
+        if (this.archiveFileAddressesBeanList == null) {
+            this.archiveFileAddressesBeanList = new ArrayList<>();
+        }
         this.archiveFileAddressesBeanList.add(dto);
     }
-    
+
     public void addReview(ArchiveFileReviewsBean dto) {
-        if(this.archiveFileReviewsBeanList==null)
-            this.archiveFileReviewsBeanList=new ArrayList<>();
+        if (this.archiveFileReviewsBeanList == null) {
+            this.archiveFileReviewsBeanList = new ArrayList<>();
+        }
         this.archiveFileReviewsBeanList.add(dto);
     }
-    
+
     public void removeAllParties() {
-        if(this.archiveFileAddressesBeanList!=null) {
-        for(int i=this.archiveFileAddressesBeanList.size()-1;i>-1;i--) {
-            ArchiveFileAddressesBean b=this.archiveFileAddressesBeanList.get(i);
-            this.archiveFileAddressesBeanList.remove(i);
-            
-            
-        }
+        if (this.archiveFileAddressesBeanList != null) {
+            for (int i = this.archiveFileAddressesBeanList.size() - 1; i > -1; i--) {
+                ArchiveFileAddressesBean b = this.archiveFileAddressesBeanList.get(i);
+                this.archiveFileAddressesBeanList.remove(i);
+
+            }
         }
     }
 
@@ -1058,7 +1057,8 @@ public class ArchiveFileBean implements Serializable {
     }
 
     /**
-     * @param archiveFileFormEntriesBeanList the archiveFileFormEntriesBeanList to set
+     * @param archiveFileFormEntriesBeanList the archiveFileFormEntriesBeanList
+     * to set
      */
     public void setArchiveFileFormEntriesBeanList(List<ArchiveFileFormEntriesBean> archiveFileFormEntriesBeanList) {
         this.archiveFileFormEntriesBeanList = archiveFileFormEntriesBeanList;
@@ -1147,5 +1147,85 @@ public class ArchiveFileBean implements Serializable {
     public void setDateArchived(Date dateArchived) {
         this.dateArchived = dateArchived;
     }
+
+    /**
+     * @return the externalId
+     */
+    public String getExternalId() {
+        return externalId;
+    }
+
+    /**
+     * @param externalId the externalId to set
+     */
+    public void setExternalId(String externalId) {
+        this.externalId = externalId;
+    }
+
+    /**
+     * @return the lastCalendarSetupFollowups
+     */
+    public String getLastCalendarSetupFollowups() {
+        return lastCalendarSetupFollowups;
+    }
+
+    /**
+     * @param lastCalendarSetupFollowups the lastCalendarSetupFollowups to set
+     */
+    public void setLastCalendarSetupFollowups(String lastCalendarSetupFollowups) {
+        this.lastCalendarSetupFollowups = lastCalendarSetupFollowups;
+    }
+
+    /**
+     * @return the lastCalendarSetupRespites
+     */
+    public String getLastCalendarSetupRespites() {
+        return lastCalendarSetupRespites;
+    }
+
+    /**
+     * @param lastCalendarSetupRespites the lastCalendarSetupRespites to set
+     */
+    public void setLastCalendarSetupRespites(String lastCalendarSetupRespites) {
+        this.lastCalendarSetupRespites = lastCalendarSetupRespites;
+    }
+
+    /**
+     * @return the lastCalendarSetupEvents
+     */
+    public String getLastCalendarSetupEvents() {
+        return lastCalendarSetupEvents;
+    }
     
+    public String getLastCalendarSetup(int eventType) {
+        switch (eventType) {
+            case EventTypes.EVENTTYPE_FOLLOWUP:
+                return this.getLastCalendarSetupFollowups();
+            case EventTypes.EVENTTYPE_RESPITE:
+                return this.getLastCalendarSetupRespites();
+            case EventTypes.EVENTTYPE_EVENT:
+                return this.getLastCalendarSetupEvents();
+            default:
+                return null;
+        }
+    }
+    
+    public void setLastCalendarSetup(int eventType, String setup) {
+        switch (eventType) {
+            case EventTypes.EVENTTYPE_FOLLOWUP:
+                this.setLastCalendarSetupFollowups(setup);
+            case EventTypes.EVENTTYPE_RESPITE:
+                this.setLastCalendarSetupRespites(setup);
+            case EventTypes.EVENTTYPE_EVENT:
+                this.setLastCalendarSetupEvents(setup);
+        }
+    }
+
+    /**
+     * @param lastCalendarSetupEvents the lastCalendarSetupEvents to set
+     */
+    public void setLastCalendarSetupEvents(String lastCalendarSetupEvents) {
+        this.lastCalendarSetupEvents = lastCalendarSetupEvents;
+    }
+
 }

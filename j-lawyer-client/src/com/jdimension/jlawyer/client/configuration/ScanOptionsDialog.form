@@ -7,6 +7,7 @@
   </Properties>
   <SyntheticProperties>
     <SyntheticProperty name="formSizePolicy" type="int" value="1"/>
+    <SyntheticProperty name="generateCenter" type="boolean" value="false"/>
   </SyntheticProperties>
   <AuxValues>
     <AuxValue name="FormSettings_autoResourcing" type="java.lang.Integer" value="0"/>
@@ -32,11 +33,17 @@
                       <EmptySpace max="-2" attributes="0"/>
                       <Component id="cmdClose" min="-2" max="-2" attributes="0"/>
                   </Group>
+                  <Component id="txtServerDir" max="32767" attributes="0"/>
+                  <Group type="102" alignment="0" attributes="0">
+                      <Component id="jLabel1" min="-2" max="-2" attributes="0"/>
+                      <EmptySpace max="32767" attributes="0"/>
+                      <Component id="jLabel2" min="-2" max="-2" attributes="0"/>
+                  </Group>
                   <Group type="102" attributes="0">
                       <Component id="jLabel16" min="-2" max="-2" attributes="0"/>
-                      <EmptySpace min="0" pref="0" max="32767" attributes="0"/>
+                      <EmptySpace min="0" pref="120" max="32767" attributes="0"/>
                   </Group>
-                  <Component id="txtServerDir" max="32767" attributes="0"/>
+                  <Component id="txtOcrCommandline" max="32767" attributes="0"/>
               </Group>
               <EmptySpace max="-2" attributes="0"/>
           </Group>
@@ -51,10 +58,17 @@
               <Component id="txtServerDir" min="-2" max="-2" attributes="0"/>
               <EmptySpace type="unrelated" max="-2" attributes="0"/>
               <Group type="103" groupAlignment="3" attributes="0">
+                  <Component id="jLabel1" alignment="3" min="-2" max="-2" attributes="0"/>
+                  <Component id="jLabel2" alignment="3" min="-2" max="-2" attributes="0"/>
+              </Group>
+              <EmptySpace max="-2" attributes="0"/>
+              <Component id="txtOcrCommandline" min="-2" max="-2" attributes="0"/>
+              <EmptySpace max="32767" attributes="0"/>
+              <Group type="103" groupAlignment="3" attributes="0">
                   <Component id="cmdClose" alignment="3" min="-2" max="-2" attributes="0"/>
                   <Component id="cmdSave" alignment="3" min="-2" max="-2" attributes="0"/>
               </Group>
-              <EmptySpace max="32767" attributes="0"/>
+              <EmptySpace max="-2" attributes="0"/>
           </Group>
       </Group>
     </DimensionLayout>
@@ -88,6 +102,21 @@
       </Properties>
     </Component>
     <Component class="javax.swing.JTextField" name="txtServerDir">
+    </Component>
+    <Component class="javax.swing.JLabel" name="jLabel1">
+      <Properties>
+        <Property name="text" type="java.lang.String" value="Aufruf f&#xfc;r OCR / Texterkennung:"/>
+      </Properties>
+    </Component>
+    <Component class="javax.swing.JLabel" name="jLabel2">
+      <Properties>
+        <Property name="icon" type="javax.swing.Icon" editor="org.netbeans.modules.form.editors2.IconEditor">
+          <Image iconType="3" name="/icons/info.png"/>
+        </Property>
+        <Property name="toolTipText" type="java.lang.String" value="&lt;html&gt;&#xa;Das hier angegebene Programm wird am &lt;b&gt;Server&lt;/b&gt; ausgef&amp;uuml;hrt, um OCR f&#xfc;r PDF-Dokumente auszuf&amp;uuml;hren. Es sollte der vollst&amp;auml;ndige Aufruf angegeben werden. Es m&amp;uuml;ssen zwei Platzhalter enthalten sein:&#xa;&lt;ul&gt;&#xa;&lt;li&gt;DATEIEIN - Datei, welche vom OCR-Programm verarbeitet werden soll&lt;/li&gt;&#xa;&lt;li&gt;DATEIAUS - Datei, welche vom OCR-Programm erstellt werden soll&lt;/li&gt;&#xa;&lt;/ul&gt;&#xa;Beispiel:&lt;br/&gt;&#xa;&lt;pre&gt;/usr/bin/ocrmypdf --skip-text DATEIEIN DATEIAUS&lt;/pre&gt;&#xa;&lt;/html&gt;"/>
+      </Properties>
+    </Component>
+    <Component class="javax.swing.JTextField" name="txtOcrCommandline">
     </Component>
   </SubComponents>
 </Form>

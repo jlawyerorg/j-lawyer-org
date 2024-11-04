@@ -694,23 +694,25 @@ public class AddBeaRecipientSearchDialog extends javax.swing.JDialog {
 
     private static final Logger log = Logger.getLogger(AddBeaRecipientSearchDialog.class.getName());
     private JList to = null;
-    private int targetReferenceType = -1;
-    //private KeyAdapter tableKeyListener = null;
-    private JDialog parent = null;
     private JComponent nextFocus = null;
 
     /**
      * Creates new form AddBeaRecipientSearchDialog
+     * @param parent
+     * @param modal
+     * @param to
+     * @param nextFocus
      */
     public AddBeaRecipientSearchDialog(JDialog parent, boolean modal, JList to, JComponent nextFocus) {
         super(parent, modal);
-        this.parent = parent;
         this.nextFocus = nextFocus;
         this.to = to;
         initComponents();
-        String[] colNames = new String[]{"Name", "Vorname", "Unternehmen", "PLZ", "Ort", "E-Mail", "SafeID"};
+        String[] colNames = new String[]{"Name", "Vorname", "Unternehmen", "PLZ", "Ort", "E-Mail", "", "SafeID"};
         QuickAddressSearchTableModel model = new QuickAddressSearchTableModel(colNames, 0);
         this.tblResults.setModel(model);
+        
+        this.tblResults.setDefaultRenderer(Object.class, new AddressHasEncryptionCellRenderer());
 
         ClientSettings s = ClientSettings.getInstance();
         List<String> tags = s.getAddressTagsInUse();
@@ -718,14 +720,6 @@ public class AddBeaRecipientSearchDialog extends javax.swing.JDialog {
 
         ComponentUtils.restoreDialogSize(this);
 
-//        this.tableKeyListener = new java.awt.event.KeyAdapter() {
-//            public void keyPressed(java.awt.event.KeyEvent evt) {
-//                if (evt.getKeyCode() == evt.VK_ENTER) {
-//                    useSelection();
-//                }
-//            }
-//        };
-        //this.tableKeyListener = null;
         this.tblResults.getInputMap(JComponent.WHEN_ANCESTOR_OF_FOCUSED_COMPONENT).put(KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, 0), "Enter");
         this.tblResults.getActionMap().put("Enter", new AbstractAction() {
             @Override
@@ -860,7 +854,6 @@ public class AddBeaRecipientSearchDialog extends javax.swing.JDialog {
                 BeaAccess bea = BeaAccess.getInstance();
                 Identity i = bea.getIdentity(safeId);
                 DefaultListModel model=(DefaultListModel)this.to.getModel();
-                model.removeAllElements();
                 model.addElement(i);
                 
             } catch (Throwable t) {
@@ -886,16 +879,7 @@ public class AddBeaRecipientSearchDialog extends javax.swing.JDialog {
 
     private void txtSearchStringKeyPressed(java.awt.event.KeyEvent evt) {//GEN-FIRST:event_txtSearchStringKeyPressed
         if (evt.getKeyCode() == evt.VK_ENTER) {
-            //this.tblResults.removeKeyListener(this.tableKeyListener);
             this.cmdQuickSearchActionPerformed(null);
-//            this.tableKeyListener = new java.awt.event.KeyAdapter() {
-//                public void keyPressed(java.awt.event.KeyEvent evt) {
-//                    if (evt.getKeyCode() == evt.VK_ENTER) {
-//                        useSelection();
-//                    }
-//                }
-//            };
-//            tblResults.addKeyListener(this.tableKeyListener);
         }
     }//GEN-LAST:event_txtSearchStringKeyPressed
 
@@ -911,12 +895,8 @@ public class AddBeaRecipientSearchDialog extends javax.swing.JDialog {
      * @param args the command line arguments
      */
     public static void main(String args[]) {
-        java.awt.EventQueue.invokeLater(new Runnable() {
-
-            public void run() {
-                new AddBeaRecipientSearchDialog(null, true, null, null).setVisible(true);
-                //new AddRecipientSearchDialog(new javax.swing.JFrame(), true, null).setVisible(true);
-            }
+        java.awt.EventQueue.invokeLater(() -> {
+            new AddBeaRecipientSearchDialog(null, true, null, null).setVisible(true);
         });
     }
     // Variables declaration - do not modify//GEN-BEGIN:variables

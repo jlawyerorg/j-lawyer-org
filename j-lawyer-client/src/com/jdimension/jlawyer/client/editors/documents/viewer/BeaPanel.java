@@ -731,7 +731,8 @@ public class BeaPanel extends javax.swing.JPanel implements PreviewPanel {
     }
 
     @Override
-    public void showContent(byte[] content) {
+    public void showContent(String documentId, byte[] content) {
+        this.documentId=documentId;
         try {
             MessageExport export=new MessageExport();
             export.setContent(content);
@@ -741,6 +742,11 @@ public class BeaPanel extends javax.swing.JPanel implements PreviewPanel {
             log.error(t);
             this.showStatus("Fehler beim Laden der Vorschau.");
         }
+    }
+
+    @Override
+    public String getDocumentId() {
+        return this.documentId;
     }
 
 }

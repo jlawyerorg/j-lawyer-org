@@ -681,6 +681,7 @@ import com.jdimension.jlawyer.client.settings.ClientSettings;
 import com.jdimension.jlawyer.client.settings.ServerSettings;
 import com.jdimension.jlawyer.client.settings.UserSettings;
 import com.jdimension.jlawyer.client.utils.FrameUtils;
+import com.jdimension.jlawyer.client.utils.GoogleMapsUtils;
 import com.jdimension.jlawyer.client.utils.JTextFieldLimit;
 import com.jdimension.jlawyer.client.utils.StringUtils;
 import com.jdimension.jlawyer.client.voip.SendFaxDialog;
@@ -693,6 +694,8 @@ import com.jdimension.jlawyer.persistence.PartyTypeBean;
 import com.jdimension.jlawyer.services.AddressServiceRemote;
 import com.jdimension.jlawyer.services.JLawyerServiceLocator;
 import com.jdimension.jlawyer.services.SystemManagementRemote;
+import com.jdimension.jlawyer.client.utils.OsmUtils;
+
 
 import java.awt.Color;
 import java.util.ArrayList;
@@ -719,7 +722,7 @@ public class InvolvedPartyEntryPanel extends javax.swing.JPanel implements Event
     private InvolvedPartiesPanel container = null;
     private ArchiveFilePanel casePanel = null;
 
-    private List<PartyTypeBean> partyTypes = new ArrayList<PartyTypeBean>();
+    private List<PartyTypeBean> partyTypes = new ArrayList<>();
     private boolean initializing = false;
 
     /**
@@ -730,11 +733,12 @@ public class InvolvedPartyEntryPanel extends javax.swing.JPanel implements Event
      * @param container
      * @param openedFromClassName
      * @param beaEnabled
+     * @param partyTypesConfig
      */
-    public InvolvedPartyEntryPanel(ArchiveFileBean caseDto, ArchiveFilePanel casePanel, InvolvedPartiesPanel container, String openedFromClassName, boolean beaEnabled) {
+    public InvolvedPartyEntryPanel(ArchiveFileBean caseDto, ArchiveFilePanel casePanel, InvolvedPartiesPanel container, String openedFromClassName, boolean beaEnabled, List<PartyTypeBean> partyTypesConfig) {
         this.initializing = true;
         initComponents();
-        
+
         this.openedFromEditorClass = openedFromClassName;
         this.container = container;
         this.casePanel = casePanel;
@@ -750,26 +754,18 @@ public class InvolvedPartyEntryPanel extends javax.swing.JPanel implements Event
         this.txtCustom1.setDocument(new JTextFieldLimit(249));
         this.txtCustom2.setDocument(new JTextFieldLimit(249));
         this.txtCustom3.setDocument(new JTextFieldLimit(249));
-        this.txtReference.setDocument(new JTextFieldLimit(49));
+        this.txtReference.setDocument(new JTextFieldLimit(249));
 
-        try {
-            ClientSettings settings = ClientSettings.getInstance();
-            JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
-            SystemManagementRemote sys = locator.lookupSystemManagementRemote();
-            this.partyTypes = sys.getPartyTypes();
+        this.partyTypes = partyTypesConfig;
 
-            this.cmbRefType.removeAllItems();
-            ArrayList<String> refTypeNames = new ArrayList<>();
-            for (PartyTypeBean p : this.partyTypes) {
-                refTypeNames.add(p.getName());
-            }
-            Collections.sort(refTypeNames);
-            for (String s : refTypeNames) {
-                this.cmbRefType.addItem(s);
-            }
-
-        } catch (Throwable t) {
-            log.error("Unable to get party types", t);
+        this.cmbRefType.removeAllItems();
+        ArrayList<String> refTypeNames = new ArrayList<>();
+        for (PartyTypeBean p : this.partyTypes) {
+            refTypeNames.add(p.getName());
+        }
+        Collections.sort(refTypeNames);
+        for (String s : refTypeNames) {
+            this.cmbRefType.addItem(s);
         }
 
         EventBroker b = EventBroker.getInstance();
@@ -932,6 +928,12 @@ public class InvolvedPartyEntryPanel extends javax.swing.JPanel implements Event
         mnuSendFax = new javax.swing.JMenuItem();
         mnuRemoveParty = new javax.swing.JMenuItem();
         mnuCopy = new javax.swing.JMenuItem();
+        mnuFindAddress = new javax.swing.JMenu();
+        mnuFindAddressOSM = new javax.swing.JMenuItem();
+        mnuFindAddressGoogle = new javax.swing.JMenuItem();
+        mnuFindRoute = new javax.swing.JMenu();
+        mnuFindRouteToAddressOSM = new javax.swing.JMenuItem();
+        mnuFindRouteToAddressGoogle = new javax.swing.JMenuItem();
         lblAddress = new javax.swing.JLabel();
         cmbRefType = new javax.swing.JComboBox<>();
         jLabel3 = new javax.swing.JLabel();
@@ -1034,6 +1036,56 @@ public class InvolvedPartyEntryPanel extends javax.swing.JPanel implements Event
             }
         });
         partiesPopup.add(mnuCopy);
+
+        mnuFindAddress.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons16/place_20dp_0E72B5.png"))); // NOI18N
+        mnuFindAddress.setText("Adresse auf Karte zeigen");
+
+        mnuFindAddressOSM.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons16/place_20dp_0E72B5.png"))); // NOI18N
+        mnuFindAddressOSM.setText("OpenStreetMap");
+        mnuFindAddressOSM.setToolTipText("Karte zur Adresse im Browser öffnen");
+        mnuFindAddressOSM.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                mnuFindAddressOSMActionPerformed(evt);
+            }
+        });
+        mnuFindAddress.add(mnuFindAddressOSM);
+
+        mnuFindAddressGoogle.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons16/place_20dp_0E72B5.png"))); // NOI18N
+        mnuFindAddressGoogle.setText("Google Maps");
+        mnuFindAddressGoogle.setToolTipText("Karte zur Adresse im Browser öffnen");
+        mnuFindAddressGoogle.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                mnuFindAddressGoogleActionPerformed(evt);
+            }
+        });
+        mnuFindAddress.add(mnuFindAddressGoogle);
+
+        partiesPopup.add(mnuFindAddress);
+
+        mnuFindRoute.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons16/assistant_direction_20dp_0E72B5.png"))); // NOI18N
+        mnuFindRoute.setText("Route anzeigen");
+
+        mnuFindRouteToAddressOSM.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons16/assistant_direction_20dp_0E72B5.png"))); // NOI18N
+        mnuFindRouteToAddressOSM.setText("OpenStreetMap");
+        mnuFindRouteToAddressOSM.setToolTipText("Route zur Adresse im Browser öffnen");
+        mnuFindRouteToAddressOSM.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                mnuFindRouteToAddressOSMActionPerformed(evt);
+            }
+        });
+        mnuFindRoute.add(mnuFindRouteToAddressOSM);
+
+        mnuFindRouteToAddressGoogle.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons16/assistant_direction_20dp_0E72B5.png"))); // NOI18N
+        mnuFindRouteToAddressGoogle.setText("Google Maps");
+        mnuFindRouteToAddressGoogle.setToolTipText("Route zur Adresse im Browser öffnen");
+        mnuFindRouteToAddressGoogle.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                mnuFindRouteToAddressGoogleActionPerformed(evt);
+            }
+        });
+        mnuFindRoute.add(mnuFindRouteToAddressGoogle);
+
+        partiesPopup.add(mnuFindRoute);
 
         lblAddress.setFont(lblAddress.getFont().deriveFont(lblAddress.getFont().getStyle() | java.awt.Font.BOLD, lblAddress.getFont().getSize()+2));
         lblAddress.setText("Kutschke, Jens");
@@ -1230,7 +1282,7 @@ public class InvolvedPartyEntryPanel extends javax.swing.JPanel implements Event
         this.lblType.setBackground(c);
 
         if (!this.initializing) {
-            ConflictOfInterestUtils.checkForConflicts(a, ptb, EditorsRegistry.getInstance().getMainWindow());
+            ConflictOfInterestUtils.checkForConflicts(a, ptb, this.caseDto.getId(), EditorsRegistry.getInstance().getMainWindow());
         }
 
         if (!this.initializing && this.a != null) {
@@ -1263,17 +1315,18 @@ public class InvolvedPartyEntryPanel extends javax.swing.JPanel implements Event
             JOptionPane.showMessageDialog(this, "Zu diesem Kontakt ist keine E-Mail-Adresse erfasst.", com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
 
         } else {
-            
-            if(this.casePanel!=null) {
+
+            if (this.casePanel != null) {
                 this.casePanel.saveFormData();
+                this.casePanel.saveInvolvements();
             }
-            
+
             SendEmailDialog dlg = new SendEmailDialog(false, EditorsRegistry.getInstance().getMainWindow(), false);
             dlg.setArchiveFile(this.caseDto, null);
             dlg.setTo(this.a.getEmail());
             ArrayList<ArchiveFileAddressesBean> involved = this.container.getInvolvedParties();
             for (ArchiveFileAddressesBean aab : involved) {
-                dlg.addParty(aab);
+                dlg.addParty(aab, true);
             }
 
             FrameUtils.centerDialog(dlg, null);
@@ -1311,11 +1364,12 @@ public class InvolvedPartyEntryPanel extends javax.swing.JPanel implements Event
                 JOptionPane.showMessageDialog(this, "Identität des beA-Teilnehmers kann nicht ermittelt werden", com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
                 return;
             }
-            
-            if(this.casePanel!=null) {
+
+            if (this.casePanel != null) {
                 this.casePanel.saveFormData();
+                this.casePanel.saveInvolvements();
             }
-            
+
             SendBeaMessageDialog dlg = new SendBeaMessageDialog(EditorsRegistry.getInstance().getMainWindow(), false);
             dlg.setArchiveFile(this.caseDto);
             dlg.setTo(iTo);
@@ -1455,11 +1509,109 @@ public class InvolvedPartyEntryPanel extends javax.swing.JPanel implements Event
     }//GEN-LAST:event_lblAddressMouseClicked
 
     private void mnuCopyActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_mnuCopyActionPerformed
-        if(this.a!=null) {
-            AddressUtils.copyToClipboard(a.getCompany(), a.getDepartment(), a.getTitleInAddress(), a.getDegreePrefix(), a.getFirstName(), a.getName(), a.getDegreeSuffix(), a.getStreet(), a.getStreetNumber(), a.getAdjunct(), a.getZipCode(), a.getCity(), a.getDistrict(), a.getCountry());
+        if (this.a != null) {
+            AddressUtils.copyToClipboard(a.getCompany(), a.getDepartment(), a.getTitleInAddress(), a.getDegreePrefix(), a.getFirstName(), a.getFirstName2(), a.getName(), a.getDegreeSuffix(), a.getStreet(), a.getStreetNumber(), a.getAdjunct(), a.getZipCode(), a.getCity(), a.getDistrict(), a.getCountry());
         }
     }//GEN-LAST:event_mnuCopyActionPerformed
 
+    private String getMapStartAddress() {
+        // PROFILE as startAdress
+        ServerSettings sset = ServerSettings.getInstance();
+        String companyCity = sset.getSetting(ServerSettings.PROFILE_COMPANYCITY, "");
+        String companyStreet = sset.getSetting(ServerSettings.PROFILE_COMPANYSTREET, "");
+        String companyZip = sset.getSetting(ServerSettings.PROFILE_COMPANYZIP, "");
+
+        return companyCity + "+" + companyZip + "+" + companyStreet.replace(" ", "+");
+    }
+    
+    private String getMapDestinationAddress() {
+        if(this.a != null) {
+            String destinationAddress = a.getCity() + "+" + a.getZipCode() + "+" + a.getStreet() + "+" + a.getStreetNumber();
+            if (destinationAddress.endsWith("+")) {
+                destinationAddress = destinationAddress.substring(0, destinationAddress.length() - 1);
+            }
+            if (destinationAddress.startsWith("+")) {
+                destinationAddress = destinationAddress.substring(1);
+            }
+            return destinationAddress;
+        }
+        return null;
+    }
+    
+    private void mnuFindRouteToAddressOSMActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_mnuFindRouteToAddressOSMActionPerformed
+        if (this.a != null) {
+            
+            String startAddress=getMapStartAddress();
+            String destinationAddress=getMapDestinationAddress();
+            try {
+                
+                String coordinates1 = OsmUtils.getCoordinates(startAddress);
+                if(coordinates1==null) {
+                    JOptionPane.showMessageDialog(this, "Koordinaten der Startadresse können nicht ermittelt werden. Stimmen die Angaben im Kanzleiprofil?", com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
+                    return;
+                }
+                
+                String coordinates2 = OsmUtils.getCoordinates(destinationAddress);
+                if(coordinates2==null) {
+                    JOptionPane.showMessageDialog(this, "Koordinaten der Zieladresse können nicht ermittelt werden. Ist die Adresse des Beteiligten vollständig?", com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
+                    return;
+                }
+   
+                OsmUtils.openBrowserWithRoute(coordinates1, coordinates2);
+                
+            } catch (Exception e) {
+                log.error("Unable to get route from OSM: " + startAddress + " TO " + destinationAddress, e);
+                JOptionPane.showMessageDialog(this, "Route konnte nicht ermittelt werden: " + e.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
+            }           
+        }
+    }//GEN-LAST:event_mnuFindRouteToAddressOSMActionPerformed
+
+    private void mnuFindAddressOSMActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_mnuFindAddressOSMActionPerformed
+        if (this.a != null) {
+            
+            String address = this.getMapDestinationAddress();
+            try {
+                
+                    OsmUtils.openBrowserWithAddress(address);
+                
+            } catch (Exception e) {
+                JOptionPane.showMessageDialog(this, "Die Addresse konnte nicht abgerufen werden: " + e.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
+                log.error("Unable to determine address in OSM: " + address, e);
+            }           
+        }
+    }//GEN-LAST:event_mnuFindAddressOSMActionPerformed
+
+    private void mnuFindRouteToAddressGoogleActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_mnuFindRouteToAddressGoogleActionPerformed
+        if (this.a != null) {
+            
+            String startAddress=getMapStartAddress();
+            String destinationAddress=getMapDestinationAddress();
+            try {
+                
+                GoogleMapsUtils.openBrowserWithRoute(startAddress, destinationAddress);
+                
+            } catch (Exception e) {
+                log.error("Unable to get route from Google Maps: " + startAddress + " TO " + destinationAddress, e);
+                JOptionPane.showMessageDialog(this, "Route konnte nicht ermittelt werden: " + e.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
+            }           
+        }
+    }//GEN-LAST:event_mnuFindRouteToAddressGoogleActionPerformed
+
+    private void mnuFindAddressGoogleActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_mnuFindAddressGoogleActionPerformed
+        if (this.a != null) {
+            
+            String address = this.getMapDestinationAddress();
+            try {
+                
+                    GoogleMapsUtils.openBrowserWithAddress(address);
+                
+            } catch (Exception e) {
+                JOptionPane.showMessageDialog(this, "Die Addresse konnte nicht abgerufen werden: " + e.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
+                log.error("Unable to determine address in Google Maps: " + address, e);
+            }           
+        }
+    }//GEN-LAST:event_mnuFindAddressGoogleActionPerformed
+    
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JComboBox<String> cmbRefType;
     private javax.swing.JButton cmdActions;
@@ -1479,6 +1631,12 @@ public class InvolvedPartyEntryPanel extends javax.swing.JPanel implements Event
     private javax.swing.JMenuItem mnuCallMobile;
     private javax.swing.JMenuItem mnuCallPhone;
     private javax.swing.JMenuItem mnuCopy;
+    private javax.swing.JMenu mnuFindAddress;
+    private javax.swing.JMenuItem mnuFindAddressGoogle;
+    private javax.swing.JMenuItem mnuFindAddressOSM;
+    private javax.swing.JMenu mnuFindRoute;
+    private javax.swing.JMenuItem mnuFindRouteToAddressGoogle;
+    private javax.swing.JMenuItem mnuFindRouteToAddressOSM;
     private javax.swing.JMenuItem mnuRemoveParty;
     private javax.swing.JMenuItem mnuSendBea;
     private javax.swing.JMenuItem mnuSendEmail;
@@ -1494,10 +1652,10 @@ public class InvolvedPartyEntryPanel extends javax.swing.JPanel implements Event
     // End of variables declaration//GEN-END:variables
 
     public void close() {
-        EventBroker b=EventBroker.getInstance();
+        EventBroker b = EventBroker.getInstance();
         b.unsubscribeConsumer(this, Event.TYPE_CONTACTUPDATED);
     }
-    
+
     @Override
     public void onEvent(Event e) {
         if (e instanceof ContactUpdatedEvent) {

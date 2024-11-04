@@ -727,7 +727,7 @@ public class DatabaseMigrator implements Integrator {
                 Context ctx = new InitialContext();
                 DataSource ds = (DataSource) ctx.lookup("java:/jlawyerdb");
                 
-                Flyway flyway = Flyway.configure().dataSource(ds).baselineVersion("1.9.1.0").baselineOnMigrate(true).load();
+                Flyway flyway = Flyway.configure().dataSource(ds).ignoreMissingMigrations(true).baselineVersion("1.13.0.16").baselineOnMigrate(true).load();
                 
                 flyway.migrate();
 

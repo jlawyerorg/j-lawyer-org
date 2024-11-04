@@ -663,19 +663,17 @@
  */
 package com.jdimension.jlawyer.sip;
 
+import com.jdimension.jlawyer.StatusLevels;
+
 /**
  *
  * @author jens
  */
-public class SipUtils {
+public class SipUtils extends StatusLevels {
     
     public static final String TOS_VOICE="voice";
     public static final String TOS_TEXT="text";
     public static final String TOS_FAX="fax";
-    
-    public static final int STATUSLEVEL_INPROGRESS=20;
-    public static final int STATUSLEVEL_ERROR=30;
-    public static final int STATUSLEVEL_SUCCESS=10;
     
     public static final String API_STATUS_PENDING="PENDING";
     public static final String API_STATUS_SENDING="SENDING";

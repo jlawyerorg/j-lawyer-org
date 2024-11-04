@@ -666,7 +666,8 @@ package com.jdimension.jlawyer.services;
 import com.jdimension.jlawyer.drebis.*;
 import com.jdimension.jlawyer.persistence.*;
 import com.jdimension.jlawyer.persistence.utils.StringGenerator;
-import com.jdimension.jlawyer.security.Crypto;
+import com.jdimension.jlawyer.security.CachingCrypto;
+import com.jdimension.jlawyer.security.CryptoProvider;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Date;
@@ -718,8 +719,9 @@ public class DrebisService implements DrebisServiceRemote, DrebisServiceLocal {
         String techPwd=this.settingsFacade.find("jlawyer.server.drebis.techpwd").getSettingValue();
         
         try {
-            techUser=Crypto.decrypt(techUser);
-            techPwd=Crypto.decrypt(techPwd);
+            CachingCrypto crypto=CryptoProvider.newCrypto();
+            techUser=crypto.decrypt(techUser);
+            techPwd=crypto.decrypt(techPwd);
         
         } catch (Exception ex) {
             log.error(ex);

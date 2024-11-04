@@ -683,7 +683,12 @@ public interface AddressBeanFacadeLocal {
 
     List<AddressBean> findAll();
     List<AddressBean> findAllWithReferences();
-    AddressBean findByExternalId(String externalId);
+    AddressBean findByAnyExternalId(String externalId);
+    AddressBean findByExternalId1(String externalId);
+    AddressBean findByExternalId2(String externalId);
+    AddressBean findByExternalId3(String externalId);
+    AddressBean findByExternalId4(String externalId);
+    AddressBean findByExternalId5(String externalId);
 
     List<AddressBean> findRange(int[] range);
 

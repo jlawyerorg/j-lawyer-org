@@ -663,6 +663,9 @@ For more information on this, and how to apply and follow the GNU AGPL, see
  */
 package com.jdimension.jlawyer.services;
 
+import com.jdimension.jlawyer.persistence.Timesheet;
+import com.jdimension.jlawyer.persistence.TimesheetAllowedPositionTpl;
+import com.jdimension.jlawyer.persistence.TimesheetFacadeLocal;
 import com.jdimension.jlawyer.persistence.TimesheetPositionTemplate;
 import com.jdimension.jlawyer.persistence.TimesheetPositionTemplateFacadeLocal;
 import com.jdimension.jlawyer.persistence.utils.StringGenerator;
@@ -671,6 +674,9 @@ import java.util.List;
 import javax.annotation.security.RolesAllowed;
 import javax.ejb.EJB;
 import javax.ejb.Stateless;
+import com.jdimension.jlawyer.persistence.TimesheetAllowedPositionTplFacadeLocal;
+import java.util.ArrayList;
+import java.util.stream.Collectors;
 
 /**
  *
@@ -681,6 +687,12 @@ public class TimesheetService implements TimesheetServiceRemote {
     
     @EJB
     private TimesheetPositionTemplateFacadeLocal posTemplates;
+    
+    @EJB
+    private TimesheetAllowedPositionTplFacadeLocal posTemplatesAllowed;
+    
+    @EJB
+    private TimesheetFacadeLocal timesheets;
 
     @Override
     @RolesAllowed({"adminRole"})
@@ -719,6 +731,51 @@ public class TimesheetService implements TimesheetServiceRemote {
     @RolesAllowed({"adminRole"})
     public void removeTimesheetPositionTemplate(TimesheetPositionTemplate tpl) {
         this.posTemplates.remove(tpl);
+    }
+
+    @Override
+    @RolesAllowed({"readArchiveFileRole"})
+    public List<TimesheetPositionTemplate> getPositionTemplatesForTimesheet(String timesheetId) throws Exception {
+        Timesheet timesheet=this.timesheets.find(timesheetId);
+        if(timesheet==null)
+            throw new Exception("Zeiterfassungsprojekt kann nicht gefunden werden!");
+        
+        List<TimesheetAllowedPositionTpl> allowedTemplates = this.posTemplatesAllowed.findByTimesheet(timesheetId);
+        List<String> allowedTemplateIds = allowedTemplates.stream()
+                .map(TimesheetAllowedPositionTpl::getPositionTemplateId)
+                .collect(Collectors.toList());
+        
+        if(allowedTemplateIds.isEmpty())
+            return new ArrayList<>();
+        else
+            return this.posTemplates.findByMultipleIds(allowedTemplateIds);
+    }
+
+    @Override
+    @RolesAllowed({"writeArchiveFileRole"})
+    public void setPositionTemplatesForTimesheet(String timesheetId, List<TimesheetPositionTemplate> positionTemplates) throws Exception {
+        Timesheet timesheet=this.timesheets.find(timesheetId);
+        if(timesheet==null)
+            throw new Exception("Zeiterfassungsprojekt kann nicht gefunden werden!");
+        
+        List<TimesheetAllowedPositionTpl> currentAllowed=this.posTemplatesAllowed.findByTimesheet(timesheetId);
+        for(TimesheetAllowedPositionTpl t: currentAllowed) {
+            this.posTemplatesAllowed.remove(t);
+        }
+        
+        for(TimesheetPositionTemplate t: positionTemplates) {
+            TimesheetAllowedPositionTpl newAllowed=new TimesheetAllowedPositionTpl();
+            
+            StringGenerator idGen = new StringGenerator();
+            String newId = idGen.getID().toString();
+            newAllowed.setId(newId);
+            
+            newAllowed.setPositionTemplateId(t.getId());
+            newAllowed.setTimesheetId(timesheetId);
+            
+            this.posTemplatesAllowed.create(newAllowed);
+        }
+        
     }
 
 }

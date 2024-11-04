@@ -681,6 +681,9 @@ import com.jdimension.jlawyer.client.settings.UserSettings;
 import com.jdimension.jlawyer.client.utils.ComponentUtils;
 import com.jdimension.jlawyer.client.utils.FileUtils;
 import com.jdimension.jlawyer.client.utils.FrameUtils;
+import com.jdimension.jlawyer.client.utils.StringUtils;
+import com.jdimension.jlawyer.client.voip.EpostSetPasswordDialog;
+import com.jdimension.jlawyer.client.voip.EpostVendorIdRequestDialog;
 import com.jdimension.jlawyer.fax.SipUser;
 import com.jdimension.jlawyer.persistence.CalendarAccess;
 import com.jdimension.jlawyer.persistence.CalendarSetup;
@@ -690,7 +693,7 @@ import com.jdimension.jlawyer.persistence.InvoicePool;
 import com.jdimension.jlawyer.persistence.InvoicePoolAccess;
 import com.jdimension.jlawyer.persistence.MailboxAccess;
 import com.jdimension.jlawyer.persistence.MailboxSetup;
-import com.jdimension.jlawyer.security.Crypto;
+import com.jdimension.jlawyer.security.CryptoProvider;
 import com.jdimension.jlawyer.server.utils.ServerStringUtils;
 import com.jdimension.jlawyer.services.SecurityServiceRemote;
 import java.awt.Point;
@@ -703,6 +706,8 @@ import java.util.Hashtable;
 import javax.swing.DefaultComboBoxModel;
 import javax.swing.JFileChooser;
 import javax.swing.table.DefaultTableModel;
+import org.jlawyer.invoicing.CountryCode;
+import org.jlawyer.invoicing.CountryCodes;
 
 /**
  *
@@ -718,12 +723,18 @@ public class UserAdministrationDialog extends javax.swing.JDialog {
 
     /**
      * Creates new form OptionGroupConfigurationDialog
+     *
      * @param parent
      * @param modal
      */
     public UserAdministrationDialog(java.awt.Frame parent, boolean modal) {
         super(parent, modal);
         initComponents();
+
+        DefaultComboBoxModel<CountryCode> countriesModel = new DefaultComboBoxModel<>();
+        countriesModel.addAll(CountryCodes.getCountryCodes());
+        this.cmbCountryCodeInvoicing.setModel(countriesModel);
+
         this.lstUsers.setCellRenderer(new UserListCellRenderer());
         UserListModel m = new UserListModel();
         this.lstUsers.setModel(m);
@@ -732,11 +743,7 @@ public class UserAdministrationDialog extends javax.swing.JDialog {
         try {
             JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
 
-            SystemManagementRemote mgmt = locator.lookupSystemManagementRemote();
-            List<AppUserBean> allUsers = mgmt.getUsers();
-            for (AppUserBean u : allUsers) {
-                m.addElement(u);
-            }
+            this.populateUsersList(this.chkShowExternalUsers.isSelected());
 
             CalendarUtils cu = CalendarUtils.getInstance();
             this.countries = cu.getCountryCodes();
@@ -768,7 +775,7 @@ public class UserAdministrationDialog extends javax.swing.JDialog {
                 ((DefaultTableModel) this.tblCalendars.getModel()).addRow(new Object[]{true, cs});
             }
             ComponentUtils.autoSizeColumns(tblCalendars);
-            
+
             String[] colNames6 = new String[]{"", "Nummernkreise"};
             GroupMembershipsTableModel model4 = new GroupMembershipsTableModel(colNames6, 0);
             this.tblInvoicePools.setModel(model4);
@@ -792,6 +799,38 @@ public class UserAdministrationDialog extends javax.swing.JDialog {
             JOptionPane.showMessageDialog(this, ex.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
         }
 
+        this.updateEpostStatus();
+
+    }
+
+    private void populateUsersList(boolean includeExternalUsers) throws Exception {
+        ClientSettings settings = ClientSettings.getInstance();
+        JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
+        UserListModel m = (UserListModel) this.lstUsers.getModel();
+        m.clear();
+        SystemManagementRemote mgmt = locator.lookupSystemManagementRemote();
+        List<AppUserBean> allUsers = mgmt.getUsers();
+        for (AppUserBean u : allUsers) {
+            if (StringUtils.isEmpty(u.getExternalId())) {
+                // internal users are always displayed
+                m.addElement(u);
+            } else {
+                if (includeExternalUsers) {
+                    m.addElement(u);
+                }
+            }
+        }
+    }
+
+    private void updateEpostStatus() {
+        String encryptedVendorId = ServerSettings.getInstance().getSetting(ServerSettings.SERVERCONF_EPOSTVENDORID_ENCRYPTED, "");
+        if ("".equalsIgnoreCase(encryptedVendorId)) {
+            this.lblEpostRegistered.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/warning.png")));
+            this.lblEpostRegistered.setText("inaktiv");
+        } else {
+            this.lblEpostRegistered.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/agt_action_success.png")));
+            this.lblEpostRegistered.setText("freigeschaltet");
+        }
     }
 
     /**
@@ -814,6 +853,50 @@ public class UserAdministrationDialog extends javax.swing.JDialog {
         cmdSave = new javax.swing.JButton();
         jLabel1 = new javax.swing.JLabel();
         jTabbedPane1 = new javax.swing.JTabbedPane();
+        jPanel14 = new javax.swing.JPanel();
+        jLabel27 = new javax.swing.JLabel();
+        jLabel13 = new javax.swing.JLabel();
+        txtEmail = new javax.swing.JTextField();
+        txtDisplayName = new javax.swing.JTextField();
+        chkLawyer = new javax.swing.JCheckBox();
+        txtFirstName = new javax.swing.JTextField();
+        jLabel14 = new javax.swing.JLabel();
+        txtName = new javax.swing.JTextField();
+        jLabel17 = new javax.swing.JLabel();
+        txtCompany = new javax.swing.JTextField();
+        jLabel23 = new javax.swing.JLabel();
+        txtRole = new javax.swing.JTextField();
+        jLabel24 = new javax.swing.JLabel();
+        txtStreet = new javax.swing.JTextField();
+        jLabel28 = new javax.swing.JLabel();
+        txtAdjunct = new javax.swing.JTextField();
+        jLabel29 = new javax.swing.JLabel();
+        txtZipCode = new javax.swing.JTextField();
+        txtCity = new javax.swing.JTextField();
+        jLabel30 = new javax.swing.JLabel();
+        jLabel31 = new javax.swing.JLabel();
+        cmbCountryCodeInvoicing = new javax.swing.JComboBox<>();
+        jLabel32 = new javax.swing.JLabel();
+        jSeparator3 = new javax.swing.JSeparator();
+        txtPhone = new javax.swing.JTextField();
+        jLabel33 = new javax.swing.JLabel();
+        txtFax = new javax.swing.JTextField();
+        jLabel34 = new javax.swing.JLabel();
+        txtMobile = new javax.swing.JTextField();
+        jLabel35 = new javax.swing.JLabel();
+        txtWebsite = new javax.swing.JTextField();
+        jLabel36 = new javax.swing.JLabel();
+        txtBank = new javax.swing.JTextField();
+        jLabel37 = new javax.swing.JLabel();
+        txtBic = new javax.swing.JTextField();
+        jLabel38 = new javax.swing.JLabel();
+        txtIban = new javax.swing.JTextField();
+        jLabel39 = new javax.swing.JLabel();
+        txtTaxNr = new javax.swing.JTextField();
+        jLabel40 = new javax.swing.JLabel();
+        txtUstId = new javax.swing.JTextField();
+        jLabel41 = new javax.swing.JLabel();
+        cmdPopulateFromCompanyProfile = new javax.swing.JButton();
         jPanel5 = new javax.swing.JPanel();
         jPanel1 = new javax.swing.JPanel();
         chkLogin = new javax.swing.JCheckBox();
@@ -833,12 +916,10 @@ public class UserAdministrationDialog extends javax.swing.JDialog {
         chkWriteOption = new javax.swing.JCheckBox();
         chkCreateOption = new javax.swing.JCheckBox();
         chkRemoveOption = new javax.swing.JCheckBox();
-        chkLawyer = new javax.swing.JCheckBox();
-        jLabel27 = new javax.swing.JLabel();
-        txtDisplayName = new javax.swing.JTextField();
         jPanel13 = new javax.swing.JPanel();
         chkReportCommon = new javax.swing.JCheckBox();
         chkReportConfidential = new javax.swing.JCheckBox();
+        chkAutoLockDocuments = new javax.swing.JCheckBox();
         jPanel6 = new javax.swing.JPanel();
         jLabel3 = new javax.swing.JLabel();
         jLabel4 = new javax.swing.JLabel();
@@ -874,6 +955,19 @@ public class UserAdministrationDialog extends javax.swing.JDialog {
         cmbVoipId = new javax.swing.JComboBox<>();
         cmdGetVoipIds = new javax.swing.JButton();
         jLabel6 = new javax.swing.JLabel();
+        jSeparator1 = new javax.swing.JSeparator();
+        txtEpostCustomer = new javax.swing.JTextField();
+        txtEpostSecret = new javax.swing.JTextField();
+        jLabel8 = new javax.swing.JLabel();
+        jLabel9 = new javax.swing.JLabel();
+        jLabel10 = new javax.swing.JLabel();
+        jLabel11 = new javax.swing.JLabel();
+        jLabel12 = new javax.swing.JLabel();
+        pwdEpostPassword = new javax.swing.JPasswordField();
+        jSeparator2 = new javax.swing.JSeparator();
+        lblEpostRegistered = new javax.swing.JLabel();
+        cmdRegisterEpost = new javax.swing.JButton();
+        cmdSetEpostPassword = new javax.swing.JButton();
         jPanel9 = new javax.swing.JPanel();
         jLabel18 = new javax.swing.JLabel();
         cmbPrimaryGroup = new javax.swing.JComboBox<>();
@@ -886,6 +980,7 @@ public class UserAdministrationDialog extends javax.swing.JDialog {
         jLabel7 = new javax.swing.JLabel();
         jScrollPane3 = new javax.swing.JScrollPane();
         tblInvoicePools = new javax.swing.JTable();
+        chkShowExternalUsers = new javax.swing.JCheckBox();
 
         mnuDelete.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/editdelete.png"))); // NOI18N
         mnuDelete.setText("Löschen");
@@ -958,6 +1053,215 @@ public class UserAdministrationDialog extends javax.swing.JDialog {
         jLabel1.setText("Nutzername:");
 
         jTabbedPane1.setFont(jTabbedPane1.getFont());
+
+        jLabel27.setText("Anzeigename:");
+
+        jLabel13.setText("E-Mail:");
+
+        chkLawyer.setText("Nutzer ist Anwalt");
+
+        jLabel14.setText("Vorname:");
+
+        jLabel17.setText("Name:");
+
+        jLabel23.setText("Unternehmen:");
+
+        jLabel24.setText("Funktion:");
+
+        jLabel28.setText("Strasse:");
+
+        jLabel29.setText("Adresszusatz:");
+
+        jLabel30.setText("PLZ:");
+
+        jLabel31.setText("Ort:");
+
+        jLabel32.setText("Ländercode:");
+
+        jSeparator3.setOrientation(javax.swing.SwingConstants.VERTICAL);
+
+        jLabel33.setText("Telefon:");
+
+        jLabel34.setText("Telefax:");
+
+        jLabel35.setText("Mobil:");
+
+        jLabel36.setText("www:");
+
+        jLabel37.setText("Bank:");
+
+        jLabel38.setText("BIC:");
+
+        jLabel39.setText("IBAN:");
+
+        jLabel40.setText("Steuernummer:");
+
+        jLabel41.setText("USt-ID-Nr.:");
+
+        cmdPopulateFromCompanyProfile.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/agt_home.png"))); // NOI18N
+        cmdPopulateFromCompanyProfile.setToolTipText("Daten aus Kanzleiprofil übernehmen");
+        cmdPopulateFromCompanyProfile.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                cmdPopulateFromCompanyProfileActionPerformed(evt);
+            }
+        });
+
+        org.jdesktop.layout.GroupLayout jPanel14Layout = new org.jdesktop.layout.GroupLayout(jPanel14);
+        jPanel14.setLayout(jPanel14Layout);
+        jPanel14Layout.setHorizontalGroup(
+            jPanel14Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
+            .add(jPanel14Layout.createSequentialGroup()
+                .addContainerGap()
+                .add(jPanel14Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
+                    .add(jLabel27)
+                    .add(jLabel14)
+                    .add(jLabel17)
+                    .add(jLabel23)
+                    .add(jLabel24)
+                    .add(jLabel28)
+                    .add(jLabel29)
+                    .add(jLabel30)
+                    .add(jLabel31)
+                    .add(jLabel32))
+                .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
+                .add(jPanel14Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING, false)
+                    .add(org.jdesktop.layout.GroupLayout.TRAILING, txtCompany)
+                    .add(txtName)
+                    .add(org.jdesktop.layout.GroupLayout.TRAILING, txtFirstName)
+                    .add(org.jdesktop.layout.GroupLayout.TRAILING, txtDisplayName)
+                    .add(org.jdesktop.layout.GroupLayout.TRAILING, txtRole)
+                    .add(chkLawyer)
+                    .add(txtStreet)
+                    .add(txtAdjunct)
+                    .add(txtZipCode)
+                    .add(txtCity)
+                    .add(cmbCountryCodeInvoicing, 0, 300, Short.MAX_VALUE))
+                .addPreferredGap(org.jdesktop.layout.LayoutStyle.UNRELATED)
+                .add(jSeparator3, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
+                .addPreferredGap(org.jdesktop.layout.LayoutStyle.UNRELATED)
+                .add(jPanel14Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
+                    .add(jLabel13)
+                    .add(jLabel33)
+                    .add(jLabel34)
+                    .add(jLabel35)
+                    .add(jLabel36)
+                    .add(jLabel37)
+                    .add(jLabel38)
+                    .add(jLabel39)
+                    .add(jLabel40)
+                    .add(jLabel41))
+                .addPreferredGap(org.jdesktop.layout.LayoutStyle.UNRELATED)
+                .add(jPanel14Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING, false)
+                    .add(txtTaxNr, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 300, Short.MAX_VALUE)
+                    .add(txtUstId)
+                    .add(txtIban)
+                    .add(txtBic)
+                    .add(txtBank)
+                    .add(txtWebsite)
+                    .add(txtMobile)
+                    .add(txtFax)
+                    .add(txtPhone)
+                    .add(txtEmail))
+                .add(18, 18, 18)
+                .add(cmdPopulateFromCompanyProfile)
+                .addContainerGap(org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+        );
+        jPanel14Layout.setVerticalGroup(
+            jPanel14Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
+            .add(jPanel14Layout.createSequentialGroup()
+                .addContainerGap()
+                .add(jPanel14Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
+                    .add(jPanel14Layout.createSequentialGroup()
+                        .add(jPanel14Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
+                            .add(jPanel14Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.BASELINE)
+                                .add(jLabel27)
+                                .add(txtDisplayName, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE))
+                            .add(org.jdesktop.layout.GroupLayout.TRAILING, jPanel14Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.BASELINE)
+                                .add(txtEmail, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
+                                .add(jLabel13)
+                                .add(cmdPopulateFromCompanyProfile)))
+                        .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
+                        .add(jPanel14Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
+                            .add(jPanel14Layout.createSequentialGroup()
+                                .add(jPanel14Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.BASELINE)
+                                    .add(txtFirstName, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
+                                    .add(jLabel14))
+                                .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
+                                .add(jPanel14Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.BASELINE)
+                                    .add(txtName, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
+                                    .add(jLabel17))
+                                .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
+                                .add(jPanel14Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.BASELINE)
+                                    .add(txtCompany, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
+                                    .add(jLabel23))
+                                .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
+                                .add(jPanel14Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.BASELINE)
+                                    .add(txtRole, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
+                                    .add(jLabel24))
+                                .addPreferredGap(org.jdesktop.layout.LayoutStyle.UNRELATED)
+                                .add(chkLawyer)
+                                .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
+                                .add(jPanel14Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.BASELINE)
+                                    .add(txtStreet, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
+                                    .add(jLabel28))
+                                .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
+                                .add(jPanel14Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.BASELINE)
+                                    .add(txtAdjunct, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
+                                    .add(jLabel29))
+                                .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
+                                .add(jPanel14Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.BASELINE)
+                                    .add(txtZipCode, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
+                                    .add(jLabel30))
+                                .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
+                                .add(jPanel14Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.BASELINE)
+                                    .add(txtCity, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
+                                    .add(jLabel31))
+                                .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
+                                .add(jPanel14Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.BASELINE)
+                                    .add(cmbCountryCodeInvoicing, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
+                                    .add(jLabel32)))
+                            .add(jPanel14Layout.createSequentialGroup()
+                                .add(jPanel14Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.BASELINE)
+                                    .add(txtPhone, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
+                                    .add(jLabel33))
+                                .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
+                                .add(jPanel14Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.BASELINE)
+                                    .add(txtFax, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
+                                    .add(jLabel34))
+                                .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
+                                .add(jPanel14Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.BASELINE)
+                                    .add(txtMobile, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
+                                    .add(jLabel35))
+                                .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
+                                .add(jPanel14Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.BASELINE)
+                                    .add(txtWebsite, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
+                                    .add(jLabel36))
+                                .addPreferredGap(org.jdesktop.layout.LayoutStyle.UNRELATED)
+                                .add(jPanel14Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.BASELINE)
+                                    .add(txtBank, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
+                                    .add(jLabel37))
+                                .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
+                                .add(jPanel14Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.BASELINE)
+                                    .add(txtBic, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
+                                    .add(jLabel38))
+                                .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
+                                .add(jPanel14Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.BASELINE)
+                                    .add(txtIban, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
+                                    .add(jLabel39))
+                                .addPreferredGap(org.jdesktop.layout.LayoutStyle.UNRELATED)
+                                .add(jPanel14Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.BASELINE)
+                                    .add(txtTaxNr, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
+                                    .add(jLabel40))
+                                .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
+                                .add(jPanel14Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.BASELINE)
+                                    .add(txtUstId, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
+                                    .add(jLabel41))))
+                        .add(0, 0, Short.MAX_VALUE))
+                    .add(jSeparator3))
+                .addContainerGap())
+        );
+
+        jTabbedPane1.addTab("Stammdaten", jPanel14);
 
         jPanel1.setBorder(javax.swing.BorderFactory.createTitledBorder("Allgemein"));
         jPanel1.setName(""); // NOI18N
@@ -1085,7 +1389,7 @@ public class UserAdministrationDialog extends javax.swing.JDialog {
                     .add(chkWriteOption)
                     .add(chkCreateOption)
                     .add(chkRemoveOption))
-                .addContainerGap(135, Short.MAX_VALUE))
+                .addContainerGap(org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
         );
         jPanel4Layout.setVerticalGroup(
             jPanel4Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
@@ -1097,10 +1401,6 @@ public class UserAdministrationDialog extends javax.swing.JDialog {
                 .add(chkRemoveOption)
                 .add(0, 0, Short.MAX_VALUE))
         );
-
-        chkLawyer.setText("Nutzer ist Anwalt");
-
-        jLabel27.setText("Anzeigename:");
 
         jPanel13.setBorder(javax.swing.BorderFactory.createTitledBorder("Auswertungen"));
 
@@ -1119,7 +1419,7 @@ public class UserAdministrationDialog extends javax.swing.JDialog {
                 .add(jPanel13Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
                     .add(chkReportCommon)
                     .add(chkReportConfidential))
-                .addContainerGap(112, Short.MAX_VALUE))
+                .addContainerGap(org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
         );
         jPanel13Layout.setVerticalGroup(
             jPanel13Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
@@ -1131,51 +1431,43 @@ public class UserAdministrationDialog extends javax.swing.JDialog {
                 .addContainerGap(org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
         );
 
+        chkAutoLockDocuments.setText("Dokumente bei Bearbeitung automatisch sperren");
+
         org.jdesktop.layout.GroupLayout jPanel5Layout = new org.jdesktop.layout.GroupLayout(jPanel5);
         jPanel5.setLayout(jPanel5Layout);
         jPanel5Layout.setHorizontalGroup(
             jPanel5Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
             .add(jPanel5Layout.createSequentialGroup()
                 .addContainerGap()
-                .add(jPanel5Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
-                    .add(org.jdesktop.layout.GroupLayout.TRAILING, jPanel5Layout.createSequentialGroup()
-                        .add(jLabel27)
+                .add(jPanel5Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.TRAILING, false)
+                    .add(org.jdesktop.layout.GroupLayout.LEADING, jPanel1, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                    .add(org.jdesktop.layout.GroupLayout.LEADING, jPanel5Layout.createSequentialGroup()
+                        .add(jPanel2, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
                         .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
-                        .add(txtDisplayName, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 486, Short.MAX_VALUE)
-                        .add(18, 18, 18)
-                        .add(chkLawyer)
-                        .add(189, 189, 189))
-                    .add(jPanel5Layout.createSequentialGroup()
-                        .add(jPanel5Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.TRAILING, false)
-                            .add(org.jdesktop.layout.GroupLayout.LEADING, jPanel1, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                            .add(org.jdesktop.layout.GroupLayout.LEADING, jPanel5Layout.createSequentialGroup()
-                                .add(jPanel2, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
-                                .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
-                                .add(jPanel3, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)))
-                        .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
-                        .add(jPanel5Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
-                            .add(jPanel4, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
-                            .add(jPanel13, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE))
-                        .addContainerGap(org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))))
+                        .add(jPanel3, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)))
+                .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
+                .add(jPanel5Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING, false)
+                    .add(jPanel13, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                    .add(jPanel4, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                .add(18, 18, 18)
+                .add(chkAutoLockDocuments)
+                .addContainerGap(129, Short.MAX_VALUE))
         );
         jPanel5Layout.setVerticalGroup(
             jPanel5Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
             .add(jPanel5Layout.createSequentialGroup()
                 .addContainerGap()
-                .add(jPanel5Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.BASELINE)
-                    .add(chkLawyer)
-                    .add(jLabel27)
-                    .add(txtDisplayName, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE))
-                .addPreferredGap(org.jdesktop.layout.LayoutStyle.UNRELATED)
                 .add(jPanel5Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
-                    .add(jPanel1, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
-                    .add(jPanel4, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE))
+                    .add(jPanel5Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING, false)
+                        .add(jPanel1, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                        .add(jPanel4, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE))
+                    .add(chkAutoLockDocuments))
                 .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
-                .add(jPanel5Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
-                    .add(jPanel2, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
-                    .add(jPanel3, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
+                .add(jPanel5Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING, false)
+                    .add(jPanel2, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                    .add(jPanel3, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                     .add(jPanel13, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE))
-                .addContainerGap(281, Short.MAX_VALUE))
+                .addContainerGap(106, Short.MAX_VALUE))
         );
 
         jPanel1.getAccessibleContext().setAccessibleName("");
@@ -1255,8 +1547,8 @@ public class UserAdministrationDialog extends javax.swing.JDialog {
                 .add(jPanel6Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
                     .add(jPanel6Layout.createSequentialGroup()
                         .add(jLabel21)
-                        .add(0, 430, Short.MAX_VALUE))
-                    .add(jScrollPane5))
+                        .add(0, 0, Short.MAX_VALUE))
+                    .add(jScrollPane5, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 0, Short.MAX_VALUE))
                 .addContainerGap())
         );
 
@@ -1306,7 +1598,7 @@ public class UserAdministrationDialog extends javax.swing.JDialog {
             .add(jPanel7Layout.createSequentialGroup()
                 .addContainerGap()
                 .add(jPanel7Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
-                    .add(jScrollPane6, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 517, Short.MAX_VALUE)
+                    .add(jScrollPane6, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 0, Short.MAX_VALUE)
                     .add(jPanel7Layout.createSequentialGroup()
                         .add(jLabel22)
                         .add(0, 0, Short.MAX_VALUE)))
@@ -1412,7 +1704,7 @@ public class UserAdministrationDialog extends javax.swing.JDialog {
                     .add(jPanel10Layout.createSequentialGroup()
                         .add(pnlCloudConnection, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
                         .add(18, 18, 18)
-                        .add(nextcloudTeaserPanel1, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 486, Short.MAX_VALUE)))
+                        .add(nextcloudTeaserPanel1, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 486, Short.MAX_VALUE)))
                 .addContainerGap())
         );
         jPanel10Layout.setVerticalGroup(
@@ -1424,15 +1716,16 @@ public class UserAdministrationDialog extends javax.swing.JDialog {
                     .add(pnlCloudConnection, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE))
                 .add(18, 18, 18)
                 .add(jLabel5)
-                .addContainerGap(339, Short.MAX_VALUE))
+                .addContainerGap(org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
         );
 
         jTabbedPane1.addTab("Nextcloud", jPanel10);
 
-        jLabel2.setText("Sipgate-Token-ID:");
+        jLabel2.setText("Token-ID:");
 
-        jLabel25.setText("Sipgate-Token:");
+        jLabel25.setText("Token:");
 
+        jLabel26.setHorizontalAlignment(javax.swing.SwingConstants.CENTER);
         jLabel26.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/info.png"))); // NOI18N
         jLabel26.setText("Änderung erfordert Neustart des j-lawyer.org Clients");
 
@@ -1444,7 +1737,40 @@ public class UserAdministrationDialog extends javax.swing.JDialog {
             }
         });
 
-        jLabel6.setText("Sipgate-Nutzer:");
+        jLabel6.setText("Nutzer:");
+
+        jLabel8.setFont(jLabel8.getFont());
+        jLabel8.setText("Kundennummer:");
+
+        jLabel9.setFont(jLabel9.getFont().deriveFont(jLabel9.getFont().getStyle() | java.awt.Font.BOLD));
+        jLabel9.setText("Sipgate");
+
+        jLabel10.setFont(jLabel10.getFont().deriveFont(jLabel10.getFont().getStyle() | java.awt.Font.BOLD));
+        jLabel10.setText("E-POST");
+
+        jLabel11.setFont(jLabel11.getFont());
+        jLabel11.setText("Passwort:");
+
+        jLabel12.setFont(jLabel12.getFont());
+        jLabel12.setText("Secret:");
+
+        lblEpostRegistered.setText("jLabel13");
+
+        cmdRegisterEpost.setText("Freischalten");
+        cmdRegisterEpost.setToolTipText("E-POST freischalten / Freischaltcode zurücksetzen");
+        cmdRegisterEpost.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                cmdRegisterEpostActionPerformed(evt);
+            }
+        });
+
+        cmdSetEpostPassword.setText("Erstellen");
+        cmdSetEpostPassword.setToolTipText("Erstellen eines neuen oder Zurücksetzen eines vorhandenen Passwortes.\nSie benötigen Kundennnummer und das Mobiltelefon, \ndas Sie bei Anmeldung bei der Deutschen Post angegeben haben.");
+        cmdSetEpostPassword.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                cmdSetEpostPasswordActionPerformed(evt);
+            }
+        });
 
         org.jdesktop.layout.GroupLayout jPanel11Layout = new org.jdesktop.layout.GroupLayout(jPanel11);
         jPanel11.setLayout(jPanel11Layout);
@@ -1453,26 +1779,50 @@ public class UserAdministrationDialog extends javax.swing.JDialog {
             .add(jPanel11Layout.createSequentialGroup()
                 .addContainerGap()
                 .add(jPanel11Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
-                    .add(jLabel2)
-                    .add(jLabel25)
-                    .add(jLabel6))
-                .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
-                .add(jPanel11Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
+                    .add(org.jdesktop.layout.GroupLayout.TRAILING, jSeparator2)
+                    .add(org.jdesktop.layout.GroupLayout.TRAILING, jSeparator1)
                     .add(jPanel11Layout.createSequentialGroup()
-                        .add(cmbVoipId, 0, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                        .add(jPanel11Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
+                            .add(jLabel2)
+                            .add(jLabel25)
+                            .add(jLabel6))
                         .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
-                        .add(cmdGetVoipIds))
+                        .add(jPanel11Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
+                            .add(jPanel11Layout.createSequentialGroup()
+                                .add(cmbVoipId, 0, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                                .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
+                                .add(cmdGetVoipIds))
+                            .add(txtVoipUser)
+                            .add(txtVoipPassword)))
+                    .add(jLabel26, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 930, Short.MAX_VALUE)
                     .add(jPanel11Layout.createSequentialGroup()
-                        .add(jLabel26)
-                        .add(0, 417, Short.MAX_VALUE))
-                    .add(txtVoipUser)
-                    .add(txtVoipPassword))
+                        .add(jPanel11Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
+                            .add(jLabel8)
+                            .add(jLabel11)
+                            .add(jLabel12)
+                            .add(jLabel9)
+                            .add(jLabel10))
+                        .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
+                        .add(jPanel11Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
+                            .add(txtEpostSecret)
+                            .add(txtEpostCustomer)
+                            .add(jPanel11Layout.createSequentialGroup()
+                                .add(lblEpostRegistered)
+                                .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
+                                .add(cmdRegisterEpost)
+                                .add(0, 0, Short.MAX_VALUE))
+                            .add(jPanel11Layout.createSequentialGroup()
+                                .add(pwdEpostPassword)
+                                .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
+                                .add(cmdSetEpostPassword)))))
                 .addContainerGap())
         );
         jPanel11Layout.setVerticalGroup(
             jPanel11Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
             .add(jPanel11Layout.createSequentialGroup()
                 .addContainerGap()
+                .add(jLabel9)
+                .addPreferredGap(org.jdesktop.layout.LayoutStyle.UNRELATED)
                 .add(jPanel11Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.BASELINE)
                     .add(jLabel2)
                     .add(txtVoipUser, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE))
@@ -1486,12 +1836,34 @@ public class UserAdministrationDialog extends javax.swing.JDialog {
                     .add(jPanel11Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.BASELINE)
                         .add(cmbVoipId, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
                         .add(jLabel6)))
-                .add(18, 18, 18)
+                .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
+                .add(jSeparator1, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 10, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
+                .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
+                .add(jPanel11Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.BASELINE)
+                    .add(jLabel10)
+                    .add(lblEpostRegistered)
+                    .add(cmdRegisterEpost))
+                .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
+                .add(jPanel11Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.BASELINE)
+                    .add(txtEpostCustomer, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
+                    .add(jLabel8))
+                .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
+                .add(jPanel11Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.BASELINE)
+                    .add(jLabel11)
+                    .add(pwdEpostPassword, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
+                    .add(cmdSetEpostPassword))
+                .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
+                .add(jPanel11Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.BASELINE)
+                    .add(txtEpostSecret, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
+                    .add(jLabel12))
+                .addPreferredGap(org.jdesktop.layout.LayoutStyle.UNRELATED)
+                .add(jSeparator2, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 10, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
+                .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
                 .add(jLabel26)
-                .addContainerGap(407, Short.MAX_VALUE))
+                .addContainerGap(org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
         );
 
-        jTabbedPane1.addTab("Sipgate", jPanel11);
+        jTabbedPane1.addTab("Sipgate / E-POST", jPanel11);
 
         jLabel18.setText("Primäre Gruppe:");
 
@@ -1566,8 +1938,8 @@ public class UserAdministrationDialog extends javax.swing.JDialog {
                 .add(jPanel9Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
                     .add(jPanel9Layout.createSequentialGroup()
                         .add(jLabel19)
-                        .add(0, 435, Short.MAX_VALUE))
-                    .add(jScrollPane4))
+                        .add(0, 0, Short.MAX_VALUE))
+                    .add(jScrollPane4, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 0, Short.MAX_VALUE))
                 .addContainerGap())
         );
 
@@ -1620,11 +1992,18 @@ public class UserAdministrationDialog extends javax.swing.JDialog {
                     .add(jPanel12Layout.createSequentialGroup()
                         .add(jLabel7)
                         .add(0, 0, Short.MAX_VALUE))
-                    .add(jScrollPane3, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 519, Short.MAX_VALUE))
+                    .add(jScrollPane3, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 0, Short.MAX_VALUE))
                 .addContainerGap())
         );
 
         jTabbedPane1.addTab("Belege", jPanel12);
+
+        chkShowExternalUsers.setText("Nutzer aus externen System anzeigen");
+        chkShowExternalUsers.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                chkShowExternalUsersActionPerformed(evt);
+            }
+        });
 
         org.jdesktop.layout.GroupLayout layout = new org.jdesktop.layout.GroupLayout(getContentPane());
         getContentPane().setLayout(layout);
@@ -1634,6 +2013,11 @@ public class UserAdministrationDialog extends javax.swing.JDialog {
                 .addContainerGap()
                 .add(layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
                     .add(jTabbedPane1)
+                    .add(org.jdesktop.layout.GroupLayout.TRAILING, layout.createSequentialGroup()
+                        .add(0, 0, Short.MAX_VALUE)
+                        .add(cmdSave)
+                        .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
+                        .add(cmdClose))
                     .add(layout.createSequentialGroup()
                         .add(layout.createParallelGroup(org.jdesktop.layout.GroupLayout.TRAILING)
                             .add(cmdAdd)
@@ -1642,12 +2026,11 @@ public class UserAdministrationDialog extends javax.swing.JDialog {
                                 .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
                                 .add(txtUser, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 216, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)))
                         .add(18, 18, 18)
-                        .add(jScrollPane1))
-                    .add(org.jdesktop.layout.GroupLayout.TRAILING, layout.createSequentialGroup()
-                        .add(0, 0, Short.MAX_VALUE)
-                        .add(cmdSave)
-                        .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
-                        .add(cmdClose)))
+                        .add(layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
+                            .add(layout.createSequentialGroup()
+                                .add(chkShowExternalUsers)
+                                .add(0, 0, Short.MAX_VALUE))
+                            .add(jScrollPane1))))
                 .addContainerGap())
         );
         layout.setVerticalGroup(
@@ -1663,7 +2046,9 @@ public class UserAdministrationDialog extends javax.swing.JDialog {
                         .add(cmdAdd))
                     .add(jScrollPane1, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 137, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE))
                 .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
-                .add(jTabbedPane1, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 570, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
+                .add(chkShowExternalUsers)
+                .addPreferredGap(org.jdesktop.layout.LayoutStyle.UNRELATED)
+                .add(jTabbedPane1, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
                 .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                 .add(layout.createParallelGroup(org.jdesktop.layout.GroupLayout.BASELINE)
                     .add(cmdClose)
@@ -1745,6 +2130,7 @@ public class UserAdministrationDialog extends javax.swing.JDialog {
             newUser.setLawyer(true);
             newUser.setCloudPort(443);
             newUser.setCloudSsl(true);
+            newUser.setCountryCodeInvoicing(CountryCodes.getDefaultCountry().getCode());
 
             ((UserListModel) this.lstUsers.getModel()).addElement(newUser);
             this.lstUsers.setSelectedIndex(this.lstUsers.getMaxSelectionIndex());
@@ -1766,6 +2152,30 @@ public class UserAdministrationDialog extends javax.swing.JDialog {
         this.txtVoipPassword.setText("");
         this.txtVoipUser.setText("");
         this.txtDisplayName.setText("");
+        this.txtEpostCustomer.setText("");
+        this.pwdEpostPassword.setText("");
+        this.txtEpostSecret.setText("");
+        this.txtEmail.setText("");
+
+        txtFirstName.setText("");
+        txtName.setText("");
+        txtCompany.setText("");
+        txtRole.setText("");
+        txtStreet.setText("");
+        txtAdjunct.setText("");
+        txtZipCode.setText("");
+        txtCity.setText("");
+        cmbCountryCodeInvoicing.setSelectedItem(CountryCodes.getDefaultCountry());
+        txtPhone.setText("");
+        txtFax.setText("");
+        txtMobile.setText("");
+        txtWebsite.setText("");
+        txtBank.setText("");
+        txtBic.setText("");
+        txtIban.setText("");
+        txtTaxNr.setText("");
+        txtUstId.setText("");
+
         this.txtUser.requestFocus();
     }//GEN-LAST:event_cmdAddActionPerformed
 
@@ -1819,6 +2229,7 @@ public class UserAdministrationDialog extends javax.swing.JDialog {
                 List<AppRoleBean> roles = mgmt.getRoles(u.getPrincipalId());
                 this.setRoles(roles);
                 this.chkLawyer.setSelected(u.isLawyer());
+                this.chkAutoLockDocuments.setSelected(u.isAutoLockDocuments());
 
                 CalendarUtils cu = CalendarUtils.getInstance();
                 String countryId = null;
@@ -1847,35 +2258,72 @@ public class UserAdministrationDialog extends javax.swing.JDialog {
                 this.pnlCloudConnection.setCloudPort(u.getCloudPort());
                 this.pnlCloudConnection.setCloudUser(u.getCloudUser());
                 this.pnlCloudConnection.setCloudPassword("");
-                if(u.getCloudPassword()!=null && !"".equals(u.getCloudPassword()))
-                    this.pnlCloudConnection.setCloudPassword(Crypto.decrypt(u.getCloudPassword()));
+                if (u.getCloudPassword() != null && !"".equals(u.getCloudPassword())) {
+                    this.pnlCloudConnection.setCloudPassword(CryptoProvider.defaultCrypto().decrypt(u.getCloudPassword()));
+                }
                 this.pnlCloudConnection.setSsl(u.isCloudSsl());
 
                 this.txtVoipPassword.setText(u.getVoipPassword());
                 this.txtVoipUser.setText(u.getVoipUser());
                 this.cmbVoipId.removeAllItems();
                 try {
-                    if(!ServerStringUtils.isEmpty(u.getVoipUser()) && !ServerStringUtils.isEmpty(u.getVoipPassword())) {
-                    String voipId=u.getVoipId();
-                    List<SipUser> voipUsers = locator.lookupVoipServiceRemote().getUsers(u.getVoipUser(), u.getVoipPassword());
-                    
-                    SipUser selectedVoipUser=null;
-                    for(SipUser su: voipUsers) {
-                        if(selectedVoipUser==null)
-                            selectedVoipUser=su;
-                        ((DefaultComboBoxModel) this.cmbVoipId.getModel()).addElement(su);
-                        if(su.getId().equals(voipId)) {
-                            selectedVoipUser=su;
+                    if (!ServerStringUtils.isEmpty(u.getVoipUser()) && !ServerStringUtils.isEmpty(u.getVoipPassword())) {
+                        String voipId = u.getVoipId();
+                        List<SipUser> voipUsers = locator.lookupVoipServiceRemote().getUsers(u.getVoipUser(), u.getVoipPassword());
+
+                        SipUser selectedVoipUser = null;
+                        for (SipUser su : voipUsers) {
+                            if (selectedVoipUser == null) {
+                                selectedVoipUser = su;
+                            }
+                            ((DefaultComboBoxModel) this.cmbVoipId.getModel()).addElement(su);
+                            if (su.getId().equals(voipId)) {
+                                selectedVoipUser = su;
+                            }
                         }
-                    }
-                    this.cmbVoipId.setSelectedItem(selectedVoipUser);
+                        this.cmbVoipId.setSelectedItem(selectedVoipUser);
                     }
                 } catch (Exception ex) {
                     log.error("Error connecting to server", ex);
                     JOptionPane.showMessageDialog(this, ex.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
                 }
 
+                this.txtEpostCustomer.setText(u.getEpostCustomer());
+                this.txtEpostSecret.setText(u.getEpostSecret());
+                try {
+                    this.pwdEpostPassword.setText(CryptoProvider.defaultCrypto().decrypt(u.getEpostPassword()));
+                } catch (Throwable t) {
+                    log.warn("Unable to decrypt E-POST password, might be empty", t);
+                    this.pwdEpostPassword.setText("");
+                }
+
                 this.txtDisplayName.setText(u.getDisplayName());
+                this.txtEmail.setText(u.getEmail());
+
+                txtFirstName.setText(u.getFirstName());
+                txtName.setText(u.getName());
+                txtCompany.setText(u.getCompany());
+                txtRole.setText(u.getRole());
+                txtStreet.setText(u.getStreet());
+                txtAdjunct.setText(u.getAdjunct());
+                txtZipCode.setText(u.getZipCode());
+                txtCity.setText(u.getCity());
+
+                String cc=u.getCountryCodeInvoicing();
+                if(cc==null)
+                    cc=CountryCodes.getDefaultCountry().getCode();
+                CountryCode selectedCc = new CountryCode(cc, "dummy");
+                cmbCountryCodeInvoicing.setSelectedItem(selectedCc);
+
+                txtPhone.setText(u.getPhone());
+                txtFax.setText(u.getFax());
+                txtMobile.setText(u.getMobile());
+                txtWebsite.setText(u.getWebsite());
+                txtBank.setText(u.getBankName());
+                txtBic.setText(u.getBankBic());
+                txtIban.setText(u.getBankIban());
+                txtTaxNr.setText(u.getTaxNr());
+                txtUstId.setText(u.getTaxVatId());
 
                 if (u.isBeaCertificateAutoLogin()) {
                     this.rdAutoLogin.setSelected(true);
@@ -1885,7 +2333,7 @@ public class UserAdministrationDialog extends javax.swing.JDialog {
                     this.rdManualLogin.setSelected(true);
                 }
                 try {
-                    this.pwdBeaCertificatePassword.setText(Crypto.decrypt(u.getBeaCertificatePassword()));
+                    this.pwdBeaCertificatePassword.setText(CryptoProvider.defaultCrypto().decrypt(u.getBeaCertificatePassword()));
                 } catch (Throwable t) {
                     log.warn("Unable to decrypt beA certificate password, might be empty", t);
                     this.pwdBeaCertificatePassword.setText("");
@@ -1896,7 +2344,7 @@ public class UserAdministrationDialog extends javax.swing.JDialog {
                     this.taBeaCertificate.setText("kein Zertifikat hinterlegt");
                 } else {
                     this.taBeaCertificate.setText("");
-                    Hashtable ht = BeaAccess.getCertificateInformation(u.getBeaCertificate(), Crypto.decrypt(u.getBeaCertificatePassword()));
+                    Hashtable ht = BeaAccess.getCertificateInformation(u.getBeaCertificate(), CryptoProvider.defaultCrypto().decrypt(u.getBeaCertificatePassword()));
                     for (Object key : ht.keySet()) {
                         this.taBeaCertificate.setText(this.taBeaCertificate.getText() + key.toString() + ": " + ht.get(key).toString() + System.getProperty("line.separator"));
                     }
@@ -1925,7 +2373,7 @@ public class UserAdministrationDialog extends javax.swing.JDialog {
                         }
                     }
                 }
-                
+
                 List<InvoicePoolAccess> invoicePools = locator.lookupSecurityServiceRemote().getInvoicePoolAccessForUser(u.getPrincipalId());
                 for (int i = 0; i < this.tblInvoicePools.getRowCount(); i++) {
                     InvoicePool ip = (InvoicePool) this.tblInvoicePools.getValueAt(i, 1);
@@ -1954,6 +2402,60 @@ public class UserAdministrationDialog extends javax.swing.JDialog {
                 log.error("Error connecting to server", ex);
                 JOptionPane.showMessageDialog(this, ex.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
             }
+        } else {
+            this.chkLawyer.setSelected(false);
+            this.chkAutoLockDocuments.setSelected(true);
+            this.cmbCountry.setSelectedIndex(0);
+            this.cmbArea.setSelectedIndex(0);
+            this.txtAbbreviation.setText("");
+            this.cmbPrimaryGroup.setSelectedIndex(0);
+
+            this.pnlCloudConnection.setCloudHost("");
+            this.pnlCloudConnection.setCloudPath("");
+            this.pnlCloudConnection.setCloudPort(443);
+            this.pnlCloudConnection.setCloudUser("");
+            this.pnlCloudConnection.setCloudPassword("");
+            this.pnlCloudConnection.setSsl(true);
+
+            this.txtVoipPassword.setText("");
+            this.txtVoipUser.setText("");
+            this.cmbVoipId.removeAllItems();
+
+            this.txtEpostCustomer.setText("");
+            this.txtEpostSecret.setText("");
+
+            this.pwdEpostPassword.setText("");
+
+            this.txtDisplayName.setText("");
+            this.txtEmail.setText("");
+
+            this.rdAutoLogin.setSelected(false);
+            this.rdManualLogin.setSelected(true);
+
+            this.pwdBeaCertificatePassword.setText("");
+            this.currentCertificate = null;
+
+            this.taBeaCertificate.setText("");
+
+            txtFirstName.setText("");
+            txtName.setText("");
+            txtCompany.setText("");
+            txtRole.setText("");
+            txtStreet.setText("");
+            txtAdjunct.setText("");
+            txtZipCode.setText("");
+            txtCity.setText("");
+            cmbCountryCodeInvoicing.setSelectedItem(CountryCodes.getDefaultCountry());
+            txtPhone.setText("");
+            txtFax.setText("");
+            txtMobile.setText("");
+            txtWebsite.setText("");
+            txtBank.setText("");
+            txtBic.setText("");
+            txtIban.setText("");
+            txtTaxNr.setText("");
+            txtUstId.setText("");
+
         }
     }//GEN-LAST:event_lstUsersValueChanged
 
@@ -1984,6 +2486,7 @@ public class UserAdministrationDialog extends javax.swing.JDialog {
             AppUserBean u = (AppUserBean) this.lstUsers.getSelectedValue();
             if (u != null) {
                 u.setLawyer(this.chkLawyer.isSelected());
+                u.setAutoLockDocuments(this.chkAutoLockDocuments.isSelected());
                 u.setAbbreviation(this.txtAbbreviation.getText());
                 u.setPrimaryGroup(null);
                 if (this.cmbPrimaryGroup.getSelectedItem() instanceof Group) {
@@ -2017,7 +2520,7 @@ public class UserAdministrationDialog extends javax.swing.JDialog {
                 u.setCountryCode(countryId);
 
                 u.setBeaCertificate(this.currentCertificate);
-                u.setBeaCertificatePassword(Crypto.encrypt(this.pwdBeaCertificatePassword.getText().trim()));
+                u.setBeaCertificatePassword(CryptoProvider.defaultCrypto().encrypt(this.pwdBeaCertificatePassword.getText().trim()));
                 u.setBeaCertificateAutoLogin(this.rdAutoLogin.isSelected());
 
                 u.setCloudHost(this.pnlCloudConnection.getCloudHost());
@@ -2035,33 +2538,56 @@ public class UserAdministrationDialog extends javax.swing.JDialog {
                     }
                 }
                 u.setCloudPath(cloudPath);
-                if(this.pnlCloudConnection.getCloudPassword().length()>0) {
-                    u.setCloudPassword(Crypto.encrypt(this.pnlCloudConnection.getCloudPassword()));
+                if (this.pnlCloudConnection.getCloudPassword().length() > 0) {
+                    u.setCloudPassword(CryptoProvider.defaultCrypto().encrypt(this.pnlCloudConnection.getCloudPassword()));
                 } else {
                     u.setCloudPassword(null);
                 }
-                
+
                 u.setCloudPort(this.pnlCloudConnection.getCloudPort());
                 u.setCloudSsl(this.pnlCloudConnection.isSsl());
                 u.setCloudUser(this.pnlCloudConnection.getCloudUser());
 
                 u.setVoipPassword(this.txtVoipPassword.getText());
                 u.setVoipUser(this.txtVoipUser.getText());
-                if(this.cmbVoipId.getSelectedItem()!=null) {
-                    SipUser su=(SipUser)this.cmbVoipId.getSelectedItem();
+                if (this.cmbVoipId.getSelectedItem() != null) {
+                    SipUser su = (SipUser) this.cmbVoipId.getSelectedItem();
                     u.setVoipId(su.getId());
                 }
 
+                u.setEpostCustomer(this.txtEpostCustomer.getText());
+                u.setEpostPassword(CryptoProvider.defaultCrypto().encrypt(this.pwdEpostPassword.getText().trim()));
+                u.setEpostSecret(this.txtEpostSecret.getText());
+
                 u.setDisplayName(this.txtDisplayName.getText());
+                u.setEmail(this.txtEmail.getText().trim());
+
+                u.setFirstName(txtFirstName.getText());
+                u.setName(txtName.getText());
+                u.setCompany(txtCompany.getText());
+                u.setRole(txtRole.getText());
+                u.setStreet(txtStreet.getText());
+                u.setAdjunct(txtAdjunct.getText());
+                u.setZipCode(txtZipCode.getText());
+                u.setCity(txtCity.getText());
+
+                u.setCountryCodeInvoicing(((CountryCode) cmbCountryCodeInvoicing.getSelectedItem()).getCode());
+
+                u.setPhone(txtPhone.getText());
+                u.setFax(txtFax.getText());
+                u.setMobile(txtMobile.getText());
+                u.setWebsite(txtWebsite.getText());
+                u.setBankName(txtBank.getText());
+                u.setBankBic(txtBic.getText());
+                u.setBankIban(txtIban.getText());
+                u.setTaxNr(txtTaxNr.getText());
+                u.setTaxVatId(txtUstId.getText());
 
                 AppUserBean newUser = mgmt.updateUser(u, this.getRolesFromUI(u.getPrincipalId()));
                 ((UserListModel) this.lstUsers.getModel()).set(this.lstUsers.getSelectedIndex(), newUser);
 
-                // if the user edited his own settings, put it into ClientSettings
-                // e.g. do not require a restart when the signature has been edited
-                if (UserSettings.getInstance().getCurrentUser().getPrincipalId().equals(newUser.getPrincipalId())) {
-                    UserSettings.getInstance().setCurrentUser(newUser);
-                }
+                // do not require a restart when the user has been edited                
+                UserSettings.getInstance().applyChangedUser(newUser);
             }
 
         } catch (Exception ex) {
@@ -2069,6 +2595,7 @@ public class UserAdministrationDialog extends javax.swing.JDialog {
             JOptionPane.showMessageDialog(this, ex.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
             return;
         }
+        
         this.txtUser.setText("");
 
         this.pwdBeaCertificatePassword.setText("");
@@ -2089,7 +2616,31 @@ public class UserAdministrationDialog extends javax.swing.JDialog {
         this.txtVoipUser.setText("");
         this.cmbVoipId.removeAllItems();
 
+        this.txtEpostCustomer.setText("");
+        this.pwdEpostPassword.setText("");
+        this.txtEpostSecret.setText("");
+
         this.txtDisplayName.setText("");
+        this.txtEmail.setText("");
+
+        txtFirstName.setText("");
+        txtName.setText("");
+        txtCompany.setText("");
+        txtRole.setText("");
+        txtStreet.setText("");
+        txtAdjunct.setText("");
+        txtZipCode.setText("");
+        txtCity.setText("");
+        cmbCountryCodeInvoicing.setSelectedItem(CountryCodes.getDefaultCountry());
+        txtPhone.setText("");
+        txtFax.setText("");
+        txtMobile.setText("");
+        txtWebsite.setText("");
+        txtBank.setText("");
+        txtBic.setText("");
+        txtIban.setText("");
+        txtTaxNr.setText("");
+        txtUstId.setText("");
 
         this.txtUser.requestFocus();
     }//GEN-LAST:event_cmdSaveActionPerformed
@@ -2412,6 +2963,62 @@ public class UserAdministrationDialog extends javax.swing.JDialog {
         }
     }//GEN-LAST:event_tblInvoicePoolsMouseClicked
 
+    private void cmdRegisterEpostActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdRegisterEpostActionPerformed
+        EpostVendorIdRequestDialog dlg = new EpostVendorIdRequestDialog(this, true);
+        FrameUtils.centerDialog(dlg, this);
+        dlg.setVisible(true);
+
+        this.updateEpostStatus();
+    }//GEN-LAST:event_cmdRegisterEpostActionPerformed
+
+    private void cmdSetEpostPasswordActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdSetEpostPasswordActionPerformed
+        AppUserBean u = (AppUserBean) this.lstUsers.getSelectedValue();
+        if (u == null) {
+            JOptionPane.showMessageDialog(this, "Es muss ein Nutzer ausgewählt sein", com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_WARNING, JOptionPane.WARNING_MESSAGE);
+            return;
+        }
+
+        EpostSetPasswordDialog dlg = new EpostSetPasswordDialog(this, true, this.txtEpostCustomer.getText());
+        FrameUtils.centerDialog(dlg, this);
+        dlg.setVisible(true);
+
+        if (dlg.getCustomerNo() != null && dlg.getSecret() != null && dlg.getPassword() != null) {
+            this.txtEpostCustomer.setText(dlg.getCustomerNo());
+            this.txtEpostSecret.setText(dlg.getSecret());
+            this.pwdEpostPassword.setText(dlg.getPassword());
+        }
+
+    }//GEN-LAST:event_cmdSetEpostPasswordActionPerformed
+
+    private void chkShowExternalUsersActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_chkShowExternalUsersActionPerformed
+        try {
+            this.populateUsersList(this.chkShowExternalUsers.isSelected());
+        } catch (Exception ex) {
+            log.error("Error loading users", ex);
+            JOptionPane.showMessageDialog(this, ex.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
+        }
+    }//GEN-LAST:event_chkShowExternalUsersActionPerformed
+
+    private void cmdPopulateFromCompanyProfileActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdPopulateFromCompanyProfileActionPerformed
+        ServerSettings set=ServerSettings.getInstance();
+        this.txtCity.setText(set.getSetting(ServerSettings.PROFILE_COMPANYCITY, ""));
+        this.txtEmail.setText(set.getSetting(ServerSettings.PROFILE_COMPANYEMAIL, ""));
+        this.txtFax.setText(set.getSetting(ServerSettings.PROFILE_COMPANYFAX, ""));
+        this.txtMobile.setText(set.getSetting(ServerSettings.PROFILE_COMPANYMOBILE, ""));
+        this.txtCompany.setText(set.getSetting(ServerSettings.PROFILE_COMPANYNAME, ""));
+        this.txtPhone.setText(set.getSetting(ServerSettings.PROFILE_COMPANYPHONE, ""));
+        this.txtStreet.setText(set.getSetting(ServerSettings.PROFILE_COMPANYSTREET, ""));
+        this.txtAdjunct.setText(set.getSetting(ServerSettings.PROFILE_COMPANYSTREET2, ""));
+        this.txtWebsite.setText(set.getSetting(ServerSettings.PROFILE_COMPANYWWW, ""));
+        this.txtZipCode.setText(set.getSetting(ServerSettings.PROFILE_COMPANYZIP, ""));
+        
+        this.txtTaxNr.setText(set.getSetting(ServerSettings.PROFILE_COMPANYTAXID, ""));
+        this.txtUstId.setText(set.getSetting(ServerSettings.PROFILE_COMPANYUSTID, ""));
+        this.txtBank.setText(set.getSetting(ServerSettings.PROFILE_COMPANYBANK, ""));
+        this.txtBic.setText(set.getSetting(ServerSettings.PROFILE_COMPANYBANKCODE, ""));
+        this.txtIban.setText(set.getSetting(ServerSettings.PROFILE_COMPANYACCOUNTNO, ""));
+    }//GEN-LAST:event_cmdPopulateFromCompanyProfileActionPerformed
+
     private List<AppRoleBean> getRolesFromUI(String principalId) {
         List<AppRoleBean> result = new ArrayList<>();
 
@@ -2526,7 +3133,7 @@ public class UserAdministrationDialog extends javax.swing.JDialog {
             r8.setRoleGroup("Roles");
             result.add(r8);
         }
-        
+
         if (this.chkReportCommon.isSelected()) {
             AppRoleBean r = new AppRoleBean();
             r.setPrincipalId(principalId);
@@ -2534,7 +3141,7 @@ public class UserAdministrationDialog extends javax.swing.JDialog {
             r.setRoleGroup("Roles");
             result.add(r);
         }
-        
+
         if (this.chkReportConfidential.isSelected()) {
             AppRoleBean r = new AppRoleBean();
             r.setPrincipalId(principalId);
@@ -2664,6 +3271,7 @@ public class UserAdministrationDialog extends javax.swing.JDialog {
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.ButtonGroup btGrpAutoLogin;
     private javax.swing.JCheckBox chkAdmin;
+    private javax.swing.JCheckBox chkAutoLockDocuments;
     private javax.swing.JCheckBox chkCreateAddress;
     private javax.swing.JCheckBox chkCreateFile;
     private javax.swing.JCheckBox chkCreateOption;
@@ -2677,41 +3285,71 @@ public class UserAdministrationDialog extends javax.swing.JDialog {
     private javax.swing.JCheckBox chkRemoveOption;
     private javax.swing.JCheckBox chkReportCommon;
     private javax.swing.JCheckBox chkReportConfidential;
+    private javax.swing.JCheckBox chkShowExternalUsers;
     private javax.swing.JCheckBox chkWriteAddress;
     private javax.swing.JCheckBox chkWriteFile;
     private javax.swing.JCheckBox chkWriteOption;
     private javax.swing.JComboBox cmbArea;
     private javax.swing.JComboBox cmbCountry;
+    private javax.swing.JComboBox<CountryCode> cmbCountryCodeInvoicing;
     private javax.swing.JComboBox<String> cmbPrimaryGroup;
     private javax.swing.JComboBox<String> cmbVoipId;
     private javax.swing.JButton cmdAdd;
     private javax.swing.JButton cmdClose;
     private javax.swing.JButton cmdGetVoipIds;
+    private javax.swing.JButton cmdPopulateFromCompanyProfile;
+    private javax.swing.JButton cmdRegisterEpost;
     private javax.swing.JButton cmdRemoveCertificate;
     private javax.swing.JButton cmdSave;
     private javax.swing.JButton cmdSelectCertificate;
+    private javax.swing.JButton cmdSetEpostPassword;
     private javax.swing.JLabel jLabel1;
+    private javax.swing.JLabel jLabel10;
+    private javax.swing.JLabel jLabel11;
+    private javax.swing.JLabel jLabel12;
+    private javax.swing.JLabel jLabel13;
+    private javax.swing.JLabel jLabel14;
     private javax.swing.JLabel jLabel15;
     private javax.swing.JLabel jLabel16;
+    private javax.swing.JLabel jLabel17;
     private javax.swing.JLabel jLabel18;
     private javax.swing.JLabel jLabel19;
     private javax.swing.JLabel jLabel2;
     private javax.swing.JLabel jLabel20;
     private javax.swing.JLabel jLabel21;
     private javax.swing.JLabel jLabel22;
+    private javax.swing.JLabel jLabel23;
+    private javax.swing.JLabel jLabel24;
     private javax.swing.JLabel jLabel25;
     private javax.swing.JLabel jLabel26;
     private javax.swing.JLabel jLabel27;
+    private javax.swing.JLabel jLabel28;
+    private javax.swing.JLabel jLabel29;
     private javax.swing.JLabel jLabel3;
+    private javax.swing.JLabel jLabel30;
+    private javax.swing.JLabel jLabel31;
+    private javax.swing.JLabel jLabel32;
+    private javax.swing.JLabel jLabel33;
+    private javax.swing.JLabel jLabel34;
+    private javax.swing.JLabel jLabel35;
+    private javax.swing.JLabel jLabel36;
+    private javax.swing.JLabel jLabel37;
+    private javax.swing.JLabel jLabel38;
+    private javax.swing.JLabel jLabel39;
     private javax.swing.JLabel jLabel4;
+    private javax.swing.JLabel jLabel40;
+    private javax.swing.JLabel jLabel41;
     private javax.swing.JLabel jLabel5;
     private javax.swing.JLabel jLabel6;
     private javax.swing.JLabel jLabel7;
+    private javax.swing.JLabel jLabel8;
+    private javax.swing.JLabel jLabel9;
     private javax.swing.JPanel jPanel1;
     private javax.swing.JPanel jPanel10;
     private javax.swing.JPanel jPanel11;
     private javax.swing.JPanel jPanel12;
     private javax.swing.JPanel jPanel13;
+    private javax.swing.JPanel jPanel14;
     private javax.swing.JPanel jPanel2;
     private javax.swing.JPanel jPanel3;
     private javax.swing.JPanel jPanel4;
@@ -2726,7 +3364,11 @@ public class UserAdministrationDialog extends javax.swing.JDialog {
     private javax.swing.JScrollPane jScrollPane4;
     private javax.swing.JScrollPane jScrollPane5;
     private javax.swing.JScrollPane jScrollPane6;
+    private javax.swing.JSeparator jSeparator1;
+    private javax.swing.JSeparator jSeparator2;
+    private javax.swing.JSeparator jSeparator3;
     private javax.swing.JTabbedPane jTabbedPane1;
+    private javax.swing.JLabel lblEpostRegistered;
     private javax.swing.JList lstUsers;
     private javax.swing.JMenuItem mnuDelete;
     private javax.swing.JMenuItem mnuUpdatePassword;
@@ -2734,6 +3376,7 @@ public class UserAdministrationDialog extends javax.swing.JDialog {
     private com.jdimension.jlawyer.client.configuration.NextcloudConnectionPanel pnlCloudConnection;
     private javax.swing.JPopupMenu popDelete;
     private javax.swing.JPasswordField pwdBeaCertificatePassword;
+    private javax.swing.JPasswordField pwdEpostPassword;
     private javax.swing.JRadioButton rdAutoLogin;
     private javax.swing.JRadioButton rdManualLogin;
     private javax.swing.JTextArea taBeaCertificate;
@@ -2742,10 +3385,30 @@ public class UserAdministrationDialog extends javax.swing.JDialog {
     private javax.swing.JTable tblInvoicePools;
     private javax.swing.JTable tblMailboxes;
     private javax.swing.JTextField txtAbbreviation;
+    private javax.swing.JTextField txtAdjunct;
+    private javax.swing.JTextField txtBank;
+    private javax.swing.JTextField txtBic;
+    private javax.swing.JTextField txtCity;
+    private javax.swing.JTextField txtCompany;
     private javax.swing.JTextField txtDisplayName;
+    private javax.swing.JTextField txtEmail;
+    private javax.swing.JTextField txtEpostCustomer;
+    private javax.swing.JTextField txtEpostSecret;
+    private javax.swing.JTextField txtFax;
+    private javax.swing.JTextField txtFirstName;
+    private javax.swing.JTextField txtIban;
+    private javax.swing.JTextField txtMobile;
+    private javax.swing.JTextField txtName;
+    private javax.swing.JTextField txtPhone;
+    private javax.swing.JTextField txtRole;
+    private javax.swing.JTextField txtStreet;
+    private javax.swing.JTextField txtTaxNr;
     private javax.swing.JTextField txtUser;
+    private javax.swing.JTextField txtUstId;
     private javax.swing.JTextField txtVoipPassword;
     private javax.swing.JTextField txtVoipUser;
+    private javax.swing.JTextField txtWebsite;
+    private javax.swing.JTextField txtZipCode;
     // End of variables declaration//GEN-END:variables
 
 }

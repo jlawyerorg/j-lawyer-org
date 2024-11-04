@@ -667,7 +667,7 @@ import com.jdimension.jlawyer.client.processing.*;
 import com.jdimension.jlawyer.client.settings.UserSettings;
 import com.jdimension.jlawyer.client.utils.ThreadUtils;
 import com.jdimension.jlawyer.persistence.AppUserBean;
-import com.jdimension.jlawyer.security.Crypto;
+import com.jdimension.jlawyer.security.CryptoProvider;
 import java.awt.Color;
 import javax.swing.JDialog;
 import javax.swing.JFrame;
@@ -941,7 +941,7 @@ public class BeaLoginDialog extends javax.swing.JDialog {
                     lblCertLogin.setText("Verbinde zum beA... einloggen...");
                     
                     AppUserBean cu = UserSettings.getInstance().getCurrentUser();
-                    BeaAccess bea = BeaAccess.getInstance(cu.getBeaCertificate(), Crypto.decrypt(cu.getBeaCertificatePassword()));
+                    BeaAccess bea = BeaAccess.getInstance(cu.getBeaCertificate(), CryptoProvider.defaultCrypto().decrypt(cu.getBeaCertificatePassword()));
                     bea.login();
                     lblCertLogin.setText("Verbinde zum beA... laden...");
                     if (callback != null) {

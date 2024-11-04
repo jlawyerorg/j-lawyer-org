@@ -705,6 +705,7 @@ public class OptionGroupConfigurationDialog extends javax.swing.JDialog {
      * Creates new form OptionGroupConfigurationDialog
      * @param parent
      * @param modal
+     * @param validatorMode
      */
     public OptionGroupConfigurationDialog(java.awt.Frame parent, boolean modal, int validatorMode) {
         super(parent, modal);

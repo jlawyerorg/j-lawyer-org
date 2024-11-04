@@ -680,22 +680,19 @@ public class IdentityPanel extends javax.swing.JPanel {
     }
     
     public void setIdentity(Identity i) {
-        
-//        result.setTitle(getIdentityDataResponse.getIdentity().getTitle());
-//                          result.setStreet(getIdentityDataResponse.getIdentity().getStreet());
-//                          result.setStreetNumber(getIdentityDataResponse.getIdentity().getStreetnumber());
-//                      result.setFederalState(getIdentityDataResponse.getIdentity().getFederalState());
-//                      result.setCountry(getIdentityDataResponse.getIdentity().getCountry());
-//            result.setEmail(getIdentityDataResponse.getIdentity().getEmail());
-//            result.setPhone(getIdentityDataResponse.getIdentity().getPhone());
-//            result.setMobile(getIdentityDataResponse.getIdentity().getMobile());
-//            result.setFax(getIdentityDataResponse.getIdentity().getFax());
-//            result.setOrganization(getIdentityDataResponse.getIdentity().getOrganization());
-//            result.setOrganizationExtension
-        
+                
         this.lblAddress.setText(StringUtils.nonEmpty(i.getStreet()) + " " + StringUtils.nonEmpty(i.getStreetNumber()) + ", " + StringUtils.nonEmpty(i.getCountry()) + " - " + StringUtils.nonEmpty(i.getZipCode()) + " " + StringUtils.nonEmpty(i.getCity()));
         this.lblChamber.setText("Kammer: " + StringUtils.nonEmpty(i.getChamber()) + ", " + StringUtils.nonEmpty(i.getChamberMemberShipId()));
-        this.lblNames.setText(StringUtils.nonEmpty(i.getSurName()) + ", " + StringUtils.nonEmpty(i.getFirstName()) + " (" + StringUtils.nonEmpty(i.getUserName()) + ")");
+        
+        String fullName=StringUtils.nonEmpty(i.getSurName()) + ", " + StringUtils.nonEmpty(i.getFirstName()) + " (" + StringUtils.nonEmpty(i.getUserName()) + ")";
+        if(fullName.length()<150) {
+            this.lblNames.setText(fullName);
+            this.lblNames.setToolTipText(null);
+        } else {
+            this.lblNames.setText(fullName.substring(0,149));
+            this.lblNames.setToolTipText(fullName);
+        }
+        
         this.lblSafeId.setText(i.getSafeId());
         this.lblState.setText("Status: " + i.getStatus());
         this.lblType.setText(i.getType());

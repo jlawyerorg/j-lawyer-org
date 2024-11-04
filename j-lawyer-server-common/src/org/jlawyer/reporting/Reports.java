@@ -685,4 +685,10 @@ public class Reports {
     
     public static final String RPT_CASES_BYSIZE="cases.bysize";
     
+    public static final String RPT_REVENUE_BYCUSTOMER="revenue.bycustomer";
+    
+    public static final String RPT_ACCOUNTS_ESCROW="accounts.escrow";
+    public static final String RPT_ACCOUNTS_EARNINGS="accounts.earnings";
+    public static final String RPT_ACCOUNTS_BOOKINGS="accounts.bookings";
+    
 }

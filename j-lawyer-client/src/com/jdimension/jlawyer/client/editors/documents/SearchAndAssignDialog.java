@@ -761,6 +761,16 @@ public class SearchAndAssignDialog extends javax.swing.JDialog implements Progre
         this.initialize();
 
     }
+    
+    public void setCancelButtonCaption(String caption, String tooltipText) {
+        this.cmdCancel.setText(caption);
+        this.cmdCancel.setToolTipText(tooltipText);
+    }
+    
+    public void setConfirmButtonCaption(String caption, String tooltipText) {
+        this.cmdUseSelection.setText(caption);
+        this.cmdUseSelection.setToolTipText(tooltipText);
+    }
 
     private void initialize() {
         ComponentUtils.decorateSplitPane(this.split);
@@ -832,13 +842,13 @@ public class SearchAndAssignDialog extends javax.swing.JDialog implements Progre
 
                 // matching entries at the top
                 for (ArchiveFileBean a : contextMatches) {
-                    Object[] row = new Object[]{new QuickArchiveFileSearchRowIdentifier(a), a.getDateCreated(), a.getName(), a.getReason(), a.getArchivedBoolean(), a.getDateArchived(), a.getLawyer(), a.getAssistant()};
+                    Object[] row = new Object[]{new QuickArchiveFileSearchRowIdentifier(a), a.getDateCreated(), a.getName(), a.getReason(), a.isArchived(), a.getDateArchived(), a.getLawyer(), a.getAssistant()};
                     model.addRow(row);
                 }
 
                 // last changed follow
                 for (ArchiveFileBean a : lastChanged) {
-                    Object[] row = new Object[]{new QuickArchiveFileSearchRowIdentifier(a), a.getDateCreated(), a.getName(), a.getReason(), a.getArchivedBoolean(), a.getDateArchived(), a.getLawyer(), a.getAssistant()};
+                    Object[] row = new Object[]{new QuickArchiveFileSearchRowIdentifier(a), a.getDateCreated(), a.getName(), a.getReason(), a.isArchived(), a.getDateArchived(), a.getLawyer(), a.getAssistant()};
                     model.addRow(row);
                 }
             } else {
@@ -851,7 +861,7 @@ public class SearchAndAssignDialog extends javax.swing.JDialog implements Progre
 
                 ArchiveFileBean forcedCase = fileService.getArchiveFile(forceCaseId);
                 if (forcedCase != null) {
-                    Object[] row = new Object[]{new QuickArchiveFileSearchRowIdentifier(forcedCase), forcedCase.getDateCreated(), forcedCase.getName(), forcedCase.getReason(), forcedCase.getArchivedBoolean(), forcedCase.getDateArchived(), forcedCase.getLawyer(), forcedCase.getAssistant()};
+                    Object[] row = new Object[]{new QuickArchiveFileSearchRowIdentifier(forcedCase), forcedCase.getDateCreated(), forcedCase.getName(), forcedCase.getReason(), forcedCase.isArchived(), forcedCase.getDateArchived(), forcedCase.getLawyer(), forcedCase.getAssistant()};
                     model.addRow(row);
                 }
             }

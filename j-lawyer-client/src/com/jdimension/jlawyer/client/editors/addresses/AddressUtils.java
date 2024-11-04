@@ -674,7 +674,7 @@ import java.awt.datatransfer.StringSelection;
  */
 public class AddressUtils {
     
-    public static void copyToClipboard(String company, String department, String titleInAddress, String degreePrefix, String firstName, String name, String degreeSuffix, String street, String streetNr, String adjunct, String zipCode, String city, String district, String country) {
+    public static void copyToClipboard(String company, String department, String titleInAddress, String degreePrefix, String firstName, String firstName2, String name, String degreeSuffix, String street, String streetNr, String adjunct, String zipCode, String city, String district, String country) {
         StringBuilder sb = new StringBuilder();
         if (!StringUtils.isEmpty(company)) {
             sb.append(company).append(System.lineSeparator());
@@ -694,6 +694,10 @@ public class AddressUtils {
 
         if (!StringUtils.isEmpty(firstName)) {
             sb.append(firstName).append(" ");
+        }
+        
+        if (!StringUtils.isEmpty(firstName2)) {
+            sb.append(firstName2).append(" ");
         }
 
         if (!StringUtils.isEmpty(name)) {

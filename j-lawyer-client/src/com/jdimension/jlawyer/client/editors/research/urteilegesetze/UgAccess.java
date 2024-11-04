@@ -663,36 +663,26 @@
  */
 package com.jdimension.jlawyer.client.editors.research.urteilegesetze;
 
-import java.util.ArrayList;
-import javax.ws.rs.client.Client;
-import javax.ws.rs.client.WebTarget;
-import org.jboss.logging.Logger;
-import org.json.simple.JsonArray;
-import org.json.simple.JsonKey;
-import org.json.simple.JsonObject;
-import org.json.simple.Jsoner;
-
 /**
  *
  * @author jens
  */
 public class UgAccess {
-    
-    public static final int SEARCHTYPE_ALL=10;
-    public static final int SEARCHTYPE_GESETZE=20;
-    public static final int SEARCHTYPE_URTEILE=30;
-    
-    private static final Logger log=Logger.getLogger(UgAccess.class.getName());
 
+    public static final int SEARCHTYPE_ALL = 10;
+    public static final int SEARCHTYPE_GESETZE = 20;
+    public static final int SEARCHTYPE_URTEILE = 30;
+
+//    private static final Logger log=Logger.getLogger(UgAccess.class.getName());
+//
     private static UgAccess instance = null;
-    private Client client = null;
-    private WebTarget webTarget = null;
+//    private Client client = null;
+//    private WebTarget webTarget = null;
 
     private UgAccess() {
-        String BASE_URI = "https://urteile-gesetze.de/extapi/v1/";
-        client = javax.ws.rs.client.ClientBuilder.newClient();
-        //WebTarget webTarget = client.target(BASE_URI).path("restws");
-        webTarget = client.target(BASE_URI);
+//        String BASE_URI = "https://urteile-gesetze.de/extapi/v1/";
+//        client = javax.ws.rs.client.ClientBuilder.newClient();
+//        webTarget = client.target(BASE_URI);
     }
 
     public static synchronized UgAccess getInstance() {
@@ -703,79 +693,80 @@ public class UgAccess {
     }
 
     public UgSearchResult search(String query, int searchType) throws Exception {
-        
-        query=query.replaceAll("\"", "");
 
-        try {
-            UgSearchResult searchResult=new UgSearchResult();
-            String jsonQuery="{\"query\":\"" + query + "\", \"referer\":\"j-lawyer\", \"filter\": {\"categories\":[\"rechtsprechung\", \"gesetze\"]}}";
-            if(searchType==SEARCHTYPE_GESETZE) {
-                jsonQuery="{\"query\":\"" + query + "\", \"referer\":\"j-lawyer\", \"filter\": {\"categories\":[\"gesetze\"]}}";
-            } else if(searchType==SEARCHTYPE_URTEILE) {
-                jsonQuery="{\"query\":\"" + query + "\", \"referer\":\"j-lawyer\", \"filter\": {\"categories\":[\"rechtsprechung\"]}}";
-            }
-            String returnValue = webTarget.request(javax.ws.rs.core.MediaType.APPLICATION_JSON).post(javax.ws.rs.client.Entity.entity(jsonQuery, javax.ws.rs.core.MediaType.APPLICATION_JSON), String.class);
-            ArrayList<UgHit> returnList=new ArrayList<>();
-            Object jsonOutput = Jsoner.deserialize(returnValue);
-            if (jsonOutput instanceof JsonObject) {
-                JsonObject result = (JsonObject) jsonOutput;
-                JsonKey hitCountKey = Jsoner.mintJsonKey("anzahlDerTreffer", null);
-                Integer hitCount = result.getInteger(hitCountKey);
-                searchResult.setNumberOfHits(hitCount);
-                JsonKey hitListLinkKey = Jsoner.mintJsonKey("linkZurTrefferliste", null);
-                String hitListUrl = result.getString(hitListLinkKey);
-                searchResult.setUrl(hitListUrl);
-                JsonKey hitListArrayKey = Jsoner.mintJsonKey("treffer", null);
-                Object hitList = result.getCollection(hitListArrayKey);
-                if (hitList instanceof JsonArray) {
-                    JsonArray hitListArray = (JsonArray) hitList;
-                    for (Object hitObject : hitListArray) {
-                        if (hitObject instanceof JsonObject) {
-                            JsonObject hit = (JsonObject) hitObject;
-                            UgHit ugHit=new UgHit();
-                            //System.out.println("hit: " + hit);
-                            if(hit.get("abkuerzung")!=null)
-                                ugHit.setAbkuerzung(hit.get("abkuerzung").toString());
-                            if(hit.get("beschlussdatum")!=null)
-                                ugHit.setBeschlussDatum(hit.get("beschlussdatum").toString());
-                            if(hit.get("titel")!=null)
-                                ugHit.setTitel(hit.get("titel").toString());
-                            if(hit.get("url")!=null)
-                                ugHit.setUrl(hit.get("url").toString());
-                            if(hit.get("kurzbeschreibung") != null)
-                                ugHit.setKurzbeschreibung(hit.get("kurzbeschreibung").toString());
-                            if ("rechtsprechung".equalsIgnoreCase(hit.get("type").toString())) {
-                                // titel gericht abkuerzung type url aktenzeichen beschlussdatum
-                                ugHit.setType(UgHit.TYPE_RECHTSPRECHUNG);
-                                if(hit.get("aktenzeichen")!=null)
-                                    ugHit.setAktenzeichen(hit.get("aktenzeichen").toString());
-                                if(hit.get("gericht")!=null)
-                                    ugHit.setGericht(hit.get("gericht").toString());
-                            } else if ("gesetz".equalsIgnoreCase(hit.get("type").toString())) {
-                                // titel abkuerzung type url beschlussdatum
-                                ugHit.setType(UgHit.TYPE_GESETZ);
-                                
-                            } else {
-                                log.error("unknown hit type: " + hit.get("type").toString());
-                                throw new Exception("Unbekannter Ergebnistyp: " + hit.get("type").toString());
-                            }
-                            if(ugHit.getTitel()==null) {
-                                ugHit.setTitel("(leer)");
-                            }
-                            returnList.add(ugHit);
-                        }
-                    }
-                }
-                searchResult.setHits(returnList);
-                return searchResult;
-            } else {
-                throw new Exception("Ergebnis ist kein JSON-Dokument!");
-            }
-
-        } catch (Throwable t) {
-            log.error(t);
-            throw new Exception(t);
-        }
+//        query=query.replaceAll("\"", "");
+//
+//        try {
+//            UgSearchResult searchResult=new UgSearchResult();
+//            String jsonQuery="{\"query\":\"" + query + "\", \"referer\":\"j-lawyer\", \"filter\": {\"categories\":[\"rechtsprechung\", \"gesetze\"]}}";
+//            if(searchType==SEARCHTYPE_GESETZE) {
+//                jsonQuery="{\"query\":\"" + query + "\", \"referer\":\"j-lawyer\", \"filter\": {\"categories\":[\"gesetze\"]}}";
+//            } else if(searchType==SEARCHTYPE_URTEILE) {
+//                jsonQuery="{\"query\":\"" + query + "\", \"referer\":\"j-lawyer\", \"filter\": {\"categories\":[\"rechtsprechung\"]}}";
+//            }
+//            String returnValue = webTarget.request(javax.ws.rs.core.MediaType.APPLICATION_JSON).post(javax.ws.rs.client.Entity.entity(jsonQuery, javax.ws.rs.core.MediaType.APPLICATION_JSON), String.class);
+//            ArrayList<UgHit> returnList=new ArrayList<>();
+//            Object jsonOutput = Jsoner.deserialize(returnValue);
+//            if (jsonOutput instanceof JsonObject) {
+//                JsonObject result = (JsonObject) jsonOutput;
+//                JsonKey hitCountKey = Jsoner.mintJsonKey("anzahlDerTreffer", null);
+//                Integer hitCount = result.getInteger(hitCountKey);
+//                searchResult.setNumberOfHits(hitCount);
+//                JsonKey hitListLinkKey = Jsoner.mintJsonKey("linkZurTrefferliste", null);
+//                String hitListUrl = result.getString(hitListLinkKey);
+//                searchResult.setUrl(hitListUrl);
+//                JsonKey hitListArrayKey = Jsoner.mintJsonKey("treffer", null);
+//                Object hitList = result.getCollection(hitListArrayKey);
+//                if (hitList instanceof JsonArray) {
+//                    JsonArray hitListArray = (JsonArray) hitList;
+//                    for (Object hitObject : hitListArray) {
+//                        if (hitObject instanceof JsonObject) {
+//                            JsonObject hit = (JsonObject) hitObject;
+//                            UgHit ugHit=new UgHit();
+//                            //System.out.println("hit: " + hit);
+//                            if(hit.get("abkuerzung")!=null)
+//                                ugHit.setAbkuerzung(hit.get("abkuerzung").toString());
+//                            if(hit.get("beschlussdatum")!=null)
+//                                ugHit.setBeschlussDatum(hit.get("beschlussdatum").toString());
+//                            if(hit.get("titel")!=null)
+//                                ugHit.setTitel(hit.get("titel").toString());
+//                            if(hit.get("url")!=null)
+//                                ugHit.setUrl(hit.get("url").toString());
+//                            if(hit.get("kurzbeschreibung") != null)
+//                                ugHit.setKurzbeschreibung(hit.get("kurzbeschreibung").toString());
+//                            if ("rechtsprechung".equalsIgnoreCase(hit.get("type").toString())) {
+//                                // titel gericht abkuerzung type url aktenzeichen beschlussdatum
+//                                ugHit.setType(UgHit.TYPE_RECHTSPRECHUNG);
+//                                if(hit.get("aktenzeichen")!=null)
+//                                    ugHit.setAktenzeichen(hit.get("aktenzeichen").toString());
+//                                if(hit.get("gericht")!=null)
+//                                    ugHit.setGericht(hit.get("gericht").toString());
+//                            } else if ("gesetz".equalsIgnoreCase(hit.get("type").toString())) {
+//                                // titel abkuerzung type url beschlussdatum
+//                                ugHit.setType(UgHit.TYPE_GESETZ);
+//                                
+//                            } else {
+//                                log.error("unknown hit type: " + hit.get("type").toString());
+//                                throw new Exception("Unbekannter Ergebnistyp: " + hit.get("type").toString());
+//                            }
+//                            if(ugHit.getTitel()==null) {
+//                                ugHit.setTitel("(leer)");
+//                            }
+//                            returnList.add(ugHit);
+//                        }
+//                    }
+//                }
+//                searchResult.setHits(returnList);
+//                return searchResult;
+//            } else {
+//                throw new Exception("Ergebnis ist kein JSON-Dokument!");
+//            }
+//
+//        } catch (Throwable t) {
+//            log.error(t);
+//            throw new Exception(t);
+//        }
+        return null;
 
     }
 

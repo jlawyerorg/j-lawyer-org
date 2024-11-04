@@ -671,6 +671,7 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.Hashtable;
 import java.util.List;
+import java.util.Map;
 import javax.swing.JButton;
 import javax.swing.JCheckBoxMenuItem;
 import javax.swing.JPopupMenu;
@@ -718,7 +719,7 @@ public class TagUtils {
         }
     }
     
-    public static String getTagList(String id, HashMap<String, ArrayList<String>> tags) {
+    public static String getTagList(String id, Map<String, ArrayList<String>> tags) {
         if (tags.containsKey(id)) {
             StringBuilder sb = new StringBuilder();
             ArrayList<String> list = tags.get(id);

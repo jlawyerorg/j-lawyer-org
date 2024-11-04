@@ -1,13 +1,17 @@
 # Use latest jboss/base-jdk:11 image as the base
-FROM jboss/base-jdk:8
+FROM jboss/base-jdk:11
 MAINTAINER j-dimension "info@j-lawyer.org"
 
 # Set the WILDFLY_VERSION env variable
-ENV WILDFLY_VERSION 16.0.0.Final
-ENV WILDFLY_SHA1 287c21b069ec6ecd80472afec01384093ed8eb7d
+ENV WILDFLY_VERSION 26.1.3.Final
+ENV WILDFLY_SHA1 b9f52ba41df890e09bb141d72947d2510caf758c
 ENV JBOSS_HOME /opt/jboss/wildfly
 
 USER root
+
+# https://stackoverflow.com/questions/78692851/could-not-retrieve-mirrorlist-http-mirrorlist-centos-org-release-7arch-x86-6
+RUN sed -i 's/mirrorlist/#mirrorlist/g' /etc/yum.repos.d/CentOS-*
+RUN sed -i 's|#baseurl=http://mirror.centos.org|baseurl=http://vault.centos.org|g' /etc/yum.repos.d/CentOS-*
 
 RUN mkdir -p /opt/jboss/j-lawyer-data/templates
 RUN mkdir -p /opt/jboss/j-lawyer-data/emailtemplates
@@ -15,19 +19,36 @@ RUN mkdir -p /opt/jboss/j-lawyer-data/mastertemplates
 RUN mkdir -p /opt/jboss/j-lawyer-data/archivefiles
 RUN mkdir -p /opt/jboss/j-lawyer-data/searchindex
 RUN mkdir -p /opt/jboss/j-lawyer-data/faxqueue
+RUN mkdir -p /opt/jboss/j-lawyer-data/letterheads
 RUN chmod -R 777 /opt/jboss/j-lawyer-data
 RUN yum -y install mysql
 
 RUN localedef -i en_US -f UTF-8 en_US.UTF-8
 
-# ugly as hell
-# ADD sleep.sh /tmp/sleep.sh
-# RUN chmod +x /tmp/sleep.sh
+
+#RUN yum-config-manager --add-repo https://download.opensuse.org/repositories/home:/Alexander_Pozdnyakov/CentOS_7/
+#RUN rpm --import https://build.opensuse.org/projects/home:Alexander_Pozdnyakov/public_key
+#RUN yum update
+#RUN yum install tesseract 
+#RUN yum install tesseract-langpack-deu
+#
+#RUN yum -y install ghostscript \
+#      icc-profiles-free \
+#      libxml2 \
+#      pngquant \
+#      python3-pip \
+#      liblept5 \
+#      libsm6 libxext6 libxrender-dev \
+#      zlib1g \
+#      pngquant \
+#      python3 \
+#      qpdf \
+#      unpaper
 
 # Add the WildFly distribution to /opt, and make wildfly the owner of the extracted tar content
 # Make sure the distribution is available from a well-known place
 RUN cd $HOME \
-    && curl -O https://download.jboss.org/wildfly/$WILDFLY_VERSION/wildfly-$WILDFLY_VERSION.tar.gz \
+    && curl -LO https://github.com/wildfly/wildfly/releases/download/26.1.3.Final/wildfly-26.1.3.Final.tar.gz \
     && sha1sum wildfly-$WILDFLY_VERSION.tar.gz | grep $WILDFLY_SHA1 \
     && tar xf wildfly-$WILDFLY_VERSION.tar.gz \
     && mv $HOME/wildfly-$WILDFLY_VERSION $JBOSS_HOME \
@@ -53,8 +74,9 @@ ENV LC_ALL=en_US.UTF-8
 COPY j-lawyer-data/ /opt/jboss/j-lawyer-data/
 
 COPY ./standalone.xml /opt/jboss/wildfly/standalone/configuration/standalone.xml
+COPY ./standalone.conf /opt/jboss/wildfly/bin/standalone.conf
 COPY ./j-lawyer-server.ear /opt/jboss/wildfly/standalone/deployments/j-lawyer-server.ear
-COPY ./mysql/main/* /opt/jboss/wildfly/modules/system/layers/base/com/mysql/main/
+COPY ./mysql/driver8/main/* /opt/jboss/wildfly/modules/system/layers/base/com/mysql/driver8/main/
 
 
 # Expose the ports we're interested in

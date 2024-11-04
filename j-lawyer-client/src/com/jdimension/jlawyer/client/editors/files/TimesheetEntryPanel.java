@@ -666,12 +666,11 @@ package com.jdimension.jlawyer.client.editors.files;
 import com.jdimension.jlawyer.client.editors.EditorsRegistry;
 import com.jdimension.jlawyer.client.settings.ClientSettings;
 import com.jdimension.jlawyer.client.utils.FrameUtils;
-import com.jdimension.jlawyer.persistence.AddressBean;
+import com.jdimension.jlawyer.client.utils.TimesheetUtils;
 import com.jdimension.jlawyer.persistence.ArchiveFileBean;
 import com.jdimension.jlawyer.persistence.Timesheet;
 import com.jdimension.jlawyer.services.JLawyerServiceLocator;
 import java.awt.Container;
-import java.util.List;
 import javax.swing.JOptionPane;
 import org.apache.log4j.Logger;
 import themes.colors.DefaultColorTheme;
@@ -689,7 +688,7 @@ public class TimesheetEntryPanel extends javax.swing.JPanel {
     private Timesheet timesheet=null;
 
     /**
-     * Creates new form InvoiceEntryPanel
+     * Creates new form TimesheetEntryPanel
      * @param caseView
      */
     public TimesheetEntryPanel(ArchiveFilePanel caseView) {
@@ -707,10 +706,13 @@ public class TimesheetEntryPanel extends javax.swing.JPanel {
         }
         this.lblName.setText(timesheet.getName());
         this.lblStatus.setText("(" + timesheet.getStatusString() + ")");
-        this.lblDescription.setText(timesheet.getDescription());
-        this.lblDescription.setToolTipText(timesheet.getDescription());
+        this.taDescription.setText(timesheet.getDescription());
+        this.taDescription.setToolTipText(timesheet.getDescription());
+        
+        TimesheetUtils.renderPieChartLabel(pieChart, timesheet);
+        caseView.checkTimesheetLimits();
     }
-
+    
     /**
      * This method is called from within the constructor to initialize the form.
      * WARNING: Do NOT modify this code. The content of this method is always
@@ -723,8 +725,10 @@ public class TimesheetEntryPanel extends javax.swing.JPanel {
         cmdOpen = new javax.swing.JButton();
         lblName = new javax.swing.JLabel();
         lblStatus = new javax.swing.JLabel();
-        lblDescription = new javax.swing.JLabel();
         cmdDelete = new javax.swing.JButton();
+        jScrollPane1 = new javax.swing.JScrollPane();
+        taDescription = new javax.swing.JTextArea();
+        pieChart = new com.jdimension.jlawyer.ui.charts.PieChartLabel();
 
         cmdOpen.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons16/kfind.png"))); // NOI18N
         cmdOpen.setToolTipText("einsehen / bearbeiten");
@@ -742,9 +746,6 @@ public class TimesheetEntryPanel extends javax.swing.JPanel {
         lblStatus.setFont(lblStatus.getFont().deriveFont(lblStatus.getFont().getStyle() | java.awt.Font.BOLD));
         lblStatus.setText("offen");
 
-        lblDescription.setFont(lblDescription.getFont());
-        lblDescription.setText("<Beschreibung>");
-
         cmdDelete.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/editdelete.png"))); // NOI18N
         cmdDelete.setToolTipText("Beleg löschen");
         cmdDelete.addActionListener(new java.awt.event.ActionListener() {
@@ -752,6 +753,15 @@ public class TimesheetEntryPanel extends javax.swing.JPanel {
                 cmdDeleteActionPerformed(evt);
             }
         });
+
+        taDescription.setEditable(false);
+        taDescription.setColumns(20);
+        taDescription.setLineWrap(true);
+        taDescription.setRows(5);
+        taDescription.setWrapStyleWord(true);
+        jScrollPane1.setViewportView(taDescription);
+
+        pieChart.setText("pieChartLabel1");
 
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(this);
         this.setLayout(layout);
@@ -764,45 +774,49 @@ public class TimesheetEntryPanel extends javax.swing.JPanel {
                 .addComponent(cmdDelete)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addComponent(jScrollPane1, javax.swing.GroupLayout.Alignment.TRAILING)
                     .addGroup(layout.createSequentialGroup()
+                        .addComponent(pieChart, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                         .addComponent(lblName)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addComponent(lblStatus))
-                    .addComponent(lblDescription, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
-                .addContainerGap())
+                        .addComponent(lblStatus)
+                        .addContainerGap(180, Short.MAX_VALUE))))
         );
         layout.setVerticalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(layout.createSequentialGroup()
                 .addContainerGap()
-                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addComponent(cmdOpen)
-                    .addComponent(cmdDelete)
-                    .addGroup(layout.createSequentialGroup()
-                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                            .addComponent(lblStatus)
-                            .addComponent(lblName))
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addComponent(lblDescription)))
+                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
+                    .addComponent(lblName, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                    .addComponent(cmdOpen, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                    .addComponent(cmdDelete, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                    .addComponent(lblStatus, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                    .addComponent(pieChart, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addComponent(jScrollPane1, javax.swing.GroupLayout.PREFERRED_SIZE, 75, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addContainerGap())
         );
     }// </editor-fold>//GEN-END:initComponents
 
     private void cmdOpenActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdOpenActionPerformed
         TimesheetDialog dlg=new TimesheetDialog(this.caseView, this.caseDto, EditorsRegistry.getInstance().getMainWindow(), true);
-        dlg.setEntry(this.timesheet);
+        dlg.setEntry(this.getTimesheet());
         FrameUtils.centerDialog(dlg, EditorsRegistry.getInstance().getMainWindow());
         dlg.setVisible(true);
-        this.setEntry(caseDto, dlg.getEntry());
+        if(dlg.getEntry()!=null) {
+            this.setEntry(caseDto, dlg.getEntry());
+            this.caseView.checkTimesheetLimits();
+        }
     }//GEN-LAST:event_cmdOpenActionPerformed
 
     private void cmdDeleteActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdDeleteActionPerformed
-        int response = JOptionPane.showConfirmDialog(this, "Projekt '" + this.timesheet.getName() + "' unwiderruflich löschen?", "Zeiterfassungsprojekt löschen", JOptionPane.YES_NO_OPTION);
+        int response = JOptionPane.showConfirmDialog(this, "Projekt '" + this.getTimesheet().getName() + "' unwiderruflich löschen?", "Zeiterfassungsprojekt löschen", JOptionPane.YES_NO_OPTION);
         if (response == JOptionPane.YES_OPTION) {
             try {
                 ClientSettings settings = ClientSettings.getInstance();
                 JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
-                locator.lookupArchiveFileServiceRemote().removeTimesheet(this.timesheet.getId());
+                locator.lookupArchiveFileServiceRemote().removeTimesheet(this.getTimesheet().getId());
                 Container parent=this.getParent();
                 parent.remove(this);
                 parent.invalidate();
@@ -818,8 +832,17 @@ public class TimesheetEntryPanel extends javax.swing.JPanel {
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JButton cmdDelete;
     private javax.swing.JButton cmdOpen;
-    private javax.swing.JLabel lblDescription;
+    private javax.swing.JScrollPane jScrollPane1;
     private javax.swing.JLabel lblName;
     private javax.swing.JLabel lblStatus;
+    private com.jdimension.jlawyer.ui.charts.PieChartLabel pieChart;
+    private javax.swing.JTextArea taDescription;
     // End of variables declaration//GEN-END:variables
+
+    /**
+     * @return the timesheet
+     */
+    public Timesheet getTimesheet() {
+        return timesheet;
+    }
 }

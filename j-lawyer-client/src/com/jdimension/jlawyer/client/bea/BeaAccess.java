@@ -720,8 +720,8 @@ public class BeaAccess {
     private String beaEnabledVersions=null;
 
     private Collection<PostBox> inboxes = null;
-    private Hashtable<String, Identity> identityCache = new Hashtable<String, Identity>();
-    private Hashtable<String, Folder> importedFolderCache = new Hashtable<String, Folder>();
+    private Hashtable<String, Identity> identityCache = new Hashtable<>();
+    private Hashtable<String, Folder> importedFolderCache = new Hashtable<>();
 
     private PersistentCacheManager cacheManager = null;
     private Cache<String, Message> messageCache = null;
@@ -829,21 +829,18 @@ public class BeaAccess {
                 .build(true);
 
         try {
+            
             this.messageCache = cacheManager.createCache("bea-messages-cache", CacheConfigurationBuilder.newCacheConfigurationBuilder(String.class, Message.class,
-                    ResourcePoolsBuilder.newResourcePoolsBuilder()
-                            .heap(50, MemoryUnit.MB)
-                            .disk(1000, MemoryUnit.MB, true)
-            ).withSizeOfMaxObjectGraph(5000).withExpiry(ExpiryPolicyBuilder.timeToLiveExpiration(Duration.ofSeconds(60l * 60l * 2l))));
+                                        ResourcePoolsBuilder.heap(5).disk(1000, MemoryUnit.MB, true)).withExpiry(ExpiryPolicyBuilder.timeToLiveExpiration(Duration.ofDays(3))).build());
+            
         } catch (Throwable t) {
             log.error(t);
         }
 
         try {
+            
             this.folderOverviewCache = cacheManager.createCache("bea-messageheaders-cache", CacheConfigurationBuilder.newCacheConfigurationBuilder(Long.class, ArrayList.class,
-                    ResourcePoolsBuilder.newResourcePoolsBuilder()
-                            .heap(100, MemoryUnit.MB)
-                            .disk(250, MemoryUnit.MB, true)
-            ).withSizeOfMaxObjectGraph(5000).withExpiry(ExpiryPolicyBuilder.timeToLiveExpiration(Duration.ofSeconds(300))));
+                                        ResourcePoolsBuilder.heap(5000).disk(500, MemoryUnit.MB, true)).withExpiry(ExpiryPolicyBuilder.timeToLiveExpiration(Duration.ofSeconds(300))).build());
 
         } catch (Throwable t) {
             log.error(t);
@@ -1239,9 +1236,9 @@ public class BeaAccess {
         }
     }
     
-    public Message sendAndRetrieveMessage(Message msg, String senderSafeId, String recipientSafeId, BeaListItem authority) throws BeaWrapperException {
+    public Message sendAndRetrieveMessage(Message msg, String senderSafeId, String recipientSafeId, BeaListItem authority, BeaListItem priority) throws BeaWrapperException {
         this.checkValidBeaClient();
-        Message sentMessage=this.wrapper.sendAndRetrieveMessage(msg, senderSafeId, recipientSafeId, authority);
+        Message sentMessage=this.wrapper.sendAndRetrieveMessage(msg, senderSafeId, recipientSafeId, authority, priority);
         if (!this.messageCache.containsKey(sentMessage.getId())) {
             this.messageCache.put(sentMessage.getId(), sentMessage);
         }
@@ -1266,14 +1263,14 @@ public class BeaAccess {
         return sentMessage;
     }
 
-    public String saveMessageToDrafts(Message msg, String senderSafeId, String recipientSafeId, BeaListItem authority) throws BeaWrapperException {
+    public String saveMessageToDrafts(Message msg, String senderSafeId, String recipientSafeId, BeaListItem authority, BeaListItem priority) throws BeaWrapperException {
         this.checkValidBeaClient();
         Folder draftsFolder = this.wrapper.getDraftsFolder(senderSafeId);
         if (draftsFolder != null) {
             if (this.folderOverviewCache.containsKey(draftsFolder.getId()))
                 this.folderOverviewCache.remove(draftsFolder.getId());
         }
-        return this.wrapper.saveMessageToDrafts(msg, senderSafeId, recipientSafeId, authority);
+        return this.wrapper.saveMessageToDrafts(msg, senderSafeId, recipientSafeId, authority, priority);
     }
 
     public Message sendEebConfirmation(Message incomingMessage, String senderSafeId, String recipientSafeId, Date abgabeDate) throws BeaWrapperException {

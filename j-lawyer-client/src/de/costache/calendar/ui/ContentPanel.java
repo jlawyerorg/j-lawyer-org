@@ -16,6 +16,8 @@ package de.costache.calendar.ui;
  * the License. 
  */
 import javax.swing.JPanel;
+import java.awt.event.MouseWheelEvent;
+import java.awt.event.MouseWheelListener;
 
 import de.costache.calendar.JCalendar;
 import de.costache.calendar.ui.strategy.DisplayStrategy;
@@ -29,43 +31,75 @@ import de.costache.calendar.ui.strategy.DisplayStrategyFactory;
  */
 public class ContentPanel extends JPanel {
 
-	/**
-	 * 
-	 */
-	private static final long serialVersionUID = 1L;
+    private static final long serialVersionUID = 1L;
 
-	private DisplayStrategy strategy;
+    private DisplayStrategy strategy;
 
-	private final JCalendar owner;
+    private final JCalendar owner;
 
-	/**
-	 * 
-	 */
-	public ContentPanel(JCalendar owner) {
-		super(true);
-		setOpaque(false);
-		this.owner = owner;
-		this.strategy = DisplayStrategyFactory.getStrategy(this, Type.WEEK);
-		this.strategy.display();
-	}
+    /**
+     * Creates a new instance of {@link ContentPanel}
+     */
+    public ContentPanel(JCalendar owner) {
+        super(true);
+        setOpaque(false);
+        this.owner = owner;
+        this.strategy = DisplayStrategyFactory.getStrategy(this, Type.WEEK);
+        this.strategy.display();
 
-	public JCalendar getOwner() {
-		return owner;
-	}
+        // Add mouse wheel listener to handle scrolling for specified type
+        addMouseWheelListener(new MouseWheelListener() {
+            @Override
+            public void mouseWheelMoved(MouseWheelEvent e) {
+                if (strategy.getType() == Type.MONTH) {
+                    if (e.getWheelRotation() < 0) {
+                        strategy.moveIntervalLeft();
+                    } else {
+                        strategy.moveIntervalRight();
+                    }
+                }
+                if (strategy.getType() == Type.WEEK) {
+                    if (e.getWheelRotation() < 0) {
+                        strategy.moveIntervalLeft();
+                    } else {
+                        strategy.moveIntervalRight();
+                    }
+                }
+                
+                if (strategy.getType() == Type.DAY) {
+                    if (e.getWheelRotation() < 0) {
+                        strategy.moveIntervalLeft();
+                    } else {
+                        strategy.moveIntervalRight();
+                    }
+                }
+                
+                // Update the interval label in the header panel
+                owner.getHeaderPanel().getIntervalLabel().setText(strategy.getDisplayInterval());
+            }
+        });
+    }
 
-	/**
-	 * @param strategy
-	 *            the strategy to set
-	 */
-	public void setStrategy(final DisplayStrategy strategy) {
-		this.strategy = strategy;
-		this.strategy.display();
-	}
+    public JCalendar getOwner() {
+        return owner;
+    }
 
-	/**
-	 * @return the strategy
-	 */
-	public DisplayStrategy getStrategy() {
-		return strategy;
-	}
+    /**
+     * Sets the display strategy and updates the display.
+     * 
+     * @param strategy the strategy to set
+     */
+    public void setStrategy(final DisplayStrategy strategy) {
+        this.strategy = strategy;
+        this.strategy.display();
+    }
+
+    /**
+     * Gets the current display strategy.
+     * 
+     * @return the strategy
+     */
+    public DisplayStrategy getStrategy() {
+        return strategy;
+    }
 }

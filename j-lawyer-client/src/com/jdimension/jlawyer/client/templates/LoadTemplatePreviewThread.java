@@ -727,7 +727,7 @@ public class LoadTemplatePreviewThread implements Runnable {
 
             byte[] data = afs.getTemplateData(this.templateType, f, fileName);
 
-            JComponent preview = DocumentViewerFactory.getDocumentViewer(null, fileName, true, new TemplatePreviewProvider(this.templateType, afs, f, fileName), data, this.pnlPreview.getWidth(), this.pnlPreview.getHeight());
+            JComponent preview = DocumentViewerFactory.getDocumentViewer(null, fileName, true, new TemplatePreviewProvider(this.templateType, afs, f, fileName), data, this.pnlPreview.getWidth(), this.pnlPreview.getHeight(), null);
             ThreadUtils.setVisible(pnlPreview, false);
             ThreadUtils.remove(pnlPreview, loading);
             ThreadUtils.setLayout(pnlPreview, new BorderLayout());

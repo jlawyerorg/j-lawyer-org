@@ -700,6 +700,7 @@ public class AddressRemovedEvent extends CustomHook implements Jsonable {
     public void toJson(Writer writer) throws IOException {
         final JsonObject json = new JsonObject();
         json.put("hookType", this.hookType.name());
+        json.put("hookId", this.hookId);
         json.put("addressId", this.getAddressId());
         json.toJson(writer);
     }

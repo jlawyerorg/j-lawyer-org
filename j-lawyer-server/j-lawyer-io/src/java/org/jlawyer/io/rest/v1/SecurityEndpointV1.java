@@ -694,11 +694,11 @@ public class SecurityEndpointV1 implements SecurityEndpointLocalV1 {
     public Response getApiMetadata() {
 
         ApiMetadataV1 meta = new ApiMetadataV1();
-        meta.setApiLevel(6);
+        meta.setApiLevel(7);
 
         Response res = Response.ok(meta).build();
         return res;
 
     }
-
+    
 }

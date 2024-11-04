@@ -663,6 +663,7 @@ For more information on this, and how to apply and follow the GNU AGPL, see
  */
 package com.jdimension.jlawyer.client.utils;
 
+import com.jdimension.jlawyer.client.editors.documents.CachingDocumentLoader;
 import com.jdimension.jlawyer.client.settings.ClientSettings;
 import com.jdimension.jlawyer.persistence.ArchiveFileDocumentsBean;
 import com.jdimension.jlawyer.services.ArchiveFileServiceRemote;
@@ -851,24 +852,12 @@ public class SelectAttachmentDialog extends javax.swing.JDialog {
     private void cmdSelectActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdSelectActionPerformed
         this.selectedFiles = new File[this.lstCaseDocuments.getSelectedValues().length];
 
-        ArchiveFileServiceRemote afs = null;
-        try {
-            ClientSettings settings = ClientSettings.getInstance();
-            JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
-            afs = locator.lookupArchiveFileServiceRemote();
-
-        } catch (Exception ex) {
-            log.error(ex);
-            JOptionPane.showMessageDialog(this, "Dokument kann nicht vom Server geladen werden" + ex.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
-            this.selectedFiles = new File[0];
-            return;
-        }
-
         int index = 0;
         for (Object o : this.lstCaseDocuments.getSelectedValues()) {
             ArchiveFileDocumentsBean doc = (ArchiveFileDocumentsBean) o;
             try {
-                byte[] content = afs.getDocumentContent(doc.getId());
+                //byte[] content = afs.getDocumentContent(doc.getId());
+                byte[] content=CachingDocumentLoader.getInstance().getDocument(doc.getId());
                 String tempUrl = FileUtils.createTempFile(doc.getName(), content);
                 File f = new File(tempUrl);
                 FileUtils.cleanupTempFile(tempUrl);

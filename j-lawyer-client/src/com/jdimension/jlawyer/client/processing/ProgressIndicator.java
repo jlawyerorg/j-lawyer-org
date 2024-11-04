@@ -663,6 +663,7 @@
  */
 package com.jdimension.jlawyer.client.processing;
 
+import java.awt.Color;
 import java.awt.Font;
 import javax.swing.JDialog;
 import javax.swing.JFrame;
@@ -773,6 +774,8 @@ public class ProgressIndicator extends javax.swing.JDialog {
     
     public void progress(String status) {
         this.lblProgress.setText(status);
+        this.lblProgress.setForeground(Color.BLACK);
+        this.lblProgress.setFont(this.lblProgress.getFont().deriveFont(Font.PLAIN));
         if(this.progress.getValue()<this.progress.getMaximum())
             this.progress.setValue(this.progress.getValue()+1);
     }

@@ -706,20 +706,25 @@ public class AddAddressSearchDialog extends javax.swing.JDialog implements ListS
     private AddressBean resultAddress = null;
     private ArchiveFileAddressesBean resultInvolvement = null;
     private List<PartyTypeBean> partyTypes = null;
+    
+    private String targetCaseId=null;
 
     /**
      * Creates new form AddAddressSearchDialog
      * @param parent
      * @param modal
+     * @param targetCaseId
      */
-    public AddAddressSearchDialog(java.awt.Frame parent, boolean modal) {
+    public AddAddressSearchDialog(java.awt.Frame parent, boolean modal, String targetCaseId) {
         super(parent, modal);
         initComponents();
+        
+        this.targetCaseId=targetCaseId;
 
         this.txtSearchString.putClientProperty("JTextField.placeholderText", "Suche: Adressen");
         this.txtSearchString.putClientProperty("JTextField.showClearButton", true);
 
-        String[] colNames = new String[]{"Name", "Vorname", "Unternehmen", "Abteilung", "PLZ", "Ort", "Strasse", "Nr.", "Land", "Etiketten"};
+        String[] colNames = new String[]{"Name", "Vorname", "Unternehmen", "Abteilung", "PLZ", "Ort", "Straße", "Nr.", "Land", "Etiketten"};
         QuickAddressSearchTableModel model = new QuickAddressSearchTableModel(colNames, 0);
         this.tblResults.setModel(model);
         ComponentUtils.autoSizeColumns(tblResults);
@@ -948,7 +953,7 @@ public class AddAddressSearchDialog extends javax.swing.JDialog implements ListS
         int row = this.tblResults.getSelectedRow();
         QuickAddressSearchRowIdentifier id = (QuickAddressSearchRowIdentifier) this.tblResults.getValueAt(row, 0);
 
-        ConflictOfInterestUtils.checkForConflicts(id.getAddressDTO(), targetReferenceType, this);
+        ConflictOfInterestUtils.checkForConflicts(id.getAddressDTO(), targetReferenceType, this.targetCaseId, this);
 
         this.resultAddress = id.getAddressDTO();
         ArchiveFileAddressesBean afa = new ArchiveFileAddressesBean();
@@ -1032,8 +1037,10 @@ public class AddAddressSearchDialog extends javax.swing.JDialog implements ListS
 
     private void cmbRefTypeActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmbRefTypeActionPerformed
 
-        if(this.cmbRefType.getSelectedItem()!=null)
+        if(this.cmbRefType.getSelectedItem()!=null) {
+            
             this.updateTargetReferenceType(this.cmbRefType.getSelectedItem().toString());
+        }
 
     }//GEN-LAST:event_cmbRefTypeActionPerformed
 
@@ -1042,7 +1049,7 @@ public class AddAddressSearchDialog extends javax.swing.JDialog implements ListS
      */
     public static void main(String args[]) {
         java.awt.EventQueue.invokeLater(() -> {
-            new AddAddressSearchDialog(new javax.swing.JFrame(), true).setVisible(true);
+            new AddAddressSearchDialog(new javax.swing.JFrame(), true, null).setVisible(true);
         });
     }
     // Variables declaration - do not modify//GEN-BEGIN:variables
@@ -1069,10 +1076,6 @@ public class AddAddressSearchDialog extends javax.swing.JDialog implements ListS
         this.resultAddress = id.getAddressDTO();
         if(this.resultAddress.getDefaultRole()!=null && !("".equalsIgnoreCase(this.resultAddress.getDefaultRole()))) {
             this.updateTargetReferenceType(this.resultAddress.getDefaultRole());
-        } else {
-            UserSettings us = UserSettings.getInstance();
-            String lastPartyType = us.getSetting(UserSettings.CONF_CASE_LASTPARTYTYPE, "");
-            this.updateTargetReferenceType(lastPartyType);
         }
     }
 }

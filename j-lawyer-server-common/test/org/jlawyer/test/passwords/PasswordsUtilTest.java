@@ -688,6 +688,7 @@ public class PasswordsUtilTest {
 
     @Test
     public void testPasswordComplexity() {
+        
         assertTrue(PasswordsUtil.validatePasswordComplexity("test")==PasswordsUtil.COMPLEXITY_WEAK);
         assertTrue(PasswordsUtil.validatePasswordComplexity("aA1.")==PasswordsUtil.COMPLEXITY_WEAK);
         assertTrue(PasswordsUtil.validatePasswordComplexity("aA1234")==PasswordsUtil.COMPLEXITY_WEAK);

@@ -755,6 +755,9 @@ public class ViewEmailDialog extends javax.swing.JDialog {
             public void componentResized(java.awt.event.ComponentEvent evt) {
                 formComponentResized(evt);
             }
+            public void componentShown(java.awt.event.ComponentEvent evt) {
+                formComponentShown(evt);
+            }
         });
         addWindowListener(new java.awt.event.WindowAdapter() {
             public void windowClosing(java.awt.event.WindowEvent evt) {
@@ -762,7 +765,6 @@ public class ViewEmailDialog extends javax.swing.JDialog {
             }
         });
 
-        jToolBar1.setFloatable(false);
         jToolBar1.setRollover(true);
 
         cmdReply.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons32/mail_reply.png"))); // NOI18N
@@ -836,6 +838,7 @@ public class ViewEmailDialog extends javax.swing.JDialog {
             dlg = EmailUtils.reply(this.outlookMsg, this.content.getBody(), this.content.getContentType());
         }
         dlg.setArchiveFile(this.contextArchiveFile, this.contextFolder);
+        this.setPartiesToSendDialog(dlg, false);
         FrameUtils.centerDialog(dlg, null);
         dlg.setVisible(true);
 
@@ -849,6 +852,7 @@ public class ViewEmailDialog extends javax.swing.JDialog {
     private void cmdReplyAllActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdReplyAllActionPerformed
         SendEmailDialog dlg = new SendEmailDialog(true, EditorsRegistry.getInstance().getMainWindow(), false);
         dlg.setArchiveFile(this.contextArchiveFile, this.contextFolder);
+        this.setPartiesToSendDialog(dlg, false);
 
         if (this.emlMsg != null) {
             MessageContainer msgC = this.emlMsg;
@@ -898,7 +902,7 @@ public class ViewEmailDialog extends javax.swing.JDialog {
                 String contentType = this.content.getContentType();
                 dlg.setContentType(contentType);
                 if (contentType.toLowerCase().startsWith(ContentTypes.TEXT_HTML)) {
-                    dlg.setBody(EmailUtils.getQuotedBody(EmailUtils.Html2Text(this.content.getBody()), ContentTypes.TEXT_PLAIN, decodedTo, origM.getSentDate()), ContentTypes.TEXT_PLAIN);
+                    dlg.setBody(EmailUtils.getQuotedBody(EmailUtils.html2Text(this.content.getBody()), ContentTypes.TEXT_PLAIN, decodedTo, origM.getSentDate()), ContentTypes.TEXT_PLAIN);
                 } else {
                     dlg.setBody(EmailUtils.getQuotedBody(this.content.getBody(), ContentTypes.TEXT_PLAIN, decodedTo, origM.getSentDate()), ContentTypes.TEXT_PLAIN);
                 }
@@ -927,7 +931,7 @@ public class ViewEmailDialog extends javax.swing.JDialog {
                 String contentType = this.content.getContentType();
                 dlg.setContentType(contentType);
                 if (contentType.toLowerCase().startsWith(ContentTypes.TEXT_HTML)) {
-                    dlg.setBody(EmailUtils.getQuotedBody(EmailUtils.Html2Text(this.content.getBody()), ContentTypes.TEXT_PLAIN, decodedTo, this.outlookMsg.getDate()), ContentTypes.TEXT_PLAIN);
+                    dlg.setBody(EmailUtils.getQuotedBody(EmailUtils.html2Text(this.content.getBody()), ContentTypes.TEXT_PLAIN, decodedTo, this.outlookMsg.getDate()), ContentTypes.TEXT_PLAIN);
                 } else {
                     dlg.setBody(EmailUtils.getQuotedBody(this.content.getBody(), ContentTypes.TEXT_PLAIN, decodedTo, this.outlookMsg.getDate()), ContentTypes.TEXT_PLAIN);
                 }
@@ -949,22 +953,26 @@ public class ViewEmailDialog extends javax.swing.JDialog {
 
     }//GEN-LAST:event_cmdReplyAllActionPerformed
 
-    private void cmdForwardActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdForwardActionPerformed
-        SendEmailDialog dlg = new SendEmailDialog(true, EditorsRegistry.getInstance().getMainWindow(), false);
-        dlg.setArchiveFile(this.contextArchiveFile, this.contextFolder);
+    private void setPartiesToSendDialog(SendEmailDialog dlg, boolean evaluateTemplates) {
         if (this.contextArchiveFile != null) {
             try {
                 ClientSettings settings = ClientSettings.getInstance();
                 JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
                 ArchiveFileServiceRemote afs = locator.lookupArchiveFileServiceRemote();
-                List<ArchiveFileAddressesBean> list = afs.getInvolvementDetailsForCase(this.contextArchiveFile.getId());
+                List<ArchiveFileAddressesBean> list = afs.getInvolvementDetailsForCase(this.contextArchiveFile.getId(), false);
                 for (ArchiveFileAddressesBean aab : list) {
-                    dlg.addParty(aab);
+                    dlg.addParty(aab, evaluateTemplates);
                 }
             } catch (Throwable t) {
                 log.error("Unable to add recipient candidates", t);
             }
         }
+    }
+    
+    private void cmdForwardActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdForwardActionPerformed
+        SendEmailDialog dlg = new SendEmailDialog(true, EditorsRegistry.getInstance().getMainWindow(), false);
+        dlg.setArchiveFile(this.contextArchiveFile, this.contextFolder);
+        this.setPartiesToSendDialog(dlg, false);
 
         if (this.emlMsg != null) {
             MessageContainer msgC = this.emlMsg;
@@ -994,7 +1002,7 @@ public class ViewEmailDialog extends javax.swing.JDialog {
                 String contentType = this.content.getContentType();
                 dlg.setContentType(contentType);
                 if (contentType.toLowerCase().startsWith(ContentTypes.TEXT_HTML)) {
-                    dlg.setBody(EmailUtils.getQuotedBody(EmailUtils.Html2Text(this.content.getBody()), ContentTypes.TEXT_PLAIN, decodedFrom, m.getSentDate()), ContentTypes.TEXT_PLAIN);
+                    dlg.setBody(EmailUtils.getQuotedBody(EmailUtils.html2Text(this.content.getBody()), ContentTypes.TEXT_PLAIN, decodedFrom, m.getSentDate()), ContentTypes.TEXT_PLAIN);
                 } else {
                     dlg.setBody(EmailUtils.getQuotedBody(this.content.getBody(), ContentTypes.TEXT_PLAIN, decodedFrom, m.getSentDate()), ContentTypes.TEXT_PLAIN);
                 }
@@ -1050,7 +1058,7 @@ public class ViewEmailDialog extends javax.swing.JDialog {
                 String contentType = this.content.getContentType();
                 dlg.setContentType(contentType);
                 if (contentType.toLowerCase().startsWith(ContentTypes.TEXT_HTML)) {
-                    dlg.setBody(EmailUtils.getQuotedBody(EmailUtils.Html2Text(this.content.getBody()), ContentTypes.TEXT_PLAIN, from, this.outlookMsg.getDate()), ContentTypes.TEXT_PLAIN);
+                    dlg.setBody(EmailUtils.getQuotedBody(EmailUtils.html2Text(this.content.getBody()), ContentTypes.TEXT_PLAIN, from, this.outlookMsg.getDate()), ContentTypes.TEXT_PLAIN);
                 } else {
                     dlg.setBody(EmailUtils.getQuotedBody(this.content.getBody(), ContentTypes.TEXT_PLAIN, from, this.outlookMsg.getDate()), ContentTypes.TEXT_PLAIN);
                 }
@@ -1100,6 +1108,10 @@ public class ViewEmailDialog extends javax.swing.JDialog {
         }
     }//GEN-LAST:event_formWindowClosing
 
+    private void formComponentShown(java.awt.event.ComponentEvent evt) {//GEN-FIRST:event_formComponentShown
+        FrameUtils.centerDialogOnParentMonitor(this, this.getOwner().getLocation());
+    }//GEN-LAST:event_formComponentShown
+    
     /**
      * @param args the command line arguments
      */

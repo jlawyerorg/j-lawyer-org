@@ -663,10 +663,14 @@
  */
 package com.jdimension.jlawyer.client.editors.files;
 
+import com.jdimension.jlawyer.client.settings.ClientSettings;
+import com.jdimension.jlawyer.client.settings.UserSettings;
+import com.jdimension.jlawyer.services.JLawyerServiceLocator;
 import java.awt.Color;
 import java.awt.Component;
 import java.text.SimpleDateFormat;
 import java.util.Date;
+import java.util.List;
 import javax.swing.JLabel;
 import javax.swing.JTable;
 import javax.swing.table.DefaultTableCellRenderer;
@@ -676,8 +680,10 @@ import javax.swing.table.DefaultTableCellRenderer;
  * @author jens
  */
 public class QuickArchiveFileSearchCellRenderer extends DefaultTableCellRenderer {
-    
-    private SimpleDateFormat df=new SimpleDateFormat("dd.MM.yyyy");
+
+    private SimpleDateFormat df = new SimpleDateFormat("dd.MM.yyyy");
+    private List<String> caseIdsSyncedForUser = null;
+    private boolean loadSyncStatus = false;
 
     @Override
     public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected,
@@ -699,13 +705,68 @@ public class QuickArchiveFileSearchCellRenderer extends DefaultTableCellRenderer
             } else {
                 ((Component) returnRenderer).setForeground(Color.BLACK);
             }
-            
-            if(value instanceof java.util.Date) {
-                if(returnRenderer instanceof JLabel)
-                    ((JLabel) returnRenderer).setText(df.format((Date)value));
+
+            if (value instanceof java.util.Date) {
+                if (returnRenderer instanceof JLabel) {
+                    ((JLabel) returnRenderer).setText(df.format((Date) value));
+                }
+            }
+        }
+
+        ((JLabel) returnRenderer).setIcon(null);
+        // app sync status
+        if (column == 6 && this.loadSyncStatus) {
+            ((JLabel) returnRenderer).setText("");
+            String caseId = ((QuickArchiveFileSearchRowIdentifier) table.getValueAt(row, 0)).getArchiveFileDTO().getId();
+            if (this.caseIdsSyncedForUser == null) {
+                ClientSettings settings = null;
+                try {
+                    settings = ClientSettings.getInstance();
+                    JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
+                    this.caseIdsSyncedForUser=locator.lookupArchiveFileServiceRemote().getCaseIdsSyncedForUser(UserSettings.getInstance().getCurrentUser().getPrincipalId());
+
+                } catch (Exception ex) {
+                    ((JLabel) returnRenderer).setText("?");
+                    ((JLabel) returnRenderer).setToolTipText("unbekannter Synchronisationsstatus");
+                }
+            }
+            boolean synced=this.caseIdsSyncedForUser.contains(caseId);
+            table.setValueAt(""+synced, row, column);
+            if (synced) {
+                ((JLabel) returnRenderer).setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons16/outline_security_update_good_black_48dp.png")));
+            } else {
+                ((JLabel) returnRenderer).setIcon(null);
             }
         }
 
         return (Component) returnRenderer;
+    }
+
+    /**
+     * @return the caseIdsSyncedForUser
+     */
+    public List<String> getCaseIdsSyncedForUser() {
+        return caseIdsSyncedForUser;
+    }
+
+    /**
+     * @param caseIdsSyncedForUser the caseIdsSyncedForUser to set
+     */
+    public void setCaseIdsSyncedForUser(List<String> caseIdsSyncedForUser) {
+        this.caseIdsSyncedForUser = caseIdsSyncedForUser;
+    }
+
+    /**
+     * @return the loadSyncStatus
+     */
+    public boolean isLoadSyncStatus() {
+        return loadSyncStatus;
+    }
+
+    /**
+     * @param loadSyncStatus the loadSyncStatus to set
+     */
+    public void setLoadSyncStatus(boolean loadSyncStatus) {
+        this.loadSyncStatus = loadSyncStatus;
     }
 }

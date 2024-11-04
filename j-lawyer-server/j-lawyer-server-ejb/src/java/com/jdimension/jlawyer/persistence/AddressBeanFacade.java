@@ -698,9 +698,54 @@ public class AddressBeanFacade extends AbstractFacade<AddressBean> implements Ad
     
     
     @Override
-    public AddressBean findByExternalId(String externalId) {
+    public AddressBean findByAnyExternalId(String externalId) {
         try {
-            return (AddressBean) em.createNamedQuery("AddressBean.findByExternalId").setParameter("externalId", externalId).getSingleResult();
+            return (AddressBean) em.createNamedQuery("AddressBean.findByExternalId").setParameter("externalId1", externalId).setParameter("externalId2", externalId).setParameter("externalId3", externalId).setParameter("externalId4", externalId).setParameter("externalId5", externalId).getSingleResult();
+        } catch (NoResultException nre) {
+            return null;
+        }
+    }
+
+    @Override
+    public AddressBean findByExternalId1(String externalId) {
+        try {
+            return (AddressBean) em.createNamedQuery("AddressBean.findByExternalId1").setParameter("externalId1", externalId).getSingleResult();
+        } catch (NoResultException nre) {
+            return null;
+        }
+    }
+
+    @Override
+    public AddressBean findByExternalId2(String externalId) {
+        try {
+            return (AddressBean) em.createNamedQuery("AddressBean.findByExternalId2").setParameter("externalId2", externalId).getSingleResult();
+        } catch (NoResultException nre) {
+            return null;
+        }
+    }
+
+    @Override
+    public AddressBean findByExternalId3(String externalId) {
+        try {
+            return (AddressBean) em.createNamedQuery("AddressBean.findByExternalId3").setParameter("externalId3", externalId).getSingleResult();
+        } catch (NoResultException nre) {
+            return null;
+        }
+    }
+
+    @Override
+    public AddressBean findByExternalId4(String externalId) {
+        try {
+            return (AddressBean) em.createNamedQuery("AddressBean.findByExternalId4").setParameter("externalId4", externalId).getSingleResult();
+        } catch (NoResultException nre) {
+            return null;
+        }
+    }
+
+    @Override
+    public AddressBean findByExternalId5(String externalId) {
+        try {
+            return (AddressBean) em.createNamedQuery("AddressBean.findByExternalId5").setParameter("externalId5", externalId).getSingleResult();
         } catch (NoResultException nre) {
             return null;
         }

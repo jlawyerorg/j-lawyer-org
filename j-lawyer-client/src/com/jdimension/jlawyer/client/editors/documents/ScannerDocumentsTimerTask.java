@@ -666,12 +666,11 @@ package com.jdimension.jlawyer.client.editors.documents;
 import com.jdimension.jlawyer.client.events.EventBroker;
 import com.jdimension.jlawyer.client.events.ScannerStatusEvent;
 import com.jdimension.jlawyer.client.settings.ClientSettings;
+import com.jdimension.jlawyer.pojo.FileMetadata;
 import com.jdimension.jlawyer.services.JLawyerServiceLocator;
-import java.io.File;
-import java.util.ArrayList;
-import java.util.Collections;
 import java.util.Date;
 import java.util.HashMap;
+import java.util.Map;
 import org.apache.log4j.Logger;
 
 /**
@@ -681,7 +680,7 @@ import org.apache.log4j.Logger;
 public class ScannerDocumentsTimerTask extends java.util.TimerTask {
 
     private static final Logger log = Logger.getLogger(ScannerDocumentsTimerTask.class.getName());
-    private static ArrayList<String> lastFiles = new ArrayList<String>();
+    private static HashMap<FileMetadata, Date> lastFiles = new HashMap<>();
     private boolean bypassCache=false;
     
     /**
@@ -700,18 +699,12 @@ public class ScannerDocumentsTimerTask extends java.util.TimerTask {
             try {
                 ClientSettings settings = ClientSettings.getInstance();
                 JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
-                HashMap<File, Date> files = locator.lookupSingletonServiceRemote().getObservedFiles(this.bypassCache);
+                HashMap<FileMetadata, Date> currentFiles = locator.lookupSingletonServiceRemote().getObservedFiles(this.bypassCache);
 
-                ArrayList<String> currentFiles = new ArrayList<>();
-                for (File f : files.keySet()) {
-                    currentFiles.add(f.getName());
-                }
-                Collections.sort(currentFiles);
-
-                if (!currentFiles.equals(lastFiles)) {
+                if (areKeySetsDifferent(lastFiles, currentFiles)) {
 
                     EventBroker eb = EventBroker.getInstance();
-                    eb.publishEvent(new ScannerStatusEvent(files));
+                    eb.publishEvent(new ScannerStatusEvent(currentFiles));
                 }
                 lastFiles = currentFiles;
 
@@ -720,6 +713,20 @@ public class ScannerDocumentsTimerTask extends java.util.TimerTask {
 
             }
         }
+    }
+    
+    private static boolean areKeySetsDifferent(Map<FileMetadata, Date> map1, Map<FileMetadata, Date> map2) {
+        if (map1.size() != map2.size()) {
+            return true; // Different number of keys
+        }
+
+        for (FileMetadata key : map1.keySet()) {
+            if (!map2.containsKey(key)) {
+                return true; // Key present in map1 but not in map2
+            }
+        }
+
+        return false; // Key sets are the same
     }
 
 }

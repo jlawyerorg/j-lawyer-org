@@ -667,6 +667,7 @@ import javax.ejb.Local;
 import javax.ws.rs.core.Response;
 import org.jlawyer.io.rest.v1.pojo.RestfulCaseV1;
 import org.jlawyer.io.rest.v1.pojo.RestfulDocumentContentV1;
+import org.jlawyer.io.rest.v1.pojo.RestfulDocumentV1;
 import org.jlawyer.io.rest.v1.pojo.RestfulPartyV1;
 
 /**
@@ -687,8 +688,10 @@ public interface CasesEndpointLocalV1 {
     public Response updateCase(RestfulCaseV1 afb);
 
     Response getCaseDocuments(String id);
-
+    Response getCaseDocumentsInTrash(String id);
+    
     Response getDocumentContent(String id);
+    Response getDocument(String id);
 
     Response getDueDates(String id);
 
@@ -697,6 +700,7 @@ public interface CasesEndpointLocalV1 {
     Response createDocument(RestfulDocumentContentV1 document);
 
     Response updateDocument(RestfulDocumentContentV1 document);
+    Response updateDocument(RestfulDocumentV1 document);
 
     Response deleteDocument(String id);
 

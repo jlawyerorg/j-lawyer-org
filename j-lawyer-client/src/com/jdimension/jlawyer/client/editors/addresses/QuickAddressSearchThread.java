@@ -672,7 +672,7 @@ import com.jdimension.jlawyer.services.JLawyerServiceLocator;
 import com.jdimension.jlawyer.ui.tagging.TagUtils;
 import java.awt.Component;
 import java.util.ArrayList;
-import java.util.Hashtable;
+import java.util.Map;
 import javax.swing.JTable;
 import org.apache.log4j.Logger;
 
@@ -704,7 +704,7 @@ public class QuickAddressSearchThread implements Runnable {
     @Override
     public void run() {
         AddressBean[] dtos=null;
-        Hashtable<String, ArrayList<String>> tags = null;
+        Map<String, ArrayList<String>> tags = null;
         try {
             ClientSettings settings=ClientSettings.getInstance();
             JLawyerServiceLocator locator=JLawyerServiceLocator.getInstance(settings.getLookupProperties());
@@ -720,7 +720,7 @@ public class QuickAddressSearchThread implements Runnable {
         }
         ThreadUtils.setDefaultCursor(this.owner);
         
-        String[] colNames=new String[] {"Name", "Vorname", "Unternehmen", "Abteilung", "PLZ", "Ort", "Strasse", "Nr.", "Land", "Etiketten"};
+        String[] colNames=new String[] {"Name", "Vorname", "Unternehmen", "Abteilung", "PLZ", "Ort", "Straße", "Nr.", "Land", "Etiketten"};
         QuickAddressSearchTableModel model=new QuickAddressSearchTableModel(colNames, 0);
         for(int i=0;i<dtos.length;i++) {
             Object[] row=new Object[]{new QuickAddressSearchRowIdentifier(dtos[i]), dtos[i].getFirstName(), dtos[i].getCompany(), dtos[i].getDepartment(), dtos[i].getZipCode(), dtos[i].getCity(), dtos[i].getStreet(), dtos[i].getStreetNumber(), dtos[i].getCountry(), TagUtils.getTagList(dtos[i].getId(), tags)};

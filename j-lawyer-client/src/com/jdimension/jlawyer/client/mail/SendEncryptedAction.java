@@ -667,11 +667,13 @@ import com.jdimension.jlawyer.client.encryption.PDFEncryptor;
 import com.jdimension.jlawyer.client.events.DocumentAddedEvent;
 import com.jdimension.jlawyer.client.events.EventBroker;
 import com.jdimension.jlawyer.client.launcher.LauncherFactory;
-import com.jdimension.jlawyer.client.mail.oauth.MsExchangeUtils;
+import com.jdimension.jlawyer.email.MsExchangeUtils;
 import com.jdimension.jlawyer.client.processing.ProgressIndicator;
 import com.jdimension.jlawyer.client.processing.ProgressableAction;
 import com.jdimension.jlawyer.client.settings.ClientSettings;
+import com.jdimension.jlawyer.client.settings.ServerSettings;
 import com.jdimension.jlawyer.client.utils.FileUtils;
+import com.jdimension.jlawyer.client.utils.StringUtils;
 import com.jdimension.jlawyer.persistence.AddressBean;
 import com.jdimension.jlawyer.persistence.ArchiveFileBean;
 import com.jdimension.jlawyer.persistence.ArchiveFileDocumentsBean;
@@ -679,7 +681,7 @@ import com.jdimension.jlawyer.persistence.ArchiveFileHistoryBean;
 import com.jdimension.jlawyer.persistence.CaseFolder;
 import com.jdimension.jlawyer.persistence.DocumentTagsBean;
 import com.jdimension.jlawyer.persistence.MailboxSetup;
-import com.jdimension.jlawyer.security.Crypto;
+import com.jdimension.jlawyer.security.CryptoProvider;
 import com.jdimension.jlawyer.server.utils.ContentTypes;
 import com.jdimension.jlawyer.services.AddressServiceRemote;
 import com.jdimension.jlawyer.services.ArchiveFileServiceRemote;
@@ -705,7 +707,7 @@ public class SendEncryptedAction extends ProgressableAction {
 
     private static final Logger log = Logger.getLogger(SendEncryptedAction.class.getName());
     private static final String SSL_FACTORY = "javax.net.ssl.SSLSocketFactory";
-    
+
     private final SimpleDateFormat df = new SimpleDateFormat("dd.MM.yyyy, HH:mm");
     private List<String> attachments = null;
     private MailboxSetup ms = null;
@@ -717,7 +719,7 @@ public class SendEncryptedAction extends ProgressableAction {
     private String body = "";
     private String contentType = ContentTypes.TEXT_PLAIN;
     private ArchiveFileBean archiveFile = null;
-    private CaseFolder caseFolder=null;
+    private CaseFolder caseFolder = null;
     private ArrayList<String> mails = null;
     private String documentTag = null;
 
@@ -742,7 +744,7 @@ public class SendEncryptedAction extends ProgressableAction {
     public SendEncryptedAction(ProgressIndicator i, JDialog cleanAfter, List<String> attachments, MailboxSetup ms, boolean readReceipt, String to, String cc, String bcc, String subject, String body, String contentType, ArchiveFileBean af, String documentTag, CaseFolder folder) {
         this(i, cleanAfter, attachments, ms, readReceipt, to, cc, bcc, subject, body, contentType, documentTag);
         this.archiveFile = af;
-        this.caseFolder=folder;
+        this.caseFolder = folder;
     }
 
     @Override
@@ -759,73 +761,113 @@ public class SendEncryptedAction extends ProgressableAction {
     public boolean execute() throws Exception {
 
         this.progress("Verbinde...");
-        Properties props = new Properties();
+
+        String inPwd = "";
+        try {
+            inPwd = CryptoProvider.defaultCrypto().decrypt(ms.getEmailInPwd());
+        } catch (Throwable t) {
+            log.error(t);
+        }
+
+        String outPwd = "";
+        try {
+            outPwd = CryptoProvider.defaultCrypto().decrypt(ms.getEmailOutPwd());
+        } catch (Throwable t) {
+            log.error(t);
+        }
+
+        Properties smtpProps = new Properties();
+        boolean authenticateSmtp = true;
+        try {
+            if (StringUtils.isEmpty(ms.getEmailOutUser()) && StringUtils.isEmpty(outPwd)) {
+                authenticateSmtp = false;
+            }
+        } catch (Throwable t) {
+            log.error("Could not decrypt outgoing password", t);
+        }
 
         if (ms.isEmailOutSsl()) {
-            props.put("mail.smtp.ssl.enable", "true");
+            smtpProps.put("mail.smtp.ssl.enable", "true");
         }
 
         if (ms.getEmailOutPort() != null && !("".equalsIgnoreCase(ms.getEmailOutPort()))) {
             try {
                 int testInt = Integer.parseInt(ms.getEmailOutPort());
-                props.put("mail.smtp.port", ms.getEmailOutPort());
-                props.put("mail.smtps.port", ms.getEmailOutPort());
+                smtpProps.put("mail.smtp.port", ms.getEmailOutPort());
+                smtpProps.put("mail.smtps.port", ms.getEmailOutPort());
             } catch (Throwable t) {
                 log.error("Invalid SMTP port: " + ms.getEmailOutPort());
             }
         }
 
-        props.put("mail.smtp.host", ms.getEmailOutServer());
-        //props.put("mail.smtp.port", "25");
-        props.put("mail.smtp.user", ms.getEmailOutUser());
-        props.put("mail.smtp.auth", true);
-        props.put("mail.smtps.host", ms.getEmailOutServer());
-        //props.put("mail.smtps.port", "25");
+        smtpProps.put("mail.from", ms.getEmailAddress());
+        smtpProps.put("mail.smtp.host", ms.getEmailOutServer());
+        smtpProps.put("mail.smtp.user", ms.getEmailOutUser());
+        smtpProps.put("mail.smtp.auth", true);
+        smtpProps.put("mail.smtps.host", ms.getEmailOutServer());
         if (ms.isEmailStartTls()) {
-            props.put("mail.smtp.starttls.enable", "true");
+            smtpProps.put("mail.smtp.starttls.enable", "true");
         }
-        props.put("mail.smtps.user", ms.getEmailOutUser());
-        props.put("mail.smtps.auth", true);
-        props.put("mail.from", ms.getEmailAddress());
-        props.put("mail.password", Crypto.decrypt(ms.getEmailOutPwd()));
+        Session session = null;
+        if (!authenticateSmtp) {
+            smtpProps.put("mail.smtps.auth", false);
+            smtpProps.put("mail.smtp.auth", false);
+            session = Session.getInstance(smtpProps);
+        } else {
+            smtpProps.put("mail.smtps.auth", true);
+            smtpProps.put("mail.smtp.auth", true);
+            smtpProps.put("mail.smtp.user", ms.getEmailOutUser());
+            smtpProps.put("mail.smtps.user", ms.getEmailOutUser());
+            smtpProps.put("mail.password", outPwd);
+
+            final String smtpPwd = outPwd;
+            javax.mail.Authenticator auth = new javax.mail.Authenticator() {
+
+                @Override
+                public PasswordAuthentication getPasswordAuthentication() {
+                    return new PasswordAuthentication(ms.getEmailOutUser(), smtpPwd);
+                }
+            };
+            session = Session.getInstance(smtpProps, auth);
+        }
+
+        smtpProps.put("mail.password", outPwd);
 
         // add outbox properties for storing in "sent"
         if (ms.isMsExchange()) {
-            props.put("mail.imaps.sasl.enable", "true");
-            props.put("mail.imaps.port", "993");
+            smtpProps.put("mail.imaps.sasl.enable", "true");
+            smtpProps.put("mail.imaps.port", "993");
 
-            props.put("mail.imaps.auth.mechanisms", "XOAUTH2");
-            props.put("mail.imaps.sasl.mechanisms", "XOAUTH2");
+            smtpProps.put("mail.imaps.auth.mechanisms", "XOAUTH2");
+            smtpProps.put("mail.imaps.sasl.mechanisms", "XOAUTH2");
 
-            props.put("mail.imaps.auth.login.disable", "true");
-            props.put("mail.imaps.auth.plain.disable", "true");
+            smtpProps.put("mail.imaps.auth.login.disable", "true");
+            smtpProps.put("mail.imaps.auth.plain.disable", "true");
 
-            props.setProperty("mail.imaps.socketFactory.class", SSL_FACTORY);
-            props.setProperty("mail.imaps.socketFactory.fallback", "false");
-            props.setProperty("mail.imaps.socketFactory.port", "993");
-            props.setProperty("mail.imaps.starttls.enable", "true");
+            smtpProps.setProperty("mail.imaps.socketFactory.class", SSL_FACTORY);
+            smtpProps.setProperty("mail.imaps.socketFactory.fallback", "false");
+            smtpProps.setProperty("mail.imaps.socketFactory.port", "993");
+            smtpProps.setProperty("mail.imaps.starttls.enable", "true");
         } else {
-            props.setProperty("mail.store.protocol", ms.getEmailInType());
+
+            smtpProps.setProperty("mail.imaps.host", ms.getEmailInServer());
+            smtpProps.setProperty("mail.imap.host", ms.getEmailInServer());
+
             if (ms.isEmailInSsl()) {
-                props.setProperty("mail." + ms.getEmailInType() + ".ssl.enable", "true");
+                smtpProps.setProperty("mail.store.protocol", "imaps");
             }
+
+            smtpProps.setProperty("mail.store.protocol", ms.getEmailInType());
+            if (ms.isEmailInSsl()) {
+                smtpProps.setProperty("mail." + ms.getEmailInType() + ".ssl.enable", "true");
+            }
+            ServerSettings sset = ServerSettings.getInstance();
+            String trustedServers = sset.getSetting("mail.imaps.ssl.trust", "");
+            if (trustedServers.length() > 0) {
+                smtpProps.put("mail.imaps.ssl.trust", trustedServers);
+            }
+
         }
-
-        javax.mail.Authenticator auth = new javax.mail.Authenticator() {
-
-            @Override
-            public PasswordAuthentication getPasswordAuthentication() {
-                String outPwd=ms.getEmailOutPwd();
-                try {
-                    outPwd=Crypto.decrypt(ms.getEmailOutPwd());
-                } catch (Throwable t) {
-                    log.error(t);
-                }
-                return new PasswordAuthentication(ms.getEmailOutUser(), outPwd);
-            }
-        };
-
-        Session session = Session.getInstance(props, auth);
 
         try {
             Transport bus = session.getTransport("smtp");
@@ -833,7 +875,11 @@ public class SendEncryptedAction extends ProgressableAction {
             // Connect only once here
             // Transport.send() disconnects after each send
             // Usually, no username and password is required for SMTP
-            bus.connect(ms.getEmailOutServer(), ms.getEmailOutUser(), Crypto.decrypt(ms.getEmailOutPwd()));
+            if (authenticateSmtp) {
+                bus.connect(ms.getEmailOutServer(), ms.getEmailOutUser(), outPwd);
+            } else {
+                bus.connect(ms.getEmailOutServer(), null, null);
+            }
 
             Throwable storeException = null;
             for (String currentRecipientMail : mails) {
@@ -845,7 +891,7 @@ public class SendEncryptedAction extends ProgressableAction {
                     JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
                     AddressServiceRemote adr = locator.lookupAddressServiceRemote();
                     AddressBean[] found = adr.searchSimple(currentRecipientMail);
-                    if (found != null && found.length>0 && EmailUtils.sameCryptoPassword(found) && found[0].supportsCrypto()) {
+                    if (found != null && found.length > 0 && EmailUtils.sameCryptoPassword(found) && found[0].supportsCrypto()) {
                         File fIn = new File(unencrypted);
                         String fInDir = fIn.getParentFile().getPath();
                         String enc = PDFEncryptor.encryptPdf(unencrypted, fInDir, found[0].getEncryptionPwd());
@@ -917,7 +963,7 @@ public class SendEncryptedAction extends ProgressableAction {
                         newName = newName + ".eml";
                         newName = FileUtils.sanitizeFileName(newName);
                         java.util.Date sentPrefix = new Date();
-                        newName = FileUtils.getNewFileName(newName, true, sentPrefix, this.indicator, "Datei benennen");
+                        newName = FileUtils.getNewFileName(this.archiveFile, newName, sentPrefix, true, this.indicator, "Datei benennen");
 
                         if (newName != null) {
                             if (newName.trim().length() == 0) {
@@ -930,7 +976,7 @@ public class SendEncryptedAction extends ProgressableAction {
                             boolean documentExists = afs.doesDocumentExist(this.archiveFile.getId(), newName);
                             while (documentExists) {
 
-                                newName = FileUtils.getNewFileName(newName, true, sentPrefix, this.indicator, "Datei benennen");
+                                newName = FileUtils.getNewFileName(this.archiveFile, newName, sentPrefix, true, this.indicator, "Datei benennen");
                                 if (newName == null || "".equals(newName)) {
                                     break;
                                 }
@@ -941,13 +987,13 @@ public class SendEncryptedAction extends ProgressableAction {
 
                         if (newName != null) {
 
-                            ArchiveFileDocumentsBean newDoc = afs.addDocument(this.archiveFile.getId(), newName, data, "");
+                            ArchiveFileDocumentsBean newDoc = afs.addDocument(this.archiveFile.getId(), newName, data, "", null);
 
                             if (this.documentTag != null && !("".equals(this.documentTag))) {
                                 afs.setDocumentTag(newDoc.getId(), new DocumentTagsBean(newDoc.getId(), this.documentTag), true);
                             }
-                            
-                            if(this.caseFolder != null) {
+
+                            if (this.caseFolder != null) {
                                 ArrayList<String> docList = new ArrayList<>();
                                 docList.add(newDoc.getId());
                                 afs.moveDocumentsToFolder(docList, caseFolder.getId());
@@ -958,11 +1004,11 @@ public class SendEncryptedAction extends ProgressableAction {
                             historyDto.setChangeDescription("E-Mail gesendet an " + currentRecipientMail + ": " + msg.getSubject());
                             afs.addHistory(this.archiveFile.getId(), historyDto);
 
-                            if(caseFolder!=null)
+                            if (caseFolder != null) {
                                 newDoc.setFolder(caseFolder);
+                            }
                             EventBroker eb = EventBroker.getInstance();
                             eb.publishEvent(new DocumentAddedEvent(newDoc));
-
                         }
 
                     } else {
@@ -976,17 +1022,66 @@ public class SendEncryptedAction extends ProgressableAction {
                 bus.close();
 
                 this.progress("Suche Ordner 'Gesendet'...");
+                Properties imapProps = new Properties();
+                boolean authenticateImap = true;
+                try {
+                    if (StringUtils.isEmpty(ms.getEmailInUser()) && StringUtils.isEmpty(inPwd)) {
+                        authenticateImap = false;
+                    }
+                } catch (Throwable t) {
+                    log.error("Could not decrypt IMAP password", t);
+                }
+                imapProps.setProperty("mail.imap.partialfetch", "false");
+                imapProps.setProperty("mail.imaps.partialfetch", "false");
+                imapProps.setProperty("mail.store.protocol", ms.getEmailInType());
+                imapProps.put("mail.from", ms.getEmailAddress());
+
+                if (authenticateImap) {
+                    imapProps.put("mail.password", inPwd);
+                }
+
                 Store store = null;
                 if (ms.isMsExchange()) {
-                    String authToken = MsExchangeUtils.getAuthToken(ms.getTenantId(), ms.getClientId(), ms.getClientSecret(), ms.getEmailInUser(), Crypto.decrypt(ms.getEmailInPwd()));
+                    String authToken = MsExchangeUtils.getAuthToken(ms.getTenantId(), ms.getClientId(), ms.getClientSecret(), ms.getEmailInUser(), inPwd);
 
-                    session = Session.getInstance(props);
+                    session = Session.getInstance(imapProps);
                     store = session.getStore("imaps");
                     store.connect(ms.getEmailInServer(), ms.getEmailInUser(), authToken);
 
                 } else {
-                    store = session.getStore(ms.getEmailInType());
-                    store.connect(ms.getEmailInServer(), ms.getEmailInUser(), Crypto.decrypt(ms.getEmailInPwd()));
+
+                    imapProps.setProperty("mail.imaps.host", ms.getEmailInServer());
+                    imapProps.setProperty("mail.imap.host", ms.getEmailInServer());
+
+                    if (ms.isEmailInSsl()) {
+                        imapProps.setProperty("mail.store.protocol", "imaps");
+                    }
+
+                    imapProps.setProperty("mail.store.protocol", ms.getEmailInType());
+                    if (ms.isEmailInSsl()) {
+                        imapProps.setProperty("mail." + ms.getEmailInType() + ".ssl.enable", "true");
+                    }
+                    ServerSettings sset = ServerSettings.getInstance();
+                    String trustedServers = sset.getSetting("mail.imaps.ssl.trust", "");
+                    if (trustedServers.length() > 0) {
+                        imapProps.put("mail.imaps.ssl.trust", trustedServers);
+                    }
+
+                    if (authenticateImap) {
+                        final String imapPwd = inPwd;
+                        session = Session.getInstance(imapProps, new Authenticator() {
+                            @Override
+                            protected PasswordAuthentication getPasswordAuthentication() {
+                                return new PasswordAuthentication(ms.getEmailInUser(), imapPwd);
+                            }
+                        });
+                    } else {
+                        session = Session.getInstance(imapProps);
+                    }
+
+                    store = session.getStore();
+                    //store.connect(ms.getEmailInServer(), ms.getEmailInUser(), Crypto.decrypt(ms.getEmailInPwd()));
+                    store.connect();
                 }
 
                 Folder folder = EmailUtils.getInboxFolder(store);
@@ -997,9 +1092,18 @@ public class SendEncryptedAction extends ProgressableAction {
                 Folder sent = EmailUtils.getSentFolder(store);
                 if (sent != null) {
                     this.progress("Kopiere Nachricht in 'Gesendet'...");
-                    sent.open(Folder.READ_WRITE);
+                    boolean closed = !sent.isOpen();
+                    if (!sent.isOpen()) {
+                        sent.open(Folder.READ_WRITE);
+                    }
                     msg.setFlag(Flags.Flag.SEEN, true);
                     sent.appendMessages(new Message[]{msg});
+                    if (closed) {
+                        EmailUtils.closeIfIMAP(sent);
+                    }
+
+                } else {
+                    log.error("Unable to determine 'Sent' folder for mailbox");
                 }
 
                 try {

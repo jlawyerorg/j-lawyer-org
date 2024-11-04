@@ -665,6 +665,7 @@ package com.jdimension.jlawyer.client.settings;
 
 import com.jdimension.jlawyer.drebis.InsuranceInfo;
 import com.jdimension.jlawyer.persistence.AppOptionGroupBean;
+import com.jdimension.jlawyer.persistence.CalendarEntryTemplate;
 import com.jdimension.jlawyer.server.modules.ModuleMetadata;
 import java.io.File;
 import java.io.FileInputStream;
@@ -686,7 +687,6 @@ public class ClientSettings {
     public static final String CONF_LASTPORT="connection.lastport";
     // in case of SSH tunneling, the client determines an available port automatically, which must not be saved for future connections --> dedicated property
     public static final String CONF_LASTPORTDYN="connection.lastportdyn";
-    public static final String CONF_LASTUSER="connection.lastuser";
     
     // deprecated! use LASTSECMODE instead
     public static final String CONF_LASTSERVERSSL="connection.lastserverssl";
@@ -768,6 +768,8 @@ public class ClientSettings {
     public static final String CONF_MAIL_DOWNLOADRESTRICTION="client.mail.downloadrestriction";
     public static final String CONF_MAIL_COLLAPSEDFOLDERS="client.mail.collapsedfolders";
     
+    public static final String CONF_INSTANTMESSAGES_DOWNLOADRESTRICTION="client.instantmessage.downloadrestriction";
+    
     public static final String CONF_VOIP_LASTSIPFAX="client.voip.lastsipfax";
     public static final String CONF_VOIP_LASTSIPSMS="client.voip.lastsipsms";
     public static final String CONF_VOIP_LASTSIPVOICE="client.voip.lastsipvoice";
@@ -788,6 +790,10 @@ public class ClientSettings {
     public static final String CONF_DOCUMENTS_AUTOGENERATEPDF="client.documents.autogeneratepdf.";
     public static final String CONF_DOCUMENTS_LETTERHEAD="client.documents.letterhead.";
     
+    public static final String CONF_SOUND_LASTRECORDINGDEVICE="client.sound.lastrecordingdevice";
+    
+    public static final String CONF_CASES_EXPORT_LASTDIR="client.archivefiles.htmlexport.lastdir";
+    
     private static final String ARRAY_DELIMITER="#####";
     
     private static final Logger log=Logger.getLogger(ClientSettings.class.getName());
@@ -801,7 +807,6 @@ public class ClientSettings {
     private AppOptionGroupBean[] salutationDtos=null;
     private AppOptionGroupBean[] complimentaryCloseDtos=null;
     private AppOptionGroupBean[] dictateSignDtos=null;
-    private AppOptionGroupBean[] reviewReasonDtos=null;
     private AppOptionGroupBean[] subjectFieldDtos=null;
     private AppOptionGroupBean[] afTagDtos=null;
     private AppOptionGroupBean[] adrTagDtos=null;
@@ -817,16 +822,17 @@ public class ClientSettings {
     private AppOptionGroupBean[] roles=null; // "Funktion" an einer Adresse
     protected AppOptionGroupBean[] timesheetIntervals=null;
     
-    private List<String>afTagsInUse=new ArrayList<String>();
-    private List<String>adrTagsInUse=new ArrayList<String>();
-    private List<String>docTagsInUse=new ArrayList<String>();
+    private List<CalendarEntryTemplate> calendarEntryTemplates=null;
     
-    private ArrayList<InsuranceInfo> insurances=new ArrayList<InsuranceInfo>();
-    private ArrayList<InsuranceInfo> motorInsurances=new ArrayList<InsuranceInfo>();
+    private List<String>afTagsInUse=new ArrayList<>();
+    private List<String>adrTagsInUse=new ArrayList<>();
+    private List<String>docTagsInUse=new ArrayList<>();
+    
+    private ArrayList<InsuranceInfo> insurances=new ArrayList<>();
+    private ArrayList<InsuranceInfo> motorInsurances=new ArrayList<>();
     
     private String urlForum="https://www.j-lawyer.org/?page_id=673";
     private String urlHelp="https://www.j-lawyer.org/?page_id=11";
-    private String urlXjustiz=null;
     
     /**
      * Creates a new instance of ClientSettings
@@ -978,14 +984,6 @@ public class ClientSettings {
         this.dictateSignDtos = dictateSignDtos;
     }
 
-    public AppOptionGroupBean[] getReviewReasonDtos() {
-        return reviewReasonDtos;
-    }
-
-    public void setReviewReasonDtos(AppOptionGroupBean[] reviewReasonDtos) {
-        this.reviewReasonDtos = reviewReasonDtos;
-    }
-
     /**
      * @return the subjectFieldDtos
      */
@@ -1130,14 +1128,6 @@ public class ClientSettings {
         this.urlHelp = urlHelp;
     }
 
-    public String getUrlXjustiz() {
-        return this.urlXjustiz;
-    }
-    
-    public void setUrlXjustiz(String url) {
-        this.urlXjustiz=url;
-    }
-
     /**
      * @return the countries
      */
@@ -1259,6 +1249,20 @@ public class ClientSettings {
      */
     public AppOptionGroupBean[] getTimesheetIntervals() {
         return timesheetIntervals;
+    }
+
+    /**
+     * @return the calendarEntryTemplates
+     */
+    public List<CalendarEntryTemplate> getCalendarEntryTemplates() {
+        return calendarEntryTemplates;
+    }
+
+    /**
+     * @param calendarEntryTemplates the calendarEntryTemplates to set
+     */
+    public void setCalendarEntryTemplates(List<CalendarEntryTemplate> calendarEntryTemplates) {
+        this.calendarEntryTemplates = calendarEntryTemplates;
     }
  
     

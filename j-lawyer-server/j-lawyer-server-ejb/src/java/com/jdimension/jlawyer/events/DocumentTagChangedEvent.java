@@ -703,6 +703,7 @@ public class DocumentTagChangedEvent extends CustomHook implements Jsonable {
     public void toJson(Writer writer) throws IOException {
         final JsonObject json = new JsonObject();
         json.put("hookType", this.hookType.name());
+        json.put("hookId", this.hookId);
         json.put("caseId", this.caseId);
         json.put("documentId", this.documentId);
         json.put("tagName", this.getTagName());

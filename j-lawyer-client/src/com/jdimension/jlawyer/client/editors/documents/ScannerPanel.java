@@ -667,6 +667,7 @@ import com.jdimension.jlawyer.client.editors.EditorsRegistry;
 import com.jdimension.jlawyer.client.editors.StatusBarProvider;
 import com.jdimension.jlawyer.client.editors.ThemeableEditor;
 import com.jdimension.jlawyer.client.editors.addresses.CaseForContactEntry;
+import com.jdimension.jlawyer.client.editors.documents.viewer.DocumentPreviewSaveCallback;
 import com.jdimension.jlawyer.client.editors.documents.viewer.DocumentViewerFactory;
 import com.jdimension.jlawyer.client.editors.documents.viewer.ScanPreviewProvider;
 import com.jdimension.jlawyer.client.editors.files.BulkSaveDialog;
@@ -683,6 +684,7 @@ import com.jdimension.jlawyer.client.launcher.ReadOnlyDocumentStore;
 import com.jdimension.jlawyer.client.mail.SaveToCaseExecutor;
 import com.jdimension.jlawyer.client.processing.ProgressIndicator;
 import com.jdimension.jlawyer.client.settings.ClientSettings;
+import com.jdimension.jlawyer.client.settings.UserSettings;
 import com.jdimension.jlawyer.client.utils.ComponentUtils;
 import com.jdimension.jlawyer.client.utils.FileUtils;
 import com.jdimension.jlawyer.client.utils.FrameUtils;
@@ -690,6 +692,7 @@ import com.jdimension.jlawyer.client.utils.StringUtils;
 import com.jdimension.jlawyer.client.utils.ThreadUtils;
 import com.jdimension.jlawyer.persistence.ArchiveFileBean;
 import com.jdimension.jlawyer.persistence.CaseFolder;
+import com.jdimension.jlawyer.pojo.FileMetadata;
 import com.jdimension.jlawyer.services.ArchiveFileServiceRemote;
 import com.jdimension.jlawyer.services.IntegrationServiceRemote;
 import com.jdimension.jlawyer.services.JLawyerServiceLocator;
@@ -727,16 +730,16 @@ import org.apache.log4j.Logger;
  *
  * @author jens
  */
-public class ScannerPanel extends javax.swing.JPanel implements ThemeableEditor, StatusBarProvider, EventConsumer, SaveToCaseExecutor {
+public class ScannerPanel extends javax.swing.JPanel implements ThemeableEditor, StatusBarProvider, EventConsumer, SaveToCaseExecutor, DocumentPreviewSaveCallback {
 
     private static final Logger log = Logger.getLogger(ScannerPanel.class.getName());
     private Image backgroundImage = null;
-    private HashMap<File, Date> lastEventFileNames = new HashMap<>();
+    private HashMap<FileMetadata, Date> lastEventFileMetadata = new HashMap<>();
 
     @Override
     public void notifyStatusBarReady() {
         EventBroker eb = EventBroker.getInstance();
-        eb.publishEvent(new ScannerStatusEvent(this.lastEventFileNames));
+        eb.publishEvent(new ScannerStatusEvent(this.lastEventFileMetadata));
     }
 
     @Override
@@ -749,19 +752,19 @@ public class ScannerPanel extends javax.swing.JPanel implements ThemeableEditor,
         if (e instanceof ScannerStatusEvent) {
 
             int selectedRow = tblDirContent.getSelectedRow();
-            HashMap<File, Date> fileNames = ((ScannerStatusEvent) e).getFileNames();
+            HashMap<FileMetadata, Date> fileMetadata = ((ScannerStatusEvent) e).getFileMetadata();
             SimpleDateFormat df = new SimpleDateFormat("dd.MM.yyyy, HH:mm", Locale.GERMAN);
-            String[] colNames = new String[]{"geändert", "Dateiname"};
+            String[] colNames = new String[]{"geändert", "OCR", "Dateiname", "von", "Quelle"};
             DefaultTableModel model = new DefaultTableModel(colNames, 0) {
                 @Override
                 public boolean isCellEditable(int i, int i0) {
                     return false;
                 }
             };
-            if (fileNames != null) {
-                for (File f : fileNames.keySet()) {
-                    Date lastModified = fileNames.get(f);
-                    Object[] row = new Object[]{df.format(lastModified), f.getName()};
+            if (fileMetadata != null) {
+                for (FileMetadata f : fileMetadata.keySet()) {
+                    Date lastModified = fileMetadata.get(f);
+                    Object[] row = new Object[]{df.format(lastModified), f, f.getFileName(), f.getPrincipalId(), f.getSource()};
                     model.addRow(row);
                 }
             }
@@ -783,7 +786,7 @@ public class ScannerPanel extends javax.swing.JPanel implements ThemeableEditor,
             } catch (Throwable t) {
                 log.error("Error re-selecting table row", t);
             }
-            this.lastEventFileNames = fileNames;
+            this.lastEventFileMetadata = fileMetadata;
         }
     }
 
@@ -815,12 +818,32 @@ public class ScannerPanel extends javax.swing.JPanel implements ThemeableEditor,
                 JLabel label = (JLabel) super.getTableCellRendererComponent(table, value, isSelected, hasFocus, row, column);
 
                 if (column == 1) {
+                    FileMetadata fm = (FileMetadata) value;
+                    label.setIcon(null);
+                    label.setText("");
+                    if (fm.getOcrStatus() == FileMetadata.OCRSTATUS_NOTSUPPORTED) {
+                        // no icon
+                    } else if (fm.getOcrStatus() == FileMetadata.OCRSTATUS_PROCESSING || fm.getOcrStatus() == FileMetadata.OCRSTATUS_OPEN) {
+                        label.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons16/material/baseline_font_download_yellow_48dp.png")));
+                    } else if (fm.getOcrStatus() == FileMetadata.OCRSTATUS_WITHOCR) {
+                        label.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons16/material/baseline_font_download_green_48dp.png")));
+                    } else if (fm.getOcrStatus() == FileMetadata.OCRSTATUS_WITHOUTOCR) {
+                        label.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons16/material/baseline_font_download_off_red_48dp.png")));
+                    }
+                } else if (column == 2) {
                     String sValue = (String) value;
                     FileUtils fu = FileUtils.getInstance();
                     Icon icon = fu.getFileTypeIcon(sValue);
                     label.setText(sValue);
                     label.setIcon(icon);
-
+                } else if (column == 3) {
+                    label.setText("");
+                    label.setIcon(null);
+                    String sValue = (String) value;
+                    if (sValue != null && sValue.length() > 0) {
+                        label.setText(sValue);
+                        label.setIcon(UserSettings.getInstance().getUserSmallIcon(sValue));
+                    }
                 } else {
                     label.setIcon(null);
                 }
@@ -845,14 +868,13 @@ public class ScannerPanel extends javax.swing.JPanel implements ThemeableEditor,
 
         ComponentUtils.persistSplitPane(this.splitTop, this.getClass(), "splitTop");
         ComponentUtils.persistSplitPane(this.splitContainer, this.getClass(), "splitContainer");
-        
+
         this.jScrollPane1.getVerticalScrollBar().setUnitIncrement(16);
 
     }
 
     private void displayLocalScanDir() {
-        ClientSettings settings = ClientSettings.getInstance();
-        String temp = settings.getConfiguration(ClientSettings.CONF_SCANS_OBSERVELOCALDIR, "");
+        String temp = ScannerUtils.getInstance().getLocalScanDir("");
         if ("".equalsIgnoreCase(temp)) {
             this.lblLocalDir.setText("kein Eingangsordner auf diesem Gerät");
         } else {
@@ -867,7 +889,7 @@ public class ScannerPanel extends javax.swing.JPanel implements ThemeableEditor,
             JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
 
             IntegrationServiceRemote is = locator.lookupIntegrationServiceRemote();
-            HashMap<File, Date> observedDirContent = is.getObservedDirectoryContent();
+            HashMap<FileMetadata, Date> observedDirContent = is.getObservedDirectoryContent();
 
             EventBroker eb = EventBroker.getInstance();
             eb.publishEvent(new ScannerStatusEvent(observedDirContent));
@@ -906,6 +928,9 @@ public class ScannerPanel extends javax.swing.JPanel implements ThemeableEditor,
         mnuDelete = new javax.swing.JMenuItem();
         mnuRename = new javax.swing.JMenuItem();
         mnuSaveToCase = new javax.swing.JMenuItem();
+        popConfiguration = new javax.swing.JPopupMenu();
+        mnuSelectLocalFolder = new javax.swing.JMenuItem();
+        mnuDeactivateLocalFolder = new javax.swing.JMenuItem();
         jLabel18 = new javax.swing.JLabel();
         lblPanelTitle = new javax.swing.JLabel();
         cmdRefresh = new javax.swing.JButton();
@@ -958,6 +983,24 @@ public class ScannerPanel extends javax.swing.JPanel implements ThemeableEditor,
         });
         popActions.add(mnuSaveToCase);
 
+        mnuSelectLocalFolder.setText("konfigurieren");
+        mnuSelectLocalFolder.setToolTipText("lokalen Eingangsordner auswählen");
+        mnuSelectLocalFolder.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                mnuSelectLocalFolderActionPerformed(evt);
+            }
+        });
+        popConfiguration.add(mnuSelectLocalFolder);
+
+        mnuDeactivateLocalFolder.setText("zurücksetzen");
+        mnuDeactivateLocalFolder.setToolTipText("deaktiviert den lokalen Eingangsordner");
+        mnuDeactivateLocalFolder.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                mnuDeactivateLocalFolderActionPerformed(evt);
+            }
+        });
+        popConfiguration.add(mnuDeactivateLocalFolder);
+
         jLabel18.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/scanner_big.png"))); // NOI18N
 
         lblPanelTitle.setFont(lblPanelTitle.getFont().deriveFont(lblPanelTitle.getFont().getStyle() | java.awt.Font.BOLD, lblPanelTitle.getFont().getSize()+12));
@@ -974,9 +1017,9 @@ public class ScannerPanel extends javax.swing.JPanel implements ThemeableEditor,
 
         cmdLocalUploadDir.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/package_system.png"))); // NOI18N
         cmdLocalUploadDir.setToolTipText("Ordner auf diesem Gerät überwachen");
-        cmdLocalUploadDir.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                cmdLocalUploadDirActionPerformed(evt);
+        cmdLocalUploadDir.addMouseListener(new java.awt.event.MouseAdapter() {
+            public void mousePressed(java.awt.event.MouseEvent evt) {
+                cmdLocalUploadDirMousePressed(evt);
             }
         });
 
@@ -1107,19 +1150,23 @@ public class ScannerPanel extends javax.swing.JPanel implements ThemeableEditor,
         int[] selRow = this.tblDirContent.getSelectedRows();
         if (selRow.length > 0) {
 
+            log.info(selRow.length + " documents selected");
+
             ArrayList<String> fileNames = new ArrayList<>();
             for (int r : selRow) {
-                String fileName = this.tblDirContent.getValueAt(r, 1).toString();
+                String fileName = this.tblDirContent.getValueAt(r, 2).toString();
                 fileNames.add(fileName);
             }
 
             ArrayList<Component> actionPanelEntries = new ArrayList<>();
             int i = 0;
 
+            log.info("creating EditScanPanel");
             EditScanPanel dsp = new EditScanPanel(this.getClass().getName());
             dsp.setDetails(fileNames, this);
             actionPanelEntries.add(dsp);
 
+            log.info("creating SaveScanToCasePanel");
             // empty case reference - will trigger a search
             SaveScanToCasePanel sp = new SaveScanToCasePanel(this.getClass().getName());
             sp.setBackground(sp.getBackground().brighter());
@@ -1134,13 +1181,17 @@ public class ScannerPanel extends javax.swing.JPanel implements ThemeableEditor,
             actionPanelEntries.add(sp);
 
             try {
+                log.info("querying last changed");
                 ClientSettings settings = ClientSettings.getInstance();
                 JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
                 ArchiveFileServiceRemote fileService = locator.lookupArchiveFileServiceRemote();
 
                 ArrayList<String> caseCandidates = new ArrayList<>();
-                List<ArchiveFileBean> myNewList = fileService.getLastChanged(settings.getConfiguration(ClientSettings.CONF_LASTUSER, ""), true, 10);
-                List<ArchiveFileBean> othersNewList = fileService.getLastChanged(settings.getConfiguration(ClientSettings.CONF_LASTUSER, ""), false, 10);
+                log.info("querying last changed for current user");
+                List<ArchiveFileBean> myNewList = fileService.getLastChanged(UserSettings.getInstance().getCurrentUser().getPrincipalId(), true, 10);
+                log.info("querying last changed for other users");
+                List<ArchiveFileBean> othersNewList = fileService.getLastChanged(UserSettings.getInstance().getCurrentUser().getPrincipalId(), false, 10);
+                log.info("building suggestion list 1");
                 for (ArchiveFileBean af : myNewList) {
                     if (!caseCandidates.contains(af.getFileNumber())) {
                         caseCandidates.add(af.getFileNumber());
@@ -1155,6 +1206,7 @@ public class ScannerPanel extends javax.swing.JPanel implements ThemeableEditor,
 
                     }
                 }
+                log.info("building suggestion list 2");
                 for (ArchiveFileBean af : othersNewList) {
                     if (!caseCandidates.contains(af.getFileNumber())) {
                         caseCandidates.add(af.getFileNumber());
@@ -1175,16 +1227,19 @@ public class ScannerPanel extends javax.swing.JPanel implements ThemeableEditor,
 
             }
 
+            log.info("updating UI (sidebar)");
             this.pnlActionsChild.setLayout(new GridLayout(actionPanelEntries.size(), 1));
             for (Component o : actionPanelEntries) {
                 this.pnlActionsChild.add(o);
             }
 
+            log.info("displaying preview");
             // display document preview
             if (fileNames.size() == 1) {
                 final String fFileName = fileNames.get(0);
                 new Thread(() -> {
                     try {
+                        log.info("loading preview as bytes");
                         int splitLocation = splitTop.getDividerLocation();
                         ThreadUtils.setVisible(pnlPreview, false);
                         ThreadUtils.removeAll(pnlPreview);
@@ -1198,13 +1253,15 @@ public class ScannerPanel extends javax.swing.JPanel implements ThemeableEditor,
                         IntegrationServiceRemote is = locator.lookupIntegrationServiceRemote();
                         byte[] data = is.getObservedFile(fFileName);
 
-                        JComponent preview = DocumentViewerFactory.getDocumentViewer(null, fFileName, true, new ScanPreviewProvider(is, fFileName), data, pnlPreview.getWidth(), pnlPreview.getHeight());
+                        log.info("rendering preview");
+                        JComponent preview = DocumentViewerFactory.getDocumentViewer(null, fFileName, true, new ScanPreviewProvider(is, fFileName), data, pnlPreview.getWidth(), pnlPreview.getHeight(), this);
                         ThreadUtils.setVisible(pnlPreview, false);
                         ThreadUtils.remove(pnlPreview, loading);
                         ThreadUtils.setLayout(pnlPreview, new BorderLayout());
                         ThreadUtils.addComponent(pnlPreview, preview, BorderLayout.CENTER);
                         ThreadUtils.setVisible(pnlPreview, true);
                         ThreadUtils.setSplitDividerLocation(splitTop, splitLocation);
+                        log.info("preview done");
                     } catch (Exception ex) {
                         log.error(ex);
                         clearPreview();
@@ -1229,7 +1286,7 @@ public class ScannerPanel extends javax.swing.JPanel implements ThemeableEditor,
         lce.setRole("");
         lce.setName(af.getName());
         lce.setReason(StringUtils.nonEmpty(af.getReason()));
-        lce.setArchived(af.getArchivedBoolean());
+        lce.setArchived(af.isArchived());
         ep.setEntry(lce, this);
         return ep;
     }
@@ -1250,7 +1307,7 @@ public class ScannerPanel extends javax.swing.JPanel implements ThemeableEditor,
 
             int selRow = this.tblDirContent.getSelectedRow();
             if (selRow > -1) {
-                String fileName = this.tblDirContent.getValueAt(selRow, 1).toString();
+                String fileName = this.tblDirContent.getValueAt(selRow, 2).toString();
 
                 try {
                     ClientSettings settings = ClientSettings.getInstance();
@@ -1282,38 +1339,6 @@ public class ScannerPanel extends javax.swing.JPanel implements ThemeableEditor,
         settings.setConfiguration(ClientSettings.CONF_SCANS_DELETEENABLED, "" + delete);
     }//GEN-LAST:event_chkDeleteAfterActionActionPerformed
 
-    private void cmdLocalUploadDirActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdLocalUploadDirActionPerformed
-
-        JOptionPane.showMessageDialog(EditorsRegistry.getInstance().getMainWindow(), "<html><b>HINWEIS:</b> Die Dokumente in dem hier gew&auml;hlten Ordner werden in den Scaneingang kopiert<br/>und anschlie&szlig;end von Ihrem Arbeitsplatz <b>gelöscht!</b></html>", "zu überwachender Ordner auf diesem Gerät", JOptionPane.WARNING_MESSAGE);
-
-        ClientSettings cs = ClientSettings.getInstance();
-        String observedDir = cs.getConfiguration(ClientSettings.CONF_SCANS_OBSERVELOCALDIR, "");
-
-        String current = cs.getConfiguration(ClientSettings.CONF_SCANS_OBSERVELOCALDIR, System.getProperty("user.home"));
-        JFileChooser chooser = new JFileChooser(current);
-        chooser.setFileSelectionMode(JFileChooser.DIRECTORIES_ONLY);
-        chooser.setAcceptAllFileFilterUsed(false);
-
-        if (!("".equals(observedDir))) {
-            File observedDirFile = new File(observedDir);
-            if (observedDirFile.exists() && observedDirFile.isDirectory()) {
-                chooser.setSelectedFile(observedDirFile);
-            }
-        }
-
-        chooser.setDialogTitle("zu überwachender Ordner auf diesem Gerät");
-        chooser.setApproveButtonText("Auswählen");
-        if (chooser.showOpenDialog(this) == JFileChooser.APPROVE_OPTION) {
-
-            cs.setConfiguration(ClientSettings.CONF_SCANS_OBSERVELOCALDIR, chooser.getSelectedFile().getAbsolutePath());
-            this.displayLocalScanDir();
-
-        } else {
-            cs.setConfiguration(ClientSettings.CONF_SCANS_OBSERVELOCALDIR, "");
-            this.displayLocalScanDir();
-        }
-    }//GEN-LAST:event_cmdLocalUploadDirActionPerformed
-
     private void tblDirContentMouseReleased(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_tblDirContentMouseReleased
         if (evt.isPopupTrigger()) {
             this.popActions.show(evt.getComponent(), evt.getX(), evt.getY());
@@ -1342,6 +1367,44 @@ public class ScannerPanel extends javax.swing.JPanel implements ThemeableEditor,
         this.splitPdfCallback();
     }//GEN-LAST:event_mnuSplitPdfActionPerformed
 
+    private void cmdLocalUploadDirMousePressed(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_cmdLocalUploadDirMousePressed
+        this.popConfiguration.show(this.cmdLocalUploadDir, evt.getX(), evt.getY());
+    }//GEN-LAST:event_cmdLocalUploadDirMousePressed
+
+    private void mnuSelectLocalFolderActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_mnuSelectLocalFolderActionPerformed
+        JOptionPane.showMessageDialog(EditorsRegistry.getInstance().getMainWindow(), "<html><b>HINWEIS:</b> Die Dokumente in dem hier gew&auml;hlten Ordner werden in den Scaneingang kopiert<br/>und anschlie&szlig;end von Ihrem Arbeitsplatz <b>gelöscht!</b></html>", "zu überwachender Ordner auf diesem Gerät", JOptionPane.WARNING_MESSAGE);
+
+        String observedDir = ScannerUtils.getInstance().getLocalScanDir("");
+
+        String current = ScannerUtils.getInstance().getLocalScanDir(System.getProperty("user.home"));
+        JFileChooser chooser = new JFileChooser(current);
+        chooser.setFileSelectionMode(JFileChooser.DIRECTORIES_ONLY);
+        chooser.setAcceptAllFileFilterUsed(false);
+
+        if (!("".equals(observedDir))) {
+            File observedDirFile = new File(observedDir);
+            if (observedDirFile.exists() && observedDirFile.isDirectory()) {
+                chooser.setSelectedFile(observedDirFile);
+            }
+        }
+
+        chooser.setDialogTitle("zu überwachender Ordner auf diesem Gerät");
+        chooser.setApproveButtonText("Auswählen");
+        if (chooser.showOpenDialog(this) == JFileChooser.APPROVE_OPTION) {
+            ScannerUtils.getInstance().setLocalScanDir(chooser.getSelectedFile().getAbsolutePath());
+            this.displayLocalScanDir();
+
+        } else {
+            ScannerUtils.getInstance().setLocalScanDir("");
+            this.displayLocalScanDir();
+        }
+    }//GEN-LAST:event_mnuSelectLocalFolderActionPerformed
+
+    private void mnuDeactivateLocalFolderActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_mnuDeactivateLocalFolderActionPerformed
+        ScannerUtils.getInstance().setLocalScanDir("");
+        this.displayLocalScanDir();
+    }//GEN-LAST:event_mnuDeactivateLocalFolderActionPerformed
+
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JCheckBox chkDeleteAfterAction;
     private javax.swing.JButton cmdLocalUploadDir;
@@ -1352,14 +1415,17 @@ public class ScannerPanel extends javax.swing.JPanel implements ThemeableEditor,
     private javax.swing.JScrollPane jScrollPane4;
     private javax.swing.JLabel lblLocalDir;
     protected javax.swing.JLabel lblPanelTitle;
+    private javax.swing.JMenuItem mnuDeactivateLocalFolder;
     private javax.swing.JMenuItem mnuDelete;
     private javax.swing.JMenuItem mnuRename;
     private javax.swing.JMenuItem mnuSaveToCase;
+    private javax.swing.JMenuItem mnuSelectLocalFolder;
     private javax.swing.JMenuItem mnuSplitPdf;
     private javax.swing.JPanel pnlActions;
     private javax.swing.JPanel pnlActionsChild;
     private javax.swing.JPanel pnlPreview;
     private javax.swing.JPopupMenu popActions;
+    private javax.swing.JPopupMenu popConfiguration;
     private javax.swing.JSplitPane splitContainer;
     private javax.swing.JSplitPane splitTop;
     private javax.swing.JTable tblDirContent;
@@ -1369,26 +1435,26 @@ public class ScannerPanel extends javax.swing.JPanel implements ThemeableEditor,
     public boolean saveToCaseCallback(String caseId, boolean withAttachments, boolean separateAttachments, boolean onlyAttachments) {
         int[] selRow = this.tblDirContent.getSelectedRows();
         if (selRow.length > 0) {
-            
-            BulkSaveDialog bulkSaveDlg=new BulkSaveDialog(BulkSaveDialog.TYPE_SCAN, EditorsRegistry.getInstance().getMainWindow(), true);
-            ScanEntryProcessor processor=new ScanEntryProcessor(this.chkDeleteAfterAction.isSelected());
+
+            BulkSaveDialog bulkSaveDlg = new BulkSaveDialog(BulkSaveDialog.TYPE_SCAN, EditorsRegistry.getInstance().getMainWindow(), true);
+            ScanEntryProcessor processor = new ScanEntryProcessor(this.chkDeleteAfterAction.isSelected());
             bulkSaveDlg.setEntryProcessor(processor);
 
             ArrayList<String> fileNames = new ArrayList<>();
             for (int r : selRow) {
-                String fileName = this.tblDirContent.getValueAt(r, 1).toString();
+                String fileName = this.tblDirContent.getValueAt(r, 2).toString();
                 fileNames.add(fileName);
             }
 
             CaseFolder rootFolder = null;
             CaseFolder targetFolder = null;
-            ArchiveFileBean targetCase=null;
+            ArchiveFileBean targetCase = null;
             if (caseId == null) {
                 SearchAndAssignDialog dlg = new SearchAndAssignDialog(EditorsRegistry.getInstance().getMainWindow(), true, "", null);
                 dlg.setVisible(true);
                 targetCase = dlg.getCaseSelection();
                 targetFolder = dlg.getFolderSelection();
-                rootFolder=dlg.getRootFolder();
+                rootFolder = dlg.getRootFolder();
                 dlg.dispose();
             } else {
                 SearchAndAssignDialog dlg = new SearchAndAssignDialog(EditorsRegistry.getInstance().getMainWindow(), true, "", caseId);
@@ -1396,45 +1462,46 @@ public class ScannerPanel extends javax.swing.JPanel implements ThemeableEditor,
                 dlg.dispose();
                 targetFolder = dlg.getFolderSelection();
                 targetCase = dlg.getCaseSelection();
-                rootFolder=dlg.getRootFolder();
+                rootFolder = dlg.getRootFolder();
             }
-            
+
             // user hit cancel
-            if (targetCase == null)
+            if (targetCase == null) {
                 return false;
-            
+            }
+
             bulkSaveDlg.setCaseFolder(rootFolder, targetFolder);
             bulkSaveDlg.setSelectedCase(targetCase);
 
             for (String fileName : fileNames) {
-                
+
                 try {
-                    
+
                     BulkSaveEntry bulkEntry = new BulkSaveEntry();
                     bulkEntry.setDocumentDate(new Date());
                     // do not load document from server - bytes remain empty, processor takes care of it
                     // bulkEntry.setDocumentBytes(locator.lookupIntegrationServiceRemote().getObservedFile(fileName));
-                    
+
                     String newName = fileName;
                     if (newName == null) {
                         newName = "";
                     }
-                    newName = FileUtils.sanitizeFileName(newName);
-
-                    bulkEntry.setDocumentFilename(fileName);
-                    bulkEntry.setDocumentFilenameNew(FileUtils.getNewFileNamePrefix(new Date()) + newName);
-
-                    bulkSaveDlg.addEntry(bulkEntry);
                     
+                    // do not change file name, because it is passed to the server in order to find the scan
+                    //newName = FileUtils.sanitizeFileName(newName);
+
+                    bulkEntry.setDocumentFilename(newName);
+                    bulkSaveDlg.addEntry(bulkEntry);
+
                 } catch (Exception ex) {
                     log.error(ex);
                     ThreadUtils.showErrorDialog(EditorsRegistry.getInstance().getMainWindow(), "Fehler beim Speichern des Scans: " + ex.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR);
                 }
             }
-            
+
             FrameUtils.centerDialog(bulkSaveDlg, EditorsRegistry.getInstance().getMainWindow());
             bulkSaveDlg.setVisible(true);
-            
+
             if (this.chkDeleteAfterAction.isSelected() && !(fileNames.isEmpty())) {
                 Timer timer = new Timer();
                 TimerTask scannerTask = new ScannerDocumentsTimerTask(true);
@@ -1463,8 +1530,8 @@ public class ScannerPanel extends javax.swing.JPanel implements ThemeableEditor,
             }
 
             for (int r : selRow) {
-                String fileName = this.tblDirContent.getValueAt(r, 1).toString();
-                String toFileName = FileUtils.getNewFileName(fileName, false);
+                String fileName = this.tblDirContent.getValueAt(r, 2).toString();
+                String toFileName = FileUtils.getNewFileName(null, fileName, false);
                 if (toFileName == null) {
                     // user cancelled
                     continue;
@@ -1513,7 +1580,7 @@ public class ScannerPanel extends javax.swing.JPanel implements ThemeableEditor,
                 }
 
                 for (int r : selRow) {
-                    String fileName = this.tblDirContent.getValueAt(r, 1).toString();
+                    String fileName = this.tblDirContent.getValueAt(r, 2).toString();
 
                     try {
 
@@ -1544,20 +1611,21 @@ public class ScannerPanel extends javax.swing.JPanel implements ThemeableEditor,
         int[] selRow = this.tblDirContent.getSelectedRows();
         if (selRow.length == 1) {
 
-            String fileName = this.tblDirContent.getValueAt(selRow[0], 1).toString();
-            if(!fileName.toLowerCase().endsWith(".pdf"))
+            String fileName = this.tblDirContent.getValueAt(selRow[0], 2).toString();
+            if (!fileName.toLowerCase().endsWith(".pdf")) {
                 return false;
+            }
 
             try {
 
                 PDFSplitDialog dlg = new PDFSplitDialog(EditorsRegistry.getInstance().getMainWindow(), true, fileName);
                 FrameUtils.centerDialog(dlg, EditorsRegistry.getInstance().getMainWindow());
                 dlg.setVisible(true);
-                ArrayList<PDFSplitRequest> splitRequests=new ArrayList<>();
-                if(dlg.getSplitRequest()!=null) {
+                ArrayList<PDFSplitRequest> splitRequests = new ArrayList<>();
+                if (dlg.getSplitRequest() != null) {
                     splitRequests.add(dlg.getSplitRequest());
                 }
-                
+
                 ProgressIndicator pi = new ProgressIndicator(EditorsRegistry.getInstance().getMainWindow(), true);
                 pi.setShowCancelButton(true);
                 pi.setMax(3);
@@ -1572,5 +1640,17 @@ public class ScannerPanel extends javax.swing.JPanel implements ThemeableEditor,
 
         }
         return true;
+    }
+
+    @Override
+    public void savePreview(String documentId, String fileName, byte[] data) {
+        try {
+            ClientSettings settings = ClientSettings.getInstance();
+            JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
+            locator.lookupIntegrationServiceRemote().updateObservedFile(fileName, data);
+        } catch (Exception ex) {
+            log.error(ex);
+            ThreadUtils.showErrorDialog(EditorsRegistry.getInstance().getMainWindow(), "Fehler beim Bearbeiten des Scans: " + ex.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR);
+        }
     }
 }

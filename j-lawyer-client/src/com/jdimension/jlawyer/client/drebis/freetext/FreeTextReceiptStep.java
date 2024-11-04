@@ -740,12 +740,12 @@ public class FreeTextReceiptStep extends javax.swing.JPanel implements WizardSte
                     log.error("Unable to unarchive case " + sel.getFileNumber(), ex);
                 }
 
-                String newName = this.getNewFileName(attachment.getName() + "." + attachment.getSuffix());
+                String newName = this.getNewFileName(sel, attachment.getName() + "." + attachment.getSuffix());
                 if (newName == null) {
                     newName = attachment.getName() + "." + attachment.getSuffix();
                 }
 
-                afs.addDocument(sel.getId(), newName, attachment.getContent(), "");
+                afs.addDocument(sel.getId(), newName, attachment.getContent(), "", null);
 
 
             } catch (Exception ex) {
@@ -864,8 +864,8 @@ public class FreeTextReceiptStep extends javax.swing.JPanel implements WizardSte
         return this.getName();
     }
     
-    public String getNewFileName(String currentFileName) {
-        return FileUtils.getNewFileName(currentFileName, false, new Date(), this, "Datei benennen");
+    public String getNewFileName(ArchiveFileBean selectedCase, String currentFileName) {
+        return FileUtils.getNewFileName(selectedCase, currentFileName, new Date(), true, this, "Datei benennen");
     }
 
     @Override
@@ -888,5 +888,10 @@ public class FreeTextReceiptStep extends javax.swing.JPanel implements WizardSte
     @Override
     public void setData(WizardDataContainer data) {
         this.data = data;
+    }
+
+    @Override
+    public void setWizardPanel(WizardMainPanel wizard) {
+        
     }
 }

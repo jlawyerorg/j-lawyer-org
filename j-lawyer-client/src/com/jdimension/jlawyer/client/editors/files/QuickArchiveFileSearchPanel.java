@@ -667,14 +667,18 @@ import com.jdimension.jlawyer.client.configuration.PopulateOptionsEditor;
 import com.jdimension.jlawyer.client.editors.EditorsRegistry;
 import com.jdimension.jlawyer.client.editors.ResetOnDisplayEditor;
 import com.jdimension.jlawyer.client.editors.ThemeableEditor;
+import com.jdimension.jlawyer.client.events.CasesChangedEvent;
+import com.jdimension.jlawyer.client.events.EventBroker;
 import com.jdimension.jlawyer.client.settings.ClientSettings;
 import com.jdimension.jlawyer.client.settings.UserSettings;
 import com.jdimension.jlawyer.client.utils.ComponentUtils;
+import com.jdimension.jlawyer.client.utils.StringUtils;
 import com.jdimension.jlawyer.client.utils.TableUtils;
 import com.jdimension.jlawyer.client.utils.ThreadUtils;
 import com.jdimension.jlawyer.persistence.ArchiveFileAddressesBean;
 import com.jdimension.jlawyer.persistence.ArchiveFileBean;
 import com.jdimension.jlawyer.persistence.ArchiveFileGroupsBean;
+import com.jdimension.jlawyer.persistence.ArchiveFileReviewsBean;
 import com.jdimension.jlawyer.persistence.ArchiveFileTagsBean;
 import com.jdimension.jlawyer.persistence.Group;
 import com.jdimension.jlawyer.services.ArchiveFileServiceRemote;
@@ -687,6 +691,7 @@ import java.awt.Image;
 import java.awt.event.ActionEvent;
 import java.awt.event.KeyEvent;
 import java.awt.event.MouseEvent;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -710,6 +715,8 @@ public class QuickArchiveFileSearchPanel extends javax.swing.JPanel implements T
     private String detailsEditorClass;
     private Image backgroundImage = null;
     private boolean initializing = false;
+    
+    private QuickArchiveFileSearchCellRenderer renderer=null;
 
     /**
      * Creates new form QuickArchiveFileSearchPanel
@@ -737,7 +744,8 @@ public class QuickArchiveFileSearchPanel extends javax.swing.JPanel implements T
         QuickArchiveFileSearchTableModel model = new QuickArchiveFileSearchTableModel(colNames, 0);
         this.tblResults.setModel(model);
 
-        QuickArchiveFileSearchCellRenderer renderer=new QuickArchiveFileSearchCellRenderer();
+        this.renderer=new QuickArchiveFileSearchCellRenderer();
+        this.renderer.setLoadSyncStatus(true);
         this.tblResults.setDefaultRenderer(Object.class, renderer);
         this.tblResults.setDefaultRenderer(Date.class, renderer);
 
@@ -1062,6 +1070,8 @@ public class QuickArchiveFileSearchPanel extends javax.swing.JPanel implements T
                 model.removeRow(tblResults.convertRowIndexToModel(selectedIndices[i]));
 
             }
+            EventBroker eb = EventBroker.getInstance();
+            eb.publishEvent(new CasesChangedEvent());
 
             EditorsRegistry.getInstance().clearStatus(false);
 
@@ -1131,18 +1141,35 @@ public class QuickArchiveFileSearchPanel extends javax.swing.JPanel implements T
         html.append("<table>");
         html.append("<tr><td>").append("Aktenzeichen: ").append("</td><td>").append(afb.getFileNumber()).append("</td></tr>");
         html.append("<tr><td>").append("Kurzrubrum: ").append("</td><td>").append(afb.getName()).append("</td></tr>");
-        if (afb.getReason() != null) {
+        if (!StringUtils.isEmpty(afb.getReason())) {
             html.append("<tr><td>").append("wegen: ").append("</td><td>").append(afb.getReason()).append("</td></tr>");
         }
-        if (afb.getNotice() != null) {
+        if (!StringUtils.isEmpty(afb.getNotice())) {
             html.append("<tr><td>").append("Notiz: ").append("</td><td>").append(afb.getNotice()).append("</td></tr>");
         }
-        if (afb.getLawyer() != null) {
+        if (!StringUtils.isEmpty(afb.getLawyer())) {
             html.append("<tr><td>").append("Anwalt: ").append("</td><td>").append(afb.getLawyer()).append("</td></tr>");
         }
-        if (afb.getAssistant() != null) {
+        if (!StringUtils.isEmpty(afb.getAssistant())) {
             html.append("<tr><td>").append("Sachbearbeiter: ").append("</td><td>").append(afb.getAssistant()).append("</td></tr>");
         }
+        
+        ClientSettings settings = ClientSettings.getInstance();
+        try {
+            JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
+            Collection<ArchiveFileReviewsBean> reviews = locator.lookupCalendarServiceRemote().getReviews(afb.getId(), false);
+            if (!reviews.isEmpty()) {
+                html.append("<tr><td>").append("Unerledigte Kalendereintr&auml;ge: ").append("</td><td>").append(reviews.size()).append("</td></tr>");
+                SimpleDateFormat df=new SimpleDateFormat("dd.MM.yyyy");
+                for (ArchiveFileReviewsBean r : reviews) {
+                    html.append("<tr><td></td><td>").append(df.format(r.getBeginDate())).append(" ").append(r.getSummary()).append(" (").append(r.getEventTypeName()).append(")").append("</td></tr>");
+                }
+            }
+        } catch (Exception ex) {
+            log.error("Error getting calendar entries", ex);
+            JOptionPane.showMessageDialog(this, "Fehler beim Ermitteln der Kalendereinträge: " + ex.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
+        }
+
 
         html.append("</table>");
         html.append("</body></html>");
@@ -1159,7 +1186,7 @@ public class QuickArchiveFileSearchPanel extends javax.swing.JPanel implements T
         // perform search here
         ThreadUtils.setWaitCursor(this);
         EditorsRegistry.getInstance().updateStatus("Suche Akten...");
-        
+        this.renderer.setCaseIdsSyncedForUser(null);
         new Thread(new QuickArchiveFileSearchThread(this, this.txtSearchString.getText(), this.chkIncludeArchive.isSelected(), TagUtils.getSelectedTags(this.popTagFilter), TagUtils.getSelectedTags(this.popDocumentTagFilter), this.tblResults)).start();
 
     }//GEN-LAST:event_cmdQuickSearchActionPerformed
@@ -1227,9 +1254,11 @@ public class QuickArchiveFileSearchPanel extends javax.swing.JPanel implements T
                 source.setArchiveFileHistoryBeanList(null);
                 source.setArchiveFileAddressesBeanList(null);
                 source.setName(source.getName() + " (Kopie)");
-                source.setArchivedBoolean(false);
+                source.setArchived(false);
                 source.setClaimNumber("");
                 source.setClaimValue(0f);
+                // reset external IDs
+                source.setExternalId(null);
                
                 ArchiveFileBean target=fileService.createArchiveFile(source);
                 
@@ -1243,7 +1272,7 @@ public class QuickArchiveFileSearchPanel extends javax.swing.JPanel implements T
                     newAab.setCustom2(aab.getCustom2());
                     newAab.setCustom3(aab.getCustom3());
                     newAab.setReferenceType(aab.getReferenceType());
-                    target.addParty(newAab);
+                    fileService.addAddressToCase(newAab);
                      
                 }
                 
@@ -1262,6 +1291,9 @@ public class QuickArchiveFileSearchPanel extends javax.swing.JPanel implements T
                 fileService.updateAllowedGroups(target.getId(), targetGroups);
                 
             }
+            
+            EventBroker eb = EventBroker.getInstance();
+            eb.publishEvent(new CasesChangedEvent());
 
             EditorsRegistry.getInstance().clearStatus(false);
             this.cmdQuickSearchActionPerformed(null);
@@ -1322,6 +1354,7 @@ public class QuickArchiveFileSearchPanel extends javax.swing.JPanel implements T
             JOptionPane.showMessageDialog(this, "Fehler beim Konfigurieren der Synchronisation: " + ex.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
             EditorsRegistry.getInstance().clearStatus(false);
         }
+        this.renderer.setCaseIdsSyncedForUser(null);
     }
     
     

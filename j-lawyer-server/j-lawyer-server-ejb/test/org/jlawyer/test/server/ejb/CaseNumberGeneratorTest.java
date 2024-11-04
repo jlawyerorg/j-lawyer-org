@@ -839,7 +839,7 @@ public class CaseNumberGeneratorTest {
 
         try {
             ArrayList<String> existing = new ArrayList<>();
-            String next = CaseNumberGenerator.getNextCaseNumber(existing, "RRR#MM/YY", -1);
+            String next = CaseNumberGenerator.getNextCaseNumber(existing, "RRR#MM/YY", -1, 1);
             System.out.println("RRR#MM/YY" + " " + next);
         } catch (InvalidSchemaPatternException ex) {
             Assert.fail();
@@ -847,7 +847,7 @@ public class CaseNumberGeneratorTest {
 
         try {
             ArrayList<String> existing = new ArrayList<>();
-            String next = CaseNumberGenerator.getNextCaseNumber(existing, "RRRRR-YYMMDD", -1);
+            String next = CaseNumberGenerator.getNextCaseNumber(existing, "RRRRR-YYMMDD", -1, 1);
             System.out.println("RRRRR-YYMMDD" + " " + next);
         } catch (InvalidSchemaPatternException ex) {
             Assert.fail();
@@ -855,7 +855,7 @@ public class CaseNumberGeneratorTest {
 
         try {
             ArrayList<String> existing = new ArrayList<>();
-            String next = CaseNumberGenerator.getNextCaseNumber(existing, "CCCCC", -1);
+            String next = CaseNumberGenerator.getNextCaseNumber(existing, "CCCCC", -1, 1);
             System.out.println("CCCCC" + " " + next);
         } catch (InvalidSchemaPatternException ex) {
             Assert.fail();
@@ -863,7 +863,7 @@ public class CaseNumberGeneratorTest {
 
         try {
             ArrayList<String> existing = new ArrayList<>();
-            String next = CaseNumberGenerator.getNextCaseNumber(existing, "CCCCC/MM/YYYY", -1);
+            String next = CaseNumberGenerator.getNextCaseNumber(existing, "CCCCC/MM/YYYY", -1, 1);
             System.out.println("CCCCC/MM/YYYY" + " " + next);
         } catch (InvalidSchemaPatternException ex) {
             Assert.fail();
@@ -871,10 +871,10 @@ public class CaseNumberGeneratorTest {
 
         try {
             ArrayList<String> existing = new ArrayList<>();
-            String next = CaseNumberGenerator.getNextCaseNumber(existing, "nnnn/YY", -1);
+            String next = CaseNumberGenerator.getNextCaseNumber(existing, "nnnn/YY", -1, 1);
             System.out.println("nnnn/YY" + " " + next);
             existing.add(next);
-            next = CaseNumberGenerator.getNextCaseNumber(existing, "nnnn/YY", -1);
+            next = CaseNumberGenerator.getNextCaseNumber(existing, "nnnn/YY", -1, 1);
             System.out.println("nnnn/YY" + " " + next);
         } catch (InvalidSchemaPatternException ex) {
             Assert.fail();
@@ -882,7 +882,7 @@ public class CaseNumberGeneratorTest {
 
         try {
             ArrayList<String> existing = new ArrayList<>();
-            String next = CaseNumberGenerator.getNextCaseNumber(existing, "NNNNN_YYYY", -1);
+            String next = CaseNumberGenerator.getNextCaseNumber(existing, "NNNNN_YYYY", -1, 1);
             System.out.println("NNNNN_YYYY" + " " + next);
         } catch (InvalidSchemaPatternException ex) {
             Assert.fail();
@@ -895,7 +895,7 @@ public class CaseNumberGeneratorTest {
         try {
             ArrayList<String> existing = new ArrayList<>();
             for (int i = 0; i < 1000; i++) {
-                String next = CaseNumberGenerator.getNextCaseNumber(existing, "nnnn/YY", -1);
+                String next = CaseNumberGenerator.getNextCaseNumber(existing, "nnnn/YY", -1, 1);
                 existing.add(next);
             }
         } catch (InvalidSchemaPatternException ex) {
@@ -905,7 +905,7 @@ public class CaseNumberGeneratorTest {
         try {
             ArrayList<String> existing = new ArrayList<>();
             for (int i = 0; i < 1000; i++) {
-                String next = CaseNumberGenerator.getNextCaseNumber(existing, "nnnnn/C", -1);
+                String next = CaseNumberGenerator.getNextCaseNumber(existing, "nnnnn/C", -1, 1);
                 existing.add(next);
                 //System.out.println("nnnnn/C" + " " + next);
             }
@@ -916,7 +916,7 @@ public class CaseNumberGeneratorTest {
         try {
             ArrayList<String> existing = new ArrayList<>();
             for (int i = 0; i < 700; i++) {
-                String next = CaseNumberGenerator.getNextCaseNumber(existing, "nnn/YY", -1);
+                String next = CaseNumberGenerator.getNextCaseNumber(existing, "nnn/YY", -1, 1);
                 existing.add(next);
             }
         } catch (InvalidSchemaPatternException ex) {
@@ -926,7 +926,7 @@ public class CaseNumberGeneratorTest {
             ArrayList<String> existing = new ArrayList<>();
             existing.add("103/19");
             for (int i = 0; i < 700; i++) {
-                String next = CaseNumberGenerator.getNextCaseNumber(existing, "nnn/YY", 100);
+                String next = CaseNumberGenerator.getNextCaseNumber(existing, "nnn/YY", 100, 1);
                 existing.add(next);
             }
         } catch (InvalidSchemaPatternException ex) {
@@ -935,7 +935,7 @@ public class CaseNumberGeneratorTest {
         try {
             ArrayList<String> existing = new ArrayList<>();
             for (int i = 0; i < 10; i++) {
-                String next = CaseNumberGenerator.getNextCaseNumber(existing, "nnn/YY", 1000);
+                String next = CaseNumberGenerator.getNextCaseNumber(existing, "nnn/YY", 1000, 1);
                 Assert.fail("must never happen");
             }
         } catch (InvalidSchemaPatternException ex) {
@@ -950,7 +950,7 @@ public class CaseNumberGeneratorTest {
         try {
             ArrayList<String> existing = new ArrayList<>();
             for (int i = 0; i < 1000; i++) {
-                String next = CaseNumberGenerator.getNextCaseNumber(existing, "NNNNN/YY", -1);
+                String next = CaseNumberGenerator.getNextCaseNumber(existing, "NNNNN/YY", -1, 1);
                 existing.add(next);
             }
         } catch (InvalidSchemaPatternException ex) {
@@ -960,7 +960,7 @@ public class CaseNumberGeneratorTest {
         try {
             ArrayList<String> existing = new ArrayList<>();
             for (int i = 0; i < 1000; i++) {
-                String next = CaseNumberGenerator.getNextCaseNumber(existing, "NNNNN/CC", -1);
+                String next = CaseNumberGenerator.getNextCaseNumber(existing, "NNNNN/CC", -1, 1);
                 existing.add(next);
             }
         } catch (InvalidSchemaPatternException ex) {
@@ -976,7 +976,7 @@ public class CaseNumberGeneratorTest {
             System.out.println("Testing RRR/YY");
             ArrayList<String> existing = new ArrayList<>();
             for (int i = 0; i < 999; i++) {
-                String next = CaseNumberGenerator.getNextCaseNumber(existing, "RRR/YY", -1);
+                String next = CaseNumberGenerator.getNextCaseNumber(existing, "RRR/YY", -1, 1);
                 existing.add(next);
             }
             Collections.sort(existing);
@@ -994,16 +994,16 @@ public class CaseNumberGeneratorTest {
         try {
             ArrayList<String> existing = new ArrayList<>();
             
-                String next = CaseNumberGenerator.getNextCaseNumber(existing, "NNNNN/YY", -1);
+                String next = CaseNumberGenerator.getNextCaseNumber(existing, "NNNNN/YY", -1, 1);
                 existing.add(next);
                 
-                next = CaseNumberGenerator.getNextCaseNumber(existing, "NNNNN/YY", -1);
+                next = CaseNumberGenerator.getNextCaseNumber(existing, "NNNNN/YY", -1, 1);
                 existing.add(next);
                 
-                next = CaseNumberGenerator.getNextCaseNumber(existing, "NNNNN/YY", 100);
+                next = CaseNumberGenerator.getNextCaseNumber(existing, "NNNNN/YY", 100, 1);
                 existing.add(next);
                 
-                next = CaseNumberGenerator.getNextCaseNumber(existing, "NNNNN/YY", 100);
+                next = CaseNumberGenerator.getNextCaseNumber(existing, "NNNNN/YY", 100,1);
                 existing.add(next);
                 
             
@@ -1023,25 +1023,25 @@ public class CaseNumberGeneratorTest {
             Date now=new Date();
             
             for(int i=0;i<3;i++) {
-                String next = CaseNumberGenerator.getNextCaseNumber(existing, "nnnnn/YYYYMMDD", now, -1);
+                String next = CaseNumberGenerator.getNextCaseNumber(existing, "nnnnn/YYYYMMDD", now, -1, 1);
                 existing.add(next);
             }
             
             Date now2=new Date(System.currentTimeMillis()+24l*60l*60l*1000l);
              for(int i=0;i<3;i++) {
-                String next = CaseNumberGenerator.getNextCaseNumber(existing, "nnnnn/YYYYMMDD", now2, -1);
+                String next = CaseNumberGenerator.getNextCaseNumber(existing, "nnnnn/YYYYMMDD", now2, -1, 1);
                 existing.add(next);
             }
              
              Date now3=new Date(System.currentTimeMillis()+24l*60l*60l*1000l + 31l*24l*60l*60l*1000l);
              for(int i=0;i<3;i++) {
-                String next = CaseNumberGenerator.getNextCaseNumber(existing, "nnnnn/YYYYMMDD", now3, -1);
+                String next = CaseNumberGenerator.getNextCaseNumber(existing, "nnnnn/YYYYMMDD", now3, -1, 1);
                 existing.add(next);
             }
              
              Date now4=new Date(now3.getTime()+366l*24l*60l*60l*1000l);
              for(int i=0;i<3;i++) {
-                String next = CaseNumberGenerator.getNextCaseNumber(existing, "nnnnn/YYYYMMDD", now4, -1);
+                String next = CaseNumberGenerator.getNextCaseNumber(existing, "nnnnn/YYYYMMDD", now4, -1, 1);
                 existing.add(next);
             }
                 

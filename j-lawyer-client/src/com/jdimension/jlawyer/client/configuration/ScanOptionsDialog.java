@@ -665,6 +665,7 @@ package com.jdimension.jlawyer.client.configuration;
 
 import com.jdimension.jlawyer.client.settings.ClientSettings;
 import com.jdimension.jlawyer.client.settings.ServerSettings;
+import com.jdimension.jlawyer.server.services.settings.ServerSettingsKeys;
 import com.jdimension.jlawyer.services.JLawyerServiceLocator;
 import com.jdimension.jlawyer.services.SystemManagementRemote;
 import java.io.File;
@@ -689,7 +690,7 @@ public class ScanOptionsDialog extends javax.swing.JDialog {
         initComponents();
         ServerSettings set=ServerSettings.getInstance();
         this.txtServerDir.setText(set.getSetting(ServerSettings.SERVERCONF_SCANNER_SERVERDIR, ""));
-        
+        this.txtOcrCommandline.setText(set.getSetting(ServerSettingsKeys.SERVERCONF_SCANNER_OCRCMD, ""));
         
     }
 
@@ -706,6 +707,9 @@ public class ScanOptionsDialog extends javax.swing.JDialog {
         cmdSave = new javax.swing.JButton();
         jLabel16 = new javax.swing.JLabel();
         txtServerDir = new javax.swing.JTextField();
+        jLabel1 = new javax.swing.JLabel();
+        jLabel2 = new javax.swing.JLabel();
+        txtOcrCommandline = new javax.swing.JTextField();
 
         setDefaultCloseOperation(javax.swing.WindowConstants.DISPOSE_ON_CLOSE);
         setTitle("Einstellungen Scannerintegration");
@@ -728,6 +732,11 @@ public class ScanOptionsDialog extends javax.swing.JDialog {
 
         jLabel16.setText("zu überwachendes Verzeichnis am Server:");
 
+        jLabel1.setText("Aufruf für OCR / Texterkennung:");
+
+        jLabel2.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/info.png"))); // NOI18N
+        jLabel2.setToolTipText("<html>\nDas hier angegebene Programm wird am <b>Server</b> ausgef&uuml;hrt, um OCR für PDF-Dokumente auszuf&uuml;hren. Es sollte der vollst&auml;ndige Aufruf angegeben werden. Es m&uuml;ssen zwei Platzhalter enthalten sein:\n<ul>\n<li>DATEIEIN - Datei, welche vom OCR-Programm verarbeitet werden soll</li>\n<li>DATEIAUS - Datei, welche vom OCR-Programm erstellt werden soll</li>\n</ul>\nBeispiel:<br/>\n<pre>/usr/bin/ocrmypdf --skip-text DATEIEIN DATEIAUS</pre>\n</html>");
+
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(getContentPane());
         getContentPane().setLayout(layout);
         layout.setHorizontalGroup(
@@ -740,10 +749,15 @@ public class ScanOptionsDialog extends javax.swing.JDialog {
                         .addComponent(cmdSave)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                         .addComponent(cmdClose))
+                    .addComponent(txtServerDir)
+                    .addGroup(layout.createSequentialGroup()
+                        .addComponent(jLabel1)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                        .addComponent(jLabel2))
                     .addGroup(layout.createSequentialGroup()
                         .addComponent(jLabel16)
-                        .addGap(0, 0, Short.MAX_VALUE))
-                    .addComponent(txtServerDir))
+                        .addGap(0, 120, Short.MAX_VALUE))
+                    .addComponent(txtOcrCommandline))
                 .addContainerGap())
         );
         layout.setVerticalGroup(
@@ -755,9 +769,15 @@ public class ScanOptionsDialog extends javax.swing.JDialog {
                 .addComponent(txtServerDir, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                    .addComponent(jLabel1)
+                    .addComponent(jLabel2))
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addComponent(txtOcrCommandline, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                     .addComponent(cmdClose)
                     .addComponent(cmdSave))
-                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                .addContainerGap())
         );
 
         pack();
@@ -783,6 +803,7 @@ public class ScanOptionsDialog extends javax.swing.JDialog {
         
         ServerSettings set=ServerSettings.getInstance();
         set.setSetting(set.SERVERCONF_SCANNER_SERVERDIR, this.txtServerDir.getText());
+        set.setSetting(set.SERVERCONF_SCANNER_OCRCMD, this.txtOcrCommandline.getText());
         
         this.setVisible(false);
         this.dispose();
@@ -842,7 +863,10 @@ public class ScanOptionsDialog extends javax.swing.JDialog {
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JButton cmdClose;
     private javax.swing.JButton cmdSave;
+    private javax.swing.JLabel jLabel1;
     private javax.swing.JLabel jLabel16;
+    private javax.swing.JLabel jLabel2;
+    private javax.swing.JTextField txtOcrCommandline;
     private javax.swing.JTextField txtServerDir;
     // End of variables declaration//GEN-END:variables
 }

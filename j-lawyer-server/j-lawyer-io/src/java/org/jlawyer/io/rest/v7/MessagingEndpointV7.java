@@ -714,7 +714,7 @@ public class MessagingEndpointV7 implements MessagingEndpointLocalV7 {
 
         try {
             if (msg.getSender() == null || "".equals(msg.getSender())) {
-                log.error("Can not submit new messgae - no sender given");
+                log.error("Can not submit new message - no sender given");
                 return Response.serverError().build();
             }
 
@@ -772,7 +772,7 @@ public class MessagingEndpointV7 implements MessagingEndpointLocalV7 {
     @Consumes(MediaType.APPLICATION_JSON)
     @Path("/{id}/delete")
     @RolesAllowed({"loginRole"})
-    public Response deleteDocument(@PathParam("id") String id) {
+    public Response deleteMessage(@PathParam("id") String id) {
         try {
 
             InitialContext ic = new InitialContext();

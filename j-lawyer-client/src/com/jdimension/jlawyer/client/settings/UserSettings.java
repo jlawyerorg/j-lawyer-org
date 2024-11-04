@@ -667,6 +667,7 @@ import static com.jdimension.jlawyer.client.settings.UserSettings.USER_AVATAR;
 import com.jdimension.jlawyer.persistence.AppRoleBean;
 import com.jdimension.jlawyer.persistence.AppUserBean;
 import com.jdimension.jlawyer.persistence.MailboxSetup;
+import com.jdimension.jlawyer.server.services.settings.UserSettingsKeys;
 import com.jdimension.jlawyer.services.JLawyerServiceLocator;
 import com.jdimension.jlawyer.services.SecurityServiceRemote;
 import com.jdimension.jlawyer.services.SystemManagementRemote;
@@ -681,67 +682,8 @@ import org.apache.log4j.Logger;
  *
  * @author jens
  */
-public class UserSettings {
+public class UserSettings extends UserSettingsKeys {
 
-    public static final String USER_AVATAR = "user.avatar";
-
-    public static final String ROLE_READCASE = "readArchiveFileRole";
-    public static final String ROLE_WRITECASE = "writeArchiveFileRole";
-    public static final String ROLE_READADDRESS = "readAddressRole";
-    public static final String ROLE_WRITEADDRESS = "writeAddressRole";
-    public static final String ROLE_LOGIN = "loginRole";
-
-    // key
-    public static final String CLOUD_SHARE_FOLDERTEMPLATE = "cloud.share.foldertemplate";
-    // values
-    public static final String CLOUD_SHARE_FOLDERTEMPLATE_CASE = "case";
-    public static final String CLOUD_SHARE_FOLDERTEMPLATE_ADDRESS = "address";
-    public static final String CLOUD_SHARE_FOLDERTEMPLATE_CASEADDRESS = "case-address";
-    public static final String CLOUD_SHARE_FOLDERTEMPLATE_ADDRESSCASE = "address-case";
-
-    // key
-    public static final String CLOUD_SHARE_PERMISSIONS = "cloud.share.permissions";
-    // values
-    public static final String CLOUD_SHARE_PERMISSIONS_READONLY = "readonly";
-    public static final String CLOUD_SHARE_PERMISSIONS_UPLOAD = "upload";
-    public static final String CLOUD_SHARE_PERMISSIONS_UPLOADEDIT = "uploadedit";
-
-    public static final String CONF_SEARCH_WITHARCHIVE = "user.conf.search.witharchive";
-
-    public static final String CONF_DESKTOP_RANDOM_BACKGROUND = "client.desktop.background.random";
-
-    public static final String CONF_DESKTOP_ONLYMYCASES = "client.desktop.onlymycases";
-    public static final String CONF_DESKTOP_ONLYMYREVIEWS = "client.desktop.onlymyreviews";
-    public static final String CONF_DESKTOP_ONLYMYTAGGED = "client.desktop.onlymytagged";
-    public static final String CONF_DESKTOP_LASTFILTERTAG = "client.desktop.lastfiltertag";
-    public static final String CONF_DESKTOP_LASTFILTERDOCUMENTTAG = "client.desktop.lastfilterdocumenttag";
-
-    public static final String CONF_DREBIS_TAGGINGENABLED = "user.drebis.taggingenabled";
-    public static final String CONF_DREBIS_DOCUMENTTAGGINGENABLED = "user.drebis.documenttaggingenabled";
-    public static final String CONF_DREBIS_LASTTAG = "user.drebis.lasttag";
-    public static final String CONF_DREBIS_LASTDOCUMENTTAG = "user.drebis.lastdocumenttag";
-    
-    public static final String CONF_SCAN_DIVIDERKEYWORD = "user.scans.dividerkeyword";
-    
-    public static final String CONF_MAIL_LASTUSEDSETUP = "user.mail.lastusedsetup";
-    
-    public static final String CONF_MAIL_LASTUSEDTEMPLATE = "user.mail.lastusedtemplate";
-    public static final String CONF_BEA_LASTUSEDTEMPLATE = "user.bea.lastusedtemplate";
-
-    public static final String CONF_CASE_LASTPARTYTYPE = "user.case.lastpartytype";
-
-    // will be used with a suffix indicating the event type (see CalendarSetup class)
-    public static final String CONF_CALENDAR_LASTSELECTED = "user.calendar.lastcalsetup.";
-    
-    
-    // for new bulk save dialog
-    public static final String CONF_BULKSAVE_LASTCASETAGS_PREFIX="user.bulksave.lastcasetags.";
-    public static final String CONF_BULKSAVE_LASTDOCTAGS_PREFIX="user.bulksave.lastdoctags.";
-    
-    // invoice related
-    public static final String INVOICE_LASTUSEDCURRENCY="invoice.currency.lastused";
-    public static final String INVOICE_LASTUSEDTYPE="invoice.type.lastused";
-    
     private static final String ARRAY_DELIMITER = "#####";
 
     private static final Logger log = Logger.getLogger(UserSettings.class.getName());
@@ -753,6 +695,7 @@ public class UserSettings {
     private AppUserBean[] assistantUsers = null;
     private AppUserBean[] allUsers = null;
     private List<AppUserBean> loginEnabledUsers = null;
+    private List<AppUserBean> messagingEnabledUsers = null;
 
     private SystemManagementRemote mgmt = null;
 
@@ -760,13 +703,13 @@ public class UserSettings {
     private ImageIcon smallIcon = null;
     private ImageIcon bigIcon = null;
 
-    private Hashtable<String, ImageIcon> userIconsSmall = new Hashtable<String, ImageIcon>();
-    private Hashtable<String, ImageIcon> userIconsBig = new Hashtable<String, ImageIcon>();
-    private Hashtable<String, List<String>> userRoles = new Hashtable<String, List<String>>();
+    private Hashtable<String, ImageIcon> userIconsSmall = new Hashtable<>();
+    private Hashtable<String, ImageIcon> userIconsBig = new Hashtable<>();
+    private Hashtable<String, List<String>> userRoles = new Hashtable<>();
 
-    private Hashtable<String, List<MailboxSetup>> userMailboxes = new Hashtable<String, List<MailboxSetup>>();
+    private Hashtable<String, List<MailboxSetup>> userMailboxes = new Hashtable<>();
 
-    private ArrayList<String> invalidUsers = new ArrayList<String>();
+    private ArrayList<String> invalidUsers = new ArrayList<>();
 
     /**
      * Creates a new instance of ClientSettings
@@ -782,7 +725,7 @@ public class UserSettings {
     }
 
     private void loadCache() {
-        if (this.settingCache == null) {
+        if (this.settingCache == null && this.mgmt!=null) {
             this.settingCache = this.mgmt.getUserSettings(this.currentUser);
         }
     }
@@ -896,6 +839,15 @@ public class UserSettings {
             }
         }
     }
+    
+    public void setSettingAsBoolean(String key, boolean value) {
+        setSetting(key, "" + value);
+    }
+    
+    public boolean getSettingAsBoolean(String key, boolean defaultValue) {
+        String s=getSetting(key, "" + defaultValue);
+        return Boolean.parseBoolean(s);
+    }
 
     public void setSettingArray(String key, String[] value) {
         StringBuilder sb = new StringBuilder();
@@ -976,6 +928,51 @@ public class UserSettings {
      */
     public AppUserBean[] getAllUsers() {
         return allUsers;
+    }
+    
+    public AppUserBean getUser(String principalId) {
+        if(allUsers != null) {
+            for (AppUserBean u : allUsers) {
+                if(u.getPrincipalId().equals(principalId))
+                    return u;
+            }
+        }
+        return null;
+    }
+    
+    // updates any cached objects for this user
+    public void applyChangedUser(AppUserBean user) {
+        
+        if(currentUser!=null && currentUser.equals(user))
+            currentUser=user;
+        
+        if(loginEnabledUsers.indexOf(user)>-1)
+            loginEnabledUsers.set(loginEnabledUsers.indexOf(user), user);
+        
+        if(messagingEnabledUsers.indexOf(user)>-1)
+            messagingEnabledUsers.set(messagingEnabledUsers.indexOf(user), user);
+        
+        for(int i=0;i<lawyerUsers.length;i++) {
+            if(lawyerUsers[i].equals(user)) {
+                lawyerUsers[i]=user;
+                break;
+            }
+        }
+        
+        for(int i=0;i<assistantUsers.length;i++) {
+            if(assistantUsers[i].equals(user)) {
+                assistantUsers[i]=user;
+                break;
+            }
+        }
+        
+        for(int i=0;i<allUsers.length;i++) {
+            if(allUsers[i].equals(user)) {
+                allUsers[i]=user;
+                break;
+            }
+        }
+
     }
 
     /**
@@ -1098,6 +1095,20 @@ public class UserSettings {
             // also, having no icon is not a big issue - but the logging of the error can cause some performance issues because it is invoked frequently
 
         }
+    }
+
+    /**
+     * @return the messagingEnabledUsers
+     */
+    public List<AppUserBean> getMessagingEnabledUsers() {
+        return messagingEnabledUsers;
+    }
+
+    /**
+     * @param messagingEnabledUsers the messagingEnabledUsers to set
+     */
+    public void setMessagingEnabledUsers(List<AppUserBean> messagingEnabledUsers) {
+        this.messagingEnabledUsers = messagingEnabledUsers;
     }
 
 }

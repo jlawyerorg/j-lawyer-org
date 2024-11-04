@@ -666,11 +666,13 @@ package org.jlawyer.io.rest.v1;
 import com.jdimension.jlawyer.persistence.AddressBean;
 import com.jdimension.jlawyer.services.AddressServiceLocal;
 import java.util.ArrayList;
+import java.util.List;
 import javax.annotation.security.RolesAllowed;
 import javax.ejb.Stateless;
 import javax.naming.InitialContext;
 import javax.ws.rs.Consumes;
 import javax.ws.rs.GET;
+import javax.ws.rs.POST;
 import javax.ws.rs.PUT;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
@@ -714,12 +716,10 @@ public class ContactsEndpointV1 implements ContactsEndpointLocalV1 {
             InitialContext ic = new InitialContext();
             AddressServiceLocal addresses = (AddressServiceLocal) ic.lookup("java:global/j-lawyer-server/j-lawyer-server-ejb/AddressService!com.jdimension.jlawyer.services.AddressServiceLocal");
             AddressBean adr=addresses.getAddress(id);
-            Response res = Response.ok(RestfulContactV1.fromAddressBean(adr)).build();
-            return res;
+            return Response.ok(RestfulContactV1.fromAddressBean(adr)).build();
         } catch (Exception ex) {
             log.error("can not get address " + id, ex);
-            Response res = Response.serverError().build();
-            return res;
+            return Response.serverError().build();
         }
     }
 
@@ -742,12 +742,10 @@ public class ContactsEndpointV1 implements ContactsEndpointLocalV1 {
             AddressServiceLocal addresses = (AddressServiceLocal) ic.lookup("java:global/j-lawyer-server/j-lawyer-server-ejb/AddressService!com.jdimension.jlawyer.services.AddressServiceLocal");
             AddressBean a=new AddressBean();
             a = addresses.createAddress(contact.toAddressBean(a));
-            Response res = Response.ok(RestfulContactV1.fromAddressBean(a)).build();
-            return res;
+            return Response.ok(RestfulContactV1.fromAddressBean(a)).build();
         } catch (Exception ex) {
             log.error("can not create new address " + contact.toString(), ex);
-            Response res = Response.serverError().build();
-            return res;
+            return Response.serverError().build();
         }
 
     
@@ -775,7 +773,11 @@ public class ContactsEndpointV1 implements ContactsEndpointLocalV1 {
                 AddressBean afb = addresses.getAddress(id);
                 RestfulContactOverviewV1 rco = new RestfulContactOverviewV1();
                 rco.setId(id);
-                rco.setExternalId(afb.getExternalId());
+                rco.setExternalId(afb.getExternalId1());
+                rco.setExternalId2(afb.getExternalId2());
+                rco.setExternalId3(afb.getExternalId3());
+                rco.setExternalId4(afb.getExternalId4());
+                rco.setExternalId5(afb.getExternalId5());
                 rco.setName(afb.getName());
                 rco.setCity(afb.getCity());
                 rco.setFirstName(afb.getFirstName());
@@ -783,15 +785,58 @@ public class ContactsEndpointV1 implements ContactsEndpointLocalV1 {
                 rco.setZipCode(afb.getZipCode());
                 rcoList.add(rco);
             }
-            Response res = Response.ok(rcoList).build();
-            return res;
+            return Response.ok(rcoList).build();
         } catch (Exception ex) {
             log.error("Can not list contacts", ex);
-            Response res = Response.serverError().build();
-            return res;
+            return Response.serverError().build();
         }
     }
 
+    /**
+     * Performs a similarity search using Jaro Winkler distance over name, first name, street and number, zip code and city. Anything with a similarity of 85% or higher will be returned.
+     *
+     * @param contact the contacts data
+     * @response 401 User not authorized
+     * @response 403 User not authenticated
+     */
+    @Override
+    @POST
+    @Produces(MediaType.APPLICATION_JSON+";charset=utf-8")
+    @Path("/similar")
+    @RolesAllowed({"readAddressRole"})
+    public Response searchSimilarContacts(RestfulContactV1 contact) {
+        try {
+
+            InitialContext ic = new InitialContext();
+            AddressServiceLocal addresses = (AddressServiceLocal) ic.lookup("java:global/j-lawyer-server/j-lawyer-server-ejb/AddressService!com.jdimension.jlawyer.services.AddressServiceLocal");
+            
+            AddressBean a=new AddressBean();
+            a = addresses.createAddress(contact.toAddressBean(a));
+            
+            List<AddressBean> similars=addresses.similaritySearch(a, 0.85f);
+            ArrayList<RestfulContactOverviewV1> rcoList = new ArrayList<>();
+            for (AddressBean sim : similars) {
+                RestfulContactOverviewV1 rco = new RestfulContactOverviewV1();
+                rco.setId(sim.getId());
+                rco.setExternalId(sim.getExternalId1());
+                rco.setExternalId2(sim.getExternalId2());
+                rco.setExternalId3(sim.getExternalId3());
+                rco.setExternalId4(sim.getExternalId4());
+                rco.setExternalId5(sim.getExternalId5());
+                rco.setName(sim.getName());
+                rco.setCity(sim.getCity());
+                rco.setFirstName(sim.getFirstName());
+                rco.setCompany(sim.getCompany());
+                rco.setZipCode(sim.getZipCode());
+                rcoList.add(rco);
+            }
+            return Response.ok(rcoList).build();
+        } catch (Exception ex) {
+            log.error("Can not list similar contacts", ex);
+            return Response.serverError().build();
+        }
+    }
+    
     /**
      * Updates an existing contact based on its ID
      *
@@ -818,8 +863,7 @@ public class ContactsEndpointV1 implements ContactsEndpointLocalV1 {
             AddressBean currentContact = addresses.getAddress(contact.getId());
             if (currentContact == null) {
                 log.error("contact with id " + contact.getId() + " does not exist - skipping update");
-                Response res = Response.serverError().build();
-                return res;
+                return Response.serverError().build();
             }
             // file number must not be changed
 
@@ -842,7 +886,7 @@ public class ContactsEndpointV1 implements ContactsEndpointLocalV1 {
             currentContact.setFirstName(contact.getFirstName());
             currentContact.setInsuranceName(contact.getInsuranceName());
             currentContact.setInsuranceNumber(contact.getInsuranceNumber());
-            currentContact.setLegalProtection(contact.getLegalProtection());
+            currentContact.setLegalProtection(contact.getLegalProtection()==1);
             currentContact.setMobile(contact.getMobile());
             currentContact.setMotorInsuranceName(contact.getMotorInsuranceName());
             currentContact.setMotorInsuranceNumber(contact.getMotorInsuranceNumber());
@@ -853,19 +897,17 @@ public class ContactsEndpointV1 implements ContactsEndpointLocalV1 {
             currentContact.setTitle(contact.getTitle());
             currentContact.setTrafficInsuranceName(contact.getTrafficInsuranceName());
             currentContact.setTrafficInsuranceNumber(contact.getTrafficInsuranceNumber());
-            currentContact.setTrafficLegalProtection(contact.getTrafficLegalProtection());
+            currentContact.setTrafficLegalProtection(contact.getTrafficLegalProtection()==1);
             currentContact.setWebsite(contact.getWebsite());
             currentContact.setZipCode(contact.getZipCode());
 
             addresses.updateAddress(currentContact);
             AddressBean addressData = addresses.getAddress(currentContact.getId());
 
-            Response res = Response.ok(RestfulContactV1.fromAddressBean(addressData)).build();
-            return res;
+            return Response.ok(RestfulContactV1.fromAddressBean(addressData)).build();
         } catch (Exception ex) {
             log.error("can not update address " + contact.getId(), ex);
-            Response res = Response.serverError().build();
-            return res;
+            return Response.serverError().build();
         }
     }
     
