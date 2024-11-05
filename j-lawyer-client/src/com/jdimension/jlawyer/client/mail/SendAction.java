@@ -1015,6 +1015,20 @@ public class SendAction extends ProgressableAction {
             
             Store store = null;
             if (ms.isMsExchange()) {
+                imapProps.put("mail.imaps.sasl.enable", "true");
+                imapProps.put("mail.imaps.port", "993");
+
+                imapProps.put("mail.imaps.auth.mechanisms", "XOAUTH2");
+                imapProps.put("mail.imaps.sasl.mechanisms", "XOAUTH2");
+
+                imapProps.put("mail.imaps.auth.login.disable", "true");
+                imapProps.put("mail.imaps.auth.plain.disable", "true");
+
+                imapProps.setProperty("mail.imaps.socketFactory.class", SSL_FACTORY);
+                imapProps.setProperty("mail.imaps.socketFactory.fallback", "false");
+                imapProps.setProperty("mail.imaps.socketFactory.port", "993");
+                imapProps.setProperty("mail.imaps.starttls.enable", "true");
+                
                 String authToken = MsExchangeUtils.getAuthToken(ms.getTenantId(), ms.getClientId(), ms.getClientSecret(), ms.getEmailInUser(), inPwd);
 
                 session = Session.getInstance(imapProps);
