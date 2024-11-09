@@ -722,6 +722,8 @@ public class BugReportDialog extends javax.swing.JDialog {
         
         if(this.clientTimer!=null)
             this.clientTimer.cancel();
+        
+        super.dispose();
     }
     
     private void loadClientLog(int numberOfLines) {
