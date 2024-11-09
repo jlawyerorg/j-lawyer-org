@@ -7158,7 +7158,7 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
 
         // Eingabedialog für Seitenzahlen
         String pageInput = JOptionPane.showInputDialog(this,
-                "Bitte Seitenzahlen zum Splitten eingeben (kommagetrennt):",
+                "Bitte Seitenzahlen eingeben, nach denen geteilt werden soll (kommagetrennt):",
                 "PDF Splitten",
                 JOptionPane.QUESTION_MESSAGE);
 
