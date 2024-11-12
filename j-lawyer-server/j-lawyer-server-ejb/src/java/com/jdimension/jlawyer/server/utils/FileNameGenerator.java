@@ -747,7 +747,7 @@ public class FileNameGenerator {
         while (pattern.contains("[yyyy]")) {
             pattern = pattern.replace("[yyyy]", longYear.format(current));
         }
-        while (pattern.contains("[yy")) {
+        while (pattern.contains("[yy]")) {
             pattern = pattern.replace("[yy]", shortYear.format(current));
         }
 
