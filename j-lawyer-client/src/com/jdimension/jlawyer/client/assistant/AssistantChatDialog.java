@@ -1147,7 +1147,7 @@ public class AssistantChatDialog extends javax.swing.JDialog {
                 ClientSettings settings = ClientSettings.getInstance();
 
                 Message incomingMsg = new Message();
-                incomingMsg.setRole("assistant");
+                incomingMsg.setRole(Message.ROLE_ASSISTANT);
                 incomingMsg.setContent("...");
                 AiChatMessagePanel incomingMsgPanel = new AiChatMessagePanel(incomingMsg, owner);
                 try {
@@ -1244,6 +1244,7 @@ public class AssistantChatDialog extends javax.swing.JDialog {
                         }
                         AiChatMessagePanel msgPanel = incomingMessageRef.get();
                         msgPanel.getMessage().setContent(resultString.toString());
+                        messages.add(msgPanel.getMessage());
                         msgPanel.setMessage(msgPanel.getMessage(), owner);
                         msgPanel.repaint();
                         msgPanel.updateUI();
