@@ -2359,6 +2359,7 @@ public class BeaInboxPanel extends javax.swing.JPanel implements SaveToCaseExecu
     public void reset(boolean force) {
 
         boolean needsBeaReset = !BeaAccess.hasInstance();
+        log.info("beA has instance: " + !needsBeaReset);
         if (!needsBeaReset) {
             try {
                 needsBeaReset = !BeaAccess.getInstance().isLoggedIn();
@@ -2367,8 +2368,16 @@ public class BeaInboxPanel extends javax.swing.JPanel implements SaveToCaseExecu
                 needsBeaReset = true;
             }
         }
+        log.info("beA reset needed: " + needsBeaReset);
 
         if (needsBeaReset) {
+            try {
+                log.info("beA logout");
+                this.logout();
+                log.info("beA logout succeeded");
+            } catch (Exception ex) {
+                log.error("beA logout failed", ex);
+            }
             BeaLoginDialog loginPanel = new BeaLoginDialog(EditorsRegistry.getInstance().getMainWindow(), true, this);
             loginPanel.setVisible(true);
             if (!BeaAccess.hasInstance()) {
