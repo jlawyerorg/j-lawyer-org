@@ -1,35 +1,15 @@
 package com.jdimension.jlawyer.client.utils.convert;
 
-import static com.jdimension.jlawyer.client.utils.convert.Helper.DEFAULT_HTML_NAME;
-import static com.jdimension.jlawyer.client.utils.convert.Helper.DEFAULT_PDF_NAME;
 import static com.jdimension.jlawyer.client.utils.convert.Helper.EMAIL_HEADER_ID;
-import static com.jdimension.jlawyer.client.utils.convert.Helper.HEADER_TEMPLATE_CONTAINER;
-import static com.jdimension.jlawyer.client.utils.convert.Helper.TEMP_DIR;
-import static com.jdimension.jlawyer.client.utils.convert.Helper.UNKNOWN;
-import static com.jdimension.jlawyer.client.utils.convert.Helper.readTemplate;
-import static com.jdimension.jlawyer.client.utils.convert.Helper.writeToFile;
 import com.lowagie.text.DocumentException;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
-//import org.simplejavamail.api.email.AttachmentResource;
-//import org.simplejavamail.converter.EmailConverter;
 
 import javax.mail.MessagingException;
-import java.io.File;
-import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.OutputStream;
-import java.nio.file.Files;
-import java.nio.file.Path;
 import java.util.List;
 
-import static java.nio.charset.StandardCharsets.UTF_8;
-import java.util.ArrayList;
-import static java.util.Objects.isNull;
-import static java.util.Optional.ofNullable;
-import static org.apache.commons.collections4.CollectionUtils.isEmpty;
-import static org.apache.commons.lang3.StringUtils.isBlank;
 import static org.apache.commons.lang3.StringUtils.isNotBlank;
 
 /**
