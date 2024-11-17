@@ -144,7 +144,7 @@
         <Property name="selected" type="boolean" value="true"/>
         <Property name="text" type="java.lang.String" value="Inhaltsverzeichnis"/>
         <Property name="toolTipText" type="java.lang.String" value="Inhaltsverzeichnis wird hinzugef&#xfc;gt"/>
-        <Property name="actionCommand" type="java.lang.String" value="addToc"/>
+        <Property name="actionCommand" type="java.lang.String" value=""/>
       </Properties>
     </Component>
     <Component class="javax.swing.JCheckBox" name="addPageNbrsCb">
@@ -152,7 +152,7 @@
         <Property name="selected" type="boolean" value="true"/>
         <Property name="text" type="java.lang.String" value="Seitenzahlen"/>
         <Property name="toolTipText" type="java.lang.String" value="Seitenzahlen werden hinzugef&#xfc;gt"/>
-        <Property name="actionCommand" type="java.lang.String" value="addPageNbrs"/>
+        <Property name="actionCommand" type="java.lang.String" value=""/>
       </Properties>
       <Events>
         <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="addPageNbrsCbActionPerformed"/>

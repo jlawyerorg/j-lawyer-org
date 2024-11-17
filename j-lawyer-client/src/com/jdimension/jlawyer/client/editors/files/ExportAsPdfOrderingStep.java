@@ -693,6 +693,19 @@ public class ExportAsPdfOrderingStep extends javax.swing.JPanel implements Wizar
         UserSettings uset = UserSettings.getInstance();
         this.addTocCb.setSelected(uset.getSettingAsBoolean(UserSettings.CONF_CASES_EXPORT_TOC, true));
         this.addPageNbrsCb.setSelected(uset.getSettingAsBoolean(UserSettings.CONF_CASES_EXPORT_PAGENUMBERS, true));
+        
+        // ComponentListener für pnlConversionList
+        this.pnlConversionList.addContainerListener(new java.awt.event.ContainerListener() {
+            @Override
+            public void componentRemoved(java.awt.event.ContainerEvent e) {
+                refreshDisplay();
+            }
+
+            @Override
+            public void componentAdded(java.awt.event.ContainerEvent e) {
+                refreshDisplay();
+            }
+        });
     }
 
     @Override
@@ -776,12 +789,12 @@ public class ExportAsPdfOrderingStep extends javax.swing.JPanel implements Wizar
         addTocCb.setSelected(true);
         addTocCb.setText("Inhaltsverzeichnis");
         addTocCb.setToolTipText("Inhaltsverzeichnis wird hinzugefügt");
-        addTocCb.setActionCommand("addToc");
+        addTocCb.setActionCommand("");
 
         addPageNbrsCb.setSelected(true);
         addPageNbrsCb.setText("Seitenzahlen");
         addPageNbrsCb.setToolTipText("Seitenzahlen werden hinzugefügt");
-        addPageNbrsCb.setActionCommand("addPageNbrs");
+        addPageNbrsCb.setActionCommand("");
         addPageNbrsCb.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 addPageNbrsCbActionPerformed(evt);
@@ -886,5 +899,22 @@ public class ExportAsPdfOrderingStep extends javax.swing.JPanel implements Wizar
     @Override
     public void setWizardPanel(WizardMainPanel wizard) {
         
+    }
+    
+    private void refreshDisplay() {
+        long totalSize=0;
+        long totalPages=0;
+
+        for (Component c: this.pnlConversionList.getComponents()) {
+            if(c instanceof EpostPdfPanel) {
+                EpostPdfPanel pdfPanel=(EpostPdfPanel)c;
+                totalSize+=pdfPanel.getFile().length();
+                totalPages+=pdfPanel.getPageCount();
+            }
+        }
+
+        this.lblFileSize.setText("" + FileUtils.getFileSizeHumanReadable(totalSize));
+        this.lblFileSizeMax.setText("Gesamtgröße:");
+        this.lblPages.setText("" + totalPages);
     }
 }
