@@ -783,6 +783,26 @@ public class ReportService implements ReportServiceRemote {
                     + "ORDER BY Monat ASC");
             result.getTables().add(getTable(false, "Akten pro Monat und Anwalt", casesByLawyerQuery.toString(), params));
             
+            // determine all subject fields for the timeframe
+            String querySubjectFields = "SELECT distinct(subjectField) FROM cases c WHERE c.date_created >= ? AND c.date_created <= ? order by upper(subjectField) asc";
+            ReportResultTable subjectFieldTable=getTable(false, "subjectfields", querySubjectFields, params);
+            
+            StringBuilder casesBySubjectFieldQuery=new StringBuilder();
+            casesBySubjectFieldQuery.append("SELECT DATE_FORMAT(date_created,'%Y-%m') AS Monat, ");
+            ArrayList<Object[]> subjectFieldRows=subjectFieldTable.getValues();
+            for(Object[] subjectFieldRow: subjectFieldRows) {
+                String subjectField=(String)subjectFieldRow[0];
+                if(subjectField!=null && !("".equalsIgnoreCase(subjectField))) {
+                    casesBySubjectFieldQuery.append("CAST(SUM(CASE WHEN c.subjectField = '").append(subjectField).append("' THEN 1 ELSE 0 END) AS UNSIGNED) AS '").append(subjectField).append("',");
+                }
+            }
+            casesBySubjectFieldQuery.append("CAST(SUM(CASE WHEN c.subjectField IS NULL OR c.subjectField = '' THEN 1 ELSE 0 END) AS UNSIGNED) AS unbekannt\n"
+                    + "FROM cases c\n"
+                    + "WHERE c.date_created >= ? AND c.date_created <= ?\n"
+                    + "GROUP BY Monat\n"
+                    + "ORDER BY Monat ASC");
+            result.getTables().add(getTable(false, "Akten pro Monat nach Sachgebiet", casesBySubjectFieldQuery.toString(), params));
+            
         } else if (Reports.RPT_INV_ALL.equals(reportId)) {
             String query = "SELECT inv.case_id, inv.invoice_no as RNr, invt.display_name as Belegart, \n"
                     + "    case \n"
