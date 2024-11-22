@@ -664,6 +664,7 @@
 package com.jdimension.jlawyer.persistence;
 
 import java.io.Serializable;
+import java.math.BigDecimal;
 import java.text.DecimalFormat;
 import javax.persistence.*;
 import javax.xml.bind.annotation.XmlRootElement;
@@ -693,11 +694,11 @@ public class TimesheetPositionTemplate implements Serializable {
     @Column(name = "description")
     protected String description;
     
-    @Column(name = "tax_rate")
-    protected float taxRate;
+    @Column(name = "tax_rate", precision = 10, scale = 2)
+    protected BigDecimal taxRate=BigDecimal.ZERO;
     
-    @Column(name = "unit_price")
-    protected float unitPrice;
+    @Column(name = "unit_price", precision = 10, scale = 2)
+    protected BigDecimal unitPrice=BigDecimal.ZERO;
     
     public TimesheetPositionTemplate() {
     }
@@ -779,28 +780,28 @@ public class TimesheetPositionTemplate implements Serializable {
     /**
      * @return the taxRate
      */
-    public float getTaxRate() {
+    public BigDecimal getTaxRate() {
         return taxRate;
     }
 
     /**
      * @param taxRate the taxRate to set
      */
-    public void setTaxRate(float taxRate) {
+    public void setTaxRate(BigDecimal taxRate) {
         this.taxRate = taxRate;
     }
 
     /**
      * @return the unitPrice
      */
-    public float getUnitPrice() {
+    public BigDecimal getUnitPrice() {
         return unitPrice;
     }
 
     /**
      * @param unitPrice the unitPrice to set
      */
-    public void setUnitPrice(float unitPrice) {
+    public void setUnitPrice(BigDecimal unitPrice) {
         this.unitPrice = unitPrice;
     }
 

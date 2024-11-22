@@ -675,6 +675,7 @@ import com.jdimension.jlawyer.services.JLawyerServiceLocator;
 import com.jdimension.jlawyer.services.TimesheetServiceRemote;
 import java.awt.Component;
 import java.awt.event.KeyEvent;
+import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Timer;
@@ -933,7 +934,7 @@ public class TimesheetLogDialog extends javax.swing.JDialog {
         tsp.setPrincipal(UserSettings.getInstance().getCurrentUser().getPrincipalId());
         tsp.setStarted(null);
         tsp.setStopped(null);
-        tsp.setTotal(0f);
+        tsp.setTotal(BigDecimal.ZERO);
         tlep.setEntry(timesheet.getArchiveFileKey(), timesheet, tsp);
 
         // add at the very top of the list

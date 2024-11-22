@@ -666,6 +666,7 @@ package com.jdimension.jlawyer.services;
 import com.jdimension.jlawyer.persistence.InvoicePool;
 import com.jdimension.jlawyer.persistence.InvoicePositionTemplate;
 import com.jdimension.jlawyer.persistence.InvoiceType;
+import java.math.BigDecimal;
 import java.util.List;
 import javax.ejb.Remote;
 
@@ -699,6 +700,6 @@ public interface InvoiceServiceRemote {
 
     void removeInvoiceType(InvoiceType invoiceType) throws Exception;
 
-    byte[] getGiroCode(String senderPrincipalId, float amount, String purpose) throws Exception;
+    byte[] getGiroCode(String senderPrincipalId, BigDecimal amount, String purpose) throws Exception;
     
 }

@@ -784,6 +784,7 @@ import java.awt.event.MouseEvent;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
+import java.math.BigDecimal;
 import java.text.DecimalFormat;
 import java.text.NumberFormat;
 import java.text.SimpleDateFormat;
@@ -4457,15 +4458,15 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
             ClientSettings settings = ClientSettings.getInstance();
             JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
             ArchiveFileServiceRemote fileService = locator.lookupArchiveFileServiceRemote();
-            HashMap<String, Float> invoiceTotals = new HashMap<>();
+            HashMap<String, BigDecimal> invoiceTotals = new HashMap<>();
             List<CaseAccountEntry> accountEntries = fileService.getAccountEntries(this.dto.getId());
             for (CaseAccountEntry cae : accountEntries) {
                 this.addAccountEntryRow(cae);
                 if (cae.getInvoice() != null) {
                     if (!invoiceTotals.containsKey(cae.getInvoice().getId())) {
-                        invoiceTotals.put(cae.getInvoice().getId(), 0f);
+                        invoiceTotals.put(cae.getInvoice().getId(), BigDecimal.ZERO);
                     }
-                    invoiceTotals.put(cae.getInvoice().getId(), invoiceTotals.get(cae.getInvoice().getId()) + cae.calculateTotal());
+                    invoiceTotals.put(cae.getInvoice().getId(), invoiceTotals.get(cae.getInvoice().getId()).add(cae.calculateTotal()));
                 }
             }
             ComponentUtils.autoSizeColumns(tblAccountEntries);
@@ -4477,7 +4478,7 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
                 if (invoiceTotals.containsKey(inv.getId())) {
                     ie.setPaidTotal(inv.getTotalGross(), invoiceTotals.get(inv.getId()), inv.getCurrency());
                 } else {
-                    ie.setPaidTotal(inv.getTotalGross(), 0f, inv.getCurrency());
+                    ie.setPaidTotal(inv.getTotalGross(), BigDecimal.ZERO, inv.getCurrency());
                 }
             }
 
@@ -6394,12 +6395,12 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
             if (this.tblAccountEntries.getRowCount() == 0) {
                 this.loadAccountEntries();
             }
-            float totalEscrow = 0f;
-            float totalExpenditures = 0f;
+            BigDecimal totalEscrow = BigDecimal.ZERO;
+            BigDecimal totalExpenditures = BigDecimal.ZERO;
             for (int r = 0; r < this.tblAccountEntries.getRowCount(); r++) {
                 AccountEntryRowIdentifier ident = (AccountEntryRowIdentifier) this.tblAccountEntries.getValueAt(r, 0);
-                totalEscrow = totalEscrow + ident.getAccountEntry().getEscrowIn() - ident.getAccountEntry().getEscrowOut();
-                totalExpenditures = totalExpenditures + ident.getAccountEntry().getExpendituresIn() - ident.getAccountEntry().getExpendituresOut();
+                totalEscrow = totalEscrow.add(ident.getAccountEntry().getEscrowIn()).subtract(ident.getAccountEntry().getEscrowOut());
+                totalExpenditures = totalExpenditures.add(ident.getAccountEntry().getExpendituresIn()).subtract(ident.getAccountEntry().getExpendituresOut());
             }
 
             ArchivalDialog dlg = new ArchivalDialog(EditorsRegistry.getInstance().getMainWindow(), true, this.dto.getId(), this.tblReviewReasons, this.pnlInvoices, this.pnlTimesheets, totalEscrow, totalExpenditures);
@@ -6642,33 +6643,33 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
     }//GEN-LAST:event_mnuSendEpostLetterActionPerformed
 
     private void addAccountEntryRow(CaseAccountEntry e) {
-        ((DefaultTableModel) this.tblAccountEntries.getModel()).addRow(new Object[]{new AccountEntryRowIdentifier(e), e.getContact(), e.getEarnings(), e.getSpendings(), e.getEscrowIn(), e.getEscrowOut(), e.getExpendituresIn(), e.getExpendituresOut(), e.getInvoice(), e.getDescription()});
+        ((DefaultTableModel) this.tblAccountEntries.getModel()).addRow(new Object[]{new AccountEntryRowIdentifier(e), e.getContact(), e.getEarnings().floatValue(), e.getSpendings().floatValue(), e.getEscrowIn().floatValue(), e.getEscrowOut().floatValue(), e.getExpendituresIn().floatValue(), e.getExpendituresOut().floatValue(), e.getInvoice(), e.getDescription()});
         this.updateAccountTotals();
     }
 
     private void updateAccountTotals() {
 
-        float tEarnings = 0f;
-        float tSpendings = 0f;
-        float tEscrowIn = 0f;
-        float tEscrowOut = 0f;
-        float tExpIn = 0f;
-        float tExpOut = 0f;
+        BigDecimal tEarnings = BigDecimal.ZERO;
+        BigDecimal tSpendings = BigDecimal.ZERO;
+        BigDecimal tEscrowIn = BigDecimal.ZERO;
+        BigDecimal tEscrowOut = BigDecimal.ZERO;
+        BigDecimal tExpIn = BigDecimal.ZERO;
+        BigDecimal tExpOut = BigDecimal.ZERO;
         for (int r = 0; r < this.tblAccountEntries.getRowCount(); r++) {
             AccountEntryRowIdentifier id = (AccountEntryRowIdentifier) this.tblAccountEntries.getValueAt(r, 0);
             CaseAccountEntry e = id.getAccountEntry();
 
-            tEarnings += e.getEarnings();
-            tSpendings += e.getSpendings();
-            tEscrowIn += e.getEscrowIn();
-            tEscrowOut += e.getEscrowOut();
-            tExpIn += e.getExpendituresIn();
-            tExpOut += e.getExpendituresOut();
+            tEarnings = tEarnings.add(e.getEarnings());
+            tSpendings = tSpendings.add(e.getSpendings());
+            tEscrowIn =tEscrowIn.add(e.getEscrowIn());
+            tEscrowOut =tEscrowOut.add(e.getEscrowOut());
+            tExpIn =tExpIn.add(e.getExpendituresIn());
+            tExpOut =tExpOut.add(e.getExpendituresOut());
         }
 
-        float tEarningsSpendings = tEarnings - tSpendings;
-        float tEscrow = tEscrowIn - tEscrowOut;
-        float tExp = tExpIn - tExpOut;
+        BigDecimal tEarningsSpendings = tEarnings.subtract(tSpendings);
+        BigDecimal tEscrow = tEscrowIn.subtract(tEscrowOut);
+        BigDecimal tExp = tExpIn.subtract(tExpOut);
 
         this.lblEarnings.setText(accountEntryFormat.format(tEarnings));
         this.lblSpendings.setText(accountEntryFormat.format(tSpendings));

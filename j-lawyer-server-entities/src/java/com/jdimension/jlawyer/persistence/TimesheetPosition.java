@@ -664,6 +664,7 @@
 package com.jdimension.jlawyer.persistence;
 
 import java.io.Serializable;
+import java.math.BigDecimal;
 import java.util.Date;
 import javax.persistence.*;
 import javax.xml.bind.annotation.XmlRootElement;
@@ -696,18 +697,18 @@ public class TimesheetPosition implements Serializable {
     @Column(name = "description")
     protected String description;
     
-    @Column(name = "tax_rate")
-    protected float taxRate;
+    @Column(name = "tax_rate", precision = 10, scale = 2)
+    protected BigDecimal taxRate=BigDecimal.ZERO;
     
     @JoinColumn(name = "timesheet_id", referencedColumnName = "id")
     @ManyToOne
     protected Timesheet timesheet;
     
-    @Column(name = "unit_price")
-    protected float unitPrice;
+    @Column(name = "unit_price", precision = 10, scale = 2)
+    protected BigDecimal unitPrice=BigDecimal.ZERO;
     
-    @Column(name = "total")
-    protected float total;
+    @Column(name = "total", precision = 10, scale = 2)
+    protected BigDecimal total=BigDecimal.ZERO;
     
     @Column(name = "principal")
     protected String principal;
@@ -804,40 +805,40 @@ public class TimesheetPosition implements Serializable {
     /**
      * @return the taxRate
      */
-    public float getTaxRate() {
+    public BigDecimal getTaxRate() {
         return taxRate;
     }
 
     /**
      * @param taxRate the taxRate to set
      */
-    public void setTaxRate(float taxRate) {
+    public void setTaxRate(BigDecimal taxRate) {
         this.taxRate = taxRate;
     }
 
     /**
      * @return the unitPrice
      */
-    public float getUnitPrice() {
+    public BigDecimal getUnitPrice() {
         return unitPrice;
     }
 
     /**
      * @param unitPrice the unitPrice to set
      */
-    public void setUnitPrice(float unitPrice) {
+    public void setUnitPrice(BigDecimal unitPrice) {
         this.unitPrice = unitPrice;
     }
 
     /**
      * @return the total
      */
-    public float getTotal() {
+    public BigDecimal getTotal() {
         return total;
     }
     
-    public float calculateTotal(int intervalMinutes) {
-        float positionTotal = 0f;
+    public BigDecimal calculateTotal(int intervalMinutes) {
+        BigDecimal positionTotal = BigDecimal.ZERO;
         if (started != null && stopped != null && started.getTime() < stopped.getTime()) {
             float totalMinutes = ((float) (stopped.getTime() - started.getTime())) / 1000f / 60f;
             if (intervalMinutes == 0) {
@@ -845,8 +846,8 @@ public class TimesheetPosition implements Serializable {
             }
             double roundedMinutes = Math.ceil(totalMinutes / intervalMinutes) * intervalMinutes;
             float roundedMinutesFloat = new Float(roundedMinutes);
-            if (this.unitPrice != 0) {
-                positionTotal = roundedMinutesFloat / 60f * this.unitPrice;
+            if (!this.unitPrice.equals(BigDecimal.ZERO)) {
+                positionTotal = this.unitPrice.multiply(BigDecimal.valueOf(roundedMinutes).divide(BigDecimal.valueOf(60d)));
             }
         }
         return positionTotal;
@@ -855,7 +856,7 @@ public class TimesheetPosition implements Serializable {
     /**
      * @param total the total to set
      */
-    public void setTotal(float total) {
+    public void setTotal(BigDecimal total) {
         this.total = total;
     }
 

@@ -664,6 +664,7 @@
 package com.jdimension.jlawyer.persistence;
 
 import java.io.Serializable;
+import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
@@ -761,11 +762,11 @@ public class Invoice implements Serializable {
     @Column(name = "sender_id")
     private String sender;
     
-    @Column(name = "total")
-    protected float total=0f;
+    @Column(name = "total", precision = 10, scale = 2)
+    protected BigDecimal total=BigDecimal.ZERO;
     
-    @Column(name = "total_gross")
-    private float totalGross=0f;
+    @Column(name = "total_gross", precision = 10, scale = 2)
+    private BigDecimal totalGross=BigDecimal.ZERO;
     
     @JoinColumn(name = "invoice_document", referencedColumnName = "id")
     @OneToOne(fetch = FetchType.EAGER)
@@ -1052,14 +1053,14 @@ public class Invoice implements Serializable {
     /**
      * @return the total
      */
-    public float getTotal() {
+    public BigDecimal getTotal() {
         return total;
     }
 
     /**
      * @param total the total to set
      */
-    public void setTotal(float total) {
+    public void setTotal(BigDecimal total) {
         this.total = total;
     }
 
@@ -1108,14 +1109,14 @@ public class Invoice implements Serializable {
     /**
      * @return the totalGross
      */
-    public float getTotalGross() {
+    public BigDecimal getTotalGross() {
         return totalGross;
     }
 
     /**
      * @param totalGross the totalGross to set
      */
-    public void setTotalGross(float totalGross) {
+    public void setTotalGross(BigDecimal totalGross) {
         this.totalGross = totalGross;
     }
 

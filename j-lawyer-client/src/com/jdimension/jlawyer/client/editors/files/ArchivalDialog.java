@@ -673,6 +673,7 @@ import com.jdimension.jlawyer.persistence.Invoice;
 import com.jdimension.jlawyer.persistence.Timesheet;
 import com.jdimension.jlawyer.services.CalendarServiceRemote;
 import com.jdimension.jlawyer.services.JLawyerServiceLocator;
+import java.math.BigDecimal;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.List;
@@ -709,7 +710,7 @@ public class ArchivalDialog extends javax.swing.JDialog {
      * @param totalEscrowDiff
      * @param totalExpendituresDiff
      */
-    public ArchivalDialog(java.awt.Frame parent, boolean modal, String caseId, JTable tblReviews, JPanel invoicesPanel, JPanel timesheetsPanel, float totalEscrowDiff, float totalExpendituresDiff) {
+    public ArchivalDialog(java.awt.Frame parent, boolean modal, String caseId, JTable tblReviews, JPanel invoicesPanel, JPanel timesheetsPanel, BigDecimal totalEscrowDiff, BigDecimal totalExpendituresDiff) {
         super(parent, modal);
         initComponents();
 
@@ -818,13 +819,13 @@ public class ArchivalDialog extends javax.swing.JDialog {
 
         }
         
-        if(totalEscrowDiff!=0) {
+        if(!totalEscrowDiff.equals(BigDecimal.ZERO)) {
             this.lblEscrow.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/cancel.png")));
             this.chkEscrow.setEnabled(true);
             this.lblEscrow.setText("Aktenkonto: Fremdgelder nicht ausgeglichen");
         }
         
-        if(totalExpendituresDiff!=0) {
+        if(!totalExpendituresDiff.equals(BigDecimal.ZERO)) {
             this.lblExpenditures.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/cancel.png")));
             this.chkExpenditures.setEnabled(true);
             this.lblExpenditures.setText("Aktenkonto: Auslagen nicht ausgeglichen");
@@ -1194,7 +1195,7 @@ public class ArchivalDialog extends javax.swing.JDialog {
 
         /* Create and display the dialog */
         java.awt.EventQueue.invokeLater(() -> {
-            ArchivalDialog dialog = new ArchivalDialog(new javax.swing.JFrame(), true, null, null, null, null, 0f, 0f);
+            ArchivalDialog dialog = new ArchivalDialog(new javax.swing.JFrame(), true, null, null, null, null, BigDecimal.ZERO, BigDecimal.ZERO);
             dialog.addWindowListener(new java.awt.event.WindowAdapter() {
                 @Override
                 public void windowClosing(java.awt.event.WindowEvent e) {

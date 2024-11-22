@@ -664,6 +664,7 @@ For more information on this, and how to apply and follow the GNU AGPL, see
 package com.jdimension.jlawyer.services;
 
 import com.jdimension.jlawyer.persistence.InvoicePool;
+import java.math.BigDecimal;
 import java.util.List;
 import javax.ejb.Local;
 
@@ -680,6 +681,6 @@ public interface InvoiceServiceLocal {
 
     void checkInvoicesDue();
 
-    byte[] getGiroCode(String senderPrincipalId, float amount, String purpose) throws Exception;
+    byte[] getGiroCode(String senderPrincipalId, BigDecimal amount, String purpose) throws Exception;
     
 }

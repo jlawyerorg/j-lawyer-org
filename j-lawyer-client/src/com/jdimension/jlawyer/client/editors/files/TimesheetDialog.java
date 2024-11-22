@@ -677,6 +677,7 @@ import com.jdimension.jlawyer.persistence.TimesheetPosition;
 import com.jdimension.jlawyer.server.constants.OptionConstants;
 import com.jdimension.jlawyer.services.JLawyerServiceLocator;
 import java.awt.Component;
+import java.math.BigDecimal;
 import java.text.DecimalFormat;
 import java.text.NumberFormat;
 import java.util.ArrayList;
@@ -1198,7 +1199,7 @@ public class TimesheetDialog extends javax.swing.JDialog {
             this.currentEntry.setName(this.txtName.getText());
         this.currentEntry.setStatus(this.currentEntry.getStatusInt(this.cmbStatus.getSelectedItem().toString()));
         this.currentEntry.setInterval(Integer.parseInt(this.cmbTimesheetInterval.getSelectedItem().toString()));
-        this.currentEntry.setLimit(this.currencyFormat.parse(this.txtTimesheetLimit.getText()).floatValue());
+        this.currentEntry.setLimit(BigDecimal.valueOf(this.currencyFormat.parse(this.txtTimesheetLimit.getText()).floatValue()));
         this.currentEntry.setLimited(this.chkTimesheetLimit.isSelected());
 
     }
@@ -1324,14 +1325,14 @@ public class TimesheetDialog extends javax.swing.JDialog {
             ep.updateEntryTotal(Integer.parseInt(this.cmbTimesheetInterval.getSelectedItem().toString()));
         }
 
-        float total = 0f;
-        float totalTax = 0f;
+        BigDecimal total = BigDecimal.ZERO;
+        BigDecimal totalTax = BigDecimal.ZERO;
         for (Component tsp : this.pnlTimesheetPositions.getComponents()) {
             TimesheetPositionEntryPanel tspep = (TimesheetPositionEntryPanel) tsp;
             TimesheetPosition pos = tspep.getEntry();
 
-            total = total + pos.getTotal();
-            totalTax = totalTax + (pos.getTotal() * (pos.getTaxRate() / 100f));
+            total = total.add(pos.getTotal());
+            totalTax = totalTax.add(pos.getTotal().multiply(pos.getTaxRate().divide(BigDecimal.valueOf(100f))));
 
         }
         this.lblTimesheetTotal.setText(cf.format(total));
@@ -1339,11 +1340,11 @@ public class TimesheetDialog extends javax.swing.JDialog {
         this.txtTimesheetTotal.setText(cf.format(total));
 
         if (this.chkTimesheetLimit.isSelected()) {
-            int prgValue = new Float((new Float(total).intValue() / ((Number) this.txtTimesheetLimit.getValue()).floatValue()) * 100f).intValue();
+            int prgValue = new Float((total.intValue() / ((Number) this.txtTimesheetLimit.getValue()).floatValue()) * 100f).intValue();
             this.prgTimesheetStatus.setMaximum(Math.max(prgValue, 100));
             this.prgTimesheetStatus.setMinimum(0);
             try {
-                this.prgTimesheetStatus.setValue(new Float((new Float(total).intValue() / ((Number) this.txtTimesheetLimit.getValue()).floatValue()) * 100f).intValue());
+                this.prgTimesheetStatus.setValue(new Float((total.intValue() / ((Number) this.txtTimesheetLimit.getValue()).floatValue()) * 100f).intValue());
             } catch (Throwable th) {
                 log.error("unable to calculate timesheet progress", th);
                 this.prgTimesheetStatus.setValue(0);

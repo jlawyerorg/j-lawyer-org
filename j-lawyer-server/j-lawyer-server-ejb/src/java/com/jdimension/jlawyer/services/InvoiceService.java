@@ -690,6 +690,7 @@ import com.jdimension.jlawyer.server.utils.InvalidSchemaPatternException;
 import com.jdimension.jlawyer.server.utils.InvoiceNumberGenerator;
 import com.jdimension.jlawyer.server.utils.ServerStringUtils;
 import java.io.ByteArrayOutputStream;
+import java.math.BigDecimal;
 import java.text.DecimalFormat;
 import java.text.DecimalFormatSymbols;
 import java.text.NumberFormat;
@@ -1051,7 +1052,7 @@ public class InvoiceService implements InvoiceServiceRemote, InvoiceServiceLocal
 
     @Override
     @RolesAllowed({"loginRole"})
-    public byte[] getGiroCode(String senderPrincipalId, float amount, String purpose) throws Exception {
+    public byte[] getGiroCode(String senderPrincipalId, BigDecimal amount, String purpose) throws Exception {
         
         if(senderPrincipalId==null)
             throw new Exception("Girocode kann nicht erstellt werden - kein Absender angegeben");

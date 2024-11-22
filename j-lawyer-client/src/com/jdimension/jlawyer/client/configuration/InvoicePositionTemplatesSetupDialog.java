@@ -668,6 +668,7 @@ import com.jdimension.jlawyer.client.settings.ClientSettings;
 import com.jdimension.jlawyer.client.utils.ComponentUtils;
 import com.jdimension.jlawyer.persistence.InvoicePositionTemplate;
 import com.jdimension.jlawyer.services.JLawyerServiceLocator;
+import java.math.BigDecimal;
 import java.util.List;
 import javax.swing.JOptionPane;
 import javax.swing.table.DefaultTableModel;
@@ -1012,9 +1013,9 @@ public class InvoicePositionTemplatesSetupDialog extends javax.swing.JDialog {
             InvoicePositionTemplate tpl = new InvoicePositionTemplate();
             tpl.setName(newNameObject.toString());
             tpl.setDescription("");
-            tpl.setTaxRate(19f);
-            tpl.setUnitPrice(0f);
-            tpl.setUnits(1);
+            tpl.setTaxRate(BigDecimal.valueOf(19f));
+            tpl.setUnitPrice(BigDecimal.ZERO);
+            tpl.setUnits(BigDecimal.ONE);
             InvoicePositionTemplate savedTpl = locator.lookupInvoiceServiceRemote().addInvoicePositionTemplate(tpl);
 
             ((DefaultTableModel) this.tblTemplates.getModel()).addRow(new Object[]{savedTpl, savedTpl.getDescription()});
@@ -1083,9 +1084,9 @@ public class InvoicePositionTemplatesSetupDialog extends javax.swing.JDialog {
             InvoicePositionTemplate tpl = (InvoicePositionTemplate) this.tblTemplates.getValueAt(row, 0);
             tpl.setName(this.txtName.getText());
             tpl.setDescription(this.taDescription.getText());
-            tpl.setTaxRate(taxRate.floatValue());
-            tpl.setUnitPrice(unitPrice.floatValue());
-            tpl.setUnits(units.floatValue());
+            tpl.setTaxRate(BigDecimal.valueOf(taxRate.floatValue()));
+            tpl.setUnitPrice(BigDecimal.valueOf(unitPrice.floatValue()));
+            tpl.setUnits(BigDecimal.valueOf(units.floatValue()));
             
             ClientSettings settings = ClientSettings.getInstance();
             try {

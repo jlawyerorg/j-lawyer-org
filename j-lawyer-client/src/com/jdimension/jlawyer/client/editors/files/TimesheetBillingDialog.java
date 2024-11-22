@@ -674,6 +674,7 @@ import com.jdimension.jlawyer.persistence.TimesheetPosition;
 import com.jdimension.jlawyer.services.ArchiveFileServiceRemote;
 import com.jdimension.jlawyer.services.JLawyerServiceLocator;
 import java.awt.event.MouseEvent;
+import java.math.BigDecimal;
 import java.text.SimpleDateFormat;
 import java.util.HashMap;
 import java.util.List;
@@ -900,8 +901,8 @@ public class TimesheetBillingDialog extends javax.swing.JDialog {
                         ip.setUnitPrice(p.getUnitPrice());
                         ip.setInvoice(this.invoice);
                         ip.setTaxRate(p.getTaxRate());
-                        ip.setUnits(0f);
-                        ip.setTotal(0f);
+                        ip.setUnits(BigDecimal.ZERO);
+                        ip.setTotal(BigDecimal.ZERO);
                         aggregatedPositions.put(identifier, ip);
                     }
                     InvoicePosition ip = aggregatedPositions.get(identifier);
@@ -909,7 +910,7 @@ public class TimesheetBillingDialog extends javax.swing.JDialog {
                     double roundedMinutes = Math.ceil(totalMinutes / p.getTimesheet().getInterval()) * p.getTimesheet().getInterval();
                     float roundedMinutesFloat = new Float(roundedMinutes);
                     //float total=roundedMinutesFloat/60f*unitPrice.floatValue();
-                    ip.setUnits(ip.getUnits()+roundedMinutesFloat/60f);
+                    ip.setUnits(ip.getUnits().add(BigDecimal.valueOf(roundedMinutesFloat/60f)));
                     
                     try {
                         JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());

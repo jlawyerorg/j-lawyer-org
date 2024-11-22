@@ -703,6 +703,7 @@ import com.jdimension.jlawyer.services.JLawyerServiceLocator;
 import java.awt.Color;
 import java.awt.Component;
 import java.awt.event.ActionEvent;
+import java.math.BigDecimal;
 import java.text.DecimalFormat;
 import java.text.SimpleDateFormat;
 import java.time.LocalDateTime;
@@ -1124,10 +1125,10 @@ public class InvoiceDialog extends javax.swing.JDialog implements EventConsumer 
                 JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
                 List<CaseAccountEntry> payments = locator.lookupArchiveFileServiceRemote().getAccountEntriesForInvoice(invoice.getId());
                 TableUtils.clearModel(tblPayments);
-                float paymentsTotal = 0f;
+                BigDecimal paymentsTotal = BigDecimal.ZERO;
                 for (CaseAccountEntry ae : payments) {
-                    float aeTotal = ae.calculateTotal();
-                    paymentsTotal += aeTotal;
+                    BigDecimal aeTotal = ae.calculateTotal();
+                    paymentsTotal = paymentsTotal.add(aeTotal);
                     ((DefaultTableModel) this.tblPayments.getModel()).addRow(new Object[]{ae.getEntryDate(), aeTotal, ae.getDescription()});
                 }
                 this.lblPaymentsTotal.setText(cf.format(paymentsTotal));
@@ -2195,11 +2196,11 @@ public class InvoiceDialog extends javax.swing.JDialog implements EventConsumer 
     }
 
     private StyledCalculationTable getInvoicePositionsAsTable(String language) {
-        float totalTax = 0f;
-        float total = 0f;
-        float totalNet = 0f;
+        BigDecimal totalTax = BigDecimal.ZERO;
+        BigDecimal total = BigDecimal.ZERO;
+        BigDecimal totalNet = BigDecimal.ZERO;
 
-        HashMap<Float, Float> taxRateToTaxTotal = new HashMap<>();
+        HashMap<BigDecimal, BigDecimal> taxRateToTaxTotal = new HashMap<>();
 
         int rowcount = 0;
 
@@ -2222,28 +2223,28 @@ public class InvoiceDialog extends javax.swing.JDialog implements EventConsumer 
             if (c instanceof InvoicePositionEntryPanel) {
 
                 InvoicePosition pos = ((InvoicePositionEntryPanel) c).getEntry();
-                float u = pos.getUnits();
-                float up = pos.getUnitPrice();
-                float t = pos.getTaxRate();
+                BigDecimal u = pos.getUnits();
+                BigDecimal up = pos.getUnitPrice();
+                BigDecimal t = pos.getTaxRate();
 
                 if (!taxRateToTaxTotal.containsKey(t)) {
-                    taxRateToTaxTotal.put(t, 0f);
+                    taxRateToTaxTotal.put(t, BigDecimal.ZERO);
                 }
 
                 if (this.chkTaxes.isSelected()) {
-                    float taxForPosition = (u * up * (t / 100f));
-                    taxRateToTaxTotal.put(t, taxRateToTaxTotal.get(t) + taxForPosition);
-                    totalTax = totalTax + taxForPosition;
+                    BigDecimal taxForPosition = (u.multiply(up).multiply(t.divide(BigDecimal.valueOf(100f))));
+                    taxRateToTaxTotal.put(t, taxRateToTaxTotal.get(t).add(taxForPosition));
+                    totalTax = totalTax.add(taxForPosition);
                 }
-                total = total + (u * up * (1 + t / 100f));
+                total = total.add(u.multiply(up).multiply(BigDecimal.ONE.add(t.divide(BigDecimal.valueOf(100f)))));
 
-                totalNet = totalNet + (u * up);
+                totalNet = totalNet.add(u.multiply(up));
 
                 positionIndex = positionIndex + 1;
                 if (StringUtils.isEmpty(pos.getDescription())) {
-                    ct.addRow("" + positionIndex, pos.getName(), cf.format(pos.getUnits()), cf.format(pos.getUnitPrice()), percentageFormat.format(t), cf.format(u * up) + " " + this.cmbCurrency.getSelectedItem());
+                    ct.addRow("" + positionIndex, pos.getName(), cf.format(pos.getUnits()), cf.format(pos.getUnitPrice()), percentageFormat.format(t), cf.format(u.multiply(up)) + " " + this.cmbCurrency.getSelectedItem());
                 } else {
-                    ct.addRow("" + positionIndex, pos.getName() + ": " + pos.getDescription(), cf.format(pos.getUnits()), cf.format(pos.getUnitPrice()), percentageFormat.format(t), cf.format(u * up) + " " + this.cmbCurrency.getSelectedItem());
+                    ct.addRow("" + positionIndex, pos.getName() + ": " + pos.getDescription(), cf.format(pos.getUnits()), cf.format(pos.getUnitPrice()), percentageFormat.format(t), cf.format(u.multiply(up)) + " " + this.cmbCurrency.getSelectedItem());
                 }
 
                 rowcount = rowcount + 1;
@@ -2256,28 +2257,28 @@ public class InvoiceDialog extends javax.swing.JDialog implements EventConsumer 
         int footerRowNet = -1;
         ArrayList<Integer> footerRowTaxes = new ArrayList<>();
         int footerRowTotal = -1;
-        Map<Float, Float> taxRateToTaxTotalSorted = new TreeMap<>(taxRateToTaxTotal);
+        Map<BigDecimal, BigDecimal> taxRateToTaxTotalSorted = new TreeMap<>(taxRateToTaxTotal);
         if ("EN".equalsIgnoreCase(language)) {
             footerRowNet = ct.addRow("", "Net", "", "", "", cf.format(totalNet) + " " + this.cmbCurrency.getSelectedItem());
-            for (float taxRate : taxRateToTaxTotalSorted.keySet()) {
+            for (BigDecimal taxRate : taxRateToTaxTotalSorted.keySet()) {
                 footerRowTaxes.add(ct.addRow("", "Tax " + percentageFormat.format(taxRate) + "%", "", "", "", cf.format(taxRateToTaxTotal.get(taxRate)) + " " + this.cmbCurrency.getSelectedItem()));
             }
             footerRowTotal = ct.addRow("", "Balance Due", "", "", "", lblInvoiceTotal.getText() + " " + this.cmbCurrency.getSelectedItem());
         } else if ("FR".equalsIgnoreCase(language)) {
             footerRowNet = ct.addRow("", "Sous Total", "", "", "", cf.format(totalNet) + " " + this.cmbCurrency.getSelectedItem());
-            for (float taxRate : taxRateToTaxTotalSorted.keySet()) {
+            for (BigDecimal taxRate : taxRateToTaxTotalSorted.keySet()) {
                 footerRowTaxes.add(ct.addRow("", "TPS " + percentageFormat.format(taxRate) + "%", "", "", "", cf.format(taxRateToTaxTotal.get(taxRate)) + " " + this.cmbCurrency.getSelectedItem()));
             }
             footerRowTotal = ct.addRow("", "Montant Dû", "", "", "", lblInvoiceTotal.getText() + " " + this.cmbCurrency.getSelectedItem());
         } else if ("NL".equalsIgnoreCase(language)) {
             footerRowNet = ct.addRow("", "Subtotal", "", "", "", cf.format(totalNet) + " " + this.cmbCurrency.getSelectedItem());
-            for (float taxRate : taxRateToTaxTotalSorted.keySet()) {
+            for (BigDecimal taxRate : taxRateToTaxTotalSorted.keySet()) {
                 footerRowTaxes.add(ct.addRow("", "BTW " + percentageFormat.format(taxRate) + "%", "", "", "", cf.format(taxRateToTaxTotal.get(taxRate)) + " " + this.cmbCurrency.getSelectedItem()));
             }
             footerRowTotal = ct.addRow("", "Totaal te betalen", "", "", "", lblInvoiceTotal.getText() + " " + this.cmbCurrency.getSelectedItem());
         } else {
             footerRowNet = ct.addRow("", "Netto", "", "", "", cf.format(totalNet) + " " + this.cmbCurrency.getSelectedItem());
-            for (float taxRate : taxRateToTaxTotalSorted.keySet()) {
+            for (BigDecimal taxRate : taxRateToTaxTotalSorted.keySet()) {
                 footerRowTaxes.add(ct.addRow("", "USt. " + percentageFormat.format(taxRate) + "%", "", "", "", cf.format(taxRateToTaxTotal.get(taxRate)) + " " + this.cmbCurrency.getSelectedItem()));
             }
             footerRowTotal = ct.addRow("", "Zahlbetrag", "", "", "", lblInvoiceTotal.getText() + " " + this.cmbCurrency.getSelectedItem());
@@ -2371,23 +2372,23 @@ public class InvoiceDialog extends javax.swing.JDialog implements EventConsumer 
             ep.updateEntryTotal();
         }
 
-        float totalTax = 0f;
-        float totalGross = 0f;
-        float totalNet = 0f;
+        BigDecimal totalTax = BigDecimal.ZERO;
+        BigDecimal totalGross = BigDecimal.ZERO;
+        BigDecimal totalNet = BigDecimal.ZERO;
         for (Component c : this.pnlInvoicePositions.getComponents()) {
             if (c instanceof InvoicePositionEntryPanel) {
 
                 InvoicePosition pos = ((InvoicePositionEntryPanel) c).getEntry();
-                float u = pos.getUnits();
-                float up = pos.getUnitPrice();
-                float t = pos.getTaxRate();
+                BigDecimal u = pos.getUnits();
+                BigDecimal up = pos.getUnitPrice();
+                BigDecimal t = pos.getTaxRate();
 
-                totalNet = totalNet + (u * up);
+                totalNet = totalNet.add(u.multiply(up));
                 if (this.chkTaxes.isSelected()) {
-                    totalTax = totalTax + (u * up * (t / 100f));
-                    totalGross = totalGross + (u * up * (1 + t / 100f));
+                    totalTax = totalTax.add(u.multiply(up).multiply(t.divide(BigDecimal.valueOf(100f))));
+                    totalGross = totalGross.add(u.multiply(up).multiply(BigDecimal.ONE.add(t.divide(BigDecimal.valueOf(100f)))));
                 } else {
-                    totalGross = totalGross + (u * up);
+                    totalGross = totalGross.add(u.multiply(up));
                 }
             }
         }
@@ -2429,10 +2430,10 @@ public class InvoiceDialog extends javax.swing.JDialog implements EventConsumer 
         pos.setInvoice(this.currentEntry);
         pos.setName("Name");
         pos.setPosition(this.pnlInvoicePositions.getComponentCount() + 1);
-        pos.setTaxRate(19f);
-        pos.setTotal(0f);
-        pos.setUnitPrice(0f);
-        pos.setUnits(1f);
+        pos.setTaxRate(BigDecimal.valueOf(19f));
+        pos.setTotal(BigDecimal.ZERO);
+        pos.setUnitPrice(BigDecimal.ZERO);
+        pos.setUnits(BigDecimal.ONE);
 
         this.addPosition(pos);
 
@@ -2661,7 +2662,7 @@ public class InvoiceDialog extends javax.swing.JDialog implements EventConsumer 
                 pos.setName(tpl.getName());
                 pos.setPosition(this.pnlInvoicePositions.getComponentCount() + 1);
                 pos.setTaxRate(tpl.getTaxRate());
-                pos.setTotal(tpl.getUnits() * tpl.getUnitPrice() * (1 + tpl.getTaxRate()));
+                pos.setTotal(tpl.getUnits().multiply(tpl.getUnitPrice()).multiply(BigDecimal.ONE.add(tpl.getTaxRate())));
                 pos.setUnitPrice(tpl.getUnitPrice());
                 pos.setUnits(tpl.getUnits());
 
@@ -2739,10 +2740,10 @@ public class InvoiceDialog extends javax.swing.JDialog implements EventConsumer 
 
     private void cmdGiroCodeActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdGiroCodeActionPerformed
         try {
-            float amount = 0f;
+            BigDecimal amount = BigDecimal.ZERO;
             boolean validAmount = false;
             try {
-                amount = cf.parse(this.lblInvoiceTotal.getText()).floatValue();
+                amount = BigDecimal.valueOf(cf.parse(this.lblInvoiceTotal.getText()).floatValue());
                 validAmount = true;
             } catch (Throwable t) {
                 log.error("error parsing invoice total: " + this.lblInvoiceTotal.getText(), t);

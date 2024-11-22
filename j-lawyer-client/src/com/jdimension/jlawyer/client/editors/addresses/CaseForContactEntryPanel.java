@@ -678,6 +678,7 @@ import com.jdimension.jlawyer.services.ArchiveFileServiceRemote;
 import com.jdimension.jlawyer.services.JLawyerServiceLocator;
 import java.awt.Color;
 import java.awt.Component;
+import java.math.BigDecimal;
 import java.text.DecimalFormat;
 import java.util.HashMap;
 import javax.swing.JOptionPane;
@@ -742,11 +743,11 @@ public class CaseForContactEntryPanel extends javax.swing.JPanel {
             this.lblArchived.setText("");
         }
         
-        HashMap<Integer,Float> invoices=e.getInvoicesByStatus();
+        HashMap<Integer,BigDecimal> invoices=e.getInvoicesByStatus();
         this.lblTotal.setText("");
         DecimalFormat df=new DecimalFormat("0.00");
         if(invoices!=null) {
-            float total=invoices.get(Invoice.STATUS_NEW) + invoices.get(Invoice.STATUS_OPEN) + invoices.get(Invoice.STATUS_OPEN_REMINDER1) + invoices.get(Invoice.STATUS_OPEN_REMINDER2) + invoices.get(Invoice.STATUS_OPEN_REMINDER3) + invoices.get(Invoice.STATUS_OPEN_NONENFORCEABLE) - invoices.get(Invoice.STATUS_PAID) - invoices.get(Invoice.STATUS_CANCELLED);
+            BigDecimal total=invoices.get(Invoice.STATUS_NEW).add(invoices.get(Invoice.STATUS_OPEN)).add(invoices.get(Invoice.STATUS_OPEN_REMINDER1)).add(invoices.get(Invoice.STATUS_OPEN_REMINDER2)).add(invoices.get(Invoice.STATUS_OPEN_REMINDER3).add(invoices.get(Invoice.STATUS_OPEN_NONENFORCEABLE)).subtract(invoices.get(Invoice.STATUS_PAID)).subtract(invoices.get(Invoice.STATUS_CANCELLED)));
             StringBuilder sb=new StringBuilder();
             sb.append("<html><b>Umsatzrelevante Werte gesamt: ").append(df.format(total)).append("</b><br/>");
             sb.append("<table><tr><td>neu:</td><td>").append(df.format(invoices.get(Invoice.STATUS_NEW))).append("</td></tr>");
@@ -758,7 +759,7 @@ public class CaseForContactEntryPanel extends javax.swing.JPanel {
             sb.append("<tr><td>bezahlt:</td><td>").append(df.format(invoices.get(Invoice.STATUS_PAID))).append("</td></tr>");
             sb.append("<tr><td>storniert:</td><td>").append(df.format(invoices.get(Invoice.STATUS_CANCELLED))).append("</td></tr></table></html>");
             this.lblTotal.setText(df.format(total));
-            if(total>0)
+            if(total.compareTo(BigDecimal.ZERO)>0)
                 this.lblTotal.setForeground(DefaultColorTheme.COLOR_LOGO_RED);
             else
                 this.lblTotal.setForeground(DefaultColorTheme.COLOR_LOGO_GREEN);

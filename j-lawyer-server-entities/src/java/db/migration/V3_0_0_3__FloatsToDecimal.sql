@@ -1,0 +1,32 @@
+ALTER TABLE case_account_entries MODIFY COLUMN in_escrow DECIMAL(10,2) DEFAULT 0.00 NOT NULL;
+ALTER TABLE case_account_entries MODIFY COLUMN out_escrow DECIMAL(10,2) DEFAULT 0.00 NOT NULL;
+
+ALTER TABLE case_account_entries MODIFY COLUMN in_earnings DECIMAL(10,2) DEFAULT 0.00 NOT NULL;
+ALTER TABLE case_account_entries MODIFY COLUMN out_spendings DECIMAL(10,2) DEFAULT 0.00 NOT NULL;
+
+ALTER TABLE case_account_entries MODIFY COLUMN in_expenditure DECIMAL(10,2) DEFAULT 0.00 NOT NULL;
+ALTER TABLE case_account_entries MODIFY COLUMN out_expenditure DECIMAL(10,2) DEFAULT 0.00 NOT NULL;
+
+ALTER TABLE invoices MODIFY COLUMN total DECIMAL(10,2) DEFAULT 0.00 NOT NULL;
+ALTER TABLE invoices MODIFY COLUMN total_gross DECIMAL(10,2) DEFAULT 0.00 NOT NULL;
+
+ALTER TABLE invoice_positions MODIFY COLUMN tax_rate DECIMAL(10,2) DEFAULT 0.00 NOT NULL;
+ALTER TABLE invoice_positions MODIFY COLUMN units DECIMAL(10,2) DEFAULT 0.00 NOT NULL;
+ALTER TABLE invoice_positions MODIFY COLUMN unit_price DECIMAL(10,2) DEFAULT 0.00 NOT NULL;
+ALTER TABLE invoice_positions MODIFY COLUMN total DECIMAL(10,2) DEFAULT 0.00 NOT NULL;
+
+ALTER TABLE invoice_position_tpls MODIFY COLUMN tax_rate DECIMAL(10,2) DEFAULT 0.00 NOT NULL;
+ALTER TABLE invoice_position_tpls MODIFY COLUMN units DECIMAL(10,2) DEFAULT 0.00 NOT NULL;
+ALTER TABLE invoice_position_tpls MODIFY COLUMN unit_price DECIMAL(10,2) DEFAULT 0.00 NOT NULL;
+
+ALTER TABLE timesheets MODIFY COLUMN limit_net DECIMAL(10,2) DEFAULT 0.00 NOT NULL;
+
+ALTER TABLE timesheet_positions MODIFY COLUMN tax_rate DECIMAL(10,2) DEFAULT 0.00 NOT NULL;
+ALTER TABLE timesheet_positions MODIFY COLUMN unit_price DECIMAL(10,2) DEFAULT 0.00 NOT NULL;
+ALTER TABLE timesheet_positions MODIFY COLUMN total DECIMAL(10,2) DEFAULT 0.00 NOT NULL;
+
+ALTER TABLE timesheet_position_tpls MODIFY COLUMN tax_rate DECIMAL(10,2) DEFAULT 0.00 NOT NULL;
+ALTER TABLE timesheet_position_tpls MODIFY COLUMN unit_price DECIMAL(10,2) DEFAULT 0.00 NOT NULL;
+
+insert into server_settings(settingKey, settingValue) values('jlawyer.server.database.version','3.0.0.3') ON DUPLICATE KEY UPDATE settingValue     = '3.0.0.3';
+commit;

@@ -688,6 +688,7 @@ import com.jdimension.jlawyer.server.utils.ServerFileUtils;
 import com.jdimension.jlawyer.server.utils.ServerStringUtils;
 import com.jdimension.jlawyer.server.utils.StringUtils;
 import java.io.*;
+import java.math.BigDecimal;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -5043,8 +5044,8 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
             i.setDescription("");
             i.setSmallBusiness(pool.isSmallBusiness());
             i.setInvoiceType(iType);
-            i.setTotal(0f);
-            i.setTotalGross(0f);
+            i.setTotal(BigDecimal.ZERO);
+            i.setTotalGross(BigDecimal.ZERO);
             i.setCurrency(currency);
             i.setLastPoolId(pool.getId());
             i.setPaymentType(Invoice.PAYMENTTYPE_BANKTRANSFER);
@@ -5131,11 +5132,11 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
         if (positions == null) {
             positions = new ArrayList<>();
         }
-        float newTotalNet = 0f;
-        float newTotalGross = 0f;
+        BigDecimal newTotalNet = BigDecimal.ZERO;
+        BigDecimal newTotalGross = BigDecimal.ZERO;
         for (InvoicePosition p : positions) {
-            newTotalNet = newTotalNet + p.getTotal();
-            newTotalGross = newTotalGross + (p.getTotal() * (1 + p.getTaxRate() / 100f));
+            newTotalNet = newTotalNet.add(p.getTotal());
+            newTotalGross = newTotalGross.add(p.getTotal().multiply((BigDecimal.ONE.add(p.getTaxRate().divide(BigDecimal.valueOf(100f))))));
         }
         invoice.setTotal(newTotalNet);
         invoice.setTotalGross(newTotalGross);
@@ -5674,15 +5675,15 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
             return 0f;
         
         // avoid div by zero
-        if(ts.getLimit()==0f)
+        if(ts.getLimit().equals(BigDecimal.ZERO))
             return 0f;
         
         List<TimesheetPosition> positions=this.timesheetPositionsFacade.findByTimesheet(ts);
-        float currentTotal=0f;
+        BigDecimal currentTotal=BigDecimal.ZERO;
         for(TimesheetPosition p: positions) {
-            currentTotal=currentTotal+p.calculateTotal(ts.getInterval());
+            currentTotal=currentTotal.add(p.calculateTotal(ts.getInterval()));
         }
-        return currentTotal / ts.getLimit() * 100f;
+        return currentTotal.divide(ts.getLimit()).multiply(BigDecimal.valueOf(100f)).floatValue();
         
     }
     
@@ -6020,7 +6021,7 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
             newPos.setTaxRate(position.getTaxRate());
             newPos.setTimesheet(sheet);
             newPos.setUnitPrice(position.getUnitPrice());
-            newPos.setTotal(0f);
+            newPos.setTotal(BigDecimal.ZERO);
             newPos.setId(id);
             this.timesheetPositionsFacade.create(newPos);
             return this.timesheetPositionsFacade.find(id);

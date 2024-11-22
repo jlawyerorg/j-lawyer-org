@@ -664,6 +664,7 @@
 package com.jdimension.jlawyer.persistence;
 
 import java.io.Serializable;
+import java.math.BigDecimal;
 import javax.persistence.*;
 import javax.xml.bind.annotation.XmlRootElement;
 
@@ -694,17 +695,17 @@ public class InvoicePosition implements Serializable {
     @Column(name = "position")
     protected int position;
     
-    @Column(name = "tax_rate")
-    protected float taxRate;
+    @Column(name = "tax_rate", precision = 10, scale = 2)
+    protected BigDecimal taxRate=BigDecimal.ZERO;
     
-    @Column(name = "units")
-    protected float units;
+    @Column(name = "units", precision = 10, scale = 2)
+    protected BigDecimal units=BigDecimal.ZERO;
     
-    @Column(name = "unit_price")
-    protected float unitPrice;
+    @Column(name = "unit_price", precision = 10, scale = 2)
+    protected BigDecimal unitPrice=BigDecimal.ZERO;
     
-    @Column(name = "total")
-    protected float total;
+    @Column(name = "total", precision = 10, scale = 2)
+    protected BigDecimal total=BigDecimal.ZERO;
     
     @JoinColumn(name = "invoice_id", referencedColumnName = "id")
     @ManyToOne
@@ -804,14 +805,14 @@ public class InvoicePosition implements Serializable {
     /**
      * @return the taxRate
      */
-    public float getTaxRate() {
+    public BigDecimal getTaxRate() {
         return taxRate;
     }
 
     /**
      * @param taxRate the taxRate to set
      */
-    public void setTaxRate(float taxRate) {
+    public void setTaxRate(BigDecimal taxRate) {
         this.taxRate = taxRate;
     }
 
@@ -832,42 +833,42 @@ public class InvoicePosition implements Serializable {
     /**
      * @return the units
      */
-    public float getUnits() {
+    public BigDecimal getUnits() {
         return units;
     }
 
     /**
      * @param units the units to set
      */
-    public void setUnits(float units) {
+    public void setUnits(BigDecimal units) {
         this.units = units;
     }
 
     /**
      * @return the unitPrice
      */
-    public float getUnitPrice() {
+    public BigDecimal getUnitPrice() {
         return unitPrice;
     }
 
     /**
      * @param unitPrice the unitPrice to set
      */
-    public void setUnitPrice(float unitPrice) {
+    public void setUnitPrice(BigDecimal unitPrice) {
         this.unitPrice = unitPrice;
     }
 
     /**
      * @return the total
      */
-    public float getTotal() {
+    public BigDecimal getTotal() {
         return total;
     }
 
     /**
      * @param total the total to set
      */
-    public void setTotal(float total) {
+    public void setTotal(BigDecimal total) {
         this.total = total;
     }
 
