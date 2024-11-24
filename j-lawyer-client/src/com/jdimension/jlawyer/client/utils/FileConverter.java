@@ -1284,8 +1284,7 @@ public class FileConverter {
 
         // Wenn sich die Daten geändert haben, neue temporäre Datei erstellen
         if (!Arrays.equals(imageData, processedData)) {
-            String tempFile = FileUtils.createTempFile(inputFile.getName(), processedData);
-            return tempFile;
+            return FileUtils.createTempFile(inputFile.getName(), processedData);
         }
 
         return url;
