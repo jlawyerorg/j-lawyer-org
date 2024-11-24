@@ -664,6 +664,7 @@
 package com.jdimension.jlawyer.client.editors.documents.viewer;
 
 import com.jdimension.jlawyer.client.settings.ClientSettings;
+import com.jdimension.jlawyer.client.utils.SystemUtils;
 import com.jdimension.jlawyer.client.utils.ThreadUtils;
 import com.jdimension.jlawyer.client.utils.einvoice.EInvoiceUtils;
 import java.awt.Color;
@@ -1314,6 +1315,22 @@ public class PdfImageScrollingPanel extends javax.swing.JPanel implements Previe
         int baseDpi = 200;
         int minDpi = 120;
 
+        // macOS has a default scale factor of 2 - assume HiDPI for all Macs
+        if(SystemUtils.isMacOs()) {
+            return 300;
+        }
+        
+        String uiScale = System.getProperty("sun.java2d.uiScale");
+        try {
+            if (uiScale != null && Double.parseDouble(uiScale) > 1.0) {
+                return 300;
+            } else {
+                // proceed with dynamic calculation below
+            }
+        } catch (Throwable t) {
+            log.warn("unable to get UI scale factor", t);
+        }
+        
         if (totalPages <= 20) {
             return 200;
         }
