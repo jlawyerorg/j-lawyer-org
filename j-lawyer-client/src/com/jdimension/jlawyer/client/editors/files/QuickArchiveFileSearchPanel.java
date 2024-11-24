@@ -677,11 +677,14 @@ import com.jdimension.jlawyer.client.utils.TableUtils;
 import com.jdimension.jlawyer.client.utils.ThreadUtils;
 import com.jdimension.jlawyer.persistence.ArchiveFileAddressesBean;
 import com.jdimension.jlawyer.persistence.ArchiveFileBean;
+import com.jdimension.jlawyer.persistence.ArchiveFileFormEntriesBean;
+import com.jdimension.jlawyer.persistence.ArchiveFileFormsBean;
 import com.jdimension.jlawyer.persistence.ArchiveFileGroupsBean;
 import com.jdimension.jlawyer.persistence.ArchiveFileReviewsBean;
 import com.jdimension.jlawyer.persistence.ArchiveFileTagsBean;
 import com.jdimension.jlawyer.persistence.Group;
 import com.jdimension.jlawyer.services.ArchiveFileServiceRemote;
+import com.jdimension.jlawyer.services.FormsServiceRemote;
 import com.jdimension.jlawyer.services.JLawyerServiceLocator;
 import com.jdimension.jlawyer.ui.tagging.TagUtils;
 import java.awt.Color;
@@ -816,6 +819,7 @@ public class QuickArchiveFileSearchPanel extends javax.swing.JPanel implements T
         popupArchiveFileActions = new javax.swing.JPopupMenu();
         mnuOpenSelectedArchiveFile = new javax.swing.JMenuItem();
         mnuDuplicateSelectedArchiveFiles = new javax.swing.JMenuItem();
+        mnuDuplicateSelectedArchiveFilesWithForms = new javax.swing.JMenuItem();
         mnuDeleteSelectedArchiveFiles = new javax.swing.JMenuItem();
         mnuEnableCaseSync = new javax.swing.JMenuItem();
         mnuDisableCaseSync = new javax.swing.JMenuItem();
@@ -855,6 +859,16 @@ public class QuickArchiveFileSearchPanel extends javax.swing.JPanel implements T
             }
         });
         popupArchiveFileActions.add(mnuDuplicateSelectedArchiveFiles);
+
+        mnuDuplicateSelectedArchiveFilesWithForms.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/editcopy.png"))); // NOI18N
+        mnuDuplicateSelectedArchiveFilesWithForms.setText("duplizieren (inklusive Falldaten)");
+        mnuDuplicateSelectedArchiveFilesWithForms.setToolTipText("gewählte Akten und deren Falldaten duplizieren");
+        mnuDuplicateSelectedArchiveFilesWithForms.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                mnuDuplicateSelectedArchiveFilesWithFormsActionPerformed(evt);
+            }
+        });
+        popupArchiveFileActions.add(mnuDuplicateSelectedArchiveFilesWithForms);
 
         mnuDeleteSelectedArchiveFiles.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/editdelete.png"))); // NOI18N
         mnuDeleteSelectedArchiveFiles.setText("löschen");
@@ -1223,8 +1237,7 @@ public class QuickArchiveFileSearchPanel extends javax.swing.JPanel implements T
         this.popTagFilter.show(this.cmdTagFilter, evt.getX(), evt.getY());
     }//GEN-LAST:event_cmdTagFilterMousePressed
 
-    private void mnuDuplicateSelectedArchiveFilesActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_mnuDuplicateSelectedArchiveFilesActionPerformed
-        
+    private void duplicateSelectedArchiveFiles(boolean includeForms) {
         int[] selectedIndices = this.tblResults.getSelectedRows();
         Arrays.sort(selectedIndices);
         ArrayList<String> ids = new ArrayList<>();
@@ -1290,6 +1303,33 @@ public class QuickArchiveFileSearchPanel extends javax.swing.JPanel implements T
                 }
                 fileService.updateAllowedGroups(target.getId(), targetGroups);
                 
+                if(includeForms) {
+                    FormsServiceRemote formsSvc=locator.lookupFormsServiceRemote();
+                    List<ArchiveFileFormsBean> forms=formsSvc.getFormsForCase(source.getId());
+                    for(ArchiveFileFormsBean form: forms) {
+                        ArchiveFileFormsBean newForm=new ArchiveFileFormsBean();
+                        newForm.setArchiveFileFormEntriesBeanList(new ArrayList<>());
+                        newForm.setArchiveFileKey(target);
+                        newForm.setCreationDate(new Date());
+                        newForm.setDescription(form.getDescription());
+                        newForm.setFormType(form.getFormType());
+                        newForm.setPlaceHolder(form.getPlaceHolder());
+                        newForm=formsSvc.addForm(target.getId(), newForm);
+                        List<ArchiveFileFormEntriesBean> formEntries=formsSvc.getFormEntries(form.getId());
+                        List newFormEntries=new ArrayList<>();
+                        for(ArchiveFileFormEntriesBean formEntry: formEntries) {
+                            ArchiveFileFormEntriesBean newEntry=new ArchiveFileFormEntriesBean();
+                            newEntry.setArchiveFileKey(target);
+                            newEntry.setEntryKey(formEntry.getEntryKey());
+                            newEntry.setForm(newForm);
+                            newEntry.setPlaceHolder(formEntry.getPlaceHolder());
+                            newEntry.setStringValue(formEntry.getStringValue());
+                            newFormEntries.add(newEntry);
+                        }
+                        formsSvc.setFormEntries(newForm.getId(), newFormEntries);
+                    }
+                }
+                
             }
             
             EventBroker eb = EventBroker.getInstance();
@@ -1304,6 +1344,11 @@ public class QuickArchiveFileSearchPanel extends javax.swing.JPanel implements T
         } finally {
             ThreadUtils.setDefaultCursor(this, false);
         }
+    }
+    
+    private void mnuDuplicateSelectedArchiveFilesActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_mnuDuplicateSelectedArchiveFilesActionPerformed
+        this.duplicateSelectedArchiveFiles(false);
+        
     }//GEN-LAST:event_mnuDuplicateSelectedArchiveFilesActionPerformed
 
     private void cmdDocumentTagFilterMousePressed(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_cmdDocumentTagFilterMousePressed
@@ -1328,6 +1373,10 @@ public class QuickArchiveFileSearchPanel extends javax.swing.JPanel implements T
     private void mnuDisableCaseSyncActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_mnuDisableCaseSyncActionPerformed
         this.toggleCaseSync(false);
     }//GEN-LAST:event_mnuDisableCaseSyncActionPerformed
+
+    private void mnuDuplicateSelectedArchiveFilesWithFormsActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_mnuDuplicateSelectedArchiveFilesWithFormsActionPerformed
+        this.duplicateSelectedArchiveFiles(true);
+    }//GEN-LAST:event_mnuDuplicateSelectedArchiveFilesWithFormsActionPerformed
 
     private void toggleCaseSync(boolean enable) {
         int[] selectedIndices = this.tblResults.getSelectedRows();
@@ -1374,6 +1423,7 @@ public class QuickArchiveFileSearchPanel extends javax.swing.JPanel implements T
     private javax.swing.JMenuItem mnuDeleteSelectedArchiveFiles;
     private javax.swing.JMenuItem mnuDisableCaseSync;
     private javax.swing.JMenuItem mnuDuplicateSelectedArchiveFiles;
+    private javax.swing.JMenuItem mnuDuplicateSelectedArchiveFilesWithForms;
     private javax.swing.JMenuItem mnuEnableCaseSync;
     private javax.swing.JMenuItem mnuOpenSelectedArchiveFile;
     private javax.swing.JPopupMenu popDocumentTagFilter;
