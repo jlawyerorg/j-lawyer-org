@@ -663,7 +663,6 @@ For more information on this, and how to apply and follow the GNU AGPL, see
  */
 package com.jdimension.jlawyer.client.voip;
 
-import com.jdimension.jlawyer.client.editors.files.ExportAsPdfOrderingStep;
 import com.jdimension.jlawyer.client.utils.FileUtils;
 import java.awt.Image;
 import java.awt.image.BufferedImage;
@@ -767,8 +766,8 @@ public class EpostPdfPanel extends javax.swing.JPanel {
 
         lblFileSize.setText("jLabel3");
 
-        cmdRemove.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons16/material/outline_backspace_black_48dp.png"))); // NOI18N
-        cmdRemove.setToolTipText("PDF Datei aus Sortierung entfernen");
+        cmdRemove.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/editdelete.png"))); // NOI18N
+        cmdRemove.setToolTipText("PDF Datei entfernen");
         cmdRemove.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 cmdRemoveActionPerformed(evt);
@@ -852,7 +851,7 @@ public class EpostPdfPanel extends javax.swing.JPanel {
   
     private void cmdRemoveActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdRemoveActionPerformed
         int response = javax.swing.JOptionPane.showConfirmDialog(this, 
-            "Diese PDF wirklich aus der Liste entfernen?", 
+            "Dieses PDF aus der Liste entfernen?", 
             "PDF entfernen", 
             javax.swing.JOptionPane.YES_NO_OPTION);
         if(response == javax.swing.JOptionPane.YES_OPTION) {
