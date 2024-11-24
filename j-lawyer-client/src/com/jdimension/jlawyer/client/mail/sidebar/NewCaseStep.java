@@ -776,8 +776,8 @@ public class NewCaseStep extends javax.swing.JPanel implements WizardStepInterfa
             ThreadUtils.addComponent(tagPanel, tb);
         }
         
-        this.cmbLawyer.setSelectedItem(UserSettings.getInstance().getCurrentUser().getPrincipalId());
-        this.cmbAssistant.setSelectedItem(UserSettings.getInstance().getCurrentUser().getPrincipalId());
+//        this.cmbLawyer.setSelectedItem(UserSettings.getInstance().getCurrentUser().getPrincipalId());
+//        this.cmbAssistant.setSelectedItem(UserSettings.getInstance().getCurrentUser().getPrincipalId());
         
         
     }
