@@ -691,8 +691,8 @@ public class ExportAsPdfOrderingStep extends javax.swing.JPanel implements Wizar
         
         // UserSettings laden
         UserSettings uset = UserSettings.getInstance();
-        this.addTocCb.setSelected(uset.getSettingAsBoolean(UserSettings.CONF_CASES_EXPORT_TOC, true));
-        this.addPageNbrsCb.setSelected(uset.getSettingAsBoolean(UserSettings.CONF_CASES_EXPORT_PAGENUMBERS, true));
+        this.cmbAddToc.setSelected(uset.getSettingAsBoolean(UserSettings.CONF_CASES_EXPORT_TOC, true));
+        this.cmbAddPageNumbers.setSelected(uset.getSettingAsBoolean(UserSettings.CONF_CASES_EXPORT_PAGENUMBERS, true));
         
         // ComponentListener für pnlConversionList
         this.pnlConversionList.addContainerListener(new java.awt.event.ContainerListener() {
@@ -716,13 +716,13 @@ public class ExportAsPdfOrderingStep extends javax.swing.JPanel implements Wizar
         }
 
         this.data.put("export.sortedpdffiles", sortedPdfs);
-        this.data.put("export.createToc", this.addTocCb.isSelected());
-        this.data.put("export.createPageNumbers", this.addPageNbrsCb.isSelected());
+        this.data.put("export.createToc", this.cmbAddToc.isSelected());
+        this.data.put("export.createPageNumbers", this.cmbAddPageNumbers.isSelected());
         
         // UserSettings speichern
         UserSettings uset = UserSettings.getInstance();
-        uset.setSettingAsBoolean(UserSettings.CONF_CASES_EXPORT_TOC, this.addTocCb.isSelected());
-        uset.setSettingAsBoolean(UserSettings.CONF_CASES_EXPORT_PAGENUMBERS, this.addPageNbrsCb.isSelected());
+        uset.setSettingAsBoolean(UserSettings.CONF_CASES_EXPORT_TOC, this.cmbAddToc.isSelected());
+        uset.setSettingAsBoolean(UserSettings.CONF_CASES_EXPORT_PAGENUMBERS, this.cmbAddPageNumbers.isSelected());
 
     }
 
@@ -758,8 +758,8 @@ public class ExportAsPdfOrderingStep extends javax.swing.JPanel implements Wizar
         lblFileSizeMax = new javax.swing.JLabel();
         lblPages = new javax.swing.JLabel();
         jLabel2 = new javax.swing.JLabel();
-        addTocCb = new javax.swing.JCheckBox();
-        addPageNbrsCb = new javax.swing.JCheckBox();
+        cmbAddToc = new javax.swing.JCheckBox();
+        cmbAddPageNumbers = new javax.swing.JCheckBox();
 
         setName("Dokumente sortieren"); // NOI18N
 
@@ -786,20 +786,15 @@ public class ExportAsPdfOrderingStep extends javax.swing.JPanel implements Wizar
         jLabel2.setFont(jLabel2.getFont().deriveFont(jLabel2.getFont().getStyle() | java.awt.Font.BOLD));
         jLabel2.setText("Seiten:");
 
-        addTocCb.setSelected(true);
-        addTocCb.setText("Inhaltsverzeichnis");
-        addTocCb.setToolTipText("Inhaltsverzeichnis wird hinzugefügt");
-        addTocCb.setActionCommand("");
+        cmbAddToc.setSelected(true);
+        cmbAddToc.setText("Inhaltsverzeichnis");
+        cmbAddToc.setToolTipText("Inhaltsverzeichnis wird hinzugefügt");
+        cmbAddToc.setActionCommand("");
 
-        addPageNbrsCb.setSelected(true);
-        addPageNbrsCb.setText("Seitenzahlen");
-        addPageNbrsCb.setToolTipText("Seitenzahlen werden hinzugefügt");
-        addPageNbrsCb.setActionCommand("");
-        addPageNbrsCb.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                addPageNbrsCbActionPerformed(evt);
-            }
-        });
+        cmbAddPageNumbers.setSelected(true);
+        cmbAddPageNumbers.setText("Seitenzahlen");
+        cmbAddPageNumbers.setToolTipText("Seitenzahlen werden hinzugefügt");
+        cmbAddPageNumbers.setActionCommand("");
 
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(this);
         this.setLayout(layout);
@@ -812,9 +807,9 @@ public class ExportAsPdfOrderingStep extends javax.swing.JPanel implements Wizar
                     .addComponent(jScrollPane1)
                     .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
                         .addGap(0, 0, Short.MAX_VALUE)
-                        .addComponent(addPageNbrsCb)
+                        .addComponent(cmbAddPageNumbers)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addComponent(addTocCb)
+                        .addComponent(cmbAddToc)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
                         .addComponent(jLabel2)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
@@ -836,21 +831,17 @@ public class ExportAsPdfOrderingStep extends javax.swing.JPanel implements Wizar
                     .addComponent(lblFileSizeMax)
                     .addComponent(lblPages)
                     .addComponent(jLabel2)
-                    .addComponent(addTocCb)
-                    .addComponent(addPageNbrsCb))
+                    .addComponent(cmbAddToc)
+                    .addComponent(cmbAddPageNumbers))
                 .addGap(47, 47, 47)
                 .addComponent(jScrollPane1, javax.swing.GroupLayout.DEFAULT_SIZE, 460, Short.MAX_VALUE)
                 .addContainerGap())
         );
     }// </editor-fold>//GEN-END:initComponents
 
-    private void addPageNbrsCbActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_addPageNbrsCbActionPerformed
-        // TODO add your handling code here:
-    }//GEN-LAST:event_addPageNbrsCbActionPerformed
-
     // Variables declaration - do not modify//GEN-BEGIN:variables
-    private javax.swing.JCheckBox addPageNbrsCb;
-    private javax.swing.JCheckBox addTocCb;
+    private javax.swing.JCheckBox cmbAddPageNumbers;
+    private javax.swing.JCheckBox cmbAddToc;
     private javax.swing.JLabel jLabel1;
     private javax.swing.JLabel jLabel2;
     private javax.swing.JScrollPane jScrollPane1;
