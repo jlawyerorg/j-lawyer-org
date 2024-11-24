@@ -740,7 +740,6 @@ public class AddCalendarEventStep extends javax.swing.JPanel implements WizardSt
         jLabel1.setBorder(new javax.swing.border.LineBorder(new java.awt.Color(0, 0, 0), 1, true));
         jLabel1.setOpaque(true);
 
-        chkCreateEvent.setSelected(true);
         chkCreateEvent.setText("Kalendereintrag erstellen");
 
         lblStatus.setFont(lblStatus.getFont().deriveFont(lblStatus.getFont().getStyle() | java.awt.Font.BOLD));

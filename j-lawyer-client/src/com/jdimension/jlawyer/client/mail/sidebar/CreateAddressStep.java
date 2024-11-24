@@ -810,6 +810,7 @@ public class CreateAddressStep extends javax.swing.JPanel implements WizardStepI
         taBody.setLineWrap(true);
         taBody.setRows(5);
         taBody.setWrapStyleWord(true);
+        taBody.setEnabled(false);
         jScrollPane1.setViewportView(taBody);
 
         jSplitPane1.setLeftComponent(jScrollPane1);
@@ -833,11 +834,11 @@ public class CreateAddressStep extends javax.swing.JPanel implements WizardStepI
                 return types [columnIndex];
             }
         });
+        tblAttributes.setEnabled(false);
         jScrollPane2.setViewportView(tblAttributes);
 
         jSplitPane1.setRightComponent(jScrollPane2);
 
-        chkGenerateAddress.setSelected(true);
         chkGenerateAddress.setText("Adresse aus Nachricht extrahieren");
         chkGenerateAddress.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {

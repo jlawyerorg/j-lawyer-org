@@ -88,7 +88,6 @@
     </Component>
     <Component class="javax.swing.JCheckBox" name="chkCreateEvent">
       <Properties>
-        <Property name="selected" type="boolean" value="true"/>
         <Property name="text" type="java.lang.String" value="Kalendereintrag erstellen"/>
       </Properties>
     </Component>
