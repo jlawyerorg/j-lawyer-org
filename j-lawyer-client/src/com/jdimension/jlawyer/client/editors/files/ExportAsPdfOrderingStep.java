@@ -663,6 +663,7 @@
  */
 package com.jdimension.jlawyer.client.editors.files;
 
+import com.jdimension.jlawyer.client.settings.UserSettings;
 import com.jdimension.jlawyer.client.voip.*;
 import com.jdimension.jlawyer.client.utils.FileUtils;
 import com.jdimension.jlawyer.client.wizard.*;
@@ -687,6 +688,24 @@ public class ExportAsPdfOrderingStep extends javax.swing.JPanel implements Wizar
     public ExportAsPdfOrderingStep() {
         initComponents();
         this.jScrollPane1.getVerticalScrollBar().setUnitIncrement(16);
+        
+        // UserSettings laden
+        UserSettings uset = UserSettings.getInstance();
+        this.addTocCb.setSelected(uset.getSettingAsBoolean(UserSettings.CONF_CASES_EXPORT_TOC, true));
+        this.addPageNbrsCb.setSelected(uset.getSettingAsBoolean(UserSettings.CONF_CASES_EXPORT_PAGENUMBERS, true));
+        
+        // ComponentListener für pnlConversionList
+        this.pnlConversionList.addContainerListener(new java.awt.event.ContainerListener() {
+            @Override
+            public void componentRemoved(java.awt.event.ContainerEvent e) {
+                refreshDisplay();
+            }
+
+            @Override
+            public void componentAdded(java.awt.event.ContainerEvent e) {
+                refreshDisplay();
+            }
+        });
     }
 
     @Override
@@ -695,8 +714,16 @@ public class ExportAsPdfOrderingStep extends javax.swing.JPanel implements Wizar
         for(Component c: this.pnlConversionList.getComponents()) {
             sortedPdfs.add(((EpostPdfPanel)c).getFile());
         }
-        
+
         this.data.put("export.sortedpdffiles", sortedPdfs);
+        this.data.put("export.createToc", this.addTocCb.isSelected());
+        this.data.put("export.createPageNumbers", this.addPageNbrsCb.isSelected());
+        
+        // UserSettings speichern
+        UserSettings uset = UserSettings.getInstance();
+        uset.setSettingAsBoolean(UserSettings.CONF_CASES_EXPORT_TOC, this.addTocCb.isSelected());
+        uset.setSettingAsBoolean(UserSettings.CONF_CASES_EXPORT_PAGENUMBERS, this.addPageNbrsCb.isSelected());
+
     }
 
     @Override
@@ -731,6 +758,8 @@ public class ExportAsPdfOrderingStep extends javax.swing.JPanel implements Wizar
         lblFileSizeMax = new javax.swing.JLabel();
         lblPages = new javax.swing.JLabel();
         jLabel2 = new javax.swing.JLabel();
+        addTocCb = new javax.swing.JCheckBox();
+        addPageNbrsCb = new javax.swing.JCheckBox();
 
         setName("Dokumente sortieren"); // NOI18N
 
@@ -757,6 +786,21 @@ public class ExportAsPdfOrderingStep extends javax.swing.JPanel implements Wizar
         jLabel2.setFont(jLabel2.getFont().deriveFont(jLabel2.getFont().getStyle() | java.awt.Font.BOLD));
         jLabel2.setText("Seiten:");
 
+        addTocCb.setSelected(true);
+        addTocCb.setText("Inhaltsverzeichnis");
+        addTocCb.setToolTipText("Inhaltsverzeichnis wird hinzugefügt");
+        addTocCb.setActionCommand("");
+
+        addPageNbrsCb.setSelected(true);
+        addPageNbrsCb.setText("Seitenzahlen");
+        addPageNbrsCb.setToolTipText("Seitenzahlen werden hinzugefügt");
+        addPageNbrsCb.setActionCommand("");
+        addPageNbrsCb.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                addPageNbrsCbActionPerformed(evt);
+            }
+        });
+
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(this);
         this.setLayout(layout);
         layout.setHorizontalGroup(
@@ -764,10 +808,14 @@ public class ExportAsPdfOrderingStep extends javax.swing.JPanel implements Wizar
             .addGroup(layout.createSequentialGroup()
                 .addContainerGap()
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addComponent(jLabel1, javax.swing.GroupLayout.Alignment.TRAILING, javax.swing.GroupLayout.DEFAULT_SIZE, 876, Short.MAX_VALUE)
+                    .addComponent(jLabel1, javax.swing.GroupLayout.Alignment.TRAILING, javax.swing.GroupLayout.DEFAULT_SIZE, 863, Short.MAX_VALUE)
                     .addComponent(jScrollPane1)
                     .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
                         .addGap(0, 0, Short.MAX_VALUE)
+                        .addComponent(addPageNbrsCb)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addComponent(addTocCb)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
                         .addComponent(jLabel2)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                         .addComponent(lblPages)
@@ -787,14 +835,22 @@ public class ExportAsPdfOrderingStep extends javax.swing.JPanel implements Wizar
                     .addComponent(lblFileSize)
                     .addComponent(lblFileSizeMax)
                     .addComponent(lblPages)
-                    .addComponent(jLabel2))
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(jScrollPane1, javax.swing.GroupLayout.DEFAULT_SIZE, 505, Short.MAX_VALUE)
+                    .addComponent(jLabel2)
+                    .addComponent(addTocCb)
+                    .addComponent(addPageNbrsCb))
+                .addGap(47, 47, 47)
+                .addComponent(jScrollPane1, javax.swing.GroupLayout.DEFAULT_SIZE, 460, Short.MAX_VALUE)
                 .addContainerGap())
         );
     }// </editor-fold>//GEN-END:initComponents
 
+    private void addPageNbrsCbActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_addPageNbrsCbActionPerformed
+        // TODO add your handling code here:
+    }//GEN-LAST:event_addPageNbrsCbActionPerformed
+
     // Variables declaration - do not modify//GEN-BEGIN:variables
+    private javax.swing.JCheckBox addPageNbrsCb;
+    private javax.swing.JCheckBox addTocCb;
     private javax.swing.JLabel jLabel1;
     private javax.swing.JLabel jLabel2;
     private javax.swing.JScrollPane jScrollPane1;
@@ -843,5 +899,22 @@ public class ExportAsPdfOrderingStep extends javax.swing.JPanel implements Wizar
     @Override
     public void setWizardPanel(WizardMainPanel wizard) {
         
+    }
+    
+    private void refreshDisplay() {
+        long totalSize=0;
+        long totalPages=0;
+
+        for (Component c: this.pnlConversionList.getComponents()) {
+            if(c instanceof EpostPdfPanel) {
+                EpostPdfPanel pdfPanel=(EpostPdfPanel)c;
+                totalSize+=pdfPanel.getFile().length();
+                totalPages+=pdfPanel.getPageCount();
+            }
+        }
+
+        this.lblFileSize.setText("" + FileUtils.getFileSizeHumanReadable(totalSize));
+        this.lblFileSizeMax.setText("Gesamtgröße:");
+        this.lblPages.setText("" + totalPages);
     }
 }
