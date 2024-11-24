@@ -1316,7 +1316,7 @@ public class QuickArchiveFileSearchPanel extends javax.swing.JPanel implements T
                         newForm.setPlaceHolder(form.getPlaceHolder());
                         newForm=formsSvc.addForm(target.getId(), newForm);
                         List<ArchiveFileFormEntriesBean> formEntries=formsSvc.getFormEntries(form.getId());
-                        List newFormEntries=new ArrayList<>();
+                        List<ArchiveFileFormEntriesBean> newFormEntries=new ArrayList<>();
                         for(ArchiveFileFormEntriesBean formEntry: formEntries) {
                             ArchiveFileFormEntriesBean newEntry=new ArchiveFileFormEntriesBean();
                             newEntry.setArchiveFileKey(target);
