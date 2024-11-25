@@ -293,7 +293,9 @@ public class CalendarEvent extends Observable implements Comparable<CalendarEven
     }
 
     public String getCaseLawyer() {
-        return this.getCaseDto().getLawyer();
+        if(this.getCaseDto()!=null)
+            return this.getCaseDto().getLawyer();
+        return "";
     }
 
     public String getAssignee() {
@@ -308,28 +310,38 @@ public class CalendarEvent extends Observable implements Comparable<CalendarEven
      * @return the caseId
      */
     public String getCaseId() {
-        return this.getCaseDto().getId();
+        if(this.getCaseDto()!=null)
+            return this.getCaseDto().getId();
+        return "";
+        
     }
 
     /**
      * @return the caseNumber
      */
     public String getCaseNumber() {
-        return this.getCaseDto().getFileNumber();
+        if(this.getCaseDto()!=null)
+            return this.getCaseDto().getFileNumber();
+        return "";
+        
     }
 
     /**
      * @return the caseName
      */
     public String getCaseName() {
-        return this.getCaseDto().getName();
+        if(this.getCaseDto()!=null)
+            return this.getCaseDto().getName();
+        return "";
     }
 
     /**
      * @return the caseReason
      */
     public String getCaseReason() {
-        return this.getCaseDto().getReason();
+        if(this.getCaseDto()!=null)
+            return this.getCaseDto().getReason();
+        return "";
     }
 
     /**
