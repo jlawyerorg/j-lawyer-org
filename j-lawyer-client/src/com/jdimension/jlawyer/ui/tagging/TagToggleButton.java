@@ -703,7 +703,6 @@ public class TagToggleButton extends JToggleButton {
             if (isSelected()) {
                 setIcon(selectedIcon);
                 setFont(getFont().deriveFont(Font.BOLD));
-//                setToolTipText("aktiv seit "  + SimpleDateFormat.getDateTimeInstance().format(new Date()));
             } else {
                 setIcon(unselectedIcon);
                 setFont(getFont().deriveFont(Font.PLAIN));
