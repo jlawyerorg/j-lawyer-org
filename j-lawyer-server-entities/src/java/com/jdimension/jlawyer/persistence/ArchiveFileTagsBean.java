@@ -664,6 +664,7 @@
 package com.jdimension.jlawyer.persistence;
 
 import java.io.Serializable;
+import java.util.Date;
 import javax.persistence.*;
 import javax.xml.bind.annotation.XmlRootElement;
 
@@ -690,6 +691,9 @@ public class ArchiveFileTagsBean implements Serializable {
     @JoinColumn(name = "archiveFileKey", referencedColumnName = "id")
     @ManyToOne
     private ArchiveFileBean archiveFileKey;
+    @Column(name = "date_set")
+    @Temporal(TemporalType.TIMESTAMP)
+    private Date dateSet;
     
     public ArchiveFileTagsBean() {
     }
@@ -752,6 +756,20 @@ public class ArchiveFileTagsBean implements Serializable {
         
         return this.tagName;
         
+    }
+
+    /**
+     * @return the dateSet
+     */
+    public Date getDateSet() {
+        return dateSet;
+    }
+
+    /**
+     * @param dateSet the dateSet to set
+     */
+    public void setDateSet(Date dateSet) {
+        this.dateSet = dateSet;
     }
     
 }

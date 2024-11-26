@@ -1147,10 +1147,12 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
 
                 ArrayList<String> activeTags = new ArrayList<>();
                 ArrayList<String> sortedTags = new ArrayList<>();
+                HashMap<String,Date> tagDates=new HashMap<>();
                 for (Object t : tags) {
                     DocumentTagsBean tag = (DocumentTagsBean) t;
                     activeTags.add(tag.getTagName());
                     sortedTags.add(tag.getTagName());
+                    tagDates.put(tag.getTagName(), tag.getDateSet());
                 }
 
                 AppOptionGroupBean[] tagOptions = settings.getDocumentTagDtos();
@@ -1164,7 +1166,7 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
                 StringUtils.sortIgnoreCase(sortedTags);
 
                 for (String tagString : sortedTags) {
-                    TagToggleButton tb = new TagToggleButton(tagString);
+                    TagToggleButton tb = new TagToggleButton(tagString, tagDates.get(tagString));
                     if (activeTags.contains(tagString)) {
                         tb.setSelected(true);
                     } else {
@@ -1556,7 +1558,7 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
         StringUtils.sortIgnoreCase(sortedTags);
 
         for (String tagString : sortedTags) {
-            TagToggleButton tb = new TagToggleButton(tagString);
+            TagToggleButton tb = new TagToggleButton(tagString, null);
             tb.setSelected(false);
             tb.setEnabled(!this.readOnly);
             tb.addActionListener(new ArchiveFileTagActionListener(null, null, this));
@@ -1576,7 +1578,7 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
         StringUtils.sortIgnoreCase(sortedDocumentTags);
 
         for (String tagString : sortedDocumentTags) {
-            TagToggleButton tb = new TagToggleButton(tagString);
+            TagToggleButton tb = new TagToggleButton(tagString, null);
             tb.setSelected(false);
             tb.setEnabled(!this.readOnly);
             tb.addActionListener(new ArchiveFileTagActionListener(null, null, this));

@@ -666,8 +666,11 @@ package com.jdimension.jlawyer.ui.tagging;
 import com.jdimension.jlawyer.client.utils.StringUtils;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.text.DateFormat;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.Hashtable;
 import java.util.List;
@@ -832,6 +835,23 @@ public class TagUtils {
             }
         }
         return selected.toArray(new String[0]);
+    }
+
+    public static String getTagListTooltip(ArrayList<String> tags, HashMap<String,Date> tagDates) {
+        StringBuilder sb = new StringBuilder();
+
+        Collections.sort(tags);
+        sb.append("<html><ul>");
+        for (String t : tags) {
+            DateFormat df=SimpleDateFormat.getDateTimeInstance();
+            if(tagDates!=null && tagDates.containsKey(t)) {
+                sb.append("<li>").append(df.format(tagDates.get(t))).append(" ").append(t).append("</li>");
+            } else {
+                sb.append("<li>").append(t).append("</li>");
+            }
+        }
+        sb.append("</ul></html>");
+        return sb.toString();
     }
 
 

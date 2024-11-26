@@ -1334,7 +1334,7 @@ public class BulkSaveDialog extends javax.swing.JDialog {
         }
         StringUtils.sortIgnoreCase(extensions);
         for (String extString : extensions) {
-            TagToggleButton tb = new TagToggleButton(extString);
+            TagToggleButton tb = new TagToggleButton(extString, null);
             tb.setSelected(true);
             tb.setToolTipText("Dateien mit Endung ." + extString + " werden gespeichert");
             tb.setSelectedIcon(new javax.swing.ImageIcon(getClass().getResource("/icons16/material/baseline_file_download_black_48dp.png")));

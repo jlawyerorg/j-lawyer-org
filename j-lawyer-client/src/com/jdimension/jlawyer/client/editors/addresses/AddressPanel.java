@@ -1070,7 +1070,7 @@ public class AddressPanel extends javax.swing.JPanel implements BeaLoginCallback
             StringUtils.sortIgnoreCase(sortedTags);
 
             for (String tagString : sortedTags) {
-                TagToggleButton tb = new TagToggleButton(tagString);
+                TagToggleButton tb = new TagToggleButton(tagString, null);
                 if (activeTags.contains(tagString)) {
                     tb.setSelected(true);
                 } else {
@@ -1340,7 +1340,7 @@ public class AddressPanel extends javax.swing.JPanel implements BeaLoginCallback
         StringUtils.sortIgnoreCase(sortedTags);
 
         for (String tagString : sortedTags) {
-            TagToggleButton tb = new TagToggleButton(tagString);
+            TagToggleButton tb = new TagToggleButton(tagString, null);
             tb.setSelected(false);
             tb.setEnabled(this.cmdSave.isEnabled());
             tb.addActionListener(new AddressTagActionListener(null, null, this));

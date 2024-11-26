@@ -770,7 +770,7 @@ public class NewCaseStep extends javax.swing.JPanel implements WizardStepInterfa
         StringUtils.sortIgnoreCase(sortedTags);
 
         for (String tagString : sortedTags) {
-            TagToggleButton tb = new TagToggleButton(tagString);
+            TagToggleButton tb = new TagToggleButton(tagString, null);
             tb.setSelected(false);
             //tb.addActionListener(new ArchiveFileTagActionListener(null, null, this));
             ThreadUtils.addComponent(tagPanel, tb);
