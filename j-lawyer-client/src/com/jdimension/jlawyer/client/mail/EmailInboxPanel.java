@@ -2169,11 +2169,11 @@ public class EmailInboxPanel extends javax.swing.JPanel implements SaveToCaseExe
             String contentType = this.mailContentUI.getContentType();
             dlg.setContentType(contentType);
             if (contentType.toLowerCase().startsWith(ContentTypes.TEXT_HTML)) {
-                dlg.setBody(EmailUtils.getQuotedBody(EmailUtils.html2Text(this.mailContentUI.getBody()), ContentTypes.TEXT_PLAIN, decodedFrom, m.getSentDate()), ContentTypes.TEXT_PLAIN);
+                dlg.setBody("", EmailUtils.getQuotedBody(EmailUtils.html2Text(this.mailContentUI.getBody()), ContentTypes.TEXT_PLAIN, decodedFrom, m.getSentDate()), ContentTypes.TEXT_PLAIN);
             } else {
-                dlg.setBody(EmailUtils.getQuotedBody(this.mailContentUI.getBody(), ContentTypes.TEXT_PLAIN, decodedFrom, m.getSentDate()), ContentTypes.TEXT_PLAIN);
+                dlg.setBody("", EmailUtils.getQuotedBody(this.mailContentUI.getBody(), ContentTypes.TEXT_PLAIN, decodedFrom, m.getSentDate()), ContentTypes.TEXT_PLAIN);
             }
-            dlg.setBody(EmailUtils.getQuotedBody(this.mailContentUI.getBody(), ContentTypes.TEXT_HTML, decodedFrom, m.getSentDate()), ContentTypes.TEXT_HTML);
+            dlg.setBody("", EmailUtils.getQuotedBody(this.mailContentUI.getBody(), ContentTypes.TEXT_HTML, decodedFrom, m.getSentDate()), ContentTypes.TEXT_HTML);
 
             try {
                 // try forwarding attachments
@@ -2272,11 +2272,11 @@ public class EmailInboxPanel extends javax.swing.JPanel implements SaveToCaseExe
             String contentType = this.mailContentUI.getContentType();
             dlg.setContentType(contentType);
             if (contentType.toLowerCase().startsWith(ContentTypes.TEXT_HTML)) {
-                dlg.setBody(EmailUtils.getQuotedBody(EmailUtils.html2Text(this.mailContentUI.getBody()), ContentTypes.TEXT_PLAIN, decodedTo, origM.getSentDate()), ContentTypes.TEXT_PLAIN);
+                dlg.setBody("", EmailUtils.getQuotedBody(EmailUtils.html2Text(this.mailContentUI.getBody()), ContentTypes.TEXT_PLAIN, decodedTo, origM.getSentDate()), ContentTypes.TEXT_PLAIN);
             } else {
-                dlg.setBody(EmailUtils.getQuotedBody(this.mailContentUI.getBody(), ContentTypes.TEXT_PLAIN, decodedTo, origM.getSentDate()), ContentTypes.TEXT_PLAIN);
+                dlg.setBody("", EmailUtils.getQuotedBody(this.mailContentUI.getBody(), ContentTypes.TEXT_PLAIN, decodedTo, origM.getSentDate()), ContentTypes.TEXT_PLAIN);
             }
-            dlg.setBody(EmailUtils.getQuotedBody(this.mailContentUI.getBody(), ContentTypes.TEXT_HTML, decodedTo, origM.getSentDate()), ContentTypes.TEXT_HTML);
+            dlg.setBody("", EmailUtils.getQuotedBody(this.mailContentUI.getBody(), ContentTypes.TEXT_HTML, decodedTo, origM.getSentDate()), ContentTypes.TEXT_HTML);
 
         } catch (Exception ex) {
             log.error(ex);

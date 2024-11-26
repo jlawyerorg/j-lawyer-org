@@ -1187,12 +1187,12 @@ public class SendEmailDialog extends javax.swing.JDialog implements SendCommunic
         return null;
     }
 
-    public void setBody(String b, String contentType) {
+    public void setBody(String preSignature, String postSignature, String contentType) {
         MailboxSetup ms = this.getSelectedMailbox();
 
         if (contentType.toLowerCase().startsWith(ContentTypes.TEXT_PLAIN)) {
             if (ms != null) {
-                this.tp.setText(EmailUtils.html2Text(ms.getEmailSignature()) + b);
+                this.tp.setText(preSignature + EmailUtils.html2Text(ms.getEmailSignature()) + postSignature);
                 this.tp.setCaretPosition(0);
             }
         } else {
@@ -1201,7 +1201,7 @@ public class SendEmailDialog extends javax.swing.JDialog implements SendCommunic
                 if (sig == null) {
                     sig = "";
                 }
-                this.hp.setText("<div>" + sig + "</div><br/><blockquote style=\"border-left: #ccc 0px solid; margin: 0px 0px 0px 0.8ex; padding-left: 1ex\">" + b + "</blockquote>");
+                this.hp.setText("<div>" + preSignature + "</div><div>" + sig + "</div><br/><blockquote style=\"border-left: #ccc 0px solid; margin: 0px 0px 0px 0.8ex; padding-left: 1ex\">" + postSignature + "</blockquote>");
                 this.hp.setCaretPosition(0);
             }
         }

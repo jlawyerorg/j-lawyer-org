@@ -1119,7 +1119,7 @@ public class BugReportDialog extends javax.swing.JDialog {
             dlg.addAttachment(tmpUrl, "");
             dlg.setSubject("j-lawyer - Systeminformationen");
             SimpleDateFormat df2 = new SimpleDateFormat("dd.MM.yyyy HH:mm");
-            dlg.setBody("Systembericht vom " + df2.format(new Date()), "text/plain");
+            dlg.setBody("Systembericht vom " + df2.format(new Date()), "", "text/plain");
 
             FrameUtils.centerDialog(dlg, null);
             dlg.setVisible(true);

@@ -1274,11 +1274,11 @@ public class EmailUtils extends CommonMailUtils {
                 prependContent=prependContent + System.lineSeparator() + System.lineSeparator();
             
             if (contentType.toLowerCase().startsWith(ContentTypes.TEXT_HTML)) {
-                dlg.setBody(prependContent + EmailUtils.getQuotedBody(EmailUtils.html2Text(content), ContentTypes.TEXT_PLAIN, decodedTo, m.getDate()), ContentTypes.TEXT_PLAIN);
+                dlg.setBody(prependContent, EmailUtils.getQuotedBody(EmailUtils.html2Text(content), ContentTypes.TEXT_PLAIN, decodedTo, m.getDate()), ContentTypes.TEXT_PLAIN);
             } else {
-                dlg.setBody(prependContent + EmailUtils.getQuotedBody(content, ContentTypes.TEXT_PLAIN, decodedTo, m.getDate()), ContentTypes.TEXT_PLAIN);
+                dlg.setBody(prependContent, EmailUtils.getQuotedBody(content, ContentTypes.TEXT_PLAIN, decodedTo, m.getDate()), ContentTypes.TEXT_PLAIN);
             }
-            dlg.setBody(prependContent + EmailUtils.getQuotedBody(content, ContentTypes.TEXT_HTML, decodedTo, m.getDate()), ContentTypes.TEXT_HTML);
+            dlg.setBody(prependContent, EmailUtils.getQuotedBody(content, ContentTypes.TEXT_HTML, decodedTo, m.getDate()), ContentTypes.TEXT_HTML);
 
         } catch (Exception ex) {
             log.error(ex);
@@ -1358,11 +1358,11 @@ public class EmailUtils extends CommonMailUtils {
                 prependContent=prependContent + System.lineSeparator() + System.lineSeparator();
             
             if (contentType.toLowerCase().startsWith(ContentTypes.TEXT_HTML)) {
-                dlg.setBody(prependContent + EmailUtils.getQuotedBody(EmailUtils.html2Text(content), ContentTypes.TEXT_PLAIN, decodedTo, m.getSentDate()), ContentTypes.TEXT_PLAIN);
+                dlg.setBody(prependContent, EmailUtils.getQuotedBody(EmailUtils.html2Text(content), ContentTypes.TEXT_PLAIN, decodedTo, m.getSentDate()), ContentTypes.TEXT_PLAIN);
             } else {
-                dlg.setBody(prependContent + EmailUtils.getQuotedBody(content, ContentTypes.TEXT_PLAIN, decodedTo, m.getSentDate()), ContentTypes.TEXT_PLAIN);
+                dlg.setBody(prependContent, EmailUtils.getQuotedBody(content, ContentTypes.TEXT_PLAIN, decodedTo, m.getSentDate()), ContentTypes.TEXT_PLAIN);
             }
-            dlg.setBody(prependContent + EmailUtils.getQuotedBody(content, ContentTypes.TEXT_HTML, decodedTo, m.getSentDate()), ContentTypes.TEXT_HTML);
+            dlg.setBody(prependContent, EmailUtils.getQuotedBody(content, ContentTypes.TEXT_HTML, decodedTo, m.getSentDate()), ContentTypes.TEXT_HTML);
 
         } catch (Exception ex) {
             log.error(ex);
