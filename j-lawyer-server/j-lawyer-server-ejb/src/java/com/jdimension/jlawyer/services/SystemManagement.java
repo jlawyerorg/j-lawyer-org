@@ -2428,7 +2428,23 @@ public class SystemManagement implements SystemManagementRemote, SystemManagemen
     @Override
     @RolesAllowed({"adminRole"})
     public DocumentNameTemplate updateDocumentNameTemplate(DocumentNameTemplate template) throws Exception {
-        this.documentNameTemplates.edit(template);
+        
+        
+        if(!template.isDefaultTemplate()) {
+            // not a default template - make sure there is at least one default
+            boolean defaultFound=false;
+            for (DocumentNameTemplate t : this.documentNameTemplates.findAll()) {
+                if (!t.equals(template)) {
+                    if(t.isDefaultTemplate()) {
+                        defaultFound=true;
+                        break;
+                    }
+                }
+            }
+            if(!defaultFound) {
+                throw new Exception("Es muss mindestens ein Standardschema existieren - Eintrag als Standard erneut speichern!");
+            }
+        }
 
         if (template.isDefaultTemplate()) {
             // default template - remove default flag from any other templates
@@ -2440,6 +2456,8 @@ public class SystemManagement implements SystemManagementRemote, SystemManagemen
             }
         }
 
+        this.documentNameTemplates.edit(template);
+        
         return this.documentNameTemplates.find(template.getId());
     }
 
