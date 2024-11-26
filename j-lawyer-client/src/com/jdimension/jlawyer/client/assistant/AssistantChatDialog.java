@@ -673,6 +673,7 @@ import com.jdimension.jlawyer.ai.Parameter;
 import com.jdimension.jlawyer.ai.ParameterData;
 import com.jdimension.jlawyer.client.editors.files.ArchiveFilePanel;
 import com.jdimension.jlawyer.client.settings.ClientSettings;
+import com.jdimension.jlawyer.client.settings.UserSettings;
 import com.jdimension.jlawyer.client.utils.ComponentUtils;
 import com.jdimension.jlawyer.client.utils.FrameUtils;
 import com.jdimension.jlawyer.client.utils.TemplatesUtil;
@@ -1288,7 +1289,28 @@ public class AssistantChatDialog extends javax.swing.JDialog {
     private void cmdProcessOutputActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdProcessOutputActionPerformed
         if (this.inputAdapter instanceof AssistantFlowAdapter && this.result != null) {
             // caller is capable of handling results
+            //((AssistantFlowAdapter) this.inputAdapter).processOutput(capability, this.result);
+            
+            if(result.getResponse()!=null && result.getResponse().getOutputData()!=null) {
+                OutputData intro=new OutputData();
+                intro.setType(OutputData.TYPE_STRING);
+                intro.setStringData("Chat-Verlauf: " + System.lineSeparator()+System.lineSeparator());
+                result.getResponse().getOutputData().add(intro);
+                for(Message msg: this.messages) {
+                    OutputData od=new OutputData();
+                    od.setType(OutputData.TYPE_STRING);
+                    String role=msg.getRole();
+                    if("user".equalsIgnoreCase(role))
+                        role=UserSettings.getInstance().getCurrentUser().getPrincipalId();
+                    else
+                        role="Assistent Ingo";
+                    od.setStringData(role + ": " + msg.getContent() + System.lineSeparator()+System.lineSeparator());
+                    result.getResponse().getOutputData().add(od);
+                }
+            }
+            
             ((AssistantFlowAdapter) this.inputAdapter).processOutput(capability, this.result);
+            
         }
         this.setVisible(false);
         this.dispose();

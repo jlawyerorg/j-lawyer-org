@@ -696,6 +696,7 @@ import com.jdimension.jlawyer.client.mail.EditorImplementation;
 import com.jdimension.jlawyer.client.mail.EmailUtils;
 import com.jdimension.jlawyer.client.utils.AudioUtils;
 import com.jdimension.jlawyer.client.utils.ThreadUtils;
+import com.jdimension.jlawyer.email.CommonMailUtils;
 import com.jdimension.jlawyer.services.IntegrationServiceRemote;
 import javax.sound.sampled.*;
 import java.io.ByteArrayOutputStream;
@@ -834,6 +835,13 @@ public class AddNoteDialog extends javax.swing.JDialog implements AssistantFlowA
     
     public void setFocusToBody() {
         this.htmlEditorPanel1.requestFocus();
+    }
+    
+    public void appendToBody(String appendText, boolean convertToHtml) {
+        if(convertToHtml) {
+            appendText=CommonMailUtils.text2Html(appendText);
+        }
+        this.htmlEditorPanel1.setText(this.htmlEditorPanel1.getText() + appendText);
     }
     
    

@@ -1048,6 +1048,23 @@ public class CommonMailUtils {
         return null;
     }
     
+    public static String text2Html(String text) {
+        if (text == null) {
+            return null;
+        }
+        // Escape HTML and add line breaks
+        return escapeHtml(text).replace("\n", "<br>");
+    }
+
+    private static String escapeHtml(String text) {
+        return text
+                .replace("&", "&amp;")
+                .replace("<", "&lt;")
+                .replace(">", "&gt;")
+                .replace("\"", "&quot;")
+                .replace("'", "&#39;");
+    }
+    
     public static String html2Text(String html) {
         try {
             if (html == null) {
