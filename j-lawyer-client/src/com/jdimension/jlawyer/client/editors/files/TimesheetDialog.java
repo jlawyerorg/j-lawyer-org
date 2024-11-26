@@ -683,7 +683,6 @@ import java.text.DecimalFormat;
 import java.text.NumberFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collection;
 import java.util.List;
 import java.util.stream.Collectors;
 import javax.swing.BoxLayout;
@@ -906,6 +905,10 @@ public class TimesheetDialog extends javax.swing.JDialog {
         cmdAllowedPositions = new javax.swing.JButton();
         jLabel6 = new javax.swing.JLabel();
         jLabel7 = new javax.swing.JLabel();
+        txtTimesheetOpen = new javax.swing.JFormattedTextField();
+        jLabel4 = new javax.swing.JLabel();
+        txtTimesheetInvoiceable = new javax.swing.JFormattedTextField();
+        jLabel8 = new javax.swing.JLabel();
         jScrollPane2 = new javax.swing.JScrollPane();
         pnlTimesheetPositions = new javax.swing.JPanel();
         lblTimesheetTotal = new javax.swing.JLabel();
@@ -975,7 +978,13 @@ public class TimesheetDialog extends javax.swing.JDialog {
 
         txtTimesheetLimit.setFormatterFactory(new javax.swing.text.DefaultFormatterFactory(new javax.swing.text.NumberFormatter(new java.text.DecimalFormat("##0.##"))));
         txtTimesheetLimit.setFont(txtTimesheetLimit.getFont());
+        txtTimesheetLimit.addFocusListener(new java.awt.event.FocusAdapter() {
+            public void focusLost(java.awt.event.FocusEvent evt) {
+                txtTimesheetLimitFocusLost(evt);
+            }
+        });
 
+        jLabel5.setFont(jLabel5.getFont());
         jLabel5.setText("gebucht:");
 
         txtTimesheetTotal.setEditable(false);
@@ -1001,6 +1010,23 @@ public class TimesheetDialog extends javax.swing.JDialog {
         jLabel7.setText(" ");
         jLabel7.setToolTipText("Optional können für das Projekt die zu nutzenden Positionsvorlagen eingeschränkt werden, um bspw. nur bestimmte Stundensätze zuzulassen.");
 
+        txtTimesheetOpen.setEditable(false);
+        txtTimesheetOpen.setFormatterFactory(new javax.swing.text.DefaultFormatterFactory(new javax.swing.text.NumberFormatter(new java.text.DecimalFormat("##0.##"))));
+        txtTimesheetOpen.setToolTipText("verbleibender Betrag, bevor das Limit erreicht wird");
+        txtTimesheetOpen.setFont(txtTimesheetOpen.getFont());
+
+        jLabel4.setFont(jLabel4.getFont());
+        jLabel4.setText("verbleibend:");
+        jLabel4.setToolTipText("verbleibender Betrag, bevor das Limit erreicht wird");
+
+        txtTimesheetInvoiceable.setEditable(false);
+        txtTimesheetInvoiceable.setFormatterFactory(new javax.swing.text.DefaultFormatterFactory(new javax.swing.text.NumberFormatter(new java.text.DecimalFormat("##0.##"))));
+        txtTimesheetInvoiceable.setToolTipText("verbleibender Betrag, bevor das Limit erreicht wird");
+        txtTimesheetInvoiceable.setFont(txtTimesheetInvoiceable.getFont());
+
+        jLabel8.setFont(jLabel8.getFont());
+        jLabel8.setText("abrechenbar:");
+
         javax.swing.GroupLayout jPanel2Layout = new javax.swing.GroupLayout(jPanel2);
         jPanel2.setLayout(jPanel2Layout);
         jPanel2Layout.setHorizontalGroup(
@@ -1016,14 +1042,19 @@ public class TimesheetDialog extends javax.swing.JDialog {
                     .addGroup(jPanel2Layout.createSequentialGroup()
                         .addGroup(jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                             .addComponent(chkTimesheetLimit)
-                            .addComponent(jLabel5))
+                            .addComponent(jLabel5)
+                            .addComponent(jLabel4)
+                            .addComponent(jLabel8))
                         .addGroup(jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                            .addGroup(jPanel2Layout.createSequentialGroup()
-                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                                .addComponent(txtTimesheetLimit, javax.swing.GroupLayout.PREFERRED_SIZE, 102, javax.swing.GroupLayout.PREFERRED_SIZE))
                             .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, jPanel2Layout.createSequentialGroup()
                                 .addGap(2, 2, 2)
-                                .addComponent(txtTimesheetTotal, javax.swing.GroupLayout.PREFERRED_SIZE, 102, javax.swing.GroupLayout.PREFERRED_SIZE)))
+                                .addComponent(txtTimesheetTotal, javax.swing.GroupLayout.PREFERRED_SIZE, 102, javax.swing.GroupLayout.PREFERRED_SIZE))
+                            .addGroup(jPanel2Layout.createSequentialGroup()
+                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                                .addGroup(jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                                    .addComponent(txtTimesheetLimit, javax.swing.GroupLayout.PREFERRED_SIZE, 102, javax.swing.GroupLayout.PREFERRED_SIZE)
+                                    .addComponent(txtTimesheetOpen, javax.swing.GroupLayout.Alignment.TRAILING, javax.swing.GroupLayout.PREFERRED_SIZE, 102, javax.swing.GroupLayout.PREFERRED_SIZE)
+                                    .addComponent(txtTimesheetInvoiceable, javax.swing.GroupLayout.Alignment.TRAILING, javax.swing.GroupLayout.PREFERRED_SIZE, 102, javax.swing.GroupLayout.PREFERRED_SIZE))))
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
                         .addComponent(prgTimesheetStatus, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
                     .addGroup(jPanel2Layout.createSequentialGroup()
@@ -1048,7 +1079,7 @@ public class TimesheetDialog extends javax.swing.JDialog {
                                 .addComponent(lblAllowedPositions)
                                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                                 .addComponent(cmdAllowedPositions)
-                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 62, Short.MAX_VALUE)
                                 .addComponent(jLabel7)))))
                 .addContainerGap())
         );
@@ -1083,13 +1114,21 @@ public class TimesheetDialog extends javax.swing.JDialog {
                     .addComponent(txtTimesheetTotal, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                     .addComponent(jLabel5)
                     .addComponent(prgTimesheetStatus, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
-                .addGap(18, 18, 18)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addGroup(jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                    .addComponent(txtTimesheetOpen, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(jLabel4))
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addGroup(jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                    .addComponent(txtTimesheetInvoiceable, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(jLabel8))
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
                 .addComponent(jSeparator1, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(lblTimesheetPositions)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(cmdRemoveAllPositions)
-                .addGap(201, 201, 201))
+                .addGap(243, 243, 243))
         );
 
         splitMain.setLeftComponent(jPanel2);
@@ -1163,7 +1202,7 @@ public class TimesheetDialog extends javax.swing.JDialog {
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(layout.createSequentialGroup()
                 .addContainerGap()
-                .addComponent(splitMain, javax.swing.GroupLayout.DEFAULT_SIZE, 595, Short.MAX_VALUE)
+                .addComponent(splitMain, javax.swing.GroupLayout.DEFAULT_SIZE, 663, Short.MAX_VALUE)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                     .addGroup(layout.createSequentialGroup()
@@ -1320,6 +1359,10 @@ public class TimesheetDialog extends javax.swing.JDialog {
         this.updateAllowedPositions();
     }//GEN-LAST:event_cmdAllowedPositionsActionPerformed
 
+    private void txtTimesheetLimitFocusLost(java.awt.event.FocusEvent evt) {//GEN-FIRST:event_txtTimesheetLimitFocusLost
+        this.updateTotals(null);
+    }//GEN-LAST:event_txtTimesheetLimitFocusLost
+
     public void updateTotals(TimesheetPositionEntryPanel ep) {
 
         if (ep != null) {
@@ -1328,17 +1371,23 @@ public class TimesheetDialog extends javax.swing.JDialog {
 
         BigDecimal total = BigDecimal.ZERO;
         BigDecimal totalTax = BigDecimal.ZERO;
+        BigDecimal invoiceable = BigDecimal.ZERO;
         for (Component tsp : this.pnlTimesheetPositions.getComponents()) {
             TimesheetPositionEntryPanel tspep = (TimesheetPositionEntryPanel) tsp;
             TimesheetPosition pos = tspep.getEntry();
 
             total = total.add(pos.getTotal());
             totalTax = totalTax.add(pos.getTotal().multiply(pos.getTaxRate().divide(BigDecimal.valueOf(100f), 2, RoundingMode.HALF_EVEN)));
+            
+            if(!tspep.hasInvoice())
+                invoiceable=invoiceable.add(pos.getTotal());
 
         }
         this.lblTimesheetTotal.setText(cf.format(total));
         this.lblTimesheetTax.setText(cf.format(totalTax));
         this.txtTimesheetTotal.setText(cf.format(total));
+        this.txtTimesheetOpen.setText(cf.format(0f));
+        this.txtTimesheetInvoiceable.setText(cf.format(invoiceable));
 
         if (this.chkTimesheetLimit.isSelected()) {
             int prgValue = new Float((total.intValue() / ((Number) this.txtTimesheetLimit.getValue()).floatValue()) * 100f).intValue();
@@ -1356,6 +1405,17 @@ public class TimesheetDialog extends javax.swing.JDialog {
             } else {
                 this.prgTimesheetStatus.setForeground(DefaultColorTheme.COLOR_LOGO_GREEN);
             }
+            
+            float latestLimit=((Number) this.txtTimesheetLimit.getValue()).floatValue();
+            try {
+                String latestValue=this.txtTimesheetLimit.getDocument().getText(0, this.txtTimesheetLimit.getDocument().getLength());
+                latestLimit = Float.parseFloat(latestValue);
+            } catch (Throwable t) {
+                log.warn("Unable to parse timesheet limit to float", t);
+            }
+            
+            this.txtTimesheetOpen.setText(cf.format(latestLimit - total.floatValue()));
+            
         } else {
             this.prgTimesheetStatus.setMaximum(100);
             this.prgTimesheetStatus.setMinimum(0);
@@ -1420,9 +1480,11 @@ public class TimesheetDialog extends javax.swing.JDialog {
     private javax.swing.JLabel jLabel12;
     private javax.swing.JLabel jLabel2;
     private javax.swing.JLabel jLabel3;
+    private javax.swing.JLabel jLabel4;
     private javax.swing.JLabel jLabel5;
     private javax.swing.JLabel jLabel6;
     private javax.swing.JLabel jLabel7;
+    private javax.swing.JLabel jLabel8;
     private javax.swing.JPanel jPanel2;
     private javax.swing.JScrollPane jScrollPane1;
     private javax.swing.JScrollPane jScrollPane2;
@@ -1438,7 +1500,9 @@ public class TimesheetDialog extends javax.swing.JDialog {
     private javax.swing.JSplitPane splitMain;
     private javax.swing.JTextArea taDescription;
     private javax.swing.JTextField txtName;
+    private javax.swing.JFormattedTextField txtTimesheetInvoiceable;
     private javax.swing.JFormattedTextField txtTimesheetLimit;
+    private javax.swing.JFormattedTextField txtTimesheetOpen;
     private javax.swing.JFormattedTextField txtTimesheetTotal;
     // End of variables declaration//GEN-END:variables
 

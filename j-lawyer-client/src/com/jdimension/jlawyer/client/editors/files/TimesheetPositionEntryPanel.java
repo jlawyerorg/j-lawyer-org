@@ -820,6 +820,13 @@ public class TimesheetPositionEntryPanel extends javax.swing.JPanel {
             }
        
     }
+    
+    public boolean hasInvoice() {
+        if(this.position!=null) {
+            return this.position.getInvoice()!=null;
+        }
+        return false;
+    }
 
     public TimesheetPosition getEntry() {
         
