@@ -907,7 +907,7 @@ public class EInvoiceUtils {
             BigDecimal total = price.multiply(quantity);
 
             BigDecimal tax = item.getProduct().getVATPercent();
-            BigDecimal taxAmount = total.multiply(tax).divide(BigDecimal.valueOf(100));
+            BigDecimal taxAmount = total.multiply(tax).divide(BigDecimal.valueOf(100), 2, RoundingMode.HALF_EVEN);
 
             totalTaxAmount = totalTaxAmount.add(taxAmount);
             totalAmount = totalAmount.add(total);

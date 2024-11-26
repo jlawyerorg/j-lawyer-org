@@ -665,6 +665,7 @@ package com.jdimension.jlawyer.persistence;
 
 import java.io.Serializable;
 import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.util.Date;
 import javax.persistence.*;
 import javax.xml.bind.annotation.XmlRootElement;
@@ -847,7 +848,7 @@ public class TimesheetPosition implements Serializable {
             double roundedMinutes = Math.ceil(totalMinutes / intervalMinutes) * intervalMinutes;
             float roundedMinutesFloat = new Float(roundedMinutes);
             if (!this.unitPrice.equals(BigDecimal.ZERO)) {
-                positionTotal = this.unitPrice.multiply(BigDecimal.valueOf(roundedMinutes).divide(BigDecimal.valueOf(60d)));
+                positionTotal = this.unitPrice.multiply(BigDecimal.valueOf(roundedMinutes).divide(BigDecimal.valueOf(60d), 2, RoundingMode.HALF_EVEN));
             }
         }
         return positionTotal;

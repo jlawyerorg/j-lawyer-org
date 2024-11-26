@@ -704,6 +704,7 @@ import java.awt.Color;
 import java.awt.Component;
 import java.awt.event.ActionEvent;
 import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.text.DecimalFormat;
 import java.text.SimpleDateFormat;
 import java.time.LocalDateTime;
@@ -2232,11 +2233,11 @@ public class InvoiceDialog extends javax.swing.JDialog implements EventConsumer 
                 }
 
                 if (this.chkTaxes.isSelected()) {
-                    BigDecimal taxForPosition = (u.multiply(up).multiply(t.divide(BigDecimal.valueOf(100f))));
+                    BigDecimal taxForPosition = (u.multiply(up).multiply(t.divide(BigDecimal.valueOf(100f), 2, RoundingMode.HALF_EVEN)));
                     taxRateToTaxTotal.put(t, taxRateToTaxTotal.get(t).add(taxForPosition));
                     totalTax = totalTax.add(taxForPosition);
                 }
-                total = total.add(u.multiply(up).multiply(BigDecimal.ONE.add(t.divide(BigDecimal.valueOf(100f)))));
+                total = total.add(u.multiply(up).multiply(BigDecimal.ONE.add(t.divide(BigDecimal.valueOf(100f), 2, RoundingMode.HALF_EVEN))));
 
                 totalNet = totalNet.add(u.multiply(up));
 
@@ -2385,8 +2386,8 @@ public class InvoiceDialog extends javax.swing.JDialog implements EventConsumer 
 
                 totalNet = totalNet.add(u.multiply(up));
                 if (this.chkTaxes.isSelected()) {
-                    totalTax = totalTax.add(u.multiply(up).multiply(t.divide(BigDecimal.valueOf(100f))));
-                    totalGross = totalGross.add(u.multiply(up).multiply(BigDecimal.ONE.add(t.divide(BigDecimal.valueOf(100f)))));
+                    totalTax = totalTax.add(u.multiply(up).multiply(t.divide(BigDecimal.valueOf(100f), 2, RoundingMode.HALF_EVEN)));
+                    totalGross = totalGross.add(u.multiply(up).multiply(BigDecimal.ONE.add(t.divide(BigDecimal.valueOf(100f), 2, RoundingMode.HALF_EVEN))));
                 } else {
                     totalGross = totalGross.add(u.multiply(up));
                 }

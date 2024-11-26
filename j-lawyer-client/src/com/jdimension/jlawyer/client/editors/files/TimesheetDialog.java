@@ -678,6 +678,7 @@ import com.jdimension.jlawyer.server.constants.OptionConstants;
 import com.jdimension.jlawyer.services.JLawyerServiceLocator;
 import java.awt.Component;
 import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.text.DecimalFormat;
 import java.text.NumberFormat;
 import java.util.ArrayList;
@@ -1332,7 +1333,7 @@ public class TimesheetDialog extends javax.swing.JDialog {
             TimesheetPosition pos = tspep.getEntry();
 
             total = total.add(pos.getTotal());
-            totalTax = totalTax.add(pos.getTotal().multiply(pos.getTaxRate().divide(BigDecimal.valueOf(100f))));
+            totalTax = totalTax.add(pos.getTotal().multiply(pos.getTaxRate().divide(BigDecimal.valueOf(100f), 2, RoundingMode.HALF_EVEN)));
 
         }
         this.lblTimesheetTotal.setText(cf.format(total));

@@ -689,6 +689,7 @@ import com.jdimension.jlawyer.server.utils.ServerStringUtils;
 import com.jdimension.jlawyer.server.utils.StringUtils;
 import java.io.*;
 import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -5136,7 +5137,7 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
         BigDecimal newTotalGross = BigDecimal.ZERO;
         for (InvoicePosition p : positions) {
             newTotalNet = newTotalNet.add(p.getTotal());
-            newTotalGross = newTotalGross.add(p.getTotal().multiply((BigDecimal.ONE.add(p.getTaxRate().divide(BigDecimal.valueOf(100f))))));
+            newTotalGross = newTotalGross.add(p.getTotal().multiply((BigDecimal.ONE.add(p.getTaxRate().divide(BigDecimal.valueOf(100f), 2, RoundingMode.HALF_EVEN)))));
         }
         invoice.setTotal(newTotalNet);
         invoice.setTotalGross(newTotalGross);
@@ -5683,7 +5684,7 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
         for(TimesheetPosition p: positions) {
             currentTotal=currentTotal.add(p.calculateTotal(ts.getInterval()));
         }
-        return currentTotal.divide(ts.getLimit()).multiply(BigDecimal.valueOf(100f)).floatValue();
+        return currentTotal.divide(ts.getLimit(), 2, RoundingMode.HALF_EVEN).multiply(BigDecimal.valueOf(100f)).floatValue();
         
     }
     
