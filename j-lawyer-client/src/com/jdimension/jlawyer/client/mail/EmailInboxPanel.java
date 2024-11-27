@@ -2395,14 +2395,13 @@ public class EmailInboxPanel extends javax.swing.JPanel implements SaveToCaseExe
     private void mnuHideFolderActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_mnuHideFolderActionPerformed
         DefaultMutableTreeNode tn = (DefaultMutableTreeNode) this.treeFolders.getSelectionPath().getLastPathComponent();
         FolderContainer folderC = (FolderContainer) tn.getUserObject();
-        Folder f = folderC.getFolder();
-
+        
         int response = JOptionPane.showConfirmDialog(this, "Ordner " + folderC.toString() + " ausblenden?", "Ordner ausblenden", JOptionPane.YES_NO_OPTION);
         if (response == JOptionPane.YES_OPTION) {
             
             MailboxSetup ms=getMailboxSetup(tn);
             if(ms!=null) {
-                String fullPath=this.getFullPathInMailbox(new TreePath(((DefaultMutableTreeNode) tn).getPath()));
+                String fullPath=this.getFullPathInMailbox(new TreePath(tn.getPath()));
                 MailboxSettings.getInstance().hideFolder(ms, fullPath);
                 
                 this.treeFolders.setSelectionPath(new TreePath(((DefaultMutableTreeNode) tn.getParent()).getPath()));
