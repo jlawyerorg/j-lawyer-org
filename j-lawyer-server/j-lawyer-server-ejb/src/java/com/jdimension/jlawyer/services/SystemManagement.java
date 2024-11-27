@@ -1575,7 +1575,7 @@ public class SystemManagement implements SystemManagementRemote, SystemManagemen
                 settings.load(in);
 
             } catch (IOException ioe) {
-                log.error("Error updating user settings", ioe);
+                log.error("Error getting user settings", ioe);
             }
 
         }
@@ -1605,7 +1605,7 @@ public class SystemManagement implements SystemManagementRemote, SystemManagemen
         this.userBeanFacade.edit(currentValues);
 
     }
-
+    
     @Override
     public String getServerIpV4() throws Exception {
         try {

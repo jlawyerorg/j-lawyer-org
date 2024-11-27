@@ -661,76 +661,180 @@
  * For more information on this, and how to apply and follow the GNU AGPL, see
  * <https://www.gnu.org/licenses/>.
  */
-package com.jdimension.jlawyer.services;
+package com.jdimension.jlawyer.client.settings;
 
-import com.jdimension.jlawyer.persistence.AppUserBean;
-import com.jdimension.jlawyer.persistence.CalendarAccess;
-import com.jdimension.jlawyer.persistence.CalendarSetup;
-import com.jdimension.jlawyer.persistence.Group;
-import com.jdimension.jlawyer.persistence.GroupMembership;
-import com.jdimension.jlawyer.persistence.InvoicePoolAccess;
-import com.jdimension.jlawyer.persistence.MailboxAccess;
 import com.jdimension.jlawyer.persistence.MailboxSetup;
-import java.util.Collection;
-import java.util.List;
+import com.jdimension.jlawyer.server.services.settings.MailboxSettingsKeys;
+import com.jdimension.jlawyer.services.JLawyerServiceLocator;
+import com.jdimension.jlawyer.services.SecurityServiceRemote;
+import java.util.Arrays;
+import java.util.Hashtable;
 import java.util.Properties;
-import javax.ejb.Remote;
+import org.apache.log4j.Logger;
+import org.hibernate.mapping.Collection;
 
 /**
  *
  * @author jens
  */
-@Remote
-public interface SecurityServiceRemote {
+public class MailboxSettings extends MailboxSettingsKeys {
 
-    boolean login(String principalId, String password);
+    private static final String ARRAY_DELIMITER = "#####";
 
-    boolean isAdmin();
-
-    Collection<Group> getAllGroups();
-
-    Group createGroup(Group group) throws Exception;
-
-    boolean deleteGroup(String groupId) throws Exception;
-
-    Group updateGroup(Group group) throws Exception;
-
-    boolean addUserToGroup(String principalId, String groupId) throws Exception;
+    private static final Logger log = Logger.getLogger(MailboxSettings.class.getName());
+    private static MailboxSettings instance = null;
     
-    boolean addUserToCalendar(String principalId, String calendarId) throws Exception;
-    boolean addUserToMailbox(String principalId, String mailboxId) throws Exception;
-    boolean addUserToInvoicePool(String principalId, String poolId) throws Exception;
+    private SecurityServiceRemote mgmt = null;
 
-    boolean removeUserFromGroup(String principalId, String groupId) throws Exception;
+    private Hashtable<MailboxSetup,Properties> settingCache = new Hashtable<>();
     
-    boolean removeUserFromCalendar(String principalId, String calendarId) throws Exception;
-    boolean removeUserFromMailbox(String principalId, String mailboxId) throws Exception;
-    boolean removeUserFromInvoicePool(String principalId, String poolId) throws Exception;
-    
-    List<GroupMembership> getGroupMembershipsForUser(String principalId) throws Exception;
-    
-    List<CalendarAccess> getCalendarAccessForUser(String principalId) throws Exception;
-    List<MailboxAccess> getMailboxAccessForUser(String principalId) throws Exception;
-    List<InvoicePoolAccess> getInvoicePoolAccessForUser(String principalId) throws Exception;
+    /**
+     * Creates a new instance of MailboxSettings
+     */
+    private MailboxSettings() {
+        ClientSettings settings = ClientSettings.getInstance();
+        try {
+            JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
+            mgmt = locator.lookupSecurityServiceRemote();
+        } catch (Exception ex) {
+            log.error("Error connecting to server", ex);
+        }
+    }
 
-    List<Group> getGroupsForUser(String principalId) throws Exception;
+    private void loadCache(MailboxSetup mailbox) {
+        if (!this.settingCache.containsKey(mailbox) && this.mgmt!=null) {
+            this.settingCache.put(mailbox, this.mgmt.getMailboxSettings(mailbox));
+        }
+    }
+
+    public void invalidateMailboxSettings(MailboxSetup mailbox) {
+        if (this.settingCache.containsKey(mailbox)) {
+            this.settingCache.remove(mailbox);
+        }
+    }
+
+    public String getSetting(MailboxSetup mailbox, String key, String defaultValue) {
+        this.loadCache(mailbox);
+        String value = this.settingCache.get(mailbox).getProperty(key);
+        if (value == null) {
+            value = defaultValue;
+        }
+        return value;
+    }
+
+    public String[] getSettingArray(MailboxSetup mailbox, String key, String[] defaultValue) {
+        String value = this.getSetting(mailbox, key, null);
+        if (value == null) {
+            return defaultValue;
+        }
+
+        String[] ary = value.split(ARRAY_DELIMITER);
+
+        return ary;
+    }
+
+    public void removeSetting(MailboxSetup mailbox, String key) {
+        // reload from server before removing a key
+        if(this.settingCache.containsKey(mailbox))
+            this.settingCache.remove(mailbox);
+        this.loadCache(mailbox);
+
+        if (this.settingCache.get(mailbox).containsKey(key)) {
+            this.settingCache.get(mailbox).remove(key);
+        }
+
+        this.mgmt.setMailboxSettings(mailbox, settingCache.get(mailbox));
+    }
+
+    public Properties getAllSettings(MailboxSetup mailbox) {
+        return this.settingCache.get(mailbox);
+    }
+
+    public void setSetting(MailboxSetup mailbox, String key, String value) {
+
+        if (key == null) {
+            log.error("Key is null when setting user properties");
+            return;
+        }
+        if (value == null) {
+            log.error("Value is null when setting user properties with key " + key, new Exception());
+            return;
+        }
+
+        // reload from server before changing a key
+        if(this.settingCache.containsKey(mailbox))
+            this.settingCache.remove(mailbox);
+        this.loadCache(mailbox);
+        if (!this.settingCache.get(mailbox).containsKey(key)) {
+            this.settingCache.get(mailbox).setProperty(key, value);
+            this.mgmt.setMailboxSettings(mailbox, settingCache.get(mailbox));
+        } else {
+            if (!(this.settingCache.get(mailbox).getProperty(key).equals(value))) {
+                this.settingCache.get(mailbox).setProperty(key, value);
+                this.mgmt.setMailboxSettings(mailbox, settingCache.get(mailbox));
+            }
+        }
+    }
     
-    List<CalendarSetup> getCalendarsForUser(String principalId) throws Exception;
-    List<MailboxSetup> getMailboxesForUser(String principalId) throws Exception;
-
-    List<AppUserBean> getUsersHavingRole(String role) throws Exception;
+    public void setSettingAsBoolean(MailboxSetup mailbox, String key, boolean value) {
+        setSetting(mailbox, key, "" + value);
+    }
     
-    List<MailboxSetup> getAllMailboxSetups();
+    public void hideFolder(MailboxSetup mailbox, String fullPath) {
+        String[] hiddenFolders=this.getSettingArray(mailbox, FOLDERS_HIDDEN, new String[0]);
+        String[] newArray = Arrays.copyOf(hiddenFolders, hiddenFolders.length + 1);
+        newArray[newArray.length - 1] = fullPath;
+        this.setSettingArray(mailbox, FOLDERS_HIDDEN, newArray);
+    }
     
-    MailboxSetup addMailboxSetup(MailboxSetup cs);
-
-    MailboxSetup updateMailboxSetup(MailboxSetup cs);
-
-    void removeMailboxSetup(MailboxSetup cs);
+    public void showFolder(MailboxSetup mailbox, String fullPath) {
+        String[] hiddenFolders=this.getSettingArray(mailbox, FOLDERS_HIDDEN, new String[0]);
+        String[] newArray = new String[hiddenFolders.length - 1];
+        int index = 0;
+        for (String element : hiddenFolders) {
+            if (!element.equals(fullPath)) {
+                newArray[index++] = element;
+            }
+        }
+        this.setSettingArray(mailbox, FOLDERS_HIDDEN, newArray);
+    }
     
-    Properties getMailboxSettings(MailboxSetup mailbox);
+    public boolean isFolderHidden(MailboxSetup mailbox, String fullPath) {
+        String[] hiddenFolders=this.getSettingArray(mailbox, FOLDERS_HIDDEN, new String[0]);
+        for(String f: hiddenFolders) {
+            if(f.equals(fullPath))
+                return true;
+        }
+        return false;
+    }
+    
+    public String[] getHiddenFolders(MailboxSetup mailbox) {
+        String[] hidden=getSettingArray(mailbox, FOLDERS_HIDDEN, new String[0]);
+        Arrays.sort(hidden);
+        return hidden;
+    }
+    
+    public boolean getSettingAsBoolean(MailboxSetup mailbox, String key, boolean defaultValue) {
+        String s=getSetting(mailbox, key, "" + defaultValue);
+        return Boolean.parseBoolean(s);
+    }
 
-    void setMailboxSettings(MailboxSetup mailbox, Properties settings);
+    public void setSettingArray(MailboxSetup mailbox, String key, String[] value) {
+        StringBuilder sb = new StringBuilder();
+        if (value == null) {
+            value = new String[]{""};
+        }
+        for (String v : value) {
+            sb.append(v).append(ARRAY_DELIMITER);
+        }
+        this.setSetting(mailbox, key, sb.toString());
+    }
 
-    List<AppUserBean> getMessagingEnabledUsers() throws Exception;
+    public static synchronized MailboxSettings getInstance() {
+        if (instance == null) {
+            instance = new MailboxSettings();
+        }
+        return instance;
+    }
+
 }

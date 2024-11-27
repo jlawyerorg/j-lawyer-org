@@ -685,14 +685,19 @@ import com.jdimension.jlawyer.persistence.MailboxSetup;
 import com.jdimension.jlawyer.persistence.MailboxSetupFacadeLocal;
 import com.jdimension.jlawyer.persistence.utils.StringGenerator;
 import com.jdimension.jlawyer.server.utils.ServerStringUtils;
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
+import java.util.Properties;
 import javax.annotation.Resource;
 import javax.annotation.security.RolesAllowed;
 import javax.ejb.EJB;
 import javax.ejb.SessionContext;
 import javax.ejb.Stateless;
+import org.apache.log4j.Logger;
 import org.jboss.ejb3.annotation.SecurityDomain;
 
 /**
@@ -702,6 +707,8 @@ import org.jboss.ejb3.annotation.SecurityDomain;
 @Stateless
 @SecurityDomain("other")
 public class SecurityService implements SecurityServiceRemote, SecurityServiceLocal {
+    
+    private static final Logger log=Logger.getLogger(SecurityService.class.getName());
 
     @Resource
     private SessionContext sessionContext;
@@ -993,6 +1000,50 @@ public class SecurityService implements SecurityServiceRemote, SecurityServiceLo
         ms.setId(msId);
         this.mailboxSetupFacade.create(ms);
         return this.mailboxSetupFacade.find(msId);
+    }
+    
+    @Override
+    @RolesAllowed({"loginRole"})
+    public Properties getMailboxSettings(MailboxSetup mailbox) {
+        MailboxSetup currentValues = this.mailboxSetupFacade.find(mailbox.getId());
+
+        byte[] settingBytes = currentValues.getSettings();
+        Properties settings = new Properties();
+        if (settingBytes != null) {
+            ByteArrayInputStream in = new ByteArrayInputStream(settingBytes);
+            try {
+                settings.load(in);
+
+            } catch (IOException ioe) {
+                log.error("Error getting mailbox settings", ioe);
+            }
+
+        }
+
+        return settings;
+    }
+
+    @Override
+    @RolesAllowed({"loginRole"})
+    public void setMailboxSettings(MailboxSetup mailbox, Properties settings) {
+        MailboxSetup currentValues = this.mailboxSetupFacade.find(mailbox.getId());
+
+        byte[] settingBytes = new byte[0];
+        if (settings != null) {
+            ByteArrayOutputStream out = new ByteArrayOutputStream();
+            try {
+                settings.store(out, "updated " + new java.util.Date().toString());
+                out.flush();
+                out.close();
+            } catch (IOException ioe) {
+                log.error("Error updating user settings", ioe);
+            }
+            settingBytes = out.toByteArray();
+        }
+
+        currentValues.setSettings(settingBytes);
+        this.mailboxSetupFacade.edit(currentValues);
+
     }
 
     @Override

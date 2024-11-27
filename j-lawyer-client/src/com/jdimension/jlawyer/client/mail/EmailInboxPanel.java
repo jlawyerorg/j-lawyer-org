@@ -685,6 +685,7 @@ import com.jdimension.jlawyer.client.mail.sidebar.NavigateToAddressPanel;
 import com.jdimension.jlawyer.client.mail.sidebar.SaveToCasePanel;
 import com.jdimension.jlawyer.client.processing.ProgressIndicator;
 import com.jdimension.jlawyer.client.settings.ClientSettings;
+import com.jdimension.jlawyer.client.settings.MailboxSettings;
 import com.jdimension.jlawyer.client.settings.ServerSettings;
 import com.jdimension.jlawyer.client.settings.UserSettings;
 import com.jdimension.jlawyer.client.utils.*;
@@ -741,6 +742,7 @@ import javax.mail.internet.MimeUtility;
 import javax.mail.util.SharedByteArrayInputStream;
 import javax.swing.DefaultComboBoxModel;
 import javax.swing.DropMode;
+import javax.swing.JMenuItem;
 import javax.swing.JOptionPane;
 import javax.swing.RowSorter.SortKey;
 import javax.swing.SwingUtilities;
@@ -1104,7 +1106,7 @@ public class EmailInboxPanel extends javax.swing.JPanel implements SaveToCaseExe
                 return;
             }
 
-             if ((child.getType() & Folder.HOLDS_MESSAGES) != 0) {
+            if ((child.getType() & Folder.HOLDS_MESSAGES) != 0) {
 
                 FolderContainer childContainer = new FolderContainer(child);
 
@@ -1120,12 +1122,18 @@ public class EmailInboxPanel extends javax.swing.JPanel implements SaveToCaseExe
         Arrays.sort(htKeysSorted);
         for (String key : htKeysSorted) {
             FolderContainer childContainer = childHt.get(key);
-            DefaultMutableTreeNode childNode = new DefaultMutableTreeNode(childContainer);
-            if (childContainer.getFolder().equals(this.inboxFolders.get(ms).getFolder())) {
-                this.inboxFolderNodes.put(ms, childNode);
+            
+            String fullParentPath=this.getFullPathInMailbox(new TreePath(currentNode.getPath()));
+            String fullChildPath=fullParentPath + File.separator + childContainer.getFolder().getName();
+            boolean isHidden=MailboxSettings.getInstance().isFolderHidden(ms, fullChildPath);
+            if (!isHidden) {
+                DefaultMutableTreeNode childNode = new DefaultMutableTreeNode(childContainer);
+                if (childContainer.getFolder().equals(this.inboxFolders.get(ms).getFolder())) {
+                    this.inboxFolderNodes.put(ms, childNode);
+                }
+                currentNode.add(childNode);
+                traverseFolders(ms, childContainer.getFolder().list(), childNode);
             }
-            currentNode.add(childNode);
-            traverseFolders(ms, childContainer.getFolder().list(), childNode);
 
             try {
                 if (childContainer.getFolder().isOpen()) {
@@ -1164,6 +1172,8 @@ public class EmailInboxPanel extends javax.swing.JPanel implements SaveToCaseExe
         mnuNewFolder = new javax.swing.JMenuItem();
         mnuEmptyTrash = new javax.swing.JMenuItem();
         mnuRemoveFolder = new javax.swing.JMenuItem();
+        mnuHideFolder = new javax.swing.JMenuItem();
+        mnuShowFolders = new javax.swing.JMenu();
         popEmailList = new javax.swing.JPopupMenu();
         mnuMarkRead = new javax.swing.JMenuItem();
         mnuMarkUnread = new javax.swing.JMenuItem();
@@ -1229,6 +1239,19 @@ public class EmailInboxPanel extends javax.swing.JPanel implements SaveToCaseExe
             }
         });
         popFolders.add(mnuRemoveFolder);
+
+        mnuHideFolder.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons16/baseline_visibility_off_black_48dp.png"))); // NOI18N
+        mnuHideFolder.setText("Ordner ausblenden");
+        mnuHideFolder.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                mnuHideFolderActionPerformed(evt);
+            }
+        });
+        popFolders.add(mnuHideFolder);
+
+        mnuShowFolders.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons16/baseline_visibility_black_48dp.png"))); // NOI18N
+        mnuShowFolders.setText("Ordner einblenden");
+        popFolders.add(mnuShowFolders);
 
         mnuMarkRead.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/agt_action_success.png"))); // NOI18N
         mnuMarkRead.setText("als gelesen markieren");
@@ -1411,7 +1434,6 @@ public class EmailInboxPanel extends javax.swing.JPanel implements SaveToCaseExe
             }
         });
 
-        jToolBar1.setFloatable(false);
         jToolBar1.setRollover(true);
         jToolBar1.setOpaque(false);
 
@@ -1741,23 +1763,27 @@ public class EmailInboxPanel extends javax.swing.JPanel implements SaveToCaseExe
             this.treeFolders.setSelectionRow(row);
 
             DefaultMutableTreeNode tn = (DefaultMutableTreeNode) this.treeFolders.getSelectionPath().getLastPathComponent();
-            FolderContainer folderC = (FolderContainer) tn.getUserObject();
-            Folder f = folderC.getFolder();
-            if (CommonMailUtils.INBOX.equalsIgnoreCase(f.getName()) || CommonMailUtils.SENT.equalsIgnoreCase(f.getName()) || CommonMailUtils.TRASH.equalsIgnoreCase(f.getName())) {
-                this.mnuRemoveFolder.setEnabled(false);
-            } else {
-                this.mnuRemoveFolder.setEnabled(true);
+            if (tn.getUserObject() instanceof FolderContainer) {
+                FolderContainer folderC = (FolderContainer) tn.getUserObject();
+                Folder f = folderC.getFolder();
+                if (CommonMailUtils.INBOX.equalsIgnoreCase(f.getName()) || CommonMailUtils.SENT.equalsIgnoreCase(f.getName()) || CommonMailUtils.TRASH.equalsIgnoreCase(f.getName())) {
+                    this.mnuRemoveFolder.setEnabled(false);
+                    this.mnuHideFolder.setEnabled(false);
+                } else {
+                    this.mnuRemoveFolder.setEnabled(true);
+                    this.mnuHideFolder.setEnabled(true);
+                }
+
+                this.mnuEmptyTrash.setEnabled(CommonMailUtils.TRASH.equalsIgnoreCase(f.getName()) || CommonMailUtils.isTrash(f.getName()));
+
+                if (f instanceof POP3Folder) {
+                    this.mnuNewFolder.setEnabled(false);
+                    this.mnuRemoveFolder.setEnabled(false);
+                    this.mnuEmptyTrash.setEnabled(false);
+                }
+
+                this.popFolders.show(evt.getComponent(), evt.getX(), evt.getY());
             }
-
-            this.mnuEmptyTrash.setEnabled(CommonMailUtils.TRASH.equalsIgnoreCase(f.getName()) || CommonMailUtils.isTrash(f.getName()));
-
-            if (f instanceof POP3Folder) {
-                this.mnuNewFolder.setEnabled(false);
-                this.mnuRemoveFolder.setEnabled(false);
-                this.mnuEmptyTrash.setEnabled(false);
-            }
-
-            this.popFolders.show(evt.getComponent(), evt.getX(), evt.getY());
         }
     }//GEN-LAST:event_treeFoldersMouseReleased
 
@@ -1800,34 +1826,6 @@ public class EmailInboxPanel extends javax.swing.JPanel implements SaveToCaseExe
         }
 
     }//GEN-LAST:event_mnuNewFolderActionPerformed
-
-    private void treeFoldersMousePressed(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_treeFoldersMousePressed
-        if (evt.isPopupTrigger()) {
-            int row = this.treeFolders.getRowForLocation(evt.getX(), evt.getY());
-            this.treeFolders.setSelectionRow(row);
-
-            DefaultMutableTreeNode tn = (DefaultMutableTreeNode) this.treeFolders.getSelectionPath().getLastPathComponent();
-            FolderContainer folderC = (FolderContainer) tn.getUserObject();
-            Folder f = folderC.getFolder();
-            if (CommonMailUtils.INBOX.equalsIgnoreCase(f.getName()) || CommonMailUtils.SENT.equalsIgnoreCase(f.getName()) || CommonMailUtils.TRASH.equalsIgnoreCase(f.getName())) {
-                this.mnuRemoveFolder.setEnabled(false);
-            } else {
-                this.mnuRemoveFolder.setEnabled(true);
-            }
-
-            this.mnuEmptyTrash.setEnabled(CommonMailUtils.TRASH.equalsIgnoreCase(f.getName()) || CommonMailUtils.isTrash(f.getName()) || CommonMailUtils.isTrash(f.getName()));
-            
-            if (f instanceof POP3Folder) {
-                this.mnuNewFolder.setEnabled(false);
-                this.mnuRemoveFolder.setEnabled(false);
-                this.mnuEmptyTrash.setEnabled(false);
-            }
-
-            this.popFolders.show(evt.getComponent(), evt.getX(), evt.getY());
-        }
-
-
-    }//GEN-LAST:event_treeFoldersMousePressed
 
     private void mnuRemoveFolderActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_mnuRemoveFolderActionPerformed
         DefaultMutableTreeNode tn = (DefaultMutableTreeNode) this.treeFolders.getSelectionPath().getLastPathComponent();
@@ -2394,12 +2392,108 @@ public class EmailInboxPanel extends javax.swing.JPanel implements SaveToCaseExe
         this.treeFoldersValueChangedImpl(new TreeSelectionEvent(this.tblMails, this.treeFolders.getSelectionPath(), false, null, null), sortCol, -1, this.txtSearchString.getText());
     }//GEN-LAST:event_cmdSearchActionPerformed
 
+    private void mnuHideFolderActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_mnuHideFolderActionPerformed
+        DefaultMutableTreeNode tn = (DefaultMutableTreeNode) this.treeFolders.getSelectionPath().getLastPathComponent();
+        FolderContainer folderC = (FolderContainer) tn.getUserObject();
+        Folder f = folderC.getFolder();
+
+        int response = JOptionPane.showConfirmDialog(this, "Ordner " + folderC.toString() + " ausblenden?", "Ordner ausblenden", JOptionPane.YES_NO_OPTION);
+        if (response == JOptionPane.YES_OPTION) {
+            
+            MailboxSetup ms=getMailboxSetup(tn);
+            if(ms!=null) {
+                String fullPath=this.getFullPathInMailbox(new TreePath(((DefaultMutableTreeNode) tn).getPath()));
+                MailboxSettings.getInstance().hideFolder(ms, fullPath);
+                
+                this.treeFolders.setSelectionPath(new TreePath(((DefaultMutableTreeNode) tn.getParent()).getPath()));
+                DefaultTreeModel dm = (DefaultTreeModel) this.treeFolders.getModel();
+                dm.removeNodeFromParent(tn);
+            }
+        }
+    }//GEN-LAST:event_mnuHideFolderActionPerformed
+
+    private void treeFoldersMousePressed(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_treeFoldersMousePressed
+        if (evt.isPopupTrigger()) {
+            int row = this.treeFolders.getRowForLocation(evt.getX(), evt.getY());
+            this.treeFolders.setSelectionRow(row);
+
+            DefaultMutableTreeNode tn = (DefaultMutableTreeNode) this.treeFolders.getSelectionPath().getLastPathComponent();
+            if (tn.getUserObject() instanceof FolderContainer) {
+                FolderContainer folderC = (FolderContainer) tn.getUserObject();
+                Folder f = folderC.getFolder();
+                if (CommonMailUtils.INBOX.equalsIgnoreCase(f.getName()) || CommonMailUtils.SENT.equalsIgnoreCase(f.getName()) || CommonMailUtils.TRASH.equalsIgnoreCase(f.getName())) {
+                    this.mnuRemoveFolder.setEnabled(false);
+                    this.mnuHideFolder.setEnabled(false);
+                } else {
+                    this.mnuRemoveFolder.setEnabled(true);
+                    this.mnuHideFolder.setEnabled(true);
+                }
+
+                this.mnuEmptyTrash.setEnabled(CommonMailUtils.TRASH.equalsIgnoreCase(f.getName()) || CommonMailUtils.isTrash(f.getName()));
+
+                if (f instanceof POP3Folder) {
+                    this.mnuNewFolder.setEnabled(false);
+                    this.mnuRemoveFolder.setEnabled(false);
+                    this.mnuEmptyTrash.setEnabled(false);
+                }
+                
+                this.mnuShowFolders.removeAll();
+                MailboxSetup ms=this.getMailboxSetup(tn);
+                if(ms!=null) {
+                    String[] hiddenFolders=MailboxSettings.getInstance().getHiddenFolders(ms);
+                    for(String s: hiddenFolders) {
+                        JMenuItem showItem = new JMenuItem(s);
+                        showItem.addActionListener(e -> {
+                            MailboxSettings.getInstance().showFolder(ms, s);
+                            this.cmdRefreshActionPerformed(null);
+                        });
+                        this.mnuShowFolders.add(showItem);
+                    }
+                }
+
+                this.popFolders.show(evt.getComponent(), evt.getX(), evt.getY());
+            }
+        }
+    }//GEN-LAST:event_treeFoldersMousePressed
+
+    private MailboxSetup getMailboxSetup(DefaultMutableTreeNode dm) {
+        while(dm.getParent()!=null && dm.getParent().getParent()!=null) {
+            dm=(DefaultMutableTreeNode)dm.getParent();
+        }
+        String mailAddress = dm.getUserObject().toString();
+
+        UserSettings uset = UserSettings.getInstance();
+        List<MailboxSetup> mailboxes = uset.getMailboxes(uset.getCurrentUser().getPrincipalId());
+        if (mailboxes.isEmpty()) {
+            return null;
+        }
+
+        for (MailboxSetup ms : mailboxes) {
+            if (ms.getEmailAddress().equals(mailAddress)) {
+                return ms;
+            }
+        }
+
+        return null;
+        
+    }
+    
+    // returns the full path within a mailbox, omitting the mailboxes mail adress
+    private String getFullPathInMailbox(TreePath tp) {
+       return getFullPathImpl(tp, 2);
+    }
+    
     private String getFullPath(TreePath tp) {
+        return getFullPathImpl(tp, 1);
+    }
+    
+    // returns the full path including the mailboxes mail adress as root
+    private String getFullPathImpl(TreePath tp, int startIndex) {
         StringBuilder sb = new StringBuilder();
 
         Object[] paths = tp.getPath();
         // ignore the root, start at index 1
-        for (int i = 1; i < paths.length; i++) {
+        for (int i = startIndex; i < paths.length; i++) {
             String name=paths[i].toString();
             if(paths[i] instanceof DefaultMutableTreeNode) {
                 if(((DefaultMutableTreeNode)paths[i]).getUserObject() instanceof FolderContainer) {
@@ -3196,6 +3290,7 @@ public class EmailInboxPanel extends javax.swing.JPanel implements SaveToCaseExe
     protected javax.swing.JLabel lblPanelTitle;
     private com.jdimension.jlawyer.client.mail.MailContentUI mailContentUI;
     private javax.swing.JMenuItem mnuEmptyTrash;
+    private javax.swing.JMenuItem mnuHideFolder;
     private javax.swing.JMenuItem mnuMarkRead;
     private javax.swing.JMenuItem mnuMarkUnread;
     private javax.swing.JMenuItem mnuNewFolder;
@@ -3205,6 +3300,7 @@ public class EmailInboxPanel extends javax.swing.JPanel implements SaveToCaseExe
     private javax.swing.JMenuItem mnuSearchSaveNoAttachments;
     private javax.swing.JMenuItem mnuSearchSaveOnlyAttachments;
     private javax.swing.JMenuItem mnuSearchSaveSeparate;
+    private javax.swing.JMenu mnuShowFolders;
     private javax.swing.JPanel pnlActions;
     private javax.swing.JPanel pnlActionsChild;
     private javax.swing.JPopupMenu popEmailList;
