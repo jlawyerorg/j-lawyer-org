@@ -671,7 +671,6 @@ import java.util.Arrays;
 import java.util.Hashtable;
 import java.util.Properties;
 import org.apache.log4j.Logger;
-import org.hibernate.mapping.Collection;
 
 /**
  *
