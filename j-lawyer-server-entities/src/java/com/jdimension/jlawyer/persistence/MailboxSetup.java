@@ -662,7 +662,10 @@ For more information on this, and how to apply and follow the GNU AGPL, see
  */
 package com.jdimension.jlawyer.persistence;
 
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
 import java.io.Serializable;
+import java.util.Properties;
 import javax.persistence.Basic;
 import javax.persistence.Column;
 import javax.persistence.Entity;
@@ -747,6 +750,9 @@ public class MailboxSetup implements Serializable, EventTypes {
     private boolean scanIgnoreInline=true;
     @Column(name = "scan_minattachmentsize", columnDefinition = "INTEGER DEFAULT 5000")
     private int scanMinAttachmentSize=0;
+    
+    @Column(name = "settings", columnDefinition = "MEDIUMBLOB")
+    private byte[] settings;
 
     public String getId() {
         return id;
@@ -1166,6 +1172,37 @@ public class MailboxSetup implements Serializable, EventTypes {
      */
     public void setScanMinAttachmentSize(int minAttachmentSize) {
         this.scanMinAttachmentSize = minAttachmentSize;
+    }
+
+    /**
+     * @return the settings
+     */
+    public byte[] getSettings() {
+        if(this.settings==null)
+            this.settings=emptySettings();
+        return settings;
+    }
+
+    /**
+     * @param settings the settings to set
+     */
+    public void setSettings(byte[] settings) {
+        this.settings = settings;
+    }
+    
+    private byte[] emptySettings() {
+        if(this.settings==null) {
+            ByteArrayOutputStream out = new ByteArrayOutputStream();
+            try {
+                new Properties().store(out, "updated " + new java.util.Date().toString());
+                out.flush();
+                out.close();
+            } catch (IOException ioe) {
+                // no logging
+            }
+            this.settings = out.toByteArray();
+        }
+        return this.settings;
     }
 
     
