@@ -3901,13 +3901,12 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
             }
             inClause = inClause.replaceFirst(",", "");
 
-            st = con.prepareStatement("select distinct(docid) from (select a5.id as docid from "
+            st = con.prepareStatement("select docid, date_set from (select a5.id as docid, a4.date_set from "
                     + "    (SELECT id, date_changed, archived from cases) a1, "
                     + "    document_tags a4, case_documents a5 "
-                    + "    where a1.archived=0 and a5.deleted=0 and (((a4.tagName in (" + inClause + ") and a4.documentKey=a5.id and a5.archiveFileKey=a1.id))) order by a1.date_changed DESC) allkeys limit 0,?");
+                    + "    where a1.archived=0 and a5.deleted=0 and (((a4.tagName in (" + inClause + ") and a4.documentKey=a5.id and a5.archiveFileKey=a1.id))) order by a4.date_set DESC) allkeys order by date_set desc limit 0,?");
 
             int index = 1;
-
             for (String t : docTagName) {
                 st.setString(index, t);
                 index = index + 1;
