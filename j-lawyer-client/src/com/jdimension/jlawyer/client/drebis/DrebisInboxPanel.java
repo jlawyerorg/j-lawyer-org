@@ -1182,6 +1182,7 @@ public class DrebisInboxPanel extends javax.swing.JPanel implements ThemeableEdi
             try {
                 locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
                 targetCase=locator.lookupArchiveFileServiceRemote().getArchiveFileByFileNumber(archiveFileNumber);
+                bulkSaveDlg.setCaseFolder(targetCase.getRootFolder(), targetCase.getRootFolder());
             } catch (Exception ex) {
                 log.error("Error getting case by reference number", ex);
             }
