@@ -7790,7 +7790,7 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
 
     @Override
     public void processError(AiCapability c, AiRequestStatus status) {
-        System.out.println("test");
+        log.error("error handling ai request");
     }
 
     protected class DropTargetHandler implements DropTargetListener {
