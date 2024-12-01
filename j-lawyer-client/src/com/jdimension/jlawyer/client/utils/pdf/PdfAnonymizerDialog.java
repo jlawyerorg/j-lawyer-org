@@ -711,7 +711,7 @@ public class PdfAnonymizerDialog extends javax.swing.JDialog implements Assistan
      * @param content
      * @param tempFilePath
      */
-    public PdfAnonymizerDialog(java.awt.Frame parent, boolean modal, String fileName, String pdfText, byte[] content, String tempFilePath) {
+    public PdfAnonymizerDialog(java.awt.Frame parent, boolean modal, String fileName, String pdfText, byte[] content, String tempFilePath, String anonymizeTerms) {
         super(parent, modal);
         initComponents();
 
@@ -720,6 +720,7 @@ public class PdfAnonymizerDialog extends javax.swing.JDialog implements Assistan
         this.content = content;
         this.tempFilePath = tempFilePath;
         this.pdfText=pdfText;
+        this.taRemoveWords.setText(anonymizeTerms);
         
         ComponentUtils.restoreDialogSize(this);
 
@@ -957,7 +958,7 @@ public class PdfAnonymizerDialog extends javax.swing.JDialog implements Assistan
             .addGroup(layout.createSequentialGroup()
                 .addComponent(pnlTitle, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addGap(18, 18, 18)
-                .addComponent(splitMain, javax.swing.GroupLayout.DEFAULT_SIZE, 444, Short.MAX_VALUE)
+                .addComponent(splitMain)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                     .addComponent(cmdCancel)
@@ -980,6 +981,8 @@ public class PdfAnonymizerDialog extends javax.swing.JDialog implements Assistan
                 for (String w : words) {
                     wordList.add(w.trim());
                 }
+                wordList.sort((s1, s2) -> Integer.compare(s2.length(), s1.length()));
+                
                 ByteArrayInputStream in = new ByteArrayInputStream(this.content);
                 FileOutputStream out = new FileOutputStream(this.tempFilePath);
 
@@ -1108,7 +1111,7 @@ public class PdfAnonymizerDialog extends javax.swing.JDialog implements Assistan
         /* Create and display the dialog */
         java.awt.EventQueue.invokeLater(new Runnable() {
             public void run() {
-                PdfAnonymizerDialog dialog = new PdfAnonymizerDialog(new javax.swing.JFrame(), true, null, null, null, null);
+                PdfAnonymizerDialog dialog = new PdfAnonymizerDialog(new javax.swing.JFrame(), true, null, null, null, null, "");
                 dialog.addWindowListener(new java.awt.event.WindowAdapter() {
                     @Override
                     public void windowClosing(java.awt.event.WindowEvent e) {
@@ -1181,7 +1184,7 @@ public class PdfAnonymizerDialog extends javax.swing.JDialog implements Assistan
                 resultText = result.toString();
             }
         }
-        this.taRemoveWords.setText(resultText);
+        this.taRemoveWords.setText(this.taRemoveWords.getText() + ", " + resultText);
     }
 
     @Override

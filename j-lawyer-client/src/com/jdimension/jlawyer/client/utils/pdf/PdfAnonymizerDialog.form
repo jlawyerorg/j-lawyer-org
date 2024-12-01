@@ -55,7 +55,7 @@
           <Group type="102" alignment="0" attributes="0">
               <Component id="pnlTitle" min="-2" max="-2" attributes="0"/>
               <EmptySpace type="separate" max="-2" attributes="0"/>
-              <Component id="splitMain" pref="444" max="32767" attributes="0"/>
+              <Component id="splitMain" max="32767" attributes="0"/>
               <EmptySpace max="-2" attributes="0"/>
               <Group type="103" groupAlignment="3" attributes="0">
                   <Component id="cmdCancel" alignment="3" min="-2" max="-2" attributes="0"/>

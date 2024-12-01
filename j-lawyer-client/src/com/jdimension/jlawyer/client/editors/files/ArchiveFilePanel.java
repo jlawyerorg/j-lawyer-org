@@ -7342,8 +7342,14 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
             byte[] content = CachingDocumentLoader.getInstance().getDocument(selectedDocs.get(0).getId());
             // Save as temporary file
             String tempPath = FileUtils.createTempFile(selectedDocs.get(0).getName(), content);
+            
+            StringBuilder anonymizeTerms=new StringBuilder();
+            anonymizeTerms.append(this.dto.getFileNumber()).append(", ");
+            for (ArchiveFileAddressesBean aab : this.pnlInvolvedParties.getInvolvedParties()) {
+                anonymizeTerms.append(System.lineSeparator()).append(aab.getAnonymizeTerms());
+            }
 
-            PdfAnonymizerDialog anoDia = new PdfAnonymizerDialog(EditorsRegistry.getInstance().getMainWindow(), true, selectedDocs.get(0).getName(), pdfText, content, tempPath);
+            PdfAnonymizerDialog anoDia = new PdfAnonymizerDialog(EditorsRegistry.getInstance().getMainWindow(), true, selectedDocs.get(0).getName(), pdfText, content, tempPath, anonymizeTerms.toString());
             FrameUtils.centerDialog(anoDia, EditorsRegistry.getInstance().getMainWindow());
             anoDia.setVisible(true);
 
