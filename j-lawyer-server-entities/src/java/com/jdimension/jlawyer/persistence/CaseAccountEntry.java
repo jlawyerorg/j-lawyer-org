@@ -741,6 +741,10 @@ public class CaseAccountEntry implements Serializable {
     public BigDecimal calculateTotal() {
         return getEarnings().add(getEscrowIn()).add(getExpendituresIn()).subtract(getSpendings()).subtract(getEscrowOut()).subtract(getExpendituresOut());
     }
+    
+    public BigDecimal calculateEarningsTotal() {
+        return getEarnings().subtract(getSpendings());
+    }
 
     @Override
     public int hashCode() {

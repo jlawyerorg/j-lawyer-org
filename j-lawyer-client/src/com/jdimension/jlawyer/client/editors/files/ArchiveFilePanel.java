@@ -1121,6 +1121,7 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
             if (this.dto.getId().equals(caseId)) {
                 InvoiceEntryPanel ip = new InvoiceEntryPanel(this);
                 ip.setEntry(this.dto, invoiceCopy, this.getInvolvedAddresses());
+                ip.setPaidTotal(invoiceCopy.getTotalGross(), BigDecimal.ZERO, invoiceCopy.getCurrency());
                 this.pnlInvoices.add(ip);
             }
         } catch (Exception ex) {
@@ -4484,7 +4485,7 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
                     if (!invoiceTotals.containsKey(cae.getInvoice().getId())) {
                         invoiceTotals.put(cae.getInvoice().getId(), BigDecimal.ZERO);
                     }
-                    invoiceTotals.put(cae.getInvoice().getId(), invoiceTotals.get(cae.getInvoice().getId()).add(cae.calculateTotal()));
+                    invoiceTotals.put(cae.getInvoice().getId(), invoiceTotals.get(cae.getInvoice().getId()).add(cae.calculateEarningsTotal()));
                 }
             }
             ComponentUtils.autoSizeColumns(tblAccountEntries);
