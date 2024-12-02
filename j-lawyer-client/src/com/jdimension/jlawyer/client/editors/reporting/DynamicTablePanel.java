@@ -664,6 +664,7 @@ For more information on this, and how to apply and follow the GNU AGPL, see
 package com.jdimension.jlawyer.client.editors.reporting;
 
 import com.jdimension.jlawyer.client.utils.ComponentUtils;
+import com.jdimension.jlawyer.client.utils.FileUtils;
 import com.jdimension.jlawyer.client.utils.TableUtils;
 import java.text.DecimalFormat;
 import javax.swing.JOptionPane;
@@ -767,7 +768,8 @@ public class DynamicTablePanel extends javax.swing.JPanel {
 
     private void cmdExportTableActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdExportTableActionPerformed
         try {
-            TableUtils.exportAndLaunch(this.resultTable.getTableName() + ".csv", this.tblResult, this.decFormat);
+            String fileName=FileUtils.sanitizeFileName(this.resultTable.getTableName() + ".csv");
+            TableUtils.exportAndLaunch(fileName, this.tblResult, this.decFormat);
         } catch (Exception ex) {
             log.error("Error exporting table to CSV", ex);
             JOptionPane.showMessageDialog(this, "Fehler beim Export: " + ex.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
