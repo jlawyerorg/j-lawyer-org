@@ -1027,7 +1027,19 @@
                       <EmptySpace max="-2" attributes="0"/>
                       <Group type="103" groupAlignment="0" attributes="0">
                           <Group type="102" attributes="0">
+                              <Component id="lblTimesheet" min="-2" max="-2" attributes="0"/>
+                              <EmptySpace type="separate" max="-2" attributes="0"/>
+                              <Component id="cmdCreateTimesheetDocument" min="-2" max="-2" attributes="0"/>
+                              <EmptySpace min="0" pref="0" max="32767" attributes="0"/>
+                          </Group>
+                          <Component id="jSeparator1" alignment="1" max="32767" attributes="0"/>
+                          <Group type="102" attributes="0">
                               <Group type="103" groupAlignment="0" attributes="0">
+                                  <Group type="102" alignment="0" attributes="0">
+                                      <Component id="cmdNavigateToDocument" min="-2" max="-2" attributes="0"/>
+                                      <EmptySpace max="-2" attributes="0"/>
+                                      <Component id="jLabel15" min="-2" max="-2" attributes="0"/>
+                                  </Group>
                                   <Component id="lblInvoiceDocument" min="-2" max="-2" attributes="0"/>
                                   <Group type="102" alignment="0" attributes="0">
                                       <Group type="103" groupAlignment="0" attributes="0">
@@ -1041,13 +1053,7 @@
                                       </Group>
                                   </Group>
                               </Group>
-                              <EmptySpace min="0" pref="0" max="32767" attributes="0"/>
-                          </Group>
-                          <Group type="102" attributes="0">
-                              <Component id="cmdNavigateToDocument" min="-2" max="-2" attributes="0"/>
-                              <EmptySpace max="-2" attributes="0"/>
-                              <Component id="jLabel15" min="-2" max="-2" attributes="0"/>
-                              <EmptySpace pref="228" max="32767" attributes="0"/>
+                              <EmptySpace pref="233" max="32767" attributes="0"/>
                               <Component id="cmdCreateInvoiceDocument" min="-2" max="-2" attributes="0"/>
                               <EmptySpace max="-2" attributes="0"/>
                               <Component id="cmbTableHeadersLanguage" min="-2" max="-2" attributes="0"/>
@@ -1085,6 +1091,13 @@
                           <Component id="lblInvoiceDocumentChanged" alignment="3" min="-2" max="-2" attributes="0"/>
                       </Group>
                       <EmptySpace max="-2" attributes="0"/>
+                      <Component id="jSeparator1" min="-2" pref="12" max="-2" attributes="0"/>
+                      <EmptySpace max="-2" attributes="0"/>
+                      <Group type="103" groupAlignment="3" attributes="0">
+                          <Component id="lblTimesheet" alignment="3" min="-2" max="-2" attributes="0"/>
+                          <Component id="cmdCreateTimesheetDocument" alignment="3" min="-2" max="-2" attributes="0"/>
+                      </Group>
+                      <EmptySpace min="-2" pref="422" max="-2" attributes="0"/>
                   </Group>
               </Group>
             </DimensionLayout>
@@ -1219,6 +1232,28 @@
                 </Property>
                 <Property name="text" type="java.lang.String" value="jLabel21"/>
               </Properties>
+            </Component>
+            <Component class="javax.swing.JLabel" name="lblTimesheet">
+              <Properties>
+                <Property name="icon" type="javax.swing.Icon" editor="org.netbeans.modules.form.editors2.IconEditor">
+                  <Image iconType="3" name="/icons16/material/baseline_timer_black_48dp.png"/>
+                </Property>
+                <Property name="text" type="java.lang.String" value="Leistungsnachweis"/>
+              </Properties>
+            </Component>
+            <Component class="javax.swing.JButton" name="cmdCreateTimesheetDocument">
+              <Properties>
+                <Property name="icon" type="javax.swing.Icon" editor="org.netbeans.modules.form.editors2.IconEditor">
+                  <Image iconType="3" name="/icons/editcopy.png"/>
+                </Property>
+                <Property name="text" type="java.lang.String" value="Erstellen"/>
+                <Property name="toolTipText" type="java.lang.String" value="Leistungsnachweis in Dokument &#xfc;bertragen - Platzhalter {{ZE_TABELLE}} in einer 1x1-Tabelle einer Vorlage"/>
+              </Properties>
+              <Events>
+                <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="cmdCreateTimesheetDocumentActionPerformed"/>
+              </Events>
+            </Component>
+            <Component class="javax.swing.JSeparator" name="jSeparator1">
             </Component>
           </SubComponents>
         </Container>

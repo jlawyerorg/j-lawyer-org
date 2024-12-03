@@ -672,6 +672,7 @@ import com.jdimension.jlawyer.client.utils.StringUtils;
 import com.jdimension.jlawyer.persistence.AppOptionGroupBean;
 import com.jdimension.jlawyer.persistence.AppUserBean;
 import com.jdimension.jlawyer.persistence.ArchiveFileBean;
+import com.jdimension.jlawyer.persistence.Invoice;
 import com.jdimension.jlawyer.persistence.Timesheet;
 import com.jdimension.jlawyer.persistence.TimesheetPosition;
 import com.jdimension.jlawyer.server.constants.OptionConstants;
@@ -1266,11 +1267,15 @@ public class TimesheetDialog extends javax.swing.JDialog {
 
         ClientSettings settings = ClientSettings.getInstance();
         List<TimesheetPosition> allPositions = new ArrayList<>();
+        List<Invoice> invoicesThatRequireUpdate=new ArrayList<>();
         for (Component c : this.pnlTimesheetPositions.getComponents()) {
             if (c instanceof TimesheetPositionEntryPanel) {
                 ((TimesheetPositionEntryPanel) c).updateEntryTotal(Integer.parseInt(this.cmbTimesheetInterval.getSelectedItem().toString()));
                 allPositions.add(((TimesheetPositionEntryPanel) c).getEntry());
-
+                
+                Invoice inv=((TimesheetPositionEntryPanel) c).invoiceUpdateRequired();
+                if(inv!=null)
+                    invoicesThatRequireUpdate.add(inv);
             }
         }
 
@@ -1294,6 +1299,20 @@ public class TimesheetDialog extends javax.swing.JDialog {
             log.error("error saving timesheet", ex);
             JOptionPane.showMessageDialog(this, "Fehler beim Speichern des Projekts: " + ex.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
             return false;
+        }
+        
+        if(!invoicesThatRequireUpdate.isEmpty()) {
+            StringBuilder sb=new StringBuilder();
+            sb.append("<html>").append("Für folgende Belege muss ein erneuter Import der Zeiten erfolgen: ").append("<ul>");
+            ArrayList<String> listed=new ArrayList<>();
+            for(Invoice inv: invoicesThatRequireUpdate) {
+                if(!listed.contains(inv.getInvoiceNumber())) {
+                    listed.add(inv.getInvoiceNumber());
+                    sb.append("<li>").append(inv.getInvoiceNumber()).append("</li>");
+                }
+            }
+            sb.append("</ul></html>");
+            JOptionPane.showMessageDialog(this, sb.toString(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_HINT, JOptionPane.INFORMATION_MESSAGE);
         }
         
         return true;

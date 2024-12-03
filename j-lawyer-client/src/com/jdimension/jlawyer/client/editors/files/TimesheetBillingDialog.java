@@ -720,15 +720,23 @@ public class TimesheetBillingDialog extends javax.swing.JDialog {
             for (Timesheet ts : timesheets) {
                 List<TimesheetPosition> positions = afs.getTimesheetPositions(ts.getId());
                 for (TimesheetPosition p : positions) {
-                    if(p.getStopped()==null || p.getInvoice()!=null)
+                    if(p.getStopped()==null)
                         continue;
-                    Object[] row = new Object[6];
+                    if(p.getInvoice()!=null && !p.isEditingAllowed())
+                        continue;
+                    
+                    Object[] row = new Object[7];
                     row[0] = false;
                     row[1] = p.getTimesheet().getName();
                     row[2] = p;
                     row[3] = p.getDescription();
                     row[4] = p.getTotal();
                     row[5] = df.format(p.getStarted()) + " - " + df.format(p.getStopped());
+                    String invoiceInfo="";
+                    if(p.getInvoice()!=null) {
+                        invoiceInfo=p.getInvoice().getInvoiceNumber() + " (" + p.getInvoice().getStatusString() + (")");
+                    }
+                    row[6] = invoiceInfo;
                     ((DefaultTableModel) this.tblPositions.getModel()).addRow(row);
                 }
             }
@@ -756,6 +764,8 @@ public class TimesheetBillingDialog extends javax.swing.JDialog {
         cmdBilling = new javax.swing.JButton();
         jScrollPane1 = new javax.swing.JScrollPane();
         tblPositions = new javax.swing.JTable();
+        cmdAll = new javax.swing.JButton();
+        cmdNone = new javax.swing.JButton();
 
         mnuSelect.setText("abrechnen");
         mnuSelect.addActionListener(new java.awt.event.ActionListener() {
@@ -793,21 +803,28 @@ public class TimesheetBillingDialog extends javax.swing.JDialog {
 
         tblPositions.setModel(new javax.swing.table.DefaultTableModel(
             new Object [][] {
-                {null, null, null, null, null, null},
-                {null, null, null, null, null, null},
-                {null, null, null, null, null, null},
-                {null, null, null, null, null, null}
+                {null, null, null, null, null, null, null},
+                {null, null, null, null, null, null, null},
+                {null, null, null, null, null, null, null},
+                {null, null, null, null, null, null, null}
             },
             new String [] {
-                "abrechnen", "Projekt", "Position", "Beschreibung", "Gesamt", "Zeit"
+                "abrechnen", "Projekt", "Position", "Beschreibung", "Gesamt", "Zeit", "Beleg"
             }
         ) {
             Class[] types = new Class [] {
-                java.lang.Boolean.class, java.lang.String.class, java.lang.Object.class, java.lang.Object.class, java.lang.Float.class, java.lang.String.class
+                java.lang.Boolean.class, java.lang.String.class, java.lang.Object.class, java.lang.Object.class, java.lang.Float.class, java.lang.String.class, java.lang.String.class
+            };
+            boolean[] canEdit = new boolean [] {
+                true, false, false, false, false, false, false
             };
 
             public Class getColumnClass(int columnIndex) {
                 return types [columnIndex];
+            }
+
+            public boolean isCellEditable(int rowIndex, int columnIndex) {
+                return canEdit [columnIndex];
             }
         });
         tblPositions.addMouseListener(new java.awt.event.MouseAdapter() {
@@ -819,6 +836,22 @@ public class TimesheetBillingDialog extends javax.swing.JDialog {
             }
         });
         jScrollPane1.setViewportView(tblPositions);
+
+        cmdAll.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons16/baseline_select_all_black_48dp.png"))); // NOI18N
+        cmdAll.setToolTipText("alle auswählen");
+        cmdAll.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                cmdAllActionPerformed(evt);
+            }
+        });
+
+        cmdNone.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons16/baseline_select_none_black_48dp.png"))); // NOI18N
+        cmdNone.setToolTipText("keine auswählen");
+        cmdNone.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                cmdNoneActionPerformed(evt);
+            }
+        });
 
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(getContentPane());
         getContentPane().setLayout(layout);
@@ -832,14 +865,23 @@ public class TimesheetBillingDialog extends javax.swing.JDialog {
                         .addComponent(cmdBilling)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                         .addComponent(cmdCancel))
-                    .addComponent(jScrollPane1, javax.swing.GroupLayout.DEFAULT_SIZE, 776, Short.MAX_VALUE))
+                    .addComponent(jScrollPane1, javax.swing.GroupLayout.DEFAULT_SIZE, 776, Short.MAX_VALUE)
+                    .addGroup(layout.createSequentialGroup()
+                        .addComponent(cmdAll)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addComponent(cmdNone)
+                        .addGap(0, 0, Short.MAX_VALUE)))
                 .addContainerGap())
         );
         layout.setVerticalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
                 .addContainerGap()
-                .addComponent(jScrollPane1, javax.swing.GroupLayout.DEFAULT_SIZE, 440, Short.MAX_VALUE)
+                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                    .addComponent(cmdAll)
+                    .addComponent(cmdNone))
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addComponent(jScrollPane1, javax.swing.GroupLayout.DEFAULT_SIZE, 406, Short.MAX_VALUE)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                     .addComponent(cmdCancel)
@@ -938,6 +980,18 @@ public class TimesheetBillingDialog extends javax.swing.JDialog {
         this.dispose();
     }//GEN-LAST:event_cmdBillingActionPerformed
 
+    private void cmdAllActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdAllActionPerformed
+        for (int i = 0; i < this.tblPositions.getRowCount(); i++) {
+            this.tblPositions.setValueAt(true, i, 0);
+        }
+    }//GEN-LAST:event_cmdAllActionPerformed
+
+    private void cmdNoneActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdNoneActionPerformed
+        for (int i = 0; i < this.tblPositions.getRowCount(); i++) {
+            this.tblPositions.setValueAt(false, i, 0);
+        }
+    }//GEN-LAST:event_cmdNoneActionPerformed
+
     /**
      * @param args the command line arguments
      */
@@ -979,8 +1033,10 @@ public class TimesheetBillingDialog extends javax.swing.JDialog {
     }
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
+    private javax.swing.JButton cmdAll;
     private javax.swing.JButton cmdBilling;
     private javax.swing.JButton cmdCancel;
+    private javax.swing.JButton cmdNone;
     private javax.swing.JScrollPane jScrollPane1;
     private javax.swing.JMenuItem mnuDeselect;
     private javax.swing.JMenuItem mnuSelect;

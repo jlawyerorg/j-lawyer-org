@@ -920,6 +920,18 @@ public class TimesheetPosition implements Serializable {
     public boolean isRunning() {
         return this.started!=null && this.stopped==null;
     }
+    
+    public boolean isEditingAllowed() {
+        if(this.invoice==null)
+            return true;
+        
+        if(this.invoice.getStatus()==Invoice.STATUS_CANCELLED || this.invoice.getStatus()==Invoice.STATUS_NEW) {
+            return true;
+        } else if(this.invoice.getStatus()==Invoice.STATUS_OPEN || this.invoice.getStatus()==Invoice.STATUS_OPEN_NONENFORCEABLE ||  this.invoice.getStatus()==Invoice.STATUS_OPEN_REMINDER1 || this.invoice.getStatus()==Invoice.STATUS_OPEN_REMINDER2 || this.invoice.getStatus()==Invoice.STATUS_OPEN_REMINDER3 || this.invoice.getStatus()==Invoice.STATUS_PAID) {
+            return false;
+        }
+        return true;
+    }
 
     /**
      * @return the invoice

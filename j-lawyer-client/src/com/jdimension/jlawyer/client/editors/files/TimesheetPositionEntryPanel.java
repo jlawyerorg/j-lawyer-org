@@ -667,10 +667,12 @@ import com.formdev.flatlaf.FlatClientProperties;
 import com.jdimension.jlawyer.client.configuration.UserListCellRenderer;
 import com.jdimension.jlawyer.client.settings.ClientSettings;
 import com.jdimension.jlawyer.client.utils.ComponentUtils;
+import com.jdimension.jlawyer.persistence.Invoice;
 import com.jdimension.jlawyer.persistence.TimesheetPosition;
 import com.jdimension.jlawyer.services.JLawyerServiceLocator;
 import java.awt.Container;
 import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.text.DecimalFormat;
 import java.text.NumberFormat;
 import java.util.Date;
@@ -687,35 +689,37 @@ import themes.colors.DefaultColorTheme;
  * @author jens
  */
 public class TimesheetPositionEntryPanel extends javax.swing.JPanel {
-    
-    private static final Logger log=Logger.getLogger(TimesheetPositionEntryPanel.class.getName());
 
-    private TimesheetDialog dlgParent=null;
-    
+    private static final Logger log = Logger.getLogger(TimesheetPositionEntryPanel.class.getName());
+
+    private TimesheetDialog dlgParent = null;
+
     private TimesheetPosition position = null;
     private String timesheetId = null;
-    
-    private DecimalFormat taxRateFormat=null;
+
+    private DecimalFormat taxRateFormat = null;
 
     /**
      * Creates new form TimesheetPositionEntryPanel
+     *
      * @param dlgParent
      * @param taxRates
+     * @param sortedPrincipalIds
      */
     public TimesheetPositionEntryPanel(TimesheetDialog dlgParent, List<String> taxRates, List<String> sortedPrincipalIds) {
         initComponents();
-        
-        this.dlgParent=dlgParent;
-        
+
+        this.dlgParent = dlgParent;
+
         NumberFormat nf = NumberFormat.getNumberInstance(Locale.GERMAN);
         this.taxRateFormat = (DecimalFormat) nf;
         this.taxRateFormat.applyPattern("0.0");
-        
-        String []principalItems = sortedPrincipalIds.toArray(new String[0]);
+
+        String[] principalItems = sortedPrincipalIds.toArray(new String[0]);
         OptionsComboBoxModel assistModel = new OptionsComboBoxModel(principalItems);
         this.cmbPrincipal.setModel(assistModel);
         this.cmbPrincipal.setRenderer(new UserListCellRenderer());
-        
+
         this.txtUnitPrice.getDocument().addDocumentListener(new DocumentListener() {
             @Override
             public void changedUpdate(DocumentEvent e) {
@@ -749,7 +753,7 @@ public class TimesheetPositionEntryPanel extends javax.swing.JPanel {
                 updateParentTotal();
             }
         });
-        
+
         this.txtStopped.getDocument().addDocumentListener(new DocumentListener() {
             @Override
             public void changedUpdate(DocumentEvent e) {
@@ -766,7 +770,7 @@ public class TimesheetPositionEntryPanel extends javax.swing.JPanel {
                 updateParentTotal();
             }
         });
-        
+
         this.cmbTaxRate.removeAllItems();
         taxRates.forEach(tr -> {
             this.cmbTaxRate.addItem(tr);
@@ -775,71 +779,94 @@ public class TimesheetPositionEntryPanel extends javax.swing.JPanel {
     }
 
     public void setEntry(String timesheetId, TimesheetPosition pos, int intervalMinutes) {
-        
-            this.timesheetId=timesheetId;
-        
-            this.position = pos;
-            this.txtName.setText(pos.getName());
-            this.taDescription.setText(pos.getDescription());
-            this.cmbTaxRate.setSelectedItem(pos.getTaxRate());
-            this.txtUnitPrice.setValue(pos.getUnitPrice());
-            this.txtStarted.setValue(pos.getStarted());
-            this.txtStopped.setValue(pos.getStopped());
-            
-            if (!ComponentUtils.containsItem(cmbPrincipal, pos.getPrincipal())) {
-                this.cmbPrincipal.addItem(pos.getPrincipal());
-            }
-            this.cmbPrincipal.setSelectedItem(pos.getPrincipal());
-            
-            this.updateEntryTotal(intervalMinutes);
-            
-            if(pos.getInvoice()!=null) {
-                this.lblBilled.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/agt_action_success.png")));
-                this.lblBilled.setText("");
-                this.lblBilled.setToolTipText("abgerechnet mit Rechnung " + pos.getInvoice().getInvoiceNumber());
-                this.cmbPrincipal.setEnabled(false);
-                this.txtName.setEnabled(false);
-                this.txtStarted.setEnabled(false);
-                this.txtStopped.setEnabled(false);
-                this.txtUnitPrice.setEnabled(false);
-                this.taDescription.setEnabled(false);
-                this.cmbTaxRate.setEnabled(false);
-                this.lblIndicator.setBackground(DefaultColorTheme.COLOR_LOGO_GREEN);
-            } else {
-                this.lblBilled.setIcon(null);
-                this.lblBilled.setText("");
-                this.lblBilled.setToolTipText(null);
-                this.cmbPrincipal.setEnabled(true);
-                this.txtName.setEnabled(true);
-                this.txtStarted.setEnabled(true);
-                this.txtStopped.setEnabled(true);
-                this.txtUnitPrice.setEnabled(true);
-                this.taDescription.setEnabled(true);
-                this.cmbTaxRate.setEnabled(true);
-                this.lblIndicator.setBackground(DefaultColorTheme.COLOR_DARK_GREY);
-            }
-       
+
+        this.timesheetId = timesheetId;
+
+        this.position = pos;
+        this.txtName.setText(pos.getName());
+        this.taDescription.setText(pos.getDescription());
+        this.cmbTaxRate.setSelectedItem(pos.getTaxRate());
+        this.txtUnitPrice.setValue(pos.getUnitPrice());
+        this.txtStarted.setValue(pos.getStarted());
+        this.txtStopped.setValue(pos.getStopped());
+
+        if (!ComponentUtils.containsItem(cmbPrincipal, pos.getPrincipal())) {
+            this.cmbPrincipal.addItem(pos.getPrincipal());
+        }
+        this.cmbPrincipal.setSelectedItem(pos.getPrincipal());
+
+        this.updateEntryTotal(intervalMinutes);
+
+        boolean editingAllowed = false;
+        if (pos.getInvoice() != null && pos.isEditingAllowed()) {
+            // assigned to an invoice, but editing allowed
+            editingAllowed = true;
+            this.lblBilled.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/file_doc.png")));
+            this.lblBilled.setText(pos.getInvoice().getInvoiceNumber());
+            this.lblBilled.setToolTipText("abgerechnet mit Rechnung " + pos.getInvoice().getInvoiceNumber() + " - Rechnungsstatus ermöglicht das Bearbeiten der erfassten Zeit");
+            this.lblIndicator.setBackground(DefaultColorTheme.COLOR_LOGO_BLUE);
+
+        } else if (pos.getInvoice() != null && !pos.isEditingAllowed()) {
+            // assigned to an invoice, no longer editable
+            editingAllowed = false;
+            this.lblBilled.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/file_doc.png")));
+            this.lblBilled.setText(pos.getInvoice().getInvoiceNumber());
+            this.lblBilled.setToolTipText("abgerechnet mit Rechnung " + pos.getInvoice().getInvoiceNumber() + " - Rechnungsstatus verhindert das Bearbeiten der erfassten Zeit");
+            this.lblIndicator.setBackground(DefaultColorTheme.COLOR_LOGO_GREEN);
+        } else {
+            // not assigned to an invoice
+            editingAllowed = true;
+            this.lblBilled.setIcon(null);
+            this.lblBilled.setText("");
+            this.lblBilled.setToolTipText(null);
+            this.lblIndicator.setBackground(DefaultColorTheme.COLOR_DARK_GREY);
+        }
+
+        this.cmbPrincipal.setEnabled(editingAllowed);
+        this.txtName.setEnabled(true);
+        this.txtStarted.setEnabled(editingAllowed);
+        this.txtStopped.setEnabled(editingAllowed);
+        this.txtUnitPrice.setEnabled(editingAllowed);
+        this.taDescription.setEnabled(true);
+        this.cmbTaxRate.setEnabled(editingAllowed);
+
     }
-    
+
     public boolean hasInvoice() {
-        if(this.position!=null) {
-            return this.position.getInvoice()!=null;
+        if (this.position != null) {
+            return this.position.getInvoice() != null;
         }
         return false;
     }
 
-    public TimesheetPosition getEntry() {
-        
+    public Invoice invoiceUpdateRequired() {
         if(this.position==null)
             return null;
         
-        TimesheetPosition clone=new TimesheetPosition();
+        if(this.position.getInvoice()==null)
+            return null;
+        
+        BigDecimal currentTotal=this.position.getTotal();
+        BigDecimal newTotal=BigDecimal.valueOf((Float) this.txtTotal.getValue()).setScale(2, RoundingMode.HALF_UP);
+        if(!(currentTotal.compareTo(newTotal)==0))
+            return this.position.getInvoice();
+        
+        return null;
+    }
+    
+    public TimesheetPosition getEntry() {
+
+        if (this.position == null) {
+            return null;
+        }
+
+        TimesheetPosition clone = new TimesheetPosition();
         clone.setId(this.position.getId());
         clone.setTimesheet(this.position.getTimesheet());
-        clone.setStarted((Date)this.txtStarted.getValue());
-        clone.setStopped((Date)this.txtStopped.getValue());
+        clone.setStarted((Date) this.txtStarted.getValue());
+        clone.setStopped((Date) this.txtStopped.getValue());
         clone.setPrincipal(this.cmbPrincipal.getSelectedItem().toString());
-        
+
         clone.setName(this.txtName.getText());
         clone.setDescription(this.taDescription.getText());
         try {
@@ -849,12 +876,13 @@ public class TimesheetPositionEntryPanel extends javax.swing.JPanel {
             JOptionPane.showMessageDialog(this, "fehlerhafter Steuersatz: " + ex.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
         }
         clone.setTotal(BigDecimal.valueOf((Float) this.txtTotal.getValue()));
-        
-        if(this.txtUnitPrice.getValue()==null)
+
+        if (this.txtUnitPrice.getValue() == null) {
             clone.setUnitPrice(BigDecimal.ZERO);
-        else
+        } else {
             clone.setUnitPrice(BigDecimal.valueOf(((Number) this.txtUnitPrice.getValue()).floatValue()));
-        
+        }
+
         return clone;
     }
 
@@ -936,7 +964,7 @@ public class TimesheetPositionEntryPanel extends javax.swing.JPanel {
         txtStopped.setFont(txtStopped.getFont().deriveFont(txtStopped.getFont().getSize()-2f));
 
         lblBilled.setFont(lblBilled.getFont().deriveFont(lblBilled.getFont().getStyle() | java.awt.Font.BOLD));
-        lblBilled.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/agt_action_success.png"))); // NOI18N
+        lblBilled.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/file_doc.png"))); // NOI18N
         lblBilled.setText(" ");
 
         cmbPrincipal.setModel(new javax.swing.DefaultComboBoxModel<>(new String[] { "Item 1", "Item 2", "Item 3", "Item 4" }));
@@ -992,8 +1020,7 @@ public class TimesheetPositionEntryPanel extends javax.swing.JPanel {
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(jScrollPane1, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addComponent(lblBilled)
+                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
                     .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                         .addComponent(txtStarted, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                         .addComponent(jLabel4)
@@ -1001,7 +1028,8 @@ public class TimesheetPositionEntryPanel extends javax.swing.JPanel {
                         .addComponent(jLabel3)
                         .addComponent(txtTotal, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                         .addComponent(txtUnitPrice, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                        .addComponent(jLabel2)))
+                        .addComponent(jLabel2))
+                    .addComponent(lblBilled, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(jSeparator1, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
             .addComponent(lblIndicator, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
@@ -1009,7 +1037,7 @@ public class TimesheetPositionEntryPanel extends javax.swing.JPanel {
     }// </editor-fold>//GEN-END:initComponents
 
     private void cmdRemovePositionActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdRemovePositionActionPerformed
-        
+
         int response = JOptionPane.showConfirmDialog(this, "Position '" + txtName.getText() + "' (" + txtStarted.getText() + ") löschen?", "erfasste Zeit löschen", JOptionPane.YES_NO_OPTION);
         if (response == JOptionPane.YES_OPTION) {
 
@@ -1035,7 +1063,7 @@ public class TimesheetPositionEntryPanel extends javax.swing.JPanel {
     private void cmbTaxRateActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmbTaxRateActionPerformed
         this.updateParentTotal();
     }//GEN-LAST:event_cmbTaxRateActionPerformed
-    
+
     public void updateParentTotal() {
         this.dlgParent.updateTotals(this);
     }
@@ -1046,15 +1074,15 @@ public class TimesheetPositionEntryPanel extends javax.swing.JPanel {
         try {
             unitPrice = (Number) this.txtUnitPrice.getValue();
 
-            if (this.txtStarted.getValue()!=null && this.txtStopped.getValue()!=null && unitPrice!=null) {
+            if (this.txtStarted.getValue() != null && this.txtStopped.getValue() != null && unitPrice != null) {
                 this.txtUnitPrice.putClientProperty(FlatClientProperties.OUTLINE, null);
                 this.txtTotal.putClientProperty(FlatClientProperties.OUTLINE, null);
-                Date started=(Date)this.txtStarted.getValue();
-                Date stopped=(Date)this.txtStopped.getValue();
-                float totalMinutes=((float)(stopped.getTime()-started.getTime()))/1000f/60f;
-                double roundedMinutes=Math.ceil(totalMinutes/intervalMinutes)*intervalMinutes;
-                float roundedMinutesFloat=new Float(roundedMinutes);
-                float total=roundedMinutesFloat/60f*unitPrice.floatValue();
+                Date started = (Date) this.txtStarted.getValue();
+                Date stopped = (Date) this.txtStopped.getValue();
+                float totalMinutes = ((float) (stopped.getTime() - started.getTime())) / 1000f / 60f;
+                double roundedMinutes = Math.ceil(totalMinutes / intervalMinutes) * intervalMinutes;
+                float roundedMinutesFloat = new Float(roundedMinutes);
+                float total = roundedMinutesFloat / 60f * unitPrice.floatValue();
                 this.txtTotal.setValue(total);
             } else {
                 this.txtUnitPrice.putClientProperty(FlatClientProperties.OUTLINE, FlatClientProperties.OUTLINE_ERROR);
@@ -1066,7 +1094,6 @@ public class TimesheetPositionEntryPanel extends javax.swing.JPanel {
             this.txtTotal.putClientProperty(FlatClientProperties.OUTLINE, FlatClientProperties.OUTLINE_ERROR);
             this.txtTotal.setValue(0f);
         }
-        
 
     }
 
