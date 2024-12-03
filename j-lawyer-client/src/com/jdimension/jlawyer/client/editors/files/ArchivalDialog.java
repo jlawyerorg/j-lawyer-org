@@ -819,13 +819,13 @@ public class ArchivalDialog extends javax.swing.JDialog {
 
         }
         
-        if(!totalEscrowDiff.equals(BigDecimal.ZERO)) {
+        if(totalEscrowDiff.compareTo(BigDecimal.ZERO)!=0) {
             this.lblEscrow.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/cancel.png")));
             this.chkEscrow.setEnabled(true);
             this.lblEscrow.setText("Aktenkonto: Fremdgelder nicht ausgeglichen");
         }
         
-        if(!totalExpendituresDiff.equals(BigDecimal.ZERO)) {
+        if(totalExpendituresDiff.compareTo(BigDecimal.ZERO)!=0) {
             this.lblExpenditures.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/cancel.png")));
             this.chkExpenditures.setEnabled(true);
             this.lblExpenditures.setText("Aktenkonto: Auslagen nicht ausgeglichen");
