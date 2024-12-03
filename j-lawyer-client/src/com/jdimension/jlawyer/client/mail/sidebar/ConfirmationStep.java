@@ -882,6 +882,7 @@ public class ConfirmationStep extends javax.swing.JPanel implements WizardStepIn
 
         } catch (Throwable t) {
             log.error("Unable to process wizard", t);
+            JOptionPane.showMessageDialog(this, "Fehler beim Speichern: " + t.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
         }
 
     }
