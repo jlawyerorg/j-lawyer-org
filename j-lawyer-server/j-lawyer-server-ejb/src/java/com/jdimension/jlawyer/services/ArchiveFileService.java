@@ -5677,7 +5677,7 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
             return 0f;
         
         // avoid div by zero
-        if(ts.getLimit().equals(BigDecimal.ZERO))
+        if(ts.getLimit().compareTo(BigDecimal.ZERO)==0)
             return 0f;
         
         List<TimesheetPosition> positions=this.timesheetPositionsFacade.findByTimesheet(ts);
