@@ -1113,7 +1113,7 @@ public class ClientSelectionStep extends javax.swing.JPanel implements WizardSte
                 row.add(cl.getName());
                 row.add(cl.getFirstName());
                 row.add(cl.getCompany());
-                row.add(cl.getStreet());
+                row.add(cl.getStreet() + " " + StringUtils.nonNull(cl.getStreetNumber()));
                 row.add(cl.getZipCode());
                 row.add(cl.getCity());
                 row.add(DrebisUtils.getCountryCode(cl.getCountry()));
