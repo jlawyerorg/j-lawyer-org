@@ -774,6 +774,8 @@ public class ServerFileUtils {
         name = name.replace(">", "");
         name = name.replace("<", "");
         name = name.replace("|", "_");
+        while(name.contains("  "))
+            name = name.replace("  ", " ");
         return name.trim();
     }
     
