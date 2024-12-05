@@ -770,7 +770,7 @@ public class GenericCalculationCallback implements CalculationPluginCallback {
                 ((ArchiveFilePanel) editor).setArchiveFileDTO(this.selectedCase);
                 ((ArchiveFilePanel) editor).setOpenedFromEditorClass(DesktopPanel.class.getName());
                 EditorsRegistry.getInstance().setMainEditorsPaneView(editor);
-                ((ArchiveFilePanel) editor).newDocumentDialog(table, null, null, null,null, null, null);
+                ((ArchiveFilePanel) editor).newDocumentDialog(table, null, null, null,null, null, null, null);
 
             } catch (Exception ex) {
                 log.error("Error creating editor from class " + EditArchiveFileDetailsPanel.class.getName(), ex);

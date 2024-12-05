@@ -1332,7 +1332,7 @@ public class AssistantChatDialog extends javax.swing.JDialog {
         if (this.caseView != null) {
             if (this.pnlMessages.getComponentCount() > 0) {
                 AiChatMessagePanel p = (AiChatMessagePanel) this.pnlMessages.getComponent(this.pnlMessages.getComponentCount() - 1);
-                this.caseView.newDocumentDialog(null, null, null, null, null, null, p.getMessage().getContent());
+                this.caseView.newDocumentDialog(null, null, null, null, null, null, null, p.getMessage().getContent());
             }
         }
     }//GEN-LAST:event_cmdNewDocumentActionPerformed
