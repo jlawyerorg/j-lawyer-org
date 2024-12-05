@@ -693,7 +693,7 @@ public class PlaceHolderServerUtils extends PlaceHolders {
 
     private static final String DATE_FORMAT = "dd.MM.yyyy";
 
-    public static HashMap<String, Object> getPlaceHolderValues(HashMap<String, Object> placeHolders, ArchiveFileBean aFile, List<PartiesTriplet> selectedParties, String dictateSign, GenericCalculationTable calculationTable, HashMap<String, String> formsPlaceHolderValues, AppUserBean caseLawyer, AppUserBean caseAssistant, AppUserBean author, Invoice invoice, AppUserBean invoiceSender, GenericCalculationTable invoiceTable, GenericCalculationTable timesheetsTable, byte[] giroCode, String ingoText) throws Exception {
+    public static HashMap<String, Object> getPlaceHolderValues(HashMap<String, Object> placeHolders, ArchiveFileBean aFile, List<PartiesTriplet> selectedParties, String dictateSign, GenericCalculationTable calculationTable, HashMap<String, String> formsPlaceHolderValues, AppUserBean caseLawyer, AppUserBean caseAssistant, AppUserBean author, Invoice invoice, AppUserBean invoiceSender, GenericCalculationTable invoiceTable, GenericCalculationTable timesheetsTable, GenericCalculationTable timesheetSummaryTable, byte[] giroCode, String ingoText) throws Exception {
 
         DecimalFormatSymbols symbols = new DecimalFormatSymbols(Locale.GERMANY);
         DecimalFormat currencyFormat = new DecimalFormat("#,##0.00", symbols);
@@ -1403,6 +1403,10 @@ public class PlaceHolderServerUtils extends PlaceHolders {
 
         if (placeHolders.containsKey(ZE_TABELLE) && timesheetsTable != null) {
             placeHolders.put(ZE_TABELLE, timesheetsTable);
+        }
+        
+        if (placeHolders.containsKey(ZE_SUMMEN) && timesheetSummaryTable != null) {
+            placeHolders.put(ZE_SUMMEN, timesheetSummaryTable);
         }
         
         if (placeHolders.containsKey(INGO_TEXT) && ingoText != null) {

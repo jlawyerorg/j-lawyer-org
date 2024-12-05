@@ -728,7 +728,7 @@ public class TemplatesUtil extends CommonTemplatesUtil {
                 }
             }
 
-            return locator.lookupSystemManagementRemote().getPlaceHolderValues(ht, contextArchiveFile, partiesTriplets, "", null, formPlaceHolderValues, caseLawyer, caseAssistant, author, invoice, invoiceSender, null, null, null, null);
+            return locator.lookupSystemManagementRemote().getPlaceHolderValues(ht, contextArchiveFile, partiesTriplets, "", null, formPlaceHolderValues, caseLawyer, caseAssistant, author, invoice, invoiceSender, null, null, null, null, null);
 
         } catch (Exception ex) {
             log.error("Error getting placeholder values", ex);

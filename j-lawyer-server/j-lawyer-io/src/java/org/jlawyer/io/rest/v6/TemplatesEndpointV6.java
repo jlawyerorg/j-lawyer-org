@@ -894,7 +894,7 @@ public class TemplatesEndpointV6 implements TemplatesEndpointLocalV6 {
                 log.warn("Unable to find assistant " + aFile.getLawyer(), t);
             }
 
-            placeHoldersInTemplateMap = system.getPlaceHolderValues(placeHoldersInTemplateMap, aFile, parties, "", null, formsPlaceHolders, userLawyer, userAssistant, null, null, null, null, null, null, null);
+            placeHoldersInTemplateMap = system.getPlaceHolderValues(placeHoldersInTemplateMap, aFile, parties, "", null, formsPlaceHolders, userLawyer, userAssistant, null, null, null, null, null, null, null, null);
 
             for (RestfulPlaceholderV6 rph : placeHolderValues) {
                 String key = rph.getPlaceHolderKey();
@@ -1044,7 +1044,7 @@ public class TemplatesEndpointV6 implements TemplatesEndpointLocalV6 {
             }
 
             // get all placeholder values for the given set of placeholders
-            HashMap<String, Object> htValues = system.getPlaceHolderValues(ht, aFile, parties, "", null, formPlaceHolderValues, caseLawyer, caseAssistant, author, null, null, null, null, null, null);
+            HashMap<String, Object> htValues = system.getPlaceHolderValues(ht, aFile, parties, "", null, formPlaceHolderValues, caseLawyer, caseAssistant, author, null, null, null, null, null, null, null);
             String subject = CommonTemplatesUtil.replacePlaceHolders(tpl.getSubject(), htValues);
 
             placeHolderNames = CommonTemplatesUtil.getPlaceHoldersInTemplate(tpl.getBody(), allPartyTypesPlaceholders, formPlaceHolders);
@@ -1052,7 +1052,7 @@ public class TemplatesEndpointV6 implements TemplatesEndpointLocalV6 {
             for (String ph : placeHolderNames) {
                 ht.put(ph, "");
             }
-            htValues = system.getPlaceHolderValues(ht, aFile, parties, "", null, formPlaceHolderValues, caseLawyer, caseAssistant, author, null, null, null, null, null, null);
+            htValues = system.getPlaceHolderValues(ht, aFile, parties, "", null, formPlaceHolderValues, caseLawyer, caseAssistant, author, null, null, null, null, null, null, null);
 
             htValues.put("{{CLOUD_LINK}}", "");
 

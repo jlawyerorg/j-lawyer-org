@@ -846,6 +846,7 @@ public class PlaceHolders {
     public static final String BEL_ABSUSTIDNR = "{{BEL_ABSUSTIDNR}}";
     
     public static final String ZE_TABELLE = "{{ZE_TABELLE}}";
+    public static final String ZE_SUMMEN = "{{ZE_SUMMEN}}";
     
     public static final String INGO_TEXT = "{{INGO_TEXT}}";
     
@@ -857,6 +858,7 @@ public class PlaceHolders {
         ALLTABLEPLACEHOLDERS.add(BEL_TABELLE);
         ALLTABLEPLACEHOLDERS.add(BEL_GIROCODE);
         ALLTABLEPLACEHOLDERS.add(ZE_TABELLE);
+        ALLTABLEPLACEHOLDERS.add(ZE_SUMMEN);
     }
     
     public static String insertAt(String origin, String insert, int position) {

@@ -706,6 +706,7 @@ import java.awt.event.ActionEvent;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.text.DecimalFormat;
+import java.text.DecimalFormatSymbols;
 import java.text.SimpleDateFormat;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
@@ -714,6 +715,7 @@ import java.util.Collections;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.TreeMap;
 import java.util.stream.Collectors;
@@ -2172,35 +2174,48 @@ public class InvoiceDialog extends javax.swing.JDialog implements EventConsumer 
         }
 
         StyledCalculationTable ct = new StyledCalculationTable();
+        SimpleDateFormat dfDateTime = null;
+        DecimalFormat currencyFormat=null;
         if ("EN".equalsIgnoreCase(language)) {
-            ct.addHeaders("Duration", "Project", "Description", "Person");
+            ct.addHeaders("Person", "Date", "Duration", "Hourly Rate", "Total", "Description");
+            dfDateTime = new SimpleDateFormat("MM/dd/yyyy");
+            currencyFormat=new DecimalFormat("#,##0.00", DecimalFormatSymbols.getInstance(Locale.US));
         } else if ("FR".equalsIgnoreCase(language)) {
-            ct.addHeaders("Durée", "Projet", "Activité", "Personne");
+            ct.addHeaders("Personne", "Date", "Durée", "Tarif horaire"  , "Somme", "Activité");
+            dfDateTime = new SimpleDateFormat("dd/MM/yyyy");
+            currencyFormat=new DecimalFormat("#,##0.00", DecimalFormatSymbols.getInstance(Locale.FRANCE));
         } else if ("NL".equalsIgnoreCase(language)) {
-            ct.addHeaders("Tijd", "Project", "handeling", "Persoon");
+            ct.addHeaders("Persoon", "Datum", "Tijd", "Uurtarief", "Totaal", "handeling");
+            dfDateTime = new SimpleDateFormat("dd-MM-yyyy");
+            currencyFormat=new DecimalFormat("#,##0.00", DecimalFormatSymbols.getInstance(new Locale("nl", "NL")));
         } else {
-            ct.addHeaders("Zeit", "Projekt", "Tätigkeit", "Person");
+            ct.addHeaders("Person", "Datum", "Dauer", "Stundensatz", "Total", "Aktivität");
+            dfDateTime = new SimpleDateFormat("dd.MM.yyyy");
+            currencyFormat=new DecimalFormat("#,##0.00", DecimalFormatSymbols.getInstance(Locale.GERMANY));
         }
 
         if (ServerSettings.getInstance().getSettingAsBoolean("plugins.global.tableproperties.table.emptyRows", true)) {
             ct.addRow("", "", "", "", "");
         }
 
-        SimpleDateFormat dfDateTime = new SimpleDateFormat("dd.MM.yyyy");
+        
         for (TimesheetPosition pos : posList) {
             float totalMinutes = ((float) (pos.getStopped().getTime() - pos.getStarted().getTime())) / 1000f / 60f;
             double roundedMinutes = Math.ceil(totalMinutes / pos.getTimesheet().getInterval()) * pos.getTimesheet().getInterval();
             Float roundedMinutesFloat = new Float(roundedMinutes);
+            int hours = roundedMinutesFloat.intValue() / 60;
+            int minutes = roundedMinutesFloat.intValue() % 60;
+            
             String person = pos.getPrincipal();
             AppUserBean personUser = UserSettings.getInstance().getUser(person);
             if (personUser != null && !StringUtils.isEmpty(personUser.getDisplayName())) {
                 person = personUser.getDisplayName();
             }
-            ct.addRow(dfDateTime.format(pos.getStarted()) + " (" + roundedMinutesFloat.intValue() + "min)", pos.getTimesheet().getName(), pos.getName() + ": " + pos.getDescription(), person);
+            ct.addRow(person, dfDateTime.format(pos.getStarted()), String.format("%02d:%02d", hours, minutes), currencyFormat.format(pos.getUnitPrice()), currencyFormat.format(pos.getTotal()), pos.getDescription());
         }
 
         if (ServerSettings.getInstance().getSettingAsBoolean("plugins.global.tableproperties.table.emptyRows", true)) {
-            ct.addRow("", "", "", "", "");
+            ct.addRow("", "", "", "", "", "");
         }
 
         //HeaderRow
@@ -2211,14 +2226,106 @@ public class InvoiceDialog extends javax.swing.JDialog implements EventConsumer 
         //TableLayout
         ct.setColumnAlignment(0, Cell.ALIGNMENT_LEFT);
         ct.setColumnAlignment(1, Cell.ALIGNMENT_LEFT);
-        ct.setColumnAlignment(2, Cell.ALIGNMENT_LEFT);
-        ct.setColumnAlignment(3, Cell.ALIGNMENT_LEFT);
+        ct.setColumnAlignment(2, Cell.ALIGNMENT_RIGHT);
+        ct.setColumnAlignment(3, Cell.ALIGNMENT_RIGHT);
+        ct.setColumnAlignment(4, Cell.ALIGNMENT_RIGHT);
+        ct.setColumnAlignment(5, Cell.ALIGNMENT_LEFT);
         ct.getCellAt(0, 1).setAlignment(Cell.ALIGNMENT_LEFT);
         ct.setRowFontSize(0, 12);
-        ct.setColumnWidth(0, 25);
-        ct.setColumnWidth(1, 120);
-        ct.setColumnWidth(2, 35);
+        ct.setColumnWidth(0, 55);
+        ct.setColumnWidth(1, 45);
+        ct.setColumnWidth(2, 45);
         ct.setColumnWidth(3, 35);
+        ct.setColumnWidth(4, 35);
+        ct.setLineBorder(ServerSettings.getInstance().getSettingAsBoolean("plugins.global.tableproperties.table.lines", true));
+        ct.setBorderColor(new Color(ServerSettings.getInstance().getSettingAsInt("plugins.global.tableproperties.table.lines.color", Color.BLACK.getRGB())));
+        ct.setFontFamily(ServerSettings.getInstance().getSetting("plugins.global.tableproperties.table.fontfamily", "Arial"));
+        ct.setFontSize(ServerSettings.getInstance().getSettingAsInt("plugins.global.tableproperties.table.fontsize", 12));
+
+        return ct;
+
+    }
+    
+    private StyledCalculationTable getTimesheetSummaryAsTable(List<TimesheetPosition> posList, String language) {
+
+        if (posList == null || posList.isEmpty()) {
+            return null;
+        }
+
+        StyledCalculationTable ct = new StyledCalculationTable();
+        SimpleDateFormat dfDateTime = null;
+        DecimalFormat currencyFormat=null;
+        if ("EN".equalsIgnoreCase(language)) {
+            ct.addHeaders("Person", "Duration", "Total");
+            dfDateTime = new SimpleDateFormat("MM/dd/yyyy");
+            currencyFormat=new DecimalFormat("#,##0.00", DecimalFormatSymbols.getInstance(Locale.US));
+        } else if ("FR".equalsIgnoreCase(language)) {
+            ct.addHeaders("Personne", "Durée", "Somme");
+            dfDateTime = new SimpleDateFormat("dd/MM/yyyy");
+            currencyFormat=new DecimalFormat("#,##0.00", DecimalFormatSymbols.getInstance(Locale.FRANCE));
+        } else if ("NL".equalsIgnoreCase(language)) {
+            ct.addHeaders("Persoon", "Tijd", "Totaal");
+            dfDateTime = new SimpleDateFormat("dd-MM-yyyy");
+            currencyFormat=new DecimalFormat("#,##0.00", DecimalFormatSymbols.getInstance(new Locale("nl", "NL")));
+        } else {
+            ct.addHeaders("Person", "Dauer", "Total");
+            dfDateTime = new SimpleDateFormat("dd.MM.yyyy");
+            currencyFormat=new DecimalFormat("#,##0.00", DecimalFormatSymbols.getInstance(Locale.GERMANY));
+        }
+
+        if (ServerSettings.getInstance().getSettingAsBoolean("plugins.global.tableproperties.table.emptyRows", true)) {
+            ct.addRow("", "", "");
+        }
+
+        HashMap<String,Long> personMillis=new HashMap();
+        HashMap<String,BigDecimal> personTotal=new HashMap();
+        for (TimesheetPosition pos : posList) {
+            
+            long millis=pos.getStopped().getTime() - pos.getStarted().getTime();
+            BigDecimal total=pos.getTotal();
+            
+            if(personMillis.containsKey(pos.getPrincipal()))
+                personMillis.put(pos.getPrincipal(), personMillis.get(pos.getPrincipal()) + millis);
+            else
+                personMillis.put(pos.getPrincipal(), millis);
+            
+            if(personTotal.containsKey(pos.getPrincipal()))
+                personTotal.put(pos.getPrincipal(), personTotal.get(pos.getPrincipal()).add(total));
+            else
+                personTotal.put(pos.getPrincipal(), total);
+            
+        }
+        
+        for(String principal: personMillis.keySet()) {
+            String person=principal;
+            AppUserBean personUser = UserSettings.getInstance().getUser(principal);
+            if (personUser != null && !StringUtils.isEmpty(personUser.getDisplayName())) {
+                person = personUser.getDisplayName();
+            }
+            float totalMinutes = ((float) (personMillis.get(principal)) / 1000f / 60f);
+            int hours = new Float(totalMinutes).intValue() / 60;
+            int minutes = new Float(totalMinutes).intValue() % 60;
+            ct.addRow(person, String.format("%02d:%02d", hours, minutes), currencyFormat.format(personTotal.get(principal)));
+        }
+
+        if (ServerSettings.getInstance().getSettingAsBoolean("plugins.global.tableproperties.table.emptyRows", true)) {
+            ct.addRow("", "", "", "", "", "");
+        }
+
+        //HeaderRow
+        ct.setRowForeGround(0, new Color(ServerSettings.getInstance().getSettingAsInt("plugins.global.tableproperties.header.fore.color", Color.BLACK.getRGB())));
+        ct.setRowBackGround(0, new Color(ServerSettings.getInstance().getSettingAsInt("plugins.global.tableproperties.header.back.color", Color.LIGHT_GRAY.getRGB())));
+        ct.setRowBold(0, ServerSettings.getInstance().getSettingAsBoolean("plugins.global.tableproperties.header.Bold", true));
+
+        //TableLayout
+        ct.setColumnAlignment(0, Cell.ALIGNMENT_LEFT);
+        ct.setColumnAlignment(1, Cell.ALIGNMENT_RIGHT);
+        ct.setColumnAlignment(2, Cell.ALIGNMENT_RIGHT);
+        ct.getCellAt(0, 1).setAlignment(Cell.ALIGNMENT_LEFT);
+        ct.setRowFontSize(0, 12);
+        ct.setColumnWidth(0, 65);
+        ct.setColumnWidth(1, 55);
+        ct.setColumnWidth(2, 55);
         ct.setLineBorder(ServerSettings.getInstance().getSettingAsBoolean("plugins.global.tableproperties.table.lines", true));
         ct.setBorderColor(new Color(ServerSettings.getInstance().getSettingAsInt("plugins.global.tableproperties.table.lines.color", Color.BLACK.getRGB())));
         ct.setFontFamily(ServerSettings.getInstance().getSetting("plugins.global.tableproperties.table.fontfamily", "Arial"));
@@ -2238,14 +2345,19 @@ public class InvoiceDialog extends javax.swing.JDialog implements EventConsumer 
         int rowcount = 0;
 
         StyledCalculationTable ct = new StyledCalculationTable();
+        DecimalFormat currencyFormat=null;
         if ("EN".equalsIgnoreCase(language)) {
             ct.addHeaders("", "Position", "Qty", "Rate", "Tax", "Amount");
+            currencyFormat=new DecimalFormat("#,##0.00", DecimalFormatSymbols.getInstance(Locale.US));
         } else if ("FR".equalsIgnoreCase(language)) {
             ct.addHeaders("", "Article de facture", "Quantité", "Prix unitaire", "TPS", "Au total");
+            currencyFormat=new DecimalFormat("#,##0.00", DecimalFormatSymbols.getInstance(Locale.FRANCE));
         } else if ("NL".equalsIgnoreCase(language)) {
             ct.addHeaders("", "Factuuritem", "Aantal", "Prijs", "BTW", "Totaal");
+            currencyFormat=new DecimalFormat("#,##0.00", DecimalFormatSymbols.getInstance(new Locale("nl", "NL")));
         } else {
             ct.addHeaders("", "Position", "Menge", "Einzel", "USt.", "Gesamt");
+            currencyFormat=new DecimalFormat("#,##0.00", DecimalFormatSymbols.getInstance(Locale.GERMANY));
         }
         if (ServerSettings.getInstance().getSettingAsBoolean("plugins.global.tableproperties.table.emptyRows", true)) {
             ct.addRow("", "", "", "", "", "");
@@ -2275,9 +2387,9 @@ public class InvoiceDialog extends javax.swing.JDialog implements EventConsumer 
 
                 positionIndex = positionIndex + 1;
                 if (StringUtils.isEmpty(pos.getDescription())) {
-                    ct.addRow("" + positionIndex, pos.getName(), cf.format(pos.getUnits()), cf.format(pos.getUnitPrice()), percentageFormat.format(t), cf.format(u.multiply(up)) + " " + this.cmbCurrency.getSelectedItem());
+                    ct.addRow("" + positionIndex, pos.getName(), currencyFormat.format(pos.getUnits()), currencyFormat.format(pos.getUnitPrice()), percentageFormat.format(t), currencyFormat.format(u.multiply(up)) + " " + this.cmbCurrency.getSelectedItem());
                 } else {
-                    ct.addRow("" + positionIndex, pos.getName() + ": " + pos.getDescription(), cf.format(pos.getUnits()), cf.format(pos.getUnitPrice()), percentageFormat.format(t), cf.format(u.multiply(up)) + " " + this.cmbCurrency.getSelectedItem());
+                    ct.addRow("" + positionIndex, pos.getName() + ": " + pos.getDescription(), currencyFormat.format(pos.getUnits()), currencyFormat.format(pos.getUnitPrice()), percentageFormat.format(t), currencyFormat.format(u.multiply(up)) + " " + this.cmbCurrency.getSelectedItem());
                 }
 
                 rowcount = rowcount + 1;
@@ -2292,27 +2404,27 @@ public class InvoiceDialog extends javax.swing.JDialog implements EventConsumer 
         int footerRowTotal = -1;
         Map<BigDecimal, BigDecimal> taxRateToTaxTotalSorted = new TreeMap<>(taxRateToTaxTotal);
         if ("EN".equalsIgnoreCase(language)) {
-            footerRowNet = ct.addRow("", "Net", "", "", "", cf.format(totalNet) + " " + this.cmbCurrency.getSelectedItem());
+            footerRowNet = ct.addRow("", "Net", "", "", "", currencyFormat.format(totalNet) + " " + this.cmbCurrency.getSelectedItem());
             for (BigDecimal taxRate : taxRateToTaxTotalSorted.keySet()) {
-                footerRowTaxes.add(ct.addRow("", "Tax " + percentageFormat.format(taxRate) + "%", "", "", "", cf.format(taxRateToTaxTotal.get(taxRate)) + " " + this.cmbCurrency.getSelectedItem()));
+                footerRowTaxes.add(ct.addRow("", "Tax " + percentageFormat.format(taxRate) + "%", "", "", "", currencyFormat.format(taxRateToTaxTotal.get(taxRate)) + " " + this.cmbCurrency.getSelectedItem()));
             }
             footerRowTotal = ct.addRow("", "Balance Due", "", "", "", lblInvoiceTotal.getText() + " " + this.cmbCurrency.getSelectedItem());
         } else if ("FR".equalsIgnoreCase(language)) {
-            footerRowNet = ct.addRow("", "Sous Total", "", "", "", cf.format(totalNet) + " " + this.cmbCurrency.getSelectedItem());
+            footerRowNet = ct.addRow("", "Sous Total", "", "", "", currencyFormat.format(totalNet) + " " + this.cmbCurrency.getSelectedItem());
             for (BigDecimal taxRate : taxRateToTaxTotalSorted.keySet()) {
-                footerRowTaxes.add(ct.addRow("", "TPS " + percentageFormat.format(taxRate) + "%", "", "", "", cf.format(taxRateToTaxTotal.get(taxRate)) + " " + this.cmbCurrency.getSelectedItem()));
+                footerRowTaxes.add(ct.addRow("", "TPS " + percentageFormat.format(taxRate) + "%", "", "", "", currencyFormat.format(taxRateToTaxTotal.get(taxRate)) + " " + this.cmbCurrency.getSelectedItem()));
             }
             footerRowTotal = ct.addRow("", "Montant Dû", "", "", "", lblInvoiceTotal.getText() + " " + this.cmbCurrency.getSelectedItem());
         } else if ("NL".equalsIgnoreCase(language)) {
-            footerRowNet = ct.addRow("", "Subtotal", "", "", "", cf.format(totalNet) + " " + this.cmbCurrency.getSelectedItem());
+            footerRowNet = ct.addRow("", "Subtotal", "", "", "", currencyFormat.format(totalNet) + " " + this.cmbCurrency.getSelectedItem());
             for (BigDecimal taxRate : taxRateToTaxTotalSorted.keySet()) {
-                footerRowTaxes.add(ct.addRow("", "BTW " + percentageFormat.format(taxRate) + "%", "", "", "", cf.format(taxRateToTaxTotal.get(taxRate)) + " " + this.cmbCurrency.getSelectedItem()));
+                footerRowTaxes.add(ct.addRow("", "BTW " + percentageFormat.format(taxRate) + "%", "", "", "", currencyFormat.format(taxRateToTaxTotal.get(taxRate)) + " " + this.cmbCurrency.getSelectedItem()));
             }
             footerRowTotal = ct.addRow("", "Totaal te betalen", "", "", "", lblInvoiceTotal.getText() + " " + this.cmbCurrency.getSelectedItem());
         } else {
-            footerRowNet = ct.addRow("", "Netto", "", "", "", cf.format(totalNet) + " " + this.cmbCurrency.getSelectedItem());
+            footerRowNet = ct.addRow("", "Netto", "", "", "", currencyFormat.format(totalNet) + " " + this.cmbCurrency.getSelectedItem());
             for (BigDecimal taxRate : taxRateToTaxTotalSorted.keySet()) {
-                footerRowTaxes.add(ct.addRow("", "USt. " + percentageFormat.format(taxRate) + "%", "", "", "", cf.format(taxRateToTaxTotal.get(taxRate)) + " " + this.cmbCurrency.getSelectedItem()));
+                footerRowTaxes.add(ct.addRow("", "USt. " + percentageFormat.format(taxRate) + "%", "", "", "", currencyFormat.format(taxRateToTaxTotal.get(taxRate)) + " " + this.cmbCurrency.getSelectedItem()));
             }
             footerRowTotal = ct.addRow("", "Zahlbetrag", "", "", "", lblInvoiceTotal.getText() + " " + this.cmbCurrency.getSelectedItem());
         }
@@ -2561,10 +2673,12 @@ public class InvoiceDialog extends javax.swing.JDialog implements EventConsumer 
                 // generate document via template system
                 // upon PDF creation, embed XRechnung XML
                 StyledCalculationTable timesheetPosTable = null;
+                StyledCalculationTable timesheetSummaryTable = null;
                 try {
                     JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(ClientSettings.getInstance().getLookupProperties());
                     List<TimesheetPosition> times = locator.lookupArchiveFileServiceRemote().getTimesheetPositionsForInvoice(this.currentEntry.getId());
                     timesheetPosTable = this.getTimesheetPositionsAsTable(times, this.cmbTableHeadersLanguage.getSelectedItem().toString());
+                    timesheetSummaryTable = this.getTimesheetSummaryAsTable(times, this.cmbTableHeadersLanguage.getSelectedItem().toString());
                 } catch (Exception ex) {
                     log.error("error getting timesheet positions table", ex);
                     JOptionPane.showMessageDialog(this, "Fehler beim Laden Zeiterfassungspositionen: " + ex.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
@@ -2581,7 +2695,7 @@ public class InvoiceDialog extends javax.swing.JDialog implements EventConsumer 
                     JOptionPane.showMessageDialog(this, ex.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
                 }
 
-                ArchiveFileDocumentsBean invoiceDoc = this.caseView.newDocumentDialog(null, currentEntry, senderUser, this.getInvoicePositionsAsTable(this.cmbTableHeadersLanguage.getSelectedItem().toString()), timesheetPosTable, giroCode, null);
+                ArchiveFileDocumentsBean invoiceDoc = this.caseView.newDocumentDialog(null, currentEntry, senderUser, this.getInvoicePositionsAsTable(this.cmbTableHeadersLanguage.getSelectedItem().toString()), timesheetPosTable, timesheetSummaryTable, giroCode, null);
                 if (invoiceDoc != null && this.currentEntry != null) {
                     this.save();
                     try {
@@ -2828,16 +2942,18 @@ public class InvoiceDialog extends javax.swing.JDialog implements EventConsumer 
             }
 
             StyledCalculationTable timesheetPosTable = null;
+            StyledCalculationTable timesheetSummaryTable = null;
             try {
                 JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(ClientSettings.getInstance().getLookupProperties());
                 List<TimesheetPosition> times = locator.lookupArchiveFileServiceRemote().getTimesheetPositionsForInvoice(this.currentEntry.getId());
                 timesheetPosTable = this.getTimesheetPositionsAsTable(times, this.cmbTableHeadersLanguage.getSelectedItem().toString());
+                timesheetSummaryTable = this.getTimesheetSummaryAsTable(times, this.cmbTableHeadersLanguage.getSelectedItem().toString());
             } catch (Exception ex) {
                 log.error("error getting timesheet positions table", ex);
                 JOptionPane.showMessageDialog(this, "Fehler beim Laden Zeiterfassungspositionen: " + ex.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
             }
 
-            ArchiveFileDocumentsBean timesheetDoc = this.caseView.newDocumentDialog(null, currentEntry, senderUser, this.getInvoicePositionsAsTable(this.cmbTableHeadersLanguage.getSelectedItem().toString()), timesheetPosTable, null, null);
+            ArchiveFileDocumentsBean timesheetDoc = this.caseView.newDocumentDialog(null, currentEntry, senderUser, this.getInvoicePositionsAsTable(this.cmbTableHeadersLanguage.getSelectedItem().toString()), timesheetPosTable, timesheetSummaryTable, null, null);
 
         }
     }//GEN-LAST:event_cmdCreateTimesheetDocumentActionPerformed

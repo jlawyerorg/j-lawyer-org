@@ -723,6 +723,7 @@ public class AddDocumentFromTemplateDialog extends javax.swing.JDialog implement
     private byte[] giroCode = null;
     private String ingoText=null;
     private StyledCalculationTable timesheetsTable = null;
+    private StyledCalculationTable timesheetSummaryTable = null;
     private List<PartyTypeBean> allPartyTypes = null;
     private Collection<String> formPlaceHolders = new ArrayList<>();
     private HashMap<String, String> formPlaceHolderValues = new HashMap<>();
@@ -734,7 +735,7 @@ public class AddDocumentFromTemplateDialog extends javax.swing.JDialog implement
     private DocumentNameTemplate nameTemplate = null;
 
     public AddDocumentFromTemplateDialog(java.awt.Frame parent, boolean modal, ArchiveFilePanel casePanel, CaseFolderPanel targetTable, ArchiveFileBean aFile, List<ArchiveFileAddressesBean> involved) {
-        this(parent, modal, casePanel, targetTable, aFile, involved, null, null, null, null, null, null, null);
+        this(parent, modal, casePanel, targetTable, aFile, involved, null, null, null, null, null, null, null, null);
     }
 
     /**
@@ -754,7 +755,7 @@ public class AddDocumentFromTemplateDialog extends javax.swing.JDialog implement
      * @param giroCode
      * @param ingoText
      */
-    public AddDocumentFromTemplateDialog(java.awt.Frame parent, boolean modal, ArchiveFilePanel casePanel, CaseFolderPanel targetTable, ArchiveFileBean aFile, List<ArchiveFileAddressesBean> involved, GenericCalculationTable calculationTable, Invoice invoice, AppUserBean invoiceSender, StyledCalculationTable invoiceTable, StyledCalculationTable timesheetsTable, byte[] giroCode, String ingoText) {
+    public AddDocumentFromTemplateDialog(java.awt.Frame parent, boolean modal, ArchiveFilePanel casePanel, CaseFolderPanel targetTable, ArchiveFileBean aFile, List<ArchiveFileAddressesBean> involved, GenericCalculationTable calculationTable, Invoice invoice, AppUserBean invoiceSender, StyledCalculationTable invoiceTable, StyledCalculationTable timesheetsTable, StyledCalculationTable timesheetSummaryTable, byte[] giroCode, String ingoText) {
         super(parent, modal);
 
         this.calculationTable = calculationTable;
@@ -764,6 +765,7 @@ public class AddDocumentFromTemplateDialog extends javax.swing.JDialog implement
         this.ingoText = ingoText;
         this.invoiceTable = invoiceTable;
         this.timesheetsTable = timesheetsTable;
+        this.timesheetSummaryTable = timesheetSummaryTable;
 
         this.targetTable = targetTable;
         this.aFile = aFile;
@@ -1803,7 +1805,7 @@ public class AddDocumentFromTemplateDialog extends javax.swing.JDialog implement
                 for (String ph : placeHoldersBody) {
                     ht.put(ph, "");
                 }
-                ht = locator.lookupSystemManagementRemote().getPlaceHolderValues(ht, aFile, partiesTriplets, this.cmbDictateSigns.getSelectedItem().toString(), this.calculationTable, this.formPlaceHolderValues, caseLawyer, caseAssistant, author, this.invoice, this.invoiceSender, this.invoiceTable, this.timesheetsTable, giroCode, ingoText);
+                ht = locator.lookupSystemManagementRemote().getPlaceHolderValues(ht, aFile, partiesTriplets, this.cmbDictateSigns.getSelectedItem().toString(), this.calculationTable, this.formPlaceHolderValues, caseLawyer, caseAssistant, author, this.invoice, this.invoiceSender, this.invoiceTable, this.timesheetsTable, this.timesheetSummaryTable, giroCode, ingoText);
 
                 int emptyValues = 0;
                 for (String key : ht.keySet()) {

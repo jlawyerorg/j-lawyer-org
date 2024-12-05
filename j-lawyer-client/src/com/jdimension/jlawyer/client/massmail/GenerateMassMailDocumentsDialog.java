@@ -993,7 +993,7 @@ public class GenerateMassMailDocumentsDialog extends javax.swing.JDialog {
                             partiesTriplets.add(triplet);
                         }
 
-                        ht = locator.lookupSystemManagementRemote().getPlaceHolderValues(ht, null, partiesTriplets, null, null, new HashMap<>(), null, null, null, null, null, null, null, null, null);
+                        ht = locator.lookupSystemManagementRemote().getPlaceHolderValues(ht, null, partiesTriplets, null, null, new HashMap<>(), null, null, null, null, null, null, null, null, null, null);
                         
                         for (String key: ht.keySet()) {
                             Object[] row = new Object[]{key, ht.get(key)};
@@ -1104,7 +1104,7 @@ public class GenerateMassMailDocumentsDialog extends javax.swing.JDialog {
                     PartiesTriplet triplet = new PartiesTriplet(pe.getAddress(), pe.getReferenceType(), pe.getInvolvement());
                     partiesTriplets.add(triplet);
                 }
-                ht = locator.lookupSystemManagementRemote().getPlaceHolderValues(ht, null, partiesTriplets, null, null, new HashMap<>(), null, null, null, null, null, null, null, null, null);
+                ht = locator.lookupSystemManagementRemote().getPlaceHolderValues(ht, null, partiesTriplets, null, null, new HashMap<>(), null, null, null, null, null, null, null, null, null, null);
 
                 for (String key: ht.keySet()) {
                     Object[] row = new Object[]{key, ht.get(key)};
