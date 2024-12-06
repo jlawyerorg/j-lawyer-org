@@ -684,13 +684,13 @@ import org.apache.http.impl.client.HttpClients;
 public class EmailServiceTest extends TestCase {
 
     // for initial token
-    private static String TENANT_ID = "";
+    private static String TENANT_ID = "1350ac73-8099-4367-b158-33e900f67387";
     private static String DEVICE_CODE_URL = "https://login.microsoftonline.com/" + TENANT_ID + "/oauth2/v2.0/devicecode";
 
     // for refreshing tokens
     private static final String TOKEN_ENDPOINT = "https://login.microsoftonline.com/" + TENANT_ID + "/oauth2/v2.0/token";
-    private static final String CLIENT_ID = "";
-    private static final String CLIENT_SECRET = "";
+    private static final String CLIENT_ID = "9716b0ae-770d-40d8-a1f8-98a7c2397509";
+    private static final String CLIENT_SECRET = "0Ea8Q~AyeRO1K.acyXRl_GkaeJKK3GxMuY-Eva1g";
 
     private static String accessToken = null; // Store access token in memory
     private static String refreshToken = "your-initial-refresh-token"; // Replace with your stored refresh token
