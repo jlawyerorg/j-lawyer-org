@@ -753,15 +753,19 @@ public class SendAction extends ProgressableAction {
         this.progress("Verbinde...");
         
         String inPwd = "";
-        try {
-            inPwd = CryptoProvider.defaultCrypto().decrypt(ms.getEmailInPwd());
-        } catch (Throwable t) {
-            log.error(t);
+        if (ms.isMsExchange()) {
+            inPwd = EmailUtils.getOffice365AuthToken(ms.getId());
+        } else {
+            try {
+                inPwd = CryptoProvider.defaultCrypto().decrypt(ms.getEmailInPwd());
+            } catch (Throwable t) {
+                log.error(t);
+            }
         }
-
+        
         String outPwd = "";
         if (ms.isMsExchange()) {
-            outPwd = EmailUtils.getOffice365AuthToken(ms.getId());
+            outPwd = inPwd;
         } else {
             try {
                 outPwd = CryptoProvider.defaultCrypto().decrypt(ms.getEmailOutPwd());

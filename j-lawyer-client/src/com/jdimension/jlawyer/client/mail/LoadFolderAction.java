@@ -663,7 +663,6 @@
  */
 package com.jdimension.jlawyer.client.mail;
 
-import com.jdimension.jlawyer.client.editors.EditorsRegistry;
 import com.jdimension.jlawyer.client.processing.ProgressIndicator;
 import com.jdimension.jlawyer.client.processing.ProgressableAction;
 import com.jdimension.jlawyer.client.settings.ClientSettings;
@@ -678,6 +677,7 @@ import javax.mail.FetchProfile;
 import javax.mail.Flags;
 import javax.mail.Folder;
 import javax.mail.Message;
+import javax.mail.search.AndTerm;
 import javax.mail.search.BodyTerm;
 import javax.mail.search.FlagTerm;
 import javax.mail.search.FromStringTerm;
@@ -703,7 +703,7 @@ public class LoadFolderAction extends ProgressableAction {
     private JTable table = null;
     private int sortCol = -1;
     private int scrollToRow = -1;
-    private String searchTerm=null;
+    private String searchTerm = null;
 
     public LoadFolderAction(ProgressIndicator i, Folder f, JTable table, int sortCol, int scrollToRow, String searchTerm) {
         super(i, false);
@@ -711,7 +711,7 @@ public class LoadFolderAction extends ProgressableAction {
         this.table = table;
         this.sortCol = sortCol;
         this.scrollToRow = scrollToRow;
-        this.searchTerm=searchTerm;
+        this.searchTerm = searchTerm;
     }
 
     @Override
@@ -732,18 +732,17 @@ public class LoadFolderAction extends ProgressableAction {
     @Override
     public boolean execute() throws Exception {
         try {
-            EditorsRegistry.getInstance().updateStatus("Öffne Ordner " + f.getName(), true);
-
             if (!(f.isOpen())) {
                 f.open(Folder.READ_WRITE);
             }
-            try {
-                if (EmailUtils.isIMAP(f)) {
-                    f.expunge();
-                }
-            } catch (Throwable t) {
-                log.error("Could not expunge folder", t);
-            }
+//            try {
+//                if (EmailUtils.isIMAP(f)) {
+//                    f.expunge();
+//                }
+//            } catch (Throwable t) {
+//                log.error("Could not expunge folder", t);
+//            }
+//            System.out.println("load 20 = " + (System.currentTimeMillis() - start));
 
             ClientSettings cs = ClientSettings.getInstance();
             String restriction = cs.getConfiguration(ClientSettings.CONF_MAIL_DOWNLOADRESTRICTION, "" + LoadFolderRestriction.RESTRICTION_50);
@@ -757,38 +756,57 @@ public class LoadFolderAction extends ProgressableAction {
 
             int fromIndex = 1;
             int toIndex = f.getMessageCount();
-            int maxQuantity=Integer.MAX_VALUE;
+            int maxQuantity = Integer.MAX_VALUE;
             switch (currentRestriction.getRestriction()) {
                 case LoadFolderRestriction.RESTRICTION_20:
                     fromIndex = Math.max(1, toIndex - 20);
-                    maxQuantity=20;
+                    maxQuantity = 20;
                     break;
                 case LoadFolderRestriction.RESTRICTION_50:
                     fromIndex = Math.max(1, toIndex - 50);
-                    maxQuantity=50;
+                    maxQuantity = 50;
                     break;
                 case LoadFolderRestriction.RESTRICTION_100:
                     fromIndex = Math.max(1, toIndex - 100);
-                    maxQuantity=100;
+                    maxQuantity = 100;
                     break;
                 case LoadFolderRestriction.RESTRICTION_500:
                     fromIndex = Math.max(1, toIndex - 500);
-                    maxQuantity=500;
+                    maxQuantity = 500;
                     break;
                 default:
                     break;
             }
 
-            Message[] messages =null;
-            if(StringUtils.isEmpty(this.searchTerm)) {
-                messages = f.getMessages(fromIndex, toIndex);
+            Message[] messages = null;
+            FlagTerm notDeleted = new FlagTerm(new Flags(Flags.Flag.DELETED), false);
+            if (StringUtils.isEmpty(this.searchTerm)) {
                 if (currentRestriction.getRestriction() == LoadFolderRestriction.RESTRICTION_UNREAD) {
-                    messages=f.search(new FlagTerm(new Flags(Flags.Flag.SEEN), false), messages);
+                    // Combine unread filter with notDeleted filter
+                    FlagTerm unread = new FlagTerm(new Flags(Flags.Flag.SEEN), false);
+                    AndTerm filter = new AndTerm(unread, notDeleted);
+                    messages = f.search(filter, messages);
+                } else {
+                    messages = f.getMessages(fromIndex, toIndex);
+
+                    // Apply the filter to the subset of messages
+                    messages = f.search(notDeleted, messages);
                 }
             } else {
-                maxQuantity=Integer.MAX_VALUE;
-                OrTerm orTerm=new OrTerm(new SearchTerm[] {new SubjectTerm(this.searchTerm), new FromStringTerm(this.searchTerm), new RecipientStringTerm(Message.RecipientType.TO, this.searchTerm), new RecipientStringTerm(Message.RecipientType.CC, this.searchTerm), new RecipientStringTerm(Message.RecipientType.BCC, this.searchTerm), new BodyTerm(this.searchTerm)});
-                messages=f.search(orTerm);
+                maxQuantity = Integer.MAX_VALUE;
+                // Build the OR search term for subject, sender, recipients, and body
+                OrTerm orTerm = new OrTerm(new SearchTerm[]{
+                    new SubjectTerm(this.searchTerm),
+                    new FromStringTerm(this.searchTerm),
+                    new RecipientStringTerm(Message.RecipientType.TO, this.searchTerm),
+                    new RecipientStringTerm(Message.RecipientType.CC, this.searchTerm),
+                    new RecipientStringTerm(Message.RecipientType.BCC, this.searchTerm),
+                    new BodyTerm(this.searchTerm)
+                });
+
+                // Combine the OR term with notDeleted filter
+                AndTerm filter = new AndTerm(orTerm, notDeleted);
+                messages = f.search(filter);
             }
             
             FetchProfile fp = new FetchProfile();
@@ -812,7 +830,6 @@ public class LoadFolderAction extends ProgressableAction {
 
                 if ((i % 100) == 0 || i == (messages.length - 1)) {
                     this.progress("Lade Nachrichten... " + (i + 1));
-                    EditorsRegistry.getInstance().updateStatus("Lade Nachricht " + (i + 1), true);
                 }
 
                 final Message msg = messages[i];
@@ -863,9 +880,9 @@ public class LoadFolderAction extends ProgressableAction {
                     }
                 }
 
-                String sentString="";
-                if(msg.getSentDate()!=null) {
-                    sentString=df.format(msg.getSentDate());
+                String sentString = "";
+                if (msg.getSentDate() != null) {
+                    sentString = df.format(msg.getSentDate());
                 }
                 Object[] newRow = new Object[]{new MessageContainer(msg, msg.getSubject(), msg.isSet(Flags.Flag.SEEN)), from, toString, sentString};
                 tableRows.add(newRow);
@@ -881,7 +898,7 @@ public class LoadFolderAction extends ProgressableAction {
                         try {
                             for (Object[] rowObject : tableRowsClone) {
                                 ((DefaultTableModel) table.getModel()).addRow(rowObject);
-                                
+
                             }
                             if (scrollToRow > 0) {
                                 if (currentIndex == (indexMax)) {
@@ -913,8 +930,6 @@ public class LoadFolderAction extends ProgressableAction {
                 ComponentUtils.autoSizeColumns(table, 0);
             });
 
-            EditorsRegistry.getInstance().clearStatus(true);
-
             new Thread(() -> {
                 try {
                     Thread.sleep(5000);
@@ -925,7 +940,6 @@ public class LoadFolderAction extends ProgressableAction {
                     log.error(t);
                 }
             }).start();
-
         } catch (Throwable ex) {
             log.error(ex);
             return false;

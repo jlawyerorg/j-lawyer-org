@@ -1681,7 +1681,18 @@ public class EmailInboxPanel extends javax.swing.JPanel implements SaveToCaseExe
         Folder folder = folderC.getFolder();
         try {
             if (!folder.isOpen()) {
-                folder.open(Folder.READ_WRITE);
+                try {
+                    folder.open(Folder.READ_WRITE);
+                } catch (Exception ex) {
+                    MailboxSetup ms=this.getMailboxSetup(selNode);
+                    log.warn("Attempting to reconnect to " + ms.getEmailAddress());
+                    String pw=ms.getEmailInPwd();
+                    if(ms.isMsExchange())
+                        pw=ms.getAuthToken();
+                    folder.getStore().connect(ms.getEmailInServer(), ms.getEmailInUser(), pw);
+                    folder.close(false);
+                    folder.open(Folder.READ_WRITE);
+                }
             }
 
             DefaultTableModel tm = new DefaultTableModel(new String[]{"Betreff", "Absender", "Empfänger", "Gesendet"}, 0) {

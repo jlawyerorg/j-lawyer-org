@@ -728,15 +728,11 @@ public class EmailService implements EmailServiceRemote, EmailServiceLocal {
 
         List<MailboxSetup> mailboxes = this.mailboxSetupFacade.findByMsExchange(true);
         for (MailboxSetup ms : mailboxes) {
-            List<MailboxAccess> usage = this.mailboxAccessFacade.findByMailbox(ms.getId());
-            if (!usage.isEmpty()) {
-                // only refresh token for mailboxes that are in use
-                if (ms.getTokenExpiry() == 0 || ((ms.getTokenExpiry() - System.currentTimeMillis()) < (6l * 60l * 1000l))) {
-                    try {
-                        this.updateAuthToken(ms);
-                    } catch (Exception ex) {
-                        log.error("failed to retrieve new access token for mailbox " + ms.getEmailAddress(), ex);
-                    }
+            if (ms.getTokenExpiry() == 0 || ((ms.getTokenExpiry() - System.currentTimeMillis()) < (6l * 60l * 1000l))) {
+                try {
+                    this.updateAuthToken(ms);
+                } catch (Exception ex) {
+                    log.error("failed to retrieve new access token for mailbox " + ms.getEmailAddress(), ex);
                 }
             }
         }
@@ -778,7 +774,7 @@ public class EmailService implements EmailServiceRemote, EmailServiceLocal {
                             response.getEntity().getContent(),
                             Map.class
                     );
-
+                    
                     String accessToken = (String) responseBody.get("access_token");
                     String refreshToken = (String) responseBody.get("refresh_token");
                     int expiresIn = (int) responseBody.get("expires_in");

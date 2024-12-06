@@ -698,10 +698,8 @@ public class MailSettingsTestAction extends ProgressableAction {
     
     private boolean isMsExchange=false;
     private String authToken=null;
-    private String clientId=null;
-    private String clientSecret=null;
 
-    public MailSettingsTestAction(ProgressIndicator i, JDialog owner, JButton cmdTestMail, String address, String outServer, String outPort, String outUser, String outPwd, boolean outSsl, boolean outStartTls, String inServer, String inUser, String inPwd, boolean inSsl, String inType, boolean isMsExchange, String clientId, String clientSecret, String authToken) {
+    public MailSettingsTestAction(ProgressIndicator i, JDialog owner, JButton cmdTestMail, String address, String outServer, String outPort, String outUser, String outPwd, boolean outSsl, boolean outStartTls, String inServer, String inUser, String inPwd, boolean inSsl, String inType, boolean isMsExchange, String authToken) {
         super(i, false);
         this.owner = owner;
         this.cmdTestMail = cmdTestMail;
@@ -721,8 +719,6 @@ public class MailSettingsTestAction extends ProgressableAction {
         
         this.isMsExchange=isMsExchange;
         this.authToken=authToken;
-        this.clientId=clientId;
-        this.clientSecret=clientSecret;
     }
 
     @Override
@@ -758,12 +754,12 @@ public class MailSettingsTestAction extends ProgressableAction {
                 port = Integer.parseInt(this.outPort);
             }
             this.progress("Test läuft (Versand)...");
-            sysMan.testSendMail(this.outServer, port, this.outUser, this.outPwd, this.outSsl, this.outStartTls, this.address);
+            sysMan.testSendMail(this.outServer, port, this.outUser, this.outPwd, this.outSsl, this.outStartTls, this.address, this.isMsExchange, this.authToken);
             this.progress("VERSAND: Testnachricht erfolgreich  verschickt - bitte Posteingang prüfen");
             Thread.sleep(5000);
             process="Empfang / Posteingang";
             this.progress("Test läuft (Empfang)...");
-            sysMan.testReceiveMail(this.address, this.inServer, this.inType, this.inSsl, this.inUser, this.inPwd, this.isMsExchange, this.clientId, this.clientSecret, this.authToken);
+            sysMan.testReceiveMail(this.address, this.inServer, this.inType, this.inSsl, this.inUser, this.inPwd, this.isMsExchange, this.authToken);
             this.progress("EMPFANG: Posteingang erfolgreich geprüft");
             Thread.sleep(3000);
             SwingUtilities.invokeLater(() -> {
