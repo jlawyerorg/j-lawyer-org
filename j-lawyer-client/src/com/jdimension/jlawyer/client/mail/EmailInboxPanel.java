@@ -1694,7 +1694,8 @@ public class EmailInboxPanel extends javax.swing.JPanel implements SaveToCaseExe
                         store.close(); // Ensure the store is clean
                     }
                     store.connect(ms.getEmailInServer(), ms.getEmailInUser(), pw);
-                    folder.close(false);
+                    if(folder.isOpen())
+                        folder.close(false);
                     folder.open(Folder.READ_WRITE);
                 }
             }

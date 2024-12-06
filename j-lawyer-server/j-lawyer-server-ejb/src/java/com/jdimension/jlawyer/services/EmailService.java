@@ -730,7 +730,12 @@ public class EmailService implements EmailServiceRemote, EmailServiceLocal {
         for (MailboxSetup ms : mailboxes) {
             if (ms.getTokenExpiry() == 0 || ((ms.getTokenExpiry() - System.currentTimeMillis()) < (6l * 60l * 1000l))) {
                 try {
-                    this.updateAuthToken(ms);
+                    log.info("attempting to update tokens for " + ms.getEmailAddress());
+                    boolean success=this.updateAuthToken(ms);
+                    if(!success)
+                        log.error("failed to update tokens for " + ms.getEmailAddress());
+                    else
+                        log.info("successfully updated tokens for " + ms.getEmailAddress());
                 } catch (Exception ex) {
                     log.error("failed to retrieve new access token for mailbox " + ms.getEmailAddress(), ex);
                 }
@@ -742,15 +747,18 @@ public class EmailService implements EmailServiceRemote, EmailServiceLocal {
     private boolean updateAuthToken(MailboxSetup mailbox) throws Exception {
 
         if (ServerStringUtils.isEmpty(mailbox.getTenantId())) {
-            throw new Exception("Tenant ID is empty");
+            log.error("Tenant ID is empty when updating access token for " + mailbox.getEmailAddress());
+            return false;
         }
 
         if (ServerStringUtils.isEmpty(mailbox.getClientId())) {
-            throw new Exception("Client ID is empty");
+            log.error("Client ID is empty when updating access token for " + mailbox.getEmailAddress());
+            return false;
         }
 
         if (ServerStringUtils.isEmpty(mailbox.getRefreshToken())) {
-            throw new Exception("Refresh token is empty");
+            log.error("Refresh token is empty when updating access token for " + mailbox.getEmailAddress());
+            return false;
         }
 
         String TOKEN_ENDPOINT = "https://login.microsoftonline.com/" + mailbox.getTenantId() + "/oauth2/v2.0/token";
@@ -780,8 +788,6 @@ public class EmailService implements EmailServiceRemote, EmailServiceLocal {
                     int expiresIn = (int) responseBody.get("expires_in");
                     // Calculate token expiry time (current time + expires_in seconds)
                     long tokenExpiryTime = System.currentTimeMillis() + (expiresIn * 1000l);
-
-                    log.info("successfully retrieved new access token for mailbox " + mailbox.getEmailAddress());
 
                     mailbox.setAuthToken(accessToken);
                     mailbox.setRefreshToken(refreshToken);
