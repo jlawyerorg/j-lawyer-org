@@ -781,7 +781,7 @@ public class EmailService implements EmailServiceRemote, EmailServiceLocal {
                     // Calculate token expiry time (current time + expires_in seconds)
                     long tokenExpiryTime = System.currentTimeMillis() + (expiresIn * 1000l);
 
-                    log.info("succesfully retrieved new access token for mailbox " + mailbox.getEmailAddress());
+                    log.info("successfully retrieved new access token for mailbox " + mailbox.getEmailAddress());
 
                     mailbox.setAuthToken(accessToken);
                     mailbox.setRefreshToken(refreshToken);
