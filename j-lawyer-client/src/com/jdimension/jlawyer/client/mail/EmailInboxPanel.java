@@ -1688,7 +1688,7 @@ public class EmailInboxPanel extends javax.swing.JPanel implements SaveToCaseExe
                     log.warn("Attempting to reconnect to " + ms.getEmailAddress());
                     String pw=ms.getEmailInPwd();
                     if(ms.isMsExchange())
-                        pw=ms.getAuthToken();
+                        pw=EmailUtils.getOffice365AuthToken(ms.getId());
                     folder.getStore().connect(ms.getEmailInServer(), ms.getEmailInUser(), pw);
                     folder.close(false);
                     folder.open(Folder.READ_WRITE);
