@@ -910,7 +910,8 @@ public class EmailInboxPanel extends javax.swing.JPanel implements SaveToCaseExe
                 server = ms.getEmailInServer();
                 
                 if(ms.isMsExchange()) {
-                    String authToken = MsExchangeUtils.getAuthToken(ms.getTenantId(), ms.getClientId(), ms.getClientSecret(), ms.getEmailInUser(), emailInPwd);
+                    //String authToken = MsExchangeUtils.getAuthToken(ms.getTenantId(), ms.getClientId(), ms.getClientSecret(), ms.getEmailInUser(), emailInPwd);
+                    String authToken = EmailUtils.getOffice365AuthToken(ms.getId());
                     props.put("mail.imaps.sasl.enable", "true");
                     props.put("mail.imaps.port", "993");
 
@@ -931,6 +932,7 @@ public class EmailInboxPanel extends javax.swing.JPanel implements SaveToCaseExe
                     store = session.getStore("imaps");
                     // server should be outlook.office365.com
                     this.stores.put(ms, store);
+                    //store.connect(server, ms.getEmailInUser(), "Bearer " + authToken);
                     store.connect(server, ms.getEmailInUser(), authToken);
                     
                 } else {
@@ -1124,7 +1126,11 @@ public class EmailInboxPanel extends javax.swing.JPanel implements SaveToCaseExe
             FolderContainer childContainer = childHt.get(key);
             
             String fullParentPath=this.getFullPathInMailbox(new TreePath(currentNode.getPath()));
-            String fullChildPath=fullParentPath + File.separator + childContainer.getFolder().getName();
+            String fullChildPath=null;
+            if(StringUtils.isEmpty(fullParentPath))
+                fullChildPath=childContainer.getFolder().getName();
+            else
+                fullChildPath=fullParentPath + File.separator + childContainer.getFolder().getName();
             boolean isHidden=MailboxSettings.getInstance().isFolderHidden(ms, fullChildPath);
             if (!isHidden) {
                 DefaultMutableTreeNode childNode = new DefaultMutableTreeNode(childContainer);

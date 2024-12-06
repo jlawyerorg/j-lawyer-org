@@ -777,6 +777,7 @@ public class FolderContainer {
             } catch (Exception ex) {
                 log.error(ex);
                 cachedToString = this.folder.getName();
+                cachedToStringUpdated = System.currentTimeMillis();
             }
         }
         return cachedToString;

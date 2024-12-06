@@ -760,10 +760,14 @@ public class SendAction extends ProgressableAction {
         }
 
         String outPwd = "";
-        try {
-            outPwd = CryptoProvider.defaultCrypto().decrypt(ms.getEmailOutPwd());
-        } catch (Throwable t) {
-            log.error(t);
+        if (ms.isMsExchange()) {
+            outPwd = EmailUtils.getOffice365AuthToken(ms.getId());
+        } else {
+            try {
+                outPwd = CryptoProvider.defaultCrypto().decrypt(ms.getEmailOutPwd());
+            } catch (Throwable t) {
+                log.error(t);
+            }
         }
 
         
@@ -831,6 +835,10 @@ public class SendAction extends ProgressableAction {
 
             smtpProps.put("mail.imaps.auth.mechanisms", "XOAUTH2");
             smtpProps.put("mail.imaps.sasl.mechanisms", "XOAUTH2");
+            
+            smtpProps.put("mail.smtp.auth.mechanisms", "XOAUTH2");
+            smtpProps.put("mail.smtps.auth.mechanisms", "XOAUTH2");
+            
 
             smtpProps.put("mail.imaps.auth.login.disable", "true");
             smtpProps.put("mail.imaps.auth.plain.disable", "true");
@@ -1029,7 +1037,7 @@ public class SendAction extends ProgressableAction {
                 imapProps.setProperty("mail.imaps.socketFactory.port", "993");
                 imapProps.setProperty("mail.imaps.starttls.enable", "true");
                 
-                String authToken = MsExchangeUtils.getAuthToken(ms.getTenantId(), ms.getClientId(), ms.getClientSecret(), ms.getEmailInUser(), inPwd);
+                String authToken = EmailUtils.getOffice365AuthToken(ms.getId());
 
                 session = Session.getInstance(imapProps);
                 store = session.getStore("imaps");

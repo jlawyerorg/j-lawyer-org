@@ -770,18 +770,23 @@ public class SendEncryptedAction extends ProgressableAction {
         }
 
         String outPwd = "";
+        if (ms.isMsExchange()) {
+            outPwd = EmailUtils.getOffice365AuthToken(ms.getId());
+        } else {
         try {
             outPwd = CryptoProvider.defaultCrypto().decrypt(ms.getEmailOutPwd());
         } catch (Throwable t) {
             log.error(t);
         }
+        }
 
+        
+        
         Properties smtpProps = new Properties();
-        boolean authenticateSmtp = true;
+        boolean authenticateSmtp=true;
         try {
-            if (StringUtils.isEmpty(ms.getEmailOutUser()) && StringUtils.isEmpty(outPwd)) {
-                authenticateSmtp = false;
-            }
+            if(StringUtils.isEmpty(ms.getEmailOutUser()) && StringUtils.isEmpty(outPwd))
+                authenticateSmtp=false;
         } catch (Throwable t) {
             log.error("Could not decrypt outgoing password", t);
         }
@@ -820,7 +825,7 @@ public class SendEncryptedAction extends ProgressableAction {
             smtpProps.put("mail.smtps.user", ms.getEmailOutUser());
             smtpProps.put("mail.password", outPwd);
 
-            final String smtpPwd = outPwd;
+            final String smtpPwd=outPwd;
             javax.mail.Authenticator auth = new javax.mail.Authenticator() {
 
                 @Override
@@ -840,6 +845,10 @@ public class SendEncryptedAction extends ProgressableAction {
 
             smtpProps.put("mail.imaps.auth.mechanisms", "XOAUTH2");
             smtpProps.put("mail.imaps.sasl.mechanisms", "XOAUTH2");
+
+            smtpProps.put("mail.smtp.auth.mechanisms", "XOAUTH2");
+            smtpProps.put("mail.smtps.auth.mechanisms", "XOAUTH2");
+            
 
             smtpProps.put("mail.imaps.auth.login.disable", "true");
             smtpProps.put("mail.imaps.auth.plain.disable", "true");
@@ -1042,7 +1051,7 @@ public class SendEncryptedAction extends ProgressableAction {
 
                 Store store = null;
                 if (ms.isMsExchange()) {
-                    String authToken = MsExchangeUtils.getAuthToken(ms.getTenantId(), ms.getClientId(), ms.getClientSecret(), ms.getEmailInUser(), inPwd);
+                    String authToken = EmailUtils.getOffice365AuthToken(ms.getId());
 
                     session = Session.getInstance(imapProps);
                     store = session.getStore("imaps");

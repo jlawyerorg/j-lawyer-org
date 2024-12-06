@@ -1558,37 +1558,56 @@ public class MailboxSetupDialog extends javax.swing.JDialog {
 
     private void cmdTestMailActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdTestMailActionPerformed
 
-        ProgressIndicator pi = new ProgressIndicator(EditorsRegistry.getInstance().getMainWindow(), true);
-        pi.setShowCancelButton(false);
+        
         
         String authToken = null;
         if (this.chkMsExchange.isSelected()) {
-            try {
-                authToken = MsExchangeUtils.getAuthToken(this.txtTenantId.getText(), this.txtClientId.getText(), this.txtClientSecret.getText(), this.txtInUser.getText(), new String(this.pwdInPassword.getPassword()));
-            } catch (MissingConsentException ex) {
-                log.error("Consent required for client id " + this.txtClientId.getText(), ex);
-                // get consent and then proceed to test action
-                OAuthUserConsentDialog oDlg=new OAuthUserConsentDialog(this, true, this.txtTenantId.getText(), this.txtClientId.getText());
-                FrameUtils.centerDialog(oDlg, EditorsRegistry.getInstance().getMainWindow());
-                oDlg.setTitle("Zustimmung zum Postfachzugriff");
-                oDlg.setVisible(true);
-                
-                // retry getting an auth token
-                try {
-                    authToken = MsExchangeUtils.getAuthToken(this.txtTenantId.getText(), this.txtClientId.getText(), this.txtClientSecret.getText(), this.txtInUser.getText(), new String(this.pwdInPassword.getPassword()));
-                } catch (Exception exc) {
-                    log.error("Unable to acquire auth token for client id " + this.txtClientId.getText(), exc);
-                    JOptionPane.showMessageDialog(this, "Autorisierungstoken für Microsoft Exchange kann nicht ermittelt werden: " + exc.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
-                    // no sense in executing the test
-                    return;
-                }
-            } catch (Exception ex) {
-                log.error("Unable to acquire auth token for client id " + this.txtClientId.getText(), ex);
-                JOptionPane.showMessageDialog(this, "Autorisierungstoken für Microsoft Exchange kann nicht ermittelt werden: " +ex.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
-                // no sense in executing the test
-                return;
-            }
+            
+            this.cmdSaveActionPerformed(evt);
+            
+            int row = this.tblMailboxes.getSelectedRow();
+            MailboxSetup ms=null;
+        if (row >= 0) {
+            ms = (MailboxSetup) this.tblMailboxes.getValueAt(row, 0);
+        } else {
+            return;
         }
+            
+        
+        O365OAuthCouplingDialog dlg=new O365OAuthCouplingDialog(this, ms);
+        FrameUtils.centerDialog(dlg, this);
+        dlg.setVisible(true);
+            
+//            try {
+//                authToken = MsExchangeUtils.getAuthToken(this.txtTenantId.getText(), this.txtClientId.getText(), this.txtClientSecret.getText(), this.txtInUser.getText(), new String(this.pwdInPassword.getPassword()));
+//            } catch (MissingConsentException ex) {
+//                log.error("Consent required for client id " + this.txtClientId.getText(), ex);
+//                // get consent and then proceed to test action
+//                OAuthUserConsentDialog oDlg=new OAuthUserConsentDialog(this, true, this.txtTenantId.getText(), this.txtClientId.getText());
+//                FrameUtils.centerDialog(oDlg, EditorsRegistry.getInstance().getMainWindow());
+//                oDlg.setTitle("Zustimmung zum Postfachzugriff");
+//                oDlg.setVisible(true);
+//                
+//                // retry getting an auth token
+//                try {
+//                    authToken = MsExchangeUtils.getAuthToken(this.txtTenantId.getText(), this.txtClientId.getText(), this.txtClientSecret.getText(), this.txtInUser.getText(), new String(this.pwdInPassword.getPassword()));
+//                } catch (Exception exc) {
+//                    log.error("Unable to acquire auth token for client id " + this.txtClientId.getText(), exc);
+//                    JOptionPane.showMessageDialog(this, "Autorisierungstoken für Microsoft Exchange kann nicht ermittelt werden: " + exc.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
+//                    // no sense in executing the test
+//                    return;
+//                }
+//            } catch (Exception ex) {
+//                log.error("Unable to acquire auth token for client id " + this.txtClientId.getText(), ex);
+//                JOptionPane.showMessageDialog(this, "Autorisierungstoken für Microsoft Exchange kann nicht ermittelt werden: " +ex.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
+//                // no sense in executing the test
+//                return;
+//            }
+        }
+        
+        ProgressIndicator pi = new ProgressIndicator(EditorsRegistry.getInstance().getMainWindow(), true);
+        pi.setShowCancelButton(false);
+        
         MailSettingsTestAction a = new MailSettingsTestAction(pi, this, this.cmdTestMail, this.txtEmailAddress.getText(), this.txtOutServer.getText(), this.txtOutPort.getText(), this.txtOutUsername.getText(), new String(this.pwdOutPassword.getPassword()), this.chkEmailOutSsl.isSelected(), this.chkEmailStartTls.isSelected(), this.txtInServer.getText(), this.txtInUser.getText(), new String(this.pwdInPassword.getPassword()), this.chkEmailInSsl.isSelected(), this.cmbAccountType.getSelectedItem().toString(), this.chkMsExchange.isSelected(), this.txtClientId.getText(), this.txtClientSecret.getText(), authToken);
 
         a.start();
