@@ -728,79 +728,100 @@ public class EmailService implements EmailServiceRemote, EmailServiceLocal {
 
         List<MailboxSetup> mailboxes = this.mailboxSetupFacade.findByMsExchange(true);
         for (MailboxSetup ms : mailboxes) {
-            if (ms.getTokenExpiry() == 0 || ((ms.getTokenExpiry() - System.currentTimeMillis()) < (6l * 60l * 1000l))) {
-                try {
-                    log.info("attempting to update tokens for " + ms.getEmailAddress());
-                    boolean success=this.updateAuthToken(ms);
-                    if(!success)
-                        log.error("failed to update tokens for " + ms.getEmailAddress());
-                    else
-                        log.info("successfully updated tokens for " + ms.getEmailAddress());
-                } catch (Exception ex) {
-                    log.error("failed to retrieve new access token for mailbox " + ms.getEmailAddress(), ex);
+
+            try {
+
+                boolean success = this.updateAuthTokenForMailbox(ms);
+                if (!success) {
+                    log.error("failed to update tokens for " + ms.getEmailAddress());
+                } else {
+                    log.info("successfully updated tokens for " + ms.getEmailAddress());
                 }
+            } catch (Exception ex) {
+                log.error("failed to retrieve new access token for mailbox " + ms.getEmailAddress(), ex);
             }
+
         }
 
     }
 
-    private boolean updateAuthToken(MailboxSetup mailbox) throws Exception {
-
-        if (ServerStringUtils.isEmpty(mailbox.getTenantId())) {
-            log.error("Tenant ID is empty when updating access token for " + mailbox.getEmailAddress());
+    @Override
+    @RolesAllowed({"loginRole"})
+    public boolean updateAuthToken(String mailboxId) throws Exception {
+        
+        MailboxSetup ms = this.mailboxSetupFacade.find(mailboxId);
+        if (ms != null) {
+            return this.updateAuthTokenForMailbox(ms);
+        } else {
+            log.error("Auth token update requested for a non-existing mailbox with id " + mailboxId);
             return false;
         }
+        
+    }
+    
+    private boolean updateAuthTokenForMailbox(MailboxSetup mailbox) throws Exception {
 
-        if (ServerStringUtils.isEmpty(mailbox.getClientId())) {
-            log.error("Client ID is empty when updating access token for " + mailbox.getEmailAddress());
-            return false;
-        }
+        if (mailbox.getTokenExpiry() == 0 || ((mailbox.getTokenExpiry() - System.currentTimeMillis()) < (6l * 60l * 1000l))) {
 
-        if (ServerStringUtils.isEmpty(mailbox.getRefreshToken())) {
-            log.error("Refresh token is empty when updating access token for " + mailbox.getEmailAddress());
-            return false;
-        }
+            log.info("attempting to update tokens for " + mailbox.getEmailAddress());
+            
+            if (ServerStringUtils.isEmpty(mailbox.getTenantId())) {
+                log.error("Tenant ID is empty when updating access token for " + mailbox.getEmailAddress());
+                return false;
+            }
 
-        String TOKEN_ENDPOINT = "https://login.microsoftonline.com/" + mailbox.getTenantId() + "/oauth2/v2.0/token";
+            if (ServerStringUtils.isEmpty(mailbox.getClientId())) {
+                log.error("Client ID is empty when updating access token for " + mailbox.getEmailAddress());
+                return false;
+            }
 
-        try (CloseableHttpClient client = HttpClients.createDefault()) {
-            HttpPost post = new HttpPost(TOKEN_ENDPOINT);
+            if (ServerStringUtils.isEmpty(mailbox.getRefreshToken())) {
+                log.error("Refresh token is empty when updating access token for " + mailbox.getEmailAddress());
+                return false;
+            }
 
-            // Create URL-encoded body
-            String body = "grant_type=" + URLEncoder.encode("refresh_token", StandardCharsets.UTF_8)
-                    + "&refresh_token=" + URLEncoder.encode(mailbox.getRefreshToken(), StandardCharsets.UTF_8)
-                    + "&client_id=" + URLEncoder.encode(mailbox.getClientId(), StandardCharsets.UTF_8);
-            //"&client_secret=" + URLEncoder.encode(CLIENT_SECRET, StandardCharsets.UTF_8);
+            String TOKEN_ENDPOINT = "https://login.microsoftonline.com/" + mailbox.getTenantId() + "/oauth2/v2.0/token";
 
-            post.setEntity(new StringEntity(body));
-            post.setHeader("Content-Type", "application/x-www-form-urlencoded");
+            try (CloseableHttpClient client = HttpClients.createDefault()) {
+                HttpPost post = new HttpPost(TOKEN_ENDPOINT);
 
-            ObjectMapper objectMapper = new ObjectMapper();
-            try (CloseableHttpResponse response = client.execute(post)) {
-                if (response.getStatusLine().getStatusCode() == 200) {
-                    Map<String, Object> responseBody = objectMapper.readValue(
-                            response.getEntity().getContent(),
-                            Map.class
-                    );
-                    
-                    String accessToken = (String) responseBody.get("access_token");
-                    String refreshToken = (String) responseBody.get("refresh_token");
-                    int expiresIn = (int) responseBody.get("expires_in");
-                    // Calculate token expiry time (current time + expires_in seconds)
-                    long tokenExpiryTime = System.currentTimeMillis() + (expiresIn * 1000l);
+                // Create URL-encoded body
+                String body = "grant_type=" + URLEncoder.encode("refresh_token", StandardCharsets.UTF_8)
+                        + "&refresh_token=" + URLEncoder.encode(mailbox.getRefreshToken(), StandardCharsets.UTF_8)
+                        + "&client_id=" + URLEncoder.encode(mailbox.getClientId(), StandardCharsets.UTF_8);
+                //"&client_secret=" + URLEncoder.encode(CLIENT_SECRET, StandardCharsets.UTF_8);
 
-                    mailbox.setAuthToken(accessToken);
-                    mailbox.setRefreshToken(refreshToken);
-                    mailbox.setTokenExpiry(tokenExpiryTime);
-                    this.mailboxSetupFacade.edit(mailbox);
-                    return true;
-                } else {
-                    log.error("failed to retrieve new access token for mailbox " + mailbox.getEmailAddress() + ", response was HTTP " + response.getStatusLine().getStatusCode() + " with content:");
-                    log.error(response.getEntity().getContent());
-                    return false;
+                post.setEntity(new StringEntity(body));
+                post.setHeader("Content-Type", "application/x-www-form-urlencoded");
+
+                ObjectMapper objectMapper = new ObjectMapper();
+                try (CloseableHttpResponse response = client.execute(post)) {
+                    if (response.getStatusLine().getStatusCode() == 200) {
+                        Map<String, Object> responseBody = objectMapper.readValue(
+                                response.getEntity().getContent(),
+                                Map.class
+                        );
+
+                        String accessToken = (String) responseBody.get("access_token");
+                        String refreshToken = (String) responseBody.get("refresh_token");
+                        int expiresIn = (int) responseBody.get("expires_in");
+                        // Calculate token expiry time (current time + expires_in seconds)
+                        long tokenExpiryTime = System.currentTimeMillis() + (expiresIn * 1000l);
+
+                        mailbox.setAuthToken(accessToken);
+                        mailbox.setRefreshToken(refreshToken);
+                        mailbox.setTokenExpiry(tokenExpiryTime);
+                        this.mailboxSetupFacade.edit(mailbox);
+                        return true;
+                    } else {
+                        log.error("failed to retrieve new access token for mailbox " + mailbox.getEmailAddress() + ", response was HTTP " + response.getStatusLine().getStatusCode() + " with content:");
+                        log.error(response.getEntity().getContent());
+                        return false;
+                    }
                 }
             }
         }
+        return true;
     }
 
     @Override
@@ -819,9 +840,9 @@ public class EmailService implements EmailServiceRemote, EmailServiceLocal {
 //            String body = "client_id=" + ms.getClientId()
 //                    + "&scope=https%3A%2F%2Fgraph.microsoft.com%2Fmail.read%20offline_access";
             String body = "client_id=" + ms.getClientId()
-            + "&scope=https%3A%2F%2Foutlook.office365.com%2FIMAP.AccessAsUser.All%20"
-            + "https%3A%2F%2Foutlook.office365.com%2FSMTP.Send%20"
-            + "offline_access";
+                    + "&scope=https%3A%2F%2Foutlook.office365.com%2FIMAP.AccessAsUser.All%20"
+                    + "https%3A%2F%2Foutlook.office365.com%2FSMTP.Send%20"
+                    + "offline_access";
 
             post.setEntity(new StringEntity(body));
             post.setHeader("Content-Type", "application/x-www-form-urlencoded");
@@ -881,7 +902,7 @@ public class EmailService implements EmailServiceRemote, EmailServiceLocal {
 
                     ms.setAuthToken(accessToken);
                     ms.setRefreshToken(refreshToken);
-                    ms.setTokenExpiry(System.currentTimeMillis() + 10l*60l*1000l);
+                    ms.setTokenExpiry(System.currentTimeMillis() + 10l * 60l * 1000l);
                     this.mailboxSetupFacade.edit(ms);
                     return true;
 

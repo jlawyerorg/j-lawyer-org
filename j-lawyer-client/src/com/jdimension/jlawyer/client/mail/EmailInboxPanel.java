@@ -983,6 +983,16 @@ public class EmailInboxPanel extends javax.swing.JPanel implements SaveToCaseExe
         for (MailboxSetup ms : mailboxes) {
 
             try {
+                
+                if(ms.isMsExchange()) {
+                    try {
+                        ClientSettings settings=ClientSettings.getInstance();
+                        JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
+                        locator.lookupEmailServiceRemote().updateAuthToken(ms.getId());
+                    } catch (Exception ex) {
+                        log.error("unable to update auth token for mailbox " + ms.getEmailAddress(), ex);
+                    }
+                }
 
                 this.connect(showErrorDialogOnFailure, ms);
 

@@ -673,6 +673,7 @@ import javax.ejb.Remote;
 public interface EmailServiceRemote {
 
     String getAuthToken(String mailboxId) throws Exception;
+    boolean updateAuthToken(String mailboxId) throws Exception;
     String[] requestDeviceCode(String mailboxId) throws Exception;
     boolean pollForTokens(String mailboxId, String deviceCode) throws Exception;
     

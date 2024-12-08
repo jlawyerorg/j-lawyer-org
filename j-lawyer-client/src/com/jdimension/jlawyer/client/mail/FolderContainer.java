@@ -689,6 +689,10 @@ public class FolderContainer {
 
     double retentionTime = -1;
 
+//    private Message[] cachedMessages=null;
+//    private String cachedMessagesKey=null;
+    
+    
     static {
         folderNameMapping.put(CommonMailUtils.INBOX, "Posteingang");
         folderNameMapping.put(CommonMailUtils.SENT, "Gesendet");
