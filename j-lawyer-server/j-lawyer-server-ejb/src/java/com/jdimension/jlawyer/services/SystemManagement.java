@@ -1462,11 +1462,12 @@ public class SystemManagement implements SystemManagementRemote, SystemManagemen
             props.put("mail.smtps.auth.mechanisms", "XOAUTH2");
         }
         
+        final String smtpPwdFinal=smtpPwd;
         javax.mail.Authenticator auth = new javax.mail.Authenticator() {
 
             @Override
             public PasswordAuthentication getPasswordAuthentication() {
-                return new PasswordAuthentication(smtpUser, smtpPwd);
+                return new PasswordAuthentication(smtpUser, smtpPwdFinal);
             }
         };
 
