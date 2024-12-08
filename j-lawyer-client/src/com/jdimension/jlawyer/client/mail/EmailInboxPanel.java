@@ -1725,7 +1725,7 @@ public class EmailInboxPanel extends javax.swing.JPanel implements SaveToCaseExe
             this.tblMails.setDefaultRenderer(Object.class, new EmailTableCellRenderer());
 
             ProgressIndicator dlg = new ProgressIndicator(EditorsRegistry.getInstance().getMainWindow(), true);
-            LoadFolderAction a = new LoadFolderAction(dlg, folder, tblMails, sortCol, scrollToRow, searchTerm);
+            LoadFolderAction a = new LoadFolderAction(dlg, folderC, tblMails, sortCol, scrollToRow, searchTerm);
             a.start();
 
         } catch (Exception ex) {

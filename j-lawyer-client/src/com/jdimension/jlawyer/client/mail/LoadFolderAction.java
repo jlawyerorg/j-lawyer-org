@@ -671,12 +671,14 @@ import com.jdimension.jlawyer.client.utils.StringUtils;
 import java.awt.Rectangle;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 import javax.mail.Address;
 import javax.mail.FetchProfile;
 import javax.mail.Flags;
 import javax.mail.Folder;
 import javax.mail.Message;
+import javax.mail.UIDFolder;
 import javax.mail.search.AndTerm;
 import javax.mail.search.BodyTerm;
 import javax.mail.search.FlagTerm;
@@ -699,13 +701,15 @@ public class LoadFolderAction extends ProgressableAction {
     private static final Logger log = Logger.getLogger(LoadFolderAction.class.getName());
     private final SimpleDateFormat df = new SimpleDateFormat("dd.MM.yyyy, HH:mm");
 
-    private Folder f = null;
+    private FolderContainer f = null;
     private JTable table = null;
     private int sortCol = -1;
     private int scrollToRow = -1;
     private String searchTerm = null;
+    
+    private int messageCount=-1;
 
-    public LoadFolderAction(ProgressIndicator i, Folder f, JTable table, int sortCol, int scrollToRow, String searchTerm) {
+    public LoadFolderAction(ProgressIndicator i, FolderContainer f, JTable table, int sortCol, int scrollToRow, String searchTerm) {
         super(i, false);
         this.f = f;
         this.table = table;
@@ -714,14 +718,21 @@ public class LoadFolderAction extends ProgressableAction {
         this.searchTerm = searchTerm;
     }
 
+    private int getMessageCount() {
+        if(messageCount < 0) {
+            try {
+                return f.getFolder().getMessageCount();
+            } catch (Throwable t) {
+                log.error(t);
+                messageCount = 1;
+            }
+        }
+        return messageCount;
+    }
+    
     @Override
     public int getMax() {
-        try {
-            return f.getMessageCount();
-        } catch (Throwable t) {
-            log.error(t);
-            return 1;
-        }
+        return this.getMessageCount();
     }
 
     @Override
@@ -732,8 +743,10 @@ public class LoadFolderAction extends ProgressableAction {
     @Override
     public boolean execute() throws Exception {
         try {
-            if (!(f.isOpen())) {
-                f.open(Folder.READ_WRITE);
+            //long start=System.currentTimeMillis();
+            
+            if (!(f.getFolder().isOpen())) {
+                f.getFolder().open(Folder.READ_WRITE);
             }
 //            try {
 //                if (EmailUtils.isIMAP(f)) {
@@ -742,7 +755,7 @@ public class LoadFolderAction extends ProgressableAction {
 //            } catch (Throwable t) {
 //                log.error("Could not expunge folder", t);
 //            }
-//            System.out.println("load 20 = " + (System.currentTimeMillis() - start));
+            //System.out.println("load 20 = " + (System.currentTimeMillis() - start));
 
             ClientSettings cs = ClientSettings.getInstance();
             String restriction = cs.getConfiguration(ClientSettings.CONF_MAIL_DOWNLOADRESTRICTION, "" + LoadFolderRestriction.RESTRICTION_50);
@@ -755,7 +768,7 @@ public class LoadFolderAction extends ProgressableAction {
             }
 
             int fromIndex = 1;
-            int toIndex = f.getMessageCount();
+            int toIndex = this.getMessageCount();
             int maxQuantity = Integer.MAX_VALUE;
             switch (currentRestriction.getRestriction()) {
                 case LoadFolderRestriction.RESTRICTION_20:
@@ -778,6 +791,7 @@ public class LoadFolderAction extends ProgressableAction {
                     break;
             }
 
+            //System.out.println("load 30 = " + (System.currentTimeMillis() - start));
             Message[] messages = null;
             FlagTerm notDeleted = new FlagTerm(new Flags(Flags.Flag.DELETED), false);
             if (StringUtils.isEmpty(this.searchTerm)) {
@@ -785,12 +799,12 @@ public class LoadFolderAction extends ProgressableAction {
                     // Combine unread filter with notDeleted filter
                     FlagTerm unread = new FlagTerm(new Flags(Flags.Flag.SEEN), false);
                     AndTerm filter = new AndTerm(unread, notDeleted);
-                    messages = f.search(filter, messages);
+                    messages = f.getFolder().search(filter, messages);
                 } else {
-                    messages = f.getMessages(fromIndex, toIndex);
+                    messages = f.getFolder().getMessages(fromIndex, toIndex);
 
                     // Apply the filter to the subset of messages
-                    messages = f.search(notDeleted, messages);
+                    messages = f.getFolder().search(notDeleted, messages);
                 }
             } else {
                 maxQuantity = Integer.MAX_VALUE;
@@ -806,14 +820,38 @@ public class LoadFolderAction extends ProgressableAction {
 
                 // Combine the OR term with notDeleted filter
                 AndTerm filter = new AndTerm(orTerm, notDeleted);
-                messages = f.search(filter);
+                messages = f.getFolder().search(filter);
             }
             
+            messages = Arrays.stream(messages)
+                                       .limit(maxQuantity+1)
+                                       .toArray(Message[]::new);
+            
+            //System.out.println("load 40 = " + (System.currentTimeMillis() - start));
+            
+            if (f.getFolder() instanceof UIDFolder) {
+                // get all the UIDs
+                FetchProfile fpUid = new FetchProfile();
+                fpUid.add(UIDFolder.FetchProfileItem.UID);
+                f.getFolder().fetch(messages, fpUid);
+            }
+            
+            //System.out.println("load 50 = " + (System.currentTimeMillis() - start));
+            Message[] uncachedMessages = f.getUncachedMessages(messages);
+            
+            //System.out.println("load 60 = " + (System.currentTimeMillis() - start));
             FetchProfile fp = new FetchProfile();
             fp.add(FetchProfile.Item.ENVELOPE);
             fp.add(FetchProfile.Item.FLAGS);
-            f.fetch(messages, fp);
-
+            f.getFolder().fetch(uncachedMessages, fp);
+            
+            
+            //System.out.println("load 70 = " + (System.currentTimeMillis() - start));
+            f.addCachedMessages(uncachedMessages);
+            
+            messages=f.getCachedMessages(messages);
+            
+            //System.out.println("load 80 = " + (System.currentTimeMillis() - start));
             HashMap<String, String> decodedMap = new HashMap<>();
             final int indexMax = messages.length - 1;
             ArrayList<Object[]> tableRows = new ArrayList<>();
@@ -845,8 +883,8 @@ public class LoadFolderAction extends ProgressableAction {
                     continue;
                 }
 
-                if (!(f.isOpen())) {
-                    f.open(Folder.READ_WRITE);
+                if (!(f.getFolder().isOpen())) {
+                    f.getFolder().open(Folder.READ_WRITE);
                 }
 
                 String fromCheck = "unbekannt";
@@ -919,22 +957,25 @@ public class LoadFolderAction extends ProgressableAction {
                 }
             }
 
-            try {
-                table.getRowSorter().toggleSortOrder(this.sortCol);
-
-            } catch (Throwable t) {
-                log.error("Error sorting mails", t);
-            }
+            //System.out.println("load 90 = " + (System.currentTimeMillis() - start));
+            
 
             SwingUtilities.invokeLater(() -> {
+                try {
+                    table.getRowSorter().toggleSortOrder(this.sortCol);
+
+                } catch (Throwable t) {
+                    log.error("Error sorting mails", t);
+                }
                 ComponentUtils.autoSizeColumns(table, 0);
             });
 
+            //System.out.println("load 100 = " + (System.currentTimeMillis() - start));
             new Thread(() -> {
                 try {
                     Thread.sleep(5000);
-                    if (f.isOpen()) {
-                        EmailUtils.closeIfIMAP(f);
+                    if (f.getFolder().isOpen()) {
+                        EmailUtils.closeIfIMAP(f.getFolder());
                     }
                 } catch (Throwable t) {
                     log.error(t);
