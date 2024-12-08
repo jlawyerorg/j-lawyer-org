@@ -683,4 +683,6 @@ public interface MailboxSetupFacadeLocal {
 
     MailboxSetup find(Object id);
     
+    List<MailboxSetup> findByMsExchange(boolean exchange);
+    
 }

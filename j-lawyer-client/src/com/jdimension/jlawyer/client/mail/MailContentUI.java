@@ -1166,7 +1166,10 @@ public class MailContentUI extends javax.swing.JPanel implements HyperlinkListen
         lblSentDate.setText(sentString);
         lblSubject.setText(copiedMsg.getSubject());
         lblSubject.setToolTipText("Klicken, um in Zwischenablage zu kopieren:" + System.lineSeparator() + lblSubject.getText());
-        lblFrom.setText(MimeUtility.decodeText(copiedMsg.getFrom()[0].toString()));
+        if(copiedMsg.getFrom()!=null && copiedMsg.getFrom().length>0)
+            lblFrom.setText(MimeUtility.decodeText(copiedMsg.getFrom()[0].toString()));
+        else
+            lblFrom.setText("");
         lblFrom.setToolTipText("Klicken, um in Zwischenablage zu kopieren:" + System.lineSeparator() + lblFrom.getText());
 
         String to = "";

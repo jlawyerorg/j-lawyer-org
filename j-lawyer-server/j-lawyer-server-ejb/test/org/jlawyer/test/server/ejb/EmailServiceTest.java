@@ -661,36 +661,254 @@ if any, to sign a "copyright disclaimer" for the program, if necessary.
 For more information on this, and how to apply and follow the GNU AGPL, see
 <https://www.gnu.org/licenses/>.
  */
-package com.jdimension.jlawyer.persistence;
+package org.jlawyer.test.server.ejb;
 
-import java.util.List;
-import javax.ejb.Local;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import java.net.URLEncoder;
+import java.nio.charset.StandardCharsets;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.logging.Level;
+import java.util.logging.Logger;
+import junit.framework.TestCase;
+import org.apache.http.client.methods.CloseableHttpResponse;
+import org.apache.http.client.methods.HttpPost;
+import org.apache.http.entity.StringEntity;
+import org.apache.http.impl.client.CloseableHttpClient;
+import org.apache.http.impl.client.HttpClients;
 
 /**
  *
  * @author jens
  */
-@Local
-public interface MailboxAccessFacadeLocal {
+public class EmailServiceTest extends TestCase {
 
-    void create(MailboxAccess mailboxAccess);
+    // for initial token
+    private static String TENANT_ID = "";
+    private static String DEVICE_CODE_URL = "https://login.microsoftonline.com/" + TENANT_ID + "/oauth2/v2.0/devicecode";
 
-    void edit(MailboxAccess mailboxAccess);
+    // for refreshing tokens
+    private static final String TOKEN_ENDPOINT = "https://login.microsoftonline.com/" + TENANT_ID + "/oauth2/v2.0/token";
+    private static final String CLIENT_ID = "";
+    private static final String CLIENT_SECRET = "";
 
-    void remove(MailboxAccess mailboxAccess);
+    private static String accessToken = null; // Store access token in memory
+    private static String refreshToken = "your-initial-refresh-token"; // Replace with your stored refresh token
+    private static long tokenExpiryTime = 0; // Store token expiry time in milliseconds
 
-    MailboxAccess find(Object id);
+    public EmailServiceTest(String testName) {
+        super(testName);
+    }
 
-    List<MailboxAccess> findAll();
+    @Override
+    protected void setUp() throws Exception {
+        super.setUp();
+    }
 
-    List<MailboxAccess> findRange(int[] range);
-    
-    MailboxAccess findByUserAndMailbox(String principalId, String mailboxId);
+    @Override
+    protected void tearDown() throws Exception {
+        super.tearDown();
+    }
 
-    List<MailboxAccess> findByUser(String principalId);
-    
-    List<MailboxAccess> findByMailbox(String mailboxId);
-    
-    int count();
-    
+    public static void main(String[] args) {
+        //new EmailServiceTest("test").testGetAccessToken();
+        
+        // in azure-app müssen "Öffentliche Clientflows zulassen" aktiviert sein, in der app unter authentifizierng
+        
+        EmailServiceTest t = new EmailServiceTest("test");
+        t.testGetInitialToken();
+        t.testGetAccessToken();
+    }
+
+    public void testGetInitialToken() {
+        try {
+
+            String deviceCode = requestDeviceCode();
+            if (deviceCode == null) {
+                System.err.println("Failed to obtain device code.");
+                return;
+            }
+
+            // Step 2: Poll for tokens
+            pollForTokens(deviceCode);
+        } catch (Exception ex) {
+            Logger.getLogger(EmailServiceTest.class.getName()).log(Level.SEVERE, null, ex);
+        }
+    }
+
+    private static String requestDeviceCode() throws Exception {
+        try (CloseableHttpClient client = HttpClients.createDefault()) {
+            HttpPost post = new HttpPost(DEVICE_CODE_URL);
+
+            String body = "client_id=" + CLIENT_ID
+                    + "&scope=https%3A%2F%2Fgraph.microsoft.com%2Fmail.read%20offline_access";
+            post.setEntity(new StringEntity(body));
+            post.setHeader("Content-Type", "application/x-www-form-urlencoded");
+
+            try (CloseableHttpResponse response = client.execute(post)) {
+                if (response.getStatusLine().getStatusCode() == 200) {
+                    Map<String, Object> responseBody = new ObjectMapper().readValue(
+                            response.getEntity().getContent(), Map.class);
+                    System.out.println("Go to " + responseBody.get("verification_uri"));
+                    System.out.println("Enter the code: " + responseBody.get("user_code"));
+                    return (String) responseBody.get("device_code");
+                } else {
+                    System.err.println("Failed to request device code. HTTP Status: " + response.getStatusLine().getStatusCode());
+                    return null;
+                }
+            }
+        }
+    }
+
+    private static void pollForTokens(String deviceCode) throws Exception {
+        try (CloseableHttpClient client = HttpClients.createDefault()) {
+            while (true) {
+                HttpPost post = new HttpPost(TOKEN_ENDPOINT);
+
+                // Include client_secret in the body
+                String body = "client_id=" + CLIENT_ID
+                        + "&client_secret=" + CLIENT_SECRET
+                        + "&grant_type=urn:ietf:params:oauth:grant-type:device_code"
+                        + "&device_code=" + deviceCode;
+                post.setEntity(new StringEntity(body));
+                post.setHeader("Content-Type", "application/x-www-form-urlencoded");
+
+                try (CloseableHttpResponse response = client.execute(post)) {
+                    if (response.getStatusLine().getStatusCode() == 200) {
+                        // Successful response
+                        Map<String, Object> responseBody = new ObjectMapper().readValue(
+                                response.getEntity().getContent(), Map.class);
+                        System.out.println("Access Token: " + responseBody.get("access_token"));
+                        accessToken = responseBody.get("access_token").toString();
+                        System.out.println("Refresh Token: " + responseBody.get("refresh_token"));
+                        refreshToken = responseBody.get("refresh_token").toString();
+                        return;
+                    } else if (response.getStatusLine().getStatusCode() == 400) {
+                        Map<String, Object> errorResponse = new ObjectMapper().readValue(
+                                response.getEntity().getContent(), Map.class);
+                        if ("authorization_pending".equals(errorResponse.get("error"))) {
+                            System.out.println("Waiting for user authorization...");
+                            Thread.sleep(5000); // Wait and retry
+                        } else {
+                            System.err.println("Error: " + errorResponse);
+                            return;
+                        }
+                    } else {
+                        System.err.println("Unexpected HTTP Status: " + response.getStatusLine().getStatusCode());
+                        return;
+                    }
+                }
+            }
+        }
+    }
+
+    public void testGetAccessToken() {
+
+        try {
+            getAccessToken();
+
+//        List<AppUserBean> users=new ArrayList<>();
+//        users.add(new AppUserBean("Otto"));
+//        
+//        // check whether all attributes are set
+//        InstantMessage im=new InstantMessage();
+//        im.setContent("Hallo @Otto, heute schon Kaffee gehabt?");
+//        List<InstantMessageMention> mentions=InstantMessagingUtil.extractMentions(im, users);
+//        Assert.assertTrue(mentions.size()==1);
+//        InstantMessageMention m=mentions.get(0);
+//        Assert.assertEquals("Otto", m.getPrincipal());
+//        Assert.assertNotNull(m.getMessage());
+//        Assert.assertFalse(m.isDone());
+        } catch (Exception ex) {
+            Logger.getLogger(EmailServiceTest.class.getName()).log(Level.SEVERE, null, ex);
+        }
+    }
+
+    public static String getAccessToken() throws Exception {
+        // Check if the token is expired or missing
+        if (accessToken == null || System.currentTimeMillis() > tokenExpiryTime) {
+            refreshAccessToken();
+        }
+        return accessToken;
+    }
+
+    private static void refreshAccessToken() throws Exception {
+
+        try (CloseableHttpClient client = HttpClients.createDefault()) {
+            HttpPost post = new HttpPost(TOKEN_ENDPOINT);
+
+            // Create URL-encoded body
+            String body = "grant_type=" + URLEncoder.encode("refresh_token", StandardCharsets.UTF_8)
+                    + "&refresh_token=" + URLEncoder.encode(refreshToken, StandardCharsets.UTF_8)
+                    + "&client_id=" + URLEncoder.encode(CLIENT_ID, StandardCharsets.UTF_8);
+            //"&client_secret=" + URLEncoder.encode(CLIENT_SECRET, StandardCharsets.UTF_8);
+
+            post.setEntity(new StringEntity(body));
+            post.setHeader("Content-Type", "application/x-www-form-urlencoded");
+
+            ObjectMapper objectMapper = new ObjectMapper();
+            try (CloseableHttpResponse response = client.execute(post)) {
+                if (response.getStatusLine().getStatusCode() == 200) {
+                    Map<String, Object> responseBody = objectMapper.readValue(
+                            response.getEntity().getContent(),
+                            Map.class
+                    );
+
+                    accessToken = (String) responseBody.get("access_token");
+                    refreshToken = (String) responseBody.get("refresh_token");
+                    int expiresIn = (int) responseBody.get("expires_in");
+
+                    // Calculate token expiry time (current time + expires_in seconds)
+                    tokenExpiryTime = System.currentTimeMillis() + (expiresIn * 1000L);
+
+                    System.out.println("New Access Token: " + accessToken);
+                    System.out.println("New Refresh Token: " + refreshToken);
+                    System.out.println("Token expires in: " + expiresIn + " seconds");
+                } else {
+                    throw new RuntimeException("Failed to refresh token. HTTP Status: " + response.getStatusLine().getStatusCode());
+                }
+            }
+        }
+
+//        CloseableHttpClient client = HttpClients.createDefault();
+//        HttpPost post = new HttpPost(TOKEN_ENDPOINT);
+//
+//        // Prepare request body
+//        Map<String, String> requestBody = new HashMap<>();
+//        requestBody.put("client_id", CLIENT_ID);
+//        requestBody.put("client_secret", CLIENT_SECRET);
+//        requestBody.put("grant_type", "refresh_token");
+//        requestBody.put("refresh_token", refreshToken);
+//
+//        ObjectMapper objectMapper = new ObjectMapper();
+//        String jsonRequestBody = objectMapper.writeValueAsString(requestBody);
+//        post.setEntity(new StringEntity(jsonRequestBody));
+//        post.setHeader("Content-Type", "application/json");
+//
+//        // Send request and parse response
+//        try (CloseableHttpResponse response = client.execute(post)) {
+//            if (response.getStatusLine().getStatusCode() == 200) {
+//                Map<String, Object> responseBody = objectMapper.readValue(
+//                        response.getEntity().getContent(),
+//                        Map.class
+//                );
+//
+//                accessToken = (String) responseBody.get("access_token");
+//                refreshToken = (String) responseBody.get("refresh_token");
+//                int expiresIn = (int) responseBody.get("expires_in");
+//
+//                // Calculate token expiry time (current time + expires_in seconds)
+//                tokenExpiryTime = System.currentTimeMillis() + (expiresIn * 1000L);
+//
+//                System.out.println("New Access Token: " + accessToken);
+//                System.out.println("New Refresh Token: " + refreshToken);
+//                System.out.println("Token expires in: " + expiresIn + " seconds");
+//            } else {
+//                throw new RuntimeException("Failed to refresh token. HTTP Status: " + response.getStatusLine().getStatusCode());
+//            }
+//        }
+    }
+
+    // TODO add test methods here. The name must begin with 'test'. For example:
+    // public void testHello() {}
 }

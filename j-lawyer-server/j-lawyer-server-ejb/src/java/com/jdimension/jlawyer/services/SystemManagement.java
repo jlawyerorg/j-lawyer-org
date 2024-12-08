@@ -1418,10 +1418,14 @@ public class SystemManagement implements SystemManagementRemote, SystemManagemen
 
     @Override
     @RolesAllowed({"loginRole"})
-    public void testSendMail(String smtpHost, int smtpPort, String smtpUser, String smtpPwd, boolean smtpSsl, boolean smtpStartTls, String mailAddress) throws Exception {
+    public void testSendMail(String smtpHost, int smtpPort, String smtpUser, String smtpPwd, boolean smtpSsl, boolean smtpStartTls, String mailAddress, boolean isMsExchange, String accessToken) throws Exception {
 
         if (smtpHost == null || smtpUser == null || smtpPwd == null || mailAddress == null) {
             throw new Exception("incomplete configuration for sending test mails");
+        }
+        
+        if (isMsExchange) {
+            smtpPwd=accessToken;
         }
 
         Properties props = new Properties();
@@ -1442,7 +1446,7 @@ public class SystemManagement implements SystemManagementRemote, SystemManagemen
                 log.error("Invalid SMTP port: " + smtpHost);
             }
         }
-
+        
         props.put("mail.smtp.host", smtpHost);
         props.put("mail.smtp.user", smtpUser);
         props.put("mail.smtp.auth", true);
@@ -1452,6 +1456,12 @@ public class SystemManagement implements SystemManagementRemote, SystemManagemen
         props.put("mail.from", smtpUser);
         props.put("mail.password", smtpPwd);
 
+        if (isMsExchange) {
+            
+            props.put("mail.smtp.auth.mechanisms", "XOAUTH2");
+            props.put("mail.smtps.auth.mechanisms", "XOAUTH2");
+        }
+        
         javax.mail.Authenticator auth = new javax.mail.Authenticator() {
 
             @Override
@@ -1484,7 +1494,7 @@ public class SystemManagement implements SystemManagementRemote, SystemManagemen
 
     @Override
     @RolesAllowed({"loginRole"})
-    public void testReceiveMail(String mailAddress, String host, String protocol, boolean ssl, String user, String pwd, boolean isMsExchange, String clientId, String clientSecret, String authToken) throws Exception {
+    public void testReceiveMail(String mailAddress, String host, String protocol, boolean ssl, String user, String pwd, boolean isMsExchange, String authToken) throws Exception {
         Properties props = System.getProperties();
         //Properties props = new Properties();
         props.setProperty("mail.imap.partialfetch", "false");
