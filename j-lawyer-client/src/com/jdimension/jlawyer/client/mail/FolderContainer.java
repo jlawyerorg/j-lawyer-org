@@ -688,6 +688,7 @@ public class FolderContainer {
 
     private long cachedUnreadUpdated = -1;
     private int cachedUnread = -1;
+    private int cachedTotal = -1;
 
     private static final Logger log = Logger.getLogger(FolderContainer.class.getName());
     private static final HashMap<String, String> folderNameMapping = new HashMap<>();
@@ -712,6 +713,7 @@ public class FolderContainer {
     public void resetCaches() {
         this.cachedToStringUpdated = -1;
         this.cachedUnreadUpdated = -1;
+        this.cachedTotal=-1;
         this.cachedMessages.clear();
     }
 
@@ -743,6 +745,7 @@ public class FolderContainer {
                 this.cachedUnreadUpdated = System.currentTimeMillis();
                 try {
                     this.cachedUnread = this.folder.getUnreadMessageCount();
+                    this.cachedTotal = this.folder.getMessageCount();
                 } catch (StoreClosedException stex) {
                     log.warn("Unable to determine number of unread messages - folder is closed");
                 } catch (MessagingException ex) {
@@ -751,6 +754,24 @@ public class FolderContainer {
             }
         }
         return cachedUnread;
+    }
+    
+    public int getMessageCount() {
+
+        if (this.cachedTotal == -1 || ((System.currentTimeMillis() - cachedUnreadUpdated) > this.getRetentionTime())) {
+            if (this.folder != null) {
+                this.cachedUnreadUpdated = System.currentTimeMillis();
+                try {
+                    this.cachedUnread = this.folder.getUnreadMessageCount();
+                    this.cachedTotal = this.folder.getMessageCount();
+                } catch (StoreClosedException stex) {
+                    log.warn("Unable to determine number of total messages - folder is closed");
+                } catch (MessagingException ex) {
+                    log.error("Unable to determine number of total messages", ex);
+                }
+            }
+        }
+        return cachedTotal;
     }
 
     /*
@@ -774,8 +795,8 @@ public class FolderContainer {
                     }
                 }
 
-                //int msgCount = this.folder.getMessageCount();
-                int msgCount = this.getUnreadMessageCount();
+                int msgCount = this.folder.getMessageCount();
+                //int msgCount = this.getUnreadMessageCount();
                 cachedToStringUpdated = System.currentTimeMillis();
                 if (msgCount < 0) {
                     cachedToString = name;
