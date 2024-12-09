@@ -742,6 +742,19 @@ public class FolderContainer {
 
         if (this.cachedUnreadUpdated == -1 || ((System.currentTimeMillis() - cachedUnreadUpdated) > this.getRetentionTime())) {
             if (this.folder != null) {
+                
+                boolean wasClosed=false;
+                try {
+                    if (!folder.isOpen()) {
+                        wasClosed = true;
+                        this.folder.open(Folder.READ_WRITE);
+                    }
+                } catch (Exception ex) {
+                    log.warn("Error opening folder", ex);
+                }
+                
+                
+                
                 this.cachedUnreadUpdated = System.currentTimeMillis();
                 try {
                     this.cachedUnread = this.folder.getUnreadMessageCount();
@@ -751,6 +764,15 @@ public class FolderContainer {
                 } catch (MessagingException ex) {
                     log.error("Unable to determine number of unread messages", ex);
                 }
+                
+                try {
+                    if (wasClosed && !EmailUtils.isInbox(this.folder.getName())) {
+                        this.folder.close();
+                    }
+                } catch (Exception ex) {
+                    log.warn("Error closing folder", ex);
+                }
+                
             }
         }
         return cachedUnread;
