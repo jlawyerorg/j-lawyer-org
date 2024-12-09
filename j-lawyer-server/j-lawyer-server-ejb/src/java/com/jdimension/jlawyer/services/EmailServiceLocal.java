@@ -661,9 +661,8 @@ if any, to sign a "copyright disclaimer" for the program, if necessary.
 For more information on this, and how to apply and follow the GNU AGPL, see
 <https://www.gnu.org/licenses/>.
  */
-package com.jdimension.jlawyer.persistence;
+package com.jdimension.jlawyer.services;
 
-import java.util.List;
 import javax.ejb.Local;
 
 /**
@@ -671,26 +670,8 @@ import javax.ejb.Local;
  * @author jens
  */
 @Local
-public interface MailboxAccessFacadeLocal {
+public interface EmailServiceLocal {
 
-    void create(MailboxAccess mailboxAccess);
-
-    void edit(MailboxAccess mailboxAccess);
-
-    void remove(MailboxAccess mailboxAccess);
-
-    MailboxAccess find(Object id);
-
-    List<MailboxAccess> findAll();
-
-    List<MailboxAccess> findRange(int[] range);
-    
-    MailboxAccess findByUserAndMailbox(String principalId, String mailboxId);
-
-    List<MailboxAccess> findByUser(String principalId);
-    
-    List<MailboxAccess> findByMailbox(String mailboxId);
-    
-    int count();
+    String getAuthToken(String mailboxId) throws Exception;
     
 }

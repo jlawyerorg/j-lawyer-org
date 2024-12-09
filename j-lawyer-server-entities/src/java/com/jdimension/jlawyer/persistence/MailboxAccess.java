@@ -683,6 +683,7 @@ import javax.xml.bind.annotation.XmlRootElement;
     @NamedQuery(name = "MailboxAccess.findAll", query = "SELECT g FROM MailboxAccess g"),
     @NamedQuery(name = "MailboxAccess.findById", query = "SELECT g FROM MailboxAccess g WHERE g.id = :id"),
     @NamedQuery(name = "MailboxAccess.findByPrincipalId", query = "SELECT g FROM MailboxAccess g WHERE g.principalId = :principalId"),
+    @NamedQuery(name = "MailboxAccess.findByMailboxId", query = "SELECT g FROM MailboxAccess g WHERE g.mailboxId = :mailboxId"),
     @NamedQuery(name = "MailboxAccess.findByPrincipalIdAndMailboxId", query = "SELECT g FROM MailboxAccess g WHERE g.principalId = :principalId AND g.mailboxId = :mailboxId")})
 public class MailboxAccess implements Serializable {
 
