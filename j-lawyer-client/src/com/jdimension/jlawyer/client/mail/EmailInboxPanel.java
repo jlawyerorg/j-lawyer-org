@@ -2603,7 +2603,9 @@ public class EmailInboxPanel extends javax.swing.JPanel implements SaveToCaseExe
         ArrayList<Component> actionPanelEntries = new ArrayList<>();
         ClientSettings settings = ClientSettings.getInstance();
         try {
-            MailboxSetup ms = EmailUtils.getMailboxSetup(msgC.getMessage());
+            DefaultMutableTreeNode selNode = (DefaultMutableTreeNode) this.treeFolders.getSelectionPath().getLastPathComponent();
+            //MailboxSetup ms = EmailUtils.getMailboxSetup(msgC.getMessage());
+            MailboxSetup ms = this.getMailboxSetup(selNode);
             this.mailContentUI.setMessage(msgC, ms);
 
             JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
