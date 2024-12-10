@@ -1174,9 +1174,9 @@ public class MailContentUI extends javax.swing.JPanel implements HyperlinkListen
 
         String to = "";
         if (copiedMsg.getRecipients(RecipientType.TO) != null && copiedMsg.getRecipients(RecipientType.TO).length > 0) {
-            to = copiedMsg.getRecipients(RecipientType.TO)[0].toString();
+            to = MimeUtility.decodeText(copiedMsg.getRecipients(RecipientType.TO)[0].toString());
             for (int i = 1; i < copiedMsg.getRecipients(RecipientType.TO).length; i++) {
-                to = to + ", " + copiedMsg.getRecipients(RecipientType.TO)[i].toString();
+                to = to + ", " + MimeUtility.decodeText(copiedMsg.getRecipients(RecipientType.TO)[i].toString());
             }
         }
         lblTo.setText(to);
@@ -1184,9 +1184,9 @@ public class MailContentUI extends javax.swing.JPanel implements HyperlinkListen
 
         String cc = "";
         if (copiedMsg.getRecipients(RecipientType.CC) != null && copiedMsg.getRecipients(RecipientType.CC).length > 0) {
-            cc = copiedMsg.getRecipients(RecipientType.CC)[0].toString();
+            cc = MimeUtility.decodeText(copiedMsg.getRecipients(RecipientType.CC)[0].toString());
             for (int i = 1; i < copiedMsg.getRecipients(RecipientType.CC).length; i++) {
-                cc = cc + ", " + copiedMsg.getRecipients(RecipientType.CC)[i].toString();
+                cc = cc + ", " + MimeUtility.decodeText(copiedMsg.getRecipients(RecipientType.CC)[i].toString());
             }
         }
         lblCC.setText(cc);
@@ -1194,9 +1194,9 @@ public class MailContentUI extends javax.swing.JPanel implements HyperlinkListen
 
         String bcc = "";
         if (copiedMsg.getRecipients(RecipientType.BCC) != null && copiedMsg.getRecipients(RecipientType.BCC).length > 0) {
-            bcc = copiedMsg.getRecipients(RecipientType.BCC)[0].toString();
+            bcc = MimeUtility.decodeText(copiedMsg.getRecipients(RecipientType.BCC)[0].toString());
             for (int i = 1; i < copiedMsg.getRecipients(RecipientType.BCC).length; i++) {
-                bcc = bcc + ", " + copiedMsg.getRecipients(RecipientType.BCC)[i].toString();
+                bcc = bcc + ", " + MimeUtility.decodeText(copiedMsg.getRecipients(RecipientType.BCC)[i].toString());
             }
         }
         lblBCC.setText(bcc);

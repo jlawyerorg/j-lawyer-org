@@ -2240,6 +2240,29 @@ public class EmailInboxPanel extends javax.swing.JPanel implements SaveToCaseExe
         dlg.setVisible(true);
     }//GEN-LAST:event_cmdForwardActionPerformed
 
+    private void reconnectSelectedFolder(Folder folder) throws Exception {
+        
+        DefaultMutableTreeNode selNode = (DefaultMutableTreeNode) this.treeFolders.getSelectionPath().getLastPathComponent();
+        if(!(selNode.getUserObject() instanceof FolderContainer))
+            return;
+        
+        MailboxSetup ms = this.getMailboxSetup(selNode);
+        log.warn("Attempting to reconnect to " + ms.getEmailAddress());
+        String pw = ms.getEmailInPwd();
+        if (ms.isMsExchange()) {
+            pw = EmailUtils.getOffice365AuthToken(ms.getId());
+        }
+        Store store = folder.getStore();
+        if (store.isConnected()) {
+            store.close(); // Ensure the store is clean
+        }
+        store.connect(ms.getEmailInServer(), ms.getEmailInUser(), pw);
+        if (folder.isOpen()) {
+            folder.close(false);
+        }
+        folder.open(Folder.READ_WRITE);
+    }
+    
     private void cmdReplyAllActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdReplyAllActionPerformed
         SendEmailDialog dlg = new SendEmailDialog(true, EditorsRegistry.getInstance().getMainWindow(), false);
 
@@ -2248,7 +2271,13 @@ public class EmailInboxPanel extends javax.swing.JPanel implements SaveToCaseExe
         MessageContainer msgC = (MessageContainer) this.tblMails.getValueAt(selected[0], 0);
         try {
             Message origM = msgC.getMessage();
-            Message m = origM.reply(true);
+            Message m = null;
+            try {
+                m = origM.reply(true);
+            } catch (FolderClosedException fce) {
+                this.reconnectSelectedFolder(origM.getFolder());
+                m = origM.reply(true);
+            }
             MailboxSetup ms = EmailUtils.getMailboxSetup(m);
             if (ms != null) {
                 dlg.setFrom(ms);
