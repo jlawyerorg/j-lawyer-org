@@ -753,8 +753,10 @@ public class FolderContainer {
                     this.cachedTotal = this.folder.getMessageCount();
                 } catch (StoreClosedException stex) {
                     log.warn("Unable to determine number of unread messages - folder is closed");
+                    return Math.max(this.cachedUnread, 0);
                 } catch (MessagingException ex) {
                     log.error("Unable to determine number of unread messages", ex);
+                    return Math.max(this.cachedUnread, 0);
                 }
                 
             }
