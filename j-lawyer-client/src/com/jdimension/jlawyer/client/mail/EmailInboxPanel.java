@@ -910,7 +910,8 @@ public class EmailInboxPanel extends javax.swing.JPanel implements SaveToCaseExe
                 server = ms.getEmailInServer();
                 
                 if(ms.isMsExchange()) {
-                    String authToken = MsExchangeUtils.getAuthToken(ms.getTenantId(), ms.getClientId(), ms.getClientSecret(), ms.getEmailInUser(), emailInPwd);
+                    //String authToken = MsExchangeUtils.getAuthToken(ms.getTenantId(), ms.getClientId(), ms.getClientSecret(), ms.getEmailInUser(), emailInPwd);
+                    String authToken = EmailUtils.getOffice365AuthToken(ms.getId());
                     props.put("mail.imaps.sasl.enable", "true");
                     props.put("mail.imaps.port", "993");
 
@@ -931,6 +932,7 @@ public class EmailInboxPanel extends javax.swing.JPanel implements SaveToCaseExe
                     store = session.getStore("imaps");
                     // server should be outlook.office365.com
                     this.stores.put(ms, store);
+                    //store.connect(server, ms.getEmailInUser(), "Bearer " + authToken);
                     store.connect(server, ms.getEmailInUser(), authToken);
                     
                 } else {
@@ -981,6 +983,16 @@ public class EmailInboxPanel extends javax.swing.JPanel implements SaveToCaseExe
         for (MailboxSetup ms : mailboxes) {
 
             try {
+                
+                if(ms.isMsExchange()) {
+                    try {
+                        ClientSettings settings=ClientSettings.getInstance();
+                        JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
+                        locator.lookupEmailServiceRemote().updateAuthToken(ms.getId());
+                    } catch (Exception ex) {
+                        log.error("unable to update auth token for mailbox " + ms.getEmailAddress(), ex);
+                    }
+                }
 
                 this.connect(showErrorDialogOnFailure, ms);
 
@@ -1124,7 +1136,11 @@ public class EmailInboxPanel extends javax.swing.JPanel implements SaveToCaseExe
             FolderContainer childContainer = childHt.get(key);
             
             String fullParentPath=this.getFullPathInMailbox(new TreePath(currentNode.getPath()));
-            String fullChildPath=fullParentPath + File.separator + childContainer.getFolder().getName();
+            String fullChildPath=null;
+            if(StringUtils.isEmpty(fullParentPath))
+                fullChildPath=childContainer.getFolder().getName();
+            else
+                fullChildPath=fullParentPath + File.separator + childContainer.getFolder().getName();
             boolean isHidden=MailboxSettings.getInstance().isFolderHidden(ms, fullChildPath);
             if (!isHidden) {
                 DefaultMutableTreeNode childNode = new DefaultMutableTreeNode(childContainer);
@@ -1675,7 +1691,23 @@ public class EmailInboxPanel extends javax.swing.JPanel implements SaveToCaseExe
         Folder folder = folderC.getFolder();
         try {
             if (!folder.isOpen()) {
-                folder.open(Folder.READ_WRITE);
+                try {
+                    folder.open(Folder.READ_WRITE);
+                } catch (Exception ex) {
+                    MailboxSetup ms=this.getMailboxSetup(selNode);
+                    log.warn("Attempting to reconnect to " + ms.getEmailAddress());
+                    String pw=ms.getEmailInPwd();
+                    if(ms.isMsExchange())
+                        pw=EmailUtils.getOffice365AuthToken(ms.getId());
+                    Store store = folder.getStore();
+                    if (store.isConnected()) {
+                        store.close(); // Ensure the store is clean
+                    }
+                    store.connect(ms.getEmailInServer(), ms.getEmailInUser(), pw);
+                    if(folder.isOpen())
+                        folder.close(false);
+                    folder.open(Folder.READ_WRITE);
+                }
             }
 
             DefaultTableModel tm = new DefaultTableModel(new String[]{"Betreff", "Absender", "Empfänger", "Gesendet"}, 0) {
@@ -1693,7 +1725,7 @@ public class EmailInboxPanel extends javax.swing.JPanel implements SaveToCaseExe
             this.tblMails.setDefaultRenderer(Object.class, new EmailTableCellRenderer());
 
             ProgressIndicator dlg = new ProgressIndicator(EditorsRegistry.getInstance().getMainWindow(), true);
-            LoadFolderAction a = new LoadFolderAction(dlg, folder, tblMails, sortCol, scrollToRow, searchTerm);
+            LoadFolderAction a = new LoadFolderAction(dlg, folderC, tblMails, sortCol, scrollToRow, searchTerm);
             a.start();
 
         } catch (Exception ex) {
@@ -2208,6 +2240,29 @@ public class EmailInboxPanel extends javax.swing.JPanel implements SaveToCaseExe
         dlg.setVisible(true);
     }//GEN-LAST:event_cmdForwardActionPerformed
 
+    private void reconnectSelectedFolder(Folder folder) throws Exception {
+        
+        DefaultMutableTreeNode selNode = (DefaultMutableTreeNode) this.treeFolders.getSelectionPath().getLastPathComponent();
+        if(!(selNode.getUserObject() instanceof FolderContainer))
+            return;
+        
+        MailboxSetup ms = this.getMailboxSetup(selNode);
+        log.warn("Attempting to reconnect to " + ms.getEmailAddress());
+        String pw = ms.getEmailInPwd();
+        if (ms.isMsExchange()) {
+            pw = EmailUtils.getOffice365AuthToken(ms.getId());
+        }
+        Store store = folder.getStore();
+        if (store.isConnected()) {
+            store.close(); // Ensure the store is clean
+        }
+        store.connect(ms.getEmailInServer(), ms.getEmailInUser(), pw);
+        if (folder.isOpen()) {
+            folder.close(false);
+        }
+        folder.open(Folder.READ_WRITE);
+    }
+    
     private void cmdReplyAllActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdReplyAllActionPerformed
         SendEmailDialog dlg = new SendEmailDialog(true, EditorsRegistry.getInstance().getMainWindow(), false);
 
@@ -2216,7 +2271,13 @@ public class EmailInboxPanel extends javax.swing.JPanel implements SaveToCaseExe
         MessageContainer msgC = (MessageContainer) this.tblMails.getValueAt(selected[0], 0);
         try {
             Message origM = msgC.getMessage();
-            Message m = origM.reply(true);
+            Message m = null;
+            try {
+                m = origM.reply(true);
+            } catch (FolderClosedException fce) {
+                this.reconnectSelectedFolder(origM.getFolder());
+                m = origM.reply(true);
+            }
             MailboxSetup ms = EmailUtils.getMailboxSetup(m);
             if (ms != null) {
                 dlg.setFrom(ms);
@@ -2542,7 +2603,9 @@ public class EmailInboxPanel extends javax.swing.JPanel implements SaveToCaseExe
         ArrayList<Component> actionPanelEntries = new ArrayList<>();
         ClientSettings settings = ClientSettings.getInstance();
         try {
-            MailboxSetup ms = EmailUtils.getMailboxSetup(msgC.getMessage());
+            DefaultMutableTreeNode selNode = (DefaultMutableTreeNode) this.treeFolders.getSelectionPath().getLastPathComponent();
+            //MailboxSetup ms = EmailUtils.getMailboxSetup(msgC.getMessage());
+            MailboxSetup ms = this.getMailboxSetup(selNode);
             this.mailContentUI.setMessage(msgC, ms);
 
             JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
