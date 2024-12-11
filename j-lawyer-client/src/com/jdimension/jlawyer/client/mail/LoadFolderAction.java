@@ -769,7 +769,7 @@ public class LoadFolderAction extends ProgressableAction {
 
             int fromIndex = 1;
             int toIndex = this.getMessageCount();
-            int maxQuantity = Integer.MAX_VALUE;
+            int maxQuantity = Integer.MAX_VALUE-1;
             switch (currentRestriction.getRestriction()) {
                 case LoadFolderRestriction.RESTRICTION_20:
                     fromIndex = Math.max(1, toIndex - 20);
@@ -799,7 +799,8 @@ public class LoadFolderAction extends ProgressableAction {
                     // Combine unread filter with notDeleted filter
                     FlagTerm unread = new FlagTerm(new Flags(Flags.Flag.SEEN), false);
                     AndTerm filter = new AndTerm(unread, notDeleted);
-                    messages = f.getFolder().search(filter, messages);
+                    //messages = f.getFolder().search(filter, messages);
+                    messages = f.getFolder().search(filter);
                 } else {
                     messages = f.getFolder().getMessages(fromIndex, toIndex);
 
@@ -807,7 +808,7 @@ public class LoadFolderAction extends ProgressableAction {
                     messages = f.getFolder().search(notDeleted, messages);
                 }
             } else {
-                maxQuantity = Integer.MAX_VALUE;
+                maxQuantity = Integer.MAX_VALUE-1;
                 // Build the OR search term for subject, sender, recipients, and body
                 OrTerm orTerm = new OrTerm(new SearchTerm[]{
                     new SubjectTerm(this.searchTerm),
