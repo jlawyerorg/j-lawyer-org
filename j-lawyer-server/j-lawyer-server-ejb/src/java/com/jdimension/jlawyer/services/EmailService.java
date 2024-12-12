@@ -669,6 +669,8 @@ import com.jdimension.jlawyer.persistence.MailboxAccessFacadeLocal;
 import com.jdimension.jlawyer.persistence.MailboxSetup;
 import com.jdimension.jlawyer.persistence.MailboxSetupFacadeLocal;
 import com.jdimension.jlawyer.server.utils.ServerStringUtils;
+import java.io.ByteArrayOutputStream;
+import java.io.InputStream;
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
 import java.util.Date;
@@ -748,7 +750,7 @@ public class EmailService implements EmailServiceRemote, EmailServiceLocal {
     @Override
     @RolesAllowed({"loginRole"})
     public boolean updateAuthToken(String mailboxId) throws Exception {
-        
+
         MailboxSetup ms = this.mailboxSetupFacade.find(mailboxId);
         if (ms != null) {
             return this.updateAuthTokenForMailbox(ms);
@@ -756,15 +758,15 @@ public class EmailService implements EmailServiceRemote, EmailServiceLocal {
             log.error("Auth token update requested for a non-existing mailbox with id " + mailboxId);
             return false;
         }
-        
+
     }
-    
+
     private boolean updateAuthTokenForMailbox(MailboxSetup mailbox) throws Exception {
 
         if (mailbox.getTokenExpiry() == 0 || ((mailbox.getTokenExpiry() - System.currentTimeMillis()) < (6l * 60l * 1000l))) {
 
             log.info("attempting to update tokens for " + mailbox.getEmailAddress());
-            
+
             if (ServerStringUtils.isEmpty(mailbox.getTenantId())) {
                 log.error("Tenant ID is empty when updating access token for " + mailbox.getEmailAddress());
                 return false;
@@ -839,7 +841,7 @@ public class EmailService implements EmailServiceRemote, EmailServiceLocal {
 
 //            String body = "client_id=" + ms.getClientId()
 //                    + "&scope=https%3A%2F%2Fgraph.microsoft.com%2Fmail.read%20offline_access";
-            String body = "client_id=" + ms.getClientId()
+            String body = "client_id=" + URLEncoder.encode(ms.getClientId(), StandardCharsets.UTF_8)
                     + "&scope=https%3A%2F%2Foutlook.office365.com%2FIMAP.AccessAsUser.All%20"
                     + "https%3A%2F%2Foutlook.office365.com%2FSMTP.Send%20"
                     + "offline_access";
@@ -883,10 +885,10 @@ public class EmailService implements EmailServiceRemote, EmailServiceLocal {
             HttpPost post = new HttpPost(TOKEN_ENDPOINT);
 
             // Include client_secret in the body
-            String body = "client_id=" + ms.getClientId()
-                    + "&client_secret=" + ms.getClientSecret()
+            String body = "client_id=" + URLEncoder.encode(ms.getClientId(), StandardCharsets.UTF_8)
+                    + "&client_secret=" + URLEncoder.encode(ms.getClientSecret(), StandardCharsets.UTF_8)
                     + "&grant_type=urn:ietf:params:oauth:grant-type:device_code"
-                    + "&device_code=" + deviceCode;
+                    + "&device_code=" + URLEncoder.encode(deviceCode, StandardCharsets.UTF_8);
             post.setEntity(new StringEntity(body));
             post.setHeader("Content-Type", "application/x-www-form-urlencoded");
 
@@ -918,7 +920,25 @@ public class EmailService implements EmailServiceRemote, EmailServiceLocal {
                     return false;
                 } else {
                     log.error("Unexpected HTTP Status when polling for tokens for " + ms.getEmailAddress() + ": " + response.getStatusLine().getStatusCode());
-                    log.error(response.getEntity().getContent());
+                    try {
+                        InputStream is = response.getEntity().getContent();
+                        ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
+
+                        // Copy content from InputStream to ByteArrayOutputStream
+                        is.transferTo(byteArrayOutputStream);
+
+                        // Get the resulting byte array (if needed)
+                        byte[] byteArray = byteArrayOutputStream.toByteArray();
+
+                        // Close the streams
+                        is.close();
+                        byteArrayOutputStream.close();
+                        
+                        log.error(new String(byteArrayOutputStream.toByteArray()));
+                        
+                    } catch (Exception ex) {
+                        log.error("Error reading response", ex);
+                    }
                     return false;
                 }
             }
