@@ -1099,7 +1099,6 @@ public class PdfImageScrollingPanel extends javax.swing.JPanel implements Previe
 
                     BufferedImage scaledImage = new BufferedImage(width, height, BufferedImage.TYPE_INT_ARGB);
                     Graphics2D g2d = scaledImage.createGraphics();
-                    //g2d.setRenderingHint(RenderingHints.KEY_INTERPOLATION, RenderingHints.VALUE_INTERPOLATION_BILINEAR);
                     g2d.setRenderingHint(RenderingHints.KEY_INTERPOLATION, RenderingHints.VALUE_INTERPOLATION_BICUBIC);
                     g2d.setRenderingHint(RenderingHints.KEY_RENDERING, RenderingHints.VALUE_RENDER_QUALITY);
                     g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
@@ -1259,7 +1258,6 @@ public class PdfImageScrollingPanel extends javax.swing.JPanel implements Previe
                             // todo: check for landscape mode and display those pages with lower height
                             BufferedImage scaledImage = new BufferedImage(width1, height1, BufferedImage.TYPE_INT_ARGB);
                             Graphics2D g2d = scaledImage.createGraphics();
-                            //g2d.setRenderingHint(RenderingHints.KEY_INTERPOLATION, RenderingHints.VALUE_INTERPOLATION_BILINEAR);
                             g2d.setRenderingHint(RenderingHints.KEY_INTERPOLATION, RenderingHints.VALUE_INTERPOLATION_BICUBIC);
                             g2d.setRenderingHint(RenderingHints.KEY_RENDERING, RenderingHints.VALUE_RENDER_QUALITY);
                             g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
@@ -1528,7 +1526,6 @@ public class PdfImageScrollingPanel extends javax.swing.JPanel implements Previe
 
                 BufferedImage bi2 = new BufferedImage(width1, height1, BufferedImage.TYPE_INT_ARGB);
                 Graphics2D g2d = bi2.createGraphics();
-                //g2d.setRenderingHint(RenderingHints.KEY_INTERPOLATION, RenderingHints.VALUE_INTERPOLATION_BILINEAR);
                 g2d.setRenderingHint(RenderingHints.KEY_INTERPOLATION, RenderingHints.VALUE_INTERPOLATION_BICUBIC);
                 g2d.setRenderingHint(RenderingHints.KEY_RENDERING, RenderingHints.VALUE_RENDER_QUALITY);
                 g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
