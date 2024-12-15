@@ -910,7 +910,6 @@ public class EmailInboxPanel extends javax.swing.JPanel implements SaveToCaseExe
                 server = ms.getEmailInServer();
                 
                 if(ms.isMsExchange()) {
-                    //String authToken = MsExchangeUtils.getAuthToken(ms.getTenantId(), ms.getClientId(), ms.getClientSecret(), ms.getEmailInUser(), emailInPwd);
                     String authToken = EmailUtils.getOffice365AuthToken(ms.getId());
                     props.put("mail.imaps.sasl.enable", "true");
                     props.put("mail.imaps.port", "993");
@@ -932,7 +931,6 @@ public class EmailInboxPanel extends javax.swing.JPanel implements SaveToCaseExe
                     store = session.getStore("imaps");
                     // server should be outlook.office365.com
                     this.stores.put(ms, store);
-                    //store.connect(server, ms.getEmailInUser(), "Bearer " + authToken);
                     store.connect(server, ms.getEmailInUser(), authToken);
                     
                 } else {
@@ -2604,7 +2602,6 @@ public class EmailInboxPanel extends javax.swing.JPanel implements SaveToCaseExe
         ClientSettings settings = ClientSettings.getInstance();
         try {
             DefaultMutableTreeNode selNode = (DefaultMutableTreeNode) this.treeFolders.getSelectionPath().getLastPathComponent();
-            //MailboxSetup ms = EmailUtils.getMailboxSetup(msgC.getMessage());
             MailboxSetup ms = this.getMailboxSetup(selNode);
             this.mailContentUI.setMessage(msgC, ms);
 

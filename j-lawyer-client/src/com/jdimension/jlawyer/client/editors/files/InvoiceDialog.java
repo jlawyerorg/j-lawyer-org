@@ -2253,23 +2253,18 @@ public class InvoiceDialog extends javax.swing.JDialog implements EventConsumer 
         }
 
         StyledCalculationTable ct = new StyledCalculationTable();
-        SimpleDateFormat dfDateTime = null;
         DecimalFormat currencyFormat=null;
         if ("EN".equalsIgnoreCase(language)) {
             ct.addHeaders("Person", "Duration", "Total");
-            dfDateTime = new SimpleDateFormat("MM/dd/yyyy");
             currencyFormat=new DecimalFormat("#,##0.00", DecimalFormatSymbols.getInstance(Locale.US));
         } else if ("FR".equalsIgnoreCase(language)) {
             ct.addHeaders("Personne", "Durée", "Somme");
-            dfDateTime = new SimpleDateFormat("dd/MM/yyyy");
             currencyFormat=new DecimalFormat("#,##0.00", DecimalFormatSymbols.getInstance(Locale.FRANCE));
         } else if ("NL".equalsIgnoreCase(language)) {
             ct.addHeaders("Persoon", "Tijd", "Totaal");
-            dfDateTime = new SimpleDateFormat("dd-MM-yyyy");
             currencyFormat=new DecimalFormat("#,##0.00", DecimalFormatSymbols.getInstance(new Locale("nl", "NL")));
         } else {
             ct.addHeaders("Person", "Dauer", "Total");
-            dfDateTime = new SimpleDateFormat("dd.MM.yyyy");
             currencyFormat=new DecimalFormat("#,##0.00", DecimalFormatSymbols.getInstance(Locale.GERMANY));
         }
 
@@ -2277,8 +2272,8 @@ public class InvoiceDialog extends javax.swing.JDialog implements EventConsumer 
             ct.addRow("", "", "");
         }
 
-        HashMap<String,Long> personMillis=new HashMap();
-        HashMap<String,BigDecimal> personTotal=new HashMap();
+        HashMap<String,Long> personMillis=new HashMap<>();
+        HashMap<String,BigDecimal> personTotal=new HashMap<>();
         for (TimesheetPosition pos : posList) {
             
             long millis=pos.getStopped().getTime() - pos.getStarted().getTime();

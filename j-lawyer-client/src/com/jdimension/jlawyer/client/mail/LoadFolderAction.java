@@ -743,19 +743,9 @@ public class LoadFolderAction extends ProgressableAction {
     @Override
     public boolean execute() throws Exception {
         try {
-            //long start=System.currentTimeMillis();
-            
             if (!(f.getFolder().isOpen())) {
                 f.getFolder().open(Folder.READ_WRITE);
             }
-//            try {
-//                if (EmailUtils.isIMAP(f)) {
-//                    f.expunge();
-//                }
-//            } catch (Throwable t) {
-//                log.error("Could not expunge folder", t);
-//            }
-            //System.out.println("load 20 = " + (System.currentTimeMillis() - start));
 
             ClientSettings cs = ClientSettings.getInstance();
             String restriction = cs.getConfiguration(ClientSettings.CONF_MAIL_DOWNLOADRESTRICTION, "" + LoadFolderRestriction.RESTRICTION_50);
@@ -791,7 +781,6 @@ public class LoadFolderAction extends ProgressableAction {
                     break;
             }
 
-            //System.out.println("load 30 = " + (System.currentTimeMillis() - start));
             Message[] messages = null;
             FlagTerm notDeleted = new FlagTerm(new Flags(Flags.Flag.DELETED), false);
             if (StringUtils.isEmpty(this.searchTerm)) {
@@ -799,7 +788,6 @@ public class LoadFolderAction extends ProgressableAction {
                     // Combine unread filter with notDeleted filter
                     FlagTerm unread = new FlagTerm(new Flags(Flags.Flag.SEEN), false);
                     AndTerm filter = new AndTerm(unread, notDeleted);
-                    //messages = f.getFolder().search(filter, messages);
                     messages = f.getFolder().search(filter);
                 } else {
                     messages = f.getFolder().getMessages(fromIndex, toIndex);
@@ -828,8 +816,6 @@ public class LoadFolderAction extends ProgressableAction {
                                        .limit(maxQuantity+1)
                                        .toArray(Message[]::new);
             
-            //System.out.println("load 40 = " + (System.currentTimeMillis() - start));
-            
             if (f.getFolder() instanceof UIDFolder) {
                 // get all the UIDs
                 FetchProfile fpUid = new FetchProfile();
@@ -837,22 +823,18 @@ public class LoadFolderAction extends ProgressableAction {
                 f.getFolder().fetch(messages, fpUid);
             }
             
-            //System.out.println("load 50 = " + (System.currentTimeMillis() - start));
             Message[] uncachedMessages = f.getUncachedMessages(messages);
             
-            //System.out.println("load 60 = " + (System.currentTimeMillis() - start));
             FetchProfile fp = new FetchProfile();
             fp.add(FetchProfile.Item.ENVELOPE);
             fp.add(FetchProfile.Item.FLAGS);
             f.getFolder().fetch(uncachedMessages, fp);
             
             
-            //System.out.println("load 70 = " + (System.currentTimeMillis() - start));
             f.addCachedMessages(uncachedMessages);
             
             messages=f.getCachedMessages(messages);
             
-            //System.out.println("load 80 = " + (System.currentTimeMillis() - start));
             HashMap<String, String> decodedMap = new HashMap<>();
             final int indexMax = messages.length - 1;
             ArrayList<Object[]> tableRows = new ArrayList<>();
@@ -926,7 +908,6 @@ public class LoadFolderAction extends ProgressableAction {
                 Object[] newRow = new Object[]{new MessageContainer(msg, msg.getSubject(), msg.isSet(Flags.Flag.SEEN)), from, toString, sentString};
                 tableRows.add(newRow);
 
-                //if (((i % 100) == 0 && i > 0) || i == (messages.length - 1) || (i == (messages.length - 1) && i<100 && messages.length>maxQuantity)) {
                 if (((i % 100) == 0 && i > 0) || i == (messages.length - 1)) {
 
                     final int currentIndex = i;
@@ -958,9 +939,6 @@ public class LoadFolderAction extends ProgressableAction {
                 }
             }
 
-            //System.out.println("load 90 = " + (System.currentTimeMillis() - start));
-            
-
             SwingUtilities.invokeLater(() -> {
                 try {
                     table.getRowSorter().toggleSortOrder(this.sortCol);
@@ -971,7 +949,6 @@ public class LoadFolderAction extends ProgressableAction {
                 ComponentUtils.autoSizeColumns(table, 0);
             });
 
-            //System.out.println("load 100 = " + (System.currentTimeMillis() - start));
             new Thread(() -> {
                 try {
                     Thread.sleep(5000);

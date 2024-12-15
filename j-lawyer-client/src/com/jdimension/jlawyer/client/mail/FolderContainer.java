@@ -689,6 +689,8 @@ public class FolderContainer {
     private long cachedUnreadUpdated = -1;
     private int cachedUnread = -1;
     private int cachedTotal = -1;
+    
+    private String mappedName=null;
 
     private static final Logger log = Logger.getLogger(FolderContainer.class.getName());
     private static final HashMap<String, String> folderNameMapping = new HashMap<>();
@@ -791,30 +793,40 @@ public class FolderContainer {
         if (this.cachedToStringUpdated == -1 || ((System.currentTimeMillis() - cachedToStringUpdated) > this.getRetentionTime())) {
             try {
 
-                String name = this.folder.getName();
+                if (this.mappedName == null) {
+                    this.mappedName = this.folder.getName();
 
-                Set mapKey = folderNameMapping.keySet();
-                Iterator mIt = mapKey.iterator();
-                while (mIt.hasNext()) {
-                    String k = mIt.next().toString();
-                    if (k.equalsIgnoreCase(name)) {
-                        name = folderNameMapping.get(k);
-                        break;
+                    Set mapKey = folderNameMapping.keySet();
+                    Iterator mIt = mapKey.iterator();
+                    while (mIt.hasNext()) {
+                        String k = mIt.next().toString();
+                        if (k.equalsIgnoreCase(this.mappedName)) {
+                            this.mappedName = folderNameMapping.get(k);
+                            break;
+                        }
                     }
                 }
 
-                int msgCount = this.folder.getMessageCount();
-                //int msgCount = this.getUnreadMessageCount();
+                int msgCount=this.folder.getMessageCount();
+                
                 cachedToStringUpdated = System.currentTimeMillis();
                 if (msgCount < 0) {
-                    cachedToString = name;
+                    cachedToString = this.mappedName;
                 } else {
-                    cachedToString = name + " (" + msgCount + ")";
+                    cachedToString = this.mappedName + " (" + msgCount + ")";
                 }
 
             } catch (Exception ex) {
                 log.error(ex);
-                cachedToString = this.folder.getName();
+                
+                // only set to folder name if not initialized
+                if(cachedToString==null) {
+                    if(this.mappedName==null)
+                        cachedToString = this.folder.getName();
+                    else
+                        cachedToString = this.mappedName;
+                }
+                
                 cachedToStringUpdated = System.currentTimeMillis();
             }
         }

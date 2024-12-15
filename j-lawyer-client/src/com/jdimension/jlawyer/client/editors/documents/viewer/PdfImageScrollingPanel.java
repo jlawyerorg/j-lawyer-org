@@ -681,7 +681,6 @@ import java.io.File;
 import java.io.IOException;
 import java.util.Arrays;
 import java.util.HashMap;
-import java.util.logging.Level;
 import javax.imageio.ImageIO;
 import javax.swing.ImageIcon;
 import javax.swing.JOptionPane;
@@ -1098,9 +1097,15 @@ public class PdfImageScrollingPanel extends javax.swing.JPanel implements Previe
                         width = (int) (width / (297f / 210f));
                     }
 
-                    BufferedImage scaledImage = new BufferedImage(width, height, BufferedImage.TYPE_INT_RGB);
+                    BufferedImage scaledImage = new BufferedImage(width, height, BufferedImage.TYPE_INT_ARGB);
                     Graphics2D g2d = scaledImage.createGraphics();
-                    g2d.setRenderingHint(RenderingHints.KEY_INTERPOLATION, RenderingHints.VALUE_INTERPOLATION_BILINEAR);
+                    //g2d.setRenderingHint(RenderingHints.KEY_INTERPOLATION, RenderingHints.VALUE_INTERPOLATION_BILINEAR);
+                    g2d.setRenderingHint(RenderingHints.KEY_INTERPOLATION, RenderingHints.VALUE_INTERPOLATION_BICUBIC);
+                    g2d.setRenderingHint(RenderingHints.KEY_RENDERING, RenderingHints.VALUE_RENDER_QUALITY);
+                    g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+                    g2d.setRenderingHint(RenderingHints.KEY_COLOR_RENDERING, RenderingHints.VALUE_COLOR_RENDER_QUALITY);
+                    g2d.setRenderingHint(RenderingHints.KEY_STROKE_CONTROL, RenderingHints.VALUE_STROKE_PURE);
+
                     g2d.drawImage(img, 0, 0, width, height, null);
                     g2d.dispose();
 
@@ -1235,7 +1240,7 @@ public class PdfImageScrollingPanel extends javax.swing.JPanel implements Previe
                     rendering = true;
                     for (int i = fromIndex; i <= toIndex; i++) {
                         try {
-                            BufferedImage buffImg = pdfRenderer.renderImageWithDPI(i, dpi, ImageType.RGB);
+                            BufferedImage buffImg = pdfRenderer.renderImageWithDPI(i, dpi, ImageType.ARGB);
                             orgImage.put(i, saveBufferedImage(buffImg));
                             // need to subtract the height of the page navigation buttons, but
                             // the panel has not been layed out yet, so there is no height we could query
@@ -1252,9 +1257,15 @@ public class PdfImageScrollingPanel extends javax.swing.JPanel implements Previe
                             }
 
                             // todo: check for landscape mode and display those pages with lower height
-                            BufferedImage scaledImage = new BufferedImage(width1, height1, BufferedImage.TYPE_INT_RGB);
+                            BufferedImage scaledImage = new BufferedImage(width1, height1, BufferedImage.TYPE_INT_ARGB);
                             Graphics2D g2d = scaledImage.createGraphics();
-                            g2d.setRenderingHint(RenderingHints.KEY_INTERPOLATION, RenderingHints.VALUE_INTERPOLATION_BILINEAR);
+                            //g2d.setRenderingHint(RenderingHints.KEY_INTERPOLATION, RenderingHints.VALUE_INTERPOLATION_BILINEAR);
+                            g2d.setRenderingHint(RenderingHints.KEY_INTERPOLATION, RenderingHints.VALUE_INTERPOLATION_BICUBIC);
+                            g2d.setRenderingHint(RenderingHints.KEY_RENDERING, RenderingHints.VALUE_RENDER_QUALITY);
+                            g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+                            g2d.setRenderingHint(RenderingHints.KEY_COLOR_RENDERING, RenderingHints.VALUE_COLOR_RENDER_QUALITY);
+                            g2d.setRenderingHint(RenderingHints.KEY_STROKE_CONTROL, RenderingHints.VALUE_STROKE_PURE);
+
                             g2d.drawImage(buffImg, 0, 0, width1, height1, null);
                             g2d.dispose();
 
@@ -1316,10 +1327,10 @@ public class PdfImageScrollingPanel extends javax.swing.JPanel implements Previe
         int minDpi = 120;
 
         // macOS has a default scale factor of 2 - assume HiDPI for all Macs
-        if(SystemUtils.isMacOs()) {
+        if (SystemUtils.isMacOs()) {
             return 300;
         }
-        
+
         String uiScale = System.getProperty("sun.java2d.uiScale");
         try {
             if (uiScale != null && Double.parseDouble(uiScale) > 1.0) {
@@ -1330,7 +1341,7 @@ public class PdfImageScrollingPanel extends javax.swing.JPanel implements Previe
         } catch (Throwable t) {
             log.warn("unable to get UI scale factor", t);
         }
-        
+
         if (totalPages <= 20) {
             return 200;
         }
@@ -1515,9 +1526,15 @@ public class PdfImageScrollingPanel extends javax.swing.JPanel implements Previe
                     width1 = (int) (width1 / (297f / 210f));
                 }
 
-                BufferedImage bi2 = new BufferedImage(width1, height1, BufferedImage.TYPE_INT_RGB);
+                BufferedImage bi2 = new BufferedImage(width1, height1, BufferedImage.TYPE_INT_ARGB);
                 Graphics2D g2d = bi2.createGraphics();
-                g2d.setRenderingHint(RenderingHints.KEY_INTERPOLATION, RenderingHints.VALUE_INTERPOLATION_BILINEAR);
+                //g2d.setRenderingHint(RenderingHints.KEY_INTERPOLATION, RenderingHints.VALUE_INTERPOLATION_BILINEAR);
+                g2d.setRenderingHint(RenderingHints.KEY_INTERPOLATION, RenderingHints.VALUE_INTERPOLATION_BICUBIC);
+                g2d.setRenderingHint(RenderingHints.KEY_RENDERING, RenderingHints.VALUE_RENDER_QUALITY);
+                g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+                g2d.setRenderingHint(RenderingHints.KEY_COLOR_RENDERING, RenderingHints.VALUE_COLOR_RENDER_QUALITY);
+                g2d.setRenderingHint(RenderingHints.KEY_STROKE_CONTROL, RenderingHints.VALUE_STROKE_PURE);
+
                 g2d.drawImage(rotated, 0, 0, width1, height1, null);
                 g2d.dispose();
 

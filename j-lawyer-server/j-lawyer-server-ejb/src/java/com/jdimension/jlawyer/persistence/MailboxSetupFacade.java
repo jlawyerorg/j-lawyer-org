@@ -692,8 +692,7 @@ public class MailboxSetupFacade extends AbstractFacade<MailboxSetup> implements 
     @Override
     public List<MailboxSetup> findByMsExchange(boolean exchange) {
         try {
-            List<MailboxSetup> gm = (List<MailboxSetup>) em.createNamedQuery("MailboxSetup.findByMsExchange").setParameter("msExchange", exchange).getResultList();
-            return gm;
+            return (List<MailboxSetup>) em.createNamedQuery("MailboxSetup.findByMsExchange").setParameter("msExchange", exchange).getResultList();
         } catch (NoResultException nre) {
             return new ArrayList<>();
         }
