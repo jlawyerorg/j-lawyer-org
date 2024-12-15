@@ -668,7 +668,6 @@ import com.jdimension.jlawyer.email.AttachmentInfo;
 import com.jdimension.jlawyer.email.CommonMailUtils;
 import static com.jdimension.jlawyer.email.CommonMailUtils.INBOX;
 import static com.jdimension.jlawyer.email.CommonMailUtils.SSL_FACTORY;
-import com.jdimension.jlawyer.email.MsExchangeUtils;
 import com.jdimension.jlawyer.persistence.AddressBean;
 import com.jdimension.jlawyer.persistence.AppUserBean;
 import com.jdimension.jlawyer.persistence.ArchiveFileAddressesBean;

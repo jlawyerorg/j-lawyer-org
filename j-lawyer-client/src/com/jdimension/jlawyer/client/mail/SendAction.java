@@ -666,7 +666,6 @@ package com.jdimension.jlawyer.client.mail;
 import com.jdimension.jlawyer.client.events.DocumentAddedEvent;
 import com.jdimension.jlawyer.client.events.EventBroker;
 import com.jdimension.jlawyer.client.launcher.LauncherFactory;
-import com.jdimension.jlawyer.email.MsExchangeUtils;
 import com.jdimension.jlawyer.client.processing.ProgressIndicator;
 import com.jdimension.jlawyer.client.processing.ProgressableAction;
 import com.jdimension.jlawyer.client.settings.ClientSettings;

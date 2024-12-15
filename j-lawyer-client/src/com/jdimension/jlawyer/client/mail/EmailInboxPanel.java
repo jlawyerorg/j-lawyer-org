@@ -677,7 +677,6 @@ import com.jdimension.jlawyer.client.events.EventBroker;
 import com.jdimension.jlawyer.client.launcher.Launcher;
 import com.jdimension.jlawyer.client.launcher.LauncherFactory;
 import com.jdimension.jlawyer.client.launcher.ReadOnlyDocumentStore;
-import com.jdimension.jlawyer.email.MsExchangeUtils;
 import com.jdimension.jlawyer.client.mail.sidebar.CreateNewAddressPanel;
 import com.jdimension.jlawyer.client.mail.sidebar.CreateNewCasePanel;
 import com.jdimension.jlawyer.client.mail.sidebar.ExtractedPhoneNumbersPanel;
