@@ -663,6 +663,7 @@ For more information on this, and how to apply and follow the GNU AGPL, see
  */
 package com.jdimension.jlawyer.persistence;
 
+import java.util.ArrayList;
 import java.util.List;
 import javax.ejb.Stateless;
 import javax.persistence.EntityManager;
@@ -706,6 +707,17 @@ public class MailboxAccessFacade extends AbstractFacade<MailboxAccess> implement
             return gm;
         } catch (NoResultException nre) {
             return null;
+        }
+
+    }
+    
+    @Override
+    public List<MailboxAccess> findByMailbox(String mailboxId) {
+        try {
+            List<MailboxAccess> gm = (List<MailboxAccess>) em.createNamedQuery("MailboxAccess.findByMailboxId").setParameter("mailboxId", mailboxId).getResultList();
+            return gm;
+        } catch (NoResultException nre) {
+            return new ArrayList<>();
         }
 
     }

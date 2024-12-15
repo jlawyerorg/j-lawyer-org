@@ -665,6 +665,7 @@ package com.jdimension.jlawyer.persistence;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.Serializable;
+import java.util.Date;
 import java.util.Properties;
 import javax.persistence.Basic;
 import javax.persistence.Column;
@@ -673,6 +674,8 @@ import javax.persistence.Id;
 import javax.persistence.NamedQueries;
 import javax.persistence.NamedQuery;
 import javax.persistence.Table;
+import javax.persistence.Temporal;
+import javax.persistence.TemporalType;
 import javax.xml.bind.annotation.XmlRootElement;
 
 /**
@@ -684,7 +687,8 @@ import javax.xml.bind.annotation.XmlRootElement;
 @XmlRootElement
 @NamedQueries({
     @NamedQuery(name = "MailboxSetup.findAll", query = "SELECT p FROM MailboxSetup p"),
-    @NamedQuery(name = "MailboxSetup.findById", query = "SELECT p FROM MailboxSetup p WHERE p.id = :id")})
+    @NamedQuery(name = "MailboxSetup.findById", query = "SELECT p FROM MailboxSetup p WHERE p.id = :id"),
+    @NamedQuery(name = "MailboxSetup.findByMsExchange", query = "SELECT p FROM MailboxSetup p WHERE p.msExchange = :msExchange")})
 public class MailboxSetup implements Serializable, EventTypes {
 
     protected static long serialVersionUID = 1L;
@@ -736,6 +740,12 @@ public class MailboxSetup implements Serializable, EventTypes {
     protected boolean msExchange;
     @Column(name = "tenant_id")
     protected String tenantId;
+    @Column(name = "token_auth")
+    private String authToken;
+    @Column(name = "token_refresh")
+    private String refreshToken;
+    @Column(name = "token_expiry")
+    private long tokenExpiry;
     
     // for mailbox scanner
     @Column(name = "scan_inbox")
@@ -1203,6 +1213,48 @@ public class MailboxSetup implements Serializable, EventTypes {
             this.settings = out.toByteArray();
         }
         return this.settings;
+    }
+
+    /**
+     * @return the authToken
+     */
+    public String getAuthToken() {
+        return authToken;
+    }
+
+    /**
+     * @param authToken the authToken to set
+     */
+    public void setAuthToken(String authToken) {
+        this.authToken = authToken;
+    }
+
+    /**
+     * @return the refreshToken
+     */
+    public String getRefreshToken() {
+        return refreshToken;
+    }
+
+    /**
+     * @param refreshToken the refreshToken to set
+     */
+    public void setRefreshToken(String refreshToken) {
+        this.refreshToken = refreshToken;
+    }
+
+    /**
+     * @return the tokenExpiry
+     */
+    public long getTokenExpiry() {
+        return tokenExpiry;
+    }
+
+    /**
+     * @param tokenExpiry the tokenExpiry to set
+     */
+    public void setTokenExpiry(long tokenExpiry) {
+        this.tokenExpiry = tokenExpiry;
     }
 
     

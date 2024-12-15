@@ -788,7 +788,7 @@ public class MailboxScannerTask extends java.util.TimerTask {
             server = ms.getEmailInServer();
 
             if (ms.isMsExchange()) {
-                String authToken = MsExchangeUtils.getAuthToken(ms.getTenantId(), ms.getClientId(), ms.getClientSecret(), ms.getEmailInUser(), emailInPwd);
+                String authToken = ms.getAuthToken();
                 props.put("mail.imaps.sasl.enable", "true");
                 props.put("mail.imaps.port", "993");
 
