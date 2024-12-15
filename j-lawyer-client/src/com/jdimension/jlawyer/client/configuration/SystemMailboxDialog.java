@@ -932,7 +932,7 @@ public class SystemMailboxDialog extends javax.swing.JDialog {
             if (!("".equals(this.txtSmtpPort.getText()))) {
                 port = Integer.parseInt(this.txtSmtpPort.getText());
             }
-            sysMan.testSendMail(this.txtSmtp.getText(), port, this.txtUser.getText(), new String(this.txtPassword.getPassword()), this.chkSsl.isSelected(), this.chkEmailStartTls.isSelected(), this.txtRecipient.getText());
+            sysMan.testSendMail(this.txtSmtp.getText(), port, this.txtUser.getText(), new String(this.txtPassword.getPassword()), this.chkSsl.isSelected(), this.chkEmailStartTls.isSelected(), this.txtRecipient.getText(), false, null);
             JOptionPane.showMessageDialog(this, "Testnachricht erfolgreich  verschickt - bitte Posteingang prüfen", "Hinweis", JOptionPane.INFORMATION_MESSAGE);
         } catch (Exception ex) {
             log.error(ex);
