@@ -677,6 +677,7 @@ public class Reports {
     
     public static final String RPT_TSHEETS_OPEN_OVERVIEW="timesheets.open.overview";
     public static final String RPT_TSHEETS_OPEN_POSITIONS="timesheets.open.positions";
+    public static final String RPT_TSHEETS_VALUES="timesheets.values";
     
     public static final String RPT_EMPLOYEE_ACTIVITY="employee.activity";
     
