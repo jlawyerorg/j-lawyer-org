@@ -1030,13 +1030,13 @@ public class MailContentUI extends javax.swing.JPanel implements HyperlinkListen
         }
     }
 
-    public void setMessage(MessageContainer msgC, MailboxSetup ms) {
+    public boolean setMessage(MessageContainer msgC, MailboxSetup ms) {
 
         this.emlMsgContainer = msgC;
         try {
             Message msg = msgC.getMessage();
             if (msg == null) {
-                return;
+                return true;
             }
 
             Folder folder = msg.getFolder();
@@ -1052,7 +1052,7 @@ public class MailContentUI extends javax.swing.JPanel implements HyperlinkListen
 
             if (msg.isExpunged()) {
                 JOptionPane.showMessageDialog(this, "Nachricht wurde verschoben oder gelöscht!", com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
-                return;
+                return false;
             }
 
             if (msg.getSize() > (1024 * 1024 * 1.5f)) {
@@ -1064,7 +1064,7 @@ public class MailContentUI extends javax.swing.JPanel implements HyperlinkListen
                 dlg.progress("Lade E-Mail... (" + df.format(msg.getSize() / 1024 / 1024) + "MB)");
                 LoadEmailAction lea = new LoadEmailAction(dlg, this, msg, ms, this.lblSubject, this.lblSentDate, this.lblTo, this.lblCC, this.lblBCC, this.lblFrom, this.lstAttachments, this.fxContainer, this.webViewId);
                 lea.start();
-                return;
+                return true;
             } else {
                 MailContentUI.setMessageImpl(this, msg, ms, this.lblSubject, this.lblSentDate, this.lblTo, this.lblCC, this.lblBCC, this.lblFrom, this.lstAttachments, false, this.fxContainer, this.webViewId);
             }
@@ -1089,7 +1089,9 @@ public class MailContentUI extends javax.swing.JPanel implements HyperlinkListen
             this.lblSubject.setToolTipText(null);
             this.lblTo.setText("");
             this.lblTo.setToolTipText(null);
+            return false;
         }
+        return true;
     }
 
     public static void setMessageImpl(MailContentUI contentUI, Message msg, MailboxSetup ms, JLabel lblSubject, JLabel lblSentDate, JLabel lblTo, JLabel lblCC, JLabel lblBCC, JLabel lblFrom, JList lstAttachments, boolean edt, JPanel fxContainer, String webViewId) throws Exception {

@@ -2391,7 +2391,7 @@ public class EmailInboxPanel extends javax.swing.JPanel implements SaveToCaseExe
             int sortCol = -1;
             List<? extends SortKey> sortKeys = this.tblMails.getRowSorter().getSortKeys();
             if (sortKeys != null) {
-                if (sortKeys.size() > 0) {
+                if (!sortKeys.isEmpty()) {
                     sortCol = sortKeys.get(0).getColumn();
                 }
             }
@@ -2602,7 +2602,16 @@ public class EmailInboxPanel extends javax.swing.JPanel implements SaveToCaseExe
         try {
             DefaultMutableTreeNode selNode = (DefaultMutableTreeNode) this.treeFolders.getSelectionPath().getLastPathComponent();
             MailboxSetup ms = this.getMailboxSetup(selNode);
-            this.mailContentUI.setMessage(msgC, ms);
+            boolean messageLoaded=this.mailContentUI.setMessage(msgC, ms);
+            if (!messageLoaded) {
+                if (this.treeFolders.getSelectionPath() != null) {
+                    DefaultMutableTreeNode selectedNode = (DefaultMutableTreeNode) this.treeFolders.getSelectionPath().getLastPathComponent();
+                    if (selectedNode.getUserObject() instanceof FolderContainer) {
+                        ((FolderContainer)selectedNode.getUserObject()).resetCaches();
+                    }
+                    this.cmbDownloadMailsActionPerformed(null);
+                }
+            }
 
             JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
             AddressServiceRemote ads = locator.lookupAddressServiceRemote();
