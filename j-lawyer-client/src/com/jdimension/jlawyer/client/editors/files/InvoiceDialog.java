@@ -2195,7 +2195,7 @@ public class InvoiceDialog extends javax.swing.JDialog implements EventConsumer 
         }
 
         if (ServerSettings.getInstance().getSettingAsBoolean("plugins.global.tableproperties.table.emptyRows", true)) {
-            ct.addRow("", "", "", "", "");
+            ct.addRow("", "", "", "", "", "");
         }
 
         
