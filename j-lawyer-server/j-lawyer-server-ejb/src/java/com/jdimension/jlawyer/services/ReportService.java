@@ -992,28 +992,29 @@ public class ReportService implements ReportServiceRemote {
             result.getTables().add(getTable(true, "Offene Zeiterfassungsprojekte", query, params));
         } else if (Reports.RPT_TSHEETS_VALUES.equals(reportId)) {
             String query = "SELECT "
-                    + "DATE_FORMAT(tsp.time_stopped, '%Y-%m') AS Monat, "
-                    + "CONCAT(tsp.principal, ', ', DATE_FORMAT(tsp.time_stopped, '%Y-%m')) AS MitarbeiterMonat, "
-                    + "tsp.principal AS Mitarbeiter, "
-                    + "SUM((GREATEST(1, CEILING(TIMESTAMPDIFF(MINUTE, tsp.time_started, tsp.time_stopped) / ts.interval_minutes)) * ts.interval_minutes DIV 1) / 60 * tsp.unit_price) AS UmsatzNetto "
-                    + "FROM timesheet_positions tsp "
-                    + "LEFT JOIN timesheets ts ON ts.id = tsp.timesheet_id "
-                    + "WHERE tsp.time_stopped >= ? "
-                    + "AND tsp.time_stopped <= ? "
-                    + "GROUP BY Monat, Mitarbeiter "
-                    + "ORDER BY Monat ASC, Mitarbeiter ASC";
+             + "DATE_FORMAT(tsp.time_stopped, '%Y-%m') AS Monat, "
+             + "CONCAT(tsp.principal, ', ', DATE_FORMAT(MIN(tsp.time_stopped), '%Y-%m')) AS MitarbeiterMonat, "
+             + "tsp.principal AS Mitarbeiter, "
+             + "SUM((GREATEST(1, CEILING(TIMESTAMPDIFF(MINUTE, tsp.time_started, tsp.time_stopped) / ts.interval_minutes)) * ts.interval_minutes DIV 1) / 60 * tsp.unit_price) AS UmsatzNetto "
+             + "FROM timesheet_positions tsp "
+             + "LEFT JOIN timesheets ts ON ts.id = tsp.timesheet_id "
+             + "WHERE tsp.time_stopped >= ? "
+             + "AND tsp.time_stopped <= ? "
+             + "GROUP BY Monat, Mitarbeiter "
+             + "ORDER BY Monat ASC, Mitarbeiter ASC";
+
             result.getTables().add(getTable(false, "Gebuchte Zeiten pro Mitarbeiter und Monat", query, params));
             String query2 = "SELECT "
-                    + "DATE_FORMAT(tsp.time_stopped, '%Y') AS Jahr, "
-                    + "CONCAT(tsp.principal, ', ', DATE_FORMAT(tsp.time_stopped, '%Y')) AS MitarbeiterJahr, "
-                    + "tsp.principal AS Mitarbeiter, "
-                    + "SUM((GREATEST(1, CEILING(TIMESTAMPDIFF(MINUTE, tsp.time_started, tsp.time_stopped) / ts.interval_minutes)) * ts.interval_minutes DIV 1) / 60 * tsp.unit_price) AS UmsatzNetto "
-                    + "FROM timesheet_positions tsp "
-                    + "LEFT JOIN timesheets ts ON ts.id = tsp.timesheet_id "
-                    + "WHERE tsp.time_stopped >= ? "
-                    + "AND tsp.time_stopped <= ? "
-                    + "GROUP BY Jahr, Mitarbeiter "
-                    + "ORDER BY Jahr ASC, Mitarbeiter ASC";
+             + "DATE_FORMAT(tsp.time_stopped, '%Y') AS Jahr, "
+             + "CONCAT(tsp.principal, ', ', DATE_FORMAT(MIN(tsp.time_stopped), '%Y')) AS MitarbeiterJahr, "
+             + "tsp.principal AS Mitarbeiter, "
+             + "SUM((GREATEST(1, CEILING(TIMESTAMPDIFF(MINUTE, tsp.time_started, tsp.time_stopped) / ts.interval_minutes)) * ts.interval_minutes DIV 1) / 60 * tsp.unit_price) AS UmsatzNetto "
+             + "FROM timesheet_positions tsp "
+             + "LEFT JOIN timesheets ts ON ts.id = tsp.timesheet_id "
+             + "WHERE tsp.time_stopped >= ? "
+             + "AND tsp.time_stopped <= ? "
+             + "GROUP BY Jahr, Mitarbeiter "
+             + "ORDER BY Jahr ASC, Mitarbeiter ASC";
             result.getTables().add(getTable(false, "Gebuchte Zeiten pro Mitarbeiter und Jahr", query2, params));
         } else if (Reports.RPT_TSHEETS_OPEN_POSITIONS.equals(reportId)) {
             String query = "SELECT cases.id, cases.fileNumber as Aktenzeichen, cases.name as Rubrum, cases.reason as wegen, \n"
