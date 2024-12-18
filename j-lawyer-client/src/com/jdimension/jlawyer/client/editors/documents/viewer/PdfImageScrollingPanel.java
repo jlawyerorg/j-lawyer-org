@@ -1097,7 +1097,7 @@ public class PdfImageScrollingPanel extends javax.swing.JPanel implements Previe
                         width = (int) (width / (297f / 210f));
                     }
 
-                    BufferedImage scaledImage = new BufferedImage(width, height, BufferedImage.TYPE_INT_ARGB);
+                    BufferedImage scaledImage = new BufferedImage(width, height, BufferedImage.TYPE_INT_RGB);
                     Graphics2D g2d = scaledImage.createGraphics();
                     g2d.setRenderingHint(RenderingHints.KEY_INTERPOLATION, RenderingHints.VALUE_INTERPOLATION_BICUBIC);
                     g2d.setRenderingHint(RenderingHints.KEY_RENDERING, RenderingHints.VALUE_RENDER_QUALITY);
@@ -1239,7 +1239,7 @@ public class PdfImageScrollingPanel extends javax.swing.JPanel implements Previe
                     rendering = true;
                     for (int i = fromIndex; i <= toIndex; i++) {
                         try {
-                            BufferedImage buffImg = pdfRenderer.renderImageWithDPI(i, dpi, ImageType.ARGB);
+                            BufferedImage buffImg = pdfRenderer.renderImageWithDPI(i, dpi, ImageType.RGB);
                             orgImage.put(i, saveBufferedImage(buffImg));
                             // need to subtract the height of the page navigation buttons, but
                             // the panel has not been layed out yet, so there is no height we could query
@@ -1256,7 +1256,7 @@ public class PdfImageScrollingPanel extends javax.swing.JPanel implements Previe
                             }
 
                             // todo: check for landscape mode and display those pages with lower height
-                            BufferedImage scaledImage = new BufferedImage(width1, height1, BufferedImage.TYPE_INT_ARGB);
+                            BufferedImage scaledImage = new BufferedImage(width1, height1, BufferedImage.TYPE_INT_RGB);
                             Graphics2D g2d = scaledImage.createGraphics();
                             g2d.setRenderingHint(RenderingHints.KEY_INTERPOLATION, RenderingHints.VALUE_INTERPOLATION_BICUBIC);
                             g2d.setRenderingHint(RenderingHints.KEY_RENDERING, RenderingHints.VALUE_RENDER_QUALITY);
@@ -1524,7 +1524,7 @@ public class PdfImageScrollingPanel extends javax.swing.JPanel implements Previe
                     width1 = (int) (width1 / (297f / 210f));
                 }
 
-                BufferedImage bi2 = new BufferedImage(width1, height1, BufferedImage.TYPE_INT_ARGB);
+                BufferedImage bi2 = new BufferedImage(width1, height1, BufferedImage.TYPE_INT_RGB);
                 Graphics2D g2d = bi2.createGraphics();
                 g2d.setRenderingHint(RenderingHints.KEY_INTERPOLATION, RenderingHints.VALUE_INTERPOLATION_BICUBIC);
                 g2d.setRenderingHint(RenderingHints.KEY_RENDERING, RenderingHints.VALUE_RENDER_QUALITY);
