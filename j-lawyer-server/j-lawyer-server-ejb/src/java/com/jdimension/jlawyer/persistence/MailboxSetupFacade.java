@@ -663,8 +663,11 @@ For more information on this, and how to apply and follow the GNU AGPL, see
  */
 package com.jdimension.jlawyer.persistence;
 
+import java.util.ArrayList;
+import java.util.List;
 import javax.ejb.Stateless;
 import javax.persistence.EntityManager;
+import javax.persistence.NoResultException;
 import javax.persistence.PersistenceContext;
 
 /**
@@ -684,5 +687,15 @@ public class MailboxSetupFacade extends AbstractFacade<MailboxSetup> implements 
     @Override
     protected EntityManager getEntityManager() {
         return em;
+    }
+    
+    @Override
+    public List<MailboxSetup> findByMsExchange(boolean exchange) {
+        try {
+            return (List<MailboxSetup>) em.createNamedQuery("MailboxSetup.findByMsExchange").setParameter("msExchange", exchange).getResultList();
+        } catch (NoResultException nre) {
+            return new ArrayList<>();
+        }
+
     }
 }

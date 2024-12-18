@@ -976,14 +976,16 @@ public class TaggedTimerTask extends java.util.TimerTask {
                                 te.setReason(aFile.getReason());
                                 if (tags.get(aFile.getId()) != null) {
                                     ArrayList<String> xTags = new ArrayList<>();
+                                    HashMap<String,Date> tagDates=new HashMap<>();
                                     for (ArchiveFileTagsBean aftb : tags.get(aFile.getId())) {
                                         xTags.add(aftb.getTagName());
+                                        tagDates.put(aftb.getTagName(), aftb.getDateSet());
                                         if (!allTags.contains(aftb.getTagName())) {
                                             allTags.add(aftb.getTagName());
                                         }
                                     }
                                     Collections.sort(xTags);
-                                    te.setTags(xTags);
+                                    te.setTags(xTags, tagDates);
                                 }
                                 ep.setEntry(te);
 
@@ -1016,14 +1018,16 @@ public class TaggedTimerTask extends java.util.TimerTask {
                                 te.setReason(aDoc.getArchiveFileKey().getReason());
                                 if (documentTags.get(aDoc.getId()) != null) {
                                     ArrayList<String> xTags = new ArrayList<>();
+                                    HashMap<String,Date> tagDates=new HashMap<>();
                                     for (DocumentTagsBean dtb : documentTags.get(aDoc.getId())) {
                                         xTags.add(dtb.getTagName());
+                                        tagDates.put(dtb.getTagName(), dtb.getDateSet());
                                         if (!allTags.contains(dtb.getTagName())) {
                                             allTags.add(dtb.getTagName());
                                         }
                                     }
                                     Collections.sort(xTags);
-                                    te.setTags(xTags);
+                                    te.setTags(xTags, tagDates);
                                 }
                                 ep.setEntry(te);
 

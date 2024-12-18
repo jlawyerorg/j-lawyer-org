@@ -664,6 +664,7 @@
 package com.jdimension.jlawyer.persistence;
 
 import java.io.Serializable;
+import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.List;
 import javax.persistence.*;
@@ -706,8 +707,8 @@ public class Timesheet implements Serializable {
     
     @Column(name = "limited")
     protected boolean limited=true;
-    @Column(name = "limit_net")
-    protected float limit=0f;
+    @Column(name = "limit_net", precision = 10, scale = 2)
+    protected BigDecimal limit=BigDecimal.ZERO;
     @Column(name = "pct_done")
     private float percentageDone=0f;
         
@@ -834,14 +835,14 @@ public class Timesheet implements Serializable {
     /**
      * @return the limit
      */
-    public float getLimit() {
+    public BigDecimal getLimit() {
         return limit;
     }
 
     /**
      * @param limit the limit to set
      */
-    public void setLimit(float limit) {
+    public void setLimit(BigDecimal limit) {
         this.limit = limit;
     }
 

@@ -737,7 +737,7 @@ public class ServerTemplatesUtil extends CommonTemplatesUtil {
                 parties.add(new PartiesTriplet(aab.getAddressKey(), aab.getReferenceType(), aab));
             }
             
-            return sys.getPlaceHolderValuesUnrestricted(ht, contextArchiveFile, parties, "", null, formPlaceHolderValues, caseLawyer, caseAssistant, null, invoice, invoiceSender, null, null, null, null);
+            return sys.getPlaceHolderValuesUnrestricted(ht, contextArchiveFile, parties, "", null, formPlaceHolderValues, caseLawyer, caseAssistant, null, invoice, invoiceSender, null, null, null, null, null);
 
         } catch (Exception ex) {
             log.error("Error getting placeholder values", ex);

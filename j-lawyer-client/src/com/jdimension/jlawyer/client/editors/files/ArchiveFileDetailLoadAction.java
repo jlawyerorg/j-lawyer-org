@@ -689,6 +689,7 @@ import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Comparator;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
@@ -1027,10 +1028,12 @@ public class ArchiveFileDetailLoadAction extends ProgressableAction {
         this.tagPanel.removeAll();
         this.documentTagPanel.removeAll();
         ArrayList<String> sortedTags = new ArrayList<>();
+        HashMap<String,Date> tagDates=new HashMap<>();
         for (Object t : tags) {
             ArchiveFileTagsBean tag = (ArchiveFileTagsBean) t;
             activeTags.add(tag.getTagName());
             sortedTags.add(tag.getTagName());
+            tagDates.put(tag.getTagName(), tag.getDateSet());
         }
 
         AppOptionGroupBean[] tagOptions = settings.getArchiveFileTagDtos();
@@ -1045,7 +1048,7 @@ public class ArchiveFileDetailLoadAction extends ProgressableAction {
         StringUtils.sortIgnoreCase(sortedTags);
 
         for (String tagString : sortedTags) {
-            TagToggleButton tb = new TagToggleButton(tagString);
+            TagToggleButton tb = new TagToggleButton(tagString, tagDates.get(tagString));
             if (activeTags.contains(tagString)) {
                 tb.setSelected(true);
             } else {

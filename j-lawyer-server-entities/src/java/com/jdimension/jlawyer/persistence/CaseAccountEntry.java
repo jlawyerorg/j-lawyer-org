@@ -664,6 +664,7 @@
 package com.jdimension.jlawyer.persistence;
 
 import java.io.Serializable;
+import java.math.BigDecimal;
 import java.util.Date;
 import javax.persistence.*;
 import javax.xml.bind.annotation.XmlRootElement;
@@ -711,23 +712,23 @@ public class CaseAccountEntry implements Serializable {
     @Column(name = "description")
     private String description;
     
-    @Column(name = "in_earnings")
-    private float earnings=0f;
+    @Column(name = "in_earnings", precision = 10, scale = 2)
+    private BigDecimal earnings=BigDecimal.ZERO;
     
-    @Column(name = "out_spendings")
-    private float spendings=0f;
+    @Column(name = "out_spendings", precision = 10, scale = 2)
+    private BigDecimal spendings=BigDecimal.ZERO;
     
-    @Column(name = "in_escrow")
-    private float escrowIn=0f;
+    @Column(name = "in_escrow", precision = 10, scale = 2)
+    private BigDecimal escrowIn=BigDecimal.ZERO;
     
-    @Column(name = "out_escrow")
-    private float escrowOut=0f;
+    @Column(name = "out_escrow", precision = 10, scale = 2)
+    private BigDecimal escrowOut=BigDecimal.ZERO;
     
-    @Column(name = "in_expenditure")
-    private float expendituresIn=0f;
+    @Column(name = "in_expenditure", precision = 10, scale = 2)
+    private BigDecimal expendituresIn=BigDecimal.ZERO;
     
-    @Column(name = "out_expenditure")
-    private float expendituresOut=0f;
+    @Column(name = "out_expenditure", precision = 10, scale = 2)
+    private BigDecimal expendituresOut=BigDecimal.ZERO;
     
 
     public CaseAccountEntry() {
@@ -737,8 +738,12 @@ public class CaseAccountEntry implements Serializable {
         this.id = id;
     }
 
-    public float calculateTotal() {
-        return getEarnings()+getEscrowIn()+getExpendituresIn()-getSpendings()-getEscrowOut()-getExpendituresOut();
+    public BigDecimal calculateTotal() {
+        return getEarnings().add(getEscrowIn()).add(getExpendituresIn()).subtract(getSpendings()).subtract(getEscrowOut()).subtract(getExpendituresOut());
+    }
+    
+    public BigDecimal calculateEarningsTotal() {
+        return getEarnings().subtract(getSpendings());
     }
 
     @Override
@@ -867,84 +872,84 @@ public class CaseAccountEntry implements Serializable {
     /**
      * @return the earnings
      */
-    public float getEarnings() {
+    public BigDecimal getEarnings() {
         return earnings;
     }
 
     /**
      * @param earnings the earnings to set
      */
-    public void setEarnings(float earnings) {
+    public void setEarnings(BigDecimal earnings) {
         this.earnings = earnings;
     }
 
     /**
      * @return the spendings
      */
-    public float getSpendings() {
+    public BigDecimal getSpendings() {
         return spendings;
     }
 
     /**
      * @param spendings the spendings to set
      */
-    public void setSpendings(float spendings) {
+    public void setSpendings(BigDecimal spendings) {
         this.spendings = spendings;
     }
 
     /**
      * @return the escrowIn
      */
-    public float getEscrowIn() {
+    public BigDecimal getEscrowIn() {
         return escrowIn;
     }
 
     /**
      * @param escrowIn the escrowIn to set
      */
-    public void setEscrowIn(float escrowIn) {
+    public void setEscrowIn(BigDecimal escrowIn) {
         this.escrowIn = escrowIn;
     }
 
     /**
      * @return the escrowOut
      */
-    public float getEscrowOut() {
+    public BigDecimal getEscrowOut() {
         return escrowOut;
     }
 
     /**
      * @param escrowOut the escrowOut to set
      */
-    public void setEscrowOut(float escrowOut) {
+    public void setEscrowOut(BigDecimal escrowOut) {
         this.escrowOut = escrowOut;
     }
 
     /**
      * @return the expendituresIn
      */
-    public float getExpendituresIn() {
+    public BigDecimal getExpendituresIn() {
         return expendituresIn;
     }
 
     /**
      * @param expendituresIn the expendituresIn to set
      */
-    public void setExpendituresIn(float expendituresIn) {
+    public void setExpendituresIn(BigDecimal expendituresIn) {
         this.expendituresIn = expendituresIn;
     }
 
     /**
      * @return the expendituresOut
      */
-    public float getExpendituresOut() {
+    public BigDecimal getExpendituresOut() {
         return expendituresOut;
     }
 
     /**
      * @param expendituresOut the expendituresOut to set
      */
-    public void setExpendituresOut(float expendituresOut) {
+    public void setExpendituresOut(BigDecimal expendituresOut) {
         this.expendituresOut = expendituresOut;
     }
     

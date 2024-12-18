@@ -667,7 +667,9 @@ import com.jdimension.jlawyer.email.CommonMailUtils;
 import java.awt.Color;
 import java.awt.Component;
 import java.awt.Font;
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import javax.mail.Folder;
 import javax.swing.Icon;
@@ -691,7 +693,10 @@ public class EmailFolderTreeCellRenderer extends DefaultTreeCellRenderer {
     private static final String FOLDER_INBOX = "inbox";
     private static final String FOLDER_DRAFTS = "drafts";
 
+    // for special folders like inbox, trash, ....
     private static final Map<String, Icon> folderIcons = new HashMap<>();
+    // for ordinary folders
+    private static final List<String> defaultFolderIcons = new ArrayList<>();
 
     private final ImageIcon draftsIcon = new javax.swing.ImageIcon(EmailFolderTreeCellRenderer.class.getResource("/icons/drafts.png"));
     private final ImageIcon trashIcon = new javax.swing.ImageIcon(EmailFolderTreeCellRenderer.class.getResource("/icons/trashcan_full.png"));
@@ -773,38 +778,43 @@ public class EmailFolderTreeCellRenderer extends DefaultTreeCellRenderer {
 
     private Icon getIconByFolder(Folder f) {
 
-        if (!folderIcons.containsKey(f.getName())) {
+        String folderName=f.getName();
+        
+        if(defaultFolderIcons.contains(folderName))
+            return null;
+        
+        if (!folderIcons.containsKey(folderName)) {
 
-            if (FOLDER_TRASH.equalsIgnoreCase(f.getName())) {
-                folderIcons.put(f.getName(), trashIcon);
-            } else if (FOLDER_SENT.equalsIgnoreCase(f.getName())) {
-                folderIcons.put(f.getName(), sentIcon);
-            } else if (FOLDER_DRAFTS.equalsIgnoreCase(f.getName())) {
-                folderIcons.put(f.getName(), draftsIcon);
-            } else if (FOLDER_INBOX.equalsIgnoreCase(f.getName())) {
-                folderIcons.put(f.getName(), inboxIcon);
-            } else if ("in Akte importiert".equalsIgnoreCase(f.getName())) {
-                folderIcons.put(f.getName(), importedIcon);
+            if (FOLDER_TRASH.equalsIgnoreCase(folderName)) {
+                folderIcons.put(folderName, trashIcon);
+            } else if (FOLDER_SENT.equalsIgnoreCase(folderName)) {
+                folderIcons.put(folderName, sentIcon);
+            } else if (FOLDER_DRAFTS.equalsIgnoreCase(folderName)) {
+                folderIcons.put(folderName, draftsIcon);
+            } else if (FOLDER_INBOX.equalsIgnoreCase(folderName)) {
+                folderIcons.put(folderName, inboxIcon);
+            } else if ("in Akte importiert".equalsIgnoreCase(folderName)) {
+                folderIcons.put(folderName, importedIcon);
             } else {
                 boolean iconIsSet = false;
                 for (String a : EmailUtils.getFolderAliases(CommonMailUtils.TRASH)) {
-                    if (a.equalsIgnoreCase(f.getName())) {
-                        folderIcons.put(f.getName(), trashIcon);
+                    if (a.equalsIgnoreCase(folderName)) {
+                        folderIcons.put(folderName, trashIcon);
                         iconIsSet = true;
                         break;
                     }
                 }
                 for (String a : EmailUtils.getFolderAliases(CommonMailUtils.DRAFTS)) {
-                    if (a.equalsIgnoreCase(f.getName())) {
-                        folderIcons.put(f.getName(), draftsIcon);
+                    if (a.equalsIgnoreCase(folderName)) {
+                        folderIcons.put(folderName, draftsIcon);
                         iconIsSet = true;
                         break;
                     }
                 }
                 if (!iconIsSet) {
                     for (String a : EmailUtils.getFolderAliases(CommonMailUtils.SENT)) {
-                        if (a.equalsIgnoreCase(f.getName())) {
-                            folderIcons.put(f.getName(), sentIcon);
+                        if (a.equalsIgnoreCase(folderName)) {
+                            folderIcons.put(folderName, sentIcon);
                             iconIsSet = true;
                             break;
                         }
@@ -812,15 +822,19 @@ public class EmailFolderTreeCellRenderer extends DefaultTreeCellRenderer {
                 }
                 if (!iconIsSet) {
                     for (String a : EmailUtils.getFolderAliases(CommonMailUtils.INBOX)) {
-                        if (a.equalsIgnoreCase(f.getName())) {
-                            folderIcons.put(f.getName(), inboxIcon);
+                        if (a.equalsIgnoreCase(folderName)) {
+                            folderIcons.put(folderName, inboxIcon);
                             break;
                         }
                     }
                 }
             }
         }
-        return folderIcons.get(f.getName());
+        
+        if(folderIcons.get(folderName)==null && !defaultFolderIcons.contains(folderName))
+            defaultFolderIcons.add(folderName);
+        
+        return folderIcons.get(folderName);
     }
 
 }

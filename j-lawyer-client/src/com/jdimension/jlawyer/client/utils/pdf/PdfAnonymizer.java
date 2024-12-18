@@ -661,73 +661,70 @@ if any, to sign a "copyright disclaimer" for the program, if necessary.
 For more information on this, and how to apply and follow the GNU AGPL, see
 <https://www.gnu.org/licenses/>.
  */
-package com.jdimension.jlawyer.email;
+package com.jdimension.jlawyer.client.utils.pdf;
 
-import org.apache.http.client.methods.CloseableHttpResponse;
-import org.apache.http.client.methods.HttpPost;
-import org.apache.http.entity.ContentType;
-import org.apache.http.entity.StringEntity;
-import org.apache.http.impl.client.CloseableHttpClient;
-import org.apache.http.impl.client.HttpClients;
-import org.apache.http.message.BasicHeader;
-import org.apache.log4j.Logger;
-import org.json.simple.JsonKey;
-import org.json.simple.JsonObject;
-import org.json.simple.Jsoner;
+import com.itextpdf.kernel.colors.ColorConstants;
+import com.itextpdf.kernel.colors.DeviceRgb;
+import com.itextpdf.kernel.pdf.PdfDocument;
+import com.itextpdf.kernel.pdf.PdfReader;
+import com.itextpdf.kernel.pdf.PdfWriter;
+import com.itextpdf.pdfcleanup.PdfCleaner;
+import com.itextpdf.pdfcleanup.autosweep.ICleanupStrategy;
+import com.itextpdf.pdfcleanup.autosweep.RegexBasedCleanupStrategy;
+import java.io.InputStream;
+import java.io.OutputStream;
+import java.util.List;
+import java.util.regex.Pattern;
+import org.apache.pdfbox.pdmodel.PDDocument;
+import org.apache.pdfbox.pdmodel.PDDocumentInformation;
+import themes.colors.DefaultColorTheme;
 
 /**
  *
  * @author jens
  */
-public class MsExchangeUtils {
+public class PdfAnonymizer {
 
-    private static final Logger log = Logger.getLogger(MsExchangeUtils.class.getName());
-
-    public static String getAuthToken(String tenantId, String clientId, String clientSecret, String user, String password) throws MissingConsentException, Exception {
-        try {
-            CloseableHttpClient client = HttpClients.createDefault();
-            HttpPost loginPost = new HttpPost("https://login.microsoftonline.com/" + tenantId + "/oauth2/v2.0/token");
-
-            String scopes = "https://outlook.office365.com/.default";
-
-            String encodedBody = "client_id=" + clientId
-                    + "&scope=" + scopes
-                    + "&client_secret=" + clientSecret
-                    + "&username=" + user
-                    + "&password=" + password
-                    + "&grant_type=password";
-
-            loginPost.setEntity(new StringEntity(encodedBody, ContentType.APPLICATION_FORM_URLENCODED));
-
-            loginPost.addHeader(new BasicHeader("cache-control", "no-cache"));
-            CloseableHttpResponse loginResponse = client.execute(loginPost);
-            byte[] response = new byte[16384];
-            int length = loginResponse.getEntity().getContent().read(response);
-            String stringResponse = new String(response, 0, length);
-            
-            if(stringResponse.toLowerCase().contains("aadsts65001") || stringResponse.toLowerCase().contains("user or administrator has not consented") || stringResponse.toLowerCase().contains("send an interactive authorization request")) {
-                throw new MissingConsentException(stringResponse);
+    /**
+     * @param in
+     * @param out
+     * @param words
+     */
+    public static void removeWords(InputStream in, OutputStream out, List<String> words) throws Exception {
+        com.itextpdf.kernel.colors.Color anonymizerColor = new DeviceRgb(DefaultColorTheme.COLOR_LOGO_BLUE.getRed(), DefaultColorTheme.COLOR_LOGO_BLUE.getGreen(), DefaultColorTheme.COLOR_LOGO_BLUE.getBlue());
+        
+        
+        
+        try (PdfDocument pdf = new PdfDocument(new PdfReader(in), new PdfWriter(out))) {
+            for (String word : words) {
+                word=Pattern.quote(word);
+                final ICleanupStrategy cleanupStrategy = new RegexBasedCleanupStrategy(Pattern.compile(word, Pattern.CASE_INSENSITIVE)).setRedactionColor(anonymizerColor);
+                PdfCleaner.autoSweepCleanUp(pdf, cleanupStrategy);
             }
-            
-            Object jsonOutput = Jsoner.deserialize(stringResponse);
-            if (jsonOutput instanceof JsonObject) {
-                JsonObject result = (JsonObject) jsonOutput;
-                JsonKey aTokenKey = Jsoner.mintJsonKey("access_token", null);
-                String aToken = result.getString(aTokenKey);
-                if(aToken==null) {
-                    log.error("Unable to retrieve authorization token");
-                    log.info(stringResponse);
-                } else {
-                    log.debug("successfully retrieved authorization token for client id " + clientId);
-                }
-                return aToken;
-            } else {
-                throw new Exception("Autorisierungs-Token für Microsoft Exchange konnte nicht ermittelt werden!");
-            }
+        }
+    }
+    
+    public static void removeMetadata(InputStream in, OutputStream out) throws Exception {
+        try (PDDocument document = PDDocument.load(in)) {
+            PDDocumentInformation info = document.getDocumentInformation();
+            info.setAuthor(null);
+            info.setTitle(null);
+            info.setSubject(null);
+            info.setKeywords(null);
+            info.setCreator(null);
+            info.setProducer(null);
+            info.setCreationDate(null);
+            info.setModificationDate(null);
+            info.setTrapped(null);
 
-        } catch (Exception e) {
-            log.error("unable to get MS Exchange authorization token for client id " + clientId, e);
-            throw e;
+            document.save(out);
+        }
+    }
+    
+    public static void removeAnnotations(InputStream in, OutputStream out) throws Exception {
+        try (PDDocument document = PDDocument.load(in)) {
+            document.getPages().forEach(page -> page.setAnnotations(null));
+            document.save(out);
         }
     }
 

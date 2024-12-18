@@ -672,6 +672,7 @@ import java.awt.datatransfer.Clipboard;
 import java.awt.datatransfer.DataFlavor;
 import java.awt.datatransfer.Transferable;
 import java.awt.datatransfer.UnsupportedFlavorException;
+import java.math.BigDecimal;
 import java.text.DecimalFormat;
 import javax.swing.ImageIcon;
 import javax.swing.JOptionPane;
@@ -697,7 +698,7 @@ public class GirocodeDialog extends javax.swing.JDialog {
      * @param amount
      * @param purpose
      */
-    public GirocodeDialog(InvoiceDialog parent, boolean modal, String senderPrincipalId, float amount, String purpose) {
+    public GirocodeDialog(InvoiceDialog parent, boolean modal, String senderPrincipalId, BigDecimal amount, String purpose) {
         super(parent, modal);
         initComponents();
         
@@ -875,7 +876,7 @@ public class GirocodeDialog extends javax.swing.JDialog {
 
         /* Create and display the dialog */
         java.awt.EventQueue.invokeLater(() -> {
-            GirocodeDialog dialog = new GirocodeDialog(null, true, null, 0f, null);
+            GirocodeDialog dialog = new GirocodeDialog(null, true, null, BigDecimal.ZERO, null);
             dialog.addWindowListener(new java.awt.event.WindowAdapter() {
                 @Override
                 public void windowClosing(java.awt.event.WindowEvent e) {

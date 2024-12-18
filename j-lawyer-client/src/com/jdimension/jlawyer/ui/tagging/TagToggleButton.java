@@ -665,6 +665,8 @@ package com.jdimension.jlawyer.ui.tagging;
 
 import java.awt.Font;
 import java.awt.event.ItemEvent;
+import java.text.SimpleDateFormat;
+import java.util.Date;
 import javax.swing.ImageIcon;
 import javax.swing.JToggleButton;
 import themes.colors.DefaultColorTheme;
@@ -679,13 +681,16 @@ public class TagToggleButton extends JToggleButton {
     protected ImageIcon unselectedIcon=new javax.swing.ImageIcon(getClass().getResource("/icons/baseline_undone_black_48dp.png"));
 
     public TagToggleButton() {
-        this("default");
+        this("default", null);
 
     }
 
-    public TagToggleButton(String text) {
+    public TagToggleButton(String text, Date dateSet) {
         super();
         setText(text);
+        if(dateSet!=null) {
+            setToolTipText("aktiv seit "  + SimpleDateFormat.getDateTimeInstance().format(dateSet));
+        }
         putClientProperty("JButton.buttonType", "roundRect");
         putClientProperty("ToggleButton.borderWidth", "12");
         putClientProperty("JButton.foreGround", DefaultColorTheme.COLOR_DARK_GREY);
@@ -701,6 +706,7 @@ public class TagToggleButton extends JToggleButton {
             } else {
                 setIcon(unselectedIcon);
                 setFont(getFont().deriveFont(Font.PLAIN));
+                setToolTipText(null);
             }
         });
         

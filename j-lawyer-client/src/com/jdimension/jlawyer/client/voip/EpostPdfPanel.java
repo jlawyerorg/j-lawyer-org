@@ -734,6 +734,7 @@ public class EpostPdfPanel extends javax.swing.JPanel {
         cmdDown = new javax.swing.JButton();
         jLabel2 = new javax.swing.JLabel();
         lblFileSize = new javax.swing.JLabel();
+        cmdRemove = new javax.swing.JButton();
 
         lblPdfPicture.setText("PDF");
 
@@ -765,6 +766,14 @@ public class EpostPdfPanel extends javax.swing.JPanel {
 
         lblFileSize.setText("jLabel3");
 
+        cmdRemove.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/editdelete.png"))); // NOI18N
+        cmdRemove.setToolTipText("PDF Datei entfernen");
+        cmdRemove.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                cmdRemoveActionPerformed(evt);
+            }
+        });
+
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(this);
         this.setLayout(layout);
         layout.setHorizontalGroup(
@@ -775,7 +784,8 @@ public class EpostPdfPanel extends javax.swing.JPanel {
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                     .addComponent(cmdDown)
-                    .addComponent(cmdUp, javax.swing.GroupLayout.Alignment.TRAILING))
+                    .addComponent(cmdUp, javax.swing.GroupLayout.Alignment.TRAILING)
+                    .addComponent(cmdRemove))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                     .addComponent(lblFileName, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
@@ -813,7 +823,9 @@ public class EpostPdfPanel extends javax.swing.JPanel {
                             .addGroup(layout.createSequentialGroup()
                                 .addComponent(cmdUp)
                                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                                .addComponent(cmdDown)))
+                                .addComponent(cmdDown)
+                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                                .addComponent(cmdRemove)))
                         .addGap(0, 0, Short.MAX_VALUE)))
                 .addContainerGap())
         );
@@ -834,10 +846,26 @@ public class EpostPdfPanel extends javax.swing.JPanel {
             this.getParent().doLayout();
         }
     }//GEN-LAST:event_cmdDownActionPerformed
+    
+    
+  
+    private void cmdRemoveActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdRemoveActionPerformed
+        int response = javax.swing.JOptionPane.showConfirmDialog(this, 
+            "Dieses PDF aus der Liste entfernen?", 
+            "PDF entfernen", 
+            javax.swing.JOptionPane.YES_NO_OPTION);
+        if(response == javax.swing.JOptionPane.YES_OPTION) {
+            javax.swing.JPanel parent = (javax.swing.JPanel)this.getParent();
+            parent.remove(this);
+            parent.revalidate();
+            parent.repaint();
+        }
+    }//GEN-LAST:event_cmdRemoveActionPerformed
 
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JButton cmdDown;
+    private javax.swing.JButton cmdRemove;
     private javax.swing.JButton cmdUp;
     private javax.swing.JLabel jLabel1;
     private javax.swing.JLabel jLabel2;

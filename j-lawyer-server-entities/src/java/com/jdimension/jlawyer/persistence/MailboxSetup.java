@@ -662,7 +662,11 @@ For more information on this, and how to apply and follow the GNU AGPL, see
  */
 package com.jdimension.jlawyer.persistence;
 
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
 import java.io.Serializable;
+import java.util.Date;
+import java.util.Properties;
 import javax.persistence.Basic;
 import javax.persistence.Column;
 import javax.persistence.Entity;
@@ -670,6 +674,8 @@ import javax.persistence.Id;
 import javax.persistence.NamedQueries;
 import javax.persistence.NamedQuery;
 import javax.persistence.Table;
+import javax.persistence.Temporal;
+import javax.persistence.TemporalType;
 import javax.xml.bind.annotation.XmlRootElement;
 
 /**
@@ -681,7 +687,8 @@ import javax.xml.bind.annotation.XmlRootElement;
 @XmlRootElement
 @NamedQueries({
     @NamedQuery(name = "MailboxSetup.findAll", query = "SELECT p FROM MailboxSetup p"),
-    @NamedQuery(name = "MailboxSetup.findById", query = "SELECT p FROM MailboxSetup p WHERE p.id = :id")})
+    @NamedQuery(name = "MailboxSetup.findById", query = "SELECT p FROM MailboxSetup p WHERE p.id = :id"),
+    @NamedQuery(name = "MailboxSetup.findByMsExchange", query = "SELECT p FROM MailboxSetup p WHERE p.msExchange = :msExchange")})
 public class MailboxSetup implements Serializable, EventTypes {
 
     protected static long serialVersionUID = 1L;
@@ -733,6 +740,12 @@ public class MailboxSetup implements Serializable, EventTypes {
     protected boolean msExchange;
     @Column(name = "tenant_id")
     protected String tenantId;
+    @Column(name = "token_auth")
+    private String authToken;
+    @Column(name = "token_refresh")
+    private String refreshToken;
+    @Column(name = "token_expiry")
+    private long tokenExpiry;
     
     // for mailbox scanner
     @Column(name = "scan_inbox")
@@ -747,6 +760,9 @@ public class MailboxSetup implements Serializable, EventTypes {
     private boolean scanIgnoreInline=true;
     @Column(name = "scan_minattachmentsize", columnDefinition = "INTEGER DEFAULT 5000")
     private int scanMinAttachmentSize=0;
+    
+    @Column(name = "settings", columnDefinition = "MEDIUMBLOB")
+    private byte[] settings;
 
     public String getId() {
         return id;
@@ -1166,6 +1182,79 @@ public class MailboxSetup implements Serializable, EventTypes {
      */
     public void setScanMinAttachmentSize(int minAttachmentSize) {
         this.scanMinAttachmentSize = minAttachmentSize;
+    }
+
+    /**
+     * @return the settings
+     */
+    public byte[] getSettings() {
+        if(this.settings==null)
+            this.settings=emptySettings();
+        return settings;
+    }
+
+    /**
+     * @param settings the settings to set
+     */
+    public void setSettings(byte[] settings) {
+        this.settings = settings;
+    }
+    
+    private byte[] emptySettings() {
+        if(this.settings==null) {
+            ByteArrayOutputStream out = new ByteArrayOutputStream();
+            try {
+                new Properties().store(out, "updated " + new java.util.Date().toString());
+                out.flush();
+                out.close();
+            } catch (IOException ioe) {
+                // no logging
+            }
+            this.settings = out.toByteArray();
+        }
+        return this.settings;
+    }
+
+    /**
+     * @return the authToken
+     */
+    public String getAuthToken() {
+        return authToken;
+    }
+
+    /**
+     * @param authToken the authToken to set
+     */
+    public void setAuthToken(String authToken) {
+        this.authToken = authToken;
+    }
+
+    /**
+     * @return the refreshToken
+     */
+    public String getRefreshToken() {
+        return refreshToken;
+    }
+
+    /**
+     * @param refreshToken the refreshToken to set
+     */
+    public void setRefreshToken(String refreshToken) {
+        this.refreshToken = refreshToken;
+    }
+
+    /**
+     * @return the tokenExpiry
+     */
+    public long getTokenExpiry() {
+        return tokenExpiry;
+    }
+
+    /**
+     * @param tokenExpiry the tokenExpiry to set
+     */
+    public void setTokenExpiry(long tokenExpiry) {
+        this.tokenExpiry = tokenExpiry;
     }
 
     

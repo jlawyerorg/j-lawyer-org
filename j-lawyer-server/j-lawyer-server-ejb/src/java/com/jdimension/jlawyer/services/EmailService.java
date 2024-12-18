@@ -661,188 +661,289 @@ if any, to sign a "copyright disclaimer" for the program, if necessary.
 For more information on this, and how to apply and follow the GNU AGPL, see
 <https://www.gnu.org/licenses/>.
  */
-package com.jdimension.jlawyer.client.mail.oauth;
+package com.jdimension.jlawyer.services;
 
-import com.jdimension.jlawyer.client.mail.WebViewRegister;
-import java.awt.BorderLayout;
-import javafx.application.Platform;
-import javafx.beans.value.ObservableValue;
-import static javafx.concurrent.Worker.State.FAILED;
-import javafx.embed.swing.JFXPanel;
-import javafx.scene.Scene;
-import javafx.scene.web.WebView;
-import javax.swing.JDialog;
-import javax.swing.JOptionPane;
-import javax.swing.SwingUtilities;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.jdimension.jlawyer.persistence.MailboxAccess;
+import com.jdimension.jlawyer.persistence.MailboxAccessFacadeLocal;
+import com.jdimension.jlawyer.persistence.MailboxSetup;
+import com.jdimension.jlawyer.persistence.MailboxSetupFacadeLocal;
+import com.jdimension.jlawyer.server.utils.ServerStringUtils;
+import java.io.ByteArrayOutputStream;
+import java.io.InputStream;
+import java.net.URLEncoder;
+import java.nio.charset.StandardCharsets;
+import java.util.Date;
+import java.util.List;
+import java.util.Map;
+import java.util.concurrent.TimeUnit;
+import javax.annotation.Resource;
+import javax.annotation.security.PermitAll;
+import javax.annotation.security.RolesAllowed;
+import javax.ejb.EJB;
+import javax.ejb.Schedule;
+import javax.ejb.SessionContext;
+import javax.ejb.Stateless;
+import org.apache.http.client.methods.CloseableHttpResponse;
+import org.apache.http.client.methods.HttpPost;
+import org.apache.http.entity.StringEntity;
+import org.apache.http.impl.client.CloseableHttpClient;
+import org.apache.http.impl.client.HttpClients;
 import org.apache.log4j.Logger;
+import org.jboss.ejb3.annotation.TransactionTimeout;
 
 /**
  *
  * @author jens
  */
-public class OAuthUserConsentDialog extends javax.swing.JDialog {
-    
-    private static final Logger log=Logger.getLogger(OAuthUserConsentDialog.class.getName());
+@Stateless
+public class EmailService implements EmailServiceRemote, EmailServiceLocal {
 
-    String authorizationCode = null;
+    private static final Logger log = Logger.getLogger(EmailService.class.getName());
 
-    /**
-     * Creates new form OAuthUserConsentDialog
-     *
-     * @param parent
-     * @param modal
-     * @param tenantId
-     * @param clientId
-     */
-    public OAuthUserConsentDialog(JDialog parent, boolean modal, String tenantId, String clientId) {
-        super(parent, modal);
-        initComponents();
+    @Resource
+    private SessionContext sessionContext;
 
-        WebViewRegister.getInstance();
-        String webViewId = "" + System.nanoTime();
-        JFXPanel jfxPanel = new JFXPanel();
+    @EJB
+    private MailboxAccessFacadeLocal mailboxAccessFacade;
 
-        Platform.setImplicitExit(false);
-        Platform.runLater(() -> {
-            WebView webView = new WebView();
-            WebViewRegister register = WebViewRegister.getInstance();
-            register.register(webViewId, webView);
-            webView.getEngine().getLoadWorker()
-                    .exceptionProperty()
-                    .addListener((ObservableValue<? extends Throwable> o, Throwable old, final Throwable value) -> {
-                        if (webView.getEngine().getLoadWorker().getState() == FAILED) {
-                            SwingUtilities.invokeLater(() -> {
-                                JOptionPane.showMessageDialog(
-                                        fxContainer,
-                                        (value != null)
-                                                ? webView.getEngine().getLocation() + "\n" + value.getMessage()
-                                                : webView.getEngine().getLocation() + "\nUnexpected error.",
-                                        "Loading error...",
-                                        JOptionPane.ERROR_MESSAGE);
-                            });
-                        }
-                    });
+    @EJB
+    private MailboxSetupFacadeLocal mailboxSetupFacade;
 
-            webView.getEngine().locationProperty().addListener((ObservableValue<? extends String> ov, String oldValue, final String newValue) -> {
-                SwingUtilities.invokeLater(() -> {
-                    System.out.println(newValue);
+    @Override
+    @PermitAll
+    public String getAuthToken(String mailboxId) throws Exception {
 
-                    if (newValue.contains("/nativeclient?code=")) {
-                        String authCode = newValue.substring(newValue.indexOf("/nativeclient?code=") + "/nativeclient?code=".length());
-                        authCode = authCode.substring(0, authCode.indexOf("&"));
-                        authorizationCode = authCode;
-                        
-                    }
-                    if (authorizationCode != null) {
-                        log.debug("Auth Code: " + authorizationCode);
-                        this.setVisible(false);
-                        this.dispose();
-                    }
-                    
-                });
-            });
+        MailboxSetup ms = this.mailboxSetupFacade.find(mailboxId);
+        if (ms != null) {
+            return ms.getAuthToken();
+        } else {
+            log.error("Auth token requested for a non-existing mailbox with id " + mailboxId);
+        }
 
-            webView.getEngine().getLoadWorker().workDoneProperty().addListener((ObservableValue<? extends Number> observableValue, Number oldValue, final Number newValue) -> {
-                SwingUtilities.invokeLater(() -> {
-                    System.out.println(newValue.intValue());
-                });
-            });
-            jfxPanel.setScene(new Scene(webView));
-        });
+        return null;
+    }
 
-        fxContainer.setLayout(new BorderLayout());
-        fxContainer.add(jfxPanel);
+    @Schedule(hour = "*", minute = "*/5", persistent = false)
+    @TransactionTimeout(value = 3, unit = TimeUnit.MINUTES)
+    public void refreshAuthTokens() {
 
-        getAuthCode(webViewId, tenantId, clientId);
+        List<MailboxSetup> mailboxes = this.mailboxSetupFacade.findByMsExchange(true);
+        for (MailboxSetup ms : mailboxes) {
+
+            try {
+
+                boolean success = this.updateAuthTokenForMailbox(ms);
+                if (!success) {
+                    log.error("failed to update tokens for " + ms.getEmailAddress());
+                } else {
+                    log.info("successfully updated tokens for " + ms.getEmailAddress());
+                }
+            } catch (Exception ex) {
+                log.error("failed to retrieve new access token for mailbox " + ms.getEmailAddress(), ex);
+            }
+
+        }
 
     }
 
-    public static String getAuthCode(String webViewId, String tenantId, String clientId) {
-        try {
-//            CloseableHttpClient client = HttpClients.createDefault();
-//            HttpPost loginPost = new HttpPost("https://login.microsoftonline.com/common/oauth2/v2.0/authorize");
+    @Override
+    @RolesAllowed({"loginRole"})
+    public boolean updateAuthToken(String mailboxId) throws Exception {
 
-//https://login.microsoftonline.com/{tenant}/oauth2/v2.0/authorize?
-//client_id=6731de76-14a6-49ae-97bc-6eba6914391e
-//&response_type=code
-//&redirect_uri=http%3A%2F%2Flocalhost%2Fmyapp%2F    
-//&response_mode=query
-//&scope=https%3A%2F%2Fgraph.microsoft.com%2Fmail.read
-//&state=12345
-//&code_challenge=YTFjNjI1OWYzMzA3MTI4ZDY2Njg5M2RkNmVjNDE5YmEyZGRhOGYyM2IzNjdmZWFhMTQ1ODg3NDcxY2Nl
-//&code_challenge_method=S256
-            String scopes = "email%20openid%20IMAP.AccessAsUser.All%20offline_access%20Mail.Read%20Mail.ReadWrite%20Mail.Send%20SMTP.Send";
-            //bei azure sind die irgendwas mit graph, aber angeblich gehen nur mit präfix https://outlook.office365.com/
-            //String scopes = "https%3A%2F%2Foutlook.office365.com%2FIMAP.AccessAsUser.All";
-            //String scopes = "IMAP.AccessAsUser.All";
+        MailboxSetup ms = this.mailboxSetupFacade.find(mailboxId);
+        if (ms != null) {
+            return this.updateAuthTokenForMailbox(ms);
+        } else {
+            log.error("Auth token update requested for a non-existing mailbox with id " + mailboxId);
+            return false;
+        }
 
-            String encodedBody = "client_id=" + clientId
-                    + "&response_type=code"
-                    + "&redirect_uri=" + "https%3A%2F%2Flogin.microsoftonline.com%2Fcommon%2Foauth2%2Fnativeclient"
-                    + "&response_mode=query"
-                    + "&scope=" + scopes
-                    + "&state=jlawyeruniquevalue";
+    }
 
-            String oauthGet = "https://login.microsoftonline.com/" + tenantId + "/oauth2/v2.0/authorize?" + encodedBody;
+    private boolean updateAuthTokenForMailbox(MailboxSetup mailbox) throws Exception {
 
-            Platform.setImplicitExit(false);
-            Platform.runLater(() -> {
-                try {
-                    WebViewRegister reg = WebViewRegister.getInstance();
-                    WebView webView1 = reg.get(webViewId);
-                    //
-                    webView1.getEngine().load(oauthGet);
-                } catch (Throwable t) {
-                    log.error("Error executing OAuth Auth token request in browser", t);
+        if (mailbox.getTokenExpiry() == 0 || ((mailbox.getTokenExpiry() - System.currentTimeMillis()) < (6l * 60l * 1000l))) {
+
+            log.info("attempting to update tokens for " + mailbox.getEmailAddress());
+
+            if (ServerStringUtils.isEmpty(mailbox.getTenantId())) {
+                log.error("Tenant ID is empty when updating access token for " + mailbox.getEmailAddress());
+                return false;
+            }
+
+            if (ServerStringUtils.isEmpty(mailbox.getClientId())) {
+                log.error("Client ID is empty when updating access token for " + mailbox.getEmailAddress());
+                return false;
+            }
+
+            if (ServerStringUtils.isEmpty(mailbox.getRefreshToken())) {
+                log.error("Refresh token is empty when updating access token for " + mailbox.getEmailAddress());
+                return false;
+            }
+
+            String TOKEN_ENDPOINT = "https://login.microsoftonline.com/" + mailbox.getTenantId() + "/oauth2/v2.0/token";
+
+            try (CloseableHttpClient client = HttpClients.createDefault()) {
+                HttpPost post = new HttpPost(TOKEN_ENDPOINT);
+
+                // Create URL-encoded body
+                String body = "grant_type=" + URLEncoder.encode("refresh_token", StandardCharsets.UTF_8)
+                        + "&refresh_token=" + URLEncoder.encode(mailbox.getRefreshToken(), StandardCharsets.UTF_8)
+                        + "&client_id=" + URLEncoder.encode(mailbox.getClientId(), StandardCharsets.UTF_8);
+                //"&client_secret=" + URLEncoder.encode(CLIENT_SECRET, StandardCharsets.UTF_8);
+
+                post.setEntity(new StringEntity(body));
+                post.setHeader("Content-Type", "application/x-www-form-urlencoded");
+
+                ObjectMapper objectMapper = new ObjectMapper();
+                try (CloseableHttpResponse response = client.execute(post)) {
+                    if (response.getStatusLine().getStatusCode() == 200) {
+                        Map<String, Object> responseBody = objectMapper.readValue(
+                                response.getEntity().getContent(),
+                                Map.class
+                        );
+
+                        String accessToken = (String) responseBody.get("access_token");
+                        String refreshToken = (String) responseBody.get("refresh_token");
+                        int expiresIn = (int) responseBody.get("expires_in");
+                        // Calculate token expiry time (current time + expires_in seconds)
+                        long tokenExpiryTime = System.currentTimeMillis() + (expiresIn * 1000l);
+
+                        mailbox.setAuthToken(accessToken);
+                        mailbox.setRefreshToken(refreshToken);
+                        mailbox.setTokenExpiry(tokenExpiryTime);
+                        this.mailboxSetupFacade.edit(mailbox);
+                        return true;
+                    } else {
+                        log.error("failed to retrieve new access token for mailbox " + mailbox.getEmailAddress() + ", response was HTTP " + response.getStatusLine().getStatusCode() + " with content:");
+                        log.error(response.getEntity().getContent());
+                        return false;
+                    }
                 }
-            });
+            }
+        }
+        return true;
+    }
 
-            return null;
-        } catch (Exception e) {
-            log.error("Error executing OAuth Auth token request in browser", e);
-            return null;
+    @Override
+    @RolesAllowed({"loginRole"})
+    public String[] requestDeviceCode(String mailboxId) throws Exception {
+
+        MailboxSetup ms = this.mailboxSetupFacade.find(mailboxId);
+        if (ms == null) {
+            throw new Exception("No mailbox with ID " + mailboxId);
+        }
+
+        String DEVICE_CODE_URL = "https://login.microsoftonline.com/" + ms.getTenantId() + "/oauth2/v2.0/devicecode";
+        try (CloseableHttpClient client = HttpClients.createDefault()) {
+            HttpPost post = new HttpPost(DEVICE_CODE_URL);
+
+//            String body = "client_id=" + ms.getClientId()
+//                    + "&scope=https%3A%2F%2Fgraph.microsoft.com%2Fmail.read%20offline_access";
+            String body = "client_id=" + URLEncoder.encode(ms.getClientId(), StandardCharsets.UTF_8)
+                    + "&scope=https%3A%2F%2Foutlook.office365.com%2FIMAP.AccessAsUser.All%20"
+                    + "https%3A%2F%2Foutlook.office365.com%2FSMTP.Send%20"
+                    + "offline_access";
+
+            post.setEntity(new StringEntity(body));
+            post.setHeader("Content-Type", "application/x-www-form-urlencoded");
+
+            try (CloseableHttpResponse response = client.execute(post)) {
+                if (response.getStatusLine().getStatusCode() == 200) {
+                    Map<String, Object> responseBody = new ObjectMapper().readValue(
+                            response.getEntity().getContent(), Map.class);
+
+                    String[] reply = new String[3];
+                    // url the user needs to open
+                    reply[0] = responseBody.get("verification_uri").toString();
+                    // code the user needs to enter
+                    reply[1] = responseBody.get("user_code").toString();
+                    reply[2] = responseBody.get("device_code").toString();
+                    return reply;
+                } else {
+                    log.error("Failed to request device code. HTTP Status: " + response.getStatusLine().getStatusCode());
+                    log.error(response.getEntity().getContent());
+                    throw new Exception("Failed to request device code. HTTP Status: " + response.getStatusLine().getStatusCode());
+                }
+            }
         }
     }
 
-    /**
-     * This method is called from within the constructor to initialize the form.
-     * WARNING: Do NOT modify this code. The content of this method is always
-     * regenerated by the Form Editor.
-     */
-    @SuppressWarnings("unchecked")
-    // <editor-fold defaultstate="collapsed" desc="Generated Code">//GEN-BEGIN:initComponents
-    private void initComponents() {
+    @Override
+    @RolesAllowed({"loginRole"})
+    public boolean pollForTokens(String mailboxId, String deviceCode) throws Exception {
 
-        fxContainer = new javax.swing.JPanel();
+        MailboxSetup ms = this.mailboxSetupFacade.find(mailboxId);
+        if (ms == null) {
+            throw new Exception("No mailbox with ID " + mailboxId);
+        }
 
-        setDefaultCloseOperation(javax.swing.WindowConstants.DISPOSE_ON_CLOSE);
+        String TOKEN_ENDPOINT = "https://login.microsoftonline.com/" + ms.getTenantId() + "/oauth2/v2.0/token";
+        try (CloseableHttpClient client = HttpClients.createDefault()) {
 
-        javax.swing.GroupLayout fxContainerLayout = new javax.swing.GroupLayout(fxContainer);
-        fxContainer.setLayout(fxContainerLayout);
-        fxContainerLayout.setHorizontalGroup(
-            fxContainerLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGap(0, 750, Short.MAX_VALUE)
-        );
-        fxContainerLayout.setVerticalGroup(
-            fxContainerLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGap(0, 650, Short.MAX_VALUE)
-        );
+            HttpPost post = new HttpPost(TOKEN_ENDPOINT);
 
-        javax.swing.GroupLayout layout = new javax.swing.GroupLayout(getContentPane());
-        getContentPane().setLayout(layout);
-        layout.setHorizontalGroup(
-            layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addComponent(fxContainer, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-        );
-        layout.setVerticalGroup(
-            layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addComponent(fxContainer, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-        );
+            // Include client_secret in the body
+            String body = "client_id=" + URLEncoder.encode(ms.getClientId(), StandardCharsets.UTF_8)
+                    + "&client_secret=" + URLEncoder.encode(ms.getClientSecret(), StandardCharsets.UTF_8)
+                    + "&grant_type=urn:ietf:params:oauth:grant-type:device_code"
+                    + "&device_code=" + URLEncoder.encode(deviceCode, StandardCharsets.UTF_8);
+            post.setEntity(new StringEntity(body));
+            post.setHeader("Content-Type", "application/x-www-form-urlencoded");
 
-        pack();
-    }// </editor-fold>//GEN-END:initComponents
+            try (CloseableHttpResponse response = client.execute(post)) {
+                if (response.getStatusLine().getStatusCode() == 200) {
+                    // Successful response
+                    Map<String, Object> responseBody = new ObjectMapper().readValue(
+                            response.getEntity().getContent(), Map.class);
+                    String accessToken = responseBody.get("access_token").toString();
+                    String refreshToken = responseBody.get("refresh_token").toString();
 
-    // Variables declaration - do not modify//GEN-BEGIN:variables
-    private javax.swing.JPanel fxContainer;
-    // End of variables declaration//GEN-END:variables
+                    log.info("succesfully retrieved initial access token for mailbox " + ms.getEmailAddress());
+
+                    ms.setAuthToken(accessToken);
+                    ms.setRefreshToken(refreshToken);
+                    ms.setTokenExpiry(System.currentTimeMillis() + 10l * 60l * 1000l);
+                    this.mailboxSetupFacade.edit(ms);
+                    return true;
+
+                } else if (response.getStatusLine().getStatusCode() == 400) {
+                    Map<String, Object> errorResponse = new ObjectMapper().readValue(
+                            response.getEntity().getContent(), Map.class);
+                    if ("authorization_pending".equals(errorResponse.get("error"))) {
+                        log.info("Waiting for user authorization for mailbox " + ms.getEmailAddress());
+                    } else {
+                        log.error("Unexpected error when polling for tokens for " + ms.getEmailAddress() + ": " + response.getStatusLine().getStatusCode());
+                        log.error(response.getEntity().getContent());
+                    }
+                    return false;
+                } else {
+                    log.error("Unexpected HTTP Status when polling for tokens for " + ms.getEmailAddress() + ": " + response.getStatusLine().getStatusCode());
+                    try {
+                        InputStream is = response.getEntity().getContent();
+                        ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
+
+                        // Copy content from InputStream to ByteArrayOutputStream
+                        is.transferTo(byteArrayOutputStream);
+
+                        // Get the resulting byte array (if needed)
+                        byte[] byteArray = byteArrayOutputStream.toByteArray();
+
+                        // Close the streams
+                        is.close();
+                        byteArrayOutputStream.close();
+                        
+                        log.error(new String(byteArrayOutputStream.toByteArray()));
+                        
+                    } catch (Exception ex) {
+                        log.error("Error reading response", ex);
+                    }
+                    return false;
+                }
+            }
+
+        }
+    }
+
 }

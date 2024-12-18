@@ -663,6 +663,7 @@ For more information on this, and how to apply and follow the GNU AGPL, see
  */
 package com.jdimension.jlawyer.persistence;
 
+import java.util.ArrayList;
 import java.util.List;
 import javax.ejb.Stateless;
 import javax.persistence.EntityManager;
@@ -691,8 +692,7 @@ public class MailboxAccessFacade extends AbstractFacade<MailboxAccess> implement
     @Override
     public MailboxAccess findByUserAndMailbox(String principalId, String mailboxId) {
         try {
-            MailboxAccess gm = (MailboxAccess) em.createNamedQuery("MailboxAccess.findByPrincipalIdAndMailboxId").setParameter("principalId", principalId).setParameter("mailboxId", mailboxId).getSingleResult();
-            return gm;
+            return (MailboxAccess) em.createNamedQuery("MailboxAccess.findByPrincipalIdAndMailboxId").setParameter("principalId", principalId).setParameter("mailboxId", mailboxId).getSingleResult();
         } catch (NoResultException nre) {
             return null;
         }
@@ -702,10 +702,19 @@ public class MailboxAccessFacade extends AbstractFacade<MailboxAccess> implement
     @Override
     public List<MailboxAccess> findByUser(String principalId) {
         try {
-            List<MailboxAccess> gm = (List<MailboxAccess>) em.createNamedQuery("MailboxAccess.findByPrincipalId").setParameter("principalId", principalId).getResultList();
-            return gm;
+            return (List<MailboxAccess>) em.createNamedQuery("MailboxAccess.findByPrincipalId").setParameter("principalId", principalId).getResultList();
         } catch (NoResultException nre) {
             return null;
+        }
+
+    }
+    
+    @Override
+    public List<MailboxAccess> findByMailbox(String mailboxId) {
+        try {
+            return (List<MailboxAccess>) em.createNamedQuery("MailboxAccess.findByMailboxId").setParameter("mailboxId", mailboxId).getResultList();
+        } catch (NoResultException nre) {
+            return new ArrayList<>();
         }
 
     }

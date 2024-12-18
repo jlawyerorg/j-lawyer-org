@@ -140,14 +140,24 @@ class MimeMessageObject {
         walkMimeStructure(part, 0, (p, level) -> {
             String[] header = p.getHeader(CONTENT_ID);
             if (p.isMimeType(IMAGE_TYPE) && nonNull(header)) {
-                if (p.getContent() != null && !(p.getContent() instanceof BASE64DecoderStream)) {
-                    log.warn("inline image has content of instance " + p.getContent().getClass().getName());
-                } else {
-                    try {
-                        String imageBase64 = Base64.getEncoder().encodeToString(IOUtils.toByteArray((BASE64DecoderStream) p.getContent()));
-                        result.put(header[0], new MimeMessageObject(imageBase64, new ContentType(p.getContentType())));
-                    } catch (Throwable t) {
-                        log.error("unable to get content of inline image - skipping", t);
+                
+                Object contentObject=null;
+                try {
+                    contentObject=p.getContent();
+                } catch (Throwable t) {
+                    log.error("Unable to extract content", t);
+                }
+                
+                if (contentObject != null) {
+                    if (!(contentObject instanceof BASE64DecoderStream)) {
+                        log.warn("inline image has content of instance " + contentObject.getClass().getName());
+                    } else {
+                        try {
+                            String imageBase64 = Base64.getEncoder().encodeToString(IOUtils.toByteArray((BASE64DecoderStream) contentObject));
+                            result.put(header[0], new MimeMessageObject(imageBase64, new ContentType(p.getContentType())));
+                        } catch (Throwable t) {
+                            log.error("unable to get content of inline image - skipping", t);
+                        }
                     }
                 }
 

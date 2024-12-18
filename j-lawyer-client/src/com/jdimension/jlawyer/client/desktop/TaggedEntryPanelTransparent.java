@@ -778,7 +778,7 @@ public class TaggedEntryPanelTransparent extends javax.swing.JPanel {
             }
             
             this.lblTags.setText(shortenedTagList);
-            this.lblTags.setToolTipText(tagList);
+            this.lblTags.setToolTipText(TagUtils.getTagListTooltip(e.getTags(), e.getTagDates()));
             
             if(this.lblTags.getText().length()>0)
                 this.lblTags.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons16/material/baseline_label_white_36dp.png")));

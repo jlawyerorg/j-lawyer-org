@@ -925,7 +925,7 @@ public class CalendarUtils {
                 relatedEventDlg.setTitle("weiterer Eintrag mit " + template.getRelatedOffsetDays() + " Tagen Versatz");
                 relatedEventDlg.setEventType(entry.getEventType());
                 relatedEventDlg.setSummary(template.getRelatedName());
-                relatedEventDlg.setDescription(template.getRelatedDescription());
+                relatedEventDlg.setDescription((entry.getDescription() + System.lineSeparator() + template.getRelatedDescription()).trim());
                 relatedEventDlg.setReviewAssignee(entry.getAssignee());
                 
                 Calendar c = Calendar.getInstance();

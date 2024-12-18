@@ -723,6 +723,7 @@ public class AddDocumentFromTemplateDialog extends javax.swing.JDialog implement
     private byte[] giroCode = null;
     private String ingoText=null;
     private StyledCalculationTable timesheetsTable = null;
+    private StyledCalculationTable timesheetSummaryTable = null;
     private List<PartyTypeBean> allPartyTypes = null;
     private Collection<String> formPlaceHolders = new ArrayList<>();
     private HashMap<String, String> formPlaceHolderValues = new HashMap<>();
@@ -734,7 +735,7 @@ public class AddDocumentFromTemplateDialog extends javax.swing.JDialog implement
     private DocumentNameTemplate nameTemplate = null;
 
     public AddDocumentFromTemplateDialog(java.awt.Frame parent, boolean modal, ArchiveFilePanel casePanel, CaseFolderPanel targetTable, ArchiveFileBean aFile, List<ArchiveFileAddressesBean> involved) {
-        this(parent, modal, casePanel, targetTable, aFile, involved, null, null, null, null, null, null, null);
+        this(parent, modal, casePanel, targetTable, aFile, involved, null, null, null, null, null, null, null, null);
     }
 
     /**
@@ -754,7 +755,7 @@ public class AddDocumentFromTemplateDialog extends javax.swing.JDialog implement
      * @param giroCode
      * @param ingoText
      */
-    public AddDocumentFromTemplateDialog(java.awt.Frame parent, boolean modal, ArchiveFilePanel casePanel, CaseFolderPanel targetTable, ArchiveFileBean aFile, List<ArchiveFileAddressesBean> involved, GenericCalculationTable calculationTable, Invoice invoice, AppUserBean invoiceSender, StyledCalculationTable invoiceTable, StyledCalculationTable timesheetsTable, byte[] giroCode, String ingoText) {
+    public AddDocumentFromTemplateDialog(java.awt.Frame parent, boolean modal, ArchiveFilePanel casePanel, CaseFolderPanel targetTable, ArchiveFileBean aFile, List<ArchiveFileAddressesBean> involved, GenericCalculationTable calculationTable, Invoice invoice, AppUserBean invoiceSender, StyledCalculationTable invoiceTable, StyledCalculationTable timesheetsTable, StyledCalculationTable timesheetSummaryTable, byte[] giroCode, String ingoText) {
         super(parent, modal);
 
         this.calculationTable = calculationTable;
@@ -764,6 +765,7 @@ public class AddDocumentFromTemplateDialog extends javax.swing.JDialog implement
         this.ingoText = ingoText;
         this.invoiceTable = invoiceTable;
         this.timesheetsTable = timesheetsTable;
+        this.timesheetSummaryTable = timesheetSummaryTable;
 
         this.targetTable = targetTable;
         this.aFile = aFile;
@@ -778,7 +780,6 @@ public class AddDocumentFromTemplateDialog extends javax.swing.JDialog implement
         this.pnlPartiesPanel.setListener(this);
 
         ComponentUtils.decorateSplitPane(jSplitPane1);
-        ComponentUtils.decorateSplitPane(this.splitPlaceholders);
         ComponentUtils.decorateSplitPane(splitMain);
 
         String[] colNames = new String[]{"Platzhalter", "Wert"};
@@ -831,11 +832,9 @@ public class AddDocumentFromTemplateDialog extends javax.swing.JDialog implement
         this.jSplitPane1.setDividerLocation(0.5d);
 
         ComponentUtils.restoreSplitPane(splitMain, this.getClass(), "splitMain");
-        ComponentUtils.restoreSplitPane(this.splitPlaceholders, this.getClass(), "splitPlaceholders");
         ComponentUtils.restoreSplitPane(this.jSplitPane1, this.getClass(), "jSplitPane1");
 
         ComponentUtils.persistSplitPane(splitMain, this.getClass(), "splitMain");
-        ComponentUtils.persistSplitPane(this.splitPlaceholders, this.getClass(), "splitPlaceholders");
         ComponentUtils.persistSplitPane(this.jSplitPane1, this.getClass(), "jSplitPane1");
 
         List<String> headTemplates = new ArrayList<>();
@@ -1005,12 +1004,12 @@ public class AddDocumentFromTemplateDialog extends javax.swing.JDialog implement
         radioReviewTypeNone = new javax.swing.JRadioButton();
         quickDateSelectionPanel = new com.jdimension.jlawyer.client.components.QuickDateSelectionPanel();
         calendarSelectionButton1 = new com.jdimension.jlawyer.client.calendar.CalendarSelectionButton();
-        jPanel2 = new javax.swing.JPanel();
-        splitPlaceholders = new javax.swing.JSplitPane();
+        tabPlaceholders = new javax.swing.JTabbedPane();
+        jPanel7 = new javax.swing.JPanel();
+        pnlPartiesPanel = new com.jdimension.jlawyer.client.editors.files.PartiesPanel();
+        jPanel8 = new javax.swing.JPanel();
         jScrollPane1 = new javax.swing.JScrollPane();
         tblPlaceHolders = new javax.swing.JTable();
-        pnlPartiesPanel = new com.jdimension.jlawyer.client.editors.files.PartiesPanel();
-        lblPlaceholderHint = new javax.swing.JLabel();
         jPanel6 = new javax.swing.JPanel();
         jPanel1 = new javax.swing.JPanel();
         txtTemplateFilter = new javax.swing.JTextField();
@@ -1023,12 +1022,11 @@ public class AddDocumentFromTemplateDialog extends javax.swing.JDialog implement
         cmdClearFilter = new javax.swing.JButton();
         jLabel2 = new javax.swing.JLabel();
         cmbLetterHeads = new javax.swing.JComboBox<>();
-        jPanel3 = new javax.swing.JPanel();
+        jLabel1 = new javax.swing.JLabel();
+        txtFileName = new javax.swing.JTextField();
+        chkGeneratePDF = new javax.swing.JCheckBox();
         cmbDictateSigns = new javax.swing.JComboBox();
         jLabel7 = new javax.swing.JLabel();
-        txtFileName = new javax.swing.JTextField();
-        jLabel1 = new javax.swing.JLabel();
-        chkGeneratePDF = new javax.swing.JCheckBox();
         cmdNameTemplate = new javax.swing.JButton();
         cmdAddAndOpen = new javax.swing.JButton();
 
@@ -1178,11 +1176,25 @@ public class AddDocumentFromTemplateDialog extends javax.swing.JDialog implement
                 .addContainerGap(org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
         );
 
-        jPanel2.setBorder(javax.swing.BorderFactory.createTitledBorder("Platzhalter"));
+        org.jdesktop.layout.GroupLayout jPanel7Layout = new org.jdesktop.layout.GroupLayout(jPanel7);
+        jPanel7.setLayout(jPanel7Layout);
+        jPanel7Layout.setHorizontalGroup(
+            jPanel7Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
+            .add(0, 450, Short.MAX_VALUE)
+            .add(jPanel7Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
+                .add(pnlPartiesPanel, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 450, Short.MAX_VALUE))
+        );
+        jPanel7Layout.setVerticalGroup(
+            jPanel7Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
+            .add(0, 276, Short.MAX_VALUE)
+            .add(jPanel7Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
+                .add(jPanel7Layout.createSequentialGroup()
+                    .addContainerGap()
+                    .add(pnlPartiesPanel, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 264, Short.MAX_VALUE)
+                    .addContainerGap()))
+        );
 
-        splitPlaceholders.setDividerLocation(300);
-        splitPlaceholders.setOrientation(javax.swing.JSplitPane.VERTICAL_SPLIT);
-        splitPlaceholders.setResizeWeight(0.5);
+        tabPlaceholders.addTab("Beteiligte", jPanel7);
 
         tblPlaceHolders.setModel(new javax.swing.table.DefaultTableModel(
             new Object [][] {
@@ -1199,35 +1211,25 @@ public class AddDocumentFromTemplateDialog extends javax.swing.JDialog implement
         tblPlaceHolders.getTableHeader().setReorderingAllowed(false);
         jScrollPane1.setViewportView(tblPlaceHolders);
 
-        splitPlaceholders.setLeftComponent(jScrollPane1);
-        splitPlaceholders.setRightComponent(pnlPartiesPanel);
-
-        lblPlaceholderHint.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/info.png"))); // NOI18N
-        lblPlaceholderHint.setText("keine leeren Platzhalterwerte");
-        lblPlaceholderHint.setToolTipText("Bearbeiten der Platzhalterwerte durch Doppelklick möglich");
-
-        org.jdesktop.layout.GroupLayout jPanel2Layout = new org.jdesktop.layout.GroupLayout(jPanel2);
-        jPanel2.setLayout(jPanel2Layout);
-        jPanel2Layout.setHorizontalGroup(
-            jPanel2Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
-            .add(jPanel2Layout.createSequentialGroup()
-                .addContainerGap()
-                .add(jPanel2Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
-                    .add(splitPlaceholders, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 0, Short.MAX_VALUE)
-                    .add(jPanel2Layout.createSequentialGroup()
-                        .add(lblPlaceholderHint)
-                        .add(0, 0, Short.MAX_VALUE)))
-                .addContainerGap())
+        org.jdesktop.layout.GroupLayout jPanel8Layout = new org.jdesktop.layout.GroupLayout(jPanel8);
+        jPanel8.setLayout(jPanel8Layout);
+        jPanel8Layout.setHorizontalGroup(
+            jPanel8Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
+            .add(0, 450, Short.MAX_VALUE)
+            .add(jPanel8Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
+                .add(jScrollPane1, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 450, Short.MAX_VALUE))
         );
-        jPanel2Layout.setVerticalGroup(
-            jPanel2Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
-            .add(org.jdesktop.layout.GroupLayout.TRAILING, jPanel2Layout.createSequentialGroup()
-                .addContainerGap()
-                .add(lblPlaceholderHint)
-                .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
-                .add(splitPlaceholders, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 581, Short.MAX_VALUE)
-                .addContainerGap())
+        jPanel8Layout.setVerticalGroup(
+            jPanel8Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
+            .add(0, 276, Short.MAX_VALUE)
+            .add(jPanel8Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
+                .add(org.jdesktop.layout.GroupLayout.TRAILING, jPanel8Layout.createSequentialGroup()
+                    .addContainerGap()
+                    .add(jScrollPane1, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 264, Short.MAX_VALUE)
+                    .addContainerGap()))
         );
+
+        tabPlaceholders.addTab("Platzhalter", jPanel8);
 
         org.jdesktop.layout.GroupLayout jPanel5Layout = new org.jdesktop.layout.GroupLayout(jPanel5);
         jPanel5.setLayout(jPanel5Layout);
@@ -1236,7 +1238,7 @@ public class AddDocumentFromTemplateDialog extends javax.swing.JDialog implement
             .add(jPanel5Layout.createSequentialGroup()
                 .addContainerGap()
                 .add(jPanel5Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
-                    .add(jPanel2, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                    .add(tabPlaceholders, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 450, Short.MAX_VALUE)
                     .add(jPanel4, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
                 .addContainerGap())
         );
@@ -1244,7 +1246,7 @@ public class AddDocumentFromTemplateDialog extends javax.swing.JDialog implement
             jPanel5Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
             .add(jPanel5Layout.createSequentialGroup()
                 .addContainerGap()
-                .add(jPanel2, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                .add(tabPlaceholders)
                 .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
                 .add(jPanel4, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
                 .addContainerGap())
@@ -1339,11 +1341,25 @@ public class AddDocumentFromTemplateDialog extends javax.swing.JDialog implement
                     .add(jLabel3)
                     .add(cmdClearFilter))
                 .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
-                .add(jSplitPane1, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 616, Short.MAX_VALUE)
+                .add(jSplitPane1, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 320, Short.MAX_VALUE)
                 .addContainerGap())
         );
 
-        jPanel3.setBorder(javax.swing.BorderFactory.createTitledBorder("Dokumenterstellung"));
+        jLabel1.setText("Dateiname:");
+
+        txtFileName.addKeyListener(new java.awt.event.KeyAdapter() {
+            public void keyPressed(java.awt.event.KeyEvent evt) {
+                txtFileNameKeyPressed(evt);
+            }
+        });
+
+        chkGeneratePDF.setFont(chkGeneratePDF.getFont());
+        chkGeneratePDF.setText("zusätzlich als PDF ablegen");
+        chkGeneratePDF.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                chkGeneratePDFActionPerformed(evt);
+            }
+        });
 
         cmbDictateSigns.setModel(new javax.swing.DefaultComboBoxModel(new String[] { "Item 1", "Item 2", "Item 3", "Item 4" }));
         cmbDictateSigns.addItemListener(new java.awt.event.ItemListener() {
@@ -1354,66 +1370,12 @@ public class AddDocumentFromTemplateDialog extends javax.swing.JDialog implement
 
         jLabel7.setText("Diktatzeichen:");
 
-        txtFileName.addKeyListener(new java.awt.event.KeyAdapter() {
-            public void keyPressed(java.awt.event.KeyEvent evt) {
-                txtFileNameKeyPressed(evt);
-            }
-        });
-
-        jLabel1.setText("Dateiname:");
-
-        chkGeneratePDF.setFont(chkGeneratePDF.getFont());
-        chkGeneratePDF.setText("zusätzlich als PDF ablegen");
-        chkGeneratePDF.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                chkGeneratePDFActionPerformed(evt);
-            }
-        });
-
         cmdNameTemplate.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/edit.png"))); // NOI18N
         cmdNameTemplate.addMouseListener(new java.awt.event.MouseAdapter() {
             public void mouseReleased(java.awt.event.MouseEvent evt) {
                 cmdNameTemplateMouseReleased(evt);
             }
         });
-
-        org.jdesktop.layout.GroupLayout jPanel3Layout = new org.jdesktop.layout.GroupLayout(jPanel3);
-        jPanel3.setLayout(jPanel3Layout);
-        jPanel3Layout.setHorizontalGroup(
-            jPanel3Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
-            .add(jPanel3Layout.createSequentialGroup()
-                .addContainerGap()
-                .add(jPanel3Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
-                    .add(jLabel7)
-                    .add(jLabel1))
-                .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
-                .add(jPanel3Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
-                    .add(cmbDictateSigns, 0, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                    .add(jPanel3Layout.createSequentialGroup()
-                        .add(chkGeneratePDF)
-                        .add(0, 82, Short.MAX_VALUE))
-                    .add(jPanel3Layout.createSequentialGroup()
-                        .add(txtFileName)
-                        .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
-                        .add(cmdNameTemplate)))
-                .addContainerGap())
-        );
-        jPanel3Layout.setVerticalGroup(
-            jPanel3Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
-            .add(jPanel3Layout.createSequentialGroup()
-                .addContainerGap()
-                .add(jPanel3Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.BASELINE)
-                    .add(txtFileName, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
-                    .add(jLabel1)
-                    .add(cmdNameTemplate))
-                .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
-                .add(chkGeneratePDF)
-                .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
-                .add(jPanel3Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.BASELINE)
-                    .add(cmbDictateSigns, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
-                    .add(jLabel7, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 15, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE))
-                .addContainerGap(org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
-        );
 
         org.jdesktop.layout.GroupLayout jPanel6Layout = new org.jdesktop.layout.GroupLayout(jPanel6);
         jPanel6.setLayout(jPanel6Layout);
@@ -1423,7 +1385,21 @@ public class AddDocumentFromTemplateDialog extends javax.swing.JDialog implement
                 .addContainerGap()
                 .add(jPanel6Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
                     .add(jPanel1, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                    .add(jPanel3, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                    .add(jPanel6Layout.createSequentialGroup()
+                        .add(jPanel6Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
+                            .add(jLabel7)
+                            .add(jLabel1))
+                        .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
+                        .add(jPanel6Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
+                            .add(jPanel6Layout.createSequentialGroup()
+                                .add(txtFileName)
+                                .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
+                                .add(cmdNameTemplate))
+                            .add(jPanel6Layout.createSequentialGroup()
+                                .add(jPanel6Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.TRAILING, false)
+                                    .add(org.jdesktop.layout.GroupLayout.LEADING, cmbDictateSigns, 0, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                                    .add(org.jdesktop.layout.GroupLayout.LEADING, chkGeneratePDF, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                                .add(0, 56, Short.MAX_VALUE)))))
                 .addContainerGap())
         );
         jPanel6Layout.setVerticalGroup(
@@ -1432,7 +1408,17 @@ public class AddDocumentFromTemplateDialog extends javax.swing.JDialog implement
                 .addContainerGap()
                 .add(jPanel1, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                 .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
-                .add(jPanel3, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE))
+                .add(jPanel6Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.BASELINE)
+                    .add(txtFileName, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
+                    .add(jLabel1)
+                    .add(cmdNameTemplate))
+                .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
+                .add(chkGeneratePDF)
+                .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
+                .add(jPanel6Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.BASELINE)
+                    .add(cmbDictateSigns, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
+                    .add(jLabel7, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 15, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE))
+                .addContainerGap())
         );
 
         splitMain.setLeftComponent(jPanel6);
@@ -1449,26 +1435,26 @@ public class AddDocumentFromTemplateDialog extends javax.swing.JDialog implement
         getContentPane().setLayout(layout);
         layout.setHorizontalGroup(
             layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
-            .add(org.jdesktop.layout.GroupLayout.TRAILING, layout.createSequentialGroup()
-                .addContainerGap(org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+            .add(layout.createSequentialGroup()
+                .add(341, 341, 341)
                 .add(cmdAddAndOpen)
                 .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
                 .add(cmdAdd)
                 .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
                 .add(cmdCancel)
-                .add(10, 10, 10))
-            .add(splitMain, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 940, Short.MAX_VALUE)
+                .addContainerGap(30, Short.MAX_VALUE))
+            .add(org.jdesktop.layout.GroupLayout.TRAILING, splitMain, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 0, Short.MAX_VALUE)
         );
         layout.setVerticalGroup(
             layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
             .add(layout.createSequentialGroup()
                 .add(splitMain)
-                .addPreferredGap(org.jdesktop.layout.LayoutStyle.UNRELATED)
+                .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
                 .add(layout.createParallelGroup(org.jdesktop.layout.GroupLayout.BASELINE)
                     .add(cmdCancel)
                     .add(cmdAdd)
                     .add(cmdAddAndOpen))
-                .addContainerGap())
+                .add(12, 12, 12))
         );
 
         pack();
@@ -1819,7 +1805,7 @@ public class AddDocumentFromTemplateDialog extends javax.swing.JDialog implement
                 for (String ph : placeHoldersBody) {
                     ht.put(ph, "");
                 }
-                ht = locator.lookupSystemManagementRemote().getPlaceHolderValues(ht, aFile, partiesTriplets, this.cmbDictateSigns.getSelectedItem().toString(), this.calculationTable, this.formPlaceHolderValues, caseLawyer, caseAssistant, author, this.invoice, this.invoiceSender, this.invoiceTable, this.timesheetsTable, giroCode, ingoText);
+                ht = locator.lookupSystemManagementRemote().getPlaceHolderValues(ht, aFile, partiesTriplets, this.cmbDictateSigns.getSelectedItem().toString(), this.calculationTable, this.formPlaceHolderValues, caseLawyer, caseAssistant, author, this.invoice, this.invoiceSender, this.invoiceTable, this.timesheetsTable, this.timesheetSummaryTable, giroCode, ingoText);
 
                 int emptyValues = 0;
                 for (String key : ht.keySet()) {
@@ -1832,7 +1818,14 @@ public class AddDocumentFromTemplateDialog extends javax.swing.JDialog implement
                         emptyValues++;
                     }
                 }
-                ThreadUtils.setLabel(this.lblPlaceholderHint, emptyValues + " leere Platzhalterwerte");
+                
+                if(emptyValues>0) {
+                    this.tabPlaceholders.setIconAt(1, new javax.swing.ImageIcon(getClass().getResource("/icons/messagebox_warning.png")));
+                } else {
+                    this.tabPlaceholders.setIconAt(1, null);
+                }
+                this.tabPlaceholders.setToolTipTextAt(1, emptyValues + " leere Platzhalterwerte");
+                
                 ThreadUtils.setTableModel(this.tblPlaceHolders, model);
 
                 ArrayList<PartyTypeBean> partiesInTemplate = new ArrayList<>();
@@ -2054,16 +2047,15 @@ public class AddDocumentFromTemplateDialog extends javax.swing.JDialog implement
     private javax.swing.JLabel jLabel7;
     private javax.swing.JLabel jLabel8;
     private javax.swing.JPanel jPanel1;
-    private javax.swing.JPanel jPanel2;
-    private javax.swing.JPanel jPanel3;
     private javax.swing.JPanel jPanel4;
     private javax.swing.JPanel jPanel5;
     private javax.swing.JPanel jPanel6;
+    private javax.swing.JPanel jPanel7;
+    private javax.swing.JPanel jPanel8;
     private javax.swing.JScrollPane jScrollPane1;
     private javax.swing.JScrollPane jScrollPane2;
     private javax.swing.JScrollPane jScrollPane3;
     private javax.swing.JSplitPane jSplitPane1;
-    private javax.swing.JLabel lblPlaceholderHint;
     private javax.swing.JList lstTemplates;
     private com.jdimension.jlawyer.client.editors.files.PartiesPanel pnlPartiesPanel;
     private javax.swing.JPopupMenu popNameTemplates;
@@ -2072,7 +2064,7 @@ public class AddDocumentFromTemplateDialog extends javax.swing.JDialog implement
     private javax.swing.JRadioButton radioReviewTypeNone;
     private javax.swing.JRadioButton radioReviewTypeRespite;
     private javax.swing.JSplitPane splitMain;
-    private javax.swing.JSplitPane splitPlaceholders;
+    private javax.swing.JTabbedPane tabPlaceholders;
     private javax.swing.JTable tblPlaceHolders;
     private javax.swing.JTree treeFolders;
     private javax.swing.JTextField txtFileName;

@@ -674,6 +674,7 @@ import com.jdimension.jlawyer.persistence.Invoice;
 import com.jdimension.jlawyer.services.JLawyerServiceLocator;
 import java.awt.Color;
 import java.awt.Container;
+import java.math.BigDecimal;
 import java.text.DecimalFormat;
 import java.text.SimpleDateFormat;
 import java.util.Date;
@@ -697,7 +698,7 @@ public class InvoiceEntryPanel extends javax.swing.JPanel {
     private Invoice invoice = null;
     private List<AddressBean> addresses = null;
 
-    private float paid = 0f;
+    private BigDecimal paid = BigDecimal.ZERO;
 
     /**
      * Creates new form InvoiceEntryPanel
@@ -709,12 +710,12 @@ public class InvoiceEntryPanel extends javax.swing.JPanel {
         this.caseView = caseView;
     }
 
-    public void setPaidTotal(float totalGross, float paid, String currency) {
-        if (paid != Float.MIN_VALUE) {
+    public void setPaidTotal(BigDecimal totalGross, BigDecimal paid, String currency) {
+        if (paid != BigDecimal.valueOf(Float.MIN_VALUE)) {
             this.paid = paid;
         }
         this.lblPaidTotal.setText(totalFormat.format(this.paid) + " " + currency);
-        this.lblOpen.setText(totalFormat.format(totalGross - this.paid) + " " + currency);
+        this.lblOpen.setText(totalFormat.format(totalGross.subtract(this.paid)) + " " + currency);
 
     }
 
@@ -759,8 +760,8 @@ public class InvoiceEntryPanel extends javax.swing.JPanel {
             this.lblRecipient.setText(" ");
         }
 
-        this.lblTotalNet.setText(totalFormat.format(invoice.getTotal()) + " " + invoice.getCurrency());
-        this.lblTotalGross.setText(totalFormat.format(invoice.getTotalGross()) + " " + invoice.getCurrency());
+        this.lblTotalNet.setText(totalFormat.format(invoice.getTotal().floatValue()) + " " + invoice.getCurrency());
+        this.lblTotalGross.setText(totalFormat.format(invoice.getTotalGross().floatValue()) + " " + invoice.getCurrency());
 
         this.cmdMarkAsPayed.setEnabled(invoice.getStatus() != Invoice.STATUS_PAID && invoice.getStatus() != Invoice.STATUS_CANCELLED);
 
@@ -982,7 +983,7 @@ public class InvoiceEntryPanel extends javax.swing.JPanel {
         FrameUtils.centerDialog(dlg, EditorsRegistry.getInstance().getMainWindow());
         dlg.setVisible(true);
         this.setEntry(caseDto, dlg.getEntry(), addresses);
-        this.setPaidTotal(dlg.getEntry().getTotalGross(), Float.MIN_VALUE, dlg.getEntry().getCurrency());
+        this.setPaidTotal(dlg.getEntry().getTotalGross(), BigDecimal.valueOf(Float.MIN_VALUE), dlg.getEntry().getCurrency());
     }//GEN-LAST:event_cmdOpenActionPerformed
 
     private void cmdDeleteActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdDeleteActionPerformed
@@ -1016,7 +1017,7 @@ public class InvoiceEntryPanel extends javax.swing.JPanel {
         this.invoice.setStatus(Invoice.STATUS_PAID);
 
         ClientSettings settings = ClientSettings.getInstance();
-        float currentPaid = 0f;
+        BigDecimal currentPaid = BigDecimal.ZERO;
         try {
             JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
             locator.lookupArchiveFileServiceRemote().updateInvoice(this.caseDto.getId(), this.invoice);
@@ -1024,24 +1025,24 @@ public class InvoiceEntryPanel extends javax.swing.JPanel {
             List<CaseAccountEntry> payments = locator.lookupArchiveFileServiceRemote().getAccountEntriesForInvoice(invoice.getId());
 
             for (CaseAccountEntry ce : payments) {
-                currentPaid = currentPaid + ce.getEarnings() - ce.getSpendings();
+                currentPaid = currentPaid.add(ce.getEarnings()).subtract(ce.getSpendings());
             }
 
             this.setEntry(caseDto, this.invoice, addresses);
 
-            if(this.invoice.getTotalGross() - currentPaid > 0) {
+            if(this.invoice.getTotalGross().subtract(currentPaid).compareTo(BigDecimal.ZERO) > 0) {
                 CaseAccountEntry entry = new CaseAccountEntry();
                 entry.setArchiveFileKey(caseDto);
                 entry.setContact(this.invoice.getContact());
                 entry.setDescription("");
-                entry.setEarnings(invoice.getTotalGross() - currentPaid);
+                entry.setEarnings(invoice.getTotalGross().subtract(currentPaid));
                 entry.setEntryDate(new Date());
-                entry.setEscrowIn(0f);
-                entry.setEscrowOut(0f);
-                entry.setExpendituresIn(0f);
-                entry.setExpendituresOut(0f);
+                entry.setEscrowIn(BigDecimal.ZERO);
+                entry.setEscrowOut(BigDecimal.ZERO);
+                entry.setExpendituresIn(BigDecimal.ZERO);
+                entry.setExpendituresOut(BigDecimal.ZERO);
                 entry.setInvoice(invoice);
-                entry.setSpendings(0f);
+                entry.setSpendings(BigDecimal.ZERO);
 
                 boolean confirmed = this.caseView.addAccountEntry(entry);
 

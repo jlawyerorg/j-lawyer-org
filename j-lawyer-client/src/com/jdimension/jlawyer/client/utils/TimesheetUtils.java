@@ -677,7 +677,7 @@ public class TimesheetUtils {
     
     public static void renderPieChartLabel(PieChartLabel pie, Timesheet ts) {
         if(ts.isLimited()) {
-            pie.setToolTipText("" + (int)ts.getPercentageDone() + "% von maximal " + new DecimalFormat("0.00").format(ts.getLimit()));
+            pie.setToolTipText("" + (int)ts.getPercentageDone() + "% von maximal " + new DecimalFormat("0.00").format(ts.getLimit().floatValue()));
             pie.setPercentage(Math.min((int)ts.getPercentageDone(), 100));
             if(ts.getPercentageDone()<80)
                 pie.setFillColor(DefaultColorTheme.COLOR_LOGO_GREEN);

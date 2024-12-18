@@ -1083,7 +1083,7 @@ public class FileUtils extends ServerFileUtils {
             // Set the permissions on the file
             Files.setPosixFilePermissions(path, perms);
             log.info("Executable flag added to the file: " + path);
-        } catch (IOException e) {
+        } catch (Throwable e) {
             log.error("Error adding executable flag: " + e.getMessage());
         }
     }

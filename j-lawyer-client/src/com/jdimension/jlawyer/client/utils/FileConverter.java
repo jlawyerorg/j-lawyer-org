@@ -664,6 +664,7 @@
 package com.jdimension.jlawyer.client.utils;
 
 import com.jdimension.jlawyer.client.bea.BeaAccess;
+import com.jdimension.jlawyer.client.editors.documents.viewer.ImageOrientationHandler;
 import com.jdimension.jlawyer.client.settings.ClientSettings;
 import com.jdimension.jlawyer.client.settings.UserSettings;
 import com.jdimension.jlawyer.client.utils.einvoice.EInvoiceUtils;
@@ -943,7 +944,11 @@ public class FileConverter {
             if (url.toLowerCase().endsWith(".bea")) {
                 return bea2pdf(url);
             }
-
+            
+            if (isImageFile(url)) {
+                url = processImageOrientation(url); // Aktualisierte URL verwenden
+            }
+            
             ClientSettings set = ClientSettings.getInstance();
             String wordProcessor = set.getConfiguration(ClientSettings.CONF_APPS_WORDPROCESSOR_KEY, ClientSettings.CONF_APPS_WORDPROCESSOR_VALUE_LO);
             boolean wordProcessorMicrosoft = ClientSettings.CONF_APPS_WORDPROCESSOR_VALUE_MSO.equalsIgnoreCase(wordProcessor);
@@ -1101,6 +1106,10 @@ public class FileConverter {
             if (url.toLowerCase().endsWith(".bea")) {
                 return bea2pdf(url);
             }
+            
+            if (isImageFile(url)) {
+                url = processImageOrientation(url);
+            }
 
             if (!this.supportsInputFormat(url)) {
                 throw new Exception("Format nicht unterstützt: " + new File(url).getName());
@@ -1202,6 +1211,10 @@ public class FileConverter {
             if (url.toLowerCase().endsWith(".bea")) {
                 return bea2pdf(url);
             }
+            
+            if (isImageFile(url)) {
+                url = processImageOrientation(url);
+            }
 
             if (!this.supportsInputFormat(url)) {
                 throw new Exception("Format nicht unterstützt: " + new File(url).getName());
@@ -1254,5 +1267,26 @@ public class FileConverter {
             // should never be reached
             throw new Exception("Konvertierung nach PDF fehlgeschlagen (2 Versuche)");
         }
+    }
+    
+    private static boolean isImageFile(String url) {
+        String lUrl = url.toLowerCase();
+        return lUrl.endsWith(".jpg") || lUrl.endsWith(".jpeg") || 
+               lUrl.endsWith(".gif") || lUrl.endsWith(".png");
+    }
+
+    private static String processImageOrientation(String url) throws Exception {
+        File inputFile = new File(url);
+        byte[] imageData = FileUtils.readFile(inputFile);
+
+        // Unsere ImageOrientationHandler Klasse verwenden
+        byte[] processedData = ImageOrientationHandler.processImage(imageData);
+
+        // Wenn sich die Daten geändert haben, neue temporäre Datei erstellen
+        if (!Arrays.equals(imageData, processedData)) {
+            return FileUtils.createTempFile(inputFile.getName(), processedData);
+        }
+
+        return url;
     }
 }

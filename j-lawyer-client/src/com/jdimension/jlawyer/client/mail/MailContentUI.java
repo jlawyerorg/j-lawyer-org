@@ -1030,13 +1030,13 @@ public class MailContentUI extends javax.swing.JPanel implements HyperlinkListen
         }
     }
 
-    public void setMessage(MessageContainer msgC, MailboxSetup ms) {
+    public boolean setMessage(MessageContainer msgC, MailboxSetup ms) {
 
         this.emlMsgContainer = msgC;
         try {
             Message msg = msgC.getMessage();
             if (msg == null) {
-                return;
+                return true;
             }
 
             Folder folder = msg.getFolder();
@@ -1052,7 +1052,7 @@ public class MailContentUI extends javax.swing.JPanel implements HyperlinkListen
 
             if (msg.isExpunged()) {
                 JOptionPane.showMessageDialog(this, "Nachricht wurde verschoben oder gelöscht!", com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
-                return;
+                return false;
             }
 
             if (msg.getSize() > (1024 * 1024 * 1.5f)) {
@@ -1064,7 +1064,7 @@ public class MailContentUI extends javax.swing.JPanel implements HyperlinkListen
                 dlg.progress("Lade E-Mail... (" + df.format(msg.getSize() / 1024 / 1024) + "MB)");
                 LoadEmailAction lea = new LoadEmailAction(dlg, this, msg, ms, this.lblSubject, this.lblSentDate, this.lblTo, this.lblCC, this.lblBCC, this.lblFrom, this.lstAttachments, this.fxContainer, this.webViewId);
                 lea.start();
-                return;
+                return true;
             } else {
                 MailContentUI.setMessageImpl(this, msg, ms, this.lblSubject, this.lblSentDate, this.lblTo, this.lblCC, this.lblBCC, this.lblFrom, this.lstAttachments, false, this.fxContainer, this.webViewId);
             }
@@ -1089,7 +1089,9 @@ public class MailContentUI extends javax.swing.JPanel implements HyperlinkListen
             this.lblSubject.setToolTipText(null);
             this.lblTo.setText("");
             this.lblTo.setToolTipText(null);
+            return false;
         }
+        return true;
     }
 
     public static void setMessageImpl(MailContentUI contentUI, Message msg, MailboxSetup ms, JLabel lblSubject, JLabel lblSentDate, JLabel lblTo, JLabel lblCC, JLabel lblBCC, JLabel lblFrom, JList lstAttachments, boolean edt, JPanel fxContainer, String webViewId) throws Exception {
@@ -1166,14 +1168,17 @@ public class MailContentUI extends javax.swing.JPanel implements HyperlinkListen
         lblSentDate.setText(sentString);
         lblSubject.setText(copiedMsg.getSubject());
         lblSubject.setToolTipText("Klicken, um in Zwischenablage zu kopieren:" + System.lineSeparator() + lblSubject.getText());
-        lblFrom.setText(MimeUtility.decodeText(copiedMsg.getFrom()[0].toString()));
+        if(copiedMsg.getFrom()!=null && copiedMsg.getFrom().length>0)
+            lblFrom.setText(MimeUtility.decodeText(copiedMsg.getFrom()[0].toString()));
+        else
+            lblFrom.setText("");
         lblFrom.setToolTipText("Klicken, um in Zwischenablage zu kopieren:" + System.lineSeparator() + lblFrom.getText());
 
         String to = "";
         if (copiedMsg.getRecipients(RecipientType.TO) != null && copiedMsg.getRecipients(RecipientType.TO).length > 0) {
-            to = copiedMsg.getRecipients(RecipientType.TO)[0].toString();
+            to = MimeUtility.decodeText(copiedMsg.getRecipients(RecipientType.TO)[0].toString());
             for (int i = 1; i < copiedMsg.getRecipients(RecipientType.TO).length; i++) {
-                to = to + ", " + copiedMsg.getRecipients(RecipientType.TO)[i].toString();
+                to = to + ", " + MimeUtility.decodeText(copiedMsg.getRecipients(RecipientType.TO)[i].toString());
             }
         }
         lblTo.setText(to);
@@ -1181,9 +1186,9 @@ public class MailContentUI extends javax.swing.JPanel implements HyperlinkListen
 
         String cc = "";
         if (copiedMsg.getRecipients(RecipientType.CC) != null && copiedMsg.getRecipients(RecipientType.CC).length > 0) {
-            cc = copiedMsg.getRecipients(RecipientType.CC)[0].toString();
+            cc = MimeUtility.decodeText(copiedMsg.getRecipients(RecipientType.CC)[0].toString());
             for (int i = 1; i < copiedMsg.getRecipients(RecipientType.CC).length; i++) {
-                cc = cc + ", " + copiedMsg.getRecipients(RecipientType.CC)[i].toString();
+                cc = cc + ", " + MimeUtility.decodeText(copiedMsg.getRecipients(RecipientType.CC)[i].toString());
             }
         }
         lblCC.setText(cc);
@@ -1191,9 +1196,9 @@ public class MailContentUI extends javax.swing.JPanel implements HyperlinkListen
 
         String bcc = "";
         if (copiedMsg.getRecipients(RecipientType.BCC) != null && copiedMsg.getRecipients(RecipientType.BCC).length > 0) {
-            bcc = copiedMsg.getRecipients(RecipientType.BCC)[0].toString();
+            bcc = MimeUtility.decodeText(copiedMsg.getRecipients(RecipientType.BCC)[0].toString());
             for (int i = 1; i < copiedMsg.getRecipients(RecipientType.BCC).length; i++) {
-                bcc = bcc + ", " + copiedMsg.getRecipients(RecipientType.BCC)[i].toString();
+                bcc = bcc + ", " + MimeUtility.decodeText(copiedMsg.getRecipients(RecipientType.BCC)[i].toString());
             }
         }
         lblBCC.setText(bcc);

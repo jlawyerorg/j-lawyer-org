@@ -1418,10 +1418,14 @@ public class SystemManagement implements SystemManagementRemote, SystemManagemen
 
     @Override
     @RolesAllowed({"loginRole"})
-    public void testSendMail(String smtpHost, int smtpPort, String smtpUser, String smtpPwd, boolean smtpSsl, boolean smtpStartTls, String mailAddress) throws Exception {
+    public void testSendMail(String smtpHost, int smtpPort, String smtpUser, String smtpPwd, boolean smtpSsl, boolean smtpStartTls, String mailAddress, boolean isMsExchange, String accessToken) throws Exception {
 
         if (smtpHost == null || smtpUser == null || smtpPwd == null || mailAddress == null) {
             throw new Exception("incomplete configuration for sending test mails");
+        }
+        
+        if (isMsExchange) {
+            smtpPwd=accessToken;
         }
 
         Properties props = new Properties();
@@ -1442,7 +1446,7 @@ public class SystemManagement implements SystemManagementRemote, SystemManagemen
                 log.error("Invalid SMTP port: " + smtpHost);
             }
         }
-
+        
         props.put("mail.smtp.host", smtpHost);
         props.put("mail.smtp.user", smtpUser);
         props.put("mail.smtp.auth", true);
@@ -1452,11 +1456,18 @@ public class SystemManagement implements SystemManagementRemote, SystemManagemen
         props.put("mail.from", smtpUser);
         props.put("mail.password", smtpPwd);
 
+        if (isMsExchange) {
+            
+            props.put("mail.smtp.auth.mechanisms", "XOAUTH2");
+            props.put("mail.smtps.auth.mechanisms", "XOAUTH2");
+        }
+        
+        final String smtpPwdFinal=smtpPwd;
         javax.mail.Authenticator auth = new javax.mail.Authenticator() {
 
             @Override
             public PasswordAuthentication getPasswordAuthentication() {
-                return new PasswordAuthentication(smtpUser, smtpPwd);
+                return new PasswordAuthentication(smtpUser, smtpPwdFinal);
             }
         };
 
@@ -1484,7 +1495,7 @@ public class SystemManagement implements SystemManagementRemote, SystemManagemen
 
     @Override
     @RolesAllowed({"loginRole"})
-    public void testReceiveMail(String mailAddress, String host, String protocol, boolean ssl, String user, String pwd, boolean isMsExchange, String clientId, String clientSecret, String authToken) throws Exception {
+    public void testReceiveMail(String mailAddress, String host, String protocol, boolean ssl, String user, String pwd, boolean isMsExchange, String authToken) throws Exception {
         Properties props = System.getProperties();
         //Properties props = new Properties();
         props.setProperty("mail.imap.partialfetch", "false");
@@ -1575,7 +1586,7 @@ public class SystemManagement implements SystemManagementRemote, SystemManagemen
                 settings.load(in);
 
             } catch (IOException ioe) {
-                log.error("Error updating user settings", ioe);
+                log.error("Error getting user settings", ioe);
             }
 
         }
@@ -1605,7 +1616,7 @@ public class SystemManagement implements SystemManagementRemote, SystemManagemen
         this.userBeanFacade.edit(currentValues);
 
     }
-
+    
     @Override
     public String getServerIpV4() throws Exception {
         try {
@@ -2383,14 +2394,14 @@ public class SystemManagement implements SystemManagementRemote, SystemManagemen
     }
 
     @Override
-    public HashMap<String, Object> getPlaceHolderValuesUnrestricted(HashMap<String, Object> placeHolders, ArchiveFileBean aFile, List<PartiesTriplet> selectedParties, String dictateSign, GenericCalculationTable calculationTable, HashMap<String, String> formsPlaceHolderValues, AppUserBean caseLawyer, AppUserBean caseAssistant, AppUserBean author, Invoice invoice, AppUserBean invoiceSender, GenericCalculationTable invoiceTable, GenericCalculationTable timesheetsTable, byte[] giroCode, String ingoText) throws Exception {
-        return PlaceHolderServerUtils.getPlaceHolderValues(placeHolders, aFile, selectedParties, dictateSign, calculationTable, formsPlaceHolderValues, caseLawyer, caseAssistant, author, invoice, invoiceSender, invoiceTable, timesheetsTable, giroCode, ingoText);
+    public HashMap<String, Object> getPlaceHolderValuesUnrestricted(HashMap<String, Object> placeHolders, ArchiveFileBean aFile, List<PartiesTriplet> selectedParties, String dictateSign, GenericCalculationTable calculationTable, HashMap<String, String> formsPlaceHolderValues, AppUserBean caseLawyer, AppUserBean caseAssistant, AppUserBean author, Invoice invoice, AppUserBean invoiceSender, GenericCalculationTable invoiceTable, GenericCalculationTable timesheetsTable, GenericCalculationTable timesheetSummaryTable, byte[] giroCode, String ingoText) throws Exception {
+        return PlaceHolderServerUtils.getPlaceHolderValues(placeHolders, aFile, selectedParties, dictateSign, calculationTable, formsPlaceHolderValues, caseLawyer, caseAssistant, author, invoice, invoiceSender, invoiceTable, timesheetsTable, timesheetSummaryTable, giroCode, ingoText);
     }
     
     @Override
     @RolesAllowed({"loginRole"})
-    public HashMap<String, Object> getPlaceHolderValues(HashMap<String, Object> placeHolders, ArchiveFileBean aFile, List<PartiesTriplet> selectedParties, String dictateSign, GenericCalculationTable calculationTable, HashMap<String, String> formsPlaceHolderValues, AppUserBean caseLawyer, AppUserBean caseAssistant, AppUserBean author, Invoice invoice, AppUserBean invoiceSender, GenericCalculationTable invoiceTable, GenericCalculationTable timesheetsTable, byte[] giroCode, String ingoText) throws Exception {
-        return PlaceHolderServerUtils.getPlaceHolderValues(placeHolders, aFile, selectedParties, dictateSign, calculationTable, formsPlaceHolderValues, caseLawyer, caseAssistant, author, invoice, invoiceSender, invoiceTable, timesheetsTable, giroCode, ingoText);
+    public HashMap<String, Object> getPlaceHolderValues(HashMap<String, Object> placeHolders, ArchiveFileBean aFile, List<PartiesTriplet> selectedParties, String dictateSign, GenericCalculationTable calculationTable, HashMap<String, String> formsPlaceHolderValues, AppUserBean caseLawyer, AppUserBean caseAssistant, AppUserBean author, Invoice invoice, AppUserBean invoiceSender, GenericCalculationTable invoiceTable, GenericCalculationTable timesheetsTable, GenericCalculationTable timesheetSummaryTable, byte[] giroCode, String ingoText) throws Exception {
+        return PlaceHolderServerUtils.getPlaceHolderValues(placeHolders, aFile, selectedParties, dictateSign, calculationTable, formsPlaceHolderValues, caseLawyer, caseAssistant, author, invoice, invoiceSender, invoiceTable, timesheetsTable, timesheetSummaryTable, giroCode, ingoText);
     }
 
     @Override
@@ -2428,7 +2439,23 @@ public class SystemManagement implements SystemManagementRemote, SystemManagemen
     @Override
     @RolesAllowed({"adminRole"})
     public DocumentNameTemplate updateDocumentNameTemplate(DocumentNameTemplate template) throws Exception {
-        this.documentNameTemplates.edit(template);
+        
+        
+        if(!template.isDefaultTemplate()) {
+            // not a default template - make sure there is at least one default
+            boolean defaultFound=false;
+            for (DocumentNameTemplate t : this.documentNameTemplates.findAll()) {
+                if (!t.equals(template)) {
+                    if(t.isDefaultTemplate()) {
+                        defaultFound=true;
+                        break;
+                    }
+                }
+            }
+            if(!defaultFound) {
+                throw new Exception("Es muss mindestens ein Standardschema existieren - Eintrag als Standard erneut speichern!");
+            }
+        }
 
         if (template.isDefaultTemplate()) {
             // default template - remove default flag from any other templates
@@ -2440,6 +2467,8 @@ public class SystemManagement implements SystemManagementRemote, SystemManagemen
             }
         }
 
+        this.documentNameTemplates.edit(template);
+        
         return this.documentNameTemplates.find(template.getId());
     }
 

@@ -861,6 +861,25 @@ public class ReportingPanel extends javax.swing.JPanel implements ThemeableEdito
         timeSheetsOpenPositions.setDateSelectionLabel("Zeiten gebucht");
         allReports.add(timeSheetsOpenPositions);
         
+        Report timeSheetsValues=new Report();
+        timeSheetsValues.setName("Gebuchte Zeiten pro Mitarbeiter");
+        timeSheetsValues.setDescription("<html><b>Werte aller gebuchten Zeiten</b>, gruppiert nach Mitarbeiter(-in) und Monat / Jahr</html>");
+        timeSheetsValues.setClassName(DynamicReportContainerPanel.class.getName());
+        timeSheetsValues.setCategory("Zeiten");
+        timeSheetsValues.setSequence(22);
+        timeSheetsValues.setReportId(Reports.RPT_TSHEETS_VALUES);
+        timeSheetsValues.setTypeChart(false);
+        timeSheetsValues.setTypeTable(true);
+        timeSheetsValues.setSecurityType(Report.SECURITY_CONFIDENTIAL);
+        fromDate=new Date();
+        fromDate.setMonth(0);
+        fromDate.setDate(1);
+        timeSheetsValues.setDefaultBeginDate(fromDate);
+        toDate=new Date();
+        timeSheetsValues.setDefaultEndDate(toDate);
+        timeSheetsValues.setDateSelectionLabel("Zeiten gebucht");
+        allReports.add(timeSheetsValues);
+        
         Report employeeReport=new Report();
         employeeReport.setName("Mitarbeiterreport");
         employeeReport.setDescription("<html>Tabellarische Auswertungen zu <b>Aktenaktivitäten</b> einer Mitarbeiterin / eines Mitarbeiters</html>");

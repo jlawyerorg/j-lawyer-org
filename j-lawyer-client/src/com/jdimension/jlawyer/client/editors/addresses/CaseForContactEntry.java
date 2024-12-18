@@ -664,6 +664,7 @@
 package com.jdimension.jlawyer.client.editors.addresses;
 
 import java.awt.Color;
+import java.math.BigDecimal;
 import java.util.HashMap;
 import themes.colors.DefaultColorTheme;
 
@@ -680,7 +681,7 @@ public class CaseForContactEntry {
     private String reason=null;
     private String role=null;
     private boolean archived=false;
-    protected HashMap<Integer, Float> invoicesByStatus=null;
+    protected HashMap<Integer, BigDecimal> invoicesByStatus=null;
     private Color roleForeground=DefaultColorTheme.COLOR_LOGO_BLUE;
     
     
@@ -803,14 +804,14 @@ public class CaseForContactEntry {
     /**
      * @return the invoicesByStatus
      */
-    public HashMap<Integer, Float> getInvoicesByStatus() {
+    public HashMap<Integer, BigDecimal> getInvoicesByStatus() {
         return invoicesByStatus;
     }
 
     /**
      * @param invoicesByStatus the invoicesByStatus to set
      */
-    public void setInvoicesByStatus(HashMap<Integer, Float> invoicesByStatus) {
+    public void setInvoicesByStatus(HashMap<Integer, BigDecimal> invoicesByStatus) {
         this.invoicesByStatus = invoicesByStatus;
     }
     

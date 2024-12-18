@@ -675,6 +675,7 @@ import com.jdimension.jlawyer.services.ArchiveFileServiceRemote;
 import com.jdimension.jlawyer.services.JLawyerServiceLocator;
 import java.awt.Color;
 import java.awt.event.KeyEvent;
+import java.math.BigDecimal;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
@@ -972,8 +973,8 @@ public class TimesheetLogEntryPanel extends javax.swing.JPanel {
                 this.entry.setTaxRate(this.templates.get(this.cmbTemplate.getEditor().getItem().toString()).getTaxRate());
                 this.entry.setUnitPrice(this.templates.get(this.cmbTemplate.getEditor().getItem().toString()).getUnitPrice());
             } else {
-                this.entry.setTaxRate(19f);
-                this.entry.setUnitPrice(0f);
+                this.entry.setTaxRate(BigDecimal.valueOf(19f));
+                this.entry.setUnitPrice(BigDecimal.ZERO);
             }
             try {
                 JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
@@ -1066,8 +1067,8 @@ public class TimesheetLogEntryPanel extends javax.swing.JPanel {
             this.entry.setUnitPrice(this.templates.get(this.cmbTemplate.getEditor().getItem().toString()).getUnitPrice());
         } else {
             // should not happen, because the combobox is not editable
-            this.entry.setTaxRate(19f);
-            this.entry.setUnitPrice(0f);
+            this.entry.setTaxRate(BigDecimal.valueOf(19f));
+            this.entry.setUnitPrice(BigDecimal.ZERO);
         }
         
         Date start=new Date();
@@ -1117,8 +1118,8 @@ public class TimesheetLogEntryPanel extends javax.swing.JPanel {
             this.entry.setUnitPrice(this.templates.get(this.cmbTemplate.getEditor().getItem().toString()).getUnitPrice());
         } else {
             // should not happen, because the combobox is not editable
-            this.entry.setTaxRate(19f);
-            this.entry.setUnitPrice(0f);
+            this.entry.setTaxRate(BigDecimal.valueOf(19f));
+            this.entry.setUnitPrice(BigDecimal.ZERO);
         }
         
         Date dStart=(Date)this.txtStart.getValue();

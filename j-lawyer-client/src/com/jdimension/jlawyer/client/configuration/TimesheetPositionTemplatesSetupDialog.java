@@ -668,6 +668,7 @@ import com.jdimension.jlawyer.client.settings.ClientSettings;
 import com.jdimension.jlawyer.client.utils.ComponentUtils;
 import com.jdimension.jlawyer.persistence.TimesheetPositionTemplate;
 import com.jdimension.jlawyer.services.JLawyerServiceLocator;
+import java.math.BigDecimal;
 import java.util.List;
 import javax.swing.JOptionPane;
 import javax.swing.table.DefaultTableModel;
@@ -998,8 +999,8 @@ public class TimesheetPositionTemplatesSetupDialog extends javax.swing.JDialog {
             TimesheetPositionTemplate tpl = new TimesheetPositionTemplate();
             tpl.setName(newNameObject.toString());
             tpl.setDescription("");
-            tpl.setTaxRate(19f);
-            tpl.setUnitPrice(0f);
+            tpl.setTaxRate(BigDecimal.valueOf(19f));
+            tpl.setUnitPrice(BigDecimal.ZERO);
             TimesheetPositionTemplate savedTpl = locator.lookupTimesheetServiceRemote().addTimesheetPositionTemplate(tpl);
 
             ((DefaultTableModel) this.tblTemplates.getModel()).addRow(new Object[]{savedTpl, savedTpl.getDescription()});
@@ -1052,8 +1053,8 @@ public class TimesheetPositionTemplatesSetupDialog extends javax.swing.JDialog {
             TimesheetPositionTemplate tpl = (TimesheetPositionTemplate) this.tblTemplates.getValueAt(row, 0);
             tpl.setName(this.txtName.getText());
             tpl.setDescription(this.taDescription.getText());
-            tpl.setTaxRate(taxRate.floatValue());
-            tpl.setUnitPrice(unitPrice.floatValue());
+            tpl.setTaxRate(BigDecimal.valueOf(taxRate.floatValue()));
+            tpl.setUnitPrice(BigDecimal.valueOf(unitPrice.floatValue()));
             
             ClientSettings settings = ClientSettings.getInstance();
             try {

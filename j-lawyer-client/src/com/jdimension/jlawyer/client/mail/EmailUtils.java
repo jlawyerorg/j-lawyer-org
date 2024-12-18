@@ -664,6 +664,7 @@
 package com.jdimension.jlawyer.client.mail;
 
 import com.jdimension.jlawyer.client.editors.EditorsRegistry;
+import com.jdimension.jlawyer.client.settings.ClientSettings;
 import com.jdimension.jlawyer.client.settings.UserSettings;
 import com.jdimension.jlawyer.client.utils.StringUtils;
 import com.jdimension.jlawyer.email.CommonMailUtils;
@@ -673,6 +674,7 @@ import com.jdimension.jlawyer.persistence.MailboxSetup;
 import com.jdimension.jlawyer.security.CachingCrypto;
 import com.jdimension.jlawyer.security.CryptoProvider;
 import com.jdimension.jlawyer.server.utils.ContentTypes;
+import com.jdimension.jlawyer.services.JLawyerServiceLocator;
 import java.io.ByteArrayOutputStream;
 import java.io.InputStream;
 import java.io.UnsupportedEncodingException;
@@ -687,6 +689,7 @@ import javax.mail.*;
 import javax.mail.Flags;
 import javax.mail.Folder;
 import javax.mail.internet.*;
+import javax.swing.JOptionPane;
 import org.apache.log4j.Logger;
 import org.simplejavamail.outlookmessageparser.model.OutlookMessage;
 import org.simplejavamail.outlookmessageparser.model.OutlookRecipient;
@@ -698,6 +701,18 @@ import org.simplejavamail.outlookmessageparser.model.OutlookRecipient;
 public class EmailUtils extends CommonMailUtils {
 
     private static final Logger log = Logger.getLogger(EmailUtils.class.getName());
+    
+    public static String getOffice365AuthToken(String mailboxId) throws Exception {
+        ClientSettings settings = ClientSettings.getInstance();
+            try {
+                JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
+                return locator.lookupEmailServiceRemote().getAuthToken(mailboxId);
+                
+            } catch (Exception ex) {
+                log.error("Error getting Office 365 auth token", ex);
+                return null;
+            }
+    }
 
     public static boolean hasConfig(AppUserBean u) {
 
@@ -1274,11 +1289,11 @@ public class EmailUtils extends CommonMailUtils {
                 prependContent=prependContent + System.lineSeparator() + System.lineSeparator();
             
             if (contentType.toLowerCase().startsWith(ContentTypes.TEXT_HTML)) {
-                dlg.setBody(prependContent + EmailUtils.getQuotedBody(EmailUtils.html2Text(content), ContentTypes.TEXT_PLAIN, decodedTo, m.getDate()), ContentTypes.TEXT_PLAIN);
+                dlg.setBody(prependContent, EmailUtils.getQuotedBody(EmailUtils.html2Text(content), ContentTypes.TEXT_PLAIN, decodedTo, m.getDate()), ContentTypes.TEXT_PLAIN);
             } else {
-                dlg.setBody(prependContent + EmailUtils.getQuotedBody(content, ContentTypes.TEXT_PLAIN, decodedTo, m.getDate()), ContentTypes.TEXT_PLAIN);
+                dlg.setBody(prependContent, EmailUtils.getQuotedBody(content, ContentTypes.TEXT_PLAIN, decodedTo, m.getDate()), ContentTypes.TEXT_PLAIN);
             }
-            dlg.setBody(prependContent + EmailUtils.getQuotedBody(content, ContentTypes.TEXT_HTML, decodedTo, m.getDate()), ContentTypes.TEXT_HTML);
+            dlg.setBody(prependContent, EmailUtils.getQuotedBody(content, ContentTypes.TEXT_HTML, decodedTo, m.getDate()), ContentTypes.TEXT_HTML);
 
         } catch (Exception ex) {
             log.error(ex);
@@ -1358,11 +1373,11 @@ public class EmailUtils extends CommonMailUtils {
                 prependContent=prependContent + System.lineSeparator() + System.lineSeparator();
             
             if (contentType.toLowerCase().startsWith(ContentTypes.TEXT_HTML)) {
-                dlg.setBody(prependContent + EmailUtils.getQuotedBody(EmailUtils.html2Text(content), ContentTypes.TEXT_PLAIN, decodedTo, m.getSentDate()), ContentTypes.TEXT_PLAIN);
+                dlg.setBody(prependContent, EmailUtils.getQuotedBody(EmailUtils.html2Text(content), ContentTypes.TEXT_PLAIN, decodedTo, m.getSentDate()), ContentTypes.TEXT_PLAIN);
             } else {
-                dlg.setBody(prependContent + EmailUtils.getQuotedBody(content, ContentTypes.TEXT_PLAIN, decodedTo, m.getSentDate()), ContentTypes.TEXT_PLAIN);
+                dlg.setBody(prependContent, EmailUtils.getQuotedBody(content, ContentTypes.TEXT_PLAIN, decodedTo, m.getSentDate()), ContentTypes.TEXT_PLAIN);
             }
-            dlg.setBody(prependContent + EmailUtils.getQuotedBody(content, ContentTypes.TEXT_HTML, decodedTo, m.getSentDate()), ContentTypes.TEXT_HTML);
+            dlg.setBody(prependContent, EmailUtils.getQuotedBody(content, ContentTypes.TEXT_HTML, decodedTo, m.getSentDate()), ContentTypes.TEXT_HTML);
 
         } catch (Exception ex) {
             log.error(ex);

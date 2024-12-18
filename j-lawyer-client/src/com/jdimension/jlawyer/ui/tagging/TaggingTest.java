@@ -666,7 +666,6 @@ package com.jdimension.jlawyer.ui.tagging;
 import com.formdev.flatlaf.FlatIntelliJLaf;
 import com.formdev.flatlaf.FlatLaf;
 import com.formdev.flatlaf.fonts.inter.FlatInterFont;
-import themes.colors.DefaultColorTheme;
 
 /**
  *
@@ -694,14 +693,14 @@ public class TaggingTest extends javax.swing.JFrame {
         this.tagPanel1.add(new TagToggleRectButton("text blalb"));
         
         
-        TagToggleButton tt2=new TagToggleButton("text blubb");
+        TagToggleButton tt2=new TagToggleButton("text blubb", null);
         
         this.tagPanel1.add(tt2);
         
-        this.tagPanel1.add(new TagToggleButton("text blubb"));
-        this.tagPanel1.add(new TagToggleButton("text blubb"));
-        this.tagPanel1.add(new TagToggleButton("text blubb"));
-        this.tagPanel1.add(new TagToggleButton("text blubb"));
+        this.tagPanel1.add(new TagToggleButton("text blubb", null));
+        this.tagPanel1.add(new TagToggleButton("text blubb", null));
+        this.tagPanel1.add(new TagToggleButton("text blubb", null));
+        this.tagPanel1.add(new TagToggleButton("text blubb", null));
         
         TagToggleRectButton ttb=new TagToggleRectButton("customStyle");
         ttb.setFont(ttb.getFont().deriveFont(10f));

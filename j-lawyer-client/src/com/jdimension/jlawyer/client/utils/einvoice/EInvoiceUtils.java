@@ -795,11 +795,11 @@ public class EInvoiceUtils {
 
         // line items
         for (InvoicePosition pos : positions) {
-            float taxRate = pos.getTaxRate();
+            BigDecimal taxRate = pos.getTaxRate();
             if (!caseInvoice.isSmallBusiness()) {
-                taxRate = 0f;
+                taxRate = BigDecimal.ZERO;
             }
-            i.addItem(new Item(new Product(pos.getName(), pos.getDescription(), "C62", new BigDecimal(taxRate)), /*price*/ new BigDecimal(pos.getUnitPrice()), /*qty*/ new BigDecimal(pos.getUnits())));
+            i.addItem(new Item(new Product(pos.getName(), pos.getDescription(), "C62", taxRate), /*price*/ pos.getUnitPrice(), /*qty*/ pos.getUnits()));
         }
 
         return i;
@@ -907,7 +907,7 @@ public class EInvoiceUtils {
             BigDecimal total = price.multiply(quantity);
 
             BigDecimal tax = item.getProduct().getVATPercent();
-            BigDecimal taxAmount = total.multiply(tax).divide(BigDecimal.valueOf(100));
+            BigDecimal taxAmount = total.multiply(tax).divide(BigDecimal.valueOf(100), 2, RoundingMode.HALF_EVEN);
 
             totalTaxAmount = totalTaxAmount.add(taxAmount);
             totalAmount = totalAmount.add(total);

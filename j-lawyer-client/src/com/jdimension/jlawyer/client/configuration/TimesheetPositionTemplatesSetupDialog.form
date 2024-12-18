@@ -50,7 +50,7 @@
                       <Group type="103" groupAlignment="0" attributes="0">
                           <Component id="txtName" max="32767" attributes="0"/>
                           <Group type="102" alignment="0" attributes="0">
-                              <Component id="lblError" pref="5" max="32767" attributes="0"/>
+                              <Component id="lblError" max="32767" attributes="0"/>
                               <EmptySpace min="-2" pref="258" max="-2" attributes="0"/>
                           </Group>
                           <Component id="jScrollPane2" max="32767" attributes="0"/>

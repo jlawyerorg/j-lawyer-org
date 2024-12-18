@@ -808,6 +808,9 @@ public class LoadDocumentPreviewThread implements Runnable {
         } catch (Exception ex) {
             running = false;
             log.error(ex);
+            if(ex.getCause()!=null) {
+                log.error(ex.getCause());
+            }
             SwingUtilities.invokeLater(() -> {
                 pnlPreview.setVisible(false);
                 pnlPreview.removeAll();

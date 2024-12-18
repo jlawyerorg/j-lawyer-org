@@ -59,6 +59,12 @@
                       <Component id="cmdCancel" min="-2" max="-2" attributes="0"/>
                   </Group>
                   <Component id="jScrollPane1" pref="776" max="32767" attributes="0"/>
+                  <Group type="102" alignment="0" attributes="0">
+                      <Component id="cmdAll" min="-2" max="-2" attributes="0"/>
+                      <EmptySpace max="-2" attributes="0"/>
+                      <Component id="cmdNone" min="-2" max="-2" attributes="0"/>
+                      <EmptySpace min="0" pref="0" max="32767" attributes="0"/>
+                  </Group>
               </Group>
               <EmptySpace max="-2" attributes="0"/>
           </Group>
@@ -68,7 +74,12 @@
       <Group type="103" groupAlignment="0" attributes="0">
           <Group type="102" alignment="1" attributes="0">
               <EmptySpace max="-2" attributes="0"/>
-              <Component id="jScrollPane1" pref="440" max="32767" attributes="0"/>
+              <Group type="103" groupAlignment="3" attributes="0">
+                  <Component id="cmdAll" alignment="3" min="-2" max="-2" attributes="0"/>
+                  <Component id="cmdNone" alignment="3" min="-2" max="-2" attributes="0"/>
+              </Group>
+              <EmptySpace max="-2" attributes="0"/>
+              <Component id="jScrollPane1" pref="406" max="32767" attributes="0"/>
               <EmptySpace max="-2" attributes="0"/>
               <Group type="103" groupAlignment="3" attributes="0">
                   <Component id="cmdCancel" alignment="3" min="-2" max="-2" attributes="0"/>
@@ -112,13 +123,14 @@
         <Component class="javax.swing.JTable" name="tblPositions">
           <Properties>
             <Property name="model" type="javax.swing.table.TableModel" editor="org.netbeans.modules.form.editors2.TableModelEditor">
-              <Table columnCount="6" rowCount="4">
+              <Table columnCount="7" rowCount="4">
                 <Column editable="true" title="abrechnen" type="java.lang.Boolean"/>
-                <Column editable="true" title="Projekt" type="java.lang.String"/>
-                <Column editable="true" title="Position" type="java.lang.Object"/>
-                <Column editable="true" title="Beschreibung" type="java.lang.Object"/>
-                <Column editable="true" title="Gesamt" type="java.lang.Float"/>
-                <Column editable="true" title="Zeit" type="java.lang.String"/>
+                <Column editable="false" title="Projekt" type="java.lang.String"/>
+                <Column editable="false" title="Position" type="java.lang.Object"/>
+                <Column editable="false" title="Beschreibung" type="java.lang.Object"/>
+                <Column editable="false" title="Gesamt" type="java.lang.Float"/>
+                <Column editable="false" title="Zeit" type="java.lang.String"/>
+                <Column editable="false" title="Beleg" type="java.lang.String"/>
               </Table>
             </Property>
           </Properties>
@@ -129,5 +141,27 @@
         </Component>
       </SubComponents>
     </Container>
+    <Component class="javax.swing.JButton" name="cmdAll">
+      <Properties>
+        <Property name="icon" type="javax.swing.Icon" editor="org.netbeans.modules.form.editors2.IconEditor">
+          <Image iconType="3" name="/icons16/baseline_select_all_black_48dp.png"/>
+        </Property>
+        <Property name="toolTipText" type="java.lang.String" value="alle ausw&#xe4;hlen"/>
+      </Properties>
+      <Events>
+        <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="cmdAllActionPerformed"/>
+      </Events>
+    </Component>
+    <Component class="javax.swing.JButton" name="cmdNone">
+      <Properties>
+        <Property name="icon" type="javax.swing.Icon" editor="org.netbeans.modules.form.editors2.IconEditor">
+          <Image iconType="3" name="/icons16/baseline_select_none_black_48dp.png"/>
+        </Property>
+        <Property name="toolTipText" type="java.lang.String" value="keine ausw&#xe4;hlen"/>
+      </Properties>
+      <Events>
+        <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="cmdNoneActionPerformed"/>
+      </Events>
+    </Component>
   </SubComponents>
 </Form>

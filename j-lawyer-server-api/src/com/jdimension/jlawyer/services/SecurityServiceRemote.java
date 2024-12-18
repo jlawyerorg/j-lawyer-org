@@ -673,6 +673,7 @@ import com.jdimension.jlawyer.persistence.MailboxAccess;
 import com.jdimension.jlawyer.persistence.MailboxSetup;
 import java.util.Collection;
 import java.util.List;
+import java.util.Properties;
 import javax.ejb.Remote;
 
 /**
@@ -726,6 +727,10 @@ public interface SecurityServiceRemote {
     MailboxSetup updateMailboxSetup(MailboxSetup cs);
 
     void removeMailboxSetup(MailboxSetup cs);
+    
+    Properties getMailboxSettings(MailboxSetup mailbox);
+
+    void setMailboxSettings(MailboxSetup mailbox, Properties settings);
 
     List<AppUserBean> getMessagingEnabledUsers() throws Exception;
 }

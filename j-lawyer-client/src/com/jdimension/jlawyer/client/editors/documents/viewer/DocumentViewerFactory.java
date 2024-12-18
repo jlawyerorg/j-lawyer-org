@@ -710,12 +710,26 @@ public class DocumentViewerFactory {
             return pdfP;
 
         } else if (lFileName.endsWith(".jpg") || lFileName.endsWith(".jpeg") || lFileName.endsWith(".gif") || lFileName.endsWith(".png")) {
-            GifJpegPngImagePanel ip = new GifJpegPngImagePanel(content);
-            ip.setSize(width, height);
-            ip.setMaximumSize(new Dimension(width, height));
-            ip.setPreferredSize(new Dimension(width, height));
-            ip.showContent(id, content);
-            return ip;
+            try {
+                // EXIF-Orientierung verarbeiten
+                byte[] processedContent = ImageOrientationHandler.processImage(content);
+
+                GifJpegPngImagePanel ip = new GifJpegPngImagePanel(processedContent);
+                ip.setSize(width, height);
+                ip.setMaximumSize(new Dimension(width, height));
+                ip.setPreferredSize(new Dimension(width, height));
+                ip.showContent(id, processedContent);
+                return ip;
+            } catch (Exception ex) {
+                log.error("Error processing image", ex);
+                // Fallback auf ursprüngliche Implementierung
+                GifJpegPngImagePanel ip = new GifJpegPngImagePanel(content);
+                ip.setSize(width, height);
+                ip.setMaximumSize(new Dimension(width, height));
+                ip.setPreferredSize(new Dimension(width, height));
+                ip.showContent(id, content);
+                return ip;
+            }
 
         } else if (lFileName.endsWith(".bmp") || lFileName.endsWith(".tif") || lFileName.endsWith(".tiff")) {
             BmpTiffImagePanel ip = new BmpTiffImagePanel(content);

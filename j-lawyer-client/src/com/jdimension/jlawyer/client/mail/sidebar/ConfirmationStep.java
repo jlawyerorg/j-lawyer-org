@@ -675,6 +675,7 @@ import com.jdimension.jlawyer.persistence.ArchiveFileBean;
 import com.jdimension.jlawyer.persistence.ArchiveFileReviewsBean;
 import com.jdimension.jlawyer.persistence.ArchiveFileTagsBean;
 import com.jdimension.jlawyer.persistence.CalendarEntryTemplate;
+import com.jdimension.jlawyer.persistence.Group;
 import com.jdimension.jlawyer.persistence.PartyTypeBean;
 import com.jdimension.jlawyer.services.JLawyerServiceLocator;
 import com.jdimension.jlawyer.services.SystemManagementRemote;
@@ -826,6 +827,8 @@ public class ConfirmationStep extends javax.swing.JPanel implements WizardStepIn
             ArchiveFileBean newCase = new ArchiveFileBean();
             newCase.setAssistant(this.data.get("newcase.assistant").toString());
             newCase.setLawyer(this.data.get("newcase.lawyer").toString());
+            if(this.data.get("newcase.group")!=null)
+                newCase.setGroup((Group)this.data.get("newcase.group"));
             newCase.setName(this.data.get("newcase.name").toString());
             newCase.setReason(this.data.get("newcase.reason").toString());
             newCase.setSubjectField(this.data.get("newcase.subjectfield").toString());
@@ -879,6 +882,7 @@ public class ConfirmationStep extends javax.swing.JPanel implements WizardStepIn
 
         } catch (Throwable t) {
             log.error("Unable to process wizard", t);
+            JOptionPane.showMessageDialog(this, "Fehler beim Speichern: " + t.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
         }
 
     }

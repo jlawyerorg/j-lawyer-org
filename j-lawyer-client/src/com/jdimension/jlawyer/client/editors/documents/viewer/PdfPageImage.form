@@ -89,7 +89,7 @@
     <Component class="javax.swing.JButton" name="cmdDeletePage">
       <Properties>
         <Property name="icon" type="javax.swing.Icon" editor="org.netbeans.modules.form.editors2.IconEditor">
-          <Image iconType="3" name="/icons16/material/outline_backspace_black_48dp.png"/>
+          <Image iconType="3" name="/icons/editdelete.png"/>
         </Property>
         <Property name="toolTipText" type="java.lang.String" value="Ausgew&#xe4;hlte Seite entfernen"/>
       </Properties>

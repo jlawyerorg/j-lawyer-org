@@ -665,6 +665,7 @@ package com.jdimension.jlawyer.client.mail.sidebar;
 
 import com.jdimension.jlawyer.client.editors.files.AddressBeanListCellRenderer;
 import com.jdimension.jlawyer.client.settings.ClientSettings;
+import com.jdimension.jlawyer.client.settings.UserSettings;
 import com.jdimension.jlawyer.client.wizard.*;
 import com.jdimension.jlawyer.persistence.AddressBean;
 import com.jdimension.jlawyer.persistence.PartyTypeBean;
@@ -673,8 +674,6 @@ import com.jdimension.jlawyer.services.SystemManagementRemote;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 import org.apache.log4j.Logger;
 
 /**
@@ -713,6 +712,13 @@ public class SelectAddressStep extends javax.swing.JPanel implements WizardStepI
             for (String s : refTypeNames) {
                 this.cmbRefType.addItem(s);
             }
+            
+            UserSettings uset=UserSettings.getInstance();
+            String lastPartyType = uset.getSetting(UserSettings.CONF_CASE_LASTPARTYTYPE_NEWCASEASSISTANT, "");
+            if(lastPartyType!=null) {
+                this.cmbRefType.setSelectedItem(lastPartyType);
+            }
+            
 
         } catch (Throwable t) {
             log.error("Unable to get party types", t);
@@ -733,6 +739,9 @@ public class SelectAddressStep extends javax.swing.JPanel implements WizardStepI
         
         this.data.put("newaddress.partytype", selectedType);
         this.data.put("newaddress.selectedaddress", this.cmbRecipient.getSelectedItem());
+        
+        UserSettings uset=UserSettings.getInstance();
+        uset.setSetting(UserSettings.CONF_CASE_LASTPARTYTYPE_NEWCASEASSISTANT, refType);
 
     }
 

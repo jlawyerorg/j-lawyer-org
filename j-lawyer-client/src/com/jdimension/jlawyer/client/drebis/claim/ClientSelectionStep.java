@@ -665,6 +665,7 @@ package com.jdimension.jlawyer.client.drebis.claim;
 
 import com.jdimension.jlawyer.client.settings.ServerSettings;
 import com.jdimension.jlawyer.client.utils.ComponentUtils;
+import com.jdimension.jlawyer.client.utils.StringUtils;
 import com.jdimension.jlawyer.client.wizard.*;
 import com.jdimension.jlawyer.drebis.DrebisPerson;
 import com.jdimension.jlawyer.drebis.DrebisUtils;
@@ -932,7 +933,7 @@ public class ClientSelectionStep extends javax.swing.JPanel implements WizardSte
                 row.add(cl.getName());
                 row.add(cl.getFirstName());
                 row.add(cl.getCompany());
-                row.add(cl.getStreet());
+                row.add(cl.getStreet() + " " + StringUtils.nonNull(cl.getStreetNumber()));
                 row.add(cl.getZipCode());
                 row.add(cl.getCity());
                 row.add(DrebisUtils.getCountryCode(cl.getCountry()));

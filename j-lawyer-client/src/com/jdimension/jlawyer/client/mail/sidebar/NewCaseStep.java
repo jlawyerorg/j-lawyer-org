@@ -673,11 +673,15 @@ import com.jdimension.jlawyer.client.utils.ThreadUtils;
 import com.jdimension.jlawyer.client.wizard.*;
 import com.jdimension.jlawyer.persistence.AppOptionGroupBean;
 import com.jdimension.jlawyer.persistence.AppUserBean;
+import com.jdimension.jlawyer.persistence.Group;
+import com.jdimension.jlawyer.services.JLawyerServiceLocator;
 import com.jdimension.jlawyer.ui.tagging.TagToggleButton;
 import com.jdimension.jlawyer.ui.tagging.WrapLayout;
 import java.awt.Component;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
+import javax.swing.DefaultComboBoxModel;
 import org.apache.log4j.Logger;
 
 /**
@@ -770,14 +774,26 @@ public class NewCaseStep extends javax.swing.JPanel implements WizardStepInterfa
         StringUtils.sortIgnoreCase(sortedTags);
 
         for (String tagString : sortedTags) {
-            TagToggleButton tb = new TagToggleButton(tagString);
+            TagToggleButton tb = new TagToggleButton(tagString, null);
             tb.setSelected(false);
             //tb.addActionListener(new ArchiveFileTagActionListener(null, null, this));
             ThreadUtils.addComponent(tagPanel, tb);
         }
         
-        this.cmbLawyer.setSelectedItem(UserSettings.getInstance().getCurrentUser().getPrincipalId());
-        this.cmbAssistant.setSelectedItem(UserSettings.getInstance().getCurrentUser().getPrincipalId());
+        this.cmbGroup.removeAllItems();
+        this.cmbGroup.addItem("");
+        try {
+            JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(ClientSettings.getInstance().getLookupProperties());
+            Collection<Group> userGroups = locator.lookupSecurityServiceRemote().getGroupsForUser(UserSettings.getInstance().getCurrentUser().getPrincipalId());
+
+            for (Group g : userGroups) {
+                ((DefaultComboBoxModel) this.cmbGroup.getModel()).addElement(g);
+            }
+            this.cmbGroup.setSelectedIndex(0);
+
+        } catch (Throwable t) {
+            log.error("Unable to load privilege groups", t);
+        }
         
         
     }
@@ -790,6 +806,13 @@ public class NewCaseStep extends javax.swing.JPanel implements WizardStepInterfa
         this.data.put("newcase.subjectfield", this.cmbSubjectField.getEditor().getItem().toString());
         this.data.put("newcase.lawyer", this.cmbLawyer.getSelectedItem().toString());
         this.data.put("newcase.assistant", this.cmbAssistant.getSelectedItem().toString());
+        if (this.cmbGroup.getSelectedItem() != null) {
+            if (this.cmbGroup.getSelectedItem() instanceof Group) {
+                this.data.put("newcase.group", this.cmbGroup.getSelectedItem());
+            } else {
+                this.data.put("newcase.group", null);
+            }
+        }
         
         ArrayList<String> tags=new ArrayList<>();
         for(Component c: this.tagPanel.getComponents()) {
@@ -826,6 +849,7 @@ public class NewCaseStep extends javax.swing.JPanel implements WizardStepInterfa
     // <editor-fold defaultstate="collapsed" desc="Generated Code">//GEN-BEGIN:initComponents
     private void initComponents() {
 
+        jLabel7 = new javax.swing.JLabel();
         jLabel1 = new javax.swing.JLabel();
         jLabel2 = new javax.swing.JLabel();
         jLabel3 = new javax.swing.JLabel();
@@ -838,6 +862,10 @@ public class NewCaseStep extends javax.swing.JPanel implements WizardStepInterfa
         cmbSubjectField = new javax.swing.JComboBox<>();
         jLabel6 = new javax.swing.JLabel();
         tagPanel = new javax.swing.JPanel();
+        cmbGroup = new javax.swing.JComboBox<>();
+        jLabel8 = new javax.swing.JLabel();
+
+        jLabel7.setText("jLabel7");
 
         setName("neue Akte erstellen"); // NOI18N
 
@@ -879,12 +907,16 @@ public class NewCaseStep extends javax.swing.JPanel implements WizardStepInterfa
         tagPanel.setLayout(tagPanelLayout);
         tagPanelLayout.setHorizontalGroup(
             tagPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGap(0, 0, Short.MAX_VALUE)
+            .addGap(0, 876, Short.MAX_VALUE)
         );
         tagPanelLayout.setVerticalGroup(
             tagPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGap(0, 423, Short.MAX_VALUE)
+            .addGap(0, 334, Short.MAX_VALUE)
         );
+
+        cmbGroup.setModel(new javax.swing.DefaultComboBoxModel<>(new String[] { "Item 1", "Item 2", "Item 3", "Item 4" }));
+
+        jLabel8.setText("Gruppe:");
 
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(this);
         this.setLayout(layout);
@@ -896,6 +928,18 @@ public class NewCaseStep extends javax.swing.JPanel implements WizardStepInterfa
                     .addComponent(jLabel1, javax.swing.GroupLayout.DEFAULT_SIZE, 876, Short.MAX_VALUE)
                     .addGroup(layout.createSequentialGroup()
                         .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                            .addComponent(jLabel5)
+                            .addComponent(jLabel4)
+                            .addComponent(jLabel8))
+                        .addGap(6, 6, 6)
+                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                            .addComponent(cmbLawyer, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                            .addComponent(cmbAssistant, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                            .addComponent(cmbGroup, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
+                        .addGap(0, 0, Short.MAX_VALUE))
+                    .addComponent(tagPanel, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                    .addGroup(layout.createSequentialGroup()
+                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                             .addComponent(jLabel3)
                             .addComponent(jLabel2)
                             .addComponent(jLabel6))
@@ -905,17 +949,7 @@ public class NewCaseStep extends javax.swing.JPanel implements WizardStepInterfa
                             .addComponent(txtName)
                             .addGroup(layout.createSequentialGroup()
                                 .addComponent(cmbSubjectField, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                                .addGap(0, 0, Short.MAX_VALUE))))
-                    .addGroup(layout.createSequentialGroup()
-                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                            .addComponent(jLabel5)
-                            .addComponent(jLabel4))
-                        .addGap(12, 12, 12)
-                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                            .addComponent(cmbLawyer, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                            .addComponent(cmbAssistant, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
-                        .addGap(0, 0, Short.MAX_VALUE))
-                    .addComponent(tagPanel, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                                .addGap(0, 0, Short.MAX_VALUE)))))
                 .addContainerGap())
         );
         layout.setVerticalGroup(
@@ -943,14 +977,19 @@ public class NewCaseStep extends javax.swing.JPanel implements WizardStepInterfa
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                     .addComponent(jLabel5)
                     .addComponent(cmbAssistant, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
-                .addGap(18, 18, 18)
-                .addComponent(tagPanel, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                    .addComponent(cmbGroup, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(jLabel8))
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                .addComponent(tagPanel, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                 .addContainerGap())
         );
     }// </editor-fold>//GEN-END:initComponents
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JComboBox<String> cmbAssistant;
+    private javax.swing.JComboBox<String> cmbGroup;
     private javax.swing.JComboBox<String> cmbLawyer;
     private javax.swing.JComboBox<String> cmbSubjectField;
     private javax.swing.JLabel jLabel1;
@@ -959,6 +998,8 @@ public class NewCaseStep extends javax.swing.JPanel implements WizardStepInterfa
     private javax.swing.JLabel jLabel4;
     private javax.swing.JLabel jLabel5;
     private javax.swing.JLabel jLabel6;
+    private javax.swing.JLabel jLabel7;
+    private javax.swing.JLabel jLabel8;
     private javax.swing.JPanel tagPanel;
     private javax.swing.JTextField txtName;
     private javax.swing.JTextField txtReason;

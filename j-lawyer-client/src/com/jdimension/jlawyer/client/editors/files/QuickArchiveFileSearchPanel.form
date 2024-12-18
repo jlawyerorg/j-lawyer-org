@@ -32,6 +32,18 @@
             <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="mnuDuplicateSelectedArchiveFilesActionPerformed"/>
           </Events>
         </MenuItem>
+        <MenuItem class="javax.swing.JMenuItem" name="mnuDuplicateSelectedArchiveFilesWithForms">
+          <Properties>
+            <Property name="icon" type="javax.swing.Icon" editor="org.netbeans.modules.form.editors2.IconEditor">
+              <Image iconType="3" name="/icons/editcopy.png"/>
+            </Property>
+            <Property name="text" type="java.lang.String" value="duplizieren (inklusive Falldaten)"/>
+            <Property name="toolTipText" type="java.lang.String" value="gew&#xe4;hlte Akten und deren Falldaten duplizieren"/>
+          </Properties>
+          <Events>
+            <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="mnuDuplicateSelectedArchiveFilesWithFormsActionPerformed"/>
+          </Events>
+        </MenuItem>
         <MenuItem class="javax.swing.JMenuItem" name="mnuDeleteSelectedArchiveFiles">
           <Properties>
             <Property name="icon" type="javax.swing.Icon" editor="org.netbeans.modules.form.editors2.IconEditor">

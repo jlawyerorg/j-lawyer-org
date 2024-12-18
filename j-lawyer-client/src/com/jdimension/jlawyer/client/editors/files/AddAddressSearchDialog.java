@@ -740,7 +740,7 @@ public class AddAddressSearchDialog extends javax.swing.JDialog implements ListS
             EditorsRegistry.getInstance().clearStatus();
         }
 
-        if (this.partyTypes.size() > 0) {
+        if (!this.partyTypes.isEmpty()) {
             this.targetReferenceType = this.partyTypes.get(0);
         }
 

@@ -689,6 +689,8 @@ public interface MailboxAccessFacadeLocal {
 
     List<MailboxAccess> findByUser(String principalId);
     
+    List<MailboxAccess> findByMailbox(String mailboxId);
+    
     int count();
     
 }

@@ -738,9 +738,9 @@ public interface SystemManagementRemote {
 
     void statusMail(String subject, String body);
     
-    void testSendMail(String smtpHost, int smtpPort, String smtpUser, String smtpPwd, boolean smtpSsl, boolean smtpStartTls, String mailAddress) throws Exception;
+    void testSendMail(String smtpHost, int smtpPort, String smtpUser, String smtpPwd, boolean smtpSsl, boolean smtpStartTls, String mailAddress, boolean isMsExchange, String authToken) throws Exception;
     
-    void testReceiveMail(String mailAddress, String host, String protocol, boolean ssl, String user, String pwd, boolean isMsExchange, String clientId, String clientSecret, String authToken) throws Exception;
+    void testReceiveMail(String mailAddress, String host, String protocol, boolean ssl, String user, String pwd, boolean isMsExchange, String authToken) throws Exception;
 
     boolean validateFileOnServer(File file, boolean isDirectory);
 
@@ -814,7 +814,7 @@ public interface SystemManagementRemote {
 
     MappingTable updateMappingTable(MappingTable mt) throws Exception;
 
-    HashMap<String,Object> getPlaceHolderValues(HashMap<String,Object> placeHolders, ArchiveFileBean aFile, List<PartiesTriplet> selectedParties, String dictateSign, GenericCalculationTable calculationTable, HashMap<String,String> formsPlaceHolderValues, AppUserBean caseLawyer, AppUserBean caseAssistant, AppUserBean author, Invoice invoice, AppUserBean invoiceSender, GenericCalculationTable invoiceTable, GenericCalculationTable timesheetsTable, byte[] giroCode, String ingoText) throws Exception;
+    HashMap<String,Object> getPlaceHolderValues(HashMap<String,Object> placeHolders, ArchiveFileBean aFile, List<PartiesTriplet> selectedParties, String dictateSign, GenericCalculationTable calculationTable, HashMap<String,String> formsPlaceHolderValues, AppUserBean caseLawyer, AppUserBean caseAssistant, AppUserBean author, Invoice invoice, AppUserBean invoiceSender, GenericCalculationTable invoiceTable, GenericCalculationTable timesheetsTable, GenericCalculationTable timesheetSummaryTable, byte[] giroCode, String ingoText) throws Exception;
 
     List<AssistantConfig> getAssistants();
 

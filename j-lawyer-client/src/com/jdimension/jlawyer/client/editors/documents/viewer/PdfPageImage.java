@@ -757,7 +757,7 @@ public class PdfPageImage extends javax.swing.JPanel {
             }
         });
 
-        cmdDeletePage.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons16/material/outline_backspace_black_48dp.png"))); // NOI18N
+        cmdDeletePage.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/editdelete.png"))); // NOI18N
         cmdDeletePage.setToolTipText("Ausgewählte Seite entfernen");
         cmdDeletePage.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {

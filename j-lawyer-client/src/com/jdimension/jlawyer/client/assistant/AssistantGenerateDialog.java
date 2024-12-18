@@ -1353,7 +1353,7 @@ public class AssistantGenerateDialog extends javax.swing.JDialog implements Assi
 
     private void cmdNewDocumentActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdNewDocumentActionPerformed
         if(this.caseView!=null)
-            this.caseView.newDocumentDialog(null, null, null, null, null, null, this.taResult.getText());
+            this.caseView.newDocumentDialog(null, null, null, null, null, null, null, this.taResult.getText());
     }//GEN-LAST:event_cmdNewDocumentActionPerformed
 
     /**

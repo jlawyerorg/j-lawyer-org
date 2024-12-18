@@ -91,6 +91,7 @@
                 <Property name="lineWrap" type="boolean" value="true"/>
                 <Property name="rows" type="int" value="5"/>
                 <Property name="wrapStyleWord" type="boolean" value="true"/>
+                <Property name="enabled" type="boolean" value="false"/>
               </Properties>
             </Component>
           </SubComponents>
@@ -115,6 +116,7 @@
                     <Column editable="true" title="Attributname" type="java.lang.String"/>
                   </Table>
                 </Property>
+                <Property name="enabled" type="boolean" value="false"/>
               </Properties>
             </Component>
           </SubComponents>
@@ -123,7 +125,6 @@
     </Container>
     <Component class="javax.swing.JCheckBox" name="chkGenerateAddress">
       <Properties>
-        <Property name="selected" type="boolean" value="true"/>
         <Property name="text" type="java.lang.String" value="Adresse aus Nachricht extrahieren"/>
       </Properties>
       <Events>

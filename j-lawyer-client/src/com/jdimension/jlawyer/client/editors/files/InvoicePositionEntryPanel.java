@@ -668,6 +668,7 @@ import com.jdimension.jlawyer.client.settings.ClientSettings;
 import com.jdimension.jlawyer.persistence.InvoicePosition;
 import com.jdimension.jlawyer.services.JLawyerServiceLocator;
 import java.awt.Container;
+import java.math.BigDecimal;
 import java.text.DecimalFormat;
 import java.text.NumberFormat;
 import java.util.List;
@@ -760,23 +761,23 @@ public class InvoicePositionEntryPanel extends javax.swing.JPanel {
         clone.setName(this.txtName.getText());
         clone.setDescription(this.taDescription.getText());
         try {
-            clone.setTaxRate(this.taxRateFormat.parse(this.cmbTaxRate.getSelectedItem().toString()).floatValue());
+            clone.setTaxRate(BigDecimal.valueOf(this.taxRateFormat.parse(this.cmbTaxRate.getSelectedItem().toString()).floatValue()));
         } catch (Exception ex) {
-            clone.setTaxRate(0f);
+            clone.setTaxRate(BigDecimal.ZERO);
             JOptionPane.showMessageDialog(this, "fehlerhafter Steuersatz: " + ex.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
         }
         //this.updateEntryTotal();
-        clone.setTotal((Float) this.txtTotal.getValue());
+        clone.setTotal(BigDecimal.valueOf((Float) this.txtTotal.getValue()));
         
         if(this.txtUnitPrice.getValue()==null)
-            clone.setUnitPrice(0f);
+            clone.setUnitPrice(BigDecimal.ZERO);
         else
-            clone.setUnitPrice(((Number) this.txtUnitPrice.getValue()).floatValue());
+            clone.setUnitPrice(BigDecimal.valueOf(((Number) this.txtUnitPrice.getValue()).floatValue()));
         
         if(this.txtUnits.getValue()==null)
-            clone.setUnits(1f);
+            clone.setUnits(BigDecimal.ONE);
         else
-            clone.setUnits(((Number) this.txtUnits.getValue()).floatValue());
+            clone.setUnits(BigDecimal.valueOf(((Number) this.txtUnits.getValue()).floatValue()));
         return clone;
     }
 

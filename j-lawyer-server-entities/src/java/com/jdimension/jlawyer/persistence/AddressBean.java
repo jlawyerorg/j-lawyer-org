@@ -1860,5 +1860,88 @@ public class AddressBean implements Serializable {
     public void setLeitwegId(String leitwegId) {
         this.leitwegId = leitwegId;
     }
+
+    public String getAnonymizeTerms() {
+        StringBuilder sb=new StringBuilder();
+        if(this.bankAccount!=null && !"".equals(this.bankAccount.trim()))
+            sb.append(this.bankAccount).append(", ");
+        
+        if(this.bankCode!=null && !"".equals(this.bankCode.trim()))
+            sb.append(this.bankCode).append(", ");
+        
+        if(this.beaSafeId!=null && !"".equals(this.beaSafeId.trim()))
+            sb.append(this.beaSafeId).append(", ");
+        
+        if(this.birthDate!=null && !"".equals(this.birthDate.trim()))
+            sb.append(this.birthDate).append(", ");
+        
+        if(this.birthName!=null && !"".equals(this.birthName.trim()))
+            sb.append(this.birthName).append(", ");
+        
+        if(this.city!=null && !"".equals(this.city.trim()))
+            sb.append(this.city).append(", ");
+        
+        if(this.company!=null && !"".equals(this.company.trim()))
+            sb.append(this.company).append(", ");
+        
+        if(this.companyRegistrationNumber!=null && !"".equals(this.companyRegistrationNumber.trim()))
+            sb.append(this.companyRegistrationNumber).append(", ");
+        
+        if(this.dateOfDeath!=null && !"".equals(this.dateOfDeath.trim()))
+            sb.append(this.dateOfDeath).append(", ");
+        
+        if(this.department!=null && !"".equals(this.department.trim()))
+            sb.append(this.department).append(", ");
+        
+        if(this.district!=null && !"".equals(this.district.trim()))
+            sb.append(this.district).append(", ");
+        
+        if(this.email!=null && !"".equals(this.email.trim()))
+            sb.append(this.email).append(", ");
+        
+        if(this.fax!=null && !"".equals(this.fax.trim()))
+            sb.append(this.fax).append(", ");
+        
+        if(this.firstName!=null && !"".equals(this.firstName.trim()))
+            sb.append(this.firstName).append(", ");
+        
+        if(this.firstName2!=null && !"".equals(this.firstName2.trim()))
+            sb.append(this.firstName2).append(", ");
+        
+        if(this.insuranceNumber!=null && !"".equals(this.insuranceNumber.trim()))
+            sb.append(this.insuranceNumber).append(", ");
+        
+        if(this.mobile!=null && !"".equals(this.mobile.trim()))
+            sb.append(this.mobile).append(", ");
+        
+        if(this.motorInsuranceNumber!=null && !"".equals(this.motorInsuranceNumber.trim()))
+            sb.append(this.motorInsuranceNumber).append(", ");
+        
+        if(this.name!=null && !"".equals(this.name.trim()))
+            sb.append(this.name).append(", ");
+        
+        if(this.phone!=null && !"".equals(this.phone.trim()))
+            sb.append(this.phone).append(", ");
+        
+        if(this.street!=null && !"".equals(this.street.trim()))
+            sb.append(this.street).append(", ");
+        
+        if(this.tin!=null && !"".equals(this.tin.trim()))
+            sb.append(this.tin).append(", ");
+        
+        if(this.trafficInsuranceNumber!=null && !"".equals(this.trafficInsuranceNumber.trim()))
+            sb.append(this.trafficInsuranceNumber).append(", ");
+        
+        if(this.vatId!=null && !"".equals(this.vatId.trim()))
+            sb.append(this.vatId).append(", ");
+        
+        if(this.website!=null && !"".equals(this.website.trim()))
+            sb.append(this.website).append(", ");
+        
+        if(this.zipCode!=null && !"".equals(this.zipCode.trim()))
+            sb.append(this.zipCode).append(", ");
+        
+        return sb.toString();
+    }
     
 }

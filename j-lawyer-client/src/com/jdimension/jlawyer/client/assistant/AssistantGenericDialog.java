@@ -1314,9 +1314,13 @@ public class AssistantGenericDialog extends javax.swing.JDialog {
     private void cmdProcessOutputActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdProcessOutputActionPerformed
         if(this.inputAdapter instanceof AssistantFlowAdapter && this.result!=null) {
             
+            String resultText=this.taResult.getText();
+            if(taResult.getSelectedText()!=null)
+                resultText=taResult.getSelectedText();
+            
             for (OutputData o : this.result.getResponse().getOutputData()) {
                 if (o.getType().equalsIgnoreCase(OutputData.TYPE_STRING)) {
-                    o.setStringData(this.taResult.getText());
+                    o.setStringData(resultText);
                 }
             }
             

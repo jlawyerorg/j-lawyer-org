@@ -661,20 +661,17 @@ if any, to sign a "copyright disclaimer" for the program, if necessary.
 For more information on this, and how to apply and follow the GNU AGPL, see
 <https://www.gnu.org/licenses/>.
  */
-package com.jdimension.jlawyer.email;
+package com.jdimension.jlawyer.services;
+
+import javax.ejb.Local;
 
 /**
  *
  * @author jens
  */
-public class MissingConsentException extends Exception {
-    
-    public MissingConsentException() {
-        super();
-    }
-    
-    public MissingConsentException(String msg) {
-        super(msg);
-    }
+@Local
+public interface EmailServiceLocal {
+
+    String getAuthToken(String mailboxId) throws Exception;
     
 }

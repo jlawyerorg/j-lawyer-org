@@ -717,6 +717,17 @@ public class ArchiveFileAddressesBean implements Serializable {
         this.id = id;
         this.referenceType = referenceType;
     }
+    
+    public String getAnonymizeTerms() {
+        StringBuilder sb=new StringBuilder();
+        if(this.reference!=null && !"".equals(this.reference.trim()))
+            sb.append(this.reference).append(", ");
+        
+        if(this.addressKey!=null)
+            sb.append(this.addressKey.getAnonymizeTerms());
+        
+        return sb.toString();
+    }
 
     public String getId() {
         return id;

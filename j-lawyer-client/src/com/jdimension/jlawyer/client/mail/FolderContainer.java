@@ -664,12 +664,17 @@
 package com.jdimension.jlawyer.client.mail;
 
 import com.jdimension.jlawyer.email.CommonMailUtils;
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Iterator;
+import java.util.Map;
 import java.util.Set;
 import javax.mail.Folder;
+import javax.mail.Message;
 import javax.mail.MessagingException;
 import javax.mail.StoreClosedException;
+import javax.mail.UIDFolder;
 import org.apache.log4j.Logger;
 
 /**
@@ -683,11 +688,16 @@ public class FolderContainer {
 
     private long cachedUnreadUpdated = -1;
     private int cachedUnread = -1;
+    private int cachedTotal = -1;
+    
+    private String mappedName=null;
 
     private static final Logger log = Logger.getLogger(FolderContainer.class.getName());
     private static final HashMap<String, String> folderNameMapping = new HashMap<>();
 
     double retentionTime = -1;
+
+    private Map<Long, Message> cachedMessages = new HashMap<>();
 
     static {
         folderNameMapping.put(CommonMailUtils.INBOX, "Posteingang");
@@ -705,6 +715,8 @@ public class FolderContainer {
     public void resetCaches() {
         this.cachedToStringUpdated = -1;
         this.cachedUnreadUpdated = -1;
+        this.cachedTotal=-1;
+        this.cachedMessages.clear();
     }
 
     private double getRetentionTime() {
@@ -732,17 +744,44 @@ public class FolderContainer {
 
         if (this.cachedUnreadUpdated == -1 || ((System.currentTimeMillis() - cachedUnreadUpdated) > this.getRetentionTime())) {
             if (this.folder != null) {
+
+                if (!folder.isOpen()) {
+                    return Math.max(this.cachedUnread, 0);
+                }
+                
+                this.cachedUnreadUpdated = System.currentTimeMillis();
                 try {
                     this.cachedUnread = this.folder.getUnreadMessageCount();
+                    this.cachedTotal = this.folder.getMessageCount();
                 } catch (StoreClosedException stex) {
                     log.warn("Unable to determine number of unread messages - folder is closed");
+                    return Math.max(this.cachedUnread, 0);
                 } catch (MessagingException ex) {
                     log.error("Unable to determine number of unread messages", ex);
+                    return Math.max(this.cachedUnread, 0);
                 }
-                this.cachedUnreadUpdated = System.currentTimeMillis();
+                
             }
         }
         return cachedUnread;
+    }
+    
+    public int getMessageCount() {
+
+        if (this.cachedTotal == -1 || ((System.currentTimeMillis() - cachedUnreadUpdated) > this.getRetentionTime())) {
+            if (this.folder != null) {
+                this.cachedUnreadUpdated = System.currentTimeMillis();
+                try {
+                    this.cachedUnread = this.folder.getUnreadMessageCount();
+                    this.cachedTotal = this.folder.getMessageCount();
+                } catch (StoreClosedException stex) {
+                    log.warn("Unable to determine number of total messages - folder is closed");
+                } catch (MessagingException ex) {
+                    log.error("Unable to determine number of total messages", ex);
+                }
+            }
+        }
+        return cachedTotal;
     }
 
     /*
@@ -753,30 +792,42 @@ public class FolderContainer {
 
         if (this.cachedToStringUpdated == -1 || ((System.currentTimeMillis() - cachedToStringUpdated) > this.getRetentionTime())) {
             try {
-                
-                String name = this.folder.getName();
 
-                Set mapKey = folderNameMapping.keySet();
-                Iterator mIt = mapKey.iterator();
-                while (mIt.hasNext()) {
-                    String k = mIt.next().toString();
-                    if (k.equalsIgnoreCase(name)) {
-                        name = folderNameMapping.get(k);
-                        break;
+                if (this.mappedName == null) {
+                    this.mappedName = this.folder.getName();
+
+                    Set mapKey = folderNameMapping.keySet();
+                    Iterator mIt = mapKey.iterator();
+                    while (mIt.hasNext()) {
+                        String k = mIt.next().toString();
+                        if (k.equalsIgnoreCase(this.mappedName)) {
+                            this.mappedName = folderNameMapping.get(k);
+                            break;
+                        }
                     }
                 }
 
-                int msgCount = this.folder.getMessageCount();
+                int msgCount=this.folder.getMessageCount();
+                
                 cachedToStringUpdated = System.currentTimeMillis();
                 if (msgCount < 0) {
-                    cachedToString = name;
+                    cachedToString = this.mappedName;
                 } else {
-                    cachedToString = name + " (" + msgCount + ")";
+                    cachedToString = this.mappedName + " (" + msgCount + ")";
                 }
 
             } catch (Exception ex) {
                 log.error(ex);
-                cachedToString = this.folder.getName();
+                
+                // only set to folder name if not initialized
+                if(cachedToString==null) {
+                    if(this.mappedName==null)
+                        cachedToString = this.folder.getName();
+                    else
+                        cachedToString = this.mappedName;
+                }
+                
+                cachedToStringUpdated = System.currentTimeMillis();
             }
         }
         return cachedToString;
@@ -794,6 +845,69 @@ public class FolderContainer {
      */
     public void setFolder(Folder folder) {
         this.folder = folder;
+    }
+
+    Message[] getUncachedMessages(Message[] messages) {
+        if (!(this.folder instanceof UIDFolder)) {
+            // no caching - return all messages to be fetched from server
+            return messages;
+        } else {
+            Set<Long> serverUids = new HashSet<>();
+            UIDFolder uidFolder = (UIDFolder) this.folder;
+            for (Message message : messages) {
+                try {
+                    long uid = uidFolder.getUID(message);
+                    serverUids.add(uid);
+                } catch (Exception ex) {
+                    log.error("unable to get UID of message", ex);
+                }
+            }
+            
+            // Remove messages from the cache that are no longer on the server
+            cachedMessages.keySet().removeIf(uid -> !serverUids.contains(uid));
+
+            // Determine which UIDs are new
+            Set<Long> newUids = new HashSet<>(serverUids);
+            newUids.removeAll(cachedMessages.keySet());
+            
+            ArrayList<Message> uncached=new ArrayList<>();
+            for (Message message : messages) {
+                try {
+                    long uid = uidFolder.getUID(message);
+                    if(newUids.contains(uid)) {
+                        uncached.add(message);
+                    }
+                } catch (Exception ex) {
+                    log.error("unable to get UID of message", ex);
+                }
+            }
+            return uncached.toArray(new Message[0]);
+
+            
+        }
+    }
+
+    public void addCachedMessages(Message[] messages) {
+        if (this.folder instanceof UIDFolder) {
+            UIDFolder uidFolder = (UIDFolder) this.folder;
+            for (Message message : messages) {
+                try {
+                    long uid = uidFolder.getUID(message);
+                    this.cachedMessages.put(uid, message);
+                } catch (Exception ex) {
+                    log.error("unable to get UID of message", ex);
+                }
+            }
+        }
+    }
+    
+    public Message[] getCachedMessages(Message[] messages) {
+        if(this.cachedMessages.isEmpty()) {
+            return messages;
+        } else {
+            return this.cachedMessages.values().toArray(new Message[0]);
+        }
+        
     }
 
 }

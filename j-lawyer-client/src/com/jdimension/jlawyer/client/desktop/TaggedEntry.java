@@ -664,6 +664,8 @@
 package com.jdimension.jlawyer.client.desktop;
 
 import java.util.ArrayList;
+import java.util.Date;
+import java.util.HashMap;
 
 /**
  *
@@ -679,6 +681,7 @@ public class TaggedEntry {
     private String lawyer=null;
     protected String assistant=null;
     private ArrayList<String> tags=null;
+    private HashMap<String,Date> tagDates=null;
     private String documentName=null;
     
     
@@ -765,9 +768,11 @@ public class TaggedEntry {
 
     /**
      * @param tags the tags to set
+     * @param tagDates
      */
-    public void setTags(ArrayList<String> tags) {
+    public void setTags(ArrayList<String> tags, HashMap<String,Date> tagDates) {
         this.tags = tags;
+        this.tagDates=tagDates;
     }
 
     /**
@@ -810,6 +815,13 @@ public class TaggedEntry {
      */
     public void setAssistant(String assistant) {
         this.assistant = assistant;
+    }
+
+    /**
+     * @return the tagDates
+     */
+    public HashMap<String,Date> getTagDates() {
+        return tagDates;
     }
     
 }

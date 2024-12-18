@@ -715,6 +715,7 @@ import java.awt.datatransfer.Clipboard;
 import java.awt.datatransfer.StringSelection;
 import java.awt.event.ActionEvent;
 import java.awt.event.KeyEvent;
+import java.math.BigDecimal;
 import java.text.SimpleDateFormat;
 import java.time.LocalDate;
 import java.time.Period;
@@ -1069,7 +1070,7 @@ public class AddressPanel extends javax.swing.JPanel implements BeaLoginCallback
             StringUtils.sortIgnoreCase(sortedTags);
 
             for (String tagString : sortedTags) {
-                TagToggleButton tb = new TagToggleButton(tagString);
+                TagToggleButton tb = new TagToggleButton(tagString, null);
                 if (activeTags.contains(tagString)) {
                     tb.setSelected(true);
                 } else {
@@ -1112,7 +1113,7 @@ public class AddressPanel extends javax.swing.JPanel implements BeaLoginCallback
         }
 
         this.invoicesPerCase.clear();
-        HashMap<Integer, Float> cumulatedInvoiceValues = this.getCumulatedInvoicesValue(invoices);
+        HashMap<Integer, BigDecimal> cumulatedInvoiceValues = this.getCumulatedInvoicesValue(invoices);
         for (Invoice inv : invoices) {
             if (!this.invoicesPerCase.containsKey(inv.getArchiveFileKey().getId())) {
                 this.invoicesPerCase.put(inv.getArchiveFileKey().getId(), new ArrayList<>());
@@ -1130,7 +1131,7 @@ public class AddressPanel extends javax.swing.JPanel implements BeaLoginCallback
         chart.addSeries("offen - 2. Mahnstufe", cumulatedInvoiceValues.get(Invoice.STATUS_OPEN_REMINDER2));
         chart.addSeries("offen - 3. Mahnstufe", cumulatedInvoiceValues.get(Invoice.STATUS_OPEN_REMINDER3));
         chart.addSeries("bezahlt", cumulatedInvoiceValues.get(Invoice.STATUS_PAID));
-        chart.addSeries("storniert", -1f * cumulatedInvoiceValues.get(Invoice.STATUS_CANCELLED));
+        chart.addSeries("storniert", BigDecimal.valueOf(-1f).multiply(cumulatedInvoiceValues.get(Invoice.STATUS_CANCELLED)));
         chart.getStyler().setLegendVisible(true);
         chart.getStyler().setLegendPosition(Styler.LegendPosition.InsideNE);
         chart.getStyler().setSumVisible(true);
@@ -1167,20 +1168,20 @@ public class AddressPanel extends javax.swing.JPanel implements BeaLoginCallback
         this.pnlInvoicesChart.add(xchartPanel, BorderLayout.CENTER);
     }
 
-    private HashMap<Integer, Float> getCumulatedInvoicesValue(List<Invoice> invoices) {
-        HashMap<Integer, Float> cumulatedInvoiceValues = new HashMap<>();
-        cumulatedInvoiceValues.put(Invoice.STATUS_NEW, 0f);
-        cumulatedInvoiceValues.put(Invoice.STATUS_OPEN, 0f);
-        cumulatedInvoiceValues.put(Invoice.STATUS_OPEN_NONENFORCEABLE, 0f);
-        cumulatedInvoiceValues.put(Invoice.STATUS_OPEN_REMINDER1, 0f);
-        cumulatedInvoiceValues.put(Invoice.STATUS_OPEN_REMINDER2, 0f);
-        cumulatedInvoiceValues.put(Invoice.STATUS_OPEN_REMINDER3, 0f);
-        cumulatedInvoiceValues.put(Invoice.STATUS_PAID, 0f);
-        cumulatedInvoiceValues.put(Invoice.STATUS_CANCELLED, 0f);
+    private HashMap<Integer, BigDecimal> getCumulatedInvoicesValue(List<Invoice> invoices) {
+        HashMap<Integer, BigDecimal> cumulatedInvoiceValues = new HashMap<>();
+        cumulatedInvoiceValues.put(Invoice.STATUS_NEW, BigDecimal.ZERO);
+        cumulatedInvoiceValues.put(Invoice.STATUS_OPEN, BigDecimal.ZERO);
+        cumulatedInvoiceValues.put(Invoice.STATUS_OPEN_NONENFORCEABLE, BigDecimal.ZERO);
+        cumulatedInvoiceValues.put(Invoice.STATUS_OPEN_REMINDER1, BigDecimal.ZERO);
+        cumulatedInvoiceValues.put(Invoice.STATUS_OPEN_REMINDER2, BigDecimal.ZERO);
+        cumulatedInvoiceValues.put(Invoice.STATUS_OPEN_REMINDER3, BigDecimal.ZERO);
+        cumulatedInvoiceValues.put(Invoice.STATUS_PAID, BigDecimal.ZERO);
+        cumulatedInvoiceValues.put(Invoice.STATUS_CANCELLED, BigDecimal.ZERO);
         for (Invoice inv : invoices) {
             if (inv.getInvoiceType().isTurnOver()) {
-                float f = cumulatedInvoiceValues.get(inv.getStatus());
-                f = f + inv.getTotalGross();
+                BigDecimal f = cumulatedInvoiceValues.get(inv.getStatus());
+                f = f.add(inv.getTotalGross());
                 cumulatedInvoiceValues.put(inv.getStatus(), f);
             }
         }
@@ -1339,7 +1340,7 @@ public class AddressPanel extends javax.swing.JPanel implements BeaLoginCallback
         StringUtils.sortIgnoreCase(sortedTags);
 
         for (String tagString : sortedTags) {
-            TagToggleButton tb = new TagToggleButton(tagString);
+            TagToggleButton tb = new TagToggleButton(tagString, null);
             tb.setSelected(false);
             tb.setEnabled(this.cmdSave.isEnabled());
             tb.addActionListener(new AddressTagActionListener(null, null, this));
@@ -3688,7 +3689,7 @@ public class AddressPanel extends javax.swing.JPanel implements BeaLoginCallback
             lce.setOwnReference(aFile.getReference());
 
             if (this.invoicesPerCase.containsKey(aFile.getArchiveFileKey().getId())) {
-                HashMap<Integer, Float> invoicesForCase = this.getCumulatedInvoicesValue(this.invoicesPerCase.get(aFile.getArchiveFileKey().getId()));
+                HashMap<Integer, BigDecimal> invoicesForCase = this.getCumulatedInvoicesValue(this.invoicesPerCase.get(aFile.getArchiveFileKey().getId()));
                 lce.setInvoicesByStatus(invoicesForCase);
             }
 

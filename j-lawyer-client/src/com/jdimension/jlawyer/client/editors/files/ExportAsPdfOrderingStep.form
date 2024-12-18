@@ -22,10 +22,14 @@
           <Group type="102" attributes="0">
               <EmptySpace max="-2" attributes="0"/>
               <Group type="103" groupAlignment="0" attributes="0">
-                  <Component id="jLabel1" alignment="1" pref="876" max="32767" attributes="0"/>
+                  <Component id="jLabel1" alignment="1" pref="863" max="32767" attributes="0"/>
                   <Component id="jScrollPane1" alignment="0" max="32767" attributes="0"/>
                   <Group type="102" alignment="1" attributes="0">
                       <EmptySpace min="0" pref="0" max="32767" attributes="0"/>
+                      <Component id="cmbAddPageNumbers" min="-2" max="-2" attributes="0"/>
+                      <EmptySpace max="-2" attributes="0"/>
+                      <Component id="cmbAddToc" min="-2" max="-2" attributes="0"/>
+                      <EmptySpace type="unrelated" max="-2" attributes="0"/>
                       <Component id="jLabel2" min="-2" max="-2" attributes="0"/>
                       <EmptySpace max="-2" attributes="0"/>
                       <Component id="lblPages" min="-2" max="-2" attributes="0"/>
@@ -50,9 +54,11 @@
                   <Component id="lblFileSizeMax" alignment="3" min="-2" max="-2" attributes="0"/>
                   <Component id="lblPages" alignment="3" min="-2" max="-2" attributes="0"/>
                   <Component id="jLabel2" alignment="3" min="-2" max="-2" attributes="0"/>
+                  <Component id="cmbAddToc" alignment="3" min="-2" max="-2" attributes="0"/>
+                  <Component id="cmbAddPageNumbers" alignment="3" min="-2" max="-2" attributes="0"/>
               </Group>
-              <EmptySpace max="-2" attributes="0"/>
-              <Component id="jScrollPane1" pref="505" max="32767" attributes="0"/>
+              <EmptySpace min="-2" pref="47" max="-2" attributes="0"/>
+              <Component id="jScrollPane1" pref="460" max="32767" attributes="0"/>
               <EmptySpace max="-2" attributes="0"/>
           </Group>
       </Group>
@@ -131,6 +137,22 @@
           </FontInfo>
         </Property>
         <Property name="text" type="java.lang.String" value="Seiten:"/>
+      </Properties>
+    </Component>
+    <Component class="javax.swing.JCheckBox" name="cmbAddToc">
+      <Properties>
+        <Property name="selected" type="boolean" value="true"/>
+        <Property name="text" type="java.lang.String" value="Inhaltsverzeichnis"/>
+        <Property name="toolTipText" type="java.lang.String" value="Inhaltsverzeichnis wird hinzugef&#xfc;gt"/>
+        <Property name="actionCommand" type="java.lang.String" value=""/>
+      </Properties>
+    </Component>
+    <Component class="javax.swing.JCheckBox" name="cmbAddPageNumbers">
+      <Properties>
+        <Property name="selected" type="boolean" value="true"/>
+        <Property name="text" type="java.lang.String" value="Seitenzahlen"/>
+        <Property name="toolTipText" type="java.lang.String" value="Seitenzahlen werden hinzugef&#xfc;gt"/>
+        <Property name="actionCommand" type="java.lang.String" value=""/>
       </Properties>
     </Component>
   </SubComponents>

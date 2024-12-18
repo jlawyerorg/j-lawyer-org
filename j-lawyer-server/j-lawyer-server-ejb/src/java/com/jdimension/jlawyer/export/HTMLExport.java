@@ -927,7 +927,7 @@ public class HTMLExport {
                 List<CaseFolder> hierarchy = new ArrayList<>();
                 if (db.getFolder() != null) {
                     if(!folderHierarchies.containsKey(db.getFolder().getId())) {
-                        hierarchy=caseFacade.getFolderHierarchy(db.getFolder().getId());
+                        hierarchy=caseFacade.getFolderHierarchyUnrestricted(db.getFolder().getId());
                         folderHierarchies.put(db.getFolder().getId(), hierarchy);
                     }
                     hierarchy=folderHierarchies.get(db.getFolder().getId());
