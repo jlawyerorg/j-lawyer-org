@@ -2602,6 +2602,7 @@ public class SystemManagement implements SystemManagementRemote, SystemManagemen
     @Override
     @RolesAllowed(value = {"adminRole"})
     public DocumentTagRule updateDocumentTagRule(DocumentTagRule rule) throws Exception {
+        rule.setRuleConditions(new ArrayList<>());
         this.documentTagRuleFacade.edit(rule);
         return rule;
     }
