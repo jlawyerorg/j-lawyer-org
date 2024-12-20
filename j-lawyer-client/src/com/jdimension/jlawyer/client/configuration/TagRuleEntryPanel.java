@@ -664,6 +664,7 @@ For more information on this, and how to apply and follow the GNU AGPL, see
 package com.jdimension.jlawyer.client.configuration;
 
 import com.jdimension.jlawyer.client.settings.ClientSettings;
+import com.jdimension.jlawyer.persistence.DocumentTagRuleCondition;
 import com.jdimension.jlawyer.persistence.TimesheetPosition;
 import com.jdimension.jlawyer.services.JLawyerServiceLocator;
 import java.awt.Container;
@@ -679,52 +680,34 @@ public class TagRuleEntryPanel extends javax.swing.JPanel {
 
     private static final Logger log = Logger.getLogger(TagRuleEntryPanel.class.getName());
 
-    private TagRulesDialog dlgParent = null;
-
-    private TimesheetPosition position = null;
-    private String timesheetId = null;
-
-    private DecimalFormat taxRateFormat = null;
+    private DocumentTagRuleCondition entry = null;
 
     /**
-     * Creates new form TimesheetPositionEntryPanel
-     *
-     * @param dlgParent
+     * Creates new form TagRuleEntryPanel
      */
-    public TagRuleEntryPanel(TagRulesDialog dlgParent) {
+    public TagRuleEntryPanel() {
         initComponents();
 
-        this.dlgParent = dlgParent;
+    }
 
+    public void setEntry(DocumentTagRuleCondition entry) {
+
+        this.entry = entry;
+        this.txtRuleValue.setText(entry.getComparisonValue());
+        this.cmbOperator.setSelectedItem(stringComparisonMode(entry.getComparisonMode()));
 
     }
 
-    public void setEntry(String timesheetId, TimesheetPosition pos, int intervalMinutes) {
+    public DocumentTagRuleCondition getEntry() {
 
-        this.timesheetId = timesheetId;
-
-        this.position = pos;
-        this.txtRuleValue.setText(pos.getName());
-        
-
-    }
-
-    public TimesheetPosition getEntry() {
-
-        if (this.position == null) {
+        if (this.entry == null) {
             return null;
         }
 
-        TimesheetPosition clone = new TimesheetPosition();
-        clone.setId(this.position.getId());
-        clone.setTimesheet(this.position.getTimesheet());
-        clone.setPrincipal(this.cmbOperator.getSelectedItem().toString());
-
-        clone.setName(this.txtRuleValue.getText());
-        
-
-        
-
+        DocumentTagRuleCondition clone = new DocumentTagRuleCondition();
+        clone.setId(this.entry.getId());
+        clone.setComparisonValue(this.txtRuleValue.getText());
+        clone.setComparisonMode(intComparisonMode(this.cmbOperator.getSelectedItem().toString()) );
         return clone;
     }
 
@@ -742,7 +725,7 @@ public class TagRuleEntryPanel extends javax.swing.JPanel {
         cmbOperator = new javax.swing.JComboBox<>();
         jLabel1 = new javax.swing.JLabel();
 
-        txtRuleValue.setFont(txtRuleValue.getFont().deriveFont(txtRuleValue.getFont().getStyle() | java.awt.Font.BOLD, txtRuleValue.getFont().getSize()-2));
+        txtRuleValue.setFont(txtRuleValue.getFont());
 
         cmdRemoveRule.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/editdelete.png"))); // NOI18N
         cmdRemoveRule.addActionListener(new java.awt.event.ActionListener() {
@@ -751,8 +734,10 @@ public class TagRuleEntryPanel extends javax.swing.JPanel {
             }
         });
 
+        cmbOperator.setFont(cmbOperator.getFont());
         cmbOperator.setModel(new javax.swing.DefaultComboBoxModel<>(new String[] { "ist", "ist nicht", "enthält", "enthält nicht" }));
 
+        jLabel1.setFont(jLabel1.getFont());
         jLabel1.setText("Dateiname");
 
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(this);
@@ -788,26 +773,46 @@ public class TagRuleEntryPanel extends javax.swing.JPanel {
         );
     }// </editor-fold>//GEN-END:initComponents
 
+    private int intComparisonMode(String value) {
+        switch (value) {
+            case "enthält":
+                return DocumentTagRuleCondition.COMPARISON_CONTAINS;
+            case "enthält nicht":
+                return DocumentTagRuleCondition.COMPARISON_CONTAINSNOT;
+            case "ist":
+                return DocumentTagRuleCondition.COMPARISON_EQUALS;
+            case "ist nicht":
+                return DocumentTagRuleCondition.COMPARISON_EQUALSNOT;
+            default:
+                return DocumentTagRuleCondition.COMPARISON_CONTAINS;
+        }
+    }
+    
+    private String stringComparisonMode(int value) {
+        // ist, ist nicht, enthält, enthält nicht
+        switch (value) {
+            case DocumentTagRuleCondition.COMPARISON_CONTAINS:
+                return "enthält";
+            case DocumentTagRuleCondition.COMPARISON_CONTAINSNOT:
+                return "enthält nicht";
+            case DocumentTagRuleCondition.COMPARISON_EQUALS:
+                return "ist";
+            case DocumentTagRuleCondition.COMPARISON_EQUALSNOT:
+                return "ist nicht";
+            default:
+                return "enthält";
+        }
+    }
+    
     private void cmdRemoveRuleActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdRemoveRuleActionPerformed
 
-        
-
-            ClientSettings settings = ClientSettings.getInstance();
-            try {
-                JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
-                locator.lookupArchiveFileServiceRemote().removeTimesheetPosition(this.timesheetId, this.position);
-                Container parentContainer = this.getParent();
-                parentContainer.remove(this);
-                try {
-                    parentContainer.doLayout();
-                } catch (Exception ex) {
-                    log.warn("unable to layout time sheet positions container", ex);
-                }
-            } catch (Exception ex) {
-                log.error("Error removing timsheet position", ex);
-                JOptionPane.showMessageDialog(this, "Fehler beim Löschen der Zeiterfassungsposition: " + ex.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
-            }
-        
+        Container parentContainer = this.getParent();
+        parentContainer.remove(this);
+        try {
+            parentContainer.doLayout();
+        } catch (Exception ex) {
+            log.warn("unable to layout conditions container", ex);
+        }
 
     }//GEN-LAST:event_cmdRemoveRuleActionPerformed
 
