@@ -897,6 +897,7 @@ public class TagRulesDialog extends javax.swing.JDialog {
         chkCancelOnMatch.setText("bei Treffer keine weitere Regel anwenden");
 
         buttonGroup1.add(rdOr);
+        rdOr.setSelected(true);
         rdOr.setText("eine Bedingung erfüllt ist");
 
         buttonGroup1.add(rdAnd);
