@@ -669,6 +669,7 @@ import com.jdimension.jlawyer.persistence.AppRoleBean;
 import com.jdimension.jlawyer.persistence.AppUserBean;
 import com.jdimension.jlawyer.persistence.ArchiveFileBean;
 import com.jdimension.jlawyer.persistence.DocumentNameTemplate;
+import com.jdimension.jlawyer.persistence.DocumentTagRule;
 import com.jdimension.jlawyer.persistence.Invoice;
 import com.jdimension.jlawyer.persistence.MappingTable;
 import com.jdimension.jlawyer.persistence.PartyTypeBean;
@@ -734,5 +735,7 @@ public interface SystemManagementLocal {
     HashMap<String,Object> getPlaceHolderValuesUnrestricted(HashMap<String,Object> placeHolders, ArchiveFileBean aFile, List<PartiesTriplet> selectedParties, String dictateSign, GenericCalculationTable calculationTable, HashMap<String,String> formsPlaceHolderValues, AppUserBean caseLawyer, AppUserBean caseAssistant, AppUserBean author, Invoice invoice, AppUserBean invoiceSender, GenericCalculationTable invoiceTable, GenericCalculationTable timesheetsTable, GenericCalculationTable timesheetSummaryTable, byte[] giroCode, String ingoText) throws Exception;
     
     DocumentNameTemplate getDefaultDocumentNameTemplate() throws Exception;
+
+    List<DocumentTagRule> getAllDocumentTagRules();
     
 }

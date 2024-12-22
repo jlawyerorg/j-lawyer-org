@@ -1180,6 +1180,7 @@ public class JKanzleiGUI extends javax.swing.JFrame implements com.jdimension.jl
         mnuDocumentOptions = new javax.swing.JMenu();
         mnuWordProcessor = new javax.swing.JMenuItem();
         mnuDocumentTags = new javax.swing.JMenuItem();
+        mnuDocumentTagRules = new javax.swing.JMenuItem();
         mnuScanOptions = new javax.swing.JMenuItem();
         mnuSearchIndex = new javax.swing.JMenuItem();
         mnuDocumentNameTemplates = new javax.swing.JMenuItem();
@@ -1675,13 +1676,22 @@ public class JKanzleiGUI extends javax.swing.JFrame implements com.jdimension.jl
         mnuDocumentOptions.add(mnuWordProcessor);
 
         mnuDocumentTags.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons16/favorites.png"))); // NOI18N
-        mnuDocumentTags.setText("Dokumenten-Etiketten");
+        mnuDocumentTags.setText("Etiketten konfigurieren");
         mnuDocumentTags.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 mnuDocumentTagsActionPerformed(evt);
             }
         });
         mnuDocumentOptions.add(mnuDocumentTags);
+
+        mnuDocumentTagRules.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons16/favorites.png"))); // NOI18N
+        mnuDocumentTagRules.setText("Etiketten-Automatik");
+        mnuDocumentTagRules.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                mnuDocumentTagRulesActionPerformed(evt);
+            }
+        });
+        mnuDocumentOptions.add(mnuDocumentTagRules);
 
         mnuScanOptions.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/scanner.png"))); // NOI18N
         mnuScanOptions.setText(bundle.getString("menu.settings.documents.scanner")); // NOI18N
@@ -2908,6 +2918,14 @@ public class JKanzleiGUI extends javax.swing.JFrame implements com.jdimension.jl
         }
     }//GEN-LAST:event_mnuGiroCodesActionPerformed
 
+    private void mnuDocumentTagRulesActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_mnuDocumentTagRulesActionPerformed
+        if (checkAdmin()) {
+            TagRulesDialog dlg = new TagRulesDialog(this, true);
+            FrameUtils.centerDialog(dlg, this);
+            dlg.setVisible(true);
+        }
+    }//GEN-LAST:event_mnuDocumentTagRulesActionPerformed
+
     /**
      * @param args the command line arguments
      */
@@ -2977,6 +2995,7 @@ public class JKanzleiGUI extends javax.swing.JFrame implements com.jdimension.jl
     private javax.swing.JMenuItem mnuDocumentNameTemplates;
     private javax.swing.JMenu mnuDocumentOptions;
     private javax.swing.JMenuItem mnuDocumentPreview;
+    private javax.swing.JMenuItem mnuDocumentTagRules;
     private javax.swing.JMenuItem mnuDocumentTags;
     private javax.swing.JMenuItem mnuDocumentsBin;
     private javax.swing.JMenuItem mnuDrebisSettings;

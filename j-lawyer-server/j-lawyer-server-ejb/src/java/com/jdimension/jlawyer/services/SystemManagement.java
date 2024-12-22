@@ -790,6 +790,10 @@ public class SystemManagement implements SystemManagementRemote, SystemManagemen
     private DocumentNameTemplateFacadeLocal documentNameTemplates;
     @EJB
     private CalendarEntryTemplateFacadeLocal calendarEntryTemplates;
+    @EJB
+    private DocumentTagRuleFacadeLocal documentTagRuleFacade;
+    @EJB
+    private DocumentTagRuleConditionFacadeLocal documentTagRuleConditionFacade;
 
     @Inject
     @JMSConnectionFactory("java:/JmsXA")
@@ -2577,4 +2581,58 @@ public class SystemManagement implements SystemManagementRemote, SystemManagemen
         return importer.importSheets(sheetNames, dryRun);
 
     }
+
+    @Override
+    @RolesAllowed({"loginRole"})
+    public List<DocumentTagRule> getAllDocumentTagRules() {
+        return this.documentTagRuleFacade.findAllSorted();
+    }
+
+    @Override
+    @RolesAllowed(value = {"adminRole"})
+    public DocumentTagRule addDocumentTagRule(DocumentTagRule rule) {
+        StringGenerator idGen=new StringGenerator();
+        String id=idGen.getID().toString();
+        rule.setId(id);
+        this.documentTagRuleFacade.create(rule);
+        return this.documentTagRuleFacade.find(id);
+    
+    }
+
+    @Override
+    @RolesAllowed(value = {"adminRole"})
+    public DocumentTagRule updateDocumentTagRule(DocumentTagRule rule) throws Exception {
+        rule.setRuleConditions(new ArrayList<>());
+        this.documentTagRuleFacade.edit(rule);
+        return rule;
+    }
+
+    @Override
+    @RolesAllowed(value = {"adminRole"})
+    public void removeDocumentTagRule(DocumentTagRule rule) throws Exception {
+        this.documentTagRuleFacade.remove(rule);
+    }
+    
+    @Override
+    @RolesAllowed(value = {"adminRole"})
+    public void setDocumentTagRuleConditions(String ruleId, List<DocumentTagRuleCondition> conditionList) throws Exception {
+        DocumentTagRule rule=this.documentTagRuleFacade.find(ruleId);
+        List<DocumentTagRuleCondition> conditions=this.documentTagRuleConditionFacade.findByRule(rule);
+        if(conditions!=null) {
+            for(DocumentTagRuleCondition c: conditions) {
+                this.documentTagRuleConditionFacade.remove(c);
+            }
+        }
+        
+        StringGenerator idGen = new StringGenerator();
+        for (DocumentTagRuleCondition c : conditionList) {
+            if (!c.getComparisonValue().trim().isEmpty()) {
+                c.setId(idGen.getID().toString());
+                c.setRule(rule);
+                this.documentTagRuleConditionFacade.create(c);
+            }
+        }
+    }
+    
+    
 }
