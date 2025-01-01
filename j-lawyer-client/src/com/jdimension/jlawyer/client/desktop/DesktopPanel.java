@@ -913,29 +913,29 @@ public class DesktopPanel extends javax.swing.JPanel implements ThemeableEditor,
         this.lblUserFilterCount.setText("" + selectedUsers.length);
 
         this.popUserFilter.removeAll();
-            for (AppUserBean ru : relevantUsers) {
-                JCheckBoxMenuItem mi = new JCheckBoxMenuItem(ru.getPrincipalId());
-                mi.putClientProperty("CheckBoxMenuItem.selectionBackground", DefaultColorTheme.COLOR_LOGO_GREEN);
-                mi.setIcon(UserSettings.getInstance().getUserSmallIcon(ru.getPrincipalId()));
-                mi.setSelected(Arrays.asList(selectedUsers).contains(ru.getPrincipalId()));
-                popUserFilter.add(mi);
+        for (AppUserBean ru : relevantUsers) {
+            JCheckBoxMenuItem mi = new JCheckBoxMenuItem(ru.getPrincipalId());
+            mi.putClientProperty("CheckBoxMenuItem.selectionBackground", DefaultColorTheme.COLOR_LOGO_GREEN);
+            mi.setIcon(UserSettings.getInstance().getUserSmallIcon(ru.getPrincipalId()));
+            mi.setSelected(Arrays.asList(selectedUsers).contains(ru.getPrincipalId()));
+            popUserFilter.add(mi);
 
-            }
-            for (MenuElement me : popUserFilter.getSubElements()) {
-                ((JCheckBoxMenuItem) me.getComponent()).addActionListener((ActionEvent e) -> {
-                    ArrayList<String> al = new ArrayList<>();
-                    for (MenuElement me1 : popUserFilter.getSubElements()) {
-                        JCheckBoxMenuItem mi = (JCheckBoxMenuItem) me1.getComponent();
-                        if (mi.isSelected()) {
-                            al.add(mi.getText());
-                        }
+        }
+        for (MenuElement me : popUserFilter.getSubElements()) {
+            ((JCheckBoxMenuItem) me.getComponent()).addActionListener((ActionEvent e) -> {
+                ArrayList<String> al = new ArrayList<>();
+                for (MenuElement me1 : popUserFilter.getSubElements()) {
+                    JCheckBoxMenuItem mi = (JCheckBoxMenuItem) me1.getComponent();
+                    if (mi.isSelected()) {
+                        al.add(mi.getText());
                     }
-                    this.lblUserFilterCount.setText("" + al.size());
-                    UserSettings.getInstance().setSettingArray(UserSettings.CONF_DESKTOP_LASTFILTERUSERS, al.toArray(new String[al.size()]));
-                    TimerTask revDueTask = new ReviewsDueTimerTask(this, this.tabPaneDue, this.pnlRevDue, this.jSplitPane1, true);
-                    new java.util.Timer().schedule(revDueTask, 100);
-                });
-            }
+                }
+                this.lblUserFilterCount.setText("" + al.size());
+                UserSettings.getInstance().setSettingArray(UserSettings.CONF_DESKTOP_LASTFILTERUSERS, al.toArray(new String[al.size()]));
+                TimerTask revDueTask = new ReviewsDueTimerTask(this, this.tabPaneDue, this.pnlRevDue, this.jSplitPane1, true);
+                new java.util.Timer().schedule(revDueTask, 100);
+            });
+        }
 
         
     }

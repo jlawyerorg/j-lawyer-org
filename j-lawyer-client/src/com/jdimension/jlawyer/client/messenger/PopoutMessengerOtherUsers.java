@@ -664,6 +664,7 @@ For more information on this, and how to apply and follow the GNU AGPL, see
 package com.jdimension.jlawyer.client.messenger;
 
 import com.jdimension.jlawyer.client.configuration.UserListCellRenderer;
+import com.jdimension.jlawyer.client.desktop.ReviewsDueTimerTask;
 import com.jdimension.jlawyer.client.editors.files.OptionsComboBoxModel;
 import com.jdimension.jlawyer.client.events.Event;
 import com.jdimension.jlawyer.client.events.EventBroker;
@@ -677,17 +678,24 @@ import com.jdimension.jlawyer.client.utils.ComponentUtils;
 import com.jdimension.jlawyer.client.utils.StringUtils;
 import com.jdimension.jlawyer.persistence.AppUserBean;
 import com.jdimension.jlawyer.persistence.InstantMessage;
+import com.jdimension.jlawyer.persistence.InstantMessageMention;
 import com.jdimension.jlawyer.services.JLawyerServiceLocator;
 import java.awt.Adjustable;
 import java.awt.event.ActionEvent;
 import java.awt.event.AdjustmentEvent;
 import java.awt.event.AdjustmentListener;
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
+import java.util.TimerTask;
 import javax.swing.BoxLayout;
+import javax.swing.JCheckBoxMenuItem;
 import javax.swing.JPanel;
 import javax.swing.JScrollBar;
+import javax.swing.MenuElement;
 import javax.swing.SwingUtilities;
 import org.apache.log4j.Logger;
+import themes.colors.DefaultColorTheme;
 
 /**
  *
@@ -715,42 +723,77 @@ public class PopoutMessengerOtherUsers extends javax.swing.JDialog implements Ev
         BoxLayout layout = new javax.swing.BoxLayout(this.pnlMessages, javax.swing.BoxLayout.Y_AXIS);
         this.pnlMessages.setLayout(layout);
 
-        List<AppUserBean> allUsers = UserSettings.getInstance().getMessagingEnabledUsers();
-        String[] allUserItems = new String[allUsers.size()];
-        for (int i = 0; i < allUsers.size(); i++) {
-            AppUserBean aub = allUsers.get(i);
-            allUserItems[i] = aub.getPrincipalId();
-        }
-        StringUtils.sortIgnoreCase(allUserItems);
-        this.cmbUsers.removeAllItems();
-        OptionsComboBoxModel usersModel = new OptionsComboBoxModel(allUserItems);
-        this.cmbUsers.setModel(usersModel);
-        this.cmbUsers.setRenderer(new UserListCellRenderer());
-        this.cmbUsers.addActionListener((ActionEvent e) -> {
-            this.pnlMessages.removeAll();
-            this.pnlMessages.updateUI();
-            try {
-                ClientSettings settings = ClientSettings.getInstance();
-                JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
-                List<InstantMessage> initialMessages = locator.lookupMessagingServiceRemote().getMessagesWithOpenMentions(this.cmbUsers.getSelectedItem().toString());
-                if (initialMessages != null) {
-                    for (InstantMessage m : initialMessages) {
-                        this.addMessageToView(m);
-                    }
-                }
-            } catch (Throwable ex) {
-                log.error("Error connecting to server", ex);
-
-            }
-
-        });
-        // initially, display messages of current user
-        this.cmbUsers.setSelectedItem(UserSettings.getInstance().getCurrentUser().getPrincipalId());
+        this.buildUsersPopup();
+        this.fetchMessages();
 
         EventBroker eb = EventBroker.getInstance();
         eb.subscribeConsumer(this, Event.TYPE_INSTANTMESSAGING_NEWMESSAGES);
         eb.subscribeConsumer(this, Event.TYPE_INSTANTMESSAGING_MENTIONCHANGED);
         eb.subscribeConsumer(this, Event.TYPE_INSTANTMESSAGING_MESSAGEDELETED);
+    }
+
+    private void buildUsersPopup() {
+        List<AppUserBean> relevantUsers = UserSettings.getInstance().getMessagingEnabledUsers();
+        List<String> userNames = new ArrayList<>();
+        for (AppUserBean u : relevantUsers) {
+            userNames.add(u.getPrincipalId());
+        }
+        StringUtils.sortIgnoreCase(userNames);
+
+        String[] selectedUsers = UserSettings.getInstance().getSettingArray(UserSettings.CONF_DESKTOP_LASTFILTERUSERS, new String[]{});
+        if (selectedUsers.length == 0) {
+            selectedUsers = new String[]{UserSettings.getInstance().getCurrentUser().getPrincipalId()};
+        }
+
+        this.lblUserFilterCount.setText("" + selectedUsers.length);
+
+        this.popUserFilter.removeAll();
+        for (AppUserBean ru : relevantUsers) {
+            JCheckBoxMenuItem mi = new JCheckBoxMenuItem(ru.getPrincipalId());
+            mi.putClientProperty("CheckBoxMenuItem.selectionBackground", DefaultColorTheme.COLOR_LOGO_GREEN);
+            mi.setIcon(UserSettings.getInstance().getUserSmallIcon(ru.getPrincipalId()));
+            mi.setSelected(Arrays.asList(selectedUsers).contains(ru.getPrincipalId()));
+            popUserFilter.add(mi);
+
+        }
+        for (MenuElement me : popUserFilter.getSubElements()) {
+            ((JCheckBoxMenuItem) me.getComponent()).addActionListener((ActionEvent e) -> {
+                fetchMessages();
+            });
+        }
+
+    }
+
+    private void fetchMessages() {
+        ArrayList<String> al = new ArrayList<>();
+        for (MenuElement me1 : popUserFilter.getSubElements()) {
+            JCheckBoxMenuItem mi = (JCheckBoxMenuItem) me1.getComponent();
+            if (mi.isSelected()) {
+                al.add(mi.getText());
+            }
+        }
+        this.lblUserFilterCount.setText("" + al.size());
+
+        this.pnlMessages.removeAll();
+        this.pnlMessages.updateUI();
+        try {
+            ClientSettings settings = ClientSettings.getInstance();
+            JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
+            List<InstantMessage> initialMessages = locator.lookupMessagingServiceRemote().getMessagesWithOpenMentions(al);
+            if (initialMessages != null) {
+                for (InstantMessage m : initialMessages) {
+                    for (String principal : al) {
+                        if (m.hasMentionFor(principal)) {
+                            this.addMessageToView(m, principal);
+                        }
+                    }
+
+                }
+            }
+        } catch (Throwable ex) {
+            log.error("Error connecting to server", ex);
+
+        }
     }
 
     /**
@@ -762,11 +805,13 @@ public class PopoutMessengerOtherUsers extends javax.swing.JDialog implements Ev
     // <editor-fold defaultstate="collapsed" desc="Generated Code">//GEN-BEGIN:initComponents
     private void initComponents() {
 
+        popUserFilter = new javax.swing.JPopupMenu();
         jPanel1 = new javax.swing.JPanel();
         jScrollPane1 = new javax.swing.JScrollPane();
         pnlMessages = new javax.swing.JPanel();
-        cmbUsers = new javax.swing.JComboBox<>();
         jLabel1 = new javax.swing.JLabel();
+        lblUserFilterCount = new javax.swing.JLabel();
+        cmdUserFilter = new javax.swing.JButton();
 
         setDefaultCloseOperation(javax.swing.WindowConstants.DISPOSE_ON_CLOSE);
         setTitle("j-lawyer.org Messages");
@@ -792,29 +837,43 @@ public class PopoutMessengerOtherUsers extends javax.swing.JDialog implements Ev
         );
         pnlMessagesLayout.setVerticalGroup(
             pnlMessagesLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGap(0, 447, Short.MAX_VALUE)
+            .addGap(0, 448, Short.MAX_VALUE)
         );
 
         jScrollPane1.setViewportView(pnlMessages);
 
-        cmbUsers.setModel(new javax.swing.DefaultComboBoxModel<>(new String[] { "Item 1", "Item 2", "Item 3", "Item 4" }));
-
         jLabel1.setFont(jLabel1.getFont());
         jLabel1.setForeground(new java.awt.Color(255, 255, 255));
         jLabel1.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons16/lassists.png"))); // NOI18N
-        jLabel1.setText("Erwähnungen für den ausgewählten Nutzer");
+        jLabel1.setText("Erwähnungen für die ausgewählten Nutzer");
         jLabel1.setToolTipText("Erwähnungen werden bei Klick im Namen des ausgewählten Nutzers als erledigt markiert.");
+
+        lblUserFilterCount.setFont(lblUserFilterCount.getFont().deriveFont(lblUserFilterCount.getFont().getStyle() | java.awt.Font.BOLD));
+        lblUserFilterCount.setForeground(new java.awt.Color(255, 255, 255));
+        lblUserFilterCount.setText("1");
+
+        cmdUserFilter.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons16/material/baseline_supervisor_account_white_48dp.png"))); // NOI18N
+        cmdUserFilter.setBorder(null);
+        cmdUserFilter.setContentAreaFilled(false);
+        cmdUserFilter.setCursor(new java.awt.Cursor(java.awt.Cursor.HAND_CURSOR));
+        cmdUserFilter.addMouseListener(new java.awt.event.MouseAdapter() {
+            public void mousePressed(java.awt.event.MouseEvent evt) {
+                cmdUserFilterMousePressed(evt);
+            }
+        });
 
         javax.swing.GroupLayout jPanel1Layout = new javax.swing.GroupLayout(jPanel1);
         jPanel1.setLayout(jPanel1Layout);
         jPanel1Layout.setHorizontalGroup(
             jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addComponent(jScrollPane1, javax.swing.GroupLayout.DEFAULT_SIZE, 863, Short.MAX_VALUE)
+            .addComponent(jScrollPane1, javax.swing.GroupLayout.DEFAULT_SIZE, 760, Short.MAX_VALUE)
             .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, jPanel1Layout.createSequentialGroup()
                 .addContainerGap()
                 .addComponent(jLabel1)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                .addComponent(cmbUsers, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addComponent(cmdUserFilter)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addComponent(lblUserFilterCount)
                 .addContainerGap())
         );
         jPanel1Layout.setVerticalGroup(
@@ -822,10 +881,11 @@ public class PopoutMessengerOtherUsers extends javax.swing.JDialog implements Ev
             .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, jPanel1Layout.createSequentialGroup()
                 .addContainerGap()
                 .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                    .addComponent(cmbUsers, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addComponent(jLabel1))
+                    .addComponent(jLabel1)
+                    .addComponent(lblUserFilterCount)
+                    .addComponent(cmdUserFilter, javax.swing.GroupLayout.PREFERRED_SIZE, 20, javax.swing.GroupLayout.PREFERRED_SIZE))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(jScrollPane1, javax.swing.GroupLayout.DEFAULT_SIZE, 404, Short.MAX_VALUE))
+                .addComponent(jScrollPane1, javax.swing.GroupLayout.DEFAULT_SIZE, 461, Short.MAX_VALUE))
         );
 
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(getContentPane());
@@ -845,6 +905,10 @@ public class PopoutMessengerOtherUsers extends javax.swing.JDialog implements Ev
     private void formComponentResized(java.awt.event.ComponentEvent evt) {//GEN-FIRST:event_formComponentResized
         ComponentUtils.storeDialogSize(this);
     }//GEN-LAST:event_formComponentResized
+
+    private void cmdUserFilterMousePressed(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_cmdUserFilterMousePressed
+        this.popUserFilter.show(this.cmdUserFilter, evt.getX(), evt.getY());
+    }//GEN-LAST:event_cmdUserFilterMousePressed
 
     /**
      * @param args the command line arguments
@@ -888,15 +952,17 @@ public class PopoutMessengerOtherUsers extends javax.swing.JDialog implements Ev
     }
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
-    private javax.swing.JComboBox<String> cmbUsers;
+    private javax.swing.JButton cmdUserFilter;
     private javax.swing.JLabel jLabel1;
     private javax.swing.JPanel jPanel1;
     private javax.swing.JScrollPane jScrollPane1;
+    private javax.swing.JLabel lblUserFilterCount;
     private javax.swing.JPanel pnlMessages;
+    private javax.swing.JPopupMenu popUserFilter;
     // End of variables declaration//GEN-END:variables
 
-    private void addMessageToView(InstantMessage msg) {
-        MessagePanel mp1 = new MessagePanel(UserSettings.getInstance().getLoginEnabledUsers(), this.cmbUsers.getSelectedItem().toString(), UserSettings.getInstance().getCurrentUser().getPrincipalId().equalsIgnoreCase(msg.getSender()), msg);
+    private void addMessageToView(InstantMessage msg, String principalId) {
+        MessagePanel mp1 = new MessagePanel(UserSettings.getInstance().getLoginEnabledUsers(), principalId, UserSettings.getInstance().getCurrentUser().getPrincipalId().equalsIgnoreCase(msg.getSender()), msg);
         mp1.setAlignmentX(JPanel.LEFT_ALIGNMENT);
         pnlMessages.add(mp1);
         pnlMessages.repaint();
@@ -925,9 +991,22 @@ public class PopoutMessengerOtherUsers extends javax.swing.JDialog implements Ev
 
             SwingUtilities.invokeLater(() -> {
                 if (((NewInstantMessagesEvent) e).getNewMessages() != null) {
+
+                    ArrayList<String> al = new ArrayList<>();
+                    for (MenuElement me1 : popUserFilter.getSubElements()) {
+                        JCheckBoxMenuItem mi = (JCheckBoxMenuItem) me1.getComponent();
+                        if (mi.isSelected()) {
+                            al.add(mi.getText());
+                        }
+                    }
+
                     for (InstantMessage msg : ((NewInstantMessagesEvent) e).getNewMessages()) {
-                        if(msg.hasMentionFor(this.cmbUsers.getSelectedItem().toString()))
-                            this.addMessageToView(msg);
+                        List<InstantMessageMention> mentions = msg.getMentions();
+                        for (InstantMessageMention imm : mentions) {
+                            if (al.contains(imm.getPrincipal())) {
+                                this.addMessageToView(msg, imm.getPrincipal());
+                            }
+                        }
                     }
                 }
             });
