@@ -747,11 +747,11 @@ public class QuickArchiveFileSearchThread implements Runnable {
         // reset cursor
         ThreadUtils.setDefaultCursor(this.owner);
 
-        String[] colNames = new String[]{"Aktenzeichen", "erstellt", "Kurzrubrum", "wegen", "archiviert","","", "Anwalt", "Sachbearbeiter", "Etiketten"};
+        String[] colNames = new String[]{"Aktenzeichen", "erstellt", "Kurzrubrum", "wegen", "archiviert","","", "Anwalt", "Sachbearbeiter", "Etiketten", "Sachgebiet"};
         QuickArchiveFileSearchTableModel model = new QuickArchiveFileSearchTableModel(colNames, 0);
 
-        for (int i = 0; i < dtos.length; i++) {
-            Object[] row = new Object[]{new QuickArchiveFileSearchRowIdentifier(dtos[i]), dtos[i].getDateCreated(), dtos[i].getName(), dtos[i].getReason(), dtos[i].isArchived(), dtos[i].getDateArchived(), "", dtos[i].getLawyer(), dtos[i].getAssistant(), TagUtils.getTagList(dtos[i].getId(), tags)};
+        for (ArchiveFileBean dto : dtos) {
+            Object[] row = new Object[]{new QuickArchiveFileSearchRowIdentifier(dto), dto.getDateCreated(), dto.getName(), dto.getReason(), dto.isArchived(), dto.getDateArchived(), "", dto.getLawyer(), dto.getAssistant(), TagUtils.getTagList(dto.getId(), tags), dto.getSubjectField()};
             model.addRow(row);
         }
         if (dtos.length > 0) {

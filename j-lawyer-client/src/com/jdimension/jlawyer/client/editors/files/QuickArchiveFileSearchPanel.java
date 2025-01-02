@@ -743,7 +743,7 @@ public class QuickArchiveFileSearchPanel extends javax.swing.JPanel implements T
             this.chkIncludeArchive.setSelected(true);
         }
 
-        String[] colNames = new String[]{"Aktenzeichen", "erstellt", "Kurzrubrum", "wegen", "archiviert", "", "Anwalt", "Sachbearbeiter", "Etiketten"};
+        String[] colNames = new String[]{"Aktenzeichen", "erstellt", "Kurzrubrum", "wegen", "archiviert", "", "Anwalt", "Sachbearbeiter", "Etiketten", "Sachgebiet"};
         QuickArchiveFileSearchTableModel model = new QuickArchiveFileSearchTableModel(colNames, 0);
         this.tblResults.setModel(model);
 
@@ -781,7 +781,7 @@ public class QuickArchiveFileSearchPanel extends javax.swing.JPanel implements T
 
     public void clearInputs() {
         this.txtSearchString.setText("");
-        String[] colNames = new String[]{"Aktenzeichen", "Kurzrubrum", "wegen", "archiviert", "Anwalt", "Sachbearbeiter", "Etiketten"};
+        String[] colNames = new String[]{"Aktenzeichen", "Kurzrubrum", "wegen", "archiviert", "Anwalt", "Sachbearbeiter", "Etiketten", "Sachgebiet"};
         QuickArchiveFileSearchTableModel model = new QuickArchiveFileSearchTableModel(colNames, 0);
         this.tblResults.setModel(model);
 
@@ -1104,9 +1104,8 @@ public class QuickArchiveFileSearchPanel extends javax.swing.JPanel implements T
             return;
         }
         QuickArchiveFileSearchRowIdentifier id = (QuickArchiveFileSearchRowIdentifier) this.tblResults.getValueAt(row, 0);
-        Object editor = null;
         try {
-            editor = EditorsRegistry.getInstance().getEditor(this.detailsEditorClass);
+            Object editor = EditorsRegistry.getInstance().getEditor(this.detailsEditorClass);
 
             if (editor instanceof ThemeableEditor) {
                 // inherit the background to newly created child editors
