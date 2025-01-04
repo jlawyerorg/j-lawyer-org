@@ -763,6 +763,54 @@ public class CasesEndpointV1 implements CasesEndpointLocalV1 {
         }
 
     }
+    
+    /**
+     * Lists all active (non-archived) cases
+     *
+     * @response 401 User not authorized
+     * @response 403 User not authenticated
+     */
+    @Override
+    @GET
+    @Produces(MediaType.APPLICATION_JSON+";charset=utf-8")
+    @Path("/list/active")
+    @RolesAllowed({"readArchiveFileRole"})
+    public Response listActiveCases() {
+        // http://localhost:8080/j-lawyer-io/rest/cases/list
+        try {
+
+            InitialContext ic = new InitialContext();
+            ArchiveFileServiceLocal cases = (ArchiveFileServiceLocal) ic.lookup("java:global/j-lawyer-server/j-lawyer-server-ejb/ArchiveFileService!com.jdimension.jlawyer.services.ArchiveFileServiceLocal");
+            ArrayList<String> ids = cases.getAllArchiveFileIds();
+            ArrayList<RestfulCaseOverviewV1> rcoList = new ArrayList<>();
+            for (String id : ids) {
+                ArchiveFileBean afb=null;
+                try {
+                    afb = cases.getArchiveFile(id);
+                } catch (Throwable t) {
+                    log.error("Case not accessible: " + id, t);
+                    continue;
+                }
+                
+                if(afb.isArchived())
+                    continue;
+                
+                RestfulCaseOverviewV1 rco = new RestfulCaseOverviewV1();
+                rco.setId(id);
+                rco.setExternalId(afb.getExternalId());
+                rco.setName(afb.getName());
+                rco.setReason(afb.getReason());
+                rco.setFileNumber(afb.getFileNumber());
+                rco.setDateChanged(afb.getDateChanged());
+                rcoList.add(rco);
+            }
+            return Response.ok(rcoList).build();
+        } catch (Exception ex) {
+            log.error("Can not list cases", ex);
+            return Response.serverError().build();
+        }
+
+    }
 
     /**
      * Returns all case metadata based on its ID
