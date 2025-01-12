@@ -706,6 +706,7 @@ import java.io.InputStream;
 import java.text.DecimalFormat;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import java.util.Properties;
@@ -1151,6 +1152,11 @@ public class MailContentUI extends javax.swing.JPanel implements HyperlinkListen
         Session session = Session.getDefaultInstance(props, null);
         Message copiedMsg = new MimeMessage(session, bis);
         bis.close();
+        
+        boolean identical=messagesAreEqual(msg, copiedMsg);
+        if(!identical) {
+            throw new EmailRemovedFromServerException();
+        }
 
         CidCache cids = CidCache.getInstance();
         cids.clear();
@@ -1325,6 +1331,47 @@ public class MailContentUI extends javax.swing.JPanel implements HyperlinkListen
             EmailUtils.closeIfIMAP(msg.getFolder());
         }
 
+    }
+    
+    private static boolean messagesAreEqual(Message msg, Message copiedMsg) throws Exception {
+        
+        InternetAddress[] originalFrom = (InternetAddress[]) msg.getFrom();
+        InternetAddress[] copiedFrom = (InternetAddress[]) copiedMsg.getFrom();
+
+        boolean fromMatches = Arrays.equals(originalFrom, copiedFrom);
+
+        if (!fromMatches) {
+            return false;
+        }
+        
+        boolean headersMatch = msg.getSubject().replace(" ", "").equals(copiedMsg.getSubject().replace(" ", ""))
+                && msg.getSentDate().equals(copiedMsg.getSentDate());
+
+        if (!headersMatch) {
+            return false;
+        }
+        
+//        int originalSize = msg.getSize();
+//        int copiedSize = copiedMsg.getSize();
+//
+//        if (originalSize != copiedSize) {
+//            return false;
+//        }
+        
+//        String[] messageIds = msg.getHeader("Message-ID");
+//        String originalMessageId = (messageIds != null && messageIds.length > 0) ? messageIds[0] : null;
+//
+//        if (originalMessageId != null) {
+//            String[] copiedMessageIds = copiedMsg.getHeader("Message-ID");
+//            String copiedMessageId = (copiedMessageIds != null && copiedMessageIds.length > 0) ? copiedMessageIds[0] : null;
+//            if (copiedMessageId != null) {
+//                if (!originalMessageId.equals(copiedMessageId)) {
+//                    return false;
+//                }
+//            }
+//        }
+        
+        return true;
     }
 
     public static void setOutlookMessageImpl(MailContentUI contentUI, OutlookMessage msg, JLabel lblSubject, JLabel lblSentDate, JLabel lblTo, JLabel lblCC, JLabel lblBCC, JLabel lblFrom, JList lstAttachments, String webViewId) throws Exception {
