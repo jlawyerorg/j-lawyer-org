@@ -976,6 +976,24 @@ public class MessagingService implements MessagingServiceRemote, MessagingServic
         }
         return messages;
     }
+    
+    @Override
+    @RolesAllowed({"loginRole"})
+    public List<InstantMessage> getMessagesWithOpenMentions(List principalIds) throws Exception {
+        List<InstantMessageMention> openMentions = this.mentionFacade.findOpen(principalIds);
+        ArrayList<InstantMessage> messages = new ArrayList<>();
+        ArrayList<String> addedMsgIds=new ArrayList<>();
+        if (openMentions != null) {
+            for (InstantMessageMention mention : openMentions) {
+                InstantMessage msg=mention.getMessage();
+                if(!addedMsgIds.contains(msg.getId())) {
+                    messages.add(msg);
+                    addedMsgIds.add(msg.getId());
+                }
+            }
+        }
+        return messages;
+    }
 
     @Override
     @RolesAllowed({"loginRole"})

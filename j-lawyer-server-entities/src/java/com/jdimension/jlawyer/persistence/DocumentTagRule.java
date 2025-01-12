@@ -1,5 +1,4 @@
-/*
-                    GNU AFFERO GENERAL PUBLIC LICENSE
+/*                    GNU AFFERO GENERAL PUBLIC LICENSE
                        Version 3, 19 November 2007
 
  Copyright (C) 2007 Free Software Foundation, Inc. <https://fsf.org/>
@@ -661,578 +660,179 @@ if any, to sign a "copyright disclaimer" for the program, if necessary.
 For more information on this, and how to apply and follow the GNU AGPL, see
 <https://www.gnu.org/licenses/>.
  */
-package com.jdimension.jlawyer.services;
+package com.jdimension.jlawyer.persistence;
 
-import com.jdimension.jlawyer.events.CaseFormUpdatedEvent;
-import com.jdimension.jlawyer.persistence.ArchiveFileBean;
-import com.jdimension.jlawyer.persistence.ArchiveFileBeanFacadeLocal;
-import com.jdimension.jlawyer.persistence.ArchiveFileFormEntriesBean;
-import com.jdimension.jlawyer.persistence.ArchiveFileFormEntriesBeanFacadeLocal;
-import com.jdimension.jlawyer.persistence.ArchiveFileFormsBean;
-import com.jdimension.jlawyer.persistence.ArchiveFileFormsBeanFacadeLocal;
-import com.jdimension.jlawyer.persistence.ArchiveFileHistoryBean;
-import com.jdimension.jlawyer.persistence.FormTypeArtefactBean;
-import com.jdimension.jlawyer.persistence.FormTypeArtefactBeanFacadeLocal;
-import com.jdimension.jlawyer.persistence.FormTypeBean;
-import com.jdimension.jlawyer.persistence.FormTypeBeanFacadeLocal;
-import com.jdimension.jlawyer.persistence.utils.StringGenerator;
-import com.jdimension.jlawyer.pojo.FormPluginSetting;
-import com.jdimension.jlawyer.pojo.ServerFormPlugin;
-import com.jdimension.jlawyer.server.utils.ServerStringUtils;
-import java.io.InputStream;
-import java.io.InputStreamReader;
-import java.io.StringReader;
-import java.net.URL;
-import java.net.URLConnection;
-import java.nio.charset.StandardCharsets;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.Date;
-import java.util.HashMap;
+import java.io.Serializable;
 import java.util.List;
-import java.util.Map;
-import java.util.TreeMap;
-import javax.annotation.Resource;
-import javax.annotation.security.RolesAllowed;
-import javax.ejb.EJB;
-import javax.ejb.SessionContext;
-import javax.ejb.Stateless;
-import javax.enterprise.event.Event;
-import javax.inject.Inject;
-import javax.xml.XMLConstants;
-import javax.xml.parsers.DocumentBuilder;
-import javax.xml.parsers.DocumentBuilderFactory;
-import org.apache.log4j.Logger;
-import org.w3c.dom.Document;
-import org.w3c.dom.Node;
-import org.w3c.dom.NodeList;
-import org.xml.sax.InputSource;
+import javax.persistence.Basic;
+import javax.persistence.CascadeType;
+import javax.persistence.Column;
+import javax.persistence.Entity;
+import javax.persistence.FetchType;
+import javax.persistence.Id;
+import javax.persistence.NamedQueries;
+import javax.persistence.NamedQuery;
+import javax.persistence.OneToMany;
+import javax.persistence.Table;
 
 /**
  *
  * @author jens
  */
-@Stateless
-//@SecurityDomain("j-lawyer-security")
-public class FormsService implements FormsServiceRemote, FormsServiceLocal {
+@Entity
+@Table(name = "document_tag_rules")
+@NamedQueries({
+    @NamedQuery(name = "DocumentTagRule.findAll", query = "SELECT t FROM DocumentTagRule t"),
+    @NamedQuery(name = "DocumentTagRule.findAllSorted", query = "SELECT t FROM DocumentTagRule t order by t.sequenceNumber ASC"),
+    @NamedQuery(name = "DocumentTagRule.findById", query = "SELECT t FROM DocumentTagRule t WHERE t.id = :id")})
+public class DocumentTagRule implements Serializable {
 
-    private static final Logger log = Logger.getLogger(FormsService.class.getName());
-    @Resource
-    private SessionContext context;
-    @EJB
-    private ArchiveFileFormsBeanFacadeLocal caseFormsFacade;
+    public static final int OPERATOR_AND=10;
+    public static final int OPERATOR_OR=20;
+    private static final long serialVersionUID = 1L;
+    
+    @Id
+    @Basic(optional = false)
+    @Column(name = "id")
+    private String id;
+    
+    @Column(name = "rule_name")
+    private String name;
+    
+    @Column(name = "tag_list")
+    private String tagList;
+    
+    @Column(name = "operator_andor")
+    private int operator=OPERATOR_OR;
+    
+    @Column(name = "sequence_no")
+    private int sequenceNumber;
+    
+    @Column(name = "cancel_onmatch")
+    private boolean cancelOnMatch;
+    
+    @OneToMany(cascade = CascadeType.REMOVE, mappedBy = "rule", fetch = FetchType.EAGER)
+    private List<DocumentTagRuleCondition> ruleConditions;
+    
+    
 
-    @EJB
-    private ArchiveFileBeanFacadeLocal caseFacade;
+    public String getId() {
+        return id;
+    }
 
-    @EJB
-    private ArchiveFileFormEntriesBeanFacadeLocal caseFormEntriesFacade;
-
-    @EJB
-    private FormTypeBeanFacadeLocal formTypesFacade;
-
-    @EJB
-    private FormTypeArtefactBeanFacadeLocal formArtefactsFacade;
-    @EJB
-    private ArchiveFileServiceLocal archiveFileService;
-
-    // custom hooks support
-    @Inject
-    Event<CaseFormUpdatedEvent> updatedCaseFormEvent;
-
-    @Override
-    @RolesAllowed({"loginRole"})
-    public List<FormTypeBean> getAllFormTypes() {
-        return this.formTypesFacade.findAll();
+    public void setId(String id) {
+        this.id = id;
     }
 
     @Override
-    @RolesAllowed({"adminRole"})
-    public FormTypeBean addFormType(FormTypeBean form) {
-
-        this.formTypesFacade.create(form);
-        return this.formTypesFacade.find(form.getId());
+    public int hashCode() {
+        int hash = 0;
+        hash += (id != null ? id.hashCode() : 0);
+        return hash;
     }
 
     @Override
-    @RolesAllowed({"adminRole"})
-    public FormTypeArtefactBean addFormTypeArtefact(FormTypeArtefactBean file) {
-
-        file.setId(file.getFileName());
-        this.formArtefactsFacade.create(file);
-        return this.formArtefactsFacade.find(file.getId());
-    }
-
-    @Override
-    @RolesAllowed({"loginRole"})
-    public List<FormTypeArtefactBean> getFormTypeArtefacts(String formTypeId) {
-        FormTypeBean formType = this.formTypesFacade.find(formTypeId);
-        if (formType == null) {
-            return new ArrayList();
-        }
-
-        return this.formArtefactsFacade.findByFormType(formType);
-    }
-
-    @Override
-    @RolesAllowed({"loginRole"})
-    public FormTypeBean getFormType(String id) {
-        return this.formTypesFacade.find(id);
-    }
-
-    @Override
-    @RolesAllowed({"adminRole"})
-    public FormTypeBean updateFormType(FormTypeBean formType) throws Exception {
-
-        FormTypeBean ftb = this.formTypesFacade.find(formType.getId());
-        if (ftb == null) {
-            log.error("Can not find form type with id " + formType.getId());
-            throw new Exception("Falldatenblatt " + formType.getId() + " ist nicht vorhanden!");
-        }
-
-        ftb.setName(formType.getName());
-        ftb.setPlaceHolder(formType.getPlaceHolder());
-        ftb.setVersion(formType.getVersion());
-
-        this.formTypesFacade.edit(ftb);
-
-        return this.formTypesFacade.find(ftb.getId());
-    }
-
-    @Override
-    @RolesAllowed({"adminRole"})
-    public void removeFormTypeArtefacts(String formTypeId) throws Exception {
-        FormTypeBean ftb = this.formTypesFacade.find(formTypeId);
-        if (ftb == null) {
-            log.error("Can not find form type with id " + formTypeId);
-            throw new Exception("Falldatenblatt " + formTypeId + " ist nicht vorhanden!");
-        }
-        List<FormTypeArtefactBean> artefacts = this.formArtefactsFacade.findByFormType(ftb);
-        for (FormTypeArtefactBean arte : artefacts) {
-            this.formArtefactsFacade.remove(arte);
-        }
-    }
-
-    @Override
-    @RolesAllowed({"writeArchiveFileRole"})
-    public ArchiveFileFormsBean addForm(String caseId, ArchiveFileFormsBean form) throws Exception {
-
-        ArchiveFileBean afb = this.caseFacade.find(caseId);
-        if (afb == null) {
-            throw new Exception("Akte " + caseId + " kann nicht gefunden werden!");
-        }
-
-        if (ServerStringUtils.isEmpty(form.getPlaceHolder())) {
-            throw new Exception("Platzhalterpräfix darf nicht leer sein!");
-        }
-
-        List<ArchiveFileFormsBean> caseForms = this.caseFormsFacade.findByArchiveFileKey(afb);
-        for (ArchiveFileFormsBean a : caseForms) {
-            if (a.getPlaceHolder().equals(form.getPlaceHolder())) {
-                throw new Exception("Platzhalterpräfix " + form.getPlaceHolder() + " ist bereits vergeben!");
-            }
-        }
-
-        StringGenerator idGen = new StringGenerator();
-        String id = idGen.getID().toString();
-        form.setArchiveFileKey(afb);
-        form.setCreationDate(new Date());
-        form.setId(id);
-        this.caseFormsFacade.create(form);
-
-        ArchiveFileHistoryBean newHistEntry = new ArchiveFileHistoryBean();
-        newHistEntry.setId(idGen.getID().toString());
-        newHistEntry.setArchiveFileKey(afb);
-        newHistEntry.setChangeDate(new Date());
-        newHistEntry.setChangeDescription("Falldaten hinzugefügt: " + form.getPlaceHolder());
-        newHistEntry.setPrincipal(context.getCallerPrincipal().getName());
-        this.archiveFileService.addHistory(afb.getId(), newHistEntry);
-
-        return this.caseFormsFacade.find(id);
-
-    }
-
-    @Override
-    @RolesAllowed({"readArchiveFileRole"})
-    public List<ArchiveFileFormsBean> getFormsForCase(String caseId) {
-        ArchiveFileBean afb = this.caseFacade.find(caseId);
-        ArrayList<ArchiveFileFormsBean> list = new ArrayList<>();
-        if (afb != null) {
-            return this.caseFormsFacade.findByArchiveFileKey(afb);
-        }
-        return list;
-    }
-
-    @Override
-    @RolesAllowed({"adminRole"})
-    public void removeFormType(String formTypeId) throws Exception {
-
-        FormTypeBean ftb = this.formTypesFacade.find(formTypeId);
-        if (ftb == null) {
-            log.error("Can not find form type with id " + formTypeId);
-            throw new Exception("Falldatenblatt " + formTypeId + " ist nicht vorhanden!");
-        }
-
-        List<ArchiveFileFormsBean> existing = this.caseFormsFacade.findByFormType(ftb);
-        if (!existing.isEmpty()) {
-            throw new Exception("Falldatenblatt " + formTypeId + " kann nicht gelöscht werden, da es noch in Akten verwendet wird!");
-        }
-
-        this.formTypesFacade.remove(ftb);
-
-    }
-
-    @Override
-    @RolesAllowed({"writeArchiveFileRole"})
-    public void removeForm(String formId) throws Exception {
-        ArchiveFileFormsBean afb = this.caseFormsFacade.find(formId);
-        if (afb == null) {
-            throw new Exception("Falldatenblatt " + formId + " ist nicht vorhanden!");
-        }
-
-        this.caseFormsFacade.remove(afb);
-
-        StringGenerator idGen = new StringGenerator();
-
-        ArchiveFileHistoryBean newHistEntry = new ArchiveFileHistoryBean();
-        newHistEntry.setId(idGen.getID().toString());
-        newHistEntry.setArchiveFileKey(afb.getArchiveFileKey());
-        newHistEntry.setChangeDate(new Date());
-        newHistEntry.setChangeDescription("Falldaten gelöscht: " + afb.getPlaceHolder());
-        newHistEntry.setPrincipal(context.getCallerPrincipal().getName());
-        this.archiveFileService.addHistory(afb.getArchiveFileKey().getId(), newHistEntry);
-    }
-
-    @Override
-    @RolesAllowed({"writeArchiveFileRole"})
-    public void setFormEntries(String formId, List<ArchiveFileFormEntriesBean> formEntries) throws Exception {
-
-        if (formId == null) {
-            log.error("Form id cannot be null when setting form entries");
-            throw new Exception("Form id cannot be null when setting form entries");
-        }
-
-        if (formEntries == null) {
-            log.error("List of form entries to update for form id " + formId + " is empty. Skipping...");
-            throw new Exception("List of form entries to update for form id " + formId + " is empty. Skipping...");
-        }
-
-        for (ArchiveFileFormEntriesBean newEntry : formEntries) {
-            if (newEntry.getPlaceHolder() == null || "".equals(newEntry.getPlaceHolder())) {
-                log.error("At least one entry has an empty placeholder when updating form entries for form " + formId);
-                throw new Exception("At least one entry has an empty placeholder when updating form entries for form " + formId);
-            }
-        }
-
-        ArchiveFileFormsBean afb = this.caseFormsFacade.find(formId);
-        if (afb == null) {
-            throw new Exception("Falldatenblatt " + formId + " ist nicht vorhanden!");
-        }
-
-        List<ArchiveFileFormEntriesBean> existingEntries = this.caseFormEntriesFacade.findByForm(afb);
-        boolean entriesChanged = entriesChanged(existingEntries, formEntries);
-
-        for (ArchiveFileFormEntriesBean existing : existingEntries) {
-            this.caseFormEntriesFacade.remove(existing);
-        }
-
-        StringGenerator idGen = new StringGenerator();
-        long totalChars = 0;
-        for (ArchiveFileFormEntriesBean newEntry : formEntries) {
-            newEntry.setForm(afb);
-            newEntry.setArchiveFileKey(afb.getArchiveFileKey());
-            newEntry.setId(idGen.getID().toString());
-            newEntry.setEntryKey(newEntry.getPlaceHolder());
-            if (newEntry.getStringValue() != null) {
-                totalChars = totalChars + newEntry.getStringValue().length();
-            }
-            this.caseFormEntriesFacade.create(newEntry);
-        }
-        log.info(context.getCallerPrincipal().getName() + " saved " + formEntries.size() + " entries with total " + totalChars + " chars to form " + formId);
-
-        if (entriesChanged) {
-            try {
-                CaseFormUpdatedEvent evt = new CaseFormUpdatedEvent();
-                evt.setCaseId(afb.getArchiveFileKey().getId());
-                evt.setFormId(formId);
-                this.updatedCaseFormEvent.fireAsync(evt);
-            } catch (Throwable t) {
-                log.error("unable fire CaseFormUpdatedEvent", t);
-            }
-        }
-
-    }
-
-    private boolean entriesChanged(List<ArchiveFileFormEntriesBean> first, List<ArchiveFileFormEntriesBean> second) {
-        if (first == null && second == null) {
+    public boolean equals(Object object) {
+        // TODO: Warning - this method won't work in the case the id fields are not set
+        if (!(object instanceof DocumentTagRule)) {
             return false;
         }
-
-        if (first == null && second != null) {
-            return true;
-        }
-
-        if (first != null && second == null) {
-            return true;
-        }
-
-        if (first != null && second != null) {
-            if (first.size() != second.size()) {
-                return true;
-            }
-        }
-
-        HashMap<String, String> firstMap = new HashMap<>();
-        for (ArchiveFileFormEntriesBean fe : first) {
-            firstMap.put(fe.getPlaceHolder(), fe.getStringValue());
-        }
-        HashMap<String, String> secondMap = new HashMap<>();
-        for (ArchiveFileFormEntriesBean fe : second) {
-            secondMap.put(fe.getPlaceHolder(), fe.getStringValue());
-        }
-
-        for (String key : firstMap.keySet()) {
-            String v1 = firstMap.get(key);
-            if (!secondMap.containsKey(key)) {
-                return true;
-            } else {
-                String v2 = secondMap.get(key);
-                if (v1 == null && v2 != null) {
-                    return true;
-                }
-                if (v2 == null && v1 != null) {
-                    return true;
-                }
-                if (v1 != null) {
-                    if (!(v1.equals(v2))) {
-                        return true;
-                    }
-                }
-            }
-        }
-
-        return false;
-    }
-
-    @Override
-    @RolesAllowed({"readArchiveFileRole"})
-    public List<ArchiveFileFormEntriesBean> getFormEntries(String formId) throws Exception {
-        ArchiveFileFormsBean afb = this.caseFormsFacade.find(formId);
-        if (afb == null) {
-            throw new Exception("Falldatenblatt " + formId + " ist nicht vorhanden!");
-        }
-
-        List<ArchiveFileFormEntriesBean> existingEntries = this.caseFormEntriesFacade.findByForm(afb);
-        if (existingEntries == null) {
-            existingEntries = new ArrayList<>();
-        }
-        return existingEntries;
-    }
-
-    @Override
-    @RolesAllowed({"readArchiveFileRole"})
-    public ArchiveFileFormsBean getForm(String formId) throws Exception {
-        ArchiveFileFormsBean afb = this.caseFormsFacade.find(formId);
-        if (afb == null) {
-            throw new Exception("Falldatenblatt " + formId + " ist nicht vorhanden!");
-        }
-
-        return afb;
-
-    }
-
-    @Override
-    public Collection<String> getPlaceHoldersForCaseUnrestricted(String caseId) throws Exception {
-        return getPlaceHoldersForCaseImpl(caseId);
-    }
-    
-    @Override
-    @RolesAllowed({"loginRole"})
-    public Collection<String> getPlaceHoldersForCase(String caseId) throws Exception {
-        return getPlaceHoldersForCaseImpl(caseId);
-    }
-    
-    private Collection<String> getPlaceHoldersForCaseImpl(String caseId) throws Exception {
-        ArchiveFileBean caseBean = this.caseFacade.find(caseId);
-        if (caseBean == null) {
-            throw new Exception("Akte " + caseId + " ist nicht vorhanden!");
-        }
-
-        List<ArchiveFileFormsBean> forms = this.caseFormsFacade.findByArchiveFileKey(caseBean);
-        ArrayList<String> placeHolders = new ArrayList<>();
-        for (ArchiveFileFormsBean f : forms) {
-            List<ArchiveFileFormEntriesBean> entries = this.getFormEntries(f.getId());
-            for (ArchiveFileFormEntriesBean e : entries) {
-                String ph = e.getPlaceHolder();
-                if (!(ph.startsWith("{{"))) {
-                    ph = "{{" + ph;
-                }
-                if (!(ph.endsWith("}}"))) {
-                    ph = ph + "}}";
-                }
-                if (!placeHolders.contains(ph)) {
-                    placeHolders.add(ph);
-                }
-            }
-        }
-        return placeHolders;
-    }
-
-    @Override
-    public HashMap<String, String> getPlaceHolderValuesForCaseUnrestricted(String caseId) throws Exception {
-        return this.getPlaceHolderValuesForCaseImpl(caseId);
-    }
-    
-    @Override
-    @RolesAllowed({"readArchiveFileRole"})
-    public HashMap<String, String> getPlaceHolderValuesForCase(String caseId) throws Exception {
-        return this.getPlaceHolderValuesForCaseImpl(caseId);
-    }
-    
-    private HashMap<String, String> getPlaceHolderValuesForCaseImpl(String caseId) throws Exception {
-        ArchiveFileBean caseBean = this.caseFacade.find(caseId);
-        if (caseBean == null) {
-            throw new Exception("Akte " + caseId + " ist nicht vorhanden!");
-        }
-
-        List<ArchiveFileFormsBean> forms = this.caseFormsFacade.findByArchiveFileKey(caseBean);
-        HashMap<String, String> placeHolders = new HashMap<>();
-        for (ArchiveFileFormsBean f : forms) {
-            List<ArchiveFileFormEntriesBean> entries = this.getFormEntries(f.getId());
-            for (ArchiveFileFormEntriesBean e : entries) {
-                String ph = e.getPlaceHolder();
-                if (!(ph.startsWith("{{"))) {
-                    ph = "{{" + ph;
-                }
-                if (!(ph.endsWith("}}"))) {
-                    ph = ph + "}}";
-                }
-                if (!placeHolders.containsKey(ph)) {
-                    placeHolders.put(ph, e.getStringValue());
-                }
-            }
-        }
-        return placeHolders;
-    }
-
-    @Override
-    @RolesAllowed({"loginRole"})
-    public Map<String, ServerFormPlugin> getPluginsInRepository(String clientVersion) throws Exception {
-        TreeMap<String, ServerFormPlugin> formPlugins = new TreeMap<>();
-
-        URL updateURL = new URL("https://www.j-lawyer.org/downloads/j-lawyer-forms.xml");
-        URLConnection urlCon = updateURL.openConnection();
-        urlCon.setConnectTimeout(5000);
-        urlCon.setReadTimeout(5000);
-        urlCon.setRequestProperty("User-Agent", "j-lawyer Client v" + clientVersion);
-
-        InputStream is = urlCon.getInputStream();
-        InputStreamReader reader = new InputStreamReader(is, StandardCharsets.UTF_8);
-
-        char[] buffer = new char[1024];
-        int len = 0;
-        StringBuilder sb = new StringBuilder();
-        while ((len = reader.read(buffer)) > -1) {
-            sb.append(buffer, 0, len);
-        }
-        reader.close();
-        is.close();
-        String formsContent = sb.toString();
-
-        DocumentBuilderFactory dbf = DocumentBuilderFactory.newInstance();
-        try {
-            dbf.setAttribute(XMLConstants.ACCESS_EXTERNAL_DTD, "");
-            dbf.setAttribute(XMLConstants.ACCESS_EXTERNAL_SCHEMA, "");
-        } catch (IllegalArgumentException iae) {
-            // only available from JAXP 1.5+, but Wildfly still ships 1.4
-            log.warn("Unable to set external entity restrictions in XML parser: " + iae.getMessage());
-        }
-        DocumentBuilder remoteDb = dbf.newDocumentBuilder();
-        InputSource inSrc1 = new InputSource(new StringReader(formsContent));
-        inSrc1.setEncoding("UTF-8");
-        Document remoteDoc = remoteDb.parse(inSrc1);
-
-        NodeList remoteList = remoteDoc.getElementsByTagName("form");
-
-        for (int i = 0; i < remoteList.getLength(); i++) {
-            Node n = remoteList.item(i);
-            String forVersion = n.getAttributes().getNamedItem("for").getNodeValue();
-            if (forVersion.contains(clientVersion)) {
-                ServerFormPlugin fp = new ServerFormPlugin();
-                fp.setForVersion(n.getAttributes().getNamedItem("for").getNodeValue());
-                fp.setId(n.getAttributes().getNamedItem("id").getNodeValue());
-                fp.setType(n.getAttributes().getNamedItem("type").getNodeValue());
-                fp.setVersionInRepository(n.getAttributes().getNamedItem("version").getNodeValue());
-                fp.setDescription(n.getAttributes().getNamedItem("description").getNodeValue());
-                String depends = "";
-                if (n.getAttributes().getNamedItem("depends") != null) {
-                    depends = n.getAttributes().getNamedItem("depends").getNodeValue();
-                }
-                String[] dependencies = depends.split(",");
-                fp.setDependsOn(dependencies);
-                fp.setUrl(n.getAttributes().getNamedItem("url").getNodeValue());
-                fp.setName(n.getAttributes().getNamedItem("name").getNodeValue());
-                fp.setPlaceHolder(n.getAttributes().getNamedItem("placeholder").getNodeValue());
-                String files = n.getAttributes().getNamedItem("files").getNodeValue();
-                fp.getFiles().addAll(Arrays.asList(files.split(",")));
-                if (n.getChildNodes() != null) {
-                    NodeList settingsList = n.getChildNodes();
-                    for (int s = 0; s < settingsList.getLength(); s++) {
-                        Node setting = settingsList.item(s);
-                        if ("setting".equalsIgnoreCase(setting.getNodeName())) {
-                            FormPluginSetting ps = new FormPluginSetting();
-                            ps.setKey(setting.getAttributes().getNamedItem("key").getNodeValue());
-                            ps.setCaption(setting.getAttributes().getNamedItem("caption").getNodeValue());
-                            ps.setDefaultValue(setting.getAttributes().getNamedItem("default").getNodeValue());
-                            ps.setOrder(Integer.parseInt(setting.getAttributes().getNamedItem("order").getNodeValue()));
-                            fp.getSettings().add(ps);
-                        }
-                    }
-                }
-
-                formPlugins.put(fp.getName(), fp);
-            }
-        }
-
-        return formPlugins;
-    }
-
-    @Override
-    @RolesAllowed({"adminRole"})
-    public boolean installRepositoryPlugin(ServerFormPlugin plugin) throws Exception {
-        FormTypeBean newFormType = addFormType(plugin.toFormTypeBean());
-
-        for (String f : plugin.getFiles()) {
-
-            URL u = new URL(plugin.getUrl() + f);
-            URLConnection urlCon = u.openConnection();
-            //urlCon.setRequestProperty("User-Agent", "j-lawyer Client v" + VersionUtils.getFullClientVersion());
-            urlCon.setConnectTimeout(5000);
-            urlCon.setReadTimeout(5000);
-
-            InputStream is = urlCon.getInputStream();
-            InputStreamReader reader = new InputStreamReader(is);
-
-            char[] buffer = new char[1024];
-            int len = 0;
-            StringBuilder sb = new StringBuilder();
-            while ((len = reader.read(buffer)) > -1) {
-                sb.append(buffer, 0, len);
-            }
-            reader.close();
-            is.close();
-            String content = sb.toString();
-
-            FormTypeArtefactBean newArtefact = new FormTypeArtefactBean();
-            newArtefact.setContent(content.getBytes());
-            newArtefact.setFileName(f);
-            newArtefact.setFormType(newFormType);
-            newArtefact.setId(f);
-            addFormTypeArtefact(newArtefact);
-
+        DocumentTagRule other = (DocumentTagRule) object;
+        if ((this.id == null && other.id != null) || (this.id != null && !this.id.equals(other.id))) {
+            return false;
         }
         return true;
     }
 
+    @Override
+    public String toString() {
+        return this.getName();
+    }
+
+    /**
+     * @return the name
+     */
+    public String getName() {
+        return name;
+    }
+
+    /**
+     * @param name the name to set
+     */
+    public void setName(String name) {
+        this.name = name;
+    }
+
+    /**
+     * @return the tagList
+     */
+    public String getTagList() {
+        return tagList;
+    }
+
+    /**
+     * @param tagList the tagList to set
+     */
+    public void setTagList(String tagList) {
+        this.tagList = tagList;
+    }
+
+    /**
+     * @return the operator
+     */
+    public int getOperator() {
+        return operator;
+    }
+
+    /**
+     * @param operator the operator to set
+     */
+    public void setOperator(int operator) {
+        this.operator = operator;
+    }
+
+    /**
+     * @return the sequenceNumber
+     */
+    public int getSequenceNumber() {
+        return sequenceNumber;
+    }
+
+    /**
+     * @param sequenceNumber the sequenceNumber to set
+     */
+    public void setSequenceNumber(int sequenceNumber) {
+        this.sequenceNumber = sequenceNumber;
+    }
+
+    /**
+     * @return the ruleConditions
+     */
+    public List<DocumentTagRuleCondition> getRuleConditions() {
+        return ruleConditions;
+    }
+
+    /**
+     * @param ruleConditions the ruleConditions to set
+     */
+    public void setRuleConditions(List<DocumentTagRuleCondition> ruleConditions) {
+        this.ruleConditions = ruleConditions;
+    }
+
+    /**
+     * @return the cancelOnMatch
+     */
+    public boolean isCancelOnMatch() {
+        return cancelOnMatch;
+    }
+
+    /**
+     * @param cancelOnMatch the cancelOnMatch to set
+     */
+    public void setCancelOnMatch(boolean cancelOnMatch) {
+        this.cancelOnMatch = cancelOnMatch;
+    }
+
+    
+    
 }

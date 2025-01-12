@@ -661,123 +661,53 @@
  * For more information on this, and how to apply and follow the GNU AGPL, see
  * <https://www.gnu.org/licenses/>.
  */
-package com.jdimension.jlawyer.client.editors.files;
+package com.jdimension.jlawyer.client.configuration;
 
-import com.jdimension.jlawyer.client.editors.EditorsRegistry;
-import com.jdimension.jlawyer.client.processing.ProgressableActionCallback;
-import com.jdimension.jlawyer.client.settings.ClientSettings;
-import com.jdimension.jlawyer.client.utils.ThreadUtils;
-import com.jdimension.jlawyer.persistence.ArchiveFileBean;
-import com.jdimension.jlawyer.services.ArchiveFileServiceRemote;
-import com.jdimension.jlawyer.services.JLawyerServiceLocator;
-import com.jdimension.jlawyer.ui.tagging.TagUtils;
+import com.jdimension.jlawyer.persistence.DocumentTagRule;
+import java.awt.Color;
 import java.awt.Component;
-import java.util.ArrayList;
-import java.util.HashMap;
+import javax.swing.JLabel;
 import javax.swing.JTable;
-import javax.swing.RowSorter;
-import javax.swing.SortOrder;
-import javax.swing.SwingUtilities;
-import javax.swing.table.TableRowSorter;
-import org.apache.log4j.Logger;
+import javax.swing.table.DefaultTableCellRenderer;
+import themes.colors.DefaultColorTheme;
 
 /**
  *
  * @author jens
  */
-public class QuickArchiveFileSearchThread implements Runnable {
-
-    private static final Logger log = Logger.getLogger(QuickArchiveFileSearchThread.class.getName());
-    
-    private final String query;
-    private final Component owner;
-    private final JTable target;
-    private final boolean withArchive;
-    private final String[] tag;
-    private final String[] documentTag;
-    private ProgressableActionCallback callback=null;
-
-    
-    public QuickArchiveFileSearchThread(Component owner, String query, boolean withArchive, String[] tag, String[] documentTag, JTable target, ProgressableActionCallback callback) {
-        this.query = query;
-        this.owner = owner;
-        this.target = target;
-        this.withArchive = withArchive;
-        this.tag = tag;
-        this.documentTag=documentTag;
-        this.callback=callback;
-    }
-    
-    /**
-     * Creates a new instance of QuickArchiveFileSearchThread
-     * @param owner
-     * @param query
-     * @param withArchive
-     * @param tag
-     * @param documentTag
-     * @param target
-     */
-    public QuickArchiveFileSearchThread(Component owner, String query, boolean withArchive, String[] tag, String[] documentTag, JTable target) {
-        this.query = query;
-        this.owner = owner;
-        this.target = target;
-        this.withArchive = withArchive;
-        this.tag = tag;
-        this.documentTag=documentTag;
-    }
+public class DocumentTagRuleTableCellRenderer extends DefaultTableCellRenderer {
 
     @Override
-    public void run() {
-        ArchiveFileBean[] dtos = null;
-        HashMap<String, ArrayList<String>> tags = null;
-        try {
-            ClientSettings settings = ClientSettings.getInstance();
-            JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
+    public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected,
+            boolean hasFocus, int row, int column) {
 
-            ArchiveFileServiceRemote fileService = locator.lookupArchiveFileServiceRemote();
-            dtos = fileService.searchEnhanced(query, withArchive, tag, documentTag);
-            tags = fileService.searchTagsEnhanced(query, withArchive, tag, documentTag);
-        } catch (Exception ex) {
-            log.error("Error connecting to server", ex);
-            ThreadUtils.setDefaultCursor(this.owner);
-            ThreadUtils.showErrorDialog(this.owner, ex.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR);
-            return;
+        DocumentTagRule r = (DocumentTagRule) table.getValueAt(row, 0);
+
+        Object returnRenderer = super.getTableCellRendererComponent(table, value, isSelected, hasFocus, row, column);
+
+        switch (column) {
+            case 0:
+                ((JLabel) ((Component) returnRenderer)).setText(r.getName());
+                break;
+            case 1:
+                ((JLabel) ((Component) returnRenderer)).setText(r.getTagList());
+                break;
+            default:
+                break;
         }
-        // the search and loading data from the server is what takes the most time
-        // reset cursor
-        ThreadUtils.setDefaultCursor(this.owner);
 
-        String[] colNames = new String[]{"Aktenzeichen", "erstellt", "Kurzrubrum", "wegen", "archiviert","","", "Anwalt", "Sachbearbeiter", "Etiketten", "Sachgebiet"};
-        QuickArchiveFileSearchTableModel model = new QuickArchiveFileSearchTableModel(colNames, 0);
-
-        for (ArchiveFileBean dto : dtos) {
-            Object[] row = new Object[]{new QuickArchiveFileSearchRowIdentifier(dto), dto.getDateCreated(), dto.getName(), dto.getReason(), dto.isArchived(), dto.getDateArchived(), "", dto.getLawyer(), dto.getAssistant(), TagUtils.getTagList(dto.getId(), tags), dto.getSubjectField()};
-            model.addRow(row);
-        }
-        if (dtos.length > 0) {
-            ThreadUtils.setTableModel(this.target, model, 0, 0);
-            ThreadUtils.requestFocus(target);
-
-            TableRowSorter dtrs = new TableRowSorter(model);
-            dtrs.setComparator(0, new FileNumberComparator());
-            target.setRowSorter(dtrs);
-            ArrayList list = new ArrayList();
-            list.add(new RowSorter.SortKey(0, SortOrder.ASCENDING));
-            dtrs.setSortKeys(list);
-            dtrs.sort();
-
+        if (isSelected) {
+            ((JLabel) ((Component) returnRenderer)).setForeground(Color.WHITE);
+            if (column != 1) {
+                ((JLabel) ((Component) returnRenderer)).setBackground(DefaultColorTheme.COLOR_LOGO_BLUE);
+            }
         } else {
-            ThreadUtils.setTableModel(this.target, model);
+            ((JLabel) ((Component) returnRenderer)).setForeground(Color.BLACK);
+            if (column != 1) {
+                ((JLabel) ((Component) returnRenderer)).setBackground(Color.WHITE);
+            }
         }
-        EditorsRegistry.getInstance().clearStatus(true);
-        
-        if(this.callback!=null) {
-            SwingUtilities.invokeLater(() -> {
-                callback.actionFinished();
-            });
-        }
+
+        return (Component) returnRenderer;
     }
-
-    
-
 }

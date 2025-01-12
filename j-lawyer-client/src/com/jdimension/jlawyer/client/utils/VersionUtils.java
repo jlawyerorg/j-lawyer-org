@@ -748,7 +748,7 @@ public class VersionUtils {
     }
     
     public static String getClientVersion() {
-        return "3.1";
+        return "3.2";
     }
 
     public static String getPatchLevel() {
@@ -756,7 +756,7 @@ public class VersionUtils {
     }
 
     public static String getBuild() {
-        return "2";
+        return "0";
     }
     
     public static boolean isVersionGreater(String referenceVersion, String compareToVersion) {

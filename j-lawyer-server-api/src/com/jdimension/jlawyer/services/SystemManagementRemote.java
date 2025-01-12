@@ -841,5 +841,11 @@ public interface SystemManagementRemote {
     List<String> listImportSheets(byte[] odsData, String fullClientVersion) throws Exception;
 
     List<ImportLogEntry> importSheets(byte[] odsData, List<String> sheetNames, boolean dryRun, String fullClientVersion) throws Exception;
+
+    List<DocumentTagRule> getAllDocumentTagRules();
+    DocumentTagRule addDocumentTagRule(DocumentTagRule rule);
+    DocumentTagRule updateDocumentTagRule(DocumentTagRule rule) throws Exception;
+    void removeDocumentTagRule(DocumentTagRule rule) throws Exception;
+    void setDocumentTagRuleConditions(String ruleId, List<DocumentTagRuleCondition> conditionList) throws Exception;
     
 }

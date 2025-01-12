@@ -688,6 +688,7 @@ public interface InstantMessageMentionFacadeLocal {
     
     List<InstantMessageMention> findOpen();
     List<InstantMessageMention> findOpen(String principalId);
+    List<InstantMessageMention> findOpen(List principalIds);
 
     int count();
     

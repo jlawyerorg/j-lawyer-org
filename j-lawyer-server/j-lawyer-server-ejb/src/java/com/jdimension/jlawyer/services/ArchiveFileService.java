@@ -801,6 +801,8 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
     private TimesheetAllowedPositionTplFacadeLocal timesheetAllowedTemplatesFacade;
     @EJB
     private CaseAccountEntryFacadeLocal accountEntries;
+    @EJB
+    private DocumentTagRuleFacadeLocal documentTagRuleFacade;
 
     // custom hooks support
     @Inject
@@ -1786,6 +1788,8 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
         this.archiveFileDocumentsFacade.create(db);
 
         this.addCaseHistory(idGen.getID().toString(), aFile, "Dokument hinzugefügt: " + fileName);
+        
+        this.applyAutomatedDocumentTags(db);
 
         if(!this.skipSearchIndex()) {
             String preview = "";
@@ -1818,6 +1822,86 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
         this.newDocumentEvent.fireAsync(evt);
 
         return this.archiveFileDocumentsFacade.find(docId);
+    }
+    
+    private void applyAutomatedDocumentTags(ArchiveFileDocumentsBean doc) {
+        List<DocumentTagRule> allRules=this.documentTagRuleFacade.findAllSorted();
+        if(allRules!=null) {
+            // iterate over all rules
+            for(DocumentTagRule rule: allRules) {
+                if(!ServerStringUtils.isEmpty(rule.getTagList()) && !rule.getRuleConditions().isEmpty() && !ServerStringUtils.isEmpty(doc.getName())) {
+                    boolean match=false;
+                    String docName=doc.getName().toLowerCase();
+                    if(rule.getOperator()==DocumentTagRule.OPERATOR_OR) {
+                        // at least one condition must be met
+                        for(DocumentTagRuleCondition c: rule.getRuleConditions()) {
+                            if(ServerStringUtils.isEmpty(c.getComparisonValue()))
+                                continue;
+                            
+                            if(c.getComparisonMode()==DocumentTagRuleCondition.COMPARISON_CONTAINS && docName.contains(c.getComparisonValue().toLowerCase())) {
+                                match=true;
+                                break;
+                            } else if(c.getComparisonMode()==DocumentTagRuleCondition.COMPARISON_CONTAINSNOT && !docName.contains(c.getComparisonValue().toLowerCase())) {
+                                match=true;
+                                break;
+                            } else if(c.getComparisonMode()==DocumentTagRuleCondition.COMPARISON_EQUALS && docName.equals(c.getComparisonValue().toLowerCase())) {
+                                match=true;
+                                break;
+                            } else if(c.getComparisonMode()==DocumentTagRuleCondition.COMPARISON_EQUALSNOT && !docName.equals(c.getComparisonValue().toLowerCase())) {
+                                match=true;
+                                break;
+                            }
+                        }
+                    } else {
+                        // all conditions must be met
+                        match=true;
+                        for(DocumentTagRuleCondition c: rule.getRuleConditions()) {
+                            if(ServerStringUtils.isEmpty(c.getComparisonValue())) {
+                                match=false;
+                                continue;
+                            }
+                            
+                            if(c.getComparisonMode()==DocumentTagRuleCondition.COMPARISON_CONTAINS && !docName.contains(c.getComparisonValue().toLowerCase())) {
+                                match=false;
+                            } else if(c.getComparisonMode()==DocumentTagRuleCondition.COMPARISON_CONTAINSNOT && docName.contains(c.getComparisonValue().toLowerCase())) {
+                                match=false;
+                            } else if(c.getComparisonMode()==DocumentTagRuleCondition.COMPARISON_EQUALS && !docName.equals(c.getComparisonValue().toLowerCase())) {
+                                match=false;
+                            } else if(c.getComparisonMode()==DocumentTagRuleCondition.COMPARISON_EQUALSNOT && docName.equals(c.getComparisonValue().toLowerCase())) {
+                                match=false;
+                            }
+                        }
+                    }
+                    
+                    if(match) {
+                        String tagList=rule.getTagList();
+                        for(String tag: tagList.split(",")) {
+                            tag=tag.trim();
+                            if(ServerStringUtils.isEmpty(tag))
+                                continue;
+                            
+                            
+                            DocumentTagsBean dtb=new DocumentTagsBean();
+                            dtb.setArchiveFileKey(doc);
+                            dtb.setDateSet(new Date());
+                            dtb.setTagName(tag);
+                            try {
+                                this.setDocumentTagUnrestricted(doc.getId(), dtb, true);
+                            } catch (Exception ex) {
+                                log.error("Could not apply auto-tag " + tag + " to document " + doc.getName() + "[" + doc.getId() + "]", ex);
+                            }
+                        }
+                        
+                        if(rule.isCancelOnMatch()) {
+                            break;
+                        }
+                    }
+                } else {
+                    log.warn("Auto-tagging rule " + rule.getName() + " has an empty tag list or empty conditions list");
+                }
+            }
+        }
+        
     }
     
     private boolean skipSearchIndex() {
@@ -2166,10 +2250,12 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
         }
 
         this.addCaseHistory(idGen.getID().toString(), aFile, "Dokument umbenannt: " + db.getName() + " (neuer Name: " + newName + ")");
-
+        
         db.setName(newName);
         db.bumpVersion(true);
         this.archiveFileDocumentsFacade.edit(db);
+        
+        this.applyAutomatedDocumentTags(db);
 
         try {
             SearchIndexRequest req = new SearchIndexRequest(SearchIndexRequest.ACTION_UPDATE);
@@ -3654,6 +3740,8 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
         this.archiveFileDocumentsFacade.create(db);
 
         this.addCaseHistory(idGen.getID().toString(), aFile, "Dokument hinzugefügt: " + fileName);
+        
+        this.applyAutomatedDocumentTags(db);
 
         String preview = "";
         try {
