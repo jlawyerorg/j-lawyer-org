@@ -932,7 +932,7 @@ public class CaseNumberGenerator {
                     if (DBG) {
                         System.out.println("70");
                     }
-                    if (existing.length() > mN.start() + s.length()) {
+                    if (existing.length() >= mN.start() + s.length()) {
                         allExistingGlobals.add(existing.substring(mN.start(), mN.start() + dfs.length()));
                     }
                 }
