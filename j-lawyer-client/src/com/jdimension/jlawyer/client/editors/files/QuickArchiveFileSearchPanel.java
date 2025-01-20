@@ -748,7 +748,6 @@ public class QuickArchiveFileSearchPanel extends javax.swing.JPanel implements T
         this.tblResults.setModel(model);
 
         this.renderer=new QuickArchiveFileSearchCellRenderer();
-        this.renderer.setLoadSyncStatus(true);
         this.tblResults.setDefaultRenderer(Object.class, renderer);
         this.tblResults.setDefaultRenderer(Date.class, renderer);
 
@@ -1199,8 +1198,20 @@ public class QuickArchiveFileSearchPanel extends javax.swing.JPanel implements T
         // perform search here
         ThreadUtils.setWaitCursor(this);
         EditorsRegistry.getInstance().updateStatus("Suche Akten...");
-        this.renderer.setCaseIdsSyncedForUser(null);
-        new Thread(new QuickArchiveFileSearchThread(this, this.txtSearchString.getText(), this.chkIncludeArchive.isSelected(), TagUtils.getSelectedTags(this.popTagFilter), TagUtils.getSelectedTags(this.popDocumentTagFilter), this.tblResults)).start();
+        
+        ClientSettings settings = ClientSettings.getInstance();
+        List<String> caseIdsSyncedForUser=null;
+        try {
+            JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
+            caseIdsSyncedForUser=locator.lookupArchiveFileServiceRemote().getCaseIdsSyncedForUser(UserSettings.getInstance().getCurrentUser().getPrincipalId());
+            
+        } catch (Exception ex) {
+            log.error("Error getting case sync status", ex);
+            JOptionPane.showMessageDialog(this, "Fehler beim Ermitteln des Synchronisationsstatus: " + ex.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
+            EditorsRegistry.getInstance().clearStatus(false);
+        }
+        
+        new Thread(new QuickArchiveFileSearchThread(this, this.txtSearchString.getText(), this.chkIncludeArchive.isSelected(), TagUtils.getSelectedTags(this.popTagFilter), TagUtils.getSelectedTags(this.popDocumentTagFilter), caseIdsSyncedForUser, this.tblResults)).start();
 
     }//GEN-LAST:event_cmdQuickSearchActionPerformed
 
@@ -1402,7 +1413,25 @@ public class QuickArchiveFileSearchPanel extends javax.swing.JPanel implements T
             JOptionPane.showMessageDialog(this, "Fehler beim Konfigurieren der Synchronisation: " + ex.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
             EditorsRegistry.getInstance().clearStatus(false);
         }
-        this.renderer.setCaseIdsSyncedForUser(null);
+        this.loadCaseSyncStatus();
+    }
+    
+    private void loadCaseSyncStatus() {
+        ClientSettings settings = ClientSettings.getInstance();
+        try {
+            JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
+            List<String> caseIdsSyncedForUser=locator.lookupArchiveFileServiceRemote().getCaseIdsSyncedForUser(UserSettings.getInstance().getCurrentUser().getPrincipalId());
+            
+            for(int i=0;i<this.tblResults.getRowCount();i++) {
+                QuickArchiveFileSearchRowIdentifier id = (QuickArchiveFileSearchRowIdentifier) this.tblResults.getValueAt(i, 0);
+                this.tblResults.setValueAt(""+caseIdsSyncedForUser.contains(id.getArchiveFileDTO().getId()), i, 6);
+            }
+            
+        } catch (Exception ex) {
+            log.error("Error getting case sync status", ex);
+            JOptionPane.showMessageDialog(this, "Fehler beim Ermitteln des Synchronisationsstatus: " + ex.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
+            EditorsRegistry.getInstance().clearStatus(false);
+        }
     }
     
     

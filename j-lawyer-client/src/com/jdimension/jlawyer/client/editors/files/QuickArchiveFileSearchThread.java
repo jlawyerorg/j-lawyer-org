@@ -674,6 +674,7 @@ import com.jdimension.jlawyer.ui.tagging.TagUtils;
 import java.awt.Component;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import javax.swing.JTable;
 import javax.swing.RowSorter;
 import javax.swing.SortOrder;
@@ -695,16 +696,18 @@ public class QuickArchiveFileSearchThread implements Runnable {
     private final boolean withArchive;
     private final String[] tag;
     private final String[] documentTag;
+    private List<String> caseIdsSyncedForUser;
     private ProgressableActionCallback callback=null;
 
     
-    public QuickArchiveFileSearchThread(Component owner, String query, boolean withArchive, String[] tag, String[] documentTag, JTable target, ProgressableActionCallback callback) {
+    public QuickArchiveFileSearchThread(Component owner, String query, boolean withArchive, String[] tag, String[] documentTag, List<String> caseIdsSyncedForUser, JTable target, ProgressableActionCallback callback) {
         this.query = query;
         this.owner = owner;
         this.target = target;
         this.withArchive = withArchive;
         this.tag = tag;
         this.documentTag=documentTag;
+        this.caseIdsSyncedForUser=caseIdsSyncedForUser;
         this.callback=callback;
     }
     
@@ -715,19 +718,25 @@ public class QuickArchiveFileSearchThread implements Runnable {
      * @param withArchive
      * @param tag
      * @param documentTag
+     * @param caseIdsSyncedForUser
      * @param target
      */
-    public QuickArchiveFileSearchThread(Component owner, String query, boolean withArchive, String[] tag, String[] documentTag, JTable target) {
+    public QuickArchiveFileSearchThread(Component owner, String query, boolean withArchive, String[] tag, String[] documentTag, List<String> caseIdsSyncedForUser, JTable target) {
         this.query = query;
         this.owner = owner;
         this.target = target;
         this.withArchive = withArchive;
         this.tag = tag;
+        this.caseIdsSyncedForUser=caseIdsSyncedForUser;
         this.documentTag=documentTag;
     }
 
     @Override
     public void run() {
+        
+        if(this.caseIdsSyncedForUser==null)
+            this.caseIdsSyncedForUser=new ArrayList<>();
+        
         ArchiveFileBean[] dtos = null;
         HashMap<String, ArrayList<String>> tags = null;
         try {
@@ -751,7 +760,8 @@ public class QuickArchiveFileSearchThread implements Runnable {
         QuickArchiveFileSearchTableModel model = new QuickArchiveFileSearchTableModel(colNames, 0);
 
         for (ArchiveFileBean dto : dtos) {
-            Object[] row = new Object[]{new QuickArchiveFileSearchRowIdentifier(dto), dto.getDateCreated(), dto.getName(), dto.getReason(), dto.isArchived(), dto.getDateArchived(), "", dto.getLawyer(), dto.getAssistant(), TagUtils.getTagList(dto.getId(), tags), dto.getSubjectField()};
+            String synced=""+this.caseIdsSyncedForUser.contains(dto.getId());
+            Object[] row = new Object[]{new QuickArchiveFileSearchRowIdentifier(dto), dto.getDateCreated(), dto.getName(), dto.getReason(), dto.isArchived(), dto.getDateArchived(), synced, dto.getLawyer(), dto.getAssistant(), TagUtils.getTagList(dto.getId(), tags), dto.getSubjectField()};
             model.addRow(row);
         }
         if (dtos.length > 0) {
