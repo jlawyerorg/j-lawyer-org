@@ -758,7 +758,7 @@ import org.apache.log4j.Logger;
  *
  * @author jens
  */
-public class EmailInboxPanel extends javax.swing.JPanel implements SaveToCaseExecutor, ThemeableEditor, StatusBarProvider, MessageChangedListener, MessageCountListener, DropTargetListener, DragGestureListener {
+public class EmailInboxPanel extends javax.swing.JPanel implements SaveToCaseExecutor, ThemeableEditor, StatusBarProvider, DropTargetListener, DragGestureListener {
 
     private static final Logger log = Logger.getLogger(EmailInboxPanel.class.getName());
     
@@ -780,8 +780,6 @@ public class EmailInboxPanel extends javax.swing.JPanel implements SaveToCaseExe
 
     private boolean initializing = true;
     private boolean statusBarNotified = false;
-    
-    private long lastUpdateTimeUnreadMessageCount=-1;
 
     /**
      * Creates new form EmailInboxPanel
@@ -1026,8 +1024,9 @@ public class EmailInboxPanel extends javax.swing.JPanel implements SaveToCaseExe
                 this.trashFolders.put(ms, new FolderContainer(trashFolderF));
                 this.sentFolders.put(ms, new FolderContainer(sentFolderF));
 
-                inboxFolderF.addMessageCountListener(this);
-                inboxFolderF.addMessageChangedListener(this);
+                IMAPFolderObserver folderObserver=new IMAPFolderObserver(this, ms);
+                inboxFolderF.addMessageCountListener(folderObserver);
+                inboxFolderF.addMessageChangedListener(folderObserver);
 
                 if (this.idleThreads.containsKey(ms)) {
                     this.idleThreads.get(ms).cancel();
@@ -1609,7 +1608,7 @@ public class EmailInboxPanel extends javax.swing.JPanel implements SaveToCaseExe
     }//GEN-LAST:event_cmdRefreshActionPerformed
 
     private void treeFoldersValueChanged(javax.swing.event.TreeSelectionEvent evt) {//GEN-FIRST:event_treeFoldersValueChanged
-        this.treeFoldersValueChangedImpl(evt, 3, -1, null);
+        this.treeFoldersValueChangedImpl(evt, 3, -1, null, false);
     }//GEN-LAST:event_treeFoldersValueChanged
 
     /*
@@ -1651,7 +1650,9 @@ public class EmailInboxPanel extends javax.swing.JPanel implements SaveToCaseExe
         return null;
     }
     
-    private void treeFoldersValueChangedImpl(javax.swing.event.TreeSelectionEvent evt, int sortCol, int scrollToRow, String searchTerm) {
+    private void treeFoldersValueChangedImpl(javax.swing.event.TreeSelectionEvent evt, int sortCol, int scrollToRow, String searchTerm, boolean silent) {
+        // if silent, no progress bar is displayed
+        
         this.mailContentUI.clear();
         this.pnlActionsChild.removeAll();
         this.cmdDelete.setEnabled(false);
@@ -1721,9 +1722,15 @@ public class EmailInboxPanel extends javax.swing.JPanel implements SaveToCaseExe
             this.tblMails.setRowSorter(sorter);
             this.tblMails.setDefaultRenderer(Object.class, new EmailTableCellRenderer());
 
-            ProgressIndicator dlg = new ProgressIndicator(EditorsRegistry.getInstance().getMainWindow(), true);
-            LoadFolderAction a = new LoadFolderAction(dlg, folderC, tblMails, sortCol, scrollToRow, searchTerm);
-            a.start();
+            if(silent) {
+                LoadFolderThread t=new LoadFolderThread(folderC, tblMails, sortCol, scrollToRow, searchTerm);
+                new Thread(t).start();
+                
+            } else {
+                ProgressIndicator dlg = new ProgressIndicator(EditorsRegistry.getInstance().getMainWindow(), true);
+                LoadFolderAction a = new LoadFolderAction(dlg, folderC, tblMails, sortCol, scrollToRow, searchTerm);
+                a.start();
+            }
 
         } catch (Exception ex) {
             log.error("Error getting contents of folder", ex);
@@ -2076,7 +2083,7 @@ public class EmailInboxPanel extends javax.swing.JPanel implements SaveToCaseExe
         }
         
         if(selectedPath!=null)
-            this.treeFoldersValueChangedImpl(new TreeSelectionEvent(this.tblMails, selectedPath, false, null, null), sortCol, scrollToRow, null);
+            this.treeFoldersValueChangedImpl(new TreeSelectionEvent(this.tblMails, selectedPath, false, null, null), sortCol, scrollToRow, null, false);
 
 
     }//GEN-LAST:event_cmdDeleteActionPerformed
@@ -2395,7 +2402,7 @@ public class EmailInboxPanel extends javax.swing.JPanel implements SaveToCaseExe
                     sortCol = sortKeys.get(0).getColumn();
                 }
             }
-            this.treeFoldersValueChangedImpl(new TreeSelectionEvent(this.tblMails, this.treeFolders.getSelectionPath(), false, null, null), sortCol, scrollToRow, null);
+            this.treeFoldersValueChangedImpl(new TreeSelectionEvent(this.tblMails, this.treeFolders.getSelectionPath(), false, null, null), sortCol, scrollToRow, null, false);
         }
     }//GEN-LAST:event_cmbDownloadMailsActionPerformed
 
@@ -2447,7 +2454,7 @@ public class EmailInboxPanel extends javax.swing.JPanel implements SaveToCaseExe
         if (sortKeys != null && !(sortKeys.isEmpty())) {
             sortCol = sortKeys.get(0).getColumn();
         }
-        this.treeFoldersValueChangedImpl(new TreeSelectionEvent(this.tblMails, this.treeFolders.getSelectionPath(), false, null, null), sortCol, -1, this.txtSearchString.getText());
+        this.treeFoldersValueChangedImpl(new TreeSelectionEvent(this.tblMails, this.treeFolders.getSelectionPath(), false, null, null), sortCol, -1, this.txtSearchString.getText(), false);
     }//GEN-LAST:event_cmdSearchActionPerformed
 
     private void mnuHideFolderActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_mnuHideFolderActionPerformed
@@ -2851,24 +2858,7 @@ public class EmailInboxPanel extends javax.swing.JPanel implements SaveToCaseExe
 
     }
 
-    @Override
-    public void messageChanged(MessageChangedEvent mce) {
-        long now=System.currentTimeMillis();
-        if((now-this.lastUpdateTimeUnreadMessageCount)<180000l)
-            return;
-            
-        this.lastUpdateTimeUnreadMessageCount=now;
-        try {
-            MailboxSetup ms = EmailUtils.getMailboxSetup(mce.getMessage());
-            DefaultTreeModel dm = (DefaultTreeModel) this.treeFolders.getModel();
-            ThreadUtils.updateTreeNode(dm, this.inboxFolderNodes.get(ms));
-            final int unread = this.getInboxUnread();
-            EventBroker eb = EventBroker.getInstance();
-            eb.publishEvent(new EmailStatusEvent(unread));
-        } catch (Exception ex) {
-            log.error("Unable to handle messageChanged event", ex);
-        }
-    }
+    
 
     public int getInboxUnread() {
         try {
@@ -2905,33 +2895,34 @@ public class EmailInboxPanel extends javax.swing.JPanel implements SaveToCaseExe
             return 0;
         }
     }
-
-    @Override
-    public void messagesAdded(MessageCountEvent mce) {
-        long now=System.currentTimeMillis();
-        if((now-this.lastUpdateTimeUnreadMessageCount)<180000l)
-            return;
-            
-        this.lastUpdateTimeUnreadMessageCount=now;
-        try {
-            if (mce.getMessages().length == 0) {
-                return;
-            }
-            MailboxSetup ms = EmailUtils.getMailboxSetup(mce.getMessages()[0]);
-            // currently only INBOX is observed
-            DefaultTreeModel dm = (DefaultTreeModel) this.treeFolders.getModel();
-            ThreadUtils.updateTreeNode(dm, this.inboxFolderNodes.get(ms));
-            int unread = this.getInboxUnread();
-            EventBroker eb = EventBroker.getInstance();
-            eb.publishEvent(new EmailStatusEvent(unread));
-        } catch (Exception ex) {
-            log.error("Unable to handle messagesAdded event", ex);
-        }
+    
+    public void renderInboxNode(MailboxSetup ms) {
+        DefaultTreeModel dm = (DefaultTreeModel) this.treeFolders.getModel();
+        ThreadUtils.updateTreeNode(dm, this.inboxFolderNodes.get(ms));
     }
-
-    @Override
-    public void messagesRemoved(MessageCountEvent mce) {
-        // for removed messages, we are not able to determine the right mailbox, therefore just ignore and do not update the message counts in the tree
+    
+    public void reloadInboxNode(MailboxSetup ms) {
+        DefaultTreeModel dm = (DefaultTreeModel) this.treeFolders.getModel();
+        ThreadUtils.updateTreeNode(dm, this.inboxFolderNodes.get(ms));
+        Object inboxFolder=this.inboxFolderNodes.get(ms).getUserObject();
+        if(inboxFolder!=null) {
+            if(inboxFolder instanceof FolderContainer) {
+                ((FolderContainer)inboxFolder).resetCaches();
+            }
+        }
+        
+        DefaultMutableTreeNode selectedNode=(DefaultMutableTreeNode)this.treeFolders.getSelectionPath().getLastPathComponent();
+        // check if this inbox is currently displayed, if so - reload it
+        if(selectedNode.equals(this.inboxFolderNodes.get(ms))) {
+            int sortCol = -1;
+            List<? extends SortKey> sortKeys = this.tblMails.getRowSorter().getSortKeys();
+            if (sortKeys != null) {
+                if (sortKeys.size() > 0) {
+                    sortCol = sortKeys.get(0).getColumn();
+                }
+            }
+            this.treeFoldersValueChangedImpl(new TreeSelectionEvent(this.tblMails, this.treeFolders.getSelectionPath(), false, null, null), sortCol, tblMails.getSelectedRow(), null, true);
+        }
     }
 
     @Override
@@ -3036,7 +3027,7 @@ public class EmailInboxPanel extends javax.swing.JPanel implements SaveToCaseExe
                 }
             }
             target.resetCaches();
-            this.treeFoldersValueChangedImpl(new TreeSelectionEvent(this.tblMails, this.treeFolders.getSelectionPath(), false, null, null), sortCol, scrollToRow, null);
+            this.treeFoldersValueChangedImpl(new TreeSelectionEvent(this.tblMails, this.treeFolders.getSelectionPath(), false, null, null), sortCol, scrollToRow, null, false);
 
         } catch (Exception e) {
             log.error(e);

@@ -1109,7 +1109,7 @@ public class MailContentUI extends javax.swing.JPanel implements HyperlinkListen
         if (EmailUtils.isReceiptRequested(msg)) {
             int response = JOptionPane.showConfirmDialog(contentUI, "Der Absender hat eine Lesebestätigung angefordert - jetzt senden?", "Lesebestätigung", JOptionPane.YES_NO_OPTION, JOptionPane.QUESTION_MESSAGE);
             if (response == JOptionPane.YES_OPTION) {
-                EmailUtils.sendReceipt(ms, msg.getSubject(), MimeUtility.decodeText(msg.getFrom()[0].toString()));
+                EmailUtils.sendReceipt(ms, StringUtils.nonNull(msg.getSubject()), MimeUtility.decodeText(msg.getFrom()[0].toString()));
             }
         }
 
@@ -1172,7 +1172,7 @@ public class MailContentUI extends javax.swing.JPanel implements HyperlinkListen
             sentString = df2.format(copiedMsg.getSentDate());
         }
         lblSentDate.setText(sentString);
-        lblSubject.setText(copiedMsg.getSubject());
+        lblSubject.setText(StringUtils.nonNull(copiedMsg.getSubject()));
         lblSubject.setToolTipText("Klicken, um in Zwischenablage zu kopieren:" + System.lineSeparator() + lblSubject.getText());
         if(copiedMsg.getFrom()!=null && copiedMsg.getFrom().length>0)
             lblFrom.setText(MimeUtility.decodeText(copiedMsg.getFrom()[0].toString()));
@@ -1344,7 +1344,15 @@ public class MailContentUI extends javax.swing.JPanel implements HyperlinkListen
             return false;
         }
         
-        boolean headersMatch = msg.getSubject().replace(" ", "").equals(copiedMsg.getSubject().replace(" ", ""))
+        String subject1="";
+        if(msg.getSubject()!=null)
+            subject1=msg.getSubject();
+        
+        String subject2="";
+        if(copiedMsg.getSubject()!=null)
+            subject2=copiedMsg.getSubject();
+        
+        boolean headersMatch = subject1.replace(" ", "").equals(subject2.replace(" ", ""))
                 && msg.getSentDate().equals(copiedMsg.getSentDate());
 
         if (!headersMatch) {
@@ -1389,7 +1397,7 @@ public class MailContentUI extends javax.swing.JPanel implements HyperlinkListen
             sentString = df2.format(msg.getDate());
         }
         lblSentDate.setText(sentString);
-        lblSubject.setText(msg.getSubject());
+        lblSubject.setText(StringUtils.nonNull(msg.getSubject()));
         lblSubject.setToolTipText("Klicken, um in Zwischenablage zu kopieren:" + System.lineSeparator() + lblSubject.getText());
         lblFrom.setText(msg.getFromName() + "<" + msg.getFromEmail() + ">");
         lblFrom.setToolTipText("Klicken, um in Zwischenablage zu kopieren:" + System.lineSeparator() + lblFrom.getText());
