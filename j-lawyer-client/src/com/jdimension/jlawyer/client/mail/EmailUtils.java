@@ -956,7 +956,11 @@ public class EmailUtils extends CommonMailUtils {
             is.close();
             bOut.close();
             if (opened) {
-                closeIfIMAP(msgContainer.getMessage().getFolder());
+                try {
+                    closeIfIMAP(msgContainer.getMessage().getFolder());
+                } catch (Throwable t) {
+                    log.error("Unable to close folder", t);
+                }
             }
             return bOut.toByteArray();
 
@@ -1031,8 +1035,12 @@ public class EmailUtils extends CommonMailUtils {
         return passwords.size() == 1;
     }
 
-    // will only close the folder if it is IMAP, and do nothing otherwise
     public static void closeIfIMAP(Folder f) {
+        closeIfIMAP(f, true);
+    }
+    
+    // will only close the folder if it is IMAP, and do nothing otherwise
+    public static void closeIfIMAP(Folder f, boolean expunge) {
         if (f == null) {
             return;
         }
@@ -1040,7 +1048,7 @@ public class EmailUtils extends CommonMailUtils {
         try {
             if (isIMAP(f)) {
                 if (f.isOpen()) {
-                    f.close(true);
+                    f.close(expunge);
                 }
             }
         } catch (Throwable t) {

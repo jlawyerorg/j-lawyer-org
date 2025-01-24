@@ -804,6 +804,9 @@ public class LoadFolderThread implements Runnable {
                                        .limit(maxQuantity+1)
                                        .toArray(Message[]::new);
             
+            if (!(f.getFolder().isOpen())) {
+                f.getFolder().open(Folder.READ_WRITE);
+            }
             if (f.getFolder() instanceof UIDFolder) {
                 // get all the UIDs
                 FetchProfile fpUid = new FetchProfile();
@@ -811,8 +814,14 @@ public class LoadFolderThread implements Runnable {
                 f.getFolder().fetch(messages, fpUid);
             }
             
+            if (!(f.getFolder().isOpen())) {
+                f.getFolder().open(Folder.READ_WRITE);
+            }
             Message[] uncachedMessages = f.getUncachedMessages(messages);
             
+            if (!(f.getFolder().isOpen())) {
+                f.getFolder().open(Folder.READ_WRITE);
+            }
             FetchProfile fp = new FetchProfile();
             fp.add(FetchProfile.Item.ENVELOPE);
             fp.add(FetchProfile.Item.FLAGS);

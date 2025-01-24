@@ -1701,9 +1701,8 @@ public class EmailInboxPanel extends javax.swing.JPanel implements SaveToCaseExe
                     if (store.isConnected()) {
                         store.close(); // Ensure the store is clean
                     }
-                    store.connect(ms.getEmailInServer(), ms.getEmailInUser(), pw);
-                    if(folder.isOpen())
-                        folder.close(false);
+                    store.connect(ms.getEmailInServer(), ms.getEmailInUser(), pw);                   
+                    EmailUtils.closeIfIMAP(folder, false);
                     folder.open(Folder.READ_WRITE);
                 }
             }
@@ -2117,12 +2116,8 @@ public class EmailInboxPanel extends javax.swing.JPanel implements SaveToCaseExe
                         this.tblMails.setModel(new DefaultTableModel(new String[]{"Betreff", "Absender", "Empfänger", "Gesendet"}, 0));
 
                         tfc.resetCaches();
-                        try {
-                            tf.close(true);
-                        } catch (Throwable t) {
-                            log.error(t);
-                        }
-
+                        EmailUtils.closeIfIMAP(tf, true);
+                        
                         EditorsRegistry.getInstance().clearStatus();
                     }
 
@@ -2261,9 +2256,7 @@ public class EmailInboxPanel extends javax.swing.JPanel implements SaveToCaseExe
             store.close(); // Ensure the store is clean
         }
         store.connect(ms.getEmailInServer(), ms.getEmailInUser(), pw);
-        if (folder.isOpen()) {
-            folder.close(false);
-        }
+        EmailUtils.closeIfIMAP(folder, false);
         folder.open(Folder.READ_WRITE);
     }
     

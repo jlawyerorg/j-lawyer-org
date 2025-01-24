@@ -951,7 +951,7 @@ public class CommonMailUtils {
                             attachmentInfos.addAll(getAttachmentInfo(mimePart.getContent()));
                         }
                     } catch (Throwable t) {
-                        log.warn("Unable to detect attachment names for mime part - is the mime type information empty?");
+                        log.warn("Unable to detect attachment names for mime part - is the mime type information empty?", t);
                     }
 
                 } else if (Part.ATTACHMENT.equalsIgnoreCase(disposition)) {
