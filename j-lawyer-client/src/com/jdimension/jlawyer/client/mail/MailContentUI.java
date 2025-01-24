@@ -1352,7 +1352,7 @@ public class MailContentUI extends javax.swing.JPanel implements HyperlinkListen
         if(copiedMsg.getSubject()!=null)
             subject2=copiedMsg.getSubject();
         
-        boolean headersMatch = subject1.replace(" ", "").equals(subject2.replace(" ", ""))
+        boolean headersMatch = subject1.replace(" ", "").replace("\t", "").equals(subject2.replace(" ", "").replace("\t", ""))
                 && msg.getSentDate().equals(copiedMsg.getSentDate());
 
         if (!headersMatch) {
