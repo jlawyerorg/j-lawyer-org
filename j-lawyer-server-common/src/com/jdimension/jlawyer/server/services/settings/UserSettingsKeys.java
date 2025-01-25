@@ -703,11 +703,6 @@ public class UserSettingsKeys {
     public static final String CONF_DESKTOP_LASTFILTERUSERS = "client.desktop.lastfilterusers";
     public static final String CONF_DESKTOP_LASTFILTERDOCUMENTTAG = "client.desktop.lastfilterdocumenttag";
 
-    public static final String CONF_DREBIS_TAGGINGENABLED = "user.drebis.taggingenabled";
-    public static final String CONF_DREBIS_DOCUMENTTAGGINGENABLED = "user.drebis.documenttaggingenabled";
-    public static final String CONF_DREBIS_LASTTAG = "user.drebis.lasttag";
-    public static final String CONF_DREBIS_LASTDOCUMENTTAG = "user.drebis.lastdocumenttag";
-    
     public static final String CONF_CALENDAR_DEFAULTTAB = "user.calendar.defaulttab";
     
     public static final String CONF_SCAN_DIVIDERKEYWORD = "user.scans.dividerkeyword";
@@ -716,7 +711,6 @@ public class UserSettingsKeys {
     
     public static final String CONF_MAIL_LASTUSEDTEMPLATE = "user.mail.lastusedtemplate";
     public static final String CONF_MAIL_WARNSENDERUNKNOWN = "user.mail.unknownsender.warn";
-    public static final String CONF_DREBIS_LASTUSEDTEMPLATE = "user.drebis.lastusedtemplate";
     public static final String CONF_BEA_LASTUSEDTEMPLATE = "user.bea.lastusedtemplate";
     public static final String CONF_BEA_LASTUSEDMAILBOX = "user.bea.lastusedmailbox";
     

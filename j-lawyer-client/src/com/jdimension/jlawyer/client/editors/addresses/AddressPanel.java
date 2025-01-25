@@ -695,7 +695,6 @@ import com.jdimension.jlawyer.client.utils.ThreadUtils;
 import com.jdimension.jlawyer.client.voip.SendFaxDialog;
 import com.jdimension.jlawyer.client.voip.SendSmsDialog;
 import com.jdimension.jlawyer.client.voip.VoipUtils;
-import com.jdimension.jlawyer.drebis.InsuranceInfo;
 import com.jdimension.jlawyer.persistence.*;
 import com.jdimension.jlawyer.services.AddressServiceRemote;
 import com.jdimension.jlawyer.services.ArchiveFileServiceRemote;
@@ -841,31 +840,31 @@ public class AddressPanel extends javax.swing.JPanel implements BeaLoginCallback
         });
     }
 
-    public void setInsurances(List<InsuranceInfo> insurances) {
-        Object value = this.cmbInsurance.getSelectedItem();
-        if (insurances != null) {
-            this.cmbInsurance.removeAllItems();
-            this.cmbInsurance.addItem("");
-            for (InsuranceInfo ins : insurances) {
-                this.cmbInsurance.addItem(ins.getName());
-            }
-        }
-        this.cmbInsurance.setSelectedItem(value);
-        ComponentUtils.addAutoComplete(this.cmbInsurance);
-    }
+//    public void setInsurances(List<InsuranceInfo> insurances) {
+//        Object value = this.cmbInsurance.getSelectedItem();
+//        if (insurances != null) {
+//            this.cmbInsurance.removeAllItems();
+//            this.cmbInsurance.addItem("");
+//            for (InsuranceInfo ins : insurances) {
+//                this.cmbInsurance.addItem(ins.getName());
+//            }
+//        }
+//        this.cmbInsurance.setSelectedItem(value);
+//        ComponentUtils.addAutoComplete(this.cmbInsurance);
+//    }
 
-    public void setMotorInsurances(List<InsuranceInfo> insurances) {
-        Object value = this.cmbMotorInsurance.getSelectedItem();
-        if (insurances != null) {
-            this.cmbMotorInsurance.removeAllItems();
-            this.cmbMotorInsurance.addItem("");
-            for (InsuranceInfo ins : insurances) {
-                this.cmbMotorInsurance.addItem(ins.getName());
-            }
-        }
-        this.cmbMotorInsurance.setSelectedItem(value);
-        ComponentUtils.addAutoComplete(this.cmbMotorInsurance);
-    }
+//    public void setMotorInsurances(List<InsuranceInfo> insurances) {
+//        Object value = this.cmbMotorInsurance.getSelectedItem();
+//        if (insurances != null) {
+//            this.cmbMotorInsurance.removeAllItems();
+//            this.cmbMotorInsurance.addItem("");
+//            for (InsuranceInfo ins : insurances) {
+//                this.cmbMotorInsurance.addItem(ins.getName());
+//            }
+//        }
+//        this.cmbMotorInsurance.setSelectedItem(value);
+//        ComponentUtils.addAutoComplete(this.cmbMotorInsurance);
+//    }
 
     public void setOpenedFromEditorClass(String editorClassName) {
         this.openedFromEditorClass = editorClassName;

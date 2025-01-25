@@ -69,7 +69,7 @@
                   </Group>
               </Group>
               <EmptySpace min="-2" pref="8" max="-2" attributes="0"/>
-              <Component id="jSplitPane1" max="32767" attributes="0"/>
+              <Component id="jSplitPane1" pref="527" max="32767" attributes="0"/>
               <EmptySpace min="-2" pref="4" max="-2" attributes="0"/>
               <Component id="systemInformationWidget" min="-2" max="-2" attributes="0"/>
               <EmptySpace max="-2" attributes="0"/>
@@ -128,7 +128,7 @@
                           <Component id="cmdUserFilter" min="-2" max="-2" attributes="0"/>
                       </Group>
                       <EmptySpace max="-2" attributes="0"/>
-                      <Component id="tabPaneDue" pref="487" max="32767" attributes="0"/>
+                      <Component id="tabPaneDue" pref="486" max="32767" attributes="0"/>
                       <EmptySpace max="-2" attributes="0"/>
                   </Group>
               </Group>
@@ -456,7 +456,7 @@
                               </Group>
                           </Group>
                           <EmptySpace max="-2" attributes="0"/>
-                          <Component id="tabPaneTagged" pref="78" max="32767" attributes="0"/>
+                          <Component id="tabPaneTagged" pref="77" max="32767" attributes="0"/>
                           <EmptySpace max="-2" attributes="0"/>
                       </Group>
                   </Group>
@@ -634,8 +634,6 @@
                   <EmptySpace type="separate" max="-2" attributes="0"/>
                   <Component id="lblMailingStatus" min="-2" max="-2" attributes="0"/>
                   <EmptySpace type="separate" max="-2" attributes="0"/>
-                  <Component id="lblUnreadDrebis" min="-2" pref="64" max="-2" attributes="0"/>
-                  <EmptySpace type="separate" max="-2" attributes="0"/>
                   <Component id="lblUnreadBea" min="-2" max="-2" attributes="0"/>
                   <EmptySpace type="separate" max="-2" attributes="0"/>
                   <Component id="lblUnreadInstantMessages" min="-2" max="-2" attributes="0"/>
@@ -645,32 +643,35 @@
                   <Component id="lblUpdateStatusFormPlugins" min="-2" max="-2" attributes="0"/>
                   <EmptySpace type="unrelated" max="-2" attributes="0"/>
                   <Component id="lblNewsStatus" min="-2" max="-2" attributes="0"/>
-                  <EmptySpace max="32767" attributes="0"/>
+                  <EmptySpace pref="88" max="32767" attributes="0"/>
               </Group>
           </Group>
         </DimensionLayout>
         <DimensionLayout dim="1">
           <Group type="103" groupAlignment="0" attributes="0">
-              <Group type="102" alignment="1" attributes="0">
-                  <EmptySpace min="0" pref="0" max="32767" attributes="0"/>
-                  <Group type="103" groupAlignment="3" attributes="0">
-                      <Component id="lblUnreadInstantMessages" alignment="3" min="-2" pref="40" max="-2" attributes="0"/>
-                      <Component id="lblUpdateStatus" alignment="3" min="-2" pref="40" max="-2" attributes="0"/>
-                      <Component id="lblNewsStatus" alignment="3" min="-2" pref="40" max="-2" attributes="0"/>
-                  </Group>
-              </Group>
-              <Group type="102" attributes="0">
-                  <Group type="103" groupAlignment="0" attributes="0">
+              <Group type="102" alignment="0" attributes="0">
+                  <Group type="103" groupAlignment="1" attributes="0">
+                      <Group type="103" groupAlignment="0" attributes="0">
+                          <Group type="103" alignment="1" groupAlignment="3" attributes="0">
+                              <Component id="lblUnreadInstantMessages" alignment="3" min="-2" pref="40" max="-2" attributes="0"/>
+                              <Component id="lblUpdateStatus" alignment="3" min="-2" pref="40" max="-2" attributes="0"/>
+                              <Component id="lblNewsStatus" alignment="3" min="-2" pref="40" max="-2" attributes="0"/>
+                          </Group>
+                          <Group type="102" alignment="0" attributes="0">
+                              <Group type="103" groupAlignment="0" attributes="0">
+                                  <Component id="lblUnreadBea" alignment="0" min="-2" max="-2" attributes="0"/>
+                                  <Component id="lblUpdateStatusFormPlugins" alignment="0" min="-2" pref="40" max="-2" attributes="0"/>
+                              </Group>
+                              <EmptySpace min="0" pref="0" max="32767" attributes="0"/>
+                          </Group>
+                      </Group>
                       <Group type="103" groupAlignment="3" attributes="0">
                           <Component id="lblUnreadMail" alignment="3" min="-2" max="-2" attributes="0"/>
                           <Component id="lblScans" alignment="3" min="-2" max="-2" attributes="0"/>
                           <Component id="lblMailingStatus" alignment="3" min="-2" max="-2" attributes="0"/>
-                          <Component id="lblUnreadDrebis" alignment="3" min="-2" max="-2" attributes="0"/>
-                          <Component id="lblUnreadBea" alignment="3" min="-2" max="-2" attributes="0"/>
                       </Group>
-                      <Component id="lblUpdateStatusFormPlugins" alignment="0" min="-2" pref="40" max="-2" attributes="0"/>
                   </Group>
-                  <EmptySpace min="0" pref="0" max="32767" attributes="0"/>
+                  <EmptySpace min="0" pref="1" max="32767" attributes="0"/>
               </Group>
           </Group>
         </DimensionLayout>
@@ -728,24 +729,6 @@
               <Image iconType="3" name="/icons/scanner_big.png"/>
             </Property>
             <Property name="text" type="java.lang.String" value="0"/>
-            <Property name="enabled" type="boolean" value="false"/>
-          </Properties>
-        </Component>
-        <Component class="javax.swing.JLabel" name="lblUnreadDrebis">
-          <Properties>
-            <Property name="font" type="java.awt.Font" editor="org.netbeans.modules.form.editors2.FontEditor">
-              <FontInfo relative="true">
-                <Font bold="true" component="lblUnreadDrebis" property="font" relativeSize="true" size="2"/>
-              </FontInfo>
-            </Property>
-            <Property name="foreground" type="java.awt.Color" editor="org.netbeans.beaninfo.editors.ColorEditor">
-              <Color blue="ff" green="ff" id="white" palette="1" red="ff" type="palette"/>
-            </Property>
-            <Property name="horizontalAlignment" type="int" value="0"/>
-            <Property name="icon" type="javax.swing.Icon" editor="org.netbeans.modules.form.editors2.IconEditor">
-              <Image iconType="3" name="/icons/Icons2-17.png"/>
-            </Property>
-            <Property name="text" type="java.lang.String" value="?"/>
             <Property name="enabled" type="boolean" value="false"/>
           </Properties>
         </Component>

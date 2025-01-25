@@ -758,14 +758,13 @@ public class AutoUpdateTimerTask extends java.util.TimerTask {
             if (UserSettings.getInstance().getCurrentUser().isVoipEnabled()) {
                 voipmode = "on";
             }
-            String drebismode = set.getSetting(ServerSettings.SERVERCONF_DREBISMODE, "off");
             String backupmode = set.getSetting(ServerSettings.SERVERCONF_BACKUP_MODE, "off");
 
             // anonymous - identify as unique installation, but we don't care about personal details.
             String installationHash = StringUtils.md5(zip + " " + company);
             String userHash = StringUtils.md5(UserSettings.getInstance().getCurrentUser().getPrincipalId());
 
-            String csession = installationHash + ",user=" + userHash + ",java=" + javaVersion + ",os=" + osName + ",osversion=" + osVersion + ",adrc=" + addressCount + ",afc=" + archiveFileCount + ",docc=" + docCount + ",j-lawyer=" + VersionUtils.getFullClientVersion() + ",drebis=" + drebismode + ",voip=" + voipmode + ",backup=" + backupmode;
+            String csession = installationHash + ",user=" + userHash + ",java=" + javaVersion + ",os=" + osName + ",osversion=" + osVersion + ",adrc=" + addressCount + ",afc=" + archiveFileCount + ",docc=" + docCount + ",j-lawyer=" + VersionUtils.getFullClientVersion() + ",drebis=off" + ",voip=" + voipmode + ",backup=" + backupmode;
 
             URL updateURL = new URL("https://www.j-lawyer.org/downloads/updatecheck.xml?csession=" + CryptoProvider.newCrypto().encrypt(csession));
             URLConnection urlCon = updateURL.openConnection();

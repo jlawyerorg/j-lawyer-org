@@ -676,7 +676,6 @@ import com.jdimension.jlawyer.client.editors.addresses.EditAddressPanel;
 import com.jdimension.jlawyer.client.editors.files.EditArchiveFilePanel;
 import com.jdimension.jlawyer.client.editors.files.TimesheetLogDialog;
 import com.jdimension.jlawyer.client.events.BeaStatusEvent;
-import com.jdimension.jlawyer.client.events.DrebisStatusEvent;
 import com.jdimension.jlawyer.client.events.EmailStatusEvent;
 import com.jdimension.jlawyer.client.events.Event;
 import com.jdimension.jlawyer.client.events.EventBroker;
@@ -762,7 +761,6 @@ public class JKanzleiGUI extends javax.swing.JFrame implements com.jdimension.jl
         b.subscribeConsumer(this, Event.TYPE_MAILINGFAILED);
         b.subscribeConsumer(this, Event.TYPE_MAILSTATUS);
         b.subscribeConsumer(this, Event.TYPE_BEASTATUS);
-        b.subscribeConsumer(this, Event.TYPE_DREBISSTATUS);
         b.subscribeConsumer(this, Event.TYPE_OPENTIMESHEETPOSITIONS);
         b.subscribeConsumer(this, Event.TYPE_INSTANTMESSAGING_OPENMENTIONS);
 
@@ -1094,16 +1092,6 @@ public class JKanzleiGUI extends javax.swing.JFrame implements com.jdimension.jl
                 this.lblUnreadInstantMessages.setText("");
                 this.lblUnreadInstantMessages.setToolTipText(null);
             }
-        } else if (e instanceof DrebisStatusEvent) {
-
-            if (((DrebisStatusEvent) e).getMessages() > 0) {
-                this.lblDrebisStatus.setEnabled(true);
-                this.lblDrebisStatus.setText("" + ((DrebisStatusEvent) e).getMessages());
-                this.lblDrebisStatus.setToolTipText("es gibt ungelesene Drebis-Nachrichten");
-            } else {
-                this.lblDrebisStatus.setText("-");
-                this.lblDrebisStatus.setToolTipText("keine ungelesenen Drebis-Nachrichten");
-            }
         } else if (e instanceof OpenTimesheetPositionsEvent) {
             OpenTimesheetPositionsEvent ope = (OpenTimesheetPositionsEvent) e;
             if (ope.getOpenPositions() > 0) {
@@ -1130,7 +1118,6 @@ public class JKanzleiGUI extends javax.swing.JFrame implements com.jdimension.jl
         lblMailStatus = new javax.swing.JLabel();
         lblSystemStatus = new javax.swing.JLabel();
         lblMailingStatus = new javax.swing.JLabel();
-        lblDrebisStatus = new javax.swing.JLabel();
         lblBeaStatus = new javax.swing.JLabel();
         lblTimesheetStatus = new javax.swing.JLabel();
         lblUnreadInstantMessages = new javax.swing.JLabel();
@@ -1213,7 +1200,6 @@ public class JKanzleiGUI extends javax.swing.JFrame implements com.jdimension.jl
         mnuAssistantPrompts = new javax.swing.JMenuItem();
         mnuVoipSoftphoneSettings = new javax.swing.JMenuItem();
         mnuBeaSettings = new javax.swing.JMenuItem();
-        mnuDrebisSettings = new javax.swing.JMenuItem();
         mnuCalculations = new javax.swing.JMenu();
         mnuAdministration = new javax.swing.JMenu();
         mnuUsers = new javax.swing.JMenuItem();
@@ -1279,11 +1265,6 @@ public class JKanzleiGUI extends javax.swing.JFrame implements com.jdimension.jl
         lblMailingStatus.setText("?");
         lblMailingStatus.setEnabled(false);
 
-        lblDrebisStatus.setFont(lblDrebisStatus.getFont());
-        lblDrebisStatus.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons16/drebis16.png"))); // NOI18N
-        lblDrebisStatus.setText("?");
-        lblDrebisStatus.setEnabled(false);
-
         lblBeaStatus.setFont(lblBeaStatus.getFont());
         lblBeaStatus.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons16/bea16.png"))); // NOI18N
         lblBeaStatus.setText("?");
@@ -1313,7 +1294,7 @@ public class JKanzleiGUI extends javax.swing.JFrame implements com.jdimension.jl
                 .add(lblSystemStatus)
                 .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
                 .add(statusLabel, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 385, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
-                .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED, 211, Short.MAX_VALUE)
+                .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED, 281, Short.MAX_VALUE)
                 .add(lblTimesheetStatus)
                 .add(22, 22, 22)
                 .add(lblMailingStatus)
@@ -1325,8 +1306,7 @@ public class JKanzleiGUI extends javax.swing.JFrame implements com.jdimension.jl
                 .add(lblScanStatus)
                 .addPreferredGap(org.jdesktop.layout.LayoutStyle.UNRELATED)
                 .add(lblBeaStatus)
-                .addPreferredGap(org.jdesktop.layout.LayoutStyle.UNRELATED)
-                .add(lblDrebisStatus))
+                .addContainerGap())
         );
         statusPanelLayout.setVerticalGroup(
             statusPanelLayout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
@@ -1335,7 +1315,6 @@ public class JKanzleiGUI extends javax.swing.JFrame implements com.jdimension.jl
                 .add(lblMailStatus)
                 .add(lblMailingStatus)
                 .add(statusLabel)
-                .add(lblDrebisStatus)
                 .add(lblBeaStatus)
                 .add(lblTimesheetStatus)
                 .add(lblUnreadInstantMessages))
@@ -1956,15 +1935,6 @@ public class JKanzleiGUI extends javax.swing.JFrame implements com.jdimension.jl
         });
         mnuOptions.add(mnuBeaSettings);
 
-        mnuDrebisSettings.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons16/drebis16.png"))); // NOI18N
-        mnuDrebisSettings.setText(bundle.getString("menu.settings.drebis")); // NOI18N
-        mnuDrebisSettings.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                mnuDrebisSettingsActionPerformed(evt);
-            }
-        });
-        mnuOptions.add(mnuDrebisSettings);
-
         jMenuBar1.add(mnuOptions);
 
         mnuCalculations.setText("Plugins");
@@ -2360,15 +2330,6 @@ public class JKanzleiGUI extends javax.swing.JFrame implements com.jdimension.jl
             dlg.setVisible(true);
         }
     }//GEN-LAST:event_mnuScanOptionsActionPerformed
-
-    private void mnuDrebisSettingsActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_mnuDrebisSettingsActionPerformed
-
-        if (checkAdmin()) {
-            DrebisConfigurationDialog dlg = new DrebisConfigurationDialog(this, true);
-            FrameUtils.centerDialog(dlg, this);
-            dlg.setVisible(true);
-        }
-    }//GEN-LAST:event_mnuDrebisSettingsActionPerformed
 
     private void mnuAddressImportActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_mnuAddressImportActionPerformed
         if (checkAdmin()) {
@@ -2941,7 +2902,6 @@ public class JKanzleiGUI extends javax.swing.JFrame implements com.jdimension.jl
     private javax.swing.JPopupMenu.Separator jSeparator4;
     private javax.swing.JPopupMenu.Separator jSeparator5;
     private javax.swing.JLabel lblBeaStatus;
-    private javax.swing.JLabel lblDrebisStatus;
     private javax.swing.JLabel lblMailStatus;
     private javax.swing.JLabel lblMailingStatus;
     private javax.swing.JLabel lblScanStatus;
@@ -2998,7 +2958,6 @@ public class JKanzleiGUI extends javax.swing.JFrame implements com.jdimension.jl
     private javax.swing.JMenuItem mnuDocumentTagRules;
     private javax.swing.JMenuItem mnuDocumentTags;
     private javax.swing.JMenuItem mnuDocumentsBin;
-    private javax.swing.JMenuItem mnuDrebisSettings;
     private javax.swing.JMenuItem mnuExit;
     private javax.swing.JMenu mnuFile;
     private javax.swing.JMenu mnuFinance;

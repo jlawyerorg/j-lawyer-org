@@ -683,7 +683,6 @@ public abstract class Event {
     public static final Integer TYPE_MAILINGFAILED=60;
     public static final Integer TYPE_MAILSTATUS=70;
     public static final Integer TYPE_BEASTATUS=80;
-    public static final Integer TYPE_DREBISSTATUS=90;
     public static final Integer TYPE_ALLCASETAGS=100;
     public static final Integer TYPE_ALLDOCUMENTTAGS=100;
     public static final Integer TYPE_DOCUMENTADDED=110;

@@ -720,7 +720,6 @@ public class BulkSaveDialog extends javax.swing.JDialog {
     public static final String TYPE_MAIL = "mail";
     public static final String TYPE_BEA = "bea";
     public static final String TYPE_SCAN = "scan";
-    public static final String TYPE_DREBIS = "drebis";
 
     private static final Logger log = Logger.getLogger(BulkSaveDialog.class.getName());
 

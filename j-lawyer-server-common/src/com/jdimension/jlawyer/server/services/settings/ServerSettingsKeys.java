@@ -693,13 +693,6 @@ public class ServerSettingsKeys {
     public static final String PROFILE_COMPANYBANKCODE_AK="profile.company.ak.bankcode";
     public static final String PROFILE_COMPANYACCOUNTNO_AK="profile.company.ak.accountno";
     
-    public static final String SERVERCONF_DREBISMODE="jlawyer.server.drebis.drebismode";
-    public static final String SERVERCONF_DREBISLOCALUSER="jlawyer.server.drebis.localuser";
-    public static final String SERVERCONF_DREBISLOCALPWD="jlawyer.server.drebis.localpwd";
-    public static final String SERVERCONF_DREBISENDPOINT="jlawyer.server.drebis.drebisendpoint";
-    public static final String SERVERCONF_DREBISTECHUSER="jlawyer.server.drebis.techuser";
-    public static final String SERVERCONF_DREBISTECHPWD="jlawyer.server.drebis.techpwd";
-    
     public static final String SERVERCONF_BEAMODE="jlawyer.server.bea.beamode";
     public static final String SERVERCONF_BEAENDPOINT="jlawyer.server.bea.beaendpoint";
     public static final String SERVERCONF_BEAENABLEDVERSIONS="jlawyer.global.bea.enabledversions";

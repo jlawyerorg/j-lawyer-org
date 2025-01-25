@@ -15,7 +15,6 @@
             <included-library dirs="200">file.reference.log4j-api-2.17.1.jar</included-library>
             <included-library dirs="200">file.reference.log4j-core-2.17.1.jar</included-library>
             <included-library dirs="200">file.reference.log4j-slf4j-impl-2.17.1.jar</included-library>
-            <included-library dirs="200">file.reference.j-lawyer-drebis-stubs.jar</included-library>
             <included-library dirs="200">file.reference.lucene-analyzers-common-4.7.0.jar</included-library>
             <included-library dirs="200">file.reference.lucene-core-4.7.0.jar</included-library>
             <included-library dirs="200">file.reference.lucene-queryparser-4.7.0.jar</included-library>

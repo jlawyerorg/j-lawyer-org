@@ -663,7 +663,6 @@
  */
 package com.jdimension.jlawyer.client.settings;
 
-import com.jdimension.jlawyer.drebis.InsuranceInfo;
 import com.jdimension.jlawyer.persistence.AppOptionGroupBean;
 import com.jdimension.jlawyer.persistence.CalendarEntryTemplate;
 import com.jdimension.jlawyer.server.modules.ModuleMetadata;
@@ -827,9 +826,6 @@ public class ClientSettings {
     private List<String>afTagsInUse=new ArrayList<>();
     private List<String>adrTagsInUse=new ArrayList<>();
     private List<String>docTagsInUse=new ArrayList<>();
-    
-    private ArrayList<InsuranceInfo> insurances=new ArrayList<>();
-    private ArrayList<InsuranceInfo> motorInsurances=new ArrayList<>();
     
     private String urlForum="https://www.j-lawyer.org/?page_id=673";
     private String urlHelp="https://www.j-lawyer.org/?page_id=11";
@@ -996,34 +992,6 @@ public class ClientSettings {
      */
     public void setSubjectFieldDtos(AppOptionGroupBean[] subjectFieldDtos) {
         this.subjectFieldDtos = subjectFieldDtos;
-    }
-
-    /**
-     * @return the insurances
-     */
-    public ArrayList<InsuranceInfo> getInsurances() {
-        return insurances;
-    }
-
-    /**
-     * @param insurances the insurances to set
-     */
-    public void setInsurances(ArrayList<InsuranceInfo> insurances) {
-        this.insurances = insurances;
-    }
-
-    /**
-     * @return the motorInsurances
-     */
-    public ArrayList<InsuranceInfo> getMotorInsurances() {
-        return motorInsurances;
-    }
-
-    /**
-     * @param motorInsurances the motorInsurances to set
-     */
-    public void setMotorInsurances(ArrayList<InsuranceInfo> motorInsurances) {
-        this.motorInsurances = motorInsurances;
     }
 
     /**

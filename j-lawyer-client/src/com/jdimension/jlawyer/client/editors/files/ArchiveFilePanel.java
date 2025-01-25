@@ -683,16 +683,12 @@ import com.jdimension.jlawyer.client.bea.SendBeaMessageDialog;
 import com.jdimension.jlawyer.client.calendar.CalendarUtils;
 import com.jdimension.jlawyer.client.cloud.CloudInstance;
 import com.jdimension.jlawyer.client.cloud.SendCloudShare;
-import com.jdimension.jlawyer.client.drebis.coverage.DrebisCoverageWizardDialog;
 import com.jdimension.jlawyer.client.components.MultiCalDialog;
 import com.jdimension.jlawyer.client.configuration.CustomLauncherOptionsDialog;
 import com.jdimension.jlawyer.client.configuration.GroupMembershipsTableModel;
 import com.jdimension.jlawyer.client.configuration.PopulateOptionsEditor;
 import com.jdimension.jlawyer.client.configuration.UserListCellRenderer;
 import com.jdimension.jlawyer.client.configuration.UserTableCellRenderer;
-import com.jdimension.jlawyer.client.drebis.*;
-import com.jdimension.jlawyer.client.drebis.claim.DrebisClaimWizardDialog;
-import com.jdimension.jlawyer.client.drebis.freetext.DrebisFreeTextWizardDialog;
 import com.jdimension.jlawyer.client.editors.EditorsRegistry;
 import com.jdimension.jlawyer.client.editors.SaveableEditor;
 import com.jdimension.jlawyer.client.editors.SelfValidatingEditor;
@@ -738,7 +734,6 @@ import com.jdimension.jlawyer.client.settings.ServerSettings;
 import com.jdimension.jlawyer.client.settings.UserSettings;
 import com.jdimension.jlawyer.client.templates.SelectTemplateFolderDialog;
 import com.jdimension.jlawyer.client.utils.*;
-import com.jdimension.jlawyer.client.utils.pdf.PdfAnonymizer;
 import com.jdimension.jlawyer.client.utils.pdf.PdfAnonymizerDialog;
 import com.jdimension.jlawyer.client.voip.EpostLetterSendStatus;
 import com.jdimension.jlawyer.client.voip.EpostLetterSendStep;
@@ -787,8 +782,6 @@ import java.awt.event.ActionListener;
 import java.awt.event.AdjustmentEvent;
 import java.awt.event.AdjustmentListener;
 import java.awt.event.MouseEvent;
-import java.io.ByteArrayInputStream;
-import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.math.BigDecimal;
 import java.text.DecimalFormat;
@@ -810,7 +803,6 @@ import net.sf.jasperreports.engine.util.JRLoader;
 import net.sf.jasperreports.view.JRViewer;
 import org.apache.log4j.Logger;
 import org.apache.pdfbox.pdmodel.PDDocument;
-import org.apache.pdfbox.pdmodel.PDPage;
 import org.jlawyer.data.tree.GenericNode;
 import org.jlawyer.plugins.calculation.GenericCalculationTable;
 import org.jlawyer.plugins.calculation.StyledCalculationTable;
@@ -915,24 +907,6 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
         String[] colNames3 = ArchiveFileReviewReasonsTableModel.getColumnNames();
         ArchiveFileReviewReasonsTableModel model3 = new ArchiveFileReviewReasonsTableModel(colNames3, 0);
         this.tblReviewReasons.setModel(model3);
-
-        if (DrebisUtils.isDrebisEnabled()) {
-            this.mnuCoverage.setEnabled(true);
-            this.mnuMotorCoverage.setEnabled(true);
-            this.mnuFreeTextMessage.setEnabled(true);
-            this.mnuSendMessage.setEnabled(true);
-            this.mnuSendCoverage.setEnabled(true);
-            this.mnuSendMotorCoverage.setEnabled(true);
-            this.cmdDrebis.setEnabled(true);
-        } else {
-            this.mnuCoverage.setEnabled(false);
-            this.mnuMotorCoverage.setEnabled(false);
-            this.mnuFreeTextMessage.setEnabled(false);
-            this.mnuSendMessage.setEnabled(false);
-            this.mnuSendCoverage.setEnabled(false);
-            this.mnuSendMotorCoverage.setEnabled(false);
-            this.cmdDrebis.setEnabled(false);
-        }
 
         if (BeaAccess.isBeaEnabled()) {
             this.mnuSendBeaDocument.setEnabled(true);
@@ -1313,24 +1287,6 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
         this.txtHistoryDesc.setEnabled(!readOnly && !archived);
         this.cmbHistoryTime.setEnabled(!readOnly && !archived);
         this.cmdAddHistory.setEnabled(!readOnly && !archived);
-
-        if (DrebisUtils.isDrebisEnabled() && !readOnly) {
-            this.mnuCoverage.setEnabled(true);
-            this.mnuMotorCoverage.setEnabled(true);
-            this.mnuFreeTextMessage.setEnabled(true);
-            this.mnuSendMessage.setEnabled(true);
-            this.mnuSendCoverage.setEnabled(true);
-            this.mnuSendMotorCoverage.setEnabled(true);
-            this.cmdDrebis.setEnabled(true);
-        } else {
-            this.mnuCoverage.setEnabled(false);
-            this.mnuMotorCoverage.setEnabled(false);
-            this.mnuFreeTextMessage.setEnabled(false);
-            this.mnuSendMessage.setEnabled(false);
-            this.mnuSendCoverage.setEnabled(false);
-            this.mnuSendMotorCoverage.setEnabled(false);
-            this.cmdDrebis.setEnabled(false);
-        }
 
         for (Component c : this.tagPanel.getComponents()) {
             c.setEnabled(!readOnly && !archived);
@@ -1810,11 +1766,6 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
         mnuAssistant = new javax.swing.JMenu();
         jSeparator10 = new javax.swing.JPopupMenu.Separator();
         mnuSendEpostLetter = new javax.swing.JMenuItem();
-        jSeparator9 = new javax.swing.JPopupMenu.Separator();
-        mnuDrebis = new javax.swing.JMenu();
-        mnuCoverage = new javax.swing.JMenuItem();
-        mnuMotorCoverage = new javax.swing.JMenuItem();
-        mnuFreeTextMessage = new javax.swing.JMenuItem();
         jSeparator5 = new javax.swing.JPopupMenu.Separator();
         mnuShareNextcloud = new javax.swing.JMenuItem();
         jSeparator8 = new javax.swing.JPopupMenu.Separator();
@@ -1822,10 +1773,6 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
         popDocumentFavorites = new javax.swing.JPopupMenu();
         popCalculations = new javax.swing.JPopupMenu();
         popDocumentTagFilter = new javax.swing.JPopupMenu();
-        drebisPopup = new javax.swing.JPopupMenu();
-        mnuSendMessage = new javax.swing.JMenuItem();
-        mnuSendCoverage = new javax.swing.JMenuItem();
-        mnuSendMotorCoverage = new javax.swing.JMenuItem();
         popHeader = new javax.swing.JPopupMenu();
         mnuCopyIdToClipboard = new javax.swing.JMenuItem();
         mnuCopyExtIdToClipboard = new javax.swing.JMenuItem();
@@ -1887,7 +1834,6 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
         cmdClearSearch = new javax.swing.JButton();
         cmdAddNote = new javax.swing.JButton();
         cmdDocumentTagFilter = new javax.swing.JButton();
-        cmdDrebis = new javax.swing.JButton();
         splitDocumentsMain = new javax.swing.JSplitPane();
         jScrollPane7 = new javax.swing.JScrollPane();
         pnlPreview = new javax.swing.JPanel();
@@ -2347,39 +2293,6 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
             }
         });
         documentsPopup.add(mnuSendEpostLetter);
-        documentsPopup.add(jSeparator9);
-
-        mnuDrebis.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons16/drebis16.png"))); // NOI18N
-        mnuDrebis.setText("Drebis");
-
-        mnuCoverage.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons16/drebis16.png"))); // NOI18N
-        mnuCoverage.setText("Deckungsanfrage");
-        mnuCoverage.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                mnuCoverageActionPerformed(evt);
-            }
-        });
-        mnuDrebis.add(mnuCoverage);
-
-        mnuMotorCoverage.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons16/drebis16.png"))); // NOI18N
-        mnuMotorCoverage.setText("Kfz-Schadenmeldung");
-        mnuMotorCoverage.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                mnuMotorCoverageActionPerformed(evt);
-            }
-        });
-        mnuDrebis.add(mnuMotorCoverage);
-
-        mnuFreeTextMessage.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons16/drebis16.png"))); // NOI18N
-        mnuFreeTextMessage.setText("Freitext senden");
-        mnuFreeTextMessage.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                mnuFreeTextMessageActionPerformed(evt);
-            }
-        });
-        mnuDrebis.add(mnuFreeTextMessage);
-
-        documentsPopup.add(mnuDrebis);
         documentsPopup.add(jSeparator5);
 
         mnuShareNextcloud.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons16/material/baseline_share_black_48dp.png"))); // NOI18N
@@ -2400,30 +2313,6 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
             }
         });
         documentsPopup.add(mnuUseDocumentAsTemplate);
-
-        mnuSendMessage.setText("Freitext-Nachricht");
-        mnuSendMessage.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                mnuSendMessageActionPerformed(evt);
-            }
-        });
-        drebisPopup.add(mnuSendMessage);
-
-        mnuSendCoverage.setText("Deckungsanfrage senden");
-        mnuSendCoverage.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                mnuSendCoverageActionPerformed(evt);
-            }
-        });
-        drebisPopup.add(mnuSendCoverage);
-
-        mnuSendMotorCoverage.setText("Kfz-Schadenmeldung");
-        mnuSendMotorCoverage.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                mnuSendMotorCoverageActionPerformed(evt);
-            }
-        });
-        drebisPopup.add(mnuSendMotorCoverage);
 
         mnuCopyIdToClipboard.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons16/editpaste.png"))); // NOI18N
         mnuCopyIdToClipboard.setText("ID in die Zwischenablage kopieren");
@@ -2924,13 +2813,6 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
             }
         });
 
-        cmdDrebis.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons16/drebis16.png"))); // NOI18N
-        cmdDrebis.addMouseListener(new java.awt.event.MouseAdapter() {
-            public void mousePressed(java.awt.event.MouseEvent evt) {
-                cmdDrebisMousePressed(evt);
-            }
-        });
-
         splitDocumentsMain.setDividerLocation(500);
 
         jScrollPane7.setHorizontalScrollBarPolicy(javax.swing.ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
@@ -3006,7 +2888,7 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
                         .add(cmdClearSearch)
                         .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
                         .add(lblDocumentHits)
-                        .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED, 74, Short.MAX_VALUE)
+                        .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                         .add(cmdNewDocument)
                         .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
                         .add(cmdUploadDocument)
@@ -3015,18 +2897,15 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
                         .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
                         .add(cmdAddNote)
                         .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
-                        .add(cmdDrebis)
-                        .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
                         .add(cmdAssistantGenerate))
-                    .add(splitDocumentsMain))
+                    .add(splitDocumentsMain, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 1084, Short.MAX_VALUE))
                 .addContainerGap())
         );
         jPanel7Layout.setVerticalGroup(
             jPanel7Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
             .add(org.jdesktop.layout.GroupLayout.TRAILING, jPanel7Layout.createSequentialGroup()
-                .add(jPanel7Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING, false)
+                .add(jPanel7Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
                     .add(jLabel15)
-                    .add(cmdDrebis, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                     .add(jPanel7Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.BASELINE)
                         .add(cmdUploadDocument)
                         .add(cmdNewDocument)
@@ -5259,125 +5138,6 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
         }
     }//GEN-LAST:event_mnuSendDocumentFaxActionPerformed
 
-    private void mnuCoverageActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_mnuCoverageActionPerformed
-
-        ArrayList<ArchiveFileAddressesBean> allParties = new ArrayList<>();
-        for (ArchiveFileAddressesBean abean : this.pnlInvolvedParties.getInvolvedParties()) {
-            allParties.add(abean);
-        }
-
-        ArrayList<AddressBean> clients = new ArrayList<>();
-        for (AddressBean abean : this.pnlInvolvedParties.getInvolvedPartiesAddress()) {
-            clients.add(abean);
-        }
-
-        ArrayList<AddressBean> others = new ArrayList<>();
-        for (AddressBean abean : this.pnlInvolvedParties.getInvolvedPartiesAddress()) {
-            others.add(abean);
-        }
-
-        ArrayList<ArchiveFileDocumentsBean> docs = this.caseFolderPanel1.getDocuments();
-        ArrayList<ArchiveFileDocumentsBean> selectedDocs = this.caseFolderPanel1.getSelectedDocuments();
-
-        DrebisCoverageWizardDialog dlg = new DrebisCoverageWizardDialog(EditorsRegistry.getInstance().getMainWindow(), true);
-
-        WizardSteps steps = new WizardSteps(dlg);
-        steps.addStep(new com.jdimension.jlawyer.client.drebis.coverage.ClientSelectionStep());
-        steps.addStep(new com.jdimension.jlawyer.client.drebis.coverage.OthersSelectionStep());
-        steps.addStep(new com.jdimension.jlawyer.client.drebis.DocumentsStep(DocumentsStep.TYPE_GENERIC));
-        steps.addStep(new com.jdimension.jlawyer.client.drebis.coverage.FinalReviewCoverageStep());
-        steps.addStep(new com.jdimension.jlawyer.client.drebis.coverage.SubmitCoverageStep());
-
-        WizardDataContainer data = steps.getData();
-        data.put("archiveFile.id", this.dto.getId());
-        data.put("archiveFile.name", this.dto.getName());
-        data.put("archiveFile.fileNumber", this.dto.getFileNumber());
-        data.put("insurances", ClientSettings.getInstance().getInsurances());
-        data.put("clients.allparties", allParties);
-        data.put("clients.addressbeans", clients);
-        data.put("others.addressbeans", others);
-        data.put("documents.documentbeans", docs);
-        data.put("documents.documentbeans.selected", selectedDocs);
-
-        dlg.setSteps(steps);
-        FrameUtils.centerDialog(dlg, EditorsRegistry.getInstance().getMainWindow());
-        dlg.setVisible(true);
-
-    }//GEN-LAST:event_mnuCoverageActionPerformed
-
-    private void mnuMotorCoverageActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_mnuMotorCoverageActionPerformed
-
-        ArrayList<ArchiveFileAddressesBean> allParties = new ArrayList<>();
-        for (ArchiveFileAddressesBean abean : this.pnlInvolvedParties.getInvolvedParties()) {
-            allParties.add(abean);
-        }
-
-        ArrayList<AddressBean> clients = new ArrayList<>();
-        for (AddressBean abean : this.pnlInvolvedParties.getInvolvedPartiesAddress()) {
-            clients.add(abean);
-        }
-
-        ArrayList<AddressBean> others = new ArrayList<>();
-        for (AddressBean abean : this.pnlInvolvedParties.getInvolvedPartiesAddress()) {
-            others.add(abean);
-        }
-
-        ArrayList<ArchiveFileDocumentsBean> docs = this.caseFolderPanel1.getDocuments();
-        ArrayList<ArchiveFileDocumentsBean> selDocs = this.caseFolderPanel1.getSelectedDocuments();
-        DrebisClaimWizardDialog dlg = new DrebisClaimWizardDialog(EditorsRegistry.getInstance().getMainWindow(), true);
-
-        WizardSteps steps = new WizardSteps(dlg);
-        steps.addStep(new com.jdimension.jlawyer.client.drebis.claim.ClientSelectionStep());
-        steps.addStep(new com.jdimension.jlawyer.client.drebis.claim.OthersSelectionStep());
-        steps.addStep(new com.jdimension.jlawyer.client.drebis.claim.ClaimDetailsStep());
-        steps.addStep(new com.jdimension.jlawyer.client.drebis.DocumentsStep(DocumentsStep.TYPE_CLAIM));
-        steps.addStep(new com.jdimension.jlawyer.client.drebis.claim.FinalReviewClaimStep());
-        steps.addStep(new com.jdimension.jlawyer.client.drebis.claim.SubmitClaimStep());
-
-        WizardDataContainer data = steps.getData();
-        data.put("archiveFile.id", this.dto.getId());
-        data.put("archiveFile.name", this.dto.getName());
-        data.put("archiveFile.fileNumber", this.dto.getFileNumber());
-        data.put("archiveFile.claimNumber", this.dto.getClaimNumber());
-        data.put("insurances", ClientSettings.getInstance().getMotorInsurances());
-        data.put("clients.allparties", allParties);
-        data.put("clients.addressbeans", clients);
-        data.put("others.addressbeans", others);
-        data.put("documents.documentbeans", docs);
-        data.put("documents.documentbeans.selected", selDocs);
-
-        ClientSettings settings = ClientSettings.getInstance();
-        try {
-            JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
-            List<ArchiveFileFormsBean> forms = locator.lookupFormsServiceRemote().getFormsForCase(this.dto.getId());
-            for (ArchiveFileFormsBean f : forms) {
-                if ("verkehr01".equalsIgnoreCase(f.getFormType().getId())) {
-                    List<ArchiveFileFormEntriesBean> formEntries = locator.lookupFormsServiceRemote().getFormEntries(f.getId());
-                    for (ArchiveFileFormEntriesBean fe : formEntries) {
-                        if (fe.getEntryKey().endsWith("_G_KENNZEICHEN")) {
-                            data.put("_G_KENNZEICHEN", fe.getStringValue());
-                        } else if (fe.getEntryKey().endsWith("_UNFALLDATUM")) {
-                            data.put("_UNFALLDATUM", fe.getStringValue());
-                        } else if (fe.getEntryKey().endsWith("_UNFALLORT")) {
-                            data.put("_UNFALLORT", fe.getStringValue());
-                        } else if (fe.getEntryKey().endsWith("_POLAUFGEN")) {
-                            data.put("_POLAUFGEN", fe.getStringValue());
-                        }
-                    }
-                    break;
-                }
-            }
-
-        } catch (Exception ex) {
-            log.error("Error loading form entries", ex);
-
-        }
-
-        dlg.setSteps(steps);
-        FrameUtils.centerDialog(dlg, EditorsRegistry.getInstance().getMainWindow());
-        dlg.setVisible(true);
-    }//GEN-LAST:event_mnuMotorCoverageActionPerformed
-
     private void cmdExportHtmlActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdExportHtmlActionPerformed
 
         ClientSettings s = ClientSettings.getInstance();
@@ -5418,48 +5178,6 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
 
 
     }//GEN-LAST:event_cmdExportHtmlActionPerformed
-
-    private void mnuFreeTextMessageActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_mnuFreeTextMessageActionPerformed
-
-        ArrayList<ArchiveFileAddressesBean> allParties = new ArrayList<>();
-        for (ArchiveFileAddressesBean abean : this.pnlInvolvedParties.getInvolvedParties()) {
-            allParties.add(abean);
-        }
-
-        ArrayList<AddressBean> clients = new ArrayList<>();
-        for (AddressBean abean : this.pnlInvolvedParties.getInvolvedPartiesAddress()) {
-            clients.add(abean);
-        }
-
-        ArrayList<ArchiveFileDocumentsBean> docs = this.caseFolderPanel1.getDocuments();
-        ArrayList<ArchiveFileDocumentsBean> selDocs = this.caseFolderPanel1.getSelectedDocuments();
-        DrebisFreeTextWizardDialog dlg = new DrebisFreeTextWizardDialog(EditorsRegistry.getInstance().getMainWindow(), true);
-
-        WizardSteps steps = new WizardSteps(dlg);
-
-        WizardDataContainer data = steps.getData();
-        data.put("archiveFile.id", this.dto.getId());
-        data.put("archiveFile.name", this.dto.getName());
-        data.put("archiveFile.fileNumber", this.dto.getFileNumber());
-        data.put("archiveFile.claimNumber", this.dto.getClaimNumber());
-        data.put("insurances", ClientSettings.getInstance().getInsurances());
-        data.put("motorinsurances", ClientSettings.getInstance().getMotorInsurances());
-        data.put("clients.addressbeans", clients);
-        data.put("clients.allparties", allParties);
-        data.put("documents.documentbeans", docs);
-        data.put("documents.documentbeans.selected", selDocs);
-
-        steps.addStep(new com.jdimension.jlawyer.client.drebis.freetext.ClientSelectionStep());
-        steps.addStep(new com.jdimension.jlawyer.client.drebis.DocumentsStep(DocumentsStep.TYPE_GENERIC));
-        steps.addStep(new com.jdimension.jlawyer.client.drebis.freetext.FreeTextStep());
-        steps.addStep(new com.jdimension.jlawyer.client.drebis.freetext.FinalReviewFreeTextStep());
-        steps.addStep(new com.jdimension.jlawyer.client.drebis.freetext.SubmitFreeTextStep());
-        steps.addStep(new com.jdimension.jlawyer.client.drebis.freetext.FreeTextReceiptStep());
-
-        dlg.setSteps(steps);
-        FrameUtils.centerDialog(dlg, EditorsRegistry.getInstance().getMainWindow());
-        dlg.setVisible(true);
-    }//GEN-LAST:event_mnuFreeTextMessageActionPerformed
 
     private void cmdShowHistorySelectorActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdShowHistorySelectorActionPerformed
         MultiCalDialog dlg = new MultiCalDialog(this.txtHistoryDate, EditorsRegistry.getInstance().getMainWindow(), true);
@@ -6274,22 +5992,6 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
     private void cmdDocumentTagFilterActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdDocumentTagFilterActionPerformed
         // TODO add your handling code here:
     }//GEN-LAST:event_cmdDocumentTagFilterActionPerformed
-
-    private void mnuSendMotorCoverageActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_mnuSendMotorCoverageActionPerformed
-        this.mnuMotorCoverageActionPerformed(evt);
-    }//GEN-LAST:event_mnuSendMotorCoverageActionPerformed
-
-    private void mnuSendCoverageActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_mnuSendCoverageActionPerformed
-        this.mnuCoverageActionPerformed(evt);
-    }//GEN-LAST:event_mnuSendCoverageActionPerformed
-
-    private void mnuSendMessageActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_mnuSendMessageActionPerformed
-        this.mnuFreeTextMessageActionPerformed(evt);
-    }//GEN-LAST:event_mnuSendMessageActionPerformed
-
-    private void cmdDrebisMousePressed(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_cmdDrebisMousePressed
-        this.drebisPopup.show(this.cmdDrebis, evt.getX(), evt.getY());
-    }//GEN-LAST:event_cmdDrebisMousePressed
 
     private void cmdAddFormActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdAddFormActionPerformed
         //tabPaneArchiveFile.addTab("allgemeine Daten", new javax.swing.ImageIcon(getClass().getResource("/icons/folder.png")), tabGeneralData);
@@ -7985,7 +7687,6 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
     private javax.swing.JButton cmdClearSearch;
     private javax.swing.JButton cmdCopyCaseNumber;
     private javax.swing.JButton cmdDocumentTagFilter;
-    private javax.swing.JButton cmdDrebis;
     private javax.swing.JButton cmdDuplicateAccountEntry;
     private javax.swing.JButton cmdEditAccountEntry;
     private javax.swing.JButton cmdEditCaseNumber;
@@ -8010,7 +7711,6 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
     private javax.swing.JButton cmdUploadDocument;
     private javax.swing.JPanel documentTagPanel;
     private javax.swing.JPopupMenu documentsPopup;
-    private javax.swing.JPopupMenu drebisPopup;
     private javax.swing.JLabel jLabel1;
     private javax.swing.JLabel jLabel10;
     private javax.swing.JLabel jLabel11;
@@ -8080,7 +7780,6 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
     private javax.swing.JPopupMenu.Separator jSeparator5;
     private javax.swing.JSeparator jSeparator7;
     private javax.swing.JPopupMenu.Separator jSeparator8;
-    private javax.swing.JPopupMenu.Separator jSeparator9;
     protected javax.swing.JLabel lblArchivedSince;
     private javax.swing.JLabel lblCaseChanged;
     private javax.swing.JLabel lblCaseCreated;
@@ -8106,19 +7805,15 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
     private javax.swing.JMenuItem mnuCopyExtIdToClipboard;
     private javax.swing.JMenuItem mnuCopyFilesToClipboard;
     private javax.swing.JMenuItem mnuCopyIdToClipboard;
-    private javax.swing.JMenuItem mnuCoverage;
     private javax.swing.JMenuItem mnuDirectPrint;
     private javax.swing.JMenuItem mnuDocumentHighlight1;
     private javax.swing.JMenuItem mnuDocumentHighlight2;
     private javax.swing.JMenu mnuDocumentHighlights;
-    private javax.swing.JMenu mnuDrebis;
     private javax.swing.JMenuItem mnuDuplicateDocument;
     private javax.swing.JMenuItem mnuDuplicateDocumentAs;
     private javax.swing.JMenuItem mnuDuplicateDocumentAsPdf;
     private javax.swing.JMenuItem mnuDuplicateReview;
     private javax.swing.JMenuItem mnuEditReview;
-    private javax.swing.JMenuItem mnuFreeTextMessage;
-    private javax.swing.JMenuItem mnuMotorCoverage;
     private javax.swing.JMenuItem mnuMoveDocumentToOtherCase;
     private javax.swing.JMenuItem mnuOpenDocument;
     private javax.swing.JMenuItem mnuOpenDocumentLibreOffice;
@@ -8135,14 +7830,11 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
     private javax.swing.JMenuItem mnuSaveDocumentsLocallyPdf;
     private javax.swing.JMenuItem mnuSendBeaDocument;
     private javax.swing.JMenuItem mnuSendBeaDocumentPDF;
-    private javax.swing.JMenuItem mnuSendCoverage;
     private javax.swing.JMenuItem mnuSendDocument;
     private javax.swing.JMenuItem mnuSendDocumentFax;
     private javax.swing.JMenuItem mnuSendDocumentPDF;
     private javax.swing.JMenuItem mnuSendEpostLetter;
-    private javax.swing.JMenuItem mnuSendMessage;
     private javax.swing.JMenuItem mnuSendMessageForDocument;
-    private javax.swing.JMenuItem mnuSendMotorCoverage;
     private javax.swing.JMenuItem mnuSetDocumentDate;
     private javax.swing.JMenuItem mnuSetReviewDone;
     private javax.swing.JMenuItem mnuSetReviewOpen;

@@ -670,6 +670,7 @@ import com.jdimension.jlawyer.client.editors.files.QuickArchiveFileSearchTableMo
 import com.jdimension.jlawyer.client.editors.files.QuickArchiveFileSearchThread;
 import com.jdimension.jlawyer.client.processing.ProgressableActionCallback;
 import com.jdimension.jlawyer.client.settings.ClientSettings;
+import com.jdimension.jlawyer.client.settings.UserSettings;
 import com.jdimension.jlawyer.client.utils.ComponentUtils;
 import com.jdimension.jlawyer.client.utils.FrameUtils;
 import com.jdimension.jlawyer.client.utils.ThreadUtils;
@@ -1090,13 +1091,19 @@ public class SearchAndAssignDialog extends javax.swing.JDialog implements Progre
         ThreadUtils.setWaitCursor(this);
         EditorsRegistry.getInstance().updateStatus("Suche Akten...");
 
-        new Thread(new QuickArchiveFileSearchThread(this, this.txtSearchString
-                .getText(), true, TagUtils
-                        .getSelectedTags(popTagFilter
-                        ), TagUtils
-                        .getSelectedTags(popDocumentTagFilter
-                        ), this.tblResults, this
-        )).start();
+        ClientSettings settings = ClientSettings.getInstance();
+        List<String> caseIdsSyncedForUser=null;
+        try {
+            JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
+            caseIdsSyncedForUser=locator.lookupArchiveFileServiceRemote().getCaseIdsSyncedForUser(UserSettings.getInstance().getCurrentUser().getPrincipalId());
+            
+        } catch (Exception ex) {
+            log.error("Error getting case sync status", ex);
+            JOptionPane.showMessageDialog(this, "Fehler beim Ermitteln des Synchronisationsstatus: " + ex.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
+            EditorsRegistry.getInstance().clearStatus(false);
+        }
+        
+        new Thread(new QuickArchiveFileSearchThread(this, this.txtSearchString.getText(), true, TagUtils.getSelectedTags(popTagFilter), TagUtils.getSelectedTags(popDocumentTagFilter), caseIdsSyncedForUser, this.tblResults, this)).start();
 
     }//GEN-LAST:event_cmdQuickSearchActionPerformed
 

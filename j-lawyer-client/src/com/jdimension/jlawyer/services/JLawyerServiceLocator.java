@@ -844,15 +844,6 @@ public class JLawyerServiceLocator {
         }
     }
     
-    public DrebisServiceRemote lookupDrebisServiceRemote() {
-        try {
-            return (DrebisServiceRemote) ic.lookup("ejb:j-lawyer-server/j-lawyer-server-ejb//DrebisService!com.jdimension.jlawyer.services.DrebisServiceRemote");
-        } catch (NamingException ne) {
-            Logger.getLogger(JLawyerServiceLocator.class.getName()).log(Level.SEVERE, "exception caught", ne);
-            throw new RuntimeException(ne);
-        }
-    }
-    
     public EmailServiceRemote lookupEmailServiceRemote() {
         try {
             return (EmailServiceRemote) ic.lookup("ejb:j-lawyer-server/j-lawyer-server-ejb//EmailService!com.jdimension.jlawyer.services.EmailServiceRemote");
