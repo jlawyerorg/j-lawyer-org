@@ -829,6 +829,7 @@ public class Main {
         FlatLaf.setPreferredSemiboldFontFamily( FlatInterFont.FAMILY_SEMIBOLD );
 
         FlatIntelliJLaf.setup();
+        //FlatDarkLaf.setup();
         
         splash = new StartupSplashFrame();
 
@@ -1035,16 +1036,6 @@ public class Main {
             bea.setHotKey(KeyStroke.getKeyStroke(KeyEvent.VK_F8, InputEvent.SHIFT_DOWN_MASK), "Shift+F8");
         }
         mail.addChildModule(bea);
-        ModuleMetadata drebis = new ModuleMetadata(java.util.ResourceBundle.getBundle("com/jdimension/jlawyer/client/Modules").getString("mod.comm.drebis"));
-        drebis.setEditorClass("com.jdimension.jlawyer.client.drebis.DrebisInboxPanel");
-        drebis.setBackgroundImage("emails.jpg");
-        drebis.setFullName("Drebis-Posteingang");
-        drebis.setEditorName("Drebis");
-        drebis.setModuleName("Post");
-        drebis.setDefaultIcon(new javax.swing.ImageIcon(getClass().getResource("/icons32/material/Icons2-17-blue.png")));
-        drebis.setRolloverIcon(new javax.swing.ImageIcon(getClass().getResource("/icons32/material/Icons2-17-green.png")));
-        drebis.setStatusEventType(Event.TYPE_DREBISSTATUS);
-        mail.addChildModule(drebis);
         ModuleMetadata mailingStatus = new ModuleMetadata(java.util.ResourceBundle.getBundle("com/jdimension/jlawyer/client/Modules").getString("mod.comm.fax"));
         mailingStatus.setEditorClass("com.jdimension.jlawyer.client.voip.MailingStatusPanel");
         mailingStatus.setBackgroundImage("emails.jpg");
