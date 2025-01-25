@@ -732,6 +732,7 @@ public class LoadFolderThread implements Runnable {
     public void run() {
         try {
             if (!(f.getFolder().isOpen())) {
+                System.out.println("open 24");
                 f.getFolder().open(Folder.READ_WRITE);
             }
 
@@ -805,6 +806,7 @@ public class LoadFolderThread implements Runnable {
                                        .toArray(Message[]::new);
             
             if (!(f.getFolder().isOpen())) {
+                System.out.println("open 25");
                 f.getFolder().open(Folder.READ_WRITE);
             }
             if (f.getFolder() instanceof UIDFolder) {
@@ -815,11 +817,13 @@ public class LoadFolderThread implements Runnable {
             }
             
             if (!(f.getFolder().isOpen())) {
+                System.out.println("open 26");
                 f.getFolder().open(Folder.READ_WRITE);
             }
             Message[] uncachedMessages = f.getUncachedMessages(messages);
             
             if (!(f.getFolder().isOpen())) {
+                System.out.println("open 27");
                 f.getFolder().open(Folder.READ_WRITE);
             }
             FetchProfile fp = new FetchProfile();
@@ -851,6 +855,7 @@ public class LoadFolderThread implements Runnable {
                 }
 
                 if (!(f.getFolder().isOpen())) {
+                    System.out.println("open 28");
                     f.getFolder().open(Folder.READ_WRITE);
                 }
 
@@ -925,26 +930,37 @@ public class LoadFolderThread implements Runnable {
 
             SwingUtilities.invokeLater(() -> {
                 try {
-                    table.getRowSorter().toggleSortOrder(this.sortCol);
+                    if(this.sortCol<0) {
+                        log.info("invalid sort column: " + this.sortCol + " using column 3");
+                        this.sortCol=3;
+                    }
+                    if(this.sortCol+1>table.getModel().getColumnCount()) {
+                        log.info("invalid sort column: " + this.sortCol + " - skip sorting");
+                    } else {
+                        table.getRowSorter().toggleSortOrder(this.sortCol);
+                    }
+                    
 
                 } catch (Throwable t) {
-                    log.error("Error sorting mails", t);
+                    log.error("Error sorting mails by column " + this.sortCol + " with " + table.getModel().getColumnCount() + " columns available", t);
                 }
                 ComponentUtils.autoSizeColumns(table, 0);
             });
 
+        } catch (Throwable ex) {
+            log.error(ex);
+        } finally {
             new Thread(() -> {
                 try {
-                    Thread.sleep(5000);
-                    if (f.getFolder().isOpen()) {
+                    //Thread.sleep(5000);
+                    if (!EmailUtils.isInbox(f.getFolder()) && f.getFolder().isOpen()) {
+                        System.out.println("close 22.b");
                         EmailUtils.closeIfIMAP(f.getFolder());
                     }
                 } catch (Throwable t) {
                     log.error(t);
                 }
             }).start();
-        } catch (Throwable ex) {
-            log.error(ex);
         }
     }
 }

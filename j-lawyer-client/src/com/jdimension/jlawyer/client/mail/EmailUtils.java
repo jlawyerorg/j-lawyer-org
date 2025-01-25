@@ -932,6 +932,7 @@ public class EmailUtils extends CommonMailUtils {
             closed = !f.isOpen();
         }
         if (closed && f != null) {
+            System.out.println("open 19");
             f.open(Folder.READ_WRITE);
             return true;
         }

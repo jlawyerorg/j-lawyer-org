@@ -717,6 +717,7 @@ public class CommonMailUtils {
 
         inboxAliases = new ArrayList<>();
         inboxAliases.add("Posteingang");
+        inboxAliases.add("INBOX");
 
         draftAliases = new ArrayList<>();
         draftAliases.add("Entwürfe");
@@ -797,6 +798,13 @@ public class CommonMailUtils {
         return false;
     }
 
+    public static boolean isInbox(Folder f) {
+        if(f==null)
+            return false;
+        
+        return isInbox(f.getName());
+    }
+    
     public static boolean isInbox(String folderName) {
         ArrayList<String> aliases = getFolderAliases(INBOX);
         for (String a : aliases) {

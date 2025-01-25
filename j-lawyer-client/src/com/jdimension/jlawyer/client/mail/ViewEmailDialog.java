@@ -1012,6 +1012,7 @@ public class ViewEmailDialog extends javax.swing.JDialog {
                     // try forwarding attachments
                     if (m.getFolder() != null) {
                         if (!m.getFolder().isOpen()) {
+                            System.out.println("open 40");
                             m.getFolder().open(Folder.READ_WRITE);
                         }
                     }
@@ -1025,7 +1026,7 @@ public class ViewEmailDialog extends javax.swing.JDialog {
                         }
                     }
 
-                    if (m.getFolder() != null) {
+                    if (m.getFolder() != null && !EmailUtils.isInbox(m.getFolder())) {
                         if (m.getFolder().isOpen()) {
                             EmailUtils.closeIfIMAP(m.getFolder());
                         }

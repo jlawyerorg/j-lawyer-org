@@ -872,6 +872,7 @@ public class FolderContainer {
             
             try {
                 if (!(this.folder.isOpen())) {
+                    System.out.println("open 20");
                     this.folder.open(Folder.READ_WRITE);
                 }
             } catch (Exception ex) {

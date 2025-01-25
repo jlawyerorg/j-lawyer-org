@@ -682,6 +682,7 @@ public class PollingThread implements Runnable {
 
     public void cancel() {
         this.cancel = true;
+        EmailUtils.closeIfIMAP(f);
     }
 
     @Override
@@ -689,6 +690,7 @@ public class PollingThread implements Runnable {
         try {
             while (!this.cancel) {
                 if (!f.isOpen()) {
+                    System.out.println("open 35");
                     f.open(Folder.READ_WRITE);
                 }
                 f.getMessageCount();

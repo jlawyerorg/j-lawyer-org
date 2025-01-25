@@ -698,12 +698,14 @@ public class IMAPFolderObserver implements MessageChangedListener, MessageCountL
             
         this.lastUpdateTimeUnreadMessageCount=now;
         try {
-            final int unread = this.parent.getInboxUnread();
-            EventBroker eb = EventBroker.getInstance();
-            eb.publishEvent(new EmailStatusEvent(unread));
-            this.parent.renderInboxNode(this.ms);
-            if(mce.getMessageChangeType()!=MessageChangedEvent.FLAGS_CHANGED)
+            if(mce.getMessageChangeType()==MessageChangedEvent.FLAGS_CHANGED) {
+                final int unread = this.parent.getInboxUnread();
+                EventBroker eb = EventBroker.getInstance();
+                eb.publishEvent(new EmailStatusEvent(unread));
+                this.parent.renderInboxNode(this.ms);
+            } else {
                 this.parent.reloadInboxNode(ms);
+            }
         } catch (Exception ex) {
             log.error("Unable to handle messageChanged event", ex);
         }
