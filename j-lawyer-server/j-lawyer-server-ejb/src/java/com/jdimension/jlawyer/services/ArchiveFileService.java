@@ -5672,7 +5672,7 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
 
     @Override
     @RolesAllowed({"writeArchiveFileRole"})
-    public Invoice copyInvoice(String invoiceId, String toCaseId, InvoicePool invoicePool) throws Exception {
+    public Invoice copyInvoice(String invoiceId, String toCaseId, InvoicePool invoicePool, boolean asCredit) throws Exception {
 
         Invoice oldInvoice = this.invoicesFacade.find(invoiceId);
 
@@ -5693,8 +5693,14 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
         newInvoice.setPeriodTo(oldInvoice.getPeriodTo());
         newInvoice.setStatus(Invoice.STATUS_NEW);
         newInvoice.setPaymentType(Invoice.PAYMENTTYPE_BANKTRANSFER);
-        newInvoice.setTotal(oldInvoice.getTotal());
-        newInvoice.setTotalGross(oldInvoice.getTotalGross());
+        if(oldInvoice.getTotal()!=null && oldInvoice.getTotalGross()!=null && asCredit) {
+            newInvoice.setTotal(oldInvoice.getTotal().negate());
+            newInvoice.setTotalGross(oldInvoice.getTotalGross().negate());
+        } else {
+            newInvoice.setTotal(oldInvoice.getTotal());
+            newInvoice.setTotalGross(oldInvoice.getTotalGross());
+        }
+        
         this.updateInvoice(toCaseId, newInvoice);
 
         List<InvoicePosition> positions = this.invoicePositionsFacade.findByInvoice(oldInvoice);
@@ -5705,8 +5711,14 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
             clone.setName(pos.getName());
             clone.setPosition(pos.getPosition());
             clone.setTaxRate(pos.getTaxRate());
-            clone.setTotal(pos.getTotal());
-            clone.setUnitPrice(pos.getUnitPrice());
+            
+            if(pos.getUnitPrice()!=null && pos.getTotal()!=null && asCredit) {
+                clone.setUnitPrice(pos.getUnitPrice().negate());
+                clone.setTotal(pos.getTotal().negate());
+            } else {
+                clone.setUnitPrice(pos.getUnitPrice());
+                clone.setTotal(pos.getTotal());
+            }
             clone.setUnits(pos.getUnits());
             this.addInvoicePosition(newInvoice.getId(), clone);
         }

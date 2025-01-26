@@ -1050,7 +1050,7 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
         return this.lastPopupClosed;
     }
 
-    public void duplicateInvoice(String caseId, String invoiceId) {
+    public void duplicateInvoice(String caseId, String invoiceId, boolean asCredit) {
         if (caseId == null) {
             SearchAndAssignDialog dlg = new SearchAndAssignDialog(EditorsRegistry.getInstance().getMainWindow(), true, null, null);
             dlg.setVisible(true);
@@ -1091,7 +1091,7 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
         // duplicate and add to view, if same case
         try {
             JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
-            Invoice invoiceCopy = locator.lookupArchiveFileServiceRemote().copyInvoice(invoiceId, caseId, selectedPool);
+            Invoice invoiceCopy = locator.lookupArchiveFileServiceRemote().copyInvoice(invoiceId, caseId, selectedPool, asCredit);
             if (this.dto.getId().equals(caseId)) {
                 InvoiceEntryPanel ip = new InvoiceEntryPanel(this);
                 ip.setEntry(this.dto, invoiceCopy, this.getInvolvedAddresses());

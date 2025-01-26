@@ -884,7 +884,7 @@ public interface ArchiveFileServiceRemote {
 
     void linkInvoiceDocument(String documentId, String invoiceId) throws Exception;
 
-    Invoice copyInvoice(String invoiceId, String toCaseId, InvoicePool invoicePool) throws Exception;
+    Invoice copyInvoice(String invoiceId, String toCaseId, InvoicePool invoicePool, boolean asCredit) throws Exception;
 
     Timesheet addTimesheet(String caseId, Timesheet timesheet) throws Exception;
 

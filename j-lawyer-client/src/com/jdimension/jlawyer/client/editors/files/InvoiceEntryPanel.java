@@ -795,6 +795,7 @@ public class InvoiceEntryPanel extends javax.swing.JPanel {
         lblOpen = new javax.swing.JLabel();
         jLabel1 = new javax.swing.JLabel();
         cmdMarkAsPayed = new javax.swing.JButton();
+        cmdCreditNote = new javax.swing.JButton();
 
         lblInvoiceNumber.setFont(lblInvoiceNumber.getFont().deriveFont(lblInvoiceNumber.getFont().getStyle() | java.awt.Font.BOLD));
         lblInvoiceNumber.setText("RG123");
@@ -880,6 +881,14 @@ public class InvoiceEntryPanel extends javax.swing.JPanel {
             }
         });
 
+        cmdCreditNote.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons16/material/calculate_20dp_0E72B5.png"))); // NOI18N
+        cmdCreditNote.setToolTipText("Gutschrift erstellen");
+        cmdCreditNote.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                cmdCreditNoteActionPerformed(evt);
+            }
+        });
+
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(this);
         this.setLayout(layout);
         layout.setHorizontalGroup(
@@ -889,38 +898,43 @@ public class InvoiceEntryPanel extends javax.swing.JPanel {
                 .addComponent(cmdOpen)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(cmdDuplicate)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(cmdCopy)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(cmdDelete)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                     .addGroup(layout.createSequentialGroup()
-                        .addComponent(lblInvoiceType)
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addComponent(lblName, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                        .addComponent(jLabel2)
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addComponent(lblTotalNet))
-                    .addGroup(layout.createSequentialGroup()
-                        .addComponent(lblRecipient)
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                        .addComponent(jLabel3)
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addComponent(lblPaidTotal))
-                    .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
-                        .addGap(0, 0, Short.MAX_VALUE)
+                        .addGap(74, 74, 74)
                         .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                            .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
-                                .addComponent(jLabel4)
+                            .addGroup(layout.createSequentialGroup()
+                                .addComponent(lblInvoiceType)
                                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                                .addComponent(lblTotalGross))
-                            .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
-                                .addComponent(jLabel1)
+                                .addComponent(lblName, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                                .addComponent(jLabel2)
                                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                                .addComponent(lblOpen))))
+                                .addComponent(lblTotalNet))
+                            .addGroup(layout.createSequentialGroup()
+                                .addComponent(lblRecipient)
+                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 509, Short.MAX_VALUE)
+                                .addComponent(jLabel3)
+                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                                .addComponent(lblPaidTotal))
+                            .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
+                                .addGap(0, 0, Short.MAX_VALUE)
+                                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                                    .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
+                                        .addComponent(jLabel4)
+                                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                                        .addComponent(lblTotalGross))
+                                    .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
+                                        .addComponent(jLabel1)
+                                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                                        .addComponent(lblOpen))))))
                     .addGroup(layout.createSequentialGroup()
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addComponent(cmdCreditNote)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addComponent(cmdCopy)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addComponent(cmdDelete)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                         .addComponent(lblDueDate)
                         .addGap(18, 18, 18)
                         .addComponent(lblInvoiceNumber)
@@ -937,18 +951,18 @@ public class InvoiceEntryPanel extends javax.swing.JPanel {
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                     .addComponent(cmdOpen)
                     .addComponent(cmdDuplicate)
-                    .addComponent(cmdCopy)
                     .addGroup(layout.createSequentialGroup()
-                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
-                            .addGroup(layout.createSequentialGroup()
-                                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                                    .addComponent(lblInvoiceNumber)
-                                    .addComponent(lblStatus, javax.swing.GroupLayout.PREFERRED_SIZE, 28, javax.swing.GroupLayout.PREFERRED_SIZE)
-                                    .addComponent(cmdMarkAsPayed))
-                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED))
-                            .addGroup(layout.createSequentialGroup()
-                                .addComponent(lblDueDate, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                                .addGap(6, 6, 6)))
+                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                            .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                                .addComponent(lblStatus, javax.swing.GroupLayout.PREFERRED_SIZE, 28, javax.swing.GroupLayout.PREFERRED_SIZE)
+                                .addComponent(cmdMarkAsPayed))
+                            .addComponent(cmdCopy)
+                            .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
+                                .addComponent(lblInvoiceNumber)
+                                .addComponent(lblDueDate, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                            .addComponent(cmdDelete)
+                            .addComponent(cmdCreditNote))
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                         .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                             .addGroup(layout.createSequentialGroup()
                                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
@@ -963,8 +977,7 @@ public class InvoiceEntryPanel extends javax.swing.JPanel {
                                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                                     .addComponent(lblTotalGross)
-                                    .addComponent(jLabel4)))))
-                    .addComponent(cmdDelete))
+                                    .addComponent(jLabel4))))))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                     .addComponent(lblPaidTotal)
@@ -1005,11 +1018,11 @@ public class InvoiceEntryPanel extends javax.swing.JPanel {
     }//GEN-LAST:event_cmdDeleteActionPerformed
 
     private void cmdDuplicateActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdDuplicateActionPerformed
-        this.caseView.duplicateInvoice(this.caseDto.getId(), this.getInvoice().getId());
+        this.caseView.duplicateInvoice(this.caseDto.getId(), this.getInvoice().getId(), false);
     }//GEN-LAST:event_cmdDuplicateActionPerformed
 
     private void cmdCopyActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdCopyActionPerformed
-        this.caseView.duplicateInvoice(null, this.getInvoice().getId());
+        this.caseView.duplicateInvoice(null, this.getInvoice().getId(), false);
     }//GEN-LAST:event_cmdCopyActionPerformed
 
     private void cmdMarkAsPayedActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdMarkAsPayedActionPerformed
@@ -1059,9 +1072,14 @@ public class InvoiceEntryPanel extends javax.swing.JPanel {
 
     }//GEN-LAST:event_cmdMarkAsPayedActionPerformed
 
+    private void cmdCreditNoteActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdCreditNoteActionPerformed
+        this.caseView.duplicateInvoice(this.caseDto.getId(), this.getInvoice().getId(), true);
+    }//GEN-LAST:event_cmdCreditNoteActionPerformed
+
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JButton cmdCopy;
+    private javax.swing.JButton cmdCreditNote;
     private javax.swing.JButton cmdDelete;
     private javax.swing.JButton cmdDuplicate;
     private javax.swing.JButton cmdMarkAsPayed;
