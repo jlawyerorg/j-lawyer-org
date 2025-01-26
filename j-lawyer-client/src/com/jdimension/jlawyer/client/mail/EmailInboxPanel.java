@@ -1601,7 +1601,20 @@ public class EmailInboxPanel extends javax.swing.JPanel implements SaveToCaseExe
     }//GEN-LAST:event_cmdRefreshActionPerformed
 
     private void treeFoldersValueChanged(javax.swing.event.TreeSelectionEvent evt) {//GEN-FIRST:event_treeFoldersValueChanged
-        this.treeFoldersValueChangedImpl(evt, 3, -1, null, false);
+        if(this.treeFolders.getSelectionCount()>0) {
+            this.treeFoldersValueChangedImpl(evt, 3, -1, null, false);
+        } else {
+            this.mailContentUI.clear();
+            DefaultTableModel tm = new DefaultTableModel(new String[]{"Betreff", "Absender", "Empfänger", "Gesendet"}, 0) {
+
+                @Override
+                public boolean isCellEditable(int row, int column) {
+                    //all cells false
+                    return false;
+                }
+            };
+            this.tblMails.setModel(tm);
+        }
     }//GEN-LAST:event_treeFoldersValueChanged
 
     /*
