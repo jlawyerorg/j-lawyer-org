@@ -1066,6 +1066,15 @@ public class InvoiceService implements InvoiceServiceRemote, InvoiceServiceLocal
             throw new Exception("Girocode kann nicht erstellt werden - Unternehmensname des Absenders leer. Korrektur unter 'Administration' - 'Nutzer'.");
         }
         String name=sender.getCompany().trim();
+        name=ServerStringUtils.removeSonderzeichen(name);
+        name=name.replace("&", "");
+        name=name.replace("'", "");
+        name=name.replace("\"", "");
+        name=name.replace("/", "");
+        name=name.replace("\\", "");
+        name=name.replace("§", "");
+        name=name.replace("(", "");
+        name=name.replace(")", "");
         
         if (ServerStringUtils.isEmpty(sender.getBankBic())) {
             throw new Exception("Girocode kann nicht erstellt werden - BIC des Absenders ist leer. Korrektur unter 'Administration' - 'Nutzer'.");
