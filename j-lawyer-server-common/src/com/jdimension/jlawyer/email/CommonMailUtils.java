@@ -717,6 +717,7 @@ public class CommonMailUtils {
 
         inboxAliases = new ArrayList<>();
         inboxAliases.add("Posteingang");
+        inboxAliases.add("INBOX");
 
         draftAliases = new ArrayList<>();
         draftAliases.add("Entwürfe");
@@ -797,6 +798,13 @@ public class CommonMailUtils {
         return false;
     }
 
+    public static boolean isInbox(Folder f) {
+        if(f==null)
+            return false;
+        
+        return isInbox(f.getName());
+    }
+    
     public static boolean isInbox(String folderName) {
         ArrayList<String> aliases = getFolderAliases(INBOX);
         for (String a : aliases) {
@@ -951,7 +959,7 @@ public class CommonMailUtils {
                             attachmentInfos.addAll(getAttachmentInfo(mimePart.getContent()));
                         }
                     } catch (Throwable t) {
-                        log.warn("Unable to detect attachment names for mime part - is the mime type information empty?");
+                        log.warn("Unable to detect attachment names for mime part - is the mime type information empty?", t);
                     }
 
                 } else if (Part.ATTACHMENT.equalsIgnoreCase(disposition)) {

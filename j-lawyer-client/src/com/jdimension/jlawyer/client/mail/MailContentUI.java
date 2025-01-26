@@ -1043,6 +1043,7 @@ public class MailContentUI extends javax.swing.JPanel implements HyperlinkListen
             Folder folder = msg.getFolder();
             if (folder != null) {
                 if (!folder.isOpen()) {
+                    System.out.println("open 29");
                     folder.open(Folder.READ_WRITE);
                 }
             }
@@ -1068,12 +1069,12 @@ public class MailContentUI extends javax.swing.JPanel implements HyperlinkListen
                 return true;
             } else {
                 MailContentUI.setMessageImpl(this, msg, ms, this.lblSubject, this.lblSentDate, this.lblTo, this.lblCC, this.lblBCC, this.lblFrom, this.lstAttachments, false, this.fxContainer, this.webViewId);
-            }
-
-            try {
-                EmailUtils.closeIfIMAP(folder);
-            } catch (Throwable t) {
-                log.error(t);
+//                try {
+//                    System.out.println("close 29");
+//                    EmailUtils.closeIfIMAP(folder);
+//                } catch (Throwable t) {
+//                    log.error(t);
+//                }
             }
 
         } catch (Exception ex) {
@@ -1103,6 +1104,7 @@ public class MailContentUI extends javax.swing.JPanel implements HyperlinkListen
             closed = !msg.getFolder().isOpen();
         }
         if (closed) {
+            System.out.println("open 30");
             msg.getFolder().open(Folder.READ_WRITE);
         }
 
@@ -1129,6 +1131,7 @@ public class MailContentUI extends javax.swing.JPanel implements HyperlinkListen
             closed = !msg.getFolder().isOpen();
         }
         if (closed) {
+            System.out.println("open 31");
             msg.getFolder().open(Folder.READ_WRITE);
         }
 
@@ -1143,6 +1146,7 @@ public class MailContentUI extends javax.swing.JPanel implements HyperlinkListen
                 closed = !msg.getFolder().isOpen();
             }
             if (closed) {
+                System.out.println("open 32");
                 msg.getFolder().open(Folder.READ_WRITE);
             }
             msg.writeTo(bos);
@@ -1152,9 +1156,14 @@ public class MailContentUI extends javax.swing.JPanel implements HyperlinkListen
         Session session = Session.getDefaultInstance(props, null);
         Message copiedMsg = new MimeMessage(session, bis);
         bis.close();
-        
-        boolean identical=messagesAreEqual(msg, copiedMsg);
-        if(!identical) {
+
+        boolean identical = messagesAreEqual(msg, copiedMsg);
+        if (!identical) {
+            
+            if (!EmailUtils.isInbox(msg.getFolder())) {
+                System.out.println("close 32.1");
+                EmailUtils.closeIfIMAP(msg.getFolder());
+            }
             throw new EmailRemovedFromServerException();
         }
 
@@ -1174,10 +1183,11 @@ public class MailContentUI extends javax.swing.JPanel implements HyperlinkListen
         lblSentDate.setText(sentString);
         lblSubject.setText(StringUtils.nonNull(copiedMsg.getSubject()));
         lblSubject.setToolTipText("Klicken, um in Zwischenablage zu kopieren:" + System.lineSeparator() + lblSubject.getText());
-        if(copiedMsg.getFrom()!=null && copiedMsg.getFrom().length>0)
+        if (copiedMsg.getFrom() != null && copiedMsg.getFrom().length > 0) {
             lblFrom.setText(MimeUtility.decodeText(copiedMsg.getFrom()[0].toString()));
-        else
+        } else {
             lblFrom.setText("");
+        }
         lblFrom.setToolTipText("Klicken, um in Zwischenablage zu kopieren:" + System.lineSeparator() + lblFrom.getText());
 
         String to = "";
@@ -1258,13 +1268,14 @@ public class MailContentUI extends javax.swing.JPanel implements HyperlinkListen
 
                 html = html.replaceAll("font-size:.{1,7}pt", "font-size:13pt");
 
-                boolean warn=UserSettings.getInstance().getSettingAsBoolean(UserSettings.CONF_MAIL_WARNSENDERUNKNOWN, true);
-                if(warn) {
+                boolean warn = UserSettings.getInstance().getSettingAsBoolean(UserSettings.CONF_MAIL_WARNSENDERUNKNOWN, true);
+                if (warn) {
                     ClientSettings s = ClientSettings.getInstance();
                     String whitelist = s.getConfiguration(ClientSettings.CONF_MAIL_HTMLWHITELIST, "");
                     int index = whitelist.indexOf(getFromAddress(lblFrom.getText(), msg));
-                    if(index > -1)
-                        warn=false;
+                    if (index > -1) {
+                        warn = false;
+                    }
                 }
                 if (!warn) {
                     contentUI.setBody(html, ContentTypes.TEXT_HTML);
@@ -1308,13 +1319,14 @@ public class MailContentUI extends javax.swing.JPanel implements HyperlinkListen
                     log.warn(body);
                 }
 
-                boolean warn=UserSettings.getInstance().getSettingAsBoolean(UserSettings.CONF_MAIL_WARNSENDERUNKNOWN, true);
-                if(warn) {
+                boolean warn = UserSettings.getInstance().getSettingAsBoolean(UserSettings.CONF_MAIL_WARNSENDERUNKNOWN, true);
+                if (warn) {
                     ClientSettings s = ClientSettings.getInstance();
                     String whitelist = s.getConfiguration(ClientSettings.CONF_MAIL_HTMLWHITELIST, "");
                     int index = whitelist.indexOf(getFromAddress(lblFrom.getText(), copiedMsg));
-                    if(index > -1)
-                        warn=false;
+                    if (index > -1) {
+                        warn = false;
+                    }
                 }
                 if (!warn) {
                     contentUI.setBody(body, ContentTypes.TEXT_HTML);
@@ -1327,14 +1339,15 @@ public class MailContentUI extends javax.swing.JPanel implements HyperlinkListen
             }
         }
 
-        if (closed) {
+        if (!EmailUtils.isInbox(msg.getFolder())) {
+            System.out.println("close 32.2");
             EmailUtils.closeIfIMAP(msg.getFolder());
         }
 
     }
-    
+
     private static boolean messagesAreEqual(Message msg, Message copiedMsg) throws Exception {
-        
+
         InternetAddress[] originalFrom = (InternetAddress[]) msg.getFrom();
         InternetAddress[] copiedFrom = (InternetAddress[]) copiedMsg.getFrom();
 
@@ -1343,29 +1356,30 @@ public class MailContentUI extends javax.swing.JPanel implements HyperlinkListen
         if (!fromMatches) {
             return false;
         }
-        
-        String subject1="";
-        if(msg.getSubject()!=null)
-            subject1=msg.getSubject();
-        
-        String subject2="";
-        if(copiedMsg.getSubject()!=null)
-            subject2=copiedMsg.getSubject();
-        
+
+        String subject1 = "";
+        if (msg.getSubject() != null) {
+            subject1 = msg.getSubject();
+        }
+
+        String subject2 = "";
+        if (copiedMsg.getSubject() != null) {
+            subject2 = copiedMsg.getSubject();
+        }
+
         boolean headersMatch = subject1.replace(" ", "").replace("\t", "").equals(subject2.replace(" ", "").replace("\t", ""))
                 && msg.getSentDate().equals(copiedMsg.getSentDate());
 
         if (!headersMatch) {
             return false;
         }
-        
+
 //        int originalSize = msg.getSize();
 //        int copiedSize = copiedMsg.getSize();
 //
 //        if (originalSize != copiedSize) {
 //            return false;
 //        }
-        
 //        String[] messageIds = msg.getHeader("Message-ID");
 //        String originalMessageId = (messageIds != null && messageIds.length > 0) ? messageIds[0] : null;
 //
@@ -1378,7 +1392,6 @@ public class MailContentUI extends javax.swing.JPanel implements HyperlinkListen
 //                }
 //            }
 //        }
-        
         return true;
     }
 
@@ -1472,13 +1485,14 @@ public class MailContentUI extends javax.swing.JPanel implements HyperlinkListen
             contentUI.setContentType(ContentTypes.TEXT_HTML);
 
             if (msg.getFromEmail() != null) {
-                boolean warn=UserSettings.getInstance().getSettingAsBoolean(UserSettings.CONF_MAIL_WARNSENDERUNKNOWN, true);
-                if(warn) {
+                boolean warn = UserSettings.getInstance().getSettingAsBoolean(UserSettings.CONF_MAIL_WARNSENDERUNKNOWN, true);
+                if (warn) {
                     ClientSettings s = ClientSettings.getInstance();
                     String whitelist = s.getConfiguration(ClientSettings.CONF_MAIL_HTMLWHITELIST, "");
                     int index = whitelist.indexOf(msg.getFromEmail());
-                    if(index > -1)
-                        warn=false;
+                    if (index > -1) {
+                        warn = false;
+                    }
                 }
                 if (!warn) {
                     contentUI.setBody(htmlContent, ContentTypes.TEXT_HTML);
@@ -2078,7 +2092,7 @@ public class MailContentUI extends javax.swing.JPanel implements HyperlinkListen
 
         AssistantAccess ingo = AssistantAccess.getInstance();
         try {
-           this.popAssistant.removeAll();
+            this.popAssistant.removeAll();
 
             // Erste Kategorie
             Map<AssistantConfig, List<AiCapability>> capabilitiesGenerate = ingo.filterCapabilities(AiCapability.REQUESTTYPE_GENERATE, AiCapability.INPUTTYPE_STRING);
@@ -2118,7 +2132,6 @@ public class MailContentUI extends javax.swing.JPanel implements HyperlinkListen
             // Sechste Kategorie
             Map<AssistantConfig, List<AiCapability>> capabilities4 = ingo.filterCapabilities(AiCapability.REQUESTTYPE_CHAT, AiCapability.INPUTTYPE_NONE);
             ingo.populateMenu(this.popAssistant, capabilities4, (AssistantInputAdapter) this, this.caseContext);
-            
 
             this.popAssistant.show(this.cmdAssistant, evt.getX(), evt.getY());
         } catch (Exception ex) {

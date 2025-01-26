@@ -870,6 +870,14 @@ public class FolderContainer {
             Set<Long> newUids = new HashSet<>(serverUids);
             newUids.removeAll(cachedMessages.keySet());
             
+            try {
+                if (!(this.folder.isOpen())) {
+                    System.out.println("open 20");
+                    this.folder.open(Folder.READ_WRITE);
+                }
+            } catch (Exception ex) {
+                log.error("Unable to open folder", ex);
+            }
             ArrayList<Message> uncached=new ArrayList<>();
             for (Message message : messages) {
                 try {

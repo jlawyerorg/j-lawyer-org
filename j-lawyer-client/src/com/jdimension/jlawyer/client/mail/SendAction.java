@@ -1082,32 +1082,19 @@ public class SendAction extends ProgressableAction {
                 store.connect();
             }
 
-            Folder folder = EmailUtils.getInboxFolder(store);
-            if (!folder.isOpen()) {
-                folder.open(Folder.READ_WRITE);
-            }
-
             Folder sent = EmailUtils.getSentFolder(store);
             if (sent != null) {
                 this.progress("Kopiere Nachricht in 'Gesendet'...");
-                boolean closed = !sent.isOpen();
                 if (!sent.isOpen()) {
+                    System.out.println("open 37");
                     sent.open(Folder.READ_WRITE);
                 }
                 msg.setFlag(Flags.Flag.SEEN, true);
                 sent.appendMessages(new Message[]{msg});
-                if (closed) {
-                    EmailUtils.closeIfIMAP(sent);
-                }
+                EmailUtils.closeIfIMAP(sent);
 
             } else {
                 log.error("Unable to determine 'Sent' folder for mailbox");
-            }
-
-            try {
-                EmailUtils.closeIfIMAP(folder);
-            } catch (Throwable t) {
-                log.error(t);
             }
 
             store.close();

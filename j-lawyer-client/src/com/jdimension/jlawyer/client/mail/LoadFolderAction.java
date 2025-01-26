@@ -744,6 +744,7 @@ public class LoadFolderAction extends ProgressableAction {
     public boolean execute() throws Exception {
         try {
             if (!(f.getFolder().isOpen())) {
+                System.out.println("open 22");
                 f.getFolder().open(Folder.READ_WRITE);
             }
 
@@ -867,6 +868,7 @@ public class LoadFolderAction extends ProgressableAction {
                 }
 
                 if (!(f.getFolder().isOpen())) {
+                    System.out.println("open 23");
                     f.getFolder().open(Folder.READ_WRITE);
                 }
 
@@ -948,20 +950,21 @@ public class LoadFolderAction extends ProgressableAction {
                 }
                 ComponentUtils.autoSizeColumns(table, 0);
             });
-
+        } catch (Throwable ex) {
+            log.error(ex);
+            return false;
+        } finally {
             new Thread(() -> {
                 try {
-                    Thread.sleep(5000);
-                    if (f.getFolder().isOpen()) {
+                    //Thread.sleep(5000);
+                    if (!EmailUtils.isInbox(f.getFolder()) && f.getFolder().isOpen()) {
+                        System.out.println("close 22");
                         EmailUtils.closeIfIMAP(f.getFolder());
                     }
                 } catch (Throwable t) {
                     log.error(t);
                 }
             }).start();
-        } catch (Throwable ex) {
-            log.error(ex);
-            return false;
         }
         return true;
     }

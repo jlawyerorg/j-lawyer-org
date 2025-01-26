@@ -685,6 +685,9 @@ public class IDLEThread implements Runnable {
 
     public void cancel() {
         this.cancel = true;
+        System.out.println("close 21a");
+        EmailUtils.closeIfIMAP(f);
+        
     }
 
     @Override
@@ -697,6 +700,7 @@ public class IDLEThread implements Runnable {
             while (!this.cancel) {
                 try {
                     if (!f.isOpen()) {
+                        System.out.println("open 21");
                         f.open(Folder.READ_WRITE);
                     }
                 } catch (Throwable t) {
@@ -704,7 +708,7 @@ public class IDLEThread implements Runnable {
                 }
                 try {
                     ((IMAPFolder) f).idle();
-                    Thread.sleep(500);
+                    //Thread.sleep(500);
                 } catch (MessagingException mex) {
                     log.error("IMAP IDLE not supported - cancelling IDLE thread: " + mex.getMessage());
                     return;
@@ -713,6 +717,9 @@ public class IDLEThread implements Runnable {
                 }
 
             }
+            log.info("IDLE thread cancelled");
+            System.out.println("close 21b");
+            EmailUtils.closeIfIMAP(f);
 
         } catch (Throwable t) {
             log.error("Could not enter IDLE mode for folder", t);
