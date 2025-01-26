@@ -712,7 +712,9 @@ public class QuickArchiveFileSearchCellRenderer extends DefaultTableCellRenderer
             }
         }
 
-        ((JLabel) returnRenderer).setIcon(null);
+        if (returnRenderer instanceof JLabel)
+            ((JLabel) returnRenderer).setIcon(null);
+        
         // app sync status
         if (column == 6) {
             ((JLabel) returnRenderer).setText("");
