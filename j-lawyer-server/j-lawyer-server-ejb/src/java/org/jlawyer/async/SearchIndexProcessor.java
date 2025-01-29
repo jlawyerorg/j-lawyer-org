@@ -750,6 +750,7 @@ public class SearchIndexProcessor implements MessageListener {
                                 log.error("Could not process search index request for " + db.getName() + ": " + message.toString(), th);
                             }
                         }
+                        log.info("full re-indexing finished");
                     }
                 } else if (o instanceof OcrRequest) {
 
