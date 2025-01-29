@@ -1069,12 +1069,6 @@ public class MailContentUI extends javax.swing.JPanel implements HyperlinkListen
                 return true;
             } else {
                 MailContentUI.setMessageImpl(this, msg, ms, this.lblSubject, this.lblSentDate, this.lblTo, this.lblCC, this.lblBCC, this.lblFrom, this.lstAttachments, false, this.fxContainer, this.webViewId);
-//                try {
-//                    System.out.println("close 29");
-//                    EmailUtils.closeIfIMAP(folder);
-//                } catch (Throwable t) {
-//                    log.error(t);
-//                }
             }
 
         } catch (Exception ex) {

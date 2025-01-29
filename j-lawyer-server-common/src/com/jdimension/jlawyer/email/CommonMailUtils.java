@@ -717,7 +717,7 @@ public class CommonMailUtils {
 
         inboxAliases = new ArrayList<>();
         inboxAliases.add("Posteingang");
-        inboxAliases.add("INBOX");
+        inboxAliases.add(INBOX);
 
         draftAliases = new ArrayList<>();
         draftAliases.add("Entwürfe");

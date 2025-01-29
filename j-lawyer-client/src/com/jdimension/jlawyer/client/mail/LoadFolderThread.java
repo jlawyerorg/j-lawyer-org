@@ -952,7 +952,6 @@ public class LoadFolderThread implements Runnable {
         } finally {
             new Thread(() -> {
                 try {
-                    //Thread.sleep(5000);
                     if (!EmailUtils.isInbox(f.getFolder()) && f.getFolder().isOpen()) {
                         System.out.println("close 22.b");
                         EmailUtils.closeIfIMAP(f.getFolder());

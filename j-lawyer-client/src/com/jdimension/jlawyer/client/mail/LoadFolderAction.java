@@ -956,7 +956,6 @@ public class LoadFolderAction extends ProgressableAction {
         } finally {
             new Thread(() -> {
                 try {
-                    //Thread.sleep(5000);
                     if (!EmailUtils.isInbox(f.getFolder()) && f.getFolder().isOpen()) {
                         System.out.println("close 22");
                         EmailUtils.closeIfIMAP(f.getFolder());
