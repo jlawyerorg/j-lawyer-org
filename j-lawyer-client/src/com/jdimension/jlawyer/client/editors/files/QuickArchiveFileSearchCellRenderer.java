@@ -716,10 +716,10 @@ public class QuickArchiveFileSearchCellRenderer extends DefaultTableCellRenderer
             ((JLabel) returnRenderer).setIcon(null);
         
         // app sync status
-        if (column == 6) {
-            ((JLabel) returnRenderer).setText("");
+        if (column == 6 && returnRenderer instanceof JLabel) {
             if(value==null)
                 value="false";
+            ((JLabel) returnRenderer).setText("");
             if ("true".equals(value)) {
                 ((JLabel) returnRenderer).setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons16/outline_security_update_good_black_48dp.png")));
             } else {
