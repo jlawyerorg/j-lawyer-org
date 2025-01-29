@@ -690,69 +690,71 @@ import themes.colors.DefaultColorTheme;
  */
 public class TimesheetLogEntryPanel extends javax.swing.JPanel {
 
-    private static final Logger log=Logger.getLogger(TimesheetLogEntryPanel.class.getName());
-    
-    private HashMap<String,TimesheetPositionTemplate> templates=new HashMap<>();
-    
+    private static final Logger log = Logger.getLogger(TimesheetLogEntryPanel.class.getName());
+
+    private HashMap<String, TimesheetPositionTemplate> templates = new HashMap<>();
+
     ArchiveFileBean entryCase = null;
     TimesheetPosition entry = null;
     Timesheet entrySheet = null;
-    TimesheetLogDialog containingParent=null;
+    TimesheetLogDialog containingParent = null;
 
     /**
      * Creates new form TimesheetLogEntryPanel
+     *
      * @param posTemplates
      * @param cParent
      */
     public TimesheetLogEntryPanel(TimesheetLogDialog cParent, List<TimesheetPositionTemplate> posTemplates) {
         initComponents();
         this.cmdSave.setText("");
-        this.containingParent=cParent;
-        
-        this.txtManualEntry.putClientProperty("JTextField.placeholderText", "min");
-        this.txtManualEntry.setToolTipText("Minuten eingeben und mit Enter bestätigen, um Zeit manuell zu buchen");
-        
+        this.containingParent = cParent;
+
+        this.txtManualEntry.putClientProperty("JTextField.placeholderText", "2h45m");
+        this.txtManualEntry.setToolTipText("Zeit eingeben im Format 2h45m und mit Enter bestätigen, um Zeit manuell zu buchen");
+
         this.cmbTemplate.removeAllItems();
-        for(TimesheetPositionTemplate t: posTemplates) {
+        for (TimesheetPositionTemplate t : posTemplates) {
             this.templates.put(t.getName(), t);
             this.cmbTemplate.addItem(t.getName());
         }
-        
+
         ComponentUtils.addAutoComplete(cmbTemplate);
-        
+
     }
-    
+
     private void setStatusColor(Color c) {
         this.txtStart.setForeground(c);
         this.txtEnd.setForeground(c);
         this.lblDuration.setForeground(c);
     }
-    
+
     public boolean isEntryRunning() {
-        return this.entry.getStarted()!=null && this.entry.getStopped()==null;
+        return this.entry.getStarted() != null && this.entry.getStopped() == null;
     }
 
     public ArchiveFileBean getEntryCase() {
         return this.entryCase;
     }
-    
+
     public Timesheet getEntryTimesheet() {
         return this.entrySheet;
     }
-    
+
     public TimesheetPosition getEntryPosition() {
         return this.entry;
     }
-    
+
     public void setEntry(ArchiveFileBean entryCase, Timesheet ts, TimesheetPosition tsp) {
         this.entry = tsp;
         this.entryCase = entryCase;
         this.entrySheet = ts;
         this.lblProject.setText(entryCase.getFileNumber() + " " + entryCase.getName() + ": " + ts.getName());
-        if(tsp.getName().trim().isEmpty())
+        if (tsp.getName().trim().isEmpty()) {
             this.cmbTemplate.setSelectedIndex(0);
-        else
+        } else {
             this.cmbTemplate.setSelectedItem(tsp.getName());
+        }
         this.taDescription.setText(tsp.getDescription());
         if (this.entry.getStarted() != null) {
             this.txtStart.setValue(this.entry.getStarted());
@@ -770,35 +772,34 @@ public class TimesheetLogEntryPanel extends javax.swing.JPanel {
         Date stopped = this.entry.getStopped();
 
         if (started != null) {
-            
+
             if (stopped == null) {
                 // position is running
-                
+
                 String duration = StringUtils.formatDuration((new Date().getTime() - started.getTime()));
                 this.lblDuration.setText(duration);
-                
+
                 cmdStartStop.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons32/material/baseline_stop_circle_black_48dp.png")));
-                
+
                 this.setStatusColor(DefaultColorTheme.COLOR_LOGO_RED);
-                
+
             } else {
                 // position already closed
                 String duration = StringUtils.formatDuration((stopped.getTime() - started.getTime()));
                 this.lblDuration.setText(duration);
-                
+
                 cmdStartStop.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons32/material/baseline_play_circle_black_48dp.png")));
             }
         } else {
             this.lblDuration.setText("");
         }
-        
+
         this.txtStart.setEditable(!this.entry.isRunning());
         this.txtEnd.setEditable(!this.entry.isRunning());
-        
-        this.cmbTemplate.setEnabled(this.entry.getId()==null);
-        
-        
-        this.cmdSave.setEnabled(started!=null);
+
+        this.cmbTemplate.setEnabled(this.entry.getId() == null);
+
+        this.cmdSave.setEnabled(started != null);
 
     }
 
@@ -914,7 +915,7 @@ public class TimesheetLogEntryPanel extends javax.swing.JPanel {
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                         .addComponent(jLabel3)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addComponent(txtManualEntry, javax.swing.GroupLayout.PREFERRED_SIZE, 80, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addComponent(txtManualEntry, javax.swing.GroupLayout.PREFERRED_SIZE, 100, javax.swing.GroupLayout.PREFERRED_SIZE)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                         .addComponent(jLabel1)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
@@ -964,12 +965,13 @@ public class TimesheetLogEntryPanel extends javax.swing.JPanel {
         if (this.entry.getStarted() == null) {
             // new entry
             this.containingParent.checkMultipleEntriesForCase(this.entryCase.getId(), this.entry.getId());
-            boolean warnOnParallelAcrossCases=ServerSettings.getInstance().getSettingAsBoolean(ServerSettings.SERVERCONF_TIMESHEET_PARALLELLOGS_WARNING, false);
-            if(warnOnParallelAcrossCases)
+            boolean warnOnParallelAcrossCases = ServerSettings.getInstance().getSettingAsBoolean(ServerSettings.SERVERCONF_TIMESHEET_PARALLELLOGS_WARNING, false);
+            if (warnOnParallelAcrossCases) {
                 this.containingParent.checkMultipleEntriesInDifferentCase(this.entryCase.getId(), this.entry.getId());
+            }
             this.entry.setDescription(this.taDescription.getText());
             this.entry.setName(this.cmbTemplate.getEditor().getItem().toString());
-            if(this.templates.containsKey(this.cmbTemplate.getEditor().getItem().toString())) {
+            if (this.templates.containsKey(this.cmbTemplate.getEditor().getItem().toString())) {
                 this.entry.setTaxRate(this.templates.get(this.cmbTemplate.getEditor().getItem().toString()).getTaxRate());
                 this.entry.setUnitPrice(this.templates.get(this.cmbTemplate.getEditor().getItem().toString()).getUnitPrice());
             } else {
@@ -986,16 +988,16 @@ public class TimesheetLogEntryPanel extends javax.swing.JPanel {
                 log.error("Error starting timesheet position", ex);
                 JOptionPane.showMessageDialog(this, "Fehler beim Starten des Zeiterfassungseintrages: " + ex.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
             }
-            
+
         } else {
-            
+
             if (this.entry.getStopped() == null) {
                 // running
                 try {
                     JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
                     ArchiveFileServiceRemote afs = locator.lookupArchiveFileServiceRemote();
                     this.entry.setDescription(this.taDescription.getText());
-                    TimesheetPosition stopped=afs.timesheetPositionStop(this.entry.getTimesheet().getId(), entry);
+                    TimesheetPosition stopped = afs.timesheetPositionStop(this.entry.getTimesheet().getId(), entry);
                     this.setEntry(entryCase, entrySheet, stopped);
                     cmdStartStop.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons32/material/baseline_play_circle_black_48dp.png")));
                     this.setStatusColor(DefaultColorTheme.COLOR_LOGO_GREEN);
@@ -1003,18 +1005,19 @@ public class TimesheetLogEntryPanel extends javax.swing.JPanel {
                     log.error("Error stopping open timesheet position", ex);
                     JOptionPane.showMessageDialog(this, "Fehler beim Stoppen des Zeiterfassungseintrages: " + ex.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
                 }
-                
+
             } else {
                 // already closed
-                
+
                 this.containingParent.checkMultipleEntriesForCase(this.entryCase.getId(), this.entry.getId());
                 boolean warnOnParallelAcrossCases = ServerSettings.getInstance().getSettingAsBoolean(ServerSettings.SERVERCONF_TIMESHEET_PARALLELLOGS_WARNING, false);
-                if (warnOnParallelAcrossCases)
+                if (warnOnParallelAcrossCases) {
                     this.containingParent.checkMultipleEntriesInDifferentCase(this.entryCase.getId(), this.entry.getId());
+                }
                 try {
                     JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
                     ArchiveFileServiceRemote afs = locator.lookupArchiveFileServiceRemote();
-                    TimesheetPosition started=afs.timesheetPositionStart(this.entry.getTimesheet().getId(), entry);
+                    TimesheetPosition started = afs.timesheetPositionStart(this.entry.getTimesheet().getId(), entry);
                     this.setEntry(entryCase, entrySheet, started);
                     cmdStartStop.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons32/material/baseline_stop_circle_black_48dp.png")));
                     this.setStatusColor(DefaultColorTheme.COLOR_LOGO_RED);
@@ -1022,15 +1025,15 @@ public class TimesheetLogEntryPanel extends javax.swing.JPanel {
                     log.error("Error restarting open timesheet position", ex);
                     JOptionPane.showMessageDialog(this, "Fehler beim Stoppen/Starten des Zeiterfassungseintrages: " + ex.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
                 }
-                
+
             }
         }
         this.containingParent.entryStartedOrStopped();
         this.containingParent.updatePercentageDone(entrySheet);
     }
-    
+
     private void cmdStartStopActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdStartStopActionPerformed
-        
+
         this.startStop();
         this.cmdSaveActionPerformed(evt);
 
@@ -1039,30 +1042,45 @@ public class TimesheetLogEntryPanel extends javax.swing.JPanel {
     public void save() {
         this.cmdSaveActionPerformed(null);
     }
-    
-    private void saveManualEntry () {
-        
-        this.setStatusColor(DefaultColorTheme.COLOR_LOGO_BLUE);
-        
-        int minutes=-1;
-        try {
-            minutes=Integer.parseInt(this.txtManualEntry.getText());
-        } catch (Throwable t) {
-            log.error("invalid minute amount: " + this.txtManualEntry.getText(), t);    
+
+    private boolean isValidTimeFormat(String text) {
+        return text.matches("\\d+h\\d+m") || text.matches("\\d+m");
+    }
+
+    private int getTotalMinutes() {
+        String text = this.txtManualEntry.getText();
+
+        if (text.matches("\\d+m")) {
+            // Format "xxm" - only minutes
+            return Integer.parseInt(text.replaceAll("(\\d+)m", "$1"));
+        } else {
+            // Format "xxhyym" - hours and minutes
+            int hours = Integer.parseInt(text.replaceAll("(\\d+)h\\d+m", "$1"));
+            int minutes = Integer.parseInt(text.replaceAll("\\d+h(\\d+)m", "$1"));
+            return hours * 60 + minutes;
         }
-        if(minutes<0 || minutes > (24l*60l*60l*1000l))
-            minutes=-1;
-        
-        if(minutes<0) {
+    }
+
+    private void saveManualEntry() {
+
+        this.setStatusColor(DefaultColorTheme.COLOR_LOGO_BLUE);
+
+        int minutes = this.getTotalMinutes();
+
+        if (minutes < 0 || minutes > (24l * 60l * 60l * 1000l)) {
+            minutes = -1;
+        }
+
+        if (minutes < 0) {
             JOptionPane.showMessageDialog(this, "Ungültige Minutenangabe: " + txtManualEntry.getText(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_WARNING, JOptionPane.WARNING_MESSAGE);
             return;
         }
-        
+
         ClientSettings settings = ClientSettings.getInstance();
 
         this.entry.setDescription(this.taDescription.getText());
         this.entry.setName(this.cmbTemplate.getEditor().getItem().toString());
-        if(this.templates.containsKey(this.cmbTemplate.getEditor().getItem().toString())) {
+        if (this.templates.containsKey(this.cmbTemplate.getEditor().getItem().toString())) {
             this.entry.setTaxRate(this.templates.get(this.cmbTemplate.getEditor().getItem().toString()).getTaxRate());
             this.entry.setUnitPrice(this.templates.get(this.cmbTemplate.getEditor().getItem().toString()).getUnitPrice());
         } else {
@@ -1070,20 +1088,20 @@ public class TimesheetLogEntryPanel extends javax.swing.JPanel {
             this.entry.setTaxRate(BigDecimal.valueOf(19f));
             this.entry.setUnitPrice(BigDecimal.ZERO);
         }
-        
-        Date start=new Date();
+
+        Date start = new Date();
         this.txtEnd.setValue(start);
-        this.txtStart.setValue(new Date(start.getTime()-minutes*60l*1000l));
-        
-        Date dEnd=(Date)this.txtEnd.getValue();
-        Date dStart=(Date)this.txtStart.getValue();
-        if(dStart != null && dEnd != null) {
+        this.txtStart.setValue(new Date(start.getTime() - minutes * 60l * 1000l));
+
+        Date dEnd = (Date) this.txtEnd.getValue();
+        Date dStart = (Date) this.txtStart.getValue();
+        if (dStart != null && dEnd != null) {
             if (dEnd.after(dStart)) {
                 this.entry.setStarted(dStart);
                 this.entry.setStopped(dEnd);
             }
         }
-        
+
         try {
             JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
             ArchiveFileServiceRemote afs = locator.lookupArchiveFileServiceRemote();
@@ -1093,27 +1111,27 @@ public class TimesheetLogEntryPanel extends javax.swing.JPanel {
             log.error("Error adding timesheet position", ex);
             JOptionPane.showMessageDialog(this, "Fehler beim Hinzufügen des Zeiterfassungseintrages: " + ex.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
         }
-        
+
         this.containingParent.updatePercentageDone(entrySheet);
-        
+
         SwingUtilities.invokeLater(() -> {
             try {
                 Thread.sleep(1500);
                 txtManualEntry.setValue(null);
             } catch (Exception ex) {
-                
+
             }
             setStatusColor(DefaultColorTheme.COLOR_LOGO_GREEN);
         });
-        
+
     }
-    
+
     private void cmdSaveActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdSaveActionPerformed
         ClientSettings settings = ClientSettings.getInstance();
 
         this.entry.setDescription(this.taDescription.getText());
         this.entry.setName(this.cmbTemplate.getEditor().getItem().toString());
-        if(this.templates.containsKey(this.cmbTemplate.getEditor().getItem().toString())) {
+        if (this.templates.containsKey(this.cmbTemplate.getEditor().getItem().toString())) {
             this.entry.setTaxRate(this.templates.get(this.cmbTemplate.getEditor().getItem().toString()).getTaxRate());
             this.entry.setUnitPrice(this.templates.get(this.cmbTemplate.getEditor().getItem().toString()).getUnitPrice());
         } else {
@@ -1121,16 +1139,16 @@ public class TimesheetLogEntryPanel extends javax.swing.JPanel {
             this.entry.setTaxRate(BigDecimal.valueOf(19f));
             this.entry.setUnitPrice(BigDecimal.ZERO);
         }
-        
-        Date dStart=(Date)this.txtStart.getValue();
-        Date dEnd=(Date)this.txtEnd.getValue();
-        if(dStart != null && dEnd != null) {
+
+        Date dStart = (Date) this.txtStart.getValue();
+        Date dEnd = (Date) this.txtEnd.getValue();
+        if (dStart != null && dEnd != null) {
             if (dEnd.after(dStart)) {
                 this.entry.setStarted(dStart);
                 this.entry.setStopped(dEnd);
             }
         }
-        
+
         try {
             JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
             ArchiveFileServiceRemote afs = locator.lookupArchiveFileServiceRemote();
@@ -1146,13 +1164,25 @@ public class TimesheetLogEntryPanel extends javax.swing.JPanel {
     }//GEN-LAST:event_cmdSaveActionPerformed
 
     private void cmbTemplateActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmbTemplateActionPerformed
-        if(this.templates.containsKey(this.cmbTemplate.getEditor().getItem().toString())) {
+        if (this.templates.containsKey(this.cmbTemplate.getEditor().getItem().toString())) {
             this.taDescription.setText(this.templates.get(this.cmbTemplate.getEditor().getItem().toString()).getDescription());
         }
     }//GEN-LAST:event_cmbTemplateActionPerformed
 
     private void txtManualEntryKeyPressed(java.awt.event.KeyEvent evt) {//GEN-FIRST:event_txtManualEntryKeyPressed
-        if(evt.getKeyCode()==KeyEvent.VK_ENTER) {
+        if (evt.getKeyCode() == KeyEvent.VK_ENTER) {
+
+            if (!isValidTimeFormat(txtManualEntry.getText())) {
+                JOptionPane.showMessageDialog(
+                        null,
+                        "Ungültige Eingabe - bitte im Format __h__m, bspw. 2h45m für 2 Stunden und 45 Minuten",
+                        "Ungültige Eingabe",
+                        JOptionPane.WARNING_MESSAGE
+                );
+                txtManualEntry.setText("");
+                return;
+            }
+
             this.saveManualEntry();
         }
     }//GEN-LAST:event_txtManualEntryKeyPressed
