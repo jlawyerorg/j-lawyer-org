@@ -1047,25 +1047,13 @@ public class TimesheetLogEntryPanel extends javax.swing.JPanel {
         return text.matches("\\d+h\\d+m") || text.matches("\\d+m");
     }
 
-    private int getTotalMinutes() {
-        String text = this.txtManualEntry.getText();
-
-        if (text.matches("\\d+m")) {
-            // Format "xxm" - only minutes
-            return Integer.parseInt(text.replaceAll("(\\d+)m", "$1"));
-        } else {
-            // Format "xxhyym" - hours and minutes
-            int hours = Integer.parseInt(text.replaceAll("(\\d+)h\\d+m", "$1"));
-            int minutes = Integer.parseInt(text.replaceAll("\\d+h(\\d+)m", "$1"));
-            return hours * 60 + minutes;
-        }
-    }
+    
 
     private void saveManualEntry() {
 
         this.setStatusColor(DefaultColorTheme.COLOR_LOGO_BLUE);
 
-        int minutes = this.getTotalMinutes();
+        int minutes = TimesheetUtils.getTotalMinutes(this.txtManualEntry.getText());
 
         if (minutes < 0 || minutes > (24l * 60l * 60l * 1000l)) {
             minutes = -1;

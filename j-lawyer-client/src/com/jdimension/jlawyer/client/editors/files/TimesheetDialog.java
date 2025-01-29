@@ -1525,4 +1525,44 @@ public class TimesheetDialog extends javax.swing.JDialog {
     private javax.swing.JFormattedTextField txtTimesheetTotal;
     // End of variables declaration//GEN-END:variables
 
+    public void duplicateEntry(TimesheetPositionEntryPanel entry) {
+        
+        TimesheetPosition pos=entry.getEntry();
+        
+        TimesheetPosition dup=new TimesheetPosition();
+        dup.setDescription(pos.getDescription());
+        dup.setInvoice(pos.getInvoice());
+        dup.setName(pos.getName());
+        dup.setPrincipal(pos.getPrincipal());
+        dup.setStarted(pos.getStarted());
+        dup.setStopped(pos.getStopped());
+        dup.setTaxRate(pos.getTaxRate());
+        dup.setTimesheet(pos.getTimesheet());
+        dup.setTotal(pos.getTotal());
+        dup.setUnitPrice(pos.getUnitPrice());
+        
+        
+        ClientSettings settings = ClientSettings.getInstance();
+        try {
+            JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
+            dup=locator.lookupArchiveFileServiceRemote().timesheetPositionAdd(dup.getTimesheet().getId(), dup);
+            int entryIndex=this.pnlTimesheetPositions.getComponentZOrder(entry);
+            
+            TimesheetPositionEntryPanel dupPanel = new TimesheetPositionEntryPanel(this, this.taxRates, this.sortedPrincipalIds);
+            this.pnlTimesheetPositions.add(dupPanel, entryIndex + 1);
+            this.pnlTimesheetPositions.doLayout();
+            int dl = this.splitMain.getDividerLocation();
+            this.splitMain.setDividerLocation(dl + 1);
+            this.splitMain.setDividerLocation(dl);
+
+            dupPanel.setEntry(this.currentEntry.getId(), dup, Integer.parseInt(this.cmbTimesheetInterval.getSelectedItem().toString()));
+            dupPanel.updateEntryTotal(Integer.parseInt(this.cmbTimesheetInterval.getSelectedItem().toString()));
+            
+        } catch (Exception ex) {
+            this.lblAllowedPositions.setText("0");
+            log.error("Error determining position templates for timesheet", ex);
+            JOptionPane.showMessageDialog(this, "Fehler beim Laden der erlaubten Positionsvorlagen: " + ex.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
+        }
+    }
+
 }
