@@ -671,7 +671,10 @@ import com.jdimension.jlawyer.client.editors.files.ArchiveFilePanel;
 import com.jdimension.jlawyer.client.events.EventBroker;
 import com.jdimension.jlawyer.client.events.ReviewUpdatedEvent;
 import com.jdimension.jlawyer.client.settings.ClientSettings;
+import com.jdimension.jlawyer.client.settings.UserSettings;
 import com.jdimension.jlawyer.client.utils.FrameUtils;
+import com.jdimension.jlawyer.client.utils.StringUtils;
+import com.jdimension.jlawyer.persistence.AppUserBean;
 import com.jdimension.jlawyer.persistence.ArchiveFileBean;
 import com.jdimension.jlawyer.persistence.ArchiveFileReviewsBean;
 import com.jdimension.jlawyer.services.CalendarServiceRemote;
@@ -693,11 +696,15 @@ import java.awt.Dimension;
 import java.awt.Image;
 import java.awt.event.ActionEvent;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Calendar;
 import java.util.Collection;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.List;
+import javax.swing.JButton;
+import javax.swing.JCheckBoxMenuItem;
 import javax.swing.JLabel;
 import javax.swing.JMenu;
 import javax.swing.JMenuBar;
@@ -706,7 +713,9 @@ import javax.swing.JOptionPane;
 import javax.swing.JPopupMenu;
 import javax.swing.JToggleButton;
 import javax.swing.JToolBar;
+import javax.swing.MenuElement;
 import org.apache.log4j.Logger;
+import themes.colors.DefaultColorTheme;
 
 /**
  *
@@ -720,10 +729,16 @@ public class CalendarPanel extends javax.swing.JPanel {
     private JMenu fileMenu;
     private JMenuItem exitMenuItem;
     private JCalendar jCalendar;
+    
+    private JLabel lblUserFilterCount;
+    private JPopupMenu popUserFilter;
+    private JButton cmdUserFilter;
+    
 
     private JToolBar toolBar;
     HashMap<String, EventType> allCalTypes = new HashMap<>();
     HashSet<String> selectedCalTypes = new HashSet<>();
+    List<String> selectedUsers=new ArrayList<>();
 
     private JPopupMenu popup;
 
@@ -743,6 +758,9 @@ public class CalendarPanel extends javax.swing.JPanel {
         initComponents();
 
         initGui();
+        
+        
+        
         bindListeners();
     }
 
@@ -750,6 +768,51 @@ public class CalendarPanel extends javax.swing.JPanel {
         this.detailsEditorClass = detailsEditorClass;
         this.backgroundImage = backgroundImage;
         this.parentClass = parentClass;
+    }
+    
+    private void buildUsersPopup() {
+        List<AppUserBean> relevantUsers=UserSettings.getInstance().getLoginEnabledUsers();
+        List<String> userNames=new ArrayList<>();
+        for(AppUserBean u: relevantUsers) {
+            userNames.add(u.getPrincipalId());
+        }
+        StringUtils.sortIgnoreCase(userNames);
+        
+        selectedUsers=Arrays.asList(UserSettings.getInstance().getSettingArray(UserSettings.CONF_DESKTOP_LASTFILTERUSERS, new String[]{}));
+        if(selectedUsers.isEmpty())
+            selectedUsers.add(UserSettings.getInstance().getCurrentUser().getPrincipalId());
+        
+        this.lblUserFilterCount.setText(" " + selectedUsers.size() + " ");
+
+        this.popUserFilter.removeAll();
+        for (AppUserBean ru : relevantUsers) {
+            JCheckBoxMenuItem mi = new JCheckBoxMenuItem(ru.getPrincipalId());
+            mi.putClientProperty("CheckBoxMenuItem.selectionBackground", DefaultColorTheme.COLOR_LOGO_GREEN);
+            mi.setIcon(UserSettings.getInstance().getUserSmallIcon(ru.getPrincipalId()));
+            mi.setSelected(selectedUsers.contains(ru.getPrincipalId()));
+            popUserFilter.add(mi);
+
+        }
+        for (MenuElement me : popUserFilter.getSubElements()) {
+            ((JCheckBoxMenuItem) me.getComponent()).addActionListener((ActionEvent e) -> {
+                ArrayList<String> al = new ArrayList<>();
+                for (MenuElement me1 : popUserFilter.getSubElements()) {
+                    JCheckBoxMenuItem mi = (JCheckBoxMenuItem) me1.getComponent();
+                    if (mi.isSelected()) {
+                        al.add(mi.getText());
+                    }
+                }
+                this.lblUserFilterCount.setText(" " + al.size() + " ");
+                UserSettings.getInstance().setSettingArray(UserSettings.CONF_DESKTOP_LASTFILTERUSERS, al.toArray(new String[al.size()]));
+                selectedUsers=al;
+                
+                Collection<ArchiveFileReviewsBean> cacheClone = new ArrayList<>();
+                cacheClone.addAll(cachedEvents);
+                setData(cacheClone);
+            });
+        }
+
+        
     }
 
     private void initGui() {
@@ -764,6 +827,38 @@ public class CalendarPanel extends javax.swing.JPanel {
         //setJMenuBar(menuBar);
 
         toolBar = new JToolBar("Controls");
+
+
+        popUserFilter=new JPopupMenu();
+        
+        lblUserFilterCount=new JLabel();
+        lblUserFilterCount.setFont(lblUserFilterCount.getFont().deriveFont(lblUserFilterCount.getFont().getStyle() | java.awt.Font.BOLD, lblUserFilterCount.getFont().getSize()));
+        lblUserFilterCount.setText(" 1 ");
+        lblUserFilterCount.setForeground(DefaultColorTheme.COLOR_LOGO_BLUE);
+        toolBar.add(lblUserFilterCount);
+        
+        this.cmdUserFilter=new JButton();
+        cmdUserFilter.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons16/material/supervisor_account_24dp_0E72B5_FILL0_wght400_GRAD0_opsz24.png"))); // NOI18N
+        cmdUserFilter.setToolTipText("verantwortliche Nutzer\n(Kalendereinträge ohne Verantwortliche(n) werden stets angezeigt)");
+        cmdUserFilter.setBorder(null);
+        cmdUserFilter.setContentAreaFilled(false);
+        cmdUserFilter.setCursor(new java.awt.Cursor(java.awt.Cursor.HAND_CURSOR));
+        cmdUserFilter.addMouseListener(new java.awt.event.MouseAdapter() {
+            @Override
+            public void mousePressed(java.awt.event.MouseEvent evt) {
+                popUserFilter.show(cmdUserFilter, evt.getX(), evt.getY());
+            }
+
+        });
+        toolBar.add(cmdUserFilter);
+        
+        JLabel spacer=new JLabel();
+        spacer.setText("   ");
+        toolBar.add(spacer);
+        
+        this.buildUsersPopup();
+
+        
 //        addButton = new JButton("Hinzufügen");
 //        removeButton = new JButton("Löschen");
 //        addButton = new JButton("Hinzufügen");
@@ -995,7 +1090,7 @@ public class CalendarPanel extends javax.swing.JPanel {
             }
         }
 
-        if (this.selectedCalTypes.contains(rev.getCalendarSetup().getId())) {
+        if (this.selectedCalTypes.contains(rev.getCalendarSetup().getId()) && (this.selectedUsers.contains(rev.getAssignee()) || StringUtils.isEmpty(rev.getAssignee()))) {
             int hour = rev.getBeginDate().getHours();
             final int min = rev.getBeginDate().getMinutes();
             final int day = rev.getBeginDate().getDate();
