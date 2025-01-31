@@ -698,7 +698,6 @@ import org.apache.pdfbox.pdmodel.PDPage;
 import org.apache.pdfbox.rendering.ImageType;
 import org.apache.pdfbox.rendering.PDFRenderer;
 import org.mustangproject.ZUGFeRD.ZUGFeRDImporter;
-import org.mustangproject.ZUGFeRD.ZUGFeRDInvoiceImporter;
 import themes.colors.DefaultColorTheme;
 
 /**
@@ -1391,7 +1390,7 @@ public class PdfImageScrollingPanel extends javax.swing.JPanel implements Previe
         this.tabs.setEnabledAt(2, false);
         long start = System.currentTimeMillis();
         try {
-            ZUGFeRDInvoiceImporter zii = new ZUGFeRDInvoiceImporter(new ByteArrayInputStream(content));
+            ZUGFeRDImporter zii = new ZUGFeRDImporter(new ByteArrayInputStream(content));
             if (zii.canParse()) {
                 String invoiceHtml = EInvoiceUtils.invoiceToHTML(zii);
                 this.tabs.setEnabledAt(1, true);

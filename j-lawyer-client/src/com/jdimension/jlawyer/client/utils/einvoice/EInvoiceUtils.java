@@ -805,7 +805,7 @@ public class EInvoiceUtils {
         return i;
     }
 
-    public static String invoiceToHTML(ZUGFeRDInvoiceImporter zii) throws Exception {
+    public static String invoiceToHTML(ZUGFeRDImporter zii) throws Exception {
 
         Invoice invoice = zii.extractInvoice();
 
