@@ -736,14 +736,14 @@ public class AssistantChatDialog extends javax.swing.JDialog {
     private AppUserBean caseAssistant = null;
     private List<PartiesTriplet> parties = new ArrayList<>();
     private ArchiveFileBean selectedCase = null;
-    
+
     // used for calling document creation dialog
-    private ArchiveFilePanel caseView=null;
+    private ArchiveFilePanel caseView = null;
 
     // cache incoming and outgoing messages
     private List<Message> messages = new ArrayList<>();
-    
-    private String initialPrompt="";
+
+    private String initialPrompt = "";
 
     /**
      * Creates new form GenericAssistantDialog
@@ -758,13 +758,13 @@ public class AssistantChatDialog extends javax.swing.JDialog {
     public AssistantChatDialog(ArchiveFileBean selectedCase, AssistantConfig config, AiCapability c, AssistantInputAdapter inputAdapter, java.awt.Frame parent, boolean modal) {
         super(parent, modal);
         initComponents();
-        
+
         this.scrollMessages.getVerticalScrollBar().setUnitIncrement(32);
-     
-        if(inputAdapter!=null && inputAdapter instanceof ArchiveFilePanel) {
-            this.caseView=(ArchiveFilePanel)inputAdapter;
+
+        if (inputAdapter != null && inputAdapter instanceof ArchiveFilePanel) {
+            this.caseView = (ArchiveFilePanel) inputAdapter;
         }
-        this.cmdNewDocument.setEnabled(this.caseView!=null);
+        this.cmdNewDocument.setEnabled(this.caseView != null);
 
         this.pnlTitle.setBackground(DefaultColorTheme.COLOR_DARK_GREY);
         this.progress.setIndeterminate(false);
@@ -819,7 +819,7 @@ public class AssistantChatDialog extends javax.swing.JDialog {
                 String promptWithValues = TemplatesUtil.replacePlaceHolders(c.getDefaultPrompt().getDefaultPrompt(), placeHolders);
                 this.taPrompt.setText(promptWithValues);
             }
-            this.initialPrompt=this.taPrompt.getText();
+            this.initialPrompt = this.taPrompt.getText();
             this.taPrompt.setEnabled(true);
         } else {
             this.taPrompt.setEnabled(false);
@@ -880,6 +880,26 @@ public class AssistantChatDialog extends javax.swing.JDialog {
         ComponentUtils.restoreSplitPane(this.splitInputOutput, this.getClass(), "splitInputOutput");
         ComponentUtils.persistSplitPane(this.splitInputOutput, this.getClass(), "splitInputOutput");
 
+//        SwingUtilities.invokeLater(() -> {
+//            this.taInputString.setCaretPosition(0);
+//            this.taInputString.selectAll();
+//            this.jScrollPane5.getVerticalScrollBar().setValue(0);
+//        });
+    }
+
+    @Override
+    public void setVisible(boolean visible) {
+        super.setVisible(visible);
+        SwingUtilities.invokeLater(() -> {
+            this.taInputString.revalidate();
+            this.taInputString.repaint();
+
+            this.taInputString.requestFocusInWindow();
+
+            this.taInputString.setCaretPosition(0);
+            this.taInputString.selectAll();
+            this.jScrollPane5.getVerticalScrollBar().setValue(this.jScrollPane5.getVerticalScrollBar().getMinimum());
+        });
     }
 
     /**
@@ -891,9 +911,6 @@ public class AssistantChatDialog extends javax.swing.JDialog {
     // <editor-fold defaultstate="collapsed" desc="Generated Code">//GEN-BEGIN:initComponents
     private void initComponents() {
 
-        popInputText = new javax.swing.JPopupMenu();
-        mnuPromptAll = new javax.swing.JMenuItem();
-        mnuPromptSelection = new javax.swing.JMenuItem();
         jScrollPane1 = new javax.swing.JScrollPane();
         taPrompt = new javax.swing.JTextArea();
         cmdCopy = new javax.swing.JButton();
@@ -912,22 +929,6 @@ public class AssistantChatDialog extends javax.swing.JDialog {
         pnlMessages = new javax.swing.JPanel();
         cmdProcessOutput = new javax.swing.JButton();
         cmdNewDocument = new javax.swing.JButton();
-
-        mnuPromptAll.setText("in Prompt übernehmen");
-        mnuPromptAll.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                mnuPromptAllActionPerformed(evt);
-            }
-        });
-        popInputText.add(mnuPromptAll);
-
-        mnuPromptSelection.setText("Auswahl in Prompt übernehmen");
-        mnuPromptSelection.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                mnuPromptSelectionActionPerformed(evt);
-            }
-        });
-        popInputText.add(mnuPromptSelection);
 
         setDefaultCloseOperation(javax.swing.WindowConstants.DISPOSE_ON_CLOSE);
         setTitle("Assistent Ingo");
@@ -1040,11 +1041,6 @@ public class AssistantChatDialog extends javax.swing.JDialog {
         taInputString.setLineWrap(true);
         taInputString.setRows(5);
         taInputString.setWrapStyleWord(true);
-        taInputString.addMouseListener(new java.awt.event.MouseAdapter() {
-            public void mousePressed(java.awt.event.MouseEvent evt) {
-                taInputStringMousePressed(evt);
-            }
-        });
         jScrollPane5.setViewportView(taInputString);
 
         splitInputOutput.setLeftComponent(jScrollPane5);
@@ -1144,8 +1140,8 @@ public class AssistantChatDialog extends javax.swing.JDialog {
         AtomicReference<AiRequestStatus> resultRef = new AtomicReference<>();
         AtomicReference<AiChatMessageMarkdownPanel> incomingMessageRef = new AtomicReference<>();
 
-        JDialog owner=this;
-        
+        JDialog owner = this;
+
         SwingWorker<Void, Void> worker = new SwingWorker<>() {
 
             @Override
@@ -1159,19 +1155,23 @@ public class AssistantChatDialog extends javax.swing.JDialog {
                 try {
                     JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
 
+                    String fullPrompt = taPrompt.getText();
+                    if(taInputString.getSelectedText()!=null)
+                        fullPrompt = fullPrompt + System.lineSeparator() + System.lineSeparator() + taInputString.getSelectedText();
+                    
                     Message outgoingMessage = new Message();
                     outgoingMessage.setRole(Message.ROLE_USER);
-                    outgoingMessage.setContent(taPrompt.getText());
+                    outgoingMessage.setContent(fullPrompt);
                     messages.add(outgoingMessage);
                     SwingUtilities.invokeAndWait(() -> {
                         AiChatMessageMarkdownPanel outGoingMsgPanel = new AiChatMessageMarkdownPanel(outgoingMessage, owner);
-                        Dimension maxSize=outGoingMsgPanel.getPreferredSize();
+                        Dimension maxSize = outGoingMsgPanel.getPreferredSize();
                         maxSize.setSize(pnlMessages.getWidth(), maxSize.getHeight());
                         outGoingMsgPanel.setPreferredSize(maxSize);
                         pnlMessages.add(outGoingMsgPanel);
                         outGoingMsgPanel.revalidate();
                         outGoingMsgPanel.repaint();
-                        
+
                         incomingMsgPanel.setPreferredSize(maxSize);
                         pnlMessages.add(incomingMsgPanel);
                         incomingMsgPanel.revalidate();
@@ -1180,7 +1180,10 @@ public class AssistantChatDialog extends javax.swing.JDialog {
                         verticalBar.setValue(verticalBar.getMaximum());
                     });
 
-                    AiRequestStatus status = locator.lookupIntegrationServiceRemote().submitAssistantRequest(config, capability.getRequestType(), capability.getModelType(), taPrompt.getText(), fParams, null, messages);
+                    
+                    AiRequestStatus status = locator.lookupIntegrationServiceRemote().submitAssistantRequest(config, capability.getRequestType(), capability.getModelType(), fullPrompt, fParams, null, messages);
+                    // after initial request, unselect input text
+                    taInputString.setCaretPosition(0);
 
                     if (status.isAsync()) {
                         Thread.sleep(1000);
@@ -1246,7 +1249,7 @@ public class AssistantChatDialog extends javax.swing.JDialog {
                         errorMsg.setContent(status.getStatus() + ": " + status.getStatusDetails());
                         errorMsg.setRole(Message.ROLE_ASSISTANT);
                         AiChatMessageMarkdownPanel msgPanel = new AiChatMessageMarkdownPanel(errorMsg, owner);
-                        Dimension maxSize=msgPanel.getPreferredSize();
+                        Dimension maxSize = msgPanel.getPreferredSize();
                         maxSize.setSize(pnlMessages.getWidth(), maxSize.getHeight());
                         msgPanel.setPreferredSize(maxSize);
                         pnlMessages.add(msgPanel);
@@ -1307,27 +1310,28 @@ public class AssistantChatDialog extends javax.swing.JDialog {
         if (this.inputAdapter instanceof AssistantFlowAdapter && this.result != null) {
             // caller is capable of handling results
             //((AssistantFlowAdapter) this.inputAdapter).processOutput(capability, this.result);
-            
-            if(result.getResponse()!=null && result.getResponse().getOutputData()!=null) {
-                OutputData intro=new OutputData();
+
+            if (result.getResponse() != null && result.getResponse().getOutputData() != null) {
+                OutputData intro = new OutputData();
                 intro.setType(OutputData.TYPE_STRING);
-                intro.setStringData("Chat-Verlauf: " + System.lineSeparator()+System.lineSeparator());
+                intro.setStringData("Chat-Verlauf: " + System.lineSeparator() + System.lineSeparator());
                 result.getResponse().getOutputData().add(intro);
-                for(Message msg: this.messages) {
-                    OutputData od=new OutputData();
+                for (Message msg : this.messages) {
+                    OutputData od = new OutputData();
                     od.setType(OutputData.TYPE_STRING);
-                    String role=msg.getRole();
-                    if("user".equalsIgnoreCase(role))
-                        role=UserSettings.getInstance().getCurrentUser().getPrincipalId();
-                    else
-                        role="Assistent Ingo";
-                    od.setStringData(role + ": " + msg.getContent() + System.lineSeparator()+System.lineSeparator());
+                    String role = msg.getRole();
+                    if ("user".equalsIgnoreCase(role)) {
+                        role = UserSettings.getInstance().getCurrentUser().getPrincipalId();
+                    } else {
+                        role = "Assistent Ingo";
+                    }
+                    od.setStringData(role + ": " + msg.getContent() + System.lineSeparator() + System.lineSeparator());
                     result.getResponse().getOutputData().add(od);
                 }
             }
-            
+
             ((AssistantFlowAdapter) this.inputAdapter).processOutput(capability, this.result);
-            
+
         }
         this.setVisible(false);
         this.dispose();
@@ -1353,20 +1357,6 @@ public class AssistantChatDialog extends javax.swing.JDialog {
             }
         }
     }//GEN-LAST:event_cmdNewDocumentActionPerformed
-
-    private void mnuPromptAllActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_mnuPromptAllActionPerformed
-        this.taPrompt.insert(this.taInputString.getText(), this.taPrompt.getCaretPosition());
-    }//GEN-LAST:event_mnuPromptAllActionPerformed
-
-    private void mnuPromptSelectionActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_mnuPromptSelectionActionPerformed
-        this.taPrompt.insert(this.taInputString.getSelectedText(), this.taPrompt.getCaretPosition());
-    }//GEN-LAST:event_mnuPromptSelectionActionPerformed
-
-    private void taInputStringMousePressed(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_taInputStringMousePressed
-        if(evt.getClickCount()==1 && evt.getButton()==MouseEvent.BUTTON3) {
-            this.popInputText.show(this.taInputString, evt.getX(), evt.getY());
-        }
-    }//GEN-LAST:event_taInputStringMousePressed
 
     /**
      * @param args the command line arguments
@@ -1422,12 +1412,9 @@ public class AssistantChatDialog extends javax.swing.JDialog {
     private javax.swing.JScrollPane jScrollPane1;
     private javax.swing.JScrollPane jScrollPane5;
     private javax.swing.JLabel lblRequestType;
-    private javax.swing.JMenuItem mnuPromptAll;
-    private javax.swing.JMenuItem mnuPromptSelection;
     private javax.swing.JPanel pnlMessages;
     private javax.swing.JPanel pnlParameters;
     private javax.swing.JPanel pnlTitle;
-    private javax.swing.JPopupMenu popInputText;
     private javax.swing.JProgressBar progress;
     private javax.swing.JScrollPane scrollMessages;
     private javax.swing.JSplitPane splitInputOutput;

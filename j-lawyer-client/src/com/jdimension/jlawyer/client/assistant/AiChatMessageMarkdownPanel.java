@@ -734,7 +734,7 @@ public class AiChatMessageMarkdownPanel extends javax.swing.JPanel {
         boolean ownMessage = aiMessage.getRole().equals(Message.ROLE_USER);
         if (ownMessage) {
             this.lblUser.setBackground(DefaultColorTheme.COLOR_LOGO_BLUE);
-            this.aiCalloutComponent1.setForeground(Color.WHITE);
+            this.aiCalloutComponent1.setForeground(Color.BLACK);
             this.aiCalloutComponent1.setBackground(DefaultColorTheme.COLOR_LOGO_BLUE);
             this.pnlButtons.setBackground(DefaultColorTheme.COLOR_LOGO_BLUE);
         } else {
@@ -760,7 +760,7 @@ public class AiChatMessageMarkdownPanel extends javax.swing.JPanel {
         boolean ownMessage = m.getRole().equals(Message.ROLE_USER);
         if (ownMessage) {
             this.lblUser.setBackground(DefaultColorTheme.COLOR_LOGO_BLUE);
-            this.aiCalloutComponent1.setForeground(Color.WHITE);
+            this.aiCalloutComponent1.setForeground(Color.BLACK);
             this.aiCalloutComponent1.setBackground(DefaultColorTheme.COLOR_LOGO_BLUE);
             this.pnlButtons.setBackground(DefaultColorTheme.COLOR_LOGO_BLUE);
         } else {
