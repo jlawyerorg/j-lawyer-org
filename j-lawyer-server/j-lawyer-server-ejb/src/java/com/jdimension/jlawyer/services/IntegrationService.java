@@ -1435,8 +1435,12 @@ public class IntegrationService implements IntegrationServiceRemote, Integration
             if(pwd!=null)
                 pwd=crypto.decrypt(c.getPassword());
             
-            AssistantAPI api=new AssistantAPI(c.getUrl(), c.getUserName(), pwd, c.getConnectionTimeout(), c.getReadTimeout());
-            allCapabilities.put(c, api.getCapabilities());
+            try {
+                AssistantAPI api = new AssistantAPI(c.getUrl(), c.getUserName(), pwd, c.getConnectionTimeout(), c.getReadTimeout());
+                allCapabilities.put(c, api.getCapabilities());
+            } catch (Exception ex) {
+                log.error("Can not determine assistant capabilities for " + c.getName(), ex);
+            }
         }
         
         return allCapabilities;
