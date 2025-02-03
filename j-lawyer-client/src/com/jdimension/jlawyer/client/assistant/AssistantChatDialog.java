@@ -686,6 +686,7 @@ import com.jdimension.jlawyer.persistence.PartyTypeBean;
 import com.jdimension.jlawyer.pojo.PartiesTriplet;
 import com.jdimension.jlawyer.services.JLawyerServiceLocator;
 import java.awt.Component;
+import java.awt.Dimension;
 import java.awt.Toolkit;
 import java.awt.datatransfer.Clipboard;
 import java.awt.datatransfer.StringSelection;
@@ -757,6 +758,8 @@ public class AssistantChatDialog extends javax.swing.JDialog {
     public AssistantChatDialog(ArchiveFileBean selectedCase, AssistantConfig config, AiCapability c, AssistantInputAdapter inputAdapter, java.awt.Frame parent, boolean modal) {
         super(parent, modal);
         initComponents();
+        
+        this.scrollMessages.getVerticalScrollBar().setUnitIncrement(32);
      
         if(inputAdapter!=null && inputAdapter instanceof ArchiveFilePanel) {
             this.caseView=(ArchiveFilePanel)inputAdapter;
@@ -1046,6 +1049,8 @@ public class AssistantChatDialog extends javax.swing.JDialog {
 
         splitInputOutput.setLeftComponent(jScrollPane5);
 
+        scrollMessages.setHorizontalScrollBarPolicy(javax.swing.ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
+
         pnlMessages.setLayout(new javax.swing.BoxLayout(pnlMessages, javax.swing.BoxLayout.Y_AXIS));
         scrollMessages.setViewportView(pnlMessages);
 
@@ -1137,7 +1142,7 @@ public class AssistantChatDialog extends javax.swing.JDialog {
         this.progress.setIndeterminate(true);
 
         AtomicReference<AiRequestStatus> resultRef = new AtomicReference<>();
-        AtomicReference<AiChatMessagePanel> incomingMessageRef = new AtomicReference<>();
+        AtomicReference<AiChatMessageMarkdownPanel> incomingMessageRef = new AtomicReference<>();
 
         JDialog owner=this;
         
@@ -1150,7 +1155,7 @@ public class AssistantChatDialog extends javax.swing.JDialog {
                 Message incomingMsg = new Message();
                 incomingMsg.setRole(Message.ROLE_ASSISTANT);
                 incomingMsg.setContent("...");
-                AiChatMessagePanel incomingMsgPanel = new AiChatMessagePanel(incomingMsg, owner);
+                AiChatMessageMarkdownPanel incomingMsgPanel = new AiChatMessageMarkdownPanel(incomingMsg, owner);
                 try {
                     JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
 
@@ -1159,9 +1164,18 @@ public class AssistantChatDialog extends javax.swing.JDialog {
                     outgoingMessage.setContent(taPrompt.getText());
                     messages.add(outgoingMessage);
                     SwingUtilities.invokeAndWait(() -> {
-                        AiChatMessagePanel outGoingMsgPanel = new AiChatMessagePanel(outgoingMessage, owner);
+                        AiChatMessageMarkdownPanel outGoingMsgPanel = new AiChatMessageMarkdownPanel(outgoingMessage, owner);
+                        Dimension maxSize=outGoingMsgPanel.getPreferredSize();
+                        maxSize.setSize(pnlMessages.getWidth(), maxSize.getHeight());
+                        outGoingMsgPanel.setPreferredSize(maxSize);
                         pnlMessages.add(outGoingMsgPanel);
+                        outGoingMsgPanel.revalidate();
+                        outGoingMsgPanel.repaint();
+                        
+                        incomingMsgPanel.setPreferredSize(maxSize);
                         pnlMessages.add(incomingMsgPanel);
+                        incomingMsgPanel.revalidate();
+                        incomingMsgPanel.repaint();
                         JScrollBar verticalBar = scrollMessages.getVerticalScrollBar();
                         verticalBar.setValue(verticalBar.getMaximum());
                     });
@@ -1231,7 +1245,10 @@ public class AssistantChatDialog extends javax.swing.JDialog {
                         Message errorMsg = new Message();
                         errorMsg.setContent(status.getStatus() + ": " + status.getStatusDetails());
                         errorMsg.setRole(Message.ROLE_ASSISTANT);
-                        AiChatMessagePanel msgPanel = new AiChatMessagePanel(errorMsg, owner);
+                        AiChatMessageMarkdownPanel msgPanel = new AiChatMessageMarkdownPanel(errorMsg, owner);
+                        Dimension maxSize=msgPanel.getPreferredSize();
+                        maxSize.setSize(pnlMessages.getWidth(), maxSize.getHeight());
+                        msgPanel.setPreferredSize(maxSize);
                         pnlMessages.add(msgPanel);
                         JScrollBar verticalBar = scrollMessages.getVerticalScrollBar();
                         verticalBar.setValue(verticalBar.getMaximum());
@@ -1243,7 +1260,7 @@ public class AssistantChatDialog extends javax.swing.JDialog {
                             }
 
                         }
-                        AiChatMessagePanel msgPanel = incomingMessageRef.get();
+                        AiChatMessageMarkdownPanel msgPanel = incomingMessageRef.get();
                         msgPanel.getMessage().setContent(resultString.toString());
                         messages.add(msgPanel.getMessage());
                         msgPanel.setMessage(msgPanel.getMessage(), owner);
@@ -1278,7 +1295,7 @@ public class AssistantChatDialog extends javax.swing.JDialog {
 
     private void cmdCopyActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdCopyActionPerformed
         if (this.pnlMessages.getComponentCount() > 0) {
-            AiChatMessagePanel p = (AiChatMessagePanel) this.pnlMessages.getComponent(this.pnlMessages.getComponentCount() - 1);
+            AiChatMessageMarkdownPanel p = (AiChatMessageMarkdownPanel) this.pnlMessages.getComponent(this.pnlMessages.getComponentCount() - 1);
             Toolkit toolkit = Toolkit.getDefaultToolkit();
             Clipboard clipboard = toolkit.getSystemClipboard();
             StringSelection strSel = new StringSelection(p.getMessage().getContent());
@@ -1331,7 +1348,7 @@ public class AssistantChatDialog extends javax.swing.JDialog {
     private void cmdNewDocumentActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdNewDocumentActionPerformed
         if (this.caseView != null) {
             if (this.pnlMessages.getComponentCount() > 0) {
-                AiChatMessagePanel p = (AiChatMessagePanel) this.pnlMessages.getComponent(this.pnlMessages.getComponentCount() - 1);
+                AiChatMessageMarkdownPanel p = (AiChatMessageMarkdownPanel) this.pnlMessages.getComponent(this.pnlMessages.getComponentCount() - 1);
                 this.caseView.newDocumentDialog(null, null, null, null, null, null, null, p.getMessage().getContent());
             }
         }
