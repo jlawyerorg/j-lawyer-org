@@ -667,6 +667,7 @@ import com.jdimension.jlawyer.ai.AiCapability;
 import com.jdimension.jlawyer.ai.AiRequestStatus;
 import com.jdimension.jlawyer.ai.AiResponse;
 import com.jdimension.jlawyer.ai.InputData;
+import com.jdimension.jlawyer.ai.Message;
 import com.jdimension.jlawyer.ai.OutputData;
 import com.jdimension.jlawyer.ai.Parameter;
 import com.jdimension.jlawyer.ai.ParameterData;
@@ -685,6 +686,7 @@ import com.jdimension.jlawyer.persistence.PartyTypeBean;
 import com.jdimension.jlawyer.pojo.PartiesTriplet;
 import com.jdimension.jlawyer.services.JLawyerServiceLocator;
 import java.awt.Component;
+import java.awt.Dimension;
 import java.awt.Toolkit;
 import java.awt.datatransfer.Clipboard;
 import java.awt.datatransfer.StringSelection;
@@ -698,7 +700,9 @@ import java.util.Vector;
 import java.util.concurrent.atomic.AtomicReference;
 import javax.swing.DefaultListModel;
 import javax.swing.JComboBox;
+import javax.swing.JDialog;
 import javax.swing.JLabel;
+import javax.swing.JScrollBar;
 import javax.swing.JTextField;
 import javax.swing.SwingUtilities;
 import javax.swing.SwingWorker;
@@ -716,11 +720,11 @@ public class AssistantGenericDialog extends javax.swing.JDialog {
     private AssistantConfig config = null;
     private AiCapability capability = null;
     private AssistantInputAdapter inputAdapter = null;
-    
-    private AiRequestStatus result=null;
-    
-    private boolean interrupted=false;
-    
+
+    private AiRequestStatus result = null;
+
+    private boolean interrupted = false;
+
     // variables used for placeholder support in prompts
     private List<PartyTypeBean> allPartyTypes = null;
     private Collection<String> formPlaceHolders = null;
@@ -752,7 +756,7 @@ public class AssistantGenericDialog extends javax.swing.JDialog {
         this.config = config;
         this.capability = c;
         this.inputAdapter = inputAdapter;
-        
+
         this.selectedCase = selectedCase;
         if (this.selectedCase != null) {
             try {
@@ -788,33 +792,32 @@ public class AssistantGenericDialog extends javax.swing.JDialog {
 
         this.taPrompt.setEnabled(false);
         if (c.getDefaultPrompt() != null && c.getDefaultPrompt().getDefaultPrompt() != null) {
-            if(!c.getDefaultPrompt().getDefaultPrompt().contains("{{")) {
+            if (!c.getDefaultPrompt().getDefaultPrompt().contains("{{")) {
                 // no placeholders in prompt
                 this.taPrompt.setText(c.getDefaultPrompt().getDefaultPrompt());
             } else {
                 // placeholders present in prompt
-                
+
                 HashMap<String, Object> placeHolders = TemplatesUtil.getPlaceHolderValues(c.getDefaultPrompt().getDefaultPrompt(), selectedCase, this.parties, null, null, this.allPartyTypes, this.formPlaceHolders, this.formPlaceHolderValues, this.caseLawyer, this.caseAssistant);
                 String promptWithValues = TemplatesUtil.replacePlaceHolders(c.getDefaultPrompt().getDefaultPrompt(), placeHolders);
                 this.taPrompt.setText(promptWithValues);
             }
             this.taPrompt.setEnabled(true);
         } else {
-            //this.getContentPane().remove(this.jScrollPane1);
             this.taPrompt.setEnabled(false);
         }
-        
+
         this.pnlParameters.setLayout(new java.awt.GridLayout(this.capability.getParameters().size(), 2, 6, 6));
-        for(Parameter p: this.capability.getParameters()) {
+        for (Parameter p : this.capability.getParameters()) {
             this.pnlParameters.add(new JLabel(p.getName()));
-            if(p.getList()!=null && p.getList().length()>0) {
-                Vector<String> v=new Vector<>(Arrays.asList(p.getList().split(",")));
-                JComboBox<String> combo=new JComboBox<>(v);
+            if (p.getList() != null && p.getList().length() > 0) {
+                Vector<String> v = new Vector<>(Arrays.asList(p.getList().split(",")));
+                JComboBox<String> combo = new JComboBox<>(v);
                 combo.setEditable(false);
                 combo.setSelectedItem(p.getDefaultValue());
                 this.pnlParameters.add(combo);
             } else {
-                JTextField tf=new JTextField();
+                JTextField tf = new JTextField();
                 tf.setText(p.getDefaultValue());
                 this.pnlParameters.add(tf);
             }
@@ -852,12 +855,11 @@ public class AssistantGenericDialog extends javax.swing.JDialog {
         }
 
         ComponentUtils.restoreDialogSize(this);
-        
+
         ComponentUtils.decorateSplitPane(this.splitInputOutput);
         ComponentUtils.restoreSplitPane(this.splitInputOutput, this.getClass(), "splitInputOutput");
         ComponentUtils.persistSplitPane(this.splitInputOutput, this.getClass(), "splitInputOutput");
-        
-        
+
         if (autoExecute) {
             //this.cmdSubmitActionPerformed(null);
             // Display the dialog first, then start the background task
@@ -897,8 +899,8 @@ public class AssistantGenericDialog extends javax.swing.JDialog {
         jPanel1 = new javax.swing.JPanel();
         jScrollPane5 = new javax.swing.JScrollPane();
         taInputString = new javax.swing.JTextArea();
-        jScrollPane2 = new javax.swing.JScrollPane();
-        taResult = new javax.swing.JTextArea();
+        scrollMessages = new javax.swing.JScrollPane();
+        pnlMessages = new javax.swing.JPanel();
         cmdProcessOutput = new javax.swing.JButton();
 
         mnuPromptAll.setText("in Prompt übernehmen");
@@ -1062,13 +1064,10 @@ public class AssistantGenericDialog extends javax.swing.JDialog {
 
         splitInputOutput.setLeftComponent(tabInputs);
 
-        taResult.setColumns(20);
-        taResult.setLineWrap(true);
-        taResult.setRows(5);
-        taResult.setWrapStyleWord(true);
-        jScrollPane2.setViewportView(taResult);
+        pnlMessages.setLayout(new javax.swing.BoxLayout(pnlMessages, javax.swing.BoxLayout.Y_AXIS));
+        scrollMessages.setViewportView(pnlMessages);
 
-        splitInputOutput.setRightComponent(jScrollPane2);
+        splitInputOutput.setRightComponent(scrollMessages);
 
         cmdProcessOutput.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/agt_action_success.png"))); // NOI18N
         cmdProcessOutput.setText("Übernehmen");
@@ -1110,7 +1109,7 @@ public class AssistantGenericDialog extends javax.swing.JDialog {
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(pnlParameters, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(splitInputOutput)
+                .addComponent(splitInputOutput, javax.swing.GroupLayout.DEFAULT_SIZE, 402, Short.MAX_VALUE)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(jScrollPane3, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
@@ -1127,110 +1126,73 @@ public class AssistantGenericDialog extends javax.swing.JDialog {
 
     private void cmdSubmitActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdSubmitActionPerformed
 
-        
-        
         SwingUtilities.invokeLater(this::startBackgroundTask);
-        
-//        List<ParameterData> params = new ArrayList<>();
-//        if (capability.getParameters() != null && !capability.getParameters().isEmpty()) {
-//            params = getParameters();
-//            if (params == null) {
-//                // user cancelled parameters dialog
-//                return;
-//            }
-//        }
-//
-//        final List<ParameterData> fParams = params;
-//
-//        this.progress.setIndeterminate(true);
-//        AtomicReference<AiRequestStatus> resultRef = new AtomicReference<>();
-//
-//        CountDownLatch latch = new CountDownLatch(1);
-//        new Thread(() -> {
-//            ClientSettings settings = ClientSettings.getInstance();
-//            try {
-//                JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
-//
-//                AiRequestStatus status = locator.lookupIntegrationServiceRemote().submitAssistantRequest(config, capability.getRequestType(), capability.getModelType(), this.taPrompt.getText(), fParams, this.inputAdapter.getInputs(capability));
-//                resultRef.set(status);
-//
-//            } catch (Throwable t) {
-//                log.error("Error processing AI request", t);
-//            } finally {
-//                latch.countDown(); // Signal that the task is done
-//            }
-//        }).start();
-//
-//        try {
-//            latch.await(); // Wait until the task is finished
-//        } catch (InterruptedException e) {
-//            // Handle interruption
-//        }
-//
-//        AiRequestStatus status = resultRef.get();
-//        if (status != null) {
-//            if (status.getStatus().equalsIgnoreCase("error")) {
-//                this.taResult.setText(status.getStatus() + ": " + status.getStatusDetails());
-//            } else {
-//                StringBuilder result = new StringBuilder();
-//                for (OutputData o : status.getResponse().getOutputData()) {
-//                    if (o.getType().equalsIgnoreCase("string")) {
-//                        result.append(o.getStringData()).append(System.lineSeparator()).append(System.lineSeparator());
-//                    }
-//
-//                }
-//                this.taResult.setText(result.toString());
-//            }
-//        }
-//
-//        this.progress.setIndeterminate(false);
 
     }//GEN-LAST:event_cmdSubmitActionPerformed
 
     private void startBackgroundTask() {
 
-        this.taResult.setText("");
-        this.interrupted=false;
-        
+        this.pnlMessages.removeAll();
+        this.interrupted = false;
+
         this.cmdSubmit.setEnabled(false);
         this.cmdInterrupt.setEnabled(true);
-        
-        ((DefaultListModel)this.lstOutputFiles.getModel()).removeAllElements();
-        
+
+        ((DefaultListModel) this.lstOutputFiles.getModel()).removeAllElements();
+
         List<ParameterData> params = new ArrayList<>();
         if (capability.getParameters() != null && !capability.getParameters().isEmpty()) {
             params = getParameters();
         }
 
-        final List<ParameterData> fParams=params;
-        
+        final List<ParameterData> fParams = params;
+
         this.progress.setIndeterminate(true);
 
         AtomicReference<AiRequestStatus> resultRef = new AtomicReference<>();
+        AtomicReference<AiChatMessageMarkdownPanel> incomingMessageRef = new AtomicReference<>();
+
+        JDialog owner = this;
 
         SwingWorker<Void, Void> worker = new SwingWorker<>() {
 
             @Override
             protected Void doInBackground() throws Exception {
-                List<InputData> inputs=inputAdapter.getInputs(capability);
+                List<InputData> inputs = inputAdapter.getInputs(capability);
                 for (InputData i : inputs) {
                     if (InputData.TYPE_STRING.equalsIgnoreCase(i.getType())) {
                         i.setStringData(taInputString.getText());
                     }
                 }
-                
+
                 ClientSettings settings = ClientSettings.getInstance();
+                Message incomingMsg = new Message();
+                incomingMsg.setRole(Message.ROLE_ASSISTANT);
+                incomingMsg.setContent("...");
+                AiChatMessageMarkdownPanel incomingMsgPanel = new AiChatMessageMarkdownPanel(incomingMsg, owner);
                 try {
                     JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
 
+                    SwingUtilities.invokeAndWait(() -> {
+                        Dimension maxSize = incomingMsgPanel.getPreferredSize();
+                        maxSize.setSize(pnlMessages.getWidth(), maxSize.getHeight());
+
+                        incomingMsgPanel.setPreferredSize(maxSize);
+                        pnlMessages.add(incomingMsgPanel);
+                        incomingMsgPanel.revalidate();
+                        incomingMsgPanel.repaint();
+                        JScrollBar verticalBar = scrollMessages.getVerticalScrollBar();
+                        verticalBar.setValue(verticalBar.getMaximum());
+                    });
+
                     AiRequestStatus status = locator.lookupIntegrationServiceRemote().submitAssistantRequest(config, capability.getRequestType(), capability.getModelType(), taPrompt.getText(), fParams, inputs, null);
-                    if(status.isAsync()) {
+                    if (status.isAsync()) {
                         Thread.sleep(1000);
                         // poll until final result is available
-                        AiResponse res=locator.lookupIntegrationServiceRemote().getAssistantRequestStatus(config, status.getRequestId());
-                        while(res.getStatus().equals(AiResponse.STATUS_EXECUTING)) {
+                        AiResponse res = locator.lookupIntegrationServiceRemote().getAssistantRequestStatus(config, status.getRequestId());
+                        while (res.getStatus().equals(AiResponse.STATUS_EXECUTING)) {
                             Thread.sleep(1000);
-                            res=locator.lookupIntegrationServiceRemote().getAssistantRequestStatus(config, status.getRequestId());
+                            res = locator.lookupIntegrationServiceRemote().getAssistantRequestStatus(config, status.getRequestId());
                             StringBuilder resultString = new StringBuilder();
                             for (OutputData o : res.getOutputData()) {
                                 if (o.getType().equalsIgnoreCase(OutputData.TYPE_STRING)) {
@@ -1238,24 +1200,39 @@ public class AssistantGenericDialog extends javax.swing.JDialog {
                                 }
 
                             }
-                            taResult.setText(resultString.toString());
-                            if(interrupted)
+
+                            SwingUtilities.invokeAndWait(() -> {
+                                incomingMsgPanel.getMessage().setContent(resultString.toString());
+                                incomingMsgPanel.setMessage(incomingMsgPanel.getMessage(), owner);
+                                incomingMsgPanel.repaint();
+                                incomingMsgPanel.updateUI();
+                                JScrollBar verticalBar = scrollMessages.getVerticalScrollBar();
+                                verticalBar.setValue(verticalBar.getMaximum());
+                            });
+
+                            if (interrupted) {
                                 break;
+                            }
                         }
                         status.setStatus(res.getStatus());
                         status.setStatusDetails(res.getStatusMessage());
                         status.setResponse(res);
                         resultRef.set(status);
+                        incomingMessageRef.set(incomingMsgPanel);
                     } else {
                         resultRef.set(status);
+                        incomingMessageRef.set(incomingMsgPanel);
                     }
 
                 } catch (Throwable t) {
                     log.error("Error processing AI request", t);
-                    AiRequestStatus status=new AiRequestStatus();
+                    AiRequestStatus status = new AiRequestStatus();
                     status.setStatus("ERROR");
                     status.setStatusDetails(t.getMessage());
                     resultRef.set(status);
+                    incomingMessageRef.set(incomingMsgPanel);
+                    JScrollBar verticalBar = scrollMessages.getVerticalScrollBar();
+                    verticalBar.setValue(verticalBar.getMaximum());
                 }
                 cmdSubmit.setEnabled(true);
                 cmdInterrupt.setEnabled(false);
@@ -1266,10 +1243,16 @@ public class AssistantGenericDialog extends javax.swing.JDialog {
             protected void done() {
                 // Task completion actions
                 AiRequestStatus status = resultRef.get();
-                result=status;
+                result = status;
                 if (status != null) {
                     if (status.getStatus().equalsIgnoreCase("failed")) {
-                        taResult.setText(status.getStatus() + ": " + status.getStatusDetails());
+                        AiChatMessageMarkdownPanel incomingMsgPanel = incomingMessageRef.get();
+                        incomingMsgPanel.getMessage().setContent(status.getStatus() + ": " + status.getStatusDetails());
+                        incomingMsgPanel.setMessage(incomingMsgPanel.getMessage(), owner);
+                        incomingMsgPanel.repaint();
+                        incomingMsgPanel.updateUI();
+                        JScrollBar verticalBar = scrollMessages.getVerticalScrollBar();
+                        verticalBar.setValue(verticalBar.getMaximum());
                     } else {
                         StringBuilder resultString = new StringBuilder();
                         for (OutputData o : status.getResponse().getOutputData()) {
@@ -1278,7 +1261,13 @@ public class AssistantGenericDialog extends javax.swing.JDialog {
                             }
 
                         }
-                        taResult.setText(resultString.toString());
+                        AiChatMessageMarkdownPanel msgPanel = incomingMessageRef.get();
+                        msgPanel.getMessage().setContent(resultString.toString());
+                        msgPanel.setMessage(msgPanel.getMessage(), owner);
+                        msgPanel.repaint();
+                        msgPanel.updateUI();
+                        JScrollBar verticalBar = scrollMessages.getVerticalScrollBar();
+                        verticalBar.setValue(verticalBar.getMaximum());
                     }
                 }
 
@@ -1287,8 +1276,7 @@ public class AssistantGenericDialog extends javax.swing.JDialog {
         };
 
         worker.execute();
-        
-        
+
     }
 
     private void cmdCloseActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdCloseActionPerformed
@@ -1305,34 +1293,46 @@ public class AssistantGenericDialog extends javax.swing.JDialog {
     }//GEN-LAST:event_formComponentShown
 
     private void cmdCopyActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdCopyActionPerformed
-        Toolkit toolkit = Toolkit.getDefaultToolkit();
-        Clipboard clipboard = toolkit.getSystemClipboard();
-        StringSelection strSel = new StringSelection(this.taResult.getText());
-        clipboard.setContents(strSel, null);
+        if (this.pnlMessages.getComponentCount() > 0) {
+            AiChatMessageMarkdownPanel p = (AiChatMessageMarkdownPanel) this.pnlMessages.getComponent(this.pnlMessages.getComponentCount() - 1);
+            
+            String htmlText = p.getAsHtml();
+
+            // Fallback: If fragment is null, extract HTML manually
+            if (htmlText == null) {
+                htmlText = p.getAsText();
+            }
+
+            // Create a Transferable object that supports both HTML and plain text
+            Clipboard clipboard = Toolkit.getDefaultToolkit().getSystemClipboard();
+            
+            clipboard.setContents(new AiChatMessageMarkdownPanel.HTMLTransferable(htmlText, p.getAsText()), null);
+        }
     }//GEN-LAST:event_cmdCopyActionPerformed
 
     private void cmdProcessOutputActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdProcessOutputActionPerformed
-        if(this.inputAdapter instanceof AssistantFlowAdapter && this.result!=null) {
-            
-            String resultText=this.taResult.getText();
-            if(taResult.getSelectedText()!=null)
-                resultText=taResult.getSelectedText();
-            
+        if (this.inputAdapter instanceof AssistantFlowAdapter && this.result != null) {
+
+            AiChatMessageMarkdownPanel p = (AiChatMessageMarkdownPanel) this.pnlMessages.getComponent(this.pnlMessages.getComponentCount() - 1);
+            String resultText=p.getSelectedAsText();
+            if(resultText==null)
+                resultText=p.getMessage().getContent();
+
             for (OutputData o : this.result.getResponse().getOutputData()) {
                 if (o.getType().equalsIgnoreCase(OutputData.TYPE_STRING)) {
                     o.setStringData(resultText);
                 }
             }
-            
+
             // caller is capable of handling results
-            ((AssistantFlowAdapter)this.inputAdapter).processOutput(capability, this.result);
+            ((AssistantFlowAdapter) this.inputAdapter).processOutput(capability, this.result);
         }
         this.setVisible(false);
         this.dispose();
     }//GEN-LAST:event_cmdProcessOutputActionPerformed
 
     private void cmdInterruptActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdInterruptActionPerformed
-        this.interrupted=true;
+        this.interrupted = true;
     }//GEN-LAST:event_cmdInterruptActionPerformed
 
     private void mnuPromptAllActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_mnuPromptAllActionPerformed
@@ -1344,7 +1344,7 @@ public class AssistantGenericDialog extends javax.swing.JDialog {
     }//GEN-LAST:event_mnuPromptSelectionActionPerformed
 
     private void taInputStringMousePressed(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_taInputStringMousePressed
-        if(evt.getClickCount()==1 && evt.getButton()==MouseEvent.BUTTON3) {
+        if (evt.getClickCount() == 1 && evt.getButton() == MouseEvent.BUTTON3) {
             this.popInputText.show(this.taInputString, evt.getX(), evt.getY());
         }
     }//GEN-LAST:event_taInputStringMousePressed
@@ -1398,7 +1398,6 @@ public class AssistantGenericDialog extends javax.swing.JDialog {
     private javax.swing.JButton cmdSubmit;
     private javax.swing.JPanel jPanel1;
     private javax.swing.JScrollPane jScrollPane1;
-    private javax.swing.JScrollPane jScrollPane2;
     private javax.swing.JScrollPane jScrollPane3;
     private javax.swing.JScrollPane jScrollPane4;
     private javax.swing.JScrollPane jScrollPane5;
@@ -1407,30 +1406,31 @@ public class AssistantGenericDialog extends javax.swing.JDialog {
     private javax.swing.JList<String> lstOutputFiles;
     private javax.swing.JMenuItem mnuPromptAll;
     private javax.swing.JMenuItem mnuPromptSelection;
+    private javax.swing.JPanel pnlMessages;
     private javax.swing.JPanel pnlParameters;
     private javax.swing.JPanel pnlTitle;
     private javax.swing.JPopupMenu popInputText;
     private javax.swing.JProgressBar progress;
+    private javax.swing.JScrollPane scrollMessages;
     private javax.swing.JSplitPane splitInputOutput;
     private javax.swing.JTextArea taInputString;
     private javax.swing.JTextArea taPrompt;
-    private javax.swing.JTextArea taResult;
     private javax.swing.JTabbedPane tabInputs;
     // End of variables declaration//GEN-END:variables
 
     private List<ParameterData> getParameters() {
 
-        List<ParameterData> parameters=new ArrayList<>();
-        for(int i=0;i<this.capability.getParameters().size();i++) {
-            ParameterData d=new ParameterData();
+        List<ParameterData> parameters = new ArrayList<>();
+        for (int i = 0; i < this.capability.getParameters().size(); i++) {
+            ParameterData d = new ParameterData();
             d.setId(this.capability.getParameters().get(i).getId());
-            Component component=this.pnlParameters.getComponent(2*i+1);
-            if(component instanceof JTextField) {
-                String value=((JTextField) component).getText();
+            Component component = this.pnlParameters.getComponent(2 * i + 1);
+            if (component instanceof JTextField) {
+                String value = ((JTextField) component).getText();
                 d.setValue(value);
             } else if (component instanceof JComboBox) {
                 //String value=((JComboBox) component).getEditor().getItem().toString();
-                String value=((JComboBox) component).getSelectedItem().toString();
+                String value = ((JComboBox) component).getSelectedItem().toString();
                 d.setValue(value);
             }
             parameters.add(d);

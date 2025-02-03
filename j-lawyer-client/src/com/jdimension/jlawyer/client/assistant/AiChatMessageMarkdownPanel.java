@@ -669,7 +669,9 @@ import java.awt.Color;
 import java.awt.Dimension;
 import java.awt.Toolkit;
 import java.awt.datatransfer.Clipboard;
-import java.awt.datatransfer.StringSelection;
+import java.awt.datatransfer.DataFlavor;
+import java.awt.datatransfer.Transferable;
+import java.awt.datatransfer.UnsupportedFlavorException;
 import javax.swing.JDialog;
 import javax.swing.UIManager;
 import org.apache.log4j.Logger;
@@ -706,7 +708,6 @@ public class AiChatMessageMarkdownPanel extends javax.swing.JPanel {
         this.pnlContent.add(this.aiCalloutComponent1);
         aiCalloutComponent1.revalidate();
         aiCalloutComponent1.repaint();
-        //this.aiCalloutComponent1.setMessage(new Message(), null);
     }
 
     public AiChatMessageMarkdownPanel(Message aiMessage, JDialog owner) {
@@ -747,14 +748,23 @@ public class AiChatMessageMarkdownPanel extends javax.swing.JPanel {
         this.pnlContent.add(this.aiCalloutComponent1);
         aiCalloutComponent1.revalidate();
         aiCalloutComponent1.repaint();
-//        this.aiCalloutComponent1.setMessage(aiMessage, owner);
-//        this.aiCalloutComponent1.setOwnMessage(ownMessage);
 
+    }
+
+    public String getAsText() {
+        return this.aiCalloutComponent1.getasText();
+    }
+
+    public String getAsHtml() {
+        return this.aiCalloutComponent1.getText();
+    }
+
+    public String getSelectedAsText() {
+        return this.aiCalloutComponent1.getSelectedText();
     }
 
     public void setMessage(Message m, JDialog owner) {
         this.msg = m;
-        //this.aiCalloutComponent1.setMessage(msg, owner);
         this.aiCalloutComponent1.setMarkdownText(m.getContent());
 
         boolean ownMessage = m.getRole().equals(Message.ROLE_USER);
@@ -781,11 +791,9 @@ public class AiChatMessageMarkdownPanel extends javax.swing.JPanel {
 
     @Override
     public void setPreferredSize(Dimension preferredSize) {
-        //super.setPreferredSize(preferredSize);
         super.setMaximumSize(new Dimension(preferredSize.width, Integer.MAX_VALUE));
         super.setPreferredSize(null);
 
-        //this.aiCalloutComponent1.setPreferredSize(preferredSize);
         this.aiCalloutComponent1.setMaximumSize(new Dimension(preferredSize.width, Integer.MAX_VALUE));
         this.aiCalloutComponent1.setPreferredSize(null);
         aiCalloutComponent1.revalidate();
@@ -794,18 +802,6 @@ public class AiChatMessageMarkdownPanel extends javax.swing.JPanel {
         revalidate();
     }
 
-//    @Override
-//    public Dimension getMaximumSize() {
-//        Dimension calloutPreferred = this.aiCalloutComponent1.getPreferredSize(); //To change body of generated methods, choose Tools | Templates.
-//        calloutPreferred.setSize(calloutPreferred.getWidth(), calloutPreferred.getHeight() + 8 + 18);
-//        return calloutPreferred;
-//    }
-//    @Override
-//    public Dimension getPreferredSize() {
-//        Dimension calloutPreferred = this.aiCalloutComponent1.getPreferredSize(); //To change body of generated methods, choose Tools | Templates.
-//        calloutPreferred.setSize(calloutPreferred.getWidth(), calloutPreferred.getHeight() + 8 + 18);
-//        return calloutPreferred;
-//    }
     /**
      * This method is called from within the constructor to initialize the form.
      * WARNING: Do NOT modify this code. The content of this method is always
@@ -894,10 +890,20 @@ public class AiChatMessageMarkdownPanel extends javax.swing.JPanel {
     }// </editor-fold>//GEN-END:initComponents
 
     private void lblCopyMouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_lblCopyMouseClicked
-        Toolkit toolkit = Toolkit.getDefaultToolkit();
-        Clipboard clipboard = toolkit.getSystemClipboard();
-        StringSelection strSel = new StringSelection(this.aiCalloutComponent1.getasText());
-        clipboard.setContents(strSel, null);
+
+        // Get the HTML content
+        String htmlText = this.aiCalloutComponent1.getText();
+
+        // Fallback: If fragment is null, extract HTML manually
+        if (htmlText == null) {
+            htmlText = this.aiCalloutComponent1.getasText();
+        }
+
+        // Create a Transferable object that supports both HTML and plain text
+        Clipboard clipboard = Toolkit.getDefaultToolkit().getSystemClipboard();
+
+        clipboard.setContents(new HTMLTransferable(htmlText, this.aiCalloutComponent1.getasText()), null);
+
     }//GEN-LAST:event_lblCopyMouseClicked
 
     private void lblSelectMouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_lblSelectMouseClicked
@@ -928,5 +934,44 @@ public class AiChatMessageMarkdownPanel extends javax.swing.JPanel {
      */
     public void setMaxDocumentChars(int maxDocumentChars) {
         this.maxDocumentChars = maxDocumentChars;
+    }
+
+    public static class HTMLTransferable implements Transferable {
+
+        private static final DataFlavor HTML_FLAVOR = new DataFlavor("text/html;class=java.lang.String", "HTML Format");
+        private static final DataFlavor[] FLAVORS = {HTML_FLAVOR, DataFlavor.stringFlavor};
+
+        private final String html;
+        private final String plainText;
+
+        public HTMLTransferable(String html, String plainText) {
+            this.html = html;
+            this.plainText = plainText;
+        }
+
+        @Override
+        public DataFlavor[] getTransferDataFlavors() {
+            return FLAVORS;
+        }
+
+        @Override
+        public boolean isDataFlavorSupported(DataFlavor flavor) {
+            for (DataFlavor f : FLAVORS) {
+                if (f.equals(flavor)) {
+                    return true;
+                }
+            }
+            return false;
+        }
+
+        @Override
+        public Object getTransferData(DataFlavor flavor) throws UnsupportedFlavorException {
+            if (flavor.equals(HTML_FLAVOR)) {
+                return html;
+            } else if (flavor.equals(DataFlavor.stringFlavor)) {
+                return plainText;
+            }
+            throw new UnsupportedFlavorException(flavor);
+        }
     }
 }
