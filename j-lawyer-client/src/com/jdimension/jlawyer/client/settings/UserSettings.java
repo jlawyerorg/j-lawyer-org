@@ -769,6 +769,8 @@ public class UserSettings extends UserSettingsKeys {
         }
 
         String[] ary = value.split(ARRAY_DELIMITER);
+        if(ary==null)
+            return defaultValue;
 
         return ary;
     }
