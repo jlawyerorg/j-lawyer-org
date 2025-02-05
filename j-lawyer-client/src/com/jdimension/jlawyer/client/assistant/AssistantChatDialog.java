@@ -880,11 +880,6 @@ public class AssistantChatDialog extends javax.swing.JDialog {
         ComponentUtils.restoreSplitPane(this.splitInputOutput, this.getClass(), "splitInputOutput");
         ComponentUtils.persistSplitPane(this.splitInputOutput, this.getClass(), "splitInputOutput");
 
-//        SwingUtilities.invokeLater(() -> {
-//            this.taInputString.setCaretPosition(0);
-//            this.taInputString.selectAll();
-//            this.jScrollPane5.getVerticalScrollBar().setValue(0);
-//        });
     }
 
     @Override
