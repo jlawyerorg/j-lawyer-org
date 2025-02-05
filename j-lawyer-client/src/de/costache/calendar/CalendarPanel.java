@@ -778,7 +778,9 @@ public class CalendarPanel extends javax.swing.JPanel {
         }
         StringUtils.sortIgnoreCase(userNames);
         
-        selectedUsers=Arrays.asList(UserSettings.getInstance().getSettingArray(UserSettings.CONF_DESKTOP_LASTFILTERUSERS, new String[]{}));
+        selectedUsers=Arrays.asList(UserSettings.getInstance().getSettingArray(UserSettings.CONF_DESKTOP_LASTFILTERUSERS, new String[0]));
+        if(selectedUsers==null)
+            selectedUsers=new ArrayList<>();
         if(selectedUsers.isEmpty())
             selectedUsers.add(UserSettings.getInstance().getCurrentUser().getPrincipalId());
         
