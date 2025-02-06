@@ -891,7 +891,7 @@ public class CalendarEntryTemplatesDialog extends javax.swing.JDialog {
 
         jLabel6.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/info.png"))); // NOI18N
         jLabel6.setText(" ");
-        jLabel6.setToolTipText("<html>zeitlicher Versatz für den zweiten Eintrag, als Anzahl an Tagen:<br/><ul><li>negativer Wert: zweiter Eintrag liegt zeitlich vor dem Haupteintrag</li><li>negativer Wert: zweiter Eintrag liegt zeitlich nach dem Haupteintrag</li></ul></html>");
+        jLabel6.setToolTipText("<html>zeitlicher Versatz für den zweiten Eintrag, als Anzahl an Tagen:<br/><ul><li>negativer Wert: zweiter Eintrag liegt zeitlich vor dem Haupteintrag</li><li>positiver Wert: zweiter Eintrag liegt zeitlich nach dem Haupteintrag</li></ul></html>");
 
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(getContentPane());
         getContentPane().setLayout(layout);
