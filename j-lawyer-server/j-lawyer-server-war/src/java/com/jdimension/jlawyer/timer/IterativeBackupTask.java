@@ -745,7 +745,9 @@ public class IterativeBackupTask extends java.util.TimerTask implements Cancella
 
         String dbUser = "";
         String dbPassword = "";
+        String dbHost = "localhost";
         String dbPort = "3306";
+        String dbName = "jlawyerdb";
         String syncLocation = "";
         boolean backupSuccess=true;
         boolean syncSuccess = true;
@@ -799,9 +801,19 @@ public class IterativeBackupTask extends java.util.TimerTask implements Cancella
                 dbPassword = dbPasswordB.getSettingValue();
             }
 
+            ServerSettingsBean dbHostB = settings.find("jlawyer.server.backup.dbhost");
+            if (dbHostB != null) {
+                dbHost = dbHostB.getSettingValue();
+            }
+            
             ServerSettingsBean dbPortB = settings.find("jlawyer.server.backup.dbport");
             if (dbPortB != null) {
                 dbPort = dbPortB.getSettingValue();
+            }
+            
+            ServerSettingsBean dbNameB = settings.find("jlawyer.server.backup.dbname");
+            if (dbNameB != null) {
+                dbName = dbNameB.getSettingValue();
             }
 
             if (dbUser == null || "".equals(dbUser)) {
@@ -913,7 +925,7 @@ public class IterativeBackupTask extends java.util.TimerTask implements Cancella
 
         
         log.info("initializing backup executor");
-        IterativeBackupExecutor ibe = new IterativeBackupExecutor(dataDir, backupDir, dbUser, dbPassword, dbPort, encryptionPassword);
+        IterativeBackupExecutor ibe = new IterativeBackupExecutor(dataDir, backupDir, dbUser, dbPassword, dbHost, dbPort, dbName, encryptionPassword);
         String subject = "Erfolgreich: ";
         StringBuilder body = new StringBuilder();
         BackupResult backupResult=null;

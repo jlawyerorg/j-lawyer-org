@@ -701,6 +701,8 @@ public class ServerSettingsKeys {
     public static final String SERVERCONF_BACKUP_DBUSER="jlawyer.server.backup.dbuser";
     public static final String SERVERCONF_BACKUP_DBPWD="jlawyer.server.backup.dbpassword";
     public static final String SERVERCONF_BACKUP_DBPORT="jlawyer.server.backup.dbport";
+    public static final String SERVERCONF_BACKUP_DBHOST="jlawyer.server.backup.dbhost";
+    public static final String SERVERCONF_BACKUP_DBNAME="jlawyer.server.backup.dbname";
     public static final String SERVERCONF_BACKUP_HOUR="jlawyer.server.backup.hour";
     public static final String SERVERCONF_BACKUP_MONDAY="jlawyer.server.backup.monday";
     public static final String SERVERCONF_BACKUP_TUESDAY="jlawyer.server.backup.tuesday";
