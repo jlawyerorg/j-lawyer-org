@@ -726,6 +726,7 @@ public class UserSettingsKeys {
 
     // will be used with a suffix indicating the event type (see CalendarSetup class)
     public static final String CONF_CALENDAR_LASTSELECTED = "user.calendar.lastcalsetup.";
+    public static final String CONF_CALENDAR_LASTFILTERUSERS = "client.calendar.lastfilterusers";
     
     
     // for new bulk save dialog

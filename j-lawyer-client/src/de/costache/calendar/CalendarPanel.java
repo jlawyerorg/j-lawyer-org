@@ -778,11 +778,11 @@ public class CalendarPanel extends javax.swing.JPanel {
         }
         StringUtils.sortIgnoreCase(userNames);
         
-        selectedUsers=Arrays.asList(UserSettings.getInstance().getSettingArray(UserSettings.CONF_DESKTOP_LASTFILTERUSERS, new String[0]));
-        if(selectedUsers==null)
-            selectedUsers=new ArrayList<>();
-        if(selectedUsers.isEmpty())
-            selectedUsers.add(UserSettings.getInstance().getCurrentUser().getPrincipalId());
+        String[] selUsersArray=UserSettings.getInstance().getSettingArray(UserSettings.CONF_CALENDAR_LASTFILTERUSERS, new String[0]);
+        if(selUsersArray.length==0)
+            selUsersArray=new String[]{UserSettings.getInstance().getCurrentUser().getPrincipalId()};
+        
+        selectedUsers=Arrays.asList(selUsersArray);
         
         this.lblUserFilterCount.setText(" " + selectedUsers.size() + " ");
 
@@ -805,7 +805,7 @@ public class CalendarPanel extends javax.swing.JPanel {
                     }
                 }
                 this.lblUserFilterCount.setText(" " + al.size() + " ");
-                UserSettings.getInstance().setSettingArray(UserSettings.CONF_DESKTOP_LASTFILTERUSERS, al.toArray(new String[al.size()]));
+                UserSettings.getInstance().setSettingArray(UserSettings.CONF_CALENDAR_LASTFILTERUSERS, al.toArray(new String[al.size()]));
                 selectedUsers=al;
                 
                 Collection<ArchiveFileReviewsBean> cacheClone = new ArrayList<>();
