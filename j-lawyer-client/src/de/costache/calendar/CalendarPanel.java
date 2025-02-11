@@ -721,7 +721,7 @@ import themes.colors.DefaultColorTheme;
  *
  * @author jens
  */
-public class CalendarPanel extends javax.swing.JPanel {
+public class CalendarPanel extends javax.swing.JPanel implements NewEventEntryCallbacks {
 
     private static final Logger log = Logger.getLogger(CalendarPanel.class.getName());
 
@@ -1338,6 +1338,11 @@ public class CalendarPanel extends javax.swing.JPanel {
      */
     public void setEventAlpha(int eventAlpha) {
         this.eventAlpha = eventAlpha;
+    }
+
+    @Override
+    public void entryAdded(ArchiveFileReviewsBean entry) {
+        this.addCalendarEvent(entry);
     }
 
 
