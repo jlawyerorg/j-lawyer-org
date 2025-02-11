@@ -760,6 +760,7 @@ public class InvoicePositionEntryPanel extends javax.swing.JPanel {
         
         clone.setName(this.txtName.getText());
         clone.setDescription(this.taDescription.getText());
+        clone.setPosition(this.position.getPosition());
         try {
             clone.setTaxRate(BigDecimal.valueOf(this.taxRateFormat.parse(this.cmbTaxRate.getSelectedItem().toString()).floatValue()));
         } catch (Exception ex) {
