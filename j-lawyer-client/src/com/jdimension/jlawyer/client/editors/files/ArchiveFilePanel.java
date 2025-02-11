@@ -4134,8 +4134,11 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
             Map<AssistantConfig, List<AiCapability>> capabilities3 = ingo.filterCapabilities(AiCapability.REQUESTTYPE_CHAT, AiCapability.INPUTTYPE_NONE);
             ingo.populateMenu(this.mnuAssistant, capabilities3, (AssistantInputAdapter) this, this.dto);
             this.mnuAssistant.add(new JSeparator());
-            Map<AssistantConfig, List<AiCapability>> capabilities4 = ingo.filterCapabilities(AiCapability.REQUESTTYPE_EXTRACT, AiCapability.INPUTTYPE_STRING);
+            Map<AssistantConfig, List<AiCapability>> capabilities4 = ingo.filterCapabilities(AiCapability.REQUESTTYPE_VISION, AiCapability.INPUTTYPE_FILE);
             ingo.populateMenu(this.mnuAssistant, capabilities4, (AssistantInputAdapter) this, this.dto);
+            this.mnuAssistant.add(new JSeparator());
+            Map<AssistantConfig, List<AiCapability>> capabilities5 = ingo.filterCapabilities(AiCapability.REQUESTTYPE_EXTRACT, AiCapability.INPUTTYPE_STRING);
+            ingo.populateMenu(this.mnuAssistant, capabilities5, (AssistantInputAdapter) this, this.dto);
         } catch (Exception ex) {
             log.error(ex);
         }
@@ -7045,8 +7048,8 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
             byte[] content = CachingDocumentLoader.getInstance().getDocument(selectedDocs.get(0).getId());
             // Save as temporary file
             String tempPath = FileUtils.createTempFile(selectedDocs.get(0).getName(), content);
-            
-            StringBuilder anonymizeTerms=new StringBuilder();
+
+            StringBuilder anonymizeTerms = new StringBuilder();
             anonymizeTerms.append(this.dto.getFileNumber()).append(", ");
             for (ArchiveFileAddressesBean aab : this.pnlInvolvedParties.getInvolvedParties()) {
                 anonymizeTerms.append(System.lineSeparator()).append(aab.getAnonymizeTerms());
@@ -7058,7 +7061,6 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
 
             if (!anoDia.isFailed() && anoDia.isSaveRequested()) {
                 // Save modified data back to the server
-                
 
                 String newName = FileUtils.getNewFileName(dto, selectedDocs.get(0).getName(), new Date(), true, EditorsRegistry.getInstance().getMainWindow(), "anonymisiertes PDF speichern");
 
@@ -7080,7 +7082,6 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
 
                 }
                 caseFolderPanel1.addDocument(locator.lookupArchiveFileServiceRemote().getDocument(newDoc.getId()), null);
-                
 
                 // Delete temporary file
                 FileUtils.cleanupTempFile(tempPath);
@@ -7510,15 +7511,26 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
                 return inputs;
             }
 
-            ArchiveFileDocumentsBean doc = selected.get(0);
-            String docText = remote.getDocumentPreview(doc.getId());
-
             InputData i = new InputData();
-            //i.setFileName("sound.wav");
-            i.setType(InputData.TYPE_STRING);
-            i.setBase64(false);
-            //i.setData(selectedText);
-            i.setStringData(docText);
+
+            if (!c.getInput().isEmpty() && c.getInput().get(0).getId().contains("FILE")) {
+                ArchiveFileDocumentsBean doc = selected.get(0);
+                i.setFileName(doc.getName());
+                i.setType(InputData.TYPE_FILE);
+                i.setBase64(true);
+                i.setData(remote.getDocumentContent(doc.getId()));
+                //i.setStringData(docText);
+            } else {
+                ArchiveFileDocumentsBean doc = selected.get(0);
+                String docText = remote.getDocumentPreview(doc.getId());
+
+                //i.setFileName("sound.wav");
+                i.setType(InputData.TYPE_STRING);
+                i.setBase64(false);
+                //i.setData(selectedText);
+                i.setStringData(docText);
+            }
+
             inputs.add(i);
             return inputs;
 

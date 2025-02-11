@@ -11,6 +11,7 @@ public class InputData implements Serializable {
     protected static long serialVersionUID = 1L;
     
     public static final String TYPE_STRING="string";
+    public static final String TYPE_FILE="file";
     
     private String type;
     private String stringData;

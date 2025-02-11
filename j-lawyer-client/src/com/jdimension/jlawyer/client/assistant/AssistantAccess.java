@@ -924,6 +924,9 @@ public class AssistantAccess {
                     if(AiCapability.REQUESTTYPE_CHAT.equals(c.getRequestType())) {
                         AssistantChatDialog dlg = new AssistantChatDialog(selectedCase, config, c, adapter, EditorsRegistry.getInstance().getMainWindow(), false);
                         dlg.setVisible(true);
+                    } else if(AiCapability.REQUESTTYPE_VISION.equals(c.getRequestType())) {
+                        AssistantVisionDialog dlg = new AssistantVisionDialog(selectedCase, config, c, adapter, EditorsRegistry.getInstance().getMainWindow(), false);
+                        dlg.setVisible(true);
                     } else {
                         AssistantGenericDialog dlg = new AssistantGenericDialog(selectedCase, config, c, adapter, !c.hasParameters(), EditorsRegistry.getInstance().getMainWindow(), false);
                         dlg.setVisible(true);
