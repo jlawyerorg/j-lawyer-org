@@ -71,7 +71,7 @@ public class BackupMgrController implements Initializable {
 
     @FXML
     private void cmdRestoreClicked(ActionEvent event) {
-        RestoreExecutor re = new RestoreExecutor(this.txtDataDir.getText(), this.txtBackupDir.getText(), this.txtEncryptionPwd.getText(), this.txtMysqlPwd.getText());
+        RestoreExecutor re = new RestoreExecutor(this.txtDataDir.getText(), this.txtBackupDir.getText(), this.txtEncryptionPwd.getText(), "localhost", "3306", "jlawyerdb", "root", this.txtMysqlPwd.getText());
         BackupProgressUiCallback callback=new BackupProgressUiCallback(lblProgress);
 
         new Thread(() -> {

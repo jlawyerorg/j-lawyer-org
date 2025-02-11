@@ -691,7 +691,11 @@ public class RestoreExecutor {
 
     private static final String DIR_LETTERHEADS="letterheads";
     
-    private String mysqlPassword = null;
+    private String dbHost = null;
+    private String dbPort = null;
+    private String dbName=null;
+    private String dbUser = null;
+    private String dbPassword = null;
     private String backupDirectory = null;
     private String dataDirectory = null;
     private String encryptionPassword = null;
@@ -699,9 +703,13 @@ public class RestoreExecutor {
 
     private int fileFailures = 0;
 
-    public RestoreExecutor(String dataDir, String backupDir, String encryptionPassword, String mysqlPassword) {
+    public RestoreExecutor(String dataDir, String backupDir, String encryptionPassword, String dbHost, String dbPort, String dbName, String dbUser, String dbPassword) {
 
-        this.mysqlPassword = mysqlPassword;
+        this.dbHost=dbHost;
+        this.dbPort=dbPort;
+        this.dbName=dbName;
+        this.dbUser=dbUser;
+        this.dbPassword = dbPassword;
         this.dataDirectory = dataDir;
         this.backupDirectory = backupDir;
         this.encryptionPassword = encryptionPassword;
@@ -751,18 +759,18 @@ public class RestoreExecutor {
         }
         Class.forName("com.mysql.jdbc.Driver");
         boolean jlawyerdbFound = false;
-        try (Connection mysql = DriverManager.getConnection("jdbc:mysql://localhost/jlawyerdb?user=root&serverTimezone=Europe/Berlin&useSSL=false&password=" + mysqlPassword)) {
+        try (Connection mysql = DriverManager.getConnection("jdbc:mysql://" + this.dbHost + ":" + this.dbPort + "/" + this.dbName + "?user=" + this.dbUser + "&serverTimezone=Europe/Berlin&useSSL=false&password=" + dbPassword)) {
             ResultSet rs = mysql.getMetaData().getCatalogs();
 
             while (rs.next()) {
-                if ("jlawyerdb".equals(rs.getString("TABLE_CAT").toLowerCase())) {
+                if (this.dbName.equals(rs.getString("TABLE_CAT").toLowerCase())) {
                     jlawyerdbFound = true;
                 }
             }
             rs.close();
         }
         if (!jlawyerdbFound) {
-            throw new Exception("Datenbank 'jlawyerdb' nicht gefunden!");
+            throw new Exception("Datenbank '" + this.dbName + "' nicht gefunden!");
         }
 
     }
@@ -1017,7 +1025,7 @@ public class RestoreExecutor {
         fileFailures = 0;
         this.clearDataDirectory(progress);
         this.restoreFiles(progress);
-        this.restoreDatabase(this.mysqlPassword, progress);
+        this.restoreDatabase(this.dbPassword, progress);
     }
 
     private void restoreFiles(BackupProgressCallback progress) throws Exception {
@@ -1179,12 +1187,16 @@ public class RestoreExecutor {
         String[] cmd = null;
         cmd = new String[]{
             path + "mysql",
+            "-h",
+            this.dbHost,
+            "-P",
+            this.dbPort,
             "-u",
-            "root",
-            "-p" + password,
+            this.dbUser,
+            "-p" + this.dbPassword,
             "-e",
             //"\"drop database if exists jlawyerdb;create database jlawyerdb;use jlawyerdb;source " + backup + "jlawyerdb-dump.sql;commit;\""
-            "drop database if exists jlawyerdb;create database jlawyerdb;use jlawyerdb;source " + backup + "jlawyerdb-dump.sql;commit;"
+            "drop database if exists " + this.dbName + ";create database " + this.dbName + ";use " + this.dbName + ";source " + backup + "jlawyerdb-dump.sql;commit;"
         //"\"drop database if exists jlawyerdb;quit;\""    
         };
 

@@ -20,8 +20,15 @@ services:
         image: jlawyerorg/jlawyer-srv:latest
         restart: always
         volumes:
+#            - jlawyer_data:/opt/jboss/j-lawyer-data
+#            - jlawyer_backup:/opt/jboss/backups
             - /var/docker_data/j-lawyer-data/:/opt/jboss/j-lawyer-data
         ports:
             - 8000:8080
         depends_on:
             - "db"
+            
+# Declare named volumes here
+# volumes:
+#   jlawyer_data:
+#   jlawyer_backup:
