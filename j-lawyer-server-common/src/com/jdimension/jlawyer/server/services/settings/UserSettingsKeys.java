@@ -728,7 +728,6 @@ public class UserSettingsKeys {
     public static final String CONF_CALENDAR_LASTSELECTED = "user.calendar.lastcalsetup.";
     public static final String CONF_CALENDAR_LASTFILTERUSERS = "client.calendar.lastfilterusers";
     
-    
     // for new bulk save dialog
     public static final String CONF_BULKSAVE_LASTCASETAGS_PREFIX="user.bulksave.lastcasetags.";
     public static final String CONF_BULKSAVE_LASTDOCTAGS_PREFIX="user.bulksave.lastdoctags.";
