@@ -805,7 +805,7 @@ public class ReportService implements ReportServiceRemote {
             result.getTables().add(getTable(false, "Akten pro Monat nach Sachgebiet", casesBySubjectFieldQuery.toString(), params));
 
         } else if (Reports.RPT_INV_ALL.equals(reportId)) {
-            String query = "SELECT inv.case_id, inv.invoice_no as RNr, invt.display_name as Belegart, \n"
+            String query = "SELECT inv.case_id, inv.invoice_no as RNr, invt.display_name as Belegart, cont.company as EmpfaengerFirma, cont.name as EmpfaengerName, \n"
                     + "    case \n"
                     + "        when inv.invoice_status = 10 then 'neu'\n"
                     + "        when inv.invoice_status = 20 then 'offen'\n"
@@ -818,7 +818,7 @@ public class ReportService implements ReportServiceRemote {
                     + "        else 'unbekannt'\n"
                     + "    end as Status,\n"
                     + "    round(inv.total, 2) Nettobetrag, round(inv.total_gross, 2) Bruttobetrag, ifnull(round(sum(acce.in_earnings), 2), 0) Zahlungseingang, inv.currency as Waehrung, DATE_FORMAT(inv.created,'%Y-%m-%d') as erstellt,\n"
-                    + "    DATE_FORMAT(inv.due_date,'%Y-%m-%d') as faellig, inv.name as Bezeichnung, inv.description as Beschreibung, inv.sender_id as Von, cont.name as EmpfaengerName, cont.company as EmpfaengerFirma, cases.fileNumber as Aktenzeichen, cases.name as Rubrum, cases.reason as wegen, cases.lawyer as Anwalt, cases.assistant as Sachbearbeiter FROM invoices inv\n"
+                    + "    DATE_FORMAT(inv.due_date,'%Y-%m-%d') as faellig, inv.name as Bezeichnung, inv.description as Beschreibung, inv.sender_id as Von, cases.fileNumber as Aktenzeichen, cases.name as Rubrum, cases.reason as wegen, cases.lawyer as Anwalt, cases.assistant as Sachbearbeiter FROM invoices inv\n"
                     + "left join case_account_entries acce on acce.invoice_id=inv.id  \n"
                     + "left join contacts cont on inv.contact_id=cont.id\n"
                     + "left join invoice_types invt on inv.invoice_type=invt.id\n"
@@ -849,7 +849,7 @@ public class ReportService implements ReportServiceRemote {
             result.getTables().add(getTable(false, "kumulierte Werte nach Belegstatus", query2, params));
 
         } else if (Reports.RPT_INV_OPEN.equals(reportId)) {
-            String query = "SELECT inv.case_id, inv.invoice_no as RNr, invt.display_name as Belegart, \n"
+            String query = "SELECT inv.case_id, inv.invoice_no as RNr, invt.display_name as Belegart, cont.company as EmpfaengerFirma, cont.name as EmpfaengerName, \n"
                     + "    case \n"
                     + "        when inv.invoice_status = 10 then 'neu'\n"
                     + "        when inv.invoice_status = 20 then 'offen'\n"
@@ -862,7 +862,7 @@ public class ReportService implements ReportServiceRemote {
                     + "        else 'unbekannt'\n"
                     + "    end as Status,\n"
                     + "    round(inv.total, 2) Nettobetrag, round(inv.total_gross, 2) Bruttobetrag, ifnull(round(sum(acce.in_earnings), 2), 0) Zahlungseingang, inv.currency as Waehrung, DATE_FORMAT(inv.created,'%Y-%m-%d') as erstellt,\n"
-                    + "    DATE_FORMAT(inv.due_date,'%Y-%m-%d') as faellig, TIMESTAMPDIFF(DAY, inv.due_date, curdate()) as TageFaellig, inv.name as Bezeichnung, inv.description as Beschreibung, inv.sender_id as Von, cont.name as EmpfaengerName, cont.company as EmpfaengerFirma, cases.fileNumber as Aktenzeichen, cases.name as Rubrum, cases.reason as wegen, cases.lawyer as Anwalt, cases.assistant as Sachbearbeiter FROM invoices inv\n"
+                    + "    DATE_FORMAT(inv.due_date,'%Y-%m-%d') as faellig, TIMESTAMPDIFF(DAY, inv.due_date, curdate()) as TageFaellig, inv.name as Bezeichnung, inv.description as Beschreibung, inv.sender_id as Von, cases.fileNumber as Aktenzeichen, cases.name as Rubrum, cases.reason as wegen, cases.lawyer as Anwalt, cases.assistant as Sachbearbeiter FROM invoices inv\n"
                     + "left join case_account_entries acce on acce.invoice_id=inv.id  \n"
                     + "left join contacts cont on inv.contact_id=cont.id\n"
                     + "left join invoice_types invt on inv.invoice_type=invt.id\n"
@@ -909,7 +909,7 @@ public class ReportService implements ReportServiceRemote {
             result.getBarCharts().add(getBarChart(true, "Alle offenen Rechnungen / Belege nach Fälligkeitsdatum", "Datum", "Summe Rechnungsbeträge", query3, 2, 3, 4, overrideParams));
 
         } else if (Reports.RPT_INV_OVERDUE.equals(reportId)) {
-            String query = "SELECT inv.case_id, inv.invoice_no as RNr, invt.display_name as Belegart, \n"
+            String query = "SELECT inv.case_id, inv.invoice_no as RNr, invt.display_name as Belegart, cont.company as EmpfaengerFirma, cont.name as EmpfaengerName, \n"
                     + "    case \n"
                     + "        when inv.invoice_status = 10 then 'neu'\n"
                     + "        when inv.invoice_status = 20 then 'offen'\n"
@@ -922,7 +922,7 @@ public class ReportService implements ReportServiceRemote {
                     + "        else 'unbekannt'\n"
                     + "    end as Status,\n"
                     + "    round(inv.total, 2) Nettobetrag, round(inv.total_gross, 2) Bruttobetrag, ifnull(round(sum(acce.in_earnings), 2), 0) Zahlungseingang, inv.currency as Waehrung, DATE_FORMAT(inv.created,'%Y-%m-%d') as erstellt,\n"
-                    + "    DATE_FORMAT(inv.due_date,'%Y-%m-%d') as faellig, TIMESTAMPDIFF(DAY, inv.due_date, curdate()) as TageFaellig, inv.name as Bezeichnung, inv.description as Beschreibung, inv.sender_id as Von, cont.name as EmpfaengerName, cont.company as EmpfaengerFirma, cases.fileNumber as Aktenzeichen, cases.name as Rubrum, cases.reason as wegen, cases.lawyer as Anwalt, cases.assistant as Sachbearbeiter FROM invoices inv\n"
+                    + "    DATE_FORMAT(inv.due_date,'%Y-%m-%d') as faellig, TIMESTAMPDIFF(DAY, inv.due_date, curdate()) as TageFaellig, inv.name as Bezeichnung, inv.description as Beschreibung, inv.sender_id as Von, cases.fileNumber as Aktenzeichen, cases.name as Rubrum, cases.reason as wegen, cases.lawyer as Anwalt, cases.assistant as Sachbearbeiter FROM invoices inv\n"
                     + "left join case_account_entries acce on acce.invoice_id=inv.id  \n"
                     + "left join contacts cont on inv.contact_id=cont.id\n"
                     + "left join invoice_types invt on inv.invoice_type=invt.id\n"
