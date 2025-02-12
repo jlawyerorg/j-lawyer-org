@@ -870,6 +870,26 @@ public class ReportService implements ReportServiceRemote {
                     + "where invt.turnover=1 and inv.invoice_status>=20 and inv.invoice_status<30 and inv.due_date >=? and inv.due_date<=?\n"
                     + "group by inv.id";
             result.getTables().add(getTable(true, "Offene Rechnungen", query, params));
+            
+            String query2 = "SELECT "
+                    + "invt.display_name AS Belegart, "
+                    + "CASE "
+                    + "    WHEN inv.invoice_status = 10 THEN 'Entwurf / neu' "
+                    + "    WHEN inv.invoice_status = 20 THEN 'offen' "
+                    + "    WHEN inv.invoice_status = 21 THEN 'offen - 1. Mahnstufe' "
+                    + "    WHEN inv.invoice_status = 22 THEN 'offen - 2. Mahnstufe' "
+                    + "    WHEN inv.invoice_status = 23 THEN 'offen - 3. Mahnstufe' "
+                    + "    WHEN inv.invoice_status = 24 THEN 'offen - nicht vollstreckbar' "
+                    + "    WHEN inv.invoice_status = 30 THEN 'bezahlt' "
+                    + "    WHEN inv.invoice_status = 40 THEN 'storniert' "
+                    + "    ELSE 'unbekannt' "
+                    + "END AS Status, "
+                    + "SUM(ROUND(inv.total, 2)) AS Nettobetrag "
+                    + "FROM invoices inv "
+                    + "LEFT JOIN invoice_types invt ON inv.invoice_type = invt.id "
+                    + "WHERE invt.turnover=1 and inv.invoice_status>=20 and inv.invoice_status<30 and inv.due_date >=? and inv.due_date<=? "
+                    + "GROUP BY Belegart, Status";
+            result.getTables().add(getTable(false, "kumulierte Werte nach Belegstatus", query2, params));
 
             // the min function on the caseid here is fishy. the grouping is by date, so if the first invoice in that date is not accessible by the user, the entire group is missing
             String query3 = "SELECT MIN(inv.case_id) as case_id,\n"
@@ -930,6 +950,26 @@ public class ReportService implements ReportServiceRemote {
                     + "where invt.turnover=1 and inv.invoice_status>=20 and inv.invoice_status<30 and inv.due_date >=? and inv.due_date<=? and inv.due_date <= curdate()\n"
                     + "group by inv.id";
             result.getTables().add(getTable(true, "Fällige Rechnungen", query, params));
+            
+            String query2 = "SELECT "
+                    + "invt.display_name AS Belegart, "
+                    + "CASE "
+                    + "    WHEN inv.invoice_status = 10 THEN 'Entwurf / neu' "
+                    + "    WHEN inv.invoice_status = 20 THEN 'offen' "
+                    + "    WHEN inv.invoice_status = 21 THEN 'offen - 1. Mahnstufe' "
+                    + "    WHEN inv.invoice_status = 22 THEN 'offen - 2. Mahnstufe' "
+                    + "    WHEN inv.invoice_status = 23 THEN 'offen - 3. Mahnstufe' "
+                    + "    WHEN inv.invoice_status = 24 THEN 'offen - nicht vollstreckbar' "
+                    + "    WHEN inv.invoice_status = 30 THEN 'bezahlt' "
+                    + "    WHEN inv.invoice_status = 40 THEN 'storniert' "
+                    + "    ELSE 'unbekannt' "
+                    + "END AS Status, "
+                    + "SUM(ROUND(inv.total, 2)) AS Nettobetrag "
+                    + "FROM invoices inv "
+                    + "LEFT JOIN invoice_types invt ON inv.invoice_type = invt.id "
+                    + "WHERE invt.turnover=1 and inv.invoice_status>=20 and inv.invoice_status<30 and inv.due_date >=? and inv.due_date<=? and inv.due_date <= curdate() "
+                    + "GROUP BY Belegart, Status";
+            result.getTables().add(getTable(false, "kumulierte Werte nach Belegstatus", query2, params));
 
             // the min function on the caseid here is fishy. the grouping is by date, so if the first invoice in that date is not accessible by the user, the entire group is missing
             String query3 = "SELECT MIN(inv.case_id) as case_id,\n"
