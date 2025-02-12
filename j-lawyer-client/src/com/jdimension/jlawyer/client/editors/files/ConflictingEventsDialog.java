@@ -665,6 +665,7 @@ package com.jdimension.jlawyer.client.editors.files;
 
 import com.jdimension.jlawyer.persistence.ArchiveFileReviewsBean;
 import com.jdimension.jlawyer.persistence.CalendarSetup;
+import de.costache.calendar.CalendarPanel;
 import java.util.Collection;
 import java.util.Date;
 
@@ -715,7 +716,7 @@ public class ConflictingEventsDialog extends javax.swing.JDialog {
     // <editor-fold defaultstate="collapsed" desc="Generated Code">//GEN-BEGIN:initComponents
     private void initComponents() {
 
-        calendarPanel = new de.costache.calendar.CalendarPanel();
+        calendarPanel = new CalendarPanel(false);
         cmdCancel = new javax.swing.JButton();
         cmdConfirm = new javax.swing.JButton();
 

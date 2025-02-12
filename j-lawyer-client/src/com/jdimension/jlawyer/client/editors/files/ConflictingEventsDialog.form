@@ -50,6 +50,9 @@
   </Layout>
   <SubComponents>
     <Component class="de.costache.calendar.CalendarPanel" name="calendarPanel">
+      <AuxValues>
+        <AuxValue name="JavaCodeGenerator_CreateCodeCustom" type="java.lang.String" value="new CalendarPanel(false);"/>
+      </AuxValues>
     </Component>
     <Component class="javax.swing.JButton" name="cmdCancel">
       <Properties>

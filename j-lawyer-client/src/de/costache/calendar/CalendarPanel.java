@@ -773,6 +773,7 @@ public class CalendarPanel extends javax.swing.JPanel implements NewEventEntryCa
         bindListeners();
         
         this.cmdUserFilter.setEnabled(userPopup);
+        this.lblUserFilterCount.setEnabled(userPopup);
     }
 
     public void setParentEditor(String parentClass, String detailsEditorClass, Image backgroundImage) {
@@ -861,7 +862,8 @@ public class CalendarPanel extends javax.swing.JPanel implements NewEventEntryCa
         cmdUserFilter.addMouseListener(new java.awt.event.MouseAdapter() {
             @Override
             public void mousePressed(java.awt.event.MouseEvent evt) {
-                popUserFilter.show(cmdUserFilter, evt.getX(), evt.getY());
+                if(userPopup)
+                    popUserFilter.show(cmdUserFilter, evt.getX(), evt.getY());
             }
 
         });
@@ -871,7 +873,11 @@ public class CalendarPanel extends javax.swing.JPanel implements NewEventEntryCa
         spacer.setText("   ");
         toolBar.add(spacer);
 
-        this.buildUsersPopup();
+        try {
+            this.buildUsersPopup();
+        } catch (Exception ex) {
+            log.error("Could not initialize users popup", ex);
+        }
 
 //        addButton = new JButton("Hinzufügen");
 //        removeButton = new JButton("Löschen");
