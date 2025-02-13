@@ -865,7 +865,6 @@ public class UserAdministrationDialog extends javax.swing.JDialog {
         jLabel17 = new javax.swing.JLabel();
         txtCompany = new javax.swing.JTextField();
         jLabel23 = new javax.swing.JLabel();
-        txtRole = new javax.swing.JTextField();
         jLabel24 = new javax.swing.JLabel();
         txtStreet = new javax.swing.JTextField();
         jLabel28 = new javax.swing.JLabel();
@@ -897,6 +896,8 @@ public class UserAdministrationDialog extends javax.swing.JDialog {
         txtUstId = new javax.swing.JTextField();
         jLabel41 = new javax.swing.JLabel();
         cmdPopulateFromCompanyProfile = new javax.swing.JButton();
+        jScrollPane7 = new javax.swing.JScrollPane();
+        taRole = new javax.swing.JTextArea();
         jPanel5 = new javax.swing.JPanel();
         jPanel1 = new javax.swing.JPanel();
         chkLogin = new javax.swing.JCheckBox();
@@ -1106,6 +1107,10 @@ public class UserAdministrationDialog extends javax.swing.JDialog {
             }
         });
 
+        taRole.setColumns(20);
+        taRole.setRows(5);
+        jScrollPane7.setViewportView(taRole);
+
         org.jdesktop.layout.GroupLayout jPanel14Layout = new org.jdesktop.layout.GroupLayout(jPanel14);
         jPanel14.setLayout(jPanel14Layout);
         jPanel14Layout.setHorizontalGroup(
@@ -1129,16 +1134,15 @@ public class UserAdministrationDialog extends javax.swing.JDialog {
                     .add(txtName)
                     .add(org.jdesktop.layout.GroupLayout.TRAILING, txtFirstName)
                     .add(org.jdesktop.layout.GroupLayout.TRAILING, txtDisplayName)
-                    .add(org.jdesktop.layout.GroupLayout.TRAILING, txtRole)
-                    .add(chkLawyer)
                     .add(txtStreet)
                     .add(txtAdjunct)
                     .add(txtZipCode)
                     .add(txtCity)
-                    .add(cmbCountryCodeInvoicing, 0, 300, Short.MAX_VALUE))
+                    .add(cmbCountryCodeInvoicing, 0, 300, Short.MAX_VALUE)
+                    .add(org.jdesktop.layout.GroupLayout.TRAILING, jScrollPane7, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 0, Short.MAX_VALUE))
                 .addPreferredGap(org.jdesktop.layout.LayoutStyle.UNRELATED)
                 .add(jSeparator3, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
-                .addPreferredGap(org.jdesktop.layout.LayoutStyle.UNRELATED)
+                .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
                 .add(jPanel14Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
                     .add(jLabel13)
                     .add(jLabel33)
@@ -1151,76 +1155,40 @@ public class UserAdministrationDialog extends javax.swing.JDialog {
                     .add(jLabel40)
                     .add(jLabel41))
                 .addPreferredGap(org.jdesktop.layout.LayoutStyle.UNRELATED)
-                .add(jPanel14Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING, false)
-                    .add(txtTaxNr, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 300, Short.MAX_VALUE)
-                    .add(txtUstId)
-                    .add(txtIban)
-                    .add(txtBic)
-                    .add(txtBank)
-                    .add(txtWebsite)
-                    .add(txtMobile)
-                    .add(txtFax)
-                    .add(txtPhone)
-                    .add(txtEmail))
-                .add(18, 18, 18)
-                .add(cmdPopulateFromCompanyProfile)
-                .addContainerGap(org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                .add(jPanel14Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
+                    .add(jPanel14Layout.createSequentialGroup()
+                        .add(jPanel14Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING, false)
+                            .add(txtTaxNr)
+                            .add(txtUstId)
+                            .add(txtIban)
+                            .add(txtBic)
+                            .add(txtBank)
+                            .add(txtWebsite)
+                            .add(txtMobile)
+                            .add(txtFax)
+                            .add(txtPhone)
+                            .add(txtEmail, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 300, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE))
+                        .add(18, 18, 18)
+                        .add(cmdPopulateFromCompanyProfile))
+                    .add(chkLawyer))
+                .addContainerGap(87, Short.MAX_VALUE))
         );
         jPanel14Layout.setVerticalGroup(
             jPanel14Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
             .add(jPanel14Layout.createSequentialGroup()
                 .addContainerGap()
                 .add(jPanel14Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
+                    .add(jSeparator3)
                     .add(jPanel14Layout.createSequentialGroup()
                         .add(jPanel14Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
-                            .add(jPanel14Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.BASELINE)
-                                .add(jLabel27)
-                                .add(txtDisplayName, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE))
-                            .add(org.jdesktop.layout.GroupLayout.TRAILING, jPanel14Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.BASELINE)
-                                .add(txtEmail, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
-                                .add(jLabel13)
-                                .add(cmdPopulateFromCompanyProfile)))
-                        .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
-                        .add(jPanel14Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
                             .add(jPanel14Layout.createSequentialGroup()
-                                .add(jPanel14Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.BASELINE)
-                                    .add(txtFirstName, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
-                                    .add(jLabel14))
-                                .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
-                                .add(jPanel14Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.BASELINE)
-                                    .add(txtName, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
-                                    .add(jLabel17))
-                                .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
-                                .add(jPanel14Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.BASELINE)
-                                    .add(txtCompany, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
-                                    .add(jLabel23))
-                                .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
-                                .add(jPanel14Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.BASELINE)
-                                    .add(txtRole, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
-                                    .add(jLabel24))
-                                .addPreferredGap(org.jdesktop.layout.LayoutStyle.UNRELATED)
                                 .add(chkLawyer)
                                 .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
                                 .add(jPanel14Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.BASELINE)
-                                    .add(txtStreet, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
-                                    .add(jLabel28))
+                                    .add(txtEmail, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
+                                    .add(jLabel13)
+                                    .add(cmdPopulateFromCompanyProfile))
                                 .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
-                                .add(jPanel14Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.BASELINE)
-                                    .add(txtAdjunct, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
-                                    .add(jLabel29))
-                                .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
-                                .add(jPanel14Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.BASELINE)
-                                    .add(txtZipCode, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
-                                    .add(jLabel30))
-                                .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
-                                .add(jPanel14Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.BASELINE)
-                                    .add(txtCity, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
-                                    .add(jLabel31))
-                                .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
-                                .add(jPanel14Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.BASELINE)
-                                    .add(cmbCountryCodeInvoicing, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
-                                    .add(jLabel32)))
-                            .add(jPanel14Layout.createSequentialGroup()
                                 .add(jPanel14Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.BASELINE)
                                     .add(txtPhone, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
                                     .add(jLabel33))
@@ -1255,9 +1223,48 @@ public class UserAdministrationDialog extends javax.swing.JDialog {
                                 .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
                                 .add(jPanel14Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.BASELINE)
                                     .add(txtUstId, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
-                                    .add(jLabel41))))
-                        .add(0, 0, Short.MAX_VALUE))
-                    .add(jSeparator3))
+                                    .add(jLabel41)))
+                            .add(jPanel14Layout.createSequentialGroup()
+                                .add(jPanel14Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.BASELINE)
+                                    .add(jLabel27)
+                                    .add(txtDisplayName, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE))
+                                .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
+                                .add(jPanel14Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.BASELINE)
+                                    .add(txtFirstName, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
+                                    .add(jLabel14))
+                                .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
+                                .add(jPanel14Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.BASELINE)
+                                    .add(txtName, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
+                                    .add(jLabel17))
+                                .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
+                                .add(jPanel14Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.BASELINE)
+                                    .add(txtCompany, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
+                                    .add(jLabel23))
+                                .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
+                                .add(jPanel14Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
+                                    .add(jLabel24)
+                                    .add(jScrollPane7, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 66, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE))
+                                .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
+                                .add(jPanel14Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.BASELINE)
+                                    .add(txtStreet, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
+                                    .add(jLabel28))
+                                .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
+                                .add(jPanel14Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.BASELINE)
+                                    .add(txtAdjunct, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
+                                    .add(jLabel29))
+                                .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
+                                .add(jPanel14Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.BASELINE)
+                                    .add(txtZipCode, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
+                                    .add(jLabel30))
+                                .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
+                                .add(jPanel14Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.BASELINE)
+                                    .add(txtCity, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
+                                    .add(jLabel31))
+                                .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
+                                .add(jPanel14Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.BASELINE)
+                                    .add(cmbCountryCodeInvoicing, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
+                                    .add(jLabel32))))
+                        .add(0, 0, Short.MAX_VALUE)))
                 .addContainerGap())
         );
 
@@ -2157,7 +2164,7 @@ public class UserAdministrationDialog extends javax.swing.JDialog {
         txtFirstName.setText("");
         txtName.setText("");
         txtCompany.setText("");
-        txtRole.setText("");
+        taRole.setText("");
         txtStreet.setText("");
         txtAdjunct.setText("");
         txtZipCode.setText("");
@@ -2300,7 +2307,7 @@ public class UserAdministrationDialog extends javax.swing.JDialog {
                 txtFirstName.setText(u.getFirstName());
                 txtName.setText(u.getName());
                 txtCompany.setText(u.getCompany());
-                txtRole.setText(u.getRole());
+                taRole.setText(u.getRole());
                 txtStreet.setText(u.getStreet());
                 txtAdjunct.setText(u.getAdjunct());
                 txtZipCode.setText(u.getZipCode());
@@ -2437,7 +2444,7 @@ public class UserAdministrationDialog extends javax.swing.JDialog {
             txtFirstName.setText("");
             txtName.setText("");
             txtCompany.setText("");
-            txtRole.setText("");
+            taRole.setText("");
             txtStreet.setText("");
             txtAdjunct.setText("");
             txtZipCode.setText("");
@@ -2562,7 +2569,7 @@ public class UserAdministrationDialog extends javax.swing.JDialog {
                 u.setFirstName(txtFirstName.getText());
                 u.setName(txtName.getText());
                 u.setCompany(txtCompany.getText());
-                u.setRole(txtRole.getText());
+                u.setRole(taRole.getText());
                 u.setStreet(txtStreet.getText());
                 u.setAdjunct(txtAdjunct.getText());
                 u.setZipCode(txtZipCode.getText());
@@ -2623,7 +2630,7 @@ public class UserAdministrationDialog extends javax.swing.JDialog {
         txtFirstName.setText("");
         txtName.setText("");
         txtCompany.setText("");
-        txtRole.setText("");
+        taRole.setText("");
         txtStreet.setText("");
         txtAdjunct.setText("");
         txtZipCode.setText("");
@@ -3361,6 +3368,7 @@ public class UserAdministrationDialog extends javax.swing.JDialog {
     private javax.swing.JScrollPane jScrollPane4;
     private javax.swing.JScrollPane jScrollPane5;
     private javax.swing.JScrollPane jScrollPane6;
+    private javax.swing.JScrollPane jScrollPane7;
     private javax.swing.JSeparator jSeparator1;
     private javax.swing.JSeparator jSeparator2;
     private javax.swing.JSeparator jSeparator3;
@@ -3377,6 +3385,7 @@ public class UserAdministrationDialog extends javax.swing.JDialog {
     private javax.swing.JRadioButton rdAutoLogin;
     private javax.swing.JRadioButton rdManualLogin;
     private javax.swing.JTextArea taBeaCertificate;
+    private javax.swing.JTextArea taRole;
     private javax.swing.JTable tblCalendars;
     private javax.swing.JTable tblGroups;
     private javax.swing.JTable tblInvoicePools;
@@ -3397,7 +3406,6 @@ public class UserAdministrationDialog extends javax.swing.JDialog {
     private javax.swing.JTextField txtMobile;
     private javax.swing.JTextField txtName;
     private javax.swing.JTextField txtPhone;
-    private javax.swing.JTextField txtRole;
     private javax.swing.JTextField txtStreet;
     private javax.swing.JTextField txtTaxNr;
     private javax.swing.JTextField txtUser;
