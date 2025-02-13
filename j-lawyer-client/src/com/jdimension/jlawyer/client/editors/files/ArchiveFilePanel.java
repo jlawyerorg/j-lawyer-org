@@ -735,6 +735,7 @@ import com.jdimension.jlawyer.client.settings.UserSettings;
 import com.jdimension.jlawyer.client.templates.SelectTemplateFolderDialog;
 import com.jdimension.jlawyer.client.utils.*;
 import com.jdimension.jlawyer.client.utils.pdf.PdfAnonymizerDialog;
+import com.jdimension.jlawyer.client.utils.pdf.PdfStamperDialog;
 import com.jdimension.jlawyer.client.voip.EpostLetterSendStatus;
 import com.jdimension.jlawyer.client.voip.EpostLetterSendStep;
 import com.jdimension.jlawyer.client.voip.EpostLetterValidationStep;
@@ -1752,6 +1753,7 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
         mnuSaveDocumentEncrypted = new javax.swing.JMenuItem();
         mnuDuplicateDocumentAs = new javax.swing.JMenuItem();
         mnuAnonymizePdf = new javax.swing.JMenuItem();
+        mnuStampPdf = new javax.swing.JMenuItem();
         jSeparator1 = new javax.swing.JPopupMenu.Separator();
         mnuSendDocument = new javax.swing.JMenuItem();
         mnuSendDocumentPDF = new javax.swing.JMenuItem();
@@ -2210,6 +2212,15 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
             }
         });
         mnuPdfAndConvertActions.add(mnuAnonymizePdf);
+
+        mnuStampPdf.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons16/material/approval_24dp_0E72B5.png"))); // NOI18N
+        mnuStampPdf.setText("PDF stempeln");
+        mnuStampPdf.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                mnuStampPdfActionPerformed(evt);
+            }
+        });
+        mnuPdfAndConvertActions.add(mnuStampPdf);
 
         documentsPopup.add(mnuPdfAndConvertActions);
         documentsPopup.add(jSeparator1);
@@ -7105,6 +7116,73 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
         }
     }//GEN-LAST:event_mnuAnonymizePdfActionPerformed
 
+    private void mnuStampPdfActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_mnuStampPdfActionPerformed
+        ArrayList<ArchiveFileDocumentsBean> selectedDocs = this.caseFolderPanel1.getSelectedDocuments();
+        if (selectedDocs.isEmpty() || !(selectedDocs.size() == 1)) {
+            return;
+        }
+
+        ArrayList<String> tempFiles = new ArrayList<>();
+
+        // check, ob die Dateien ALLE die Endung .pdf haben
+        for (ArchiveFileDocumentsBean doc : selectedDocs) {
+            if (!doc.getName().toLowerCase().endsWith(".pdf")) {
+                JOptionPane.showMessageDialog(null, "Es können nur PDF-Dateien gestempelt werden", "Fehler", JOptionPane.ERROR_MESSAGE);
+                return;
+            }
+        }
+
+        try {
+            ClientSettings settings = ClientSettings.getInstance();
+            JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
+            
+            // Load document content
+            byte[] content = CachingDocumentLoader.getInstance().getDocument(selectedDocs.get(0).getId());
+            // Save as temporary file
+            String tempPath = FileUtils.createTempFile(selectedDocs.get(0).getName(), content);
+
+            PdfStamperDialog stampDia = new PdfStamperDialog(EditorsRegistry.getInstance().getMainWindow(), true, selectedDocs.get(0).getName(), content, tempPath);
+            FrameUtils.centerDialog(stampDia, EditorsRegistry.getInstance().getMainWindow());
+            stampDia.setVisible(true);
+
+            if (!stampDia.isFailed() && stampDia.isSaveRequested()) {
+                // Save modified data back to the server
+
+                String newName = FileUtils.getNewFileName(dto, selectedDocs.get(0).getName(), new Date(), true, EditorsRegistry.getInstance().getMainWindow(), "gestempeltes PDF speichern");
+
+                if (newName == null || "".equals(newName)) {
+                    return;
+                }
+
+                if (newName.length() == 0) {
+                    JOptionPane.showMessageDialog(EditorsRegistry.getInstance().getMainWindow(), "Dateiname darf nicht leer sein.", "Hinweis", JOptionPane.INFORMATION_MESSAGE);
+                    this.lastPopupClosed = System.currentTimeMillis();
+                    return;
+                }
+                ArchiveFileDocumentsBean newDoc = locator.lookupArchiveFileServiceRemote().addDocument(dto.getId(), newName, FileUtils.readFile(new File(tempPath)), selectedDocs.get(0).getDictateSign(), null);
+
+                if (selectedDocs.get(0).getFolder() != null) {
+                    ArrayList<String> docId = new ArrayList<>();
+                    docId.add(newDoc.getId());
+                    locator.lookupArchiveFileServiceRemote().moveDocumentsToFolder(docId, selectedDocs.get(0).getFolder().getId());
+
+                }
+                caseFolderPanel1.addDocument(locator.lookupArchiveFileServiceRemote().getDocument(newDoc.getId()), null);
+
+                // Delete temporary file
+                FileUtils.cleanupTempFile(tempPath);
+            }
+
+        } catch (Exception ex) {
+            log.error(ex);
+            JOptionPane.showMessageDialog(null, "Fehler beim Stempeln des PDFs: " + ex.getMessage(), "Fehler", JOptionPane.ERROR_MESSAGE);
+            // Clean up temp files in case of error
+            for (String tempFile : tempFiles) {
+                FileUtils.cleanupTempFile(tempFile);
+            }
+        }
+    }//GEN-LAST:event_mnuStampPdfActionPerformed
+
     public void exportSelectedDocumentsAsPdf() {
 
         ArrayList<ArchiveFileDocumentsBean> selectedDocs = this.caseFolderPanel1.getSelectedDocuments();
@@ -7861,6 +7939,7 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
     private javax.swing.JMenuItem mnuShareNextcloud;
     private javax.swing.JMenuItem mnuShrinkPdf;
     private javax.swing.JMenuItem mnuSplitPdf;
+    private javax.swing.JMenuItem mnuStampPdf;
     private javax.swing.JMenuItem mnuToggleFavorite;
     private javax.swing.JMenuItem mnuUseDocumentAsTemplate;
     private com.jdimension.jlawyer.client.editors.files.NewEventPanel newEventPanel;
