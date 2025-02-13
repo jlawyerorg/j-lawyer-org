@@ -727,7 +727,6 @@ import java.util.HashMap;
 import java.util.Hashtable;
 import java.util.List;
 import javax.swing.AbstractAction;
-import javax.swing.DefaultComboBoxModel;
 import javax.swing.JComponent;
 import javax.swing.JDialog;
 import javax.swing.JLabel;

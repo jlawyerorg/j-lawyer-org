@@ -666,6 +666,7 @@ package com.jdimension.jlawyer.client.editors.addresses;
 import com.jdimension.jlawyer.client.configuration.CitySearchDialog;
 import com.jdimension.jlawyer.client.configuration.OptionGroupListCellRenderer;
 import com.jdimension.jlawyer.client.editors.EditorsRegistry;
+import com.jdimension.jlawyer.client.mail.sidebar.AttributeCellEditor;
 import com.jdimension.jlawyer.client.settings.ClientSettings;
 import com.jdimension.jlawyer.client.utils.ComponentUtils;
 import com.jdimension.jlawyer.client.utils.FrameUtils;
@@ -675,6 +676,7 @@ import com.jdimension.jlawyer.persistence.AddressBean;
 import com.jdimension.jlawyer.persistence.AppOptionGroupBean;
 import com.jdimension.jlawyer.services.AddressServiceRemote;
 import com.jdimension.jlawyer.services.JLawyerServiceLocator;
+import java.util.HashMap;
 import java.util.List;
 import javax.swing.DefaultComboBoxModel;
 import javax.swing.JOptionPane;
@@ -817,6 +819,7 @@ public class QuickCreateAddressDialog extends javax.swing.JDialog {
         jPanel19 = new javax.swing.JPanel();
         txtNoticePane = new javax.swing.JScrollPane();
         txtNotice = new javax.swing.JTextArea();
+        cmdAttributesFromClipboard = new javax.swing.JButton();
 
         setDefaultCloseOperation(javax.swing.WindowConstants.DISPOSE_ON_CLOSE);
         setTitle("neuer Kontakt (Schnellerfassung)");
@@ -1187,6 +1190,14 @@ public class QuickCreateAddressDialog extends javax.swing.JDialog {
                 .addContainerGap())
         );
 
+        cmdAttributesFromClipboard.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons16/material/baseline_auto_fix_high_black_48dp.png"))); // NOI18N
+        cmdAttributesFromClipboard.setToolTipText("Informationen per Copy & Paste-Assistent übernehmen");
+        cmdAttributesFromClipboard.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                cmdAttributesFromClipboardActionPerformed(evt);
+            }
+        });
+
         org.jdesktop.layout.GroupLayout layout = new org.jdesktop.layout.GroupLayout(getContentPane());
         getContentPane().setLayout(layout);
         layout.setHorizontalGroup(
@@ -1195,7 +1206,8 @@ public class QuickCreateAddressDialog extends javax.swing.JDialog {
                 .addContainerGap()
                 .add(layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
                     .add(org.jdesktop.layout.GroupLayout.TRAILING, layout.createSequentialGroup()
-                        .add(0, 0, Short.MAX_VALUE)
+                        .add(cmdAttributesFromClipboard)
+                        .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                         .add(cmdUseSelection)
                         .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
                         .add(cmdCancel))
@@ -1226,7 +1238,8 @@ public class QuickCreateAddressDialog extends javax.swing.JDialog {
                 .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
                 .add(layout.createParallelGroup(org.jdesktop.layout.GroupLayout.BASELINE)
                     .add(cmdCancel)
-                    .add(cmdUseSelection))
+                    .add(cmdUseSelection)
+                    .add(cmdAttributesFromClipboard))
                 .addContainerGap())
         );
 
@@ -1365,6 +1378,42 @@ public class QuickCreateAddressDialog extends javax.swing.JDialog {
         dlg.setVisible(true);
     }//GEN-LAST:event_cmdChooseCityActionPerformed
 
+    private void cmdAttributesFromClipboardActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdAttributesFromClipboardActionPerformed
+        AddressFromClipboardDialog dlg = new AddressFromClipboardDialog(EditorsRegistry.getInstance().getMainWindow(), true);
+        FrameUtils.centerDialog(dlg, EditorsRegistry.getInstance().getMainWindow());
+        dlg.setVisible(true);
+
+        HashMap<String, String> attributes = dlg.getAttributes();
+        for (String att : attributes.keySet()) {
+            if (att.equals(AttributeCellEditor.ATTRIBUTE_EMAIL)) {
+                this.txtEmail.setText(attributes.get(att));
+            } else if (att.equals(AttributeCellEditor.ATTRIBUTE_FAX)) {
+                this.txtFax.setText(attributes.get(att));
+            } else if (att.equals(AttributeCellEditor.ATTRIBUTE_HAUSNR)) {
+                this.txtStreetNr.setText(attributes.get(att));
+            } else if (att.equals(AttributeCellEditor.ATTRIBUTE_LAND)) {
+                this.txtCountry.setText(attributes.get(att));
+            } else if (att.equals(AttributeCellEditor.ATTRIBUTE_MOBIL)) {
+                this.txtMobile.setText(attributes.get(att));
+            } else if (att.equals(AttributeCellEditor.ATTRIBUTE_NAME)) {
+                this.txtName.setText(attributes.get(att));
+            } else if (att.equals(AttributeCellEditor.ATTRIBUTE_ORT)) {
+                this.txtCity.setText(attributes.get(att));
+            } else if (att.equals(AttributeCellEditor.ATTRIBUTE_PLZ)) {
+                this.txtZipCode.setText(attributes.get(att));
+            } else if (att.equals(AttributeCellEditor.ATTRIBUTE_STRASSE)) {
+                this.txtStreet.setText(attributes.get(att));
+            } else if (att.equals(AttributeCellEditor.ATTRIBUTE_TEL)) {
+                this.txtPhone.setText(attributes.get(att));
+            } else if (att.equals(AttributeCellEditor.ATTRIBUTE_UNTERNEHMEN)) {
+                this.txtCompany.setText(attributes.get(att));
+            } else if (att.equals(AttributeCellEditor.ATTRIBUTE_VORNAME)) {
+                this.txtFirstName.setText(attributes.get(att));
+            }
+
+        }
+    }//GEN-LAST:event_cmdAttributesFromClipboardActionPerformed
+
     /**
      * @param args the command line arguments
      */
@@ -1380,6 +1429,7 @@ public class QuickCreateAddressDialog extends javax.swing.JDialog {
     protected javax.swing.JComboBox cmbSalutation;
     protected javax.swing.JComboBox cmbTitle;
     private javax.swing.JComboBox<String> cmbTitleInAddress;
+    private javax.swing.JButton cmdAttributesFromClipboard;
     private javax.swing.JButton cmdCancel;
     private javax.swing.JButton cmdChooseCity;
     private javax.swing.JButton cmdUseSelection;
