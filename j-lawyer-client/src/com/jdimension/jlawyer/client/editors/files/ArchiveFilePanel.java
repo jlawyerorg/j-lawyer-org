@@ -3908,6 +3908,15 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
 
     private void mnuRemoveReviewActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_mnuRemoveReviewActionPerformed
 
+        int[] selectedRows = this.tblReviewReasons.getSelectedRows();
+        if(selectedRows.length==0)
+            return;
+        
+        int response = JOptionPane.showConfirmDialog(this, "Sollen " + selectedRows.length + " ausgewählte Kalendereinträge gelöscht werden?", "Kalendereinträge löschen", JOptionPane.YES_NO_OPTION);
+        if (response != JOptionPane.YES_OPTION) {
+            return;
+        }
+        
         ClientSettings settings = ClientSettings.getInstance();
         JLawyerServiceLocator locator = null;
         try {
@@ -3920,8 +3929,7 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
         }
         CalendarServiceRemote calService = locator.lookupCalendarServiceRemote();
         EditorsRegistry.getInstance().updateStatus("Wiedervorlage/Frist wird gelöscht...");
-
-        int[] selectedRows = this.tblReviewReasons.getSelectedRows();
+                
         ArchiveFileReviewReasonsTableModel tModel = (ArchiveFileReviewReasonsTableModel) this.tblReviewReasons.getModel();
         ArchiveFileReviewsBean relevantEvent = null;
         for (int i = selectedRows.length - 1; i > -1; i--) {

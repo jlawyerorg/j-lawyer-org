@@ -745,7 +745,7 @@ public class LoginDialog extends javax.swing.JFrame {
     public LoginDialog(String cmdHost, String cmdPort, String cmdUser, String cmdPassword, String cmdSecMode, String cmdSshHost, String cmdSshPort, String cmdSshUser, String cmdSshPwd, String cmdSshTargetPort) {
         initComponents();
 
-        this.lblProgress.setText("");
+        this.lblProgress.setText(" ");
         this.progress.setForeground(DefaultColorTheme.COLOR_LOGO_GREEN);
         this.progress.setString("");
         this.lblUser.setText("");
@@ -2190,7 +2190,7 @@ public class LoginDialog extends javax.swing.JFrame {
 
     public void addStatus(String s) {
         if (System.getProperty("line.separator").equals(s)) {
-            this.lblProgress.setText("");
+            this.lblProgress.setText(" ");
         } else {
             this.lblProgress.setText(this.lblProgress.getText() + s);
         }
