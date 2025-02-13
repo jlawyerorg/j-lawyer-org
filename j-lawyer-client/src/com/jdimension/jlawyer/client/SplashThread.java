@@ -695,7 +695,6 @@ import java.awt.Image;
 import java.io.*;
 import java.net.URL;
 import java.net.URLConnection;
-import java.nio.file.FileSystem;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -908,7 +907,6 @@ public class SplashThread implements Runnable {
         } else {
             rootModule.setBackgroundImage(null);
             
-            FileSystem fileSystem=null;
             if (randomBackgroundFile!=null) {
 
                 rootModule.setRandomBackgroundImage(randomBackgroundFile);
