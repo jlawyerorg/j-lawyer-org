@@ -681,6 +681,7 @@ import java.io.UnsupportedEncodingException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
+import java.util.Enumeration;
 import java.util.List;
 import java.util.Properties;
 import java.util.regex.Matcher;
@@ -1417,4 +1418,79 @@ public class EmailUtils extends CommonMailUtils {
 
         return s;
     }
+    
+    /**
+    * Entfernt aus der gegebenen MimeMessage alle Anhänge, deren Dateinamen in attachmentNames enthalten sind.
+    * Es wird ein neues MimeMessage-Objekt erstellt, das keine der angegebenen Anhänge mehr enthält.
+    *
+    * @param message         die ursprüngliche MimeMessage
+    * @param attachmentNames Liste der Dateinamen, die entfernt werden sollen
+    * @return ein neues MimeMessage-Objekt ohne die ausgewählten Anhänge
+    * @throws Exception falls ein Fehler beim Verarbeiten der Nachricht auftritt
+    */
+   public static MimeMessage removeAttachmentsFromMessage(MimeMessage message, List<String> attachmentNames) throws Exception {
+       if (!message.isMimeType("multipart/*")) {
+           return message;
+       }
+       Object content = message.getContent();
+       if (!(content instanceof Multipart)) {
+           return message;
+       }
+       Multipart originalMultipart = (Multipart) content;
+       Multipart newMultipart = removeAttachmentsFromMultipart(originalMultipart, attachmentNames);
+
+       // Neues MimeMessage-Objekt mit demselben Session-Objekt erstellen
+       MimeMessage newMessage = new MimeMessage(message.getSession());
+       @SuppressWarnings("unchecked")
+       Enumeration<Header> headers = message.getAllHeaders();
+       while (headers.hasMoreElements()) {
+           Header header = headers.nextElement();
+           newMessage.setHeader(header.getName(), header.getValue());
+       }
+       newMessage.setContent(newMultipart);
+       newMessage.saveChanges();
+       return newMessage;
+   }
+
+   /**
+    * Rekursive Methode zur Verarbeitung eines Multipart-Objekts.
+    * Sie erstellt ein neues Multipart, das alle BodyParts enthält, außer denen,
+    * deren Dateiname in attachmentNames enthalten ist.
+    *
+    * @param multipart       das zu verarbeitende Multipart-Objekt
+    * @param attachmentNames Liste der Dateinamen, die entfernt werden sollen
+    * @return ein neues Multipart ohne die ausgewählten Anhänge
+    * @throws Exception falls ein Fehler beim Verarbeiten der Parts auftritt
+    */
+   private static Multipart removeAttachmentsFromMultipart(Multipart multipart, List<String> attachmentNames) throws Exception {
+       MimeMultipart newMultipart = new MimeMultipart();
+       int count = multipart.getCount();
+       for (int i = 0; i < count; i++) {
+           BodyPart part = multipart.getBodyPart(i);
+           // Falls der Part selbst ein Multipart ist, rekursiv verarbeiten
+           if (part.isMimeType("multipart/*")) {
+               Multipart subMultipart = (Multipart) part.getContent();
+               Multipart newSubMultipart = removeAttachmentsFromMultipart(subMultipart, attachmentNames);
+               if (newSubMultipart.getCount() > 0) {
+                   MimeBodyPart newPart = new MimeBodyPart();
+                   newPart.setContent(newSubMultipart);
+                   newMultipart.addBodyPart(newPart);
+               }
+           } else {
+               String disposition = part.getDisposition();
+               boolean isAttachment = disposition != null && 
+                       (disposition.equalsIgnoreCase(Part.ATTACHMENT) || disposition.equalsIgnoreCase(Part.INLINE));
+               if (isAttachment && part.getFileName() != null) {
+                   String decodedFileName = MimeUtility.decodeText(part.getFileName());
+                   if (attachmentNames.contains(decodedFileName)) {
+                       // Diese Anhängervariante wird entfernt
+                       continue;
+                   }
+               }
+               // Anderenfalls den Part übernehmen
+               newMultipart.addBodyPart(part);
+           }
+       }
+       return newMultipart;
+   }
 }
