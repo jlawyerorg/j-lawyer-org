@@ -815,6 +815,12 @@ public class MailContentUI extends javax.swing.JPanel implements HyperlinkListen
         this.lstAttachments.setCellRenderer(new AttachmentListCellRenderer());
         this.lstAttachments.setModel(new DefaultListModel());
 
+        mnuRemoveItem.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                mnuRemoveItemActionPerformed(evt);
+            }
+        });
+
         // Add mouse listeners to copy labels
         addCopyFunctionality(lblSubject);
         addCopyFunctionality(lblFrom);
@@ -1638,6 +1644,7 @@ public class MailContentUI extends javax.swing.JPanel implements HyperlinkListen
         mnuSave = new javax.swing.JMenu();
         mnuSearchSave = new javax.swing.JMenuItem();
         mnuSaveAsFile = new javax.swing.JMenuItem();
+        mnuRemoveItem = new javax.swing.JMenuItem();
         jLabel5 = new javax.swing.JLabel();
         popAssistant = new javax.swing.JPopupMenu();
         jPanel1 = new javax.swing.JPanel();
@@ -1683,6 +1690,15 @@ public class MailContentUI extends javax.swing.JPanel implements HyperlinkListen
         mnuSave.add(mnuSaveAsFile);
 
         popAttachments.add(mnuSave);
+
+        mnuRemoveItem.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/editdelete.png"))); // NOI18N
+        mnuRemoveItem.setText("Anhang entfernen");
+        mnuRemoveItem.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                mnuRemoveItemActionPerformed(evt);
+            }
+        });
+        popAttachments.add(mnuRemoveItem);
 
         jLabel5.setText("CC:");
 
@@ -2134,6 +2150,116 @@ public class MailContentUI extends javax.swing.JPanel implements HyperlinkListen
         }
     }//GEN-LAST:event_cmdAssistantMouseReleased
 
+    private void mnuRemoveItemActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_mnuRemoveItemActionPerformed
+        // Menüpunkt deaktivieren während der Verarbeitung
+        mnuRemoveItem.setEnabled(false);
+
+        try {
+            
+            if (this.lstAttachments.getSelectedValue() == null) {
+                return;
+            }
+
+            List<String> selectedAttachments = new ArrayList<>();
+            for (Object selected : this.lstAttachments.getSelectedValuesList()) {
+                selectedAttachments.add(selected.toString());
+            }
+
+            log.info("Ausgewählte Anhänge zum Entfernen: " + selectedAttachments);
+
+            MimeMessage originalMessage = (MimeMessage) emlMsgContainer.getMessage();
+            MimeMessage modifiedMessage = EmailUtils.removeAttachmentsFromMessage(originalMessage, selectedAttachments);
+
+            ByteArrayOutputStream bos = new ByteArrayOutputStream();
+            modifiedMessage.writeTo(bos);
+            byte[] modifiedContent = bos.toByteArray();
+            bos.close();
+
+            // 4. Speichere die E-Mail als neues Dokument in der Akte
+            if (caseContext != null) {
+                try {
+                    // Service initialisieren
+                    ClientSettings settings = ClientSettings.getInstance();
+                    JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
+                    ArchiveFileServiceRemote remote = locator.lookupArchiveFileServiceRemote();
+
+                    // Basis-Dateinamen generieren
+                    String baseFilename = "Email_ohne_Anhaenge.eml";
+                    if (lblSubject != null && !lblSubject.getText().trim().isEmpty()) {
+                        // Verwende Betreff als Teil des Dateinamens, wenn verfügbar
+                        String subject = lblSubject.getText().trim();
+                        if (subject.length() > 30) {
+                            subject = subject.substring(0, 30);
+                        }
+
+                        subject = subject.replaceAll("[\\\\/:*?\"<>|]", "_");
+                        baseFilename = subject + "_ohne_Anhaenge.eml";
+                    }
+
+                    // Verwende FileUtils.getNewFileName, um einen eindeutigen Namen zu erhalten
+                    // Die Methode öffnet einen Dialog oder generiert automatisch einen Namen
+                    String uniqueFilename = FileUtils.getNewFileName(caseContext, baseFilename, true);
+
+                    // Wenn der Benutzer den Dialog abgebrochen hat oder kein Name generiert werden konnte
+                    if (uniqueFilename == null || uniqueFilename.trim().isEmpty()) {
+                        JOptionPane.showMessageDialog(this, 
+                            "Vorgang abgebrochen - kein Dateiname angegeben.", 
+                            "Information", JOptionPane.INFORMATION_MESSAGE);
+                        return;
+                    }
+
+                    // Füge die E-Mail als neues Dokument zur Akte hinzu
+                    ArchiveFileDocumentsBean newDoc = remote.addDocument(
+                            caseContext.getId(),
+                            uniqueFilename,
+                            modifiedContent,
+                            null,
+                            null
+                    );
+
+                    // Benachrichtige das System über das neue Dokument
+                    EventBroker eb = EventBroker.getInstance();
+                    eb.publishEvent(new DocumentAddedEvent(newDoc));
+
+                } catch (Exception e) {
+                    log.error("Fehler beim Speichern in der Akte", e);
+                    JOptionPane.showMessageDialog(this,
+                            "Fehler beim Speichern in der Akte: " + e.getMessage(),
+                            "Fehler", JOptionPane.ERROR_MESSAGE);
+                }
+            } else {
+                JOptionPane.showMessageDialog(this,
+                        "Anhang aus Nachricht entfernt.",
+                        "Hinweis", JOptionPane.WARNING_MESSAGE);
+            }
+
+            // 6. Aktualisiere die lokale Anzeige
+            emlMsgContainer.setMessage(modifiedMessage);
+
+            // UI aktualisieren
+            ((DefaultListModel) lstAttachments.getModel()).removeAllElements();
+            if (modifiedMessage.isMimeType("multipart/*")) {
+                try {
+                    ArrayList<String> attachments = EmailUtils.getAttachmentNames(modifiedMessage.getContent());
+                    for (String name : attachments) {
+                        ((DefaultListModel) lstAttachments.getModel()).addElement(name);
+                    }
+                } catch (Exception e) {
+                    log.error("Fehler beim Aktualisieren der Anhangliste", e);
+                }
+            }
+
+        } catch (Exception ex) {
+            log.error("Fehler beim Entfernen der Anhänge", ex);
+            JOptionPane.showMessageDialog(this,
+                    "Fehler beim Entfernen der Anhänge: " + ex.getMessage(),
+                    "Fehler", JOptionPane.ERROR_MESSAGE);
+        } finally {
+            // Menüpunkt wieder aktivieren
+            mnuRemoveItem.setEnabled(true);
+        }
+    }//GEN-LAST:event_mnuRemoveItemActionPerformed
+    
     private static String getFromAddress(String from, Message msg) {
         String whiteListEntry = from;
         try {
@@ -2184,6 +2310,7 @@ public class MailContentUI extends javax.swing.JPanel implements HyperlinkListen
     private javax.swing.JLabel lblSubject;
     private javax.swing.JLabel lblTo;
     private javax.swing.JList lstAttachments;
+    private javax.swing.JMenuItem mnuRemoveItem;
     private javax.swing.JMenu mnuSave;
     private javax.swing.JMenuItem mnuSaveAsFile;
     private javax.swing.JMenuItem mnuSearchSave;
