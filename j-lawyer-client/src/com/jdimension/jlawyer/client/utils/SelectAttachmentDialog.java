@@ -668,6 +668,7 @@ import com.jdimension.jlawyer.client.settings.ClientSettings;
 import com.jdimension.jlawyer.persistence.ArchiveFileDocumentsBean;
 import com.jdimension.jlawyer.services.ArchiveFileServiceRemote;
 import com.jdimension.jlawyer.services.JLawyerServiceLocator;
+import java.awt.event.KeyEvent;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -675,6 +676,8 @@ import java.util.Collections;
 import javax.swing.DefaultListModel;
 import javax.swing.JDialog;
 import javax.swing.JOptionPane;
+import javax.swing.event.DocumentEvent;
+import javax.swing.event.DocumentListener;
 import org.apache.log4j.Logger;
 
 /**
@@ -686,13 +689,41 @@ public class SelectAttachmentDialog extends javax.swing.JDialog {
     private static final Logger log = Logger.getLogger(SelectAttachmentDialog.class.getName());
 
     private File[] selectedFiles = null;
+    private ArrayList sortedDocs = null;
 
     /**
      * Creates new form SelectAttachmentDialog
+     *
+     * @param parent
+     * @param modal
+     * @param caseId
      */
     public SelectAttachmentDialog(JDialog parent, boolean modal, String caseId) {
         super(parent, modal);
         initComponents();
+
+        this.txtSearch.putClientProperty("JTextField.showClearButton", true);
+        this.txtSearch.putClientProperty("JTextField.placeholderText", "Suche nach Dateinamen");
+        this.txtSearch.getDocument().addDocumentListener(new DocumentListener() {
+                @Override
+                public void insertUpdate(DocumentEvent e) {
+                    textChanged();
+                }
+
+                @Override
+                public void removeUpdate(DocumentEvent e) {
+                    textChanged();
+                }
+
+                @Override
+                public void changedUpdate(DocumentEvent e) {
+                    // This is mainly used for style changes in rich text, not plain text.
+                }
+
+                private void textChanged() {
+                    filterDocuments(txtSearch.getText());
+                }
+            });
 
         if (caseId != null) {
             try {
@@ -700,15 +731,11 @@ public class SelectAttachmentDialog extends javax.swing.JDialog {
                 JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
                 ArchiveFileServiceRemote afs = locator.lookupArchiveFileServiceRemote();
                 Collection docs = afs.getDocuments(caseId);
-                ArrayList sortedDocs=new ArrayList(docs);
+                this.sortedDocs = new ArrayList(docs);
                 Collections.sort(sortedDocs, new ArchiveFileDocumentsBeanComparator());
                 Collections.reverse(sortedDocs);
-                DefaultListModel dm = new DefaultListModel();
-                this.lstCaseDocuments.setModel(dm);
-                this.lstCaseDocuments.setCellRenderer(new AttachmentListCellRenderer());
-                for (Object o : sortedDocs) {
-                    ((DefaultListModel) this.lstCaseDocuments.getModel()).addElement(o);
-                }
+                this.filterDocuments(null);
+
             } catch (Exception ex) {
                 log.error(ex);
             }
@@ -740,6 +767,7 @@ public class SelectAttachmentDialog extends javax.swing.JDialog {
         lstCaseDocuments = new javax.swing.JList<>();
         cmdCancel = new javax.swing.JButton();
         cmdSelect = new javax.swing.JButton();
+        txtSearch = new javax.swing.JTextField();
 
         setDefaultCloseOperation(javax.swing.WindowConstants.DISPOSE_ON_CLOSE);
         setTitle("Anhang hinzufügen");
@@ -757,13 +785,13 @@ public class SelectAttachmentDialog extends javax.swing.JDialog {
             pnlFromDesktopLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGap(0, 571, Short.MAX_VALUE)
             .addGroup(pnlFromDesktopLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                .addComponent(fileChooser, javax.swing.GroupLayout.DEFAULT_SIZE, 571, Short.MAX_VALUE))
+                .addComponent(fileChooser, javax.swing.GroupLayout.PREFERRED_SIZE, 571, Short.MAX_VALUE))
         );
         pnlFromDesktopLayout.setVerticalGroup(
             pnlFromDesktopLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGap(0, 364, Short.MAX_VALUE)
             .addGroup(pnlFromDesktopLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                .addComponent(fileChooser, javax.swing.GroupLayout.DEFAULT_SIZE, 364, Short.MAX_VALUE))
+                .addComponent(fileChooser, javax.swing.GroupLayout.PREFERRED_SIZE, 364, Short.MAX_VALUE))
         );
 
         jTabbedPane1.addTab("vom Arbeitsplatz", pnlFromDesktop);
@@ -806,14 +834,17 @@ public class SelectAttachmentDialog extends javax.swing.JDialog {
                         .addComponent(cmdSelect)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                         .addComponent(cmdCancel))
-                    .addComponent(jScrollPane1))
+                    .addComponent(jScrollPane1)
+                    .addComponent(txtSearch))
                 .addContainerGap())
         );
         pnlFromCaseLayout.setVerticalGroup(
             pnlFromCaseLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(pnlFromCaseLayout.createSequentialGroup()
                 .addContainerGap()
-                .addComponent(jScrollPane1, javax.swing.GroupLayout.DEFAULT_SIZE, 309, Short.MAX_VALUE)
+                .addComponent(txtSearch, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addComponent(jScrollPane1, javax.swing.GroupLayout.DEFAULT_SIZE, 278, Short.MAX_VALUE)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addGroup(pnlFromCaseLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                     .addComponent(cmdCancel)
@@ -856,8 +887,7 @@ public class SelectAttachmentDialog extends javax.swing.JDialog {
         for (Object o : this.lstCaseDocuments.getSelectedValues()) {
             ArchiveFileDocumentsBean doc = (ArchiveFileDocumentsBean) o;
             try {
-                //byte[] content = afs.getDocumentContent(doc.getId());
-                byte[] content=CachingDocumentLoader.getInstance().getDocument(doc.getId());
+                byte[] content = CachingDocumentLoader.getInstance().getDocument(doc.getId());
                 String tempUrl = FileUtils.createTempFile(doc.getName(), content);
                 File f = new File(tempUrl);
                 FileUtils.cleanupTempFile(tempUrl);
@@ -880,6 +910,22 @@ public class SelectAttachmentDialog extends javax.swing.JDialog {
         }
     }//GEN-LAST:event_lstCaseDocumentsMouseClicked
 
+    private void filterDocuments(String filter) {
+
+        DefaultListModel dm = new DefaultListModel();
+        this.lstCaseDocuments.setModel(dm);
+        this.lstCaseDocuments.setCellRenderer(new AttachmentListCellRenderer());
+        for (Object o : sortedDocs) {
+            if (filter == null || "".equals(filter)) {
+                ((DefaultListModel) this.lstCaseDocuments.getModel()).addElement(o);
+            } else {
+                if(((ArchiveFileDocumentsBean)o).getName().toLowerCase().contains(filter.toLowerCase()))
+                    ((DefaultListModel) this.lstCaseDocuments.getModel()).addElement(o);
+            }
+
+        }
+    }
+    
     /**
      * @param args the command line arguments
      */
@@ -908,17 +954,15 @@ public class SelectAttachmentDialog extends javax.swing.JDialog {
         //</editor-fold>
 
         /* Create and display the dialog */
-        java.awt.EventQueue.invokeLater(new Runnable() {
-            public void run() {
-                SelectAttachmentDialog dialog = new SelectAttachmentDialog(null, true, null);
-                dialog.addWindowListener(new java.awt.event.WindowAdapter() {
-                    @Override
-                    public void windowClosing(java.awt.event.WindowEvent e) {
-                        System.exit(0);
-                    }
-                });
-                dialog.setVisible(true);
-            }
+        java.awt.EventQueue.invokeLater(() -> {
+            SelectAttachmentDialog dialog = new SelectAttachmentDialog(null, true, null);
+            dialog.addWindowListener(new java.awt.event.WindowAdapter() {
+                @Override
+                public void windowClosing(java.awt.event.WindowEvent e) {
+                    System.exit(0);
+                }
+            });
+            dialog.setVisible(true);
         });
     }
 
@@ -931,5 +975,6 @@ public class SelectAttachmentDialog extends javax.swing.JDialog {
     private javax.swing.JList<String> lstCaseDocuments;
     private javax.swing.JPanel pnlFromCase;
     private javax.swing.JPanel pnlFromDesktop;
+    private javax.swing.JTextField txtSearch;
     // End of variables declaration//GEN-END:variables
 }
