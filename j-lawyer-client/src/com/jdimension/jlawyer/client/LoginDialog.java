@@ -1153,6 +1153,7 @@ public class LoginDialog extends javax.swing.JFrame {
         jPanel5.setBackground(new java.awt.Color(0, 153, 51));
         jPanel5.setOpaque(false);
 
+        txtUser.setColumns(20);
         txtUser.setHorizontalAlignment(javax.swing.JTextField.CENTER);
 
         pwPassword.setHorizontalAlignment(javax.swing.JTextField.CENTER);

@@ -192,6 +192,7 @@
                       <SubComponents>
                         <Component class="javax.swing.JTextField" name="txtUser">
                           <Properties>
+                            <Property name="columns" type="int" value="20"/>
                             <Property name="horizontalAlignment" type="int" value="0"/>
                           </Properties>
                         </Component>
