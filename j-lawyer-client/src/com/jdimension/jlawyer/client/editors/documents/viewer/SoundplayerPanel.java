@@ -917,8 +917,11 @@ public class SoundplayerPanel extends javax.swing.JPanel implements PreviewPanel
     }//GEN-LAST:event_cmdCopyActionPerformed
 
     private void cmdContinueRecordingActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdContinueRecordingActionPerformed
-        // Stoppe die aktuelle Wiedergabe, falls sie läuft
+        // Stoppe die aktuelle Wiedergabe, falls sie läuft und gebe Ressourcen frei
         stop();
+
+        // Stelle sicher, dass der Clip geschlossen wird
+        closeAudioResources();
 
         try {
             // Neuen Dialog erstellen
@@ -945,8 +948,13 @@ public class SoundplayerPanel extends javax.swing.JPanel implements PreviewPanel
                 JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
                 locator.lookupArchiveFileServiceRemote().setDocumentContent(this.documentId, result);
 
-                // Aktualisiere den lokalen Content und zeige ihn an
+                // Aktualisiere den lokalen Content
                 this.content = result;
+
+                // Stelle sicher, dass alle audio-Ressourcen freigegeben wurden
+                closeAudioResources();
+
+                // Zeige den neuen Inhalt an
                 showContent(this.documentId, this.content);
 
                 // Bestätigungsmeldung anzeigen
@@ -987,6 +995,7 @@ public class SoundplayerPanel extends javax.swing.JPanel implements PreviewPanel
 
     @Override
     public void removeNotify() {
+        closeAudioResources();
         super.removeNotify();
         stop(); // Stop the sound when the panel is removed or no longer displayed
 
@@ -1013,6 +1022,7 @@ public class SoundplayerPanel extends javax.swing.JPanel implements PreviewPanel
 
     @Override
     public void showContent(String documentId, byte[] content) {
+        closeAudioResources();
         this.documentId = documentId;
         this.content = content;
 
@@ -1080,7 +1090,23 @@ public class SoundplayerPanel extends javax.swing.JPanel implements PreviewPanel
             clip.setMicrosecondPosition(0);
             timer.stop();
             updateTimeLabel();
-            this.cmdPlayPause.setText("Play"); // Reset button text to "Play" when stopped
+            this.cmdPlayPause.setText("Play");
+        }
+    }
+    
+    private void closeAudioResources() {
+        if (clip != null) {
+            try {
+                clip.stop();
+                clip.flush();
+                clip.close();
+                clip = null;
+            } catch (Exception e) {
+                log.warn("Error closing clip", e);
+            }
+        }
+        if (timer != null) {
+            timer.stop();
         }
     }
 

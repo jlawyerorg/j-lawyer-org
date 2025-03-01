@@ -669,11 +669,15 @@ import com.jdimension.jlawyer.client.utils.ComponentUtils;
 import com.jdimension.jlawyer.client.utils.FileUtils;
 import com.jdimension.jlawyer.client.utils.ThreadUtils;
 import java.awt.event.KeyEvent;
+import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
+import java.io.SequenceInputStream;
 import java.text.SimpleDateFormat;
 import java.util.*;
+import javax.sound.sampled.AudioFileFormat;
 import javax.sound.sampled.AudioFormat;
+import javax.sound.sampled.AudioInputStream;
 import javax.sound.sampled.AudioSystem;
 import javax.sound.sampled.DataLine;
 import javax.sound.sampled.Mixer;
@@ -875,29 +879,87 @@ public class AddVoiceMemoDialog extends javax.swing.JDialog {
             return null;
         }
 
+        // Falls nur ein Teil vorhanden ist, direkt zurückgeben
+        if (audioDataList.size() == 1) {
+            return audioDataList.get(0);
+        }
+
+        // Temporärer WAV-Datei-Ansatz
         ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
+        AudioFormat format = null;
 
-        // Calculate total audio data length (excluding headers)
-        long totalAudioDataLen = 0;
-        for (byte[] audioData : audioDataList) {
-            // Für jede WAV-Datei nehmen wir nur die tatsächlichen Audio-Daten (nach dem 44-Byte-Header)
-            if (audioData.length > 44) {
-                totalAudioDataLen += audioData.length - 44;
+        // Wir werden die erste Datei untersuchen, um das Format zu erhalten
+        ByteArrayInputStream firstStream = new ByteArrayInputStream(audioDataList.get(0));
+        AudioInputStream firstAudio = AudioSystem.getAudioInputStream(firstStream);
+        format = firstAudio.getFormat();
+        firstAudio.close();
+        firstStream.close();
+
+        // Wir werden die Daten ohne Header sammeln
+        ByteArrayOutputStream audioDataOutput = new ByteArrayOutputStream();
+        byte[] header = null;
+
+        for (int i = 0; i < audioDataList.size(); i++) {
+            byte[] audioData = audioDataList.get(i);
+            ByteArrayInputStream bais = new ByteArrayInputStream(audioData);
+            AudioInputStream ais = AudioSystem.getAudioInputStream(bais);
+
+            // Beim ersten Durchlauf speichern wir den Header (44 Bytes)
+            if (i == 0) {
+                header = new byte[44];
+                ais.read(header, 0, 44);
+                audioDataOutput.write(audioData, 44, audioData.length - 44);
+            } else {
+                // Wir überspringen den Header bei den folgenden Dateien
+                ais.skip(44);
+
+                // Den Rest der Datei lesen wir
+                byte[] buffer = new byte[4096];
+                int bytesRead;
+                while ((bytesRead = ais.read(buffer)) != -1) {
+                    audioDataOutput.write(buffer, 0, bytesRead);
+                }
             }
+
+            ais.close();
+            bais.close();
         }
 
-        // Write WAV header for the merged audio
-        writeWavHeader(outputStream, totalAudioDataLen);
+        // Jetzt erstellen wir eine neue WAV-Datei mit dem Header der ersten Datei
+        // aber angepasster Länge
+        byte[] mergedData = audioDataOutput.toByteArray();
 
-        // Concatenate only the audio data portions (skip the 44-byte headers)
-        for (byte[] audioData : audioDataList) {
-            if (audioData.length > 44) {
-                outputStream.write(audioData, 44, audioData.length - 44);
-            }
-        }
+        // Jetzt müssen wir einen neuen Header erstellen mit der korrekten Länge
+        ByteArrayOutputStream finalOutput = new ByteArrayOutputStream();
 
-        return outputStream.toByteArray();
+        // RIFF header
+        finalOutput.write("RIFF".getBytes());
+
+        // Gesamtlänge des Files (minus 8 Bytes für RIFF und Size)
+        int totalLength = 36 + mergedData.length; // 36 für Header-Reste + Datenlänge
+        finalOutput.write(intToBytes(totalLength));
+
+        // WAVE header
+        finalOutput.write("WAVE".getBytes());
+
+        // 'fmt ' chunk
+        finalOutput.write("fmt ".getBytes());
+
+        // Kopieren der restlichen Header-Informationen vom Original (ab Byte 12)
+        finalOutput.write(header, 12, 24); // 24 Bytes ab Offset 12 für den fmt-Chunk
+
+        // 'data' chunk
+        finalOutput.write("data".getBytes());
+
+        // Länge der Audiodaten
+        finalOutput.write(intToBytes(mergedData.length));
+
+        // Audiodaten
+        finalOutput.write(mergedData);
+
+        return finalOutput.toByteArray();
     }
+    
 
     private void writeWavHeader(ByteArrayOutputStream outputStream, long totalDataLen) throws IOException {
         // Define audio format for WAV header
@@ -1046,19 +1108,70 @@ public class AddVoiceMemoDialog extends javax.swing.JDialog {
     private void stopRecording() {
         isRecording = false;
         if (targetDataLine != null) {
-            targetDataLine.stop();
-            targetDataLine.close();
+            try {
+                targetDataLine.stop();
+                targetDataLine.close();
+                targetDataLine = null;  // Wichtig: Referenz auf null setzen
+            } catch (Exception e) {
+                log.warn("Error closing targetDataLine", e);
+            }
         }
-        this.memoParts.add(byteArrayOutputStream.toByteArray());
-        long byteCount=0;
+
+        // Byte-Array zur Liste hinzufügen
+        if (byteArrayOutputStream != null) {
+            byte[] audioData = byteArrayOutputStream.toByteArray();
+            if (audioData.length > 0) {
+                try {
+                    // Validieren, dass es sich um gültige WAV-Daten handelt
+                    ByteArrayInputStream bais = new ByteArrayInputStream(audioData);
+                    AudioInputStream ais = AudioSystem.getAudioInputStream(bais);
+                    ais.close();
+                    bais.close();
+
+                    // Zur Liste hinzufügen
+                    this.memoParts.add(audioData);
+                } catch (Exception e) {
+                    log.error("Recorded audio data is not valid", e);
+                    // Optional: Benutzer benachrichtigen
+                }
+            }
+
+            try {
+                byteArrayOutputStream.close();
+                byteArrayOutputStream = null;  // Referenz auf null setzen
+            } catch (IOException e) {
+                log.warn("Error closing byteArrayOutputStream", e);
+            }
+        }
+
+        // Info-Label aktualisieren
+        updateInfoLabel();
+    }
+
+    private void updateInfoLabel() {
+        long byteCount = 0;
         for(byte[] bytes: this.memoParts) {
-            byteCount+=bytes.length;
+            byteCount += bytes.length;
         }
         this.lblInfo.setText(this.memoParts.size() + " Clip(s), insgesamt " + FileUtils.getFileSizeHumanReadable(byteCount));
     }
     
     public void setExistingAudio(byte[] existingAudio, String fileName) {
         try {
+            // Validate the existing audio format
+            ByteArrayInputStream byteStream = new ByteArrayInputStream(existingAudio);
+            AudioInputStream audioStream = AudioSystem.getAudioInputStream(byteStream);
+            AudioFormat format = audioStream.getFormat();
+
+            // Check if format matches our recording format
+            AudioFormat recordingFormat = AudioUtils.getAudioFormat();
+            if (!format.matches(recordingFormat)) {
+                log.warn("Existing audio format differs from recording format. This may cause issues.");
+            }
+
+            // Close the stream
+            audioStream.close();
+
             // Bestehende Aufnahme in memoParts hinzufügen
             this.memoParts.add(existingAudio);
 
@@ -1084,12 +1197,41 @@ public class AddVoiceMemoDialog extends javax.swing.JDialog {
             this.cmdAddDocument.setText("Aufnahme aktualisieren");
         } catch (Exception e) {
             log.error("Error setting existing audio", e);
+            JOptionPane.showMessageDialog(this, 
+                "Fehler beim Laden der bestehenden Audiodatei: " + e.getMessage(),
+                com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, 
+                JOptionPane.ERROR_MESSAGE);
         }
     }
 
-    // Pürfen, ob der Dialog im "Fortsetzen"-Modus ist
+    // Prüfen, ob der Dialog im "Fortsetzen"-Modus ist
     public boolean isAppendMode() {
         return !this.memoParts.isEmpty();
+    }
+
+    @Override
+    public void dispose() {
+        // Aufnahme stoppen falls noch aktiv
+        if (isRecording) {
+            stopRecording();
+        }
+
+        // Sicherstellen, dass alle Ressourcen freigegeben werden
+        if (targetDataLine != null) {
+            targetDataLine.close();
+            targetDataLine = null;
+        }
+
+        if (byteArrayOutputStream != null) {
+            try {
+                byteArrayOutputStream.close();
+            } catch (IOException e) {
+                log.warn("Error closing output stream", e);
+            }
+            byteArrayOutputStream = null;
+        }
+
+        super.dispose();
     }
 
 }
