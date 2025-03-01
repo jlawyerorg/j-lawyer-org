@@ -673,6 +673,7 @@ import com.jdimension.jlawyer.client.assistant.AssistantAccess;
 import com.jdimension.jlawyer.client.assistant.AssistantFlowAdapter;
 import com.jdimension.jlawyer.client.assistant.AssistantInputAdapter;
 import com.jdimension.jlawyer.client.editors.EditorsRegistry;
+import com.jdimension.jlawyer.client.editors.files.AddVoiceMemoDialog;
 import com.jdimension.jlawyer.client.editors.files.EditArchiveFileDetailsPanel;
 import com.jdimension.jlawyer.client.settings.ClientSettings;
 import com.jdimension.jlawyer.client.utils.ThreadUtils;
@@ -752,6 +753,7 @@ public class SoundplayerPanel extends javax.swing.JPanel implements PreviewPanel
         taTranscription = new javax.swing.JTextArea();
         cmdNewDocument = new javax.swing.JButton();
         cmdCopy = new javax.swing.JButton();
+        cmdContinueRecording = new javax.swing.JButton();
 
         cmdPlayPause.setFont(cmdPlayPause.getFont());
         cmdPlayPause.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons32/material/baseline_play_circle_black_48dp.png"))); // NOI18N
@@ -809,6 +811,15 @@ public class SoundplayerPanel extends javax.swing.JPanel implements PreviewPanel
             }
         });
 
+        cmdContinueRecording.setFont(cmdContinueRecording.getFont());
+        cmdContinueRecording.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons32/material/baseline_exit_to_app_black_36dp.png"))); // NOI18N
+        cmdContinueRecording.setText("Cont.");
+        cmdContinueRecording.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                cmdContinueRecordingActionPerformed(evt);
+            }
+        });
+
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(this);
         this.setLayout(layout);
         layout.setHorizontalGroup(
@@ -827,6 +838,8 @@ public class SoundplayerPanel extends javax.swing.JPanel implements PreviewPanel
                         .addComponent(cmdPlayPause)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                         .addComponent(cmdStop)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addComponent(cmdContinueRecording)
                         .addGap(0, 0, Short.MAX_VALUE))
                     .addGroup(javax.swing.GroupLayout.Alignment.LEADING, layout.createSequentialGroup()
                         .addComponent(cmdAssistant)
@@ -842,7 +855,8 @@ public class SoundplayerPanel extends javax.swing.JPanel implements PreviewPanel
                 .addContainerGap()
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                     .addComponent(cmdPlayPause)
-                    .addComponent(cmdStop))
+                    .addComponent(cmdStop)
+                    .addComponent(cmdContinueRecording))
                 .addGap(18, 18, 18)
                 .addComponent(prgTime, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
@@ -902,9 +916,57 @@ public class SoundplayerPanel extends javax.swing.JPanel implements PreviewPanel
 
     }//GEN-LAST:event_cmdCopyActionPerformed
 
+    private void cmdContinueRecordingActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdContinueRecordingActionPerformed
+        // Stoppe die aktuelle Wiedergabe, falls sie läuft
+        stop();
+
+        try {
+            // Neuen Dialog erstellen
+            AddVoiceMemoDialog dlg = new AddVoiceMemoDialog(EditorsRegistry.getInstance().getMainWindow(), true);
+            dlg.setTitle("Sprachmemo fortsetzen");
+
+            // Bestehende Audiodaten übergeben
+            String fileName = new java.io.File(this.documentId).getName();
+            dlg.setExistingAudio(this.content, fileName);
+
+            // Dialog anzeigen
+            com.jdimension.jlawyer.client.utils.FrameUtils.centerDialog(dlg, EditorsRegistry.getInstance().getMainWindow());
+            dlg.setVisible(true);
+
+            // Ergebnis verarbeiten
+            byte[] result = dlg.getMemoBytes();
+            if (result == null) {
+                return;
+            }
+
+            // Aktualisiere die Datei
+            try {
+                ClientSettings settings = ClientSettings.getInstance();
+                JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
+                locator.lookupArchiveFileServiceRemote().setDocumentContent(this.documentId, result);
+
+                // Aktualisiere den lokalen Content und zeige ihn an
+                this.content = result;
+                showContent(this.documentId, this.content);
+
+                // Bestätigungsmeldung anzeigen
+                this.lblStatus.setText("Sprachmemo wurde aktualisiert.");
+            } catch (Exception e) {
+                log.error("Error updating voice memo", e);
+                JOptionPane.showMessageDialog(this, "Fehler beim Aktualisieren des Sprachmemos: " + e.getMessage(), 
+                    com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
+            }
+        } catch (Exception ex) {
+            log.error("Error creating dialog", ex);
+            JOptionPane.showMessageDialog(this, "Fehler beim Öffnen des Aufnahmedialogs: " + ex.getMessage(), 
+                com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
+        }
+    }//GEN-LAST:event_cmdContinueRecordingActionPerformed
+
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JButton cmdAssistant;
+    private javax.swing.JButton cmdContinueRecording;
     private javax.swing.JButton cmdCopy;
     private javax.swing.JButton cmdNewDocument;
     private javax.swing.JButton cmdPlayPause;

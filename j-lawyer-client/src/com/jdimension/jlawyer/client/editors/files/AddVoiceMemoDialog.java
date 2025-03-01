@@ -676,7 +676,6 @@ import java.util.*;
 import javax.sound.sampled.AudioFormat;
 import javax.sound.sampled.AudioSystem;
 import javax.sound.sampled.DataLine;
-import javax.sound.sampled.Line;
 import javax.sound.sampled.Mixer;
 import javax.sound.sampled.TargetDataLine;
 import javax.sound.sampled.UnsupportedAudioFileException;
@@ -872,20 +871,29 @@ public class AddVoiceMemoDialog extends javax.swing.JDialog {
     }//GEN-LAST:event_cmdAddDocumentActionPerformed
 
     private byte[] mergeWAVs(List<byte[]> audioDataList) throws IOException, UnsupportedAudioFileException {
+        if (audioDataList.isEmpty()) {
+            return null;
+        }
+
         ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
 
-        // Calculate total data length excluding header (44 bytes)
-        long totalDataLen = 0;
+        // Calculate total audio data length (excluding headers)
+        long totalAudioDataLen = 0;
         for (byte[] audioData : audioDataList) {
-            totalDataLen += audioData.length;
+            // Für jede WAV-Datei nehmen wir nur die tatsächlichen Audio-Daten (nach dem 44-Byte-Header)
+            if (audioData.length > 44) {
+                totalAudioDataLen += audioData.length - 44;
+            }
         }
 
         // Write WAV header for the merged audio
-        writeWavHeader(outputStream, totalDataLen);
+        writeWavHeader(outputStream, totalAudioDataLen);
 
-        // Concatenate audio data
+        // Concatenate only the audio data portions (skip the 44-byte headers)
         for (byte[] audioData : audioDataList) {
-            outputStream.write(audioData);
+            if (audioData.length > 44) {
+                outputStream.write(audioData, 44, audioData.length - 44);
+            }
         }
 
         return outputStream.toByteArray();
@@ -905,7 +913,7 @@ public class AddVoiceMemoDialog extends javax.swing.JDialog {
         outputStream.write("fmt ".getBytes());
         outputStream.write(intToBytes(16)); // Subchunk1Size
         outputStream.write(shortToBytes((short) 1)); // AudioFormat (PCM)
-        outputStream.write(shortToBytes((short) 1)); // NumChannels
+        outputStream.write(shortToBytes((short) 1)); // NumChannels (Mono)
         outputStream.write(intToBytes((int) audioFormat.getSampleRate())); // SampleRate
         outputStream.write(intToBytes((int) audioFormat.getSampleRate() * audioFormat.getSampleSizeInBits() / 8)); // ByteRate
         outputStream.write(shortToBytes((short) (audioFormat.getSampleSizeInBits() / 8))); // BlockAlign
@@ -1047,6 +1055,41 @@ public class AddVoiceMemoDialog extends javax.swing.JDialog {
             byteCount+=bytes.length;
         }
         this.lblInfo.setText(this.memoParts.size() + " Clip(s), insgesamt " + FileUtils.getFileSizeHumanReadable(byteCount));
+    }
+    
+    public void setExistingAudio(byte[] existingAudio, String fileName) {
+        try {
+            // Bestehende Aufnahme in memoParts hinzufügen
+            this.memoParts.add(existingAudio);
+
+            // Dateinamen setzen und Feld deaktivieren
+            if (fileName != null && !fileName.isEmpty()) {
+                // Entferne .wav-Endung, falls vorhanden
+                if (fileName.toLowerCase().endsWith(".wav")) {
+                    fileName = fileName.substring(0, fileName.length() - 4);
+                }
+                this.txtFileName.setText(fileName);
+                this.txtFileName.setEditable(false); // Mache das Textfeld nicht editierbar
+                this.txtFileName.setEnabled(false);  // Visuell deaktiviert
+            }
+
+            // Aktualisiere Info-Label
+            long byteCount = 0;
+            for (byte[] bytes : this.memoParts) {
+                byteCount += bytes.length;
+            }
+            this.lblInfo.setText(this.memoParts.size() + " Clip(s), insgesamt " + FileUtils.getFileSizeHumanReadable(byteCount));
+
+            // Button-Text anpassen
+            this.cmdAddDocument.setText("Aufnahme aktualisieren");
+        } catch (Exception e) {
+            log.error("Error setting existing audio", e);
+        }
+    }
+
+    // Pürfen, ob der Dialog im "Fortsetzen"-Modus ist
+    public boolean isAppendMode() {
+        return !this.memoParts.isEmpty();
     }
 
 }
