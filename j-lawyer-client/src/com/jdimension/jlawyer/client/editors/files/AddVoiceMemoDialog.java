@@ -1122,17 +1122,32 @@ public class AddVoiceMemoDialog extends javax.swing.JDialog {
             byte[] audioData = byteArrayOutputStream.toByteArray();
             if (audioData.length > 0) {
                 try {
-                    // Validieren, dass es sich um gültige WAV-Daten handelt
+                    // Die rohen PCM-Daten in ein gültiges WAV-Format konvertieren
+                    AudioFormat format = AudioUtils.getAudioFormat();
                     ByteArrayInputStream bais = new ByteArrayInputStream(audioData);
-                    AudioInputStream ais = AudioSystem.getAudioInputStream(bais);
-                    ais.close();
-                    bais.close();
+                    AudioInputStream ais = new AudioInputStream(
+                        bais,
+                        format,
+                        audioData.length / format.getFrameSize()
+                    );
+
+                    // In WAV konvertieren
+                    ByteArrayOutputStream wavOutputStream = new ByteArrayOutputStream();
+                    AudioSystem.write(ais, AudioFileFormat.Type.WAVE, wavOutputStream);
 
                     // Zur Liste hinzufügen
-                    this.memoParts.add(audioData);
+                    this.memoParts.add(wavOutputStream.toByteArray());
+
+                    // Ressourcen freigeben
+                    ais.close();
+                    bais.close();
+                    wavOutputStream.close();
                 } catch (Exception e) {
-                    log.error("Recorded audio data is not valid", e);
-                    // Optional: Benutzer benachrichtigen
+                    log.error("Error converting recorded audio data to WAV", e);
+                    JOptionPane.showMessageDialog(this, 
+                        "Fehler bei der Audioverarbeitung: " + e.getMessage(),
+                        com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, 
+                        JOptionPane.ERROR_MESSAGE);
                 }
             }
 

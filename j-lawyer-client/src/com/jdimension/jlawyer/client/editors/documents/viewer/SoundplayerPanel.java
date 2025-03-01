@@ -676,6 +676,7 @@ import com.jdimension.jlawyer.client.editors.EditorsRegistry;
 import com.jdimension.jlawyer.client.editors.files.AddVoiceMemoDialog;
 import com.jdimension.jlawyer.client.editors.files.EditArchiveFileDetailsPanel;
 import com.jdimension.jlawyer.client.settings.ClientSettings;
+import com.jdimension.jlawyer.client.utils.AudioUtils;
 import com.jdimension.jlawyer.client.utils.ThreadUtils;
 import com.jdimension.jlawyer.client.utils.WavAudioUtils;
 import com.jdimension.jlawyer.persistence.AssistantConfig;
@@ -692,9 +693,13 @@ import javax.sound.sampled.LineUnavailableException;
 import javax.sound.sampled.UnsupportedAudioFileException;
 import javax.swing.Timer;
 import java.awt.event.ActionEvent;
+import java.io.ByteArrayOutputStream;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import javax.sound.sampled.AudioFileFormat;
+import javax.sound.sampled.AudioFormat;
+import javax.sound.sampled.DataLine;
 import javax.sound.sampled.LineEvent;
 import javax.swing.JOptionPane;
 import org.apache.log4j.Logger;
@@ -1022,7 +1027,9 @@ public class SoundplayerPanel extends javax.swing.JPanel implements PreviewPanel
 
     @Override
     public void showContent(String documentId, byte[] content) {
+        // Bestehende Ressourcen freigeben
         closeAudioResources();
+
         this.documentId = documentId;
         this.content = content;
 
@@ -1034,8 +1041,31 @@ public class SoundplayerPanel extends javax.swing.JPanel implements PreviewPanel
             this.taTranscription.setText("");
         }
 
+        if (content == null || content.length == 0) {
+            showStatus("Keine Audiodaten vorhanden");
+            return;
+        }
+
         try {
-            AudioInputStream audioInputStream = AudioSystem.getAudioInputStream(new ByteArrayInputStream(content));
+            // Versuchen, den WAV-Header zu reparieren, falls nötig
+            byte[] fixedContent = ensureValidWavHeader(content);
+
+            ByteArrayInputStream byteStream = new ByteArrayInputStream(fixedContent);
+            AudioInputStream audioInputStream = AudioSystem.getAudioInputStream(byteStream);
+
+            // Get audio format details for better error handling
+            AudioFormat format = audioInputStream.getFormat();
+            log.info("Audio format: " + format.toString());
+
+            // Check if we have a supported format
+            DataLine.Info info = new DataLine.Info(Clip.class, format);
+            if (!AudioSystem.isLineSupported(info)) {
+                showStatus("Audioformat wird nicht unterstützt: " + format.toString());
+                log.error("Unsupported audio format: " + format.toString());
+                return;
+            }
+
+            // Continue with playback setup
             clip = AudioSystem.getClip();
             clip.open(audioInputStream);
 
@@ -1051,19 +1081,182 @@ public class SoundplayerPanel extends javax.swing.JPanel implements PreviewPanel
             this.prgTime.setMinimum(0);
             this.prgTime.setMaximum((int) (clip.getMicrosecondLength() / 1000l / 1000l));
             this.prgTime.setValue(0);
+
+            // Clear any previous error messages
+            showStatus("");
         } catch (UnsupportedAudioFileException uae) {
-            log.error(uae);
-            showStatus("Audioformat wird nicht unterstützt");
-        } catch (IOException | LineUnavailableException ex) {
-            log.error(ex);
-            showStatus("Fehler: " + ex.getMessage());
+            log.error("Unsupported audio file format", uae);
+            showStatus("Audioformat wird nicht unterstützt - versuche Reparatur...");
+
+            // Versuche, den Stream als PCM-Daten zu interpretieren und zu konvertieren
+            try {
+                fixAndPlayAsPCM(content);
+            } catch (Exception e) {
+                log.error("Failed to repair audio data", e);
+                showStatus("Fehler beim Verarbeiten der Audiodaten: " + e.getMessage());
+            }
+        } catch (LineUnavailableException lue) {
+            log.error("LineUnavailableException", lue);
+            showStatus("Audio-Hardware unterstützt dieses Format nicht: " + lue.getMessage());
+        } catch (IOException ex) {
+            log.error("IO Exception when loading audio", ex);
+            showStatus("Fehler beim Laden der Audiodatei: " + ex.getMessage());
+        } catch (Exception ex) {
+            log.error("Unexpected error when loading audio", ex);
+            showStatus("Unerwarteter Fehler: " + ex.getMessage());
         }
 
         timer = new Timer(1000, (ActionEvent e) -> {
             updateTimeLabel();
         });
-
     }
+    
+    /**
+    * Versucht, einen korrupten WAV-Header zu reparieren
+    */
+   private byte[] ensureValidWavHeader(byte[] audioData) {
+       // Überprüfen, ob die Datei mit "RIFF" beginnt und lang genug für einen Wav-Header ist
+       if (audioData.length < 44 || 
+           audioData[0] != 'R' || audioData[1] != 'I' || audioData[2] != 'F' || audioData[3] != 'F') {
+
+           log.warn("Audio data doesn't have a valid WAV header, attempting to fix");
+
+           // Erstelle einen neuen korrekten WAV-Header
+           AudioFormat format = AudioUtils.getAudioFormat(); // Standardformat verwenden
+
+           ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
+
+           // RIFF header
+           outputStream.write("RIFF".getBytes(), 0, 4);
+
+           // Gesamtlänge berechnen (Dateigröße - 8 bytes für RIFF und Länge)
+           int totalLength = audioData.length + 36; // 36 für Header, audioData für Audiodaten
+           byte[] totalLengthBytes = new byte[4];
+           totalLengthBytes[0] = (byte) (totalLength & 0xff);
+           totalLengthBytes[1] = (byte) ((totalLength >> 8) & 0xff);
+           totalLengthBytes[2] = (byte) ((totalLength >> 16) & 0xff);
+           totalLengthBytes[3] = (byte) ((totalLength >> 24) & 0xff);
+           outputStream.write(totalLengthBytes, 0, 4);
+
+           // WAVE header
+           outputStream.write("WAVE".getBytes(), 0, 4);
+
+           // fmt chunk
+           outputStream.write("fmt ".getBytes(), 0, 4);
+
+           // Subchunk1Size (16 für PCM)
+           byte[] subchunk1Size = { 16, 0, 0, 0 };
+           outputStream.write(subchunk1Size, 0, 4);
+
+           // AudioFormat (1 für PCM)
+           byte[] audioFormat = { 1, 0 };
+           outputStream.write(audioFormat, 0, 2);
+
+           // NumChannels (1 für mono, 2 für stereo)
+           byte[] numChannels = { (byte)format.getChannels(), 0 };
+           outputStream.write(numChannels, 0, 2);
+
+           // SampleRate
+           int sampleRate = (int)format.getSampleRate();
+           byte[] sampleRateBytes = new byte[4];
+           sampleRateBytes[0] = (byte) (sampleRate & 0xff);
+           sampleRateBytes[1] = (byte) ((sampleRate >> 8) & 0xff);
+           sampleRateBytes[2] = (byte) ((sampleRate >> 16) & 0xff);
+           sampleRateBytes[3] = (byte) ((sampleRate >> 24) & 0xff);
+           outputStream.write(sampleRateBytes, 0, 4);
+
+           // ByteRate (SampleRate * NumChannels * BitsPerSample/8)
+           int byteRate = (int)(format.getSampleRate() * format.getChannels() * format.getSampleSizeInBits() / 8);
+           byte[] byteRateBytes = new byte[4];
+           byteRateBytes[0] = (byte) (byteRate & 0xff);
+           byteRateBytes[1] = (byte) ((byteRate >> 8) & 0xff);
+           byteRateBytes[2] = (byte) ((byteRate >> 16) & 0xff);
+           byteRateBytes[3] = (byte) ((byteRate >> 24) & 0xff);
+           outputStream.write(byteRateBytes, 0, 4);
+
+           // BlockAlign (NumChannels * BitsPerSample/8)
+           short blockAlign = (short)(format.getChannels() * format.getSampleSizeInBits() / 8);
+           byte[] blockAlignBytes = { (byte) (blockAlign & 0xff), (byte) ((blockAlign >> 8) & 0xff) };
+           outputStream.write(blockAlignBytes, 0, 2);
+
+           // BitsPerSample
+           short bitsPerSample = (short)format.getSampleSizeInBits();
+           byte[] bitsPerSampleBytes = { (byte) (bitsPerSample & 0xff), (byte) ((bitsPerSample >> 8) & 0xff) };
+           outputStream.write(bitsPerSampleBytes, 0, 2);
+
+           // data chunk
+           outputStream.write("data".getBytes(), 0, 4);
+
+           // Subchunk2Size (Größe der Audiodaten)
+           int subchunk2Size = audioData.length;
+           byte[] subchunk2SizeBytes = new byte[4];
+           subchunk2SizeBytes[0] = (byte) (subchunk2Size & 0xff);
+           subchunk2SizeBytes[1] = (byte) ((subchunk2Size >> 8) & 0xff);
+           subchunk2SizeBytes[2] = (byte) ((subchunk2Size >> 16) & 0xff);
+           subchunk2SizeBytes[3] = (byte) ((subchunk2Size >> 24) & 0xff);
+           outputStream.write(subchunk2SizeBytes, 0, 4);
+
+           // Audiodaten anhängen
+           try {
+               outputStream.write(audioData);
+               return outputStream.toByteArray();
+           } catch (IOException e) {
+               log.error("Error writing audio data", e);
+               return audioData; // Im Fehlerfall die Originaldaten zurückgeben
+           }
+       }
+
+       return audioData; // Wenn alles gut aussieht, die Originaldaten zurückgeben
+   }
+
+   /**
+    * Versucht, die Audiodaten als reine PCM-Daten zu interpretieren und abzuspielen
+    */
+   private void fixAndPlayAsPCM(byte[] audioData) throws Exception {
+       // PCM-Format für die Audiodaten definieren
+       AudioFormat format = AudioUtils.getAudioFormat();
+
+       // AudioInputStream aus den PCM-Daten erstellen
+       ByteArrayInputStream bais = new ByteArrayInputStream(audioData);
+       AudioInputStream ais = new AudioInputStream(
+           bais,
+           format,
+           audioData.length / format.getFrameSize()
+       );
+
+       // In korrektes WAV-Format konvertieren
+       ByteArrayOutputStream baos = new ByteArrayOutputStream();
+       AudioSystem.write(ais, AudioFileFormat.Type.WAVE, baos);
+
+       // Die konvertierten Daten als WAV-Datei abspielen
+       byte[] wavData = baos.toByteArray();
+
+       // Speichere die konvertierten Daten
+       this.content = wavData;
+
+       // Zeige die konvertierten Daten an
+       ByteArrayInputStream convertedStream = new ByteArrayInputStream(wavData);
+       AudioInputStream convertedAis = AudioSystem.getAudioInputStream(convertedStream);
+
+       // Setup playback
+       clip = AudioSystem.getClip();
+       clip.open(convertedAis);
+
+       clip.addLineListener((LineEvent event) -> {
+           if (event.getType() == LineEvent.Type.STOP && (clip.getMicrosecondPosition() == clip.getMicrosecondLength())) {
+               clip.setMicrosecondPosition(0);
+               timer.stop();
+               updateTimeLabel();
+               cmdPlayPause.setText("Play");
+           }
+       });
+
+       this.prgTime.setMinimum(0);
+       this.prgTime.setMaximum((int) (clip.getMicrosecondLength() / 1000l / 1000l));
+       this.prgTime.setValue(0);
+
+       showStatus("Audiodaten repariert");
+   }
 
     @Override
     public String getDocumentId() {
