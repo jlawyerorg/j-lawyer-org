@@ -925,7 +925,7 @@ public class CasesEndpointV1 implements CasesEndpointLocalV1 {
         try {
 
             if (caseData.getName() == null || "".equals(caseData.getName())) {
-                log.error("Can not create new case - no case number given");
+                log.error("Can not create new case - no case name given");
                 return Response.serverError().build();
             }
 
