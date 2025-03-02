@@ -700,6 +700,7 @@ import java.util.Map;
 import javax.sound.sampled.AudioFileFormat;
 import javax.sound.sampled.AudioFormat;
 import javax.sound.sampled.DataLine;
+import javax.sound.sampled.FloatControl;
 import javax.sound.sampled.LineEvent;
 import javax.swing.JOptionPane;
 import org.apache.log4j.Logger;
@@ -723,6 +724,8 @@ public class SoundplayerPanel extends javax.swing.JPanel implements PreviewPanel
 
     private DocumentPreviewSaveCallback saveCallback = null;
 
+    private FloatControl volumeControl;
+    
     /**
      * Creates new form SoundplayerPanel
      *
@@ -735,6 +738,15 @@ public class SoundplayerPanel extends javax.swing.JPanel implements PreviewPanel
         this.readOnly = readOnly;
         this.saveCallback = saveCallback;
         initComponents();
+        
+        try {
+            String savedVolume = ClientSettings.getInstance().getConfiguration("soundplayer.volume", "80");
+            if (savedVolume != null && !savedVolume.isEmpty()) {
+                sliderVolume.setValue(Integer.parseInt(savedVolume));
+            }
+        } catch (Exception e) {
+            log.warn("Could not restore volume setting", e);
+        }
     }
 
     /**
@@ -759,6 +771,7 @@ public class SoundplayerPanel extends javax.swing.JPanel implements PreviewPanel
         cmdNewDocument = new javax.swing.JButton();
         cmdCopy = new javax.swing.JButton();
         cmdContinueRecording = new javax.swing.JButton();
+        sliderVolume = new javax.swing.JSlider();
 
         cmdPlayPause.setFont(cmdPlayPause.getFont());
         cmdPlayPause.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons32/material/baseline_play_circle_black_48dp.png"))); // NOI18N
@@ -825,6 +838,15 @@ public class SoundplayerPanel extends javax.swing.JPanel implements PreviewPanel
             }
         });
 
+        sliderVolume.setMinorTickSpacing(5);
+        sliderVolume.setToolTipText("Lautstärke anpassen");
+        sliderVolume.setValue(80);
+        sliderVolume.addChangeListener(new javax.swing.event.ChangeListener() {
+            public void stateChanged(javax.swing.event.ChangeEvent evt) {
+                sliderVolumeStateChanged(evt);
+            }
+        });
+
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(this);
         this.setLayout(layout);
         layout.setHorizontalGroup(
@@ -832,7 +854,7 @@ public class SoundplayerPanel extends javax.swing.JPanel implements PreviewPanel
             .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
                 .addContainerGap()
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
-                    .addComponent(jScrollPane1, javax.swing.GroupLayout.DEFAULT_SIZE, 452, Short.MAX_VALUE)
+                    .addComponent(jScrollPane1)
                     .addComponent(lblStatus, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                     .addComponent(prgTime, javax.swing.GroupLayout.Alignment.LEADING, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                     .addGroup(javax.swing.GroupLayout.Alignment.LEADING, layout.createSequentialGroup()
@@ -845,6 +867,8 @@ public class SoundplayerPanel extends javax.swing.JPanel implements PreviewPanel
                         .addComponent(cmdStop)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                         .addComponent(cmdContinueRecording)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addComponent(sliderVolume, javax.swing.GroupLayout.PREFERRED_SIZE, 160, javax.swing.GroupLayout.PREFERRED_SIZE)
                         .addGap(0, 0, Short.MAX_VALUE))
                     .addGroup(javax.swing.GroupLayout.Alignment.LEADING, layout.createSequentialGroup()
                         .addComponent(cmdAssistant)
@@ -861,7 +885,8 @@ public class SoundplayerPanel extends javax.swing.JPanel implements PreviewPanel
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                     .addComponent(cmdPlayPause)
                     .addComponent(cmdStop)
-                    .addComponent(cmdContinueRecording))
+                    .addComponent(cmdContinueRecording)
+                    .addComponent(sliderVolume, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
                 .addGap(18, 18, 18)
                 .addComponent(prgTime, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
@@ -976,6 +1001,10 @@ public class SoundplayerPanel extends javax.swing.JPanel implements PreviewPanel
         }
     }//GEN-LAST:event_cmdContinueRecordingActionPerformed
 
+    private void sliderVolumeStateChanged(javax.swing.event.ChangeEvent evt) {//GEN-FIRST:event_sliderVolumeStateChanged
+        updateVolume();
+    }//GEN-LAST:event_sliderVolumeStateChanged
+
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JButton cmdAssistant;
@@ -989,6 +1018,7 @@ public class SoundplayerPanel extends javax.swing.JPanel implements PreviewPanel
     private javax.swing.JLabel lblStatus;
     private javax.swing.JPopupMenu popAssistant;
     private javax.swing.JProgressBar prgTime;
+    private javax.swing.JSlider sliderVolume;
     private javax.swing.JTextArea taTranscription;
     private javax.swing.JLabel timeLabel;
     // End of variables declaration//GEN-END:variables
@@ -1004,6 +1034,9 @@ public class SoundplayerPanel extends javax.swing.JPanel implements PreviewPanel
         super.removeNotify();
         stop(); // Stop the sound when the panel is removed or no longer displayed
 
+        ClientSettings.getInstance().setConfiguration("soundplayer.volume", 
+                                           String.valueOf(sliderVolume.getValue()));
+        
         if (this.documentId != null && !this.readOnly) {
 
             String currentComment = this.taTranscription.getText();
@@ -1068,6 +1101,9 @@ public class SoundplayerPanel extends javax.swing.JPanel implements PreviewPanel
             // Continue with playback setup
             clip = AudioSystem.getClip();
             clip.open(audioInputStream);
+            
+            volumeControl = null;
+            updateVolume();
 
             clip.addLineListener((LineEvent event) -> {
                 if (event.getType() == LineEvent.Type.STOP && (clip.getMicrosecondPosition() == clip.getMicrosecondLength())) {
@@ -1105,7 +1141,7 @@ public class SoundplayerPanel extends javax.swing.JPanel implements PreviewPanel
             log.error("Unexpected error when loading audio", ex);
             showStatus("Unerwarteter Fehler: " + ex.getMessage());
         }
-
+        
         timer = new Timer(1000, (ActionEvent e) -> {
             updateTimeLabel();
         });
@@ -1310,6 +1346,36 @@ public class SoundplayerPanel extends javax.swing.JPanel implements PreviewPanel
         long seconds = (microseconds / 1000000) % 60;
         String timeString = String.format("%02d:%02d", minutes, seconds);
         timeLabel.setText(timeString);
+    }
+    
+    private void updateVolume() {
+        if (clip != null && clip.isOpen()) {
+            try {
+                // FloatControl für die Lautstärke holen
+                if (volumeControl == null) {
+                    volumeControl = (FloatControl) clip.getControl(FloatControl.Type.MASTER_GAIN);
+                }
+                // Lautstärke berechnen (von Prozent in dB umrechnen)
+                int volumePercent = sliderVolume.getValue();
+                float gain;
+
+                if (volumePercent == 0) {
+                    gain = -80.0f; // Praktisch stumm
+                } else {
+                    // Logarithmische Skala für natürlichere Lautstärkeänderung
+                    gain = (float) (Math.log10(volumePercent / 100.0) * 20.0);
+                    gain = Math.max(-40.0f, Math.min(6.0f, gain));
+                }
+
+                volumeControl.setValue(gain);
+
+                // Optional: Debug-Ausgabe
+                log.info("Volume set to " + volumePercent + "% (" + gain + " dB)");
+            } catch (Exception e) {
+                log.error("Error adjusting volume", e);
+                showStatus("Lautstärkeeinstellung nicht verfügbar: " + e.getMessage());
+            }
+        }
     }
 
     @Override
