@@ -672,6 +672,7 @@ import javax.annotation.security.RolesAllowed;
 import javax.ejb.Stateless;
 import javax.naming.InitialContext;
 import javax.ws.rs.Consumes;
+import javax.ws.rs.DELETE;
 import javax.ws.rs.GET;
 import javax.ws.rs.PUT;
 import javax.ws.rs.Path;
@@ -876,6 +877,41 @@ public class ContactsEndpointV2 implements ContactsEndpointLocalV2 {
             return res;
         } catch (Exception ex) {
             log.error("can not create new address " + contact.toString(), ex);
+            Response res = Response.serverError().build();
+            return res;
+        }
+
+    }
+    
+    /**
+     * Creates a new contact
+     *
+     * @param id contact id
+     * @response 401 User not authorized
+     * @response 403 User not authenticated
+     * @response 404 Contact not found
+     */
+    @Override
+    @DELETE
+    @Produces(MediaType.APPLICATION_JSON + ";charset=utf-8")
+    @Path("/{id}/delete")
+    @RolesAllowed({"createAddressRole"})
+    public Response deleteContact(@PathParam("id") String id) {
+        try {
+
+            InitialContext ic = new InitialContext();
+            AddressServiceLocal addresses = (AddressServiceLocal) ic.lookup("java:global/j-lawyer-server/j-lawyer-server-ejb/AddressService!com.jdimension.jlawyer.services.AddressServiceLocal");
+            
+            AddressBean a=addresses.getAddress(id);
+            if(a==null) {
+                return Response.status(Response.Status.NOT_FOUND).build();
+            }
+            
+            addresses.removeAddress(id);
+            Response res = Response.ok().build();
+            return res;
+        } catch (Exception ex) {
+            log.error("can not delete address " + id, ex);
             Response res = Response.serverError().build();
             return res;
         }

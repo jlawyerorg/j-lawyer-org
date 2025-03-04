@@ -686,4 +686,6 @@ public interface ContactsEndpointLocalV2 {
 
     Response updateContact(RestfulContactV2 contact);
     
+    Response deleteContact(String id);
+    
 }
