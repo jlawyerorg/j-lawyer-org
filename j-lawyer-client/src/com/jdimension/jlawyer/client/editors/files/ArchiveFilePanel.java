@@ -1747,9 +1747,10 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
         mnuRemoveDocument = new javax.swing.JMenuItem();
         jSeparator11 = new javax.swing.JPopupMenu.Separator();
         mnuPdfAndConvertActions = new javax.swing.JMenu();
-        mnuShrinkPdf = new javax.swing.JMenuItem();
+        mnuMergeToPdf = new javax.swing.JMenuItem();
         mnuSplitPdf = new javax.swing.JMenuItem();
         mnuSaveDocumentsLocallyPdf = new javax.swing.JMenuItem();
+        mnuShrinkPdf = new javax.swing.JMenuItem();
         mnuSaveDocumentEncrypted = new javax.swing.JMenuItem();
         mnuDuplicateDocumentAs = new javax.swing.JMenuItem();
         mnuAnonymizePdf = new javax.swing.JMenuItem();
@@ -2156,15 +2157,15 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
         mnuPdfAndConvertActions.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons16/pdf.png"))); // NOI18N
         mnuPdfAndConvertActions.setText("PDF und Konvertierung");
 
-        mnuShrinkPdf.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons16/material/compress_24dp_0E72B5.png"))); // NOI18N
-        mnuShrinkPdf.setText("PDF verkleinern");
-        mnuShrinkPdf.setToolTipText("");
-        mnuShrinkPdf.addActionListener(new java.awt.event.ActionListener() {
+        mnuMergeToPdf.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons16/pdf.png"))); // NOI18N
+        mnuMergeToPdf.setText("als PDF zusammenführen");
+        mnuMergeToPdf.setToolTipText("alle selektierten Dokumente in ein PDF exportieren");
+        mnuMergeToPdf.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
-                mnuShrinkPdfActionPerformed(evt);
+                mnuMergeToPdfActionPerformed(evt);
             }
         });
-        mnuPdfAndConvertActions.add(mnuShrinkPdf);
+        mnuPdfAndConvertActions.add(mnuMergeToPdf);
 
         mnuSplitPdf.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons16/material/baseline_splitscreen_black_48dp.png"))); // NOI18N
         mnuSplitPdf.setText("PDF aufteilen ");
@@ -2184,6 +2185,16 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
             }
         });
         mnuPdfAndConvertActions.add(mnuSaveDocumentsLocallyPdf);
+
+        mnuShrinkPdf.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons16/material/compress_24dp_0E72B5.png"))); // NOI18N
+        mnuShrinkPdf.setText("PDF verkleinern");
+        mnuShrinkPdf.setToolTipText("");
+        mnuShrinkPdf.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                mnuShrinkPdfActionPerformed(evt);
+            }
+        });
+        mnuPdfAndConvertActions.add(mnuShrinkPdf);
 
         mnuSaveDocumentEncrypted.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons16/gpg.png"))); // NOI18N
         mnuSaveDocumentEncrypted.setText("verschlüsseltes PDF exportieren");
@@ -7183,6 +7194,10 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
         }
     }//GEN-LAST:event_mnuStampPdfActionPerformed
 
+    private void mnuMergeToPdfActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_mnuMergeToPdfActionPerformed
+        this.exportSelectedDocumentsAsPdf();
+    }//GEN-LAST:event_mnuMergeToPdfActionPerformed
+
     public void exportSelectedDocumentsAsPdf() {
 
         ArrayList<ArchiveFileDocumentsBean> selectedDocs = this.caseFolderPanel1.getSelectedDocuments();
@@ -7224,27 +7239,6 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
         FrameUtils.centerDialog(dlg, EditorsRegistry.getInstance().getMainWindow());
         dlg.setVisible(true);
 
-//            ProgressIndicator dlg = new ProgressIndicator(EditorsRegistry.getInstance().getMainWindow(), true);
-//            dlg.setShowCancelButton(true);
-//            dlg.setInfinite(false);
-//            dlg.progress("Lade Export vom Server...");
-//            ExportAsHtmlAction exact = new ExportAsHtmlAction(dlg, this, dir, this.dto.getId());
-//            exact.start();
-//            
-//            
-//            try {
-//            ClientSettings settings = ClientSettings.getInstance();
-//            JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
-//            for (ArchiveFileDocumentsBean doc : selectedDocs) {
-//                byte[] content = locator.lookupArchiveFileServiceRemote().getDocumentContent(doc.getId());
-//                String tmpUrl = FileUtils.createTempFile(FileUtils.sanitizeAttachmentName(doc.getName()), content);
-//                dlg.addAttachment(tmpUrl, doc.getDictateSign());
-//
-//            }
-//        } catch (Exception ioe) {
-//            log.error("Error sending document", ioe);
-//            JOptionPane.showMessageDialog(this, "Fehler beim Senden des Dokuments: " + ioe.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
-//        }
     }
 
     private void updateDocumentHighlights(int highlightIndex) {
@@ -7912,6 +7906,7 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
     private javax.swing.JMenuItem mnuDuplicateDocumentAsPdf;
     private javax.swing.JMenuItem mnuDuplicateReview;
     private javax.swing.JMenuItem mnuEditReview;
+    private javax.swing.JMenuItem mnuMergeToPdf;
     private javax.swing.JMenuItem mnuMoveDocumentToOtherCase;
     private javax.swing.JMenuItem mnuOpenDocument;
     private javax.swing.JMenuItem mnuOpenDocumentLibreOffice;

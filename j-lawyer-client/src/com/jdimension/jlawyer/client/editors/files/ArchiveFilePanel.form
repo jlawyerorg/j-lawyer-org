@@ -287,16 +287,16 @@
             <Property name="text" type="java.lang.String" value="PDF und Konvertierung"/>
           </Properties>
           <SubComponents>
-            <MenuItem class="javax.swing.JMenuItem" name="mnuShrinkPdf">
+            <MenuItem class="javax.swing.JMenuItem" name="mnuMergeToPdf">
               <Properties>
                 <Property name="icon" type="javax.swing.Icon" editor="org.netbeans.modules.form.editors2.IconEditor">
-                  <Image iconType="3" name="/icons16/material/compress_24dp_0E72B5.png"/>
+                  <Image iconType="3" name="/icons16/pdf.png"/>
                 </Property>
-                <Property name="text" type="java.lang.String" value="PDF verkleinern"/>
-                <Property name="toolTipText" type="java.lang.String" value=""/>
+                <Property name="text" type="java.lang.String" value="als PDF zusammenf&#xfc;hren"/>
+                <Property name="toolTipText" type="java.lang.String" value="alle selektierten Dokumente in ein PDF exportieren"/>
               </Properties>
               <Events>
-                <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="mnuShrinkPdfActionPerformed"/>
+                <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="mnuMergeToPdfActionPerformed"/>
               </Events>
             </MenuItem>
             <MenuItem class="javax.swing.JMenuItem" name="mnuSplitPdf">
@@ -320,6 +320,18 @@
               </Properties>
               <Events>
                 <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="mnuSaveDocumentsLocallyPdfActionPerformed"/>
+              </Events>
+            </MenuItem>
+            <MenuItem class="javax.swing.JMenuItem" name="mnuShrinkPdf">
+              <Properties>
+                <Property name="icon" type="javax.swing.Icon" editor="org.netbeans.modules.form.editors2.IconEditor">
+                  <Image iconType="3" name="/icons16/material/compress_24dp_0E72B5.png"/>
+                </Property>
+                <Property name="text" type="java.lang.String" value="PDF verkleinern"/>
+                <Property name="toolTipText" type="java.lang.String" value=""/>
+              </Properties>
+              <Events>
+                <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="mnuShrinkPdfActionPerformed"/>
               </Events>
             </MenuItem>
             <MenuItem class="javax.swing.JMenuItem" name="mnuSaveDocumentEncrypted">
