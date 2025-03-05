@@ -718,8 +718,8 @@ public class QuickArchiveFileSearchPanel extends javax.swing.JPanel implements T
     private String detailsEditorClass;
     private Image backgroundImage = null;
     private boolean initializing = false;
-    
-    private QuickArchiveFileSearchCellRenderer renderer=null;
+
+    private QuickArchiveFileSearchCellRenderer renderer = null;
 
     /**
      * Creates new form QuickArchiveFileSearchPanel
@@ -727,17 +727,17 @@ public class QuickArchiveFileSearchPanel extends javax.swing.JPanel implements T
     public QuickArchiveFileSearchPanel() {
         this.initializing = true;
         initComponents();
-        
+
         this.txtSearchString.putClientProperty("JTextField.showClearButton", true);
         this.txtSearchString.putClientProperty("JTextField.placeholderText", "Suche: Akten");
-        
+
         UserSettings userSet = UserSettings.getInstance();
         if (userSet.isCurrentUserInRole(UserSettings.ROLE_WRITECASE)) {
             this.detailsEditorClass = EditArchiveFileDetailsPanel.class.getName();
         } else {
             this.detailsEditorClass = ViewArchiveFileDetailsPanel.class.getName();
         }
-        
+
         String temp = userSet.getSetting(UserSettings.CONF_SEARCH_WITHARCHIVE, "false");
         if ("true".equalsIgnoreCase(temp)) {
             this.chkIncludeArchive.setSelected(true);
@@ -747,7 +747,7 @@ public class QuickArchiveFileSearchPanel extends javax.swing.JPanel implements T
         QuickArchiveFileSearchTableModel model = new QuickArchiveFileSearchTableModel(colNames, 0);
         this.tblResults.setModel(model);
 
-        this.renderer=new QuickArchiveFileSearchCellRenderer();
+        this.renderer = new QuickArchiveFileSearchCellRenderer();
         this.tblResults.setDefaultRenderer(Object.class, renderer);
         this.tblResults.setDefaultRenderer(Date.class, renderer);
 
@@ -758,8 +758,8 @@ public class QuickArchiveFileSearchPanel extends javax.swing.JPanel implements T
                 useSelection();
             }
         });
-        
-        Color splitPaneColor=new Color(DefaultColorTheme.COLOR_DARK_GREY.getRed(), DefaultColorTheme.COLOR_DARK_GREY.getGreen(), DefaultColorTheme.COLOR_DARK_GREY.getBlue(), 170);
+
+        Color splitPaneColor = new Color(DefaultColorTheme.COLOR_DARK_GREY.getRed(), DefaultColorTheme.COLOR_DARK_GREY.getGreen(), DefaultColorTheme.COLOR_DARK_GREY.getBlue(), 170);
         ComponentUtils.decorateSplitPane(jSplitPane1, splitPaneColor);
         this.jSplitPane1.setDividerLocation(0.8d);
         ComponentUtils.restoreSplitPane(this.jSplitPane1, this.getClass(), "jSplitPane1");
@@ -773,7 +773,7 @@ public class QuickArchiveFileSearchPanel extends javax.swing.JPanel implements T
     public void populateTags(List<String> tags) {
         TagUtils.populateTags(tags, cmdTagFilter, popTagFilter, null);
     }
-    
+
     public void populateDocumentTags(List<String> tags) {
         TagUtils.populateTags(tags, cmdDocumentTagFilter, popDocumentTagFilter, null);
     }
@@ -1057,13 +1057,28 @@ public class QuickArchiveFileSearchPanel extends javax.swing.JPanel implements T
 
     private void mnuDeleteSelectedArchiveFilesActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_mnuDeleteSelectedArchiveFilesActionPerformed
 
-        int response = JOptionPane.showConfirmDialog(this, "Ausgewählte Akte(n) löschen?", "Akte löschen", JOptionPane.YES_NO_OPTION);
+        int[] selectedIndices = this.tblResults.getSelectedRows();
+        StringBuilder confirmMsg = new StringBuilder();
+        confirmMsg.append("<html>Ausgewählte Akte(n) löschen?<br/>");
+        if (selectedIndices.length > 20) {
+            confirmMsg.append("<ul><li>mehr als 20 Akten</li></ul>");
+            confirmMsg.append("</html>");
+        } else {
+            confirmMsg.append("<ul>");
+            for (int i = 0; i < selectedIndices.length; i++) {
+                QuickArchiveFileSearchRowIdentifier id = (QuickArchiveFileSearchRowIdentifier) this.tblResults.getValueAt(selectedIndices[i], 0);
+                confirmMsg.append("<li>").append(id.getArchiveFileDTO().getFileNumber()).append(" ").append(id.getArchiveFileDTO().getName()).append("</li>");
+            }
+            confirmMsg.append("</ul></html>");
+        }
+
+        int response = JOptionPane.showConfirmDialog(this, confirmMsg.toString(), "Akte löschen", JOptionPane.YES_NO_OPTION);
         if (response != JOptionPane.YES_OPTION) {
             return;
         }
 
         ThreadUtils.setWaitCursor(this, false);
-        int[] selectedIndices = this.tblResults.getSelectedRows();
+
         Arrays.sort(selectedIndices);
         ArrayList<String> ids = new ArrayList<>();
         for (int i = 0; i < selectedIndices.length; i++) {
@@ -1128,11 +1143,11 @@ public class QuickArchiveFileSearchPanel extends javax.swing.JPanel implements T
             this.useSelection();
 
         } else if (evt.getClickCount() == 1 && evt.getButton() == MouseEvent.BUTTON3) {
-            int selectionCount=this.tblResults.getSelectedRowCount();
+            int selectionCount = this.tblResults.getSelectedRowCount();
             if (selectionCount < 1) {
                 return;
             }
-            this.mnuOpenSelectedArchiveFile.setEnabled(selectionCount==1);
+            this.mnuOpenSelectedArchiveFile.setEnabled(selectionCount == 1);
             this.popupArchiveFileActions.show(this.tblResults, evt.getX(), evt.getY());
         } else if (evt.getClickCount() == 1 && evt.getButton() == MouseEvent.BUTTON1) {
             if (this.tblResults.getSelectedRowCount() == 1) {
@@ -1165,14 +1180,14 @@ public class QuickArchiveFileSearchPanel extends javax.swing.JPanel implements T
         if (!StringUtils.isEmpty(afb.getAssistant())) {
             html.append("<tr><td>").append("Sachbearbeiter: ").append("</td><td>").append(afb.getAssistant()).append("</td></tr>");
         }
-        
+
         ClientSettings settings = ClientSettings.getInstance();
         try {
             JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
             Collection<ArchiveFileReviewsBean> reviews = locator.lookupCalendarServiceRemote().getReviews(afb.getId(), false);
             if (!reviews.isEmpty()) {
                 html.append("<tr><td>").append("Unerledigte Kalendereintr&auml;ge: ").append("</td><td>").append(reviews.size()).append("</td></tr>");
-                SimpleDateFormat df=new SimpleDateFormat("dd.MM.yyyy");
+                SimpleDateFormat df = new SimpleDateFormat("dd.MM.yyyy");
                 for (ArchiveFileReviewsBean r : reviews) {
                     html.append("<tr><td></td><td>").append(df.format(r.getBeginDate())).append(" ").append(r.getSummary()).append(" (").append(r.getEventTypeName()).append(")").append("</td></tr>");
                 }
@@ -1181,7 +1196,6 @@ public class QuickArchiveFileSearchPanel extends javax.swing.JPanel implements T
             log.error("Error getting calendar entries", ex);
             JOptionPane.showMessageDialog(this, "Fehler beim Ermitteln der Kalendereinträge: " + ex.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
         }
-
 
         html.append("</table>");
         html.append("</body></html>");
@@ -1198,19 +1212,19 @@ public class QuickArchiveFileSearchPanel extends javax.swing.JPanel implements T
         // perform search here
         ThreadUtils.setWaitCursor(this);
         EditorsRegistry.getInstance().updateStatus("Suche Akten...");
-        
+
         ClientSettings settings = ClientSettings.getInstance();
-        List<String> caseIdsSyncedForUser=null;
+        List<String> caseIdsSyncedForUser = null;
         try {
             JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
-            caseIdsSyncedForUser=locator.lookupArchiveFileServiceRemote().getCaseIdsSyncedForUser(UserSettings.getInstance().getCurrentUser().getPrincipalId());
-            
+            caseIdsSyncedForUser = locator.lookupArchiveFileServiceRemote().getCaseIdsSyncedForUser(UserSettings.getInstance().getCurrentUser().getPrincipalId());
+
         } catch (Exception ex) {
             log.error("Error getting case sync status", ex);
             JOptionPane.showMessageDialog(this, "Fehler beim Ermitteln des Synchronisationsstatus: " + ex.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
             EditorsRegistry.getInstance().clearStatus(false);
         }
-        
+
         new Thread(new QuickArchiveFileSearchThread(this, this.txtSearchString.getText(), this.chkIncludeArchive.isSelected(), TagUtils.getSelectedTags(this.popTagFilter), TagUtils.getSelectedTags(this.popDocumentTagFilter), caseIdsSyncedForUser, this.tblResults)).start();
 
     }//GEN-LAST:event_cmdQuickSearchActionPerformed
@@ -1255,8 +1269,8 @@ public class QuickArchiveFileSearchPanel extends javax.swing.JPanel implements T
             QuickArchiveFileSearchRowIdentifier id = (QuickArchiveFileSearchRowIdentifier) this.tblResults.getValueAt(selectedIndices[i], 0);
             ids.add(id.getArchiveFileDTO().getId());
         }
-        
-        if(ids.size() > 1) {
+
+        if (ids.size() > 1) {
             int response = JOptionPane.showConfirmDialog(this, "" + ids.size() + " Akten duplizieren?", "Akten duplizieren", JOptionPane.YES_NO_OPTION);
             if (response != JOptionPane.YES_OPTION) {
                 return;
@@ -1271,7 +1285,7 @@ public class QuickArchiveFileSearchPanel extends javax.swing.JPanel implements T
 
             ArchiveFileServiceRemote fileService = locator.lookupArchiveFileServiceRemote();
             for (int i = ids.size() - 1; i > -1; i--) {
-                ArchiveFileBean source=fileService.getArchiveFile(ids.get(i));
+                ArchiveFileBean source = fileService.getArchiveFile(ids.get(i));
                 source.setArchiveFileDocumentsBeanList(null);
                 source.setArchiveFileReviewsBeanList(null);
                 source.setArchiveFileHistoryBeanList(null);
@@ -1282,12 +1296,12 @@ public class QuickArchiveFileSearchPanel extends javax.swing.JPanel implements T
                 source.setClaimValue(0f);
                 // reset external IDs
                 source.setExternalId(null);
-               
-                ArchiveFileBean target=fileService.createArchiveFile(source);
-                
-                Collection<ArchiveFileAddressesBean> parties=fileService.getInvolvementDetailsForCase(ids.get(i));
-                for(ArchiveFileAddressesBean aab: parties) {
-                    ArchiveFileAddressesBean newAab=new ArchiveFileAddressesBean();
+
+                ArchiveFileBean target = fileService.createArchiveFile(source);
+
+                Collection<ArchiveFileAddressesBean> parties = fileService.getInvolvementDetailsForCase(ids.get(i));
+                for (ArchiveFileAddressesBean aab : parties) {
+                    ArchiveFileAddressesBean newAab = new ArchiveFileAddressesBean();
                     newAab.setAddressKey(aab.getAddressKey());
                     newAab.setArchiveFileKey(target);
                     newAab.setContact(aab.getContact());
@@ -1296,39 +1310,39 @@ public class QuickArchiveFileSearchPanel extends javax.swing.JPanel implements T
                     newAab.setCustom3(aab.getCustom3());
                     newAab.setReferenceType(aab.getReferenceType());
                     fileService.addAddressToCase(newAab);
-                     
+
                 }
-                
+
                 fileService.updateArchiveFile(target);
-                
-                Collection<ArchiveFileTagsBean> sourceTags=fileService.getTags(ids.get(i));
-                for(ArchiveFileTagsBean atb: sourceTags) {
+
+                Collection<ArchiveFileTagsBean> sourceTags = fileService.getTags(ids.get(i));
+                for (ArchiveFileTagsBean atb : sourceTags) {
                     fileService.setTag(target.getId(), atb, true);
                 }
-                
-                List<ArchiveFileGroupsBean> allowedGroups=fileService.getAllowedGroups(ids.get(i));
-                ArrayList<Group> targetGroups=new ArrayList<>();
-                for(ArchiveFileGroupsBean afgb: allowedGroups) {
+
+                List<ArchiveFileGroupsBean> allowedGroups = fileService.getAllowedGroups(ids.get(i));
+                ArrayList<Group> targetGroups = new ArrayList<>();
+                for (ArchiveFileGroupsBean afgb : allowedGroups) {
                     targetGroups.add(afgb.getAllowedGroup());
                 }
                 fileService.updateAllowedGroups(target.getId(), targetGroups);
-                
-                if(includeForms) {
-                    FormsServiceRemote formsSvc=locator.lookupFormsServiceRemote();
-                    List<ArchiveFileFormsBean> forms=formsSvc.getFormsForCase(source.getId());
-                    for(ArchiveFileFormsBean form: forms) {
-                        ArchiveFileFormsBean newForm=new ArchiveFileFormsBean();
+
+                if (includeForms) {
+                    FormsServiceRemote formsSvc = locator.lookupFormsServiceRemote();
+                    List<ArchiveFileFormsBean> forms = formsSvc.getFormsForCase(source.getId());
+                    for (ArchiveFileFormsBean form : forms) {
+                        ArchiveFileFormsBean newForm = new ArchiveFileFormsBean();
                         newForm.setArchiveFileFormEntriesBeanList(new ArrayList<>());
                         newForm.setArchiveFileKey(target);
                         newForm.setCreationDate(new Date());
                         newForm.setDescription(form.getDescription());
                         newForm.setFormType(form.getFormType());
                         newForm.setPlaceHolder(form.getPlaceHolder());
-                        newForm=formsSvc.addForm(target.getId(), newForm);
-                        List<ArchiveFileFormEntriesBean> formEntries=formsSvc.getFormEntries(form.getId());
-                        List<ArchiveFileFormEntriesBean> newFormEntries=new ArrayList<>();
-                        for(ArchiveFileFormEntriesBean formEntry: formEntries) {
-                            ArchiveFileFormEntriesBean newEntry=new ArchiveFileFormEntriesBean();
+                        newForm = formsSvc.addForm(target.getId(), newForm);
+                        List<ArchiveFileFormEntriesBean> formEntries = formsSvc.getFormEntries(form.getId());
+                        List<ArchiveFileFormEntriesBean> newFormEntries = new ArrayList<>();
+                        for (ArchiveFileFormEntriesBean formEntry : formEntries) {
+                            ArchiveFileFormEntriesBean newEntry = new ArchiveFileFormEntriesBean();
                             newEntry.setArchiveFileKey(target);
                             newEntry.setEntryKey(formEntry.getEntryKey());
                             newEntry.setForm(newForm);
@@ -1339,9 +1353,9 @@ public class QuickArchiveFileSearchPanel extends javax.swing.JPanel implements T
                         formsSvc.setFormEntries(newForm.getId(), newFormEntries);
                     }
                 }
-                
+
             }
-            
+
             EventBroker eb = EventBroker.getInstance();
             eb.publishEvent(new CasesChangedEvent());
 
@@ -1355,10 +1369,10 @@ public class QuickArchiveFileSearchPanel extends javax.swing.JPanel implements T
             ThreadUtils.setDefaultCursor(this, false);
         }
     }
-    
+
     private void mnuDuplicateSelectedArchiveFilesActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_mnuDuplicateSelectedArchiveFilesActionPerformed
         this.duplicateSelectedArchiveFiles(false);
-        
+
     }//GEN-LAST:event_mnuDuplicateSelectedArchiveFilesActionPerformed
 
     private void cmdDocumentTagFilterMousePressed(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_cmdDocumentTagFilterMousePressed
@@ -1403,9 +1417,10 @@ public class QuickArchiveFileSearchPanel extends javax.swing.JPanel implements T
 
             ArchiveFileServiceRemote fileService = locator.lookupArchiveFileServiceRemote();
             fileService.enableCaseSync(ids, UserSettings.getInstance().getCurrentUser().getPrincipalId(), enable);
-            String status="aktiviert";
-            if(!enable)
-                status="deaktiviert";
+            String status = "aktiviert";
+            if (!enable) {
+                status = "deaktiviert";
+            }
             JOptionPane.showMessageDialog(this, "Synchronisation für " + ids.size() + " Akten " + status, com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_HINT, JOptionPane.INFORMATION_MESSAGE);
 
         } catch (Exception ex) {
@@ -1415,26 +1430,26 @@ public class QuickArchiveFileSearchPanel extends javax.swing.JPanel implements T
         }
         this.loadCaseSyncStatus();
     }
-    
+
     private void loadCaseSyncStatus() {
         ClientSettings settings = ClientSettings.getInstance();
         try {
             JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
-            List<String> caseIdsSyncedForUser=locator.lookupArchiveFileServiceRemote().getCaseIdsSyncedForUser(UserSettings.getInstance().getCurrentUser().getPrincipalId());
-            
-            for(int i=0;i<this.tblResults.getRowCount();i++) {
+            List<String> caseIdsSyncedForUser = locator.lookupArchiveFileServiceRemote().getCaseIdsSyncedForUser(UserSettings.getInstance().getCurrentUser().getPrincipalId());
+
+            for (int i = 0; i < this.tblResults.getRowCount(); i++) {
                 QuickArchiveFileSearchRowIdentifier id = (QuickArchiveFileSearchRowIdentifier) this.tblResults.getValueAt(i, 0);
-                this.tblResults.setValueAt(""+caseIdsSyncedForUser.contains(id.getArchiveFileDTO().getId()), i, 6);
+                this.tblResults.setValueAt("" + caseIdsSyncedForUser.contains(id.getArchiveFileDTO().getId()), i, 6);
             }
-            
+
         } catch (Exception ex) {
             log.error("Error getting case sync status", ex);
             JOptionPane.showMessageDialog(this, "Fehler beim Ermitteln des Synchronisationsstatus: " + ex.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
             EditorsRegistry.getInstance().clearStatus(false);
         }
     }
-    
-    
+
+
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JCheckBox chkIncludeArchive;
     private javax.swing.JButton cmdDocumentTagFilter;
