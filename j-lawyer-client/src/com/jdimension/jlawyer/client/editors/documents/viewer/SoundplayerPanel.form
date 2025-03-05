@@ -207,9 +207,10 @@
           </FontInfo>
         </Property>
         <Property name="icon" type="javax.swing.Icon" editor="org.netbeans.modules.form.editors2.IconEditor">
-          <Image iconType="3" name="/icons32/material/baseline_exit_to_app_black_36dp.png"/>
+          <Image iconType="3" name="/icons32/material/not_started_24dp_0E72B5.png"/>
         </Property>
-        <Property name="text" type="java.lang.String" value="Cont."/>
+        <Property name="text" type="java.lang.String" value="Fortsetzen"/>
+        <Property name="toolTipText" type="java.lang.String" value="Memo durch weitere Spracheingabe weiterf&#xfc;hren"/>
       </Properties>
       <Events>
         <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="cmdContinueRecordingActionPerformed"/>

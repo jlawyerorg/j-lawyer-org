@@ -830,8 +830,9 @@ public class SoundplayerPanel extends javax.swing.JPanel implements PreviewPanel
         });
 
         cmdContinueRecording.setFont(cmdContinueRecording.getFont());
-        cmdContinueRecording.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons32/material/baseline_exit_to_app_black_36dp.png"))); // NOI18N
-        cmdContinueRecording.setText("Cont.");
+        cmdContinueRecording.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons32/material/not_started_24dp_0E72B5.png"))); // NOI18N
+        cmdContinueRecording.setText("Fortsetzen");
+        cmdContinueRecording.setToolTipText("Memo durch weitere Spracheingabe weiterführen");
         cmdContinueRecording.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 cmdContinueRecordingActionPerformed(evt);
