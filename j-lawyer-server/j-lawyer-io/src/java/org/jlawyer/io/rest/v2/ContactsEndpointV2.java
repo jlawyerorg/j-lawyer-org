@@ -715,12 +715,10 @@ public class ContactsEndpointV2 implements ContactsEndpointLocalV2 {
             InitialContext ic = new InitialContext();
             AddressServiceLocal addresses = (AddressServiceLocal) ic.lookup("java:global/j-lawyer-server/j-lawyer-server-ejb/AddressService!com.jdimension.jlawyer.services.AddressServiceLocal");
             AddressBean adr = addresses.getAddress(id);
-            Response res = Response.ok(RestfulContactV2.fromAddressBean(adr)).build();
-            return res;
+            return Response.ok(RestfulContactV2.fromAddressBean(adr)).build();
         } catch (Exception ex) {
             log.error("can not get address " + id, ex);
-            Response res = Response.serverError().build();
-            return res;
+            return Response.serverError().build();
         }
     }
 
