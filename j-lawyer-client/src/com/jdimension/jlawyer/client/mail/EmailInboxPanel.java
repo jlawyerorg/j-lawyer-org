@@ -2311,24 +2311,14 @@ public class EmailInboxPanel extends javax.swing.JPanel implements SaveToCaseExe
 
             try {
                 Address[] to = m.getRecipients(RecipientType.TO);
-                String toString = "";
-                for (Address a : to) {
-                    toString = toString + MimeUtility.decodeText(a.toString()) + ", ";
-                }
+                String toString = EmailUtils.getAddressesAsList(to);
+                
                 Address[] cc = m.getRecipients(RecipientType.CC);
-                String ccString = "";
-                if (cc != null) {
-                    for (Address a : cc) {
-                        ccString = ccString + MimeUtility.decodeText(a.toString()) + ", ";
-                    }
-                }
+                String ccString = EmailUtils.getAddressesAsList(cc);
+                
                 Address[] bcc = m.getRecipients(RecipientType.BCC);
-                String bccString = "";
-                if (bcc != null) {
-                    for (Address a : bcc) {
-                        bccString = bccString + MimeUtility.decodeText(a.toString()) + ", ";
-                    }
-                }
+                String bccString = EmailUtils.getAddressesAsList(bcc);
+                
                 dlg.setTo(toString);
                 dlg.setCC(ccString);
                 dlg.setBCC(bccString);
@@ -2938,7 +2928,7 @@ public class EmailInboxPanel extends javax.swing.JPanel implements SaveToCaseExe
                 int sortCol = -1;
                 List<? extends SortKey> sortKeys = this.tblMails.getRowSorter().getSortKeys();
                 if (sortKeys != null) {
-                    if (sortKeys.size() > 0) {
+                    if (!sortKeys.isEmpty()) {
                         sortCol = sortKeys.get(0).getColumn();
                     }
                 }

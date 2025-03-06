@@ -702,17 +702,17 @@ import org.simplejavamail.outlookmessageparser.model.OutlookRecipient;
 public class EmailUtils extends CommonMailUtils {
 
     private static final Logger log = Logger.getLogger(EmailUtils.class.getName());
-    
+
     public static String getOffice365AuthToken(String mailboxId) throws Exception {
         ClientSettings settings = ClientSettings.getInstance();
-            try {
-                JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
-                return locator.lookupEmailServiceRemote().getAuthToken(mailboxId);
-                
-            } catch (Exception ex) {
-                log.error("Error getting Office 365 auth token", ex);
-                return null;
-            }
+        try {
+            JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
+            return locator.lookupEmailServiceRemote().getAuthToken(mailboxId);
+
+        } catch (Exception ex) {
+            log.error("Error getting Office 365 auth token", ex);
+            return null;
+        }
     }
 
     public static boolean hasConfig(AppUserBean u) {
@@ -729,7 +729,7 @@ public class EmailUtils extends CommonMailUtils {
                 return false;
             }
 
-            CachingCrypto crypto=CryptoProvider.defaultCrypto();
+            CachingCrypto crypto = CryptoProvider.defaultCrypto();
             if (StringUtils.isEmpty(crypto.decrypt(ms.getEmailInPwd()))) {
                 return false;
             }
@@ -1040,7 +1040,7 @@ public class EmailUtils extends CommonMailUtils {
     public static void closeIfIMAP(Folder f) {
         closeIfIMAP(f, true);
     }
-    
+
     // will only close the folder if it is IMAP, and do nothing otherwise
     public static void closeIfIMAP(Folder f, boolean expunge) {
         if (f == null) {
@@ -1133,14 +1133,15 @@ public class EmailUtils extends CommonMailUtils {
     public static void sendReceipt(final MailboxSetup ms, String subject, String to) {
         Properties props = new Properties();
 
-        boolean authenticate=true;
+        boolean authenticate = true;
         try {
-            if(StringUtils.isEmpty(ms.getEmailOutUser()) && StringUtils.isEmpty(CryptoProvider.defaultCrypto().decrypt(ms.getEmailOutPwd())))
-                authenticate=false;
+            if (StringUtils.isEmpty(ms.getEmailOutUser()) && StringUtils.isEmpty(CryptoProvider.defaultCrypto().decrypt(ms.getEmailOutPwd()))) {
+                authenticate = false;
+            }
         } catch (Throwable t) {
             log.error("Could not decrypt outgoing password", t);
         }
-        
+
         if (ms.isEmailOutSsl()) {
             props.put("mail.smtp.ssl.enable", "true");
         }
@@ -1162,7 +1163,7 @@ public class EmailUtils extends CommonMailUtils {
         props.put("mail.smtp.host", ms.getEmailOutServer());
         props.put("mail.smtps.host", ms.getEmailOutServer());
         props.put("mail.from", ms.getEmailAddress());
-        
+
         Session session = null;
         if (!authenticate) {
             props.put("mail.smtps.auth", false);
@@ -1196,17 +1197,18 @@ public class EmailUtils extends CommonMailUtils {
             };
             session = Session.getInstance(props, auth);
         }
-        
+
         try {
             Transport bus = session.getTransport("smtp");
 
             // Connect only once here
             // Transport.send() disconnects after each send
             // Usually, no username and password is required for SMTP
-            if(authenticate)
+            if (authenticate) {
                 bus.connect(ms.getEmailOutServer(), ms.getEmailOutUser(), CryptoProvider.defaultCrypto().decrypt(ms.getEmailOutPwd()));
-            else
+            } else {
                 bus.connect(ms.getEmailOutServer(), null, null);
+            }
 
             MimeMessage msg = new MimeMessage(session);
 
@@ -1237,7 +1239,7 @@ public class EmailUtils extends CommonMailUtils {
     public static SendEmailDialog reply(OutlookMessage m, String content, String contentType) {
         return reply(m, null, content, contentType);
     }
-    
+
     public static SendEmailDialog reply(OutlookMessage m, String prependContent, String content, String contentType) {
         SendEmailDialog dlg = new SendEmailDialog(true, EditorsRegistry.getInstance().getMainWindow(), false);
         try {
@@ -1292,12 +1294,13 @@ public class EmailUtils extends CommonMailUtils {
 
             String decodedTo = toString.toString();
             dlg.setContentType(contentType);
-            
-            if(prependContent==null)
-                prependContent="";
-            else
-                prependContent=prependContent + System.lineSeparator() + System.lineSeparator();
-            
+
+            if (prependContent == null) {
+                prependContent = "";
+            } else {
+                prependContent = prependContent + System.lineSeparator() + System.lineSeparator();
+            }
+
             if (contentType.toLowerCase().startsWith(ContentTypes.TEXT_HTML)) {
                 dlg.setBody(prependContent, EmailUtils.getQuotedBody(EmailUtils.html2Text(content), ContentTypes.TEXT_PLAIN, decodedTo, m.getDate()), ContentTypes.TEXT_PLAIN);
             } else {
@@ -1315,7 +1318,7 @@ public class EmailUtils extends CommonMailUtils {
     public static SendEmailDialog reply(Message m, String content, String contentType) {
         return reply(m, null, content, contentType);
     }
-    
+
     public static SendEmailDialog reply(Message m, String prependContent, String content, String contentType) {
         SendEmailDialog dlg = new SendEmailDialog(true, EditorsRegistry.getInstance().getMainWindow(), false);
         try {
@@ -1347,9 +1350,7 @@ public class EmailUtils extends CommonMailUtils {
             if (sentByCurrentUser) {
                 // sent by the current user - reply to the recipient of the message
                 Address[] recs = m.getRecipients(Message.RecipientType.TO);
-                for (Address a : recs) {
-                    toString.append(MimeUtility.decodeText(a.toString())).append(", ");
-                }
+                toString.append(getAddressesAsList(recs));
             } else {
                 // not sent by the current user - reply to the sender of the message
                 Address to = null;
@@ -1361,7 +1362,7 @@ public class EmailUtils extends CommonMailUtils {
                 if (to == null) {
                     to = m.getFrom()[0];
                 }
-                toString.append(MimeUtility.decodeText(to.toString()));
+                toString.append(getAddressesAsList(new Address[]{to}));
             }
             dlg.setTo(toString.toString());
 
@@ -1376,12 +1377,13 @@ public class EmailUtils extends CommonMailUtils {
 
             String decodedTo = toString.toString();
             dlg.setContentType(contentType);
-            
-            if(prependContent==null)
-                prependContent="";
-            else
-                prependContent=prependContent + System.lineSeparator() + System.lineSeparator();
-            
+
+            if (prependContent == null) {
+                prependContent = "";
+            } else {
+                prependContent = prependContent + System.lineSeparator() + System.lineSeparator();
+            }
+
             if (contentType.toLowerCase().startsWith(ContentTypes.TEXT_HTML)) {
                 dlg.setBody(prependContent, EmailUtils.getQuotedBody(EmailUtils.html2Text(content), ContentTypes.TEXT_PLAIN, decodedTo, m.getSentDate()), ContentTypes.TEXT_PLAIN);
             } else {
@@ -1404,7 +1406,17 @@ public class EmailUtils extends CommonMailUtils {
                     continue;
                 }
                 if (adr instanceof InternetAddress) {
-                    listString.append(((InternetAddress) adr).getAddress()).append(", ");
+                    // listString.append(((InternetAddress) adr).getAddress()).append(", ");
+                    InternetAddress ia = (InternetAddress) adr;
+                    String personal = ia.getPersonal();
+                    String email = ia.getAddress();
+
+                    if (personal != null && !personal.isEmpty()) {
+                        personal = MimeUtility.decodeText(personal);
+                        listString.append("\"").append(personal).append("\" <").append(email).append(">, ");
+                    } else {
+                        listString.append(email).append(", ");
+                    }
                 } else {
                     listString.append(MimeUtility.decodeText(adr.toString())).append(", ");
                 }
@@ -1418,79 +1430,81 @@ public class EmailUtils extends CommonMailUtils {
 
         return s;
     }
-    
+
     /**
-    * Entfernt aus der gegebenen MimeMessage alle Anhänge, deren Dateinamen in attachmentNames enthalten sind.
-    * Es wird ein neues MimeMessage-Objekt erstellt, das keine der angegebenen Anhänge mehr enthält.
-    *
-    * @param message         die ursprüngliche MimeMessage
-    * @param attachmentNames Liste der Dateinamen, die entfernt werden sollen
-    * @return ein neues MimeMessage-Objekt ohne die ausgewählten Anhänge
-    * @throws Exception falls ein Fehler beim Verarbeiten der Nachricht auftritt
-    */
-   public static MimeMessage removeAttachmentsFromMessage(MimeMessage message, List<String> attachmentNames) throws Exception {
-       if (!message.isMimeType("multipart/*")) {
-           return message;
-       }
-       Object content = message.getContent();
-       if (!(content instanceof Multipart)) {
-           return message;
-       }
-       Multipart originalMultipart = (Multipart) content;
-       Multipart newMultipart = removeAttachmentsFromMultipart(originalMultipart, attachmentNames);
+     * Entfernt aus der gegebenen MimeMessage alle Anhänge, deren Dateinamen in
+     * attachmentNames enthalten sind. Es wird ein neues MimeMessage-Objekt
+     * erstellt, das keine der angegebenen Anhänge mehr enthält.
+     *
+     * @param message die ursprüngliche MimeMessage
+     * @param attachmentNames Liste der Dateinamen, die entfernt werden sollen
+     * @return ein neues MimeMessage-Objekt ohne die ausgewählten Anhänge
+     * @throws Exception falls ein Fehler beim Verarbeiten der Nachricht
+     * auftritt
+     */
+    public static MimeMessage removeAttachmentsFromMessage(MimeMessage message, List<String> attachmentNames) throws Exception {
+        if (!message.isMimeType("multipart/*")) {
+            return message;
+        }
+        Object content = message.getContent();
+        if (!(content instanceof Multipart)) {
+            return message;
+        }
+        Multipart originalMultipart = (Multipart) content;
+        Multipart newMultipart = removeAttachmentsFromMultipart(originalMultipart, attachmentNames);
 
-       // Neues MimeMessage-Objekt mit demselben Session-Objekt erstellen
-       MimeMessage newMessage = new MimeMessage(message.getSession());
-       @SuppressWarnings("unchecked")
-       Enumeration<Header> headers = message.getAllHeaders();
-       while (headers.hasMoreElements()) {
-           Header header = headers.nextElement();
-           newMessage.setHeader(header.getName(), header.getValue());
-       }
-       newMessage.setContent(newMultipart);
-       newMessage.saveChanges();
-       return newMessage;
-   }
+        // Neues MimeMessage-Objekt mit demselben Session-Objekt erstellen
+        MimeMessage newMessage = new MimeMessage(message.getSession());
+        @SuppressWarnings("unchecked")
+        Enumeration<Header> headers = message.getAllHeaders();
+        while (headers.hasMoreElements()) {
+            Header header = headers.nextElement();
+            newMessage.setHeader(header.getName(), header.getValue());
+        }
+        newMessage.setContent(newMultipart);
+        newMessage.saveChanges();
+        return newMessage;
+    }
 
-   /**
-    * Rekursive Methode zur Verarbeitung eines Multipart-Objekts.
-    * Sie erstellt ein neues Multipart, das alle BodyParts enthält, außer denen,
-    * deren Dateiname in attachmentNames enthalten ist.
-    *
-    * @param multipart       das zu verarbeitende Multipart-Objekt
-    * @param attachmentNames Liste der Dateinamen, die entfernt werden sollen
-    * @return ein neues Multipart ohne die ausgewählten Anhänge
-    * @throws Exception falls ein Fehler beim Verarbeiten der Parts auftritt
-    */
-   private static Multipart removeAttachmentsFromMultipart(Multipart multipart, List<String> attachmentNames) throws Exception {
-       MimeMultipart newMultipart = new MimeMultipart();
-       int count = multipart.getCount();
-       for (int i = 0; i < count; i++) {
-           BodyPart part = multipart.getBodyPart(i);
-           // Falls der Part selbst ein Multipart ist, rekursiv verarbeiten
-           if (part.isMimeType("multipart/*")) {
-               Multipart subMultipart = (Multipart) part.getContent();
-               Multipart newSubMultipart = removeAttachmentsFromMultipart(subMultipart, attachmentNames);
-               if (newSubMultipart.getCount() > 0) {
-                   MimeBodyPart newPart = new MimeBodyPart();
-                   newPart.setContent(newSubMultipart);
-                   newMultipart.addBodyPart(newPart);
-               }
-           } else {
-               String disposition = part.getDisposition();
-               boolean isAttachment = disposition != null && 
-                       (disposition.equalsIgnoreCase(Part.ATTACHMENT) || disposition.equalsIgnoreCase(Part.INLINE));
-               if (isAttachment && part.getFileName() != null) {
-                   String decodedFileName = MimeUtility.decodeText(part.getFileName());
-                   if (attachmentNames.contains(decodedFileName)) {
-                       // Diese Anhängervariante wird entfernt
-                       continue;
-                   }
-               }
-               // Anderenfalls den Part übernehmen
-               newMultipart.addBodyPart(part);
-           }
-       }
-       return newMultipart;
-   }
+    /**
+     * Rekursive Methode zur Verarbeitung eines Multipart-Objekts. Sie erstellt
+     * ein neues Multipart, das alle BodyParts enthält, außer denen, deren
+     * Dateiname in attachmentNames enthalten ist.
+     *
+     * @param multipart das zu verarbeitende Multipart-Objekt
+     * @param attachmentNames Liste der Dateinamen, die entfernt werden sollen
+     * @return ein neues Multipart ohne die ausgewählten Anhänge
+     * @throws Exception falls ein Fehler beim Verarbeiten der Parts auftritt
+     */
+    private static Multipart removeAttachmentsFromMultipart(Multipart multipart, List<String> attachmentNames) throws Exception {
+        MimeMultipart newMultipart = new MimeMultipart();
+        int count = multipart.getCount();
+        for (int i = 0; i < count; i++) {
+            BodyPart part = multipart.getBodyPart(i);
+            // Falls der Part selbst ein Multipart ist, rekursiv verarbeiten
+            if (part.isMimeType("multipart/*")) {
+                Multipart subMultipart = (Multipart) part.getContent();
+                Multipart newSubMultipart = removeAttachmentsFromMultipart(subMultipart, attachmentNames);
+                if (newSubMultipart.getCount() > 0) {
+                    MimeBodyPart newPart = new MimeBodyPart();
+                    newPart.setContent(newSubMultipart);
+                    newMultipart.addBodyPart(newPart);
+                }
+            } else {
+                String disposition = part.getDisposition();
+                boolean isAttachment = disposition != null
+                        && (disposition.equalsIgnoreCase(Part.ATTACHMENT) || disposition.equalsIgnoreCase(Part.INLINE));
+                if (isAttachment && part.getFileName() != null) {
+                    String decodedFileName = MimeUtility.decodeText(part.getFileName());
+                    if (attachmentNames.contains(decodedFileName)) {
+                        // Diese Anhängervariante wird entfernt
+                        continue;
+                    }
+                }
+                // Anderenfalls den Part übernehmen
+                newMultipart.addBodyPart(part);
+            }
+        }
+        return newMultipart;
+    }
 }

@@ -1184,7 +1184,7 @@ public class MailContentUI extends javax.swing.JPanel implements HyperlinkListen
         lblSubject.setText(StringUtils.nonNull(copiedMsg.getSubject()));
         lblSubject.setToolTipText("Klicken, um in Zwischenablage zu kopieren:" + System.lineSeparator() + lblSubject.getText());
         if (copiedMsg.getFrom() != null && copiedMsg.getFrom().length > 0) {
-            lblFrom.setText(MimeUtility.decodeText(copiedMsg.getFrom()[0].toString()));
+            lblFrom.setText(EmailUtils.getAddressesAsList(new Address[]{copiedMsg.getFrom()[0]}));
         } else {
             lblFrom.setText("");
         }
@@ -1192,30 +1192,21 @@ public class MailContentUI extends javax.swing.JPanel implements HyperlinkListen
 
         String to = "";
         if (copiedMsg.getRecipients(RecipientType.TO) != null && copiedMsg.getRecipients(RecipientType.TO).length > 0) {
-            to = MimeUtility.decodeText(copiedMsg.getRecipients(RecipientType.TO)[0].toString());
-            for (int i = 1; i < copiedMsg.getRecipients(RecipientType.TO).length; i++) {
-                to = to + ", " + MimeUtility.decodeText(copiedMsg.getRecipients(RecipientType.TO)[i].toString());
-            }
+            to = EmailUtils.getAddressesAsList(copiedMsg.getRecipients(RecipientType.TO));
         }
         lblTo.setText(to);
         lblTo.setToolTipText("Klicken, um in Zwischenablage zu kopieren:" + System.lineSeparator() + to);
 
         String cc = "";
         if (copiedMsg.getRecipients(RecipientType.CC) != null && copiedMsg.getRecipients(RecipientType.CC).length > 0) {
-            cc = MimeUtility.decodeText(copiedMsg.getRecipients(RecipientType.CC)[0].toString());
-            for (int i = 1; i < copiedMsg.getRecipients(RecipientType.CC).length; i++) {
-                cc = cc + ", " + MimeUtility.decodeText(copiedMsg.getRecipients(RecipientType.CC)[i].toString());
-            }
+            cc = EmailUtils.getAddressesAsList(copiedMsg.getRecipients(RecipientType.CC));
         }
         lblCC.setText(cc);
         lblCC.setToolTipText("Klicken, um in Zwischenablage zu kopieren:" + System.lineSeparator() + cc);
 
         String bcc = "";
         if (copiedMsg.getRecipients(RecipientType.BCC) != null && copiedMsg.getRecipients(RecipientType.BCC).length > 0) {
-            bcc = MimeUtility.decodeText(copiedMsg.getRecipients(RecipientType.BCC)[0].toString());
-            for (int i = 1; i < copiedMsg.getRecipients(RecipientType.BCC).length; i++) {
-                bcc = bcc + ", " + MimeUtility.decodeText(copiedMsg.getRecipients(RecipientType.BCC)[i].toString());
-            }
+            bcc = EmailUtils.getAddressesAsList(copiedMsg.getRecipients(RecipientType.BCC));
         }
         lblBCC.setText(bcc);
         lblBCC.setToolTipText("Klicken, um in Zwischenablage zu kopieren:" + System.lineSeparator() + bcc);
