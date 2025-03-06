@@ -672,6 +672,7 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Timestamp;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Date;
@@ -717,11 +718,13 @@ public class ReportService implements ReportServiceRemote {
 
         reportPrivs.put(Reports.RPT_INV_ALL, PRIVILEGE_COMMON);
         reportPrivs.put(Reports.RPT_INV_OPEN, PRIVILEGE_COMMON);
+        reportPrivs.put(Reports.RPT_INV_DRAFTS, PRIVILEGE_COMMON);
         reportPrivs.put(Reports.RPT_INV_OVERDUE, PRIVILEGE_COMMON);
 
         reportPrivs.put(Reports.RPT_TSHEETS_OPEN_OVERVIEW, PRIVILEGE_COMMON);
         reportPrivs.put(Reports.RPT_TSHEETS_OPEN_POSITIONS, PRIVILEGE_COMMON);
         reportPrivs.put(Reports.RPT_TSHEETS_VALUES, PRIVILEGE_CONFIDENTIAL);
+        reportPrivs.put(Reports.RPT_TSHEETS_VALUES_USER, PRIVILEGE_COMMON);
 
         reportPrivs.put(Reports.RPT_EMPLOYEE_ACTIVITY, PRIVILEGE_CONFIDENTIAL);
 
@@ -930,6 +933,49 @@ public class ReportService implements ReportServiceRemote {
 
             result.getBarCharts().add(getBarChart(true, "Alle offenen Rechnungen / Belege nach Fälligkeitsdatum", "Datum", "Summe Rechnungsbeträge", query3, 2, 3, 4, overrideParams));
 
+        } else if (Reports.RPT_INV_DRAFTS.equals(reportId)) {
+            String query = "SELECT inv.case_id, inv.invoice_no as RNr, invt.display_name as Belegart, cont.company as EmpfaengerFirma, cont.name as EmpfaengerName, \n"
+                    + "    case \n"
+                    + "        when inv.invoice_status = 10 then 'neu'\n"
+                    + "        when inv.invoice_status = 20 then 'offen'\n"
+                    + "        when inv.invoice_status = 21 then 'offen - 1. Mahnstufe'\n"
+                    + "        when inv.invoice_status = 22 then 'offen - 2. Mahnstufe'\n"
+                    + "        when inv.invoice_status = 23 then 'offen - 3. Mahnstufe'\n"
+                    + "        when inv.invoice_status = 24 then 'offen - nicht vollstreckbar'\n"
+                    + "        when inv.invoice_status = 30 then 'bezahlt'\n"
+                    + "        when inv.invoice_status = 40 then 'storniert'\n"
+                    + "        else 'unbekannt'\n"
+                    + "    end as Status,\n"
+                    + "    round(inv.total, 2) Nettobetrag, round(inv.total_gross, 2) Bruttobetrag, ifnull(round(sum(acce.in_earnings), 2), 0) Zahlungseingang, inv.currency as Waehrung, DATE_FORMAT(inv.created,'%Y-%m-%d') as erstellt,\n"
+                    + "    DATE_FORMAT(inv.due_date,'%Y-%m-%d') as faellig, TIMESTAMPDIFF(DAY, inv.due_date, curdate()) as TageFaellig, inv.name as Bezeichnung, inv.description as Beschreibung, inv.sender_id as Von, cases.fileNumber as Aktenzeichen, cases.name as Rubrum, cases.reason as wegen, cases.lawyer as Anwalt, cases.assistant as Sachbearbeiter FROM invoices inv\n"
+                    + "left join case_account_entries acce on acce.invoice_id=inv.id  \n"
+                    + "left join contacts cont on inv.contact_id=cont.id\n"
+                    + "left join invoice_types invt on inv.invoice_type=invt.id\n"
+                    + "left join cases cases on inv.case_id=cases.id\n"
+                    + "where invt.turnover=1 and inv.invoice_status=10 and inv.created >=? and inv.created<=?\n"
+                    + "group by inv.id";
+            result.getTables().add(getTable(true, "Rechnungsentwürfe", query, List.of("Nettobetrag", "Bruttobetrag","Zahlungseingang"), params));
+            
+            String query2 = "SELECT "
+                    + "invt.display_name AS Belegart, "
+                    + "CASE "
+                    + "    WHEN inv.invoice_status = 10 THEN 'Entwurf / neu' "
+                    + "    WHEN inv.invoice_status = 20 THEN 'offen' "
+                    + "    WHEN inv.invoice_status = 21 THEN 'offen - 1. Mahnstufe' "
+                    + "    WHEN inv.invoice_status = 22 THEN 'offen - 2. Mahnstufe' "
+                    + "    WHEN inv.invoice_status = 23 THEN 'offen - 3. Mahnstufe' "
+                    + "    WHEN inv.invoice_status = 24 THEN 'offen - nicht vollstreckbar' "
+                    + "    WHEN inv.invoice_status = 30 THEN 'bezahlt' "
+                    + "    WHEN inv.invoice_status = 40 THEN 'storniert' "
+                    + "    ELSE 'unbekannt' "
+                    + "END AS Status, "
+                    + "SUM(ROUND(inv.total, 2)) AS Nettobetrag "
+                    + "FROM invoices inv "
+                    + "LEFT JOIN invoice_types invt ON inv.invoice_type = invt.id "
+                    + "WHERE invt.turnover=1 and inv.invoice_status=10 and inv.created >=? and inv.created<=? "
+                    + "GROUP BY Belegart, Status";
+            result.getTables().add(getTable(false, "kumulierte Werte nach Belegstatus", query2, null, params));
+
         } else if (Reports.RPT_INV_OVERDUE.equals(reportId)) {
             String query = "SELECT inv.case_id, inv.invoice_no as RNr, invt.display_name as Belegart, cont.company as EmpfaengerFirma, cont.name as EmpfaengerName, \n"
                     + "    case \n"
@@ -1011,7 +1057,7 @@ public class ReportService implements ReportServiceRemote {
             result.getBarCharts().add(getBarChart(true, "Alle fälligen Rechnungen / Belege nach Fälligkeitsdatum", "Datum", "Summe Rechnungsbeträge", query3, 2, 3, 4, overrideParams));
 
         } else if (Reports.RPT_TSHEETS_OPEN_OVERVIEW.equals(reportId)) {
-            String query = "SELECT ts.case_id, ts.name as Projektname, ts.description as Projektbeschreibung,  \n"
+            String query = "SELECT ts.case_id, cases.fileNumber as Aktenzeichen, cases.name as Rubrum, cases.reason as wegen, ts.name as Projektname, ts.description as Projektbeschreibung,  \n"
                     + "    case \n"
                     + "        when ts.status = 10 then 'offen'\n"
                     + "        when ts.status = 20 then 'abgeschlossen'\n"
@@ -1024,14 +1070,60 @@ public class ReportService implements ReportServiceRemote {
                     + "    end as limitiert,\n"
                     + "    ts.limit_net Projektlimit,\n"
                     + "    ts.interval_minutes as Taktminuten,\n"
-                    + "    round(sum(tsp.total), 2) gebucht, DATE_FORMAT(min(tsp.time_started),'%Y-%m-%d') as von, DATE_FORMAT(max(tsp.time_started),'%Y-%m-%d') as bis,\n"
-                    + "    cases.fileNumber as Aktenzeichen, cases.name as Rubrum, cases.reason as wegen FROM timesheet_positions tsp\n"
+                    + "    round(sum(tsp.total), 2) gebucht, DATE_FORMAT(min(tsp.time_started),'%Y-%m-%d') as von, DATE_FORMAT(max(tsp.time_started),'%Y-%m-%d') as bis \n"
+                    + "    FROM timesheet_positions tsp\n"
                     + "left join timesheets ts on ts.id=tsp.timesheet_id  \n"
                     + "left join cases cases on ts.case_id=cases.id\n"
                     + "where ts.status=10 and tsp.time_started >= ? and tsp.time_started <= ?\n"
                     + "group by tsp.timesheet_id\n"
                     + "order by von desc";
-            result.getTables().add(getTable(true, "Offene Zeiterfassungsprojekte", query, List.of("gebucht"), params));
+            result.getTables().add(getTable(true, "Gebuchte Zeiten", query, List.of("gebucht"), params));
+            
+            query = "SELECT ts.case_id, cases.fileNumber as Aktenzeichen, cases.name as Rubrum, cases.reason as wegen, ts.name as Projektname, ts.description as Projektbeschreibung,  \n"
+                    + "    case \n"
+                    + "        when ts.status = 10 then 'offen'\n"
+                    + "        when ts.status = 20 then 'abgeschlossen'\n"
+                    + "        else 'unbekannt'\n"
+                    + "    end as Status,\n"
+                    + "    case \n"
+                    + "        when ts.limited = 0 then 'unlimitiert'\n"
+                    + "        when ts.limited = 1 then 'limitiert'\n"
+                    + "        else 'unlimitiert'\n"
+                    + "    end as limitiert,\n"
+                    + "    ts.limit_net Projektlimit,\n"
+                    + "    ts.interval_minutes as Taktminuten,\n"
+                    + "    round(sum(tsp.total), 2) abrechenbar, DATE_FORMAT(min(tsp.time_started),'%Y-%m-%d') as von, DATE_FORMAT(max(tsp.time_started),'%Y-%m-%d') as bis \n"
+                    + "    FROM timesheet_positions tsp\n"
+                    + "left join timesheets ts on ts.id=tsp.timesheet_id  \n"
+                    + "left join cases cases on ts.case_id=cases.id\n"
+                    + "left join invoices inv on tsp.invoice=inv.id\n"
+                    + "where ts.status=10 and tsp.time_started >= ? and tsp.time_started <= ? and (tsp.invoice is null or (tsp.invoice is not null and inv.invoice_status=10))\n"
+                    + "group by tsp.timesheet_id\n"
+                    + "order by von desc";
+            result.getTables().add(getTable(true, "Abrechenbare Zeiten", query, List.of("abrechenbar"), params));
+            
+            query = "SELECT ts.case_id, cases.fileNumber as Aktenzeichen, cases.name as Rubrum, cases.reason as wegen, ts.name as Projektname, ts.description as Projektbeschreibung,  \n"
+                    + "    case \n"
+                    + "        when ts.status = 10 then 'offen'\n"
+                    + "        when ts.status = 20 then 'abgeschlossen'\n"
+                    + "        else 'unbekannt'\n"
+                    + "    end as Status,\n"
+                    + "    case \n"
+                    + "        when ts.limited = 0 then 'unlimitiert'\n"
+                    + "        when ts.limited = 1 then 'limitiert'\n"
+                    + "        else 'unlimitiert'\n"
+                    + "    end as limitiert,\n"
+                    + "    ts.limit_net Projektlimit,\n"
+                    + "    ts.interval_minutes as Taktminuten,\n"
+                    + "    round(sum(tsp.total), 2) abgerechnet, DATE_FORMAT(min(tsp.time_started),'%Y-%m-%d') as von, DATE_FORMAT(max(tsp.time_started),'%Y-%m-%d') as bis \n"
+                    + "    FROM timesheet_positions tsp\n"
+                    + "left join timesheets ts on ts.id=tsp.timesheet_id  \n"
+                    + "left join cases cases on ts.case_id=cases.id\n"
+                    + "left join invoices inv on tsp.invoice=inv.id\n"
+                    + "where ts.status=10 and tsp.time_started >= ? and tsp.time_started <= ? and tsp.invoice is not null and (inv.invoice_status=20 or inv.invoice_status=21 or inv.invoice_status=22 or inv.invoice_status=23 or inv.invoice_status=24 or inv.invoice_status=30 or inv.invoice_status=40)\n"
+                    + "group by tsp.timesheet_id\n"
+                    + "order by von desc";
+            result.getTables().add(getTable(true, "Abgerechnete Zeiten", query, List.of("abgerechnet"), params));
         } else if (Reports.RPT_TSHEETS_VALUES.equals(reportId)) {
             String query = "SELECT "
              + "DATE_FORMAT(tsp.time_stopped, '%Y-%m') AS Monat, "
@@ -1045,7 +1137,7 @@ public class ReportService implements ReportServiceRemote {
              + "GROUP BY Monat, Mitarbeiter "
              + "ORDER BY Monat ASC, Mitarbeiter ASC";
 
-            result.getTables().add(getTable(false, "Gebuchte Zeiten pro Mitarbeiter und Monat", query, null, params));
+            result.getTables().add(getTable(false, "Gebuchte Zeiten pro Mitarbeiter und Monat", query, List.of("UmsatzNetto"), params));
             String query2 = "SELECT "
              + "DATE_FORMAT(tsp.time_stopped, '%Y') AS Jahr, "
              + "CONCAT(tsp.principal, ', ', DATE_FORMAT(MIN(tsp.time_stopped), '%Y')) AS MitarbeiterJahr, "
@@ -1057,7 +1149,39 @@ public class ReportService implements ReportServiceRemote {
              + "AND tsp.time_stopped <= ? "
              + "GROUP BY Jahr, Mitarbeiter "
              + "ORDER BY Jahr ASC, Mitarbeiter ASC";
-            result.getTables().add(getTable(false, "Gebuchte Zeiten pro Mitarbeiter und Jahr", query2, null, params));
+            result.getTables().add(getTable(false, "Gebuchte Zeiten pro Mitarbeiter und Jahr", query2, List.of("UmsatzNetto"), params));
+        } else if (Reports.RPT_TSHEETS_VALUES_USER.equals(reportId)) {
+            String principal=context.getCallerPrincipal().getName();
+            Object[] newParams = Arrays.copyOf(params, params.length + 1);
+            newParams[newParams.length - 1] = principal;
+            
+            String query = "SELECT "
+             + "DATE_FORMAT(tsp.time_stopped, '%Y-%m') AS Monat, "
+             + "CONCAT(tsp.principal, ', ', DATE_FORMAT(MIN(tsp.time_stopped), '%Y-%m')) AS MitarbeiterMonat, "
+             + "tsp.principal AS Mitarbeiter, "
+             + "SUM((GREATEST(1, CEILING(TIMESTAMPDIFF(MINUTE, tsp.time_started, tsp.time_stopped) / ts.interval_minutes)) * ts.interval_minutes DIV 1) / 60 * tsp.unit_price) AS UmsatzNetto "
+             + "FROM timesheet_positions tsp "
+             + "LEFT JOIN timesheets ts ON ts.id = tsp.timesheet_id "
+             + "WHERE tsp.time_stopped >= ? "
+             + "AND tsp.time_stopped <= ? "
+             + "AND tsp.principal = ? "
+             + "GROUP BY Monat, Mitarbeiter "
+             + "ORDER BY Monat ASC, Mitarbeiter ASC";
+
+            result.getTables().add(getTable(false, "Meine gebuchten Zeiten pro Monat", query, List.of("UmsatzNetto"), newParams));
+            String query2 = "SELECT "
+             + "DATE_FORMAT(tsp.time_stopped, '%Y') AS Jahr, "
+             + "CONCAT(tsp.principal, ', ', DATE_FORMAT(MIN(tsp.time_stopped), '%Y')) AS MitarbeiterJahr, "
+             + "tsp.principal AS Mitarbeiter, "
+             + "SUM((GREATEST(1, CEILING(TIMESTAMPDIFF(MINUTE, tsp.time_started, tsp.time_stopped) / ts.interval_minutes)) * ts.interval_minutes DIV 1) / 60 * tsp.unit_price) AS UmsatzNetto "
+             + "FROM timesheet_positions tsp "
+             + "LEFT JOIN timesheets ts ON ts.id = tsp.timesheet_id "
+             + "WHERE tsp.time_stopped >= ? "
+             + "AND tsp.time_stopped <= ? "
+             + "AND tsp.principal = ? "
+             + "GROUP BY Jahr, Mitarbeiter "
+             + "ORDER BY Jahr ASC, Mitarbeiter ASC";
+            result.getTables().add(getTable(false, "Meine gebuchten Zeiten pro Jahr", query2, List.of("UmsatzNetto"), newParams));
         } else if (Reports.RPT_TSHEETS_OPEN_POSITIONS.equals(reportId)) {
             String query = "SELECT cases.id, cases.fileNumber as Aktenzeichen, cases.name as Rubrum, cases.reason as wegen, \n"
                     + "    concat(cases.fileNumber, ' ', cases.name, ': ', ts.name) as Projektname, ts.description as Projektbeschreibung,  ts.interval_minutes as Taktung,\n"
@@ -1223,15 +1347,15 @@ public class ReportService implements ReportServiceRemote {
             st = con.prepareStatement(query);
             for (int i = 0; i < params.length; i++) {
                 if (params[i] instanceof String) {
-                    st.setString(i + 1, (String) params[1]);
+                    st.setString(i + 1, (String) params[i]);
                 } else if (params[i] instanceof Date) {
                     st.setTimestamp(i + 1, new Timestamp(((Date) params[i]).getTime()));
                 } else if (params[i] instanceof Integer) {
-                    st.setInt(i + 1, ((Integer) params[1]));
+                    st.setInt(i + 1, ((Integer) params[i]));
                 } else if (params[i] instanceof Float) {
-                    st.setFloat(i + 1, ((Float) params[1]));
+                    st.setFloat(i + 1, ((Float) params[i]));
                 } else if (params[i] instanceof Double) {
-                    st.setDouble(i + 1, ((Double) params[1]));
+                    st.setDouble(i + 1, ((Double) params[i]));
                 }
             }
             rs = st.executeQuery();

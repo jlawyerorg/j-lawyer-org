@@ -728,6 +728,24 @@ public class ReportingPanel extends javax.swing.JPanel implements ThemeableEdito
         invoicesOverdue.setDateSelectionLabel("fällig");
         allReports.add(invoicesOverdue);
         
+        Report invoicesDraft=new Report();
+        invoicesDraft.setName("Rechnungsentwürfe");
+        invoicesDraft.setDescription("<html>Alle <b>Rechnungen im Entwurfsstatus</b> im Überblick</html>");
+        invoicesDraft.setClassName(DynamicReportContainerPanel.class.getName());
+        invoicesDraft.setCategory("Finanzen");
+        invoicesDraft.setReportId(Reports.RPT_INV_DRAFTS);
+        invoicesDraft.setSequence(10);
+        invoicesDraft.setTypeChart(false);
+        invoicesDraft.setTypeTable(true);
+        invoicesDraft.setSecurityType(Report.SECURITY_COMMON);
+        fromDate=new Date(System.currentTimeMillis() - 30l*24l*60l*60l*1000l);
+        invoicesDraft.setDefaultBeginDate(fromDate);
+        invoicesDraft.setDateSelectionLabel("erstellt");
+        // display open invoices for 35 days into the future
+        toDate=new Date(System.currentTimeMillis() + 30l*24l*60l*60l*1000l);
+        invoicesDraft.setDefaultEndDate(toDate);
+        allReports.add(invoicesDraft);
+        
         Report invoicesAll=new Report();
         invoicesAll.setName("Alle Rechnungen / Belege");
         invoicesAll.setDescription("<html>Alle <b>Rechnungen / Belege</b> unabhängig von Belegart, Status oder Erstellungsdatum</html>");
@@ -879,6 +897,25 @@ public class ReportingPanel extends javax.swing.JPanel implements ThemeableEdito
         timeSheetsValues.setDefaultEndDate(toDate);
         timeSheetsValues.setDateSelectionLabel("Zeiten gebucht");
         allReports.add(timeSheetsValues);
+        
+        Report timeSheetsValuesMine=new Report();
+        timeSheetsValuesMine.setName("Meine gebuchten Zeiten");
+        timeSheetsValuesMine.setDescription("<html><b>Werte aller durch mich gebuchten Zeiten</b>, gruppiert nach Monat / Jahr</html>");
+        timeSheetsValuesMine.setClassName(DynamicReportContainerPanel.class.getName());
+        timeSheetsValuesMine.setCategory("Zeiten");
+        timeSheetsValuesMine.setSequence(22);
+        timeSheetsValuesMine.setReportId(Reports.RPT_TSHEETS_VALUES_USER);
+        timeSheetsValuesMine.setTypeChart(false);
+        timeSheetsValuesMine.setTypeTable(true);
+        timeSheetsValuesMine.setSecurityType(Report.SECURITY_COMMON);
+        fromDate=new Date();
+        fromDate.setMonth(0);
+        fromDate.setDate(1);
+        timeSheetsValuesMine.setDefaultBeginDate(fromDate);
+        toDate=new Date();
+        timeSheetsValuesMine.setDefaultEndDate(toDate);
+        timeSheetsValuesMine.setDateSelectionLabel("Zeiten gebucht");
+        allReports.add(timeSheetsValuesMine);
         
         Report employeeReport=new Report();
         employeeReport.setName("Mitarbeiterreport");
