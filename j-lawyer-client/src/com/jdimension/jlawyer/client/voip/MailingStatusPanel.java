@@ -681,6 +681,7 @@ import com.jdimension.jlawyer.client.settings.UserSettings;
 import com.jdimension.jlawyer.client.utils.ComponentUtils;
 import com.jdimension.jlawyer.client.utils.FileUtils;
 import com.jdimension.jlawyer.client.utils.FrameUtils;
+import com.jdimension.jlawyer.client.utils.StringUtils;
 import com.jdimension.jlawyer.client.utils.ThreadUtils;
 import com.jdimension.jlawyer.persistence.ArchiveFileBean;
 import com.jdimension.jlawyer.persistence.EpostQueueBean;
@@ -778,6 +779,7 @@ public class MailingStatusPanel extends javax.swing.JPanel implements ThemeableE
         this.lblSession.setText("");
         this.lblStatus.setText("");
         this.lblStatusDetails.setText("");
+        this.lblStatusDetails.setToolTipText("");
         this.lblStatus.setIcon(null);
         this.lblTo.setText("");
         this.selectAllToggle.setSelected(false);
@@ -1171,7 +1173,8 @@ public class MailingStatusPanel extends javax.swing.JPanel implements ThemeableE
             //this.lblTo.setText("an " + mqe.getRemoteName() + " (" + mqe.getRemoteUri() + ")");
             this.lblTo.setText(mqe.getRecipientInformation());
             this.lblStatus.setText(mqe.getDisplayableStatus() + " seit " + df.format(mqe.getLastStatusDate()));
-            this.lblStatusDetails.setText(mqe.getStatusDetailsString());
+            this.lblStatusDetails.setText(StringUtils.cutoff(mqe.getStatusDetailsString(),300));
+            this.lblStatusDetails.setToolTipText(mqe.getStatusDetailsString());
             int level = mqe.getStatusLevel();
             Icon icon = null;
             switch (level) {
