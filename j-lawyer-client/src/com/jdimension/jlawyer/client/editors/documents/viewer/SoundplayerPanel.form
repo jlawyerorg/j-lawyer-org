@@ -27,7 +27,7 @@
           <Group type="102" alignment="1" attributes="0">
               <EmptySpace max="-2" attributes="0"/>
               <Group type="103" groupAlignment="1" attributes="0">
-                  <Component id="jScrollPane1" pref="452" max="32767" attributes="0"/>
+                  <Component id="jScrollPane1" max="32767" attributes="0"/>
                   <Component id="lblStatus" alignment="1" max="32767" attributes="0"/>
                   <Component id="prgTime" alignment="0" max="32767" attributes="0"/>
                   <Group type="102" alignment="0" attributes="0">
@@ -39,6 +39,10 @@
                       <Component id="cmdPlayPause" min="-2" max="-2" attributes="0"/>
                       <EmptySpace max="-2" attributes="0"/>
                       <Component id="cmdStop" min="-2" max="-2" attributes="0"/>
+                      <EmptySpace max="-2" attributes="0"/>
+                      <Component id="cmdContinueRecording" min="-2" max="-2" attributes="0"/>
+                      <EmptySpace max="-2" attributes="0"/>
+                      <Component id="sliderVolume" min="-2" pref="160" max="-2" attributes="0"/>
                       <EmptySpace min="0" pref="0" max="32767" attributes="0"/>
                   </Group>
                   <Group type="102" alignment="0" attributes="0">
@@ -60,6 +64,8 @@
               <Group type="103" groupAlignment="3" attributes="0">
                   <Component id="cmdPlayPause" alignment="3" min="-2" max="-2" attributes="0"/>
                   <Component id="cmdStop" alignment="3" min="-2" max="-2" attributes="0"/>
+                  <Component id="cmdContinueRecording" alignment="3" min="-2" max="-2" attributes="0"/>
+                  <Component id="sliderVolume" alignment="3" min="-2" max="-2" attributes="0"/>
               </Group>
               <EmptySpace type="separate" max="-2" attributes="0"/>
               <Component id="prgTime" min="-2" max="-2" attributes="0"/>
@@ -191,6 +197,33 @@
       </Properties>
       <Events>
         <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="cmdCopyActionPerformed"/>
+      </Events>
+    </Component>
+    <Component class="javax.swing.JButton" name="cmdContinueRecording">
+      <Properties>
+        <Property name="font" type="java.awt.Font" editor="org.netbeans.modules.form.editors2.FontEditor">
+          <FontInfo relative="true">
+            <Font component="cmdContinueRecording" property="font" relativeSize="true" size="0"/>
+          </FontInfo>
+        </Property>
+        <Property name="icon" type="javax.swing.Icon" editor="org.netbeans.modules.form.editors2.IconEditor">
+          <Image iconType="3" name="/icons32/material/not_started_24dp_0E72B5.png"/>
+        </Property>
+        <Property name="text" type="java.lang.String" value="Fortsetzen"/>
+        <Property name="toolTipText" type="java.lang.String" value="Memo durch weitere Spracheingabe weiterf&#xfc;hren"/>
+      </Properties>
+      <Events>
+        <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="cmdContinueRecordingActionPerformed"/>
+      </Events>
+    </Component>
+    <Component class="javax.swing.JSlider" name="sliderVolume">
+      <Properties>
+        <Property name="minorTickSpacing" type="int" value="5"/>
+        <Property name="toolTipText" type="java.lang.String" value="Lautst&#xe4;rke anpassen"/>
+        <Property name="value" type="int" value="80"/>
+      </Properties>
+      <Events>
+        <EventHandler event="stateChanged" listener="javax.swing.event.ChangeListener" parameters="javax.swing.event.ChangeEvent" handler="sliderVolumeStateChanged"/>
       </Events>
     </Component>
   </SubComponents>

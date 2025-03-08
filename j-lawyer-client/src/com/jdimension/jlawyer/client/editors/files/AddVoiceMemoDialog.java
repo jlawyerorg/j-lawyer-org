@@ -669,14 +669,17 @@ import com.jdimension.jlawyer.client.utils.ComponentUtils;
 import com.jdimension.jlawyer.client.utils.FileUtils;
 import com.jdimension.jlawyer.client.utils.ThreadUtils;
 import java.awt.event.KeyEvent;
+import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
+import java.io.SequenceInputStream;
 import java.text.SimpleDateFormat;
 import java.util.*;
+import javax.sound.sampled.AudioFileFormat;
 import javax.sound.sampled.AudioFormat;
+import javax.sound.sampled.AudioInputStream;
 import javax.sound.sampled.AudioSystem;
 import javax.sound.sampled.DataLine;
-import javax.sound.sampled.Line;
 import javax.sound.sampled.Mixer;
 import javax.sound.sampled.TargetDataLine;
 import javax.sound.sampled.UnsupportedAudioFileException;
@@ -872,24 +875,170 @@ public class AddVoiceMemoDialog extends javax.swing.JDialog {
     }//GEN-LAST:event_cmdAddDocumentActionPerformed
 
     private byte[] mergeWAVs(List<byte[]> audioDataList) throws IOException, UnsupportedAudioFileException {
-        ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
-
-        // Calculate total data length excluding header (44 bytes)
-        long totalDataLen = 0;
-        for (byte[] audioData : audioDataList) {
-            totalDataLen += audioData.length;
+        if (audioDataList.isEmpty()) {
+            return null;
         }
 
-        // Write WAV header for the merged audio
-        writeWavHeader(outputStream, totalDataLen);
-
-        // Concatenate audio data
-        for (byte[] audioData : audioDataList) {
-            outputStream.write(audioData);
+        // If only one part exists, return it directly
+        if (audioDataList.size() == 1) {
+            return audioDataList.get(0);
         }
 
-        return outputStream.toByteArray();
+        // Find and extract INFO chunk from first WAV file if it exists
+        byte[] infoChunk = null;
+        int infoChunkSize = 0;
+
+        ByteArrayInputStream firstWavStream = new ByteArrayInputStream(audioDataList.get(0));
+        AudioInputStream firstAudio = AudioSystem.getAudioInputStream(firstWavStream);
+        AudioFormat format = firstAudio.getFormat();
+
+        // Work with a copy of the first file to extract chunks
+        byte[] firstFileData = audioDataList.get(0);
+
+        // Search for INFO chunk in the first file
+        int position = 12; // Skip RIFF header (12 bytes)
+        while (position + 8 < firstFileData.length) {
+            // Read chunk ID (4 bytes)
+            String chunkId = new String(firstFileData, position, 4);
+
+            // Read chunk size (4 bytes)
+            int chunkSize = ((firstFileData[position + 7] & 0xFF) << 24) | 
+                            ((firstFileData[position + 6] & 0xFF) << 16) |
+                            ((firstFileData[position + 5] & 0xFF) << 8) |
+                            (firstFileData[position + 4] & 0xFF);
+
+            // Check if this is the INFO chunk
+            if (chunkId.equals("INFO") || chunkId.equals("LIST")) {
+                // Found INFO/LIST chunk - save it
+                infoChunkSize = chunkSize + 8; // Include chunk ID and size fields
+                infoChunk = new byte[infoChunkSize];
+                System.arraycopy(firstFileData, position, infoChunk, 0, infoChunkSize);
+                break;
+            }
+
+            // Move to next chunk (chunk data + 8 bytes for ID and size)
+            position += chunkSize + 8;
+
+            // Ensure alignment to even byte boundary
+            if (chunkSize % 2 != 0) position++;
+        }
+
+        firstAudio.close();
+        firstWavStream.close();
+
+        // Collect audio data from all files (skipping headers)
+        ByteArrayOutputStream audioDataOutput = new ByteArrayOutputStream();
+        byte[] fmtChunk = null;
+
+        for (int i = 0; i < audioDataList.size(); i++) {
+            byte[] audioData = audioDataList.get(i);
+            ByteArrayInputStream bais = new ByteArrayInputStream(audioData);
+            AudioInputStream ais = AudioSystem.getAudioInputStream(bais);
+
+            // When processing first file, extract the fmt chunk
+            if (i == 0) {
+                // Find the fmt chunk in the first file
+                position = 12; // Skip RIFF header
+                while (position + 8 < audioData.length) {
+                    String chunkId = new String(audioData, position, 4);
+                    int chunkSize = ((audioData[position + 7] & 0xFF) << 24) | 
+                                   ((audioData[position + 6] & 0xFF) << 16) |
+                                   ((audioData[position + 5] & 0xFF) << 8) |
+                                   (audioData[position + 4] & 0xFF);
+
+                    if (chunkId.equals("fmt ")) {
+                        // Extract fmt chunk (including ID and size)
+                        fmtChunk = new byte[chunkSize + 8];
+                        System.arraycopy(audioData, position, fmtChunk, 0, chunkSize + 8);
+                        break;
+                    }
+
+                    position += chunkSize + 8;
+                    if (chunkSize % 2 != 0) position++;
+                }
+
+                // Now find the data chunk and extract only the audio data
+                position = 12; // Reset position to search for data chunk
+                while (position + 8 < audioData.length) {
+                    String chunkId = new String(audioData, position, 4);
+                    int chunkSize = ((audioData[position + 7] & 0xFF) << 24) | 
+                                   ((audioData[position + 6] & 0xFF) << 16) |
+                                   ((audioData[position + 5] & 0xFF) << 8) |
+                                   (audioData[position + 4] & 0xFF);
+
+                    if (chunkId.equals("data")) {
+                        // Skip chunk ID and size fields (8 bytes)
+                        audioDataOutput.write(audioData, position + 8, chunkSize);
+                        break;
+                    }
+
+                    position += chunkSize + 8;
+                    if (chunkSize % 2 != 0) position++;
+                }
+            } else {
+                // For subsequent files, just find the data chunk and extract audio data
+                position = 12; // Skip RIFF header
+                while (position + 8 < audioData.length) {
+                    String chunkId = new String(audioData, position, 4);
+                    int chunkSize = ((audioData[position + 7] & 0xFF) << 24) | 
+                                   ((audioData[position + 6] & 0xFF) << 16) |
+                                   ((audioData[position + 5] & 0xFF) << 8) |
+                                   (audioData[position + 4] & 0xFF);
+
+                    if (chunkId.equals("data")) {
+                        // Skip chunk ID and size fields (8 bytes)
+                        audioDataOutput.write(audioData, position + 8, chunkSize);
+                        break;
+                    }
+
+                    position += chunkSize + 8;
+                    if (chunkSize % 2 != 0) position++;
+                }
+            }
+
+            ais.close();
+            bais.close();
+        }
+
+        // Get all audio data combined
+        byte[] mergedAudioData = audioDataOutput.toByteArray();
+
+        // Create the new WAV file
+        ByteArrayOutputStream finalOutput = new ByteArrayOutputStream();
+
+        // RIFF header
+        finalOutput.write("RIFF".getBytes());
+
+        // Calculate total size: 4 (WAVE) + fmt chunk + data chunk + INFO chunk (if present)
+        int totalSize = 4 + (fmtChunk != null ? fmtChunk.length : 0) + 8 + mergedAudioData.length;
+        if (infoChunk != null) {
+            totalSize += infoChunk.length;
+        }
+        finalOutput.write(intToBytes(totalSize));
+
+        // WAVE identifier
+        finalOutput.write("WAVE".getBytes());
+
+        // Write fmt chunk
+        if (fmtChunk != null) {
+            finalOutput.write(fmtChunk);
+        }
+
+        // Write INFO chunk if it exists
+        if (infoChunk != null) {
+            finalOutput.write(infoChunk);
+        }
+
+        // Write data chunk header
+        finalOutput.write("data".getBytes());
+        finalOutput.write(intToBytes(mergedAudioData.length));
+
+        // Write audio data
+        finalOutput.write(mergedAudioData);
+
+        return finalOutput.toByteArray();
     }
+    
 
     private void writeWavHeader(ByteArrayOutputStream outputStream, long totalDataLen) throws IOException {
         // Define audio format for WAV header
@@ -905,7 +1054,7 @@ public class AddVoiceMemoDialog extends javax.swing.JDialog {
         outputStream.write("fmt ".getBytes());
         outputStream.write(intToBytes(16)); // Subchunk1Size
         outputStream.write(shortToBytes((short) 1)); // AudioFormat (PCM)
-        outputStream.write(shortToBytes((short) 1)); // NumChannels
+        outputStream.write(shortToBytes((short) 1)); // NumChannels (Mono)
         outputStream.write(intToBytes((int) audioFormat.getSampleRate())); // SampleRate
         outputStream.write(intToBytes((int) audioFormat.getSampleRate() * audioFormat.getSampleSizeInBits() / 8)); // ByteRate
         outputStream.write(shortToBytes((short) (audioFormat.getSampleSizeInBits() / 8))); // BlockAlign
@@ -1038,15 +1187,145 @@ public class AddVoiceMemoDialog extends javax.swing.JDialog {
     private void stopRecording() {
         isRecording = false;
         if (targetDataLine != null) {
-            targetDataLine.stop();
-            targetDataLine.close();
+            try {
+                targetDataLine.stop();
+                targetDataLine.close();
+                targetDataLine = null;  // Wichtig: Referenz auf null setzen
+            } catch (Exception e) {
+                log.warn("Error closing targetDataLine", e);
+            }
         }
-        this.memoParts.add(byteArrayOutputStream.toByteArray());
-        long byteCount=0;
+
+        // Byte-Array zur Liste hinzufügen
+        if (byteArrayOutputStream != null) {
+            byte[] audioData = byteArrayOutputStream.toByteArray();
+            if (audioData.length > 0) {
+                try {
+                    // Die rohen PCM-Daten in ein gültiges WAV-Format konvertieren
+                    AudioFormat format = AudioUtils.getAudioFormat();
+                    ByteArrayInputStream bais = new ByteArrayInputStream(audioData);
+                    AudioInputStream ais = new AudioInputStream(
+                        bais,
+                        format,
+                        audioData.length / format.getFrameSize()
+                    );
+
+                    // In WAV konvertieren
+                    ByteArrayOutputStream wavOutputStream = new ByteArrayOutputStream();
+                    AudioSystem.write(ais, AudioFileFormat.Type.WAVE, wavOutputStream);
+
+                    // Zur Liste hinzufügen
+                    this.memoParts.add(wavOutputStream.toByteArray());
+
+                    // Ressourcen freigeben
+                    ais.close();
+                    bais.close();
+                    wavOutputStream.close();
+                } catch (Exception e) {
+                    log.error("Error converting recorded audio data to WAV", e);
+                    JOptionPane.showMessageDialog(this, 
+                        "Fehler bei der Audioverarbeitung: " + e.getMessage(),
+                        com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, 
+                        JOptionPane.ERROR_MESSAGE);
+                }
+            }
+
+            try {
+                byteArrayOutputStream.close();
+                byteArrayOutputStream = null;  // Referenz auf null setzen
+            } catch (IOException e) {
+                log.warn("Error closing byteArrayOutputStream", e);
+            }
+        }
+
+        // Info-Label aktualisieren
+        updateInfoLabel();
+    }
+
+    private void updateInfoLabel() {
+        long byteCount = 0;
         for(byte[] bytes: this.memoParts) {
-            byteCount+=bytes.length;
+            byteCount += bytes.length;
         }
         this.lblInfo.setText(this.memoParts.size() + " Clip(s), insgesamt " + FileUtils.getFileSizeHumanReadable(byteCount));
+    }
+    
+    public void setExistingAudio(byte[] existingAudio, String fileName) {
+        try {
+            // Validate the existing audio format
+            ByteArrayInputStream byteStream = new ByteArrayInputStream(existingAudio);
+            AudioInputStream audioStream = AudioSystem.getAudioInputStream(byteStream);
+            AudioFormat format = audioStream.getFormat();
+
+            // Check if format matches our recording format
+            AudioFormat recordingFormat = AudioUtils.getAudioFormat();
+            if (!format.matches(recordingFormat)) {
+                log.warn("Existing audio format differs from recording format. This may cause issues.");
+            }
+
+            // Close the stream
+            audioStream.close();
+
+            // Bestehende Aufnahme in memoParts hinzufügen
+            this.memoParts.add(existingAudio);
+
+            // Dateinamen setzen und Feld deaktivieren
+            if (fileName != null && !fileName.isEmpty()) {
+                // Entferne .wav-Endung, falls vorhanden
+                if (fileName.toLowerCase().endsWith(".wav")) {
+                    fileName = fileName.substring(0, fileName.length() - 4);
+                }
+                this.txtFileName.setText(fileName);
+                this.txtFileName.setEditable(false); // Mache das Textfeld nicht editierbar
+                this.txtFileName.setEnabled(false);  // Visuell deaktiviert
+            }
+
+            // Aktualisiere Info-Label
+            long byteCount = 0;
+            for (byte[] bytes : this.memoParts) {
+                byteCount += bytes.length;
+            }
+            this.lblInfo.setText(this.memoParts.size() + " Clip(s), insgesamt " + FileUtils.getFileSizeHumanReadable(byteCount));
+
+            // Button-Text anpassen
+            this.cmdAddDocument.setText("Aufnahme aktualisieren");
+        } catch (Exception e) {
+            log.error("Error setting existing audio", e);
+            JOptionPane.showMessageDialog(this, 
+                "Fehler beim Laden der bestehenden Audiodatei: " + e.getMessage(),
+                com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, 
+                JOptionPane.ERROR_MESSAGE);
+        }
+    }
+
+    // Prüfen, ob der Dialog im "Fortsetzen"-Modus ist
+    public boolean isAppendMode() {
+        return !this.memoParts.isEmpty();
+    }
+
+    @Override
+    public void dispose() {
+        // Aufnahme stoppen falls noch aktiv
+        if (isRecording) {
+            stopRecording();
+        }
+
+        // Sicherstellen, dass alle Ressourcen freigegeben werden
+        if (targetDataLine != null) {
+            targetDataLine.close();
+            targetDataLine = null;
+        }
+
+        if (byteArrayOutputStream != null) {
+            try {
+                byteArrayOutputStream.close();
+            } catch (IOException e) {
+                log.warn("Error closing output stream", e);
+            }
+            byteArrayOutputStream = null;
+        }
+
+        super.dispose();
     }
 
 }
