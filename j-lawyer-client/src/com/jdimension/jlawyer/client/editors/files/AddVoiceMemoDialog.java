@@ -879,45 +879,120 @@ public class AddVoiceMemoDialog extends javax.swing.JDialog {
             return null;
         }
 
-        // Falls nur ein Teil vorhanden ist, direkt zurückgeben
+        // If only one part exists, return it directly
         if (audioDataList.size() == 1) {
             return audioDataList.get(0);
         }
 
-        // Temporärer WAV-Datei-Ansatz
-        ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
-        AudioFormat format = null;
+        // Find and extract INFO chunk from first WAV file if it exists
+        byte[] infoChunk = null;
+        int infoChunkSize = 0;
 
-        // Wir werden die erste Datei untersuchen, um das Format zu erhalten
-        ByteArrayInputStream firstStream = new ByteArrayInputStream(audioDataList.get(0));
-        AudioInputStream firstAudio = AudioSystem.getAudioInputStream(firstStream);
-        format = firstAudio.getFormat();
+        ByteArrayInputStream firstWavStream = new ByteArrayInputStream(audioDataList.get(0));
+        AudioInputStream firstAudio = AudioSystem.getAudioInputStream(firstWavStream);
+        AudioFormat format = firstAudio.getFormat();
+
+        // Work with a copy of the first file to extract chunks
+        byte[] firstFileData = audioDataList.get(0);
+
+        // Search for INFO chunk in the first file
+        int position = 12; // Skip RIFF header (12 bytes)
+        while (position + 8 < firstFileData.length) {
+            // Read chunk ID (4 bytes)
+            String chunkId = new String(firstFileData, position, 4);
+
+            // Read chunk size (4 bytes)
+            int chunkSize = ((firstFileData[position + 7] & 0xFF) << 24) | 
+                            ((firstFileData[position + 6] & 0xFF) << 16) |
+                            ((firstFileData[position + 5] & 0xFF) << 8) |
+                            (firstFileData[position + 4] & 0xFF);
+
+            // Check if this is the INFO chunk
+            if (chunkId.equals("INFO") || chunkId.equals("LIST")) {
+                // Found INFO/LIST chunk - save it
+                infoChunkSize = chunkSize + 8; // Include chunk ID and size fields
+                infoChunk = new byte[infoChunkSize];
+                System.arraycopy(firstFileData, position, infoChunk, 0, infoChunkSize);
+                break;
+            }
+
+            // Move to next chunk (chunk data + 8 bytes for ID and size)
+            position += chunkSize + 8;
+
+            // Ensure alignment to even byte boundary
+            if (chunkSize % 2 != 0) position++;
+        }
+
         firstAudio.close();
-        firstStream.close();
+        firstWavStream.close();
 
-        // Wir werden die Daten ohne Header sammeln
+        // Collect audio data from all files (skipping headers)
         ByteArrayOutputStream audioDataOutput = new ByteArrayOutputStream();
-        byte[] header = null;
+        byte[] fmtChunk = null;
 
         for (int i = 0; i < audioDataList.size(); i++) {
             byte[] audioData = audioDataList.get(i);
             ByteArrayInputStream bais = new ByteArrayInputStream(audioData);
             AudioInputStream ais = AudioSystem.getAudioInputStream(bais);
 
-            // Beim ersten Durchlauf speichern wir den Header (44 Bytes)
+            // When processing first file, extract the fmt chunk
             if (i == 0) {
-                header = new byte[44];
-                ais.read(header, 0, 44);
-                audioDataOutput.write(audioData, 44, audioData.length - 44);
-            } else {
-                // Wir überspringen den Header bei den folgenden Dateien
-                ais.skip(44);
+                // Find the fmt chunk in the first file
+                position = 12; // Skip RIFF header
+                while (position + 8 < audioData.length) {
+                    String chunkId = new String(audioData, position, 4);
+                    int chunkSize = ((audioData[position + 7] & 0xFF) << 24) | 
+                                   ((audioData[position + 6] & 0xFF) << 16) |
+                                   ((audioData[position + 5] & 0xFF) << 8) |
+                                   (audioData[position + 4] & 0xFF);
 
-                // Den Rest der Datei lesen wir
-                byte[] buffer = new byte[4096];
-                int bytesRead;
-                while ((bytesRead = ais.read(buffer)) != -1) {
-                    audioDataOutput.write(buffer, 0, bytesRead);
+                    if (chunkId.equals("fmt ")) {
+                        // Extract fmt chunk (including ID and size)
+                        fmtChunk = new byte[chunkSize + 8];
+                        System.arraycopy(audioData, position, fmtChunk, 0, chunkSize + 8);
+                        break;
+                    }
+
+                    position += chunkSize + 8;
+                    if (chunkSize % 2 != 0) position++;
+                }
+
+                // Now find the data chunk and extract only the audio data
+                position = 12; // Reset position to search for data chunk
+                while (position + 8 < audioData.length) {
+                    String chunkId = new String(audioData, position, 4);
+                    int chunkSize = ((audioData[position + 7] & 0xFF) << 24) | 
+                                   ((audioData[position + 6] & 0xFF) << 16) |
+                                   ((audioData[position + 5] & 0xFF) << 8) |
+                                   (audioData[position + 4] & 0xFF);
+
+                    if (chunkId.equals("data")) {
+                        // Skip chunk ID and size fields (8 bytes)
+                        audioDataOutput.write(audioData, position + 8, chunkSize);
+                        break;
+                    }
+
+                    position += chunkSize + 8;
+                    if (chunkSize % 2 != 0) position++;
+                }
+            } else {
+                // For subsequent files, just find the data chunk and extract audio data
+                position = 12; // Skip RIFF header
+                while (position + 8 < audioData.length) {
+                    String chunkId = new String(audioData, position, 4);
+                    int chunkSize = ((audioData[position + 7] & 0xFF) << 24) | 
+                                   ((audioData[position + 6] & 0xFF) << 16) |
+                                   ((audioData[position + 5] & 0xFF) << 8) |
+                                   (audioData[position + 4] & 0xFF);
+
+                    if (chunkId.equals("data")) {
+                        // Skip chunk ID and size fields (8 bytes)
+                        audioDataOutput.write(audioData, position + 8, chunkSize);
+                        break;
+                    }
+
+                    position += chunkSize + 8;
+                    if (chunkSize % 2 != 0) position++;
                 }
             }
 
@@ -925,37 +1000,41 @@ public class AddVoiceMemoDialog extends javax.swing.JDialog {
             bais.close();
         }
 
-        // Jetzt erstellen wir eine neue WAV-Datei mit dem Header der ersten Datei
-        // aber angepasster Länge
-        byte[] mergedData = audioDataOutput.toByteArray();
+        // Get all audio data combined
+        byte[] mergedAudioData = audioDataOutput.toByteArray();
 
-        // Jetzt müssen wir einen neuen Header erstellen mit der korrekten Länge
+        // Create the new WAV file
         ByteArrayOutputStream finalOutput = new ByteArrayOutputStream();
 
         // RIFF header
         finalOutput.write("RIFF".getBytes());
 
-        // Gesamtlänge des Files (minus 8 Bytes für RIFF und Size)
-        int totalLength = 36 + mergedData.length; // 36 für Header-Reste + Datenlänge
-        finalOutput.write(intToBytes(totalLength));
+        // Calculate total size: 4 (WAVE) + fmt chunk + data chunk + INFO chunk (if present)
+        int totalSize = 4 + (fmtChunk != null ? fmtChunk.length : 0) + 8 + mergedAudioData.length;
+        if (infoChunk != null) {
+            totalSize += infoChunk.length;
+        }
+        finalOutput.write(intToBytes(totalSize));
 
-        // WAVE header
+        // WAVE identifier
         finalOutput.write("WAVE".getBytes());
 
-        // 'fmt ' chunk
-        finalOutput.write("fmt ".getBytes());
+        // Write fmt chunk
+        if (fmtChunk != null) {
+            finalOutput.write(fmtChunk);
+        }
 
-        // Kopieren der restlichen Header-Informationen vom Original (ab Byte 12)
-        finalOutput.write(header, 12, 24); // 24 Bytes ab Offset 12 für den fmt-Chunk
+        // Write INFO chunk if it exists
+        if (infoChunk != null) {
+            finalOutput.write(infoChunk);
+        }
 
-        // 'data' chunk
+        // Write data chunk header
         finalOutput.write("data".getBytes());
+        finalOutput.write(intToBytes(mergedAudioData.length));
 
-        // Länge der Audiodaten
-        finalOutput.write(intToBytes(mergedData.length));
-
-        // Audiodaten
-        finalOutput.write(mergedData);
+        // Write audio data
+        finalOutput.write(mergedAudioData);
 
         return finalOutput.toByteArray();
     }
