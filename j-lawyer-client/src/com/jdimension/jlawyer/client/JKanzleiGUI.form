@@ -840,6 +840,21 @@
             </MenuItem>
           </SubComponents>
         </Menu>
+        <Menu class="javax.swing.JMenu" name="mnuBookKeeping">
+          <Properties>
+            <Property name="text" type="java.lang.String" value="Finanzen"/>
+          </Properties>
+          <SubComponents>
+            <MenuItem class="javax.swing.JMenuItem" name="mnuImportAccountStatement">
+              <Properties>
+                <Property name="text" type="java.lang.String" value="Buchen: Kontoauszug importieren"/>
+              </Properties>
+              <Events>
+                <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="mnuImportAccountStatementActionPerformed"/>
+              </Events>
+            </MenuItem>
+          </SubComponents>
+        </Menu>
         <Menu class="javax.swing.JMenu" name="mnuCalculations">
           <Properties>
             <Property name="text" type="java.lang.String" value="Plugins"/>

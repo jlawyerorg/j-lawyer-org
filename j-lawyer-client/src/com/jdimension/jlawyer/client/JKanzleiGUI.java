@@ -675,6 +675,7 @@ import com.jdimension.jlawyer.client.editors.ServiceMenuItem;
 import com.jdimension.jlawyer.client.editors.addresses.EditAddressPanel;
 import com.jdimension.jlawyer.client.editors.files.EditArchiveFilePanel;
 import com.jdimension.jlawyer.client.editors.files.TimesheetLogDialog;
+import com.jdimension.jlawyer.client.editors.finance.ImportBankStatementFrame;
 import com.jdimension.jlawyer.client.events.BeaStatusEvent;
 import com.jdimension.jlawyer.client.events.EmailStatusEvent;
 import com.jdimension.jlawyer.client.events.Event;
@@ -1200,6 +1201,8 @@ public class JKanzleiGUI extends javax.swing.JFrame implements com.jdimension.jl
         mnuAssistantPrompts = new javax.swing.JMenuItem();
         mnuVoipSoftphoneSettings = new javax.swing.JMenuItem();
         mnuBeaSettings = new javax.swing.JMenuItem();
+        mnuBookKeeping = new javax.swing.JMenu();
+        mnuImportAccountStatement = new javax.swing.JMenuItem();
         mnuCalculations = new javax.swing.JMenu();
         mnuAdministration = new javax.swing.JMenu();
         mnuUsers = new javax.swing.JMenuItem();
@@ -1936,6 +1939,18 @@ public class JKanzleiGUI extends javax.swing.JFrame implements com.jdimension.jl
         mnuOptions.add(mnuBeaSettings);
 
         jMenuBar1.add(mnuOptions);
+
+        mnuBookKeeping.setText("Finanzen");
+
+        mnuImportAccountStatement.setText("Buchen: Kontoauszug importieren");
+        mnuImportAccountStatement.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                mnuImportAccountStatementActionPerformed(evt);
+            }
+        });
+        mnuBookKeeping.add(mnuImportAccountStatement);
+
+        jMenuBar1.add(mnuBookKeeping);
 
         mnuCalculations.setText("Plugins");
         jMenuBar1.add(mnuCalculations);
@@ -2887,6 +2902,11 @@ public class JKanzleiGUI extends javax.swing.JFrame implements com.jdimension.jl
         }
     }//GEN-LAST:event_mnuDocumentTagRulesActionPerformed
 
+    private void mnuImportAccountStatementActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_mnuImportAccountStatementActionPerformed
+        ImportBankStatementFrame ibsf=new ImportBankStatementFrame();
+        ibsf.setVisible(true);
+    }//GEN-LAST:event_mnuImportAccountStatementActionPerformed
+
     /**
      * @param args the command line arguments
      */
@@ -2942,6 +2962,7 @@ public class JKanzleiGUI extends javax.swing.JFrame implements com.jdimension.jl
     private javax.swing.JMenuItem mnuBankImport;
     private javax.swing.JMenuItem mnuBeaCourtAddressImport;
     private javax.swing.JMenuItem mnuBeaSettings;
+    private javax.swing.JMenu mnuBookKeeping;
     private javax.swing.JMenuItem mnuBugReport;
     private javax.swing.JMenu mnuCalculations;
     private javax.swing.JMenuItem mnuCalendarEntryTemplates;
@@ -2967,6 +2988,7 @@ public class JKanzleiGUI extends javax.swing.JFrame implements com.jdimension.jl
     private javax.swing.JMenuItem mnuGiroCodes;
     private javax.swing.JMenuItem mnuGroups;
     private javax.swing.JMenu mnuHelp;
+    private javax.swing.JMenuItem mnuImportAccountStatement;
     private javax.swing.JMenuItem mnuImportFromSheet;
     private javax.swing.JMenuItem mnuInvoiceCurrencies;
     private javax.swing.JMenuItem mnuInvoicePools;
