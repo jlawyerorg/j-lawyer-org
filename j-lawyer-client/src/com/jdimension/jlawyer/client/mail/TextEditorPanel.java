@@ -781,7 +781,7 @@ public class TextEditorPanel extends javax.swing.JPanel implements EditorImpleme
     public String getText() {
         return this.taText.getText();
     }
-
+    
     @Override
     public void setText(String t) {
         this.taText.setText(t);

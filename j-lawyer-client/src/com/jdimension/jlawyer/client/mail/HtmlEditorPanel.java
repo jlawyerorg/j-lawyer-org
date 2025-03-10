@@ -677,24 +677,30 @@ import javax.swing.JEditorPane;
 import javax.swing.KeyStroke;
 import org.apache.log4j.Logger;
 import javax.swing.undo.UndoManager;
+import org.jsoup.Jsoup;
+import org.jsoup.nodes.Document;
+import org.jsoup.nodes.Element;
+import org.jsoup.parser.Tag;
+import org.jsoup.select.Elements;
 
 /**
  *
  * @author Kutschke
  */
 public class HtmlEditorPanel extends javax.swing.JPanel implements EditorImplementation {
-    
+
     private final UndoManager undoManager;
-    private static final Logger log=Logger.getLogger(HtmlEditorPanel.class.getName());
+    private static final Logger log = Logger.getLogger(HtmlEditorPanel.class.getName());
 
     /**
      * Creates new form HtmlEditorPanel
      */
     public HtmlEditorPanel() {
         initComponents();
-        
+
         undoManager = new UndoManager();
-        setupUndoRedoForEditorPane(htmlPane);    }
+        setupUndoRedoForEditorPane(htmlPane);
+    }
 
     /**
      * This method is called from within the constructor to initialize the form.
@@ -729,7 +735,58 @@ public class HtmlEditorPanel extends javax.swing.JPanel implements EditorImpleme
 
     @Override
     public String getText() {
-        return this.htmlPane.getText();
+//        String fixedHtml = Jsoup.parse(this.htmlPane.getText()).outerHtml();
+        String fixedHtml = cleanSHEFHtml(this.htmlPane.getText());
+        return fixedHtml;
+        //return this.htmlPane.getText();
+    }
+
+    public String cleanSHEFHtml(String shefHtml) {
+        // Parse the manipulated HTML from SHEF
+        Document doc = Jsoup.parse(shefHtml);
+
+        // Convert <font> tags back to <span style="...">
+        Elements fontTags = doc.select("font");
+        for (Element font : fontTags) {
+            String color = font.attr("color");
+            String face = font.attr("face");
+            String size = font.attr("size");
+
+            // Build a CSS style string
+            StringBuilder style = new StringBuilder();
+            if (!color.isEmpty()) {
+                style.append("color:").append(color).append(";");
+            }
+            if (!face.isEmpty()) {
+                style.append("font-family:").append(face).append(";");
+            }
+            if (!size.isEmpty()) {
+                style.append("font-size:").append(size).append(";");
+            }
+
+            // Replace <font> with <span style="...">
+            Element span = new Element(Tag.valueOf("span"), ""); // Correct constructor
+            span.text(font.text());
+            if (style.length() > 0) {
+                span.attr("style", style.toString());
+            }
+            font.replaceWith(span);
+        }
+
+        // Remove incorrectly transformed <o p="#DEFAULT">
+        Elements oTags = doc.select("o");
+        for (Element o : oTags) {
+            o.remove();
+        }
+
+        // Ensure a clean <head> with default styles
+        Element head = doc.head();
+        if (head == null) {
+            head = doc.prependElement("head");
+        }
+        head.append("<style> p { margin: 0; padding: 0; } </style>");
+
+        return doc.outerHtml(); // Return cleaned HTML
     }
 
     @Override
@@ -814,9 +871,9 @@ public class HtmlEditorPanel extends javax.swing.JPanel implements EditorImpleme
         for (Component child : c.getComponents()) {
             if (child instanceof JEditorPane) {
                 try {
-                    if(child.getClass().getName().equals(JEditorPane.class.getName())) {
+                    if (child.getClass().getName().equals(JEditorPane.class.getName())) {
                         // the html source is an instance of SourceCodeEditor, which is a subclass of JEditorPane
-                        int caretPos=((JEditorPane) child).getCaretPosition();
+                        int caretPos = ((JEditorPane) child).getCaretPosition();
                         ((JEditorPane) child).getDocument().insertString(caretPos, t, null);
                         return true;
                     }
@@ -832,25 +889,25 @@ public class HtmlEditorPanel extends javax.swing.JPanel implements EditorImpleme
         }
         return false;
     }
-    
+
     private void setupUndoRedoForEditorPane(Container container) {
         for (Component comp : container.getComponents()) {
             if (comp instanceof JEditorPane) {
                 JEditorPane editorPane = (JEditorPane) comp;
                 editorPane.getDocument().addUndoableEditListener(e -> undoManager.addEdit(e.getEdit()));
-                
+
                 // Setup key bindings for undo
                 KeyStroke undoKeystroke = KeyStroke.getKeyStroke(
-                    KeyEvent.VK_Z, 
-                    Toolkit.getDefaultToolkit().getMenuShortcutKeyMaskEx()
+                        KeyEvent.VK_Z,
+                        Toolkit.getDefaultToolkit().getMenuShortcutKeyMaskEx()
                 );
-                
+
                 // Setup key bindings for redo
                 KeyStroke redoKeystroke = KeyStroke.getKeyStroke(
-                    KeyEvent.VK_Y, 
-                    Toolkit.getDefaultToolkit().getMenuShortcutKeyMaskEx()
+                        KeyEvent.VK_Y,
+                        Toolkit.getDefaultToolkit().getMenuShortcutKeyMaskEx()
                 );
-                
+
                 editorPane.getInputMap(JComponent.WHEN_FOCUSED).put(undoKeystroke, "Undo");
                 editorPane.getActionMap().put("Undo", new AbstractAction("Undo") {
                     @Override
@@ -860,7 +917,7 @@ public class HtmlEditorPanel extends javax.swing.JPanel implements EditorImpleme
                         }
                     }
                 });
-                
+
                 editorPane.getInputMap(JComponent.WHEN_FOCUSED).put(redoKeystroke, "Redo");
                 editorPane.getActionMap().put("Redo", new AbstractAction("Redo") {
                     @Override
@@ -870,14 +927,14 @@ public class HtmlEditorPanel extends javax.swing.JPanel implements EditorImpleme
                         }
                     }
                 });
-                
+
                 break;  // Found the editor pane, no need to continue
             } else if (comp instanceof Container) {
                 setupUndoRedoForEditorPane((Container) comp);
             }
         }
     }
-    
+
     public UndoManager getUndoManager() {
         return undoManager;
     }
