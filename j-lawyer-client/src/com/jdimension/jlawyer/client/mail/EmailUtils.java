@@ -1123,10 +1123,10 @@ public class EmailUtils extends CommonMailUtils {
     }
 
     private static String escapeHtml(String text) {
-        return text.replaceAll("&", "&amp;")
-                   .replaceAll("<", "&lt;")
-                   .replaceAll(">", "&gt;")
-                   .replaceAll("\"", "&quot;");
+        return text.replace("&", "&amp;")
+                   .replace("<", "&lt;")
+                   .replace(">", "&gt;")
+                   .replace("\"", "&quot;");
     }
 
     public static boolean isValidEmailAddress(String email) {

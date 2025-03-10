@@ -736,8 +736,7 @@ public class HtmlEditorPanel extends javax.swing.JPanel implements EditorImpleme
     @Override
     public String getText() {
 //        String fixedHtml = Jsoup.parse(this.htmlPane.getText()).outerHtml();
-        String fixedHtml = cleanSHEFHtml(this.htmlPane.getText());
-        return fixedHtml;
+        return cleanSHEFHtml(this.htmlPane.getText());
         //return this.htmlPane.getText();
     }
 
