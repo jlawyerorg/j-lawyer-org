@@ -1039,6 +1039,19 @@ public class InvoiceService implements InvoiceServiceRemote, InvoiceServiceLocal
         }
 
     }
+    
+    @Override
+    @RolesAllowed({"loginRole"})
+    public List<Invoice> getInvoicesByStatus(int... status) throws Exception {
+
+        Date now = new Date();
+        List<Invoice> invoicesList = new ArrayList<>();
+        this.invoices.findByStatus(Invoice.STATUS_OPEN);
+        for(int s: status) {
+            invoicesList.addAll(invoices.findByStatus(s));
+        }
+        return invoicesList;
+    }
 
     private void publishOutgoingMailRequest(OutgoingMailRequest req) {
         try {

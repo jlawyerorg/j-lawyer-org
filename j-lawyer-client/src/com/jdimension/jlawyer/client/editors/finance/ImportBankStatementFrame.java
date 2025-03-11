@@ -663,7 +663,9 @@ For more information on this, and how to apply and follow the GNU AGPL, see
  */
 package com.jdimension.jlawyer.client.editors.finance;
 
-import com.jdimension.jlawyer.client.utils.FileUtils;
+import com.jdimension.jlawyer.client.settings.ClientSettings;
+import com.jdimension.jlawyer.persistence.Invoice;
+import com.jdimension.jlawyer.services.JLawyerServiceLocator;
 import com.opencsv.CSVParser;
 import com.opencsv.CSVParserBuilder;
 import com.opencsv.CSVReader;
@@ -672,13 +674,13 @@ import java.io.File;
 import java.io.FileReader;
 import java.text.DecimalFormat;
 import java.text.DecimalFormatSymbols;
-import java.text.NumberFormat;
 import java.util.ArrayList;
-import java.util.Hashtable;
 import java.util.List;
 import java.util.Locale;
 import javax.swing.JFileChooser;
 import javax.swing.JOptionPane;
+import org.apache.log4j.Logger;
+import org.jlawyer.text.similarity.JaroWinkler;
 
 /**
  *
@@ -686,14 +688,27 @@ import javax.swing.JOptionPane;
  */
 public class ImportBankStatementFrame extends javax.swing.JFrame {
 
+    private static final Logger log = Logger.getLogger(ImportBankStatementFrame.class.getName());
+
     private int txIndex = -1;
     private ArrayList<BankTransaction> transactions = null;
+    private List<Invoice> openInvoices = null;
 
     /**
      * Creates new form ImportBankStatement
      */
     public ImportBankStatementFrame() {
         initComponents();
+
+        ClientSettings settings = ClientSettings.getInstance();
+        try {
+            JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
+            this.openInvoices = locator.lookupInvoiceServiceRemote().getInvoicesByStatus(Invoice.STATUS_OPEN, Invoice.STATUS_OPEN_NONENFORCEABLE, Invoice.STATUS_OPEN_REMINDER1, Invoice.STATUS_OPEN_REMINDER2, Invoice.STATUS_OPEN_REMINDER3, Invoice.STATUS_NEW);
+
+        } catch (Exception ex) {
+            log.error("Error connecting to server", ex);
+            JOptionPane.showMessageDialog(this, "Fehler beim Laden offener Rechnungen: " + ex.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
+        }
     }
 
     /**
@@ -705,13 +720,26 @@ public class ImportBankStatementFrame extends javax.swing.JFrame {
     // <editor-fold defaultstate="collapsed" desc="Generated Code">//GEN-BEGIN:initComponents
     private void initComponents() {
 
+        btnGrpAccountEntryType = new javax.swing.ButtonGroup();
         cmdCsvUpload = new javax.swing.JButton();
         jScrollPane1 = new javax.swing.JScrollPane();
         taTransaction = new javax.swing.JTextArea();
         cmdNext = new javax.swing.JButton();
         cmdPrevious = new javax.swing.JButton();
+        chkMarkAsPaid = new javax.swing.JCheckBox();
+        jCheckBox1 = new javax.swing.JCheckBox();
+        jFormattedTextField1 = new javax.swing.JFormattedTextField();
+        jLabel1 = new javax.swing.JLabel();
+        jRadioButton1 = new javax.swing.JRadioButton();
+        jRadioButton2 = new javax.swing.JRadioButton();
+        jRadioButton3 = new javax.swing.JRadioButton();
+        jRadioButton4 = new javax.swing.JRadioButton();
+        jRadioButton5 = new javax.swing.JRadioButton();
+        jRadioButton6 = new javax.swing.JRadioButton();
+        jLabel2 = new javax.swing.JLabel();
+        jLabel3 = new javax.swing.JLabel();
 
-        setDefaultCloseOperation(javax.swing.WindowConstants.EXIT_ON_CLOSE);
+        setDefaultCloseOperation(javax.swing.WindowConstants.DISPOSE_ON_CLOSE);
 
         cmdCsvUpload.setText("CSV Upload");
         cmdCsvUpload.addActionListener(new java.awt.event.ActionListener() {
@@ -738,6 +766,31 @@ public class ImportBankStatementFrame extends javax.swing.JFrame {
             }
         });
 
+        chkMarkAsPaid.setText("Rechnung als bezahlt markieren");
+
+        jCheckBox1.setText("Buchung im Aktenkonto erstellen");
+
+        jFormattedTextField1.setText("jFormattedTextField1");
+
+        jLabel1.setText("Betrag:");
+
+        btnGrpAccountEntryType.add(jRadioButton1);
+        jRadioButton1.setText("Einnahme");
+
+        jRadioButton2.setText("Ausgabe");
+
+        jRadioButton3.setText("Auslage ein");
+
+        jRadioButton4.setText("Auslage aus");
+
+        jRadioButton5.setText("Fremdgeld ein");
+
+        jRadioButton6.setText("Fremdgeld aus");
+
+        jLabel2.setText("Aktenetiketten:");
+
+        jLabel3.setText("Kalendereinträge:");
+
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(getContentPane());
         getContentPane().setLayout(layout);
         layout.setHorizontalGroup(
@@ -746,13 +799,44 @@ public class ImportBankStatementFrame extends javax.swing.JFrame {
                 .addContainerGap()
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                     .addGroup(layout.createSequentialGroup()
-                        .addComponent(cmdCsvUpload)
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                        .addComponent(cmdPrevious)
+                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                            .addGroup(layout.createSequentialGroup()
+                                .addComponent(cmdCsvUpload)
+                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                                .addComponent(cmdPrevious)
+                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                                .addComponent(cmdNext))
+                            .addComponent(jScrollPane1, javax.swing.GroupLayout.DEFAULT_SIZE, 1190, Short.MAX_VALUE)
+                            .addGroup(layout.createSequentialGroup()
+                                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                                    .addComponent(chkMarkAsPaid)
+                                    .addGroup(layout.createSequentialGroup()
+                                        .addComponent(jCheckBox1)
+                                        .addGap(18, 18, 18)
+                                        .addComponent(jLabel1)
+                                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                                        .addComponent(jFormattedTextField1, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)))
+                                .addGap(0, 0, Short.MAX_VALUE)))
+                        .addContainerGap())
+                    .addGroup(layout.createSequentialGroup()
+                        .addGap(27, 27, 27)
+                        .addComponent(jRadioButton1)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                        .addComponent(jRadioButton2)
+                        .addGap(18, 18, 18)
+                        .addComponent(jRadioButton3)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addComponent(cmdNext))
-                    .addComponent(jScrollPane1, javax.swing.GroupLayout.DEFAULT_SIZE, 1190, Short.MAX_VALUE))
-                .addContainerGap())
+                        .addComponent(jRadioButton4)
+                        .addGap(18, 18, 18)
+                        .addComponent(jRadioButton5)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addComponent(jRadioButton6)
+                        .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                    .addGroup(layout.createSequentialGroup()
+                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                            .addComponent(jLabel2)
+                            .addComponent(jLabel3))
+                        .addGap(0, 0, Short.MAX_VALUE))))
         );
         layout.setVerticalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
@@ -763,8 +847,27 @@ public class ImportBankStatementFrame extends javax.swing.JFrame {
                     .addComponent(cmdNext)
                     .addComponent(cmdPrevious))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(jScrollPane1, javax.swing.GroupLayout.DEFAULT_SIZE, 777, Short.MAX_VALUE)
-                .addContainerGap())
+                .addComponent(jScrollPane1, javax.swing.GroupLayout.PREFERRED_SIZE, 291, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                .addComponent(chkMarkAsPaid)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                    .addComponent(jCheckBox1)
+                    .addComponent(jLabel1)
+                    .addComponent(jFormattedTextField1, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                    .addComponent(jRadioButton1)
+                    .addComponent(jRadioButton2)
+                    .addComponent(jRadioButton3)
+                    .addComponent(jRadioButton4)
+                    .addComponent(jRadioButton5)
+                    .addComponent(jRadioButton6))
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                .addComponent(jLabel2)
+                .addGap(18, 18, 18)
+                .addComponent(jLabel3)
+                .addContainerGap(303, Short.MAX_VALUE))
         );
 
         pack();
@@ -814,9 +917,9 @@ public class ImportBankStatementFrame extends javax.swing.JFrame {
                 }
                 System.out.println("" + transactions.size() + " Zeilen im CSV");
 
-                this.txIndex = 0;
+                this.txIndex = -1;
                 if (transactions.size() > 0) {
-                    this.taTransaction.setText(transactions.get(0).toString());
+                    this.cmdNextActionPerformed(null);
                 }
 
             } catch (Exception ex) {
@@ -828,13 +931,52 @@ public class ImportBankStatementFrame extends javax.swing.JFrame {
 
     private void cmdNextActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdNextActionPerformed
         this.txIndex++;
-        this.taTransaction.setText(this.transactions.get(this.txIndex).toString());
+        this.loadTransaction(txIndex);
     }//GEN-LAST:event_cmdNextActionPerformed
 
     private void cmdPreviousActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdPreviousActionPerformed
         this.txIndex--;
-        this.taTransaction.setText(this.transactions.get(this.txIndex).toString());
+        this.loadTransaction(txIndex);
     }//GEN-LAST:event_cmdPreviousActionPerformed
+
+    private void loadTransaction(int index) {
+        BankTransaction tx = this.transactions.get(index);
+        this.taTransaction.setText(tx.toString());
+
+        Invoice exactMatch = null;
+        for (Invoice inv : this.openInvoices) {
+            if (tx.getPurpose().contains(inv.getInvoiceNumber())) {
+                exactMatch = inv;
+            }
+        }
+
+        Invoice jaroWinklerMatch=null;
+        if (exactMatch == null) {
+            double jaroWinklerMatchDistance=0.9d;
+            for (Invoice inv : this.openInvoices) {
+                double dist=JaroWinkler.jaroWinklerDistance(tx.getPurpose(), inv.getInvoiceNumber());
+                if (dist>0.9d && (jaroWinklerMatch==null || dist>jaroWinklerMatchDistance)) {
+                    jaroWinklerMatch=inv;
+                    jaroWinklerMatchDistance=dist;
+                    log.info("found invoice " + jaroWinklerMatch.getInvoiceNumber() + " with distance "+dist + ", compared: " + inv.getInvoiceNumber() + " & " + tx.getPurpose());
+                }
+            }
+        }
+        
+        Invoice match=exactMatch;
+        if(exactMatch==null)
+            match=jaroWinklerMatch;
+        
+        this.taTransaction.append(System.lineSeparator());
+            this.taTransaction.append(System.lineSeparator());
+        if(match!=null) {
+            this.taTransaction.append("Rechnung gefunden: " + match.getInvoiceNumber() + " - " + match.getName());
+            
+        } else {
+            this.taTransaction.append("keine Rechnung gefunden");
+        }
+
+    }
 
     /**
      * @param args the command line arguments
@@ -865,17 +1007,28 @@ public class ImportBankStatementFrame extends javax.swing.JFrame {
         //</editor-fold>
 
         /* Create and display the form */
-        java.awt.EventQueue.invokeLater(new Runnable() {
-            public void run() {
-                new ImportBankStatementFrame().setVisible(true);
-            }
+        java.awt.EventQueue.invokeLater(() -> {
+            new ImportBankStatementFrame().setVisible(true);
         });
     }
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
+    private javax.swing.ButtonGroup btnGrpAccountEntryType;
+    private javax.swing.JCheckBox chkMarkAsPaid;
     private javax.swing.JButton cmdCsvUpload;
     private javax.swing.JButton cmdNext;
     private javax.swing.JButton cmdPrevious;
+    private javax.swing.JCheckBox jCheckBox1;
+    private javax.swing.JFormattedTextField jFormattedTextField1;
+    private javax.swing.JLabel jLabel1;
+    private javax.swing.JLabel jLabel2;
+    private javax.swing.JLabel jLabel3;
+    private javax.swing.JRadioButton jRadioButton1;
+    private javax.swing.JRadioButton jRadioButton2;
+    private javax.swing.JRadioButton jRadioButton3;
+    private javax.swing.JRadioButton jRadioButton4;
+    private javax.swing.JRadioButton jRadioButton5;
+    private javax.swing.JRadioButton jRadioButton6;
     private javax.swing.JScrollPane jScrollPane1;
     private javax.swing.JTextArea taTransaction;
     // End of variables declaration//GEN-END:variables
