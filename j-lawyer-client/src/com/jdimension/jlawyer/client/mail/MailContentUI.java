@@ -1904,6 +1904,7 @@ public class MailContentUI extends javax.swing.JPanel implements HyperlinkListen
                 }
 
             }
+            this.mnuRemoveItem.setEnabled(this.caseContext!=null && this.emlMsgContainer!=null);
             this.popAttachments.show(evt.getComponent(), evt.getX(), evt.getY());
         }
     }//GEN-LAST:event_lstAttachmentsMouseReleased
