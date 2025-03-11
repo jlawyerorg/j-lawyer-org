@@ -713,11 +713,11 @@ public class AudioUtils {
 
         return new AudioFormat(
                 AudioFormat.Encoding.PCM_SIGNED,
-                44100, // Sample rate
+                16000, // Sample rate
                 16, // Bits per sample
                 1, // Number of channels
                 2, // Frame size
-                44100, // Frame rate
+                16000, // Frame rate
                 false // Big endian
         );
 
