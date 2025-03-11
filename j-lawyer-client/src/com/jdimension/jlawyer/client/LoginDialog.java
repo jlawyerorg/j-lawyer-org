@@ -2186,7 +2186,7 @@ public class LoginDialog extends javax.swing.JFrame {
         this.lblUser.setText(name);
         this.lblUser.setIcon(icon);
         this.lblDefaultUserIcon.setIcon(null);
-        this.lblRole.setText(StringUtils.nonEmpty(principal.getRole()));
+        this.lblRole.setText(StringUtils.nonEmpty(principal.getRole()).replace(System.lineSeparator(), " | "));
     }
 
     public void addStatus(String s) {
