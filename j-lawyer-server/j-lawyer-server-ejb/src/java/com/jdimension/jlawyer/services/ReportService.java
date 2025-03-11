@@ -1409,7 +1409,7 @@ public class ReportService implements ReportServiceRemote {
                                 if(!sumValues.containsKey(columnNames[i-1]))
                                     sumValues.put(columnNames[i-1], (Number)row[i-1]);
                                 else
-                                    sumValues.put(columnNames[i-1], new BigDecimal(((Number)row[i-1]).floatValue()).add(new BigDecimal(sumValues.get(columnNames[i-1]).floatValue())));
+                                    sumValues.put(columnNames[i-1], BigDecimal.valueOf(((Number)row[i-1]).floatValue()).add(BigDecimal.valueOf(sumValues.get(columnNames[i-1]).floatValue())));
                             }
                         }
                     } else {
@@ -1419,7 +1419,7 @@ public class ReportService implements ReportServiceRemote {
                                 if(!sumValues.containsKey(columnNames[i]))
                                     sumValues.put(columnNames[i], (Number)row[i]);
                                 else
-                                    sumValues.put(columnNames[i], new BigDecimal(((Number)row[i]).floatValue()).add(new BigDecimal(sumValues.get(columnNames[i]).floatValue())));
+                                    sumValues.put(columnNames[i], BigDecimal.valueOf(((Number)row[i]).floatValue()).add(BigDecimal.valueOf(sumValues.get(columnNames[i]).floatValue())));
                             }
                         }
                     }
