@@ -714,6 +714,7 @@ public class SoundplayerPanel extends javax.swing.JPanel implements PreviewPanel
     private static final Logger log = Logger.getLogger(SoundplayerPanel.class.getName());
 
     private String documentId = null;
+    private String documentName = null;
     private byte[] content = null;
     private String initialComment = null;
 
@@ -733,8 +734,9 @@ public class SoundplayerPanel extends javax.swing.JPanel implements PreviewPanel
      * @param readOnly
      * @param saveCallback
      */
-    public SoundplayerPanel(String docId, boolean readOnly, DocumentPreviewSaveCallback saveCallback) {
+    public SoundplayerPanel(String docId, String docName, boolean readOnly, DocumentPreviewSaveCallback saveCallback) {
         this.documentId = docId;
+        this.documentName=docName;
         this.readOnly = readOnly;
         this.saveCallback = saveCallback;
         initComponents();
@@ -960,8 +962,7 @@ public class SoundplayerPanel extends javax.swing.JPanel implements PreviewPanel
             dlg.setTitle("Sprachmemo fortsetzen");
 
             // Bestehende Audiodaten übergeben
-            String fileName = new java.io.File(this.documentId).getName();
-            dlg.setExistingAudio(this.content, fileName);
+            dlg.setExistingAudio(this.content, this.documentName);
 
             // Dialog anzeigen
             com.jdimension.jlawyer.client.utils.FrameUtils.centerDialog(dlg, EditorsRegistry.getInstance().getMainWindow());
