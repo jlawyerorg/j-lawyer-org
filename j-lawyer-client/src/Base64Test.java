@@ -663,10 +663,21 @@
  */
 import com.jdimension.jlawyer.client.utils.FileUtils;
 import com.jdimension.jlawyer.security.Base64;
+import java.io.ByteArrayOutputStream;
 import java.io.File;
+import java.io.StringWriter;
 import java.util.Arrays;
+import java.util.Date;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import org.java.sepaxml.SEPA;
+import org.java.sepaxml.SEPABankAccount;
+import org.java.sepaxml.SEPACreditTransfer;
+import org.java.sepaxml.SEPATransaction;
+
+import java.math.BigDecimal;
+import java.util.ArrayList;
+import java.util.List;
 
 /*
  * To change this template, choose Tools | Templates
@@ -684,20 +695,80 @@ public class Base64Test {
      */
     public static void main(String[] args) {
         try {
+            
+            
+            final SEPABankAccount sender = new SEPABankAccount(
+                "DE9820130400...",
+                "GREBDEH1",
+                "Off"
+        );
+            
+
+        final List<SEPATransaction> transactions = new ArrayList<SEPATransaction>() {{
+            add(new SEPATransaction(
+                            new SEPABankAccount(
+                                    "DE857012040...",
+                                    "DABBDEMMXXX",
+                                    "Jens"
+                            ),
+                            new BigDecimal(1.99d),
+                            "Spende",
+                            SEPATransaction.Currency.EUR
+                    )
+            );
+
+//            add(new SEPATransaction(
+//                            new SEPABankAccount(
+//                                    "DK5250511963137134",
+//                                    "UINVDEFFXXX",
+//                                    "Carl White"
+//                            ),
+//                            new BigDecimal(1000.00d),
+//                            "Salary CW 2015-12",
+//                            SEPATransaction.Currency.EUR
+//                    )
+//            );
+//
+//            add(new SEPATransaction(
+//                            new SEPABankAccount(
+//                                    "CZ7627005991764514418145",
+//                                    "SWBSDESSXXX",
+//                                    "Frank Black"
+//                            ),
+//                            new BigDecimal(5000.00d),
+//                            "Salary FB 2017-05",
+//                            SEPATransaction.Currency.EUR
+//                    )
+//            );
+        }};
+
+        final SEPA sepa = new SEPACreditTransfer(SEPA.PaymentMethods.TransferAdvice, sender, transactions);
+            ByteArrayOutputStream bout=new ByteArrayOutputStream();
+        
+        sepa.write(bout);
+        
+        String sepaString=bout.toString();
+        sepaString=sepaString.replace("CstmrCdtTrfInitn xmlns=\"\"", "CstmrCdtTrfInitn");
+        
+        //CstmrCdtTrfInitn xmlns=""
+        System.out.println(sepaString);
+            
+            
+            
             // TODO code application logic here
-            byte[] content=FileUtils.readFile(new File("/home/jens/temp/j-lawyer-allgemeiner-Brief-Mandant_2013-02-07-2.pdf"));
-            Base64 b64=new Base64();
-            String s1=b64.encode(content);
-            byte[] utf=s1.getBytes("UTF-8");
-            byte[] iso=s1.getBytes("iso-8859-1");
-            System.out.println(utf.length + " " + iso.length + Arrays.equals(utf, iso));
-            for(int i=0;i<utf.length;i++) {
-                byte butf=utf[i];
-                byte biso=iso[i];
-                if(butf != biso)
-                    System.out.println("diff: " + i);
-                        
-            } 
+//            byte[] content=FileUtils.readFile(new File("/home/jens/temp/j-lawyer-allgemeiner-Brief-Mandant_2013-02-07-2.pdf"));
+//            Base64 b64=new Base64();
+//            String s1=b64.encode(content);
+//            byte[] utf=s1.getBytes("UTF-8");
+//            byte[] iso=s1.getBytes("iso-8859-1");
+//            System.out.println(utf.length + " " + iso.length + Arrays.equals(utf, iso));
+//            for(int i=0;i<utf.length;i++) {
+//                byte butf=utf[i];
+//                byte biso=iso[i];
+//                if(butf != biso)
+//                    System.out.println("diff: " + i);
+//                        
+//            } 
         } catch (Throwable ex) {
             Logger.getLogger(Base64Test.class.getName()).log(Level.SEVERE, null, ex);
         }
