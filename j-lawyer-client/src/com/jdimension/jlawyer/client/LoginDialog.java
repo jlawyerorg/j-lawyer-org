@@ -808,11 +808,17 @@ public class LoginDialog extends javax.swing.JFrame {
             }
         }
 
+        int backgroundWidth=800;
+        int backgroundHeight=600;
         if (randomBackground != null) {
             ImageIcon image = new ImageIcon(getClass().getResource("/themes/default/backgroundsrandom/" + randomBackground));
+            backgroundHeight=image.getIconHeight();
+            backgroundWidth=image.getIconWidth();
             this.bgPanel.setBackgroundImage(image.getImage());
         } else {
             ImageIcon image = new ImageIcon(getClass().getResource("/images/login-background-dark.jpg"));
+            backgroundHeight=image.getIconHeight();
+            backgroundWidth=image.getIconWidth();
             this.bgPanel.setBackgroundImage(image.getImage());
         }
 
@@ -823,8 +829,9 @@ public class LoginDialog extends javax.swing.JFrame {
         Rectangle bounds = gc.getBounds(); // Get screen bounds
 
         // Set frame size to 80% of the screen's width and height
-        int width = (int) (bounds.width * 0.8);
         int height = (int) (bounds.height * 0.8);
+        //int width = (int) (bounds.width * 0.8);
+        int width=(int)((float)height*((float)backgroundWidth/(float)backgroundHeight));
         setSize(width, height);
 
         // Center the frame within the screen bounds
