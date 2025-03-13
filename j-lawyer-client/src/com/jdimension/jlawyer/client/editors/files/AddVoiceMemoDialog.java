@@ -890,8 +890,7 @@ public class AddVoiceMemoDialog extends javax.swing.JDialog {
 
         ByteArrayInputStream firstWavStream = new ByteArrayInputStream(audioDataList.get(0));
         AudioInputStream firstAudio = AudioSystem.getAudioInputStream(firstWavStream);
-        AudioFormat format = firstAudio.getFormat();
-
+        
         // Work with a copy of the first file to extract chunks
         byte[] firstFileData = audioDataList.get(0);
 
@@ -1039,30 +1038,6 @@ public class AddVoiceMemoDialog extends javax.swing.JDialog {
         return finalOutput.toByteArray();
     }
     
-
-    private void writeWavHeader(ByteArrayOutputStream outputStream, long totalDataLen) throws IOException {
-        // Define audio format for WAV header
-        AudioFormat audioFormat = AudioUtils.getAudioFormat();
-
-        // Calculate total audio length (including header)
-        long totalAudioLen = totalDataLen + 36;
-
-        // Write WAV header
-        outputStream.write("RIFF".getBytes());
-        outputStream.write(intToBytes((int) totalAudioLen));
-        outputStream.write("WAVE".getBytes());
-        outputStream.write("fmt ".getBytes());
-        outputStream.write(intToBytes(16)); // Subchunk1Size
-        outputStream.write(shortToBytes((short) 1)); // AudioFormat (PCM)
-        outputStream.write(shortToBytes((short) 1)); // NumChannels (Mono)
-        outputStream.write(intToBytes((int) audioFormat.getSampleRate())); // SampleRate
-        outputStream.write(intToBytes((int) audioFormat.getSampleRate() * audioFormat.getSampleSizeInBits() / 8)); // ByteRate
-        outputStream.write(shortToBytes((short) (audioFormat.getSampleSizeInBits() / 8))); // BlockAlign
-        outputStream.write(shortToBytes((short) audioFormat.getSampleSizeInBits())); // BitsPerSample
-        outputStream.write("data".getBytes());
-        outputStream.write(intToBytes((int) totalDataLen));
-    }
-
     private static byte[] intToBytes(int value) {
         byte[] bytes = new byte[4];
         bytes[0] = (byte) (value & 0xFF);
