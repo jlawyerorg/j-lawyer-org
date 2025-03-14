@@ -1047,14 +1047,6 @@ public class AddVoiceMemoDialog extends javax.swing.JDialog {
         return bytes;
     }
 
-    private static byte[] shortToBytes(short value) {
-        byte[] bytes = new byte[2];
-        bytes[0] = (byte) (value & 0xFF);
-        bytes[1] = (byte) ((value >> 8) & 0xFF);
-        return bytes;
-    }
-
-
     private void txtFileNameKeyPressed(java.awt.event.KeyEvent evt) {//GEN-FIRST:event_txtFileNameKeyPressed
         if (evt.getKeyCode() == KeyEvent.VK_ENTER) {
             this.cmdAddDocumentActionPerformed(null);

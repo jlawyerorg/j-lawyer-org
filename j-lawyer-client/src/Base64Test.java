@@ -743,6 +743,7 @@ public class Base64Test {
         }};
 
         final SEPA sepa = new SEPACreditTransfer(SEPA.PaymentMethods.TransferAdvice, sender, transactions);
+        
             ByteArrayOutputStream bout=new ByteArrayOutputStream();
         
         sepa.write(bout);
