@@ -1,5 +1,4 @@
-/*
-                    GNU AFFERO GENERAL PUBLIC LICENSE
+/*                    GNU AFFERO GENERAL PUBLIC LICENSE
                        Version 3, 19 November 2007
 
  Copyright (C) 2007 Free Software Foundation, Inc. <https://fsf.org/>
@@ -661,51 +660,204 @@ if any, to sign a "copyright disclaimer" for the program, if necessary.
 For more information on this, and how to apply and follow the GNU AGPL, see
 <https://www.gnu.org/licenses/>.
  */
-package com.jdimension.jlawyer.services;
+package com.jdimension.jlawyer.persistence;
 
-import com.jdimension.jlawyer.persistence.BankStatementsCSVConfig;
-import com.jdimension.jlawyer.persistence.Invoice;
-import com.jdimension.jlawyer.persistence.InvoicePool;
-import com.jdimension.jlawyer.persistence.InvoicePositionTemplate;
-import com.jdimension.jlawyer.persistence.InvoiceType;
-import java.math.BigDecimal;
-import java.util.List;
-import javax.ejb.Remote;
+import java.io.Serializable;
+import java.util.Locale;
 
 /**
  *
  * @author jens
  */
-@Remote
-public interface InvoiceServiceRemote {
-
-    List<InvoicePool> getAllInvoicePools() throws Exception;
-    List<InvoicePositionTemplate> getAllInvoicePositionTemplates() throws Exception;
-    List<InvoicePool> getInvoicePoolsForUser(String principalId) throws Exception;
+public class BankStatementsCSVConfig implements Serializable {
+    private static final long serialVersionUID = 1L;
     
-    List<BankStatementsCSVConfig> getAllBankStatementsCSVConfigurations() throws Exception;
-
-    InvoicePool addInvoicePool(InvoicePool ip);
-    InvoicePositionTemplate addInvoicePositionTemplate(InvoicePositionTemplate tpl);
-
-    InvoicePool updateInvoicePool(InvoicePool ip);
-    InvoicePositionTemplate updateInvoicePositionTemplate(InvoicePositionTemplate tpl);
-
-    void removeInvoicePool(InvoicePool ip);
-    void removeInvoicePositionTemplate(InvoicePositionTemplate tpl);
-
-    List<String> previewInvoiceNumbering(InvoicePool testPool) throws Exception;
-
-    List<InvoiceType> getAllInvoiceTypes() throws Exception;
-
-    InvoiceType addInvoiceType(InvoiceType invoiceType) throws Exception;
-
-    InvoiceType updateInvoiceType(InvoiceType invoiceType) throws Exception;
-
-    void removeInvoiceType(InvoiceType invoiceType) throws Exception;
-
-    byte[] getGiroCode(String senderPrincipalId, BigDecimal amount, String purpose) throws Exception;
+    private String configurationName="Deutsche Bank (CSV)";
     
-    List<Invoice> getInvoicesByStatus(int... status) throws Exception;
+    private String delimiter=";";
+    private String decimalFormat="#,##0.00";
+    private boolean header=true;
+    private String locale=Locale.GERMANY.toString();
+    
+    private int columnDate=-1;
+    private int columnName=-1;
+    private int columnBookingType=-1;
+    private int columnIban=-1;
+    private int columnPurpose=-1;
+    private int columnAmount=-1;
+    private int columnCurrency=-1;
+
+    public BankStatementsCSVConfig() {
+    }
+
+    /**
+     * @return the delimiter
+     */
+    public String getDelimiter() {
+        return delimiter;
+    }
+
+    /**
+     * @param delimiter the delimiter to set
+     */
+    public void setDelimiter(String delimiter) {
+        this.delimiter = delimiter;
+    }
+
+    /**
+     * @return the decimalFormat
+     */
+    public String getDecimalFormat() {
+        return decimalFormat;
+    }
+
+    /**
+     * @param decimalFormat the decimalFormat to set
+     */
+    public void setDecimalFormat(String decimalFormat) {
+        this.decimalFormat = decimalFormat;
+    }
+
+    /**
+     * @return the header
+     */
+    public boolean isHeader() {
+        return header;
+    }
+
+    /**
+     * @param header the header to set
+     */
+    public void setHeader(boolean header) {
+        this.header = header;
+    }
+
+    /**
+     * @return the locale
+     */
+    public String getLocale() {
+        return locale;
+    }
+
+    /**
+     * @param locale the locale to set
+     */
+    public void setLocale(String locale) {
+        this.locale = locale;
+    }
+
+    /**
+     * @return the columnDate
+     */
+    public int getColumnDate() {
+        return columnDate;
+    }
+
+    /**
+     * @param columnDate the columnDate to set
+     */
+    public void setColumnDate(int columnDate) {
+        this.columnDate = columnDate;
+    }
+
+    /**
+     * @return the columnName
+     */
+    public int getColumnName() {
+        return columnName;
+    }
+
+    /**
+     * @param columnName the columnName to set
+     */
+    public void setColumnName(int columnName) {
+        this.columnName = columnName;
+    }
+
+    /**
+     * @return the columnBookingType
+     */
+    public int getColumnBookingType() {
+        return columnBookingType;
+    }
+
+    /**
+     * @param columnBookingType the columnBookingType to set
+     */
+    public void setColumnBookingType(int columnBookingType) {
+        this.columnBookingType = columnBookingType;
+    }
+
+    /**
+     * @return the columnIban
+     */
+    public int getColumnIban() {
+        return columnIban;
+    }
+
+    /**
+     * @param columnIban the columnIban to set
+     */
+    public void setColumnIban(int columnIban) {
+        this.columnIban = columnIban;
+    }
+
+    /**
+     * @return the columnPurpose
+     */
+    public int getColumnPurpose() {
+        return columnPurpose;
+    }
+
+    /**
+     * @param columnPurpose the columnPurpose to set
+     */
+    public void setColumnPurpose(int columnPurpose) {
+        this.columnPurpose = columnPurpose;
+    }
+
+    /**
+     * @return the columnAmount
+     */
+    public int getColumnAmount() {
+        return columnAmount;
+    }
+
+    /**
+     * @param columnAmount the columnAmount to set
+     */
+    public void setColumnAmount(int columnAmount) {
+        this.columnAmount = columnAmount;
+    }
+
+    /**
+     * @return the columnCurrency
+     */
+    public int getColumnCurrency() {
+        return columnCurrency;
+    }
+
+    /**
+     * @param columnCurrency the columnCurrency to set
+     */
+    public void setColumnCurrency(int columnCurrency) {
+        this.columnCurrency = columnCurrency;
+    }
+
+    /**
+     * @return the configurationName
+     */
+    public String getConfigurationName() {
+        return configurationName;
+    }
+
+    /**
+     * @param configurationName the configurationName to set
+     */
+    public void setConfigurationName(String configurationName) {
+        this.configurationName = configurationName;
+    }
+    
+    
     
 }

@@ -671,6 +671,7 @@ import com.google.zxing.qrcode.QRCodeWriter;
 import com.google.zxing.qrcode.decoder.ErrorCorrectionLevel;
 import com.jdimension.jlawyer.persistence.AppUserBean;
 import com.jdimension.jlawyer.persistence.AppUserBeanFacadeLocal;
+import com.jdimension.jlawyer.persistence.BankStatementsCSVConfig;
 import com.jdimension.jlawyer.persistence.Invoice;
 import com.jdimension.jlawyer.persistence.InvoiceFacadeLocal;
 import com.jdimension.jlawyer.persistence.InvoicePool;
@@ -786,6 +787,41 @@ public class InvoiceService implements InvoiceServiceRemote, InvoiceServiceLocal
             return s1.toUpperCase().compareTo(s2.toUpperCase());
         });
         return tpls;
+    }
+    
+    @Override
+    @RolesAllowed({"loginRole"})
+    public List<BankStatementsCSVConfig> getAllBankStatementsCSVConfigurations() throws Exception {
+        List<BankStatementsCSVConfig> configs = new ArrayList<>();
+        
+        BankStatementsCSVConfig grenke=new BankStatementsCSVConfig();
+        grenke.setColumnAmount(11);
+        grenke.setColumnBookingType(9);
+        grenke.setColumnCurrency(12);
+        grenke.setColumnDate(4);
+        grenke.setColumnIban(7);
+        grenke.setColumnName(6);
+        grenke.setColumnPurpose(10);
+        grenke.setConfigurationName("GRENKE Bank AG");
+        grenke.setDecimalFormat("#,##0.00");
+        grenke.setDelimiter(";");
+        grenke.setHeader(true);
+        grenke.setLocale("DE");
+        
+        configs.add(grenke);
+        
+        Collections.sort(configs, (BankStatementsCSVConfig arg0, BankStatementsCSVConfig arg1) -> {
+            String s1 = arg0.getConfigurationName();
+            if (s1 == null) {
+                s1 = "";
+            }
+            String s2 = arg1.getConfigurationName();
+            if (s2 == null) {
+                s2 = "";
+            }
+            return s1.toUpperCase().compareTo(s2.toUpperCase());
+        });
+        return configs;
     }
 
     @Override

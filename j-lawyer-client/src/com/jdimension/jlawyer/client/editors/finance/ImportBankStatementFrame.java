@@ -664,6 +664,7 @@ For more information on this, and how to apply and follow the GNU AGPL, see
 package com.jdimension.jlawyer.client.editors.finance;
 
 import com.jdimension.jlawyer.client.settings.ClientSettings;
+import com.jdimension.jlawyer.persistence.BankStatementsCSVConfig;
 import com.jdimension.jlawyer.persistence.Invoice;
 import com.jdimension.jlawyer.services.JLawyerServiceLocator;
 import com.opencsv.CSVParser;
@@ -693,6 +694,7 @@ public class ImportBankStatementFrame extends javax.swing.JFrame {
     private int txIndex = -1;
     private ArrayList<BankTransaction> transactions = null;
     private List<Invoice> openInvoices = null;
+    private List<BankStatementsCSVConfig> csvConfigs=null;
 
     /**
      * Creates new form ImportBankStatement
@@ -704,6 +706,13 @@ public class ImportBankStatementFrame extends javax.swing.JFrame {
         try {
             JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
             this.openInvoices = locator.lookupInvoiceServiceRemote().getInvoicesByStatus(Invoice.STATUS_OPEN, Invoice.STATUS_OPEN_NONENFORCEABLE, Invoice.STATUS_OPEN_REMINDER1, Invoice.STATUS_OPEN_REMINDER2, Invoice.STATUS_OPEN_REMINDER3, Invoice.STATUS_NEW);
+            
+            this.cmbCsvConfig.removeAllItems();
+            csvConfigs=locator.lookupInvoiceServiceRemote().getAllBankStatementsCSVConfigurations();
+            for(BankStatementsCSVConfig c: csvConfigs) {
+                this.cmbCsvConfig.addItem(c.getConfigurationName());
+            }
+            
 
         } catch (Exception ex) {
             log.error("Error connecting to server", ex);
@@ -738,6 +747,7 @@ public class ImportBankStatementFrame extends javax.swing.JFrame {
         jRadioButton6 = new javax.swing.JRadioButton();
         jLabel2 = new javax.swing.JLabel();
         jLabel3 = new javax.swing.JLabel();
+        cmbCsvConfig = new javax.swing.JComboBox<>();
 
         setDefaultCloseOperation(javax.swing.WindowConstants.DISPOSE_ON_CLOSE);
 
@@ -791,6 +801,8 @@ public class ImportBankStatementFrame extends javax.swing.JFrame {
 
         jLabel3.setText("Kalendereinträge:");
 
+        cmbCsvConfig.setModel(new javax.swing.DefaultComboBoxModel<>(new String[] { "Item 1", "Item 2", "Item 3", "Item 4" }));
+
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(getContentPane());
         getContentPane().setLayout(layout);
         layout.setHorizontalGroup(
@@ -802,6 +814,8 @@ public class ImportBankStatementFrame extends javax.swing.JFrame {
                         .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                             .addGroup(layout.createSequentialGroup()
                                 .addComponent(cmdCsvUpload)
+                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                                .addComponent(cmbCsvConfig, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                                 .addComponent(cmdPrevious)
                                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
@@ -845,7 +859,8 @@ public class ImportBankStatementFrame extends javax.swing.JFrame {
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                     .addComponent(cmdCsvUpload)
                     .addComponent(cmdNext)
-                    .addComponent(cmdPrevious))
+                    .addComponent(cmdPrevious)
+                    .addComponent(cmbCsvConfig, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(jScrollPane1, javax.swing.GroupLayout.PREFERRED_SIZE, 291, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
@@ -877,17 +892,32 @@ public class ImportBankStatementFrame extends javax.swing.JFrame {
         JFileChooser chooser = new JFileChooser();
         int returnVal = chooser.showOpenDialog(this);
         if (returnVal == JFileChooser.APPROVE_OPTION) {
+            
+            BankStatementsCSVConfig csvConfig=null;
+            for(BankStatementsCSVConfig c: this.csvConfigs) {
+                if(c.getConfigurationName().equals(this.cmbCsvConfig.getSelectedItem().toString())) {
+                    csvConfig=c;
+                    break;
+                }
+            }
+            if(csvConfig==null) {
+                JOptionPane.showMessageDialog(this, "Ungültige CSV-Konfiguration", "Kontoauszug importieren", JOptionPane.ERROR_MESSAGE);
+                return;
+            }
 
             try {
+                
+                char delimiter = ';';
+                if(csvConfig.getDelimiter().length()==1)
+                    delimiter=csvConfig.getDelimiter().charAt(0);
+                        
                 String url = chooser.getSelectedFile().getCanonicalPath();
                 File f = new File(url);
-                //byte[] content = FileUtils.readFile(f);
-
-                char delimiter = ';';
-                boolean hasHeader = true;
+                
+                
                 // Create a DecimalFormat with German locale (comma as decimal separator)
-                DecimalFormatSymbols symbols = new DecimalFormatSymbols(Locale.GERMANY);
-                DecimalFormat df = new DecimalFormat("#,##0.00", symbols); // No currency symbols
+                DecimalFormatSymbols symbols = new DecimalFormatSymbols(Locale.forLanguageTag(csvConfig.getLocale()));
+                DecimalFormat df = new DecimalFormat(csvConfig.getDecimalFormat(), symbols); // No currency symbols
 
                 CSVParser parser = new CSVParserBuilder()
                         .withSeparator(delimiter) // Use the specified delimiter
@@ -896,20 +926,20 @@ public class ImportBankStatementFrame extends javax.swing.JFrame {
                 //CSVReader reader = new CSVReader(new FileReader(f.getAbsolutePath()));
                 CSVReader reader = new CSVReaderBuilder(new FileReader(f.getAbsolutePath()))
                         .withCSVParser(parser)
-                        .withSkipLines(hasHeader ? 1 : 0) // Skip header if present
+                        .withSkipLines(csvConfig.isHeader() ? 1 : 0) // Skip header if present
                         .build();
                 String[] nextLine;
 
                 // erst alle einlesen
                 this.transactions = new ArrayList<>();
                 while ((nextLine = reader.readNext()) != null) {
-                    String date = nextLine[4].trim();
-                    String fromName = nextLine[6].trim();
-                    String fromIban = nextLine[7].trim();
-                    String bookingType = nextLine[9].trim();
-                    String purpose = nextLine[10].trim();
-                    double amount = df.parse(nextLine[11].trim()).doubleValue();
-                    String currency = nextLine[12].trim();
+                    String date = nextLine[csvConfig.getColumnDate()].trim();
+                    String fromName = nextLine[csvConfig.getColumnName()].trim();
+                    String fromIban = nextLine[csvConfig.getColumnIban()].trim();
+                    String bookingType = nextLine[csvConfig.getColumnBookingType()].trim();
+                    String purpose = nextLine[csvConfig.getColumnPurpose()].trim();
+                    double amount = df.parse(nextLine[csvConfig.getColumnAmount()].trim()).doubleValue();
+                    String currency = nextLine[csvConfig.getColumnCurrency()].trim();
 
                     BankTransaction tx = new BankTransaction(date, fromName, fromIban, bookingType, purpose, amount, currency);
                     transactions.add(tx);
@@ -918,12 +948,12 @@ public class ImportBankStatementFrame extends javax.swing.JFrame {
                 System.out.println("" + transactions.size() + " Zeilen im CSV");
 
                 this.txIndex = -1;
-                if (transactions.size() > 0) {
+                if (!transactions.isEmpty()) {
                     this.cmdNextActionPerformed(null);
                 }
 
             } catch (Exception ex) {
-                ex.printStackTrace();
+                log.error("Unable to load bank statements from CSV", ex);
                 JOptionPane.showMessageDialog(this, "Kontoauszug kann nicht geladen werden", "Kontoauszug", JOptionPane.ERROR_MESSAGE);
             }
         }
@@ -1015,6 +1045,7 @@ public class ImportBankStatementFrame extends javax.swing.JFrame {
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.ButtonGroup btnGrpAccountEntryType;
     private javax.swing.JCheckBox chkMarkAsPaid;
+    private javax.swing.JComboBox<String> cmbCsvConfig;
     private javax.swing.JButton cmdCsvUpload;
     private javax.swing.JButton cmdNext;
     private javax.swing.JButton cmdPrevious;
