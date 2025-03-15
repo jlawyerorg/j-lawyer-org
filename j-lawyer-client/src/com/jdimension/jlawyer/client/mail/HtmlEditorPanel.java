@@ -783,7 +783,10 @@ public class HtmlEditorPanel extends javax.swing.JPanel implements EditorImpleme
         if (head == null) {
             head = doc.prependElement("head");
         }
-        head.append("<style> p { margin: 0; padding: 0; } </style>");
+        // this causes paragraphs to have no spacing at all
+        //head.append("<style> p { margin: 0; padding: 0; } </style>");
+        
+        head.append("<style> p { margin: 4px 0; padding: 0; line-height: 1.4; } </style>");
 
         return doc.outerHtml(); // Return cleaned HTML
     }
