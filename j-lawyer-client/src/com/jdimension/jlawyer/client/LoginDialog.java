@@ -830,7 +830,6 @@ public class LoginDialog extends javax.swing.JFrame {
 
         // Set frame size to 80% of the screen's width and height
         int height = (int) (bounds.height * 0.8);
-        //int width = (int) (bounds.width * 0.8);
         int width=(int)((float)height*((float)backgroundWidth/(float)backgroundHeight));
         setSize(width, height);
 
