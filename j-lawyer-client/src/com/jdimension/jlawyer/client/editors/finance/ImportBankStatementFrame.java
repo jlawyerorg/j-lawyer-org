@@ -678,10 +678,12 @@ import java.text.DecimalFormatSymbols;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
+import javax.swing.ImageIcon;
 import javax.swing.JFileChooser;
 import javax.swing.JOptionPane;
 import org.apache.log4j.Logger;
 import org.jlawyer.text.similarity.JaroWinkler;
+import themes.colors.DefaultColorTheme;
 
 /**
  *
@@ -691,10 +693,12 @@ public class ImportBankStatementFrame extends javax.swing.JFrame {
 
     private static final Logger log = Logger.getLogger(ImportBankStatementFrame.class.getName());
 
-    private int txIndex = -1;
     private ArrayList<BankTransaction> transactions = null;
     private List<Invoice> openInvoices = null;
     private List<BankStatementsCSVConfig> csvConfigs=null;
+    
+    private int txCount=0;
+    private int txIndex=0;
 
     /**
      * Creates new form ImportBankStatement
@@ -702,6 +706,13 @@ public class ImportBankStatementFrame extends javax.swing.JFrame {
     public ImportBankStatementFrame() {
         initComponents();
 
+        this.lblTxIndex.setText("0 / 0");
+        this.lblInvoice.setText("-");
+        this.lblCase.setText("-");
+        
+        this.cmdNext.setEnabled(false);
+        this.cmdPrevious.setEnabled(false);
+        
         ClientSettings settings = ClientSettings.getInstance();
         try {
             JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
@@ -736,22 +747,30 @@ public class ImportBankStatementFrame extends javax.swing.JFrame {
         cmdNext = new javax.swing.JButton();
         cmdPrevious = new javax.swing.JButton();
         chkMarkAsPaid = new javax.swing.JCheckBox();
-        jCheckBox1 = new javax.swing.JCheckBox();
-        jFormattedTextField1 = new javax.swing.JFormattedTextField();
+        chkCreateCaseAccountEntry = new javax.swing.JCheckBox();
+        txtAmount = new javax.swing.JFormattedTextField();
         jLabel1 = new javax.swing.JLabel();
-        jRadioButton1 = new javax.swing.JRadioButton();
-        jRadioButton2 = new javax.swing.JRadioButton();
-        jRadioButton3 = new javax.swing.JRadioButton();
-        jRadioButton4 = new javax.swing.JRadioButton();
-        jRadioButton5 = new javax.swing.JRadioButton();
-        jRadioButton6 = new javax.swing.JRadioButton();
+        rdEarnings = new javax.swing.JRadioButton();
+        rdSpendings = new javax.swing.JRadioButton();
+        rdExpenditureIn = new javax.swing.JRadioButton();
+        rdExpenditureOut = new javax.swing.JRadioButton();
+        rdEscrowIn = new javax.swing.JRadioButton();
+        rdEscrowOut = new javax.swing.JRadioButton();
         jLabel2 = new javax.swing.JLabel();
         jLabel3 = new javax.swing.JLabel();
         cmbCsvConfig = new javax.swing.JComboBox<>();
+        lblInvoice = new javax.swing.JLabel();
+        lblCase = new javax.swing.JLabel();
+        jButton1 = new javax.swing.JButton();
+        lblTxIndex = new javax.swing.JLabel();
+        cmbInvoices = new javax.swing.JComboBox<>();
 
         setDefaultCloseOperation(javax.swing.WindowConstants.DISPOSE_ON_CLOSE);
+        setIconImage(new ImageIcon(getClass().getResource("/icons/windowicon.png")).getImage());
 
-        cmdCsvUpload.setText("CSV Upload");
+        cmdCsvUpload.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons16/fileicons/file_type_csv.png"))); // NOI18N
+        cmdCsvUpload.setText("Kontoauszug laden");
+        cmdCsvUpload.setToolTipText("Kontoauszug im CSV-Format laden");
         cmdCsvUpload.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 cmdCsvUploadActionPerformed(evt);
@@ -762,46 +781,84 @@ public class ImportBankStatementFrame extends javax.swing.JFrame {
         taTransaction.setRows(5);
         jScrollPane1.setViewportView(taTransaction);
 
-        cmdNext.setText(">");
+        cmdNext.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/1rightarrow.png"))); // NOI18N
+        cmdNext.setToolTipText("zur nächsten Buchung wechseln");
         cmdNext.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 cmdNextActionPerformed(evt);
             }
         });
 
-        cmdPrevious.setText("<");
+        cmdPrevious.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/1leftarrow.png"))); // NOI18N
+        cmdPrevious.setToolTipText("zur vorhergehenden Buchung wechseln");
         cmdPrevious.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 cmdPreviousActionPerformed(evt);
             }
         });
 
+        chkMarkAsPaid.setFont(chkMarkAsPaid.getFont());
         chkMarkAsPaid.setText("Rechnung als bezahlt markieren");
 
-        jCheckBox1.setText("Buchung im Aktenkonto erstellen");
+        chkCreateCaseAccountEntry.setFont(chkCreateCaseAccountEntry.getFont());
+        chkCreateCaseAccountEntry.setText("Buchung im Aktenkonto erstellen");
 
-        jFormattedTextField1.setText("jFormattedTextField1");
+        txtAmount.setText("0");
+        txtAmount.setFont(txtAmount.getFont());
 
+        jLabel1.setFont(jLabel1.getFont());
         jLabel1.setText("Betrag:");
 
-        btnGrpAccountEntryType.add(jRadioButton1);
-        jRadioButton1.setText("Einnahme");
+        btnGrpAccountEntryType.add(rdEarnings);
+        rdEarnings.setFont(rdEarnings.getFont());
+        rdEarnings.setText("Einnahme");
 
-        jRadioButton2.setText("Ausgabe");
+        btnGrpAccountEntryType.add(rdSpendings);
+        rdSpendings.setFont(rdSpendings.getFont());
+        rdSpendings.setText("Ausgabe");
 
-        jRadioButton3.setText("Auslage ein");
+        btnGrpAccountEntryType.add(rdExpenditureIn);
+        rdExpenditureIn.setFont(rdExpenditureIn.getFont());
+        rdExpenditureIn.setText("Auslage ein");
 
-        jRadioButton4.setText("Auslage aus");
+        btnGrpAccountEntryType.add(rdExpenditureOut);
+        rdExpenditureOut.setFont(rdExpenditureOut.getFont());
+        rdExpenditureOut.setText("Auslage aus");
 
-        jRadioButton5.setText("Fremdgeld ein");
+        btnGrpAccountEntryType.add(rdEscrowIn);
+        rdEscrowIn.setFont(rdEscrowIn.getFont());
+        rdEscrowIn.setText("Fremdgeld ein");
 
-        jRadioButton6.setText("Fremdgeld aus");
+        btnGrpAccountEntryType.add(rdEscrowOut);
+        rdEscrowOut.setFont(rdEscrowOut.getFont());
+        rdEscrowOut.setText("Fremdgeld aus");
 
+        jLabel2.setFont(jLabel2.getFont());
         jLabel2.setText("Aktenetiketten:");
 
+        jLabel3.setFont(jLabel3.getFont());
         jLabel3.setText("Kalendereinträge:");
 
         cmbCsvConfig.setModel(new javax.swing.DefaultComboBoxModel<>(new String[] { "Item 1", "Item 2", "Item 3", "Item 4" }));
+
+        lblInvoice.setFont(lblInvoice.getFont().deriveFont(lblInvoice.getFont().getStyle() | java.awt.Font.BOLD));
+        lblInvoice.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/file_doc.png"))); // NOI18N
+
+        lblCase.setFont(lblCase.getFont().deriveFont(lblCase.getFont().getStyle() | java.awt.Font.BOLD));
+        lblCase.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons16/material/baseline_folder_blue_36dp.png"))); // NOI18N
+        lblCase.setText("der ./. den");
+
+        jButton1.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/find.png"))); // NOI18N
+        jButton1.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                jButton1ActionPerformed(evt);
+            }
+        });
+
+        lblTxIndex.setFont(lblTxIndex.getFont().deriveFont(lblTxIndex.getFont().getStyle() | java.awt.Font.BOLD));
+        lblTxIndex.setText("1 / 10");
+
+        cmbInvoices.setModel(new javax.swing.DefaultComboBoxModel<>(new String[] { "Item 1", "Item 2", "Item 3", "Item 4" }));
 
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(getContentPane());
         getContentPane().setLayout(layout);
@@ -811,46 +868,54 @@ public class ImportBankStatementFrame extends javax.swing.JFrame {
                 .addContainerGap()
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                     .addGroup(layout.createSequentialGroup()
+                        .addComponent(cmdCsvUpload)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addComponent(cmbCsvConfig, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                        .addComponent(lblTxIndex)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addComponent(cmdPrevious)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addComponent(cmdNext))
+                    .addComponent(jScrollPane1, javax.swing.GroupLayout.DEFAULT_SIZE, 988, Short.MAX_VALUE)
+                    .addGroup(layout.createSequentialGroup()
+                        .addGap(6, 6, 6)
                         .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                             .addGroup(layout.createSequentialGroup()
-                                .addComponent(cmdCsvUpload)
-                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                                .addComponent(cmbCsvConfig, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                                .addComponent(cmdPrevious)
-                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                                .addComponent(cmdNext))
-                            .addComponent(jScrollPane1, javax.swing.GroupLayout.DEFAULT_SIZE, 1190, Short.MAX_VALUE)
-                            .addGroup(layout.createSequentialGroup()
                                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                                    .addComponent(chkMarkAsPaid)
                                     .addGroup(layout.createSequentialGroup()
-                                        .addComponent(jCheckBox1)
+                                        .addComponent(chkCreateCaseAccountEntry)
                                         .addGap(18, 18, 18)
                                         .addComponent(jLabel1)
                                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                                        .addComponent(jFormattedTextField1, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)))
-                                .addGap(0, 0, Short.MAX_VALUE)))
-                        .addContainerGap())
-                    .addGroup(layout.createSequentialGroup()
-                        .addGap(27, 27, 27)
-                        .addComponent(jRadioButton1)
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-                        .addComponent(jRadioButton2)
-                        .addGap(18, 18, 18)
-                        .addComponent(jRadioButton3)
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addComponent(jRadioButton4)
-                        .addGap(18, 18, 18)
-                        .addComponent(jRadioButton5)
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addComponent(jRadioButton6)
-                        .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
-                    .addGroup(layout.createSequentialGroup()
-                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                            .addComponent(jLabel2)
-                            .addComponent(jLabel3))
-                        .addGap(0, 0, Short.MAX_VALUE))))
+                                        .addComponent(txtAmount, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
+                                    .addGroup(layout.createSequentialGroup()
+                                        .addComponent(chkMarkAsPaid)
+                                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                                        .addComponent(lblInvoice)
+                                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                                        .addComponent(cmbInvoices, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
+                                    .addGroup(layout.createSequentialGroup()
+                                        .addGap(27, 27, 27)
+                                        .addComponent(rdEarnings)
+                                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                                        .addComponent(rdSpendings)
+                                        .addGap(18, 18, 18)
+                                        .addComponent(rdExpenditureIn)
+                                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                                        .addComponent(rdExpenditureOut)
+                                        .addGap(18, 18, 18)
+                                        .addComponent(rdEscrowIn)
+                                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                                        .addComponent(rdEscrowOut))
+                                    .addComponent(jLabel2)
+                                    .addComponent(jLabel3))
+                                .addGap(0, 0, Short.MAX_VALUE))
+                            .addGroup(layout.createSequentialGroup()
+                                .addComponent(jButton1)
+                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                                .addComponent(lblCase, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)))))
+                .addContainerGap())
         );
         layout.setVerticalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
@@ -860,29 +925,37 @@ public class ImportBankStatementFrame extends javax.swing.JFrame {
                     .addComponent(cmdCsvUpload)
                     .addComponent(cmdNext)
                     .addComponent(cmdPrevious)
-                    .addComponent(cmbCsvConfig, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
+                    .addComponent(cmbCsvConfig, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(lblTxIndex))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(jScrollPane1, javax.swing.GroupLayout.PREFERRED_SIZE, 291, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-                .addComponent(chkMarkAsPaid)
+                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
+                    .addComponent(jButton1, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                    .addComponent(lblCase, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                .addGap(15, 15, 15)
+                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                    .addComponent(chkMarkAsPaid)
+                    .addComponent(cmbInvoices, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(lblInvoice, javax.swing.GroupLayout.PREFERRED_SIZE, 31, javax.swing.GroupLayout.PREFERRED_SIZE))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                    .addComponent(jCheckBox1)
+                    .addComponent(chkCreateCaseAccountEntry)
                     .addComponent(jLabel1)
-                    .addComponent(jFormattedTextField1, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
+                    .addComponent(txtAmount, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                    .addComponent(jRadioButton1)
-                    .addComponent(jRadioButton2)
-                    .addComponent(jRadioButton3)
-                    .addComponent(jRadioButton4)
-                    .addComponent(jRadioButton5)
-                    .addComponent(jRadioButton6))
+                    .addComponent(rdEarnings)
+                    .addComponent(rdSpendings)
+                    .addComponent(rdExpenditureIn)
+                    .addComponent(rdExpenditureOut)
+                    .addComponent(rdEscrowIn)
+                    .addComponent(rdEscrowOut))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
                 .addComponent(jLabel2)
                 .addGap(18, 18, 18)
                 .addComponent(jLabel3)
-                .addContainerGap(303, Short.MAX_VALUE))
+                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
         );
 
         pack();
@@ -947,10 +1020,14 @@ public class ImportBankStatementFrame extends javax.swing.JFrame {
                 }
                 System.out.println("" + transactions.size() + " Zeilen im CSV");
 
+                this.txCount=transactions.size();
                 this.txIndex = -1;
                 if (!transactions.isEmpty()) {
                     this.cmdNextActionPerformed(null);
                 }
+                
+                this.cmdNext.setEnabled(transactions.size()>1);
+                this.cmdPrevious.setEnabled(false);
 
             } catch (Exception ex) {
                 log.error("Unable to load bank statements from CSV", ex);
@@ -961,15 +1038,25 @@ public class ImportBankStatementFrame extends javax.swing.JFrame {
 
     private void cmdNextActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdNextActionPerformed
         this.txIndex++;
+        this.cmdNext.setEnabled(transactions.size()-1>=this.txIndex);
+        this.cmdPrevious.setEnabled(this.txIndex>0);
         this.loadTransaction(txIndex);
     }//GEN-LAST:event_cmdNextActionPerformed
 
     private void cmdPreviousActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdPreviousActionPerformed
         this.txIndex--;
+        this.cmdNext.setEnabled(transactions.size()-1>=this.txIndex);
+        this.cmdPrevious.setEnabled(this.txIndex>0);
         this.loadTransaction(txIndex);
     }//GEN-LAST:event_cmdPreviousActionPerformed
 
+    private void jButton1ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton1ActionPerformed
+        // TODO add your handling code here:
+    }//GEN-LAST:event_jButton1ActionPerformed
+
     private void loadTransaction(int index) {
+        this.lblTxIndex.setText(this.txIndex+1 + " / " + this.txCount);
+        
         BankTransaction tx = this.transactions.get(index);
         this.taTransaction.setText(tx.toString());
 
@@ -998,12 +1085,47 @@ public class ImportBankStatementFrame extends javax.swing.JFrame {
             match=jaroWinklerMatch;
         
         this.taTransaction.append(System.lineSeparator());
-            this.taTransaction.append(System.lineSeparator());
+        this.taTransaction.append(System.lineSeparator());
+        
+        this.chkMarkAsPaid.setEnabled(match!=null);
+        this.chkMarkAsPaid.setSelected(match!=null);
+        this.txtAmount.setValue(tx.getAmount());
+        
+        this.cmbInvoices.removeAllItems();
+        
         if(match!=null) {
             this.taTransaction.append("Rechnung gefunden: " + match.getInvoiceNumber() + " - " + match.getName());
-            
+            this.cmbInvoices.addItem(match.getInvoiceNumber());
+            this.lblCase.setText(match.getArchiveFileKey().getFileNumber() + " " + match.getArchiveFileKey().getName());
         } else {
             this.taTransaction.append("keine Rechnung gefunden");
+            this.lblCase.setText("-");
+        }
+        
+        if(tx.getAmount()<0) {
+            this.txtAmount.setForeground(DefaultColorTheme.COLOR_LOGO_RED);
+            
+            this.rdEarnings.setEnabled(false);
+            this.rdExpenditureIn.setEnabled(false);
+            this.rdEscrowIn.setEnabled(false);
+            
+            this.rdSpendings.setEnabled(true);
+            this.rdExpenditureOut.setEnabled(true);
+            this.rdEscrowOut.setEnabled(true);
+            
+            this.rdSpendings.setSelected(true);
+        } else {
+            this.txtAmount.setForeground(DefaultColorTheme.COLOR_LOGO_GREEN);
+            
+            this.rdEarnings.setEnabled(true);
+            this.rdExpenditureIn.setEnabled(true);
+            this.rdEscrowIn.setEnabled(true);
+            
+            this.rdSpendings.setEnabled(false);
+            this.rdExpenditureOut.setEnabled(false);
+            this.rdEscrowOut.setEnabled(false);
+            
+            this.rdEarnings.setSelected(true);
         }
 
     }
@@ -1044,23 +1166,28 @@ public class ImportBankStatementFrame extends javax.swing.JFrame {
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.ButtonGroup btnGrpAccountEntryType;
+    private javax.swing.JCheckBox chkCreateCaseAccountEntry;
     private javax.swing.JCheckBox chkMarkAsPaid;
     private javax.swing.JComboBox<String> cmbCsvConfig;
+    private javax.swing.JComboBox<String> cmbInvoices;
     private javax.swing.JButton cmdCsvUpload;
     private javax.swing.JButton cmdNext;
     private javax.swing.JButton cmdPrevious;
-    private javax.swing.JCheckBox jCheckBox1;
-    private javax.swing.JFormattedTextField jFormattedTextField1;
+    private javax.swing.JButton jButton1;
     private javax.swing.JLabel jLabel1;
     private javax.swing.JLabel jLabel2;
     private javax.swing.JLabel jLabel3;
-    private javax.swing.JRadioButton jRadioButton1;
-    private javax.swing.JRadioButton jRadioButton2;
-    private javax.swing.JRadioButton jRadioButton3;
-    private javax.swing.JRadioButton jRadioButton4;
-    private javax.swing.JRadioButton jRadioButton5;
-    private javax.swing.JRadioButton jRadioButton6;
     private javax.swing.JScrollPane jScrollPane1;
+    private javax.swing.JLabel lblCase;
+    private javax.swing.JLabel lblInvoice;
+    private javax.swing.JLabel lblTxIndex;
+    private javax.swing.JRadioButton rdEarnings;
+    private javax.swing.JRadioButton rdEscrowIn;
+    private javax.swing.JRadioButton rdEscrowOut;
+    private javax.swing.JRadioButton rdExpenditureIn;
+    private javax.swing.JRadioButton rdExpenditureOut;
+    private javax.swing.JRadioButton rdSpendings;
     private javax.swing.JTextArea taTransaction;
+    private javax.swing.JFormattedTextField txtAmount;
     // End of variables declaration//GEN-END:variables
 }
