@@ -2904,6 +2904,7 @@ public class JKanzleiGUI extends javax.swing.JFrame implements com.jdimension.jl
 
     private void mnuImportAccountStatementActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_mnuImportAccountStatementActionPerformed
         ImportBankStatementFrame ibsf=new ImportBankStatementFrame();
+        FrameUtils.centerFrame(ibsf, EditorsRegistry.getInstance().getMainWindow());
         ibsf.setVisible(true);
     }//GEN-LAST:event_mnuImportAccountStatementActionPerformed
 
