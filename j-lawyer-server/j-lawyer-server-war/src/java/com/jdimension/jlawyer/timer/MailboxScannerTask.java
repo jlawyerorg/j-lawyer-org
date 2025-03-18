@@ -1238,26 +1238,24 @@ public class MailboxScannerTask extends java.util.TimerTask {
             Collection<String> formPlaceHolders = formsSvc.getPlaceHoldersForCaseUnrestricted(toCase.getId());
             HashMap<String, String> formPlaceHolderValues = formsSvc.getPlaceHolderValuesForCaseUnrestricted(toCase.getId());
 
-            String newNameMsg = msg.getSubject();
-            if (newNameMsg == null) {
-                newNameMsg = "E-Mail ohne Betreff";
+            String docName=getEmailFilename(-1, msg.getSubject(), caseSvc, serverTemplates, received, nameTemplate, toCase, allPartyTypes, formPlaceHolders, formPlaceHolderValues, involved, caseLawyer, caseAssistant);
+            if(caseSvc.doesDocumentExistUnrestricted(toCase.getId(), docName)) {
+                // naming clash - find alternative name
+                int fileNameIndex=2;
+                boolean fileNameClash=true;
+                while(fileNameClash && fileNameIndex<=5) {
+                    docName=getEmailFilename(fileNameIndex, msg.getSubject(), caseSvc, serverTemplates, received, nameTemplate, toCase, allPartyTypes, formPlaceHolders, formPlaceHolderValues, involved, caseLawyer, caseAssistant);
+                    fileNameClash=caseSvc.doesDocumentExistUnrestricted(toCase.getId(), docName);
+                    fileNameIndex=fileNameIndex+1;
+                    if(fileNameClash)
+                        docName=null;
+                    if(!fileNameClash)
+                        break;
+                }
             }
-            newNameMsg = newNameMsg + ".eml";
-            newNameMsg = ServerFileUtils.sanitizeFileName(newNameMsg);
-            String extension = ServerFileUtils.getExtension(newNameMsg);
-            String docName = caseSvc.getNewDocumentNameUnrestricted(newNameMsg, received, nameTemplate);
-            HashMap<String, Object> placeHolders = serverTemplates.getPlaceHolderValues(docName, toCase, involved, null, null, allPartyTypes, formPlaceHolders, formPlaceHolderValues, caseLawyer, caseAssistant);
-            docName = ServerTemplatesUtil.replacePlaceHolders(docName, placeHolders);
-            docName = ServerFileUtils.sanitizeFileName(docName);
-
-            // remove any extension, because of the template it might be somewhere in the middle of the new name
-            docName = docName.replace("." + extension, "");
-
-            // add back extension
-            docName = ServerFileUtils.preserveExtension(newNameMsg, docName);
-
-            if (caseSvc.doesDocumentExistUnrestricted(toCase.getId(), docName)) {
-                log.error("There is already a document '" + docName + "' in case " + toCase.getFileNumber() + " - skipping entire message");
+            
+            if (docName==null) {
+                log.error("There is a naming conflict for email '" + msg.getSubject() + "' in case " + toCase.getFileNumber() + " - skipping entire message");
                 return false;
             } else {
                 ArchiveFileDocumentsBean newDoc = caseSvc.addDocumentUnrestricted(toCase.getId(), docName, msgData, "", null);
@@ -1303,15 +1301,15 @@ public class MailboxScannerTask extends java.util.TimerTask {
                     newName = "unbekannter Anhang";
                 }
                 newName = ServerFileUtils.sanitizeFileName(newName);
-                extension = ServerFileUtils.getExtension(newName);
+                String extension = ServerFileUtils.getExtension(newName);
                 docName = caseSvc.getNewDocumentNameUnrestricted(newName, received, nameTemplate);
-                placeHolders = serverTemplates.getPlaceHolderValues(docName, toCase, involved, null, null, allPartyTypes, formPlaceHolders, formPlaceHolderValues, caseLawyer, caseAssistant);
+                HashMap<String, Object> placeHolders = serverTemplates.getPlaceHolderValues(docName, toCase, involved, null, null, allPartyTypes, formPlaceHolders, formPlaceHolderValues, caseLawyer, caseAssistant);
                 docName = ServerTemplatesUtil.replacePlaceHolders(docName, placeHolders);
                 docName = ServerFileUtils.sanitizeFileName(docName);
 
                 // remove any extension, because of the template it might be somewhere in the middle of the new name
                 docName = docName.replace("." + extension, "");
-                
+
                 // add back extension
                 docName = ServerFileUtils.preserveExtension(newName, docName);
 
@@ -1358,6 +1356,31 @@ public class MailboxScannerTask extends java.util.TimerTask {
         }
         // in case of multiple active cases, return nothing
         return null;
+    }
+
+    private String getEmailFilename(int fileNameIndex, String subject, ArchiveFileServiceLocal caseSvc, ServerTemplatesUtil serverTemplates, Date received, DocumentNameTemplate nameTemplate, ArchiveFileBean toCase, List<PartyTypeBean> allPartyTypes, Collection<String> formPlaceHolders, HashMap<String, String> formPlaceHolderValues, List<ArchiveFileAddressesBean> involved, AppUserBean caseLawyer, AppUserBean caseAssistant) throws Exception {
+        String newNameMsg = subject;
+        if (newNameMsg == null) {
+            newNameMsg = "E-Mail ohne Betreff";
+        }
+        
+        if(fileNameIndex>=2)
+            newNameMsg=newNameMsg+ " (" + fileNameIndex+")";
+        
+        newNameMsg = newNameMsg + ".eml";
+        newNameMsg = ServerFileUtils.sanitizeFileName(newNameMsg);
+        String extension = ServerFileUtils.getExtension(newNameMsg);
+        String docName = caseSvc.getNewDocumentNameUnrestricted(newNameMsg, received, nameTemplate);
+        HashMap<String, Object> placeHolders = serverTemplates.getPlaceHolderValues(docName, toCase, involved, null, null, allPartyTypes, formPlaceHolders, formPlaceHolderValues, caseLawyer, caseAssistant);
+        docName = ServerTemplatesUtil.replacePlaceHolders(docName, placeHolders);
+        docName = ServerFileUtils.sanitizeFileName(docName);
+
+        // remove any extension, because of the template it might be somewhere in the middle of the new name
+        docName = docName.replace("." + extension, "");
+
+        // add back extension
+        return ServerFileUtils.preserveExtension(newNameMsg, docName);
+
     }
 
 }
