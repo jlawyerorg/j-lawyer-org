@@ -843,7 +843,7 @@ public class LoadFolderAction extends ProgressableAction {
 
                 if (this.isCancelled()) {
                     try {
-                        ComponentUtils.autoSizeColumns(table, 0);
+                        ComponentUtils.autoSizeColumns(table, 2);
                     } catch (Throwable t) {
                         log.error("Could not auto-size columns", t);
                     }
@@ -907,7 +907,7 @@ public class LoadFolderAction extends ProgressableAction {
                 if (msg.getSentDate() != null) {
                     sentString = df.format(msg.getSentDate());
                 }
-                Object[] newRow = new Object[]{new MessageContainer(msg, msg.getSubject(), msg.isSet(Flags.Flag.SEEN)), from, toString, sentString};
+                Object[] newRow = new Object[]{sentString, from, new MessageContainer(msg, msg.getSubject(), msg.isSet(Flags.Flag.SEEN)), toString};
                 tableRows.add(newRow);
 
                 if (((i % 100) == 0 && i > 0) || i == (messages.length - 1)) {
@@ -948,7 +948,7 @@ public class LoadFolderAction extends ProgressableAction {
                 } catch (Throwable t) {
                     log.error("Error sorting mails", t);
                 }
-                ComponentUtils.autoSizeColumns(table, 0);
+                ComponentUtils.autoSizeColumns(table, 2);
             });
         } catch (Throwable ex) {
             log.error(ex);

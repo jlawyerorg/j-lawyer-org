@@ -828,10 +828,10 @@ public class EmailInboxPanel extends javax.swing.JPanel implements SaveToCaseExe
             }
         }
 
-        DefaultTableModel tm = new DefaultTableModel(new String[]{"Betreff", "Absender", "Empfänger", "Gesendet"}, 0);
+        DefaultTableModel tm = new DefaultTableModel(new String[]{"Gesendet", "Absender", "Betreff", "Empfänger"}, 0);
         this.tblMails.setModel(tm);
         TableRowSorter<TableModel> sorter = new TableRowSorter<>(tm);
-        sorter.setComparator(3, new DescendingDateTimeStringComparator());
+        sorter.setComparator(0, new DescendingDateTimeStringComparator());
         this.tblMails.setRowSorter(sorter);
 
         this.renderer = new EmailFolderTreeCellRenderer();
@@ -1602,7 +1602,7 @@ public class EmailInboxPanel extends javax.swing.JPanel implements SaveToCaseExe
 
     private void treeFoldersValueChanged(javax.swing.event.TreeSelectionEvent evt) {//GEN-FIRST:event_treeFoldersValueChanged
         if(this.treeFolders.getSelectionCount()>0) {
-            this.treeFoldersValueChangedImpl(evt, 3, -1, null, false);
+            this.treeFoldersValueChangedImpl(evt, 0, -1, null, false);
         } else {
             this.mailContentUI.clear();
             DefaultTableModel tm = new DefaultTableModel(new String[]{"Betreff", "Absender", "Empfänger", "Gesendet"}, 0) {
@@ -1678,7 +1678,7 @@ public class EmailInboxPanel extends javax.swing.JPanel implements SaveToCaseExe
 
         if (!(selNode.getUserObject() instanceof FolderContainer)) {
             // probably clicked the root node, which does not have a folder object but is the email account name
-            DefaultTableModel tm = new DefaultTableModel(new String[]{"Betreff", "Absender", "Empfänger", "Gesendet"}, 0) {
+            DefaultTableModel tm = new DefaultTableModel(new String[]{"Gesendet", "Absender", "Betreff", "Empfänger"}, 0) {
 
                 @Override
                 public boolean isCellEditable(int row, int column) {
@@ -1688,7 +1688,7 @@ public class EmailInboxPanel extends javax.swing.JPanel implements SaveToCaseExe
             };
             this.tblMails.setModel(tm);
             TableRowSorter<TableModel> sorter = new TableRowSorter<>(tm);
-            sorter.setComparator(3, new DescendingDateTimeStringComparator());
+            sorter.setComparator(0, new DescendingDateTimeStringComparator());
             this.tblMails.setRowSorter(sorter);
             this.tblMails.setDefaultRenderer(Object.class, new EmailTableCellRenderer());
             return;
@@ -1719,7 +1719,7 @@ public class EmailInboxPanel extends javax.swing.JPanel implements SaveToCaseExe
                 }
             }
 
-            DefaultTableModel tm = new DefaultTableModel(new String[]{"Betreff", "Absender", "Empfänger", "Gesendet"}, 0) {
+            DefaultTableModel tm = new DefaultTableModel(new String[]{"Gesendet", "Absender", "Betreff", "Empfänger"}, 0) {
 
                 @Override
                 public boolean isCellEditable(int row, int column) {
@@ -1729,7 +1729,7 @@ public class EmailInboxPanel extends javax.swing.JPanel implements SaveToCaseExe
             };
             this.tblMails.setModel(tm);
             TableRowSorter<TableModel> sorter = new TableRowSorter<>(tm);
-            sorter.setComparator(3, new DescendingDateTimeStringComparator());
+            sorter.setComparator(0, new DescendingDateTimeStringComparator());
             this.tblMails.setRowSorter(sorter);
             this.tblMails.setDefaultRenderer(Object.class, new EmailTableCellRenderer());
 
@@ -1790,7 +1790,7 @@ public class EmailInboxPanel extends javax.swing.JPanel implements SaveToCaseExe
                 return;
             }
 
-            MessageContainer msgC = (MessageContainer) this.tblMails.getValueAt(this.tblMails.getSelectedRow(), 0);
+            MessageContainer msgC = (MessageContainer) this.tblMails.getValueAt(this.tblMails.getSelectedRow(), 2);
 
             ViewEmailDialog view = new ViewEmailDialog(EditorsRegistry.getInstance().getMainWindow(), null, null);
             try {
@@ -1926,14 +1926,14 @@ public class EmailInboxPanel extends javax.swing.JPanel implements SaveToCaseExe
         int[] selected = this.tblMails.getSelectedRows();
         Folder folder = null;
         for (int sel : selected) {
-            MessageContainer msgC = (MessageContainer) this.tblMails.getValueAt(sel, 0);
+            MessageContainer msgC = (MessageContainer) this.tblMails.getValueAt(sel, 2);
             if (folder == null && msgC != null) {
                 folder = msgC.getMessage().getFolder();
             }
             if (msgC != null) {
                 try {
                     msgC.setRead(read);
-                    this.tblMails.setValueAt(msgC, sel, 0);
+                    this.tblMails.setValueAt(msgC, sel, 2);
                 } catch (MessagingException ex) {
                     log.error(ex);
                 }
@@ -1949,7 +1949,7 @@ public class EmailInboxPanel extends javax.swing.JPanel implements SaveToCaseExe
         int scrollToRow = -1;
         MessageContainer msgC = null;
         if (selected.length > 0) {
-            msgC = (MessageContainer) this.tblMails.getValueAt(selected[0], 0);
+            msgC = (MessageContainer) this.tblMails.getValueAt(selected[0], 2);
 
             expungeFolder = msgC.getMessage().getFolder();
             expungeClosed = !expungeFolder.isOpen();
@@ -1992,7 +1992,7 @@ public class EmailInboxPanel extends javax.swing.JPanel implements SaveToCaseExe
 
         ArrayList<Message> messages = new ArrayList<>();
         for (int i = selected.length - 1; i > -1; i--) {
-            msgC = (MessageContainer) this.tblMails.getValueAt(selected[i], 0);
+            msgC = (MessageContainer) this.tblMails.getValueAt(selected[i], 2);
             messages.add(msgC.getMessage());
         }
 
@@ -2139,7 +2139,7 @@ public class EmailInboxPanel extends javax.swing.JPanel implements SaveToCaseExe
                             EditorsRegistry.getInstance().updateStatus("Lösche Nachricht " + (i + 1) + " von " + all.length + "...", true);
                             m.setFlag(Flag.DELETED, true);
                         }
-                        this.tblMails.setModel(new DefaultTableModel(new String[]{"Betreff", "Absender", "Empfänger", "Gesendet"}, 0));
+                        this.tblMails.setModel(new DefaultTableModel(new String[]{"Gesendet", "Absender", "Betreff"}, 0));
 
                         tfc.resetCaches();
                         EmailUtils.closeIfIMAP(tf, true);
@@ -2167,7 +2167,7 @@ public class EmailInboxPanel extends javax.swing.JPanel implements SaveToCaseExe
     private void cmdReplyActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdReplyActionPerformed
         int[] selected = this.tblMails.getSelectedRows();
 
-        MessageContainer msgC = (MessageContainer) this.tblMails.getValueAt(selected[0], 0);
+        MessageContainer msgC = (MessageContainer) this.tblMails.getValueAt(selected[0], 2);
         Message m = msgC.getMessage();
         SendEmailDialog dlg = EmailUtils.reply(m, this.mailContentUI.getBody(), this.mailContentUI.getContentType());
         FrameUtils.centerDialog(dlg, null);
@@ -2196,7 +2196,7 @@ public class EmailInboxPanel extends javax.swing.JPanel implements SaveToCaseExe
 
         int[] selected = this.tblMails.getSelectedRows();
 
-        MessageContainer msgC = (MessageContainer) this.tblMails.getValueAt(selected[0], 0);
+        MessageContainer msgC = (MessageContainer) this.tblMails.getValueAt(selected[0], 2);
         try {
             Message m = msgC.getMessage();
             MailboxSetup ms = EmailUtils.getMailboxSetup(m);
@@ -2294,7 +2294,7 @@ public class EmailInboxPanel extends javax.swing.JPanel implements SaveToCaseExe
 
         int[] selected = this.tblMails.getSelectedRows();
 
-        MessageContainer msgC = (MessageContainer) this.tblMails.getValueAt(selected[0], 0);
+        MessageContainer msgC = (MessageContainer) this.tblMails.getValueAt(selected[0], 2);
         try {
             Message origM = msgC.getMessage();
             Message m = null;
@@ -2365,7 +2365,7 @@ public class EmailInboxPanel extends javax.swing.JPanel implements SaveToCaseExe
         if (this.tblMails.getSelectedRowCount() == 1) {
             try {
 
-                MessageContainer msgC = (MessageContainer) this.tblMails.getValueAt(this.tblMails.getSelectedRow(), 0);
+                MessageContainer msgC = (MessageContainer) this.tblMails.getValueAt(this.tblMails.getSelectedRow(), 2);
                 Message m = msgC.getMessage();
                 Folder f = m.getFolder();
                 boolean closed = !f.isOpen();
@@ -2614,7 +2614,7 @@ public class EmailInboxPanel extends javax.swing.JPanel implements SaveToCaseExe
 
         int selectionIndex = this.tblMails.getSelectedRow();
 
-        MessageContainer msgC = (MessageContainer) this.tblMails.getValueAt(selectionIndex, 0);
+        MessageContainer msgC = (MessageContainer) this.tblMails.getValueAt(selectionIndex, 2);
 
         this.pnlActionsChild.removeAll();
         ArrayList<Component> actionPanelEntries = new ArrayList<>();
@@ -2814,7 +2814,7 @@ public class EmailInboxPanel extends javax.swing.JPanel implements SaveToCaseExe
 
         }
 
-        this.tblMails.setValueAt(msgC, selectionIndex, 0);
+        this.tblMails.setValueAt(msgC, selectionIndex, 2);
         for (int i = 1; i < this.tblMails.getColumnCount(); i++) {
             this.tblMails.setValueAt(this.tblMails.getValueAt(selectionIndex, i), selectionIndex, i);
         }
@@ -2998,7 +2998,7 @@ public class EmailInboxPanel extends javax.swing.JPanel implements SaveToCaseExe
             Message[] copyMsg = new Message[selectedRows.length];
             for (int i = selectedRows.length - 1; i > -1; i--) {
                 int sel = selectedRows[i];
-                MessageContainer msgC = (MessageContainer) this.tblMails.getValueAt(sel, 0);
+                MessageContainer msgC = (MessageContainer) this.tblMails.getValueAt(sel, 2);
                 copyMsg[i] = msgC.getMessage();
             }
             Folder origin = copyMsg[0].getFolder();
@@ -3037,7 +3037,7 @@ public class EmailInboxPanel extends javax.swing.JPanel implements SaveToCaseExe
             int sortCol = -1;
             List<? extends SortKey> sortKeys = this.tblMails.getRowSorter().getSortKeys();
             if (sortKeys != null) {
-                if (sortKeys.size() > 0) {
+                if (!sortKeys.isEmpty()) {
                     sortCol = sortKeys.get(0).getColumn();
                 }
             }
@@ -3090,7 +3090,7 @@ public class EmailInboxPanel extends javax.swing.JPanel implements SaveToCaseExe
 
         StringBuilder searchContext = new StringBuilder();
         for (int row : this.tblMails.getSelectedRows()) {
-            MessageContainer msgC = (MessageContainer) this.tblMails.getValueAt(row, 0);
+            MessageContainer msgC = (MessageContainer) this.tblMails.getValueAt(row, 2);
             Message m = msgC.getMessage();
             try {
                 searchContext.append(m.getSubject()).append(" ");
@@ -3134,7 +3134,7 @@ public class EmailInboxPanel extends javax.swing.JPanel implements SaveToCaseExe
         try {
             for (int row : this.tblMails.getSelectedRows()) {
 
-                MessageContainer msgC = (MessageContainer) this.tblMails.getValueAt(row, 0);
+                MessageContainer msgC = (MessageContainer) this.tblMails.getValueAt(row, 2);
                 Message m = msgC.getMessage();
 
                 if (ms == null) {

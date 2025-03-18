@@ -894,7 +894,7 @@ public class LoadFolderThread implements Runnable {
                 if (msg.getSentDate() != null) {
                     sentString = df.format(msg.getSentDate());
                 }
-                Object[] newRow = new Object[]{new MessageContainer(msg, msg.getSubject(), msg.isSet(Flags.Flag.SEEN)), from, toString, sentString};
+                Object[] newRow = new Object[]{sentString, from, new MessageContainer(msg, msg.getSubject(), msg.isSet(Flags.Flag.SEEN)), toString};
                 tableRows.add(newRow);
 
                 if (((i % 100) == 0 && i > 0) || i == (messages.length - 1)) {
@@ -932,7 +932,7 @@ public class LoadFolderThread implements Runnable {
                 try {
                     if(this.sortCol<0) {
                         log.info("invalid sort column: " + this.sortCol + " using column 3");
-                        this.sortCol=3;
+                        this.sortCol=0;
                     }
                     if(this.sortCol+1>table.getModel().getColumnCount()) {
                         log.info("invalid sort column: " + this.sortCol + " - skip sorting");
@@ -944,7 +944,7 @@ public class LoadFolderThread implements Runnable {
                 } catch (Throwable t) {
                     log.error("Error sorting mails by column " + this.sortCol + " with " + table.getModel().getColumnCount() + " columns available", t);
                 }
-                ComponentUtils.autoSizeColumns(table, 0);
+                ComponentUtils.autoSizeColumns(table, 2);
             });
 
         } catch (Throwable ex) {
