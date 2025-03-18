@@ -748,6 +748,7 @@ public class ViewEmailDialog extends javax.swing.JDialog {
         cmdReply = new javax.swing.JButton();
         cmdReplyAll = new javax.swing.JButton();
         cmdForward = new javax.swing.JButton();
+        cmdEditDraft = new javax.swing.JButton();
 
         setDefaultCloseOperation(javax.swing.WindowConstants.DISPOSE_ON_CLOSE);
         setTitle("neue E-Mail");
@@ -802,6 +803,17 @@ public class ViewEmailDialog extends javax.swing.JDialog {
             }
         });
         jToolBar1.add(cmdForward);
+
+        cmdEditDraft.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons32/baseline_edit_square_black_48dp.png"))); // NOI18N
+        cmdEditDraft.setFocusable(false);
+        cmdEditDraft.setHorizontalTextPosition(javax.swing.SwingConstants.CENTER);
+        cmdEditDraft.setVerticalTextPosition(javax.swing.SwingConstants.BOTTOM);
+        cmdEditDraft.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                cmdEditDraftActionPerformed(evt);
+            }
+        });
+        jToolBar1.add(cmdEditDraft);
 
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(getContentPane());
         getContentPane().setLayout(layout);
@@ -1112,6 +1124,154 @@ public class ViewEmailDialog extends javax.swing.JDialog {
     private void formComponentShown(java.awt.event.ComponentEvent evt) {//GEN-FIRST:event_formComponentShown
         FrameUtils.centerDialogOnParentMonitor(this, this.getOwner().getLocation());
     }//GEN-LAST:event_formComponentShown
+
+    private void cmdEditDraftActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdEditDraftActionPerformed
+        SendEmailDialog dlg = new SendEmailDialog(true, EditorsRegistry.getInstance().getMainWindow(), false);
+        dlg.setArchiveFile(this.contextArchiveFile, this.contextFolder);
+        this.setPartiesToSendDialog(dlg, false);
+
+        if (this.emlMsg != null) {
+            MessageContainer msgC = this.emlMsg;
+            try {
+                Message m = msgC.getMessage();
+                MailboxSetup ms = EmailUtils.getMailboxSetup(m);
+                if (ms != null) {
+                    dlg.setFrom(ms);
+                }
+                Address from = m.getFrom()[0];
+
+                String subject = m.getSubject();
+                if (subject == null) {
+                    subject = "";
+                }
+                dlg.setSubject(subject);
+                
+                try {
+                    Address[] to = m.getRecipients(RecipientType.TO);
+                    String toString = EmailUtils.getAddressesAsList(to);
+
+                    Address[] cc = m.getRecipients(RecipientType.CC);
+                    String ccString = EmailUtils.getAddressesAsList(cc);
+
+                    Address[] bcc = m.getRecipients(RecipientType.BCC);
+                    String bccString = EmailUtils.getAddressesAsList(bcc);
+
+                    dlg.setTo(toString);
+                    dlg.setCC(ccString);
+                    dlg.setBCC(bccString);
+
+                } catch (Throwable t) {
+                    log.error(t);
+                    dlg.setTo(m.getRecipients(RecipientType.TO)[0].toString());
+                }
+
+                String contentType = this.content.getContentType();
+                dlg.setContentType(contentType);
+                if (contentType.toLowerCase().startsWith(ContentTypes.TEXT_HTML)) {
+                    dlg.setBody("", this.content.getBody(), ContentTypes.TEXT_PLAIN, false);
+                } else {
+                    dlg.setBody("", this.content.getBody(), ContentTypes.TEXT_PLAIN, false);
+                }
+                dlg.setBody("", this.content.getBody(), ContentTypes.TEXT_HTML, false);
+
+                try {
+                    // try forwarding attachments
+                    if (m.getFolder() != null) {
+                        if (!m.getFolder().isOpen()) {
+                            m.getFolder().open(Folder.READ_WRITE);
+                        }
+                    }
+                    ArrayList<String> attachmentNames = EmailUtils.getAttachmentNames(m.getContent());
+                    for (String attName : attachmentNames) {
+                        byte[] data = EmailUtils.getAttachmentBytes(attName, msgC);
+                        if (data != null) {
+                            String attachmentUrl = FileUtils.createTempFile(attName, data);
+                            new File(attachmentUrl).deleteOnExit();
+                            dlg.addAttachment(attachmentUrl, "");
+                        }
+                    }
+
+                    if (m.getFolder() != null && !EmailUtils.isInbox(m.getFolder())) {
+                        if (m.getFolder().isOpen()) {
+                            EmailUtils.closeIfIMAP(m.getFolder());
+                        }
+                    }
+
+                } catch (Throwable t) {
+                    log.error("Error forwarding attachments", t);
+                }
+
+            } catch (Exception ex) {
+                log.error(ex);
+            }
+        } else {
+            try {
+                MailboxSetup ms = EmailUtils.getMailboxSetup(this.outlookMsg);
+                if (ms != null) {
+                    dlg.setFrom(ms);
+                }
+                String from = this.outlookMsg.getFromEmail();
+                
+                try {
+                    String toString = EmailUtils.getAddressesAsList(this.outlookMsg.getToRecipients());
+                    String ccString = EmailUtils.getAddressesAsList(this.outlookMsg.getCcRecipients());
+                    String bccString = EmailUtils.getAddressesAsList(this.outlookMsg.getBccRecipients());
+
+                    dlg.setTo(toString);
+                    dlg.setCC(ccString);
+                    dlg.setBCC(bccString);
+
+                } catch (Throwable t) {
+                    log.error(t);
+                }
+
+                String subject = this.outlookMsg.getSubject();
+                if (subject == null) {
+                    subject = "";
+                }
+                dlg.setSubject(subject);
+
+                String contentType = this.content.getContentType();
+                dlg.setContentType(contentType);
+                if (contentType.toLowerCase().startsWith(ContentTypes.TEXT_HTML)) {
+                    dlg.setBody("", this.content.getBody(), ContentTypes.TEXT_PLAIN, false);
+                } else {
+                    dlg.setBody("", this.content.getBody(), ContentTypes.TEXT_PLAIN, false);
+                }
+                dlg.setBody("", this.content.getBody(), ContentTypes.TEXT_HTML, false);
+
+                try {
+                    List<OutlookFileAttachment> attachments = this.outlookMsg.fetchTrueAttachments();
+                    for (OutlookFileAttachment ofa : attachments) {
+                        byte[] data = ofa.getData();
+                        if (data != null) {
+                            String fileName=ofa.getFilename();
+                            if(StringUtils.isEmpty(fileName))
+                                fileName=ofa.getLongFilename();
+                            String attachmentUrl = FileUtils.createTempFile(fileName, data);
+                            new File(attachmentUrl).deleteOnExit();
+                            dlg.addAttachment(attachmentUrl, "");
+                        }
+                    }
+
+                } catch (Throwable t) {
+                    log.error("Error forwarding attachments", t);
+                }
+
+            } catch (Exception ex) {
+                log.error(ex);
+            }
+        }
+
+        FrameUtils.centerDialog(dlg, null);
+        dlg.setVisible(true);
+
+        if (this.odoc != null) {
+            this.odoc.setClosed(true);
+        }
+        this.setVisible(false);
+        this.dispose();
+    }//GEN-LAST:event_cmdEditDraftActionPerformed
     
     /**
      * @param args the command line arguments
@@ -1160,6 +1320,7 @@ public class ViewEmailDialog extends javax.swing.JDialog {
         });
     }
     // Variables declaration - do not modify//GEN-BEGIN:variables
+    private javax.swing.JButton cmdEditDraft;
     private javax.swing.JButton cmdForward;
     private javax.swing.JButton cmdReply;
     private javax.swing.JButton cmdReplyAll;

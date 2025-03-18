@@ -688,6 +688,7 @@ import com.jdimension.jlawyer.client.launcher.ReadOnlyDocumentStore;
 import com.jdimension.jlawyer.client.processing.ProgressIndicator;
 import com.jdimension.jlawyer.client.processing.ProgressableAction;
 import com.jdimension.jlawyer.client.settings.ClientSettings;
+import com.jdimension.jlawyer.client.settings.ServerSettings;
 import com.jdimension.jlawyer.client.settings.UserSettings;
 import com.jdimension.jlawyer.client.utils.AttachmentListCellRenderer;
 import com.jdimension.jlawyer.client.utils.AudioUtils;
@@ -716,6 +717,7 @@ import com.jdimension.jlawyer.server.utils.ContentTypes;
 import com.jdimension.jlawyer.services.AddressServiceRemote;
 import com.jdimension.jlawyer.services.JLawyerServiceLocator;
 import com.jdimension.jlawyer.pojo.PartiesTriplet;
+import com.jdimension.jlawyer.security.CryptoProvider;
 import java.awt.Color;
 import java.awt.event.ActionEvent;
 import java.awt.event.KeyEvent;
@@ -733,7 +735,22 @@ import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Properties;
 import java.util.concurrent.atomic.AtomicReference;
+import javax.activation.FileDataSource;
+import javax.mail.Authenticator;
+import javax.mail.Flags;
+import javax.mail.Folder;
+import javax.mail.Multipart;
+import javax.mail.Part;
+import javax.mail.PasswordAuthentication;
+import javax.mail.Session;
+import javax.mail.Store;
+import javax.mail.internet.InternetAddress;
+import javax.mail.internet.MimeBodyPart;
+import javax.mail.internet.MimeMessage;
+import javax.mail.internet.MimeMultipart;
+import javax.mail.internet.MimeUtility;
 import javax.sound.sampled.AudioFormat;
 import javax.sound.sampled.AudioSystem;
 import javax.sound.sampled.DataLine;
@@ -753,7 +770,7 @@ import themes.colors.DefaultColorTheme;
 public class SendEmailDialog extends javax.swing.JDialog implements SendCommunicationDialog, PartiesSelectionListener, AssistantFlowAdapter {
 
     private static final Logger log = Logger.getLogger(SendEmailDialog.class.getName());
-
+    private static final String SSL_FACTORY = "javax.net.ssl.SSLSocketFactory";
     private static final String LABEL_SEND_UNENCRYPTED = "unverschlüsselt senden";
 
     private AppUserBean cu = null;
@@ -1191,11 +1208,18 @@ public class SendEmailDialog extends javax.swing.JDialog implements SendCommunic
     }
 
     public void setBody(String preSignature, String postSignature, String contentType) {
+        this.setBody(preSignature, postSignature, contentType, true);
+    }
+    
+    public void setBody(String preSignature, String postSignature, String contentType, boolean useSignature) {
         MailboxSetup ms = this.getSelectedMailbox();
 
         if (contentType.toLowerCase().startsWith(ContentTypes.TEXT_PLAIN)) {
             if (ms != null) {
-                this.tp.setText(preSignature + EmailUtils.html2Text(ms.getEmailSignature()) + postSignature);
+                if(useSignature)
+                    this.tp.setText(preSignature + EmailUtils.html2Text(ms.getEmailSignature()) + postSignature);
+                else
+                    this.tp.setText(preSignature + postSignature);
                 this.tp.setCaretPosition(0);
             }
         } else {
@@ -1212,7 +1236,10 @@ public class SendEmailDialog extends javax.swing.JDialog implements SendCommunic
                 Element body = doc.body();
                 if (body != null) {
                     // Insert preSignature and sig at the beginning of the body
-                    body.prepend("<div>" + preSignature + "</div><div>" + sig + "</div><br/>");
+                    if(useSignature)
+                        body.prepend("<div>" + preSignature + "</div><div>" + sig + "</div><br/>");
+                    else
+                        body.prepend("<div>" + preSignature + "</div><br/>");
                 }
 
                 // Set the updated HTML in JEditorPane
@@ -1542,7 +1569,6 @@ public class SendEmailDialog extends javax.swing.JDialog implements SendCommunic
 
         cmdSaveDraft.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons32/baseline_edit_square_black_48dp.png"))); // NOI18N
         cmdSaveDraft.setToolTipText("als Entwurf speichern");
-        cmdSaveDraft.setEnabled(false);
         cmdSaveDraft.setFocusable(false);
         cmdSaveDraft.setHorizontalTextPosition(javax.swing.SwingConstants.CENTER);
         cmdSaveDraft.setVerticalTextPosition(javax.swing.SwingConstants.BOTTOM);
@@ -2512,98 +2538,161 @@ public class SendEmailDialog extends javax.swing.JDialog implements SendCommunic
     }//GEN-LAST:event_cmbFromActionPerformed
 
     private void cmdSaveDraftActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdSaveDraftActionPerformed
-//        if (StringUtils.isEmpty(this.txtSubject.getText())) {
-//            int response = JOptionPane.showConfirmDialog(this, "Nachricht ohne Betreff speichern?", "leerer Betreff", JOptionPane.YES_NO_OPTION);
-//            if (response == JOptionPane.NO_OPTION) {
-//                this.txtSubject.requestFocus();
-//                return;
-//            }
-//        }
-//
-//        MailboxSetup ms = this.getSelectedMailbox();
-//
-//        ClientSettings settings = ClientSettings.getInstance();
-//        if (this.chkSaveAsDocument.isSelected()) {
-//            JOptionPane.showMessageDialog(this, "Nachricht wird erst bei Versand zur Akte gespeichert.", "zur Akte speichern", JOptionPane.INFORMATION_MESSAGE);
-//        }
-//        if (this.chkEncryption.isSelected()) {
-//            JOptionPane.showMessageDialog(this, "Entwurf kann erst bei Versand verschlüsselt werden.", "Nachricht verschlüsseln", JOptionPane.INFORMATION_MESSAGE);
-//        }
-//
-//        ProgressIndicator dlg = new ProgressIndicator(this, true);
-//        EditorImplementation ed = (EditorImplementation) this.contentPanel.getComponent(0);
-//        String contentType = ed.getContentType();
-//        ArrayList<String> mails = EmailUtils.getAllMailAddressesFromString(this.txtTo.getText());
-//        mails.addAll(EmailUtils.getAllMailAddressesFromString(this.txtCc.getText()));
-//        mails.addAll(EmailUtils.getAllMailAddressesFromString(this.txtBcc.getText()));
-//
-//        String editorContent = ed.getText();
-//        editorContent = editorContent.replaceAll("<p>[\\s ]*</p>", "<p>&nbsp;</p>");
-//        editorContent = editorContent.replaceAll("<div>[\\s ]*</div>", "<div>&nbsp;</div>");
-//        ed.setText(editorContent);
-//
-//        if (mails.isEmpty()) {
-//            ThreadUtils.showErrorDialog(this, "Liste der Empfänger kann nicht leer sein.", com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR);
-//            return;
-//        }
-//
-//        ProgressableAction a = new SendAction(dlg, this, new ArrayList<>(this.attachments.values()), ms, this.chkReadReceipt.isSelected(), this.txtTo.getText(), this.txtCc.getText(), this.txtBcc.getText(), this.txtSubject.getText(), ed.getText(), contentType, createDocumentTag);
-//        a.start();
-//
-//        UserSettings uset = UserSettings.getInstance();
-//        if (ms != null) {
-//            uset.setSetting(UserSettings.CONF_MAIL_LASTUSEDSETUP, ms.getDisplayName());
-//        }
-//        if (this.cmbTemplates.getSelectedItem() != null) {
-//            uset.setSetting(UserSettings.CONF_MAIL_LASTUSEDTEMPLATE, this.cmbTemplates.getSelectedItem().toString());
-//        }
-//
-//        if (!(this.radioReviewTypeNone.isSelected()) && this.contextArchiveFile != null) {
-//            if (this.txtReviewDateField.getText().length() != 10) {
-//                JOptionPane.showMessageDialog(this, "Wiedervorlagedatum ungültig", "E-Mail senden", JOptionPane.INFORMATION_MESSAGE);
-//                return;
-//            }
-//            Date d = null;
-//            try {
-//                SimpleDateFormat df = new SimpleDateFormat("dd.MM.yyyy");
-//                d = df.parse(this.txtReviewDateField.getText());
-//            } catch (Throwable t) {
-//                JOptionPane.showMessageDialog(this, "Wiedervorlagedatum ungültig", "E-Mail senden", JOptionPane.INFORMATION_MESSAGE);
-//                return;
-//            }
-//
-//            ArchiveFileReviewsBean reviewDto = new ArchiveFileReviewsBean();
-//            reviewDto.setEventType(ArchiveFileReviewsBean.EVENTTYPE_FOLLOWUP);
-//            if (this.radioReviewTypeRespite.isSelected()) {
-//                reviewDto.setEventType(ArchiveFileReviewsBean.EVENTTYPE_RESPITE);
-//            }
-//            reviewDto.setDoneBoolean(false);
-//            reviewDto.setBeginDate(d);
-//            reviewDto.setAssignee(this.cmbReviewAssignee.getSelectedItem().toString());
-//            reviewDto.setSummary(this.cmbReviewReason.getModel().getSelectedItem().toString());
-//            reviewDto.setCalendarSetup(this.calendarSelectionButton1.getSelectedSetup());
-//
-//            if (CalendarUtils.checkForConflicts(this, reviewDto)) {
-//                EditorsRegistry.getInstance().updateStatus("Wiedervorlage/Frist wird gespeichert...");
-//                try {
-//                    JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
-//                    CalendarServiceRemote calService = locator.lookupCalendarServiceRemote();
-//
-//                    reviewDto = calService.addReview(this.contextArchiveFile.getId(), reviewDto);
-//                    EditorsRegistry.getInstance().updateStatus("Wiedervorlage/Frist gespeichert.", 5000);
-//
-//                } catch (Exception ex) {
-//                    log.error("Error adding review", ex);
-//                    JOptionPane.showMessageDialog(this, "Fehler beim Speichern der Wiedervorlage: " + ex.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
-//                    EditorsRegistry.getInstance().clearStatus();
-//                    return;
-//                }
-//
-//                EventBroker eb = EventBroker.getInstance();
-//                eb.publishEvent(new ReviewAddedEvent(reviewDto));
-//            }
-//
-//        }
+        try {
+
+            MailboxSetup ms = this.getSelectedMailbox();
+            String inPwd = "";
+            if (ms.isMsExchange()) {
+                inPwd = EmailUtils.getOffice365AuthToken(ms.getId());
+            } else {
+                try {
+                    inPwd = CryptoProvider.defaultCrypto().decrypt(ms.getEmailInPwd());
+                } catch (Throwable t) {
+                    log.error(t);
+                }
+            }
+
+            Properties imapProps = new Properties();
+            boolean authenticateImap = true;
+            try {
+                if (StringUtils.isEmpty(ms.getEmailInUser()) && StringUtils.isEmpty(inPwd)) {
+                    authenticateImap = false;
+                }
+            } catch (Throwable t) {
+                log.error("Could not decrypt IMAP password", t);
+            }
+            imapProps.setProperty("mail.imap.partialfetch", "false");
+            imapProps.setProperty("mail.imaps.partialfetch", "false");
+            imapProps.setProperty("mail.store.protocol", ms.getEmailInType());
+            imapProps.put("mail.from", ms.getEmailAddress());
+
+            if (authenticateImap) {
+                imapProps.put("mail.password", inPwd);
+            }
+
+            Store store = null;
+            Session session = null;
+            if (ms.isMsExchange()) {
+                imapProps.put("mail.imaps.sasl.enable", "true");
+                imapProps.put("mail.imaps.port", "993");
+
+                imapProps.put("mail.imaps.auth.mechanisms", "XOAUTH2");
+                imapProps.put("mail.imaps.sasl.mechanisms", "XOAUTH2");
+
+                imapProps.put("mail.imaps.auth.login.disable", "true");
+                imapProps.put("mail.imaps.auth.plain.disable", "true");
+
+                imapProps.setProperty("mail.imaps.socketFactory.class", SSL_FACTORY);
+                imapProps.setProperty("mail.imaps.socketFactory.fallback", "false");
+                imapProps.setProperty("mail.imaps.socketFactory.port", "993");
+                imapProps.setProperty("mail.imaps.starttls.enable", "true");
+
+                String authToken = EmailUtils.getOffice365AuthToken(ms.getId());
+
+                session = Session.getInstance(imapProps);
+                store = session.getStore("imaps");
+                store.connect(ms.getEmailInServer(), ms.getEmailInUser(), authToken);
+
+            } else {
+
+                imapProps.setProperty("mail.imaps.host", ms.getEmailInServer());
+                imapProps.setProperty("mail.imap.host", ms.getEmailInServer());
+
+                if (ms.isEmailInSsl()) {
+                    imapProps.setProperty("mail.store.protocol", "imaps");
+                }
+
+                imapProps.setProperty("mail.store.protocol", ms.getEmailInType());
+                if (ms.isEmailInSsl()) {
+                    imapProps.setProperty("mail." + ms.getEmailInType() + ".ssl.enable", "true");
+                }
+                ServerSettings sset = ServerSettings.getInstance();
+                String trustedServers = sset.getSetting("mail.imaps.ssl.trust", "");
+                if (trustedServers.length() > 0) {
+                    imapProps.put("mail.imaps.ssl.trust", trustedServers);
+                }
+
+                if (authenticateImap) {
+                    final String imapPwd = inPwd;
+                    session = Session.getInstance(imapProps, new Authenticator() {
+                        @Override
+                        protected PasswordAuthentication getPasswordAuthentication() {
+                            return new PasswordAuthentication(ms.getEmailInUser(), imapPwd);
+                        }
+                    });
+                } else {
+                    session = Session.getInstance(imapProps);
+                }
+
+                store = session.getStore();
+                store.connect();
+            }
+
+            MimeMessage msg = new MimeMessage(session);
+
+            msg.setFrom(new InternetAddress(ms.getEmailAddress(), ms.getEmailSenderName()));
+
+            if (this.chkReadReceipt.isSelected()) {
+                msg.setHeader("Disposition-Notification-To", ms.getEmailAddress());
+                msg.setHeader("Return-Receipt-To", ms.getEmailAddress());
+            }
+
+            msg.setRecipients(javax.mail.Message.RecipientType.TO, this.txtTo.getText());
+            msg.setRecipients(javax.mail.Message.RecipientType.CC, this.txtCc.getText());
+            msg.setRecipients(javax.mail.Message.RecipientType.BCC, this.txtBcc.getText());
+
+            msg.setSubject(MimeUtility.encodeText(this.txtSubject.getText(), "utf-8", "B"));
+            msg.setSentDate(new Date());
+
+            Multipart multiPart = new MimeMultipart();
+
+            MimeBodyPart messageText = new MimeBodyPart();
+            EditorImplementation ed = (EditorImplementation) this.contentPanel.getComponent(0);
+            String contentType = ed.getContentType();
+            String editorContent = ed.getText();
+            editorContent = editorContent.replaceAll("<p>[\\s ]*</p>", "<p>&nbsp;</p>");
+            editorContent = editorContent.replaceAll("<div>[\\s ]*</div>", "<div>&nbsp;</div>");
+            ed.setText(editorContent);
+            messageText.setContent(ed.getText(), contentType + "; charset=UTF-8");
+            multiPart.addBodyPart(messageText);
+
+            String attachmentNames = "";
+            for (String url : this.attachments.values()) {
+                MimeBodyPart att = new MimeBodyPart();
+                FileDataSource attFile = new FileDataSource(url);
+                att.attachFile (url);
+                att.setDisposition (Part.ATTACHMENT);
+                att.setFileName (attFile.getName());
+                attachmentNames  = attachmentNames + attFile.getName() + " ";
+                multiPart.addBodyPart(att);
+            }
+            msg.setContent(multiPart);
+            msg.saveChanges();
+
+            Folder drafts = EmailUtils.getDraftsFolder(store);
+            if (drafts != null) {
+                if (!drafts.isOpen()) {
+                    drafts.open(Folder.READ_WRITE);
+                }
+                msg.setFlag(Flags.Flag.SEEN, false);
+                drafts.appendMessages(new javax.mail.Message[]{msg});
+                EmailUtils.closeIfIMAP(drafts);
+
+            } else {
+                log.error("Unable to determine 'Drafts' folder for mailbox");
+            }
+
+            store.close();
+            
+            JOptionPane.showMessageDialog(this, "Nachricht im Ordner '" + drafts.getName() + "' gespeichert.", com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_HINT, JOptionPane.INFORMATION_MESSAGE);
+            
+            setVisible(false);
+            dispose();
+
+        } catch (Exception mex) {
+            log.error(mex);
+            JOptionPane.showMessageDialog(this, "" + mex.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
+        }
     }//GEN-LAST:event_cmdSaveDraftActionPerformed
 
     private void cmdAssistantMouseReleased(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_cmdAssistantMouseReleased
