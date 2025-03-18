@@ -1138,8 +1138,7 @@ public class ViewEmailDialog extends javax.swing.JDialog {
                 if (ms != null) {
                     dlg.setFrom(ms);
                 }
-                Address from = m.getFrom()[0];
-
+                
                 String subject = m.getSubject();
                 if (subject == null) {
                     subject = "";
