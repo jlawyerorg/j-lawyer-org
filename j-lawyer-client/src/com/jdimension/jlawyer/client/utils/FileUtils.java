@@ -892,7 +892,7 @@ public class FileUtils extends ServerFileUtils {
         // cleaning up temp dir must not ever cause the client to fail
         try {
 
-            String tmpDir = System.getProperty("user.home") + System.getProperty("file.separator") + ".j-lawyer-client" + System.getProperty("file.separator") + "tmp-documents";
+            String tmpDir = System.getProperty("user.home") + System.getProperty("file.separator") + ClientSettings.JLAWYERCLIENT_SETTINGDIR + System.getProperty("file.separator") + "tmp-documents";
             File fTmpDir = new File(tmpDir);
             if (!(fTmpDir.exists())) {
                 fTmpDir.mkdirs();
@@ -934,7 +934,7 @@ public class FileUtils extends ServerFileUtils {
 
         String tmpDir = System.getProperty("java.io.tmpdir");
         if (deleteAfterDays > -1) {
-            tmpDir = System.getProperty("user.home") + System.getProperty("file.separator") + ".j-lawyer-client" + System.getProperty("file.separator") + "tmp-documents";
+            tmpDir = System.getProperty("user.home") + System.getProperty("file.separator") + ClientSettings.JLAWYERCLIENT_SETTINGDIR + System.getProperty("file.separator") + "tmp-documents";
         }
 
         boolean wordOnMac = false;

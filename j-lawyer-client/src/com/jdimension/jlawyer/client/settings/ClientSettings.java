@@ -669,6 +669,14 @@ import com.jdimension.jlawyer.server.modules.ModuleMetadata;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
+import java.io.IOException;
+import java.nio.file.FileVisitResult;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.nio.file.SimpleFileVisitor;
+import java.nio.file.StandardCopyOption;
+import java.nio.file.attribute.BasicFileAttributes;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -680,6 +688,8 @@ import org.apache.log4j.Logger;
  * @author jens
  */
 public class ClientSettings {
+    
+    public static final String JLAWYERCLIENT_SETTINGDIR="j-lawyer-settings";
     
     public static final String CONF_LASTSERVER="connection.lastserver";
     public static final String CONF_LASTSERVERLIST="connection.lastserverlist";
@@ -835,7 +845,7 @@ public class ClientSettings {
      */
     private ClientSettings() {
         this.clientConfiguration=new Properties();
-        String clientConfFileLocation=System.getProperty("user.home") + System.getProperty("file.separator") + ".j-lawyer-client" + System.getProperty("file.separator") + "clientConfiguration.properties";
+        String clientConfFileLocation=System.getProperty("user.home") + System.getProperty("file.separator") + ClientSettings.JLAWYERCLIENT_SETTINGDIR + System.getProperty("file.separator") + "clientConfiguration.properties";
         File clientConfFile=new File(clientConfFileLocation);
         if(!clientConfFile.exists()) {
             try {
@@ -851,15 +861,45 @@ public class ClientSettings {
         }
     }
     
+    public static void migrateClientSettingsDirectory() {
+        
+        Path oldDir = Paths.get(System.getProperty("user.home"), ".j-lawyer-client");
+        Path newDir = Paths.get(System.getProperty("user.home"), ClientSettings.JLAWYERCLIENT_SETTINGDIR);
+        
+        if (Files.exists(oldDir) && !Files.exists(newDir)) {
+            try {
+                Files.createDirectories(newDir);
+                Files.walkFileTree(oldDir, new SimpleFileVisitor<Path>() {
+                    @Override
+                    public FileVisitResult visitFile(Path file, BasicFileAttributes attrs) throws IOException {
+                        Path targetFile = newDir.resolve(oldDir.relativize(file));
+                        Files.copy(file, targetFile, StandardCopyOption.REPLACE_EXISTING);
+                        return FileVisitResult.CONTINUE;
+                    }
+
+                    @Override
+                    public FileVisitResult preVisitDirectory(Path dir, BasicFileAttributes attrs) throws IOException {
+                        Path targetDir = newDir.resolve(oldDir.relativize(dir));
+                        Files.createDirectories(targetDir);
+                        return FileVisitResult.CONTINUE;
+                    }
+                });
+            } catch (IOException ex) {
+                System.out.println("Unable to migrate from old settings directory to new settings directory: " + ex.getMessage());
+                ex.printStackTrace();
+            }
+        }
+    }
+    
     public String getLocalReportsDirectory() {
-        String reportsDir=System.getProperty("user.home") + System.getProperty("file.separator") + ".j-lawyer-client" + System.getProperty("file.separator") + "reports" + System.getProperty("file.separator");
+        String reportsDir=System.getProperty("user.home") + System.getProperty("file.separator") + ClientSettings.JLAWYERCLIENT_SETTINGDIR + System.getProperty("file.separator") + "reports" + System.getProperty("file.separator");
         File rdFile=new File(reportsDir);
         rdFile.mkdirs();
         return reportsDir;
     } 
     
     public void saveConfiguration() throws Exception {
-        String clientConfFileLocation=System.getProperty("user.home") + System.getProperty("file.separator") + ".j-lawyer-client" + System.getProperty("file.separator") + "clientConfiguration.properties";
+        String clientConfFileLocation=System.getProperty("user.home") + System.getProperty("file.separator") + ClientSettings.JLAWYERCLIENT_SETTINGDIR + System.getProperty("file.separator") + "clientConfiguration.properties";
         File clientConfFile=new File(clientConfFileLocation);
         try (FileOutputStream fos=new FileOutputStream(clientConfFile)) {
             this.clientConfiguration.store(fos, "j-lawyer Client configuration");

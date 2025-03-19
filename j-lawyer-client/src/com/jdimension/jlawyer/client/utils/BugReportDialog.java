@@ -666,6 +666,7 @@ package com.jdimension.jlawyer.client.utils;
 import com.jdimension.jlawyer.client.bea.BeaAccess;
 import com.jdimension.jlawyer.client.editors.EditorsRegistry;
 import com.jdimension.jlawyer.client.mail.SendEmailDialog;
+import com.jdimension.jlawyer.client.settings.ClientSettings;
 import com.jdimension.jlawyer.server.services.ServerInformation;
 import com.jdimension.jlawyer.server.utils.ServerFileUtils;
 import com.jdimension.jlawyer.services.JLawyerServiceLocator;
@@ -728,7 +729,7 @@ public class BugReportDialog extends javax.swing.JDialog {
     
     private void loadClientLog(int numberOfLines) {
         try {
-            String clientLog=System.getProperty("user.home") + File.separator + ".j-lawyer-client" + File.separator + "log" + File.separator + "client.log";
+            String clientLog=System.getProperty("user.home") + File.separator + ClientSettings.JLAWYERCLIENT_SETTINGDIR + File.separator + "log" + File.separator + "client.log";
             String logLines=ServerFileUtils.readLinesFromEnd(new File(clientLog), numberOfLines);
             SwingUtilities.invokeLater(() -> {
                 taClientLog.setText(logLines);

@@ -693,7 +693,6 @@ public class Main {
 
     private static final String USER_HOME="user.home";
     private static final String FILE_SEPARATOR="file.separator";
-    private static final String JLAWYERCLIENT_SETTINGDIR=".j-lawyer-client";
     
     private static Logger log=null;
 
@@ -709,7 +708,9 @@ public class Main {
      */
     public static void main(String[] args) {
         
-        String userHomeConfLogParent = System.getProperty(USER_HOME) + System.getProperty(FILE_SEPARATOR) + JLAWYERCLIENT_SETTINGDIR + System.getProperty(FILE_SEPARATOR) + "log";
+        ClientSettings.migrateClientSettingsDirectory();
+        
+        String userHomeConfLogParent = System.getProperty(USER_HOME) + System.getProperty(FILE_SEPARATOR) + ClientSettings.JLAWYERCLIENT_SETTINGDIR + System.getProperty(FILE_SEPARATOR) + "log";
         new File(userHomeConfLogParent).mkdirs();
         log = LogManager.getLogger();
         
@@ -828,12 +829,12 @@ public class Main {
         FlatIntelliJLaf.setup();
         //FlatDarkLaf.setup();
         
-        String userHomeConf = System.getProperty(USER_HOME) + System.getProperty(FILE_SEPARATOR) + JLAWYERCLIENT_SETTINGDIR;
+        String userHomeConf = System.getProperty(USER_HOME) + System.getProperty(FILE_SEPARATOR) + ClientSettings.JLAWYERCLIENT_SETTINGDIR;
         File userHomeConfDir = new File(userHomeConf);
         if (!userHomeConfDir.exists()) {
             userHomeConfDir.mkdirs();
         }
-        String userHomeConfLogParent = System.getProperty(USER_HOME) + System.getProperty(FILE_SEPARATOR) + JLAWYERCLIENT_SETTINGDIR + System.getProperty(FILE_SEPARATOR) + "log";
+        String userHomeConfLogParent = System.getProperty(USER_HOME) + System.getProperty(FILE_SEPARATOR) + ClientSettings.JLAWYERCLIENT_SETTINGDIR + System.getProperty(FILE_SEPARATOR) + "log";
         new File(userHomeConfLogParent).mkdirs();
 
         log.info("Java: " + System.getProperty("java.version"));

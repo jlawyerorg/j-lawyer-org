@@ -663,6 +663,7 @@ For more information on this, and how to apply and follow the GNU AGPL, see
  */
 package com.jdimension.jlawyer.client;
 
+import com.jdimension.jlawyer.client.settings.ClientSettings;
 import com.jdimension.jlawyer.security.CachingCrypto;
 import com.jdimension.jlawyer.security.CryptoProvider;
 import java.awt.Component;
@@ -687,7 +688,7 @@ public class ConnectionProfiles {
     private static final Logger log = Logger.getLogger(ConnectionProfiles.class.getName());
     private static ConnectionProfiles instance = null;
 
-    private final String connectionDir = System.getProperty("user.home") + File.separator + ".j-lawyer-client" + File.separator + "connections";
+    private final String connectionDir = System.getProperty("user.home") + File.separator + ClientSettings.JLAWYERCLIENT_SETTINGDIR + File.separator + "connections";
     private CachingCrypto crypto=null;
 
     private ConnectionProfiles() throws GeneralSecurityException {

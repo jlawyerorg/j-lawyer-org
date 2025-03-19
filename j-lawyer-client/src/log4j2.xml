@@ -5,7 +5,7 @@
     <Appenders>
     
         -->
-        <RollingFile name="FILE" fileName="${sys:user.home}/.j-lawyer-client/log/client.log" filePattern="${sys:user.home}/.j-lawyer-client/log/client.%i.log">
+        <RollingFile name="FILE" fileName="${sys:user.home}/j-lawyer-settings/log/client.log" filePattern="${sys:user.home}/j-lawyer-settings/log/client.%i.log">
             <PatternLayout pattern="%d %-5p [%c] %m%n"/>
             <Filters>
                 <ThresholdFilter level="INFO" onMatch="ACCEPT" />
