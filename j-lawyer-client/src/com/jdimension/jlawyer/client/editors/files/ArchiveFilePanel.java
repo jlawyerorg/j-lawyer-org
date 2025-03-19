@@ -7159,7 +7159,7 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
             if (!stampDia.isFailed() && stampDia.isSaveRequested()) {
                 // Save modified data back to the server
 
-                String newName = FileUtils.getNewFileName(dto, selectedDocs.get(0).getName(), new Date(), true, EditorsRegistry.getInstance().getMainWindow(), "gestempeltes PDF speichern");
+                String newName = FileUtils.getNewFileName(dto, stampDia.getLastStampText() + "_" + selectedDocs.get(0).getName(), new Date(), false, EditorsRegistry.getInstance().getMainWindow(), "gestempeltes PDF speichern");
 
                 if (newName == null || "".equals(newName)) {
                     return;

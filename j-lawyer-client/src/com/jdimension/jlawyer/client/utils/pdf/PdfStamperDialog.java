@@ -668,10 +668,7 @@ import com.jdimension.jlawyer.client.utils.ComponentUtils;
 import com.jdimension.jlawyer.client.utils.FileUtils;
 import java.awt.BorderLayout;
 import java.awt.Dimension;
-import java.io.ByteArrayInputStream;
 import java.io.File;
-import java.io.FileOutputStream;
-import java.util.ArrayList;
 import javax.swing.JOptionPane;
 import javax.swing.SwingUtilities;
 import org.apache.log4j.Logger;
@@ -688,6 +685,7 @@ public class PdfStamperDialog extends javax.swing.JDialog {
     private byte[] content = null;
     private String tempFilePath = null;
     private boolean failed = true;
+    private String lastStampText="";
     private boolean saveRequested = false;
 
     /**
@@ -965,6 +963,7 @@ public class PdfStamperDialog extends javax.swing.JDialog {
 
             });
             this.progress.setString("Stempeln abgeschlossen");
+            this.lastStampText=this.txtStampText.getText();
 
             this.failed = false;
             this.cmdSave.setEnabled(true);
@@ -1059,6 +1058,10 @@ public class PdfStamperDialog extends javax.swing.JDialog {
      */
     public boolean isFailed() {
         return failed;
+    }
+    
+    public String getLastStampText() {
+        return this.lastStampText;
     }
 
     /**
