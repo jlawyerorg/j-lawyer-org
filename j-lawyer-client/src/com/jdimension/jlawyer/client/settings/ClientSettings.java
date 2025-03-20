@@ -845,7 +845,7 @@ public class ClientSettings {
      */
     private ClientSettings() {
         this.clientConfiguration=new Properties();
-        String clientConfFileLocation=System.getProperty("user.home") + System.getProperty("file.separator") + ClientSettings.JLAWYERCLIENT_SETTINGDIR + System.getProperty("file.separator") + "clientConfiguration.properties";
+        String clientConfFileLocation=System.getProperty("user.home") + File.separator + ClientSettings.JLAWYERCLIENT_SETTINGDIR + File.separator + "clientConfiguration.properties";
         File clientConfFile=new File(clientConfFileLocation);
         if(!clientConfFile.exists()) {
             try {
@@ -892,14 +892,14 @@ public class ClientSettings {
     }
     
     public String getLocalReportsDirectory() {
-        String reportsDir=System.getProperty("user.home") + System.getProperty("file.separator") + ClientSettings.JLAWYERCLIENT_SETTINGDIR + System.getProperty("file.separator") + "reports" + System.getProperty("file.separator");
+        String reportsDir=System.getProperty("user.home") + File.separator + ClientSettings.JLAWYERCLIENT_SETTINGDIR + File.separator + "reports" + File.separator;
         File rdFile=new File(reportsDir);
         rdFile.mkdirs();
         return reportsDir;
     } 
     
     public void saveConfiguration() throws Exception {
-        String clientConfFileLocation=System.getProperty("user.home") + System.getProperty("file.separator") + ClientSettings.JLAWYERCLIENT_SETTINGDIR + System.getProperty("file.separator") + "clientConfiguration.properties";
+        String clientConfFileLocation=System.getProperty("user.home") + File.separator + ClientSettings.JLAWYERCLIENT_SETTINGDIR + File.separator + "clientConfiguration.properties";
         File clientConfFile=new File(clientConfFileLocation);
         try (FileOutputStream fos=new FileOutputStream(clientConfFile)) {
             this.clientConfiguration.store(fos, "j-lawyer Client configuration");

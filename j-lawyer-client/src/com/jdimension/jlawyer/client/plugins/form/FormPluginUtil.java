@@ -701,11 +701,11 @@ public class FormPluginUtil {
     private static ArrayList<FormPlugin> pluginList = null;
 
     public static String getLocalDirectory() {
-        return System.getProperty("user.home") + System.getProperty("file.separator") + ClientSettings.JLAWYERCLIENT_SETTINGDIR + System.getProperty("file.separator") + "forms" + File.separator + VersionUtils.getFullClientVersion();
+        return System.getProperty("user.home") + File.separator + ClientSettings.JLAWYERCLIENT_SETTINGDIR + File.separator + "forms" + File.separator + VersionUtils.getFullClientVersion();
     }
 
     public static String getLocalDirectoryInternalPlugins() {
-        return System.getProperty("user.home") + System.getProperty("file.separator") + ClientSettings.JLAWYERCLIENT_SETTINGDIR + System.getProperty("file.separator") + "forms-internal";
+        return System.getProperty("user.home") + File.separator + ClientSettings.JLAWYERCLIENT_SETTINGDIR + File.separator + "forms-internal";
     }
 
     public static synchronized ArrayList<FormPlugin> loadLocalPlugins() {
