@@ -2175,37 +2175,36 @@ public class InvoiceDialog extends javax.swing.JDialog implements EventConsumer 
 
         StyledCalculationTable ct = new StyledCalculationTable();
         SimpleDateFormat dfDateTime = null;
-        DecimalFormat currencyFormat=null;
+        DecimalFormat currencyFormat = null;
         if ("EN".equalsIgnoreCase(language)) {
             ct.addHeaders("Person", "Date", "Duration", "Hourly Rate", "Total", "Description");
             dfDateTime = new SimpleDateFormat("MM/dd/yyyy");
-            currencyFormat=new DecimalFormat("#,##0.00", DecimalFormatSymbols.getInstance(Locale.US));
+            currencyFormat = new DecimalFormat("#,##0.00", DecimalFormatSymbols.getInstance(Locale.US));
         } else if ("FR".equalsIgnoreCase(language)) {
-            ct.addHeaders("Personne", "Date", "Durée", "Tarif horaire"  , "Somme", "Activité");
+            ct.addHeaders("Personne", "Date", "Durée", "Tarif horaire", "Somme", "Activité");
             dfDateTime = new SimpleDateFormat("dd/MM/yyyy");
-            currencyFormat=new DecimalFormat("#,##0.00", DecimalFormatSymbols.getInstance(Locale.FRANCE));
+            currencyFormat = new DecimalFormat("#,##0.00", DecimalFormatSymbols.getInstance(Locale.FRANCE));
         } else if ("NL".equalsIgnoreCase(language)) {
             ct.addHeaders("Persoon", "Datum", "Tijd", "Uurtarief", "Totaal", "handeling");
             dfDateTime = new SimpleDateFormat("dd-MM-yyyy");
-            currencyFormat=new DecimalFormat("#,##0.00", DecimalFormatSymbols.getInstance(new Locale("nl", "NL")));
+            currencyFormat = new DecimalFormat("#,##0.00", DecimalFormatSymbols.getInstance(new Locale("nl", "NL")));
         } else {
             ct.addHeaders("Person", "Datum", "Dauer", "Stundensatz", "Total", "Aktivität");
             dfDateTime = new SimpleDateFormat("dd.MM.yyyy");
-            currencyFormat=new DecimalFormat("#,##0.00", DecimalFormatSymbols.getInstance(Locale.GERMANY));
+            currencyFormat = new DecimalFormat("#,##0.00", DecimalFormatSymbols.getInstance(Locale.GERMANY));
         }
 
         if (ServerSettings.getInstance().getSettingAsBoolean("plugins.global.tableproperties.table.emptyRows", true)) {
             ct.addRow("", "", "", "", "", "");
         }
 
-        
         for (TimesheetPosition pos : posList) {
             float totalMinutes = ((float) (pos.getStopped().getTime() - pos.getStarted().getTime())) / 1000f / 60f;
             double roundedMinutes = Math.ceil(totalMinutes / pos.getTimesheet().getInterval()) * pos.getTimesheet().getInterval();
             Float roundedMinutesFloat = new Float(roundedMinutes);
             int hours = roundedMinutesFloat.intValue() / 60;
             int minutes = roundedMinutesFloat.intValue() % 60;
-            
+
             String person = pos.getPrincipal();
             AppUserBean personUser = UserSettings.getInstance().getUser(person);
             if (personUser != null && !StringUtils.isEmpty(personUser.getDisplayName())) {
@@ -2245,7 +2244,7 @@ public class InvoiceDialog extends javax.swing.JDialog implements EventConsumer 
         return ct;
 
     }
-    
+
     private StyledCalculationTable getTimesheetSummaryAsTable(List<TimesheetPosition> posList, String language) {
 
         if (posList == null || posList.isEmpty()) {
@@ -2253,46 +2252,48 @@ public class InvoiceDialog extends javax.swing.JDialog implements EventConsumer 
         }
 
         StyledCalculationTable ct = new StyledCalculationTable();
-        DecimalFormat currencyFormat=null;
+        DecimalFormat currencyFormat = null;
         if ("EN".equalsIgnoreCase(language)) {
             ct.addHeaders("Person", "Duration", "Total");
-            currencyFormat=new DecimalFormat("#,##0.00", DecimalFormatSymbols.getInstance(Locale.US));
+            currencyFormat = new DecimalFormat("#,##0.00", DecimalFormatSymbols.getInstance(Locale.US));
         } else if ("FR".equalsIgnoreCase(language)) {
             ct.addHeaders("Personne", "Durée", "Somme");
-            currencyFormat=new DecimalFormat("#,##0.00", DecimalFormatSymbols.getInstance(Locale.FRANCE));
+            currencyFormat = new DecimalFormat("#,##0.00", DecimalFormatSymbols.getInstance(Locale.FRANCE));
         } else if ("NL".equalsIgnoreCase(language)) {
             ct.addHeaders("Persoon", "Tijd", "Totaal");
-            currencyFormat=new DecimalFormat("#,##0.00", DecimalFormatSymbols.getInstance(new Locale("nl", "NL")));
+            currencyFormat = new DecimalFormat("#,##0.00", DecimalFormatSymbols.getInstance(new Locale("nl", "NL")));
         } else {
             ct.addHeaders("Person", "Dauer", "Total");
-            currencyFormat=new DecimalFormat("#,##0.00", DecimalFormatSymbols.getInstance(Locale.GERMANY));
+            currencyFormat = new DecimalFormat("#,##0.00", DecimalFormatSymbols.getInstance(Locale.GERMANY));
         }
 
         if (ServerSettings.getInstance().getSettingAsBoolean("plugins.global.tableproperties.table.emptyRows", true)) {
             ct.addRow("", "", "");
         }
 
-        HashMap<String,Long> personMillis=new HashMap<>();
-        HashMap<String,BigDecimal> personTotal=new HashMap<>();
+        HashMap<String, Long> personMillis = new HashMap<>();
+        HashMap<String, BigDecimal> personTotal = new HashMap<>();
         for (TimesheetPosition pos : posList) {
-            
-            long millis=pos.getStopped().getTime() - pos.getStarted().getTime();
-            BigDecimal total=pos.getTotal();
-            
-            if(personMillis.containsKey(pos.getPrincipal()))
+
+            long millis = pos.getStopped().getTime() - pos.getStarted().getTime();
+            BigDecimal total = pos.getTotal();
+
+            if (personMillis.containsKey(pos.getPrincipal())) {
                 personMillis.put(pos.getPrincipal(), personMillis.get(pos.getPrincipal()) + millis);
-            else
+            } else {
                 personMillis.put(pos.getPrincipal(), millis);
-            
-            if(personTotal.containsKey(pos.getPrincipal()))
+            }
+
+            if (personTotal.containsKey(pos.getPrincipal())) {
                 personTotal.put(pos.getPrincipal(), personTotal.get(pos.getPrincipal()).add(total));
-            else
+            } else {
                 personTotal.put(pos.getPrincipal(), total);
-            
+            }
+
         }
-        
-        for(String principal: personMillis.keySet()) {
-            String person=principal;
+
+        for (String principal : personMillis.keySet()) {
+            String person = principal;
             AppUserBean personUser = UserSettings.getInstance().getUser(principal);
             if (personUser != null && !StringUtils.isEmpty(personUser.getDisplayName())) {
                 person = personUser.getDisplayName();
@@ -2340,19 +2341,19 @@ public class InvoiceDialog extends javax.swing.JDialog implements EventConsumer 
         int rowcount = 0;
 
         StyledCalculationTable ct = new StyledCalculationTable();
-        DecimalFormat currencyFormat=null;
+        DecimalFormat currencyFormat = null;
         if ("EN".equalsIgnoreCase(language)) {
             ct.addHeaders("", "Position", "Qty", "Rate", "Tax", "Amount");
-            currencyFormat=new DecimalFormat("#,##0.00", DecimalFormatSymbols.getInstance(Locale.US));
+            currencyFormat = new DecimalFormat("#,##0.00", DecimalFormatSymbols.getInstance(Locale.US));
         } else if ("FR".equalsIgnoreCase(language)) {
             ct.addHeaders("", "Article de facture", "Quantité", "Prix unitaire", "TPS", "Au total");
-            currencyFormat=new DecimalFormat("#,##0.00", DecimalFormatSymbols.getInstance(Locale.FRANCE));
+            currencyFormat = new DecimalFormat("#,##0.00", DecimalFormatSymbols.getInstance(Locale.FRANCE));
         } else if ("NL".equalsIgnoreCase(language)) {
             ct.addHeaders("", "Factuuritem", "Aantal", "Prijs", "BTW", "Totaal");
-            currencyFormat=new DecimalFormat("#,##0.00", DecimalFormatSymbols.getInstance(new Locale("nl", "NL")));
+            currencyFormat = new DecimalFormat("#,##0.00", DecimalFormatSymbols.getInstance(new Locale("nl", "NL")));
         } else {
             ct.addHeaders("", "Position", "Menge", "Einzel", "USt.", "Gesamt");
-            currencyFormat=new DecimalFormat("#,##0.00", DecimalFormatSymbols.getInstance(Locale.GERMANY));
+            currencyFormat = new DecimalFormat("#,##0.00", DecimalFormatSymbols.getInstance(Locale.GERMANY));
         }
         if (ServerSettings.getInstance().getSettingAsBoolean("plugins.global.tableproperties.table.emptyRows", true)) {
             ct.addRow("", "", "", "", "", "");
@@ -2372,13 +2373,18 @@ public class InvoiceDialog extends javax.swing.JDialog implements EventConsumer 
                 }
 
                 if (this.chkTaxes.isSelected()) {
-                    BigDecimal taxForPosition = (u.multiply(up).multiply(t.divide(BigDecimal.valueOf(100f), 2, RoundingMode.HALF_EVEN)));
+                    //BigDecimal taxForPosition = (u.multiply(up).multiply(t.divide(BigDecimal.valueOf(100f), 2, RoundingMode.HALF_EVEN)));
+                    BigDecimal taxForPosition = u.multiply(up)
+                            .multiply(t.divide(BigDecimal.valueOf(100), 4, RoundingMode.HALF_EVEN)) // mehr Präzision
+                            .setScale(2, RoundingMode.HALF_EVEN); // kaufmännisch runden
+                    
                     taxRateToTaxTotal.put(t, taxRateToTaxTotal.get(t).add(taxForPosition));
                     totalTax = totalTax.add(taxForPosition);
                 }
-                total = total.add(u.multiply(up).multiply(BigDecimal.ONE.add(t.divide(BigDecimal.valueOf(100f), 2, RoundingMode.HALF_EVEN))));
+                total = total.add(u.multiply(up).multiply(BigDecimal.ONE.add(t.divide(BigDecimal.valueOf(100f), 2, RoundingMode.HALF_EVEN))).setScale(2, RoundingMode.HALF_EVEN));
 
                 totalNet = totalNet.add(u.multiply(up));
+                totalNet = totalNet.setScale(2, RoundingMode.HALF_EVEN);
 
                 positionIndex = positionIndex + 1;
                 if (StringUtils.isEmpty(pos.getDescription())) {
@@ -2524,12 +2530,32 @@ public class InvoiceDialog extends javax.swing.JDialog implements EventConsumer 
                 BigDecimal t = pos.getTaxRate();
 
                 totalNet = totalNet.add(u.multiply(up));
+                totalNet = totalNet.setScale(2, RoundingMode.HALF_EVEN);
+//                if (this.chkTaxes.isSelected()) {
+//                    totalTax = totalTax.add(u.multiply(up).multiply(t.divide(BigDecimal.valueOf(100f), 2, RoundingMode.HALF_EVEN)));
+//                    totalGross = totalGross.add(u.multiply(up).multiply(BigDecimal.ONE.add(t.divide(BigDecimal.valueOf(100f), 2, RoundingMode.HALF_EVEN))));
+//                } else {
+//                    totalGross = totalGross.add(u.multiply(up));
+//                }
+
                 if (this.chkTaxes.isSelected()) {
-                    totalTax = totalTax.add(u.multiply(up).multiply(t.divide(BigDecimal.valueOf(100f), 2, RoundingMode.HALF_EVEN)));
-                    totalGross = totalGross.add(u.multiply(up).multiply(BigDecimal.ONE.add(t.divide(BigDecimal.valueOf(100f), 2, RoundingMode.HALF_EVEN))));
+                    BigDecimal taxAmount = u.multiply(up)
+                            .multiply(t.divide(BigDecimal.valueOf(100), 4, RoundingMode.HALF_EVEN)) // mehr Präzision
+                            .setScale(2, RoundingMode.HALF_EVEN); // kaufmännisch runden
+
+                    totalTax = totalTax.add(taxAmount);
+                    totalTax = totalTax.setScale(2, RoundingMode.HALF_EVEN);
+
+                    totalGross = totalGross.add(
+                            u.multiply(up)
+                                    .multiply(BigDecimal.ONE.add(t.divide(BigDecimal.valueOf(100), 4, RoundingMode.HALF_EVEN)))
+                                    .setScale(2, RoundingMode.HALF_EVEN) // kaufmännisch runden
+                    );
                 } else {
                     totalGross = totalGross.add(u.multiply(up));
                 }
+                // Sicherstellen, dass totalGross kaufmännisch gerundet ist
+                totalGross = totalGross.setScale(2, RoundingMode.HALF_EVEN);
             }
         }
         this.lblNetValue.setText(cf.format(totalNet));

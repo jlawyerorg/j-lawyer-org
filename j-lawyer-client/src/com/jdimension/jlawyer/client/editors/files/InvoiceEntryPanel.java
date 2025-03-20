@@ -760,8 +760,8 @@ public class InvoiceEntryPanel extends javax.swing.JPanel {
             this.lblRecipient.setText(" ");
         }
 
-        this.lblTotalNet.setText(totalFormat.format(invoice.getTotal().floatValue()) + " " + invoice.getCurrency());
-        this.lblTotalGross.setText(totalFormat.format(invoice.getTotalGross().floatValue()) + " " + invoice.getCurrency());
+        this.lblTotalNet.setText(totalFormat.format(invoice.getTotal()) + " " + invoice.getCurrency());
+        this.lblTotalGross.setText(totalFormat.format(invoice.getTotalGross()) + " " + invoice.getCurrency());
 
         this.cmdMarkAsPayed.setEnabled(invoice.getStatus() != Invoice.STATUS_PAID && invoice.getStatus() != Invoice.STATUS_CANCELLED);
 
