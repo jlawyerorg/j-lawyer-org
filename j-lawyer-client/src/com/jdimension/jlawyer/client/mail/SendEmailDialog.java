@@ -806,6 +806,7 @@ public class SendEmailDialog extends javax.swing.JDialog implements SendCommunic
     private ByteArrayOutputStream byteArrayOutputStream;
     
     private boolean ignoreTemplateSelectionEvent = false;
+    private Object savedTemplateSelection = null;
 
     /**
      * Creates new form SendEmailDialog
@@ -1962,6 +1963,11 @@ public class SendEmailDialog extends javax.swing.JDialog implements SendCommunic
                 txtTemplateSearchFocusLost(evt);
             }
         });
+        txtTemplateSearch.addMouseListener(new java.awt.event.MouseAdapter() {
+            public void mouseClicked(java.awt.event.MouseEvent evt) {
+                txtTemplateSearchMouseClicked(evt);
+            }
+        });
         txtTemplateSearch.addKeyListener(new java.awt.event.KeyAdapter() {
             public void keyPressed(java.awt.event.KeyEvent evt) {
                 txtTemplateSearchKeyPressed(evt);
@@ -2877,6 +2883,13 @@ public class SendEmailDialog extends javax.swing.JDialog implements SendCommunic
         if (txtTemplateSearch.getText().isEmpty()) {
             txtTemplateSearch.setText("Suche...");
             txtTemplateSearch.setForeground(Color.GRAY);
+            
+            // Ursprüngliche Auswahl wiederherstellen, wenn keine Suche durchgeführt wurde
+            if (savedTemplateSelection != null && cmbTemplates.getSelectedItem().equals("")) {
+                ignoreTemplateSelectionEvent = true;
+                cmbTemplates.setSelectedItem(savedTemplateSelection);
+                ignoreTemplateSelectionEvent = false;
+            }
         }
     }//GEN-LAST:event_txtTemplateSearchFocusLost
 
@@ -2893,6 +2906,23 @@ public class SendEmailDialog extends javax.swing.JDialog implements SendCommunic
             }
         }
     }//GEN-LAST:event_txtTemplateSearchKeyPressed
+
+    private void txtTemplateSearchMouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_txtTemplateSearchMouseClicked
+        // Aktuelle Auswahl speichern
+        savedTemplateSelection = cmbTemplates.getSelectedItem();
+        
+        // ComboBox-Auswahl temporär zurücksetzen, um Suche zu ermöglichen
+        ignoreTemplateSelectionEvent = true;
+        cmbTemplates.setSelectedItem("");
+        ignoreTemplateSelectionEvent = false;
+        
+        // Focus und Textauswahl im Suchfeld
+        txtTemplateSearch.requestFocusInWindow();
+        if ("Suche...".equals(txtTemplateSearch.getText())) {
+            txtTemplateSearch.setText("");
+            txtTemplateSearch.setForeground(Color.BLACK);
+        }
+    }//GEN-LAST:event_txtTemplateSearchMouseClicked
 
     private String getThunderbirdExecutablePath() {
         if (SystemUtils.isWindows()) {
