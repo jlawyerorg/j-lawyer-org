@@ -772,6 +772,8 @@ public class SendEmailDialog extends javax.swing.JDialog implements SendCommunic
     private static final Logger log = Logger.getLogger(SendEmailDialog.class.getName());
     private static final String SSL_FACTORY = "javax.net.ssl.SSLSocketFactory";
     private static final String LABEL_SEND_UNENCRYPTED = "unverschlüsselt senden";
+    
+    private Collection<String> allMailTemplates=null;
 
     private AppUserBean cu = null;
     private Collection<MailboxSetup> mailboxes = new ArrayList<>();
@@ -804,6 +806,9 @@ public class SendEmailDialog extends javax.swing.JDialog implements SendCommunic
     // transcription
     private TargetDataLine targetDataLine;
     private ByteArrayOutputStream byteArrayOutputStream;
+    
+    private boolean ignoreTemplateSelectionEvent = false;
+    private Object savedTemplateSelection = null;
 
     /**
      * Creates new form SendEmailDialog
@@ -837,6 +842,9 @@ public class SendEmailDialog extends javax.swing.JDialog implements SendCommunic
 
     private void initialize() {
         initComponents();
+        
+        this.txtTemplateSearch.putClientProperty("JTextField.showClearButton", true);
+        this.txtTemplateSearch.putClientProperty("JTextField.placeholderText", "Suche: ...");
 
         AssistantAccess ingo = AssistantAccess.getInstance();
         try {
@@ -926,11 +934,11 @@ public class SendEmailDialog extends javax.swing.JDialog implements SendCommunic
         try {
             JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
 
-            Collection<String> templates = locator.lookupIntegrationServiceRemote().getAllEmailTemplateNames();
+            this.allMailTemplates = locator.lookupIntegrationServiceRemote().getAllEmailTemplateNames();
             this.cmbTemplates.removeAllItems();
             this.cmbTemplates.addItem("");
             String lastUsedTemplate = UserSettings.getInstance().getSetting(UserSettings.CONF_MAIL_LASTUSEDTEMPLATE, null);
-            for (String t : templates) {
+            for (String t : this.allMailTemplates) {
                 this.cmbTemplates.addItem(t);
             }
             if (lastUsedTemplate != null) {
@@ -938,6 +946,24 @@ public class SendEmailDialog extends javax.swing.JDialog implements SendCommunic
             } else {
                 this.cmbTemplates.setSelectedIndex(0);
             }
+            
+            txtTemplateSearch.setToolTipText("Geben Sie Text ein, um Vorlagen zu filtern");
+            txtTemplateSearch.getDocument().addDocumentListener(new javax.swing.event.DocumentListener() {
+                @Override
+                public void insertUpdate(javax.swing.event.DocumentEvent e) {
+                    filterTemplates();
+                }
+
+                @Override
+                public void removeUpdate(javax.swing.event.DocumentEvent e) {
+                    filterTemplates();
+                }
+
+                @Override
+                public void changedUpdate(javax.swing.event.DocumentEvent e) {
+                    filterTemplates();
+                }
+            });
         } catch (Exception ex) {
             JOptionPane.showMessageDialog(this, "Fehler beim Erstellen der Vorlage: " + ex.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
         }
@@ -1418,6 +1444,7 @@ public class SendEmailDialog extends javax.swing.JDialog implements SendCommunic
         jLabel4 = new javax.swing.JLabel();
         cmbTemplates = new javax.swing.JComboBox();
         pnlParties = new com.jdimension.jlawyer.client.editors.files.PartiesPanel();
+        txtTemplateSearch = new javax.swing.JTextField();
 
         mnuSearchRecipient.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/find.png"))); // NOI18N
         mnuSearchRecipient.setText("suchen");
@@ -1930,6 +1957,28 @@ public class SendEmailDialog extends javax.swing.JDialog implements SendCommunic
             }
         });
 
+        txtTemplateSearch.setForeground(new java.awt.Color(102, 102, 102));
+        txtTemplateSearch.setText("Suche...");
+        txtTemplateSearch.setToolTipText("Vorlagen suchen");
+        txtTemplateSearch.addFocusListener(new java.awt.event.FocusAdapter() {
+            public void focusGained(java.awt.event.FocusEvent evt) {
+                txtTemplateSearchFocusGained(evt);
+            }
+            public void focusLost(java.awt.event.FocusEvent evt) {
+                txtTemplateSearchFocusLost(evt);
+            }
+        });
+        txtTemplateSearch.addMouseListener(new java.awt.event.MouseAdapter() {
+            public void mouseClicked(java.awt.event.MouseEvent evt) {
+                txtTemplateSearchMouseClicked(evt);
+            }
+        });
+        txtTemplateSearch.addKeyListener(new java.awt.event.KeyAdapter() {
+            public void keyPressed(java.awt.event.KeyEvent evt) {
+                txtTemplateSearchKeyPressed(evt);
+            }
+        });
+
         javax.swing.GroupLayout jPanel1Layout = new javax.swing.GroupLayout(jPanel1);
         jPanel1.setLayout(jPanel1Layout);
         jPanel1Layout.setHorizontalGroup(
@@ -1939,22 +1988,23 @@ public class SendEmailDialog extends javax.swing.JDialog implements SendCommunic
                 .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                     .addGroup(jPanel1Layout.createSequentialGroup()
                         .addComponent(jLabel4)
-                        .addGap(0, 0, Short.MAX_VALUE))
-                    .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, jPanel1Layout.createSequentialGroup()
-                        .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
-                            .addComponent(pnlParties, javax.swing.GroupLayout.Alignment.LEADING, javax.swing.GroupLayout.DEFAULT_SIZE, 616, Short.MAX_VALUE)
-                            .addComponent(cmbTemplates, 0, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
-                        .addContainerGap())))
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                        .addComponent(txtTemplateSearch, javax.swing.GroupLayout.PREFERRED_SIZE, 275, javax.swing.GroupLayout.PREFERRED_SIZE))
+                    .addComponent(pnlParties, javax.swing.GroupLayout.DEFAULT_SIZE, 616, Short.MAX_VALUE)
+                    .addComponent(cmbTemplates, javax.swing.GroupLayout.Alignment.TRAILING, 0, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                .addContainerGap())
         );
         jPanel1Layout.setVerticalGroup(
             jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(jPanel1Layout.createSequentialGroup()
                 .addContainerGap()
-                .addComponent(jLabel4)
+                .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                    .addComponent(jLabel4)
+                    .addComponent(txtTemplateSearch, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(cmbTemplates, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(pnlParties, javax.swing.GroupLayout.DEFAULT_SIZE, 115, Short.MAX_VALUE)
+                .addComponent(pnlParties, javax.swing.GroupLayout.DEFAULT_SIZE, 126, Short.MAX_VALUE)
                 .addContainerGap())
         );
 
@@ -2248,6 +2298,11 @@ public class SendEmailDialog extends javax.swing.JDialog implements SendCommunic
     }//GEN-LAST:event_cmdRecipientsActionPerformed
 
     private void cmbTemplatesActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmbTemplatesActionPerformed
+        if (ignoreTemplateSelectionEvent) {
+            return;
+        }
+
+
         // when performing a reply, do not evaluate the template
         if (this.initializing && this.replyOrForward) {
             return;
@@ -2822,6 +2877,58 @@ public class SendEmailDialog extends javax.swing.JDialog implements SendCommunic
         }
     }//GEN-LAST:event_cmdOpenTbActionPerformed
 
+    private void txtTemplateSearchFocusGained(java.awt.event.FocusEvent evt) {//GEN-FIRST:event_txtTemplateSearchFocusGained
+        if ("Suche...".equals(txtTemplateSearch.getText())) {
+            txtTemplateSearch.setText("");
+            txtTemplateSearch.setForeground(Color.BLACK);
+        }
+    }//GEN-LAST:event_txtTemplateSearchFocusGained
+
+    private void txtTemplateSearchFocusLost(java.awt.event.FocusEvent evt) {//GEN-FIRST:event_txtTemplateSearchFocusLost
+        if (txtTemplateSearch.getText().isEmpty()) {
+            txtTemplateSearch.setText("Suche...");
+            txtTemplateSearch.setForeground(Color.GRAY);
+            
+            // Ursprüngliche Auswahl wiederherstellen, wenn keine Suche durchgeführt wurde
+            if (savedTemplateSelection != null && cmbTemplates.getSelectedItem().equals("")) {
+                ignoreTemplateSelectionEvent = true;
+                cmbTemplates.setSelectedItem(savedTemplateSelection);
+                ignoreTemplateSelectionEvent = false;
+            }
+        }
+    }//GEN-LAST:event_txtTemplateSearchFocusLost
+
+    private void txtTemplateSearchKeyPressed(java.awt.event.KeyEvent evt) {//GEN-FIRST:event_txtTemplateSearchKeyPressed
+        if (evt.getKeyCode() == java.awt.event.KeyEvent.VK_ENTER) {
+            if (cmbTemplates.isPopupVisible()) {
+                Object selectedItem = cmbTemplates.getSelectedItem();
+                if (selectedItem != null && !selectedItem.toString().isEmpty()) {
+                    cmbTemplates.setSelectedItem(selectedItem);
+                    cmbTemplates.hidePopup();
+                    cmbTemplatesActionPerformed(null);
+                }
+                evt.consume();
+            }
+        }
+    }//GEN-LAST:event_txtTemplateSearchKeyPressed
+
+    private void txtTemplateSearchMouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_txtTemplateSearchMouseClicked
+        // Aktuelle Auswahl speichern
+        savedTemplateSelection = cmbTemplates.getSelectedItem();
+        
+        // ComboBox-Auswahl temporär zurücksetzen, um Suche zu ermöglichen
+        ignoreTemplateSelectionEvent = true;
+        cmbTemplates.setSelectedItem("");
+        ignoreTemplateSelectionEvent = false;
+        
+        // Focus und Textauswahl im Suchfeld
+        txtTemplateSearch.requestFocusInWindow();
+        if ("Suche...".equals(txtTemplateSearch.getText())) {
+            txtTemplateSearch.setText("");
+            txtTemplateSearch.setForeground(Color.BLACK);
+        }
+    }//GEN-LAST:event_txtTemplateSearchMouseClicked
+
     private String getThunderbirdExecutablePath() {
         if (SystemUtils.isWindows()) {
             String path = getThunderbirdExecutablePathWindows();
@@ -3063,6 +3170,66 @@ public class SendEmailDialog extends javax.swing.JDialog implements SendCommunic
             this.txtReviewDateField.setText(null);
         }
     }
+    
+    private void filterTemplates() {
+        String searchText = txtTemplateSearch.getText().toLowerCase();
+        if (searchText.isEmpty() || "suche...".equals(searchText.toLowerCase())) {
+            resetTemplatesComboBox();
+            return;
+        }
+
+        ignoreTemplateSelectionEvent = true;
+        try {
+            List<String> matchingTemplates = new ArrayList<>();
+            for (String template : this.allMailTemplates) {
+                if (template.toLowerCase().contains(searchText)) {
+                    matchingTemplates.add(template);
+                }
+            }
+
+            if (!matchingTemplates.isEmpty()) {
+                DefaultComboBoxModel<String> model = new DefaultComboBoxModel<>();
+                model.addElement(""); 
+                for (String template : matchingTemplates) {
+                    model.addElement(template);
+                }
+                cmbTemplates.setModel(model);
+
+                if (!cmbTemplates.isPopupVisible() && matchingTemplates.size() > 0) {
+                    cmbTemplates.showPopup();
+                }
+            } else {
+                cmbTemplates.hidePopup();
+            }
+        } catch (Exception ex) {
+            log.error("Fehler beim Filtern der Vorlagen", ex);
+        } finally {
+            ignoreTemplateSelectionEvent = false;
+        }
+    }
+
+    private void resetTemplatesComboBox() {
+        try {
+            Object selectedItem = cmbTemplates.getSelectedItem();
+
+            DefaultComboBoxModel<String> model = new DefaultComboBoxModel<>();
+            model.addElement("");
+            for (String template : this.allMailTemplates) {
+                model.addElement(template);
+            }
+            cmbTemplates.setModel(model);
+
+            if (selectedItem != null) {
+                cmbTemplates.setSelectedItem(selectedItem);
+            }
+
+            cmbTemplates.hidePopup();
+        } catch (Exception ex) {
+            log.error("Fehler beim Zurücksetzen der Vorlagen", ex);
+        }
+    }
+    
+    
 
     /**
      * @param args the command line arguments
@@ -3179,6 +3346,7 @@ public class SendEmailDialog extends javax.swing.JDialog implements SendCommunic
     private javax.swing.JTextField txtCc;
     private javax.swing.JTextField txtReviewDateField;
     private javax.swing.JTextField txtSubject;
+    private javax.swing.JTextField txtTemplateSearch;
     private javax.swing.JTextField txtTo;
     // End of variables declaration//GEN-END:variables
 
