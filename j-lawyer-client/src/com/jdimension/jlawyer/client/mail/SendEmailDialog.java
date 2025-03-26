@@ -808,7 +808,7 @@ public class SendEmailDialog extends javax.swing.JDialog implements SendCommunic
     private ByteArrayOutputStream byteArrayOutputStream;
     
     private boolean ignoreTemplateSelectionEvent = false;
-    private Object savedTemplateSelection = null;
+    private String savedTemplateSelection = null;
 
     /**
      * Creates new form SendEmailDialog
@@ -2914,7 +2914,7 @@ public class SendEmailDialog extends javax.swing.JDialog implements SendCommunic
 
     private void txtTemplateSearchMouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_txtTemplateSearchMouseClicked
         // Aktuelle Auswahl speichern
-        savedTemplateSelection = cmbTemplates.getSelectedItem();
+        savedTemplateSelection = cmbTemplates.getSelectedItem().toString();
         
         // ComboBox-Auswahl temporär zurücksetzen, um Suche zu ermöglichen
         ignoreTemplateSelectionEvent = true;
@@ -3172,8 +3172,8 @@ public class SendEmailDialog extends javax.swing.JDialog implements SendCommunic
     }
     
     private void filterTemplates() {
-        String searchText = txtTemplateSearch.getText().toLowerCase();
-        if (searchText.isEmpty() || "suche...".equals(searchText.toLowerCase())) {
+        String searchText = txtTemplateSearch.getText().toLowerCase().trim();
+        if (searchText.isEmpty()) {
             resetTemplatesComboBox();
             return;
         }
@@ -3195,7 +3195,7 @@ public class SendEmailDialog extends javax.swing.JDialog implements SendCommunic
                 }
                 cmbTemplates.setModel(model);
 
-                if (!cmbTemplates.isPopupVisible() && matchingTemplates.size() > 0) {
+                if (!cmbTemplates.isPopupVisible() && !matchingTemplates.isEmpty()) {
                     cmbTemplates.showPopup();
                 }
             } else {
