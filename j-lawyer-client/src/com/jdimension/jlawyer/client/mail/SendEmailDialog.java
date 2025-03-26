@@ -772,6 +772,8 @@ public class SendEmailDialog extends javax.swing.JDialog implements SendCommunic
     private static final Logger log = Logger.getLogger(SendEmailDialog.class.getName());
     private static final String SSL_FACTORY = "javax.net.ssl.SSLSocketFactory";
     private static final String LABEL_SEND_UNENCRYPTED = "unverschlüsselt senden";
+    
+    private Collection<String> allMailTemplates=null;
 
     private AppUserBean cu = null;
     private Collection<MailboxSetup> mailboxes = new ArrayList<>();
@@ -932,11 +934,11 @@ public class SendEmailDialog extends javax.swing.JDialog implements SendCommunic
         try {
             JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
 
-            Collection<String> templates = locator.lookupIntegrationServiceRemote().getAllEmailTemplateNames();
+            this.allMailTemplates = locator.lookupIntegrationServiceRemote().getAllEmailTemplateNames();
             this.cmbTemplates.removeAllItems();
             this.cmbTemplates.addItem("");
             String lastUsedTemplate = UserSettings.getInstance().getSetting(UserSettings.CONF_MAIL_LASTUSEDTEMPLATE, null);
-            for (String t : templates) {
+            for (String t : this.allMailTemplates) {
                 this.cmbTemplates.addItem(t);
             }
             if (lastUsedTemplate != null) {
@@ -3178,12 +3180,8 @@ public class SendEmailDialog extends javax.swing.JDialog implements SendCommunic
 
         ignoreTemplateSelectionEvent = true;
         try {
-            ClientSettings settings = ClientSettings.getInstance();
-            JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
-            Collection<String> allTemplates = locator.lookupIntegrationServiceRemote().getAllEmailTemplateNames();
-
             List<String> matchingTemplates = new ArrayList<>();
-            for (String template : allTemplates) {
+            for (String template : this.allMailTemplates) {
                 if (template.toLowerCase().contains(searchText)) {
                     matchingTemplates.add(template);
                 }
@@ -3212,15 +3210,11 @@ public class SendEmailDialog extends javax.swing.JDialog implements SendCommunic
 
     private void resetTemplatesComboBox() {
         try {
-            ClientSettings settings = ClientSettings.getInstance();
-            JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
-            Collection<String> templates = locator.lookupIntegrationServiceRemote().getAllEmailTemplateNames();
-
             Object selectedItem = cmbTemplates.getSelectedItem();
 
             DefaultComboBoxModel<String> model = new DefaultComboBoxModel<>();
             model.addElement("");
-            for (String template : templates) {
+            for (String template : this.allMailTemplates) {
                 model.addElement(template);
             }
             cmbTemplates.setModel(model);
