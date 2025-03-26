@@ -840,6 +840,9 @@ public class SendEmailDialog extends javax.swing.JDialog implements SendCommunic
 
     private void initialize() {
         initComponents();
+        
+        this.txtTemplateSearch.putClientProperty("JTextField.showClearButton", true);
+        this.txtTemplateSearch.putClientProperty("JTextField.placeholderText", "Suche: ...");
 
         AssistantAccess ingo = AssistantAccess.getInstance();
         try {
