@@ -1075,7 +1075,7 @@ public class SendBeaMessageDialog extends javax.swing.JDialog implements SendCom
 
         this.pnlParties.addParty(new PartiesPanelEntry(addr, ptb), true);
 
-        this.addRecipientCandidate(addr, ptb);
+        this.addRecipientCandidate(addr, ptb, null);
 
     }
 
@@ -1086,7 +1086,7 @@ public class SendBeaMessageDialog extends javax.swing.JDialog implements SendCom
 
         this.pnlParties.addParty(new PartiesPanelEntry(aab), true);
 
-        this.addRecipientCandidate(aab.getAddressKey(), aab.getReferenceType());
+        this.addRecipientCandidate(aab.getAddressKey(), aab.getReferenceType(), aab.getReference());
 
     }
 
@@ -2022,14 +2022,14 @@ public class SendBeaMessageDialog extends javax.swing.JDialog implements SendCom
 
     }//GEN-LAST:event_cmdAttachActionPerformed
 
-    private void addRecipientCandidate(AddressBean ab, PartyTypeBean ptb) {
+    private void addRecipientCandidate(AddressBean ab, PartyTypeBean ptb, String fileNumber) {
         if (ab.getBeaSafeId() != null && !("".equals(ab.getBeaSafeId()))) {
             JCheckBoxMenuItem mi = new JCheckBoxMenuItem();
             mi.setState(false);
             mi.setText(ab.toDisplayName() + " (" + ptb.getName() + ")");
             mi.setBackground(new Color(ptb.getColor()));
             mi.setOpaque(true);
-            mi.addActionListener(new RecipientsActionListener(this, ab.getBeaSafeId(), this.lstTo));
+            mi.addActionListener(new RecipientsActionListener(this, ab.getBeaSafeId(), fileNumber, this.lstTo, this.cmbAzRecipient));
             this.popRecipients.add(mi);
 
         }
@@ -2634,12 +2634,16 @@ public class SendBeaMessageDialog extends javax.swing.JDialog implements SendCom
     class RecipientsActionListener implements java.awt.event.ActionListener {
 
         private String safeId = null;
+        private String fileNumber = null;
         private JList to = null;
+        private JComboBox toFileNumber = null;
         private JDialog caller = null;
 
-        public RecipientsActionListener(JDialog caller, String safeId, JList to) {
+        public RecipientsActionListener(JDialog caller, String safeId, String fileNumber, JList to, JComboBox fileNumberTo) {
             this.safeId = safeId;
+            this.fileNumber=fileNumber;
             this.to = to;
+            this.toFileNumber=fileNumberTo;
             this.caller = caller;
         }
 
@@ -2656,9 +2660,14 @@ public class SendBeaMessageDialog extends javax.swing.JDialog implements SendCom
                     if (!model.contains(i)) {
                         model.addElement(i);
                     }
+                    if(this.toFileNumber!=null && this.toFileNumber.getEditor().getItem().toString().trim().isEmpty())
+                        this.toFileNumber.setSelectedItem(StringUtils.nonEmpty(this.fileNumber));
 
                 } else if (model.contains(i)) {
                     model.removeElement(i);
+                    
+                    if(this.toFileNumber!=null && this.toFileNumber.getEditor().getItem().toString().equals(this.fileNumber))
+                        this.toFileNumber.setSelectedItem("");
                 }
             } catch (Throwable t) {
                 log.error(t);
