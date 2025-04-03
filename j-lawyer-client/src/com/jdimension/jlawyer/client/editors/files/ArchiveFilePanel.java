@@ -4383,6 +4383,61 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
 
     }
 
+    private void loadForms() {
+        try {
+            
+            EditorsRegistry.getInstance().updateStatus("Lade Falldaten zur Akte...", false);
+            
+            ClientSettings settings = ClientSettings.getInstance();
+            JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
+            
+            this.cmbFormType.removeAllItems();
+                List<FormTypeBean> formTypes = locator.lookupFormsServiceRemote().getAllFormTypes();
+                for (FormTypeBean ftb : formTypes) {
+                    if (ftb.getUsageType().equals(FormTypeBean.TYPE_PLUGIN)) {
+                        this.cmbFormType.addItem(ftb);
+                    }
+                }
+                if (this.cmbFormType.getItemCount() > 0) {
+                    this.cmbFormType.setSelectedIndex(0);
+                }
+
+                List<ArchiveFileFormsBean> caseForms = locator.lookupFormsServiceRemote().getFormsForCase(this.dto.getId());
+                SimpleDateFormat dayFormat = new SimpleDateFormat("dd.MM.yyyy");
+                for (ArchiveFileFormsBean affb : caseForms) {
+                    EditorsRegistry.getInstance().updateStatus("Lade Falldaten " + affb.getFormType().getName() + " (" + affb.getPlaceHolder() + ")", false);
+                    FormPlugin plugin = new FormPlugin();
+                    plugin.setId(affb.getFormType().getId());
+                    plugin.setCaseDto(this.dto);
+                    plugin.setPlaceHolder(affb.getPlaceHolder());
+                    FormInstancePanel formInstance = new FormInstancePanel(this.tabPaneForms, plugin);
+                    Dimension maxDimension = this.pnlAddForms.getSize();
+                    maxDimension.setSize(maxDimension.getWidth() - 100, maxDimension.getHeight() - 60);
+                    formInstance.setMaximumSize(maxDimension);
+                    formInstance.setPreferredSize(maxDimension);
+                    formInstance.setDescription(affb.getDescription());
+                    formInstance.setForm(affb);
+
+                    try {
+
+                        formInstance.initialize();
+                        String tabTitle = "<html><p style=\"text-align: left; width: 130px\"><b>" + affb.getFormType().getName() + "</b><br/>" + dayFormat.format(affb.getCreationDate()) + "<br/>" + affb.getPlaceHolder() + "</p></html>";
+                        tabPaneForms.addTab(tabTitle, null, formInstance);
+
+                    } catch (Throwable t) {
+                        log.error("Error loading form plugin", t);
+                        JOptionPane.showMessageDialog(this, "Fehler beim Laden des Falldatenblattes: " + t.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
+                    }
+                }
+
+        } catch (Exception ex) {
+            log.error("Error loading forms", ex);
+            JOptionPane.showMessageDialog(this, "Fehler beim Laden der Falldaten: " + ex.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
+        } finally {
+            EditorsRegistry.getInstance().clearStatus(false);
+        }
+    }
+    
     private void loadAccountEntries() {
         TableUtils.clearModel(this.tblAccountEntries);
         try {
@@ -4429,6 +4484,10 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
 
             if (this.tabPaneArchiveFile.getSelectedIndex() == 3 && this.tblAccountEntries.getRowCount() == 0) {
                 this.loadAccountEntries();
+            }
+            
+            if (this.tabPaneArchiveFile.getSelectedIndex() == 6 && this.tabPaneForms.getTabCount() == 1) {
+                this.loadForms();
             }
 
         } else if (this.tabPaneArchiveFile.getSelectedIndex() == 7) {
