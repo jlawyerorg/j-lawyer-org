@@ -5420,6 +5420,7 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
             Invoice updatedInvoice = this.invoicesFacade.find(invoice.getId());
             updatedInvoice.setContact(invoice.getContact());
             updatedInvoice.setDescription(invoice.getDescription());
+            updatedInvoice.setCreationDate(invoice.getCreationDate());
             updatedInvoice.setDueDate(invoice.getDueDate());
             updatedInvoice.setInvoiceNumber(invoice.getInvoiceNumber());
             updatedInvoice.setName(invoice.getName());
