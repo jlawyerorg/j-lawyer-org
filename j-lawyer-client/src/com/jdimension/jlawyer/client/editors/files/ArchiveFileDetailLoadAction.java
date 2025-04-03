@@ -807,46 +807,6 @@ public class ArchiveFileDetailLoadAction extends ProgressableAction {
                 }
             });
             
-            this.progress("Lade Akte: Falldatenblätter...");
-            this.cmbFormTypes.removeAllItems();
-            List<FormTypeBean> formTypes = locator.lookupFormsServiceRemote().getAllFormTypes();
-            for (FormTypeBean ftb : formTypes) {
-                if (ftb.getUsageType().equals(FormTypeBean.TYPE_PLUGIN)) {
-                    this.cmbFormTypes.addItem(ftb);
-                }
-            }
-            if (this.cmbFormTypes.getItemCount() > 0) {
-                this.cmbFormTypes.setSelectedIndex(0);
-            }
-
-            List<ArchiveFileFormsBean> caseForms = locator.lookupFormsServiceRemote().getFormsForCase(this.archiveFileKey);
-            SimpleDateFormat dayFormat = new SimpleDateFormat("dd.MM.yyyy");
-            for (ArchiveFileFormsBean affb : caseForms) {
-                this.setProgressString("Lade Akte: Falldatenblatt " + affb.getFormType().getName() + " (" + affb.getPlaceHolder() + ")");
-                FormPlugin plugin = new FormPlugin();
-                plugin.setId(affb.getFormType().getId());
-                plugin.setCaseDto(this.caseDto);
-                plugin.setPlaceHolder(affb.getPlaceHolder());
-                FormInstancePanel formInstance = new FormInstancePanel(this.tabPaneForms, plugin);
-                Dimension maxDimension = this.formsPanel.getSize();
-                maxDimension.setSize(maxDimension.getWidth() - 100, maxDimension.getHeight() - 60);
-                formInstance.setMaximumSize(maxDimension);
-                formInstance.setPreferredSize(maxDimension);
-                formInstance.setDescription(affb.getDescription());
-                formInstance.setForm(affb);
-
-                try {
-
-                    formInstance.initialize();
-                    String tabTitle = "<html><p style=\"text-align: left; width: 130px\"><b>" + affb.getFormType().getName() + "</b><br/>" + dayFormat.format(affb.getCreationDate()) + "<br/>" + affb.getPlaceHolder() + "</p></html>";
-                    tabPaneForms.addTab(tabTitle, null, formInstance);
-
-                } catch (Throwable t) {
-                    log.error("Error loading form plugin", t);
-                    JOptionPane.showMessageDialog(this.owner, "Fehler beim Laden des Falldatenblattes: " + t.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
-                }
-            }
-            
             this.progress("Lade Akte: Berechtigungen...");
             fileService = locator.lookupArchiveFileServiceRemote();
             Collection<Group> allGroups = locator.lookupSecurityServiceRemote().getAllGroups();
