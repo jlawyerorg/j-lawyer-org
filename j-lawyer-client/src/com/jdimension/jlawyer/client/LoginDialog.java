@@ -1139,7 +1139,7 @@ public class LoginDialog extends javax.swing.JFrame {
         jLabel13 = new javax.swing.JLabel();
         jLabel14 = new javax.swing.JLabel();
         jLabel15 = new javax.swing.JLabel();
-        jLabel3 = new javax.swing.JLabel();
+        lblLogo = new javax.swing.JLabel();
         lblAutoUpdate = new javax.swing.JLabel();
         lblFullClientVersion = new javax.swing.JLabel();
 
@@ -1784,8 +1784,8 @@ public class LoginDialog extends javax.swing.JFrame {
 
         jTabbedPane1.addTab("j-lawyer.BOX ", new javax.swing.ImageIcon(getClass().getResource("/icons/greyled.png")), jPanel3); // NOI18N
 
-        jLabel3.setHorizontalAlignment(javax.swing.SwingConstants.RIGHT);
-        jLabel3.setIcon(new javax.swing.ImageIcon(getClass().getResource("/images/j-lawyer-logo-180px.png"))); // NOI18N
+        lblLogo.setHorizontalAlignment(javax.swing.SwingConstants.RIGHT);
+        lblLogo.setIcon(new javax.swing.ImageIcon(getClass().getResource("/images/j-lawyer-logo-125px.png"))); // NOI18N
 
         lblAutoUpdate.setFont(lblAutoUpdate.getFont().deriveFont(lblAutoUpdate.getFont().getStyle() | java.awt.Font.BOLD));
         lblAutoUpdate.setForeground(new java.awt.Color(255, 255, 255));
@@ -1809,7 +1809,7 @@ public class LoginDialog extends javax.swing.JFrame {
                 .add(36, 36, 36)
                 .add(lblFullClientVersion)
                 .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                .add(jLabel3)
+                .add(lblLogo)
                 .add(36, 36, 36))
         );
         bgPanelLayout.setVerticalGroup(
@@ -1817,13 +1817,13 @@ public class LoginDialog extends javax.swing.JFrame {
             .add(bgPanelLayout.createSequentialGroup()
                 .add(18, 18, 18)
                 .add(bgPanelLayout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
-                    .add(jLabel3)
+                    .add(lblLogo)
                     .add(lblFullClientVersion))
                 .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
                 .add(jTabbedPane1, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
                 .addPreferredGap(org.jdesktop.layout.LayoutStyle.UNRELATED)
                 .add(lblAutoUpdate)
-                .addContainerGap(12, Short.MAX_VALUE))
+                .addContainerGap(56, Short.MAX_VALUE))
         );
 
         org.jdesktop.layout.GroupLayout layout = new org.jdesktop.layout.GroupLayout(getContentPane());
@@ -2364,7 +2364,6 @@ public class LoginDialog extends javax.swing.JFrame {
     private javax.swing.JLabel jLabel17;
     private javax.swing.JLabel jLabel19;
     private javax.swing.JLabel jLabel2;
-    private javax.swing.JLabel jLabel3;
     private javax.swing.JLabel jLabel4;
     private javax.swing.JLabel jLabel5;
     private javax.swing.JLabel jLabel6;
@@ -2389,6 +2388,7 @@ public class LoginDialog extends javax.swing.JFrame {
     private javax.swing.JLabel lblCompany;
     private javax.swing.JLabel lblDefaultUserIcon;
     private javax.swing.JLabel lblFullClientVersion;
+    private javax.swing.JLabel lblLogo;
     private javax.swing.JLabel lblProfile;
     private javax.swing.JLabel lblProgress;
     private javax.swing.JLabel lblRole;
