@@ -1187,6 +1187,7 @@ public class JKanzleiGUI extends javax.swing.JFrame implements com.jdimension.jl
         mnuInvoiceTaxRates = new javax.swing.JMenuItem();
         mnuInvoicePositionTemplates = new javax.swing.JMenuItem();
         mnuGiroCodes = new javax.swing.JMenuItem();
+        mnuBankstatementCsvConfigs = new javax.swing.JMenuItem();
         mnuTimesheet = new javax.swing.JMenu();
         mnuTimesheetIntervals = new javax.swing.JMenuItem();
         mnuTimesheetPositions = new javax.swing.JMenuItem();
@@ -1831,6 +1832,15 @@ public class JKanzleiGUI extends javax.swing.JFrame implements com.jdimension.jl
             }
         });
         mnuFinance.add(mnuGiroCodes);
+
+        mnuBankstatementCsvConfigs.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons16/material/payments_24dp_0E72B5.png"))); // NOI18N
+        mnuBankstatementCsvConfigs.setText("Kontoauszug-Import");
+        mnuBankstatementCsvConfigs.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                mnuBankstatementCsvConfigsActionPerformed(evt);
+            }
+        });
+        mnuFinance.add(mnuBankstatementCsvConfigs);
 
         mnuOptions.add(mnuFinance);
 
@@ -2908,6 +2918,14 @@ public class JKanzleiGUI extends javax.swing.JFrame implements com.jdimension.jl
         ibsf.setVisible(true);
     }//GEN-LAST:event_mnuImportAccountStatementActionPerformed
 
+    private void mnuBankstatementCsvConfigsActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_mnuBankstatementCsvConfigsActionPerformed
+        if (checkAdmin()) {
+            BankstatementCsvConfigDialog dlg = new BankstatementCsvConfigDialog(this, true);
+            FrameUtils.centerDialog(dlg, this);
+            dlg.setVisible(true);
+        }
+    }//GEN-LAST:event_mnuBankstatementCsvConfigsActionPerformed
+
     /**
      * @param args the command line arguments
      */
@@ -2961,6 +2979,7 @@ public class JKanzleiGUI extends javax.swing.JFrame implements com.jdimension.jl
     private javax.swing.JMenu mnuAssistants;
     private javax.swing.JMenuItem mnuBackupConfiguration;
     private javax.swing.JMenuItem mnuBankImport;
+    private javax.swing.JMenuItem mnuBankstatementCsvConfigs;
     private javax.swing.JMenuItem mnuBeaCourtAddressImport;
     private javax.swing.JMenuItem mnuBeaSettings;
     private javax.swing.JMenu mnuBookKeeping;

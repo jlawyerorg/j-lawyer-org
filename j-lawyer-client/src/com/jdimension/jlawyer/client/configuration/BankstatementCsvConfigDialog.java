@@ -661,527 +661,616 @@ if any, to sign a "copyright disclaimer" for the program, if necessary.
 For more information on this, and how to apply and follow the GNU AGPL, see
 <https://www.gnu.org/licenses/>.
  */
-package com.jdimension.jlawyer.services;
+package com.jdimension.jlawyer.client.configuration;
 
-import com.google.zxing.BarcodeFormat;
-import com.google.zxing.EncodeHintType;
-import com.google.zxing.client.j2se.MatrixToImageWriter;
-import com.google.zxing.common.BitMatrix;
-import com.google.zxing.qrcode.QRCodeWriter;
-import com.google.zxing.qrcode.decoder.ErrorCorrectionLevel;
-import com.jdimension.jlawyer.persistence.AppUserBean;
-import com.jdimension.jlawyer.persistence.AppUserBeanFacadeLocal;
+import com.jdimension.jlawyer.ai.AiRequestLog;
+import com.jdimension.jlawyer.client.assistant.AssistantAccess;
+import com.jdimension.jlawyer.client.editors.EditorsRegistry;
+import com.jdimension.jlawyer.client.settings.ClientSettings;
+import com.jdimension.jlawyer.client.utils.CaseInsensitiveStringComparator;
+import com.jdimension.jlawyer.client.utils.ComponentUtils;
+import com.jdimension.jlawyer.client.utils.FrameUtils;
+import com.jdimension.jlawyer.persistence.AssistantConfig;
 import com.jdimension.jlawyer.persistence.BankStatementsCSVConfig;
-import com.jdimension.jlawyer.persistence.BankStatementsCSVConfigFacadeLocal;
-import com.jdimension.jlawyer.persistence.Invoice;
-import com.jdimension.jlawyer.persistence.InvoiceFacadeLocal;
-import com.jdimension.jlawyer.persistence.InvoicePool;
-import com.jdimension.jlawyer.persistence.InvoicePoolAccess;
-import com.jdimension.jlawyer.persistence.InvoicePoolAccessFacadeLocal;
-import com.jdimension.jlawyer.persistence.InvoicePoolFacadeLocal;
-import com.jdimension.jlawyer.persistence.InvoicePositionTemplate;
-import com.jdimension.jlawyer.persistence.InvoicePositionTemplateFacadeLocal;
-import com.jdimension.jlawyer.persistence.InvoiceType;
-import com.jdimension.jlawyer.persistence.InvoiceTypeFacadeLocal;
-import com.jdimension.jlawyer.persistence.ServerSettingsBean;
-import com.jdimension.jlawyer.persistence.ServerSettingsBeanFacadeLocal;
-import com.jdimension.jlawyer.persistence.utils.StringGenerator;
-import com.jdimension.jlawyer.server.services.settings.ServerSettingsKeys;
-import com.jdimension.jlawyer.server.services.settings.UserSettingsKeys;
-import com.jdimension.jlawyer.server.utils.InvalidSchemaPatternException;
-import com.jdimension.jlawyer.server.utils.InvoiceNumberGenerator;
-import com.jdimension.jlawyer.server.utils.ServerStringUtils;
-import java.io.ByteArrayOutputStream;
-import java.math.BigDecimal;
-import java.text.DecimalFormat;
-import java.text.DecimalFormatSymbols;
-import java.text.NumberFormat;
-import java.text.SimpleDateFormat;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.Date;
+import com.jdimension.jlawyer.security.CryptoProvider;
+import com.jdimension.jlawyer.services.JLawyerServiceLocator;
 import java.util.List;
-import java.util.Locale;
-import javax.annotation.Resource;
-import javax.annotation.security.PermitAll;
-import javax.annotation.security.RolesAllowed;
-import javax.ejb.EJB;
-import javax.ejb.SessionContext;
-import javax.ejb.Stateless;
-import javax.inject.Inject;
-import javax.jms.JMSConnectionFactory;
-import javax.jms.JMSContext;
-import javax.jms.ObjectMessage;
+import javax.swing.JOptionPane;
+import javax.swing.table.DefaultTableModel;
+import javax.swing.table.TableModel;
+import javax.swing.table.TableRowSorter;
 import org.apache.log4j.Logger;
-import org.jlawyer.notification.OutgoingMailRequest;
+import themes.colors.DefaultColorTheme;
 
 /**
  *
  * @author jens
  */
-@Stateless
-public class InvoiceService implements InvoiceServiceRemote, InvoiceServiceLocal {
+public class BankstatementCsvConfigDialog extends javax.swing.JDialog {
 
-    private static final Logger log = Logger.getLogger(InvoiceService.class.getName());
+    private static final Logger log = Logger.getLogger(BankstatementCsvConfigDialog.class.getName());
 
-    SimpleDateFormat df = new SimpleDateFormat("dd.MM.yyyy");
-    NumberFormat nf = NumberFormat.getCurrencyInstance(Locale.GERMANY);
+    /**
+     * Creates new form BankstatementCsvConfigDialog
+     *
+     * @param parent
+     * @param modal
+     */
+    public BankstatementCsvConfigDialog(java.awt.Frame parent, boolean modal) {
+        super(parent, modal);
+        initComponents();
 
-    @Resource
-    private SessionContext context;
+        this.resetDetails();
 
-    @EJB
-    private SecurityServiceLocal securityFacade;
-    @EJB
-    private InvoiceFacadeLocal invoices;
-    @EJB
-    private InvoicePoolFacadeLocal invoicePools;
-    @EJB
-    private InvoicePoolAccessFacadeLocal invoicePoolAccess;
-    @EJB
-    private InvoiceTypeFacadeLocal invoiceTypes;
-    @EJB
-    private InvoicePositionTemplateFacadeLocal posTemplates;
-    @EJB
-    private BankStatementsCSVConfigFacadeLocal csvConfigs;
-    @EJB
-    private AppUserBeanFacadeLocal users;
-    @EJB
-    private ServerSettingsBeanFacadeLocal settingsFacade;
+        this.tblCsvConfigs.setSelectionForeground(DefaultColorTheme.COLOR_LOGO_BLUE);
 
-    @Inject
-    @JMSConnectionFactory("java:/JmsXA")
-    private JMSContext jmsContext;
+        ClientSettings settings = ClientSettings.getInstance();
+        try {
+            JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
+            List<BankStatementsCSVConfig> configs = locator.lookupInvoiceServiceRemote().getAllBankStatementsCSVConfigurations();
 
-    @Resource(lookup = "java:/jms/queue/outgoingMailProcessorQueue")
-    private javax.jms.Queue outgoingMailQueue;
+            this.tblCsvConfigs.setDefaultRenderer(Object.class, new BankStatementCsvConfigTableCellRenderer());
 
-    @Override
-    @RolesAllowed({"loginRole"})
-    public List<InvoicePool> getAllInvoicePools() throws Exception {
-        List<InvoicePool> pools = this.invoicePools.findAll();
-        Collections.sort(pools, (InvoicePool arg0, InvoicePool arg1) -> {
-            String s1 = arg0.getDisplayName();
-            if (s1 == null) {
-                s1 = "";
+            for (BankStatementsCSVConfig csv : configs) {
+                ((DefaultTableModel) this.tblCsvConfigs.getModel()).addRow(new Object[]{csv});
+
             }
-            String s2 = arg1.getDisplayName();
-            if (s2 == null) {
-                s2 = "";
-            }
-            return s1.toUpperCase().compareTo(s2.toUpperCase());
-        });
-        return pools;
-    }
+            TableRowSorter<TableModel> sorter = new TableRowSorter<>(this.tblCsvConfigs.getModel());
+            sorter.setComparator(0, new CaseInsensitiveStringComparator());
+            this.tblCsvConfigs.setRowSorter(sorter);
+            this.tblCsvConfigs.getRowSorter().toggleSortOrder(0);
 
-    @Override
-    @RolesAllowed({"loginRole"})
-    public List<InvoicePositionTemplate> getAllInvoicePositionTemplates() throws Exception {
-        List<InvoicePositionTemplate> tpls = this.posTemplates.findAll();
-        Collections.sort(tpls, (InvoicePositionTemplate arg0, InvoicePositionTemplate arg1) -> {
-            String s1 = arg0.getName();
-            if (s1 == null) {
-                s1 = "";
-            }
-            String s2 = arg1.getName();
-            if (s2 == null) {
-                s2 = "";
-            }
-            return s1.toUpperCase().compareTo(s2.toUpperCase());
-        });
-        return tpls;
-    }
-    
-    @Override
-    @RolesAllowed({"loginRole"})
-    public List<BankStatementsCSVConfig> getAllBankStatementsCSVConfigurations() throws Exception {
-        List<BankStatementsCSVConfig> configs=this.csvConfigs.findAll();
-        Collections.sort(configs, (BankStatementsCSVConfig arg0, BankStatementsCSVConfig arg1) -> {
-            String s1 = arg0.getConfigurationName();
-            if (s1 == null) {
-                s1 = "";
-            }
-            String s2 = arg1.getConfigurationName();
-            if (s2 == null) {
-                s2 = "";
-            }
-            return s1.toUpperCase().compareTo(s2.toUpperCase());
-        });
-        return configs;
-    }
-
-    @Override
-    @RolesAllowed({"loginRole"})
-    public List<InvoicePool> getInvoicePoolsForUser(String principalId) throws Exception {
-        List<InvoicePool> returnList = new ArrayList<>();
-        List<InvoicePoolAccess> acc = this.invoicePoolAccess.findByUser(principalId);
-        if (acc != null) {
-            for (InvoicePoolAccess ipa : acc) {
-                InvoicePool ip = this.invoicePools.find(ipa.getPoolId());
-                if (ip != null) {
-                    returnList.add(ip);
-                }
-            }
+        } catch (Exception ex) {
+            log.error("Error connecting to server", ex);
+            JOptionPane.showMessageDialog(this, ex.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
+            return;
         }
-        Collections.sort(returnList, (InvoicePool p1, InvoicePool p2) -> {
-            if (p1 != null && p2 != null && p1.getDisplayName() != null && p2.getDisplayName() != null) {
-                return p1.getDisplayName().compareTo(p2.getDisplayName());
+
+        ComponentUtils.autoSizeColumns(tblCsvConfigs);
+    }
+
+    private void resetDetails() {
+        this.txtName.setText("");
+        this.txtDelimiter.setText("");
+        this.chkHeader.setSelected(true);
+        this.cmbNumberLocale.setSelectedItem("DE");
+        this.txtNumberFormat.setText("#,##0.00");
+        
+        this.spnColDate.setValue(0);
+        this.spnColName.setValue(1);
+        this.spnColIban.setValue(2);
+        this.spnColPurpose.setValue(3);
+        this.spnColAmount.setValue(4);
+        this.spnColCurrency.setValue(5);
+        this.spnColBookingType.setValue(6);
+        
+
+    }
+
+    /**
+     * This method is called from within the constructor to initialize the form.
+     * WARNING: Do NOT modify this code. The content of this method is always
+     * regenerated by the Form Editor.
+     */
+    @SuppressWarnings("unchecked")
+    // <editor-fold defaultstate="collapsed" desc="Generated Code">//GEN-BEGIN:initComponents
+    private void initComponents() {
+
+        jPanel1 = new javax.swing.JPanel();
+        jScrollPane1 = new javax.swing.JScrollPane();
+        tblCsvConfigs = new javax.swing.JTable();
+        cmdAdd = new javax.swing.JButton();
+        cmdRemove = new javax.swing.JButton();
+        cmdClose = new javax.swing.JButton();
+        jLabel1 = new javax.swing.JLabel();
+        txtName = new javax.swing.JTextField();
+        cmdSave = new javax.swing.JButton();
+        lblColumns = new javax.swing.JLabel();
+        jLabel5 = new javax.swing.JLabel();
+        jSeparator1 = new javax.swing.JSeparator();
+        txtDelimiter = new javax.swing.JTextField();
+        jLabel3 = new javax.swing.JLabel();
+        spnColDate = new javax.swing.JSpinner();
+        jLabel11 = new javax.swing.JLabel();
+        chkHeader = new javax.swing.JCheckBox();
+        txtNumberFormat = new javax.swing.JTextField();
+        jLabel4 = new javax.swing.JLabel();
+        cmbNumberLocale = new javax.swing.JComboBox<>();
+        spnColName = new javax.swing.JSpinner();
+        spnColIban = new javax.swing.JSpinner();
+        spnColPurpose = new javax.swing.JSpinner();
+        spnColAmount = new javax.swing.JSpinner();
+        spnColCurrency = new javax.swing.JSpinner();
+        spnColBookingType = new javax.swing.JSpinner();
+        jLabel2 = new javax.swing.JLabel();
+        jLabel6 = new javax.swing.JLabel();
+        jLabel7 = new javax.swing.JLabel();
+        jLabel8 = new javax.swing.JLabel();
+        jLabel9 = new javax.swing.JLabel();
+        jLabel10 = new javax.swing.JLabel();
+
+        setDefaultCloseOperation(javax.swing.WindowConstants.DISPOSE_ON_CLOSE);
+        setTitle("Assistent Ingo");
+
+        jPanel1.setBorder(javax.swing.BorderFactory.createTitledBorder("CSV-Konfigurationen"));
+
+        tblCsvConfigs.setModel(new javax.swing.table.DefaultTableModel(
+            new Object [][] {
+
+            },
+            new String [] {
+                "Name"
+            }
+        ) {
+            boolean[] canEdit = new boolean [] {
+                false
+            };
+
+            public boolean isCellEditable(int rowIndex, int columnIndex) {
+                return canEdit [columnIndex];
+            }
+        });
+        tblCsvConfigs.setSelectionMode(javax.swing.ListSelectionModel.SINGLE_SELECTION);
+        tblCsvConfigs.getTableHeader().setReorderingAllowed(false);
+        tblCsvConfigs.addMouseListener(new java.awt.event.MouseAdapter() {
+            public void mouseClicked(java.awt.event.MouseEvent evt) {
+                tblCsvConfigsMouseClicked(evt);
+            }
+        });
+        tblCsvConfigs.addKeyListener(new java.awt.event.KeyAdapter() {
+            public void keyReleased(java.awt.event.KeyEvent evt) {
+                tblCsvConfigsKeyReleased(evt);
+            }
+        });
+        jScrollPane1.setViewportView(tblCsvConfigs);
+
+        cmdAdd.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/edit_add.png"))); // NOI18N
+        cmdAdd.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                cmdAddActionPerformed(evt);
+            }
+        });
+
+        cmdRemove.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/trashcan_full.png"))); // NOI18N
+        cmdRemove.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                cmdRemoveActionPerformed(evt);
+            }
+        });
+
+        javax.swing.GroupLayout jPanel1Layout = new javax.swing.GroupLayout(jPanel1);
+        jPanel1.setLayout(jPanel1Layout);
+        jPanel1Layout.setHorizontalGroup(
+            jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(jPanel1Layout.createSequentialGroup()
+                .addContainerGap()
+                .addComponent(jScrollPane1, javax.swing.GroupLayout.DEFAULT_SIZE, 441, Short.MAX_VALUE)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addComponent(cmdAdd)
+                    .addComponent(cmdRemove))
+                .addContainerGap())
+        );
+        jPanel1Layout.setVerticalGroup(
+            jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(jPanel1Layout.createSequentialGroup()
+                .addContainerGap()
+                .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addComponent(jScrollPane1)
+                    .addGroup(jPanel1Layout.createSequentialGroup()
+                        .addComponent(cmdAdd)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addComponent(cmdRemove)
+                        .addGap(0, 0, Short.MAX_VALUE)))
+                .addContainerGap())
+        );
+
+        cmdClose.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/cancel.png"))); // NOI18N
+        cmdClose.setText("Schliessen");
+        cmdClose.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                cmdCloseActionPerformed(evt);
+            }
+        });
+
+        jLabel1.setText("Name:");
+
+        cmdSave.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/agt_action_success.png"))); // NOI18N
+        cmdSave.setText("Übernehmen");
+        cmdSave.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                cmdSaveActionPerformed(evt);
+            }
+        });
+
+        lblColumns.setFont(lblColumns.getFont().deriveFont(lblColumns.getFont().getStyle() | java.awt.Font.BOLD, lblColumns.getFont().getSize()-2));
+        lblColumns.setForeground(new java.awt.Color(153, 153, 153));
+        lblColumns.setText("Spalten (beginnend bei 0)");
+
+        jLabel5.setFont(jLabel5.getFont().deriveFont(jLabel5.getFont().getStyle() | java.awt.Font.BOLD, jLabel5.getFont().getSize()-2));
+        jLabel5.setForeground(new java.awt.Color(153, 153, 153));
+        jLabel5.setText("CSV-Konfigurationen für Kontoauszugimporte");
+
+        jLabel3.setText("Trennzeichen:");
+
+        spnColDate.setModel(new javax.swing.SpinnerNumberModel(0, 0, 50, 1));
+
+        jLabel11.setText("Datum:");
+
+        chkHeader.setText("erste Zeile ist Kopfzeile");
+        chkHeader.setToolTipText("wenn aktiviert, so wird die erste Zeile der Datei übersprungen");
+
+        jLabel4.setText("Zahlenformat:");
+
+        cmbNumberLocale.setModel(new javax.swing.DefaultComboBoxModel<>(new String[] { "DE", "EN" }));
+
+        spnColName.setModel(new javax.swing.SpinnerNumberModel(0, 0, 50, 1));
+
+        spnColIban.setModel(new javax.swing.SpinnerNumberModel(0, 0, 50, 1));
+
+        spnColPurpose.setModel(new javax.swing.SpinnerNumberModel(0, 0, 50, 1));
+
+        spnColAmount.setModel(new javax.swing.SpinnerNumberModel(0, 0, 50, 1));
+
+        spnColCurrency.setModel(new javax.swing.SpinnerNumberModel(0, 0, 50, 1));
+
+        spnColBookingType.setModel(new javax.swing.SpinnerNumberModel(0, 0, 50, 1));
+
+        jLabel2.setText("von / an:");
+
+        jLabel6.setText("IBAN:");
+
+        jLabel7.setText("Verwendungszweck:");
+
+        jLabel8.setText("Betrag:");
+
+        jLabel9.setText("Währung:");
+
+        jLabel10.setText("Buchungsart:");
+
+        javax.swing.GroupLayout layout = new javax.swing.GroupLayout(getContentPane());
+        getContentPane().setLayout(layout);
+        layout.setHorizontalGroup(
+            layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(layout.createSequentialGroup()
+                .addContainerGap()
+                .addComponent(jPanel1, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
+                        .addGap(0, 0, Short.MAX_VALUE)
+                        .addComponent(cmdSave)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addComponent(cmdClose))
+                    .addGroup(layout.createSequentialGroup()
+                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                            .addComponent(jLabel1)
+                            .addComponent(jLabel3)
+                            .addComponent(jLabel4))
+                        .addGap(25, 25, 25)
+                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                            .addComponent(txtName, javax.swing.GroupLayout.Alignment.TRAILING)
+                            .addComponent(txtDelimiter)
+                            .addGroup(layout.createSequentialGroup()
+                                .addComponent(chkHeader)
+                                .addGap(0, 0, Short.MAX_VALUE))
+                            .addGroup(layout.createSequentialGroup()
+                                .addComponent(txtNumberFormat)
+                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                                .addComponent(cmbNumberLocale, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))))
+                    .addComponent(jSeparator1)
+                    .addGroup(layout.createSequentialGroup()
+                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                            .addComponent(jLabel5)
+                            .addComponent(lblColumns)
+                            .addGroup(layout.createSequentialGroup()
+                                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                                    .addComponent(jLabel7)
+                                    .addComponent(jLabel6)
+                                    .addComponent(jLabel2)
+                                    .addComponent(jLabel11)
+                                    .addComponent(jLabel8))
+                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                                    .addComponent(spnColAmount, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                                    .addComponent(spnColDate, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                                    .addComponent(spnColName, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                                    .addComponent(spnColIban, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                                    .addComponent(spnColPurpose, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)))
+                            .addGroup(layout.createSequentialGroup()
+                                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                                    .addComponent(jLabel9)
+                                    .addComponent(jLabel10))
+                                .addGap(60, 60, 60)
+                                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                                    .addComponent(spnColBookingType, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                                    .addComponent(spnColCurrency, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))))
+                        .addGap(0, 230, Short.MAX_VALUE)))
+                .addContainerGap())
+        );
+        layout.setVerticalGroup(
+            layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(layout.createSequentialGroup()
+                .addContainerGap()
+                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addComponent(jPanel1, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                    .addGroup(layout.createSequentialGroup()
+                        .addComponent(jLabel5)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                            .addComponent(txtName, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                            .addComponent(jLabel1))
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addComponent(chkHeader)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                            .addComponent(txtDelimiter, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                            .addComponent(jLabel3))
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                            .addComponent(txtNumberFormat, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                            .addComponent(jLabel4)
+                            .addComponent(cmbNumberLocale, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                        .addComponent(jSeparator1, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                        .addComponent(lblColumns)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                            .addComponent(spnColDate, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                            .addComponent(jLabel11))
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                            .addComponent(spnColName, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                            .addComponent(jLabel2))
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                            .addComponent(spnColIban, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                            .addComponent(jLabel6))
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                            .addComponent(spnColPurpose, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                            .addComponent(jLabel7))
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                            .addComponent(spnColAmount, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                            .addComponent(jLabel8))
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                            .addComponent(spnColCurrency, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                            .addComponent(jLabel9))
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                            .addComponent(spnColBookingType, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                            .addComponent(jLabel10))
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 75, Short.MAX_VALUE)
+                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                            .addComponent(cmdClose)
+                            .addComponent(cmdSave))))
+                .addContainerGap())
+        );
+
+        pack();
+    }// </editor-fold>//GEN-END:initComponents
+
+    private void cmdCloseActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdCloseActionPerformed
+        this.setVisible(false);
+        this.dispose();
+    }//GEN-LAST:event_cmdCloseActionPerformed
+
+    private void tblCsvConfigsMouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_tblCsvConfigsMouseClicked
+        if (evt.getClickCount() == 1 && !evt.isConsumed()) {
+
+            int row = this.tblCsvConfigs.getSelectedRow();
+
+            if (row < 0) {
+                this.resetDetails();
             } else {
-                return -1;
-            }
-        });
-        return returnList;
-    }
 
-    @Override
-    @RolesAllowed({"adminRole"})
-    public InvoicePool addInvoicePool(InvoicePool ip) {
-        StringGenerator idGen = new StringGenerator();
-        String ipId = idGen.getID().toString();
-        ip.setId(ipId);
-        this.invoicePools.create(ip);
-        String principalId = null;
+                BankStatementsCSVConfig csv = (BankStatementsCSVConfig) this.tblCsvConfigs.getValueAt(row, 0);
+                this.updatedUI(csv);
+            }
+
+        }
+    }//GEN-LAST:event_tblCsvConfigsMouseClicked
+
+    private void cmdAddActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdAddActionPerformed
+        Object newNameObject = JOptionPane.showInputDialog(this, "Name der Bank: ", "Neue Konfiguration für CSV-Kontoauszug", JOptionPane.QUESTION_MESSAGE, null, null, "");
+        if (newNameObject == null) {
+            return;
+        }
+
+        ClientSettings settings = ClientSettings.getInstance();
         try {
-            principalId = context.getCallerPrincipal().getName();
-            this.securityFacade.addUserToInvoicePool(principalId, ipId);
+            JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
+
+            BankStatementsCSVConfig csv = new BankStatementsCSVConfig();
+            csv.setConfigurationName(newNameObject.toString());
+            
+            BankStatementsCSVConfig savedConfig = locator.lookupInvoiceServiceRemote().addBankStatementsCSVConfiguration(csv);
+
+            ((DefaultTableModel) this.tblCsvConfigs.getModel()).addRow(new Object[]{savedConfig});
+            this.tblCsvConfigs.getSelectionModel().setSelectionInterval(this.tblCsvConfigs.getRowCount()-1, this.tblCsvConfigs.getRowCount()-1);
+
         } catch (Exception ex) {
-            log.error("Could not add invoice pool privilege for invoice pool " + ipId + " to user " + principalId, ex);
-        }
-        return this.invoicePools.find(ipId);
-    }
-
-    @Override
-    @RolesAllowed({"adminRole"})
-    public InvoicePositionTemplate addInvoicePositionTemplate(InvoicePositionTemplate tpl) {
-        StringGenerator idGen = new StringGenerator();
-        String tplId = idGen.getID().toString();
-        tpl.setId(tplId);
-        this.posTemplates.create(tpl);
-        return this.posTemplates.find(tplId);
-    }
-
-    @Override
-    @RolesAllowed({"adminRole"})
-    public InvoicePool updateInvoicePool(InvoicePool ip) {
-        this.invoicePools.edit(ip);
-        return this.invoicePools.find(ip.getId());
-    }
-
-    @Override
-    @RolesAllowed({"adminRole"})
-    public InvoicePositionTemplate updateInvoicePositionTemplate(InvoicePositionTemplate tpl) {
-        this.posTemplates.edit(tpl);
-        return this.posTemplates.find(tpl.getId());
-    }
-
-    @Override
-    @RolesAllowed({"adminRole"})
-    public void removeInvoicePool(InvoicePool ip) {
-        this.invoicePools.remove(ip);
-    }
-
-    @Override
-    @RolesAllowed({"adminRole"})
-    public void removeInvoicePositionTemplate(InvoicePositionTemplate tpl) {
-        this.posTemplates.remove(tpl);
-    }
-
-    @Override
-    @RolesAllowed({"loginRole"})
-    public List<String> previewInvoiceNumbering(InvoicePool testPool) throws Exception {
-        ArrayList<String> previews = new ArrayList<>();
-
-        int startFrom = testPool.getLastIndex() + 1;
-        int startFrom2 = startFrom;
-        if (testPool.getStartIndex() > startFrom) {
-            startFrom = testPool.getStartIndex();
+            log.error("Error creating new assistant", ex);
+            JOptionPane.showMessageDialog(this, ex.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
         }
 
-        Date now = new Date();
+    }//GEN-LAST:event_cmdAddActionPerformed
+
+    private void cmdSaveActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdSaveActionPerformed
+        
+        int row = this.tblCsvConfigs.getSelectedRow();
+
+        if (row >= 0) {
+
+            BankStatementsCSVConfig csv = (BankStatementsCSVConfig) this.tblCsvConfigs.getValueAt(row, 0);
+            csv.setColumnAmount(((Number) this.spnColAmount.getValue()).intValue());
+            csv.setColumnBookingType(((Number) this.spnColBookingType.getValue()).intValue());
+            csv.setColumnCurrency(((Number) this.spnColCurrency.getValue()).intValue());
+            csv.setColumnDate(((Number) this.spnColDate.getValue()).intValue());
+            csv.setColumnIban(((Number) this.spnColIban.getValue()).intValue());
+            csv.setColumnName(((Number) this.spnColName.getValue()).intValue());
+            csv.setColumnPurpose(((Number) this.spnColPurpose.getValue()).intValue());
+            csv.setConfigurationName(this.txtName.getText());
+            csv.setDecimalFormat(this.txtNumberFormat.getText());
+            csv.setDelimiter(this.txtDelimiter.getText());
+            csv.setLocale(this.cmbNumberLocale.getEditor().getItem().toString());
+            
+
+            ClientSettings settings = ClientSettings.getInstance();
+            try {
+                JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
+
+                BankStatementsCSVConfig savedConfig = locator.lookupInvoiceServiceRemote().updateBankStatementsCSVConfiguration(csv);
+                row = this.tblCsvConfigs.convertRowIndexToModel(row);
+                ((DefaultTableModel) this.tblCsvConfigs.getModel()).setValueAt(savedConfig, row, 0);
+
+            } catch (Exception ex) {
+                log.error("Error updating csv config", ex);
+                JOptionPane.showMessageDialog(this, ex.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
+            }
+        }
+
+
+    }//GEN-LAST:event_cmdSaveActionPerformed
+
+    private void cmdRemoveActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdRemoveActionPerformed
+        int row = this.tblCsvConfigs.getSelectedRow();
+
+        if (row >= 0) {
+
+            BankStatementsCSVConfig csv = (BankStatementsCSVConfig) this.tblCsvConfigs.getValueAt(row, 0);
+            ClientSettings settings = ClientSettings.getInstance();
+            try {
+                JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
+
+                locator.lookupInvoiceServiceRemote().removeBankStatementsCSVConfiguration(csv);
+                row = this.tblCsvConfigs.convertRowIndexToModel(row);
+                ((DefaultTableModel) this.tblCsvConfigs.getModel()).removeRow(row);
+
+                this.resetDetails();
+            } catch (Exception ex) {
+                log.error("Error removing assistant config", ex);
+                JOptionPane.showMessageDialog(this, ex.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
+            }
+        }
+    }//GEN-LAST:event_cmdRemoveActionPerformed
+
+    private void tblCsvConfigsKeyReleased(java.awt.event.KeyEvent evt) {//GEN-FIRST:event_tblCsvConfigsKeyReleased
+        int row = this.tblCsvConfigs.getSelectedRow();
+
+        if (row < 0) {
+            this.resetDetails();
+        } else {
+
+            BankStatementsCSVConfig csv = (BankStatementsCSVConfig) this.tblCsvConfigs.getValueAt(row, 0);
+            this.updatedUI(csv);
+        }
+    }//GEN-LAST:event_tblCsvConfigsKeyReleased
+
+    private void updatedUI(BankStatementsCSVConfig csv) {
+        
+        this.spnColAmount.setValue(csv.getColumnAmount());
+        this.spnColBookingType.setValue(csv.getColumnBookingType());
+        this.spnColCurrency.setValue(csv.getColumnCurrency());
+        this.spnColDate.setValue(csv.getColumnDate());
+        this.spnColIban.setValue(csv.getColumnIban());
+        this.spnColName.setValue(csv.getColumnName());
+        this.spnColPurpose.setValue(csv.getColumnPurpose());
+        this.chkHeader.setSelected(csv.isHeader());
+        this.cmbNumberLocale.setSelectedItem(csv.getLocale());
+        this.txtDelimiter.setText(csv.getDelimiter());
+        this.txtName.setText(csv.getConfigurationName());
+        this.txtNumberFormat.setText(csv.getDecimalFormat());
+        
+    }
+
+    /**
+     * @param args the command line arguments
+     */
+    public static void main(String args[]) {
+        /* Set the Nimbus look and feel */
+        //<editor-fold defaultstate="collapsed" desc=" Look and feel setting code (optional) ">
+        /* If Nimbus (introduced in Java SE 6) is not available, stay with the default look and feel.
+         * For details see http://download.oracle.com/javase/tutorial/uiswing/lookandfeel/plaf.html 
+         */
         try {
-
-            for (int i = 0; i < 3; i++) {
-                String next = InvoiceNumberGenerator.getNextInvoiceNumber(testPool.getPattern(), now, startFrom);
-                startFrom++;
-                previews.add(next);
-            }
-
-            Date now2 = new Date(System.currentTimeMillis() + 24l * 60l * 60l * 1000l);
-            for (int i = 0; i < 3; i++) {
-                String next = InvoiceNumberGenerator.getNextInvoiceNumber(testPool.getPattern(), now2, startFrom);
-                startFrom++;
-                previews.add(next);
-            }
-
-            Date now3 = new Date(System.currentTimeMillis() + 24l * 60l * 60l * 1000l + 31l * 24l * 60l * 60l * 1000l);
-            for (int i = 0; i < 3; i++) {
-                String next = InvoiceNumberGenerator.getNextInvoiceNumber(testPool.getPattern(), now3, startFrom);
-                startFrom++;
-                previews.add(next);
-            }
-
-            Date now4 = new Date(now3.getTime() + 366l * 24l * 60l * 60l * 1000l);
-            for (int i = 0; i < 3; i++) {
-                String next = InvoiceNumberGenerator.getNextInvoiceNumber(testPool.getPattern(), now4, startFrom2);
-                startFrom++;
-                previews.add(next);
-            }
-
-            return previews;
-
-        } catch (InvalidSchemaPatternException isp) {
-            throw new Exception(isp.getMessage());
-        }
-    }
-
-    @Override
-    @RolesAllowed({"loginRole"})
-    public String nextInvoiceNumber(InvoicePool pool) throws Exception {
-        InvoicePool ip = this.invoicePools.find(pool.getId());
-        if (ip == null) {
-            log.error("invalid invoice pool with id " + pool.getId());
-            throw new Exception("Ungültiger Rechnungsnummernkreis");
-        }
-
-        int startFrom = ip.getLastIndex() + 1;
-        if (ip.getStartIndex() > startFrom) {
-            startFrom = ip.getStartIndex();
-        }
-        ip.setLastIndex(startFrom);
-
-        Date now = new Date();
-        try {
-
-            String next = InvoiceNumberGenerator.getNextInvoiceNumber(ip.getPattern(), now, startFrom);
-            this.invoicePools.edit(ip);
-            return next;
-
-        } catch (InvalidSchemaPatternException isp) {
-            log.error("invalid invoice schema pattern " + ip.getPattern(), isp);
-            throw new Exception(isp.getMessage());
-        }
-
-    }
-
-    @Override
-    @RolesAllowed({"loginRole"})
-    public List<InvoiceType> getAllInvoiceTypes() throws Exception {
-        return this.invoiceTypes.findAll();
-    }
-
-    @Override
-    @RolesAllowed({"adminRole"})
-    public InvoiceType addInvoiceType(InvoiceType invoiceType) throws Exception {
-        StringGenerator idGen = new StringGenerator();
-        String ipId = idGen.getID().toString();
-        invoiceType.setId(ipId);
-        this.invoiceTypes.create(invoiceType);
-        return this.invoiceTypes.find(ipId);
-    }
-
-    @Override
-    @RolesAllowed({"adminRole"})
-    public InvoiceType updateInvoiceType(InvoiceType invoiceType) throws Exception {
-        this.invoiceTypes.edit(invoiceType);
-        return this.invoiceTypes.find(invoiceType.getId());
-    }
-
-    @Override
-    @RolesAllowed({"adminRole"})
-    public void removeInvoiceType(InvoiceType invoiceType) throws Exception {
-        this.invoiceTypes.remove(invoiceType);
-    }
-
-    @Override
-    @PermitAll
-    public void checkInvoicesDue() {
-
-        Date now = new Date();
-        List<Invoice> openInvoices = this.invoices.findByStatus(Invoice.STATUS_OPEN);
-        if (openInvoices != null) {
-            for (Invoice i : openInvoices) {
-                Date dueDate = i.getDueDate();
-                if (dueDate != null) {
-                    if (now.getTime() > dueDate.getTime() && i.getInvoiceType().isTurnOver()) {
-                        log.info("Setting invoice " + i.getInvoiceNumber() + " to first dunning level");
-                        i.setStatus(Invoice.STATUS_OPEN_REMINDER1);
-                        this.invoices.edit(i);
-
-                        String assistant = i.getArchiveFileKey().getAssistant();
-                        String assistantEmail = null;
-                        boolean assistantNotification = false;
-                        String lawyer = i.getArchiveFileKey().getLawyer();
-                        String lawyerEmail = null;
-                        boolean lawyerNotification = false;
-
-                        if (!ServerStringUtils.isEmpty(assistant)) {
-                            AppUserBean assUser = this.users.find(assistant);
-                            if (assUser != null && !ServerStringUtils.isEmpty(assUser.getEmail())) {
-                                assistantEmail = assUser.getEmail();
-                                assistantNotification = assUser.getSettingAsBoolean(UserSettingsKeys.NOTIFICATION_EVENT_INVOICE_DUE, true);
-                            }
-                        }
-                        if (!ServerStringUtils.isEmpty(lawyer)) {
-                            AppUserBean lawUser = this.users.find(lawyer);
-                            if (lawUser != null && !ServerStringUtils.isEmpty(lawUser.getEmail())) {
-                                lawyerEmail = lawUser.getEmail();
-                                lawyerNotification = lawUser.getSettingAsBoolean(UserSettingsKeys.NOTIFICATION_EVENT_INVOICE_DUE, true);
-                            }
-                        }
-
-                        if (lawyerNotification || assistantNotification) {
-                            OutgoingMailRequest omr = new OutgoingMailRequest();
-                            if (lawyerNotification) {
-                                omr.addTo(lawyerEmail);
-                            }
-                            if (assistantNotification) {
-                                omr.addTo(assistantEmail);
-                            }
-                            omr.setSubject(i.getInvoiceType().getDisplayName() + " fällig");
-                            omr.setMainCaption(i.getInvoiceType().getDisplayName() + " " + i.getInvoiceNumber() + " ist seit heute fällig");
-
-                            omr.setSubCaption(i.getInvoiceNumber() + " " + i.getName() + " (" + nf.format(i.getTotalGross()) + ")");
-
-                            StringBuilder body = new StringBuilder();
-                            body.append("Erstellt: ").append(df.format(i.getCreationDate())).append("\n");
-                            body.append("Fällig: ").append(df.format(i.getDueDate())).append("\n");
-                            body.append("Betrag: ").append(nf.format(i.getTotalGross())).append("\n");
-                            if (i.getContact() != null) {
-                                body.append("zahlungspflichtig: ").append(i.getContact().toDisplayName()).append("\n");
-                            }
-                            body.append("Akte: ").append(i.getArchiveFileKey().getFileNumber()).append(" ").append(i.getArchiveFileKey().getName());
-                            omr.setBodyContent(body.toString());
-                            this.publishOutgoingMailRequest(omr);
-                        }
-
-                    }
-
+            for (javax.swing.UIManager.LookAndFeelInfo info : javax.swing.UIManager.getInstalledLookAndFeels()) {
+                if ("Nimbus".equals(info.getName())) {
+                    javax.swing.UIManager.setLookAndFeel(info.getClassName());
+                    break;
                 }
             }
+        } catch (ClassNotFoundException | InstantiationException | IllegalAccessException | javax.swing.UnsupportedLookAndFeelException ex) {
+            java.util.logging.Logger.getLogger(BankstatementCsvConfigDialog.class.getName()).log(java.util.logging.Level.SEVERE, null, ex);
         }
+        //</editor-fold>
+        //</editor-fold>
+        //</editor-fold>
+        //</editor-fold>
+        //</editor-fold>
+        //</editor-fold>
+        //</editor-fold>
+        //</editor-fold>
+        //</editor-fold>
+        //</editor-fold>
+        //</editor-fold>
+        //</editor-fold>
+        //</editor-fold>
+        //</editor-fold>
+        //</editor-fold>
+        //</editor-fold>
 
-    }
-    
-    @Override
-    @RolesAllowed({"loginRole"})
-    public List<Invoice> getInvoicesByStatus(int... status) throws Exception {
+        //</editor-fold>
+        //</editor-fold>
 
-        List<Invoice> invoicesList = new ArrayList<>();
-        this.invoices.findByStatus(Invoice.STATUS_OPEN);
-        for(int s: status) {
-            invoicesList.addAll(invoices.findByStatus(s));
-        }
-        return invoicesList;
-    }
-
-    private void publishOutgoingMailRequest(OutgoingMailRequest req) {
-        try {
-            ObjectMessage msg = this.jmsContext.createObjectMessage(req);
-            jmsContext.createProducer().send(outgoingMailQueue, msg);
-
-        } catch (Exception ex) {
-            log.error("could not publish outgoing mail request", ex);
-        }
-    }
-
-    @Override
-    @RolesAllowed({"loginRole"})
-    public byte[] getGiroCode(String senderPrincipalId, BigDecimal amount, String purpose) throws Exception {
-        
-        if(senderPrincipalId==null)
-            throw new Exception("Girocode kann nicht erstellt werden - kein Absender angegeben");
-        
-        AppUserBean sender=this.users.findByPrincipalId(senderPrincipalId);
-        if(sender==null) {
-            throw new Exception("Girocode kann nicht erstellt werden - Absender '" + senderPrincipalId + "' kann nicht gefunden werden");
-        }
-        
-        if (ServerStringUtils.isEmpty(sender.getCompany())) {
-            throw new Exception("Girocode kann nicht erstellt werden - Unternehmensname des Absenders leer. Korrektur unter 'Administration' - 'Nutzer'.");
-        }
-        String name=sender.getCompany().trim();
-        name=ServerStringUtils.removeSonderzeichen(name);
-        name=name.replace("&", "");
-        name=name.replace("'", "");
-        name=name.replace("\"", "");
-        name=name.replace("/", "");
-        name=name.replace("\\", "");
-        name=name.replace("§", "");
-        name=name.replace("(", "");
-        name=name.replace(")", "");
-        
-        if (ServerStringUtils.isEmpty(sender.getBankBic())) {
-            throw new Exception("Girocode kann nicht erstellt werden - BIC des Absenders ist leer. Korrektur unter 'Administration' - 'Nutzer'.");
-        }
-        String bic=sender.getBankBic().trim();
-        bic=bic.replace(" ", "");
-        
-        if (ServerStringUtils.isEmpty(sender.getBankIban())) {
-            throw new Exception("Girocode kann nicht erstellt werden - IBAN des Absenders ist leer. Korrektur unter 'Administration' - 'Nutzer'.");
-        }
-        String iban=sender.getBankIban().trim();
-        iban=iban.replace(" ", "");
-        
-        ServerSettingsBean pixelSetting = this.settingsFacade.find(ServerSettingsKeys.SERVERCONF_FINANCE_GIROCODEPX);
-        int pixels=150;
-        if (pixelSetting != null) {
-            try {
-                pixels=Integer.parseInt(pixelSetting.getSettingValue());
-            } catch (Exception ex) {
-                log.warn("invalid pixel setting for Girocode: " + pixelSetting.getSettingValue());
-            }
-        }
-        
-        try {
-
-            // Encode invoice data as a Girocode string
-            DecimalFormatSymbols symbols = new DecimalFormatSymbols(Locale.US);
-            DecimalFormat amountFormat = new DecimalFormat("0.00", symbols);
-            String girocodeData = String.format("BCD\n002\n1\nSCT\n%s\n%s\n%s\nEUR%s\n\n\n%s\n", bic, name, iban, amountFormat.format(amount), purpose);
-
-            // Generate QR code from Girocode string
-            QRCodeWriter qrWriter = new QRCodeWriter();
-            BitMatrix matrix = qrWriter.encode(girocodeData, BarcodeFormat.QR_CODE, pixels, pixels, getHints());
-
-            ByteArrayOutputStream pngStream=new ByteArrayOutputStream();
-            MatrixToImageWriter.writeToStream(matrix, "PNG", pngStream);
-
-            return pngStream.toByteArray();
-
-        } catch (Exception ex) {
-            log.error("Could not create Girocode",ex);
-            throw new Exception("Girocode kann nicht erstellt werden: " + ex.getMessage());
-        }
-    }
-    
-    private static java.util.Map<EncodeHintType, Object> getHints() {
-        java.util.Map<EncodeHintType, Object> hints = new java.util.EnumMap<>(EncodeHintType.class);
-        hints.put(EncodeHintType.ERROR_CORRECTION, ErrorCorrectionLevel.L);
-        hints.put(EncodeHintType.CHARACTER_SET, "utf-8");
-        return hints;
+        /* Create and display the dialog */
+        java.awt.EventQueue.invokeLater(() -> {
+            BankstatementCsvConfigDialog dialog = new BankstatementCsvConfigDialog(new javax.swing.JFrame(), true);
+            dialog.addWindowListener(new java.awt.event.WindowAdapter() {
+                @Override
+                public void windowClosing(java.awt.event.WindowEvent e) {
+                    System.exit(0);
+                }
+            });
+            dialog.setVisible(true);
+        });
     }
 
-    @Override
-    @RolesAllowed({"adminRole"})
-    public BankStatementsCSVConfig addBankStatementsCSVConfiguration(BankStatementsCSVConfig csv) throws Exception {
-        StringGenerator idGen = new StringGenerator();
-        String csvId = idGen.getID().toString();
-        csv.setId(csvId);
-        this.csvConfigs.create(csv);
-        return this.csvConfigs.find(csvId);
-    }
-    
-    @Override
-    @RolesAllowed({"adminRole"})
-    public BankStatementsCSVConfig updateBankStatementsCSVConfiguration(BankStatementsCSVConfig csv) throws Exception {
-        this.csvConfigs.edit(csv);
-        return this.csvConfigs.find(csv.getId());
-    }
-
-    @Override
-    @RolesAllowed({"adminRole"})
-    public void removeBankStatementsCSVConfiguration(BankStatementsCSVConfig csv) throws Exception {
-        this.csvConfigs.remove(csv);
-    }
-
+    // Variables declaration - do not modify//GEN-BEGIN:variables
+    private javax.swing.JCheckBox chkHeader;
+    private javax.swing.JComboBox<String> cmbNumberLocale;
+    private javax.swing.JButton cmdAdd;
+    private javax.swing.JButton cmdClose;
+    private javax.swing.JButton cmdRemove;
+    private javax.swing.JButton cmdSave;
+    private javax.swing.JLabel jLabel1;
+    private javax.swing.JLabel jLabel10;
+    private javax.swing.JLabel jLabel11;
+    private javax.swing.JLabel jLabel2;
+    private javax.swing.JLabel jLabel3;
+    private javax.swing.JLabel jLabel4;
+    private javax.swing.JLabel jLabel5;
+    private javax.swing.JLabel jLabel6;
+    private javax.swing.JLabel jLabel7;
+    private javax.swing.JLabel jLabel8;
+    private javax.swing.JLabel jLabel9;
+    private javax.swing.JPanel jPanel1;
+    private javax.swing.JScrollPane jScrollPane1;
+    private javax.swing.JSeparator jSeparator1;
+    private javax.swing.JLabel lblColumns;
+    private javax.swing.JSpinner spnColAmount;
+    private javax.swing.JSpinner spnColBookingType;
+    private javax.swing.JSpinner spnColCurrency;
+    private javax.swing.JSpinner spnColDate;
+    private javax.swing.JSpinner spnColIban;
+    private javax.swing.JSpinner spnColName;
+    private javax.swing.JSpinner spnColPurpose;
+    private javax.swing.JTable tblCsvConfigs;
+    private javax.swing.JTextField txtDelimiter;
+    private javax.swing.JTextField txtName;
+    private javax.swing.JTextField txtNumberFormat;
+    // End of variables declaration//GEN-END:variables
 }

@@ -2399,7 +2399,7 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
             } else {
                 historyText = "Akten-Etikett gesetzt: " + tag.getTagName() + "(war bereits gesetzt)";
             }
-        } else if (check.size() > 0) {
+        } else if (!check.isEmpty()) {
             ArchiveFileTagsBean remove = (ArchiveFileTagsBean) check.get(0);
             this.archiveFileTagsFacade.remove(remove);
             historyText = "Akten-Etikett entfernt: " + tag.getTagName();

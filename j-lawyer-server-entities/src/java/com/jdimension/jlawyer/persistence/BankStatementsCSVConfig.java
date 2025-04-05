@@ -664,28 +664,66 @@ package com.jdimension.jlawyer.persistence;
 
 import java.io.Serializable;
 import java.util.Locale;
+import javax.persistence.Basic;
+import javax.persistence.Column;
+import javax.persistence.Entity;
+import javax.persistence.Id;
+import javax.persistence.NamedQueries;
+import javax.persistence.NamedQuery;
+import javax.persistence.Table;
 
 /**
  *
  * @author jens
  */
+@Entity
+@Table(name = "config_bankstatement")
+@NamedQueries({
+    @NamedQuery(name = "BankStatementsCSVConfig.findAll", query = "SELECT b FROM BankStatementsCSVConfig b order by b.configurationName"),
+    @NamedQuery(name = "BankStatementsCSVConfig.findById", query = "SELECT b FROM BankStatementsCSVConfig b WHERE b.id = :id")})
 public class BankStatementsCSVConfig implements Serializable {
     private static final long serialVersionUID = 1L;
     
+    @Id
+    @Basic(optional = false)
+    @Column(name = "id")
+    private String id;
+    
+    @Column(name = "display_name")
     private String configurationName="Deutsche Bank (CSV)";
     
+    @Column(name = "csv_delimiter")
     private String delimiter=";";
+    
+    @Column(name = "number_format")
     private String decimalFormat="#,##0.00";
+    
+    @Column(name = "has_header")
     private boolean header=true;
+    
+    @Column(name = "number_locale")
     private String locale=Locale.GERMANY.toString();
     
-    private int columnDate=-1;
-    private int columnName=-1;
-    private int columnBookingType=-1;
-    private int columnIban=-1;
-    private int columnPurpose=-1;
-    private int columnAmount=-1;
-    private int columnCurrency=-1;
+    @Column(name = "col_date")
+    private int columnDate=0;
+    
+    @Column(name = "col_name")
+    private int columnName=1;
+    
+    @Column(name = "col_bookingtype")
+    private int columnBookingType=2;
+    
+    @Column(name = "col_iban")
+    private int columnIban=3;
+    
+    @Column(name = "col_purpose")
+    private int columnPurpose=4;
+    
+    @Column(name = "col_amount")
+    private int columnAmount=5;
+    
+    @Column(name = "col_currency")
+    private int columnCurrency=6;
 
     public BankStatementsCSVConfig() {
     }
@@ -856,6 +894,20 @@ public class BankStatementsCSVConfig implements Serializable {
      */
     public void setConfigurationName(String configurationName) {
         this.configurationName = configurationName;
+    }
+
+    /**
+     * @return the id
+     */
+    public String getId() {
+        return id;
+    }
+
+    /**
+     * @param id the id to set
+     */
+    public void setId(String id) {
+        this.id = id;
     }
     
     

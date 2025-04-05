@@ -707,5 +707,11 @@ public interface InvoiceServiceRemote {
     byte[] getGiroCode(String senderPrincipalId, BigDecimal amount, String purpose) throws Exception;
     
     List<Invoice> getInvoicesByStatus(int... status) throws Exception;
+
+    BankStatementsCSVConfig addBankStatementsCSVConfiguration(BankStatementsCSVConfig csv) throws Exception;
+    
+    BankStatementsCSVConfig updateBankStatementsCSVConfiguration(BankStatementsCSVConfig csv) throws Exception;
+
+    void removeBankStatementsCSVConfiguration(BankStatementsCSVConfig csv) throws Exception;
     
 }
