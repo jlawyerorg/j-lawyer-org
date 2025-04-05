@@ -761,6 +761,8 @@ public class InvoiceDialog extends javax.swing.JDialog implements EventConsumer 
     private HashMap<String, InvoicePositionTemplate> invoicePosTemplates = new HashMap<>();
 
     private List<String> taxRates = new ArrayList<>();
+    
+    private boolean cancelled=true;
 
     /**
      * Creates new form InvoiceDialog
@@ -2095,6 +2097,7 @@ public class InvoiceDialog extends javax.swing.JDialog implements EventConsumer 
     }//GEN-LAST:event_cmdDateDueActionPerformed
 
     private void cmdCancelActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdCancelActionPerformed
+        this.cancelled=true;
         this.setVisible(false);
         this.dispose();
     }//GEN-LAST:event_cmdCancelActionPerformed
@@ -2163,6 +2166,7 @@ public class InvoiceDialog extends javax.swing.JDialog implements EventConsumer 
     private void cmdSaveActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdSaveActionPerformed
 
         this.save();
+        this.cancelled=false;
         this.setVisible(false);
         this.dispose();
     }//GEN-LAST:event_cmdSaveActionPerformed
@@ -3120,5 +3124,12 @@ public class InvoiceDialog extends javax.swing.JDialog implements EventConsumer 
     private void enableTimesheetButton(boolean enable) {
         this.lblTimesheet.setEnabled(enable);
         this.cmdCreateTimesheetDocument.setEnabled(enable);
+    }
+
+    /**
+     * @return the cancelled
+     */
+    public boolean isCancelled() {
+        return cancelled;
     }
 }

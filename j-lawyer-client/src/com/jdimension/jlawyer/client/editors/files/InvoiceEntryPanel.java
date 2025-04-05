@@ -995,8 +995,10 @@ public class InvoiceEntryPanel extends javax.swing.JPanel {
         dlg.setEntry(this.getInvoice());
         FrameUtils.centerDialog(dlg, EditorsRegistry.getInstance().getMainWindow());
         dlg.setVisible(true);
-        this.setEntry(caseDto, dlg.getEntry(), addresses);
-        this.setPaidTotal(dlg.getEntry().getTotalGross(), BigDecimal.valueOf(Float.MIN_VALUE), dlg.getEntry().getCurrency());
+        if(!dlg.isCancelled()) {
+            this.setEntry(caseDto, dlg.getEntry(), addresses);
+            this.setPaidTotal(dlg.getEntry().getTotalGross(), BigDecimal.valueOf(Float.MIN_VALUE), dlg.getEntry().getCurrency());
+        }
     }//GEN-LAST:event_cmdOpenActionPerformed
 
     private void cmdDeleteActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdDeleteActionPerformed
