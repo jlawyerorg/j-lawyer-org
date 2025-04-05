@@ -700,7 +700,7 @@ public class ContactSyncService implements ContactSyncServiceLocal {
     private ServerSettingsBeanFacadeLocal settings;
 
     @Override
-    @Schedule(dayOfWeek = "1-5", hour = "11,22", minute = "11", second = "0", persistent = false)
+    @Schedule(dayOfWeek = "1-5", hour = "23", minute = "11", second = "0", persistent = false)
     @TransactionTimeout(value = 120, unit = TimeUnit.MINUTES)
     public void fullAddressBookSync() {
         this.fullAddressBookSyncImpl();
