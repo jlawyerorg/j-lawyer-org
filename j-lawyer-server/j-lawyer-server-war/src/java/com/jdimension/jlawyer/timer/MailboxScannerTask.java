@@ -801,6 +801,8 @@ public class MailboxScannerTask extends java.util.TimerTask {
                 props.setProperty("mail.imaps.socketFactory.fallback", "false");
                 props.setProperty("mail.imaps.socketFactory.port", "993");
                 props.setProperty("mail.imaps.starttls.enable", "true");
+                
+                ms.applyCustomProperties(ms.customConfigurationsReceiveProperties(), props);
 
                 session = Session.getInstance(props);
 
@@ -824,6 +826,7 @@ public class MailboxScannerTask extends java.util.TimerTask {
                 if (trustedServers != null) {
                     props.put("mail.imaps.ssl.trust", trustedServers.getSettingValue());
                 }
+                ms.applyCustomProperties(ms.customConfigurationsReceiveProperties(), props);
 
                 session = Session.getInstance(props, new Authenticator() {
                     @Override

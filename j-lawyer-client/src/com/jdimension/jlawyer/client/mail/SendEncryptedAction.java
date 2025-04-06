@@ -820,6 +820,7 @@ public class SendEncryptedAction extends ProgressableAction {
         if (!authenticateSmtp) {
             smtpProps.put("mail.smtps.auth", false);
             smtpProps.put("mail.smtp.auth", false);
+            ms.applyCustomProperties(ms.customConfigurationsSendProperties(), smtpProps);
             session = Session.getInstance(smtpProps);
         } else {
             smtpProps.put("mail.smtps.auth", true);
@@ -827,6 +828,7 @@ public class SendEncryptedAction extends ProgressableAction {
             smtpProps.put("mail.smtp.user", ms.getEmailOutUser());
             smtpProps.put("mail.smtps.user", ms.getEmailOutUser());
             smtpProps.put("mail.password", outPwd);
+            ms.applyCustomProperties(ms.customConfigurationsSendProperties(), smtpProps);
 
             final String smtpPwd=outPwd;
             javax.mail.Authenticator auth = new javax.mail.Authenticator() {
@@ -1054,6 +1056,7 @@ public class SendEncryptedAction extends ProgressableAction {
 
                 Store store = null;
                 if (ms.isMsExchange()) {
+                    ms.applyCustomProperties(ms.customConfigurationsReceiveProperties(), imapProps);
                     String authToken = EmailUtils.getOffice365AuthToken(ms.getId());
 
                     session = Session.getInstance(imapProps);
@@ -1078,6 +1081,7 @@ public class SendEncryptedAction extends ProgressableAction {
                     if (trustedServers.length() > 0) {
                         imapProps.put("mail.imaps.ssl.trust", trustedServers);
                     }
+                    ms.applyCustomProperties(ms.customConfigurationsReceiveProperties(), imapProps);
 
                     if (authenticateImap) {
                         final String imapPwd = inPwd;

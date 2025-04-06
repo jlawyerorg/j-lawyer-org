@@ -682,7 +682,6 @@ public class IMAPFolderObserver implements MessageChangedListener, MessageCountL
     
     private EmailInboxPanel parent=null;
     private MailboxSetup ms=null;
-    private long lastUpdateTimeUnreadMessageCount=-1;
     
     public IMAPFolderObserver(EmailInboxPanel parent, MailboxSetup ms) {
         super();
@@ -692,11 +691,6 @@ public class IMAPFolderObserver implements MessageChangedListener, MessageCountL
     
     @Override
     public void messageChanged(MessageChangedEvent mce) {
-        long now=System.currentTimeMillis();
-//        if((now-this.lastUpdateTimeUnreadMessageCount)<180000l)
-//            return;
-            
-        this.lastUpdateTimeUnreadMessageCount=now;
         try {
             if(mce.getMessageChangeType()==MessageChangedEvent.FLAGS_CHANGED) {
                 final int unread = this.parent.getInboxUnread();
@@ -713,11 +707,6 @@ public class IMAPFolderObserver implements MessageChangedListener, MessageCountL
     
     @Override
     public void messagesAdded(MessageCountEvent mce) {
-        long now=System.currentTimeMillis();
-//        if((now-this.lastUpdateTimeUnreadMessageCount)<180000l)
-//            return;
-            
-        this.lastUpdateTimeUnreadMessageCount=now;
         try {
             if (mce.getMessages().length == 0) {
                 return;
@@ -735,12 +724,6 @@ public class IMAPFolderObserver implements MessageChangedListener, MessageCountL
     @Override
     public void messagesRemoved(MessageCountEvent mce) {
         // for removed messages, we are not able to determine the right mailbox, therefore just ignore and do not update the message counts in the tree
-        System.out.println("message removed");
-        long now=System.currentTimeMillis();
-//        if((now-this.lastUpdateTimeUnreadMessageCount)<180000l)
-//            return;
-            
-        this.lastUpdateTimeUnreadMessageCount=now;
         try {
             if (mce.getMessages().length == 0) {
                 return;

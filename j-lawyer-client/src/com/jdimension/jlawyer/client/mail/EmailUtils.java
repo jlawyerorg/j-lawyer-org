@@ -690,7 +690,6 @@ import javax.mail.*;
 import javax.mail.Flags;
 import javax.mail.Folder;
 import javax.mail.internet.*;
-import javax.swing.JOptionPane;
 import org.apache.log4j.Logger;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
@@ -1212,6 +1211,7 @@ public class EmailUtils extends CommonMailUtils {
         if (!authenticate) {
             props.put("mail.smtps.auth", false);
             props.put("mail.smtp.auth", false);
+            ms.applyCustomProperties(ms.customConfigurationsSendProperties(), props);
             session = Session.getInstance(props);
         } else {
             props.put("mail.smtps.auth", true);
@@ -1225,6 +1225,7 @@ public class EmailUtils extends CommonMailUtils {
                 log.error(t);
             }
             props.put("mail.password", outPwd);
+            ms.applyCustomProperties(ms.customConfigurationsSendProperties(), props);
 
             javax.mail.Authenticator auth = new javax.mail.Authenticator() {
 

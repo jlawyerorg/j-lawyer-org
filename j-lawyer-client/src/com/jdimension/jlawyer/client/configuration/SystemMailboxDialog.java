@@ -668,6 +668,7 @@ import com.jdimension.jlawyer.client.settings.ServerSettings;
 import com.jdimension.jlawyer.client.utils.UserUtils;
 import com.jdimension.jlawyer.services.JLawyerServiceLocator;
 import com.jdimension.jlawyer.services.SystemManagementRemote;
+import java.util.Properties;
 import javax.swing.JOptionPane;
 import org.apache.log4j.Logger;
 
@@ -932,7 +933,7 @@ public class SystemMailboxDialog extends javax.swing.JDialog {
             if (!("".equals(this.txtSmtpPort.getText()))) {
                 port = Integer.parseInt(this.txtSmtpPort.getText());
             }
-            sysMan.testSendMail(this.txtSmtp.getText(), port, this.txtUser.getText(), new String(this.txtPassword.getPassword()), this.chkSsl.isSelected(), this.chkEmailStartTls.isSelected(), this.txtRecipient.getText(), false, null);
+            sysMan.testSendMail(this.txtSmtp.getText(), port, this.txtUser.getText(), new String(this.txtPassword.getPassword()), this.chkSsl.isSelected(), this.chkEmailStartTls.isSelected(), this.txtRecipient.getText(), false, null, new Properties());
             JOptionPane.showMessageDialog(this, "Testnachricht erfolgreich  verschickt - bitte Posteingang prüfen", "Hinweis", JOptionPane.INFORMATION_MESSAGE);
         } catch (Exception ex) {
             log.error(ex);

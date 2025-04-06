@@ -1422,7 +1422,7 @@ public class SystemManagement implements SystemManagementRemote, SystemManagemen
 
     @Override
     @RolesAllowed({"loginRole"})
-    public void testSendMail(String smtpHost, int smtpPort, String smtpUser, String smtpPwd, boolean smtpSsl, boolean smtpStartTls, String mailAddress, boolean isMsExchange, String accessToken) throws Exception {
+    public void testSendMail(String smtpHost, int smtpPort, String smtpUser, String smtpPwd, boolean smtpSsl, boolean smtpStartTls, String mailAddress, boolean isMsExchange, String accessToken, Properties customProps) throws Exception {
 
         if (smtpHost == null || smtpUser == null || smtpPwd == null || mailAddress == null) {
             throw new Exception("incomplete configuration for sending test mails");
@@ -1466,6 +1466,8 @@ public class SystemManagement implements SystemManagementRemote, SystemManagemen
             props.put("mail.smtps.auth.mechanisms", "XOAUTH2");
         }
         
+        this.applyCustomProperties(customProps, props);
+        
         final String smtpPwdFinal=smtpPwd;
         javax.mail.Authenticator auth = new javax.mail.Authenticator() {
 
@@ -1499,7 +1501,7 @@ public class SystemManagement implements SystemManagementRemote, SystemManagemen
 
     @Override
     @RolesAllowed({"loginRole"})
-    public void testReceiveMail(String mailAddress, String host, String protocol, boolean ssl, String user, String pwd, boolean isMsExchange, String authToken) throws Exception {
+    public void testReceiveMail(String mailAddress, String host, String protocol, boolean ssl, String user, String pwd, boolean isMsExchange, String authToken, Properties customProps) throws Exception {
         Properties props = System.getProperties();
         //Properties props = new Properties();
         props.setProperty("mail.imap.partialfetch", "false");
@@ -1525,6 +1527,7 @@ public class SystemManagement implements SystemManagementRemote, SystemManagemen
             props.setProperty("mail.imaps.socketFactory.fallback", "false");
             props.setProperty("mail.imaps.socketFactory.port", "993");
             props.setProperty("mail.imaps.starttls.enable", "true");
+            this.applyCustomProperties(customProps, props);
 
             session = Session.getInstance(props);
             session.setDebug(true);
@@ -1532,6 +1535,7 @@ public class SystemManagement implements SystemManagementRemote, SystemManagemen
             store.connect(host, user, authToken);
 
         } else {
+            this.applyCustomProperties(customProps, props);
             session = Session.getDefaultInstance(props, null);
             store = session.getStore(protocol);
             store.connect(host, user, pwd);
@@ -1545,6 +1549,12 @@ public class SystemManagement implements SystemManagementRemote, SystemManagemen
         folder.close(false);
         store.close();
 
+    }
+    
+    private void applyCustomProperties(Properties customProps, Properties targetProps) {
+        for(Object k: customProps.keySet()) {
+            targetProps.setProperty(k.toString(), customProps.getProperty(k.toString()));
+        }
     }
 
     @Override

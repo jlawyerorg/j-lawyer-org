@@ -919,6 +919,8 @@ public class EmailInboxPanel extends javax.swing.JPanel implements SaveToCaseExe
                     props.setProperty("mail.imaps.socketFactory.fallback", "false");
                     props.setProperty("mail.imaps.socketFactory.port", "993");
                     props.setProperty("mail.imaps.starttls.enable", "true");
+                    
+                    ms.applyCustomProperties(ms.customConfigurationsReceiveProperties(), props);
 
                     session = Session.getInstance(props);
 
@@ -932,10 +934,19 @@ public class EmailInboxPanel extends javax.swing.JPanel implements SaveToCaseExe
 
                     props.setProperty("mail.imaps.host", server);
                     props.setProperty("mail.imap.host", server);
+                    
+                    // sample properties required for ms exchange shared mailboxes. may be set using the "custom properties" of a mailboxsetup
+//                    props.put("mail.imap.port", "143");
+//                    props.put("mail.imap.sasl.enable", "false");
+//                    props.setProperty("mail.imap.ssl.enable", "false");
+//                    props.put("mail.imap.auth", "true");
+//                    props.put("mail.debug", "true");
+//                    props.put("mail.imap.auth.mechanisms", "LOGIN");
 
                     if (ms.isEmailInSsl()) {
                         props.setProperty("mail.store.protocol", "imaps");
                     }
+                    ms.applyCustomProperties(ms.customConfigurationsReceiveProperties(), props);
 
                     ServerSettings sset = ServerSettings.getInstance();
                     String trustedServers = sset.getSetting("mail.imaps.ssl.trust", "");
@@ -1601,7 +1612,7 @@ public class EmailInboxPanel extends javax.swing.JPanel implements SaveToCaseExe
     }//GEN-LAST:event_cmdRefreshActionPerformed
 
     private void treeFoldersValueChanged(javax.swing.event.TreeSelectionEvent evt) {//GEN-FIRST:event_treeFoldersValueChanged
-        if(this.treeFolders.getSelectionCount()>0) {
+        if (this.treeFolders.getSelectionCount() > 0) {
             this.treeFoldersValueChangedImpl(evt, 0, -1, null, false);
         } else {
             this.mailContentUI.clear();
@@ -1862,8 +1873,9 @@ public class EmailInboxPanel extends javax.swing.JPanel implements SaveToCaseExe
             }
 
             try {
-                if(!EmailUtils.isInbox(f))
+                if (!EmailUtils.isInbox(f)) {
                     EmailUtils.closeIfIMAP(f);
+                }
             } catch (Throwable t) {
                 log.error(t);
             }
@@ -2104,9 +2116,10 @@ public class EmailInboxPanel extends javax.swing.JPanel implements SaveToCaseExe
         if (selectedPath != null) {
             this.treeFoldersValueChangedImpl(new TreeSelectionEvent(this.tblMails, selectedPath, false, null, null), sortCol, scrollToRow, null, false);
         }
-        
-        if(expungeFolder!=null && !EmailUtils.isInbox(expungeFolder))
+
+        if (expungeFolder != null && !EmailUtils.isInbox(expungeFolder)) {
             EmailUtils.closeIfIMAP(expungeFolder);
+        }
 
 
     }//GEN-LAST:event_cmdDeleteActionPerformed
@@ -2312,13 +2325,13 @@ public class EmailInboxPanel extends javax.swing.JPanel implements SaveToCaseExe
             try {
                 Address[] to = m.getRecipients(RecipientType.TO);
                 String toString = EmailUtils.getAddressesAsList(to);
-                
+
                 Address[] cc = m.getRecipients(RecipientType.CC);
                 String ccString = EmailUtils.getAddressesAsList(cc);
-                
+
                 Address[] bcc = m.getRecipients(RecipientType.BCC);
                 String bccString = EmailUtils.getAddressesAsList(bcc);
-                
+
                 dlg.setTo(toString);
                 dlg.setCC(ccString);
                 dlg.setBCC(bccString);
@@ -2921,7 +2934,7 @@ public class EmailInboxPanel extends javax.swing.JPanel implements SaveToCaseExe
             }
         }
 
-        if(this.treeFolders.getSelectionPath() != null) {
+        if (this.treeFolders.getSelectionPath() != null) {
             DefaultMutableTreeNode selectedNode = (DefaultMutableTreeNode) this.treeFolders.getSelectionPath().getLastPathComponent();
             // check if this inbox is currently displayed, if so - reload it
             if (selectedNode.equals(this.inboxFolderNodes.get(ms))) {
@@ -3028,8 +3041,9 @@ public class EmailInboxPanel extends javax.swing.JPanel implements SaveToCaseExe
             dtde.dropComplete(true);
 
             try {
-                if(!EmailUtils.isInbox(targetFolder))
+                if (!EmailUtils.isInbox(targetFolder)) {
                     EmailUtils.closeIfIMAP(targetFolder);
+                }
             } catch (Throwable t) {
                 log.error(t);
             }
@@ -3129,7 +3143,7 @@ public class EmailInboxPanel extends javax.swing.JPanel implements SaveToCaseExe
         bulkSaveDlg.setCaseFolder(rootFolder, targetFolder);
         bulkSaveDlg.setSelectedCase(targetCase);
         MailboxSetup ms = this.getSelectedMailbox();
-        
+
         Folder f = null;
         try {
             for (int row : this.tblMails.getSelectedRows()) {
@@ -3158,7 +3172,7 @@ public class EmailInboxPanel extends javax.swing.JPanel implements SaveToCaseExe
                 }
 
                 Date sentDate = m.getSentDate();
-                
+
                 f = m.getFolder();
                 if (f != null) {
                     if (!f.isOpen()) {
@@ -3166,7 +3180,6 @@ public class EmailInboxPanel extends javax.swing.JPanel implements SaveToCaseExe
                         f.open(Folder.READ_WRITE);
                     }
                 }
-            
 
                 byte[] data = null;
 

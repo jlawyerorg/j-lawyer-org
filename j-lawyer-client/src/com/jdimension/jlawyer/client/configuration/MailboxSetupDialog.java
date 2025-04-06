@@ -678,9 +678,11 @@ import com.jdimension.jlawyer.security.CryptoProvider;
 import com.jdimension.jlawyer.services.JLawyerServiceLocator;
 import java.awt.event.ActionEvent;
 import java.awt.event.ItemEvent;
+import java.io.StringReader;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Properties;
 import javax.swing.JCheckBoxMenuItem;
 import javax.swing.JOptionPane;
 import javax.swing.MenuElement;
@@ -767,6 +769,9 @@ public class MailboxSetupDialog extends javax.swing.JDialog {
         this.lblScanTags.setText("");
         this.sldMinAttachmentSizeKb.setValue(0);
         this.chkIgnoreInlineAttachments.setSelected(true);
+        
+        this.taCustomConfigIn.setText("");
+        this.taCustomConfigOut.setText("");
 
     }
 
@@ -899,6 +904,15 @@ public class MailboxSetupDialog extends javax.swing.JDialog {
         lblMinAttachmentSize = new javax.swing.JLabel();
         chkIgnoreInlineAttachments = new javax.swing.JCheckBox();
         sldMinAttachmentSizeKb = new javax.swing.JSlider();
+        jPanel6 = new javax.swing.JPanel();
+        jLabel25 = new javax.swing.JLabel();
+        jTabbedPane2 = new javax.swing.JTabbedPane();
+        jPanel7 = new javax.swing.JPanel();
+        jScrollPane2 = new javax.swing.JScrollPane();
+        taCustomConfigIn = new javax.swing.JTextArea();
+        jPanel8 = new javax.swing.JPanel();
+        jScrollPane3 = new javax.swing.JScrollPane();
+        taCustomConfigOut = new javax.swing.JTextArea();
 
         jLabel23.setText("jLabel23");
 
@@ -1241,9 +1255,9 @@ public class MailboxSetupDialog extends javax.swing.JDialog {
                         .addComponent(txtClientId, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
                     .addComponent(cmdO365Coupling, javax.swing.GroupLayout.PREFERRED_SIZE, 31, javax.swing.GroupLayout.PREFERRED_SIZE))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addGroup(jPanel3Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                    .addComponent(jLabel3)
-                    .addComponent(txtClientSecret, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
+                .addGroup(jPanel3Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addComponent(txtClientSecret, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(jLabel3))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addGroup(jPanel3Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                     .addComponent(txtTenantId, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
@@ -1389,6 +1403,75 @@ public class MailboxSetupDialog extends javax.swing.JDialog {
 
         jTabbedPane1.addTab("Automation", jPanel5);
 
+        jLabel25.setFont(jLabel25.getFont());
+        jLabel25.setText("benutzerdefinierte Konfigurationsparameter:");
+
+        jTabbedPane2.setTabPlacement(javax.swing.JTabbedPane.RIGHT);
+        jTabbedPane2.setFont(jTabbedPane2.getFont());
+
+        taCustomConfigIn.setColumns(20);
+        taCustomConfigIn.setRows(5);
+        jScrollPane2.setViewportView(taCustomConfigIn);
+
+        javax.swing.GroupLayout jPanel7Layout = new javax.swing.GroupLayout(jPanel7);
+        jPanel7.setLayout(jPanel7Layout);
+        jPanel7Layout.setHorizontalGroup(
+            jPanel7Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(jPanel7Layout.createSequentialGroup()
+                .addComponent(jScrollPane2, javax.swing.GroupLayout.DEFAULT_SIZE, 589, Short.MAX_VALUE)
+                .addContainerGap())
+        );
+        jPanel7Layout.setVerticalGroup(
+            jPanel7Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addComponent(jScrollPane2, javax.swing.GroupLayout.DEFAULT_SIZE, 497, Short.MAX_VALUE)
+        );
+
+        jTabbedPane2.addTab("Posteingang", jPanel7);
+
+        taCustomConfigOut.setColumns(20);
+        taCustomConfigOut.setRows(5);
+        jScrollPane3.setViewportView(taCustomConfigOut);
+
+        javax.swing.GroupLayout jPanel8Layout = new javax.swing.GroupLayout(jPanel8);
+        jPanel8.setLayout(jPanel8Layout);
+        jPanel8Layout.setHorizontalGroup(
+            jPanel8Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(jPanel8Layout.createSequentialGroup()
+                .addComponent(jScrollPane3, javax.swing.GroupLayout.DEFAULT_SIZE, 589, Short.MAX_VALUE)
+                .addContainerGap())
+        );
+        jPanel8Layout.setVerticalGroup(
+            jPanel8Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addComponent(jScrollPane3, javax.swing.GroupLayout.DEFAULT_SIZE, 497, Short.MAX_VALUE)
+        );
+
+        jTabbedPane2.addTab("Postausgang", jPanel8);
+
+        javax.swing.GroupLayout jPanel6Layout = new javax.swing.GroupLayout(jPanel6);
+        jPanel6.setLayout(jPanel6Layout);
+        jPanel6Layout.setHorizontalGroup(
+            jPanel6Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(jPanel6Layout.createSequentialGroup()
+                .addContainerGap()
+                .addGroup(jPanel6Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addComponent(jTabbedPane2)
+                    .addGroup(jPanel6Layout.createSequentialGroup()
+                        .addComponent(jLabel25)
+                        .addGap(0, 0, Short.MAX_VALUE)))
+                .addContainerGap())
+        );
+        jPanel6Layout.setVerticalGroup(
+            jPanel6Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(jPanel6Layout.createSequentialGroup()
+                .addContainerGap()
+                .addComponent(jLabel25)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addComponent(jTabbedPane2)
+                .addContainerGap())
+        );
+
+        jTabbedPane1.addTab("Erweitert", jPanel6);
+
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(getContentPane());
         getContentPane().setLayout(layout);
         layout.setHorizontalGroup(
@@ -1515,6 +1598,9 @@ public class MailboxSetupDialog extends javax.swing.JDialog {
             ms.setScanExclusionList(this.txtScanExclusionList.getText());
             ms.setScanIgnoreInline(this.chkIgnoreInlineAttachments.isSelected());
             ms.setScanMinAttachmentSize(this.sldMinAttachmentSizeKb.getValue() * 1024);
+            
+            ms.setCustomConfigurationsReceive(this.taCustomConfigIn.getText());
+            ms.setCustomConfigurationsSend(this.taCustomConfigOut.getText());
 
             List<String> al = ComponentUtils.getSelectedPopupMenuItems(popScanTags);
             ms.setScanDocumentTagsArray(al.toArray(String[]::new));
@@ -1597,7 +1683,22 @@ public class MailboxSetupDialog extends javax.swing.JDialog {
         ProgressIndicator pi = new ProgressIndicator(EditorsRegistry.getInstance().getMainWindow(), true);
         pi.setShowCancelButton(false);
 
-        MailSettingsTestAction a = new MailSettingsTestAction(pi, this, this.cmdTestMail, this.txtEmailAddress.getText(), this.txtOutServer.getText(), this.txtOutPort.getText(), this.txtOutUsername.getText(), new String(this.pwdOutPassword.getPassword()), this.chkEmailOutSsl.isSelected(), this.chkEmailStartTls.isSelected(), this.txtInServer.getText(), this.txtInUser.getText(), new String(this.pwdInPassword.getPassword()), this.chkEmailInSsl.isSelected(), this.cmbAccountType.getSelectedItem().toString(), this.chkMsExchange.isSelected(), authToken);
+        Properties customSendProps=new Properties();
+        Properties customReceiveProps=new Properties();
+        try {
+            StringReader sr = new StringReader(this.taCustomConfigOut.getText());
+            customSendProps.load(sr);
+            sr.close();
+
+            sr = new StringReader(this.taCustomConfigIn.getText());
+            customReceiveProps.load(sr);
+            sr.close();
+        } catch (Exception ex) {
+            log.error("Error reading custom properties", ex);
+            JOptionPane.showMessageDialog(this, "Fehler beim Lesen der erweiterten Konfiguration: " + ex.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
+        }
+        
+        MailSettingsTestAction a = new MailSettingsTestAction(pi, this, this.cmdTestMail, this.txtEmailAddress.getText(), this.txtOutServer.getText(), this.txtOutPort.getText(), this.txtOutUsername.getText(), new String(this.pwdOutPassword.getPassword()), this.chkEmailOutSsl.isSelected(), this.chkEmailStartTls.isSelected(), this.txtInServer.getText(), this.txtInUser.getText(), new String(this.pwdInPassword.getPassword()), this.chkEmailInSsl.isSelected(), this.cmbAccountType.getSelectedItem().toString(), this.chkMsExchange.isSelected(), authToken, customSendProps, customReceiveProps);
 
         a.start();
 
@@ -1682,6 +1783,9 @@ public class MailboxSetupDialog extends javax.swing.JDialog {
         this.txtScanExclusionList.setText(ms.getScanExclusionList());
         this.chkIgnoreInlineAttachments.setSelected(ms.isScanIgnoreInline());
         this.sldMinAttachmentSizeKb.setValue((int) ((int) ms.getScanMinAttachmentSize() / (int) 1024));
+        
+        this.taCustomConfigIn.setText(ms.getCustomConfigurationsReceive());
+        this.taCustomConfigOut.setText(ms.getCustomConfigurationsSend());
 
         this.buildScanTagsPopup(this.availableDocumentTags, ms.getScanDocumentTagsArray());
 
@@ -1760,6 +1864,7 @@ public class MailboxSetupDialog extends javax.swing.JDialog {
     private javax.swing.JLabel jLabel22;
     private javax.swing.JLabel jLabel23;
     private javax.swing.JLabel jLabel24;
+    private javax.swing.JLabel jLabel25;
     private javax.swing.JLabel jLabel3;
     private javax.swing.JLabel jLabel4;
     private javax.swing.JLabel jLabel5;
@@ -1772,10 +1877,16 @@ public class MailboxSetupDialog extends javax.swing.JDialog {
     private javax.swing.JPanel jPanel3;
     private javax.swing.JPanel jPanel4;
     private javax.swing.JPanel jPanel5;
+    private javax.swing.JPanel jPanel6;
+    private javax.swing.JPanel jPanel7;
+    private javax.swing.JPanel jPanel8;
     private javax.swing.JScrollPane jScrollPane1;
+    private javax.swing.JScrollPane jScrollPane2;
+    private javax.swing.JScrollPane jScrollPane3;
     private javax.swing.JSeparator jSeparator1;
     private javax.swing.JSeparator jSeparator2;
     private javax.swing.JTabbedPane jTabbedPane1;
+    private javax.swing.JTabbedPane jTabbedPane2;
     private javax.swing.JLabel lblMinAttachmentSize;
     private javax.swing.JLabel lblScanTags;
     private javax.swing.JLabel lblTestProgress;
@@ -1783,6 +1894,8 @@ public class MailboxSetupDialog extends javax.swing.JDialog {
     private javax.swing.JPasswordField pwdInPassword;
     private javax.swing.JPasswordField pwdOutPassword;
     private javax.swing.JSlider sldMinAttachmentSizeKb;
+    private javax.swing.JTextArea taCustomConfigIn;
+    private javax.swing.JTextArea taCustomConfigOut;
     private javax.swing.JTable tblMailboxes;
     private javax.swing.JTextField txtClientId;
     private javax.swing.JTextField txtClientSecret;

@@ -665,7 +665,7 @@ package com.jdimension.jlawyer.persistence;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.Serializable;
-import java.util.Date;
+import java.io.StringReader;
 import java.util.Properties;
 import javax.persistence.Basic;
 import javax.persistence.Column;
@@ -674,9 +674,9 @@ import javax.persistence.Id;
 import javax.persistence.NamedQueries;
 import javax.persistence.NamedQuery;
 import javax.persistence.Table;
-import javax.persistence.Temporal;
-import javax.persistence.TemporalType;
+import javax.persistence.Transient;
 import javax.xml.bind.annotation.XmlRootElement;
+import org.apache.log4j.Logger;
 
 /**
  *
@@ -690,6 +690,8 @@ import javax.xml.bind.annotation.XmlRootElement;
     @NamedQuery(name = "MailboxSetup.findById", query = "SELECT p FROM MailboxSetup p WHERE p.id = :id"),
     @NamedQuery(name = "MailboxSetup.findByMsExchange", query = "SELECT p FROM MailboxSetup p WHERE p.msExchange = :msExchange")})
 public class MailboxSetup implements Serializable, EventTypes {
+    
+    private static final Logger log = Logger.getLogger(MailboxSetup.class.getName());
 
     protected static long serialVersionUID = 1L;
     private static final String ARRAY_DELIMITER = "#####";
@@ -760,6 +762,18 @@ public class MailboxSetup implements Serializable, EventTypes {
     private boolean scanIgnoreInline=true;
     @Column(name = "scan_minattachmentsize", columnDefinition = "INTEGER DEFAULT 5000")
     private int scanMinAttachmentSize=0;
+    
+    @Column(name = "props_in")
+    private String customConfigurationsReceive="";
+    @Column(name = "props_out")
+    private String customConfigurationsSend="";
+    
+    @Transient
+    private Properties customConfigurationsReceiveProperties=null;
+    
+    @Transient
+    private Properties customConfigurationsSendProperties=null;
+    
     
     @Column(name = "settings", columnDefinition = "MEDIUMBLOB")
     private byte[] settings;
@@ -1255,6 +1269,72 @@ public class MailboxSetup implements Serializable, EventTypes {
      */
     public void setTokenExpiry(long tokenExpiry) {
         this.tokenExpiry = tokenExpiry;
+    }
+
+    /**
+     * @return the customConfigurationsReceive
+     */
+    public String getCustomConfigurationsReceive() {
+        return customConfigurationsReceive;
+    }
+
+    /**
+     * @param customConfigurationsReceive the customConfigurationsReceive to set
+     */
+    public void setCustomConfigurationsReceive(String customConfigurationsReceive) {
+        this.customConfigurationsReceive = customConfigurationsReceive;
+        this.customConfigurationsReceiveProperties=null;
+    }
+
+    /**
+     * @return the customConfigurationsSend
+     */
+    public String getCustomConfigurationsSend() {
+        return customConfigurationsSend;
+    }
+
+    /**
+     * @param customConfigurationsSend the customConfigurationsSend to set
+     */
+    public void setCustomConfigurationsSend(String customConfigurationsSend) {
+        this.customConfigurationsSend = customConfigurationsSend;
+        this.customConfigurationsSendProperties=null;
+    }
+
+    /**
+     * @return the customConfigurationsReceiveProperties
+     */
+    public Properties customConfigurationsReceiveProperties() {
+        if(this.customConfigurationsReceiveProperties==null) {
+            this.customConfigurationsReceiveProperties=new Properties();
+            try (StringReader r=new StringReader(this.customConfigurationsReceive)) {
+                this.customConfigurationsReceiveProperties.load(r);
+            } catch (Exception ex) {
+                log.error("unable to load custom receive properties for mailbox " + this.displayName);
+            }
+        }
+        return customConfigurationsReceiveProperties;
+    }
+
+    /**
+     * @return the customConfigurationsSendProperties
+     */
+    public Properties customConfigurationsSendProperties() {
+        if(this.customConfigurationsSendProperties==null) {
+            this.customConfigurationsSendProperties=new Properties();
+            try (StringReader r=new StringReader(this.customConfigurationsSend)) {
+                this.customConfigurationsSendProperties.load(r);
+            } catch (Exception ex) {
+                log.error("unable to load custom send properties for mailbox " + this.displayName);
+            }
+        }
+        return customConfigurationsSendProperties;
+    }
+    
+    public void applyCustomProperties(Properties customProps, Properties targetProps) {
+        for(Object k: customProps.keySet()) {
+            targetProps.setProperty(k.toString(), customProps.getProperty(k.toString()));
+        }
     }
 
     

@@ -663,7 +663,6 @@
  */
 package com.jdimension.jlawyer.client.editors.documents.viewer;
 
-import com.jdimension.jlawyer.client.mail.MessageContainer;
 import com.jdimension.jlawyer.persistence.ArchiveFileBean;
 import com.jdimension.jlawyer.persistence.MailboxSetup;
 import java.io.ByteArrayInputStream;
