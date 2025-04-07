@@ -1142,7 +1142,7 @@ public class ImportBankStatementFrame extends javax.swing.JFrame {
                 CaseAccountEntry entry = new CaseAccountEntry();
                 entry.setArchiveFileKey(this.currentCase);
                 entry.setContact(entryContact);
-                entry.setDescription("");
+                entry.setDescription(this.txtEntryDescription.getText());
                 entry.setEarnings(BigDecimal.ZERO);
                 entry.setEntryDate(DateUtils.parseDate(this.currentTransaction.getDate()));
                 entry.setEscrowIn(BigDecimal.ZERO);
@@ -1312,9 +1312,10 @@ public class ImportBankStatementFrame extends javax.swing.JFrame {
                         openInvoice = i;
                     }
                 }
-                this.cmbInvoices.setSelectedItem(openInvoice.getInvoiceNumber());
-                this.cmbInvoicesAccountEntry.setSelectedItem(openInvoice.getInvoiceNumber());
-
+                if(openInvoice != null) {
+                    this.cmbInvoices.setSelectedItem(openInvoice.getInvoiceNumber());
+                    this.cmbInvoicesAccountEntry.setSelectedItem(openInvoice.getInvoiceNumber());
+                }
             } catch (Exception ex) {
                 log.error("Error connecting to server", ex);
                 JOptionPane.showMessageDialog(this, "Fehler beim der Rechnungen: " + ex.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
@@ -1337,7 +1338,7 @@ public class ImportBankStatementFrame extends javax.swing.JFrame {
         this.chkCreateCaseAccountEntry.setEnabled(matchingCase != null);
         this.chkCreateCaseAccountEntry.setSelected(matchingCase != null);
         this.chkMarkAsPaid.setEnabled(matchingCase != null && matchingInvoice != null && !(matchingInvoice.getStatus() == Invoice.STATUS_PAID));
-        this.chkMarkAsPaid.setSelected(matchingCase != null && matchingInvoice != null && !(matchingInvoice.getStatus() == Invoice.STATUS_PAID));
+        this.chkMarkAsPaid.setSelected(false);
         this.cmbInvoices.setEnabled(matchingCase != null);
         this.cmbInvoicesAccountEntry.setEnabled(matchingCase != null);
         this.txtEntryDescription.setEnabled(matchingCase != null);
