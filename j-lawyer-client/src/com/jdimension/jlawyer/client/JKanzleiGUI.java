@@ -1952,6 +1952,7 @@ public class JKanzleiGUI extends javax.swing.JFrame implements com.jdimension.jl
 
         mnuBookKeeping.setText("Finanzen");
 
+        mnuImportAccountStatement.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons16/material/baseline_receipt_long_black_48dp.png"))); // NOI18N
         mnuImportAccountStatement.setText("Buchen: Kontoauszug importieren");
         mnuImportAccountStatement.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {

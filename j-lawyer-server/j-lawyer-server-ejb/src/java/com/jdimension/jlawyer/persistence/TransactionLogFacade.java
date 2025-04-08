@@ -661,153 +661,50 @@ if any, to sign a "copyright disclaimer" for the program, if necessary.
 For more information on this, and how to apply and follow the GNU AGPL, see
 <https://www.gnu.org/licenses/>.
  */
-package com.jdimension.jlawyer.client.editors.finance;
+package com.jdimension.jlawyer.persistence;
+
+import java.util.Date;
+import java.util.List;
+import javax.ejb.Stateless;
+import javax.persistence.EntityManager;
+import javax.persistence.NoResultException;
+import javax.persistence.PersistenceContext;
 
 /**
  *
  * @author jens
  */
-public class BankTransaction {
+@Stateless
+public class TransactionLogFacade extends AbstractFacade<TransactionLog> implements TransactionLogFacadeLocal {
 
-    private String date;
-    private String fromName;
-    private String fromIban;
-    private String bookingType;
-    private String purpose;
-    private double amount = 0d;
-    private String currency = "EUR";
+    @PersistenceContext(unitName = "j-lawyer-server-ejbPU")
+    private EntityManager em;
 
     @Override
-    public String toString() {
-        StringBuilder sb=new StringBuilder();
-        sb.append(date).append(System.lineSeparator());
-        sb.append(fromName).append(System.lineSeparator());
-        sb.append(fromIban).append(System.lineSeparator());
-        sb.append(bookingType).append(System.lineSeparator());
-        sb.append(purpose).append(System.lineSeparator());
-        sb.append(amount).append(System.lineSeparator());
-        sb.append(currency);
-        return sb.toString();
+    protected EntityManager getEntityManager() {
+        return em;
+    }
+
+    public TransactionLogFacade() {
+        super(TransactionLog.class);
     }
     
-    public String toHashInput() {
-        StringBuilder sb=new StringBuilder();
-        sb.append(date);
-        sb.append(fromName);
-        sb.append(fromIban);
-        sb.append(bookingType);
-        sb.append(purpose);
-        sb.append(amount);
-        sb.append(currency);
-        return sb.toString();
+    @Override
+    public TransactionLog findByChecksum(String checksum) {
+        try {
+            return (TransactionLog) em.createNamedQuery("TransactionLog.findByChecksum").setParameter("checksum", checksum).getSingleResult();
+        } catch (NoResultException nre) {
+            return null;
+        }
     }
-
-    public BankTransaction(String date, String fromName, String fromIban, String bookingType, String purpose, double amount, String currency) {
-        this.date = date;
-        this.fromName = fromName;
-        this.fromIban = fromIban;
-        this.bookingType = bookingType;
-        this.purpose = purpose;
-        this.amount=amount;
-        this.currency=currency;
+    
+    @Override
+    public List<TransactionLog> findExpired(Date expiryDate) {
+        try {
+            return em.createNamedQuery("TransactionLog.findOlderThan").setParameter("expiryDate", expiryDate).getResultList();
+        } catch (NoResultException nre) {
+            return null;
+        }
     }
-
-    /**
-     * @return the date
-     */
-    public String getDate() {
-        return date;
-    }
-
-    /**
-     * @param date the date to set
-     */
-    public void setDate(String date) {
-        this.date = date;
-    }
-
-    /**
-     * @return the fromName
-     */
-    public String getFromName() {
-        return fromName;
-    }
-
-    /**
-     * @param fromName the fromName to set
-     */
-    public void setFromName(String fromName) {
-        this.fromName = fromName;
-    }
-
-    /**
-     * @return the fromIban
-     */
-    public String getFromIban() {
-        return fromIban;
-    }
-
-    /**
-     * @param fromIban the fromIban to set
-     */
-    public void setFromIban(String fromIban) {
-        this.fromIban = fromIban;
-    }
-
-    /**
-     * @return the bookingType
-     */
-    public String getBookingType() {
-        return bookingType;
-    }
-
-    /**
-     * @param bookingType the bookingType to set
-     */
-    public void setBookingType(String bookingType) {
-        this.bookingType = bookingType;
-    }
-
-    /**
-     * @return the purpose
-     */
-    public String getPurpose() {
-        return purpose;
-    }
-
-    /**
-     * @param purpose the purpose to set
-     */
-    public void setPurpose(String purpose) {
-        this.purpose = purpose;
-    }
-
-    /**
-     * @return the amount
-     */
-    public double getAmount() {
-        return amount;
-    }
-
-    /**
-     * @param amount the amount to set
-     */
-    public void setAmount(double amount) {
-        this.amount = amount;
-    }
-
-    /**
-     * @return the currency
-     */
-    public String getCurrency() {
-        return currency;
-    }
-
-    /**
-     * @param currency the currency to set
-     */
-    public void setCurrency(String currency) {
-        this.currency = currency;
-    }
-
+    
 }

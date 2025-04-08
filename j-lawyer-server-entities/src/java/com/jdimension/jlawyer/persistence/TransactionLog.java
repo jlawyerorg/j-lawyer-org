@@ -661,195 +661,167 @@
  * For more information on this, and how to apply and follow the GNU AGPL, see
  * <https://www.gnu.org/licenses/>.
  */
-package com.jdimension.jlawyer.services;
+package com.jdimension.jlawyer.persistence;
 
-import com.jdimension.jlawyer.pojo.PartiesTriplet;
-import com.jdimension.jlawyer.persistence.*;
-import com.jdimension.jlawyer.pojo.imports.ImportLogEntry;
-import com.jdimension.jlawyer.server.services.MonitoringSnapshot;
-import com.jdimension.jlawyer.server.services.ServerInformation;
-import java.io.File;
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.Hashtable;
-import java.util.List;
-import java.util.Properties;
-import javax.ejb.Remote;
-import org.jlawyer.data.tree.GenericNode;
-import org.jlawyer.plugins.calculation.GenericCalculationTable;
+import java.io.Serializable;
+import java.util.Date;
+import javax.persistence.*;
+import javax.xml.bind.annotation.XmlRootElement;
 
 /**
  *
  * @author jens
  */
-@Remote
-public interface SystemManagementRemote {
+@Entity
+@Table(name = "transaction_log")
+@XmlRootElement
+@NamedQueries({
+    @NamedQuery(name = "TransactionLog.findAll", query = "SELECT a FROM TransactionLog a"),
+    @NamedQuery(name = "TransactionLog.findById", query = "SELECT a FROM TransactionLog a WHERE a.id = :id"),
+    @NamedQuery(name = "TransactionLog.findByPrincipal", query = "SELECT a FROM TransactionLog a WHERE a.principal = :principal order by a.processedDate asc"),
+    @NamedQuery(name = "TransactionLog.findOlderThan", query = "SELECT h FROM TransactionLog h WHERE h.expiryDate < :expiryDate"),
+    @NamedQuery(name = "TransactionLog.findByChecksum", query = "SELECT a FROM TransactionLog a WHERE a.checksum = :checksum")})
+public class TransactionLog implements Serializable {
     
-    public static final int TEMPLATE_TYPE_BODY=10;
-    public static final int TEMPLATE_TYPE_HEAD=20;
-
-    AppOptionGroupBean[] getOptionGroup(String optionGroup);
-
-    BankDataBean[] searchBankData(String query);
-
-    CityDataBean[] searchCityData(String query);
-
-    void removeAllBankData();
-
-    void createBankData(BankDataBean[] bankData);
-
-    void removeAllCityData();
-
-    void createCityData(CityDataBean[] cityData);
-
-    AppOptionGroupBean createOptionGroup(AppOptionGroupBean dto);
-
-    void removeOptionGroup(String id);
-
-    boolean addFromMasterTemplate(int templateType, String fileName, String basedOnFileName) throws Exception;
     
-    public void clearCurrentBackup();
-
-    List<AppUserBean> getUsers();
-
-    List<AppRoleBean> getRoles(String principalId);
-
-    AppUserBean createUser(AppUserBean user, List<AppRoleBean> roles) throws Exception;
-
-    AppUserBean updateUser(AppUserBean user, List<AppRoleBean> roles) throws Exception;
-
-    void deleteUser(String principalId);
-
-    ServerInformation getServerInformation();
     
-    Properties getSystemProperties();
+    protected static long serialVersionUID = 1L;
     
-    String getServerLogs(int numberOfLines) throws Exception;
-
-    ServerSettingsBean getSetting(String key);
-
-    boolean setSetting(String key, String value);
+    @Id
+    @Basic(optional = false)
+    @Column(name = "id")
+    private String id;
     
-    List<String> getAllOptionGroups();
-
-    AppUserBean getUser(String principalId);
-
-    MonitoringSnapshot getMonitoringSnapshot();
-
-    void statusMail(String subject, String body);
+    @Column(name = "date_processed")
+    @Temporal(TemporalType.TIMESTAMP)
+    private Date processedDate;
     
-    void testSendMail(String smtpHost, int smtpPort, String smtpUser, String smtpPwd, boolean smtpSsl, boolean smtpStartTls, String mailAddress, boolean isMsExchange, String authToken, Properties customProps) throws Exception;
+    @Column(name = "date_expiry")
+    @Temporal(TemporalType.TIMESTAMP)
+    private Date expiryDate;
     
-    void testReceiveMail(String mailAddress, String host, String protocol, boolean ssl, String user, String pwd, boolean isMsExchange, String authToken, Properties customProps) throws Exception;
-
-    boolean validateFileOnServer(File file, boolean isDirectory);
-
-    String getServerVersion();
-
-    Properties getUserSettings(AppUserBean user);
-
-    void setUserSettings(AppUserBean user, Properties settings);
-
-    String getServerIpV4() throws Exception;
-
-    String getServerInterfacesBoundTo() throws Exception;
-
-    boolean setServerInterfaceBindings(String ip) throws Exception;
-
-    boolean addTemplate(int templateType, GenericNode folder, String fileName, byte[] data) throws Exception;
-
-    boolean addTemplateFromTemplate(int templateType, GenericNode folder, String fileName, String basedOnTemplateFileName) throws Exception;
-
-    boolean deleteTemplate(int templateType, GenericNode folder, String fileName) throws Exception;
-
-    GenericNode getAllTemplatesTree(int templateType) throws Exception;
-
-    byte[] getTemplateData(int templateType, GenericNode folder, String fileName) throws Exception;
-
-    void setTemplateData(int templateType, GenericNode folder, String fileName, byte[] content) throws Exception;
-
-    boolean addTemplateFolder(int templateType, GenericNode parent, String folderName) throws Exception;
-
-    boolean deleteTemplateFolder(int templateType, GenericNode parent, String folderName) throws Exception;
-
-    boolean renameTemplateFolder(int templateType, GenericNode parent, String oldFolderName, String newFolderName) throws Exception;
-
-    List<String> getTemplatesInFolder(int templateType, GenericNode folder) throws Exception;
-
-    boolean addFromMasterTemplate(int templateType, String fileName, String basedOnFileName, GenericNode folder) throws Exception;
-
-    List<String> getPlaceHoldersForTemplate(int templateType, GenericNode folder, String templateName, Collection<String> formsPlaceHolders) throws Exception;
-
-    List<GenericNode> searchTemplateFolders(int templateType, String query) throws Exception;
-
-    String getTemplatePreview(int templateType, GenericNode folder, String fileName) throws Exception;
-
-    void renameTemplate(int templateType, GenericNode folder, String fromName, String toName) throws Exception;
-
-    List<PartyTypeBean> getPartyTypes();
-
-    Hashtable<String,PartyTypeBean> getPartyTypesTable();
-
-    PartyTypeBean addPartyType(PartyTypeBean partyType) throws Exception;
+    @Column(name = "principal")
+    private String principal;
     
-    PartyTypeBean updatePartyType(PartyTypeBean partyType) throws Exception;
-
-    void removePartyType(PartyTypeBean partyType) throws Exception;
-
-    void addObservedFile(String fileName, byte[] content, String source) throws Exception;
-
-    boolean updatePassword(String newPassword) throws Exception;
-
-    boolean updatePasswordForUser(String principalId, String newPassword) throws Exception;
-
-    List<MappingTable> getMappingTables();
+    @Column(name = "tx_checksum")
+    private String checksum;
     
-    List<MappingEntry> getMappingEntries(String tableName);
+    public TransactionLog() {
+    }
+
+    public TransactionLog(String id) {
+        this.id = id;
+    }
+
+    @Override
+    public int hashCode() {
+        int hash = 0;
+        hash += (getId() != null ? getId().hashCode() : 0);
+        return hash;
+    }
+
+    @Override
+    public boolean equals(Object object) {
+        // TODO: Warning - this method won't work in the case the id fields are not set
+        if (!(object instanceof TransactionLog)) {
+            return false;
+        }
+        TransactionLog other = (TransactionLog) object;
+        if ((this.getId() == null && other.getId() != null) || (this.getId() != null && !this.id.equals(other.id))) {
+            return false;
+        }
+        return true;
+    }
+
+    @Override
+    public String toString() {
+        return "com.jdimension.jlawyer.persistence.TransactionLog[ id=" + getId() + " ]";
+    }
+
+    /**
+     * @return the serialVersionUID
+     */
+    public static long getSerialVersionUID() {
+        return serialVersionUID;
+    }
+
+    /**
+     * @param aSerialVersionUID the serialVersionUID to set
+     */
+    public static void setSerialVersionUID(long aSerialVersionUID) {
+        serialVersionUID = aSerialVersionUID;
+    }
+
+    /**
+     * @return the id
+     */
+    public String getId() {
+        return id;
+    }
+
+    /**
+     * @param id the id to set
+     */
+    public void setId(String id) {
+        this.id = id;
+    }
+
+    /**
+     * @return the processedDate
+     */
+    public Date getProcessedDate() {
+        return processedDate;
+    }
+
+    /**
+     * @param processedDate the processedDate to set
+     */
+    public void setProcessedDate(Date processedDate) {
+        this.processedDate = processedDate;
+    }
+
+    /**
+     * @return the expiryDate
+     */
+    public Date getExpiryDate() {
+        return expiryDate;
+    }
+
+    /**
+     * @param expiryDate the expiryDate to set
+     */
+    public void setExpiryDate(Date expiryDate) {
+        this.expiryDate = expiryDate;
+    }
+
+    /**
+     * @return the principal
+     */
+    public String getPrincipal() {
+        return principal;
+    }
+
+    /**
+     * @param principal the principal to set
+     */
+    public void setPrincipal(String principal) {
+        this.principal = principal;
+    }
+
+    /**
+     * @return the checksum
+     */
+    public String getChecksum() {
+        return checksum;
+    }
+
+    /**
+     * @param checksum the checksum to set
+     */
+    public void setChecksum(String checksum) {
+        this.checksum = checksum;
+    }
+
     
-    void updateMappingEntries(String tableName, List<MappingEntry> newEntries) throws Exception;
-
-    MappingTable addMappingTable(MappingTable table) throws Exception;
-
-    void deleteMappingTable(String tableName) throws Exception;
-
-    MappingTable updateMappingTable(MappingTable mt) throws Exception;
-
-    HashMap<String,Object> getPlaceHolderValues(HashMap<String,Object> placeHolders, ArchiveFileBean aFile, List<PartiesTriplet> selectedParties, String dictateSign, GenericCalculationTable calculationTable, HashMap<String,String> formsPlaceHolderValues, AppUserBean caseLawyer, AppUserBean caseAssistant, AppUserBean author, Invoice invoice, AppUserBean invoiceSender, GenericCalculationTable invoiceTable, GenericCalculationTable timesheetsTable, GenericCalculationTable timesheetSummaryTable, byte[] giroCode, String ingoText) throws Exception;
-
-    List<AssistantConfig> getAssistants();
-
-    AssistantConfig addAssistant(AssistantConfig assistant) throws Exception;
-
-    AssistantConfig updateAssistant(AssistantConfig assistant) throws Exception;
-    
-    DocumentNameTemplate addDocumentNameTemplate(DocumentNameTemplate template) throws Exception;
-    
-    DocumentNameTemplate updateDocumentNameTemplate(DocumentNameTemplate template) throws Exception;
-    
-    void removeDocumentNameTemplate(DocumentNameTemplate template) throws Exception;
-    
-    List<DocumentNameTemplate> getDocumentNameTemplates() throws Exception;
-    
-    DocumentNameTemplate getDefaultDocumentNameTemplate() throws Exception;
-    
-    List<String> previewDocumentNamesForTemplate(DocumentNameTemplate template, String fileName) throws Exception;
-    
-    DocumentNameTemplate getDocumentNameTemplate(String templateId) throws Exception;
-
-    byte[] getImportTemplateOds(boolean exportCurrentData, String fullClientVersion) throws Exception;
-
-    List<String> listImportSheets(byte[] odsData, String fullClientVersion) throws Exception;
-
-    List<ImportLogEntry> importSheets(byte[] odsData, List<String> sheetNames, boolean dryRun, String fullClientVersion) throws Exception;
-
-    List<DocumentTagRule> getAllDocumentTagRules();
-    DocumentTagRule addDocumentTagRule(DocumentTagRule rule);
-    DocumentTagRule updateDocumentTagRule(DocumentTagRule rule) throws Exception;
-    void removeDocumentTagRule(DocumentTagRule rule) throws Exception;
-    void setDocumentTagRuleConditions(String ruleId, List<DocumentTagRuleCondition> conditionList) throws Exception;
-
-    TransactionLog addTransactionLog(String hashInput, int expiryDays) throws Exception;
-
-    TransactionLog getTransactionLog(String hashInput) throws Exception;
     
 }

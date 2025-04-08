@@ -801,7 +801,7 @@ public class AddressService implements AddressServiceRemote, AddressServiceLocal
 
         List l = this.archiveFileAddressesFacade.findByAddressKey(dto);
         if (l != null) {
-            if (l.size() > 0) {
+            if (!l.isEmpty()) {
                 throw new EJBException("Kontakt ist als Beteiligter in min. einer Akte vorhanden und kann nicht gelöscht werden.");
             }
         }
@@ -951,6 +951,26 @@ public class AddressService implements AddressServiceRemote, AddressServiceLocal
     public AddressBean getAddressByExternalId5(String extId) {
         return this.addressFacade.findByExternalId5(extId);
     }
+    
+    @Override
+    @RolesAllowed({"readAddressRole"})
+    public HashMap<String,String> getAddressesWithIban() {
+        JDBCUtils utils = new JDBCUtils();
+        HashMap<String,String> list = new HashMap<>();
+        try ( Connection con = utils.getConnection();  PreparedStatement st = con.prepareStatement("select id, bankAccount from contacts where length(bankAccount)>0");  ResultSet rs = st.executeQuery()) {
+
+            while (rs.next()) {
+                String id = rs.getString(1);
+                String iban=rs.getString(2);
+                list.put(id, ServerStringUtils.normalizeIban(iban));
+            }
+        } catch (SQLException sqle) {
+            log.error("Error finding contacts with IBAN", sqle);
+            throw new EJBException("Fehler bei der IBAN-Suche.", sqle);
+        }
+
+        return list;
+    }
 
     @Override
     @RolesAllowed({"writeAddressRole"})
@@ -969,7 +989,7 @@ public class AddressService implements AddressServiceRemote, AddressServiceLocal
 
             }
         } else {
-            if (check.size() > 0) {
+            if (!check.isEmpty()) {
                 AddressTagsBean remove = (AddressTagsBean) check.get(0);
                 this.addressTagsFacade.remove(remove);
 

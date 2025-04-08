@@ -760,4 +760,18 @@ public class ServerStringUtils {
         return list.split(delimiter);
     }
     
+    /**
+     * Normiert eine IBAN zur Vergleichbarkeit.
+     * Entfernt alle Leerzeichen und wandelt in Großbuchstaben um.
+     *
+     * @param iban die Eingabe-IBAN
+     * @return normierte IBAN oder Leerstring, wenn Eingabe null oder leer
+     */
+    public static String normalizeIban(String iban) {
+        if (iban == null || iban.isBlank()) {
+            return "";
+        }
+        return iban.replaceAll("\\s+", "").toUpperCase();
+    }
+    
 }

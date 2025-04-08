@@ -691,8 +691,11 @@ import java.net.Inet4Address;
 import java.net.InetAddress;
 import java.net.NetworkInterface;
 import java.net.SocketException;
+import java.nio.charset.StandardCharsets;
+import java.security.MessageDigest;
 import java.sql.*;
 import java.util.ArrayList;
+import java.util.Calendar;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
@@ -701,12 +704,14 @@ import java.util.HashMap;
 import java.util.Hashtable;
 import java.util.List;
 import java.util.Properties;
+import java.util.concurrent.TimeUnit;
 import javax.annotation.Resource;
 import javax.annotation.security.PermitAll;
 import javax.annotation.security.RolesAllowed;
 import javax.ejb.Asynchronous;
 import javax.ejb.EJB;
 import javax.ejb.EJBException;
+import javax.ejb.Schedule;
 import javax.ejb.SessionContext;
 import javax.ejb.Stateless;
 import javax.inject.Inject;
@@ -734,6 +739,7 @@ import javax.xml.xpath.XPathExpression;
 import javax.xml.xpath.XPathFactory;
 import org.apache.log4j.Logger;
 import org.apache.tika.Tika;
+import org.jboss.ejb3.annotation.TransactionTimeout;
 import org.jlawyer.data.tree.GenericNode;
 import org.jlawyer.data.tree.TreeNodeUtils;
 import org.jlawyer.plugins.calculation.GenericCalculationTable;
@@ -794,6 +800,8 @@ public class SystemManagement implements SystemManagementRemote, SystemManagemen
     private DocumentTagRuleFacadeLocal documentTagRuleFacade;
     @EJB
     private DocumentTagRuleConditionFacadeLocal documentTagRuleConditionFacade;
+    @EJB
+    private TransactionLogFacadeLocal txLogFacade;
 
     @Inject
     @JMSConnectionFactory("java:/JmsXA")
@@ -2643,6 +2651,68 @@ public class SystemManagement implements SystemManagementRemote, SystemManagemen
             }
         }
     }
+
+    @Override
+    @RolesAllowed(value = {"adminRole"})
+    public TransactionLog addTransactionLog(String hashInput, int expiryDays) throws Exception {
+        StringGenerator idGen=new StringGenerator();
+        String id=idGen.getID().toString();
+        
+        MessageDigest digest = MessageDigest.getInstance("SHA-256");
+        byte[] hashBytes = digest.digest(hashInput.getBytes(StandardCharsets.UTF_8));
+
+        StringBuilder checksum = new StringBuilder();
+        for (byte b : hashBytes) {
+            checksum.append(String.format("%02x", b));
+        }
+        
+        TransactionLog txLog=new TransactionLog(id);
+        txLog.setChecksum(checksum.toString());
+        txLog.setPrincipal(this.context.getCallerPrincipal().getName());
+        java.util.Date processedDate=new java.util.Date();
+        txLog.setProcessedDate(processedDate);
+        
+        Calendar cal = Calendar.getInstance();
+        cal.setTime(processedDate);
+        cal.add(Calendar.DATE, expiryDays);
+        
+        txLog.setExpiryDate(cal.getTime());
+        txLogFacade.create(txLog);
+        return txLogFacade.find(id);
+    }
+
+    @Override
+    @RolesAllowed(value = {"adminRole"})
+    public TransactionLog getTransactionLog(String hashInput) throws Exception {
+        MessageDigest digest = MessageDigest.getInstance("SHA-256");
+        byte[] hashBytes = digest.digest(hashInput.getBytes(StandardCharsets.UTF_8));
+
+        StringBuilder checksum = new StringBuilder();
+        for (byte b : hashBytes) {
+            checksum.append(String.format("%02x", b));
+        }
+        return this.txLogFacade.findByChecksum(checksum.toString());
+    }
     
+    @Schedule(dayOfWeek = "1-7", hour = "3", minute = "41", second = "0", persistent = false)
+    // testing: @Schedule(hour = "*", minute = "*/2", persistent = false)
+    //@Schedule(hour = "*", minute = "*/2", persistent = false)
+    @TransactionTimeout(value = 10, unit = TimeUnit.MINUTES)
+    public void cleanupTransactionLogs() {
+        
+        log.info("cleaning up old transaction logs");
+        
+        List<TransactionLog> logs=this.txLogFacade.findExpired(new java.util.Date());
+        long removed=0;
+        if(logs!=null) {
+            for(TransactionLog l: logs) {
+                this.txLogFacade.remove(l);
+                removed++;
+            }
+        }
+        if(removed>0)
+            log.info("removed " + removed + " old transaction logs");
+        
+    }
     
 }

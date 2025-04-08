@@ -661,153 +661,35 @@ if any, to sign a "copyright disclaimer" for the program, if necessary.
 For more information on this, and how to apply and follow the GNU AGPL, see
 <https://www.gnu.org/licenses/>.
  */
-package com.jdimension.jlawyer.client.editors.finance;
+package com.jdimension.jlawyer.persistence;
+
+import java.util.Date;
+import java.util.List;
+import javax.ejb.Local;
 
 /**
  *
  * @author jens
  */
-public class BankTransaction {
+@Local
+public interface TransactionLogFacadeLocal {
 
-    private String date;
-    private String fromName;
-    private String fromIban;
-    private String bookingType;
-    private String purpose;
-    private double amount = 0d;
-    private String currency = "EUR";
+    void create(TransactionLog transactionLog);
 
-    @Override
-    public String toString() {
-        StringBuilder sb=new StringBuilder();
-        sb.append(date).append(System.lineSeparator());
-        sb.append(fromName).append(System.lineSeparator());
-        sb.append(fromIban).append(System.lineSeparator());
-        sb.append(bookingType).append(System.lineSeparator());
-        sb.append(purpose).append(System.lineSeparator());
-        sb.append(amount).append(System.lineSeparator());
-        sb.append(currency);
-        return sb.toString();
-    }
+    void edit(TransactionLog transactionLog);
+
+    void remove(TransactionLog transactionLog);
+
+    TransactionLog find(Object id);
+
+    List<TransactionLog> findAll();
+
+    List<TransactionLog> findRange(int[] range);
+
+    int count();
     
-    public String toHashInput() {
-        StringBuilder sb=new StringBuilder();
-        sb.append(date);
-        sb.append(fromName);
-        sb.append(fromIban);
-        sb.append(bookingType);
-        sb.append(purpose);
-        sb.append(amount);
-        sb.append(currency);
-        return sb.toString();
-    }
-
-    public BankTransaction(String date, String fromName, String fromIban, String bookingType, String purpose, double amount, String currency) {
-        this.date = date;
-        this.fromName = fromName;
-        this.fromIban = fromIban;
-        this.bookingType = bookingType;
-        this.purpose = purpose;
-        this.amount=amount;
-        this.currency=currency;
-    }
-
-    /**
-     * @return the date
-     */
-    public String getDate() {
-        return date;
-    }
-
-    /**
-     * @param date the date to set
-     */
-    public void setDate(String date) {
-        this.date = date;
-    }
-
-    /**
-     * @return the fromName
-     */
-    public String getFromName() {
-        return fromName;
-    }
-
-    /**
-     * @param fromName the fromName to set
-     */
-    public void setFromName(String fromName) {
-        this.fromName = fromName;
-    }
-
-    /**
-     * @return the fromIban
-     */
-    public String getFromIban() {
-        return fromIban;
-    }
-
-    /**
-     * @param fromIban the fromIban to set
-     */
-    public void setFromIban(String fromIban) {
-        this.fromIban = fromIban;
-    }
-
-    /**
-     * @return the bookingType
-     */
-    public String getBookingType() {
-        return bookingType;
-    }
-
-    /**
-     * @param bookingType the bookingType to set
-     */
-    public void setBookingType(String bookingType) {
-        this.bookingType = bookingType;
-    }
-
-    /**
-     * @return the purpose
-     */
-    public String getPurpose() {
-        return purpose;
-    }
-
-    /**
-     * @param purpose the purpose to set
-     */
-    public void setPurpose(String purpose) {
-        this.purpose = purpose;
-    }
-
-    /**
-     * @return the amount
-     */
-    public double getAmount() {
-        return amount;
-    }
-
-    /**
-     * @param amount the amount to set
-     */
-    public void setAmount(double amount) {
-        this.amount = amount;
-    }
-
-    /**
-     * @return the currency
-     */
-    public String getCurrency() {
-        return currency;
-    }
-
-    /**
-     * @param currency the currency to set
-     */
-    public void setCurrency(String currency) {
-        this.currency = currency;
-    }
-
+    TransactionLog findByChecksum(String checksum);
+    
+    List<TransactionLog> findExpired(Date expiryDate);
+    
 }
