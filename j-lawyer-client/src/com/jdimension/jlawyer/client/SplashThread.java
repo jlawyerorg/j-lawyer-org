@@ -663,6 +663,7 @@
  */
 package com.jdimension.jlawyer.client;
 
+import com.inet.jortho.SpellChecker;
 import com.jdimension.jlawyer.client.configuration.BackupConfigurationDialog;
 import com.jdimension.jlawyer.client.configuration.ProfileDialog;
 import com.jdimension.jlawyer.client.editors.EditorsRegistry;
@@ -736,6 +737,7 @@ public class SplashThread implements Runnable {
      * Creates a new instance of SplashThread
      * @param splash
      * @param settings
+     * @param randomBackgroundFile
      * @param owner
      */
     public SplashThread(LoginDialog splash, ClientSettings settings, String randomBackgroundFile, JFrame owner) {
@@ -941,6 +943,23 @@ public class SplashThread implements Runnable {
             }
         };
         pool.execute(pluginRunnable);
+        
+        Runnable spellcheckerRunnable = () -> {
+            try {
+                //            // Lade Wörterbücher aus dem "dicts"-Ordner
+                //            SpellChecker.registerDictionaries(new java.io.File("dictionaries").toURL(), "de", "en");
+            
+                URL dictPath = SplashThread.class.getClassLoader().getResource("dictionaries/").toURI().toURL();
+                SpellChecker.registerDictionaries(dictPath, "de,en,fr,ru,pl,nl,it,es,ar", "de");
+
+                // Optional: Benutzer-Wörterbuch deaktivieren (oder eigenes implementieren)
+                SpellChecker.setUserDictionaryProvider(null);
+            } catch (Throwable t) {
+                log.error("Error loading spellchecker dictionaries", t);
+            }
+        };
+        pool.execute(spellcheckerRunnable);
+        
         pool.shutdown();
         try {
             pool.awaitTermination(60, TimeUnit.SECONDS);
