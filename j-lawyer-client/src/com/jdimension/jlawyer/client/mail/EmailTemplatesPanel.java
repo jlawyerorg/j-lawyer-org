@@ -693,71 +693,69 @@ public class EmailTemplatesPanel extends javax.swing.JPanel implements Themeable
     private static final Logger log = Logger.getLogger(EmailTemplatesPanel.class.getName());
     private Image backgroundImage = null;
 
-    private static final String PLACEHOLDERTARGET_SUBJECT="in Betreff";
-    private static final String PLACEHOLDERTARGET_BODY="in Inhalt";
-    
+    private static final String PLACEHOLDERTARGET_SUBJECT = "in Betreff";
+    private static final String PLACEHOLDERTARGET_BODY = "in Inhalt";
+
     private TextEditorPanel tp;
     private HtmlEditorPanel hp;
-    
+
     /**
      * Creates new form AddressPanel
      */
     public EmailTemplatesPanel() {
 
         initComponents();
-        
+
         ComponentUtils.decorateSplitPane(jSplitPane1);
         ComponentUtils.decorateSplitPane(jSplitPane2);
-        
-        tp=new TextEditorPanel();
-        hp=new HtmlEditorPanel();
-        
+
+        tp = new TextEditorPanel();
+        hp = new HtmlEditorPanel();
+
         this.contentPanel.add(tp);
-        tp.setBounds(0,0, this.contentPanel.getWidth(), this.contentPanel.getHeight());
-        
+        tp.setBounds(0, 0, this.contentPanel.getWidth(), this.contentPanel.getHeight());
 
         this.cmbFormat.removeAllItems();
-        for(String s: EmailTemplate.SUPPORTED_FORMATS)
+        for (String s : EmailTemplate.SUPPORTED_FORMATS) {
             this.cmbFormat.addItem(s);
-        
-        DefaultListModel lm=new DefaultListModel();
+        }
+
+        DefaultListModel lm = new DefaultListModel();
         this.lstPlaceHolders.setModel(lm);
-        
+
         try {
             JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(ClientSettings.getInstance().getLookupProperties());
-            List<PartyTypeBean> allPartyTypes=locator.lookupSystemManagementRemote().getPartyTypes();
-            List<String> placeHolders=new ArrayList<>();
-            for(PartyTypeBean ptb: allPartyTypes) {
+            List<PartyTypeBean> allPartyTypes = locator.lookupSystemManagementRemote().getPartyTypes();
+            List<String> placeHolders = new ArrayList<>();
+            for (PartyTypeBean ptb : allPartyTypes) {
                 placeHolders.add(ptb.getPlaceHolder());
             }
-            
-            for(String s: PlaceHolders.getAllPlaceHolders(placeHolders, new ArrayList<>()))
-                ((DefaultListModel)this.lstPlaceHolders.getModel()).addElement(s);
+
+            for (String s : PlaceHolders.getAllPlaceHolders(placeHolders, new ArrayList<>())) {
+                ((DefaultListModel) this.lstPlaceHolders.getModel()).addElement(s);
+            }
         } catch (Exception ex) {
             log.error("Error getting all party types", ex);
             JOptionPane.showMessageDialog(this, "Fehler beim Laden der Beteiligtentypen: " + ex.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
             EditorsRegistry.getInstance().clearStatus();
         }
-        
-        
-        
-        DefaultComboBoxModel cm=new DefaultComboBoxModel();
+
+        DefaultComboBoxModel cm = new DefaultComboBoxModel();
         this.cmbPlaceHolderTarget.setModel(cm);
-        ((DefaultComboBoxModel)this.cmbPlaceHolderTarget.getModel()).addElement(PLACEHOLDERTARGET_SUBJECT);
-        ((DefaultComboBoxModel)this.cmbPlaceHolderTarget.getModel()).addElement(PLACEHOLDERTARGET_BODY);
-        
+        ((DefaultComboBoxModel) this.cmbPlaceHolderTarget.getModel()).addElement(PLACEHOLDERTARGET_SUBJECT);
+        ((DefaultComboBoxModel) this.cmbPlaceHolderTarget.getModel()).addElement(PLACEHOLDERTARGET_BODY);
+
         this.refreshList();
 
-        if(this.jSplitPane1.getWidth()>200) {
+        if (this.jSplitPane1.getWidth() > 200) {
             this.jSplitPane1.setDividerLocation(0.8d);
         } else {
-            this.jSplitPane1.setDividerLocation(Math.max(this.jSplitPane1.getWidth()-280, 600));
+            this.jSplitPane1.setDividerLocation(Math.max(this.jSplitPane1.getWidth() - 280, 600));
         }
-        
-        
+
         ComponentUtils.restoreSplitPane(this.jSplitPane1, this.getClass(), "jSplitPane1");
         ComponentUtils.restoreSplitPane(this.jSplitPane2, this.getClass(), "jSplitPane2");
-        
+
         ComponentUtils.persistSplitPane(this.jSplitPane1, this.getClass(), "jSplitPane1");
         ComponentUtils.persistSplitPane(this.jSplitPane2, this.getClass(), "jSplitPane2");
 
@@ -771,13 +769,12 @@ public class EmailTemplatesPanel extends javax.swing.JPanel implements Themeable
         ClientSettings settings = ClientSettings.getInstance();
         try {
             JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
-            
-              Collection<String> fileNames=locator.lookupIntegrationServiceRemote().getAllEmailTemplateNames();  
-                
-                for(Object o:fileNames) {
-                    model.addElement(o);
-                }
 
+            Collection<String> fileNames = locator.lookupIntegrationServiceRemote().getAllEmailTemplateNames();
+
+            for (Object o : fileNames) {
+                model.addElement(o);
+            }
 
         } catch (Exception ex) {
             log.error(ex);
@@ -1099,16 +1096,16 @@ public class EmailTemplatesPanel extends javax.swing.JPanel implements Themeable
     }// </editor-fold>//GEN-END:initComponents
 
     private void cmdSaveActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdSaveActionPerformed
-        
+
         if (this.lstMailTemplates.getSelectedValue() == null) {
-                return;
+            return;
         }
-        
+
         ClientSettings settings = ClientSettings.getInstance();
         try {
             JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
-            EmailTemplate tpl=new EmailTemplate();
-            EditorImplementation ed=(EditorImplementation)this.contentPanel.getComponent(0);
+            EmailTemplate tpl = new EmailTemplate();
+            EditorImplementation ed = (EditorImplementation) this.contentPanel.getComponent(0);
             tpl.setBody(ed.getText());
             tpl.setFileName(this.lstMailTemplates.getSelectedValue().toString());
             tpl.setFormat(this.cmbFormat.getSelectedItem().toString());
@@ -1117,8 +1114,8 @@ public class EmailTemplatesPanel extends javax.swing.JPanel implements Themeable
         } catch (Exception ex) {
             JOptionPane.showMessageDialog(this, "Fehler beim Speichern der Vorlage: " + ex.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
         }
-        
-        
+
+
     }//GEN-LAST:event_cmdSaveActionPerformed
 
     private void cmdRefreshActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdRefreshActionPerformed
@@ -1126,16 +1123,17 @@ public class EmailTemplatesPanel extends javax.swing.JPanel implements Themeable
     }//GEN-LAST:event_cmdRefreshActionPerformed
 
     private void lstMailTemplatesMouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_lstMailTemplatesMouseClicked
-        if(this.lstMailTemplates.getSelectedValue()==null)
+        if (this.lstMailTemplates.getSelectedValue() == null) {
             return;
-        
+        }
+
         ClientSettings settings = ClientSettings.getInstance();
         try {
             JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
-            
-            EmailTemplate tpl=locator.lookupIntegrationServiceRemote().getEmailTemplate(this.lstMailTemplates.getSelectedValue().toString());
+
+            EmailTemplate tpl = locator.lookupIntegrationServiceRemote().getEmailTemplate(this.lstMailTemplates.getSelectedValue().toString());
             this.cmbFormat.setSelectedItem(tpl.getFormat());
-            EditorImplementation ed=(EditorImplementation)this.contentPanel.getComponent(0);
+            EditorImplementation ed = (EditorImplementation) this.contentPanel.getComponent(0);
             ed.setText(tpl.getBody());
             this.txtSubject.setText(tpl.getSubject());
             this.cmbFormat.setSelectedItem(tpl.getFormat());
@@ -1146,11 +1144,12 @@ public class EmailTemplatesPanel extends javax.swing.JPanel implements Themeable
 
     private void cmdNewActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdNewActionPerformed
         String fileName = JOptionPane.showInputDialog(this, "Name der neuen Vorlage: ", "neue E-Mail - Vorlage", JOptionPane.QUESTION_MESSAGE);
-        if(fileName==null)
+        if (fileName == null) {
             return;
+        }
         fileName = fileName.replaceAll(" ", "-");
         fileName = fileName + ".xml";
-        if(fileName.length()==0) {
+        if (fileName.length() == 0) {
             JOptionPane.showMessageDialog(this, "Dateiname darf nicht leer sein.", CommonStrings.HINT, JOptionPane.INFORMATION_MESSAGE);
             return;
         }
@@ -1158,7 +1157,7 @@ public class EmailTemplatesPanel extends javax.swing.JPanel implements Themeable
         ClientSettings settings = ClientSettings.getInstance();
         try {
             JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
-            EmailTemplate tpl=new EmailTemplate();
+            EmailTemplate tpl = new EmailTemplate();
             tpl.setBody("");
             tpl.setFileName(fileName);
             tpl.setFormat("");
@@ -1168,64 +1167,67 @@ public class EmailTemplatesPanel extends javax.swing.JPanel implements Themeable
             JOptionPane.showMessageDialog(this, "Fehler beim Erstellen der Vorlage: " + ex.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
         }
 
-
         this.refreshList();
     }//GEN-LAST:event_cmdNewActionPerformed
 
     private void cmdDeleteActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdDeleteActionPerformed
         if (this.lstMailTemplates.getSelectedValue() != null) {
-            
-                ClientSettings settings = ClientSettings.getInstance();
-                try {
-                    JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
-                    List selectedValues=this.lstMailTemplates.getSelectedValuesList();
-                    if(selectedValues!=null) {
-                        for(Object selectedValue: selectedValues) {
-                            locator.lookupIntegrationServiceRemote().deleteEmailTemplate(selectedValue.toString());
-                        }
-                        
-                    }
-                    
-                } catch (Exception ex) {
-                    JOptionPane.showMessageDialog(this, "Fehler beim Löschen der Vorlage: " + ex.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
+
+            List selectedValues = this.lstMailTemplates.getSelectedValuesList();
+
+            int response = JOptionPane.showConfirmDialog(this, selectedValues.size() + " Vorlagen löschen?", "Vorlagen löschen", JOptionPane.YES_NO_OPTION, JOptionPane.QUESTION_MESSAGE);
+            if (response != JOptionPane.YES_OPTION) {
+                return;
+            }
+
+            ClientSettings settings = ClientSettings.getInstance();
+            try {
+                JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
+                for (Object selectedValue : selectedValues) {
+                    locator.lookupIntegrationServiceRemote().deleteEmailTemplate(selectedValue.toString());
                 }
-            
+
+            } catch (Exception ex) {
+                JOptionPane.showMessageDialog(this, "Fehler beim Löschen der Vorlage: " + ex.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
+            }
+
         }
         this.refreshList();
     }//GEN-LAST:event_cmdDeleteActionPerformed
 
     private void cmdAddPlaceHolderActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdAddPlaceHolderActionPerformed
-        
-        List selectedList=this.lstPlaceHolders.getSelectedValuesList();
-        String insert="";
-        for(Object o: selectedList) {
+
+        List selectedList = this.lstPlaceHolders.getSelectedValuesList();
+        String insert = "";
+        for (Object o : selectedList) {
             insert = insert + o.toString() + " ";
         }
-        
-        String target=this.cmbPlaceHolderTarget.getSelectedItem().toString();
-        
-        EditorImplementation ed=(EditorImplementation)this.contentPanel.getComponent(0);
-        if(EmailTemplatesPanel.PLACEHOLDERTARGET_SUBJECT.equals(target)) {
+
+        String target = this.cmbPlaceHolderTarget.getSelectedItem().toString();
+
+        EditorImplementation ed = (EditorImplementation) this.contentPanel.getComponent(0);
+        if (EmailTemplatesPanel.PLACEHOLDERTARGET_SUBJECT.equals(target)) {
             this.txtSubject.setText(PlaceHolders.insertAt(this.txtSubject.getText(), insert, this.txtSubject.getCaretPosition()));
-        } else if(EmailTemplatesPanel.PLACEHOLDERTARGET_BODY.equals(target)) {
+        } else if (EmailTemplatesPanel.PLACEHOLDERTARGET_BODY.equals(target)) {
             ed.setText(PlaceHolders.insertAt(ed.getText(), insert, ed.getCaretPosition()));
         }
     }//GEN-LAST:event_cmdAddPlaceHolderActionPerformed
 
     private void contentPanelComponentResized(java.awt.event.ComponentEvent evt) {//GEN-FIRST:event_contentPanelComponentResized
-        tp.setBounds(0,0, this.contentPanel.getWidth(), this.contentPanel.getHeight());        
-        hp.setBounds(0,0, this.contentPanel.getWidth(), this.contentPanel.getHeight());        
+        tp.setBounds(0, 0, this.contentPanel.getWidth(), this.contentPanel.getHeight());
+        hp.setBounds(0, 0, this.contentPanel.getWidth(), this.contentPanel.getHeight());
         SwingUtilities.updateComponentTreeUI(tp);
         SwingUtilities.updateComponentTreeUI(hp);
     }//GEN-LAST:event_contentPanelComponentResized
 
     private void cmbFormatItemStateChanged(java.awt.event.ItemEvent evt) {//GEN-FIRST:event_cmbFormatItemStateChanged
-        String sel=(String)this.cmbFormat.getSelectedItem();
-        if(sel==null)
-            sel=ContentTypes.TEXT_PLAIN;
+        String sel = (String) this.cmbFormat.getSelectedItem();
+        if (sel == null) {
+            sel = ContentTypes.TEXT_PLAIN;
+        }
 
-        if(sel.toLowerCase().contains("html")) {
-        
+        if (sel.toLowerCase().contains("html")) {
+
             this.contentPanel.remove(0);
             this.contentPanel.add(hp);
             hp.setBounds(0, 0, this.contentPanel.getWidth(), this.contentPanel.getHeight());
@@ -1248,66 +1250,68 @@ public class EmailTemplatesPanel extends javax.swing.JPanel implements Themeable
 
     private void cmdRenameActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdRenameActionPerformed
         if (this.lstMailTemplates.getSelectedValue() != null) {
-            
-                ClientSettings settings = ClientSettings.getInstance();
-                try {
-                    JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
-                    List selectedValues=this.lstMailTemplates.getSelectedValuesList();
-                    if(selectedValues!=null) {
-                        for(Object selectedValue : selectedValues) {
 
-                            String oldName = selectedValue.toString();
+            ClientSettings settings = ClientSettings.getInstance();
+            try {
+                JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
+                List selectedValues = this.lstMailTemplates.getSelectedValuesList();
+                if (selectedValues != null) {
+                    for (Object selectedValue : selectedValues) {
 
-                            String newName = FileUtils.getNewFileName(null, oldName, new Date(), false, EditorsRegistry.getInstance().getMainWindow(), "Vorlage umbenennen");
-                            if (newName==null || newName.isEmpty()) {
-                                JOptionPane.showMessageDialog(this, "Name darf nicht leer sein.", CommonStrings.HINT, JOptionPane.INFORMATION_MESSAGE);
-                                return;
-                            }
-                            if(!newName.toLowerCase().endsWith(".xml"))
-                                newName = newName + ".xml";
-                            
-                            locator.lookupIntegrationServiceRemote().renameEmailTemplate(oldName, newName);
+                        String oldName = selectedValue.toString();
+
+                        String newName = FileUtils.getNewFileName(null, oldName, new Date(), false, EditorsRegistry.getInstance().getMainWindow(), "Vorlage umbenennen");
+                        if (newName == null || newName.isEmpty()) {
+                            JOptionPane.showMessageDialog(this, "Name darf nicht leer sein.", CommonStrings.HINT, JOptionPane.INFORMATION_MESSAGE);
+                            return;
                         }
-                        
+                        if (!newName.toLowerCase().endsWith(".xml")) {
+                            newName = newName + ".xml";
+                        }
+
+                        locator.lookupIntegrationServiceRemote().renameEmailTemplate(oldName, newName);
                     }
-                    
-                } catch (Exception ex) {
-                    JOptionPane.showMessageDialog(this, "Fehler beim Umbenennen der Vorlage: " + ex.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
+
                 }
-            
+
+            } catch (Exception ex) {
+                JOptionPane.showMessageDialog(this, "Fehler beim Umbenennen der Vorlage: " + ex.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
+            }
+
         }
         this.refreshList();
     }//GEN-LAST:event_cmdRenameActionPerformed
 
     private void cmdDuplicateActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdDuplicateActionPerformed
         if (this.lstMailTemplates.getSelectedValue() != null) {
-            
-                ClientSettings settings = ClientSettings.getInstance();
-                try {
-                    JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
-                    List selectedValues=this.lstMailTemplates.getSelectedValuesList();
-                    if(selectedValues!=null) {
-                        for(Object selectedValue : selectedValues) {
 
-                            String oldName = selectedValue.toString();
+            ClientSettings settings = ClientSettings.getInstance();
+            try {
+                JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
+                List selectedValues = this.lstMailTemplates.getSelectedValuesList();
+                if (selectedValues != null) {
+                    for (Object selectedValue : selectedValues) {
 
-                            String newName = FileUtils.getNewFileName(null, oldName, new Date(), false, EditorsRegistry.getInstance().getMainWindow(), "Vorlage duplizieren");
-                            if (newName==null || newName.isEmpty()) {
-                                JOptionPane.showMessageDialog(this, "Name darf nicht leer sein.", CommonStrings.HINT, JOptionPane.INFORMATION_MESSAGE);
-                                return;
-                            }
-                            if(!newName.toLowerCase().endsWith(".xml"))
-                                newName = newName + ".xml";
-                            
-                            locator.lookupIntegrationServiceRemote().duplicateEmailTemplate(oldName, newName);
+                        String oldName = selectedValue.toString();
+
+                        String newName = FileUtils.getNewFileName(null, oldName, new Date(), false, EditorsRegistry.getInstance().getMainWindow(), "Vorlage duplizieren");
+                        if (newName == null || newName.isEmpty()) {
+                            JOptionPane.showMessageDialog(this, "Name darf nicht leer sein.", CommonStrings.HINT, JOptionPane.INFORMATION_MESSAGE);
+                            return;
                         }
-                        
+                        if (!newName.toLowerCase().endsWith(".xml")) {
+                            newName = newName + ".xml";
+                        }
+
+                        locator.lookupIntegrationServiceRemote().duplicateEmailTemplate(oldName, newName);
                     }
-                    
-                } catch (Exception ex) {
-                    JOptionPane.showMessageDialog(this, "Fehler beim Duplizieren der Vorlage: " + ex.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
+
                 }
-            
+
+            } catch (Exception ex) {
+                JOptionPane.showMessageDialog(this, "Fehler beim Duplizieren der Vorlage: " + ex.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
+            }
+
         }
         this.refreshList();
     }//GEN-LAST:event_cmdDuplicateActionPerformed
