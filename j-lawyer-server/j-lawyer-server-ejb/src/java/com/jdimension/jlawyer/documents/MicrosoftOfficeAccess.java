@@ -818,7 +818,12 @@ public class MicrosoftOfficeAccess {
                             t.setInsideHBorder(XWPFTable.XWPFBorderType.SINGLE, 8, 0, Integer.toHexString(tab.getBorderColor().getRGB()).substring(2));
                             t.setInsideVBorder(XWPFTable.XWPFBorderType.SINGLE, 8, 0, Integer.toHexString(tab.getBorderColor().getRGB()).substring(2));
                         } else {
+                            t.setTopBorder(XWPFTable.XWPFBorderType.NONE, 8, 0, "000000");
                             t.setBottomBorder(XWPFTable.XWPFBorderType.NONE, 8, 0, "000000");
+                            t.setLeftBorder(XWPFTable.XWPFBorderType.NONE, 8, 0, "000000");
+                            t.setRightBorder(XWPFTable.XWPFBorderType.NONE, 8, 0, "000000");
+                            t.setInsideHBorder(XWPFTable.XWPFBorderType.NONE, 8, 0, "000000");
+                            t.setInsideVBorder(XWPFTable.XWPFBorderType.NONE, 8, 0, "000000");
                         }
 
                         if (t.getNumberOfRows() == 1 && t.getRow(0).getTableCells().size() == 1) {
