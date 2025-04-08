@@ -696,6 +696,7 @@ import com.jdimension.jlawyer.client.utils.CaseUtils;
 import com.jdimension.jlawyer.client.utils.ComponentUtils;
 import com.jdimension.jlawyer.client.utils.FileUtils;
 import com.jdimension.jlawyer.client.utils.FrameUtils;
+import com.jdimension.jlawyer.client.utils.HtmlUtils;
 import com.jdimension.jlawyer.client.utils.SelectAttachmentDialog;
 import com.jdimension.jlawyer.client.utils.StringUtils;
 import com.jdimension.jlawyer.client.utils.SystemUtils;
@@ -1254,6 +1255,7 @@ public class SendEmailDialog extends javax.swing.JDialog implements SendCommunic
                 if (sig == null) {
                     sig = "";
                 }
+                sig=HtmlUtils.stripHeadAndBodyTags(sig);
 
                 // Parse postSignature as an HTML document
                 Document doc = Jsoup.parse(postSignature);
@@ -2389,7 +2391,9 @@ public class SendEmailDialog extends javax.swing.JDialog implements SendCommunic
                         if (sig == null) {
                             sig = "";
                         }
-                        String t = TemplatesUtil.replacePlaceHolders(tpl.getBody(), htValues) + "<br/><br/><div><blockquote style=\"border-left: #ccc 0px solid; margin: 0px 0px 0px 0.8ex; padding-left: 1ex\">" + sig + "</blockquote></div>";
+                        sig=HtmlUtils.stripHeadAndBodyTags(sig);
+                        //String t = TemplatesUtil.replacePlaceHolders(tpl.getBody(), htValues) + "<br/><br/><div><blockquote style=\"border-left: #ccc 0px solid; margin: 0px 0px 0px 0.8ex; padding-left: 1ex\">" + sig + "</blockquote></div>";
+                        String t = TemplatesUtil.replacePlaceHolders(tpl.getBody(), htValues) + "<br/><br/>" + sig;
                         int cursorIndex = t.indexOf(EmailTemplate.PLACEHOLDER_CURSOR);
                         if (cursorIndex > -1) {
                             t = t.replace(EmailTemplate.PLACEHOLDER_CURSOR, "");

@@ -740,6 +740,27 @@ public class HtmlEditorPanel extends javax.swing.JPanel implements EditorImpleme
         //return this.htmlPane.getText();
     }
 
+    private static String mapFontSize(String sizeAttr) {
+        switch (sizeAttr) {
+            case "1":
+                return "8px";
+            case "2":
+                return "10px";
+            case "3":
+                return "12px";
+            case "4":
+                return "14px";
+            case "5":
+                return "18px";
+            case "6":
+                return "24px";
+            case "7":
+                return "32px";
+            default:
+                return "12px"; // Fallback
+        }
+    }
+
     public String cleanSHEFHtml(String shefHtml) {
         // Parse the manipulated HTML from SHEF
         Document doc = Jsoup.parse(shefHtml);
@@ -760,7 +781,7 @@ public class HtmlEditorPanel extends javax.swing.JPanel implements EditorImpleme
                 style.append("font-family:").append(face).append(";");
             }
             if (!size.isEmpty()) {
-                style.append("font-size:").append(size).append(";");
+                style.append("font-size:").append(mapFontSize(size)).append(";");
             }
 
             // Replace <font> with <span style="...">
@@ -785,10 +806,15 @@ public class HtmlEditorPanel extends javax.swing.JPanel implements EditorImpleme
         }
         // this causes paragraphs to have no spacing at all
         //head.append("<style> p { margin: 0; padding: 0; } </style>");
-        
+
         head.append("<style> p { margin: 4px 0; padding: 0; line-height: 1.4; } </style>");
 
-        return doc.outerHtml(); // Return cleaned HTML
+        String result = doc.outerHtml(); // Return cleaned HTML
+        result = result.replaceAll(
+                "<span\\s+style=\"font-size:([^\"]+);\">\\s*([\\u0009\\u0020\\u00A0\\u1680\\u180E\\u2000-\\u200A\\u202F\\u205F\\u3000]*)\\s*</span>",
+                "<span style=\"font-size:$1;\">&nbsp;</span>"
+        );
+        return result;
     }
 
     @Override

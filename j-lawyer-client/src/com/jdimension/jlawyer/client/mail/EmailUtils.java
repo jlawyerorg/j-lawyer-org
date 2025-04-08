@@ -666,6 +666,7 @@ package com.jdimension.jlawyer.client.mail;
 import com.jdimension.jlawyer.client.editors.EditorsRegistry;
 import com.jdimension.jlawyer.client.settings.ClientSettings;
 import com.jdimension.jlawyer.client.settings.UserSettings;
+import com.jdimension.jlawyer.client.utils.HtmlUtils;
 import com.jdimension.jlawyer.client.utils.StringUtils;
 import com.jdimension.jlawyer.email.CommonMailUtils;
 import com.jdimension.jlawyer.persistence.AddressBean;
@@ -1106,7 +1107,7 @@ public class EmailUtils extends CommonMailUtils {
                     + "<br/><br/>" + bodyContent + "<br/><br/></blockquote>";
 
             // Construct reply HTML
-            Document replyDoc = Jsoup.parse("<html><head>" + doc.head().html() + "</head><body></body></html>");
+            Document replyDoc = Jsoup.parse("<html><head>" + HtmlUtils.cleanHeadStylesInHead(doc.head().html()) + "</head><body></body></html>");
             Element replyBody = replyDoc.body();
 
             replyBody.append("<br/><br/>*** " + decodedTo + (dateString != null ? " schrieb am " + dateString : " schrieb") + ": ***<br/><br/>");
