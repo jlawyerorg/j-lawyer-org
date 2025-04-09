@@ -666,6 +666,7 @@ package com.jdimension.jlawyer.client.utils;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
+import org.jsoup.select.Elements;
 
 /**
  *
@@ -755,6 +756,33 @@ public class HtmlUtils {
         }
 
         return html;
+    }
+
+    public static String convertTextOnlyDivsToBreaks(String html) {
+        Document doc = Jsoup.parse(html);
+
+        // Find all <div> elements
+        Elements divs = doc.select("div");
+
+        for (Element div : divs) {
+            // Skip if it contains other elements/tags
+            if (!div.select("*").isEmpty()) {
+                continue;
+            }
+
+            // Replace newlines in the text with <br>
+            String[] lines = div.html().split("\n");
+            StringBuilder newHtml = new StringBuilder();
+            for (int i = 0; i < lines.length; i++) {
+                newHtml.append(lines[i].strip());
+                if (i < lines.length - 1) {
+                    newHtml.append("<br>");
+                }
+            }
+            div.html(newHtml.toString());
+        }
+
+        return doc.body().html();
     }
 
 }

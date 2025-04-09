@@ -946,9 +946,6 @@ public class SplashThread implements Runnable {
         
         Runnable spellcheckerRunnable = () -> {
             try {
-                //            // Lade Wörterbücher aus dem "dicts"-Ordner
-                //            SpellChecker.registerDictionaries(new java.io.File("dictionaries").toURL(), "de", "en");
-            
                 URL dictPath = SplashThread.class.getClassLoader().getResource("dictionaries/").toURI().toURL();
                 SpellChecker.registerDictionaries(dictPath, "de,en,fr,ru,pl,nl,it,es,ar", "de");
 

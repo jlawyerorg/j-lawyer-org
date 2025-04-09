@@ -663,6 +663,7 @@
  */
 package com.jdimension.jlawyer.client.mail;
 
+import com.jdimension.jlawyer.client.utils.HtmlUtils;
 import com.jdimension.jlawyer.server.utils.ContentTypes;
 import java.awt.Component;
 import java.awt.Container;
@@ -814,6 +815,10 @@ public class HtmlEditorPanel extends javax.swing.JPanel implements EditorImpleme
                 "<span\\s+style=\"font-size:([^\"]+);\">\\s*([\\u0009\\u0020\\u00A0\\u1680\\u180E\\u2000-\\u200A\\u202F\\u205F\\u3000]*)\\s*</span>",
                 "<span style=\"font-size:$1;\">&nbsp;</span>"
         );
+        
+        // preserve line breaks in div tags
+        result = HtmlUtils.convertTextOnlyDivsToBreaks(result);
+        
         return result;
     }
 
