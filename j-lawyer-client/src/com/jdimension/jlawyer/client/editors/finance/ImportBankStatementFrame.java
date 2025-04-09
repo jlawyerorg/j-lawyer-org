@@ -1097,7 +1097,7 @@ public class ImportBankStatementFrame extends javax.swing.JFrame {
 
                 // Create a DecimalFormat with German locale (comma as decimal separator)
                 DecimalFormatSymbols symbols = new DecimalFormatSymbols(Locale.forLanguageTag(csvConfig.getLocale()));
-                DecimalFormat df = new DecimalFormat(csvConfig.getDecimalFormat(), symbols); // No currency symbols
+                DecimalFormat decf = new DecimalFormat(csvConfig.getDecimalFormat(), symbols); // No currency symbols
 
                 CSVParser parser = new CSVParserBuilder()
                         .withSeparator(delimiter) // Use the specified delimiter
@@ -1118,7 +1118,7 @@ public class ImportBankStatementFrame extends javax.swing.JFrame {
                     String fromIban = nextLine[csvConfig.getColumnIban()].trim();
                     String bookingType = nextLine[csvConfig.getColumnBookingType()].trim();
                     String purpose = nextLine[csvConfig.getColumnPurpose()].trim();
-                    double amount = df.parse(nextLine[csvConfig.getColumnAmount()].trim()).doubleValue();
+                    double amount = decf.parse(nextLine[csvConfig.getColumnAmount()].trim()).doubleValue();
                     String currency = nextLine[csvConfig.getColumnCurrency()].trim();
                     
                     BankTransaction tx = new BankTransaction(date, fromName, fromIban, bookingType, purpose, amount, currency);
