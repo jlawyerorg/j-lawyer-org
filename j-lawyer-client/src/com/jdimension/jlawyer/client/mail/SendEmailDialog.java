@@ -1962,14 +1962,6 @@ public class SendEmailDialog extends javax.swing.JDialog implements SendCommunic
         txtTemplateSearch.setForeground(new java.awt.Color(102, 102, 102));
         txtTemplateSearch.setText("Suche...");
         txtTemplateSearch.setToolTipText("Vorlagen suchen");
-        txtTemplateSearch.addFocusListener(new java.awt.event.FocusAdapter() {
-            public void focusGained(java.awt.event.FocusEvent evt) {
-                txtTemplateSearchFocusGained(evt);
-            }
-            public void focusLost(java.awt.event.FocusEvent evt) {
-                txtTemplateSearchFocusLost(evt);
-            }
-        });
         txtTemplateSearch.addMouseListener(new java.awt.event.MouseAdapter() {
             public void mouseClicked(java.awt.event.MouseEvent evt) {
                 txtTemplateSearchMouseClicked(evt);
@@ -2880,27 +2872,6 @@ public class SendEmailDialog extends javax.swing.JDialog implements SendCommunic
             JOptionPane.showMessageDialog(this, "Fehler beim Öffnen von Thunderbird: " + t);
         }
     }//GEN-LAST:event_cmdOpenTbActionPerformed
-
-    private void txtTemplateSearchFocusGained(java.awt.event.FocusEvent evt) {//GEN-FIRST:event_txtTemplateSearchFocusGained
-        if ("Suche...".equals(txtTemplateSearch.getText())) {
-            txtTemplateSearch.setText("");
-            txtTemplateSearch.setForeground(Color.BLACK);
-        }
-    }//GEN-LAST:event_txtTemplateSearchFocusGained
-
-    private void txtTemplateSearchFocusLost(java.awt.event.FocusEvent evt) {//GEN-FIRST:event_txtTemplateSearchFocusLost
-        if (txtTemplateSearch.getText().isEmpty()) {
-            txtTemplateSearch.setText("Suche...");
-            txtTemplateSearch.setForeground(Color.GRAY);
-            
-            // Ursprüngliche Auswahl wiederherstellen, wenn keine Suche durchgeführt wurde
-            if (savedTemplateSelection != null && cmbTemplates.getSelectedItem().equals("")) {
-                ignoreTemplateSelectionEvent = true;
-                cmbTemplates.setSelectedItem(savedTemplateSelection);
-                ignoreTemplateSelectionEvent = false;
-            }
-        }
-    }//GEN-LAST:event_txtTemplateSearchFocusLost
 
     private void txtTemplateSearchKeyPressed(java.awt.event.KeyEvent evt) {//GEN-FIRST:event_txtTemplateSearchKeyPressed
         if (evt.getKeyCode() == java.awt.event.KeyEvent.VK_ENTER) {
