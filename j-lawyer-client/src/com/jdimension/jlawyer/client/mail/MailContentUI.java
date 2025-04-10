@@ -2155,8 +2155,6 @@ public class MailContentUI extends javax.swing.JPanel implements HyperlinkListen
                 selectedAttachments.add(selected.toString());
             }
 
-            log.info("Ausgewählte Anhänge zum Entfernen: " + selectedAttachments);
-
             MimeMessage originalMessage = (MimeMessage) emlMsgContainer.getMessage();
             MimeMessage modifiedMessage = EmailUtils.removeAttachmentsFromMessage(originalMessage, selectedAttachments);
 
@@ -2221,22 +2219,6 @@ public class MailContentUI extends javax.swing.JPanel implements HyperlinkListen
                 JOptionPane.showMessageDialog(this,
                         "Anhang aus Nachricht entfernt.",
                         "Hinweis", JOptionPane.WARNING_MESSAGE);
-            }
-
-            // 6. Aktualisiere die lokale Anzeige
-            emlMsgContainer.setMessage(modifiedMessage);
-
-            // UI aktualisieren
-            ((DefaultListModel) lstAttachments.getModel()).removeAllElements();
-            if (modifiedMessage.isMimeType("multipart/*")) {
-                try {
-                    ArrayList<String> attachments = EmailUtils.getAttachmentNames(modifiedMessage.getContent());
-                    for (String name : attachments) {
-                        ((DefaultListModel) lstAttachments.getModel()).addElement(name);
-                    }
-                } catch (Exception e) {
-                    log.error("Fehler beim Aktualisieren der Anhangliste", e);
-                }
             }
 
         } catch (Exception ex) {

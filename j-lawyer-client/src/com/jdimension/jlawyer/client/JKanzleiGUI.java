@@ -1167,6 +1167,7 @@ public class JKanzleiGUI extends javax.swing.JFrame implements com.jdimension.jl
         mnuArchiveFileCustomFieldsInvolvements = new javax.swing.JMenuItem();
         mnuDocumentOptions = new javax.swing.JMenu();
         mnuWordProcessor = new javax.swing.JMenuItem();
+        mnuPdfStamps = new javax.swing.JMenuItem();
         mnuDocumentTags = new javax.swing.JMenuItem();
         mnuDocumentTagRules = new javax.swing.JMenuItem();
         mnuScanOptions = new javax.swing.JMenuItem();
@@ -1657,6 +1658,15 @@ public class JKanzleiGUI extends javax.swing.JFrame implements com.jdimension.jl
             }
         });
         mnuDocumentOptions.add(mnuWordProcessor);
+
+        mnuPdfStamps.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons16/material/approval_24dp_0E72B5.png"))); // NOI18N
+        mnuPdfStamps.setText("PDF-Stempel");
+        mnuPdfStamps.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                mnuPdfStampsActionPerformed(evt);
+            }
+        });
+        mnuDocumentOptions.add(mnuPdfStamps);
 
         mnuDocumentTags.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons16/favorites.png"))); // NOI18N
         mnuDocumentTags.setText("Etiketten konfigurieren");
@@ -2927,6 +2937,14 @@ public class JKanzleiGUI extends javax.swing.JFrame implements com.jdimension.jl
         }
     }//GEN-LAST:event_mnuBankstatementCsvConfigsActionPerformed
 
+    private void mnuPdfStampsActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_mnuPdfStampsActionPerformed
+        OptionGroupConfigurationDialog dlg = new OptionGroupConfigurationDialog(this, true);
+        dlg.setTitle("verfügbare PDF-Stempel");
+        dlg.setOptionGroup(OptionConstants.OPTIONGROUP_PDFSTAMPS);
+        FrameUtils.centerDialog(dlg, this);
+        dlg.setVisible(true);
+    }//GEN-LAST:event_mnuPdfStampsActionPerformed
+
     /**
      * @param args the command line arguments
      */
@@ -3023,6 +3041,7 @@ public class JKanzleiGUI extends javax.swing.JFrame implements com.jdimension.jl
     private javax.swing.JMenu mnuOptions;
     private javax.swing.JMenuItem mnuParallelTimesheetLogs;
     private javax.swing.JMenuItem mnuPartyTypes;
+    private javax.swing.JMenuItem mnuPdfStamps;
     private javax.swing.JMenuItem mnuProfileInfo;
     private javax.swing.JMenuItem mnuScanOptions;
     private javax.swing.JMenuItem mnuSearchIndex;
