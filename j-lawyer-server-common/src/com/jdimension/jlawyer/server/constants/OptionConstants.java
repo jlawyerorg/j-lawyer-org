@@ -693,4 +693,6 @@ public interface OptionConstants {
     
     public static final String OPTIONGROUP_TIMESHEETINTERVALMINUTES="timesheet.intervalminutes";
     
+    public static final String OPTIONGROUP_PDFSTAMPS="document.pdfstamps";
+    
 }

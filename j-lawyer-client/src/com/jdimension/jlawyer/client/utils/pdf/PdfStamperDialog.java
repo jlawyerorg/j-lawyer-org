@@ -664,8 +664,12 @@ For more information on this, and how to apply and follow the GNU AGPL, see
 package com.jdimension.jlawyer.client.utils.pdf;
 
 import com.jdimension.jlawyer.client.editors.documents.viewer.PdfImagePanel;
+import com.jdimension.jlawyer.client.settings.ClientSettings;
 import com.jdimension.jlawyer.client.utils.ComponentUtils;
 import com.jdimension.jlawyer.client.utils.FileUtils;
+import com.jdimension.jlawyer.persistence.AppOptionGroupBean;
+import com.jdimension.jlawyer.server.constants.OptionConstants;
+import com.jdimension.jlawyer.services.JLawyerServiceLocator;
 import java.awt.BorderLayout;
 import java.awt.Dimension;
 import java.io.File;
@@ -689,7 +693,7 @@ public class PdfStamperDialog extends javax.swing.JDialog {
     private boolean saveRequested = false;
 
     /**
-     * Creates new form PdfAnonymizerDialog
+     * Creates new form PdfStamperDialog
      *
      * @param parent
      * @param modal
@@ -705,7 +709,22 @@ public class PdfStamperDialog extends javax.swing.JDialog {
         this.lblFileName.setText(fileName);
         this.content = content;
         this.tempFilePath = tempFilePath;
-        this.txtStampText.setText("K1");
+        
+        this.cmbStampText.removeAllItems();
+        this.cmbStampText.addItem("");
+        
+        try {
+            ClientSettings settings=ClientSettings.getInstance();
+            JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
+
+            AppOptionGroupBean[] stamps=locator.lookupSystemManagementRemote().getOptionGroup(OptionConstants.OPTIONGROUP_PDFSTAMPS);
+            for(AppOptionGroupBean stamp: stamps) {
+                this.cmbStampText.addItem(stamp.getValue());
+            }
+        } catch (Exception ex) {
+            JOptionPane.showMessageDialog(this, "Fehler beim Ermitteln der Beteiligtentypen: " + ex.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
+        }
+        this.cmbStampText.setSelectedItem("");
 
         ComponentUtils.restoreDialogSize(this);
 
@@ -756,9 +775,9 @@ public class PdfStamperDialog extends javax.swing.JDialog {
         progress = new javax.swing.JProgressBar();
         cmdSubmit = new javax.swing.JButton();
         jLabel2 = new javax.swing.JLabel();
-        txtStampText = new javax.swing.JTextField();
         spnFontSize = new javax.swing.JSpinner();
         jLabel3 = new javax.swing.JLabel();
+        cmbStampText = new javax.swing.JComboBox<>();
         pnlPreview = new javax.swing.JPanel();
         cmdSave = new javax.swing.JButton();
 
@@ -828,6 +847,9 @@ public class PdfStamperDialog extends javax.swing.JDialog {
 
         jLabel3.setText("Schriftgröße:");
 
+        cmbStampText.setEditable(true);
+        cmbStampText.setModel(new javax.swing.DefaultComboBoxModel<>(new String[] { "Item 1", "Item 2", "Item 3", "Item 4" }));
+
         javax.swing.GroupLayout jPanel1Layout = new javax.swing.GroupLayout(jPanel1);
         jPanel1.setLayout(jPanel1Layout);
         jPanel1Layout.setHorizontalGroup(
@@ -850,7 +872,7 @@ public class PdfStamperDialog extends javax.swing.JDialog {
                             .addGroup(jPanel1Layout.createSequentialGroup()
                                 .addComponent(spnFontSize, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                                 .addGap(0, 0, Short.MAX_VALUE))
-                            .addComponent(txtStampText))))
+                            .addComponent(cmbStampText, 0, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))))
                 .addGap(40, 40, 40))
         );
         jPanel1Layout.setVerticalGroup(
@@ -859,7 +881,7 @@ public class PdfStamperDialog extends javax.swing.JDialog {
                 .addContainerGap()
                 .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                     .addComponent(jLabel2)
-                    .addComponent(txtStampText, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
+                    .addComponent(cmbStampText, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                     .addComponent(spnFontSize, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
@@ -935,7 +957,7 @@ public class PdfStamperDialog extends javax.swing.JDialog {
             this.cmdSave.setEnabled(false);
 
             
-            PdfStamper.stampPdf(this.tempFilePath, this.txtStampText.getText(),(int)this.spnFontSize.getValue());
+            PdfStamper.stampPdf(this.tempFilePath, this.cmbStampText.getEditor().getItem().toString(), (int)this.spnFontSize.getValue());
             
             this.progress.setValue(2);
             this.progress.setString("Vorschau laden...");
@@ -963,7 +985,7 @@ public class PdfStamperDialog extends javax.swing.JDialog {
 
             });
             this.progress.setString("Stempeln abgeschlossen");
-            this.lastStampText=this.txtStampText.getText();
+            this.lastStampText=this.cmbStampText.getEditor().getItem().toString();
 
             this.failed = false;
             this.cmdSave.setEnabled(true);
@@ -1036,6 +1058,7 @@ public class PdfStamperDialog extends javax.swing.JDialog {
     }
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
+    private javax.swing.JComboBox<String> cmbStampText;
     private javax.swing.JButton cmdCancel;
     private javax.swing.JButton cmdSave;
     private javax.swing.JButton cmdSubmit;
@@ -1050,7 +1073,6 @@ public class PdfStamperDialog extends javax.swing.JDialog {
     private javax.swing.JProgressBar progress;
     private javax.swing.JSplitPane splitMain;
     private javax.swing.JSpinner spnFontSize;
-    private javax.swing.JTextField txtStampText;
     // End of variables declaration//GEN-END:variables
 
     /**
