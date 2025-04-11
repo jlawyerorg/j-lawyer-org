@@ -937,24 +937,6 @@ public class FileUtils extends ServerFileUtils {
             tmpDir = System.getProperty("user.home") + System.getProperty("file.separator") + ClientSettings.JLAWYERCLIENT_SETTINGDIR + System.getProperty("file.separator") + "tmp-documents";
         }
 
-        boolean wordOnMac = false;
-
-        if (SystemUtils.isMacOs()) {
-
-            ClientSettings set = ClientSettings.getInstance();
-            String wordProcessor = set.getConfiguration(ClientSettings.CONF_APPS_WORDPROCESSOR_KEY, ClientSettings.CONF_APPS_WORDPROCESSOR_VALUE_LO);
-            boolean wordProcessorMicrosoft = ClientSettings.CONF_APPS_WORDPROCESSOR_VALUE_MSO.equalsIgnoreCase(wordProcessor);
-
-            if (wordProcessorMicrosoft) {
-                wordOnMac = true;
-                // otherwise mac os 10.15+ will give a warning and user needs to grant access manually
-                tmpDir = "/Users/" + System.getProperty("user.name") + "/Library/Group Containers/UBF8T346G9.Office";
-                if (!(new File(tmpDir).exists()) || !(new File(tmpDir).isDirectory())) {
-                    throw new Exception("Ungültiges temporäres Verzeichnis: " + tmpDir);
-                }
-            }
-        }
-
         if (!tmpDir.endsWith(System.getProperty("file.separator"))) {
             tmpDir = tmpDir + System.getProperty("file.separator");
         }
@@ -982,7 +964,7 @@ public class FileUtils extends ServerFileUtils {
             }
         }
 
-        if (deleteOnExit || wordOnMac) {
+        if (deleteOnExit) {
             cleanupTempFile(tmpFile);
         }
 

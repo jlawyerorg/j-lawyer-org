@@ -675,9 +675,9 @@ import org.apache.log4j.Logger;
 public class MacMicrosoftOfficeLauncher extends OfficeLauncher {
 
     private static final Logger log = Logger.getLogger(MacMicrosoftOfficeLauncher.class.getName());
-    private static String winwordBinary = "/Applications/Microsoft Word.app/Contents/MacOS/Microsoft Word";
-    private static String powerpointBinary = "/Applications/Microsoft PowerPoint.app/Contents/MacOS/Microsoft PowerPoint";
-    private static String excelBinary = "/Applications/Microsoft Excel.app/Contents/MacOS/Microsoft Excel";
+    private static String winwordBinary = "Microsoft Word";
+    private static String powerpointBinary = "Microsoft PowerPoint";
+    private static String excelBinary = "Microsoft Excel";
 
     public MacMicrosoftOfficeLauncher(String url, ObservedDocumentStore store) {
         super(url, store);
@@ -716,8 +716,8 @@ public class MacMicrosoftOfficeLauncher extends OfficeLauncher {
                         binary=powerpointBinary;
                     
                     
-                    p = Runtime.getRuntime().exec(new String[]{binary, url});
-                    log.debug("using " + binary + " for " + odoc.getName());
+                    p = Runtime.getRuntime().exec(new String[]{"open", "-a", binary, url});
+                    log.debug("using " + binary + " for " + odoc.getName() + " at url " + url);
                     
                 } catch (Throwable ex) {
                     log.error("error starting winword" + ex.getMessage());
