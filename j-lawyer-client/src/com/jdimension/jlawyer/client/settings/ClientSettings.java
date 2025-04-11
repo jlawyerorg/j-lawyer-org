@@ -863,10 +863,19 @@ public class ClientSettings {
     
     public static void migrateClientSettingsDirectory() {
         
+        
+        
         Path oldDir = Paths.get(System.getProperty("user.home"), ".j-lawyer-client");
         Path newDir = Paths.get(System.getProperty("user.home"), ClientSettings.JLAWYERCLIENT_SETTINGDIR);
         
-        if (Files.exists(oldDir) && !Files.exists(newDir)) {
+        Path testDir = Paths.get(System.getProperty("user.home") + File.separator + ClientSettings.JLAWYERCLIENT_SETTINGDIR, "calculations");
+        
+        System.out.println("Migrating settings from " + oldDir.toString() + " to " + newDir.toString());
+        System.out.println("new dir exists: " + Files.exists(newDir));
+        System.out.println("old dir exists: " + Files.exists(oldDir));
+        System.out.println("test dir exists: " + Files.exists(testDir));
+        
+        if (Files.exists(oldDir) && (!Files.exists(newDir) || !Files.exists(testDir))) {
             try {
                 Files.createDirectories(newDir);
                 Files.walkFileTree(oldDir, new SimpleFileVisitor<Path>() {
@@ -874,6 +883,7 @@ public class ClientSettings {
                     public FileVisitResult visitFile(Path file, BasicFileAttributes attrs) throws IOException {
                         Path targetFile = newDir.resolve(oldDir.relativize(file));
                         Files.copy(file, targetFile, StandardCopyOption.REPLACE_EXISTING);
+                        System.out.println("copying from " + file.toString() + " to " + targetFile.toString());
                         return FileVisitResult.CONTINUE;
                     }
 
@@ -881,6 +891,7 @@ public class ClientSettings {
                     public FileVisitResult preVisitDirectory(Path dir, BasicFileAttributes attrs) throws IOException {
                         Path targetDir = newDir.resolve(oldDir.relativize(dir));
                         Files.createDirectories(targetDir);
+                        System.out.println("created dir " + targetDir.toString());
                         return FileVisitResult.CONTINUE;
                     }
                 });

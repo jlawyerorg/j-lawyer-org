@@ -1,4 +1,5 @@
-/*                    GNU AFFERO GENERAL PUBLIC LICENSE
+/*
+                    GNU AFFERO GENERAL PUBLIC LICENSE
                        Version 3, 19 November 2007
 
  Copyright (C) 2007 Free Software Foundation, Inc. <https://fsf.org/>
@@ -82,25 +83,19 @@ permission, would make you directly or secondarily liable for
 infringement under applicable copyright law, except executing it on a
 computer or modifying a private copy.  Propagation includes copying,
 distribution (with or without modification), making available to the
-public
-
-, and in some countries other activities as well.
+public, and in some countries other activities as well.
 
   To "convey" a work means any kind of propagation that enables other
 parties to make or receive copies.  Mere interaction with a user through
 a computer network, with no transfer of a copy, is not conveying.
 
-  An interactive user interface displays 
-
-"Appropriate Legal Notices"
+  An interactive user interface displays "Appropriate Legal Notices"
 to the extent that it includes a convenient and prominently visible
 feature that (1) displays an appropriate copyright notice, and (2)
 tells the user that there is no warranty for the work (except to the
 extent that warranties are provided), that licensees may convey the
 work under this License, and how to view a copy of this License.  If
-the interface presents 
-
-a list of user commands or options, such as a
+the interface presents a list of user commands or options, such as a
 menu, a prominent item in the list meets this criterion.
 
   1. Source Code.
@@ -109,8 +104,7 @@ menu, a prominent item in the list meets this criterion.
 for making modifications to it.  "Object code" means any non-source
 form of a work.
 
-  A "Standard Interface" means an interface that 
-either is an official
+  A "Standard Interface" means an interface that either is an official
 standard defined by a recognized standards body, or, in the case of
 interfaces specified for a particular programming language, one that
 is widely used among developers working in that language.
@@ -120,9 +114,7 @@ than the work as a whole, that (a) is included in the normal form of
 packaging a Major Component, but which is not part of that Major
 Component, and (b) serves only to enable use of the work with that
 Major Component, or to implement a Standard Interface for which an
-implementation is available to the public in 
-
-source code form.  A
+implementation is available to the public in source code form.  A
 "Major Component", in this context, means a major essential component
 (kernel, window system, and so on) of the specific operating system
 (if any) on which the executable work runs, or a compiler used to
@@ -135,8 +127,7 @@ control those activities.  However, it does not include the work's
 System Libraries, or general-purpose tools or generally available free
 programs which are used unmodified in performing those activities but
 which are not part of the work.  For example, Corresponding Source
-includes interface definition 
-files associated with source files for
+includes interface definition files associated with source files for
 the work, and the source code for shared libraries and dynamically
 linked subprograms that the work is specifically designed to require,
 such as by intimate data communication or control flow between those
@@ -285,9 +276,7 @@ in one of these ways:
 
     e) Convey the object code using peer-to-peer transmission, provided
     you inform other peers where the object code and Corresponding
-    Source of the work are being offered to the general public at 
-
-no
+    Source of the work are being offered to the general public at no
     charge under subsection 6d.
 
   A separable portion of the object code, whose source code is excluded
@@ -300,8 +289,7 @@ or household purposes, or (2) anything designed or sold for incorporation
 into a dwelling.  In determining whether a product is a consumer product,
 doubtful cases shall be resolved in favor of coverage.  For a particular
 product received by a particular user, "normally used" refers to a
-typical or common use of that class of 
-product, regardless of the status
+typical or common use of that class of product, regardless of the status
 of the particular user or of the way in which the particular user
 actually uses, or expects or is expected to use, the product.  A product
 is a consumer product regardless of whether the product has substantial
@@ -651,9 +639,7 @@ the "copyright" line and a pointer to where the full notice is found.
     (at your option) any later version.
 
     This program is distributed in the hope that it will be useful,
-    but WITHOUT ANY WARRANTY; without 
-
-even the implied warranty of
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
     GNU Affero General Public License for more details.
 
@@ -665,8 +651,7 @@ Also add information on how to contact you by electronic and paper mail.
   If your software can interact with users remotely through a computer
 network, you should also make sure that it provides a way for users to
 get its source.  For example, if your program is a web application, its
-interface could 
-display a "Source" link that leads users to an archive
+interface could display a "Source" link that leads users to an archive
 of the code.  There are many ways you could offer source, and different
 solutions will be better for different programs; see section 13 for the
 specific requirements.
@@ -675,71 +660,468 @@ specific requirements.
 if any, to sign a "copyright disclaimer" for the program, if necessary.
 For more information on this, and how to apply and follow the GNU AGPL, see
 <https://www.gnu.org/licenses/>.
-*/
+ */
+package com.jdimension.jlawyer.client.configuration;
 
-package com.jdimension.jlawyer.services;
-
-
-
+import com.jdimension.jlawyer.client.settings.ClientSettings;
+import com.jdimension.jlawyer.client.utils.CaseInsensitiveStringComparator;
+import com.jdimension.jlawyer.client.utils.ComponentUtils;
 import com.jdimension.jlawyer.persistence.AssistantReplacement;
-import com.jdimension.jlawyer.persistence.EpostQueueBean;
-import com.jdimension.jlawyer.persistence.FaxQueueBean;
-import com.jdimension.jlawyer.pojo.FileMetadata;
-import com.jdimension.jlawyer.pojo.JobStatus;
-import java.io.File;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Date;
-import java.util.HashMap;
+import com.jdimension.jlawyer.services.JLawyerServiceLocator;
 import java.util.List;
-import javax.ejb.Local;
+import javax.swing.JOptionPane;
+import javax.swing.table.DefaultTableModel;
+import javax.swing.table.TableModel;
+import javax.swing.table.TableRowSorter;
+import org.apache.log4j.Logger;
+import themes.colors.DefaultColorTheme;
 
 /**
  *
  * @author jens
  */
-@Local
-public interface SingletonServiceLocal {
-    
-    int getSystemStatus();
+public class AssistantReplacementSetupDialog extends javax.swing.JDialog {
 
-    void setSystemStatus(int status);
+    private static final Logger log = Logger.getLogger(AssistantReplacementSetupDialog.class.getName());
 
-    HashMap<FileMetadata,Date> getObservedFiles();
-    
-    HashMap<FileMetadata,Date> getObservedFiles(boolean bypassCache);
-    
-    void updateObservedFiles();
+    /**
+     * Creates new form AssistantReplacementSetupDialog
+     *
+     * @param parent
+     * @param modal
+     */
+    public AssistantReplacementSetupDialog(java.awt.Frame parent, boolean modal) {
+        super(parent, modal);
+        initComponents();
 
-    void setObservedFiles(HashMap<FileMetadata,Date> fileNames);
+        this.resetDetails();
+        
+        this.tblReplacements.setSelectionForeground(DefaultColorTheme.COLOR_LOGO_BLUE);
 
-    FaxQueueBean getFailedFax();
-    EpostQueueBean getFailedLetter();
+        ClientSettings settings = ClientSettings.getInstance();
+        try {
+            JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
+            List<AssistantReplacement> replacements = locator.lookupSingletonServiceRemote().getAssistantReplacements();
 
-    ArrayList<FaxQueueBean> getFaxQueue();
-    ArrayList<EpostQueueBean> getEpostQueue();
+            this.tblReplacements.setDefaultRenderer(Object.class, new AssistantReplacementTableCellRenderer());
+            
+            for (AssistantReplacement r : replacements) {
+                ((DefaultTableModel) this.tblReplacements.getModel()).addRow(new Object[]{r});
 
-    void setFailedFax(FaxQueueBean failedFax);
-    void setFailedLetter(EpostQueueBean failedLetter);
+            }
+            TableRowSorter<TableModel> sorter = new TableRowSorter<>(this.tblReplacements.getModel());
+            sorter.setComparator(0, new CaseInsensitiveStringComparator());
+            this.tblReplacements.setRowSorter(sorter);
+            this.tblReplacements.getRowSorter().toggleSortOrder(0);
 
-    void setFaxQueue(ArrayList<FaxQueueBean> faxQueue);
-    void setEpostQueue(ArrayList<EpostQueueBean> epostQueue);
+        } catch (Exception ex) {
+            log.error("Error connecting to server", ex);
+            JOptionPane.showMessageDialog(this, ex.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
+            return;
+        }
 
-    long getLatestInstantMessageReceived();
+        ComponentUtils.autoSizeColumns(tblReplacements);
+    }
 
-    void setLatestInstantMessageReceived(long timestamp);
-    
-    long getLatestInstantMessageStatusUpdated();
-    void setLatestInstantMessageStatusUpdated(long latestInstantMessageStatusUpdated);
+    private void resetDetails() {
+        this.taReplaceWith.setText("");
+        this.taSearch.setText("");
+        this.chkCaseInsensitive.setSelected(false);
 
-    JobStatus getJobStatus(String jobId);
+    }
 
-    void updateJobStatus(JobStatus jobStatus);
+    /**
+     * This method is called from within the constructor to initialize the form.
+     * WARNING: Do NOT modify this code. The content of this method is always
+     * regenerated by the Form Editor.
+     */
+    @SuppressWarnings("unchecked")
+    // <editor-fold defaultstate="collapsed" desc="Generated Code">//GEN-BEGIN:initComponents
+    private void initComponents() {
 
-    Collection<JobStatus> listJobs();
-    
-    List<AssistantReplacement> getAssistantReplacements();
-    void flushAssistantReplacements();
-    
-    
+        jPanel1 = new javax.swing.JPanel();
+        jScrollPane1 = new javax.swing.JScrollPane();
+        tblReplacements = new javax.swing.JTable();
+        cmdAdd = new javax.swing.JButton();
+        cmdRemove = new javax.swing.JButton();
+        cmdClose = new javax.swing.JButton();
+        cmdSave = new javax.swing.JButton();
+        jLabel5 = new javax.swing.JLabel();
+        jLabel3 = new javax.swing.JLabel();
+        jLabel11 = new javax.swing.JLabel();
+        jScrollPane2 = new javax.swing.JScrollPane();
+        taReplaceWith = new javax.swing.JTextArea();
+        jScrollPane3 = new javax.swing.JScrollPane();
+        taSearch = new javax.swing.JTextArea();
+        chkCaseInsensitive = new javax.swing.JCheckBox();
+
+        setDefaultCloseOperation(javax.swing.WindowConstants.DISPOSE_ON_CLOSE);
+        setTitle("Assistent Ingo - Ersetzungen in Diktaten / Transkriptionen");
+
+        jPanel1.setBorder(javax.swing.BorderFactory.createTitledBorder("Ersetzungen (Diktate / Transkriptionen)"));
+
+        tblReplacements.setModel(new javax.swing.table.DefaultTableModel(
+            new Object [][] {
+
+            },
+            new String [] {
+                "zu ersetzender Wert"
+            }
+        ) {
+            boolean[] canEdit = new boolean [] {
+                false
+            };
+
+            public boolean isCellEditable(int rowIndex, int columnIndex) {
+                return canEdit [columnIndex];
+            }
+        });
+        tblReplacements.setSelectionMode(javax.swing.ListSelectionModel.SINGLE_SELECTION);
+        tblReplacements.getTableHeader().setReorderingAllowed(false);
+        tblReplacements.addMouseListener(new java.awt.event.MouseAdapter() {
+            public void mouseClicked(java.awt.event.MouseEvent evt) {
+                tblReplacementsMouseClicked(evt);
+            }
+        });
+        tblReplacements.addKeyListener(new java.awt.event.KeyAdapter() {
+            public void keyReleased(java.awt.event.KeyEvent evt) {
+                tblReplacementsKeyReleased(evt);
+            }
+        });
+        jScrollPane1.setViewportView(tblReplacements);
+
+        cmdAdd.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/edit_add.png"))); // NOI18N
+        cmdAdd.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                cmdAddActionPerformed(evt);
+            }
+        });
+
+        cmdRemove.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/trashcan_full.png"))); // NOI18N
+        cmdRemove.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                cmdRemoveActionPerformed(evt);
+            }
+        });
+
+        javax.swing.GroupLayout jPanel1Layout = new javax.swing.GroupLayout(jPanel1);
+        jPanel1.setLayout(jPanel1Layout);
+        jPanel1Layout.setHorizontalGroup(
+            jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(jPanel1Layout.createSequentialGroup()
+                .addContainerGap()
+                .addComponent(jScrollPane1, javax.swing.GroupLayout.DEFAULT_SIZE, 441, Short.MAX_VALUE)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addComponent(cmdAdd)
+                    .addComponent(cmdRemove))
+                .addContainerGap())
+        );
+        jPanel1Layout.setVerticalGroup(
+            jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(jPanel1Layout.createSequentialGroup()
+                .addContainerGap()
+                .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addComponent(jScrollPane1, javax.swing.GroupLayout.DEFAULT_SIZE, 528, Short.MAX_VALUE)
+                    .addGroup(jPanel1Layout.createSequentialGroup()
+                        .addComponent(cmdAdd)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addComponent(cmdRemove)
+                        .addGap(0, 0, Short.MAX_VALUE)))
+                .addContainerGap())
+        );
+
+        cmdClose.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/cancel.png"))); // NOI18N
+        cmdClose.setText("Schliessen");
+        cmdClose.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                cmdCloseActionPerformed(evt);
+            }
+        });
+
+        cmdSave.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/agt_action_success.png"))); // NOI18N
+        cmdSave.setText("Übernehmen");
+        cmdSave.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                cmdSaveActionPerformed(evt);
+            }
+        });
+
+        jLabel5.setFont(jLabel5.getFont().deriveFont(jLabel5.getFont().getStyle() | java.awt.Font.BOLD, jLabel5.getFont().getSize()-2));
+        jLabel5.setForeground(new java.awt.Color(153, 153, 153));
+        jLabel5.setText("Konfiguration");
+
+        jLabel3.setText("Suche nach:");
+
+        jLabel11.setText("ersetzen durch:");
+
+        taReplaceWith.setColumns(20);
+        taReplaceWith.setLineWrap(true);
+        taReplaceWith.setRows(5);
+        taReplaceWith.setWrapStyleWord(true);
+        jScrollPane2.setViewportView(taReplaceWith);
+
+        taSearch.setColumns(20);
+        taSearch.setLineWrap(true);
+        taSearch.setRows(2);
+        taSearch.setWrapStyleWord(true);
+        jScrollPane3.setViewportView(taSearch);
+
+        chkCaseInsensitive.setText("Groß- / Kleinschreibung ignorieren");
+
+        javax.swing.GroupLayout layout = new javax.swing.GroupLayout(getContentPane());
+        getContentPane().setLayout(layout);
+        layout.setHorizontalGroup(
+            layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(layout.createSequentialGroup()
+                .addContainerGap()
+                .addComponent(jPanel1, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addComponent(jScrollPane3)
+                    .addComponent(jScrollPane2, javax.swing.GroupLayout.DEFAULT_SIZE, 598, Short.MAX_VALUE)
+                    .addGroup(layout.createSequentialGroup()
+                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                            .addComponent(jLabel5)
+                            .addComponent(jLabel3)
+                            .addComponent(chkCaseInsensitive)
+                            .addComponent(jLabel11))
+                        .addGap(0, 0, Short.MAX_VALUE))
+                    .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
+                        .addGap(0, 0, Short.MAX_VALUE)
+                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                            .addComponent(cmdClose, javax.swing.GroupLayout.Alignment.TRAILING)
+                            .addComponent(cmdSave, javax.swing.GroupLayout.Alignment.TRAILING))))
+                .addContainerGap())
+        );
+        layout.setVerticalGroup(
+            layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(layout.createSequentialGroup()
+                .addContainerGap()
+                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addComponent(jPanel1, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                    .addGroup(layout.createSequentialGroup()
+                        .addComponent(jLabel5)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addComponent(jLabel3)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addComponent(jScrollPane3, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addComponent(chkCaseInsensitive)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                        .addComponent(jLabel11)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addComponent(jScrollPane2, javax.swing.GroupLayout.PREFERRED_SIZE, 239, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addComponent(cmdSave)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                        .addComponent(cmdClose)))
+                .addContainerGap())
+        );
+
+        pack();
+    }// </editor-fold>//GEN-END:initComponents
+
+    private void cmdCloseActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdCloseActionPerformed
+        this.setVisible(false);
+        this.dispose();
+    }//GEN-LAST:event_cmdCloseActionPerformed
+
+    private void tblReplacementsMouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_tblReplacementsMouseClicked
+        if (evt.getClickCount() == 1 && !evt.isConsumed()) {
+
+            int row = this.tblReplacements.getSelectedRow();
+
+            if (row < 0) {
+                this.resetDetails();
+            } else {
+
+                AssistantReplacement r = (AssistantReplacement) this.tblReplacements.getValueAt(row, 0);
+                this.updatedUI(r);
+            }
+
+        }
+    }//GEN-LAST:event_tblReplacementsMouseClicked
+
+    private void cmdAddActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdAddActionPerformed
+        Object newNameObject = JOptionPane.showInputDialog(this, "zu ersetzender Begriff: ", "Neue Ersetzung hinzufügen", JOptionPane.QUESTION_MESSAGE, null, null, "");
+        if (newNameObject == null) {
+            return;
+        }
+
+        ClientSettings settings = ClientSettings.getInstance();
+        try {
+            JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
+
+            AssistantReplacement r = new AssistantReplacement();
+            r.setCaseInsensitive(false);
+            r.setReplaceWith("");
+            r.setSearchString(newNameObject.toString());
+
+            AssistantReplacement savedReplacement = locator.lookupIntegrationServiceRemote().addAssistantReplacement(r);
+            
+            ((DefaultTableModel) this.tblReplacements.getModel()).addRow(new Object[]{savedReplacement});
+            this.tblReplacements.getSelectionModel().setSelectionInterval(this.tblReplacements.getRowCount()-1, this.tblReplacements.getRowCount()-1);
+
+        } catch (Exception ex) {
+            log.error("Error creating new replacement", ex);
+            JOptionPane.showMessageDialog(this, ex.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
+        }
+
+    }//GEN-LAST:event_cmdAddActionPerformed
+
+    private void cmdSaveActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdSaveActionPerformed
+        
+        int row = this.tblReplacements.getSelectedRow();
+
+        if (row >= 0) {
+
+            AssistantReplacement r = (AssistantReplacement) this.tblReplacements.getValueAt(row, 0);
+            r.setCaseInsensitive(this.chkCaseInsensitive.isSelected());
+            r.setReplaceWith(this.taReplaceWith.getText());
+            r.setSearchString(this.taSearch.getText());
+            
+            ClientSettings settings = ClientSettings.getInstance();
+            try {
+                JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
+
+                AssistantReplacement savedReplacement = locator.lookupIntegrationServiceRemote().updateAssistantReplacement(r);
+                row = this.tblReplacements.convertRowIndexToModel(row);
+                ((DefaultTableModel) this.tblReplacements.getModel()).setValueAt(savedReplacement, row, 0);
+
+            } catch (Exception ex) {
+                log.error("Error updating replacement", ex);
+                JOptionPane.showMessageDialog(this, ex.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
+            }
+        }
+
+
+    }//GEN-LAST:event_cmdSaveActionPerformed
+
+    private void cmdRemoveActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdRemoveActionPerformed
+        int row = this.tblReplacements.getSelectedRow();
+
+        if (row >= 0) {
+
+            AssistantReplacement r = (AssistantReplacement) this.tblReplacements.getValueAt(row, 0);
+            ClientSettings settings = ClientSettings.getInstance();
+            try {
+                JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
+
+                locator.lookupIntegrationServiceRemote().removeAssistantReplacement(r);
+                row = this.tblReplacements.convertRowIndexToModel(row);
+                ((DefaultTableModel) this.tblReplacements.getModel()).removeRow(row);
+
+                this.resetDetails();
+            } catch (Exception ex) {
+                log.error("Error removing replacement", ex);
+                JOptionPane.showMessageDialog(this, ex.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
+            }
+        }
+    }//GEN-LAST:event_cmdRemoveActionPerformed
+
+    private void tblReplacementsKeyReleased(java.awt.event.KeyEvent evt) {//GEN-FIRST:event_tblReplacementsKeyReleased
+        int row = this.tblReplacements.getSelectedRow();
+
+        if (row < 0) {
+            this.resetDetails();
+        } else {
+
+            AssistantReplacement r = (AssistantReplacement) this.tblReplacements.getValueAt(row, 0);
+            this.updatedUI(r);
+        }
+    }//GEN-LAST:event_tblReplacementsKeyReleased
+
+    private void updatedUI(AssistantReplacement r) {
+        this.taReplaceWith.setText(r.getReplaceWith());
+        this.taSearch.setText(r.getSearchString());
+        this.chkCaseInsensitive.setSelected(r.isCaseInsensitive());
+
+    }
+
+    /**
+     * @param args the command line arguments
+     */
+    public static void main(String args[]) {
+        /* Set the Nimbus look and feel */
+        //<editor-fold defaultstate="collapsed" desc=" Look and feel setting code (optional) ">
+        /* If Nimbus (introduced in Java SE 6) is not available, stay with the default look and feel.
+         * For details see http://download.oracle.com/javase/tutorial/uiswing/lookandfeel/plaf.html 
+         */
+        try {
+            for (javax.swing.UIManager.LookAndFeelInfo info : javax.swing.UIManager.getInstalledLookAndFeels()) {
+                if ("Nimbus".equals(info.getName())) {
+                    javax.swing.UIManager.setLookAndFeel(info.getClassName());
+                    break;
+                }
+            }
+        } catch (ClassNotFoundException | InstantiationException | IllegalAccessException | javax.swing.UnsupportedLookAndFeelException ex) {
+            java.util.logging.Logger.getLogger(AssistantReplacementSetupDialog.class.getName()).log(java.util.logging.Level.SEVERE, null, ex);
+        }
+        //</editor-fold>
+        //</editor-fold>
+        //</editor-fold>
+        //</editor-fold>
+        //</editor-fold>
+        //</editor-fold>
+        //</editor-fold>
+        //</editor-fold>
+        //</editor-fold>
+        //</editor-fold>
+        //</editor-fold>
+        //</editor-fold>
+        //</editor-fold>
+        //</editor-fold>
+        //</editor-fold>
+        //</editor-fold>
+        //</editor-fold>
+        //</editor-fold>
+        //</editor-fold>
+        //</editor-fold>
+        //</editor-fold>
+        //</editor-fold>
+        //</editor-fold>
+        //</editor-fold>
+        //</editor-fold>
+        //</editor-fold>
+        //</editor-fold>
+        //</editor-fold>
+        //</editor-fold>
+        //</editor-fold>
+        //</editor-fold>
+        //</editor-fold>
+
+        //</editor-fold>
+        //</editor-fold>
+
+        /* Create and display the dialog */
+        java.awt.EventQueue.invokeLater(() -> {
+            AssistantReplacementSetupDialog dialog = new AssistantReplacementSetupDialog(new javax.swing.JFrame(), true);
+            dialog.addWindowListener(new java.awt.event.WindowAdapter() {
+                @Override
+                public void windowClosing(java.awt.event.WindowEvent e) {
+                    System.exit(0);
+                }
+            });
+            dialog.setVisible(true);
+        });
+    }
+
+    // Variables declaration - do not modify//GEN-BEGIN:variables
+    private javax.swing.JCheckBox chkCaseInsensitive;
+    private javax.swing.JButton cmdAdd;
+    private javax.swing.JButton cmdClose;
+    private javax.swing.JButton cmdRemove;
+    private javax.swing.JButton cmdSave;
+    private javax.swing.JLabel jLabel11;
+    private javax.swing.JLabel jLabel3;
+    private javax.swing.JLabel jLabel5;
+    private javax.swing.JPanel jPanel1;
+    private javax.swing.JScrollPane jScrollPane1;
+    private javax.swing.JScrollPane jScrollPane2;
+    private javax.swing.JScrollPane jScrollPane3;
+    private javax.swing.JTextArea taReplaceWith;
+    private javax.swing.JTextArea taSearch;
+    private javax.swing.JTable tblReplacements;
+    // End of variables declaration//GEN-END:variables
 }
