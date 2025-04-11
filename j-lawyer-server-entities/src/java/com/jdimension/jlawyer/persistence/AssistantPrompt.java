@@ -675,8 +675,8 @@ import javax.xml.bind.annotation.XmlRootElement;
 @Table(name = "assistant_prompts")
 @XmlRootElement
 @NamedQueries({
-    @NamedQuery(name = "AssistantPrompt.findAll", query = "SELECT a FROM AppOptionGroupBean a"),
-    @NamedQuery(name = "AssistantPrompt.findById", query = "SELECT a FROM AppOptionGroupBean a WHERE a.id = :id")})
+    @NamedQuery(name = "AssistantPrompt.findAll", query = "SELECT a FROM AssistantPrompt a"),
+    @NamedQuery(name = "AssistantPrompt.findById", query = "SELECT a FROM AssistantPrompt a WHERE a.id = :id")})
 public class AssistantPrompt implements Serializable {
     private static final long serialVersionUID = 1L;
     @Id

@@ -1201,6 +1201,7 @@ public class JKanzleiGUI extends javax.swing.JFrame implements com.jdimension.jl
         mnuAssistants = new javax.swing.JMenu();
         mnuAssistantConfigs = new javax.swing.JMenuItem();
         mnuAssistantPrompts = new javax.swing.JMenuItem();
+        mnuAssistantReplacements = new javax.swing.JMenuItem();
         mnuVoipSoftphoneSettings = new javax.swing.JMenuItem();
         mnuBeaSettings = new javax.swing.JMenuItem();
         mnuBookKeeping = new javax.swing.JMenu();
@@ -1937,6 +1938,15 @@ public class JKanzleiGUI extends javax.swing.JFrame implements com.jdimension.jl
             }
         });
         mnuAssistants.add(mnuAssistantPrompts);
+
+        mnuAssistantReplacements.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons16/material/baseline_mic_black_48dp.png"))); // NOI18N
+        mnuAssistantReplacements.setText("automatische Ersetzungen");
+        mnuAssistantReplacements.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                mnuAssistantReplacementsActionPerformed(evt);
+            }
+        });
+        mnuAssistants.add(mnuAssistantReplacements);
 
         mnuOptions.add(mnuAssistants);
 
@@ -2945,6 +2955,12 @@ public class JKanzleiGUI extends javax.swing.JFrame implements com.jdimension.jl
         dlg.setVisible(true);
     }//GEN-LAST:event_mnuPdfStampsActionPerformed
 
+    private void mnuAssistantReplacementsActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_mnuAssistantReplacementsActionPerformed
+        AssistantReplacementSetupDialog dlg = new AssistantReplacementSetupDialog(this, true);
+        FrameUtils.centerDialog(dlg, this);
+        dlg.setVisible(true);
+    }//GEN-LAST:event_mnuAssistantReplacementsActionPerformed
+
     /**
      * @param args the command line arguments
      */
@@ -2995,6 +3011,7 @@ public class JKanzleiGUI extends javax.swing.JFrame implements com.jdimension.jl
     private javax.swing.JMenuItem mnuArchiveFileTags;
     private javax.swing.JMenuItem mnuAssistantConfigs;
     private javax.swing.JMenuItem mnuAssistantPrompts;
+    private javax.swing.JMenuItem mnuAssistantReplacements;
     private javax.swing.JMenu mnuAssistants;
     private javax.swing.JMenuItem mnuBackupConfiguration;
     private javax.swing.JMenuItem mnuBankImport;

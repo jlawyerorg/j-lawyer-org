@@ -661,116 +661,121 @@
  * For more information on this, and how to apply and follow the GNU AGPL, see
  * <https://www.gnu.org/licenses/>.
  */
-package com.jdimension.jlawyer.services;
+package com.jdimension.jlawyer.persistence;
 
-import com.jdimension.jlawyer.ai.AiCapability;
-import com.jdimension.jlawyer.ai.AiRequestLog;
-import com.jdimension.jlawyer.ai.AiRequestStatus;
-import com.jdimension.jlawyer.ai.AiResponse;
-import com.jdimension.jlawyer.ai.AiUser;
-import com.jdimension.jlawyer.ai.InputData;
-import com.jdimension.jlawyer.ai.Message;
-import com.jdimension.jlawyer.ai.ParameterData;
-import com.jdimension.jlawyer.email.EmailTemplate;
-import com.jdimension.jlawyer.persistence.AssistantConfig;
-import com.jdimension.jlawyer.persistence.AssistantPrompt;
-import com.jdimension.jlawyer.persistence.AssistantReplacement;
-import com.jdimension.jlawyer.persistence.IntegrationHook;
-import com.jdimension.jlawyer.pojo.FileMetadata;
-import java.util.Collection;
-import java.util.Date;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import javax.ejb.Remote;
+import java.io.Serializable;
+import javax.persistence.*;
+import javax.xml.bind.annotation.XmlRootElement;
 
 /**
  *
  * @author jens
  */
-@Remote
-public interface IntegrationServiceRemote {
+@Entity
+@Table(name = "assistant_replacements")
+@XmlRootElement
+@NamedQueries({
+    @NamedQuery(name = "AssistantReplacement.findAll", query = "SELECT a FROM AssistantReplacement a"),
+    @NamedQuery(name = "AssistantReplacement.findById", query = "SELECT a FROM AssistantReplacement a WHERE a.id = :id")})
+public class AssistantReplacement implements Serializable {
+    private static final long serialVersionUID = 1L;
+    @Id
+    @Basic(optional = false)
+    @Column(name = "id")
+    private String id;
+    @Column(name = "search_string")
+    private String searchString;
+    @Column(name = "replace_with")
+    private String replaceWith;
+    @Column(name = "case_insensitive")
+    private boolean caseInsensitive;
 
-    HashMap<FileMetadata,Date> getObservedDirectoryContent();
+    public AssistantReplacement() {
+    }
 
-    boolean removeObservedFile(String fileName);
+    public AssistantReplacement(String id) {
+        this.id = id;
+    }
 
-    String assignObservedFile(String fileName, String archiveFileId) throws Exception;
+    public String getId() {
+        return id;
+    }
 
-    byte[] getObservedFile(String fileName) throws Exception;
+    public void setId(String id) {
+        this.id = id;
+    }
 
-    String assignObservedFile(String fileName, String archiveFileId, String renameTo) throws Exception;
-
-    Collection<String> getAllEmailTemplateNames();
-
-    void saveEmailTemplate(EmailTemplate template, boolean replace) throws Exception;
-
-    void deleteEmailTemplate(String fileName) throws Exception;
-
-    EmailTemplate getEmailTemplate(String fileName) throws Exception;
-
-    String getObservedFilePreview(String fileName) throws Exception;
-
-    boolean validateExternalStorageLocation(String location) throws Exception;
-
-    String[] getHookTypes();
-
-    List<IntegrationHook> getAllIntegrationHooks() throws Exception;
-
-    IntegrationHook addIntegrationHook(IntegrationHook hook) throws Exception;
-
-    IntegrationHook updateIntegrationHook(IntegrationHook hook) throws Exception;
-
-    void removeIntegrationHook(IntegrationHook hook) throws Exception;
-
-    boolean renameObservedFile(String fromName, String toName) throws Exception;
-
-    boolean addObservedFile(String fileName, byte[] data, String source) throws Exception;
-
-    void renameEmailTemplate(String oldName, String newName) throws Exception;
-
-    void duplicateEmailTemplate(String templateName, String duplicateName) throws Exception;
-
-    FileMetadata getObservedFileMetadata(String fileName) throws Exception;
-
-    List<FileMetadata> getObservedFilesMetadata(List<String> fileNames) throws Exception;
-
-    boolean performOcrForObservedFile(String fileName) throws Exception;
-
-    List<AssistantConfig> getAllAssistantConfigs() throws Exception;
-
-    AssistantConfig addAssistantConfig(AssistantConfig ac) throws Exception;
-
-    AssistantConfig updateAssistantConfig(AssistantConfig ac) throws Exception;
-
-    void removeAssistantConfig(AssistantConfig ac) throws Exception;
-
-    Map<AssistantConfig,List<AiCapability>> getAssistantCapabilities() throws Exception;
-
-    AiRequestStatus submitAssistantRequest(AssistantConfig config, String requestType, String modelType, String prompt, List<ParameterData> params, List<InputData> inputs, List<Message> messages) throws Exception;
     
-    AiResponse getAssistantRequestStatus(AssistantConfig config, String requestId) throws Exception;
 
-    boolean updateObservedFile(String fileName, byte[] data) throws Exception;
+    @Override
+    public int hashCode() {
+        int hash = 0;
+        hash += (id != null ? id.hashCode() : 0);
+        return hash;
+    }
+
+    @Override
+    public boolean equals(Object object) {
+        // TODO: Warning - this method won't work in the case the id fields are not set
+        if (!(object instanceof AssistantReplacement)) {
+            return false;
+        }
+        AssistantReplacement other = (AssistantReplacement) object;
+        if ((this.id == null && other.id != null) || (this.id != null && !this.id.equals(other.id))) {
+            return false;
+        }
+        return true;
+    }
+
+    @Override
+    public String toString() {
+        return this.getSearchString();
+    }
+
+    /**
+     * @return the searchString
+     */
+    public String getSearchString() {
+        return searchString;
+    }
+
+    /**
+     * @param searchString the searchString to set
+     */
+    public void setSearchString(String searchString) {
+        this.searchString = searchString;
+    }
+
+    /**
+     * @return the replaceWith
+     */
+    public String getReplaceWith() {
+        return replaceWith;
+    }
+
+    /**
+     * @param replaceWith the replaceWith to set
+     */
+    public void setReplaceWith(String replaceWith) {
+        this.replaceWith = replaceWith;
+    }
+
+    /**
+     * @return the caseInsensitive
+     */
+    public boolean isCaseInsensitive() {
+        return caseInsensitive;
+    }
+
+    /**
+     * @param caseInsensitive the caseInsensitive to set
+     */
+    public void setCaseInsensitive(boolean caseInsensitive) {
+        this.caseInsensitive = caseInsensitive;
+    }
+
     
-    List<AssistantPrompt> getAllAssistantPrompts() throws Exception;
 
-    AssistantPrompt addAssistantPrompt(AssistantPrompt ap) throws Exception;
-
-    AssistantPrompt updateAssistantPrompt(AssistantPrompt ap) throws Exception;
-
-    void removeAssistantPrompt(AssistantPrompt ap) throws Exception;
-
-    Map<AssistantConfig,AiUser> getAssistantUserInformation() throws Exception;
     
-    List<AiRequestLog> getAssistantRequestLog(AssistantConfig config) throws Exception;
-    
-    List<AssistantReplacement> getAllAssistantReplacements() throws Exception;
-
-    AssistantReplacement addAssistantReplacement(AssistantReplacement ap) throws Exception;
-
-    AssistantReplacement updateAssistantReplacement(AssistantReplacement ap) throws Exception;
-
-    void removeAssistantReplacement(AssistantReplacement ap) throws Exception;
     
 }

@@ -661,116 +661,50 @@
  * For more information on this, and how to apply and follow the GNU AGPL, see
  * <https://www.gnu.org/licenses/>.
  */
-package com.jdimension.jlawyer.services;
+package com.jdimension.jlawyer.client.configuration;
 
-import com.jdimension.jlawyer.ai.AiCapability;
-import com.jdimension.jlawyer.ai.AiRequestLog;
-import com.jdimension.jlawyer.ai.AiRequestStatus;
-import com.jdimension.jlawyer.ai.AiResponse;
-import com.jdimension.jlawyer.ai.AiUser;
-import com.jdimension.jlawyer.ai.InputData;
-import com.jdimension.jlawyer.ai.Message;
-import com.jdimension.jlawyer.ai.ParameterData;
-import com.jdimension.jlawyer.email.EmailTemplate;
-import com.jdimension.jlawyer.persistence.AssistantConfig;
-import com.jdimension.jlawyer.persistence.AssistantPrompt;
 import com.jdimension.jlawyer.persistence.AssistantReplacement;
-import com.jdimension.jlawyer.persistence.IntegrationHook;
-import com.jdimension.jlawyer.pojo.FileMetadata;
-import java.util.Collection;
-import java.util.Date;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import javax.ejb.Remote;
+import java.awt.Color;
+import java.awt.Component;
+import javax.swing.JLabel;
+import javax.swing.JTable;
+import javax.swing.table.DefaultTableCellRenderer;
+import themes.colors.DefaultColorTheme;
 
 /**
  *
  * @author jens
  */
-@Remote
-public interface IntegrationServiceRemote {
+public class AssistantReplacementTableCellRenderer extends DefaultTableCellRenderer {
 
-    HashMap<FileMetadata,Date> getObservedDirectoryContent();
+    @Override
+    public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected,
+            boolean hasFocus, int row, int column) {
 
-    boolean removeObservedFile(String fileName);
+        AssistantReplacement r = (AssistantReplacement) table.getValueAt(row, 0);
 
-    String assignObservedFile(String fileName, String archiveFileId) throws Exception;
+        Object returnRenderer = super.getTableCellRendererComponent(table, value, isSelected, hasFocus, row, column);
 
-    byte[] getObservedFile(String fileName) throws Exception;
+        switch (column) {
+            case 0:
+                ((JLabel) ((Component) returnRenderer)).setText(r.getSearchString());
+                break;
+            default:
+                break;
+        }
 
-    String assignObservedFile(String fileName, String archiveFileId, String renameTo) throws Exception;
+        if (isSelected) {
+            ((JLabel) ((Component) returnRenderer)).setForeground(Color.WHITE);
+            if (column != 1) {
+                ((JLabel) ((Component) returnRenderer)).setBackground(DefaultColorTheme.COLOR_LOGO_BLUE);
+            }
+        } else {
+            ((JLabel) ((Component) returnRenderer)).setForeground(Color.BLACK);
+            if (column != 1) {
+                ((JLabel) ((Component) returnRenderer)).setBackground(Color.WHITE);
+            }
+        }
 
-    Collection<String> getAllEmailTemplateNames();
-
-    void saveEmailTemplate(EmailTemplate template, boolean replace) throws Exception;
-
-    void deleteEmailTemplate(String fileName) throws Exception;
-
-    EmailTemplate getEmailTemplate(String fileName) throws Exception;
-
-    String getObservedFilePreview(String fileName) throws Exception;
-
-    boolean validateExternalStorageLocation(String location) throws Exception;
-
-    String[] getHookTypes();
-
-    List<IntegrationHook> getAllIntegrationHooks() throws Exception;
-
-    IntegrationHook addIntegrationHook(IntegrationHook hook) throws Exception;
-
-    IntegrationHook updateIntegrationHook(IntegrationHook hook) throws Exception;
-
-    void removeIntegrationHook(IntegrationHook hook) throws Exception;
-
-    boolean renameObservedFile(String fromName, String toName) throws Exception;
-
-    boolean addObservedFile(String fileName, byte[] data, String source) throws Exception;
-
-    void renameEmailTemplate(String oldName, String newName) throws Exception;
-
-    void duplicateEmailTemplate(String templateName, String duplicateName) throws Exception;
-
-    FileMetadata getObservedFileMetadata(String fileName) throws Exception;
-
-    List<FileMetadata> getObservedFilesMetadata(List<String> fileNames) throws Exception;
-
-    boolean performOcrForObservedFile(String fileName) throws Exception;
-
-    List<AssistantConfig> getAllAssistantConfigs() throws Exception;
-
-    AssistantConfig addAssistantConfig(AssistantConfig ac) throws Exception;
-
-    AssistantConfig updateAssistantConfig(AssistantConfig ac) throws Exception;
-
-    void removeAssistantConfig(AssistantConfig ac) throws Exception;
-
-    Map<AssistantConfig,List<AiCapability>> getAssistantCapabilities() throws Exception;
-
-    AiRequestStatus submitAssistantRequest(AssistantConfig config, String requestType, String modelType, String prompt, List<ParameterData> params, List<InputData> inputs, List<Message> messages) throws Exception;
-    
-    AiResponse getAssistantRequestStatus(AssistantConfig config, String requestId) throws Exception;
-
-    boolean updateObservedFile(String fileName, byte[] data) throws Exception;
-    
-    List<AssistantPrompt> getAllAssistantPrompts() throws Exception;
-
-    AssistantPrompt addAssistantPrompt(AssistantPrompt ap) throws Exception;
-
-    AssistantPrompt updateAssistantPrompt(AssistantPrompt ap) throws Exception;
-
-    void removeAssistantPrompt(AssistantPrompt ap) throws Exception;
-
-    Map<AssistantConfig,AiUser> getAssistantUserInformation() throws Exception;
-    
-    List<AiRequestLog> getAssistantRequestLog(AssistantConfig config) throws Exception;
-    
-    List<AssistantReplacement> getAllAssistantReplacements() throws Exception;
-
-    AssistantReplacement addAssistantReplacement(AssistantReplacement ap) throws Exception;
-
-    AssistantReplacement updateAssistantReplacement(AssistantReplacement ap) throws Exception;
-
-    void removeAssistantReplacement(AssistantReplacement ap) throws Exception;
-    
+        return (Component) returnRenderer;
+    }
 }

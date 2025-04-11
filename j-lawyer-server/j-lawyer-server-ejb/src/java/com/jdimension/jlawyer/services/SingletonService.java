@@ -678,6 +678,8 @@ For more information on this, and how to apply and follow the GNU AGPL, see
  */
 package com.jdimension.jlawyer.services;
 
+import com.jdimension.jlawyer.persistence.AssistantReplacement;
+import com.jdimension.jlawyer.persistence.AssistantReplacementFacadeLocal;
 import com.jdimension.jlawyer.persistence.EpostQueueBean;
 import com.jdimension.jlawyer.persistence.FaxQueueBean;
 import com.jdimension.jlawyer.persistence.ServerSettingsBean;
@@ -688,11 +690,14 @@ import com.jdimension.jlawyer.server.constants.MonitoringConstants;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Comparator;
 import java.util.Date;
 import java.util.HashMap;
+import java.util.List;
 import javax.annotation.Resource;
 import javax.annotation.security.PermitAll;
 import javax.annotation.security.RolesAllowed;
+import javax.ejb.EJB;
 import javax.ejb.Singleton;
 import javax.inject.Inject;
 import javax.jms.JMSConnectionFactory;
@@ -712,6 +717,9 @@ public class SingletonService implements SingletonServiceRemote, SingletonServic
 
     private static final Logger log = Logger.getLogger(SingletonService.class.getName());
 
+    @EJB
+    private AssistantReplacementFacadeLocal assistantReplacementFacade;
+
     private int systemStatus = MonitoringConstants.LEVEL_NORMAL;
     private HashMap<FileMetadata, Date> observedFileNames = new HashMap<>();
     private FaxQueueBean failedFax = null;
@@ -719,6 +727,8 @@ public class SingletonService implements SingletonServiceRemote, SingletonServic
     private ArrayList<FaxQueueBean> faxQueue = new ArrayList<>();
     protected ArrayList<EpostQueueBean> epostQueue = new ArrayList<>();
     private HashMap<String, JobStatus> jobStatus = new HashMap<>();
+
+    private List<AssistantReplacement> assistantReplacements = null;
 
     private long latestInstantMessageReceived = -1;
     private long latestInstantMessageStatusUpdated = -1;
@@ -729,6 +739,26 @@ public class SingletonService implements SingletonServiceRemote, SingletonServic
 
     @Resource(lookup = "java:/jms/queue/searchIndexProcessorQueue")
     private javax.jms.Queue searchIndexQueue;
+
+    @Override
+    @RolesAllowed(value = {"loginRole"})
+    public List<AssistantReplacement> getAssistantReplacements() {
+        if (this.assistantReplacements == null) {
+            this.assistantReplacements = this.assistantReplacementFacade.findAll();
+            
+            // need to sort by length of search string descending to make it work reliably
+            this.assistantReplacements.sort(Comparator.comparingInt((AssistantReplacement a)
+                    -> a.getSearchString() != null ? a.getSearchString().length() : 0
+            ).reversed());
+        }
+        return this.assistantReplacements;
+    }
+
+    @Override
+    @RolesAllowed(value = {"loginRole"})
+    public void flushAssistantReplacements() {
+        this.assistantReplacements = null;
+    }
 
     @Override
     @RolesAllowed(value = {"loginRole"})
@@ -815,8 +845,8 @@ public class SingletonService implements SingletonServiceRemote, SingletonServic
         } else {
             log.error("observed directory returns null for #listFiles");
         }
-        
-        if(!req.getAbsolutePaths().isEmpty()) {
+
+        if (!req.getAbsolutePaths().isEmpty()) {
             this.publishOcrRequest(req);
         }
 

@@ -681,13 +681,14 @@ package com.jdimension.jlawyer.services;
 
 
 
+import com.jdimension.jlawyer.persistence.AssistantReplacement;
 import com.jdimension.jlawyer.persistence.EpostQueueBean;
 import com.jdimension.jlawyer.persistence.FaxQueueBean;
 import com.jdimension.jlawyer.pojo.FileMetadata;
-import java.io.File;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
+import java.util.List;
 import javax.ejb.Remote;
 
 /**
@@ -718,5 +719,7 @@ public interface SingletonServiceRemote {
     void setFailedFax(FaxQueueBean failedFax);
 
     void setFaxQueue(ArrayList<FaxQueueBean> faxQueue);
+    
+    List<AssistantReplacement> getAssistantReplacements();
     
 }
