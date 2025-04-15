@@ -663,16 +663,10 @@ For more information on this, and how to apply and follow the GNU AGPL, see
  */
 package com.jdimension.jlawyer.client.configuration;
 
-import com.jdimension.jlawyer.ai.AiRequestLog;
-import com.jdimension.jlawyer.client.assistant.AssistantAccess;
-import com.jdimension.jlawyer.client.editors.EditorsRegistry;
 import com.jdimension.jlawyer.client.settings.ClientSettings;
 import com.jdimension.jlawyer.client.utils.CaseInsensitiveStringComparator;
 import com.jdimension.jlawyer.client.utils.ComponentUtils;
-import com.jdimension.jlawyer.client.utils.FrameUtils;
-import com.jdimension.jlawyer.persistence.AssistantConfig;
 import com.jdimension.jlawyer.persistence.BankStatementsCSVConfig;
-import com.jdimension.jlawyer.security.CryptoProvider;
 import com.jdimension.jlawyer.services.JLawyerServiceLocator;
 import java.util.List;
 import javax.swing.JOptionPane;
@@ -732,7 +726,6 @@ public class BankstatementCsvConfigDialog extends javax.swing.JDialog {
     private void resetDetails() {
         this.txtName.setText("");
         this.txtDelimiter.setText("");
-        this.chkHeader.setSelected(true);
         this.cmbNumberLocale.setSelectedItem("DE");
         this.txtNumberFormat.setText("#,##0.00");
         
@@ -743,6 +736,8 @@ public class BankstatementCsvConfigDialog extends javax.swing.JDialog {
         this.spnColAmount.setValue(4);
         this.spnColCurrency.setValue(5);
         this.spnColBookingType.setValue(6);
+        
+        this.spnHeaderLines.setValue(1);
         
 
     }
@@ -772,7 +767,6 @@ public class BankstatementCsvConfigDialog extends javax.swing.JDialog {
         jLabel3 = new javax.swing.JLabel();
         spnColDate = new javax.swing.JSpinner();
         jLabel11 = new javax.swing.JLabel();
-        chkHeader = new javax.swing.JCheckBox();
         txtNumberFormat = new javax.swing.JTextField();
         jLabel4 = new javax.swing.JLabel();
         cmbNumberLocale = new javax.swing.JComboBox<>();
@@ -788,6 +782,9 @@ public class BankstatementCsvConfigDialog extends javax.swing.JDialog {
         jLabel8 = new javax.swing.JLabel();
         jLabel9 = new javax.swing.JLabel();
         jLabel10 = new javax.swing.JLabel();
+        spnHeaderLines = new javax.swing.JSpinner();
+        jLabel12 = new javax.swing.JLabel();
+        jLabel13 = new javax.swing.JLabel();
 
         setDefaultCloseOperation(javax.swing.WindowConstants.DISPOSE_ON_CLOSE);
         setTitle("Assistent Ingo");
@@ -893,28 +890,25 @@ public class BankstatementCsvConfigDialog extends javax.swing.JDialog {
 
         jLabel3.setText("Trennzeichen:");
 
-        spnColDate.setModel(new javax.swing.SpinnerNumberModel(0, 0, 50, 1));
+        spnColDate.setModel(new javax.swing.SpinnerNumberModel(0, -1, 50, 1));
 
         jLabel11.setText("Datum:");
-
-        chkHeader.setText("erste Zeile ist Kopfzeile");
-        chkHeader.setToolTipText("wenn aktiviert, so wird die erste Zeile der Datei übersprungen");
 
         jLabel4.setText("Zahlenformat:");
 
         cmbNumberLocale.setModel(new javax.swing.DefaultComboBoxModel<>(new String[] { "DE", "EN" }));
 
-        spnColName.setModel(new javax.swing.SpinnerNumberModel(0, 0, 50, 1));
+        spnColName.setModel(new javax.swing.SpinnerNumberModel(0, -1, 50, 1));
 
-        spnColIban.setModel(new javax.swing.SpinnerNumberModel(0, 0, 50, 1));
+        spnColIban.setModel(new javax.swing.SpinnerNumberModel(0, -1, 50, 1));
 
-        spnColPurpose.setModel(new javax.swing.SpinnerNumberModel(0, 0, 50, 1));
+        spnColPurpose.setModel(new javax.swing.SpinnerNumberModel(0, -1, 50, 1));
 
-        spnColAmount.setModel(new javax.swing.SpinnerNumberModel(0, 0, 50, 1));
+        spnColAmount.setModel(new javax.swing.SpinnerNumberModel(0, -1, 50, 1));
 
-        spnColCurrency.setModel(new javax.swing.SpinnerNumberModel(0, 0, 50, 1));
+        spnColCurrency.setModel(new javax.swing.SpinnerNumberModel(0, -1, 50, 1));
 
-        spnColBookingType.setModel(new javax.swing.SpinnerNumberModel(0, 0, 50, 1));
+        spnColBookingType.setModel(new javax.swing.SpinnerNumberModel(0, -1, 50, 1));
 
         jLabel2.setText("von / an:");
 
@@ -927,6 +921,15 @@ public class BankstatementCsvConfigDialog extends javax.swing.JDialog {
         jLabel9.setText("Währung:");
 
         jLabel10.setText("Buchungsart:");
+
+        spnHeaderLines.setFont(spnHeaderLines.getFont());
+        spnHeaderLines.setModel(new javax.swing.SpinnerNumberModel(1, 0, 50, 1));
+
+        jLabel12.setText("Kopfzeilen");
+
+        jLabel13.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons16/info.png"))); // NOI18N
+        jLabel13.setText(" ");
+        jLabel13.setToolTipText("für nicht vorhandene Spalten bitte \"-1\" wählen");
 
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(getContentPane());
         getContentPane().setLayout(layout);
@@ -942,6 +945,7 @@ public class BankstatementCsvConfigDialog extends javax.swing.JDialog {
                         .addComponent(cmdSave)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                         .addComponent(cmdClose))
+                    .addComponent(jSeparator1)
                     .addGroup(layout.createSequentialGroup()
                         .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                             .addComponent(jLabel1)
@@ -949,20 +953,24 @@ public class BankstatementCsvConfigDialog extends javax.swing.JDialog {
                             .addComponent(jLabel4))
                         .addGap(25, 25, 25)
                         .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                            .addGroup(layout.createSequentialGroup()
+                                .addComponent(spnHeaderLines, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                                .addComponent(jLabel12)
+                                .addGap(0, 0, Short.MAX_VALUE))
                             .addComponent(txtName, javax.swing.GroupLayout.Alignment.TRAILING)
                             .addComponent(txtDelimiter)
-                            .addGroup(layout.createSequentialGroup()
-                                .addComponent(chkHeader)
-                                .addGap(0, 0, Short.MAX_VALUE))
                             .addGroup(layout.createSequentialGroup()
                                 .addComponent(txtNumberFormat)
                                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                                 .addComponent(cmbNumberLocale, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))))
-                    .addComponent(jSeparator1)
                     .addGroup(layout.createSequentialGroup()
                         .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                             .addComponent(jLabel5)
-                            .addComponent(lblColumns)
+                            .addGroup(layout.createSequentialGroup()
+                                .addComponent(lblColumns)
+                                .addGap(18, 18, 18)
+                                .addComponent(jLabel13))
                             .addGroup(layout.createSequentialGroup()
                                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                                     .addComponent(jLabel7)
@@ -973,10 +981,10 @@ public class BankstatementCsvConfigDialog extends javax.swing.JDialog {
                                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                                     .addComponent(spnColAmount, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                                    .addComponent(spnColDate, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                                     .addComponent(spnColName, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                                     .addComponent(spnColIban, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                                    .addComponent(spnColPurpose, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)))
+                                    .addComponent(spnColPurpose, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                                    .addComponent(spnColDate, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)))
                             .addGroup(layout.createSequentialGroup()
                                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                                     .addComponent(jLabel9)
@@ -1001,7 +1009,9 @@ public class BankstatementCsvConfigDialog extends javax.swing.JDialog {
                             .addComponent(txtName, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                             .addComponent(jLabel1))
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addComponent(chkHeader)
+                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                            .addComponent(spnHeaderLines, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                            .addComponent(jLabel12))
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                         .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                             .addComponent(txtDelimiter, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
@@ -1014,7 +1024,9 @@ public class BankstatementCsvConfigDialog extends javax.swing.JDialog {
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
                         .addComponent(jSeparator1, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-                        .addComponent(lblColumns)
+                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                            .addComponent(lblColumns)
+                            .addComponent(jLabel13))
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                         .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                             .addComponent(spnColDate, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
@@ -1043,7 +1055,7 @@ public class BankstatementCsvConfigDialog extends javax.swing.JDialog {
                         .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                             .addComponent(spnColBookingType, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                             .addComponent(jLabel10))
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 75, Short.MAX_VALUE)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 71, Short.MAX_VALUE)
                         .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                             .addComponent(cmdClose)
                             .addComponent(cmdSave))))
@@ -1117,6 +1129,7 @@ public class BankstatementCsvConfigDialog extends javax.swing.JDialog {
             csv.setDecimalFormat(this.txtNumberFormat.getText());
             csv.setDelimiter(this.txtDelimiter.getText());
             csv.setLocale(this.cmbNumberLocale.getEditor().getItem().toString());
+            csv.setHeaderLines(((Number) this.spnHeaderLines.getValue()).intValue());
             
 
             ClientSettings settings = ClientSettings.getInstance();
@@ -1179,7 +1192,7 @@ public class BankstatementCsvConfigDialog extends javax.swing.JDialog {
         this.spnColIban.setValue(csv.getColumnIban());
         this.spnColName.setValue(csv.getColumnName());
         this.spnColPurpose.setValue(csv.getColumnPurpose());
-        this.chkHeader.setSelected(csv.isHeader());
+        this.spnHeaderLines.setValue(csv.getHeaderLines());
         this.cmbNumberLocale.setSelectedItem(csv.getLocale());
         this.txtDelimiter.setText(csv.getDelimiter());
         this.txtName.setText(csv.getConfigurationName());
@@ -1240,7 +1253,6 @@ public class BankstatementCsvConfigDialog extends javax.swing.JDialog {
     }
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
-    private javax.swing.JCheckBox chkHeader;
     private javax.swing.JComboBox<String> cmbNumberLocale;
     private javax.swing.JButton cmdAdd;
     private javax.swing.JButton cmdClose;
@@ -1249,6 +1261,8 @@ public class BankstatementCsvConfigDialog extends javax.swing.JDialog {
     private javax.swing.JLabel jLabel1;
     private javax.swing.JLabel jLabel10;
     private javax.swing.JLabel jLabel11;
+    private javax.swing.JLabel jLabel12;
+    private javax.swing.JLabel jLabel13;
     private javax.swing.JLabel jLabel2;
     private javax.swing.JLabel jLabel3;
     private javax.swing.JLabel jLabel4;
@@ -1268,6 +1282,7 @@ public class BankstatementCsvConfigDialog extends javax.swing.JDialog {
     private javax.swing.JSpinner spnColIban;
     private javax.swing.JSpinner spnColName;
     private javax.swing.JSpinner spnColPurpose;
+    private javax.swing.JSpinner spnHeaderLines;
     private javax.swing.JTable tblCsvConfigs;
     private javax.swing.JTextField txtDelimiter;
     private javax.swing.JTextField txtName;

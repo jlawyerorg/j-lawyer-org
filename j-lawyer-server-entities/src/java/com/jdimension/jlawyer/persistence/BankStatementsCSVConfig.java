@@ -698,8 +698,8 @@ public class BankStatementsCSVConfig implements Serializable {
     @Column(name = "number_format")
     private String decimalFormat="#,##0.00";
     
-    @Column(name = "has_header")
-    private boolean header=true;
+    @Column(name = "header_lines")
+    private int headerLines=1;
     
     @Column(name = "number_locale")
     private String locale=Locale.GERMANY.toString();
@@ -754,20 +754,6 @@ public class BankStatementsCSVConfig implements Serializable {
      */
     public void setDecimalFormat(String decimalFormat) {
         this.decimalFormat = decimalFormat;
-    }
-
-    /**
-     * @return the header
-     */
-    public boolean isHeader() {
-        return header;
-    }
-
-    /**
-     * @param header the header to set
-     */
-    public void setHeader(boolean header) {
-        this.header = header;
     }
 
     /**
@@ -908,6 +894,20 @@ public class BankStatementsCSVConfig implements Serializable {
      */
     public void setId(String id) {
         this.id = id;
+    }
+
+    /**
+     * @return the headerLines
+     */
+    public int getHeaderLines() {
+        return headerLines;
+    }
+
+    /**
+     * @param headerLines the headerLines to set
+     */
+    public void setHeaderLines(int headerLines) {
+        this.headerLines = headerLines;
     }
     
     

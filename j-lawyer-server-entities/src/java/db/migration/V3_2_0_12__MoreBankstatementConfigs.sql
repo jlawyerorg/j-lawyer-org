@@ -1,0 +1,5 @@
+insert into config_bankstatement (id, display_name, csv_delimiter, number_format, number_locale, header_lines, col_date, col_name, col_bookingtype, col_iban, col_purpose, col_amount, col_currency) values ('dkb-csv','DKB',';','#,##0.00', 'DE', 5, 0, 4, 6, 7, 5, 8, -1);
+insert into config_bankstatement (id, display_name, csv_delimiter, number_format, number_locale, header_lines, col_date, col_name, col_bookingtype, col_iban, col_purpose, col_amount, col_currency) values ('bwbank-csv','BW-Bank',';','#,##0.00', 'DE', 1, 1, 11, 3, 12, 4, 14, 15);
+insert into config_bankstatement (id, display_name, csv_delimiter, number_format, number_locale, header_lines, col_date, col_name, col_bookingtype, col_iban, col_purpose, col_amount, col_currency) values ('apobank-csv','apoBank',';','#,##0.00', 'DE', 1, 0, 1, -1, -1, 2, 3, -1);
+insert into server_settings(settingKey, settingValue) values('jlawyer.server.database.version','3.2.0.12') ON DUPLICATE KEY UPDATE settingValue     = '3.2.0.12';
+commit;
