@@ -868,6 +868,8 @@ public class CustomLauncherOptionsDialog extends javax.swing.JDialog {
 
         jLabel6.setText("Dateiendung:");
 
+        txtExtension.setToolTipText("Durch Komma getrennt können mehrere Dateitypen konfiguriert werden (z.B. pdf,html,jpg)");
+
         chkDefaultLauncher.setSelected(true);
         chkDefaultLauncher.setText("Standardprogramm");
         chkDefaultLauncher.setToolTipText("Standardprogramme werden durch Doppelklick auf ein Dokument geöffnet,\nNicht-Standardprogramme sind über das Kontextmenü des Dokuments aufrufbar.");
@@ -1235,8 +1237,11 @@ final class ExtensionFilter extends FileFilter {
         }
 
         String fileName = file.getName().toLowerCase();
-        if (fileName.endsWith("." + this.ext)) {
-            return true;
+        String[] exts = this.ext.split("\\s*,\\s*");
+        for (String e : exts) {
+            if (fileName.endsWith("." + e.trim().toLowerCase())) {
+                return true;
+            }
         }
         return false;
     }
