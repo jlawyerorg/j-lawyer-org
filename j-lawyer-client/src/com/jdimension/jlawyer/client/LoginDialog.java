@@ -861,7 +861,7 @@ public class LoginDialog extends javax.swing.JFrame {
         this.jTabbedPane1.setOpaque(false);
         this.jTabbedPane1.putClientProperty("TabbedPane.contentOpaque", Boolean.FALSE);
         this.jTabbedPane1.putClientProperty("TabbedPane.tabsOpaque", Boolean.FALSE);
-        this.jTabbedPane1.putClientProperty("JTabbedPane.tabAreaAlignment", "center");
+        //this.jTabbedPane1.putClientProperty("JTabbedPane.tabAreaAlignment", "center");
         // end
 
         try {
@@ -1149,7 +1149,7 @@ public class LoginDialog extends javax.swing.JFrame {
         setTitle("j-lawyer.org Login");
         setIconImage(new ImageIcon(getClass().getResource("/icons/windowicon.png")).getImage());
 
-        jTabbedPane1.setTabPlacement(javax.swing.JTabbedPane.BOTTOM);
+        jTabbedPane1.setTabPlacement(javax.swing.JTabbedPane.RIGHT);
 
         jPanel1.setOpaque(false);
 
@@ -1320,7 +1320,7 @@ public class LoginDialog extends javax.swing.JFrame {
                     .add(org.jdesktop.layout.GroupLayout.TRAILING, lblProgress, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                     .add(jPanel7, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                     .add(jPanel11, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                    .add(jPanel9, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 1035, Short.MAX_VALUE))
+                    .add(jPanel9, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 987, Short.MAX_VALUE))
                 .addContainerGap())
         );
         jPanel1Layout.setVerticalGroup(
@@ -1334,7 +1334,7 @@ public class LoginDialog extends javax.swing.JFrame {
                 .add(lblProgress, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 36, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
                 .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
                 .add(jPanel9, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
-                .addContainerGap(72, Short.MAX_VALUE))
+                .add(24, 24, 24))
         );
 
         jTabbedPane1.addTab("Login", jPanel1);
@@ -1823,7 +1823,7 @@ public class LoginDialog extends javax.swing.JFrame {
                 .add(jTabbedPane1, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
                 .addPreferredGap(org.jdesktop.layout.LayoutStyle.UNRELATED)
                 .add(lblAutoUpdate)
-                .addContainerGap(56, Short.MAX_VALUE))
+                .addContainerGap(org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
         );
 
         org.jdesktop.layout.GroupLayout layout = new org.jdesktop.layout.GroupLayout(getContentPane());
