@@ -32,6 +32,7 @@ check_error $?
 ant -buildfile j-lawyer-io-common/build.xml jar
 check_error $?
 export JAVA_HOME=/home/jens/bin/jdk-11.0.9.1-full/
+# export JAVA_HOME=/home/jens/bin/jdk-17.0.9-full/
 ant -buildfile j-lawyer-client/build.xml jar
 check_error $?
 
