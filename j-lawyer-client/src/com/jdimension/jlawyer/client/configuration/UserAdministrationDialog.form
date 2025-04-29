@@ -1766,7 +1766,7 @@
     </Container>
     <Component class="javax.swing.JCheckBox" name="chkShowExternalUsers">
       <Properties>
-        <Property name="text" type="java.lang.String" value="Nutzer aus externen System anzeigen"/>
+        <Property name="text" type="java.lang.String" value="Nutzer aus externen Systemen anzeigen"/>
       </Properties>
       <Events>
         <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="chkShowExternalUsersActionPerformed"/>
