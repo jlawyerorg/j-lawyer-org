@@ -2005,7 +2005,7 @@ public class UserAdministrationDialog extends javax.swing.JDialog {
 
         jTabbedPane1.addTab("Belege", jPanel12);
 
-        chkShowExternalUsers.setText("Nutzer aus externen System anzeigen");
+        chkShowExternalUsers.setText("Nutzer aus externen Systemen anzeigen");
         chkShowExternalUsers.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 chkShowExternalUsersActionPerformed(evt);
