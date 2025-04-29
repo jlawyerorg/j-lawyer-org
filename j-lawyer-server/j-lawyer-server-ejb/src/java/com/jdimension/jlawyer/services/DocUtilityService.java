@@ -661,341 +661,81 @@ if any, to sign a "copyright disclaimer" for the program, if necessary.
 For more information on this, and how to apply and follow the GNU AGPL, see
 <https://www.gnu.org/licenses/>.
  */
-package org.jlawyer.io.rest.v6;
+package com.jdimension.jlawyer.services;
 
-import com.jdimension.jlawyer.persistence.ArchiveFileBean;
+import com.jdimension.jlawyer.documents.FileTypes;
+import com.jdimension.jlawyer.documents.LibreOfficeAccess;
 import com.jdimension.jlawyer.persistence.ArchiveFileDocumentsBean;
-import com.jdimension.jlawyer.persistence.ArchiveFileHistoryBean;
-import com.jdimension.jlawyer.persistence.ArchiveFileReviewsBean;
-import com.jdimension.jlawyer.persistence.CalendarSetup;
-import com.jdimension.jlawyer.pojo.DataBucket;
-import com.jdimension.jlawyer.security.Base64;
-import com.jdimension.jlawyer.services.ArchiveFileServiceLocal;
-import com.jdimension.jlawyer.services.CalendarServiceLocal;
-import com.jdimension.jlawyer.services.DocUtilityServiceLocal;
+import com.jdimension.jlawyer.persistence.ServerSettingsBeanFacadeLocal;
+import com.jdimension.jlawyer.stirlingpdf.StirlingPdfAPI;
+import java.util.ArrayList;
 import javax.annotation.security.RolesAllowed;
+import javax.ejb.EJB;
 import javax.ejb.Stateless;
-import javax.naming.InitialContext;
-import javax.ws.rs.Consumes;
-import javax.ws.rs.GET;
-import javax.ws.rs.PUT;
-import javax.ws.rs.Path;
-import javax.ws.rs.PathParam;
-import javax.ws.rs.Produces;
-import javax.ws.rs.core.MediaType;
-import javax.ws.rs.core.Response;
-import org.jboss.logging.Logger;
-import org.jlawyer.io.rest.v1.pojo.RestfulDocumentContentV1;
-import org.jlawyer.io.rest.v5.pojo.RestfulCaseHistoryV5;
-import org.jlawyer.io.rest.v6.pojo.RestfulDataBucketV6;
-import org.jlawyer.io.rest.v6.pojo.RestfulDueDateV6;
+import org.apache.log4j.Logger;
 
 /**
  *
- * http://localhost:8080/j-lawyer-io/rest/cases/list
+ * @author jens
  */
 @Stateless
-@Path("/v6/cases")
-@Consumes({"application/json"})
-@Produces({"application/json"})
-public class CasesEndpointV6 implements CasesEndpointLocalV6 {
+public class DocUtilityService implements DocUtilityServiceRemote, DocUtilityServiceLocal {
 
-    private static final Logger log = Logger.getLogger(CasesEndpointV6.class.getName());
-    private static final String LOOKUP_DOCUTILITY="java:global/j-lawyer-server/j-lawyer-server-ejb/DocUtilityService!com.jdimension.jlawyer.services.DocUtilityServiceLocal";
-    private static final String LOOKUP_CASES="java:global/j-lawyer-server/j-lawyer-server-ejb/ArchiveFileService!com.jdimension.jlawyer.services.ArchiveFileServiceLocal";
+    private static final Logger log = Logger.getLogger(DocUtilityService.class.getName());
 
-    /**
-     * Creates a history entry for a case.
-     *
-     * @param id case ID
-     * @param history the history entry to be added. its id and case id may be
-     * empty. its principalId is discarded when provided by the caller and
-     * automatically populated based on the API users authentication. Provide
-     * the date / time in UTC in a format like this: "2022-05-01T13:42:37Z[UTC]"
-     * @return
-     * @response 401 User not authorized
-     * @response 403 User not authenticated
-     */
+    @EJB
+    private ArchiveFileServiceLocal archiveFileService;
+    @EJB
+    private ServerSettingsBeanFacadeLocal settingsFacade;
+
+    // Add business logic below. (Right-click in editor and choose
+    // "Insert Code > Add Business Method")
     @Override
-    @PUT
-    @Produces(MediaType.APPLICATION_JSON+";charset=utf-8")
-    @Consumes(MediaType.APPLICATION_JSON)
-    @Path("/{id}/history")
     @RolesAllowed({"writeArchiveFileRole"})
-    public Response createHistory(@PathParam("id") String id, RestfulCaseHistoryV5 history) {
-        try {
-
-            InitialContext ic = new InitialContext();
-            ArchiveFileServiceLocal cases = (ArchiveFileServiceLocal) ic.lookup(LOOKUP_CASES);
-
-            ArchiveFileBean afb = cases.getArchiveFile(id);
-            if (afb != null) {
-                ArchiveFileHistoryBean newHistory = new ArchiveFileHistoryBean();
-                newHistory.setArchiveFileKey(afb);
-                newHistory.setId(history.getId());
-                newHistory.setChangeDate(history.getChangeDate());
-                newHistory.setChangeDescription(history.getChangeDescription());
-                cases.addHistory(afb.getId(), newHistory);
+    public ArchiveFileDocumentsBean convertToPdf(String docId) throws Exception {
+        ArchiveFileDocumentsBean doc = this.archiveFileService.getDocument(docId);
+        String docName = doc.getName().toLowerCase();
+        boolean supportedFileFormat = false;
+        String currentExt = "";
+        for (String ft : FileTypes.LO_OFFICEFILETYPES) {
+            if (docName.endsWith(ft.toLowerCase())) {
+                supportedFileFormat = true;
+                currentExt = ft;
+                break;
             }
-
-            return Response.ok().build();
-        } catch (Exception ex) {
-            log.error("can not create history entry " + id, ex);
-            return Response.serverError().build();
         }
-    }
-
-    /**
-     * Returns a documents content in the form of a data bucket, given its
-     * ID.The return value is Base64 encoded.
-     *
-     * @param id document ID
-     * @return initial bucket of type RestfulDataBucketV6
-     * @response 401 User not authorized
-     * @response 403 User not authenticated
-     */
-    @Override
-    @GET
-    @Produces(MediaType.APPLICATION_JSON+";charset=utf-8")
-    @Path("/document/{id}/contentbucket")
-    @RolesAllowed({"readArchiveFileRole"})
-    public Response getDocumentContentBucket(@PathParam("id") String id) {
-        try {
-            InitialContext ic = new InitialContext();
-            ArchiveFileServiceLocal cases = (ArchiveFileServiceLocal) ic.lookup(LOOKUP_CASES);
-            ArchiveFileDocumentsBean doc = cases.getDocument(id);
-            if (doc == null) {
-                log.error("can not get document " + id);
-                return Response.serverError().build();
-            }
-
-            DataBucket bucket = cases.getDocumentContentBucket(id);
-            if (bucket == null) {
-                log.error("can not get content of document " + id);
-                return Response.serverError().build();
-            }
-
-            String base64 = new Base64().encode(bucket.getPayload());
-            RestfulDataBucketV6 db = new RestfulDataBucketV6();
-            db.setBeginOffset(bucket.getBeginOffset());
-            db.setCapacity(bucket.getCapacity());
-            db.setFileName(bucket.getFileName());
-            db.setHasNext(bucket.hasNext());
-            db.setId(bucket.getId());
-            db.setPayload(base64);
-            db.setSize(bucket.getSize());
-            db.setTotalSize(bucket.getTotalSize());
-            return Response.ok(db).build();
-        } catch (Exception ex) {
-            log.error("can not get document " + id, ex);
-            return Response.serverError().build();
+        if (!supportedFileFormat) {
+            throw new Exception("PDF conversion: file format is not supported, input file was " + doc.getName());
         }
-    }
 
-    /**
-     * Creates a new due date within an existing case. An ID for the due date is
-     * not required in the request.
-     *
-     * @param dueDate document data
-     * @response 401 User not authorized
-     * @response 403 User not authenticated
-     */
-    @Override
-    @PUT
-    @Produces(MediaType.APPLICATION_JSON+";charset=utf-8")
-    @Consumes(MediaType.APPLICATION_JSON)
-    @Path("/duedate/create")
-    @RolesAllowed({"writeArchiveFileRole"})
-    public Response createDueDate(RestfulDueDateV6 dueDate) {
-        try {
+        byte[] docContent = this.archiveFileService.getDocumentContent(docId);
 
-            InitialContext ic = new InitialContext();
-            ArchiveFileServiceLocal cases = (ArchiveFileServiceLocal) ic.lookup(LOOKUP_CASES);
-            CalendarServiceLocal cal = (CalendarServiceLocal) ic.lookup("java:global/j-lawyer-server/j-lawyer-server-ejb/CalendarService!com.jdimension.jlawyer.services.CalendarServiceLocal");
-            ArchiveFileBean currentCase = cases.getArchiveFile(dueDate.getCaseId());
-            if (currentCase == null) {
-                log.error("case with id " + dueDate.getCaseId() + " does not exist");
-                return Response.serverError().build();
-            }
-            
-            CalendarSetup calSetup=null;
-            for(CalendarSetup cs: cal.getAllCalendarSetups()) {
-                if(cs.getId().equals(dueDate.getCalendar())) {
-                    calSetup=cs;
-                    break;
-                }
-            }
-            if (calSetup == null) {
-                log.error("calendar setup with id " + dueDate.getCalendar() + " does not exist");
-                return Response.serverError().build();
-            }
+        StirlingPdfAPI api = new StirlingPdfAPI("http://localhost:6080/", 3000, 120000);
+        byte[] pdfBytes = api.convertToPdf(doc.getName(), docContent);
 
-            ArchiveFileReviewsBean rev = new ArchiveFileReviewsBean();
-            rev.setArchiveFileKey(currentCase);
-            rev.setAssignee(dueDate.getAssignee());
-            rev.setBeginDate(dueDate.getBeginDate());
-            rev.setEndDate(dueDate.getEndDate());
-            rev.setCalendarSetup(calSetup);
-            rev.setDescription(dueDate.getDescription());
-            rev.setDone(dueDate.isDone());
-            rev.setEventType(ArchiveFileReviewsBean.EVENTTYPE_FOLLOWUP);
-            if (RestfulDueDateV6.TYPE_RESPITE.equals(dueDate.getType())) {
-                rev.setEventType(ArchiveFileReviewsBean.EVENTTYPE_RESPITE);
-            } else if (RestfulDueDateV6.TYPE_EVENT.equals(dueDate.getType())) {
-                rev.setEventType(ArchiveFileReviewsBean.EVENTTYPE_EVENT);
-            }
-            rev.setLocation(dueDate.getLocation());
-            rev.setSummary(dueDate.getSummary());
-            rev = cal.addReview(dueDate.getCaseId(), rev);
-
-            RestfulDueDateV6 dd = new RestfulDueDateV6();
-            dd.setId(rev.getId());
-            dd.setAssignee(rev.getAssignee());
-            dd.setDone(rev.isDone());
-            dd.setBeginDate(rev.getBeginDate());
-            dd.setEndDate(rev.getBeginDate());
-            dd.setSummary(rev.getSummary());
-            dd.setCalendar(rev.getCalendarSetup().getId());
-            dd.setCaseId(rev.getArchiveFileKey().getId());
-            dd.setDescription(rev.getDescription());
-            dd.setLocation(rev.getLocation());
-            dd.setType(RestfulDueDateV6.TYPE_RESPITE);
-            if (rev.getEventType() == ArchiveFileReviewsBean.EVENTTYPE_FOLLOWUP) {
-                dd.setType(RestfulDueDateV6.TYPE_FOLLOWUP);
-            } else if (rev.getEventType() == ArchiveFileReviewsBean.EVENTTYPE_EVENT) {
-                dd.setType(RestfulDueDateV6.TYPE_EVENT);
-            }
-
-            return Response.ok(dd).build();
-        } catch (Exception ex) {
-            log.error("can not create due date for case " + dueDate.getCaseId(), ex);
-            return Response.serverError().build();
+        String newName = doc.getName().substring(0, doc.getName().length() - currentExt.length()) + ".pdf";
+        if (newName.length() == 0) {
+            newName = doc.getId() + ".pdf";
         }
-    }
 
-    /**
-     * Updates a due date.
-     *
-     * @param dueDate the due dates new data
-     * @response 401 User not authorized
-     * @response 403 User not authenticated
-     */
-    @Override
-    @PUT
-    @Produces(MediaType.APPLICATION_JSON+";charset=utf-8")
-    @Consumes(MediaType.APPLICATION_JSON)
-    @Path("/duedate/update")
-    @RolesAllowed({"writeArchiveFileRole"})
-    public Response updateDueDate(RestfulDueDateV6 dueDate) {
-        try {
-
-            InitialContext ic = new InitialContext();
-            ArchiveFileServiceLocal cases = (ArchiveFileServiceLocal) ic.lookup(LOOKUP_CASES);
-            CalendarServiceLocal cal = (CalendarServiceLocal) ic.lookup("java:global/j-lawyer-server/j-lawyer-server-ejb/CalendarService!com.jdimension.jlawyer.services.CalendarServiceLocal");
-            ArchiveFileBean currentCase = cases.getArchiveFile(dueDate.getCaseId());
-            if (currentCase == null) {
-                log.error("case with id " + dueDate.getCaseId() + " does not exist");
-                return Response.serverError().build();
-            }
-            
-            CalendarSetup calSetup=null;
-            for(CalendarSetup cs: cal.getAllCalendarSetups()) {
-                if(cs.getId().equals(dueDate.getCalendar())) {
-                    calSetup=cs;
-                    break;
-                }
-            }
-            if (calSetup == null) {
-                log.error("calendar setup with id " + dueDate.getCalendar() + " does not exist");
-                return Response.serverError().build();
-            }
-            
-            if(dueDate.getId()==null) {
-                log.error("id of due date to be updated must not be empty");
-                return Response.serverError().build();
-            }
-            
-            ArchiveFileReviewsBean rev=null;
-            for(ArchiveFileReviewsBean afrb: cal.getReviews(dueDate.getCaseId())) {
-                if(afrb.getId().equals(dueDate.getId())) {
-                    rev=afrb;
-                    break;
-                }
-            }
-            if(rev==null) {
-                log.error("there is no due date with id " + dueDate.getId() + " in case " + dueDate.getCaseId());
-                return Response.serverError().build();
-            }
-
-            rev.setAssignee(dueDate.getAssignee());
-            rev.setBeginDate(dueDate.getBeginDate());
-            rev.setEndDate(dueDate.getEndDate());
-            rev.setCalendarSetup(calSetup);
-            rev.setDescription(dueDate.getDescription());
-            rev.setDone(dueDate.isDone());
-            rev.setLocation(dueDate.getLocation());
-            rev.setSummary(dueDate.getSummary());
-            rev = cal.updateReview(dueDate.getCaseId(), rev);
-
-            RestfulDueDateV6 dd = new RestfulDueDateV6();
-            dd.setId(rev.getId());
-            dd.setAssignee(rev.getAssignee());
-            dd.setDone(rev.isDone());
-            dd.setBeginDate(rev.getBeginDate());
-            dd.setEndDate(rev.getBeginDate());
-            dd.setSummary(rev.getSummary());
-            dd.setCalendar(rev.getCalendarSetup().getId());
-            dd.setCaseId(rev.getArchiveFileKey().getId());
-            dd.setDescription(rev.getDescription());
-            dd.setLocation(rev.getLocation());
-            dd.setType(RestfulDueDateV6.TYPE_RESPITE);
-            if (rev.getEventType() == ArchiveFileReviewsBean.EVENTTYPE_FOLLOWUP) {
-                dd.setType(RestfulDueDateV6.TYPE_FOLLOWUP);
-            } else if (rev.getEventType() == ArchiveFileReviewsBean.EVENTTYPE_EVENT) {
-                dd.setType(RestfulDueDateV6.TYPE_EVENT);
-            }
-
-            return Response.ok(dd).build();
-        } catch (Exception ex) {
-            log.error("can not create due date for case " + dueDate.getCaseId(), ex);
-            return Response.serverError().build();
+        int i = 2;
+        while (this.archiveFileService.doesDocumentExist(doc.getArchiveFileKey().getId(), newName)) {
+            newName = "(" + i + ") " + newName;
+            i = i + 1;
         }
-    }
-    
-    /**
-     * Converts a document to PDF.
-     *
-     * @param id the documents ID
-     * @response 401 User not authorized
-     * @response 403 User not authenticated
-     */
-    @Override
-    @PUT
-    @Produces(MediaType.APPLICATION_JSON+";charset=utf-8")
-    @Path("/document/{id}/to-pdf")
-    @RolesAllowed({"writeArchiveFileRole"})
-    public Response convertToPdf(@PathParam("id") String id) {
-        try {
 
-            InitialContext ic = new InitialContext();
-            DocUtilityServiceLocal docUtility = (DocUtilityServiceLocal) ic.lookup(LOOKUP_DOCUTILITY);
-            ArchiveFileDocumentsBean pdfDoc=docUtility.convertToPdf(id);
-            
-            RestfulDocumentContentV1 doc = new RestfulDocumentContentV1();
-            doc.setCaseId(pdfDoc.getArchiveFileKey().getId());
-            doc.setExternalId(pdfDoc.getExternalId());
-            doc.setFileName(pdfDoc.getName());
-            doc.setId(pdfDoc.getId());
-            doc.setVersion(pdfDoc.getVersion());
-            if(pdfDoc.getFolder()!=null)
-                doc.setFolderId(pdfDoc.getFolder().getId());
+        ArchiveFileDocumentsBean newDoc = this.archiveFileService.addDocument(doc.getArchiveFileKey().getId(), newName, pdfBytes, doc.getDictateSign(), null);
 
-            Response res = Response.ok(doc).build();
-            return res;
-        } catch (Exception ex) {
-            log.error("Can not convert document " + id + " to PDF", ex);
-            return Response.serverError().build();
+        newDoc.setSize(pdfBytes.length);
+
+        if (doc.getFolder() != null) {
+            newDoc.setFolder(doc.getFolder());
+            ArrayList<String> documentIds = new ArrayList<>();
+            documentIds.add(newDoc.getId());
+            this.archiveFileService.moveDocumentsToFolder(documentIds, doc.getFolder().getId());
         }
+
+        return newDoc;
     }
 
 }
