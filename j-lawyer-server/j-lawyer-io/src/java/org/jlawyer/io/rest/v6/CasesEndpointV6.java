@@ -990,8 +990,7 @@ public class CasesEndpointV6 implements CasesEndpointLocalV6 {
             if(pdfDoc.getFolder()!=null)
                 doc.setFolderId(pdfDoc.getFolder().getId());
 
-            Response res = Response.ok(doc).build();
-            return res;
+            return Response.ok(doc).build();
         } catch (Exception ex) {
             log.error("Can not convert document " + id + " to PDF", ex);
             return Response.serverError().build();
