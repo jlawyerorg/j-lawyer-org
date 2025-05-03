@@ -4123,6 +4123,7 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
             }
 
             List<String> customLauncherNames = CustomLauncher.getCustomLauncherNames(FileUtils.getExtension(value.getName()));
+            Collections.sort(customLauncherNames, String.CASE_INSENSITIVE_ORDER);
             for (String customLauncher : customLauncherNames) {
                 JMenuItem miCustomLauncher = new JMenuItem();
                 FileUtils fu = FileUtils.getInstance();

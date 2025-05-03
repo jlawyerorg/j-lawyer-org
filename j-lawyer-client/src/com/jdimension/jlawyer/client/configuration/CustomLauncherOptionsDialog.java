@@ -678,6 +678,7 @@ import java.awt.event.MouseEvent;
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.Enumeration;
 import java.util.List;
 import java.util.Properties;
@@ -703,27 +704,30 @@ public class CustomLauncherOptionsDialog extends javax.swing.JDialog {
      * @param modal
      */
     public CustomLauncherOptionsDialog(java.awt.Frame parent, boolean modal) {
-        super(parent, modal);
-        initComponents();
-        this.txtNewLauncher.putClientProperty("JTextField.placeholderText", "Programmbezeichner");
-        ClientSettings settings = ClientSettings.getInstance();
-        Properties all = settings.getAllConfigurations();
-        Enumeration keys = all.propertyNames();
-        ArrayList<String> launchers = new ArrayList<>();
-        this.lstLaunchers.setModel(new DefaultListModel<String>());
-        while (keys.hasMoreElements()) {
-            String key = keys.nextElement().toString();
-            if (key.startsWith(CL_PREFIX + ".")) {
-                String launcher = key.substring(13);
-                launcher = launcher.substring(0, launcher.indexOf('.'));
-                if (!launchers.contains(launcher)) {
-                    launchers.add(launcher);
-                    ((DefaultListModel<String>) this.lstLaunchers.getModel()).addElement(launcher);
-                }
+    super(parent, modal);
+    initComponents();
+    this.txtNewLauncher.putClientProperty("JTextField.placeholderText", "Programmbezeichner");
+    ClientSettings settings = ClientSettings.getInstance();
+    Properties all = settings.getAllConfigurations();
+    Enumeration<?> keys = all.propertyNames();
+    ArrayList<String> launchers = new ArrayList<>();
+    while (keys.hasMoreElements()) {
+        String key = keys.nextElement().toString();
+        if (key.startsWith(CL_PREFIX + ".")) {
+            String launcher = key.substring(CL_PREFIX.length() + 1);
+            launcher = launcher.substring(0, launcher.indexOf('.'));
+            if (!launchers.contains(launcher)) {
+                launchers.add(launcher);
             }
         }
-
     }
+    Collections.sort(launchers, String.CASE_INSENSITIVE_ORDER);
+    DefaultListModel<String> model = new DefaultListModel<>();
+    for (String name : launchers) {
+        model.addElement(name);
+    }
+    this.lstLaunchers.setModel(model);
+}
 
     /*
     * Migrates settings from pre 2.1 (one launcher per file type) to 2.1+ (multiple launchers per file type)
