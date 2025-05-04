@@ -663,6 +663,7 @@
  */
 package com.jdimension.jlawyer.services;
 
+import com.jdimension.jlawyer.documents.DocumentPreview;
 import com.jdimension.jlawyer.pojo.PartiesTriplet;
 import com.jdimension.jlawyer.persistence.*;
 import com.jdimension.jlawyer.pojo.imports.ImportLogEntry;
@@ -782,7 +783,7 @@ public interface SystemManagementRemote {
 
     List<GenericNode> searchTemplateFolders(int templateType, String query) throws Exception;
 
-    String getTemplatePreview(int templateType, GenericNode folder, String fileName) throws Exception;
+    DocumentPreview getTemplatePreview(int templateType, GenericNode folder, String fileName) throws Exception;
 
     void renameTemplate(int templateType, GenericNode folder, String fromName, String toName) throws Exception;
 

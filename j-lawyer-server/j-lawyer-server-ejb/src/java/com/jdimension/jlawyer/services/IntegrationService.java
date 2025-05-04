@@ -675,6 +675,7 @@ import com.jdimension.jlawyer.ai.InputData;
 import com.jdimension.jlawyer.ai.Message;
 import com.jdimension.jlawyer.ai.OutputData;
 import com.jdimension.jlawyer.ai.ParameterData;
+import com.jdimension.jlawyer.documents.DocumentPreview;
 import com.jdimension.jlawyer.documents.TikaConfigurator;
 import com.jdimension.jlawyer.email.EmailTemplate;
 import com.jdimension.jlawyer.events.CustomHooksServiceLocal;
@@ -694,7 +695,9 @@ import com.jdimension.jlawyer.persistence.utils.StringGenerator;
 import com.jdimension.jlawyer.pojo.FileMetadata;
 import com.jdimension.jlawyer.security.CachingCrypto;
 import com.jdimension.jlawyer.security.CryptoProvider;
+import com.jdimension.jlawyer.server.services.settings.ServerSettingsKeys;
 import com.jdimension.jlawyer.server.utils.ServerFileUtils;
+import com.jdimension.jlawyer.stirlingpdf.StirlingPdfAPI;
 import com.jdimension.jlawyer.server.utils.ServerStringUtils;
 import com.jdimension.jlawyer.storage.VirtualFile;
 import java.io.BufferedReader;
@@ -1060,32 +1063,44 @@ public class IntegrationService implements IntegrationServiceRemote, Integration
     }
 
     @Override
-    public String getObservedFilePreview(String fileName) throws Exception {
+    public DocumentPreview getObservedFilePreview(String fileName) throws Exception {
         byte[] data = this.getObservedFile(fileName);
         if (data == null) {
             log.error("Error creating document preview - content data for file is null");
-            return "";
+            return new DocumentPreview("");
         }
 
-        Tika tika = TikaConfigurator.newTika(fileName);
-        String result = null;
-        try {
-            try (Reader r = tika.parse(new ByteArrayInputStream(data)); BufferedReader br = new BufferedReader(r); StringWriter sw = new StringWriter(); BufferedWriter bw = new BufferedWriter(sw)) {
-                char[] buffer = new char[1024];
-                int bytesRead = -1;
-                while ((bytesRead = br.read(buffer)) > -1) {
-                    bw.write(buffer, 0, bytesRead);
+        
+        ServerSettingsBean sb = this.settingsFacade.find(ServerSettingsKeys.SERVERCONF_STIRLINGPDF_ENDPOINT);
+        StirlingPdfAPI pdfApi = null;
+        if (sb != null && !ServerStringUtils.isEmpty(sb.getSettingValue())) {
+            pdfApi = new StirlingPdfAPI(sb.getSettingValue(), 5000, 120000);
+        }
+
+        if (DocumentPreview.supportsPdfPreview(fileName) && pdfApi != null) {
+            byte[] pdfPreviewBytes = pdfApi.convertToPdf(fileName, data);
+            return new DocumentPreview(pdfPreviewBytes);
+        } else {
+            Tika tika = TikaConfigurator.newTika(fileName);
+            String result = null;
+            try {
+                try (Reader r = tika.parse(new ByteArrayInputStream(data)); BufferedReader br = new BufferedReader(r); StringWriter sw = new StringWriter(); BufferedWriter bw = new BufferedWriter(sw)) {
+                    char[] buffer = new char[1024];
+                    int bytesRead = -1;
+                    while ((bytesRead = br.read(buffer)) > -1) {
+                        bw.write(buffer, 0, bytesRead);
+                    }
+                    result = sw.toString();
                 }
-                result = sw.toString();
+
+                return new DocumentPreview(result);
+
+            } catch (Throwable t) {
+                log.error("Error creating document preview", t);
             }
-
-            return result;
-
-        } catch (Throwable t) {
-            log.error("Error creating document preview", t);
         }
 
-        return "";
+        return new DocumentPreview("");
 
     }
 

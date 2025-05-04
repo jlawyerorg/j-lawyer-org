@@ -682,10 +682,16 @@ public class PdfPageImage extends javax.swing.JPanel {
     /**
      * Creates new form PdfPageImage
      * @param documentContainer
+     * @param readOnly
      */
-    public PdfPageImage(PdfImageScrollingPanel documentContainer) {
+    public PdfPageImage(PdfImageScrollingPanel documentContainer, boolean readOnly) {
         this.documentContainer=documentContainer;
         initComponents();
+        
+        this.cmdDeletePage.setEnabled(!readOnly);
+        this.cmdRotateLeft.setEnabled(!readOnly);
+        this.cmdRotateRight.setEnabled(!readOnly);
+        
         this.setBackground(DefaultColorTheme.COLOR_DARK_GREY);
         
         LineBorder lb=new LineBorder(DefaultColorTheme.COLOR_DARK_GREY,10);

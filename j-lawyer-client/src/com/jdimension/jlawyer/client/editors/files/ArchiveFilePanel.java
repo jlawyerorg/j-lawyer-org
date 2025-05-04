@@ -746,6 +746,7 @@ import com.jdimension.jlawyer.client.voip.EpostWizardDialog;
 import com.jdimension.jlawyer.client.voip.SendFaxDialog;
 import com.jdimension.jlawyer.client.wizard.WizardDataContainer;
 import com.jdimension.jlawyer.client.wizard.WizardSteps;
+import com.jdimension.jlawyer.documents.DocumentPreview;
 import com.jdimension.jlawyer.persistence.*;
 import com.jdimension.jlawyer.services.AddressServiceRemote;
 import com.jdimension.jlawyer.services.ArchiveFileServiceRemote;
@@ -7131,7 +7132,7 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
         try {
             ClientSettings settings = ClientSettings.getInstance();
             JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
-            String pdfText = locator.lookupArchiveFileServiceRemote().getDocumentPreview(selectedDocs.get(0).getId());
+            String pdfText = locator.lookupArchiveFileServiceRemote().getDocumentPreview(selectedDocs.get(0).getId(), DocumentPreview.TYPE_TEXT).getText();
 
             // Load document content
             byte[] content = CachingDocumentLoader.getInstance().getDocument(selectedDocs.get(0).getId());
@@ -7661,7 +7662,7 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
                 //i.setStringData(docText);
             } else {
                 ArchiveFileDocumentsBean doc = selected.get(0);
-                String docText = remote.getDocumentPreview(doc.getId());
+                String docText = remote.getDocumentPreview(doc.getId(), DocumentPreview.TYPE_TEXT).getText();
 
                 //i.setFileName("sound.wav");
                 i.setType(InputData.TYPE_STRING);

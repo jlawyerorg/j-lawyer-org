@@ -663,13 +663,17 @@ For more information on this, and how to apply and follow the GNU AGPL, see
  */
 package com.jdimension.jlawyer.client.editors.documents.viewer;
 
+import com.jdimension.jlawyer.documents.DocumentPreview;
 import com.jdimension.jlawyer.services.ArchiveFileServiceRemote;
+import org.apache.log4j.Logger;
 
 /**
  *
  * @author jens
  */
 public class CaseDocumentPreviewProvider implements DocumentPreviewProvider {
+    
+    private static final Logger log=Logger.getLogger(CaseDocumentPreviewProvider.class.getName());
 
     private ArchiveFileServiceRemote afs=null;
     private String docId=null;
@@ -682,8 +686,13 @@ public class CaseDocumentPreviewProvider implements DocumentPreviewProvider {
     
     
     @Override
-    public String getPreview() throws Exception {
-        return this.afs.getDocumentPreview(this.docId);
+    public DocumentPreview getPreview() throws Exception {
+        try {
+            return this.afs.getDocumentPreview(this.docId, DocumentPreview.TYPE_PDF);
+        } catch (Exception ex) {
+            log.warn(ex.getMessage());
+            return this.afs.getDocumentPreview(this.docId, DocumentPreview.TYPE_TEXT);
+        }
     }
     
     

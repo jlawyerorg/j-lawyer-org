@@ -663,6 +663,7 @@
  */
 package com.jdimension.jlawyer.services;
 
+import com.jdimension.jlawyer.documents.DocumentPreview;
 import com.jdimension.jlawyer.persistence.*;
 import com.jdimension.jlawyer.pojo.DataBucket;
 import java.util.ArrayList;
@@ -747,7 +748,7 @@ public interface ArchiveFileServiceRemote {
 
     ArchiveFileBean[] searchEnhanced(String query, boolean withArchive, String[] tagName, String[] documentTagName);
 
-    String getDocumentPreview(String id) throws Exception;
+    DocumentPreview getDocumentPreview(String id, String previewType) throws Exception;
 
     Date[] getHistoryInterval(String principalId);
 

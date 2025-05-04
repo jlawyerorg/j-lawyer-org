@@ -726,16 +726,24 @@ public class PdfImageScrollingPanel extends javax.swing.JPanel implements Previe
     private DocumentPreviewSaveCallback saveCallback = null;
 
     private boolean rendering = false;
+    
+    private boolean readOnly=false;
 
     /**
      * Creates new form PlaintextPanel
      *
+     * @param readOnly
      * @param fileName
      * @param content
      * @param saveCallback
      */
-    public PdfImageScrollingPanel(String fileName, byte[] content, DocumentPreviewSaveCallback saveCallback) {
+    public PdfImageScrollingPanel(boolean readOnly, String fileName, byte[] content, DocumentPreviewSaveCallback saveCallback) {
         initComponents();
+        
+        this.readOnly=readOnly;
+        this.cmdRotateLeft.setEnabled(!readOnly);
+        this.cmdRotateRight.setEnabled(!readOnly);
+        
         this.fileName = fileName;
         this.content = content;
         this.saveCallback = saveCallback;
@@ -1116,7 +1124,7 @@ public class PdfImageScrollingPanel extends javax.swing.JPanel implements Previe
                                 return;
                             }
 
-                            PdfPageImage pnlPage = new PdfPageImage(this);
+                            PdfPageImage pnlPage = new PdfPageImage(this, this.readOnly);
                             pnlPage.setBorder(new EmptyBorder(0, 0, 10, 0));
                             pnlPage.setPage(iIndex, new ImageIcon(scaledImage));
                             pnlPages.add(pnlPage);
@@ -1271,7 +1279,7 @@ public class PdfImageScrollingPanel extends javax.swing.JPanel implements Previe
                             final int iIndex = i;
                             SwingUtilities.invokeAndWait(() -> {
 
-                                PdfPageImage pnlPage = new PdfPageImage(this);
+                                PdfPageImage pnlPage = new PdfPageImage(this, this.readOnly);
                                 pnlPage.setBorder(new EmptyBorder(0, 0, 10, 0));
                                 pnlPage.setPage(iIndex, new ImageIcon(scaledImage));
                                 pnlPages.add(pnlPage);

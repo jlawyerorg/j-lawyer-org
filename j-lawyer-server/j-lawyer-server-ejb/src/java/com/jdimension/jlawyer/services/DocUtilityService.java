@@ -666,7 +666,10 @@ package com.jdimension.jlawyer.services;
 import com.jdimension.jlawyer.documents.FileTypes;
 import com.jdimension.jlawyer.documents.LibreOfficeAccess;
 import com.jdimension.jlawyer.persistence.ArchiveFileDocumentsBean;
+import com.jdimension.jlawyer.persistence.ServerSettingsBean;
 import com.jdimension.jlawyer.persistence.ServerSettingsBeanFacadeLocal;
+import com.jdimension.jlawyer.server.services.settings.ServerSettingsKeys;
+import com.jdimension.jlawyer.server.utils.ServerStringUtils;
 import com.jdimension.jlawyer.stirlingpdf.StirlingPdfAPI;
 import java.util.ArrayList;
 import javax.annotation.security.RolesAllowed;
@@ -707,10 +710,15 @@ public class DocUtilityService implements DocUtilityServiceRemote, DocUtilitySer
         if (!supportedFileFormat) {
             throw new Exception("PDF conversion: file format is not supported, input file was " + doc.getName());
         }
+        
+        ServerSettingsBean sb=this.settingsFacade.find(ServerSettingsKeys.SERVERCONF_STIRLINGPDF_ENDPOINT);
+        if(sb==null || ServerStringUtils.isEmpty(sb.getSettingValue())) {
+            throw new Exception("Stirling PDF API endpoint not configured.");
+        }
 
         byte[] docContent = this.archiveFileService.getDocumentContent(docId);
 
-        StirlingPdfAPI api = new StirlingPdfAPI("http://localhost:6080/", 3000, 120000);
+        StirlingPdfAPI api = new StirlingPdfAPI(sb.getSettingValue().trim(), 5000, 120000);
         byte[] pdfBytes = api.convertToPdf(doc.getName(), docContent);
 
         String newName = doc.getName().substring(0, doc.getName().length() - currentExt.length()) + ".pdf";

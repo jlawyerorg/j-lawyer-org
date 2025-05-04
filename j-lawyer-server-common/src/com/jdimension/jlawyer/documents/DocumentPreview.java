@@ -661,16 +661,105 @@ if any, to sign a "copyright disclaimer" for the program, if necessary.
 For more information on this, and how to apply and follow the GNU AGPL, see
 <https://www.gnu.org/licenses/>.
  */
-package com.jdimension.jlawyer.client.editors.documents.viewer;
+package com.jdimension.jlawyer.documents;
 
-import com.jdimension.jlawyer.documents.DocumentPreview;
+import java.io.Serializable;
+import java.util.Arrays;
+import java.util.List;
 
 /**
  *
  * @author jens
  */
-public interface DocumentPreviewProvider {
+public class DocumentPreview implements Serializable {
     
-    public DocumentPreview getPreview() throws Exception;
+    protected static long serialVersionUID = 1L;
+    
+    protected static final List<String> PDFPREVIEW_FILETYPES = Arrays.asList(".doc", ".docx", ".odt", ".rtf", ".sdw", ".eps", ".odd", ".xls", ".xlsx", ".ods", ".sdc", ".odp", ".ppt", ".pptx", ".sda", ".fodp", ".fodt");
+    
+    public static final String TYPE_TEXT="txt";
+    public static final String TYPE_PDF="pdf";
+    
+    private String text=null;
+    private byte[] bytes=null;
+    private String previewType=TYPE_TEXT;
+    
+    public DocumentPreview(String text) {
+        this.text=text;
+        this.previewType=TYPE_TEXT;
+    }
+    
+    public DocumentPreview(byte[] bytes) {
+        this.bytes=bytes;
+        this.previewType=TYPE_PDF;
+    }
+    
+    public static String getDefaultPreviewType(String fileName) {
+        if(fileName==null || "".equals(fileName))
+            return TYPE_TEXT;
+        
+        String lFileName=fileName.toLowerCase();
+        for(String ext: PDFPREVIEW_FILETYPES) {
+            if(lFileName.endsWith(ext))
+                return TYPE_PDF;
+        }
+        return TYPE_TEXT;
+    }
+    
+    public static boolean supportsPdfPreview(String fileName) {
+        if(fileName==null || "".equals(fileName))
+            return false;
+        
+        String lFileName=fileName.toLowerCase();
+        for(String ext: PDFPREVIEW_FILETYPES) {
+            if(lFileName.endsWith(ext))
+                return true;
+        }
+        return false;
+    }
+
+    /**
+     * @return the text
+     */
+    public String getText() {
+        return text;
+    }
+
+    /**
+     * @param text the text to set
+     */
+    public void setText(String text) {
+        this.text = text;
+    }
+
+    /**
+     * @return the bytes
+     */
+    public byte[] getBytes() {
+        return bytes;
+    }
+
+    /**
+     * @param bytes the bytes to set
+     */
+    public void setBytes(byte[] bytes) {
+        this.bytes = bytes;
+    }
+
+    /**
+     * @return the previewType
+     */
+    public String getPreviewType() {
+        return previewType;
+    }
+
+    /**
+     * @param previewType the previewType to set
+     */
+    public void setPreviewType(String previewType) {
+        this.previewType = previewType;
+    }
+    
+    
     
 }
