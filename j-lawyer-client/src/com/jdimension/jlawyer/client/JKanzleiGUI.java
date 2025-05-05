@@ -1707,7 +1707,7 @@ public class JKanzleiGUI extends javax.swing.JFrame implements com.jdimension.jl
         mnuDocumentOptions.add(mnuSearchIndex);
 
         mnuStirlingPdf.setIcon(new javax.swing.ImageIcon(getClass().getResource("/images/stirlingpdf-logo.png"))); // NOI18N
-        mnuStirlingPdf.setText(bundle.getString("menu.settings.documents.search")); // NOI18N
+        mnuStirlingPdf.setText("Stirling PDF");
         mnuStirlingPdf.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 mnuStirlingPdfActionPerformed(evt);
