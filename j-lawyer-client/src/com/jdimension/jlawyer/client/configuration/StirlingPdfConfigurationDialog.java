@@ -704,7 +704,7 @@ public class StirlingPdfConfigurationDialog extends javax.swing.JDialog {
         lblStirlingHint = new javax.swing.JLabel();
 
         setDefaultCloseOperation(javax.swing.WindowConstants.DISPOSE_ON_CLOSE);
-        setTitle("Einstellungen beA-Schnittstelle"); // NOI18N
+        setTitle("Stirling PDF-Integration"); // NOI18N
 
         cmdCancel.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/cancel.png"))); // NOI18N
         java.util.ResourceBundle bundle = java.util.ResourceBundle.getBundle("com/jdimension/jlawyer/client/configuration/DrebisConfigurationDialog"); // NOI18N
