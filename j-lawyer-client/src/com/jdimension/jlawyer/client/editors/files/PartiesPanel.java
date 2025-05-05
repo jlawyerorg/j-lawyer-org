@@ -753,16 +753,16 @@ public class PartiesPanel extends javax.swing.JPanel {
 
             Collections.sort(columnNames);
             ArrayList<String> allColumnNames = new ArrayList<>();
-            allColumnNames.add("Beteiligte");
             allColumnNames.addAll(columnNames);
+            allColumnNames.add("Beteiligte");
             String[] colNames = allColumnNames.toArray(new String[0]);
             PartiesPanelTableModel model = new PartiesPanelTableModel(colNames, 0);
 
             this.tblParties.setModel(model);
-            this.tblParties.getColumnModel().getColumn(0).setCellRenderer(new PartyRenderer());
+            this.tblParties.getColumnModel().getColumn(allColumnNames.size()-1).setCellRenderer(new PartyRenderer());
             
             TableCellRenderer headerRenderer = new VerticalTableHeaderCellRenderer();
-            for (int i = 1; i < this.tblParties.getColumnCount(); i++) {
+            for (int i = 0; i < this.tblParties.getColumnCount()-1; i++) {
                 this.tblParties.getColumnModel().getColumn(i).setHeaderRenderer(headerRenderer);
                 this.tblParties.getColumnModel().getColumn(i).setWidth(30);
                 this.tblParties.getColumnModel().getColumn(i).setMaxWidth(30);
@@ -773,11 +773,11 @@ public class PartiesPanel extends javax.swing.JPanel {
 
             for (ArchiveFileAddressesBean aab : involved) {
                 ArrayList row = new ArrayList();
-                row.add(new PartiesPanelEntry(aab));
-                for (int i = 1; i < this.tblParties.getColumnCount(); i++) {
+                for (int i = 0; i < this.tblParties.getColumnCount()-1; i++) {
                     String colName = this.tblParties.getColumnName(i);
                     row.add(colName.equals(aab.getReferenceType().getName()) && getNumberOfSelected(i) == 0);
                 }
+                row.add(new PartiesPanelEntry(aab));
                 Object[] rowArray = row.toArray();
                 model.addRow(rowArray);
             }
@@ -788,7 +788,7 @@ public class PartiesPanel extends javax.swing.JPanel {
                 }
                 
                 ignoreTableChanges = true;
-                if (evt.getColumn() > 0) {
+                if (evt.getColumn()>-1 && evt.getColumn() < columnNames.size()-1) {
                     Boolean newValue = (Boolean) tblParties.getValueAt(evt.getFirstRow(), evt.getColumn());
                     if (newValue == true) {
                         for (int i = 0; i < tblParties.getRowCount(); i++) {
@@ -816,8 +816,7 @@ public class PartiesPanel extends javax.swing.JPanel {
             
         PartiesPanelTableModel model = (PartiesPanelTableModel) this.tblParties.getModel();
         ArrayList row = new ArrayList();
-        row.add(entry);
-        for (int i = 1; i < this.tblParties.getColumnCount(); i++) {
+        for (int i = 0; i < this.tblParties.getColumnCount()-1; i++) {
             String colName = this.tblParties.getColumnName(i);
             if (entry.getReferenceType() != null) {
                 row.add(colName.equals(entry.getReferenceType().getName()) && getNumberOfSelected(i) == 0);
@@ -825,6 +824,7 @@ public class PartiesPanel extends javax.swing.JPanel {
                 row.add(getNumberOfSelected(i) == 0);
             }
         }
+        row.add(entry);
         Object[] rowArray = row.toArray();
         model.addRow(rowArray);
 
@@ -832,14 +832,14 @@ public class PartiesPanel extends javax.swing.JPanel {
     }
 
     public PartiesPanelEntry getSelectedParty(PartyTypeBean ptb) {
-        for (int i = 1; i < this.tblParties.getColumnCount(); i++) {
+        for (int i = 0; i < this.tblParties.getColumnCount()-1; i++) {
             String colName = this.tblParties.getColumnName(i);
             if (colName.equals(ptb.getName())) {
                 // found the right column, now get the selected party
                 for (int k = 0; k < this.tblParties.getRowCount(); k++) {
                     Boolean value = (Boolean) tblParties.getValueAt(k, i);
                     if (value == true) {
-                        PartiesPanelEntry ab = (PartiesPanelEntry) this.tblParties.getValueAt(k, 0);
+                        PartiesPanelEntry ab = (PartiesPanelEntry) this.tblParties.getValueAt(k, this.tblParties.getColumnCount()-1);
                         return ab;
                     }
                 }
@@ -850,7 +850,7 @@ public class PartiesPanel extends javax.swing.JPanel {
 
     public void expandAllParties(boolean expanded) {
         this.ignoreTableChanges=true;
-        for (int i = 1; i < this.tblParties.getColumnCount(); i++) {
+        for (int i = 0; i < this.tblParties.getColumnCount()-1; i++) {
             
             if (expanded) {
                 this.tblParties.getColumnModel().getColumn(i).setWidth(30);
@@ -872,7 +872,7 @@ public class PartiesPanel extends javax.swing.JPanel {
         this.expandAllParties(false);
         this.ignoreTableChanges=true;
         for (PartyTypeBean p : parties) {
-            for (int i = 1; i < this.tblParties.getColumnCount(); i++) {
+            for (int i = 0; i < this.tblParties.getColumnCount()-1; i++) {
                 String colName = this.tblParties.getColumnName(i);
                 if (colName.equals(p.getName())) {
                     this.tblParties.getColumnModel().getColumn(i).setWidth(30);
@@ -926,6 +926,8 @@ public class PartiesPanel extends javax.swing.JPanel {
 
         jScrollPane1 = new javax.swing.JScrollPane();
         tblParties = new javax.swing.JTable();
+
+        jScrollPane1.setHorizontalScrollBarPolicy(javax.swing.ScrollPaneConstants.HORIZONTAL_SCROLLBAR_ALWAYS);
 
         tblParties.setModel(new javax.swing.table.DefaultTableModel(
             new Object [][] {
