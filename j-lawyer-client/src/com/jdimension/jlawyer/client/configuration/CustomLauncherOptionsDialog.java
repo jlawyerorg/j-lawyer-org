@@ -678,6 +678,7 @@ import java.awt.event.MouseEvent;
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.Enumeration;
 import java.util.List;
 import java.util.Properties;
@@ -708,21 +709,24 @@ public class CustomLauncherOptionsDialog extends javax.swing.JDialog {
         this.txtNewLauncher.putClientProperty("JTextField.placeholderText", "Programmbezeichner");
         ClientSettings settings = ClientSettings.getInstance();
         Properties all = settings.getAllConfigurations();
-        Enumeration keys = all.propertyNames();
+        Enumeration<?> keys = all.propertyNames();
         ArrayList<String> launchers = new ArrayList<>();
-        this.lstLaunchers.setModel(new DefaultListModel<String>());
         while (keys.hasMoreElements()) {
             String key = keys.nextElement().toString();
             if (key.startsWith(CL_PREFIX + ".")) {
-                String launcher = key.substring(13);
+                String launcher = key.substring(CL_PREFIX.length() + 1);
                 launcher = launcher.substring(0, launcher.indexOf('.'));
                 if (!launchers.contains(launcher)) {
                     launchers.add(launcher);
-                    ((DefaultListModel<String>) this.lstLaunchers.getModel()).addElement(launcher);
                 }
             }
         }
-
+        Collections.sort(launchers, String.CASE_INSENSITIVE_ORDER);
+        DefaultListModel<String> model = new DefaultListModel<>();
+        for (String name : launchers) {
+            model.addElement(name);
+        }
+        this.lstLaunchers.setModel(model);
     }
 
     /*
@@ -867,6 +871,8 @@ public class CustomLauncherOptionsDialog extends javax.swing.JDialog {
         jLabel5.setText("Programmbezeichnung:");
 
         jLabel6.setText("Dateiendung:");
+
+        txtExtension.setToolTipText("Durch Komma getrennt können mehrere Dateitypen konfiguriert werden (z.B. pdf,html,jpg)");
 
         chkDefaultLauncher.setSelected(true);
         chkDefaultLauncher.setText("Standardprogramm");
@@ -1235,8 +1241,11 @@ final class ExtensionFilter extends FileFilter {
         }
 
         String fileName = file.getName().toLowerCase();
-        if (fileName.endsWith("." + this.ext)) {
-            return true;
+        String[] exts = this.ext.split("\\s*,\\s*");
+        for (String e : exts) {
+            if (fileName.endsWith("." + e.trim().toLowerCase())) {
+                return true;
+            }
         }
         return false;
     }
