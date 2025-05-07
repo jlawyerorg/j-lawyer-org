@@ -827,12 +827,22 @@ public class PreviewGenerator {
             }
         } else if (DocumentPreview.TYPE_PDF.equals(previewType)) {
             if(this.pdfApi!=null) {
+                byte[] pdfPreviewBytes=null;
+                try {
+                    pdfPreviewBytes=this.pdfApi.convertToPdf(fileName, ServerFileUtils.readFile(fSrcFile));
+                } catch (Exception ex) {
+                    log.error("Could not create Stirling PDF preview for file " + fileName + " with ID " + docId);
+                    return new DocumentPreview("");
+                }
+                if(pdfPreviewBytes==null || pdfPreviewBytes.length==0) {
+                    log.error("Stirling PDF preview for file " + fileName + " with ID " + docId + " is empty!");
+                    return new DocumentPreview("");
+                }
                 try (FileOutputStream fout=new FileOutputStream(dst)) {
-                    byte[] pdfPreviewBytes=this.pdfApi.convertToPdf(fileName, ServerFileUtils.readFile(fSrcFile));
                     fout.write(pdfPreviewBytes);
                     return new DocumentPreview(pdfPreviewBytes);
                 } catch (Exception ex) {
-                    log.error("Could not create PDF preview for file " + fileName + " with ID " + docId);
+                    log.error("Could not store PDF preview for file " + fileName + " with ID " + docId);
                     return new DocumentPreview("");
                 }
             }

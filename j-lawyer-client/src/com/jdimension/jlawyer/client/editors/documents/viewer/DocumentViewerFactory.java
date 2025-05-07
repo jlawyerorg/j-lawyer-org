@@ -745,7 +745,7 @@ public class DocumentViewerFactory {
             ptp.setMaximumSize(new Dimension(width, height));
             ptp.setPreferredSize(new Dimension(width, height));
             try {
-                DocumentPreview txtPreview=previewProvider.getPreview();
+                DocumentPreview txtPreview = previewProvider.getPreview();
                 ptp.showContent(id, txtPreview.getText().getBytes());
             } catch (Exception ex) {
                 ptp.showContent(id, ("FEHLER: " + ex.getMessage()).getBytes());
@@ -870,50 +870,68 @@ public class DocumentViewerFactory {
 //                log.error("could not convert file to PDF: " + fileName, t);
 //            }
         } else if (lFileName.endsWith(".odt") || lFileName.endsWith(".ods")) {
-//            try {
-//                byte[] thumbBytes = null;
-//                ZipInputStream zis
-//                        = new ZipInputStream(new ByteArrayInputStream(content));
-//                //get the zipped file list entry
-//                ZipEntry ze = zis.getNextEntry();
-//
-//                while (ze != null) {
-//
-//                    String thumbName = ze.getName();
-//                    if (thumbName.toLowerCase().endsWith("thumbnail.png")) {
-//                        byte[] buffer = new byte[1024];
-//                        //create all non exists folders
-//                        //else you will hit FileNotFoundException for compressed folder
-//
-//                        ByteArrayOutputStream bos = new ByteArrayOutputStream();
-//
-//                        int len;
-//                        while ((len = zis.read(buffer)) > 0) {
-//                            bos.write(buffer, 0, len);
-//                        }
-//
-//                        bos.close();
-//                        thumbBytes = bos.toByteArray();
-//                        break;
-//                    }
-//
-//                    ze = zis.getNextEntry();
-//                }
-//
-//                zis.closeEntry();
-//                zis.close();
-//
-//                if (thumbBytes != null) {
-//                    GifJpegPngImageWithTextPanel ip = new GifJpegPngImageWithTextPanel(thumbBytes, previewProvider.getPreview().getBytes());
-//                    ip.setSize(width, height);
-//                    ip.setMaximumSize(new Dimension(width, height));
-//                    ip.setPreferredSize(new Dimension(width, height));
-//                    ip.showContent(id, thumbBytes);
-//                    return ip;
-//                }
-//            } catch (Throwable t) {
-//                log.error("Error extracting thumbnail from " + fileName, t);
-//            }
+
+            DocumentPreview docPreview = null;
+            try {
+                docPreview = previewProvider.getPreview();
+            } catch (Exception ex) {
+                log.error(ex);
+                docPreview = new DocumentPreview("FEHLER: " + ex.getMessage());
+            }
+            if (DocumentPreview.TYPE_PDF.equals(docPreview.getPreviewType()) && docPreview.getBytes() != null && docPreview.getBytes().length > 0) {
+                PdfImageScrollingPanel pdfP = new PdfImageScrollingPanel(true, fileName, content, null);
+                pdfP.setSize(new Dimension(width, height));
+                pdfP.setMaximumSize(new Dimension(width, height));
+                pdfP.setPreferredSize(new Dimension(width, height));
+                pdfP.showContent(id, docPreview.getBytes());
+                return pdfP;
+            } else {
+
+                try {
+                    byte[] thumbBytes = null;
+                    ZipInputStream zis
+                            = new ZipInputStream(new ByteArrayInputStream(content));
+                    //get the zipped file list entry
+                    ZipEntry ze = zis.getNextEntry();
+
+                    while (ze != null) {
+
+                        String thumbName = ze.getName();
+                        if (thumbName.toLowerCase().endsWith("thumbnail.png")) {
+                            byte[] buffer = new byte[1024];
+                            //create all non exists folders
+                            //else you will hit FileNotFoundException for compressed folder
+
+                            ByteArrayOutputStream bos = new ByteArrayOutputStream();
+
+                            int len;
+                            while ((len = zis.read(buffer)) > 0) {
+                                bos.write(buffer, 0, len);
+                            }
+
+                            bos.close();
+                            thumbBytes = bos.toByteArray();
+                            break;
+                        }
+
+                        ze = zis.getNextEntry();
+                    }
+
+                    zis.closeEntry();
+                    zis.close();
+
+                    if (thumbBytes != null) {
+                        GifJpegPngImageWithTextPanel ip = new GifJpegPngImageWithTextPanel(thumbBytes, docPreview.getText().getBytes());
+                        ip.setSize(width, height);
+                        ip.setMaximumSize(new Dimension(width, height));
+                        ip.setPreferredSize(new Dimension(width, height));
+                        ip.showContent(id, thumbBytes);
+                        return ip;
+                    }
+                } catch (Throwable t) {
+                    log.error("Error extracting thumbnail from " + fileName, t);
+                }
+            }
         } else if (lFileName.endsWith(".bea")) {
             try {
                 BeaPanel bp = new BeaPanel(id);
@@ -963,12 +981,12 @@ public class DocumentViewerFactory {
         // default / fallback
         DocumentPreview docPreview = null;
         try {
-            docPreview=previewProvider.getPreview();
+            docPreview = previewProvider.getPreview();
         } catch (Exception ex) {
             log.error(ex);
-            docPreview=new DocumentPreview("FEHLER: " + ex.getMessage());
+            docPreview = new DocumentPreview("FEHLER: " + ex.getMessage());
         }
-        if (docPreview.getBytes() != null) {
+        if (docPreview.getBytes() != null && docPreview.getBytes().length > 0) {
             PdfImageScrollingPanel pdfP = new PdfImageScrollingPanel(true, fileName, content, null);
             pdfP.setSize(new Dimension(width, height));
             pdfP.setMaximumSize(new Dimension(width, height));
