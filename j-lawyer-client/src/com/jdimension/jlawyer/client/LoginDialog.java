@@ -755,10 +755,10 @@ public class LoginDialog extends javax.swing.JFrame {
         try {
             InputStream is = LoginDialog.class.getResourceAsStream("/fonts/exo2/exo2-bold.ttf");
             Font font = Font.createFont(Font.TRUETYPE_FONT, is);
-            this.lblCompany.setFont(font.deriveFont(Font.BOLD, 18));
-            this.lblProgress.setFont(font.deriveFont(Font.BOLD, 18));
-            this.lblUser.setFont(font.deriveFont(Font.BOLD, 24));
-            this.lblRole.setFont(font.deriveFont(Font.BOLD, 18));
+            this.lblCompany.setFont(font.deriveFont(Font.BOLD, 16));
+            this.lblProgress.setFont(font.deriveFont(Font.BOLD, 16));
+            this.lblUser.setFont(font.deriveFont(Font.BOLD, 20));
+            this.lblRole.setFont(font.deriveFont(Font.BOLD, 16));
             this.lblFullClientVersion.setText(VersionUtils.getClientVersion());
             this.lblFullClientVersion.setFont(font.deriveFont(Font.BOLD, 48));
             this.lblFullClientVersion.setForeground(DefaultColorTheme.COLOR_LOGO_GREEN);
@@ -1062,8 +1062,6 @@ public class LoginDialog extends javax.swing.JFrame {
         pwPassword = new javax.swing.JPasswordField();
         cmdLogin = new javax.swing.JButton();
         cmbCurrentConnection = new javax.swing.JComboBox<>();
-        lblProgress = new javax.swing.JLabel();
-        jPanel9 = new javax.swing.JPanel();
         progressPanel = new javax.swing.JPanel();
         progress = new JProgressBar() {
             @Override
@@ -1074,6 +1072,7 @@ public class LoginDialog extends javax.swing.JFrame {
                 super.paintComponent(g);
             }
         };
+        lblProgress = new javax.swing.JLabel();
         jPanel11 = new javax.swing.JPanel();
         jPanel12 = new javax.swing.JPanel();
         lblDefaultUserIcon = new javax.swing.JLabel();
@@ -1149,7 +1148,7 @@ public class LoginDialog extends javax.swing.JFrame {
         setTitle("j-lawyer.org Login");
         setIconImage(new ImageIcon(getClass().getResource("/icons/windowicon.png")).getImage());
 
-        jTabbedPane1.setTabPlacement(javax.swing.JTabbedPane.RIGHT);
+        jTabbedPane1.setTabPlacement(javax.swing.JTabbedPane.LEFT);
 
         jPanel1.setOpaque(false);
 
@@ -1191,6 +1190,37 @@ public class LoginDialog extends javax.swing.JFrame {
             }
         });
 
+        progressPanel.setOpaque(false);
+
+        progress.setOpaque(true);
+        progress.setString("                                                          ");
+
+        org.jdesktop.layout.GroupLayout progressPanelLayout = new org.jdesktop.layout.GroupLayout(progressPanel);
+        progressPanel.setLayout(progressPanelLayout);
+        progressPanelLayout.setHorizontalGroup(
+            progressPanelLayout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
+            .add(0, 0, Short.MAX_VALUE)
+            .add(progressPanelLayout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
+                .add(org.jdesktop.layout.GroupLayout.TRAILING, progressPanelLayout.createSequentialGroup()
+                    .addContainerGap()
+                    .add(progress, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                    .addContainerGap()))
+        );
+        progressPanelLayout.setVerticalGroup(
+            progressPanelLayout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
+            .add(0, 17, Short.MAX_VALUE)
+            .add(progressPanelLayout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
+                .add(progressPanelLayout.createSequentialGroup()
+                    .addContainerGap()
+                    .add(progress, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                    .addContainerGap()))
+        );
+
+        lblProgress.setFont(lblProgress.getFont().deriveFont(lblProgress.getFont().getStyle() | java.awt.Font.BOLD, lblProgress.getFont().getSize()+6));
+        lblProgress.setForeground(new java.awt.Color(255, 255, 255));
+        lblProgress.setHorizontalAlignment(javax.swing.SwingConstants.CENTER);
+        lblProgress.setText("jLabel20");
+
         org.jdesktop.layout.GroupLayout jPanel5Layout = new org.jdesktop.layout.GroupLayout(jPanel5);
         jPanel5.setLayout(jPanel5Layout);
         jPanel5Layout.setHorizontalGroup(
@@ -1201,8 +1231,10 @@ public class LoginDialog extends javax.swing.JFrame {
                     .add(pwPassword)
                     .add(cmdLogin, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                     .add(org.jdesktop.layout.GroupLayout.TRAILING, txtUser)
-                    .add(cmbCurrentConnection, 0, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
-                .add(57, 57, 57))
+                    .add(cmbCurrentConnection, 0, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                    .add(progressPanel, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                    .add(lblProgress, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                .addContainerGap(24, Short.MAX_VALUE))
         );
         jPanel5Layout.setVerticalGroup(
             jPanel5Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
@@ -1215,7 +1247,11 @@ public class LoginDialog extends javax.swing.JFrame {
                 .add(pwPassword, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
                 .add(18, 18, 18)
                 .add(cmdLogin)
-                .addContainerGap(18, Short.MAX_VALUE))
+                .addPreferredGap(org.jdesktop.layout.LayoutStyle.UNRELATED)
+                .add(progressPanel, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
+                .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
+                .add(lblProgress, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 36, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
+                .addContainerGap(org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
         );
 
         gridBagConstraints = new java.awt.GridBagConstraints();
@@ -1224,42 +1260,6 @@ public class LoginDialog extends javax.swing.JFrame {
         gridBagConstraints.anchor = java.awt.GridBagConstraints.NORTHWEST;
         gridBagConstraints.insets = new java.awt.Insets(12, 12, 12, 12);
         jPanel7.add(jPanel5, gridBagConstraints);
-
-        lblProgress.setFont(lblProgress.getFont().deriveFont(lblProgress.getFont().getStyle() | java.awt.Font.BOLD, lblProgress.getFont().getSize()+6));
-        lblProgress.setForeground(new java.awt.Color(255, 255, 255));
-        lblProgress.setHorizontalAlignment(javax.swing.SwingConstants.CENTER);
-        lblProgress.setText("jLabel20");
-
-        jPanel9.setOpaque(false);
-        jPanel9.setLayout(new java.awt.GridBagLayout());
-
-        progressPanel.setOpaque(false);
-
-        progress.setOpaque(true);
-        progress.setString("                                                          ");
-
-        org.jdesktop.layout.GroupLayout progressPanelLayout = new org.jdesktop.layout.GroupLayout(progressPanel);
-        progressPanel.setLayout(progressPanelLayout);
-        progressPanelLayout.setHorizontalGroup(
-            progressPanelLayout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
-            .add(0, 0, Short.MAX_VALUE)
-            .add(progressPanelLayout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
-                .add(progressPanelLayout.createSequentialGroup()
-                    .addContainerGap()
-                    .add(progress, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 400, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
-                    .addContainerGap(org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)))
-        );
-        progressPanelLayout.setVerticalGroup(
-            progressPanelLayout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
-            .add(0, 0, Short.MAX_VALUE)
-            .add(progressPanelLayout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
-                .add(org.jdesktop.layout.GroupLayout.TRAILING, progressPanelLayout.createSequentialGroup()
-                    .addContainerGap(org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                    .add(progress, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 5, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
-                    .addContainerGap()))
-        );
-
-        jPanel9.add(progressPanel, new java.awt.GridBagConstraints());
 
         jPanel11.setOpaque(false);
         jPanel11.setLayout(new java.awt.GridBagLayout());
@@ -1317,10 +1317,8 @@ public class LoginDialog extends javax.swing.JFrame {
             .add(jPanel1Layout.createSequentialGroup()
                 .addContainerGap()
                 .add(jPanel1Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
-                    .add(org.jdesktop.layout.GroupLayout.TRAILING, lblProgress, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                    .add(jPanel7, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                    .add(jPanel11, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                    .add(jPanel9, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 987, Short.MAX_VALUE))
+                    .add(jPanel7, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 672, Short.MAX_VALUE)
+                    .add(jPanel11, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
                 .addContainerGap())
         );
         jPanel1Layout.setVerticalGroup(
@@ -1330,17 +1328,12 @@ public class LoginDialog extends javax.swing.JFrame {
                 .add(jPanel11, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
                 .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
                 .add(jPanel7, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
-                .add(18, 18, 18)
-                .add(lblProgress, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 36, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
-                .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
-                .add(jPanel9, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
-                .add(24, 24, 24))
+                .addContainerGap(org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
         );
 
         jTabbedPane1.addTab("Login", jPanel1);
 
         jPanel2.setOpaque(false);
-        jPanel2.setLayout(new java.awt.GridBagLayout());
 
         jPanel6.setOpaque(false);
 
@@ -1577,21 +1570,28 @@ public class LoginDialog extends javax.swing.JFrame {
                 .add(jPanel4, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
                 .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
                 .add(cmdSaveProfile)
-                .addContainerGap())
+                .addContainerGap(org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
         );
 
-        gridBagConstraints = new java.awt.GridBagConstraints();
-        gridBagConstraints.gridx = 0;
-        gridBagConstraints.gridy = 0;
-        gridBagConstraints.ipadx = 309;
-        gridBagConstraints.anchor = java.awt.GridBagConstraints.NORTHWEST;
-        gridBagConstraints.insets = new java.awt.Insets(24, 6, 73, 6);
-        jPanel2.add(jPanel6, gridBagConstraints);
+        org.jdesktop.layout.GroupLayout jPanel2Layout = new org.jdesktop.layout.GroupLayout(jPanel2);
+        jPanel2.setLayout(jPanel2Layout);
+        jPanel2Layout.setHorizontalGroup(
+            jPanel2Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
+            .add(jPanel2Layout.createSequentialGroup()
+                .add(32, 32, 32)
+                .add(jPanel6, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                .addContainerGap())
+        );
+        jPanel2Layout.setVerticalGroup(
+            jPanel2Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
+            .add(org.jdesktop.layout.GroupLayout.TRAILING, jPanel2Layout.createSequentialGroup()
+                .addContainerGap(org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                .add(jPanel6, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE))
+        );
 
         jTabbedPane1.addTab("Profile", jPanel2);
 
         jPanel3.setOpaque(false);
-        jPanel3.setLayout(new java.awt.GridBagLayout());
 
         jPanel8.setOpaque(false);
 
@@ -1689,13 +1689,13 @@ public class LoginDialog extends javax.swing.JFrame {
                 .add(jLabel6)
                 .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
                 .add(jPanel8Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
-                    .add(jPanel8Layout.createSequentialGroup()
-                        .add(txtBoxPassword, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 210, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
-                        .add(18, 18, 18)
-                        .add(boxProgress, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
                     .add(lblBoxOutput, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                     .add(jPanel8Layout.createSequentialGroup()
-                        .add(jPanel8Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
+                        .add(jPanel8Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING, false)
+                            .add(jPanel8Layout.createSequentialGroup()
+                                .add(txtBoxPassword, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 210, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
+                                .add(18, 18, 18)
+                                .add(boxProgress, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
                             .add(jPanel8Layout.createSequentialGroup()
                                 .add(cmdRestore)
                                 .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
@@ -1719,14 +1719,14 @@ public class LoginDialog extends javax.swing.JFrame {
                             .add(jPanel8Layout.createSequentialGroup()
                                 .add(cmdBoxCheck)
                                 .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
-                                .add(jLabel10)))
-                        .add(0, 0, Short.MAX_VALUE))
-                    .add(jPanel8Layout.createSequentialGroup()
-                        .add(cmdScanNetwork)
-                        .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
-                        .add(jLabel15)
-                        .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
-                        .add(txtCurrentHost)))
+                                .add(jLabel10))
+                            .add(jPanel8Layout.createSequentialGroup()
+                                .add(cmdScanNetwork)
+                                .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
+                                .add(jLabel15)
+                                .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
+                                .add(txtCurrentHost, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 350, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)))
+                        .add(0, 0, Short.MAX_VALUE)))
                 .addContainerGap())
         );
         jPanel8Layout.setVerticalGroup(
@@ -1750,15 +1750,15 @@ public class LoginDialog extends javax.swing.JFrame {
                 .add(jPanel8Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING, false)
                     .add(cmdBoxReboot, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                     .add(jLabel13, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 28, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE))
-                .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED, 21, Short.MAX_VALUE)
                 .add(jPanel8Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
                     .add(cmdBoxShutdown)
                     .add(jLabel12, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 30, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE))
-                .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED, 21, Short.MAX_VALUE)
                 .add(jPanel8Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING, false)
                     .add(cmdMgmtConsole, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                     .add(jLabel11, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 28, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE))
-                .add(18, 18, Short.MAX_VALUE)
+                .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED, 33, Short.MAX_VALUE)
                 .add(jPanel8Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
                     .add(cmdRestore)
                     .add(jLabel9, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 30, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE))
@@ -1768,19 +1768,25 @@ public class LoginDialog extends javax.swing.JFrame {
                     .add(jPanel8Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.BASELINE)
                         .add(jLabel15, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 30, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
                         .add(txtCurrentHost, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)))
-                .add(99, 99, 99)
-                .add(lblBoxOutput)
-                .addContainerGap())
+                .add(18, 18, 18)
+                .add(lblBoxOutput))
         );
 
-        gridBagConstraints = new java.awt.GridBagConstraints();
-        gridBagConstraints.gridx = 0;
-        gridBagConstraints.gridy = 0;
-        gridBagConstraints.ipadx = 439;
-        gridBagConstraints.ipady = 12;
-        gridBagConstraints.anchor = java.awt.GridBagConstraints.NORTHWEST;
-        gridBagConstraints.insets = new java.awt.Insets(6, 6, 15, 6);
-        jPanel3.add(jPanel8, gridBagConstraints);
+        org.jdesktop.layout.GroupLayout jPanel3Layout = new org.jdesktop.layout.GroupLayout(jPanel3);
+        jPanel3.setLayout(jPanel3Layout);
+        jPanel3Layout.setHorizontalGroup(
+            jPanel3Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
+            .add(jPanel3Layout.createSequentialGroup()
+                .add(6, 6, 6)
+                .add(jPanel8, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE))
+        );
+        jPanel3Layout.setVerticalGroup(
+            jPanel3Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
+            .add(jPanel3Layout.createSequentialGroup()
+                .add(36, 36, 36)
+                .add(jPanel8, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
+                .addContainerGap(org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+        );
 
         jTabbedPane1.addTab("j-lawyer.BOX ", new javax.swing.ImageIcon(getClass().getResource("/icons/greyled.png")), jPanel3); // NOI18N
 
@@ -1800,7 +1806,6 @@ public class LoginDialog extends javax.swing.JFrame {
         bgPanel.setLayout(bgPanelLayout);
         bgPanelLayout.setHorizontalGroup(
             bgPanelLayout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
-            .add(org.jdesktop.layout.GroupLayout.TRAILING, lblAutoUpdate, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
             .add(bgPanelLayout.createSequentialGroup()
                 .add(8, 8, 8)
                 .add(jTabbedPane1)
@@ -1811,6 +1816,7 @@ public class LoginDialog extends javax.swing.JFrame {
                 .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                 .add(lblLogo)
                 .add(36, 36, 36))
+            .add(org.jdesktop.layout.GroupLayout.TRAILING, lblAutoUpdate, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
         );
         bgPanelLayout.setVerticalGroup(
             bgPanelLayout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
@@ -1819,9 +1825,9 @@ public class LoginDialog extends javax.swing.JFrame {
                 .add(bgPanelLayout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
                     .add(lblLogo)
                     .add(lblFullClientVersion))
-                .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
+                .add(24, 24, 24)
                 .add(jTabbedPane1, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
-                .addPreferredGap(org.jdesktop.layout.LayoutStyle.UNRELATED)
+                .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
                 .add(lblAutoUpdate)
                 .addContainerGap(org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
         );
@@ -1888,16 +1894,6 @@ public class LoginDialog extends javax.swing.JFrame {
 
         box.serviceCheck(lblBoxOutput, boxProgress, this.txtServer.getText());
     }//GEN-LAST:event_cmdBoxCheckActionPerformed
-
-    private void pwPasswordKeyPressed(java.awt.event.KeyEvent evt) {//GEN-FIRST:event_pwPasswordKeyPressed
-        if (evt.getKeyCode() == KeyEvent.VK_ENTER) {
-            this.loginPerformed(true);
-        }
-    }//GEN-LAST:event_pwPasswordKeyPressed
-
-    private void cmdLoginActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdLoginActionPerformed
-        this.loginPerformed(true);
-    }//GEN-LAST:event_cmdLoginActionPerformed
 
     private void loginPerformed(boolean saveProfile) {
         if (launching) {
@@ -2224,10 +2220,6 @@ public class LoginDialog extends javax.swing.JFrame {
         }
     }
 
-    private void cmbCurrentConnectionActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmbCurrentConnectionActionPerformed
-        this.cmbProfile.setSelectedItem(this.cmbCurrentConnection.getSelectedItem());
-    }//GEN-LAST:event_cmbCurrentConnectionActionPerformed
-
     private void txtServerFocusLost(java.awt.event.FocusEvent evt) {//GEN-FIRST:event_txtServerFocusLost
         txtServer.setText(txtServer.getText().trim());
     }//GEN-LAST:event_txtServerFocusLost
@@ -2309,6 +2301,20 @@ public class LoginDialog extends javax.swing.JFrame {
         }
     }//GEN-LAST:event_cmdImportProfileActionPerformed
 
+    private void cmbCurrentConnectionActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmbCurrentConnectionActionPerformed
+        this.cmbProfile.setSelectedItem(this.cmbCurrentConnection.getSelectedItem());
+    }//GEN-LAST:event_cmbCurrentConnectionActionPerformed
+
+    private void cmdLoginActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdLoginActionPerformed
+        this.loginPerformed(true);
+    }//GEN-LAST:event_cmdLoginActionPerformed
+
+    private void pwPasswordKeyPressed(java.awt.event.KeyEvent evt) {//GEN-FIRST:event_pwPasswordKeyPressed
+        if (evt.getKeyCode() == KeyEvent.VK_ENTER) {
+            this.loginPerformed(true);
+        }
+    }//GEN-LAST:event_pwPasswordKeyPressed
+
     private void highlightSecuritySelection() {
         this.rdSecNone.setBackground(new Color(100, 100, 100, 0));
         this.rdSecSsl.setBackground(new Color(100, 100, 100, 0));
@@ -2381,7 +2387,6 @@ public class LoginDialog extends javax.swing.JFrame {
     private javax.swing.JPanel jPanel6;
     private javax.swing.JPanel jPanel7;
     private javax.swing.JPanel jPanel8;
-    private javax.swing.JPanel jPanel9;
     private javax.swing.JTabbedPane jTabbedPane1;
     private javax.swing.JLabel lblAutoUpdate;
     private javax.swing.JLabel lblBoxOutput;
