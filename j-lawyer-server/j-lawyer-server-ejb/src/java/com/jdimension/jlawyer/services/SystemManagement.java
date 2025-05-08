@@ -2021,37 +2021,42 @@ public class SystemManagement implements SystemManagementRemote, SystemManagemen
         String localBaseDir = this.getTemplatesBaseDir(templateType, TreeNodeUtils.buildNodePath(folder));
 
         String read = localBaseDir + File.separator + fileName;
-        
+
         ServerSettingsBean sb = this.settingsFacade.find(ServerSettingsKeys.SERVERCONF_STIRLINGPDF_ENDPOINT);
         StirlingPdfAPI pdfApi = null;
         if (sb != null && !ServerStringUtils.isEmpty(sb.getSettingValue())) {
             pdfApi = new StirlingPdfAPI(sb.getSettingValue(), 5000, 120000);
         }
 
-        if (DocumentPreview.supportsPdfPreview(fileName) && pdfApi!=null) {
-            byte[] pdfPreviewBytes=pdfApi.convertToPdf(fileName, ServerFileUtils.readFile(new File(read)));
-            return new DocumentPreview(pdfPreviewBytes);
-        } else {
-            Tika tika = TikaConfigurator.newTika(fileName);
-            try {
-                Reader r = tika.parse(new File(read));
-                BufferedReader br = new BufferedReader(r);
-                StringWriter sw = new StringWriter();
-                BufferedWriter bw = new BufferedWriter(sw);
-                char[] buffer = new char[1024];
-                int bytesRead = -1;
-                while ((bytesRead = br.read(buffer)) > -1) {
-                    bw.write(buffer, 0, bytesRead);
-                }
-                bw.close();
-                br.close();
-
-                return new DocumentPreview(sw.toString());
-
-            } catch (Throwable t) {
-                log.error("Error creating template preview", t);
+        try {
+            if (DocumentPreview.supportsPdfPreview(fileName) && pdfApi != null) {
+                byte[] pdfPreviewBytes = pdfApi.convertToPdf(fileName, ServerFileUtils.readFile(new File(read)));
+                return new DocumentPreview(pdfPreviewBytes);
             }
+        } catch (Exception ex) {
+            log.error("Error creating PDF preview for document", ex);
         }
+
+        Tika tika = TikaConfigurator.newTika(fileName);
+        try {
+            Reader r = tika.parse(new File(read));
+            BufferedReader br = new BufferedReader(r);
+            StringWriter sw = new StringWriter();
+            BufferedWriter bw = new BufferedWriter(sw);
+            char[] buffer = new char[1024];
+            int bytesRead = -1;
+            while ((bytesRead = br.read(buffer)) > -1) {
+                bw.write(buffer, 0, bytesRead);
+            }
+            bw.close();
+            br.close();
+
+            return new DocumentPreview(sw.toString());
+
+        } catch (Throwable t) {
+            log.error("Error creating template preview", t);
+        }
+
         return new DocumentPreview("");
     }
 

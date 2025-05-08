@@ -1070,34 +1070,37 @@ public class IntegrationService implements IntegrationServiceRemote, Integration
             return new DocumentPreview("");
         }
 
-        
         ServerSettingsBean sb = this.settingsFacade.find(ServerSettingsKeys.SERVERCONF_STIRLINGPDF_ENDPOINT);
         StirlingPdfAPI pdfApi = null;
         if (sb != null && !ServerStringUtils.isEmpty(sb.getSettingValue())) {
             pdfApi = new StirlingPdfAPI(sb.getSettingValue(), 5000, 120000);
         }
 
-        if (DocumentPreview.supportsPdfPreview(fileName) && pdfApi != null) {
-            byte[] pdfPreviewBytes = pdfApi.convertToPdf(fileName, data);
-            return new DocumentPreview(pdfPreviewBytes);
-        } else {
-            Tika tika = TikaConfigurator.newTika(fileName);
-            String result = null;
-            try {
-                try (Reader r = tika.parse(new ByteArrayInputStream(data)); BufferedReader br = new BufferedReader(r); StringWriter sw = new StringWriter(); BufferedWriter bw = new BufferedWriter(sw)) {
-                    char[] buffer = new char[1024];
-                    int bytesRead = -1;
-                    while ((bytesRead = br.read(buffer)) > -1) {
-                        bw.write(buffer, 0, bytesRead);
-                    }
-                    result = sw.toString();
-                }
-
-                return new DocumentPreview(result);
-
-            } catch (Throwable t) {
-                log.error("Error creating document preview", t);
+        try {
+            if (DocumentPreview.supportsPdfPreview(fileName) && pdfApi != null) {
+                byte[] pdfPreviewBytes = pdfApi.convertToPdf(fileName, data);
+                return new DocumentPreview(pdfPreviewBytes);
             }
+        } catch (Exception ex) {
+            log.error("Error creating PDF preview for document", ex);
+        }
+
+        Tika tika = TikaConfigurator.newTika(fileName);
+        String result = null;
+        try {
+            try (Reader r = tika.parse(new ByteArrayInputStream(data)); BufferedReader br = new BufferedReader(r); StringWriter sw = new StringWriter(); BufferedWriter bw = new BufferedWriter(sw)) {
+                char[] buffer = new char[1024];
+                int bytesRead = -1;
+                while ((bytesRead = br.read(buffer)) > -1) {
+                    bw.write(buffer, 0, bytesRead);
+                }
+                result = sw.toString();
+            }
+
+            return new DocumentPreview(result);
+
+        } catch (Throwable t) {
+            log.error("Error creating document preview", t);
         }
 
         return new DocumentPreview("");
@@ -1496,12 +1499,12 @@ public class IntegrationService implements IntegrationServiceRemote, Integration
             if (status.getResponse() != null && AiCapability.REQUESTTYPE_TRANSCRIBE.equals(status.getResponse().getRequestType()) && !status.getResponse().getOutputData().isEmpty()) {
                 for (OutputData od : status.getResponse().getOutputData()) {
                     if (OutputData.TYPE_STRING.equals(od.getType())) {
-                        String outputString=od.getStringData();
+                        String outputString = od.getStringData();
                         for (AssistantReplacement r : this.singleton.getAssistantReplacements()) {
-                            if(r.isCaseInsensitive()) {
-                                outputString=ServerStringUtils.replaceCaseInsensitive(outputString, r.getSearchString(), r.getReplaceWith());
+                            if (r.isCaseInsensitive()) {
+                                outputString = ServerStringUtils.replaceCaseInsensitive(outputString, r.getSearchString(), r.getReplaceWith());
                             } else {
-                                outputString=outputString.replace(r.getSearchString(), r.getReplaceWith());
+                                outputString = outputString.replace(r.getSearchString(), r.getReplaceWith());
                             }
                         }
                         od.setStringData(outputString);
@@ -1513,7 +1516,7 @@ public class IntegrationService implements IntegrationServiceRemote, Integration
         }
         throw new AssistantException("Kein Assistent für diese Anfrage gefunden.");
     }
-    
+
     private static List<ConfigurationData> parseConfiguration(String configString) {
         List<ConfigurationData> configList = new ArrayList<>();
 
