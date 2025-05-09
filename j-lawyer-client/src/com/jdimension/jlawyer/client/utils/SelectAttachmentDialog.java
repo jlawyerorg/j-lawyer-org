@@ -668,8 +668,6 @@ import com.jdimension.jlawyer.client.settings.ClientSettings;
 import com.jdimension.jlawyer.persistence.ArchiveFileDocumentsBean;
 import com.jdimension.jlawyer.services.ArchiveFileServiceRemote;
 import com.jdimension.jlawyer.services.JLawyerServiceLocator;
-import java.awt.Window;
-import java.awt.event.KeyEvent;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -692,13 +690,6 @@ public class SelectAttachmentDialog extends javax.swing.JDialog {
 
     private File[] selectedFiles = null;
     private ArrayList sortedDocs = null;
-
-    
-//    public SelectAttachmentDialog(Window parent, boolean modal, String caseId) {
-//        super(parent);
-//        initComponents();
-//        this.initialize(caseId);
-//    }
     
     public SelectAttachmentDialog(JFrame parent, boolean modal, String caseId) {
         super(parent, modal);

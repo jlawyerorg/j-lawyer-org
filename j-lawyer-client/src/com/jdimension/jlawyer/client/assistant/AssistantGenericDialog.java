@@ -733,7 +733,6 @@ public class AssistantGenericDialog extends javax.swing.JDialog {
     private AppUserBean caseLawyer = null;
     private AppUserBean caseAssistant = null;
     private List<PartiesTriplet> parties = new ArrayList<>();
-    private ArchiveFileBean selectedCase = null;
 
     /**
      * Creates new form GenericAssistantDialog
@@ -769,31 +768,30 @@ public class AssistantGenericDialog extends javax.swing.JDialog {
         this.capability = c;
         this.inputAdapter = inputAdapter;
 
-        this.selectedCase = selectedCase;
-        if (this.selectedCase != null) {
+        if (selectedCase != null) {
             try {
                 ClientSettings settings = ClientSettings.getInstance();
                 JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
 
                 this.allPartyTypes = locator.lookupSystemManagementRemote().getPartyTypes();
                 try {
-                    this.caseAssistant = locator.lookupSystemManagementRemote().getUser(this.selectedCase.getAssistant());
+                    this.caseAssistant = locator.lookupSystemManagementRemote().getUser(selectedCase.getAssistant());
                 } catch (Exception ex) {
                 }
                 try {
-                    this.caseLawyer = locator.lookupSystemManagementRemote().getUser(this.selectedCase.getLawyer());
+                    this.caseLawyer = locator.lookupSystemManagementRemote().getUser(selectedCase.getLawyer());
                 } catch (Exception ex) {
                 }
-                this.formPlaceHolders = locator.lookupFormsServiceRemote().getPlaceHoldersForCase(this.selectedCase.getId());
-                this.formPlaceHolderValues = locator.lookupFormsServiceRemote().getPlaceHolderValuesForCase(this.selectedCase.getId());
+                this.formPlaceHolders = locator.lookupFormsServiceRemote().getPlaceHoldersForCase(selectedCase.getId());
+                this.formPlaceHolderValues = locator.lookupFormsServiceRemote().getPlaceHolderValuesForCase(selectedCase.getId());
 
                 try {
-                    List<ArchiveFileAddressesBean> involved = locator.lookupArchiveFileServiceRemote().getInvolvementDetailsForCase(this.selectedCase.getId(), false);
+                    List<ArchiveFileAddressesBean> involved = locator.lookupArchiveFileServiceRemote().getInvolvementDetailsForCase(selectedCase.getId(), false);
                     for (ArchiveFileAddressesBean aab : involved) {
                         parties.add(new PartiesTriplet(aab.getAddressKey(), aab.getReferenceType(), aab));
                     }
                 } catch (Exception ex) {
-                    log.error("Could not load involvements for case " + this.selectedCase.getId(), ex);
+                    log.error("Could not load involvements for case " + selectedCase.getId(), ex);
                 }
 
             } catch (Exception ex) {

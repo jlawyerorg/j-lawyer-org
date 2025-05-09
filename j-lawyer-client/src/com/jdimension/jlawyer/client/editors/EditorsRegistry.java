@@ -860,13 +860,13 @@ public class EditorsRegistry {
     }
     
     public void registerFrame(JFrame frame) {
-        if(this.mainWindow!=null && this.mainWindow instanceof JKanzleiGUI) {
+        if(this.mainWindow instanceof JKanzleiGUI) {
             ((JKanzleiGUI)this.mainWindow).registerFrame(frame);
         }
     }
 
     public void unregisterFrame(JFrame frame) {
-        if(this.mainWindow!=null && this.mainWindow instanceof JKanzleiGUI) {
+        if(this.mainWindow instanceof JKanzleiGUI) {
             ((JKanzleiGUI)this.mainWindow).unregisterFrame(frame);
         }
     }

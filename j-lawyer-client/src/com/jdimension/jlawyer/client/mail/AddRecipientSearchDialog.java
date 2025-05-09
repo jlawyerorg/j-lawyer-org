@@ -691,12 +691,10 @@ public class AddRecipientSearchDialog extends javax.swing.JDialog {
 
     private static final Logger log = Logger.getLogger(AddRecipientSearchDialog.class.getName());
     private JTextField to = null;
-    private Window parent=null;
     private JComponent nextFocus=null;
 
     public AddRecipientSearchDialog(Window parent, JTextField to, JComponent nextFocus) {
         super(parent);
-        this.parent=parent;
         this.nextFocus=nextFocus;
         this.to = to;
         this.initialize();
@@ -711,7 +709,6 @@ public class AddRecipientSearchDialog extends javax.swing.JDialog {
      */
     public AddRecipientSearchDialog(JDialog parent, boolean modal, JTextField to, JComponent nextFocus) {
         super(parent, modal);
-        this.parent=parent;
         this.nextFocus=nextFocus;
         this.to = to;
         this.initialize();

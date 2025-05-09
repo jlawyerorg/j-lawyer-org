@@ -819,8 +819,6 @@ public abstract class ProgressableAction {
                 }
                 
                 if(succeeded && this.pushToFrontWhenFinished!=null) {
-//                    this.pushToFrontWhenFinished.setAlwaysOnTop(true);
-//                    this.pushToFrontWhenFinished.setAlwaysOnTop(false);
                     this.pushToFrontWhenFinished.toFront();
                     this.pushToFrontWhenFinished.requestFocus();
                 }
