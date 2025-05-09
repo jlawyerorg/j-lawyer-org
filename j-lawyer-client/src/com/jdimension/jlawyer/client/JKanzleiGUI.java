@@ -741,7 +741,7 @@ import themes.colors.DefaultColorTheme;
 public class JKanzleiGUI extends javax.swing.JFrame implements com.jdimension.jlawyer.client.events.EventConsumer {
 
     private static final Logger log = Logger.getLogger(JKanzleiGUI.class.getName());
-    
+
     private static final List<JFrame> openFrames = new ArrayList<>();
 
     private boolean initializing = false;
@@ -760,8 +760,7 @@ public class JKanzleiGUI extends javax.swing.JFrame implements com.jdimension.jl
         initComponents();
 
         this.initializing = false;
-        
-        
+
         this.mnuWindow.addMenuListener(new MenuListener() {
             @Override
             public void menuSelected(MenuEvent e) {
@@ -907,7 +906,7 @@ public class JKanzleiGUI extends javax.swing.JFrame implements com.jdimension.jl
 //            setExtendedState(java.awt.Frame.MAXIMIZED_BOTH);
 //        }
 
-        ClientSettings cs=ClientSettings.getInstance();
+        ClientSettings cs = ClientSettings.getInstance();
         Rectangle lastBounds = null;
         String lastBoundsString = cs.getConfiguration(ClientSettings.CONF_FRAME_BOUNDS, null);
         log.info("restoring windows size (x,y,w,h) to " + lastBoundsString);
@@ -985,7 +984,7 @@ public class JKanzleiGUI extends javax.swing.JFrame implements com.jdimension.jl
             return null;
         }
     }
-    
+
     private void updateWindowMenu() {
 
         if (this.mnuWindow == null) {
@@ -1004,14 +1003,14 @@ public class JKanzleiGUI extends javax.swing.JFrame implements com.jdimension.jl
             }
 
             JMenuItem item = new JMenuItem(title);
-            
+
             // Icon auf 16x16 skalieren
             Image iconImage = tf.getIconImage();
             if (iconImage != null) {
                 Image scaledIcon = iconImage.getScaledInstance(20, 20, Image.SCALE_SMOOTH);
                 item.setIcon(new ImageIcon(scaledIcon));
             }
-            
+
             item.addActionListener(e -> {
                 tf.setVisible(true);
                 tf.toFront();
@@ -1029,7 +1028,7 @@ public class JKanzleiGUI extends javax.swing.JFrame implements com.jdimension.jl
         this.mnuWindow.revalidate();
         this.mnuWindow.repaint();
     }
-    
+
     public void registerFrame(JFrame frame) {
         openFrames.add(frame);
     }
@@ -2290,8 +2289,7 @@ public class JKanzleiGUI extends javax.swing.JFrame implements com.jdimension.jl
         dlg.setVisible(true);
     }//GEN-LAST:event_mnuAddressOptionsSalutationActionPerformed
 
-    private void formWindowClosing(java.awt.event.WindowEvent evt) {//GEN-FIRST:event_formWindowClosing
-
+    private void exitApplication() {
         try {
             if (BeaAccess.hasInstance()) {
                 BeaAccess bea = BeaAccess.getInstance();
@@ -2313,6 +2311,17 @@ public class JKanzleiGUI extends javax.swing.JFrame implements com.jdimension.jl
 
         // check for open timesheet positions
         this.confirmOpenTimesheetPositions();
+
+        // check for open frame windows
+        if (!openFrames.isEmpty()) {
+            int response = JOptionPane.showConfirmDialog(this, "Es sind noch " + openFrames.size() + " Fenster geöffnet - trotzdem schließen?", "Hinweis", JOptionPane.YES_NO_OPTION);
+            if (response != JOptionPane.YES_OPTION) {
+                log.info("user cancelled closing the app because of open frame windows");
+                return;
+            } else {
+                log.info("user closed the app despite open frame windows");
+            }
+        }
 
         // check for open documents
         DocumentObserver observer = DocumentObserver.getInstance();
@@ -2347,6 +2356,11 @@ public class JKanzleiGUI extends javax.swing.JFrame implements com.jdimension.jl
             this.dispose();
             System.exit(0);
         }
+    }
+    
+    private void formWindowClosing(java.awt.event.WindowEvent evt) {//GEN-FIRST:event_formWindowClosing
+
+        this.exitApplication();
 
 
     }//GEN-LAST:event_formWindowClosing
@@ -2368,8 +2382,8 @@ public class JKanzleiGUI extends javax.swing.JFrame implements com.jdimension.jl
 
     private void mnuExitActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_mnuExitActionPerformed
 
-        this.formWindowClosing(null);
-        System.exit(0);
+        this.exitApplication();
+        
     }//GEN-LAST:event_mnuExitActionPerformed
 
     private boolean checkAdmin() {
@@ -3023,7 +3037,7 @@ public class JKanzleiGUI extends javax.swing.JFrame implements com.jdimension.jl
     }//GEN-LAST:event_mnuDocumentTagRulesActionPerformed
 
     private void mnuImportAccountStatementActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_mnuImportAccountStatementActionPerformed
-        ImportBankStatementFrame ibsf=new ImportBankStatementFrame();
+        ImportBankStatementFrame ibsf = new ImportBankStatementFrame();
         FrameUtils.centerFrame(ibsf, EditorsRegistry.getInstance().getMainWindow());
         ibsf.setVisible(true);
     }//GEN-LAST:event_mnuImportAccountStatementActionPerformed
