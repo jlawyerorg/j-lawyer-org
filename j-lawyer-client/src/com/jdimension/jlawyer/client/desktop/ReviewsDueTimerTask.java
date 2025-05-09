@@ -692,6 +692,12 @@ public class ReviewsDueTimerTask extends java.util.TimerTask {
     private boolean ignoreCurrentEditor = false;
     private JTabbedPane eventPane = null;
 
+    private volatile boolean stopped = false;
+
+    public void stop() {
+        stopped = true;
+    }
+
     /**
      * Creates a new instance of ReviewsDueTimerTask
      *
@@ -716,6 +722,9 @@ public class ReviewsDueTimerTask extends java.util.TimerTask {
 
     @Override
     public void run() {
+        if (stopped) {
+            return;
+        }
 
         ArrayList<ReviewDueEntry> entries = new ArrayList<>();
         try {
@@ -731,16 +740,25 @@ public class ReviewsDueTimerTask extends java.util.TimerTask {
             ClientSettings settings = ClientSettings.getInstance();
             JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
 
+            if (stopped) {
+                return;
+            }
             ArchiveFileServiceRemote fileService = locator.lookupArchiveFileServiceRemote();
             CalendarServiceRemote calService = locator.lookupCalendarServiceRemote();
             Collection<ArchiveFileReviewsBean> myNewList = calService.searchReviews(ArchiveFileConstants.REVIEWSTATUS_OPEN, ArchiveFileConstants.REVIEWTYPE_ANY, null, new Date(), 2500);
 
+            if (stopped) {
+                return;
+            }
             String[] relevantUsers = UserSettings.getInstance().getSettingArray(UserSettings.CONF_DESKTOP_LASTFILTERUSERS, new String[]{UserSettings.getInstance().getCurrentUser().getPrincipalId()});
             List<String> relevantUsersList = Arrays.asList(relevantUsers);
 
             if (myNewList != null) {
 
                 for (ArchiveFileReviewsBean ar : myNewList) {
+                    if (stopped) {
+                        return;
+                    }
 
                     if (!StringUtils.isEmpty(ar.getAssignee()) && !relevantUsersList.contains(ar.getAssignee())) {
                         continue;
@@ -774,6 +792,9 @@ public class ReviewsDueTimerTask extends java.util.TimerTask {
                 }
             }
 
+            if (stopped) {
+                return;
+            }
             Collections.sort(entries, (ReviewDueEntry arg1, ReviewDueEntry arg2) -> {
                 Date d1 = arg1.getDue();
                 Date d2 = arg2.getDue();
@@ -810,6 +831,9 @@ public class ReviewsDueTimerTask extends java.util.TimerTask {
             return;
         }
 
+        if (stopped) {
+            return;
+        }
         final ArrayList<ReviewDueEntry> list = entries;
         try {
 
@@ -821,6 +845,9 @@ public class ReviewsDueTimerTask extends java.util.TimerTask {
             log.error(t);
         }
 
+        if (stopped) {
+            return;
+        }
         try {
             SwingUtilities.invokeLater(
                     new Runnable() {
@@ -835,6 +862,7 @@ public class ReviewsDueTimerTask extends java.util.TimerTask {
 
                     int maxCount = Math.min(list.size(), 200);
                     for (int k = 0; k < maxCount; k++) {
+                        if (stopped) return;
                         try {
                             ReviewDueEntryPanelTransparent ep = new ReviewDueEntryPanelTransparent();
 
@@ -884,6 +912,7 @@ public class ReviewsDueTimerTask extends java.util.TimerTask {
                 private void addEntryToTab(String eventTypeName, ReviewDueEntryPanelTransparent ep) {
 
                     for (int i = 0; i < eventPane.getTabCount(); i++) {
+                        if (stopped) return;
                         if (eventPane.getTitleAt(i).equals(eventTypeName)) {
                             JScrollPane sp = (JScrollPane) eventPane.getComponentAt(i);
                             JViewport p = (JViewport) sp.getComponent(0);

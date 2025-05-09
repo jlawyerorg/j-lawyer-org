@@ -704,6 +704,12 @@ public class TaggedTimerTask extends java.util.TimerTask {
     private JButton tagMenu = null;
     private JButton tagDocumentMenu = null;
     private JTabbedPane tagsPane = null;
+    
+    private volatile boolean stopped = false;
+
+    public void stop() {
+        stopped = true;
+    }
 
     /**
      * Creates a new instance of SystemStateTimerTask
@@ -809,6 +815,8 @@ public class TaggedTimerTask extends java.util.TimerTask {
 
         running = true;
         
+        if (stopped) return;
+        
         String selectedTabTitle=null;
         if(this.tagsPane.getSelectedIndex()>-1)
             selectedTabTitle=this.tagsPane.getTitleAt(this.tagsPane.getSelectedIndex());
@@ -829,9 +837,16 @@ public class TaggedTimerTask extends java.util.TimerTask {
             ClientSettings settings = ClientSettings.getInstance();
             JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
 
+            if (stopped) return;
             UserSettings.getInstance().migrateFrom(settings, UserSettings.CONF_DESKTOP_LASTFILTERTAG);
+            
+            if (stopped) return;
             lastFilterTags = UserSettings.getInstance().getSettingArray(UserSettings.CONF_DESKTOP_LASTFILTERTAG, new String[]{""});
+            
+            if (stopped) return;
             List<String> caseTagsInUse = settings.getArchiveFileTagsInUse();
+            
+            if (stopped) return;
             AppOptionGroupBean[] allCaseTags = settings.getArchiveFileTagDtos();
             List<String> allCaseTagsAsString = new ArrayList<>();
             for (AppOptionGroupBean aog : allCaseTags) {
@@ -842,13 +857,20 @@ public class TaggedTimerTask extends java.util.TimerTask {
                     allCaseTagsAsString.add(t);
                 }
             }
+            
+            if (stopped) return;
             if (this.rebuildPopup && !(this.popTags.isVisible())) {
                 UserSettings.getInstance().migrateFrom(settings, UserSettings.CONF_DESKTOP_LASTFILTERTAG);
                 this.buildPopup(this.tagMenu, this.popTags, allCaseTagsAsString, lastFilterTags, UserSettings.CONF_DESKTOP_LASTFILTERTAG);
             }
 
+            if (stopped) return;
             UserSettings.getInstance().migrateFrom(settings, UserSettings.CONF_DESKTOP_LASTFILTERDOCUMENTTAG);
+            
+            if (stopped) return;
             lastFilterDocumentTags = UserSettings.getInstance().getSettingArray(UserSettings.CONF_DESKTOP_LASTFILTERDOCUMENTTAG, new String[]{""});
+            
+            if (stopped) return;
             List<String> docTagsInUse = settings.getDocumentTagsInUse();
             AppOptionGroupBean[] allDocTags = settings.getDocumentTagDtos();
             List<String> allDocTagsAsString = new ArrayList<>();
@@ -860,6 +882,8 @@ public class TaggedTimerTask extends java.util.TimerTask {
                     allDocTagsAsString.add(t);
                 }
             }
+            
+            if (stopped) return;
             if (this.rebuildPopup && !(this.popDocumentTags.isVisible())) {
                 UserSettings.getInstance().migrateFrom(settings, UserSettings.CONF_DESKTOP_LASTFILTERDOCUMENTTAG);
                 this.buildPopup(this.tagDocumentMenu, this.popDocumentTags, allDocTagsAsString, lastFilterDocumentTags, UserSettings.CONF_DESKTOP_LASTFILTERDOCUMENTTAG);
@@ -882,6 +906,8 @@ public class TaggedTimerTask extends java.util.TimerTask {
             ArchiveFileServiceRemote fileService = locator.lookupArchiveFileServiceRemote();
 
             myNewList = fileService.getTagged(lastFilterTags, null, 1000);
+            
+            if (stopped) return;
             UserSettings.getInstance().migrateFrom(settings, UserSettings.CONF_DESKTOP_ONLYMYTAGGED);
             String temp = UserSettings.getInstance().getSetting(UserSettings.CONF_DESKTOP_ONLYMYTAGGED, "false");
             if ("true".equalsIgnoreCase(temp)) {
@@ -896,12 +922,14 @@ public class TaggedTimerTask extends java.util.TimerTask {
                 myNewList = filteredList;
             }
 
+            if (stopped) return;
             ArrayList<String> myNewListIds = new ArrayList<>();
             for (ArchiveFileBean a : myNewList) {
                 myNewListIds.add(a.getId());
             }
             tags = fileService.getTags(myNewListIds);
 
+            if (stopped) return;
             myNewDocumentList = fileService.getTaggedDocuments(lastFilterDocumentTags, 1000);
             if ("true".equalsIgnoreCase(temp)) {
                 String principalId = UserSettings.getInstance().getCurrentUser().getPrincipalId();
@@ -915,6 +943,7 @@ public class TaggedTimerTask extends java.util.TimerTask {
                 myNewDocumentList = filteredDocumentList;
             }
 
+            if (stopped) return;
             ArrayList<String> myNewDocumentListIds = new ArrayList<>();
             for (ArchiveFileDocumentsBean d : myNewDocumentList) {
                 myNewDocumentListIds.add(d.getId());
@@ -946,6 +975,8 @@ public class TaggedTimerTask extends java.util.TimerTask {
             final String[] caseTags = lastFilterTags.clone();
             final String[] docTags = lastFilterDocumentTags.clone();
             final String reselectTabWithTitle=selectedTabTitle;
+            
+            if (stopped) return;
             SwingUtilities.invokeAndWait(
                     new Runnable() {
                         @Override
@@ -965,6 +996,9 @@ public class TaggedTimerTask extends java.util.TimerTask {
                             List<String> allTags = new ArrayList<>();
                             ListMultimap<String, TaggedEntryPanelTransparent> tagToTep = ArrayListMultimap.create();
                             for (ArchiveFileBean aFile : l1) {
+                                
+                                if (stopped) return;
+                                
                                 TaggedEntryPanelTransparent ep = new TaggedEntryPanelTransparent();
 
                                 TaggedEntry te = new TaggedEntry();
@@ -1006,6 +1040,9 @@ public class TaggedTimerTask extends java.util.TimerTask {
                             }
 
                             for (ArchiveFileDocumentsBean aDoc : l2) {
+                                
+                                if (stopped) return;
+                                
                                 TaggedEntryPanelTransparent ep = new TaggedEntryPanelTransparent();
                                 TaggedEntry te = new TaggedEntry();
                                 te.setFileNumber(aDoc.getArchiveFileKey().getFileNumber());

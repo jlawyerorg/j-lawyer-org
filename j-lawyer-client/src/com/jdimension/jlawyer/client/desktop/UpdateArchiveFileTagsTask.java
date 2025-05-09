@@ -687,6 +687,12 @@ public class UpdateArchiveFileTagsTask extends java.util.TimerTask {
     private static final Logger log = Logger.getLogger(UpdateArchiveFileTagsTask.class.getName());
     private Component owner;
     private QuickArchiveFileSearchPanel p1;
+    
+    private volatile boolean stopped = false;
+
+    public void stop() {
+        stopped = true;
+    }
 
     /**
      * Creates a new instance of UpdateArchiveFileTagsTask
@@ -702,18 +708,26 @@ public class UpdateArchiveFileTagsTask extends java.util.TimerTask {
 
     @Override
     public void run() {
+        if (stopped) return;
+        
         final List<String> tagsInUse2;
         try {
             ClientSettings settings = ClientSettings.getInstance();
             JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
 
+            if (stopped) return;
             ArchiveFileServiceRemote fileService = locator.lookupArchiveFileServiceRemote();
             SystemManagementRemote sys = locator.lookupSystemManagementRemote();
+            
+            if (stopped) return;
             AppOptionGroupBean[] tagDtos = sys.getOptionGroup(OptionConstants.OPTIONGROUP_ARCHIVEFILETAGS);
             settings.setArchiveFileTagDtos(tagDtos);
+            
+            if (stopped) return;
             EventBroker eb=EventBroker.getInstance();
             eb.publishEvent(new AllCaseTagsEvent(tagDtos));
 
+            if (stopped) return;
             List<String> tagsInUse = fileService.searchTagsInUse();
             settings.setArchiveFileTagsInUse(tagsInUse);
 
@@ -733,6 +747,7 @@ public class UpdateArchiveFileTagsTask extends java.util.TimerTask {
         }
 
         try {
+            if (stopped) return;
             SwingUtilities.invokeLater(() -> {
                 p1.populateTags(tagsInUse2);
 

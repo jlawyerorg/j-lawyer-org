@@ -1128,11 +1128,22 @@ public class MessagingCenterPanel extends javax.swing.JPanel implements Themeabl
         if (messagingEnabled) {
             this.timer.cancel();
             this.timer = new Timer();
-            TimerTask instantMessagesTask = new MessagePollingTimerTask(latestMessage);
+            MessagePollingTimerTask instantMessagesTask = new MessagePollingTimerTask(latestMessage);
             this.timer.schedule(instantMessagesTask, 4300, 1000);
 
-            TimerTask openMentionsTask = new OpenMessageMentionsTimerTask();
+            OpenMessageMentionsTimerTask openMentionsTask = new OpenMessageMentionsTimerTask();
             this.timer.schedule(openMentionsTask, 6300, 30000);
+            
+            Runtime.getRuntime().addShutdownHook(new Thread(() -> {
+            try {
+                log.info("shutting down MessagePollingTimerTask and OpenMessageMentionsTimerTask");
+                instantMessagesTask.stop();
+                openMentionsTask.stop();
+                this.timer.cancel();
+            } catch (Throwable t) {
+                log.error("Error shutting down timer", t);
+            }
+        }));
         }
     }
 

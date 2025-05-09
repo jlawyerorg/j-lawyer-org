@@ -856,12 +856,29 @@ public class ScannerPanel extends javax.swing.JPanel implements ThemeableEditor,
         this.splitTop.setDividerLocation(0.5d);
 
         Timer timer = new Timer();
-        TimerTask scannerTask = new ScannerDocumentsTimerTask(false);
+        ScannerDocumentsTimerTask scannerTask = new ScannerDocumentsTimerTask(false);
         timer.schedule(scannerTask, 6500, 15000);
 
         Timer timer2 = new Timer();
-        TimerTask scannerUploadsTask = new ScannerLocalDocumentsUploadTimerTask();
+        ScannerLocalDocumentsUploadTimerTask scannerUploadsTask = new ScannerLocalDocumentsUploadTimerTask();
         timer2.schedule(scannerUploadsTask, 9500, 15000);
+        
+        Runtime.getRuntime().addShutdownHook(new Thread(() -> {
+            try {
+                log.info("shutting down ScannerDocumentsTimerTask");
+                scannerTask.stop();
+                timer.cancel();
+            } catch (Throwable t) {
+                log.error("Error shutting down timer", t);
+            }
+            try {
+                log.info("shutting down ScannerLocalDocumentsUploadTimerTask");
+                scannerUploadsTask.stop();
+                timer2.cancel();
+            } catch (Throwable t) {
+                log.error("Error shutting down timer", t);
+            }
+        }));
 
         ComponentUtils.restoreSplitPane(this.splitTop, this.getClass(), "splitTop");
         ComponentUtils.restoreSplitPane(this.splitContainer, this.getClass(), "splitContainer");

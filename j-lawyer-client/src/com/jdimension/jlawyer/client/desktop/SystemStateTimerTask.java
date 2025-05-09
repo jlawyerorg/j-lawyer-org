@@ -696,6 +696,12 @@ public class SystemStateTimerTask extends java.util.TimerTask {
     private final JLabel voipLabel;
     private final JLabel assistantLabel;
     
+    private volatile boolean stopped = false;
+
+    public void stop() {
+        stopped = true;
+    }
+    
     /** Creates a new instance of SystemStateTimerTask
      * @param owner
      * @param addressCountLabel
@@ -717,6 +723,8 @@ public class SystemStateTimerTask extends java.util.TimerTask {
 
     @Override
     public void run() {
+        if (stopped) return;
+        
         int addressCount=0;
         int archiveFileCount=0;
         int archiveFileArchivedCount=0;
@@ -725,25 +733,31 @@ public class SystemStateTimerTask extends java.util.TimerTask {
             ClientSettings settings=ClientSettings.getInstance();
             JLawyerServiceLocator locator=JLawyerServiceLocator.getInstance(settings.getLookupProperties());
             
+            if (stopped) return;
             AddressServiceRemote addressService = locator.lookupAddressServiceRemote();
             addressCount=addressService.getAddressCount();
             ThreadUtils.updateLabel(this.addressCountLabel, "" + addressCount, "" + addressCount + " Adressen");
             
+            if (stopped) return;
             ArchiveFileServiceRemote fileService = locator.lookupArchiveFileServiceRemote();
             archiveFileCount=fileService.getArchiveFileCount();
             ThreadUtils.updateLabel(this.archiveFileCountLabel, "" + archiveFileCount, "" + archiveFileCount + " Akten");
             
+            if (stopped) return;
             archiveFileArchivedCount=fileService.getArchiveFileArchivedCount();
             ThreadUtils.updateLabel(this.archiveFileArchivedLabel, "" + archiveFileArchivedCount, "" + archiveFileArchivedCount + " Akten im Archiv");
             
+            if (stopped) return;
             docCount=fileService.getDocumentCount();
             ThreadUtils.updateLabel(this.documentLabel, "" + docCount, "" + docCount + " Dokumente");
             
+            if (stopped) return;
             VoipServiceRemote voipService=locator.lookupVoipServiceRemote();
             BalanceInformation bi=voipService.getBalance();
             NumberFormat nf=NumberFormat.getCurrencyInstance();
             ThreadUtils.updateLabel(voipLabel, nf.format(bi.getTotal()));
             
+            if (stopped) return;
             IntegrationServiceRemote integrationService=locator.lookupIntegrationServiceRemote();
             Map<AssistantConfig,AiUser> userInfos=integrationService.getAssistantUserInformation();
             StringBuilder sb=new StringBuilder();
@@ -755,6 +769,7 @@ public class SystemStateTimerTask extends java.util.TimerTask {
             }
             ThreadUtils.updateLabel(assistantLabel, "" + totalTokens, sb.toString());
             
+            if (stopped) return;
             if(this.owner instanceof DesktopPanel) {
                 SwingUtilities.invokeLater(() -> {
                     try {

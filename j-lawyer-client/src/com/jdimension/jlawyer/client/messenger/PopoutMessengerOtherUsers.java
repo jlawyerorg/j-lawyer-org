@@ -663,9 +663,6 @@ For more information on this, and how to apply and follow the GNU AGPL, see
  */
 package com.jdimension.jlawyer.client.messenger;
 
-import com.jdimension.jlawyer.client.configuration.UserListCellRenderer;
-import com.jdimension.jlawyer.client.desktop.ReviewsDueTimerTask;
-import com.jdimension.jlawyer.client.editors.files.OptionsComboBoxModel;
 import com.jdimension.jlawyer.client.events.Event;
 import com.jdimension.jlawyer.client.events.EventBroker;
 import com.jdimension.jlawyer.client.events.EventConsumer;
@@ -687,7 +684,6 @@ import java.awt.event.AdjustmentListener;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
-import java.util.TimerTask;
 import javax.swing.BoxLayout;
 import javax.swing.JCheckBoxMenuItem;
 import javax.swing.JPanel;

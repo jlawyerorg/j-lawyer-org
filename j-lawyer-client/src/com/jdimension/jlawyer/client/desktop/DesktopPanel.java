@@ -728,6 +728,13 @@ public class DesktopPanel extends javax.swing.JPanel implements ThemeableEditor,
     
     private transient Timer reviewsTimer=null;
     private transient Timer lastChangedTimer=null;
+    
+    private UpdateArchiveFileTagsTask tagsTask=null;
+    private transient Timer timer9=null;
+    private UpdateAddressTagsTask tagsTask2=null;
+    private transient Timer timer10=null;
+    private UpdateDocumentTagsTask tagsTask3=null;
+    private transient Timer timer11=null;
 
     /**
      * Creates new form MainPanel
@@ -806,49 +813,49 @@ public class DesktopPanel extends javax.swing.JPanel implements ThemeableEditor,
         this.buildUsersPopup();
         
         Timer timer1 = new Timer();
-        TimerTask systemStateTask = new SystemStateTimerTask(this, this.lblAddressCount, this.lblArchiveFileCount, this.lblArchiveFileArchivedCount, this.lblDocumentCount, this.lblVoipBalance, this.lblAssistant);
+        SystemStateTimerTask systemStateTask = new SystemStateTimerTask(this, this.lblAddressCount, this.lblArchiveFileCount, this.lblArchiveFileArchivedCount, this.lblDocumentCount, this.lblVoipBalance, this.lblAssistant);
         timer1.schedule(systemStateTask, 5000, 1800000);
 
         BoxLayout boxLayout=new BoxLayout(this.pnlLastChanged, BoxLayout.Y_AXIS);
         this.pnlLastChanged.setLayout(boxLayout);
         this.lastChangedTimer = new Timer();
-        TimerTask lastChangedTask = new LastChangedTimerTask(this, this.pnlLastChanged, this.jSplitPane1);
+        LastChangedTimerTask lastChangedTask = new LastChangedTimerTask(this, this.pnlLastChanged, this.jSplitPane1);
         this.lastChangedTimer.schedule(lastChangedTask, 1000, 15l*59000l);
 
         Timer timer3 = new Timer();
-        TimerTask autoUpdateTask = new AutoUpdateTimerTask(this);
+        AutoUpdateTimerTask autoUpdateTask = new AutoUpdateTimerTask(this);
         timer3.schedule(autoUpdateTask, 20000, 24l * 60l * 60l * 1000l);
 
         this.reviewsTimer = new Timer();
-        TimerTask revDueTask = new ReviewsDueTimerTask(this, this.tabPaneDue, this.pnlRevDue, this.jSplitPane1);
+        ReviewsDueTimerTask revDueTask = new ReviewsDueTimerTask(this, this.tabPaneDue, this.pnlRevDue, this.jSplitPane1);
         reviewsTimer.schedule(revDueTask, 1000, 15l*61000l);
 
         BoxLayout boxLayout2=new BoxLayout(this.pnlTagged, BoxLayout.Y_AXIS);
         this.pnlTagged.setLayout(boxLayout2);
         Timer timer5 = new Timer();
-        TimerTask taggedTask = new TaggedTimerTask(this, this.tabPaneTagged, this.pnlTagged, this.jSplitPane2, this.cmdTagFilter, this.cmdDocumentTagFilter, this.popTagFilter, this.popDocumentTagFilter);
+        TaggedTimerTask taggedTask = new TaggedTimerTask(this, this.tabPaneTagged, this.pnlTagged, this.jSplitPane2, this.cmdTagFilter, this.cmdDocumentTagFilter, this.popTagFilter, this.popDocumentTagFilter);
         timer5.schedule(taggedTask, 1000, 3l*63000l);
 
         Timer timer6 = new Timer();
-        TimerTask docObserverTask = new DocumentObserverTask();
+        DocumentObserverTask docObserverTask = new DocumentObserverTask();
         timer6.schedule(docObserverTask, 5000, DocumentObserverTask.getDefaultInterval());
         
         Timer timer7 = new Timer();
-        TimerTask beaCheckTask=new BeaCheckTimerTask();
+        BeaCheckTimerTask beaCheckTask=new BeaCheckTimerTask();
         // perform every 9,75mins - to keep session alive
         timer7.schedule(beaCheckTask, 2500,585000);
         
         try {
-            Timer timer9 = new Timer();
-            TimerTask tagsTask = new UpdateArchiveFileTagsTask(this, (EditArchiveFilePanel) EditorsRegistry.getInstance().getEditor(EditArchiveFilePanel.class.getName()));
+            timer9 = new Timer();
+            tagsTask = new UpdateArchiveFileTagsTask(this, (EditArchiveFilePanel) EditorsRegistry.getInstance().getEditor(EditArchiveFilePanel.class.getName()));
             timer9.schedule(tagsTask, 4500, 180000);
 
-            Timer timer10 = new Timer();
-            TimerTask tagsTask2 = new UpdateAddressTagsTask(this, (EditAddressPanel) EditorsRegistry.getInstance().getEditor(EditAddressPanel.class.getName()));
+            timer10 = new Timer();
+            tagsTask2 = new UpdateAddressTagsTask(this, (EditAddressPanel) EditorsRegistry.getInstance().getEditor(EditAddressPanel.class.getName()));
             timer10.schedule(tagsTask2, 5500, 180000);
             
-            Timer timer11 = new Timer();
-            TimerTask tagsTask3 = new UpdateDocumentTagsTask(this, (EditArchiveFilePanel) EditorsRegistry.getInstance().getEditor(EditArchiveFilePanel.class.getName()));
+            timer11 = new Timer();
+            tagsTask3 = new UpdateDocumentTagsTask(this, (EditArchiveFilePanel) EditorsRegistry.getInstance().getEditor(EditArchiveFilePanel.class.getName()));
             timer11.schedule(tagsTask3, 6500, 180000);
         } catch (Throwable t) {
             log.error("Could not set up timer task for automatic tag updates", t);
@@ -866,6 +873,87 @@ public class DesktopPanel extends javax.swing.JPanel implements ThemeableEditor,
             }   
         };
         timer12.schedule(fileChooserPreload, 7500);
+        
+        
+        Runtime.getRuntime().addShutdownHook(new Thread(() -> {
+            try {
+                log.info("shutting down SystemStateTimerTask");
+                systemStateTask.stop();
+                timer1.cancel();
+            } catch (Throwable t) {
+                log.error("Error shutting down timer", t);
+            }
+            try {
+                log.info("shutting down LastChangedTimerTask");
+                lastChangedTask.stop();
+                this.lastChangedTimer.cancel();
+            } catch (Throwable t) {
+                log.error("Error shutting down timer", t);
+            }
+            try {
+                log.info("shutting down AutoUpdateTimerTask");
+                autoUpdateTask.stop();
+                timer3.cancel();
+            } catch (Throwable t) {
+                log.error("Error shutting down timer", t);
+            }
+            try {
+                log.info("shutting down ReviewsDueTimerTask");
+                revDueTask.stop();
+                reviewsTimer.cancel();
+            } catch (Throwable t) {
+                log.error("Error shutting down timer", t);
+            }
+            try {
+                log.info("shutting down TaggedTimerTask");
+                taggedTask.stop();
+                timer5.cancel();
+            } catch (Throwable t) {
+                log.error("Error shutting down timer", t);
+            }
+            try {
+                log.info("shutting down DocumentObserverTask");
+                docObserverTask.stop();
+                timer6.cancel();
+            } catch (Throwable t) {
+                log.error("Error shutting down timer", t);
+            }
+            try {
+                log.info("shutting down BeaCheckTimerTask");
+                beaCheckTask.stop();
+                timer7.cancel();
+            } catch (Throwable t) {
+                log.error("Error shutting down timer", t);
+            }
+            try {
+                log.info("shutting down UpdateArchiveFileTagsTask");
+                if(tagsTask!=null) tagsTask.stop();
+                if(timer9!=null) timer9.cancel();
+            } catch (Throwable t) {
+                log.error("Error shutting down timer", t);
+            }
+            try {
+                log.info("shutting down UpdateAddressTagsTask");
+                if(tagsTask2!=null) tagsTask2.stop();
+                if(timer10!=null) timer10.cancel();
+            } catch (Throwable t) {
+                log.error("Error shutting down timer", t);
+            }
+            try {
+                log.info("shutting down UpdateDocumentTagsTask");
+                if(tagsTask3!=null) tagsTask3.stop();
+                if(timer11!=null) timer11.cancel();
+            } catch (Throwable t) {
+                log.error("Error shutting down timer", t);
+            }
+            try {
+                log.info("shutting down JFileChooser preloader task");
+                timer12.cancel();
+            } catch (Throwable t) {
+                log.error("Error shutting down timer", t);
+            }
+        }));
+        
 
         this.jSplitPane1.setDividerLocation(0.5d);
         

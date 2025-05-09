@@ -689,6 +689,12 @@ public class LastChangedTimerTask extends java.util.TimerTask {
     private JPanel resultUI;
     private JSplitPane split;
     private boolean ignoreCurrentEditor = false;
+    
+    private volatile boolean stopped = false;
+
+    public void stop() {
+        stopped = true;
+    }
 
     /**
      * Creates a new instance of LastChangedTimerTask
@@ -711,6 +717,8 @@ public class LastChangedTimerTask extends java.util.TimerTask {
     @Override
     public void run() {
 
+        if (stopped) return;
+        
         List<ArchiveFileBean> myNewList = new ArrayList<>();
         List<ArchiveFileBean> filteredList = new ArrayList<>();
         HashMap<String, List<ArchiveFileTagsBean>> tags = new HashMap<>();
@@ -727,14 +735,17 @@ public class LastChangedTimerTask extends java.util.TimerTask {
             ClientSettings settings = ClientSettings.getInstance();
             JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
 
+            if (stopped) return;
             ArchiveFileServiceRemote fileService = locator.lookupArchiveFileServiceRemote();
             myNewList = fileService.getLastChanged(50);
 
+            if (stopped) return;
             UserSettings.getInstance().migrateFrom(settings, UserSettings.CONF_DESKTOP_ONLYMYCASES);
             String temp = UserSettings.getInstance().getSetting(UserSettings.CONF_DESKTOP_ONLYMYCASES, "false");
             if ("true".equalsIgnoreCase(temp)) {
                 String principalId = UserSettings.getInstance().getCurrentUser().getPrincipalId();
                 for (ArchiveFileBean x : myNewList) {
+                    if (stopped) return;
                     if (principalId.equalsIgnoreCase(x.getLawyer()) || principalId.equalsIgnoreCase(x.getAssistant())) {
                         filteredList.add(x);
 
@@ -743,7 +754,9 @@ public class LastChangedTimerTask extends java.util.TimerTask {
                 myNewList = filteredList;
             }
 
+            if (stopped) return;
             for (ArchiveFileBean a : myNewList) {
+                if (stopped) return;
                 Collection<ArchiveFileTagsBean> xTags = fileService.getTags(a.getId());
                 tags.put(a.getId(), (List<ArchiveFileTagsBean>) xTags);
             }
@@ -765,6 +778,7 @@ public class LastChangedTimerTask extends java.util.TimerTask {
                 int i = 0;
                 for (ArchiveFileBean aFile : l1) {
 
+                    if (stopped) return;
                     LastChangedEntryPanelTransparent ep = new LastChangedEntryPanelTransparent();
                     LastChangedEntry lce = new LastChangedEntry();
                     lce.setFileNumber(aFile.getFileNumber());

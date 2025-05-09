@@ -678,6 +678,12 @@ public class TimesheetsTimerTask extends java.util.TimerTask {
 
     private static final Logger log = Logger.getLogger(TimesheetsTimerTask.class.getName());
     private String principal = null;
+    
+    private volatile boolean stopped = false;
+
+    public void stop() {
+        stopped = true;
+    }
 
     /**
      * Creates a new instance of TimesheetsTimerTask
@@ -689,11 +695,15 @@ public class TimesheetsTimerTask extends java.util.TimerTask {
 
     @Override
     public void run() {
+        if (stopped) return;
         try {
             ClientSettings settings = ClientSettings.getInstance();
             JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
+            
+            if (stopped) return;
             int openPositions = locator.lookupArchiveFileServiceRemote().hasOpenTimesheetPositions(principal);
 
+            if (stopped) return;
             OpenTimesheetPositionsEvent e = new OpenTimesheetPositionsEvent(principal, openPositions);
             EventBroker eb = EventBroker.getInstance();
             eb.publishEvent(e);

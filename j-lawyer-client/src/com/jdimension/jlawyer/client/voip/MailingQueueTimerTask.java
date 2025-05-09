@@ -685,6 +685,12 @@ public class MailingQueueTimerTask extends java.util.TimerTask {
 
     private FaxQueueBean lastFailedFax = null;
     private EpostQueueBean lastFailedLetter = null;
+    
+    private volatile boolean stopped = false;
+
+    public void stop() {
+        stopped = true;
+    }
 
     /**
      * Creates a new instance of MailingQueueTimerTask
@@ -696,13 +702,17 @@ public class MailingQueueTimerTask extends java.util.TimerTask {
 
     @Override
     public void run() {
+        if (stopped) return;
         try {
             ClientSettings settings = ClientSettings.getInstance();
             JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
             SingletonServiceRemote singleton = locator.lookupSingletonServiceRemote();
             EventBroker eb = EventBroker.getInstance();
             
+            if (stopped) return;
             FaxQueueBean failed = singleton.getFailedFax();
+            
+            if (stopped) return;
             if (failed != null) {
                 if (lastFailedFax != null) {
                     if (!failed.equals(lastFailedFax)) {
@@ -717,6 +727,7 @@ public class MailingQueueTimerTask extends java.util.TimerTask {
             }
             this.lastFailedFax = failed;
             
+            if (stopped) return;
             EpostQueueBean failed2 = singleton.getFailedLetter();
             if (failed2 != null) {
                 if (lastFailedLetter != null) {
@@ -735,18 +746,23 @@ public class MailingQueueTimerTask extends java.util.TimerTask {
             // combine the two lists for sipgate and epost into one
             ArrayList<MailingQueueEntry> mq=new ArrayList<>();
             
+            if (stopped) return;
             ArrayList<FaxQueueBean> faxQueue = singleton.getFaxQueue();
             for(FaxQueueBean f: faxQueue) {
+                if (stopped) return;
                 FaxQueueEntry e=new FaxQueueEntry(f);
                 mq.add(e);
             }
             
+            if (stopped) return;
             ArrayList<EpostQueueBean> epostQueue = singleton.getEpostQueue();
             for(EpostQueueBean f: epostQueue) {
+                if (stopped) return;
                 EpostQueueEntry e=new EpostQueueEntry(f);
                 mq.add(e);
             }
             
+            if (stopped) return;
             eb.publishEvent(new MailingStatusEvent(mq));
 
         } catch (Throwable ex) {

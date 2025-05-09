@@ -805,16 +805,40 @@ public class JKanzleiGUI extends javax.swing.JFrame implements com.jdimension.jl
         });
 
         Timer timer = new Timer();
-        TimerTask monitorStateTask = new MonitoringStateTimerTask();
+        MonitoringStateTimerTask monitorStateTask = new MonitoringStateTimerTask();
         timer.schedule(monitorStateTask, 5500l, 60000l * 10l);
 
         Timer timer2 = new Timer();
-        TimerTask timesheetsTask = new TimesheetsTimerTask();
+        TimesheetsTimerTask timesheetsTask = new TimesheetsTimerTask();
         timer2.schedule(timesheetsTask, 7000l, 60000l);
 
         Timer timer3 = new Timer();
-        TimerTask timesheetsHintTask = new TimesheetsHintTimerTask(this.lblTimesheetStatus);
+        TimesheetsHintTimerTask timesheetsHintTask = new TimesheetsHintTimerTask(this.lblTimesheetStatus);
         timer3.schedule(timesheetsHintTask, 7500l, 1000l);
+        
+        Runtime.getRuntime().addShutdownHook(new Thread(() -> {
+            try {
+                log.info("shutting down MonitoringStateTimerTask");
+                monitorStateTask.stop();
+                timer.cancel();
+            } catch (Throwable t) {
+                log.error("Error shutting down timer", t);
+            }
+            try {
+                log.info("shutting down TimesheetsTimerTask");
+                timesheetsTask.stop();
+                timer2.cancel();
+            } catch (Throwable t) {
+                log.error("Error shutting down timer", t);
+            }
+            try {
+                log.info("shutting down TimesheetsHintTimerTask");
+                timesheetsHintTask.stop();
+                timer3.cancel();
+            } catch (Throwable t) {
+                log.error("Error shutting down timer", t);
+            }
+        }));
 
         ArrayList<CalculationPlugin> plugins = CalculationPluginUtil.loadLocalPlugins();
         Collections.sort(plugins);
@@ -861,7 +885,7 @@ public class JKanzleiGUI extends javax.swing.JFrame implements com.jdimension.jl
                 log.error("Error disposing cloud connection instance", t);
             }
         }));
-
+        
     }
 
     public void restoreWindowSize() {

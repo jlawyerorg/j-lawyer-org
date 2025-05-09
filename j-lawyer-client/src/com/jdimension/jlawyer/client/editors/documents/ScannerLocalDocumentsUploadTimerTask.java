@@ -677,6 +677,12 @@ import org.apache.log4j.Logger;
 public class ScannerLocalDocumentsUploadTimerTask extends java.util.TimerTask {
 
     private static final Logger log = Logger.getLogger(ScannerLocalDocumentsUploadTimerTask.class.getName());
+    
+    private volatile boolean stopped = false;
+
+    public void stop() {
+        stopped = true;
+    }
 
     /**
      * Creates a new instance of ScannerLocalDocumentsUploadTimerTask
@@ -688,9 +694,12 @@ public class ScannerLocalDocumentsUploadTimerTask extends java.util.TimerTask {
 
     @Override
     public void run() {
+        if (stopped) return;
         try {
             ClientSettings settings = ClientSettings.getInstance();
             JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
+            
+            if (stopped) return;
             String localDirConfiguration=ScannerUtils.getInstance().getLocalScanDir("");
             
             if("".equals(localDirConfiguration))
@@ -702,6 +711,8 @@ public class ScannerLocalDocumentsUploadTimerTask extends java.util.TimerTask {
 
                 File[] children = localDir.listFiles();
                 for (File f : children) {
+                    
+                    if (stopped) return;
                     
                     // avoid two concurrently running clients to upload the same file
                     if(f.getName().endsWith(".uploading"))
@@ -724,6 +735,8 @@ public class ScannerLocalDocumentsUploadTimerTask extends java.util.TimerTask {
                             uploadInProgress=new File(f.getParentFile().getAbsolutePath() + File.separator + f.getName() + ".uploading");
                             f.renameTo(uploadInProgress);
                             byte[] content = FileUtils.readFile(uploadInProgress);
+                            
+                            if (stopped) return;
                             locator.lookupSystemManagementRemote().addObservedFile(realName, content, ServerInformation.getHostName());
                         } catch (Exception ex) {
                             log.error("Unable to upload scan " + f.getName() + " from " + localDir.getPath(), ex);
