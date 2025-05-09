@@ -671,6 +671,7 @@ import com.jdimension.jlawyer.client.utils.ComponentUtils;
 import com.jdimension.jlawyer.client.utils.ThreadUtils;
 import com.jdimension.jlawyer.persistence.AddressBean;
 import com.jdimension.jlawyer.ui.tagging.TagUtils;
+import java.awt.Window;
 import java.awt.event.ActionEvent;
 import java.awt.event.KeyEvent;
 import java.awt.event.MouseEvent;
@@ -690,9 +691,17 @@ public class AddRecipientSearchDialog extends javax.swing.JDialog {
 
     private static final Logger log = Logger.getLogger(AddRecipientSearchDialog.class.getName());
     private JTextField to = null;
-    private JDialog parent=null;
+    private Window parent=null;
     private JComponent nextFocus=null;
 
+    public AddRecipientSearchDialog(Window parent, JTextField to, JComponent nextFocus) {
+        super(parent);
+        this.parent=parent;
+        this.nextFocus=nextFocus;
+        this.to = to;
+        this.initialize();
+    }
+    
     /**
      * Creates new form AddRecipientSearchDialog
      * @param parent
@@ -705,6 +714,12 @@ public class AddRecipientSearchDialog extends javax.swing.JDialog {
         this.parent=parent;
         this.nextFocus=nextFocus;
         this.to = to;
+        this.initialize();
+
+    }
+    
+    private void initialize() {
+        
         initComponents();
         String[] colNames = new String[]{"Name", "Vorname", "Unternehmen", "PLZ", "Ort", "E-Mail", "", "SafeID"};
         QuickAddressSearchTableModel model = new QuickAddressSearchTableModel(colNames, 0);
@@ -739,7 +754,6 @@ public class AddRecipientSearchDialog extends javax.swing.JDialog {
             }
 
         }
-
     }
 
     /**

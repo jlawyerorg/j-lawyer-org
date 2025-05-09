@@ -924,7 +924,7 @@ public class SoundplayerPanel extends javax.swing.JPanel implements PreviewPanel
             Map<AssistantConfig, List<AiCapability>> capabilities = ingo.filterCapabilities(AiCapability.REQUESTTYPE_TRANSCRIBE, AiCapability.INPUTTYPE_FILE);
             this.popAssistant.removeAll();
             //ingo.populateMenu(this.popAssistant, capabilities, this);
-            ingo.populateMenu(this.popAssistant, capabilities, (AssistantInputAdapter) this, null);
+            ingo.populateMenu(this.popAssistant, capabilities, (AssistantInputAdapter) this, null, EditorsRegistry.getInstance().getMainWindow(), false);
             this.popAssistant.show(this.cmdAssistant, evt.getX(), evt.getY());
         } catch (Exception ex) {
             log.error(ex);

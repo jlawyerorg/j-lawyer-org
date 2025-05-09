@@ -701,6 +701,7 @@ import java.util.concurrent.atomic.AtomicReference;
 import javax.swing.DefaultListModel;
 import javax.swing.JComboBox;
 import javax.swing.JDialog;
+import javax.swing.JFrame;
 import javax.swing.JLabel;
 import javax.swing.JScrollBar;
 import javax.swing.JTextField;
@@ -745,8 +746,19 @@ public class AssistantGenericDialog extends javax.swing.JDialog {
      * @param parent
      * @param modal
      */
-    public AssistantGenericDialog(ArchiveFileBean selectedCase, AssistantConfig config, AiCapability c, AssistantInputAdapter inputAdapter, boolean autoExecute, java.awt.Frame parent, boolean modal) {
+    public AssistantGenericDialog(ArchiveFileBean selectedCase, AssistantConfig config, AiCapability c, AssistantInputAdapter inputAdapter, boolean autoExecute, JFrame parent, boolean modal) {
         super(parent, modal);
+        this.initialize(selectedCase, config, c, inputAdapter, autoExecute);
+
+    }
+    
+    public AssistantGenericDialog(ArchiveFileBean selectedCase, AssistantConfig config, AiCapability c, AssistantInputAdapter inputAdapter, boolean autoExecute, JDialog parent, boolean modal) {
+        super(parent, modal);
+        this.initialize(selectedCase, config, c, inputAdapter, autoExecute);
+
+    }
+    
+    private void initialize(ArchiveFileBean selectedCase, AssistantConfig config, AiCapability c, AssistantInputAdapter inputAdapter, boolean autoExecute) {
         initComponents();
 
         this.pnlTitle.setBackground(DefaultColorTheme.COLOR_DARK_GREY);
@@ -865,7 +877,6 @@ public class AssistantGenericDialog extends javax.swing.JDialog {
             // Display the dialog first, then start the background task
             SwingUtilities.invokeLater(this::startBackgroundTask);
         }
-
     }
 
     /**

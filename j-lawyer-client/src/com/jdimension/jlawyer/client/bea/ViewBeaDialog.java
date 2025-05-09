@@ -828,7 +828,7 @@ public class ViewBeaDialog extends javax.swing.JDialog {
             }
         }
 
-        SendBeaMessageDialog dlg = new SendBeaMessageDialog(EditorsRegistry.getInstance().getMainWindow(), false);
+        SendBeaMessageFrame dlg = new SendBeaMessageFrame();
         dlg.setArchiveFile(this.contextArchiveFile);
 
         Message msgC = this.msg;
@@ -858,7 +858,8 @@ public class ViewBeaDialog extends javax.swing.JDialog {
             log.error(ex);
         }
 
-        FrameUtils.centerDialog(dlg, null);
+        FrameUtils.centerFrame(dlg, null);
+        EditorsRegistry.getInstance().registerFrame(dlg);
         dlg.setVisible(true);
 
         if (this.odoc != null) {
@@ -883,7 +884,7 @@ public class ViewBeaDialog extends javax.swing.JDialog {
             }
         }
 
-        SendBeaMessageDialog dlg = new SendBeaMessageDialog(EditorsRegistry.getInstance().getMainWindow(), false);
+        SendBeaMessageFrame dlg = new SendBeaMessageFrame();
         dlg.setArchiveFile(this.contextArchiveFile);
 
         Message msgC = this.msg;
@@ -920,7 +921,8 @@ public class ViewBeaDialog extends javax.swing.JDialog {
             log.error(ex);
         }
 
-        FrameUtils.centerDialog(dlg, null);
+        FrameUtils.centerFrame(dlg, null);
+        EditorsRegistry.getInstance().registerFrame(dlg);
         dlg.setVisible(true);
 
         if (this.odoc != null) {
@@ -946,7 +948,7 @@ public class ViewBeaDialog extends javax.swing.JDialog {
             }
         }
 
-        SendBeaMessageDialog dlg = new SendBeaMessageDialog(EditorsRegistry.getInstance().getMainWindow(), false);
+        SendBeaMessageFrame dlg = new SendBeaMessageFrame();
         dlg.setArchiveFile(this.contextArchiveFile);
 
         Message msgC = this.msg;
@@ -980,7 +982,8 @@ public class ViewBeaDialog extends javax.swing.JDialog {
             log.error(ex);
         }
 
-        FrameUtils.centerDialog(dlg, null);
+        FrameUtils.centerFrame(dlg, null);
+        EditorsRegistry.getInstance().registerFrame(dlg);
         dlg.setVisible(true);
 
         if (this.odoc != null) {

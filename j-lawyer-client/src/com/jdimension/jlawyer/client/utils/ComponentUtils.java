@@ -679,6 +679,7 @@ import javax.swing.ComboBoxModel;
 import javax.swing.JCheckBoxMenuItem;
 import javax.swing.JComboBox;
 import javax.swing.JDialog;
+import javax.swing.JFrame;
 import javax.swing.JList;
 import javax.swing.JPopupMenu;
 import javax.swing.JSplitPane;
@@ -889,6 +890,20 @@ public class ComponentUtils {
             log.error("can not store size of dialog", t);
         }
     }
+    
+    public static void storeFrameSize(JFrame d) {
+        try {
+            if (d != null) {
+                int width = d.getWidth();
+                int height = d.getHeight();
+                ClientSettings s = ClientSettings.getInstance();
+                s.setConfiguration(d.getClass().getName() + ".w", "" + width);
+                s.setConfiguration(d.getClass().getName() + ".h", "" + height);
+            }
+        } catch (Throwable t) {
+            log.error("can not store size of dialog", t);
+        }
+    }
 
     public static void setEnabledRecursive(Container c, boolean enabled) {
         c.setEnabled(enabled);
@@ -900,6 +915,24 @@ public class ComponentUtils {
     }
 
     public static void restoreDialogSize(JDialog d) {
+        try {
+            if (d != null) {
+                ClientSettings s = ClientSettings.getInstance();
+                String w = s.getConfiguration(d.getClass().getName() + ".w", "" + d.getWidth());
+                String h = s.getConfiguration(d.getClass().getName() + ".h", "" + d.getHeight());
+
+                int width = Integer.parseInt(w);
+                int height = Integer.parseInt(h);
+
+                d.setSize(width, height);
+
+            }
+        } catch (Throwable t) {
+            log.error("can not restore size of dialog", t);
+        }
+    }
+    
+    public static void restoreFrameSize(JFrame d) {
         try {
             if (d != null) {
                 ClientSettings s = ClientSettings.getInstance();

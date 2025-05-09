@@ -710,21 +710,26 @@ import java.awt.Color;
 import java.awt.Dimension;
 import java.awt.GraphicsDevice;
 import java.awt.GraphicsEnvironment;
+import java.awt.Image;
 import java.awt.Rectangle;
 import java.awt.Toolkit;
 import java.awt.event.ActionEvent;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.List;
 import java.util.Timer;
 import java.util.TimerTask;
 import javax.swing.Icon;
 import javax.swing.ImageIcon;
+import javax.swing.JFrame;
 import javax.swing.JMenuItem;
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.JSeparator;
 import javax.swing.SwingUtilities;
+import javax.swing.event.MenuEvent;
+import javax.swing.event.MenuListener;
 import org.apache.log4j.Logger;
 import org.jlawyer.bea.model.PostBox;
 import themes.colors.DefaultColorTheme;
@@ -736,6 +741,8 @@ import themes.colors.DefaultColorTheme;
 public class JKanzleiGUI extends javax.swing.JFrame implements com.jdimension.jlawyer.client.events.EventConsumer {
 
     private static final Logger log = Logger.getLogger(JKanzleiGUI.class.getName());
+    
+    private static final List<JFrame> openFrames = new ArrayList<>();
 
     private boolean initializing = false;
     private long initialized = Long.MIN_VALUE;
@@ -753,6 +760,22 @@ public class JKanzleiGUI extends javax.swing.JFrame implements com.jdimension.jl
         initComponents();
 
         this.initializing = false;
+        
+        
+        this.mnuWindow.addMenuListener(new MenuListener() {
+            @Override
+            public void menuSelected(MenuEvent e) {
+                updateWindowMenu();
+            }
+
+            @Override
+            public void menuDeselected(MenuEvent e) {
+            }
+
+            @Override
+            public void menuCanceled(MenuEvent e) {
+            }
+        });
 
         EventBroker b = EventBroker.getInstance();
         b.subscribeConsumer(this, Event.TYPE_SERVICES);
@@ -961,6 +984,58 @@ public class JKanzleiGUI extends javax.swing.JFrame implements com.jdimension.jl
             log.error("unable to get rectangle from string: " + boundsStr, e);
             return null;
         }
+    }
+    
+    private void updateWindowMenu() {
+
+        if (this.mnuWindow == null) {
+            return;
+        }
+        this.mnuWindow.removeAll();
+
+        for (JFrame tf : openFrames) {
+            if (!tf.isDisplayable()) {
+                continue;
+            }
+
+            String title = tf.getTitle();
+            if (title == null || title.isEmpty()) {
+                title = "(Unbenannt)";
+            }
+
+            JMenuItem item = new JMenuItem(title);
+            
+            // Icon auf 16x16 skalieren
+            Image iconImage = tf.getIconImage();
+            if (iconImage != null) {
+                Image scaledIcon = iconImage.getScaledInstance(20, 20, Image.SCALE_SMOOTH);
+                item.setIcon(new ImageIcon(scaledIcon));
+            }
+            
+            item.addActionListener(e -> {
+                tf.setVisible(true);
+                tf.toFront();
+                tf.requestFocus();
+            });
+            this.mnuWindow.add(item);
+        }
+
+        if (this.mnuWindow.getItemCount() == 0) {
+            JMenuItem leer = new JMenuItem("(Keine Fenster geöffnet)");
+            leer.setEnabled(false);
+            this.mnuWindow.add(leer);
+        }
+
+        this.mnuWindow.revalidate();
+        this.mnuWindow.repaint();
+    }
+    
+    public void registerFrame(JFrame frame) {
+        openFrames.add(frame);
+    }
+
+    public void unregisterFrame(JFrame frame) {
+        openFrames.removeIf(tf -> tf == frame);
     }
 
     public void buildModuleBar() {
@@ -1220,6 +1295,7 @@ public class JKanzleiGUI extends javax.swing.JFrame implements com.jdimension.jl
         mnuWebHooks = new javax.swing.JMenuItem();
         mnuBugReport = new javax.swing.JMenuItem();
         mnuServices = new javax.swing.JMenu();
+        mnuWindow = new javax.swing.JMenu();
         mnuHelp = new javax.swing.JMenu();
         mnuDocumentMonitor = new javax.swing.JMenuItem();
         mnuOnlineHelp = new javax.swing.JMenuItem();
@@ -2085,6 +2161,9 @@ public class JKanzleiGUI extends javax.swing.JFrame implements com.jdimension.jl
 
         mnuServices.setText("Services");
         jMenuBar1.add(mnuServices);
+
+        mnuWindow.setText("Fenster");
+        jMenuBar1.add(mnuWindow);
 
         mnuHelp.setText(bundle.getString("menu.?")); // NOI18N
 
@@ -3093,6 +3172,7 @@ public class JKanzleiGUI extends javax.swing.JFrame implements com.jdimension.jl
     private javax.swing.JMenu mnuView;
     private javax.swing.JMenuItem mnuVoipSoftphoneSettings;
     private javax.swing.JMenuItem mnuWebHooks;
+    private javax.swing.JMenu mnuWindow;
     private javax.swing.JMenuItem mnuWordProcessor;
     private javax.swing.JMenuItem mnuZipCodeImport;
     private com.jdimension.jlawyer.client.modulebar.ModuleBar moduleBar;

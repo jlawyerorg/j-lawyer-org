@@ -1031,6 +1031,11 @@
             <Property name="text" type="java.lang.String" value="Services"/>
           </Properties>
         </Menu>
+        <Menu class="javax.swing.JMenu" name="mnuWindow">
+          <Properties>
+            <Property name="text" type="java.lang.String" value="Fenster"/>
+          </Properties>
+        </Menu>
         <Menu class="javax.swing.JMenu" name="mnuHelp">
           <Properties>
             <Property name="text" type="java.lang.String" editor="org.netbeans.modules.i18n.form.FormI18nStringEditor">

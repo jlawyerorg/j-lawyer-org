@@ -1778,14 +1778,15 @@ public class BeaInboxPanel extends javax.swing.JPanel implements SaveToCaseExecu
     }//GEN-LAST:event_mnuEmptyTrashActionPerformed
 
     private void cmdNewActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdNewActionPerformed
-        SendBeaMessageDialog dlg = new SendBeaMessageDialog(EditorsRegistry.getInstance().getMainWindow(), false);
-        FrameUtils.centerDialog(dlg, EditorsRegistry.getInstance().getMainWindow());
+        SendBeaMessageFrame dlg = new SendBeaMessageFrame();
+        FrameUtils.centerFrame(dlg, EditorsRegistry.getInstance().getMainWindow());
+        EditorsRegistry.getInstance().registerFrame(dlg);
         dlg.setVisible(true);
 
     }//GEN-LAST:event_cmdNewActionPerformed
 
     private void cmdReplyActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdReplyActionPerformed
-        SendBeaMessageDialog dlg = new SendBeaMessageDialog(EditorsRegistry.getInstance().getMainWindow(), false);
+        SendBeaMessageFrame dlg = new SendBeaMessageFrame();
 
         int[] selected = this.tblMails.getSelectedRows();
 
@@ -1819,7 +1820,8 @@ public class BeaInboxPanel extends javax.swing.JPanel implements SaveToCaseExecu
             JOptionPane.showMessageDialog(this, "Nachricht nicht gesendet: " + ex.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
         }
 
-        FrameUtils.centerDialog(dlg, null);
+        FrameUtils.centerFrame(dlg, null);
+        EditorsRegistry.getInstance().registerFrame(dlg);
         dlg.setVisible(true);
     }//GEN-LAST:event_cmdReplyActionPerformed
 
@@ -1849,7 +1851,7 @@ public class BeaInboxPanel extends javax.swing.JPanel implements SaveToCaseExecu
     }//GEN-LAST:event_tblMailsMouseReleased
 
     private void cmdForwardActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdForwardActionPerformed
-        SendBeaMessageDialog dlg = new SendBeaMessageDialog(EditorsRegistry.getInstance().getMainWindow(), false);
+        SendBeaMessageFrame dlg = new SendBeaMessageFrame();
 
         int[] selected = this.tblMails.getSelectedRows();
 
@@ -1882,7 +1884,8 @@ public class BeaInboxPanel extends javax.swing.JPanel implements SaveToCaseExecu
                 }
             }
 
-            FrameUtils.centerDialog(dlg, null);
+            FrameUtils.centerFrame(dlg, null);
+            EditorsRegistry.getInstance().registerFrame(dlg);
             dlg.setVisible(true);
         } catch (Exception ex) {
             log.error(ex);
@@ -1891,7 +1894,7 @@ public class BeaInboxPanel extends javax.swing.JPanel implements SaveToCaseExecu
     }//GEN-LAST:event_cmdForwardActionPerformed
 
     private void cmdReplyAllActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdReplyAllActionPerformed
-        SendBeaMessageDialog dlg = new SendBeaMessageDialog(EditorsRegistry.getInstance().getMainWindow(), false);
+        SendBeaMessageFrame dlg = new SendBeaMessageFrame();
 
         int[] selected = this.tblMails.getSelectedRows();
 
@@ -1936,7 +1939,8 @@ public class BeaInboxPanel extends javax.swing.JPanel implements SaveToCaseExecu
             JOptionPane.showMessageDialog(this, "Nachricht nicht gesendet: " + ex.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
         }
 
-        FrameUtils.centerDialog(dlg, null);
+        FrameUtils.centerFrame(dlg, null);
+        EditorsRegistry.getInstance().registerFrame(dlg);
         dlg.setVisible(true);
     }//GEN-LAST:event_cmdReplyAllActionPerformed
 

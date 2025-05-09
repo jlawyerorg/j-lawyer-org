@@ -682,6 +682,7 @@ import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 import javax.swing.JDialog;
+import javax.swing.JFrame;
 import javax.swing.JOptionPane;
 import javax.swing.SwingUtilities;
 import org.apache.commons.io.FileUtils;
@@ -736,6 +737,29 @@ public class SendBeaMessageAction extends ProgressableAction {
     }
 
     public SendBeaMessageAction(ProgressIndicator i, JDialog cleanAfter, String messageType, String fromSafeId, List<BeaAttachmentMetadata> attachmentMetadata, AppUserBean cu, boolean readReceipt, BeaListItem authority, List<Identity> to, String subject, String body, BeaListItem priority, ArchiveFileBean af, String documentTag, String azSender, String azRecipient, CaseFolder folder) {
+        this(i, cleanAfter, messageType, fromSafeId, attachmentMetadata, cu, readReceipt, authority, to, subject, body, priority, documentTag, azSender, azRecipient);
+        this.archiveFile = af;
+        this.folder = folder;
+    }
+    
+    public SendBeaMessageAction(ProgressIndicator i, JFrame cleanAfter, String messageType, String fromSafeId, List<BeaAttachmentMetadata> attachmentMetadata, AppUserBean cu, boolean readReceipt, BeaListItem authority, List<Identity> to, String subject, String body, BeaListItem priority, String documentTag, String azSender, String azRecipient) {
+        super(i, false, cleanAfter);
+        this.attachments = attachmentMetadata;
+        this.readReceipt = readReceipt;
+        this.recipients = to;
+        this.subject = subject;
+        this.body = body;
+        this.priority=priority;
+        this.fromSafeId = fromSafeId;
+        this.documentTag = documentTag;
+        this.readReceipt = readReceipt;
+        this.authority = authority;
+        this.azSender = azSender;
+        this.azRecipient = azRecipient;
+        this.msgType = messageType;
+    }
+
+    public SendBeaMessageAction(ProgressIndicator i, JFrame cleanAfter, String messageType, String fromSafeId, List<BeaAttachmentMetadata> attachmentMetadata, AppUserBean cu, boolean readReceipt, BeaListItem authority, List<Identity> to, String subject, String body, BeaListItem priority, ArchiveFileBean af, String documentTag, String azSender, String azRecipient, CaseFolder folder) {
         this(i, cleanAfter, messageType, fromSafeId, attachmentMetadata, cu, readReceipt, authority, to, subject, body, priority, documentTag, azSender, azRecipient);
         this.archiveFile = af;
         this.folder = folder;

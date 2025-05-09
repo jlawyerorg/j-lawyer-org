@@ -842,7 +842,7 @@ public class ViewEmailDialog extends javax.swing.JDialog {
 
     private void cmdReplyActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdReplyActionPerformed
 
-        SendEmailDialog dlg = null;
+        SendEmailFrame dlg = null;
         if (this.emlMsg != null) {
             MessageContainer msgC = this.emlMsg;
             Message m = msgC.getMessage();
@@ -852,7 +852,8 @@ public class ViewEmailDialog extends javax.swing.JDialog {
         }
         dlg.setArchiveFile(this.contextArchiveFile, this.contextFolder);
         this.setPartiesToSendDialog(dlg, false);
-        FrameUtils.centerDialog(dlg, null);
+        FrameUtils.centerFrame(dlg, null);
+        EditorsRegistry.getInstance().registerFrame(dlg);
         dlg.setVisible(true);
 
         if (this.odoc != null) {
@@ -863,7 +864,7 @@ public class ViewEmailDialog extends javax.swing.JDialog {
     }//GEN-LAST:event_cmdReplyActionPerformed
 
     private void cmdReplyAllActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdReplyAllActionPerformed
-        SendEmailDialog dlg = new SendEmailDialog(true, EditorsRegistry.getInstance().getMainWindow(), false);
+        SendEmailFrame dlg = new SendEmailFrame(true);
         dlg.setArchiveFile(this.contextArchiveFile, this.contextFolder);
         this.setPartiesToSendDialog(dlg, false);
 
@@ -955,7 +956,8 @@ public class ViewEmailDialog extends javax.swing.JDialog {
             }
         }
 
-        FrameUtils.centerDialog(dlg, null);
+        FrameUtils.centerFrame(dlg, null);
+        EditorsRegistry.getInstance().registerFrame(dlg);
         dlg.setVisible(true);
 
         if (this.odoc != null) {
@@ -966,7 +968,7 @@ public class ViewEmailDialog extends javax.swing.JDialog {
 
     }//GEN-LAST:event_cmdReplyAllActionPerformed
 
-    private void setPartiesToSendDialog(SendEmailDialog dlg, boolean evaluateTemplates) {
+    private void setPartiesToSendDialog(SendEmailFrame dlg, boolean evaluateTemplates) {
         if (this.contextArchiveFile != null) {
             try {
                 ClientSettings settings = ClientSettings.getInstance();
@@ -983,7 +985,7 @@ public class ViewEmailDialog extends javax.swing.JDialog {
     }
     
     private void cmdForwardActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdForwardActionPerformed
-        SendEmailDialog dlg = new SendEmailDialog(true, EditorsRegistry.getInstance().getMainWindow(), false);
+        SendEmailFrame dlg = new SendEmailFrame(true);
         dlg.setArchiveFile(this.contextArchiveFile, this.contextFolder);
         this.setPartiesToSendDialog(dlg, false);
 
@@ -1101,7 +1103,8 @@ public class ViewEmailDialog extends javax.swing.JDialog {
             }
         }
 
-        FrameUtils.centerDialog(dlg, null);
+        FrameUtils.centerFrame(dlg, null);
+        EditorsRegistry.getInstance().registerFrame(dlg);
         dlg.setVisible(true);
 
         if (this.odoc != null) {
@@ -1127,7 +1130,7 @@ public class ViewEmailDialog extends javax.swing.JDialog {
     }//GEN-LAST:event_formComponentShown
 
     private void cmdEditDraftActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdEditDraftActionPerformed
-        SendEmailDialog dlg = new SendEmailDialog(true, EditorsRegistry.getInstance().getMainWindow(), false);
+        SendEmailFrame dlg = new SendEmailFrame(true);
         dlg.setArchiveFile(this.contextArchiveFile, this.contextFolder);
         this.setPartiesToSendDialog(dlg, false);
 
@@ -1263,7 +1266,8 @@ public class ViewEmailDialog extends javax.swing.JDialog {
             }
         }
 
-        FrameUtils.centerDialog(dlg, null);
+        FrameUtils.centerFrame(dlg, null);
+        EditorsRegistry.getInstance().registerFrame(dlg);
         dlg.setVisible(true);
 
         if (this.odoc != null) {

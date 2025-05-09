@@ -1282,12 +1282,12 @@ public class EmailUtils extends CommonMailUtils {
         }
     }
 
-    public static SendEmailDialog reply(OutlookMessage m, String content, String contentType) {
+    public static SendEmailFrame reply(OutlookMessage m, String content, String contentType) {
         return reply(m, null, content, contentType);
     }
 
-    public static SendEmailDialog reply(OutlookMessage m, String prependContent, String content, String contentType) {
-        SendEmailDialog dlg = new SendEmailDialog(true, EditorsRegistry.getInstance().getMainWindow(), false);
+    public static SendEmailFrame reply(OutlookMessage m, String prependContent, String content, String contentType) {
+        SendEmailFrame dlg = new SendEmailFrame(true);
         try {
             // figure out if the message was sent from one of the users accounts
             boolean sentByCurrentUser = false;
@@ -1361,12 +1361,12 @@ public class EmailUtils extends CommonMailUtils {
         return dlg;
     }
 
-    public static SendEmailDialog reply(Message m, String content, String contentType) {
+    public static SendEmailFrame reply(Message m, String content, String contentType) {
         return reply(m, null, content, contentType);
     }
 
-    public static SendEmailDialog reply(Message m, String prependContent, String content, String contentType) {
-        SendEmailDialog dlg = new SendEmailDialog(true, EditorsRegistry.getInstance().getMainWindow(), false);
+    public static SendEmailFrame reply(Message m, String prependContent, String content, String contentType) {
+        SendEmailFrame dlg = new SendEmailFrame(true);
         try {
             // figure out if the message was sent from one of the users accounts
             boolean sentByCurrentUser = false;

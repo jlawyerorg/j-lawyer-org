@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8" ?>
 
-<Form version="1.3" maxVersion="1.8" type="org.netbeans.modules.form.forminfo.JDialogFormInfo">
+<Form version="1.3" maxVersion="1.9" type="org.netbeans.modules.form.forminfo.JFrameFormInfo">
   <NonVisualComponents>
     <Container class="javax.swing.JPopupMenu" name="popRecipients">
 
@@ -98,6 +98,9 @@
   <Properties>
     <Property name="defaultCloseOperation" type="int" value="2"/>
     <Property name="title" type="java.lang.String" value="neue E-Mail"/>
+    <Property name="iconImage" type="java.awt.Image" editor="org.netbeans.modules.form.RADConnectionPropertyEditor">
+      <Connection code="new ImageIcon(getClass().getResource(&quot;/icons/windowicon-mail.png&quot;)).getImage()" type="code"/>
+    </Property>
   </Properties>
   <SyntheticProperties>
     <SyntheticProperty name="formSizePolicy" type="int" value="1"/>
@@ -105,6 +108,7 @@
   </SyntheticProperties>
   <Events>
     <EventHandler event="componentResized" listener="java.awt.event.ComponentListener" parameters="java.awt.event.ComponentEvent" handler="formComponentResized"/>
+    <EventHandler event="windowClosed" listener="java.awt.event.WindowListener" parameters="java.awt.event.WindowEvent" handler="formWindowClosed"/>
   </Events>
   <AuxValues>
     <AuxValue name="FormSettings_autoResourcing" type="java.lang.Integer" value="0"/>
@@ -148,7 +152,7 @@
           <Layout>
             <DimensionLayout dim="0">
               <Group type="103" groupAlignment="0" attributes="0">
-                  <Group type="102" attributes="0">
+                  <Group type="102" alignment="0" attributes="0">
                       <EmptySpace max="-2" attributes="0"/>
                       <Group type="103" groupAlignment="0" attributes="0">
                           <Group type="102" alignment="0" attributes="0">
@@ -161,7 +165,7 @@
                               </Group>
                               <EmptySpace min="-2" pref="18" max="-2" attributes="0"/>
                               <Group type="103" groupAlignment="0" attributes="0">
-                                  <Group type="102" attributes="0">
+                                  <Group type="102" alignment="0" attributes="0">
                                       <Group type="103" groupAlignment="0" attributes="0">
                                           <Component id="txtCc" alignment="0" max="32767" attributes="0"/>
                                           <Component id="txtTo" alignment="1" max="32767" attributes="0"/>
@@ -171,14 +175,14 @@
                                       <EmptySpace max="-2" attributes="0"/>
                                       <Group type="103" groupAlignment="1" attributes="0">
                                           <Component id="cmdRecipients" alignment="1" min="-2" max="-2" attributes="0"/>
-                                          <Component id="cmdRecipientsCc" min="-2" max="-2" attributes="0"/>
+                                          <Component id="cmdRecipientsCc" alignment="1" min="-2" max="-2" attributes="0"/>
                                           <Component id="cmdRecipientsBcc" alignment="1" min="-2" max="-2" attributes="0"/>
                                       </Group>
                                   </Group>
-                                  <Component id="cmbFrom" max="32767" attributes="0"/>
+                                  <Component id="cmbFrom" alignment="0" max="32767" attributes="0"/>
                               </Group>
                           </Group>
-                          <Component id="jPanel5" max="32767" attributes="0"/>
+                          <Component id="jPanel5" alignment="0" max="32767" attributes="0"/>
                           <Group type="102" alignment="0" attributes="0">
                               <Component id="jToolBar1" min="-2" max="-2" attributes="0"/>
                               <EmptySpace max="32767" attributes="0"/>
@@ -195,7 +199,7 @@
             </DimensionLayout>
             <DimensionLayout dim="1">
               <Group type="103" groupAlignment="0" attributes="0">
-                  <Group type="102" attributes="0">
+                  <Group type="102" alignment="0" attributes="0">
                       <EmptySpace max="-2" attributes="0"/>
                       <Group type="103" groupAlignment="3" attributes="0">
                           <Component id="jLabel1" alignment="3" min="-2" max="-2" attributes="0"/>
@@ -232,17 +236,17 @@
                       </Group>
                       <EmptySpace max="-2" attributes="0"/>
                       <Group type="103" groupAlignment="0" attributes="0">
-                          <Group type="102" attributes="0">
+                          <Group type="102" alignment="0" attributes="0">
                               <Component id="jToolBar1" min="-2" max="-2" attributes="0"/>
                               <EmptySpace min="-2" pref="5" max="-2" attributes="0"/>
                           </Group>
                           <Group type="102" alignment="1" attributes="0">
                               <Group type="103" groupAlignment="1" attributes="0">
-                                  <Group type="103" groupAlignment="3" attributes="0">
+                                  <Group type="103" alignment="1" groupAlignment="3" attributes="0">
                                       <Component id="cmdTranscribe" alignment="3" min="-2" max="-2" attributes="0"/>
                                       <Component id="cmbDevices" alignment="3" min="-2" max="-2" attributes="0"/>
                                   </Group>
-                                  <Component id="cmdAssistant" min="-2" max="-2" attributes="0"/>
+                                  <Component id="cmdAssistant" alignment="1" min="-2" max="-2" attributes="0"/>
                               </Group>
                               <EmptySpace type="unrelated" max="-2" attributes="0"/>
                           </Group>
@@ -311,7 +315,7 @@
                     </DimensionLayout>
                     <DimensionLayout dim="1">
                       <Group type="103" groupAlignment="0" attributes="0">
-                          <EmptySpace min="0" pref="291" max="32767" attributes="0"/>
+                          <EmptySpace min="0" pref="556" max="32767" attributes="0"/>
                       </Group>
                     </DimensionLayout>
                   </Layout>
@@ -513,11 +517,11 @@
           <Layout>
             <DimensionLayout dim="0">
               <Group type="103" groupAlignment="0" attributes="0">
-                  <Group type="102" attributes="0">
+                  <Group type="102" alignment="0" attributes="0">
                       <EmptySpace max="-2" attributes="0"/>
                       <Group type="103" groupAlignment="0" attributes="0">
-                          <Component id="jPanel2" max="32767" attributes="0"/>
-                          <Component id="jPanel1" max="32767" attributes="0"/>
+                          <Component id="jPanel2" alignment="0" max="32767" attributes="0"/>
+                          <Component id="jPanel1" alignment="0" max="32767" attributes="0"/>
                           <Component id="jPanel4" alignment="0" max="32767" attributes="0"/>
                       </Group>
                       <EmptySpace max="-2" attributes="0"/>
@@ -551,7 +555,7 @@
               <Layout>
                 <DimensionLayout dim="0">
                   <Group type="103" groupAlignment="0" attributes="0">
-                      <Group type="102" attributes="0">
+                      <Group type="102" alignment="0" attributes="0">
                           <EmptySpace max="-2" attributes="0"/>
                           <Group type="103" groupAlignment="0" attributes="0">
                               <Group type="102" alignment="0" attributes="0">
@@ -559,9 +563,9 @@
                                   <EmptySpace max="-2" attributes="0"/>
                                   <Component id="lblEncryption" max="32767" attributes="0"/>
                               </Group>
-                              <Group type="102" attributes="0">
+                              <Group type="102" alignment="0" attributes="0">
                                   <Group type="103" groupAlignment="0" attributes="0">
-                                      <Component id="chkSaveAsDocument" min="-2" max="-2" attributes="0"/>
+                                      <Component id="chkSaveAsDocument" alignment="0" min="-2" max="-2" attributes="0"/>
                                       <Group type="102" alignment="0" attributes="0">
                                           <Component id="text" min="-2" max="-2" attributes="0"/>
                                           <EmptySpace max="-2" attributes="0"/>
@@ -599,8 +603,8 @@
                           </Group>
                           <EmptySpace max="32767" attributes="0"/>
                           <Group type="103" groupAlignment="1" attributes="0">
-                              <Component id="chkEncryption" min="-2" max="-2" attributes="0"/>
-                              <Component id="lblEncryption" min="-2" pref="32" max="-2" attributes="0"/>
+                              <Component id="chkEncryption" alignment="1" min="-2" max="-2" attributes="0"/>
+                              <Component id="lblEncryption" alignment="1" min="-2" pref="32" max="-2" attributes="0"/>
                           </Group>
                           <EmptySpace max="-2" attributes="0"/>
                       </Group>
@@ -610,9 +614,6 @@
               <SubComponents>
                 <Component class="javax.swing.JRadioButton" name="text">
                   <Properties>
-                    <Property name="buttonGroup" type="javax.swing.ButtonGroup" editor="org.netbeans.modules.form.RADComponent$ButtonGroupPropertyEditor">
-                      <ComponentRef name="buttonGroupTextHtml"/>
-                    </Property>
                     <Property name="selected" type="boolean" value="true"/>
                     <Property name="text" type="java.lang.String" value="Text"/>
                   </Properties>
@@ -622,9 +623,6 @@
                 </Component>
                 <Component class="javax.swing.JRadioButton" name="html">
                   <Properties>
-                    <Property name="buttonGroup" type="javax.swing.ButtonGroup" editor="org.netbeans.modules.form.RADComponent$ButtonGroupPropertyEditor">
-                      <ComponentRef name="buttonGroupTextHtml"/>
-                    </Property>
                     <Property name="text" type="java.lang.String" value="HTML"/>
                   </Properties>
                   <Events>
@@ -725,16 +723,16 @@
                                   <EmptySpace max="-2" attributes="0"/>
                                   <Group type="103" groupAlignment="0" attributes="0">
                                       <Component id="cmbReviewAssignee" alignment="0" max="32767" attributes="0"/>
-                                      <Group type="102" attributes="0">
+                                      <Group type="102" alignment="0" attributes="0">
                                           <Group type="103" groupAlignment="0" attributes="0">
-                                              <Component id="quickDateSelectionPanel" min="-2" max="-2" attributes="0"/>
+                                              <Component id="quickDateSelectionPanel" alignment="0" min="-2" max="-2" attributes="0"/>
                                               <Group type="102" alignment="0" attributes="0">
                                                   <Component id="txtReviewDateField" min="-2" pref="135" max="-2" attributes="0"/>
                                                   <EmptySpace max="-2" attributes="0"/>
                                                   <Component id="cmdShowReviewSelector" min="-2" max="-2" attributes="0"/>
                                               </Group>
                                           </Group>
-                                          <EmptySpace min="0" pref="13" max="32767" attributes="0"/>
+                                          <EmptySpace min="0" pref="254" max="32767" attributes="0"/>
                                       </Group>
                                   </Group>
                               </Group>
@@ -747,7 +745,7 @@
                   <Group type="103" groupAlignment="0" attributes="0">
                       <Group type="102" alignment="1" attributes="0">
                           <Group type="103" groupAlignment="1" attributes="0">
-                              <Group type="103" groupAlignment="3" attributes="0">
+                              <Group type="103" alignment="1" groupAlignment="3" attributes="0">
                                   <Component id="radioReviewTypeFollowUp" alignment="3" min="-2" max="-2" attributes="0"/>
                                   <Component id="radioReviewTypeRespite" alignment="3" min="-2" max="-2" attributes="0"/>
                                   <Component id="radioReviewTypeNone" alignment="3" min="-2" max="-2" attributes="0"/>
@@ -804,9 +802,6 @@
                 </Component>
                 <Component class="javax.swing.JRadioButton" name="radioReviewTypeFollowUp">
                   <Properties>
-                    <Property name="buttonGroup" type="javax.swing.ButtonGroup" editor="org.netbeans.modules.form.RADComponent$ButtonGroupPropertyEditor">
-                      <ComponentRef name="btGroupReviews"/>
-                    </Property>
                     <Property name="text" type="java.lang.String" value="Wiedervorlage"/>
                   </Properties>
                   <Events>
@@ -815,9 +810,6 @@
                 </Component>
                 <Component class="javax.swing.JRadioButton" name="radioReviewTypeRespite">
                   <Properties>
-                    <Property name="buttonGroup" type="javax.swing.ButtonGroup" editor="org.netbeans.modules.form.RADComponent$ButtonGroupPropertyEditor">
-                      <ComponentRef name="btGroupReviews"/>
-                    </Property>
                     <Property name="text" type="java.lang.String" value="Frist"/>
                   </Properties>
                   <Events>
@@ -864,9 +856,6 @@
                 </Component>
                 <Component class="javax.swing.JRadioButton" name="radioReviewTypeNone">
                   <Properties>
-                    <Property name="buttonGroup" type="javax.swing.ButtonGroup" editor="org.netbeans.modules.form.RADComponent$ButtonGroupPropertyEditor">
-                      <ComponentRef name="btGroupReviews"/>
-                    </Property>
                     <Property name="selected" type="boolean" value="true"/>
                     <Property name="text" type="java.lang.String" value="keine"/>
                   </Properties>
@@ -895,12 +884,12 @@
                       <Group type="102" alignment="0" attributes="0">
                           <EmptySpace max="-2" attributes="0"/>
                           <Group type="103" groupAlignment="0" attributes="0">
-                              <Group type="102" attributes="0">
+                              <Group type="102" alignment="0" attributes="0">
                                   <Component id="jLabel4" min="-2" max="-2" attributes="0"/>
                                   <EmptySpace max="32767" attributes="0"/>
                                   <Component id="txtTemplateSearch" min="-2" pref="275" max="-2" attributes="0"/>
                               </Group>
-                              <Component id="pnlParties" alignment="0" pref="616" max="32767" attributes="0"/>
+                              <Component id="pnlParties" alignment="0" pref="676" max="32767" attributes="0"/>
                               <Component id="cmbTemplates" alignment="1" max="32767" attributes="0"/>
                           </Group>
                           <EmptySpace max="-2" attributes="0"/>
@@ -918,7 +907,7 @@
                           <EmptySpace max="-2" attributes="0"/>
                           <Component id="cmbTemplates" min="-2" max="-2" attributes="0"/>
                           <EmptySpace max="-2" attributes="0"/>
-                          <Component id="pnlParties" pref="126" max="32767" attributes="0"/>
+                          <Component id="pnlParties" pref="345" max="32767" attributes="0"/>
                           <EmptySpace max="-2" attributes="0"/>
                       </Group>
                   </Group>

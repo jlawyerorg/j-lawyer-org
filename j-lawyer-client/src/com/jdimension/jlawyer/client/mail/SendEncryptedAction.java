@@ -696,6 +696,7 @@ import javax.activation.FileDataSource;
 import javax.mail.*;
 import javax.mail.internet.*;
 import javax.swing.JDialog;
+import javax.swing.JFrame;
 import org.apache.log4j.Logger;
 
 /**
@@ -741,6 +742,30 @@ public class SendEncryptedAction extends ProgressableAction {
     }
 
     public SendEncryptedAction(ProgressIndicator i, JDialog cleanAfter, List<String> attachments, MailboxSetup ms, boolean readReceipt, String to, String cc, String bcc, String subject, String body, String contentType, ArchiveFileBean af, String documentTag, CaseFolder folder) {
+        this(i, cleanAfter, attachments, ms, readReceipt, to, cc, bcc, subject, body, contentType, documentTag);
+        this.archiveFile = af;
+        this.caseFolder = folder;
+    }
+    
+    public SendEncryptedAction(ProgressIndicator i, JFrame cleanAfter, List<String> attachments, MailboxSetup ms, boolean readReceipt, String to, String cc, String bcc, String subject, String body, String contentType, String documentTag) {
+        super(i, false, cleanAfter);
+        this.attachments = attachments;
+        this.ms = ms;
+        this.readReceipt = readReceipt;
+        this.to = to;
+        this.cc = cc;
+        this.bcc = bcc;
+        this.subject = subject;
+        this.body = body;
+        this.contentType = contentType;
+        this.documentTag = documentTag;
+
+        this.mails = EmailUtils.getAllMailAddressesFromString(this.to);
+        mails.addAll(EmailUtils.getAllMailAddressesFromString(this.cc));
+        mails.addAll(EmailUtils.getAllMailAddressesFromString(this.bcc));
+    }
+
+    public SendEncryptedAction(ProgressIndicator i, JFrame cleanAfter, List<String> attachments, MailboxSetup ms, boolean readReceipt, String to, String cc, String bcc, String subject, String body, String contentType, ArchiveFileBean af, String documentTag, CaseFolder folder) {
         this(i, cleanAfter, attachments, ms, readReceipt, to, cc, bcc, subject, body, contentType, documentTag);
         this.archiveFile = af;
         this.caseFolder = folder;

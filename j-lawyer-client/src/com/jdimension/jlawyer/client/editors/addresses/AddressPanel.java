@@ -668,7 +668,7 @@ import com.jdimension.jlawyer.client.bea.BeaIdentitySearchDialog;
 import com.jdimension.jlawyer.client.bea.BeaLoginCallback;
 import com.jdimension.jlawyer.client.bea.BeaLoginDialog;
 import com.jdimension.jlawyer.client.bea.IdentityPanel;
-import com.jdimension.jlawyer.client.bea.SendBeaMessageDialog;
+import com.jdimension.jlawyer.client.bea.SendBeaMessageFrame;
 import com.jdimension.jlawyer.client.components.MultiCalDialog;
 import com.jdimension.jlawyer.client.configuration.BankSearchDialog;
 import com.jdimension.jlawyer.client.configuration.CitySearchDialog;
@@ -681,7 +681,7 @@ import com.jdimension.jlawyer.client.editors.files.NewArchiveFilePanel;
 import com.jdimension.jlawyer.client.encryption.PasswordGenerator;
 import com.jdimension.jlawyer.client.events.ContactUpdatedEvent;
 import com.jdimension.jlawyer.client.events.EventBroker;
-import com.jdimension.jlawyer.client.mail.SendEmailDialog;
+import com.jdimension.jlawyer.client.mail.SendEmailFrame;
 import com.jdimension.jlawyer.client.mail.sidebar.AttributeCellEditor;
 import com.jdimension.jlawyer.client.settings.ClientSettings;
 import com.jdimension.jlawyer.client.settings.ServerSettings;
@@ -3197,7 +3197,7 @@ public class AddressPanel extends javax.swing.JPanel implements BeaLoginCallback
     }//GEN-LAST:event_jTabbedPane1StateChanged
 
     private void cmdSendEmailActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdSendEmailActionPerformed
-        SendEmailDialog dlg = new SendEmailDialog(false, EditorsRegistry.getInstance().getMainWindow(), false);
+        SendEmailFrame dlg = new SendEmailFrame(false);
         dlg.setTo(this.txtEmail.getText());
 
         try {
@@ -3212,7 +3212,8 @@ public class AddressPanel extends javax.swing.JPanel implements BeaLoginCallback
             JOptionPane.showMessageDialog(this, "Fehler beim Ermitteln der Beteiligtentypen: " + ex.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
         }
 
-        FrameUtils.centerDialog(dlg, null);
+        FrameUtils.centerFrame(dlg, null);
+        EditorsRegistry.getInstance().registerFrame(dlg);
         dlg.setVisible(true);
     }//GEN-LAST:event_cmdSendEmailActionPerformed
 
@@ -3377,7 +3378,7 @@ public class AddressPanel extends javax.swing.JPanel implements BeaLoginCallback
             BeaAccess bea = BeaAccess.getInstance();
             Identity i = bea.getIdentity(this.txtBeaSafeId.getText());
 
-            SendBeaMessageDialog dlg = new SendBeaMessageDialog(EditorsRegistry.getInstance().getMainWindow(), false);
+            SendBeaMessageFrame dlg = new SendBeaMessageFrame();
             dlg.setTo(i);
             try {
                 JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(ClientSettings.getInstance().getLookupProperties());
@@ -3391,7 +3392,8 @@ public class AddressPanel extends javax.swing.JPanel implements BeaLoginCallback
                 JOptionPane.showMessageDialog(this, "Fehler beim Ermitteln der Beteiligtentypen: " + ex.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
             }
 
-            FrameUtils.centerDialog(dlg, null);
+            FrameUtils.centerFrame(dlg, null);
+            EditorsRegistry.getInstance().registerFrame(dlg);
             dlg.setVisible(true);
 
         } catch (Throwable t) {

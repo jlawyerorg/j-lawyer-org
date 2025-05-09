@@ -686,6 +686,8 @@ import java.util.Map;
 import javax.json.Json;
 import javax.json.JsonObject;
 import javax.json.JsonReader;
+import javax.swing.JDialog;
+import javax.swing.JFrame;
 import javax.swing.JMenu;
 import javax.swing.JMenuItem;
 import javax.swing.JPopupMenu;
@@ -891,7 +893,7 @@ public class AssistantAccess {
 
     }
 
-    public void populateMenu(JPopupMenu menu, Map<AssistantConfig, List<AiCapability>> capabilities, AssistantInputAdapter adapter, ArchiveFileBean selectedCase) {
+    public void populateMenu(JPopupMenu menu, Map<AssistantConfig, List<AiCapability>> capabilities, AssistantInputAdapter adapter, ArchiveFileBean selectedCase, JDialog parent, boolean modal) {
 
         for (AssistantConfig config : capabilities.keySet()) {
             for (AiCapability c : capabilities.get(config)) {
@@ -900,10 +902,32 @@ public class AssistantAccess {
                 mi.setToolTipText(c.getDescription() + " (" + config.getName() + ")");
                 mi.addActionListener((ActionEvent e) -> {
                     if(AiCapability.REQUESTTYPE_CHAT.equals(c.getRequestType())) {
-                        AssistantChatDialog dlg = new AssistantChatDialog(selectedCase, config, c, adapter, EditorsRegistry.getInstance().getMainWindow(), false);
+                        AssistantChatDialog dlg = new AssistantChatDialog(selectedCase, config, c, adapter, parent, modal);
                         dlg.setVisible(true);
                     } else {
-                        AssistantGenericDialog dlg = new AssistantGenericDialog(selectedCase, config, c, adapter, !c.hasParameters(), EditorsRegistry.getInstance().getMainWindow(), false);
+                        AssistantGenericDialog dlg = new AssistantGenericDialog(selectedCase, config, c, adapter, !c.hasParameters(), parent, modal);
+                        dlg.setVisible(true);
+                    }
+                });
+                menu.add(mi);
+            }
+        }
+
+    }
+    
+    public void populateMenu(JPopupMenu menu, Map<AssistantConfig, List<AiCapability>> capabilities, AssistantInputAdapter adapter, ArchiveFileBean selectedCase, JFrame parent, boolean modal) {
+
+        for (AssistantConfig config : capabilities.keySet()) {
+            for (AiCapability c : capabilities.get(config)) {
+                JMenuItem mi = new JMenuItem();
+                mi.setText(c.getName());
+                mi.setToolTipText(c.getDescription() + " (" + config.getName() + ")");
+                mi.addActionListener((ActionEvent e) -> {
+                    if(AiCapability.REQUESTTYPE_CHAT.equals(c.getRequestType())) {
+                        AssistantChatDialog dlg = new AssistantChatDialog(selectedCase, config, c, adapter, parent, modal);
+                        dlg.setVisible(true);
+                    } else {
+                        AssistantGenericDialog dlg = new AssistantGenericDialog(selectedCase, config, c, adapter, !c.hasParameters(), parent, modal);
                         dlg.setVisible(true);
                     }
                 });

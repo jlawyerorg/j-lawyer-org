@@ -663,6 +663,7 @@
  */
 package com.jdimension.jlawyer.client.editors;
 
+import com.jdimension.jlawyer.client.JKanzleiGUI;
 import com.jdimension.jlawyer.client.utils.ThreadUtils;
 import java.awt.Component;
 import java.util.HashMap;
@@ -856,5 +857,17 @@ public class EditorsRegistry {
 
     public void setMainWindow(JFrame mainWindow) {
         this.mainWindow = mainWindow;
+    }
+    
+    public void registerFrame(JFrame frame) {
+        if(this.mainWindow!=null && this.mainWindow instanceof JKanzleiGUI) {
+            ((JKanzleiGUI)this.mainWindow).registerFrame(frame);
+        }
+    }
+
+    public void unregisterFrame(JFrame frame) {
+        if(this.mainWindow!=null && this.mainWindow instanceof JKanzleiGUI) {
+            ((JKanzleiGUI)this.mainWindow).unregisterFrame(frame);
+        }
     }
 }

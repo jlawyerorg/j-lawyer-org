@@ -668,7 +668,7 @@ import com.jdimension.jlawyer.client.bea.BeaInboxPanel;
 import com.jdimension.jlawyer.client.bea.BeaLoginCallback;
 import com.jdimension.jlawyer.client.bea.BeaLoginDialog;
 import com.jdimension.jlawyer.client.bea.IdentityPanel;
-import com.jdimension.jlawyer.client.bea.SendBeaMessageDialog;
+import com.jdimension.jlawyer.client.bea.SendBeaMessageFrame;
 import com.jdimension.jlawyer.client.editors.EditorsRegistry;
 import com.jdimension.jlawyer.client.editors.addresses.AddressUtils;
 import com.jdimension.jlawyer.client.editors.addresses.ConflictOfInterestUtils;
@@ -676,7 +676,7 @@ import com.jdimension.jlawyer.client.events.ContactUpdatedEvent;
 import com.jdimension.jlawyer.client.events.Event;
 import com.jdimension.jlawyer.client.events.EventBroker;
 import com.jdimension.jlawyer.client.events.EventConsumer;
-import com.jdimension.jlawyer.client.mail.SendEmailDialog;
+import com.jdimension.jlawyer.client.mail.SendEmailFrame;
 import com.jdimension.jlawyer.client.settings.ClientSettings;
 import com.jdimension.jlawyer.client.settings.ServerSettings;
 import com.jdimension.jlawyer.client.settings.UserSettings;
@@ -1321,7 +1321,7 @@ public class InvolvedPartyEntryPanel extends javax.swing.JPanel implements Event
                 this.casePanel.saveInvolvements();
             }
 
-            SendEmailDialog dlg = new SendEmailDialog(false, EditorsRegistry.getInstance().getMainWindow(), false);
+            SendEmailFrame dlg = new SendEmailFrame(false);
             dlg.setArchiveFile(this.caseDto, null);
             dlg.setTo(this.a.getEmail());
             ArrayList<ArchiveFileAddressesBean> involved = this.container.getInvolvedParties();
@@ -1329,7 +1329,8 @@ public class InvolvedPartyEntryPanel extends javax.swing.JPanel implements Event
                 dlg.addParty(aab, true);
             }
 
-            FrameUtils.centerDialog(dlg, null);
+            FrameUtils.centerFrame(dlg, null);
+            EditorsRegistry.getInstance().registerFrame(dlg);
             dlg.setVisible(true);
         }
 
@@ -1370,7 +1371,7 @@ public class InvolvedPartyEntryPanel extends javax.swing.JPanel implements Event
                 this.casePanel.saveInvolvements();
             }
 
-            SendBeaMessageDialog dlg = new SendBeaMessageDialog(EditorsRegistry.getInstance().getMainWindow(), false);
+            SendBeaMessageFrame dlg = new SendBeaMessageFrame();
             dlg.setArchiveFile(this.caseDto);
             dlg.setTo(iTo);
 
@@ -1379,7 +1380,8 @@ public class InvolvedPartyEntryPanel extends javax.swing.JPanel implements Event
                 dlg.addParty(aab);
             }
             dlg.setAzRecipient(this.txtReference.getText());
-            FrameUtils.centerDialog(dlg, null);
+            FrameUtils.centerFrame(dlg, null);
+            EditorsRegistry.getInstance().registerFrame(dlg);
             dlg.setVisible(true);
         }
 

@@ -673,6 +673,7 @@ import com.jdimension.jlawyer.client.utils.StringUtils;
 import com.jdimension.jlawyer.client.utils.ThreadUtils;
 import com.jdimension.jlawyer.persistence.AddressBean;
 import com.jdimension.jlawyer.ui.tagging.TagUtils;
+import java.awt.Window;
 import java.awt.event.ActionEvent;
 import java.awt.event.KeyEvent;
 import java.util.List;
@@ -707,6 +708,18 @@ public class AddBeaRecipientSearchDialog extends javax.swing.JDialog {
         super(parent, modal);
         this.nextFocus = nextFocus;
         this.to = to;
+        this.initialize();
+
+    }
+    
+    public AddBeaRecipientSearchDialog(Window parent, JList to, JComponent nextFocus) {
+        super(parent);
+        this.nextFocus = nextFocus;
+        this.to = to;
+        this.initialize();
+    }
+    
+    private void initialize() {
         initComponents();
         String[] colNames = new String[]{"Name", "Vorname", "Unternehmen", "PLZ", "Ort", "E-Mail", "", "SafeID"};
         QuickAddressSearchTableModel model = new QuickAddressSearchTableModel(colNames, 0);
@@ -727,7 +740,6 @@ public class AddBeaRecipientSearchDialog extends javax.swing.JDialog {
                 useSelection();
             }
         });
-
     }
 
     /**

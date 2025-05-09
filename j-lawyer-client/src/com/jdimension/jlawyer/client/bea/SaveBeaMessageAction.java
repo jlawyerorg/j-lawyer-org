@@ -682,6 +682,7 @@ import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 import javax.swing.JDialog;
+import javax.swing.JFrame;
 import javax.swing.JOptionPane;
 import org.apache.commons.io.FileUtils;
 import org.apache.log4j.Logger;
@@ -732,6 +733,28 @@ public class SaveBeaMessageAction extends ProgressableAction {
     }
 
     public SaveBeaMessageAction(ProgressIndicator i, JDialog cleanAfter, String fromSafeId, List<BeaAttachmentMetadata> attachmentMetadata, AppUserBean cu, boolean readReceipt, BeaListItem authority, Identity to, String subject, String body, ArchiveFileBean af, String documentTag, String azSender, String azRecipient, CaseFolder folder, BeaListItem priority) {
+        this(i, cleanAfter, fromSafeId, attachmentMetadata, cu, readReceipt, authority, to, subject, body, documentTag, azSender, azRecipient, priority);
+        this.archiveFile = af;
+        this.folder = folder;
+    }
+    
+    public SaveBeaMessageAction(ProgressIndicator i, JFrame cleanAfter, String fromSafeId, List<BeaAttachmentMetadata> attachmentMetadata, AppUserBean cu, boolean readReceipt, BeaListItem authority, Identity to, String subject, String body, String documentTag, String azSender, String azRecipient, BeaListItem priority) {
+        super(i, false, cleanAfter);
+        this.attachments = attachmentMetadata;
+        this.readReceipt = readReceipt;
+        this.to = to;
+        this.subject = subject;
+        this.body = body;
+        this.fromSafeId = fromSafeId;
+        this.documentTag = documentTag;
+        this.readReceipt = readReceipt;
+        this.authority = authority;
+        this.azSender = azSender;
+        this.azRecipient = azRecipient;
+        this.priority=priority;
+    }
+
+    public SaveBeaMessageAction(ProgressIndicator i, JFrame cleanAfter, String fromSafeId, List<BeaAttachmentMetadata> attachmentMetadata, AppUserBean cu, boolean readReceipt, BeaListItem authority, Identity to, String subject, String body, ArchiveFileBean af, String documentTag, String azSender, String azRecipient, CaseFolder folder, BeaListItem priority) {
         this(i, cleanAfter, fromSafeId, attachmentMetadata, cu, readReceipt, authority, to, subject, body, documentTag, azSender, azRecipient, priority);
         this.archiveFile = af;
         this.folder = folder;

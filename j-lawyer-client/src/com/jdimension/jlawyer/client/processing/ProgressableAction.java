@@ -664,6 +664,7 @@
 package com.jdimension.jlawyer.client.processing;
 
 import javax.swing.JDialog;
+import javax.swing.JFrame;
 import javax.swing.JOptionPane;
 import javax.swing.SwingUtilities;
 import org.jboss.logging.Logger;
@@ -679,18 +680,34 @@ public abstract class ProgressableAction {
     private boolean infinite;
     protected ProgressIndicator indicator;
     private boolean cancelled = false;
-    private JDialog cleanAfter = null;
+    private JDialog cleanAfterDialog = null;
+    private JFrame cleanAfterFrame = null;
+    private JFrame pushToFrontWhenFinished = null;
     private ProgressableActionCallback callback = null;
 
     public ProgressableAction(ProgressIndicator i, boolean infinite) {
         this.infinite = infinite;
         this.indicator = i;
     }
+    
+    public ProgressableAction(ProgressIndicator i, JFrame pushToFrontWhenFinished, boolean infinite) {
+        this.infinite = infinite;
+        this.indicator = i;
+        this.pushToFrontWhenFinished=pushToFrontWhenFinished;
+    }
 
     public ProgressableAction(ProgressIndicator i, boolean infinite, JDialog cleanAfter) {
         this.infinite = infinite;
         this.indicator = i;
-        this.cleanAfter = cleanAfter;
+        this.cleanAfterDialog = cleanAfter;
+        this.cleanAfterFrame=null;
+    }
+    
+    public ProgressableAction(ProgressIndicator i, boolean infinite, JFrame cleanAfter) {
+        this.infinite = infinite;
+        this.indicator = i;
+        this.cleanAfterDialog = null;
+        this.cleanAfterFrame=cleanAfter;
     }
 
     public void progress() {
@@ -786,15 +803,26 @@ public abstract class ProgressableAction {
                 indicator.dispose();
                 
                 if (succeeded) {
-                    if (cleanAfter != null) {
-                        cleanAfter.setVisible(false);
-                        cleanAfter.dispose();
+                    if (cleanAfterDialog != null) {
+                        cleanAfterDialog.setVisible(false);
+                        cleanAfterDialog.dispose();
+                    }
+                    if (cleanAfterFrame != null) {
+                        cleanAfterFrame.setVisible(false);
+                        cleanAfterFrame.dispose();
                     }
                 }
                 if (succeeded) {
                     if (callback != null) {
                         callback.actionFinished();
                     }
+                }
+                
+                if(succeeded && this.pushToFrontWhenFinished!=null) {
+//                    this.pushToFrontWhenFinished.setAlwaysOnTop(true);
+//                    this.pushToFrontWhenFinished.setAlwaysOnTop(false);
+                    this.pushToFrontWhenFinished.toFront();
+                    this.pushToFrontWhenFinished.requestFocus();
                 }
             }));
         }).start();

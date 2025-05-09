@@ -703,6 +703,7 @@ import javax.swing.AbstractAction;
 import javax.swing.JComboBox;
 import javax.swing.JComponent;
 import javax.swing.JDialog;
+import javax.swing.JFrame;
 import javax.swing.JLabel;
 import javax.swing.JScrollBar;
 import javax.swing.JTextField;
@@ -755,8 +756,29 @@ public class AssistantChatDialog extends javax.swing.JDialog {
      * @param parent
      * @param modal
      */
-    public AssistantChatDialog(ArchiveFileBean selectedCase, AssistantConfig config, AiCapability c, AssistantInputAdapter inputAdapter, java.awt.Frame parent, boolean modal) {
+    public AssistantChatDialog(ArchiveFileBean selectedCase, AssistantConfig config, AiCapability c, AssistantInputAdapter inputAdapter, JDialog parent, boolean modal) {
         super(parent, modal);
+        this.initialize(selectedCase, config, c, inputAdapter);
+        
+    }
+    
+    /**
+     * Creates new form GenericAssistantDialog
+     *
+     * @param selectedCase
+     * @param config
+     * @param c
+     * @param inputAdapter
+     * @param parent
+     * @param modal
+     */
+    public AssistantChatDialog(ArchiveFileBean selectedCase, AssistantConfig config, AiCapability c, AssistantInputAdapter inputAdapter, JFrame parent, boolean modal) {
+        super(parent, modal);
+        this.initialize(selectedCase, config, c, inputAdapter);
+
+    }
+    
+    private void initialize(ArchiveFileBean selectedCase, AssistantConfig config, AiCapability c, AssistantInputAdapter inputAdapter) {
         initComponents();
 
         this.scrollMessages.getVerticalScrollBar().setUnitIncrement(32);
@@ -879,7 +901,6 @@ public class AssistantChatDialog extends javax.swing.JDialog {
         ComponentUtils.decorateSplitPane(this.splitInputOutput);
         ComponentUtils.restoreSplitPane(this.splitInputOutput, this.getClass(), "splitInputOutput");
         ComponentUtils.persistSplitPane(this.splitInputOutput, this.getClass(), "splitInputOutput");
-
     }
 
     @Override

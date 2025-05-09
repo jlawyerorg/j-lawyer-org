@@ -668,6 +668,7 @@ import com.jdimension.jlawyer.client.settings.ClientSettings;
 import com.jdimension.jlawyer.persistence.ArchiveFileDocumentsBean;
 import com.jdimension.jlawyer.services.ArchiveFileServiceRemote;
 import com.jdimension.jlawyer.services.JLawyerServiceLocator;
+import java.awt.Window;
 import java.awt.event.KeyEvent;
 import java.io.File;
 import java.util.ArrayList;
@@ -675,6 +676,7 @@ import java.util.Collection;
 import java.util.Collections;
 import javax.swing.DefaultListModel;
 import javax.swing.JDialog;
+import javax.swing.JFrame;
 import javax.swing.JOptionPane;
 import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
@@ -691,6 +693,19 @@ public class SelectAttachmentDialog extends javax.swing.JDialog {
     private File[] selectedFiles = null;
     private ArrayList sortedDocs = null;
 
+    
+//    public SelectAttachmentDialog(Window parent, boolean modal, String caseId) {
+//        super(parent);
+//        initComponents();
+//        this.initialize(caseId);
+//    }
+    
+    public SelectAttachmentDialog(JFrame parent, boolean modal, String caseId) {
+        super(parent, modal);
+        initComponents();
+        this.initialize(caseId);
+    }
+    
     /**
      * Creates new form SelectAttachmentDialog
      *
@@ -701,7 +716,12 @@ public class SelectAttachmentDialog extends javax.swing.JDialog {
     public SelectAttachmentDialog(JDialog parent, boolean modal, String caseId) {
         super(parent, modal);
         initComponents();
+        this.initialize(caseId);
+        
 
+    }
+    
+    private void initialize(String caseId) {
         this.txtSearch.putClientProperty("JTextField.showClearButton", true);
         this.txtSearch.putClientProperty("JTextField.placeholderText", "Suche nach Dateinamen");
         this.txtSearch.getDocument().addDocumentListener(new DocumentListener() {
@@ -743,7 +763,6 @@ public class SelectAttachmentDialog extends javax.swing.JDialog {
             this.jTabbedPane1.setEnabledAt(1, false);
             this.pnlFromCase.setEnabled(false);
         }
-
     }
 
     public File[] getSelectedFiles() {
@@ -955,7 +974,7 @@ public class SelectAttachmentDialog extends javax.swing.JDialog {
 
         /* Create and display the dialog */
         java.awt.EventQueue.invokeLater(() -> {
-            SelectAttachmentDialog dialog = new SelectAttachmentDialog(null, true, null);
+            SelectAttachmentDialog dialog = new SelectAttachmentDialog((JFrame)null, true, null);
             dialog.addWindowListener(new java.awt.event.WindowAdapter() {
                 @Override
                 public void windowClosing(java.awt.event.WindowEvent e) {

@@ -876,13 +876,14 @@ public class MailContentUI extends javax.swing.JPanel implements HyperlinkListen
                                         if (hrefValue.contains("jlawyer://addtowhitelist")) {
                                             showHtml();
                                         } else if (hrefValue.toLowerCase().startsWith("mailto:")) {
-                                            SendEmailDialog dlg = new SendEmailDialog(false, EditorsRegistry.getInstance().getMainWindow(), false);
-                                            FrameUtils.centerDialog(dlg, null);
+                                            SendEmailFrame dlg = new SendEmailFrame(false);
+                                            FrameUtils.centerFrame(dlg, null);
                                             String mTo = hrefValue;
                                             if (mTo.length() > 7) {
                                                 mTo = mTo.substring(7);
                                             }
                                             dlg.setTo(mTo);
+                                            EditorsRegistry.getInstance().registerFrame(dlg);
                                             dlg.setVisible(true);
                                         } else {
                                             DesktopUtils.openBrowser(hrefValue);
@@ -2096,42 +2097,42 @@ public class MailContentUI extends javax.swing.JPanel implements HyperlinkListen
 
             // Erste Kategorie
             Map<AssistantConfig, List<AiCapability>> capabilitiesGenerate = ingo.filterCapabilities(AiCapability.REQUESTTYPE_GENERATE, AiCapability.INPUTTYPE_STRING);
-            ingo.populateMenu(this.popAssistant, capabilitiesGenerate, (AssistantInputAdapter) this, this.caseContext);
+            ingo.populateMenu(this.popAssistant, capabilitiesGenerate, (AssistantInputAdapter) this, this.caseContext, EditorsRegistry.getInstance().getMainWindow(), false);
             if (!capabilitiesGenerate.isEmpty()) {
                 this.popAssistant.add(new JSeparator());
             }
 
             // Zweite Kategorie
             Map<AssistantConfig, List<AiCapability>> capabilitiesGenerate2 = ingo.filterCapabilities(AiCapability.REQUESTTYPE_GENERATE, AiCapability.INPUTTYPE_NONE);
-            ingo.populateMenu(this.popAssistant, capabilitiesGenerate2, (AssistantInputAdapter) this, this.caseContext);
+            ingo.populateMenu(this.popAssistant, capabilitiesGenerate2, (AssistantInputAdapter) this, this.caseContext, EditorsRegistry.getInstance().getMainWindow(), false);
             if (!capabilitiesGenerate2.isEmpty()) {
                 this.popAssistant.add(new JSeparator());
             }
 
             // Dritte Kategorie
             Map<AssistantConfig, List<AiCapability>> capabilities = ingo.filterCapabilities(AiCapability.REQUESTTYPE_EXPLAIN, AiCapability.INPUTTYPE_STRING);
-            ingo.populateMenu(this.popAssistant, capabilities, (AssistantInputAdapter) this, this.caseContext);
+            ingo.populateMenu(this.popAssistant, capabilities, (AssistantInputAdapter) this, this.caseContext, EditorsRegistry.getInstance().getMainWindow(), false);
             if (!capabilities.isEmpty()) {
                 this.popAssistant.add(new JSeparator());
             }
 
             // Vierte Kategorie
             Map<AssistantConfig, List<AiCapability>> capabilities2 = ingo.filterCapabilities(AiCapability.REQUESTTYPE_SUMMARIZE, AiCapability.INPUTTYPE_STRING);
-            ingo.populateMenu(this.popAssistant, capabilities2, (AssistantInputAdapter) this, this.caseContext);
+            ingo.populateMenu(this.popAssistant, capabilities2, (AssistantInputAdapter) this, this.caseContext, EditorsRegistry.getInstance().getMainWindow(), false);
             if (!capabilities2.isEmpty()) {
                 this.popAssistant.add(new JSeparator());
             }
 
             // Fünfte Kategorie
             Map<AssistantConfig, List<AiCapability>> capabilities3 = ingo.filterCapabilities(AiCapability.REQUESTTYPE_TRANSLATE, AiCapability.INPUTTYPE_STRING);
-            ingo.populateMenu(this.popAssistant, capabilities3, (AssistantInputAdapter) this, this.caseContext);
+            ingo.populateMenu(this.popAssistant, capabilities3, (AssistantInputAdapter) this, this.caseContext, EditorsRegistry.getInstance().getMainWindow(), false);
             if (!capabilities3.isEmpty()) {
                 this.popAssistant.add(new JSeparator());
             }
 
             // Sechste Kategorie
             Map<AssistantConfig, List<AiCapability>> capabilities4 = ingo.filterCapabilities(AiCapability.REQUESTTYPE_CHAT, AiCapability.INPUTTYPE_NONE);
-            ingo.populateMenu(this.popAssistant, capabilities4, (AssistantInputAdapter) this, this.caseContext);
+            ingo.populateMenu(this.popAssistant, capabilities4, (AssistantInputAdapter) this, this.caseContext, EditorsRegistry.getInstance().getMainWindow(), false);
 
             this.popAssistant.show(this.cmdAssistant, evt.getX(), evt.getY());
         } catch (Exception ex) {
@@ -2299,12 +2300,13 @@ public class MailContentUI extends javax.swing.JPanel implements HyperlinkListen
 
             String url = he.getURL().toString();
             if (url.toLowerCase().startsWith("mailto:")) {
-                SendEmailDialog dlg = new SendEmailDialog(false, EditorsRegistry.getInstance().getMainWindow(), false);
-                FrameUtils.centerDialog(dlg, null);
+                SendEmailFrame dlg = new SendEmailFrame(false);
+                FrameUtils.centerFrame(dlg, null);
                 if (url.length() > 7) {
                     url = url.substring(7);
                 }
                 dlg.setTo(url);
+                EditorsRegistry.getInstance().registerFrame(dlg);
                 dlg.setVisible(true);
             } else {
                 DesktopUtils.openBrowser(url);
@@ -2399,7 +2401,7 @@ public class MailContentUI extends javax.swing.JPanel implements HyperlinkListen
             }
         }
 
-        SendEmailDialog dlg = null;
+        SendEmailFrame dlg = null;
         if (this.emlMsgContainer != null) {
             Message m = emlMsgContainer.getMessage();
             dlg = EmailUtils.reply(m, prependText, this.getBody(), this.getContentType());
@@ -2407,7 +2409,8 @@ public class MailContentUI extends javax.swing.JPanel implements HyperlinkListen
             dlg = EmailUtils.reply(this.outlookMsgContainer, prependText, this.getBody(), this.getContentType());
         }
         dlg.setArchiveFile(caseContext, null);
-        FrameUtils.centerDialog(dlg, null);
+        FrameUtils.centerFrame(dlg, null);
+        EditorsRegistry.getInstance().registerFrame(dlg);
         dlg.setVisible(true);
 
     }

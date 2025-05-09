@@ -679,7 +679,7 @@ import com.jdimension.jlawyer.client.bea.BeaAccess;
 import com.jdimension.jlawyer.client.bea.BeaInboxPanel;
 import com.jdimension.jlawyer.client.bea.BeaLoginCallback;
 import com.jdimension.jlawyer.client.bea.BeaLoginDialog;
-import com.jdimension.jlawyer.client.bea.SendBeaMessageDialog;
+import com.jdimension.jlawyer.client.bea.SendBeaMessageFrame;
 import com.jdimension.jlawyer.client.calendar.CalendarUtils;
 import com.jdimension.jlawyer.client.cloud.CloudInstance;
 import com.jdimension.jlawyer.client.cloud.SendCloudShare;
@@ -715,7 +715,7 @@ import com.jdimension.jlawyer.client.launcher.DocumentObserver;
 import com.jdimension.jlawyer.client.launcher.Launcher;
 import com.jdimension.jlawyer.client.launcher.LauncherFactory;
 import com.jdimension.jlawyer.client.launcher.ReadOnlyDocumentStore;
-import com.jdimension.jlawyer.client.mail.SendEmailDialog;
+import com.jdimension.jlawyer.client.mail.SendEmailFrame;
 import com.jdimension.jlawyer.client.messenger.MessagePanel;
 import com.jdimension.jlawyer.client.messenger.NewMessageConsumer;
 import com.jdimension.jlawyer.client.messenger.SendInstantMessageDialog;
@@ -5049,7 +5049,7 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
             this.saveInvolvements();
         }
 
-        SendEmailDialog dlg = new SendEmailDialog(false, EditorsRegistry.getInstance().getMainWindow(), false);
+        SendEmailFrame dlg = new SendEmailFrame(false);
 
         HashMap<String, CaseFolder> folders = new HashMap<>();
         for (ArchiveFileDocumentsBean doc : selectedDocs) {
@@ -5085,7 +5085,8 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
             JOptionPane.showMessageDialog(this, "Fehler beim Senden des Dokuments: " + ioe.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
         }
 
-        FrameUtils.centerDialog(dlg, null);
+        FrameUtils.centerFrame(dlg, null);
+        EditorsRegistry.getInstance().registerFrame(dlg);
         dlg.setVisible(true);
     }//GEN-LAST:event_mnuSendDocumentActionPerformed
 
@@ -5111,7 +5112,7 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
             this.saveInvolvements();
         }
 
-        SendEmailDialog dlg = new SendEmailDialog(false, EditorsRegistry.getInstance().getMainWindow(), false);
+        SendEmailFrame dlg = new SendEmailFrame(false);
 
         HashMap<String, CaseFolder> folders = new HashMap<>();
         for (ArchiveFileDocumentsBean doc : selectedDocs) {
@@ -5134,7 +5135,7 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
 
         ProgressIndicator pi = new ProgressIndicator(EditorsRegistry.getInstance().getMainWindow(), true);
         pi.setShowCancelButton(selectedDocs.size() > 1);
-        SendPDFAction a = new SendPDFAction(pi, this.caseFolderPanel1, dlg);
+        SendPDFAction a = new SendPDFAction(pi, this.caseFolderPanel1, dlg, dlg);
 
         a.start();
 
@@ -5694,7 +5695,7 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
             this.saveInvolvements();
         }
 
-        SendBeaMessageDialog dlg = new SendBeaMessageDialog(EditorsRegistry.getInstance().getMainWindow(), false);
+        SendBeaMessageFrame dlg = new SendBeaMessageFrame();
 
         dlg.setArchiveFile(dto);
         dlg.setInvolvedInCase(this.pnlInvolvedParties.getInvolvedParties());
@@ -5718,7 +5719,8 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
             JOptionPane.showMessageDialog(this, "Fehler beim Senden des Dokuments: " + ioe.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
         }
 
-        FrameUtils.centerDialog(dlg, null);
+        FrameUtils.centerFrame(dlg, null);
+        EditorsRegistry.getInstance().registerFrame(dlg);
         dlg.setVisible(true);
     }//GEN-LAST:event_mnuSendBeaDocumentActionPerformed
 
@@ -5758,7 +5760,7 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
             this.saveInvolvements();
         }
 
-        SendBeaMessageDialog dlg = new SendBeaMessageDialog(EditorsRegistry.getInstance().getMainWindow(), false);
+        SendBeaMessageFrame dlg = new SendBeaMessageFrame();
 
         dlg.setArchiveFile(dto);
         dlg.setInvolvedInCase(this.pnlInvolvedParties.getInvolvedParties());
@@ -5768,7 +5770,7 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
 
         ProgressIndicator pi = new ProgressIndicator(EditorsRegistry.getInstance().getMainWindow(), true);
         pi.setShowCancelButton(selectedDocs.size() > 1);
-        SendPDFAction a = new SendPDFAction(pi, this.caseFolderPanel1, dlg);
+        SendPDFAction a = new SendPDFAction(pi, this.caseFolderPanel1, dlg, dlg);
 
         a.start();
     }//GEN-LAST:event_mnuSendBeaDocumentPDFActionPerformed
@@ -5811,9 +5813,9 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
     }//GEN-LAST:event_cmdClearSearchActionPerformed
 
     private void cmdAddNoteActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdAddNoteActionPerformed
-        AddNoteDialog dlg = new AddNoteDialog(EditorsRegistry.getInstance().getMainWindow(), true, this.caseFolderPanel1, this.dto);
-        dlg.setTitle("Notiz hinzufügen");
-        FrameUtils.centerDialog(dlg, EditorsRegistry.getInstance().getMainWindow());
+        AddNoteFrame dlg = new AddNoteFrame(this.dto);
+        FrameUtils.centerFrame(dlg, EditorsRegistry.getInstance().getMainWindow());
+        EditorsRegistry.getInstance().registerFrame(dlg);
         dlg.setVisible(true);
 
     }//GEN-LAST:event_cmdAddNoteActionPerformed
@@ -6845,7 +6847,7 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
 
             AssistantAccess ingo = AssistantAccess.getInstance();
             Map<AssistantConfig, List<AiCapability>> capabilities3 = ingo.filterCapabilities(AiCapability.REQUESTTYPE_CHAT, AiCapability.INPUTTYPE_NONE);
-            ingo.populateMenu(this.popAssistantNoContext, capabilities3, (AssistantInputAdapter) this, this.dto);
+            ingo.populateMenu(this.popAssistantNoContext, capabilities3, (AssistantInputAdapter) this, this.dto, EditorsRegistry.getInstance().getMainWindow(), true);
 
             this.popAssistantNoContext.show(this.cmdAssistantGenerate, evt.getX(), evt.getY());
 
@@ -7714,10 +7716,10 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
             }
         }
 
-        AddNoteDialog dlg = new AddNoteDialog(EditorsRegistry.getInstance().getMainWindow(), true, this.caseFolderPanel1, this.dto);
-        dlg.setTitle("Notiz hinzufügen");
+        AddNoteFrame dlg = new AddNoteFrame(this.dto);
         dlg.appendToBody(System.lineSeparator() + "Assistent Ingo - Ergebnis (" + c.getName() + ")" + System.lineSeparator() + System.lineSeparator() + resultText, true);
-        FrameUtils.centerDialog(dlg, EditorsRegistry.getInstance().getMainWindow());
+        FrameUtils.centerFrame(dlg, EditorsRegistry.getInstance().getMainWindow());
+        EditorsRegistry.getInstance().registerFrame(dlg);
         dlg.setVisible(true);
 
     }
