@@ -788,7 +788,7 @@ public class PartiesPanel extends javax.swing.JPanel {
                 }
                 
                 ignoreTableChanges = true;
-                if (evt.getColumn()>-1 && evt.getColumn() < columnNames.size()-1) {
+                if (evt.getColumn()>-1 && evt.getColumn() < columnNames.size()) {
                     Boolean newValue = (Boolean) tblParties.getValueAt(evt.getFirstRow(), evt.getColumn());
                     if (newValue == true) {
                         for (int i = 0; i < tblParties.getRowCount(); i++) {
