@@ -867,6 +867,10 @@ public class ViewBeaDialog extends javax.swing.JDialog {
         }
         this.setVisible(false);
         this.dispose();
+        
+        dlg.toFront();
+        dlg.requestFocus();
+        
     }//GEN-LAST:event_cmdReplyActionPerformed
 
     private void cmdReplyAllActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdReplyAllActionPerformed
@@ -930,6 +934,10 @@ public class ViewBeaDialog extends javax.swing.JDialog {
         }
         this.setVisible(false);
         this.dispose();
+        
+        dlg.toFront();
+        dlg.requestFocus();
+        
     }//GEN-LAST:event_cmdReplyAllActionPerformed
 
     private void cmdForwardActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdForwardActionPerformed
@@ -991,6 +999,9 @@ public class ViewBeaDialog extends javax.swing.JDialog {
         }
         this.setVisible(false);
         this.dispose();
+        
+        dlg.toFront();
+        dlg.requestFocus();
 
     }//GEN-LAST:event_cmdForwardActionPerformed
 
