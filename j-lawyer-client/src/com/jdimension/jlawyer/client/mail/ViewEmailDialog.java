@@ -861,6 +861,10 @@ public class ViewEmailDialog extends javax.swing.JDialog {
         }
         this.setVisible(false);
         this.dispose();
+        
+        dlg.toFront();
+        dlg.requestFocus();
+        
     }//GEN-LAST:event_cmdReplyActionPerformed
 
     private void cmdReplyAllActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdReplyAllActionPerformed
@@ -965,6 +969,9 @@ public class ViewEmailDialog extends javax.swing.JDialog {
         }
         this.setVisible(false);
         this.dispose();
+        
+        dlg.toFront();
+        dlg.requestFocus();
 
     }//GEN-LAST:event_cmdReplyAllActionPerformed
 
@@ -1112,6 +1119,9 @@ public class ViewEmailDialog extends javax.swing.JDialog {
         }
         this.setVisible(false);
         this.dispose();
+        
+        dlg.toFront();
+        dlg.requestFocus();
 
     }//GEN-LAST:event_cmdForwardActionPerformed
 
