@@ -788,6 +788,7 @@ public class CustomLauncherOptionsDialog extends javax.swing.JDialog {
         jLabel6 = new javax.swing.JLabel();
         txtExtension = new javax.swing.JTextField();
         chkDefaultLauncher = new javax.swing.JCheckBox();
+        lblInfo = new javax.swing.JLabel();
 
         mnuRemove.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/cancel.png"))); // NOI18N
         java.util.ResourceBundle bundle = java.util.ResourceBundle.getBundle("com/jdimension/jlawyer/client/configuration/CustomLauncherOptionsDialog"); // NOI18N
@@ -870,13 +871,14 @@ public class CustomLauncherOptionsDialog extends javax.swing.JDialog {
 
         jLabel5.setText("Programmbezeichnung:");
 
-        jLabel6.setText("Dateiendung:");
-
-        txtExtension.setToolTipText("Durch Komma getrennt können mehrere Dateitypen konfiguriert werden (z.B. pdf,html,jpg)");
+        jLabel6.setText("Dateiendung(en):");
 
         chkDefaultLauncher.setSelected(true);
         chkDefaultLauncher.setText("Standardprogramm");
         chkDefaultLauncher.setToolTipText("Standardprogramme werden durch Doppelklick auf ein Dokument geöffnet,\nNicht-Standardprogramme sind über das Kontextmenü des Dokuments aufrufbar.");
+
+        lblInfo.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/info.png"))); // NOI18N
+        lblInfo.setToolTipText("Durch Komma getrennt können mehrere Dateitypen konfiguriert werden (z.B. pdf,html,jpg)");
 
         javax.swing.GroupLayout jPanel1Layout = new javax.swing.GroupLayout(jPanel1);
         jPanel1.setLayout(jPanel1Layout);
@@ -893,19 +895,23 @@ public class CustomLauncherOptionsDialog extends javax.swing.JDialog {
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                         .addComponent(cmdBrowseBinary))
                     .addComponent(txtParamsRo)
-                    .addGroup(jPanel1Layout.createSequentialGroup()
-                        .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                            .addComponent(chkDefaultLauncher)
-                            .addComponent(jLabel5)
+                    .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                        .addGroup(jPanel1Layout.createSequentialGroup()
                             .addComponent(jLabel6)
-                            .addComponent(jLabel3)
-                            .addComponent(jLabel4)
-                            .addComponent(jLabel2)
-                            .addGroup(jPanel1Layout.createSequentialGroup()
-                                .addComponent(cmdTest)
-                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                                .addComponent(cmdSave)))
-                        .addGap(0, 0, Short.MAX_VALUE)))
+                            .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                            .addComponent(lblInfo))
+                        .addGroup(jPanel1Layout.createSequentialGroup()
+                            .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                                .addComponent(chkDefaultLauncher)
+                                .addComponent(jLabel5)
+                                .addComponent(jLabel3)
+                                .addComponent(jLabel4)
+                                .addComponent(jLabel2)
+                                .addGroup(jPanel1Layout.createSequentialGroup()
+                                    .addComponent(cmdTest)
+                                    .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                                    .addComponent(cmdSave)))
+                            .addGap(0, 0, Short.MAX_VALUE))))
                 .addContainerGap())
         );
         jPanel1Layout.setVerticalGroup(
@@ -916,7 +922,9 @@ public class CustomLauncherOptionsDialog extends javax.swing.JDialog {
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(txtLauncherName, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(jLabel6)
+                .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                    .addComponent(jLabel6)
+                    .addComponent(lblInfo))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(txtExtension, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
@@ -1213,6 +1221,7 @@ public class CustomLauncherOptionsDialog extends javax.swing.JDialog {
     private javax.swing.JPanel jPanel1;
     private javax.swing.JPanel jPanel2;
     private javax.swing.JScrollPane jScrollPane1;
+    private javax.swing.JLabel lblInfo;
     private javax.swing.JList lstLaunchers;
     private javax.swing.JMenuItem mnuRemove;
     private javax.swing.JPopupMenu popup;
