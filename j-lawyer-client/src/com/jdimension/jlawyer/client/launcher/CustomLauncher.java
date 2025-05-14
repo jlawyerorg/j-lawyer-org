@@ -669,6 +669,7 @@ import com.jdimension.jlawyer.client.utils.FileUtils;
 import java.io.BufferedReader;
 import java.io.InputStreamReader;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Enumeration;
 import java.util.List;
 import java.util.Properties;
@@ -736,12 +737,13 @@ public class CustomLauncher extends Launcher {
                         if (key.startsWith(CL_PREFIX + ".") && key.endsWith("." + CL_SUFFIX_EXTENSION)) {
                             String ext = settings.getConfiguration(key, "none");
                             String launcherKey = key.substring(0, key.lastIndexOf(".") + 1);
-                            if (extension.equalsIgnoreCase(ext)) {
+                            List<String> extensions = Arrays.asList(ext.split("\\s*,\\s*"));
+                            if (extensions.contains(extension.toLowerCase())) {
                                 String defaultLauncher = settings.getConfiguration(launcherKey + CL_SUFFIX_DEFAULT, "");
 
                                 if (this.specificLauncherName != null) {
-                                    if(launcherKey.endsWith(this.specificLauncherName + ".")) {
-                                        found=true;
+                                    if (launcherKey.endsWith(this.specificLauncherName + ".")) {
+                                        found = true;
                                         executable = settings.getConfiguration(launcherKey + CL_SUFFIX_EXE, "");
                                         String paramsRw = settings.getConfiguration(launcherKey + CL_SUFFIX_RW, "");
                                         String paramsRo = settings.getConfiguration(launcherKey + CL_SUFFIX_RO, "");
@@ -752,11 +754,10 @@ public class CustomLauncher extends Launcher {
                                         if (store.isReadOnly()) {
                                             params = paramsRo;
                                         }
-                                        
                                         break;
                                     }
                                 } else {
-                                    if (found == false || "1".equalsIgnoreCase(defaultLauncher) || "true".equalsIgnoreCase(defaultLauncher)) {
+                                    if (!found || "1".equalsIgnoreCase(defaultLauncher) || "true".equalsIgnoreCase(defaultLauncher)) {
                                         found = true;
                                         executable = settings.getConfiguration(launcherKey + CL_SUFFIX_EXE, "");
                                         String paramsRw = settings.getConfiguration(launcherKey + CL_SUFFIX_RW, "");
@@ -769,13 +770,11 @@ public class CustomLauncher extends Launcher {
                                             params = paramsRo;
                                         }
 
-                                        // a default launcher was found, skip searching
                                         if ("1".equalsIgnoreCase(defaultLauncher) || "true".equalsIgnoreCase(defaultLauncher)) {
                                             break;
                                         }
                                     }
                                 }
-
                             }
 
                         }
@@ -850,15 +849,18 @@ public class CustomLauncher extends Launcher {
                     if (key.startsWith(CL_PREFIX + ".") && key.endsWith("." + CL_SUFFIX_EXTENSION)) {
                         String ext = settings.getConfiguration(key, "none");
                         String launcherKey = key.substring(0, key.lastIndexOf(".") + 1);
-                        if (extension.equalsIgnoreCase(ext)) {
-                            String executable = settings.getConfiguration(launcherKey + CL_SUFFIX_EXE, "");
-                            String paramsRw = settings.getConfiguration(launcherKey + CL_SUFFIX_RW, "");
-                            String paramsRo = settings.getConfiguration(launcherKey + CL_SUFFIX_RO, "");
-                            if ("".equals(paramsRo)) {
-                                paramsRo = paramsRw;
-                            }
-                            if (executable.length() > 0 && paramsRw.length() > 0 && paramsRo.length() > 0) {
-                                launcherNames.add(launcherKey.substring(launcherKey.indexOf('.') + 1, launcherKey.lastIndexOf('.')));
+                        for (String singleExt : ext.split("\\s*,\\s*")) {
+                            if (extension.equalsIgnoreCase(singleExt.trim())) {
+                                String executable = settings.getConfiguration(launcherKey + CL_SUFFIX_EXE, "");
+                                String paramsRw = settings.getConfiguration(launcherKey + CL_SUFFIX_RW, "");
+                                String paramsRo = settings.getConfiguration(launcherKey + CL_SUFFIX_RO, "");
+                                if ("".equals(paramsRo)) {
+                                    paramsRo = paramsRw;
+                                }
+                                if (executable.length() > 0 && paramsRw.length() > 0 && paramsRo.length() > 0) {
+                                    launcherNames.add(launcherKey.substring(launcherKey.indexOf('.') + 1, launcherKey.lastIndexOf('.')));
+                                }
+                                break;
                             }
                         }
 
