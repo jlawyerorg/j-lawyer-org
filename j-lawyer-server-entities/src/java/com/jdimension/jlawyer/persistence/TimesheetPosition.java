@@ -848,7 +848,7 @@ public class TimesheetPosition implements Serializable {
             double roundedMinutes = Math.ceil(totalMinutes / intervalMinutes) * intervalMinutes;
             float roundedMinutesFloat = new Float(roundedMinutes);
             if (this.unitPrice.compareTo(BigDecimal.ZERO)!=0) {
-                positionTotal = this.unitPrice.multiply(BigDecimal.valueOf(roundedMinutes).divide(BigDecimal.valueOf(60d), 2, RoundingMode.HALF_EVEN));
+                positionTotal = this.unitPrice.multiply(BigDecimal.valueOf(roundedMinutes).divide(BigDecimal.valueOf(60d), 2, RoundingMode.HALF_UP));
             }
         }
         return positionTotal;

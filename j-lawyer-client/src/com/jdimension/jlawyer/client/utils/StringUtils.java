@@ -737,7 +737,7 @@ public class StringUtils extends ServerStringUtils {
       long seconds=milliseconds/1000l;
         
       // your code goes here
-      if (seconds < 10) return "wenige Sekunden";
+      if (seconds < 60) return "< 1min";
       
       final int secPerYr  = 31_536_000;
       final int secPerDay = 86_400;

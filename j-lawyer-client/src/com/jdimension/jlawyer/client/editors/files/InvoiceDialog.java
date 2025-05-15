@@ -761,8 +761,8 @@ public class InvoiceDialog extends javax.swing.JDialog implements EventConsumer 
     private HashMap<String, InvoicePositionTemplate> invoicePosTemplates = new HashMap<>();
 
     private List<String> taxRates = new ArrayList<>();
-    
-    private boolean cancelled=true;
+
+    private boolean cancelled = true;
 
     /**
      * Creates new form InvoiceDialog
@@ -2097,7 +2097,7 @@ public class InvoiceDialog extends javax.swing.JDialog implements EventConsumer 
     }//GEN-LAST:event_cmdDateDueActionPerformed
 
     private void cmdCancelActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdCancelActionPerformed
-        this.cancelled=true;
+        this.cancelled = true;
         this.setVisible(false);
         this.dispose();
     }//GEN-LAST:event_cmdCancelActionPerformed
@@ -2166,7 +2166,7 @@ public class InvoiceDialog extends javax.swing.JDialog implements EventConsumer 
     private void cmdSaveActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdSaveActionPerformed
 
         this.save();
-        this.cancelled=false;
+        this.cancelled = false;
         this.setVisible(false);
         this.dispose();
     }//GEN-LAST:event_cmdSaveActionPerformed
@@ -2368,36 +2368,52 @@ public class InvoiceDialog extends javax.swing.JDialog implements EventConsumer 
             if (c instanceof InvoicePositionEntryPanel) {
 
                 InvoicePosition pos = ((InvoicePositionEntryPanel) c).getEntry();
-                BigDecimal u = pos.getUnits();
-                BigDecimal up = pos.getUnitPrice();
-                BigDecimal t = pos.getTaxRate();
+                BigDecimal u = pos.getUnits();           // Menge
+                BigDecimal up = pos.getUnitPrice();      // Einzelpreis
+                BigDecimal t = pos.getTaxRate();         // Steuersatz z.B. 19
 
                 if (!taxRateToTaxTotal.containsKey(t)) {
                     taxRateToTaxTotal.put(t, BigDecimal.ZERO);
                 }
+                
+                // Netto-Betrag berechnen (Einzelpreis × Menge) und kaufmännisch runden
+                BigDecimal netAmount = u.multiply(up).setScale(2, RoundingMode.HALF_UP);
+                totalNet = totalNet.add(netAmount);
 
+                // Steuerbetrag (optional)
+                BigDecimal taxAmount = BigDecimal.ZERO;
                 if (this.chkTaxes.isSelected()) {
-                    //BigDecimal taxForPosition = (u.multiply(up).multiply(t.divide(BigDecimal.valueOf(100f), 2, RoundingMode.HALF_EVEN)));
-                    BigDecimal taxForPosition = u.multiply(up)
-                            .multiply(t.divide(BigDecimal.valueOf(100), 4, RoundingMode.HALF_EVEN)) // mehr Präzision
-                            .setScale(2, RoundingMode.HALF_EVEN); // kaufmännisch runden
-                    
-                    taxRateToTaxTotal.put(t, taxRateToTaxTotal.get(t).add(taxForPosition));
-                    totalTax = totalTax.add(taxForPosition);
-                }
-                total = total.add(u.multiply(up).multiply(BigDecimal.ONE.add(t.divide(BigDecimal.valueOf(100f), 2, RoundingMode.HALF_EVEN))).setScale(2, RoundingMode.HALF_EVEN));
+                    // Steuerbetrag = Netto * (Steuersatz / 100), kaufmännisch runden
+                    taxAmount = netAmount
+                            .multiply(t.divide(BigDecimal.valueOf(100), 4, RoundingMode.HALF_UP))
+                            .setScale(2, RoundingMode.HALF_UP);
 
-                totalNet = totalNet.add(u.multiply(up));
-                totalNet = totalNet.setScale(2, RoundingMode.HALF_EVEN);
+                    totalTax = totalTax.add(taxAmount);
 
-                positionIndex = positionIndex + 1;
-                if (StringUtils.isEmpty(pos.getDescription())) {
-                    ct.addRow("" + positionIndex, pos.getName(), currencyFormat.format(pos.getUnits()), currencyFormat.format(pos.getUnitPrice()), percentageFormat.format(t), currencyFormat.format(u.multiply(up)) + " " + this.cmbCurrency.getSelectedItem());
-                } else {
-                    ct.addRow("" + positionIndex, pos.getName() + ": " + pos.getDescription(), currencyFormat.format(pos.getUnits()), currencyFormat.format(pos.getUnitPrice()), percentageFormat.format(t), currencyFormat.format(u.multiply(up)) + " " + this.cmbCurrency.getSelectedItem());
+                    // Steuer je Steuersatz gruppieren
+                    taxRateToTaxTotal.put(t, taxRateToTaxTotal.getOrDefault(t, BigDecimal.ZERO).add(taxAmount));
                 }
 
-                rowcount = rowcount + 1;
+                // Bruttobetrag = Netto + Steuer
+                BigDecimal grossAmount = netAmount.add(taxAmount);
+                total = total.add(grossAmount);
+
+                // Positionstext
+                String description = StringUtils.isEmpty(pos.getDescription())
+                        ? pos.getName()
+                        : pos.getName() + ": " + pos.getDescription();
+
+                // Zeile in Tabelle
+                ct.addRow(
+                        String.valueOf(++positionIndex),
+                        description,
+                        currencyFormat.format(u),
+                        currencyFormat.format(up),
+                        percentageFormat.format(t),
+                        currencyFormat.format(netAmount) + " " + this.cmbCurrency.getSelectedItem()
+                );
+
+                rowcount++;
             }
         }
 
@@ -2533,33 +2549,28 @@ public class InvoiceDialog extends javax.swing.JDialog implements EventConsumer 
                 BigDecimal up = pos.getUnitPrice();
                 BigDecimal t = pos.getTaxRate();
 
-                totalNet = totalNet.add(u.multiply(up));
-                totalNet = totalNet.setScale(2, RoundingMode.HALF_EVEN);
-//                if (this.chkTaxes.isSelected()) {
-//                    totalTax = totalTax.add(u.multiply(up).multiply(t.divide(BigDecimal.valueOf(100f), 2, RoundingMode.HALF_EVEN)));
-//                    totalGross = totalGross.add(u.multiply(up).multiply(BigDecimal.ONE.add(t.divide(BigDecimal.valueOf(100f), 2, RoundingMode.HALF_EVEN))));
-//                } else {
-//                    totalGross = totalGross.add(u.multiply(up));
-//                }
+                // Netto = Menge * Einzelpreis, kaufmännisch runden
+                BigDecimal netAmount = u.multiply(up).setScale(2, RoundingMode.HALF_UP);
+                totalNet = totalNet.add(netAmount);
 
                 if (this.chkTaxes.isSelected()) {
-                    BigDecimal taxAmount = u.multiply(up)
-                            .multiply(t.divide(BigDecimal.valueOf(100), 4, RoundingMode.HALF_EVEN)) // mehr Präzision
-                            .setScale(2, RoundingMode.HALF_EVEN); // kaufmännisch runden
-
+                    // Steuerbetrag = Netto * Steuersatz / 100, kaufmännisch runden
+                    BigDecimal taxAmount = netAmount
+                            .multiply(t.divide(BigDecimal.valueOf(100), 4, RoundingMode.HALF_UP))
+                            .setScale(2, RoundingMode.HALF_UP);
                     totalTax = totalTax.add(taxAmount);
-                    totalTax = totalTax.setScale(2, RoundingMode.HALF_EVEN);
 
-                    totalGross = totalGross.add(
-                            u.multiply(up)
-                                    .multiply(BigDecimal.ONE.add(t.divide(BigDecimal.valueOf(100), 4, RoundingMode.HALF_EVEN)))
-                                    .setScale(2, RoundingMode.HALF_EVEN) // kaufmännisch runden
-                    );
+                    // Brutto = Netto + Steuer
+                    BigDecimal grossAmount = netAmount.add(taxAmount);
+                    totalGross = totalGross.add(grossAmount);
                 } else {
-                    totalGross = totalGross.add(u.multiply(up));
+                    // Falls keine Steuer berechnet wird
+                    totalGross = totalGross.add(netAmount);
                 }
-                // Sicherstellen, dass totalGross kaufmännisch gerundet ist
-                totalGross = totalGross.setScale(2, RoundingMode.HALF_EVEN);
+                // Finales kaufmännisches Runden (sicherheitshalber)
+                totalNet = totalNet.setScale(2, RoundingMode.HALF_UP);
+                totalTax = totalTax.setScale(2, RoundingMode.HALF_UP);
+                totalGross = totalGross.setScale(2, RoundingMode.HALF_UP);
             }
         }
         this.lblNetValue.setText(cf.format(totalNet));

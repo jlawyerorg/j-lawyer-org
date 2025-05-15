@@ -831,9 +831,9 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
 
     @Resource(lookup = "java:/jms/queue/searchIndexProcessorQueue")
     private javax.jms.Queue searchIndexQueue;
-    
-    private long lastSearchIndexSkipCheck=-1;
-    private boolean skipSearchIndex=false;
+
+    private long lastSearchIndexSkipCheck = -1;
+    private boolean skipSearchIndex = false;
 
     private static final String PS_SEARCHENHANCED_2 = "select id from cases where ucase(name) like ? or ucase(fileNumber) like ? or ucase(filenumberext) like ? or ucase(reason) like ? or ucase(custom1) like ? or ucase(custom2) like ? or ucase(custom3) like ? or ucase(subjectField) like ? or ucase(lawyer) like ? or ucase(assistant) like ?";
     private static final String PS_SEARCHENHANCED_4 = "select id from cases where (ucase(name) like ? or ucase(fileNumber) like ? or ucase(filenumberext) like ? or ucase(reason) like ? or ucase(custom1) like ? or ucase(custom2) like ? or ucase(custom3) like ? or ucase(subjectField) like ? or ucase(lawyer) like ? or ucase(assistant) like ?) and archived=0";
@@ -956,7 +956,7 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
                 }
             }
         }
-        
+
         ServerSettingsBean incrementSetting = this.settingsFacade.find("jlawyer.server.numbering.increment");
         int increment = 1;
         if (incrementSetting != null) {
@@ -1245,8 +1245,9 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
                 ad.setId(idGen.getID().toString());
                 ad.setArchiveFileKey(dto);
                 this.archiveFileAddressesFacade.create(ad);
-                if(ad.getAddressKey()!=null)
+                if (ad.getAddressKey() != null) {
                     this.addCaseHistory(idGen.getID().toString(), dto, "Beteiligte(n) hinzugefügt: " + ad.getAddressKey().toDisplayName());
+                }
             }
         }
 
@@ -1583,7 +1584,7 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
     public Collection<ArchiveFileDocumentsBean> getDocuments(String archiveFileKey) {
         return getDocumentsImpl(archiveFileKey, false, context.getCallerPrincipal().getName());
     }
-    
+
     @Override
     @RolesAllowed({"readArchiveFileRole"})
     public Collection<ArchiveFileDocumentsBean> getDocuments(String archiveFileKey, boolean deleted) {
@@ -1679,8 +1680,9 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
                 ad.setId(idGen.getID().toString());
                 ad.setArchiveFileKey(dto);
                 this.archiveFileAddressesFacade.create(ad);
-                if(ad.getAddressKey()!=null)
+                if (ad.getAddressKey() != null) {
                     this.addCaseHistory(idGen.getID().toString(), dto, "Beteiligte(n) hinzugefügt: " + ad.getAddressKey().toDisplayName());
+                }
             }
         }
 
@@ -1721,13 +1723,13 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
     public ArchiveFileDocumentsBean addDocumentUnrestricted(String archiveFileId, String fileName, byte[] data, String dictateSign, String externalId) throws Exception {
         return this.addDocumentImpl(archiveFileId, fileName, data, dictateSign, externalId, false);
     }
-    
+
     @Override
     @RolesAllowed({"writeArchiveFileRole"})
     public ArchiveFileDocumentsBean addDocument(String archiveFileId, String fileName, byte[] data, String dictateSign, String externalId) throws Exception {
         return this.addDocumentImpl(archiveFileId, fileName, data, dictateSign, externalId, true);
     }
-    
+
     private ArchiveFileDocumentsBean addDocumentImpl(String archiveFileId, String fileName, byte[] data, String dictateSign, String externalId, boolean roleCheck) throws Exception {
 
         if (fileName == null || "".equals(fileName)) {
@@ -1736,9 +1738,10 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
 
         StringGenerator idGen = new StringGenerator();
         ArchiveFileBean aFile = this.archiveFileFacade.find(archiveFileId);
-        
-        if(roleCheck)
+
+        if (roleCheck) {
             SecurityUtils.checkGroupsForCase(context.getCallerPrincipal().getName(), aFile, this.securityFacade, this.getAllowedGroups(aFile));
+        }
 
         String localBaseDir = System.getProperty("jlawyer.server.basedirectory");
         localBaseDir = localBaseDir.trim();
@@ -1791,10 +1794,10 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
         this.archiveFileDocumentsFacade.create(db);
 
         this.addCaseHistory(idGen.getID().toString(), aFile, "Dokument hinzugefügt: " + fileName);
-        
+
         this.applyAutomatedDocumentTags(db);
 
-        if(!this.skipSearchIndex()) {
+        if (!this.skipSearchIndex()) {
             DocumentPreview txtPreview = new DocumentPreview("");
             try {
                 if (DocumentPreview.supportsPdfPreview(fileName)) {
@@ -1839,65 +1842,66 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
 
         return this.archiveFileDocumentsFacade.find(docId);
     }
-    
+
     private void applyAutomatedDocumentTags(ArchiveFileDocumentsBean doc) {
-        List<DocumentTagRule> allRules=this.documentTagRuleFacade.findAllSorted();
-        if(allRules!=null) {
+        List<DocumentTagRule> allRules = this.documentTagRuleFacade.findAllSorted();
+        if (allRules != null) {
             // iterate over all rules
-            for(DocumentTagRule rule: allRules) {
-                if(!ServerStringUtils.isEmpty(rule.getTagList()) && !rule.getRuleConditions().isEmpty() && !ServerStringUtils.isEmpty(doc.getName())) {
-                    boolean match=false;
-                    String docName=doc.getName().toLowerCase();
-                    if(rule.getOperator()==DocumentTagRule.OPERATOR_OR) {
+            for (DocumentTagRule rule : allRules) {
+                if (!ServerStringUtils.isEmpty(rule.getTagList()) && !rule.getRuleConditions().isEmpty() && !ServerStringUtils.isEmpty(doc.getName())) {
+                    boolean match = false;
+                    String docName = doc.getName().toLowerCase();
+                    if (rule.getOperator() == DocumentTagRule.OPERATOR_OR) {
                         // at least one condition must be met
-                        for(DocumentTagRuleCondition c: rule.getRuleConditions()) {
-                            if(ServerStringUtils.isEmpty(c.getComparisonValue()))
+                        for (DocumentTagRuleCondition c : rule.getRuleConditions()) {
+                            if (ServerStringUtils.isEmpty(c.getComparisonValue())) {
                                 continue;
-                            
-                            if(c.getComparisonMode()==DocumentTagRuleCondition.COMPARISON_CONTAINS && docName.contains(c.getComparisonValue().toLowerCase())) {
-                                match=true;
+                            }
+
+                            if (c.getComparisonMode() == DocumentTagRuleCondition.COMPARISON_CONTAINS && docName.contains(c.getComparisonValue().toLowerCase())) {
+                                match = true;
                                 break;
-                            } else if(c.getComparisonMode()==DocumentTagRuleCondition.COMPARISON_CONTAINSNOT && !docName.contains(c.getComparisonValue().toLowerCase())) {
-                                match=true;
+                            } else if (c.getComparisonMode() == DocumentTagRuleCondition.COMPARISON_CONTAINSNOT && !docName.contains(c.getComparisonValue().toLowerCase())) {
+                                match = true;
                                 break;
-                            } else if(c.getComparisonMode()==DocumentTagRuleCondition.COMPARISON_EQUALS && docName.equals(c.getComparisonValue().toLowerCase())) {
-                                match=true;
+                            } else if (c.getComparisonMode() == DocumentTagRuleCondition.COMPARISON_EQUALS && docName.equals(c.getComparisonValue().toLowerCase())) {
+                                match = true;
                                 break;
-                            } else if(c.getComparisonMode()==DocumentTagRuleCondition.COMPARISON_EQUALSNOT && !docName.equals(c.getComparisonValue().toLowerCase())) {
-                                match=true;
+                            } else if (c.getComparisonMode() == DocumentTagRuleCondition.COMPARISON_EQUALSNOT && !docName.equals(c.getComparisonValue().toLowerCase())) {
+                                match = true;
                                 break;
                             }
                         }
                     } else {
                         // all conditions must be met
-                        match=true;
-                        for(DocumentTagRuleCondition c: rule.getRuleConditions()) {
-                            if(ServerStringUtils.isEmpty(c.getComparisonValue())) {
-                                match=false;
+                        match = true;
+                        for (DocumentTagRuleCondition c : rule.getRuleConditions()) {
+                            if (ServerStringUtils.isEmpty(c.getComparisonValue())) {
+                                match = false;
                                 continue;
                             }
-                            
-                            if(c.getComparisonMode()==DocumentTagRuleCondition.COMPARISON_CONTAINS && !docName.contains(c.getComparisonValue().toLowerCase())) {
-                                match=false;
-                            } else if(c.getComparisonMode()==DocumentTagRuleCondition.COMPARISON_CONTAINSNOT && docName.contains(c.getComparisonValue().toLowerCase())) {
-                                match=false;
-                            } else if(c.getComparisonMode()==DocumentTagRuleCondition.COMPARISON_EQUALS && !docName.equals(c.getComparisonValue().toLowerCase())) {
-                                match=false;
-                            } else if(c.getComparisonMode()==DocumentTagRuleCondition.COMPARISON_EQUALSNOT && docName.equals(c.getComparisonValue().toLowerCase())) {
-                                match=false;
+
+                            if (c.getComparisonMode() == DocumentTagRuleCondition.COMPARISON_CONTAINS && !docName.contains(c.getComparisonValue().toLowerCase())) {
+                                match = false;
+                            } else if (c.getComparisonMode() == DocumentTagRuleCondition.COMPARISON_CONTAINSNOT && docName.contains(c.getComparisonValue().toLowerCase())) {
+                                match = false;
+                            } else if (c.getComparisonMode() == DocumentTagRuleCondition.COMPARISON_EQUALS && !docName.equals(c.getComparisonValue().toLowerCase())) {
+                                match = false;
+                            } else if (c.getComparisonMode() == DocumentTagRuleCondition.COMPARISON_EQUALSNOT && docName.equals(c.getComparisonValue().toLowerCase())) {
+                                match = false;
                             }
                         }
                     }
-                    
-                    if(match) {
-                        String tagList=rule.getTagList();
-                        for(String tag: tagList.split(",")) {
-                            tag=tag.trim();
-                            if(ServerStringUtils.isEmpty(tag))
+
+                    if (match) {
+                        String tagList = rule.getTagList();
+                        for (String tag : tagList.split(",")) {
+                            tag = tag.trim();
+                            if (ServerStringUtils.isEmpty(tag)) {
                                 continue;
-                            
-                            
-                            DocumentTagsBean dtb=new DocumentTagsBean();
+                            }
+
+                            DocumentTagsBean dtb = new DocumentTagsBean();
                             dtb.setArchiveFileKey(doc);
                             dtb.setDateSet(new Date());
                             dtb.setTagName(tag);
@@ -1907,8 +1911,8 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
                                 log.error("Could not apply auto-tag " + tag + " to document " + doc.getName() + "[" + doc.getId() + "]", ex);
                             }
                         }
-                        
-                        if(rule.isCancelOnMatch()) {
+
+                        if (rule.isCancelOnMatch()) {
                             break;
                         }
                     }
@@ -1917,9 +1921,9 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
                 }
             }
         }
-        
+
     }
-    
+
     private boolean skipSearchIndex() {
         if ((System.currentTimeMillis() - lastSearchIndexSkipCheck) > (1000l * 60l * 5l)) {
             skipSearchIndex = false;
@@ -2074,14 +2078,14 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
 
         DocumentPreview txtPreview = new DocumentPreview("");
         try {
-            if(DocumentPreview.supportsPdfPreview(db.getName())) {
-                
-                ServerSettingsBean sb=this.settingsFacade.find(ServerSettingsKeys.SERVERCONF_STIRLINGPDF_ENDPOINT);
-                StirlingPdfAPI pdfApi=null;
-                if(sb!=null && !ServerStringUtils.isEmpty(sb.getSettingValue())) {
-                    pdfApi=new StirlingPdfAPI(sb.getSettingValue(), 5000, 120000);
+            if (DocumentPreview.supportsPdfPreview(db.getName())) {
+
+                ServerSettingsBean sb = this.settingsFacade.find(ServerSettingsKeys.SERVERCONF_STIRLINGPDF_ENDPOINT);
+                StirlingPdfAPI pdfApi = null;
+                if (sb != null && !ServerStringUtils.isEmpty(sb.getSettingValue())) {
+                    pdfApi = new StirlingPdfAPI(sb.getSettingValue(), 5000, 120000);
                 }
-                
+
                 PreviewGenerator pg = new PreviewGenerator(this.archiveFileDocumentsFacade, pdfApi);
                 txtPreview = pg.updatePreview(aId, db.getId(), db.getName(), DocumentPreview.TYPE_TEXT);
                 DocumentPreview pdfPreview = pg.updatePreview(aId, db.getId(), db.getName(), DocumentPreview.TYPE_PDF);
@@ -2123,13 +2127,13 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
     public String getNewDocumentNameUnrestricted(String fileName, Date date, DocumentNameTemplate tpl) throws Exception {
         return getNewDocumentNameImpl(fileName, date, tpl);
     }
-    
+
     @Override
     @RolesAllowed({"loginRole"})
     public String getNewDocumentName(String fileName, Date date, DocumentNameTemplate tpl) throws Exception {
         return getNewDocumentNameImpl(fileName, date, tpl);
     }
-    
+
     private String getNewDocumentNameImpl(String fileName, Date date, DocumentNameTemplate tpl) throws Exception {
         try {
             return FileNameGenerator.getFileName(tpl.getPattern(), date, fileName);
@@ -2137,7 +2141,7 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
             throw new Exception(isp.getMessage());
         }
     }
-    
+
     @Override
     @RolesAllowed({"readArchiveFileRole"})
     public byte[] getDocumentContent(String id) throws Exception {
@@ -2205,7 +2209,7 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
         AddressBean ab = this.addressFacade.find(adressId);
         return this.archiveFileAddressesFacade.findByAddressKey(ab);
     }
-    
+
     @Override
     public Collection<ArchiveFileAddressesBean> getArchiveFileAddressesForAddress(String adressId) {
 
@@ -2247,7 +2251,7 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
 
         ArchiveFileBean aFile = db.getArchiveFileKey();
         SecurityUtils.checkGroupsForCase(context.getCallerPrincipal().getName(), aFile, this.securityFacade, this.getAllowedGroups(aFile));
-        
+
         ArchiveFileDocumentsBean existingDoc = this.archiveFileDocumentsFacade.findByArchiveFileKey(aFile, newName);
         if (existingDoc != null) {
             throw new Exception("Dokument " + newName + " existiert bereits in der Akte oder deren Papierkorb - bitte einen anderen Namen wählen!");
@@ -2280,11 +2284,11 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
         }
 
         this.addCaseHistory(idGen.getID().toString(), aFile, "Dokument umbenannt: " + db.getName() + " (neuer Name: " + newName + ")");
-        
+
         db.setName(newName);
         db.bumpVersion(true);
         this.archiveFileDocumentsFacade.edit(db);
-        
+
         this.applyAutomatedDocumentTags(db);
 
         try {
@@ -2360,9 +2364,10 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
         }
 
         ArchiveFileBean aFile = result.get(0);
-        
-        if(roleCheck)
+
+        if (roleCheck) {
             SecurityUtils.checkGroupsForCase(context.getCallerPrincipal().getName(), result.get(0), this.securityFacade, this.getAllowedGroups(aFile));
+        }
 
         CaseFolder rootFolder = aFile.getRootFolder();
         StringGenerator idGen = new StringGenerator();
@@ -2378,15 +2383,13 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
 
         return aFile;
     }
-    
+
     @Override
     @RolesAllowed({"readArchiveFileRole"})
     public ArchiveFileBean getArchiveFileByFileNumber(String fileNumber) throws Exception {
         return this.getArchiveFileByFileNumberImpl(fileNumber, true);
     }
-    
-    
-    
+
     @Override
     public ArchiveFileBean getArchiveFileByFileNumberUnrestricted(String fileNumber) throws Exception {
 
@@ -2449,20 +2452,21 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
     public void setDocumentTagUnrestricted(String documentId, DocumentTagsBean tag, boolean active) throws Exception {
         this.setDocumentTagImpl(documentId, tag, active, false);
     }
-    
+
     @Override
     @RolesAllowed({"writeArchiveFileRole"})
     public void setDocumentTag(String documentId, DocumentTagsBean tag, boolean active) throws Exception {
         this.setDocumentTagImpl(documentId, tag, active, true);
     }
-    
+
     private void setDocumentTagImpl(String documentId, DocumentTagsBean tag, boolean active, boolean roleCheck) throws Exception {
 
         ArchiveFileDocumentsBean aFile = this.archiveFileDocumentsFacade.find(documentId);
-        
-        if(roleCheck)
+
+        if (roleCheck) {
             SecurityUtils.checkGroupsForCase(context.getCallerPrincipal().getName(), aFile.getArchiveFileKey(), this.securityFacade, this.getAllowedGroups(aFile.getArchiveFileKey()));
-        
+        }
+
         List check = this.documentTagsFacade.findByDocumentKeyAndTagName(aFile, tag.getTagName());
         StringGenerator idGen = new StringGenerator();
         String historyText = "";
@@ -2849,7 +2853,7 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
         if (sb != null && !ServerStringUtils.isEmpty(sb.getSettingValue())) {
             pdfApi = new StirlingPdfAPI(sb.getSettingValue(), 5000, 120000);
         }
-        
+
         PreviewGenerator pg = new PreviewGenerator(this.archiveFileDocumentsFacade, pdfApi);
         return pg.getDocumentPreview(id, previewType);
 
@@ -3064,14 +3068,15 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
 
         return list;
     }
-    
+
     @Override
     @RolesAllowed({"readArchiveFileRole"})
     public Collection<ArchiveFileBean> getAllWithMissingCalendarEntries(int type) throws Exception {
-        
-        if(type!=ArchiveFileReviewsBean.EVENTTYPE_EVENT && type!=ArchiveFileReviewsBean.EVENTTYPE_RESPITE && type!=ArchiveFileReviewsBean.EVENTTYPE_FOLLOWUP)
+
+        if (type != ArchiveFileReviewsBean.EVENTTYPE_EVENT && type != ArchiveFileReviewsBean.EVENTTYPE_RESPITE && type != ArchiveFileReviewsBean.EVENTTYPE_FOLLOWUP) {
             throw new Exception("Ungültige Typangabe für Kalendereinträge!");
-        
+        }
+
         JDBCUtils utils = new JDBCUtils();
         ArrayList<ArchiveFileBean> list = new ArrayList<>();
 
@@ -3776,19 +3781,19 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
         this.archiveFileDocumentsFacade.create(db);
 
         this.addCaseHistory(idGen.getID().toString(), aFile, "Dokument hinzugefügt: " + fileName);
-        
+
         this.applyAutomatedDocumentTags(db);
 
         DocumentPreview txtPreview = new DocumentPreview("");
         try {
-            if(DocumentPreview.supportsPdfPreview(fileName)) {
-                
-                ServerSettingsBean sb=this.settingsFacade.find(ServerSettingsKeys.SERVERCONF_STIRLINGPDF_ENDPOINT);
-                StirlingPdfAPI pdfApi=null;
-                if(sb!=null && !ServerStringUtils.isEmpty(sb.getSettingValue())) {
-                    pdfApi=new StirlingPdfAPI(sb.getSettingValue(), 5000, 120000);
+            if (DocumentPreview.supportsPdfPreview(fileName)) {
+
+                ServerSettingsBean sb = this.settingsFacade.find(ServerSettingsKeys.SERVERCONF_STIRLINGPDF_ENDPOINT);
+                StirlingPdfAPI pdfApi = null;
+                if (sb != null && !ServerStringUtils.isEmpty(sb.getSettingValue())) {
+                    pdfApi = new StirlingPdfAPI(sb.getSettingValue(), 5000, 120000);
                 }
-                
+
                 PreviewGenerator pg = new PreviewGenerator(this.archiveFileDocumentsFacade, pdfApi);
                 txtPreview = pg.createPreview(aFile.getId(), docId, db.getName(), DocumentPreview.TYPE_TEXT);
                 DocumentPreview pdfPreview = pg.createPreview(aFile.getId(), docId, db.getName(), DocumentPreview.TYPE_PDF);
@@ -3879,12 +3884,12 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
                 }
             }
         }
-        
-        if(!includeCases) {
+
+        if (!includeCases) {
             // can be a porentially large graph because all the cases are contained as well
             // exclude cases upon a clients request
-            List<ArchiveFileAddressesBean> shallowList=new ArrayList<>();
-            for(ArchiveFileAddressesBean aab: resultList) {
+            List<ArchiveFileAddressesBean> shallowList = new ArrayList<>();
+            for (ArchiveFileAddressesBean aab : resultList) {
                 shallowList.add(aab.cloneWithoutCase());
             }
             return shallowList;
@@ -3898,7 +3903,7 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
     public List<ArchiveFileAddressesBean> getInvolvementDetailsForCase(String archiveFileKey) {
         return this.getInvolvementDetailsForCaseImpl(archiveFileKey, true);
     }
-    
+
     @Override
     @RolesAllowed({"readArchiveFileRole"})
     public List<ArchiveFileAddressesBean> getInvolvementDetailsForCase(String archiveFileKey, boolean includeCases) {
@@ -3909,7 +3914,7 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
     public List<ArchiveFileAddressesBean> getInvolvementDetailsForCaseUnrestricted(String archiveFileKey) {
         return this.getInvolvementDetailsForCaseImpl(archiveFileKey, true);
     }
-    
+
     @Override
     public List<ArchiveFileAddressesBean> getInvolvementDetailsForCaseUnrestricted(String archiveFileKey, boolean includeCases) {
         return this.getInvolvementDetailsForCaseImpl(archiveFileKey, includeCases);
@@ -3955,13 +3960,13 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
     public boolean doesDocumentExistUnrestricted(String caseId, String documentName) {
         return this.doesDocumentExistImpl(caseId, documentName);
     }
-    
+
     @Override
     @RolesAllowed({"loginRole"})
     public boolean doesDocumentExist(String caseId, String documentName) {
         return this.doesDocumentExistImpl(caseId, documentName);
     }
-    
+
     private boolean doesDocumentExistImpl(String caseId, String documentName) {
         ArchiveFileBean aFile = this.archiveFileFacade.find(caseId);
 
@@ -4441,7 +4446,7 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
         this.folderFacade.remove(df);
 
     }
-    
+
     @Override
     public DocumentFolder renameFolderInTemplate(String folderId, String newName) throws Exception {
 
@@ -4722,40 +4727,45 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
     public DocumentFolderTemplate getFolderTemplateById(String id) {
         return this.folderTemplateFacade.find(id);
     }
-    
+
     /**
-     * Returns a list of folder representing a hierarchy. First element in the list is the root folder.
+     * Returns a list of folder representing a hierarchy. First element in the
+     * list is the root folder.
+     *
      * @param folderId
-     * @return 
+     * @return
      */
     @Override
     public List<CaseFolder> getFolderHierarchyUnrestricted(String folderId) {
         return getFolderHierarchyImpl(folderId);
     }
-    
+
     /**
-     * Returns a list of folder representing a hierarchy. First element in the list is the root folder.
+     * Returns a list of folder representing a hierarchy. First element in the
+     * list is the root folder.
+     *
      * @param folderId
-     * @return 
+     * @return
      */
     @Override
     @RolesAllowed({"loginRole"})
     public List<CaseFolder> getFolderHierarchy(String folderId) {
         return getFolderHierarchyImpl(folderId);
     }
-    
+
     private List<CaseFolder> getFolderHierarchyImpl(String folderId) {
-        List<CaseFolder> hierarchy=new ArrayList<>();
-        if(folderId==null)
+        List<CaseFolder> hierarchy = new ArrayList<>();
+        if (folderId == null) {
             return hierarchy;
-        
-        CaseFolder cf=this.caseFolderFacade.find(folderId);
-        if(cf!=null) {
+        }
+
+        CaseFolder cf = this.caseFolderFacade.find(folderId);
+        if (cf != null) {
             hierarchy.add(cf);
-            while(!cf.isRoot()) {
-                cf=this.caseFolderFacade.find(cf.getParentId());
+            while (!cf.isRoot()) {
+                cf = this.caseFolderFacade.find(cf.getParentId());
                 hierarchy.add(cf);
-                
+
             }
         }
         Collections.reverse(hierarchy);
@@ -4856,14 +4866,14 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
 
         DocumentPreview txtPreview = new DocumentPreview("");
         try {
-            if(DocumentPreview.supportsPdfPreview(db.getName())) {
-                
-                ServerSettingsBean sb=this.settingsFacade.find(ServerSettingsKeys.SERVERCONF_STIRLINGPDF_ENDPOINT);
-                StirlingPdfAPI pdfApi=null;
-                if(sb!=null && !ServerStringUtils.isEmpty(sb.getSettingValue())) {
-                    pdfApi=new StirlingPdfAPI(sb.getSettingValue(), 5000, 120000);
+            if (DocumentPreview.supportsPdfPreview(db.getName())) {
+
+                ServerSettingsBean sb = this.settingsFacade.find(ServerSettingsKeys.SERVERCONF_STIRLINGPDF_ENDPOINT);
+                StirlingPdfAPI pdfApi = null;
+                if (sb != null && !ServerStringUtils.isEmpty(sb.getSettingValue())) {
+                    pdfApi = new StirlingPdfAPI(sb.getSettingValue(), 5000, 120000);
                 }
-                
+
                 PreviewGenerator pg = new PreviewGenerator(this.archiveFileDocumentsFacade, pdfApi);
                 txtPreview = pg.createPreview(aFile.getId(), docId, db.getName(), DocumentPreview.TYPE_TEXT);
                 DocumentPreview pdfPreview = pg.createPreview(aFile.getId(), docId, db.getName(), DocumentPreview.TYPE_PDF);
@@ -5291,13 +5301,22 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
         }
         BigDecimal newTotalNet = BigDecimal.ZERO;
         BigDecimal newTotalGross = BigDecimal.ZERO;
+
         for (InvoicePosition p : positions) {
-            newTotalNet = newTotalNet.add(p.getTotal());
-            newTotalGross = newTotalGross.add(p.getTotal().multiply((BigDecimal.ONE.add(p.getTaxRate().divide(BigDecimal.valueOf(100f), 2, RoundingMode.HALF_EVEN)))));
+            BigDecimal net = p.getTotal().setScale(2, RoundingMode.HALF_UP);
+
+            BigDecimal taxRate = p.getTaxRate().divide(BigDecimal.valueOf(100), 4, RoundingMode.HALF_UP);
+            BigDecimal gross = net.multiply(BigDecimal.ONE.add(taxRate)).setScale(2, RoundingMode.HALF_UP);
+
+            newTotalNet = newTotalNet.add(net);
+            newTotalGross = newTotalGross.add(gross);
         }
-        invoice.setTotal(newTotalNet);
-        invoice.setTotalGross(newTotalGross);
+
+        // Gesamtsummen kaufmännisch runden
+        invoice.setTotal(newTotalNet.setScale(2, RoundingMode.HALF_UP));
+        invoice.setTotalGross(newTotalGross.setScale(2, RoundingMode.HALF_UP));
         this.invoicesFacade.edit(invoice);
+
     }
 
     @Override
@@ -5338,12 +5357,12 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
     @RolesAllowed({"readArchiveFileRole"})
     public List<Invoice> getInvoicesForDocument(String docId) throws Exception {
         // this call will also check if caller is allowed for this case
-        ArchiveFileDocumentsBean doc=this.getDocument(docId);
-        
+        ArchiveFileDocumentsBean doc = this.getDocument(docId);
+
         return this.invoicesFacade.findByInvoiceDocument(doc);
-        
+
     }
-    
+
     @Override
     @RolesAllowed({"readArchiveFileRole"})
     public ArchiveFileDocumentsBean getInvoiceDocument(String invoiceId) throws Exception {
@@ -5756,14 +5775,14 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
         newInvoice.setPeriodTo(oldInvoice.getPeriodTo());
         newInvoice.setStatus(Invoice.STATUS_NEW);
         newInvoice.setPaymentType(Invoice.PAYMENTTYPE_BANKTRANSFER);
-        if(oldInvoice.getTotal()!=null && oldInvoice.getTotalGross()!=null && asCredit) {
+        if (oldInvoice.getTotal() != null && oldInvoice.getTotalGross() != null && asCredit) {
             newInvoice.setTotal(oldInvoice.getTotal().negate());
             newInvoice.setTotalGross(oldInvoice.getTotalGross().negate());
         } else {
             newInvoice.setTotal(oldInvoice.getTotal());
             newInvoice.setTotalGross(oldInvoice.getTotalGross());
         }
-        
+
         this.updateInvoice(toCaseId, newInvoice);
 
         List<InvoicePosition> positions = this.invoicePositionsFacade.findByInvoice(oldInvoice);
@@ -5774,8 +5793,8 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
             clone.setName(pos.getName());
             clone.setPosition(pos.getPosition());
             clone.setTaxRate(pos.getTaxRate());
-            
-            if(pos.getUnitPrice()!=null && pos.getTotal()!=null && asCredit) {
+
+            if (pos.getUnitPrice() != null && pos.getTotal() != null && asCredit) {
                 clone.setUnitPrice(pos.getUnitPrice().negate());
                 clone.setTotal(pos.getTotal().negate());
             } else {
@@ -5793,8 +5812,8 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
     @RolesAllowed({"writeArchiveFileRole"})
     public Timesheet addTimesheet(String caseId, Timesheet timesheet) throws Exception {
         String principalId = context.getCallerPrincipal().getName();
-        
-        if(ServerStringUtils.isEmpty(timesheet.getName())) {
+
+        if (ServerStringUtils.isEmpty(timesheet.getName())) {
             throw new Exception("Projektname darf nicht leer sein!");
         }
 
@@ -5823,9 +5842,9 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
 
             this.timesheetFacade.create(timesheet);
 
-            List<TimesheetPositionTemplate> allTpls=this.timesheetPositionTemplateFacade.findAll();
-            for(TimesheetPositionTemplate tpl: allTpls) {
-                TimesheetAllowedPositionTpl allowedTpl=new TimesheetAllowedPositionTpl();
+            List<TimesheetPositionTemplate> allTpls = this.timesheetPositionTemplateFacade.findAll();
+            for (TimesheetPositionTemplate tpl : allTpls) {
+                TimesheetAllowedPositionTpl allowedTpl = new TimesheetAllowedPositionTpl();
                 allowedTpl.setId(idGen.getID().toString());
                 allowedTpl.setPositionTemplateId(tpl.getId());
                 allowedTpl.setTimesheetId(timesheet.getId());
@@ -5841,28 +5860,30 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
     }
 
     private float getTimesheetPercentageDone(Timesheet ts) {
-        if(!ts.isLimited())
+        if (!ts.isLimited()) {
             return 0f;
-        
-        // avoid div by zero
-        if(ts.getLimit().compareTo(BigDecimal.ZERO)==0)
-            return 0f;
-        
-        List<TimesheetPosition> positions=this.timesheetPositionsFacade.findByTimesheet(ts);
-        BigDecimal currentTotal=BigDecimal.ZERO;
-        for(TimesheetPosition p: positions) {
-            currentTotal=currentTotal.add(p.calculateTotal(ts.getInterval()));
         }
-        return currentTotal.divide(ts.getLimit(), 2, RoundingMode.HALF_EVEN).multiply(BigDecimal.valueOf(100f)).floatValue();
-        
+
+        // avoid div by zero
+        if (ts.getLimit().compareTo(BigDecimal.ZERO) == 0) {
+            return 0f;
+        }
+
+        List<TimesheetPosition> positions = this.timesheetPositionsFacade.findByTimesheet(ts);
+        BigDecimal currentTotal = BigDecimal.ZERO;
+        for (TimesheetPosition p : positions) {
+            currentTotal = currentTotal.add(p.calculateTotal(ts.getInterval()));
+        }
+        return currentTotal.divide(ts.getLimit(), 2, RoundingMode.HALF_UP).multiply(BigDecimal.valueOf(100f)).floatValue();
+
     }
-    
+
     @Override
     @RolesAllowed({"writeArchiveFileRole"})
     public Timesheet updateTimesheet(String caseId, Timesheet timesheet) throws Exception {
         String principalId = context.getCallerPrincipal().getName();
-        
-        if(ServerStringUtils.isEmpty(timesheet.getName())) {
+
+        if (ServerStringUtils.isEmpty(timesheet.getName())) {
             throw new Exception("Projektname darf nicht leer sein!");
         }
 
@@ -5892,17 +5913,14 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
             updatedTimesheet.setName(timesheet.getName());
             updatedTimesheet.setStatus(timesheet.getStatus());
 
-            if(timesheet.isLimited()) {
-                float pctDone=getTimesheetPercentageDone(timesheet);
+            if (timesheet.isLimited()) {
+                float pctDone = getTimesheetPercentageDone(timesheet);
                 updatedTimesheet.setPercentageDone(pctDone);
             } else {
                 updatedTimesheet.setPercentageDone(0f);
             }
-            
-            
+
             this.timesheetFacade.edit(updatedTimesheet);
-            
-            
 
             this.addCaseHistory(new StringGenerator().getID().toString(), aFile, "Zeiterfassungsprojekt geändert (" + updatedTimesheet.getName() + ")");
 
@@ -5951,7 +5969,7 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
     public Timesheet getTimesheet(String timesheetId) throws Exception {
         return this.timesheetFacade.find(timesheetId);
     }
-    
+
     @Override
     @RolesAllowed({"readArchiveFileRole"})
     public List<Timesheet> getTimesheets(String caseId) throws Exception {
@@ -6144,7 +6162,15 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
             StringGenerator idGen = new StringGenerator();
             String id = idGen.getID().toString();
             position.setId(id);
-            position.setStarted(new Date());
+            
+            Date rawStart = new Date();
+            Calendar cal = Calendar.getInstance();
+            cal.setTime(rawStart);
+            cal.set(Calendar.SECOND, 0);
+            cal.set(Calendar.MILLISECOND, 0);
+            Date start = cal.getTime();
+            
+            position.setStarted(start);
             position.setStopped(null);
             position.setPrincipal(context.getCallerPrincipal().getName());
             position.setTimesheet(sheet);
@@ -6161,7 +6187,20 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
                 if (existing.getStarted() == null) {
                     existing.setStarted(new Date());
                 }
-                existing.setStopped(new Date());
+                
+                Date rawStop = new Date();
+                Calendar cal = Calendar.getInstance();
+                cal.setTime(rawStop);
+                if (cal.get(Calendar.SECOND) > 0 || cal.get(Calendar.MILLISECOND) > 0) {
+                    // Add 1 minute
+                    cal.add(Calendar.MINUTE, 1);
+                }
+                // Set seconds and milliseconds to zero
+                cal.set(Calendar.SECOND, 0);
+                cal.set(Calendar.MILLISECOND, 0);
+                Date stop = cal.getTime();
+                
+                existing.setStopped(stop);
                 existing.setDescription(position.getDescription());
                 existing.setName(position.getName());
                 existing.setTaxRate(position.getTaxRate());
@@ -6169,7 +6208,7 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
                 existing.setUnitPrice(position.getUnitPrice());
                 existing.setTotal(existing.calculateTotal(sheet.getInterval()));
                 this.timesheetPositionsFacade.edit(existing);
-                
+
                 if (sheet.isLimited()) {
                     float pctDone = getTimesheetPercentageDone(sheet);
                     sheet.setPercentageDone(pctDone);
@@ -6186,7 +6225,14 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
             newPos.setPrincipal(context.getCallerPrincipal().getName());
             newPos.setDescription(position.getDescription());
             newPos.setName(position.getName());
-            newPos.setStarted(new Date());
+            
+            Date rawStart = new Date();
+            Calendar cal = Calendar.getInstance();
+            cal.setTime(rawStart);
+            cal.set(Calendar.SECOND, 0);
+            cal.set(Calendar.MILLISECOND, 0);
+            Date start = cal.getTime();
+            newPos.setStarted(start);
             newPos.setStopped(null);
             newPos.setTaxRate(position.getTaxRate());
             newPos.setTimesheet(sheet);
@@ -6220,7 +6266,18 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
                 throw new Exception("Zeiterfassungsposition ist bereits beendet!");
             }
 
-            existing.setStopped(new Date());
+            Date rawStop = new Date();
+                Calendar cal = Calendar.getInstance();
+                cal.setTime(rawStop);
+                if (cal.get(Calendar.SECOND) > 0 || cal.get(Calendar.MILLISECOND) > 0) {
+                    // Add 1 minute
+                    cal.add(Calendar.MINUTE, 1);
+                }
+                // Set seconds and milliseconds to zero
+                cal.set(Calendar.SECOND, 0);
+                cal.set(Calendar.MILLISECOND, 0);
+                Date stop = cal.getTime();
+            existing.setStopped(stop);
             existing.setDescription(position.getDescription());
             existing.setName(position.getName());
             existing.setTaxRate(position.getTaxRate());
@@ -6228,13 +6285,13 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
             existing.setUnitPrice(position.getUnitPrice());
             existing.setTotal(existing.calculateTotal(sheet.getInterval()));
             this.timesheetPositionsFacade.edit(existing);
-            
+
             if (sheet.isLimited()) {
                 float pctDone = getTimesheetPercentageDone(sheet);
                 sheet.setPercentageDone(pctDone);
                 this.timesheetFacade.edit(sheet);
             }
-                
+
             return this.timesheetPositionsFacade.find(position.getId());
 
         }
@@ -6267,7 +6324,7 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
             existing.setStopped(position.getStopped());
             existing.setTotal(existing.calculateTotal(sheet.getInterval()));
             this.timesheetPositionsFacade.edit(existing);
-            
+
             if (sheet.isLimited()) {
                 float pctDone = getTimesheetPercentageDone(sheet);
                 sheet.setPercentageDone(pctDone);
@@ -6319,13 +6376,13 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
         if (allowed) {
             TimesheetPosition removePos = this.timesheetPositionsFacade.find(position.getId());
             this.timesheetPositionsFacade.remove(removePos);
-            
+
             if (timesheet.isLimited()) {
                 float pctDone = getTimesheetPercentageDone(timesheet);
                 timesheet.setPercentageDone(pctDone);
                 this.timesheetFacade.edit(timesheet);
             }
-            
+
         } else {
             throw new Exception(MSG_MISSINGPRIVILEGE_CASE);
         }
@@ -6371,7 +6428,7 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
 
                 this.timesheetPositionsFacade.edit(updatePos);
             }
-            
+
             if (timesheet.isLimited()) {
                 float pctDone = getTimesheetPercentageDone(timesheet);
                 timesheet.setPercentageDone(pctDone);
@@ -6412,7 +6469,7 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
             for (TimesheetPosition pos : this.timesheetPositionsFacade.findByTimesheet(timesheet)) {
                 this.timesheetPositionsFacade.remove(pos);
             }
-            if(timesheet.isLimited()) {
+            if (timesheet.isLimited()) {
                 timesheet.setPercentageDone(0f);
                 this.timesheetFacade.edit(timesheet);
             }
@@ -6516,7 +6573,7 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
         position.setTotal(position.calculateTotal(sheet.getInterval()));
 
         this.timesheetPositionsFacade.create(position);
-        
+
         if (sheet.isLimited()) {
             float pctDone = getTimesheetPercentageDone(sheet);
             sheet.setPercentageDone(pctDone);
@@ -6544,7 +6601,7 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
 
         return list;
     }
-    
+
     @Override
     @RolesAllowed({"loginRole"})
     public ArrayList<String> getAllArchiveFileNumbers() throws Exception {
@@ -6838,7 +6895,7 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
     @RolesAllowed({"loginRole"})
     public boolean isDocumentLocked(String docId) throws Exception {
         ArchiveFileDocumentsBean db = this.archiveFileDocumentsFacade.find(docId);
-        if(db==null) {
+        if (db == null) {
             log.warn("There is no document with ID " + docId + " - assuming unlocked.");
             return false;
         }

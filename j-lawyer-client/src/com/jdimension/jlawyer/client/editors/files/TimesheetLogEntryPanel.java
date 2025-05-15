@@ -676,6 +676,7 @@ import com.jdimension.jlawyer.services.JLawyerServiceLocator;
 import java.awt.Color;
 import java.awt.event.KeyEvent;
 import java.math.BigDecimal;
+import java.util.Calendar;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
@@ -1077,7 +1078,14 @@ public class TimesheetLogEntryPanel extends javax.swing.JPanel {
             this.entry.setUnitPrice(BigDecimal.ZERO);
         }
 
-        Date start = new Date();
+        Date rawStart = new Date();
+        Calendar cal = Calendar.getInstance();
+        cal.setTime(rawStart);
+        cal.set(Calendar.SECOND, 0);
+        cal.set(Calendar.MILLISECOND, 0);
+
+        Date start = cal.getTime();
+        
         this.txtEnd.setValue(start);
         this.txtStart.setValue(new Date(start.getTime() - minutes * 60l * 1000l));
 

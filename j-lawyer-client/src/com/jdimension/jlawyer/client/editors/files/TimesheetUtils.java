@@ -671,7 +671,7 @@ import java.util.concurrent.TimeUnit;
  * @author jens
  */
 public class TimesheetUtils {
-    
+
     public static int getTotalMinutes(String inputText) {
 
         if (inputText.matches("\\d+m")) {
@@ -684,27 +684,28 @@ public class TimesheetUtils {
             return hours * 60 + minutes;
         }
     }
-    
+
     public static String formatDuration(Date start, Date end) {
         if (start == null || end == null) {
             return "0h0m";
         }
-        
+
         long durationMillis = end.getTime() - start.getTime();
-        if (durationMillis < 0) {
+        if (durationMillis <= 0) {
             return "0h0m";
         }
 
-        long hours = TimeUnit.MILLISECONDS.toHours(durationMillis);
-        long minutes = TimeUnit.MILLISECONDS.toMinutes(durationMillis) % 60;
+        // Runden wir auf volle Minuten (jede Sekunde zählt!)
+        long totalMinutes = (long) Math.ceil(durationMillis / 60000.0); // 60000 ms = 1 min
+        long hours = totalMinutes / 60;
+        long minutes = totalMinutes % 60;
 
-        String duration=minutes+"m";
-        if(hours>0)
-            duration=hours+"h " + duration;
-        
+        String duration = minutes + "m";
+        if (hours > 0) {
+            duration = hours + "h " + duration;
+        }
+
         return duration;
-        
-        //return String.format("%dh%dm", hours, minutes);
     }
-    
+
 }
