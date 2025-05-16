@@ -2342,8 +2342,6 @@ public class InvoiceDialog extends javax.swing.JDialog implements EventConsumer 
 
         HashMap<BigDecimal, BigDecimal> taxRateToTaxTotal = new HashMap<>();
 
-        int rowcount = 0;
-
         StyledCalculationTable ct = new StyledCalculationTable();
         DecimalFormat currencyFormat = null;
         if ("EN".equalsIgnoreCase(language)) {
@@ -2412,8 +2410,6 @@ public class InvoiceDialog extends javax.swing.JDialog implements EventConsumer 
                         percentageFormat.format(t),
                         currencyFormat.format(netAmount) + " " + this.cmbCurrency.getSelectedItem()
                 );
-
-                rowcount++;
             }
         }
 

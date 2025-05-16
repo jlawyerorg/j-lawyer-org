@@ -664,7 +664,6 @@ For more information on this, and how to apply and follow the GNU AGPL, see
 package com.jdimension.jlawyer.client.editors.files;
 
 import java.util.Date;
-import java.util.concurrent.TimeUnit;
 
 /**
  *

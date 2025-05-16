@@ -719,8 +719,7 @@ public class CasesEndpointV4 implements CasesEndpointLocalV4 {
             ArchiveFileBean currentCase = cases.getArchiveFile(id);
             if (currentCase == null) {
                 log.error("case with id " + id + " does not exist");
-                Response res = Response.serverError().build();
-                return res;
+                return Response.serverError().build();
             }
 
             Collection<ArchiveFileReviewsBean> reviews = cal.getReviews(id);
@@ -746,12 +745,10 @@ public class CasesEndpointV4 implements CasesEndpointLocalV4 {
                 ddList.add(dd);
             }
 
-            Response res = Response.ok(ddList).build();
-            return res;
+            return Response.ok(ddList).build();
         } catch (Exception ex) {
             log.error("can not get case " + id, ex);
-            Response res = Response.serverError().build();
-            return res;
+            return Response.serverError().build();
         }
     }
     
@@ -799,12 +796,10 @@ public class CasesEndpointV4 implements CasesEndpointLocalV4 {
                 ddList.add(dd);
             }
 
-            Response res = Response.ok(ddList).build();
-            return res;
+            return Response.ok(ddList).build();
         } catch (Exception ex) {
             log.error("can not get open due dates", ex);
-            Response res = Response.serverError().build();
-            return res;
+            return Response.serverError().build();
         }
     }
 
