@@ -762,6 +762,8 @@ public class MailboxSetup implements Serializable, EventTypes {
     private boolean scanIgnoreInline=true;
     @Column(name = "scan_minattachmentsize", columnDefinition = "INTEGER DEFAULT 5000")
     private int scanMinAttachmentSize=0;
+    @Column(name = "scan_days", columnDefinition = "INTEGER DEFAULT 2")
+    private int scanDays=2;
     
     @Column(name = "props_in")
     private String customConfigurationsReceive="";
@@ -1335,6 +1337,20 @@ public class MailboxSetup implements Serializable, EventTypes {
         for(Object k: customProps.keySet()) {
             targetProps.setProperty(k.toString(), customProps.getProperty(k.toString()));
         }
+    }
+
+    /**
+     * @return the scanDays
+     */
+    public int getScanDays() {
+        return scanDays;
+    }
+
+    /**
+     * @param scanDays the scanDays to set
+     */
+    public void setScanDays(int scanDays) {
+        this.scanDays = scanDays;
     }
 
     

@@ -769,6 +769,7 @@ public class MailboxSetupDialog extends javax.swing.JDialog {
         this.lblScanTags.setText("");
         this.sldMinAttachmentSizeKb.setValue(0);
         this.chkIgnoreInlineAttachments.setSelected(true);
+        this.spnScanDays.setValue(2);
         
         this.taCustomConfigIn.setText("");
         this.taCustomConfigOut.setText("");
@@ -904,6 +905,8 @@ public class MailboxSetupDialog extends javax.swing.JDialog {
         lblMinAttachmentSize = new javax.swing.JLabel();
         chkIgnoreInlineAttachments = new javax.swing.JCheckBox();
         sldMinAttachmentSizeKb = new javax.swing.JSlider();
+        jLabel26 = new javax.swing.JLabel();
+        spnScanDays = new javax.swing.JSpinner();
         jPanel6 = new javax.swing.JPanel();
         jLabel25 = new javax.swing.JLabel();
         jTabbedPane2 = new javax.swing.JTabbedPane();
@@ -1052,7 +1055,7 @@ public class MailboxSetupDialog extends javax.swing.JDialog {
                 .addGroup(jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                     .addComponent(txtEmailSender, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                     .addComponent(jLabel10))
-                .addContainerGap(427, Short.MAX_VALUE))
+                .addContainerGap(429, Short.MAX_VALUE))
         );
 
         jTabbedPane1.addTab("Postfach", jPanel2);
@@ -1286,7 +1289,7 @@ public class MailboxSetupDialog extends javax.swing.JDialog {
             jPanel4Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(jPanel4Layout.createSequentialGroup()
                 .addContainerGap()
-                .addComponent(htmlEmailSig, javax.swing.GroupLayout.DEFAULT_SIZE, 532, Short.MAX_VALUE))
+                .addComponent(htmlEmailSig, javax.swing.GroupLayout.DEFAULT_SIZE, 534, Short.MAX_VALUE))
         );
 
         jTabbedPane1.addTab("Signatur", jPanel4);
@@ -1332,6 +1335,12 @@ public class MailboxSetupDialog extends javax.swing.JDialog {
             }
         });
 
+        jLabel26.setFont(jLabel26.getFont());
+        jLabel26.setText("Tage rückblickend");
+
+        spnScanDays.setFont(spnScanDays.getFont());
+        spnScanDays.setModel(new javax.swing.SpinnerNumberModel(2, 1, 50, 1));
+
         javax.swing.GroupLayout jPanel5Layout = new javax.swing.GroupLayout(jPanel5);
         jPanel5.setLayout(jPanel5Layout);
         jPanel5Layout.setHorizontalGroup(
@@ -1341,7 +1350,10 @@ public class MailboxSetupDialog extends javax.swing.JDialog {
                 .addGroup(jPanel5Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
                     .addGroup(javax.swing.GroupLayout.Alignment.LEADING, jPanel5Layout.createSequentialGroup()
                         .addComponent(chkScanInbox)
-                        .addGap(0, 0, Short.MAX_VALUE))
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                        .addComponent(spnScanDays, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addComponent(jLabel26))
                     .addGroup(javax.swing.GroupLayout.Alignment.LEADING, jPanel5Layout.createSequentialGroup()
                         .addGap(27, 27, 27)
                         .addGroup(jPanel5Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
@@ -1373,7 +1385,10 @@ public class MailboxSetupDialog extends javax.swing.JDialog {
             jPanel5Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(jPanel5Layout.createSequentialGroup()
                 .addContainerGap()
-                .addComponent(chkScanInbox)
+                .addGroup(jPanel5Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                    .addComponent(chkScanInbox)
+                    .addComponent(jLabel26)
+                    .addComponent(spnScanDays, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(jLabel12, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
@@ -1423,7 +1438,7 @@ public class MailboxSetupDialog extends javax.swing.JDialog {
         );
         jPanel7Layout.setVerticalGroup(
             jPanel7Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addComponent(jScrollPane2, javax.swing.GroupLayout.DEFAULT_SIZE, 497, Short.MAX_VALUE)
+            .addComponent(jScrollPane2, javax.swing.GroupLayout.DEFAULT_SIZE, 499, Short.MAX_VALUE)
         );
 
         jTabbedPane2.addTab("Posteingang", jPanel7);
@@ -1442,7 +1457,7 @@ public class MailboxSetupDialog extends javax.swing.JDialog {
         );
         jPanel8Layout.setVerticalGroup(
             jPanel8Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addComponent(jScrollPane3, javax.swing.GroupLayout.DEFAULT_SIZE, 497, Short.MAX_VALUE)
+            .addComponent(jScrollPane3, javax.swing.GroupLayout.DEFAULT_SIZE, 499, Short.MAX_VALUE)
         );
 
         jTabbedPane2.addTab("Postausgang", jPanel8);
@@ -1598,6 +1613,7 @@ public class MailboxSetupDialog extends javax.swing.JDialog {
             ms.setScanExclusionList(this.txtScanExclusionList.getText());
             ms.setScanIgnoreInline(this.chkIgnoreInlineAttachments.isSelected());
             ms.setScanMinAttachmentSize(this.sldMinAttachmentSizeKb.getValue() * 1024);
+            ms.setScanDays((Integer)this.spnScanDays.getValue());
             
             ms.setCustomConfigurationsReceive(this.taCustomConfigIn.getText());
             ms.setCustomConfigurationsSend(this.taCustomConfigOut.getText());
@@ -1783,6 +1799,7 @@ public class MailboxSetupDialog extends javax.swing.JDialog {
         this.txtScanExclusionList.setText(ms.getScanExclusionList());
         this.chkIgnoreInlineAttachments.setSelected(ms.isScanIgnoreInline());
         this.sldMinAttachmentSizeKb.setValue((int) ((int) ms.getScanMinAttachmentSize() / (int) 1024));
+        this.spnScanDays.setValue(ms.getScanDays());
         
         this.taCustomConfigIn.setText(ms.getCustomConfigurationsReceive());
         this.taCustomConfigOut.setText(ms.getCustomConfigurationsSend());
@@ -1865,6 +1882,7 @@ public class MailboxSetupDialog extends javax.swing.JDialog {
     private javax.swing.JLabel jLabel23;
     private javax.swing.JLabel jLabel24;
     private javax.swing.JLabel jLabel25;
+    private javax.swing.JLabel jLabel26;
     private javax.swing.JLabel jLabel3;
     private javax.swing.JLabel jLabel4;
     private javax.swing.JLabel jLabel5;
@@ -1894,6 +1912,7 @@ public class MailboxSetupDialog extends javax.swing.JDialog {
     private javax.swing.JPasswordField pwdInPassword;
     private javax.swing.JPasswordField pwdOutPassword;
     private javax.swing.JSlider sldMinAttachmentSizeKb;
+    private javax.swing.JSpinner spnScanDays;
     private javax.swing.JTextArea taCustomConfigIn;
     private javax.swing.JTextArea taCustomConfigOut;
     private javax.swing.JTable tblMailboxes;

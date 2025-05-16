@@ -692,6 +692,7 @@ import java.io.ByteArrayOutputStream;
 import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Calendar;
 import java.util.Collection;
 import java.util.Date;
 import java.util.HashMap;
@@ -700,6 +701,7 @@ import java.util.Properties;
 import javax.annotation.security.RunAs;
 import javax.mail.Address;
 import javax.mail.Authenticator;
+import javax.mail.FetchProfile;
 import javax.mail.Flags;
 import javax.mail.Folder;
 import javax.mail.FolderClosedException;
@@ -708,6 +710,9 @@ import javax.mail.PasswordAuthentication;
 import javax.mail.Session;
 import javax.mail.Store;
 import javax.mail.internet.MimeMessage;
+import javax.mail.search.ComparisonTerm;
+import javax.mail.search.SearchTerm;
+import javax.mail.search.SentDateTerm;
 import javax.mail.util.SharedByteArrayInputStream;
 import javax.naming.InitialContext;
 import org.apache.log4j.Logger;
@@ -752,7 +757,10 @@ public class MailboxScannerTask extends java.util.TimerTask {
                         if (t == null) {
                             t = "";
                         }
+                        long processingStart=System.currentTimeMillis();
+                        log.info("Processing mailbox " + ms.getEmailAddress());
                         this.processMailbox(ms, caseSvc, adrSvc, sysSvc, formsSvc, allFileNumbers, documentTags, blacklistedTypes, t, ms.isScanIgnoreInline(), ms.getScanMinAttachmentSize(), allPartyTypes, sysSvc.getDefaultDocumentNameTemplate());
+                        log.info("Finished processing mailbox " + ms.getEmailAddress() + " in " + ((System.currentTimeMillis()-processingStart)/1000) + " seconds");
                     } catch (Throwable ex) {
                         log.error("Error processing scanned inbox " + ms.getEmailAddress(), ex);
                     }
@@ -765,8 +773,6 @@ public class MailboxScannerTask extends java.util.TimerTask {
     }
 
     private void processMailbox(MailboxSetup ms, ArchiveFileServiceLocal caseSvc, AddressServiceLocal adrSvc, SystemManagementLocal sysSvc, FormsServiceLocal formsSvc, ArrayList<String> allFileNumbers, List<String> tags, List<String> blacklistedFileTypes, String exclusionList, boolean ignoreInline, int minAttachmentSize, List<PartyTypeBean> allPartyTypes, DocumentNameTemplate defaultNameTemplate) {
-
-        log.info("Processing mailbox " + ms.getEmailAddress());
 
         String server = null;
         try {
@@ -882,14 +888,53 @@ public class MailboxScannerTask extends java.util.TimerTask {
                 log.error("Folder for imported mails could not be checked / created!", ex);
             }
 
-            Message[] allMessages = inboxFolder.getMessages();
+            Message[] allMessages=new Message[0];
+            boolean fallbackNeeded=false;
+            try {
+
+                // try server-side filtering for messages in a relevant timeframe (last x days)
+                
+                // Calculate the date two days ago
+                Calendar cal = Calendar.getInstance();
+                cal.add(Calendar.DATE, -1 * ms.getScanDays());
+                Date daysAgo = cal.getTime();
+
+                // Use SentDateTerm for better compatibility
+                SearchTerm newerThanDays = new SentDateTerm(ComparisonTerm.GT, daysAgo);
+                allMessages = inboxFolder.search(newerThanDays);
+                if(allMessages==null || allMessages.length==0) {
+                    fallbackNeeded=true;
+                    log.warn("Mailserver does not support search by sent date or returned an empty message list - executing fallback");
+                }
+            } catch (Exception ex) {
+                log.error("Mailserver does not support search by sent date - executing fallback", ex);
+                fallbackNeeded=true;
+            }
+            
+            if(fallbackNeeded) {
+                allMessages = inboxFolder.getMessages();
+            }
+            
+            
+            // try fetching all headers at once to avoid server roundtrips
+            try {
+                FetchProfile fp = new FetchProfile();
+                fp.add(FetchProfile.Item.ENVELOPE); // includes headers like Date, Subject, From
+                inboxFolder.fetch(allMessages, fp);
+            } catch (Exception ex) {
+                log.warn("Fetching mail headers failed", ex);
+            }
+            
+            
+            
             ArrayList<Message> deleteMessages = new ArrayList<>();
             long currentTimeStamp = System.currentTimeMillis();
+            if(allMessages!=null)
+                log.info("processing " +allMessages.length + " messages in mailbox " + ms.getEmailAddress());
             for (Message msg : allMessages) {
 
                 if (msg.getReceivedDate() != null) {
-                    if (msg.getReceivedDate().getTime() < (currentTimeStamp - (1000l * 60l * 60l * 24l * 31l * 2l))) {
-                        log.info("Message '" + msg.getSubject() + "' is older than two months and will not be processed");
+                    if (msg.getReceivedDate().getTime() < (currentTimeStamp - (1000l * 60l * 60l * 24l * ms.getScanDays()))) {
                         continue;
                     }
                 }
