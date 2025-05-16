@@ -4202,7 +4202,11 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
         this.jScrollPane9.revalidate();
 
         JScrollBar vertical = this.jScrollPane9.getVerticalScrollBar();
-        vertical.setValue(vertical.getMaximum());
+        SwingUtilities.invokeLater(() -> {
+            SwingUtilities.invokeLater(() -> {
+                vertical.setValue(vertical.getMaximum());
+            });
+        });
 
         AdjustmentListener downScroller = new AdjustmentListener() {
             @Override
