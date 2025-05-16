@@ -674,6 +674,6 @@ import javax.ws.rs.core.Response;
 public interface CasesEndpointLocalV4 {
 
     Response getDueDates(String id);
-    
+    Response getAllDueDates();
     
 }

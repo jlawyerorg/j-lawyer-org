@@ -677,6 +677,7 @@ import javax.ejb.Local;
 public interface CalendarServiceLocal {
 
     Collection<ArchiveFileReviewsBean> getAllOpenReviewsUnrestricted();
+    Collection<ArchiveFileReviewsBean> getAllOpenReviews();
     
     Collection<ArchiveFileReviewsBean> getReviewsUnrestricted(String archiveFileKey) throws Exception;
     

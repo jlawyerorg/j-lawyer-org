@@ -754,5 +754,58 @@ public class CasesEndpointV4 implements CasesEndpointLocalV4 {
             return res;
         }
     }
+    
+    // when seeing something like
+    //  com.fasterxml.jackson.databind.JsonMappingException: failed to lazily initialize a collection of role: com.jdimension.jlawyer.persistence.ArchiveFileBean.archiveFileFormsBeanList, could not initialize proxy - no Session
+    // it is not necessarily an issue with fetch type eager or lazy, just put @XmlTransient to the getter of the list in the entity
+    /**
+     * Returns all due dates for all non-archived cases
+     *
+     * @response 401 User not authorized
+     * @response 403 User not authenticated
+     */
+    @Override
+    @GET
+    @Produces(MediaType.APPLICATION_JSON+";charset=utf-8")
+    @Path("/duedates")
+    @RolesAllowed({"readArchiveFileRole"})
+    public Response getAllDueDates() {
+        //http://localhost:8080/j-lawyer-io/rest/cases/0c79112f7f000101327bf357f0b6010c/duedates
+        try {
+
+            InitialContext ic = new InitialContext();
+            CalendarServiceLocal cal = (CalendarServiceLocal) ic.lookup("java:global/j-lawyer-server/j-lawyer-server-ejb/CalendarService!com.jdimension.jlawyer.services.CalendarServiceLocal");
+            
+            Collection<ArchiveFileReviewsBean> reviews = cal.getAllOpenReviews();
+            ArrayList<RestfulDueDateV4> ddList = new ArrayList<>();
+            for (ArchiveFileReviewsBean rev : reviews) {
+                RestfulDueDateV4 dd = new RestfulDueDateV4();
+                dd.setId(rev.getId());
+                dd.setAssignee(rev.getAssignee());
+                dd.setDone(rev.isDone());
+                dd.setBeginDate(rev.getBeginDate());
+                dd.setEndDate(rev.getEndDate());
+                dd.setSummary(rev.getSummary());
+                dd.setDescription(rev.getDescription());
+                dd.setLocation(rev.getLocation());
+                dd.setType(RestfulDueDateV4.TYPE_RESPITE);
+                if (rev.getEventType() == ArchiveFileReviewsBean.EVENTTYPE_FOLLOWUP) {
+                    dd.setType(RestfulDueDateV4.TYPE_FOLLOWUP);
+                } else if (rev.getEventType() == ArchiveFileReviewsBean.EVENTTYPE_EVENT) {
+                    dd.setType(RestfulDueDateV4.TYPE_EVENT);
+                }
+                if(rev.getCalendarSetup()!=null)
+                    dd.setCalendar(rev.getCalendarSetup().getId());
+                ddList.add(dd);
+            }
+
+            Response res = Response.ok(ddList).build();
+            return res;
+        } catch (Exception ex) {
+            log.error("can not get open due dates", ex);
+            Response res = Response.serverError().build();
+            return res;
+        }
+    }
 
 }
