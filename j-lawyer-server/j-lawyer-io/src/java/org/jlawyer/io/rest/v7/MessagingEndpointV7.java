@@ -669,6 +669,7 @@ import com.jdimension.jlawyer.persistence.InstantMessage;
 import com.jdimension.jlawyer.services.ArchiveFileServiceLocal;
 import com.jdimension.jlawyer.services.MessagingServiceLocal;
 import java.util.ArrayList;
+import java.util.Calendar;
 import java.util.List;
 import javax.annotation.security.RolesAllowed;
 import javax.ejb.Stateless;
@@ -787,6 +788,42 @@ public class MessagingEndpointV7 implements MessagingEndpointLocalV7 {
             log.error("can not delete message " + id, ex);
             Response res = Response.serverError().build();
             return res;
+        }
+    }
+    
+    /**
+     * Returns a list of instant messages the requesting user has access to, created up to x seconds in the past
+     *
+     * @param seconds number of seconds - only messages created after this point in time in the past are retrieved
+     * @response 401 User not authorized
+     * @response 403 User not authenticated
+     */
+    @Override
+    @GET
+    @Produces(MediaType.APPLICATION_JSON + ";charset=utf-8")
+    @Consumes(MediaType.APPLICATION_JSON)
+    @Path("/since/{seconds}")
+    @RolesAllowed({"readArchiveFileRole"})
+    public Response getMessagesSince(@PathParam("seconds") int seconds) {
+        try {
+
+            InitialContext ic = new InitialContext();
+            MessagingServiceLocal msgService = (MessagingServiceLocal) ic.lookup("java:global/j-lawyer-server/j-lawyer-server-ejb/MessagingService!com.jdimension.jlawyer.services.MessagingServiceLocal");
+            Calendar now = Calendar.getInstance();
+            now.add(Calendar.SECOND, (-1 * seconds));
+            
+            List<InstantMessage> messages = msgService.getMessagesSince(now.getTime(), Integer.MAX_VALUE);
+
+            ArrayList<RestfulInstantMessageV7> msgList = new ArrayList<>();
+            for (InstantMessage im : messages) {
+                RestfulInstantMessageV7 m = RestfulInstantMessageV7.fromInstantMessage(im);
+                msgList.add(m);
+            }
+
+            return Response.ok(msgList).build();
+        } catch (Exception ex) {
+            log.error("can not get messages for last " + seconds + " seconds", ex);
+            return Response.serverError().build();
         }
     }
     
