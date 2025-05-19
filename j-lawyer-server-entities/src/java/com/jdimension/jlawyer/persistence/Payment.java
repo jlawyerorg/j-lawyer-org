@@ -661,185 +661,408 @@
  * For more information on this, and how to apply and follow the GNU AGPL, see
  * <https://www.gnu.org/licenses/>.
  */
-package com.jdimension.jlawyer.client.utils;
+package com.jdimension.jlawyer.persistence;
 
-import com.jdimension.jlawyer.client.settings.ClientSettings;
-import com.jdimension.jlawyer.services.JLawyerServiceLocator;
-import java.io.InputStream;
-import java.io.InputStreamReader;
-import java.io.StringReader;
-import java.net.URL;
-import java.net.URLConnection;
-import java.nio.charset.StandardCharsets;
-import javax.xml.XMLConstants;
-import javax.xml.parsers.DocumentBuilder;
-import javax.xml.parsers.DocumentBuilderFactory;
-import org.apache.log4j.Logger;
-import org.w3c.dom.Document;
-import org.w3c.dom.Node;
-import org.w3c.dom.NodeList;
-import org.xml.sax.InputSource;
+import java.io.Serializable;
+import java.math.BigDecimal;
+import java.util.ArrayList;
+import java.util.Date;
+import java.util.List;
+import javax.persistence.*;
+import javax.xml.bind.annotation.XmlRootElement;
 
 /**
  *
  * @author jens
  */
-public class VersionUtils {
-
-    private static final Logger log = Logger.getLogger(VersionUtils.class.getName());
-
-    public static String getLatestClientDownloadForServer(String serverVersion) {
-        return getLatestClientForServer(serverVersion, "url");
-    }
+@Entity
+@Table(name = "payments")
+@XmlRootElement
+@NamedQueries({
+    @NamedQuery(name = "Payment.findAll", query = "SELECT a FROM Payment a"),
+    @NamedQuery(name = "Payment.findById", query = "SELECT a FROM Payment a WHERE a.id = :id"),
+    @NamedQuery(name = "Payment.findByArchiveFileKey", query = "SELECT a FROM Payment a WHERE a.archiveFileKey = :archiveFileKey order by a.creationDate desc"),
+    @NamedQuery(name = "Payment.findByStatus", query = "SELECT a FROM Payment a WHERE a.status = :status order by a.targetDate desc"),
+    @NamedQuery(name = "Payment.findByPaymentNumber", query = "SELECT a FROM Payment a WHERE a.paymentNumber = :paymentNumber"),
+    @NamedQuery(name = "Payment.findByAddress", query = "SELECT a FROM Payment a WHERE a.contact = :contact")})
+public class Payment implements Serializable {
     
-    public static String getLatestClientVersionForServer(String serverVersion) {
-        return getLatestClientForServer(serverVersion, "client");
-    }
+    // draft
+    public static final int STATUS_NEW=10;
+    private static final String S_STATUS_NEW="Entwurf";
     
-    private static String getLatestClientForServer(String serverVersion, String queryAttribute) {
-        try {
-            URL updateURL = new URL("https://www.j-lawyer.org/downloads/j-lawyer-autoupdate.xml");
-            URLConnection urlCon = updateURL.openConnection();
-            urlCon.setRequestProperty("User-Agent", "j-lawyer Client v" + VersionUtils.getFullClientVersion());
-            urlCon.setConnectTimeout(2000);
-            urlCon.setReadTimeout(3000);
-
-            InputStream is = urlCon.getInputStream();
-            InputStreamReader reader = new InputStreamReader(is, StandardCharsets.UTF_8);
-
-            char[] buffer = new char[1024];
-            int len = 0;
-            StringBuilder sb = new StringBuilder();
-            while ((len = reader.read(buffer)) > -1) {
-                sb.append(buffer, 0, len);
-            }
-            reader.close();
-            is.close();
-            String calculationsContent = sb.toString();
-
-            DocumentBuilderFactory dbf = DocumentBuilderFactory.newInstance();
-            try {
-                dbf.setAttribute(XMLConstants.ACCESS_EXTERNAL_DTD, "");
-                dbf.setAttribute(XMLConstants.ACCESS_EXTERNAL_SCHEMA, "");
-            } catch (IllegalArgumentException iae) {
-                log.warn("Unable to set external entity restrictions in XML parser", iae);
-            }
-            DocumentBuilder remoteDb = dbf.newDocumentBuilder();
-            InputSource inSrc1 = new InputSource(new StringReader(calculationsContent));
-            inSrc1.setEncoding("UTF-8");
-            Document remoteDoc = remoteDb.parse(inSrc1);
-
-            NodeList remoteList = remoteDoc.getElementsByTagName("server");
-
-            for (int i = 0; i < remoteList.getLength(); i++) {
-                Node n = remoteList.item(i);
-                String server = n.getAttributes().getNamedItem("version").getNodeValue();
-                String os = n.getAttributes().getNamedItem("os").getNodeValue();
-                String arch = n.getAttributes().getNamedItem("arch").getNodeValue();
-                if (serverVersion.equals(server) && System.getProperty("os.name").toLowerCase().contains(os) && System.getProperty("os.arch").toLowerCase().contains(arch)) {
-                    return n.getAttributes().getNamedItem(queryAttribute).getNodeValue();
-                }
-            }
-
-        } catch (Throwable t) {
-            log.error("Error downloading client version information", t);
-        }
-        return null;
-    }
+    // when sent to recipient
+    public static final int STATUS_APPROVED=20;
+    private static final String S_STATUS_APPROVED="freigegeben";
     
-    public static String getClientVersion() {
-        return "3.4";
-    }
-
-    public static String getPatchLevel() {
-        return "0";
-    }
-
-    public static String getBuild() {
-        return "0";
-    }
+    // when SEPA XML has been exported or payment has been initiated otherwise (e.g. paypal payment prepared / scheduled)
+    public static final int STATUS_INITIATED=30;
+    private static final String S_STATUS_INITIATED="veranlasst";
     
-    public static boolean isVersionGreater(String referenceVersion, String compareToVersion) {
-        long ref=getVersionAsLong(referenceVersion);
-        long comp=getVersionAsLong(compareToVersion);
-        
-        return (ref>comp);
-    }
+    // payment uploaded to bank account
+    public static final int STATUS_EXECUTED=40;
+    private static final String S_STATUS_EXECUTED="ausgeführt";
     
-    private static long getVersionAsLong(String v) {
-        String major="0";
-        String minor="0";
-        String patch="0";
-        String build="0";
-        
-        if(v.contains(".")) {
-            major=v.substring(0, v.indexOf("."));
-            v=v.substring(v.indexOf(".")+1, v.length());
-        } else if (v.length()>0) {
-            major=v;
-        }
-        
-        if(v.contains(".")) {
-            minor=v.substring(0, v.indexOf("."));
-            v=v.substring(v.indexOf(".")+1, v.length());
-        } else if (v.length()>0) {
-            minor=v;
-        }
-        
-        if(v.contains(".")) {
-            patch=v.substring(0, v.indexOf("."));
-            v=v.substring(v.indexOf(".")+1, v.length());
-        } else if (v.length()>0) {
-            patch=v;
-        }
-        
-        if(v.contains(".")) {
-            build=v.substring(0, v.indexOf("."));
-            v=v.substring(v.indexOf("."), v.length()-1);
-        } else if (v.length()>0) {
-            build=v;
-        }
-        
-        try {
-            return Long.parseLong(major)*1000000 + Long.parseLong(minor)*10000 + Long.parseLong(patch)*100 + Long.parseLong(build);
-        } catch (Exception ex) {
-            return 1;
-        }
+    // payment failed
+    public static final int STATUS_FAILED=50;
+    private static final String S_STATUS_FAILED="fehlgeschlagen";
+    
+    // payment cancelled
+    public static final int STATUS_CANCELLED=60;
+    private static final String S_STATUS_CANCELLED="storniert";
+    
+    public static final String PAYMENTTYPE_SEPATRANSFER="SEPATRANSFER";
+    public static final String PAYMENTTYPE_OTHER="OTHER";
+    
+    public static final List<String> PAYMENTTYPES=List.of(PAYMENTTYPE_SEPATRANSFER, PAYMENTTYPE_OTHER);
+    
+    
+    protected static long serialVersionUID = 1L;
+    
+    @Id
+    @Basic(optional = false)
+    @Column(name = "id")
+    protected String id;
+    @Column(name = "name")
+    protected String name;
+    @Column(name = "description")
+    protected String description;
+    @Column(name = "reason")
+    private String reason;
+    @Column(name = "payment_no")
+    protected String paymentNumber;
+    @Column(name = "payment_status")
+    protected int status=STATUS_NEW;
+    
+    @Column(name = "date_created")
+    @Temporal(TemporalType.TIMESTAMP)
+    protected Date creationDate;
+    
+    @Column(name = "date_target")
+    @Temporal(TemporalType.TIMESTAMP)
+    protected Date targetDate;
+    
+    @JoinColumn(name = "case_id", referencedColumnName = "id")
+    @ManyToOne
+    protected ArchiveFileBean archiveFileKey;
+    
+    // payment recipient
+    @JoinColumn(name = "contact_id", referencedColumnName = "id")
+    @ManyToOne(fetch = FetchType.EAGER)
+    protected AddressBean contact;
+    
+    // invoice sender
+    @Column(name = "sender_id")
+    private String sender;
+    
+    @Column(name = "total", precision = 10, scale = 2)
+    protected BigDecimal total=BigDecimal.ZERO;
+    
+//    @JoinColumn(name = "payment_document", referencedColumnName = "id")
+//    @OneToOne(fetch = FetchType.EAGER)
+//    protected ArchiveFileDocumentsBean paymentDocument;
+    
+    @Column(name = "currency")
+    protected String currency="EUR";
+    
+    @Column(name = "payment_type")
+    private String paymentType;
+    
+    public Payment() {
     }
 
-    public static String getFullClientVersion() {
-        return getClientVersion() + "." + getPatchLevel() + "." + getBuild();
+    public Payment(String id) {
+        this.id = id;
     }
 
-    public static boolean isCompatible(String serverVersion, String clientVersion) {
-        int serverRevs = serverVersion.length() - serverVersion.replace(".", "").length();
-        if (serverRevs == 3) {
-            serverVersion = serverVersion.substring(0, serverVersion.lastIndexOf('.'));
-        }
-        int clientRevs = clientVersion.length() - clientVersion.replace(".", "").length();
-        if (clientRevs == 3) {
-            clientVersion = clientVersion.substring(0, clientVersion.lastIndexOf('.'));
-        }
+    public String getId() {
+        return id;
+    }
 
-        if (serverVersion == null) {
+    public void setId(String id) {
+        this.id = id;
+    }
+
+    public String getName() {
+        return name;
+    }
+
+    public void setName(String name) {
+        this.name = name;
+    }
+
+    public Date getTargetDate() {
+        return targetDate;
+    }
+
+    public void setTargetDate(Date dueDate) {
+        this.targetDate = dueDate;
+    }
+
+    public ArchiveFileBean getArchiveFileKey() {
+        return archiveFileKey;
+    }
+
+    public void setArchiveFileKey(ArchiveFileBean archiveFileKey) {
+        this.archiveFileKey = archiveFileKey;
+    }
+
+    @Override
+    public int hashCode() {
+        int hash = 0;
+        hash += (getId() != null ? getId().hashCode() : 0);
+        return hash;
+    }
+
+    @Override
+    public boolean equals(Object object) {
+        // TODO: Warning - this method won't work in the case the id fields are not set
+        if (!(object instanceof Payment)) {
             return false;
         }
-        if (clientVersion == null) {
+        Payment other = (Payment) object;
+        if ((this.getId() == null && other.getId() != null) || (this.getId() != null && !this.id.equals(other.id))) {
             return false;
         }
-        return clientVersion.startsWith(serverVersion);
+        return true;
     }
 
-    public static String getServerVersion() {
+    @Override
+    public String toString() {
+        return "com.jdimension.jlawyer.persistence.Payment[ id=" + getId() + " ]";
+    }
 
-        try {
-            ClientSettings settings = ClientSettings.getInstance();
-            JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
-            return locator.lookupSystemManagementRemote().getServerVersion();
-        } catch (Exception ex) {
-            log.error(ex);
+    /**
+     * @return the serialVersionUID
+     */
+    public static long getSerialVersionUID() {
+        return serialVersionUID;
+    }
+
+    /**
+     * @param aSerialVersionUID the serialVersionUID to set
+     */
+    public static void setSerialVersionUID(long aSerialVersionUID) {
+        serialVersionUID = aSerialVersionUID;
+    }
+
+    /**
+     * @return the description
+     */
+    public String getDescription() {
+        return description;
+    }
+
+    /**
+     * @param description the description to set
+     */
+    public void setDescription(String description) {
+        this.description = description;
+    }
+
+    /**
+     * @return the invoiceNumber
+     */
+    public String getPaymentNumber() {
+        return paymentNumber;
+    }
+
+    /**
+     * @param invoiceNumber the invoiceNumber to set
+     */
+    public void setPaymentNumber(String invoiceNumber) {
+        this.paymentNumber = invoiceNumber;
+    }
+
+    /**
+     * @return the status
+     */
+    public int getStatus() {
+        return status;
+    }
+    
+    public String getStatusString() {
+        switch (this.status) {
+            case STATUS_CANCELLED:
+                return S_STATUS_CANCELLED;
+            case STATUS_NEW:
+                return S_STATUS_NEW;
+            case STATUS_APPROVED:
+                return S_STATUS_APPROVED;
+            case STATUS_EXECUTED:
+                return S_STATUS_EXECUTED;
+            case STATUS_FAILED:
+                return S_STATUS_FAILED;
+            case STATUS_INITIATED:
+                return S_STATUS_INITIATED;
+            default:
+                return "unbekannt";
         }
-
-        return "unbekannt";
+        
     }
+    
+    public int getStatusInt(String statusString) {
+        switch(statusString) {
+            case S_STATUS_CANCELLED:
+                return STATUS_CANCELLED;
+            case S_STATUS_NEW:
+                return STATUS_NEW;
+            case S_STATUS_APPROVED:
+                return STATUS_APPROVED;
+            case S_STATUS_EXECUTED:
+                return STATUS_EXECUTED;
+            case S_STATUS_FAILED:
+                return STATUS_FAILED;
+            case S_STATUS_INITIATED:
+                return STATUS_INITIATED;
+            default:
+                return STATUS_NEW;
+                
+        }
+    }
+    
+    public List<String> getStatusValues() {
+        List<String> statuses=new ArrayList<>();
+        statuses.add(S_STATUS_NEW);
+        statuses.add(S_STATUS_APPROVED);
+        statuses.add(S_STATUS_INITIATED);
+        statuses.add(S_STATUS_EXECUTED);
+        statuses.add(S_STATUS_CANCELLED);
+        statuses.add(S_STATUS_FAILED);
+        return statuses;
+    }
+
+    /**
+     * @param status the status to set
+     */
+    public void setStatus(int status) {
+        this.status = status;
+    }
+
+    /**
+     * @return the contact
+     */
+    public AddressBean getContact() {
+        return contact;
+    }
+
+    /**
+     * @param contact the contact to set
+     */
+    public void setContact(AddressBean contact) {
+        this.contact = contact;
+    }
+
+    /**
+     * @return the creationDate
+     */
+    public Date getCreationDate() {
+        return creationDate;
+    }
+
+    /**
+     * @param creationDate the creationDate to set
+     */
+    public void setCreationDate(Date creationDate) {
+        this.creationDate = creationDate;
+    }
+
+    /**
+     * @return the paymentType
+     */
+    public String getPaymentType() {
+        return paymentType;
+    }
+
+    /**
+     * @param paymentType the paymentType to set
+     */
+    public void setPaymentType(String paymentType) {
+        this.paymentType = paymentType;
+    }
+
+    /**
+     * @return the total
+     */
+    public BigDecimal getTotal() {
+        return total;
+    }
+
+    /**
+     * @param total the total to set
+     */
+    public void setTotal(BigDecimal total) {
+        this.total = total;
+    }
+
+//    /**
+//     * @return the invoiceDocument
+//     */
+//    public ArchiveFileDocumentsBean getPaymentDocument() {
+//        return paymentDocument;
+//    }
+//
+//    /**
+//     * @param invoiceDocument the invoiceDocument to set
+//     */
+//    public void setPaymentDocument(ArchiveFileDocumentsBean invoiceDocument) {
+//        this.paymentDocument = invoiceDocument;
+//    }
+
+    /**
+     * @return the currency
+     */
+    public String getCurrency() {
+        return currency;
+    }
+
+    /**
+     * @param currency the currency to set
+     */
+    public void setCurrency(String currency) {
+        this.currency = currency;
+    }
+
+    /**
+     * @return the sender
+     */
+    public String getSender() {
+        return sender;
+    }
+
+    /**
+     * @param sender the sender to set
+     */
+    public void setSender(String sender) {
+        this.sender = sender;
+    }
+
+    public static String paymentTypeForDisplayValue(String dv) {
+        if("Überweisung".equals(dv))
+            return PAYMENTTYPE_SEPATRANSFER;
+        else
+            return PAYMENTTYPE_OTHER;
+    }
+    
+    public static String paymentTypeDisplayValueForType(String type) {
+        if(PAYMENTTYPE_SEPATRANSFER.equals(type))
+            return "Überweisung";
+        else
+            return "Sonstige";
+    }
+
+    /**
+     * @return the reason
+     */
+    public String getReason() {
+        return reason;
+    }
+
+    /**
+     * @param reason the reason to set
+     */
+    public void setReason(String reason) {
+        this.reason = reason;
+    }
+    
 }

@@ -787,6 +787,8 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
     @EJB
     private InvoiceFacadeLocal invoicesFacade;
     @EJB
+    private PaymentFacadeLocal paymentsFacade;
+    @EJB
     private InvoicePositionFacadeLocal invoicePositionsFacade;
     @EJB
     private InvoicePoolFacadeLocal invoicesPoolsFacade;
@@ -6915,6 +6917,34 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
             }
         }
         return numberOfLocked;
+    }
+
+    @Override
+    @RolesAllowed({"readArchiveFileRole"})
+    public List<Payment> getPayments(String caseId) {
+        String principalId = context.getCallerPrincipal().getName();
+
+        ArchiveFileBean aFile = this.archiveFileFacade.find(caseId);
+        boolean allowed = false;
+        if (principalId != null) {
+            List<Group> userGroups = new ArrayList<>();
+            try {
+                userGroups = this.securityFacade.getGroupsForUser(principalId);
+            } catch (Throwable t) {
+                log.error("Unable to determine groups for user " + principalId, t);
+            }
+            if (SecurityUtils.checkGroupsForCase(userGroups, aFile, this.caseGroupsFacade)) {
+                allowed = true;
+            }
+        } else {
+            allowed = true;
+        }
+
+        if (allowed) {
+            return this.paymentsFacade.findByArchiveFileKey(aFile);
+        } else {
+            return new ArrayList<>();
+        }
     }
 
 }

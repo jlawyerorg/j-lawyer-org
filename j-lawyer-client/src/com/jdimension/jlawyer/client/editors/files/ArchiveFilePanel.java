@@ -1409,7 +1409,7 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
 
         ProgressIndicator pi = new ProgressIndicator(EditorsRegistry.getInstance().getMainWindow(), true);
         pi.setShowCancelButton(false);
-        ArchiveFileDetailLoadAction a = new ArchiveFileDetailLoadAction(pi, this, dto.getId(), this.dto, this.caseFolderPanel1, this.tblHistory, this.pnlInvolvedParties, this.tblReviewReasons, this.tagPanel, this.documentTagPanel, this.pnlInvoices, this.pnlTimesheets, this.pnlMessages, this.readOnly, BeaAccess.isBeaEnabled(), selectDocumentWithFileName, this.lblArchivedSince, dto.isArchived(), this.popDocumentFavorites, this.cmbFormType, this.pnlAddForms, this.tabPaneForms, this.cmbGroup, this.tblGroups, this.togCaseSync);
+        ArchiveFileDetailLoadAction a = new ArchiveFileDetailLoadAction(pi, this, dto.getId(), this.dto, this.caseFolderPanel1, this.tblHistory, this.pnlInvolvedParties, this.tblReviewReasons, this.tagPanel, this.documentTagPanel, this.pnlInvoices, this.pnlPayments, this.pnlTimesheets, this.pnlMessages, this.readOnly, BeaAccess.isBeaEnabled(), selectDocumentWithFileName, this.lblArchivedSince, dto.isArchived(), this.popDocumentFavorites, this.cmbFormType, this.pnlAddForms, this.tabPaneForms, this.cmbGroup, this.tblGroups, this.togCaseSync);
 
         a.start();
 
@@ -1850,6 +1850,11 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
         cmdAssistantGenerate = new javax.swing.JButton();
         tabFinance = new javax.swing.JPanel();
         subTabsFinance = new javax.swing.JTabbedPane();
+        jPanel8 = new javax.swing.JPanel();
+        jLabel7 = new javax.swing.JLabel();
+        cmdNewInvoice = new javax.swing.JButton();
+        jScrollPane5 = new javax.swing.JScrollPane();
+        pnlInvoices = new javax.swing.JPanel();
         jPanel15 = new javax.swing.JPanel();
         cmdAddAccountEntry = new javax.swing.JButton();
         jScrollPane10 = new javax.swing.JScrollPane();
@@ -1879,11 +1884,11 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
         lblExpendituresTotal = new javax.swing.JLabel();
         cmdExportAccountEntries = new javax.swing.JButton();
         cmdDuplicateAccountEntry = new javax.swing.JButton();
-        jPanel8 = new javax.swing.JPanel();
-        jLabel7 = new javax.swing.JLabel();
-        cmdNewInvoice = new javax.swing.JButton();
-        jScrollPane5 = new javax.swing.JScrollPane();
-        pnlInvoices = new javax.swing.JPanel();
+        jPanel19 = new javax.swing.JPanel();
+        jLabel29 = new javax.swing.JLabel();
+        jButton1 = new javax.swing.JButton();
+        jScrollPane12 = new javax.swing.JScrollPane();
+        pnlPayments = new javax.swing.JPanel();
         jPanel14 = new javax.swing.JPanel();
         jLabel22 = new javax.swing.JLabel();
         cmdNewTimesheet = new javax.swing.JButton();
@@ -2965,6 +2970,61 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
         subTabsFinance.setTabPlacement(javax.swing.JTabbedPane.LEFT);
         subTabsFinance.setFont(subTabsFinance.getFont());
 
+        jLabel7.setFont(jLabel7.getFont().deriveFont(jLabel7.getFont().getStyle() | java.awt.Font.BOLD));
+        jLabel7.setText("Belege:");
+
+        cmdNewInvoice.setFont(cmdNewInvoice.getFont());
+        cmdNewInvoice.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/edit_add.png"))); // NOI18N
+        cmdNewInvoice.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                cmdNewInvoiceActionPerformed(evt);
+            }
+        });
+
+        jScrollPane5.setHorizontalScrollBarPolicy(javax.swing.ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
+
+        org.jdesktop.layout.GroupLayout pnlInvoicesLayout = new org.jdesktop.layout.GroupLayout(pnlInvoices);
+        pnlInvoices.setLayout(pnlInvoicesLayout);
+        pnlInvoicesLayout.setHorizontalGroup(
+            pnlInvoicesLayout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
+            .add(0, 0, Short.MAX_VALUE)
+        );
+        pnlInvoicesLayout.setVerticalGroup(
+            pnlInvoicesLayout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
+            .add(0, 678, Short.MAX_VALUE)
+        );
+
+        jScrollPane5.setViewportView(pnlInvoices);
+
+        org.jdesktop.layout.GroupLayout jPanel8Layout = new org.jdesktop.layout.GroupLayout(jPanel8);
+        jPanel8.setLayout(jPanel8Layout);
+        jPanel8Layout.setHorizontalGroup(
+            jPanel8Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
+            .add(jPanel8Layout.createSequentialGroup()
+                .addContainerGap()
+                .add(jPanel8Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
+                    .add(jPanel8Layout.createSequentialGroup()
+                        .add(jLabel7)
+                        .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
+                        .add(cmdNewInvoice)
+                        .add(0, 829, Short.MAX_VALUE))
+                    .add(jScrollPane5))
+                .addContainerGap())
+        );
+        jPanel8Layout.setVerticalGroup(
+            jPanel8Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
+            .add(jPanel8Layout.createSequentialGroup()
+                .addContainerGap()
+                .add(jPanel8Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.TRAILING, false)
+                    .add(jLabel7, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                    .add(cmdNewInvoice))
+                .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
+                .add(jScrollPane5)
+                .addContainerGap())
+        );
+
+        subTabsFinance.addTab("Belege", jPanel8);
+
         cmdAddAccountEntry.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/edit_add.png"))); // NOI18N
         cmdAddAccountEntry.setToolTipText("Buchung erstellen");
         cmdAddAccountEntry.addActionListener(new java.awt.event.ActionListener() {
@@ -3227,60 +3287,52 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
 
         subTabsFinance.addTab("Aktenkonto", jPanel15);
 
-        jLabel7.setFont(jLabel7.getFont().deriveFont(jLabel7.getFont().getStyle() | java.awt.Font.BOLD));
-        jLabel7.setText("Belege:");
+        jLabel29.setFont(jLabel29.getFont().deriveFont(jLabel29.getFont().getStyle() | java.awt.Font.BOLD));
+        jLabel29.setText("Zahlungen:");
 
-        cmdNewInvoice.setFont(cmdNewInvoice.getFont());
-        cmdNewInvoice.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/edit_add.png"))); // NOI18N
-        cmdNewInvoice.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                cmdNewInvoiceActionPerformed(evt);
-            }
-        });
+        jButton1.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/edit_add.png"))); // NOI18N
 
-        jScrollPane5.setHorizontalScrollBarPolicy(javax.swing.ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
-
-        org.jdesktop.layout.GroupLayout pnlInvoicesLayout = new org.jdesktop.layout.GroupLayout(pnlInvoices);
-        pnlInvoices.setLayout(pnlInvoicesLayout);
-        pnlInvoicesLayout.setHorizontalGroup(
-            pnlInvoicesLayout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
-            .add(0, 0, Short.MAX_VALUE)
+        org.jdesktop.layout.GroupLayout pnlPaymentsLayout = new org.jdesktop.layout.GroupLayout(pnlPayments);
+        pnlPayments.setLayout(pnlPaymentsLayout);
+        pnlPaymentsLayout.setHorizontalGroup(
+            pnlPaymentsLayout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
+            .add(0, 955, Short.MAX_VALUE)
         );
-        pnlInvoicesLayout.setVerticalGroup(
-            pnlInvoicesLayout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
-            .add(0, 678, Short.MAX_VALUE)
+        pnlPaymentsLayout.setVerticalGroup(
+            pnlPaymentsLayout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
+            .add(0, 793, Short.MAX_VALUE)
         );
 
-        jScrollPane5.setViewportView(pnlInvoices);
+        jScrollPane12.setViewportView(pnlPayments);
 
-        org.jdesktop.layout.GroupLayout jPanel8Layout = new org.jdesktop.layout.GroupLayout(jPanel8);
-        jPanel8.setLayout(jPanel8Layout);
-        jPanel8Layout.setHorizontalGroup(
-            jPanel8Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
-            .add(jPanel8Layout.createSequentialGroup()
+        org.jdesktop.layout.GroupLayout jPanel19Layout = new org.jdesktop.layout.GroupLayout(jPanel19);
+        jPanel19.setLayout(jPanel19Layout);
+        jPanel19Layout.setHorizontalGroup(
+            jPanel19Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
+            .add(jPanel19Layout.createSequentialGroup()
                 .addContainerGap()
-                .add(jPanel8Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
-                    .add(jPanel8Layout.createSequentialGroup()
-                        .add(jLabel7)
+                .add(jPanel19Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
+                    .add(jScrollPane12)
+                    .add(jPanel19Layout.createSequentialGroup()
+                        .add(jLabel29)
                         .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
-                        .add(cmdNewInvoice)
-                        .add(0, 829, Short.MAX_VALUE))
-                    .add(jScrollPane5))
+                        .add(jButton1)
+                        .add(0, 0, Short.MAX_VALUE)))
                 .addContainerGap())
         );
-        jPanel8Layout.setVerticalGroup(
-            jPanel8Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
-            .add(jPanel8Layout.createSequentialGroup()
+        jPanel19Layout.setVerticalGroup(
+            jPanel19Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
+            .add(jPanel19Layout.createSequentialGroup()
                 .addContainerGap()
-                .add(jPanel8Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.TRAILING, false)
-                    .add(jLabel7, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                    .add(cmdNewInvoice))
+                .add(jPanel19Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING, false)
+                    .add(jButton1, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                    .add(jLabel29, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
                 .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
-                .add(jScrollPane5)
+                .add(jScrollPane12)
                 .addContainerGap())
         );
 
-        subTabsFinance.addTab("Belege", jPanel8);
+        subTabsFinance.addTab("Zahlungen", jPanel19);
 
         jLabel22.setFont(jLabel22.getFont().deriveFont(jLabel22.getFont().getStyle() | java.awt.Font.BOLD));
         jLabel22.setText("Projekte:");
@@ -7870,6 +7922,7 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
     private javax.swing.JButton cmdUploadDocument;
     private javax.swing.JPanel documentTagPanel;
     private javax.swing.JPopupMenu documentsPopup;
+    private javax.swing.JButton jButton1;
     private javax.swing.JLabel jLabel1;
     private javax.swing.JLabel jLabel10;
     private javax.swing.JLabel jLabel11;
@@ -7891,6 +7944,7 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
     private javax.swing.JLabel jLabel26;
     private javax.swing.JLabel jLabel27;
     private javax.swing.JLabel jLabel28;
+    private javax.swing.JLabel jLabel29;
     private javax.swing.JLabel jLabel3;
     private javax.swing.JLabel jLabel35;
     private javax.swing.JLabel jLabel36;
@@ -7911,6 +7965,7 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
     private javax.swing.JPanel jPanel16;
     private javax.swing.JPanel jPanel17;
     private javax.swing.JPanel jPanel18;
+    private javax.swing.JPanel jPanel19;
     private javax.swing.JPanel jPanel2;
     private javax.swing.JPanel jPanel3;
     private javax.swing.JPanel jPanel4;
@@ -7922,6 +7977,7 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
     private javax.swing.JScrollPane jScrollPane1;
     private javax.swing.JScrollPane jScrollPane10;
     private javax.swing.JScrollPane jScrollPane11;
+    private javax.swing.JScrollPane jScrollPane12;
     private javax.swing.JScrollPane jScrollPane2;
     private javax.swing.JScrollPane jScrollPane3;
     private javax.swing.JScrollPane jScrollPane4;
@@ -8010,6 +8066,7 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
     protected com.jdimension.jlawyer.client.editors.files.InvolvedPartiesPanel pnlInvolvedParties;
     private javax.swing.JPanel pnlMessages;
     private javax.swing.JPanel pnlMessagesView;
+    private javax.swing.JPanel pnlPayments;
     private javax.swing.JPanel pnlPreview;
     private javax.swing.JPanel pnlTimesheets;
     private javax.swing.JPopupMenu popAssistantNoContext;
