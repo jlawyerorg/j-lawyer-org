@@ -874,6 +874,8 @@ public interface ArchiveFileServiceRemote {
     void removeInvoicePosition(String invoiceId, InvoicePosition position) throws Exception;
 
     Invoice updateInvoice(String caseId, Invoice invoice) throws Exception;
+    
+    Payment updatePayment(String caseId, Payment payment) throws Exception;
 
     void removeAllInvoicePositions(String invoiceId) throws Exception;
 

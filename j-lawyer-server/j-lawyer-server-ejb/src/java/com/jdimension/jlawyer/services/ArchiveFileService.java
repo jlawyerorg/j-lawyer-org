@@ -5525,6 +5525,53 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
             throw new Exception(MSG_MISSINGPRIVILEGE_CASE);
         }
     }
+    
+    @Override
+    @RolesAllowed({"writeArchiveFileRole"})
+    public Payment updatePayment(String caseId, Payment payment) throws Exception {
+        String principalId = context.getCallerPrincipal().getName();
+
+        ArchiveFileBean aFile = this.archiveFileFacade.find(caseId);
+        boolean allowed = false;
+        if (principalId != null) {
+            List<Group> userGroups = new ArrayList<>();
+            try {
+                userGroups = this.securityFacade.getGroupsForUser(principalId);
+            } catch (Throwable t) {
+                log.error("Unable to determine groups for user " + principalId, t);
+            }
+            if (SecurityUtils.checkGroupsForCase(userGroups, aFile, this.caseGroupsFacade)) {
+                allowed = true;
+            }
+        } else {
+            allowed = true;
+        }
+
+        if (allowed) {
+
+            Payment updatedPayment = this.paymentsFacade.find(payment.getId());
+            updatedPayment.setContact(payment.getContact());
+            updatedPayment.setDescription(payment.getDescription());
+            updatedPayment.setCreationDate(payment.getCreationDate());
+            updatedPayment.setTargetDate(payment.getTargetDate());
+            updatedPayment.setPaymentNumber(payment.getPaymentNumber());
+            updatedPayment.setName(payment.getName());
+            updatedPayment.setStatus(payment.getStatus());
+            updatedPayment.setCurrency(payment.getCurrency());
+            updatedPayment.setSender(payment.getSender());
+            updatedPayment.setPaymentType(payment.getPaymentType());
+            updatedPayment.setReason(payment.getReason());
+            updatedPayment.setTotal(payment.getTotal());
+
+            this.paymentsFacade.edit(updatedPayment);
+            
+            this.addCaseHistory(new StringGenerator().getID().toString(), aFile, "Zahlung geändert (" + updatedPayment.getPaymentNumber() + ", " + updatedPayment.getStatusString() + ", " + updatedPayment.getPaymentType() + ")");
+
+            return this.paymentsFacade.find(updatedPayment.getId());
+        } else {
+            throw new Exception(MSG_MISSINGPRIVILEGE_CASE);
+        }
+    }
 
     @Override
     @RolesAllowed({"writeArchiveFileRole"})
