@@ -1828,6 +1828,8 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
         cmdSearchClient = new javax.swing.JButton();
         jScrollPane8 = new javax.swing.JScrollPane();
         pnlInvolvedParties = new com.jdimension.jlawyer.client.editors.files.InvolvedPartiesPanel();
+        cmdFuzzySearchClient = new javax.swing.JTextField();
+        jLabel30 = new javax.swing.JLabel();
         tabDocuments = new javax.swing.JPanel();
         jPanel7 = new javax.swing.JPanel();
         cmdNewDocument = new javax.swing.JButton();
@@ -2758,6 +2760,20 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
 
         jScrollPane8.setViewportView(pnlInvolvedParties);
 
+        cmdFuzzySearchClient.setToolTipText("In der Liste der Beteiligten suchen...");
+        cmdFuzzySearchClient.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                cmdFuzzySearchClientActionPerformed(evt);
+            }
+        });
+        cmdFuzzySearchClient.addKeyListener(new java.awt.event.KeyAdapter() {
+            public void keyReleased(java.awt.event.KeyEvent evt) {
+                cmdFuzzySearchClientKeyReleased(evt);
+            }
+        });
+
+        jLabel30.setText("Suche:");
+
         org.jdesktop.layout.GroupLayout tabPartiesLayout = new org.jdesktop.layout.GroupLayout(tabParties);
         tabParties.setLayout(tabPartiesLayout);
         tabPartiesLayout.setHorizontalGroup(
@@ -2765,9 +2781,13 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
             .add(tabPartiesLayout.createSequentialGroup()
                 .addContainerGap()
                 .add(tabPartiesLayout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
-                    .add(jScrollPane8)
+                    .add(jScrollPane8, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 1106, Short.MAX_VALUE)
                     .add(tabPartiesLayout.createSequentialGroup()
                         .add(cmdSearchClient)
+                        .add(18, 18, 18)
+                        .add(jLabel30)
+                        .add(18, 18, 18)
+                        .add(cmdFuzzySearchClient, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 276, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
                         .add(0, 0, Short.MAX_VALUE)))
                 .addContainerGap())
         );
@@ -2775,7 +2795,11 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
             tabPartiesLayout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
             .add(org.jdesktop.layout.GroupLayout.TRAILING, tabPartiesLayout.createSequentialGroup()
                 .addContainerGap()
-                .add(cmdSearchClient)
+                .add(tabPartiesLayout.createParallelGroup(org.jdesktop.layout.GroupLayout.TRAILING)
+                    .add(cmdSearchClient)
+                    .add(tabPartiesLayout.createParallelGroup(org.jdesktop.layout.GroupLayout.BASELINE)
+                        .add(cmdFuzzySearchClient, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
+                        .add(jLabel30)))
                 .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
                 .add(jScrollPane8))
         );
@@ -7317,6 +7341,53 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
         this.exportSelectedDocumentsAsPdf();
     }//GEN-LAST:event_mnuMergeToPdfActionPerformed
 
+    private void cmdFuzzySearchClientActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdFuzzySearchClientActionPerformed
+        // Fuzzy-Suche in der Liste der Beteiligten (Involved Parties)
+        String search = cmdFuzzySearchClient.getText();
+        if (search == null) search = "";
+        search = search.trim().toLowerCase();
+
+        // Alle Panels der Beteiligten holen
+        Component[] partyPanels = pnlInvolvedParties.getComponents();
+
+        // Wenn Suchfeld leer, alle sichtbar machen
+        if (search.isEmpty()) {
+            for (Component c : partyPanels) {
+                c.setVisible(true);
+            }
+            pnlInvolvedParties.revalidate();
+            pnlInvolvedParties.repaint();
+            return;
+        }
+
+        // Suche auf Name, InvolvementType, Reference
+        for (Component c : partyPanels) {
+            boolean match = false;
+            if (c instanceof InvolvedPartyEntryPanel) {
+                InvolvedPartyEntryPanel panel = (InvolvedPartyEntryPanel) c;
+                ArchiveFileAddressesBean involvement = panel.getInvolvement();
+                AddressBean address = panel.getAdress();
+
+                String name = address != null ? StringUtils.nonNull(address.toDisplayName()).toLowerCase() : "";
+                String involvementType = involvement != null && involvement.getReferenceType() != null
+                        ? involvement.getReferenceType().toString().toLowerCase() : "";
+                String reference = involvement != null ? StringUtils.nonNull(involvement.getReference()).toLowerCase() : "";
+
+                // Fuzzy-Match: Enthält Suchbegriff?
+                if (name.contains(search) || involvementType.contains(search) || reference.contains(search)) {
+                    match = true;
+                }
+            }
+            c.setVisible(match);
+        }
+        pnlInvolvedParties.revalidate();
+        pnlInvolvedParties.repaint();
+    }//GEN-LAST:event_cmdFuzzySearchClientActionPerformed
+
+    private void cmdFuzzySearchClientKeyReleased(java.awt.event.KeyEvent evt) {//GEN-FIRST:event_cmdFuzzySearchClientKeyReleased
+        cmdFuzzySearchClientActionPerformed(null);
+    }//GEN-LAST:event_cmdFuzzySearchClientKeyReleased
+
     public void exportSelectedDocumentsAsPdf() {
 
         ArrayList<ArchiveFileDocumentsBean> selectedDocs = this.caseFolderPanel1.getSelectedDocuments();
@@ -7905,6 +7976,7 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
     private javax.swing.JButton cmdExportHtml;
     private javax.swing.JButton cmdFavoriteDocuments;
     private javax.swing.JButton cmdFormsManager;
+    private javax.swing.JTextField cmdFuzzySearchClient;
     private javax.swing.JButton cmdHeaderAddNote;
     private javax.swing.JButton cmdLoadFullHistory;
     private javax.swing.JButton cmdNewDocument;
@@ -7946,6 +8018,7 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
     private javax.swing.JLabel jLabel28;
     private javax.swing.JLabel jLabel29;
     private javax.swing.JLabel jLabel3;
+    private javax.swing.JLabel jLabel30;
     private javax.swing.JLabel jLabel35;
     private javax.swing.JLabel jLabel36;
     private javax.swing.JLabel jLabel37;
