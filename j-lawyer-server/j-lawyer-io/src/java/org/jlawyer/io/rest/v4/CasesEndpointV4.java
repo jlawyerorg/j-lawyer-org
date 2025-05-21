@@ -680,7 +680,7 @@ import javax.ws.rs.Produces;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import org.jboss.logging.Logger;
-import org.jlawyer.io.rest.v4.pojo.RestfulDueDateV4;
+import org.jlawyer.io.rest.v6.pojo.RestfulDueDateV6;
 
 /**
  *
@@ -723,10 +723,11 @@ public class CasesEndpointV4 implements CasesEndpointLocalV4 {
             }
 
             Collection<ArchiveFileReviewsBean> reviews = cal.getReviews(id);
-            ArrayList<RestfulDueDateV4> ddList = new ArrayList<>();
+            ArrayList<RestfulDueDateV6> ddList = new ArrayList<>();
             for (ArchiveFileReviewsBean rev : reviews) {
-                RestfulDueDateV4 dd = new RestfulDueDateV4();
+                RestfulDueDateV6 dd = new RestfulDueDateV6();
                 dd.setId(rev.getId());
+                dd.setCaseId(id);
                 dd.setAssignee(rev.getAssignee());
                 dd.setDone(rev.isDone());
                 dd.setBeginDate(rev.getBeginDate());
@@ -734,11 +735,11 @@ public class CasesEndpointV4 implements CasesEndpointLocalV4 {
                 dd.setSummary(rev.getSummary());
                 dd.setDescription(rev.getDescription());
                 dd.setLocation(rev.getLocation());
-                dd.setType(RestfulDueDateV4.TYPE_RESPITE);
+                dd.setType(RestfulDueDateV6.TYPE_RESPITE);
                 if (rev.getEventType() == ArchiveFileReviewsBean.EVENTTYPE_FOLLOWUP) {
-                    dd.setType(RestfulDueDateV4.TYPE_FOLLOWUP);
+                    dd.setType(RestfulDueDateV6.TYPE_FOLLOWUP);
                 } else if (rev.getEventType() == ArchiveFileReviewsBean.EVENTTYPE_EVENT) {
-                    dd.setType(RestfulDueDateV4.TYPE_EVENT);
+                    dd.setType(RestfulDueDateV6.TYPE_EVENT);
                 }
                 if(rev.getCalendarSetup()!=null)
                     dd.setCalendar(rev.getCalendarSetup().getId());
@@ -774,10 +775,11 @@ public class CasesEndpointV4 implements CasesEndpointLocalV4 {
             CalendarServiceLocal cal = (CalendarServiceLocal) ic.lookup("java:global/j-lawyer-server/j-lawyer-server-ejb/CalendarService!com.jdimension.jlawyer.services.CalendarServiceLocal");
             
             Collection<ArchiveFileReviewsBean> reviews = cal.getAllOpenReviews();
-            ArrayList<RestfulDueDateV4> ddList = new ArrayList<>();
+            ArrayList<RestfulDueDateV6> ddList = new ArrayList<>();
             for (ArchiveFileReviewsBean rev : reviews) {
-                RestfulDueDateV4 dd = new RestfulDueDateV4();
+                RestfulDueDateV6 dd = new RestfulDueDateV6();
                 dd.setId(rev.getId());
+                dd.setCaseId(rev.getArchiveFileKey().getId());
                 dd.setAssignee(rev.getAssignee());
                 dd.setDone(rev.isDone());
                 dd.setBeginDate(rev.getBeginDate());
@@ -785,11 +787,11 @@ public class CasesEndpointV4 implements CasesEndpointLocalV4 {
                 dd.setSummary(rev.getSummary());
                 dd.setDescription(rev.getDescription());
                 dd.setLocation(rev.getLocation());
-                dd.setType(RestfulDueDateV4.TYPE_RESPITE);
+                dd.setType(RestfulDueDateV6.TYPE_RESPITE);
                 if (rev.getEventType() == ArchiveFileReviewsBean.EVENTTYPE_FOLLOWUP) {
-                    dd.setType(RestfulDueDateV4.TYPE_FOLLOWUP);
+                    dd.setType(RestfulDueDateV6.TYPE_FOLLOWUP);
                 } else if (rev.getEventType() == ArchiveFileReviewsBean.EVENTTYPE_EVENT) {
-                    dd.setType(RestfulDueDateV4.TYPE_EVENT);
+                    dd.setType(RestfulDueDateV6.TYPE_EVENT);
                 }
                 if(rev.getCalendarSetup()!=null)
                     dd.setCalendar(rev.getCalendarSetup().getId());
