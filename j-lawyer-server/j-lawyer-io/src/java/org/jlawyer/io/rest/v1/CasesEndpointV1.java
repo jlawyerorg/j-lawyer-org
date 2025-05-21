@@ -1060,7 +1060,7 @@ public class CasesEndpointV1 implements CasesEndpointLocalV1 {
             Collection<ArchiveFileDocumentsBean> documents = cases.getDocuments(caseId, deleted);
             ArrayList<RestfulDocumentV1> docList = new ArrayList<>();
             for (ArchiveFileDocumentsBean doc : documents) {
-                docList.add(RestfulDocumentV1.fromDocumentsBean(doc));
+                docList.add(RestfulDocumentV1.fromDocumentsBean(doc, caseId));
             }
 
             Response res = Response.ok(docList).build();

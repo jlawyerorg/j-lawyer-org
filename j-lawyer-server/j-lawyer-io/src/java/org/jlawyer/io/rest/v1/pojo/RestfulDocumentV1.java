@@ -673,6 +673,7 @@ import java.util.Date;
 public class RestfulDocumentV1 {
 
     private String id = null;
+    private String caseId = null;
     private String externalId = null;
     private String name = null;
     private Date creationDate = null;
@@ -688,8 +689,16 @@ public class RestfulDocumentV1 {
     }
 
     public static RestfulDocumentV1 fromDocumentsBean(ArchiveFileDocumentsBean d) {
+        return fromDocumentsBean(d, null);
+    }
+    
+    public static RestfulDocumentV1 fromDocumentsBean(ArchiveFileDocumentsBean d, String caseId) {
         RestfulDocumentV1 doc = new RestfulDocumentV1();
         doc.setId(d.getId());
+        if(caseId!=null)
+            doc.setCaseId(caseId);
+        else
+            doc.setCaseId(d.getArchiveFileKey().getId());
         doc.setExternalId(d.getExternalId());
         doc.setVersion(d.getVersion());
         doc.setName(d.getName());
@@ -857,6 +866,20 @@ public class RestfulDocumentV1 {
      */
     public void setExternalId(String externalId) {
         this.externalId = externalId;
+    }
+
+    /**
+     * @return the caseId
+     */
+    public String getCaseId() {
+        return caseId;
+    }
+
+    /**
+     * @param caseId the caseId to set
+     */
+    public void setCaseId(String caseId) {
+        this.caseId = caseId;
     }
 
 }

@@ -910,6 +910,7 @@ public class CasesEndpointV7 implements CasesEndpointLocalV7 {
 
             RestfulDocumentV1 d = new RestfulDocumentV1();
             d.setId(doc.getId());
+            d.setCaseId(doc.getArchiveFileKey().getId());
             d.setExternalId(doc.getExternalId());
             d.setVersion(doc.getVersion());
             d.setName(doc.getName());
@@ -945,6 +946,7 @@ public class CasesEndpointV7 implements CasesEndpointLocalV7 {
             if (matches != null) {
                 for (ArchiveFileDocumentsBean doc : matches) {
                     RestfulDocumentV1 d = new RestfulDocumentV1();
+                    d.setCaseId(doc.getArchiveFileKey().getId());
                     d.setId(doc.getId());
                     d.setExternalId(doc.getExternalId());
                     d.setVersion(doc.getVersion());
