@@ -614,6 +614,9 @@
               <SubComponents>
                 <Component class="javax.swing.JRadioButton" name="text">
                   <Properties>
+                    <Property name="buttonGroup" type="javax.swing.ButtonGroup" editor="org.netbeans.modules.form.RADComponent$ButtonGroupPropertyEditor">
+                      <ComponentRef name="buttonGroupTextHtml"/>
+                    </Property>
                     <Property name="selected" type="boolean" value="true"/>
                     <Property name="text" type="java.lang.String" value="Text"/>
                   </Properties>
@@ -623,6 +626,9 @@
                 </Component>
                 <Component class="javax.swing.JRadioButton" name="html">
                   <Properties>
+                    <Property name="buttonGroup" type="javax.swing.ButtonGroup" editor="org.netbeans.modules.form.RADComponent$ButtonGroupPropertyEditor">
+                      <ComponentRef name="buttonGroupTextHtml"/>
+                    </Property>
                     <Property name="text" type="java.lang.String" value="HTML"/>
                   </Properties>
                   <Events>
@@ -802,6 +808,9 @@
                 </Component>
                 <Component class="javax.swing.JRadioButton" name="radioReviewTypeFollowUp">
                   <Properties>
+                    <Property name="buttonGroup" type="javax.swing.ButtonGroup" editor="org.netbeans.modules.form.RADComponent$ButtonGroupPropertyEditor">
+                      <ComponentRef name="btGroupReviews"/>
+                    </Property>
                     <Property name="text" type="java.lang.String" value="Wiedervorlage"/>
                   </Properties>
                   <Events>
@@ -810,6 +819,9 @@
                 </Component>
                 <Component class="javax.swing.JRadioButton" name="radioReviewTypeRespite">
                   <Properties>
+                    <Property name="buttonGroup" type="javax.swing.ButtonGroup" editor="org.netbeans.modules.form.RADComponent$ButtonGroupPropertyEditor">
+                      <ComponentRef name="btGroupReviews"/>
+                    </Property>
                     <Property name="text" type="java.lang.String" value="Frist"/>
                   </Properties>
                   <Events>
@@ -856,6 +868,9 @@
                 </Component>
                 <Component class="javax.swing.JRadioButton" name="radioReviewTypeNone">
                   <Properties>
+                    <Property name="buttonGroup" type="javax.swing.ButtonGroup" editor="org.netbeans.modules.form.RADComponent$ButtonGroupPropertyEditor">
+                      <ComponentRef name="btGroupReviews"/>
+                    </Property>
                     <Property name="selected" type="boolean" value="true"/>
                     <Property name="text" type="java.lang.String" value="keine"/>
                   </Properties>

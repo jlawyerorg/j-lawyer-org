@@ -2115,6 +2115,7 @@ public class SendEmailFrame extends javax.swing.JFrame implements SendCommunicat
 
         jPanel2.setBorder(javax.swing.BorderFactory.createTitledBorder("Optionen"));
 
+        buttonGroupTextHtml.add(text);
         text.setSelected(true);
         text.setText("Text");
         text.addActionListener(new java.awt.event.ActionListener() {
@@ -2123,6 +2124,7 @@ public class SendEmailFrame extends javax.swing.JFrame implements SendCommunicat
             }
         });
 
+        buttonGroupTextHtml.add(html);
         html.setText("HTML");
         html.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
@@ -2221,6 +2223,7 @@ public class SendEmailFrame extends javax.swing.JFrame implements SendCommunicat
         jLabel10.setText("Datum:");
         jLabel10.setEnabled(false);
 
+        btGroupReviews.add(radioReviewTypeFollowUp);
         radioReviewTypeFollowUp.setText("Wiedervorlage");
         radioReviewTypeFollowUp.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
@@ -2228,6 +2231,7 @@ public class SendEmailFrame extends javax.swing.JFrame implements SendCommunicat
             }
         });
 
+        btGroupReviews.add(radioReviewTypeRespite);
         radioReviewTypeRespite.setText("Frist");
         radioReviewTypeRespite.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
@@ -2257,6 +2261,7 @@ public class SendEmailFrame extends javax.swing.JFrame implements SendCommunicat
         cmbReviewAssignee.setModel(new javax.swing.DefaultComboBoxModel(new String[] { "Item 1", "Item 2", "Item 3", "Item 4" }));
         cmbReviewAssignee.setEnabled(false);
 
+        btGroupReviews.add(radioReviewTypeNone);
         radioReviewTypeNone.setSelected(true);
         radioReviewTypeNone.setText("keine");
         radioReviewTypeNone.addActionListener(new java.awt.event.ActionListener() {
