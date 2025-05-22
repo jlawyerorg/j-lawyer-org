@@ -76,16 +76,14 @@
                               <Component id="lblTotal" alignment="3" min="-2" max="-2" attributes="0"/>
                               <Component id="jLabel2" alignment="3" min="-2" max="-2" attributes="0"/>
                           </Group>
-                          <Group type="103" groupAlignment="3" attributes="0">
-                              <Component id="lblPaymentType" alignment="0" min="-2" max="-2" attributes="0"/>
-                              <Component id="lblName" alignment="3" min="-2" max="-2" attributes="0"/>
-                          </Group>
+                          <Component id="lblPaymentType" alignment="0" min="-2" max="-2" attributes="0"/>
+                          <Component id="lblName" min="-2" max="-2" attributes="0"/>
                       </Group>
                   </Group>
               </Group>
               <EmptySpace max="-2" attributes="0"/>
               <Component id="lblRecipient" min="-2" max="-2" attributes="0"/>
-              <EmptySpace max="32767" attributes="0"/>
+              <EmptySpace max="-2" attributes="0"/>
           </Group>
       </Group>
     </DimensionLayout>

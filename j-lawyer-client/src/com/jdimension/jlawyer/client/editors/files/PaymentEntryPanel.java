@@ -888,42 +888,40 @@ public class PaymentEntryPanel extends javax.swing.JPanel {
                             .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                                 .addComponent(lblTotal)
                                 .addComponent(jLabel2))
-                            .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                                .addComponent(lblPaymentType)
-                                .addComponent(lblName)))))
+                            .addComponent(lblPaymentType)
+                            .addComponent(lblName))))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(lblRecipient)
-                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                .addContainerGap())
         );
     }// </editor-fold>//GEN-END:initComponents
 
     private void cmdOpenActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdOpenActionPerformed
-//        InvoiceDialog dlg = new InvoiceDialog(this.caseView, this.caseDto, EditorsRegistry.getInstance().getMainWindow(), true, this.addresses);
-//        dlg.setEntry(this.getInvoice());
-//        FrameUtils.centerDialog(dlg, EditorsRegistry.getInstance().getMainWindow());
-//        dlg.setVisible(true);
-//        if(!dlg.isCancelled()) {
-//            this.setEntry(caseDto, dlg.getEntry(), addresses);
-//            this.setPaidTotal(dlg.getEntry().getTotalGross(), BigDecimal.valueOf(Float.MIN_VALUE), dlg.getEntry().getCurrency());
-//        }
+        PaymentDialog dlg = new PaymentDialog(this.getPayment(), this.caseView, this.caseDto, EditorsRegistry.getInstance().getMainWindow(), true, this.addresses);
+        dlg.setEntry(this.getPayment());
+        FrameUtils.centerDialog(dlg, EditorsRegistry.getInstance().getMainWindow());
+        dlg.setVisible(true);
+        if(!dlg.isCancelled()) {
+            this.setEntry(caseDto, dlg.getEntry(), addresses);
+        }
     }//GEN-LAST:event_cmdOpenActionPerformed
 
     private void cmdDeleteActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdDeleteActionPerformed
-//        int response = JOptionPane.showConfirmDialog(this, "Zahlung '" + this.getPayment().getPaymentNumber() + "' unwiderruflich löschen?", "Zahlung löschen", JOptionPane.YES_NO_OPTION);
-//        if (response == JOptionPane.YES_OPTION) {
-//            try {
-//                ClientSettings settings = ClientSettings.getInstance();
-//                JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
-//                locator.lookupArchiveFileServiceRemote().removeInvoice(this.getInvoice().getId());
-//                Container parent = this.getParent();
-//                parent.remove(this);
-//                parent.invalidate();
-//                parent.repaint();
-//            } catch (Exception ex) {
-//                log.error("Error deleting payment", ex);
-//                JOptionPane.showMessageDialog(this, "Fehler beim Löschen der Zahlung: " + ex.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
-//            }
-//        }
+        int response = JOptionPane.showConfirmDialog(this, "Zahlung '" + this.getPayment().getPaymentNumber() + "' unwiderruflich löschen?", "Zahlung löschen", JOptionPane.YES_NO_OPTION);
+        if (response == JOptionPane.YES_OPTION) {
+            try {
+                ClientSettings settings = ClientSettings.getInstance();
+                JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
+                locator.lookupArchiveFileServiceRemote().removePayment(this.getPayment().getId());
+                Container parent = this.getParent();
+                parent.remove(this);
+                parent.invalidate();
+                parent.repaint();
+            } catch (Exception ex) {
+                log.error("Error deleting payment", ex);
+                JOptionPane.showMessageDialog(this, "Fehler beim Löschen der Zahlung: " + ex.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
+            }
+        }
     }//GEN-LAST:event_cmdDeleteActionPerformed
 
     private void cmdDuplicateActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdDuplicateActionPerformed

@@ -754,25 +754,26 @@ public class PaymentDialog extends javax.swing.JDialog implements EventConsumer 
     /**
      * Creates new form PaymentDialog
      *
+     * @param entry
      * @param caseView
      * @param caseDto
      * @param parent
      * @param modal
      * @param addresses
      */
-    public PaymentDialog(ArchiveFilePanel caseView, ArchiveFileBean caseDto, java.awt.Frame parent, boolean modal, List<AddressBean> addresses) {
+    public PaymentDialog(Payment entry, ArchiveFilePanel caseView, ArchiveFileBean caseDto, java.awt.Frame parent, boolean modal, List<AddressBean> addresses) {
         super(parent, modal);
         this.caseDto = caseDto;
         this.caseView = caseView;
         initComponents();
         ComponentUtils.restoreDialogSize(this);
         this.jScrollPane1.getVerticalScrollBar().setUnitIncrement(16);
-        
+
         this.lblHeader.setBackground(DefaultColorTheme.COLOR_DARK_GREY);
 
         DefaultComboBoxModel<String> dmCurrencies = new DefaultComboBoxModel<>();
         try {
-            ClientSettings settings=ClientSettings.getInstance();
+            ClientSettings settings = ClientSettings.getInstance();
             JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
             AppOptionGroupBean[] currencyDtos = locator.lookupSystemManagementRemote().getOptionGroup(OptionConstants.OPTIONGROUP_INVOICECURRENCIES);
             for (AppOptionGroupBean cur : currencyDtos) {
@@ -805,7 +806,7 @@ public class PaymentDialog extends javax.swing.JDialog implements EventConsumer 
             this.popRecipients.add(mi);
         }
 
-        this.setEntry(null);
+        this.setEntry(entry);
 
         List<AppUserBean> allUsers = UserSettings.getInstance().getLoginEnabledUsers();
         List<String> l2 = new ArrayList<>();
@@ -834,13 +835,6 @@ public class PaymentDialog extends javax.swing.JDialog implements EventConsumer 
     }
 
     public final void setEntry(Payment payment) {
-
-        this.cmdSearchRecipient.setEnabled(payment != null && payment.getId() != null);
-        this.cmdDateCreated.setEnabled(payment != null && payment.getId() != null);
-        this.cmdDateCreated.setEnabled(payment != null && payment.getId() != null);
-        this.cmdDateTarget.setEnabled(payment != null && payment.getId() != null);
-        this.cmdDateCreated.setEnabled(payment != null && payment.getId() != null);
-        this.cmdSave.setEnabled(payment != null && payment.getId() != null);
 
         this.cmbPaymentSender.setSelectedItem(UserSettings.getInstance().getCurrentUser().getPrincipalId());
 
@@ -896,8 +890,6 @@ public class PaymentDialog extends javax.swing.JDialog implements EventConsumer 
             this.cmbCurrency.setSelectedItem(payment.getCurrency());
 
         }
-
-        this.cmbStatus.setEnabled(payment != null);
 
     }
 
@@ -1225,7 +1217,7 @@ public class PaymentDialog extends javax.swing.JDialog implements EventConsumer 
         } else {
             this.currentEntry.setPaymentType(Payment.PAYMENTTYPE_OTHER);
         }
-        this.currentEntry.setTotal((BigDecimal)this.txtTotal.getValue());
+        this.currentEntry.setTotal(BigDecimal.valueOf(((Number) this.txtTotal.getValue()).floatValue()));
     }
 
     private void save() {
@@ -1233,10 +1225,19 @@ public class PaymentDialog extends javax.swing.JDialog implements EventConsumer 
         try {
             UserSettings.getInstance().setSetting(UserSettings.INVOICE_LASTUSEDCURRENCY, this.cmbCurrency.getSelectedItem().toString());
 
-            this.fillCurrentEntry();
-
-            JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
-            locator.lookupArchiveFileServiceRemote().updatePayment(this.caseDto.getId(), this.currentEntry);
+            boolean newEntry = (this.currentEntry == null);
+            if (newEntry) {
+                // create
+                this.currentEntry = new Payment();
+                this.fillCurrentEntry();
+                JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
+                locator.lookupArchiveFileServiceRemote().addPayment(this.caseDto.getId(), this.currentEntry);
+            } else {
+                // update
+                this.fillCurrentEntry();
+                JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
+                locator.lookupArchiveFileServiceRemote().updatePayment(this.caseDto.getId(), this.currentEntry);
+            }
 
         } catch (Exception ex) {
             log.error("error saving payment", ex);
@@ -1286,7 +1287,7 @@ public class PaymentDialog extends javax.swing.JDialog implements EventConsumer 
 
         /* Create and display the dialog */
         java.awt.EventQueue.invokeLater(() -> {
-            PaymentDialog dialog = new PaymentDialog(null, null, new javax.swing.JFrame(), true, null);
+            PaymentDialog dialog = new PaymentDialog(null, null, null, new javax.swing.JFrame(), true, null);
             dialog.addWindowListener(new java.awt.event.WindowAdapter() {
                 @Override
                 public void windowClosing(java.awt.event.WindowEvent e) {
@@ -1331,7 +1332,7 @@ public class PaymentDialog extends javax.swing.JDialog implements EventConsumer 
 
     @Override
     public void onEvent(Event e) {
-        
+
     }
 
     /**

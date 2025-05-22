@@ -694,4 +694,13 @@ public class PaymentFacade extends AbstractFacade<Payment> implements PaymentFac
         
     }
     
+    @Override
+    public Payment findByPaymentNumber(String paymentNumber) {
+        try {
+            return (Payment) em.createNamedQuery("Payment.findByPaymentNumber").setParameter("paymentNumber", paymentNumber).getSingleResult();
+        } catch (javax.persistence.NoResultException nrex) {
+            return null;
+        }
+    }
+    
 }

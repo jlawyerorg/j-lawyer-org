@@ -739,6 +739,7 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
 
     private static final String MSG_MISSINGPRIVILEGE_CASE = "Keine Berechtigung für diese Akte";
     private static final String MSG_MISSING_INVOICE = "Rechnung kann nicht gefunden werden";
+    private static final String MSG_MISSING_PAYMENT = "Zahlung kann nicht gefunden werden";
     private static final String MSG_MISSING_TIMESHEET = "Zeiterfassungsprojekt kann nicht gefunden werden";
     private static final String MSG_MISSING_TIMESHEETPOS = "Zeiterfassungsposition kann nicht gefunden werden";
 
@@ -6991,6 +6992,100 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
             return this.paymentsFacade.findByArchiveFileKey(aFile);
         } else {
             return new ArrayList<>();
+        }
+    }
+
+    @Override
+    @RolesAllowed({"writeArchiveFileRole"})
+    public Payment addPayment(String caseId, Payment payment) throws Exception {
+        String principalId = context.getCallerPrincipal().getName();
+
+        ArchiveFileBean aFile = this.archiveFileFacade.find(caseId);
+        boolean allowed = false;
+        if (principalId != null) {
+            List<Group> userGroups = new ArrayList<>();
+            try {
+                userGroups = this.securityFacade.getGroupsForUser(principalId);
+            } catch (Throwable t) {
+                log.error("Unable to determine groups for user " + principalId, t);
+            }
+            if (SecurityUtils.checkGroupsForCase(userGroups, aFile, this.caseGroupsFacade)) {
+                allowed = true;
+            }
+        } else {
+            allowed = true;
+        }
+
+        if (allowed) {
+            StringGenerator idGen = new StringGenerator();
+
+            // use file number as identifier, remove special characters because it may cause issues in banking
+            String paymentNumberPrefix=ServerFileUtils.sanitizeFileName(aFile.getFileNumber()) + "-" + new SimpleDateFormat("yyyyMMdd").format(new Date())+"-";
+            int i=0;
+            boolean paymentNumberExists=true;
+            String paymentNumber=null;
+            while (paymentNumberExists) {
+                i=i+1;
+                paymentNumber=paymentNumberPrefix+i;
+                Payment existingPayment = this.paymentsFacade.findByPaymentNumber(paymentNumber);
+                if(existingPayment==null) {
+                    break;
+                }
+            }
+            
+            
+            payment.setPaymentNumber(paymentNumber);
+            payment.setId(idGen.getID().toString());
+            payment.setCreationDate(new Date());
+            payment.setArchiveFileKey(aFile);
+            
+            // check for conflicting invoice numbers
+            Payment conflictingPayment = this.paymentsFacade.findByPaymentNumber(payment.getPaymentNumber());
+            if (conflictingPayment != null) {
+                throw new Exception("Es gibt bereits eine Zahlung mit der Nummer '" + payment.getPaymentNumber() + "!");
+            }
+
+            this.paymentsFacade.create(payment);
+
+            this.addCaseHistory(new StringGenerator().getID().toString(), aFile, "Zahlung erstellt (" + payment.getPaymentNumber() + ")");
+
+            return this.paymentsFacade.find(payment.getId());
+        } else {
+            throw new Exception(MSG_MISSINGPRIVILEGE_CASE);
+        }
+    }
+
+    @Override
+    @RolesAllowed({"writeArchiveFileRole"})
+    public void removePayment(String paymentId) throws Exception {
+        String principalId = context.getCallerPrincipal().getName();
+
+        Payment payment = this.paymentsFacade.find(paymentId);
+        if (payment == null) {
+            throw new Exception(MSG_MISSING_PAYMENT);
+        }
+
+        ArchiveFileBean aFile = this.archiveFileFacade.find(payment.getArchiveFileKey().getId());
+        boolean allowed = false;
+        if (principalId != null) {
+            List<Group> userGroups = new ArrayList<>();
+            try {
+                userGroups = this.securityFacade.getGroupsForUser(principalId);
+            } catch (Throwable t) {
+                log.error("Unable to determine groups for user " + principalId, t);
+            }
+            if (SecurityUtils.checkGroupsForCase(userGroups, aFile, this.caseGroupsFacade)) {
+                allowed = true;
+            }
+        } else {
+            allowed = true;
+        }
+
+        if (allowed) {
+            this.paymentsFacade.remove(payment);
+            this.addCaseHistory(new StringGenerator().getID().toString(), aFile, "Zahlung gelöscht (" + payment.getPaymentNumber() + ")");
+        } else {
+            throw new Exception(MSG_MISSINGPRIVILEGE_CASE);
         }
     }
 

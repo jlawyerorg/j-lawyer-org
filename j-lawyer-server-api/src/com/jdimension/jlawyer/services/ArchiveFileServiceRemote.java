@@ -953,4 +953,8 @@ public interface ArchiveFileServiceRemote {
     ArchiveFileAddressesBean updateParty(String caseId, ArchiveFileAddressesBean party) throws Exception;
 
     List<Payment> getPayments(String caseId);
+
+    Payment addPayment(String caseId, Payment payment) throws Exception;
+
+    void removePayment(String paymentId) throws Exception;
 }

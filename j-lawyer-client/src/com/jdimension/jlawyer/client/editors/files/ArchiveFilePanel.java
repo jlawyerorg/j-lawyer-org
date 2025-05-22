@@ -952,6 +952,9 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
 
         BoxLayout boxLayout = new BoxLayout(this.pnlInvoices, BoxLayout.Y_AXIS);
         this.pnlInvoices.setLayout(boxLayout);
+        
+        BoxLayout boxLayout4 = new BoxLayout(this.pnlPayments, BoxLayout.Y_AXIS);
+        this.pnlPayments.setLayout(boxLayout4);
 
         BoxLayout boxLayout3 = new BoxLayout(this.pnlTimesheets, BoxLayout.Y_AXIS);
         this.pnlTimesheets.setLayout(boxLayout3);
@@ -3296,6 +3299,8 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
                 cmdNewPaymentActionPerformed(evt);
             }
         });
+
+        jScrollPane12.setHorizontalScrollBarPolicy(javax.swing.ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
 
         org.jdesktop.layout.GroupLayout pnlPaymentsLayout = new org.jdesktop.layout.GroupLayout(pnlPayments);
         pnlPayments.setLayout(pnlPaymentsLayout);
@@ -7323,7 +7328,7 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
     }//GEN-LAST:event_mnuMergeToPdfActionPerformed
 
     private void cmdNewPaymentActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdNewPaymentActionPerformed
-        PaymentDialog dlg = new PaymentDialog(this, this.dto, EditorsRegistry.getInstance().getMainWindow(), true, this.pnlInvolvedParties.getInvolvedPartiesAddress());
+        PaymentDialog dlg = new PaymentDialog(null, this, this.dto, EditorsRegistry.getInstance().getMainWindow(), true, this.pnlInvolvedParties.getInvolvedPartiesAddress());
         FrameUtils.centerDialog(dlg, EditorsRegistry.getInstance().getMainWindow());
         dlg.setVisible(true);
 

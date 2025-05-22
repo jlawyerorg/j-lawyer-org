@@ -689,4 +689,6 @@ public interface PaymentFacadeLocal {
     
     List<Payment> findByArchiveFileKey(ArchiveFileBean archiveFileKey);
     
+    Payment findByPaymentNumber(String paymentNumber);
+    
 }
