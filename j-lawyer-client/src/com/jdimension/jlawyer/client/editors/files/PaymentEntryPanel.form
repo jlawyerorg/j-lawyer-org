@@ -32,7 +32,7 @@
                       <EmptySpace type="separate" max="-2" attributes="0"/>
                       <Component id="lblTargetDate" min="-2" max="-2" attributes="0"/>
                       <EmptySpace type="separate" max="-2" attributes="0"/>
-                      <Component id="lblInvoiceNumber" min="-2" max="-2" attributes="0"/>
+                      <Component id="lblPaymentNumber" min="-2" max="-2" attributes="0"/>
                       <EmptySpace max="32767" attributes="0"/>
                       <Component id="lblStatus" min="-2" max="-2" attributes="0"/>
                       <EmptySpace max="-2" attributes="0"/>
@@ -65,7 +65,7 @@
                               <Component id="cmdMarkAsPayed" alignment="3" min="-2" max="-2" attributes="0"/>
                           </Group>
                           <Group type="103" alignment="0" groupAlignment="0" max="-2" attributes="0">
-                              <Component id="lblInvoiceNumber" alignment="0" min="-2" max="-2" attributes="0"/>
+                              <Component id="lblPaymentNumber" alignment="0" min="-2" max="-2" attributes="0"/>
                               <Component id="lblTargetDate" alignment="0" max="32767" attributes="0"/>
                           </Group>
                           <Component id="cmdDelete" alignment="0" min="-2" max="-2" attributes="0"/>
@@ -89,11 +89,11 @@
     </DimensionLayout>
   </Layout>
   <SubComponents>
-    <Component class="javax.swing.JLabel" name="lblInvoiceNumber">
+    <Component class="javax.swing.JLabel" name="lblPaymentNumber">
       <Properties>
         <Property name="font" type="java.awt.Font" editor="org.netbeans.modules.form.editors2.FontEditor">
           <FontInfo relative="true">
-            <Font bold="true" component="lblInvoiceNumber" property="font" relativeSize="true" size="0"/>
+            <Font bold="true" component="lblPaymentNumber" property="font" relativeSize="true" size="0"/>
           </FontInfo>
         </Property>
         <Property name="text" type="java.lang.String" value="RG123"/>

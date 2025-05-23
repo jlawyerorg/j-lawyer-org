@@ -714,7 +714,7 @@ public class PaymentEntryPanel extends javax.swing.JPanel {
         this.caseDto = caseDto;
         this.payment = payment;
         this.addresses = addresses;
-        this.lblInvoiceNumber.setText(payment.getPaymentNumber());
+        this.lblPaymentNumber.setText(payment.getPaymentNumber());
         this.lblTargetDate.setText(df.format(payment.getTargetDate()));
         if (payment.getStatus() == Payment.STATUS_CANCELLED || payment.getStatus() == Payment.STATUS_EXECUTED) {
             this.lblTargetDate.setForeground(DefaultColorTheme.COLOR_LOGO_GREEN);
@@ -729,7 +729,8 @@ public class PaymentEntryPanel extends javax.swing.JPanel {
         this.lblStatus.setText("(" + payment.getStatusString() + ")");
         StringBuilder tooltip = new StringBuilder();
         tooltip.append("<html>");
-        tooltip.append("Belegdatum: ").append(df.format(payment.getCreationDate()));
+        tooltip.append("erstellt: ").append(df.format(payment.getCreationDate())).append("<br/>");
+        tooltip.append("zur Zahlung am: ").append(df.format(payment.getTargetDate()));
         tooltip.append("<br/><br/>");
         if (!StringUtils.isEmpty(payment.getDescription())) {
             tooltip.append(StringUtils.nonEmpty(payment.getDescription()));
@@ -738,13 +739,13 @@ public class PaymentEntryPanel extends javax.swing.JPanel {
         tooltip.append("</html>");
         this.lblName.setToolTipText(tooltip.toString());
         if (payment.getPaymentType() != null) {
-            this.lblPaymentType.setText(payment.getPaymentType());
+            this.lblPaymentType.setText(Payment.paymentTypeDisplayValueForType(payment.getPaymentType()));
         } else {
             this.lblPaymentType.setText("");
         }
 
         if (payment.getContact() != null) {
-            this.lblRecipient.setText(payment.getContact().toDisplayName());
+            this.lblRecipient.setText("an: " + payment.getContact().toDisplayName());
         } else {
             this.lblRecipient.setText(" ");
         }
@@ -764,7 +765,7 @@ public class PaymentEntryPanel extends javax.swing.JPanel {
     // <editor-fold defaultstate="collapsed" desc="Generated Code">//GEN-BEGIN:initComponents
     private void initComponents() {
 
-        lblInvoiceNumber = new javax.swing.JLabel();
+        lblPaymentNumber = new javax.swing.JLabel();
         cmdOpen = new javax.swing.JButton();
         lblName = new javax.swing.JLabel();
         lblTargetDate = new javax.swing.JLabel();
@@ -777,8 +778,8 @@ public class PaymentEntryPanel extends javax.swing.JPanel {
         jLabel2 = new javax.swing.JLabel();
         cmdMarkAsPayed = new javax.swing.JButton();
 
-        lblInvoiceNumber.setFont(lblInvoiceNumber.getFont().deriveFont(lblInvoiceNumber.getFont().getStyle() | java.awt.Font.BOLD));
-        lblInvoiceNumber.setText("RG123");
+        lblPaymentNumber.setFont(lblPaymentNumber.getFont().deriveFont(lblPaymentNumber.getFont().getStyle() | java.awt.Font.BOLD));
+        lblPaymentNumber.setText("RG123");
 
         cmdOpen.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons16/kfind.png"))); // NOI18N
         cmdOpen.setToolTipText("einsehen / bearbeiten");
@@ -853,7 +854,7 @@ public class PaymentEntryPanel extends javax.swing.JPanel {
                         .addGap(18, 18, 18)
                         .addComponent(lblTargetDate)
                         .addGap(18, 18, 18)
-                        .addComponent(lblInvoiceNumber)
+                        .addComponent(lblPaymentNumber)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                         .addComponent(lblStatus)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
@@ -880,7 +881,7 @@ public class PaymentEntryPanel extends javax.swing.JPanel {
                                 .addComponent(lblStatus, javax.swing.GroupLayout.PREFERRED_SIZE, 28, javax.swing.GroupLayout.PREFERRED_SIZE)
                                 .addComponent(cmdMarkAsPayed))
                             .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
-                                .addComponent(lblInvoiceNumber)
+                                .addComponent(lblPaymentNumber)
                                 .addComponent(lblTargetDate, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
                             .addComponent(cmdDelete))
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
@@ -982,8 +983,8 @@ public class PaymentEntryPanel extends javax.swing.JPanel {
     private javax.swing.JButton cmdMarkAsPayed;
     private javax.swing.JButton cmdOpen;
     private javax.swing.JLabel jLabel2;
-    private javax.swing.JLabel lblInvoiceNumber;
     private javax.swing.JLabel lblName;
+    private javax.swing.JLabel lblPaymentNumber;
     private javax.swing.JLabel lblPaymentType;
     private javax.swing.JLabel lblRecipient;
     private javax.swing.JLabel lblStatus;

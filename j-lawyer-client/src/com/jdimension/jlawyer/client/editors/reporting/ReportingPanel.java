@@ -697,7 +697,7 @@ public class ReportingPanel extends javax.swing.JPanel implements ThemeableEdito
         invoicesOpen.setName("Offene Rechnungen");
         invoicesOpen.setDescription("<html>Alle <b>offenen Rechnungen</b> im Überblick</html>");
         invoicesOpen.setClassName(DynamicReportContainerPanel.class.getName());
-        invoicesOpen.setCategory("Finanzen");
+        invoicesOpen.setCategory("Finanzen: Rechnungen");
         invoicesOpen.setReportId(Reports.RPT_INV_OPEN);
         invoicesOpen.setSequence(10);
         invoicesOpen.setTypeChart(true);
@@ -715,7 +715,7 @@ public class ReportingPanel extends javax.swing.JPanel implements ThemeableEdito
         invoicesOverdue.setName("Fällige Rechnungen");
         invoicesOverdue.setDescription("<html>Alle <b>fälligen Rechnungen</b> im Überblick</html>");
         invoicesOverdue.setClassName(DynamicReportContainerPanel.class.getName());
-        invoicesOverdue.setCategory("Finanzen");
+        invoicesOverdue.setCategory("Finanzen: Rechnungen");
         invoicesOverdue.setSequence(20);
         invoicesOverdue.setReportId(Reports.RPT_INV_OVERDUE);
         invoicesOverdue.setTypeChart(true);
@@ -732,7 +732,7 @@ public class ReportingPanel extends javax.swing.JPanel implements ThemeableEdito
         invoicesDraft.setName("Rechnungsentwürfe");
         invoicesDraft.setDescription("<html>Alle <b>Rechnungen im Entwurfsstatus</b> im Überblick</html>");
         invoicesDraft.setClassName(DynamicReportContainerPanel.class.getName());
-        invoicesDraft.setCategory("Finanzen");
+        invoicesDraft.setCategory("Finanzen: Rechnungen");
         invoicesDraft.setReportId(Reports.RPT_INV_DRAFTS);
         invoicesDraft.setSequence(10);
         invoicesDraft.setTypeChart(false);
@@ -750,7 +750,7 @@ public class ReportingPanel extends javax.swing.JPanel implements ThemeableEdito
         invoicesAll.setName("Alle Rechnungen / Belege");
         invoicesAll.setDescription("<html>Alle <b>Rechnungen / Belege</b> unabhängig von Belegart, Status oder Erstellungsdatum</html>");
         invoicesAll.setClassName(DynamicReportContainerPanel.class.getName());
-        invoicesAll.setCategory("Finanzen");
+        invoicesAll.setCategory("Finanzen: Rechnungen");
         invoicesAll.setSequence(20);
         invoicesAll.setReportId(Reports.RPT_INV_ALL);
         invoicesAll.setTypeChart(false);
@@ -765,11 +765,30 @@ public class ReportingPanel extends javax.swing.JPanel implements ThemeableEdito
         invoicesAll.setDateSelectionLabel("erstellt");
         allReports.add(invoicesAll);
         
+        Report paymentsAll=new Report();
+        paymentsAll.setName("Alle Zahlungen");
+        paymentsAll.setDescription("<html>Alle <b>Zahlungen</b> unabhängig von Status oder Erstellungsdatum</html>");
+        paymentsAll.setClassName(DynamicReportContainerPanel.class.getName());
+        paymentsAll.setCategory("Finanzen: Zahlungen");
+        paymentsAll.setSequence(20);
+        paymentsAll.setReportId(Reports.RPT_PAY_ALL);
+        paymentsAll.setTypeChart(false);
+        paymentsAll.setTypeTable(true);
+        paymentsAll.setSecurityType(Report.SECURITY_COMMON);
+        fromDate=new Date();
+        fromDate.setMonth(0);
+        fromDate.setDate(1);
+        paymentsAll.setDefaultBeginDate(fromDate);
+        toDate=new Date();
+        paymentsAll.setDefaultEndDate(toDate);
+        paymentsAll.setDateSelectionLabel("erstellt");
+        allReports.add(paymentsAll);
+        
         Report revenuePerCustomer=new Report();
         revenuePerCustomer.setName("Umsatz pro Kunde / Kundin");
         revenuePerCustomer.setDescription("<html><b>Ums&auml;tze</b> pro Kunde / Kundin, basierend auf bezahlten Rechnungen</html>");
         revenuePerCustomer.setClassName(DynamicReportContainerPanel.class.getName());
-        revenuePerCustomer.setCategory("Finanzen");
+        revenuePerCustomer.setCategory("Finanzen: Controlling");
         revenuePerCustomer.setSequence(20);
         revenuePerCustomer.setReportId(Reports.RPT_REVENUE_BYCUSTOMER);
         revenuePerCustomer.setTypeChart(false);
@@ -788,7 +807,7 @@ public class ReportingPanel extends javax.swing.JPanel implements ThemeableEdito
         accountBookings.setName("Aktenkonto - Buchungen");
         accountBookings.setDescription("<html>Alle Buchungen in Aktenkonten in einem bestimmten Zeitraum</html>");
         accountBookings.setClassName(DynamicReportContainerPanel.class.getName());
-        accountBookings.setCategory("Finanzen");
+        accountBookings.setCategory("Finanzen: Controlling");
         accountBookings.setSequence(15);
         accountBookings.setReportId(Reports.RPT_ACCOUNTS_BOOKINGS);
         accountBookings.setTypeChart(false);
@@ -807,7 +826,7 @@ public class ReportingPanel extends javax.swing.JPanel implements ThemeableEdito
         casesWithEscrow.setName("Akten mit nicht ausgeglichenem Fremdgeld");
         casesWithEscrow.setDescription("<html>Akten eines bestimmten Zeitraumes mit  <b>nicht ausgeglichenem Fremdgeld</b></html>");
         casesWithEscrow.setClassName(DynamicReportContainerPanel.class.getName());
-        casesWithEscrow.setCategory("Finanzen");
+        casesWithEscrow.setCategory("Finanzen: Controlling");
         casesWithEscrow.setSequence(20);
         casesWithEscrow.setReportId(Reports.RPT_ACCOUNTS_ESCROW);
         casesWithEscrow.setTypeChart(false);
@@ -826,7 +845,7 @@ public class ReportingPanel extends javax.swing.JPanel implements ThemeableEdito
         casesEarnings.setName("Ergebnis pro Akte");
         casesEarnings.setDescription("<html>Akten eines bestimmten Zeitraumes und deren <b>betriebswirtschaftliches Ergebnis</b>, basierend auf Aktenkonten</html>");
         casesEarnings.setClassName(DynamicReportContainerPanel.class.getName());
-        casesEarnings.setCategory("Finanzen");
+        casesEarnings.setCategory("Finanzen: Controlling");
         casesEarnings.setSequence(20);
         casesEarnings.setReportId(Reports.RPT_ACCOUNTS_EARNINGS);
         casesEarnings.setTypeChart(false);
@@ -845,7 +864,7 @@ public class ReportingPanel extends javax.swing.JPanel implements ThemeableEdito
         timeSheetsOpenOverview.setName("Alle offenen Zeiterfassungsprojekte im Überblick");
         timeSheetsOpenOverview.setDescription("<html>Alle <b>offenen Zeiterfassungsprojekte</b> im Überblick, absteigend sortiert nach letzter Buchung</html>");
         timeSheetsOpenOverview.setClassName(DynamicReportContainerPanel.class.getName());
-        timeSheetsOpenOverview.setCategory("Zeiten");
+        timeSheetsOpenOverview.setCategory("Zeiterfassung");
         timeSheetsOpenOverview.setSequence(10);
         timeSheetsOpenOverview.setReportId(Reports.RPT_TSHEETS_OPEN_OVERVIEW);
         timeSheetsOpenOverview.setTypeChart(false);
@@ -864,7 +883,7 @@ public class ReportingPanel extends javax.swing.JPanel implements ThemeableEdito
         timeSheetsOpenPositions.setName("Alle offenen Zeiterfassungsprojekte und deren Buchungen");
         timeSheetsOpenPositions.setDescription("<html>Alle <b>offenen Zeiterfassungsprojekte</b> und deren Buchungen, als Gesamtansicht und gruppiert nach Projekt</html>");
         timeSheetsOpenPositions.setClassName(DynamicReportContainerPanel.class.getName());
-        timeSheetsOpenPositions.setCategory("Zeiten");
+        timeSheetsOpenPositions.setCategory("Zeiterfassung");
         timeSheetsOpenPositions.setSequence(20);
         timeSheetsOpenPositions.setReportId(Reports.RPT_TSHEETS_OPEN_POSITIONS);
         timeSheetsOpenPositions.setTypeChart(false);
@@ -883,7 +902,7 @@ public class ReportingPanel extends javax.swing.JPanel implements ThemeableEdito
         timeSheetsValues.setName("Gebuchte Zeiten pro Mitarbeiter");
         timeSheetsValues.setDescription("<html><b>Werte aller gebuchten Zeiten</b>, gruppiert nach Mitarbeiter(-in) und Monat / Jahr</html>");
         timeSheetsValues.setClassName(DynamicReportContainerPanel.class.getName());
-        timeSheetsValues.setCategory("Zeiten");
+        timeSheetsValues.setCategory("Zeiterfassung");
         timeSheetsValues.setSequence(22);
         timeSheetsValues.setReportId(Reports.RPT_TSHEETS_VALUES);
         timeSheetsValues.setTypeChart(false);
@@ -902,7 +921,7 @@ public class ReportingPanel extends javax.swing.JPanel implements ThemeableEdito
         timeSheetsValuesMine.setName("Meine gebuchten Zeiten");
         timeSheetsValuesMine.setDescription("<html><b>Werte aller durch mich gebuchten Zeiten</b>, gruppiert nach Monat / Jahr</html>");
         timeSheetsValuesMine.setClassName(DynamicReportContainerPanel.class.getName());
-        timeSheetsValuesMine.setCategory("Zeiten");
+        timeSheetsValuesMine.setCategory("Zeiterfassung");
         timeSheetsValuesMine.setSequence(22);
         timeSheetsValuesMine.setReportId(Reports.RPT_TSHEETS_VALUES_USER);
         timeSheetsValuesMine.setTypeChart(false);
@@ -922,7 +941,7 @@ public class ReportingPanel extends javax.swing.JPanel implements ThemeableEdito
         employeeReport.setDescription("<html>Tabellarische Auswertungen zu <b>Aktenaktivitäten</b> einer Mitarbeiterin / eines Mitarbeiters</html>");
         employeeReport.setReportId(Reports.RPT_EMPLOYEE_ACTIVITY);
         employeeReport.setClassName(DynamicReportContainerPanel.class.getName());
-        employeeReport.setCategory("Zeiten");
+        employeeReport.setCategory("Zeiterfassung");
         employeeReport.setSequence(30);
         employeeReport.setTypeTable(true);
         employeeReport.setTypeChart(true);

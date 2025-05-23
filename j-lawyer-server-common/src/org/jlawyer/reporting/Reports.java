@@ -676,6 +676,8 @@ public class Reports {
     public static final String RPT_INV_DRAFTS="invoices.drafts";
     public static final String RPT_INV_OVERDUE="invoices.overdue";
     
+    public static final String RPT_PAY_ALL="payments.all";
+    
     public static final String RPT_TSHEETS_OPEN_OVERVIEW="timesheets.open.overview";
     public static final String RPT_TSHEETS_OPEN_POSITIONS="timesheets.open.positions";
     public static final String RPT_TSHEETS_VALUES="timesheets.values";

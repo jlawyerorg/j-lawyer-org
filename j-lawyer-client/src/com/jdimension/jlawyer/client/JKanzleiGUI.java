@@ -1305,6 +1305,7 @@ public class JKanzleiGUI extends javax.swing.JFrame implements com.jdimension.jl
         mnuBeaSettings = new javax.swing.JMenuItem();
         mnuBookKeeping = new javax.swing.JMenu();
         mnuImportAccountStatement = new javax.swing.JMenuItem();
+        mnuPayments = new javax.swing.JMenuItem();
         mnuCalculations = new javax.swing.JMenu();
         mnuAdministration = new javax.swing.JMenu();
         mnuUsers = new javax.swing.JMenuItem();
@@ -2089,6 +2090,10 @@ public class JKanzleiGUI extends javax.swing.JFrame implements com.jdimension.jl
             }
         });
         mnuBookKeeping.add(mnuImportAccountStatement);
+
+        mnuPayments.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons16/material/credit_card_20dp_0E72B5.png"))); // NOI18N
+        mnuPayments.setText("Zahlungen ausführen");
+        mnuBookKeeping.add(mnuPayments);
 
         jMenuBar1.add(mnuBookKeeping);
 
@@ -3193,6 +3198,7 @@ public class JKanzleiGUI extends javax.swing.JFrame implements com.jdimension.jl
     private javax.swing.JMenu mnuOptions;
     private javax.swing.JMenuItem mnuParallelTimesheetLogs;
     private javax.swing.JMenuItem mnuPartyTypes;
+    private javax.swing.JMenuItem mnuPayments;
     private javax.swing.JMenuItem mnuPdfStamps;
     private javax.swing.JMenuItem mnuProfileInfo;
     private javax.swing.JMenuItem mnuScanOptions;
