@@ -669,7 +669,6 @@ import com.jdimension.jlawyer.client.utils.FrameUtils;
 import com.jdimension.jlawyer.client.utils.StringUtils;
 import com.jdimension.jlawyer.persistence.AddressBean;
 import com.jdimension.jlawyer.persistence.ArchiveFileBean;
-import com.jdimension.jlawyer.persistence.CaseAccountEntry;
 import com.jdimension.jlawyer.persistence.Payment;
 import com.jdimension.jlawyer.services.JLawyerServiceLocator;
 import java.awt.Color;
@@ -829,6 +828,7 @@ public class PaymentEntryPanel extends javax.swing.JPanel {
         jLabel2.setText("Zahlbetrag:");
 
         cmdMarkAsPayed.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/agt_action_success.png"))); // NOI18N
+        cmdMarkAsPayed.setToolTipText("als \"ausgeführt\" markieren");
         cmdMarkAsPayed.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 cmdMarkAsPayedActionPerformed(evt);
@@ -926,52 +926,23 @@ public class PaymentEntryPanel extends javax.swing.JPanel {
     }//GEN-LAST:event_cmdDeleteActionPerformed
 
     private void cmdDuplicateActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdDuplicateActionPerformed
-        //this.caseView.duplicateInvoice(this.caseDto.getId(), this.getInvoice().getId(), false);
+        this.caseView.duplicatePayment(this.caseDto.getId(), this.getPayment().getId());
     }//GEN-LAST:event_cmdDuplicateActionPerformed
 
     private void cmdMarkAsPayedActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdMarkAsPayedActionPerformed
 
-//        this.payment.setStatus(Invoice.STATUS_PAID);
-//
-//        ClientSettings settings = ClientSettings.getInstance();
-//        BigDecimal currentPaid = BigDecimal.ZERO;
-//        try {
-//            JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
-//            locator.lookupArchiveFileServiceRemote().updateInvoice(this.caseDto.getId(), this.payment);
-//
-//            List<CaseAccountEntry> payments = locator.lookupArchiveFileServiceRemote().getAccountEntriesForInvoice(payment.getId());
-//
-//            for (CaseAccountEntry ce : payments) {
-//                currentPaid = currentPaid.add(ce.getEarnings()).subtract(ce.getSpendings());
-//            }
-//
-//            this.setEntry(caseDto, this.payment, addresses);
-//
-//            if(this.payment.getTotalGross().subtract(currentPaid).compareTo(BigDecimal.ZERO) > 0) {
-//                CaseAccountEntry entry = new CaseAccountEntry();
-//                entry.setArchiveFileKey(caseDto);
-//                entry.setContact(this.payment.getContact());
-//                entry.setDescription("");
-//                entry.setEarnings(payment.getTotalGross().subtract(currentPaid));
-//                entry.setEntryDate(new Date());
-//                entry.setEscrowIn(BigDecimal.ZERO);
-//                entry.setEscrowOut(BigDecimal.ZERO);
-//                entry.setExpendituresIn(BigDecimal.ZERO);
-//                entry.setExpendituresOut(BigDecimal.ZERO);
-//                entry.setInvoice(payment);
-//                entry.setSpendings(BigDecimal.ZERO);
-//
-//                boolean confirmed = this.caseView.addAccountEntry(entry);
-//
-//                if (confirmed) {
-//                    this.setPaidTotal(payment.getTotalGross(), payment.getTotalGross(), payment.getCurrency());
-//                }
-//            }
-//            
-//        } catch (Exception ex) {
-//            log.error("error saving invoice", ex);
-//            JOptionPane.showMessageDialog(this, "Fehler beim Speichern der Rechnung: " + ex.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
-//        }
+        this.payment.setStatus(Payment.STATUS_EXECUTED);
+
+        ClientSettings settings = ClientSettings.getInstance();
+        try {
+            JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
+            locator.lookupArchiveFileServiceRemote().updatePayment(this.caseDto.getId(), this.payment);
+            this.setEntry(caseDto, this.payment, addresses);
+
+        } catch (Exception ex) {
+            log.error("error saving payment", ex);
+            JOptionPane.showMessageDialog(this, "Fehler beim Speichern der Zahlung: " + ex.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
+        }
 
 
     }//GEN-LAST:event_cmdMarkAsPayedActionPerformed
@@ -993,7 +964,7 @@ public class PaymentEntryPanel extends javax.swing.JPanel {
     // End of variables declaration//GEN-END:variables
 
     /**
-     * @return the invoice
+     * @return the payment
      */
     public Payment getPayment() {
         return payment;

@@ -7089,4 +7089,34 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
         }
     }
 
+    @Override
+    @RolesAllowed({"writeArchiveFileRole"})
+    public Payment copyPayment(String paymentId, String toCaseId) throws Exception {
+        Payment oldPayment = this.paymentsFacade.find(paymentId);
+
+        Payment newPayment = new Payment();
+        newPayment.setArchiveFileKey(oldPayment.getArchiveFileKey());
+        newPayment.setContact(oldPayment.getContact());
+        newPayment.setCreationDate(new Date());
+        newPayment.setCurrency(oldPayment.getCurrency());
+        newPayment.setDescription(oldPayment.getDescription());
+        newPayment.setId(null);
+        newPayment.setName("Kopie von '" + oldPayment.getName() + "'");
+        newPayment.setPaymentNumber(null);
+        newPayment.setPaymentType(oldPayment.getPaymentType());
+        newPayment.setReason(oldPayment.getReason());
+        newPayment.setSender(oldPayment.getSender());
+        newPayment.setStatus(Payment.STATUS_NEW);
+        newPayment.setTargetDate(oldPayment.getTargetDate());
+        newPayment.setTotal(oldPayment.getTotal());
+        newPayment=this.addPayment(toCaseId, newPayment);
+        if(newPayment.getTargetDate()!=null) {
+            if(newPayment.getTargetDate().getTime()<newPayment.getCreationDate().getTime())
+                newPayment.setTargetDate(new Date());
+        }
+        this.updatePayment(toCaseId, newPayment);
+
+        return this.paymentsFacade.find(newPayment.getId());
+    }
+
 }

@@ -1109,6 +1109,35 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
         }
 
     }
+    
+    public void duplicatePayment(String caseId, String paymentId) {
+        if (caseId == null) {
+            SearchAndAssignDialog dlg = new SearchAndAssignDialog(EditorsRegistry.getInstance().getMainWindow(), true, null, null);
+            dlg.setVisible(true);
+            ArchiveFileBean sel = dlg.getCaseSelection();
+            dlg.dispose();
+            if (sel == null) {
+                return;
+            }
+            caseId = sel.getId();
+        }
+
+        // duplicate and add to view, if same case
+        try {
+            ClientSettings settings=ClientSettings.getInstance();
+            JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
+            Payment paymentCopy = locator.lookupArchiveFileServiceRemote().copyPayment(paymentId, caseId);
+            if (this.dto.getId().equals(caseId)) {
+                PaymentEntryPanel pp = new PaymentEntryPanel(this);
+                pp.setEntry(this.dto, paymentCopy, this.getInvolvedAddresses());
+                this.pnlPayments.add(pp);
+            }
+        } catch (Exception ex) {
+            log.error("Error duplicating payment", ex);
+            JOptionPane.showMessageDialog(this, "Fehler beim Kopieren der Zahlung: " + ex.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
+        }
+
+    }
 
     public void documentSelectionChanged() {
 //        if (!evt.getValueIsAdjusting()) {

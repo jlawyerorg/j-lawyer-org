@@ -957,4 +957,6 @@ public interface ArchiveFileServiceRemote {
     Payment addPayment(String caseId, Payment payment) throws Exception;
 
     void removePayment(String paymentId) throws Exception;
+
+    Payment copyPayment(String paymentId, String toCaseId) throws Exception;
 }
