@@ -676,6 +676,7 @@ import com.jdimension.jlawyer.client.editors.addresses.EditAddressPanel;
 import com.jdimension.jlawyer.client.editors.files.EditArchiveFilePanel;
 import com.jdimension.jlawyer.client.editors.files.TimesheetLogDialog;
 import com.jdimension.jlawyer.client.editors.finance.ImportBankStatementFrame;
+import com.jdimension.jlawyer.client.editors.finance.ManagePaymentsFrame;
 import com.jdimension.jlawyer.client.events.BeaStatusEvent;
 import com.jdimension.jlawyer.client.events.EmailStatusEvent;
 import com.jdimension.jlawyer.client.events.Event;
@@ -2092,7 +2093,12 @@ public class JKanzleiGUI extends javax.swing.JFrame implements com.jdimension.jl
         mnuBookKeeping.add(mnuImportAccountStatement);
 
         mnuPayments.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons16/material/credit_card_20dp_0E72B5.png"))); // NOI18N
-        mnuPayments.setText("Zahlungen ausführen");
+        mnuPayments.setText("Zahlungen verwalten");
+        mnuPayments.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                mnuPaymentsActionPerformed(evt);
+            }
+        });
         mnuBookKeeping.add(mnuPayments);
 
         jMenuBar1.add(mnuBookKeeping);
@@ -3100,6 +3106,12 @@ public class JKanzleiGUI extends javax.swing.JFrame implements com.jdimension.jl
             dlg.setVisible(true);
         }
     }//GEN-LAST:event_mnuStirlingPdfActionPerformed
+
+    private void mnuPaymentsActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_mnuPaymentsActionPerformed
+        ManagePaymentsFrame mpf = new ManagePaymentsFrame();
+        FrameUtils.centerFrame(mpf, EditorsRegistry.getInstance().getMainWindow());
+        mpf.setVisible(true);
+    }//GEN-LAST:event_mnuPaymentsActionPerformed
 
     /**
      * @param args the command line arguments

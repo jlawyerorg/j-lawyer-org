@@ -661,51 +661,201 @@ if any, to sign a "copyright disclaimer" for the program, if necessary.
 For more information on this, and how to apply and follow the GNU AGPL, see
 <https://www.gnu.org/licenses/>.
  */
-package com.jdimension.jlawyer.persistence;
+package com.jdimension.jlawyer.client.editors.finance;
 
+import com.jdimension.jlawyer.client.settings.ClientSettings;
+import com.jdimension.jlawyer.persistence.Invoice;
+import com.jdimension.jlawyer.persistence.Payment;
+import com.jdimension.jlawyer.services.JLawyerServiceLocator;
+import java.io.ByteArrayOutputStream;
+import java.math.BigDecimal;
+import java.text.DecimalFormat;
+import java.text.SimpleDateFormat;
+import java.util.ArrayList;
 import java.util.List;
-import javax.ejb.Stateless;
-import javax.persistence.EntityManager;
-import javax.persistence.PersistenceContext;
+import javax.swing.ImageIcon;
+import javax.swing.JFileChooser;
+import javax.swing.JOptionPane;
+import org.apache.log4j.Logger;
+import org.java.sepaxml.SEPA;
+import org.java.sepaxml.SEPABankAccount;
+import org.java.sepaxml.SEPACreditTransfer;
+import org.java.sepaxml.SEPATransaction;
+import org.java.sepaxml.validator.SEPAValidatorIBAN;
 
 /**
  *
  * @author jens
  */
-@Stateless
-public class PaymentFacade extends AbstractFacade<Payment> implements PaymentFacadeLocal {
+public class ManagePaymentsFrame extends javax.swing.JFrame {
 
-    @PersistenceContext(unitName = "j-lawyer-server-ejbPU")
-    private EntityManager em;
+    private static final Logger log = Logger.getLogger(ManagePaymentsFrame.class.getName());
 
-    @Override
-    protected EntityManager getEntityManager() {
-        return em;
-    }
+    private SimpleDateFormat df = new SimpleDateFormat("dd.MM.yyyy HH:mm");
+    private DecimalFormat nf = new DecimalFormat("0.00");
 
-    public PaymentFacade() {
-        super(Payment.class);
-    }
-    
-    @Override
-    public List<Payment> findByArchiveFileKey(ArchiveFileBean archiveFileKey) {
-        
-        return (List<Payment>) em.createNamedQuery("Payment.findByArchiveFileKey").setParameter("archiveFileKey", archiveFileKey).getResultList();
-        
-    }
-    
-    @Override
-    public Payment findByPaymentNumber(String paymentNumber) {
+    /**
+     * Creates new form ImportBankStatement
+     */
+    public ManagePaymentsFrame() {
+        initComponents();
+
+        ClientSettings settings = ClientSettings.getInstance();
         try {
-            return (Payment) em.createNamedQuery("Payment.findByPaymentNumber").setParameter("paymentNumber", paymentNumber).getSingleResult();
-        } catch (javax.persistence.NoResultException nrex) {
-            return null;
+            JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
+            List<Payment> openPayments = locator.lookupPaymentServiceRemote().getPaymentsByStatus(Payment.STATUS_APPROVED, Payment.STATUS_NEW);
+
+            boolean valid = SEPAValidatorIBAN.isValid("DE4485095004768306");
+            System.out.println("IBAN valid: " + valid);
+            
+            final SEPABankAccount sender = new SEPABankAccount(
+                    "DE4485095004768306",
+                    "GREBDEH1",
+                    "Off"
+            );
+            
+            List<SEPATransaction> transactions = new ArrayList<>();
+            for(Payment p: openPayments) {
+                transactions.add(new SEPATransaction(
+                            new SEPABankAccount(
+                                    p.getContact().getBankAccount(),
+                                    p.getContact().getBankCode(),
+                                    p.getContact().toDisplayName()
+                            ),
+                            p.getTotal(),
+                            p.getReason(),
+                            SEPATransaction.Currency.EUR
+                    ));
+            }
+
+
+            SEPA sepa = new SEPACreditTransfer(SEPA.PaymentMethods.TransferAdvice, sender, transactions);
+
+            ByteArrayOutputStream bout = new ByteArrayOutputStream();
+
+            sepa.write(bout);
+
+            String sepaString = bout.toString();
+            sepaString = sepaString.replace("CstmrCdtTrfInitn xmlns=\"\"", "CstmrCdtTrfInitn");
+
+            //CstmrCdtTrfInitn xmlns=""
+            taSepa.setText(sepaString);
+
+        } catch (Exception ex) {
+            log.error("Error connecting to server", ex);
+            JOptionPane.showMessageDialog(this, "Fehler beim Laden der Zahlungen: " + ex.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
         }
     }
-    
-    @Override
-    public List<Payment> findByStatus(int status) {
-        return (List<Payment>) em.createNamedQuery("Payment.findByStatus").setParameter("status", status).getResultList();
+
+    /**
+     * This method is called from within the constructor to initialize the form.
+     * WARNING: Do NOT modify this code. The content of this method is always
+     * regenerated by the Form Editor.
+     */
+    @SuppressWarnings("unchecked")
+    // <editor-fold defaultstate="collapsed" desc="Generated Code">//GEN-BEGIN:initComponents
+    private void initComponents() {
+
+        btnGrpAccountEntryType = new javax.swing.ButtonGroup();
+        popCaseTags = new javax.swing.JPopupMenu();
+        cmdCsvUpload = new javax.swing.JButton();
+        jScrollPane1 = new javax.swing.JScrollPane();
+        taSepa = new javax.swing.JTextArea();
+
+        setDefaultCloseOperation(javax.swing.WindowConstants.DISPOSE_ON_CLOSE);
+        setTitle("Zahlungen verwalten");
+        setIconImage(new ImageIcon(getClass().getResource("/icons/windowicon.png")).getImage());
+
+        cmdCsvUpload.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons16/material/credit_card_20dp_0E72B5.png"))); // NOI18N
+        cmdCsvUpload.setText("SEPA-Datei generieren");
+        cmdCsvUpload.setToolTipText("Zahlungen für Import im Banking bereitstellen");
+        cmdCsvUpload.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                cmdCsvUploadActionPerformed(evt);
+            }
+        });
+
+        taSepa.setColumns(20);
+        taSepa.setLineWrap(true);
+        taSepa.setRows(5);
+        taSepa.setWrapStyleWord(true);
+        jScrollPane1.setViewportView(taSepa);
+
+        javax.swing.GroupLayout layout = new javax.swing.GroupLayout(getContentPane());
+        getContentPane().setLayout(layout);
+        layout.setHorizontalGroup(
+            layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(layout.createSequentialGroup()
+                .addContainerGap()
+                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
+                        .addGap(0, 0, Short.MAX_VALUE)
+                        .addComponent(cmdCsvUpload))
+                    .addComponent(jScrollPane1, javax.swing.GroupLayout.DEFAULT_SIZE, 988, Short.MAX_VALUE))
+                .addContainerGap())
+        );
+        layout.setVerticalGroup(
+            layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
+                .addContainerGap()
+                .addComponent(jScrollPane1, javax.swing.GroupLayout.DEFAULT_SIZE, 536, Short.MAX_VALUE)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addComponent(cmdCsvUpload)
+                .addContainerGap())
+        );
+
+        pack();
+    }// </editor-fold>//GEN-END:initComponents
+
+    private void cmdCsvUploadActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdCsvUploadActionPerformed
+        JFileChooser chooser = new JFileChooser();
+        int returnVal = chooser.showOpenDialog(this);
+        if (returnVal == JFileChooser.APPROVE_OPTION) {
+
+        }
+    }//GEN-LAST:event_cmdCsvUploadActionPerformed
+
+    /**
+     * @param args the command line arguments
+     */
+    public static void main(String args[]) {
+        /* Set the Nimbus look and feel */
+        //<editor-fold defaultstate="collapsed" desc=" Look and feel setting code (optional) ">
+        /* If Nimbus (introduced in Java SE 6) is not available, stay with the default look and feel.
+         * For details see http://download.oracle.com/javase/tutorial/uiswing/lookandfeel/plaf.html 
+         */
+        try {
+            for (javax.swing.UIManager.LookAndFeelInfo info : javax.swing.UIManager.getInstalledLookAndFeels()) {
+                if ("Nimbus".equals(info.getName())) {
+                    javax.swing.UIManager.setLookAndFeel(info.getClassName());
+                    break;
+                }
+            }
+        } catch (ClassNotFoundException ex) {
+            java.util.logging.Logger.getLogger(ManagePaymentsFrame.class.getName()).log(java.util.logging.Level.SEVERE, null, ex);
+        } catch (InstantiationException ex) {
+            java.util.logging.Logger.getLogger(ManagePaymentsFrame.class.getName()).log(java.util.logging.Level.SEVERE, null, ex);
+        } catch (IllegalAccessException ex) {
+            java.util.logging.Logger.getLogger(ManagePaymentsFrame.class.getName()).log(java.util.logging.Level.SEVERE, null, ex);
+        } catch (javax.swing.UnsupportedLookAndFeelException ex) {
+            java.util.logging.Logger.getLogger(ManagePaymentsFrame.class.getName()).log(java.util.logging.Level.SEVERE, null, ex);
+        }
+        //</editor-fold>
+        //</editor-fold>
+        //</editor-fold>
+        //</editor-fold>
+
+        /* Create and display the form */
+        java.awt.EventQueue.invokeLater(() -> {
+            new ManagePaymentsFrame().setVisible(true);
+        });
     }
-    
+
+    // Variables declaration - do not modify//GEN-BEGIN:variables
+    private javax.swing.ButtonGroup btnGrpAccountEntryType;
+    private javax.swing.JButton cmdCsvUpload;
+    private javax.swing.JScrollPane jScrollPane1;
+    private javax.swing.JPopupMenu popCaseTags;
+    private javax.swing.JTextArea taSepa;
+    // End of variables declaration//GEN-END:variables
 }

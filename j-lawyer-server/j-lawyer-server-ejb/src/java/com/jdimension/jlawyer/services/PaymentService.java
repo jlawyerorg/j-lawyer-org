@@ -663,6 +663,12 @@ For more information on this, and how to apply and follow the GNU AGPL, see
  */
 package com.jdimension.jlawyer.services;
 
+import com.jdimension.jlawyer.persistence.Payment;
+import com.jdimension.jlawyer.persistence.PaymentFacadeLocal;
+import java.util.ArrayList;
+import java.util.List;
+import javax.annotation.security.RolesAllowed;
+import javax.ejb.EJB;
 import javax.ejb.Stateless;
 
 /**
@@ -671,7 +677,21 @@ import javax.ejb.Stateless;
  */
 @Stateless
 public class PaymentService implements PaymentServiceRemote, PaymentServiceLocal {
+    
+    @EJB
+    private PaymentFacadeLocal payments;
 
     // Add business logic below. (Right-click in editor and choose
     // "Insert Code > Add Business Method")
+    
+    @Override
+    @RolesAllowed({"loginRole"})
+    public List<Payment> getPaymentsByStatus(int... status) throws Exception {
+
+        List<Payment> paymentsList = new ArrayList<>();
+        for(int s: status) {
+            paymentsList.addAll(payments.findByStatus(s));
+        }
+        return paymentsList;
+    }
 }

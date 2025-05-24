@@ -905,8 +905,11 @@
                 <Property name="icon" type="javax.swing.Icon" editor="org.netbeans.modules.form.editors2.IconEditor">
                   <Image iconType="3" name="/icons16/material/credit_card_20dp_0E72B5.png"/>
                 </Property>
-                <Property name="text" type="java.lang.String" value="Zahlungen ausf&#xfc;hren"/>
+                <Property name="text" type="java.lang.String" value="Zahlungen verwalten"/>
               </Properties>
+              <Events>
+                <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="mnuPaymentsActionPerformed"/>
+              </Events>
             </MenuItem>
           </SubComponents>
         </Menu>

@@ -691,4 +691,6 @@ public interface PaymentFacadeLocal {
     
     Payment findByPaymentNumber(String paymentNumber);
     
+    List<Payment> findByStatus(int status);
+    
 }

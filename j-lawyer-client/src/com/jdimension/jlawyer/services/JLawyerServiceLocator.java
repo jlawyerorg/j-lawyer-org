@@ -797,6 +797,16 @@ public class JLawyerServiceLocator {
         }
     }
     
+    public PaymentServiceRemote lookupPaymentServiceRemote() {
+        try {
+            return (PaymentServiceRemote) ic.lookup("ejb:j-lawyer-server/j-lawyer-server-ejb//PaymentService!com.jdimension.jlawyer.services.PaymentServiceRemote");
+            
+        } catch (NamingException ne) {
+            Logger.getLogger(JLawyerServiceLocator.class.getName()).log(Level.SEVERE, "exception caught", ne);
+            throw new RuntimeException(ne);
+        }
+    }
+    
     public TimesheetServiceRemote lookupTimesheetServiceRemote() {
         try {
             return (TimesheetServiceRemote) ic.lookup("ejb:j-lawyer-server/j-lawyer-server-ejb//TimesheetService!com.jdimension.jlawyer.services.TimesheetServiceRemote");
