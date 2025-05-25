@@ -682,5 +682,7 @@ public interface FormPluginMethods {
     public void setPlaceHolderValues(String prefix, Hashtable placeHolderValues);
     
     public void setCallback(FormPluginCallback callback);
+
+    public String getAsHtml();
     
 }
