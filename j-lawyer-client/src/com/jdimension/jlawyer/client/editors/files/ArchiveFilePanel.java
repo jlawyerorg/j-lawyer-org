@@ -1102,6 +1102,7 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
                 ip.setEntry(this.dto, invoiceCopy, this.getInvolvedAddresses());
                 ip.setPaidTotal(invoiceCopy.getTotalGross(), BigDecimal.ZERO, invoiceCopy.getCurrency());
                 this.pnlInvoices.add(ip);
+                this.pnlInvoices.revalidate();
             }
         } catch (Exception ex) {
             log.error("Error determining invoice pools", ex);
@@ -1131,6 +1132,7 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
                 PaymentEntryPanel pp = new PaymentEntryPanel(this);
                 pp.setEntry(this.dto, paymentCopy, this.getInvolvedAddresses());
                 this.pnlPayments.add(pp);
+                this.pnlPayments.revalidate();
             }
         } catch (Exception ex) {
             log.error("Error duplicating payment", ex);
@@ -6314,7 +6316,7 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
                 totalExpenditures = totalExpenditures.add(ident.getAccountEntry().getExpendituresIn()).subtract(ident.getAccountEntry().getExpendituresOut());
             }
 
-            ArchivalDialog dlg = new ArchivalDialog(EditorsRegistry.getInstance().getMainWindow(), true, this.dto.getId(), this.tblReviewReasons, this.pnlInvoices, this.pnlTimesheets, totalEscrow, totalExpenditures);
+            ArchivalDialog dlg = new ArchivalDialog(EditorsRegistry.getInstance().getMainWindow(), true, this.dto.getId(), this.tblReviewReasons, this.pnlInvoices, this.pnlPayments, this.pnlTimesheets, totalEscrow, totalExpenditures);
             FrameUtils.centerDialog(dlg, EditorsRegistry.getInstance().getMainWindow());
             dlg.setVisible(true);
             if (!dlg.isArchivalConfirmed()) {

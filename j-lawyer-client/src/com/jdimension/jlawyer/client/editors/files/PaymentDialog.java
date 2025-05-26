@@ -1193,12 +1193,12 @@ public class PaymentDialog extends javax.swing.JDialog implements EventConsumer 
                 this.currentEntry = new Payment();
                 this.fillCurrentEntry();
                 JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
-                locator.lookupArchiveFileServiceRemote().addPayment(this.caseDto.getId(), this.currentEntry);
+                this.currentEntry=locator.lookupArchiveFileServiceRemote().addPayment(this.caseDto.getId(), this.currentEntry);
             } else {
                 // update
                 this.fillCurrentEntry();
                 JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
-                locator.lookupArchiveFileServiceRemote().updatePayment(this.caseDto.getId(), this.currentEntry);
+                this.currentEntry=locator.lookupArchiveFileServiceRemote().updatePayment(this.caseDto.getId(), this.currentEntry);
             }
 
         } catch (Exception ex) {

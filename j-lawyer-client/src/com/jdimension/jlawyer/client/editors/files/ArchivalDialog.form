@@ -35,15 +35,11 @@
                   </Group>
                   <Group type="102" alignment="1" attributes="0">
                       <Group type="103" groupAlignment="0" attributes="0">
-                          <Group type="102" attributes="0">
-                              <Group type="103" groupAlignment="0" attributes="0">
-                                  <Component id="lblCalendar" alignment="0" max="32767" attributes="0"/>
-                                  <Component id="lblInvoices" alignment="0" max="32767" attributes="0"/>
-                                  <Component id="lblTimesheets" alignment="0" pref="585" max="32767" attributes="0"/>
-                              </Group>
+                          <Group type="102" alignment="0" attributes="0">
+                              <Component id="lblTimesheets" pref="585" max="32767" attributes="0"/>
                               <EmptySpace min="-2" pref="18" max="-2" attributes="0"/>
                           </Group>
-                          <Group type="102" attributes="0">
+                          <Group type="102" alignment="0" attributes="0">
                               <Group type="103" groupAlignment="0" attributes="0">
                                   <Component id="lblEscrow" alignment="0" min="-2" max="-2" attributes="0"/>
                                   <Component id="lblExpenditures" alignment="0" min="-2" max="-2" attributes="0"/>
@@ -54,13 +50,31 @@
                       </Group>
                       <Group type="103" groupAlignment="0" attributes="0">
                           <Component id="chkEscrow" min="-2" max="-2" attributes="0"/>
+                          <Component id="chkTimesheets" alignment="0" max="32767" attributes="0"/>
+                          <Component id="chkExpenditures" alignment="0" min="-2" max="-2" attributes="0"/>
+                          <Component id="chkMessages" alignment="0" min="-2" max="-2" attributes="0"/>
+                      </Group>
+                  </Group>
+                  <Group type="102" alignment="1" attributes="0">
+                      <Group type="103" groupAlignment="0" attributes="0">
+                          <Group type="102" attributes="0">
+                              <Group type="103" groupAlignment="0" attributes="0">
+                                  <Component id="lblCalendar" alignment="0" max="32767" attributes="0"/>
+                                  <Component id="lblInvoices" alignment="0" pref="585" max="32767" attributes="0"/>
+                              </Group>
+                              <EmptySpace min="-2" pref="18" max="-2" attributes="0"/>
+                          </Group>
+                          <Group type="102" alignment="0" attributes="0">
+                              <Component id="lblPayments" min="-2" max="-2" attributes="0"/>
+                              <EmptySpace max="32767" attributes="0"/>
+                          </Group>
+                      </Group>
+                      <Group type="103" groupAlignment="0" attributes="0">
+                          <Component id="chkPayments" min="-2" max="-2" attributes="0"/>
                           <Group type="103" groupAlignment="0" max="-2" attributes="0">
-                              <Component id="chkTimesheets" max="32767" attributes="0"/>
                               <Component id="chkInvoices" max="32767" attributes="0"/>
                               <Component id="chkCalendar" max="32767" attributes="0"/>
                           </Group>
-                          <Component id="chkExpenditures" alignment="0" min="-2" max="-2" attributes="0"/>
-                          <Component id="chkMessages" alignment="0" min="-2" max="-2" attributes="0"/>
                       </Group>
                   </Group>
               </Group>
@@ -80,6 +94,11 @@
               <Group type="103" groupAlignment="3" attributes="0">
                   <Component id="lblInvoices" alignment="3" min="-2" max="-2" attributes="0"/>
                   <Component id="chkInvoices" alignment="3" min="-2" max="-2" attributes="0"/>
+              </Group>
+              <EmptySpace max="-2" attributes="0"/>
+              <Group type="103" groupAlignment="3" attributes="0">
+                  <Component id="chkPayments" alignment="3" min="-2" max="-2" attributes="0"/>
+                  <Component id="lblPayments" alignment="3" min="-2" max="-2" attributes="0"/>
               </Group>
               <EmptySpace max="-2" attributes="0"/>
               <Group type="103" groupAlignment="3" attributes="0">
@@ -250,6 +269,19 @@
     <Component class="javax.swing.JLabel" name="lblMessages">
       <Properties>
         <Property name="text" type="java.lang.String" value="Nachrichten: unerledigte Erw&#xe4;hnungen"/>
+      </Properties>
+    </Component>
+    <Component class="javax.swing.JCheckBox" name="chkPayments">
+      <Properties>
+        <Property name="text" type="java.lang.String" value="ignorieren"/>
+      </Properties>
+      <Events>
+        <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="chkPaymentsActionPerformed"/>
+      </Events>
+    </Component>
+    <Component class="javax.swing.JLabel" name="lblPayments">
+      <Properties>
+        <Property name="text" type="java.lang.String" value="nicht abgeschlossene Zahlungen"/>
       </Properties>
     </Component>
   </SubComponents>
