@@ -699,6 +699,31 @@ public class MessagingEndpointV7 implements MessagingEndpointLocalV7 {
     private static final Logger log = Logger.getLogger(MessagingEndpointV7.class.getName());
 
     /**
+     * Marks a specific mentioning of a user in a message as done.
+     *
+     * @param id id of the mentioning
+     * @response 401 User not authorized
+     * @response 403 User not authenticated
+     */
+    @Override
+    @PUT
+    @Produces(MediaType.APPLICATION_JSON+";charset=utf-8")
+    @Path("/mentions/{id}/done")
+    @RolesAllowed({"loginRole"})
+    public Response markMentionDone(@PathParam("id") String id) {
+        try {
+            InitialContext ic = new InitialContext();
+            MessagingServiceLocal msgService = (MessagingServiceLocal) ic.lookup("java:global/j-lawyer-server/j-lawyer-server-ejb/MessagingService!com.jdimension.jlawyer.services.MessagingServiceLocal");
+            
+            msgService.markMentionDone(id, true);
+            return Response.ok().build();
+        } catch (Exception ex) {
+            log.error("can not mark mentioning as done for id " + id, ex);
+            return Response.serverError().build();
+        }
+    }
+    
+    /**
      * Submits a new message. An API client should not provide mentions along with the message,
      * they will be automatically extracted based on the content of the message.
      *

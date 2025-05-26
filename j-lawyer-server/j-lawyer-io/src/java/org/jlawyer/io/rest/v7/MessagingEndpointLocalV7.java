@@ -680,4 +680,6 @@ public interface MessagingEndpointLocalV7 {
     
     public Response getMessagesSince(int seconds);
     
+    public Response markMentionDone(String id);
+    
 }
