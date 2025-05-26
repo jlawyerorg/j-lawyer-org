@@ -1899,7 +1899,7 @@
                               <EmptySpace max="-2" attributes="0"/>
                               <Group type="103" groupAlignment="0" attributes="0">
                                   <Component id="jScrollPane10" alignment="0" max="32767" attributes="0"/>
-                                  <Component id="jPanel17" alignment="1" pref="943" max="32767" attributes="0"/>
+                                  <Component id="jPanel17" alignment="1" pref="957" max="32767" attributes="0"/>
                                   <Group type="102" attributes="0">
                                       <Component id="cmdAddAccountEntry" min="-2" max="-2" attributes="0"/>
                                       <EmptySpace max="-2" attributes="0"/>
@@ -1908,6 +1908,8 @@
                                       <Component id="cmdDuplicateAccountEntry" min="-2" max="-2" attributes="0"/>
                                       <EmptySpace max="-2" attributes="0"/>
                                       <Component id="cmdRemoveAccountEntry" min="-2" max="-2" attributes="0"/>
+                                      <EmptySpace type="separate" max="-2" attributes="0"/>
+                                      <Component id="cmdPaymentFromAccountEntry" min="-2" max="-2" attributes="0"/>
                                       <EmptySpace max="32767" attributes="0"/>
                                       <Component id="cmdExportAccountEntries" min="-2" max="-2" attributes="0"/>
                                   </Group>
@@ -1922,19 +1924,22 @@
                       <Group type="103" groupAlignment="0" attributes="0">
                           <Group type="102" alignment="0" attributes="0">
                               <EmptySpace max="-2" attributes="0"/>
-                              <Group type="103" groupAlignment="1" attributes="0">
-                                  <Group type="103" groupAlignment="0" attributes="0">
-                                      <Group type="103" groupAlignment="3" attributes="0">
-                                          <Component id="cmdAddAccountEntry" alignment="3" min="-2" max="-2" attributes="0"/>
-                                          <Component id="cmdEditAccountEntry" alignment="3" min="-2" max="-2" attributes="0"/>
+                              <Group type="103" groupAlignment="0" attributes="0">
+                                  <Group type="103" groupAlignment="1" attributes="0">
+                                      <Group type="103" groupAlignment="0" attributes="0">
+                                          <Group type="103" groupAlignment="3" attributes="0">
+                                              <Component id="cmdAddAccountEntry" alignment="3" min="-2" max="-2" attributes="0"/>
+                                              <Component id="cmdEditAccountEntry" alignment="3" min="-2" max="-2" attributes="0"/>
+                                          </Group>
+                                          <Component id="cmdRemoveAccountEntry" alignment="1" min="-2" max="-2" attributes="0"/>
                                       </Group>
-                                      <Component id="cmdRemoveAccountEntry" alignment="1" min="-2" max="-2" attributes="0"/>
+                                      <Component id="cmdExportAccountEntries" min="-2" max="-2" attributes="0"/>
+                                      <Component id="cmdDuplicateAccountEntry" min="-2" max="-2" attributes="0"/>
                                   </Group>
-                                  <Component id="cmdExportAccountEntries" min="-2" max="-2" attributes="0"/>
-                                  <Component id="cmdDuplicateAccountEntry" min="-2" max="-2" attributes="0"/>
+                                  <Component id="cmdPaymentFromAccountEntry" min="-2" max="-2" attributes="0"/>
                               </Group>
                               <EmptySpace max="-2" attributes="0"/>
-                              <Component id="jScrollPane10" pref="682" max="32767" attributes="0"/>
+                              <Component id="jScrollPane10" pref="693" max="32767" attributes="0"/>
                               <EmptySpace max="-2" attributes="0"/>
                               <Component id="jPanel17" min="-2" max="-2" attributes="0"/>
                               <EmptySpace min="0" pref="0" max="-2" attributes="0"/>
@@ -2413,6 +2418,17 @@
                       </Properties>
                       <Events>
                         <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="cmdDuplicateAccountEntryActionPerformed"/>
+                      </Events>
+                    </Component>
+                    <Component class="javax.swing.JButton" name="cmdPaymentFromAccountEntry">
+                      <Properties>
+                        <Property name="icon" type="javax.swing.Icon" editor="org.netbeans.modules.form.editors2.IconEditor">
+                          <Image iconType="3" name="/icons16/material/credit_card_20dp_0E72B5.png"/>
+                        </Property>
+                        <Property name="toolTipText" type="java.lang.String" value="neue Zahlung aus Buchung im Aktenkonto"/>
+                      </Properties>
+                      <Events>
+                        <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="cmdPaymentFromAccountEntryActionPerformed"/>
                       </Events>
                     </Component>
                   </SubComponents>

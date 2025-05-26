@@ -1918,6 +1918,7 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
         lblExpendituresTotal = new javax.swing.JLabel();
         cmdExportAccountEntries = new javax.swing.JButton();
         cmdDuplicateAccountEntry = new javax.swing.JButton();
+        cmdPaymentFromAccountEntry = new javax.swing.JButton();
         jPanel19 = new javax.swing.JPanel();
         jLabel29 = new javax.swing.JLabel();
         cmdNewPayment = new javax.swing.JButton();
@@ -3273,6 +3274,14 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
             }
         });
 
+        cmdPaymentFromAccountEntry.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons16/material/credit_card_20dp_0E72B5.png"))); // NOI18N
+        cmdPaymentFromAccountEntry.setToolTipText("neue Zahlung aus Buchung im Aktenkonto");
+        cmdPaymentFromAccountEntry.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                cmdPaymentFromAccountEntryActionPerformed(evt);
+            }
+        });
+
         org.jdesktop.layout.GroupLayout jPanel15Layout = new org.jdesktop.layout.GroupLayout(jPanel15);
         jPanel15.setLayout(jPanel15Layout);
         jPanel15Layout.setHorizontalGroup(
@@ -3281,7 +3290,7 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
                 .addContainerGap()
                 .add(jPanel15Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
                     .add(jScrollPane10)
-                    .add(org.jdesktop.layout.GroupLayout.TRAILING, jPanel17, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 943, Short.MAX_VALUE)
+                    .add(org.jdesktop.layout.GroupLayout.TRAILING, jPanel17, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 957, Short.MAX_VALUE)
                     .add(jPanel15Layout.createSequentialGroup()
                         .add(cmdAddAccountEntry)
                         .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
@@ -3290,6 +3299,8 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
                         .add(cmdDuplicateAccountEntry)
                         .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
                         .add(cmdRemoveAccountEntry)
+                        .add(18, 18, 18)
+                        .add(cmdPaymentFromAccountEntry)
                         .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                         .add(cmdExportAccountEntries))
                     .add(jPanel16, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
@@ -3300,16 +3311,18 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
             jPanel15Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
             .add(jPanel15Layout.createSequentialGroup()
                 .addContainerGap()
-                .add(jPanel15Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.TRAILING)
-                    .add(jPanel15Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
-                        .add(jPanel15Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.BASELINE)
-                            .add(cmdAddAccountEntry)
-                            .add(cmdEditAccountEntry))
-                        .add(org.jdesktop.layout.GroupLayout.TRAILING, cmdRemoveAccountEntry))
-                    .add(cmdExportAccountEntries)
-                    .add(cmdDuplicateAccountEntry))
+                .add(jPanel15Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
+                    .add(jPanel15Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.TRAILING)
+                        .add(jPanel15Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
+                            .add(jPanel15Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.BASELINE)
+                                .add(cmdAddAccountEntry)
+                                .add(cmdEditAccountEntry))
+                            .add(org.jdesktop.layout.GroupLayout.TRAILING, cmdRemoveAccountEntry))
+                        .add(cmdExportAccountEntries)
+                        .add(cmdDuplicateAccountEntry))
+                    .add(cmdPaymentFromAccountEntry))
                 .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
-                .add(jScrollPane10, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 682, Short.MAX_VALUE)
+                .add(jScrollPane10, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 693, Short.MAX_VALUE)
                 .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
                 .add(jPanel17, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
                 .add(0, 0, 0)
@@ -7369,6 +7382,56 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
         this.pnlPayments.revalidate();
     }//GEN-LAST:event_cmdNewPaymentActionPerformed
 
+    private void cmdPaymentFromAccountEntryActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdPaymentFromAccountEntryActionPerformed
+        int[] selected = this.tblAccountEntries.getSelectedRows();
+        if (selected.length != 1) {
+            return;
+        }
+
+        ClientSettings settings = ClientSettings.getInstance();
+        AccountEntryRowIdentifier ae = (AccountEntryRowIdentifier) this.tblAccountEntries.getValueAt(this.tblAccountEntries.getSelectedRow(), 0);
+
+//        ArrayList<Invoice> invoices = new ArrayList<>();
+//        for (int i = 0; i < this.pnlInvoices.getComponentCount(); i++) {
+//            InvoiceEntryPanel ie = (InvoiceEntryPanel) this.pnlInvoices.getComponent(i);
+//            Invoice inv = ie.getInvoice();
+//            invoices.add(inv);
+//        }
+
+//        CaseAccountEntry newEntry = new CaseAccountEntry();
+//        newEntry.setArchiveFileKey(ae.getAccountEntry().getArchiveFileKey());
+//        newEntry.setContact(ae.getAccountEntry().getContact());
+//        newEntry.setDescription(ae.getAccountEntry().getDescription());
+//        newEntry.setEarnings(ae.getAccountEntry().getEarnings());
+//        newEntry.setEntryDate(new Date());
+//        newEntry.setEscrowIn(ae.getAccountEntry().getEscrowIn());
+//        newEntry.setEscrowOut(ae.getAccountEntry().getEscrowOut());
+//        newEntry.setExpendituresIn(ae.getAccountEntry().getExpendituresIn());
+//        newEntry.setExpendituresOut(ae.getAccountEntry().getExpendituresOut());
+//        newEntry.setId(null);
+//        newEntry.setInvoice(ae.getAccountEntry().getInvoice());
+//        newEntry.setSpendings(ae.getAccountEntry().getSpendings());
+
+        SplitPaymentDialog dlg=new SplitPaymentDialog(EditorsRegistry.getInstance().getMainWindow(), true, this.dto, ae.getAccountEntry(), this.pnlInvolvedParties.getInvolvedPartiesAddress());
+
+        FrameUtils.centerDialog(dlg, EditorsRegistry.getInstance().getMainWindow());
+        dlg.setVisible(true);
+//        if (dlg.getEntry() != null) {
+//            CaseAccountEntry e = dlg.getEntry();
+//            try {
+//                JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
+//                ArchiveFileServiceRemote caseService = locator.lookupArchiveFileServiceRemote();
+//                e = caseService.addAccountEntry(this.dto.getId(), e);
+//                this.addAccountEntryRow(e);
+//
+//                this.updateAccountTotals();
+//            } catch (Throwable ex) {
+//                log.error("Error saving account entry", ex);
+//                JOptionPane.showMessageDialog(this, "Buchungseintrag konnte nicht aktualisiert werden: " + ex.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
+//            }
+//        }
+    }//GEN-LAST:event_cmdPaymentFromAccountEntryActionPerformed
+
     public void exportSelectedDocumentsAsPdf() {
 
         ArrayList<ArchiveFileDocumentsBean> selectedDocs = this.caseFolderPanel1.getSelectedDocuments();
@@ -7964,6 +8027,7 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
     private javax.swing.JButton cmdNewPayment;
     private javax.swing.JButton cmdNewRvg;
     private javax.swing.JButton cmdNewTimesheet;
+    private javax.swing.JButton cmdPaymentFromAccountEntry;
     private javax.swing.JButton cmdPrint;
     private javax.swing.JButton cmdRemoveAccountEntry;
     private javax.swing.JButton cmdSave;
