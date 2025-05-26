@@ -665,6 +665,7 @@ package com.jdimension.jlawyer.client.editors.files;
 
 import com.jdimension.jlawyer.client.editors.EditorsRegistry;
 import com.jdimension.jlawyer.client.settings.ClientSettings;
+import com.jdimension.jlawyer.client.settings.UserSettings;
 import com.jdimension.jlawyer.client.utils.FrameUtils;
 import com.jdimension.jlawyer.client.utils.StringUtils;
 import com.jdimension.jlawyer.persistence.AddressBean;
@@ -748,6 +749,13 @@ public class PaymentEntryPanel extends javax.swing.JPanel {
         } else {
             this.lblRecipient.setText(" ");
         }
+        
+        if(!StringUtils.isEmpty(payment.getSender())) {
+            lblSender.setText(payment.getSender());
+            lblSender.setIcon(UserSettings.getInstance().getUserSmallIcon(payment.getSender()));
+        } else {
+            lblSender.setText("");
+        }
 
         this.lblTotal.setText(totalFormat.format(payment.getTotal()) + " " + payment.getCurrency());
 
@@ -776,6 +784,8 @@ public class PaymentEntryPanel extends javax.swing.JPanel {
         lblTotal = new javax.swing.JLabel();
         jLabel2 = new javax.swing.JLabel();
         cmdMarkAsPayed = new javax.swing.JButton();
+        jLabel1 = new javax.swing.JLabel();
+        lblSender = new javax.swing.JLabel();
 
         lblPaymentNumber.setFont(lblPaymentNumber.getFont().deriveFont(lblPaymentNumber.getFont().getStyle() | java.awt.Font.BOLD));
         lblPaymentNumber.setText("RG123");
@@ -835,6 +845,10 @@ public class PaymentEntryPanel extends javax.swing.JPanel {
             }
         });
 
+        jLabel1.setText("von:");
+
+        lblSender.setText("admin");
+
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(this);
         this.setLayout(layout);
         layout.setHorizontalGroup(
@@ -847,8 +861,12 @@ public class PaymentEntryPanel extends javax.swing.JPanel {
                 .addGap(18, 18, 18)
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                     .addGroup(layout.createSequentialGroup()
+                        .addComponent(jLabel1)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addComponent(lblSender)
+                        .addGap(18, 18, 18)
                         .addComponent(lblRecipient)
-                        .addGap(0, 0, Short.MAX_VALUE))
+                        .addContainerGap())
                     .addGroup(layout.createSequentialGroup()
                         .addComponent(cmdDelete)
                         .addGap(18, 18, 18)
@@ -892,7 +910,10 @@ public class PaymentEntryPanel extends javax.swing.JPanel {
                             .addComponent(lblPaymentType)
                             .addComponent(lblName))))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(lblRecipient)
+                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                    .addComponent(jLabel1)
+                    .addComponent(lblSender)
+                    .addComponent(lblRecipient))
                 .addContainerGap())
         );
     }// </editor-fold>//GEN-END:initComponents
@@ -953,11 +974,13 @@ public class PaymentEntryPanel extends javax.swing.JPanel {
     private javax.swing.JButton cmdDuplicate;
     private javax.swing.JButton cmdMarkAsPayed;
     private javax.swing.JButton cmdOpen;
+    private javax.swing.JLabel jLabel1;
     private javax.swing.JLabel jLabel2;
     private javax.swing.JLabel lblName;
     private javax.swing.JLabel lblPaymentNumber;
     private javax.swing.JLabel lblPaymentType;
     private javax.swing.JLabel lblRecipient;
+    private javax.swing.JLabel lblSender;
     private javax.swing.JLabel lblStatus;
     private javax.swing.JLabel lblTargetDate;
     private javax.swing.JLabel lblTotal;

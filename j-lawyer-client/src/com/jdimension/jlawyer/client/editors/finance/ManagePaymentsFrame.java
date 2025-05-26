@@ -664,6 +664,8 @@ For more information on this, and how to apply and follow the GNU AGPL, see
 package com.jdimension.jlawyer.client.editors.finance;
 
 import com.jdimension.jlawyer.client.settings.ClientSettings;
+import com.jdimension.jlawyer.client.settings.UserSettings;
+import com.jdimension.jlawyer.persistence.AppUserBean;
 import com.jdimension.jlawyer.persistence.Invoice;
 import com.jdimension.jlawyer.persistence.Payment;
 import com.jdimension.jlawyer.services.JLawyerServiceLocator;
@@ -672,6 +674,7 @@ import java.math.BigDecimal;
 import java.text.DecimalFormat;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import javax.swing.ImageIcon;
 import javax.swing.JFileChooser;
@@ -707,16 +710,31 @@ public class ManagePaymentsFrame extends javax.swing.JFrame {
 
             boolean valid = SEPAValidatorIBAN.isValid("DE4485095004768306");
             System.out.println("IBAN valid: " + valid);
-            
-            final SEPABankAccount sender = new SEPABankAccount(
-                    "DE4485095004768306",
-                    "GREBDEH1",
-                    "Off"
-            );
-            
-            List<SEPATransaction> transactions = new ArrayList<>();
-            for(Payment p: openPayments) {
-                transactions.add(new SEPATransaction(
+
+            // group payments by sender IBAN - need to generate one file for each bank account
+            HashMap<String, List<Payment>> paymentsBySender = new HashMap<>();
+            for (Payment p : openPayments) {
+                AppUserBean sender = UserSettings.getInstance().getUser(p.getSender());
+                String senderIban = null;
+                if (sender != null) {
+                    senderIban = sender.getBankIban();
+                    senderIban = senderIban.replace(" ", "");
+                }
+                if (senderIban == null) {
+                    this.taSepa.append("Sender oder dessen IBAN ungültig" + System.lineSeparator());
+                    continue;
+                }
+                if (!paymentsBySender.containsKey(senderIban)) {
+                    paymentsBySender.put(senderIban, new ArrayList<>());
+                }
+                paymentsBySender.get(senderIban).add(p);
+            }
+
+            for (String iban : paymentsBySender.keySet()) {
+                List<Payment> paymentsForIban = paymentsBySender.get(iban);
+                List<SEPATransaction> transactions = new ArrayList<>();
+                for (Payment p : paymentsForIban) {
+                    transactions.add(new SEPATransaction(
                             new SEPABankAccount(
                                     p.getContact().getBankAccount(),
                                     p.getContact().getBankCode(),
@@ -726,20 +744,24 @@ public class ManagePaymentsFrame extends javax.swing.JFrame {
                             p.getReason(),
                             SEPATransaction.Currency.EUR
                     ));
+                }
+                final SEPABankAccount sender = new SEPABankAccount(
+                        iban,
+                        UserSettings.getInstance().getUser(paymentsForIban.get(0).getSender()).getBankBic(),
+                        UserSettings.getInstance().getUser(paymentsForIban.get(0).getSender()).getCompany()
+                );
+                SEPA sepa = new SEPACreditTransfer(SEPA.PaymentMethods.TransferAdvice, sender, transactions);
+                ByteArrayOutputStream bout = new ByteArrayOutputStream();
+                sepa.write(bout);
+
+                String sepaString = bout.toString();
+                sepaString = sepaString.replace("CstmrCdtTrfInitn xmlns=\"\"", "CstmrCdtTrfInitn");
+
+                taSepa.append(System.lineSeparator() + "SEPA-XML für IBAN " + iban + System.lineSeparator());
+
+                //CstmrCdtTrfInitn xmlns=""
+                taSepa.append(sepaString + System.lineSeparator() + System.lineSeparator());
             }
-
-
-            SEPA sepa = new SEPACreditTransfer(SEPA.PaymentMethods.TransferAdvice, sender, transactions);
-
-            ByteArrayOutputStream bout = new ByteArrayOutputStream();
-
-            sepa.write(bout);
-
-            String sepaString = bout.toString();
-            sepaString = sepaString.replace("CstmrCdtTrfInitn xmlns=\"\"", "CstmrCdtTrfInitn");
-
-            //CstmrCdtTrfInitn xmlns=""
-            taSepa.setText(sepaString);
 
         } catch (Exception ex) {
             log.error("Error connecting to server", ex);
