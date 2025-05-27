@@ -2256,7 +2256,7 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
         SecurityUtils.checkGroupsForCase(context.getCallerPrincipal().getName(), aFile, this.securityFacade, this.getAllowedGroups(aFile));
 
         ArchiveFileDocumentsBean existingDoc = this.archiveFileDocumentsFacade.findByArchiveFileKey(aFile, newName);
-        if (existingDoc != null) {
+        if (existingDoc != null && !id.equals(existingDoc.getId())) {
             throw new Exception("Dokument " + newName + " existiert bereits in der Akte oder deren Papierkorb - bitte einen anderen Namen wählen!");
         }
 
@@ -7020,13 +7020,15 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
             StringGenerator idGen = new StringGenerator();
 
             // use file number as identifier, remove special characters because it may cause issues in banking
-            String paymentNumberPrefix=ServerFileUtils.sanitizeFileName(aFile.getFileNumber()) + "-" + new SimpleDateFormat("yyyyMMdd").format(new Date())+"-";
+            //String paymentNumberPrefix=ServerFileUtils.sanitizeFileName(aFile.getFileNumber()) + "-" + new SimpleDateFormat("yyyyMMdd").format(new Date())+"-";
+            String paymentNumberPrefix=ServerFileUtils.sanitizeFileName(aFile.getFileNumber())+"-";
             int i=0;
             boolean paymentNumberExists=true;
             String paymentNumber=null;
+            DecimalFormat df=new DecimalFormat("000");
             while (paymentNumberExists) {
                 i=i+1;
-                paymentNumber=paymentNumberPrefix+i;
+                paymentNumber=paymentNumberPrefix+df.format(i);
                 Payment existingPayment = this.paymentsFacade.findByPaymentNumber(paymentNumber);
                 if(existingPayment==null) {
                     break;
