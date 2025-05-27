@@ -1262,7 +1262,7 @@ public class ImportBankStatementFrame extends javax.swing.JFrame {
     private void cmdNextActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdNextActionPerformed
         this.processActions();
         this.txIndex++;
-        this.cmdNext.setEnabled(transactions.size() - 1 >= this.txIndex);
+        this.cmdNext.setEnabled(transactions.size() - 1 > this.txIndex);
         this.cmdPrevious.setEnabled(this.txIndex > 0);
         this.loadTransaction(txIndex);
     }//GEN-LAST:event_cmdNextActionPerformed
@@ -1270,7 +1270,7 @@ public class ImportBankStatementFrame extends javax.swing.JFrame {
     private void cmdPreviousActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdPreviousActionPerformed
         this.processActions();
         this.txIndex--;
-        this.cmdNext.setEnabled(transactions.size() - 1 >= this.txIndex);
+        this.cmdNext.setEnabled(transactions.size() - 1 > this.txIndex);
         this.cmdPrevious.setEnabled(this.txIndex > 0);
         this.loadTransaction(txIndex);
     }//GEN-LAST:event_cmdPreviousActionPerformed
