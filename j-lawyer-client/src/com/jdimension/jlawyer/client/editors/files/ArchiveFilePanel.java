@@ -7388,7 +7388,6 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
             return;
         }
 
-        ClientSettings settings = ClientSettings.getInstance();
         AccountEntryRowIdentifier ae = (AccountEntryRowIdentifier) this.tblAccountEntries.getValueAt(this.tblAccountEntries.getSelectedRow(), 0);
 
         SplitPaymentDialog dlg=new SplitPaymentDialog(EditorsRegistry.getInstance().getMainWindow(), true, this.dto, ae.getAccountEntry(), this.pnlInvolvedParties.getInvolvedPartiesAddress());
