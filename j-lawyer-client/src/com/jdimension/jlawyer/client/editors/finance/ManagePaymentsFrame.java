@@ -734,16 +734,21 @@ public class ManagePaymentsFrame extends javax.swing.JFrame {
                 List<Payment> paymentsForIban = paymentsBySender.get(iban);
                 List<SEPATransaction> transactions = new ArrayList<>();
                 for (Payment p : paymentsForIban) {
-                    transactions.add(new SEPATransaction(
-                            new SEPABankAccount(
-                                    p.getContact().getBankAccount(),
-                                    p.getContact().getBankCode(),
-                                    p.getContact().toDisplayName()
-                            ),
-                            p.getTotal(),
-                            p.getReason(),
-                            SEPATransaction.Currency.EUR
-                    ));
+                    try {
+                        transactions.add(new SEPATransaction(
+                                new SEPABankAccount(
+                                        p.getContact().getBankAccount(),
+                                        p.getContact().getBankCode(),
+                                        p.getContact().toDisplayName()
+                                ),
+                                p.getTotal(),
+                                p.getPaymentNumber() + " " + p.getReason(),
+                                SEPATransaction.Currency.EUR
+                        ));
+                    } catch (Exception ex) {
+                        log.error("Could not add transaction to SEPA XML: " + p.getPaymentNumber());
+                        JOptionPane.showMessageDialog(this, "Zahlung " + p.getPaymentNumber() + " kann nicht exportiert werden: " + ex.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
+                    }
                 }
                 final SEPABankAccount sender = new SEPABankAccount(
                         iban,
