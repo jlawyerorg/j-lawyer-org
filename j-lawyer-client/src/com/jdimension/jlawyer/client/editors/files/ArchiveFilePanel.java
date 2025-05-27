@@ -7391,45 +7391,19 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
         ClientSettings settings = ClientSettings.getInstance();
         AccountEntryRowIdentifier ae = (AccountEntryRowIdentifier) this.tblAccountEntries.getValueAt(this.tblAccountEntries.getSelectedRow(), 0);
 
-//        ArrayList<Invoice> invoices = new ArrayList<>();
-//        for (int i = 0; i < this.pnlInvoices.getComponentCount(); i++) {
-//            InvoiceEntryPanel ie = (InvoiceEntryPanel) this.pnlInvoices.getComponent(i);
-//            Invoice inv = ie.getInvoice();
-//            invoices.add(inv);
-//        }
-
-//        CaseAccountEntry newEntry = new CaseAccountEntry();
-//        newEntry.setArchiveFileKey(ae.getAccountEntry().getArchiveFileKey());
-//        newEntry.setContact(ae.getAccountEntry().getContact());
-//        newEntry.setDescription(ae.getAccountEntry().getDescription());
-//        newEntry.setEarnings(ae.getAccountEntry().getEarnings());
-//        newEntry.setEntryDate(new Date());
-//        newEntry.setEscrowIn(ae.getAccountEntry().getEscrowIn());
-//        newEntry.setEscrowOut(ae.getAccountEntry().getEscrowOut());
-//        newEntry.setExpendituresIn(ae.getAccountEntry().getExpendituresIn());
-//        newEntry.setExpendituresOut(ae.getAccountEntry().getExpendituresOut());
-//        newEntry.setId(null);
-//        newEntry.setInvoice(ae.getAccountEntry().getInvoice());
-//        newEntry.setSpendings(ae.getAccountEntry().getSpendings());
-
         SplitPaymentDialog dlg=new SplitPaymentDialog(EditorsRegistry.getInstance().getMainWindow(), true, this.dto, ae.getAccountEntry(), this.pnlInvolvedParties.getInvolvedPartiesAddress());
 
         FrameUtils.centerDialog(dlg, EditorsRegistry.getInstance().getMainWindow());
         dlg.setVisible(true);
-//        if (dlg.getEntry() != null) {
-//            CaseAccountEntry e = dlg.getEntry();
-//            try {
-//                JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
-//                ArchiveFileServiceRemote caseService = locator.lookupArchiveFileServiceRemote();
-//                e = caseService.addAccountEntry(this.dto.getId(), e);
-//                this.addAccountEntryRow(e);
-//
-//                this.updateAccountTotals();
-//            } catch (Throwable ex) {
-//                log.error("Error saving account entry", ex);
-//                JOptionPane.showMessageDialog(this, "Buchungseintrag konnte nicht aktualisiert werden: " + ex.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
-//            }
-//        }
+        if(dlg.getSplitPayments()!=null) {
+            for (Payment p : dlg.getSplitPayments()) {
+                PaymentEntryPanel pep = new PaymentEntryPanel(this);
+                pep.setEntry(this.dto, p, this.pnlInvolvedParties.getInvolvedPartiesAddress());
+                this.pnlPayments.add(pep, 0);
+                this.pnlPayments.revalidate();
+            }
+        }
+       
     }//GEN-LAST:event_cmdPaymentFromAccountEntryActionPerformed
 
     public void exportSelectedDocumentsAsPdf() {

@@ -663,7 +663,11 @@ For more information on this, and how to apply and follow the GNU AGPL, see
  */
 package com.jdimension.jlawyer.client.editors.files;
 
+import com.jdimension.jlawyer.persistence.AddressBean;
+import java.awt.event.ActionEvent;
 import java.math.BigDecimal;
+import java.util.List;
+import javax.swing.JMenuItem;
 import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
 
@@ -674,15 +678,29 @@ import javax.swing.event.DocumentListener;
 public class SplitPaymentEntry extends javax.swing.JPanel {
 
     private SplitPaymentDialog parentDlg=null;
+    private AddressBean recipientAddress = null;
     
     /**
      * Creates new form SplitPaymentEntry
      * @param parentDlg
+     * @param addresses
      */
-    public SplitPaymentEntry(SplitPaymentDialog parentDlg) {
+    public SplitPaymentEntry(SplitPaymentDialog parentDlg, List<AddressBean> addresses) {
         initComponents();
         this.parentDlg=parentDlg;
         this.txtTotal.setValue(0f);
+        
+        for (AddressBean ad : addresses) {
+            JMenuItem mi = new JMenuItem();
+            mi.setText(ad.toDisplayName());
+            mi.setToolTipText(ad.toDisplayName() + " als Belegempfänger verwenden");
+            mi.addActionListener((ActionEvent e) -> {
+                lblRecipient.setText(ad.toDisplayName());
+                lblRecipient.setIcon(null);
+                recipientAddress = ad;
+            });
+            this.popRecipients.add(mi);
+        }
         
         this.txtTotal.getDocument().addDocumentListener(new DocumentListener() {
             @Override
@@ -720,6 +738,14 @@ public class SplitPaymentEntry extends javax.swing.JPanel {
         Number t=(Number)this.txtTotal.getValue();
         return BigDecimal.valueOf(t.doubleValue());
     }
+    
+    public String getReason() {
+        return this.txtReason.getText();
+    }
+    
+    public AddressBean getRecipient() {
+        return this.recipientAddress;
+    }
 
     /**
      * This method is called from within the constructor to initialize the form.
@@ -730,10 +756,13 @@ public class SplitPaymentEntry extends javax.swing.JPanel {
     // <editor-fold defaultstate="collapsed" desc="Generated Code">//GEN-BEGIN:initComponents
     private void initComponents() {
 
+        popRecipients = new javax.swing.JPopupMenu();
         txtTotal = new javax.swing.JFormattedTextField();
         txtReason = new javax.swing.JTextField();
         jLabel1 = new javax.swing.JLabel();
         jLabel2 = new javax.swing.JLabel();
+        lblRecipient = new javax.swing.JLabel();
+        cmdSearchRecipient = new javax.swing.JButton();
 
         txtTotal.setColumns(8);
         txtTotal.setFormatterFactory(new javax.swing.text.DefaultFormatterFactory(new javax.swing.text.NumberFormatter(new java.text.DecimalFormat("#0.00"))));
@@ -750,6 +779,18 @@ public class SplitPaymentEntry extends javax.swing.JPanel {
 
         jLabel2.setText("Verwendungszweck");
 
+        lblRecipient.setFont(lblRecipient.getFont());
+        lblRecipient.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/warning.png"))); // NOI18N
+        lblRecipient.setText("Empfänger auswählen");
+
+        cmdSearchRecipient.setFont(cmdSearchRecipient.getFont());
+        cmdSearchRecipient.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/find.png"))); // NOI18N
+        cmdSearchRecipient.addMouseListener(new java.awt.event.MouseAdapter() {
+            public void mousePressed(java.awt.event.MouseEvent evt) {
+                cmdSearchRecipientMousePressed(evt);
+            }
+        });
+
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(this);
         this.setLayout(layout);
         layout.setHorizontalGroup(
@@ -761,10 +802,14 @@ public class SplitPaymentEntry extends javax.swing.JPanel {
                     .addComponent(jLabel1))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addComponent(txtReason)
                     .addGroup(layout.createSequentialGroup()
                         .addComponent(jLabel2)
-                        .addGap(0, 439, Short.MAX_VALUE))
-                    .addComponent(txtReason))
+                        .addGap(0, 0, Short.MAX_VALUE))
+                    .addGroup(layout.createSequentialGroup()
+                        .addComponent(lblRecipient, javax.swing.GroupLayout.DEFAULT_SIZE, 558, Short.MAX_VALUE)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addComponent(cmdSearchRecipient)))
                 .addContainerGap())
         );
         layout.setVerticalGroup(
@@ -778,7 +823,11 @@ public class SplitPaymentEntry extends javax.swing.JPanel {
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                     .addComponent(txtTotal, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                     .addComponent(txtReason, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
-                .addContainerGap())
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                    .addComponent(lblRecipient, javax.swing.GroupLayout.PREFERRED_SIZE, 28, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(cmdSearchRecipient))
+                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
         );
     }// </editor-fold>//GEN-END:initComponents
 
@@ -790,10 +839,17 @@ public class SplitPaymentEntry extends javax.swing.JPanel {
         this.parentDlg.updateTotal();
     }//GEN-LAST:event_txtTotalKeyTyped
 
+    private void cmdSearchRecipientMousePressed(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_cmdSearchRecipientMousePressed
+        this.popRecipients.show(this.cmdSearchRecipient, evt.getX(), evt.getY());
+    }//GEN-LAST:event_cmdSearchRecipientMousePressed
+
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
+    private javax.swing.JButton cmdSearchRecipient;
     private javax.swing.JLabel jLabel1;
     private javax.swing.JLabel jLabel2;
+    private javax.swing.JLabel lblRecipient;
+    private javax.swing.JPopupMenu popRecipients;
     private javax.swing.JTextField txtReason;
     private javax.swing.JFormattedTextField txtTotal;
     // End of variables declaration//GEN-END:variables

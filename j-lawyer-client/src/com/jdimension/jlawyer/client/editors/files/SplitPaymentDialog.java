@@ -663,12 +663,21 @@ For more information on this, and how to apply and follow the GNU AGPL, see
  */
 package com.jdimension.jlawyer.client.editors.files;
 
+import com.jdimension.jlawyer.client.configuration.UserListCellRenderer;
+import com.jdimension.jlawyer.client.settings.ClientSettings;
+import com.jdimension.jlawyer.client.settings.UserSettings;
+import com.jdimension.jlawyer.client.utils.StringUtils;
 import com.jdimension.jlawyer.persistence.AddressBean;
+import com.jdimension.jlawyer.persistence.AppUserBean;
 import com.jdimension.jlawyer.persistence.ArchiveFileBean;
 import com.jdimension.jlawyer.persistence.CaseAccountEntry;
+import com.jdimension.jlawyer.persistence.Payment;
+import com.jdimension.jlawyer.services.JLawyerServiceLocator;
 import java.awt.Component;
 import java.math.BigDecimal;
 import java.text.DecimalFormat;
+import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
 import javax.swing.BoxLayout;
 import javax.swing.JOptionPane;
@@ -681,13 +690,18 @@ import themes.colors.DefaultColorTheme;
  */
 public class SplitPaymentDialog extends javax.swing.JDialog {
 
-    private static final Logger log=Logger.getLogger(SplitPaymentDialog.class.getName());
-    
-    private CaseAccountEntry entry=null;
-    private BigDecimal entryValue=null;
-    
+    private static final Logger log = Logger.getLogger(SplitPaymentDialog.class.getName());
+
+    private ArchiveFileBean dto = null;
+    private CaseAccountEntry entry = null;
+    private BigDecimal entryValue = null;
+    private List<AddressBean> addresses = null;
+    // result of the split
+    List<Payment> payments = null;
+
     /**
      * Creates new form SplitPaymentDialog
+     *
      * @param parent
      * @param modal
      * @param dto
@@ -697,36 +711,52 @@ public class SplitPaymentDialog extends javax.swing.JDialog {
     public SplitPaymentDialog(java.awt.Frame parent, boolean modal, ArchiveFileBean dto, CaseAccountEntry entry, List<AddressBean> addresses) {
         super(parent, modal);
         initComponents();
-        this.entry=entry;
-        
+        this.entry = entry;
+        this.addresses = addresses;
+        this.dto = dto;
+
         BoxLayout boxLayout = new BoxLayout(this.pnlPayments, BoxLayout.Y_AXIS);
         this.pnlPayments.setLayout(boxLayout);
-        
-        BigDecimal value=this.findValue(entry);
-        this.entryValue=value;
-        
-        SplitPaymentEntry pe=new SplitPaymentEntry(this);
+
+        BigDecimal value = this.findValue(entry);
+        this.entryValue = value;
+
+        SplitPaymentEntry pe = new SplitPaymentEntry(this, addresses);
         pe.setValues(value, "");
         this.pnlPayments.add(pe);
-        
-        this.updateTotal();
-        
-    }
-    
-    public void updateTotal() {
-        BigDecimal total=BigDecimal.ZERO;
-        for(Component e: this.pnlPayments.getComponents()) {
-            SplitPaymentEntry pe=(SplitPaymentEntry)e;
-            total=total.add(pe.getTotal());
+
+        List<AppUserBean> allUsers = UserSettings.getInstance().getLoginEnabledUsers();
+        List<String> l2 = new ArrayList<>();
+        l2.add("");
+        for (AppUserBean aub : allUsers) {
+            l2.add(aub.getPrincipalId());
         }
-        DecimalFormat df=new DecimalFormat("0.00");
-        this.lblTotal.setText("" + df.format(total) + " von insgesamt " + df.format(this.entryValue));
-        if(total.compareTo(this.entryValue)==0)
-            this.lblTotal.setForeground(DefaultColorTheme.COLOR_LOGO_GREEN);
-        else
-            this.lblTotal.setForeground(DefaultColorTheme.COLOR_LOGO_RED);
+        String[] userItems = l2.toArray(new String[0]);
+        StringUtils.sortIgnoreCase(userItems);
+        OptionsComboBoxModel userModel = new OptionsComboBoxModel(userItems);
+        this.cmbPaymentSender.setModel(userModel);
+        this.cmbPaymentSender.setRenderer(new UserListCellRenderer());
+        this.cmbPaymentSender.setSelectedItem(UserSettings.getInstance().getCurrentUser().getPrincipalId());
+
+        this.updateTotal();
+
     }
-    
+
+    public void updateTotal() {
+        BigDecimal total = BigDecimal.ZERO;
+        for (Component e : this.pnlPayments.getComponents()) {
+            SplitPaymentEntry pe = (SplitPaymentEntry) e;
+            total = total.add(pe.getTotal());
+        }
+        DecimalFormat df = new DecimalFormat("0.00");
+        this.lblTotal.setText("" + df.format(total) + " von insgesamt " + df.format(this.entryValue));
+        if (total.compareTo(this.entryValue) == 0) {
+            this.lblTotal.setForeground(DefaultColorTheme.COLOR_LOGO_GREEN);
+        } else {
+            this.lblTotal.setForeground(DefaultColorTheme.COLOR_LOGO_RED);
+        }
+    }
+
     /**
      * This method is called from within the constructor to initialize the form.
      * WARNING: Do NOT modify this code. The content of this method is always
@@ -744,6 +774,7 @@ public class SplitPaymentDialog extends javax.swing.JDialog {
         jScrollPane1 = new javax.swing.JScrollPane();
         pnlPayments = new javax.swing.JPanel();
         lblTotal = new javax.swing.JLabel();
+        cmbPaymentSender = new javax.swing.JComboBox<>();
 
         setDefaultCloseOperation(javax.swing.WindowConstants.DISPOSE_ON_CLOSE);
         setTitle("Zahlungen aus Aktenkontobuchung erstellen");
@@ -796,6 +827,9 @@ public class SplitPaymentDialog extends javax.swing.JDialog {
         lblTotal.setFont(lblTotal.getFont());
         lblTotal.setText("Gesamtsumme:");
 
+        cmbPaymentSender.setFont(cmbPaymentSender.getFont());
+        cmbPaymentSender.setModel(new javax.swing.DefaultComboBoxModel<>(new String[] { "Item 1", "Item 2", "Item 3", "Item 4" }));
+
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(getContentPane());
         getContentPane().setLayout(layout);
         layout.setHorizontalGroup(
@@ -816,7 +850,8 @@ public class SplitPaymentDialog extends javax.swing.JDialog {
                         .addComponent(spnNumberOfPayments, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                         .addComponent(jLabel2)
-                        .addGap(0, 0, Short.MAX_VALUE)))
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                        .addComponent(cmbPaymentSender, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)))
                 .addContainerGap())
         );
         layout.setVerticalGroup(
@@ -826,7 +861,8 @@ public class SplitPaymentDialog extends javax.swing.JDialog {
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                     .addComponent(jLabel1)
                     .addComponent(spnNumberOfPayments, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addComponent(jLabel2))
+                    .addComponent(jLabel2)
+                    .addComponent(cmbPaymentSender, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(jScrollPane1)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
@@ -841,39 +877,69 @@ public class SplitPaymentDialog extends javax.swing.JDialog {
     }// </editor-fold>//GEN-END:initComponents
 
     private void cmdCancelActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdCancelActionPerformed
-        this.entry=null;
+        this.entry = null;
+        this.payments = null;
         this.setVisible(false);
         this.dispose();
     }//GEN-LAST:event_cmdCancelActionPerformed
 
     private void cmdSaveActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdSaveActionPerformed
-        try {
-            //this.entry=this.caseAccountEntryPanel1.getEntry();
-        } catch (Exception ex) {
-            log.error("error saving invoice", ex);
-            JOptionPane.showMessageDialog(this, "Fehler beim Speichern der Buchung: " + ex.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
+
+        this.payments = new ArrayList<>();
+        int i = 1;
+        for (Component c : this.pnlPayments.getComponents()) {
+            SplitPaymentEntry pe = (SplitPaymentEntry) c;
+            Payment p = new Payment();
+            p.setContact(pe.getRecipient());
+            p.setSender(this.cmbPaymentSender.getSelectedItem().toString());
+            p.setTotal(pe.getTotal());
+            p.setCreationDate(new Date());
+            p.setTargetDate(new Date());
+            p.setPaymentType(Payment.PAYMENTTYPE_SEPATRANSFER);
+            p.setStatus(Payment.STATUS_NEW);
+            p.setName("Zahlung übernommen aus Aktenkontobuchung");
+            p.setDescription("Teilzahlung " + i + "/" + this.pnlPayments.getComponentCount());
+            p.setReason(pe.getReason());
+            p.setArchiveFileKey(this.dto);
+
+            ClientSettings settings = ClientSettings.getInstance();
+            try {
+                JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
+                p = locator.lookupArchiveFileServiceRemote().addPayment(this.dto.getId(), p);
+            } catch (Exception ex) {
+                log.error("error saving payment", ex);
+                JOptionPane.showMessageDialog(this, "Fehler beim Speichern der Zahlung (" + p.getReason() + "): " + ex.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
+            }
+
+            this.payments.add(p);
+            i++;
         }
-        
+
         this.setVisible(false);
         this.dispose();
-        
+
     }//GEN-LAST:event_cmdSaveActionPerformed
 
     private void spnNumberOfPaymentsStateChanged(javax.swing.event.ChangeEvent evt) {//GEN-FIRST:event_spnNumberOfPaymentsStateChanged
-        int value = (Integer)this.spnNumberOfPayments.getValue();
-        while(this.pnlPayments.getComponentCount()>value) {
-            this.pnlPayments.remove(this.pnlPayments.getComponentCount()-1);
+        int value = (Integer) this.spnNumberOfPayments.getValue();
+        while (this.pnlPayments.getComponentCount() > value) {
+            this.pnlPayments.remove(this.pnlPayments.getComponentCount() - 1);
+            this.pnlPayments.revalidate();
+            this.pnlPayments.doLayout();
             this.jScrollPane1.revalidate();
             this.jScrollPane1.doLayout();
         }
-        while(this.pnlPayments.getComponentCount()<value) {
-            SplitPaymentEntry e=new SplitPaymentEntry(this);
+        while (this.pnlPayments.getComponentCount() < value) {
+            SplitPaymentEntry e = new SplitPaymentEntry(this, this.addresses);
             e.setValues(BigDecimal.ZERO, "");
             this.pnlPayments.add(e);
+            this.pnlPayments.revalidate();
+            this.pnlPayments.doLayout();
             this.jScrollPane1.revalidate();
             this.jScrollPane1.doLayout();
+
         }
-        
+
     }//GEN-LAST:event_spnNumberOfPaymentsStateChanged
 
     /**
@@ -918,6 +984,7 @@ public class SplitPaymentDialog extends javax.swing.JDialog {
     }
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
+    private javax.swing.JComboBox<String> cmbPaymentSender;
     private javax.swing.JButton cmdCancel;
     private javax.swing.JButton cmdSave;
     private javax.swing.JLabel jLabel1;
@@ -935,30 +1002,35 @@ public class SplitPaymentDialog extends javax.swing.JDialog {
         return entry;
     }
 
+    public List<Payment> getSplitPayments() {
+        return this.payments;
+
+    }
+
     public void requestSaveFocus() {
         this.cmdSave.requestFocus();
     }
 
     private BigDecimal findValue(CaseAccountEntry entry) {
-        if(entry.getEscrowIn()!=null && !BigDecimal.ZERO.equals(entry.getEscrowIn())) {
+        if (entry.getEscrowIn() != null && !BigDecimal.ZERO.equals(entry.getEscrowIn())) {
             return entry.getEscrowIn();
         }
-        if(entry.getEscrowOut()!=null && !BigDecimal.ZERO.equals(entry.getEscrowOut())) {
+        if (entry.getEscrowOut() != null && !BigDecimal.ZERO.equals(entry.getEscrowOut())) {
             return entry.getEscrowOut();
         }
-        if(entry.getExpendituresIn()!=null && !BigDecimal.ZERO.equals(entry.getExpendituresIn())) {
+        if (entry.getExpendituresIn() != null && !BigDecimal.ZERO.equals(entry.getExpendituresIn())) {
             return entry.getExpendituresIn();
         }
-        if(entry.getExpendituresOut()!=null && !BigDecimal.ZERO.equals(entry.getExpendituresOut())) {
+        if (entry.getExpendituresOut() != null && !BigDecimal.ZERO.equals(entry.getExpendituresOut())) {
             return entry.getExpendituresOut();
         }
-        if(entry.getEarnings()!=null && !BigDecimal.ZERO.equals(entry.getEarnings())) {
+        if (entry.getEarnings() != null && !BigDecimal.ZERO.equals(entry.getEarnings())) {
             return entry.getEarnings();
         }
-        if(entry.getSpendings()!=null && !BigDecimal.ZERO.equals(entry.getSpendings())) {
+        if (entry.getSpendings() != null && !BigDecimal.ZERO.equals(entry.getSpendings())) {
             return entry.getSpendings();
         }
-        
+
         return BigDecimal.ZERO;
     }
 }
