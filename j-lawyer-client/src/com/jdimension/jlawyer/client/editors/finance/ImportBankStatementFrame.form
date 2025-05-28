@@ -127,7 +127,7 @@
                   <Component id="lblTxIndex" alignment="3" min="-2" max="-2" attributes="0"/>
               </Group>
               <EmptySpace max="-2" attributes="0"/>
-              <Component id="jScrollPane1" pref="297" max="32767" attributes="0"/>
+              <Component id="jScrollPane1" pref="316" max="32767" attributes="0"/>
               <EmptySpace max="-2" attributes="0"/>
               <Component id="lblDuplicateTransaction" min="-2" max="-2" attributes="0"/>
               <EmptySpace max="-2" attributes="0"/>
@@ -140,7 +140,7 @@
                   <Component id="chkMarkAsPaid" min="-2" max="-2" attributes="0"/>
                   <Group type="103" alignment="1" groupAlignment="0" attributes="0">
                       <Component id="lblInvoice" min="-2" pref="31" max="-2" attributes="0"/>
-                      <Group type="103" groupAlignment="3" attributes="0">
+                      <Group type="103" alignment="0" groupAlignment="3" attributes="0">
                           <Component id="cmbInvoices" alignment="3" min="-2" max="-2" attributes="0"/>
                           <Component id="lblInvoiceInfo" alignment="3" min="-2" max="-2" attributes="0"/>
                       </Group>
@@ -154,7 +154,7 @@
                       <Component id="txtAmount" alignment="3" min="-2" max="-2" attributes="0"/>
                   </Group>
                   <Component id="lblInvoice1" min="-2" pref="31" max="-2" attributes="0"/>
-                  <Group type="103" groupAlignment="3" attributes="0">
+                  <Group type="103" alignment="1" groupAlignment="3" attributes="0">
                       <Component id="cmbInvoicesAccountEntry" alignment="3" min="-2" max="-2" attributes="0"/>
                       <Component id="lblInvoiceInfoAccountEntry" alignment="3" min="-2" max="-2" attributes="0"/>
                   </Group>
@@ -171,10 +171,10 @@
               <EmptySpace max="-2" attributes="0"/>
               <Component id="txtEntryDescription" min="-2" max="-2" attributes="0"/>
               <EmptySpace max="-2" attributes="0"/>
-              <Group type="103" groupAlignment="3" attributes="0">
-                  <Component id="lblCaseTags" alignment="3" max="32767" attributes="0"/>
-                  <Component id="cmdCaseTags" alignment="3" pref="0" max="32767" attributes="0"/>
-                  <Component id="jLabel2" max="32767" attributes="0"/>
+              <Group type="103" groupAlignment="0" max="-2" attributes="0">
+                  <Component id="cmdCaseTags" max="32767" attributes="0"/>
+                  <Component id="lblCaseTags" alignment="0" max="32767" attributes="0"/>
+                  <Component id="jLabel2" alignment="0" min="-2" pref="28" max="-2" attributes="0"/>
               </Group>
               <EmptySpace max="-2" attributes="0"/>
           </Group>
@@ -439,7 +439,6 @@
         <Property name="icon" type="javax.swing.Icon" editor="org.netbeans.modules.form.editors2.IconEditor">
           <Image iconType="3" name="/icons16/material/baseline_label_green_36dp.png"/>
         </Property>
-        <Property name="text" type="java.lang.String" value=" "/>
       </Properties>
       <Events>
         <EventHandler event="mousePressed" listener="java.awt.event.MouseListener" parameters="java.awt.event.MouseEvent" handler="cmdCaseTagsMousePressed"/>

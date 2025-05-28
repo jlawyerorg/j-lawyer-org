@@ -914,7 +914,6 @@ public class ImportBankStatementFrame extends javax.swing.JFrame {
         });
 
         cmdCaseTags.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons16/material/baseline_label_green_36dp.png"))); // NOI18N
-        cmdCaseTags.setText(" ");
         cmdCaseTags.addMouseListener(new java.awt.event.MouseAdapter() {
             public void mousePressed(java.awt.event.MouseEvent evt) {
                 cmdCaseTagsMousePressed(evt);
@@ -1022,7 +1021,7 @@ public class ImportBankStatementFrame extends javax.swing.JFrame {
                     .addComponent(cmbCsvConfig, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                     .addComponent(lblTxIndex))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(jScrollPane1, javax.swing.GroupLayout.DEFAULT_SIZE, 297, Short.MAX_VALUE)
+                .addComponent(jScrollPane1, javax.swing.GroupLayout.DEFAULT_SIZE, 316, Short.MAX_VALUE)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(lblDuplicateTransaction)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
@@ -1058,10 +1057,10 @@ public class ImportBankStatementFrame extends javax.swing.JFrame {
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(txtEntryDescription, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
+                    .addComponent(cmdCaseTags, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                     .addComponent(lblCaseTags, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                    .addComponent(cmdCaseTags, javax.swing.GroupLayout.PREFERRED_SIZE, 0, Short.MAX_VALUE)
-                    .addComponent(jLabel2, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                    .addComponent(jLabel2, javax.swing.GroupLayout.PREFERRED_SIZE, 28, javax.swing.GroupLayout.PREFERRED_SIZE))
                 .addContainerGap())
         );
 
@@ -1262,7 +1261,7 @@ public class ImportBankStatementFrame extends javax.swing.JFrame {
     private void cmdNextActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdNextActionPerformed
         this.processActions();
         this.txIndex++;
-        this.cmdNext.setEnabled(transactions.size() - 1 >= this.txIndex);
+        this.cmdNext.setEnabled(transactions.size() - 1 > this.txIndex);
         this.cmdPrevious.setEnabled(this.txIndex > 0);
         this.loadTransaction(txIndex);
     }//GEN-LAST:event_cmdNextActionPerformed
@@ -1270,7 +1269,7 @@ public class ImportBankStatementFrame extends javax.swing.JFrame {
     private void cmdPreviousActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdPreviousActionPerformed
         this.processActions();
         this.txIndex--;
-        this.cmdNext.setEnabled(transactions.size() - 1 >= this.txIndex);
+        this.cmdNext.setEnabled(transactions.size() - 1 > this.txIndex);
         this.cmdPrevious.setEnabled(this.txIndex > 0);
         this.loadTransaction(txIndex);
     }//GEN-LAST:event_cmdPreviousActionPerformed
@@ -1325,7 +1324,13 @@ public class ImportBankStatementFrame extends javax.swing.JFrame {
             }
             popup.add(mi);
         }
-        allValues.setText(ComponentUtils.getSelectedPopupMenuItemsAsString(popup));
+        String allValuesText=ComponentUtils.getSelectedPopupMenuItemsAsString(popup);
+        String allValuesTooltip=allValuesText;
+        if(allValuesText.length()>50)
+            allValuesText=allValuesText.substring(0,49) + "... (weitere)";
+            
+        allValues.setText(allValuesText);
+        allValues.setToolTipText(allValuesTooltip);
         if (hasSelection) {
             button.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons16/material/baseline_label_green_36dp.png")));
         } else {
@@ -1333,7 +1338,15 @@ public class ImportBankStatementFrame extends javax.swing.JFrame {
         }
         for (MenuElement me : popup.getSubElements()) {
             ((JCheckBoxMenuItem) me.getComponent()).addItemListener((ItemEvent arg0) -> {
-                allValues.setText(ComponentUtils.getSelectedPopupMenuItemsAsString(popup));
+                
+                String avte=ComponentUtils.getSelectedPopupMenuItemsAsString(popup);
+                String avto = avte;
+                if (avte.length() > 50) {
+                    avte = avte.substring(0, 49) + "... (weitere)";
+                }
+
+                allValues.setText(avte);
+                allValues.setToolTipText(avto);
             });
             ((JCheckBoxMenuItem) me.getComponent()).addActionListener((ActionEvent e) -> {
                 if (this.currentCase != null) {
