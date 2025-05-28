@@ -2699,7 +2699,7 @@ public class SystemManagement implements SystemManagementRemote, SystemManagemen
     }
 
     @Override
-    @RolesAllowed(value = {"adminRole"})
+    @RolesAllowed(value = {"loginRole"})
     public TransactionLog getTransactionLog(String hashInput) throws Exception {
         MessageDigest digest = MessageDigest.getInstance("SHA-256");
         byte[] hashBytes = digest.digest(hashInput.getBytes(StandardCharsets.UTF_8));
