@@ -665,6 +665,7 @@ package com.jdimension.jlawyer.client.editors.finance;
 
 import com.jdimension.jlawyer.client.editors.documents.SearchAndAssignDialog;
 import com.jdimension.jlawyer.client.settings.ClientSettings;
+import com.jdimension.jlawyer.client.settings.UserSettings;
 import com.jdimension.jlawyer.client.utils.ComponentUtils;
 import com.jdimension.jlawyer.client.utils.DateUtils;
 import com.jdimension.jlawyer.client.utils.StringUtils;
@@ -678,6 +679,7 @@ import com.jdimension.jlawyer.persistence.BankStatementsCSVConfig;
 import com.jdimension.jlawyer.persistence.CaseAccountEntry;
 import com.jdimension.jlawyer.persistence.Invoice;
 import com.jdimension.jlawyer.persistence.TransactionLog;
+import com.jdimension.jlawyer.server.services.settings.UserSettingsKeys;
 import com.jdimension.jlawyer.services.JLawyerServiceLocator;
 import com.opencsv.CSVParser;
 import com.opencsv.CSVParserBuilder;
@@ -702,6 +704,7 @@ import javax.swing.JButton;
 import javax.swing.JCheckBoxMenuItem;
 import javax.swing.JFileChooser;
 import javax.swing.JLabel;
+import javax.swing.JMenuItem;
 import javax.swing.JOptionPane;
 import javax.swing.JPopupMenu;
 import javax.swing.MenuElement;
@@ -726,6 +729,7 @@ public class ImportBankStatementFrame extends javax.swing.JFrame {
 
     private BankTransaction currentTransaction = null;
     private ArchiveFileBean currentCase = null;
+    private AddressBean recipientAddress = null;
 
     private List<String> allCaseTagsAsString = new ArrayList<>();
 
@@ -753,6 +757,10 @@ public class ImportBankStatementFrame extends javax.swing.JFrame {
         this.lblInvoiceInfo.setText("");
         this.lblInvoiceInfoAccountEntry.setText("");
 
+        this.lblRecipient.setText("...");
+        this.lblRecipient.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/warning.png")));
+        this.recipientAddress = null;
+
         ClientSettings settings = ClientSettings.getInstance();
         try {
             JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
@@ -763,6 +771,11 @@ public class ImportBankStatementFrame extends javax.swing.JFrame {
             for (BankStatementsCSVConfig c : csvConfigs) {
                 this.cmbCsvConfig.addItem(c.getConfigurationName());
             }
+            
+            String lastConfig=UserSettings.getInstance().getSetting(UserSettingsKeys.BANKSTATEMENT_LASTCONFIG, null);
+            if(lastConfig!=null) {
+                this.cmbCsvConfig.setSelectedItem(lastConfig);
+            }
 
             this.contactToIbanTo = locator.lookupAddressServiceRemote().getAddressesWithIban();
 
@@ -772,6 +785,32 @@ public class ImportBankStatementFrame extends javax.swing.JFrame {
         }
 
         this.initializeOptions();
+    }
+
+    private void loadAddressesForCase(ArchiveFileBean targetCase) {
+
+        ClientSettings settings = ClientSettings.getInstance();
+        try {
+            JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
+            List<AddressBean> addresses = locator.lookupArchiveFileServiceRemote().getAddressesForCase(targetCase.getId());
+            this.popRecipients.removeAll();
+            for (AddressBean ad : addresses) {
+                JMenuItem mi = new JMenuItem();
+                mi.setText(ad.toDisplayName());
+                mi.setToolTipText(ad.toDisplayName() + " als Buchungskontakt verwenden");
+                mi.addActionListener((ActionEvent e) -> {
+                    lblRecipient.setText(ad.toDisplayName());
+                    lblRecipient.setIcon(null);
+                    recipientAddress = ad;
+                });
+                this.popRecipients.add(mi);
+            }
+
+        } catch (Exception ex) {
+            log.error("Error connecting to server", ex);
+            JOptionPane.showMessageDialog(this, "Fehler beim der Rechnungen: " + ex.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
+        }
+
     }
 
     /**
@@ -785,6 +824,7 @@ public class ImportBankStatementFrame extends javax.swing.JFrame {
 
         btnGrpAccountEntryType = new javax.swing.ButtonGroup();
         popCaseTags = new javax.swing.JPopupMenu();
+        popRecipients = new javax.swing.JPopupMenu();
         cmdCsvUpload = new javax.swing.JButton();
         jScrollPane1 = new javax.swing.JScrollPane();
         taTransaction = new javax.swing.JTextArea();
@@ -815,6 +855,11 @@ public class ImportBankStatementFrame extends javax.swing.JFrame {
         lblDuplicateTransaction = new javax.swing.JLabel();
         lblInvoiceInfo = new javax.swing.JLabel();
         lblInvoiceInfoAccountEntry = new javax.swing.JLabel();
+        cmdSearchRecipient = new javax.swing.JButton();
+        lblRecipient = new javax.swing.JLabel();
+        jSeparator1 = new javax.swing.JSeparator();
+        jSeparator2 = new javax.swing.JSeparator();
+        jSeparator3 = new javax.swing.JSeparator();
 
         setDefaultCloseOperation(javax.swing.WindowConstants.DISPOSE_ON_CLOSE);
         setTitle("Kontoauszug importieren und buchen");
@@ -940,6 +985,16 @@ public class ImportBankStatementFrame extends javax.swing.JFrame {
         lblInvoiceInfoAccountEntry.setFont(lblInvoiceInfoAccountEntry.getFont());
         lblInvoiceInfoAccountEntry.setText("jLabel3");
 
+        cmdSearchRecipient.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/find.png"))); // NOI18N
+        cmdSearchRecipient.addMouseListener(new java.awt.event.MouseAdapter() {
+            public void mousePressed(java.awt.event.MouseEvent evt) {
+                cmdSearchRecipientMousePressed(evt);
+            }
+        });
+
+        lblRecipient.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/warning.png"))); // NOI18N
+        lblRecipient.setText("...");
+
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(getContentPane());
         getContentPane().setLayout(layout);
         layout.setHorizontalGroup(
@@ -947,6 +1002,8 @@ public class ImportBankStatementFrame extends javax.swing.JFrame {
             .addGroup(layout.createSequentialGroup()
                 .addContainerGap()
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addComponent(jSeparator3)
+                    .addComponent(jSeparator2, javax.swing.GroupLayout.Alignment.TRAILING)
                     .addGroup(layout.createSequentialGroup()
                         .addComponent(cmbCsvConfig, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
@@ -962,9 +1019,16 @@ public class ImportBankStatementFrame extends javax.swing.JFrame {
                         .addComponent(cmdSearchCase)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                         .addComponent(lblCase, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                    .addComponent(lblDuplicateTransaction, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                    .addComponent(jSeparator1)
                     .addGroup(layout.createSequentialGroup()
                         .addGap(27, 27, 27)
-                        .addComponent(txtEntryDescription))
+                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                            .addGroup(layout.createSequentialGroup()
+                                .addComponent(cmdSearchRecipient)
+                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                                .addComponent(lblRecipient, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                            .addComponent(txtEntryDescription)))
                     .addGroup(layout.createSequentialGroup()
                         .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                             .addGroup(layout.createSequentialGroup()
@@ -1006,8 +1070,7 @@ public class ImportBankStatementFrame extends javax.swing.JFrame {
                                 .addComponent(rdEscrowIn)
                                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                                 .addComponent(rdEscrowOut)))
-                        .addGap(0, 0, Short.MAX_VALUE))
-                    .addComponent(lblDuplicateTransaction, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                        .addGap(0, 0, Short.MAX_VALUE)))
                 .addContainerGap())
         );
         layout.setVerticalGroup(
@@ -1021,14 +1084,16 @@ public class ImportBankStatementFrame extends javax.swing.JFrame {
                     .addComponent(cmbCsvConfig, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                     .addComponent(lblTxIndex))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(jScrollPane1, javax.swing.GroupLayout.DEFAULT_SIZE, 316, Short.MAX_VALUE)
+                .addComponent(jScrollPane1, javax.swing.GroupLayout.DEFAULT_SIZE, 247, Short.MAX_VALUE)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(lblDuplicateTransaction)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
                     .addComponent(cmdSearchCase, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                     .addComponent(lblCase, javax.swing.GroupLayout.PREFERRED_SIZE, 28, javax.swing.GroupLayout.PREFERRED_SIZE))
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                .addComponent(jSeparator1, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
                     .addComponent(chkMarkAsPaid)
                     .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
@@ -1036,7 +1101,9 @@ public class ImportBankStatementFrame extends javax.swing.JFrame {
                         .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                             .addComponent(cmbInvoices, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                             .addComponent(lblInvoiceInfo))))
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                .addComponent(jSeparator2, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
                     .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                         .addComponent(chkCreateCaseAccountEntry)
@@ -1056,6 +1123,12 @@ public class ImportBankStatementFrame extends javax.swing.JFrame {
                     .addComponent(rdEscrowOut))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(txtEntryDescription, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
+                    .addComponent(cmdSearchRecipient, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                    .addComponent(lblRecipient, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                .addComponent(jSeparator3, javax.swing.GroupLayout.PREFERRED_SIZE, 10, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
                     .addComponent(cmdCaseTags, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
@@ -1084,6 +1157,8 @@ public class ImportBankStatementFrame extends javax.swing.JFrame {
                 return;
             }
 
+            UserSettings.getInstance().setSetting(UserSettingsKeys.BANKSTATEMENT_LASTCONFIG, this.cmbCsvConfig.getSelectedItem().toString());
+            
             try {
 
                 char delimiter = ';';
@@ -1115,23 +1190,23 @@ public class ImportBankStatementFrame extends javax.swing.JFrame {
                     try {
                         String date = nextLine[csvConfig.getColumnDate()].trim();
                         String fromName = nextLine[csvConfig.getColumnName()].trim();
-                        
+
                         String fromIban = "";
                         if (csvConfig.getColumnIban() > -1) {
                             fromIban = nextLine[csvConfig.getColumnIban()].trim();
                         }
-                        
+
                         String bookingType = "unbekannte Buchungsart";
                         if (csvConfig.getColumnBookingType() > -1) {
                             bookingType = nextLine[csvConfig.getColumnBookingType()].trim();
                         }
-                        
+
                         String purpose = nextLine[csvConfig.getColumnPurpose()].trim();
                         double amount = decf.parse(nextLine[csvConfig.getColumnAmount()].trim()).doubleValue();
-                        
+
                         String currency = "EUR";
                         if (csvConfig.getColumnCurrency() > -1) {
-                            currency=nextLine[csvConfig.getColumnCurrency()].trim();
+                            currency = nextLine[csvConfig.getColumnCurrency()].trim();
                         }
 
                         BankTransaction tx = new BankTransaction(date, fromName, fromIban, bookingType, purpose, amount, currency);
@@ -1164,7 +1239,35 @@ public class ImportBankStatementFrame extends javax.swing.JFrame {
     }//GEN-LAST:event_cmdCsvUploadActionPerformed
 
     private void processActions() {
+
         if (this.currentCase == null) {
+            return;
+        }
+        
+        // nothing to do
+        if(!this.chkMarkAsPaid.isSelected() && !this.chkCreateCaseAccountEntry.isSelected())
+            return;
+        
+        StringBuilder sb=new StringBuilder();
+        sb.append("<html>Buchungen jetzt ausf&uuml;hren?<br/><ul>");
+        if(this.chkMarkAsPaid.isSelected())
+            sb.append("<li>Belegstatus anpassen</li>");
+        if(this.chkCreateCaseAccountEntry.isSelected())
+            sb.append("<li>Buchung im Aktenkonto erstellen</li>");
+        sb.append("</ul></html>");
+        
+        Object[] options = {"Ja", "Nein"}; // Custom labels, optional
+        int response = JOptionPane.showOptionDialog(
+                this,
+                sb.toString(),
+                "Buchungen ausführen?",
+                JOptionPane.YES_NO_OPTION,
+                JOptionPane.QUESTION_MESSAGE,
+                null,
+                options,
+                options[0] // Default selection (focus) is "Ja"
+        );
+        if (response == JOptionPane.NO_OPTION) {
             return;
         }
 
@@ -1207,7 +1310,7 @@ public class ImportBankStatementFrame extends javax.swing.JFrame {
 
                 CaseAccountEntry entry = new CaseAccountEntry();
                 entry.setArchiveFileKey(this.currentCase);
-                entry.setContact(entryContact);
+                entry.setContact(this.recipientAddress);
                 entry.setDescription(this.txtEntryDescription.getText());
                 entry.setEarnings(BigDecimal.ZERO);
                 entry.setEntryDate(DateUtils.parseDate(this.currentTransaction.getDate()));
@@ -1324,11 +1427,12 @@ public class ImportBankStatementFrame extends javax.swing.JFrame {
             }
             popup.add(mi);
         }
-        String allValuesText=ComponentUtils.getSelectedPopupMenuItemsAsString(popup);
-        String allValuesTooltip=allValuesText;
-        if(allValuesText.length()>50)
-            allValuesText=allValuesText.substring(0,49) + "... (weitere)";
-            
+        String allValuesText = ComponentUtils.getSelectedPopupMenuItemsAsString(popup);
+        String allValuesTooltip = allValuesText;
+        if (allValuesText.length() > 50) {
+            allValuesText = allValuesText.substring(0, 49) + "... (weitere)";
+        }
+
         allValues.setText(allValuesText);
         allValues.setToolTipText(allValuesTooltip);
         if (hasSelection) {
@@ -1338,8 +1442,8 @@ public class ImportBankStatementFrame extends javax.swing.JFrame {
         }
         for (MenuElement me : popup.getSubElements()) {
             ((JCheckBoxMenuItem) me.getComponent()).addItemListener((ItemEvent arg0) -> {
-                
-                String avte=ComponentUtils.getSelectedPopupMenuItemsAsString(popup);
+
+                String avte = ComponentUtils.getSelectedPopupMenuItemsAsString(popup);
                 String avto = avte;
                 if (avte.length() > 50) {
                     avte = avte.substring(0, 49) + "... (weitere)";
@@ -1403,6 +1507,7 @@ public class ImportBankStatementFrame extends javax.swing.JFrame {
             if (openInvoice != null) {
                 this.cmbInvoices.setSelectedItem(openInvoice.getInvoiceNumber());
                 this.cmbInvoicesAccountEntry.setSelectedItem(openInvoice.getInvoiceNumber());
+                this.recipientAddress = openInvoice.getContact();
             }
         } catch (Exception ex) {
             log.error("Error connecting to server", ex);
@@ -1419,6 +1524,7 @@ public class ImportBankStatementFrame extends javax.swing.JFrame {
         ArchiveFileBean targetCase = dlg.getCaseSelection();
         if (targetCase != null) {
             this.loadInvoicesForCase(targetCase);
+            this.loadAddressesForCase(targetCase);
         }
         dlg.dispose();
         this.requestFocus();
@@ -1443,15 +1549,27 @@ public class ImportBankStatementFrame extends javax.swing.JFrame {
 
     private void cmbInvoicesAccountEntryItemStateChanged(java.awt.event.ItemEvent evt) {//GEN-FIRST:event_cmbInvoicesAccountEntryItemStateChanged
         if (this.cmbInvoicesAccountEntry.getSelectedItem() != null && this.cmbInvoicesAccountEntry.getSelectedItem().toString().length() > 0) {
+            this.lblRecipient.setText("...");
+            this.lblRecipient.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/warning.png")));
+            this.recipientAddress = null;
             for (Invoice i : this.openInvoices) {
                 if (i.getInvoiceNumber().equals(this.cmbInvoicesAccountEntry.getSelectedItem().toString())) {
                     this.lblInvoiceInfoAccountEntry.setText("Rechnungsbetrag: " + nf.format(i.getTotalGross()));
+                    if (i.getContact() != null) {
+                        this.lblRecipient.setText(i.getContact().toDisplayName());
+                        this.lblRecipient.setIcon(null);
+                        this.recipientAddress = i.getContact();
+                    }
                 }
             }
         } else {
             this.lblInvoiceInfoAccountEntry.setText("");
         }
     }//GEN-LAST:event_cmbInvoicesAccountEntryItemStateChanged
+
+    private void cmdSearchRecipientMousePressed(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_cmdSearchRecipientMousePressed
+        this.popRecipients.show(this.cmdSearchRecipient, evt.getX(), evt.getY());
+    }//GEN-LAST:event_cmdSearchRecipientMousePressed
 
     private void enableActions(Invoice matchingInvoice, ArchiveFileBean matchingCase, double amount) {
         this.cmdCaseTags.setEnabled(matchingCase != null);
@@ -1461,6 +1579,8 @@ public class ImportBankStatementFrame extends javax.swing.JFrame {
         this.chkMarkAsPaid.setSelected(false);
         this.cmbInvoices.setEnabled(matchingCase != null);
         this.cmbInvoicesAccountEntry.setEnabled(matchingCase != null);
+        this.cmdSearchRecipient.setEnabled(matchingCase != null);
+        this.lblRecipient.setEnabled(matchingCase != null);
         this.txtEntryDescription.setEnabled(matchingCase != null);
         this.txtAmount.setEnabled(matchingCase != null);
         this.txtAmount.setEditable(false);
@@ -1491,6 +1611,11 @@ public class ImportBankStatementFrame extends javax.swing.JFrame {
     private void loadTransaction(int index) {
 
         this.enableActions(null, null, 0);
+
+        this.popRecipients.removeAll();
+        this.lblRecipient.setText("...");
+        this.lblRecipient.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/warning.png")));
+        this.recipientAddress = null;
 
         this.lblTxIndex.setText(this.txIndex + 1 + " / " + this.txCount);
 
@@ -1584,6 +1709,10 @@ public class ImportBankStatementFrame extends javax.swing.JFrame {
         this.cmbInvoicesAccountEntry.removeAllItems();
         this.cmbInvoicesAccountEntry.addItem("");
 
+        this.lblRecipient.setText("...");
+        this.lblRecipient.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/warning.png")));
+        this.recipientAddress = null;
+
         if (this.currentTransaction.getAmount() < 0) {
             this.txtAmount.setForeground(DefaultColorTheme.COLOR_LOGO_RED);
         } else {
@@ -1598,6 +1727,7 @@ public class ImportBankStatementFrame extends javax.swing.JFrame {
             this.cmbInvoicesAccountEntry.addItem(invoiceMatch.getInvoiceNumber());
             if (caseMatch != null) {
                 this.currentCase = caseMatch;
+                this.loadAddressesForCase(currentCase);
                 this.buildCheckboxPopup(this.cmdCaseTags, this.popCaseTags, this.allCaseTagsAsString, this.lblCaseTags);
                 this.lblCase.setText(caseMatch.getFileNumber() + " " + caseMatch.getName());
                 String tooltip = "<html><b>" + caseMatch.getFileNumber() + " " + StringUtils.nonNull(caseMatch.getName()) + "</b><br/>" + StringUtils.nonNull(caseMatch.getReason()) + "<br/>" + "Anwalt: " + StringUtils.nonNull(caseMatch.getLawyer()) + "</html>";
@@ -1607,6 +1737,7 @@ public class ImportBankStatementFrame extends javax.swing.JFrame {
             // found not matching invoice but a matching case
             this.enableActions(null, caseMatch, this.currentTransaction.getAmount());
             this.currentCase = caseMatch;
+            this.loadAddressesForCase(currentCase);
             this.loadInvoicesForCase(caseMatch);
             this.buildCheckboxPopup(this.cmdCaseTags, this.popCaseTags, this.allCaseTagsAsString, this.lblCaseTags);
             this.lblCase.setText(caseMatch.getFileNumber() + " " + caseMatch.getName());
@@ -1686,9 +1817,13 @@ public class ImportBankStatementFrame extends javax.swing.JFrame {
     private javax.swing.JButton cmdNext;
     private javax.swing.JButton cmdPrevious;
     private javax.swing.JButton cmdSearchCase;
+    private javax.swing.JButton cmdSearchRecipient;
     private javax.swing.JLabel jLabel1;
     private javax.swing.JLabel jLabel2;
     private javax.swing.JScrollPane jScrollPane1;
+    private javax.swing.JSeparator jSeparator1;
+    private javax.swing.JSeparator jSeparator2;
+    private javax.swing.JSeparator jSeparator3;
     private javax.swing.JLabel lblCase;
     private javax.swing.JLabel lblCaseTags;
     private javax.swing.JLabel lblDuplicateTransaction;
@@ -1696,8 +1831,10 @@ public class ImportBankStatementFrame extends javax.swing.JFrame {
     private javax.swing.JLabel lblInvoice1;
     private javax.swing.JLabel lblInvoiceInfo;
     private javax.swing.JLabel lblInvoiceInfoAccountEntry;
+    private javax.swing.JLabel lblRecipient;
     private javax.swing.JLabel lblTxIndex;
     private javax.swing.JPopupMenu popCaseTags;
+    private javax.swing.JPopupMenu popRecipients;
     private javax.swing.JRadioButton rdEarnings;
     private javax.swing.JRadioButton rdEscrowIn;
     private javax.swing.JRadioButton rdEscrowOut;
