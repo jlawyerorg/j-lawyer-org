@@ -696,7 +696,7 @@ public class DateUtils {
                     
                     // Set pivot year to 80 years before now (adjust as needed)
                     Calendar pivot = Calendar.getInstance();
-                    pivot.set(Calendar.YEAR, 1950); // two-digit years 00-39 => 2000-2039, 40-99 => 1940-1999
+                    pivot.set(Calendar.YEAR, 1950); // two-digit years 00-49 => 2000-2049, 50-99 => 1950-1999
                     sdf.set2DigitYearStart(pivot.getTime());
                     
                     return sdf.parse(dateString);
