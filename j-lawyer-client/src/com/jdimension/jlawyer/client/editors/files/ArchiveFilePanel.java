@@ -6389,7 +6389,7 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
             }
 
             ArrayList<String> open = this.getDocumentsOpenForWrite(selectedDocs);
-            if (open.size() > 0) {
+            if (!open.isEmpty()) {
                 String question = "<html>Soll die Aktion auf geöffnete Dokumente ausgeführt werden? Es besteht das Risiko fehlender / inkonsistenter Inhalte.<br/><ul>";
                 for (String o : open) {
                     question = question + "<li>" + o + "</li>";
@@ -7372,7 +7372,7 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
     }//GEN-LAST:event_mnuMergeToPdfActionPerformed
 
     private void cmdNewPaymentActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdNewPaymentActionPerformed
-        PaymentDialog dlg = new PaymentDialog(null, this, this.dto, EditorsRegistry.getInstance().getMainWindow(), true, this.pnlInvolvedParties.getInvolvedPartiesAddress());
+        PaymentDialog dlg = new PaymentDialog(null, this.dto, EditorsRegistry.getInstance().getMainWindow(), true, this.pnlInvolvedParties.getInvolvedPartiesAddress());
         FrameUtils.centerDialog(dlg, EditorsRegistry.getInstance().getMainWindow());
         dlg.setVisible(true);
 

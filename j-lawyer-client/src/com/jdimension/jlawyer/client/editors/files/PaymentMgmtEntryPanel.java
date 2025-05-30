@@ -663,7 +663,10 @@ For more information on this, and how to apply and follow the GNU AGPL, see
  */
 package com.jdimension.jlawyer.client.editors.files;
 
+import com.jdimension.jlawyer.client.configuration.PopulateOptionsEditor;
+import com.jdimension.jlawyer.client.desktop.DesktopPanel;
 import com.jdimension.jlawyer.client.editors.EditorsRegistry;
+import com.jdimension.jlawyer.client.editors.ThemeableEditor;
 import com.jdimension.jlawyer.client.settings.ClientSettings;
 import com.jdimension.jlawyer.client.settings.UserSettings;
 import com.jdimension.jlawyer.client.utils.FrameUtils;
@@ -671,9 +674,11 @@ import com.jdimension.jlawyer.client.utils.StringUtils;
 import com.jdimension.jlawyer.persistence.AddressBean;
 import com.jdimension.jlawyer.persistence.ArchiveFileBean;
 import com.jdimension.jlawyer.persistence.Payment;
+import com.jdimension.jlawyer.services.ArchiveFileServiceRemote;
 import com.jdimension.jlawyer.services.JLawyerServiceLocator;
 import java.awt.Color;
-import java.awt.Container;
+import java.awt.Component;
+import java.awt.Image;
 import java.math.BigDecimal;
 import java.text.DecimalFormat;
 import java.text.SimpleDateFormat;
@@ -687,34 +692,51 @@ import themes.colors.DefaultColorTheme;
  *
  * @author jens
  */
-public class PaymentEntryPanel extends javax.swing.JPanel {
+public class PaymentMgmtEntryPanel extends javax.swing.JPanel {
 
-    private static final Logger log = Logger.getLogger(PaymentEntryPanel.class.getName());
+    private static final Logger log = Logger.getLogger(PaymentMgmtEntryPanel.class.getName());
     private final SimpleDateFormat df = new SimpleDateFormat("dd.MM.yyyy");
     private final DecimalFormat totalFormat = new DecimalFormat("#0.00");
 
     private ArchiveFileBean caseDto = null;
-    private ArchiveFilePanel caseView = null;
     private Payment payment = null;
     private List<AddressBean> addresses = null;
 
     private BigDecimal paid = BigDecimal.ZERO;
 
     /**
-     * Creates new form PaymentEntryPanel
+     * Creates new form PaymentMgmtEntryPanel
      *
-     * @param caseView
      */
-    public PaymentEntryPanel(ArchiveFilePanel caseView) {
+    public PaymentMgmtEntryPanel() {
         initComponents();
-        this.caseView = caseView;
+    }
+    
+    public void setError(String error) {
+        this.lblError.setForeground(DefaultColorTheme.COLOR_LOGO_RED);
+        if(StringUtils.isEmpty(error))
+            this.lblError.setText("");
+        else
+            this.lblError.setText(error);
+    }
+    
+    public void setSuccess(String success) {
+        this.lblError.setForeground(DefaultColorTheme.COLOR_LOGO_GREEN);
+        if(StringUtils.isEmpty(success))
+            this.lblError.setText("");
+        else
+            this.lblError.setText(success);
     }
 
     public void setEntry(ArchiveFileBean caseDto, Payment payment, List<AddressBean> addresses) {
         this.caseDto = caseDto;
         this.payment = payment;
         this.addresses = addresses;
+        this.lblError.setText("");
+        this.lblError.setForeground(DefaultColorTheme.COLOR_LOGO_RED);
         this.lblPaymentNumber.setText(payment.getPaymentNumber());
+        this.lblCase.setText(caseDto.getFileNumber() + " " + caseDto.getName());
+        this.lblCase.setToolTipText(caseDto.getReason());
         this.lblTargetDate.setText(df.format(payment.getTargetDate()));
         if (payment.getStatus() == Payment.STATUS_CANCELLED || payment.getStatus() == Payment.STATUS_EXECUTED) {
             this.lblTargetDate.setForeground(DefaultColorTheme.COLOR_LOGO_GREEN);
@@ -760,6 +782,8 @@ public class PaymentEntryPanel extends javax.swing.JPanel {
         this.lblTotal.setText(totalFormat.format(payment.getTotal()) + " " + payment.getCurrency());
 
         this.cmdMarkAsPayed.setEnabled(payment.getStatus() != Payment.STATUS_EXECUTED && payment.getStatus() != Payment.STATUS_CANCELLED);
+        this.cmdCancel.setEnabled(payment.getStatus() != Payment.STATUS_CANCELLED && payment.getStatus() != Payment.STATUS_FAILED && payment.getStatus() != Payment.STATUS_EXECUTED);
+        this.cmdApprove.setEnabled(payment.getStatus() != Payment.STATUS_APPROVED && payment.getStatus() != Payment.STATUS_FAILED && payment.getStatus() != Payment.STATUS_EXECUTED);
 
     }
 
@@ -779,13 +803,16 @@ public class PaymentEntryPanel extends javax.swing.JPanel {
         lblStatus = new javax.swing.JLabel();
         lblRecipient = new javax.swing.JLabel();
         lblPaymentType = new javax.swing.JLabel();
-        cmdDelete = new javax.swing.JButton();
-        cmdDuplicate = new javax.swing.JButton();
         lblTotal = new javax.swing.JLabel();
         jLabel2 = new javax.swing.JLabel();
         cmdMarkAsPayed = new javax.swing.JButton();
         jLabel1 = new javax.swing.JLabel();
         lblSender = new javax.swing.JLabel();
+        cmdApprove = new javax.swing.JButton();
+        lblCase = new javax.swing.JLabel();
+        cmdCancel = new javax.swing.JButton();
+        jSeparator1 = new javax.swing.JSeparator();
+        lblError = new javax.swing.JLabel();
 
         lblPaymentNumber.setFont(lblPaymentNumber.getFont().deriveFont(lblPaymentNumber.getFont().getStyle() | java.awt.Font.BOLD));
         lblPaymentNumber.setText("RG123");
@@ -815,22 +842,6 @@ public class PaymentEntryPanel extends javax.swing.JPanel {
         lblPaymentType.setFont(lblPaymentType.getFont());
         lblPaymentType.setText("SEPA-Überweisung");
 
-        cmdDelete.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/editdelete.png"))); // NOI18N
-        cmdDelete.setToolTipText("Beleg löschen");
-        cmdDelete.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                cmdDeleteActionPerformed(evt);
-            }
-        });
-
-        cmdDuplicate.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/editcopy2.png"))); // NOI18N
-        cmdDuplicate.setToolTipText("in dieser Akte duplizieren");
-        cmdDuplicate.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                cmdDuplicateActionPerformed(evt);
-            }
-        });
-
         lblTotal.setFont(lblTotal.getFont());
         lblTotal.setHorizontalAlignment(javax.swing.SwingConstants.RIGHT);
         lblTotal.setText("0,75");
@@ -849,71 +860,119 @@ public class PaymentEntryPanel extends javax.swing.JPanel {
 
         lblSender.setText("admin");
 
+        cmdApprove.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons16/material/approval_24dp_0E72B5.png"))); // NOI18N
+        cmdApprove.setToolTipText("freigeben");
+        cmdApprove.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                cmdApproveActionPerformed(evt);
+            }
+        });
+
+        lblCase.setFont(lblCase.getFont().deriveFont(lblCase.getFont().getStyle() | java.awt.Font.BOLD));
+        lblCase.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/folder.png"))); // NOI18N
+        lblCase.setText("Akte");
+        lblCase.setToolTipText("Akte öffnen");
+        lblCase.setCursor(new java.awt.Cursor(java.awt.Cursor.HAND_CURSOR));
+        lblCase.addMouseListener(new java.awt.event.MouseAdapter() {
+            public void mouseClicked(java.awt.event.MouseEvent evt) {
+                lblCaseMouseClicked(evt);
+            }
+            public void mouseEntered(java.awt.event.MouseEvent evt) {
+                lblCaseMouseEntered(evt);
+            }
+            public void mouseExited(java.awt.event.MouseEvent evt) {
+                lblCaseMouseExited(evt);
+            }
+        });
+
+        cmdCancel.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/cancel.png"))); // NOI18N
+        cmdCancel.setToolTipText("stornieren");
+        cmdCancel.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                cmdCancelActionPerformed(evt);
+            }
+        });
+
+        lblError.setText("Fehler!");
+
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(this);
         this.setLayout(layout);
         layout.setHorizontalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(layout.createSequentialGroup()
                 .addContainerGap()
-                .addComponent(cmdOpen)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(cmdDuplicate)
-                .addGap(18, 18, 18)
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addComponent(jSeparator1)
                     .addGroup(layout.createSequentialGroup()
-                        .addComponent(jLabel1)
+                        .addComponent(cmdOpen)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addComponent(lblSender)
-                        .addGap(18, 18, 18)
-                        .addComponent(lblRecipient)
-                        .addContainerGap())
-                    .addGroup(layout.createSequentialGroup()
-                        .addComponent(cmdDelete)
-                        .addGap(18, 18, 18)
-                        .addComponent(lblTargetDate)
-                        .addGap(18, 18, 18)
-                        .addComponent(lblPaymentNumber)
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                        .addComponent(lblStatus)
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addComponent(cmdMarkAsPayed))
-                    .addGroup(layout.createSequentialGroup()
-                        .addComponent(lblPaymentType)
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-                        .addComponent(lblName, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                        .addGap(225, 225, 225)
-                        .addComponent(jLabel2)
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addComponent(lblTotal))))
+                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                            .addGroup(layout.createSequentialGroup()
+                                .addComponent(lblTargetDate)
+                                .addGap(18, 18, 18)
+                                .addComponent(lblPaymentNumber)
+                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                                .addComponent(lblStatus)
+                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                                .addComponent(cmdApprove)
+                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                                .addComponent(cmdMarkAsPayed)
+                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                                .addComponent(cmdCancel))
+                            .addComponent(lblCase, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                            .addGroup(layout.createSequentialGroup()
+                                .addComponent(lblPaymentType)
+                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                                .addComponent(lblName, javax.swing.GroupLayout.DEFAULT_SIZE, 236, Short.MAX_VALUE)
+                                .addGap(127, 127, 127)
+                                .addComponent(jLabel2)
+                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                                .addComponent(lblTotal))
+                            .addGroup(layout.createSequentialGroup()
+                                .addComponent(jLabel1)
+                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                                .addComponent(lblSender)
+                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                                .addComponent(lblRecipient)
+                                .addGap(0, 0, Short.MAX_VALUE))
+                            .addComponent(lblError, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))))
+                .addContainerGap())
         );
         layout.setVerticalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(layout.createSequentialGroup()
-                .addGap(8, 8, 8)
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addComponent(cmdOpen)
-                    .addComponent(cmdDuplicate)
-                    .addGroup(layout.createSequentialGroup()
-                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                            .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                                .addComponent(lblStatus, javax.swing.GroupLayout.PREFERRED_SIZE, 28, javax.swing.GroupLayout.PREFERRED_SIZE)
-                                .addComponent(cmdMarkAsPayed))
+                    .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                        .addGroup(layout.createSequentialGroup()
+                            .addGap(4, 4, 4)
                             .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
-                                .addComponent(lblPaymentNumber)
-                                .addComponent(lblTargetDate, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
-                            .addComponent(cmdDelete))
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                            .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                                .addComponent(lblTotal)
-                                .addComponent(jLabel2))
-                            .addComponent(lblPaymentType)
-                            .addComponent(lblName))))
+                                .addComponent(lblStatus, javax.swing.GroupLayout.PREFERRED_SIZE, 28, javax.swing.GroupLayout.PREFERRED_SIZE)
+                                .addComponent(cmdOpen, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                                .addComponent(lblTargetDate, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)))
+                        .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
+                            .addContainerGap()
+                            .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                                .addComponent(cmdCancel, javax.swing.GroupLayout.Alignment.TRAILING)
+                                .addComponent(cmdMarkAsPayed, javax.swing.GroupLayout.Alignment.TRAILING)
+                                .addComponent(cmdApprove, javax.swing.GroupLayout.Alignment.TRAILING))))
+                    .addComponent(lblPaymentNumber, javax.swing.GroupLayout.Alignment.TRAILING, javax.swing.GroupLayout.PREFERRED_SIZE, 26, javax.swing.GroupLayout.PREFERRED_SIZE))
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addComponent(lblCase)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                    .addComponent(lblPaymentType)
+                    .addComponent(lblName)
+                    .addComponent(lblTotal)
+                    .addComponent(jLabel2))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                     .addComponent(jLabel1)
                     .addComponent(lblSender)
                     .addComponent(lblRecipient))
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addComponent(lblError)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                .addComponent(jSeparator1, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addContainerGap())
         );
     }// </editor-fold>//GEN-END:initComponents
@@ -928,31 +987,8 @@ public class PaymentEntryPanel extends javax.swing.JPanel {
         }
     }//GEN-LAST:event_cmdOpenActionPerformed
 
-    private void cmdDeleteActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdDeleteActionPerformed
-        int response = JOptionPane.showConfirmDialog(this, "Zahlung '" + this.getPayment().getPaymentNumber() + "' unwiderruflich löschen?", "Zahlung löschen", JOptionPane.YES_NO_OPTION);
-        if (response == JOptionPane.YES_OPTION) {
-            try {
-                ClientSettings settings = ClientSettings.getInstance();
-                JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
-                locator.lookupArchiveFileServiceRemote().removePayment(this.getPayment().getId());
-                Container parent = this.getParent();
-                parent.remove(this);
-                parent.invalidate();
-                parent.repaint();
-            } catch (Exception ex) {
-                log.error("Error deleting payment", ex);
-                JOptionPane.showMessageDialog(this, "Fehler beim Löschen der Zahlung: " + ex.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
-            }
-        }
-    }//GEN-LAST:event_cmdDeleteActionPerformed
-
-    private void cmdDuplicateActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdDuplicateActionPerformed
-        this.caseView.duplicatePayment(this.caseDto.getId(), this.getPayment().getId());
-    }//GEN-LAST:event_cmdDuplicateActionPerformed
-
-    private void cmdMarkAsPayedActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdMarkAsPayedActionPerformed
-
-        this.payment.setStatus(Payment.STATUS_EXECUTED);
+    public void updateStatus(int newStatus) {
+        this.payment.setStatus(newStatus);
 
         ClientSettings settings = ClientSettings.getInstance();
         try {
@@ -964,18 +1000,86 @@ public class PaymentEntryPanel extends javax.swing.JPanel {
             log.error("error saving payment", ex);
             JOptionPane.showMessageDialog(this, "Fehler beim Speichern der Zahlung: " + ex.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
         }
+    }
+    
+    private void cmdMarkAsPayedActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdMarkAsPayedActionPerformed
+
+        this.updateStatus(Payment.STATUS_EXECUTED);
 
 
     }//GEN-LAST:event_cmdMarkAsPayedActionPerformed
 
+    private void cmdApproveActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdApproveActionPerformed
+        this.updateStatus(Payment.STATUS_APPROVED);
+    }//GEN-LAST:event_cmdApproveActionPerformed
+
+    private void cmdCancelActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdCancelActionPerformed
+        this.updateStatus(Payment.STATUS_CANCELLED);
+    }//GEN-LAST:event_cmdCancelActionPerformed
+
+    private void lblCaseMouseEntered(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_lblCaseMouseEntered
+        this.lblCase.setForeground(DefaultColorTheme.COLOR_LOGO_BLUE);
+    }//GEN-LAST:event_lblCaseMouseEntered
+
+    private void lblCaseMouseExited(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_lblCaseMouseExited
+        this.lblCase.setForeground(Color.BLACK);
+    }//GEN-LAST:event_lblCaseMouseExited
+
+    private void lblCaseMouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_lblCaseMouseClicked
+        try {
+            Object editor=null;
+            if(UserSettings.getInstance().isCurrentUserInRole(UserSettings.ROLE_WRITECASE)) {
+                editor = EditorsRegistry.getInstance().getEditor(EditArchiveFileDetailsPanel.class.getName());
+            } else {
+                editor = EditorsRegistry.getInstance().getEditor(ViewArchiveFileDetailsPanel.class.getName());
+            }
+            
+            Object searcheditor = EditorsRegistry.getInstance().getEditor(DesktopPanel.class.getName());
+            Image bgi=((DesktopPanel)searcheditor).getBackgroundImage();
+            
+            if (editor instanceof ThemeableEditor) {
+                // inherit the background to newly created child editors
+                ((ThemeableEditor) editor).setBackgroundImage(bgi);
+            }
+            
+            if (editor instanceof PopulateOptionsEditor) {
+                ((PopulateOptionsEditor) editor).populateOptions();
+            }
+
+            ArchiveFileBean aFile = null;
+            try {
+                JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(ClientSettings.getInstance().getLookupProperties());
+                ArchiveFileServiceRemote fileService = locator.lookupArchiveFileServiceRemote();
+                
+                aFile = fileService.getArchiveFile(this.payment.getArchiveFileKey().getId());
+            } catch (Exception ex) {
+                log.error("Error loading archive file from server", ex);
+                JOptionPane.showMessageDialog(this, "Fehler beim Laden der Akte: " + ex.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
+            }
+
+            if (aFile == null) {
+                return;
+            }
+
+            ((ArchiveFilePanel) editor).setArchiveFileDTO(aFile);
+            EditorsRegistry.getInstance().setMainEditorsPaneView((Component) editor);
+        } catch (Exception ex) {
+            log.error("Error creating editor from class " + this.getClass().getName(), ex);
+            JOptionPane.showMessageDialog(this, "Fehler beim Laden des Editors: " + ex.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
+        }
+    }//GEN-LAST:event_lblCaseMouseClicked
+
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
-    private javax.swing.JButton cmdDelete;
-    private javax.swing.JButton cmdDuplicate;
+    private javax.swing.JButton cmdApprove;
+    private javax.swing.JButton cmdCancel;
     private javax.swing.JButton cmdMarkAsPayed;
     private javax.swing.JButton cmdOpen;
     private javax.swing.JLabel jLabel1;
     private javax.swing.JLabel jLabel2;
+    private javax.swing.JSeparator jSeparator1;
+    private javax.swing.JLabel lblCase;
+    private javax.swing.JLabel lblError;
     private javax.swing.JLabel lblName;
     private javax.swing.JLabel lblPaymentNumber;
     private javax.swing.JLabel lblPaymentType;

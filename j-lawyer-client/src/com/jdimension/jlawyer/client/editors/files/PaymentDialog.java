@@ -708,7 +708,6 @@ public class PaymentDialog extends javax.swing.JDialog implements EventConsumer 
 
     private Payment currentEntry = null;
     private ArchiveFileBean caseDto = null;
-    private ArchiveFilePanel caseView = null;
     private AddressBean recipientAddress = null;
 
     private boolean cancelled = true;
@@ -717,16 +716,14 @@ public class PaymentDialog extends javax.swing.JDialog implements EventConsumer 
      * Creates new form PaymentDialog
      *
      * @param entry
-     * @param caseView
      * @param caseDto
      * @param parent
      * @param modal
      * @param addresses
      */
-    public PaymentDialog(Payment entry, ArchiveFilePanel caseView, ArchiveFileBean caseDto, java.awt.Frame parent, boolean modal, List<AddressBean> addresses) {
+    public PaymentDialog(Payment entry, ArchiveFileBean caseDto, java.awt.Frame parent, boolean modal, List<AddressBean> addresses) {
         super(parent, modal);
         this.caseDto = caseDto;
-        this.caseView = caseView;
         initComponents();
         ComponentUtils.restoreDialogSize(this);
         this.jScrollPane1.getVerticalScrollBar().setUnitIncrement(16);
@@ -1165,7 +1162,7 @@ public class PaymentDialog extends javax.swing.JDialog implements EventConsumer 
         this.currentEntry.setTargetDate(df.parse(this.dtTarget.getText()));
         this.currentEntry.setName(this.txtName.getText());
         this.currentEntry.setReason(this.txtReason.getText());
-        this.currentEntry.setStatus(this.currentEntry.getStatusInt(this.cmbStatus.getSelectedItem().toString()));
+        this.currentEntry.setStatus(Payment.getStatusInt(this.cmbStatus.getSelectedItem().toString()));
         this.currentEntry.setContact(this.recipientAddress);
         this.currentEntry.setCurrency(this.cmbCurrency.getSelectedItem().toString());
         this.currentEntry.setSender(this.cmbPaymentSender.getSelectedItem().toString());
@@ -1244,7 +1241,7 @@ public class PaymentDialog extends javax.swing.JDialog implements EventConsumer 
 
         /* Create and display the dialog */
         java.awt.EventQueue.invokeLater(() -> {
-            PaymentDialog dialog = new PaymentDialog(null, null, null, new javax.swing.JFrame(), true, null);
+            PaymentDialog dialog = new PaymentDialog(null, null, new javax.swing.JFrame(), true, null);
             dialog.addWindowListener(new java.awt.event.WindowAdapter() {
                 @Override
                 public void windowClosing(java.awt.event.WindowEvent e) {

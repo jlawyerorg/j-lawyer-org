@@ -901,7 +901,7 @@ public class Payment implements Serializable {
         
     }
     
-    public int getStatusInt(String statusString) {
+    public static int getStatusInt(String statusString) {
         switch(statusString) {
             case S_STATUS_CANCELLED:
                 return STATUS_CANCELLED;
@@ -917,6 +917,26 @@ public class Payment implements Serializable {
                 return STATUS_INITIATED;
             default:
                 return STATUS_NEW;
+                
+        }
+    }
+    
+    public static String getStatusString(int statusValue) {
+        switch(statusValue) {
+            case STATUS_CANCELLED:
+                return S_STATUS_CANCELLED;
+            case STATUS_NEW:
+                return S_STATUS_NEW;
+            case STATUS_APPROVED:
+                return S_STATUS_APPROVED;
+            case STATUS_EXECUTED:
+                return S_STATUS_EXECUTED;
+            case STATUS_FAILED:
+                return S_STATUS_FAILED;
+            case STATUS_INITIATED:
+                return S_STATUS_INITIATED;
+            default:
+                return S_STATUS_NEW;
                 
         }
     }
