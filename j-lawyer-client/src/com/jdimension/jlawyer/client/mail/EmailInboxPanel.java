@@ -868,7 +868,7 @@ public class EmailInboxPanel extends javax.swing.JPanel implements SaveToCaseExe
 
         this.treeFolders.setDropMode(DropMode.ON);
 
-        Runtime.getRuntime().addShutdownHook(new Thread(new EmailObjectsCleanUp(this.stores)));
+        Runtime.getRuntime().addShutdownHook(new Thread(new EmailObjectsCleanUp(this.idleThreads, this.stores)));
 
         DropTarget dt = new DropTarget(this.treeFolders, this);
 
@@ -919,7 +919,7 @@ public class EmailInboxPanel extends javax.swing.JPanel implements SaveToCaseExe
                     props.setProperty("mail.imaps.socketFactory.fallback", "false");
                     props.setProperty("mail.imaps.socketFactory.port", "993");
                     props.setProperty("mail.imaps.starttls.enable", "true");
-                    
+
                     ms.applyCustomProperties(ms.customConfigurationsReceiveProperties(), props);
 
                     session = Session.getInstance(props);
@@ -934,7 +934,7 @@ public class EmailInboxPanel extends javax.swing.JPanel implements SaveToCaseExe
 
                     props.setProperty("mail.imaps.host", server);
                     props.setProperty("mail.imap.host", server);
-                    
+
                     // sample properties required for ms exchange shared mailboxes. may be set using the "custom properties" of a mailboxsetup
 //                    props.put("mail.imap.port", "143");
 //                    props.put("mail.imap.sasl.enable", "false");
@@ -942,7 +942,6 @@ public class EmailInboxPanel extends javax.swing.JPanel implements SaveToCaseExe
 //                    props.put("mail.imap.auth", "true");
 //                    props.put("mail.debug", "true");
 //                    props.put("mail.imap.auth.mechanisms", "LOGIN");
-
                     if (ms.isEmailInSsl()) {
                         props.setProperty("mail.store.protocol", "imaps");
                     }
@@ -3333,20 +3332,31 @@ public class EmailInboxPanel extends javax.swing.JPanel implements SaveToCaseExe
     public static class EmailObjectsCleanUp implements Runnable {
 
         private HashMap<MailboxSetup, Store> s;
+        private HashMap<MailboxSetup, IDLEThread> idleThreads;
 
-        public EmailObjectsCleanUp(HashMap<MailboxSetup, Store> s) {
+        public EmailObjectsCleanUp(HashMap<MailboxSetup, IDLEThread> idleThreads, HashMap<MailboxSetup, Store> s) {
             this.s = s;
+            this.idleThreads = idleThreads;
         }
 
         @Override
         public void run() {
-            try {
-                for (Store store : this.s.values()) {
-                    store.close();
-                }
 
-            } catch (Exception ex) {
-                log.error(ex);
+            for (IDLEThread t : this.idleThreads.values()) {
+                try {
+                    t.shutdown();
+                } catch (Throwable th) {
+                    log.error(th);
+                }
+            }
+
+            for (Store store : this.s.values()) {
+                try {
+                    if(store.isConnected())
+                        store.close();
+                } catch (Exception ex) {
+                    log.error(ex);
+                }
             }
 
         }
