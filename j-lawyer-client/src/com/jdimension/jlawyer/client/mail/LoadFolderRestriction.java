@@ -670,69 +670,92 @@ import java.util.ArrayList;
  * @author jens
  */
 public class LoadFolderRestriction {
-    
-    
-    public static final int RESTRICTION_UNREAD=20;
-    public static final int RESTRICTION_20=30;
-    public static final int RESTRICTION_50=40;
-    public static final int RESTRICTION_100=50;
-    public static final int RESTRICTION_500=60;
-    public static final int RESTRICTION_NONE=10;
-    
-    private int restriction=RESTRICTION_50;
-    
-    public static ArrayList<LoadFolderRestriction> ALL_RESTRICTIONS=new ArrayList<LoadFolderRestriction>() {};
-    
+
+    public static final int RESTRICTION_UNREAD = 20;
+    public static final int RESTRICTION_20 = 30;
+    public static final int RESTRICTION_50 = 40;
+    public static final int RESTRICTION_100 = 50;
+    public static final int RESTRICTION_500 = 60;
+    public static final int RESTRICTION_LAST1W = 61;
+    public static final int RESTRICTION_LAST2W = 62;
+    public static final int RESTRICTION_LAST4W = 63;
+    public static final int RESTRICTION_LAST2M = 64;
+    public static final int RESTRICTION_LAST6M = 65;
+    public static final int RESTRICTION_LAST1Y = 66;
+    public static final int RESTRICTION_NONE = 10;
+
+    private int restriction = RESTRICTION_50;
+
+    public static ArrayList<LoadFolderRestriction> ALL_RESTRICTIONS = new ArrayList<LoadFolderRestriction>() {
+    };
+
     static {
         ALL_RESTRICTIONS.add(new LoadFolderRestriction(RESTRICTION_UNREAD));
         ALL_RESTRICTIONS.add(new LoadFolderRestriction(RESTRICTION_20));
         ALL_RESTRICTIONS.add(new LoadFolderRestriction(RESTRICTION_50));
         ALL_RESTRICTIONS.add(new LoadFolderRestriction(RESTRICTION_100));
         ALL_RESTRICTIONS.add(new LoadFolderRestriction(RESTRICTION_500));
+        ALL_RESTRICTIONS.add(new LoadFolderRestriction(RESTRICTION_LAST1W));
+        ALL_RESTRICTIONS.add(new LoadFolderRestriction(RESTRICTION_LAST2W));
+        ALL_RESTRICTIONS.add(new LoadFolderRestriction(RESTRICTION_LAST4W));
+        ALL_RESTRICTIONS.add(new LoadFolderRestriction(RESTRICTION_LAST2M));
+        ALL_RESTRICTIONS.add(new LoadFolderRestriction(RESTRICTION_LAST6M));
+        ALL_RESTRICTIONS.add(new LoadFolderRestriction(RESTRICTION_LAST1Y));
         ALL_RESTRICTIONS.add(new LoadFolderRestriction(RESTRICTION_NONE));
     }
-    
+
     public LoadFolderRestriction() {
         this(RESTRICTION_50);
     }
-    
+
     public LoadFolderRestriction(int restriction) {
-        this.restriction=restriction;
+        this.restriction = restriction;
     }
-    
+
     public int getRestriction() {
         return this.restriction;
     }
-    
+
     public String getName() {
-        if(this.restriction==RESTRICTION_UNREAD) {
-            return "ungelesene";
-        } else if(this.restriction==RESTRICTION_20) {
-            return "20";
-        } else if(this.restriction==RESTRICTION_50) {
-            return "50";
-        } else if(this.restriction==RESTRICTION_100) {
-            return "100";
-        } else if(this.restriction==RESTRICTION_500) {
-            return "500";
-        } else {
-            return "alle";
+        switch (this.restriction) {
+            case RESTRICTION_UNREAD:
+                return "ungelesene";
+            case RESTRICTION_20:
+                return "20 Nachrichten";
+            case RESTRICTION_50:
+                return "50 Nachrichten";
+            case RESTRICTION_100:
+                return "100 Nachrichten";
+            case RESTRICTION_500:
+                return "500 Nachrichten";
+            case RESTRICTION_LAST1W:
+                return "letzte Woche";
+            case RESTRICTION_LAST2W:
+                return "letzte 2 Wochen";
+            case RESTRICTION_LAST4W:
+                return "letzte 4 Wochen";
+            case RESTRICTION_LAST2M:
+                return "letzte 2 Monate";
+            case RESTRICTION_LAST6M:
+                return "letzte 6 Monate";
+            case RESTRICTION_LAST1Y:
+                return "letztes Jahr";
+            default:
+                return "alle";
         }
     }
 
     @Override
     public boolean equals(Object obj) {
-        if(obj instanceof LoadFolderRestriction) {
-            return ((LoadFolderRestriction)obj).getRestriction()==this.restriction;
+        if (obj instanceof LoadFolderRestriction) {
+            return ((LoadFolderRestriction) obj).getRestriction() == this.restriction;
         } else {
             return false;
         }
     }
-    
-    
-    
+
     public String toString() {
         return getName();
     }
-    
+
 }
