@@ -668,14 +668,20 @@ import com.jdimension.jlawyer.server.utils.ContentTypes;
 import java.awt.Component;
 import java.awt.Container;
 import java.awt.Toolkit;
+import java.awt.datatransfer.Clipboard;
+import java.awt.datatransfer.DataFlavor;
 import java.awt.event.ActionEvent;
 import java.awt.event.KeyEvent;
 import javax.swing.AbstractAction;
+import javax.swing.Action;
 import javax.swing.JButton;
 import javax.swing.JComboBox;
 import javax.swing.JComponent;
 import javax.swing.JEditorPane;
 import javax.swing.KeyStroke;
+import javax.swing.text.DefaultEditorKit;
+import javax.swing.text.html.HTMLDocument;
+import javax.swing.text.html.HTMLEditorKit;
 import org.apache.log4j.Logger;
 import javax.swing.undo.UndoManager;
 import org.jsoup.Jsoup;
@@ -698,6 +704,9 @@ public class HtmlEditorPanel extends javax.swing.JPanel implements EditorImpleme
      */
     public HtmlEditorPanel() {
         initComponents();
+
+        // Override paste action
+        this.overridePasteActionForEditorPane(htmlPane);
 
         undoManager = new UndoManager();
         setupUndoRedoForEditorPane(htmlPane);
@@ -786,11 +795,16 @@ public class HtmlEditorPanel extends javax.swing.JPanel implements EditorImpleme
             }
 
             // Replace <font> with <span style="...">
-            Element span = new Element(Tag.valueOf("span"), ""); // Correct constructor
-            span.text(font.text());
+            Element span = new Element(Tag.valueOf("span"), "");
             if (style.length() > 0) {
                 span.attr("style", style.toString());
             }
+
+            // Preserve child nodes like <b>, <i>, etc.
+            for (org.jsoup.nodes.Node child : font.childNodes()) {
+                span.appendChild(child.clone());
+            }
+
             font.replaceWith(span);
         }
 
@@ -815,10 +829,10 @@ public class HtmlEditorPanel extends javax.swing.JPanel implements EditorImpleme
                 "<span\\s+style=\"font-size:([^\"]+);\">\\s*([\\u0009\\u0020\\u00A0\\u1680\\u180E\\u2000-\\u200A\\u202F\\u205F\\u3000]*)\\s*</span>",
                 "<span style=\"font-size:$1;\">&nbsp;</span>"
         );
-        
+
         // preserve line breaks in div tags
         result = HtmlUtils.convertTextOnlyDivsToBreaks(result);
-        
+
         return result;
     }
 
@@ -964,6 +978,43 @@ public class HtmlEditorPanel extends javax.swing.JPanel implements EditorImpleme
                 break;  // Found the editor pane, no need to continue
             } else if (comp instanceof Container) {
                 setupUndoRedoForEditorPane((Container) comp);
+            }
+        }
+    }
+
+    private void overridePasteActionForEditorPane(Container container) {
+        for (Component comp : container.getComponents()) {
+            if (comp instanceof JEditorPane) {
+                JEditorPane editorPane = (JEditorPane) comp;
+                Action originalPasteAction = editorPane.getActionMap().get(DefaultEditorKit.pasteAction);
+                editorPane.getActionMap().put(DefaultEditorKit.pasteAction, new AbstractAction() {
+                    @Override
+                    public void actionPerformed(ActionEvent e) {
+                        try {
+                            Clipboard clipboard = Toolkit.getDefaultToolkit().getSystemClipboard();
+                            if (clipboard.isDataFlavorAvailable(DataFlavor.stringFlavor)) {
+                                String text = (String) clipboard.getData(DataFlavor.stringFlavor);
+
+                                // Replace line breaks with <br>
+                                text = text.replace("\r\n", "\n").replace("\r", "\n").replace("\n", "<br>");
+
+                                // Insert HTML using the HTMLEditorKit
+                                HTMLEditorKit kit = (HTMLEditorKit) editorPane.getEditorKit();
+                                HTMLDocument doc = (HTMLDocument) editorPane.getDocument();
+                                int pos = editorPane.getCaretPosition();
+
+                                // Insert actual HTML (so <br> is not escaped)
+                                kit.insertHTML(doc, pos, text, 0, 0, null);
+                            }
+                        } catch (Exception ex) {
+                            ex.printStackTrace();
+                        }
+                    }
+                });
+
+                break;  // Found the editor pane, no need to continue
+            } else if (comp instanceof Container) {
+                overridePasteActionForEditorPane((Container) comp);
             }
         }
     }
