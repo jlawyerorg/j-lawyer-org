@@ -2645,6 +2645,8 @@ public class UserAdministrationDialog extends javax.swing.JDialog {
         txtIban.setText("");
         txtTaxNr.setText("");
         txtUstId.setText("");
+        
+        this.lstUsers.setSelectedValue(null, false);
 
         this.txtUser.requestFocus();
     }//GEN-LAST:event_cmdSaveActionPerformed
