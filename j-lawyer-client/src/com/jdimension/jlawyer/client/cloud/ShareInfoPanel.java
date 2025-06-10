@@ -691,7 +691,7 @@ public class ShareInfoPanel extends javax.swing.JPanel {
 
     private SharesListPanel parent = null;
     private Share share = null;
-    private ShareListener listener=null;
+    private ShareListener listener = null;
 
     /**
      * Creates new form ShareInfoPanel
@@ -703,7 +703,7 @@ public class ShareInfoPanel extends javax.swing.JPanel {
         this.cmbFolder.addItem("");
         this.share = s;
         this.parent = parent;
-        this.listener=listener;
+        this.listener = listener;
         this.cmdCopyLinkToClipboard.setEnabled(s.getShareType().equals(ShareType.PUBLIC_LINK));
         this.cmdBrowser.setEnabled(s.getShareType().equals(ShareType.PUBLIC_LINK));
         if (this.cmdCopyLinkToClipboard.isEnabled()) {
@@ -743,23 +743,22 @@ public class ShareInfoPanel extends javax.swing.JPanel {
             shareType = "Link-Freigabe";
         }
         this.lblShareType.setText(shareType);
-        
-        
+
     }
-    
+
     public void loadFolders() {
         CloudInstance cloud = CloudInstance.getInstance(UserSettings.getInstance().getCurrentUser());
         if (cloud != null) {
-            List<String> subFolders=cloud.listFullFolders(this.share.getPath(),-1);
+            List<String> subFolders = cloud.listFullFolders(this.share.getPath(), -1);
             Collections.sort(subFolders);
-            for(String f : subFolders) {
-                f=f.substring(this.share.getPath().length(),f.length()-1);
-                if(SwingUtilities.isEventDispatchThread()) {
+            for (String f : subFolders) {
+                f = f.substring(this.share.getPath().length(), f.length() - 1);
+                if (SwingUtilities.isEventDispatchThread()) {
                     this.cmbFolder.addItem(f);
                 } else {
                     ThreadUtils.addComboBoxItem(cmbFolder, f);
                 }
-                
+
             }
         }
     }
@@ -767,7 +766,7 @@ public class ShareInfoPanel extends javax.swing.JPanel {
     public Share getShare() {
         return this.share;
     }
-    
+
     public String getSubfolder() {
         return this.cmbFolder.getEditor().getItem().toString();
     }
@@ -987,13 +986,13 @@ public class ShareInfoPanel extends javax.swing.JPanel {
         if (cloud != null) {
             cloud.deleteShare(this.share.getId());
             this.listener.shareRemoved(this.share);
-            
+
         }
     }//GEN-LAST:event_cmdDeleteShareActionPerformed
 
     private void cmdBrowserActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdBrowserActionPerformed
         String str = this.share.getUrl();
-        DesktopUtils.openBrowserFromDialog(str, (JDialog)this.listener);
+        DesktopUtils.openBrowserFromDialog(str, (JDialog) this.listener);
     }//GEN-LAST:event_cmdBrowserActionPerformed
 
 
