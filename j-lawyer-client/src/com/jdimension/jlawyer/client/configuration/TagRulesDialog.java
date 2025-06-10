@@ -1096,10 +1096,12 @@ public class TagRulesDialog extends javax.swing.JDialog {
 
                 DocumentTagRule savedRule = locator.lookupSystemManagementRemote().updateDocumentTagRule(r);
                 row = this.tblTagRules.convertRowIndexToModel(row);
-                ((DefaultTableModel) this.tblTagRules.getModel()).setValueAt(savedRule, row, 0);
-                ((DefaultTableModel) this.tblTagRules.getModel()).setValueAt(savedRule.getTagList(), row, 1);
                 
                 locator.lookupSystemManagementRemote().setDocumentTagRuleConditions(r.getId(), conditions);
+                savedRule.setRuleConditions(conditions);
+                
+                ((DefaultTableModel) this.tblTagRules.getModel()).setValueAt(savedRule, row, 0);
+                ((DefaultTableModel) this.tblTagRules.getModel()).setValueAt(savedRule.getTagList(), row, 1);
 
             } catch (Exception ex) {
                 log.error("Error updating rule", ex);
