@@ -695,6 +695,9 @@ public class ShareInfoPanel extends javax.swing.JPanel {
 
     /**
      * Creates new form ShareInfoPanel
+     * @param s
+     * @param parent
+     * @param listener
      */
     public ShareInfoPanel(Share s, SharesListPanel parent, ShareListener listener) {
 

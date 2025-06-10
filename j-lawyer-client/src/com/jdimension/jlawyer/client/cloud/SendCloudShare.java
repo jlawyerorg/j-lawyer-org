@@ -673,7 +673,6 @@ import com.jdimension.jlawyer.persistence.ArchiveFileDocumentsBean;
 import java.awt.Component;
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.Comparator;
 import java.util.List;
 import javax.swing.JScrollBar;
 import org.aarboard.nextcloud.api.filesharing.ItemType;
