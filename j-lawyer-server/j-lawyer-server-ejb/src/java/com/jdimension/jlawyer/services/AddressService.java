@@ -725,7 +725,7 @@ public class AddressService implements AddressServiceRemote, AddressServiceLocal
     @Inject
     Event<AddressTagChangedEvent> tagChangedEvent;
 
-    private static final String PS_SEARCHENHANCED_2 = "select id from contacts where ucase(name) like ? or ucase(firstname) like ? or ucase(company) like ? or ucase(department) like ? or ucase(custom1) like ? or ucase(custom2) like ? or ucase(custom3) like ? or ucase(email) like ? or ucase(beaSafeId) like ? or ucase(phone) like ? or ucase(mobile) like ? or ucase(district) like ? or ucase(birthName) like ? or zipCode like ?";
+    private static final String PS_SEARCHENHANCED_2 = "select id from contacts where ucase(name) like ? or ucase(firstname) like ? or ucase(company) like ? or ucase(department) like ? or ucase(custom1) like ? or ucase(custom2) like ? or ucase(custom3) like ? or ucase(email) like ? or ucase(beaSafeId) like ? or ucase(phone) like ? or ucase(mobile) like ? or ucase(city) like ? or ucase(birthName) like ? or zipCode like ?";
 
     @Override
     @RolesAllowed({"readAddressRole"})
@@ -1034,7 +1034,37 @@ public class AddressService implements AddressServiceRemote, AddressServiceLocal
 
     @Override
     @RolesAllowed({"readAddressRole"})
-    public AddressBean[] searchEnhanced(String query, String[] tagName) {
+    public AddressBean[] searchEnhanced(String multiTermQuery, String[] tagName) {
+        
+        if (multiTermQuery == null) {
+            multiTermQuery = "";
+        }
+        multiTermQuery=multiTermQuery.trim();
+        multiTermQuery=multiTermQuery.replace(",", " ");
+        String[] terms=multiTermQuery.split("\\s+");
+        
+        ArrayList<String> idList = new ArrayList<>();
+        boolean firstTerm=true;
+        for(String term: terms) {
+            ArrayList<String> termIdList=this.searchEnhancedSingleTerm(term, tagName);
+            if(firstTerm) {
+                // first term defines the initial list
+                firstTerm=false;
+                idList.addAll(termIdList);
+            } else {
+                // logical AND - remove all from the initial list that are not contained in the current terms result list
+                idList.retainAll(termIdList);
+            }
+        }
+        
+        ArrayList<AddressBean> list = new ArrayList<>();
+        for(String id: idList) {
+            list.add(this.addressFacade.find(id));
+        }
+        return (AddressBean[]) list.toArray(new AddressBean[list.size()]);
+    }
+    
+    private ArrayList<String> searchEnhancedSingleTerm(String query, String[] tagName) {
 
         if (query == null) {
             query = "";
@@ -1056,7 +1086,6 @@ public class AddressService implements AddressServiceRemote, AddressServiceLocal
 
         }
 
-        ArrayList<AddressBean> list = new ArrayList<>();
         ArrayList<String> idList = new ArrayList<>();
         try ( Connection con = utils.getConnection()) {
 
@@ -1068,7 +1097,7 @@ public class AddressService implements AddressServiceRemote, AddressServiceLocal
                 }
                 inClause = inClause.replaceFirst(",", "");
 
-                st = con.prepareStatement("select contacts.id from contacts, contact_tags where (ucase(name) like ? or ucase(firstname) like ? or ucase(department) like ? or ucase(company) like ? or ucase(custom1) like ? or ucase(custom2) like ? or ucase(custom3) like ? or ucase(email) like ? or ucase(beaSafeId) like ? or ucase(phone) like ? or ucase(mobile) like ? or ucase(district) like ? or ucase(birthName) like ? or zipCode like ?) and (contact_tags.tagName in (" + inClause + ") and contact_tags.addressKey=contacts.id)");
+                st = con.prepareStatement("select contacts.id from contacts, contact_tags where (ucase(name) like ? or ucase(firstname) like ? or ucase(department) like ? or ucase(company) like ? or ucase(custom1) like ? or ucase(custom2) like ? or ucase(custom3) like ? or ucase(email) like ? or ucase(beaSafeId) like ? or ucase(phone) like ? or ucase(mobile) like ? or ucase(city) like ? or ucase(birthName) like ? or zipCode like ?) and (contact_tags.tagName in (" + inClause + ") and contact_tags.addressKey=contacts.id)");
                 String wildCard = "%" + StringUtils.germanToUpperCase(query) + "%";
                 st.setString(1, wildCard);
                 st.setString(2, wildCard);
@@ -1113,8 +1142,6 @@ public class AddressService implements AddressServiceRemote, AddressServiceLocal
             while (rs.next()) {
                 String id = rs.getString(1);
                 if (!idList.contains(id)) {
-                    AddressBean address = this.addressFacade.find(id);
-                    list.add(address);
                     idList.add(id);
                 }
             }
@@ -1138,12 +1165,37 @@ public class AddressService implements AddressServiceRemote, AddressServiceLocal
             }
         }
 
-        return (AddressBean[]) list.toArray(new AddressBean[list.size()]);
+        return idList;
     }
 
     @Override
     @RolesAllowed({"readAddressRole"})
-    public Map<String, ArrayList<String>> searchTagsEnhanced(String query, String[] tagName) {
+    public Map<String, ArrayList<String>> searchTagsEnhanced(String multiTermQuery, String[] tagName) {
+        
+        if (multiTermQuery == null) {
+            multiTermQuery = "";
+        }
+        multiTermQuery=multiTermQuery.trim();
+        multiTermQuery=multiTermQuery.replace(",", " ");
+        String[] terms=multiTermQuery.split("\\s+");
+        
+        Map<String, ArrayList<String>> resultMap = new HashMap<>();
+        boolean firstTerm = true;
+        for (String term : terms) {
+            Map<String, ArrayList<String>> termMap = this.searchTagsEnhancedSingleTerm(term, tagName); // Map<String, ArrayList<String>>
+            if (firstTerm) {
+                firstTerm = false;
+                resultMap.putAll(termMap);
+            } else {
+                // Retain only keys that exist in the current termMap
+                resultMap.keySet().retainAll(termMap.keySet());
+            }
+        }
+        return resultMap;
+        
+    }
+    
+    private Map<String, ArrayList<String>> searchTagsEnhancedSingleTerm(String query, String[] tagName) {
 
         if (query == null) {
             query = "";
@@ -1176,7 +1228,7 @@ public class AddressService implements AddressServiceRemote, AddressServiceLocal
                 }
                 inClause = inClause.replaceFirst(",", "");
 
-                st = con.prepareStatement("select addressKey, tagName from contact_tags where addressKey in (" + "select contacts.id from contacts, contact_tags where (ucase(name) like ? or ucase(firstname) like ? or ucase(company) like ? or ucase(department) like ? or ucase(custom1) like ? or ucase(custom2) like ? or ucase(custom3) like ? or ucase(email) like ? or ucase(beaSafeId) like ? or ucase(phone) like ? or ucase(mobile) like ? or ucase(district) like ? or ucase(birthName) like ?) and (contact_tags.tagName in (" + inClause + ") and contact_tags.addressKey=contacts.id)" + ")");
+                st = con.prepareStatement("select addressKey, tagName from contact_tags where addressKey in (" + "select contacts.id from contacts, contact_tags where (ucase(name) like ? or ucase(firstname) like ? or ucase(company) like ? or ucase(department) like ? or ucase(custom1) like ? or ucase(custom2) like ? or ucase(custom3) like ? or ucase(email) like ? or ucase(beaSafeId) like ? or ucase(phone) like ? or ucase(mobile) like ? or ucase(city) like ? or ucase(birthName) like ?) and (contact_tags.tagName in (" + inClause + ") and contact_tags.addressKey=contacts.id)" + ")");
                 String wildCard = "%" + StringUtils.germanToUpperCase(query) + "%";
                 st.setString(1, wildCard);
                 st.setString(2, wildCard);
