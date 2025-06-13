@@ -1563,7 +1563,7 @@ public class ImportBankStatementFrame extends javax.swing.JFrame {
 
             for (Payment p : casePayments) {
                 this.cmbPayments.addItem(p.getPaymentNumber());
-                if (openPayment == null && !(p.getStatus() == Payment.STATUS_EXECUTED)) {
+                if (openPayment == null && p.getStatus() != Payment.STATUS_EXECUTED) {
                     openPayment = p;
                 }
             }
@@ -1671,9 +1671,9 @@ public class ImportBankStatementFrame extends javax.swing.JFrame {
         this.cmdCaseTags.setEnabled(matchingCase != null);
         this.chkCreateCaseAccountEntry.setEnabled(matchingCase != null);
         this.chkCreateCaseAccountEntry.setSelected(matchingCase != null);
-        this.chkMarkInvoicePaid.setEnabled(matchingCase != null && matchingInvoice != null && !(matchingInvoice.getStatus() == Invoice.STATUS_PAID));
+        this.chkMarkInvoicePaid.setEnabled(matchingCase != null && matchingInvoice != null && matchingInvoice.getStatus() != Invoice.STATUS_PAID);
         this.chkMarkInvoicePaid.setSelected(false);
-        this.chkMarkPaymentExecuted.setEnabled(matchingCase != null && matchingPayment != null && !(matchingPayment.getStatus() == Payment.STATUS_EXECUTED) && amount < 0);
+        this.chkMarkPaymentExecuted.setEnabled(matchingCase != null && matchingPayment != null && matchingPayment.getStatus() != Payment.STATUS_EXECUTED && amount < 0);
         this.chkMarkPaymentExecuted.setSelected(false);
         this.cmbInvoices.setEnabled(matchingCase != null);
         this.cmbPayments.setEnabled(matchingPayment != null);
