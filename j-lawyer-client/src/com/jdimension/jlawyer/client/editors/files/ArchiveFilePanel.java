@@ -1111,6 +1111,39 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
 
     }
     
+    public void newPayment(String caseId, String name, String description, String reason, AddressBean paymentRecipient, String currency, String sender, BigDecimal total) {
+        Payment newPayment = new Payment();
+        newPayment.setDescription(description);
+        newPayment.setCreationDate(new Date());
+        newPayment.setTargetDate(new Date());
+        newPayment.setName(name);
+        newPayment.setReason(reason);
+        newPayment.setStatus(Payment.STATUS_NEW);
+        newPayment.setContact(paymentRecipient);
+        newPayment.setCurrency(currency);
+        newPayment.setSender(sender);
+        newPayment.setPaymentType(Payment.PAYMENTTYPE_SEPATRANSFER);
+        newPayment.setTotal(total);
+
+        ClientSettings settings = ClientSettings.getInstance();
+        try {
+            JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
+            newPayment = locator.lookupArchiveFileServiceRemote().addPayment(caseId, newPayment);
+
+        } catch (Exception ex) {
+            log.error("error saving payment", ex);
+            JOptionPane.showMessageDialog(this, "Fehler beim Speichern der Zahlung: " + ex.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
+            return;
+        }
+
+        PaymentEntryPanel pep = new PaymentEntryPanel(this);
+        pep.setEntry(this.dto, newPayment, this.pnlInvolvedParties.getInvolvedPartiesAddress());
+        this.pnlPayments.add(pep, 0);
+        this.pnlPayments.revalidate();
+        
+        JOptionPane.showMessageDialog(this, "Zahlung im Tab 'Zahlungen' erstellt", "neue Zahlung aus Belegt", JOptionPane.INFORMATION_MESSAGE);
+    }
+    
     public void duplicatePayment(String caseId, String paymentId) {
         if (caseId == null) {
             SearchAndAssignDialog dlg = new SearchAndAssignDialog(EditorsRegistry.getInstance().getMainWindow(), true, null, null);

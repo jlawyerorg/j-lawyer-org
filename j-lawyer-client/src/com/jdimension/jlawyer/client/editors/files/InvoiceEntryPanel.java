@@ -796,6 +796,7 @@ public class InvoiceEntryPanel extends javax.swing.JPanel {
         jLabel1 = new javax.swing.JLabel();
         cmdMarkAsPayed = new javax.swing.JButton();
         cmdCreditNote = new javax.swing.JButton();
+        cmdPaymentFromInvoice = new javax.swing.JButton();
 
         lblInvoiceNumber.setFont(lblInvoiceNumber.getFont().deriveFont(lblInvoiceNumber.getFont().getStyle() | java.awt.Font.BOLD));
         lblInvoiceNumber.setText("RG123");
@@ -889,6 +890,14 @@ public class InvoiceEntryPanel extends javax.swing.JPanel {
             }
         });
 
+        cmdPaymentFromInvoice.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/man.png"))); // NOI18N
+        cmdPaymentFromInvoice.setToolTipText("neue ausgehende Zahlung aus Beleg");
+        cmdPaymentFromInvoice.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                cmdPaymentFromInvoiceActionPerformed(evt);
+            }
+        });
+
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(this);
         this.setLayout(layout);
         layout.setHorizontalGroup(
@@ -929,10 +938,12 @@ public class InvoiceEntryPanel extends javax.swing.JPanel {
                                         .addComponent(lblOpen))))))
                     .addGroup(layout.createSequentialGroup()
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addComponent(cmdCopy)
+                        .addGap(18, 18, 18)
                         .addComponent(cmdCreditNote)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addComponent(cmdCopy)
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addComponent(cmdPaymentFromInvoice)
+                        .addGap(18, 18, 18)
                         .addComponent(cmdDelete)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                         .addComponent(lblDueDate)
@@ -961,7 +972,8 @@ public class InvoiceEntryPanel extends javax.swing.JPanel {
                                 .addComponent(lblInvoiceNumber)
                                 .addComponent(lblDueDate, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
                             .addComponent(cmdDelete)
-                            .addComponent(cmdCreditNote))
+                            .addComponent(cmdCreditNote)
+                            .addComponent(cmdPaymentFromInvoice))
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                         .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                             .addGroup(layout.createSequentialGroup()
@@ -1078,6 +1090,10 @@ public class InvoiceEntryPanel extends javax.swing.JPanel {
         this.caseView.duplicateInvoice(this.caseDto.getId(), this.getInvoice().getId(), true);
     }//GEN-LAST:event_cmdCreditNoteActionPerformed
 
+    private void cmdPaymentFromInvoiceActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdPaymentFromInvoiceActionPerformed
+        this.caseView.newPayment(this.caseDto.getId(), "Zahlung aus Beleg " + this.invoice.getInvoiceNumber(), this.invoice.getName(), "", this.invoice.getContact(), this.invoice.getCurrency(), this.invoice.getSender(), this.invoice.getTotalGross());
+    }//GEN-LAST:event_cmdPaymentFromInvoiceActionPerformed
+
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JButton cmdCopy;
@@ -1086,6 +1102,7 @@ public class InvoiceEntryPanel extends javax.swing.JPanel {
     private javax.swing.JButton cmdDuplicate;
     private javax.swing.JButton cmdMarkAsPayed;
     private javax.swing.JButton cmdOpen;
+    private javax.swing.JButton cmdPaymentFromInvoice;
     private javax.swing.JLabel jLabel1;
     private javax.swing.JLabel jLabel2;
     private javax.swing.JLabel jLabel3;

@@ -720,6 +720,14 @@ public class PaymentMgmtEntryPanel extends javax.swing.JPanel {
             this.lblError.setText(error);
     }
     
+    public void setWarning(String warning) {
+        this.lblError.setForeground(DefaultColorTheme.COLOR_LOGO_BLUE);
+        if(StringUtils.isEmpty(warning))
+            this.lblError.setText("");
+        else
+            this.lblError.setText(warning);
+    }
+    
     public void setSuccess(String success) {
         this.lblError.setForeground(DefaultColorTheme.COLOR_LOGO_GREEN);
         if(StringUtils.isEmpty(success))

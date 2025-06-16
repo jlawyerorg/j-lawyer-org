@@ -315,18 +315,16 @@
                   <EmptySpace max="-2" attributes="0"/>
                   <Component id="lblPaymentNumber" min="-2" max="-2" attributes="0"/>
                   <EmptySpace type="unrelated" max="-2" attributes="0"/>
-                  <Group type="103" groupAlignment="0" attributes="0">
-                      <Component id="jLabel7" min="-2" max="-2" attributes="0"/>
-                      <Group type="103" alignment="0" groupAlignment="0" attributes="0">
-                          <Component id="cmdDateCreated" alignment="1" min="-2" max="-2" attributes="0"/>
-                          <Group type="103" alignment="1" groupAlignment="3" attributes="0">
-                              <Component id="dtTarget" alignment="3" min="-2" max="-2" attributes="0"/>
-                              <Component id="jLabel3" alignment="3" min="-2" max="-2" attributes="0"/>
-                              <Component id="cmdDateTarget" alignment="3" min="-2" max="-2" attributes="0"/>
-                          </Group>
-                          <Component id="dtCreated" alignment="0" min="-2" max="-2" attributes="0"/>
+                  <Group type="103" groupAlignment="0" max="-2" attributes="0">
+                      <Component id="cmdDateCreated" alignment="1" min="-2" max="-2" attributes="0"/>
+                      <Group type="103" alignment="1" groupAlignment="3" attributes="0">
+                          <Component id="dtTarget" alignment="3" min="-2" max="-2" attributes="0"/>
+                          <Component id="jLabel3" alignment="3" min="-2" max="-2" attributes="0"/>
+                          <Component id="cmdDateTarget" alignment="3" min="-2" max="-2" attributes="0"/>
                       </Group>
-                      <Component id="cmbStatus" alignment="0" min="-2" max="-2" attributes="0"/>
+                      <Component id="dtCreated" alignment="0" max="32767" attributes="0"/>
+                      <Component id="cmbStatus" alignment="0" max="32767" attributes="0"/>
+                      <Component id="jLabel7" alignment="0" max="32767" attributes="0"/>
                   </Group>
                   <EmptySpace max="32767" attributes="0"/>
               </Group>

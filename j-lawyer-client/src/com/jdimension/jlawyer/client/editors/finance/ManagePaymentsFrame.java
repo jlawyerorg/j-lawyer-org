@@ -848,7 +848,9 @@ public class ManagePaymentsFrame extends javax.swing.JFrame {
         try {
             // group payments by sender IBAN - need to generate one file for each bank account
             HashMap<String, List<Payment>> paymentsBySender = new HashMap<>();
-            boolean allValid = this.validateForExport();
+            
+            // validate only approved payments
+            boolean allValid = this.validateForExport(true);
             if (!allValid) {
                 JOptionPane.showMessageDialog(this, "Einige Zahlungsinformationen sind fehlerhaft - bitte prüfen und Export erneut versuchen.", com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_WARNING, JOptionPane.WARNING_MESSAGE);
                 return;
@@ -860,6 +862,10 @@ public class ManagePaymentsFrame extends javax.swing.JFrame {
                 Payment p = pmep.getPayment();
 
                 if (p.getStatus() != Payment.STATUS_APPROVED) {
+                    continue;
+                }
+                
+                if (!Payment.PAYMENTTYPE_SEPATRANSFER.equals(p.getPaymentType())) {
                     continue;
                 }
 
@@ -881,7 +887,7 @@ public class ManagePaymentsFrame extends javax.swing.JFrame {
                 List<SEPATransaction> transactions = new ArrayList<>();
                 for (Payment p : paymentsForIban) {
                     try {
-                        
+
                         String recipientIban = null;
                         if (p.getContact() != null) {
                             recipientIban = p.getContact().getBankAccount();
@@ -938,17 +944,17 @@ public class ManagePaymentsFrame extends javax.swing.JFrame {
                     } catch (Throwable t) {
                         log.error("can not get canonical path during sepa export", t);
                     }
-                    
-                    String fileName=dir.getPath() + File.separator + new SimpleDateFormat("yyyyMMdd_HHmm_").format(new Date()) + "_SEPA-Export_" + iban + ".xml";
-                    FileWriter fw=new FileWriter(fileName);
+
+                    String fileName = dir.getPath() + File.separator + new SimpleDateFormat("yyyyMMdd_HHmm_").format(new Date()) + "_SEPA-Export_" + iban + ".xml";
+                    FileWriter fw = new FileWriter(fileName);
                     fw.write(sepaString);
                     fw.close();
-                    
+
                     // update status
                     for (Payment p : paymentsForIban) {
                         for (Component pmepc : this.pnlPayments.getComponents()) {
                             PaymentMgmtEntryPanel pmep = (PaymentMgmtEntryPanel) pmepc;
-                            if(pmep.getPayment().getId().equals(p.getId())) {
+                            if (pmep.getPayment().getId().equals(p.getId())) {
                                 pmep.updateStatus(Payment.STATUS_INITIATED);
                                 break;
                             }
@@ -967,41 +973,52 @@ public class ManagePaymentsFrame extends javax.swing.JFrame {
     }//GEN-LAST:event_cmdGenerateSepaXmlActionPerformed
 
     private void cmdValidateForExportActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdValidateForExportActionPerformed
-        this.validateForExport();
+        this.validateForExport(false);
     }//GEN-LAST:event_cmdValidateForExportActionPerformed
 
-    private boolean validateForExport() {
+    private boolean validateForExport(boolean approvedOnly) {
         boolean allValid = true;
         for (Component pmepc : this.pnlPayments.getComponents()) {
             boolean entryValid = true;
             PaymentMgmtEntryPanel pmep = (PaymentMgmtEntryPanel) pmepc;
             pmep.setError(null);
             Payment p = pmep.getPayment();
-            AppUserBean sender = UserSettings.getInstance().getUser(p.getSender());
-            String senderIban = null;
-            if (sender != null) {
-                senderIban = sender.getBankIban();
-                senderIban = senderIban.replace(" ", "");
+            
+            if(approvedOnly && p.getStatus()!=Payment.STATUS_APPROVED) {
+                pmep.setWarning("Zahlung ist nicht freigegeben, wird nicht geprüft / exportiert.");
+                continue;
             }
-            if (senderIban == null || !SEPAValidatorIBAN.isValid(senderIban)) {
-                pmep.setError("Ungültige Sender-IBAN: " + senderIban);
-                allValid = false;
-                entryValid = false;
-            }
+                
+            
+            if (!Payment.PAYMENTTYPE_SEPATRANSFER.equals(p.getPaymentType())) {
+                pmep.setWarning("Zahlung ist nicht als SEPA-Überweisung geplant");
+            } else {
+                AppUserBean sender = UserSettings.getInstance().getUser(p.getSender());
+                String senderIban = null;
+                if (sender != null) {
+                    senderIban = sender.getBankIban();
+                    senderIban = senderIban.replace(" ", "");
+                }
+                if (senderIban == null || !SEPAValidatorIBAN.isValid(senderIban)) {
+                    pmep.setError("Ungültige Sender-IBAN: " + senderIban);
+                    allValid = false;
+                    entryValid = false;
+                }
 
-            String recipientIban = null;
-            if (p.getContact() != null) {
-                recipientIban = p.getContact().getBankAccount();
-                recipientIban = recipientIban.replace(" ", "");
-            }
-            if (recipientIban == null || !SEPAValidatorIBAN.isValid(recipientIban)) {
-                pmep.setError("Ungültige Empfänger-IBAN: " + recipientIban);
-                allValid = false;
-                entryValid = false;
-            }
+                String recipientIban = null;
+                if (p.getContact() != null) {
+                    recipientIban = p.getContact().getBankAccount();
+                    recipientIban = recipientIban.replace(" ", "");
+                }
+                if (recipientIban == null || !SEPAValidatorIBAN.isValid(recipientIban)) {
+                    pmep.setError("Ungültige Empfänger-IBAN: " + recipientIban);
+                    allValid = false;
+                    entryValid = false;
+                }
 
-            if (entryValid) {
-                pmep.setSuccess("Zahlungsinformationen gültig.");
+                if (entryValid) {
+                    pmep.setSuccess("Zahlungsinformationen gültig.");
+                }
             }
 
         }
