@@ -685,6 +685,7 @@ import java.math.BigDecimal;
 import java.text.DecimalFormat;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
 import javax.swing.DefaultComboBoxModel;
 import javax.swing.JMenuItem;
@@ -811,7 +812,7 @@ public class PaymentDialog extends javax.swing.JDialog implements EventConsumer 
             this.txtReason.setText("");
             this.cmbStatus.setSelectedItem("");
             this.dtTarget.setText("");
-            this.dtCreated.setText("");
+            this.dtCreated.setText(df.format(new Date()));
             this.txtTotal.setValue(0f);
             this.lblRecipient.setText("");
             this.lblRecipient.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/warning.png")));
@@ -1014,16 +1015,15 @@ public class PaymentDialog extends javax.swing.JDialog implements EventConsumer 
                 .addContainerGap()
                 .addComponent(lblPaymentNumber)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-                .addGroup(lblHeaderLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addComponent(jLabel7)
-                    .addGroup(lblHeaderLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                        .addComponent(cmdDateCreated, javax.swing.GroupLayout.Alignment.TRAILING)
-                        .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, lblHeaderLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                            .addComponent(dtTarget, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                            .addComponent(jLabel3)
-                            .addComponent(cmdDateTarget))
-                        .addComponent(dtCreated, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
-                    .addComponent(cmbStatus, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
+                .addGroup(lblHeaderLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
+                    .addComponent(cmdDateCreated, javax.swing.GroupLayout.Alignment.TRAILING)
+                    .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, lblHeaderLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                        .addComponent(dtTarget, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addComponent(jLabel3)
+                        .addComponent(cmdDateTarget))
+                    .addComponent(dtCreated)
+                    .addComponent(cmbStatus)
+                    .addComponent(jLabel7, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
                 .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
         );
 
@@ -1157,6 +1157,16 @@ public class PaymentDialog extends javax.swing.JDialog implements EventConsumer 
     }//GEN-LAST:event_cmdCancelActionPerformed
 
     private void fillCurrentEntry() throws Exception {
+        try {
+            df.parse(this.dtCreated.getText());
+        } catch (Exception ex) {
+            throw new Exception("Ungültiges Erstellungsdatum");
+        }
+        try {
+            df.parse(this.dtTarget.getText());
+        } catch (Exception ex) {
+            throw new Exception("Ungültiges Ausführungsdatum");
+        }
         this.currentEntry.setDescription(this.taDescription.getText());
         this.currentEntry.setCreationDate(df.parse(this.dtCreated.getText()));
         this.currentEntry.setTargetDate(df.parse(this.dtTarget.getText()));
@@ -1174,7 +1184,7 @@ public class PaymentDialog extends javax.swing.JDialog implements EventConsumer 
         this.currentEntry.setTotal(BigDecimal.valueOf(((Number) this.txtTotal.getValue()).floatValue()));
     }
 
-    private void save() {
+    private boolean save() {
         ClientSettings settings = ClientSettings.getInstance();
         try {
             UserSettings.getInstance().setSetting(UserSettings.INVOICE_LASTUSEDCURRENCY, this.cmbCurrency.getSelectedItem().toString());
@@ -1192,16 +1202,20 @@ public class PaymentDialog extends javax.swing.JDialog implements EventConsumer 
                 JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
                 this.currentEntry=locator.lookupArchiveFileServiceRemote().updatePayment(this.caseDto.getId(), this.currentEntry);
             }
+            return true;
 
         } catch (Exception ex) {
             log.error("error saving payment", ex);
             JOptionPane.showMessageDialog(this, "Fehler beim Speichern der Zahlung: " + ex.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
+            return false;
         }
     }
 
     private void cmdSaveActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdSaveActionPerformed
 
-        this.save();
+        boolean valid=this.save();
+        if(!valid)
+            return;
         this.cancelled = false;
         this.setVisible(false);
         this.dispose();
