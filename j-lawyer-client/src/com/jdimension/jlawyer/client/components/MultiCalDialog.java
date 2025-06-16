@@ -666,10 +666,6 @@ package com.jdimension.jlawyer.client.components;
 import com.jdimension.jlawyer.client.calendar.CalendarUtils;
 import com.jdimension.jlawyer.client.utils.FrameUtils;
 import com.toedter.calendar.JDayChooser;
-import java.awt.GraphicsDevice;
-import java.awt.GraphicsEnvironment;
-import java.awt.Point;
-import java.awt.Rectangle;
 import java.text.SimpleDateFormat;
 import java.util.Calendar;
 import java.util.Date;
@@ -1082,11 +1078,6 @@ public class MultiCalDialog extends javax.swing.JDialog {
                         // Closed dialog (response == JOptionPane.CLOSED_OPTION)
                         return;
                     }
-                    
-//                    int response = JOptionPane.showConfirmDialog(this, java.util.ResourceBundle.getBundle("com/jdimension/jlawyer/client/components/MultiCalDialog").getString("dlg.confirm.nonweekday"), java.util.ResourceBundle.getBundle("com/jdimension/jlawyer/client/components/MultiCalDialog").getString("dlg.confirm.datecheck"), JOptionPane.YES_NO_OPTION);
-//                    if (response == JOptionPane.NO_OPTION) {
-//                        return;
-//                    }
                 }
 
             } catch (Exception ex) {
