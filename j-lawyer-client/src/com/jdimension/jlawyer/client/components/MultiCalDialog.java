@@ -1051,10 +1051,42 @@ public class MultiCalDialog extends javax.swing.JDialog {
                 }
 
                 if (holiday) {
-                    int response = JOptionPane.showConfirmDialog(this, java.util.ResourceBundle.getBundle("com/jdimension/jlawyer/client/components/MultiCalDialog").getString("dlg.confirm.nonweekday"), java.util.ResourceBundle.getBundle("com/jdimension/jlawyer/client/components/MultiCalDialog").getString("dlg.confirm.datecheck"), JOptionPane.YES_NO_OPTION);
-                    if (response == JOptionPane.NO_OPTION) {
+                    
+                    Object[] options = {
+                        "Trotzdem verwenden",
+                        "Abbrechen",
+                        "Nächstmöglichen Werktag verwenden"
+                    };
+
+                    int response = JOptionPane.showOptionDialog(
+                            this,
+                            java.util.ResourceBundle.getBundle("com/jdimension/jlawyer/client/components/MultiCalDialog").getString("dlg.confirm.nonweekday"),
+                            java.util.ResourceBundle.getBundle("com/jdimension/jlawyer/client/components/MultiCalDialog").getString("dlg.confirm.datecheck"),
+                            JOptionPane.YES_NO_CANCEL_OPTION,
+                            JOptionPane.QUESTION_MESSAGE,
+                            null,
+                            options,
+                            options[0] // default selection
+                    );
+
+                    // Interpret the response
+                    if (response == 0) {
+                        // Yes
+                    } else if (response == 1) {
+                        // No
+                        return;
+                    } else if (response == 2) {
+                        // Custom button
+                        d=CalendarUtils.getInstance().getNextAvailableWorkday(d);
+                    } else {
+                        // Closed dialog (response == JOptionPane.CLOSED_OPTION)
                         return;
                     }
+                    
+//                    int response = JOptionPane.showConfirmDialog(this, java.util.ResourceBundle.getBundle("com/jdimension/jlawyer/client/components/MultiCalDialog").getString("dlg.confirm.nonweekday"), java.util.ResourceBundle.getBundle("com/jdimension/jlawyer/client/components/MultiCalDialog").getString("dlg.confirm.datecheck"), JOptionPane.YES_NO_OPTION);
+//                    if (response == JOptionPane.NO_OPTION) {
+//                        return;
+//                    }
                 }
 
             } catch (Exception ex) {
