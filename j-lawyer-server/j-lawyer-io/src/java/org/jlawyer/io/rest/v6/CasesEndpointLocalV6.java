@@ -684,5 +684,6 @@ public interface CasesEndpointLocalV6 {
     Response updateDueDate(RestfulDueDateV6 dueDate);
     
     Response convertToPdf(String id);
+    Response performOcr(String id);
     
 }

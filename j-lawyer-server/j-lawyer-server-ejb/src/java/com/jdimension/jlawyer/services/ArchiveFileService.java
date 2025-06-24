@@ -726,6 +726,7 @@ import org.jlawyer.data.tree.GenericNode;
 import org.jlawyer.data.tree.TreeNodeUtils;
 import org.jlawyer.databucket.DataBucketUtils;
 import org.jlawyer.search.SearchIndexRequest;
+import org.jlawyer.utils.ocr.OcrUtils;
 
 /**
  *
@@ -2143,6 +2144,99 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
         } catch (InvalidSchemaPatternException isp) {
             throw new Exception(isp.getMessage());
         }
+    }
+
+    @Override
+    @RolesAllowed({"writeArchiveFileRole"})
+    public boolean performOcr(String docId) throws Exception {
+
+        ArchiveFileDocumentsBean doc = this.archiveFileDocumentsFacade.find(docId);
+        if (doc == null) {
+            return false;
+        }
+
+        if (ServerStringUtils.isEmpty(doc.getName())) {
+            return false;
+        }
+
+        if (!doc.getName().toLowerCase().endsWith(".pdf")) {
+            return false;
+        }
+
+        ServerSettingsBean s = this.settingsFacade.find("jlawyer.server.observe.ocrcmd");
+        String[] cmd = null;
+        if (s != null) {
+            if (s.getSettingValue().length() > 0) {
+                cmd = s.getSettingValue().split(" ");
+            }
+        }
+        if (cmd != null) {
+
+            log.info("performing OCR on document " + docId + " " + doc.getName() + " using ocrmypdf");
+
+            String tmpDir = System.getProperty("java.io.tmpdir");
+            if (!tmpDir.endsWith(System.getProperty("file.separator"))) {
+                tmpDir = tmpDir + System.getProperty("file.separator");
+            }
+
+            // Add the "OCR" prefix to the original file name
+            String tmpFileName = tmpDir + System.currentTimeMillis();
+
+            // Create a new File instance with the modified file name in the same directory
+            File outputFile = new File(tmpFileName);
+
+            String localBaseDir = System.getProperty("jlawyer.server.basedirectory");
+            localBaseDir = localBaseDir.trim();
+            if (!localBaseDir.endsWith(System.getProperty("file.separator"))) {
+                localBaseDir = localBaseDir + System.getProperty("file.separator");
+            }
+
+            String src = localBaseDir + "archivefiles" + System.getProperty("file.separator") + doc.getArchiveFileKey().getId() + System.getProperty("file.separator");
+            String srcId = src + doc.getId();
+
+            File srcFile = new File(srcId);
+
+            int exitCode = OcrUtils.performOcr(cmd, srcFile, outputFile);
+            if (!outputFile.exists()) {
+                log.error("OCR failed for file " + srcFile.getAbsolutePath());
+                return false;
+            } else {
+                byte[] ocrFile = ServerFileUtils.readFile(outputFile);
+                outputFile.delete();
+                if (exitCode < 0) {
+                    log.error("OCR failed for file " + srcFile.getAbsolutePath() + ", exit code is " + exitCode);
+                    return false;
+                } else {
+                    return this.setDocumentContent(docId, ocrFile);
+                }
+            }
+        } else {
+
+            ServerSettingsBean sb = this.settingsFacade.find(ServerSettingsKeys.SERVERCONF_STIRLINGPDF_ENDPOINT);
+            StirlingPdfAPI pdfApi = null;
+            if (sb != null && !ServerStringUtils.isEmpty(sb.getSettingValue())) {
+                
+                log.info("performing OCR on document " + docId + " " + doc.getName() + " using Stirling PDF");
+                
+                pdfApi = new StirlingPdfAPI(sb.getSettingValue(), 5000, 120000);
+                byte[] docContent = this.getDocumentContent(docId);
+                if (docContent == null) {
+                    return false;
+                }
+
+                byte[] ocred = pdfApi.ocrPdf(doc.getName(), docContent);
+                if (ocred != null) {
+                    return this.setDocumentContent(docId, ocred);
+                }
+            } else {
+                log.info("performing OCR on document " + docId + " " + doc.getName() + " failed because OCR tooling is not configured");
+                return false;
+            }
+
+        }
+        log.info("performing OCR on document " + docId + " " + doc.getName() + " failed");
+        return false;
+
     }
 
     @Override
@@ -5526,7 +5620,7 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
             throw new Exception(MSG_MISSINGPRIVILEGE_CASE);
         }
     }
-    
+
     @Override
     @RolesAllowed({"writeArchiveFileRole"})
     public Payment updatePayment(String caseId, Payment payment) throws Exception {
@@ -5565,7 +5659,7 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
             updatedPayment.setTotal(payment.getTotal());
 
             this.paymentsFacade.edit(updatedPayment);
-            
+
             this.addCaseHistory(new StringGenerator().getID().toString(), aFile, "Zahlung geändert (" + updatedPayment.getPaymentNumber() + ", " + updatedPayment.getStatusString() + ", " + updatedPayment.getPaymentType() + ")");
 
             return this.paymentsFacade.find(updatedPayment.getId());
@@ -6212,14 +6306,14 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
             StringGenerator idGen = new StringGenerator();
             String id = idGen.getID().toString();
             position.setId(id);
-            
+
             Date rawStart = new Date();
             Calendar cal = Calendar.getInstance();
             cal.setTime(rawStart);
             cal.set(Calendar.SECOND, 0);
             cal.set(Calendar.MILLISECOND, 0);
             Date start = cal.getTime();
-            
+
             position.setStarted(start);
             position.setStopped(null);
             position.setPrincipal(context.getCallerPrincipal().getName());
@@ -6237,7 +6331,7 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
                 if (existing.getStarted() == null) {
                     existing.setStarted(new Date());
                 }
-                
+
                 Date rawStop = new Date();
                 Calendar cal = Calendar.getInstance();
                 cal.setTime(rawStop);
@@ -6249,7 +6343,7 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
                 cal.set(Calendar.SECOND, 0);
                 cal.set(Calendar.MILLISECOND, 0);
                 Date stop = cal.getTime();
-                
+
                 existing.setStopped(stop);
                 existing.setDescription(position.getDescription());
                 existing.setName(position.getName());
@@ -6275,7 +6369,7 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
             newPos.setPrincipal(context.getCallerPrincipal().getName());
             newPos.setDescription(position.getDescription());
             newPos.setName(position.getName());
-            
+
             Date rawStart = new Date();
             Calendar cal = Calendar.getInstance();
             cal.setTime(rawStart);
@@ -6317,16 +6411,16 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
             }
 
             Date rawStop = new Date();
-                Calendar cal = Calendar.getInstance();
-                cal.setTime(rawStop);
-                if (cal.get(Calendar.SECOND) > 0 || cal.get(Calendar.MILLISECOND) > 0) {
-                    // Add 1 minute
-                    cal.add(Calendar.MINUTE, 1);
-                }
-                // Set seconds and milliseconds to zero
-                cal.set(Calendar.SECOND, 0);
-                cal.set(Calendar.MILLISECOND, 0);
-                Date stop = cal.getTime();
+            Calendar cal = Calendar.getInstance();
+            cal.setTime(rawStop);
+            if (cal.get(Calendar.SECOND) > 0 || cal.get(Calendar.MILLISECOND) > 0) {
+                // Add 1 minute
+                cal.add(Calendar.MINUTE, 1);
+            }
+            // Set seconds and milliseconds to zero
+            cal.set(Calendar.SECOND, 0);
+            cal.set(Calendar.MILLISECOND, 0);
+            Date stop = cal.getTime();
             existing.setStopped(stop);
             existing.setDescription(position.getDescription());
             existing.setName(position.getName());
@@ -7021,26 +7115,25 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
 
             // use file number as identifier, remove special characters because it may cause issues in banking
             //String paymentNumberPrefix=ServerFileUtils.sanitizeFileName(aFile.getFileNumber()) + "-" + new SimpleDateFormat("yyyyMMdd").format(new Date())+"-";
-            String paymentNumberPrefix=ServerFileUtils.sanitizeFileName(aFile.getFileNumber())+"-";
-            int i=0;
-            boolean paymentNumberExists=true;
-            String paymentNumber=null;
-            DecimalFormat df=new DecimalFormat("000");
+            String paymentNumberPrefix = ServerFileUtils.sanitizeFileName(aFile.getFileNumber()) + "-";
+            int i = 0;
+            boolean paymentNumberExists = true;
+            String paymentNumber = null;
+            DecimalFormat df = new DecimalFormat("000");
             while (paymentNumberExists) {
-                i=i+1;
-                paymentNumber=paymentNumberPrefix+df.format(i);
+                i = i + 1;
+                paymentNumber = paymentNumberPrefix + df.format(i);
                 Payment existingPayment = this.paymentsFacade.findByPaymentNumber(paymentNumber);
-                if(existingPayment==null) {
+                if (existingPayment == null) {
                     break;
                 }
             }
-            
-            
+
             payment.setPaymentNumber(paymentNumber);
             payment.setId(idGen.getID().toString());
             payment.setCreationDate(new Date());
             payment.setArchiveFileKey(aFile);
-            
+
             // check for conflicting invoice numbers
             Payment conflictingPayment = this.paymentsFacade.findByPaymentNumber(payment.getPaymentNumber());
             if (conflictingPayment != null) {
@@ -7111,10 +7204,11 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
         newPayment.setStatus(Payment.STATUS_NEW);
         newPayment.setTargetDate(oldPayment.getTargetDate());
         newPayment.setTotal(oldPayment.getTotal());
-        newPayment=this.addPayment(toCaseId, newPayment);
-        if(newPayment.getTargetDate()!=null) {
-            if(newPayment.getTargetDate().getTime()<newPayment.getCreationDate().getTime())
+        newPayment = this.addPayment(toCaseId, newPayment);
+        if (newPayment.getTargetDate() != null) {
+            if (newPayment.getTargetDate().getTime() < newPayment.getCreationDate().getTime()) {
                 newPayment.setTargetDate(new Date());
+            }
         }
         this.updatePayment(toCaseId, newPayment);
 

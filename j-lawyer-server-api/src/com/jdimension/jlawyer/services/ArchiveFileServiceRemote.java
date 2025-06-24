@@ -959,4 +959,6 @@ public interface ArchiveFileServiceRemote {
     void removePayment(String paymentId) throws Exception;
 
     Payment copyPayment(String paymentId, String toCaseId) throws Exception;
+    
+    boolean performOcr(String docId) throws Exception;
 }

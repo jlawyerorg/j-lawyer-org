@@ -952,7 +952,7 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
 
         BoxLayout boxLayout = new BoxLayout(this.pnlInvoices, BoxLayout.Y_AXIS);
         this.pnlInvoices.setLayout(boxLayout);
-        
+
         BoxLayout boxLayout4 = new BoxLayout(this.pnlPayments, BoxLayout.Y_AXIS);
         this.pnlPayments.setLayout(boxLayout4);
 
@@ -1110,7 +1110,7 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
         }
 
     }
-    
+
     public void newPayment(String caseId, String name, String description, String reason, AddressBean paymentRecipient, String currency, String sender, BigDecimal total) {
         Payment newPayment = new Payment();
         newPayment.setDescription(description);
@@ -1140,10 +1140,10 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
         pep.setEntry(this.dto, newPayment, this.pnlInvolvedParties.getInvolvedPartiesAddress());
         this.pnlPayments.add(pep, 0);
         this.pnlPayments.revalidate();
-        
+
         JOptionPane.showMessageDialog(this, "Zahlung im Tab 'Zahlungen' erstellt", "neue Zahlung aus Belegt", JOptionPane.INFORMATION_MESSAGE);
     }
-    
+
     public void duplicatePayment(String caseId, String paymentId) {
         if (caseId == null) {
             SearchAndAssignDialog dlg = new SearchAndAssignDialog(EditorsRegistry.getInstance().getMainWindow(), true, null, null);
@@ -1158,7 +1158,7 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
 
         // duplicate and add to view, if same case
         try {
-            ClientSettings settings=ClientSettings.getInstance();
+            ClientSettings settings = ClientSettings.getInstance();
             JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
             Payment paymentCopy = locator.lookupArchiveFileServiceRemote().copyPayment(paymentId, caseId);
             if (this.dto.getId().equals(caseId)) {
@@ -1815,6 +1815,7 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
         mnuRemoveDocument = new javax.swing.JMenuItem();
         jSeparator11 = new javax.swing.JPopupMenu.Separator();
         mnuPdfAndConvertActions = new javax.swing.JMenu();
+        mnuOcr = new javax.swing.JMenuItem();
         mnuMergeToPdf = new javax.swing.JMenuItem();
         mnuSplitPdf = new javax.swing.JMenuItem();
         mnuSaveDocumentsLocallyPdf = new javax.swing.JMenuItem();
@@ -2230,6 +2231,16 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
 
         mnuPdfAndConvertActions.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons16/pdf.png"))); // NOI18N
         mnuPdfAndConvertActions.setText("PDF und Konvertierung");
+
+        mnuOcr.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons16/material/baseline_font_download_green_48dp.png"))); // NOI18N
+        mnuOcr.setText("Texterkennung (OCR)");
+        mnuOcr.setToolTipText("führt eine Texterkennung für die selektieren Dokumente durch");
+        mnuOcr.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                mnuOcrActionPerformed(evt);
+            }
+        });
+        mnuPdfAndConvertActions.add(mnuOcr);
 
         mnuMergeToPdf.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons16/pdf.png"))); // NOI18N
         mnuMergeToPdf.setText("als PDF zusammenführen");
@@ -4071,14 +4082,15 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
     private void mnuRemoveReviewActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_mnuRemoveReviewActionPerformed
 
         int[] selectedRows = this.tblReviewReasons.getSelectedRows();
-        if(selectedRows.length==0)
+        if (selectedRows.length == 0) {
             return;
-        
+        }
+
         int response = JOptionPane.showConfirmDialog(this, "Sollen " + selectedRows.length + " ausgewählte Kalendereinträge gelöscht werden?", "Kalendereinträge löschen", JOptionPane.YES_NO_OPTION);
         if (response != JOptionPane.YES_OPTION) {
             return;
         }
-        
+
         ClientSettings settings = ClientSettings.getInstance();
         JLawyerServiceLocator locator = null;
         try {
@@ -4091,7 +4103,7 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
         }
         CalendarServiceRemote calService = locator.lookupCalendarServiceRemote();
         EditorsRegistry.getInstance().updateStatus("Wiedervorlage/Frist wird gelöscht...");
-                
+
         ArchiveFileReviewReasonsTableModel tModel = (ArchiveFileReviewReasonsTableModel) this.tblReviewReasons.getModel();
         ArchiveFileReviewsBean relevantEvent = null;
         for (int i = selectedRows.length - 1; i > -1; i--) {
@@ -4530,50 +4542,50 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
 
     private void loadForms() {
         try {
-            
+
             EditorsRegistry.getInstance().updateStatus("Lade Falldaten zur Akte...", false);
-            
+
             ClientSettings settings = ClientSettings.getInstance();
             JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
-            
+
             this.cmbFormType.removeAllItems();
-                List<FormTypeBean> formTypes = locator.lookupFormsServiceRemote().getAllFormTypes();
-                for (FormTypeBean ftb : formTypes) {
-                    if (ftb.getUsageType().equals(FormTypeBean.TYPE_PLUGIN)) {
-                        this.cmbFormType.addItem(ftb);
-                    }
+            List<FormTypeBean> formTypes = locator.lookupFormsServiceRemote().getAllFormTypes();
+            for (FormTypeBean ftb : formTypes) {
+                if (ftb.getUsageType().equals(FormTypeBean.TYPE_PLUGIN)) {
+                    this.cmbFormType.addItem(ftb);
                 }
-                if (this.cmbFormType.getItemCount() > 0) {
-                    this.cmbFormType.setSelectedIndex(0);
+            }
+            if (this.cmbFormType.getItemCount() > 0) {
+                this.cmbFormType.setSelectedIndex(0);
+            }
+
+            List<ArchiveFileFormsBean> caseForms = locator.lookupFormsServiceRemote().getFormsForCase(this.dto.getId());
+            SimpleDateFormat dayFormat = new SimpleDateFormat("dd.MM.yyyy");
+            for (ArchiveFileFormsBean affb : caseForms) {
+                EditorsRegistry.getInstance().updateStatus("Lade Falldaten " + affb.getFormType().getName() + " (" + affb.getPlaceHolder() + ")", false);
+                FormPlugin plugin = new FormPlugin();
+                plugin.setId(affb.getFormType().getId());
+                plugin.setCaseDto(this.dto);
+                plugin.setPlaceHolder(affb.getPlaceHolder());
+                FormInstancePanel formInstance = new FormInstancePanel(this.tabPaneForms, plugin);
+                Dimension maxDimension = this.pnlAddForms.getSize();
+                maxDimension.setSize(maxDimension.getWidth() - 100, maxDimension.getHeight() - 60);
+                formInstance.setMaximumSize(maxDimension);
+                formInstance.setPreferredSize(maxDimension);
+                formInstance.setDescription(affb.getDescription());
+                formInstance.setForm(affb);
+
+                try {
+
+                    formInstance.initialize();
+                    String tabTitle = "<html><p style=\"text-align: left; width: 130px\"><b>" + affb.getFormType().getName() + "</b><br/>" + dayFormat.format(affb.getCreationDate()) + "<br/>" + affb.getPlaceHolder() + "</p></html>";
+                    tabPaneForms.addTab(tabTitle, null, formInstance);
+
+                } catch (Throwable t) {
+                    log.error("Error loading form plugin", t);
+                    JOptionPane.showMessageDialog(this, "Fehler beim Laden des Falldatenblattes: " + t.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
                 }
-
-                List<ArchiveFileFormsBean> caseForms = locator.lookupFormsServiceRemote().getFormsForCase(this.dto.getId());
-                SimpleDateFormat dayFormat = new SimpleDateFormat("dd.MM.yyyy");
-                for (ArchiveFileFormsBean affb : caseForms) {
-                    EditorsRegistry.getInstance().updateStatus("Lade Falldaten " + affb.getFormType().getName() + " (" + affb.getPlaceHolder() + ")", false);
-                    FormPlugin plugin = new FormPlugin();
-                    plugin.setId(affb.getFormType().getId());
-                    plugin.setCaseDto(this.dto);
-                    plugin.setPlaceHolder(affb.getPlaceHolder());
-                    FormInstancePanel formInstance = new FormInstancePanel(this.tabPaneForms, plugin);
-                    Dimension maxDimension = this.pnlAddForms.getSize();
-                    maxDimension.setSize(maxDimension.getWidth() - 100, maxDimension.getHeight() - 60);
-                    formInstance.setMaximumSize(maxDimension);
-                    formInstance.setPreferredSize(maxDimension);
-                    formInstance.setDescription(affb.getDescription());
-                    formInstance.setForm(affb);
-
-                    try {
-
-                        formInstance.initialize();
-                        String tabTitle = "<html><p style=\"text-align: left; width: 130px\"><b>" + affb.getFormType().getName() + "</b><br/>" + dayFormat.format(affb.getCreationDate()) + "<br/>" + affb.getPlaceHolder() + "</p></html>";
-                        tabPaneForms.addTab(tabTitle, null, formInstance);
-
-                    } catch (Throwable t) {
-                        log.error("Error loading form plugin", t);
-                        JOptionPane.showMessageDialog(this, "Fehler beim Laden des Falldatenblattes: " + t.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
-                    }
-                }
+            }
 
         } catch (Exception ex) {
             log.error("Error loading forms", ex);
@@ -4582,7 +4594,7 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
             EditorsRegistry.getInstance().clearStatus(false);
         }
     }
-    
+
     private void loadAccountEntries() {
         TableUtils.clearModel(this.tblAccountEntries);
         try {
@@ -4630,7 +4642,7 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
             if (this.tabPaneArchiveFile.getSelectedIndex() == 3 && this.tblAccountEntries.getRowCount() == 0) {
                 this.loadAccountEntries();
             }
-            
+
             if (this.tabPaneArchiveFile.getSelectedIndex() == 6 && this.tabPaneForms.getTabCount() == 1) {
                 this.loadForms();
             }
@@ -5584,6 +5596,30 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
             JOptionPane.showMessageDialog(this, "Fehler beim Kopieren des Dokuments: " + ioe.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
         }
     }//GEN-LAST:event_mnuCopyDocumentToOtherCaseActionPerformed
+
+    public void performOcr(ArchiveFileDocumentsBean doc) throws Exception {
+
+        if (doc.getName().toLowerCase().endsWith(".pdf")) {
+
+            ClientSettings settings = ClientSettings.getInstance();
+            JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
+            ArchiveFileServiceRemote remote = locator.lookupArchiveFileServiceRemote();
+
+            try {
+                if(!remote.performOcr(doc.getId())){
+                    JOptionPane.showMessageDialog(EditorsRegistry.getInstance().getMainWindow(), "Fehler bei der Texterkennung für Dokument " + doc.getName(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
+                }
+                
+                
+            } catch (Throwable t) {
+                log.error("Could not perform OCR for document", t);
+                JOptionPane.showMessageDialog(EditorsRegistry.getInstance().getMainWindow(), "Fehler bei der Texterkennung: " + t.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
+            }
+
+            this.lastPopupClosed = System.currentTimeMillis();
+        }
+
+    }
 
     public void convertDocumentToPdf(ArchiveFileDocumentsBean doc) throws Exception {
         ClientSettings settings = ClientSettings.getInstance();
@@ -7352,7 +7388,7 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
         try {
             ClientSettings settings = ClientSettings.getInstance();
             JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
-            
+
             // Load document content
             byte[] content = CachingDocumentLoader.getInstance().getDocument(selectedDocs.get(0).getId());
             // Save as temporary file
@@ -7423,11 +7459,11 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
 
         AccountEntryRowIdentifier ae = (AccountEntryRowIdentifier) this.tblAccountEntries.getValueAt(this.tblAccountEntries.getSelectedRow(), 0);
 
-        SplitPaymentDialog dlg=new SplitPaymentDialog(EditorsRegistry.getInstance().getMainWindow(), true, this.dto, ae.getAccountEntry(), this.pnlInvolvedParties.getInvolvedPartiesAddress());
+        SplitPaymentDialog dlg = new SplitPaymentDialog(EditorsRegistry.getInstance().getMainWindow(), true, this.dto, ae.getAccountEntry(), this.pnlInvolvedParties.getInvolvedPartiesAddress());
 
         FrameUtils.centerDialog(dlg, EditorsRegistry.getInstance().getMainWindow());
         dlg.setVisible(true);
-        if(dlg.getSplitPayments()!=null) {
+        if (dlg.getSplitPayments() != null) {
             for (Payment p : dlg.getSplitPayments()) {
                 PaymentEntryPanel pep = new PaymentEntryPanel(this);
                 pep.setEntry(this.dto, p, this.pnlInvolvedParties.getInvolvedPartiesAddress());
@@ -7435,8 +7471,45 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
                 this.pnlPayments.revalidate();
             }
         }
-       
+
     }//GEN-LAST:event_cmdPaymentFromAccountEntryActionPerformed
+
+    private void mnuOcrActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_mnuOcrActionPerformed
+        if (LoadDocumentPreviewThread.isRunning()) {
+            JOptionPane.showMessageDialog(this, "Bitte warten Sie bis die Dokumentvorschau abgeschlossen ist.", "Hinweis", JOptionPane.PLAIN_MESSAGE);
+            return;
+        }
+
+        try {
+
+            ArrayList<ArchiveFileDocumentsBean> selected = this.caseFolderPanel1.getSelectedDocuments();
+            if (selected.isEmpty()) {
+                return;
+            }
+
+            ArrayList<String> open = this.getDocumentsOpenForWrite(selected);
+            if (!open.isEmpty()) {
+                String question = "<html>Soll die Aktion auf geöffnete Dokumente ausgeführt werden? Es besteht das Risiko fehlender / inkonsistenter Inhalte.<br/><ul>";
+                for (String o : open) {
+                    question = question + "<li>" + o + "</li>";
+                }
+                question = question + "</ul></html>";
+                int response = JOptionPane.showConfirmDialog(this, question, "Aktion auf offene Dokumente ausführen", JOptionPane.YES_NO_OPTION);
+                if (response == JOptionPane.NO_OPTION) {
+                    return;
+                }
+            }
+
+            for (ArchiveFileDocumentsBean doc : selected) {
+                this.performOcr(doc);
+            }
+            JOptionPane.showMessageDialog(EditorsRegistry.getInstance().getMainWindow(), "Texterkennung für " + selected.size() + " Dokument(e) abgeschlossen.", com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_HINT, JOptionPane.INFORMATION_MESSAGE);
+
+        } catch (Exception ioe) {
+            log.error("Error OCRing document", ioe);
+            JOptionPane.showMessageDialog(this, "Fehler bei der Texterkennung für das Dokument: " + ioe.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
+        }
+    }//GEN-LAST:event_mnuOcrActionPerformed
 
     public void exportSelectedDocumentsAsPdf() {
 
@@ -8153,6 +8226,7 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
     private javax.swing.JMenuItem mnuEditReview;
     private javax.swing.JMenuItem mnuMergeToPdf;
     private javax.swing.JMenuItem mnuMoveDocumentToOtherCase;
+    private javax.swing.JMenuItem mnuOcr;
     private javax.swing.JMenuItem mnuOpenDocument;
     private javax.swing.JMenuItem mnuOpenDocumentLibreOffice;
     private javax.swing.JMenuItem mnuOpenDocumentMicrosoftOffice;

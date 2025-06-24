@@ -287,6 +287,18 @@
             <Property name="text" type="java.lang.String" value="PDF und Konvertierung"/>
           </Properties>
           <SubComponents>
+            <MenuItem class="javax.swing.JMenuItem" name="mnuOcr">
+              <Properties>
+                <Property name="icon" type="javax.swing.Icon" editor="org.netbeans.modules.form.editors2.IconEditor">
+                  <Image iconType="3" name="/icons16/material/baseline_font_download_green_48dp.png"/>
+                </Property>
+                <Property name="text" type="java.lang.String" value="Texterkennung (OCR)"/>
+                <Property name="toolTipText" type="java.lang.String" value="f&#xfc;hrt eine Texterkennung f&#xfc;r die selektieren Dokumente durch"/>
+              </Properties>
+              <Events>
+                <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="mnuOcrActionPerformed"/>
+              </Events>
+            </MenuItem>
             <MenuItem class="javax.swing.JMenuItem" name="mnuMergeToPdf">
               <Properties>
                 <Property name="icon" type="javax.swing.Icon" editor="org.netbeans.modules.form.editors2.IconEditor">
