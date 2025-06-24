@@ -995,11 +995,19 @@ public class QuickAddressSearchPanel extends javax.swing.JPanel implements Theme
             JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
 
             AddressServiceRemote addressService = locator.lookupAddressServiceRemote();
+            int failedDeletions=0;
             for (int i = ids.size() - 1; i > -1; i--) {
-                addressService.removeAddress(ids.get(i));
-                QuickAddressSearchTableModel model = (QuickAddressSearchTableModel) this.tblResults.getModel();
-                model.removeRow(this.tblResults.convertRowIndexToModel(selectedIndices[i]));
+                try {
+                    addressService.removeAddress(ids.get(i));
+                    QuickAddressSearchTableModel model = (QuickAddressSearchTableModel) this.tblResults.getModel();
+                    model.removeRow(this.tblResults.convertRowIndexToModel(selectedIndices[i]));
+                } catch (Exception ex) {
+                    log.error("Error deleting address", ex);
+                    failedDeletions++;
+                }
             }
+            if(failedDeletions>0)
+                JOptionPane.showMessageDialog(this, "" + failedDeletions + " Adresse(n) konnten nicht gelöscht werden, bspw. weil sie noch als Beteiligte in Nutzung sind.", com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
 
             EditorsRegistry.getInstance().clearStatus(false);
 
