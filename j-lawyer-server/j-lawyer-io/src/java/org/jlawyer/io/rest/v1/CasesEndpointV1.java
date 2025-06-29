@@ -1472,8 +1472,8 @@ public class CasesEndpointV1 implements CasesEndpointLocalV1 {
     /**
      * Creates a new party in a given case.
      *
-     * @param party The parties metadata. Use CLIENT | OPPONENT | OTHER for
-     * involvementType.
+     * @param party The parties metadata. Use an ID for a party type as
+     * involvementType. Available types can be retrieved using /v1/cases/party/types.
      * @response 401 User not authorized
      * @response 403 User not authenticated
      */
