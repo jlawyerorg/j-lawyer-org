@@ -985,6 +985,8 @@ public class AddressService implements AddressServiceRemote, AddressServiceLocal
                 String tagId = idGen.getID().toString();
                 tag.setId(tagId);
                 tag.setAddressKey(ab);
+                if(tag.getDateSet()==null)
+                    tag.setDateSet(new Date());
                 this.addressTagsFacade.create(tag);
 
             }

@@ -2523,7 +2523,8 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
                 String tagId = idGen.getID().toString();
                 tag.setId(tagId);
                 tag.setArchiveFileKey(aFile);
-                tag.setDateSet(new Date());
+                if(tag.getDateSet()==null)
+                    tag.setDateSet(new Date());
                 this.archiveFileTagsFacade.create(tag);
                 historyText = "Akten-Etikett gesetzt: " + tag.getTagName();
             } else {
@@ -2574,7 +2575,8 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
                 String tagId = idGen.getID().toString();
                 tag.setId(tagId);
                 tag.setArchiveFileKey(aFile);
-                tag.setDateSet(new Date());
+                if(tag.getDateSet()==null)
+                    tag.setDateSet(new Date());
                 this.documentTagsFacade.create(tag);
                 historyText = "Dokument-Etikett gesetzt an " + aFile.getName() + ": " + tag.getTagName();
             }

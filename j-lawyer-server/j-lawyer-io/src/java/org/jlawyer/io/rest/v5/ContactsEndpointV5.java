@@ -701,7 +701,7 @@ public class ContactsEndpointV5 implements ContactsEndpointLocalV5 {
     private static final String LOOKUP_ADDRESSSERVICE="java:global/j-lawyer-server/j-lawyer-server-ejb/AddressService!com.jdimension.jlawyer.services.AddressServiceLocal";
 
     /**
-     * Returns all tags attached to the contact give by its ID
+     * Returns all tags attached to the contact given by its ID
      *
      * @param id contact ID
      * @response 401 User not authorized
@@ -730,6 +730,7 @@ public class ContactsEndpointV5 implements ContactsEndpointLocalV5 {
                 RestfulTagV1 t = new RestfulTagV1();
                 t.setId(tag.getId());
                 t.setName(tag.getTagName());
+                t.setDateSet(tag.getDateSet());
                 tagList.add(t);
             }
 
@@ -770,7 +771,7 @@ public class ContactsEndpointV5 implements ContactsEndpointLocalV5 {
     }
     
     /**
-     * Creates a contact tag.
+     * Creates a contact tag. dateSet is optional.
      *
      * @param id contact ID
      * @param tag the tag to be added. its id may be empty.
@@ -795,6 +796,8 @@ public class ContactsEndpointV5 implements ContactsEndpointLocalV5 {
                 AddressTagsBean newTag=new AddressTagsBean();
                 newTag.setAddressKey(addr);
                 newTag.setTagName(tag.getName());
+                if(tag.getDateSet()!=null)
+                    newTag.setDateSet(tag.getDateSet());
                 newTag.setId(tag.getId());
                 addresses.setTag(addr.getId(), newTag, true);
             }

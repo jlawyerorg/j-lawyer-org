@@ -894,6 +894,7 @@ public class CasesEndpointV1 implements CasesEndpointLocalV1 {
                 RestfulTagV1 t = new RestfulTagV1();
                 t.setId(tag.getId());
                 t.setName(tag.getTagName());
+                t.setDateSet(tag.getDateSet());
                 tagList.add(t);
 
             }

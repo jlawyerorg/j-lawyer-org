@@ -853,6 +853,7 @@ public class CasesEndpointV5 implements CasesEndpointLocalV5 {
                 RestfulTagV1 t = new RestfulTagV1();
                 t.setId(tag.getId());
                 t.setName(tag.getTagName());
+                t.setDateSet(tag.getDateSet());
                 tagList.add(t);
             }
 
@@ -896,7 +897,7 @@ public class CasesEndpointV5 implements CasesEndpointLocalV5 {
     }
     
     /**
-     * Creates a case tag.
+     * Creates a case tag. dateSet is optional.
      *
      * @param id case ID
      * @param tag the tag to be added. its id may be empty.
@@ -921,6 +922,9 @@ public class CasesEndpointV5 implements CasesEndpointLocalV5 {
                 ArchiveFileTagsBean newTag=new ArchiveFileTagsBean();
                 newTag.setArchiveFileKey(afb);
                 newTag.setTagName(tag.getName());
+                if(tag.getDateSet()!=null) {
+                    newTag.setDateSet(tag.getDateSet());
+                }
                 newTag.setId(tag.getId());
                 cases.setTag(afb.getId(), newTag, true);
             }
@@ -933,7 +937,7 @@ public class CasesEndpointV5 implements CasesEndpointLocalV5 {
     }
     
     /**
-     * Creates a document tag.
+     * Creates a document tag. dateSet is optional.
      *
      * @param id document ID
      * @param tag the tag to be added. its id may be empty.
@@ -958,6 +962,8 @@ public class CasesEndpointV5 implements CasesEndpointLocalV5 {
                 DocumentTagsBean newTag=new DocumentTagsBean();
                 newTag.setArchiveFileKey(doc);
                 newTag.setTagName(tag.getName());
+                if(tag.getDateSet()!=null)
+                    newTag.setDateSet(tag.getDateSet());
                 newTag.setId(tag.getId());
                 cases.setDocumentTag(doc.getId(), newTag, true);
             }
