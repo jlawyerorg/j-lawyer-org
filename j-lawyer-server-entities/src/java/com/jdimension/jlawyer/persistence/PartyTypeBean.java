@@ -681,6 +681,7 @@ import javax.xml.bind.annotation.XmlRootElement;
 @XmlRootElement
 @NamedQueries({
     @NamedQuery(name = "PartyTypeBean.findAll", query = "SELECT p FROM PartyTypeBean p"),
+    @NamedQuery(name = "PartyTypeBean.findAllInSequence", query = "SELECT p FROM PartyTypeBean p order by p.sequenceNumber asc, p.name asc"),
     @NamedQuery(name = "PartyTypeBean.findById", query = "SELECT p FROM PartyTypeBean p WHERE p.id = :id"),
     @NamedQuery(name = "PartyTypeBean.findByName", query = "SELECT p FROM PartyTypeBean p WHERE p.name = :name")})
 public class PartyTypeBean implements Serializable {

@@ -663,6 +663,7 @@
  */
 package com.jdimension.jlawyer.persistence;
 
+import java.util.List;
 import javax.annotation.security.PermitAll;
 import javax.ejb.Stateless;
 import javax.persistence.EntityManager;
@@ -697,6 +698,12 @@ public class PartyTypeBeanFacade extends AbstractFacade<PartyTypeBean> implement
             return null;
         }
 
+    }
+    
+    @Override
+    public List<PartyTypeBean> findAllInSequence() {
+        return (List<PartyTypeBean>) em.createNamedQuery("PartyTypeBean.findAllInSequence").getResultList();
+        
     }
     
 }

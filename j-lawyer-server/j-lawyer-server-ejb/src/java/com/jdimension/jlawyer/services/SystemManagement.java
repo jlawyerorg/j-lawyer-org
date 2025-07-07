@@ -2078,43 +2078,7 @@ public class SystemManagement implements SystemManagementRemote, SystemManagemen
 
     @Override
     public List<PartyTypeBean> getPartyTypes() {
-        List<PartyTypeBean> all = this.partyTypesFacade.findAll();
-        Collections.sort(all, (Object t, Object t1) -> {
-            Object u1 = t;
-            Object u2 = t1;
-            if (u1 == null) {
-                return -1;
-            }
-            if (u2 == null) {
-                return 1;
-            }
-
-            if (!(u1 instanceof PartyTypeBean)) {
-                return -1;
-            }
-            if (!(u2 instanceof PartyTypeBean)) {
-                return 1;
-            }
-
-            PartyTypeBean f1 = (PartyTypeBean) u1;
-            PartyTypeBean f2 = (PartyTypeBean) u2;
-
-            int sequenceSortResult = Integer.compare(f1.getSequenceNumber(), f2.getSequenceNumber());
-            if (sequenceSortResult != 0) {
-                return sequenceSortResult;
-            } else {
-                String f1name = "";
-                if (f1.getName() != null) {
-                    f1name = f1.getName().toLowerCase();
-                }
-                String f2name = "";
-                if (f2.getName() != null) {
-                    f2name = f2.getName().toLowerCase();
-                }
-                return f1name.compareTo(f2name);
-            }
-        });
-        return all;
+        return this.partyTypesFacade.findAllInSequence();
     }
 
     @Override
