@@ -815,9 +815,6 @@ public class MailContentUI extends javax.swing.JPanel implements HyperlinkListen
         this.lstAttachments.setCellRenderer(new AttachmentListCellRenderer());
         this.lstAttachments.setModel(new DefaultListModel());
 
-        mnuRemoveItem.addActionListener((java.awt.event.ActionEvent evt) -> {
-            mnuRemoveItemActionPerformed(evt);
-        });
 
         // Add mouse listeners to copy labels
         addCopyFunctionality(lblSubject);
