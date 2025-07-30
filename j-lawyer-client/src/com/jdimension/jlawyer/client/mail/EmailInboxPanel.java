@@ -671,7 +671,7 @@ import com.jdimension.jlawyer.client.editors.documents.SearchAndAssignDialog;
 import com.jdimension.jlawyer.client.editors.files.BulkSaveDialog;
 import com.jdimension.jlawyer.client.editors.files.BulkSaveEntry;
 import com.jdimension.jlawyer.client.editors.files.DescendingDateTimeStringComparator;
-import com.jdimension.jlawyer.client.editors.files.FileNumberComparator;
+import com.jdimension.jlawyer.client.editors.files.FileNumberComparatorArchiveFileBean;
 import com.jdimension.jlawyer.client.events.EmailStatusEvent;
 import com.jdimension.jlawyer.client.events.EventBroker;
 import com.jdimension.jlawyer.client.launcher.Launcher;
@@ -2771,24 +2771,26 @@ public class EmailInboxPanel extends javax.swing.JPanel implements SaveToCaseExe
                             Collections.sort(addressRelatedCases, (Object o1, Object o2) -> {
                                 ArchiveFileBean aFile1 = (ArchiveFileBean) o1;
                                 ArchiveFileBean aFile2 = (ArchiveFileBean) o2;
+                                
+                                boolean archived1 = aFile1.isArchived();
+                                boolean archived2 = aFile2.isArchived();
 
-                                if (aFile2.isArchived()) {
-                                    if (aFile1.isArchived()) {
-                                        // both archived
-                                        // sort by changed date
-                                        return new FileNumberComparator().compare(aFile1, aFile2) * -1;
-                                    } else {
-                                        // only 2 is archived
-                                        return -1;
-                                    }
-                                } else if (aFile1.isArchived()) {
+                                if (archived1 && archived2) {
+                                    // both archived
+                                    // sort by changed date
+                                    return new FileNumberComparatorArchiveFileBean().reversed().compare(aFile1, aFile2);
+                                } else if (archived1) {
                                     // only 1 is archived
                                     return 1;
+                                } else if (archived2) {
+                                    // only 2 is archived
+                                    return -1;
                                 } else {
                                     // both are non-archived
                                     // sort by changed date
-                                    return new FileNumberComparator().compare(aFile1, aFile2) * -1;
+                                    return new FileNumberComparatorArchiveFileBean().reversed().compare(aFile1, aFile2);
                                 }
+
                             });
 
                         }

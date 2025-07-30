@@ -789,7 +789,7 @@ public class ArchiveFileReviewsAdvancedSearchThread implements Runnable {
             model.addRow(row);
         }
         TableRowSorter<TableModel> sorter = new TableRowSorter<>(model);
-        sorter.setComparator(2, new FileNumberComparator());
+        sorter.setComparator(2, new FileNumberComparatorString());
         sorter.setComparator(0, new DateStringComparator());
         ThreadUtils.setTableModel(this.target, model, sorter);
         ThreadUtils.setDefaultCursor(this.owner);

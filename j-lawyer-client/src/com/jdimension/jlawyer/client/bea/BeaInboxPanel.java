@@ -675,7 +675,7 @@ import com.jdimension.jlawyer.client.editors.files.BeaEntryProcessor;
 import com.jdimension.jlawyer.client.editors.files.BulkSaveDialog;
 import com.jdimension.jlawyer.client.editors.files.BulkSaveEntry;
 import com.jdimension.jlawyer.client.editors.files.DescendingDateTimeStringComparator;
-import com.jdimension.jlawyer.client.editors.files.FileNumberComparator;
+import com.jdimension.jlawyer.client.editors.files.FileNumberComparatorArchiveFileBean;
 import com.jdimension.jlawyer.client.events.BeaStatusEvent;
 import com.jdimension.jlawyer.client.events.EventBroker;
 import com.jdimension.jlawyer.client.mail.sidebar.CreateNewAddressPanel;
@@ -2183,23 +2183,25 @@ public class BeaInboxPanel extends javax.swing.JPanel implements SaveToCaseExecu
                         ArchiveFileAddressesBean afab2 = (ArchiveFileAddressesBean) o2;
                         ArchiveFileBean aFile2 = afab2.getArchiveFileKey();
 
-                        if (aFile2.isArchived()) {
-                            if (aFile1.isArchived()) {
-                                // both archived
-                                // sort by changed date
-                                return new FileNumberComparator().compare(aFile1, aFile2) * -1;
-                            } else {
-                                // only 2 is archived
-                                return -1;
-                            }
-                        } else if (aFile1.isArchived()) {
+                        boolean archived1 = aFile1.isArchived();
+                        boolean archived2 = aFile2.isArchived();
+
+                        if (archived1 && archived2) {
+                            // both archived
+                            // sort by changed date
+                            return new FileNumberComparatorArchiveFileBean().reversed().compare(aFile1, aFile2);
+                        } else if (archived1) {
                             // only 1 is archived
                             return 1;
+                        } else if (archived2) {
+                            // only 2 is archived
+                            return -1;
                         } else {
                             // both are non-archived
                             // sort by changed date
-                            return new FileNumberComparator().compare(aFile1, aFile2) * -1;
+                            return new FileNumberComparatorArchiveFileBean().reversed().compare(aFile1, aFile2);
                         }
+
                     });
                     for (Object c : cases) {
                         ArchiveFileAddressesBean afab = (ArchiveFileAddressesBean) c;
@@ -2647,20 +2649,20 @@ public class BeaInboxPanel extends javax.swing.JPanel implements SaveToCaseExecu
                             sortCol = sortKeys.get(0).getColumn();
                         }
                     }
-                    
-                    DefaultMutableTreeNode tn=null;
-                    if(this.treeFolders.getSelectionPath()==null) {
+
+                    DefaultMutableTreeNode tn = null;
+                    if (this.treeFolders.getSelectionPath() == null) {
                         log.warn("no source folder selected");
-                        tn=this.findFolder((DefaultMutableTreeNode)this.treeFolders.getModel().getRoot(), mh.getFolderId(), mh.getPostBoxSafeId());
+                        tn = this.findFolder((DefaultMutableTreeNode) this.treeFolders.getModel().getRoot(), mh.getFolderId(), mh.getPostBoxSafeId());
                     } else {
                         tn = (DefaultMutableTreeNode) this.treeFolders.getSelectionPath().getLastPathComponent();
                     }
-                    
-                    if(tn==null) {
+
+                    if (tn == null) {
                         log.error("last path component of source folder is null");
                     }
                     org.jlawyer.bea.model.Folder sourceFolder = (org.jlawyer.bea.model.Folder) tn.getUserObject();
-                    if(sourceFolder==null) {
+                    if (sourceFolder == null) {
                         log.error("user object of source folder is null");
                     }
                     Folder importedFolder = BeaAccess.getInstance().getImportedFolder(sourceFolder.getSafeId());
@@ -2686,17 +2688,19 @@ public class BeaInboxPanel extends javax.swing.JPanel implements SaveToCaseExecu
         }
         return false;
     }
-    
+
     private DefaultMutableTreeNode findFolder(DefaultMutableTreeNode node, long folderId, String safeId) {
-        if(node.getUserObject() instanceof org.jlawyer.bea.model.Folder) {
-            org.jlawyer.bea.model.Folder f=(org.jlawyer.bea.model.Folder)node.getUserObject();
-            if(f.getId()==folderId && f.getSafeId().equals(safeId))
+        if (node.getUserObject() instanceof org.jlawyer.bea.model.Folder) {
+            org.jlawyer.bea.model.Folder f = (org.jlawyer.bea.model.Folder) node.getUserObject();
+            if (f.getId() == folderId && f.getSafeId().equals(safeId)) {
                 return node;
+            }
         }
-        for(int i=0;i<node.getChildCount();i++) {
-            DefaultMutableTreeNode c=findFolder((DefaultMutableTreeNode)node.getChildAt(i), folderId, safeId);
-            if(c!=null)
+        for (int i = 0; i < node.getChildCount(); i++) {
+            DefaultMutableTreeNode c = findFolder((DefaultMutableTreeNode) node.getChildAt(i), folderId, safeId);
+            if (c != null) {
                 return c;
+            }
         }
         return null;
     }
@@ -2850,13 +2854,14 @@ public class BeaInboxPanel extends javax.swing.JPanel implements SaveToCaseExecu
             ArchiveFileBean targetCase = dlg.getCaseSelection();
             CaseFolder targetFolder = dlg.getFolderSelection();
             dlg.dispose();
-            
+
             // user decided to cancel
-            if(dlg.getCaseSelection()==null)
+            if (dlg.getCaseSelection() == null) {
                 return;
+            }
 
             CaseUtils.optionalUnarchiveCase(dlg.getCaseSelection(), this);
-            
+
             ClientSettings settings = ClientSettings.getInstance();
             JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
             ArchiveFileServiceRemote remote = locator.lookupArchiveFileServiceRemote();
@@ -2864,7 +2869,7 @@ public class BeaInboxPanel extends javax.swing.JPanel implements SaveToCaseExecu
             MessageExport mex = BeaAccess.exportMessage(m);
             String newName = FileUtils.getNewFileName(targetCase, m.getId() + "_eEb-" + rejectionOrConfirmation + ".bea", new Date(), true, EditorsRegistry.getInstance().getMainWindow(), "eEb-Antwort speichern");
             if (newName == null || "".equals(newName)) {
-                newName=m.getId() + "_eEb-" + rejectionOrConfirmation + ".bea";
+                newName = m.getId() + "_eEb-" + rejectionOrConfirmation + ".bea";
             }
             newName = FileUtils.sanitizeFileName(newName);
             ArchiveFileDocumentsBean newDoc = remote.addDocument(targetCase.getId(), newName, mex.getContent(), "", null);

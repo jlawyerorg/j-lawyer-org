@@ -663,105 +663,83 @@
  */
 package com.jdimension.jlawyer.client.editors.files;
 
-import com.jdimension.jlawyer.client.configuration.UserTableCellRenderer;
-import com.jdimension.jlawyer.client.events.EventBroker;
-import com.jdimension.jlawyer.client.events.MissingCalendarEntriesEvent;
-import com.jdimension.jlawyer.client.settings.ClientSettings;
-import com.jdimension.jlawyer.client.utils.ThreadUtils;
 import com.jdimension.jlawyer.persistence.ArchiveFileBean;
-import com.jdimension.jlawyer.services.ArchiveFileServiceRemote;
-import com.jdimension.jlawyer.services.JLawyerServiceLocator;
-import java.awt.Component;
-import java.util.Collection;
-import javax.swing.JTable;
-import javax.swing.table.DefaultTableModel;
-import javax.swing.table.TableModel;
-import javax.swing.table.TableRowSorter;
+import java.util.Comparator;
 import org.apache.log4j.Logger;
 
 /**
  *
  * @author jens
  */
-public class CaseMissingCalendarEntriesSearchThread implements Runnable {
+public class FileNumberComparatorRowIdentifier implements Comparator<QuickArchiveFileSearchRowIdentifier> {
     
-    private static final Logger log=Logger.getLogger(CaseMissingCalendarEntriesSearchThread.class.getName());
+    private static final Logger log=Logger.getLogger(FileNumberComparatorRowIdentifier.class.getName());
     
-    private Component owner;
-    private JTable target;
-    private int eventType=-1;
-    
-    /**
-     * Creates a new instance of ArchiveFileReviewsSearchThread
-     * @param owner
-     * @param target
-     * @param eventType ArchiveFileReviewsBean.EVENT_TYPE_FOLLOWUP or ArchiveFileReviewsBean.EVENT_TYPE_RESPITE or ArchiveFileReviewsBean.EVENT_TYPE_EVENT or -1 if any event types should be considered
-     */
-    public CaseMissingCalendarEntriesSearchThread(Component owner, JTable target, int eventType) {
-        this.owner=owner;
-        this.target=target;
-        this.eventType=eventType;
-    }
 
     @Override
-    public void run() {
-        long start=System.currentTimeMillis();
-        Collection<ArchiveFileBean> dtos=null;
+    public int compare(QuickArchiveFileSearchRowIdentifier t, QuickArchiveFileSearchRowIdentifier t1) {
         try {
-            ClientSettings settings=ClientSettings.getInstance();
-            JLawyerServiceLocator locator=JLawyerServiceLocator.getInstance(settings.getLookupProperties());
-            
-            ArchiveFileServiceRemote fileService = locator.lookupArchiveFileServiceRemote();
-            
-            if(this.eventType<0)
-                dtos=fileService.getAllWithMissingCalendarEntries();
-            else
-                dtos=fileService.getAllWithMissingCalendarEntries(this.eventType);
-            log.info("loaded missing review in " + (System.currentTimeMillis()-start) + "ms");
-            
-            if(dtos!=null && this.eventType<0) {
-                // only send event for cases without ANY entry
-                EventBroker eb = EventBroker.getInstance();
-                eb.publishEvent(new MissingCalendarEntriesEvent(dtos.size()));
-            }
-            
-        } catch (Exception ex) {
-            log.error("Error connecting to server", ex);
-            ThreadUtils.showErrorDialog(this.owner, ex.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR);
-            return;
-        }
-        
-        String[] colNames=new String[] {"Aktenzeichen", "Kurzrubrum", "wegen", "Anwalt"};
-        DefaultTableModel model = new DefaultTableModel(colNames, 0) {
 
-            @Override
-            public boolean isCellEditable(int i, int i0) {
-                return false;
-            }
-        };
-        ThreadUtils.setTableModel(this.target, model);
-        try {
-            Thread.sleep(750);
-        } catch (Throwable t) {
-            log.error(t);
-        }
-        
-        this.target.getColumnModel().getColumn(3).setCellRenderer(new UserTableCellRenderer());
-        for(ArchiveFileBean b:dtos) {
-            try {
-            Object[] row=new Object[]{new QuickArchiveFileSearchRowIdentifier(b), b.getName(), b.getReason(), b.getLawyer()};
+            String s1=null;
+            String s2=null;
             
-            model.addRow(row);
-            } catch (Throwable t) {
-                log.error(t);
+            if(t!=null)
+                s1=t.getArchiveFileDTO().getFileNumber();
+            if(t1!=null)
+                s2=t1.getArchiveFileDTO().getFileNumber();
+            
+            if (s1 == null && s2 == null) return 0;
+            
+            if(s1==null)
+                return -1;
+            
+            if(s2==null)
+                return 1;
+            
+            if (s1.matches("\\d{3,5}/\\d{2,4}") && s2.matches("\\d{3,5}/\\d{2,4}")) {
+                // in case of default file number schema
+                String year1 = s1.substring(s1.indexOf("/")+1);
+                String year2 = s2.substring(s2.indexOf("/")+1);
+
+                Integer y1 = Integer.parseInt(year1);
+                Integer y2 = Integer.parseInt(year2);
+
+                if (y1 <= 50 && y2 <= 50) {
+                    // case 1: both after year 2000 --> same range
+                    int yearComp = y1.compareTo(y2);
+                    if (yearComp != 0) {
+                        return yearComp;
+                    }
+                } else if (y1 > 50 && y2 > 50) {
+                    // case 2: both before year 2000 --> same range
+                    int yearComp = y1.compareTo(y2);
+                    if (yearComp != 0) {
+                        return yearComp;
+                    }
+                } else if (y1 > 50 && y2 <= 50) {
+                    // case 3:
+                    return -1;
+                } else if (y1 <= 50 && y2 > 50) {
+                    // case 4:
+                    // y1<=50 && y2>50
+                    return 1;
+                }
+
+                String index1 = s1.substring(0, s1.indexOf("/"));
+                String index2 = s2.substring(0, s2.indexOf("/"));
+
+                Integer in1 = Integer.parseInt(index1);
+                Integer in2 = Integer.parseInt(index2);
+
+                return in1.compareTo(in2);
+            } else {
+                // default comparison
+                return s1.compareTo(s2);
             }
+
+        } catch (Throwable thr) {
+            log.error("error sorting by archive file number", thr);
+            return 0;
         }
-        TableRowSorter<TableModel> sorter = new TableRowSorter<>(model);
-        sorter.setComparator(0, new FileNumberComparatorRowIdentifier());
-        ThreadUtils.setTableModel(this.target, model, sorter);
-        ThreadUtils.setDefaultCursor(this.owner);
-        log.info("loaded and rendered missing review in " + (System.currentTimeMillis()-start) + "ms");
-        
     }
-    
 }
