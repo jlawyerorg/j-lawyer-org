@@ -783,6 +783,8 @@ public class ContactsEndpointV1 implements ContactsEndpointLocalV1 {
                 rco.setFirstName(afb.getFirstName());
                 rco.setCompany(afb.getCompany());
                 rco.setZipCode(afb.getZipCode());
+                rco.setStreet(afb.getStreet());
+                rco.setStreetNumber(afb.getStreetNumber());
                 rcoList.add(rco);
             }
             return Response.ok(rcoList).build();
@@ -828,6 +830,8 @@ public class ContactsEndpointV1 implements ContactsEndpointLocalV1 {
                 rco.setFirstName(sim.getFirstName());
                 rco.setCompany(sim.getCompany());
                 rco.setZipCode(sim.getZipCode());
+                rco.setStreet(sim.getStreet());
+                rco.setStreetNumber(sim.getStreetNumber());
                 rcoList.add(rco);
             }
             return Response.ok(rcoList).build();
@@ -894,6 +898,7 @@ public class ContactsEndpointV1 implements ContactsEndpointLocalV1 {
             currentContact.setPhone(contact.getPhone());
             currentContact.setSalutation(contact.getSalutation());
             currentContact.setStreet(contact.getStreet());
+            currentContact.setStreetNumber(contact.getStreetNumber());
             currentContact.setTitle(contact.getTitle());
             currentContact.setTrafficInsuranceName(contact.getTrafficInsuranceName());
             currentContact.setTrafficInsuranceNumber(contact.getTrafficInsuranceNumber());

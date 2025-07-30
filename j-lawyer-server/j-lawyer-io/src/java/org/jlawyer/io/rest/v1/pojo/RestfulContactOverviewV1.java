@@ -680,6 +680,8 @@ public class RestfulContactOverviewV1 {
     private String company=null;
     private String zipCode=null;
     private String city=null;
+    private String street=null;
+    private String streetNumber=null;
 
     public RestfulContactOverviewV1() {
     }
@@ -836,6 +838,34 @@ public class RestfulContactOverviewV1 {
      */
     public void setExternalId5(String externalId5) {
         this.externalId5 = externalId5;
+    }
+
+    /**
+     * @return the street
+     */
+    public String getStreet() {
+        return street;
+    }
+
+    /**
+     * @param street the street to set
+     */
+    public void setStreet(String street) {
+        this.street = street;
+    }
+
+    /**
+     * @return the streetNumber
+     */
+    public String getStreetNumber() {
+        return streetNumber;
+    }
+
+    /**
+     * @param streetNumber the streetNumber to set
+     */
+    public void setStreetNumber(String streetNumber) {
+        this.streetNumber = streetNumber;
     }
 
     
