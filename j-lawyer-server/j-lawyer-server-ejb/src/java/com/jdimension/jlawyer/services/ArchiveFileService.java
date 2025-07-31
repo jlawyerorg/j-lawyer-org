@@ -5295,28 +5295,42 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
         if (invoice == null) {
             throw new Exception(MSG_MISSING_INVOICE);
         }
+
         List<InvoicePosition> positions = this.invoicePositionsFacade.findByInvoice(invoice);
         if (positions == null) {
             positions = new ArrayList<>();
         }
+
         BigDecimal newTotalNet = BigDecimal.ZERO;
         BigDecimal newTotalGross = BigDecimal.ZERO;
+        Map<BigDecimal, BigDecimal> taxRateToNetSum = new HashMap<>();
 
         for (InvoicePosition p : positions) {
             BigDecimal net = p.getTotal().setScale(2, RoundingMode.HALF_UP);
-
-            BigDecimal taxRate = p.getTaxRate().divide(BigDecimal.valueOf(100), 4, RoundingMode.HALF_UP);
-            BigDecimal gross = net.multiply(BigDecimal.ONE.add(taxRate)).setScale(2, RoundingMode.HALF_UP);
-
             newTotalNet = newTotalNet.add(net);
-            newTotalGross = newTotalGross.add(gross);
+
+            BigDecimal taxRate = p.getTaxRate();
+
+            // Kumulierung der Netto-Beträge pro Steuersatz
+            taxRateToNetSum.put(
+                    taxRate,
+                    taxRateToNetSum.getOrDefault(taxRate, BigDecimal.ZERO).add(net)
+            );
         }
 
-        // Gesamtsummen kaufmännisch runden
+        // Bruttosumme berechnen
+        for (Map.Entry<BigDecimal, BigDecimal> entry : taxRateToNetSum.entrySet()) {
+            BigDecimal taxRate = entry.getKey();
+            BigDecimal netSum = entry.getValue();
+            BigDecimal taxFactor = taxRate.divide(BigDecimal.valueOf(100), 4, RoundingMode.HALF_UP);
+            BigDecimal grossPart = netSum.multiply(BigDecimal.ONE.add(taxFactor)).setScale(2, RoundingMode.HALF_UP);
+            newTotalGross = newTotalGross.add(grossPart);
+        }
+
+        // Gesamtsummen setzen (mit kaufmännischer Rundung)
         invoice.setTotal(newTotalNet.setScale(2, RoundingMode.HALF_UP));
         invoice.setTotalGross(newTotalGross.setScale(2, RoundingMode.HALF_UP));
         this.invoicesFacade.edit(invoice);
-
     }
 
     @Override
@@ -6162,14 +6176,14 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
             StringGenerator idGen = new StringGenerator();
             String id = idGen.getID().toString();
             position.setId(id);
-            
+
             Date rawStart = new Date();
             Calendar cal = Calendar.getInstance();
             cal.setTime(rawStart);
             cal.set(Calendar.SECOND, 0);
             cal.set(Calendar.MILLISECOND, 0);
             Date start = cal.getTime();
-            
+
             position.setStarted(start);
             position.setStopped(null);
             position.setPrincipal(context.getCallerPrincipal().getName());
@@ -6187,7 +6201,7 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
                 if (existing.getStarted() == null) {
                     existing.setStarted(new Date());
                 }
-                
+
                 Date rawStop = new Date();
                 Calendar cal = Calendar.getInstance();
                 cal.setTime(rawStop);
@@ -6199,7 +6213,7 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
                 cal.set(Calendar.SECOND, 0);
                 cal.set(Calendar.MILLISECOND, 0);
                 Date stop = cal.getTime();
-                
+
                 existing.setStopped(stop);
                 existing.setDescription(position.getDescription());
                 existing.setName(position.getName());
@@ -6225,7 +6239,7 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
             newPos.setPrincipal(context.getCallerPrincipal().getName());
             newPos.setDescription(position.getDescription());
             newPos.setName(position.getName());
-            
+
             Date rawStart = new Date();
             Calendar cal = Calendar.getInstance();
             cal.setTime(rawStart);
@@ -6267,16 +6281,16 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
             }
 
             Date rawStop = new Date();
-                Calendar cal = Calendar.getInstance();
-                cal.setTime(rawStop);
-                if (cal.get(Calendar.SECOND) > 0 || cal.get(Calendar.MILLISECOND) > 0) {
-                    // Add 1 minute
-                    cal.add(Calendar.MINUTE, 1);
-                }
-                // Set seconds and milliseconds to zero
-                cal.set(Calendar.SECOND, 0);
-                cal.set(Calendar.MILLISECOND, 0);
-                Date stop = cal.getTime();
+            Calendar cal = Calendar.getInstance();
+            cal.setTime(rawStop);
+            if (cal.get(Calendar.SECOND) > 0 || cal.get(Calendar.MILLISECOND) > 0) {
+                // Add 1 minute
+                cal.add(Calendar.MINUTE, 1);
+            }
+            // Set seconds and milliseconds to zero
+            cal.set(Calendar.SECOND, 0);
+            cal.set(Calendar.MILLISECOND, 0);
+            Date stop = cal.getTime();
             existing.setStopped(stop);
             existing.setDescription(position.getDescription());
             existing.setName(position.getName());
