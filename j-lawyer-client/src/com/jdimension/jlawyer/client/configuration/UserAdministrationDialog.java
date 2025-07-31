@@ -903,6 +903,7 @@ public class UserAdministrationDialog extends javax.swing.JDialog {
         chkLogin = new javax.swing.JCheckBox();
         chkImport = new javax.swing.JCheckBox();
         chkAdmin = new javax.swing.JCheckBox();
+        chkSysAdmin = new javax.swing.JCheckBox();
         jPanel2 = new javax.swing.JPanel();
         chkReadAddress = new javax.swing.JCheckBox();
         chkWriteAddress = new javax.swing.JCheckBox();
@@ -1171,7 +1172,7 @@ public class UserAdministrationDialog extends javax.swing.JDialog {
                         .add(18, 18, 18)
                         .add(cmdPopulateFromCompanyProfile))
                     .add(chkLawyer))
-                .addContainerGap(87, Short.MAX_VALUE))
+                .addContainerGap(112, Short.MAX_VALUE))
         );
         jPanel14Layout.setVerticalGroup(
             jPanel14Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
@@ -1277,7 +1278,9 @@ public class UserAdministrationDialog extends javax.swing.JDialog {
 
         chkImport.setText("Datenimport");
 
-        chkAdmin.setText("volle Administrationsrechte");
+        chkAdmin.setText("Unternehmens-Administrator");
+
+        chkSysAdmin.setText("System-Administrator");
 
         org.jdesktop.layout.GroupLayout jPanel1Layout = new org.jdesktop.layout.GroupLayout(jPanel1);
         jPanel1.setLayout(jPanel1Layout);
@@ -1290,7 +1293,8 @@ public class UserAdministrationDialog extends javax.swing.JDialog {
                     .add(jPanel1Layout.createSequentialGroup()
                         .add(jPanel1Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
                             .add(chkImport)
-                            .add(chkAdmin))
+                            .add(chkAdmin)
+                            .add(chkSysAdmin))
                         .add(0, 0, Short.MAX_VALUE)))
                 .addContainerGap())
         );
@@ -1302,6 +1306,8 @@ public class UserAdministrationDialog extends javax.swing.JDialog {
                 .add(chkImport)
                 .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
                 .add(chkAdmin)
+                .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
+                .add(chkSysAdmin)
                 .addContainerGap(org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
         );
 
@@ -1458,23 +1464,22 @@ public class UserAdministrationDialog extends javax.swing.JDialog {
                     .add(jPanel4, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
                 .add(18, 18, 18)
                 .add(chkAutoLockDocuments)
-                .addContainerGap(129, Short.MAX_VALUE))
+                .addContainerGap(173, Short.MAX_VALUE))
         );
         jPanel5Layout.setVerticalGroup(
             jPanel5Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
             .add(jPanel5Layout.createSequentialGroup()
                 .addContainerGap()
-                .add(jPanel5Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
-                    .add(jPanel5Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING, false)
-                        .add(jPanel1, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                        .add(jPanel4, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE))
-                    .add(chkAutoLockDocuments))
+                .add(jPanel5Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING, false)
+                    .add(chkAutoLockDocuments)
+                    .add(jPanel1, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                    .add(jPanel4, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
                 .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
                 .add(jPanel5Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING, false)
                     .add(jPanel2, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                    .add(jPanel3, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                    .add(jPanel3, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
                     .add(jPanel13, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE))
-                .addContainerGap(106, Short.MAX_VALUE))
+                .addContainerGap(77, Short.MAX_VALUE))
         );
 
         jPanel1.getAccessibleContext().setAccessibleName("");
@@ -1534,7 +1539,7 @@ public class UserAdministrationDialog extends javax.swing.JDialog {
                     .add(jLabel21))
                 .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
                 .add(jPanel6Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
-                    .add(cmbCountry, 0, 672, Short.MAX_VALUE)
+                    .add(cmbCountry, 0, 771, Short.MAX_VALUE)
                     .add(cmbArea, 0, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                     .add(jScrollPane5))
                 .addContainerGap())
@@ -1597,7 +1602,7 @@ public class UserAdministrationDialog extends javax.swing.JDialog {
                 .addContainerGap()
                 .add(jLabel22)
                 .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
-                .add(jScrollPane6, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 799, Short.MAX_VALUE)
+                .add(jScrollPane6, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 934, Short.MAX_VALUE)
                 .addContainerGap())
         );
         jPanel7Layout.setVerticalGroup(
@@ -1711,7 +1716,7 @@ public class UserAdministrationDialog extends javax.swing.JDialog {
                     .add(jPanel10Layout.createSequentialGroup()
                         .add(pnlCloudConnection, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
                         .add(18, 18, 18)
-                        .add(nextcloudTeaserPanel1, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 486, Short.MAX_VALUE)))
+                        .add(nextcloudTeaserPanel1, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 619, Short.MAX_VALUE)))
                 .addContainerGap())
         );
         jPanel10Layout.setVerticalGroup(
@@ -1801,7 +1806,7 @@ public class UserAdministrationDialog extends javax.swing.JDialog {
                                 .add(cmdGetVoipIds))
                             .add(txtVoipUser)
                             .add(txtVoipPassword)))
-                    .add(jLabel26, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 930, Short.MAX_VALUE)
+                    .add(jLabel26, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 1026, Short.MAX_VALUE)
                     .add(jPanel11Layout.createSequentialGroup()
                         .add(jPanel11Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
                             .add(jLabel8)
@@ -1927,7 +1932,7 @@ public class UserAdministrationDialog extends javax.swing.JDialog {
                         .add(jPanel9Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING, false)
                             .add(cmbPrimaryGroup, 0, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                             .add(txtAbbreviation))
-                        .addContainerGap(712, Short.MAX_VALUE))
+                        .addContainerGap(800, Short.MAX_VALUE))
                     .add(jScrollPane4)))
         );
         jPanel9Layout.setVerticalGroup(
@@ -1988,7 +1993,7 @@ public class UserAdministrationDialog extends javax.swing.JDialog {
                 .addContainerGap()
                 .add(jLabel7)
                 .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
-                .add(jScrollPane3, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 770, Short.MAX_VALUE)
+                .add(jScrollPane3, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 849, Short.MAX_VALUE)
                 .addContainerGap())
         );
         jPanel12Layout.setVerticalGroup(
@@ -3043,6 +3048,14 @@ public class UserAdministrationDialog extends javax.swing.JDialog {
             r.setRoleGroup("Roles");
             result.add(r);
         }
+        
+        if (this.chkSysAdmin.isSelected()) {
+            AppRoleBean r = new AppRoleBean();
+            r.setPrincipalId(principalId);
+            r.setRole("sysAdminRole");
+            r.setRoleGroup("Roles");
+            result.add(r);
+        }
 
         if (this.chkImport.isSelected()) {
             AppRoleBean r = new AppRoleBean();
@@ -3210,6 +3223,7 @@ public class UserAdministrationDialog extends javax.swing.JDialog {
 
     private void setRoles(List<AppRoleBean> roles) {
         this.chkAdmin.setSelected(false);
+        this.chkSysAdmin.setSelected(false);
         this.chkCreateAddress.setSelected(false);
         this.chkCreateFile.setSelected(false);
         this.chkCreateOption.setSelected(false);
@@ -3230,6 +3244,8 @@ public class UserAdministrationDialog extends javax.swing.JDialog {
             String rn = r.getRole();
             if ("adminRole".equals(rn)) {
                 this.chkAdmin.setSelected(true);
+            } else if ("sysAdminRole".equals(rn)) {
+                this.chkSysAdmin.setSelected(true);
             } else if ("createAddressRole".equals(rn)) {
                 this.chkCreateAddress.setSelected(true);
             } else if ("createArchiveFileRole".equals(rn)) {
@@ -3292,6 +3308,7 @@ public class UserAdministrationDialog extends javax.swing.JDialog {
     private javax.swing.JCheckBox chkReportCommon;
     private javax.swing.JCheckBox chkReportConfidential;
     private javax.swing.JCheckBox chkShowExternalUsers;
+    private javax.swing.JCheckBox chkSysAdmin;
     private javax.swing.JCheckBox chkWriteAddress;
     private javax.swing.JCheckBox chkWriteFile;
     private javax.swing.JCheckBox chkWriteOption;

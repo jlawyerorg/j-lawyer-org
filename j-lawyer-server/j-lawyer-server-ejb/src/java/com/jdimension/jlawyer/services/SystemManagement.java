@@ -915,7 +915,7 @@ public class SystemManagement implements SystemManagementRemote, SystemManagemen
 
     @Override
     @Asynchronous
-    @RolesAllowed({"adminRole"})
+    @RolesAllowed({"sysAdminRole"})
     public void clearCurrentBackup() {
         // needs to be called e.g. when encryption password has changed
         File directoryToZip = new File(System.getProperty("jlawyer.server.basedirectory").trim());
@@ -2568,7 +2568,7 @@ public class SystemManagement implements SystemManagementRemote, SystemManagemen
     }
 
     @Override
-    @RolesAllowed({"adminRole"})
+    @RolesAllowed({"sysAdminRole"})
     public List<ImportLogEntry> importSheets(byte[] odsData, List<String> sheetNames, boolean dryRun, String fullClientVersion) throws Exception {
         ImporterPersistence persister = null;
         if (dryRun) {
@@ -2634,7 +2634,7 @@ public class SystemManagement implements SystemManagementRemote, SystemManagemen
     }
 
     @Override
-    @RolesAllowed(value = {"adminRole"})
+    @RolesAllowed(value = {"loginRole"})
     public TransactionLog addTransactionLog(String hashInput, int expiryDays) throws Exception {
         StringGenerator idGen = new StringGenerator();
         String id = idGen.getID().toString();

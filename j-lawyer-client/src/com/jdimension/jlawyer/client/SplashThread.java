@@ -1058,7 +1058,7 @@ public class SplashThread implements Runnable {
 
     private void openBackupConfigurationDialog() {
         try {
-            if (UserUtils.isCurrentUserAdmin()) {
+            if (UserUtils.isCurrentUserSysAdmin()) {
                 BackupConfigurationDialog dlg = new BackupConfigurationDialog(EditorsRegistry.getInstance().getMainWindow(), true);
                 FrameUtils.centerDialog(dlg, EditorsRegistry.getInstance().getMainWindow());
                 dlg.setVisible(true);

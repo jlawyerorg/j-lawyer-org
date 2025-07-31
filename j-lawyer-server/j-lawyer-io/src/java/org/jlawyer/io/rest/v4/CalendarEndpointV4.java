@@ -707,7 +707,7 @@ public class CalendarEndpointV4 implements CalendarEndpointLocalV4 {
     @GET
     @Produces(MediaType.APPLICATION_JSON+";charset=utf-8")
     @Path("/list")
-    @RolesAllowed({"adminRole"})
+    @RolesAllowed({"loginRole"})
     public Response getAllCalendars() {
         try {
 

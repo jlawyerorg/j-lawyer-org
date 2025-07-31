@@ -270,7 +270,7 @@
                           </Group>
                           <Component id="chkLawyer" min="-2" max="-2" attributes="0"/>
                       </Group>
-                      <EmptySpace pref="87" max="32767" attributes="0"/>
+                      <EmptySpace pref="112" max="32767" attributes="0"/>
                   </Group>
               </Group>
             </DimensionLayout>
@@ -610,7 +610,7 @@
                       </Group>
                       <EmptySpace type="separate" max="-2" attributes="0"/>
                       <Component id="chkAutoLockDocuments" min="-2" max="-2" attributes="0"/>
-                      <EmptySpace pref="129" max="32767" attributes="0"/>
+                      <EmptySpace pref="173" max="32767" attributes="0"/>
                   </Group>
               </Group>
             </DimensionLayout>
@@ -618,20 +618,18 @@
               <Group type="103" groupAlignment="0" attributes="0">
                   <Group type="102" attributes="0">
                       <EmptySpace max="-2" attributes="0"/>
-                      <Group type="103" groupAlignment="0" attributes="0">
-                          <Group type="103" groupAlignment="0" max="-2" attributes="0">
-                              <Component id="jPanel1" max="32767" attributes="0"/>
-                              <Component id="jPanel4" min="-2" max="-2" attributes="0"/>
-                          </Group>
+                      <Group type="103" groupAlignment="0" max="-2" attributes="0">
                           <Component id="chkAutoLockDocuments" min="-2" max="-2" attributes="0"/>
+                          <Component id="jPanel1" alignment="0" max="32767" attributes="0"/>
+                          <Component id="jPanel4" alignment="0" max="32767" attributes="0"/>
                       </Group>
                       <EmptySpace max="-2" attributes="0"/>
                       <Group type="103" groupAlignment="0" max="-2" attributes="0">
                           <Component id="jPanel2" max="32767" attributes="0"/>
-                          <Component id="jPanel3" max="32767" attributes="0"/>
+                          <Component id="jPanel3" min="-2" max="-2" attributes="0"/>
                           <Component id="jPanel13" alignment="0" min="-2" max="-2" attributes="0"/>
                       </Group>
-                      <EmptySpace pref="106" max="32767" attributes="0"/>
+                      <EmptySpace pref="77" max="32767" attributes="0"/>
                   </Group>
               </Group>
             </DimensionLayout>
@@ -661,6 +659,7 @@
                                   <Group type="103" groupAlignment="0" attributes="0">
                                       <Component id="chkImport" alignment="0" min="-2" max="-2" attributes="0"/>
                                       <Component id="chkAdmin" alignment="0" min="-2" max="-2" attributes="0"/>
+                                      <Component id="chkSysAdmin" alignment="0" min="-2" max="-2" attributes="0"/>
                                   </Group>
                                   <EmptySpace min="0" pref="0" max="32767" attributes="0"/>
                               </Group>
@@ -677,6 +676,8 @@
                           <Component id="chkImport" min="-2" max="-2" attributes="0"/>
                           <EmptySpace max="-2" attributes="0"/>
                           <Component id="chkAdmin" min="-2" max="-2" attributes="0"/>
+                          <EmptySpace max="-2" attributes="0"/>
+                          <Component id="chkSysAdmin" min="-2" max="-2" attributes="0"/>
                           <EmptySpace max="32767" attributes="0"/>
                       </Group>
                   </Group>
@@ -695,7 +696,12 @@
                 </Component>
                 <Component class="javax.swing.JCheckBox" name="chkAdmin">
                   <Properties>
-                    <Property name="text" type="java.lang.String" value="volle Administrationsrechte"/>
+                    <Property name="text" type="java.lang.String" value="Unternehmens-Administrator"/>
+                  </Properties>
+                </Component>
+                <Component class="javax.swing.JCheckBox" name="chkSysAdmin">
+                  <Properties>
+                    <Property name="text" type="java.lang.String" value="System-Administrator"/>
                   </Properties>
                 </Component>
               </SubComponents>
@@ -956,7 +962,7 @@
                       </Group>
                       <EmptySpace max="-2" attributes="0"/>
                       <Group type="103" groupAlignment="0" attributes="0">
-                          <Component id="cmbCountry" pref="672" max="32767" attributes="0"/>
+                          <Component id="cmbCountry" pref="771" max="32767" attributes="0"/>
                           <Component id="cmbArea" max="32767" attributes="0"/>
                           <Component id="jScrollPane5" alignment="0" max="32767" attributes="0"/>
                       </Group>
@@ -1073,7 +1079,7 @@
                       <EmptySpace max="-2" attributes="0"/>
                       <Component id="jLabel22" min="-2" max="-2" attributes="0"/>
                       <EmptySpace max="-2" attributes="0"/>
-                      <Component id="jScrollPane6" pref="799" max="32767" attributes="0"/>
+                      <Component id="jScrollPane6" pref="934" max="32767" attributes="0"/>
                       <EmptySpace max="-2" attributes="0"/>
                   </Group>
               </Group>
@@ -1282,7 +1288,7 @@
                           <Group type="102" attributes="0">
                               <Component id="pnlCloudConnection" min="-2" max="-2" attributes="0"/>
                               <EmptySpace type="separate" max="-2" attributes="0"/>
-                              <Component id="nextcloudTeaserPanel1" pref="486" max="32767" attributes="0"/>
+                              <Component id="nextcloudTeaserPanel1" pref="619" max="32767" attributes="0"/>
                           </Group>
                       </Group>
                       <EmptySpace max="-2" attributes="0"/>
@@ -1354,7 +1360,7 @@
                                   <Component id="txtVoipPassword" max="32767" attributes="0"/>
                               </Group>
                           </Group>
-                          <Component id="jLabel26" alignment="0" pref="930" max="32767" attributes="0"/>
+                          <Component id="jLabel26" alignment="0" pref="1026" max="32767" attributes="0"/>
                           <Group type="102" alignment="0" attributes="0">
                               <Group type="103" groupAlignment="0" attributes="0">
                                   <Component id="jLabel8" min="-2" max="-2" attributes="0"/>
@@ -1602,7 +1608,7 @@
                                   <Component id="cmbPrimaryGroup" max="32767" attributes="0"/>
                                   <Component id="txtAbbreviation" max="32767" attributes="0"/>
                               </Group>
-                              <EmptySpace pref="712" max="32767" attributes="0"/>
+                              <EmptySpace pref="800" max="32767" attributes="0"/>
                           </Group>
                           <Component id="jScrollPane4" max="32767" attributes="0"/>
                       </Group>
@@ -1711,7 +1717,7 @@
                       <EmptySpace max="-2" attributes="0"/>
                       <Component id="jLabel7" min="-2" max="-2" attributes="0"/>
                       <EmptySpace max="-2" attributes="0"/>
-                      <Component id="jScrollPane3" pref="770" max="32767" attributes="0"/>
+                      <Component id="jScrollPane3" pref="849" max="32767" attributes="0"/>
                       <EmptySpace max="-2" attributes="0"/>
                   </Group>
               </Group>

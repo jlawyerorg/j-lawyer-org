@@ -2424,11 +2424,14 @@ public class JKanzleiGUI extends javax.swing.JFrame implements com.jdimension.jl
     private boolean checkAdmin() {
         return UserUtils.isCurrentUserAdmin(this, true);
     }
-
+    
+    private boolean checkSysAdmin() {
+        return UserUtils.isCurrentUserSysAdmin(this, true);
+    }
 
     private void mnuAdminConsoleActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_mnuAdminConsoleActionPerformed
 
-        if (checkAdmin()) {
+        if (checkSysAdmin()) {
             AdminConsoleFrame frm = new AdminConsoleFrame();
             frm.setVisible(true);
         }
@@ -2479,7 +2482,7 @@ public class JKanzleiGUI extends javax.swing.JFrame implements com.jdimension.jl
 
     private void mnuBackupConfigurationActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_mnuBackupConfigurationActionPerformed
 
-        if (checkAdmin()) {
+        if (checkSysAdmin()) {
             BackupConfigurationDialog dlg = new BackupConfigurationDialog(this, true);
             FrameUtils.centerDialog(dlg, this);
             dlg.setVisible(true);
@@ -2508,7 +2511,7 @@ public class JKanzleiGUI extends javax.swing.JFrame implements com.jdimension.jl
 
     private void mnuScanOptionsActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_mnuScanOptionsActionPerformed
 
-        if (checkAdmin()) {
+        if (checkSysAdmin()) {
             ScanOptionsDialog dlg = new ScanOptionsDialog(this, true);
             FrameUtils.centerDialog(dlg, this);
             dlg.setVisible(true);
@@ -2524,7 +2527,6 @@ public class JKanzleiGUI extends javax.swing.JFrame implements com.jdimension.jl
     }//GEN-LAST:event_mnuAddressImportActionPerformed
 
     private void mnuArchiveFileTagsActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_mnuArchiveFileTagsActionPerformed
-        if (checkAdmin()) {
             OptionGroupCaseTagRename ren = new OptionGroupCaseTagRename();
             OptionGroupConfigurationDialog dlg = new OptionGroupConfigurationDialog(this, ren, true);
             dlg.setTitle(java.util.ResourceBundle.getBundle("com/jdimension/jlawyer/client/JKanzleiGUI").getString("dialog.title.casetags"));
@@ -2541,7 +2543,6 @@ public class JKanzleiGUI extends javax.swing.JFrame implements com.jdimension.jl
                 log.error("Could not set up timer task for tag updates", t);
             }
 
-        }
 
     }//GEN-LAST:event_mnuArchiveFileTagsActionPerformed
 
@@ -2555,7 +2556,7 @@ public class JKanzleiGUI extends javax.swing.JFrame implements com.jdimension.jl
 
     private void mnuSearchIndexActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_mnuSearchIndexActionPerformed
 
-        if (checkAdmin()) {
+        if (checkSysAdmin()) {
             SearchIndexOptionsDialog dlg = new SearchIndexOptionsDialog(this, true);
             FrameUtils.centerDialog(dlg, this);
             dlg.setVisible(true);
@@ -2564,7 +2565,6 @@ public class JKanzleiGUI extends javax.swing.JFrame implements com.jdimension.jl
 
     private void mnuAddressTagsActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_mnuAddressTagsActionPerformed
 
-        if (checkAdmin()) {
             OptionGroupAddressTagRename ren = new OptionGroupAddressTagRename();
             OptionGroupConfigurationDialog dlg = new OptionGroupConfigurationDialog(this, ren, true);
             dlg.setTitle(java.util.ResourceBundle.getBundle("com/jdimension/jlawyer/client/JKanzleiGUI").getString("dialog.title.addresstags"));
@@ -2578,7 +2578,7 @@ public class JKanzleiGUI extends javax.swing.JFrame implements com.jdimension.jl
             } catch (Throwable t) {
                 log.error("Could not set up timer task for tag updates", t);
             }
-        }
+        
     }//GEN-LAST:event_mnuAddressTagsActionPerformed
 
     private void mnuCustomLauncherOptionsActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_mnuCustomLauncherOptionsActionPerformed
@@ -2634,7 +2634,7 @@ public class JKanzleiGUI extends javax.swing.JFrame implements com.jdimension.jl
 
     private void mnuBeaSettingsActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_mnuBeaSettingsActionPerformed
 
-        if (checkAdmin()) {
+        if (checkSysAdmin()) {
             BeaConfigurationDialog dlg = new BeaConfigurationDialog(this, true);
             FrameUtils.centerDialog(dlg, this);
             dlg.setVisible(true);
@@ -2654,7 +2654,6 @@ public class JKanzleiGUI extends javax.swing.JFrame implements com.jdimension.jl
 
     private void mnuDocumentTagsActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_mnuDocumentTagsActionPerformed
 
-        if (checkAdmin()) {
             OptionGroupCaseDocumentTagRename ren = new OptionGroupCaseDocumentTagRename();
             OptionGroupConfigurationDialog dlg = new OptionGroupConfigurationDialog(this, ren, true);
             dlg.setTitle("Dokumenten-Etiketten");
@@ -2671,7 +2670,6 @@ public class JKanzleiGUI extends javax.swing.JFrame implements com.jdimension.jl
                 log.error("Could not set up timer task for tag updates", t);
             }
 
-        }
     }//GEN-LAST:event_mnuDocumentTagsActionPerformed
 
     private void mnuBeaCourtAddressImportActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_mnuBeaCourtAddressImportActionPerformed
@@ -2793,11 +2791,10 @@ public class JKanzleiGUI extends javax.swing.JFrame implements com.jdimension.jl
 
     private void mnuDocumentFolderTemplatesActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_mnuDocumentFolderTemplatesActionPerformed
 
-        if (checkAdmin()) {
             DocumentFolderTemplatesDialog dlg = new DocumentFolderTemplatesDialog(this, true);
             FrameUtils.centerDialog(dlg, this);
             dlg.setVisible(true);
-        }
+        
     }//GEN-LAST:event_mnuDocumentFolderTemplatesActionPerformed
 
     private void mnuDocumentsBinActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_mnuDocumentsBinActionPerformed
@@ -2824,7 +2821,7 @@ public class JKanzleiGUI extends javax.swing.JFrame implements com.jdimension.jl
 
     private void mnuCalendarSetupActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_mnuCalendarSetupActionPerformed
 
-        if (checkAdmin()) {
+        if (checkSysAdmin()) {
             CalendarSetupDialog dlg = new CalendarSetupDialog(this, true);
             FrameUtils.centerDialog(dlg, this);
             dlg.setVisible(true);
@@ -2833,7 +2830,7 @@ public class JKanzleiGUI extends javax.swing.JFrame implements com.jdimension.jl
 
     private void mnuAddressBookSyncActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_mnuAddressBookSyncActionPerformed
 
-        if (checkAdmin()) {
+        if (checkSysAdmin()) {
             AddressBookSetupDialog dlg = new AddressBookSetupDialog(this, true);
             FrameUtils.centerDialog(dlg, this);
             dlg.setVisible(true);
@@ -2877,19 +2874,17 @@ public class JKanzleiGUI extends javax.swing.JFrame implements com.jdimension.jl
     }//GEN-LAST:event_mnuMailboxSettingsActionPerformed
 
     private void mnuMappingTablesActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_mnuMappingTablesActionPerformed
-        if (checkAdmin()) {
             MappingTablesDialog dlg = new MappingTablesDialog(this, true);
             FrameUtils.centerDialog(dlg, this);
             dlg.setVisible(true);
-        }
+        
     }//GEN-LAST:event_mnuMappingTablesActionPerformed
 
     private void mnuMappingEntriesActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_mnuMappingEntriesActionPerformed
-        if (checkAdmin()) {
             MappingEntriesDialog dlg = new MappingEntriesDialog(this, true);
             FrameUtils.centerDialog(dlg, this);
             dlg.setVisible(true);
-        }
+        
     }//GEN-LAST:event_mnuMappingEntriesActionPerformed
 
     private void mnuWebHooksActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_mnuWebHooksActionPerformed
@@ -2947,11 +2942,10 @@ public class JKanzleiGUI extends javax.swing.JFrame implements com.jdimension.jl
     }//GEN-LAST:event_mnuInvoiceTaxRatesActionPerformed
 
     private void mnuInvoicePositionTemplatesActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_mnuInvoicePositionTemplatesActionPerformed
-        if (checkAdmin()) {
             InvoicePositionTemplatesSetupDialog dlg = new InvoicePositionTemplatesSetupDialog(this, true);
             FrameUtils.centerDialog(dlg, this);
             dlg.setVisible(true);
-        }
+        
     }//GEN-LAST:event_mnuInvoicePositionTemplatesActionPerformed
 
     private void mnuTimesheetIntervalsActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_mnuTimesheetIntervalsActionPerformed
@@ -2971,11 +2965,10 @@ public class JKanzleiGUI extends javax.swing.JFrame implements com.jdimension.jl
     }//GEN-LAST:event_lblTimesheetStatusMouseClicked
 
     private void mnuTimesheetPositionsActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_mnuTimesheetPositionsActionPerformed
-        if (checkAdmin()) {
             TimesheetPositionTemplatesSetupDialog dlg = new TimesheetPositionTemplatesSetupDialog(this, true);
             FrameUtils.centerDialog(dlg, this);
             dlg.setVisible(true);
-        }
+        
     }//GEN-LAST:event_mnuTimesheetPositionsActionPerformed
 
     private void mnuParallelTimesheetLogsActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_mnuParallelTimesheetLogsActionPerformed
@@ -3015,7 +3008,7 @@ public class JKanzleiGUI extends javax.swing.JFrame implements com.jdimension.jl
     }//GEN-LAST:event_mnuBugReportActionPerformed
 
     private void mnuSystemMailboxActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_mnuSystemMailboxActionPerformed
-        if (checkAdmin()) {
+        if (checkSysAdmin()) {
             SystemMailboxDialog dlg = new SystemMailboxDialog(this, true);
 
             FrameUtils.centerDialog(dlg, this);
@@ -3032,11 +3025,10 @@ public class JKanzleiGUI extends javax.swing.JFrame implements com.jdimension.jl
     }//GEN-LAST:event_mnuAssistantConfigsActionPerformed
 
     private void mnuAssistantPromptsActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_mnuAssistantPromptsActionPerformed
-        if (checkAdmin()) {
             AssistantPromptSetupDialog dlg = new AssistantPromptSetupDialog(this, true);
             FrameUtils.centerDialog(dlg, this);
             dlg.setVisible(true);
-        }
+        
     }//GEN-LAST:event_mnuAssistantPromptsActionPerformed
 
     private void mnuDocumentNameTemplatesActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_mnuDocumentNameTemplatesActionPerformed
@@ -3048,7 +3040,7 @@ public class JKanzleiGUI extends javax.swing.JFrame implements com.jdimension.jl
     }//GEN-LAST:event_mnuDocumentNameTemplatesActionPerformed
 
     private void mnuImportFromSheetActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_mnuImportFromSheetActionPerformed
-        if (checkAdmin()) {
+        if (checkSysAdmin()) {
             ImportFromSheetsDialog dlg = new ImportFromSheetsDialog(this, true);
             FrameUtils.centerDialog(dlg, this);
             dlg.setVisible(true);
@@ -3100,7 +3092,7 @@ public class JKanzleiGUI extends javax.swing.JFrame implements com.jdimension.jl
     }//GEN-LAST:event_mnuAssistantReplacementsActionPerformed
 
     private void mnuStirlingPdfActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_mnuStirlingPdfActionPerformed
-        if (checkAdmin()) {
+        if (checkSysAdmin()) {
             StirlingPdfConfigurationDialog dlg = new StirlingPdfConfigurationDialog(this, true);
             FrameUtils.centerDialog(dlg, this);
             dlg.setVisible(true);

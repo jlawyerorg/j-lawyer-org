@@ -757,6 +757,12 @@ public class SecurityService implements SecurityServiceRemote, SecurityServiceLo
     public boolean isAdmin() {
         return sessionContext.isCallerInRole("adminRole");
     }
+    
+    @Override
+    @RolesAllowed({"loginRole"})
+    public boolean isSysAdmin() {
+        return sessionContext.isCallerInRole("sysAdminRole");
+    }
 
     @Override
     @RolesAllowed({"loginRole"})
