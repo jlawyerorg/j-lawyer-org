@@ -884,7 +884,7 @@ public class TimesheetPositionEntryPanel extends javax.swing.JPanel {
         if (this.txtUnitPrice.getValue() == null) {
             clone.setUnitPrice(BigDecimal.ZERO);
         } else {
-            clone.setUnitPrice(BigDecimal.valueOf(((Number) this.txtUnitPrice.getValue()).floatValue()));
+            clone.setUnitPrice(BigDecimal.valueOf(((Number) this.txtUnitPrice.getValue()).doubleValue()));
         }
 
         return clone;

@@ -1165,12 +1165,12 @@ public class CaseAccountEntryPanel extends javax.swing.JPanel {
         this.entry.setEntryDate(this.df.parse(this.txtDate.getText()));
         this.entry.setContact(this.recipientAddress);
         this.entry.setDescription(this.taDescription.getText());
-        this.entry.setEarnings(BigDecimal.valueOf(((Number) txtEarnings.getValue()).floatValue()));
-        this.entry.setSpendings(BigDecimal.valueOf(((Number) txtSpendings.getValue()).floatValue()));
-        this.entry.setEscrowIn(BigDecimal.valueOf(((Number) txtEscrowIn.getValue()).floatValue()));
-        this.entry.setEscrowOut(BigDecimal.valueOf(((Number) txtEscrowOut.getValue()).floatValue()));
-        this.entry.setExpendituresIn(BigDecimal.valueOf(((Number) txtExpendituresIn.getValue()).floatValue()));
-        this.entry.setExpendituresOut(BigDecimal.valueOf(((Number) txtExpendituresOut.getValue()).floatValue()));
+        this.entry.setEarnings(BigDecimal.valueOf(((Number) txtEarnings.getValue()).doubleValue()));
+        this.entry.setSpendings(BigDecimal.valueOf(((Number) txtSpendings.getValue()).doubleValue()));
+        this.entry.setEscrowIn(BigDecimal.valueOf(((Number) txtEscrowIn.getValue()).doubleValue()));
+        this.entry.setEscrowOut(BigDecimal.valueOf(((Number) txtEscrowOut.getValue()).doubleValue()));
+        this.entry.setExpendituresIn(BigDecimal.valueOf(((Number) txtExpendituresIn.getValue()).doubleValue()));
+        this.entry.setExpendituresOut(BigDecimal.valueOf(((Number) txtExpendituresOut.getValue()).doubleValue()));
 
         if (this.cmbInvoice.getSelectedItem() instanceof Invoice) {
             this.entry.setInvoice((Invoice) this.cmbInvoice.getSelectedItem());

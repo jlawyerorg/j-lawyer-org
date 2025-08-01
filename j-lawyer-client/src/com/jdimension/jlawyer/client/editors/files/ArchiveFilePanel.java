@@ -1097,7 +1097,10 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
             if (this.dto.getId().equals(caseId)) {
                 InvoiceEntryPanel ip = new InvoiceEntryPanel(this);
                 ip.setEntry(this.dto, invoiceCopy, this.getInvolvedAddresses());
-                ip.setPaidTotal(invoiceCopy.getTotalGross(), BigDecimal.ZERO, invoiceCopy.getCurrency());
+                if(invoiceCopy.isSmallBusiness())
+                    ip.setPaidTotal(invoiceCopy.getTotalGross(), BigDecimal.ZERO, invoiceCopy.getCurrency());
+                else
+                    ip.setPaidTotal(invoiceCopy.getTotal(), BigDecimal.ZERO, invoiceCopy.getCurrency());
                 this.pnlInvoices.add(ip);
             }
         } catch (Exception ex) {
@@ -4468,9 +4471,15 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
                 InvoiceEntryPanel ie = (InvoiceEntryPanel) this.pnlInvoices.getComponent(i);
                 Invoice inv = ie.getInvoice();
                 if (invoiceTotals.containsKey(inv.getId())) {
-                    ie.setPaidTotal(inv.getTotalGross(), invoiceTotals.get(inv.getId()), inv.getCurrency());
+                    if(inv.isSmallBusiness())
+                        ie.setPaidTotal(inv.getTotalGross(), invoiceTotals.get(inv.getId()), inv.getCurrency());
+                    else
+                        ie.setPaidTotal(inv.getTotal(), invoiceTotals.get(inv.getId()), inv.getCurrency());
                 } else {
-                    ie.setPaidTotal(inv.getTotalGross(), BigDecimal.ZERO, inv.getCurrency());
+                    if(inv.isSmallBusiness())
+                        ie.setPaidTotal(inv.getTotalGross(), BigDecimal.ZERO, inv.getCurrency());
+                    else
+                        ie.setPaidTotal(inv.getTotal(), BigDecimal.ZERO, inv.getCurrency());
                 }
             }
 
