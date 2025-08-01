@@ -751,7 +751,7 @@ public class ArchiveFileReviewsSearchThread implements Runnable {
             }
         }
         TableRowSorter<TableModel> sorter = new TableRowSorter<>(model);
-        sorter.setComparator(2, new FileNumberComparator());
+        sorter.setComparator(2, new FileNumberComparatorString());
         sorter.setComparator(0, new DateStringComparator());
         ThreadUtils.setTableModel(this.target, model, sorter);
         if (this.calendarTarget != null) {

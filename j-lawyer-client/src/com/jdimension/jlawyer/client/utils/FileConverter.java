@@ -766,6 +766,9 @@ public class FileConverter {
     }
 
     public boolean supportsInputFormat(String url) {
+        
+        if(url.toLowerCase().endsWith(".eml"))
+            return true;
 
         return supportsInputFormat(url, INPUTTYPES_LIBREOFFICE);
 
@@ -872,6 +875,9 @@ public class FileConverter {
 
         @Override
         public boolean supportsInputFormat(String url) {
+            
+            if(url.toLowerCase().endsWith(".eml"))
+                return true;
 
             ClientSettings set = ClientSettings.getInstance();
             String wordProcessor = set.getConfiguration(ClientSettings.CONF_APPS_WORDPROCESSOR_KEY, ClientSettings.CONF_APPS_WORDPROCESSOR_VALUE_LO);

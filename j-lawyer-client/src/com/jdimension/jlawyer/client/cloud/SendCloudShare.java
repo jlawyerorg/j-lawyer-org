@@ -673,7 +673,6 @@ import com.jdimension.jlawyer.persistence.ArchiveFileDocumentsBean;
 import java.awt.Component;
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.Comparator;
 import java.util.List;
 import javax.swing.JScrollBar;
 import org.aarboard.nextcloud.api.filesharing.ItemType;
@@ -786,9 +785,6 @@ public class SendCloudShare extends javax.swing.JDialog implements ShareListener
         jScrollPane1.setViewportView(pnlSharesList);
 
         txtFilter.addKeyListener(new java.awt.event.KeyAdapter() {
-            public void keyTyped(java.awt.event.KeyEvent evt) {
-                txtFilterKeyTyped(evt);
-            }
             public void keyReleased(java.awt.event.KeyEvent evt) {
                 txtFilterKeyReleased(evt);
             }
@@ -858,12 +854,9 @@ public class SendCloudShare extends javax.swing.JDialog implements ShareListener
         pack();
     }// </editor-fold>//GEN-END:initComponents
 
-    private void txtFilterKeyTyped(java.awt.event.KeyEvent evt) {//GEN-FIRST:event_txtFilterKeyTyped
-
-    }//GEN-LAST:event_txtFilterKeyTyped
-
     private void txtFilterKeyReleased(java.awt.event.KeyEvent evt) {//GEN-FIRST:event_txtFilterKeyReleased
         this.pnlSharesList.removeAll();
+        this.pnlSharesList.setSelectedPanel(null);
         if (this.txtFilter.getText().length() > 0) {
 
             ShareInfoPanel initialSelection = null;
@@ -874,6 +867,7 @@ public class SendCloudShare extends javax.swing.JDialog implements ShareListener
                     if (initialSelection == null) {
                         initialSelection = p;
                         p.setSelected(true);
+                        this.pnlSharesList.setSelectedPanel(p);
                     }
                 }
             }
@@ -886,6 +880,7 @@ public class SendCloudShare extends javax.swing.JDialog implements ShareListener
                 if (initialSelection == null) {
                     initialSelection = p;
                     p.setSelected(true);
+                    this.pnlSharesList.setSelectedPanel(p);
                 }
             }
         }

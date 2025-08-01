@@ -694,6 +694,7 @@ public class RestfulContactV1 {
     private String complimentaryClose=null;
     
     private String street=null;
+    private String streetNumber=null;
     private String country=null;
     private String zipCode=null;
     private String city=null;
@@ -753,6 +754,7 @@ public class RestfulContactV1 {
         ad.setPhone(this.getPhone());
         ad.setSalutation(this.getSalutation());
         ad.setStreet(this.getStreet());
+        ad.setStreetNumber(this.getStreetNumber());
         ad.setTitle(this.getTitle());
         ad.setTrafficInsuranceName(this.getTrafficInsuranceName());
         ad.setTrafficInsuranceNumber(this.getTrafficInsuranceNumber());
@@ -799,6 +801,7 @@ public class RestfulContactV1 {
         ad.setPhone(a.getPhone());
         ad.setSalutation(a.getSalutation());
         ad.setStreet(a.getStreet());
+        ad.setStreetNumber(a.getStreetNumber());
         ad.setTitle(a.getTitle());
         ad.setTrafficInsuranceName(a.getTrafficInsuranceName());
         ad.setTrafficInsuranceNumber(a.getTrafficInsuranceNumber());
@@ -1355,6 +1358,20 @@ public class RestfulContactV1 {
      */
     public void setFirstName2(String firstName2) {
         this.firstName2 = firstName2;
+    }
+
+    /**
+     * @return the streetNumber
+     */
+    public String getStreetNumber() {
+        return streetNumber;
+    }
+
+    /**
+     * @param streetNumber the streetNumber to set
+     */
+    public void setStreetNumber(String streetNumber) {
+        this.streetNumber = streetNumber;
     }
     
     

@@ -683,4 +683,6 @@ public interface MessagingServiceLocal {
     
     List<InstantMessage> getMessagesSince(Date since, int maxNumberOfMessages) throws Exception;
     
+    boolean markMentionDone(String mentionId, boolean done) throws Exception;
+    
 }

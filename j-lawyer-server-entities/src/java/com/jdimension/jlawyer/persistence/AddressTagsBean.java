@@ -664,6 +664,7 @@
 package com.jdimension.jlawyer.persistence;
 
 import java.io.Serializable;
+import java.util.Date;
 import javax.persistence.*;
 import javax.xml.bind.annotation.XmlRootElement;
 
@@ -690,6 +691,10 @@ public class AddressTagsBean implements Serializable {
     @JoinColumn(name = "addressKey", referencedColumnName = "id")
     @ManyToOne
     private AddressBean addressKey;
+    
+    @Column(name = "date_set")
+    @Temporal(TemporalType.TIMESTAMP)
+    private Date dateSet;
     
     public AddressTagsBean() {
     }
@@ -752,6 +757,20 @@ public class AddressTagsBean implements Serializable {
 
         return this.tagName;
         
+    }
+
+    /**
+     * @return the dateSet
+     */
+    public Date getDateSet() {
+        return dateSet;
+    }
+
+    /**
+     * @param dateSet the dateSet to set
+     */
+    public void setDateSet(Date dateSet) {
+        this.dateSet = dateSet;
     }
     
 }

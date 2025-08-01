@@ -842,6 +842,8 @@ public class ContactsEndpointV2 implements ContactsEndpointLocalV2 {
                         rco.setFirstName(afb.getFirstName());
                         rco.setCompany(afb.getCompany());
                         rco.setZipCode(afb.getZipCode());
+                        rco.setStreet(afb.getStreet());
+                        rco.setStreetNumber(afb.getStreetNumber());
                         rcoList.add(rco);
                 }
             }

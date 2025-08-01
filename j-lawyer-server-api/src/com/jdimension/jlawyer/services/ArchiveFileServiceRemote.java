@@ -874,6 +874,8 @@ public interface ArchiveFileServiceRemote {
     void removeInvoicePosition(String invoiceId, InvoicePosition position) throws Exception;
 
     Invoice updateInvoice(String caseId, Invoice invoice) throws Exception;
+    
+    Payment updatePayment(String caseId, Payment payment) throws Exception;
 
     void removeAllInvoicePositions(String invoiceId) throws Exception;
 
@@ -949,4 +951,14 @@ public interface ArchiveFileServiceRemote {
     void removeParty(String id) throws Exception;
     
     ArchiveFileAddressesBean updateParty(String caseId, ArchiveFileAddressesBean party) throws Exception;
+
+    List<Payment> getPayments(String caseId);
+
+    Payment addPayment(String caseId, Payment payment) throws Exception;
+
+    void removePayment(String paymentId) throws Exception;
+
+    Payment copyPayment(String paymentId, String toCaseId) throws Exception;
+    
+    boolean performOcr(String docId) throws Exception;
 }

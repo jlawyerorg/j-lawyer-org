@@ -704,4 +704,31 @@ public class UserUtils {
         }
         return currentUserAdmin;
     }
+    
+    public static boolean isCurrentUserSysAdmin(Component parent) {
+        return isCurrentUserSysAdmin(parent, true);
+    }
+
+    public static boolean isCurrentUserSysAdmin(Component parent, boolean displayWarning) {
+        boolean admin = isCurrentUserSysAdmin();
+
+        if (!admin && displayWarning) {
+            JOptionPane.showMessageDialog(parent, java.util.ResourceBundle.getBundle("com/jdimension/jlawyer/client/JKanzleiGUI").getString("msg.sysadminrequired"), java.util.ResourceBundle.getBundle("com/jdimension/jlawyer/client/JKanzleiGUI").getString("msg.title.hint"), JOptionPane.INFORMATION_MESSAGE);
+        }
+        return admin;
+    }
+
+    public static boolean isCurrentUserSysAdmin() {
+        if (currentUserAdmin == null) {
+            ClientSettings settings = ClientSettings.getInstance();
+            try {
+                JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
+                currentUserAdmin = locator.lookupSecurityServiceRemote().isSysAdmin();
+            } catch (Exception ex) {
+                log.error(ex);
+                return false;
+            }
+        }
+        return currentUserAdmin;
+    }
 }

@@ -803,6 +803,8 @@ public class ClientSettings {
     
     public static final String CONF_CASES_EXPORT_LASTDIR="client.archivefiles.htmlexport.lastdir";
     
+    public static final String CONF_FINANCE_SEPAXML_LASTDIR="client.finance.sepaxml.lastdir";
+    
     private static final String ARRAY_DELIMITER="#####";
     
     private static final Logger log=Logger.getLogger(ClientSettings.class.getName());

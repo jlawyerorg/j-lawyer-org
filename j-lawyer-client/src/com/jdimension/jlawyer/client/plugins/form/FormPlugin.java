@@ -991,4 +991,15 @@ public class FormPlugin extends ServerFormPlugin implements Comparable {
         this.versionInstalled = versionInRepository;
     }
 
+    public String getAsHtml() {
+        try {
+
+            return ((FormPluginMethods) scriptInstance).getAsHtml();
+
+        } catch (Throwable t) {
+            log.error(t);
+            return null;
+        }
+    }
+
 }

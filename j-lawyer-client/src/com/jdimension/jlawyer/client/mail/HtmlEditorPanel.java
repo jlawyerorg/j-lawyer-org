@@ -986,7 +986,6 @@ public class HtmlEditorPanel extends javax.swing.JPanel implements EditorImpleme
         for (Component comp : container.getComponents()) {
             if (comp instanceof JEditorPane) {
                 JEditorPane editorPane = (JEditorPane) comp;
-                Action originalPasteAction = editorPane.getActionMap().get(DefaultEditorKit.pasteAction);
                 editorPane.getActionMap().put(DefaultEditorKit.pasteAction, new AbstractAction() {
                     @Override
                     public void actionPerformed(ActionEvent e) {
@@ -1007,7 +1006,7 @@ public class HtmlEditorPanel extends javax.swing.JPanel implements EditorImpleme
                                 kit.insertHTML(doc, pos, text, 0, 0, null);
                             }
                         } catch (Exception ex) {
-                            ex.printStackTrace();
+                            log.error("Error pasting plain text into HTML editor pane", ex);
                         }
                     }
                 });

@@ -1095,6 +1095,12 @@ public class PartyTypesDialog extends javax.swing.JDialog {
         } else {
 
             PartyTypeBean ptb = (PartyTypeBean) this.tblPartyTypes.getValueAt(row, 0);
+            
+            int response = JOptionPane.showConfirmDialog(this, "'" + ptb.getName() + "' löschen?", "Beteiligtentyp löschen", JOptionPane.YES_NO_OPTION);
+            if (response == JOptionPane.NO_OPTION) {
+                return;
+            }
+            
             ClientSettings settings = ClientSettings.getInstance();
             try {
                 JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());

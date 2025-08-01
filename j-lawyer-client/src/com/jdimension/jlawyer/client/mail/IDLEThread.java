@@ -666,6 +666,7 @@ package com.jdimension.jlawyer.client.mail;
 import com.sun.mail.imap.IMAPFolder;
 import javax.mail.Folder;
 import javax.mail.MessagingException;
+import javax.mail.Store;
 import org.apache.log4j.Logger;
 
 /**
@@ -687,7 +688,7 @@ public class IDLEThread implements Runnable {
         this.cancel = true;
         System.out.println("close 21a");
         EmailUtils.closeIfIMAP(f);
-        
+
     }
 
     @Override
@@ -722,6 +723,28 @@ public class IDLEThread implements Runnable {
 
         } catch (Throwable t) {
             log.error("Could not enter IDLE mode for folder", t);
+        }
+    }
+
+    public void shutdown() {
+        this.cancel = true;
+
+        try {
+            if (f.isOpen()) {
+                log.info("Closing folder to interrupt IDLE");
+                f.close(false); // false = don't expunge deleted messages
+            }
+        } catch (Exception e) {
+            log.warn("Error closing folder during shutdown", e);
+        }
+
+        try {
+            Store store = f.getStore();
+            if (store != null && store.isConnected()) {
+                store.close();
+            }
+        } catch (Exception e) {
+            log.warn("Error closing store during shutdown", e);
         }
     }
 

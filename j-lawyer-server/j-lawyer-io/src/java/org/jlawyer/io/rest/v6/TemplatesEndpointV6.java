@@ -908,6 +908,7 @@ public class TemplatesEndpointV6 implements TemplatesEndpointLocalV6 {
             }
             ArchiveFileDocumentsBean newDoc = casesvc.addDocumentFromTemplate(caseId, fileName, null, folder, template, placeHoldersInTemplateMap, "", null);
             RestfulDocumentV1 rdoc = new RestfulDocumentV1();
+            rdoc.setCaseId(caseId);
             rdoc.setCreationDate(newDoc.getCreationDate());
             rdoc.setChangeDate(newDoc.getChangeDate());
             rdoc.setFavorite(rdoc.isFavorite());

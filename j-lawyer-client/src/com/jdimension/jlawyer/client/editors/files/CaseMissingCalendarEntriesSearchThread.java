@@ -757,7 +757,7 @@ public class CaseMissingCalendarEntriesSearchThread implements Runnable {
             }
         }
         TableRowSorter<TableModel> sorter = new TableRowSorter<>(model);
-        sorter.setComparator(0, new FileNumberComparator());
+        sorter.setComparator(0, new FileNumberComparatorRowIdentifier());
         ThreadUtils.setTableModel(this.target, model, sorter);
         ThreadUtils.setDefaultCursor(this.owner);
         log.info("loaded and rendered missing review in " + (System.currentTimeMillis()-start) + "ms");

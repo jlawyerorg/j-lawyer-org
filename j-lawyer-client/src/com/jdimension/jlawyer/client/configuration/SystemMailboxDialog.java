@@ -690,7 +690,7 @@ public class SystemMailboxDialog extends javax.swing.JDialog {
         initComponents();
 
         try {
-            if (!UserUtils.isCurrentUserAdmin()) {
+            if (!UserUtils.isCurrentUserSysAdmin()) {
                 this.cmdSave.setEnabled(false);
                 this.cmdTestMail.setEnabled(false);
                 this.txtPassword.setEnabled(false);

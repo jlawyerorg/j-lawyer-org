@@ -1052,10 +1052,12 @@ public class AddressPanel extends javax.swing.JPanel implements BeaLoginCallback
 
             ArrayList<String> activeTags = new ArrayList<>();
             ArrayList<String> sortedTags = new ArrayList<>();
+            HashMap<String, Date> tagDates = new HashMap<>();
             for (Object t : tags) {
                 AddressTagsBean tag = (AddressTagsBean) t;
                 activeTags.add(tag.getTagName());
                 sortedTags.add(tag.getTagName());
+                tagDates.put(tag.getTagName(), tag.getDateSet());
             }
 
             AppOptionGroupBean[] tagOptions = settings.getAddressTagDtos();
@@ -1068,7 +1070,7 @@ public class AddressPanel extends javax.swing.JPanel implements BeaLoginCallback
             StringUtils.sortIgnoreCase(sortedTags);
 
             for (String tagString : sortedTags) {
-                TagToggleButton tb = new TagToggleButton(tagString, null);
+                TagToggleButton tb = new TagToggleButton(tagString, tagDates.get(tagString));
                 if (activeTags.contains(tagString)) {
                     tb.setSelected(true);
                 } else {

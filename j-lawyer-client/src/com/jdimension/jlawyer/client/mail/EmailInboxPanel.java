@@ -671,7 +671,7 @@ import com.jdimension.jlawyer.client.editors.documents.SearchAndAssignDialog;
 import com.jdimension.jlawyer.client.editors.files.BulkSaveDialog;
 import com.jdimension.jlawyer.client.editors.files.BulkSaveEntry;
 import com.jdimension.jlawyer.client.editors.files.DescendingDateTimeStringComparator;
-import com.jdimension.jlawyer.client.editors.files.FileNumberComparator;
+import com.jdimension.jlawyer.client.editors.files.FileNumberComparatorArchiveFileBean;
 import com.jdimension.jlawyer.client.events.EmailStatusEvent;
 import com.jdimension.jlawyer.client.events.EventBroker;
 import com.jdimension.jlawyer.client.launcher.Launcher;
@@ -868,7 +868,7 @@ public class EmailInboxPanel extends javax.swing.JPanel implements SaveToCaseExe
 
         this.treeFolders.setDropMode(DropMode.ON);
 
-        Runtime.getRuntime().addShutdownHook(new Thread(new EmailObjectsCleanUp(this.stores)));
+        Runtime.getRuntime().addShutdownHook(new Thread(new EmailObjectsCleanUp(this.idleThreads, this.stores)));
 
         DropTarget dt = new DropTarget(this.treeFolders, this);
 
@@ -919,7 +919,7 @@ public class EmailInboxPanel extends javax.swing.JPanel implements SaveToCaseExe
                     props.setProperty("mail.imaps.socketFactory.fallback", "false");
                     props.setProperty("mail.imaps.socketFactory.port", "993");
                     props.setProperty("mail.imaps.starttls.enable", "true");
-                    
+
                     ms.applyCustomProperties(ms.customConfigurationsReceiveProperties(), props);
 
                     session = Session.getInstance(props);
@@ -934,7 +934,7 @@ public class EmailInboxPanel extends javax.swing.JPanel implements SaveToCaseExe
 
                     props.setProperty("mail.imaps.host", server);
                     props.setProperty("mail.imap.host", server);
-                    
+
                     // sample properties required for ms exchange shared mailboxes. may be set using the "custom properties" of a mailboxsetup
 //                    props.put("mail.imap.port", "143");
 //                    props.put("mail.imap.sasl.enable", "false");
@@ -942,7 +942,6 @@ public class EmailInboxPanel extends javax.swing.JPanel implements SaveToCaseExe
 //                    props.put("mail.imap.auth", "true");
 //                    props.put("mail.debug", "true");
 //                    props.put("mail.imap.auth.mechanisms", "LOGIN");
-
                     if (ms.isEmailInSsl()) {
                         props.setProperty("mail.store.protocol", "imaps");
                     }
@@ -2772,24 +2771,26 @@ public class EmailInboxPanel extends javax.swing.JPanel implements SaveToCaseExe
                             Collections.sort(addressRelatedCases, (Object o1, Object o2) -> {
                                 ArchiveFileBean aFile1 = (ArchiveFileBean) o1;
                                 ArchiveFileBean aFile2 = (ArchiveFileBean) o2;
+                                
+                                boolean archived1 = aFile1.isArchived();
+                                boolean archived2 = aFile2.isArchived();
 
-                                if (aFile2.isArchived()) {
-                                    if (aFile1.isArchived()) {
-                                        // both archived
-                                        // sort by changed date
-                                        return new FileNumberComparator().compare(aFile1, aFile2) * -1;
-                                    } else {
-                                        // only 2 is archived
-                                        return -1;
-                                    }
-                                } else if (aFile1.isArchived()) {
+                                if (archived1 && archived2) {
+                                    // both archived
+                                    // sort by changed date
+                                    return new FileNumberComparatorArchiveFileBean().reversed().compare(aFile1, aFile2);
+                                } else if (archived1) {
                                     // only 1 is archived
                                     return 1;
+                                } else if (archived2) {
+                                    // only 2 is archived
+                                    return -1;
                                 } else {
                                     // both are non-archived
                                     // sort by changed date
-                                    return new FileNumberComparator().compare(aFile1, aFile2) * -1;
+                                    return new FileNumberComparatorArchiveFileBean().reversed().compare(aFile1, aFile2);
                                 }
+
                             });
 
                         }
@@ -3333,20 +3334,31 @@ public class EmailInboxPanel extends javax.swing.JPanel implements SaveToCaseExe
     public static class EmailObjectsCleanUp implements Runnable {
 
         private HashMap<MailboxSetup, Store> s;
+        private HashMap<MailboxSetup, IDLEThread> idleThreads;
 
-        public EmailObjectsCleanUp(HashMap<MailboxSetup, Store> s) {
+        public EmailObjectsCleanUp(HashMap<MailboxSetup, IDLEThread> idleThreads, HashMap<MailboxSetup, Store> s) {
             this.s = s;
+            this.idleThreads = idleThreads;
         }
 
         @Override
         public void run() {
-            try {
-                for (Store store : this.s.values()) {
-                    store.close();
-                }
 
-            } catch (Exception ex) {
-                log.error(ex);
+            for (IDLEThread t : this.idleThreads.values()) {
+                try {
+                    t.shutdown();
+                } catch (Throwable th) {
+                    log.error(th);
+                }
+            }
+
+            for (Store store : this.s.values()) {
+                try {
+                    if(store.isConnected())
+                        store.close();
+                } catch (Exception ex) {
+                    log.error(ex);
+                }
             }
 
         }

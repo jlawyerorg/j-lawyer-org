@@ -664,14 +664,20 @@ For more information on this, and how to apply and follow the GNU AGPL, see
 package com.jdimension.jlawyer.client.plugins.form;
 
 import com.jdimension.jlawyer.client.editors.EditorsRegistry;
+import com.jdimension.jlawyer.client.events.DocumentAddedEvent;
+import com.jdimension.jlawyer.client.events.EventBroker;
 import com.jdimension.jlawyer.client.settings.ClientSettings;
 import com.jdimension.jlawyer.client.utils.FrameUtils;
 import com.jdimension.jlawyer.client.utils.StringUtils;
+import com.jdimension.jlawyer.persistence.ArchiveFileDocumentsBean;
 import com.jdimension.jlawyer.persistence.ArchiveFileFormEntriesBean;
 import com.jdimension.jlawyer.persistence.ArchiveFileFormsBean;
+import com.jdimension.jlawyer.services.ArchiveFileServiceRemote;
 import com.jdimension.jlawyer.services.JLawyerServiceLocator;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.Date;
 import java.util.Hashtable;
 import java.util.List;
 import javax.swing.JOptionPane;
@@ -769,6 +775,7 @@ public class FormInstancePanel extends javax.swing.JPanel {
         scrollPlugin = new javax.swing.JScrollPane();
         jScrollPane1 = new javax.swing.JScrollPane();
         taDescription = new javax.swing.JTextArea();
+        cmdSaveAsDocument = new javax.swing.JButton();
 
         cmdRemoveForm.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/editdelete.png"))); // NOI18N
         cmdRemoveForm.setToolTipText("Falldatenblatt löschen");
@@ -798,6 +805,14 @@ public class FormInstancePanel extends javax.swing.JPanel {
         taDescription.setBorder(null);
         jScrollPane1.setViewportView(taDescription);
 
+        cmdSaveAsDocument.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/edit.png"))); // NOI18N
+        cmdSaveAsDocument.setToolTipText("Falldaten als Dokument zur Akte speichern");
+        cmdSaveAsDocument.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                cmdSaveAsDocumentActionPerformed(evt);
+            }
+        });
+
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(this);
         this.setLayout(layout);
         layout.setHorizontalGroup(
@@ -811,17 +826,21 @@ public class FormInstancePanel extends javax.swing.JPanel {
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                         .addComponent(cmdShowPlaceHolders)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addComponent(jScrollPane1, javax.swing.GroupLayout.DEFAULT_SIZE, 612, Short.MAX_VALUE)))
+                        .addComponent(cmdSaveAsDocument)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addComponent(jScrollPane1, javax.swing.GroupLayout.DEFAULT_SIZE, 578, Short.MAX_VALUE)))
                 .addContainerGap())
         );
         layout.setVerticalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(layout.createSequentialGroup()
                 .addContainerGap()
-                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
-                    .addComponent(cmdRemoveForm, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                    .addComponent(cmdShowPlaceHolders, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                    .addComponent(jScrollPane1, javax.swing.GroupLayout.PREFERRED_SIZE, 0, Short.MAX_VALUE))
+                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
+                        .addComponent(cmdRemoveForm, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                        .addComponent(cmdShowPlaceHolders, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                        .addComponent(jScrollPane1, javax.swing.GroupLayout.PREFERRED_SIZE, 0, Short.MAX_VALUE))
+                    .addComponent(cmdSaveAsDocument))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(scrollPlugin, javax.swing.GroupLayout.DEFAULT_SIZE, 372, Short.MAX_VALUE)
                 .addContainerGap())
@@ -855,6 +874,44 @@ public class FormInstancePanel extends javax.swing.JPanel {
         dlg.setVisible(true);
 
     }//GEN-LAST:event_cmdShowPlaceHoldersActionPerformed
+
+    private void cmdSaveAsDocumentActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdSaveAsDocumentActionPerformed
+        String html=this.plugin.getAsHtml();
+        
+        String formType=this.getForm().getFormType().getName();
+        
+        SimpleDateFormat df = new SimpleDateFormat("yyyy-MM-dd");
+        String fileName=df.format(new Date()) + "_Falldaten_" + formType;
+        fileName=fileName + ".html";
+        
+        try {
+            ClientSettings settings = ClientSettings.getInstance();
+            JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
+            ArchiveFileServiceRemote remote = locator.lookupArchiveFileServiceRemote();
+
+            if (!remote.doesDocumentExist(this.plugin.getCaseDto().getId(), fileName)) {
+                ArchiveFileDocumentsBean newDoc = remote.addDocument(this.plugin.getCaseDto().getId(), fileName, html.getBytes(), "", null);
+                EventBroker eb = EventBroker.getInstance();
+                eb.publishEvent(new DocumentAddedEvent(newDoc));
+                
+            } else {
+                for (int i = 2; i < 50; i++) {
+                    String indexedFileName = "(" + i + ") " + fileName;
+                    if (!remote.doesDocumentExist(this.plugin.getCaseDto().getId(), indexedFileName)) {
+                        ArchiveFileDocumentsBean newDoc = remote.addDocument(this.plugin.getCaseDto().getId(), indexedFileName, html.getBytes(), "", null);
+                        EventBroker eb = EventBroker.getInstance();
+                        eb.publishEvent(new DocumentAddedEvent(newDoc));
+                        break;
+                    }
+                }
+            }
+            JOptionPane.showMessageDialog(this, "Falldaten wurden als Dokument zur Akte gespeichert.", com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_HINT, JOptionPane.INFORMATION_MESSAGE);
+
+        } catch (Exception ioe) {
+            log.error("Error saving form data as file", ioe);
+            JOptionPane.showMessageDialog(this, "Fehler beim Speichern der Falldaten: " + ioe.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
+        }
+    }//GEN-LAST:event_cmdSaveAsDocumentActionPerformed
 
     public void save() {
         Hashtable placeHolders = this.plugin.getPlaceHolderValues();
@@ -920,6 +977,7 @@ public class FormInstancePanel extends javax.swing.JPanel {
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JButton cmdRemoveForm;
+    private javax.swing.JButton cmdSaveAsDocument;
     private javax.swing.JButton cmdShowPlaceHolders;
     private javax.swing.JScrollPane jScrollPane1;
     private javax.swing.JScrollPane scrollPlugin;

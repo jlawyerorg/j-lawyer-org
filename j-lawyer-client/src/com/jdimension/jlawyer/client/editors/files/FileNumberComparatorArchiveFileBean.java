@@ -671,32 +671,24 @@ import org.apache.log4j.Logger;
  *
  * @author jens
  */
-public class FileNumberComparator implements Comparator {
+public class FileNumberComparatorArchiveFileBean implements Comparator<ArchiveFileBean> {
     
-    private static final Logger log=Logger.getLogger(FileNumberComparator.class.getName());
+    private static final Logger log=Logger.getLogger(FileNumberComparatorArchiveFileBean.class.getName());
     
 
     @Override
-    public int compare(Object t, Object t1) {
+    public int compare(ArchiveFileBean t, ArchiveFileBean t1) {
         try {
 
             String s1=null;
             String s2=null;
+            if(t!=null)
+                s1=t.getFileNumber();
+            if(t1!=null)
+                s2=t1.getFileNumber();
             
-            if (t instanceof QuickArchiveFileSearchRowIdentifier) {
-                QuickArchiveFileSearchRowIdentifier i1 = (QuickArchiveFileSearchRowIdentifier) t;
-                QuickArchiveFileSearchRowIdentifier i2 = (QuickArchiveFileSearchRowIdentifier) t1;
-                s1 = i1.getArchiveFileDTO().getFileNumber();
-                s2 = i2.getArchiveFileDTO().getFileNumber();
-            } else if (t instanceof ArchiveFileBean) {
-                ArchiveFileBean i1=(ArchiveFileBean)t;
-                ArchiveFileBean i2=(ArchiveFileBean)t1;
-                s1=i1.getFileNumber();
-                s2=i2.getFileNumber();
-            }else {
-                s1 = t.toString();
-                s2 = t1.toString();
-            }
+            
+            if (s1 == null && s2 == null) return 0;
             
             if(s1==null)
                 return -1;
@@ -747,7 +739,7 @@ public class FileNumberComparator implements Comparator {
 
         } catch (Throwable thr) {
             log.error("error sorting by archive file number", thr);
-            return -1;
+            return 0;
         }
     }
 }

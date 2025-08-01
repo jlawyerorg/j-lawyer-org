@@ -686,6 +686,7 @@ public interface SecurityServiceRemote {
     boolean login(String principalId, String password);
 
     boolean isAdmin();
+    boolean isSysAdmin();
 
     Collection<Group> getAllGroups();
 

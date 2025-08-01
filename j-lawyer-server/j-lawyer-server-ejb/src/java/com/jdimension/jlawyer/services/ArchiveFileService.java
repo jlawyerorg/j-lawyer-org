@@ -726,6 +726,7 @@ import org.jlawyer.data.tree.GenericNode;
 import org.jlawyer.data.tree.TreeNodeUtils;
 import org.jlawyer.databucket.DataBucketUtils;
 import org.jlawyer.search.SearchIndexRequest;
+import org.jlawyer.utils.ocr.OcrUtils;
 
 /**
  *
@@ -739,6 +740,7 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
 
     private static final String MSG_MISSINGPRIVILEGE_CASE = "Keine Berechtigung für diese Akte";
     private static final String MSG_MISSING_INVOICE = "Rechnung kann nicht gefunden werden";
+    private static final String MSG_MISSING_PAYMENT = "Zahlung kann nicht gefunden werden";
     private static final String MSG_MISSING_TIMESHEET = "Zeiterfassungsprojekt kann nicht gefunden werden";
     private static final String MSG_MISSING_TIMESHEETPOS = "Zeiterfassungsposition kann nicht gefunden werden";
 
@@ -786,6 +788,8 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
     private FormsServiceLocal formsFacade;
     @EJB
     private InvoiceFacadeLocal invoicesFacade;
+    @EJB
+    private PaymentFacadeLocal paymentsFacade;
     @EJB
     private InvoicePositionFacadeLocal invoicePositionsFacade;
     @EJB
@@ -2143,6 +2147,99 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
     }
 
     @Override
+    @RolesAllowed({"writeArchiveFileRole"})
+    public boolean performOcr(String docId) throws Exception {
+
+        ArchiveFileDocumentsBean doc = this.archiveFileDocumentsFacade.find(docId);
+        if (doc == null) {
+            return false;
+        }
+
+        if (ServerStringUtils.isEmpty(doc.getName())) {
+            return false;
+        }
+
+        if (!doc.getName().toLowerCase().endsWith(".pdf")) {
+            return false;
+        }
+
+        ServerSettingsBean s = this.settingsFacade.find("jlawyer.server.observe.ocrcmd");
+        String[] cmd = null;
+        if (s != null) {
+            if (s.getSettingValue().length() > 0) {
+                cmd = s.getSettingValue().split(" ");
+            }
+        }
+        if (cmd != null) {
+
+            log.info("performing OCR on document " + docId + " " + doc.getName() + " using ocrmypdf");
+
+            String tmpDir = System.getProperty("java.io.tmpdir");
+            if (!tmpDir.endsWith(System.getProperty("file.separator"))) {
+                tmpDir = tmpDir + System.getProperty("file.separator");
+            }
+
+            // Add the "OCR" prefix to the original file name
+            String tmpFileName = tmpDir + System.currentTimeMillis();
+
+            // Create a new File instance with the modified file name in the same directory
+            File outputFile = new File(tmpFileName);
+
+            String localBaseDir = System.getProperty("jlawyer.server.basedirectory");
+            localBaseDir = localBaseDir.trim();
+            if (!localBaseDir.endsWith(System.getProperty("file.separator"))) {
+                localBaseDir = localBaseDir + System.getProperty("file.separator");
+            }
+
+            String src = localBaseDir + "archivefiles" + System.getProperty("file.separator") + doc.getArchiveFileKey().getId() + System.getProperty("file.separator");
+            String srcId = src + doc.getId();
+
+            File srcFile = new File(srcId);
+
+            int exitCode = OcrUtils.performOcr(cmd, srcFile, outputFile);
+            if (!outputFile.exists()) {
+                log.error("OCR failed for file " + srcFile.getAbsolutePath());
+                return false;
+            } else {
+                byte[] ocrFile = ServerFileUtils.readFile(outputFile);
+                outputFile.delete();
+                if (exitCode < 0) {
+                    log.error("OCR failed for file " + srcFile.getAbsolutePath() + ", exit code is " + exitCode);
+                    return false;
+                } else {
+                    return this.setDocumentContent(docId, ocrFile);
+                }
+            }
+        } else {
+
+            ServerSettingsBean sb = this.settingsFacade.find(ServerSettingsKeys.SERVERCONF_STIRLINGPDF_ENDPOINT);
+            StirlingPdfAPI pdfApi = null;
+            if (sb != null && !ServerStringUtils.isEmpty(sb.getSettingValue())) {
+                
+                log.info("performing OCR on document " + docId + " " + doc.getName() + " using Stirling PDF");
+                
+                pdfApi = new StirlingPdfAPI(sb.getSettingValue(), 5000, 120000);
+                byte[] docContent = this.getDocumentContent(docId);
+                if (docContent == null) {
+                    return false;
+                }
+
+                byte[] ocred = pdfApi.ocrPdf(doc.getName(), docContent);
+                if (ocred != null) {
+                    return this.setDocumentContent(docId, ocred);
+                }
+            } else {
+                log.info("performing OCR on document " + docId + " " + doc.getName() + " failed because OCR tooling is not configured");
+                return false;
+            }
+
+        }
+        log.info("performing OCR on document " + docId + " " + doc.getName() + " failed");
+        return false;
+
+    }
+
+    @Override
     @RolesAllowed({"readArchiveFileRole"})
     public byte[] getDocumentContent(String id) throws Exception {
 
@@ -2253,7 +2350,7 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
         SecurityUtils.checkGroupsForCase(context.getCallerPrincipal().getName(), aFile, this.securityFacade, this.getAllowedGroups(aFile));
 
         ArchiveFileDocumentsBean existingDoc = this.archiveFileDocumentsFacade.findByArchiveFileKey(aFile, newName);
-        if (existingDoc != null) {
+        if (existingDoc != null && !id.equals(existingDoc.getId())) {
             throw new Exception("Dokument " + newName + " existiert bereits in der Akte oder deren Papierkorb - bitte einen anderen Namen wählen!");
         }
 
@@ -2426,7 +2523,8 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
                 String tagId = idGen.getID().toString();
                 tag.setId(tagId);
                 tag.setArchiveFileKey(aFile);
-                tag.setDateSet(new Date());
+                if(tag.getDateSet()==null)
+                    tag.setDateSet(new Date());
                 this.archiveFileTagsFacade.create(tag);
                 historyText = "Akten-Etikett gesetzt: " + tag.getTagName();
             } else {
@@ -2477,7 +2575,8 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
                 String tagId = idGen.getID().toString();
                 tag.setId(tagId);
                 tag.setArchiveFileKey(aFile);
-                tag.setDateSet(new Date());
+                if(tag.getDateSet()==null)
+                    tag.setDateSet(new Date());
                 this.documentTagsFacade.create(tag);
                 historyText = "Dokument-Etikett gesetzt an " + aFile.getName() + ": " + tag.getTagName();
             }
@@ -5540,6 +5639,53 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
 
     @Override
     @RolesAllowed({"writeArchiveFileRole"})
+    public Payment updatePayment(String caseId, Payment payment) throws Exception {
+        String principalId = context.getCallerPrincipal().getName();
+
+        ArchiveFileBean aFile = this.archiveFileFacade.find(caseId);
+        boolean allowed = false;
+        if (principalId != null) {
+            List<Group> userGroups = new ArrayList<>();
+            try {
+                userGroups = this.securityFacade.getGroupsForUser(principalId);
+            } catch (Throwable t) {
+                log.error("Unable to determine groups for user " + principalId, t);
+            }
+            if (SecurityUtils.checkGroupsForCase(userGroups, aFile, this.caseGroupsFacade)) {
+                allowed = true;
+            }
+        } else {
+            allowed = true;
+        }
+
+        if (allowed) {
+
+            Payment updatedPayment = this.paymentsFacade.find(payment.getId());
+            updatedPayment.setContact(payment.getContact());
+            updatedPayment.setDescription(payment.getDescription());
+            updatedPayment.setCreationDate(payment.getCreationDate());
+            updatedPayment.setTargetDate(payment.getTargetDate());
+            updatedPayment.setPaymentNumber(payment.getPaymentNumber());
+            updatedPayment.setName(payment.getName());
+            updatedPayment.setStatus(payment.getStatus());
+            updatedPayment.setCurrency(payment.getCurrency());
+            updatedPayment.setSender(payment.getSender());
+            updatedPayment.setPaymentType(payment.getPaymentType());
+            updatedPayment.setReason(payment.getReason());
+            updatedPayment.setTotal(payment.getTotal());
+
+            this.paymentsFacade.edit(updatedPayment);
+
+            this.addCaseHistory(new StringGenerator().getID().toString(), aFile, "Zahlung geändert (" + updatedPayment.getPaymentNumber() + ", " + updatedPayment.getStatusString() + ", " + updatedPayment.getPaymentType() + ")");
+
+            return this.paymentsFacade.find(updatedPayment.getId());
+        } else {
+            throw new Exception(MSG_MISSINGPRIVILEGE_CASE);
+        }
+    }
+
+    @Override
+    @RolesAllowed({"writeArchiveFileRole"})
     public void removeAllInvoicePositions(String invoiceId) throws Exception {
         String principalId = context.getCallerPrincipal().getName();
 
@@ -6929,6 +7075,160 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
             }
         }
         return numberOfLocked;
+    }
+
+    @Override
+    @RolesAllowed({"readArchiveFileRole"})
+    public List<Payment> getPayments(String caseId) {
+        String principalId = context.getCallerPrincipal().getName();
+
+        ArchiveFileBean aFile = this.archiveFileFacade.find(caseId);
+        boolean allowed = false;
+        if (principalId != null) {
+            List<Group> userGroups = new ArrayList<>();
+            try {
+                userGroups = this.securityFacade.getGroupsForUser(principalId);
+            } catch (Throwable t) {
+                log.error("Unable to determine groups for user " + principalId, t);
+            }
+            if (SecurityUtils.checkGroupsForCase(userGroups, aFile, this.caseGroupsFacade)) {
+                allowed = true;
+            }
+        } else {
+            allowed = true;
+        }
+
+        if (allowed) {
+            return this.paymentsFacade.findByArchiveFileKey(aFile);
+        } else {
+            return new ArrayList<>();
+        }
+    }
+
+    @Override
+    @RolesAllowed({"writeArchiveFileRole"})
+    public Payment addPayment(String caseId, Payment payment) throws Exception {
+        String principalId = context.getCallerPrincipal().getName();
+
+        ArchiveFileBean aFile = this.archiveFileFacade.find(caseId);
+        boolean allowed = false;
+        if (principalId != null) {
+            List<Group> userGroups = new ArrayList<>();
+            try {
+                userGroups = this.securityFacade.getGroupsForUser(principalId);
+            } catch (Throwable t) {
+                log.error("Unable to determine groups for user " + principalId, t);
+            }
+            if (SecurityUtils.checkGroupsForCase(userGroups, aFile, this.caseGroupsFacade)) {
+                allowed = true;
+            }
+        } else {
+            allowed = true;
+        }
+
+        if (allowed) {
+            StringGenerator idGen = new StringGenerator();
+
+            // use file number as identifier, remove special characters because it may cause issues in banking
+            //String paymentNumberPrefix=ServerFileUtils.sanitizeFileName(aFile.getFileNumber()) + "-" + new SimpleDateFormat("yyyyMMdd").format(new Date())+"-";
+            String paymentNumberPrefix = ServerFileUtils.sanitizeFileName(aFile.getFileNumber()) + "-";
+            int i = 0;
+            boolean paymentNumberExists = true;
+            String paymentNumber = null;
+            DecimalFormat df = new DecimalFormat("000");
+            while (paymentNumberExists) {
+                i = i + 1;
+                paymentNumber = paymentNumberPrefix + df.format(i);
+                Payment existingPayment = this.paymentsFacade.findByPaymentNumber(paymentNumber);
+                if (existingPayment == null) {
+                    break;
+                }
+            }
+
+            payment.setPaymentNumber(paymentNumber);
+            payment.setId(idGen.getID().toString());
+            payment.setCreationDate(new Date());
+            payment.setArchiveFileKey(aFile);
+
+            // check for conflicting invoice numbers
+            Payment conflictingPayment = this.paymentsFacade.findByPaymentNumber(payment.getPaymentNumber());
+            if (conflictingPayment != null) {
+                throw new Exception("Es gibt bereits eine Zahlung mit der Nummer '" + payment.getPaymentNumber() + "!");
+            }
+
+            this.paymentsFacade.create(payment);
+
+            this.addCaseHistory(new StringGenerator().getID().toString(), aFile, "Zahlung erstellt (" + payment.getPaymentNumber() + ")");
+
+            return this.paymentsFacade.find(payment.getId());
+        } else {
+            throw new Exception(MSG_MISSINGPRIVILEGE_CASE);
+        }
+    }
+
+    @Override
+    @RolesAllowed({"writeArchiveFileRole"})
+    public void removePayment(String paymentId) throws Exception {
+        String principalId = context.getCallerPrincipal().getName();
+
+        Payment payment = this.paymentsFacade.find(paymentId);
+        if (payment == null) {
+            throw new Exception(MSG_MISSING_PAYMENT);
+        }
+
+        ArchiveFileBean aFile = this.archiveFileFacade.find(payment.getArchiveFileKey().getId());
+        boolean allowed = false;
+        if (principalId != null) {
+            List<Group> userGroups = new ArrayList<>();
+            try {
+                userGroups = this.securityFacade.getGroupsForUser(principalId);
+            } catch (Throwable t) {
+                log.error("Unable to determine groups for user " + principalId, t);
+            }
+            if (SecurityUtils.checkGroupsForCase(userGroups, aFile, this.caseGroupsFacade)) {
+                allowed = true;
+            }
+        } else {
+            allowed = true;
+        }
+
+        if (allowed) {
+            this.paymentsFacade.remove(payment);
+            this.addCaseHistory(new StringGenerator().getID().toString(), aFile, "Zahlung gelöscht (" + payment.getPaymentNumber() + ")");
+        } else {
+            throw new Exception(MSG_MISSINGPRIVILEGE_CASE);
+        }
+    }
+
+    @Override
+    @RolesAllowed({"writeArchiveFileRole"})
+    public Payment copyPayment(String paymentId, String toCaseId) throws Exception {
+        Payment oldPayment = this.paymentsFacade.find(paymentId);
+
+        Payment newPayment = new Payment();
+        newPayment.setArchiveFileKey(oldPayment.getArchiveFileKey());
+        newPayment.setContact(oldPayment.getContact());
+        newPayment.setCreationDate(new Date());
+        newPayment.setCurrency(oldPayment.getCurrency());
+        newPayment.setDescription(oldPayment.getDescription());
+        newPayment.setId(null);
+        newPayment.setName("Kopie von '" + oldPayment.getName() + "'");
+        newPayment.setPaymentNumber(null);
+        newPayment.setPaymentType(oldPayment.getPaymentType());
+        newPayment.setReason(oldPayment.getReason());
+        newPayment.setSender(oldPayment.getSender());
+        newPayment.setStatus(Payment.STATUS_NEW);
+        newPayment.setTargetDate(oldPayment.getTargetDate());
+        newPayment.setTotal(oldPayment.getTotal());
+        newPayment = this.addPayment(toCaseId, newPayment);
+        if (newPayment.getTargetDate() != null) {
+            if (newPayment.getTargetDate().getTime() < newPayment.getCreationDate().getTime()) {
+                newPayment.setTargetDate(new Date());
+            }
+        }
+        this.updatePayment(toCaseId, newPayment);
+
+        return this.paymentsFacade.find(newPayment.getId());
     }
 
 }

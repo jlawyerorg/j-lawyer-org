@@ -684,6 +684,8 @@ public interface PartyTypeBeanFacadeLocal {
     List<PartyTypeBean> findAll();
 
     PartyTypeBean findByName(String name);
+    
+    List<PartyTypeBean> findAllInSequence();
 
     int count();
     

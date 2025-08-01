@@ -663,6 +663,8 @@ For more information on this, and how to apply and follow the GNU AGPL, see
  */
 package org.jlawyer.io.rest.v1.pojo;
 
+import java.util.Date;
+
 /**
  *
  * @author jens
@@ -671,6 +673,7 @@ public class RestfulTagV1 {
     
     private String id=null;
     private String name=null;
+    private Date dateSet=null;
 
     public RestfulTagV1() {
     }
@@ -701,6 +704,20 @@ public class RestfulTagV1 {
      */
     public void setName(String name) {
         this.name = name;
+    }
+
+    /**
+     * @return the dateSet
+     */
+    public Date getDateSet() {
+        return dateSet;
+    }
+
+    /**
+     * @param dateSet the dateSet to set
+     */
+    public void setDateSet(Date dateSet) {
+        this.dateSet = dateSet;
     }
     
     

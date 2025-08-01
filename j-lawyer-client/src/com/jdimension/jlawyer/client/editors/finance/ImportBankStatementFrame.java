@@ -665,6 +665,7 @@ package com.jdimension.jlawyer.client.editors.finance;
 
 import com.jdimension.jlawyer.client.editors.documents.SearchAndAssignDialog;
 import com.jdimension.jlawyer.client.settings.ClientSettings;
+import com.jdimension.jlawyer.client.settings.UserSettings;
 import com.jdimension.jlawyer.client.utils.ComponentUtils;
 import com.jdimension.jlawyer.client.utils.DateUtils;
 import com.jdimension.jlawyer.client.utils.StringUtils;
@@ -677,7 +678,9 @@ import com.jdimension.jlawyer.persistence.ArchiveFileTagsBean;
 import com.jdimension.jlawyer.persistence.BankStatementsCSVConfig;
 import com.jdimension.jlawyer.persistence.CaseAccountEntry;
 import com.jdimension.jlawyer.persistence.Invoice;
+import com.jdimension.jlawyer.persistence.Payment;
 import com.jdimension.jlawyer.persistence.TransactionLog;
+import com.jdimension.jlawyer.server.services.settings.UserSettingsKeys;
 import com.jdimension.jlawyer.services.JLawyerServiceLocator;
 import com.opencsv.CSVParser;
 import com.opencsv.CSVParserBuilder;
@@ -702,6 +705,7 @@ import javax.swing.JButton;
 import javax.swing.JCheckBoxMenuItem;
 import javax.swing.JFileChooser;
 import javax.swing.JLabel;
+import javax.swing.JMenuItem;
 import javax.swing.JOptionPane;
 import javax.swing.JPopupMenu;
 import javax.swing.MenuElement;
@@ -719,6 +723,7 @@ public class ImportBankStatementFrame extends javax.swing.JFrame {
 
     private ArrayList<BankTransaction> transactions = null;
     private List<Invoice> openInvoices = null;
+    private List<Payment> openPayments = null;
     private List<BankStatementsCSVConfig> csvConfigs = null;
 
     private int txCount = 0;
@@ -726,6 +731,7 @@ public class ImportBankStatementFrame extends javax.swing.JFrame {
 
     private BankTransaction currentTransaction = null;
     private ArchiveFileBean currentCase = null;
+    private AddressBean recipientAddress = null;
 
     private List<String> allCaseTagsAsString = new ArrayList<>();
 
@@ -752,16 +758,27 @@ public class ImportBankStatementFrame extends javax.swing.JFrame {
 
         this.lblInvoiceInfo.setText("");
         this.lblInvoiceInfoAccountEntry.setText("");
+        this.lblPaymentInfo.setText("");
+
+        this.lblRecipient.setText("...");
+        this.lblRecipient.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/warning.png")));
+        this.recipientAddress = null;
 
         ClientSettings settings = ClientSettings.getInstance();
         try {
             JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
             this.openInvoices = locator.lookupInvoiceServiceRemote().getInvoicesByStatus(Invoice.STATUS_OPEN, Invoice.STATUS_OPEN_NONENFORCEABLE, Invoice.STATUS_OPEN_REMINDER1, Invoice.STATUS_OPEN_REMINDER2, Invoice.STATUS_OPEN_REMINDER3, Invoice.STATUS_NEW);
+            this.openPayments = locator.lookupPaymentServiceRemote().getPaymentsByStatus(Payment.STATUS_APPROVED, Payment.STATUS_INITIATED, Payment.STATUS_NEW);
 
             this.cmbCsvConfig.removeAllItems();
             csvConfigs = locator.lookupInvoiceServiceRemote().getAllBankStatementsCSVConfigurations();
             for (BankStatementsCSVConfig c : csvConfigs) {
                 this.cmbCsvConfig.addItem(c.getConfigurationName());
+            }
+
+            String lastConfig = UserSettings.getInstance().getSetting(UserSettingsKeys.BANKSTATEMENT_LASTCONFIG, null);
+            if (lastConfig != null) {
+                this.cmbCsvConfig.setSelectedItem(lastConfig);
             }
 
             this.contactToIbanTo = locator.lookupAddressServiceRemote().getAddressesWithIban();
@@ -772,6 +789,32 @@ public class ImportBankStatementFrame extends javax.swing.JFrame {
         }
 
         this.initializeOptions();
+    }
+
+    private void loadAddressesForCase(ArchiveFileBean targetCase) {
+
+        ClientSettings settings = ClientSettings.getInstance();
+        try {
+            JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
+            List<AddressBean> addresses = locator.lookupArchiveFileServiceRemote().getAddressesForCase(targetCase.getId());
+            this.popRecipients.removeAll();
+            for (AddressBean ad : addresses) {
+                JMenuItem mi = new JMenuItem();
+                mi.setText(ad.toDisplayName());
+                mi.setToolTipText(ad.toDisplayName() + " als Buchungskontakt verwenden");
+                mi.addActionListener((ActionEvent e) -> {
+                    lblRecipient.setText(ad.toDisplayName());
+                    lblRecipient.setIcon(null);
+                    recipientAddress = ad;
+                });
+                this.popRecipients.add(mi);
+            }
+
+        } catch (Exception ex) {
+            log.error("Error connecting to server", ex);
+            JOptionPane.showMessageDialog(this, "Fehler beim der Rechnungen: " + ex.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
+        }
+
     }
 
     /**
@@ -785,12 +828,13 @@ public class ImportBankStatementFrame extends javax.swing.JFrame {
 
         btnGrpAccountEntryType = new javax.swing.ButtonGroup();
         popCaseTags = new javax.swing.JPopupMenu();
+        popRecipients = new javax.swing.JPopupMenu();
         cmdCsvUpload = new javax.swing.JButton();
         jScrollPane1 = new javax.swing.JScrollPane();
         taTransaction = new javax.swing.JTextArea();
         cmdNext = new javax.swing.JButton();
         cmdPrevious = new javax.swing.JButton();
-        chkMarkAsPaid = new javax.swing.JCheckBox();
+        chkMarkInvoicePaid = new javax.swing.JCheckBox();
         chkCreateCaseAccountEntry = new javax.swing.JCheckBox();
         txtAmount = new javax.swing.JFormattedTextField();
         jLabel1 = new javax.swing.JLabel();
@@ -815,6 +859,16 @@ public class ImportBankStatementFrame extends javax.swing.JFrame {
         lblDuplicateTransaction = new javax.swing.JLabel();
         lblInvoiceInfo = new javax.swing.JLabel();
         lblInvoiceInfoAccountEntry = new javax.swing.JLabel();
+        cmdSearchRecipient = new javax.swing.JButton();
+        lblRecipient = new javax.swing.JLabel();
+        jSeparator1 = new javax.swing.JSeparator();
+        jSeparator2 = new javax.swing.JSeparator();
+        jSeparator3 = new javax.swing.JSeparator();
+        jSeparator4 = new javax.swing.JSeparator();
+        chkMarkPaymentExecuted = new javax.swing.JCheckBox();
+        jLabel3 = new javax.swing.JLabel();
+        cmbPayments = new javax.swing.JComboBox<>();
+        lblPaymentInfo = new javax.swing.JLabel();
 
         setDefaultCloseOperation(javax.swing.WindowConstants.DISPOSE_ON_CLOSE);
         setTitle("Kontoauszug importieren und buchen");
@@ -849,8 +903,8 @@ public class ImportBankStatementFrame extends javax.swing.JFrame {
             }
         });
 
-        chkMarkAsPaid.setFont(chkMarkAsPaid.getFont());
-        chkMarkAsPaid.setText("Rechnung als bezahlt markieren");
+        chkMarkInvoicePaid.setFont(chkMarkInvoicePaid.getFont());
+        chkMarkInvoicePaid.setText("Rechnung als bezahlt markieren");
 
         chkCreateCaseAccountEntry.setFont(chkCreateCaseAccountEntry.getFont());
         chkCreateCaseAccountEntry.setText("Buchung im Aktenkonto erstellen");
@@ -914,7 +968,6 @@ public class ImportBankStatementFrame extends javax.swing.JFrame {
         });
 
         cmdCaseTags.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons16/material/baseline_label_green_36dp.png"))); // NOI18N
-        cmdCaseTags.setText(" ");
         cmdCaseTags.addMouseListener(new java.awt.event.MouseAdapter() {
             public void mousePressed(java.awt.event.MouseEvent evt) {
                 cmdCaseTagsMousePressed(evt);
@@ -941,6 +994,29 @@ public class ImportBankStatementFrame extends javax.swing.JFrame {
         lblInvoiceInfoAccountEntry.setFont(lblInvoiceInfoAccountEntry.getFont());
         lblInvoiceInfoAccountEntry.setText("jLabel3");
 
+        cmdSearchRecipient.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/find.png"))); // NOI18N
+        cmdSearchRecipient.addMouseListener(new java.awt.event.MouseAdapter() {
+            public void mousePressed(java.awt.event.MouseEvent evt) {
+                cmdSearchRecipientMousePressed(evt);
+            }
+        });
+
+        lblRecipient.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/warning.png"))); // NOI18N
+        lblRecipient.setText("...");
+
+        chkMarkPaymentExecuted.setText("Zahlung als ausgeführt markieren");
+
+        jLabel3.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/file_doc.png"))); // NOI18N
+        jLabel3.setText(" ");
+
+        cmbPayments.addItemListener(new java.awt.event.ItemListener() {
+            public void itemStateChanged(java.awt.event.ItemEvent evt) {
+                cmbPaymentsItemStateChanged(evt);
+            }
+        });
+
+        lblPaymentInfo.setText("jLabel4");
+
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(getContentPane());
         getContentPane().setLayout(layout);
         layout.setHorizontalGroup(
@@ -948,6 +1024,7 @@ public class ImportBankStatementFrame extends javax.swing.JFrame {
             .addGroup(layout.createSequentialGroup()
                 .addContainerGap()
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addComponent(jSeparator4, javax.swing.GroupLayout.Alignment.TRAILING)
                     .addGroup(layout.createSequentialGroup()
                         .addComponent(cmbCsvConfig, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
@@ -963,19 +1040,36 @@ public class ImportBankStatementFrame extends javax.swing.JFrame {
                         .addComponent(cmdSearchCase)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                         .addComponent(lblCase, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                    .addComponent(lblDuplicateTransaction, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                    .addComponent(jSeparator1)
+                    .addComponent(jSeparator3)
+                    .addComponent(jSeparator2, javax.swing.GroupLayout.Alignment.TRAILING)
                     .addGroup(layout.createSequentialGroup()
                         .addGap(27, 27, 27)
-                        .addComponent(txtEntryDescription))
+                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                            .addGroup(layout.createSequentialGroup()
+                                .addComponent(cmdSearchRecipient)
+                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                                .addComponent(lblRecipient, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                            .addComponent(txtEntryDescription)))
                     .addGroup(layout.createSequentialGroup()
                         .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                             .addGroup(layout.createSequentialGroup()
-                                .addComponent(chkMarkAsPaid)
+                                .addComponent(chkMarkInvoicePaid)
                                 .addGap(18, 18, 18)
                                 .addComponent(lblInvoice)
                                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                                 .addComponent(cmbInvoices, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                                 .addComponent(lblInvoiceInfo))
+                            .addGroup(layout.createSequentialGroup()
+                                .addComponent(chkMarkPaymentExecuted)
+                                .addGap(18, 18, 18)
+                                .addComponent(jLabel3)
+                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                                .addComponent(cmbPayments, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                                .addComponent(lblPaymentInfo))
                             .addGroup(layout.createSequentialGroup()
                                 .addComponent(jLabel2)
                                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
@@ -1007,8 +1101,7 @@ public class ImportBankStatementFrame extends javax.swing.JFrame {
                                 .addComponent(rdEscrowIn)
                                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                                 .addComponent(rdEscrowOut)))
-                        .addGap(0, 0, Short.MAX_VALUE))
-                    .addComponent(lblDuplicateTransaction, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                        .addGap(0, 0, Short.MAX_VALUE)))
                 .addContainerGap())
         );
         layout.setVerticalGroup(
@@ -1022,22 +1115,34 @@ public class ImportBankStatementFrame extends javax.swing.JFrame {
                     .addComponent(cmbCsvConfig, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                     .addComponent(lblTxIndex))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(jScrollPane1, javax.swing.GroupLayout.DEFAULT_SIZE, 297, Short.MAX_VALUE)
+                .addComponent(jScrollPane1, javax.swing.GroupLayout.PREFERRED_SIZE, 252, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(lblDuplicateTransaction)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
                     .addComponent(cmdSearchCase, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                     .addComponent(lblCase, javax.swing.GroupLayout.PREFERRED_SIZE, 28, javax.swing.GroupLayout.PREFERRED_SIZE))
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                .addComponent(jSeparator1, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
-                    .addComponent(chkMarkAsPaid)
+                    .addComponent(chkMarkInvoicePaid)
                     .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                         .addComponent(lblInvoice, javax.swing.GroupLayout.PREFERRED_SIZE, 31, javax.swing.GroupLayout.PREFERRED_SIZE)
                         .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                             .addComponent(cmbInvoices, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                             .addComponent(lblInvoiceInfo))))
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                .addComponent(jSeparator4, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                    .addComponent(chkMarkPaymentExecuted)
+                    .addComponent(jLabel3, javax.swing.GroupLayout.PREFERRED_SIZE, 29, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(cmbPayments, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(lblPaymentInfo))
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                .addComponent(jSeparator2, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
                     .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                         .addComponent(chkCreateCaseAccountEntry)
@@ -1058,11 +1163,17 @@ public class ImportBankStatementFrame extends javax.swing.JFrame {
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(txtEntryDescription, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
+                    .addComponent(cmdSearchRecipient, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                    .addComponent(lblRecipient, javax.swing.GroupLayout.PREFERRED_SIZE, 28, javax.swing.GroupLayout.PREFERRED_SIZE))
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                .addComponent(jSeparator3, javax.swing.GroupLayout.PREFERRED_SIZE, 10, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
+                    .addComponent(cmdCaseTags, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                     .addComponent(lblCaseTags, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                    .addComponent(cmdCaseTags, javax.swing.GroupLayout.PREFERRED_SIZE, 0, Short.MAX_VALUE)
-                    .addComponent(jLabel2, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
-                .addContainerGap())
+                    .addComponent(jLabel2, javax.swing.GroupLayout.PREFERRED_SIZE, 28, javax.swing.GroupLayout.PREFERRED_SIZE))
+                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
         );
 
         pack();
@@ -1084,6 +1195,8 @@ public class ImportBankStatementFrame extends javax.swing.JFrame {
                 JOptionPane.showMessageDialog(this, "Ungültige CSV-Konfiguration", "Kontoauszug importieren", JOptionPane.ERROR_MESSAGE);
                 return;
             }
+
+            UserSettings.getInstance().setSetting(UserSettingsKeys.BANKSTATEMENT_LASTCONFIG, this.cmbCsvConfig.getSelectedItem().toString());
 
             try {
 
@@ -1116,23 +1229,23 @@ public class ImportBankStatementFrame extends javax.swing.JFrame {
                     try {
                         String date = nextLine[csvConfig.getColumnDate()].trim();
                         String fromName = nextLine[csvConfig.getColumnName()].trim();
-                        
+
                         String fromIban = "";
                         if (csvConfig.getColumnIban() > -1) {
                             fromIban = nextLine[csvConfig.getColumnIban()].trim();
                         }
-                        
+
                         String bookingType = "unbekannte Buchungsart";
                         if (csvConfig.getColumnBookingType() > -1) {
                             bookingType = nextLine[csvConfig.getColumnBookingType()].trim();
                         }
-                        
+
                         String purpose = nextLine[csvConfig.getColumnPurpose()].trim();
                         double amount = decf.parse(nextLine[csvConfig.getColumnAmount()].trim()).doubleValue();
-                        
+
                         String currency = "EUR";
                         if (csvConfig.getColumnCurrency() > -1) {
-                            currency=nextLine[csvConfig.getColumnCurrency()].trim();
+                            currency = nextLine[csvConfig.getColumnCurrency()].trim();
                         }
 
                         BankTransaction tx = new BankTransaction(date, fromName, fromIban, bookingType, purpose, amount, currency);
@@ -1165,7 +1278,41 @@ public class ImportBankStatementFrame extends javax.swing.JFrame {
     }//GEN-LAST:event_cmdCsvUploadActionPerformed
 
     private void processActions() {
+
         if (this.currentCase == null) {
+            return;
+        }
+
+        // nothing to do
+        if (!this.chkMarkInvoicePaid.isSelected() && !this.chkCreateCaseAccountEntry.isSelected() && !this.chkMarkPaymentExecuted.isSelected()) {
+            return;
+        }
+
+        StringBuilder sb = new StringBuilder();
+        sb.append("<html>Buchungen jetzt ausf&uuml;hren?<br/><ul>");
+        if (this.chkMarkInvoicePaid.isSelected()) {
+            sb.append("<li>Belegstatus anpassen</li>");
+        }
+        if (this.chkMarkPaymentExecuted.isSelected()) {
+            sb.append("<li>Zahlungsstatus anpassen</li>");
+        }
+        if (this.chkCreateCaseAccountEntry.isSelected()) {
+            sb.append("<li>Buchung im Aktenkonto erstellen</li>");
+        }
+        sb.append("</ul></html>");
+
+        Object[] options = {"Ja", "Nein"}; // Custom labels, optional
+        int response = JOptionPane.showOptionDialog(
+                this,
+                sb.toString(),
+                "Buchungen ausführen?",
+                JOptionPane.YES_NO_OPTION,
+                JOptionPane.QUESTION_MESSAGE,
+                null,
+                options,
+                options[0] // Default selection (focus) is "Ja"
+        );
+        if (response == JOptionPane.NO_OPTION) {
             return;
         }
 
@@ -1176,7 +1323,7 @@ public class ImportBankStatementFrame extends javax.swing.JFrame {
             ClientSettings settings = ClientSettings.getInstance();
             JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
             List<Invoice> invoicesForCase = locator.lookupArchiveFileServiceRemote().getInvoices(this.currentCase.getId());
-            if (this.chkMarkAsPaid.isSelected()) {
+            if (this.chkMarkInvoicePaid.isSelected()) {
                 for (Invoice i : invoicesForCase) {
                     if (i.getInvoiceNumber().equals(this.cmbInvoices.getSelectedItem().toString())) {
                         i.setStatus(Invoice.STATUS_PAID);
@@ -1188,6 +1335,23 @@ public class ImportBankStatementFrame extends javax.swing.JFrame {
                 for (Invoice i : this.openInvoices) {
                     if (i.getInvoiceNumber().equals(this.cmbInvoices.getSelectedItem().toString())) {
                         i.setStatus(Invoice.STATUS_PAID);
+                        break;
+                    }
+                }
+            }
+            if (this.chkMarkPaymentExecuted.isSelected()) {
+                List<Payment> paymentsForCase = locator.lookupArchiveFileServiceRemote().getPayments(this.currentCase.getId());
+                for (Payment p : paymentsForCase) {
+                    if (p.getPaymentNumber().equals(this.cmbPayments.getSelectedItem().toString())) {
+                        p.setStatus(Payment.STATUS_EXECUTED);
+                        locator.lookupArchiveFileServiceRemote().updatePayment(this.currentCase.getId(), p);
+                        processed = true;
+                        break;
+                    }
+                }
+                for (Payment p : this.openPayments) {
+                    if (p.getPaymentNumber().equals(this.cmbPayments.getSelectedItem().toString())) {
+                        p.setStatus(Payment.STATUS_EXECUTED);
                         break;
                     }
                 }
@@ -1208,7 +1372,7 @@ public class ImportBankStatementFrame extends javax.swing.JFrame {
 
                 CaseAccountEntry entry = new CaseAccountEntry();
                 entry.setArchiveFileKey(this.currentCase);
-                entry.setContact(entryContact);
+                entry.setContact(this.recipientAddress);
                 entry.setDescription(this.txtEntryDescription.getText());
                 entry.setEarnings(BigDecimal.ZERO);
                 entry.setEntryDate(DateUtils.parseDate(this.currentTransaction.getDate()));
@@ -1262,7 +1426,7 @@ public class ImportBankStatementFrame extends javax.swing.JFrame {
     private void cmdNextActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdNextActionPerformed
         this.processActions();
         this.txIndex++;
-        this.cmdNext.setEnabled(transactions.size() - 1 >= this.txIndex);
+        this.cmdNext.setEnabled(transactions.size() - 1 > this.txIndex);
         this.cmdPrevious.setEnabled(this.txIndex > 0);
         this.loadTransaction(txIndex);
     }//GEN-LAST:event_cmdNextActionPerformed
@@ -1270,7 +1434,7 @@ public class ImportBankStatementFrame extends javax.swing.JFrame {
     private void cmdPreviousActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdPreviousActionPerformed
         this.processActions();
         this.txIndex--;
-        this.cmdNext.setEnabled(transactions.size() - 1 >= this.txIndex);
+        this.cmdNext.setEnabled(transactions.size() - 1 > this.txIndex);
         this.cmdPrevious.setEnabled(this.txIndex > 0);
         this.loadTransaction(txIndex);
     }//GEN-LAST:event_cmdPreviousActionPerformed
@@ -1325,7 +1489,14 @@ public class ImportBankStatementFrame extends javax.swing.JFrame {
             }
             popup.add(mi);
         }
-        allValues.setText(ComponentUtils.getSelectedPopupMenuItemsAsString(popup));
+        String allValuesText = ComponentUtils.getSelectedPopupMenuItemsAsString(popup);
+        String allValuesTooltip = allValuesText;
+        if (allValuesText.length() > 50) {
+            allValuesText = allValuesText.substring(0, 49) + "... (weitere)";
+        }
+
+        allValues.setText(allValuesText);
+        allValues.setToolTipText(allValuesTooltip);
         if (hasSelection) {
             button.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons16/material/baseline_label_green_36dp.png")));
         } else {
@@ -1333,7 +1504,15 @@ public class ImportBankStatementFrame extends javax.swing.JFrame {
         }
         for (MenuElement me : popup.getSubElements()) {
             ((JCheckBoxMenuItem) me.getComponent()).addItemListener((ItemEvent arg0) -> {
-                allValues.setText(ComponentUtils.getSelectedPopupMenuItemsAsString(popup));
+
+                String avte = ComponentUtils.getSelectedPopupMenuItemsAsString(popup);
+                String avto = avte;
+                if (avte.length() > 50) {
+                    avte = avte.substring(0, 49) + "... (weitere)";
+                }
+
+                allValues.setText(avte);
+                allValues.setToolTipText(avto);
             });
             ((JCheckBoxMenuItem) me.getComponent()).addActionListener((ActionEvent e) -> {
                 if (this.currentCase != null) {
@@ -1372,10 +1551,30 @@ public class ImportBankStatementFrame extends javax.swing.JFrame {
     private void loadInvoicesForCase(ArchiveFileBean targetCase) {
         this.currentCase = targetCase;
         this.cmbInvoices.removeAllItems();
+        this.cmbPayments.removeAllItems();
         this.cmbInvoicesAccountEntry.removeAllItems();
         this.cmbInvoicesAccountEntry.addItem("");
         Invoice openInvoice = null;
+        Payment openPayment = null;
         ClientSettings settings = ClientSettings.getInstance();
+        try {
+            JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
+            List<Payment> casePayments = locator.lookupArchiveFileServiceRemote().getPayments(targetCase.getId());
+
+            for (Payment p : casePayments) {
+                this.cmbPayments.addItem(p.getPaymentNumber());
+                if (openPayment == null && p.getStatus() != Payment.STATUS_EXECUTED) {
+                    openPayment = p;
+                }
+            }
+            if (openPayment != null) {
+                this.cmbPayments.setSelectedItem(openPayment.getPaymentNumber());
+                this.recipientAddress = openPayment.getContact();
+            }
+        } catch (Exception ex) {
+            log.error("Error connecting to server", ex);
+            JOptionPane.showMessageDialog(this, "Fehler beim Laden der Zahlungen: " + ex.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
+        }
         try {
             JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
             List<Invoice> caseInvoices = locator.lookupArchiveFileServiceRemote().getInvoices(targetCase.getId());
@@ -1390,13 +1589,15 @@ public class ImportBankStatementFrame extends javax.swing.JFrame {
             if (openInvoice != null) {
                 this.cmbInvoices.setSelectedItem(openInvoice.getInvoiceNumber());
                 this.cmbInvoicesAccountEntry.setSelectedItem(openInvoice.getInvoiceNumber());
+                this.recipientAddress = openInvoice.getContact();
             }
         } catch (Exception ex) {
             log.error("Error connecting to server", ex);
-            JOptionPane.showMessageDialog(this, "Fehler beim der Rechnungen: " + ex.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
+            JOptionPane.showMessageDialog(this, "Fehler beim Laden der Rechnungen: " + ex.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
         }
+
         this.lblCase.setText(targetCase.getFileNumber() + " " + targetCase.getName());
-        this.enableActions(openInvoice, targetCase, this.transactions.get(this.txIndex).getAmount());
+        this.enableActions(openInvoice, openPayment, targetCase, this.transactions.get(this.txIndex).getAmount());
         this.buildCheckboxPopup(this.cmdCaseTags, this.popCaseTags, this.allCaseTagsAsString, this.lblCaseTags);
     }
 
@@ -1406,6 +1607,7 @@ public class ImportBankStatementFrame extends javax.swing.JFrame {
         ArchiveFileBean targetCase = dlg.getCaseSelection();
         if (targetCase != null) {
             this.loadInvoicesForCase(targetCase);
+            this.loadAddressesForCase(targetCase);
         }
         dlg.dispose();
         this.requestFocus();
@@ -1430,24 +1632,54 @@ public class ImportBankStatementFrame extends javax.swing.JFrame {
 
     private void cmbInvoicesAccountEntryItemStateChanged(java.awt.event.ItemEvent evt) {//GEN-FIRST:event_cmbInvoicesAccountEntryItemStateChanged
         if (this.cmbInvoicesAccountEntry.getSelectedItem() != null && this.cmbInvoicesAccountEntry.getSelectedItem().toString().length() > 0) {
+            this.lblRecipient.setText("...");
+            this.lblRecipient.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/warning.png")));
+            this.recipientAddress = null;
             for (Invoice i : this.openInvoices) {
                 if (i.getInvoiceNumber().equals(this.cmbInvoicesAccountEntry.getSelectedItem().toString())) {
                     this.lblInvoiceInfoAccountEntry.setText("Rechnungsbetrag: " + nf.format(i.getTotalGross()));
+                    if (i.getContact() != null) {
+                        this.lblRecipient.setText(i.getContact().toDisplayName());
+                        this.lblRecipient.setIcon(null);
+                        this.recipientAddress = i.getContact();
+                    }
                 }
             }
+            
         } else {
             this.lblInvoiceInfoAccountEntry.setText("");
         }
     }//GEN-LAST:event_cmbInvoicesAccountEntryItemStateChanged
 
-    private void enableActions(Invoice matchingInvoice, ArchiveFileBean matchingCase, double amount) {
+    private void cmdSearchRecipientMousePressed(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_cmdSearchRecipientMousePressed
+        this.popRecipients.show(this.cmdSearchRecipient, evt.getX(), evt.getY());
+    }//GEN-LAST:event_cmdSearchRecipientMousePressed
+
+    private void cmbPaymentsItemStateChanged(java.awt.event.ItemEvent evt) {//GEN-FIRST:event_cmbPaymentsItemStateChanged
+        if (this.cmbPayments.getSelectedItem() != null && this.cmbPayments.getSelectedItem().toString().length() > 0) {
+            for (Payment p : this.openPayments) {
+                if (p.getPaymentNumber().equals(this.cmbPayments.getSelectedItem().toString())) {
+                    this.lblPaymentInfo.setText("Zahlungsbetrag: " + nf.format(p.getTotal()));
+                }
+            }
+        } else {
+            this.lblPaymentInfo.setText("");
+        }
+    }//GEN-LAST:event_cmbPaymentsItemStateChanged
+
+    private void enableActions(Invoice matchingInvoice, Payment matchingPayment, ArchiveFileBean matchingCase, double amount) {
         this.cmdCaseTags.setEnabled(matchingCase != null);
         this.chkCreateCaseAccountEntry.setEnabled(matchingCase != null);
         this.chkCreateCaseAccountEntry.setSelected(matchingCase != null);
-        this.chkMarkAsPaid.setEnabled(matchingCase != null && matchingInvoice != null && !(matchingInvoice.getStatus() == Invoice.STATUS_PAID));
-        this.chkMarkAsPaid.setSelected(false);
+        this.chkMarkInvoicePaid.setEnabled(matchingCase != null && matchingInvoice != null && matchingInvoice.getStatus() != Invoice.STATUS_PAID);
+        this.chkMarkInvoicePaid.setSelected(false);
+        this.chkMarkPaymentExecuted.setEnabled(matchingCase != null && matchingPayment != null && matchingPayment.getStatus() != Payment.STATUS_EXECUTED && amount < 0);
+        this.chkMarkPaymentExecuted.setSelected(false);
         this.cmbInvoices.setEnabled(matchingCase != null);
+        this.cmbPayments.setEnabled(matchingPayment != null);
         this.cmbInvoicesAccountEntry.setEnabled(matchingCase != null);
+        this.cmdSearchRecipient.setEnabled(matchingCase != null);
+        this.lblRecipient.setEnabled(matchingCase != null);
         this.txtEntryDescription.setEnabled(matchingCase != null);
         this.txtAmount.setEnabled(matchingCase != null);
         this.txtAmount.setEditable(false);
@@ -1477,7 +1709,12 @@ public class ImportBankStatementFrame extends javax.swing.JFrame {
 
     private void loadTransaction(int index) {
 
-        this.enableActions(null, null, 0);
+        this.enableActions(null, null, null, 0);
+
+        this.popRecipients.removeAll();
+        this.lblRecipient.setText("...");
+        this.lblRecipient.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/warning.png")));
+        this.recipientAddress = null;
 
         this.lblTxIndex.setText(this.txIndex + 1 + " / " + this.txCount);
 
@@ -1485,6 +1722,7 @@ public class ImportBankStatementFrame extends javax.swing.JFrame {
         this.lblCase.setToolTipText(null);
         this.lblInvoiceInfo.setText("");
         this.lblInvoiceInfoAccountEntry.setText("");
+        this.lblPaymentInfo.setText("");
 
         this.currentTransaction = this.transactions.get(index);
         this.currentCase = null;
@@ -1513,29 +1751,54 @@ public class ImportBankStatementFrame extends javax.swing.JFrame {
             JOptionPane.showMessageDialog(this, "Fehler beim Prüfen der Transaktion: " + ex.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
         }
 
-        Invoice exactMatch = null;
+        Invoice exactInvoiceMatch = null;
         for (Invoice inv : this.openInvoices) {
             if (this.currentTransaction.getPurpose().contains(inv.getInvoiceNumber())) {
-                exactMatch = inv;
+                exactInvoiceMatch = inv;
             }
         }
 
-        Invoice jaroWinklerMatch = null;
-        if (exactMatch == null) {
+        Invoice jaroWinklerInvoiceMatch = null;
+        if (exactInvoiceMatch == null) {
             double jaroWinklerMatchDistance = 0.9d;
             for (Invoice inv : this.openInvoices) {
                 double dist = JaroWinkler.jaroWinklerDistance(this.currentTransaction.getPurpose(), inv.getInvoiceNumber());
-                if (dist > 0.9d && (jaroWinklerMatch == null || dist > jaroWinklerMatchDistance)) {
-                    jaroWinklerMatch = inv;
+                if (dist > 0.9d && (jaroWinklerInvoiceMatch == null || dist > jaroWinklerMatchDistance)) {
+                    jaroWinklerInvoiceMatch = inv;
                     jaroWinklerMatchDistance = dist;
-                    log.info("found invoice " + jaroWinklerMatch.getInvoiceNumber() + " with distance " + dist + ", compared: " + inv.getInvoiceNumber() + " & " + this.currentTransaction.getPurpose());
+                    log.info("found invoice " + jaroWinklerInvoiceMatch.getInvoiceNumber() + " with distance " + dist + ", compared: " + inv.getInvoiceNumber() + " & " + this.currentTransaction.getPurpose());
                 }
             }
         }
 
-        Invoice invoiceMatch = exactMatch;
-        if (exactMatch == null) {
-            invoiceMatch = jaroWinklerMatch;
+        Invoice invoiceMatch = exactInvoiceMatch;
+        if (exactInvoiceMatch == null) {
+            invoiceMatch = jaroWinklerInvoiceMatch;
+        }
+
+        Payment exactPaymentMatch = null;
+        for (Payment pay : this.openPayments) {
+            if (this.currentTransaction.getPurpose().contains(pay.getPaymentNumber())) {
+                exactPaymentMatch = pay;
+            }
+        }
+
+        Payment jaroWinklerPaymentMatch = null;
+        if (exactPaymentMatch == null) {
+            double jaroWinklerMatchDistance = 0.9d;
+            for (Payment pay : this.openPayments) {
+                double dist = JaroWinkler.jaroWinklerDistance(this.currentTransaction.getPurpose(), pay.getPaymentNumber());
+                if (dist > 0.9d && (jaroWinklerInvoiceMatch == null || dist > jaroWinklerMatchDistance)) {
+                    jaroWinklerPaymentMatch = pay;
+                    jaroWinklerMatchDistance = dist;
+                    log.info("found payment " + jaroWinklerPaymentMatch.getPaymentNumber() + " with distance " + dist + ", compared: " + pay.getPaymentNumber() + " & " + this.currentTransaction.getPurpose());
+                }
+            }
+        }
+
+        Payment paymentMatch = exactPaymentMatch;
+        if (exactPaymentMatch == null) {
+            paymentMatch = jaroWinklerPaymentMatch;
         }
 
         ArchiveFileBean caseMatch = null;
@@ -1562,6 +1825,9 @@ public class ImportBankStatementFrame extends javax.swing.JFrame {
         } else {
             caseMatch = invoiceMatch.getArchiveFileKey();
         }
+        if(caseMatch==null && invoiceMatch==null && paymentMatch!=null) {
+            caseMatch=paymentMatch.getArchiveFileKey();
+        }
 
         this.taTransaction.append(System.lineSeparator());
         this.taTransaction.append(System.lineSeparator());
@@ -1571,20 +1837,40 @@ public class ImportBankStatementFrame extends javax.swing.JFrame {
         this.cmbInvoicesAccountEntry.removeAllItems();
         this.cmbInvoicesAccountEntry.addItem("");
 
+        this.cmbPayments.removeAllItems();
+
+        this.lblRecipient.setText("...");
+        this.lblRecipient.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/warning.png")));
+        this.recipientAddress = null;
+
         if (this.currentTransaction.getAmount() < 0) {
             this.txtAmount.setForeground(DefaultColorTheme.COLOR_LOGO_RED);
         } else {
             this.txtAmount.setForeground(DefaultColorTheme.COLOR_LOGO_GREEN);
         }
 
-        if (invoiceMatch != null) {
+        if (paymentMatch != null) {
+            // found a matching payment
+            this.enableActions(invoiceMatch, paymentMatch, caseMatch, this.currentTransaction.getAmount());
+            this.taTransaction.append("Zahlung gefunden: " + paymentMatch.getPaymentNumber() + " - " + paymentMatch.getName());
+            this.cmbPayments.addItem(paymentMatch.getPaymentNumber());
+            if (caseMatch != null) {
+                this.currentCase = caseMatch;
+                this.loadAddressesForCase(currentCase);
+                this.buildCheckboxPopup(this.cmdCaseTags, this.popCaseTags, this.allCaseTagsAsString, this.lblCaseTags);
+                this.lblCase.setText(caseMatch.getFileNumber() + " " + caseMatch.getName());
+                String tooltip = "<html><b>" + caseMatch.getFileNumber() + " " + StringUtils.nonNull(caseMatch.getName()) + "</b><br/>" + StringUtils.nonNull(caseMatch.getReason()) + "<br/>" + "Anwalt: " + StringUtils.nonNull(caseMatch.getLawyer()) + "</html>";
+                this.lblCase.setToolTipText(tooltip);
+            }
+        } else if (invoiceMatch != null) {
             // found a matching invoice
-            this.enableActions(invoiceMatch, caseMatch, this.currentTransaction.getAmount());
+            this.enableActions(invoiceMatch, paymentMatch, caseMatch, this.currentTransaction.getAmount());
             this.taTransaction.append("Rechnung gefunden: " + invoiceMatch.getInvoiceNumber() + " - " + invoiceMatch.getName());
             this.cmbInvoices.addItem(invoiceMatch.getInvoiceNumber());
             this.cmbInvoicesAccountEntry.addItem(invoiceMatch.getInvoiceNumber());
             if (caseMatch != null) {
                 this.currentCase = caseMatch;
+                this.loadAddressesForCase(currentCase);
                 this.buildCheckboxPopup(this.cmdCaseTags, this.popCaseTags, this.allCaseTagsAsString, this.lblCaseTags);
                 this.lblCase.setText(caseMatch.getFileNumber() + " " + caseMatch.getName());
                 String tooltip = "<html><b>" + caseMatch.getFileNumber() + " " + StringUtils.nonNull(caseMatch.getName()) + "</b><br/>" + StringUtils.nonNull(caseMatch.getReason()) + "<br/>" + "Anwalt: " + StringUtils.nonNull(caseMatch.getLawyer()) + "</html>";
@@ -1592,8 +1878,9 @@ public class ImportBankStatementFrame extends javax.swing.JFrame {
             }
         } else if (caseMatch != null) {
             // found not matching invoice but a matching case
-            this.enableActions(null, caseMatch, this.currentTransaction.getAmount());
+            this.enableActions(null, null, caseMatch, this.currentTransaction.getAmount());
             this.currentCase = caseMatch;
+            this.loadAddressesForCase(currentCase);
             this.loadInvoicesForCase(caseMatch);
             this.buildCheckboxPopup(this.cmdCaseTags, this.popCaseTags, this.allCaseTagsAsString, this.lblCaseTags);
             this.lblCase.setText(caseMatch.getFileNumber() + " " + caseMatch.getName());
@@ -1603,8 +1890,8 @@ public class ImportBankStatementFrame extends javax.swing.JFrame {
         } else {
             this.lblCaseTags.setText("");
             this.cmdCaseTags.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons16/material/baseline_label_white_36dp.png")));
-            this.taTransaction.append("keine Rechnung gefunden");
-            this.enableActions(null, null, this.currentTransaction.getAmount());
+            this.taTransaction.append("keine Rechnung oder Zahlung gefunden");
+            this.enableActions(null, null, null, this.currentTransaction.getAmount());
         }
 
     }
@@ -1664,18 +1951,26 @@ public class ImportBankStatementFrame extends javax.swing.JFrame {
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.ButtonGroup btnGrpAccountEntryType;
     private javax.swing.JCheckBox chkCreateCaseAccountEntry;
-    private javax.swing.JCheckBox chkMarkAsPaid;
+    private javax.swing.JCheckBox chkMarkInvoicePaid;
+    private javax.swing.JCheckBox chkMarkPaymentExecuted;
     private javax.swing.JComboBox<String> cmbCsvConfig;
     private javax.swing.JComboBox<String> cmbInvoices;
     private javax.swing.JComboBox<String> cmbInvoicesAccountEntry;
+    private javax.swing.JComboBox<String> cmbPayments;
     private javax.swing.JButton cmdCaseTags;
     private javax.swing.JButton cmdCsvUpload;
     private javax.swing.JButton cmdNext;
     private javax.swing.JButton cmdPrevious;
     private javax.swing.JButton cmdSearchCase;
+    private javax.swing.JButton cmdSearchRecipient;
     private javax.swing.JLabel jLabel1;
     private javax.swing.JLabel jLabel2;
+    private javax.swing.JLabel jLabel3;
     private javax.swing.JScrollPane jScrollPane1;
+    private javax.swing.JSeparator jSeparator1;
+    private javax.swing.JSeparator jSeparator2;
+    private javax.swing.JSeparator jSeparator3;
+    private javax.swing.JSeparator jSeparator4;
     private javax.swing.JLabel lblCase;
     private javax.swing.JLabel lblCaseTags;
     private javax.swing.JLabel lblDuplicateTransaction;
@@ -1683,8 +1978,11 @@ public class ImportBankStatementFrame extends javax.swing.JFrame {
     private javax.swing.JLabel lblInvoice1;
     private javax.swing.JLabel lblInvoiceInfo;
     private javax.swing.JLabel lblInvoiceInfoAccountEntry;
+    private javax.swing.JLabel lblPaymentInfo;
+    private javax.swing.JLabel lblRecipient;
     private javax.swing.JLabel lblTxIndex;
     private javax.swing.JPopupMenu popCaseTags;
+    private javax.swing.JPopupMenu popRecipients;
     private javax.swing.JRadioButton rdEarnings;
     private javax.swing.JRadioButton rdEscrowIn;
     private javax.swing.JRadioButton rdEscrowOut;

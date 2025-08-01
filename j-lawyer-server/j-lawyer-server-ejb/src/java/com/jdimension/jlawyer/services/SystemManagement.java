@@ -915,7 +915,7 @@ public class SystemManagement implements SystemManagementRemote, SystemManagemen
 
     @Override
     @Asynchronous
-    @RolesAllowed({"adminRole"})
+    @RolesAllowed({"sysAdminRole"})
     public void clearCurrentBackup() {
         // needs to be called e.g. when encryption password has changed
         File directoryToZip = new File(System.getProperty("jlawyer.server.basedirectory").trim());
@@ -2078,43 +2078,7 @@ public class SystemManagement implements SystemManagementRemote, SystemManagemen
 
     @Override
     public List<PartyTypeBean> getPartyTypes() {
-        List<PartyTypeBean> all = this.partyTypesFacade.findAll();
-        Collections.sort(all, (Object t, Object t1) -> {
-            Object u1 = t;
-            Object u2 = t1;
-            if (u1 == null) {
-                return -1;
-            }
-            if (u2 == null) {
-                return 1;
-            }
-
-            if (!(u1 instanceof PartyTypeBean)) {
-                return -1;
-            }
-            if (!(u2 instanceof PartyTypeBean)) {
-                return 1;
-            }
-
-            PartyTypeBean f1 = (PartyTypeBean) u1;
-            PartyTypeBean f2 = (PartyTypeBean) u2;
-
-            int sequenceSortResult = Integer.compare(f1.getSequenceNumber(), f2.getSequenceNumber());
-            if (sequenceSortResult != 0) {
-                return sequenceSortResult;
-            } else {
-                String f1name = "";
-                if (f1.getName() != null) {
-                    f1name = f1.getName().toLowerCase();
-                }
-                String f2name = "";
-                if (f2.getName() != null) {
-                    f2name = f2.getName().toLowerCase();
-                }
-                return f1name.compareTo(f2name);
-            }
-        });
-        return all;
+        return this.partyTypesFacade.findAllInSequence();
     }
 
     @Override
@@ -2604,7 +2568,7 @@ public class SystemManagement implements SystemManagementRemote, SystemManagemen
     }
 
     @Override
-    @RolesAllowed({"adminRole"})
+    @RolesAllowed({"sysAdminRole"})
     public List<ImportLogEntry> importSheets(byte[] odsData, List<String> sheetNames, boolean dryRun, String fullClientVersion) throws Exception {
         ImporterPersistence persister = null;
         if (dryRun) {
@@ -2670,7 +2634,7 @@ public class SystemManagement implements SystemManagementRemote, SystemManagemen
     }
 
     @Override
-    @RolesAllowed(value = {"adminRole"})
+    @RolesAllowed(value = {"loginRole"})
     public TransactionLog addTransactionLog(String hashInput, int expiryDays) throws Exception {
         StringGenerator idGen = new StringGenerator();
         String id = idGen.getID().toString();
@@ -2699,7 +2663,7 @@ public class SystemManagement implements SystemManagementRemote, SystemManagemen
     }
 
     @Override
-    @RolesAllowed(value = {"adminRole"})
+    @RolesAllowed(value = {"loginRole"})
     public TransactionLog getTransactionLog(String hashInput) throws Exception {
         MessageDigest digest = MessageDigest.getInstance("SHA-256");
         byte[] hashBytes = digest.digest(hashInput.getBytes(StandardCharsets.UTF_8));

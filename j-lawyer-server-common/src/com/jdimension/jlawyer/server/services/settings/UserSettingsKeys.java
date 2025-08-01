@@ -737,6 +737,9 @@ public class UserSettingsKeys {
     public static final String INVOICE_LASTUSEDCURRENCY="invoice.currency.lastused";
     public static final String INVOICE_LASTUSEDTYPE="invoice.type.lastused";
     
+    // bank statement related
+    public static final String BANKSTATEMENT_LASTCONFIG="bankstatement.csv.lastconfig";
+    
     // E-POST related
     public static final String EPOST_LAST_SENDER_ADRLINE="epost.sender.last.adrline";
     public static final String EPOST_LAST_SENDER_STREET="epost.sender.last.street";

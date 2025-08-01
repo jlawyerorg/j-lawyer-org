@@ -721,6 +721,8 @@ public class ReportService implements ReportServiceRemote {
         reportPrivs.put(Reports.RPT_INV_DRAFTS, PRIVILEGE_COMMON);
         reportPrivs.put(Reports.RPT_INV_OVERDUE, PRIVILEGE_COMMON);
 
+        reportPrivs.put(Reports.RPT_PAY_ALL, PRIVILEGE_COMMON);
+
         reportPrivs.put(Reports.RPT_TSHEETS_OPEN_OVERVIEW, PRIVILEGE_COMMON);
         reportPrivs.put(Reports.RPT_TSHEETS_OPEN_POSITIONS, PRIVILEGE_COMMON);
         reportPrivs.put(Reports.RPT_TSHEETS_VALUES, PRIVILEGE_CONFIDENTIAL);
@@ -830,7 +832,7 @@ public class ReportService implements ReportServiceRemote {
                     + "left join cases cases on inv.case_id=cases.id\n"
                     + "where inv.created >=? and inv.created<=?\n"
                     + "group by inv.id";
-            result.getTables().add(getTable(true, "Alle Rechnungen / Belege", query, List.of("Nettobetrag", "Bruttobetrag","Zahlungseingang"), params));
+            result.getTables().add(getTable(true, "Alle Rechnungen / Belege", query, List.of("Nettobetrag", "Bruttobetrag", "Zahlungseingang"), params));
 
             String query2 = "SELECT "
                     + "invt.display_name AS Belegart, "
@@ -874,8 +876,8 @@ public class ReportService implements ReportServiceRemote {
                     + "left join cases cases on inv.case_id=cases.id\n"
                     + "where invt.turnover=1 and inv.invoice_status>=20 and inv.invoice_status<30 and inv.due_date >=? and inv.due_date<=?\n"
                     + "group by inv.id";
-            result.getTables().add(getTable(true, "Offene Rechnungen", query, List.of("Nettobetrag", "Bruttobetrag","Zahlungseingang"), params));
-            
+            result.getTables().add(getTable(true, "Offene Rechnungen", query, List.of("Nettobetrag", "Bruttobetrag", "Zahlungseingang"), params));
+
             String query2 = "SELECT "
                     + "invt.display_name AS Belegart, "
                     + "CASE "
@@ -954,8 +956,8 @@ public class ReportService implements ReportServiceRemote {
                     + "left join cases cases on inv.case_id=cases.id\n"
                     + "where invt.turnover=1 and inv.invoice_status=10 and inv.created >=? and inv.created<=?\n"
                     + "group by inv.id";
-            result.getTables().add(getTable(true, "Rechnungsentwürfe", query, List.of("Nettobetrag", "Bruttobetrag","Zahlungseingang"), params));
-            
+            result.getTables().add(getTable(true, "Rechnungsentwürfe", query, List.of("Nettobetrag", "Bruttobetrag", "Zahlungseingang"), params));
+
             String query2 = "SELECT "
                     + "invt.display_name AS Belegart, "
                     + "CASE "
@@ -998,7 +1000,7 @@ public class ReportService implements ReportServiceRemote {
                     + "where invt.turnover=1 and inv.invoice_status>=20 and inv.invoice_status<30 and inv.due_date >=? and inv.due_date<=? and inv.due_date <= curdate()\n"
                     + "group by inv.id";
             result.getTables().add(getTable(true, "Fällige Rechnungen", query, List.of("Nettobetrag", "Bruttobetrag", "Zahlungseingang"), params));
-            
+
             String query2 = "SELECT "
                     + "invt.display_name AS Belegart, "
                     + "CASE "
@@ -1055,6 +1057,46 @@ public class ReportService implements ReportServiceRemote {
             overrideParams[5] = params[1];
 
             result.getBarCharts().add(getBarChart(true, "Alle fälligen Rechnungen / Belege nach Fälligkeitsdatum", "Datum", "Summe Rechnungsbeträge", query3, 2, 3, 4, overrideParams));
+        } else if (Reports.RPT_PAY_ALL.equals(reportId)) {
+            String query = "SELECT pay.case_id, pay.payment_no as ZNr, "
+                    + "    case \n"
+                    + "        when pay.payment_type = 'SEPATRANSFER' then 'Überweisung'\n"
+                    + "        when pay.payment_type = 'OTHER' then 'Sonstige'\n"
+                    + "        else 'unbekannt'\n"
+                    + "    end as Zahlungsart,\n"
+                    + "cont.company as EmpfaengerFirma, cont.name as EmpfaengerName, \n"
+                    + "    case \n"
+                    + "        when pay.payment_status = 10 then 'Entwurf'\n"
+                    + "        when pay.payment_status = 20 then 'freigegeben'\n"
+                    + "        when pay.payment_status = 30 then 'veranlasst'\n"
+                    + "        when pay.payment_status = 40 then 'ausgeführt'\n"
+                    + "        when pay.payment_status = 50 then 'fehlgeschlagen'\n"
+                    + "        when pay.payment_status = 60 then 'storniert'\n"
+                    + "        else 'unbekannt'\n"
+                    + "    end as Status,\n"
+                    + "    round(pay.total, 2) Betrag, pay.currency as Waehrung, DATE_FORMAT(pay.date_created,'%Y-%m-%d') as erstellt,\n"
+                    + "    DATE_FORMAT(pay.date_target,'%Y-%m-%d') as geplant, pay.name as Bezeichnung, pay.description as Beschreibung, pay.reason as Verwendungszweck, pay.sender_id as Von, cases.fileNumber as Aktenzeichen, cases.name as Rubrum, cases.reason as wegen, cases.lawyer as Anwalt, cases.assistant as Sachbearbeiter FROM payments pay\n"
+                    + "left join contacts cont on pay.contact_id=cont.id\n"
+                    + "left join cases cases on pay.case_id=cases.id\n"
+                    + "where pay.date_created >=? and pay.date_created<=?\n";
+            result.getTables().add(getTable(true, "Alle Zahlungen", query, List.of("Betrag"), params));
+
+            String query2 = "SELECT "
+                    + "    case \n"
+                    + "        when pay.payment_status = 10 then 'Entwurf'\n"
+                    + "        when pay.payment_status = 20 then 'freigegeben'\n"
+                    + "        when pay.payment_status = 30 then 'veranlasst'\n"
+                    + "        when pay.payment_status = 40 then 'ausgeführt'\n"
+                    + "        when pay.payment_status = 50 then 'fehlgeschlagen'\n"
+                    + "        when pay.payment_status = 60 then 'storniert'\n"
+                    + "        else 'unbekannt'\n"
+                    + "    end as Status,\n"
+                    + "SUM(ROUND(pay.total, 2)) AS Betrag "
+                    + "FROM payments pay "
+                    + "WHERE pay.date_created >= ? "
+                    + "AND pay.date_created <= ? "
+                    + "GROUP BY Status";
+            result.getTables().add(getTable(false, "kumulierte Werte nach Zahlungsstatus", query2, null, params));
 
         } else if (Reports.RPT_TSHEETS_OPEN_OVERVIEW.equals(reportId)) {
             String query = "SELECT ts.case_id, cases.fileNumber as Aktenzeichen, cases.name as Rubrum, cases.reason as wegen, ts.name as Projektname, ts.description as Projektbeschreibung,  \n"
@@ -1078,7 +1120,7 @@ public class ReportService implements ReportServiceRemote {
                     + "group by tsp.timesheet_id\n"
                     + "order by von desc";
             result.getTables().add(getTable(true, "Gebuchte Zeiten", query, List.of("gebucht"), params));
-            
+
             query = "SELECT ts.case_id, cases.fileNumber as Aktenzeichen, cases.name as Rubrum, cases.reason as wegen, ts.name as Projektname, ts.description as Projektbeschreibung,  \n"
                     + "    case \n"
                     + "        when ts.status = 10 then 'offen'\n"
@@ -1101,7 +1143,7 @@ public class ReportService implements ReportServiceRemote {
                     + "group by tsp.timesheet_id\n"
                     + "order by von desc";
             result.getTables().add(getTable(true, "Abrechenbare Zeiten", query, List.of("abrechenbar"), params));
-            
+
             query = "SELECT ts.case_id, cases.fileNumber as Aktenzeichen, cases.name as Rubrum, cases.reason as wegen, ts.name as Projektname, ts.description as Projektbeschreibung,  \n"
                     + "    case \n"
                     + "        when ts.status = 10 then 'offen'\n"
@@ -1126,65 +1168,77 @@ public class ReportService implements ReportServiceRemote {
             result.getTables().add(getTable(true, "Abgerechnete Zeiten", query, List.of("abgerechnet"), params));
         } else if (Reports.RPT_TSHEETS_VALUES.equals(reportId)) {
             String query = "SELECT "
-             + "DATE_FORMAT(tsp.time_stopped, '%Y-%m') AS Monat, "
-             + "CONCAT(tsp.principal, ', ', DATE_FORMAT(MIN(tsp.time_stopped), '%Y-%m')) AS MitarbeiterMonat, "
-             + "tsp.principal AS Mitarbeiter, "
-             + "SUM((GREATEST(1, CEILING(TIMESTAMPDIFF(MINUTE, tsp.time_started, tsp.time_stopped)))) / 60) AS Stunden, "
-             + "SUM((GREATEST(1, CEILING(TIMESTAMPDIFF(MINUTE, tsp.time_started, tsp.time_stopped) / ts.interval_minutes)) * ts.interval_minutes DIV 1) / 60 * tsp.unit_price) AS UmsatzNetto "
-             + "FROM timesheet_positions tsp "
-             + "LEFT JOIN timesheets ts ON ts.id = tsp.timesheet_id "
-             + "WHERE tsp.time_stopped >= ? "
-             + "AND tsp.time_stopped <= ? "
-             + "GROUP BY Monat, Mitarbeiter "
-             + "ORDER BY Monat ASC, Mitarbeiter ASC";
+                    + "DATE_FORMAT(tsp.time_stopped, '%Y-%m') AS Monat, "
+                    + "CONCAT(tsp.principal, ', ', DATE_FORMAT(MIN(tsp.time_stopped), '%Y-%m')) AS MitarbeiterMonat, "
+                    + "tsp.principal AS Mitarbeiter, "
+                    + "SUM((GREATEST(1, CEILING(TIMESTAMPDIFF(MINUTE, tsp.time_started, tsp.time_stopped)))) / 60) AS Stunden, "
+                    + "SUM((GREATEST(1, CEILING(TIMESTAMPDIFF(MINUTE, tsp.time_started, tsp.time_stopped) / ts.interval_minutes)) * ts.interval_minutes DIV 1) / 60) AS StundenInTaktung, "
+                    + "SUM(GREATEST(1, CEILING(TIMESTAMPDIFF(MINUTE, tsp.time_started, tsp.time_stopped)))) AS Minuten, "
+                    + "SUM(GREATEST(1, CEILING(TIMESTAMPDIFF(MINUTE, tsp.time_started, tsp.time_stopped) / ts.interval_minutes)) * ts.interval_minutes DIV 1) AS MinutenInTaktung, "
+                    + "SUM((GREATEST(1, CEILING(TIMESTAMPDIFF(MINUTE, tsp.time_started, tsp.time_stopped) / ts.interval_minutes)) * ts.interval_minutes DIV 1) / 60 * tsp.unit_price) AS UmsatzNetto "
+                    + "FROM timesheet_positions tsp "
+                    + "LEFT JOIN timesheets ts ON ts.id = tsp.timesheet_id "
+                    + "WHERE tsp.time_stopped >= ? "
+                    + "AND tsp.time_stopped <= ? "
+                    + "GROUP BY Monat, Mitarbeiter "
+                    + "ORDER BY Monat ASC, Mitarbeiter ASC";
 
             result.getTables().add(getTable(false, "Gebuchte Zeiten pro Mitarbeiter und Monat", query, List.of("UmsatzNetto"), params));
             String query2 = "SELECT "
-             + "DATE_FORMAT(tsp.time_stopped, '%Y') AS Jahr, "
-             + "CONCAT(tsp.principal, ', ', DATE_FORMAT(MIN(tsp.time_stopped), '%Y')) AS MitarbeiterJahr, "
-             + "tsp.principal AS Mitarbeiter, "
-             + "SUM((GREATEST(1, CEILING(TIMESTAMPDIFF(MINUTE, tsp.time_started, tsp.time_stopped)))) / 60) AS Stunden, "
-             + "SUM((GREATEST(1, CEILING(TIMESTAMPDIFF(MINUTE, tsp.time_started, tsp.time_stopped) / ts.interval_minutes)) * ts.interval_minutes DIV 1) / 60 * tsp.unit_price) AS UmsatzNetto "
-             + "FROM timesheet_positions tsp "
-             + "LEFT JOIN timesheets ts ON ts.id = tsp.timesheet_id "
-             + "WHERE tsp.time_stopped >= ? "
-             + "AND tsp.time_stopped <= ? "
-             + "GROUP BY Jahr, Mitarbeiter "
-             + "ORDER BY Jahr ASC, Mitarbeiter ASC";
+                    + "DATE_FORMAT(tsp.time_stopped, '%Y') AS Jahr, "
+                    + "CONCAT(tsp.principal, ', ', DATE_FORMAT(MIN(tsp.time_stopped), '%Y')) AS MitarbeiterJahr, "
+                    + "tsp.principal AS Mitarbeiter, "
+                    + "SUM((GREATEST(1, CEILING(TIMESTAMPDIFF(MINUTE, tsp.time_started, tsp.time_stopped)))) / 60) AS Stunden, "
+                    + "SUM((GREATEST(1, CEILING(TIMESTAMPDIFF(MINUTE, tsp.time_started, tsp.time_stopped) / ts.interval_minutes)) * ts.interval_minutes DIV 1) / 60) AS StundenInTaktung, "
+                    + "SUM(GREATEST(1, CEILING(TIMESTAMPDIFF(MINUTE, tsp.time_started, tsp.time_stopped)))) AS Minuten, "
+                    + "SUM(GREATEST(1, CEILING(TIMESTAMPDIFF(MINUTE, tsp.time_started, tsp.time_stopped) / ts.interval_minutes)) * ts.interval_minutes DIV 1) AS MinutenInTaktung, "
+                    + "SUM((GREATEST(1, CEILING(TIMESTAMPDIFF(MINUTE, tsp.time_started, tsp.time_stopped) / ts.interval_minutes)) * ts.interval_minutes DIV 1) / 60 * tsp.unit_price) AS UmsatzNetto "
+                    + "FROM timesheet_positions tsp "
+                    + "LEFT JOIN timesheets ts ON ts.id = tsp.timesheet_id "
+                    + "WHERE tsp.time_stopped >= ? "
+                    + "AND tsp.time_stopped <= ? "
+                    + "GROUP BY Jahr, Mitarbeiter "
+                    + "ORDER BY Jahr ASC, Mitarbeiter ASC";
             result.getTables().add(getTable(false, "Gebuchte Zeiten pro Mitarbeiter und Jahr", query2, List.of("UmsatzNetto"), params));
         } else if (Reports.RPT_TSHEETS_VALUES_USER.equals(reportId)) {
-            String principal=context.getCallerPrincipal().getName();
+            String principal = context.getCallerPrincipal().getName();
             Object[] newParams = Arrays.copyOf(params, params.length + 1);
             newParams[newParams.length - 1] = principal;
-            
+
             String query = "SELECT "
-             + "DATE_FORMAT(tsp.time_stopped, '%Y-%m') AS Monat, "
-             + "CONCAT(tsp.principal, ', ', DATE_FORMAT(MIN(tsp.time_stopped), '%Y-%m')) AS MitarbeiterMonat, "
-             + "tsp.principal AS Mitarbeiter, "
-             + "SUM((GREATEST(1, CEILING(TIMESTAMPDIFF(MINUTE, tsp.time_started, tsp.time_stopped)))) / 60) AS Stunden, "
-             + "SUM((GREATEST(1, CEILING(TIMESTAMPDIFF(MINUTE, tsp.time_started, tsp.time_stopped) / ts.interval_minutes)) * ts.interval_minutes DIV 1) / 60 * tsp.unit_price) AS UmsatzNetto "
-             + "FROM timesheet_positions tsp "
-             + "LEFT JOIN timesheets ts ON ts.id = tsp.timesheet_id "
-             + "WHERE tsp.time_stopped >= ? "
-             + "AND tsp.time_stopped <= ? "
-             + "AND tsp.principal = ? "
-             + "GROUP BY Monat, Mitarbeiter "
-             + "ORDER BY Monat ASC, Mitarbeiter ASC";
+                    + "DATE_FORMAT(tsp.time_stopped, '%Y-%m') AS Monat, "
+                    + "CONCAT(tsp.principal, ', ', DATE_FORMAT(MIN(tsp.time_stopped), '%Y-%m')) AS MitarbeiterMonat, "
+                    + "tsp.principal AS Mitarbeiter, "
+                    + "SUM((GREATEST(1, CEILING(TIMESTAMPDIFF(MINUTE, tsp.time_started, tsp.time_stopped)))) / 60) AS Stunden, "
+                    + "SUM((GREATEST(1, CEILING(TIMESTAMPDIFF(MINUTE, tsp.time_started, tsp.time_stopped) / ts.interval_minutes)) * ts.interval_minutes DIV 1) / 60) AS StundenInTaktung, "
+                    + "SUM(GREATEST(1, CEILING(TIMESTAMPDIFF(MINUTE, tsp.time_started, tsp.time_stopped)))) AS Minuten, "
+                    + "SUM(GREATEST(1, CEILING(TIMESTAMPDIFF(MINUTE, tsp.time_started, tsp.time_stopped) / ts.interval_minutes)) * ts.interval_minutes DIV 1) AS MinutenInTaktung, "
+                    + "SUM((GREATEST(1, CEILING(TIMESTAMPDIFF(MINUTE, tsp.time_started, tsp.time_stopped) / ts.interval_minutes)) * ts.interval_minutes DIV 1) / 60 * tsp.unit_price) AS UmsatzNetto "
+                    + "FROM timesheet_positions tsp "
+                    + "LEFT JOIN timesheets ts ON ts.id = tsp.timesheet_id "
+                    + "WHERE tsp.time_stopped >= ? "
+                    + "AND tsp.time_stopped <= ? "
+                    + "AND tsp.principal = ? "
+                    + "GROUP BY Monat, Mitarbeiter "
+                    + "ORDER BY Monat ASC, Mitarbeiter ASC";
 
             result.getTables().add(getTable(false, "Meine gebuchten Zeiten pro Monat", query, List.of("UmsatzNetto"), newParams));
             String query2 = "SELECT "
-             + "DATE_FORMAT(tsp.time_stopped, '%Y') AS Jahr, "
-             + "CONCAT(tsp.principal, ', ', DATE_FORMAT(MIN(tsp.time_stopped), '%Y')) AS MitarbeiterJahr, "
-             + "tsp.principal AS Mitarbeiter, "
-             + "SUM((GREATEST(1, CEILING(TIMESTAMPDIFF(MINUTE, tsp.time_started, tsp.time_stopped)))) / 60) AS Stunden, "
-             + "SUM((GREATEST(1, CEILING(TIMESTAMPDIFF(MINUTE, tsp.time_started, tsp.time_stopped) / ts.interval_minutes)) * ts.interval_minutes DIV 1) / 60 * tsp.unit_price) AS UmsatzNetto "
-             + "FROM timesheet_positions tsp "
-             + "LEFT JOIN timesheets ts ON ts.id = tsp.timesheet_id "
-             + "WHERE tsp.time_stopped >= ? "
-             + "AND tsp.time_stopped <= ? "
-             + "AND tsp.principal = ? "
-             + "GROUP BY Jahr, Mitarbeiter "
-             + "ORDER BY Jahr ASC, Mitarbeiter ASC";
+                    + "DATE_FORMAT(tsp.time_stopped, '%Y') AS Jahr, "
+                    + "CONCAT(tsp.principal, ', ', DATE_FORMAT(MIN(tsp.time_stopped), '%Y')) AS MitarbeiterJahr, "
+                    + "tsp.principal AS Mitarbeiter, "
+                    + "SUM((GREATEST(1, CEILING(TIMESTAMPDIFF(MINUTE, tsp.time_started, tsp.time_stopped)))) / 60) AS Stunden, "
+                    + "SUM((GREATEST(1, CEILING(TIMESTAMPDIFF(MINUTE, tsp.time_started, tsp.time_stopped) / ts.interval_minutes)) * ts.interval_minutes DIV 1) / 60) AS StundenInTaktung, "
+                    + "SUM(GREATEST(1, CEILING(TIMESTAMPDIFF(MINUTE, tsp.time_started, tsp.time_stopped)))) AS Minuten, "
+                    + "SUM(GREATEST(1, CEILING(TIMESTAMPDIFF(MINUTE, tsp.time_started, tsp.time_stopped) / ts.interval_minutes)) * ts.interval_minutes DIV 1) AS MinutenInTaktung, "
+                    + "SUM((GREATEST(1, CEILING(TIMESTAMPDIFF(MINUTE, tsp.time_started, tsp.time_stopped) / ts.interval_minutes)) * ts.interval_minutes DIV 1) / 60 * tsp.unit_price) AS UmsatzNetto "
+                    + "FROM timesheet_positions tsp "
+                    + "LEFT JOIN timesheets ts ON ts.id = tsp.timesheet_id "
+                    + "WHERE tsp.time_stopped >= ? "
+                    + "AND tsp.time_stopped <= ? "
+                    + "AND tsp.principal = ? "
+                    + "GROUP BY Jahr, Mitarbeiter "
+                    + "ORDER BY Jahr ASC, Mitarbeiter ASC";
             result.getTables().add(getTable(false, "Meine gebuchten Zeiten pro Jahr", query2, List.of("UmsatzNetto"), newParams));
         } else if (Reports.RPT_TSHEETS_OPEN_POSITIONS.equals(reportId)) {
             String query = "SELECT cases.id, cases.fileNumber as Aktenzeichen, cases.name as Rubrum, cases.reason as wegen, \n"
@@ -1384,7 +1438,7 @@ public class ReportService implements ReportServiceRemote {
             }
             table.setColumnNames(columnNames);
 
-            HashMap<String,Number> sumValues=new HashMap<>();
+            HashMap<String, Number> sumValues = new HashMap<>();
             while (rs.next()) {
 
                 if (allowedCases != null) {
@@ -1404,46 +1458,49 @@ public class ReportService implements ReportServiceRemote {
                 for (int i = minIndex; i < columnCount; i++) {
                     if (caseIdColumn) {
                         row[i - 1] = rs.getObject(i + 1);
-                        if(sumColumns!=null && sumColumns.contains(columnNames[i-1])) {
-                            if(row[i - 1] instanceof Number) {
-                                if(!sumValues.containsKey(columnNames[i-1]))
-                                    sumValues.put(columnNames[i-1], (Number)row[i-1]);
-                                else
-                                    sumValues.put(columnNames[i-1], BigDecimal.valueOf(((Number)row[i-1]).floatValue()).add(BigDecimal.valueOf(sumValues.get(columnNames[i-1]).floatValue())));
+                        if (sumColumns != null && sumColumns.contains(columnNames[i - 1])) {
+                            if (row[i - 1] instanceof Number) {
+                                if (!sumValues.containsKey(columnNames[i - 1])) {
+                                    sumValues.put(columnNames[i - 1], (Number) row[i - 1]);
+                                } else {
+                                    sumValues.put(columnNames[i - 1], BigDecimal.valueOf(((Number) row[i - 1]).floatValue()).add(BigDecimal.valueOf(sumValues.get(columnNames[i - 1]).floatValue())));
+                                }
                             }
                         }
                     } else {
                         row[i] = rs.getObject(i + 1);
-                        if(sumColumns!=null && sumColumns.contains(columnNames[i])) {
-                            if(row[i] instanceof Number) {
-                                if(!sumValues.containsKey(columnNames[i]))
-                                    sumValues.put(columnNames[i], (Number)row[i]);
-                                else
-                                    sumValues.put(columnNames[i], BigDecimal.valueOf(((Number)row[i]).floatValue()).add(BigDecimal.valueOf(sumValues.get(columnNames[i]).floatValue())));
+                        if (sumColumns != null && sumColumns.contains(columnNames[i])) {
+                            if (row[i] instanceof Number) {
+                                if (!sumValues.containsKey(columnNames[i])) {
+                                    sumValues.put(columnNames[i], (Number) row[i]);
+                                } else {
+                                    sumValues.put(columnNames[i], BigDecimal.valueOf(((Number) row[i]).floatValue()).add(BigDecimal.valueOf(sumValues.get(columnNames[i]).floatValue())));
+                                }
                             }
                         }
                     }
                 }
                 table.getValues().add(row);
             }
-            
-            if(sumColumns!=null && !sumColumns.isEmpty()) {
-                if(!table.getValues().isEmpty()) {
-                    int colCount=table.getValues().get(0).length;
-                    Object[] emptyRow=new Object[colCount];
-                    Object[] sumCaptionRow=new Object[colCount];
-                    Object[] sumValueRow=new Object[colCount];
-                    for(int i=0;i<emptyRow.length;i++) {
-                        emptyRow[i]="";
-                        sumCaptionRow[i]="";
-                        if(i==0)
-                            sumCaptionRow[i]="Summen:";
-                        
-                        sumValueRow[i]="";
-                        if(sumColumns.contains(columnNames[i])) {
-                            sumValueRow[i]=sumValues.get(columnNames[i]);
+
+            if (sumColumns != null && !sumColumns.isEmpty()) {
+                if (!table.getValues().isEmpty()) {
+                    int colCount = table.getValues().get(0).length;
+                    Object[] emptyRow = new Object[colCount];
+                    Object[] sumCaptionRow = new Object[colCount];
+                    Object[] sumValueRow = new Object[colCount];
+                    for (int i = 0; i < emptyRow.length; i++) {
+                        emptyRow[i] = "";
+                        sumCaptionRow[i] = "";
+                        if (i == 0) {
+                            sumCaptionRow[i] = "Summen:";
                         }
-                        
+
+                        sumValueRow[i] = "";
+                        if (sumColumns.contains(columnNames[i])) {
+                            sumValueRow[i] = sumValues.get(columnNames[i]);
+                        }
+
                     }
                     table.getValues().add(emptyRow);
                     table.getValues().add(sumCaptionRow);
