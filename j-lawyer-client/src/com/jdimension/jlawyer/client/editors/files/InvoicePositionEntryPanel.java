@@ -762,23 +762,23 @@ public class InvoicePositionEntryPanel extends javax.swing.JPanel {
         clone.setDescription(this.taDescription.getText());
         clone.setPosition(this.position.getPosition());
         try {
-            clone.setTaxRate(BigDecimal.valueOf(this.taxRateFormat.parse(this.cmbTaxRate.getSelectedItem().toString()).floatValue()));
+            clone.setTaxRate(BigDecimal.valueOf(this.taxRateFormat.parse(this.cmbTaxRate.getSelectedItem().toString()).doubleValue()));
         } catch (Exception ex) {
             clone.setTaxRate(BigDecimal.ZERO);
             JOptionPane.showMessageDialog(this, "fehlerhafter Steuersatz: " + ex.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
         }
         //this.updateEntryTotal();
-        clone.setTotal(BigDecimal.valueOf((Float) this.txtTotal.getValue()));
+        clone.setTotal(BigDecimal.valueOf(((Number)this.txtTotal.getValue()).doubleValue()));
         
         if(this.txtUnitPrice.getValue()==null)
             clone.setUnitPrice(BigDecimal.ZERO);
         else
-            clone.setUnitPrice(BigDecimal.valueOf(((Number) this.txtUnitPrice.getValue()).floatValue()));
+            clone.setUnitPrice(BigDecimal.valueOf(((Number) this.txtUnitPrice.getValue()).doubleValue()));
         
         if(this.txtUnits.getValue()==null)
             clone.setUnits(BigDecimal.ONE);
         else
-            clone.setUnits(BigDecimal.valueOf(((Number) this.txtUnits.getValue()).floatValue()));
+            clone.setUnits(BigDecimal.valueOf(((Number) this.txtUnits.getValue()).doubleValue()));
         return clone;
     }
 
@@ -1008,7 +1008,7 @@ public class InvoicePositionEntryPanel extends javax.swing.JPanel {
             if (unitPrice != null) {
                 this.txtUnitPrice.putClientProperty(FlatClientProperties.OUTLINE, null);
                 this.txtTotal.putClientProperty(FlatClientProperties.OUTLINE, null);
-                this.txtTotal.setValue(((Number) this.txtUnits.getValue()).floatValue() * unitPrice.floatValue());
+                this.txtTotal.setValue(((Number) this.txtUnits.getValue()).doubleValue() * unitPrice.doubleValue());
             } else {
                 this.txtUnitPrice.putClientProperty(FlatClientProperties.OUTLINE, FlatClientProperties.OUTLINE_ERROR);
                 this.txtTotal.putClientProperty(FlatClientProperties.OUTLINE, FlatClientProperties.OUTLINE_ERROR);

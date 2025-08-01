@@ -5394,28 +5394,42 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
         if (invoice == null) {
             throw new Exception(MSG_MISSING_INVOICE);
         }
+
         List<InvoicePosition> positions = this.invoicePositionsFacade.findByInvoice(invoice);
         if (positions == null) {
             positions = new ArrayList<>();
         }
+
         BigDecimal newTotalNet = BigDecimal.ZERO;
         BigDecimal newTotalGross = BigDecimal.ZERO;
+        Map<BigDecimal, BigDecimal> taxRateToNetSum = new HashMap<>();
 
         for (InvoicePosition p : positions) {
             BigDecimal net = p.getTotal().setScale(2, RoundingMode.HALF_UP);
-
-            BigDecimal taxRate = p.getTaxRate().divide(BigDecimal.valueOf(100), 4, RoundingMode.HALF_UP);
-            BigDecimal gross = net.multiply(BigDecimal.ONE.add(taxRate)).setScale(2, RoundingMode.HALF_UP);
-
             newTotalNet = newTotalNet.add(net);
-            newTotalGross = newTotalGross.add(gross);
+
+            BigDecimal taxRate = p.getTaxRate();
+
+            // Kumulierung der Netto-Beträge pro Steuersatz
+            taxRateToNetSum.put(
+                    taxRate,
+                    taxRateToNetSum.getOrDefault(taxRate, BigDecimal.ZERO).add(net)
+            );
         }
 
-        // Gesamtsummen kaufmännisch runden
+        // Bruttosumme berechnen
+        for (Map.Entry<BigDecimal, BigDecimal> entry : taxRateToNetSum.entrySet()) {
+            BigDecimal taxRate = entry.getKey();
+            BigDecimal netSum = entry.getValue();
+            BigDecimal taxFactor = taxRate.divide(BigDecimal.valueOf(100), 4, RoundingMode.HALF_UP);
+            BigDecimal grossPart = netSum.multiply(BigDecimal.ONE.add(taxFactor)).setScale(2, RoundingMode.HALF_UP);
+            newTotalGross = newTotalGross.add(grossPart);
+        }
+
+        // Gesamtsummen setzen (mit kaufmännischer Rundung)
         invoice.setTotal(newTotalNet.setScale(2, RoundingMode.HALF_UP));
         invoice.setTotalGross(newTotalGross.setScale(2, RoundingMode.HALF_UP));
         this.invoicesFacade.edit(invoice);
-
     }
 
     @Override

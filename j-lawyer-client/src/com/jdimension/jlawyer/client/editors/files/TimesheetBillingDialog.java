@@ -675,6 +675,7 @@ import com.jdimension.jlawyer.services.ArchiveFileServiceRemote;
 import com.jdimension.jlawyer.services.JLawyerServiceLocator;
 import java.awt.event.MouseEvent;
 import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.text.SimpleDateFormat;
 import java.util.HashMap;
 import java.util.List;
@@ -973,6 +974,7 @@ public class TimesheetBillingDialog extends javax.swing.JDialog {
         
         EventBroker eb = EventBroker.getInstance();
         for (InvoicePosition p : aggregatedPositions.values()) {
+            p.setUnits(p.getUnits().setScale(2, RoundingMode.CEILING));
             eb.publishEvent(new InvoicePositionAddedEvent(this.invoice.getId(), p));
         }
         

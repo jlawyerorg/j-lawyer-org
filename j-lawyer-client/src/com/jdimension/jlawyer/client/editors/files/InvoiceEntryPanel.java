@@ -716,7 +716,6 @@ public class InvoiceEntryPanel extends javax.swing.JPanel {
         }
         this.lblPaidTotal.setText(totalFormat.format(this.paid) + " " + currency);
         this.lblOpen.setText(totalFormat.format(totalGross.subtract(this.paid)) + " " + currency);
-
     }
 
     public void setEntry(ArchiveFileBean caseDto, Invoice invoice, List<AddressBean> addresses) {
@@ -761,7 +760,10 @@ public class InvoiceEntryPanel extends javax.swing.JPanel {
         }
 
         this.lblTotalNet.setText(totalFormat.format(invoice.getTotal()) + " " + invoice.getCurrency());
-        this.lblTotalGross.setText(totalFormat.format(invoice.getTotalGross()) + " " + invoice.getCurrency());
+        if(invoice.isSmallBusiness())
+            this.lblTotalGross.setText(totalFormat.format(invoice.getTotalGross()) + " " + invoice.getCurrency());
+        else
+            this.lblTotalGross.setText(totalFormat.format(invoice.getTotal()) + " " + invoice.getCurrency());
 
         this.cmdMarkAsPayed.setEnabled(invoice.getStatus() != Invoice.STATUS_PAID && invoice.getStatus() != Invoice.STATUS_CANCELLED);
 
@@ -1009,7 +1011,10 @@ public class InvoiceEntryPanel extends javax.swing.JPanel {
         dlg.setVisible(true);
         if(!dlg.isCancelled()) {
             this.setEntry(caseDto, dlg.getEntry(), addresses);
-            this.setPaidTotal(dlg.getEntry().getTotalGross(), BigDecimal.valueOf(Float.MIN_VALUE), dlg.getEntry().getCurrency());
+            if(dlg.getEntry().isSmallBusiness())
+                this.setPaidTotal(dlg.getEntry().getTotalGross(), BigDecimal.valueOf(Float.MIN_VALUE), dlg.getEntry().getCurrency());
+            else
+                this.setPaidTotal(dlg.getEntry().getTotal(), BigDecimal.valueOf(Float.MIN_VALUE), dlg.getEntry().getCurrency());
         }
     }//GEN-LAST:event_cmdOpenActionPerformed
 
@@ -1074,7 +1079,10 @@ public class InvoiceEntryPanel extends javax.swing.JPanel {
                 boolean confirmed = this.caseView.addAccountEntry(entry);
 
                 if (confirmed) {
-                    this.setPaidTotal(invoice.getTotalGross(), invoice.getTotalGross(), invoice.getCurrency());
+                    if(invoice.isSmallBusiness())
+                        this.setPaidTotal(invoice.getTotalGross(), invoice.getTotalGross(), invoice.getCurrency());
+                    else
+                        this.setPaidTotal(invoice.getTotal(), invoice.getTotal(), invoice.getCurrency());
                 }
             }
             
