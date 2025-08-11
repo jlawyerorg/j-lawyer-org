@@ -709,8 +709,11 @@ import java.util.TimerTask;
 import javax.swing.BoxLayout;
 import javax.swing.JCheckBoxMenuItem;
 import javax.swing.JFileChooser;
+import javax.swing.JLabel;
 import javax.swing.JOptionPane;
+import javax.swing.JRadioButtonMenuItem;
 import javax.swing.MenuElement;
+import javax.swing.SwingConstants;
 import org.apache.log4j.Logger;
 import themes.colors.DefaultColorTheme;
 
@@ -811,6 +814,7 @@ public class DesktopPanel extends javax.swing.JPanel implements ThemeableEditor,
         b.subscribeConsumer(this, Event.TYPE_CASESCHANGED);
 
         this.buildUsersPopup();
+        this.buildDueSinceDaysPopup();
         
         Timer timer1 = new Timer();
         SystemStateTimerTask systemStateTask = new SystemStateTimerTask(this, this.lblAddressCount, this.lblArchiveFileCount, this.lblArchiveFileArchivedCount, this.lblDocumentCount, this.lblVoipBalance, this.lblAssistant);
@@ -978,6 +982,32 @@ public class DesktopPanel extends javax.swing.JPanel implements ThemeableEditor,
         
     }
     
+    private void buildDueSinceDaysPopup() {
+        int daysSince=UserSettings.getInstance().getSettingAsInt(UserSettings.CONF_DESKTOP_LASTFILTERDUESINCEDAYS, 1);
+        
+        this.lblDueSinceDays.setText("" + daysSince);
+
+        this.popDueSinceDays.removeAll();
+        for (int days: new int[]{1,3,7,14,31,180,365}) {
+            JRadioButtonMenuItem mi = new JRadioButtonMenuItem("" + days);
+            mi.setSelected(days==daysSince);
+            mi.setHorizontalTextPosition(SwingConstants.RIGHT);
+            mi.setHorizontalAlignment(SwingConstants.RIGHT);
+            btnGrpDueSinceDays.add(mi);
+            popDueSinceDays.add(mi);
+        }
+        for (MenuElement me : popDueSinceDays.getSubElements()) {
+            ((JRadioButtonMenuItem) me.getComponent()).addActionListener((ActionEvent e) -> {
+                this.lblDueSinceDays.setText(((JRadioButtonMenuItem) me.getComponent()).getText());
+                UserSettings.getInstance().setSetting(UserSettings.CONF_DESKTOP_LASTFILTERDUESINCEDAYS, this.lblDueSinceDays.getText());
+                TimerTask revDueTask = new ReviewsDueTimerTask(this, this.tabPaneDue, this.pnlRevDue, this.jSplitPane1, true);
+                new java.util.Timer().schedule(revDueTask, 100);
+            });
+        }
+
+        
+    }
+    
     private void buildUsersPopup() {
         List<AppUserBean> relevantUsers=UserSettings.getInstance().getLoginEnabledUsers();
         List<String> userNames=new ArrayList<>();
@@ -1062,6 +1092,8 @@ public class DesktopPanel extends javax.swing.JPanel implements ThemeableEditor,
         popTagFilter = new javax.swing.JPopupMenu();
         popDocumentTagFilter = new javax.swing.JPopupMenu();
         popUserFilter = new javax.swing.JPopupMenu();
+        popDueSinceDays = new javax.swing.JPopupMenu();
+        btnGrpDueSinceDays = new javax.swing.ButtonGroup();
         jSplitPane1 = new javax.swing.JSplitPane();
         jPanel2 = new javax.swing.JPanel();
         jLabel6 = new javax.swing.JLabel();
@@ -1072,6 +1104,8 @@ public class DesktopPanel extends javax.swing.JPanel implements ThemeableEditor,
         pnlRevDue = new javax.swing.JPanel();
         jLabel8 = new javax.swing.JLabel();
         lblUserFilterCount = new javax.swing.JLabel();
+        lblDueSinceDays = new javax.swing.JLabel();
+        cmdDueSinceDays = new javax.swing.JButton();
         jSplitPane2 = new javax.swing.JSplitPane();
         jPanel1 = new javax.swing.JPanel();
         jLabel5 = new javax.swing.JLabel();
@@ -1176,6 +1210,21 @@ public class DesktopPanel extends javax.swing.JPanel implements ThemeableEditor,
         lblUserFilterCount.setForeground(java.awt.Color.white);
         lblUserFilterCount.setText("1");
 
+        lblDueSinceDays.setFont(lblDueSinceDays.getFont().deriveFont(lblDueSinceDays.getFont().getStyle() | java.awt.Font.BOLD, lblDueSinceDays.getFont().getSize()+2));
+        lblDueSinceDays.setForeground(new java.awt.Color(255, 255, 255));
+        lblDueSinceDays.setText("7");
+
+        cmdDueSinceDays.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons16/material/calendar_clock_20dp_FFFFFF_FILL0_wght400_GRAD0_opsz20.png"))); // NOI18N
+        cmdDueSinceDays.setToolTipText("zeige offene Kalendereinträge der letzten ... Tage");
+        cmdDueSinceDays.setBorder(null);
+        cmdDueSinceDays.setContentAreaFilled(false);
+        cmdDueSinceDays.setCursor(new java.awt.Cursor(java.awt.Cursor.HAND_CURSOR));
+        cmdDueSinceDays.addMouseListener(new java.awt.event.MouseAdapter() {
+            public void mousePressed(java.awt.event.MouseEvent evt) {
+                cmdDueSinceDaysMousePressed(evt);
+            }
+        });
+
         org.jdesktop.layout.GroupLayout jPanel2Layout = new org.jdesktop.layout.GroupLayout(jPanel2);
         jPanel2.setLayout(jPanel2Layout);
         jPanel2Layout.setHorizontalGroup(
@@ -1188,7 +1237,11 @@ public class DesktopPanel extends javax.swing.JPanel implements ThemeableEditor,
                         .add(cmdRefreshRevDue)
                         .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
                         .add(jLabel6)
-                        .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED, 295, Short.MAX_VALUE)
+                        .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED, 129, Short.MAX_VALUE)
+                        .add(cmdDueSinceDays)
+                        .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
+                        .add(lblDueSinceDays)
+                        .add(18, 18, 18)
                         .add(cmdUserFilter)
                         .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
                         .add(lblUserFilterCount)))
@@ -1198,13 +1251,16 @@ public class DesktopPanel extends javax.swing.JPanel implements ThemeableEditor,
             jPanel2Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
             .add(jPanel2Layout.createSequentialGroup()
                 .addContainerGap()
-                .add(jPanel2Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
+                .add(jPanel2Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING, false)
                     .add(cmdRefreshRevDue)
-                    .add(jLabel6)
-                    .add(lblUserFilterCount)
-                    .add(cmdUserFilter))
+                    .add(jPanel2Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.BASELINE)
+                        .add(jLabel6)
+                        .add(lblDueSinceDays, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                        .add(cmdDueSinceDays, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                    .add(cmdUserFilter, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                    .add(lblUserFilterCount, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
                 .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
-                .add(tabPaneDue, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 486, Short.MAX_VALUE)
+                .add(tabPaneDue, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 482, Short.MAX_VALUE)
                 .addContainerGap())
         );
 
@@ -1647,7 +1703,7 @@ public class DesktopPanel extends javax.swing.JPanel implements ThemeableEditor,
                         .add(org.jdesktop.layout.GroupLayout.LEADING, lblDay, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                         .add(org.jdesktop.layout.GroupLayout.LEADING, messagesWidget, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)))
                 .add(8, 8, 8)
-                .add(jSplitPane1, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 527, Short.MAX_VALUE)
+                .add(jSplitPane1)
                 .add(4, 4, 4)
                 .add(systemInformationWidget, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
                 .addContainerGap())
@@ -1743,11 +1799,17 @@ public class DesktopPanel extends javax.swing.JPanel implements ThemeableEditor,
         this.popUserFilter.show(this.cmdUserFilter, evt.getX(), evt.getY());
     }//GEN-LAST:event_cmdUserFilterMousePressed
 
+    private void cmdDueSinceDaysMousePressed(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_cmdDueSinceDaysMousePressed
+        this.popDueSinceDays.show(this.cmdDueSinceDays, evt.getX(), evt.getY());
+    }//GEN-LAST:event_cmdDueSinceDaysMousePressed
+
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
+    private javax.swing.ButtonGroup btnGrpDueSinceDays;
     private javax.swing.JCheckBox chkOnlyMyCases;
     private javax.swing.JCheckBox chkOnlyMyTagged;
     private javax.swing.JButton cmdDocumentTagFilter;
+    private javax.swing.JButton cmdDueSinceDays;
     private javax.swing.JButton cmdRefreshLastChanged;
     private javax.swing.JButton cmdRefreshRevDue;
     private javax.swing.JButton cmdRefreshTagged;
@@ -1774,6 +1836,7 @@ public class DesktopPanel extends javax.swing.JPanel implements ThemeableEditor,
     private javax.swing.JLabel lblAssistant;
     private javax.swing.JLabel lblDay;
     private javax.swing.JLabel lblDocumentCount;
+    private javax.swing.JLabel lblDueSinceDays;
     private javax.swing.JLabel lblMailingStatus;
     private javax.swing.JLabel lblNewsStatus;
     private javax.swing.JLabel lblScans;
@@ -1791,6 +1854,7 @@ public class DesktopPanel extends javax.swing.JPanel implements ThemeableEditor,
     private javax.swing.JPanel pnlRevDue;
     private javax.swing.JPanel pnlTagged;
     private javax.swing.JPopupMenu popDocumentTagFilter;
+    private javax.swing.JPopupMenu popDueSinceDays;
     private javax.swing.JPopupMenu popTagFilter;
     private javax.swing.JPopupMenu popUserFilter;
     private com.jdimension.jlawyer.client.desktop.DesktopWidgetPanel systemInformationWidget;

@@ -743,9 +743,14 @@ public class ReviewsDueTimerTask extends java.util.TimerTask {
             if (stopped) {
                 return;
             }
+            
+            int sinceDays=UserSettings.getInstance().getSettingAsInt(UserSettings.CONF_DESKTOP_LASTFILTERDUESINCEDAYS, 1);
+            Calendar fromDate = Calendar.getInstance();
+            fromDate.add(Calendar.DAY_OF_MONTH, (-1 * sinceDays));
+            
             ArchiveFileServiceRemote fileService = locator.lookupArchiveFileServiceRemote();
             CalendarServiceRemote calService = locator.lookupCalendarServiceRemote();
-            Collection<ArchiveFileReviewsBean> myNewList = calService.searchReviews(ArchiveFileConstants.REVIEWSTATUS_OPEN, ArchiveFileConstants.REVIEWTYPE_ANY, null, new Date(), 2500);
+            Collection<ArchiveFileReviewsBean> myNewList = calService.searchReviews(ArchiveFileConstants.REVIEWSTATUS_OPEN, ArchiveFileConstants.REVIEWTYPE_ANY, fromDate.getTime(), new Date(), 2500);
 
             if (stopped) {
                 return;

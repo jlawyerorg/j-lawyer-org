@@ -850,6 +850,11 @@ public class UserSettings extends UserSettingsKeys {
         String s=getSetting(key, "" + defaultValue);
         return Boolean.parseBoolean(s);
     }
+    
+    public int getSettingAsInt(String key, int defaultValue) {
+        String s=getSetting(key, "" + defaultValue);
+        return Integer.parseInt(s);
+    }
 
     public void setSettingArray(String key, String[] value) {
         StringBuilder sb = new StringBuilder();
