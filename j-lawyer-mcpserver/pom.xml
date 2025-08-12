@@ -27,6 +27,67 @@
             <artifactId>jetty-ee10-servlet</artifactId>
             <version>12.0.18</version>
         </dependency>
+        <dependency>
+            <groupId>javax.annotation</groupId>
+            <artifactId>javax.annotation-api</artifactId>
+            <version>1.3.2</version>
+            <scope>compile</scope>
+        </dependency>
+        
+        <!-- Spring Core -->
+        <dependency>
+            <groupId>org.springframework</groupId>
+            <artifactId>spring-core</artifactId>
+            <version>6.0.12</version> <!-- oder deine gewünschte Version -->
+        </dependency>
+
+        <!-- Spring Beans -->
+        <dependency>
+            <groupId>org.springframework</groupId>
+            <artifactId>spring-beans</artifactId>
+            <version>6.0.12</version>
+        </dependency>
+
+        <!-- Spring Context -->
+        <dependency>
+            <groupId>org.springframework</groupId>
+            <artifactId>spring-context</artifactId>
+            <version>6.0.12</version>
+        </dependency>
+
+        <!-- Spring Web -->
+        <dependency>
+            <groupId>org.springframework</groupId>
+            <artifactId>spring-web</artifactId>
+            <version>6.0.12</version>
+        </dependency>
+
+        <!-- Spring Web Client -->
+        <dependency>
+            <groupId>org.springframework</groupId>
+            <artifactId>spring-webflux</artifactId> <!-- für WebClient, falls benötigt -->
+            <version>6.0.12</version>
+        </dependency>
+
+        <!-- Spring Web (für RestTemplate, RequestEntity etc.) -->
+        <dependency>
+            <groupId>org.springframework</groupId>
+            <artifactId>spring-web</artifactId>
+            <version>6.0.12</version>
+        </dependency>
+
+        <dependency>
+            <groupId>commons-logging</groupId>
+            <artifactId>commons-logging</artifactId>
+            <version>1.2</version>
+        </dependency>
+
+        <!-- dependency>
+            <groupId>org.openapitools</groupId>
+            <artifactId>jackson-datatype-nullable</artifactId>
+            <version>0.2.5</version>
+        </dependency -->
+
     </dependencies>
     <build>
         <plugins>
@@ -41,28 +102,24 @@
                             <goal>generate</goal>
                         </goals>
                         <configuration>
-                            <!-- Pfad zu deiner lokal gespeicherten swagger.json -->
                             <inputSpec>${project.basedir}/src/main/resources/swagger-jlawyer.json</inputSpec>
                             <generatorName>java</generatorName>
-                            <library>resttemplate</library> <!-- oder okhttp, feign, etc. -->
+                            <library>resttemplate</library>
                             <apiPackage>org.jlawyer.generated.api</apiPackage>
                             <modelPackage>org.jlawyer.generated.model</modelPackage>
                             <invokerPackage>org.jlawyer.generated.invoker</invokerPackage>
+
                             <validateSpec>false</validateSpec>
                             <skipValidateSpec>true</skipValidateSpec>
+
+                            <!-- WICHTIG: jakarta statt javax Annotationen -->
+                            <useJakartaEe>true</useJakartaEe>
+
                             <configOptions>
                                 <dateLibrary>java8</dateLibrary>
+                                <!-- keine javax.annotation.Generated -->
+                                <annotationLibrary>none</annotationLibrary>
                             </configOptions>
-                            
-                            <skipDefaultInterface>true</skipDefaultInterface> <!-- optional -->
-                            <useJakartaEe>false</useJakartaEe> <!-- nur relevant bei Jakarta -->
-                            <generateMetadata>false</generateMetadata> <!-- optional -->
-                            <additionalProperties>
-                                <hideGenerationTimestamp>true</hideGenerationTimestamp>
-                                <useJakartaEe>false</useJakartaEe>
-                                <useJavaxAnnotation>false</useJavaxAnnotation> <!-- ✅ verhindert javax.annotation -->
-                            </additionalProperties>
-                            
                         </configuration>
                     </execution>
                 </executions>
