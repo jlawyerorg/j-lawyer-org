@@ -10,6 +10,7 @@
         <maven.compiler.source>17</maven.compiler.source>
         <maven.compiler.target>17</maven.compiler.target>
     </properties>
+    
     <dependencies>
         <dependency>
             <groupId>io.modelcontextprotocol.sdk</groupId>
@@ -27,4 +28,45 @@
             <version>12.0.18</version>
         </dependency>
     </dependencies>
+    <build>
+        <plugins>
+            <plugin>
+                <groupId>org.openapitools</groupId>
+                <artifactId>openapi-generator-maven-plugin</artifactId>
+                <version>7.4.0</version>
+                <executions>
+                    <execution>
+                        <id>generate-rest-client</id>
+                        <goals>
+                            <goal>generate</goal>
+                        </goals>
+                        <configuration>
+                            <!-- Pfad zu deiner lokal gespeicherten swagger.json -->
+                            <inputSpec>${project.basedir}/src/main/resources/swagger-jlawyer.json</inputSpec>
+                            <generatorName>java</generatorName>
+                            <library>resttemplate</library> <!-- oder okhttp, feign, etc. -->
+                            <apiPackage>org.jlawyer.generated.api</apiPackage>
+                            <modelPackage>org.jlawyer.generated.model</modelPackage>
+                            <invokerPackage>org.jlawyer.generated.invoker</invokerPackage>
+                            <validateSpec>false</validateSpec>
+                            <skipValidateSpec>true</skipValidateSpec>
+                            <configOptions>
+                                <dateLibrary>java8</dateLibrary>
+                            </configOptions>
+                            
+                            <skipDefaultInterface>true</skipDefaultInterface> <!-- optional -->
+                            <useJakartaEe>false</useJakartaEe> <!-- nur relevant bei Jakarta -->
+                            <generateMetadata>false</generateMetadata> <!-- optional -->
+                            <additionalProperties>
+                                <hideGenerationTimestamp>true</hideGenerationTimestamp>
+                                <useJakartaEe>false</useJakartaEe>
+                                <useJavaxAnnotation>false</useJavaxAnnotation> <!-- ✅ verhindert javax.annotation -->
+                            </additionalProperties>
+                            
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
+        </plugins>
+    </build>
 </project>

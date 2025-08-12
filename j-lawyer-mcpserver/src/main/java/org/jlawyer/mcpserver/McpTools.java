@@ -679,17 +679,6 @@ public class McpTools {
         this.mcpService = mcpService;
     }
 
-//    public McpServerFeatures.SyncToolSpecification paidInvoicesCount() {
-//        return noParamsToolSpec("get-paid-invoices-count",
-//                "Retrieves the number of paid invoices",
-//                invoiceService::countPaidInvoices);
-//    }
-// 
-//    public McpServerFeatures.SyncToolSpecification totalPaidAmount() {
-//        return noParamsToolSpec("get-total-paid-amount",
-//                "Returns the total invoice paid amount",
-//                invoiceService::totalPaidAmount);
-//    }
     public McpServerFeatures.SyncToolSpecification allInvoices() {
         return noParamsToolSpec("get-all-invoices",
                 "Retrieves all invoices",
