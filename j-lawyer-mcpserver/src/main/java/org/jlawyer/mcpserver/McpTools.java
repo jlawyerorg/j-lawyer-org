@@ -40,7 +40,7 @@ letting the public access it on a server without ever releasing its
 source code to the public.
 
   The GNU Affero General Public License is designed specifically to
-ensure that, in such cases, the modified source code becomes available
+ensure that, in such getAllCases, the modified source code becomes available
 to the community.  It requires the operator of a network server to
 provide the source code of the modified version running there to the
 users of that server.  Therefore, public use of a modified version, on
@@ -286,7 +286,7 @@ included in conveying the object code work.
 tangible personal property which is normally used for personal, family,
 or household purposes, or (2) anything designed or sold for incorporation
 into a dwelling.  In determining whether a product is a consumer product,
-doubtful cases shall be resolved in favor of coverage.  For a particular
+doubtful getAllCases shall be resolved in favor of coverage.  For a particular
 product received by a particular user, "normally used" refers to a
 typical or common use of that class of product, regardless of the status
 of the particular user or of the way in which the particular user
@@ -342,7 +342,7 @@ this License without regard to the additional permissions.
   When you convey a copy of a covered work, you may at your option
 remove any additional permissions from that copy, or from any part of
 it.  (Additional permissions may be written to require their own
-removal in certain cases when you modify the work.)  You may place
+removal in certain getAllCases when you modify the work.)  You may place
 additional permissions on material, added by you to a covered work,
 for which you have or can give appropriate copyright permission.
 
@@ -662,10 +662,14 @@ For more information on this, and how to apply and follow the GNU AGPL, see
  */
 package org.jlawyer.mcpserver;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import io.modelcontextprotocol.server.McpServerFeatures;
 import io.modelcontextprotocol.spec.McpSchema;
 import java.util.List;
+import java.util.Map;
 import java.util.function.Supplier;
+import org.jlawyer.generated.model.RestfulCaseOverviewV1;
+import org.jlawyer.generated.model.RestfulCaseV2;
 
 /**
  *
@@ -673,16 +677,75 @@ import java.util.function.Supplier;
  */
 public class McpTools {
 
+    private static final ObjectMapper objectMapper = new ObjectMapper();
+
     private final McpService mcpService;
 
     public McpTools(McpService mcpService) {
         this.mcpService = mcpService;
     }
 
-    public McpServerFeatures.SyncToolSpecification allInvoices() {
-        return noParamsToolSpec("get-all-invoices",
-                "Retrieves all invoices",
-                mcpService::invoices);
+//    public McpServerFeatures.SyncToolSpecification allCases() {
+//        return noParamsToolSpec("get-all-getAllCases",
+//                "Gibt alle Akten und deren Attribute zurück.",
+//                mcpService::getAllCases);
+//    }
+    public McpServerFeatures.SyncToolSpecification allCases() {
+        return noParamsToolSpec(
+                "get-all-cases",
+                "Gibt alle Akten - unabhängig von ihrem Status - und deren Attribute (Änderungsdatum, externe Kennung, Aktenzeichen, ID, Name/Rubrum und Beschreibung) zurück.",
+                () -> {
+                    List<RestfulCaseOverviewV1> cases = mcpService.getAllCases();
+
+                    // Schema-Beschreibung für das LLM
+                    Map<String, String> schemaDescription = Map.of(
+                            "dateChanged", "Datum und Uhrzeit der letzten Änderung an dieser Akte (Format abhängig vom System, oft ISO-8601)",
+                            "externalId", "Externe Kennung der Akte, z. B. aus einem Fremdsystem oder Import",
+                            "fileNumber", "Aktenzeichen bzw. Aktennummer im internen System",
+                            "id", "Eindeutige technische ID der Akte im System",
+                            "name", "Kurzrubrum, Rubrum, Bezeichnung oder Titel der Akte",
+                            "reason", "Grund oder Anlass für die Erstellung der Akte, beschreibt oftmals den Beweggrund / Streitgegenstand des Mandanten"
+                    );
+
+                    // Paket für das LLM: enthält Schema + Daten
+                    Map<String, Object> llmPayload = Map.of(
+                            "description", "Liste aller Akten mit Felderklärung.",
+                            "schema", schemaDescription,
+                            "data", cases
+                    );
+
+                    return llmPayload;
+                }
+        );
+    }
+
+    public McpServerFeatures.SyncToolSpecification allActiveCases() {
+        return noParamsToolSpec(
+                "get-all-active-cases",
+                "Gibt alle aktiven Akten und deren Attribute (Änderungsdatum, externe Kennung, Aktenzeichen, ID, Name/Rubrum und Beschreibung) zurück. Abgelegte / archivierte Akten werden nicht zurückgegeben.",
+                () -> {
+                    List<RestfulCaseOverviewV1> cases = mcpService.getAllActiveCases();
+
+                    // Schema-Beschreibung für das LLM
+                    Map<String, String> schemaDescription = Map.of(
+                            "dateChanged", "Datum und Uhrzeit der letzten Änderung an dieser Akte (Format abhängig vom System, oft ISO-8601)",
+                            "externalId", "Externe Kennung der Akte, z. B. aus einem Fremdsystem oder Import",
+                            "fileNumber", "Aktenzeichen bzw. Aktennummer im internen System",
+                            "id", "Eindeutige technische ID der Akte im System",
+                            "name", "Kurzrubrum, Rubrum, Bezeichnung oder Titel der Akte",
+                            "reason", "Grund oder Anlass für die Erstellung der Akte, beschreibt oftmals den Beweggrund / Streitgegenstand des Mandanten"
+                    );
+
+                    // Paket für das LLM: enthält Schema + Daten
+                    Map<String, Object> llmPayload = Map.of(
+                            "description", "Liste aller Akten mit Felderklärung.",
+                            "schema", schemaDescription,
+                            "data", cases
+                    );
+
+                    return llmPayload;
+                }
+        );
     }
 
     private McpServerFeatures.SyncToolSpecification noParamsToolSpec(String name,
@@ -707,31 +770,90 @@ public class McpTools {
         );
     }
 
-    public McpServerFeatures.SyncToolSpecification invoicesByPattern() {
+//    public McpServerFeatures.SyncToolSpecification getCase() {
+//        String schema = "{\n"
+//                + "  \"type\": \"object\",\n"
+//                + "  \"properties\": {\n"
+//                + "    \"caseId\": {\n"
+//                + "      \"type\": \"string\"\n"
+//                + "    }\n"
+//                + "  },\n"
+//                + "  \"required\": [\"caseId\"]\n"
+//                + "}";
+//
+//        return new McpServerFeatures.SyncToolSpecification(
+//                new McpSchema.Tool("get-case-by-id",
+//                        "Liefert Detaildaten zu einer Akte anhand einer übergebenen ID",
+//                        schema),
+//                (exchange, args) -> {
+//                    String caseId = (String) args.get("caseId");
+//                    RestfulCaseV2 result = mcpService.getCase(caseId);
+//
+//                    return McpSchema.CallToolResult.builder()
+//                            .content(List.of(new McpSchema.TextContent(result.toString())))
+//                            .isError(false)
+//                            .build();
+//                }
+//        );
+//    }
+    public McpServerFeatures.SyncToolSpecification getCase() {
         String schema = "{\n"
                 + "  \"type\": \"object\",\n"
                 + "  \"properties\": {\n"
-                + "    \"pattern\": {\n"
+                + "    \"caseId\": {\n"
                 + "      \"type\": \"string\"\n"
                 + "    }\n"
                 + "  },\n"
-                + "  \"required\": [\"pattern\"]\n"
+                + "  \"required\": [\"caseId\"]\n"
                 + "}";
 
         return new McpServerFeatures.SyncToolSpecification(
-                new McpSchema.Tool("get-invoices-by-pattern-on-number",
-                        "Retrieves invoices whose numbers contain a provided pattern",
+                new McpSchema.Tool("get-case-by-id",
+                        "Liefert Detaildaten zu einer Akte anhand einer übergebenen ID",
                         schema),
                 (exchange, args) -> {
-                    String pattern = (String) args.get("pattern");
-                    List<String> result = mcpService.invoices(pattern);
+                    String caseId = (String) args.get("caseId");
+                    RestfulCaseV2 result = mcpService.getCase(caseId);
 
-                    return McpSchema.CallToolResult.builder()
-                            .content(List.of(new McpSchema.TextContent(result.toString())))
-                            .isError(false)
-                            .build();
+                    Map<String, Object> llmPayload = Map.of(
+                            "description", "Detaildaten der Akte mit Felderklärung.",
+                            "schema", Map.ofEntries(
+                                    Map.entry("archived", "Archivierungsstatus der Akte, typischerweise 0 (nicht archiviert) oder 1 (archiviert)"),
+                                    Map.entry("assistant", "Name des unterstützenden Mitarbeiters oder Assistenten"),
+                                    Map.entry("claimNumber", "Schadennummer, Nummer der Forderung oder des Anspruchs, falls relevant"),
+                                    Map.entry("claimValue", "Gegenstandswert oder Schadenwert, Wert der Forderung in Geldeinheiten (Zahl)"),
+                                    Map.entry("custom1", "Benutzerdefiniertes Feld 1, zur freien Verwendung"),
+                                    Map.entry("custom2", "Benutzerdefiniertes Feld 2, zur freien Verwendung"),
+                                    Map.entry("custom3", "Benutzerdefiniertes Feld 3, zur freien Verwendung"),
+                                    Map.entry("dateCreated", "Datum und Uhrzeit der Erstellung der Akte (oft ISO-8601, kann leer sein)"),
+                                    Map.entry("dateUpdated", "Datum und Uhrzeit der letzten Aktualisierung der Akte (oft ISO-8601, kann leer sein)"),
+                                    Map.entry("externalId", "Externe Kennung der Akte, z.B. aus einem Fremdsystem"),
+                                    Map.entry("fileNumber", "Aktenzeichen oder Aktennummer im internen System"),
+                                    Map.entry("group", "Zugeordnete Gruppe oder Abteilung für die Akte"),
+                                    Map.entry("id", "Eindeutige technische ID der Akte im System"),
+                                    Map.entry("lawyer", "Name des verantwortlichen Anwalts"),
+                                    Map.entry("name", "Kurzrubrum oder Titel der Akte"),
+                                    Map.entry("notice", "Zusätzliche Hinweise oder Bemerkungen zur Akte"),
+                                    Map.entry("reason", "Grund oder Anlass für die Erstellung der Akte"),
+                                    Map.entry("subjectField", "Sachgebiet / Rechtsgebiet / fachliches Themengebiet oder Betreff der Akte")
+                            ),
+                            "data", result
+                    );
+
+                    try {
+                        String jsonPayload = objectMapper.writeValueAsString(llmPayload);
+
+                        return McpSchema.CallToolResult.builder()
+                                .content(List.of(new McpSchema.TextContent(jsonPayload)))
+                                .isError(false)
+                                .build();
+                    } catch (Exception ex) {
+                        ex.printStackTrace();
+                        return null;
+                    }
                 }
         );
+
     }
 
 }

@@ -81,6 +81,34 @@
             <artifactId>commons-logging</artifactId>
             <version>1.2</version>
         </dependency>
+        
+        <dependency>
+            <groupId>com.google.code.gson</groupId>
+            <artifactId>gson</artifactId>
+            <version>2.13.1</version>
+        </dependency>
+        <dependency>
+            <groupId>io.gsonfire</groupId>
+            <artifactId>gson-fire</artifactId>
+            <version>1.9.0</version>
+        </dependency>
+        
+        <dependency>
+            <groupId>com.squareup.okhttp3</groupId>
+            <artifactId>okhttp</artifactId>
+            <version>5.0.0-alpha.11</version>
+        </dependency>
+        <dependency>
+            <groupId>com.squareup.okhttp3</groupId>
+            <artifactId>logging-interceptor</artifactId>
+            <version>5.0.0-alpha.11</version>
+        </dependency>
+        
+        <dependency>
+            <groupId>com.google.code.findbugs</groupId>
+            <artifactId>jsr305</artifactId>
+            <version>3.0.2</version>
+        </dependency>
 
         <!-- dependency>
             <groupId>org.openapitools</groupId>
@@ -91,7 +119,7 @@
     </dependencies>
     <build>
         <plugins>
-            <plugin>
+            <!-- plugin>
                 <groupId>org.openapitools</groupId>
                 <artifactId>openapi-generator-maven-plugin</artifactId>
                 <version>7.4.0</version>
@@ -112,14 +140,42 @@
                             <validateSpec>false</validateSpec>
                             <skipValidateSpec>true</skipValidateSpec>
 
-                            <!-- WICHTIG: jakarta statt javax Annotationen -->
                             <useJakartaEe>true</useJakartaEe>
 
                             <configOptions>
                                 <dateLibrary>java8</dateLibrary>
-                                <!-- keine javax.annotation.Generated -->
                                 <annotationLibrary>none</annotationLibrary>
                             </configOptions>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin -->
+            
+            <plugin>
+                <groupId>org.openapitools</groupId>
+                <artifactId>openapi-generator-maven-plugin</artifactId>
+                <version>7.0.1</version>
+                <executions>
+                    <execution>
+                        <goals>
+                            <goal>generate</goal>
+                        </goals>
+                        <configuration>
+                            <inputSpec>${project.basedir}/src/main/resources/swagger-jlawyer.json</inputSpec>
+                            <skipValidateSpec>true</skipValidateSpec>
+                            <generatorName>java</generatorName>
+                            <apiPackage>org.jlawyer.generated.api</apiPackage>
+                            <modelPackage>org.jlawyer.generated.model</modelPackage>
+                            <invokerPackage>org.jlawyer.generated.invoker</invokerPackage>
+                            <configOptions>
+                                <dateLibrary>java8</dateLibrary>
+                            </configOptions>
+                            <typeMappings>
+                                <typeMapping>String=java.lang.String</typeMapping>
+                            </typeMappings>
+                            <importMappings>
+                                <importMapping>String=java.lang.String</importMapping>
+                            </importMappings>
                         </configuration>
                     </execution>
                 </executions>

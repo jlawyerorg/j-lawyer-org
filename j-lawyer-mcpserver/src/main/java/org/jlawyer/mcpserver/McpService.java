@@ -40,7 +40,7 @@ letting the public access it on a server without ever releasing its
 source code to the public.
 
   The GNU Affero General Public License is designed specifically to
-ensure that, in such cases, the modified source code becomes available
+ensure that, in such getAllCases, the modified source code becomes available
 to the community.  It requires the operator of a network server to
 provide the source code of the modified version running there to the
 users of that server.  Therefore, public use of a modified version, on
@@ -286,7 +286,7 @@ included in conveying the object code work.
 tangible personal property which is normally used for personal, family,
 or household purposes, or (2) anything designed or sold for incorporation
 into a dwelling.  In determining whether a product is a consumer product,
-doubtful cases shall be resolved in favor of coverage.  For a particular
+doubtful getAllCases shall be resolved in favor of coverage.  For a particular
 product received by a particular user, "normally used" refers to a
 typical or common use of that class of product, regardless of the status
 of the particular user or of the way in which the particular user
@@ -342,7 +342,7 @@ this License without regard to the additional permissions.
   When you convey a copy of a covered work, you may at your option
 remove any additional permissions from that copy, or from any part of
 it.  (Additional permissions may be written to require their own
-removal in certain cases when you modify the work.)  You may place
+removal in certain getAllCases when you modify the work.)  You may place
 additional permissions on material, added by you to a covered work,
 for which you have or can give appropriate copyright permission.
 
@@ -662,21 +662,74 @@ For more information on this, and how to apply and follow the GNU AGPL, see
  */
 package org.jlawyer.mcpserver;
 
+import java.util.ArrayList;
 import java.util.List;
+import org.jlawyer.generated.api.DefaultApi;
+import org.jlawyer.generated.invoker.ApiClient;
+import org.jlawyer.generated.invoker.ApiException;
+import org.jlawyer.generated.model.RestfulCaseOverviewV1;
+import org.jlawyer.generated.model.RestfulCaseV2;
 
 /**
  *
  * @author jens
  */
 public class McpService {
- 
-    public List<String> invoices() {
-        return List.of("1","2");
+    
+    private DefaultApi api=null;
+    
+    public McpService(String baseUrl, String username, String password) {
+        ApiClient client = new ApiClient();
+
+        // Basis-URL setzen
+        client.setBasePath(baseUrl);
+
+        // Basic-Auth konfigurieren
+        client.setUsername(username);
+        client.setPassword(password);
+
+        // API-Instanz erstellen
+        this.api = new DefaultApi(client);
     }
-     
-    public List<String> invoices(String pattern) {
-        return List.of("1","2");
-    }
  
+    public List<RestfulCaseOverviewV1> getAllCases() {
+        //return List.of("1","2");
+        
+        try {
+            List<RestfulCaseOverviewV1> cases= this.api.v1CasesListGet();
+            return cases;
+        } catch (ApiException e) {
+            System.err.println("API-Aufruf fehlgeschlagen: " + e.getMessage());
+            e.printStackTrace();
+            return new ArrayList<>();
+        }
+    }
+    
+    public List<RestfulCaseOverviewV1> getAllActiveCases() {
+        //return List.of("1","2");
+        
+        try {
+            List<RestfulCaseOverviewV1> cases= this.api.v1CasesListActiveGet();
+            return cases;
+        } catch (ApiException e) {
+            System.err.println("API-Aufruf fehlgeschlagen: " + e.getMessage());
+            e.printStackTrace();
+            return new ArrayList<>();
+        }
+    }
+    
+    public RestfulCaseV2 getCase(String caseId) {
+        //return List.of("1","2");
+        
+        try {
+            RestfulCaseV2 c= this.api.v2CasesIdGet(caseId);
+            return c;
+        } catch (ApiException e) {
+            System.err.println("API-Aufruf fehlgeschlagen: " + e.getMessage());
+            e.printStackTrace();
+            return null;
+        }
+    }
+    
     
 }

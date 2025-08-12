@@ -23,8 +23,7 @@ import org.eclipse.jetty.util.thread.QueuedThreadPool;
 public class JlawyerMcpServer {
 
     /**
-     * test: ollmcp installieren MCP-server hinzufügen / nutzen: ollmcp
-     * --mcp-server-url http://localhost:45450/sse
+     * test: ollmcp installieren MCP-server hinzufügen / nutzen: ollmcp --mcp-server-url http://localhost:45450/sse
      *
      *
      *
@@ -37,10 +36,10 @@ public class JlawyerMcpServer {
                     = new HttpServletSseServerTransportProvider(
                             new ObjectMapper(), "/", "/sse");
 
-            McpTools mcpTools = new McpTools(new McpService());
+            McpTools mcpTools = new McpTools(new McpService("http://localhost:8080/j-lawyer-io/rest", "admin", "a"));
 
             McpSyncServer syncServer = McpServer.sync(transportProvider)
-                    .serverInfo("WildFly MCP", "1.0")
+                    .serverInfo("j-lawyer.org MCP Server", "1.0")
                     .capabilities(ServerCapabilities.builder()
                             .resources(false, true)
                             .tools(true)
@@ -49,8 +48,9 @@ public class JlawyerMcpServer {
                             .completions()
                             .build())
                     .tools(
-                            mcpTools.allInvoices(),
-                            mcpTools.invoicesByPattern())
+                            mcpTools.allCases(),
+                            mcpTools.allActiveCases(),
+                            mcpTools.getCase())
                     .build();
 
             QueuedThreadPool threadPool = new QueuedThreadPool();

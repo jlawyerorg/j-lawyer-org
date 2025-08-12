@@ -3506,7 +3506,7 @@
                         "headers": {
                         },
                         "schema": {
-                            "$ref": "#/definitions/String"
+                            "$ref": "#/definitions/CustomString"
                         }
                     },
                     "401": {
@@ -3624,7 +3624,7 @@
                         "schema": {
                             "type": "array",
                             "items": {
-                                "$ref": "#/definitions/String;>"
+                                "$ref": "#/definitions/CustomString"
                             }
                         }
                     },
@@ -5846,7 +5846,7 @@
                 }
             }
         },
-        "String": {
+        "CustomString": {
             "properties": {
                 "blank": {
                     "type": "boolean"
@@ -5857,10 +5857,6 @@
                 "empty": {
                     "type": "boolean"
                 }
-            }
-        },
-        "String;>": {
-            "properties": {
             }
         },
         "[": {
