@@ -32,11 +32,16 @@ public class JlawyerMcpServerCli {
      */
     public static void main(String[] args) {
         try {
+            
+            String baseUrl=args[0];
+            String user=args[1];
+            String password=args[2];
+            
             // Transport über stdin/stdout statt HTTP/SSE
             StdioServerTransportProvider transportProvider = new StdioServerTransportProvider(new ObjectMapper());
 
             McpTools mcpTools = new McpTools(
-                new McpService("http://192.168.178.140:8080/j-lawyer-io/rest", "admin", "a")
+                new McpService(baseUrl, user, password)
             );
 
             McpSyncServer syncServer = McpServer.sync(transportProvider)
@@ -51,7 +56,10 @@ public class JlawyerMcpServerCli {
                 .tools(
                     mcpTools.allCases(),
                     mcpTools.allActiveCases(),
-                    mcpTools.getCase()
+                    mcpTools.getCase(),
+                    mcpTools.searchCases(),
+                    mcpTools.getCaseDocuments(),
+                    mcpTools.getDocumentContent()
                 )
                 .build();
 

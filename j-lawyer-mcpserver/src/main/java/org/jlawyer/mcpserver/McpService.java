@@ -669,6 +669,9 @@ import org.jlawyer.generated.invoker.ApiClient;
 import org.jlawyer.generated.invoker.ApiException;
 import org.jlawyer.generated.model.RestfulCaseOverviewV1;
 import org.jlawyer.generated.model.RestfulCaseV2;
+import org.jlawyer.generated.model.RestfulDocumentContentV1;
+import org.jlawyer.generated.model.RestfulDocumentV1;
+import org.jlawyer.mcpserver.util.StringUtils;
 
 /**
  *
@@ -702,6 +705,22 @@ public class McpService {
         }
     }
     
+    public List<RestfulCaseOverviewV1> searchCases(String pattern) {
+        try {
+            List<RestfulCaseOverviewV1> allCases=this.api.v1CasesListGet();
+            List<RestfulCaseOverviewV1> hits=new ArrayList<>();
+            for(RestfulCaseOverviewV1 co: allCases) {
+                if(StringUtils.nonEmpty(co.getFileNumber()).toLowerCase().contains(pattern.toLowerCase()) || StringUtils.nonEmpty(co.getId()).toLowerCase().contains(pattern.toLowerCase()) || StringUtils.nonEmpty(co.getName()).toLowerCase().contains(pattern.toLowerCase()) || StringUtils.nonEmpty(co.getReason()).toLowerCase().contains(pattern.toLowerCase()))
+                    hits.add(co);
+            }
+            return hits;
+        } catch (ApiException e) {
+            System.err.println("API-Aufruf fehlgeschlagen: " + e.getMessage());
+            e.printStackTrace();
+            return new ArrayList<>();
+        }
+    }
+    
     public List<RestfulCaseOverviewV1> getAllActiveCases() {
         try {
             return this.api.v1CasesListActiveGet();
@@ -715,6 +734,26 @@ public class McpService {
     public RestfulCaseV2 getCase(String caseId) {
         try {
             return this.api.v2CasesIdGet(caseId);
+        } catch (ApiException e) {
+            System.err.println("API-Aufruf fehlgeschlagen: " + e.getMessage());
+            e.printStackTrace();
+            return null;
+        }
+    }
+    
+    public List<RestfulDocumentV1> getCaseDocuments(String caseId) {
+        try {
+            return this.api.v1CasesIdDocumentsGet(caseId);
+        } catch (ApiException e) {
+            System.err.println("API-Aufruf fehlgeschlagen: " + e.getMessage());
+            e.printStackTrace();
+            return null;
+        }
+    }
+    
+    public RestfulDocumentContentV1 getDocumentContent(String documentId) {
+        try {
+            return this.api.v1CasesDocumentIdContentGet(documentId);
         } catch (ApiException e) {
             System.err.println("API-Aufruf fehlgeschlagen: " + e.getMessage());
             e.printStackTrace();

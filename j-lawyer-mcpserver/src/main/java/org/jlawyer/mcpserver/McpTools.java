@@ -670,6 +670,8 @@ import java.util.Map;
 import java.util.function.Supplier;
 import org.jlawyer.generated.model.RestfulCaseOverviewV1;
 import org.jlawyer.generated.model.RestfulCaseV2;
+import org.jlawyer.generated.model.RestfulDocumentContentV1;
+import org.jlawyer.generated.model.RestfulDocumentV1;
 
 /**
  *
@@ -838,6 +840,160 @@ public class McpTools {
                                     Map.entry("subjectField", "Sachgebiet / Rechtsgebiet / fachliches Themengebiet oder Betreff der Akte")
                             ),
                             "data", result
+                    );
+
+                    try {
+                        String jsonPayload = objectMapper.writeValueAsString(llmPayload);
+
+                        return McpSchema.CallToolResult.builder()
+                                .content(List.of(new McpSchema.TextContent(jsonPayload)))
+                                .isError(false)
+                                .build();
+                    } catch (Exception ex) {
+                        ex.printStackTrace();
+                        return null;
+                    }
+                }
+        );
+
+    }
+
+    public McpServerFeatures.SyncToolSpecification searchCases() {
+        String schema = "{\n"
+                + "  \"type\": \"object\",\n"
+                + "  \"properties\": {\n"
+                + "    \"pattern\": {\n"
+                + "      \"type\": \"string\"\n"
+                + "    }\n"
+                + "  },\n"
+                + "  \"required\": [\"pattern\"]\n"
+                + "}";
+
+        return new McpServerFeatures.SyncToolSpecification(
+                new McpSchema.Tool("search-cases",
+                        "Findet Akten anhand einer Suchanfrage / eines Patterns. Das Pattern kann ein Aktenzeichen, eine ID, das Rubrum oder der Titel der Akte, der Grund oder Anlass für die Erstellung der Akte sein.",
+                        schema),
+                (exchange, args) -> {
+                    String pattern = (String) args.get("pattern");
+                    List<RestfulCaseOverviewV1> cases = mcpService.searchCases(pattern);
+
+                    Map<String, Object> llmPayload = Map.of(
+                            "description", "Liste der anhand des Patterns gefundenen Akten mit Felderklärung.",
+                            "schema", Map.of(
+                                    "dateChanged", "Datum und Uhrzeit der letzten Änderung an dieser Akte (Format abhängig vom System, oft ISO-8601)",
+                                    "externalId", "Externe Kennung der Akte, z. B. aus einem Fremdsystem oder Import",
+                                    "fileNumber", "Aktenzeichen bzw. Aktennummer im internen System",
+                                    "id", "Eindeutige technische ID der Akte im System",
+                                    "name", "Kurzrubrum, Rubrum, Bezeichnung oder Titel der Akte",
+                                    "reason", "Grund oder Anlass für die Erstellung der Akte, beschreibt oftmals den Beweggrund / Streitgegenstand des Mandanten"
+                            ),
+                            "data", cases
+                    );
+
+                    try {
+                        String jsonPayload = objectMapper.writeValueAsString(llmPayload);
+
+                        return McpSchema.CallToolResult.builder()
+                                .content(List.of(new McpSchema.TextContent(jsonPayload)))
+                                .isError(false)
+                                .build();
+                    } catch (Exception ex) {
+                        ex.printStackTrace();
+                        return null;
+                    }
+                }
+        );
+
+    }
+
+    public McpServerFeatures.SyncToolSpecification getCaseDocuments() {
+        String schema = "{\n"
+                + "  \"type\": \"object\",\n"
+                + "  \"properties\": {\n"
+                + "    \"caseId\": {\n"
+                + "      \"type\": \"string\"\n"
+                + "    }\n"
+                + "  },\n"
+                + "  \"required\": [\"caseId\"]\n"
+                + "}";
+
+        return new McpServerFeatures.SyncToolSpecification(
+                new McpSchema.Tool("get-documents-for-case",
+                        "Liefert eine Liste der Dokumente einer Akte. Die ID der Akte wird als Parameter benötigt. Das Ergebnis enthält nur die Metadaten der Dokumente, nicht den Inhalt.",
+                        schema),
+                (exchange, args) -> {
+                    String caseId = (String) args.get("caseId");
+                    List<RestfulDocumentV1> documents = mcpService.getCaseDocuments(caseId);
+
+                    Map<String, String> descriptions = Map.ofEntries(
+                            Map.entry("changeDate", "Datum und Uhrzeit der letzten Änderung des Dokuments (Format abhängig vom System, oft ISO-8601)"),
+                            Map.entry("creationDate", "Datum und Uhrzeit der Erstellung des Dokuments (Format abhängig vom System, oft ISO-8601)"),
+                            Map.entry("externalId", "Externe Kennung des Dokuments, z. B. aus einem Fremdsystem oder Import"),
+                            Map.entry("favorite", "boolescher Wert, true wenn das Dokument als Favorit gekennzeichnet ist"),
+                            Map.entry("folderId", "Eindeutige technische ID des Ordners, in welchem sich das Dokument befindet"),
+                            Map.entry("highlight1", "Farbe 1: der numerische RGB-Wert eines java.awt.Color-Objekts, mit welchem das Dokument farbig markiert wurde"),
+                            Map.entry("highlight2", "Farbe 2: der numerische RGB-Wert eines java.awt.Color-Objekts, mit welchem das Dokument farbig markiert wurde"),
+                            Map.entry("id", "Eindeutige technische ID des Dokuments"),
+                            Map.entry("name", "Dateiname des Dokuments"),
+                            Map.entry("size", "Größe des Dokuments in Bytes"),
+                            Map.entry("version", "Version des Dokuments")
+                    );
+
+                    Map<String, Object> llmPayload = Map.of(
+                            "description", "Liste der anhand des Patterns gefundenen Akten mit Felderklärung.",
+                            "schema", descriptions,
+                            "data", documents
+                    );
+
+                    try {
+                        String jsonPayload = objectMapper.writeValueAsString(llmPayload);
+
+                        return McpSchema.CallToolResult.builder()
+                                .content(List.of(new McpSchema.TextContent(jsonPayload)))
+                                .isError(false)
+                                .build();
+                    } catch (Exception ex) {
+                        ex.printStackTrace();
+                        return null;
+                    }
+                }
+        );
+
+    }
+    
+    public McpServerFeatures.SyncToolSpecification getDocumentContent() {
+        String schema = "{\n"
+                + "  \"type\": \"object\",\n"
+                + "  \"properties\": {\n"
+                + "    \"documentId\": {\n"
+                + "      \"type\": \"string\"\n"
+                + "    }\n"
+                + "  },\n"
+                + "  \"required\": [\"documentId\"]\n"
+                + "}";
+
+        return new McpServerFeatures.SyncToolSpecification(
+                new McpSchema.Tool("get-documents-content",
+                        "Liefert die Metadaten UND den Inhalt eines bestimmten Dokuments einer Akte. Die ID des Dokuments wird als Parameter benötigt.",
+                        schema),
+                (exchange, args) -> {
+                    String documentId = (String) args.get("documentId");
+                    RestfulDocumentContentV1 content = mcpService.getDocumentContent(documentId);
+
+                    Map<String, String> descriptions = Map.ofEntries(
+                            Map.entry("base64content", "Der Inhalt des Dokuments als Base 64-kodiertes Byte-Array"),
+                            Map.entry("caseId", "ID der Akte, zu welcher das Dokument gehört"),
+                            Map.entry("externalId", "Externe Kennung des Dokuments, z. B. aus einem Fremdsystem oder Import"),
+                            Map.entry("fileName", "Dateiname des Dokuments"),
+                            Map.entry("folderId", "Eindeutige technische ID des Ordners, in welchem sich das Dokument befindet"),
+                            Map.entry("id", "Eindeutige technische ID des Dokuments"),
+                            Map.entry("version", "Version des Dokuments")
+                    );
+
+                    Map<String, Object> llmPayload = Map.of(
+                            "description", "Liste der anhand des Patterns gefundenen Akten mit Felderklärung.",
+                            "schema", descriptions,
+                            "data", content
                     );
 
                     try {
