@@ -673,13 +673,16 @@ import com.jdimension.jlawyer.persistence.Timesheet;
 import com.jdimension.jlawyer.persistence.TimesheetPosition;
 import com.jdimension.jlawyer.services.ArchiveFileServiceRemote;
 import com.jdimension.jlawyer.services.JLawyerServiceLocator;
+import java.awt.event.ActionEvent;
 import java.awt.event.MouseEvent;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.text.SimpleDateFormat;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import javax.swing.JDialog;
+import javax.swing.JMenuItem;
 import javax.swing.JOptionPane;
 import javax.swing.table.DefaultTableModel;
 import org.apache.log4j.Logger;
@@ -692,7 +695,8 @@ public class TimesheetBillingDialog extends javax.swing.JDialog {
 
     private static final Logger log = Logger.getLogger(TimesheetBillingDialog.class.getName());
 
-    private final Invoice invoice;
+    private Invoice invoice = null;
+    private String timesheetId = null;
 
     /**
      * Creates new form TimesheetBillingDialog
@@ -705,9 +709,13 @@ public class TimesheetBillingDialog extends javax.swing.JDialog {
     public TimesheetBillingDialog(JDialog parent, boolean modal, String caseId, Invoice invoice) {
         super(parent, modal);
         initComponents();
-        this.invoice=invoice;
-        
-        SimpleDateFormat df=new SimpleDateFormat("dd.MM.yyyy HH:mm");
+
+        this.cmdTransferPositions.setEnabled(false);
+        this.cmdBilling.setEnabled(true);
+
+        this.invoice = invoice;
+
+        SimpleDateFormat df = new SimpleDateFormat("dd.MM.yyyy HH:mm");
 
         ClientSettings settings = ClientSettings.getInstance();
         for (int i = ((DefaultTableModel) this.tblPositions.getModel()).getRowCount() - 1; i > -1; i--) {
@@ -721,11 +729,13 @@ public class TimesheetBillingDialog extends javax.swing.JDialog {
             for (Timesheet ts : timesheets) {
                 List<TimesheetPosition> positions = afs.getTimesheetPositions(ts.getId());
                 for (TimesheetPosition p : positions) {
-                    if(p.getStopped()==null)
+                    if (p.getStopped() == null) {
                         continue;
-                    if(p.getInvoice()!=null && !p.isEditingAllowed())
+                    }
+                    if (p.getInvoice() != null && !p.isEditingAllowed()) {
                         continue;
-                    
+                    }
+
                     Object[] row = new Object[7];
                     row[0] = false;
                     row[1] = p.getTimesheet().getName();
@@ -733,13 +743,69 @@ public class TimesheetBillingDialog extends javax.swing.JDialog {
                     row[3] = p.getDescription();
                     row[4] = p.getTotal();
                     row[5] = df.format(p.getStarted()) + " - " + df.format(p.getStopped());
-                    String invoiceInfo="";
-                    if(p.getInvoice()!=null) {
-                        invoiceInfo=p.getInvoice().getInvoiceNumber() + " (" + p.getInvoice().getStatusString() + (")");
+                    String invoiceInfo = "";
+                    if (p.getInvoice() != null) {
+                        invoiceInfo = p.getInvoice().getInvoiceNumber() + " (" + p.getInvoice().getStatusString() + (")");
                     }
                     row[6] = invoiceInfo;
                     ((DefaultTableModel) this.tblPositions.getModel()).addRow(row);
                 }
+            }
+
+        } catch (Exception ex) {
+            log.error("Error determining open timesheet positions", ex);
+            JOptionPane.showMessageDialog(this, "Fehler beim Laden der offenen Zeiterfassungseinträge: " + ex.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
+        }
+
+    }
+
+    /**
+     * Creates new form TimesheetBillingDialog
+     *
+     * @param parent
+     * @param timesheetId
+     */
+    public TimesheetBillingDialog(java.awt.Window parent, String timesheetId) {
+        super(parent);
+        initComponents();
+
+        this.cmdTransferPositions.setEnabled(true);
+        this.cmdBilling.setEnabled(false);
+
+        this.timesheetId = timesheetId;
+
+        SimpleDateFormat df = new SimpleDateFormat("dd.MM.yyyy HH:mm");
+
+        ClientSettings settings = ClientSettings.getInstance();
+        for (int i = ((DefaultTableModel) this.tblPositions.getModel()).getRowCount() - 1; i > -1; i--) {
+            ((DefaultTableModel) this.tblPositions.getModel()).removeRow(i);
+        }
+        try {
+            JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
+            ArchiveFileServiceRemote afs = locator.lookupArchiveFileServiceRemote();
+
+            List<TimesheetPosition> positions = afs.getTimesheetPositions(timesheetId);
+            for (TimesheetPosition p : positions) {
+                if (p.getStopped() == null) {
+                    continue;
+                }
+                if (p.getInvoice() != null) {
+                    continue;
+                }
+
+                Object[] row = new Object[7];
+                row[0] = false;
+                row[1] = p.getTimesheet().getName();
+                row[2] = p;
+                row[3] = p.getDescription();
+                row[4] = p.getTotal();
+                row[5] = df.format(p.getStarted()) + " - " + df.format(p.getStopped());
+                String invoiceInfo = "";
+                if (p.getInvoice() != null) {
+                    invoiceInfo = p.getInvoice().getInvoiceNumber() + " (" + p.getInvoice().getStatusString() + (")");
+                }
+                row[6] = invoiceInfo;
+                ((DefaultTableModel) this.tblPositions.getModel()).addRow(row);
             }
 
         } catch (Exception ex) {
@@ -761,12 +827,14 @@ public class TimesheetBillingDialog extends javax.swing.JDialog {
         popPositions = new javax.swing.JPopupMenu();
         mnuSelect = new javax.swing.JMenuItem();
         mnuDeselect = new javax.swing.JMenuItem();
+        popTimesheets = new javax.swing.JPopupMenu();
         cmdCancel = new javax.swing.JButton();
         cmdBilling = new javax.swing.JButton();
         jScrollPane1 = new javax.swing.JScrollPane();
         tblPositions = new javax.swing.JTable();
         cmdAll = new javax.swing.JButton();
         cmdNone = new javax.swing.JButton();
+        cmdTransferPositions = new javax.swing.JButton();
 
         mnuSelect.setText("abrechnen");
         mnuSelect.addActionListener(new java.awt.event.ActionListener() {
@@ -854,6 +922,14 @@ public class TimesheetBillingDialog extends javax.swing.JDialog {
             }
         });
 
+        cmdTransferPositions.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/editcopy3.png"))); // NOI18N
+        cmdTransferPositions.setText("in anderes Projekt verschieben");
+        cmdTransferPositions.addMouseListener(new java.awt.event.MouseAdapter() {
+            public void mousePressed(java.awt.event.MouseEvent evt) {
+                cmdTransferPositionsMousePressed(evt);
+            }
+        });
+
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(getContentPane());
         getContentPane().setLayout(layout);
         layout.setHorizontalGroup(
@@ -863,6 +939,8 @@ public class TimesheetBillingDialog extends javax.swing.JDialog {
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                     .addGroup(layout.createSequentialGroup()
                         .addGap(0, 0, Short.MAX_VALUE)
+                        .addComponent(cmdTransferPositions)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                         .addComponent(cmdBilling)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                         .addComponent(cmdCancel))
@@ -886,7 +964,8 @@ public class TimesheetBillingDialog extends javax.swing.JDialog {
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                     .addComponent(cmdCancel)
-                    .addComponent(cmdBilling))
+                    .addComponent(cmdBilling)
+                    .addComponent(cmdTransferPositions))
                 .addContainerGap())
         );
 
@@ -914,7 +993,7 @@ public class TimesheetBillingDialog extends javax.swing.JDialog {
 
     private void tblPositionsMouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_tblPositionsMouseClicked
         if (evt.getClickCount() == 1 && evt.getButton() == MouseEvent.BUTTON3) {
-            int selectionCount=this.tblPositions.getSelectedRowCount();
+            int selectionCount = this.tblPositions.getSelectedRowCount();
             if (selectionCount < 1) {
                 return;
             }
@@ -927,18 +1006,18 @@ public class TimesheetBillingDialog extends javax.swing.JDialog {
     }//GEN-LAST:event_tblPositionsMousePressed
 
     private void cmdBillingActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdBillingActionPerformed
-        
-        ClientSettings settings=ClientSettings.getInstance();
-        HashMap<String,InvoicePosition> aggregatedPositions=new HashMap<>();
+
+        ClientSettings settings = ClientSettings.getInstance();
+        HashMap<String, InvoicePosition> aggregatedPositions = new HashMap<>();
         for (int i = 0; i < this.tblPositions.getRowCount(); i++) {
-            Object o=this.tblPositions.getValueAt(i, 0);
-            if(o instanceof Boolean) {
-                boolean selected=((Boolean)o);
-                if(selected) {
-                    TimesheetPosition p=(TimesheetPosition)this.tblPositions.getValueAt(i, 2);
-                    String identifier=p.getName() + p.getUnitPrice()+p.getTaxRate();
-                    if(!aggregatedPositions.containsKey(identifier)) {
-                        InvoicePosition ip=new InvoicePosition();
+            Object o = this.tblPositions.getValueAt(i, 0);
+            if (o instanceof Boolean) {
+                boolean selected = ((Boolean) o);
+                if (selected) {
+                    TimesheetPosition p = (TimesheetPosition) this.tblPositions.getValueAt(i, 2);
+                    String identifier = p.getName() + p.getUnitPrice() + p.getTaxRate();
+                    if (!aggregatedPositions.containsKey(identifier)) {
+                        InvoicePosition ip = new InvoicePosition();
                         ip.setDescription("");
                         ip.setName(p.getName());
                         ip.setUnitPrice(p.getUnitPrice());
@@ -953,8 +1032,8 @@ public class TimesheetBillingDialog extends javax.swing.JDialog {
                     double roundedMinutes = Math.ceil(totalMinutes / p.getTimesheet().getInterval()) * p.getTimesheet().getInterval();
                     float roundedMinutesFloat = new Float(roundedMinutes);
                     //float total=roundedMinutesFloat/60f*unitPrice.floatValue();
-                    ip.setUnits(ip.getUnits().add(BigDecimal.valueOf(roundedMinutesFloat/60f)));
-                    
+                    ip.setUnits(ip.getUnits().add(BigDecimal.valueOf(roundedMinutesFloat / 60f)));
+
                     try {
                         JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
                         ArchiveFileServiceRemote afs = locator.lookupArchiveFileServiceRemote();
@@ -963,21 +1042,19 @@ public class TimesheetBillingDialog extends javax.swing.JDialog {
                         log.error("Error linking timesheet position with invoice", ex);
                         JOptionPane.showMessageDialog(this, "Fehler beim Verknüpfen des Zeiterfassungseintrages mit der Rechnung: " + ex.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
                     }
-                    
-                    
-                    
+
                 }
             } else {
                 log.error("unknown column type in column 0 of billing dialog");
             }
         }
-        
+
         EventBroker eb = EventBroker.getInstance();
         for (InvoicePosition p : aggregatedPositions.values()) {
             p.setUnits(p.getUnits().setScale(2, RoundingMode.CEILING));
             eb.publishEvent(new InvoicePositionAddedEvent(this.invoice.getId(), p));
         }
-        
+
         this.setVisible(false);
         this.dispose();
     }//GEN-LAST:event_cmdBillingActionPerformed
@@ -993,6 +1070,56 @@ public class TimesheetBillingDialog extends javax.swing.JDialog {
             this.tblPositions.setValueAt(false, i, 0);
         }
     }//GEN-LAST:event_cmdNoneActionPerformed
+
+    private void cmdTransferPositionsMousePressed(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_cmdTransferPositionsMousePressed
+        ClientSettings settings = ClientSettings.getInstance();
+        this.popTimesheets.removeAll();
+        try {
+            JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
+            ArchiveFileServiceRemote afs = locator.lookupArchiveFileServiceRemote();
+
+            List<Timesheet> sheets = afs.getOpenTimesheets();
+            for (Timesheet t : sheets) {
+                // no transfer to current sheet
+                if (t.getId().equals(this.timesheetId)) {
+                    continue;
+                }
+
+                JMenuItem mi = new JMenuItem();
+                mi.setText(t.getName() + " (" + t.getArchiveFileKey().getFileNumber() + " " + t.getArchiveFileKey().getName() + ")");
+                mi.addActionListener((ActionEvent arg0) -> {
+                    try {
+                        String newSheetId = t.getId();
+                        List<String> positionIds = new ArrayList<>();
+                        for (int i = 0; i < this.tblPositions.getRowCount(); i++) {
+                            Object o = this.tblPositions.getValueAt(i, 0);
+                            if (o instanceof Boolean) {
+                                boolean selected = ((Boolean) o);
+                                if (selected) {
+                                    TimesheetPosition p = (TimesheetPosition) this.tblPositions.getValueAt(i, 2);
+                                    positionIds.add(p.getId());
+                                }
+                            } else {
+                                log.error("unknown column type in column 0 of billing dialog");
+                            }
+                        }
+                        afs.transferTimesheetPositions(positionIds, newSheetId);
+                        this.setVisible(false);
+                        this.dispose();
+                    } catch (Exception ex) {
+                        log.error("Error transferring timesheet positions", ex);
+                        JOptionPane.showMessageDialog(this, "Fehler beim Verschieben der Zeiterfassungseinträge: " + ex.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
+                    }
+                });
+                this.popTimesheets.add(mi);
+            }
+
+        } catch (Exception ex) {
+            log.error("Error determining open timesheet positions", ex);
+            JOptionPane.showMessageDialog(this, "Fehler beim Laden der offenen Zeiterfassungseinträge: " + ex.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
+        }
+        this.popTimesheets.show(cmdTransferPositions, evt.getX(), evt.getY());
+    }//GEN-LAST:event_cmdTransferPositionsMousePressed
 
     /**
      * @param args the command line arguments
@@ -1039,10 +1166,12 @@ public class TimesheetBillingDialog extends javax.swing.JDialog {
     private javax.swing.JButton cmdBilling;
     private javax.swing.JButton cmdCancel;
     private javax.swing.JButton cmdNone;
+    private javax.swing.JButton cmdTransferPositions;
     private javax.swing.JScrollPane jScrollPane1;
     private javax.swing.JMenuItem mnuDeselect;
     private javax.swing.JMenuItem mnuSelect;
     private javax.swing.JPopupMenu popPositions;
+    private javax.swing.JPopupMenu popTimesheets;
     private javax.swing.JTable tblPositions;
     // End of variables declaration//GEN-END:variables
 }

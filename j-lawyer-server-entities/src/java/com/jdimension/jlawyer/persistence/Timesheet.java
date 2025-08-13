@@ -680,7 +680,7 @@ import javax.xml.bind.annotation.XmlRootElement;
 @NamedQueries({
     @NamedQuery(name = "Timesheet.findAll", query = "SELECT a FROM Timesheet a"),
     @NamedQuery(name = "Timesheet.findById", query = "SELECT a FROM Timesheet a WHERE a.id = :id"),
-    @NamedQuery(name = "Timesheet.findByStatus", query = "SELECT a FROM Timesheet a WHERE a.status = :status"),
+    @NamedQuery(name = "Timesheet.findByStatus", query = "SELECT a FROM Timesheet a WHERE a.status = :status order by a.name asc"),
     @NamedQuery(name = "Timesheet.findByArchiveFileKey", query = "SELECT a FROM Timesheet a WHERE a.archiveFileKey = :archiveFileKey order by a.status asc, a.name asc")})
 public class Timesheet implements Serializable {
        

@@ -903,6 +903,7 @@ public interface ArchiveFileServiceRemote {
 
     List<TimesheetPosition> getOpenTimesheetPositions(String principal) throws Exception;
     List<Timesheet> getOpenTimesheets(String caseId) throws Exception;
+    List<Timesheet> getOpenTimesheets() throws Exception;
 
     List<TimesheetPosition> getLastTimesheetPositions(String caseId, String principal) throws Exception;
 
@@ -925,6 +926,8 @@ public interface ArchiveFileServiceRemote {
     List<TimesheetPosition> getTimesheetPositionsForInvoice(String invoiceId) throws Exception;
 
     TimesheetPosition timesheetPositionAdd(String timesheetId, TimesheetPosition position) throws Exception;
+    
+    boolean transferTimesheetPositions(List<String> positionIds, String newTimesheetId) throws Exception;
 
     ArrayList<String> getAllArchiveFileNumbers() throws Exception;
 
