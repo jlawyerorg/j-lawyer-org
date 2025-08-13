@@ -693,11 +693,8 @@ public class McpService {
     }
  
     public List<RestfulCaseOverviewV1> getAllCases() {
-        //return List.of("1","2");
-        
         try {
-            List<RestfulCaseOverviewV1> cases= this.api.v1CasesListGet();
-            return cases;
+            return this.api.v1CasesListGet();
         } catch (ApiException e) {
             System.err.println("API-Aufruf fehlgeschlagen: " + e.getMessage());
             e.printStackTrace();
@@ -706,11 +703,8 @@ public class McpService {
     }
     
     public List<RestfulCaseOverviewV1> getAllActiveCases() {
-        //return List.of("1","2");
-        
         try {
-            List<RestfulCaseOverviewV1> cases= this.api.v1CasesListActiveGet();
-            return cases;
+            return this.api.v1CasesListActiveGet();
         } catch (ApiException e) {
             System.err.println("API-Aufruf fehlgeschlagen: " + e.getMessage());
             e.printStackTrace();
@@ -719,11 +713,8 @@ public class McpService {
     }
     
     public RestfulCaseV2 getCase(String caseId) {
-        //return List.of("1","2");
-        
         try {
-            RestfulCaseV2 c= this.api.v2CasesIdGet(caseId);
-            return c;
+            return this.api.v2CasesIdGet(caseId);
         } catch (ApiException e) {
             System.err.println("API-Aufruf fehlgeschlagen: " + e.getMessage());
             e.printStackTrace();
