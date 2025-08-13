@@ -20,7 +20,7 @@ import org.eclipse.jetty.util.thread.QueuedThreadPool;
  *
  * @author jens
  */
-public class JlawyerMcpServer {
+public class JlawyerMcpServerSse {
 
     /**
      * test: ollmcp installieren MCP-server hinzufügen / nutzen: ollmcp --mcp-server-url http://localhost:45450/sse
