@@ -662,7 +662,9 @@ For more information on this, and how to apply and follow the GNU AGPL, see
  */
 package org.jlawyer.mcpserver;
 
+import com.fasterxml.jackson.databind.node.ObjectNode;
 import java.util.ArrayList;
+import java.util.Base64;
 import java.util.List;
 import org.jlawyer.generated.api.DefaultApi;
 import org.jlawyer.generated.invoker.ApiClient;
@@ -678,9 +680,9 @@ import org.jlawyer.mcpserver.util.StringUtils;
  * @author jens
  */
 public class McpService {
-    
-    private DefaultApi api=null;
-    
+
+    private DefaultApi api = null;
+
     public McpService(String baseUrl, String username, String password) {
         ApiClient client = new ApiClient();
 
@@ -694,7 +696,7 @@ public class McpService {
         // API-Instanz erstellen
         this.api = new DefaultApi(client);
     }
- 
+
     public List<RestfulCaseOverviewV1> getAllCases() {
         try {
             return this.api.v1CasesListGet();
@@ -704,14 +706,15 @@ public class McpService {
             return new ArrayList<>();
         }
     }
-    
+
     public List<RestfulCaseOverviewV1> searchCases(String pattern) {
         try {
-            List<RestfulCaseOverviewV1> allCases=this.api.v1CasesListGet();
-            List<RestfulCaseOverviewV1> hits=new ArrayList<>();
-            for(RestfulCaseOverviewV1 co: allCases) {
-                if(StringUtils.nonEmpty(co.getFileNumber()).toLowerCase().contains(pattern.toLowerCase()) || StringUtils.nonEmpty(co.getId()).toLowerCase().contains(pattern.toLowerCase()) || StringUtils.nonEmpty(co.getName()).toLowerCase().contains(pattern.toLowerCase()) || StringUtils.nonEmpty(co.getReason()).toLowerCase().contains(pattern.toLowerCase()))
+            List<RestfulCaseOverviewV1> allCases = this.api.v1CasesListGet();
+            List<RestfulCaseOverviewV1> hits = new ArrayList<>();
+            for (RestfulCaseOverviewV1 co : allCases) {
+                if (StringUtils.nonEmpty(co.getFileNumber()).toLowerCase().contains(pattern.toLowerCase()) || StringUtils.nonEmpty(co.getId()).toLowerCase().contains(pattern.toLowerCase()) || StringUtils.nonEmpty(co.getName()).toLowerCase().contains(pattern.toLowerCase()) || StringUtils.nonEmpty(co.getReason()).toLowerCase().contains(pattern.toLowerCase())) {
                     hits.add(co);
+                }
             }
             return hits;
         } catch (ApiException e) {
@@ -720,7 +723,7 @@ public class McpService {
             return new ArrayList<>();
         }
     }
-    
+
     public List<RestfulCaseOverviewV1> getAllActiveCases() {
         try {
             return this.api.v1CasesListActiveGet();
@@ -730,27 +733,53 @@ public class McpService {
             return new ArrayList<>();
         }
     }
-    
+
     public RestfulCaseV2 getCase(String caseId) {
         try {
             return this.api.v2CasesIdGet(caseId);
         } catch (ApiException e) {
+
+            try {
+                // the LLM may have passed a file number instead
+                List<RestfulCaseOverviewV1> allCases = this.api.v1CasesListGet();
+                for (RestfulCaseOverviewV1 c : allCases) {
+                    if (c.getFileNumber().equalsIgnoreCase(caseId)) {
+                        return this.api.v2CasesIdGet(c.getId());
+                    }
+                }
+            } catch (Exception ex) {
+
+            }
+
             System.err.println("API-Aufruf fehlgeschlagen: " + e.getMessage());
             e.printStackTrace();
             return null;
         }
     }
-    
+
     public List<RestfulDocumentV1> getCaseDocuments(String caseId) {
         try {
             return this.api.v1CasesIdDocumentsGet(caseId);
         } catch (ApiException e) {
+            
+            try {
+                // the LLM may have passed a file number instead
+                List<RestfulCaseOverviewV1> allCases = this.api.v1CasesListGet();
+                for (RestfulCaseOverviewV1 c : allCases) {
+                    if (c.getFileNumber().equalsIgnoreCase(caseId)) {
+                        return this.api.v1CasesIdDocumentsGet(c.getId());
+                    }
+                }
+            } catch (Exception ex) {
+
+            }
+            
             System.err.println("API-Aufruf fehlgeschlagen: " + e.getMessage());
             e.printStackTrace();
             return null;
         }
     }
-    
+
     public RestfulDocumentContentV1 getDocumentContent(String documentId) {
         try {
             return this.api.v1CasesDocumentIdContentGet(documentId);
@@ -760,6 +789,5 @@ public class McpService {
             return null;
         }
     }
-    
-    
+
 }

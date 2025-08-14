@@ -663,8 +663,13 @@ For more information on this, and how to apply and follow the GNU AGPL, see
 package org.jlawyer.mcpserver;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 import io.modelcontextprotocol.server.McpServerFeatures;
 import io.modelcontextprotocol.spec.McpSchema;
+import java.io.File;
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.List;
 import java.util.Map;
 import java.util.function.Supplier;
@@ -811,7 +816,7 @@ public class McpTools {
 
         return new McpServerFeatures.SyncToolSpecification(
                 new McpSchema.Tool("get-case-by-id",
-                        "Liefert Detaildaten zu einer Akte anhand einer übergebenen ID",
+                        "Liefert Detaildaten zu einer Akte anhand einer übergebenen ID. Der übergebene Parameter muss zwingend eine ID sein, Aktenzeichen werden nicht unterstützt. ",
                         schema),
                 (exchange, args) -> {
                     String caseId = (String) args.get("caseId");
@@ -960,7 +965,7 @@ public class McpTools {
         );
 
     }
-    
+
     public McpServerFeatures.SyncToolSpecification getDocumentContent() {
         String schema = "{\n"
                 + "  \"type\": \"object\",\n"
@@ -974,26 +979,34 @@ public class McpTools {
 
         return new McpServerFeatures.SyncToolSpecification(
                 new McpSchema.Tool("get-documents-content",
-                        "Liefert die Metadaten UND den Inhalt eines bestimmten Dokuments einer Akte. Die ID des Dokuments wird als Parameter benötigt.",
+                        "Liefert den Inhalt eines bestimmten Dokuments als Datei zurück. Die ID des Dokuments wird als Parameter benötigt.",
                         schema),
                 (exchange, args) -> {
                     String documentId = (String) args.get("documentId");
                     RestfulDocumentContentV1 content = mcpService.getDocumentContent(documentId);
 
+                    ObjectNode fileNode = objectMapper.createObjectNode();
+                    fileNode.put("type", "file");
+                    fileNode.put("name", content.getFileName());
+                    fileNode.put("mediaType", getMediaType(content.getFileName()));
+                    fileNode.put("data", content.getBase64content());
+
+                    ObjectNode resultNode = objectMapper.createObjectNode();
+                    resultNode.putArray("content").add(fileNode);
+
+                    ObjectNode response = objectMapper.createObjectNode();
+                    response.put("jsonrpc", "2.0");
+                    response.put("id", documentId);
+                    response.set("result", resultNode);
+
                     Map<String, String> descriptions = Map.ofEntries(
-                            Map.entry("base64content", "Der Inhalt des Dokuments als Base 64-kodiertes Byte-Array"),
-                            Map.entry("caseId", "ID der Akte, zu welcher das Dokument gehört"),
-                            Map.entry("externalId", "Externe Kennung des Dokuments, z. B. aus einem Fremdsystem oder Import"),
-                            Map.entry("fileName", "Dateiname des Dokuments"),
-                            Map.entry("folderId", "Eindeutige technische ID des Ordners, in welchem sich das Dokument befindet"),
-                            Map.entry("id", "Eindeutige technische ID des Dokuments"),
-                            Map.entry("version", "Version des Dokuments")
+                            //Map.entry("content", "Der Inhalt des Dokuments als Byte-Array. Anhand der Dateiendung am 'fileName'-Attribut kann entschieden werden, wie die Datei dargestellt / interpretiert werden kann.")
                     );
 
                     Map<String, Object> llmPayload = Map.of(
-                            "description", "Liste der anhand des Patterns gefundenen Akten mit Felderklärung.",
+                            "description", "Liefert den Inhalt eines bestimmten Dokuments als Datei zurück",
                             "schema", descriptions,
-                            "data", content
+                            "data", response
                     );
 
                     try {
@@ -1010,6 +1023,20 @@ public class McpTools {
                 }
         );
 
+    }
+    
+    private static String getMediaType(String fileName) {
+        try {
+            Path path = new File(fileName).toPath();
+            String mimeType = Files.probeContentType(path);
+            // Fallback, falls probeContentType nichts findet
+            if (mimeType == null) {
+                mimeType = "application/octet-stream";
+            }
+            return mimeType;
+        } catch (IOException e) {
+            return "application/octet-stream";
+        }
     }
 
 }
