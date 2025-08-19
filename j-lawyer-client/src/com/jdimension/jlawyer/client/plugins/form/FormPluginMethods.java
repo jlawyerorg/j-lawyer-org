@@ -665,7 +665,6 @@ package com.jdimension.jlawyer.client.plugins.form;
 
 import java.util.ArrayList;
 import java.util.Hashtable;
-import javax.swing.JPanel;
 
 /**
  *

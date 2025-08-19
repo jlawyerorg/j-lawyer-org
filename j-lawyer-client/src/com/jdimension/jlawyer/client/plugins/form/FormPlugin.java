@@ -663,7 +663,6 @@ For more information on this, and how to apply and follow the GNU AGPL, see
  */
 package com.jdimension.jlawyer.client.plugins.form;
 
-import com.jdimension.jlawyer.pojo.FormPluginSetting;
 import com.jdimension.jlawyer.client.settings.ClientSettings;
 import com.jdimension.jlawyer.client.utils.FileUtils;
 import com.jdimension.jlawyer.client.utils.VersionUtils;
@@ -725,6 +724,36 @@ public class FormPlugin extends ServerFormPlugin implements Comparable {
         this.versionInRepository=sfp.getVersionInRepository();
     }
 
+    public String getExtractionPrompt() {
+        try {
+
+            if(scriptInstance instanceof FormAiMethods) {
+                return ((FormAiMethods) scriptInstance).getExtractionPrompt();
+            } else {
+                return "";
+            }
+
+        } catch (Throwable t) {
+            log.error(t);
+        }
+        return "";
+    }
+    
+    public boolean isAiEnabled() {
+        try {
+
+            if(scriptInstance instanceof FormAiMethods) {
+                return ((FormAiMethods) scriptInstance).isAiEnabled();
+            } else {
+                return false;
+            }
+
+        } catch (Throwable t) {
+            log.error(t);
+        }
+        return false;
+    }
+    
     public ArrayList<String> getPlaceHolders() {
         try {
 
