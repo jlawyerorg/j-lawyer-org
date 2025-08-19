@@ -800,6 +800,10 @@ public class ShareDocumentsToCloudAction extends ProgressableAction {
                 StringSelection strSel = new StringSelection(this.share.getUrl());
                 clipboard.setContents(strSel, null);
                 DesktopUtils.openBrowserFromDialog(this.share.getUrl(), this.indicator);
+                SwingUtilities.invokeLater(() -> {
+                    parent.setVisible(false);
+                    parent.dispose();
+                });
             } else if (this.postAction == POST_ACTION_EMAIL && this.share.getUrl() != null && !("".equals(this.share.getUrl()))) {
                 SwingUtilities.invokeLater(() -> {
                     SendEmailFrame dlg = new SendEmailFrame(false);
@@ -822,13 +826,15 @@ public class ShareDocumentsToCloudAction extends ProgressableAction {
                     FrameUtils.centerFrame(dlg, null);
                     EditorsRegistry.getInstance().registerFrame(dlg);
                     dlg.setVisible(true);
+
+                    parent.setVisible(false);
+                    parent.dispose();
+                    
+                    dlg.toFront();
+                    dlg.requestFocus();
                 });
 
             }
-            SwingUtilities.invokeLater(() -> {
-                parent.setVisible(false);
-                parent.dispose();
-            });
 
         } catch (Exception ex) {
             log.error(ex);
