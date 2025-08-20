@@ -663,6 +663,11 @@ For more information on this, and how to apply and follow the GNU AGPL, see
  */
 package com.jdimension.jlawyer.client.plugins.form;
 
+import com.jdimension.jlawyer.ai.AiCapability;
+import com.jdimension.jlawyer.ai.AiRequestStatus;
+import com.jdimension.jlawyer.ai.InputData;
+import com.jdimension.jlawyer.ai.OutputData;
+import com.jdimension.jlawyer.client.assistant.AssistantAccess;
 import com.jdimension.jlawyer.client.editors.EditorsRegistry;
 import com.jdimension.jlawyer.client.events.DocumentAddedEvent;
 import com.jdimension.jlawyer.client.events.EventBroker;
@@ -672,6 +677,7 @@ import com.jdimension.jlawyer.client.utils.StringUtils;
 import com.jdimension.jlawyer.persistence.ArchiveFileDocumentsBean;
 import com.jdimension.jlawyer.persistence.ArchiveFileFormEntriesBean;
 import com.jdimension.jlawyer.persistence.ArchiveFileFormsBean;
+import com.jdimension.jlawyer.persistence.AssistantConfig;
 import com.jdimension.jlawyer.services.ArchiveFileServiceRemote;
 import com.jdimension.jlawyer.services.JLawyerServiceLocator;
 import java.text.SimpleDateFormat;
@@ -680,6 +686,7 @@ import java.util.Collections;
 import java.util.Date;
 import java.util.Hashtable;
 import java.util.List;
+import java.util.Map;
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.JTabbedPane;
@@ -696,12 +703,16 @@ public class FormInstancePanel extends javax.swing.JPanel {
     private ArchiveFileFormsBean form = null;
     private JTabbedPane container = null;
     private FormPlugin plugin = null;
-    
+
     // used to compare before and after to determine whether saving is needed
-    private String valuesCheckSum=null;
+    private String valuesCheckSum = null;
+
+    private AiCapability extractCapability = null;
+    private AssistantConfig extractConfig = null;
 
     /**
      * Creates new form FormInstancePanel
+     *
      * @param container
      * @param plugin
      */
@@ -709,16 +720,35 @@ public class FormInstancePanel extends javax.swing.JPanel {
         initComponents();
         this.container = container;
         this.plugin = plugin;
-        
+
     }
 
     public void initialize() throws Exception {
+
+        AssistantAccess ingo = AssistantAccess.getInstance();
+        try {
+            Map<AssistantConfig, List<AiCapability>> capabilities = ingo.filterCapabilities(AiCapability.REQUESTTYPE_EXTRACT, AiCapability.INPUTTYPE_STRING, AiCapability.USAGETYPE_AUTOMATED);
+
+            if (!capabilities.isEmpty()) {
+                // use first capability that can use custom prompts
+                for (AiCapability c : capabilities.get(capabilities.keySet().iterator().next())) {
+                    if (c.isCustomPrompts()) {
+                        this.extractCapability = capabilities.get(capabilities.keySet().iterator().next()).get(0);
+                        this.extractConfig = capabilities.keySet().iterator().next();
+                    }
+                }
+            }
+        } catch (Exception ex) {
+            log.error(ex);
+            JOptionPane.showMessageDialog(this, "" + ex.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
+        }
+
         JPanel ui = new JPanel();
         try {
             ui = plugin.getUi();
             this.scrollPlugin.setViewportView(ui);
             this.scrollPlugin.getVerticalScrollBar().setUnitIncrement(16);
-            this.cmdFormAi.setEnabled(this.plugin.isAiEnabled());
+            this.cmdFormAi.setEnabled(this.plugin.isAiEnabled() && this.extractCapability != null);
         } catch (Exception ex) {
             log.error("Can not initialize plugin " + plugin.getId(), ex);
             this.scrollPlugin.setViewportView(ui);
@@ -729,7 +759,7 @@ public class FormInstancePanel extends javax.swing.JPanel {
             JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(ClientSettings.getInstance().getLookupProperties());
             List<ArchiveFileFormEntriesBean> entries = locator.lookupFormsServiceRemote().getFormEntries(this.form.getId());
             Hashtable placeHolderValues = new Hashtable();
-            ArrayList<String> allPlaceHolderKeys=new ArrayList<>();
+            ArrayList<String> allPlaceHolderKeys = new ArrayList<>();
             for (ArchiveFileFormEntriesBean entry : entries) {
                 if (entry.getPlaceHolder() == null || "".equals(entry.getPlaceHolder())) {
                     log.warn("Form with id " + this.form.getId() + " has an entry with a null placeholder, which is invalid!");
@@ -739,17 +769,17 @@ public class FormInstancePanel extends javax.swing.JPanel {
                 }
 
             }
-            
+
             // create a sorted list of all keys before calculating a checksum
             Collections.sort(allPlaceHolderKeys);
-            
+
             // checksum only includes values
-            StringBuilder checkSumValues=new StringBuilder();
-            for(String k: allPlaceHolderKeys) {
+            StringBuilder checkSumValues = new StringBuilder();
+            for (String k : allPlaceHolderKeys) {
                 checkSumValues.append(placeHolderValues.get(k));
             }
-            this.valuesCheckSum=StringUtils.md5(checkSumValues.toString());            
-            
+            this.valuesCheckSum = StringUtils.md5(checkSumValues.toString());
+
             this.plugin.setPlaceHolderValues(placeHolderValues);
 
         } catch (Throwable t) {
@@ -890,14 +920,14 @@ public class FormInstancePanel extends javax.swing.JPanel {
     }//GEN-LAST:event_cmdShowPlaceHoldersActionPerformed
 
     private void cmdSaveAsDocumentActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdSaveAsDocumentActionPerformed
-        String html=this.plugin.getAsHtml();
-        
-        String formType=this.getForm().getFormType().getName();
-        
+        String html = this.plugin.getAsHtml();
+
+        String formType = this.getForm().getFormType().getName();
+
         SimpleDateFormat df = new SimpleDateFormat("yyyy-MM-dd");
-        String fileName=df.format(new Date()) + "_Falldaten_" + formType;
-        fileName=fileName + ".html";
-        
+        String fileName = df.format(new Date()) + "_Falldaten_" + formType;
+        fileName = fileName + ".html";
+
         try {
             ClientSettings settings = ClientSettings.getInstance();
             JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
@@ -907,7 +937,7 @@ public class FormInstancePanel extends javax.swing.JPanel {
                 ArchiveFileDocumentsBean newDoc = remote.addDocument(this.plugin.getCaseDto().getId(), fileName, html.getBytes(), "", null);
                 EventBroker eb = EventBroker.getInstance();
                 eb.publishEvent(new DocumentAddedEvent(newDoc));
-                
+
             } else {
                 for (int i = 2; i < 50; i++) {
                     String indexedFileName = "(" + i + ") " + fileName;
@@ -928,7 +958,86 @@ public class FormInstancePanel extends javax.swing.JPanel {
     }//GEN-LAST:event_cmdSaveAsDocumentActionPerformed
 
     private void cmdFormAiActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdFormAiActionPerformed
-        System.out.println(this.plugin.getExtractionPrompt());
+        String prompt = this.plugin.getExtractionPrompt();
+        log.info("extracting form data using this prompt:");
+        log.info(prompt);
+
+        String text = "irgendein Text";
+        if (text == null) {
+            text = "";
+        }
+
+        List<InputData> inputs = new ArrayList<>();
+        InputData stringInput = new InputData();
+        stringInput.setStringData(text);
+        stringInput.setType(InputData.TYPE_STRING);
+        inputs.add(stringInput);
+
+        ClientSettings settings = ClientSettings.getInstance();
+        try {
+            JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
+
+            AiRequestStatus status = locator.lookupIntegrationServiceRemote().submitAssistantRequest(extractConfig, extractCapability.getRequestType(), extractCapability.getModelType(), prompt, null, inputs, null);
+            if (status != null) {
+                String resultText = "";
+                if (status.getStatus().equalsIgnoreCase("failed")) {
+                    resultText = status.getStatus() + ": " + status.getStatusDetails();
+                } else {
+                    StringBuilder resultString = new StringBuilder();
+                    for (OutputData o : status.getResponse().getOutputData()) {
+                        if (o.getType().equalsIgnoreCase(OutputData.TYPE_STRING)) {
+                            resultString.append(o.getStringData());
+                        }
+
+                    }
+                    resultText = resultString.toString();
+                }
+
+                log.info("Ingo extracted contacts and responde: ");
+                log.info(resultText);
+
+                Map<String, String> contactAttributes = AssistantAccess.jsonStringToMap(resultText);
+
+//                for(String key: contactAttributes.keySet()) {
+//                    String mappingKey=null;
+//                    if(key.equalsIgnoreCase("company")) {
+//                        mappingKey=AttributeCellEditor.ATTRIBUTE_UNTERNEHMEN;
+//                    } else if(key.equalsIgnoreCase("firstName")) {
+//                        mappingKey=AttributeCellEditor.ATTRIBUTE_VORNAME;
+//                    } else if(key.equalsIgnoreCase("name")) {
+//                        mappingKey=AttributeCellEditor.ATTRIBUTE_NAME;
+//                    } else if(key.equalsIgnoreCase("city")) {
+//                        mappingKey=AttributeCellEditor.ATTRIBUTE_ORT;
+//                    } else if(key.equalsIgnoreCase("phone")) {
+//                        mappingKey=AttributeCellEditor.ATTRIBUTE_TEL;
+//                    } else if(key.equalsIgnoreCase("mobile")) {
+//                        mappingKey=AttributeCellEditor.ATTRIBUTE_MOBIL;
+//                    } else if(key.equalsIgnoreCase("zip")) {
+//                        mappingKey=AttributeCellEditor.ATTRIBUTE_PLZ;
+//                    } else if(key.equalsIgnoreCase("country")) {
+//                        mappingKey=AttributeCellEditor.ATTRIBUTE_LAND;
+//                    } else if(key.equalsIgnoreCase("street")) {
+//                        mappingKey=AttributeCellEditor.ATTRIBUTE_STRASSE;
+//                    } else if(key.equalsIgnoreCase("streetNo")) {
+//                        mappingKey=AttributeCellEditor.ATTRIBUTE_HAUSNR;
+//                    } else if(key.equalsIgnoreCase("email")) {
+//                        mappingKey=AttributeCellEditor.ATTRIBUTE_EMAIL;
+//                    } else if(key.equalsIgnoreCase("fax")) {
+//                        mappingKey=AttributeCellEditor.ATTRIBUTE_FAX;
+//                    }
+//                    if(mappingKey!=null) {
+//                        String value=contactAttributes.get(key);
+//                        tm.addRow(new String[]{value, mappingKey});
+//                    }
+//                    
+//                }
+            }
+
+        } catch (Throwable t) {
+            log.error("Error processing AI request", t);
+            JOptionPane.showMessageDialog(this, "Falldaten konnten nicht extrahiert werden: " + t.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
+        }
+
     }//GEN-LAST:event_cmdFormAiActionPerformed
 
     public void save() {
@@ -939,16 +1048,16 @@ public class FormInstancePanel extends javax.swing.JPanel {
             log.warn("Form plugin did not provide any placeholders - skip saving to avoid empty form!");
             return;
         }
-        
+
         log.info("Form plugin " + form.getId() + " has " + placeHolders.size() + " placeholder values");
-        
-        boolean save=true;
-        
-        ArrayList<String> allPlaceHolderKeys=new ArrayList<>();
-        for(Object k: placeHolders.keySet()) {
+
+        boolean save = true;
+
+        ArrayList<String> allPlaceHolderKeys = new ArrayList<>();
+        for (Object k : placeHolders.keySet()) {
             allPlaceHolderKeys.add(k.toString());
         }
-        
+
         // create a sorted list of all keys before calculating a checksum
         Collections.sort(allPlaceHolderKeys);
 
@@ -965,8 +1074,8 @@ public class FormInstancePanel extends javax.swing.JPanel {
                 save = false;
             }
         }
-        
-        if(save) {
+
+        if (save) {
             log.info("form " + form.getId() + " has been updated - saving");
             ArrayList<ArchiveFileFormEntriesBean> formEntries = new ArrayList<>();
             try {
@@ -989,7 +1098,7 @@ public class FormInstancePanel extends javax.swing.JPanel {
         } else {
             log.info("form " + form.getId() + " has not been changed - skip saving");
         }
-        this.valuesCheckSum=newCheckSum;
+        this.valuesCheckSum = newCheckSum;
 
     }
 
