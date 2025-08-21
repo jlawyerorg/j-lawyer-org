@@ -666,14 +666,19 @@ package com.jdimension.jlawyer.client.plugins.form;
 import com.jdimension.jlawyer.ai.AiCapability;
 import com.jdimension.jlawyer.ai.AiRequestStatus;
 import com.jdimension.jlawyer.ai.InputData;
-import com.jdimension.jlawyer.ai.OutputData;
+import com.jdimension.jlawyer.ai.Message;
+import com.jdimension.jlawyer.ai.ParameterData;
 import com.jdimension.jlawyer.client.assistant.AssistantAccess;
+import com.jdimension.jlawyer.client.assistant.AssistantExtractDialog;
+import com.jdimension.jlawyer.client.assistant.AssistantFlowAdapter;
 import com.jdimension.jlawyer.client.editors.EditorsRegistry;
 import com.jdimension.jlawyer.client.events.DocumentAddedEvent;
 import com.jdimension.jlawyer.client.events.EventBroker;
 import com.jdimension.jlawyer.client.settings.ClientSettings;
 import com.jdimension.jlawyer.client.utils.FrameUtils;
+import com.jdimension.jlawyer.client.utils.SelectAttachmentDialog;
 import com.jdimension.jlawyer.client.utils.StringUtils;
+import com.jdimension.jlawyer.documents.DocumentPreview;
 import com.jdimension.jlawyer.persistence.ArchiveFileDocumentsBean;
 import com.jdimension.jlawyer.persistence.ArchiveFileFormEntriesBean;
 import com.jdimension.jlawyer.persistence.ArchiveFileFormsBean;
@@ -696,7 +701,7 @@ import org.jboss.logging.Logger;
  *
  * @author jens
  */
-public class FormInstancePanel extends javax.swing.JPanel {
+public class FormInstancePanel extends javax.swing.JPanel implements AssistantFlowAdapter {
 
     private static final Logger log = Logger.getLogger(FormInstancePanel.class.getName());
 
@@ -709,6 +714,7 @@ public class FormInstancePanel extends javax.swing.JPanel {
 
     private AiCapability extractCapability = null;
     private AssistantConfig extractConfig = null;
+    private List<InputData> aiInputs=null;
 
     /**
      * Creates new form FormInstancePanel
@@ -958,87 +964,63 @@ public class FormInstancePanel extends javax.swing.JPanel {
     }//GEN-LAST:event_cmdSaveAsDocumentActionPerformed
 
     private void cmdFormAiActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdFormAiActionPerformed
-        String prompt = this.plugin.getExtractionPrompt();
-        log.info("extracting form data using this prompt:");
-        log.info(prompt);
 
-        String text = "irgendein Text";
-        if (text == null) {
-            text = "";
+        SelectAttachmentDialog sad = new SelectAttachmentDialog(EditorsRegistry.getInstance().getMainWindow(), true, this.plugin.getCaseDto().getId(), false);
+        sad.setTitle("Quelldatei(en) auswählen");
+        FrameUtils.centerDialog(sad, EditorsRegistry.getInstance().getMainWindow());
+        sad.setVisible(true);
+
+        ArchiveFileDocumentsBean[] selectedDocs = sad.getSelectedDocuments();
+        if (selectedDocs == null || selectedDocs.length == 0) {
+            return;
         }
-
-        List<InputData> inputs = new ArrayList<>();
-        InputData stringInput = new InputData();
-        stringInput.setStringData(text);
-        stringInput.setType(InputData.TYPE_STRING);
-        inputs.add(stringInput);
-
-        ClientSettings settings = ClientSettings.getInstance();
-        try {
-            JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
-
-            AiRequestStatus status = locator.lookupIntegrationServiceRemote().submitAssistantRequest(extractConfig, extractCapability.getRequestType(), extractCapability.getModelType(), prompt, null, inputs, null);
-            if (status != null) {
-                String resultText = "";
-                if (status.getStatus().equalsIgnoreCase("failed")) {
-                    resultText = status.getStatus() + ": " + status.getStatusDetails();
-                } else {
-                    StringBuilder resultString = new StringBuilder();
-                    for (OutputData o : status.getResponse().getOutputData()) {
-                        if (o.getType().equalsIgnoreCase(OutputData.TYPE_STRING)) {
-                            resultString.append(o.getStringData());
-                        }
-
-                    }
-                    resultText = resultString.toString();
-                }
-
-                log.info("Ingo extracted contacts and responde: ");
-                log.info(resultText);
-
-                Map<String, String> contactAttributes = AssistantAccess.jsonStringToMap(resultText);
-
-//                for(String key: contactAttributes.keySet()) {
-//                    String mappingKey=null;
-//                    if(key.equalsIgnoreCase("company")) {
-//                        mappingKey=AttributeCellEditor.ATTRIBUTE_UNTERNEHMEN;
-//                    } else if(key.equalsIgnoreCase("firstName")) {
-//                        mappingKey=AttributeCellEditor.ATTRIBUTE_VORNAME;
-//                    } else if(key.equalsIgnoreCase("name")) {
-//                        mappingKey=AttributeCellEditor.ATTRIBUTE_NAME;
-//                    } else if(key.equalsIgnoreCase("city")) {
-//                        mappingKey=AttributeCellEditor.ATTRIBUTE_ORT;
-//                    } else if(key.equalsIgnoreCase("phone")) {
-//                        mappingKey=AttributeCellEditor.ATTRIBUTE_TEL;
-//                    } else if(key.equalsIgnoreCase("mobile")) {
-//                        mappingKey=AttributeCellEditor.ATTRIBUTE_MOBIL;
-//                    } else if(key.equalsIgnoreCase("zip")) {
-//                        mappingKey=AttributeCellEditor.ATTRIBUTE_PLZ;
-//                    } else if(key.equalsIgnoreCase("country")) {
-//                        mappingKey=AttributeCellEditor.ATTRIBUTE_LAND;
-//                    } else if(key.equalsIgnoreCase("street")) {
-//                        mappingKey=AttributeCellEditor.ATTRIBUTE_STRASSE;
-//                    } else if(key.equalsIgnoreCase("streetNo")) {
-//                        mappingKey=AttributeCellEditor.ATTRIBUTE_HAUSNR;
-//                    } else if(key.equalsIgnoreCase("email")) {
-//                        mappingKey=AttributeCellEditor.ATTRIBUTE_EMAIL;
-//                    } else if(key.equalsIgnoreCase("fax")) {
-//                        mappingKey=AttributeCellEditor.ATTRIBUTE_FAX;
-//                    }
-//                    if(mappingKey!=null) {
-//                        String value=contactAttributes.get(key);
-//                        tm.addRow(new String[]{value, mappingKey});
-//                    }
-//                    
-//                }
-            }
-
-        } catch (Throwable t) {
-            log.error("Error processing AI request", t);
-            JOptionPane.showMessageDialog(this, "Falldaten konnten nicht extrahiert werden: " + t.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
+        
+        this.aiInputs=this.getStringInputs(selectedDocs);
+        if(this.aiInputs==null) {
+            JOptionPane.showMessageDialog(this, "Fehler bei der Aufbereitung der Eingangsdaten", com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
+            return;
         }
+        
+        
+        
+        AssistantExtractDialog dlg = new AssistantExtractDialog(this.plugin.getCaseDto(), extractConfig, extractCapability, this, EditorsRegistry.getInstance().getMainWindow(), true);
+        FrameUtils.centerDialog(dlg, EditorsRegistry.getInstance().getMainWindow());
+        dlg.setVisible(true);
+        
+        
 
     }//GEN-LAST:event_cmdFormAiActionPerformed
+
+    private List<InputData> getStringInputs(ArchiveFileDocumentsBean[] selected) {
+        ArrayList<InputData> inputs = new ArrayList<>();
+        try {
+            ClientSettings settings = ClientSettings.getInstance();
+            JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
+            ArchiveFileServiceRemote remote = locator.lookupArchiveFileServiceRemote();
+
+            if (selected.length == 0) {
+                return inputs;
+            }
+
+            InputData i = new InputData();
+            StringBuilder sb = new StringBuilder();
+            for (ArchiveFileDocumentsBean doc : selected) {
+
+                String docText = remote.getDocumentPreview(doc.getId(), DocumentPreview.TYPE_TEXT).getText();
+                sb.append(docText).append(System.lineSeparator()).append(System.lineSeparator());
+
+            }
+            i.setType(InputData.TYPE_STRING);
+            i.setBase64(false);
+            i.setStringData(sb.toString());
+            inputs.add(i);
+            return inputs;
+
+        } catch (Exception ioe) {
+            log.error("Error getting document as text", ioe);
+            return null;
+        }
+    }
 
     public void save() {
         Hashtable placeHolders = this.plugin.getPlaceHolderValues();
@@ -1124,5 +1106,43 @@ public class FormInstancePanel extends javax.swing.JPanel {
      */
     public void setForm(ArchiveFileFormsBean form) {
         this.form = form;
+    }
+
+    @Override
+    public List<InputData> getInputs(AiCapability c) {
+        return this.aiInputs;
+    }
+
+    @Override
+    public List<Message> getMessages(AiCapability c) {
+        return new ArrayList<>();
+    }
+
+    @Override
+    public String getPrompt(AiCapability c) {
+        String prompt = this.plugin.getExtractionPrompt();
+        log.info("extracting form data using this prompt:");
+        log.info(prompt);
+        return prompt;
+    }
+
+    @Override
+    public List<ParameterData> getParameters(AiCapability c) {
+        return new ArrayList<>();
+    }
+
+    @Override
+    public void processOutput(AiCapability c, AiRequestStatus status) {
+        
+    }
+
+    @Override
+    public void processOutput(Map<String, String> output) {
+        this.plugin.setExtractedValues(output);
+    }
+
+    @Override
+    public void processError(AiCapability c, AiRequestStatus status) {
+        
     }
 }

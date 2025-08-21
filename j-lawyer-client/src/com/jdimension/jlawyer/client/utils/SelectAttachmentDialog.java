@@ -689,12 +689,22 @@ public class SelectAttachmentDialog extends javax.swing.JDialog {
     private static final Logger log = Logger.getLogger(SelectAttachmentDialog.class.getName());
 
     private File[] selectedFiles = null;
+    private ArchiveFileDocumentsBean[] selectedDocuments = null;
     private ArrayList sortedDocs = null;
     
     public SelectAttachmentDialog(JFrame parent, boolean modal, String caseId) {
         super(parent, modal);
         initComponents();
         this.initialize(caseId);
+    }
+    
+    public SelectAttachmentDialog(JFrame parent, boolean modal, String caseId, boolean allowLocalFiles) {
+        super(parent, modal);
+        initComponents();
+        this.initialize(caseId);
+        this.jTabbedPane1.setEnabledAt(0, allowLocalFiles);
+        if(!allowLocalFiles)
+            this.jTabbedPane1.setSelectedIndex(1);
     }
     
     /**
@@ -709,6 +719,16 @@ public class SelectAttachmentDialog extends javax.swing.JDialog {
         initComponents();
         this.initialize(caseId);
         
+
+    }
+    
+    public SelectAttachmentDialog(JDialog parent, boolean modal, String caseId, boolean allowLocalFiles) {
+        super(parent, modal);
+        initComponents();
+        this.initialize(caseId);
+        this.jTabbedPane1.setEnabledAt(0, allowLocalFiles);
+        if(!allowLocalFiles)
+            this.jTabbedPane1.setSelectedIndex(1);
 
     }
     
@@ -758,6 +778,10 @@ public class SelectAttachmentDialog extends javax.swing.JDialog {
 
     public File[] getSelectedFiles() {
         return this.selectedFiles;
+    }
+    
+    public ArchiveFileDocumentsBean[] getSelectedDocuments() {
+        return this.selectedDocuments;
     }
 
     /**
@@ -886,12 +910,14 @@ public class SelectAttachmentDialog extends javax.swing.JDialog {
 
     private void cmdCancelActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdCancelActionPerformed
         this.selectedFiles = new File[0];
+        this.selectedDocuments=new ArchiveFileDocumentsBean[0];
         this.setVisible(false);
         this.dispose();
     }//GEN-LAST:event_cmdCancelActionPerformed
 
     private void cmdSelectActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdSelectActionPerformed
         this.selectedFiles = new File[this.lstCaseDocuments.getSelectedValues().length];
+        this.selectedDocuments = new ArchiveFileDocumentsBean[this.lstCaseDocuments.getSelectedValues().length];
 
         int index = 0;
         for (Object o : this.lstCaseDocuments.getSelectedValues()) {
@@ -902,11 +928,13 @@ public class SelectAttachmentDialog extends javax.swing.JDialog {
                 File f = new File(tempUrl);
                 FileUtils.cleanupTempFile(tempUrl);
                 this.selectedFiles[index] = f;
+                this.selectedDocuments[index]=doc;
 
                 index = index + 1;
             } catch (Exception ex) {
                 JOptionPane.showMessageDialog(this, "Dokument " + doc.getName() + " kann nicht vom Server geladen werden: " + ex.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
                 this.selectedFiles = new File[0];
+                this.selectedDocuments=new ArchiveFileDocumentsBean[0];
                 return;
             }
         }

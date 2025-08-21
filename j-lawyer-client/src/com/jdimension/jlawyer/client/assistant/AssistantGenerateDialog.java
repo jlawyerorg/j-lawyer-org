@@ -1600,4 +1600,9 @@ public class AssistantGenerateDialog extends javax.swing.JDialog implements Assi
     public List<Message> getMessages(AiCapability c) {
         return null;
     }
+
+    @Override
+    public void processOutput(Map<String, String> output) {
+        
+    }
 }

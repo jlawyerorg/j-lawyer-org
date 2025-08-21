@@ -7989,6 +7989,11 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
         log.error("error handling ai request");
     }
 
+    @Override
+    public void processOutput(Map<String, String> output) {
+        
+    }
+
     protected class DropTargetHandler implements DropTargetListener {
 
         private JPanel p = null;

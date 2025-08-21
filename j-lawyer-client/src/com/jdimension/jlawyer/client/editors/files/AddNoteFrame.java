@@ -1627,4 +1627,9 @@ public class AddNoteFrame extends javax.swing.JFrame implements AssistantFlowAda
     private javax.swing.JTextField txtFileName;
     private javax.swing.JTextField txtReviewDateField;
     // End of variables declaration//GEN-END:variables
+
+    @Override
+    public void processOutput(Map<String, String> output) {
+        
+    }
 }

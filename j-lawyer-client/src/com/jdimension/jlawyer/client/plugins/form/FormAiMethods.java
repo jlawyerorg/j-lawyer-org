@@ -663,6 +663,8 @@ For more information on this, and how to apply and follow the GNU AGPL, see
  */
 package com.jdimension.jlawyer.client.plugins.form;
 
+import java.util.Map;
+
 /**
  *
  * @author jens
@@ -672,5 +674,7 @@ public interface FormAiMethods {
     public boolean isAiEnabled();
     
     public String getExtractionPrompt();
+    
+    public void setExtractedValues(Map<String,String> attributes);
     
 }

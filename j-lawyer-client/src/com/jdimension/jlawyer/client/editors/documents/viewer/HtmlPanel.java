@@ -673,10 +673,8 @@ import com.jdimension.jlawyer.client.assistant.AssistantAccess;
 import com.jdimension.jlawyer.client.assistant.AssistantFlowAdapter;
 import com.jdimension.jlawyer.client.editors.EditorsRegistry;
 import com.jdimension.jlawyer.client.mail.EditorImplementation;
-import com.jdimension.jlawyer.client.mail.EmailUtils;
 import com.jdimension.jlawyer.client.settings.ClientSettings;
 import com.jdimension.jlawyer.client.utils.AudioUtils;
-import com.jdimension.jlawyer.client.utils.StringUtils;
 import com.jdimension.jlawyer.client.utils.ThreadUtils;
 import com.jdimension.jlawyer.persistence.AssistantConfig;
 import com.jdimension.jlawyer.services.IntegrationServiceRemote;
@@ -1110,5 +1108,10 @@ public class HtmlPanel extends javax.swing.JPanel implements PreviewPanel, Assis
             log.error(ex);
             JOptionPane.showMessageDialog(this, "" + ex.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
         }
+    }
+
+    @Override
+    public void processOutput(Map<String, String> output) {
+        
     }
 }

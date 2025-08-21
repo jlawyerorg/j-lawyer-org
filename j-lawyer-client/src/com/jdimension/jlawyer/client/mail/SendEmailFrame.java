@@ -1365,6 +1365,11 @@ public class SendEmailFrame extends javax.swing.JFrame implements SendCommunicat
         ed.setText(prependText + System.lineSeparator() + System.lineSeparator() + ed.getText());
 
     }
+    
+    @Override
+    public void processOutput(Map<String, String> output) {
+        
+    }
 
     @Override
     public void processError(AiCapability c, AiRequestStatus status) {

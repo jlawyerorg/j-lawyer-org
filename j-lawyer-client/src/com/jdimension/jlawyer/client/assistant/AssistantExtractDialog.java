@@ -661,30 +661,50 @@ if any, to sign a "copyright disclaimer" for the program, if necessary.
 For more information on this, and how to apply and follow the GNU AGPL, see
 <https://www.gnu.org/licenses/>.
  */
-package com.jdimension.jlawyer.client.utils.pdf;
+package com.jdimension.jlawyer.client.assistant;
 
 import com.jdimension.jlawyer.ai.AiCapability;
 import com.jdimension.jlawyer.ai.AiRequestStatus;
+import com.jdimension.jlawyer.ai.AiResponse;
 import com.jdimension.jlawyer.ai.InputData;
 import com.jdimension.jlawyer.ai.Message;
 import com.jdimension.jlawyer.ai.OutputData;
+import com.jdimension.jlawyer.ai.Parameter;
 import com.jdimension.jlawyer.ai.ParameterData;
-import com.jdimension.jlawyer.client.assistant.AssistantAccess;
-import com.jdimension.jlawyer.client.assistant.AssistantFlowAdapter;
-import com.jdimension.jlawyer.client.editors.documents.viewer.PdfImagePanel;
+import com.jdimension.jlawyer.client.settings.ClientSettings;
 import com.jdimension.jlawyer.client.utils.ComponentUtils;
-import com.jdimension.jlawyer.client.utils.FileUtils;
+import com.jdimension.jlawyer.client.utils.FrameUtils;
+import com.jdimension.jlawyer.client.utils.TableUtils;
+import com.jdimension.jlawyer.client.utils.ThreadUtils;
+import com.jdimension.jlawyer.persistence.AppUserBean;
+import com.jdimension.jlawyer.persistence.ArchiveFileAddressesBean;
+import com.jdimension.jlawyer.persistence.ArchiveFileBean;
 import com.jdimension.jlawyer.persistence.AssistantConfig;
-import java.awt.BorderLayout;
-import java.awt.Dimension;
-import java.io.ByteArrayInputStream;
-import java.io.File;
-import java.io.FileOutputStream;
+import com.jdimension.jlawyer.persistence.PartyTypeBean;
+import com.jdimension.jlawyer.pojo.PartiesTriplet;
+import com.jdimension.jlawyer.services.JLawyerServiceLocator;
+import java.awt.Component;
+import java.awt.Toolkit;
+import java.awt.datatransfer.Clipboard;
+import java.awt.datatransfer.StringSelection;
+import java.awt.event.MouseEvent;
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import javax.swing.JOptionPane;
+import java.util.Vector;
+import java.util.concurrent.atomic.AtomicReference;
+import javax.swing.JComboBox;
+import javax.swing.JDialog;
+import javax.swing.JFrame;
+import javax.swing.JLabel;
+import javax.swing.JScrollBar;
+import javax.swing.JTextField;
 import javax.swing.SwingUtilities;
+import javax.swing.SwingWorker;
+import javax.swing.table.DefaultTableModel;
 import org.apache.log4j.Logger;
 import themes.colors.DefaultColorTheme;
 
@@ -692,64 +712,90 @@ import themes.colors.DefaultColorTheme;
  *
  * @author jens
  */
-public class PdfAnonymizerDialog extends javax.swing.JDialog implements AssistantFlowAdapter {
+public class AssistantExtractDialog extends javax.swing.JDialog {
 
-    private static final Logger log = Logger.getLogger(PdfAnonymizerDialog.class.getName());
+    private static final Logger log = Logger.getLogger(AssistantExtractDialog.class.getName());
 
-    private byte[] content = null;
-    private String tempFilePath = null;
-    private boolean failed = true;
-    private boolean saveRequested = false;
-    private String pdfText=null;
+    private AssistantConfig config = null;
+    private AiCapability capability = null;
+    private AssistantInputAdapter inputAdapter = null;
+
+    private AiRequestStatus result = null;
+
+    private boolean interrupted = false;
+
+    private Map<String, String> jsonResultAttributes = null;
 
     /**
-     * Creates new form PdfAnonymizerDialog
+     * Creates new form AssistantExtractDialog
      *
+     * @param selectedCase
+     * @param config
+     * @param c
+     * @param inputAdapter
      * @param parent
      * @param modal
-     * @param fileName
-     * @param content
-     * @param tempFilePath
      */
-    public PdfAnonymizerDialog(java.awt.Frame parent, boolean modal, String fileName, String pdfText, byte[] content, String tempFilePath, String anonymizeTerms) {
+    public AssistantExtractDialog(ArchiveFileBean selectedCase, AssistantConfig config, AiCapability c, AssistantInputAdapter inputAdapter, JFrame parent, boolean modal) {
         super(parent, modal);
+        this.initialize(selectedCase, config, c, inputAdapter);
+
+    }
+
+    public AssistantExtractDialog(ArchiveFileBean selectedCase, AssistantConfig config, AiCapability c, AssistantInputAdapter inputAdapter, JDialog parent, boolean modal) {
+        super(parent, modal);
+        this.initialize(selectedCase, config, c, inputAdapter);
+
+    }
+
+    private void initialize(ArchiveFileBean selectedCase, AssistantConfig config, AiCapability c, AssistantInputAdapter inputAdapter) {
         initComponents();
 
+        TableUtils.clearModel(tblExtractedKeys);
+
         this.pnlTitle.setBackground(DefaultColorTheme.COLOR_DARK_GREY);
-        this.lblFileName.setText(fileName);
-        this.content = content;
-        this.tempFilePath = tempFilePath;
-        this.pdfText=pdfText;
-        this.taRemoveWords.setText(anonymizeTerms);
-        
+        this.progress.setIndeterminate(false);
+        this.progress.setForeground(DefaultColorTheme.COLOR_LOGO_GREEN);
+
+        this.config = config;
+        this.capability = c;
+        this.inputAdapter = inputAdapter;
+
+        this.taPrompt.setText(((AssistantFlowAdapter) this.inputAdapter).getPrompt(this.capability));
+
+        this.pnlParameters.setLayout(new java.awt.GridLayout(this.capability.getParameters().size(), 2, 6, 6));
+        for (Parameter p : this.capability.getParameters()) {
+            this.pnlParameters.add(new JLabel(p.getName()));
+            if (p.getList() != null && p.getList().length() > 0) {
+                Vector<String> v = new Vector<>(Arrays.asList(p.getList().split(",")));
+                JComboBox<String> combo = new JComboBox<>(v);
+                combo.setEditable(false);
+                combo.setSelectedItem(p.getDefaultValue());
+                this.pnlParameters.add(combo);
+            } else {
+                JTextField tf = new JTextField();
+                tf.setText(p.getDefaultValue());
+                this.pnlParameters.add(tf);
+            }
+        }
+
+        this.lblRequestType.setText(c.getName() + " (" + c.getDescription() + ")");
+
+        this.taInputString.setText("");
+
+        for (InputData i : inputAdapter.getInputs(c)) {
+            if (InputData.TYPE_STRING.equalsIgnoreCase(i.getType())) {
+                this.taInputString.append(i.getStringData());
+                this.taInputString.append(System.lineSeparator());
+            }
+        }
+
         ComponentUtils.restoreDialogSize(this);
 
-        ComponentUtils.decorateSplitPane(this.splitMain);
-        ComponentUtils.restoreSplitPane(this.splitMain, this.getClass(), "splitMain");
-        ComponentUtils.persistSplitPane(this.splitMain, this.getClass(), "splitMain");
-        
-        SwingUtilities.invokeLater(() -> {
-                try {
-                    PdfImagePanel pdfP = new PdfImagePanel(new File(this.tempFilePath).getName(), content);
-                    this.pnlPreview.removeAll();
-                    this.pnlPreview.add(pdfP, BorderLayout.CENTER);
-                    this.pnlPreview.revalidate();
-                    this.pnlPreview.doLayout();
-                    this.pnlPreview.updateUI();
+        ComponentUtils.decorateSplitPane(this.splitInputOutput);
+        ComponentUtils.restoreSplitPane(this.splitInputOutput, this.getClass(), "splitInputOutput");
+        ComponentUtils.persistSplitPane(this.splitInputOutput, this.getClass(), "splitInputOutput");
 
-                    int width = Math.max(290, this.pnlPreview.getWidth());
-                    int height = Math.max(400, this.pnlPreview.getHeight());
-
-                    pdfP.setSize(new Dimension(width, height));
-                    pdfP.setMaximumSize(new Dimension(width, height));
-                    pdfP.setPreferredSize(new Dimension(width, height));
-                    pdfP.showContent(content);
-                } catch (Exception ex) {
-
-                }
-
-            });
-        
     }
 
     /**
@@ -761,39 +807,93 @@ public class PdfAnonymizerDialog extends javax.swing.JDialog implements Assistan
     // <editor-fold defaultstate="collapsed" desc="Generated Code">//GEN-BEGIN:initComponents
     private void initComponents() {
 
-        popAssistant = new javax.swing.JPopupMenu();
-        pnlTitle = new javax.swing.JPanel();
-        jLabel1 = new javax.swing.JLabel();
-        lblFileName = new javax.swing.JLabel();
-        cmdCancel = new javax.swing.JButton();
-        splitMain = new javax.swing.JSplitPane();
-        jPanel1 = new javax.swing.JPanel();
-        chkRemoveAnnotations = new javax.swing.JCheckBox();
-        chkRemoveMetadata = new javax.swing.JCheckBox();
-        chkRemoveWords = new javax.swing.JCheckBox();
+        popInputText = new javax.swing.JPopupMenu();
+        mnuPromptAll = new javax.swing.JMenuItem();
+        mnuPromptSelection = new javax.swing.JMenuItem();
         jScrollPane1 = new javax.swing.JScrollPane();
-        taRemoveWords = new javax.swing.JTextArea();
-        cmdAssistant = new javax.swing.JButton();
-        progress = new javax.swing.JProgressBar();
+        taPrompt = new javax.swing.JTextArea();
+        cmdCopy = new javax.swing.JButton();
+        cmdClose = new javax.swing.JButton();
+        pnlTitle = new javax.swing.JPanel();
+        lblRequestType = new javax.swing.JLabel();
         cmdSubmit = new javax.swing.JButton();
-        pnlPreview = new javax.swing.JPanel();
-        cmdSave = new javax.swing.JButton();
+        cmdInterrupt = new javax.swing.JButton();
+        progress = new javax.swing.JProgressBar();
+        pnlParameters = new javax.swing.JPanel();
+        splitInputOutput = new javax.swing.JSplitPane();
+        jScrollPane5 = new javax.swing.JScrollPane();
+        taInputString = new javax.swing.JTextArea();
+        scrollMessages = new javax.swing.JScrollPane();
+        tblExtractedKeys = new javax.swing.JTable();
+        cmdProcessOutput = new javax.swing.JButton();
+
+        mnuPromptAll.setText("in Prompt übernehmen");
+        mnuPromptAll.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                mnuPromptAllActionPerformed(evt);
+            }
+        });
+        popInputText.add(mnuPromptAll);
+
+        mnuPromptSelection.setText("Auswahl in Prompt übernehmen");
+        mnuPromptSelection.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                mnuPromptSelectionActionPerformed(evt);
+            }
+        });
+        popInputText.add(mnuPromptSelection);
 
         setDefaultCloseOperation(javax.swing.WindowConstants.DISPOSE_ON_CLOSE);
-        setTitle("PDF schwärzen");
+        setTitle("Assistent Ingo");
         addComponentListener(new java.awt.event.ComponentAdapter() {
             public void componentResized(java.awt.event.ComponentEvent evt) {
                 formComponentResized(evt);
             }
+            public void componentShown(java.awt.event.ComponentEvent evt) {
+                formComponentShown(evt);
+            }
         });
 
-        jLabel1.setFont(jLabel1.getFont().deriveFont(jLabel1.getFont().getStyle() | java.awt.Font.BOLD, jLabel1.getFont().getSize()+2));
-        jLabel1.setForeground(new java.awt.Color(255, 255, 255));
-        jLabel1.setText("PDF anonymisieren");
+        taPrompt.setColumns(20);
+        taPrompt.setLineWrap(true);
+        taPrompt.setRows(5);
+        taPrompt.setWrapStyleWord(true);
+        jScrollPane1.setViewportView(taPrompt);
 
-        lblFileName.setFont(lblFileName.getFont());
-        lblFileName.setForeground(new java.awt.Color(255, 255, 255));
-        lblFileName.setText("dings.pdf");
+        cmdCopy.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons16/editpaste.png"))); // NOI18N
+        cmdCopy.setText("Kopieren");
+        cmdCopy.setToolTipText("Text in Zwischenablage kopieren");
+        cmdCopy.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                cmdCopyActionPerformed(evt);
+            }
+        });
+
+        cmdClose.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/cancel.png"))); // NOI18N
+        cmdClose.setText("Schliessen");
+        cmdClose.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                cmdCloseActionPerformed(evt);
+            }
+        });
+
+        lblRequestType.setFont(lblRequestType.getFont().deriveFont(lblRequestType.getFont().getStyle() | java.awt.Font.BOLD, lblRequestType.getFont().getSize()+2));
+        lblRequestType.setForeground(new java.awt.Color(255, 255, 255));
+        lblRequestType.setText("Transkribieren");
+
+        cmdSubmit.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons16/material/baseline_slideshow_black_48dp.png"))); // NOI18N
+        cmdSubmit.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                cmdSubmitActionPerformed(evt);
+            }
+        });
+
+        cmdInterrupt.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons16/material/stop_circle_24dp_0E72B5.png"))); // NOI18N
+        cmdInterrupt.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                cmdInterruptActionPerformed(evt);
+            }
+        });
 
         javax.swing.GroupLayout pnlTitleLayout = new javax.swing.GroupLayout(pnlTitle);
         pnlTitle.setLayout(pnlTitleLayout);
@@ -801,140 +901,84 @@ public class PdfAnonymizerDialog extends javax.swing.JDialog implements Assistan
             pnlTitleLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(pnlTitleLayout.createSequentialGroup()
                 .addContainerGap()
-                .addGroup(pnlTitleLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addGroup(pnlTitleLayout.createSequentialGroup()
-                        .addComponent(jLabel1)
-                        .addGap(0, 0, Short.MAX_VALUE))
-                    .addComponent(lblFileName, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                .addComponent(lblRequestType, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addComponent(cmdSubmit)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addComponent(cmdInterrupt)
                 .addContainerGap())
         );
         pnlTitleLayout.setVerticalGroup(
             pnlTitleLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(pnlTitleLayout.createSequentialGroup()
                 .addContainerGap()
-                .addComponent(jLabel1)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(lblFileName)
-                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
-        );
-
-        cmdCancel.setFont(cmdCancel.getFont());
-        cmdCancel.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/cancel.png"))); // NOI18N
-        cmdCancel.setText("Abbrechen");
-        cmdCancel.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                cmdCancelActionPerformed(evt);
-            }
-        });
-
-        chkRemoveAnnotations.setFont(chkRemoveAnnotations.getFont());
-        chkRemoveAnnotations.setSelected(true);
-        chkRemoveAnnotations.setText("Anmerkungen entfernen");
-
-        chkRemoveMetadata.setFont(chkRemoveMetadata.getFont());
-        chkRemoveMetadata.setSelected(true);
-        chkRemoveMetadata.setText("Metadaten leeren");
-        chkRemoveMetadata.setToolTipText("Autor, Titel, Betreff, Datumsangaben etc.");
-
-        chkRemoveWords.setFont(chkRemoveWords.getFont());
-        chkRemoveWords.setSelected(true);
-        chkRemoveWords.setText("Wörter ersetzen, kommaseparierte:");
-
-        taRemoveWords.setColumns(20);
-        taRemoveWords.setLineWrap(true);
-        taRemoveWords.setRows(5);
-        taRemoveWords.setWrapStyleWord(true);
-        jScrollPane1.setViewportView(taRemoveWords);
-
-        cmdAssistant.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons16/material/j-lawyer-ai.png"))); // NOI18N
-        cmdAssistant.addMouseListener(new java.awt.event.MouseAdapter() {
-            public void mouseReleased(java.awt.event.MouseEvent evt) {
-                cmdAssistantMouseReleased(evt);
-            }
-        });
-
-        progress.setFont(progress.getFont());
-        progress.setStringPainted(true);
-
-        cmdSubmit.setFont(cmdSubmit.getFont());
-        cmdSubmit.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons16/material/search_off_20dp_0E72B5.png"))); // NOI18N
-        cmdSubmit.setText("Anonymisieren");
-        cmdSubmit.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                cmdSubmitActionPerformed(evt);
-            }
-        });
-
-        javax.swing.GroupLayout jPanel1Layout = new javax.swing.GroupLayout(jPanel1);
-        jPanel1.setLayout(jPanel1Layout);
-        jPanel1Layout.setHorizontalGroup(
-            jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(jPanel1Layout.createSequentialGroup()
-                .addContainerGap()
-                .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addGroup(jPanel1Layout.createSequentialGroup()
-                        .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                            .addComponent(chkRemoveAnnotations)
-                            .addComponent(chkRemoveMetadata)
-                            .addComponent(chkRemoveWords))
-                        .addGap(0, 0, Short.MAX_VALUE))
-                    .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, jPanel1Layout.createSequentialGroup()
-                        .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
-                            .addGroup(jPanel1Layout.createSequentialGroup()
-                                .addGap(0, 0, Short.MAX_VALUE)
-                                .addComponent(cmdSubmit))
-                            .addGroup(javax.swing.GroupLayout.Alignment.LEADING, jPanel1Layout.createSequentialGroup()
-                                .addGap(27, 27, 27)
-                                .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                                    .addComponent(progress, javax.swing.GroupLayout.Alignment.TRAILING, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                                    .addComponent(jScrollPane1, javax.swing.GroupLayout.PREFERRED_SIZE, 0, Short.MAX_VALUE))))
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addComponent(cmdAssistant)))
-                .addContainerGap())
-        );
-        jPanel1Layout.setVerticalGroup(
-            jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(jPanel1Layout.createSequentialGroup()
-                .addContainerGap()
-                .addComponent(chkRemoveAnnotations)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(chkRemoveMetadata)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(chkRemoveWords)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addGroup(jPanel1Layout.createSequentialGroup()
-                        .addComponent(cmdAssistant)
-                        .addGap(0, 0, Short.MAX_VALUE))
-                    .addComponent(jScrollPane1, javax.swing.GroupLayout.DEFAULT_SIZE, 272, Short.MAX_VALUE))
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(progress, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-                .addComponent(cmdSubmit)
+                .addGroup(pnlTitleLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addComponent(lblRequestType, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                    .addGroup(pnlTitleLayout.createSequentialGroup()
+                        .addGroup(pnlTitleLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                            .addComponent(cmdInterrupt)
+                            .addComponent(cmdSubmit))
+                        .addGap(0, 0, Short.MAX_VALUE)))
                 .addContainerGap())
         );
 
-        splitMain.setLeftComponent(jPanel1);
+        progress.setFont(progress.getFont().deriveFont(progress.getFont().getStyle() | java.awt.Font.BOLD, progress.getFont().getSize()+2));
+        progress.setIndeterminate(true);
+        progress.setOpaque(true);
+        progress.setString("Transkribieren");
 
-        javax.swing.GroupLayout pnlPreviewLayout = new javax.swing.GroupLayout(pnlPreview);
-        pnlPreview.setLayout(pnlPreviewLayout);
-        pnlPreviewLayout.setHorizontalGroup(
-            pnlPreviewLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGap(0, 822, Short.MAX_VALUE)
+        javax.swing.GroupLayout pnlParametersLayout = new javax.swing.GroupLayout(pnlParameters);
+        pnlParameters.setLayout(pnlParametersLayout);
+        pnlParametersLayout.setHorizontalGroup(
+            pnlParametersLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGap(0, 0, Short.MAX_VALUE)
         );
-        pnlPreviewLayout.setVerticalGroup(
-            pnlPreviewLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGap(0, 444, Short.MAX_VALUE)
+        pnlParametersLayout.setVerticalGroup(
+            pnlParametersLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGap(0, 0, Short.MAX_VALUE)
         );
 
-        splitMain.setRightComponent(pnlPreview);
+        taInputString.setColumns(20);
+        taInputString.setLineWrap(true);
+        taInputString.setRows(5);
+        taInputString.setWrapStyleWord(true);
+        taInputString.addMouseListener(new java.awt.event.MouseAdapter() {
+            public void mousePressed(java.awt.event.MouseEvent evt) {
+                taInputStringMousePressed(evt);
+            }
+        });
+        jScrollPane5.setViewportView(taInputString);
 
-        cmdSave.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/agt_action_success.png"))); // NOI18N
-        cmdSave.setText("zur Akte speichern");
-        cmdSave.setEnabled(false);
-        cmdSave.addActionListener(new java.awt.event.ActionListener() {
+        splitInputOutput.setLeftComponent(jScrollPane5);
+
+        tblExtractedKeys.setModel(new javax.swing.table.DefaultTableModel(
+            new Object [][] {
+                {null, null, null},
+                {null, null, null},
+                {null, null, null},
+                {null, null, null}
+            },
+            new String [] {
+                "übernehmen", "Attribut", "extrahierter Wert"
+            }
+        ) {
+            Class[] types = new Class [] {
+                java.lang.Boolean.class, java.lang.String.class, java.lang.String.class
+            };
+
+            public Class getColumnClass(int columnIndex) {
+                return types [columnIndex];
+            }
+        });
+        scrollMessages.setViewportView(tblExtractedKeys);
+
+        splitInputOutput.setRightComponent(scrollMessages);
+
+        cmdProcessOutput.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/agt_action_success.png"))); // NOI18N
+        cmdProcessOutput.setText("Übernehmen");
+        cmdProcessOutput.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
-                cmdSaveActionPerformed(evt);
+                cmdProcessOutputActionPerformed(evt);
             }
         });
 
@@ -946,24 +990,36 @@ public class PdfAnonymizerDialog extends javax.swing.JDialog implements Assistan
             .addGroup(layout.createSequentialGroup()
                 .addContainerGap()
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addComponent(splitMain)
+                    .addComponent(jScrollPane1, javax.swing.GroupLayout.DEFAULT_SIZE, 788, Short.MAX_VALUE)
+                    .addComponent(progress, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                    .addComponent(pnlParameters, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                     .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
-                        .addGap(0, 0, Short.MAX_VALUE)
-                        .addComponent(cmdSave)
+                        .addComponent(cmdClose)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                        .addComponent(cmdProcessOutput)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addComponent(cmdCancel)))
+                        .addComponent(cmdCopy))
+                    .addComponent(splitInputOutput))
                 .addContainerGap())
         );
         layout.setVerticalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(layout.createSequentialGroup()
                 .addComponent(pnlTitle, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addGap(18, 18, 18)
-                .addComponent(splitMain)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                    .addComponent(cmdCancel)
-                    .addComponent(cmdSave))
+                .addComponent(progress, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addComponent(jScrollPane1, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addComponent(pnlParameters, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addComponent(splitInputOutput, javax.swing.GroupLayout.DEFAULT_SIZE, 389, Short.MAX_VALUE)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
+                    .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                        .addComponent(cmdClose, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                        .addComponent(cmdProcessOutput))
+                    .addComponent(cmdCopy, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
                 .addContainerGap())
         );
 
@@ -971,116 +1027,206 @@ public class PdfAnonymizerDialog extends javax.swing.JDialog implements Assistan
     }// </editor-fold>//GEN-END:initComponents
 
     private void cmdSubmitActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdSubmitActionPerformed
-        try {
-            this.progress.setMaximum(5);
-            this.progress.setValue(1);
-            this.progress.setString("Inhalt schwärzen...");
-            this.cmdSave.setEnabled(false);
-            if (this.chkRemoveWords.isSelected()) {
-                String[] words = this.taRemoveWords.getText().split(",");
-                ArrayList<String> wordList = new ArrayList<>();
-                for (String w : words) {
-                    wordList.add(w.trim());
-                }
-                wordList.sort((s1, s2) -> Integer.compare(s2.length(), s1.length()));
-                
-                ByteArrayInputStream in = new ByteArrayInputStream(this.content);
-                FileOutputStream out = new FileOutputStream(this.tempFilePath);
 
-                PdfAnonymizer.removeWords(in, out, wordList);
+        SwingUtilities.invokeLater(this::startBackgroundTask);
 
-                out.close();
-            }
-
-            this.progress.setValue(2);
-            this.progress.setString("Anmerkungen entfernen...");
-            if (this.chkRemoveAnnotations.isSelected()) {
-                byte[] currentContent = FileUtils.readFile(new File(this.tempFilePath));
-                ByteArrayInputStream in = new ByteArrayInputStream(currentContent);
-                FileOutputStream out = new FileOutputStream(this.tempFilePath);
-                PdfAnonymizer.removeAnnotations(in, out);
-                out.close();
-            }
-
-            this.progress.setValue(3);
-            this.progress.setString("Metadaten entfernen...");
-            if (this.chkRemoveMetadata.isSelected()) {
-                byte[] currentContent = FileUtils.readFile(new File(this.tempFilePath));
-                ByteArrayInputStream in = new ByteArrayInputStream(currentContent);
-                FileOutputStream out = new FileOutputStream(this.tempFilePath);
-                PdfAnonymizer.removeMetadata(in, out);
-                out.close();
-            }
-
-            this.progress.setValue(4);
-            this.progress.setString("Vorschau laden...");
-            SwingUtilities.invokeLater(() -> {
-                try {
-                    byte[] previewContent = FileUtils.readFile(new File(this.tempFilePath));
-                    PdfImagePanel pdfP = new PdfImagePanel(new File(this.tempFilePath).getName(), previewContent);
-                    this.pnlPreview.removeAll();
-                    this.pnlPreview.add(pdfP, BorderLayout.CENTER);
-                    this.pnlPreview.revalidate();
-                    this.pnlPreview.doLayout();
-                    this.pnlPreview.updateUI();
-
-                    int width = Math.max(290, this.pnlPreview.getWidth());
-                    int height = Math.max(400, this.pnlPreview.getHeight());
-
-                    pdfP.setSize(new Dimension(width, height));
-                    pdfP.setMaximumSize(new Dimension(width, height));
-                    pdfP.setPreferredSize(new Dimension(width, height));
-                    pdfP.showContent(previewContent);
-                    this.progress.setValue(5);
-                } catch (Exception ex) {
-
-                }
-
-            });
-            this.progress.setString("Anonymisierung abgeschlossen");
-
-            this.failed = false;
-            this.cmdSave.setEnabled(true);
-
-        } catch (Exception ex) {
-            log.error("unable to anonymize PDF", ex);
-            this.progress.setString("Fehler");
-            JOptionPane.showMessageDialog(this, "PDF konnte nicht anonymisiert werden: " + ex.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
-            this.failed=true;
-        }
     }//GEN-LAST:event_cmdSubmitActionPerformed
 
-    private void cmdSaveActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdSaveActionPerformed
-        this.saveRequested = true;
+    private void startBackgroundTask() {
 
+        TableUtils.clearModel(tblExtractedKeys);
+        this.interrupted = false;
+
+        this.cmdSubmit.setEnabled(false);
+        this.cmdInterrupt.setEnabled(true);
+
+        List<ParameterData> params = new ArrayList<>();
+        if (capability.getParameters() != null && !capability.getParameters().isEmpty()) {
+            params = getParameters();
+        }
+
+        final List<ParameterData> fParams = params;
+
+        this.progress.setIndeterminate(true);
+
+        AtomicReference<AiRequestStatus> resultRef = new AtomicReference<>();
+        AtomicReference<AiChatMessageMarkdownPanel> incomingMessageRef = new AtomicReference<>();
+
+        JDialog owner = this;
+
+        SwingWorker<Void, Void> worker = new SwingWorker<>() {
+
+            @Override
+            protected Void doInBackground() throws Exception {
+                List<InputData> inputs = inputAdapter.getInputs(capability);
+                for (InputData i : inputs) {
+                    if (InputData.TYPE_STRING.equalsIgnoreCase(i.getType())) {
+                        i.setStringData(taInputString.getText());
+                    }
+                }
+
+                ClientSettings settings = ClientSettings.getInstance();
+                Message incomingMsg = new Message();
+                incomingMsg.setRole(Message.ROLE_ASSISTANT);
+                incomingMsg.setContent("...");
+                AiChatMessageMarkdownPanel incomingMsgPanel = new AiChatMessageMarkdownPanel(incomingMsg, owner);
+                try {
+                    JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
+
+                    AiRequestStatus status = locator.lookupIntegrationServiceRemote().submitAssistantRequest(config, capability.getRequestType(), capability.getModelType(), taPrompt.getText(), fParams, inputs, null);
+                    if (status.isAsync()) {
+                        Thread.sleep(1000);
+                        // poll until final result is available
+                        AiResponse res = locator.lookupIntegrationServiceRemote().getAssistantRequestStatus(config, status.getRequestId());
+                        while (res.getStatus().equals(AiResponse.STATUS_EXECUTING)) {
+                            Thread.sleep(1000);
+                            res = locator.lookupIntegrationServiceRemote().getAssistantRequestStatus(config, status.getRequestId());
+
+                            if (interrupted) {
+                                break;
+                            }
+                        }
+                        status.setStatus(res.getStatus());
+                        status.setStatusDetails(res.getStatusMessage());
+                        status.setResponse(res);
+                        resultRef.set(status);
+                    } else {
+                        resultRef.set(status);
+                    }
+
+                } catch (Throwable t) {
+                    log.error("Error processing AI request", t);
+                    AiRequestStatus status = new AiRequestStatus();
+                    status.setStatus("ERROR");
+                    status.setStatusDetails(t.getMessage());
+                    resultRef.set(status);
+                    incomingMessageRef.set(incomingMsgPanel);
+                    JScrollBar verticalBar = scrollMessages.getVerticalScrollBar();
+                    verticalBar.setValue(verticalBar.getMaximum());
+                }
+                cmdSubmit.setEnabled(true);
+                cmdInterrupt.setEnabled(false);
+                return null;
+            }
+
+            @Override
+            protected void done() {
+                // Task completion actions
+                AiRequestStatus status = resultRef.get();
+                result = status;
+                if (status != null) {
+                    if (status.getStatus().equalsIgnoreCase("failed")) {
+                        //JOptionPane.showMessageDialog(this, "Daten konnten nicht extrahiert werden: " + status.getStatusDetails(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
+                    } else {
+                        StringBuilder resultString = new StringBuilder();
+                        for (OutputData o : status.getResponse().getOutputData()) {
+                            if (o.getType().equalsIgnoreCase(OutputData.TYPE_STRING)) {
+                                resultString.append(o.getStringData()).append(System.lineSeparator()).append(System.lineSeparator());
+                            }
+
+                        }
+                        String rawOutput = resultString.toString();
+                        jsonResultAttributes = getCleanJson(rawOutput);
+                        if (jsonResultAttributes == null) {
+                            startBackgroundTask();
+                        } else {
+                            for (String key : jsonResultAttributes.keySet()) {
+                                String value = jsonResultAttributes.get(key);
+                                boolean relevantAttribute=!value.trim().isEmpty() && !"...".equals(value.trim()) && !"- -".equals(value.trim());
+                                Object[] row = new Object[]{relevantAttribute, key, value};
+                                ((DefaultTableModel) tblExtractedKeys.getModel()).addRow(row);
+                            }
+                            ComponentUtils.autoSizeColumns(tblExtractedKeys);
+                        }
+                    }
+                }
+
+                progress.setIndeterminate(false);
+            }
+        };
+
+        worker.execute();
+
+    }
+
+    private Map<String, String> getCleanJson(String rawOutput) {
+        log.info("received raw JSON for extraction: ");
+        log.info(rawOutput);
+        rawOutput = rawOutput.replace("```json", "");
+        rawOutput = rawOutput.replace("```", "");
+
+        try {
+            // must be valid json
+            rawOutput = rawOutput.substring(rawOutput.indexOf("{"), rawOutput.lastIndexOf("}") + 1);
+            
+            return AssistantAccess.jsonStringToMap(rawOutput);
+        } catch (Exception ex) {
+            return null;
+        }
+    }
+
+    private void cmdCloseActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdCloseActionPerformed
         this.setVisible(false);
         this.dispose();
-
-    }//GEN-LAST:event_cmdSaveActionPerformed
+    }//GEN-LAST:event_cmdCloseActionPerformed
 
     private void formComponentResized(java.awt.event.ComponentEvent evt) {//GEN-FIRST:event_formComponentResized
         ComponentUtils.storeDialogSize(this);
     }//GEN-LAST:event_formComponentResized
 
-    private void cmdCancelActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdCancelActionPerformed
-        this.saveRequested=false;
+    private void formComponentShown(java.awt.event.ComponentEvent evt) {//GEN-FIRST:event_formComponentShown
+        FrameUtils.centerDialogOnParentMonitor(this, this.getOwner().getLocation());
+    }//GEN-LAST:event_formComponentShown
+
+    private void cmdCopyActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdCopyActionPerformed
+        if (this.jsonResultAttributes != null) {
+            StringBuilder sb=new StringBuilder();
+            for (String key : jsonResultAttributes.keySet()) {
+                String value = jsonResultAttributes.get(key);
+                sb.append(key).append(": ").append(value);
+            }
+
+            StringSelection stsel = new StringSelection(sb.toString());
+            Clipboard system = Toolkit.getDefaultToolkit().getSystemClipboard();
+            system.setContents(stsel, null);
+
+        }
+    }//GEN-LAST:event_cmdCopyActionPerformed
+
+    private void cmdProcessOutputActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdProcessOutputActionPerformed
+        if (this.inputAdapter instanceof AssistantFlowAdapter && this.jsonResultAttributes != null) {
+
+            Map<String,String> selectedAttributes=new HashMap<>();
+            for(int i=0;i<tblExtractedKeys.getRowCount();i++) {
+                if(tblExtractedKeys.getValueAt(i, 0).equals(Boolean.TRUE)) {
+                    selectedAttributes.put(tblExtractedKeys.getValueAt(i, 1).toString(), tblExtractedKeys.getValueAt(i, 2).toString());
+                }
+            }
+            
+            // caller is capable of handling results
+            ((AssistantFlowAdapter) this.inputAdapter).processOutput(selectedAttributes);
+        }
         this.setVisible(false);
         this.dispose();
-    }//GEN-LAST:event_cmdCancelActionPerformed
+    }//GEN-LAST:event_cmdProcessOutputActionPerformed
 
-    private void cmdAssistantMouseReleased(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_cmdAssistantMouseReleased
-        AssistantAccess ingo = AssistantAccess.getInstance();
-        try {
-           this.popAssistant.removeAll();
+    private void cmdInterruptActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdInterruptActionPerformed
+        this.interrupted = true;
+    }//GEN-LAST:event_cmdInterruptActionPerformed
 
-            Map<AssistantConfig, List<AiCapability>> capabilitiesExtract = ingo.filterCapabilities(AiCapability.REQUESTTYPE_EXTRACT, AiCapability.INPUTTYPE_STRING, AiCapability.USAGETYPE_INTERACTIVE);
-            ingo.populateMenu(this.popAssistant, capabilitiesExtract, this);
-            this.popAssistant.show(this.cmdAssistant, evt.getX(), evt.getY());
-        } catch (Exception ex) {
-            log.error(ex);
-            JOptionPane.showMessageDialog(this, "" + ex.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
+    private void mnuPromptAllActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_mnuPromptAllActionPerformed
+        this.taPrompt.insert(this.taInputString.getText(), this.taPrompt.getCaretPosition());
+    }//GEN-LAST:event_mnuPromptAllActionPerformed
+
+    private void mnuPromptSelectionActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_mnuPromptSelectionActionPerformed
+        this.taPrompt.insert(this.taInputString.getSelectedText(), this.taPrompt.getCaretPosition());
+    }//GEN-LAST:event_mnuPromptSelectionActionPerformed
+
+    private void taInputStringMousePressed(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_taInputStringMousePressed
+        if (evt.getClickCount() == 1 && evt.getButton() == MouseEvent.BUTTON3) {
+            this.popInputText.show(this.taInputString, evt.getX(), evt.getY());
         }
-    }//GEN-LAST:event_cmdAssistantMouseReleased
+    }//GEN-LAST:event_taInputStringMousePressed
 
     /**
      * @param args the command line arguments
@@ -1099,118 +1245,73 @@ public class PdfAnonymizerDialog extends javax.swing.JDialog implements Assistan
                 }
             }
         } catch (ClassNotFoundException ex) {
-            java.util.logging.Logger.getLogger(PdfAnonymizerDialog.class.getName()).log(java.util.logging.Level.SEVERE, null, ex);
+            java.util.logging.Logger.getLogger(AssistantExtractDialog.class.getName()).log(java.util.logging.Level.SEVERE, null, ex);
         } catch (InstantiationException ex) {
-            java.util.logging.Logger.getLogger(PdfAnonymizerDialog.class.getName()).log(java.util.logging.Level.SEVERE, null, ex);
+            java.util.logging.Logger.getLogger(AssistantExtractDialog.class.getName()).log(java.util.logging.Level.SEVERE, null, ex);
         } catch (IllegalAccessException ex) {
-            java.util.logging.Logger.getLogger(PdfAnonymizerDialog.class.getName()).log(java.util.logging.Level.SEVERE, null, ex);
+            java.util.logging.Logger.getLogger(AssistantExtractDialog.class.getName()).log(java.util.logging.Level.SEVERE, null, ex);
         } catch (javax.swing.UnsupportedLookAndFeelException ex) {
-            java.util.logging.Logger.getLogger(PdfAnonymizerDialog.class.getName()).log(java.util.logging.Level.SEVERE, null, ex);
+            java.util.logging.Logger.getLogger(AssistantExtractDialog.class.getName()).log(java.util.logging.Level.SEVERE, null, ex);
         }
+        //</editor-fold>
+        //</editor-fold>
+        //</editor-fold>
         //</editor-fold>
 
         /* Create and display the dialog */
-        java.awt.EventQueue.invokeLater(new Runnable() {
-            public void run() {
-                PdfAnonymizerDialog dialog = new PdfAnonymizerDialog(new javax.swing.JFrame(), true, null, null, null, null, "");
-                dialog.addWindowListener(new java.awt.event.WindowAdapter() {
-                    @Override
-                    public void windowClosing(java.awt.event.WindowEvent e) {
-                        System.exit(0);
-                    }
-                });
-                dialog.setVisible(true);
-            }
+        java.awt.EventQueue.invokeLater(() -> {
+            AssistantExtractDialog dialog = new AssistantExtractDialog(null, null, null, null, new javax.swing.JFrame(), true);
+            dialog.addWindowListener(new java.awt.event.WindowAdapter() {
+                @Override
+                public void windowClosing(java.awt.event.WindowEvent e) {
+                    System.exit(0);
+                }
+            });
+            dialog.setVisible(true);
         });
     }
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
-    private javax.swing.JCheckBox chkRemoveAnnotations;
-    private javax.swing.JCheckBox chkRemoveMetadata;
-    private javax.swing.JCheckBox chkRemoveWords;
-    private javax.swing.JButton cmdAssistant;
-    private javax.swing.JButton cmdCancel;
-    private javax.swing.JButton cmdSave;
+    private javax.swing.JButton cmdClose;
+    private javax.swing.JButton cmdCopy;
+    private javax.swing.JButton cmdInterrupt;
+    private javax.swing.JButton cmdProcessOutput;
     private javax.swing.JButton cmdSubmit;
-    private javax.swing.JLabel jLabel1;
-    private javax.swing.JPanel jPanel1;
     private javax.swing.JScrollPane jScrollPane1;
-    private javax.swing.JLabel lblFileName;
-    private javax.swing.JPanel pnlPreview;
+    private javax.swing.JScrollPane jScrollPane5;
+    private javax.swing.JLabel lblRequestType;
+    private javax.swing.JMenuItem mnuPromptAll;
+    private javax.swing.JMenuItem mnuPromptSelection;
+    private javax.swing.JPanel pnlParameters;
     private javax.swing.JPanel pnlTitle;
-    private javax.swing.JPopupMenu popAssistant;
+    private javax.swing.JPopupMenu popInputText;
     private javax.swing.JProgressBar progress;
-    private javax.swing.JSplitPane splitMain;
-    private javax.swing.JTextArea taRemoveWords;
+    private javax.swing.JScrollPane scrollMessages;
+    private javax.swing.JSplitPane splitInputOutput;
+    private javax.swing.JTextArea taInputString;
+    private javax.swing.JTextArea taPrompt;
+    private javax.swing.JTable tblExtractedKeys;
     // End of variables declaration//GEN-END:variables
 
-    /**
-     * @return the failed
-     */
-    public boolean isFailed() {
-        return failed;
-    }
+    private List<ParameterData> getParameters() {
 
-    /**
-     * @return the saveRequested
-     */
-    public boolean isSaveRequested() {
-        return saveRequested;
-    }
-
-    @Override
-    public String getPrompt(AiCapability c) {
-        return null;
-    }
-
-    @Override
-    public List<ParameterData> getParameters(AiCapability c) {
-        return new ArrayList<>();
-    }
-
-    @Override
-    public void processOutput(AiCapability c, AiRequestStatus status) {
-        String resultText = "";
-        if (status != null) {
-            if (status.getStatus().equalsIgnoreCase("error")) {
-                // ignore output
-            } else {
-                StringBuilder result = new StringBuilder();
-                for (OutputData o : status.getResponse().getOutputData()) {
-                    if (o.getType().equalsIgnoreCase(OutputData.TYPE_STRING)) {
-                        result.append(o.getStringData()).append(System.lineSeparator()).append(System.lineSeparator());
-                    }
-
-                }
-                resultText = result.toString();
+        List<ParameterData> parameters = new ArrayList<>();
+        for (int i = 0; i < this.capability.getParameters().size(); i++) {
+            ParameterData d = new ParameterData();
+            d.setId(this.capability.getParameters().get(i).getId());
+            Component component = this.pnlParameters.getComponent(2 * i + 1);
+            if (component instanceof JTextField) {
+                String value = ((JTextField) component).getText();
+                d.setValue(value);
+            } else if (component instanceof JComboBox) {
+                //String value=((JComboBox) component).getEditor().getItem().toString();
+                String value = ((JComboBox) component).getSelectedItem().toString();
+                d.setValue(value);
             }
+            parameters.add(d);
         }
-        this.taRemoveWords.setText(this.taRemoveWords.getText() + ", " + resultText);
-    }
-    
-    @Override
-    public void processOutput(Map<String, String> output) {
-        
+        return parameters;
+
     }
 
-    @Override
-    public void processError(AiCapability c, AiRequestStatus status) {
-        
-    }
-
-    @Override
-    public List<InputData> getInputs(AiCapability c) {
-        ArrayList<InputData> inputs = new ArrayList<>();
-        InputData i = new InputData();
-        i.setType(InputData.TYPE_STRING);
-        i.setBase64(false);
-        i.setStringData(this.pdfText);
-        inputs.add(i);
-        return inputs;
-    }
-
-    @Override
-    public List<Message> getMessages(AiCapability c) {
-        return new ArrayList<>();
-    }
 }

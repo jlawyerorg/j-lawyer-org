@@ -2425,4 +2425,9 @@ public class MailContentUI extends javax.swing.JPanel implements HyperlinkListen
     public List<com.jdimension.jlawyer.ai.Message> getMessages(AiCapability c) {
         return null;
     }
+
+    @Override
+    public void processOutput(Map<String, String> output) {
+        
+    }
 }

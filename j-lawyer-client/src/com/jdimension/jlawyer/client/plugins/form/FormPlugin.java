@@ -681,6 +681,7 @@ import java.net.URL;
 import java.net.URLConnection;
 import java.util.ArrayList;
 import java.util.Hashtable;
+import java.util.Map;
 import javax.swing.JPanel;
 import org.apache.log4j.Logger;
 
@@ -797,6 +798,16 @@ public class FormPlugin extends ServerFormPlugin implements Comparable {
         try {
 
             ((FormPluginMethods) scriptInstance).setPlaceHolderValues(this.placeHolder, placeHolders);
+
+        } catch (Throwable t) {
+            log.error(t);
+        }
+    }
+    
+    public void setExtractedValues(Map<String,String> attributes) {
+        try {
+
+            ((FormAiMethods) scriptInstance).setExtractedValues(attributes);
 
         } catch (Throwable t) {
             log.error(t);
