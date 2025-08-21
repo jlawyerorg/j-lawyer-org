@@ -797,6 +797,10 @@ public class AssistantExtractDialog extends javax.swing.JDialog {
         ComponentUtils.persistSplitPane(this.splitInputOutput, this.getClass(), "splitInputOutput");
 
     }
+    
+    public void setRequestTypeLabel(String label) {
+        this.lblRequestType.setText(label);
+    }
 
     /**
      * This method is called from within the constructor to initialize the form.

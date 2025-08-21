@@ -984,6 +984,7 @@ public class FormInstancePanel extends javax.swing.JPanel implements AssistantFl
         
         
         AssistantExtractDialog dlg = new AssistantExtractDialog(this.plugin.getCaseDto(), extractConfig, extractCapability, this, EditorsRegistry.getInstance().getMainWindow(), true);
+        dlg.setRequestTypeLabel("Falldaten aus Dokument(en) extrahieren");
         FrameUtils.centerDialog(dlg, EditorsRegistry.getInstance().getMainWindow());
         dlg.setVisible(true);
         
