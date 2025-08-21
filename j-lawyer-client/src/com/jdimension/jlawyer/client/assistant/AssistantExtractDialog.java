@@ -797,7 +797,7 @@ public class AssistantExtractDialog extends javax.swing.JDialog {
         ComponentUtils.persistSplitPane(this.splitInputOutput, this.getClass(), "splitInputOutput");
 
     }
-    
+
     public void setRequestTypeLabel(String label) {
         this.lblRequestType.setText(label);
     }
@@ -1131,12 +1131,21 @@ public class AssistantExtractDialog extends javax.swing.JDialog {
                         }
                         String rawOutput = resultString.toString();
                         jsonResultAttributes = getCleanJson(rawOutput);
-                        if (jsonResultAttributes == null) {
+                        boolean allEmpty = true;
+                        if (jsonResultAttributes != null) {
+                            for (String k : jsonResultAttributes.keySet()) {
+                                if (!"...".equals(jsonResultAttributes.get(k))) {
+                                    allEmpty = false;
+                                    break;
+                                }
+                            }
+                        }
+                        if (jsonResultAttributes == null || allEmpty) {
                             startBackgroundTask();
                         } else {
                             for (String key : jsonResultAttributes.keySet()) {
                                 String value = jsonResultAttributes.get(key);
-                                boolean relevantAttribute=!value.trim().isEmpty() && !"...".equals(value.trim()) && !"- -".equals(value.trim());
+                                boolean relevantAttribute = !value.trim().isEmpty() && !"...".equals(value.trim()) && !"- -".equals(value.trim());
                                 Object[] row = new Object[]{relevantAttribute, key, value};
                                 ((DefaultTableModel) tblExtractedKeys.getModel()).addRow(row);
                             }
@@ -1162,7 +1171,7 @@ public class AssistantExtractDialog extends javax.swing.JDialog {
         try {
             // must be valid json
             rawOutput = rawOutput.substring(rawOutput.indexOf("{"), rawOutput.lastIndexOf("}") + 1);
-            
+
             return AssistantAccess.jsonStringToMap(rawOutput);
         } catch (Exception ex) {
             return null;
@@ -1184,7 +1193,7 @@ public class AssistantExtractDialog extends javax.swing.JDialog {
 
     private void cmdCopyActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdCopyActionPerformed
         if (this.jsonResultAttributes != null) {
-            StringBuilder sb=new StringBuilder();
+            StringBuilder sb = new StringBuilder();
             for (String key : jsonResultAttributes.keySet()) {
                 String value = jsonResultAttributes.get(key);
                 sb.append(key).append(": ").append(value);
@@ -1200,13 +1209,13 @@ public class AssistantExtractDialog extends javax.swing.JDialog {
     private void cmdProcessOutputActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdProcessOutputActionPerformed
         if (this.inputAdapter instanceof AssistantFlowAdapter && this.jsonResultAttributes != null) {
 
-            Map<String,String> selectedAttributes=new HashMap<>();
-            for(int i=0;i<tblExtractedKeys.getRowCount();i++) {
-                if(tblExtractedKeys.getValueAt(i, 0).equals(Boolean.TRUE)) {
+            Map<String, String> selectedAttributes = new HashMap<>();
+            for (int i = 0; i < tblExtractedKeys.getRowCount(); i++) {
+                if (tblExtractedKeys.getValueAt(i, 0).equals(Boolean.TRUE)) {
                     selectedAttributes.put(tblExtractedKeys.getValueAt(i, 1).toString(), tblExtractedKeys.getValueAt(i, 2).toString());
                 }
             }
-            
+
             // caller is capable of handling results
             ((AssistantFlowAdapter) this.inputAdapter).processOutput(selectedAttributes);
         }
