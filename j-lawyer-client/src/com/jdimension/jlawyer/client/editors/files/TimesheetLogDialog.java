@@ -735,10 +735,7 @@ public class TimesheetLogDialog extends javax.swing.JDialog {
             ArchiveFileServiceRemote afs = locator.lookupArchiveFileServiceRemote();
             TimesheetServiceRemote tss = locator.lookupTimesheetServiceRemote();
             
-            long start=System.currentTimeMillis();
             this.openSheets = afs.getOpenTimesheets(caseId);
-            System.out.println("TS-1: " + (System.currentTimeMillis()-start));
-            start=System.currentTimeMillis();
             ArrayList<String> timesheetIds=new ArrayList<>();
             for (Timesheet ts : openSheets) {
                 TimesheetDialogEntryPanel tsep = new TimesheetDialogEntryPanel(this);
@@ -746,20 +743,15 @@ public class TimesheetLogDialog extends javax.swing.JDialog {
                 this.pnlOpenTimesheets.add(tsep);
                 timesheetIds.add(ts.getId());
             }
-            System.out.println("TS-2: " + (System.currentTimeMillis()-start));
-
+            
             // will return last positions for the user, independent of status
-            start=System.currentTimeMillis();
             List<TimesheetPosition> lastPositions = afs.getLastTimesheetPositions(caseId, UserSettings.getInstance().getCurrentUser().getPrincipalId());
-            System.out.println("TS-3: " + (System.currentTimeMillis()-start));
-            start=System.currentTimeMillis();
             
             Map<String,List<TimesheetPositionTemplate>> positionTemplatesPerTimesheet=tss.getPositionTemplatesForTimesheets(timesheetIds);
             for (TimesheetPosition lp : lastPositions) {
                 this.existingTimesheetLogEntry(lp, positionTemplatesPerTimesheet);
             }
-            System.out.println("TS-4: " + (System.currentTimeMillis()-start));
-
+            
         } catch (Exception ex) {
             log.error("Error determining open timesheet positions", ex);
             JOptionPane.showMessageDialog(this, "Fehler beim Laden der offenen Zeiterfassungseinträge: " + ex.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
