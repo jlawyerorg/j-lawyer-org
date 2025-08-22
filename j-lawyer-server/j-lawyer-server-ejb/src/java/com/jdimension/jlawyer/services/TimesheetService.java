@@ -676,6 +676,8 @@ import javax.ejb.EJB;
 import javax.ejb.Stateless;
 import com.jdimension.jlawyer.persistence.TimesheetAllowedPositionTplFacadeLocal;
 import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 /**
@@ -749,6 +751,19 @@ public class TimesheetService implements TimesheetServiceRemote {
             return new ArrayList<>();
         else
             return this.posTemplates.findByMultipleIds(allowedTemplateIds);
+    }
+    
+    @Override
+    @RolesAllowed({"readArchiveFileRole"})
+    public Map<String,List<TimesheetPositionTemplate>> getPositionTemplatesForTimesheets(List<String> timesheetIds) throws Exception {
+        
+        HashMap<String,List<TimesheetPositionTemplate>> resultMap=new HashMap<>();
+        for(String timesheetId: timesheetIds) {
+            List<TimesheetPositionTemplate> templates=this.getPositionTemplatesForTimesheet(timesheetId);
+            resultMap.put(timesheetId, templates);
+        }
+        
+        return resultMap;
     }
 
     @Override

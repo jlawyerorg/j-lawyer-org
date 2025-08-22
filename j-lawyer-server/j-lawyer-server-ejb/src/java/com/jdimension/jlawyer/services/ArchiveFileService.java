@@ -6265,7 +6265,21 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
         ArrayList<TimesheetPosition> list = new ArrayList<>();
         try {
             con = utils.getConnection();
-            st = con.prepareStatement("select id, timesheet_id, time_stopped from timesheet_positions where timesheet_id in (select id from timesheets where status=10) and principal=? order by time_stopped desc");
+            // get all timesheet positions where time_stopped is null (timer is currently active) or the position is the last one used for this timesheet
+            st = con.prepareStatement("SELECT p.id, p.timesheet_id, p.time_stopped\n"
+                    + "FROM timesheet_positions p\n"
+                    + "JOIN timesheets t ON p.timesheet_id = t.id\n"
+                    + "WHERE t.status = 10\n"
+                    + "  AND p.principal = ?\n"
+                    + "  AND (\n"
+                    + "       p.time_stopped IS NULL\n"
+                    + "       OR p.time_stopped = (\n"
+                    + "            SELECT MAX(p2.time_stopped)\n"
+                    + "            FROM timesheet_positions p2\n"
+                    + "            WHERE p2.timesheet_id = p.timesheet_id\n"
+                    + "              AND p2.principal = p.principal\n"
+                    + "       )\n"
+                    + "  )");
             st.setString(1, principal);
             rs = st.executeQuery();
 
