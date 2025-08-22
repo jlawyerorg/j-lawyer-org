@@ -664,7 +664,9 @@ For more information on this, and how to apply and follow the GNU AGPL, see
 package org.jlawyer.io.rest.v1.pojo;
 
 import com.jdimension.jlawyer.persistence.ArchiveFileDocumentsBean;
+import java.util.ArrayList;
 import java.util.Date;
+import java.util.List;
 
 /**
  *
@@ -684,6 +686,7 @@ public class RestfulDocumentV1 {
     protected long version = 1l;
     protected int highlight1 = -1;
     protected int highlight2 = -1;
+    private List<RestfulTagV1> tags=new ArrayList<>();
 
     public RestfulDocumentV1() {
     }
@@ -880,6 +883,20 @@ public class RestfulDocumentV1 {
      */
     public void setCaseId(String caseId) {
         this.caseId = caseId;
+    }
+
+    /**
+     * @return the tags
+     */
+    public List<RestfulTagV1> getTags() {
+        return tags;
+    }
+
+    /**
+     * @param tags the tags to set
+     */
+    public void setTags(List<RestfulTagV1> tags) {
+        this.tags = tags;
     }
 
 }

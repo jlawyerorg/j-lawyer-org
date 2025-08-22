@@ -671,6 +671,7 @@ import com.jdimension.jlawyer.persistence.ArchiveFileDocumentsBeanFacadeLocal;
 import com.jdimension.jlawyer.persistence.ArchiveFileFormsBean;
 import com.jdimension.jlawyer.persistence.ArchiveFileReviewsBean;
 import com.jdimension.jlawyer.persistence.ArchiveFileTagsBean;
+import com.jdimension.jlawyer.persistence.DocumentTagsBean;
 import com.jdimension.jlawyer.persistence.PartyTypeBean;
 import com.jdimension.jlawyer.security.Base64;
 import com.jdimension.jlawyer.services.AddressServiceLocal;
@@ -1025,7 +1026,24 @@ public class CasesEndpointV1 implements CasesEndpointLocalV1 {
     @Path("/{id}/documents")
     @RolesAllowed({"readArchiveFileRole"})
     public Response getCaseDocuments(@PathParam("id") String id) {
-        return getCaseDocuments(id, false);
+        return getCaseDocuments(id, false, false);
+    }
+    
+    /**
+     * Returns a list of documents for a given case
+     *
+     * @param id case ID
+     * @response 401 User not authorized
+     * @response 403 User not authenticated
+     */
+    @Override
+    @GET
+    @Produces(MediaType.APPLICATION_JSON+";charset=utf-8")
+    @Consumes(MediaType.APPLICATION_JSON)
+    @Path("/{id}/documents/with-tags")
+    @RolesAllowed({"readArchiveFileRole"})
+    public Response getCaseDocumentsWithTags(@PathParam("id") String id) {
+        return getCaseDocuments(id, false, true);
     }
     
     /**
@@ -1042,10 +1060,10 @@ public class CasesEndpointV1 implements CasesEndpointLocalV1 {
     @Path("/{id}/documents/trash")
     @RolesAllowed({"readArchiveFileRole"})
     public Response getCaseDocumentsInTrash(@PathParam("id") String id) {
-        return getCaseDocuments(id, true);
+        return getCaseDocuments(id, true, false);
     }
     
-    private Response getCaseDocuments(String caseId, boolean deleted) {
+    private Response getCaseDocuments(String caseId, boolean deleted, boolean includeTags) {
         //http://localhost:8080/j-lawyer-io/rest/cases/0c79112f7f000101327bf357f0b6010c/documents
         try {
 
@@ -1061,7 +1079,21 @@ public class CasesEndpointV1 implements CasesEndpointLocalV1 {
             Collection<ArchiveFileDocumentsBean> documents = cases.getDocuments(caseId, deleted);
             ArrayList<RestfulDocumentV1> docList = new ArrayList<>();
             for (ArchiveFileDocumentsBean doc : documents) {
-                docList.add(RestfulDocumentV1.fromDocumentsBean(doc, caseId));
+                RestfulDocumentV1 restfulDoc=RestfulDocumentV1.fromDocumentsBean(doc, caseId);
+                if(includeTags) {
+                    Collection tags=cases.getDocumentTags(doc.getId());
+                    if(tags!=null) {
+                        for(Object o: tags) {
+                            DocumentTagsBean dtb=(DocumentTagsBean)o;
+                            RestfulTagV1 dt=new RestfulTagV1();
+                            dt.setId(dtb.getId());
+                            dt.setDateSet(dtb.getDateSet());
+                            dt.setName(dtb.getTagName());
+                            restfulDoc.getTags().add(dt);
+                        }
+                    }
+                }
+                docList.add(restfulDoc);
             }
 
             Response res = Response.ok(docList).build();
