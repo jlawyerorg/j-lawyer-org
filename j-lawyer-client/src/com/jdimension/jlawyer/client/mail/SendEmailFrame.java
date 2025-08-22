@@ -913,7 +913,7 @@ public class SendEmailFrame extends javax.swing.JFrame implements SendCommunicat
 
             if (!mailboxes.isEmpty()) {
                 MailboxSetup ms = mailboxes.iterator().next();
-                this.tp.setText(EmailUtils.html2Text(ms.getEmailSignature()));
+                this.tp.setText(ms.getEmailSignatureTxt());
                 this.hp.setText(ms.getEmailSignature());
             }
 
@@ -922,7 +922,7 @@ public class SendEmailFrame extends javax.swing.JFrame implements SendCommunicat
                 this.cmbFrom.setSelectedItem(lastSetup);
                 for (MailboxSetup t : mailboxes) {
                     if (t.getDisplayName().equals(lastSetup)) {
-                        this.tp.setText(EmailUtils.html2Text(t.getEmailSignature()));
+                        this.tp.setText(t.getEmailSignatureTxt());
                         this.hp.setText(t.getEmailSignature());
                         break;
                     }
@@ -1248,7 +1248,7 @@ public class SendEmailFrame extends javax.swing.JFrame implements SendCommunicat
         if (contentType.toLowerCase().startsWith(ContentTypes.TEXT_PLAIN)) {
             if (ms != null) {
                 if(useSignature)
-                    this.tp.setText(preSignature + EmailUtils.html2Text(ms.getEmailSignature()) + postSignature);
+                    this.tp.setText(preSignature + ms.getEmailSignatureTxt() + postSignature);
                 else
                     this.tp.setText(preSignature + postSignature);
                 this.tp.setCaretPosition(0);
@@ -3141,7 +3141,7 @@ public class SendEmailFrame extends javax.swing.JFrame implements SendCommunicat
 
                 if (tpl.isText()) {
                     if (ms != null) {
-                        String t = TemplatesUtil.replacePlaceHolders(tpl.getBody(), htValues) + System.getProperty("line.separator") + System.getProperty("line.separator") + EmailUtils.html2Text(ms.getEmailSignature());
+                        String t = TemplatesUtil.replacePlaceHolders(tpl.getBody(), htValues) + System.getProperty("line.separator") + System.getProperty("line.separator") + ms.getEmailSignatureTxt();
                         int cursorIndex = t.indexOf(EmailTemplate.PLACEHOLDER_CURSOR);
                         if (cursorIndex > -1) {
                             t = t.replace(EmailTemplate.PLACEHOLDER_CURSOR, "");

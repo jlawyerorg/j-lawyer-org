@@ -753,6 +753,7 @@ public class MailboxSetupDialog extends javax.swing.JDialog {
         this.txtOutServer.setText("");
         this.pwdOutPassword.setText("");
         this.htmlEmailSig.setText("");
+        this.txtEmailSig.setText("");
 
         this.chkEmailInSsl.setSelected(true);
         this.chkEmailOutSsl.setSelected(true);
@@ -891,6 +892,9 @@ public class MailboxSetupDialog extends javax.swing.JDialog {
         jLabel24 = new javax.swing.JLabel();
         jPanel4 = new javax.swing.JPanel();
         htmlEmailSig = new com.jdimension.jlawyer.client.mail.HtmlEditorPanel();
+        jPanel9 = new javax.swing.JPanel();
+        jScrollPane4 = new javax.swing.JScrollPane();
+        txtEmailSig = new javax.swing.JTextArea();
         jPanel5 = new javax.swing.JPanel();
         chkScanInbox = new javax.swing.JCheckBox();
         jLabel12 = new javax.swing.JLabel();
@@ -1055,7 +1059,7 @@ public class MailboxSetupDialog extends javax.swing.JDialog {
                 .addGroup(jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                     .addComponent(txtEmailSender, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                     .addComponent(jLabel10))
-                .addContainerGap(429, Short.MAX_VALUE))
+                .addContainerGap(456, Short.MAX_VALUE))
         );
 
         jTabbedPane1.addTab("Postfach", jPanel2);
@@ -1289,10 +1293,35 @@ public class MailboxSetupDialog extends javax.swing.JDialog {
             jPanel4Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(jPanel4Layout.createSequentialGroup()
                 .addContainerGap()
-                .addComponent(htmlEmailSig, javax.swing.GroupLayout.DEFAULT_SIZE, 534, Short.MAX_VALUE))
+                .addComponent(htmlEmailSig, javax.swing.GroupLayout.DEFAULT_SIZE, 561, Short.MAX_VALUE))
         );
 
-        jTabbedPane1.addTab("Signatur", jPanel4);
+        jTabbedPane1.addTab("Signatur (HTML)", jPanel4);
+
+        txtEmailSig.setColumns(20);
+        txtEmailSig.setLineWrap(true);
+        txtEmailSig.setRows(5);
+        txtEmailSig.setWrapStyleWord(true);
+        jScrollPane4.setViewportView(txtEmailSig);
+
+        javax.swing.GroupLayout jPanel9Layout = new javax.swing.GroupLayout(jPanel9);
+        jPanel9.setLayout(jPanel9Layout);
+        jPanel9Layout.setHorizontalGroup(
+            jPanel9Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(jPanel9Layout.createSequentialGroup()
+                .addContainerGap()
+                .addComponent(jScrollPane4, javax.swing.GroupLayout.DEFAULT_SIZE, 731, Short.MAX_VALUE)
+                .addContainerGap())
+        );
+        jPanel9Layout.setVerticalGroup(
+            jPanel9Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(jPanel9Layout.createSequentialGroup()
+                .addContainerGap()
+                .addComponent(jScrollPane4, javax.swing.GroupLayout.DEFAULT_SIZE, 555, Short.MAX_VALUE)
+                .addContainerGap())
+        );
+
+        jTabbedPane1.addTab("Signatur (Text)", jPanel9);
 
         chkScanInbox.setFont(chkScanInbox.getFont());
         chkScanInbox.setText("eingehende Nachrichten automatisch zuordnen");
@@ -1438,7 +1467,7 @@ public class MailboxSetupDialog extends javax.swing.JDialog {
         );
         jPanel7Layout.setVerticalGroup(
             jPanel7Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addComponent(jScrollPane2, javax.swing.GroupLayout.DEFAULT_SIZE, 499, Short.MAX_VALUE)
+            .addComponent(jScrollPane2, javax.swing.GroupLayout.DEFAULT_SIZE, 526, Short.MAX_VALUE)
         );
 
         jTabbedPane2.addTab("Posteingang", jPanel7);
@@ -1457,7 +1486,7 @@ public class MailboxSetupDialog extends javax.swing.JDialog {
         );
         jPanel8Layout.setVerticalGroup(
             jPanel8Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addComponent(jScrollPane3, javax.swing.GroupLayout.DEFAULT_SIZE, 499, Short.MAX_VALUE)
+            .addComponent(jScrollPane3, javax.swing.GroupLayout.DEFAULT_SIZE, 526, Short.MAX_VALUE)
         );
 
         jTabbedPane2.addTab("Postausgang", jPanel8);
@@ -1595,6 +1624,7 @@ public class MailboxSetupDialog extends javax.swing.JDialog {
             ms.setEmailInType(this.cmbAccountType.getSelectedItem().toString());
             ms.setEmailSenderName(this.txtEmailSender.getText());
             ms.setEmailSignature(this.htmlEmailSig.getText());
+            ms.setEmailSignatureTxt(this.txtEmailSig.getText());
             ms.setEmailInServer(this.txtInServer.getText());
             ms.setEmailInUser(this.txtInUser.getText());
             ms.setEmailOutServer(this.txtOutServer.getText());
@@ -1764,6 +1794,13 @@ public class MailboxSetupDialog extends javax.swing.JDialog {
             sig = "";
         }
         this.htmlEmailSig.setText(sig);
+        
+        sig = ms.getEmailSignatureTxt();
+        if (sig == null) {
+            sig = "";
+        }
+        this.txtEmailSig.setText(sig);
+        
         this.txtInServer.setText(ms.getEmailInServer());
         this.txtInUser.setText(ms.getEmailInUser());
         String inPwd = ms.getEmailInPwd();
@@ -1898,9 +1935,11 @@ public class MailboxSetupDialog extends javax.swing.JDialog {
     private javax.swing.JPanel jPanel6;
     private javax.swing.JPanel jPanel7;
     private javax.swing.JPanel jPanel8;
+    private javax.swing.JPanel jPanel9;
     private javax.swing.JScrollPane jScrollPane1;
     private javax.swing.JScrollPane jScrollPane2;
     private javax.swing.JScrollPane jScrollPane3;
+    private javax.swing.JScrollPane jScrollPane4;
     private javax.swing.JSeparator jSeparator1;
     private javax.swing.JSeparator jSeparator2;
     private javax.swing.JTabbedPane jTabbedPane1;
@@ -1921,6 +1960,7 @@ public class MailboxSetupDialog extends javax.swing.JDialog {
     private javax.swing.JTextField txtDisplayName;
     private javax.swing.JTextField txtEmailAddress;
     private javax.swing.JTextField txtEmailSender;
+    private javax.swing.JTextArea txtEmailSig;
     private javax.swing.JTextField txtInServer;
     private javax.swing.JTextField txtInUser;
     private javax.swing.JTextField txtOutPort;

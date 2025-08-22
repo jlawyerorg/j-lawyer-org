@@ -726,6 +726,8 @@ public class MailboxSetup implements Serializable, EventTypes {
     protected String emailSenderName;
     @Column(name = "emailSignature", columnDefinition = "TEXT")
     protected String emailSignature;
+    @Column(name = "email_signature_txt")
+    protected String emailSignatureTxt;
     @Column(name = "emailInSsl")
     protected boolean emailInSsl;
     @Column(name = "emailOutSsl")
@@ -1351,6 +1353,20 @@ public class MailboxSetup implements Serializable, EventTypes {
      */
     public void setScanDays(int scanDays) {
         this.scanDays = scanDays;
+    }
+
+    /**
+     * @return the emailSignatureTxt
+     */
+    public String getEmailSignatureTxt() {
+        return emailSignatureTxt;
+    }
+
+    /**
+     * @param emailSignatureTxt the emailSignatureTxt to set
+     */
+    public void setEmailSignatureTxt(String emailSignatureTxt) {
+        this.emailSignatureTxt = emailSignatureTxt;
     }
 
     
