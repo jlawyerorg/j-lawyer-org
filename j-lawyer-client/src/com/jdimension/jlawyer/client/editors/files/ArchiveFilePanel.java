@@ -7909,13 +7909,15 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
             if (selected.isEmpty()) {
                 return inputs;
             }
-            if (selected.size() != 1) {
-                return inputs;
-            }
-
+            
             InputData i = new InputData();
 
             if (!c.getInput().isEmpty() && c.getInput().get(0).getId().contains("FILE")) {
+                // only one input file supported
+                if (selected.size() != 1) {
+                    return inputs;
+                }
+                
                 ArchiveFileDocumentsBean doc = selected.get(0);
                 i.setFileName(doc.getName());
                 i.setType(InputData.TYPE_FILE);
@@ -7923,14 +7925,20 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
                 i.setData(remote.getDocumentContent(doc.getId()));
                 //i.setStringData(docText);
             } else {
-                ArchiveFileDocumentsBean doc = selected.get(0);
-                String docText = remote.getDocumentPreview(doc.getId(), DocumentPreview.TYPE_TEXT).getText();
+                StringBuilder docTexts=new StringBuilder();
+                
+                for(ArchiveFileDocumentsBean doc: selected) {
+                    docTexts.append("Dokument \"").append(doc.getName()).append("\" vom ").append(dfDay.format(doc.getCreationDate())).append(System.lineSeparator());
+                    docTexts.append("************************").append(System.lineSeparator()).append(System.lineSeparator());
+                    docTexts.append(remote.getDocumentPreview(doc.getId(), DocumentPreview.TYPE_TEXT).getText());
+                    docTexts.append(System.lineSeparator()).append(System.lineSeparator());
+                }
 
                 //i.setFileName("sound.wav");
                 i.setType(InputData.TYPE_STRING);
                 i.setBase64(false);
                 //i.setData(selectedText);
-                i.setStringData(docText);
+                i.setStringData(docTexts.toString());
             }
 
             inputs.add(i);
