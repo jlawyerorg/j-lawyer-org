@@ -1147,19 +1147,24 @@ public class SendBeaMessageFrame extends javax.swing.JFrame implements SendCommu
 
     }
 
-    @Override
-    public void addAttachment(String tempUrl, String dictateSign) {
+    
+    public void addAttachment(String tempUrl, String dictateSign, String alias) {
         this.contextDictateSign = dictateSign;
         this.attachments.put(new File(tempUrl).getName(), tempUrl);
 
         DefaultTableModel tm = (DefaultTableModel) this.tblAttachments.getModel();
-        tm.addRow(new Object[]{false, true, false, false, new File(tempUrl).getName(), new File(tempUrl).getName()});
+        tm.addRow(new Object[]{false, true, false, false, alias, new File(tempUrl).getName()});
 
         this.updateAttachmentSize();
         this.updateAlias();
 
         ComponentUtils.autoSizeColumns(tblAttachments);
 
+    }
+    
+    @Override
+    public void addAttachment(String tempUrl, String dictateSign) {
+        this.addAttachment(tempUrl, dictateSign, new File(tempUrl).getName());
     }
     
     private ArrayList<BeaAttachmentMetadata> getAttachmentMetdata() {

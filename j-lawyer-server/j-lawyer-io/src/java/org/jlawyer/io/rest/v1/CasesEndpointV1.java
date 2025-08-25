@@ -1081,10 +1081,9 @@ public class CasesEndpointV1 implements CasesEndpointLocalV1 {
             for (ArchiveFileDocumentsBean doc : documents) {
                 RestfulDocumentV1 restfulDoc=RestfulDocumentV1.fromDocumentsBean(doc, caseId);
                 if(includeTags) {
-                    Collection tags=cases.getDocumentTags(doc.getId());
+                    Collection<DocumentTagsBean> tags=cases.getDocumentTags(doc.getId());
                     if(tags!=null) {
-                        for(Object o: tags) {
-                            DocumentTagsBean dtb=(DocumentTagsBean)o;
+                        for(DocumentTagsBean dtb: tags) {
                             RestfulTagV1 dt=new RestfulTagV1();
                             dt.setId(dtb.getId());
                             dt.setDateSet(dtb.getDateSet());
