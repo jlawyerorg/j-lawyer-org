@@ -698,7 +698,6 @@ import org.odftoolkit.odfdom.dom.element.text.TextListItemElement;
 import org.odftoolkit.odfdom.dom.element.text.TextPElement;
 import org.odftoolkit.odfdom.dom.element.text.TextTabElement;
 import org.odftoolkit.odfdom.incubator.doc.draw.OdfDrawFrame;
-import org.odftoolkit.odfdom.incubator.doc.text.OdfTextParagraph;
 import org.odftoolkit.odfdom.pkg.OdfElement;
 import org.odftoolkit.odfdom.pkg.OdfPackage;
 import org.odftoolkit.odfdom.type.Color;
@@ -872,6 +871,7 @@ public class LibreOfficeAccess {
                     if (imageNode instanceof DrawImageElement) {
                         try {
                             mergeImage(((DrawImageElement) imageNode), bodyPackage, targetDoc, mergedPackage);
+                            //mergeImageKeepingWrap(((DrawImageElement) imageNode), bodyPackage, targetDoc, mergedPackage);
                         } catch (Exception ex) {
                             log.error("Can not merge image", ex);
                         }
@@ -894,7 +894,7 @@ public class LibreOfficeAccess {
 
         }
     }
-
+    
     private static void mergeImage(org.odftoolkit.odfdom.dom.element.draw.DrawImageElement drawImageElement, OdfPackage bodyPack, TextDocument targetDoc, OdfPackage mergedPack) throws Exception {
         String href = drawImageElement.getAttributes().getNamedItem("xlink:href").getNodeValue();
         byte[] bytes = bodyPack.getBytes(href);
@@ -971,6 +971,237 @@ public class LibreOfficeAccess {
             //targetDoc.addParagraph("").getFrameContainerElement().appendChild(drawImageElement.cloneNode(true));
         }
     }
+
+//    private static void mergeImage(org.odftoolkit.odfdom.dom.element.draw.DrawImageElement drawImageElement,
+//            OdfPackage bodyPack,
+//            TextDocument targetDoc,
+//            OdfPackage mergedPack) throws Exception {
+//
+//        String href = drawImageElement.getAttribute("xlink:href");
+//        byte[] bytes = bodyPack.getBytes(href);
+//        String mimeType = drawImageElement.getAttribute("draw:mime-type");
+//
+//        if (bytes != null) {
+//            // Bild ins Paket einfügen
+//            mergedPack.insert(bytes, href, mimeType);
+//
+//            // temporäre Datei zum Einfügen ins Dokument
+//            File tmpImage = File.createTempFile("img_" + System.currentTimeMillis(), ".bin");
+//            try (FileOutputStream fout = new FileOutputStream(tmpImage)) {
+//                fout.write(bytes);
+//            }
+//
+//            // Bild ins Dokument einfügen
+//            Paragraph imgParagraph = targetDoc.addParagraph("");
+//            Image newImage = Image.newImage(imgParagraph, tmpImage.toURI());
+//
+//            OdfDrawFrame sourceFrame = (OdfDrawFrame) drawImageElement.getParentNode();
+//            OdfDrawFrame targetFrame = (OdfDrawFrame) newImage.getOdfElement().getParentNode();
+//
+//            // Geometrie übernehmen
+//            targetFrame.setSvgXAttribute(sourceFrame.getSvgXAttribute());
+//            targetFrame.setSvgYAttribute(sourceFrame.getSvgYAttribute());
+//            targetFrame.setSvgWidthAttribute(sourceFrame.getSvgWidthAttribute());
+//            targetFrame.setSvgHeightAttribute(sourceFrame.getSvgHeightAttribute());
+//            targetFrame.setTextAnchorTypeAttribute(sourceFrame.getTextAnchorTypeAttribute());
+//
+////            copyAttributeIfExists(sourceFrame, targetFrame, "style:wrap");
+////            copyAttributeIfExists(sourceFrame, targetFrame, "style:number-wrapped-paragraphs");
+////            copyAttributeIfExists(sourceFrame, targetFrame, "style:wrap-contour");
+////            copyAttributeIfExists(sourceFrame, targetFrame, "style:wrap-contour-mode");
+////            copyAttributeIfExists(sourceFrame, targetFrame, "draw:z-index");
+//            // falls Quelle einen Style benutzt → übernehmen
+//            String styleName = sourceFrame.getDrawStyleNameAttribute();
+//            if (styleName != null) {
+//                OdfFileDom sourceDom = (OdfFileDom) sourceFrame.getOwnerDocument();
+//                OdfOfficeAutomaticStyles sourceStyles = sourceDom.getAutomaticStyles();
+//                OdfStyle sourceStyle = sourceStyles.getStyle(styleName, OdfStyleFamily.Graphic);
+//
+//                if (sourceStyle != null) {
+//                    OdfFileDom targetDom = targetDoc.getContentDom();
+//                    OdfOfficeAutomaticStyles targetStyles = targetDom.getAutomaticStyles();
+//
+//                    // prüfen, ob Style schon im Ziel existiert
+//                    OdfStyle targetStyle = targetStyles.getStyle(styleName, OdfStyleFamily.Graphic);
+//                    if (targetStyle == null) {
+//                        // Style-Knoten ins Zieldokument importieren
+//                        Node imported = targetDom.importNode(sourceStyle, true);
+//                        targetStyles.appendChild(imported);
+//                    }
+//
+//                    // Frame den Style-Namen setzen
+//                    targetFrame.setDrawStyleNameAttribute(styleName);
+//                }
+//            } else {
+//                // falls kein Style, dann Wrap-Attribute direkt übernehmen
+//                copyAttributeIfExists(sourceFrame, targetFrame, "style:wrap");
+//                copyAttributeIfExists(sourceFrame, targetFrame, "style:number-wrapped-paragraphs");
+//                copyAttributeIfExists(sourceFrame, targetFrame, "style:wrap-contour");
+//                copyAttributeIfExists(sourceFrame, targetFrame, "style:wrap-contour-mode");
+//                copyAttributeIfExists(sourceFrame, targetFrame, "draw:z-index");
+//            }
+//        }
+//    }
+//
+//    private static void copyAttributeIfExists(OdfDrawFrame source, OdfDrawFrame target, String attr) {
+//        if (source.hasAttribute(attr)) {
+//            target.setAttribute(attr, source.getAttribute(attr));
+//        }
+//    }
+    
+//    private static void copyAttributeIfExists(Node src, Node target, String attrName) {
+//        if (src instanceof org.w3c.dom.Element && target instanceof org.w3c.dom.Element) {
+//            org.w3c.dom.Element srcElem = (org.w3c.dom.Element) src;
+//            org.w3c.dom.Element targetElem = (org.w3c.dom.Element) target;
+//            if (srcElem.hasAttribute(attrName)) {
+//                targetElem.setAttribute(attrName, srcElem.getAttribute(attrName));
+//            }
+//        }
+//    }
+//    
+//    private static void mergeImageKeepingWrap(
+//            DrawImageElement srcImg,
+//            OdfPackage srcPack,
+//            TextDocument targetDoc,
+//            OdfPackage mergedPack
+//    ) throws Exception {
+//
+//        String href = srcImg.getXlinkHrefAttribute();
+//        
+//        byte[] bytes = srcPack.getBytes(href);
+//        if (bytes == null) {
+//            return;
+//        }
+//        
+//        //String mime = srcImg.getDrawMimeTypeAttribute();
+//        String mime = java.net.URLConnection.guessContentTypeFromName(href);
+//        if (mime == null) {
+//            mime = java.net.URLConnection.guessContentTypeFromStream(
+//                    new java.io.ByteArrayInputStream(bytes));
+//        }
+//        if (mime == null) {
+//            mime = "application/octet-stream"; // Fallback
+//        }
+//
+//        // Bilddaten ins Zielpaket
+//        mergedPack.insert(bytes, href, mime);
+//
+//        // Quell-Frame
+//        DrawFrameElement srcFrame = (DrawFrameElement) srcImg.getParentNode();
+//        String styleName = srcFrame.getDrawStyleNameAttribute();
+//
+//        // Ziel-DOM
+//        OdfFileDom dstDom = targetDoc.getContentDom();
+//
+//        // Grafik-Style kopieren (für Umlauf), falls vorhanden
+//        if (styleName != null && !styleName.isEmpty()) {
+//            copyGraphicStyleIfMissing((OdfFileDom) srcImg.getOwnerDocument(), dstDom, styleName);
+//        }
+//
+//        // 1) Absatz über Simple-API
+//        Paragraph para = targetDoc.addParagraph("");
+//        TextPElement p = (TextPElement) para.getOdfElement();
+//
+//        // 2) Frame unter Absatz erzeugen (Fabrik hängt am Eltern-Element)
+//        DrawFrameElement dstFrame = p.newDrawFrameElement();
+//
+//        // 3) Bild unter Frame erzeugen
+//        DrawImageElement dstImg = dstFrame.newDrawImageElement();
+//        dstImg.setXlinkHrefAttribute(href);
+//        //dstImg.setDrawMimeTypeAttribute(mime);
+//        dstImg.setXlinkTypeAttribute("simple");
+//        dstImg.setXlinkShowAttribute("embed");
+//
+//        // 4) Geometrie / Anker übernehmen
+//        dstFrame.setSvgXAttribute(srcFrame.getSvgXAttribute());
+//        dstFrame.setSvgYAttribute(srcFrame.getSvgYAttribute());
+//        dstFrame.setSvgWidthAttribute(srcFrame.getSvgWidthAttribute());
+//        dstFrame.setSvgHeightAttribute(srcFrame.getSvgHeightAttribute());
+//        dstFrame.setTextAnchorTypeAttribute(srcFrame.getTextAnchorTypeAttribute());
+//        
+//        copyAttributeIfExists(srcFrame, dstFrame, "style:wrap");
+//        copyAttributeIfExists(srcFrame, dstFrame, "style:number-wrapped-paragraphs");
+//        copyAttributeIfExists(srcFrame, dstFrame, "style:wrap-contour");
+//        copyAttributeIfExists(srcFrame, dstFrame, "style:wrap-contour-mode");
+//        copyAttributeIfExists(srcFrame, dstFrame, "draw:z-index");
+//
+//        // 5) Style-Name setzen (entscheidend für Umlauf)
+//        if (styleName != null && !styleName.isEmpty()) {
+//            dstFrame.setDrawStyleNameAttribute(styleName);
+//        }
+//    }
+//
+//    /**
+//     * Sucht/erzeugt office:automatic-styles im content.xml-DOM.
+//     */
+//    private static OfficeAutomaticStylesElement ensureAutomaticStyles(OdfFileDom dom) {
+//        OfficeDocumentContentElement root = (OfficeDocumentContentElement) dom.getRootElement();
+//        NodeList nl = root.getElementsByTagNameNS(
+//                "urn:oasis:names:tc:opendocument:xmlns:office:1.0", "automatic-styles");
+//        if (nl.getLength() > 0) {
+//            return (OfficeAutomaticStylesElement) nl.item(0);
+//        }
+//        // Wenn verfügbar (neuere ODFDOM-Versionen)
+//        try {
+//            return root.newOfficeAutomaticStylesElement();
+//        } catch (NoSuchMethodError e) {
+//            // Fallback: per DOM erstellen und vor <office:body> einfügen
+//            Node auto = dom.createElementNS(
+//                    "urn:oasis:names:tc:opendocument:xmlns:office:1.0",
+//                    "office:automatic-styles");
+//            NodeList bodies = root.getElementsByTagNameNS(
+//                    "urn:oasis:names:tc:opendocument:xmlns:office:1.0", "body");
+//            if (bodies.getLength() > 0) {
+//                root.insertBefore(auto, bodies.item(0));
+//            } else {
+//                root.appendChild(auto);
+//            }
+//            return (OfficeAutomaticStylesElement) auto;
+//        }
+//    }
+//
+//    /**
+//     * Findet Grafik-Style nach Name in einem content.xml-DOM.
+//     */
+//    private static StyleStyleElement findGraphicStyleByName(OdfFileDom dom, String name) {
+//        NodeList styles = dom.getElementsByTagNameNS(
+//                "urn:oasis:names:tc:opendocument:xmlns:style:1.0", "style");
+//        for (int i = 0; i < styles.getLength(); i++) {
+//            StyleStyleElement s = (StyleStyleElement) styles.item(i);
+//            if (name.equals(s.getStyleNameAttribute())) {
+//                String fam = s.getStyleFamilyAttribute();
+//                if ("graphic".equals(fam) || "presentation".equals(fam)) {
+//                    return s;
+//                }
+//            }
+//        }
+//        return null;
+//    }
+//
+//    /**
+//     * Kopiert den Grafik-Style aus srcContentDom nach dstContentDom, falls dort
+//     * fehlt.
+//     */
+//    private static void copyGraphicStyleIfMissing(OdfFileDom srcContentDom, OdfFileDom dstContentDom, String styleName) {
+//        if (findGraphicStyleByName(dstContentDom, styleName) != null) {
+//            return;
+//        }
+//        StyleStyleElement srcStyle = findGraphicStyleByName(srcContentDom, styleName);
+//        if (srcStyle == null) {
+//            return;
+//        }
+//
+//        OfficeAutomaticStylesElement dstAuto = ensureAutomaticStyles(dstContentDom);
+//
+//        // Import ins Ziel-DOM (nutze importNode; falls nicht verfügbar, auf adoptNode/clone ausweichen)
+//        Node imported;
+//        try {
+//            imported = dstContentDom.importNode(srcStyle, true);
+//        } catch (Throwable t) {
+//            imported = dstContentDom.adoptNode(srcStyle.cloneNode(true));
+//        }
+//        dstAuto.appendChild(imported);
+//    }
 
     // Define a utility function to get an array of child elements of a certain type
     public static <T extends Node> T[] getChildElementsOfType(Node parent, Class<T> type) {
@@ -1434,26 +1665,27 @@ public class LibreOfficeAccess {
 //                    } else {
 //                        item.replaceWith("");
 //                    }
-                    
-                    if(isContainedAsSeparateParagraph(item.getContainerElement(), item.getText())) {
+
+                    if (isContainedAsSeparateParagraph(item.getContainerElement(), item.getText())) {
                         removalNodes.add(item.getContainerElement());
                         removalNodesItemText.add(item.getText());
                     }
                     item.replaceWith("");
-                    
+
                 } else {
                     item.replaceWith(scriptResult);
                 }
 
             }
-            for (int rn=0;rn<removalNodes.size();rn++) {
-                Node rNode=removalNodes.get(rn);
+            for (int rn = 0; rn < removalNodes.size(); rn++) {
+                Node rNode = removalNodes.get(rn);
                 Node parentNode = rNode.getParentNode();
-                if(parentNode==null)
+                if (parentNode == null) {
                     continue;
-                
+                }
+
                 parentNode.removeChild(rNode);
-                
+
 //                NodeList childNodes = parentNode.getChildNodes();
 //                for (int i = 0; i < childNodes.getLength(); i++) {
 //                    Node child = childNodes.item(i);
@@ -1545,7 +1777,7 @@ public class LibreOfficeAccess {
         NodeList childNodes = parentNode.getChildNodes();
         for (int i = 0; i < childNodes.getLength(); i++) {
             Node child = childNodes.item(i);
-            if(child.getTextContent().contains(searchText) && child.getTextContent().length()>searchText.length()) {
+            if (child.getTextContent().contains(searchText) && child.getTextContent().length() > searchText.length()) {
                 return false;
             }
             if (child.getTextContent().equals(searchText)) {
@@ -1554,7 +1786,7 @@ public class LibreOfficeAccess {
         }
         return false;
     }
-    
+
     private static double calculateTextWidth(org.odftoolkit.simple.table.Cell cell) {
         // Create a temporary image to obtain FontMetrics
         BufferedImage image = new BufferedImage(1, 1, BufferedImage.TYPE_INT_ARGB);
