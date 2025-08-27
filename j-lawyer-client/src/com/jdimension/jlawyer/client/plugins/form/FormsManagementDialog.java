@@ -684,6 +684,8 @@ public class FormsManagementDialog extends javax.swing.JDialog implements FormAc
     public FormsManagementDialog(java.awt.Frame parent, boolean modal) {
         super(parent, modal);
         initComponents();
+        
+        this.jScrollPane2.getVerticalScrollBar().setUnitIncrement(16);
 
         lblGitHubLink.setForeground(DefaultColorTheme.COLOR_LOGO_BLUE);
 
