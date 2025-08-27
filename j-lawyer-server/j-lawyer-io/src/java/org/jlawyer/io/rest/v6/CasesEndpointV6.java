@@ -997,4 +997,30 @@ public class CasesEndpointV6 implements CasesEndpointLocalV6 {
         }
     }
 
+    /**
+     * Performs OCR on a PDF document. Existing PDF is replaced with its OCRed equivalent.
+     *
+     * @param id the documents ID
+     * @response 401 User not authorized
+     * @response 403 User not authenticated
+     */
+    @Override
+    @PUT
+    @Produces(MediaType.APPLICATION_JSON+";charset=utf-8")
+    @Path("/document/{id}/perform-ocr")
+    @RolesAllowed({"writeArchiveFileRole"})
+    public Response performOcr(@PathParam("id") String id) {
+        try {
+
+            InitialContext ic = new InitialContext();
+            ArchiveFileServiceLocal cases = (ArchiveFileServiceLocal) ic.lookup(LOOKUP_CASES);
+            boolean ocred=cases.performOcr(id);
+
+            return Response.ok(ocred).build();
+        } catch (Exception ex) {
+            log.error("Can not perform OCR for document " + id, ex);
+            return Response.serverError().build();
+}
+    }
+
 }

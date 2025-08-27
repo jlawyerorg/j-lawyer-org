@@ -671,6 +671,7 @@ import com.jdimension.jlawyer.persistence.ArchiveFileDocumentsBeanFacadeLocal;
 import com.jdimension.jlawyer.persistence.ArchiveFileFormsBean;
 import com.jdimension.jlawyer.persistence.ArchiveFileReviewsBean;
 import com.jdimension.jlawyer.persistence.ArchiveFileTagsBean;
+import com.jdimension.jlawyer.persistence.DocumentTagsBean;
 import com.jdimension.jlawyer.persistence.PartyTypeBean;
 import com.jdimension.jlawyer.security.Base64;
 import com.jdimension.jlawyer.services.AddressServiceLocal;
@@ -894,6 +895,7 @@ public class CasesEndpointV1 implements CasesEndpointLocalV1 {
                 RestfulTagV1 t = new RestfulTagV1();
                 t.setId(tag.getId());
                 t.setName(tag.getTagName());
+                t.setDateSet(tag.getDateSet());
                 tagList.add(t);
 
             }

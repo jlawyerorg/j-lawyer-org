@@ -726,6 +726,7 @@ import org.jlawyer.data.tree.GenericNode;
 import org.jlawyer.data.tree.TreeNodeUtils;
 import org.jlawyer.databucket.DataBucketUtils;
 import org.jlawyer.search.SearchIndexRequest;
+import org.jlawyer.utils.ocr.OcrUtils;
 
 /**
  *
@@ -2143,6 +2144,99 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
     }
 
     @Override
+    @RolesAllowed({"writeArchiveFileRole"})
+    public boolean performOcr(String docId) throws Exception {
+
+        ArchiveFileDocumentsBean doc = this.archiveFileDocumentsFacade.find(docId);
+        if (doc == null) {
+            return false;
+        }
+
+        if (ServerStringUtils.isEmpty(doc.getName())) {
+            return false;
+        }
+
+        if (!doc.getName().toLowerCase().endsWith(".pdf")) {
+            return false;
+        }
+
+        ServerSettingsBean s = this.settingsFacade.find("jlawyer.server.observe.ocrcmd");
+        String[] cmd = null;
+        if (s != null) {
+            if (s.getSettingValue().length() > 0) {
+                cmd = s.getSettingValue().split(" ");
+            }
+        }
+        if (cmd != null) {
+
+            log.info("performing OCR on document " + docId + " " + doc.getName() + " using ocrmypdf");
+
+            String tmpDir = System.getProperty("java.io.tmpdir");
+            if (!tmpDir.endsWith(System.getProperty("file.separator"))) {
+                tmpDir = tmpDir + System.getProperty("file.separator");
+            }
+
+            // Add the "OCR" prefix to the original file name
+            String tmpFileName = tmpDir + System.currentTimeMillis();
+
+            // Create a new File instance with the modified file name in the same directory
+            File outputFile = new File(tmpFileName);
+
+            String localBaseDir = System.getProperty("jlawyer.server.basedirectory");
+            localBaseDir = localBaseDir.trim();
+            if (!localBaseDir.endsWith(System.getProperty("file.separator"))) {
+                localBaseDir = localBaseDir + System.getProperty("file.separator");
+            }
+
+            String src = localBaseDir + "archivefiles" + System.getProperty("file.separator") + doc.getArchiveFileKey().getId() + System.getProperty("file.separator");
+            String srcId = src + doc.getId();
+
+            File srcFile = new File(srcId);
+
+            int exitCode = OcrUtils.performOcr(cmd, srcFile, outputFile);
+            if (!outputFile.exists()) {
+                log.error("OCR failed for file " + srcFile.getAbsolutePath());
+                return false;
+            } else {
+                byte[] ocrFile = ServerFileUtils.readFile(outputFile);
+                outputFile.delete();
+                if (exitCode < 0) {
+                    log.error("OCR failed for file " + srcFile.getAbsolutePath() + ", exit code is " + exitCode);
+                    return false;
+                } else {
+                    return this.setDocumentContent(docId, ocrFile);
+                }
+            }
+        } else {
+
+            ServerSettingsBean sb = this.settingsFacade.find(ServerSettingsKeys.SERVERCONF_STIRLINGPDF_ENDPOINT);
+            StirlingPdfAPI pdfApi = null;
+            if (sb != null && !ServerStringUtils.isEmpty(sb.getSettingValue())) {
+                
+                log.info("performing OCR on document " + docId + " " + doc.getName() + " using Stirling PDF");
+                
+                pdfApi = new StirlingPdfAPI(sb.getSettingValue(), 5000, 120000);
+                byte[] docContent = this.getDocumentContent(docId);
+                if (docContent == null) {
+                    return false;
+                }
+
+                byte[] ocred = pdfApi.ocrPdf(doc.getName(), docContent);
+                if (ocred != null) {
+                    return this.setDocumentContent(docId, ocred);
+                }
+            } else {
+                log.info("performing OCR on document " + docId + " " + doc.getName() + " failed because OCR tooling is not configured");
+                return false;
+            }
+
+        }
+        log.info("performing OCR on document " + docId + " " + doc.getName() + " failed");
+        return false;
+
+    }
+
+    @Override
     @RolesAllowed({"readArchiveFileRole"})
     public byte[] getDocumentContent(String id) throws Exception {
 
@@ -2426,6 +2520,7 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
                 String tagId = idGen.getID().toString();
                 tag.setId(tagId);
                 tag.setArchiveFileKey(aFile);
+                if(tag.getDateSet()==null)
                 tag.setDateSet(new Date());
                 this.archiveFileTagsFacade.create(tag);
                 historyText = "Akten-Etikett gesetzt: " + tag.getTagName();
@@ -2477,6 +2572,7 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
                 String tagId = idGen.getID().toString();
                 tag.setId(tagId);
                 tag.setArchiveFileKey(aFile);
+                if(tag.getDateSet()==null)
                 tag.setDateSet(new Date());
                 this.documentTagsFacade.create(tag);
                 historyText = "Dokument-Etikett gesetzt an " + aFile.getName() + ": " + tag.getTagName();

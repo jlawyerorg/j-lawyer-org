@@ -824,4 +824,6 @@ public interface ArchiveFileServiceLocal {
     List<ArchiveFileBean> getTagged(String[] tagName, String[] docTagName, int limit);
     List<ArchiveFileDocumentsBean> getTaggedDocuments(java.lang.String[] docTagName, int limit);
     
+    boolean performOcr(String docId) throws Exception;
+    
 }

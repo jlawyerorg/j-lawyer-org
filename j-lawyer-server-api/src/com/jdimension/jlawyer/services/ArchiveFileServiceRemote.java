@@ -949,4 +949,6 @@ public interface ArchiveFileServiceRemote {
     void removeParty(String id) throws Exception;
     
     ArchiveFileAddressesBean updateParty(String caseId, ArchiveFileAddressesBean party) throws Exception;
+    
+    boolean performOcr(String docId) throws Exception;
 }

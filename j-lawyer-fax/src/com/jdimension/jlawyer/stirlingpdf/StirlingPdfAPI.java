@@ -664,6 +664,10 @@ For more information on this, and how to apply and follow the GNU AGPL, see
 package com.jdimension.jlawyer.stirlingpdf;
 
 import java.io.ByteArrayOutputStream;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
+import java.io.FileWriter;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.text.SimpleDateFormat;
@@ -683,13 +687,13 @@ import org.glassfish.jersey.client.JerseyClientBuilder;
 public class StirlingPdfAPI {
 
     private static final Logger log = Logger.getLogger(StirlingPdfAPI.class.getName());
-    
+
     private SimpleDateFormat dfMilliseconds = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSS");
     private SimpleDateFormat dfSeconds = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss");
 
     private String baseUri = null;
-    private int connectTimeout=5;
-    private int readTimeout=60;
+    private int connectTimeout = 5;
+    private int readTimeout = 60;
 
     public StirlingPdfAPI(String baseUri, int connectTimeout, int readTimeout) {
         // http://localhost:6080/
@@ -697,30 +701,28 @@ public class StirlingPdfAPI {
         if (!this.baseUri.endsWith("/")) {
             this.baseUri = this.baseUri + "/";
         }
-        this.connectTimeout=connectTimeout;
-        this.readTimeout=readTimeout;
+        this.connectTimeout = connectTimeout;
+        this.readTimeout = readTimeout;
     }
 
     public byte[] convertToPdf(String originalFilename, byte[] inputFileData) throws Exception {
         log.info("Converting a file to PDF using Stirling-PDF");;
 
         JerseyClient restClient = (JerseyClient) JerseyClientBuilder.createClient();
-        restClient.property(ClientProperties.CONNECT_TIMEOUT, this.connectTimeout*1000);
-        restClient.property(ClientProperties.READ_TIMEOUT, this.readTimeout*1000);
+        restClient.property(ClientProperties.CONNECT_TIMEOUT, this.connectTimeout * 1000);
+        restClient.property(ClientProperties.READ_TIMEOUT, this.readTimeout * 1000);
         //JerseyWebTarget webTarget = restClient.target(baseUri + "j-lawyer-ai/v1/request-submit");
-        
-        
-        
+
         String boundary = UUID.randomUUID().toString();
         String LINE_FEED = "\r\n";
 
         ByteArrayOutputStream baos = new ByteArrayOutputStream();
         try {
             // Multipart part for the fileInput field (no specific content type)
-            String partHeader = "--" + boundary + LINE_FEED +
-                    "Content-Disposition: form-data; name=\"fileInput\"; filename=\"" + originalFilename + "\"" + LINE_FEED +
-                    "Content-Type: application/octet-stream" + LINE_FEED +
-                    LINE_FEED;
+            String partHeader = "--" + boundary + LINE_FEED
+                    + "Content-Disposition: form-data; name=\"fileInput\"; filename=\"" + originalFilename + "\"" + LINE_FEED
+                    + "Content-Type: application/octet-stream" + LINE_FEED
+                    + LINE_FEED;
 
             baos.write(partHeader.getBytes(StandardCharsets.UTF_8));
             baos.write(inputFileData);
@@ -756,13 +758,75 @@ public class StirlingPdfAPI {
         response.close();
 
         return result;
-        
-        
-
-        
 
     }
 
-    
+    public byte[] ocrPdf(String originalFilename, byte[] inputPdfData) throws Exception {
+        log.info("Performing OCR using Stirling-PDF");
+
+        JerseyClient restClient = (JerseyClient) JerseyClientBuilder.createClient();
+        restClient.property(ClientProperties.CONNECT_TIMEOUT, this.connectTimeout * 1000);
+        restClient.property(ClientProperties.READ_TIMEOUT, this.readTimeout * 1000);
+
+        String boundary = UUID.randomUUID().toString();
+        String LINE_FEED = "\r\n";
+
+        ByteArrayOutputStream baos = new ByteArrayOutputStream();
+
+        try {
+            // File part
+            baos.write(("--" + boundary + LINE_FEED).getBytes(StandardCharsets.UTF_8));
+            baos.write(("Content-Disposition: form-data; name=\"fileInput\"; filename=\"" + originalFilename + "\"" + LINE_FEED).getBytes(StandardCharsets.UTF_8));
+            baos.write(("Content-Type: application/pdf" + LINE_FEED + LINE_FEED).getBytes(StandardCharsets.UTF_8));
+            baos.write(inputPdfData);
+            baos.write(LINE_FEED.getBytes(StandardCharsets.UTF_8));
+
+            // languages field
+            baos.write(("--" + boundary + LINE_FEED).getBytes(StandardCharsets.UTF_8));
+            baos.write(("Content-Disposition: form-data; name=\"languages\"" + LINE_FEED + LINE_FEED).getBytes(StandardCharsets.UTF_8));
+            baos.write("eng,deu".getBytes(StandardCharsets.UTF_8));
+            baos.write(LINE_FEED.getBytes(StandardCharsets.UTF_8));
+
+            // ocrType field
+            baos.write(("--" + boundary + LINE_FEED).getBytes(StandardCharsets.UTF_8));
+            baos.write(("Content-Disposition: form-data; name=\"ocrType\"" + LINE_FEED + LINE_FEED).getBytes(StandardCharsets.UTF_8));
+            baos.write("skip-text".getBytes(StandardCharsets.UTF_8));
+            baos.write(LINE_FEED.getBytes(StandardCharsets.UTF_8));
+
+            // ocrRenderType field
+            baos.write(("--" + boundary + LINE_FEED).getBytes(StandardCharsets.UTF_8));
+            baos.write(("Content-Disposition: form-data; name=\"ocrRenderType\"" + LINE_FEED + LINE_FEED).getBytes(StandardCharsets.UTF_8));
+            baos.write("hocr".getBytes(StandardCharsets.UTF_8));
+            baos.write(LINE_FEED.getBytes(StandardCharsets.UTF_8));
+
+            // Closing boundary
+            baos.write(("--" + boundary + "--" + LINE_FEED).getBytes(StandardCharsets.UTF_8));
+
+        } catch (IOException e) {
+            throw new Exception("Error constructing multipart body", e);
+        }
+
+        Entity<byte[]> entity = Entity.entity(
+                baos.toByteArray(),
+                MediaType.valueOf("multipart/form-data; boundary=" + boundary)
+        );
+
+        Response response = restClient
+                .target(this.baseUri + "api/v1/misc/ocr-pdf")
+                .request()
+                .header("Accept", "*/*")
+                .post(entity);
+
+        if (response.getStatus() != 200) {
+            String error = response.readEntity(String.class);
+            response.close();
+            throw new Exception("OCR failed: HTTP " + response.getStatus() + ": " + error);
+        }
+
+        byte[] result = response.readEntity(byte[].class);
+        response.close();
+
+        return result;
+    }
 
 }
