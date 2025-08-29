@@ -4,7 +4,7 @@ name: Main build including DockerHub
 
 # Controls when the action will run. 
 on:
-  # Triggers the workflow on push or pull request events but only for the master branch
+  # Triggers the workflow on push or pull request events but only for the master branch and one specific fix branch
   push:
     branches: [ master ]
   # pull_request:
