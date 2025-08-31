@@ -1008,7 +1008,7 @@ public class CasesEndpointV7 implements CasesEndpointLocalV7 {
     }
     
     /**
-     * Creates a new invoice within an existing case. An ID for the invoice is
+     * Creates a new invoice position within an existing invoice. An ID for the position is
      * not required in the request.
      *
      * @param id id of the invoice
