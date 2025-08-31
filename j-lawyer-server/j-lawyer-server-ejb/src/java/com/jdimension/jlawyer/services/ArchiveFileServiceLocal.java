@@ -795,6 +795,12 @@ public interface ArchiveFileServiceLocal {
     List<CaseFolder> getFolderHierarchy(String folderId);
     List<CaseFolder> getFolderHierarchyUnrestricted(String folderId);
 
+    CaseFolder createCaseFolder(String parentId, String name) throws Exception;
+
+    CaseFolder updateCaseFolder(CaseFolder folder) throws Exception;
+
+    void deleteCaseFolder(String folderId) throws Exception;
+
     void purgeDocumentBin() throws Exception;
     
     void enableCaseSync(List<String> caseIds, String principalId, boolean enabled) throws Exception;
