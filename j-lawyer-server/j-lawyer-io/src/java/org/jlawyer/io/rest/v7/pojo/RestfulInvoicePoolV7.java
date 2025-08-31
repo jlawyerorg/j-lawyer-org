@@ -661,45 +661,156 @@ if any, to sign a "copyright disclaimer" for the program, if necessary.
 For more information on this, and how to apply and follow the GNU AGPL, see
 <https://www.gnu.org/licenses/>.
  */
-package org.jlawyer.io.rest.v7;
+package org.jlawyer.io.rest.v7.pojo;
 
-import java.util.Collection;
-import javax.ejb.Local;
-import javax.ws.rs.core.Response;
-import org.jlawyer.io.rest.v6.pojo.RestfulGroupV6;
-import org.jlawyer.io.rest.v7.pojo.RestfulDocumentValidationRequestV7;
-import org.jlawyer.io.rest.v7.pojo.RestfulInvoicePositionV7;
-import org.jlawyer.io.rest.v7.pojo.RestfulInvoiceV7;
+import com.jdimension.jlawyer.persistence.InvoicePool;
 
 /**
  *
  * @author jens
  */
-@Local
-public interface CasesEndpointLocalV7 {
+public class RestfulInvoicePoolV7 {
+    
+    private String id;
+    private String displayName;
+    private String pattern;
+    private boolean manualAdjust=true;
+    private boolean smallBusiness=true;
+    private int startIndex=0;
+    private int lastIndex=0;
+    private int paymentTerm=14;
 
-    Response validateDocumentName(String id, RestfulDocumentValidationRequestV7 request);
     
-    Response getCaseMessages(String id);
+    public RestfulInvoicePoolV7() {
+    }
     
-    Response getCaseInvoices(String id);
-    
-    Response getInvoicePositions(String id);
-    
-    Response createInvoice(RestfulInvoiceV7 invoice);
-    
-    Response createInvoicePosition(String id, RestfulInvoicePositionV7 invoicePos);
-    
-    Response getCaseByExternalId(String extId);
-    
-    Response getCasesByTag(String tag);
-    
-    Response getDocumentsByTag(String tag);
-    
-    Response getDocumentByExternalId(String extId);
-    
-    Response updateAllowedGroups(String id, Collection<RestfulGroupV6> allowedGroups);
-    
-    Response getAllowedGroups(String id);
+    public static RestfulInvoicePoolV7 fromInvoicePool(InvoicePool i) {
+        RestfulInvoicePoolV7 invoicePool=new RestfulInvoicePoolV7();
+        invoicePool.setDisplayName(i.getDisplayName());
+        invoicePool.setId(i.getId());
+        invoicePool.setLastIndex(i.getLastIndex());
+        invoicePool.setManualAdjust(i.isManualAdjust());
+        invoicePool.setPattern(i.getPattern());
+        invoicePool.setPaymentTerm(i.getPaymentTerm());
+        invoicePool.setSmallBusiness(i.isSmallBusiness());
+        invoicePool.setStartIndex(i.getStartIndex());
         
+        return invoicePool;
+    }
+
+    /**
+     * @return the id
+     */
+    public String getId() {
+        return id;
+    }
+
+    /**
+     * @param id the id to set
+     */
+    public void setId(String id) {
+        this.id = id;
+    }
+
+    /**
+     * @return the displayName
+     */
+    public String getDisplayName() {
+        return displayName;
+    }
+
+    /**
+     * @param displayName the displayName to set
+     */
+    public void setDisplayName(String displayName) {
+        this.displayName = displayName;
+    }
+
+    /**
+     * @return the pattern
+     */
+    public String getPattern() {
+        return pattern;
+    }
+
+    /**
+     * @param pattern the pattern to set
+     */
+    public void setPattern(String pattern) {
+        this.pattern = pattern;
+    }
+
+    /**
+     * @return the manualAdjust
+     */
+    public boolean isManualAdjust() {
+        return manualAdjust;
+    }
+
+    /**
+     * @param manualAdjust the manualAdjust to set
+     */
+    public void setManualAdjust(boolean manualAdjust) {
+        this.manualAdjust = manualAdjust;
+    }
+
+    /**
+     * @return the smallBusiness
+     */
+    public boolean isSmallBusiness() {
+        return smallBusiness;
+    }
+
+    /**
+     * @param smallBusiness the smallBusiness to set
+     */
+    public void setSmallBusiness(boolean smallBusiness) {
+        this.smallBusiness = smallBusiness;
+    }
+
+    /**
+     * @return the startIndex
+     */
+    public int getStartIndex() {
+        return startIndex;
+    }
+
+    /**
+     * @param startIndex the startIndex to set
+     */
+    public void setStartIndex(int startIndex) {
+        this.startIndex = startIndex;
+    }
+
+    /**
+     * @return the lastIndex
+     */
+    public int getLastIndex() {
+        return lastIndex;
+    }
+
+    /**
+     * @param lastIndex the lastIndex to set
+     */
+    public void setLastIndex(int lastIndex) {
+        this.lastIndex = lastIndex;
+    }
+
+    /**
+     * @return the paymentTerm
+     */
+    public int getPaymentTerm() {
+        return paymentTerm;
+    }
+
+    /**
+     * @param paymentTerm the paymentTerm to set
+     */
+    public void setPaymentTerm(int paymentTerm) {
+        this.paymentTerm = paymentTerm;
+    }
+
+    
+    
+    
 }

@@ -661,45 +661,365 @@ if any, to sign a "copyright disclaimer" for the program, if necessary.
 For more information on this, and how to apply and follow the GNU AGPL, see
 <https://www.gnu.org/licenses/>.
  */
-package org.jlawyer.io.rest.v7;
+package org.jlawyer.io.rest.v7.pojo;
 
-import java.util.Collection;
-import javax.ejb.Local;
-import javax.ws.rs.core.Response;
-import org.jlawyer.io.rest.v6.pojo.RestfulGroupV6;
-import org.jlawyer.io.rest.v7.pojo.RestfulDocumentValidationRequestV7;
-import org.jlawyer.io.rest.v7.pojo.RestfulInvoicePositionV7;
-import org.jlawyer.io.rest.v7.pojo.RestfulInvoiceV7;
+import com.jdimension.jlawyer.persistence.Invoice;
+import java.math.BigDecimal;
+import java.util.Date;
 
 /**
  *
  * @author jens
  */
-@Local
-public interface CasesEndpointLocalV7 {
+public class RestfulInvoiceV7 {
+    
+    private String id;
+    private String name;
+    private String description;
+    private String invoiceNumber;
+    private String status;
+    private Date creationDate;
+    private Date dueDate;
+    private Date periodFrom;
+    private Date periodTo;
+    private String invoiceType;
+    private String caseId;
+    private boolean smallBusiness=true;
+    private String contactId;
+    private String sender;
+    private BigDecimal total=BigDecimal.ZERO;
+    private BigDecimal totalGross=BigDecimal.ZERO;
+    private String invoiceDocumentId;
+    private String electronicInvoiceDocumentId;
+    private String currency="EUR";
+    private String lastPoolId;
+    private String paymentType;
 
-    Response validateDocumentName(String id, RestfulDocumentValidationRequestV7 request);
     
-    Response getCaseMessages(String id);
+    public RestfulInvoiceV7() {
+    }
     
-    Response getCaseInvoices(String id);
-    
-    Response getInvoicePositions(String id);
-    
-    Response createInvoice(RestfulInvoiceV7 invoice);
-    
-    Response createInvoicePosition(String id, RestfulInvoicePositionV7 invoicePos);
-    
-    Response getCaseByExternalId(String extId);
-    
-    Response getCasesByTag(String tag);
-    
-    Response getDocumentsByTag(String tag);
-    
-    Response getDocumentByExternalId(String extId);
-    
-    Response updateAllowedGroups(String id, Collection<RestfulGroupV6> allowedGroups);
-    
-    Response getAllowedGroups(String id);
+    public static RestfulInvoiceV7 fromInvoice(Invoice i) {
+        RestfulInvoiceV7 invoice=new RestfulInvoiceV7();
+        invoice.setId(i.getId());
+        invoice.setName(i.getName());
+        invoice.setDescription(i.getDescription());
+        invoice.setInvoiceNumber(i.getInvoiceNumber());
+        invoice.setStatus(i.getStatusString());
+        invoice.setCreationDate(i.getCreationDate());
+        invoice.setDueDate(i.getDueDate());
+        invoice.setPeriodFrom(i.getPeriodFrom());
+        invoice.setPeriodTo(i.getPeriodTo());
+        invoice.setInvoiceType(i.getInvoiceType().getDisplayName());
+        invoice.setCaseId(i.getArchiveFileKey().getId());
+        invoice.setSmallBusiness(i.isSmallBusiness());
+        if(i.getContact()!=null)
+            invoice.setContactId(i.getContact().getId());
+        invoice.setSender(i.getSender());
+        invoice.setTotal(i.getTotal());
+        invoice.setTotalGross(i.getTotalGross());
+        if(i.getInvoiceDocument()!=null)
+            invoice.setInvoiceDocumentId(i.getInvoiceDocument().getId());
+        if(i.getElectronicInvoiceDocument()!=null)
+            invoice.setElectronicInvoiceDocumentId(i.getElectronicInvoiceDocument().getId());
+        invoice.setCurrency(i.getCurrency());
+        invoice.setPaymentType(i.getPaymentType());
         
+        return invoice;
+    }
+
+    /**
+     * @return the id
+     */
+    public String getId() {
+        return id;
+    }
+
+    /**
+     * @param id the id to set
+     */
+    public void setId(String id) {
+        this.id = id;
+    }
+
+    /**
+     * @return the name
+     */
+    public String getName() {
+        return name;
+    }
+
+    /**
+     * @param name the name to set
+     */
+    public void setName(String name) {
+        this.name = name;
+    }
+
+    /**
+     * @return the description
+     */
+    public String getDescription() {
+        return description;
+    }
+
+    /**
+     * @param description the description to set
+     */
+    public void setDescription(String description) {
+        this.description = description;
+    }
+
+    /**
+     * @return the invoiceNumber
+     */
+    public String getInvoiceNumber() {
+        return invoiceNumber;
+    }
+
+    /**
+     * @param invoiceNumber the invoiceNumber to set
+     */
+    public void setInvoiceNumber(String invoiceNumber) {
+        this.invoiceNumber = invoiceNumber;
+    }
+
+    /**
+     * @return the status
+     */
+    public String getStatus() {
+        return status;
+    }
+
+    /**
+     * @param status the status to set
+     */
+    public void setStatus(String status) {
+        this.status = status;
+    }
+
+    /**
+     * @return the creationDate
+     */
+    public Date getCreationDate() {
+        return creationDate;
+    }
+
+    /**
+     * @param creationDate the creationDate to set
+     */
+    public void setCreationDate(Date creationDate) {
+        this.creationDate = creationDate;
+    }
+
+    /**
+     * @return the dueDate
+     */
+    public Date getDueDate() {
+        return dueDate;
+    }
+
+    /**
+     * @param dueDate the dueDate to set
+     */
+    public void setDueDate(Date dueDate) {
+        this.dueDate = dueDate;
+    }
+
+    /**
+     * @return the periodFrom
+     */
+    public Date getPeriodFrom() {
+        return periodFrom;
+    }
+
+    /**
+     * @param periodFrom the periodFrom to set
+     */
+    public void setPeriodFrom(Date periodFrom) {
+        this.periodFrom = periodFrom;
+    }
+
+    /**
+     * @return the periodTo
+     */
+    public Date getPeriodTo() {
+        return periodTo;
+    }
+
+    /**
+     * @param periodTo the periodTo to set
+     */
+    public void setPeriodTo(Date periodTo) {
+        this.periodTo = periodTo;
+    }
+
+    /**
+     * @return the invoiceType
+     */
+    public String getInvoiceType() {
+        return invoiceType;
+    }
+
+    /**
+     * @param invoiceType the invoiceType to set
+     */
+    public void setInvoiceType(String invoiceType) {
+        this.invoiceType = invoiceType;
+    }
+
+    /**
+     * @return the caseId
+     */
+    public String getCaseId() {
+        return caseId;
+    }
+
+    /**
+     * @param caseId the caseId to set
+     */
+    public void setCaseId(String caseId) {
+        this.caseId = caseId;
+    }
+
+    /**
+     * @return the smallBusiness
+     */
+    public boolean isSmallBusiness() {
+        return smallBusiness;
+    }
+
+    /**
+     * @param smallBusiness the smallBusiness to set
+     */
+    public void setSmallBusiness(boolean smallBusiness) {
+        this.smallBusiness = smallBusiness;
+    }
+
+    /**
+     * @return the contactId
+     */
+    public String getContactId() {
+        return contactId;
+    }
+
+    /**
+     * @param contactId the contactId to set
+     */
+    public void setContactId(String contactId) {
+        this.contactId = contactId;
+    }
+
+    /**
+     * @return the sender
+     */
+    public String getSender() {
+        return sender;
+    }
+
+    /**
+     * @param sender the sender to set
+     */
+    public void setSender(String sender) {
+        this.sender = sender;
+    }
+
+    /**
+     * @return the total
+     */
+    public BigDecimal getTotal() {
+        return total;
+    }
+
+    /**
+     * @param total the total to set
+     */
+    public void setTotal(BigDecimal total) {
+        this.total = total;
+    }
+
+    /**
+     * @return the totalGross
+     */
+    public BigDecimal getTotalGross() {
+        return totalGross;
+    }
+
+    /**
+     * @param totalGross the totalGross to set
+     */
+    public void setTotalGross(BigDecimal totalGross) {
+        this.totalGross = totalGross;
+    }
+
+    /**
+     * @return the invoiceDocumentId
+     */
+    public String getInvoiceDocumentId() {
+        return invoiceDocumentId;
+    }
+
+    /**
+     * @param invoiceDocumentId the invoiceDocumentId to set
+     */
+    public void setInvoiceDocumentId(String invoiceDocumentId) {
+        this.invoiceDocumentId = invoiceDocumentId;
+    }
+
+    /**
+     * @return the electronicInvoiceDocumentId
+     */
+    public String getElectronicInvoiceDocumentId() {
+        return electronicInvoiceDocumentId;
+    }
+
+    /**
+     * @param electronicInvoiceDocumentId the electronicInvoiceDocumentId to set
+     */
+    public void setElectronicInvoiceDocumentId(String electronicInvoiceDocumentId) {
+        this.electronicInvoiceDocumentId = electronicInvoiceDocumentId;
+    }
+
+    /**
+     * @return the currency
+     */
+    public String getCurrency() {
+        return currency;
+    }
+
+    /**
+     * @param currency the currency to set
+     */
+    public void setCurrency(String currency) {
+        this.currency = currency;
+    }
+
+    /**
+     * @return the lastPoolId
+     */
+    public String getLastPoolId() {
+        return lastPoolId;
+    }
+
+    /**
+     * @param lastPoolId the lastPoolId to set
+     */
+    public void setLastPoolId(String lastPoolId) {
+        this.lastPoolId = lastPoolId;
+    }
+
+    /**
+     * @return the paymentType
+     */
+    public String getPaymentType() {
+        return paymentType;
+    }
+
+    /**
+     * @param paymentType the paymentType to set
+     */
+    public void setPaymentType(String paymentType) {
+        this.paymentType = paymentType;
+    }
+    
 }

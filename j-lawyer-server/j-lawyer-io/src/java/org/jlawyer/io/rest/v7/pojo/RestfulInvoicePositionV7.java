@@ -661,45 +661,171 @@ if any, to sign a "copyright disclaimer" for the program, if necessary.
 For more information on this, and how to apply and follow the GNU AGPL, see
 <https://www.gnu.org/licenses/>.
  */
-package org.jlawyer.io.rest.v7;
+package org.jlawyer.io.rest.v7.pojo;
 
-import java.util.Collection;
-import javax.ejb.Local;
-import javax.ws.rs.core.Response;
-import org.jlawyer.io.rest.v6.pojo.RestfulGroupV6;
-import org.jlawyer.io.rest.v7.pojo.RestfulDocumentValidationRequestV7;
-import org.jlawyer.io.rest.v7.pojo.RestfulInvoicePositionV7;
-import org.jlawyer.io.rest.v7.pojo.RestfulInvoiceV7;
+import com.jdimension.jlawyer.persistence.InvoicePosition;
+import java.math.BigDecimal;
 
 /**
  *
  * @author jens
  */
-@Local
-public interface CasesEndpointLocalV7 {
+public class RestfulInvoicePositionV7 {
 
-    Response validateDocumentName(String id, RestfulDocumentValidationRequestV7 request);
+    private String id;
+    private String name;
+    private String description;
+    private int position;
+    private BigDecimal taxRate=BigDecimal.ZERO;
+    private BigDecimal units=BigDecimal.ZERO;
+    private BigDecimal unitPrice=BigDecimal.ZERO;
+    private BigDecimal total=BigDecimal.ZERO;
+    private String invoiceId;
     
-    Response getCaseMessages(String id);
+    public RestfulInvoicePositionV7() {
+    }
     
-    Response getCaseInvoices(String id);
-    
-    Response getInvoicePositions(String id);
-    
-    Response createInvoice(RestfulInvoiceV7 invoice);
-    
-    Response createInvoicePosition(String id, RestfulInvoicePositionV7 invoicePos);
-    
-    Response getCaseByExternalId(String extId);
-    
-    Response getCasesByTag(String tag);
-    
-    Response getDocumentsByTag(String tag);
-    
-    Response getDocumentByExternalId(String extId);
-    
-    Response updateAllowedGroups(String id, Collection<RestfulGroupV6> allowedGroups);
-    
-    Response getAllowedGroups(String id);
+    public static RestfulInvoicePositionV7 fromInvoicePosition(InvoicePosition i) {
+        RestfulInvoicePositionV7 invoiceP=new RestfulInvoicePositionV7();
+        invoiceP.setDescription(i.getDescription());
+        invoiceP.setId(i.getId());
+        invoiceP.setInvoiceId(i.getInvoice().getId());
+        invoiceP.setName(i.getName());
+        invoiceP.setPosition(i.getPosition());
+        invoiceP.setTaxRate(i.getTaxRate());
+        invoiceP.setTotal(i.getTotal());
+        invoiceP.setUnitPrice(i.getUnitPrice());
+        invoiceP.setUnits(i.getUnits());
         
+        return invoiceP;
+    }
+
+    /**
+     * @return the id
+     */
+    public String getId() {
+        return id;
+    }
+
+    /**
+     * @param id the id to set
+     */
+    public void setId(String id) {
+        this.id = id;
+    }
+
+    /**
+     * @return the name
+     */
+    public String getName() {
+        return name;
+    }
+
+    /**
+     * @param name the name to set
+     */
+    public void setName(String name) {
+        this.name = name;
+    }
+
+    /**
+     * @return the description
+     */
+    public String getDescription() {
+        return description;
+    }
+
+    /**
+     * @param description the description to set
+     */
+    public void setDescription(String description) {
+        this.description = description;
+    }
+
+    /**
+     * @return the position
+     */
+    public int getPosition() {
+        return position;
+    }
+
+    /**
+     * @param position the position to set
+     */
+    public void setPosition(int position) {
+        this.position = position;
+    }
+
+    /**
+     * @return the taxRate
+     */
+    public BigDecimal getTaxRate() {
+        return taxRate;
+    }
+
+    /**
+     * @param taxRate the taxRate to set
+     */
+    public void setTaxRate(BigDecimal taxRate) {
+        this.taxRate = taxRate;
+    }
+
+    /**
+     * @return the units
+     */
+    public BigDecimal getUnits() {
+        return units;
+    }
+
+    /**
+     * @param units the units to set
+     */
+    public void setUnits(BigDecimal units) {
+        this.units = units;
+    }
+
+    /**
+     * @return the unitPrice
+     */
+    public BigDecimal getUnitPrice() {
+        return unitPrice;
+    }
+
+    /**
+     * @param unitPrice the unitPrice to set
+     */
+    public void setUnitPrice(BigDecimal unitPrice) {
+        this.unitPrice = unitPrice;
+    }
+
+    /**
+     * @return the total
+     */
+    public BigDecimal getTotal() {
+        return total;
+    }
+
+    /**
+     * @param total the total to set
+     */
+    public void setTotal(BigDecimal total) {
+        this.total = total;
+    }
+
+    /**
+     * @return the invoiceId
+     */
+    public String getInvoiceId() {
+        return invoiceId;
+    }
+
+    /**
+     * @param invoiceId the invoiceId to set
+     */
+    public void setInvoiceId(String invoiceId) {
+        this.invoiceId = invoiceId;
+    }
+    
+    
+    
 }

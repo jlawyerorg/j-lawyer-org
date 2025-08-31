@@ -668,7 +668,6 @@ import javax.ejb.Local;
 import javax.ws.rs.core.Response;
 import org.jlawyer.io.rest.v6.pojo.RestfulGroupV6;
 import org.jlawyer.io.rest.v7.pojo.RestfulDocumentValidationRequestV7;
-import org.jlawyer.io.rest.v7.pojo.RestfulInvoicePositionV7;
 import org.jlawyer.io.rest.v7.pojo.RestfulInvoiceV7;
 
 /**
@@ -676,30 +675,10 @@ import org.jlawyer.io.rest.v7.pojo.RestfulInvoiceV7;
  * @author jens
  */
 @Local
-public interface CasesEndpointLocalV7 {
+public interface InvoicesEndpointLocalV7 {
 
-    Response validateDocumentName(String id, RestfulDocumentValidationRequestV7 request);
+    Response getInvoiceTypes();
+    Response getInvoicePools();
     
-    Response getCaseMessages(String id);
-    
-    Response getCaseInvoices(String id);
-    
-    Response getInvoicePositions(String id);
-    
-    Response createInvoice(RestfulInvoiceV7 invoice);
-    
-    Response createInvoicePosition(String id, RestfulInvoicePositionV7 invoicePos);
-    
-    Response getCaseByExternalId(String extId);
-    
-    Response getCasesByTag(String tag);
-    
-    Response getDocumentsByTag(String tag);
-    
-    Response getDocumentByExternalId(String extId);
-    
-    Response updateAllowedGroups(String id, Collection<RestfulGroupV6> allowedGroups);
-    
-    Response getAllowedGroups(String id);
         
 }

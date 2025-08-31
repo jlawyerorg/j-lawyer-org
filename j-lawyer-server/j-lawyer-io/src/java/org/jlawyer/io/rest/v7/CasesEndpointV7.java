@@ -663,14 +663,22 @@ For more information on this, and how to apply and follow the GNU AGPL, see
  */
 package org.jlawyer.io.rest.v7;
 
+import com.jdimension.jlawyer.persistence.AddressBean;
 import com.jdimension.jlawyer.persistence.ArchiveFileBean;
 import com.jdimension.jlawyer.persistence.ArchiveFileDocumentsBean;
 import com.jdimension.jlawyer.persistence.ArchiveFileDocumentsBeanFacadeLocal;
 import com.jdimension.jlawyer.persistence.ArchiveFileGroupsBean;
 import com.jdimension.jlawyer.persistence.Group;
 import com.jdimension.jlawyer.persistence.InstantMessage;
+import com.jdimension.jlawyer.persistence.Invoice;
+import com.jdimension.jlawyer.persistence.InvoiceFacadeLocal;
+import com.jdimension.jlawyer.persistence.InvoicePool;
+import com.jdimension.jlawyer.persistence.InvoicePosition;
+import com.jdimension.jlawyer.persistence.InvoiceType;
 import com.jdimension.jlawyer.server.utils.ServerStringUtils;
+import com.jdimension.jlawyer.services.AddressServiceLocal;
 import com.jdimension.jlawyer.services.ArchiveFileServiceLocal;
+import com.jdimension.jlawyer.services.InvoiceServiceLocal;
 import com.jdimension.jlawyer.services.MessagingServiceLocal;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -693,6 +701,8 @@ import org.jlawyer.io.rest.v1.pojo.RestfulDocumentV1;
 import org.jlawyer.io.rest.v6.pojo.RestfulGroupV6;
 import org.jlawyer.io.rest.v7.pojo.RestfulDocumentValidationRequestV7;
 import org.jlawyer.io.rest.v7.pojo.RestfulInstantMessageV7;
+import org.jlawyer.io.rest.v7.pojo.RestfulInvoicePositionV7;
+import org.jlawyer.io.rest.v7.pojo.RestfulInvoiceV7;
 import org.jlawyer.io.rest.v7.pojo.RestfulStatusResponseV7;
 
 /**
@@ -707,6 +717,7 @@ public class CasesEndpointV7 implements CasesEndpointLocalV7 {
 
     private static final Logger log = Logger.getLogger(CasesEndpointV7.class.getName());
     private static final String LOOKUP_CASES = "java:global/j-lawyer-server/j-lawyer-server-ejb/ArchiveFileService!com.jdimension.jlawyer.services.ArchiveFileServiceLocal";
+    private static final String LOOKUP_INVOICES = "java:global/j-lawyer-server/j-lawyer-server-ejb/InvoiceService!com.jdimension.jlawyer.services.InvoiceServiceLocal";
 
     /**
      * Checks whether or not a document (as specified in the request) may
@@ -816,6 +827,227 @@ public class CasesEndpointV7 implements CasesEndpointLocalV7 {
             return Response.ok(msgList).build();
         } catch (Exception ex) {
             log.error("can not get message for case " + id, ex);
+            return Response.serverError().build();
+        }
+    }
+    
+    /**
+     * Returns a list of invoices for a given case
+     *
+     * @param id case ID
+     * @response 401 User not authorized
+     * @response 403 User not authenticated
+     */
+    @Override
+    @GET
+    @Produces(MediaType.APPLICATION_JSON + ";charset=utf-8")
+    @Consumes(MediaType.APPLICATION_JSON)
+    @Path("/{id}/invoices")
+    @RolesAllowed({"readArchiveFileRole"})
+    public Response getCaseInvoices(@PathParam("id") String id) {
+        try {
+
+            InitialContext ic = new InitialContext();
+            ArchiveFileServiceLocal cases = (ArchiveFileServiceLocal) ic.lookup(LOOKUP_CASES);
+            ArchiveFileBean currentCase = cases.getArchiveFile(id);
+            if (currentCase == null) {
+                log.error("case with id " + id + " does not exist");
+                return Response.serverError().build();
+            }
+
+            List<Invoice> invoices=cases.getInvoices(id);
+            
+            ArrayList<RestfulInvoiceV7> invoiceList = new ArrayList<>();
+            for (Invoice i : invoices) {
+                RestfulInvoiceV7 ri = RestfulInvoiceV7.fromInvoice(i);
+                invoiceList.add(ri);
+            }
+
+            return Response.ok(invoiceList).build();
+        } catch (Exception ex) {
+            log.error("can not get invoices for case " + id, ex);
+            return Response.serverError().build();
+        }
+    }
+    
+    /**
+     * Returns a list of invoice positions for a given invoice
+     *
+     * @param id invoice ID
+     * @response 401 User not authorized
+     * @response 403 User not authenticated
+     */
+    @Override
+    @GET
+    @Produces(MediaType.APPLICATION_JSON + ";charset=utf-8")
+    @Consumes(MediaType.APPLICATION_JSON)
+    @Path("/invoices/{id}/positions")
+    @RolesAllowed({"readArchiveFileRole"})
+    public Response getInvoicePositions(@PathParam("id") String id) {
+        try {
+
+            InitialContext ic = new InitialContext();
+            
+            InvoiceFacadeLocal invoiceFacade = (InvoiceFacadeLocal) ic.lookup("java:global/j-lawyer-server/j-lawyer-server-ejb/InvoiceFacade!com.jdimension.jlawyer.persistence.InvoiceFacadeLocal");
+            Invoice found=invoiceFacade.find(id);
+            if(found==null)
+                return Response.status(Response.Status.NOT_FOUND).build();
+            
+            ArchiveFileServiceLocal cases = (ArchiveFileServiceLocal) ic.lookup(LOOKUP_CASES);
+            
+            List<InvoicePosition> positions=cases.getInvoicePositions(id);
+            
+            ArrayList<RestfulInvoicePositionV7> positionList = new ArrayList<>();
+            for (InvoicePosition i : positions) {
+                RestfulInvoicePositionV7 ri = RestfulInvoicePositionV7.fromInvoicePosition(i);
+                positionList.add(ri);
+            }
+
+            return Response.ok(positionList).build();
+        } catch (Exception ex) {
+            log.error("can not get invoice positions for invoice " + id, ex);
+            return Response.serverError().build();
+        }
+    }
+    
+    /**
+     * Creates a new invoice within an existing case. An ID for the invoice is
+     * not required in the request.
+     *
+     * @param invoice document data
+     * @response 401 User not authorized
+     * @response 403 User not authenticated
+     */
+    @Override
+    @PUT
+    @Produces(MediaType.APPLICATION_JSON+";charset=utf-8")
+    @Consumes(MediaType.APPLICATION_JSON)
+    @Path("/invoices/create")
+    @RolesAllowed({"writeArchiveFileRole"})
+    public Response createInvoice(RestfulInvoiceV7 invoice) {
+        try {
+
+            InitialContext ic = new InitialContext();
+            ArchiveFileServiceLocal cases = (ArchiveFileServiceLocal) ic.lookup(LOOKUP_CASES);
+            ArchiveFileBean currentCase = cases.getArchiveFile(invoice.getCaseId());
+            if (currentCase == null) {
+                log.error("case with id " + invoice.getCaseId() + " does not exist");
+                return Response.serverError().build();
+            }
+            
+            AddressServiceLocal addresses = (AddressServiceLocal) ic.lookup("java:global/j-lawyer-server/j-lawyer-server-ejb/AddressService!com.jdimension.jlawyer.services.AddressServiceLocal");
+            AddressBean address=null;
+            if(invoice.getContactId()!=null) {
+                address=addresses.getAddress(invoice.getContactId());
+            }
+            
+            InvoiceServiceLocal invoices = (InvoiceServiceLocal) ic.lookup(LOOKUP_INVOICES);
+            InvoiceType foundType=null;
+            for(InvoiceType it: invoices.getAllInvoiceTypes()) {
+                if(it.getId().equals(invoice.getInvoiceType())) {
+                    foundType=it;
+                    break;
+                }
+            }
+            if(foundType==null) {
+                log.error("Invoice type with name '" + invoice.getInvoiceType() + "' can not be found!");
+                return Response.serverError().build();
+            }
+            
+            InvoicePool foundPool=null;
+            for(InvoicePool ip: invoices.getAllInvoicePools()) {
+                if(ip.getId().equals(invoice.getLastPoolId())) {
+                    foundPool=ip;
+                    break;
+                }
+            }
+            if(foundPool==null) {
+                log.error("Invoice pool with id '" + invoice.getLastPoolId() + "' can not be found!");
+                return Response.serverError().build();
+            }
+            
+            boolean found=false;
+            if(Invoice.PAYMENTTYPE_BANKTRANSFER.equals(invoice.getPaymentType()) || Invoice.PAYMENTTYPE_DIRECTDEBIT.equals(invoice.getPaymentType()) || Invoice.PAYMENTTYPE_OTHER.equals(invoice.getPaymentType())) {
+                found=true;
+            }
+            if(!found) {
+                log.error("Invoice with invalid payment type '" + invoice.getPaymentType());
+                return Response.serverError().build();
+            }
+            
+            Invoice newInvoice=new Invoice();
+            newInvoice.setArchiveFileKey(currentCase);
+            newInvoice.setContact(address);
+            newInvoice.setCreationDate(invoice.getCreationDate());
+            newInvoice.setCurrency(invoice.getCurrency());
+            newInvoice.setDescription(invoice.getDescription());
+            newInvoice.setDueDate(invoice.getDueDate());
+            //newInvoice.setElectronicInvoiceDocument(electronicInvoiceDocument);
+            //newInvoice.setInvoiceDocument(invoiceDocument);
+            //newInvoice.setInvoiceNumber(LOOKUP_CASES);
+            newInvoice.setInvoiceType(foundType);
+            //newInvoice.setLastPoolId(LOOKUP_CASES);
+            newInvoice.setName(invoice.getName());
+            newInvoice.setPaymentType(Invoice.PAYMENTTYPE_BANKTRANSFER);
+            newInvoice.setPeriodFrom(invoice.getPeriodFrom());
+            newInvoice.setPeriodTo(invoice.getPeriodTo());
+            newInvoice.setSender(invoice.getSender());
+            newInvoice.setSmallBusiness(invoice.isSmallBusiness());
+            newInvoice.setStatus(newInvoice.getStatusInt(invoice.getStatus()));
+            newInvoice.setTotal(invoice.getTotal());
+            newInvoice.setTotalGross(invoice.getTotalGross());
+            newInvoice.setLastPoolId(invoice.getLastPoolId());
+            
+            Invoice createdInvoice=cases.addInvoice(invoice.getCaseId(), foundPool, foundType, invoice.getCurrency());
+
+            return Response.ok(RestfulInvoiceV7.fromInvoice(createdInvoice)).build();
+        } catch (Exception ex) {
+            log.error("can not create invoice for case " + invoice.getCaseId(), ex);
+            return Response.serverError().build();
+        }
+    }
+    
+    /**
+     * Creates a new invoice within an existing case. An ID for the invoice is
+     * not required in the request.
+     *
+     * @param id id of the invoice
+     * @param invoicePos invoice position data
+     * @response 401 User not authorized
+     * @response 403 User not authenticated
+     */
+    @Override
+    @PUT
+    @Produces(MediaType.APPLICATION_JSON+";charset=utf-8")
+    @Consumes(MediaType.APPLICATION_JSON)
+    @Path("/invoices/{id}/positions/create")
+    @RolesAllowed({"writeArchiveFileRole"})
+    public Response createInvoicePosition(@PathParam("id") String id, RestfulInvoicePositionV7 invoicePos) {
+        try {
+
+            InitialContext ic = new InitialContext();
+            InvoiceFacadeLocal invoiceFacade = (InvoiceFacadeLocal) ic.lookup("java:global/j-lawyer-server/j-lawyer-server-ejb/InvoiceFacade!com.jdimension.jlawyer.persistence.InvoiceFacadeLocal");
+            Invoice found=invoiceFacade.find(id);
+            if(found==null)
+                return Response.status(Response.Status.NOT_FOUND).build();
+                        
+            ArchiveFileServiceLocal cases = (ArchiveFileServiceLocal) ic.lookup(LOOKUP_CASES);
+            
+            InvoicePosition newPosition=new InvoicePosition();
+            newPosition.setDescription(invoicePos.getDescription());
+            newPosition.setInvoice(found);
+            newPosition.setName(invoicePos.getName());
+            newPosition.setPosition(invoicePos.getPosition());
+            newPosition.setTaxRate(invoicePos.getTaxRate());
+            newPosition.setTotal(invoicePos.getTotal());
+            newPosition.setUnitPrice(invoicePos.getUnitPrice());
+            newPosition.setUnits(invoicePos.getUnits());
+            
+            InvoicePosition createdPosition=cases.addInvoicePosition(id, newPosition);
+
+            return Response.ok(RestfulInvoicePositionV7.fromInvoicePosition(createdPosition)).build();
+        } catch (Exception ex) {
+            log.error("can not create invoice position for invoice " + id, ex);
             return Response.serverError().build();
         }
     }

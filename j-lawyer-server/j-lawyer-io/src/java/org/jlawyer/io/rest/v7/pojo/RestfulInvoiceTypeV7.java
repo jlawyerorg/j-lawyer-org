@@ -661,45 +661,91 @@ if any, to sign a "copyright disclaimer" for the program, if necessary.
 For more information on this, and how to apply and follow the GNU AGPL, see
 <https://www.gnu.org/licenses/>.
  */
-package org.jlawyer.io.rest.v7;
+package org.jlawyer.io.rest.v7.pojo;
 
-import java.util.Collection;
-import javax.ejb.Local;
-import javax.ws.rs.core.Response;
-import org.jlawyer.io.rest.v6.pojo.RestfulGroupV6;
-import org.jlawyer.io.rest.v7.pojo.RestfulDocumentValidationRequestV7;
-import org.jlawyer.io.rest.v7.pojo.RestfulInvoicePositionV7;
-import org.jlawyer.io.rest.v7.pojo.RestfulInvoiceV7;
+import com.jdimension.jlawyer.persistence.InvoiceType;
 
 /**
  *
  * @author jens
  */
-@Local
-public interface CasesEndpointLocalV7 {
+public class RestfulInvoiceTypeV7 {
+    
+    private String id;
+    private String displayName;
+    private String description;
+    private boolean turnOver=true;
 
-    Response validateDocumentName(String id, RestfulDocumentValidationRequestV7 request);
     
-    Response getCaseMessages(String id);
+    public RestfulInvoiceTypeV7() {
+    }
     
-    Response getCaseInvoices(String id);
-    
-    Response getInvoicePositions(String id);
-    
-    Response createInvoice(RestfulInvoiceV7 invoice);
-    
-    Response createInvoicePosition(String id, RestfulInvoicePositionV7 invoicePos);
-    
-    Response getCaseByExternalId(String extId);
-    
-    Response getCasesByTag(String tag);
-    
-    Response getDocumentsByTag(String tag);
-    
-    Response getDocumentByExternalId(String extId);
-    
-    Response updateAllowedGroups(String id, Collection<RestfulGroupV6> allowedGroups);
-    
-    Response getAllowedGroups(String id);
+    public static RestfulInvoiceTypeV7 fromInvoiceType(InvoiceType i) {
+        RestfulInvoiceTypeV7 invoiceType=new RestfulInvoiceTypeV7();
+        invoiceType.setDescription(i.getDescription());
+        invoiceType.setDisplayName(i.getDisplayName());
+        invoiceType.setId(i.getId());
+        invoiceType.setTurnOver(i.isTurnOver());
         
+        return invoiceType;
+    }
+
+    /**
+     * @return the id
+     */
+    public String getId() {
+        return id;
+    }
+
+    /**
+     * @param id the id to set
+     */
+    public void setId(String id) {
+        this.id = id;
+    }
+
+    /**
+     * @return the displayName
+     */
+    public String getDisplayName() {
+        return displayName;
+    }
+
+    /**
+     * @param displayName the displayName to set
+     */
+    public void setDisplayName(String displayName) {
+        this.displayName = displayName;
+    }
+
+    /**
+     * @return the description
+     */
+    public String getDescription() {
+        return description;
+    }
+
+    /**
+     * @param description the description to set
+     */
+    public void setDescription(String description) {
+        this.description = description;
+    }
+
+    /**
+     * @return the turnOver
+     */
+    public boolean isTurnOver() {
+        return turnOver;
+    }
+
+    /**
+     * @param turnOver the turnOver to set
+     */
+    public void setTurnOver(boolean turnOver) {
+        this.turnOver = turnOver;
+    }
+
+    
+    
 }

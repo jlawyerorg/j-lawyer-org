@@ -664,6 +664,7 @@ For more information on this, and how to apply and follow the GNU AGPL, see
 package com.jdimension.jlawyer.services;
 
 import com.jdimension.jlawyer.persistence.InvoicePool;
+import com.jdimension.jlawyer.persistence.InvoiceType;
 import java.math.BigDecimal;
 import java.util.List;
 import javax.ejb.Local;
@@ -676,6 +677,7 @@ import javax.ejb.Local;
 public interface InvoiceServiceLocal {
 
     List<InvoicePool> getAllInvoicePools() throws Exception;
+    List<InvoiceType> getAllInvoiceTypes() throws Exception;
 
     String nextInvoiceNumber(InvoicePool pool) throws Exception;
 

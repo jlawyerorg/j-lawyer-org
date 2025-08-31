@@ -663,43 +663,100 @@ For more information on this, and how to apply and follow the GNU AGPL, see
  */
 package org.jlawyer.io.rest.v7;
 
-import java.util.Collection;
-import javax.ejb.Local;
+import com.jdimension.jlawyer.persistence.InvoicePool;
+import com.jdimension.jlawyer.persistence.InvoiceType;
+import com.jdimension.jlawyer.services.InvoiceServiceLocal;
+import java.util.ArrayList;
+import java.util.List;
+import javax.annotation.security.RolesAllowed;
+import javax.ejb.Stateless;
+import javax.naming.InitialContext;
+import javax.ws.rs.Consumes;
+import javax.ws.rs.GET;
+import javax.ws.rs.Path;
+import javax.ws.rs.Produces;
+import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
-import org.jlawyer.io.rest.v6.pojo.RestfulGroupV6;
-import org.jlawyer.io.rest.v7.pojo.RestfulDocumentValidationRequestV7;
-import org.jlawyer.io.rest.v7.pojo.RestfulInvoicePositionV7;
-import org.jlawyer.io.rest.v7.pojo.RestfulInvoiceV7;
+import org.jboss.logging.Logger;
+import org.jlawyer.io.rest.v7.pojo.RestfulInvoicePoolV7;
+import org.jlawyer.io.rest.v7.pojo.RestfulInvoiceTypeV7;
 
 /**
  *
- * @author jens
+ * http://localhost:8080/j-lawyer-io/rest/cases/list
  */
-@Local
-public interface CasesEndpointLocalV7 {
+@Stateless
+@Path("/v7/invoices")
+@Consumes({"application/json"})
+@Produces({"application/json"})
+public class InvoicesEndpointV7 implements InvoicesEndpointLocalV7 {
 
-    Response validateDocumentName(String id, RestfulDocumentValidationRequestV7 request);
+    private static final Logger log = Logger.getLogger(InvoicesEndpointV7.class.getName());
+    private static final String LOOKUP_CASES = "java:global/j-lawyer-server/j-lawyer-server-ejb/ArchiveFileService!com.jdimension.jlawyer.services.ArchiveFileServiceLocal";
+    private static final String LOOKUP_INVOICES = "java:global/j-lawyer-server/j-lawyer-server-ejb/InvoiceService!com.jdimension.jlawyer.services.InvoiceServiceLocal";
+
+    /**
+     * Returns the list of invoice types available
+     *
+     * @response 401 User not authorized
+     * @response 403 User not authenticated
+     */
+    @Override
+    @GET
+    @Produces(MediaType.APPLICATION_JSON + ";charset=utf-8")
+    @Consumes(MediaType.APPLICATION_JSON)
+    @Path("/types")
+    @RolesAllowed({"loginRole"})
+    public Response getInvoiceTypes() {
+        try {
+            
+            InitialContext ic = new InitialContext();
+            InvoiceServiceLocal invoices = (InvoiceServiceLocal) ic.lookup(LOOKUP_INVOICES);
+            List<InvoiceType> types=invoices.getAllInvoiceTypes();
+            List<RestfulInvoiceTypeV7> resultList=new ArrayList<>();
+            for(InvoiceType it: types) {
+                RestfulInvoiceTypeV7 t=RestfulInvoiceTypeV7.fromInvoiceType(it);
+                resultList.add(t);
+                
+            }
+
+            return Response.ok(resultList).build();
+        } catch (Exception ex) {
+            log.error("can not get invoice types", ex);
+            return Response.serverError().build();
+        }
+    }
     
-    Response getCaseMessages(String id);
+    /**
+     * Returns the list of invoice pools available
+     *
+     * @response 401 User not authorized
+     * @response 403 User not authenticated
+     */
+    @Override
+    @GET
+    @Produces(MediaType.APPLICATION_JSON + ";charset=utf-8")
+    @Consumes(MediaType.APPLICATION_JSON)
+    @Path("/pools")
+    @RolesAllowed({"loginRole"})
+    public Response getInvoicePools() {
+        try {
+            
+            InitialContext ic = new InitialContext();
+            InvoiceServiceLocal invoices = (InvoiceServiceLocal) ic.lookup(LOOKUP_INVOICES);
+            List<InvoicePool> pools=invoices.getAllInvoicePools();
+            List<RestfulInvoicePoolV7> resultList=new ArrayList<>();
+            for(InvoicePool ip: pools) {
+                RestfulInvoicePoolV7 p=RestfulInvoicePoolV7.fromInvoicePool(ip);
+                resultList.add(p);
+                
+            }
+
+            return Response.ok(resultList).build();
+        } catch (Exception ex) {
+            log.error("can not get invoice pools", ex);
+            return Response.serverError().build();
+        }
+    }
     
-    Response getCaseInvoices(String id);
-    
-    Response getInvoicePositions(String id);
-    
-    Response createInvoice(RestfulInvoiceV7 invoice);
-    
-    Response createInvoicePosition(String id, RestfulInvoicePositionV7 invoicePos);
-    
-    Response getCaseByExternalId(String extId);
-    
-    Response getCasesByTag(String tag);
-    
-    Response getDocumentsByTag(String tag);
-    
-    Response getDocumentByExternalId(String extId);
-    
-    Response updateAllowedGroups(String id, Collection<RestfulGroupV6> allowedGroups);
-    
-    Response getAllowedGroups(String id);
-        
 }

@@ -676,6 +676,10 @@ import com.jdimension.jlawyer.persistence.DocumentFolderTemplate;
 import com.jdimension.jlawyer.persistence.DocumentNameTemplate;
 import com.jdimension.jlawyer.persistence.DocumentTagsBean;
 import com.jdimension.jlawyer.persistence.Group;
+import com.jdimension.jlawyer.persistence.Invoice;
+import com.jdimension.jlawyer.persistence.InvoicePool;
+import com.jdimension.jlawyer.persistence.InvoicePosition;
+import com.jdimension.jlawyer.persistence.InvoiceType;
 import com.jdimension.jlawyer.pojo.DataBucket;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -825,5 +829,10 @@ public interface ArchiveFileServiceLocal {
     List<ArchiveFileDocumentsBean> getTaggedDocuments(java.lang.String[] docTagName, int limit);
     
     boolean performOcr(String docId) throws Exception;
+    
+    List<Invoice> getInvoices(String caseId);
+    List<InvoicePosition> getInvoicePositions(String invoiceId) throws Exception;
+    Invoice addInvoice(String caseId, InvoicePool invoicePool, InvoiceType invoiceType, String currency) throws Exception;
+    InvoicePosition addInvoicePosition(String invoiceId, InvoicePosition position) throws Exception;
     
 }
