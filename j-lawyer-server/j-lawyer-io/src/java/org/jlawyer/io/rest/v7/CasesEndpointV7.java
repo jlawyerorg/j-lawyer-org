@@ -1051,6 +1051,38 @@ public class CasesEndpointV7 implements CasesEndpointLocalV7 {
             return Response.serverError().build();
         }
     }
+    
+    /**
+     * Returns all invoices currently open or in draft for all non-archived cases
+     *
+     * @response 401 User not authorized
+     * @response 403 User not authenticated
+     */
+    @Override
+    @GET
+    @Produces(MediaType.APPLICATION_JSON+";charset=utf-8")
+    @Path("/invoices")
+    @RolesAllowed({"readArchiveFileRole"})
+    public Response getAllInvoices() {
+        //http://localhost:8080/j-lawyer-io/rest/cases/0c79112f7f000101327bf357f0b6010c/duedates
+        try {
+
+            InitialContext ic = new InitialContext();
+            InvoiceServiceLocal invoices = (InvoiceServiceLocal) ic.lookup(LOOKUP_INVOICES);
+            
+            List<Invoice> openInvoices = invoices.getInvoicesByStatus(Invoice.STATUS_NEW, Invoice.STATUS_OPEN, Invoice.STATUS_OPEN_NONENFORCEABLE, Invoice.STATUS_OPEN_REMINDER1, Invoice.STATUS_OPEN_REMINDER2, Invoice.STATUS_OPEN_REMINDER3);
+            ArrayList<RestfulInvoiceV7> invList = new ArrayList<>();
+            for (Invoice inv : openInvoices) {
+                RestfulInvoiceV7 i = RestfulInvoiceV7.fromInvoice(inv);
+                invList.add(i);
+            }
+
+            return Response.ok(invList).build();
+        } catch (Exception ex) {
+            log.error("can not get open invoices", ex);
+            return Response.serverError().build();
+        }
+    }
 
     /**
      * Returns a cases metadata given its external ID

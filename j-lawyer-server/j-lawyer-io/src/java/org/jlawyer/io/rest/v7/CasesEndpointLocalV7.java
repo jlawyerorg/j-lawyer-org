@@ -690,6 +690,8 @@ public interface CasesEndpointLocalV7 {
     
     Response createInvoicePosition(String id, RestfulInvoicePositionV7 invoicePos);
     
+    Response getAllInvoices();
+    
     Response getCaseByExternalId(String extId);
     
     Response getCasesByTag(String tag);
