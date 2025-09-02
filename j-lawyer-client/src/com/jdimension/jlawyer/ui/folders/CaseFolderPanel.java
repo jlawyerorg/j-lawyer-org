@@ -1896,6 +1896,8 @@ public class CaseFolderPanel extends javax.swing.JPanel implements EventConsumer
         int matchCount = 0;
         this.nonMatchingdocuments.clear();
         this.matchingDocumentHits.clear();
+        if((selectedTags==null || selectedTags.length==0) && (text == null || "".equals(text)))
+            clear=true;
         if (clear) {
             // do not need to evaluate all documents
         } else {
