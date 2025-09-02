@@ -663,6 +663,7 @@
  */
 package com.jdimension.jlawyer.services;
 
+import com.jdimension.jlawyer.documents.DocumentPreview;
 import com.jdimension.jlawyer.persistence.ArchiveFileAddressesBean;
 import com.jdimension.jlawyer.persistence.ArchiveFileBean;
 import com.jdimension.jlawyer.persistence.ArchiveFileDocumentsBean;
@@ -716,6 +717,7 @@ public interface ArchiveFileServiceLocal {
     public Collection<ArchiveFileDocumentsBean> getDocuments(String archiveFileKey);
     public Collection<ArchiveFileDocumentsBean> getDocuments(String archiveFileKey, boolean deleted);
     public byte[] getDocumentContent(String id) throws Exception;
+    public DocumentPreview getDocumentPreview(String id, String previewType) throws Exception;
     public DataBucket getDocumentContentBucket(String id) throws Exception;
     
     public ArchiveFileHistoryBean[] getHistoryForArchiveFile(String archiveFileKey, Date since) throws Exception;
