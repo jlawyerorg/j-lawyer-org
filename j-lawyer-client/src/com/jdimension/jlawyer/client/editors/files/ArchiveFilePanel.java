@@ -793,6 +793,8 @@ import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.util.*;
 import javax.swing.*;
+import javax.swing.event.DocumentEvent;
+import javax.swing.event.DocumentListener;
 import javax.swing.table.DefaultTableCellRenderer;
 import javax.swing.table.DefaultTableModel;
 import javax.swing.table.TableRowSorter;
@@ -849,6 +851,71 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
         this.dto = null;
         this.initializing = true;
         initComponents();
+
+        this.txtFilterParties.putClientProperty("JTextField.placeholderText", "Beteiligte filtern...");
+        this.txtFilterParties.putClientProperty("JTextField.showClearButton", true);
+        this.txtFilterParties.getDocument().addDocumentListener(new DocumentListener() {
+            @Override
+            public void insertUpdate(DocumentEvent e) {
+                onChange();
+            }
+
+            @Override
+            public void removeUpdate(DocumentEvent e) {
+                onChange();
+            }
+
+            @Override
+            public void changedUpdate(DocumentEvent e) {
+                // Not called for plain text components
+            }
+
+            private void onChange() {
+                // Fuzzy-Suche in der Liste der Beteiligten (Involved Parties)
+                String search = txtFilterParties.getText();
+                if (search == null) {
+                    search = "";
+                }
+                search = search.trim().toLowerCase();
+
+                // Alle Panels der Beteiligten holen
+                Component[] partyPanels = pnlInvolvedParties.getComponents();
+
+                // Wenn Suchfeld leer, alle sichtbar machen
+                if (search.isEmpty()) {
+                    for (Component c : partyPanels) {
+                        c.setVisible(true);
+                    }
+                    pnlInvolvedParties.revalidate();
+                    pnlInvolvedParties.repaint();
+                    return;
+                }
+
+                // Suche auf Name, InvolvementType, Reference
+                for (Component c : partyPanels) {
+                    boolean match = false;
+                    if (c instanceof InvolvedPartyEntryPanel) {
+                        InvolvedPartyEntryPanel panel = (InvolvedPartyEntryPanel) c;
+                        ArchiveFileAddressesBean involvement = panel.getInvolvement();
+                        AddressBean address = panel.getAdress();
+
+                        String name = address != null ? StringUtils.nonNull(address.toDisplayName()).toLowerCase() : "";
+                        String involvementType = involvement != null && involvement.getReferenceType() != null
+                                ? involvement.getReferenceType().toString().toLowerCase() : "";
+                        String reference = involvement != null ? StringUtils.nonNull(involvement.getReference()).toLowerCase() : "";
+
+                        // Fuzzy-Match: Enthält Suchbegriff?
+                        if (name.contains(search) || involvementType.contains(search) || reference.contains(search)) {
+                            match = true;
+                        }
+                    }
+                    if(c!=null)
+                        c.setVisible(match);
+                }
+                pnlInvolvedParties.revalidate();
+                pnlInvolvedParties.repaint();
+            }
+        });
 
         this.jScrollPane9.getVerticalScrollBar().setUnitIncrement(16);
 
@@ -1101,10 +1168,11 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
             if (this.dto.getId().equals(caseId)) {
                 InvoiceEntryPanel ip = new InvoiceEntryPanel(this);
                 ip.setEntry(this.dto, invoiceCopy, this.getInvolvedAddresses());
-                if(invoiceCopy.isSmallBusiness())
+                if (invoiceCopy.isSmallBusiness()) {
                     ip.setPaidTotal(invoiceCopy.getTotalGross(), BigDecimal.ZERO, invoiceCopy.getCurrency());
-                else
+                } else {
                     ip.setPaidTotal(invoiceCopy.getTotal(), BigDecimal.ZERO, invoiceCopy.getCurrency());
+                }
                 this.pnlInvoices.add(ip);
                 this.pnlInvoices.revalidate();
             }
@@ -1397,6 +1465,8 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
         if (this.dto != null) {
             this.cmdEditCaseNumber.setEnabled(UserUtils.isCurrentUserAdmin());
         }
+        
+        this.txtFilterParties.setText("");
 
         this.groupPrivilegesChanged = false;
         this.tabPrivileges.setSelectedIndex(0);
@@ -1900,6 +1970,7 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
         cmdSearchClient = new javax.swing.JButton();
         jScrollPane8 = new javax.swing.JScrollPane();
         pnlInvolvedParties = new com.jdimension.jlawyer.client.editors.files.InvolvedPartiesPanel();
+        txtFilterParties = new javax.swing.JTextField();
         tabDocuments = new javax.swing.JPanel();
         jPanel7 = new javax.swing.JPanel();
         cmdNewDocument = new javax.swing.JButton();
@@ -2836,7 +2907,7 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
         );
         pnlInvolvedPartiesLayout.setVerticalGroup(
             pnlInvolvedPartiesLayout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
-            .add(0, 752, Short.MAX_VALUE)
+            .add(0, 845, Short.MAX_VALUE)
         );
 
         jScrollPane8.setViewportView(pnlInvolvedParties);
@@ -2848,9 +2919,11 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
             .add(tabPartiesLayout.createSequentialGroup()
                 .addContainerGap()
                 .add(tabPartiesLayout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
-                    .add(jScrollPane8)
+                    .add(jScrollPane8, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 1111, Short.MAX_VALUE)
                     .add(tabPartiesLayout.createSequentialGroup()
                         .add(cmdSearchClient)
+                        .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
+                        .add(txtFilterParties, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 275, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
                         .add(0, 0, Short.MAX_VALUE)))
                 .addContainerGap())
         );
@@ -2858,7 +2931,9 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
             tabPartiesLayout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
             .add(org.jdesktop.layout.GroupLayout.TRAILING, tabPartiesLayout.createSequentialGroup()
                 .addContainerGap()
-                .add(cmdSearchClient)
+                .add(tabPartiesLayout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
+                    .add(cmdSearchClient)
+                    .add(txtFilterParties, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE))
                 .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
                 .add(jScrollPane8))
         );
@@ -4623,15 +4698,17 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
                 InvoiceEntryPanel ie = (InvoiceEntryPanel) this.pnlInvoices.getComponent(i);
                 Invoice inv = ie.getInvoice();
                 if (invoiceTotals.containsKey(inv.getId())) {
-                    if(inv.isSmallBusiness())
+                    if (inv.isSmallBusiness()) {
                         ie.setPaidTotal(inv.getTotalGross(), invoiceTotals.get(inv.getId()), inv.getCurrency());
-                    else
+                    } else {
                         ie.setPaidTotal(inv.getTotal(), invoiceTotals.get(inv.getId()), inv.getCurrency());
+                    }
                 } else {
-                    if(inv.isSmallBusiness())
+                    if (inv.isSmallBusiness()) {
                         ie.setPaidTotal(inv.getTotalGross(), BigDecimal.ZERO, inv.getCurrency());
-                    else
+                    } else {
                         ie.setPaidTotal(inv.getTotal(), BigDecimal.ZERO, inv.getCurrency());
+                    }
                 }
             }
 
@@ -5616,11 +5693,10 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
             ArchiveFileServiceRemote remote = locator.lookupArchiveFileServiceRemote();
 
             try {
-                if(!remote.performOcr(doc.getId())){
+                if (!remote.performOcr(doc.getId())) {
                     JOptionPane.showMessageDialog(EditorsRegistry.getInstance().getMainWindow(), "Fehler bei der Texterkennung für Dokument " + doc.getName(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
                 }
-                
-                
+
             } catch (Throwable t) {
                 log.error("Could not perform OCR for document", t);
                 JOptionPane.showMessageDialog(EditorsRegistry.getInstance().getMainWindow(), "Fehler bei der Texterkennung: " + t.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
@@ -6127,40 +6203,40 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
 
     private void searchInputChanged(boolean clearOnly) {
         String[] selectedTags = ComponentUtils.getSelectedMenuItems(this.popDocumentTagFilter);
-            try {
-                ClientSettings settings = ClientSettings.getInstance();
-                JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
-                
-                // perform full-text search, but do not fail the search in general if this does not work
-                List<SearchHit> fullTextMatches=new ArrayList<>();
-                if (!clearOnly) {
-                    try {
-                        boolean performFulltextSearch=ServerSettings.getInstance().getSettingAsBoolean(ServerSettings.SERVERCONF_SEARCH_FULLTEXT_INCASE, true);
-                        if (performFulltextSearch && !this.txtSearchDocumentNames.getText().trim().isEmpty()) {
-                            fullTextMatches = locator.lookupSearchServiceRemote().search(this.txtSearchDocumentNames.getText(), 5000, this.dto.getId());
-                        }
-                    } catch (Throwable t) {
-                        log.error("full-text search failed", t);
-                        JOptionPane.showMessageDialog(this, "Volltextsuche fehlgeschlagen: " + t.getMessage() + " - suche anhand Dateinamen", com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
+        try {
+            ClientSettings settings = ClientSettings.getInstance();
+            JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
+
+            // perform full-text search, but do not fail the search in general if this does not work
+            List<SearchHit> fullTextMatches = new ArrayList<>();
+            if (!clearOnly) {
+                try {
+                    boolean performFulltextSearch = ServerSettings.getInstance().getSettingAsBoolean(ServerSettings.SERVERCONF_SEARCH_FULLTEXT_INCASE, true);
+                    if (performFulltextSearch && !this.txtSearchDocumentNames.getText().trim().isEmpty()) {
+                        fullTextMatches = locator.lookupSearchServiceRemote().search(this.txtSearchDocumentNames.getText(), 5000, this.dto.getId());
                     }
+                } catch (Throwable t) {
+                    log.error("full-text search failed", t);
+                    JOptionPane.showMessageDialog(this, "Volltextsuche fehlgeschlagen: " + t.getMessage() + " - suche anhand Dateinamen", com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
                 }
-                
-                ArchiveFileServiceRemote remote = locator.lookupArchiveFileServiceRemote();
-                Hashtable<String, ArrayList<String>> allTags = remote.getDocumentTagsForCase(this.dto.getId());
-                int matches = this.caseFolderPanel1.toggleSearchFilter(clearOnly, this.txtSearchDocumentNames.getText(), selectedTags, allTags, fullTextMatches);
-                lblDocumentHits.setText(matches + " Treffer");
-            } catch (Exception ioe) {
-                log.error("Error loading document tags", ioe);
-                JOptionPane.showMessageDialog(this, "Fehler beim Laden der Dokumentetiketten: " + ioe.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
             }
 
-            if (this.txtSearchDocumentNames.getText().length() > 0 || selectedTags.length > 0) {
-                this.cmdClearSearch.setEnabled(true);
-            } else {
-                this.cmdClearSearch.setEnabled(false);
-            }
+            ArchiveFileServiceRemote remote = locator.lookupArchiveFileServiceRemote();
+            Hashtable<String, ArrayList<String>> allTags = remote.getDocumentTagsForCase(this.dto.getId());
+            int matches = this.caseFolderPanel1.toggleSearchFilter(clearOnly, this.txtSearchDocumentNames.getText(), selectedTags, allTags, fullTextMatches);
+            lblDocumentHits.setText(matches + " Treffer");
+        } catch (Exception ioe) {
+            log.error("Error loading document tags", ioe);
+            JOptionPane.showMessageDialog(this, "Fehler beim Laden der Dokumentetiketten: " + ioe.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
+        }
+
+        if (this.txtSearchDocumentNames.getText().length() > 0 || selectedTags.length > 0) {
+            this.cmdClearSearch.setEnabled(true);
+        } else {
+            this.cmdClearSearch.setEnabled(false);
+        }
     }
-    
+
     private void txtSearchDocumentNamesKeyReleased(java.awt.event.KeyEvent evt) {//GEN-FIRST:event_txtSearchDocumentNamesKeyReleased
         if (evt == null || evt.getKeyCode() == evt.VK_ENTER) {
             this.searchInputChanged(false);
@@ -7928,7 +8004,7 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
             if (selected.isEmpty()) {
                 return inputs;
             }
-            
+
             InputData i = new InputData();
 
             if (!c.getInput().isEmpty() && c.getInput().get(0).getId().contains("FILE")) {
@@ -7936,7 +8012,7 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
                 if (selected.size() != 1) {
                     return inputs;
                 }
-                
+
                 ArchiveFileDocumentsBean doc = selected.get(0);
                 i.setFileName(doc.getName());
                 i.setType(InputData.TYPE_FILE);
@@ -7944,9 +8020,9 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
                 i.setData(remote.getDocumentContent(doc.getId()));
                 //i.setStringData(docText);
             } else {
-                StringBuilder docTexts=new StringBuilder();
-                
-                for(ArchiveFileDocumentsBean doc: selected) {
+                StringBuilder docTexts = new StringBuilder();
+
+                for (ArchiveFileDocumentsBean doc : selected) {
                     docTexts.append("Dokument \"").append(doc.getName()).append("\" vom ").append(dfDay.format(doc.getCreationDate())).append(System.lineSeparator());
                     docTexts.append("************************").append(System.lineSeparator()).append(System.lineSeparator());
                     docTexts.append(remote.getDocumentPreview(doc.getId(), DocumentPreview.TYPE_TEXT).getText());
@@ -8018,7 +8094,7 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
 
     @Override
     public void processOutput(Map<String, String> output) {
-        
+
     }
 
     protected class DropTargetHandler implements DropTargetListener {
@@ -8339,6 +8415,7 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
     protected javax.swing.JTextField txtCustom1;
     protected javax.swing.JTextField txtCustom2;
     protected javax.swing.JTextField txtFileNumber;
+    private javax.swing.JTextField txtFilterParties;
     private javax.swing.JTextField txtFormDescription;
     private javax.swing.JTextField txtFormPrefix;
     private javax.swing.JTextField txtHistoryDate;
