@@ -6147,7 +6147,6 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
                 
                 ArchiveFileServiceRemote remote = locator.lookupArchiveFileServiceRemote();
                 Hashtable<String, ArrayList<String>> allTags = remote.getDocumentTagsForCase(this.dto.getId());
-                //int matches = this.caseFolderPanel1.highlightDocuments(this.txtSearchDocumentNames.getText(), selectedTags, allTags);
                 int matches = this.caseFolderPanel1.toggleSearchFilter(clearOnly, this.txtSearchDocumentNames.getText(), selectedTags, allTags, fullTextMatches);
                 lblDocumentHits.setText(matches + " Treffer");
             } catch (Exception ioe) {

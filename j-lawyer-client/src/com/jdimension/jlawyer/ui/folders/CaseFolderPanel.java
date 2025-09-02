@@ -1892,49 +1892,6 @@ public class CaseFolderPanel extends javax.swing.JPanel implements EventConsumer
         this.foldersListPanel.renderEmptyFullState();
     }
 
-    public int highlightDocuments(String text, String[] selectedTags, Hashtable<String, ArrayList<String>> allTags) {
-        int matchCount = 0;
-        for (Component c : this.pnlDocumentEntries.getComponents()) {
-            if (c instanceof DocumentEntryPanel) {
-                ArchiveFileDocumentsBean doc = ((DocumentEntryPanel) c).getDocument();
-                boolean match = false;
-                if (text != null && !("".equals(text))) {
-                    if (doc.getName().toLowerCase().contains(text.toLowerCase())) {
-                        match = true;
-                    } else {
-                        //((DocumentEntryPanel) c).highlight(false);
-                    }
-                } else {
-                    //((DocumentEntryPanel) c).highlight(false);
-                }
-
-                if (!match) {
-                    if (selectedTags.length > 0) {
-
-                        String id = doc.getId();
-                        if (allTags.containsKey(id)) {
-                            for (String tag : selectedTags) {
-                                if (allTags.get(id).contains(tag)) {
-                                    match = true;
-                                    break;
-                                }
-                            }
-                        }
-
-                    }
-                }
-
-                if (match) {
-                    matchCount = matchCount + 1;
-                }
-
-                ((DocumentEntryPanel) c).highlight(match);
-
-            }
-        }
-        return matchCount;
-    }
-
     public int toggleSearchFilter(boolean clear, String text, String[] selectedTags, Hashtable<String, ArrayList<String>> allTags, List<SearchHit> searchHits) {
         int matchCount = 0;
         this.nonMatchingdocuments.clear();
@@ -1951,11 +1908,7 @@ public class CaseFolderPanel extends javax.swing.JPanel implements EventConsumer
                 if (text != null && !("".equals(text))) {
                     if (dMatchTest.getName().toLowerCase().contains(text.toLowerCase())) {
                         match = true;
-                    } else {
-                        //((DocumentEntryPanel) c).highlight(false);
                     }
-                } else {
-                    //((DocumentEntryPanel) c).highlight(false);
                 }
 
                 if (!match) {
