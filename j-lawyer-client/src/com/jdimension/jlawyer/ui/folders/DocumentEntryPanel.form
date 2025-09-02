@@ -37,15 +37,16 @@
                       <EmptySpace type="separate" max="-2" attributes="0"/>
                       <Component id="lblFolder" max="32767" attributes="0"/>
                   </Group>
-                  <Group type="102" attributes="0">
-                      <Component id="lblInvoice" min="-2" max="-2" attributes="0"/>
-                      <EmptySpace min="226" max="32767" attributes="0"/>
-                  </Group>
                   <Group type="102" alignment="1" attributes="0">
                       <Component id="lblLockIcon" min="-2" max="-2" attributes="0"/>
                       <EmptySpace min="0" pref="0" max="-2" attributes="0"/>
                       <Component id="lblFileName" max="32767" attributes="0"/>
                   </Group>
+                  <Group type="102" attributes="0">
+                      <Component id="lblInvoice" min="-2" max="-2" attributes="0"/>
+                      <EmptySpace max="32767" attributes="0"/>
+                  </Group>
+                  <Component id="lblSearchMatch" alignment="0" max="32767" attributes="0"/>
               </Group>
           </Group>
       </Group>
@@ -70,6 +71,8 @@
                       </Group>
                       <EmptySpace min="-2" pref="3" max="-2" attributes="0"/>
                       <Component id="lblInvoice" min="-2" max="-2" attributes="0"/>
+                      <EmptySpace min="-2" pref="3" max="-2" attributes="0"/>
+                      <Component id="lblSearchMatch" min="-2" max="-2" attributes="0"/>
                   </Group>
               </Group>
           </Group>
@@ -213,6 +216,16 @@
           <Image iconType="3" name="/icons16/baseline_lock_black_48dp.png"/>
         </Property>
         <Property name="text" type="java.lang.String" value=" "/>
+      </Properties>
+    </Component>
+    <Component class="javax.swing.JLabel" name="lblSearchMatch">
+      <Properties>
+        <Property name="font" type="java.awt.Font" editor="org.netbeans.modules.form.editors2.FontEditor">
+          <FontInfo relative="true">
+            <Font component="lblSearchMatch" property="font" relativeSize="true" size="-2"/>
+          </FontInfo>
+        </Property>
+        <Property name="text" type="java.lang.String" value="jLabel1"/>
       </Properties>
     </Component>
   </SubComponents>

@@ -808,6 +808,7 @@ import org.apache.pdfbox.pdmodel.PDDocument;
 import org.jlawyer.data.tree.GenericNode;
 import org.jlawyer.plugins.calculation.GenericCalculationTable;
 import org.jlawyer.plugins.calculation.StyledCalculationTable;
+import org.jlawyer.search.SearchHit;
 import themes.colors.DefaultColorTheme;
 import themes.colors.HighlightPicker;
 
@@ -5998,7 +5999,7 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
         this.txtSearchDocumentNames.setText("");
         ComponentUtils.unSelectMenuItems(this.popDocumentTagFilter);
         this.cmdDocumentTagFilter.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons16/favorites.png")));
-        this.txtSearchDocumentNamesKeyReleased(null);
+        this.searchInputChanged(true);
     }//GEN-LAST:event_cmdClearSearchActionPerformed
 
     private void cmdAddNoteActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdAddNoteActionPerformed
@@ -6124,16 +6125,30 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
 
     }//GEN-LAST:event_mnuSaveDocumentEncryptedActionPerformed
 
-    private void txtSearchDocumentNamesKeyReleased(java.awt.event.KeyEvent evt) {//GEN-FIRST:event_txtSearchDocumentNamesKeyReleased
-        if (evt == null || evt.getKeyCode() == evt.VK_ENTER) {
-
-            String[] selectedTags = ComponentUtils.getSelectedMenuItems(this.popDocumentTagFilter);
+    private void searchInputChanged(boolean clearOnly) {
+        String[] selectedTags = ComponentUtils.getSelectedMenuItems(this.popDocumentTagFilter);
             try {
                 ClientSettings settings = ClientSettings.getInstance();
                 JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
+                
+                // perform full-text search, but do not fail the search in general if this does not work
+                List<SearchHit> fullTextMatches=new ArrayList<>();
+                if (!clearOnly) {
+                    try {
+                        boolean performFulltextSearch=ServerSettings.getInstance().getSettingAsBoolean(ServerSettings.SERVERCONF_SEARCH_FULLTEXT_INCASE, true);
+                        if (performFulltextSearch && !this.txtSearchDocumentNames.getText().trim().isEmpty()) {
+                            fullTextMatches = locator.lookupSearchServiceRemote().search(this.txtSearchDocumentNames.getText(), 5000, this.dto.getId());
+                        }
+                    } catch (Throwable t) {
+                        log.error("full-text search failed", t);
+                        JOptionPane.showMessageDialog(this, "Volltextsuche fehlgeschlagen: " + t.getMessage() + " - suche anhand Dateinamen", com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
+                    }
+                }
+                
                 ArchiveFileServiceRemote remote = locator.lookupArchiveFileServiceRemote();
                 Hashtable<String, ArrayList<String>> allTags = remote.getDocumentTagsForCase(this.dto.getId());
-                int matches = this.caseFolderPanel1.highlightDocuments(this.txtSearchDocumentNames.getText(), selectedTags, allTags);
+                //int matches = this.caseFolderPanel1.highlightDocuments(this.txtSearchDocumentNames.getText(), selectedTags, allTags);
+                int matches = this.caseFolderPanel1.toggleSearchFilter(clearOnly, this.txtSearchDocumentNames.getText(), selectedTags, allTags, fullTextMatches);
                 lblDocumentHits.setText(matches + " Treffer");
             } catch (Exception ioe) {
                 log.error("Error loading document tags", ioe);
@@ -6145,6 +6160,11 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
             } else {
                 this.cmdClearSearch.setEnabled(false);
             }
+    }
+    
+    private void txtSearchDocumentNamesKeyReleased(java.awt.event.KeyEvent evt) {//GEN-FIRST:event_txtSearchDocumentNamesKeyReleased
+        if (evt == null || evt.getKeyCode() == evt.VK_ENTER) {
+            this.searchInputChanged(false);
         }
     }//GEN-LAST:event_txtSearchDocumentNamesKeyReleased
 

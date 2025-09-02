@@ -702,28 +702,27 @@ import themes.colors.HighlightPicker;
  * @author jens
  */
 public class DocumentEntryPanel extends javax.swing.JPanel implements DragGestureListener {
-    
-    private static final Logger log=Logger.getLogger(DocumentEntryPanel.class.getName());
-    
-    public static final int DATE_DISPLAY_MODE_CHANGEDATE=1;
-    public static final int DATE_DISPLAY_MODE_CREATIONDATE=2;
-    
-    private int dateDisplayMode=DATE_DISPLAY_MODE_CHANGEDATE;
+
+    private static final Logger log = Logger.getLogger(DocumentEntryPanel.class.getName());
+
+    public static final int DATE_DISPLAY_MODE_CHANGEDATE = 1;
+    public static final int DATE_DISPLAY_MODE_CREATIONDATE = 2;
+
+    private int dateDisplayMode = DATE_DISPLAY_MODE_CHANGEDATE;
 
     private final SimpleDateFormat dfDateTime = new SimpleDateFormat("dd.MM.yyy, HH:mm");
     private final SimpleDateFormat dfDate = new SimpleDateFormat("dd.MM.yyy");
-    private final DecimalFormat currencyFormat=new DecimalFormat("0.00");
-    private CaseFolderPanel documentsContainer=null;
-    private ArchiveFilePanel caseContainer=null;
-    private Color defaultBackground=null;
-    private boolean readOnly=false;
-    protected ArchiveFileDocumentsBean document=null;
-    protected Invoice linkedInvoice=null;
-    private Color defaultBackColor=null;
-    private boolean highlighted=false;
-    
+    private final DecimalFormat currencyFormat = new DecimalFormat("0.00");
+    private CaseFolderPanel documentsContainer = null;
+    private ArchiveFilePanel caseContainer = null;
+    private Color defaultBackground = null;
+    private boolean readOnly = false;
+    protected ArchiveFileDocumentsBean document = null;
+    protected Invoice linkedInvoice = null;
+    private Color defaultBackColor = null;
+    private boolean highlighted = false;
+
     private DragSource dragSource = null;
-    
 
     /**
      * Creates new form DocumentEntryPanel
@@ -732,52 +731,67 @@ public class DocumentEntryPanel extends javax.swing.JPanel implements DragGestur
         initComponents();
         initHighlights();
         this.lblFolder.setForeground(DefaultColorTheme.COLOR_LOGO_BLUE);
-        
+
+        this.lblSearchMatch.setText("");
+
         this.dragSource = new DragSource();
         DragGestureRecognizer dgr
                 = dragSource.createDefaultDragGestureRecognizer(
                         this.lblFileName,
                         DnDConstants.ACTION_MOVE,
                         this);
-        
+
         this.lblDisplayedDate.setForeground(DefaultColorTheme.COLOR_DARK_GREY);
         this.lblDictateSign.setForeground(DefaultColorTheme.COLOR_DARK_GREY);
         this.lblFileSize.setForeground(DefaultColorTheme.COLOR_DARK_GREY);
-        
+
     }
-    
 
     public DocumentEntryPanel(ArchiveFilePanel caseContainer, CaseFolderPanel documentsContainer, ArchiveFileDocumentsBean doc, Invoice invoice, boolean readonly, int dateDisplayMode) {
         initComponents();
         initHighlights();
-        this.dateDisplayMode=dateDisplayMode;
+        this.dateDisplayMode = dateDisplayMode;
         this.lblFolder.setForeground(DefaultColorTheme.COLOR_LOGO_BLUE);
-        
-        this.documentsContainer=documentsContainer;
-        this.caseContainer=caseContainer;
-        this.readOnly=readonly;
-        
+
+        this.lblSearchMatch.setText("");
+
+        this.documentsContainer = documentsContainer;
+        this.caseContainer = caseContainer;
+        this.readOnly = readonly;
+
         this.setDocument(doc, invoice);
-        
+
         this.dragSource = new DragSource();
         DragGestureRecognizer dgr
                 = dragSource.createDefaultDragGestureRecognizer(
                         this.lblFileName,
                         DnDConstants.ACTION_MOVE,
                         this);
-        
+
         this.lblDisplayedDate.setForeground(DefaultColorTheme.COLOR_DARK_GREY);
         this.lblDictateSign.setForeground(DefaultColorTheme.COLOR_DARK_GREY);
         this.lblFileSize.setForeground(DefaultColorTheme.COLOR_DARK_GREY);
-        
+
+    }
+
+    public void setSearchMatches(String text) {
+
+        if ("".equals(text) || text == null) {
+            this.lblSearchMatch.setText("");
+        } else {
+            text = text.replace("<b>", "<span style='background-color:#97bf0d'><b>").replace("</b>", "</b></span>");
+            text = text.replace("<B>", "<span style='background-color:#97bf0d'><b>").replace("</B>", "</b></span>");
+            this.lblSearchMatch.setText(text);
+
+        }
     }
 
     @Override
     public void setBackground(Color bg) {
         super.setBackground(bg);
-        
-        if(this.document == null) {
-            if(this.cmdHighlight1 != null && this.cmdHighlight2 != null) {
+
+        if (this.document == null) {
+            if (this.cmdHighlight1 != null && this.cmdHighlight2 != null) {
                 this.cmdHighlight1.setBackground(bg);
                 this.cmdHighlight2.setBackground(bg);
             }
@@ -790,9 +804,7 @@ public class DocumentEntryPanel extends javax.swing.JPanel implements DragGestur
             }
         }
     }
-    
-    
-    
+
     private void initHighlights() {
         for (JButton btn : new JButton[]{this.cmdHighlight1, this.cmdHighlight2}) {
             btn.putClientProperty("Button.arc", 999);
@@ -803,10 +815,10 @@ public class DocumentEntryPanel extends javax.swing.JPanel implements DragGestur
             btn.addMouseListener(new MouseAdapter() {
                 @Override
                 public void mousePressed(java.awt.event.MouseEvent evt) {
-                    HighlightPicker hp=new HighlightPicker(EditorsRegistry.getInstance().getMainWindow(), true);
+                    HighlightPicker hp = new HighlightPicker(EditorsRegistry.getInstance().getMainWindow(), true);
                     hp.setLocationRelativeTo(btn);
                     hp.setVisible(true);
-                    if(hp.getSelectedColor() != null) {
+                    if (hp.getSelectedColor() != null) {
                         if (btn.equals(cmdHighlight1)) {
                             document.setHighlight1(hp.getSelectedColor().getRGB());
                         }
@@ -821,7 +833,7 @@ public class DocumentEntryPanel extends javax.swing.JPanel implements DragGestur
                             document.setHighlight2(Integer.MIN_VALUE);
                         }
                     }
-                    
+
                     saveHighlights();
                     updateHighlights();
                 }
@@ -829,25 +841,26 @@ public class DocumentEntryPanel extends javax.swing.JPanel implements DragGestur
             });
         }
     }
-    
+
     public void highlight(boolean highlight) {
-        
-        if(this.defaultBackColor==null) {
-            this.defaultBackColor=this.getBackground();
+
+        if (this.defaultBackColor == null) {
+            this.defaultBackColor = this.getBackground();
         }
-        
-        this.highlighted=highlight;
-        if(highlight) {
+
+        this.highlighted = highlight;
+        if (highlight) {
             this.setBackground(DefaultColorTheme.COLOR_LOGO_RED);
         } else {
             this.setBackground(this.defaultBackColor);
-            
+
             // set background to selected
-            if(this.chkSelected.isSelected())
+            if (this.chkSelected.isSelected()) {
                 this.setSelected(true);
+            }
         }
     }
-    
+
     /**
      * This method is called from within the constructor to initialize the form.
      * WARNING: Do NOT modify this code. The content of this method is always
@@ -869,6 +882,7 @@ public class DocumentEntryPanel extends javax.swing.JPanel implements DragGestur
         cmdHighlight2 = new javax.swing.JButton();
         lblInvoice = new javax.swing.JLabel();
         lblLockIcon = new javax.swing.JLabel();
+        lblSearchMatch = new javax.swing.JLabel();
 
         lblFileIcon.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons16/fileicons/file_type_odt.png"))); // NOI18N
         lblFileIcon.addMouseListener(new java.awt.event.MouseAdapter() {
@@ -980,6 +994,9 @@ public class DocumentEntryPanel extends javax.swing.JPanel implements DragGestur
         lblLockIcon.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons16/baseline_lock_black_48dp.png"))); // NOI18N
         lblLockIcon.setText(" ");
 
+        lblSearchMatch.setFont(lblSearchMatch.getFont().deriveFont(lblSearchMatch.getFont().getSize()-2f));
+        lblSearchMatch.setText("jLabel1");
+
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(this);
         this.setLayout(layout);
         layout.setHorizontalGroup(
@@ -1005,12 +1022,13 @@ public class DocumentEntryPanel extends javax.swing.JPanel implements DragGestur
                         .addGap(18, 18, 18)
                         .addComponent(lblFolder, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
                     .addGroup(layout.createSequentialGroup()
-                        .addComponent(lblInvoice)
-                        .addContainerGap())
-                    .addGroup(layout.createSequentialGroup()
                         .addComponent(lblLockIcon)
                         .addGap(0, 0, 0)
-                        .addComponent(lblFileName, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))))
+                        .addComponent(lblFileName, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                    .addGroup(layout.createSequentialGroup()
+                        .addComponent(lblInvoice)
+                        .addContainerGap())
+                    .addComponent(lblSearchMatch, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)))
         );
         layout.setVerticalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
@@ -1029,7 +1047,9 @@ public class DocumentEntryPanel extends javax.swing.JPanel implements DragGestur
                             .addComponent(lblFileSize)
                             .addComponent(lblFolder))
                         .addGap(3, 3, 3)
-                        .addComponent(lblInvoice))))
+                        .addComponent(lblInvoice)
+                        .addGap(3, 3, 3)
+                        .addComponent(lblSearchMatch))))
             .addComponent(chkSelected, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
             .addComponent(lblFavorite, javax.swing.GroupLayout.Alignment.TRAILING, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
             .addComponent(cmdHighlight1, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
@@ -1055,18 +1075,19 @@ public class DocumentEntryPanel extends javax.swing.JPanel implements DragGestur
 
     private void lblFileNameMouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_lblFileNameMouseClicked
         if ((evt.getModifiers() & InputEvent.BUTTON2_MASK) == MouseEvent.BUTTON2_MASK || (evt.getModifiers() & InputEvent.BUTTON2_DOWN_MASK) == MouseEvent.BUTTON2_DOWN_MASK || (evt.getModifiers() & InputEvent.BUTTON3_MASK) == MouseEvent.BUTTON3_MASK || (evt.getModifiers() & InputEvent.BUTTON3_DOWN_MASK) == MouseEvent.BUTTON3_DOWN_MASK) {
-            if((evt.getModifiers() & InputEvent.SHIFT_MASK) == InputEvent.SHIFT_MASK || (evt.getModifiers() & InputEvent.CTRL_MASK) == InputEvent.CTRL_MASK) {
+            if ((evt.getModifiers() & InputEvent.SHIFT_MASK) == InputEvent.SHIFT_MASK || (evt.getModifiers() & InputEvent.CTRL_MASK) == InputEvent.CTRL_MASK) {
                 this.documentClicked(evt, false);
             } else {
-                if(this.isSelected())
+                if (this.isSelected()) {
                     this.documentClicked(evt, false);
-                else
+                } else {
                     this.documentClicked(evt, true);
+                }
             }
             this.caseContainer.showDocumentsPopup(evt);
         } else if ((evt.getModifiers() & InputEvent.SHIFT_MASK) == InputEvent.SHIFT_MASK) {
             this.documentRangeClicked(evt);
-            
+
         } else if ((evt.getModifiers() & InputEvent.CTRL_MASK) == InputEvent.CTRL_MASK) {
             this.documentClicked(evt, false);
         } else {
@@ -1079,37 +1100,37 @@ public class DocumentEntryPanel extends javax.swing.JPanel implements DragGestur
     }//GEN-LAST:event_lblFileIconMouseClicked
 
     private void chkSelectedActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_chkSelectedActionPerformed
-        if(this.chkSelected.isSelected()) {
+        if (this.chkSelected.isSelected()) {
             this.setBackground(DefaultColorTheme.COLOR_LOGO_GREEN);
         } else {
             this.setBackground(this.defaultBackground);
         }
-        
+
     }//GEN-LAST:event_chkSelectedActionPerformed
 
     private void lblFavoriteMouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_lblFavoriteMouseClicked
-        if(evt.getClickCount()==1 && !this.readOnly) {
+        if (evt.getClickCount() == 1 && !this.readOnly) {
             try {
-                        ClientSettings settings = ClientSettings.getInstance();
-                        JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
-                        ArchiveFileServiceRemote remote = locator.lookupArchiveFileServiceRemote();
-                        boolean favorite = this.getDocument().isFavorite();
-                        boolean newValue = !favorite;
-                        remote.setDocumentFavorite(this.getDocument().getId(), newValue);
-                        this.getDocument().setFavorite(newValue);
-                        this.setFavorite(newValue);
-                        this.caseContainer.updateFavoriteDocuments();
+                ClientSettings settings = ClientSettings.getInstance();
+                JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
+                ArchiveFileServiceRemote remote = locator.lookupArchiveFileServiceRemote();
+                boolean favorite = this.getDocument().isFavorite();
+                boolean newValue = !favorite;
+                remote.setDocumentFavorite(this.getDocument().getId(), newValue);
+                this.getDocument().setFavorite(newValue);
+                this.setFavorite(newValue);
+                this.caseContainer.updateFavoriteDocuments();
 
-                    } catch (Exception ioe) {
-                        log.error("Error setting document as favorite", ioe);
-                        JOptionPane.showMessageDialog(this, "Fehler beim Speichern: " + ioe.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
-                    }
+            } catch (Exception ioe) {
+                log.error("Error setting document as favorite", ioe);
+                JOptionPane.showMessageDialog(this, "Fehler beim Speichern: " + ioe.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
+            }
         }
     }//GEN-LAST:event_lblFavoriteMouseClicked
 
     private void chkSelectedMouseReleased(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_chkSelectedMouseReleased
         if ((evt.getModifiers() & InputEvent.BUTTON2_MASK) == evt.BUTTON2_MASK || (evt.getModifiers() & InputEvent.BUTTON2_DOWN_MASK) == evt.BUTTON2_DOWN_MASK || (evt.getModifiers() & InputEvent.BUTTON3_MASK) == evt.BUTTON3_MASK || (evt.getModifiers() & InputEvent.BUTTON3_DOWN_MASK) == evt.BUTTON3_DOWN_MASK) {
-            if((evt.getModifiers() & InputEvent.SHIFT_MASK) == InputEvent.SHIFT_MASK || (evt.getModifiers() & InputEvent.CTRL_MASK) == InputEvent.CTRL_MASK) {
+            if ((evt.getModifiers() & InputEvent.SHIFT_MASK) == InputEvent.SHIFT_MASK || (evt.getModifiers() & InputEvent.CTRL_MASK) == InputEvent.CTRL_MASK) {
                 this.documentClicked(evt, false);
             } else {
                 this.documentClicked(evt, true);
@@ -1147,7 +1168,7 @@ public class DocumentEntryPanel extends javax.swing.JPanel implements DragGestur
                 break;
             case KeyEvent.VK_ENTER:
                 // see lastpopclosed flag comment
-                long sinceLastPopup=System.currentTimeMillis() - this.caseContainer.getLastPopupClosed();
+                long sinceLastPopup = System.currentTimeMillis() - this.caseContainer.getLastPopupClosed();
                 if (sinceLastPopup > 100l) {
                     if (this.documentsContainer != null) {
                         List<ArchiveFileDocumentsBean> selDocs = this.documentsContainer.getSelectedDocuments();
@@ -1181,7 +1202,7 @@ public class DocumentEntryPanel extends javax.swing.JPanel implements DragGestur
     }//GEN-LAST:event_lblFolderMouseClicked
 
     private void lblInvoiceMouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_lblInvoiceMouseClicked
-        InvoiceDialog dlg=new InvoiceDialog(this.caseContainer, this.caseContainer.getArchiveFileDTO(), EditorsRegistry.getInstance().getMainWindow(), true, this.caseContainer.getInvolvedAddresses());
+        InvoiceDialog dlg = new InvoiceDialog(this.caseContainer, this.caseContainer.getArchiveFileDTO(), EditorsRegistry.getInstance().getMainWindow(), true, this.caseContainer.getInvolvedAddresses());
         dlg.setEntry(this.linkedInvoice);
         FrameUtils.centerDialog(dlg, EditorsRegistry.getInstance().getMainWindow());
         dlg.setVisible(true);
@@ -1197,49 +1218,53 @@ public class DocumentEntryPanel extends javax.swing.JPanel implements DragGestur
     }//GEN-LAST:event_lblInvoiceMouseExited
 
     private void lblDisplayedDateMouseEntered(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_lblDisplayedDateMouseEntered
-        if(this.document!=null) {
-            if(this.dateDisplayMode==DATE_DISPLAY_MODE_CHANGEDATE)
+        if (this.document != null) {
+            if (this.dateDisplayMode == DATE_DISPLAY_MODE_CHANGEDATE) {
                 this.lblDisplayedDate.setText(DateUtils.getHumanReadableTime(this.document.getChangeDate()));
-            else
+            } else {
                 this.lblDisplayedDate.setText(DateUtils.getHumanReadableTime(this.document.getCreationDate()));
+            }
         }
     }//GEN-LAST:event_lblDisplayedDateMouseEntered
 
     private void lblDisplayedDateMouseExited(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_lblDisplayedDateMouseExited
-        if(this.document!=null) {
-            if(this.dateDisplayMode==DATE_DISPLAY_MODE_CHANGEDATE)
+        if (this.document != null) {
+            if (this.dateDisplayMode == DATE_DISPLAY_MODE_CHANGEDATE) {
                 this.lblDisplayedDate.setText(dfDateTime.format(this.document.getChangeDate()));
-            else
+            } else {
                 this.lblDisplayedDate.setText(dfDateTime.format(this.document.getCreationDate()));
+            }
         }
     }//GEN-LAST:event_lblDisplayedDateMouseExited
 
     private void documentUnClicked() {
         this.caseContainer.documentSelectionChanged();
     }
-                    
+
     private void documentClicked(MouseEvent evt, boolean deselectOthers) {
-        if(evt.getClickCount()==2 && !evt.isConsumed()) {
+        if (evt.getClickCount() == 2 && !evt.isConsumed()) {
             evt.consume();
             this.caseContainer.openSelectedDocument(this.document);
-        } else if(evt.getClickCount()==1 && !evt.isConsumed()) {
-            if(this.documentsContainer!=null && deselectOthers)
+        } else if (evt.getClickCount() == 1 && !evt.isConsumed()) {
+            if (this.documentsContainer != null && deselectOthers) {
                 this.documentsContainer.selectAllDocuments(false);
+            }
             this.setSelected(true);
             this.caseContainer.documentSelectionChanged();
             evt.consume();
         }
     }
-    
+
     public boolean isSelected() {
         return this.chkSelected.isSelected();
     }
-    
+
     public void setSelected(boolean selected) {
-        if(this.defaultBackground==null && !this.chkSelected.isSelected())
-            this.defaultBackground=this.getBackground();
-        
-        if(selected) {
+        if (this.defaultBackground == null && !this.chkSelected.isSelected()) {
+            this.defaultBackground = this.getBackground();
+        }
+
+        if (selected) {
             this.chkSelected.setSelected(selected);
             this.setBackground(DefaultColorTheme.COLOR_LOGO_GREEN);
             this.chkSelected.requestFocus();
@@ -1247,11 +1272,12 @@ public class DocumentEntryPanel extends javax.swing.JPanel implements DragGestur
             this.chkSelected.setSelected(selected);
             this.setBackground(this.defaultBackground);
         }
-        
-        if(this.highlighted)
+
+        if (this.highlighted) {
             this.highlight(true);
+        }
     }
-    
+
     public void setFavorite(boolean favorite) {
         this.getDocument().setFavorite(favorite);
         if (favorite) {
@@ -1260,7 +1286,7 @@ public class DocumentEntryPanel extends javax.swing.JPanel implements DragGestur
             this.lblFavorite.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons16/package_favorite_grey.png")));
         }
     }
-    
+
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JCheckBox chkSelected;
@@ -1275,6 +1301,7 @@ public class DocumentEntryPanel extends javax.swing.JPanel implements DragGestur
     private javax.swing.JLabel lblFolder;
     private javax.swing.JLabel lblInvoice;
     private javax.swing.JLabel lblLockIcon;
+    private javax.swing.JLabel lblSearchMatch;
     // End of variables declaration//GEN-END:variables
 
     /**
@@ -1285,18 +1312,19 @@ public class DocumentEntryPanel extends javax.swing.JPanel implements DragGestur
     }
 
     void setDocument(ArchiveFileDocumentsBean doc, Invoice linkedInvoice) {
-        this.document=doc;
+        this.document = doc;
         this.lblFileName.setText(doc.getName());
         this.lblFileName.setToolTipText(doc.getName());
         this.lblFileIcon.setToolTipText(doc.getName());
-        
-        if(this.dateDisplayMode==DATE_DISPLAY_MODE_CHANGEDATE)
+
+        if (this.dateDisplayMode == DATE_DISPLAY_MODE_CHANGEDATE) {
             this.lblDisplayedDate.setText(dfDateTime.format(this.document.getChangeDate()));
-        else
+        } else {
             this.lblDisplayedDate.setText(dfDateTime.format(this.document.getCreationDate()));
+        }
         this.lblDisplayedDate.setToolTipText("erstellt: " + dfDateTime.format(doc.getCreationDate()) + System.lineSeparator() + "geändert: " + dfDateTime.format(doc.getChangeDate()));
         this.lblDictateSign.setText(doc.getDictateSign());
-        if(this.document.getFolder()==null) {
+        if (this.document.getFolder() == null) {
             this.lblFolder.setIcon(null);
             this.lblFolder.setText("");
         } else {
@@ -1312,20 +1340,20 @@ public class DocumentEntryPanel extends javax.swing.JPanel implements DragGestur
         this.lblFileIcon.setIcon(icon);
 
         this.lblFileSize.setText(FileUtils.getFileSizeHumanReadable(doc.getSize()));
-        
+
         this.updateHighlights();
         this.setInvoice(linkedInvoice);
-        
+
         lblLockIcon.setIcon(null);
         lblLockIcon.setText("");
         this.updateLock(doc.isLocked(), doc.getLockedBy(), doc.getLockedDate());
-        
+
     }
-    
+
     public void updateLock(boolean locked, String lockedBy, Date when) {
         this.document.setLockedBy(lockedBy);
         this.document.setLockedDate(when);
-        
+
         // note: we do not update the UI because it may confuse users - a document not displayed as locked might have been locked recently by another client
 //        if(locked) {
 //            lblLockIcon.setIcon(lockIcon);
@@ -1336,37 +1364,40 @@ public class DocumentEntryPanel extends javax.swing.JPanel implements DragGestur
 //            lblLockIcon.setText("");
 //        }
     }
-    
+
     private void setInvoice(Invoice linkedInvoice) {
         this.linkedInvoice = linkedInvoice;
-        if(linkedInvoice!=null) {
+        if (linkedInvoice != null) {
             lblInvoice.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/man.png")));
-            String dueDate="";
-            if(linkedInvoice.getDueDate()!=null)
-                dueDate=dfDate.format(linkedInvoice.getDueDate());
+            String dueDate = "";
+            if (linkedInvoice.getDueDate() != null) {
+                dueDate = dfDate.format(linkedInvoice.getDueDate());
+            }
             lblInvoice.setText(linkedInvoice.getInvoiceType().getDisplayName() + " " + linkedInvoice.getInvoiceNumber());
-            lblInvoice.setToolTipText("<html><b>" + linkedInvoice.getInvoiceType().getDisplayName() + " " + linkedInvoice.getInvoiceNumber() + "</b><br/>" + linkedInvoice.getStatusString() + "<br/>f&auml;llig: " + dueDate + "<br/>Betrag: " + currencyFormat.format(linkedInvoice.getTotalGross().floatValue()) + " " + linkedInvoice.getCurrency()+ "</html>");
+            lblInvoice.setToolTipText("<html><b>" + linkedInvoice.getInvoiceType().getDisplayName() + " " + linkedInvoice.getInvoiceNumber() + "</b><br/>" + linkedInvoice.getStatusString() + "<br/>f&auml;llig: " + dueDate + "<br/>Betrag: " + currencyFormat.format(linkedInvoice.getTotalGross().floatValue()) + " " + linkedInvoice.getCurrency() + "</html>");
             lblInvoice.setForeground(DefaultColorTheme.COLOR_LOGO_RED);
-            
+
         } else {
             lblInvoice.setIcon(null);
             lblInvoice.setText("");
             lblInvoice.setToolTipText(null);
         }
     }
-    
+
     private void updateHighlights() {
-        if(this.document.getHighlight1()>Integer.MIN_VALUE)
+        if (this.document.getHighlight1() > Integer.MIN_VALUE) {
             this.cmdHighlight1.setBackground(new Color(this.document.getHighlight1()));
-        else
+        } else {
             this.cmdHighlight1.setBackground(getBackground());
-        
-        if(this.document.getHighlight2()>Integer.MIN_VALUE)
+        }
+
+        if (this.document.getHighlight2() > Integer.MIN_VALUE) {
             this.cmdHighlight2.setBackground(new Color(this.document.getHighlight2()));
-        else
+        } else {
             this.cmdHighlight2.setBackground(getBackground());
+        }
     }
-    
+
     private void saveHighlights() {
         try {
             ClientSettings settings = ClientSettings.getInstance();
@@ -1379,9 +1410,10 @@ public class DocumentEntryPanel extends javax.swing.JPanel implements DragGestur
     }
 
     private void documentRangeClicked(MouseEvent evt) {
-        if(evt.getClickCount()==1 && !evt.isConsumed()) {
-            if(this.documentsContainer!=null)
+        if (evt.getClickCount() == 1 && !evt.isConsumed()) {
+            if (this.documentsContainer != null) {
                 this.documentsContainer.selectDocumentsRangeTo(this.document.getId());
+            }
             this.setSelected(true);
             this.caseContainer.documentSelectionChanged();
             evt.consume();
@@ -1390,9 +1422,9 @@ public class DocumentEntryPanel extends javax.swing.JPanel implements DragGestur
 
     @Override
     public void dragGestureRecognized(DragGestureEvent dge) {
-        ArrayList<ArchiveFileDocumentsBean> selDocs=this.documentsContainer.getSelectedDocuments();
-        if(selDocs==null || selDocs.isEmpty()) {
-            selDocs=new ArrayList<>();
+        ArrayList<ArchiveFileDocumentsBean> selDocs = this.documentsContainer.getSelectedDocuments();
+        if (selDocs == null || selDocs.isEmpty()) {
+            selDocs = new ArrayList<>();
             selDocs.add(this.document);
         }
         this.dragSource.startDrag(dge, null, new DocumentsTransferable(selDocs), null);

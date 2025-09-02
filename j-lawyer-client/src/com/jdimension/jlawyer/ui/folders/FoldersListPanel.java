@@ -961,7 +961,7 @@ public class FoldersListPanel extends javax.swing.JPanel {
         ArrayList<CaseFolder> ids = new ArrayList<>();
         for (Component c : this.pnlFolders.getComponents()) {
             if (c instanceof FolderListCell) {
-                if (((FolderListCell) c).isSelected()) {
+                if (((FolderListCell) c).isSelected() && !(((FolderListCell) c).getFolder()==null)) {
                     ids.add(((FolderListCell) c).getFolder());
                 }
             }

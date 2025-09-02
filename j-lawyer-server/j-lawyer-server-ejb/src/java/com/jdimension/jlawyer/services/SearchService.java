@@ -704,6 +704,12 @@ public class SearchService implements SearchServiceRemote, SearchServiceLocal {
     @Override
     @RolesAllowed({"readArchiveFileRole"})
     public ArrayList<SearchHit> search(String queryString, int maxDocs) throws SearchException {
+        return search(queryString, maxDocs, null);
+    }
+    
+    @Override
+    @RolesAllowed({"readArchiveFileRole"})
+    public ArrayList<SearchHit> search(String queryString, int maxDocs, String caseId) throws SearchException {
 
         ArrayList<String> allowedCases = null;
         try {
@@ -718,6 +724,12 @@ public class SearchService implements SearchServiceRemote, SearchServiceLocal {
         HashMap<String, ArchiveFileBean> caseCache = new HashMap<>();
         for (SearchHit h : hits) {
 
+            if(caseId!=null) {
+                if(!caseId.equals(h.getArchiveFileId())) {
+                    continue;
+                }
+            }
+            
             if (allowedCases.contains(h.getArchiveFileId())) {
                 if (!caseCache.containsKey(h.getArchiveFileId())) {
                     ArchiveFileBean afb = this.archiveFileFacade.find(h.getArchiveFileId());
