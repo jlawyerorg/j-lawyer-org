@@ -663,6 +663,7 @@ For more information on this, and how to apply and follow the GNU AGPL, see
  */
 package org.jlawyer.io.rest.v1;
 
+import com.jdimension.jlawyer.documents.DocumentPreview;
 import com.jdimension.jlawyer.persistence.AddressBean;
 import com.jdimension.jlawyer.persistence.ArchiveFileAddressesBean;
 import com.jdimension.jlawyer.persistence.ArchiveFileBean;
@@ -1181,6 +1182,44 @@ public class CasesEndpointV1 implements CasesEndpointLocalV1 {
             log.error("can not get case " + id, ex);
             Response res = Response.serverError().build();
             return res;
+        }
+    }
+    
+    /**
+     * Returns a a documents content as plain texct, given its ID.
+     *
+     * @param id document ID
+     * @response 401 User not authorized
+     * @response 403 User not authenticated
+     */
+    @Override
+    @GET
+    @Produces(MediaType.TEXT_PLAIN+";charset=utf-8")
+    @Path("/document/{id}/content/as-text")
+    @RolesAllowed({"readArchiveFileRole"})
+    public Response getDocumentContentAsText(@PathParam("id") String id) {
+        //http://localhost:8080/j-lawyer-io/rest/cases/document/0c6f1f867f00010173b54cfcd4cce056/content
+        try {
+            InitialContext ic = new InitialContext();
+            ArchiveFileServiceLocal cases = (ArchiveFileServiceLocal) ic.lookup("java:global/j-lawyer-server/j-lawyer-server-ejb/ArchiveFileService!com.jdimension.jlawyer.services.ArchiveFileServiceLocal");
+            ArchiveFileDocumentsBean doc = cases.getDocument(id);
+            if (doc == null) {
+                log.error("can not get document " + id);
+                Response res = Response.serverError().build();
+                return res;
+            }
+
+            DocumentPreview preview = cases.getDocumentPreview(id, DocumentPreview.TYPE_TEXT);
+            if (preview == null) {
+                log.error("can not get preview of document " + id);
+                Response res = Response.serverError().build();
+                return res;
+            }
+
+            return Response.ok(preview.getText()).build();
+        } catch (Exception ex) {
+            log.error("can not get document " + id, ex);
+            return Response.serverError().build();
         }
     }
 

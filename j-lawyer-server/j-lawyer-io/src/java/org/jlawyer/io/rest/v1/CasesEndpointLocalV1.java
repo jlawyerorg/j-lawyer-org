@@ -693,6 +693,7 @@ public interface CasesEndpointLocalV1 {
     Response getCaseDocumentsInTrash(String id);
     
     Response getDocumentContent(String id);
+    Response getDocumentContentAsText(String id);
     Response getDocument(String id);
 
     Response getDueDates(String id);
