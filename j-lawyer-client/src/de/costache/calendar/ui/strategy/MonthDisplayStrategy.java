@@ -27,6 +27,8 @@ import java.util.Calendar;
 import java.util.Date;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
+import java.awt.event.MouseWheelListener;
+import java.awt.event.MouseWheelEvent;
 
 /**
  * Month display strategy for the calendar UI.
@@ -86,6 +88,21 @@ class MonthDisplayStrategy implements DisplayStrategy {
             });
             c.add(Calendar.DATE, 1);
         }
+
+        // Month navigation via wheel anywhere over the month grid
+        displayPanel.addMouseWheelListener(new MouseWheelListener() {
+            @Override
+            public void mouseWheelMoved(MouseWheelEvent e) {
+                if (getType() != Type.MONTH) return;
+                if (e.getWheelRotation() < 0) {
+                    moveIntervalLeft();
+                } else {
+                    moveIntervalRight();
+                }
+                parent.getOwner().getHeaderPanel().getIntervalLabel().setText(getDisplayInterval());
+                e.consume();
+            }
+        });
     }
 
     @Override

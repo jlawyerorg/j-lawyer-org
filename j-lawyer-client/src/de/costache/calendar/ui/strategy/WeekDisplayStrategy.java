@@ -19,6 +19,8 @@ import com.jdimension.jlawyer.client.utils.ComponentUtils;
 import java.awt.BorderLayout;
 import java.awt.Dimension;
 import java.awt.GridLayout;
+import java.awt.GridBagLayout;
+import java.awt.GridBagConstraints;
 import java.awt.Cursor;
 import java.awt.Point;
 import java.text.SimpleDateFormat;
@@ -40,6 +42,8 @@ import de.costache.calendar.util.CalendarUtil;
 import javax.swing.JSplitPane;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
+import java.awt.event.MouseWheelEvent;
+import java.awt.event.MouseWheelListener;
 
 /**
  *
@@ -80,8 +84,9 @@ class WeekDisplayStrategy implements DisplayStrategy {
         headersPanel.setPreferredSize(new Dimension(1440, 60));
 
         // Viewport panel: contains only the 7 day content columns (no hours column)
+        // Use GridBagLayout so preferred heights of day panels (e.g., 1440) are honored for scrolling
         JPanel contentsPanel = new JPanel(true);
-        contentsPanel.setLayout(new GridLayout(1, 7));
+        contentsPanel.setLayout(new GridBagLayout());
         contentsPanel.setOpaque(false);
 
         JPanel allDayPanel = new JPanel(true);
@@ -99,6 +104,9 @@ class WeekDisplayStrategy implements DisplayStrategy {
         // Create containers for day headers (top) and day contents (center)
         JPanel dayHeaders = new JPanel(new GridLayout(1, 7));
         dayHeaders.setOpaque(false);
+        GridBagConstraints gbc = new GridBagConstraints();
+        gbc.gridy = 0;
+        gbc.fill = GridBagConstraints.BOTH;
         for (int i = 0; i < 7; i++) {
             final Date dayDate = c.getTime();
             days[i] = new DayPanel(parent.getOwner(), dayDate, 0.02f);
@@ -116,7 +124,10 @@ class WeekDisplayStrategy implements DisplayStrategy {
                 }
             });
             days[i].getContentPanel().setPreferredSize(new Dimension(30, 1440));
-            contentsPanel.add(days[i].getContentPanel());
+            gbc.gridx = i;
+            gbc.weightx = 1;
+            gbc.weighty = 1;
+            contentsPanel.add(days[i].getContentPanel(), gbc);
             allDayPanel.add(days[i].getCompleteDayPanel());
             c.add(Calendar.DATE, 1);
         }
@@ -124,13 +135,36 @@ class WeekDisplayStrategy implements DisplayStrategy {
         // Header now only holds the 7 day headers (no spacer needed)
         headersPanel.add(dayHeaders, BorderLayout.CENTER);
 
+        // Scroll on header switches weeks (left/right). Content area keeps vertical scroll.
+        headersPanel.addMouseWheelListener(new MouseWheelListener() {
+            @Override
+            public void mouseWheelMoved(MouseWheelEvent e) {
+                if (getType() != Type.WEEK) return;
+                if (e.getWheelRotation() < 0) {
+                    moveIntervalLeft();
+                } else {
+                    moveIntervalRight();
+                }
+                parent.getOwner().getHeaderPanel().getIntervalLabel().setText(getDisplayInterval());
+                e.consume();
+            }
+        });
+
+        // Ensure vertical scroll range by setting a preferred height for the week grid
+        contentsPanel.setPreferredSize(new Dimension(0, 1440));
+
         JScrollPane content = new JScrollPane(contentsPanel);
+        content.setWheelScrollingEnabled(true);
         content.setOpaque(false);
         content.getViewport().setOpaque(false);
         content.setBorder(new EmptyBorder(0, 0, 0, 0));
         content.setVerticalScrollBarPolicy(ScrollPaneConstants.VERTICAL_SCROLLBAR_ALWAYS);
         content.getViewport().setViewPosition(new Point(0, 500));
         content.getVerticalScrollBar().setUnitIncrement(16);
+
+        // Do not intercept mouse wheel here: allow vertical scrolling in the viewport.
+        // Week navigation via wheel remains handled by ContentPanel when events are not consumed
+        // (e.g., when hovering non-scrollable areas like the header).
 
         // Put headers as column header view so it shares viewport width (accounts for scrollbar)
         content.setColumnHeaderView(headersPanel);

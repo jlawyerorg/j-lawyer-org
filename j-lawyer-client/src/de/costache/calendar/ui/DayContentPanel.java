@@ -306,6 +306,16 @@ public class DayContentPanel extends JPanel {
             public void mouseWheelMoved(java.awt.event.MouseWheelEvent e) {
                 final JCalendar calendar = DayContentPanel.this.owner.getOwner();
                 if (calendar.getDisplayStrategy() != Type.MONTH) {
+                    // Forward wheel to enclosing scroll pane to allow vertical scrolling in DAY/WEEK
+                    java.awt.Component anc = javax.swing.SwingUtilities.getAncestorOfClass(javax.swing.JScrollPane.class, DayContentPanel.this);
+                    if (anc instanceof javax.swing.JScrollPane) {
+                        javax.swing.JScrollPane sp = (javax.swing.JScrollPane) anc;
+                        javax.swing.JScrollBar vbar = sp.getVerticalScrollBar();
+                        int inc = Math.max(16, vbar.getUnitIncrement());
+                        int delta = e.getWheelRotation() * inc * 3;
+                        vbar.setValue(vbar.getValue() + delta);
+                        e.consume();
+                    }
                     return;
                 }
 
