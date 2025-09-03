@@ -695,6 +695,8 @@ public class QuickDateSelectionPanel extends javax.swing.JPanel {
         toggles.add(this.togReview1Year);
         toggles.add(this.togReview2Days);
         toggles.add(this.togReview2Weeks);
+        toggles.add(this.togReview3Weeks);
+        toggles.add(this.togReview1Month);
         toggles.add(this.togReview3Months);
         toggles.add(this.togReview4Weeks);
         toggles.add(this.togReview6Months);
@@ -718,6 +720,9 @@ public class QuickDateSelectionPanel extends javax.swing.JPanel {
             } else if (this.togReview2Weeks.isSelected()) {
                 c.add(Calendar.DAY_OF_YEAR, 14);
                 noneSelected=false;
+            } else if (this.togReview3Weeks.isSelected()) {
+                c.add(Calendar.DAY_OF_YEAR, 21);
+                noneSelected=false;
             } else if (this.togReview4Weeks.isSelected()) {
                 c.add(Calendar.DAY_OF_YEAR, 28);
                 noneSelected=false;
@@ -727,6 +732,9 @@ public class QuickDateSelectionPanel extends javax.swing.JPanel {
             } else if (this.togReview2Days.isSelected()) {
                 c.add(Calendar.DAY_OF_YEAR, 2);
                 noneSelected=false;
+            } else if (this.togReview1Month.isSelected()) {
+                c.add(Calendar.MONTH, 1);
+                noneSelected=false;    
             } else if (this.togReview3Months.isSelected()) {
                 c.add(Calendar.MONTH, 3);
                 noneSelected=false;
@@ -782,9 +790,11 @@ public class QuickDateSelectionPanel extends javax.swing.JPanel {
 
         togReview1Week = new javax.swing.JToggleButton();
         togReview2Weeks = new javax.swing.JToggleButton();
+        togReview3Weeks = new javax.swing.JToggleButton();
         togReview4Weeks = new javax.swing.JToggleButton();
         togReview1Day = new javax.swing.JToggleButton();
         togReview2Days = new javax.swing.JToggleButton();
+        togReview1Month = new javax.swing.JToggleButton();
         togReview3Months = new javax.swing.JToggleButton();
         togReview6Months = new javax.swing.JToggleButton();
         togReview1Year = new javax.swing.JToggleButton();
@@ -802,6 +812,14 @@ public class QuickDateSelectionPanel extends javax.swing.JPanel {
         togReview2Weeks.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 togReview2WeeksActionPerformed(evt);
+            }
+        });
+
+        togReview3Weeks.setText("3W");
+        togReview3Weeks.setMargin(new java.awt.Insets(2, 4, 2, 4));
+        togReview3Weeks.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                togReview3WeeksActionPerformed(evt);
             }
         });
 
@@ -826,6 +844,14 @@ public class QuickDateSelectionPanel extends javax.swing.JPanel {
         togReview2Days.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 togReview2DaysActionPerformed(evt);
+            }
+        });
+
+        togReview1Month.setText("1M");
+        togReview1Month.setMargin(new java.awt.Insets(2, 4, 2, 4));
+        togReview1Month.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                togReview1MonthActionPerformed(evt);
             }
         });
 
@@ -866,13 +892,18 @@ public class QuickDateSelectionPanel extends javax.swing.JPanel {
                 .addGap(3, 3, 3)
                 .addComponent(togReview2Weeks)
                 .addGap(3, 3, 3)
+                .addComponent(togReview3Weeks)
+                .addGap(3, 3, 3)
                 .addComponent(togReview4Weeks)
+                .addGap(3, 3, 3)
+                .addComponent(togReview1Month)
                 .addGap(3, 3, 3)
                 .addComponent(togReview3Months)
                 .addGap(3, 3, 3)
                 .addComponent(togReview6Months)
                 .addGap(3, 3, 3)
-                .addComponent(togReview1Year))
+                .addComponent(togReview1Year)
+                .addGap(0, 0, 0))
         );
         layout.setVerticalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
@@ -884,7 +915,9 @@ public class QuickDateSelectionPanel extends javax.swing.JPanel {
                 .addComponent(togReview2Days)
                 .addComponent(togReview3Months)
                 .addComponent(togReview6Months)
-                .addComponent(togReview1Year))
+                .addComponent(togReview1Year)
+                .addComponent(togReview1Month)
+                .addComponent(togReview3Weeks))
         );
     }// </editor-fold>//GEN-END:initComponents
 
@@ -937,14 +970,26 @@ public class QuickDateSelectionPanel extends javax.swing.JPanel {
         this.updateTarget();
     }//GEN-LAST:event_togReview1YearActionPerformed
 
+    private void togReview1MonthActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_togReview1MonthActionPerformed
+        this.toggleSelection(togReview1Month);
+        this.updateTarget();
+    }//GEN-LAST:event_togReview1MonthActionPerformed
+
+    private void togReview3WeeksActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_togReview3WeeksActionPerformed
+        this.toggleSelection(togReview3Weeks);
+        this.updateTarget();
+    }//GEN-LAST:event_togReview3WeeksActionPerformed
+
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JToggleButton togReview1Day;
+    private javax.swing.JToggleButton togReview1Month;
     private javax.swing.JToggleButton togReview1Week;
     private javax.swing.JToggleButton togReview1Year;
     private javax.swing.JToggleButton togReview2Days;
     private javax.swing.JToggleButton togReview2Weeks;
     private javax.swing.JToggleButton togReview3Months;
+    private javax.swing.JToggleButton togReview3Weeks;
     private javax.swing.JToggleButton togReview4Weeks;
     private javax.swing.JToggleButton togReview6Months;
     // End of variables declaration//GEN-END:variables
