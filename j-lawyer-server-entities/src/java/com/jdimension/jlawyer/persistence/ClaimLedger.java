@@ -661,309 +661,140 @@
  * For more information on this, and how to apply and follow the GNU AGPL, see
  * <https://www.gnu.org/licenses/>.
  */
-package com.jdimension.jlawyer.services;
+package com.jdimension.jlawyer.persistence;
 
-import com.jdimension.jlawyer.documents.DocumentPreview;
-import com.jdimension.jlawyer.persistence.*;
-import com.jdimension.jlawyer.pojo.DataBucket;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Date;
-import java.util.HashMap;
-import java.util.Hashtable;
-import java.util.List;
-import javax.ejb.Remote;
-import org.jlawyer.data.tree.GenericNode;
+import java.io.Serializable;
+import java.math.BigDecimal;
+import javax.persistence.*;
+import javax.xml.bind.annotation.XmlRootElement;
 
 /**
  *
  * @author jens
  */
-@Remote
-public interface ArchiveFileServiceRemote {
-
-    int getArchiveFileCount();
-
-    ArchiveFileBean[] searchSimple(String query);
-
-    void removeArchiveFile(String id) throws Exception;
-
-    ArchiveFileHistoryBean[] getHistoryForArchiveFile(String archiveFileKey, Date since) throws Exception;
-
-    ArchiveFileBean createArchiveFile(ArchiveFileBean dto) throws Exception;
-
-    void updateArchiveFile(ArchiveFileBean dto) throws Exception;
+@Entity
+@Table(name = "claimledgers")
+@XmlRootElement
+@NamedQueries({
+    @NamedQuery(name = "ClaimLedger.findAll", query = "SELECT a FROM ClaimLedger a"),
+    @NamedQuery(name = "ClaimLedger.findById", query = "SELECT a FROM ClaimLedger a WHERE a.id = :id"),
+    @NamedQuery(name = "ClaimLedger.findByArchiveFileKey", query = "SELECT a FROM ClaimLedger a WHERE a.archiveFileKey = :archiveFileKey")})
+public class ClaimLedger implements Serializable {
     
-    void updateArchivedFlag(String caseId, boolean archived) throws Exception;
-
-    List<ArchiveFileBean> getLastChanged(String lastChangeUser, boolean userOnly, int limit);
-
-    ArchiveFileBean getArchiveFile(String id) throws Exception;
-
-    Collection<ArchiveFileDocumentsBean> getDocuments(String archiveFileKey);
-
-    boolean archiveFileExists(String id);
-
-    ArchiveFileBean createArchiveFile(ArchiveFileBean dto, String id) throws Exception;
-
-    ArchiveFileDocumentsBean addDocument(String archiveFileId, String fileName, byte[] data, String dictateSign, String externalId) throws Exception;
-
-    int getArchiveFileArchivedCount();
-
-    int getDocumentCount();
-
-    void removeDocument(String id) throws Exception;
-
-    boolean setDocumentContent(String id, byte[] content) throws Exception;
-
-    byte[] getDocumentContent(String id) throws Exception;
+    protected static long serialVersionUID = 1L;
     
-    String getNewDocumentName(String fileName, Date date, DocumentNameTemplate tpl) throws Exception;
+    @Id
+    @Basic(optional = false)
+    @Column(name = "id")
+    protected String id;
+    @Column(name = "name")
+    protected String name;
+    @Column(name = "description")
+    protected String description;
+    @Column(name = "tax_rate", precision = 10, scale = 2)
+    private BigDecimal taxRateAboveBase=BigDecimal.ZERO;
     
-    ArchiveFileDocumentsBean getDocument(String id) throws Exception;
-
-    Collection<ArchiveFileAddressesBean> getArchiveFileAddressesForAddress(String adressId);
-
-    boolean renameDocument(String id, String newName) throws Exception;
-
-    ArchiveFileBean getArchiveFileByFileNumber(String fileNumber) throws Exception;
-
-    ArchiveFileHistoryBean addHistory(String archiveFileId, ArchiveFileHistoryBean history) throws Exception;
-
-    void setTag(String archiveFileId, ArchiveFileTagsBean tag, boolean active) throws Exception;
     
-    void setDocumentTag(String documentId, DocumentTagsBean tag, boolean active) throws Exception;
-
-    Collection<ArchiveFileTagsBean> getTags(String archiveFileId) throws Exception;
+    @JoinColumn(name = "case_id", referencedColumnName = "id")
+    @ManyToOne
+    protected ArchiveFileBean archiveFileKey;
     
-    HashMap<String,ArrayList<ArchiveFileTagsBean>> getTags(List<String> archiveFileId) throws Exception;
+    public ClaimLedger() {
+    }
+
+    public ClaimLedger(String id) {
+        this.id = id;
+    }
+
+    public String getId() {
+        return id;
+    }
+
+    public void setId(String id) {
+        this.id = id;
+    }
+
+    public String getName() {
+        return name;
+    }
+
+    public void setName(String name) {
+        this.name = name;
+    }
+
+    public ArchiveFileBean getArchiveFileKey() {
+        return archiveFileKey;
+    }
+
+    public void setArchiveFileKey(ArchiveFileBean archiveFileKey) {
+        this.archiveFileKey = archiveFileKey;
+    }
+
+    @Override
+    public int hashCode() {
+        int hash = 0;
+        hash += (getId() != null ? getId().hashCode() : 0);
+        return hash;
+    }
+
+    @Override
+    public boolean equals(Object object) {
+        // TODO: Warning - this method won't work in the case the id fields are not set
+        if (!(object instanceof ClaimLedger)) {
+            return false;
+        }
+        ClaimLedger other = (ClaimLedger) object;
+        if ((this.getId() == null && other.getId() != null) || (this.getId() != null && !this.id.equals(other.id))) {
+            return false;
+        }
+        return true;
+    }
+
+    @Override
+    public String toString() {
+        return "com.jdimension.jlawyer.persistence.ClaimLedger[ id=" + getId() + " ]";
+    }
+
+    /**
+     * @return the serialVersionUID
+     */
+    public static long getSerialVersionUID() {
+        return serialVersionUID;
+    }
+
+    /**
+     * @param aSerialVersionUID the serialVersionUID to set
+     */
+    public static void setSerialVersionUID(long aSerialVersionUID) {
+        serialVersionUID = aSerialVersionUID;
+    }
+
+    /**
+     * @return the description
+     */
+    public String getDescription() {
+        return description;
+    }
+
+    /**
+     * @param description the description to set
+     */
+    public void setDescription(String description) {
+        this.description = description;
+    }
+
+    /**
+     * @return the taxRateAboveBase
+     */
+    public BigDecimal getTaxRateAboveBase() {
+        return taxRateAboveBase;
+    }
+
+    /**
+     * @param taxRateAboveBase the taxRateAboveBase to set
+     */
+    public void setTaxRateAboveBase(BigDecimal taxRateAboveBase) {
+        this.taxRateAboveBase = taxRateAboveBase;
+    }
     
-    Collection<DocumentTagsBean> getDocumentTags(String documentId) throws Exception;
-    
-    HashMap<String,ArrayList<DocumentTagsBean>> getDocumentTags(List<String> documentId) throws Exception;
-
-    List<String> searchTagsInUse();
-    
-    List<String> searchDocumentTagsInUse();
-
-    ArchiveFileBean[] searchEnhanced(String query, boolean withArchive, String[] tagName, String[] documentTagName);
-
-    DocumentPreview getDocumentPreview(String id, String previewType) throws Exception;
-
-    Date[] getHistoryInterval(String principalId);
-
-    List<ArchiveFileHistoryBean> getHistoryByDateInterval(Date fromDate, Date toDate, int limit);
-
-    List<ArchiveFileHistoryBean> getHistoryByPrincipalAndDateInterval(String principal, Date fromDate, Date toDate, int limit);
-
-    List<ArchiveFileBean> getLastChanged(int limit);
-
-    String[] previewCaseNumbering(String pattern, int startFrom, int increment, boolean extension, String dividerMain, String dividerExt, boolean bPrefix, String prefix, boolean bSuffix, String suffix, boolean userAbbr, boolean groupAbbr) throws Exception;
-
-    Collection<ArchiveFileBean> getAllWithMissingCalendarEntries();
-    Collection<ArchiveFileBean> getAllWithMissingCalendarEntries(int type) throws Exception;
-
-    byte[] exportCaseToHtml(String caseId) throws Exception;
-    
-    DataBucket loadHtmlCaseExport(String caseId) throws Exception;
-
-    List<ArchiveFileBean> getTagged(String[] tagName, String[] docTagName, int limit);
-
-    boolean setDocumentDate(String id, Date date) throws Exception;
-    
-    boolean setDocumentFavorite(String id, boolean favorite) throws Exception;
-
-    HashMap<String,ArrayList<String>> searchTagsEnhanced(String query, boolean withArchive, String[] tagName, String[] documentTagName);
-
-    ArchiveFileDocumentsBean addDocumentFromTemplate(String archiveFileId, String fileName, String letterHead, GenericNode templateFolder, String templateName, HashMap<String,Object> placeHolderValues, String dictateSign, String externalId) throws Exception;
-
-    List<AddressBean> getAddressesForCase(String archiveFileKey) throws Exception;
-
-    List<ArchiveFileAddressesBean> getInvolvementDetailsForCase(String archiveFileKey);
-    
-    List<ArchiveFileAddressesBean> getInvolvementDetailsForCase(String archiveFileKey, boolean includeCases);
-
-    boolean udpateFileNumber(String from, String to) throws Exception;
-
-    boolean doesDocumentExist(String caseId, String documentName);
-    
-    boolean doesDocumentExist(String id);
-
-    List<ArchiveFileDocumentsBean> getTaggedDocuments(java.lang.String[] docTagName, int limit);
-
-    Hashtable<String, ArrayList<String>> getDocumentTagsForCase(String caseId);
-
-    void renameTag(String fromName, String toName) throws Exception;
-
-    void renameDocumentTag(String fromName, String toName) throws Exception;
-
-    List<ArchiveFileGroupsBean> getAllowedGroups(String caseId) throws Exception;
-
-    void updateAllowedGroups(String caseId, Collection<Group> allowedGroups) throws Exception;
-
-    String getFileNumber(String id);
-
-    List<DocumentFolderTemplate> getAllFolderTemplates();
-
-    void addFolderTemplate(DocumentFolderTemplate template) throws Exception;
-
-    void removeFolderTemplate(String name);
-
-    void updateFolderTemplate(DocumentFolderTemplate template);
-
-    DocumentFolderTemplate getFolderTemplate(String name);
-
-    DocumentFolder addFolderToTemplate(String templateName, DocumentFolder folder) throws Exception;
-
-    void removeFolderFromTemplate(String folderId) throws Exception;
-
-    void cloneFolderTemplate(String sourceTemplateName, String targetTemplateName) throws Exception;
-    
-    DocumentFolder renameFolderInTemplate(String folderId, String newName) throws Exception;
-
-    CaseFolder createCaseFolder(String parentId, String name) throws Exception;
-
-    CaseFolder updateCaseFolder(CaseFolder folder) throws Exception;
-
-    void deleteCaseFolder(String folderId) throws Exception;
-
-    void moveDocumentsToFolder(Collection<String> documentIds, String folderId) throws Exception;
-
-    CaseFolder applyFolderTemplate(String caseId, String templateName) throws Exception;
-
-    CaseFolder applyFolderTemplateById(String id, String templateId) throws Exception;
-
-    DocumentFolderTemplate getFolderTemplateById(String id);
-
-    Collection<ArchiveFileDocumentsBean> getDocumentsBin();
-
-    void removeDocumentFromBin(String docId) throws Exception;
-
-    boolean restoreDocumentFromBin(String docId) throws Exception;
-
-    Collection<Keyword> extractKeywordsFromDocument(String docId) throws Exception;
-
-    Collection<Keyword> extractKeywordsFromText(String text) throws Exception;
-
-    void setCaseFolderSettings(String folderId, CaseFolderSettings folderSettings) throws Exception;
-
-    HashMap<String,CaseFolderSettings> getCaseFolderSettings(List<String> folderIds) throws Exception;
-
-    void enableCaseSync(List<String> caseIds, String principalId, boolean enabled) throws Exception;
-
-    List<CaseSyncSettings> getCaseSyncs(String caseId);
-
-    DataBucket getDocumentContentBucket(String id) throws Exception;
-
-    boolean setDocumentHighlights(String id, int highlight1, int highlight2) throws Exception;
-    
-    List<Invoice> getInvoices(String caseId);
-
-    Invoice addInvoice(String caseId, InvoicePool invoicePool, InvoiceType invoiceType, String currency) throws Exception;
-
-    InvoicePosition addInvoicePosition(String invoiceId, InvoicePosition position) throws Exception;
-
-    List<InvoicePosition> getInvoicePositions(String invoiceId) throws Exception;
-    
-    ArchiveFileDocumentsBean getInvoiceDocument(String invoiceId) throws Exception;
-    
-    List<Invoice> getInvoicesForDocument(String docId) throws Exception;
-
-    InvoicePosition updateInvoicePosition(String invoiceId, InvoicePosition position) throws Exception;
-
-    void removeInvoicePosition(String invoiceId, InvoicePosition position) throws Exception;
-
-    Invoice updateInvoice(String caseId, Invoice invoice) throws Exception;
-    
-    Payment updatePayment(String caseId, Payment payment) throws Exception;
-
-    void removeAllInvoicePositions(String invoiceId) throws Exception;
-
-    Invoice updateInvoiceType(String caseId, Invoice invoice, InvoicePool invoicePool, InvoiceType invoiceType) throws Exception;
-
-    List<Invoice> getInvoicesForAddress(String addressId, boolean turnOverOnly) throws Exception;
-
-    void removeInvoice(String invoiceId) throws Exception;
-
-    void linkInvoiceDocument(String documentId, String invoiceId) throws Exception;
-
-    Invoice copyInvoice(String invoiceId, String toCaseId, InvoicePool invoicePool, boolean asCredit) throws Exception;
-
-    Timesheet addTimesheet(String caseId, Timesheet timesheet) throws Exception;
-
-    Timesheet updateTimesheet(String caseId, Timesheet timesheet) throws Exception;
-
-    void removeTimesheet(String timesheetId) throws Exception;
-
-    List<Timesheet> getTimesheets(String caseId) throws Exception;
-    
-    Timesheet getTimesheet(String timesheetId) throws Exception;
-
-    List<TimesheetPosition> getTimesheetPositions(String timesheetId) throws Exception;
-
-    List<TimesheetPosition> getOpenTimesheetPositions(String principal) throws Exception;
-    List<Timesheet> getOpenTimesheets(String caseId) throws Exception;
-    List<Timesheet> getOpenTimesheets() throws Exception;
-
-    List<TimesheetPosition> getLastTimesheetPositions(String caseId, String principal) throws Exception;
-
-    TimesheetPosition timesheetPositionStart(String timesheetId, TimesheetPosition position) throws Exception;
-
-    TimesheetPosition timesheetPositionStop(String timesheetId, TimesheetPosition position) throws Exception;
-
-    TimesheetPosition timesheetPositionSave(String timesheetId, TimesheetPosition position) throws Exception;
-
-    int hasOpenTimesheetPositions(String principal) throws Exception;
-
-    void removeTimesheetPosition(String timesheetId, TimesheetPosition position) throws Exception;
-
-    void updateTimesheetPositions(String timesheetId, List<TimesheetPosition> positions) throws Exception;
-
-    void removeAllTimesheetPositions(String timesheetId) throws Exception;
-
-    TimesheetPosition updateTimesheetPositionBilling(String timesheetId, TimesheetPosition position, String invoiceId) throws Exception;
-
-    List<TimesheetPosition> getTimesheetPositionsForInvoice(String invoiceId) throws Exception;
-
-    TimesheetPosition timesheetPositionAdd(String timesheetId, TimesheetPosition position) throws Exception;
-    
-    boolean transferTimesheetPositions(List<String> positionIds, String newTimesheetId) throws Exception;
-
-    ArrayList<String> getAllArchiveFileNumbers() throws Exception;
-
-    List<String> getCaseIdsSyncedForUser(String principalId) throws Exception;
-
-    List<CaseAccountEntry> getAccountEntries(String caseId) throws Exception;
-
-    CaseAccountEntry addAccountEntry(String caseId, CaseAccountEntry accountEntry) throws Exception;
-
-    CaseAccountEntry updateAccountEntry(String caseId, CaseAccountEntry accountEntry) throws Exception;
-
-    void removeAccountEntry(String entryId) throws Exception;
-
-    List<CaseAccountEntry> getAccountEntriesForInvoice(String invoiceId) throws Exception;
-
-    void setDocumentLock(String docId, boolean locked, boolean force) throws Exception;
-
-    boolean isDocumentLocked(String docId) throws Exception;
-    
-    int unlockDocuments() throws Exception;
-    
-    ArchiveFileAddressesBean addAddressToCase(ArchiveFileAddressesBean address) throws Exception;
-    
-    void removeParty(String id) throws Exception;
-    
-    ArchiveFileAddressesBean updateParty(String caseId, ArchiveFileAddressesBean party) throws Exception;
-
-    List<Payment> getPayments(String caseId);
-
-    Payment addPayment(String caseId, Payment payment) throws Exception;
-
-    void removePayment(String paymentId) throws Exception;
-
-    Payment copyPayment(String paymentId, String toCaseId) throws Exception;
-    
-    boolean performOcr(String docId) throws Exception;
-
-    List<ClaimLedger> getClaimLedgers(String caseId);
 }

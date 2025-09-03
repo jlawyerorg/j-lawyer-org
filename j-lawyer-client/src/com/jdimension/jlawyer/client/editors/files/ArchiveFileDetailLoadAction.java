@@ -715,6 +715,7 @@ public class ArchiveFileDetailLoadAction extends ProgressableAction {
     private JPanel tagPanel;
     private JPanel documentTagPanel;
     private JPanel invoicesPanel;
+    private JPanel claimLedgersPanel;
     private JPanel paymentsPanel;
     private JPanel pnlMessages;
     private JPanel timesheetsPanel;
@@ -734,7 +735,7 @@ public class ArchiveFileDetailLoadAction extends ProgressableAction {
 
     private final SimpleDateFormat dateTimeFormat = new SimpleDateFormat("dd.MM.yyyy HH:mm", Locale.GERMAN);
 
-    public ArchiveFileDetailLoadAction(ProgressIndicator i, ArchiveFilePanel owner, String archiveFileKey, ArchiveFileBean caseDto, CaseFolderPanel caseFolders, JTable historyTarget, InvolvedPartiesPanel contactsForCasePanel, JTable tblReviews, JPanel tagPanel, JPanel documentTagPanel, JPanel invoicesPanel, JPanel paymentsPanel, JPanel timesheetsPanel, JPanel pnlMessages, boolean readOnly, boolean beaEnabled, String selectDocumentWithFileName, JLabel lblArchivedSince, boolean isArchived, JPopupMenu popDocumentFavorites, JComboBox formTypes, JPanel formsPanel, JTabbedPane tabPaneForms, JComboBox cmbGroups, JTable tblGroups, JToggleButton togCaseSync) {
+    public ArchiveFileDetailLoadAction(ProgressIndicator i, ArchiveFilePanel owner, String archiveFileKey, ArchiveFileBean caseDto, CaseFolderPanel caseFolders, JTable historyTarget, InvolvedPartiesPanel contactsForCasePanel, JTable tblReviews, JPanel tagPanel, JPanel documentTagPanel, JPanel invoicesPanel, JPanel claimLedgersPanel, JPanel paymentsPanel, JPanel timesheetsPanel, JPanel pnlMessages, boolean readOnly, boolean beaEnabled, String selectDocumentWithFileName, JLabel lblArchivedSince, boolean isArchived, JPopupMenu popDocumentFavorites, JComboBox formTypes, JPanel formsPanel, JTabbedPane tabPaneForms, JComboBox cmbGroups, JTable tblGroups, JToggleButton togCaseSync) {
         super(i, false);
 
         this.caseFolders = caseFolders;
@@ -751,6 +752,7 @@ public class ArchiveFileDetailLoadAction extends ProgressableAction {
         this.tabPaneForms = tabPaneForms;
         this.documentTagPanel = documentTagPanel;
         this.invoicesPanel = invoicesPanel;
+        this.claimLedgersPanel=claimLedgersPanel;
         this.paymentsPanel = paymentsPanel;
         this.timesheetsPanel = timesheetsPanel;
         this.pnlMessages = pnlMessages;
@@ -880,6 +882,13 @@ public class ArchiveFileDetailLoadAction extends ProgressableAction {
                 InvoiceEntryPanel ip=new InvoiceEntryPanel(this.owner);
                 ip.setEntry(this.caseDto, inv, addressesForCase);
                 this.invoicesPanel.add(ip);
+            }
+            List<ClaimLedger> ledgers=fileService.getClaimLedgers(archiveFileKey);
+            this.claimLedgersPanel.removeAll();
+            for(ClaimLedger cl: ledgers) {
+                ClaimLedgerEntryPanel clp=new ClaimLedgerEntryPanel(this.owner);
+                clp.setEntry(this.caseDto, cl);
+                this.claimLedgersPanel.add(clp);
             }
             List<Payment> payments=fileService.getPayments(archiveFileKey);
             this.paymentsPanel.removeAll();
