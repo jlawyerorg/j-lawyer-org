@@ -19,6 +19,7 @@ import com.jdimension.jlawyer.client.utils.ComponentUtils;
 import java.awt.BorderLayout;
 import java.awt.Dimension;
 import java.awt.GridLayout;
+import java.awt.Cursor;
 import java.awt.Point;
 import java.text.SimpleDateFormat;
 import java.util.Calendar;
@@ -37,6 +38,8 @@ import de.costache.calendar.ui.DayPanel;
 import de.costache.calendar.ui.HoursPanel;
 import de.costache.calendar.util.CalendarUtil;
 import javax.swing.JSplitPane;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
 
 /**
  *
@@ -97,8 +100,21 @@ class WeekDisplayStrategy implements DisplayStrategy {
         JPanel dayHeaders = new JPanel(new GridLayout(1, 7));
         dayHeaders.setOpaque(false);
         for (int i = 0; i < 7; i++) {
-            days[i] = new DayPanel(parent.getOwner(), c.getTime(), 0.02f);
+            final Date dayDate = c.getTime();
+            days[i] = new DayPanel(parent.getOwner(), dayDate, 0.02f);
             dayHeaders.add(days[i].getHeaderPanel());
+            // Single-click on header switches to day view
+            days[i].getHeaderPanel().setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
+            days[i].getHeaderPanel().addMouseListener(new MouseAdapter() {
+                @Override
+                public void mouseClicked(MouseEvent e) {
+                    if (e.getButton() == MouseEvent.BUTTON1) {
+                        parent.getOwner().setSelectedDay(dayDate);
+                        parent.getOwner().setDisplayStrategy(Type.DAY, dayDate);
+                        e.consume();
+                    }
+                }
+            });
             days[i].getContentPanel().setPreferredSize(new Dimension(30, 1440));
             contentsPanel.add(days[i].getContentPanel());
             allDayPanel.add(days[i].getCompleteDayPanel());

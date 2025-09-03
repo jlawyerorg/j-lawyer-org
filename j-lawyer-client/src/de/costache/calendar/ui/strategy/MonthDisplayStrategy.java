@@ -25,6 +25,8 @@ import java.awt.*;
 import java.text.SimpleDateFormat;
 import java.util.Calendar;
 import java.util.Date;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
 
 /**
  * Month display strategy for the calendar UI.
@@ -66,9 +68,22 @@ class MonthDisplayStrategy implements DisplayStrategy {
         final Calendar c = CalendarUtil.copyCalendar(start, true);
         c.set(Calendar.DAY_OF_WEEK, c.getFirstDayOfWeek());
         for (int i = 0; i < 35; i++) {
-            days[i] = new DayPanel(parent.getOwner(), c.getTime(), 0.1f);
+            final Date dayDate = c.getTime();
+            days[i] = new DayPanel(parent.getOwner(), dayDate, 0.1f);
             days[i].setEnabled(CalendarUtil.isSameMonth(start, c));
             displayPanel.add(days[i].layout());
+            // In month view: single-click on the day header switches to day view
+            days[i].getHeaderPanel().setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
+            days[i].getHeaderPanel().addMouseListener(new MouseAdapter() {
+                @Override
+                public void mouseClicked(MouseEvent e) {
+                    if (e.getButton() == MouseEvent.BUTTON1) {
+                        parent.getOwner().setSelectedDay(dayDate);
+                        parent.getOwner().setDisplayStrategy(DisplayStrategy.Type.DAY, dayDate);
+                        e.consume();
+                    }
+                }
+            });
             c.add(Calendar.DATE, 1);
         }
     }

@@ -51,6 +51,10 @@ public class ContentPanel extends JPanel {
         addMouseWheelListener(new MouseWheelListener() {
             @Override
             public void mouseWheelMoved(MouseWheelEvent e) {
+                // Allow child panels to consume wheel events (e.g., month day cell overflow scrolling)
+                if (e.isConsumed()) {
+                    return;
+                }
                 if (strategy.getType() == Type.MONTH) {
                     if (e.getWheelRotation() < 0) {
                         strategy.moveIntervalLeft();
