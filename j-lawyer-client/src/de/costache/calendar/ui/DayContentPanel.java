@@ -45,6 +45,10 @@ public class DayContentPanel extends JPanel {
     private Point endSelection;
     private Date startDate;
     private Date endDate;
+    private int monthScrollOffset = 0;
+    private boolean hoverMonthCell = false;
+    private boolean overAddButton = false;
+    private static final int ADD_BTN_SIZE = 18;
 
     /**
      * Creates a new instance of {@link DayContentPanel}
@@ -83,6 +87,22 @@ public class DayContentPanel extends JPanel {
 
             @Override
             public void mouseReleased(final MouseEvent e) {
+                final boolean isSelectedStrategyMonthRelease = calendar.getDisplayStrategy() == Type.MONTH;
+                if (isSelectedStrategyMonthRelease && overAddButton) {
+                    // Create a new event at working hours start, duration 30 mins
+                    Calendar cs = CalendarUtil.getCalendar(owner.getDate(), false);
+                    int whStart = owner.getOwner().getConfig().getWorkingHoursStart();
+                    cs.set(Calendar.HOUR_OF_DAY, whStart);
+                    cs.set(Calendar.MINUTE, 0);
+                    cs.set(Calendar.SECOND, 0);
+                    cs.set(Calendar.MILLISECOND, 0);
+                    Date s = cs.getTime();
+                    Calendar ce = CalendarUtil.getCalendar(s, false);
+                    ce.add(Calendar.MINUTE, 30);
+                    Date en = ce.getTime();
+                    EventRepository.get().triggerIntervalSelection(calendar, s, en);
+                    return;
+                }
                 if (e.isPopupTrigger() && calendar.getPopupMenu() != null) {
                     calendar.getPopupMenu().show(DayContentPanel.this,
                             e.getX(), e.getY());
@@ -152,10 +172,22 @@ public class DayContentPanel extends JPanel {
             public void mouseExited(MouseEvent e) {
                 startSelection = null;
                 endSelection = null;
+                hoverMonthCell = false;
+                overAddButton = false;
+                setCursor(Cursor.getDefaultCursor());
                 calendar.validate();
                 calendar.repaint();
             }
 
+            @Override
+            public void mouseEntered(MouseEvent e) {
+                final JCalendar calendar = DayContentPanel.this.owner.getOwner();
+                if (calendar.getDisplayStrategy() == Type.MONTH) {
+                    hoverMonthCell = true;
+                    calendar.validate();
+                    calendar.repaint();
+                }
+            }
         });
 
         addMouseMotionListener(new MouseAdapter() {
@@ -167,6 +199,16 @@ public class DayContentPanel extends JPanel {
             public void mouseMoved(MouseEvent e) {
                 final boolean isSelectedStrategyMonth = calendar
                         .getDisplayStrategy() == Type.MONTH;
+
+                // Update add-button hover state for month view
+                if (isSelectedStrategyMonth) {
+                    hoverMonthCell = true;
+                    Rectangle ab = getAddButtonBounds();
+                    overAddButton = ab.contains(e.getPoint());
+                    setCursor(overAddButton ? Cursor.getPredefinedCursor(Cursor.HAND_CURSOR) : Cursor.getDefaultCursor());
+                    // No tooltip for add button to keep UI minimal
+                }
+
                 final CalendarEvent event = isSelectedStrategyMonth ? getEventForMonth(
                         e.getX(), e.getY()) : getNotMonthEvent(e.getX(),
                         e.getY());
@@ -255,6 +297,45 @@ public class DayContentPanel extends JPanel {
                     }
                 }
 
+            }
+        });
+
+        // Wheel scroll within a month day cell when content overflows
+        addMouseWheelListener(new java.awt.event.MouseWheelListener() {
+            @Override
+            public void mouseWheelMoved(java.awt.event.MouseWheelEvent e) {
+                final JCalendar calendar = DayContentPanel.this.owner.getOwner();
+                if (calendar.getDisplayStrategy() != Type.MONTH) {
+                    return;
+                }
+
+                // Determine total content height for this day in month view
+                final EventCollection eventsCollection = EventCollectionRepository.get(calendar);
+                final Collection<CalendarEvent> events = eventsCollection.getEvents(owner.getDate());
+                int rowHeight = 17; // step used in month drawing
+                int marginTop = 2;
+                int totalRows = 0;
+                for (final CalendarEvent event : CalendarUtil.sortEvents(new ArrayList<>(events))) {
+                    if (event.isHoliday()) continue;
+                    totalRows++;
+                }
+                int totalHeight = marginTop + totalRows * rowHeight;
+                int viewport = getHeight();
+                int maxOffset = Math.max(0, totalHeight - viewport);
+                if (maxOffset <= 0) {
+                    // No overflow, let parent handle (month navigation)
+                    return;
+                }
+
+                // Consume and apply local scrolling only when there is overflow
+                int direction = e.getWheelRotation(); // 1 = down, -1 = up
+                int step = rowHeight * 2; // scroll 2 rows per notch for speed
+                if (e.isShiftDown()) step = rowHeight * 4; // accelerate
+                if (e.isControlDown()) step = rowHeight; // precise
+                monthScrollOffset = Math.max(0, Math.min(maxOffset, monthScrollOffset + direction * step));
+                e.consume();
+                calendar.validate();
+                calendar.repaint();
             }
         });
     }
@@ -480,46 +561,128 @@ public class DayContentPanel extends JPanel {
 
         final EventCollection eventsCollection = EventCollectionRepository
                 .get(owner.getOwner());
-        final Collection<CalendarEvent> events = eventsCollection
-                .getEvents(owner.getDate());
-        int pos = 2;
-        if (events.size() > 0) {
+        final Collection<CalendarEvent> events = eventsCollection.getEvents(owner.getDate());
+        // Collect non-holiday events in month view order
+        java.util.List<CalendarEvent> monthEvents = new ArrayList<>();
+        for (final CalendarEvent event : CalendarUtil.sortEvents(new ArrayList<>(events))) {
+            if (!event.isHoliday()) monthEvents.add(event);
+        }
+
+        int rowHeight = 17;
+        int marginTop = 2;
+        int totalHeight = marginTop + monthEvents.size() * rowHeight;
+        int viewport = getHeight();
+        int maxOffset = Math.max(0, totalHeight - viewport);
+        if (monthScrollOffset > maxOffset) monthScrollOffset = maxOffset;
+        if (monthScrollOffset < 0) monthScrollOffset = 0;
+
+        int pos = marginTop - monthScrollOffset;
+        if (!monthEvents.isEmpty()) {
             final Config config = owner.getOwner().getConfig();
-            for (final CalendarEvent event : CalendarUtil.sortEvents(new ArrayList<>(events))) {
-                if (event.isHoliday())
-                    continue;
-                Color bgColor = event.getType().getBackgroundColor();
-                bgColor = bgColor == null ? config
-                        .getEventDefaultBackgroundColor() : bgColor;
-                Color fgColor = event.getType().getForegroundColor();
-                fgColor = fgColor == null ? config
-                        .getEventDefaultForegroundColor() : fgColor;
-                graphics2d.setColor(!event.isSelected() ? bgColor : bgColor
-                        .darker().darker());
-                graphics2d.fillRect(2, pos, getWidth() - 4, 15);
+            for (final CalendarEvent event : monthEvents) {
+                // Compute row Y with current offset
+                int y = pos;
+                int h = 15;
+                // Only paint if visible (simple intersection check)
+                if (y < viewport && (y + h) > 0) {
+                    Color bgColor = event.getType().getBackgroundColor();
+                    bgColor = bgColor == null ? config.getEventDefaultBackgroundColor() : bgColor;
+                    Color fgColor = event.getType().getForegroundColor();
+                    fgColor = fgColor == null ? config.getEventDefaultForegroundColor() : fgColor;
 
-                String eventString;
-                if (event.isAllDay()) {
-                    eventString = event.getSummary();
-                } else {
-                    eventString = sdf.format(event.getStart()) + " "
-                            + sdf.format(event.getEnd()) + " " + event.getSummary();
+                    graphics2d.setColor(!event.isSelected() ? bgColor : bgColor.darker().darker());
+                    graphics2d.fillRect(2, y, getWidth() - 4, h);
+
+                    String eventString = event.isAllDay() ? event.getSummary()
+                            : sdf.format(event.getStart()) + " " + sdf.format(event.getEnd()) + " " + event.getSummary();
+                    int fontSize = Math.round(getHeight() * 0.5f);
+                    fontSize = fontSize > 9 ? 9 : fontSize;
+
+                    final Font font = new Font("Verdana", Font.BOLD, fontSize);
+                    final FontMetrics metrics = graphics2d.getFontMetrics(font);
+                    graphics2d.setFont(font);
+
+                    graphics2d.setColor(!event.isSelected() ? fgColor : Color.white);
+                    GraphicsUtil.drawTrimmedString(graphics2d, eventString, 6, y + (13 / 2 + metrics.getHeight() / 2) - 2, getWidth());
                 }
-                int fontSize = Math.round(getHeight() * 0.5f);
-                fontSize = fontSize > 9 ? 9 : fontSize;
-
-                final Font font = new Font("Verdana", Font.BOLD, fontSize);
-                final FontMetrics metrics = graphics2d.getFontMetrics(font);
-                graphics2d.setFont(font);
-
-                graphics2d
-                        .setColor(!event.isSelected() ? fgColor : Color.white);
-                GraphicsUtil.drawTrimmedString(graphics2d, eventString, 6, pos
-                        + (13 / 2 + metrics.getHeight() / 2) - 2, getWidth());
-
-                pos += 17;
+                pos += rowHeight;
             }
         }
+
+        // Visual hint overlays if there is more content
+        if (maxOffset > 0) {
+            Graphics2D g2 = (Graphics2D) graphics2d.create();
+            // smoother gradients using LinearGradientPaint
+            int fadeH = Math.min(18, viewport / 3);
+            // top fade
+            if (monthScrollOffset > 0) {
+                java.awt.geom.Point2D p1 = new java.awt.geom.Point2D.Float(0, 0);
+                java.awt.geom.Point2D p2 = new java.awt.geom.Point2D.Float(0, fadeH);
+                float[] dist = {0f, 1f};
+                Color[] cols = {new Color(255, 255, 255, 220), new Color(255, 255, 255, 0)};
+                java.awt.LinearGradientPaint gp = new java.awt.LinearGradientPaint(p1, p2, dist, cols);
+                g2.setPaint(gp);
+                g2.fillRect(0, 0, getWidth(), fadeH);
+            }
+            // bottom fade
+            if (monthScrollOffset < maxOffset) {
+                int y0 = viewport - fadeH;
+                java.awt.geom.Point2D p1b = new java.awt.geom.Point2D.Float(0, y0);
+                java.awt.geom.Point2D p2b = new java.awt.geom.Point2D.Float(0, viewport);
+                float[] distb = {0f, 1f};
+                Color[] colsb = {new Color(255, 255, 255, 0), new Color(255, 255, 255, 220)};
+                java.awt.LinearGradientPaint gp2 = new java.awt.LinearGradientPaint(p1b, p2b, distb, colsb);
+                g2.setPaint(gp2);
+                g2.fillRect(0, y0, getWidth(), fadeH);
+            }
+            g2.dispose();
+
+            // Draw "+N" indicator bottom-right for offscreen events
+            int hiddenTop = monthScrollOffset / rowHeight;
+            int hiddenBottomPx = totalHeight - (monthScrollOffset + viewport);
+            int hiddenBottom = hiddenBottomPx > 0 ? (int) Math.ceil(hiddenBottomPx / (double) rowHeight) : 0;
+            int hiddenTotal = hiddenTop + hiddenBottom;
+            if (hiddenTotal > 0) {
+                String more = "+" + hiddenTotal;
+                Font f = graphics2d.getFont().deriveFont(Font.PLAIN, 9f);
+                FontMetrics fm = graphics2d.getFontMetrics(f);
+                int tw = fm.stringWidth(more);
+                int th = fm.getHeight();
+                int pad = 3;
+                int boxW = tw + pad * 2;
+                int boxH = th;
+                int x = getWidth() - boxW - 2;
+                int y = viewport - boxH - 2;
+                graphics2d.setColor(new Color(0, 0, 0, 90));
+                graphics2d.fillRoundRect(x, y, boxW, boxH, 8, 8);
+                graphics2d.setColor(Color.white);
+                graphics2d.setFont(f);
+                graphics2d.drawString(more, x + pad, y + th - fm.getDescent());
+            }
+        }
+
+        // Add-button overlay (hover only) in top-right corner
+        final JCalendar calendar = DayContentPanel.this.owner.getOwner();
+        if (calendar.getDisplayStrategy() == Type.MONTH && hoverMonthCell) {
+            Rectangle ab = getAddButtonBounds();
+            Graphics2D g2 = (Graphics2D) graphics2d.create();
+            g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+            g2.setColor(new Color(0, 0, 0, overAddButton ? 160 : 120));
+            g2.fillRoundRect(ab.x, ab.y, ab.width, ab.height, 10, 10);
+            g2.setColor(new Color(255, 255, 255, 230));
+            int cx = ab.x + ab.width / 2;
+            int cy = ab.y + ab.height / 2;
+            int arm = Math.max(5, ab.width / 3);
+            g2.setStroke(new BasicStroke(2f));
+            g2.drawLine(cx - arm, cy, cx + arm, cy);
+            g2.drawLine(cx, cy - arm, cx, cy + arm);
+            g2.dispose();
+        }
+    }
+
+    // Resets the month scroll offset; invoked by parent when date changes
+    public void resetMonthScroll() {
+        this.monthScrollOffset = 0;
     }
 
     private CalendarEvent getEventForMonth(final int x, final int y) {
@@ -537,7 +700,7 @@ public class DayContentPanel extends JPanel {
                     continue;
 
                 final int rectXStart = 2;
-                final int rectYStart = pos;
+                final int rectYStart = pos - monthScrollOffset;
 
                 final int rectWidth = getWidth() - 4;
 
@@ -554,6 +717,15 @@ public class DayContentPanel extends JPanel {
             }
         }
         return null;
+    }
+
+    private Rectangle getAddButtonBounds() {
+        int pad = 3;
+        int w = Math.min(ADD_BTN_SIZE, Math.max(14, getWidth() / 8));
+        int h = w;
+        int x = getWidth() - w - pad;
+        int y = pad;
+        return new Rectangle(x, y, w, h);
     }
 
 }
