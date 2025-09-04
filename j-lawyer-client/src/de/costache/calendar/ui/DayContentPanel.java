@@ -49,6 +49,14 @@ public class DayContentPanel extends JPanel {
     private boolean hoverMonthCell = false;
     private boolean overAddButton = false;
     private static final int ADD_BTN_SIZE = 18;
+    // Tooltip timing control during drag
+    private boolean dragging = false;
+    private int origInitialDelay = -1;
+    private int origReshowDelay = -1;
+    private int origDismissDelay = -1;
+    // Custom popup tooltip during drag
+    private Popup dragPopup = null;
+    private JLabel dragTipLabel = null;
 
     /**
      * Creates a new instance of {@link DayContentPanel}
@@ -100,6 +108,18 @@ public class DayContentPanel extends JPanel {
                     Calendar ce = CalendarUtil.getCalendar(s, false);
                     ce.add(Calendar.MINUTE, 30);
                     Date en = ce.getTime();
+                    // Ensure any drag tooltip is removed immediately BEFORE the dialog opens
+                    hideDragTip();
+                    setToolTipText(null);
+                    startSelection = null;
+                    endSelection = null;
+                    if (dragging) {
+                        javax.swing.ToolTipManager ttm = javax.swing.ToolTipManager.sharedInstance();
+                        if (origInitialDelay >= 0) ttm.setInitialDelay(origInitialDelay);
+                        if (origReshowDelay >= 0) ttm.setReshowDelay(origReshowDelay);
+                        if (origDismissDelay >= 0) ttm.setDismissDelay(origDismissDelay);
+                        dragging = false;
+                    }
                     EventRepository.get().triggerIntervalSelection(calendar, s, en);
                     return;
                 }
@@ -115,11 +135,28 @@ public class DayContentPanel extends JPanel {
                     
                     if(event==null) {
                     
-                    if (startDate != null && endDate != null)
-                        EventRepository.get().triggerIntervalSelection(calendar,
-                                startDate, endDate);
+                    if (startDate != null && endDate != null) {
+                        // Hide tooltip BEFORE opening the dialog
+                        hideDragTip();
+                        setToolTipText(null);
+                        EventRepository.get().triggerIntervalSelection(calendar, startDate, endDate);
+                    }
                     
                     }
+                }
+                // Clear tooltip after finishing drag/selection
+                setToolTipText(null);
+                hideDragTip();
+                // Clear selection rectangle after release
+                startSelection = null;
+                endSelection = null;
+                // Restore tooltip timings if we were dragging
+                if (dragging) {
+                    javax.swing.ToolTipManager ttm = javax.swing.ToolTipManager.sharedInstance();
+                    if (origInitialDelay >= 0) ttm.setInitialDelay(origInitialDelay);
+                    if (origReshowDelay >= 0) ttm.setReshowDelay(origReshowDelay);
+                    if (origDismissDelay >= 0) ttm.setDismissDelay(origDismissDelay);
+                    dragging = false;
                 }
 //                for (final MouseListener ml : DayContentPanel.this.owner
 //                        .getOwner().getMouseListeners()) {
@@ -165,16 +202,53 @@ public class DayContentPanel extends JPanel {
 //                        .getOwner().getMouseListeners()) {
 //                    ml.mousePressed(e);
 //                }
+                    // Begin drag selection on empty space in DAY/WEEK
+                    if (!isSelectedStrategyMonth && event == null && SwingUtilities.isLeftMouseButton(e)) {
+                        // Initialize selection from press position
+                        startDate = CalendarUtil.pixelToDate(owner.getDate(), e.getY(), getHeight());
+                        startDate = CalendarUtil.roundDateToHalfAnHour(startDate, false);
+                        endDate = CalendarUtil.roundDateToHalfAnHour(startDate, true);
+                        startSelection = new Point(e.getX(), CalendarUtil.secondsToPixels(startDate, getHeight()));
+                        endSelection = new Point(e.getX(), CalendarUtil.secondsToPixels(endDate, getHeight()));
+                        // Prepare immediate tooltip behavior during drag
+                        javax.swing.ToolTipManager ttm = javax.swing.ToolTipManager.sharedInstance();
+                        if (!dragging) {
+                            origInitialDelay = ttm.getInitialDelay();
+                            origReshowDelay = ttm.getReshowDelay();
+                            origDismissDelay = ttm.getDismissDelay();
+                            ttm.setInitialDelay(0);
+                            ttm.setReshowDelay(0);
+                            ttm.setDismissDelay(Math.max(15000, origDismissDelay));
+                        }
+                        dragging = true;
+                        String tipText = sdf.format(startDate) + " - " + sdf.format(endDate) + " Uhr";
+                        setToolTipText(tipText);
+                        showDragTip(e, tipText);
+                        calendar.validate();
+                        calendar.repaint();
+                    }
                 }
             }
 
             @Override
             public void mouseExited(MouseEvent e) {
-                startSelection = null;
-                endSelection = null;
+                // Do not clear active drag selection when the pointer briefly exits due to overlays
+                if (!dragging) {
+                    startSelection = null;
+                    endSelection = null;
+                }
                 hoverMonthCell = false;
                 overAddButton = false;
                 setCursor(Cursor.getDefaultCursor());
+                hideDragTip();
+                // Also restore tooltip timings if we leave while dragging
+                if (dragging) {
+                    javax.swing.ToolTipManager ttm = javax.swing.ToolTipManager.sharedInstance();
+                    if (origInitialDelay >= 0) ttm.setInitialDelay(origInitialDelay);
+                    if (origReshowDelay >= 0) ttm.setReshowDelay(origReshowDelay);
+                    if (origDismissDelay >= 0) ttm.setDismissDelay(origDismissDelay);
+                    dragging = false;
+                }
                 calendar.validate();
                 calendar.repaint();
             }
@@ -197,6 +271,8 @@ public class DayContentPanel extends JPanel {
 
             @Override
             public void mouseMoved(MouseEvent e) {
+                // While actively dragging a selection, do not modify hover state
+                if (dragging) return;
                 final boolean isSelectedStrategyMonth = calendar
                         .getDisplayStrategy() == Type.MONTH;
 
@@ -266,6 +342,27 @@ public class DayContentPanel extends JPanel {
                     endDate = CalendarUtil.roundDateToHalfAnHour(endDate, true);
 
                     checkEndSelectionAndRepaintCalendar(e, startDate, endDate);
+
+                    // Update tooltip live while dragging with current span
+                    try {
+                        // Ensure tooltip shows immediately during drag
+                        if (!dragging) {
+                            javax.swing.ToolTipManager ttm = javax.swing.ToolTipManager.sharedInstance();
+                            origInitialDelay = ttm.getInitialDelay();
+                            origReshowDelay = ttm.getReshowDelay();
+                            origDismissDelay = ttm.getDismissDelay();
+                            ttm.setInitialDelay(0);
+                            ttm.setReshowDelay(0);
+                            // keep dismiss delay generous so it stays visible while moving
+                            ttm.setDismissDelay(Math.max(15000, origDismissDelay));
+                            dragging = true;
+                        }
+                        String tipText = sdf.format(startDate) + " - " + sdf.format(endDate) + " Uhr";
+                        setToolTipText(tipText);
+                        showDragTip(e, tipText);
+                    } catch (Exception ignore) {
+                        // best effort; tooltip is non-critical
+                    }
                 }
             }
         });
@@ -278,6 +375,8 @@ public class DayContentPanel extends JPanel {
 
             @Override
             public void mouseMoved(final MouseEvent e) {
+                // Suppress separate hover tooltip updates during active drag
+                if (dragging) return;
                 super.mouseMoved(e);
 
                 final boolean isSelectedStrategyMonth = calendar
@@ -736,6 +835,49 @@ public class DayContentPanel extends JPanel {
         int x = getWidth() - w - pad;
         int y = pad;
         return new Rectangle(x, y, w, h);
+    }
+
+    // Show a lightweight popup near the cursor with the current timespan
+    private void showDragTip(java.awt.event.MouseEvent e, String text) {
+        try {
+            if (dragTipLabel == null) {
+                dragTipLabel = new JLabel(text);
+                dragTipLabel.setOpaque(true);
+                Color bg = UIManager.getColor("ToolTip.background");
+                Color fg = UIManager.getColor("ToolTip.foreground");
+                if (bg == null) bg = new Color(255, 255, 220);
+                if (fg == null) fg = Color.black;
+                dragTipLabel.setBackground(bg);
+                dragTipLabel.setForeground(fg);
+                dragTipLabel.setBorder(BorderFactory.createCompoundBorder(
+                        BorderFactory.createLineBorder(new Color(120, 120, 120)),
+                        BorderFactory.createEmptyBorder(3, 6, 3, 6)
+                ));
+            } else {
+                dragTipLabel.setText(text);
+            }
+
+            if (dragPopup != null) {
+                dragPopup.hide();
+                dragPopup = null;
+            }
+            java.awt.Point screen = new java.awt.Point(e.getX() + 12, e.getY() + 12);
+            javax.swing.SwingUtilities.convertPointToScreen(screen, this);
+            dragPopup = javax.swing.PopupFactory.getSharedInstance().getPopup(this, dragTipLabel, screen.x, screen.y);
+            dragPopup.show();
+        } catch (Exception ignore) {
+            // non-fatal
+        }
+    }
+
+    private void hideDragTip() {
+        try {
+            if (dragPopup != null) {
+                dragPopup.hide();
+                dragPopup = null;
+            }
+        } catch (Exception ignore) {
+        }
     }
 
 }
