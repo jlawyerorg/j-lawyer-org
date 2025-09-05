@@ -906,17 +906,17 @@ public class TaggedTimerTask extends java.util.TimerTask {
             ArchiveFileServiceRemote fileService = locator.lookupArchiveFileServiceRemote();
 
             myNewList = fileService.getTagged(lastFilterTags, null, 1000);
-            
-            if (stopped) return;
-            UserSettings.getInstance().migrateFrom(settings, UserSettings.CONF_DESKTOP_ONLYMYTAGGED);
-            String temp = UserSettings.getInstance().getSetting(UserSettings.CONF_DESKTOP_ONLYMYTAGGED, "false");
-            if ("true".equalsIgnoreCase(temp)) {
-                String principalId = UserSettings.getInstance().getCurrentUser().getPrincipalId();
-                for (ArchiveFileBean x : myNewList) {
-                    boolean caseWithoutResponsibles=StringUtils.isEmpty(x.getLawyer()) && StringUtils.isEmpty(x.getAssistant());
-                    if (principalId.equalsIgnoreCase(x.getLawyer()) || principalId.equalsIgnoreCase(x.getAssistant()) || caseWithoutResponsibles) {
-                        filteredList.add(x);
 
+            if (stopped) return;
+            // Filter by selected users (shared with due panel); default to current user if none stored
+            String[] selectedUsers = UserSettings.getInstance().getSettingArray(UserSettings.CONF_DESKTOP_LASTFILTERUSERS_TAGGED, new String[]{});
+            if (selectedUsers.length > 0) {
+                java.util.Set<String> selected = new java.util.HashSet<>(java.util.Arrays.asList(selectedUsers));
+                filteredList.clear();
+                for (ArchiveFileBean x : myNewList) {
+                    boolean caseWithoutResponsibles = StringUtils.isEmpty(x.getLawyer()) && StringUtils.isEmpty(x.getAssistant());
+                    if (caseWithoutResponsibles || selected.contains(x.getLawyer()) || selected.contains(x.getAssistant())) {
+                        filteredList.add(x);
                     }
                 }
                 myNewList = filteredList;
@@ -931,13 +931,13 @@ public class TaggedTimerTask extends java.util.TimerTask {
 
             if (stopped) return;
             myNewDocumentList = fileService.getTaggedDocuments(lastFilterDocumentTags, 1000);
-            if ("true".equalsIgnoreCase(temp)) {
-                String principalId = UserSettings.getInstance().getCurrentUser().getPrincipalId();
+            if (selectedUsers.length > 0) {
+                java.util.Set<String> selected = new java.util.HashSet<>(java.util.Arrays.asList(selectedUsers));
+                filteredDocumentList.clear();
                 for (ArchiveFileDocumentsBean x : myNewDocumentList) {
-                    boolean caseWithoutResponsibles=StringUtils.isEmpty(x.getArchiveFileKey().getLawyer()) && StringUtils.isEmpty(x.getArchiveFileKey().getAssistant());
-                    if (principalId.equalsIgnoreCase(x.getArchiveFileKey().getLawyer()) || principalId.equalsIgnoreCase(x.getArchiveFileKey().getAssistant()) || caseWithoutResponsibles) {
+                    boolean caseWithoutResponsibles = StringUtils.isEmpty(x.getArchiveFileKey().getLawyer()) && StringUtils.isEmpty(x.getArchiveFileKey().getAssistant());
+                    if (caseWithoutResponsibles || selected.contains(x.getArchiveFileKey().getLawyer()) || selected.contains(x.getArchiveFileKey().getAssistant())) {
                         filteredDocumentList.add(x);
-
                     }
                 }
                 myNewDocumentList = filteredDocumentList;
