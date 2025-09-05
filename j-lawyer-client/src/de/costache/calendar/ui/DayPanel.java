@@ -117,6 +117,8 @@ public class DayPanel {
 	public void setDate(final Date date) {
 		this.date = date;
 		headerPanel.setHeaderText(sdf.format(date));
+		// Reset month scroll in content when day changes
+		this.contentPanel.resetMonthScroll();
 	}
 
 	public void setEnabled(final boolean enabled) {

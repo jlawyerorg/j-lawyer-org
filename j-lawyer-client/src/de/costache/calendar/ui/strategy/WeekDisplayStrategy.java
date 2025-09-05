@@ -18,9 +18,10 @@ package de.costache.calendar.ui.strategy;
 import com.jdimension.jlawyer.client.utils.ComponentUtils;
 import java.awt.BorderLayout;
 import java.awt.Dimension;
-import java.awt.GridBagConstraints;
-import java.awt.GridBagLayout;
 import java.awt.GridLayout;
+import java.awt.GridBagLayout;
+import java.awt.GridBagConstraints;
+import java.awt.Cursor;
 import java.awt.Point;
 import java.text.SimpleDateFormat;
 import java.util.Calendar;
@@ -31,6 +32,7 @@ import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.ScrollPaneConstants;
 import javax.swing.border.EmptyBorder;
+ 
 
 import de.costache.calendar.JCalendar;
 import de.costache.calendar.ui.ContentPanel;
@@ -38,6 +40,10 @@ import de.costache.calendar.ui.DayPanel;
 import de.costache.calendar.ui.HoursPanel;
 import de.costache.calendar.util.CalendarUtil;
 import javax.swing.JSplitPane;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
+import java.awt.event.MouseWheelEvent;
+import java.awt.event.MouseWheelListener;
 
 /**
  *
@@ -73,13 +79,14 @@ class WeekDisplayStrategy implements DisplayStrategy {
         calendar.getConfig().setIntervalEnd(end);
 
         JPanel headersPanel = new JPanel(true);
-        headersPanel.setLayout(new GridLayout());
+        headersPanel.setLayout(new BorderLayout());
         headersPanel.setOpaque(false);
         headersPanel.setPreferredSize(new Dimension(1440, 60));
 
+        // Viewport panel: contains only the 7 day content columns (no hours column)
+        // Use GridBagLayout so preferred heights of day panels (e.g., 1440) are honored for scrolling
         JPanel contentsPanel = new JPanel(true);
         contentsPanel.setLayout(new GridBagLayout());
-        GridBagConstraints gbc = new GridBagConstraints();
         contentsPanel.setOpaque(false);
 
         JPanel allDayPanel = new JPanel(true);
@@ -90,36 +97,79 @@ class WeekDisplayStrategy implements DisplayStrategy {
         displayPanel.setOpaque(false);
         displayPanel.setLayout(new BorderLayout());
 
-        gbc.gridy = 0;
-        gbc.weighty = 1;
-        gbc.weightx = 0;
-        gbc.fill = GridBagConstraints.BOTH;
-        contentsPanel.add(new HoursPanel(parent.getOwner()), gbc);
+        // Use a single HoursPanel instance as the row header of the scroll pane
+        HoursPanel hoursPanel = new HoursPanel(parent.getOwner());
 
         final Calendar c = CalendarUtil.copyCalendar(start, true);
+        // Create containers for day headers (top) and day contents (center)
+        JPanel dayHeaders = new JPanel(new GridLayout(1, 7));
+        dayHeaders.setOpaque(false);
+        GridBagConstraints gbc = new GridBagConstraints();
+        gbc.gridy = 0;
+        gbc.fill = GridBagConstraints.BOTH;
         for (int i = 0; i < 7; i++) {
-            days[i] = new DayPanel(parent.getOwner(), c.getTime(), 0.02f);
-            headersPanel.add(days[i].getHeaderPanel());
+            final Date dayDate = c.getTime();
+            days[i] = new DayPanel(parent.getOwner(), dayDate, 0.02f);
+            dayHeaders.add(days[i].getHeaderPanel());
+            // Single-click on header switches to day view
+            days[i].getHeaderPanel().setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
+            days[i].getHeaderPanel().addMouseListener(new MouseAdapter() {
+                @Override
+                public void mouseClicked(MouseEvent e) {
+                    if (e.getButton() == MouseEvent.BUTTON1) {
+                        parent.getOwner().setSelectedDay(dayDate);
+                        parent.getOwner().setDisplayStrategy(Type.DAY, dayDate);
+                        e.consume();
+                    }
+                }
+            });
             days[i].getContentPanel().setPreferredSize(new Dimension(30, 1440));
-
-            gbc.gridx = i + 1;
-            gbc.gridy = 0;
-            gbc.weighty = 1;
+            gbc.gridx = i;
             gbc.weightx = 1;
+            gbc.weighty = 1;
             contentsPanel.add(days[i].getContentPanel(), gbc);
             allDayPanel.add(days[i].getCompleteDayPanel());
             c.add(Calendar.DATE, 1);
         }
 
-        displayPanel.add(headersPanel, BorderLayout.NORTH);
+        // Header now only holds the 7 day headers (no spacer needed)
+        headersPanel.add(dayHeaders, BorderLayout.CENTER);
+
+        // Scroll on header switches weeks (left/right). Content area keeps vertical scroll.
+        headersPanel.addMouseWheelListener(new MouseWheelListener() {
+            @Override
+            public void mouseWheelMoved(MouseWheelEvent e) {
+                if (getType() != Type.WEEK) return;
+                if (e.getWheelRotation() < 0) {
+                    moveIntervalLeft();
+                } else {
+                    moveIntervalRight();
+                }
+                parent.getOwner().getHeaderPanel().getIntervalLabel().setText(getDisplayInterval());
+                e.consume();
+            }
+        });
+
+        // Ensure vertical scroll range by setting a preferred height for the week grid
+        contentsPanel.setPreferredSize(new Dimension(0, 1440));
 
         JScrollPane content = new JScrollPane(contentsPanel);
+        content.setWheelScrollingEnabled(true);
         content.setOpaque(false);
         content.getViewport().setOpaque(false);
         content.setBorder(new EmptyBorder(0, 0, 0, 0));
         content.setVerticalScrollBarPolicy(ScrollPaneConstants.VERTICAL_SCROLLBAR_ALWAYS);
         content.getViewport().setViewPosition(new Point(0, 500));
         content.getVerticalScrollBar().setUnitIncrement(16);
+
+        // Do not intercept mouse wheel here: allow vertical scrolling in the viewport.
+        // Week navigation via wheel remains handled by ContentPanel when events are not consumed
+        // (e.g., when hovering non-scrollable areas like the header).
+
+        // Put headers as column header view so it shares viewport width (accounts for scrollbar)
+        content.setColumnHeaderView(headersPanel);
+        // Put hours panel as row header so it's outside the viewport width
+        content.setRowHeaderView(hoursPanel);
 
         displayPanel.add(content, BorderLayout.CENTER);
 
@@ -148,6 +198,8 @@ class WeekDisplayStrategy implements DisplayStrategy {
         parent.repaint();
 
     }
+
+    
 
     @Override
     public void moveIntervalLeft() {
