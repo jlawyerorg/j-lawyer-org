@@ -692,7 +692,15 @@ public class CalculationPluginDialog extends javax.swing.JDialog {
     public CalculationPluginDialog(java.awt.Frame parent, boolean modal, JPanel pluginUi) {
         this(parent, modal);
         this.scrollMain.setViewportView(pluginUi);
-        
+        // pack after injecting content so width follows content's preferred size
+        this.pack();
+        // widen slightly to compensate for vertical scrollbar width
+        try {
+            int extra = this.scrollMain.getVerticalScrollBar().getPreferredSize().width + 4;
+            this.setSize(this.getWidth() + extra, this.getHeight());
+        } catch (Throwable t) {
+            // ignore sizing errors
+        }
     }
     
     /**
@@ -706,6 +714,15 @@ public class CalculationPluginDialog extends javax.swing.JDialog {
         initComponents();
         this.scrollMain.setViewportView(pluginUi);
         this.scrollMain.getVerticalScrollBar().setUnitIncrement(16);
+        // pack after injecting content so width follows content's preferred size
+        this.pack();
+        // widen slightly to compensate for vertical scrollbar width
+        try {
+            int extra = this.scrollMain.getVerticalScrollBar().getPreferredSize().width + 4;
+            this.setSize(this.getWidth() + extra, this.getHeight());
+        } catch (Throwable t) {
+            // ignore sizing errors
+        }
     }
     
     public void setHeader(String h) {
@@ -736,6 +753,9 @@ public class CalculationPluginDialog extends javax.swing.JDialog {
 
         lblUpdated.setFont(lblUpdated.getFont().deriveFont(lblUpdated.getFont().getSize()-2f));
         lblUpdated.setText("aktualisiert am");
+
+        // avoid horizontal scrolling for plugin UIs; we expand width instead
+        scrollMain.setHorizontalScrollBarPolicy(javax.swing.ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
 
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(getContentPane());
         getContentPane().setLayout(layout);
