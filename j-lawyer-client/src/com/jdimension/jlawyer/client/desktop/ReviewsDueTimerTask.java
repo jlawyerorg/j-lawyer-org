@@ -755,8 +755,9 @@ public class ReviewsDueTimerTask extends java.util.TimerTask {
             if (stopped) {
                 return;
             }
-            String[] relevantUsers = UserSettings.getInstance().getSettingArray(UserSettings.CONF_DESKTOP_LASTFILTERUSERS, new String[]{UserSettings.getInstance().getCurrentUser().getPrincipalId()});
-            List<String> relevantUsersList = Arrays.asList(relevantUsers);
+            String[] relevantUsers = UserSettings.getInstance().getSettingArray(UserSettings.CONF_DESKTOP_LASTFILTERUSERS, new String[]{});
+            java.util.Set<String> relevantUsersSet = new java.util.HashSet<>(java.util.Arrays.asList(relevantUsers));
+            boolean filterEnabled = !relevantUsersSet.isEmpty();
 
             if (myNewList != null) {
 
@@ -765,7 +766,7 @@ public class ReviewsDueTimerTask extends java.util.TimerTask {
                         return;
                     }
 
-                    if (!StringUtils.isEmpty(ar.getAssignee()) && !relevantUsersList.contains(ar.getAssignee())) {
+                    if (filterEnabled && !StringUtils.isEmpty(ar.getAssignee()) && !relevantUsersSet.contains(ar.getAssignee())) {
                         continue;
                     }
 
