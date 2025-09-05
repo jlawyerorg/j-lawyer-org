@@ -691,7 +691,7 @@ public class FormPluginsPanel extends javax.swing.JPanel {
         aFile.removeAllParties();
         //aFile.
         
-        ArrayList<AddressBean> parties=new ArrayList<AddressBean>();
+        ArrayList<AddressBean> parties=new ArrayList<>();
         for(Component c: this.getComponents()) {
             if(c instanceof InvolvedPartyEntryPanel) {
                 InvolvedPartyEntryPanel ipep=(InvolvedPartyEntryPanel)c;
@@ -712,7 +712,7 @@ public class FormPluginsPanel extends javax.swing.JPanel {
     }
     
     public List<AddressBean> getInvolvedPartiesAddress(PartyTypeBean referenceType) {
-        ArrayList<AddressBean> parties=new ArrayList<AddressBean>();
+        ArrayList<AddressBean> parties=new ArrayList<>();
         for(Component c: this.getComponents()) {
             if(c instanceof InvolvedPartyEntryPanel) {
                 InvolvedPartyEntryPanel ipep=(InvolvedPartyEntryPanel)c;
@@ -724,7 +724,7 @@ public class FormPluginsPanel extends javax.swing.JPanel {
     }
     
     public List<AddressBean> getInvolvedPartiesAddress() {
-        ArrayList<AddressBean> parties=new ArrayList<AddressBean>();
+        ArrayList<AddressBean> parties=new ArrayList<>();
         for(Component c: this.getComponents()) {
             if(c instanceof InvolvedPartyEntryPanel) {
                 InvolvedPartyEntryPanel ipep=(InvolvedPartyEntryPanel)c;
@@ -736,7 +736,7 @@ public class FormPluginsPanel extends javax.swing.JPanel {
     }
     
     public ArrayList<ArchiveFileAddressesBean> getInvolvedParties() {
-        ArrayList<ArchiveFileAddressesBean> parties=new ArrayList<ArchiveFileAddressesBean>();
+        ArrayList<ArchiveFileAddressesBean> parties=new ArrayList<>();
         for(Component c: this.getComponents()) {
             if(c instanceof InvolvedPartyEntryPanel) {
                 InvolvedPartyEntryPanel ipep=(InvolvedPartyEntryPanel)c;
