@@ -29,6 +29,7 @@
               <Group type="103" groupAlignment="1" attributes="0">
                   <Component id="jScrollPane1" max="32767" attributes="0"/>
                   <Component id="lblStatus" alignment="1" max="32767" attributes="0"/>
+                  <Component id="waveformView" alignment="0" max="32767" attributes="0"/>
                   <Component id="prgTime" alignment="0" max="32767" attributes="0"/>
                   <Group type="102" alignment="0" attributes="0">
                       <Component id="timeLabel" max="32767" attributes="0"/>
@@ -45,6 +46,7 @@
                       <Component id="sliderVolume" min="-2" pref="160" max="-2" attributes="0"/>
                       <EmptySpace min="0" pref="0" max="32767" attributes="0"/>
                   </Group>
+                  
                   <Group type="102" alignment="0" attributes="0">
                       <Component id="cmdAssistant" min="-2" max="-2" attributes="0"/>
                       <EmptySpace max="32767" attributes="0"/>
@@ -67,7 +69,10 @@
                   <Component id="cmdContinueRecording" alignment="3" min="-2" max="-2" attributes="0"/>
                   <Component id="sliderVolume" alignment="3" min="-2" max="-2" attributes="0"/>
               </Group>
+              
               <EmptySpace type="separate" max="-2" attributes="0"/>
+              <Component id="waveformView" min="-2" pref="80" max="32767" attributes="0"/>
+              <EmptySpace max="-2" attributes="0"/>
               <Component id="prgTime" min="-2" max="-2" attributes="0"/>
               <EmptySpace max="-2" attributes="0"/>
               <Component id="timeLabel" min="-2" max="-2" attributes="0"/>
@@ -91,6 +96,14 @@
     </DimensionLayout>
   </Layout>
   <SubComponents>
+    
+    <Component class="com.jdimension.jlawyer.client.editors.documents.viewer.WaveformPanel" name="waveformView">
+      <Properties>
+        <Property name="preferredSize" type="java.awt.Dimension" editor="org.netbeans.beaninfo.editors.DimensionEditor">
+          <Dimension value="[400, 80]"/>
+        </Property>
+      </Properties>
+    </Component>
     <Component class="javax.swing.JButton" name="cmdPlayPause">
       <Properties>
         <Property name="font" type="java.awt.Font" editor="org.netbeans.modules.form.editors2.FontEditor">

@@ -727,6 +727,7 @@ public class SoundplayerPanel extends javax.swing.JPanel implements PreviewPanel
 
     private FloatControl volumeControl;
     
+    
     /**
      * Creates new form SoundplayerPanel
      *
@@ -740,6 +741,7 @@ public class SoundplayerPanel extends javax.swing.JPanel implements PreviewPanel
         this.readOnly = readOnly;
         this.saveCallback = saveCallback;
         initComponents();
+        
         
         try {
             String savedVolume = ClientSettings.getInstance().getConfiguration("soundplayer.volume", "80");
@@ -774,6 +776,7 @@ public class SoundplayerPanel extends javax.swing.JPanel implements PreviewPanel
         cmdCopy = new javax.swing.JButton();
         cmdContinueRecording = new javax.swing.JButton();
         sliderVolume = new javax.swing.JSlider();
+        waveformView = new com.jdimension.jlawyer.client.editors.documents.viewer.WaveformPanel();
 
         cmdPlayPause.setFont(cmdPlayPause.getFont());
         cmdPlayPause.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons32/material/baseline_play_circle_black_48dp.png"))); // NOI18N
@@ -850,6 +853,7 @@ public class SoundplayerPanel extends javax.swing.JPanel implements PreviewPanel
             }
         });
 
+
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(this);
         this.setLayout(layout);
         layout.setHorizontalGroup(
@@ -859,6 +863,7 @@ public class SoundplayerPanel extends javax.swing.JPanel implements PreviewPanel
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
                     .addComponent(jScrollPane1)
                     .addComponent(lblStatus, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                    .addComponent(waveformView, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                     .addComponent(prgTime, javax.swing.GroupLayout.Alignment.LEADING, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                     .addGroup(javax.swing.GroupLayout.Alignment.LEADING, layout.createSequentialGroup()
                         .addComponent(timeLabel, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
@@ -873,6 +878,7 @@ public class SoundplayerPanel extends javax.swing.JPanel implements PreviewPanel
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                         .addComponent(sliderVolume, javax.swing.GroupLayout.PREFERRED_SIZE, 160, javax.swing.GroupLayout.PREFERRED_SIZE)
                         .addGap(0, 0, Short.MAX_VALUE))
+                    
                     .addGroup(javax.swing.GroupLayout.Alignment.LEADING, layout.createSequentialGroup()
                         .addComponent(cmdAssistant)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
@@ -890,7 +896,10 @@ public class SoundplayerPanel extends javax.swing.JPanel implements PreviewPanel
                     .addComponent(cmdStop)
                     .addComponent(cmdContinueRecording)
                     .addComponent(sliderVolume, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
+                
                 .addGap(18, 18, 18)
+                .addComponent(waveformView, javax.swing.GroupLayout.PREFERRED_SIZE, 80, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(prgTime, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(timeLabel)
@@ -963,6 +972,7 @@ public class SoundplayerPanel extends javax.swing.JPanel implements PreviewPanel
 
             // Bestehende Audiodaten übergeben
             dlg.setExistingAudio(this.content, this.documentName);
+            // Mode selection is handled inside the dialog
 
             // Dialog anzeigen
             com.jdimension.jlawyer.client.utils.FrameUtils.centerDialog(dlg, EditorsRegistry.getInstance().getMainWindow());
@@ -1007,14 +1017,19 @@ public class SoundplayerPanel extends javax.swing.JPanel implements PreviewPanel
         updateVolume();
     }//GEN-LAST:event_sliderVolumeStateChanged
 
+    
+
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
+    private com.jdimension.jlawyer.client.editors.documents.viewer.WaveformPanel waveformView;
+    
     private javax.swing.JButton cmdAssistant;
     private javax.swing.JButton cmdContinueRecording;
     private javax.swing.JButton cmdCopy;
     private javax.swing.JButton cmdNewDocument;
     private javax.swing.JButton cmdPlayPause;
     private javax.swing.JButton cmdStop;
+    
     private javax.swing.JScrollPane jScrollPane1;
     private javax.swing.JSeparator jSeparator1;
     private javax.swing.JLabel lblStatus;
@@ -1106,6 +1121,8 @@ public class SoundplayerPanel extends javax.swing.JPanel implements PreviewPanel
             
             volumeControl = null;
             updateVolume();
+            // Update waveform view with new content
+            updateWaveform(fixedContent);
 
             clip.addLineListener((LineEvent event) -> {
                 if (event.getType() == LineEvent.Type.STOP && (clip.getMicrosecondPosition() == clip.getMicrosecondLength())) {
@@ -1294,6 +1311,8 @@ public class SoundplayerPanel extends javax.swing.JPanel implements PreviewPanel
        this.prgTime.setValue(0);
 
        showStatus("Audiodaten repariert");
+       // Update waveform based on converted WAV data
+       updateWaveform(wavData);
    }
 
     @Override
@@ -1348,6 +1367,34 @@ public class SoundplayerPanel extends javax.swing.JPanel implements PreviewPanel
         long seconds = (microseconds / 1000000) % 60;
         String timeString = String.format("%02d:%02d", minutes, seconds);
         timeLabel.setText(timeString);
+        try {
+            if (clip != null && waveformView != null && clip.getMicrosecondLength() > 0) {
+                double frac = clip.getMicrosecondPosition() / (double) clip.getMicrosecondLength();
+                waveformView.setPlayheadFraction(frac);
+            }
+        } catch (Throwable ignore) {}
+    }
+
+    private void updateWaveform(byte[] wavBytes) {
+        if (waveformView == null || wavBytes == null) return;
+        try {
+            float[] peaks = WaveformPanel.computePeaks(wavBytes, 1500);
+            waveformView.setWaveform(peaks);
+            waveformView.setSeekListener(fraction -> {
+                if (clip != null) {
+                    long target = (long) (clip.getMicrosecondLength() * Math.min(1.0, Math.max(0.0, fraction)));
+                    try {
+                        clip.setMicrosecondPosition(target);
+                        updateTimeLabel();
+                    } catch (Throwable t) {
+                        // ignore seek errors
+                    }
+                }
+            });
+            waveformView.setPlayheadFraction(0.0);
+        } catch (Exception e) {
+            waveformView.setWaveform(new float[0]);
+        }
     }
     
     private void updateVolume() {
@@ -1430,5 +1477,4 @@ public class SoundplayerPanel extends javax.swing.JPanel implements PreviewPanel
     public void processOutput(Map<String, String> output) {
         
     }
-
 }
