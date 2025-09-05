@@ -701,6 +701,8 @@ public class UserSettingsKeys {
     public static final String CONF_DESKTOP_ONLYMYTAGGED = "client.desktop.onlymytagged";
     public static final String CONF_DESKTOP_LASTFILTERTAG = "client.desktop.lastfiltertag";
     public static final String CONF_DESKTOP_LASTFILTERUSERS = "client.desktop.lastfilterusers";
+    public static final String CONF_DESKTOP_LASTFILTERUSERS_TAGGED = "client.desktop.lastfilterusers.tagged";
+    public static final String CONF_DESKTOP_LASTFILTERUSERS_LASTCHANGED = "client.desktop.lastfilterusers.lastchanged";
     public static final String CONF_DESKTOP_LASTFILTERDUESINCEDAYS = "client.desktop.lastfilterduesincedays";
     public static final String CONF_DESKTOP_LASTFILTERDOCUMENTTAG = "client.desktop.lastfilterdocumenttag";
 

@@ -666,6 +666,7 @@ package com.jdimension.jlawyer.client.desktop;
 import com.jdimension.jlawyer.client.editors.*;
 import com.jdimension.jlawyer.client.settings.ClientSettings;
 import com.jdimension.jlawyer.client.settings.UserSettings;
+import com.jdimension.jlawyer.client.utils.StringUtils;
 import com.jdimension.jlawyer.persistence.ArchiveFileBean;
 import com.jdimension.jlawyer.persistence.ArchiveFileTagsBean;
 import com.jdimension.jlawyer.services.ArchiveFileServiceRemote;
@@ -740,15 +741,16 @@ public class LastChangedTimerTask extends java.util.TimerTask {
             myNewList = fileService.getLastChanged(50);
 
             if (stopped) return;
-            UserSettings.getInstance().migrateFrom(settings, UserSettings.CONF_DESKTOP_ONLYMYCASES);
-            String temp = UserSettings.getInstance().getSetting(UserSettings.CONF_DESKTOP_ONLYMYCASES, "false");
-            if ("true".equalsIgnoreCase(temp)) {
-                String principalId = UserSettings.getInstance().getCurrentUser().getPrincipalId();
+            
+            String[] selectedUsers = UserSettings.getInstance().getSettingArray(UserSettings.CONF_DESKTOP_LASTFILTERUSERS_LASTCHANGED, new String[]{});
+            if (selectedUsers.length > 0) {
+                java.util.Set<String> selected = new java.util.HashSet<>(java.util.Arrays.asList(selectedUsers));
+                filteredList.clear();
                 for (ArchiveFileBean x : myNewList) {
                     if (stopped) return;
-                    if (principalId.equalsIgnoreCase(x.getLawyer()) || principalId.equalsIgnoreCase(x.getAssistant())) {
+                    boolean caseWithoutResponsibles = StringUtils.isEmpty(x.getLawyer()) && StringUtils.isEmpty(x.getAssistant());
+                    if (caseWithoutResponsibles || selected.contains(x.getLawyer()) || selected.contains(x.getAssistant())) {
                         filteredList.add(x);
-
                     }
                 }
                 myNewList = filteredList;

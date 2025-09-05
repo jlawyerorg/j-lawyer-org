@@ -711,6 +711,7 @@ import javax.swing.JCheckBoxMenuItem;
 import javax.swing.JFileChooser;
 import javax.swing.JLabel;
 import javax.swing.JOptionPane;
+import javax.swing.JPopupMenu;
 import javax.swing.JRadioButtonMenuItem;
 import javax.swing.MenuElement;
 import javax.swing.SwingConstants;
@@ -783,16 +784,6 @@ public class DesktopPanel extends javax.swing.JPanel implements ThemeableEditor,
         
         this.jSplitPane1.setDividerLocation(0.5d);
 
-        ClientSettings settings = ClientSettings.getInstance();
-        
-        UserSettings.getInstance().migrateFrom(settings, UserSettings.CONF_DESKTOP_ONLYMYCASES);
-        String temp = UserSettings.getInstance().getSetting(UserSettings.CONF_DESKTOP_ONLYMYCASES, "false");
-        if ("true".equalsIgnoreCase(temp)) {
-            this.chkOnlyMyCases.setSelected(true);
-        }
-
-        // replaced legacy tagged checkbox with multi-user filter button
-
         this.initializing = false;
 
         EventBroker b = EventBroker.getInstance();
@@ -809,9 +800,10 @@ public class DesktopPanel extends javax.swing.JPanel implements ThemeableEditor,
         b.subscribeConsumer(this, Event.TYPE_REVIEWUPDATED);
         b.subscribeConsumer(this, Event.TYPE_CASESCHANGED);
 
-        this.buildUsersPopup();
+        this.buildUsersPopupCalendarEntries();
         this.buildDueSinceDaysPopup();
         this.buildUsersPopupTagged();
+        this.buildUsersPopupLastchanged();
         
         Timer timer1 = new Timer();
         SystemStateTimerTask systemStateTask = new SystemStateTimerTask(this, this.lblAddressCount, this.lblArchiveFileCount, this.lblArchiveFileArchivedCount, this.lblDocumentCount, this.lblVoipBalance, this.lblAssistant);
@@ -1005,7 +997,7 @@ public class DesktopPanel extends javax.swing.JPanel implements ThemeableEditor,
         
     }
     
-    private void buildUsersPopup() {
+    private void buildUsersPopupCalendarEntries() {
         List<AppUserBean> relevantUsers=UserSettings.getInstance().getLoginEnabledUsers();
         List<String> userNames=new ArrayList<>();
         for(AppUserBean u: relevantUsers) {
@@ -1080,6 +1072,43 @@ public class DesktopPanel extends javax.swing.JPanel implements ThemeableEditor,
             });
         }
     }
+    
+    private void buildUsersPopupLastchanged() {
+        List<AppUserBean> relevantUsers=UserSettings.getInstance().getLoginEnabledUsers();
+        List<String> userNames=new ArrayList<>();
+        for(AppUserBean u: relevantUsers) {
+            userNames.add(u.getPrincipalId());
+        }
+        StringUtils.sortIgnoreCase(userNames);
+
+        String[] selectedUsers=UserSettings.getInstance().getSettingArray(UserSettings.CONF_DESKTOP_LASTFILTERUSERS_LASTCHANGED, new String[]{});
+        this.lblUserFilterCountLastchanged.setText("" + selectedUsers.length);
+
+        this.popUserFilterLastchanged.removeAll();
+        for (AppUserBean ru : relevantUsers) {
+            JCheckBoxMenuItem mi = new JCheckBoxMenuItem(ru.getPrincipalId());
+            mi.putClientProperty("CheckBoxMenuItem.selectionBackground", DefaultColorTheme.COLOR_LOGO_GREEN);
+            mi.setIcon(UserSettings.getInstance().getUserSmallIcon(ru.getPrincipalId()));
+            mi.setSelected(Arrays.asList(selectedUsers).contains(ru.getPrincipalId()));
+            popUserFilterLastchanged.add(mi);
+        }
+        for (MenuElement me : popUserFilterLastchanged.getSubElements()) {
+            ((JCheckBoxMenuItem) me.getComponent()).addActionListener((ActionEvent e) -> {
+                ArrayList<String> al = new ArrayList<>();
+                for (MenuElement me1 : popUserFilterLastchanged.getSubElements()) {
+                    JCheckBoxMenuItem mi = (JCheckBoxMenuItem) me1.getComponent();
+                    if (mi.isSelected()) {
+                        al.add(mi.getText());
+                    }
+                }
+                this.lblUserFilterCountLastchanged.setText("" + al.size());
+                UserSettings.getInstance().setSettingArray(UserSettings.CONF_DESKTOP_LASTFILTERUSERS_LASTCHANGED, al.toArray(new String[al.size()]));
+                // refresh tagged view
+                LastChangedTimerTask lastChangedTask = new LastChangedTimerTask(this, this.pnlLastChanged, this.jSplitPane1, true);
+                new java.util.Timer().schedule(lastChangedTask, 100);
+            });
+        }
+    }
 
     public void setUnreadMessages(int count) {
         this.lblUnreadMail.setText("" + count);
@@ -1123,9 +1152,10 @@ public class DesktopPanel extends javax.swing.JPanel implements ThemeableEditor,
         popTagFilter = new javax.swing.JPopupMenu();
         popDocumentTagFilter = new javax.swing.JPopupMenu();
         popUserFilter = new javax.swing.JPopupMenu();
-        popUserFilterTagged = new javax.swing.JPopupMenu();
         popDueSinceDays = new javax.swing.JPopupMenu();
         btnGrpDueSinceDays = new javax.swing.ButtonGroup();
+        popUserFilterTagged = new javax.swing.JPopupMenu();
+        popUserFilterLastchanged = new javax.swing.JPopupMenu();
         jSplitPane1 = new javax.swing.JSplitPane();
         jPanel2 = new javax.swing.JPanel();
         jLabel6 = new javax.swing.JLabel();
@@ -1144,8 +1174,9 @@ public class DesktopPanel extends javax.swing.JPanel implements ThemeableEditor,
         jScrollPane3 = new javax.swing.JScrollPane();
         pnlLastChanged = new javax.swing.JPanel();
         jLabel7 = new javax.swing.JLabel();
-        chkOnlyMyCases = new javax.swing.JCheckBox();
         cmdRefreshLastChanged = new javax.swing.JButton();
+        lblUserFilterCountLastchanged = new javax.swing.JLabel();
+        cmdUserFilterLastchanged = new javax.swing.JButton();
         jPanel3 = new javax.swing.JPanel();
         jLabel9 = new javax.swing.JLabel();
         cmdUserFilterTagged = new javax.swing.JButton();
@@ -1201,7 +1232,7 @@ public class DesktopPanel extends javax.swing.JPanel implements ThemeableEditor,
         jLabel6.setText("Fällig");
 
         cmdUserFilter.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons16/material/baseline_supervisor_account_white_48dp.png"))); // NOI18N
-        cmdUserFilter.setToolTipText("verantwortliche Nutzer\n(Kalendereinträge ohne Verantwortliche(n) werden stets angezeigt)");
+        cmdUserFilter.setToolTipText("verantwortliche Nutzer");
         cmdUserFilter.setBorder(null);
         cmdUserFilter.setContentAreaFilled(false);
         cmdUserFilter.setCursor(new java.awt.Cursor(java.awt.Cursor.HAND_CURSOR));
@@ -1258,21 +1289,6 @@ public class DesktopPanel extends javax.swing.JPanel implements ThemeableEditor,
             }
         });
 
-        lblUserFilterCountTagged.setFont(lblUserFilterCountTagged.getFont().deriveFont(lblUserFilterCountTagged.getFont().getStyle() | java.awt.Font.BOLD, lblUserFilterCountTagged.getFont().getSize()+2));
-        lblUserFilterCountTagged.setForeground(java.awt.Color.white);
-        lblUserFilterCountTagged.setText("0");
-
-        cmdUserFilterTagged.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons16/material/baseline_supervisor_account_white_48dp.png"))); // NOI18N
-        cmdUserFilterTagged.setToolTipText("verantwortliche Nutzer");
-        cmdUserFilterTagged.setBorder(null);
-        cmdUserFilterTagged.setContentAreaFilled(false);
-        cmdUserFilterTagged.setCursor(new java.awt.Cursor(java.awt.Cursor.HAND_CURSOR));
-        cmdUserFilterTagged.addMouseListener(new java.awt.event.MouseAdapter() {
-            public void mousePressed(java.awt.event.MouseEvent evt) {
-                cmdUserFilterTaggedMousePressed(evt);
-            }
-        });
-
         org.jdesktop.layout.GroupLayout jPanel2Layout = new org.jdesktop.layout.GroupLayout(jPanel2);
         jPanel2.setLayout(jPanel2Layout);
         jPanel2Layout.setHorizontalGroup(
@@ -1285,7 +1301,7 @@ public class DesktopPanel extends javax.swing.JPanel implements ThemeableEditor,
                         .add(cmdRefreshRevDue)
                         .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
                         .add(jLabel6)
-                        .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED, 129, Short.MAX_VALUE)
+                        .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                         .add(cmdDueSinceDays)
                         .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
                         .add(lblDueSinceDays)
@@ -1345,19 +1361,10 @@ public class DesktopPanel extends javax.swing.JPanel implements ThemeableEditor,
             .add(pnlLastChangedLayout.createSequentialGroup()
                 .addContainerGap()
                 .add(jLabel7)
-                .addContainerGap(311, Short.MAX_VALUE))
+                .addContainerGap(324, Short.MAX_VALUE))
         );
 
         jScrollPane3.setViewportView(pnlLastChanged);
-
-        chkOnlyMyCases.setFont(chkOnlyMyCases.getFont().deriveFont(chkOnlyMyCases.getFont().getStyle() | java.awt.Font.BOLD));
-        chkOnlyMyCases.setForeground(new java.awt.Color(255, 255, 255));
-        chkOnlyMyCases.setText("nur meine anzeigen");
-        chkOnlyMyCases.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                chkOnlyMyCasesActionPerformed(evt);
-            }
-        });
 
         cmdRefreshLastChanged.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons16/material/baseline_refresh_white_36dp.png"))); // NOI18N
         cmdRefreshLastChanged.setBorder(null);
@@ -1366,6 +1373,20 @@ public class DesktopPanel extends javax.swing.JPanel implements ThemeableEditor,
         cmdRefreshLastChanged.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 cmdRefreshLastChangedActionPerformed(evt);
+            }
+        });
+
+        lblUserFilterCountLastchanged.setFont(lblUserFilterCountLastchanged.getFont().deriveFont(lblUserFilterCountLastchanged.getFont().getStyle() | java.awt.Font.BOLD));
+        lblUserFilterCountLastchanged.setForeground(new java.awt.Color(255, 255, 255));
+        lblUserFilterCountLastchanged.setText("0");
+
+        cmdUserFilterLastchanged.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons16/material/baseline_supervisor_account_white_48dp.png"))); // NOI18N
+        cmdUserFilterLastchanged.setBorder(null);
+        cmdUserFilterLastchanged.setContentAreaFilled(false);
+        cmdUserFilterLastchanged.setCursor(new java.awt.Cursor(java.awt.Cursor.HAND_CURSOR));
+        cmdUserFilterLastchanged.addMouseListener(new java.awt.event.MouseAdapter() {
+            public void mousePressed(java.awt.event.MouseEvent evt) {
+                cmdUserFilterLastchangedMousePressed(evt);
             }
         });
 
@@ -1380,8 +1401,10 @@ public class DesktopPanel extends javax.swing.JPanel implements ThemeableEditor,
                         .add(cmdRefreshLastChanged)
                         .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
                         .add(jLabel5)
-                        .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                        .add(chkOnlyMyCases))
+                        .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED, 370, Short.MAX_VALUE)
+                        .add(cmdUserFilterLastchanged)
+                        .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
+                        .add(lblUserFilterCountLastchanged))
                     .add(jScrollPane3, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 0, Short.MAX_VALUE))
                 .addContainerGap())
         );
@@ -1393,9 +1416,10 @@ public class DesktopPanel extends javax.swing.JPanel implements ThemeableEditor,
                     .add(cmdRefreshLastChanged)
                     .add(jPanel1Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.BASELINE)
                         .add(jLabel5)
-                        .add(chkOnlyMyCases)))
+                        .add(lblUserFilterCountLastchanged)
+                        .add(cmdUserFilterLastchanged, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 29, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)))
                 .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
-                .add(jScrollPane3, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 258, Short.MAX_VALUE)
+                .add(jScrollPane3)
                 .addContainerGap())
         );
 
@@ -1407,7 +1431,20 @@ public class DesktopPanel extends javax.swing.JPanel implements ThemeableEditor,
         jLabel9.setForeground(java.awt.Color.white);
         jLabel9.setText(bundle.getString("label.tagged")); // NOI18N
 
-        // replaced legacy checkbox by user filter button + count (configured above)
+        cmdUserFilterTagged.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons16/material/baseline_supervisor_account_white_48dp.png"))); // NOI18N
+        cmdUserFilterTagged.setToolTipText("verantwortliche Nutzer");
+        cmdUserFilterTagged.setBorder(null);
+        cmdUserFilterTagged.setContentAreaFilled(false);
+        cmdUserFilterTagged.setCursor(new java.awt.Cursor(java.awt.Cursor.HAND_CURSOR));
+        cmdUserFilterTagged.addMouseListener(new java.awt.event.MouseAdapter() {
+            public void mousePressed(java.awt.event.MouseEvent evt) {
+                cmdUserFilterTaggedMousePressed(evt);
+            }
+        });
+
+        lblUserFilterCountTagged.setFont(lblUserFilterCountTagged.getFont().deriveFont(lblUserFilterCountTagged.getFont().getStyle() | java.awt.Font.BOLD));
+        lblUserFilterCountTagged.setForeground(java.awt.Color.white);
+        lblUserFilterCountTagged.setText("0");
 
         cmdRefreshTagged.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons16/material/baseline_refresh_white_36dp.png"))); // NOI18N
         cmdRefreshTagged.setBorder(null);
@@ -1500,15 +1537,16 @@ public class DesktopPanel extends javax.swing.JPanel implements ThemeableEditor,
             .add(jPanel3Layout.createSequentialGroup()
                 .addContainerGap()
                 .add(jPanel3Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
-                    .add(cmdUserFilterTagged)
-                    .add(lblUserFilterCountTagged)
                     .add(jLabel9)
                     .add(cmdRefreshTagged)
                     .add(jPanel3Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.TRAILING, false)
                         .add(org.jdesktop.layout.GroupLayout.LEADING, cmdDocumentTagFilter, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                        .add(org.jdesktop.layout.GroupLayout.LEADING, cmdTagFilter, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)))
+                        .add(org.jdesktop.layout.GroupLayout.LEADING, cmdTagFilter, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                    .add(jPanel3Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.TRAILING, false)
+                        .add(org.jdesktop.layout.GroupLayout.LEADING, cmdUserFilterTagged, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                        .add(org.jdesktop.layout.GroupLayout.LEADING, lblUserFilterCountTagged, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)))
                 .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
-                .add(tabPaneTagged, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 77, Short.MAX_VALUE)
+                .add(tabPaneTagged, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 76, Short.MAX_VALUE)
                 .addContainerGap())
         );
 
@@ -1733,7 +1771,7 @@ public class DesktopPanel extends javax.swing.JPanel implements ThemeableEditor,
                         .add(lblDay, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                         .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
                         .add(desktopWidgetPanel2, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE))
-                    .add(jSplitPane1)
+                    .add(jSplitPane1, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 0, Short.MAX_VALUE)
                     .add(systemInformationWidget, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
                 .addContainerGap())
         );
@@ -1779,22 +1817,6 @@ public class DesktopPanel extends javax.swing.JPanel implements ThemeableEditor,
         dlg.setVisible(true);
     }//GEN-LAST:event_lblUserNameMouseClicked
 
-    private void chkOnlyMyCasesActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_chkOnlyMyCasesActionPerformed
-
-        if (this.initializing) {
-            return;
-        }
-
-        UserSettings settings = UserSettings.getInstance();
-
-        boolean onlyMyCases = this.chkOnlyMyCases.isSelected();
-        settings.setSetting(UserSettings.CONF_DESKTOP_ONLYMYCASES, "" + onlyMyCases);
-
-        TimerTask lastChangedTask = new LastChangedTimerTask(this, this.pnlLastChanged, this.jSplitPane1, true);
-        new Timer().schedule(lastChangedTask, 500);
-
-    }//GEN-LAST:event_chkOnlyMyCasesActionPerformed
-
     private void cmdRefreshLastChangedActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdRefreshLastChangedActionPerformed
         Timer timer = new Timer();
 
@@ -1837,11 +1859,13 @@ public class DesktopPanel extends javax.swing.JPanel implements ThemeableEditor,
         this.popDueSinceDays.show(this.cmdDueSinceDays, evt.getX(), evt.getY());
     }//GEN-LAST:event_cmdDueSinceDaysMousePressed
 
+    private void cmdUserFilterLastchangedMousePressed(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_cmdUserFilterLastchangedMousePressed
+        this.popUserFilterLastchanged.show(this.cmdUserFilterLastchanged, evt.getX(), evt.getY());
+    }//GEN-LAST:event_cmdUserFilterLastchangedMousePressed
+
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.ButtonGroup btnGrpDueSinceDays;
-    private javax.swing.JCheckBox chkOnlyMyCases;
-    private javax.swing.JButton cmdUserFilterTagged;
     private javax.swing.JButton cmdDocumentTagFilter;
     private javax.swing.JButton cmdDueSinceDays;
     private javax.swing.JButton cmdRefreshLastChanged;
@@ -1849,7 +1873,8 @@ public class DesktopPanel extends javax.swing.JPanel implements ThemeableEditor,
     private javax.swing.JButton cmdRefreshTagged;
     private javax.swing.JButton cmdTagFilter;
     private javax.swing.JButton cmdUserFilter;
-    private javax.swing.JLabel lblUserFilterCountTagged;
+    private javax.swing.JButton cmdUserFilterLastchanged;
+    private javax.swing.JButton cmdUserFilterTagged;
     private com.jdimension.jlawyer.client.desktop.DesktopWidgetPanel desktopWidgetPanel2;
     private javax.swing.JLabel jLabel10;
     private javax.swing.JLabel jLabel5;
@@ -1881,6 +1906,8 @@ public class DesktopPanel extends javax.swing.JPanel implements ThemeableEditor,
     private javax.swing.JLabel lblUpdateStatus;
     private javax.swing.JLabel lblUpdateStatusFormPlugins;
     private javax.swing.JLabel lblUserFilterCount;
+    private javax.swing.JLabel lblUserFilterCountLastchanged;
+    private javax.swing.JLabel lblUserFilterCountTagged;
     private javax.swing.JLabel lblUserIcon;
     private javax.swing.JLabel lblUserName;
     private javax.swing.JLabel lblVoipBalance;
@@ -1892,6 +1919,7 @@ public class DesktopPanel extends javax.swing.JPanel implements ThemeableEditor,
     private javax.swing.JPopupMenu popDueSinceDays;
     private javax.swing.JPopupMenu popTagFilter;
     private javax.swing.JPopupMenu popUserFilter;
+    private javax.swing.JPopupMenu popUserFilterLastchanged;
     private javax.swing.JPopupMenu popUserFilterTagged;
     private com.jdimension.jlawyer.client.desktop.DesktopWidgetPanel systemInformationWidget;
     private javax.swing.JTabbedPane tabPaneDue;
