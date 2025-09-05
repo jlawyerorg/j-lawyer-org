@@ -70,18 +70,19 @@ class MonthDisplayStrategy implements DisplayStrategy {
         final Calendar c = CalendarUtil.copyCalendar(start, true);
         c.set(Calendar.DAY_OF_WEEK, c.getFirstDayOfWeek());
         for (int i = 0; i < 35; i++) {
-            final Date dayDate = c.getTime();
-            days[i] = new DayPanel(parent.getOwner(), dayDate, 0.1f);
+            days[i] = new DayPanel(parent.getOwner(), c.getTime(), 0.1f);
             days[i].setEnabled(CalendarUtil.isSameMonth(start, c));
             displayPanel.add(days[i].layout());
             // In month view: single-click on the day header switches to day view
             days[i].getHeaderPanel().setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
+            final DayPanel panelRef = days[i];
             days[i].getHeaderPanel().addMouseListener(new MouseAdapter() {
                 @Override
                 public void mouseClicked(MouseEvent e) {
                     if (e.getButton() == MouseEvent.BUTTON1) {
-                        parent.getOwner().setSelectedDay(dayDate);
-                        parent.getOwner().setDisplayStrategy(DisplayStrategy.Type.DAY, dayDate);
+                        Date current = panelRef.getDate();
+                        parent.getOwner().setSelectedDay(current);
+                        parent.getOwner().setDisplayStrategy(DisplayStrategy.Type.DAY, current);
                         e.consume();
                     }
                 }

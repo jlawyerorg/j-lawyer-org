@@ -22,6 +22,7 @@ import java.awt.Insets;
 
 import javax.imageio.ImageIO;
 import javax.swing.*;
+import de.costache.calendar.ui.strategy.DisplayStrategy;
 
 
 /**
@@ -200,9 +201,9 @@ public class HeaderPanel extends JPanel {
 	/**
 	 * @return the intervalLabel
 	 */
-	public JLabel getIntervalLabel() {
-		return intervalLabel;
-	}
+    public JLabel getIntervalLabel() {
+        return intervalLabel;
+    }
         
         /**
         * Updates the interval label text.
@@ -211,6 +212,21 @@ public class HeaderPanel extends JPanel {
         */
        public void updateIntervalLabel(String text) {
            intervalLabel.setText(text);
+       }
+
+       /**
+        * Visually marks the active view button (Tag/Woche/Monat).
+        * Current approach: disable the active button and enable the others.
+        * This is minimalistic and works with the existing JButton-based UI.
+        */
+       public void setActive(DisplayStrategy.Type type) {
+           boolean isDay = type == DisplayStrategy.Type.DAY;
+           boolean isWeek = type == DisplayStrategy.Type.WEEK;
+           boolean isMonth = type == DisplayStrategy.Type.MONTH;
+
+           dayButton.setEnabled(!isDay);
+           weekButton.setEnabled(!isWeek);
+           monthButton.setEnabled(!isMonth);
        }
 
 }
