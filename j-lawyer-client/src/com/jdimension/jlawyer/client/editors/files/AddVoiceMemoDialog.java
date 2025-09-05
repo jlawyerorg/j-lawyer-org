@@ -701,6 +701,13 @@ public class AddVoiceMemoDialog extends javax.swing.JDialog {
 
     private byte[] memoBytes = null;
 
+    // Waveform + cursor state
+    private double insertCursorFraction = 1.0; // default to end
+    private long totalLengthMicros = 0L;
+    private javax.sound.sampled.Clip previewClip;
+    private javax.swing.Timer previewTimer;
+    private java.util.ArrayDeque<byte[]> undoStack = new java.util.ArrayDeque<>();
+
     /**
      * Creates new form AddVoiceMemoDialog
      *
@@ -720,6 +727,31 @@ public class AddVoiceMemoDialog extends javax.swing.JDialog {
         this.cmbDevices.removeAllItems();
         AudioUtils.populateMicrophoneDevices(this.cmbDevices);
 
+        // Mode defaults
+        btGrpModes = new javax.swing.ButtonGroup();
+        btGrpModes.add(rdoInsert);
+        btGrpModes.add(rdoOverwrite);
+        rdoInsert.setSelected(true);
+
+        // Configure waveform seek handling
+        if (this.waveformView != null) {
+            this.waveformView.setSeekListener(fraction -> {
+                insertCursorFraction = Math.min(1.0, Math.max(0.0, fraction));
+                this.waveformView.setPlayheadFraction(insertCursorFraction);
+                updateInfoLabel();
+            });
+        }
+        // Initial waveform if parts present
+        refreshWaveform();
+
+        // Mode defaults group
+        btGrpModes = new javax.swing.ButtonGroup();
+        btGrpModes.add(rdoInsert);
+        btGrpModes.add(rdoOverwrite);
+        rdoInsert.setSelected(true);
+
+        updateControlsEnabled();
+
     }
 
     /**
@@ -731,6 +763,14 @@ public class AddVoiceMemoDialog extends javax.swing.JDialog {
     private void initComponents() {
 
         btGrpReviews = new javax.swing.ButtonGroup();
+        btGrpModes = new javax.swing.ButtonGroup();
+        lblState = new javax.swing.JLabel();
+        rdoInsert = new javax.swing.JRadioButton();
+        rdoOverwrite = new javax.swing.JRadioButton();
+        cmdPreviewPlay = new javax.swing.JButton();
+        cmdPreviewStop = new javax.swing.JButton();
+        cmdUndoTake = new javax.swing.JButton();
+        waveformView = new com.jdimension.jlawyer.client.editors.documents.viewer.WaveformPanel();
         cmdCancel = new javax.swing.JButton();
         cmdAddDocument = new javax.swing.JButton();
         jPanel2 = new javax.swing.JPanel();
@@ -741,6 +781,36 @@ public class AddVoiceMemoDialog extends javax.swing.JDialog {
         lblInfo = new javax.swing.JLabel();
 
         setDefaultCloseOperation(javax.swing.WindowConstants.DISPOSE_ON_CLOSE);
+
+        lblState.setText(" ");
+
+        rdoInsert.setText("Einfügen am Cursor");
+
+        rdoOverwrite.setText("Überschreiben ab Cursor");
+
+        cmdPreviewPlay.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/1rightarrow.png"))); // NOI18N
+        cmdPreviewPlay.setToolTipText("Abspielen");
+        cmdPreviewPlay.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                cmdPreviewPlayActionPerformed(evt);
+            }
+        });
+
+        cmdPreviewStop.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons16/material/stop_20dp_0E72B5.png"))); // NOI18N
+        cmdPreviewStop.setToolTipText("Stop");
+        cmdPreviewStop.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                cmdPreviewStopActionPerformed(evt);
+            }
+        });
+
+        cmdUndoTake.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons16/material/undo_20dp_0E72B5.png"))); // NOI18N
+        cmdUndoTake.setToolTipText("Letzte Aufnahme rückgängig");
+        cmdUndoTake.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                cmdUndoTakeActionPerformed(evt);
+            }
+        });
 
         cmdCancel.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/cancel.png"))); // NOI18N
         cmdCancel.setText("Verwerfen");
@@ -811,22 +881,33 @@ public class AddVoiceMemoDialog extends javax.swing.JDialog {
         layout.setHorizontalGroup(
             layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
             .add(jPanel2, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-            .add(layout.createSequentialGroup()
-                .add(layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
-                    .add(layout.createSequentialGroup()
-                        .addContainerGap()
-                        .add(layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
-                            .add(org.jdesktop.layout.GroupLayout.TRAILING, layout.createSequentialGroup()
-                                .add(0, 316, Short.MAX_VALUE)
-                                .add(cmdAddDocument)
-                                .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
-                                .add(cmdCancel))
-                            .add(layout.createSequentialGroup()
-                                .add(cmdRecord)
-                                .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                                .add(cmbDevices, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE))))
-                    .add(layout.createSequentialGroup()
+            .add(org.jdesktop.layout.GroupLayout.TRAILING, layout.createSequentialGroup()
+                .addContainerGap()
+                .add(layout.createParallelGroup(org.jdesktop.layout.GroupLayout.TRAILING)
+                    .add(org.jdesktop.layout.GroupLayout.LEADING, layout.createSequentialGroup()
+                        .add(cmdRecord)
+                        .addPreferredGap(org.jdesktop.layout.LayoutStyle.UNRELATED)
+                        .add(rdoInsert)
+                        .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
+                        .add(rdoOverwrite)
+                        .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                        .add(cmbDevices, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE))
+                    .add(org.jdesktop.layout.GroupLayout.LEADING, waveformView, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 738, Short.MAX_VALUE)
+                    .add(org.jdesktop.layout.GroupLayout.LEADING, layout.createSequentialGroup()
                         .add(12, 12, 12)
+                        .add(lblState, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                    .add(layout.createSequentialGroup()
+                        .add(0, 0, Short.MAX_VALUE)
+                        .add(cmdAddDocument)
+                        .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
+                        .add(cmdCancel))
+                    .add(layout.createSequentialGroup()
+                        .add(cmdPreviewPlay)
+                        .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
+                        .add(cmdPreviewStop)
+                        .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
+                        .add(cmdUndoTake)
+                        .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
                         .add(lblInfo, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)))
                 .addContainerGap())
         );
@@ -837,9 +918,20 @@ public class AddVoiceMemoDialog extends javax.swing.JDialog {
                 .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
                 .add(layout.createParallelGroup(org.jdesktop.layout.GroupLayout.BASELINE)
                     .add(cmdRecord)
-                    .add(cmbDevices, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE))
+                    .add(cmbDevices, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
+                    .add(rdoInsert)
+                    .add(rdoOverwrite))
+                .add(18, 18, 18)
+                .add(lblState)
                 .addPreferredGap(org.jdesktop.layout.LayoutStyle.UNRELATED)
-                .add(lblInfo)
+                .add(waveformView, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 98, Short.MAX_VALUE)
+                .addPreferredGap(org.jdesktop.layout.LayoutStyle.UNRELATED)
+                .add(layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING, false)
+                    .add(layout.createParallelGroup(org.jdesktop.layout.GroupLayout.BASELINE)
+                        .add(cmdPreviewPlay)
+                        .add(cmdPreviewStop)
+                        .add(cmdUndoTake))
+                    .add(lblInfo, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 28, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE))
                 .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                 .add(layout.createParallelGroup(org.jdesktop.layout.GroupLayout.BASELINE)
                     .add(cmdCancel)
@@ -1079,15 +1171,23 @@ public class AddVoiceMemoDialog extends javax.swing.JDialog {
         });
     }
     // Variables declaration - do not modify//GEN-BEGIN:variables
+    private javax.swing.ButtonGroup btGrpModes;
     private javax.swing.ButtonGroup btGrpReviews;
     private javax.swing.JComboBox<String> cmbDevices;
     private javax.swing.JButton cmdAddDocument;
     private javax.swing.JButton cmdCancel;
+    private javax.swing.JButton cmdPreviewPlay;
+    private javax.swing.JButton cmdPreviewStop;
     private javax.swing.JButton cmdRecord;
+    private javax.swing.JButton cmdUndoTake;
     private javax.swing.JLabel jLabel1;
     private javax.swing.JPanel jPanel2;
     private javax.swing.JLabel lblInfo;
+    private javax.swing.JLabel lblState;
+    private javax.swing.JRadioButton rdoInsert;
+    private javax.swing.JRadioButton rdoOverwrite;
     private javax.swing.JTextField txtFileName;
+    private com.jdimension.jlawyer.client.editors.documents.viewer.WaveformPanel waveformView;
     // End of variables declaration//GEN-END:variables
 
     /**
@@ -1145,6 +1245,8 @@ public class AddVoiceMemoDialog extends javax.swing.JDialog {
                     ThreadUtils.showErrorDialog(this, "Aufnahmefehler: " + e.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR);
                 }
             }).start();
+
+            updateControlsEnabled();
         } catch (Exception ex) {
             log.error("Unable to start recording microphone audio stream", ex);
             JOptionPane.showMessageDialog(this, "Aufnahme konnte nicht gestartet werden: " + ex.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
@@ -1163,31 +1265,34 @@ public class AddVoiceMemoDialog extends javax.swing.JDialog {
             }
         }
 
-        // Byte-Array zur Liste hinzufügen
+        // Byte-Array verarbeiten (Einfügen/Überschreiben)
         if (byteArrayOutputStream != null) {
             byte[] audioData = byteArrayOutputStream.toByteArray();
             if (audioData.length > 0) {
                 try {
-                    // Die rohen PCM-Daten in ein gültiges WAV-Format konvertieren
-                    AudioFormat format = AudioUtils.getAudioFormat();
-                    ByteArrayInputStream bais = new ByteArrayInputStream(audioData);
-                    AudioInputStream ais = new AudioInputStream(
-                        bais,
-                        format,
-                        audioData.length / format.getFrameSize()
-                    );
-
-                    // In WAV konvertieren
-                    ByteArrayOutputStream wavOutputStream = new ByteArrayOutputStream();
-                    AudioSystem.write(ais, AudioFileFormat.Type.WAVE, wavOutputStream);
-
-                    // Zur Liste hinzufügen
-                    this.memoParts.add(wavOutputStream.toByteArray());
-
-                    // Ressourcen freigeben
-                    ais.close();
-                    bais.close();
-                    wavOutputStream.close();
+                    if (this.memoParts.isEmpty()) {
+                        // Erstaufnahme: als WAV speichern
+                        AudioFormat format = AudioUtils.getAudioFormat();
+                        try (ByteArrayInputStream bais = new ByteArrayInputStream(audioData);
+                             AudioInputStream ais = new AudioInputStream(bais, format, audioData.length / format.getFrameSize());
+                             ByteArrayOutputStream wavOutputStream = new ByteArrayOutputStream()) {
+                            AudioSystem.write(ais, AudioFileFormat.Type.WAVE, wavOutputStream);
+                            this.memoParts.clear();
+                            this.memoParts.add(wavOutputStream.toByteArray());
+                        }
+                    } else {
+                        boolean overwrite = rdoOverwrite.isSelected();
+                        // Save current state for undo
+                        try {
+                            byte[] current = mergeWAVs(this.memoParts);
+                            if (current != null && current.length > 0) {
+                                undoStack.push(current);
+                            }
+                        } catch (Exception ignore) {}
+                        byte[] merged = applyRecordingAtCursor(audioData, overwrite);
+                        this.memoParts.clear();
+                        this.memoParts.add(merged);
+                    }
                 } catch (Exception e) {
                     log.error("Error converting recorded audio data to WAV", e);
                     JOptionPane.showMessageDialog(this, 
@@ -1207,6 +1312,222 @@ public class AddVoiceMemoDialog extends javax.swing.JDialog {
 
         // Info-Label aktualisieren
         updateInfoLabel();
+        // Waveform aktualisieren
+        refreshWaveform();
+
+        updateControlsEnabled();
+    }
+
+    private byte[] applyRecordingAtCursor(byte[] newPcm, boolean overwrite) throws Exception {
+        byte[] existingWav = mergeWAVs(this.memoParts);
+        if (existingWav == null || existingWav.length == 0) {
+            AudioFormat format = AudioUtils.getAudioFormat();
+            try (ByteArrayInputStream bais = new ByteArrayInputStream(newPcm);
+                 AudioInputStream ais = new AudioInputStream(bais, format, newPcm.length / format.getFrameSize());
+                 ByteArrayOutputStream wavOut = new ByteArrayOutputStream()) {
+                AudioSystem.write(ais, AudioFileFormat.Type.WAVE, wavOut);
+                return wavOut.toByteArray();
+            }
+        }
+
+        AudioFormat fmt = AudioUtils.getAudioFormat();
+        byte[] existingPcm;
+        try (ByteArrayInputStream in = new ByteArrayInputStream(existingWav);
+             AudioInputStream ais = AudioSystem.getAudioInputStream(in)) {
+            AudioInputStream pcmStream = ais;
+            if (!ais.getFormat().matches(fmt)) {
+                pcmStream = AudioSystem.getAudioInputStream(fmt, ais);
+            }
+            ByteArrayOutputStream bos = new ByteArrayOutputStream();
+            byte[] buf = new byte[8192];
+            int r;
+            while ((r = pcmStream.read(buf)) > 0) bos.write(buf, 0, r);
+            existingPcm = bos.toByteArray();
+        }
+
+        int bytesPerSample = fmt.getSampleSizeInBits() / 8;
+        int totalSamples = existingPcm.length / bytesPerSample;
+        int cursorSample = Math.max(0, Math.min(totalSamples, (int)Math.round(insertCursorFraction * totalSamples)));
+        int cursorByte = cursorSample * bytesPerSample;
+
+        byte[] head = java.util.Arrays.copyOfRange(existingPcm, 0, cursorByte);
+        byte[] tail = java.util.Arrays.copyOfRange(existingPcm, cursorByte, existingPcm.length);
+
+        byte[] composed;
+        if (overwrite) {
+            int skip = Math.min(tail.length, newPcm.length);
+            byte[] tailAfter = java.util.Arrays.copyOfRange(tail, skip, tail.length);
+            composed = new byte[head.length + newPcm.length + tailAfter.length];
+            System.arraycopy(head, 0, composed, 0, head.length);
+            System.arraycopy(newPcm, 0, composed, head.length, newPcm.length);
+            System.arraycopy(tailAfter, 0, composed, head.length + newPcm.length, tailAfter.length);
+        } else {
+            composed = new byte[head.length + newPcm.length + tail.length];
+            System.arraycopy(head, 0, composed, 0, head.length);
+            System.arraycopy(newPcm, 0, composed, head.length, newPcm.length);
+            System.arraycopy(tail, 0, composed, head.length + newPcm.length, tail.length);
+        }
+
+        try (ByteArrayInputStream bais = new ByteArrayInputStream(composed);
+             AudioInputStream ais = new AudioInputStream(bais, fmt, composed.length / fmt.getFrameSize());
+             ByteArrayOutputStream wavOut = new ByteArrayOutputStream()) {
+            AudioSystem.write(ais, AudioFileFormat.Type.WAVE, wavOut);
+            return wavOut.toByteArray();
+        }
+    }
+
+    private void cmdPreviewPlayActionPerformed(java.awt.event.ActionEvent evt) {
+        try {
+            byte[] wav = mergeWAVs(this.memoParts);
+            if (wav == null) return;
+            ByteArrayInputStream in = new ByteArrayInputStream(wav);
+            AudioInputStream ais = AudioSystem.getAudioInputStream(in);
+            if (previewClip != null) { try { previewClip.stop(); previewClip.close(); } catch (Exception ignore) {} }
+            previewClip = AudioSystem.getClip();
+            previewClip.open(ais);
+            long len = previewClip.getMicrosecondLength();
+            long pos = (long)(insertCursorFraction * len);
+            previewClip.setMicrosecondPosition(pos);
+            previewClip.addLineListener(ev -> {
+                try {
+                    if (ev.getType() == javax.sound.sampled.LineEvent.Type.STOP ||
+                        ev.getType() == javax.sound.sampled.LineEvent.Type.CLOSE) {
+                        javax.swing.SwingUtilities.invokeLater(() -> {
+                            if (previewTimer != null) {
+                                try { previewTimer.stop(); } catch (Exception ignore) {}
+                            }
+                            updateControlsEnabled();
+                        });
+                    }
+                } catch (Exception ignore) {}
+            });
+            previewClip.start();
+            // start timer to advance playhead
+            previewTimer = new javax.swing.Timer(200, e -> {
+                try {
+                    if (previewClip != null && previewClip.isOpen() && previewClip.getMicrosecondLength() > 0) {
+                        double frac = previewClip.getMicrosecondPosition() / (double) previewClip.getMicrosecondLength();
+                        waveformView.setPlayheadFraction(frac);
+                    }
+                } catch (Exception ignore) {}
+            });
+            previewTimer.start();
+            updateControlsEnabled();
+        } catch (Exception ex) {
+            log.warn("Preview play failed", ex);
+        }
+    }
+
+    private void cmdPreviewStopActionPerformed(java.awt.event.ActionEvent evt) {
+        if (previewClip != null) {
+            try { previewClip.stop(); previewClip.close(); } catch (Exception ignore) {}
+            previewClip = null;
+        }
+        if (previewTimer != null) {
+            try { previewTimer.stop(); } catch (Exception ignore) {}
+            previewTimer = null;
+        }
+        updateControlsEnabled();
+    }
+
+    private void cmdUndoTakeActionPerformed(java.awt.event.ActionEvent evt) {
+        if (previewClip != null) {
+            try { previewClip.stop(); previewClip.close(); } catch (Exception ignore) {}
+            previewClip = null;
+        }
+        if (previewTimer != null) {
+            try { previewTimer.stop(); } catch (Exception ignore) {}
+            previewTimer = null;
+        }
+        if (undoStack.isEmpty()) {
+            return;
+        }
+        byte[] previous = undoStack.pop();
+        this.memoParts.clear();
+        this.memoParts.add(previous);
+        refreshWaveform();
+        updateInfoLabel();
+        updateControlsEnabled();
+    }
+
+    private void updateControlsEnabled() {
+        boolean playing = false;
+        try {
+            playing = previewClip != null && previewClip.isRunning();
+        } catch (Exception ignore) {}
+        // Disable record during preview playback
+        cmdRecord.setEnabled(!playing);
+        // Device selection disabled while recording or preview playing
+        cmbDevices.setEnabled(!isRecording && !playing);
+        // Editing mode disabled during recording/preview
+        rdoInsert.setEnabled(!isRecording && !playing);
+        rdoOverwrite.setEnabled(!isRecording && !playing);
+        // Preview play disabled while recording or already playing
+        cmdPreviewPlay.setEnabled(!isRecording && !playing);
+        // Preview stop only enabled when playing
+        cmdPreviewStop.setEnabled(playing);
+        // Undo disabled while recording/preview to prevent conflicts
+        cmdUndoTake.setEnabled(!isRecording && !playing && !undoStack.isEmpty());
+        // Save disabled during recording/preview
+        cmdAddDocument.setEnabled(!isRecording && !playing);
+        // Status label
+        if (lblState != null) {
+            if (isRecording) {
+                lblState.setText("Aufnahme läuft …");
+            } else if (playing) {
+                lblState.setText("Vorschau läuft …");
+            } else {
+                lblState.setText("Bereit");
+                // ensure playhead reflects cursor when idle
+                if (waveformView != null && totalLengthMicros > 0) {
+                    waveformView.setPlayheadFraction(insertCursorFraction);
+                }
+            }
+        }
+    }
+
+    // Allow external caller to set default edit mode
+    public void setEditModeOverwrite(boolean overwrite) {
+        if (overwrite) {
+            rdoOverwrite.setSelected(true);
+        } else {
+            rdoInsert.setSelected(true);
+        }
+        updateControlsEnabled();
+    }
+
+    private void refreshWaveform() {
+        try {
+            if (this.waveformView == null) return;
+            if (this.memoParts.isEmpty()) {
+                this.waveformView.setWaveform(new float[0]);
+                this.totalLengthMicros = 0L;
+                this.insertCursorFraction = 0.0;
+                this.waveformView.setPlayheadFraction(0.0);
+                return;
+            }
+            byte[] merged = mergeWAVs(this.memoParts);
+            // compute total length
+            try (ByteArrayInputStream b = new ByteArrayInputStream(merged);
+                 AudioInputStream ais = AudioSystem.getAudioInputStream(b)) {
+                AudioFormat f = ais.getFormat();
+                long frames = ais.getFrameLength();
+                if (frames > 0 && f.getFrameRate() > 0) {
+                    this.totalLengthMicros = (long)((frames / f.getFrameRate()) * 1_000_000L);
+                } else {
+                    this.totalLengthMicros = 0L;
+                }
+            } catch (Exception ignore) { this.totalLengthMicros = 0L; }
+
+            float[] peaks = com.jdimension.jlawyer.client.editors.documents.viewer.WaveformPanel.computePeaks(merged, 1200);
+            this.waveformView.setWaveform(peaks);
+            // Keep cursor position; default to end for append mode
+            if (Double.isNaN(this.insertCursorFraction)) this.insertCursorFraction = 1.0;
+            this.waveformView.setPlayheadFraction(this.insertCursorFraction);
+            updateInfoLabel();
+        } catch (Throwable t) {
+            try { this.waveformView.setWaveform(new float[0]); } catch (Throwable ignore) {}
+        }
     }
 
     private void updateInfoLabel() {
@@ -1214,7 +1535,14 @@ public class AddVoiceMemoDialog extends javax.swing.JDialog {
         for(byte[] bytes: this.memoParts) {
             byteCount += bytes.length;
         }
-        this.lblInfo.setText(this.memoParts.size() + " Clip(s), insgesamt " + FileUtils.getFileSizeHumanReadable(byteCount));
+        String base = this.memoParts.size() + " Clip(s), insgesamt " + FileUtils.getFileSizeHumanReadable(byteCount);
+        if (totalLengthMicros > 0) {
+            long posMicros = (long) (insertCursorFraction * totalLengthMicros);
+            long minutes = (posMicros / 1_000_000L) / 60L;
+            long seconds = (posMicros / 1_000_000L) % 60L;
+            base += String.format("  |  Cursor: %02d:%02d", minutes, seconds);
+        }
+        this.lblInfo.setText(base);
     }
     
     public void setExistingAudio(byte[] existingAudio, String fileName) {
@@ -1256,6 +1584,8 @@ public class AddVoiceMemoDialog extends javax.swing.JDialog {
 
             // Button-Text anpassen
             this.cmdAddDocument.setText("Aufnahme aktualisieren");
+            // Update waveform and metrics
+            refreshWaveform();
         } catch (Exception e) {
             log.error("Error setting existing audio", e);
             JOptionPane.showMessageDialog(this, 
@@ -1272,6 +1602,14 @@ public class AddVoiceMemoDialog extends javax.swing.JDialog {
 
     @Override
     public void dispose() {
+        if (previewClip != null) {
+            try { previewClip.stop(); previewClip.close(); } catch (Exception ignore) {}
+            previewClip = null;
+        }
+        if (previewTimer != null) {
+            try { previewTimer.stop(); } catch (Exception ignore) {}
+            previewTimer = null;
+        }
         // Aufnahme stoppen falls noch aktiv
         if (isRecording) {
             stopRecording();
