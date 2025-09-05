@@ -108,17 +108,18 @@ class WeekDisplayStrategy implements DisplayStrategy {
         gbc.gridy = 0;
         gbc.fill = GridBagConstraints.BOTH;
         for (int i = 0; i < 7; i++) {
-            final Date dayDate = c.getTime();
-            days[i] = new DayPanel(parent.getOwner(), dayDate, 0.02f);
+            days[i] = new DayPanel(parent.getOwner(), c.getTime(), 0.02f);
             dayHeaders.add(days[i].getHeaderPanel());
             // Single-click on header switches to day view
             days[i].getHeaderPanel().setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
+            final DayPanel panelRef = days[i];
             days[i].getHeaderPanel().addMouseListener(new MouseAdapter() {
                 @Override
                 public void mouseClicked(MouseEvent e) {
                     if (e.getButton() == MouseEvent.BUTTON1) {
-                        parent.getOwner().setSelectedDay(dayDate);
-                        parent.getOwner().setDisplayStrategy(Type.DAY, dayDate);
+                        Date current = panelRef.getDate();
+                        parent.getOwner().setSelectedDay(current);
+                        parent.getOwner().setDisplayStrategy(Type.DAY, current);
                         e.consume();
                     }
                 }
