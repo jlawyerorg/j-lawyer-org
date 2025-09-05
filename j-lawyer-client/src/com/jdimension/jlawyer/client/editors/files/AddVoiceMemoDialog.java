@@ -763,6 +763,14 @@ public class AddVoiceMemoDialog extends javax.swing.JDialog {
     private void initComponents() {
 
         btGrpReviews = new javax.swing.ButtonGroup();
+        btGrpModes = new javax.swing.ButtonGroup();
+        lblState = new javax.swing.JLabel();
+        rdoInsert = new javax.swing.JRadioButton();
+        rdoOverwrite = new javax.swing.JRadioButton();
+        cmdPreviewPlay = new javax.swing.JButton();
+        cmdPreviewStop = new javax.swing.JButton();
+        cmdUndoTake = new javax.swing.JButton();
+        waveformView = new com.jdimension.jlawyer.client.editors.documents.viewer.WaveformPanel();
         cmdCancel = new javax.swing.JButton();
         cmdAddDocument = new javax.swing.JButton();
         jPanel2 = new javax.swing.JPanel();
@@ -771,15 +779,38 @@ public class AddVoiceMemoDialog extends javax.swing.JDialog {
         cmdRecord = new javax.swing.JButton();
         cmbDevices = new javax.swing.JComboBox<>();
         lblInfo = new javax.swing.JLabel();
-        lblState = new javax.swing.JLabel();
-        waveformView = new com.jdimension.jlawyer.client.editors.documents.viewer.WaveformPanel();
-        rdoInsert = new javax.swing.JRadioButton();
-        rdoOverwrite = new javax.swing.JRadioButton();
-        cmdPreviewPlay = new javax.swing.JButton();
-        cmdPreviewStop = new javax.swing.JButton();
-        cmdUndoTake = new javax.swing.JButton();
 
         setDefaultCloseOperation(javax.swing.WindowConstants.DISPOSE_ON_CLOSE);
+
+        lblState.setText(" ");
+
+        rdoInsert.setText("Einfügen am Cursor");
+
+        rdoOverwrite.setText("Überschreiben ab Cursor");
+
+        cmdPreviewPlay.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/1rightarrow.png"))); // NOI18N
+        cmdPreviewPlay.setToolTipText("Abspielen");
+        cmdPreviewPlay.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                cmdPreviewPlayActionPerformed(evt);
+            }
+        });
+
+        cmdPreviewStop.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons16/material/stop_20dp_0E72B5.png"))); // NOI18N
+        cmdPreviewStop.setToolTipText("Stop");
+        cmdPreviewStop.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                cmdPreviewStopActionPerformed(evt);
+            }
+        });
+
+        cmdUndoTake.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons16/material/undo_20dp_0E72B5.png"))); // NOI18N
+        cmdUndoTake.setToolTipText("Letzte Aufnahme rückgängig");
+        cmdUndoTake.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                cmdUndoTakeActionPerformed(evt);
+            }
+        });
 
         cmdCancel.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/cancel.png"))); // NOI18N
         cmdCancel.setText("Verwerfen");
@@ -844,68 +875,39 @@ public class AddVoiceMemoDialog extends javax.swing.JDialog {
         cmbDevices.setModel(new javax.swing.DefaultComboBoxModel<>(new String[] { "Item 1", "Item 2", "Item 3", "Item 4" }));
 
         lblInfo.setText("info");
-        lblState.setText(" ");
-
-        rdoInsert.setText("Einfügen am Cursor");
-        rdoOverwrite.setText("Überschreiben ab Cursor");
-
-        cmdPreviewPlay.setText("Play");
-        cmdPreviewPlay.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                cmdPreviewPlayActionPerformed(evt);
-            }
-        });
-        cmdPreviewStop.setText("Stop");
-        cmdPreviewStop.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                cmdPreviewStopActionPerformed(evt);
-            }
-        });
-
-        cmdUndoTake.setText("Undo");
-        cmdUndoTake.setToolTipText("Letzte Aufnahme rückgängig");
-        cmdUndoTake.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                cmdUndoTakeActionPerformed(evt);
-            }
-        });
 
         org.jdesktop.layout.GroupLayout layout = new org.jdesktop.layout.GroupLayout(getContentPane());
         getContentPane().setLayout(layout);
         layout.setHorizontalGroup(
             layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
             .add(jPanel2, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-            .add(layout.createSequentialGroup()
-                .add(layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
-                    .add(layout.createSequentialGroup()
-                        .addContainerGap()
-                        .add(layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
-                            .add(org.jdesktop.layout.GroupLayout.TRAILING, layout.createSequentialGroup()
-                                .add(0, 316, Short.MAX_VALUE)
-                                .add(cmdAddDocument)
-                                .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
-                                .add(cmdCancel))
-                            .add(layout.createSequentialGroup()
-                                .add(cmdRecord)
-                                .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                                .add(cmbDevices, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE))
-                            .add(layout.createSequentialGroup()
-                                .add(rdoInsert)
-                                .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
-                                .add(rdoOverwrite)
-                                .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                                .add(cmdPreviewPlay)
-                                .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
-                                .add(cmdPreviewStop)
-                                .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
-                                .add(cmdUndoTake))
-                            .add(layout.createSequentialGroup()
-                                .add(waveformView, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))))
-                    .add(layout.createSequentialGroup()
+            .add(org.jdesktop.layout.GroupLayout.TRAILING, layout.createSequentialGroup()
+                .addContainerGap()
+                .add(layout.createParallelGroup(org.jdesktop.layout.GroupLayout.TRAILING)
+                    .add(org.jdesktop.layout.GroupLayout.LEADING, layout.createSequentialGroup()
+                        .add(cmdRecord)
+                        .addPreferredGap(org.jdesktop.layout.LayoutStyle.UNRELATED)
+                        .add(rdoInsert)
+                        .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
+                        .add(rdoOverwrite)
+                        .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                        .add(cmbDevices, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE))
+                    .add(org.jdesktop.layout.GroupLayout.LEADING, waveformView, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 738, Short.MAX_VALUE)
+                    .add(org.jdesktop.layout.GroupLayout.LEADING, layout.createSequentialGroup()
                         .add(12, 12, 12)
-                        .add(lblState, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                        .add(lblState, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
                     .add(layout.createSequentialGroup()
-                        .add(12, 12, 12)
+                        .add(0, 0, Short.MAX_VALUE)
+                        .add(cmdAddDocument)
+                        .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
+                        .add(cmdCancel))
+                    .add(layout.createSequentialGroup()
+                        .add(cmdPreviewPlay)
+                        .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
+                        .add(cmdPreviewStop)
+                        .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
+                        .add(cmdUndoTake)
+                        .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
                         .add(lblInfo, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)))
                 .addContainerGap())
         );
@@ -916,20 +918,20 @@ public class AddVoiceMemoDialog extends javax.swing.JDialog {
                 .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
                 .add(layout.createParallelGroup(org.jdesktop.layout.GroupLayout.BASELINE)
                     .add(cmdRecord)
-                    .add(cmbDevices, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE))
-                .addPreferredGap(org.jdesktop.layout.LayoutStyle.UNRELATED)
-                .add(layout.createParallelGroup(org.jdesktop.layout.GroupLayout.BASELINE)
+                    .add(cmbDevices, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
                     .add(rdoInsert)
-                    .add(rdoOverwrite)
-                    .add(cmdPreviewPlay)
-                    .add(cmdPreviewStop)
-                    .add(cmdUndoTake))
-                .addPreferredGap(org.jdesktop.layout.LayoutStyle.UNRELATED)
-                .add(waveformView, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 80, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
-                .addPreferredGap(org.jdesktop.layout.LayoutStyle.UNRELATED)
+                    .add(rdoOverwrite))
+                .add(18, 18, 18)
                 .add(lblState)
                 .addPreferredGap(org.jdesktop.layout.LayoutStyle.UNRELATED)
-                .add(lblInfo)
+                .add(waveformView, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 98, Short.MAX_VALUE)
+                .addPreferredGap(org.jdesktop.layout.LayoutStyle.UNRELATED)
+                .add(layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING, false)
+                    .add(layout.createParallelGroup(org.jdesktop.layout.GroupLayout.BASELINE)
+                        .add(cmdPreviewPlay)
+                        .add(cmdPreviewStop)
+                        .add(cmdUndoTake))
+                    .add(lblInfo, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 28, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE))
                 .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                 .add(layout.createParallelGroup(org.jdesktop.layout.GroupLayout.BASELINE)
                     .add(cmdCancel)
@@ -1169,8 +1171,8 @@ public class AddVoiceMemoDialog extends javax.swing.JDialog {
         });
     }
     // Variables declaration - do not modify//GEN-BEGIN:variables
-    private javax.swing.ButtonGroup btGrpReviews;
     private javax.swing.ButtonGroup btGrpModes;
+    private javax.swing.ButtonGroup btGrpReviews;
     private javax.swing.JComboBox<String> cmbDevices;
     private javax.swing.JButton cmdAddDocument;
     private javax.swing.JButton cmdCancel;
