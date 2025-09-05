@@ -255,7 +255,6 @@ public class DayContentPanel extends JPanel {
 
             @Override
             public void mouseEntered(MouseEvent e) {
-                final JCalendar calendar = DayContentPanel.this.owner.getOwner();
                 if (calendar.getDisplayStrategy() == Type.MONTH) {
                     hoverMonthCell = true;
                     calendar.validate();
