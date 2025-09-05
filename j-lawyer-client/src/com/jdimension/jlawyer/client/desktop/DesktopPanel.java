@@ -728,8 +728,6 @@ public class DesktopPanel extends javax.swing.JPanel implements ThemeableEditor,
 
     private Image backgroundImage = null;
 
-    private boolean initializing = false;
-    
     private transient Timer reviewsTimer=null;
     private transient Timer lastChangedTimer=null;
     
@@ -741,10 +739,9 @@ public class DesktopPanel extends javax.swing.JPanel implements ThemeableEditor,
     private transient Timer timer11=null;
 
     /**
-     * Creates new form MainPanel
+     * Creates new form DesktopPanel
      */
     public DesktopPanel() {
-        this.initializing = true;
         initComponents();
         
         this.lblNewsStatus.setText(" ");
@@ -783,8 +780,6 @@ public class DesktopPanel extends javax.swing.JPanel implements ThemeableEditor,
         updateCurrentDay();
         
         this.jSplitPane1.setDividerLocation(0.5d);
-
-        this.initializing = false;
 
         EventBroker b = EventBroker.getInstance();
         b.subscribeConsumer(this, Event.TYPE_UPDATE_APPLICATION);
