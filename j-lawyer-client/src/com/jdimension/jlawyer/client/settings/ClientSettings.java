@@ -717,6 +717,9 @@ public class ClientSettings {
     public static final String CONF_UI_SCALING="client.ui.scaling";
     public static final String CONF_UI_FONTSIZEOFFSET="client.ui.fontsizeoffset";
     
+    // Calendar UI
+    public static final String CONF_CALENDAR_WEEKVIEW_WORKWEEK = "client.calendar.weekview.workweek";
+    
     public static final String CONF_DESKTOP_MYAPPOINTMENTS_HEIGHT="client.desktop.myappointments.height";
     public static final String CONF_DESKTOP_MYAPPOINTMENTS_WIDTH="client.desktop.myappointments.width";
     public static final String CONF_DESKTOP_MYAPPOINTMENTS_X="client.desktop.myappointments.x";
