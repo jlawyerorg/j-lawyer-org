@@ -193,7 +193,7 @@ class WeekDisplayStrategy implements DisplayStrategy {
             display();
             parent.getOwner().getHeaderPanel().getIntervalLabel().setText(getDisplayInterval());
         });
-        content.setCorner(JScrollPane.UPPER_LEFT_CORNER, togWorkweek);
+        content.setCorner(ScrollPaneConstants.UPPER_LEFT_CORNER, togWorkweek);
 
         // Do not intercept mouse wheel here: allow vertical scrolling in the viewport.
         // Week navigation via wheel remains handled by ContentPanel when events are not consumed
