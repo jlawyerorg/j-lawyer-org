@@ -91,9 +91,10 @@ public class WaveformPanel extends JPanel {
                 }
             }
 
-            // Playhead
+            // Playhead (ensure visible even at fraction 0)
             g2.setColor(new Color(200, 30, 30));
             int x = (int) Math.round(playhead * w);
+            x = Math.max(1, Math.min(w - 1, x));
             g2.drawLine(x, 0, x, h);
         } finally {
             g2.dispose();
@@ -158,4 +159,3 @@ public class WaveformPanel extends JPanel {
                 && f.isBigEndian() == false;
     }
 }
-

@@ -705,6 +705,7 @@ public class AddVoiceMemoDialog extends javax.swing.JDialog {
     private double insertCursorFraction = 1.0; // default to end
     private long totalLengthMicros = 0L;
     private javax.sound.sampled.Clip previewClip;
+    private boolean previewEnabled = true;
     private javax.swing.Timer previewTimer;
     private java.util.ArrayDeque<byte[]> undoStack = new java.util.ArrayDeque<>();
 
@@ -732,6 +733,13 @@ public class AddVoiceMemoDialog extends javax.swing.JDialog {
             this.waveformView.setSeekListener(fraction -> {
                 insertCursorFraction = Math.min(1.0, Math.max(0.0, fraction));
                 this.waveformView.setPlayheadFraction(insertCursorFraction);
+                // If preview is open, seek immediately to clicked position
+                try {
+                    if (previewClip != null && previewClip.isOpen() && previewClip.getMicrosecondLength() > 0) {
+                        long target = (long) (previewClip.getMicrosecondLength() * insertCursorFraction);
+                        previewClip.setMicrosecondPosition(target);
+                    }
+                } catch (Exception ignore) {}
                 updateInfoLabel();
             });
         }
@@ -1368,6 +1376,15 @@ public class AddVoiceMemoDialog extends javax.swing.JDialog {
     }
 
     private void cmdPreviewPlayActionPerformed(java.awt.event.ActionEvent evt) {
+        if (!previewEnabled) {
+            return; // Preview disabled by caller
+        }
+        // Avoid replay while already running
+        try {
+            if (previewClip != null && previewClip.isRunning()) {
+                return;
+            }
+        } catch (Exception ignore) {}
         try {
             byte[] wav = mergeWAVs(this.memoParts);
             if (wav == null) return;
@@ -1385,14 +1402,49 @@ public class AddVoiceMemoDialog extends javax.swing.JDialog {
             previewClip.open(ais);
             long len = previewClip.getMicrosecondLength();
             long pos = (long)(insertCursorFraction * len);
+            // If cursor is at or beyond the end, wrap to start
+            if (insertCursorFraction >= 0.999 || pos >= Math.max(0, len - 1000)) {
+                insertCursorFraction = 0.0;
+                pos = 0L;
+                try {
+                    if (waveformView != null) waveformView.setPlayheadFraction(0.0);
+                } catch (Exception ignore) {}
+                updateInfoLabel();
+            }
             previewClip.setMicrosecondPosition(pos);
             previewClip.addLineListener(ev -> {
                 try {
+                    if (ev.getType() == javax.sound.sampled.LineEvent.Type.START) {
+                        javax.swing.SwingUtilities.invokeLater(this::updateControlsEnabled);
+                    }
                     if (ev.getType() == javax.sound.sampled.LineEvent.Type.STOP ||
                         ev.getType() == javax.sound.sampled.LineEvent.Type.CLOSE) {
+                        boolean ended = false;
+                        try {
+                            if (previewClip != null && previewClip.getMicrosecondLength() > 0) {
+                                long len2 = previewClip.getMicrosecondLength();
+                                long pos2 = previewClip.getMicrosecondPosition();
+                                ended = pos2 >= Math.max(0, len2 - 10_000); // within 10ms of end
+                            }
+                        } catch (Exception ignore) {}
+                        final boolean fEnded = ended;
                         javax.swing.SwingUtilities.invokeLater(() -> {
                             if (previewTimer != null) {
                                 try { previewTimer.stop(); } catch (Exception ignore) {}
+                            }
+                            if (fEnded) {
+                                // If playback reached the end naturally, prepare for wrap from start
+                                insertCursorFraction = 0.0;
+                                try { if (waveformView != null) waveformView.setPlayheadFraction(0.0); } catch (Exception ignore) {}
+                                updateInfoLabel();
+                                // Fully close/release the clip to avoid stuck active state
+                                try {
+                                    if (previewClip != null) {
+                                        previewClip.stop();
+                                        previewClip.close();
+                                    }
+                                } catch (Exception ignore) {}
+                                previewClip = null;
                             }
                             updateControlsEnabled();
                         });
@@ -1458,8 +1510,7 @@ public class AddVoiceMemoDialog extends javax.swing.JDialog {
     private void updateControlsEnabled() {
         boolean playing = false;
         try {
-            playing = previewClip != null && previewClip.isRunning();
-            System.out.println("playing: " + playing);
+            playing = previewEnabled && previewClip != null && previewClip.isRunning();
         } catch (Exception ignore) {
             log.error(ignore);
         }
@@ -1471,9 +1522,9 @@ public class AddVoiceMemoDialog extends javax.swing.JDialog {
         rdoInsert.setEnabled(!isRecording && !playing);
         rdoOverwrite.setEnabled(!isRecording && !playing);
         // Preview play disabled while recording or already playing
-        cmdPreviewPlay.setEnabled(!isRecording && !playing);
+        cmdPreviewPlay.setEnabled(previewEnabled && !isRecording && !playing);
         // Preview stop only enabled when playing
-        cmdPreviewStop.setEnabled(playing);
+        cmdPreviewStop.setEnabled(previewEnabled && playing);
         // Undo disabled while recording/preview to prevent conflicts
         cmdUndoTake.setEnabled(!isRecording && !playing && !undoStack.isEmpty());
         // Save disabled during recording/preview
@@ -1482,7 +1533,7 @@ public class AddVoiceMemoDialog extends javax.swing.JDialog {
         if (lblState != null) {
             if (isRecording) {
                 lblState.setText("Aufnahme läuft …");
-            } else if (playing) {
+            } else if (previewEnabled && playing) {
                 lblState.setText("Vorschau läuft …");
             } else {
                 lblState.setText("Bereit");
@@ -1492,6 +1543,28 @@ public class AddVoiceMemoDialog extends javax.swing.JDialog {
                 }
             }
         }
+    }
+
+    // Enable or disable the in-dialog preview feature
+    public void setPreviewEnabled(boolean enabled) {
+        this.previewEnabled = enabled;
+        // Hide preview controls if disabled
+        try {
+            cmdPreviewPlay.setVisible(enabled);
+            cmdPreviewStop.setVisible(enabled);
+        } catch (Throwable ignore) {}
+        if (!enabled) {
+            // Stop any running preview
+            if (previewClip != null) {
+                try { previewClip.stop(); previewClip.close(); } catch (Exception ignore) {}
+                previewClip = null;
+            }
+            if (previewTimer != null) {
+                try { previewTimer.stop(); } catch (Exception ignore) {}
+                previewTimer = null;
+            }
+        }
+        updateControlsEnabled();
     }
 
     // Allow external caller to set default edit mode
@@ -1513,8 +1586,6 @@ public class AddVoiceMemoDialog extends javax.swing.JDialog {
                 this.insertCursorFraction = 0.0;
                 this.waveformView.setPlayheadFraction(0.0);
                 return;
-            } else {
-                this.insertCursorFraction = 1.0;
             }
             byte[] merged = mergeWAVs(this.memoParts);
             // compute total length
@@ -1573,6 +1644,8 @@ public class AddVoiceMemoDialog extends javax.swing.JDialog {
 
             // Bestehende Aufnahme in memoParts hinzufügen
             this.memoParts.add(existingAudio);
+            // Beim Fortsetzen: Cursor standardmäßig ans Ende
+            this.insertCursorFraction = 1.0;
 
             // Dateinamen setzen und Feld deaktivieren
             if (fileName != null && !fileName.isEmpty()) {
@@ -1597,6 +1670,11 @@ public class AddVoiceMemoDialog extends javax.swing.JDialog {
             
             // Update waveform and metrics
             refreshWaveform();
+            // Sichtbare Positionslinie sicherstellen
+            if (this.waveformView != null) {
+                this.waveformView.setPlayheadFraction(this.insertCursorFraction);
+            }
+            updateControlsEnabled();
         } catch (Exception e) {
             log.error("Error setting existing audio", e);
             JOptionPane.showMessageDialog(this, 
