@@ -993,9 +993,12 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
                         applyConflictRenderers();
                         attachReviewsModelListener();
                         recomputeConflictsAsync();
-                    } catch (Throwable ignore) {}
+                    } catch (Throwable ignore) {
+                        log.error(ignore);
+                    }
                 });
             } catch (Throwable t) {
+                log.error(t);
             }
         });
         // Also track row-level changes to recompute conflicts
@@ -4432,6 +4435,7 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
                     mnuOpenCalendarDay.setVisible(true);
                 }
             } catch (Throwable ignore) {
+                log.error(ignore);
             }
             this.reviewsPopup.show(evt.getComponent(), evt.getX(), evt.getY());
         }
@@ -4449,7 +4453,7 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
             javax.swing.table.TableCellRenderer base = col.getCellRenderer();
             if (!(base instanceof ConflictAwareUserRenderer)) {
                 base = new com.jdimension.jlawyer.client.configuration.UserTableCellRenderer();
-                col.setCellRenderer(new ConflictAwareUserRenderer((javax.swing.table.TableCellRenderer) base));
+                col.setCellRenderer(new ConflictAwareUserRenderer(base));
             }
         } catch (Throwable t) {
             // ignore if column not available yet
@@ -4513,6 +4517,7 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
                     }
                 }
             } catch (Throwable t) {
+                log.error(t);
             }
             return c;
         }
@@ -4541,7 +4546,7 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
             String caseInfo = (c.getArchiveFileKey() != null) ? (c.getArchiveFileKey().getFileNumber() + " " + c.getArchiveFileKey().getName()) : "";
             sb.append("<li><span style='color:red'>").append(time).append("</span> ");
             sb.append(c.getSummary() == null ? "" : c.getSummary());
-            if (!caseInfo.isEmpty()) sb.append(" (" + caseInfo + ")");
+            if (!caseInfo.isEmpty()) sb.append(" (").append(caseInfo).append(")");
             sb.append("</li>");
         }
         sb.append("</ul>");
@@ -4629,7 +4634,9 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
                                     return dx.compareTo(dy);
                                 });
                             }
-                        } catch (Throwable ignore) {}
+                        } catch (Throwable ignore) {
+                            log.error(ignore);
+                        }
                     }
                 }
                 // De-duplicate and sort conflict lists to avoid duplicates in tooltips
@@ -4654,7 +4661,9 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
                             return dx.compareTo(dy);
                         });
                     }
-                } catch (Throwable ignore) {}
+                } catch (Throwable ignore) {
+                    log.error(ignore);
+                }
 
                 // swap state and repaint
                 this.conflictingEventIds = newConflictIds;
@@ -4682,6 +4691,7 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
                 recomputeConflictsAsync();
             });
         } catch (Throwable t) {
+            log.error(t);
         }
     }
 
