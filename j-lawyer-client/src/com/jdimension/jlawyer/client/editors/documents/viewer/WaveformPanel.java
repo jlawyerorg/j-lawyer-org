@@ -23,6 +23,10 @@ public class WaveformPanel extends JPanel {
     private float[] peaks = new float[0];
     private double playhead = 0.0; // 0..1
     private SeekListener seekListener;
+    // Selection support (fractions 0..1, NaN if none)
+    private double selStart = Double.NaN;
+    private double selEnd = Double.NaN;
+    private boolean selectionEnabled = false;
 
     public WaveformPanel() {
         setOpaque(true);
@@ -37,8 +41,44 @@ public class WaveformPanel extends JPanel {
                 if (seekListener != null) seekListener.onSeek(fraction);
                 setPlayheadFraction(fraction);
             }
-            @Override public void mousePressed(MouseEvent e) { seekFrom(e); }
-            @Override public void mouseDragged(MouseEvent e) { seekFrom(e); }
+            private double anchor = Double.NaN;
+            @Override public void mousePressed(MouseEvent e) {
+                if (peaks == null || peaks.length == 0) return;
+                if (!selectionEnabled) { seekFrom(e); return; }
+                int w = Math.max(1, getWidth());
+                anchor = Math.min(1.0, Math.max(0.0, e.getX() / (double) w));
+                // start selection
+                selStart = anchor;
+                selEnd = anchor;
+                // also move playhead to anchor
+                if (seekListener != null) seekListener.onSeek(anchor);
+                setPlayheadFraction(anchor);
+                repaint();
+            }
+            @Override public void mouseDragged(MouseEvent e) {
+                if (peaks == null || peaks.length == 0) return;
+                if (!selectionEnabled) { seekFrom(e); return; }
+                if (Double.isNaN(anchor)) return;
+                int w = Math.max(1, getWidth());
+                double f = Math.min(1.0, Math.max(0.0, e.getX() / (double) w));
+                selStart = Math.min(anchor, f);
+                selEnd = Math.max(anchor, f);
+                // Do not force playhead during drag beyond initial anchor
+                if (seekListener != null) seekListener.onSeek(playhead);
+                repaint();
+            }
+            @Override public void mouseReleased(MouseEvent e) {
+                if (!selectionEnabled) return;
+                // finalize selection; if tiny range, treat as a click (clear selection)
+                if (!Double.isNaN(selStart) && !Double.isNaN(selEnd)) {
+                    if (Math.abs(selEnd - selStart) < 0.002) { // <0.2% width => click
+                        clearSelection();
+                    }
+                }
+                anchor = Double.NaN;
+                if (seekListener != null) seekListener.onSeek(playhead);
+                repaint();
+            }
         };
         addMouseListener(mouse);
         addMouseMotionListener(mouse);
@@ -51,6 +91,13 @@ public class WaveformPanel extends JPanel {
     public void setWaveform(float[] peaks) {
         if (peaks == null) peaks = new float[0];
         this.peaks = Arrays.copyOf(peaks, peaks.length);
+        // keep any existing selection but clamp to [0,1]
+        if (selectionEnabled) {
+            if (!Double.isNaN(selStart)) selStart = Math.min(1.0, Math.max(0.0, selStart));
+            if (!Double.isNaN(selEnd)) selEnd = Math.min(1.0, Math.max(0.0, selEnd));
+        } else {
+            clearSelection();
+        }
         repaint();
     }
 
@@ -60,6 +107,22 @@ public class WaveformPanel extends JPanel {
             this.playhead = clamped;
             repaint();
         }
+    }
+
+    public boolean hasSelection() {
+        return selectionEnabled && !Double.isNaN(selStart) && !Double.isNaN(selEnd) && selEnd > selStart;
+    }
+
+    public double getSelectionStartFraction() { return hasSelection() ? selStart : Double.NaN; }
+    public double getSelectionEndFraction() { return hasSelection() ? selEnd : Double.NaN; }
+    public void clearSelection() { selStart = Double.NaN; selEnd = Double.NaN; repaint(); }
+
+    public void setSelectionEnabled(boolean enabled) {
+        this.selectionEnabled = enabled;
+        if (!enabled) {
+            clearSelection();
+        }
+        repaint();
     }
 
     @Override
@@ -89,6 +152,18 @@ public class WaveformPanel extends JPanel {
                     int amp = (int) Math.round(val * (h * 0.45));
                     g2.drawLine(x, mid - amp, x, mid + amp);
                 }
+            }
+
+            // Selection region (drawn over waveform, under playhead)
+            if (selectionEnabled && hasSelection()) {
+                int x1 = (int) Math.round(selStart * w);
+                int x2 = (int) Math.round(selEnd * w);
+                int x = Math.max(0, Math.min(w, Math.min(x1, x2)));
+                int width = Math.max(1, Math.min(w, Math.abs(x2 - x1)));
+                g2.setColor(new Color(14, 114, 181, 60));
+                g2.fillRect(x, 0, width, h);
+                g2.setColor(new Color(14, 114, 181, 120));
+                g2.drawRect(x, 0, width, h-1);
             }
 
             // Playhead (ensure visible even at fraction 0)
