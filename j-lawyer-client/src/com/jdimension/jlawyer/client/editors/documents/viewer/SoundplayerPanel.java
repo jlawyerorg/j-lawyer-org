@@ -981,6 +981,10 @@ public class SoundplayerPanel extends javax.swing.JPanel implements PreviewPanel
             // Ergebnis verarbeiten
             byte[] result = dlg.getMemoBytes();
             if (result == null) {
+                // Benutzer hat abgebrochen: ursprünglichen Inhalt wieder laden
+                try {
+                    showContent(this.documentId, this.content);
+                } catch (Exception ignore) {}
                 return;
             }
 
