@@ -668,6 +668,7 @@ import com.jdimension.jlawyer.client.editors.EditorsRegistry;
 import com.jdimension.jlawyer.client.editors.ThemeableEditor;
 import com.jdimension.jlawyer.client.editors.documents.SearchAndAssignDialog;
 import com.jdimension.jlawyer.client.editors.files.ArchiveFilePanel;
+import com.jdimension.jlawyer.client.editors.files.EditOrDuplicateEventDialog;
 import com.jdimension.jlawyer.client.events.EventBroker;
 import com.jdimension.jlawyer.client.events.ReviewUpdatedEvent;
 import com.jdimension.jlawyer.client.settings.ClientSettings;
@@ -930,6 +931,75 @@ public class CalendarPanel extends javax.swing.JPanel implements NewEventEntryCa
             }
         });
 
+        JMenuItem mnuEditEvent = new JMenuItem("Eintrag bearbeiten");
+        mnuEditEvent.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/edit.png")));
+        mnuEditEvent.setToolTipText("Kalendereintrag bearbeiten");
+        mnuEditEvent.addActionListener((java.awt.event.ActionEvent evt) -> {
+            Collection<CalendarEvent> selected = this.jCalendar.getSelectedCalendarEvents();
+            if (!selected.isEmpty()) {
+                CalendarEvent ce = selected.iterator().next();
+
+                if (ce.getEventId() == null) {
+                    JOptionPane.showMessageDialog(this, "Der Kalendereintrag ist ungültig und kann nicht bearbeitet werden (unbekannter Bezeichner).", com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
+                    return;
+                }
+
+                try {
+                    ClientSettings settings = ClientSettings.getInstance();
+                    JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
+                    CalendarServiceRemote calService = locator.lookupCalendarServiceRemote();
+
+                    // Load full review from server to edit
+                    ArchiveFileReviewsBean review = calService.getReview(ce.getEventId());
+
+                    EditOrDuplicateEventDialog dlg = new EditOrDuplicateEventDialog(
+                            EditOrDuplicateEventDialog.MODE_EDIT,
+                            EditorsRegistry.getInstance().getMainWindow(),
+                            true,
+                            ce.getCaseDto(),
+                            review,
+                            null // no reviews table in Calendar view
+                    );
+                    dlg.setVisible(true);
+
+                    // After dialog closes, reload the edited review and update UI
+                    try {
+                        ArchiveFileReviewsBean updated = calService.getReview(ce.getEventId());
+
+                        // keep cache current
+                        if (cachedEvents != null) {
+                            ArchiveFileReviewsBean toRemove = null;
+                            for (ArchiveFileReviewsBean r : cachedEvents) {
+                                if (updated != null && updated.getId() != null && updated.getId().equals(r.getId())) {
+                                    toRemove = r;
+                                    break;
+                                }
+                            }
+                            if (toRemove != null) {
+                                cachedEvents.remove(toRemove);
+                            }
+                            if (updated != null) {
+                                cachedEvents.add(updated);
+                            }
+                        }
+
+                        // replace visual event
+                        this.jCalendar.removeCalendarEvent(ce);
+                        if (updated != null) {
+                            this.addCalendarEvent(updated);
+                        }
+
+                    } catch (Exception e2) {
+                        log.warn("Could not refresh calendar event after editing", e2);
+                    }
+                } catch (Exception ex) {
+                    log.error("Error editing review", ex);
+                    JOptionPane.showMessageDialog(this, "Fehler beim Bearbeiten: " + ex.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
+                    EditorsRegistry.getInstance().clearStatus();
+                }
+            }
+        });
+
         JMenuItem mnuMarkEventAsDone = new JMenuItem("erledigt");
         mnuMarkEventAsDone.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/agt_action_success.png")));
         mnuMarkEventAsDone.setToolTipText("Kalendereintrag als erledigt markieren");
@@ -978,6 +1048,7 @@ public class CalendarPanel extends javax.swing.JPanel implements NewEventEntryCa
 
         popup = new JPopupMenu();
         popup.add(mnuOpenCase);
+        popup.add(mnuEditEvent);
         popup.add(mnuMarkEventAsDone);
 
         jCalendar = new JCalendar();

@@ -16,6 +16,7 @@
 package de.costache.calendar.ui.strategy;
 
 import com.jdimension.jlawyer.client.utils.ComponentUtils;
+import com.jdimension.jlawyer.client.settings.ClientSettings;
 import java.awt.BorderLayout;
 import java.awt.Dimension;
 import java.awt.GridLayout;
@@ -58,6 +59,11 @@ class WeekDisplayStrategy implements DisplayStrategy {
     private final DayPanel[] days = new DayPanel[7];
 
     private JSplitPane split = null;
+    private boolean workWeek = false;
+
+    private int getActiveDayCount() {
+        return workWeek ? 5 : 7;
+    }
 
     public WeekDisplayStrategy(final ContentPanel parent) {
         this.parent = parent;
@@ -73,7 +79,11 @@ class WeekDisplayStrategy implements DisplayStrategy {
         start.set(Calendar.DAY_OF_WEEK, start.getFirstDayOfWeek());
 
         Calendar end = CalendarUtil.getCalendar(start.getTime(), true);
-        end.add(Calendar.DATE, 7);
+        // load persisted preference
+        ClientSettings cs = ClientSettings.getInstance();
+        this.workWeek = "true".equalsIgnoreCase(cs.getConfiguration(ClientSettings.CONF_CALENDAR_WEEKVIEW_WORKWEEK, "false"));
+        int dayCount = getActiveDayCount();
+        end.add(Calendar.DATE, dayCount);
 
         calendar.getConfig().setIntervalStart(start);
         calendar.getConfig().setIntervalEnd(end);
@@ -81,7 +91,9 @@ class WeekDisplayStrategy implements DisplayStrategy {
         JPanel headersPanel = new JPanel(true);
         headersPanel.setLayout(new BorderLayout());
         headersPanel.setOpaque(false);
-        headersPanel.setPreferredSize(new Dimension(1440, 60));
+        // Allow the header to shrink with the viewport width; fix height only
+        headersPanel.setMinimumSize(new Dimension(0, 60));
+        headersPanel.setPreferredSize(new Dimension(0, 60));
 
         // Viewport panel: contains only the 7 day content columns (no hours column)
         // Use GridBagLayout so preferred heights of day panels (e.g., 1440) are honored for scrolling
@@ -102,12 +114,12 @@ class WeekDisplayStrategy implements DisplayStrategy {
 
         final Calendar c = CalendarUtil.copyCalendar(start, true);
         // Create containers for day headers (top) and day contents (center)
-        JPanel dayHeaders = new JPanel(new GridLayout(1, 7));
+        JPanel dayHeaders = new JPanel(new GridLayout(1, dayCount));
         dayHeaders.setOpaque(false);
         GridBagConstraints gbc = new GridBagConstraints();
         gbc.gridy = 0;
         gbc.fill = GridBagConstraints.BOTH;
-        for (int i = 0; i < 7; i++) {
+        for (int i = 0; i < dayCount; i++) {
             days[i] = new DayPanel(parent.getOwner(), c.getTime(), 0.02f);
             dayHeaders.add(days[i].getHeaderPanel());
             // Single-click on header switches to day view
@@ -163,6 +175,26 @@ class WeekDisplayStrategy implements DisplayStrategy {
         content.getViewport().setViewPosition(new Point(0, 500));
         content.getVerticalScrollBar().setUnitIncrement(16);
 
+        // Add 5-day workweek toggle in the upper-left corner (week view only)
+        javax.swing.JToggleButton togWorkweek = new javax.swing.JToggleButton("5T");
+        togWorkweek.setSelected(this.workWeek);
+        togWorkweek.setToolTipText("5-Tage-Woche anzeigen");
+        togWorkweek.setMargin(new java.awt.Insets(0, 2, 0, 2));
+        togWorkweek.addActionListener(e -> {
+            this.workWeek = togWorkweek.isSelected();
+            try {
+                ClientSettings.getInstance().setConfiguration(ClientSettings.CONF_CALENDAR_WEEKVIEW_WORKWEEK, Boolean.toString(this.workWeek));
+                ClientSettings.getInstance().saveConfiguration();
+            } catch (Exception ex) {
+                // ignore save failure, preference still applied for current session
+            }
+            // Re-init with new day count and redraw
+            init();
+            display();
+            parent.getOwner().getHeaderPanel().getIntervalLabel().setText(getDisplayInterval());
+        });
+        content.setCorner(JScrollPane.UPPER_LEFT_CORNER, togWorkweek);
+
         // Do not intercept mouse wheel here: allow vertical scrolling in the viewport.
         // Week navigation via wheel remains handled by ContentPanel when events are not consumed
         // (e.g., when hovering non-scrollable areas like the header).
@@ -180,6 +212,11 @@ class WeekDisplayStrategy implements DisplayStrategy {
         contentAllDay.setBorder(BorderFactory.createLineBorder(parent.getOwner().getConfig().getLineColor()));
         contentAllDay.setVerticalScrollBarPolicy(ScrollPaneConstants.VERTICAL_SCROLLBAR_ALWAYS);
         contentAllDay.getVerticalScrollBar().setUnitIncrement(16);
+        // Align all-day columns with timed grid by adding a left spacer equal to HoursPanel width
+        JPanel allDayRowHeaderSpacer = new JPanel(true);
+        allDayRowHeaderSpacer.setOpaque(false);
+        allDayRowHeaderSpacer.setPreferredSize(new Dimension(hoursPanel.getPreferredSize().width, 1));
+        contentAllDay.setRowHeaderView(allDayRowHeaderSpacer);
         
         this.split = new JSplitPane(JSplitPane.VERTICAL_SPLIT, displayPanel, contentAllDay);
         ComponentUtils.decorateSplitPane(split);
@@ -214,7 +251,8 @@ class WeekDisplayStrategy implements DisplayStrategy {
         calendar.getConfig().setIntervalEnd(end);
 
         final Calendar c = CalendarUtil.copyCalendar(start, true);
-        for (int i = 0; i < 7; i++) {
+        int dayCount = getActiveDayCount();
+        for (int i = 0; i < dayCount; i++) {
             days[i].setDate(c.getTime());
             c.add(Calendar.DATE, 1);
         }
@@ -229,12 +267,13 @@ class WeekDisplayStrategy implements DisplayStrategy {
         start.setTime(CalendarUtil.createInDays(start.getTime(), 7));
         start.set(Calendar.DAY_OF_WEEK, start.getFirstDayOfWeek());
         Calendar end = CalendarUtil.getCalendar(start.getTime(), true);
-        end.add(Calendar.DATE, 7);
+        end.add(Calendar.DATE, getActiveDayCount());
 
         calendar.getConfig().setIntervalStart(start);
         calendar.getConfig().setIntervalEnd(end);
         final Calendar c = CalendarUtil.copyCalendar(start, true);
-        for (int i = 0; i < 7; i++) {
+        int dayCount = getActiveDayCount();
+        for (int i = 0; i < dayCount; i++) {
             days[i].setDate(c.getTime());
             c.add(Calendar.DATE, 1);
         }
@@ -253,13 +292,14 @@ class WeekDisplayStrategy implements DisplayStrategy {
         Calendar start = CalendarUtil.getCalendar(date, true);
         start.set(Calendar.DAY_OF_WEEK, start.getFirstDayOfWeek());
         Calendar end = CalendarUtil.getCalendar(start.getTime(), true);
-        end.add(Calendar.DATE, 7);
+        end.add(Calendar.DATE, getActiveDayCount());
 
         calendar.getConfig().setIntervalStart(start);
         calendar.getConfig().setIntervalEnd(end);
 
         final Calendar c = CalendarUtil.copyCalendar(start, true);
-        for (int i = 0; i < 7; i++) {
+        int dayCount = getActiveDayCount();
+        for (int i = 0; i < dayCount; i++) {
             days[i].setDate(c.getTime());
             c.add(Calendar.DATE, 1);
         }
