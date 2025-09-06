@@ -984,7 +984,9 @@ public class SoundplayerPanel extends javax.swing.JPanel implements PreviewPanel
                 // Benutzer hat abgebrochen: ursprünglichen Inhalt wieder laden
                 try {
                     showContent(this.documentId, this.content);
-                } catch (Exception ignore) {}
+                } catch (Exception ignore) {
+                    log.error(ignore);
+                }
                 return;
             }
 

@@ -741,7 +741,9 @@ public class AddVoiceMemoDialog extends javax.swing.JDialog {
                         long target = (long) (previewClip.getMicrosecondLength() * insertCursorFraction);
                         previewClip.setMicrosecondPosition(target);
                     }
-                } catch (Exception ignore) {}
+                } catch (Exception ignore) {
+                    log.error(ignore);
+                }
                 updateInfoLabel();
                 updateControlsEnabled();
             });
@@ -751,7 +753,9 @@ public class AddVoiceMemoDialog extends javax.swing.JDialog {
             if (this.cmdDeleteSelection != null) {
                 this.cmdDeleteSelection.setIcon(createBlueXIcon(20, 20, new java.awt.Color(0x0E72B5)));
             }
-        } catch (Throwable ignore) {}
+        } catch (Throwable ignore) {
+            log.error(ignore);
+        }
 
         // Initial waveform if parts present
         refreshWaveform();
@@ -1453,10 +1457,18 @@ public class AddVoiceMemoDialog extends javax.swing.JDialog {
             try {
                 hasSelection = (waveformView != null && waveformView.hasSelection());
                 if (hasSelection) selectionStart = waveformView.getSelectionStartFraction();
-            } catch (Throwable ignore) {}
+            } catch (Throwable ignore) {
+                log.error(ignore);
+            }
             if (hasSelection && !Double.isNaN(selectionStart)) {
                 insertCursorFraction = Math.min(1.0, Math.max(0.0, selectionStart));
-                try { if (waveformView != null) waveformView.setPlayheadFraction(insertCursorFraction); } catch (Exception ignore) {}
+                try {
+                    if (waveformView != null) {
+                        waveformView.setPlayheadFraction(insertCursorFraction);
+                    }
+                } catch (Exception ignore) {
+                    log.error(ignore);
+                }
                 updateInfoLabel();
             }
 
@@ -1467,7 +1479,9 @@ public class AddVoiceMemoDialog extends javax.swing.JDialog {
                 pos = 0L;
                 try {
                     if (waveformView != null) waveformView.setPlayheadFraction(0.0);
-                } catch (Exception ignore) {}
+                } catch (Exception ignore) {
+                    log.error(ignore);
+                }
                 updateInfoLabel();
             }
             previewClip.setMicrosecondPosition(pos);
@@ -1485,7 +1499,9 @@ public class AddVoiceMemoDialog extends javax.swing.JDialog {
                                 long pos2 = previewClip.getMicrosecondPosition();
                                 ended = pos2 >= Math.max(0, len2 - 10_000); // within 10ms of end
                             }
-                        } catch (Exception ignore) {}
+                        } catch (Exception ignore) {
+                            log.error(ignore);
+                        }
                         if (previewStoppedAtSelection) {
                             ended = false; // selection-driven stop is not natural end
                         }
@@ -1500,7 +1516,9 @@ public class AddVoiceMemoDialog extends javax.swing.JDialog {
                                     previewClip.stop();
                                     previewClip.close();
                                 }
-                            } catch (Exception ignore) {}
+                            } catch (Exception ignore) {
+                                log.error(ignore);
+                            }
                             previewClip = null;
                             // If we stopped due to selection end, snap playhead to selection end for clear feedback
                             if (previewStoppedAtSelection) {
@@ -1513,7 +1531,9 @@ public class AddVoiceMemoDialog extends javax.swing.JDialog {
                                             updateInfoLabel();
                                         }
                                     }
-                                } catch (Throwable ignore) {}
+                                } catch (Throwable ignore) {
+                                    log.error(ignore);
+                                }
                             }
                             if (fEnded) {
                                 // If playback reached the end naturally, prepare for wrap from start
@@ -1544,9 +1564,13 @@ public class AddVoiceMemoDialog extends javax.swing.JDialog {
                                     previewClip.stop();
                                 }
                             }
-                        } catch (Throwable ignore) {}
+                        } catch (Throwable ignore) {
+                            log.error(ignore);
+                        }
                     }
-                } catch (Exception ignore) {}
+                } catch (Exception ignore) {
+                    log.error(ignore);
+                }
             });
             previewTimer.start();
             updateControlsEnabled();
@@ -1590,7 +1614,13 @@ public class AddVoiceMemoDialog extends javax.swing.JDialog {
         byte[] previous = undoStack.pop();
         this.memoParts.clear();
         this.memoParts.add(previous);
-        try { if (this.waveformView != null) this.waveformView.clearSelection(); } catch (Exception ignore) {}
+        try {
+            if (this.waveformView != null) {
+                this.waveformView.clearSelection();
+            }
+        } catch (Exception ignore) {
+            log.error(ignore);
+        }
         refreshWaveform();
         updateInfoLabel();
         updateControlsEnabled();
@@ -1600,11 +1630,20 @@ public class AddVoiceMemoDialog extends javax.swing.JDialog {
         if (isRecording) return;
         // Stop any preview first
         if (previewClip != null) {
-            try { previewClip.stop(); previewClip.close(); } catch (Exception ignore) {}
+            try {
+                previewClip.stop();
+                previewClip.close();
+            } catch (Exception ignore) {
+                log.error(ignore);
+            }
             previewClip = null;
         }
         if (previewTimer != null) {
-            try { previewTimer.stop(); } catch (Exception ignore) {}
+            try {
+                previewTimer.stop();
+            } catch (Exception ignore) {
+                log.error(ignore);
+            }
             previewTimer = null;
         }
 
@@ -1663,7 +1702,11 @@ public class AddVoiceMemoDialog extends javax.swing.JDialog {
             this.memoParts.add(newWav);
             // Set cursor to start of deletion region in new length
             this.insertCursorFraction = Math.min(1.0, Math.max(0.0, s));
-            try { waveformView.clearSelection(); } catch (Exception ignore) {}
+            try {
+                waveformView.clearSelection();
+            } catch (Exception ignore) {
+                log.error(ignore);
+            }
             refreshWaveform();
             updateControlsEnabled();
         } catch (Exception ex) {
@@ -1700,7 +1743,9 @@ public class AddVoiceMemoDialog extends javax.swing.JDialog {
             boolean hasSel = waveformView != null && waveformView.hasSelection();
             cmdDeleteSelection.setEnabled(!isRecording && !playing && hasSel);
             cmdDeleteSelection.setVisible(true);
-        } catch (Throwable ignore) {}
+        } catch (Throwable ignore) {
+            log.error(ignore);
+        }
         // Save disabled during recording/preview
         cmdAddDocument.setEnabled(!isRecording && !playing);
         // Status label
@@ -1726,15 +1771,26 @@ public class AddVoiceMemoDialog extends javax.swing.JDialog {
         try {
             cmdPreviewPlay.setVisible(enabled);
             cmdPreviewStop.setVisible(enabled);
-        } catch (Throwable ignore) {}
+        } catch (Throwable ignore) {
+            log.error(ignore);
+        }
         if (!enabled) {
             // Stop any running preview
             if (previewClip != null) {
-                try { previewClip.stop(); previewClip.close(); } catch (Exception ignore) {}
+                try {
+                    previewClip.stop();
+                    previewClip.close();
+                } catch (Exception ignore) {
+                    log.error(ignore);
+                }
                 previewClip = null;
             }
             if (previewTimer != null) {
-                try { previewTimer.stop(); } catch (Exception ignore) {}
+                try {
+                    previewTimer.stop();
+                } catch (Exception ignore) {
+                    log.error(ignore);
+                }
                 previewTimer = null;
             }
         }
@@ -1899,5 +1955,5 @@ public class AddVoiceMemoDialog extends javax.swing.JDialog {
 
         super.dispose();
     }
-
+    
 }
