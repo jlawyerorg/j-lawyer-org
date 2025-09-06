@@ -1373,7 +1373,14 @@ public class AddVoiceMemoDialog extends javax.swing.JDialog {
             if (wav == null) return;
             ByteArrayInputStream in = new ByteArrayInputStream(wav);
             AudioInputStream ais = AudioSystem.getAudioInputStream(in);
-            if (previewClip != null) { try { previewClip.stop(); previewClip.close(); } catch (Exception ignore) {} }
+            if (previewClip != null) {
+                try {
+                    previewClip.stop();
+                    previewClip.close();
+                } catch (Exception ignore) {
+                    log.error(ignore);
+                }
+            }
             previewClip = AudioSystem.getClip();
             previewClip.open(ais);
             long len = previewClip.getMicrosecondLength();
@@ -1411,7 +1418,12 @@ public class AddVoiceMemoDialog extends javax.swing.JDialog {
 
     private void cmdPreviewStopActionPerformed(java.awt.event.ActionEvent evt) {
         if (previewClip != null) {
-            try { previewClip.stop(); previewClip.close(); } catch (Exception ignore) {}
+            try {
+                previewClip.stop();
+                previewClip.close();
+            } catch (Exception ignore) {
+                log.error(ignore);
+            }
             previewClip = null;
         }
         if (previewTimer != null) {
@@ -1423,7 +1435,9 @@ public class AddVoiceMemoDialog extends javax.swing.JDialog {
 
     private void cmdUndoTakeActionPerformed(java.awt.event.ActionEvent evt) {
         if (previewClip != null) {
-            try { previewClip.stop(); previewClip.close(); } catch (Exception ignore) {}
+            try { previewClip.stop(); previewClip.close(); } catch (Exception ignore) {
+                log.error(ignore);
+            }
             previewClip = null;
         }
         if (previewTimer != null) {
@@ -1445,7 +1459,10 @@ public class AddVoiceMemoDialog extends javax.swing.JDialog {
         boolean playing = false;
         try {
             playing = previewClip != null && previewClip.isRunning();
-        } catch (Exception ignore) {}
+            System.out.println("playing: " + playing);
+        } catch (Exception ignore) {
+            log.error(ignore);
+        }
         // Disable record during preview playback
         cmdRecord.setEnabled(!playing);
         // Device selection disabled while recording or preview playing
@@ -1597,7 +1614,11 @@ public class AddVoiceMemoDialog extends javax.swing.JDialog {
     @Override
     public void dispose() {
         if (previewClip != null) {
-            try { previewClip.stop(); previewClip.close(); } catch (Exception ignore) {}
+            try {
+                previewClip.stop();
+                previewClip.close();
+            } catch (Exception ignore) {
+            }
             previewClip = null;
         }
         if (previewTimer != null) {
