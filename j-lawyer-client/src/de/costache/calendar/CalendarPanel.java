@@ -932,7 +932,7 @@ public class CalendarPanel extends javax.swing.JPanel implements NewEventEntryCa
         });
 
         JMenuItem mnuEditEvent = new JMenuItem("Eintrag bearbeiten");
-        mnuEditEvent.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/edit.png")));
+        mnuEditEvent.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons16/kate.png")));
         mnuEditEvent.setToolTipText("Kalendereintrag bearbeiten");
         mnuEditEvent.addActionListener((java.awt.event.ActionEvent evt) -> {
             Collection<CalendarEvent> selected = this.jCalendar.getSelectedCalendarEvents();
