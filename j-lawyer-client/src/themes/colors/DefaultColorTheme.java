@@ -675,6 +675,7 @@ public class DefaultColorTheme {
     
     private static final ArrayList<Color> highlightColors=new ArrayList<>();
     
+    // HEX: #de313b
     public static final Color COLOR_LOGO_RED=new Color(222, 49, 59);
     
     // HEX: #97bf0d    

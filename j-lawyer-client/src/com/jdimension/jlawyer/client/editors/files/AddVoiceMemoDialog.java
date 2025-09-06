@@ -727,12 +727,6 @@ public class AddVoiceMemoDialog extends javax.swing.JDialog {
         this.cmbDevices.removeAllItems();
         AudioUtils.populateMicrophoneDevices(this.cmbDevices);
 
-        // Mode defaults
-        btGrpModes = new javax.swing.ButtonGroup();
-        btGrpModes.add(rdoInsert);
-        btGrpModes.add(rdoOverwrite);
-        rdoInsert.setSelected(true);
-
         // Configure waveform seek handling
         if (this.waveformView != null) {
             this.waveformView.setSeekListener(fraction -> {
@@ -743,12 +737,6 @@ public class AddVoiceMemoDialog extends javax.swing.JDialog {
         }
         // Initial waveform if parts present
         refreshWaveform();
-
-        // Mode defaults group
-        btGrpModes = new javax.swing.ButtonGroup();
-        btGrpModes.add(rdoInsert);
-        btGrpModes.add(rdoOverwrite);
-        rdoInsert.setSelected(true);
 
         updateControlsEnabled();
 
@@ -762,7 +750,6 @@ public class AddVoiceMemoDialog extends javax.swing.JDialog {
     // <editor-fold defaultstate="collapsed" desc="Generated Code">//GEN-BEGIN:initComponents
     private void initComponents() {
 
-        btGrpReviews = new javax.swing.ButtonGroup();
         btGrpModes = new javax.swing.ButtonGroup();
         lblState = new javax.swing.JLabel();
         rdoInsert = new javax.swing.JRadioButton();
@@ -784,9 +771,14 @@ public class AddVoiceMemoDialog extends javax.swing.JDialog {
 
         lblState.setText(" ");
 
-        rdoInsert.setText("Einfügen am Cursor");
+        btGrpModes.add(rdoInsert);
+        rdoInsert.setSelected(true);
+        rdoInsert.setText("Einfügen");
+        rdoInsert.setToolTipText("Einfügen an markierter Position");
 
-        rdoOverwrite.setText("Überschreiben ab Cursor");
+        btGrpModes.add(rdoOverwrite);
+        rdoOverwrite.setText("Überschreiben");
+        rdoOverwrite.setToolTipText("Überschreiben ab markierter Position");
 
         cmdPreviewPlay.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/1rightarrow.png"))); // NOI18N
         cmdPreviewPlay.setToolTipText("Abspielen");
@@ -864,7 +856,7 @@ public class AddVoiceMemoDialog extends javax.swing.JDialog {
         );
 
         cmdRecord.setFont(cmdRecord.getFont());
-        cmdRecord.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons32/material/baseline_play_circle_black_48dp.png"))); // NOI18N
+        cmdRecord.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons32/material/radio_button_checked_32dp_97BF0D_FILL0_wght400_GRAD0_opsz40.png"))); // NOI18N
         cmdRecord.setText("Aufnahme");
         cmdRecord.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
@@ -892,7 +884,7 @@ public class AddVoiceMemoDialog extends javax.swing.JDialog {
                         .add(rdoOverwrite)
                         .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                         .add(cmbDevices, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE))
-                    .add(org.jdesktop.layout.GroupLayout.LEADING, waveformView, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 738, Short.MAX_VALUE)
+                    .add(org.jdesktop.layout.GroupLayout.LEADING, waveformView, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 778, Short.MAX_VALUE)
                     .add(org.jdesktop.layout.GroupLayout.LEADING, layout.createSequentialGroup()
                         .add(12, 12, 12)
                         .add(lblState, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
@@ -1154,11 +1146,11 @@ public class AddVoiceMemoDialog extends javax.swing.JDialog {
             startRecording();
             ClientSettings.getInstance().setConfiguration(ClientSettings.CONF_SOUND_LASTRECORDINGDEVICE, (String) this.cmbDevices.getSelectedItem());
             this.cmdRecord.setText("Pause / Stop");
-            cmdRecord.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons32/material/baseline_stop_circle_black_48dp.png")));
+            cmdRecord.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons32/material/stop_circle_32dp_DE313B_FILL0_wght400_GRAD0_opsz40.png")));
         } else {
             stopRecording();
             this.cmdRecord.setText("Start");
-            cmdRecord.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons32/material/baseline_play_circle_black_48dp.png")));
+            cmdRecord.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons32/material/radio_button_checked_32dp_97BF0D_FILL0_wght400_GRAD0_opsz40.png")));
         }
     }//GEN-LAST:event_cmdRecordActionPerformed
 
@@ -1172,7 +1164,6 @@ public class AddVoiceMemoDialog extends javax.swing.JDialog {
     }
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.ButtonGroup btGrpModes;
-    private javax.swing.ButtonGroup btGrpReviews;
     private javax.swing.JComboBox<String> cmbDevices;
     private javax.swing.JButton cmdAddDocument;
     private javax.swing.JButton cmdCancel;

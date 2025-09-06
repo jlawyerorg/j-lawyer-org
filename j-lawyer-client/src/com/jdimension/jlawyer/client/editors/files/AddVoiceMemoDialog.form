@@ -2,8 +2,6 @@
 
 <Form version="1.5" maxVersion="1.8" type="org.netbeans.modules.form.forminfo.JDialogFormInfo">
   <NonVisualComponents>
-    <Component class="javax.swing.ButtonGroup" name="btGrpReviews">
-    </Component>
     <Component class="javax.swing.ButtonGroup" name="btGrpModes">
     </Component>
   </NonVisualComponents>
@@ -42,7 +40,7 @@
                       <EmptySpace max="32767" attributes="0"/>
                       <Component id="cmbDevices" min="-2" max="-2" attributes="0"/>
                   </Group>
-                  <Component id="waveformView" alignment="0" pref="738" max="32767" attributes="0"/>
+                  <Component id="waveformView" alignment="0" pref="778" max="32767" attributes="0"/>
                   <Group type="102" alignment="0" attributes="0">
                       <EmptySpace min="-2" pref="12" max="-2" attributes="0"/>
                       <Component id="lblState" min="-2" max="32767" attributes="0"/>
@@ -109,12 +107,21 @@
     </Component>
     <Component class="javax.swing.JRadioButton" name="rdoInsert">
       <Properties>
-        <Property name="text" type="java.lang.String" value="Einf&#xfc;gen am Cursor"/>
+        <Property name="buttonGroup" type="javax.swing.ButtonGroup" editor="org.netbeans.modules.form.RADComponent$ButtonGroupPropertyEditor">
+          <ComponentRef name="btGrpModes"/>
+        </Property>
+        <Property name="selected" type="boolean" value="true"/>
+        <Property name="text" type="java.lang.String" value="Einf&#xfc;gen"/>
+        <Property name="toolTipText" type="java.lang.String" value="Einf&#xfc;gen an markierter Position"/>
       </Properties>
     </Component>
     <Component class="javax.swing.JRadioButton" name="rdoOverwrite">
       <Properties>
-        <Property name="text" type="java.lang.String" value="&#xdc;berschreiben ab Cursor"/>
+        <Property name="buttonGroup" type="javax.swing.ButtonGroup" editor="org.netbeans.modules.form.RADComponent$ButtonGroupPropertyEditor">
+          <ComponentRef name="btGrpModes"/>
+        </Property>
+        <Property name="text" type="java.lang.String" value="&#xdc;berschreiben"/>
+        <Property name="toolTipText" type="java.lang.String" value="&#xdc;berschreiben ab markierter Position"/>
       </Properties>
     </Component>
     <Component class="javax.swing.JButton" name="cmdPreviewPlay">
@@ -237,7 +244,7 @@
           </FontInfo>
         </Property>
         <Property name="icon" type="javax.swing.Icon" editor="org.netbeans.modules.form.editors2.IconEditor">
-          <Image iconType="3" name="/icons32/material/baseline_play_circle_black_48dp.png"/>
+          <Image iconType="3" name="/icons32/material/radio_button_checked_32dp_97BF0D_FILL0_wght400_GRAD0_opsz40.png"/>
         </Property>
         <Property name="text" type="java.lang.String" value="Aufnahme"/>
       </Properties>
