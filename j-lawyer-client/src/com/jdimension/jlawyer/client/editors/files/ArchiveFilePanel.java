@@ -4467,7 +4467,7 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
                     com.jdimension.jlawyer.persistence.ArchiveFileReviewsBean evt = (com.jdimension.jlawyer.persistence.ArchiveFileReviewsBean) eventObj;
                     if (evt.getEventType() == com.jdimension.jlawyer.persistence.ArchiveFileReviewsBean.EVENTTYPE_EVENT && conflictingEventIds.contains(evt.getId())) {
                         if (!isSelected) {
-                            c.setForeground(java.awt.Color.RED);
+                            c.setForeground(DefaultColorTheme.COLOR_LOGO_RED);
                         }
                         if (c instanceof javax.swing.JComponent) {
                             ((javax.swing.JComponent) c).setToolTipText(buildConflictTooltip(evt));
@@ -4500,7 +4500,7 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
                     com.jdimension.jlawyer.persistence.ArchiveFileReviewsBean evt = (com.jdimension.jlawyer.persistence.ArchiveFileReviewsBean) eventObj;
                     if (evt.getEventType() == com.jdimension.jlawyer.persistence.ArchiveFileReviewsBean.EVENTTYPE_EVENT && conflictingEventIds.contains(evt.getId())) {
                         if (!isSelected) {
-                            c.setForeground(java.awt.Color.RED);
+                            c.setForeground(DefaultColorTheme.COLOR_LOGO_RED);
                         }
                         if (c instanceof javax.swing.JComponent) {
                             ((javax.swing.JComponent) c).setToolTipText(buildConflictTooltip(evt));
