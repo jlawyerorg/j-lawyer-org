@@ -81,7 +81,9 @@ class WeekDisplayStrategy implements DisplayStrategy {
         JPanel headersPanel = new JPanel(true);
         headersPanel.setLayout(new BorderLayout());
         headersPanel.setOpaque(false);
-        headersPanel.setPreferredSize(new Dimension(1440, 60));
+        // Allow the header to shrink with the viewport width; fix height only
+        headersPanel.setMinimumSize(new Dimension(0, 60));
+        headersPanel.setPreferredSize(new Dimension(0, 60));
 
         // Viewport panel: contains only the 7 day content columns (no hours column)
         // Use GridBagLayout so preferred heights of day panels (e.g., 1440) are honored for scrolling
@@ -180,6 +182,11 @@ class WeekDisplayStrategy implements DisplayStrategy {
         contentAllDay.setBorder(BorderFactory.createLineBorder(parent.getOwner().getConfig().getLineColor()));
         contentAllDay.setVerticalScrollBarPolicy(ScrollPaneConstants.VERTICAL_SCROLLBAR_ALWAYS);
         contentAllDay.getVerticalScrollBar().setUnitIncrement(16);
+        // Align all-day columns with timed grid by adding a left spacer equal to HoursPanel width
+        JPanel allDayRowHeaderSpacer = new JPanel(true);
+        allDayRowHeaderSpacer.setOpaque(false);
+        allDayRowHeaderSpacer.setPreferredSize(new Dimension(hoursPanel.getPreferredSize().width, 1));
+        contentAllDay.setRowHeaderView(allDayRowHeaderSpacer);
         
         this.split = new JSplitPane(JSplitPane.VERTICAL_SPLIT, displayPanel, contentAllDay);
         ComponentUtils.decorateSplitPane(split);
