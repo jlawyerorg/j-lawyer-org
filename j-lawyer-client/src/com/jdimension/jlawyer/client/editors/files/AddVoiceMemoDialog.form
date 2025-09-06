@@ -58,6 +58,8 @@
                       <EmptySpace max="-2" attributes="0"/>
                       <Component id="cmdUndoTake" min="-2" max="-2" attributes="0"/>
                       <EmptySpace max="-2" attributes="0"/>
+                      <Component id="cmdDeleteSelection" min="-2" max="-2" attributes="0"/>
+                      <EmptySpace max="-2" attributes="0"/>
                       <Component id="lblInfo" max="32767" attributes="0"/>
                   </Group>
               </Group>
@@ -86,6 +88,7 @@
                       <Component id="cmdPreviewPlay" alignment="3" min="-2" max="-2" attributes="0"/>
                       <Component id="cmdPreviewStop" alignment="3" min="-2" max="-2" attributes="0"/>
                       <Component id="cmdUndoTake" alignment="3" min="-2" max="-2" attributes="0"/>
+                      <Component id="cmdDeleteSelection" alignment="3" min="-2" max="-2" attributes="0"/>
                   </Group>
                   <Component id="lblInfo" min="-2" pref="28" max="-2" attributes="0"/>
               </Group>
@@ -155,6 +158,17 @@
       </Properties>
       <Events>
         <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="cmdUndoTakeActionPerformed"/>
+      </Events>
+    </Component>
+    <Component class="javax.swing.JButton" name="cmdDeleteSelection">
+      <Properties>
+        <Property name="icon" type="javax.swing.Icon" editor="org.netbeans.modules.form.editors2.IconEditor">
+          <Image iconType="3" name="/icons16/material/baseline_delete_lightgrey_48dp.png"/>
+        </Property>
+        <Property name="toolTipText" type="java.lang.String" value="Auswahl l&#xf6;schen"/>
+      </Properties>
+      <Events>
+        <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="cmdDeleteSelectionActionPerformed"/>
       </Events>
     </Component>
     <Component class="com.jdimension.jlawyer.client.editors.documents.viewer.WaveformPanel" name="waveformView">

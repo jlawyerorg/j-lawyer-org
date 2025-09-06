@@ -707,6 +707,7 @@ public class AddVoiceMemoDialog extends javax.swing.JDialog {
     private javax.sound.sampled.Clip previewClip;
     private boolean previewEnabled = true;
     private javax.swing.Timer previewTimer;
+    private boolean previewStoppedAtSelection = false;
     private java.util.ArrayDeque<byte[]> undoStack = new java.util.ArrayDeque<>();
 
     /**
@@ -730,6 +731,7 @@ public class AddVoiceMemoDialog extends javax.swing.JDialog {
 
         // Configure waveform seek handling
         if (this.waveformView != null) {
+            try { this.waveformView.setSelectionEnabled(true); } catch (Throwable ignore) {}
             this.waveformView.setSeekListener(fraction -> {
                 insertCursorFraction = Math.min(1.0, Math.max(0.0, fraction));
                 this.waveformView.setPlayheadFraction(insertCursorFraction);
@@ -741,13 +743,42 @@ public class AddVoiceMemoDialog extends javax.swing.JDialog {
                     }
                 } catch (Exception ignore) {}
                 updateInfoLabel();
+                updateControlsEnabled();
             });
         }
+        // Replace delete icon with a blue "X" programmatically for visibility if available
+        try {
+            if (this.cmdDeleteSelection != null) {
+                this.cmdDeleteSelection.setIcon(createBlueXIcon(20, 20, new java.awt.Color(0x0E72B5)));
+            }
+        } catch (Throwable ignore) {}
+
         // Initial waveform if parts present
         refreshWaveform();
 
         updateControlsEnabled();
 
+    }
+
+    private static javax.swing.Icon createBlueXIcon(int w, int h, java.awt.Color color) {
+        java.awt.image.BufferedImage img = new java.awt.image.BufferedImage(w, h, java.awt.image.BufferedImage.TYPE_INT_ARGB);
+        java.awt.Graphics2D g2 = img.createGraphics();
+        try {
+            g2.setRenderingHint(java.awt.RenderingHints.KEY_ANTIALIASING, java.awt.RenderingHints.VALUE_ANTIALIAS_ON);
+            // transparent background
+            g2.setComposite(java.awt.AlphaComposite.Src);
+            g2.setColor(new java.awt.Color(0,0,0,0));
+            g2.fillRect(0,0,w,h);
+            // draw X
+            g2.setStroke(new java.awt.BasicStroke(Math.max(2f, w/10f), java.awt.BasicStroke.CAP_ROUND, java.awt.BasicStroke.JOIN_ROUND));
+            g2.setColor(color);
+            int pad = Math.max(3, w/6);
+            g2.drawLine(pad, pad, w-pad, h-pad);
+            g2.drawLine(w-pad, pad, pad, h-pad);
+        } finally {
+            g2.dispose();
+        }
+        return new javax.swing.ImageIcon(img);
     }
 
     /**
@@ -765,6 +796,7 @@ public class AddVoiceMemoDialog extends javax.swing.JDialog {
         cmdPreviewPlay = new javax.swing.JButton();
         cmdPreviewStop = new javax.swing.JButton();
         cmdUndoTake = new javax.swing.JButton();
+        cmdDeleteSelection = new javax.swing.JButton();
         waveformView = new com.jdimension.jlawyer.client.editors.documents.viewer.WaveformPanel();
         cmdCancel = new javax.swing.JButton();
         cmdAddDocument = new javax.swing.JButton();
@@ -809,6 +841,15 @@ public class AddVoiceMemoDialog extends javax.swing.JDialog {
         cmdUndoTake.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 cmdUndoTakeActionPerformed(evt);
+            }
+        });
+
+        // fallback to existing grey delete icon; replaced to blue in constructor
+        cmdDeleteSelection.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons16/material/baseline_delete_lightgrey_48dp.png"))); // NOI18N
+        cmdDeleteSelection.setToolTipText("Auswahl löschen");
+        cmdDeleteSelection.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                cmdDeleteSelectionActionPerformed(evt);
             }
         });
 
@@ -908,6 +949,8 @@ public class AddVoiceMemoDialog extends javax.swing.JDialog {
                         .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
                         .add(cmdUndoTake)
                         .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
+                        .add(cmdDeleteSelection)
+                        .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
                         .add(lblInfo, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)))
                 .addContainerGap())
         );
@@ -930,7 +973,8 @@ public class AddVoiceMemoDialog extends javax.swing.JDialog {
                     .add(layout.createParallelGroup(org.jdesktop.layout.GroupLayout.BASELINE)
                         .add(cmdPreviewPlay)
                         .add(cmdPreviewStop)
-                        .add(cmdUndoTake))
+                        .add(cmdUndoTake)
+                        .add(cmdDeleteSelection))
                     .add(lblInfo, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 28, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE))
                 .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                 .add(layout.createParallelGroup(org.jdesktop.layout.GroupLayout.BASELINE)
@@ -1175,6 +1219,7 @@ public class AddVoiceMemoDialog extends javax.swing.JDialog {
     private javax.swing.JComboBox<String> cmbDevices;
     private javax.swing.JButton cmdAddDocument;
     private javax.swing.JButton cmdCancel;
+    private javax.swing.JButton cmdDeleteSelection;
     private javax.swing.JButton cmdPreviewPlay;
     private javax.swing.JButton cmdPreviewStop;
     private javax.swing.JButton cmdRecord;
@@ -1401,9 +1446,23 @@ public class AddVoiceMemoDialog extends javax.swing.JDialog {
             previewClip = AudioSystem.getClip();
             previewClip.open(ais);
             long len = previewClip.getMicrosecondLength();
+
+            // If a selection exists: always start at selection start
+            boolean hasSelection = false;
+            double selectionStart = Double.NaN;
+            try {
+                hasSelection = (waveformView != null && waveformView.hasSelection());
+                if (hasSelection) selectionStart = waveformView.getSelectionStartFraction();
+            } catch (Throwable ignore) {}
+            if (hasSelection && !Double.isNaN(selectionStart)) {
+                insertCursorFraction = Math.min(1.0, Math.max(0.0, selectionStart));
+                try { if (waveformView != null) waveformView.setPlayheadFraction(insertCursorFraction); } catch (Exception ignore) {}
+                updateInfoLabel();
+            }
+
             long pos = (long)(insertCursorFraction * len);
-            // If cursor is at or beyond the end, wrap to start
-            if (insertCursorFraction >= 0.999 || pos >= Math.max(0, len - 1000)) {
+            // If no selection and cursor is at or beyond the end, wrap to start
+            if (!hasSelection && (insertCursorFraction >= 0.999 || pos >= Math.max(0, len - 1000))) {
                 insertCursorFraction = 0.0;
                 pos = 0L;
                 try {
@@ -1427,25 +1486,42 @@ public class AddVoiceMemoDialog extends javax.swing.JDialog {
                                 ended = pos2 >= Math.max(0, len2 - 10_000); // within 10ms of end
                             }
                         } catch (Exception ignore) {}
+                        if (previewStoppedAtSelection) {
+                            ended = false; // selection-driven stop is not natural end
+                        }
                         final boolean fEnded = ended;
                         javax.swing.SwingUtilities.invokeLater(() -> {
                             if (previewTimer != null) {
                                 try { previewTimer.stop(); } catch (Exception ignore) {}
+                            }
+                            // Always close/cleanup clip to reset state
+                            try {
+                                if (previewClip != null) {
+                                    previewClip.stop();
+                                    previewClip.close();
+                                }
+                            } catch (Exception ignore) {}
+                            previewClip = null;
+                            // If we stopped due to selection end, snap playhead to selection end for clear feedback
+                            if (previewStoppedAtSelection) {
+                                try {
+                                    if (waveformView != null && waveformView.hasSelection()) {
+                                        double endFrac = waveformView.getSelectionEndFraction();
+                                        if (!Double.isNaN(endFrac)) {
+                                            insertCursorFraction = Math.min(1.0, Math.max(0.0, endFrac));
+                                            waveformView.setPlayheadFraction(insertCursorFraction);
+                                            updateInfoLabel();
+                                        }
+                                    }
+                                } catch (Throwable ignore) {}
                             }
                             if (fEnded) {
                                 // If playback reached the end naturally, prepare for wrap from start
                                 insertCursorFraction = 0.0;
                                 try { if (waveformView != null) waveformView.setPlayheadFraction(0.0); } catch (Exception ignore) {}
                                 updateInfoLabel();
-                                // Fully close/release the clip to avoid stuck active state
-                                try {
-                                    if (previewClip != null) {
-                                        previewClip.stop();
-                                        previewClip.close();
-                                    }
-                                } catch (Exception ignore) {}
-                                previewClip = null;
                             }
+                            previewStoppedAtSelection = false;
                             updateControlsEnabled();
                         });
                     }
@@ -1458,6 +1534,17 @@ public class AddVoiceMemoDialog extends javax.swing.JDialog {
                     if (previewClip != null && previewClip.isOpen() && previewClip.getMicrosecondLength() > 0) {
                         double frac = previewClip.getMicrosecondPosition() / (double) previewClip.getMicrosecondLength();
                         waveformView.setPlayheadFraction(frac);
+                        // If selection exists, stop at selection end
+                        try {
+                            if (waveformView != null && waveformView.hasSelection()) {
+                                double endFrac = waveformView.getSelectionEndFraction();
+                                long stopAt = (long) Math.round(endFrac * previewClip.getMicrosecondLength());
+                                if (previewClip.getMicrosecondPosition() >= Math.max(0L, stopAt - 5_000)) { // ~5ms margin
+                                    previewStoppedAtSelection = true;
+                                    previewClip.stop();
+                                }
+                            }
+                        } catch (Throwable ignore) {}
                     }
                 } catch (Exception ignore) {}
             });
@@ -1482,6 +1569,7 @@ public class AddVoiceMemoDialog extends javax.swing.JDialog {
             try { previewTimer.stop(); } catch (Exception ignore) {}
             previewTimer = null;
         }
+        previewStoppedAtSelection = false;
         updateControlsEnabled();
     }
 
@@ -1502,9 +1590,89 @@ public class AddVoiceMemoDialog extends javax.swing.JDialog {
         byte[] previous = undoStack.pop();
         this.memoParts.clear();
         this.memoParts.add(previous);
+        try { if (this.waveformView != null) this.waveformView.clearSelection(); } catch (Exception ignore) {}
         refreshWaveform();
         updateInfoLabel();
         updateControlsEnabled();
+    }
+
+    private void cmdDeleteSelectionActionPerformed(java.awt.event.ActionEvent evt) {
+        if (isRecording) return;
+        // Stop any preview first
+        if (previewClip != null) {
+            try { previewClip.stop(); previewClip.close(); } catch (Exception ignore) {}
+            previewClip = null;
+        }
+        if (previewTimer != null) {
+            try { previewTimer.stop(); } catch (Exception ignore) {}
+            previewTimer = null;
+        }
+
+        if (waveformView == null || this.memoParts.isEmpty()) return;
+        double s = waveformView.getSelectionStartFraction();
+        double e = waveformView.getSelectionEndFraction();
+        if (Double.isNaN(s) || Double.isNaN(e) || e <= s) {
+            return;
+        }
+        try {
+            // Save current state for undo
+            byte[] current = mergeWAVs(this.memoParts);
+            if (current == null || current.length == 0) return;
+            undoStack.push(current);
+
+            // Convert to PCM and remove selection range
+            AudioFormat fmt = AudioUtils.getAudioFormat();
+            byte[] pcm;
+            try (ByteArrayInputStream in = new ByteArrayInputStream(current);
+                 AudioInputStream ais = AudioSystem.getAudioInputStream(in)) {
+                AudioInputStream pcmStream = ais;
+                if (!ais.getFormat().matches(fmt)) {
+                    pcmStream = AudioSystem.getAudioInputStream(fmt, ais);
+                }
+                ByteArrayOutputStream bos = new ByteArrayOutputStream();
+                byte[] buf = new byte[8192];
+                int r;
+                while ((r = pcmStream.read(buf)) > 0) bos.write(buf, 0, r);
+                pcm = bos.toByteArray();
+            }
+
+            int bytesPerSample = fmt.getFrameSize();
+            if (bytesPerSample <= 0) bytesPerSample = Math.max(1, fmt.getSampleSizeInBits() / 8);
+            int totalSamples = pcm.length / bytesPerSample;
+            int startSample = (int) Math.max(0, Math.min(totalSamples, Math.round(s * totalSamples)));
+            int endSample = (int) Math.max(startSample, Math.min(totalSamples, Math.round(e * totalSamples)));
+            int startByte = startSample * bytesPerSample;
+            int endByte = endSample * bytesPerSample;
+
+            ByteArrayOutputStream composed = new ByteArrayOutputStream(pcm.length - (endByte - startByte));
+            composed.write(pcm, 0, startByte);
+            composed.write(pcm, endByte, pcm.length - endByte);
+            byte[] newPcm = composed.toByteArray();
+
+            // Wrap back into WAV
+            byte[] newWav;
+            try (ByteArrayInputStream bais = new ByteArrayInputStream(newPcm);
+                 AudioInputStream outAis = new AudioInputStream(bais, fmt, newPcm.length / fmt.getFrameSize());
+                 ByteArrayOutputStream wavOut = new ByteArrayOutputStream()) {
+                AudioSystem.write(outAis, AudioFileFormat.Type.WAVE, wavOut);
+                newWav = wavOut.toByteArray();
+            }
+
+            // Apply new content
+            this.memoParts.clear();
+            this.memoParts.add(newWav);
+            // Set cursor to start of deletion region in new length
+            this.insertCursorFraction = Math.min(1.0, Math.max(0.0, s));
+            try { waveformView.clearSelection(); } catch (Exception ignore) {}
+            refreshWaveform();
+            updateControlsEnabled();
+        } catch (Exception ex) {
+            log.error("Error deleting selection", ex);
+            JOptionPane.showMessageDialog(this,
+                    "Fehler beim Löschen der Auswahl: " + ex.getMessage(),
+                    com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR,
+                    JOptionPane.ERROR_MESSAGE);
+        }
     }
 
     private void updateControlsEnabled() {
@@ -1527,6 +1695,12 @@ public class AddVoiceMemoDialog extends javax.swing.JDialog {
         cmdPreviewStop.setEnabled(previewEnabled && playing);
         // Undo disabled while recording/preview to prevent conflicts
         cmdUndoTake.setEnabled(!isRecording && !playing && !undoStack.isEmpty());
+        // Delete selection enabled only when a selection exists and not playing/recording
+        try {
+            boolean hasSel = waveformView != null && waveformView.hasSelection();
+            cmdDeleteSelection.setEnabled(!isRecording && !playing && hasSel);
+            cmdDeleteSelection.setVisible(true);
+        } catch (Throwable ignore) {}
         // Save disabled during recording/preview
         cmdAddDocument.setEnabled(!isRecording && !playing);
         // Status label
