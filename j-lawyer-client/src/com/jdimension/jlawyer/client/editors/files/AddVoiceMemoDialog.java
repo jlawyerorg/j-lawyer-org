@@ -1496,6 +1496,8 @@ public class AddVoiceMemoDialog extends javax.swing.JDialog {
                 this.insertCursorFraction = 0.0;
                 this.waveformView.setPlayheadFraction(0.0);
                 return;
+            } else {
+                this.insertCursorFraction = 1.0;
             }
             byte[] merged = mergeWAVs(this.memoParts);
             // compute total length
@@ -1575,6 +1577,7 @@ public class AddVoiceMemoDialog extends javax.swing.JDialog {
 
             // Button-Text anpassen
             this.cmdAddDocument.setText("Aufnahme aktualisieren");
+            
             // Update waveform and metrics
             refreshWaveform();
         } catch (Exception e) {
