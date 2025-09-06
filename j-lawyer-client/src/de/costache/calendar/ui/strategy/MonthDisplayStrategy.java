@@ -196,7 +196,7 @@ class MonthDisplayStrategy implements DisplayStrategy {
                 Date endDate = endOfDay(days[endIdx].getDate());
                 // normalize order
                 if (startDate.after(endDate)) {
-                    Date tmp = startDate; startDate = startOfDay(days[endIdx].getDate()); endDate = endOfDay(selectionStartDate);
+                    startDate = startOfDay(days[endIdx].getDate()); endDate = endOfDay(selectionStartDate);
                 }
                 EventRepository.get().triggerIntervalSelection(parent.getOwner(), startDate, endDate);
             }
