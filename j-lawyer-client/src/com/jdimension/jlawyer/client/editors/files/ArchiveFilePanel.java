@@ -914,8 +914,9 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
                             match = true;
                         }
                     }
-                    if(c!=null)
+                    if (c != null) {
                         c.setVisible(match);
+                    }
                 }
                 pnlInvolvedParties.revalidate();
                 pnlInvolvedParties.repaint();
@@ -1013,7 +1014,6 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
         reviewsPopup.add(new javax.swing.JPopupMenu.Separator());
         reviewsPopup.add(mnuOpenCalendarDay);
 
-
         if (BeaAccess.isBeaEnabled()) {
             this.mnuSendBeaDocument.setEnabled(true);
             this.mnuSendBeaDocumentPDF.setEnabled(true);
@@ -1059,7 +1059,7 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
 
         BoxLayout boxLayout4 = new BoxLayout(this.pnlPayments, BoxLayout.Y_AXIS);
         this.pnlPayments.setLayout(boxLayout4);
-        
+
         BoxLayout boxLayout5 = new BoxLayout(this.pnlClaimLedgers, BoxLayout.Y_AXIS);
         this.pnlClaimLedgers.setLayout(boxLayout5);
 
@@ -1504,7 +1504,7 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
         if (this.dto != null) {
             this.cmdEditCaseNumber.setEnabled(UserUtils.isCurrentUserAdmin());
         }
-        
+
         this.txtFilterParties.setText("");
 
         this.groupPrivilegesChanged = false;
@@ -3927,14 +3927,14 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
             jPanel5Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
             .add(jPanel5Layout.createSequentialGroup()
                 .addContainerGap()
-                .add(tabPaneForms)
+                .add(tabPaneForms, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 1115, Short.MAX_VALUE)
                 .addContainerGap())
         );
         jPanel5Layout.setVerticalGroup(
             jPanel5Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
             .add(jPanel5Layout.createSequentialGroup()
                 .addContainerGap()
-                .add(tabPaneForms)
+                .add(tabPaneForms, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 878, Short.MAX_VALUE)
                 .addContainerGap())
         );
 
@@ -3997,8 +3997,7 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
         });
 
         cmdExportHistoryTimeline.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/baseline_preview_black_48dp.png"))); // NOI18N
-        cmdExportHistoryTimeline.setToolTipText("Historie als HTML exportieren und im Browser öffnen");
-        cmdExportHistoryTimeline.setMargin(new java.awt.Insets(2, 4, 2, 4));
+        cmdExportHistoryTimeline.setToolTipText("Historie im Browser öffnen");
         cmdExportHistoryTimeline.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 cmdExportHistoryTimelineActionPerformed(evt);
@@ -4006,8 +4005,7 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
         });
 
         cmdSaveHistoryDocument.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/filesave.png"))); // NOI18N
-        cmdSaveHistoryDocument.setToolTipText("Historie-HTML als Dokument zur Akte speichern");
-        cmdSaveHistoryDocument.setMargin(new java.awt.Insets(2, 4, 2, 4));
+        cmdSaveHistoryDocument.setToolTipText("Historie als HTML-Dokument zur Akte speichern");
         cmdSaveHistoryDocument.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 cmdSaveHistoryDocumentActionPerformed(evt);
@@ -4021,7 +4019,7 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
             .add(jPanel10Layout.createSequentialGroup()
                 .addContainerGap()
                 .add(jPanel10Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
-                    .add(jScrollPane4, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 1057, Short.MAX_VALUE)
+                    .add(jScrollPane4, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 1093, Short.MAX_VALUE)
                     .add(jPanel10Layout.createSequentialGroup()
                         .add(jPanel10Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
                             .add(jLabel14)
@@ -4060,13 +4058,18 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
                     .add(jLabel14)
                     .add(txtHistoryDesc, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE))
                 .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
-                .add(jPanel10Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.BASELINE)
-                    .add(cmdAddHistory)
-                    .add(cmdLoadFullHistory)
-                    .add(cmdExportHistoryTimeline)
-                    .add(cmdSaveHistoryDocument))
-                .addPreferredGap(org.jdesktop.layout.LayoutStyle.UNRELATED)
-                .add(jScrollPane4, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 642, Short.MAX_VALUE)
+                .add(jPanel10Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
+                    .add(jPanel10Layout.createSequentialGroup()
+                        .add(jPanel10Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
+                            .add(jPanel10Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.BASELINE)
+                                .add(cmdAddHistory)
+                                .add(cmdLoadFullHistory))
+                            .add(cmdExportHistoryTimeline))
+                        .addPreferredGap(org.jdesktop.layout.LayoutStyle.UNRELATED)
+                        .add(jScrollPane4, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 725, Short.MAX_VALUE))
+                    .add(jPanel10Layout.createSequentialGroup()
+                        .add(cmdSaveHistoryDocument)
+                        .add(0, 0, Short.MAX_VALUE)))
                 .addContainerGap())
         );
 
@@ -4488,6 +4491,7 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
 
     // Renderer applying red foreground + tooltip for conflicting Termine
     private class ConflictAwareDefaultRenderer extends javax.swing.table.DefaultTableCellRenderer {
+
         @Override
         public java.awt.Component getTableCellRendererComponent(javax.swing.JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
             java.awt.Component c = super.getTableCellRendererComponent(table, value, isSelected, hasFocus, row, column);
@@ -4503,7 +4507,9 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
                             ((javax.swing.JComponent) c).setToolTipText(buildConflictTooltip(evt));
                         }
                     } else {
-                        if (!isSelected) c.setForeground(java.awt.Color.BLACK);
+                        if (!isSelected) {
+                            c.setForeground(java.awt.Color.BLACK);
+                        }
                         if (c instanceof javax.swing.JComponent) {
                             ((javax.swing.JComponent) c).setToolTipText(null);
                         }
@@ -4517,10 +4523,13 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
     }
 
     private class ConflictAwareUserRenderer extends javax.swing.table.DefaultTableCellRenderer {
+
         private final javax.swing.table.TableCellRenderer delegate;
+
         public ConflictAwareUserRenderer(javax.swing.table.TableCellRenderer delegate) {
             this.delegate = delegate;
         }
+
         @Override
         public java.awt.Component getTableCellRendererComponent(javax.swing.JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
             java.awt.Component c = delegate.getTableCellRendererComponent(table, value, isSelected, hasFocus, row, column);
@@ -4536,7 +4545,9 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
                             ((javax.swing.JComponent) c).setToolTipText(buildConflictTooltip(evt));
                         }
                     } else {
-                        if (!isSelected) c.setForeground(java.awt.Color.BLACK);
+                        if (!isSelected) {
+                            c.setForeground(java.awt.Color.BLACK);
+                        }
                         if (c instanceof javax.swing.JComponent) {
                             ((javax.swing.JComponent) c).setToolTipText(null);
                         }
@@ -4551,7 +4562,9 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
 
     private String buildConflictTooltip(com.jdimension.jlawyer.persistence.ArchiveFileReviewsBean evt) {
         java.util.List<com.jdimension.jlawyer.persistence.ArchiveFileReviewsBean> list = conflictDetailsByEventId.get(evt.getId());
-        if (list == null || list.isEmpty()) return null;
+        if (list == null || list.isEmpty()) {
+            return null;
+        }
         StringBuilder sb = new StringBuilder();
         java.text.SimpleDateFormat df = new java.text.SimpleDateFormat("dd.MM.yyyy");
         java.text.SimpleDateFormat tf = new java.text.SimpleDateFormat("HH:mm");
@@ -4572,7 +4585,9 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
             String caseInfo = (c.getArchiveFileKey() != null) ? (c.getArchiveFileKey().getFileNumber() + " " + c.getArchiveFileKey().getName()) : "";
             sb.append("<li><span style='color:red'>").append(time).append("</span> ");
             sb.append(c.getSummary() == null ? "" : c.getSummary());
-            if (!caseInfo.isEmpty()) sb.append(" (").append(caseInfo).append(")");
+            if (!caseInfo.isEmpty()) {
+                sb.append(" (").append(caseInfo).append(")");
+            }
             sb.append("</li>");
         }
         sb.append("</ul>");
@@ -4600,18 +4615,38 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
                 // Local collision detection (same calendar + same assignee + overlap + open Termine)
                 for (int i = 0; i < localEvents.size(); i++) {
                     com.jdimension.jlawyer.persistence.ArchiveFileReviewsBean a = localEvents.get(i);
-                    if (a.getEventType() != com.jdimension.jlawyer.persistence.ArchiveFileReviewsBean.EVENTTYPE_EVENT) continue;
-                    if (a.isDone()) continue;
-                    if (a.getBeginDate() == null || a.getEndDate() == null) continue;
-                    if (a.getCalendarSetup() == null || a.getAssignee() == null) continue;
+                    if (a.getEventType() != com.jdimension.jlawyer.persistence.ArchiveFileReviewsBean.EVENTTYPE_EVENT) {
+                        continue;
+                    }
+                    if (a.isDone()) {
+                        continue;
+                    }
+                    if (a.getBeginDate() == null || a.getEndDate() == null) {
+                        continue;
+                    }
+                    if (a.getCalendarSetup() == null || a.getAssignee() == null) {
+                        continue;
+                    }
                     for (int j = i + 1; j < localEvents.size(); j++) {
                         com.jdimension.jlawyer.persistence.ArchiveFileReviewsBean b = localEvents.get(j);
-                        if (b.getEventType() != com.jdimension.jlawyer.persistence.ArchiveFileReviewsBean.EVENTTYPE_EVENT) continue;
-                        if (b.isDone()) continue;
-                        if (b.getBeginDate() == null || b.getEndDate() == null) continue;
-                        if (b.getCalendarSetup() == null || b.getAssignee() == null) continue;
-                        if (!a.getAssignee().equals(b.getAssignee())) continue;
-                        if (!a.getCalendarSetup().getId().equals(b.getCalendarSetup().getId())) continue;
+                        if (b.getEventType() != com.jdimension.jlawyer.persistence.ArchiveFileReviewsBean.EVENTTYPE_EVENT) {
+                            continue;
+                        }
+                        if (b.isDone()) {
+                            continue;
+                        }
+                        if (b.getBeginDate() == null || b.getEndDate() == null) {
+                            continue;
+                        }
+                        if (b.getCalendarSetup() == null || b.getAssignee() == null) {
+                            continue;
+                        }
+                        if (!a.getAssignee().equals(b.getAssignee())) {
+                            continue;
+                        }
+                        if (!a.getCalendarSetup().getId().equals(b.getCalendarSetup().getId())) {
+                            continue;
+                        }
                         boolean overlap = a.getBeginDate().before(b.getEndDate()) && a.getEndDate().after(b.getBeginDate());
                         if (overlap) {
                             newConflictIds.add(a.getId());
@@ -4631,18 +4666,30 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
                 }
                 if (calService != null) {
                     for (com.jdimension.jlawyer.persistence.ArchiveFileReviewsBean e : localEvents) {
-                        if (e.getEventType() != com.jdimension.jlawyer.persistence.ArchiveFileReviewsBean.EVENTTYPE_EVENT) continue;
-                        if (e.isDone()) continue;
-                        if (e.getBeginDate() == null || e.getEndDate() == null) continue;
-                        if (e.getAssignee() == null || e.getCalendarSetup() == null) continue;
+                        if (e.getEventType() != com.jdimension.jlawyer.persistence.ArchiveFileReviewsBean.EVENTTYPE_EVENT) {
+                            continue;
+                        }
+                        if (e.isDone()) {
+                            continue;
+                        }
+                        if (e.getBeginDate() == null || e.getEndDate() == null) {
+                            continue;
+                        }
+                        if (e.getAssignee() == null || e.getCalendarSetup() == null) {
+                            continue;
+                        }
                         try {
                             java.util.List<com.jdimension.jlawyer.persistence.ArchiveFileReviewsBean> candidates = calService.getConflictingEvents(
                                     com.jdimension.jlawyer.persistence.ArchiveFileReviewsBean.EVENTTYPE_EVENT,
                                     e.getBeginDate(), e.getEndDate(), e.getAssignee());
                             java.util.List<com.jdimension.jlawyer.persistence.ArchiveFileReviewsBean> sameCal = new java.util.ArrayList<>();
                             for (com.jdimension.jlawyer.persistence.ArchiveFileReviewsBean c : candidates) {
-                                if (c.getId().equals(e.getId())) continue;
-                                if (c.getCalendarSetup() == null) continue;
+                                if (c.getId().equals(e.getId())) {
+                                    continue;
+                                }
+                                if (c.getCalendarSetup() == null) {
+                                    continue;
+                                }
                                 if (e.getCalendarSetup().getId().equals(c.getCalendarSetup().getId())) {
                                     sameCal.add(c);
                                 }
@@ -4654,9 +4701,15 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
                                 list.sort((x, y) -> {
                                     java.util.Date dx = x.getBeginDate();
                                     java.util.Date dy = y.getBeginDate();
-                                    if (dx == null && dy == null) return 0;
-                                    if (dx == null) return -1;
-                                    if (dy == null) return 1;
+                                    if (dx == null && dy == null) {
+                                        return 0;
+                                    }
+                                    if (dx == null) {
+                                        return -1;
+                                    }
+                                    if (dy == null) {
+                                        return 1;
+                                    }
                                     return dx.compareTo(dy);
                                 });
                             }
@@ -4681,9 +4734,15 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
                         lst.sort((x, y) -> {
                             java.util.Date dx = x.getBeginDate();
                             java.util.Date dy = y.getBeginDate();
-                            if (dx == null && dy == null) return 0;
-                            if (dx == null) return -1;
-                            if (dy == null) return 1;
+                            if (dx == null && dy == null) {
+                                return 0;
+                            }
+                            if (dx == null) {
+                                return -1;
+                            }
+                            if (dy == null) {
+                                return 1;
+                            }
                             return dx.compareTo(dy);
                         });
                     }
@@ -4707,7 +4766,9 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
     private void attachReviewsModelListener() {
         try {
             javax.swing.table.TableModel m = this.tblReviewReasons.getModel();
-            if (m == null) return;
+            if (m == null) {
+                return;
+            }
             // Avoid double-adding: remove existing listeners if we used a marker wrapper? Keep simple: add lightweight listener
             if (m instanceof javax.swing.event.TableModelListener) {
                 // cannot reliably detect duplicates; proceed to add anonymous listener
@@ -4723,11 +4784,17 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
 
     private void openSelectedEventInDayView() {
         int row = this.tblReviewReasons.getSelectedRow();
-        if (row < 0) return;
+        if (row < 0) {
+            return;
+        }
         Object v = this.tblReviewReasons.getValueAt(row, 0);
-        if (!(v instanceof com.jdimension.jlawyer.persistence.ArchiveFileReviewsBean)) return;
+        if (!(v instanceof com.jdimension.jlawyer.persistence.ArchiveFileReviewsBean)) {
+            return;
+        }
         com.jdimension.jlawyer.persistence.ArchiveFileReviewsBean evt = (com.jdimension.jlawyer.persistence.ArchiveFileReviewsBean) v;
-        if (evt.getBeginDate() == null || evt.getEndDate() == null) return;
+        if (evt.getBeginDate() == null || evt.getEndDate() == null) {
+            return;
+        }
         try {
             com.jdimension.jlawyer.services.JLawyerServiceLocator locator = com.jdimension.jlawyer.services.JLawyerServiceLocator.getInstance(ClientSettings.getInstance().getLookupProperties());
             com.jdimension.jlawyer.services.CalendarServiceRemote calService = locator.lookupCalendarServiceRemote();
@@ -4736,7 +4803,9 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
                     evt.getBeginDate(), evt.getEndDate(), evt.getAssignee());
             java.util.List<com.jdimension.jlawyer.persistence.ArchiveFileReviewsBean> sameCal = new java.util.ArrayList<>();
             for (com.jdimension.jlawyer.persistence.ArchiveFileReviewsBean c : candidates) {
-                if (c.getCalendarSetup() == null) continue;
+                if (c.getCalendarSetup() == null) {
+                    continue;
+                }
                 if (evt.getCalendarSetup() != null && evt.getCalendarSetup().getId().equals(c.getCalendarSetup().getId())) {
                     sameCal.add(c);
                 }
@@ -4744,14 +4813,22 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
             // Show using existing conflict dialog in day view for quick visual check
             ConflictingEventsDialog dlg = new ConflictingEventsDialog(EditorsRegistry.getInstance().getMainWindow());
             // Ensure our target event is included for highlighting
-            if (!sameCal.contains(evt)) sameCal.add(evt);
+            if (!sameCal.contains(evt)) {
+                sameCal.add(evt);
+            }
             // Sort for nicer display
             sameCal.sort((a, b) -> {
                 java.util.Date da = a.getBeginDate();
                 java.util.Date db = b.getBeginDate();
-                if (da == null && db == null) return 0;
-                if (da == null) return -1;
-                if (db == null) return 1;
+                if (da == null && db == null) {
+                    return 0;
+                }
+                if (da == null) {
+                    return -1;
+                }
+                if (db == null) {
+                    return 1;
+                }
                 return da.compareTo(db);
             });
             dlg.setCalendarEntries(sameCal, evt, evt.getBeginDate());
@@ -7076,19 +7153,23 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
             exportHistoryTimelineToHtml(true);
         } catch (Throwable ex) {
             log.error("Error exporting history timeline", ex);
-            javax.swing.JOptionPane.showMessageDialog(this, "Fehler beim Export der Timeline: " + ex.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, javax.swing.JOptionPane.ERROR_MESSAGE);
+            javax.swing.JOptionPane.showMessageDialog(this, "Fehler beim Export der Aktenhistorie: " + ex.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, javax.swing.JOptionPane.ERROR_MESSAGE);
         }
     }//GEN-LAST:event_cmdExportHistoryTimelineActionPerformed
 
     private void cmdSaveHistoryDocumentActionPerformed(java.awt.event.ActionEvent evt) {
         try {
             java.io.File out = exportHistoryTimelineToHtml(false);
-            if (out == null) return;
-            String safeCase = (this.dto != null && this.dto.getFileNumber()!=null ? this.dto.getFileNumber() : "Akte");
-            // replace filesystem-unsafe characters: / \ : * ? " < > |
-            safeCase = safeCase.replaceAll("[\\\\/:*?\"<>|]", "_");
-            if (safeCase.trim().length()==0) safeCase = "Akte";
+            if (out == null) {
+                return;
+            }
+
+            String safeCase = (this.dto != null && this.dto.getFileNumber() != null ? this.dto.getFileNumber() : "Akte");
+            if (safeCase.trim().length() == 0) {
+                safeCase = "Akte";
+            }
             String fileName = "Historie-" + safeCase + "-" + new java.text.SimpleDateFormat("yyyyMMdd-HHmmss").format(new java.util.Date()) + ".html";
+            fileName = FileUtils.sanitizeFileName(fileName);
             byte[] content = com.jdimension.jlawyer.client.utils.FileUtils.readFile(out);
 
             com.jdimension.jlawyer.client.settings.ClientSettings settings = com.jdimension.jlawyer.client.settings.ClientSettings.getInstance();
@@ -7096,7 +7177,7 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
             ArchiveFileServiceRemote remote = locator.lookupArchiveFileServiceRemote();
             ArchiveFileDocumentsBean newDoc = remote.addDocument(this.dto.getId(), fileName, content, "", null);
             this.caseFolderPanel1.addDocument(remote.getDocument(newDoc.getId()), null);
-            javax.swing.JOptionPane.showMessageDialog(this, "Historie-HTML als Dokument hinzugefügt.", com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_HINT, javax.swing.JOptionPane.INFORMATION_MESSAGE);
+            javax.swing.JOptionPane.showMessageDialog(this, "Historie als HTML-Dokument hinzugefügt.", com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_HINT, javax.swing.JOptionPane.INFORMATION_MESSAGE);
         } catch (Throwable ex) {
             log.error("Error adding history HTML as document", ex);
             javax.swing.JOptionPane.showMessageDialog(this, "Fehler beim Hinzufügen des Dokuments: " + ex.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, javax.swing.JOptionPane.ERROR_MESSAGE);
@@ -7142,17 +7223,29 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
         Object lawyerObj = this.cmbLawyer != null ? this.cmbLawyer.getSelectedItem() : null;
 
         String h1Title = (caseName != null && caseName.trim().length() > 0) ? caseName : caseTitle;
+        h1Title=this.dto.getFileNumber() + " " + h1Title;
         StringBuilder meta = new StringBuilder();
-        if (reason != null && reason.trim().length() > 0) { meta.append("Wegen: ").append(escapeHtml(reason)); }
-        if (subjectObj != null) { if (meta.length() > 0) meta.append(" · "); meta.append("Sachgebiet: ").append(escapeHtml(subjectObj.toString())); }
-        if (lawyerObj != null) { if (meta.length() > 0) meta.append(" · "); meta.append("Anwalt: ").append(escapeHtml(lawyerObj.toString())); }
+        if (reason != null && reason.trim().length() > 0) {
+            meta.append("Wegen: ").append(escapeHtml(reason));
+        }
+        if (subjectObj != null) {
+            if (meta.length() > 0) {
+                meta.append(" · ");
+            }
+            meta.append("Sachgebiet: ").append(escapeHtml(subjectObj.toString()));
+        }
+        if (lawyerObj != null) {
+            if (meta.length() > 0) {
+                meta.append(" · ");
+            }
+            meta.append("Anwalt: ").append(escapeHtml(lawyerObj.toString()));
+        }
 
         // help tooltip block removed; tooltip is shown on the "Kategorien:" label
-
         html.append("<h1>").append(escapeHtml(h1Title)).append("</h1>");
         html.append("<div class=\"sub\">").append(meta.toString()).append("</div>");
 
-        java.util.LinkedHashMap<String,String> catNames = new java.util.LinkedHashMap<>();
+        java.util.LinkedHashMap<String, String> catNames = new java.util.LinkedHashMap<>();
         java.util.LinkedHashSet<String> usedCats = new java.util.LinkedHashSet<>();
 
         // collect categories (no timeline)
@@ -7183,15 +7276,16 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
             html.append("<button type=\"button\" class=\"btn\" id=\"btnNone\">Keine</button>");
 
             java.util.List<String> sortedCats = new java.util.ArrayList<>(usedCats);
-            java.util.Collections.sort(sortedCats, new java.util.Comparator<String>() {
-                @Override
-                public int compare(String a, String b) {
-                    String la = catNames.get(a);
-                    String lb = catNames.get(b);
-                    if (la == null) la = a;
-                    if (lb == null) lb = b;
-                    return la.compareToIgnoreCase(lb);
+            java.util.Collections.sort(sortedCats, (String a, String b) -> {
+                String la = catNames.get(a);
+                String lb = catNames.get(b);
+                if (la == null) {
+                    la = a;
                 }
+                if (lb == null) {
+                    lb = b;
+                }
+                return la.compareToIgnoreCase(lb);
             });
             for (String code : sortedCats) {
                 String label = catNames.get(code);
@@ -7225,23 +7319,43 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
         }
 
         if (openBrowser) {
-            try { java.awt.Desktop.getDesktop().browse(out.toURI()); } catch (Throwable t) { try { java.awt.Desktop.getDesktop().open(out); } catch (Throwable ignore) {} }
+            try {
+                DesktopUtils.openBrowser(out.toURI().toString());
+            } catch (Throwable t) {
+                try {
+                    java.awt.Desktop.getDesktop().open(out);
+                } catch (Throwable ignore) {
+                }
+            }
         }
         return out;
     }
 
     private static String escapeHtml(String s) {
-        if (s == null) return "";
+        if (s == null) {
+            return "";
+        }
         StringBuilder b = new StringBuilder(s.length() + 16);
         for (int i = 0; i < s.length(); i++) {
             char c = s.charAt(i);
             switch (c) {
-                case '&': b.append("&amp;"); break;
-                case '<': b.append("&lt;"); break;
-                case '>': b.append("&gt;"); break;
-                case '"': b.append("&quot;"); break;
-                case '\'': b.append("&#39;"); break;
-                default: b.append(c);
+                case '&':
+                    b.append("&amp;");
+                    break;
+                case '<':
+                    b.append("&lt;");
+                    break;
+                case '>':
+                    b.append("&gt;");
+                    break;
+                case '"':
+                    b.append("&quot;");
+                    break;
+                case '\'':
+                    b.append("&#39;");
+                    break;
+                default:
+                    b.append(c);
             }
         }
         return b.toString();
@@ -7252,24 +7366,52 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
     private static String[] determineCategory(String description) {
         String d = description == null ? "" : description.toLowerCase(java.util.Locale.ROOT);
         // Specific and high-priority matches first
-        if (containsAny(d, "akte geändert")) return new String[]{"cat-casechg", "Akte geändert"};
-        if (containsAny(d, "wiedervorlage hinzugefügt", "frist hinzugefügt", "termin hinzugefügt", "wiedervorlage geändert", "frist geändert", "termin geändert", "wiedervorlage gelöscht", "frist gelöscht", "termin gelöscht")) return new String[]{"cat-kal", "Kalendereintrag"};
-        if (containsAny(d, "wiedervorlage")) return new String[]{"cat-wvl", "Wiedervorlage"};
-        if (containsAny(d, "frist")) return new String[]{"cat-frist", "Frist"};
-        if (containsAny(d, "termin")) return new String[]{"cat-termin", "Termin"};
-        if (containsAny(d, "dokument-etikett", "tag ", "schlagwort", "label")) return new String[]{"cat-tag", "Tags"};
+        if (containsAny(d, "akte geändert")) {
+            return new String[]{"cat-casechg", "Akte geändert"};
+        }
+        if (containsAny(d, "wiedervorlage hinzugefügt", "frist hinzugefügt", "termin hinzugefügt", "wiedervorlage geändert", "frist geändert", "termin geändert", "wiedervorlage gelöscht", "frist gelöscht", "termin gelöscht")) {
+            return new String[]{"cat-kal", "Kalendereintrag"};
+        }
+        if (containsAny(d, "wiedervorlage")) {
+            return new String[]{"cat-wvl", "Wiedervorlage"};
+        }
+        if (containsAny(d, "frist")) {
+            return new String[]{"cat-frist", "Frist"};
+        }
+        if (containsAny(d, "termin")) {
+            return new String[]{"cat-termin", "Termin"};
+        }
+        if (containsAny(d, "dokument-etikett", "tag ", "schlagwort", "label")) {
+            return new String[]{"cat-tag", "Tags"};
+        }
         // General categories
-        if (containsAny(d, "dokument", "doc ", "pdf", "hochgeladen", "erstellt", "vorlage")) return new String[]{"cat-doc", "Dokument"};
-        if (containsAny(d, "nachricht", "e-mail", "email", "mail", "bea", "epost", "sms")) return new String[]{"cat-msg", "Nachricht"};
-        if (containsAny(d, "kalender", "erinnerung")) return new String[]{"cat-time", "Kalender"};
-        if (containsAny(d, "notiz", "hinweis", "memo")) return new String[]{"cat-note", "Notiz"};
-        if (containsAny(d, "rechnung", "gebühr", "kosten", "honorar", "rvg")) return new String[]{"cat-fin", "Rechnung"};
-        if (containsAny(d, "zahlung", "ausgleich", "überweisung", "zahlungseingang")) return new String[]{"cat-pay", "Zahlung"};
+        if (containsAny(d, "dokument", "doc ", "pdf", "hochgeladen", "erstellt", "vorlage")) {
+            return new String[]{"cat-doc", "Dokument"};
+        }
+        if (containsAny(d, "nachricht", "e-mail", "email", "mail", "bea", "epost", "sms")) {
+            return new String[]{"cat-msg", "Nachricht"};
+        }
+        if (containsAny(d, "kalender", "erinnerung")) {
+            return new String[]{"cat-time", "Kalender"};
+        }
+        if (containsAny(d, "notiz", "hinweis", "memo")) {
+            return new String[]{"cat-note", "Notiz"};
+        }
+        if (containsAny(d, "rechnung", "gebühr", "kosten", "honorar", "rvg")) {
+            return new String[]{"cat-fin", "Rechnung"};
+        }
+        if (containsAny(d, "zahlung", "ausgleich", "überweisung", "zahlungseingang")) {
+            return new String[]{"cat-pay", "Zahlung"};
+        }
         return new String[]{"cat-oth", "Sonstiges"};
     }
 
     private static boolean containsAny(String haystack, String... needles) {
-        for (String n : needles) { if (haystack.contains(n)) return true; }
+        for (String n : needles) {
+            if (haystack.contains(n)) {
+                return true;
+            }
+        }
         return false;
     }
 
@@ -8866,13 +9008,12 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
     private javax.swing.JButton cmdEditAccountEntry;
     private javax.swing.JButton cmdEditCaseNumber;
     private javax.swing.JButton cmdExportAccountEntries;
+    private javax.swing.JButton cmdExportHistoryTimeline;
     private javax.swing.JButton cmdExportHtml;
     private javax.swing.JButton cmdFavoriteDocuments;
     private javax.swing.JButton cmdFormsManager;
     private javax.swing.JButton cmdHeaderAddNote;
     private javax.swing.JButton cmdLoadFullHistory;
-    private javax.swing.JButton cmdExportHistoryTimeline;
-    private javax.swing.JButton cmdSaveHistoryDocument;
     private javax.swing.JButton cmdNewClaimLedger;
     private javax.swing.JButton cmdNewDocument;
     private javax.swing.JButton cmdNewInvoice;
@@ -8883,6 +9024,7 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
     private javax.swing.JButton cmdPrint;
     private javax.swing.JButton cmdRemoveAccountEntry;
     private javax.swing.JButton cmdSave;
+    private javax.swing.JButton cmdSaveHistoryDocument;
     private javax.swing.JButton cmdSearchClient;
     private javax.swing.JButton cmdSendInstantMessage;
     private javax.swing.JButton cmdShowHistorySelector;
