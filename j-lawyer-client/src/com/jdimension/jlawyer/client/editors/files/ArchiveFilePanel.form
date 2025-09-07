@@ -3216,6 +3216,8 @@
                                           <Component id="cmdAddHistory" min="-2" max="-2" attributes="0"/>
                                           <EmptySpace max="32767" attributes="0"/>
                                           <Component id="cmdLoadFullHistory" min="-2" max="-2" attributes="0"/>
+                                          <EmptySpace type="related" max="-2" attributes="0"/>
+                                          <Component id="cmdExportHistoryTimeline" min="-2" max="-2" attributes="0"/>
                                       </Group>
                                   </Group>
                               </Group>
@@ -3244,6 +3246,7 @@
                           <Group type="103" groupAlignment="3" attributes="0">
                               <Component id="cmdAddHistory" alignment="3" min="-2" max="-2" attributes="0"/>
                               <Component id="cmdLoadFullHistory" alignment="3" min="-2" max="-2" attributes="0"/>
+                              <Component id="cmdExportHistoryTimeline" alignment="3" min="-2" max="-2" attributes="0"/>
                           </Group>
                           <EmptySpace type="unrelated" max="-2" attributes="0"/>
                           <Component id="jScrollPane4" pref="642" max="32767" attributes="0"/>
@@ -3365,6 +3368,20 @@
                   </Properties>
                   <Events>
                     <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="cmdLoadFullHistoryActionPerformed"/>
+                  </Events>
+                </Component>
+                <Component class="javax.swing.JButton" name="cmdExportHistoryTimeline">
+                  <Properties>
+                    <Property name="icon" type="javax.swing.Icon" editor="org.netbeans.modules.form.editors2.IconEditor">
+                      <Image iconType="3" name="/icons/baseline_preview_black_48dp.png"/>
+                    </Property>
+                    <Property name="toolTipText" type="java.lang.String" value="Historie als Timeline (HTML) exportieren und im Browser &#xf6;ffnen"/>
+                    <Property name="margin" type="java.awt.Insets" editor="org.netbeans.beaninfo.editors.InsetsEditor">
+                      <Insets value="[2, 4, 2, 4]"/>
+                    </Property>
+                  </Properties>
+                  <Events>
+                    <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="cmdExportHistoryTimelineActionPerformed"/>
                   </Events>
                 </Component>
               </SubComponents>

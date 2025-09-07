@@ -2124,6 +2124,7 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
         jLabel14 = new javax.swing.JLabel();
         cmbHistoryTime = new javax.swing.JComboBox();
         cmdLoadFullHistory = new javax.swing.JButton();
+        cmdExportHistoryTimeline = new javax.swing.JButton();
         lblPanelTitle = new javax.swing.JLabel();
         jLabel2 = new javax.swing.JLabel();
         lblHeaderInfo = new javax.swing.JLabel();
@@ -3994,6 +3995,15 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
             }
         });
 
+        cmdExportHistoryTimeline.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/baseline_preview_black_48dp.png"))); // NOI18N
+        cmdExportHistoryTimeline.setToolTipText("Historie als Timeline (HTML) exportieren und im Browser öffnen");
+        cmdExportHistoryTimeline.setMargin(new java.awt.Insets(2, 4, 2, 4));
+        cmdExportHistoryTimeline.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                cmdExportHistoryTimelineActionPerformed(evt);
+            }
+        });
+
         org.jdesktop.layout.GroupLayout jPanel10Layout = new org.jdesktop.layout.GroupLayout(jPanel10);
         jPanel10.setLayout(jPanel10Layout);
         jPanel10Layout.setHorizontalGroup(
@@ -4019,7 +4029,9 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
                             .add(jPanel10Layout.createSequentialGroup()
                                 .add(cmdAddHistory)
                                 .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                                .add(cmdLoadFullHistory)))))
+                                .add(cmdLoadFullHistory)
+                                .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
+                                .add(cmdExportHistoryTimeline)))))
                 .addContainerGap())
         );
         jPanel10Layout.setVerticalGroup(
@@ -4038,7 +4050,8 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
                 .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
                 .add(jPanel10Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.BASELINE)
                     .add(cmdAddHistory)
-                    .add(cmdLoadFullHistory))
+                    .add(cmdLoadFullHistory)
+                    .add(cmdExportHistoryTimeline))
                 .addPreferredGap(org.jdesktop.layout.LayoutStyle.UNRELATED)
                 .add(jScrollPane4, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 642, Short.MAX_VALUE)
                 .addContainerGap())
@@ -7045,6 +7058,185 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
         this.loadHistoryEntries(null);
     }//GEN-LAST:event_cmdLoadFullHistoryActionPerformed
 
+    private void cmdExportHistoryTimelineActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdExportHistoryTimelineActionPerformed
+        try {
+            exportHistoryTimelineToHtml();
+        } catch (Throwable ex) {
+            log.error("Error exporting history timeline", ex);
+            javax.swing.JOptionPane.showMessageDialog(this, "Fehler beim Export der Timeline: " + ex.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, javax.swing.JOptionPane.ERROR_MESSAGE);
+        }
+    }//GEN-LAST:event_cmdExportHistoryTimelineActionPerformed
+
+    private void exportHistoryTimelineToHtml() throws Exception {
+        int rowCount = this.tblHistory.getRowCount();
+        if (rowCount == 0) {
+            javax.swing.JOptionPane.showMessageDialog(this, "Keine Historie vorhanden.", com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_HINT, javax.swing.JOptionPane.INFORMATION_MESSAGE);
+            return;
+        }
+
+        StringBuilder html = new StringBuilder(8192);
+        html.append("<!DOCTYPE html><html lang=\"de\"><head><meta charset=\"UTF-8\">");
+        html.append("<meta name=\"viewport\" content=\"width=device-width, initial-scale=1\">");
+        html.append("<title>Fallhistorie Timeline</title>");
+        html.append("<style>\n");
+        html.append(":root{--c-doc:#1976d2;--c-msg:#00796b;--c-time:#6a1b9a;--c-note:#5d4037;--c-party:#0097a7;--c-fin:#e65100;--c-pay:#2e7d32;--c-tag:#9e9d24;--c-oth:#607d8b;--c-tags:#8d6e63;--c-casechg:#546e7a;--c-wvl:#8e24aa;--c-frist:#d81b60;--c-termin:#1e88e5;--c-kal:#5e35b1}\n");
+        html.append("body{font-family:Arial,Helvetica,sans-serif;margin:22px;color:#223;} h1{font-size:22px;margin:0 0 6px} .sub{color:#666;margin-bottom:14px}\n");
+        html.append(".legend{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px;margin-bottom:18px}\n");
+        html.append(".chip{display:inline-block;font-size:11px;padding:3px 8px;border-radius:12px;color:#133;border:1px solid rgba(0,0,0,.08);background:#f5f7fa} .chip.cat-doc{border-color:var(--c-doc);background:color-mix(in srgb,var(--c-doc) 10%,white)} .chip.cat-msg{border-color:var(--c-msg);background:color-mix(in srgb,var(--c-msg) 10%,white)} .chip.cat-time{border-color:var(--c-time);background:color-mix(in srgb,var(--c-time) 10%,white)} .chip.cat-note{border-color:var(--c-note);background:color-mix(in srgb,var(--c-note) 10%,white)} .chip.cat-party{border-color:var(--c-party);background:color-mix(in srgb,var(--c-party) 10%,white)} .chip.cat-fin{border-color:var(--c-fin);background:color-mix(in srgb,var(--c-fin) 10%,white)} .chip.cat-pay{border-color:var(--c-pay);background:color-mix(in srgb,var(--c-pay) 10%,white)} .chip.cat-tag{border-color:var(--c-tag);background:color-mix(in srgb,var(--c-tag) 10%,white)} .chip.cat-oth{border-color:var(--c-oth);background:color-mix(in srgb,var(--c-oth) 10%,white)} .chip.cat-tags{border-color:var(--c-tags);background:color-mix(in srgb,var(--c-tags) 18%,white)} .chip.cat-casechg{border-color:var(--c-casechg);background:color-mix(in srgb,var(--c-casechg) 18%,white)} .chip.cat-wvl{border-color:var(--c-wvl);background:color-mix(in srgb,var(--c-wvl) 18%,white)} .chip.cat-frist{border-color:var(--c-frist);background:color-mix(in srgb,var(--c-frist) 18%,white)} .chip.cat-termin{border-color:var(--c-termin);background:color-mix(in srgb,var(--c-termin) 18%,white)} .chip.cat-kal{border-color:var(--c-kal);background:color-mix(in srgb,var(--c-kal) 18%,white)}\n");
+        html.append(".timeline{position:relative;margin:36px 0 18px;padding-top:28px} .line{height:4px;background:linear-gradient(90deg,#3f51b5,#2196f3);border-radius:3px;position:relative} .arrow{position:absolute;right:-12px;top:25px;width:0;height:0;border-top:9px solid transparent;border-bottom:9px solid transparent;border-left:12px solid #2196f3}\n");
+        html.append(".scroll{overflow-x:auto;overflow-y:hidden;-webkit-overflow-scrolling:touch;padding-bottom:6px} .dots{display:inline-flex;gap:10px;white-space:nowrap;padding-top:6px;align-items:flex-start}\n");
+        html.append(".dot{position:relative;display:inline-flex;align-items:flex-start;gap:6px;text-decoration:none;color:#0d47a1} .dot .point{width:6px;height:6px;border-radius:50%;border:2px solid #2196f3;background:#fff;box-shadow:0 0 0 1px rgba(33,150,243,.15)} .dot .lbl{display:inline-block;font-size:10px;color:#1a237e;transform:rotate(-30deg);transform-origin:left top;white-space:nowrap;margin-top:8px} .dot:hover .point{box-shadow:0 0 0 4px rgba(33,150,243,.3);transform:scale(1.4)}\n");
+        html.append(".dot.cat-doc .point{border-color:var(--c-doc)} .dot.cat-msg .point{border-color:var(--c-msg)} .dot.cat-time .point{border-color:var(--c-time)} .dot.cat-note .point{border-color:var(--c-note)} .dot.cat-party .point{border-color:var(--c-party)} .dot.cat-fin .point{border-color:var(--c-fin)} .dot.cat-pay .point{border-color:var(--c-pay)} .dot.cat-tag .point{border-color:var(--c-tag)} .dot.cat-oth .point{border-color:var(--c-oth)} .dot.cat-tags .point{border-color:var(--c-tags)} .dot.cat-casechg .point{border-color:var(--c-casechg)} .dot.cat-wvl .point{border-color:var(--c-wvl)} .dot.cat-frist .point{border-color:var(--c-frist)} .dot.cat-termin .point{border-color:var(--c-termin)} .dot.cat-kal .point{border-color:var(--c-kal)}\n");
+        html.append(".tbl{width:100%;border-collapse:collapse;margin-top:10px} .tbl th,.tbl td{padding:10px 12px;border-bottom:1px solid #eee;vertical-align:top} .tbl th{background:#fafafa;text-align:left;color:#444} .tbl tr:nth-child(even){background:#fcfcfc}\n");
+        html.append(".tbl thead th{cursor:pointer;user-select:none;position:relative;padding-right:22px} .tbl thead th::after{content:'';position:absolute;right:6px;top:50%;transform:translateY(-50%);font-size:11px;color:#666} .tbl thead th[data-dir=asc]::after{content:'\\25B2'} .tbl thead th[data-dir=desc]::after{content:'\\25BC'}\n");
+        html.append(".row{border-left:4px solid transparent} .row.cat-doc{border-left-color:var(--c-doc)} .row.cat-msg{border-left-color:var(--c-msg)} .row.cat-time{border-left-color:var(--c-time)} .row.cat-note{border-left-color:var(--c-note)} .row.cat-party{border-left-color:var(--c-party)} .row.cat-fin{border-left-color:var(--c-fin)} .row.cat-pay{border-left-color:var(--c-pay)} .row.cat-tag{border-left-color:var(--c-tag)} .row.cat-oth{border-left-color:var(--c-oth)} .row.cat-tags{border-left-color:var(--c-tags)} .row.cat-casechg{border-left-color:var(--c-casechg)} .row.cat-wvl{border-left-color:var(--c-wvl)} .row.cat-frist{border-left-color:var(--c-frist)} .row.cat-termin{border-left-color:var(--c-termin)} .row.cat-kal{border-left-color:var(--c-kal)}\n");
+        html.append(".row.cat-doc td{background:color-mix(in srgb,var(--c-doc) 35%,white)} .row.cat-msg td{background:color-mix(in srgb,var(--c-msg) 35%,white)} .row.cat-time td{background:color-mix(in srgb,var(--c-time) 35%,white)} .row.cat-note td{background:color-mix(in srgb,var(--c-note) 35%,white)} .row.cat-party td{background:color-mix(in srgb,var(--c-party) 35%,white)} .row.cat-fin td{background:color-mix(in srgb,var(--c-fin) 35%,white)} .row.cat-pay td{background:color-mix(in srgb,var(--c-pay) 35%,white)} .row.cat-tag td{background:color-mix(in srgb,var(--c-tag) 35%,white)} .row.cat-oth td{background:color-mix(in srgb,var(--c-oth) 35%,white)} .row.cat-tags td{background:color-mix(in srgb,var(--c-tags) 35%,white)} .row.cat-casechg td{background:color-mix(in srgb,var(--c-casechg) 35%,white)} .row.cat-wvl td{background:color-mix(in srgb,var(--c-wvl) 35%,white)} .row.cat-frist td{background:color-mix(in srgb,var(--c-frist) 35%,white)} .row.cat-termin td{background:color-mix(in srgb,var(--c-termin) 35%,white)} .row.cat-kal td{background:color-mix(in srgb,var(--c-kal) 35%,white)}\n");
+
+        html.append(".ts{white-space:nowrap;font-family:monospace;color:#333} .user{display:inline-block;font-size:11px;padding:3px 8px;border-radius:12px;background:#eef7ee;color:#1b5e20;border:1px solid #cfe9cf} .desc .chip{margin-right:8px}\n");
+        html.append("html{scroll-behavior:smooth}\n");
+        html.append("@supports not (background: color-mix(in srgb, red 50%, white)) { .chip.cat-doc{background:#e8f1fb} .chip.cat-msg{background:#e6f4f1} .chip.cat-time{background:#f0e7f5} .chip.cat-note{background:#efe9e6} .chip.cat-party{background:#e6f6f8} .chip.cat-fin{background:#fbeee5} .chip.cat-pay{background:#eaf4eb} .chip.cat-tag{background:#f2f3e6} .chip.cat-oth{background:#edf2f5} }\n");
+        html.append(".filters{display:flex;flex-wrap:wrap;gap:8px;margin-top:8px;margin-bottom:18px} .btn{margin-right:6px;font-size:12px;padding:4px 8px;border-radius:8px;border:1px solid #c5c5c5;background:#f7f7f7;cursor:pointer} .btn:hover{background:#eee} .toggle{opacity:.7} .toggle.active{opacity:1} .toggle.cat-doc{border-color:var(--c-doc)} .toggle.cat-msg{border-color:var(--c-msg)} .toggle.cat-time{border-color:var(--c-time)} .toggle.cat-note{border-color:var(--c-note)} .toggle.cat-party{border-color:var(--c-party)} .toggle.cat-fin{border-color:var(--c-fin)} .toggle.cat-pay{border-color:var(--c-pay)} .toggle.cat-tag{border-color:var(--c-tag)} .toggle.cat-oth{border-color:var(--c-oth)} .toggle.cat-tags{border-color:var(--c-tags)} .toggle.cat-casechg{border-color:var(--c-casechg)} .toggle.cat-wvl{border-color:var(--c-wvl)} .toggle.cat-frist{border-color:var(--c-frist)} .toggle.cat-termin{border-color:var(--c-termin)} .toggle.cat-kal{border-color:var(--c-kal)} .toggle.cat-doc.active{background:color-mix(in srgb,var(--c-doc) 18%,white)} .toggle.cat-msg.active{background:color-mix(in srgb,var(--c-msg) 18%,white)} .toggle.cat-time.active{background:color-mix(in srgb,var(--c-time) 18%,white)} .toggle.cat-note.active{background:color-mix(in srgb,var(--c-note) 18%,white)} .toggle.cat-party.active{background:color-mix(in srgb,var(--c-party) 18%,white)} .toggle.cat-fin.active{background:color-mix(in srgb,var(--c-fin) 18%,white)} .toggle.cat-pay.active{background:color-mix(in srgb,var(--c-pay) 18%,white)} .toggle.cat-tag.active{background:color-mix(in srgb,var(--c-tag) 18%,white)} .toggle.cat-oth.active{background:color-mix(in srgb,var(--c-oth) 18%,white)} .toggle.cat-tags.active{background:color-mix(in srgb,var(--c-tags) 18%,white)} .toggle.cat-casechg.active{background:color-mix(in srgb,var(--c-casechg) 18%,white)} .toggle.cat-wvl.active{background:color-mix(in srgb,var(--c-wvl) 18%,white)} .toggle.cat-frist.active{background:color-mix(in srgb,var(--c-frist) 18%,white)} .toggle.cat-termin.active{background:color-mix(in srgb,var(--c-termin) 18%,white)} .toggle.cat-kal.active{background:color-mix(in srgb,var(--c-kal) 18%,white)} .hidden{display:none !important}\\n");
+        html.append(".help{position:fixed;bottom:10px;right:10px;z-index:999} .help .btn{width:22px;height:22px;border-radius:50%;background:#f5f5f5;border:1px solid #c9c9c9;display:flex;align-items:center;justify-content:center;font-weight:bold;color:#555;box-shadow:0 1px 2px rgba(0,0,0,.08)} .help .tip{position:absolute;bottom:28px;right:0;width:360px;max-width:90vw;background:#fff;border:1px solid #ddd;border-radius:8px;box-shadow:0 6px 18px rgba(0,0,0,.12);padding:10px 12px;opacity:0;pointer-events:none;transition:opacity .15s} .help:hover .tip,.help:focus-within .tip{opacity:1;pointer-events:auto} .tiptitle{font-weight:bold;margin-bottom:6px} .tiplist{list-style:none;margin:6px 0 0;padding:0} .tiplist li{margin:6px 0;font-size:12px;line-height:1.4} .tiplist .kw{color:#555}\\n");
+        html.append("</style></head><body>");
+
+        String caseTitle = this.lblPanelTitle != null ? this.lblPanelTitle.getText() : "Akte";
+        String caseName = this.txtName != null ? this.txtName.getText() : null;
+        String reason = this.txtReason != null ? this.txtReason.getText() : null;
+        Object subjectObj = this.cmbSubjectField != null ? this.cmbSubjectField.getSelectedItem() : null;
+        Object lawyerObj = this.cmbLawyer != null ? this.cmbLawyer.getSelectedItem() : null;
+
+        String h1Title = (caseName != null && caseName.trim().length() > 0) ? caseName : caseTitle;
+        StringBuilder meta = new StringBuilder();
+        if (reason != null && reason.trim().length() > 0) { meta.append("Wegen: ").append(escapeHtml(reason)); }
+        if (subjectObj != null) { if (meta.length() > 0) meta.append(" · "); meta.append("Sachgebiet: ").append(escapeHtml(subjectObj.toString())); }
+        if (lawyerObj != null) { if (meta.length() > 0) meta.append(" · "); meta.append("Anwalt: ").append(escapeHtml(lawyerObj.toString())); }
+
+        // Help tooltip with keyword mapping
+        html.append("<div class=\"help\" aria-label=\"Hilfe zur Kategorisierung\"><div class=\"btn\">?</div><div class=\"tip\"><div class=\"tiptitle\">Kategorien & Schlagwörter</div><ul class=\"tiplist\">");
+        html.append("<li><span class=\"chip cat-doc\">Dokument</span> <span class=\"kw\">(dokument, doc, pdf, hochgeladen, erstellt, vorlage)</span></li>");
+        html.append("<li><span class=\"chip cat-msg\">Nachricht</span> <span class=\"kw\">(nachricht, e-mail, email, mail, bea, epost, sms)</span></li>");
+        html.append("<li><span class=\"chip cat-time\">Termin/Frist</span> <span class=\"kw\">(termin, kalender, frist, erinnerung)</span></li>");
+        html.append("<li><span class=\"chip cat-note\">Notiz</span> <span class=\"kw\">(notiz, hinweis, memo)</span></li>");
+        html.append("<li><span class=\"chip cat-party\">Beteiligte</span> <span class=\"kw\">(beteilig, adresse, kontakt, mandant)</span></li>");
+        html.append("<li><span class=\"chip cat-fin\">Rechnung</span> <span class=\"kw\">(rechnung, geb\u00fchr, kosten, honorar, rvg)</span></li>");
+        html.append("<li><span class=\"chip cat-pay\">Zahlung</span> <span class=\"kw\">(zahlung, ausgleich, \u00fcberweisung, zahlungseingang)</span></li>");
+        html.append("<li><span class=\"chip cat-tag\">Tag</span> <span class=\"kw\">(tag, schlagwort, label)</span></li>");
+        html.append("<li><span class=\"chip cat-oth\">Sonstiges</span></li>");
+        html.append("</ul></div></div>");
+
+        html.append("<h1>").append(escapeHtml(h1Title)).append("</h1>");
+        html.append("<div class=\"sub\">").append(meta.toString()).append("</div>");
+
+        java.util.LinkedHashMap<String,String> catNames = new java.util.LinkedHashMap<>();
+        java.util.LinkedHashSet<String> usedCats = new java.util.LinkedHashSet<>();
+
+        // collect categories (no timeline)
+        for (int r = 0; r < rowCount; r++) {
+            Object desc = this.tblHistory.getValueAt(r, 2);
+            String[] cat = determineCategory(desc != null ? desc.toString() : null);
+            usedCats.add(cat[0]);
+            catNames.put(cat[0], cat[1]);
+        }
+
+        if (!usedCats.isEmpty()) {
+            html.append("<div class=\"filters\" style=\"justify-content:flex-start\"><span style=\"margin-right:6px;color:#555\">Kategorien:</span>");
+            html.append("<button type=\"button\" class=\"btn\" id=\"btnAll\">Alle</button>");
+            html.append("<button type=\"button\" class=\"btn\" id=\"btnNone\">Keine</button>");
+
+            java.util.List<String> sortedCats = new java.util.ArrayList<>(usedCats);
+            java.util.Collections.sort(sortedCats, new java.util.Comparator<String>() {
+                @Override
+                public int compare(String a, String b) {
+                    String la = catNames.get(a);
+                    String lb = catNames.get(b);
+                    if (la == null) la = a;
+                    if (lb == null) lb = b;
+                    return la.compareToIgnoreCase(lb);
+                }
+            });
+            for (String code : sortedCats) {
+                String label = catNames.get(code);
+                html.append("<button type=\"button\" class=\"btn toggle ").append(code).append(" active\" data-cat=\"").append(code).append("\">").append(escapeHtml(label)).append("</button>");
+            }
+            html.append("</div>");
+        }
+
+        // detailed table
+        html.append("<table id=\"hist\" class=\"tbl\"><colgroup><col /><col /><col /></colgroup><thead><tr><th data-col=\"0\">Änderung</th><th data-col=\"1\">Nutzer</th><th data-col=\"2\">Beschreibung</th></tr></thead><tbody>");
+        for (int r = 0; r < rowCount; r++) {
+            Object ts = this.tblHistory.getValueAt(r, 0);
+            Object user = this.tblHistory.getValueAt(r, 1);
+            Object desc = this.tblHistory.getValueAt(r, 2);
+            String[] cat = determineCategory(desc != null ? desc.toString() : null);
+            html.append("<tr id=\"event").append(r).append("\" class=\"row ").append(cat[0]).append("\">");
+            html.append("<td class=\"ts\">").append(escapeHtml(ts != null ? ts.toString() : "")).append("</td>");
+            html.append("<td><span class=\"user\">").append(escapeHtml(user != null ? user.toString() : "")).append("</span></td>");
+            html.append("<td class=\"desc\"><span class=\"chip ").append(cat[0]).append("\">").append(escapeHtml(cat[1])).append("</span>").append(escapeHtml(desc != null ? desc.toString() : "")).append("</td>");
+            html.append("</tr>");
+        }
+        html.append("</tbody></table>");
+
+        html.append("<script>(function(){function applyFilters(){var toggles=document.querySelectorAll('.filters .toggle');toggles.forEach(function(btn){var cat=btn.getAttribute('data-cat');var on=btn.classList.contains('active');document.querySelectorAll('.row.'+cat).forEach(function(el){el.classList.toggle('hidden',!on);});});}function parseDate(s){if(!s)return NaN;var d=s.slice(0,10).split('.');var t=s.slice(11).split(':');var Y=+d[2],M=+d[1]-1,D=+d[0],h=+(t[0]||0),m=+(t[1]||0),sec=+(t[2]||0);return new Date(Y,M,D,h,m,sec).getTime();}function sortTableBy(col,dir){var tbl=document.getElementById('hist');if(!tbl)return;var tbody=tbl.tBodies[0];var rows=Array.from(tbody.querySelectorAll('tr'));rows.sort(function(a,b){var A=a.children[col].innerText.trim();var B=b.children[col].innerText.trim();if(col===0){var tA=parseDate(A),tB=parseDate(B);if(!isNaN(tA)&&!isNaN(tB)){return dir*(tA-tB);} } return dir*A.localeCompare(B,'de');});rows.forEach(function(r){tbody.appendChild(r);});}function makeResizable(){var tbl=document.getElementById('hist');if(!tbl)return;var ths=tbl.tHead.rows[0].cells;var cols=tbl.querySelectorAll('colgroup col');for(var i=0;i<ths.length;i++){var th=ths[i];th.style.position='relative';var rz=document.createElement('span');rz.className='resizer';rz.style.cssText='position:absolute;right:0;top:0;width:6px;cursor:col-resize;user-select:none;height:100%;';th.appendChild(rz);th.addEventListener('click',function(e){if(e.target.classList.contains('resizer'))return;var col=parseInt(this.getAttribute('data-col'),10);var dir=this.getAttribute('data-dir')==='asc'?-1:1;Array.prototype.forEach.call(ths,function(x){x.removeAttribute('data-dir');});this.setAttribute('data-dir',dir===1?'asc':'desc');sortTableBy(col,dir);});(function(th,i){var startX,startW;rz.addEventListener('mousedown',function(e){startX=e.pageX;startW=th.offsetWidth;document.body.style.cursor='col-resize';function mm(ev){var dx=ev.pageX-startX;var w=Math.max(80,startW+dx);th.style.width=w+'px';if(cols[i])cols[i].style.width=w+'px';}function mu(){document.removeEventListener('mousemove',mm);document.removeEventListener('mouseup',mu);document.body.style.cursor='';}document.addEventListener('mousemove',mm);document.addEventListener('mouseup',mu);});})(th,i);}}document.addEventListener('DOMContentLoaded',function(){var toggles=document.querySelectorAll('.filters .toggle');toggles.forEach(function(btn){btn.addEventListener('click',function(){btn.classList.toggle('active');applyFilters();});});var btnAll=document.getElementById('btnAll');var btnNone=document.getElementById('btnNone');if(btnAll)btnAll.addEventListener('click',function(){toggles.forEach(function(b){b.classList.add('active');});applyFilters();});if(btnNone)btnNone.addEventListener('click',function(){toggles.forEach(function(b){b.classList.remove('active');});applyFilters();});makeResizable();applyFilters();});})();</script>");
+
+        html.append("</body></html>");
+
+        java.io.File out = java.io.File.createTempFile("jlawyer-history-", ".html");
+        try (java.io.PrintWriter pw = new java.io.PrintWriter(new java.io.OutputStreamWriter(new java.io.FileOutputStream(out), java.nio.charset.StandardCharsets.UTF_8))) {
+            pw.print(html.toString());
+        }
+
+        try {
+            java.awt.Desktop.getDesktop().browse(out.toURI());
+        } catch (Throwable t) {
+            try { java.awt.Desktop.getDesktop().open(out); } catch (Throwable ignore) {}
+        }
+    }
+
+    private static String escapeHtml(String s) {
+        if (s == null) return "";
+        StringBuilder b = new StringBuilder(s.length() + 16);
+        for (int i = 0; i < s.length(); i++) {
+            char c = s.charAt(i);
+            switch (c) {
+                case '&': b.append("&amp;"); break;
+                case '<': b.append("&lt;"); break;
+                case '>': b.append("&gt;"); break;
+                case '"': b.append("&quot;"); break;
+                case '\'': b.append("&#39;"); break;
+                default: b.append(c);
+            }
+        }
+        return b.toString();
+    }
+
+    // Determine a simple category from the description text
+    // Returns [cssCode, displayName]
+    private static String[] determineCategory(String description) {
+        String d = description == null ? "" : description.toLowerCase(java.util.Locale.ROOT);
+        // Specific and high-priority matches first
+        if (containsAny(d, "akte geändert")) return new String[]{"cat-casechg", "Akte geändert"};
+        if (containsAny(d, "wiedervorlage hinzugefügt", "frist hinzugefügt", "termin hinzugefügt", "wiedervorlage geändert", "frist geändert", "termin geändert", "wiedervorlage gelöscht", "frist gelöscht", "termin gelöscht")) return new String[]{"cat-kal", "Kalendereintrag"};
+        if (containsAny(d, "wiedervorlage")) return new String[]{"cat-wvl", "Wiedervorlage"};
+        if (containsAny(d, "frist")) return new String[]{"cat-frist", "Frist"};
+        if (containsAny(d, "termin")) return new String[]{"cat-termin", "Termin"};
+        if (containsAny(d, "dokument-etikett")) return new String[]{"cat-tags", "Tags"};
+        // General categories
+        if (containsAny(d, "dokument", "doc ", "pdf", "hochgeladen", "erstellt", "vorlage")) return new String[]{"cat-doc", "Dokument"};
+        if (containsAny(d, "nachricht", "e-mail", "email", "mail", "bea", "epost", "sms")) return new String[]{"cat-msg", "Nachricht"};
+        if (containsAny(d, "kalender", "erinnerung")) return new String[]{"cat-time", "Kalender"};
+        if (containsAny(d, "notiz", "hinweis", "memo")) return new String[]{"cat-note", "Notiz"};
+        if (containsAny(d, "beteilig", "adresse", "kontakt", "mandant")) return new String[]{"cat-party", "Beteiligte"};
+        if (containsAny(d, "rechnung", "gebühr", "kosten", "honorar", "rvg")) return new String[]{"cat-fin", "Rechnung"};
+        if (containsAny(d, "zahlung", "ausgleich", "überweisung", "zahlungseingang")) return new String[]{"cat-pay", "Zahlung"};
+        if (containsAny(d, "tag ", "schlagwort", "label")) return new String[]{"cat-tag", "Tag"};
+        return new String[]{"cat-oth", "Sonstiges"};
+    }
+
+    private static boolean containsAny(String haystack, String... needles) {
+        for (String n : needles) { if (haystack.contains(n)) return true; }
+        return false;
+    }
+
     private void cmdCopyCaseNumberActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdCopyCaseNumberActionPerformed
         if (this.dto != null) {
             Toolkit toolkit = Toolkit.getDefaultToolkit();
@@ -8643,6 +8835,7 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
     private javax.swing.JButton cmdFormsManager;
     private javax.swing.JButton cmdHeaderAddNote;
     private javax.swing.JButton cmdLoadFullHistory;
+    private javax.swing.JButton cmdExportHistoryTimeline;
     private javax.swing.JButton cmdNewClaimLedger;
     private javax.swing.JButton cmdNewDocument;
     private javax.swing.JButton cmdNewInvoice;
