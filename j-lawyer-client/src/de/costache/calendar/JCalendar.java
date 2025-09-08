@@ -50,11 +50,14 @@ public class JCalendar extends JPanel {
     private JPopupMenu popupMenu;
     private CalendarEventFormat formater;
     private Calendar selectedDay;
+    private CalendarPanel calPanel;
 
     /**
      * Creates a new instance of {@link JCalendar}
+     * @param calPanel the panel owning this calendar
      */
-    public JCalendar() {
+    public JCalendar(CalendarPanel calPanel) {
+        this.calPanel=calPanel;
         intervalChangedListener = new ArrayList<>();
         config = new Config();
         formater = new DefaultCalendarEventFormat();
@@ -71,7 +74,7 @@ public class JCalendar extends JPanel {
      */
     private void initGui() {
         this.setBackground(Color.white);
-        headerPane = new HeaderPanel();
+        headerPane = new HeaderPanel(this.calPanel);
         contentPane = new ContentPanel(this);
 
         headerPane.getIntervalLabel().setText(contentPane.getStrategy().getDisplayInterval());

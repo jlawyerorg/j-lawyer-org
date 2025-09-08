@@ -664,6 +664,10 @@ For more information on this, and how to apply and follow the GNU AGPL, see
 package com.jdimension.jlawyer.client.editors.files;
 
 import com.jdimension.jlawyer.client.calendar.CalendarUtils;
+import com.jdimension.jlawyer.client.settings.ClientSettings;
+import com.jdimension.jlawyer.services.JLawyerServiceLocator;
+import com.jdimension.jlawyer.services.CalendarServiceRemote;
+import com.jdimension.jlawyer.persistence.ArchiveFileReviewsBean;
 import com.jdimension.jlawyer.client.components.MultiCalDialog;
 import com.jdimension.jlawyer.client.components.QuickDateSelectionListener;
 import com.jdimension.jlawyer.client.configuration.UserListCellRenderer;
@@ -683,6 +687,8 @@ import java.util.Calendar;
 import java.util.Date;
 import java.util.List;
 import javax.swing.DefaultListModel;
+import javax.swing.ImageIcon;
+import javax.swing.JButton;
 import javax.swing.JList;
 import javax.swing.JOptionPane;
 import org.apache.log4j.Logger;
@@ -786,6 +792,7 @@ public class NewEventPanel extends javax.swing.JPanel implements QuickDateSelect
     private void initComponents() {
 
         btGrpReviewType = new javax.swing.ButtonGroup();
+        btnOpenCalendar = new javax.swing.JButton();
         radioEventTypeFollowUp = new javax.swing.JRadioButton();
         radioEventTypeRespite = new javax.swing.JRadioButton();
         radioEventTypeEvent = new javax.swing.JRadioButton();
@@ -810,6 +817,17 @@ public class NewEventPanel extends javax.swing.JPanel implements QuickDateSelect
         jScrollPane9 = new javax.swing.JScrollPane();
         lstReviewReasons = new javax.swing.JList<>();
         jLabel22 = new javax.swing.JLabel();
+
+        btnOpenCalendar.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons16/material/baseline_splitscreen_black_48dp.png"))); // NOI18N
+        btnOpenCalendar.setToolTipText("Kalender in separatem Fenster öffnen");
+        btnOpenCalendar.setFocusPainted(false);
+        btnOpenCalendar.setMargin(new java.awt.Insets(2, 2, 2, 2));
+        btnOpenCalendar.setPreferredSize(new java.awt.Dimension(26, 26));
+        btnOpenCalendar.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                btnOpenCalendarActionPerformed(evt);
+            }
+        });
 
         btGrpReviewType.add(radioEventTypeFollowUp);
         radioEventTypeFollowUp.setSelected(true);
@@ -947,7 +965,9 @@ public class NewEventPanel extends javax.swing.JPanel implements QuickDateSelect
                             .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
                             .addComponent(radioEventTypeEvent)
                             .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                            .addComponent(calendarSelectionButton, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)))
+                            .addComponent(calendarSelectionButton, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                            .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                            .addComponent(btnOpenCalendar, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)))
                     .addComponent(jLabel23)
                     .addGroup(layout.createSequentialGroup()
                         .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
@@ -972,12 +992,13 @@ public class NewEventPanel extends javax.swing.JPanel implements QuickDateSelect
         layout.setVerticalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(layout.createSequentialGroup()
-                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addComponent(calendarSelectionButton, javax.swing.GroupLayout.Alignment.TRAILING, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
+                    .addComponent(calendarSelectionButton, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                     .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                         .addComponent(radioEventTypeFollowUp)
                         .addComponent(radioEventTypeRespite)
-                        .addComponent(radioEventTypeEvent)))
+                        .addComponent(radioEventTypeEvent))
+                    .addComponent(btnOpenCalendar, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
                 .addComponent(quickDateSelectionPanel, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
@@ -1241,6 +1262,54 @@ public class NewEventPanel extends javax.swing.JPanel implements QuickDateSelect
         this.txtEventEndDateField.setText(s);
     }
 
+    private void btnOpenCalendarActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnOpenCalendarActionPerformed
+        javax.swing.JButton src = this.btnOpenCalendar;
+        src.setEnabled(false);
+        javax.swing.SwingUtilities.invokeLater(() -> {
+            javax.swing.JFrame frame = new javax.swing.JFrame("Kalender");
+            frame.setIconImage(new ImageIcon(getClass().getResource("/icons/windowicon.png")).getImage());
+            try { frame.setModalExclusionType(java.awt.Dialog.ModalExclusionType.APPLICATION_EXCLUDE); } catch (Throwable ignore) {}
+            de.costache.calendar.CalendarPanel pop = new de.costache.calendar.CalendarPanel();
+            // Do not allow navigating to cases from this popout (stay within Akte context)
+            pop.setAllowOpenCase(false);
+            // Start in Tagesansicht heute
+            pop.setSelectedDayInDayView(new java.util.Date());
+            // Datenquellen laden: Alle offenen Einträge (für Verfügbarkeitsprüfung)
+            try {
+                ClientSettings settings = ClientSettings.getInstance();
+                JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
+                java.util.Collection<ArchiveFileReviewsBean> reviews = locator.lookupCalendarServiceRemote().getAllOpenReviews();
+                pop.setData(reviews);
+            } catch (Exception ex) {
+                org.apache.log4j.Logger.getLogger(NewEventPanel.class.getName()).warn("Kalenderdaten konnten nicht geladen werden", ex);
+            }
+            
+            JButton popupHeaderBtn = new JButton();
+            popupHeaderBtn.setText("Aktualisieren");
+            popupHeaderBtn.setToolTipText("Kalenderansicht neu laden");
+            popupHeaderBtn.addActionListener(e -> {
+                // Daten erneut komplett vom Server laden
+                try {
+                    ClientSettings settings = ClientSettings.getInstance();
+                    JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
+                    java.util.Collection<ArchiveFileReviewsBean> reviews = locator.lookupCalendarServiceRemote().getAllOpenReviews();
+                    pop.setData(reviews);
+                } catch (Exception ex) {
+                    org.apache.log4j.Logger.getLogger(NewEventPanel.class.getName()).warn("Kalenderdaten konnten nicht geladen werden", ex);
+                }
+            });
+            frame.setContentPane(pop);
+            frame.setDefaultCloseOperation(javax.swing.WindowConstants.DISPOSE_ON_CLOSE);
+            frame.setSize(1024, 768);
+            frame.setLocationByPlatform(true);
+            frame.addWindowListener(new java.awt.event.WindowAdapter() {
+                @Override public void windowClosed(java.awt.event.WindowEvent e) { src.setEnabled(true); }
+                @Override public void windowClosing(java.awt.event.WindowEvent e) { src.setEnabled(true); }
+            });
+            frame.setVisible(true);
+        });
+    }//GEN-LAST:event_btnOpenCalendarActionPerformed
+
     public void reset() {
         this.quickDateSelectionPanel.reset();
         this.txtEventBeginDateField.setText("");
@@ -1325,6 +1394,7 @@ public class NewEventPanel extends javax.swing.JPanel implements QuickDateSelect
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.ButtonGroup btGrpReviewType;
+    private javax.swing.JButton btnOpenCalendar;
     private com.jdimension.jlawyer.client.calendar.CalendarSelectionButton calendarSelectionButton;
     private javax.swing.JComboBox<String> cmbEventBeginTime;
     private javax.swing.JComboBox<String> cmbEventEndTime;

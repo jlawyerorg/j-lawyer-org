@@ -15,6 +15,7 @@
  */
 package de.costache.calendar.ui;
 
+import de.costache.calendar.CalendarPanel;
 import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
 import java.awt.Image;
@@ -23,6 +24,8 @@ import java.awt.Insets;
 import javax.imageio.ImageIO;
 import javax.swing.*;
 import de.costache.calendar.ui.strategy.DisplayStrategy;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
 
 
 /**
@@ -33,6 +36,8 @@ import de.costache.calendar.ui.strategy.DisplayStrategy;
 public class HeaderPanel extends JPanel {
 
 	private static final long serialVersionUID = 1L;
+        
+        private CalendarPanel calPanel=null;
 
 	private JButton scrollLeftButton;
 
@@ -47,12 +52,14 @@ public class HeaderPanel extends JPanel {
 	private JButton monthButton;
         
         private JButton todayButton;
+        private JButton windowButton;
 
 	/**
 	 * Creates a new instance of {@link HeaderPanel}
 	 */
-	public HeaderPanel() {
-		init();
+	public HeaderPanel(CalendarPanel calPanel) {
+            this.calPanel=calPanel;
+            init();
 	}
 
 	private void init() {
@@ -70,6 +77,8 @@ public class HeaderPanel extends JPanel {
 		monthButton = new JButton();
                 monthButton.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons16/calendar_month.png")));
                 todayButton=new JButton();
+                windowButton=new JButton();
+                windowButton.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons16/material/open_in_new_20dp_0E72B5.png")));
                 todayButton.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons16/calendar_today.png")));
 
 		scrollLeftButton = new JButton();
@@ -81,6 +90,11 @@ public class HeaderPanel extends JPanel {
 		weekButton.setText(strWeek);
 		monthButton.setText(strMonth);
                 todayButton.setText("Heute");
+                windowButton.setText("");
+                windowButton.setToolTipText("Kalender in separatem Fenster öffnen");
+                windowButton.addActionListener((ActionEvent ae) -> {
+                    calPanel.showSeparateCalendarWindow();
+                });
                 
 
 		scrollLeftButton.setBorderPainted(false);
@@ -152,11 +166,17 @@ public class HeaderPanel extends JPanel {
                 sep.setOrientation(SwingConstants.VERTICAL);
 		this.add(sep, c);
                 c.gridx = 7;
-		c.gridy = 0;
-		c.weightx = 0.0;
-		c.fill = GridBagConstraints.BOTH;
-		c.insets = new Insets(10, 0, 10, 10);
-		this.add(todayButton, c);
+                c.gridy = 0;
+                c.weightx = 0.0;
+                c.fill = GridBagConstraints.BOTH;
+                c.insets = new Insets(10, 0, 10, 10);
+                this.add(todayButton, c);
+                c.gridx = 8;
+                c.gridy = 0;
+                c.weightx = 0.0;
+                c.fill = GridBagConstraints.BOTH;
+                c.insets = new Insets(10, 0, 10, 10);
+                this.add(windowButton, c);
 	}
 
 	/**
@@ -194,9 +214,9 @@ public class HeaderPanel extends JPanel {
 		return monthButton;
 	}
         
-        public JButton getTodayButton() {
-		return todayButton;
-	}
+       public JButton getTodayButton() {
+           return todayButton;
+       }
 
 	/**
 	 * @return the intervalLabel
