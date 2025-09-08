@@ -5408,7 +5408,7 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
         if (target == null) {
             if (selectedDocs.isEmpty()) {
                 target=null;
-            } if (selectedDocs.size() == 1) {
+            } else if (selectedDocs.size() == 1) {
                 target = selectedDocs.get(0);
             } else {
                 target = selectedDocs.get(selectedDocs.size() - 1);
