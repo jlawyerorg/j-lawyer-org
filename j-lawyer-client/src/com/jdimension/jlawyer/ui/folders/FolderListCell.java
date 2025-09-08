@@ -708,6 +708,22 @@ public class FolderListCell extends javax.swing.JPanel implements DropTargetList
     private int level = 0;
     protected boolean readOnly = false;
     private FoldersListPanel parent = null;
+    
+    public static final int FILL_EMPTY = 0;
+    public static final int FILL_HALF = 1;
+    public static final int FILL_FULL = 2;
+    private static final javax.swing.ImageIcon ICON_FOLDER_EMPTY = new javax.swing.ImageIcon(FolderListCell.class.getResource("/com/jdimension/jlawyer/ui/folders/folder-empty.png"));
+    private static final javax.swing.ImageIcon ICON_FOLDER_FILLED = new javax.swing.ImageIcon(FolderListCell.class.getResource("/com/jdimension/jlawyer/ui/folders/folder-filled.png"));
+    private static javax.swing.ImageIcon ICON_FOLDER_HALF = null;
+
+    static {
+        java.net.URL u = FolderListCell.class.getResource("/com/jdimension/jlawyer/ui/folders/folder-half.png");
+        if (u != null) {
+            ICON_FOLDER_HALF = new javax.swing.ImageIcon(u);
+        } else {
+            ICON_FOLDER_HALF = ICON_FOLDER_FILLED; // fallback if no dedicated half icon
+        }
+    }
 
     /**
      * Creates new form FolderCell
@@ -746,9 +762,29 @@ public class FolderListCell extends javax.swing.JPanel implements DropTargetList
 
     public void setEmpty(boolean empty) {
         if (empty) {
-            lblFolderName.setIcon(new javax.swing.ImageIcon(getClass().getResource("/com/jdimension/jlawyer/ui/folders/folder-empty.png")));
+            lblFolderName.setIcon(ICON_FOLDER_EMPTY);
+            lblFolderName.setToolTipText("Keine Dokumente");
         } else {
-            lblFolderName.setIcon(new javax.swing.ImageIcon(getClass().getResource("/com/jdimension/jlawyer/ui/folders/folder-filled.png")));
+            lblFolderName.setIcon(ICON_FOLDER_FILLED);
+            lblFolderName.setToolTipText("Enthält Dokumente");
+        }
+    }
+
+    public void setFillState(int state) {
+        switch (state) {
+            case FILL_FULL:
+                lblFolderName.setIcon(ICON_FOLDER_FILLED);
+                lblFolderName.setToolTipText("Enthält Dokumente");
+                break;
+            case FILL_HALF:
+                lblFolderName.setIcon(ICON_FOLDER_HALF);
+                lblFolderName.setToolTipText("Enthält Dokumente in Unterordnern");
+                break;
+            case FILL_EMPTY:
+            default:
+                lblFolderName.setIcon(ICON_FOLDER_EMPTY);
+                lblFolderName.setToolTipText("Keine Dokumente");
+                break;
         }
     }
 
@@ -764,11 +800,14 @@ public class FolderListCell extends javax.swing.JPanel implements DropTargetList
         if (hasChildren) {
             if (expanded) {
                 this.lblExpanded.setIcon(new javax.swing.ImageIcon(getClass().getResource("/com/jdimension/jlawyer/ui/folders/node-expanded.png")));
+                this.lblExpanded.setToolTipText("Ordner einklappen");
             } else {
                 this.lblExpanded.setIcon(new javax.swing.ImageIcon(getClass().getResource("/com/jdimension/jlawyer/ui/folders/node-collapsed.png")));
+                this.lblExpanded.setToolTipText("Ordner ausklappen");
             }
         } else {
             this.lblExpanded.setIcon(new javax.swing.ImageIcon(getClass().getResource("/com/jdimension/jlawyer/ui/folders/node-leaf.png")));
+            this.lblExpanded.setToolTipText("Keine Unterordner");
         }
 
     }
@@ -915,8 +954,10 @@ public class FolderListCell extends javax.swing.JPanel implements DropTargetList
     }//GEN-LAST:event_lblFolderNameMouseClicked
 
     private void lblExpandedMouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_lblExpandedMouseClicked
-        setSelected(!isSelected());
-        this.parent.selectionChanged();
+        // toggle expand/collapse for this node
+        if (this.folder != null) {
+            this.parent.toggleExpandedFor(this);
+        }
     }//GEN-LAST:event_lblExpandedMouseClicked
 
     private void cmdMoreMouseReleased(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_cmdMoreMouseReleased
@@ -1024,6 +1065,10 @@ public class FolderListCell extends javax.swing.JPanel implements DropTargetList
 
     public CaseFolder getFolder() {
         return this.folder;
+    }
+
+    public int getLevel() {
+        return this.level;
     }
 
     /**

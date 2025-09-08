@@ -752,6 +752,8 @@ public class CaseFolderPanel extends javax.swing.JPanel implements EventConsumer
         this.cmdSelectNone.setBackground(this.jPanel2.getBackground());
         this.cmdSelectAll1.setBackground(this.jPanel2.getBackground());
         this.cmdSelectNone1.setBackground(this.jPanel2.getBackground());
+        if (this.cmdExpandAll != null) this.cmdExpandAll.setBackground(this.jPanel2.getBackground());
+        if (this.cmdCollapseAll != null) this.cmdCollapseAll.setBackground(this.jPanel2.getBackground());
 
         ImageIcon sortDateNoneIcon = new ImageIcon(CaseFolderPanel.class.getResource("/com/jdimension/jlawyer/ui/folders/baseline_query_builder_white_18dp.png"));
         sortChangeDate.setNoneIcon(sortDateNoneIcon);
@@ -784,6 +786,9 @@ public class CaseFolderPanel extends javax.swing.JPanel implements EventConsumer
         this.selectedCase = afb;
         this.nonMatchingdocuments.clear();
         this.matchingDocumentHits.clear();
+        if (this.foldersListPanel != null) {
+            this.foldersListPanel.reloadExpansionStateFromSettings();
+        }
     }
 
     public CaseFolderPanel() {
@@ -798,6 +803,8 @@ public class CaseFolderPanel extends javax.swing.JPanel implements EventConsumer
         this.cmdSelectNone.setBackground(this.jPanel2.getBackground());
         this.cmdSelectAll1.setBackground(this.jPanel2.getBackground());
         this.cmdSelectNone1.setBackground(this.jPanel2.getBackground());
+        if (this.cmdExpandAll != null) this.cmdExpandAll.setBackground(this.jPanel2.getBackground());
+        if (this.cmdCollapseAll != null) this.cmdCollapseAll.setBackground(this.jPanel2.getBackground());
 
         ImageIcon sortDateNoneIcon = new ImageIcon(CaseFolderPanel.class.getResource("/com/jdimension/jlawyer/ui/folders/baseline_query_builder_white_18dp.png"));
         sortChangeDate.setNoneIcon(sortDateNoneIcon);
@@ -1179,6 +1186,28 @@ public class CaseFolderPanel extends javax.swing.JPanel implements EventConsumer
             }
         });
 
+        cmdExpandAll = new javax.swing.JButton();
+        cmdExpandAll.setIcon(new javax.swing.ImageIcon(getClass().getResource("/com/jdimension/jlawyer/ui/folders/node-expanded.png"))); // NOI18N
+        cmdExpandAll.setToolTipText("alle Ordner ab Ebene 1 ausklappen");
+        cmdExpandAll.setBorder(null);
+        cmdExpandAll.setCursor(new java.awt.Cursor(java.awt.Cursor.HAND_CURSOR));
+        cmdExpandAll.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                cmdExpandAllActionPerformed(evt);
+            }
+        });
+
+        cmdCollapseAll = new javax.swing.JButton();
+        cmdCollapseAll.setIcon(new javax.swing.ImageIcon(getClass().getResource("/com/jdimension/jlawyer/ui/folders/node-collapsed.png"))); // NOI18N
+        cmdCollapseAll.setToolTipText("alle Ordner ab Ebene 1 einklappen");
+        cmdCollapseAll.setBorder(null);
+        cmdCollapseAll.setCursor(new java.awt.Cursor(java.awt.Cursor.HAND_CURSOR));
+        cmdCollapseAll.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                cmdCollapseAllActionPerformed(evt);
+            }
+        });
+
         javax.swing.GroupLayout jPanel1Layout = new javax.swing.GroupLayout(jPanel1);
         jPanel1.setLayout(jPanel1Layout);
         jPanel1Layout.setHorizontalGroup(
@@ -1189,6 +1218,10 @@ public class CaseFolderPanel extends javax.swing.JPanel implements EventConsumer
                 .addComponent(cmdSelectAll)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(cmdSelectNone)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addComponent(cmdExpandAll)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addComponent(cmdCollapseAll)
                 .addGap(0, 0, Short.MAX_VALUE))
         );
         jPanel1Layout.setVerticalGroup(
@@ -1197,6 +1230,8 @@ public class CaseFolderPanel extends javax.swing.JPanel implements EventConsumer
                 .addGap(0, 0, Short.MAX_VALUE)
                 .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
                     .addComponent(cmdSelectNone, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                    .addComponent(cmdExpandAll, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                    .addComponent(cmdCollapseAll, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                     .addComponent(cmdOptions, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                     .addComponent(cmdSelectAll, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)))
         );
@@ -1406,6 +1441,18 @@ public class CaseFolderPanel extends javax.swing.JPanel implements EventConsumer
             if (c instanceof DocumentEntryPanel) {
                 ((DocumentEntryPanel) c).setSelected(selected);
             }
+        }
+    }
+
+    private void cmdExpandAllActionPerformed(java.awt.event.ActionEvent evt) {
+        if (this.foldersListPanel != null) {
+            this.foldersListPanel.expandAllFromLevel1();
+        }
+    }
+
+    private void cmdCollapseAllActionPerformed(java.awt.event.ActionEvent evt) {
+        if (this.foldersListPanel != null) {
+            this.foldersListPanel.collapseAllFromLevel1();
         }
     }
 
@@ -1661,6 +1708,8 @@ public class CaseFolderPanel extends javax.swing.JPanel implements EventConsumer
     private com.jdimension.jlawyer.ui.folders.SortButton sortFolder;
     private com.jdimension.jlawyer.ui.folders.SortButton sortName;
     private com.jdimension.jlawyer.ui.folders.SortButton sortSize;
+    private javax.swing.JButton cmdExpandAll;
+    private javax.swing.JButton cmdCollapseAll;
     // End of variables declaration//GEN-END:variables
 
     /**
