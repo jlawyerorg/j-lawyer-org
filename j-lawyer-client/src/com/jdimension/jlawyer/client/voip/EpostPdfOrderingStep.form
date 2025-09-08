@@ -138,7 +138,6 @@
         <Property name="text" type="java.lang.String" value="Seiten:"/>
       </Properties>
     </Component>
-  </SubComponents>
     <Component class="javax.swing.JButton" name="btnLightTable">
       <Properties>
         <Property name="text" type="java.lang.String" value="Übersicht..."/>
@@ -157,4 +156,5 @@
         <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="btnReverseActionPerformed"/>
       </Events>
     </Component>
+  </SubComponents>
 </Form>
