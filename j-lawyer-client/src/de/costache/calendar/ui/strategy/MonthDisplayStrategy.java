@@ -87,7 +87,8 @@ class MonthDisplayStrategy implements DisplayStrategy {
         final Calendar c = CalendarUtil.copyCalendar(start, true);
         c.set(Calendar.DAY_OF_WEEK, c.getFirstDayOfWeek());
         for (int i = 0; i < 35; i++) {
-            days[i] = new DayPanel(parent.getOwner(), c.getTime(), 0.1f);
+            // In month view we want KW in the header
+            days[i] = new DayPanel(parent.getOwner(), c.getTime(), 0.1f, true);
             days[i].setEnabled(CalendarUtil.isSameMonth(start, c));
             JPanel cell = days[i].layout();
             displayPanel.add(cell);
@@ -369,7 +370,13 @@ class MonthDisplayStrategy implements DisplayStrategy {
     @Override
     public String getDisplayInterval() {
         Calendar c = CalendarUtil.copyCalendar(calendar.getConfig().getIntervalStart(), true);
-        return sdf.format(c.getTime());
+        String base = sdf.format(c.getTime());
+        // Determine displayed grid span for KW info (first and last visible day in the 5x7 grid)
+        Date gridStart = days[0] != null ? days[0].getDate() : c.getTime();
+        Date gridEnd = days[34] != null ? days[34].getDate() : CalendarUtil.createInDays(gridStart, 34);
+        int kwStart = CalendarUtil.getIsoWeekOfYear(gridStart);
+        int kwEnd = CalendarUtil.getIsoWeekOfYear(gridEnd);
+        return base + " (" + kwStart + ". KW bis " + kwEnd + ". KW)";
     }
 
     @Override
