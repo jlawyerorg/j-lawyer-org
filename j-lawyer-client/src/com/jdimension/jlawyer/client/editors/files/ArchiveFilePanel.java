@@ -753,6 +753,7 @@ import com.jdimension.jlawyer.services.ArchiveFileServiceRemote;
 import com.jdimension.jlawyer.services.CalendarServiceRemote;
 import com.jdimension.jlawyer.services.JLawyerServiceLocator;
 import com.jdimension.jlawyer.services.SystemManagementRemote;
+import com.jdimension.jlawyer.ui.folders.DocumentEntryPanel;
 import com.jdimension.jlawyer.ui.tagging.ArchiveFileTagActionListener;
 import com.jdimension.jlawyer.ui.tagging.DocumentTagActionListener;
 import com.jdimension.jlawyer.ui.tagging.TagSelectedAction;
@@ -767,6 +768,7 @@ import java.awt.Dimension;
 import java.awt.FlowLayout;
 import java.awt.Graphics;
 import java.awt.Image;
+import java.awt.KeyboardFocusManager;
 import java.awt.Point;
 import java.awt.Toolkit;
 import java.awt.datatransfer.Clipboard;
@@ -1507,6 +1509,7 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
 
     public void setArchiveFileDTO(ArchiveFileBean inDto, String selectDocumentWithFileName) {
         this.dto = inDto;
+        this.lastPreviewDocId=null;
 
         if (this.dto != null) {
             this.cmdEditCaseNumber.setEnabled(UserUtils.isCurrentUserAdmin());
@@ -5380,11 +5383,11 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
         // If nothing yet, try focused entry within selection
         if (target == null) {
             try {
-                java.awt.Component focusOwner = java.awt.KeyboardFocusManager.getCurrentKeyboardFocusManager().getFocusOwner();
+                Component focusOwner = KeyboardFocusManager.getCurrentKeyboardFocusManager().getFocusOwner();
                 if (focusOwner != null) {
-                    java.awt.Component entry = javax.swing.SwingUtilities.getAncestorOfClass(com.jdimension.jlawyer.ui.folders.DocumentEntryPanel.class, focusOwner);
-                    if (entry instanceof com.jdimension.jlawyer.ui.folders.DocumentEntryPanel) {
-                        ArchiveFileDocumentsBean focusedDoc = ((com.jdimension.jlawyer.ui.folders.DocumentEntryPanel) entry).getDocument();
+                    Component entry = SwingUtilities.getAncestorOfClass(com.jdimension.jlawyer.ui.folders.DocumentEntryPanel.class, focusOwner);
+                    if (entry instanceof DocumentEntryPanel) {
+                        ArchiveFileDocumentsBean focusedDoc = ((DocumentEntryPanel) entry).getDocument();
                         if (focusedDoc != null) {
                             for (ArchiveFileDocumentsBean d : selectedDocs) {
                                 if (d.getId().equals(focusedDoc.getId())) {
@@ -5397,12 +5400,15 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
                 }
             } catch (Throwable t) {
                 // ignore focus errors
+                log.error(t);
             }
         }
 
         // Fallbacks: single selection -> the one; multi selection -> pick the last in the list for stability
         if (target == null) {
-            if (selectedDocs.size() == 1) {
+            if (selectedDocs.isEmpty()) {
+                target=null;
+            } if (selectedDocs.size() == 1) {
                 target = selectedDocs.get(0);
             } else {
                 target = selectedDocs.get(selectedDocs.size() - 1);
