@@ -675,6 +675,7 @@ import com.jdimension.jlawyer.client.events.ReviewUpdatedEvent;
 import com.jdimension.jlawyer.client.events.ReviewAddedEvent;
 import com.jdimension.jlawyer.client.settings.ClientSettings;
 import com.jdimension.jlawyer.client.settings.UserSettings;
+import com.jdimension.jlawyer.client.utils.DesktopUtils;
 import com.jdimension.jlawyer.client.utils.FrameUtils;
 import com.jdimension.jlawyer.client.utils.StringUtils;
 import com.jdimension.jlawyer.persistence.AppUserBean;
@@ -720,6 +721,7 @@ import javax.swing.JToolBar;
 import javax.swing.MenuElement;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
+import javax.swing.ImageIcon;
 // no window listener needed; no live sync
 // removed live sync, no AtomicBoolean needed
 import org.apache.log4j.Logger;
@@ -1078,6 +1080,7 @@ public class CalendarPanel extends javax.swing.JPanel implements NewEventEntryCa
         JButton btnWindow = jCalendar.getHeaderPanel().getWindowButton();
         btnWindow.addActionListener(e -> {
             javax.swing.JFrame frame = new javax.swing.JFrame("Kalender");
+            frame.setIconImage(new ImageIcon(getClass().getResource("/icons/windowicon.png")).getImage());
             CalendarPanel pop = new CalendarPanel(this.userPopup);
             // preserve context
             pop.setParentEditor(this.parentClass, this.detailsEditorClass, this.backgroundImage);
@@ -1101,21 +1104,21 @@ public class CalendarPanel extends javax.swing.JPanel implements NewEventEntryCa
                     if (w instanceof javax.swing.JDialog) {
                         javax.swing.JDialog d = (javax.swing.JDialog) w;
                         if (d.isVisible() && d.isModal()) {
-                            javax.swing.JOptionPane.showMessageDialog(pop, "Bitte zuerst offene Dialoge schließen.", "Aktualisieren", javax.swing.JOptionPane.INFORMATION_MESSAGE);
+                            JOptionPane.showMessageDialog(pop, "Bitte zuerst offene Dialoge schließen.", "Aktualisieren", JOptionPane.INFORMATION_MESSAGE);
                             return;
                         }
                     }
                 }
                 // Server-Reload analog zur Hauptkalender-Befüllung
                 try {
-                    com.jdimension.jlawyer.client.settings.ClientSettings settings = com.jdimension.jlawyer.client.settings.ClientSettings.getInstance();
-                    com.jdimension.jlawyer.services.JLawyerServiceLocator locator = com.jdimension.jlawyer.services.JLawyerServiceLocator.getInstance(settings.getLookupProperties());
-                    com.jdimension.jlawyer.services.CalendarServiceRemote calService = locator.lookupCalendarServiceRemote();
-                    java.util.Collection<com.jdimension.jlawyer.persistence.ArchiveFileReviewsBean> dtos = calService.getAllOpenReviews();
+                    ClientSettings settings = ClientSettings.getInstance();
+                    JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
+                    CalendarServiceRemote calService = locator.lookupCalendarServiceRemote();
+                    Collection<ArchiveFileReviewsBean> dtos = calService.getAllOpenReviews();
                     pop.setData(dtos);
                 } catch (Exception ex) {
                     log.error("Kalenderdaten konnten nicht vom Server geladen werden", ex);
-                    javax.swing.JOptionPane.showMessageDialog(pop, "Fehler beim Laden der Kalenderdaten: " + ex.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, javax.swing.JOptionPane.ERROR_MESSAGE);
+                    JOptionPane.showMessageDialog(pop, "Fehler beim Laden der Kalenderdaten: " + ex.getMessage(), DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
                 }
                 // Ansicht an Hauptkalender ausrichten
                 pop.jCalendar.setDisplayStrategy(this.jCalendar.getDisplayStrategy(), this.jCalendar.getSelectedDay());
