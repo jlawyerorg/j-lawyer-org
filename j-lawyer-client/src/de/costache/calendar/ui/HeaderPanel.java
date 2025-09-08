@@ -47,6 +47,7 @@ public class HeaderPanel extends JPanel {
 	private JButton monthButton;
         
         private JButton todayButton;
+        private JButton windowButton;
 
 	/**
 	 * Creates a new instance of {@link HeaderPanel}
@@ -70,6 +71,7 @@ public class HeaderPanel extends JPanel {
 		monthButton = new JButton();
                 monthButton.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons16/calendar_month.png")));
                 todayButton=new JButton();
+                windowButton=new JButton();
                 todayButton.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons16/calendar_today.png")));
 
 		scrollLeftButton = new JButton();
@@ -81,6 +83,8 @@ public class HeaderPanel extends JPanel {
 		weekButton.setText(strWeek);
 		monthButton.setText(strMonth);
                 todayButton.setText("Heute");
+                windowButton.setText("2. Fenster");
+                windowButton.setToolTipText("Kalender in separatem Fenster öffnen");
                 
 
 		scrollLeftButton.setBorderPainted(false);
@@ -152,11 +156,17 @@ public class HeaderPanel extends JPanel {
                 sep.setOrientation(SwingConstants.VERTICAL);
 		this.add(sep, c);
                 c.gridx = 7;
-		c.gridy = 0;
-		c.weightx = 0.0;
-		c.fill = GridBagConstraints.BOTH;
-		c.insets = new Insets(10, 0, 10, 10);
-		this.add(todayButton, c);
+                c.gridy = 0;
+                c.weightx = 0.0;
+                c.fill = GridBagConstraints.BOTH;
+                c.insets = new Insets(10, 0, 10, 10);
+                this.add(todayButton, c);
+                c.gridx = 8;
+                c.gridy = 0;
+                c.weightx = 0.0;
+                c.fill = GridBagConstraints.BOTH;
+                c.insets = new Insets(10, 0, 10, 10);
+                this.add(windowButton, c);
 	}
 
 	/**
@@ -194,9 +204,13 @@ public class HeaderPanel extends JPanel {
 		return monthButton;
 	}
         
-        public JButton getTodayButton() {
-		return todayButton;
-	}
+       public JButton getTodayButton() {
+           return todayButton;
+       }
+
+        public JButton getWindowButton() {
+            return windowButton;
+        }
 
 	/**
 	 * @return the intervalLabel

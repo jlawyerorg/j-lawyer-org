@@ -4445,8 +4445,13 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
     private void applyConflictRenderers() {
         // Default renderer for Object.class
         this.tblReviewReasons.setDefaultRenderer(Object.class, new ConflictAwareDefaultRenderer());
-        // Boolean renderer should also honor conflict foreground color
-        this.tblReviewReasons.setDefaultRenderer(Boolean.class, new ConflictAwareDefaultRenderer());
+        // Boolean renderer should also honor conflict foreground color, but keep checkbox rendering
+        try {
+            javax.swing.table.TableCellRenderer boolBase = this.tblReviewReasons.getDefaultRenderer(Boolean.class);
+            this.tblReviewReasons.setDefaultRenderer(Boolean.class, new ConflictAwareUserRenderer(boolBase));
+        } catch (Throwable t) {
+            this.tblReviewReasons.setDefaultRenderer(Boolean.class, new ConflictAwareDefaultRenderer());
+        }
         // Column 5 has a custom renderer: wrap it to keep user rendering + conflict style
         try {
             javax.swing.table.TableColumn col = this.tblReviewReasons.getColumnModel().getColumn(5);
