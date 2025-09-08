@@ -753,6 +753,7 @@ import com.jdimension.jlawyer.services.ArchiveFileServiceRemote;
 import com.jdimension.jlawyer.services.CalendarServiceRemote;
 import com.jdimension.jlawyer.services.JLawyerServiceLocator;
 import com.jdimension.jlawyer.services.SystemManagementRemote;
+import com.jdimension.jlawyer.ui.folders.DocumentEntryPanel;
 import com.jdimension.jlawyer.ui.tagging.ArchiveFileTagActionListener;
 import com.jdimension.jlawyer.ui.tagging.DocumentTagActionListener;
 import com.jdimension.jlawyer.ui.tagging.TagSelectedAction;
@@ -767,6 +768,7 @@ import java.awt.Dimension;
 import java.awt.FlowLayout;
 import java.awt.Graphics;
 import java.awt.Image;
+import java.awt.KeyboardFocusManager;
 import java.awt.Point;
 import java.awt.Toolkit;
 import java.awt.datatransfer.Clipboard;
@@ -848,6 +850,13 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
     private java.util.Set<String> conflictingEventIds = new java.util.HashSet<>();
     private java.util.Map<String, java.util.List<com.jdimension.jlawyer.persistence.ArchiveFileReviewsBean>> conflictDetailsByEventId = new java.util.HashMap<>();
     private javax.swing.JMenuItem mnuOpenCalendarDay; // context action to jump to day view for conflicts
+
+    // Remember last document shown in preview to improve multi-select behavior
+    private String lastPreviewDocId = null;
+
+    public void setLastPreviewDocId(String docId) {
+        this.lastPreviewDocId = docId;
+    }
 
     /**
      * Creates new form ArchiveFilePanel
@@ -1500,6 +1509,7 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
 
     public void setArchiveFileDTO(ArchiveFileBean inDto, String selectDocumentWithFileName) {
         this.dto = inDto;
+        this.lastPreviewDocId=null;
 
         if (this.dto != null) {
             this.cmdEditCaseNumber.setEnabled(UserUtils.isCurrentUserAdmin());
@@ -5353,12 +5363,65 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
 
     public void updateDocumentPreview() {
         ArrayList<ArchiveFileDocumentsBean> selectedDocs = this.caseFolderPanel1.getSelectedDocuments();
-        if (selectedDocs.size() != 1) {
-            this.clearDocumentPreview("Vorschau nicht verfügbar");
-        } else {
-            ArchiveFileDocumentsBean value = selectedDocs.get(0);
 
+        if (selectedDocs.isEmpty()) {
+            this.clearDocumentPreview("Vorschau nicht verfügbar");
+            lastPreviewDocId = null;
+            return;
+        }
+
+        // Prefer the last explicitly interacted document if still selected
+        ArchiveFileDocumentsBean target = null;
+        if (lastPreviewDocId != null) {
+            for (ArchiveFileDocumentsBean d : selectedDocs) {
+                if (lastPreviewDocId.equals(d.getId())) {
+                    target = d;
+                    break;
+                }
+            }
+        }
+        // If nothing yet, try focused entry within selection
+        if (target == null) {
+            try {
+                Component focusOwner = KeyboardFocusManager.getCurrentKeyboardFocusManager().getFocusOwner();
+                if (focusOwner != null) {
+                    Component entry = SwingUtilities.getAncestorOfClass(com.jdimension.jlawyer.ui.folders.DocumentEntryPanel.class, focusOwner);
+                    if (entry instanceof DocumentEntryPanel) {
+                        ArchiveFileDocumentsBean focusedDoc = ((DocumentEntryPanel) entry).getDocument();
+                        if (focusedDoc != null) {
+                            for (ArchiveFileDocumentsBean d : selectedDocs) {
+                                if (d.getId().equals(focusedDoc.getId())) {
+                                    target = d;
+                                    break;
+                                }
+                            }
+                        }
+                    }
+                }
+            } catch (Throwable t) {
+                // ignore focus errors
+                log.error(t);
+            }
+        }
+
+        // Fallbacks: single selection -> the one; multi selection -> pick the last in the list for stability
+        if (target == null) {
+            if (selectedDocs.isEmpty()) {
+                target=null;
+            } if (selectedDocs.size() == 1) {
+                target = selectedDocs.get(0);
+            } else {
+                target = selectedDocs.get(selectedDocs.size() - 1);
+            }
+        }
+
+        lastPreviewDocId = target != null ? target.getId() : null;
+
+        if (target != null) {
+            ArchiveFileDocumentsBean value = target;
             new Thread(new LoadDocumentPreviewThread(this.dto, value, this.readOnly, this.pnlPreview, false, this)).start();
+        } else {
+            this.clearDocumentPreview("Vorschau nicht verfügbar");
         }
     }
 
