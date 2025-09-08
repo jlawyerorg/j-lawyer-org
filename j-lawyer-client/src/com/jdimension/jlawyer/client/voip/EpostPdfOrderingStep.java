@@ -663,6 +663,7 @@
  */
 package com.jdimension.jlawyer.client.voip;
 
+import com.jdimension.jlawyer.client.editors.files.PdfReorderLightTableDialog;
 import com.jdimension.jlawyer.client.utils.FileUtils;
 import com.jdimension.jlawyer.client.wizard.*;
 import com.jdimension.jlawyer.epost.EpostLetter;
@@ -733,8 +734,8 @@ public class EpostPdfOrderingStep extends javax.swing.JPanel implements WizardSt
         lblFileSizeMax = new javax.swing.JLabel();
         lblPages = new javax.swing.JLabel();
         jLabel2 = new javax.swing.JLabel();
-        btnLightTable = new javax.swing.JButton();
-        btnReverse = new javax.swing.JButton();
+        cmdLightTable = new javax.swing.JButton();
+        cmdReverse = new javax.swing.JButton();
 
         setName("Dokumente sortieren"); // NOI18N
 
@@ -761,19 +762,21 @@ public class EpostPdfOrderingStep extends javax.swing.JPanel implements WizardSt
         jLabel2.setFont(jLabel2.getFont().deriveFont(jLabel2.getFont().getStyle() | java.awt.Font.BOLD));
         jLabel2.setText("Seiten:");
 
-        btnLightTable.setText("Übersicht...");
-        btnLightTable.setToolTipText("Dokumente in der Übersicht per Drag & Drop sortieren");
-        btnLightTable.addActionListener(new java.awt.event.ActionListener() {
+        cmdLightTable.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons16/material/grid_on_20dp_0E72B5.png"))); // NOI18N
+        cmdLightTable.setText("Übersicht");
+        cmdLightTable.setToolTipText("Dokumente in der Übersicht per Drag & Drop sortieren");
+        cmdLightTable.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
-                btnLightTableActionPerformed(evt);
+                cmdLightTableActionPerformed(evt);
             }
         });
 
-        btnReverse.setText("Umkehren");
-        btnReverse.setToolTipText("Reihenfolge der Dokumente umkehren");
-        btnReverse.addActionListener(new java.awt.event.ActionListener() {
+        cmdReverse.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons16/material/import_export_20dp_0E72B5.png"))); // NOI18N
+        cmdReverse.setText("Umkehren");
+        cmdReverse.setToolTipText("Reihenfolge der Dokumente umkehren");
+        cmdReverse.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
-                btnReverseActionPerformed(evt);
+                cmdReverseActionPerformed(evt);
             }
         });
 
@@ -787,10 +790,10 @@ public class EpostPdfOrderingStep extends javax.swing.JPanel implements WizardSt
                     .addComponent(jLabel1, javax.swing.GroupLayout.Alignment.TRAILING, javax.swing.GroupLayout.DEFAULT_SIZE, 876, Short.MAX_VALUE)
                     .addComponent(jScrollPane1)
                     .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
-                        .addComponent(btnLightTable)
+                        .addComponent(cmdLightTable)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addComponent(btnReverse)
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                        .addComponent(cmdReverse)
+                        .addGap(0, 0, Short.MAX_VALUE)
                         .addComponent(jLabel2)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                         .addComponent(lblPages)
@@ -811,8 +814,8 @@ public class EpostPdfOrderingStep extends javax.swing.JPanel implements WizardSt
                     .addComponent(lblFileSizeMax)
                     .addComponent(lblPages)
                     .addComponent(jLabel2)
-                    .addComponent(btnLightTable)
-                    .addComponent(btnReverse))
+                    .addComponent(cmdLightTable)
+                    .addComponent(cmdReverse))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(jScrollPane1, javax.swing.GroupLayout.DEFAULT_SIZE, 505, Short.MAX_VALUE)
                 .addContainerGap())
@@ -820,6 +823,8 @@ public class EpostPdfOrderingStep extends javax.swing.JPanel implements WizardSt
     }// </editor-fold>//GEN-END:initComponents
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
+    private javax.swing.JButton cmdLightTable;
+    private javax.swing.JButton cmdReverse;
     private javax.swing.JLabel jLabel1;
     private javax.swing.JLabel jLabel2;
     private javax.swing.JScrollPane jScrollPane1;
@@ -827,8 +832,6 @@ public class EpostPdfOrderingStep extends javax.swing.JPanel implements WizardSt
     private javax.swing.JLabel lblFileSizeMax;
     private javax.swing.JLabel lblPages;
     private javax.swing.JPanel pnlConversionList;
-    private javax.swing.JButton btnLightTable;
-    private javax.swing.JButton btnReverse;
     // End of variables declaration//GEN-END:variables
 
     @Override
@@ -866,7 +869,7 @@ public class EpostPdfOrderingStep extends javax.swing.JPanel implements WizardSt
 
     }
 
-    private void btnLightTableActionPerformed(java.awt.event.ActionEvent evt) {
+    private void cmdLightTableActionPerformed(java.awt.event.ActionEvent evt) {
         List<File> current = new ArrayList<>();
         for (java.awt.Component c : this.pnlConversionList.getComponents()) {
             if (c instanceof EpostPdfPanel) {
@@ -874,14 +877,14 @@ public class EpostPdfOrderingStep extends javax.swing.JPanel implements WizardSt
             }
         }
         java.awt.Window owner = SwingUtilities.getWindowAncestor(this);
-        com.jdimension.jlawyer.client.editors.files.PdfReorderLightTableDialog dlg = new com.jdimension.jlawyer.client.editors.files.PdfReorderLightTableDialog(owner, current);
+        PdfReorderLightTableDialog dlg = new PdfReorderLightTableDialog(owner, current);
         dlg.setVisible(true);
         if (dlg.isAccepted()) {
             applyOrder(dlg.getOrderedFiles());
         }
     }
 
-    private void btnReverseActionPerformed(java.awt.event.ActionEvent evt) {
+    private void cmdReverseActionPerformed(java.awt.event.ActionEvent evt) {
         List<File> current = new ArrayList<>();
         for (java.awt.Component c : this.pnlConversionList.getComponents()) {
             if (c instanceof EpostPdfPanel) {
@@ -902,7 +905,7 @@ public class EpostPdfOrderingStep extends javax.swing.JPanel implements WizardSt
             totalSize += f.length();
             totalPages += pdfPanel.getPageCount();
         }
-        this.lblFileSize.setText("" + com.jdimension.jlawyer.client.utils.FileUtils.getFileSizeHumanReadable(totalSize));
+        this.lblFileSize.setText("" + FileUtils.getFileSizeHumanReadable(totalSize));
         this.lblPages.setText("" + totalPages);
         this.pnlConversionList.revalidate();
         this.pnlConversionList.repaint();
