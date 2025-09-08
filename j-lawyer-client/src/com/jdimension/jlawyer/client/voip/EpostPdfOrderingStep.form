@@ -25,6 +25,9 @@
                   <Component id="jLabel1" alignment="1" pref="876" max="32767" attributes="0"/>
                   <Component id="jScrollPane1" alignment="0" max="32767" attributes="0"/>
                   <Group type="102" alignment="1" attributes="0">
+                      <Component id="btnLightTable" min="-2" max="-2" attributes="0"/>
+                      <EmptySpace max="-2" attributes="0"/>
+                      <Component id="btnReverse" min="-2" max="-2" attributes="0"/>
                       <EmptySpace min="0" pref="0" max="32767" attributes="0"/>
                       <Component id="jLabel2" min="-2" max="-2" attributes="0"/>
                       <EmptySpace max="-2" attributes="0"/>
@@ -50,6 +53,8 @@
                   <Component id="lblFileSizeMax" alignment="3" min="-2" max="-2" attributes="0"/>
                   <Component id="lblPages" alignment="3" min="-2" max="-2" attributes="0"/>
                   <Component id="jLabel2" alignment="3" min="-2" max="-2" attributes="0"/>
+                  <Component id="btnLightTable" alignment="3" min="-2" max="-2" attributes="0"/>
+                  <Component id="btnReverse" alignment="3" min="-2" max="-2" attributes="0"/>
               </Group>
               <EmptySpace max="-2" attributes="0"/>
               <Component id="jScrollPane1" pref="505" max="32767" attributes="0"/>
@@ -134,4 +139,22 @@
       </Properties>
     </Component>
   </SubComponents>
+    <Component class="javax.swing.JButton" name="btnLightTable">
+      <Properties>
+        <Property name="text" type="java.lang.String" value="Übersicht..."/>
+        <Property name="toolTipText" type="java.lang.String" value="Dokumente in der Übersicht per Drag &amp; Drop sortieren"/>
+      </Properties>
+      <Events>
+        <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="btnLightTableActionPerformed"/>
+      </Events>
+    </Component>
+    <Component class="javax.swing.JButton" name="btnReverse">
+      <Properties>
+        <Property name="text" type="java.lang.String" value="Umkehren"/>
+        <Property name="toolTipText" type="java.lang.String" value="Reihenfolge der Dokumente umkehren"/>
+      </Properties>
+      <Events>
+        <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="btnReverseActionPerformed"/>
+      </Events>
+    </Component>
 </Form>

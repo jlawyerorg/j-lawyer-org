@@ -671,6 +671,7 @@ import java.awt.Component;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
+import javax.swing.SwingUtilities;
 
 /**
  *
@@ -760,6 +761,8 @@ public class ExportAsPdfOrderingStep extends javax.swing.JPanel implements Wizar
         jLabel2 = new javax.swing.JLabel();
         cmbAddToc = new javax.swing.JCheckBox();
         cmbAddPageNumbers = new javax.swing.JCheckBox();
+        btnLightTable = new javax.swing.JButton();
+        btnReverse = new javax.swing.JButton();
 
         setName("Dokumente sortieren"); // NOI18N
 
@@ -796,6 +799,22 @@ public class ExportAsPdfOrderingStep extends javax.swing.JPanel implements Wizar
         cmbAddPageNumbers.setToolTipText("Seitenzahlen werden hinzugefügt");
         cmbAddPageNumbers.setActionCommand("");
 
+        btnLightTable.setText("Übersicht...");
+        btnLightTable.setToolTipText("Dokumente in der Übersicht per Drag & Drop sortieren");
+        btnLightTable.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                btnLightTableActionPerformed(evt);
+            }
+        });
+
+        btnReverse.setText("Umkehren");
+        btnReverse.setToolTipText("Reihenfolge der Dokumente umkehren");
+        btnReverse.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                btnReverseActionPerformed(evt);
+            }
+        });
+
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(this);
         this.setLayout(layout);
         layout.setHorizontalGroup(
@@ -806,7 +825,10 @@ public class ExportAsPdfOrderingStep extends javax.swing.JPanel implements Wizar
                     .addComponent(jLabel1, javax.swing.GroupLayout.Alignment.TRAILING, javax.swing.GroupLayout.DEFAULT_SIZE, 863, Short.MAX_VALUE)
                     .addComponent(jScrollPane1)
                     .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
-                        .addGap(0, 0, Short.MAX_VALUE)
+                        .addComponent(btnLightTable)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addComponent(btnReverse)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                         .addComponent(cmbAddPageNumbers)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                         .addComponent(cmbAddToc)
@@ -832,7 +854,9 @@ public class ExportAsPdfOrderingStep extends javax.swing.JPanel implements Wizar
                     .addComponent(lblPages)
                     .addComponent(jLabel2)
                     .addComponent(cmbAddToc)
-                    .addComponent(cmbAddPageNumbers))
+                    .addComponent(cmbAddPageNumbers)
+                    .addComponent(btnLightTable)
+                    .addComponent(btnReverse))
                 .addGap(47, 47, 47)
                 .addComponent(jScrollPane1, javax.swing.GroupLayout.DEFAULT_SIZE, 460, Short.MAX_VALUE)
                 .addContainerGap())
@@ -842,6 +866,8 @@ public class ExportAsPdfOrderingStep extends javax.swing.JPanel implements Wizar
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JCheckBox cmbAddPageNumbers;
     private javax.swing.JCheckBox cmbAddToc;
+    private javax.swing.JButton btnLightTable;
+    private javax.swing.JButton btnReverse;
     private javax.swing.JLabel jLabel1;
     private javax.swing.JLabel jLabel2;
     private javax.swing.JScrollPane jScrollPane1;
@@ -880,6 +906,48 @@ public class ExportAsPdfOrderingStep extends javax.swing.JPanel implements Wizar
         this.lblFileSizeMax.setText("Gesamtgröße:");
         this.lblPages.setText("" + totalPages);
 
+    }
+
+    private void btnLightTableActionPerformed(java.awt.event.ActionEvent evt) {
+        List<File> current = new ArrayList<>();
+        for (java.awt.Component c : this.pnlConversionList.getComponents()) {
+            if (c instanceof com.jdimension.jlawyer.client.voip.EpostPdfPanel) {
+                current.add(((com.jdimension.jlawyer.client.voip.EpostPdfPanel) c).getFile());
+            }
+        }
+        java.awt.Window owner = SwingUtilities.getWindowAncestor(this);
+        PdfReorderLightTableDialog dlg = new PdfReorderLightTableDialog(owner, current);
+        dlg.setVisible(true);
+        if (dlg.isAccepted()) {
+            applyOrder(dlg.getOrderedFiles());
+        }
+    }
+
+    private void btnReverseActionPerformed(java.awt.event.ActionEvent evt) {
+        List<File> current = new ArrayList<>();
+        for (java.awt.Component c : this.pnlConversionList.getComponents()) {
+            if (c instanceof com.jdimension.jlawyer.client.voip.EpostPdfPanel) {
+                current.add(((com.jdimension.jlawyer.client.voip.EpostPdfPanel) c).getFile());
+            }
+        }
+        java.util.Collections.reverse(current);
+        applyOrder(current);
+    }
+
+    private void applyOrder(List<File> files) {
+        this.pnlConversionList.removeAll();
+        long totalSize = 0;
+        long totalPages = 0;
+        for (File f : files) {
+            com.jdimension.jlawyer.client.voip.EpostPdfPanel pdfPanel = new com.jdimension.jlawyer.client.voip.EpostPdfPanel(f);
+            this.pnlConversionList.add(pdfPanel);
+            totalSize += f.length();
+            totalPages += pdfPanel.getPageCount();
+        }
+        this.lblFileSize.setText("" + com.jdimension.jlawyer.client.utils.FileUtils.getFileSizeHumanReadable(totalSize));
+        this.lblPages.setText("" + totalPages);
+        this.pnlConversionList.revalidate();
+        this.pnlConversionList.repaint();
     }
 
     @Override
