@@ -761,8 +761,8 @@ public class ExportAsPdfOrderingStep extends javax.swing.JPanel implements Wizar
         jLabel2 = new javax.swing.JLabel();
         cmbAddToc = new javax.swing.JCheckBox();
         cmbAddPageNumbers = new javax.swing.JCheckBox();
-        btnLightTable = new javax.swing.JButton();
-        btnReverse = new javax.swing.JButton();
+        cmdLightTable = new javax.swing.JButton();
+        cmdReverse = new javax.swing.JButton();
 
         setName("Dokumente sortieren"); // NOI18N
 
@@ -799,19 +799,22 @@ public class ExportAsPdfOrderingStep extends javax.swing.JPanel implements Wizar
         cmbAddPageNumbers.setToolTipText("Seitenzahlen werden hinzugefügt");
         cmbAddPageNumbers.setActionCommand("");
 
-        btnLightTable.setText("Übersicht...");
-        btnLightTable.setToolTipText("Dokumente in der Übersicht per Drag & Drop sortieren");
-        btnLightTable.addActionListener(new java.awt.event.ActionListener() {
+        cmdLightTable.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons16/material/grid_on_20dp_0E72B5.png"))); // NOI18N
+        cmdLightTable.setText("Übersicht");
+        cmdLightTable.setToolTipText("Dokumente in der Übersicht per Drag & Drop sortieren");
+        cmdLightTable.setActionCommand("Übersicht");
+        cmdLightTable.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
-                btnLightTableActionPerformed(evt);
+                cmdLightTableActionPerformed(evt);
             }
         });
 
-        btnReverse.setText("Umkehren");
-        btnReverse.setToolTipText("Reihenfolge der Dokumente umkehren");
-        btnReverse.addActionListener(new java.awt.event.ActionListener() {
+        cmdReverse.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons16/material/import_export_20dp_0E72B5.png"))); // NOI18N
+        cmdReverse.setText("Umkehren");
+        cmdReverse.setToolTipText("Reihenfolge der Dokumente umkehren");
+        cmdReverse.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
-                btnReverseActionPerformed(evt);
+                cmdReverseActionPerformed(evt);
             }
         });
 
@@ -822,13 +825,13 @@ public class ExportAsPdfOrderingStep extends javax.swing.JPanel implements Wizar
             .addGroup(layout.createSequentialGroup()
                 .addContainerGap()
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addComponent(jLabel1, javax.swing.GroupLayout.Alignment.TRAILING, javax.swing.GroupLayout.DEFAULT_SIZE, 863, Short.MAX_VALUE)
+                    .addComponent(jLabel1, javax.swing.GroupLayout.Alignment.TRAILING)
                     .addComponent(jScrollPane1)
                     .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
-                        .addComponent(btnLightTable)
+                        .addComponent(cmdLightTable)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addComponent(btnReverse)
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                        .addComponent(cmdReverse)
+                        .addGap(0, 0, Short.MAX_VALUE)
                         .addComponent(cmbAddPageNumbers)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                         .addComponent(cmbAddToc)
@@ -855,10 +858,10 @@ public class ExportAsPdfOrderingStep extends javax.swing.JPanel implements Wizar
                     .addComponent(jLabel2)
                     .addComponent(cmbAddToc)
                     .addComponent(cmbAddPageNumbers)
-                    .addComponent(btnLightTable)
-                    .addComponent(btnReverse))
-                .addGap(47, 47, 47)
-                .addComponent(jScrollPane1, javax.swing.GroupLayout.DEFAULT_SIZE, 460, Short.MAX_VALUE)
+                    .addComponent(cmdLightTable)
+                    .addComponent(cmdReverse))
+                .addGap(18, 18, 18)
+                .addComponent(jScrollPane1, javax.swing.GroupLayout.DEFAULT_SIZE, 489, Short.MAX_VALUE)
                 .addContainerGap())
         );
     }// </editor-fold>//GEN-END:initComponents
@@ -866,8 +869,8 @@ public class ExportAsPdfOrderingStep extends javax.swing.JPanel implements Wizar
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JCheckBox cmbAddPageNumbers;
     private javax.swing.JCheckBox cmbAddToc;
-    private javax.swing.JButton btnLightTable;
-    private javax.swing.JButton btnReverse;
+    private javax.swing.JButton cmdLightTable;
+    private javax.swing.JButton cmdReverse;
     private javax.swing.JLabel jLabel1;
     private javax.swing.JLabel jLabel2;
     private javax.swing.JScrollPane jScrollPane1;
@@ -908,7 +911,7 @@ public class ExportAsPdfOrderingStep extends javax.swing.JPanel implements Wizar
 
     }
 
-    private void btnLightTableActionPerformed(java.awt.event.ActionEvent evt) {
+    private void cmdLightTableActionPerformed(java.awt.event.ActionEvent evt) {
         List<File> current = new ArrayList<>();
         for (java.awt.Component c : this.pnlConversionList.getComponents()) {
             if (c instanceof com.jdimension.jlawyer.client.voip.EpostPdfPanel) {
@@ -923,7 +926,7 @@ public class ExportAsPdfOrderingStep extends javax.swing.JPanel implements Wizar
         }
     }
 
-    private void btnReverseActionPerformed(java.awt.event.ActionEvent evt) {
+    private void cmdReverseActionPerformed(java.awt.event.ActionEvent evt) {
         List<File> current = new ArrayList<>();
         for (java.awt.Component c : this.pnlConversionList.getComponents()) {
             if (c instanceof com.jdimension.jlawyer.client.voip.EpostPdfPanel) {
