@@ -208,7 +208,9 @@ class DayDisplayStrategy implements DisplayStrategy {
 
     @Override
     public String getDisplayInterval() {
-        return sdf.format(calendar.getConfig().getIntervalStart().getTime());
+        Date d = calendar.getConfig().getIntervalStart().getTime();
+        int kw = de.costache.calendar.util.CalendarUtil.getIsoWeekOfYear(d);
+        return sdf.format(d) + " (" + kw + ". KW)";
     }
 
     /*

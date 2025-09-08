@@ -34,12 +34,13 @@ import de.costache.calendar.ui.strategy.DisplayStrategy.Type;
  */
 public class DayPanel {
 
-	private final SimpleDateFormat sdf = new SimpleDateFormat("EEE dd. MMM");
+    private final SimpleDateFormat sdf = new SimpleDateFormat("EEE dd. MMM");
 	private Date date;
 	private final DayHeaderPanel headerPanel;
 	private final DayContentPanel contentPanel;
 	private final DayCompleteContentPanel completeDayPanel;
-	private final JCalendar owner;
+    private final JCalendar owner;
+    private final boolean showKwInHeader;
 	private float headerRatio = 0.0f;
 
 	/**
@@ -48,13 +49,14 @@ public class DayPanel {
 	 * @param owner
 	 * @param date
 	 */
-	public DayPanel(final JCalendar owner, final Date date) {
+    public DayPanel(final JCalendar owner, final Date date) {
 
-		this.date = date;
-		this.owner = owner;
-		this.headerPanel = new DayHeaderPanel(this, sdf.format(date));
-		this.contentPanel = new DayContentPanel(this);
-		this.completeDayPanel = new DayCompleteContentPanel(this);
+        this.date = date;
+        this.owner = owner;
+        this.showKwInHeader = false;
+        this.headerPanel = new DayHeaderPanel(this, formatHeader(date));
+        this.contentPanel = new DayContentPanel(this);
+        this.completeDayPanel = new DayCompleteContentPanel(this);
 		this.headerPanel.addMouseListener(new MouseAdapter() {
 			@Override
 			public void mouseClicked(MouseEvent e) {
@@ -73,12 +75,35 @@ public class DayPanel {
 	 * @param date
 	 * @param headerRatio
 	 */
-	public DayPanel(final JCalendar owner, final Date date, final float headerRatio) {
+    public DayPanel(final JCalendar owner, final Date date, final float headerRatio) {
 
-		this(owner, date);
-		this.headerRatio = headerRatio;
+        this(owner, date);
+        this.headerRatio = headerRatio;
 
-	}
+    }
+
+    /**
+     * Extended constructor to explicitly control whether the header shows KW.
+     */
+    public DayPanel(final JCalendar owner, final Date date, final float headerRatio, final boolean showKwInHeader) {
+        this.date = date;
+        this.owner = owner;
+        this.headerRatio = headerRatio;
+        this.showKwInHeader = showKwInHeader;
+        this.headerPanel = new DayHeaderPanel(this, formatHeader(date));
+        this.contentPanel = new DayContentPanel(this);
+        this.completeDayPanel = new DayCompleteContentPanel(this);
+        this.headerPanel.addMouseListener(new MouseAdapter() {
+            @Override
+            public void mouseClicked(MouseEvent e) {
+                super.mouseClicked(e);
+                if (e.getClickCount() == 2) {
+                    owner.setSelectedDay(DayPanel.this.date);
+                    owner.setDisplayStrategy(Type.DAY, DayPanel.this.date);
+                }
+            }
+        });
+    }
 
 	public JPanel layout() {
 		JPanel panel = new JPanel(true);
@@ -114,12 +139,21 @@ public class DayPanel {
 	 * @param date
 	 *            the date to set
 	 */
-	public void setDate(final Date date) {
-		this.date = date;
-		headerPanel.setHeaderText(sdf.format(date));
-		// Reset month scroll in content when day changes
-		this.contentPanel.resetMonthScroll();
-	}
+    public void setDate(final Date date) {
+        this.date = date;
+        headerPanel.setHeaderText(formatHeader(date));
+        // Reset month scroll in content when day changes
+        this.contentPanel.resetMonthScroll();
+    }
+
+    private String formatHeader(final Date date) {
+        String base = sdf.format(date);
+        if (showKwInHeader) {
+            int kw = de.costache.calendar.util.CalendarUtil.getIsoWeekOfYear(date);
+            return base + " (" + kw + ".KW)";
+        }
+        return base;
+    }
 
 	public void setEnabled(final boolean enabled) {
 		this.contentPanel.setEnabled(enabled);

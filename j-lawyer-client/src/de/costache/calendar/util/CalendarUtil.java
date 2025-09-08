@@ -133,6 +133,19 @@ public class CalendarUtil {
         return cal.getTime();
     }
 
+    /**
+     * Returns the ISO-8601 calendar week (Kalenderwoche, KW) for the given date.
+     * Uses German locale conventions: Monday is the first day of week and
+     * a week belongs to the year if it contains at least 4 days in that year.
+     */
+    public static int getIsoWeekOfYear(final Date date) {
+        final Calendar c = Calendar.getInstance(Locale.GERMANY);
+        c.setFirstDayOfWeek(Calendar.MONDAY);
+        c.setMinimalDaysInFirstWeek(4);
+        c.setTime(date);
+        return c.get(Calendar.WEEK_OF_YEAR);
+    }
+
     public static Date createInMonths(final Date date, final int amount) {
         final Calendar cal = Calendar.getInstance();
         cal.setTime(date);
