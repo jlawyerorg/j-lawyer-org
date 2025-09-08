@@ -729,6 +729,9 @@ public class PdfImageScrollingPanel extends javax.swing.JPanel implements Previe
     
     private boolean readOnly=false;
 
+    // Global key dispatcher to make LEFT/RIGHT work regardless of focus quirks
+    private transient java.awt.KeyEventDispatcher arrowKeyDispatcher;
+
     /**
      * Creates new form PlaintextPanel
      *
@@ -793,6 +796,8 @@ public class PdfImageScrollingPanel extends javax.swing.JPanel implements Previe
             }
         });
 
+        // Keyboard navigation handled via global KeyEventDispatcher
+
         String zoomFactorString = ClientSettings.getInstance().getConfiguration("pdf.zoomfactor", "100");
         this.zoomFactor = 100;
         try {
@@ -808,6 +813,93 @@ public class PdfImageScrollingPanel extends javax.swing.JPanel implements Previe
             log.warn("invalid zoom factor: " + zoomFactorString);
         }
 
+    }
+
+    @Override
+    public void addNotify() {
+        super.addNotify();
+        installArrowKeyDispatcher();
+    }
+
+    @Override
+    public void removeNotify() {
+        uninstallArrowKeyDispatcher();
+        super.removeNotify();
+    }
+
+    private void installArrowKeyDispatcher() {
+        if (arrowKeyDispatcher != null) return;
+        arrowKeyDispatcher = (java.awt.event.KeyEvent e) -> {
+            if (e.getID() != java.awt.event.KeyEvent.KEY_PRESSED) return false;
+
+            // Only when this viewer is visible in the active window and PDF tab is selected
+            java.awt.Window viewerWindow = javax.swing.SwingUtilities.windowForComponent(this);
+            java.awt.Window activeWindow = java.awt.KeyboardFocusManager.getCurrentKeyboardFocusManager().getActiveWindow();
+            if (viewerWindow == null || activeWindow == null || viewerWindow != activeWindow) return false;
+            if (!this.isShowing()) return false;
+            if (tabs.getSelectedIndex() != 0) return false;
+
+            int key = e.getKeyCode();
+            if (key == java.awt.event.KeyEvent.VK_RIGHT) {
+                navigateToPage(currentPage + 1, true);
+                e.consume();
+                return true;
+            } else if (key == java.awt.event.KeyEvent.VK_LEFT) {
+                navigateToPage(currentPage - 1, true);
+                e.consume();
+                return true;
+            }
+            return false;
+        };
+        java.awt.KeyboardFocusManager.getCurrentKeyboardFocusManager().addKeyEventDispatcher(arrowKeyDispatcher);
+    }
+
+    private void uninstallArrowKeyDispatcher() {
+        if (arrowKeyDispatcher != null) {
+            try {
+                java.awt.KeyboardFocusManager.getCurrentKeyboardFocusManager().removeKeyEventDispatcher(arrowKeyDispatcher);
+            } catch (Throwable t) {
+                log.warn("unable to remove arrow key dispatcher", t);
+            }
+            arrowKeyDispatcher = null;
+        }
+    }
+
+    // removed old local KeyBindings; handled via KeyEventDispatcher now
+
+    private void navigateToPage(int targetPage, boolean fitToScreen) {
+        if (totalPages <= 0) return;
+        if (targetPage < 0) targetPage = 0;
+        if (targetPage > totalPages - 1) targetPage = totalPages - 1;
+
+        final int desired = targetPage;
+
+        // Optionally fit to page to show the whole page when flipping
+        if (fitToScreen && this.sliderZoom.getValue() != 100) {
+            this.sliderZoom.setValue(100);
+        }
+
+        // If page is already rendered, just scroll
+        if (desired < renderedPages && desired < pnlPages.getComponentCount()) {
+            scrollToPage(desired, true);
+            return;
+        }
+
+        // Otherwise, render ahead including the desired page
+        int from = renderedPages;
+        int to = Math.max(desired, renderedPages) + MAX_RENDER_PAGES - 1;
+        renderContent(currentPage, from, to, this.zoomFactor, true);
+
+        // Wait until the page is available, then scroll to it
+        javax.swing.Timer t = new javax.swing.Timer(100, null);
+        t.addActionListener(ev -> {
+            if (!rendering && desired < renderedPages && desired < pnlPages.getComponentCount()) {
+                scrollToPage(desired, true);
+                t.stop();
+            }
+        });
+        t.setRepeats(true);
+        t.start();
     }
 
     private void setCurrentPage(int pageIndex, boolean requestFocus) {
