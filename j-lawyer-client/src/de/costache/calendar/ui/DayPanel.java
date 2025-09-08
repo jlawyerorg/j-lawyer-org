@@ -150,7 +150,7 @@ public class DayPanel {
         String base = sdf.format(date);
         if (showKwInHeader) {
             int kw = de.costache.calendar.util.CalendarUtil.getIsoWeekOfYear(date);
-            return base + " (" + kw + ".KW)";
+            return base + " (" + kw + ". KW)";
         }
         return base;
     }

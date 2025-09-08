@@ -376,7 +376,7 @@ class MonthDisplayStrategy implements DisplayStrategy {
         Date gridEnd = days[34] != null ? days[34].getDate() : CalendarUtil.createInDays(gridStart, 34);
         int kwStart = CalendarUtil.getIsoWeekOfYear(gridStart);
         int kwEnd = CalendarUtil.getIsoWeekOfYear(gridEnd);
-        return base + " (" + kwStart + ".KW bis " + kwEnd + ".KW)";
+        return base + " (" + kwStart + ". KW bis " + kwEnd + ". KW)";
     }
 
     @Override
