@@ -72,6 +72,7 @@ public class HeaderPanel extends JPanel {
                 monthButton.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons16/calendar_month.png")));
                 todayButton=new JButton();
                 windowButton=new JButton();
+                windowButton.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons16/material/open_in_new_20dp_0E72B5.png")));
                 todayButton.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons16/calendar_today.png")));
 
 		scrollLeftButton = new JButton();
@@ -83,7 +84,7 @@ public class HeaderPanel extends JPanel {
 		weekButton.setText(strWeek);
 		monthButton.setText(strMonth);
                 todayButton.setText("Heute");
-                windowButton.setText("2. Fenster");
+                windowButton.setText("");
                 windowButton.setToolTipText("Kalender in separatem Fenster öffnen");
                 
 
