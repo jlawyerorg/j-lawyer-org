@@ -15,6 +15,7 @@
  */
 package de.costache.calendar.ui;
 
+import de.costache.calendar.CalendarPanel;
 import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
 import java.awt.Image;
@@ -23,6 +24,8 @@ import java.awt.Insets;
 import javax.imageio.ImageIO;
 import javax.swing.*;
 import de.costache.calendar.ui.strategy.DisplayStrategy;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
 
 
 /**
@@ -33,6 +36,8 @@ import de.costache.calendar.ui.strategy.DisplayStrategy;
 public class HeaderPanel extends JPanel {
 
 	private static final long serialVersionUID = 1L;
+        
+        private CalendarPanel calPanel=null;
 
 	private JButton scrollLeftButton;
 
@@ -52,8 +57,9 @@ public class HeaderPanel extends JPanel {
 	/**
 	 * Creates a new instance of {@link HeaderPanel}
 	 */
-	public HeaderPanel() {
-		init();
+	public HeaderPanel(CalendarPanel calPanel) {
+            this.calPanel=calPanel;
+            init();
 	}
 
 	private void init() {
@@ -86,6 +92,9 @@ public class HeaderPanel extends JPanel {
                 todayButton.setText("Heute");
                 windowButton.setText("");
                 windowButton.setToolTipText("Kalender in separatem Fenster öffnen");
+                windowButton.addActionListener((ActionEvent ae) -> {
+                    calPanel.showSeparateCalendarWindow();
+                });
                 
 
 		scrollLeftButton.setBorderPainted(false);
@@ -208,10 +217,6 @@ public class HeaderPanel extends JPanel {
        public JButton getTodayButton() {
            return todayButton;
        }
-
-        public JButton getWindowButton() {
-            return windowButton;
-        }
 
 	/**
 	 * @return the intervalLabel

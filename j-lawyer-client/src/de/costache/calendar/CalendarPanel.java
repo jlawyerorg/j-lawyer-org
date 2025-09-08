@@ -722,6 +722,7 @@ import javax.swing.MenuElement;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
 import javax.swing.ImageIcon;
+import javax.swing.JDialog;
 // no window listener needed; no live sync
 // removed live sync, no AtomicBoolean needed
 import org.apache.log4j.Logger;
@@ -1071,15 +1072,19 @@ public class CalendarPanel extends javax.swing.JPanel implements NewEventEntryCa
         popup.add(mnuEditEvent);
         popup.add(mnuMarkEventAsDone);
 
-        jCalendar = new JCalendar();
+        jCalendar = new JCalendar(this);
         jCalendar.setPreferredSize(new Dimension(1024, 768));
         jCalendar.setJPopupMenu(popup);
         jCalendar.getConfig().setAllDayPanelVisible(false);
 
-        // Button to open calendar in separate window (no live sync)
-        JButton btnWindow = jCalendar.getHeaderPanel().getWindowButton();
-        btnWindow.addActionListener(e -> {
-            javax.swing.JFrame frame = new javax.swing.JFrame("Kalender");
+        this.setLayout(new BorderLayout(10, 10));
+        this.add(toolBar, BorderLayout.PAGE_START);
+        this.add(jCalendar, BorderLayout.CENTER);
+
+    }
+    
+    public void showSeparateCalendarWindow() {
+        javax.swing.JFrame frame = new javax.swing.JFrame("Kalender");
             frame.setIconImage(new ImageIcon(getClass().getResource("/icons/windowicon.png")).getImage());
             CalendarPanel pop = new CalendarPanel(this.userPopup);
             // preserve context
@@ -1092,17 +1097,14 @@ public class CalendarPanel extends javax.swing.JPanel implements NewEventEntryCa
             pop.jCalendar.setDisplayStrategy(this.jCalendar.getDisplayStrategy(), this.jCalendar.getSelectedDay());
 
             // In the popup: repurpose the header's window button to act as "Aktualisieren"
-            JButton popupHeaderBtn = pop.jCalendar.getHeaderPanel().getWindowButton();
+            JButton popupHeaderBtn = new JButton();
             popupHeaderBtn.setText("Aktualisieren");
             popupHeaderBtn.setToolTipText("Daten und Ansicht aus dem Hauptfenster übernehmen");
-            for (java.awt.event.ActionListener al : popupHeaderBtn.getActionListeners()) {
-                popupHeaderBtn.removeActionListener(al);
-            }
             popupHeaderBtn.addActionListener(e2 -> {
                 // Avoid refreshing while modal dialogs are open (e.g., ProgressIndicator)
                 for (java.awt.Window w : java.awt.Window.getWindows()) {
-                    if (w instanceof javax.swing.JDialog) {
-                        javax.swing.JDialog d = (javax.swing.JDialog) w;
+                    if (w instanceof JDialog) {
+                        JDialog d = (JDialog) w;
                         if (d.isVisible() && d.isModal()) {
                             JOptionPane.showMessageDialog(pop, "Bitte zuerst offene Dialoge schließen.", "Aktualisieren", JOptionPane.INFORMATION_MESSAGE);
                             return;
@@ -1128,26 +1130,18 @@ public class CalendarPanel extends javax.swing.JPanel implements NewEventEntryCa
             frame.setDefaultCloseOperation(javax.swing.WindowConstants.DISPOSE_ON_CLOSE);
             frame.setSize(1024, 768);
             frame.setLocationByPlatform(true);
-            // Disable main button while popup is open
-            btnWindow.setEnabled(false);
             frame.addWindowListener(new WindowAdapter() {
                 @Override
                 public void windowClosed(WindowEvent e) {
-                    btnWindow.setEnabled(true);
+                    
                 }
                 @Override
                 public void windowClosing(WindowEvent e) {
                     // also re-enable in case of system-initiated close
-                    btnWindow.setEnabled(true);
+                    
                 }
             });
             frame.setVisible(true);
-        });
-
-        this.setLayout(new BorderLayout(10, 10));
-        this.add(toolBar, BorderLayout.PAGE_START);
-        this.add(jCalendar, BorderLayout.CENTER);
-
     }
 
     @Override
