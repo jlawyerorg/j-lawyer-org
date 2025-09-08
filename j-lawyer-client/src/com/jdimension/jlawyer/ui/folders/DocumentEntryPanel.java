@@ -1249,6 +1249,9 @@ public class DocumentEntryPanel extends javax.swing.JPanel implements DragGestur
             if (this.documentsContainer != null && deselectOthers) {
                 this.documentsContainer.selectAllDocuments(false);
             }
+            if (this.document != null) {
+                this.caseContainer.setLastPreviewDocId(this.document.getId());
+            }
             this.setSelected(true);
             this.caseContainer.documentSelectionChanged();
             evt.consume();
@@ -1413,6 +1416,9 @@ public class DocumentEntryPanel extends javax.swing.JPanel implements DragGestur
         if (evt.getClickCount() == 1 && !evt.isConsumed()) {
             if (this.documentsContainer != null) {
                 this.documentsContainer.selectDocumentsRangeTo(this.document.getId());
+            }
+            if (this.document != null) {
+                this.caseContainer.setLastPreviewDocId(this.document.getId());
             }
             this.setSelected(true);
             this.caseContainer.documentSelectionChanged();
