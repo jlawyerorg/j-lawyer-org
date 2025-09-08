@@ -678,6 +678,7 @@ import org.java.sepaxml.SEPATransaction;
 import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.List;
+import org.java.sepaxml.validator.SEPAValidatorIBAN;
 
 /*
  * To change this template, choose Tools | Templates
@@ -694,6 +695,11 @@ public class Base64Test {
      * @param args the command line arguments
      */
     public static void main(String[] args) {
+        
+        boolean valid=SEPAValidatorIBAN.isValid("DE8570120400 849454");
+        System.out.println("IBAN valid: " + valid);
+        System.exit(0);
+        
         try {
             
             
