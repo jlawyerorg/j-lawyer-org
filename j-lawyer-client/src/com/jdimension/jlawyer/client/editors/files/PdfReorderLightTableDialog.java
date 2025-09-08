@@ -1,6 +1,7 @@
 package com.jdimension.jlawyer.client.editors.files;
 
 import java.awt.BorderLayout;
+import java.awt.Cursor;
 import java.awt.Dimension;
 import java.awt.Window;
 import java.awt.datatransfer.DataFlavor;
@@ -25,7 +26,6 @@ import javax.swing.TransferHandler;
 import javax.swing.JButton;
 import javax.swing.Box;
 import javax.swing.BoxLayout;
-import javax.swing.SwingUtilities;
 import javax.swing.DropMode;
 import org.apache.pdfbox.pdmodel.PDDocument;
 import org.apache.pdfbox.rendering.PDFRenderer;
@@ -176,6 +176,7 @@ public class PdfReorderLightTableDialog extends JDialog {
         public ThumbnailRenderer() {
             panel.setLayout(new BorderLayout(4, 4));
             lblThumb.setHorizontalAlignment(JLabel.CENTER);
+            lblThumb.setCursor(new java.awt.Cursor(Cursor.HAND_CURSOR));
             lblName.setHorizontalAlignment(JLabel.CENTER);
             // arrows left/right around thumbnail
             lblLeft.setHorizontalAlignment(JLabel.CENTER);
