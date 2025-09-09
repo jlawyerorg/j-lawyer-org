@@ -667,6 +667,8 @@ import com.jdimension.jlawyer.client.editors.EditorsRegistry;
 import com.jdimension.jlawyer.client.settings.ClientSettings;
 import com.jdimension.jlawyer.client.utils.ThreadUtils;
 import com.jdimension.jlawyer.services.JLawyerServiceLocator;
+import java.awt.BorderLayout;
+import java.awt.Component;
 import java.util.Arrays;
 import java.nio.charset.StandardCharsets;
 import java.awt.Toolkit;
@@ -1148,169 +1150,125 @@ public class MarkdownPanel extends javax.swing.JPanel implements PreviewPanel {
     }
 
     private void wireToolbarActions() {
-        ActionListener undoAct = new ActionListener() {
-            public void actionPerformed(ActionEvent e) {
-                if (undoManager.canUndo()) {
-                    undoManager.undo();
-                    markdownPane.setMarkdownText(taEdit.getText());
-                    updateToolbarEnabledStates();
-                }
+        ActionListener undoAct = (ActionEvent e) -> {
+            if (undoManager.canUndo()) {
+                undoManager.undo();
+                markdownPane.setMarkdownText(taEdit.getText());
+                updateToolbarEnabledStates();
             }
         };
-        ActionListener redoAct = new ActionListener() {
-            public void actionPerformed(ActionEvent e) {
-                if (undoManager.canRedo()) {
-                    undoManager.redo();
-                    markdownPane.setMarkdownText(taEdit.getText());
-                    updateToolbarEnabledStates();
-                }
+        ActionListener redoAct = (ActionEvent e) -> {
+            if (undoManager.canRedo()) {
+                undoManager.redo();
+                markdownPane.setMarkdownText(taEdit.getText());
+                updateToolbarEnabledStates();
             }
         };
 
         btnUndo.addActionListener(undoAct);
         btnRedo.addActionListener(redoAct);
-        btnClearFmt.addActionListener(new ActionListener() {
-            public void actionPerformed(ActionEvent e) {
-                clearSelectionFormatting();
-            }
+        btnClearFmt.addActionListener((ActionEvent e) -> {
+            clearSelectionFormatting();
         });
-        btnBold.addActionListener(new ActionListener() {
-            public void actionPerformed(ActionEvent e) {
-                wrapSelection("**", "**");
-            }
+        btnBold.addActionListener((ActionEvent e) -> {
+            wrapSelection("**", "**");
         });
-        btnItalic.addActionListener(new ActionListener() {
-            public void actionPerformed(ActionEvent e) {
-                wrapSelection("*", "*");
-            }
+        btnItalic.addActionListener((ActionEvent e) -> {
+            wrapSelection("*", "*");
         });
-        btnHeading.addActionListener(new ActionListener() {
-            public void actionPerformed(ActionEvent e) {
-                addPrefixToSelectedLines("## ");
-            }
+        btnHeading.addActionListener((ActionEvent e) -> {
+            addPrefixToSelectedLines("## ");
         });
-        btnBullet.addActionListener(new ActionListener() {
-            public void actionPerformed(ActionEvent e) {
-                addPrefixToSelectedLines("- ");
-            }
+        btnBullet.addActionListener((ActionEvent e) -> {
+            addPrefixToSelectedLines("- ");
         });
-        btnNumbered.addActionListener(new ActionListener() {
-            public void actionPerformed(ActionEvent e) {
-                addPrefixToSelectedLines("1. ");
-            }
+        btnNumbered.addActionListener((ActionEvent e) -> {
+            addPrefixToSelectedLines("1. ");
         });
-        btnQuote.addActionListener(new ActionListener() {
-            public void actionPerformed(ActionEvent e) {
-                addPrefixToSelectedLines("> ");
-            }
+        btnQuote.addActionListener((ActionEvent e) -> {
+            addPrefixToSelectedLines("> ");
         });
-        btnCodeInline.addActionListener(new ActionListener() {
-            public void actionPerformed(ActionEvent e) {
-                wrapSelection("`", "`");
-            }
+        btnCodeInline.addActionListener((ActionEvent e) -> {
+            wrapSelection("`", "`");
         });
-        btnCodeBlock.addActionListener(new ActionListener() {
-            public void actionPerformed(ActionEvent e) {
-                surroundSelectionWithFences("```");
-            }
+        btnCodeBlock.addActionListener((ActionEvent e) -> {
+            surroundSelectionWithFences("```");
         });
-        btnLink.addActionListener(new ActionListener() {
-            public void actionPerformed(ActionEvent e) {
-                insertLink();
-            }
+        btnLink.addActionListener((ActionEvent e) -> {
+            insertLink();
         });
 
         // Wire preview toolbar to same actions
         btnPUndo.addActionListener(undoAct);
         btnPRedo.addActionListener(redoAct);
-        btnPClearFmt.addActionListener(new ActionListener() {
-            public void actionPerformed(ActionEvent e) {
-                String s = markdownPane.getSelectedText();
-                if (selectInEditorByPreviewSelection()) {
-                    clearSelectionFormatting();
-                    reselectInPreview(s);
-                }
+        btnPClearFmt.addActionListener((ActionEvent e) -> {
+            String s = markdownPane.getSelectedText();
+            if (selectInEditorByPreviewSelection()) {
+                clearSelectionFormatting();
+                reselectInPreview(s);
             }
         });
-        btnPBold.addActionListener(new ActionListener() {
-            public void actionPerformed(ActionEvent e) {
-                String s = markdownPane.getSelectedText();
-                if (selectInEditorByPreviewSelection()) {
-                    wrapSelection("**", "**");
-                    reselectInPreview(s);
-                }
+        btnPBold.addActionListener((ActionEvent e) -> {
+            String s = markdownPane.getSelectedText();
+            if (selectInEditorByPreviewSelection()) {
+                wrapSelection("**", "**");
+                reselectInPreview(s);
             }
         });
-        btnPItalic.addActionListener(new ActionListener() {
-            public void actionPerformed(ActionEvent e) {
-                String s = markdownPane.getSelectedText();
-                if (selectInEditorByPreviewSelection()) {
-                    wrapSelection("*", "*");
-                    reselectInPreview(s);
-                }
+        btnPItalic.addActionListener((ActionEvent e) -> {
+            String s = markdownPane.getSelectedText();
+            if (selectInEditorByPreviewSelection()) {
+                wrapSelection("*", "*");
+                reselectInPreview(s);
             }
         });
-        btnPHeading.addActionListener(new ActionListener() {
-            public void actionPerformed(ActionEvent e) {
-                String s = markdownPane.getSelectedText();
-                if (selectInEditorByPreviewSelection()) {
-                    addPrefixToSelectedLines("## ");
-                    reselectInPreview(s);
-                }
+        btnPHeading.addActionListener((ActionEvent e) -> {
+            String s = markdownPane.getSelectedText();
+            if (selectInEditorByPreviewSelection()) {
+                addPrefixToSelectedLines("## ");
+                reselectInPreview(s);
             }
         });
-        btnPBullet.addActionListener(new ActionListener() {
-            public void actionPerformed(ActionEvent e) {
-                String s = markdownPane.getSelectedText();
-                if (selectInEditorByPreviewSelection()) {
-                    addPrefixToSelectedLines("- ");
-                    reselectInPreview(s);
-                }
+        btnPBullet.addActionListener((ActionEvent e) -> {
+            String s = markdownPane.getSelectedText();
+            if (selectInEditorByPreviewSelection()) {
+                addPrefixToSelectedLines("- ");
+                reselectInPreview(s);
             }
         });
-        btnPNumbered.addActionListener(new ActionListener() {
-            public void actionPerformed(ActionEvent e) {
-                String s = markdownPane.getSelectedText();
-                if (selectInEditorByPreviewSelection()) {
-                    addPrefixToSelectedLines("1. ");
-                    reselectInPreview(s);
-                }
+        btnPNumbered.addActionListener((ActionEvent e) -> {
+            String s = markdownPane.getSelectedText();
+            if (selectInEditorByPreviewSelection()) {
+                addPrefixToSelectedLines("1. ");
+                reselectInPreview(s);
             }
         });
-        btnPQuote.addActionListener(new ActionListener() {
-            public void actionPerformed(ActionEvent e) {
-                String s = markdownPane.getSelectedText();
-                if (selectInEditorByPreviewSelection()) {
-                    addPrefixToSelectedLines("> ");
-                    reselectInPreview(s);
-                }
+        btnPQuote.addActionListener((ActionEvent e) -> {
+            String s = markdownPane.getSelectedText();
+            if (selectInEditorByPreviewSelection()) {
+                addPrefixToSelectedLines("> ");
+                reselectInPreview(s);
             }
         });
-        btnPCodeInline.addActionListener(new ActionListener() {
-            public void actionPerformed(ActionEvent e) {
-                String s = markdownPane.getSelectedText();
-                if (selectInEditorByPreviewSelection()) {
-                    wrapSelection("`", "`");
-                    reselectInPreview(s);
-                }
+        btnPCodeInline.addActionListener((ActionEvent e) -> {
+            String s = markdownPane.getSelectedText();
+            if (selectInEditorByPreviewSelection()) {
+                wrapSelection("`", "`");
+                reselectInPreview(s);
             }
         });
-        btnPCodeBlock.addActionListener(new ActionListener() {
-            public void actionPerformed(ActionEvent e) {
-                String s = markdownPane.getSelectedText();
-                if (selectInEditorByPreviewSelection()) {
-                    surroundSelectionWithFences("```");
-                    reselectInPreview(s);
-                }
+        btnPCodeBlock.addActionListener((ActionEvent e) -> {
+            String s = markdownPane.getSelectedText();
+            if (selectInEditorByPreviewSelection()) {
+                surroundSelectionWithFences("```");
+                reselectInPreview(s);
             }
         });
-        btnPLink.addActionListener(new ActionListener() {
-            public void actionPerformed(ActionEvent e) {
-                String s = markdownPane.getSelectedText();
-                if (selectInEditorByPreviewSelection()) {
-                    insertLink();
-                    reselectInPreview(s);
-                }
+        btnPLink.addActionListener((ActionEvent e) -> {
+            String s = markdownPane.getSelectedText();
+            if (selectInEditorByPreviewSelection()) {
+                insertLink();
+                reselectInPreview(s);
             }
         });
     }
@@ -1410,25 +1368,25 @@ public class MarkdownPanel extends javax.swing.JPanel implements PreviewPanel {
     }
 
     private void wrapTabsWithToolbars() {
-        // Embed toolbars inside each tab's scrollpane viewport to avoid replacing tab components
-        javax.swing.JPanel previewContainer = new javax.swing.JPanel(new java.awt.BorderLayout());
-        previewContainer.add(tbMarkdownPreview, java.awt.BorderLayout.NORTH);
-        // HtmlPane is already set as view of jScrollPane1; use the component from its viewport
-        java.awt.Component previewView = jScrollPane1.getViewport().getView();
+        // --- Preview tab ---
+        // put the toolbar into the fixed column header area
+        jScrollPane1.setColumnHeaderView(tbMarkdownPreview);
+
+        // make sure the correct content is in the viewport
+        Component previewView = jScrollPane1.getViewport().getView();
         if (previewView == null) {
             previewView = markdownPane;
         }
-        previewContainer.add(previewView, java.awt.BorderLayout.CENTER);
-        jScrollPane1.setViewportView(previewContainer);
+        jScrollPane1.setViewportView(previewView);
 
-        javax.swing.JPanel editorContainer = new javax.swing.JPanel(new java.awt.BorderLayout());
-        editorContainer.add(tbMarkdown, java.awt.BorderLayout.NORTH);
-        java.awt.Component editorView = jScrollPane2.getViewport().getView();
+        // --- Editor tab ---
+        jScrollPane2.setColumnHeaderView(tbMarkdown);
+
+        Component editorView = jScrollPane2.getViewport().getView();
         if (editorView == null) {
             editorView = taEdit;
         }
-        editorContainer.add(editorView, java.awt.BorderLayout.CENTER);
-        jScrollPane2.setViewportView(editorContainer);
+        jScrollPane2.setViewportView(editorView);
     }
 
     // (removed) ensureTabs
@@ -1582,7 +1540,7 @@ public class MarkdownPanel extends javax.swing.JPanel implements PreviewPanel {
         rx.append("(?s)"); // DOTALL to match across lines
         for (int i = 0; i < words.length; i++) {
             String w = java.util.regex.Pattern.quote(words[i]);
-            rx.append("(?:[" + punct + "]*)").append(w).append("(?:[" + punct + "]*)");
+            rx.append("(?:[").append(punct).append("]*)").append(w).append("(?:[").append(punct).append("]*)");
             if (i < words.length - 1) {
                 rx.append("[\\s]+");
             }
