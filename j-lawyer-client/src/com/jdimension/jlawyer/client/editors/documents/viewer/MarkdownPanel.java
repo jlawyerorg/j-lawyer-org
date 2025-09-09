@@ -699,7 +699,7 @@ public class MarkdownPanel extends javax.swing.JPanel implements PreviewPanel {
     private String id=null;
     private HtmlPane markdownPane=null;
     private byte[] initialContent = null;
-    private boolean readOnly = true;
+    private boolean readOnly = false;
     
     // Toolbar components (only used in DocumentPreview context)
     private JToolBar tbMarkdown; // Editor tab
@@ -745,24 +745,22 @@ public class MarkdownPanel extends javax.swing.JPanel implements PreviewPanel {
         
         this.markdownPane=new HtmlPane();
         this.jScrollPane1.getViewport().add(markdownPane);
+        // Ensure editor scrollpane contains the editor text area
+        this.jScrollPane2.setViewportView(this.taEdit);
 
         // Build toolbars and integrate into tabs (outside GUI Builder code)
         setupToolbars();
         wrapTabsWithToolbars();
         setTooltips();
         wireToolbarActions();
-        ensureTabs();
+        // Select preview tab initially
+        try { this.jTabbedPane1.setSelectedIndex(0); } catch (Exception ignore) {}
 
         // Show toolbars only when not read-only
         if (this.tbMarkdown != null) this.tbMarkdown.setVisible(!this.readOnly);
         if (this.tbMarkdownPreview != null) this.tbMarkdownPreview.setVisible(!this.readOnly);
         this.taEdit.setEditable(!this.readOnly);
-        try {
-            int editorTabIndex = this.jTabbedPane1.indexOfTab("Editor");
-            if (editorTabIndex >= 0) this.jTabbedPane1.setEnabledAt(editorTabIndex, !this.readOnly);
-        } catch (Throwable t) {
-            // ignore
-        }
+        // Keep tabs always enabled; only control editability and toolbar visibility via readOnly
 
         // Undo/redo support and selection tracking
         this.taEdit.getDocument().addUndoableEditListener(undoManager);
@@ -780,6 +778,8 @@ public class MarkdownPanel extends javax.swing.JPanel implements PreviewPanel {
             updateToolbarEnabledStates();
             synchronizeSelectionOnTabChange();
         });
+
+        // Tabs are defined in initComponents(); no dynamic additions here
         
     }
 
@@ -852,12 +852,7 @@ public class MarkdownPanel extends javax.swing.JPanel implements PreviewPanel {
     public void showContent(String documentId, byte[] content) {
         this.id = documentId;
         this.initialContent = content;
-        String text;
-            if (content == null) {
-                text = "";
-            } else {
-                text = new String(content, StandardCharsets.UTF_8);
-            }
+        String text = decodeMarkdownBytes(content);
         setEditorTextFromExternal(text.trim());
     }
     
@@ -1034,6 +1029,41 @@ public class MarkdownPanel extends javax.swing.JPanel implements PreviewPanel {
         updateToolbarEnabledStates();
     }
 
+    private String decodeMarkdownBytes(byte[] content) {
+        if (content == null) return "";
+        // BOM detection
+        if (content.length >= 3 && (content[0] & 0xFF) == 0xEF && (content[1] & 0xFF) == 0xBB && (content[2] & 0xFF) == 0xBF) {
+            return new String(content, 3, content.length - 3, StandardCharsets.UTF_8);
+        }
+        if (content.length >= 2) {
+            int b0 = content[0] & 0xFF;
+            int b1 = content[1] & 0xFF;
+            if (b0 == 0xFE && b1 == 0xFF) {
+                return new String(content, 2, content.length - 2, java.nio.charset.StandardCharsets.UTF_16BE);
+            }
+            if (b0 == 0xFF && b1 == 0xFE) {
+                return new String(content, 2, content.length - 2, java.nio.charset.StandardCharsets.UTF_16LE);
+            }
+        }
+        // Try UTF-8 first with round-trip validation
+        try {
+            String s = new String(content, StandardCharsets.UTF_8);
+            // If decoding produced replacement characters, it's likely not UTF-8
+            if (s.indexOf('\uFFFD') == -1) {
+                byte[] rt = s.getBytes(StandardCharsets.UTF_8);
+                if (java.util.Arrays.equals(content, rt)) {
+                    return s;
+                }
+            }
+        } catch (Exception ignore) {}
+        // Fallback to Windows-1252 (common on Windows)
+        try {
+            return new String(content, java.nio.charset.Charset.forName("windows-1252"));
+        } catch (Exception ignore) {}
+        // Last resort ISO-8859-1
+        return new String(content, java.nio.charset.StandardCharsets.ISO_8859_1);
+    }
+
     private void wireToolbarActions() {
         ActionListener undoAct = new ActionListener(){ public void actionPerformed(ActionEvent e){ if (undoManager.canUndo()) { undoManager.undo(); markdownPane.setMarkdownText(taEdit.getText()); updateToolbarEnabledStates(); } }};
         ActionListener redoAct = new ActionListener(){ public void actionPerformed(ActionEvent e){ if (undoManager.canRedo()) { undoManager.redo(); markdownPane.setMarkdownText(taEdit.getText()); updateToolbarEnabledStates(); } }};
@@ -1161,45 +1191,26 @@ public class MarkdownPanel extends javax.swing.JPanel implements PreviewPanel {
     }
 
     private void wrapTabsWithToolbars() {
-        // Determine indices robustly
-        int previewIdx = this.jTabbedPane1.indexOfTab("Vorschau");
-        int editorIdx = this.jTabbedPane1.indexOfTab("Editor");
-        if (previewIdx < 0 && this.jTabbedPane1.getTabCount() >= 1) previewIdx = 0;
-        if (editorIdx < 0 && this.jTabbedPane1.getTabCount() >= 2) editorIdx = 1;
+        // Embed toolbars inside each tab's scrollpane viewport to avoid replacing tab components
+        javax.swing.JPanel previewContainer = new javax.swing.JPanel(new java.awt.BorderLayout());
+        previewContainer.add(tbMarkdownPreview, java.awt.BorderLayout.NORTH);
+        // HtmlPane is already set as view of jScrollPane1; use the component from its viewport
+        java.awt.Component previewView = jScrollPane1.getViewport().getView();
+        if (previewView == null) previewView = markdownPane;
+        previewContainer.add(previewView, java.awt.BorderLayout.CENTER);
+        jScrollPane1.setViewportView(previewContainer);
 
-        if (previewIdx >= 0 && previewIdx < this.jTabbedPane1.getTabCount()) {
-            javax.swing.JPanel previewContainer = new javax.swing.JPanel(new java.awt.BorderLayout());
-            previewContainer.add(tbMarkdownPreview, java.awt.BorderLayout.NORTH);
-            previewContainer.add(jScrollPane1, java.awt.BorderLayout.CENTER);
-            String title = this.jTabbedPane1.getTitleAt(previewIdx);
-            this.jTabbedPane1.setComponentAt(previewIdx, previewContainer);
-            this.jTabbedPane1.setTitleAt(previewIdx, title);
-        }
-        if (editorIdx >= 0 && editorIdx < this.jTabbedPane1.getTabCount()) {
-            javax.swing.JPanel editorContainer = new javax.swing.JPanel(new java.awt.BorderLayout());
-            editorContainer.add(tbMarkdown, java.awt.BorderLayout.NORTH);
-            editorContainer.add(jScrollPane2, java.awt.BorderLayout.CENTER);
-            String title = this.jTabbedPane1.getTitleAt(editorIdx);
-            this.jTabbedPane1.setComponentAt(editorIdx, editorContainer);
-            this.jTabbedPane1.setTitleAt(editorIdx, title);
-        }
+        javax.swing.JPanel editorContainer = new javax.swing.JPanel(new java.awt.BorderLayout());
+        editorContainer.add(tbMarkdown, java.awt.BorderLayout.NORTH);
+        java.awt.Component editorView = jScrollPane2.getViewport().getView();
+        if (editorView == null) editorView = taEdit;
+        editorContainer.add(editorView, java.awt.BorderLayout.CENTER);
+        jScrollPane2.setViewportView(editorContainer);
     }
 
-    private void ensureTabs() {
-        // Ensure both tabs exist; if not, add them safely
-        if (this.jTabbedPane1.indexOfTab("Vorschau") == -1) {
-            javax.swing.JPanel previewContainer = new javax.swing.JPanel(new java.awt.BorderLayout());
-            previewContainer.add(tbMarkdownPreview, java.awt.BorderLayout.NORTH);
-            previewContainer.add(jScrollPane1, java.awt.BorderLayout.CENTER);
-            this.jTabbedPane1.insertTab("Vorschau", null, previewContainer, null, 0);
-        }
-        if (this.jTabbedPane1.indexOfTab("Editor") == -1) {
-            javax.swing.JPanel editorContainer = new javax.swing.JPanel(new java.awt.BorderLayout());
-            editorContainer.add(tbMarkdown, java.awt.BorderLayout.NORTH);
-            editorContainer.add(jScrollPane2, java.awt.BorderLayout.CENTER);
-            this.jTabbedPane1.addTab("Editor", editorContainer);
-        }
-    }
+    // (removed) ensureTabs
+
+    // (removed) fixEditorBinding
 
     @Override
     public void addNotify() {
@@ -1315,6 +1326,7 @@ public class MarkdownPanel extends javax.swing.JPanel implements PreviewPanel {
             int end = mapNormToOriginalEnd(ne, idx + target.length(), editorText.length());
             if (start >= 0 && end >= start) {
                 taEdit.select(start, end);
+                trimSelectionInsideInlineMarkdown();
                 return true;
             }
         }
@@ -1444,15 +1456,48 @@ public class MarkdownPanel extends javax.swing.JPanel implements PreviewPanel {
         } else if ("Editor".equals(title)) {
             String selPrev = markdownPane.getSelectedText();
             if (selPrev != null && !selPrev.isEmpty()) {
-                selectInEditorByPreviewSelection(selPrev);
+                if (selectInEditorByPreviewSelection(selPrev)) {
+                    trimSelectionInsideInlineMarkdown();
+                }
             }
+        }
+    }
+
+    private void trimSelectionInsideInlineMarkdown() {
+        int start = taEdit.getSelectionStart();
+        int end = taEdit.getSelectionEnd();
+        if (start < 0 || end <= start) return;
+        String text = taEdit.getText();
+        if (end > text.length()) end = text.length();
+        String sel = text.substring(start, end);
+
+        // Trim closing markers first
+        boolean changed = false;
+        if (sel.endsWith("**") && end - start >= 2) { end -= 2; changed = true; sel = text.substring(start, end); }
+        else if (sel.endsWith("`") && end - start >= 1) { end -= 1; changed = true; sel = text.substring(start, end); }
+        else if (sel.endsWith("*") && end - start >= 1) { end -= 1; changed = true; sel = text.substring(start, end); }
+        else if (sel.endsWith("_") && end - start >= 1) { end -= 1; changed = true; sel = text.substring(start, end); }
+
+        // Trim opening markers
+        if (sel.startsWith("**") && end - start >= 2) { start += 2; changed = true; sel = text.substring(start, end); }
+        else if (sel.startsWith("`") && end - start >= 1) { start += 1; changed = true; sel = text.substring(start, end); }
+        else if (sel.startsWith("*") && end - start >= 1) { start += 1; changed = true; sel = text.substring(start, end); }
+        else if (sel.startsWith("_") && end - start >= 1) { start += 1; changed = true; sel = text.substring(start, end); }
+
+        if (changed && end > start) {
+            taEdit.select(start, end);
         }
     }
 
     private void setEditorTextFromExternal(String text) {
         // Called when loading content/status: should not create an undo entry that clears everything
         taEdit.setText(text);
+        try { taEdit.setCaretPosition(0); } catch (Exception ignore) {}
+        taEdit.revalidate();
+        taEdit.repaint();
         markdownPane.setMarkdownText(text);
+        jScrollPane2.revalidate();
+        jScrollPane2.repaint();
         undoManager.discardAllEdits();
         updateToolbarEnabledStates();
     }

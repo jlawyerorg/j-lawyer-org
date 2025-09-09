@@ -758,16 +758,7 @@ public class DocumentViewerFactory {
             mdp.setMaximumSize(new Dimension(width, height));
             mdp.setPreferredSize(new Dimension(width, height));
             try {
-                com.jdimension.jlawyer.documents.DocumentPreview dp = previewProvider.getPreview();
-                byte[] bytes = null;
-                if (dp != null) {
-                    String text = dp.getText();
-                    if (text != null) {
-                        bytes = text.getBytes(StandardCharsets.UTF_8);
-                    } else {
-                        bytes = dp.getBytes();
-                    }
-                }
+                byte[] bytes = content;
                 if (bytes == null) {
                     mdp.showContent(id, ("FEHLER: kein Inhalt verfügbar").getBytes(StandardCharsets.UTF_8));
                 } else {
