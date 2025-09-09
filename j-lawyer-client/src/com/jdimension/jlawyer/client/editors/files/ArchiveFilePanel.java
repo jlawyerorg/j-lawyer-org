@@ -795,10 +795,15 @@ import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.util.*;
 import javax.swing.*;
+import javax.swing.border.Border;
+import javax.swing.border.EmptyBorder;
 import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
 import javax.swing.table.DefaultTableCellRenderer;
 import javax.swing.table.DefaultTableModel;
+import javax.swing.table.TableCellRenderer;
+import javax.swing.table.TableColumn;
+import javax.swing.table.TableModel;
 import javax.swing.table.TableRowSorter;
 import javax.swing.text.DefaultStyledDocument;
 import net.sf.jasperreports.engine.JasperFillManager;
@@ -4437,7 +4442,7 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
                         Object v = this.tblReviewReasons.getValueAt(row, 0);
                         if (v instanceof ArchiveFileReviewsBean) {
                             ArchiveFileReviewsBean r = (ArchiveFileReviewsBean) v;
-                            enable = (r.getEventType() == com.jdimension.jlawyer.persistence.ArchiveFileReviewsBean.EVENTTYPE_EVENT)
+                            enable = (r.getEventType() == ArchiveFileReviewsBean.EVENTTYPE_EVENT)
                                     && conflictingEventIds.contains(r.getId());
                         }
                     }
@@ -4455,74 +4460,45 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
     private void applyConflictRenderers() {
         // Default renderer for Object.class
         this.tblReviewReasons.setDefaultRenderer(Object.class, new ConflictAwareDefaultRenderer());
-        // Boolean renderer should also honor conflict foreground color
-        this.tblReviewReasons.setDefaultRenderer(Boolean.class, new ConflictAwareDefaultRenderer());
+        // Boolean renderer with real checkbox, also honoring conflict foreground color
+        this.tblReviewReasons.setDefaultRenderer(Boolean.class, new ConflictAwareBooleanRenderer());
         // Column 5 has a custom renderer: wrap it to keep user rendering + conflict style
         try {
-            javax.swing.table.TableColumn col = this.tblReviewReasons.getColumnModel().getColumn(5);
-            javax.swing.table.TableCellRenderer base = col.getCellRenderer();
+            TableColumn col = this.tblReviewReasons.getColumnModel().getColumn(5);
+            TableCellRenderer base = col.getCellRenderer();
             if (!(base instanceof ConflictAwareUserRenderer)) {
-                base = new com.jdimension.jlawyer.client.configuration.UserTableCellRenderer();
+                base = new UserTableCellRenderer();
                 col.setCellRenderer(new ConflictAwareUserRenderer(base));
             }
         } catch (Throwable t) {
             // ignore if column not available yet
+            log.error(t);
         }
     }
 
     // Renderer applying red foreground + tooltip for conflicting Termine
-    private class ConflictAwareDefaultRenderer extends javax.swing.table.DefaultTableCellRenderer {
+    private class ConflictAwareDefaultRenderer extends DefaultTableCellRenderer {
+
         @Override
         public java.awt.Component getTableCellRendererComponent(javax.swing.JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
             java.awt.Component c = super.getTableCellRendererComponent(table, value, isSelected, hasFocus, row, column);
             try {
                 Object eventObj = table.getValueAt(row, 0);
-                if (eventObj instanceof com.jdimension.jlawyer.persistence.ArchiveFileReviewsBean) {
-                    com.jdimension.jlawyer.persistence.ArchiveFileReviewsBean evt = (com.jdimension.jlawyer.persistence.ArchiveFileReviewsBean) eventObj;
-                    if (evt.getEventType() == com.jdimension.jlawyer.persistence.ArchiveFileReviewsBean.EVENTTYPE_EVENT && conflictingEventIds.contains(evt.getId())) {
+                if (eventObj instanceof ArchiveFileReviewsBean) {
+                    ArchiveFileReviewsBean evt = (ArchiveFileReviewsBean) eventObj;
+                    if (evt.getEventType() == ArchiveFileReviewsBean.EVENTTYPE_EVENT && conflictingEventIds.contains(evt.getId())) {
                         if (!isSelected) {
                             c.setForeground(DefaultColorTheme.COLOR_LOGO_RED);
                         }
-                        if (c instanceof javax.swing.JComponent) {
-                            ((javax.swing.JComponent) c).setToolTipText(buildConflictTooltip(evt));
+                        if (c instanceof JComponent) {
+                            ((JComponent) c).setToolTipText(buildConflictTooltip(evt));
                         }
                     } else {
-                        if (!isSelected) c.setForeground(java.awt.Color.BLACK);
-                        if (c instanceof javax.swing.JComponent) {
-                            ((javax.swing.JComponent) c).setToolTipText(null);
-                        }
-                    }
-                }
-            } catch (Throwable t) {
-                // ignore rendering issues
-            }
-            return c;
-        }
-    }
-
-    private class ConflictAwareUserRenderer extends javax.swing.table.DefaultTableCellRenderer {
-        private final javax.swing.table.TableCellRenderer delegate;
-        public ConflictAwareUserRenderer(javax.swing.table.TableCellRenderer delegate) {
-            this.delegate = delegate;
-        }
-        @Override
-        public java.awt.Component getTableCellRendererComponent(javax.swing.JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
-            java.awt.Component c = delegate.getTableCellRendererComponent(table, value, isSelected, hasFocus, row, column);
-            try {
-                Object eventObj = table.getValueAt(row, 0);
-                if (eventObj instanceof com.jdimension.jlawyer.persistence.ArchiveFileReviewsBean) {
-                    com.jdimension.jlawyer.persistence.ArchiveFileReviewsBean evt = (com.jdimension.jlawyer.persistence.ArchiveFileReviewsBean) eventObj;
-                    if (evt.getEventType() == com.jdimension.jlawyer.persistence.ArchiveFileReviewsBean.EVENTTYPE_EVENT && conflictingEventIds.contains(evt.getId())) {
                         if (!isSelected) {
-                            c.setForeground(DefaultColorTheme.COLOR_LOGO_RED);
+                            c.setForeground(java.awt.Color.BLACK);
                         }
-                        if (c instanceof javax.swing.JComponent) {
-                            ((javax.swing.JComponent) c).setToolTipText(buildConflictTooltip(evt));
-                        }
-                    } else {
-                        if (!isSelected) c.setForeground(java.awt.Color.BLACK);
-                        if (c instanceof javax.swing.JComponent) {
-                            ((javax.swing.JComponent) c).setToolTipText(null);
+                        if (c instanceof JComponent) {
+                            ((JComponent) c).setToolTipText(null);
                         }
                     }
                 }
@@ -4533,14 +4509,110 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
         }
     }
 
-    private String buildConflictTooltip(com.jdimension.jlawyer.persistence.ArchiveFileReviewsBean evt) {
-        java.util.List<com.jdimension.jlawyer.persistence.ArchiveFileReviewsBean> list = conflictDetailsByEventId.get(evt.getId());
-        if (list == null || list.isEmpty()) return null;
+    // Checkbox renderer for Boolean cells, retaining conflict highlighting/tooltip
+    private class ConflictAwareBooleanRenderer extends JCheckBox implements TableCellRenderer {
+
+        private final Border noFocusBorder
+                = (UIManager.getBorder("Table.cellNoFocusBorder") != null)
+                ? UIManager.getBorder("Table.cellNoFocusBorder")
+                : new EmptyBorder(1, 1, 1, 1);
+
+        public ConflictAwareBooleanRenderer() {
+            super();
+            setHorizontalAlignment(SwingConstants.CENTER);
+        }
+
+        @Override
+        public java.awt.Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
+            boolean selected = Boolean.TRUE.equals(value);
+            setSelected(selected);
+
+            // selection colors
+            if (isSelected) {
+                setBackground(table.getSelectionBackground());
+                setForeground(table.getSelectionForeground());
+            } else {
+                setBackground(table.getBackground());
+                setForeground(table.getForeground());
+            }
+
+            // borders like default renderers
+            if (hasFocus) {
+                Border focusBorder = UIManager.getBorder("Table.focusCellHighlightBorder");
+                setBorder(focusBorder);
+            } else {
+                setBorder(noFocusBorder);
+            }
+
+            try {
+                Object eventObj = table.getValueAt(row, 0);
+                if (eventObj instanceof ArchiveFileReviewsBean) {
+                    ArchiveFileReviewsBean evt = (ArchiveFileReviewsBean) eventObj;
+                    if (evt.getEventType() == ArchiveFileReviewsBean.EVENTTYPE_EVENT && conflictingEventIds.contains(evt.getId())) {
+                        if (!isSelected) {
+                            setForeground(DefaultColorTheme.COLOR_LOGO_RED);
+                        }
+                        setToolTipText(buildConflictTooltip(evt));
+                    } else {
+                        if (!isSelected) {
+                            setForeground(java.awt.Color.BLACK);
+                        }
+                        setToolTipText(null);
+                    }
+                }
+            } catch (Throwable t) {
+                log.error(t);
+            }
+            return this;
+        }
+    }
+
+    private class ConflictAwareUserRenderer extends DefaultTableCellRenderer {
+
+        private final TableCellRenderer delegate;
+
+        public ConflictAwareUserRenderer(TableCellRenderer delegate) {
+            this.delegate = delegate;
+        }
+
+        @Override
+        public java.awt.Component getTableCellRendererComponent(javax.swing.JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
+            java.awt.Component c = delegate.getTableCellRendererComponent(table, value, isSelected, hasFocus, row, column);
+            try {
+                Object eventObj = table.getValueAt(row, 0);
+                if (eventObj instanceof ArchiveFileReviewsBean) {
+                    ArchiveFileReviewsBean evt = (ArchiveFileReviewsBean) eventObj;
+                    if (evt.getEventType() == ArchiveFileReviewsBean.EVENTTYPE_EVENT && conflictingEventIds.contains(evt.getId())) {
+                        if (!isSelected) {
+                            c.setForeground(DefaultColorTheme.COLOR_LOGO_RED);
+                        }
+                        if (c instanceof JComponent) {
+                            ((JComponent) c).setToolTipText(buildConflictTooltip(evt));
+                        }
+                    } else {
+                        if (!isSelected) {
+                            c.setForeground(java.awt.Color.BLACK);
+                        }
+                        if (c instanceof JComponent) {
+                            ((JComponent) c).setToolTipText(null);
+                        }
+                    }
+                }
+            } catch (Throwable t) {
+                log.error(t);
+            }
+            return c;
+        }
+    }
+
+    private String buildConflictTooltip(ArchiveFileReviewsBean evt) {
+        List<ArchiveFileReviewsBean> list = conflictDetailsByEventId.get(evt.getId());
+        if (list == null || list.isEmpty()) {
+            return null;
+        }
         StringBuilder sb = new StringBuilder();
-        java.text.SimpleDateFormat df = new java.text.SimpleDateFormat("dd.MM.yyyy");
-        java.text.SimpleDateFormat tf = new java.text.SimpleDateFormat("HH:mm");
         sb.append("<html>");
-        sb.append("<b>Kollisionen am ").append(df.format(evt.getBeginDate())).append("</b><br/>");
+        sb.append("<b>Kollisionen am ").append(dfDay.format(evt.getBeginDate())).append("</b><br/>");
         if (evt.getCalendarSetup() != null) {
             sb.append("Kalender: ").append(evt.getCalendarSetup().getDisplayName()).append("<br/>");
         }
@@ -4548,15 +4620,17 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
             sb.append("verantwortlich: ").append(evt.getAssignee()).append("<br/>");
         }
         sb.append("<ul>");
-        for (com.jdimension.jlawyer.persistence.ArchiveFileReviewsBean c : list) {
+        for (ArchiveFileReviewsBean c : list) {
             String time = "";
             if (c.getBeginDate() != null && c.getEndDate() != null) {
-                time = tf.format(c.getBeginDate()) + " - " + tf.format(c.getEndDate());
+                time = dfTime.format(c.getBeginDate()) + " - " + dfTime.format(c.getEndDate());
             }
             String caseInfo = (c.getArchiveFileKey() != null) ? (c.getArchiveFileKey().getFileNumber() + " " + c.getArchiveFileKey().getName()) : "";
             sb.append("<li><span style='color:red'>").append(time).append("</span> ");
             sb.append(c.getSummary() == null ? "" : c.getSummary());
-            if (!caseInfo.isEmpty()) sb.append(" (").append(caseInfo).append(")");
+            if (!caseInfo.isEmpty()) {
+                sb.append(" (").append(caseInfo).append(")");
+            }
             sb.append("</li>");
         }
         sb.append("</ul>");
@@ -4569,78 +4643,115 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
         // Run on background to avoid blocking EDT
         new Thread(() -> {
             try {
-                java.util.Set<String> newConflictIds = new java.util.HashSet<>();
-                java.util.Map<String, java.util.List<com.jdimension.jlawyer.persistence.ArchiveFileReviewsBean>> newDetails = new java.util.HashMap<>();
-                javax.swing.table.TableModel model = tblReviewReasons.getModel();
+                Set<String> newConflictIds = new java.util.HashSet<>();
+                Map<String, List<ArchiveFileReviewsBean>> newDetails = new HashMap<>();
+                TableModel model = tblReviewReasons.getModel();
                 int rc = model.getRowCount();
                 // Collect events from the table
-                java.util.List<com.jdimension.jlawyer.persistence.ArchiveFileReviewsBean> localEvents = new java.util.ArrayList<>();
+                List<ArchiveFileReviewsBean> localEvents = new ArrayList<>();
                 for (int i = 0; i < rc; i++) {
                     Object value = model.getValueAt(i, 0);
-                    if (value instanceof com.jdimension.jlawyer.persistence.ArchiveFileReviewsBean) {
-                        localEvents.add((com.jdimension.jlawyer.persistence.ArchiveFileReviewsBean) value);
+                    if (value instanceof ArchiveFileReviewsBean) {
+                        localEvents.add((ArchiveFileReviewsBean) value);
                     }
                 }
                 // Local collision detection (same calendar + same assignee + overlap + open Termine)
                 for (int i = 0; i < localEvents.size(); i++) {
-                    com.jdimension.jlawyer.persistence.ArchiveFileReviewsBean a = localEvents.get(i);
-                    if (a.getEventType() != com.jdimension.jlawyer.persistence.ArchiveFileReviewsBean.EVENTTYPE_EVENT) continue;
-                    if (a.isDone()) continue;
-                    if (a.getBeginDate() == null || a.getEndDate() == null) continue;
-                    if (a.getCalendarSetup() == null || a.getAssignee() == null) continue;
+                    ArchiveFileReviewsBean a = localEvents.get(i);
+                    if (a.getEventType() != ArchiveFileReviewsBean.EVENTTYPE_EVENT) {
+                        continue;
+                    }
+                    if (a.isDone()) {
+                        continue;
+                    }
+                    if (a.getBeginDate() == null || a.getEndDate() == null) {
+                        continue;
+                    }
+                    if (a.getCalendarSetup() == null || a.getAssignee() == null) {
+                        continue;
+                    }
                     for (int j = i + 1; j < localEvents.size(); j++) {
-                        com.jdimension.jlawyer.persistence.ArchiveFileReviewsBean b = localEvents.get(j);
-                        if (b.getEventType() != com.jdimension.jlawyer.persistence.ArchiveFileReviewsBean.EVENTTYPE_EVENT) continue;
-                        if (b.isDone()) continue;
-                        if (b.getBeginDate() == null || b.getEndDate() == null) continue;
-                        if (b.getCalendarSetup() == null || b.getAssignee() == null) continue;
-                        if (!a.getAssignee().equals(b.getAssignee())) continue;
-                        if (!a.getCalendarSetup().getId().equals(b.getCalendarSetup().getId())) continue;
+                        ArchiveFileReviewsBean b = localEvents.get(j);
+                        if (b.getEventType() != ArchiveFileReviewsBean.EVENTTYPE_EVENT) {
+                            continue;
+                        }
+                        if (b.isDone()) {
+                            continue;
+                        }
+                        if (b.getBeginDate() == null || b.getEndDate() == null) {
+                            continue;
+                        }
+                        if (b.getCalendarSetup() == null || b.getAssignee() == null) {
+                            continue;
+                        }
+                        if (!a.getAssignee().equals(b.getAssignee())) {
+                            continue;
+                        }
+                        if (!a.getCalendarSetup().getId().equals(b.getCalendarSetup().getId())) {
+                            continue;
+                        }
                         boolean overlap = a.getBeginDate().before(b.getEndDate()) && a.getEndDate().after(b.getBeginDate());
                         if (overlap) {
                             newConflictIds.add(a.getId());
                             newConflictIds.add(b.getId());
-                            newDetails.computeIfAbsent(a.getId(), k -> new java.util.ArrayList<>()).add(b);
-                            newDetails.computeIfAbsent(b.getId(), k -> new java.util.ArrayList<>()).add(a);
+                            newDetails.computeIfAbsent(a.getId(), k -> new ArrayList<>()).add(b);
+                            newDetails.computeIfAbsent(b.getId(), k -> new ArrayList<>()).add(a);
                         }
                     }
                 }
                 // Remote enrichment to include conflicts from other cases
-                com.jdimension.jlawyer.services.CalendarServiceRemote calService = null;
+                CalendarServiceRemote calService = null;
                 try {
-                    com.jdimension.jlawyer.services.JLawyerServiceLocator locator = com.jdimension.jlawyer.services.JLawyerServiceLocator.getInstance(ClientSettings.getInstance().getLookupProperties());
+                    JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(ClientSettings.getInstance().getLookupProperties());
                     calService = locator.lookupCalendarServiceRemote();
                 } catch (Exception ex) {
                     calService = null;
                 }
                 if (calService != null) {
-                    for (com.jdimension.jlawyer.persistence.ArchiveFileReviewsBean e : localEvents) {
-                        if (e.getEventType() != com.jdimension.jlawyer.persistence.ArchiveFileReviewsBean.EVENTTYPE_EVENT) continue;
-                        if (e.isDone()) continue;
-                        if (e.getBeginDate() == null || e.getEndDate() == null) continue;
-                        if (e.getAssignee() == null || e.getCalendarSetup() == null) continue;
+                    for (ArchiveFileReviewsBean e : localEvents) {
+                        if (e.getEventType() != ArchiveFileReviewsBean.EVENTTYPE_EVENT) {
+                            continue;
+                        }
+                        if (e.isDone()) {
+                            continue;
+                        }
+                        if (e.getBeginDate() == null || e.getEndDate() == null) {
+                            continue;
+                        }
+                        if (e.getAssignee() == null || e.getCalendarSetup() == null) {
+                            continue;
+                        }
                         try {
-                            java.util.List<com.jdimension.jlawyer.persistence.ArchiveFileReviewsBean> candidates = calService.getConflictingEvents(
-                                    com.jdimension.jlawyer.persistence.ArchiveFileReviewsBean.EVENTTYPE_EVENT,
+                            List<ArchiveFileReviewsBean> candidates = calService.getConflictingEvents(ArchiveFileReviewsBean.EVENTTYPE_EVENT,
                                     e.getBeginDate(), e.getEndDate(), e.getAssignee());
-                            java.util.List<com.jdimension.jlawyer.persistence.ArchiveFileReviewsBean> sameCal = new java.util.ArrayList<>();
-                            for (com.jdimension.jlawyer.persistence.ArchiveFileReviewsBean c : candidates) {
-                                if (c.getId().equals(e.getId())) continue;
-                                if (c.getCalendarSetup() == null) continue;
+                            List<ArchiveFileReviewsBean> sameCal = new ArrayList<>();
+                            for (ArchiveFileReviewsBean c : candidates) {
+                                if (c.getId().equals(e.getId())) {
+                                    continue;
+                                }
+                                if (c.getCalendarSetup() == null) {
+                                    continue;
+                                }
                                 if (e.getCalendarSetup().getId().equals(c.getCalendarSetup().getId())) {
                                     sameCal.add(c);
                                 }
                             }
                             if (!sameCal.isEmpty()) {
                                 newConflictIds.add(e.getId());
-                                java.util.List<com.jdimension.jlawyer.persistence.ArchiveFileReviewsBean> list = newDetails.computeIfAbsent(e.getId(), k -> new java.util.ArrayList<>());
+                                List<ArchiveFileReviewsBean> list = newDetails.computeIfAbsent(e.getId(), k -> new ArrayList<>());
                                 list.addAll(sameCal);
                                 list.sort((x, y) -> {
                                     java.util.Date dx = x.getBeginDate();
                                     java.util.Date dy = y.getBeginDate();
-                                    if (dx == null && dy == null) return 0;
-                                    if (dx == null) return -1;
-                                    if (dy == null) return 1;
+                                    if (dx == null && dy == null) {
+                                        return 0;
+                                    }
+                                    if (dx == null) {
+                                        return -1;
+                                    }
+                                    if (dy == null) {
+                                        return 1;
+                                    }
                                     return dx.compareTo(dy);
                                 });
                             }
@@ -4651,10 +4762,10 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
                 }
                 // De-duplicate and sort conflict lists to avoid duplicates in tooltips
                 try {
-                    for (java.util.Map.Entry<String, java.util.List<com.jdimension.jlawyer.persistence.ArchiveFileReviewsBean>> en : newDetails.entrySet()) {
-                        java.util.List<com.jdimension.jlawyer.persistence.ArchiveFileReviewsBean> lst = en.getValue();
-                        java.util.LinkedHashMap<String, com.jdimension.jlawyer.persistence.ArchiveFileReviewsBean> uniq = new java.util.LinkedHashMap<>();
-                        for (com.jdimension.jlawyer.persistence.ArchiveFileReviewsBean it : lst) {
+                    for (Map.Entry<String, List<ArchiveFileReviewsBean>> en : newDetails.entrySet()) {
+                        List<ArchiveFileReviewsBean> lst = en.getValue();
+                        LinkedHashMap<String, ArchiveFileReviewsBean> uniq = new LinkedHashMap<>();
+                        for (ArchiveFileReviewsBean it : lst) {
                             if (it != null && it.getId() != null) {
                                 uniq.putIfAbsent(it.getId(), it);
                             }
@@ -4663,11 +4774,17 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
                         lst.addAll(uniq.values());
                         // sort by start time for readability
                         lst.sort((x, y) -> {
-                            java.util.Date dx = x.getBeginDate();
-                            java.util.Date dy = y.getBeginDate();
-                            if (dx == null && dy == null) return 0;
-                            if (dx == null) return -1;
-                            if (dy == null) return 1;
+                            Date dx = x.getBeginDate();
+                            Date dy = y.getBeginDate();
+                            if (dx == null && dy == null) {
+                                return 0;
+                            }
+                            if (dx == null) {
+                                return -1;
+                            }
+                            if (dy == null) {
+                                return 1;
+                            }
                             return dx.compareTo(dy);
                         });
                     }
@@ -4683,15 +4800,17 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
                     tblReviewReasons.repaint();
                 });
             } catch (Throwable t) {
-                // ignore errors for UI friendliness
+                log.error(t);
             }
         }, "RecomputeCalendarConflicts").start();
     }
 
     private void attachReviewsModelListener() {
         try {
-            javax.swing.table.TableModel m = this.tblReviewReasons.getModel();
-            if (m == null) return;
+            TableModel m = this.tblReviewReasons.getModel();
+            if (m == null) {
+                return;
+            }
             // Avoid double-adding: remove existing listeners if we used a marker wrapper? Keep simple: add lightweight listener
             if (m instanceof javax.swing.event.TableModelListener) {
                 // cannot reliably detect duplicates; proceed to add anonymous listener
@@ -4707,20 +4826,28 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
 
     private void openSelectedEventInDayView() {
         int row = this.tblReviewReasons.getSelectedRow();
-        if (row < 0) return;
+        if (row < 0) {
+            return;
+        }
         Object v = this.tblReviewReasons.getValueAt(row, 0);
-        if (!(v instanceof com.jdimension.jlawyer.persistence.ArchiveFileReviewsBean)) return;
-        com.jdimension.jlawyer.persistence.ArchiveFileReviewsBean evt = (com.jdimension.jlawyer.persistence.ArchiveFileReviewsBean) v;
-        if (evt.getBeginDate() == null || evt.getEndDate() == null) return;
+        if (!(v instanceof ArchiveFileReviewsBean)) {
+            return;
+        }
+        ArchiveFileReviewsBean evt = (ArchiveFileReviewsBean) v;
+        if (evt.getBeginDate() == null || evt.getEndDate() == null) {
+            return;
+        }
         try {
-            com.jdimension.jlawyer.services.JLawyerServiceLocator locator = com.jdimension.jlawyer.services.JLawyerServiceLocator.getInstance(ClientSettings.getInstance().getLookupProperties());
-            com.jdimension.jlawyer.services.CalendarServiceRemote calService = locator.lookupCalendarServiceRemote();
-            java.util.List<com.jdimension.jlawyer.persistence.ArchiveFileReviewsBean> candidates = calService.getConflictingEvents(
-                    com.jdimension.jlawyer.persistence.ArchiveFileReviewsBean.EVENTTYPE_EVENT,
+            JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(ClientSettings.getInstance().getLookupProperties());
+            CalendarServiceRemote calService = locator.lookupCalendarServiceRemote();
+            List<ArchiveFileReviewsBean> candidates = calService.getConflictingEvents(
+                    ArchiveFileReviewsBean.EVENTTYPE_EVENT,
                     evt.getBeginDate(), evt.getEndDate(), evt.getAssignee());
-            java.util.List<com.jdimension.jlawyer.persistence.ArchiveFileReviewsBean> sameCal = new java.util.ArrayList<>();
-            for (com.jdimension.jlawyer.persistence.ArchiveFileReviewsBean c : candidates) {
-                if (c.getCalendarSetup() == null) continue;
+            List<ArchiveFileReviewsBean> sameCal = new ArrayList<>();
+            for (ArchiveFileReviewsBean c : candidates) {
+                if (c.getCalendarSetup() == null) {
+                    continue;
+                }
                 if (evt.getCalendarSetup() != null && evt.getCalendarSetup().getId().equals(c.getCalendarSetup().getId())) {
                     sameCal.add(c);
                 }
@@ -4728,22 +4855,30 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
             // Show using existing conflict dialog in day view for quick visual check
             ConflictingEventsDialog dlg = new ConflictingEventsDialog(EditorsRegistry.getInstance().getMainWindow());
             // Ensure our target event is included for highlighting
-            if (!sameCal.contains(evt)) sameCal.add(evt);
+            if (!sameCal.contains(evt)) {
+                sameCal.add(evt);
+            }
             // Sort for nicer display
             sameCal.sort((a, b) -> {
-                java.util.Date da = a.getBeginDate();
-                java.util.Date db = b.getBeginDate();
-                if (da == null && db == null) return 0;
-                if (da == null) return -1;
-                if (db == null) return 1;
+                Date da = a.getBeginDate();
+                Date db = b.getBeginDate();
+                if (da == null && db == null) {
+                    return 0;
+                }
+                if (da == null) {
+                    return -1;
+                }
+                if (db == null) {
+                    return 1;
+                }
                 return da.compareTo(db);
             });
             dlg.setCalendarEntries(sameCal, evt, evt.getBeginDate());
-            com.jdimension.jlawyer.client.utils.FrameUtils.centerDialog(dlg, EditorsRegistry.getInstance().getMainWindow());
+            FrameUtils.centerDialog(dlg, EditorsRegistry.getInstance().getMainWindow());
             dlg.setVisible(true);
         } catch (Exception ex) {
-            org.apache.log4j.Logger.getLogger(ArchiveFilePanel.class.getName()).error("Error opening calendar day view", ex);
-            javax.swing.JOptionPane.showMessageDialog(this, "Fehler beim Öffnen der Kalenderansicht: " + ex.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, javax.swing.JOptionPane.ERROR_MESSAGE);
+            log.error("Error opening calendar day view", ex);
+            JOptionPane.showMessageDialog(this, "Fehler beim Öffnen der Kalenderansicht: " + ex.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, javax.swing.JOptionPane.ERROR_MESSAGE);
         }
     }
 
