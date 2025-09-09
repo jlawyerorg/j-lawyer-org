@@ -667,7 +667,6 @@ import com.jdimension.jlawyer.client.editors.EditorsRegistry;
 import com.jdimension.jlawyer.client.settings.ClientSettings;
 import com.jdimension.jlawyer.client.utils.ThreadUtils;
 import com.jdimension.jlawyer.services.JLawyerServiceLocator;
-import java.awt.BorderLayout;
 import java.awt.Component;
 import java.util.Arrays;
 import java.nio.charset.StandardCharsets;
@@ -678,7 +677,6 @@ import java.awt.event.KeyEvent;
 import javax.swing.JButton;
 import javax.swing.JToolBar;
 import javax.swing.JOptionPane;
-import javax.swing.JPanel;
 import javax.swing.KeyStroke;
 import javax.swing.AbstractAction;
 import javax.swing.ActionMap;
@@ -790,18 +788,12 @@ public class MarkdownPanel extends javax.swing.JPanel implements PreviewPanel {
 
         // Undo/redo support and selection tracking
         this.taEdit.getDocument().addUndoableEditListener(undoManager);
-        this.taEdit.addCaretListener(new CaretListener() {
-            @Override
-            public void caretUpdate(CaretEvent e) {
-                updateToolbarEnabledStates();
-            }
+        this.taEdit.addCaretListener((CaretEvent e) -> {
+            updateToolbarEnabledStates();
         });
-        this.markdownPane.addCaretListener(new CaretListener() {
-            @Override
-            public void caretUpdate(CaretEvent e) {
-                updateToolbarEnabledStates();
-                recordPreviewSelection();
-            }
+        this.markdownPane.addCaretListener((CaretEvent e) -> {
+            updateToolbarEnabledStates();
+            recordPreviewSelection();
         });
         setupUndoRedoKeybindings();
         updateToolbarEnabledStates();
@@ -904,7 +896,7 @@ public class MarkdownPanel extends javax.swing.JPanel implements PreviewPanel {
                     taEdit.select(start + prefix.length(), start + prefix.length() + sel.length());
                 }
             } catch (Exception ex) {
-                // ignore
+                log.error(ex);
             }
         });
         markdownPane.setMarkdownText(taEdit.getText());
@@ -942,7 +934,7 @@ public class MarkdownPanel extends javax.swing.JPanel implements PreviewPanel {
                 taEdit.getDocument().remove(lineStart, selection.length());
                 taEdit.getDocument().insertString(lineStart, sb.toString(), null);
             } catch (Exception ex) {
-                // ignore
+                log.error(ex);
             }
         });
         markdownPane.setMarkdownText(taEdit.getText());
@@ -992,7 +984,7 @@ public class MarkdownPanel extends javax.swing.JPanel implements PreviewPanel {
                     taEdit.setCaretPosition(newPos);
                 }
             } catch (Exception ex) {
-                // ignore
+                log.error(ex);
             }
         });
         markdownPane.setMarkdownText(taEdit.getText());
@@ -1074,7 +1066,7 @@ public class MarkdownPanel extends javax.swing.JPanel implements PreviewPanel {
                 taEdit.getDocument().insertString(start, md, null);
                 taEdit.setCaretPosition(start + md.length());
             } catch (Exception ex) {
-                // ignore
+                log.error(ex);
             }
         });
         markdownPane.setMarkdownText(taEdit.getText());
@@ -1139,11 +1131,13 @@ public class MarkdownPanel extends javax.swing.JPanel implements PreviewPanel {
                 }
             }
         } catch (Exception ignore) {
+            log.error(ignore);
         }
         // Fallback to Windows-1252 (common on Windows)
         try {
             return new String(content, java.nio.charset.Charset.forName("windows-1252"));
         } catch (Exception ignore) {
+            log.error(ignore);
         }
         // Last resort ISO-8859-1
         return new String(content, java.nio.charset.StandardCharsets.ISO_8859_1);
@@ -1556,6 +1550,7 @@ public class MarkdownPanel extends javax.swing.JPanel implements PreviewPanel {
                 return true;
             }
         } catch (Exception ignore) {
+            log.error(ignore);
         }
         return false;
     }
@@ -1703,7 +1698,7 @@ public class MarkdownPanel extends javax.swing.JPanel implements PreviewPanel {
                 markdownPane.setSelectionEnd(idx + selectionText.length());
             }
         } catch (Exception ex) {
-            // ignore
+            log.error(ex);
         }
     }
 

@@ -758,11 +758,10 @@ public class DocumentViewerFactory {
             mdp.setMaximumSize(new Dimension(width, height));
             mdp.setPreferredSize(new Dimension(width, height));
             try {
-                byte[] bytes = content;
-                if (bytes == null) {
+                if (content == null) {
                     mdp.showContent(id, ("FEHLER: kein Inhalt verfügbar").getBytes(StandardCharsets.UTF_8));
                 } else {
-                    mdp.showContent(id, bytes);
+                    mdp.showContent(id, content);
                 }
             } catch (Exception ex) {
                 mdp.showContent(id, ("FEHLER: " + ex.getMessage()).getBytes(StandardCharsets.UTF_8));
