@@ -75,12 +75,16 @@ public class MarkdownParser {
 	public String getHTML() {
 		if(document == null)
 			return null;
-		List<Extension> extensions = Arrays.asList(TablesExtension.create());
-		HtmlRenderer renderer = HtmlRenderer.builder()
-		        .extensions(extensions)
-		        .build();
-		String html = renderer.render(document);  
-		return html;		
+        // Transform soft line breaks into hard breaks to ensure preview keeps line breaks
+        SoftToHardBreakVisitor brVisitor = new SoftToHardBreakVisitor();
+        document.accept(brVisitor);
+
+        List<Extension> extensions = Arrays.asList(TablesExtension.create());
+        HtmlRenderer renderer = HtmlRenderer.builder()
+                .extensions(extensions)
+                .build();
+        String html = renderer.render(document);  
+        return html;        
 	}
 
 	public String getText() {

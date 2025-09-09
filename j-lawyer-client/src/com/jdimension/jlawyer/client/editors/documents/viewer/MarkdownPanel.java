@@ -669,6 +669,22 @@ import com.jdimension.jlawyer.client.utils.ThreadUtils;
 import com.jdimension.jlawyer.services.JLawyerServiceLocator;
 import java.util.Arrays;
 import java.nio.charset.StandardCharsets;
+import java.awt.Toolkit;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
+import java.awt.event.KeyEvent;
+import javax.swing.JButton;
+import javax.swing.JToolBar;
+import javax.swing.JOptionPane;
+import javax.swing.JPanel;
+import javax.swing.KeyStroke;
+import javax.swing.AbstractAction;
+import javax.swing.ActionMap;
+import javax.swing.InputMap;
+import javax.swing.JComponent;
+import javax.swing.event.CaretEvent;
+import javax.swing.event.CaretListener;
+import javax.swing.undo.UndoManager;
 import org.apache.log4j.Logger;
 import org.jmarkdownviewer.jmdviewer.HtmlPane;
 
@@ -685,6 +701,37 @@ public class MarkdownPanel extends javax.swing.JPanel implements PreviewPanel {
     private byte[] initialContent = null;
     private boolean readOnly = true;
     
+    // Toolbar components (only used in DocumentPreview context)
+    private JToolBar tbMarkdown; // Editor tab
+    private JButton btnBold;
+    private JButton btnItalic;
+    private JButton btnHeading;
+    private JButton btnBullet;
+    private JButton btnNumbered;
+    private JButton btnQuote;
+    private JButton btnCodeInline;
+    private JButton btnCodeBlock;
+    private JButton btnLink;
+    private JButton btnUndo;
+    private JButton btnRedo;
+    private JButton btnClearFmt;
+
+    private JToolBar tbMarkdownPreview; // Preview tab
+    private JButton btnPBold;
+    private JButton btnPItalic;
+    private JButton btnPHeading;
+    private JButton btnPBullet;
+    private JButton btnPNumbered;
+    private JButton btnPQuote;
+    private JButton btnPCodeInline;
+    private JButton btnPCodeBlock;
+    private JButton btnPLink;
+    private JButton btnPUndo;
+    private JButton btnPRedo;
+    private JButton btnPClearFmt;
+
+    private final UndoManager undoManager = new UndoManager();
+    
     /**
      * Creates new form MarkdownPanel
      * @param docId
@@ -698,6 +745,41 @@ public class MarkdownPanel extends javax.swing.JPanel implements PreviewPanel {
         
         this.markdownPane=new HtmlPane();
         this.jScrollPane1.getViewport().add(markdownPane);
+
+        // Build toolbars and integrate into tabs (outside GUI Builder code)
+        setupToolbars();
+        wrapTabsWithToolbars();
+        setTooltips();
+        wireToolbarActions();
+        ensureTabs();
+
+        // Show toolbars only when not read-only
+        if (this.tbMarkdown != null) this.tbMarkdown.setVisible(!this.readOnly);
+        if (this.tbMarkdownPreview != null) this.tbMarkdownPreview.setVisible(!this.readOnly);
+        this.taEdit.setEditable(!this.readOnly);
+        try {
+            int editorTabIndex = this.jTabbedPane1.indexOfTab("Editor");
+            if (editorTabIndex >= 0) this.jTabbedPane1.setEnabledAt(editorTabIndex, !this.readOnly);
+        } catch (Throwable t) {
+            // ignore
+        }
+
+        // Undo/redo support and selection tracking
+        this.taEdit.getDocument().addUndoableEditListener(undoManager);
+        this.taEdit.addCaretListener(new CaretListener(){
+            @Override public void caretUpdate(CaretEvent e) { updateToolbarEnabledStates(); }
+        });
+        this.markdownPane.addCaretListener(new CaretListener(){
+            @Override public void caretUpdate(CaretEvent e) { updateToolbarEnabledStates(); }
+        });
+        setupUndoRedoKeybindings();
+        updateToolbarEnabledStates();
+
+        // keep selections in sync on tab switch
+        jTabbedPane1.addChangeListener(e -> {
+            updateToolbarEnabledStates();
+            synchronizeSelectionOnTabChange();
+        });
         
     }
 
@@ -718,6 +800,7 @@ public class MarkdownPanel extends javax.swing.JPanel implements PreviewPanel {
         jTabbedPane1.setTabPlacement(javax.swing.JTabbedPane.BOTTOM);
 
         jScrollPane1.setFont(jScrollPane1.getFont());
+        // Add preview tab with plain scroll pane (toolbars added post-init)
         jTabbedPane1.addTab("Vorschau", jScrollPane1);
 
         taEdit.setColumns(20);
@@ -732,6 +815,7 @@ public class MarkdownPanel extends javax.swing.JPanel implements PreviewPanel {
         });
         jScrollPane2.setViewportView(taEdit);
 
+        // Editor tab with plain scroll pane (toolbar added post-init)
         jTabbedPane1.addTab("Editor", jScrollPane2);
 
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(this);
@@ -748,6 +832,7 @@ public class MarkdownPanel extends javax.swing.JPanel implements PreviewPanel {
 
     private void taEditKeyTyped(java.awt.event.KeyEvent evt) {//GEN-FIRST:event_taEditKeyTyped
         markdownPane.setMarkdownText(this.taEdit.getText());
+        updateToolbarEnabledStates();
     }//GEN-LAST:event_taEditKeyTyped
 
 
@@ -760,30 +845,616 @@ public class MarkdownPanel extends javax.swing.JPanel implements PreviewPanel {
 
     @Override
     public void showStatus(String text) {
-        
-        //SwingUtilities.invokeLater(() -> {
-            
-            
-            markdownPane.setMarkdownText(text.trim());
-            taEdit.setText(text.trim());
-        //});
+        setEditorTextFromExternal(text.trim());
     }
 
     @Override
     public void showContent(String documentId, byte[] content) {
         this.id = documentId;
         this.initialContent = content;
-        
-        //SwingUtilities.invokeLater(() -> {
-            String text;
+        String text;
             if (content == null) {
                 text = "";
             } else {
                 text = new String(content, StandardCharsets.UTF_8);
             }
-            markdownPane.setMarkdownText(text.trim());
-            taEdit.setText(text.trim());
-        //});
+        setEditorTextFromExternal(text.trim());
+    }
+    
+    // Helper methods for toolbar actions
+    private void wrapSelection(String prefix, String suffix) {
+        int start = taEdit.getSelectionStart();
+        int end = taEdit.getSelectionEnd();
+        try {
+            if (start == end) {
+                taEdit.getDocument().insertString(start, prefix + suffix, null);
+                taEdit.setCaretPosition(start + prefix.length());
+            } else {
+                String sel = taEdit.getSelectedText();
+                taEdit.getDocument().remove(start, end - start);
+                taEdit.getDocument().insertString(start, prefix + sel + suffix, null);
+                taEdit.select(start + prefix.length(), start + prefix.length() + sel.length());
+            }
+        } catch (Exception ex) {
+            // ignore
+        }
+        markdownPane.setMarkdownText(taEdit.getText());
+        updateToolbarEnabledStates();
+    }
+
+    private void addPrefixToSelectedLines(String prefix) {
+        int start = taEdit.getSelectionStart();
+        int end = taEdit.getSelectionEnd();
+        String text = taEdit.getText();
+        int lineStart = text.lastIndexOf('\n', Math.max(0, start - 1)) + 1;
+        int lineEnd = end;
+        if (lineEnd < text.length()) {
+            // extend to end of line selection
+            int nextNl = text.indexOf('\n', lineEnd);
+            if (nextNl >= 0) lineEnd = nextNl;
+        }
+        String selection = text.substring(lineStart, Math.max(lineStart, end));
+        String[] lines = selection.split("\n", -1);
+        StringBuilder sb = new StringBuilder();
+        for (int i = 0; i < lines.length; i++) {
+            String line = lines[i];
+            if (line.trim().isEmpty()) {
+                sb.append(line);
+            } else {
+                sb.append(prefix).append(line);
+            }
+            if (i < lines.length - 1) sb.append('\n');
+        }
+        try {
+            taEdit.getDocument().remove(lineStart, selection.length());
+            taEdit.getDocument().insertString(lineStart, sb.toString(), null);
+        } catch (Exception ex) {
+            // ignore
+        }
+        markdownPane.setMarkdownText(taEdit.getText());
+        updateToolbarEnabledStates();
+    }
+
+    private void clearSelectionFormatting() {
+        int selStart = taEdit.getSelectionStart();
+        int selEnd = taEdit.getSelectionEnd();
+        if (selStart == selEnd) return;
+
+        String full = taEdit.getText();
+        int lineStart = full.lastIndexOf('\n', Math.max(0, selStart - 1)) + 1;
+        int lineEnd = full.indexOf('\n', selEnd);
+        if (lineEnd < 0) lineEnd = full.length();
+
+        String segment = full.substring(lineStart, lineEnd);
+        String originalSelected = full.substring(selStart, selEnd);
+
+        String cleanedSegment = stripMarkdown(segment);
+        String cleanedSelected = stripMarkdown(originalSelected);
+
+        try {
+            taEdit.getDocument().remove(lineStart, segment.length());
+            taEdit.getDocument().insertString(lineStart, cleanedSegment, null);
+
+            // Try to reselect the cleaned selection within the updated segment
+            String newFull = taEdit.getText();
+            int newSegStart = lineStart;
+            int newSegEnd = lineStart + cleanedSegment.length();
+            int idx = -1;
+            if (!cleanedSelected.isEmpty()) {
+                String region = newFull.substring(newSegStart, newSegEnd);
+                idx = region.indexOf(cleanedSelected);
+                if (idx >= 0) {
+                    int absStart = newSegStart + idx;
+                    taEdit.select(absStart, absStart + cleanedSelected.length());
+                } else {
+                    // fallback: select the segment
+                    taEdit.select(newSegStart, newSegEnd);
+                }
+            } else {
+                // If nothing left (e.g., only markup), collapse selection to original start within new segment bounds
+                int newPos = Math.min(newSegStart + Math.max(0, selStart - lineStart), newSegEnd);
+                taEdit.setCaretPosition(newPos);
+            }
+        } catch (Exception ex) {
+            // ignore
+        }
+        markdownPane.setMarkdownText(taEdit.getText());
+        updateToolbarEnabledStates();
+    }
+
+    private String stripMarkdown(String s) {
+        if (s == null || s.isEmpty()) return s;
+        String out = s;
+        // Remove code fences lines
+        out = out.replaceAll("(?m)^```.*\\r?\\n?", "");
+        // Images: ![alt](url) -> alt
+        out = out.replaceAll("!\\[([^\\]]*)\\]\\(([^)]+)\\)", "$1");
+        // Links: [text](url) -> text
+        out = out.replaceAll("\\[([^\\]]+)\\]\\(([^)]+)\\)", "$1");
+        // Inline code: remove backticks
+        out = out.replace("`", "");
+        // Strong/Emphasis
+        out = out.replaceAll("\\*\\*([^*]+)\\*\\*", "$1");
+        out = out.replaceAll("__([^_]+)__", "$1");
+        out = out.replaceAll("\\*([^*]+)\\*", "$1");
+        out = out.replaceAll("_([^_]+)_", "$1");
+        // Headings at line start
+        out = out.replaceAll("(?m)^\\s{0,3}#{1,6}\\s+", "");
+        // Blockquote at line start
+        out = out.replaceAll("(?m)^\\s{0,3}>\\s?", "");
+        // Unordered lists at line start
+        out = out.replaceAll("(?m)^\\s{0,3}[-*+]\\s+", "");
+        // Ordered lists at line start
+        out = out.replaceAll("(?m)^\\s{0,3}\\d+\\.\\s+", "");
+        return out;
+    }
+
+    private void surroundSelectionWithFences(String fenceFirstLine) {
+        int start = taEdit.getSelectionStart();
+        int end = taEdit.getSelectionEnd();
+        String sel = (start == end) ? "" : taEdit.getSelectedText();
+        String lang = JOptionPane.showInputDialog(this, "Sprache (optional)", "", JOptionPane.QUESTION_MESSAGE);
+        if (lang == null) lang = "";
+        String opener = "```" + (lang.trim().isEmpty() ? "" : lang.trim()) + "\n";
+        String closer = "\n```\n";
+        try {
+            if (start == end) {
+                taEdit.getDocument().insertString(start, opener + closer, null);
+                taEdit.setCaretPosition(start + opener.length());
+            } else {
+                taEdit.getDocument().remove(start, end - start);
+                taEdit.getDocument().insertString(start, opener + sel + closer, null);
+                taEdit.select(start + opener.length(), start + opener.length() + sel.length());
+            }
+        } catch (Exception ex) {
+            // ignore
+        }
+        markdownPane.setMarkdownText(taEdit.getText());
+        updateToolbarEnabledStates();
+    }
+
+    private void insertLink() {
+        String current = taEdit.getSelectedText();
+        String text = current != null ? current : "Linktext";
+        String url = JOptionPane.showInputDialog(this, "URL eingeben", "https://", JOptionPane.QUESTION_MESSAGE);
+        if (url == null || url.trim().isEmpty()) return;
+        String md = "[" + text + "](" + url.trim() + ")";
+        int start = taEdit.getSelectionStart();
+        int end = taEdit.getSelectionEnd();
+        try {
+            if (start != end) {
+                taEdit.getDocument().remove(start, end - start);
+            }
+            taEdit.getDocument().insertString(start, md, null);
+            taEdit.setCaretPosition(start + md.length());
+        } catch (Exception ex) {
+            // ignore
+        }
+        markdownPane.setMarkdownText(taEdit.getText());
+        updateToolbarEnabledStates();
+    }
+
+    private void wireToolbarActions() {
+        ActionListener undoAct = new ActionListener(){ public void actionPerformed(ActionEvent e){ if (undoManager.canUndo()) { undoManager.undo(); markdownPane.setMarkdownText(taEdit.getText()); updateToolbarEnabledStates(); } }};
+        ActionListener redoAct = new ActionListener(){ public void actionPerformed(ActionEvent e){ if (undoManager.canRedo()) { undoManager.redo(); markdownPane.setMarkdownText(taEdit.getText()); updateToolbarEnabledStates(); } }};
+
+        btnUndo.addActionListener(undoAct);
+        btnRedo.addActionListener(redoAct);
+        btnClearFmt.addActionListener(new ActionListener(){ public void actionPerformed(ActionEvent e){ clearSelectionFormatting(); }});
+        btnBold.addActionListener(new ActionListener(){ public void actionPerformed(ActionEvent e){ wrapSelection("**","**"); }});
+        btnItalic.addActionListener(new ActionListener(){ public void actionPerformed(ActionEvent e){ wrapSelection("*","*"); }});
+        btnHeading.addActionListener(new ActionListener(){ public void actionPerformed(ActionEvent e){ addPrefixToSelectedLines("## "); }});
+        btnBullet.addActionListener(new ActionListener(){ public void actionPerformed(ActionEvent e){ addPrefixToSelectedLines("- "); }});
+        btnNumbered.addActionListener(new ActionListener(){ public void actionPerformed(ActionEvent e){ addPrefixToSelectedLines("1. "); }});
+        btnQuote.addActionListener(new ActionListener(){ public void actionPerformed(ActionEvent e){ addPrefixToSelectedLines("> "); }});
+        btnCodeInline.addActionListener(new ActionListener(){ public void actionPerformed(ActionEvent e){ wrapSelection("`","`"); }});
+        btnCodeBlock.addActionListener(new ActionListener(){ public void actionPerformed(ActionEvent e){ surroundSelectionWithFences("```"); }});
+        btnLink.addActionListener(new ActionListener(){ public void actionPerformed(ActionEvent e){ insertLink(); }});
+
+        // Wire preview toolbar to same actions
+        btnPUndo.addActionListener(undoAct);
+        btnPRedo.addActionListener(redoAct);
+        btnPClearFmt.addActionListener(new ActionListener(){ public void actionPerformed(ActionEvent e){ String s=markdownPane.getSelectedText(); if (selectInEditorByPreviewSelection()) { clearSelectionFormatting(); reselectInPreview(s); } }});
+        btnPBold.addActionListener(new ActionListener(){ public void actionPerformed(ActionEvent e){ String s=markdownPane.getSelectedText(); if (selectInEditorByPreviewSelection()) { wrapSelection("**","**"); reselectInPreview(s); } }});
+        btnPItalic.addActionListener(new ActionListener(){ public void actionPerformed(ActionEvent e){ String s=markdownPane.getSelectedText(); if (selectInEditorByPreviewSelection()) { wrapSelection("*","*"); reselectInPreview(s); } }});
+        btnPHeading.addActionListener(new ActionListener(){ public void actionPerformed(ActionEvent e){ String s=markdownPane.getSelectedText(); if (selectInEditorByPreviewSelection()) { addPrefixToSelectedLines("## "); reselectInPreview(s); } }});
+        btnPBullet.addActionListener(new ActionListener(){ public void actionPerformed(ActionEvent e){ String s=markdownPane.getSelectedText(); if (selectInEditorByPreviewSelection()) { addPrefixToSelectedLines("- "); reselectInPreview(s); } }});
+        btnPNumbered.addActionListener(new ActionListener(){ public void actionPerformed(ActionEvent e){ String s=markdownPane.getSelectedText(); if (selectInEditorByPreviewSelection()) { addPrefixToSelectedLines("1. "); reselectInPreview(s); } }});
+        btnPQuote.addActionListener(new ActionListener(){ public void actionPerformed(ActionEvent e){ String s=markdownPane.getSelectedText(); if (selectInEditorByPreviewSelection()) { addPrefixToSelectedLines("> "); reselectInPreview(s); } }});
+        btnPCodeInline.addActionListener(new ActionListener(){ public void actionPerformed(ActionEvent e){ String s=markdownPane.getSelectedText(); if (selectInEditorByPreviewSelection()) { wrapSelection("`","`"); reselectInPreview(s); } }});
+        btnPCodeBlock.addActionListener(new ActionListener(){ public void actionPerformed(ActionEvent e){ String s=markdownPane.getSelectedText(); if (selectInEditorByPreviewSelection()) { surroundSelectionWithFences("```"); reselectInPreview(s); } }});
+        btnPLink.addActionListener(new ActionListener(){ public void actionPerformed(ActionEvent e){ String s=markdownPane.getSelectedText(); if (selectInEditorByPreviewSelection()) { insertLink(); reselectInPreview(s); } }});
+    }
+
+    private void setTooltips() {
+        // Editor toolbar tooltips
+        btnUndo.setToolTipText("Rückgängig (Strg+Z)");
+        btnRedo.setToolTipText("Wiederholen (Strg+Y / Strg+Shift+Z)");
+        btnClearFmt.setToolTipText("Markdown-Formatierung entfernen (Auswahl)");
+        btnBold.setToolTipText("Fett (**) auf Auswahl");
+        btnItalic.setToolTipText("Kursiv (*) auf Auswahl");
+        btnHeading.setToolTipText("Überschrift (## ) hinzufügen");
+        btnBullet.setToolTipText("Aufzählung (- ) hinzufügen");
+        btnNumbered.setToolTipText("Nummerierte Liste (1. ) hinzufügen");
+        btnQuote.setToolTipText("Zitat (> ) hinzufügen");
+        btnCodeInline.setToolTipText("Inline-Code (`) auf Auswahl");
+        btnCodeBlock.setToolTipText("Codeblock (```) einfügen");
+        btnLink.setToolTipText("Link einfügen");
+
+        // Preview toolbar tooltips
+        btnPUndo.setToolTipText("Rückgängig (Strg+Z)");
+        btnPRedo.setToolTipText("Wiederholen (Strg+Y / Strg+Shift+Z)");
+        btnPClearFmt.setToolTipText("Markdown-Formatierung entfernen (Auswahl in Vorschau)");
+        btnPBold.setToolTipText("Fett (**) auf Auswahl");
+        btnPItalic.setToolTipText("Kursiv (*) auf Auswahl");
+        btnPHeading.setToolTipText("Überschrift (## ) hinzufügen");
+        btnPBullet.setToolTipText("Aufzählung (- ) hinzufügen");
+        btnPNumbered.setToolTipText("Nummerierte Liste (1. ) hinzufügen");
+        btnPQuote.setToolTipText("Zitat (> ) hinzufügen");
+        btnPCodeInline.setToolTipText("Inline-Code (`) auf Auswahl");
+        btnPCodeBlock.setToolTipText("Codeblock (```) einfügen");
+        btnPLink.setToolTipText("Link einfügen");
+    }
+
+    private void setupToolbars() {
+        // Instantiate editor toolbar and buttons
+        tbMarkdown = new javax.swing.JToolBar();
+        tbMarkdown.setFloatable(false);
+        btnBold = new javax.swing.JButton("B");
+        btnItalic = new javax.swing.JButton("I");
+        btnHeading = new javax.swing.JButton("H");
+        btnBullet = new javax.swing.JButton("•");
+        btnNumbered = new javax.swing.JButton("1.");
+        btnQuote = new javax.swing.JButton("> ");
+        btnCodeInline = new javax.swing.JButton("`");
+        btnCodeBlock = new javax.swing.JButton("``` ");
+        btnLink = new javax.swing.JButton("[ ]");
+        btnUndo = new javax.swing.JButton("↶");
+        btnRedo = new javax.swing.JButton("↷");
+        btnClearFmt = new javax.swing.JButton("⎚");
+
+        tbMarkdown.add(btnUndo);
+        tbMarkdown.add(btnRedo);
+        tbMarkdown.addSeparator();
+        tbMarkdown.add(btnClearFmt);
+        tbMarkdown.addSeparator();
+        tbMarkdown.add(btnBold);
+        tbMarkdown.add(btnItalic);
+        tbMarkdown.add(btnHeading);
+        tbMarkdown.add(btnBullet);
+        tbMarkdown.add(btnNumbered);
+        tbMarkdown.add(btnQuote);
+        tbMarkdown.add(btnCodeInline);
+        tbMarkdown.add(btnCodeBlock);
+        tbMarkdown.add(btnLink);
+
+        // Instantiate preview toolbar and buttons
+        tbMarkdownPreview = new javax.swing.JToolBar();
+        tbMarkdownPreview.setFloatable(false);
+        btnPUndo = new javax.swing.JButton("↶");
+        btnPRedo = new javax.swing.JButton("↷");
+        btnPBold = new javax.swing.JButton("B");
+        btnPItalic = new javax.swing.JButton("I");
+        btnPHeading = new javax.swing.JButton("H");
+        btnPBullet = new javax.swing.JButton("•");
+        btnPNumbered = new javax.swing.JButton("1.");
+        btnPQuote = new javax.swing.JButton("> ");
+        btnPCodeInline = new javax.swing.JButton("`");
+        btnPCodeBlock = new javax.swing.JButton("``` ");
+        btnPLink = new javax.swing.JButton("[ ]");
+        btnPClearFmt = new javax.swing.JButton("⎚");
+
+        tbMarkdownPreview.add(btnPUndo);
+        tbMarkdownPreview.add(btnPRedo);
+        tbMarkdownPreview.addSeparator();
+        tbMarkdownPreview.add(btnPClearFmt);
+        tbMarkdownPreview.addSeparator();
+        tbMarkdownPreview.add(btnPBold);
+        tbMarkdownPreview.add(btnPItalic);
+        tbMarkdownPreview.add(btnPHeading);
+        tbMarkdownPreview.add(btnPBullet);
+        tbMarkdownPreview.add(btnPNumbered);
+        tbMarkdownPreview.add(btnPQuote);
+        tbMarkdownPreview.add(btnPCodeInline);
+        tbMarkdownPreview.add(btnPCodeBlock);
+        tbMarkdownPreview.add(btnPLink);
+    }
+
+    private void wrapTabsWithToolbars() {
+        // Determine indices robustly
+        int previewIdx = this.jTabbedPane1.indexOfTab("Vorschau");
+        int editorIdx = this.jTabbedPane1.indexOfTab("Editor");
+        if (previewIdx < 0 && this.jTabbedPane1.getTabCount() >= 1) previewIdx = 0;
+        if (editorIdx < 0 && this.jTabbedPane1.getTabCount() >= 2) editorIdx = 1;
+
+        if (previewIdx >= 0 && previewIdx < this.jTabbedPane1.getTabCount()) {
+            javax.swing.JPanel previewContainer = new javax.swing.JPanel(new java.awt.BorderLayout());
+            previewContainer.add(tbMarkdownPreview, java.awt.BorderLayout.NORTH);
+            previewContainer.add(jScrollPane1, java.awt.BorderLayout.CENTER);
+            String title = this.jTabbedPane1.getTitleAt(previewIdx);
+            this.jTabbedPane1.setComponentAt(previewIdx, previewContainer);
+            this.jTabbedPane1.setTitleAt(previewIdx, title);
+        }
+        if (editorIdx >= 0 && editorIdx < this.jTabbedPane1.getTabCount()) {
+            javax.swing.JPanel editorContainer = new javax.swing.JPanel(new java.awt.BorderLayout());
+            editorContainer.add(tbMarkdown, java.awt.BorderLayout.NORTH);
+            editorContainer.add(jScrollPane2, java.awt.BorderLayout.CENTER);
+            String title = this.jTabbedPane1.getTitleAt(editorIdx);
+            this.jTabbedPane1.setComponentAt(editorIdx, editorContainer);
+            this.jTabbedPane1.setTitleAt(editorIdx, title);
+        }
+    }
+
+    private void ensureTabs() {
+        // Ensure both tabs exist; if not, add them safely
+        if (this.jTabbedPane1.indexOfTab("Vorschau") == -1) {
+            javax.swing.JPanel previewContainer = new javax.swing.JPanel(new java.awt.BorderLayout());
+            previewContainer.add(tbMarkdownPreview, java.awt.BorderLayout.NORTH);
+            previewContainer.add(jScrollPane1, java.awt.BorderLayout.CENTER);
+            this.jTabbedPane1.insertTab("Vorschau", null, previewContainer, null, 0);
+        }
+        if (this.jTabbedPane1.indexOfTab("Editor") == -1) {
+            javax.swing.JPanel editorContainer = new javax.swing.JPanel(new java.awt.BorderLayout());
+            editorContainer.add(tbMarkdown, java.awt.BorderLayout.NORTH);
+            editorContainer.add(jScrollPane2, java.awt.BorderLayout.CENTER);
+            this.jTabbedPane1.addTab("Editor", editorContainer);
+        }
+    }
+
+    @Override
+    public void addNotify() {
+        super.addNotify();
+        updateToolbarEnabledStates();
+    }
+
+    private void setupUndoRedoKeybindings() {
+        final String UNDO = "md_undo";
+        final String REDO = "md_redo";
+
+        AbstractAction undoAction = new AbstractAction() {
+            @Override public void actionPerformed(ActionEvent e) {
+                if (undoManager.canUndo()) {
+                    undoManager.undo();
+                    markdownPane.setMarkdownText(taEdit.getText());
+                }
+            }
+        };
+        AbstractAction redoAction = new AbstractAction() {
+            @Override public void actionPerformed(ActionEvent e) {
+                if (undoManager.canRedo()) {
+                    undoManager.redo();
+                    markdownPane.setMarkdownText(taEdit.getText());
+                }
+            }
+        };
+
+        int ctrl = Toolkit.getDefaultToolkit().getMenuShortcutKeyMaskEx();
+        KeyStroke ksUndo = KeyStroke.getKeyStroke(KeyEvent.VK_Z, ctrl);
+        KeyStroke ksRedoY = KeyStroke.getKeyStroke(KeyEvent.VK_Y, ctrl);
+        KeyStroke ksRedoShiftZ = KeyStroke.getKeyStroke(KeyEvent.VK_Z, ctrl | KeyEvent.SHIFT_DOWN_MASK);
+
+        // Bind on editor
+        InputMap im = taEdit.getInputMap(JComponent.WHEN_FOCUSED);
+        ActionMap am = taEdit.getActionMap();
+        im.put(ksUndo, UNDO);
+        im.put(ksRedoY, REDO);
+        im.put(ksRedoShiftZ, REDO);
+        am.put(UNDO, undoAction);
+        am.put(REDO, redoAction);
+
+        // Also bind on preview pane so shortcuts work from preview tab
+        InputMap imPrev = markdownPane.getInputMap(JComponent.WHEN_FOCUSED);
+        ActionMap amPrev = markdownPane.getActionMap();
+        imPrev.put(ksUndo, UNDO);
+        imPrev.put(ksRedoY, REDO);
+        imPrev.put(ksRedoShiftZ, REDO);
+        amPrev.put(UNDO, undoAction);
+        amPrev.put(REDO, redoAction);
+    }
+
+    private boolean hasSelection() {
+        return taEdit.getSelectionStart() != taEdit.getSelectionEnd();
+    }
+
+    private void updateToolbarEnabledStates() {
+        boolean canEdit = !this.readOnly;
+        boolean selEditor = hasSelection();
+        boolean selPreview = markdownPane.getSelectionStart() != markdownPane.getSelectionEnd();
+
+        // Editor toolbar: enabled when editable; actions always allowed
+        if (tbMarkdown != null) {
+            btnUndo.setEnabled(canEdit && undoManager.canUndo());
+            btnRedo.setEnabled(canEdit && undoManager.canRedo());
+            btnBold.setEnabled(canEdit);
+            btnItalic.setEnabled(canEdit);
+            btnHeading.setEnabled(canEdit);
+            btnBullet.setEnabled(canEdit);
+            btnNumbered.setEnabled(canEdit);
+            btnQuote.setEnabled(canEdit);
+            btnCodeInline.setEnabled(canEdit);
+            btnCodeBlock.setEnabled(canEdit);
+            btnLink.setEnabled(canEdit);
+        }
+
+        // Preview toolbar: enabled only with a selection (no cursor in preview)
+        if (tbMarkdownPreview != null) {
+            btnPUndo.setEnabled(canEdit && undoManager.canUndo());
+            btnPRedo.setEnabled(canEdit && undoManager.canRedo());
+            btnPBold.setEnabled(canEdit && selPreview);
+            btnPItalic.setEnabled(canEdit && selPreview);
+            btnPHeading.setEnabled(canEdit && selPreview);
+            btnPBullet.setEnabled(canEdit && selPreview);
+            btnPNumbered.setEnabled(canEdit && selPreview);
+            btnPQuote.setEnabled(canEdit && selPreview);
+            btnPCodeInline.setEnabled(canEdit && selPreview);
+            btnPCodeBlock.setEnabled(canEdit && selPreview);
+            btnPLink.setEnabled(canEdit && selPreview);
+        }
+    }
+
+    private boolean selectInEditorByPreviewSelection() {
+        if (readOnly) return false;
+        String sel = markdownPane.getSelectedText();
+        if (sel == null || sel.isEmpty()) return false;
+        return selectInEditorByPreviewSelection(sel);
+    }
+
+    private boolean selectInEditorByPreviewSelection(String previewSelection) {
+        String editorText = taEdit.getText();
+        NormalizedEditor ne = normalizeEditorWithMapping(editorText);
+        String target = collapseWhitespace(previewSelection);
+        if (target.isEmpty()) return false;
+
+        int idx = ne.norm.indexOf(target);
+        if (idx < 0) {
+            String trimmed = target.trim();
+            if (!trimmed.isEmpty()) idx = ne.norm.indexOf(trimmed);
+        }
+        if (idx >= 0) {
+            int start = mapNormToOriginalStart(ne, idx);
+            int end = mapNormToOriginalEnd(ne, idx + target.length(), editorText.length());
+            if (start >= 0 && end >= start) {
+                taEdit.select(start, end);
+                return true;
+            }
+        }
+        return false;
+    }
+
+    private boolean isIgnorableMarkdownChar(char c) {
+        return c=='*' || c=='_' || c=='`' || c=='~' || c=='[' || c==']' || c=='(' || c==')' || c=='!' || c=='\\';
+    }
+
+    private int skipListOrHeadingPrefix(String s, int i) {
+        int len = s.length();
+        int pos = i;
+        // only at line start
+        int ls = s.lastIndexOf('\n', Math.max(0, i-1)) + 1;
+        if (ls != i) return i;
+        // skip spaces
+        while (pos < len && Character.isWhitespace(s.charAt(pos)) && s.charAt(pos)!='\n') pos++;
+        if (pos >= len) return i;
+        char ch = s.charAt(pos);
+        if (ch == '>') {
+            pos++;
+            while (pos < len && s.charAt(pos)==' ') pos++;
+            return pos;
+        }
+        if (ch == '#' ) {
+            while (pos < len && s.charAt(pos)=='#') pos++;
+            while (pos < len && s.charAt(pos)==' ') pos++;
+            return pos;
+        }
+        // unordered list - or * or + followed by space
+        if ((ch=='-'||ch=='*'||ch=='+') && pos+1 < len && s.charAt(pos+1)==' ') {
+            pos += 2;
+            return pos;
+        }
+        // ordered list: digits '.' space
+        int p = pos;
+        while (p < len && Character.isDigit(s.charAt(p))) p++;
+        if (p > pos && p < len && s.charAt(p)=='.') {
+            p++;
+            if (p < len && s.charAt(p)==' ') return p+1;
+        }
+        return i;
+    }
+
+    private static class NormalizedEditor {
+        final String norm;
+        final int[] map; // map from norm index -> original editor index
+        NormalizedEditor(String norm, int[] map) { this.norm = norm; this.map = map; }
+    }
+
+    private NormalizedEditor normalizeEditorWithMapping(String editor) {
+        StringBuilder norm = new StringBuilder(editor.length());
+        int[] tempMap = new int[editor.length() * 2 + 1]; // upper bound
+        int m = 0;
+        int n = editor.length();
+        int i = 0;
+        while (i < n) {
+            // At start of line, skip list/heading/quote prefixes
+            int ls = editor.lastIndexOf('\n', Math.max(0, i - 1)) + 1;
+            if (ls == i) {
+                int sk = skipListOrHeadingPrefix(editor, i);
+                i = sk;
+            }
+            if (i >= n) break;
+
+            char c = editor.charAt(i);
+            if (isIgnorableMarkdownChar(c)) { i++; continue; }
+            if (Character.isWhitespace(c)) {
+                // collapse any run of whitespace to single space
+                int runStart = i;
+                while (i < n && Character.isWhitespace(editor.charAt(i))) i++;
+                // append single space
+                norm.append(' ');
+                tempMap[m++] = runStart; // map this single space to first ws position
+                continue;
+            }
+            norm.append(c);
+            tempMap[m++] = i;
+            i++;
+        }
+        int[] map = new int[m];
+        System.arraycopy(tempMap, 0, map, 0, m);
+        return new NormalizedEditor(norm.toString(), map);
+    }
+
+    private int mapNormToOriginalStart(NormalizedEditor ne, int normIndex) {
+        if (normIndex < 0 || normIndex >= ne.map.length) return -1;
+        return ne.map[normIndex];
+    }
+
+    private int mapNormToOriginalEnd(NormalizedEditor ne, int normIndex, int originalLength) {
+        if (normIndex < 0) return -1;
+        if (normIndex >= ne.map.length) return originalLength;
+        return ne.map[normIndex];
+    }
+
+    private String collapseWhitespace(String s) {
+        return s == null ? "" : s.replaceAll("[\\s\\u00A0]+", " ").trim();
+    }
+
+    private void reselectInPreview(String selectionText) {
+        if (selectionText == null || selectionText.isEmpty()) return;
+        try {
+            javax.swing.text.Document doc = markdownPane.getDocument();
+            String plain = doc.getText(0, doc.getLength()).replace('\r', '\n');
+            plain = plain.replaceAll("\n+", "\n");
+            int idx = plain.indexOf(selectionText);
+            if (idx >= 0) {
+                markdownPane.setSelectionStart(idx);
+                markdownPane.setSelectionEnd(idx + selectionText.length());
+            }
+        } catch (Exception ex) {
+            // ignore
+        }
+    }
+
+    private void synchronizeSelectionOnTabChange() {
+        int idx = jTabbedPane1.getSelectedIndex();
+        if (idx < 0) return;
+        String title = jTabbedPane1.getTitleAt(idx);
+        if ("Vorschau".equals(title)) {
+            String sel = taEdit.getSelectedText();
+            if (sel != null && !sel.isEmpty()) {
+                reselectInPreview(sel);
+            }
+        } else if ("Editor".equals(title)) {
+            String selPrev = markdownPane.getSelectedText();
+            if (selPrev != null && !selPrev.isEmpty()) {
+                selectInEditorByPreviewSelection(selPrev);
+            }
+        }
+    }
+
+    private void setEditorTextFromExternal(String text) {
+        // Called when loading content/status: should not create an undo entry that clears everything
+        taEdit.setText(text);
+        markdownPane.setMarkdownText(text);
+        undoManager.discardAllEdits();
+        updateToolbarEnabledStates();
     }
 
     @Override
