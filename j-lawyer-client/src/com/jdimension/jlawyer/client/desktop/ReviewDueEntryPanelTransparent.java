@@ -694,6 +694,7 @@ import java.awt.Polygon;
 import java.awt.Window;
 import java.text.SimpleDateFormat;
 import java.util.Calendar;
+import java.util.Collection;
 import java.util.Date;
 import javax.swing.JOptionPane;
 import javax.swing.JTextField;
@@ -1126,12 +1127,16 @@ public class ReviewDueEntryPanelTransparent extends javax.swing.JPanel {
                     ClientSettings settingsCheck = ClientSettings.getInstance();
                     JLawyerServiceLocator locatorCheck = JLawyerServiceLocator.getInstance(settingsCheck.getLookupProperties());
                     CalendarServiceRemote calServiceCheck = locatorCheck.lookupCalendarServiceRemote();
-                    java.util.Collection<com.jdimension.jlawyer.persistence.ArchiveFileReviewsBean> open = calServiceCheck.getReviews(this.e.getArchiveFileId(), false);
+                    Collection<ArchiveFileReviewsBean> open = calServiceCheck.getReviews(this.e.getArchiveFileId(), false);
                     if (open != null && open.size() == 1) {
                         String caseNumber = this.e.getArchiveFileNumber();
-                        if (caseNumber == null) caseNumber = "";
+                        if (caseNumber == null) {
+                            caseNumber = "";
+                        }
                         String caseName = this.e.getArchiveFileName();
-                        if (caseName == null) caseName = "";
+                        if (caseName == null) {
+                            caseName = "";
+                        }
                         String msg = java.text.MessageFormat.format(java.util.ResourceBundle.getBundle("com/jdimension/jlawyer/client/desktop/ReviewDueEntryPanel").getString("dialog.confirm.lastopen"), new Object[]{caseNumber, caseName});
                         String title = java.util.ResourceBundle.getBundle("com/jdimension/jlawyer/client/desktop/ReviewDueEntryPanel").getString("dialog.confirm.lastopen.title");
                         int r = JOptionPane.showConfirmDialog(this, msg, title, JOptionPane.YES_NO_OPTION, JOptionPane.WARNING_MESSAGE);
