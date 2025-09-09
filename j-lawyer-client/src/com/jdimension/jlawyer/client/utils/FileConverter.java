@@ -665,6 +665,7 @@ package com.jdimension.jlawyer.client.utils;
 
 import com.jdimension.jlawyer.client.bea.BeaAccess;
 import com.jdimension.jlawyer.client.editors.documents.viewer.ImageOrientationHandler;
+import static com.jdimension.jlawyer.client.editors.documents.viewer.MarkdownPanel.decodeMarkdownBytes;
 import com.jdimension.jlawyer.client.settings.ClientSettings;
 import com.jdimension.jlawyer.client.settings.UserSettings;
 import com.jdimension.jlawyer.client.utils.einvoice.EInvoiceUtils;
@@ -673,6 +674,7 @@ import com.jdimension.jlawyer.persistence.ArchiveFileDocumentsBean;
 import com.jdimension.jlawyer.persistence.Invoice;
 import com.jdimension.jlawyer.services.JLawyerServiceLocator;
 import java.io.File;
+import java.io.FileWriter;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -682,6 +684,7 @@ import org.apache.pdfbox.multipdf.PDFMergerUtility;
 import org.jlawyer.bea.model.Attachment;
 import org.jlawyer.bea.model.Message;
 import org.jlawyer.bea.model.MessageExport;
+import org.jmarkdownviewer.jmdviewer.parser.MarkdownParser;
 import org.mustangproject.ZUGFeRD.IZUGFeRDExporter;
 import org.mustangproject.ZUGFeRD.ZUGFeRDExporterFromPDFA;
 
@@ -864,6 +867,32 @@ public class FileConverter {
         }
         return url;
     }
+    
+    protected String md2pdf(String url) throws Exception {
+        if (url.toLowerCase().endsWith(".md")) {
+
+            
+            File inputFile = new File(url);
+            byte[] data = FileUtils.readFile(inputFile);
+            String mdText = decodeMarkdownBytes(data);
+            
+            MarkdownParser parser = new MarkdownParser();
+            parser.parse(mdText);
+            org.commonmark.node.Node document = parser.getDocument();
+            String html = parser.getHTML();
+            html=html.replace("�", "");
+            if (html != null) {
+                File outputFile = File.createTempFile(url.substring(0, url.toLowerCase().lastIndexOf(".md")), ".html");
+                FileWriter fw=new FileWriter(outputFile);
+                fw.write(html);
+                fw.close();
+                return convertToPDF(outputFile.getAbsolutePath());
+            }
+            
+
+        }
+        return url;
+    }
 
     private FileConverter() {
     }
@@ -949,6 +978,10 @@ public class FileConverter {
 
             if (url.toLowerCase().endsWith(".bea")) {
                 return bea2pdf(url);
+            }
+            
+            if (url.toLowerCase().endsWith(".md")) {
+                return md2pdf(url);
             }
             
             if (isImageFile(url)) {
@@ -1113,6 +1146,10 @@ public class FileConverter {
                 return bea2pdf(url);
             }
             
+            if (url.toLowerCase().endsWith(".md")) {
+                return md2pdf(url);
+            }
+            
             if (isImageFile(url)) {
                 url = processImageOrientation(url);
             }
@@ -1216,6 +1253,10 @@ public class FileConverter {
 
             if (url.toLowerCase().endsWith(".bea")) {
                 return bea2pdf(url);
+            }
+            
+            if (url.toLowerCase().endsWith(".md")) {
+                return md2pdf(url);
             }
             
             if (isImageFile(url)) {

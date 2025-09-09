@@ -1102,7 +1102,7 @@ public class MarkdownPanel extends javax.swing.JPanel implements PreviewPanel {
         }
     }
 
-    private String decodeMarkdownBytes(byte[] content) {
+    public static String decodeMarkdownBytes(byte[] content) {
         if (content == null) {
             return "";
         }
