@@ -668,6 +668,7 @@ import com.jdimension.jlawyer.client.settings.ClientSettings;
 import com.jdimension.jlawyer.client.utils.ThreadUtils;
 import com.jdimension.jlawyer.services.JLawyerServiceLocator;
 import java.util.Arrays;
+import java.nio.charset.StandardCharsets;
 import org.apache.log4j.Logger;
 import org.jmarkdownviewer.jmdviewer.HtmlPane;
 
@@ -774,10 +775,14 @@ public class MarkdownPanel extends javax.swing.JPanel implements PreviewPanel {
         this.initialContent = content;
         
         //SwingUtilities.invokeLater(() -> {
-            
-            
-            markdownPane.setMarkdownText(new String(content).trim());
-            taEdit.setText(new String(content).trim());
+            String text;
+            if (content == null) {
+                text = "";
+            } else {
+                text = new String(content, StandardCharsets.UTF_8);
+            }
+            markdownPane.setMarkdownText(text.trim());
+            taEdit.setText(text.trim());
         //});
     }
 
