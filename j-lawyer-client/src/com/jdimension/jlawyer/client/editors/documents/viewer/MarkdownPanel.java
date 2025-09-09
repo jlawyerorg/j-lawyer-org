@@ -684,7 +684,10 @@ import javax.swing.InputMap;
 import javax.swing.JComponent;
 import javax.swing.event.CaretEvent;
 import javax.swing.event.CaretListener;
+import javax.swing.event.UndoableEditEvent;
+import javax.swing.event.UndoableEditListener;
 import javax.swing.undo.UndoManager;
+import javax.swing.undo.CompoundEdit;
 import org.apache.log4j.Logger;
 import org.jmarkdownviewer.jmdviewer.HtmlPane;
 
@@ -731,6 +734,15 @@ public class MarkdownPanel extends javax.swing.JPanel implements PreviewPanel {
     private JButton btnPClearFmt;
 
     private final UndoManager undoManager = new UndoManager();
+    private String lastPreviewSelectionText = null;
+    private CompoundEdit currentCompoundEdit = null;
+    private final UndoableEditListener compoundCollector = new UndoableEditListener() {
+        @Override public void undoableEditHappened(UndoableEditEvent e) {
+            if (currentCompoundEdit != null) {
+                currentCompoundEdit.addEdit(e.getEdit());
+            }
+        }
+    };
     
     /**
      * Creates new form MarkdownPanel
@@ -768,7 +780,10 @@ public class MarkdownPanel extends javax.swing.JPanel implements PreviewPanel {
             @Override public void caretUpdate(CaretEvent e) { updateToolbarEnabledStates(); }
         });
         this.markdownPane.addCaretListener(new CaretListener(){
-            @Override public void caretUpdate(CaretEvent e) { updateToolbarEnabledStates(); }
+            @Override public void caretUpdate(CaretEvent e) {
+                updateToolbarEnabledStates();
+                recordPreviewSelection();
+            }
         });
         setupUndoRedoKeybindings();
         updateToolbarEnabledStates();
@@ -858,54 +873,57 @@ public class MarkdownPanel extends javax.swing.JPanel implements PreviewPanel {
     
     // Helper methods for toolbar actions
     private void wrapSelection(String prefix, String suffix) {
-        int start = taEdit.getSelectionStart();
-        int end = taEdit.getSelectionEnd();
-        try {
-            if (start == end) {
-                taEdit.getDocument().insertString(start, prefix + suffix, null);
-                taEdit.setCaretPosition(start + prefix.length());
-            } else {
-                String sel = taEdit.getSelectedText();
-                taEdit.getDocument().remove(start, end - start);
-                taEdit.getDocument().insertString(start, prefix + sel + suffix, null);
-                taEdit.select(start + prefix.length(), start + prefix.length() + sel.length());
+        doCompound(() -> {
+            int start = taEdit.getSelectionStart();
+            int end = taEdit.getSelectionEnd();
+            try {
+                if (start == end) {
+                    taEdit.getDocument().insertString(start, prefix + suffix, null);
+                    taEdit.setCaretPosition(start + prefix.length());
+                } else {
+                    String sel = taEdit.getSelectedText();
+                    taEdit.getDocument().remove(start, end - start);
+                    taEdit.getDocument().insertString(start, prefix + sel + suffix, null);
+                    taEdit.select(start + prefix.length(), start + prefix.length() + sel.length());
+                }
+            } catch (Exception ex) {
+                // ignore
             }
-        } catch (Exception ex) {
-            // ignore
-        }
+        });
         markdownPane.setMarkdownText(taEdit.getText());
         updateToolbarEnabledStates();
     }
 
     private void addPrefixToSelectedLines(String prefix) {
-        int start = taEdit.getSelectionStart();
-        int end = taEdit.getSelectionEnd();
-        String text = taEdit.getText();
-        int lineStart = text.lastIndexOf('\n', Math.max(0, start - 1)) + 1;
-        int lineEnd = end;
-        if (lineEnd < text.length()) {
-            // extend to end of line selection
-            int nextNl = text.indexOf('\n', lineEnd);
-            if (nextNl >= 0) lineEnd = nextNl;
-        }
-        String selection = text.substring(lineStart, Math.max(lineStart, end));
-        String[] lines = selection.split("\n", -1);
-        StringBuilder sb = new StringBuilder();
-        for (int i = 0; i < lines.length; i++) {
-            String line = lines[i];
-            if (line.trim().isEmpty()) {
-                sb.append(line);
-            } else {
-                sb.append(prefix).append(line);
+        doCompound(() -> {
+            int start = taEdit.getSelectionStart();
+            int end = taEdit.getSelectionEnd();
+            String text = taEdit.getText();
+            int lineStart = text.lastIndexOf('\n', Math.max(0, start - 1)) + 1;
+            int lineEnd = end;
+            if (lineEnd < text.length()) {
+                int nextNl = text.indexOf('\n', lineEnd);
+                if (nextNl >= 0) lineEnd = nextNl;
             }
-            if (i < lines.length - 1) sb.append('\n');
-        }
-        try {
-            taEdit.getDocument().remove(lineStart, selection.length());
-            taEdit.getDocument().insertString(lineStart, sb.toString(), null);
-        } catch (Exception ex) {
-            // ignore
-        }
+            String selection = text.substring(lineStart, Math.max(lineStart, end));
+            String[] lines = selection.split("\n", -1);
+            StringBuilder sb = new StringBuilder();
+            for (int i = 0; i < lines.length; i++) {
+                String line = lines[i];
+                if (line.trim().isEmpty()) {
+                    sb.append(line);
+                } else {
+                    sb.append(prefix).append(line);
+                }
+                if (i < lines.length - 1) sb.append('\n');
+            }
+            try {
+                taEdit.getDocument().remove(lineStart, selection.length());
+                taEdit.getDocument().insertString(lineStart, sb.toString(), null);
+            } catch (Exception ex) {
+                // ignore
+            }
+        });
         markdownPane.setMarkdownText(taEdit.getText());
         updateToolbarEnabledStates();
     }
@@ -926,33 +944,32 @@ public class MarkdownPanel extends javax.swing.JPanel implements PreviewPanel {
         String cleanedSegment = stripMarkdown(segment);
         String cleanedSelected = stripMarkdown(originalSelected);
 
-        try {
-            taEdit.getDocument().remove(lineStart, segment.length());
-            taEdit.getDocument().insertString(lineStart, cleanedSegment, null);
+        doCompound(() -> {
+            try {
+                taEdit.getDocument().remove(lineStart, segment.length());
+                taEdit.getDocument().insertString(lineStart, cleanedSegment, null);
 
-            // Try to reselect the cleaned selection within the updated segment
-            String newFull = taEdit.getText();
-            int newSegStart = lineStart;
-            int newSegEnd = lineStart + cleanedSegment.length();
-            int idx = -1;
-            if (!cleanedSelected.isEmpty()) {
-                String region = newFull.substring(newSegStart, newSegEnd);
-                idx = region.indexOf(cleanedSelected);
-                if (idx >= 0) {
-                    int absStart = newSegStart + idx;
-                    taEdit.select(absStart, absStart + cleanedSelected.length());
+                String newFull = taEdit.getText();
+                int newSegStart = lineStart;
+                int newSegEnd = lineStart + cleanedSegment.length();
+                int idx = -1;
+                if (!cleanedSelected.isEmpty()) {
+                    String region = newFull.substring(newSegStart, newSegEnd);
+                    idx = region.indexOf(cleanedSelected);
+                    if (idx >= 0) {
+                        int absStart = newSegStart + idx;
+                        taEdit.select(absStart, absStart + cleanedSelected.length());
+                    } else {
+                        taEdit.select(newSegStart, newSegEnd);
+                    }
                 } else {
-                    // fallback: select the segment
-                    taEdit.select(newSegStart, newSegEnd);
+                    int newPos = Math.min(newSegStart + Math.max(0, selStart - lineStart), newSegEnd);
+                    taEdit.setCaretPosition(newPos);
                 }
-            } else {
-                // If nothing left (e.g., only markup), collapse selection to original start within new segment bounds
-                int newPos = Math.min(newSegStart + Math.max(0, selStart - lineStart), newSegEnd);
-                taEdit.setCaretPosition(newPos);
+            } catch (Exception ex) {
+                // ignore
             }
-        } catch (Exception ex) {
-            // ignore
-        }
+        });
         markdownPane.setMarkdownText(taEdit.getText());
         updateToolbarEnabledStates();
     }
@@ -992,18 +1009,20 @@ public class MarkdownPanel extends javax.swing.JPanel implements PreviewPanel {
         if (lang == null) lang = "";
         String opener = "```" + (lang.trim().isEmpty() ? "" : lang.trim()) + "\n";
         String closer = "\n```\n";
-        try {
-            if (start == end) {
-                taEdit.getDocument().insertString(start, opener + closer, null);
-                taEdit.setCaretPosition(start + opener.length());
-            } else {
-                taEdit.getDocument().remove(start, end - start);
-                taEdit.getDocument().insertString(start, opener + sel + closer, null);
-                taEdit.select(start + opener.length(), start + opener.length() + sel.length());
+        doCompound(() -> {
+            try {
+                if (start == end) {
+                    taEdit.getDocument().insertString(start, opener + closer, null);
+                    taEdit.setCaretPosition(start + opener.length());
+                } else {
+                    taEdit.getDocument().remove(start, end - start);
+                    taEdit.getDocument().insertString(start, opener + sel + closer, null);
+                    taEdit.select(start + opener.length(), start + opener.length() + sel.length());
+                }
+            } catch (Exception ex) {
+                // ignore
             }
-        } catch (Exception ex) {
-            // ignore
-        }
+        });
         markdownPane.setMarkdownText(taEdit.getText());
         updateToolbarEnabledStates();
     }
@@ -1016,17 +1035,41 @@ public class MarkdownPanel extends javax.swing.JPanel implements PreviewPanel {
         String md = "[" + text + "](" + url.trim() + ")";
         int start = taEdit.getSelectionStart();
         int end = taEdit.getSelectionEnd();
-        try {
-            if (start != end) {
-                taEdit.getDocument().remove(start, end - start);
+        doCompound(() -> {
+            try {
+                if (start != end) {
+                    taEdit.getDocument().remove(start, end - start);
+                }
+                taEdit.getDocument().insertString(start, md, null);
+                taEdit.setCaretPosition(start + md.length());
+            } catch (Exception ex) {
+                // ignore
             }
-            taEdit.getDocument().insertString(start, md, null);
-            taEdit.setCaretPosition(start + md.length());
-        } catch (Exception ex) {
-            // ignore
-        }
+        });
         markdownPane.setMarkdownText(taEdit.getText());
         updateToolbarEnabledStates();
+    }
+
+    private void beginCompoundEdit() {
+        if (currentCompoundEdit != null) return;
+        currentCompoundEdit = new CompoundEdit();
+        taEdit.getDocument().removeUndoableEditListener(undoManager);
+        taEdit.getDocument().addUndoableEditListener(compoundCollector);
+    }
+
+    private void endCompoundEdit() {
+        if (currentCompoundEdit == null) return;
+        taEdit.getDocument().removeUndoableEditListener(compoundCollector);
+        taEdit.getDocument().addUndoableEditListener(undoManager);
+        currentCompoundEdit.end();
+        undoManager.addEdit(currentCompoundEdit);
+        currentCompoundEdit = null;
+    }
+
+    private void doCompound(Runnable r) {
+        beginCompoundEdit();
+        try { r.run(); }
+        finally { endCompoundEdit(); }
     }
 
     private String decodeMarkdownBytes(byte[] content) {
@@ -1312,6 +1355,10 @@ public class MarkdownPanel extends javax.swing.JPanel implements PreviewPanel {
 
     private boolean selectInEditorByPreviewSelection(String previewSelection) {
         String editorText = taEdit.getText();
+        // First try regex-based flexible match that tolerates MD punctuation and numbering
+        if (selectByFlexibleRegex(editorText, previewSelection)) {
+            return true;
+        }
         NormalizedEditor ne = normalizeEditorWithMapping(editorText);
         String target = collapseWhitespace(previewSelection);
         if (target.isEmpty()) return false;
@@ -1330,6 +1377,35 @@ public class MarkdownPanel extends javax.swing.JPanel implements PreviewPanel {
                 return true;
             }
         }
+        return false;
+    }
+
+    private boolean selectByFlexibleRegex(String editorText, String previewSelection) {
+        if (previewSelection == null) return false;
+        String target = collapseWhitespace(previewSelection);
+        if (target.isEmpty()) return false;
+        String[] words = target.split(" ");
+        String punct = "\\\\*`_~\\\\[\\\\]\\\\(\\\\)!\\\\\\\\>#+\\\\-\\\\.\\\\d";
+        StringBuilder rx = new StringBuilder();
+        rx.append("(?s)"); // DOTALL to match across lines
+        for (int i = 0; i < words.length; i++) {
+            String w = java.util.regex.Pattern.quote(words[i]);
+            rx.append("(?:["+punct+"]*)").append(w).append("(?:["+punct+"]*)");
+            if (i < words.length - 1) {
+                rx.append("[\\s]+");
+            }
+        }
+        try {
+            java.util.regex.Pattern p = java.util.regex.Pattern.compile(rx.toString());
+            java.util.regex.Matcher m = p.matcher(editorText);
+            if (m.find()) {
+                int s = m.start();
+                int e = m.end();
+                taEdit.select(s, e);
+                trimSelectionInsideInlineMarkdown();
+                return true;
+            }
+        } catch (Exception ignore) {}
         return false;
     }
 
@@ -1455,12 +1531,22 @@ public class MarkdownPanel extends javax.swing.JPanel implements PreviewPanel {
             }
         } else if ("Editor".equals(title)) {
             String selPrev = markdownPane.getSelectedText();
+            if (selPrev == null || selPrev.isEmpty()) selPrev = lastPreviewSelectionText;
             if (selPrev != null && !selPrev.isEmpty()) {
                 if (selectInEditorByPreviewSelection(selPrev)) {
                     trimSelectionInsideInlineMarkdown();
                 }
             }
         }
+    }
+
+    private void recordPreviewSelection() {
+        try {
+            String s = markdownPane.getSelectedText();
+            if (s != null && !s.isEmpty()) {
+                lastPreviewSelectionText = s;
+            }
+        } catch (Exception ignore) {}
     }
 
     private void trimSelectionInsideInlineMarkdown() {
