@@ -696,14 +696,14 @@ import org.jmarkdownviewer.jmdviewer.HtmlPane;
  * @author jens
  */
 public class MarkdownPanel extends javax.swing.JPanel implements PreviewPanel {
-    
+
     private static final Logger log = Logger.getLogger(MarkdownPanel.class.getName());
 
-    private String id=null;
-    private HtmlPane markdownPane=null;
+    private String id = null;
+    private HtmlPane markdownPane = null;
     private byte[] initialContent = null;
     private boolean readOnly = false;
-    
+
     // Toolbar components (only used in DocumentPreview context)
     private JToolBar tbMarkdown; // Editor tab
     private JButton btnBold;
@@ -737,25 +737,30 @@ public class MarkdownPanel extends javax.swing.JPanel implements PreviewPanel {
     private String lastPreviewSelectionText = null;
     private CompoundEdit currentCompoundEdit = null;
     private final UndoableEditListener compoundCollector = new UndoableEditListener() {
-        @Override public void undoableEditHappened(UndoableEditEvent e) {
+        @Override
+        public void undoableEditHappened(UndoableEditEvent e) {
             if (currentCompoundEdit != null) {
                 currentCompoundEdit.addEdit(e.getEdit());
             }
         }
     };
-    
+
     /**
      * Creates new form MarkdownPanel
+     *
      * @param docId
      * @param readOnly
      */
     public MarkdownPanel(String docId, boolean readOnly) {
         initComponents();
-        
+
+        this.jScrollPane1.getVerticalScrollBar().setUnitIncrement(16);
+        this.jScrollPane2.getVerticalScrollBar().setUnitIncrement(16);
+
         this.id = docId;
         this.readOnly = readOnly;
-        
-        this.markdownPane=new HtmlPane();
+
+        this.markdownPane = new HtmlPane();
         this.jScrollPane1.getViewport().add(markdownPane);
         // Ensure editor scrollpane contains the editor text area
         this.jScrollPane2.setViewportView(this.taEdit);
@@ -766,21 +771,32 @@ public class MarkdownPanel extends javax.swing.JPanel implements PreviewPanel {
         setTooltips();
         wireToolbarActions();
         // Select preview tab initially
-        try { this.jTabbedPane1.setSelectedIndex(0); } catch (Exception ignore) {}
+        try {
+            this.jTabbedPane1.setSelectedIndex(0);
+        } catch (Exception ignore) {
+        }
 
         // Show toolbars only when not read-only
-        if (this.tbMarkdown != null) this.tbMarkdown.setVisible(!this.readOnly);
-        if (this.tbMarkdownPreview != null) this.tbMarkdownPreview.setVisible(!this.readOnly);
+        if (this.tbMarkdown != null) {
+            this.tbMarkdown.setVisible(!this.readOnly);
+        }
+        if (this.tbMarkdownPreview != null) {
+            this.tbMarkdownPreview.setVisible(!this.readOnly);
+        }
         this.taEdit.setEditable(!this.readOnly);
         // Keep tabs always enabled; only control editability and toolbar visibility via readOnly
 
         // Undo/redo support and selection tracking
         this.taEdit.getDocument().addUndoableEditListener(undoManager);
-        this.taEdit.addCaretListener(new CaretListener(){
-            @Override public void caretUpdate(CaretEvent e) { updateToolbarEnabledStates(); }
+        this.taEdit.addCaretListener(new CaretListener() {
+            @Override
+            public void caretUpdate(CaretEvent e) {
+                updateToolbarEnabledStates();
+            }
         });
-        this.markdownPane.addCaretListener(new CaretListener(){
-            @Override public void caretUpdate(CaretEvent e) {
+        this.markdownPane.addCaretListener(new CaretListener() {
+            @Override
+            public void caretUpdate(CaretEvent e) {
                 updateToolbarEnabledStates();
                 recordPreviewSelection();
             }
@@ -795,7 +811,6 @@ public class MarkdownPanel extends javax.swing.JPanel implements PreviewPanel {
         });
 
         // Tabs are defined in initComponents(); no dynamic additions here
-        
     }
 
     /**
@@ -870,7 +885,7 @@ public class MarkdownPanel extends javax.swing.JPanel implements PreviewPanel {
         String text = decodeMarkdownBytes(content);
         setEditorTextFromExternal(text.trim());
     }
-    
+
     // Helper methods for toolbar actions
     private void wrapSelection(String prefix, String suffix) {
         doCompound(() -> {
@@ -903,7 +918,9 @@ public class MarkdownPanel extends javax.swing.JPanel implements PreviewPanel {
             int lineEnd = end;
             if (lineEnd < text.length()) {
                 int nextNl = text.indexOf('\n', lineEnd);
-                if (nextNl >= 0) lineEnd = nextNl;
+                if (nextNl >= 0) {
+                    lineEnd = nextNl;
+                }
             }
             String selection = text.substring(lineStart, Math.max(lineStart, end));
             String[] lines = selection.split("\n", -1);
@@ -915,7 +932,9 @@ public class MarkdownPanel extends javax.swing.JPanel implements PreviewPanel {
                 } else {
                     sb.append(prefix).append(line);
                 }
-                if (i < lines.length - 1) sb.append('\n');
+                if (i < lines.length - 1) {
+                    sb.append('\n');
+                }
             }
             try {
                 taEdit.getDocument().remove(lineStart, selection.length());
@@ -931,12 +950,16 @@ public class MarkdownPanel extends javax.swing.JPanel implements PreviewPanel {
     private void clearSelectionFormatting() {
         int selStart = taEdit.getSelectionStart();
         int selEnd = taEdit.getSelectionEnd();
-        if (selStart == selEnd) return;
+        if (selStart == selEnd) {
+            return;
+        }
 
         String full = taEdit.getText();
         int lineStart = full.lastIndexOf('\n', Math.max(0, selStart - 1)) + 1;
         int lineEnd = full.indexOf('\n', selEnd);
-        if (lineEnd < 0) lineEnd = full.length();
+        if (lineEnd < 0) {
+            lineEnd = full.length();
+        }
 
         String segment = full.substring(lineStart, lineEnd);
         String originalSelected = full.substring(selStart, selEnd);
@@ -975,7 +998,9 @@ public class MarkdownPanel extends javax.swing.JPanel implements PreviewPanel {
     }
 
     private String stripMarkdown(String s) {
-        if (s == null || s.isEmpty()) return s;
+        if (s == null || s.isEmpty()) {
+            return s;
+        }
         String out = s;
         // Remove code fences lines
         out = out.replaceAll("(?m)^```.*\\r?\\n?", "");
@@ -1006,7 +1031,9 @@ public class MarkdownPanel extends javax.swing.JPanel implements PreviewPanel {
         int end = taEdit.getSelectionEnd();
         String sel = (start == end) ? "" : taEdit.getSelectedText();
         String lang = JOptionPane.showInputDialog(this, "Sprache (optional)", "", JOptionPane.QUESTION_MESSAGE);
-        if (lang == null) lang = "";
+        if (lang == null) {
+            lang = "";
+        }
         String opener = "```" + (lang.trim().isEmpty() ? "" : lang.trim()) + "\n";
         String closer = "\n```\n";
         doCompound(() -> {
@@ -1031,7 +1058,9 @@ public class MarkdownPanel extends javax.swing.JPanel implements PreviewPanel {
         String current = taEdit.getSelectedText();
         String text = current != null ? current : "Linktext";
         String url = JOptionPane.showInputDialog(this, "URL eingeben", "https://", JOptionPane.QUESTION_MESSAGE);
-        if (url == null || url.trim().isEmpty()) return;
+        if (url == null || url.trim().isEmpty()) {
+            return;
+        }
         String md = "[" + text + "](" + url.trim() + ")";
         int start = taEdit.getSelectionStart();
         int end = taEdit.getSelectionEnd();
@@ -1051,14 +1080,18 @@ public class MarkdownPanel extends javax.swing.JPanel implements PreviewPanel {
     }
 
     private void beginCompoundEdit() {
-        if (currentCompoundEdit != null) return;
+        if (currentCompoundEdit != null) {
+            return;
+        }
         currentCompoundEdit = new CompoundEdit();
         taEdit.getDocument().removeUndoableEditListener(undoManager);
         taEdit.getDocument().addUndoableEditListener(compoundCollector);
     }
 
     private void endCompoundEdit() {
-        if (currentCompoundEdit == null) return;
+        if (currentCompoundEdit == null) {
+            return;
+        }
         taEdit.getDocument().removeUndoableEditListener(compoundCollector);
         taEdit.getDocument().addUndoableEditListener(undoManager);
         currentCompoundEdit.end();
@@ -1068,12 +1101,17 @@ public class MarkdownPanel extends javax.swing.JPanel implements PreviewPanel {
 
     private void doCompound(Runnable r) {
         beginCompoundEdit();
-        try { r.run(); }
-        finally { endCompoundEdit(); }
+        try {
+            r.run();
+        } finally {
+            endCompoundEdit();
+        }
     }
 
     private String decodeMarkdownBytes(byte[] content) {
-        if (content == null) return "";
+        if (content == null) {
+            return "";
+        }
         // BOM detection
         if (content.length >= 3 && (content[0] & 0xFF) == 0xEF && (content[1] & 0xFF) == 0xBB && (content[2] & 0xFF) == 0xBF) {
             return new String(content, 3, content.length - 3, StandardCharsets.UTF_8);
@@ -1098,45 +1136,183 @@ public class MarkdownPanel extends javax.swing.JPanel implements PreviewPanel {
                     return s;
                 }
             }
-        } catch (Exception ignore) {}
+        } catch (Exception ignore) {
+        }
         // Fallback to Windows-1252 (common on Windows)
         try {
             return new String(content, java.nio.charset.Charset.forName("windows-1252"));
-        } catch (Exception ignore) {}
+        } catch (Exception ignore) {
+        }
         // Last resort ISO-8859-1
         return new String(content, java.nio.charset.StandardCharsets.ISO_8859_1);
     }
 
     private void wireToolbarActions() {
-        ActionListener undoAct = new ActionListener(){ public void actionPerformed(ActionEvent e){ if (undoManager.canUndo()) { undoManager.undo(); markdownPane.setMarkdownText(taEdit.getText()); updateToolbarEnabledStates(); } }};
-        ActionListener redoAct = new ActionListener(){ public void actionPerformed(ActionEvent e){ if (undoManager.canRedo()) { undoManager.redo(); markdownPane.setMarkdownText(taEdit.getText()); updateToolbarEnabledStates(); } }};
+        ActionListener undoAct = new ActionListener() {
+            public void actionPerformed(ActionEvent e) {
+                if (undoManager.canUndo()) {
+                    undoManager.undo();
+                    markdownPane.setMarkdownText(taEdit.getText());
+                    updateToolbarEnabledStates();
+                }
+            }
+        };
+        ActionListener redoAct = new ActionListener() {
+            public void actionPerformed(ActionEvent e) {
+                if (undoManager.canRedo()) {
+                    undoManager.redo();
+                    markdownPane.setMarkdownText(taEdit.getText());
+                    updateToolbarEnabledStates();
+                }
+            }
+        };
 
         btnUndo.addActionListener(undoAct);
         btnRedo.addActionListener(redoAct);
-        btnClearFmt.addActionListener(new ActionListener(){ public void actionPerformed(ActionEvent e){ clearSelectionFormatting(); }});
-        btnBold.addActionListener(new ActionListener(){ public void actionPerformed(ActionEvent e){ wrapSelection("**","**"); }});
-        btnItalic.addActionListener(new ActionListener(){ public void actionPerformed(ActionEvent e){ wrapSelection("*","*"); }});
-        btnHeading.addActionListener(new ActionListener(){ public void actionPerformed(ActionEvent e){ addPrefixToSelectedLines("## "); }});
-        btnBullet.addActionListener(new ActionListener(){ public void actionPerformed(ActionEvent e){ addPrefixToSelectedLines("- "); }});
-        btnNumbered.addActionListener(new ActionListener(){ public void actionPerformed(ActionEvent e){ addPrefixToSelectedLines("1. "); }});
-        btnQuote.addActionListener(new ActionListener(){ public void actionPerformed(ActionEvent e){ addPrefixToSelectedLines("> "); }});
-        btnCodeInline.addActionListener(new ActionListener(){ public void actionPerformed(ActionEvent e){ wrapSelection("`","`"); }});
-        btnCodeBlock.addActionListener(new ActionListener(){ public void actionPerformed(ActionEvent e){ surroundSelectionWithFences("```"); }});
-        btnLink.addActionListener(new ActionListener(){ public void actionPerformed(ActionEvent e){ insertLink(); }});
+        btnClearFmt.addActionListener(new ActionListener() {
+            public void actionPerformed(ActionEvent e) {
+                clearSelectionFormatting();
+            }
+        });
+        btnBold.addActionListener(new ActionListener() {
+            public void actionPerformed(ActionEvent e) {
+                wrapSelection("**", "**");
+            }
+        });
+        btnItalic.addActionListener(new ActionListener() {
+            public void actionPerformed(ActionEvent e) {
+                wrapSelection("*", "*");
+            }
+        });
+        btnHeading.addActionListener(new ActionListener() {
+            public void actionPerformed(ActionEvent e) {
+                addPrefixToSelectedLines("## ");
+            }
+        });
+        btnBullet.addActionListener(new ActionListener() {
+            public void actionPerformed(ActionEvent e) {
+                addPrefixToSelectedLines("- ");
+            }
+        });
+        btnNumbered.addActionListener(new ActionListener() {
+            public void actionPerformed(ActionEvent e) {
+                addPrefixToSelectedLines("1. ");
+            }
+        });
+        btnQuote.addActionListener(new ActionListener() {
+            public void actionPerformed(ActionEvent e) {
+                addPrefixToSelectedLines("> ");
+            }
+        });
+        btnCodeInline.addActionListener(new ActionListener() {
+            public void actionPerformed(ActionEvent e) {
+                wrapSelection("`", "`");
+            }
+        });
+        btnCodeBlock.addActionListener(new ActionListener() {
+            public void actionPerformed(ActionEvent e) {
+                surroundSelectionWithFences("```");
+            }
+        });
+        btnLink.addActionListener(new ActionListener() {
+            public void actionPerformed(ActionEvent e) {
+                insertLink();
+            }
+        });
 
         // Wire preview toolbar to same actions
         btnPUndo.addActionListener(undoAct);
         btnPRedo.addActionListener(redoAct);
-        btnPClearFmt.addActionListener(new ActionListener(){ public void actionPerformed(ActionEvent e){ String s=markdownPane.getSelectedText(); if (selectInEditorByPreviewSelection()) { clearSelectionFormatting(); reselectInPreview(s); } }});
-        btnPBold.addActionListener(new ActionListener(){ public void actionPerformed(ActionEvent e){ String s=markdownPane.getSelectedText(); if (selectInEditorByPreviewSelection()) { wrapSelection("**","**"); reselectInPreview(s); } }});
-        btnPItalic.addActionListener(new ActionListener(){ public void actionPerformed(ActionEvent e){ String s=markdownPane.getSelectedText(); if (selectInEditorByPreviewSelection()) { wrapSelection("*","*"); reselectInPreview(s); } }});
-        btnPHeading.addActionListener(new ActionListener(){ public void actionPerformed(ActionEvent e){ String s=markdownPane.getSelectedText(); if (selectInEditorByPreviewSelection()) { addPrefixToSelectedLines("## "); reselectInPreview(s); } }});
-        btnPBullet.addActionListener(new ActionListener(){ public void actionPerformed(ActionEvent e){ String s=markdownPane.getSelectedText(); if (selectInEditorByPreviewSelection()) { addPrefixToSelectedLines("- "); reselectInPreview(s); } }});
-        btnPNumbered.addActionListener(new ActionListener(){ public void actionPerformed(ActionEvent e){ String s=markdownPane.getSelectedText(); if (selectInEditorByPreviewSelection()) { addPrefixToSelectedLines("1. "); reselectInPreview(s); } }});
-        btnPQuote.addActionListener(new ActionListener(){ public void actionPerformed(ActionEvent e){ String s=markdownPane.getSelectedText(); if (selectInEditorByPreviewSelection()) { addPrefixToSelectedLines("> "); reselectInPreview(s); } }});
-        btnPCodeInline.addActionListener(new ActionListener(){ public void actionPerformed(ActionEvent e){ String s=markdownPane.getSelectedText(); if (selectInEditorByPreviewSelection()) { wrapSelection("`","`"); reselectInPreview(s); } }});
-        btnPCodeBlock.addActionListener(new ActionListener(){ public void actionPerformed(ActionEvent e){ String s=markdownPane.getSelectedText(); if (selectInEditorByPreviewSelection()) { surroundSelectionWithFences("```"); reselectInPreview(s); } }});
-        btnPLink.addActionListener(new ActionListener(){ public void actionPerformed(ActionEvent e){ String s=markdownPane.getSelectedText(); if (selectInEditorByPreviewSelection()) { insertLink(); reselectInPreview(s); } }});
+        btnPClearFmt.addActionListener(new ActionListener() {
+            public void actionPerformed(ActionEvent e) {
+                String s = markdownPane.getSelectedText();
+                if (selectInEditorByPreviewSelection()) {
+                    clearSelectionFormatting();
+                    reselectInPreview(s);
+                }
+            }
+        });
+        btnPBold.addActionListener(new ActionListener() {
+            public void actionPerformed(ActionEvent e) {
+                String s = markdownPane.getSelectedText();
+                if (selectInEditorByPreviewSelection()) {
+                    wrapSelection("**", "**");
+                    reselectInPreview(s);
+                }
+            }
+        });
+        btnPItalic.addActionListener(new ActionListener() {
+            public void actionPerformed(ActionEvent e) {
+                String s = markdownPane.getSelectedText();
+                if (selectInEditorByPreviewSelection()) {
+                    wrapSelection("*", "*");
+                    reselectInPreview(s);
+                }
+            }
+        });
+        btnPHeading.addActionListener(new ActionListener() {
+            public void actionPerformed(ActionEvent e) {
+                String s = markdownPane.getSelectedText();
+                if (selectInEditorByPreviewSelection()) {
+                    addPrefixToSelectedLines("## ");
+                    reselectInPreview(s);
+                }
+            }
+        });
+        btnPBullet.addActionListener(new ActionListener() {
+            public void actionPerformed(ActionEvent e) {
+                String s = markdownPane.getSelectedText();
+                if (selectInEditorByPreviewSelection()) {
+                    addPrefixToSelectedLines("- ");
+                    reselectInPreview(s);
+                }
+            }
+        });
+        btnPNumbered.addActionListener(new ActionListener() {
+            public void actionPerformed(ActionEvent e) {
+                String s = markdownPane.getSelectedText();
+                if (selectInEditorByPreviewSelection()) {
+                    addPrefixToSelectedLines("1. ");
+                    reselectInPreview(s);
+                }
+            }
+        });
+        btnPQuote.addActionListener(new ActionListener() {
+            public void actionPerformed(ActionEvent e) {
+                String s = markdownPane.getSelectedText();
+                if (selectInEditorByPreviewSelection()) {
+                    addPrefixToSelectedLines("> ");
+                    reselectInPreview(s);
+                }
+            }
+        });
+        btnPCodeInline.addActionListener(new ActionListener() {
+            public void actionPerformed(ActionEvent e) {
+                String s = markdownPane.getSelectedText();
+                if (selectInEditorByPreviewSelection()) {
+                    wrapSelection("`", "`");
+                    reselectInPreview(s);
+                }
+            }
+        });
+        btnPCodeBlock.addActionListener(new ActionListener() {
+            public void actionPerformed(ActionEvent e) {
+                String s = markdownPane.getSelectedText();
+                if (selectInEditorByPreviewSelection()) {
+                    surroundSelectionWithFences("```");
+                    reselectInPreview(s);
+                }
+            }
+        });
+        btnPLink.addActionListener(new ActionListener() {
+            public void actionPerformed(ActionEvent e) {
+                String s = markdownPane.getSelectedText();
+                if (selectInEditorByPreviewSelection()) {
+                    insertLink();
+                    reselectInPreview(s);
+                }
+            }
+        });
     }
 
     private void setTooltips() {
@@ -1239,22 +1415,24 @@ public class MarkdownPanel extends javax.swing.JPanel implements PreviewPanel {
         previewContainer.add(tbMarkdownPreview, java.awt.BorderLayout.NORTH);
         // HtmlPane is already set as view of jScrollPane1; use the component from its viewport
         java.awt.Component previewView = jScrollPane1.getViewport().getView();
-        if (previewView == null) previewView = markdownPane;
+        if (previewView == null) {
+            previewView = markdownPane;
+        }
         previewContainer.add(previewView, java.awt.BorderLayout.CENTER);
         jScrollPane1.setViewportView(previewContainer);
 
         javax.swing.JPanel editorContainer = new javax.swing.JPanel(new java.awt.BorderLayout());
         editorContainer.add(tbMarkdown, java.awt.BorderLayout.NORTH);
         java.awt.Component editorView = jScrollPane2.getViewport().getView();
-        if (editorView == null) editorView = taEdit;
+        if (editorView == null) {
+            editorView = taEdit;
+        }
         editorContainer.add(editorView, java.awt.BorderLayout.CENTER);
         jScrollPane2.setViewportView(editorContainer);
     }
 
     // (removed) ensureTabs
-
     // (removed) fixEditorBinding
-
     @Override
     public void addNotify() {
         super.addNotify();
@@ -1266,7 +1444,8 @@ public class MarkdownPanel extends javax.swing.JPanel implements PreviewPanel {
         final String REDO = "md_redo";
 
         AbstractAction undoAction = new AbstractAction() {
-            @Override public void actionPerformed(ActionEvent e) {
+            @Override
+            public void actionPerformed(ActionEvent e) {
                 if (undoManager.canUndo()) {
                     undoManager.undo();
                     markdownPane.setMarkdownText(taEdit.getText());
@@ -1274,7 +1453,8 @@ public class MarkdownPanel extends javax.swing.JPanel implements PreviewPanel {
             }
         };
         AbstractAction redoAction = new AbstractAction() {
-            @Override public void actionPerformed(ActionEvent e) {
+            @Override
+            public void actionPerformed(ActionEvent e) {
                 if (undoManager.canRedo()) {
                     undoManager.redo();
                     markdownPane.setMarkdownText(taEdit.getText());
@@ -1347,9 +1527,13 @@ public class MarkdownPanel extends javax.swing.JPanel implements PreviewPanel {
     }
 
     private boolean selectInEditorByPreviewSelection() {
-        if (readOnly) return false;
+        if (readOnly) {
+            return false;
+        }
         String sel = markdownPane.getSelectedText();
-        if (sel == null || sel.isEmpty()) return false;
+        if (sel == null || sel.isEmpty()) {
+            return false;
+        }
         return selectInEditorByPreviewSelection(sel);
     }
 
@@ -1361,12 +1545,16 @@ public class MarkdownPanel extends javax.swing.JPanel implements PreviewPanel {
         }
         NormalizedEditor ne = normalizeEditorWithMapping(editorText);
         String target = collapseWhitespace(previewSelection);
-        if (target.isEmpty()) return false;
+        if (target.isEmpty()) {
+            return false;
+        }
 
         int idx = ne.norm.indexOf(target);
         if (idx < 0) {
             String trimmed = target.trim();
-            if (!trimmed.isEmpty()) idx = ne.norm.indexOf(trimmed);
+            if (!trimmed.isEmpty()) {
+                idx = ne.norm.indexOf(trimmed);
+            }
         }
         if (idx >= 0) {
             int start = mapNormToOriginalStart(ne, idx);
@@ -1381,16 +1569,20 @@ public class MarkdownPanel extends javax.swing.JPanel implements PreviewPanel {
     }
 
     private boolean selectByFlexibleRegex(String editorText, String previewSelection) {
-        if (previewSelection == null) return false;
+        if (previewSelection == null) {
+            return false;
+        }
         String target = collapseWhitespace(previewSelection);
-        if (target.isEmpty()) return false;
+        if (target.isEmpty()) {
+            return false;
+        }
         String[] words = target.split(" ");
         String punct = "\\\\*`_~\\\\[\\\\]\\\\(\\\\)!\\\\\\\\>#+\\\\-\\\\.\\\\d";
         StringBuilder rx = new StringBuilder();
         rx.append("(?s)"); // DOTALL to match across lines
         for (int i = 0; i < words.length; i++) {
             String w = java.util.regex.Pattern.quote(words[i]);
-            rx.append("(?:["+punct+"]*)").append(w).append("(?:["+punct+"]*)");
+            rx.append("(?:[" + punct + "]*)").append(w).append("(?:[" + punct + "]*)");
             if (i < words.length - 1) {
                 rx.append("[\\s]+");
             }
@@ -1405,53 +1597,75 @@ public class MarkdownPanel extends javax.swing.JPanel implements PreviewPanel {
                 trimSelectionInsideInlineMarkdown();
                 return true;
             }
-        } catch (Exception ignore) {}
+        } catch (Exception ignore) {
+        }
         return false;
     }
 
     private boolean isIgnorableMarkdownChar(char c) {
-        return c=='*' || c=='_' || c=='`' || c=='~' || c=='[' || c==']' || c=='(' || c==')' || c=='!' || c=='\\';
+        return c == '*' || c == '_' || c == '`' || c == '~' || c == '[' || c == ']' || c == '(' || c == ')' || c == '!' || c == '\\';
     }
 
     private int skipListOrHeadingPrefix(String s, int i) {
         int len = s.length();
         int pos = i;
         // only at line start
-        int ls = s.lastIndexOf('\n', Math.max(0, i-1)) + 1;
-        if (ls != i) return i;
+        int ls = s.lastIndexOf('\n', Math.max(0, i - 1)) + 1;
+        if (ls != i) {
+            return i;
+        }
         // skip spaces
-        while (pos < len && Character.isWhitespace(s.charAt(pos)) && s.charAt(pos)!='\n') pos++;
-        if (pos >= len) return i;
+        while (pos < len && Character.isWhitespace(s.charAt(pos)) && s.charAt(pos) != '\n') {
+            pos++;
+        }
+        if (pos >= len) {
+            return i;
+        }
         char ch = s.charAt(pos);
         if (ch == '>') {
             pos++;
-            while (pos < len && s.charAt(pos)==' ') pos++;
+            while (pos < len && s.charAt(pos) == ' ') {
+                pos++;
+            }
             return pos;
         }
-        if (ch == '#' ) {
-            while (pos < len && s.charAt(pos)=='#') pos++;
-            while (pos < len && s.charAt(pos)==' ') pos++;
+        if (ch == '#') {
+            while (pos < len && s.charAt(pos) == '#') {
+                pos++;
+            }
+            while (pos < len && s.charAt(pos) == ' ') {
+                pos++;
+            }
             return pos;
         }
         // unordered list - or * or + followed by space
-        if ((ch=='-'||ch=='*'||ch=='+') && pos+1 < len && s.charAt(pos+1)==' ') {
+        if ((ch == '-' || ch == '*' || ch == '+') && pos + 1 < len && s.charAt(pos + 1) == ' ') {
             pos += 2;
             return pos;
         }
         // ordered list: digits '.' space
         int p = pos;
-        while (p < len && Character.isDigit(s.charAt(p))) p++;
-        if (p > pos && p < len && s.charAt(p)=='.') {
+        while (p < len && Character.isDigit(s.charAt(p))) {
             p++;
-            if (p < len && s.charAt(p)==' ') return p+1;
+        }
+        if (p > pos && p < len && s.charAt(p) == '.') {
+            p++;
+            if (p < len && s.charAt(p) == ' ') {
+                return p + 1;
+            }
         }
         return i;
     }
 
     private static class NormalizedEditor {
+
         final String norm;
         final int[] map; // map from norm index -> original editor index
-        NormalizedEditor(String norm, int[] map) { this.norm = norm; this.map = map; }
+
+        NormalizedEditor(String norm, int[] map) {
+            this.norm = norm;
+            this.map = map;
+        }
     }
 
     private NormalizedEditor normalizeEditorWithMapping(String editor) {
@@ -1467,14 +1681,21 @@ public class MarkdownPanel extends javax.swing.JPanel implements PreviewPanel {
                 int sk = skipListOrHeadingPrefix(editor, i);
                 i = sk;
             }
-            if (i >= n) break;
+            if (i >= n) {
+                break;
+            }
 
             char c = editor.charAt(i);
-            if (isIgnorableMarkdownChar(c)) { i++; continue; }
+            if (isIgnorableMarkdownChar(c)) {
+                i++;
+                continue;
+            }
             if (Character.isWhitespace(c)) {
                 // collapse any run of whitespace to single space
                 int runStart = i;
-                while (i < n && Character.isWhitespace(editor.charAt(i))) i++;
+                while (i < n && Character.isWhitespace(editor.charAt(i))) {
+                    i++;
+                }
                 // append single space
                 norm.append(' ');
                 tempMap[m++] = runStart; // map this single space to first ws position
@@ -1490,13 +1711,19 @@ public class MarkdownPanel extends javax.swing.JPanel implements PreviewPanel {
     }
 
     private int mapNormToOriginalStart(NormalizedEditor ne, int normIndex) {
-        if (normIndex < 0 || normIndex >= ne.map.length) return -1;
+        if (normIndex < 0 || normIndex >= ne.map.length) {
+            return -1;
+        }
         return ne.map[normIndex];
     }
 
     private int mapNormToOriginalEnd(NormalizedEditor ne, int normIndex, int originalLength) {
-        if (normIndex < 0) return -1;
-        if (normIndex >= ne.map.length) return originalLength;
+        if (normIndex < 0) {
+            return -1;
+        }
+        if (normIndex >= ne.map.length) {
+            return originalLength;
+        }
         return ne.map[normIndex];
     }
 
@@ -1505,7 +1732,9 @@ public class MarkdownPanel extends javax.swing.JPanel implements PreviewPanel {
     }
 
     private void reselectInPreview(String selectionText) {
-        if (selectionText == null || selectionText.isEmpty()) return;
+        if (selectionText == null || selectionText.isEmpty()) {
+            return;
+        }
         try {
             javax.swing.text.Document doc = markdownPane.getDocument();
             String plain = doc.getText(0, doc.getLength()).replace('\r', '\n');
@@ -1522,7 +1751,9 @@ public class MarkdownPanel extends javax.swing.JPanel implements PreviewPanel {
 
     private void synchronizeSelectionOnTabChange() {
         int idx = jTabbedPane1.getSelectedIndex();
-        if (idx < 0) return;
+        if (idx < 0) {
+            return;
+        }
         String title = jTabbedPane1.getTitleAt(idx);
         if ("Vorschau".equals(title)) {
             String sel = taEdit.getSelectedText();
@@ -1531,7 +1762,9 @@ public class MarkdownPanel extends javax.swing.JPanel implements PreviewPanel {
             }
         } else if ("Editor".equals(title)) {
             String selPrev = markdownPane.getSelectedText();
-            if (selPrev == null || selPrev.isEmpty()) selPrev = lastPreviewSelectionText;
+            if (selPrev == null || selPrev.isEmpty()) {
+                selPrev = lastPreviewSelectionText;
+            }
             if (selPrev != null && !selPrev.isEmpty()) {
                 if (selectInEditorByPreviewSelection(selPrev)) {
                     trimSelectionInsideInlineMarkdown();
@@ -1546,29 +1779,60 @@ public class MarkdownPanel extends javax.swing.JPanel implements PreviewPanel {
             if (s != null && !s.isEmpty()) {
                 lastPreviewSelectionText = s;
             }
-        } catch (Exception ignore) {}
+        } catch (Exception ignore) {
+        }
     }
 
     private void trimSelectionInsideInlineMarkdown() {
         int start = taEdit.getSelectionStart();
         int end = taEdit.getSelectionEnd();
-        if (start < 0 || end <= start) return;
+        if (start < 0 || end <= start) {
+            return;
+        }
         String text = taEdit.getText();
-        if (end > text.length()) end = text.length();
+        if (end > text.length()) {
+            end = text.length();
+        }
         String sel = text.substring(start, end);
 
         // Trim closing markers first
         boolean changed = false;
-        if (sel.endsWith("**") && end - start >= 2) { end -= 2; changed = true; sel = text.substring(start, end); }
-        else if (sel.endsWith("`") && end - start >= 1) { end -= 1; changed = true; sel = text.substring(start, end); }
-        else if (sel.endsWith("*") && end - start >= 1) { end -= 1; changed = true; sel = text.substring(start, end); }
-        else if (sel.endsWith("_") && end - start >= 1) { end -= 1; changed = true; sel = text.substring(start, end); }
+        if (sel.endsWith("**") && end - start >= 2) {
+            end -= 2;
+            changed = true;
+            sel = text.substring(start, end);
+        } else if (sel.endsWith("`") && end - start >= 1) {
+            end -= 1;
+            changed = true;
+            sel = text.substring(start, end);
+        } else if (sel.endsWith("*") && end - start >= 1) {
+            end -= 1;
+            changed = true;
+            sel = text.substring(start, end);
+        } else if (sel.endsWith("_") && end - start >= 1) {
+            end -= 1;
+            changed = true;
+            sel = text.substring(start, end);
+        }
 
         // Trim opening markers
-        if (sel.startsWith("**") && end - start >= 2) { start += 2; changed = true; sel = text.substring(start, end); }
-        else if (sel.startsWith("`") && end - start >= 1) { start += 1; changed = true; sel = text.substring(start, end); }
-        else if (sel.startsWith("*") && end - start >= 1) { start += 1; changed = true; sel = text.substring(start, end); }
-        else if (sel.startsWith("_") && end - start >= 1) { start += 1; changed = true; sel = text.substring(start, end); }
+        if (sel.startsWith("**") && end - start >= 2) {
+            start += 2;
+            changed = true;
+            sel = text.substring(start, end);
+        } else if (sel.startsWith("`") && end - start >= 1) {
+            start += 1;
+            changed = true;
+            sel = text.substring(start, end);
+        } else if (sel.startsWith("*") && end - start >= 1) {
+            start += 1;
+            changed = true;
+            sel = text.substring(start, end);
+        } else if (sel.startsWith("_") && end - start >= 1) {
+            start += 1;
+            changed = true;
+            sel = text.substring(start, end);
+        }
 
         if (changed && end > start) {
             taEdit.select(start, end);
@@ -1578,7 +1842,10 @@ public class MarkdownPanel extends javax.swing.JPanel implements PreviewPanel {
     private void setEditorTextFromExternal(String text) {
         // Called when loading content/status: should not create an undo entry that clears everything
         taEdit.setText(text);
-        try { taEdit.setCaretPosition(0); } catch (Exception ignore) {}
+        try {
+            taEdit.setCaretPosition(0);
+        } catch (Exception ignore) {
+        }
         taEdit.revalidate();
         taEdit.repaint();
         markdownPane.setMarkdownText(text);
@@ -1593,7 +1860,7 @@ public class MarkdownPanel extends javax.swing.JPanel implements PreviewPanel {
         if (this.id != null && !this.readOnly) {
 
             byte[] currentBytes = this.taEdit.getText().trim().getBytes();
-            if (this.initialContent!=null && !Arrays.equals(this.initialContent, currentBytes)) {
+            if (this.initialContent != null && !Arrays.equals(this.initialContent, currentBytes)) {
                 try {
                     ClientSettings settings = ClientSettings.getInstance();
                     JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
@@ -1611,6 +1878,5 @@ public class MarkdownPanel extends javax.swing.JPanel implements PreviewPanel {
     public String getDocumentId() {
         return this.id;
     }
-    
-    
+
 }
