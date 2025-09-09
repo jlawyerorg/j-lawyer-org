@@ -4455,8 +4455,8 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
     private void applyConflictRenderers() {
         // Default renderer for Object.class
         this.tblReviewReasons.setDefaultRenderer(Object.class, new ConflictAwareDefaultRenderer());
-        // Boolean renderer should also honor conflict foreground color
-        this.tblReviewReasons.setDefaultRenderer(Boolean.class, new ConflictAwareDefaultRenderer());
+        // Boolean renderer with real checkbox, also honoring conflict foreground color
+        this.tblReviewReasons.setDefaultRenderer(Boolean.class, new ConflictAwareBooleanRenderer());
         // Column 5 has a custom renderer: wrap it to keep user rendering + conflict style
         try {
             javax.swing.table.TableColumn col = this.tblReviewReasons.getColumnModel().getColumn(5);
@@ -4497,6 +4497,61 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
                 // ignore rendering issues
             }
             return c;
+        }
+    }
+
+    // Checkbox renderer for Boolean cells, retaining conflict highlighting/tooltip
+    private class ConflictAwareBooleanRenderer extends javax.swing.JCheckBox implements javax.swing.table.TableCellRenderer {
+        private final javax.swing.border.Border noFocusBorder =
+                (javax.swing.UIManager.getBorder("Table.cellNoFocusBorder") != null)
+                        ? javax.swing.UIManager.getBorder("Table.cellNoFocusBorder")
+                        : new javax.swing.border.EmptyBorder(1, 1, 1, 1);
+
+        public ConflictAwareBooleanRenderer() {
+            super();
+            setHorizontalAlignment(javax.swing.SwingConstants.CENTER);
+        }
+
+        @Override
+        public java.awt.Component getTableCellRendererComponent(javax.swing.JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
+            boolean selected = Boolean.TRUE.equals(value);
+            setSelected(selected);
+
+            // selection colors
+            if (isSelected) {
+                setBackground(table.getSelectionBackground());
+                setForeground(table.getSelectionForeground());
+            } else {
+                setBackground(table.getBackground());
+                setForeground(table.getForeground());
+            }
+
+            // borders like default renderers
+            if (hasFocus) {
+                javax.swing.border.Border focusBorder = javax.swing.UIManager.getBorder("Table.focusCellHighlightBorder");
+                setBorder(focusBorder);
+            } else {
+                setBorder(noFocusBorder);
+            }
+
+            try {
+                Object eventObj = table.getValueAt(row, 0);
+                if (eventObj instanceof com.jdimension.jlawyer.persistence.ArchiveFileReviewsBean) {
+                    com.jdimension.jlawyer.persistence.ArchiveFileReviewsBean evt = (com.jdimension.jlawyer.persistence.ArchiveFileReviewsBean) eventObj;
+                    if (evt.getEventType() == com.jdimension.jlawyer.persistence.ArchiveFileReviewsBean.EVENTTYPE_EVENT && conflictingEventIds.contains(evt.getId())) {
+                        if (!isSelected) {
+                            setForeground(DefaultColorTheme.COLOR_LOGO_RED);
+                        }
+                        setToolTipText(buildConflictTooltip(evt));
+                    } else {
+                        if (!isSelected) setForeground(java.awt.Color.BLACK);
+                        setToolTipText(null);
+                    }
+                }
+            } catch (Throwable t) {
+                // ignore rendering issues
+            }
+            return this;
         }
     }
 
