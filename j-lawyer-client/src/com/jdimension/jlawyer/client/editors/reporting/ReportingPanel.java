@@ -1023,6 +1023,25 @@ public class ReportingPanel extends javax.swing.JPanel implements ThemeableEdito
         casesBySize.setDefaultEndDate(toDate);
         allReports.add(casesBySize);
         
+        Report casesUnsecured=new Report();
+        casesUnsecured.setName("Akten ohne Zugriffsbeschränkkungen");
+        casesUnsecured.setDescription("<html>Tabellarische Auswertungen aller Akten ohne Zugriffsbeschränkungen</b></html>");
+        casesUnsecured.setReportId(Reports.RPT_CASES_UNSECURED);
+        casesUnsecured.setClassName(DynamicReportContainerPanel.class.getName());
+        casesUnsecured.setCategory("Systemwartung");
+        casesUnsecured.setSequence(20);
+        casesUnsecured.setTypeTable(true);
+        casesUnsecured.setTypeChart(false);
+        casesUnsecured.setSecurityType(Report.SECURITY_COMMON);
+        fromDate=new Date();
+        fromDate.setYear(fromDate.getYear()-20);
+        fromDate.setMonth(0);
+        fromDate.setDate(1);
+        casesUnsecured.setDefaultBeginDate(fromDate);
+        toDate=new Date();
+        casesUnsecured.setDefaultEndDate(toDate);
+        allReports.add(casesUnsecured);
+        
         DecimalFormat df=new DecimalFormat("000");
         Collections.sort(allReports, (Object arg0, Object arg1) -> {
             String s1=((Report)arg0).getCategory() + df.format(((Report)arg0).getSequence());

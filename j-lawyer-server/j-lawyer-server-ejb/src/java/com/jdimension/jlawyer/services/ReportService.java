@@ -731,6 +731,7 @@ public class ReportService implements ReportServiceRemote {
         reportPrivs.put(Reports.RPT_EMPLOYEE_ACTIVITY, PRIVILEGE_CONFIDENTIAL);
 
         reportPrivs.put(Reports.RPT_CASES_BYSIZE, PRIVILEGE_COMMON);
+        reportPrivs.put(Reports.RPT_CASES_UNSECURED, PRIVILEGE_COMMON);
 
         reportPrivs.put(Reports.RPT_REVENUE_BYCUSTOMER, PRIVILEGE_CONFIDENTIAL);
 
@@ -1287,7 +1288,11 @@ public class ReportService implements ReportServiceRemote {
             ReportResultTable mainTable = getTable(true, "Akten nach Speicherbedarf", query, List.of("Megabytes"), params);
 
             result.getTables().add(mainTable);
+        } else if (Reports.RPT_CASES_UNSECURED.equals(reportId)) {
+            String query = "select c.id as cid, c.fileNumber as Aktenzeichen, c.name as Rubrum, c.reason as wegen, case when c.archived = 1 then 'archiviert' else '' end as archiviert from cases c where c.id not in (select case_id from case_groups) and c.date_created>=? and c.date_created<=?";
+            ReportResultTable mainTable = getTable(true, "Akten ohne Zugriffsbeschränkungen", query, null, params);
 
+            result.getTables().add(mainTable);
         } else if (Reports.RPT_REVENUE_BYCUSTOMER.equals(reportId)) {
             String query = "select Organisation, Nachname, Vorname, PLZ, Ort, Strasse, Hausnr, Umsatz from (select id, company as Organisation, name as Nachname, firstName as Vorname, zipCode as PLZ, city as Ort, street as Strasse, streetNumber as Hausnr, sum(total_gross) as Umsatz from (\n"
                     + "                    SELECT c.id, c.company, c.name, c.firstName, c.zipCode, c.city, c.street, c.streetNumber, i.contact_id, i.total_gross, i.invoice_status, i.due_date\n"
