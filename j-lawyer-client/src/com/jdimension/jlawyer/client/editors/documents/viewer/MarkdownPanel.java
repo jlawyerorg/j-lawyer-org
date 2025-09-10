@@ -1438,10 +1438,6 @@ public class MarkdownPanel extends javax.swing.JPanel implements PreviewPanel {
         amPrev.put(REDO, redoAction);
     }
 
-    private boolean hasSelection() {
-        return taEdit.getSelectionStart() != taEdit.getSelectionEnd();
-    }
-
     private void updateToolbarEnabledStates() {
         boolean canEdit = !this.readOnly;
         boolean selPreview = markdownPane.getSelectionStart() != markdownPane.getSelectionEnd();
