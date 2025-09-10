@@ -709,6 +709,16 @@ public class DocumentViewerFactory {
             pdfP.setMaximumSize(new Dimension(width, height));
             pdfP.setPreferredSize(new Dimension(width, height));
             pdfP.showContent(id, content);
+            if(previewProvider != null && previewProvider instanceof CaseDocumentPreviewProvider) {
+                try {
+                    DocumentPreview previewText = ((CaseDocumentPreviewProvider) previewProvider).getPreviewAsText();
+                    if (previewText != null) {
+                        pdfP.showContentAsText(previewText.getText());
+                    }
+                } catch (Exception prevEx) {
+                    log.error("Could not load preview as text", prevEx);
+                }
+            }
             return pdfP;
 
         } else if (lFileName.endsWith(".jpg") || lFileName.endsWith(".jpeg") || lFileName.endsWith(".gif") || lFileName.endsWith(".png")) {
@@ -889,6 +899,16 @@ public class DocumentViewerFactory {
                 pdfP.setMaximumSize(new Dimension(width, height));
                 pdfP.setPreferredSize(new Dimension(width, height));
                 pdfP.showContent(id, docPreview.getBytes());
+                if(previewProvider != null && previewProvider instanceof CaseDocumentPreviewProvider) {
+                try {
+                    DocumentPreview previewText = ((CaseDocumentPreviewProvider) previewProvider).getPreviewAsText();
+                    if (previewText != null) {
+                        pdfP.showContentAsText(previewText.getText());
+                    }
+                } catch (Exception prevEx) {
+                    log.error("Could not load preview as text", prevEx);
+                }
+            }
                 return pdfP;
             } else {
 
@@ -997,6 +1017,16 @@ public class DocumentViewerFactory {
             pdfP.setMaximumSize(new Dimension(width, height));
             pdfP.setPreferredSize(new Dimension(width, height));
             pdfP.showContent(id, docPreview.getBytes());
+            if(previewProvider != null && previewProvider instanceof CaseDocumentPreviewProvider) {
+                try {
+                    DocumentPreview previewText = ((CaseDocumentPreviewProvider) previewProvider).getPreviewAsText();
+                    if (previewText != null) {
+                        pdfP.showContentAsText(previewText.getText());
+                    }
+                } catch (Exception prevEx) {
+                    log.error("Could not load preview as text", prevEx);
+                }
+            }
             return pdfP;
         } else {
             // plain text preview is default

@@ -695,6 +695,13 @@ public class CaseDocumentPreviewProvider implements DocumentPreviewProvider {
         }
     }
     
-    
+    public DocumentPreview getPreviewAsText() throws Exception {
+        try {
+            return this.afs.getDocumentPreview(this.docId, DocumentPreview.TYPE_TEXT);
+        } catch (Exception ex) {
+            log.warn(ex.getMessage());
+            return null;
+        }
+    }
     
 }
