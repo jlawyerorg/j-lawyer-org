@@ -1020,7 +1020,7 @@ public class MarkdownPanel extends javax.swing.JPanel implements PreviewPanel {
         return out;
     }
 
-    private void surroundSelectionWithFences(String fenceFirstLine) {
+    private void surroundSelectionWithFences() {
         int start = taEdit.getSelectionStart();
         int end = taEdit.getSelectionEnd();
         String sel = (start == end) ? "" : taEdit.getSelectedText();
@@ -1041,7 +1041,7 @@ public class MarkdownPanel extends javax.swing.JPanel implements PreviewPanel {
                     taEdit.select(start + opener.length(), start + opener.length() + sel.length());
                 }
             } catch (Exception ex) {
-                // ignore
+                log.error(ex);
             }
         });
         markdownPane.setMarkdownText(taEdit.getText());
@@ -1186,7 +1186,7 @@ public class MarkdownPanel extends javax.swing.JPanel implements PreviewPanel {
             wrapSelection("`", "`");
         });
         btnCodeBlock.addActionListener((ActionEvent e) -> {
-            surroundSelectionWithFences("```");
+            surroundSelectionWithFences();
         });
         btnLink.addActionListener((ActionEvent e) -> {
             insertLink();
@@ -1254,7 +1254,7 @@ public class MarkdownPanel extends javax.swing.JPanel implements PreviewPanel {
         btnPCodeBlock.addActionListener((ActionEvent e) -> {
             String s = markdownPane.getSelectedText();
             if (selectInEditorByPreviewSelection()) {
-                surroundSelectionWithFences("```");
+                surroundSelectionWithFences();
                 reselectInPreview(s);
             }
         });
@@ -1444,7 +1444,6 @@ public class MarkdownPanel extends javax.swing.JPanel implements PreviewPanel {
 
     private void updateToolbarEnabledStates() {
         boolean canEdit = !this.readOnly;
-        boolean selEditor = hasSelection();
         boolean selPreview = markdownPane.getSelectionStart() != markdownPane.getSelectionEnd();
 
         // Editor toolbar: enabled when editable; actions always allowed

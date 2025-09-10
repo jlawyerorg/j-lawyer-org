@@ -709,7 +709,7 @@ public class DocumentViewerFactory {
             pdfP.setMaximumSize(new Dimension(width, height));
             pdfP.setPreferredSize(new Dimension(width, height));
             pdfP.showContent(id, content);
-            if(previewProvider != null && previewProvider instanceof CaseDocumentPreviewProvider) {
+            if(previewProvider instanceof CaseDocumentPreviewProvider) {
                 try {
                     DocumentPreview previewText = ((CaseDocumentPreviewProvider) previewProvider).getPreviewAsText();
                     if (previewText != null) {
@@ -899,7 +899,7 @@ public class DocumentViewerFactory {
                 pdfP.setMaximumSize(new Dimension(width, height));
                 pdfP.setPreferredSize(new Dimension(width, height));
                 pdfP.showContent(id, docPreview.getBytes());
-                if(previewProvider != null && previewProvider instanceof CaseDocumentPreviewProvider) {
+                if(previewProvider instanceof CaseDocumentPreviewProvider) {
                 try {
                     DocumentPreview previewText = ((CaseDocumentPreviewProvider) previewProvider).getPreviewAsText();
                     if (previewText != null) {
@@ -1017,7 +1017,7 @@ public class DocumentViewerFactory {
             pdfP.setMaximumSize(new Dimension(width, height));
             pdfP.setPreferredSize(new Dimension(width, height));
             pdfP.showContent(id, docPreview.getBytes());
-            if(previewProvider != null && previewProvider instanceof CaseDocumentPreviewProvider) {
+            if(previewProvider instanceof CaseDocumentPreviewProvider) {
                 try {
                     DocumentPreview previewText = ((CaseDocumentPreviewProvider) previewProvider).getPreviewAsText();
                     if (previewText != null) {

@@ -878,7 +878,6 @@ public class FileConverter {
             
             MarkdownParser parser = new MarkdownParser();
             parser.parse(mdText);
-            org.commonmark.node.Node document = parser.getDocument();
             String html = parser.getHTML();
             html=html.replace("�", "");
             if (html != null) {
