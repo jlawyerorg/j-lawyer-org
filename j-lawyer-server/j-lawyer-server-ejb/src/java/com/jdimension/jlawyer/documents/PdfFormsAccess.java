@@ -672,20 +672,11 @@ import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import org.apache.log4j.Logger;
-import org.apache.pdfbox.contentstream.operator.Operator;
-import org.apache.pdfbox.cos.COSDictionary;
-import org.apache.pdfbox.cos.COSName;
-import org.apache.pdfbox.cos.COSStream;
-import org.apache.pdfbox.pdfparser.PDFStreamParser;
 import org.apache.pdfbox.pdmodel.PDDocument;
 import org.apache.pdfbox.pdmodel.PDDocumentCatalog;
-import org.apache.pdfbox.pdmodel.PDPage;
-import org.apache.pdfbox.pdmodel.interactive.annotation.PDAnnotation;
-import org.apache.pdfbox.pdmodel.interactive.annotation.PDAnnotationWidget;
 import org.apache.pdfbox.pdmodel.interactive.form.PDAcroForm;
 import org.apache.pdfbox.pdmodel.interactive.form.PDField;
 import org.apache.pdfbox.pdmodel.interactive.form.PDNonTerminalField;
-import org.apache.pdfbox.pdmodel.interactive.form.PDVariableText;
 
 /**
  *
@@ -698,15 +689,15 @@ public class PdfFormsAccess {
 
     public static void setPlaceHolders(String caseId, String fileInFileSystem, String fileName, HashMap<String, Object> values, ArrayList<String> formsPrefixes) throws Exception {
         if (fileName.toLowerCase().endsWith(EXT_PDF)) {
-            File inputFile = new File(fileInFileSystem);
+            File inputFile=new File(fileInFileSystem);
             // Create tempFile in the same directory as inputFile
             File tempFile = new File(inputFile.getParentFile(), System.currentTimeMillis() + ".pdf");
-
+            
             PDDocument document = PDDocument.load(inputFile);
             replacePlaceHolders(document, values);
             document.save(tempFile);
             document.close();
-
+            
             // Replace the original file with the modified one
             Files.move(tempFile.toPath(), inputFile.toPath(), StandardCopyOption.REPLACE_EXISTING);
 
@@ -725,34 +716,6 @@ public class PdfFormsAccess {
 
     }
 
-    private static void listAllFields(PDField field, ArrayList<String> searchStrings, ArrayList<String> foundStrings) {
-        if (field == null) {
-            return;
-        }
-
-        System.out.println("Field Name: " + field.getFullyQualifiedName());
-        System.out.println("Field Value: " + field.getValueAsString());
-        System.out.println("Field Type: " + field.getClass().getSimpleName());
-        System.out.println("Field Keys: " + field.getCOSObject().keySet());
-
-        for (String ph : searchStrings) {
-            if (field.getValueAsString() != null && field.getValueAsString().contains(ph)) {
-                foundStrings.add(ph);
-            } else if (field.getCOSObject().containsKey("T")) { // Check correct key
-                if (field.getCOSObject().getString("T").equals(ph.replace("{{", "").replace("}}", ""))) {
-                    foundStrings.add(ph);
-                }
-            }
-        }
-
-        // Force recursive traversal into deeply nested fields
-        if (field instanceof PDNonTerminalField) {
-            for (PDField child : ((PDNonTerminalField) field).getChildren()) {
-                listAllFields(child, searchStrings, foundStrings);
-            }
-        }
-    }
-
     private static void list(PDField field, ArrayList<String> searchStrings, ArrayList<String> foundStrings) {
         System.out.println("Feld (Name / Wert): " + field.getFullyQualifiedName() + " = " + field.getValueAsString());
         //System.out.println("    Wert im PDF: " + field.getValueAsString());
@@ -762,8 +725,8 @@ public class PdfFormsAccess {
             if (field.getValueAsString() != null && field.getValueAsString().contains(ph)) {
                 foundStrings.add(ph);
             } else {
-                if (field.getCOSObject().containsKey("T")) {
-                    if (field.getCOSObject().getString("T").equals(ph.replace("{{", "").replace("}}", ""))) {
+                if (field.getCOSObject().containsKey("TU")) {
+                    if (field.getCOSObject().getString("TU").equals(ph.replace("{{", "").replace("}}", ""))) {
                         foundStrings.add(ph);
                     }
                 }
@@ -775,9 +738,6 @@ public class PdfFormsAccess {
             for (PDField child : nonTerminalField.getChildren()) {
                 list(child, searchStrings, foundStrings);
             }
-        } else if (field instanceof PDVariableText) {
-            // Some form fields store values differently
-            System.out.println("VariableText Field Found: " + field.getFullyQualifiedName());
         }
     }
 
@@ -817,91 +777,24 @@ public class PdfFormsAccess {
         }
     }
 
-    private static void extractTextFromStream(COSStream appearanceStream) throws IOException {
-        PDFStreamParser parser = new PDFStreamParser(appearanceStream);
-        parser.parse();
-        List<Object> tokens = parser.getTokens();
-
-        for (Object token : tokens) {
-            if (token instanceof Operator) {
-                Operator op = (Operator) token;
-                if ("Tj".equals(op.getName()) || "TJ".equals(op.getName())) {
-                    System.out.println("Found text: " + tokens.get(tokens.indexOf(op) - 1));
-                }
-            }
-        }
-    }
-    
     private static void collectPlaceHolders(PDDocument document, ArrayList<String> searchStrings, ArrayList<String> foundStrings) throws IOException {
 
         //List<PDField> fields=document.getDocumentCatalog().getAcroForm().getFields();
         PDDocumentCatalog cat = document.getDocumentCatalog();
-
-        for (PDPage page : document.getPages()) {
-            for (PDAnnotation annotation : page.getAnnotations()) {
-                if (annotation instanceof PDAnnotationWidget) {
-                    PDAnnotationWidget widget = (PDAnnotationWidget) annotation;
-                    if (widget.getCOSObject().containsKey("T")) {
-                        String fieldName = widget.getCOSObject().getString("T");
-                        System.out.println("Found widget field: " + fieldName);
-                    }
-                }
-            }
-        }
-
         PDAcroForm form = cat.getAcroForm();
-        if (form == null) {
+        if(form==null)
             return;
-        }
-
-        for (PDField field : form.getFieldTree()) {
-            COSDictionary fieldDict = field.getCOSObject();
-            if (fieldDict.containsKey(COSName.AP)) {  // Check if it has an appearance stream
-                COSDictionary apDict = (COSDictionary) fieldDict.getDictionaryObject(COSName.AP);
-                if (apDict.containsKey(COSName.N)) {  // Extract "N" (normal appearance)
-                    COSStream appearanceStream = (COSStream) apDict.getDictionaryObject(COSName.N);
-                    extractTextFromStream(appearanceStream);
-                }
-            }
-        }
-
-        COSDictionary acroFormDict = form.getCOSObject();
-        System.out.println("AcroForm Dictionary Keys: " + acroFormDict.keySet());
-
-        if (form.getXFA() != null) {
-            System.out.println("PDF uses XFA forms, which are not supported by PDFBox.");
-        }
-
-        for (PDField field : form.getFieldTree()) {
-            listAllFields(field, searchStrings, foundStrings);
-        }
-
-        for (PDField field : form.getFieldTree()) {
-            COSDictionary cosObject = field.getCOSObject();
-            if (cosObject.containsKey(COSName.AP)) {
-                COSDictionary apDict = (COSDictionary) cosObject.getDictionaryObject(COSName.AP);
-                System.out.println("Field " + field.getFullyQualifiedName() + " has AP: " + apDict);
-            }
-        }
-
-        //List<PDField> fields = form.getFields();
-        List<PDField> fields = new ArrayList<>();
-        form.getFieldTree().forEach(fields::add);
+        
+        List<PDField> fields = form.getFields();
 
         for (PDField field : fields) {
-
-            System.out.println("Field Name: " + field.getFullyQualifiedName());
-            System.out.println("Field Value: " + field.getValueAsString());
-            System.out.println("Field Type: " + field.getClass().getSimpleName());
-            System.out.println("Field Keys: " + field.getCOSObject().keySet());
-
             for (String ph : searchStrings) {
                 // placeholders may be VALUES of a form field or may be the NAME of a form field
                 if (field.getValueAsString() != null && field.getValueAsString().contains(ph)) {
                     foundStrings.add(ph);
                 } else {
-                    if (field.getCOSObject().containsKey("T")) {
-                        if (field.getCOSObject().getString("T").equals(ph.replace("{{", "").replace("}}", ""))) {
+                    if (field.getCOSObject().containsKey("TU")) {
+                        if (field.getCOSObject().getString("TU").equals(ph.replace("{{", "").replace("}}", ""))) {
                             foundStrings.add(ph);
                         }
                     }
@@ -922,10 +815,9 @@ public class PdfFormsAccess {
         //List<PDField> fields=document.getDocumentCatalog().getAcroForm().getFields();
         PDDocumentCatalog cat = document.getDocumentCatalog();
         PDAcroForm form = cat.getAcroForm();
-        if (form == null) {
+        if(form==null)
             return document;
-        }
-
+        
         List<PDField> fields = form.getFields();
 
         for (PDField field : fields) {
