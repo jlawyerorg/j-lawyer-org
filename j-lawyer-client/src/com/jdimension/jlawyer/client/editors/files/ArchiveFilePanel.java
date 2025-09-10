@@ -4061,9 +4061,8 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
                 .add(jPanel10Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
                     .add(jPanel10Layout.createSequentialGroup()
                         .add(jPanel10Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
-                            .add(jPanel10Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.BASELINE)
-                                .add(cmdAddHistory)
-                                .add(cmdLoadFullHistory))
+                            .add(cmdLoadFullHistory)
+                            .add(cmdAddHistory)
                             .add(cmdExportHistoryTimeline))
                         .addPreferredGap(org.jdesktop.layout.LayoutStyle.UNRELATED)
                         .add(jScrollPane4, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 725, Short.MAX_VALUE))
@@ -7149,8 +7148,9 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
     }//GEN-LAST:event_cmdLoadFullHistoryActionPerformed
 
     private void cmdExportHistoryTimelineActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdExportHistoryTimelineActionPerformed
+        this.loadHistoryEntries(null);
         try {
-            exportHistoryTimelineToHtml(true);
+            generateHistoryTimelineHtml(true);
         } catch (Throwable ex) {
             log.error("Error exporting history timeline", ex);
             javax.swing.JOptionPane.showMessageDialog(this, "Fehler beim Export der Aktenhistorie: " + ex.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, javax.swing.JOptionPane.ERROR_MESSAGE);
@@ -7158,8 +7158,9 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
     }//GEN-LAST:event_cmdExportHistoryTimelineActionPerformed
 
     private void cmdSaveHistoryDocumentActionPerformed(java.awt.event.ActionEvent evt) {
+        this.loadHistoryEntries(null);
         try {
-            java.io.File out = exportHistoryTimelineToHtml(false);
+            java.io.File out = generateHistoryTimelineHtml(false);
             if (out == null) {
                 return;
             }
@@ -7168,7 +7169,7 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
             if (safeCase.trim().length() == 0) {
                 safeCase = "Akte";
             }
-            String fileName = "Historie-" + safeCase + "-" + new java.text.SimpleDateFormat("yyyyMMdd-HHmmss").format(new java.util.Date()) + ".html";
+            String fileName = "Historie-" + safeCase + "-" + new java.text.SimpleDateFormat("yyyyMMdd-HHmm").format(new java.util.Date()) + ".htm";
             fileName = FileUtils.sanitizeFileName(fileName);
             byte[] content = com.jdimension.jlawyer.client.utils.FileUtils.readFile(out);
 
@@ -7177,14 +7178,14 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
             ArchiveFileServiceRemote remote = locator.lookupArchiveFileServiceRemote();
             ArchiveFileDocumentsBean newDoc = remote.addDocument(this.dto.getId(), fileName, content, "", null);
             this.caseFolderPanel1.addDocument(remote.getDocument(newDoc.getId()), null);
-            javax.swing.JOptionPane.showMessageDialog(this, "Historie als HTML-Dokument hinzugefügt.", com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_HINT, javax.swing.JOptionPane.INFORMATION_MESSAGE);
+            javax.swing.JOptionPane.showMessageDialog(this, "Historie wurde als Dokument zur Akte gespeichert.", com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_HINT, javax.swing.JOptionPane.INFORMATION_MESSAGE);
         } catch (Throwable ex) {
             log.error("Error adding history HTML as document", ex);
             javax.swing.JOptionPane.showMessageDialog(this, "Fehler beim Hinzufügen des Dokuments: " + ex.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, javax.swing.JOptionPane.ERROR_MESSAGE);
         }
     }
 
-    private java.io.File exportHistoryTimelineToHtml(boolean openBrowser) throws Exception {
+    private java.io.File generateHistoryTimelineHtml(boolean openBrowser) throws Exception {
         int rowCount = this.tblHistory.getRowCount();
         if (rowCount == 0) {
             javax.swing.JOptionPane.showMessageDialog(this, "Keine Historie vorhanden.", com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_HINT, javax.swing.JOptionPane.INFORMATION_MESSAGE);
@@ -7319,15 +7320,16 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
         }
 
         if (openBrowser) {
+        try {
+            DesktopUtils.openBrowser(out.toURI().toString());
+        } catch (Throwable t) {
             try {
-                DesktopUtils.openBrowser(out.toURI().toString());
-            } catch (Throwable t) {
-                try {
-                    java.awt.Desktop.getDesktop().open(out);
-                } catch (Throwable ignore) {
-                }
+                java.awt.Desktop.getDesktop().open(out);
+            } catch (Throwable ignore) {
+                // no other option to handle this
             }
         }
+    }
         return out;
     }
 

@@ -773,10 +773,17 @@ public class DocumentViewerFactory {
                 spp.showStatus("FEHLER: " + ex.getMessage());
             }
             return spp;
-        } else if (lFileName.endsWith(".html") || lFileName.endsWith(".htm")) {
+        } else if (lFileName.endsWith(".html")) {
             HtmlPanel hp = new HtmlPanel(id, readOnly);
             hp.setSize(new Dimension(width, height));
             hp.setFileName(fileName);
+            hp.setMaximumSize(new Dimension(width, height));
+            hp.setPreferredSize(new Dimension(width, height));
+            hp.showContent(id, content);
+            return hp;
+        } else if (lFileName.endsWith(".htm")) {
+            JavaFxBrowserPanel hp = new JavaFxBrowserPanel();
+            hp.setSize(new Dimension(width, height));
             hp.setMaximumSize(new Dimension(width, height));
             hp.setPreferredSize(new Dimension(width, height));
             hp.showContent(id, content);

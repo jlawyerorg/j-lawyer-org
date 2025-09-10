@@ -3248,10 +3248,8 @@
                           <Group type="103" groupAlignment="0" attributes="0">
                               <Group type="102" attributes="0">
                                   <Group type="103" groupAlignment="0" attributes="0">
-                                      <Group type="103" groupAlignment="3" attributes="0">
-                                          <Component id="cmdAddHistory" alignment="3" min="-2" max="-2" attributes="0"/>
-                                          <Component id="cmdLoadFullHistory" alignment="0" min="-2" max="-2" attributes="0"/>
-                                      </Group>
+                                      <Component id="cmdLoadFullHistory" alignment="0" min="-2" max="-2" attributes="0"/>
+                                      <Component id="cmdAddHistory" min="-2" max="-2" attributes="0"/>
                                       <Component id="cmdExportHistoryTimeline" alignment="0" min="-2" max="-2" attributes="0"/>
                                   </Group>
                                   <EmptySpace type="unrelated" max="-2" attributes="0"/>
