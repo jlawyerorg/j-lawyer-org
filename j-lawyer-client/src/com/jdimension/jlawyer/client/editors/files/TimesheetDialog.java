@@ -672,18 +672,26 @@ import com.jdimension.jlawyer.client.utils.StringUtils;
 import com.jdimension.jlawyer.persistence.AppOptionGroupBean;
 import com.jdimension.jlawyer.persistence.AppUserBean;
 import com.jdimension.jlawyer.persistence.ArchiveFileBean;
+import com.jdimension.jlawyer.persistence.ArchiveFileReviewsBean;
 import com.jdimension.jlawyer.persistence.Invoice;
 import com.jdimension.jlawyer.persistence.Timesheet;
 import com.jdimension.jlawyer.persistence.TimesheetPosition;
 import com.jdimension.jlawyer.server.constants.OptionConstants;
 import com.jdimension.jlawyer.services.JLawyerServiceLocator;
+import de.costache.calendar.NewEventEntryCallbacks;
+import de.costache.calendar.NewEventEntryDialog;
 import java.awt.Component;
+import java.awt.Dialog;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.text.DecimalFormat;
 import java.text.NumberFormat;
+import java.time.DayOfWeek;
+import java.time.LocalDate;
+import java.time.ZoneId;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Date;
 import java.util.List;
 import java.util.stream.Collectors;
 import javax.swing.BoxLayout;
@@ -695,7 +703,7 @@ import themes.colors.DefaultColorTheme;
  *
  * @author jens
  */
-public class TimesheetDialog extends javax.swing.JDialog {
+public class TimesheetDialog extends javax.swing.JDialog implements NewEventEntryCallbacks {
 
     private static final Logger log = Logger.getLogger(TimesheetDialog.class.getName());
     private static final DecimalFormat cf = new DecimalFormat("0.00");
@@ -1258,6 +1266,34 @@ public class TimesheetDialog extends javax.swing.JDialog {
                 newTimesheet = locator.lookupArchiveFileServiceRemote().addTimesheet(this.caseDto.getId(), newTimesheet);
                 this.currentEntry = newTimesheet;
 
+                int response = JOptionPane.showConfirmDialog(this, "Soll eine Wiedervorlage erstellt werden, die an die Abrechnung erinnert?", "Wiedervorlage erstellen", JOptionPane.YES_NO_OPTION);
+                if (response == JOptionPane.YES_OPTION) {
+                    NewEventEntryDialog dlg2 = new NewEventEntryDialog(this, this, Dialog.ModalityType.APPLICATION_MODAL, this.caseDto, false);
+                    dlg2.setEventType(ArchiveFileReviewsBean.EVENTTYPE_EVENT);
+                    dlg2.setSummary("Zeiten abrechnen");
+                    dlg2.setEventType(ArchiveFileReviewsBean.EVENTTYPE_FOLLOWUP);
+                    
+                    // Heutiges Datum
+                    LocalDate today = LocalDate.now();
+                    // Erster Tag des nächsten Monats
+                    LocalDate firstDayNextMonth = today.plusMonths(1).withDayOfMonth(1);
+                    // Wenn der erste Tag ein Samstag oder Sonntag ist → auf Montag verschieben
+                    DayOfWeek dow = firstDayNextMonth.getDayOfWeek();
+                    if (dow == DayOfWeek.SATURDAY) {
+                        firstDayNextMonth = firstDayNextMonth.plusDays(2);
+                    } else if (dow == DayOfWeek.SUNDAY) {
+                        firstDayNextMonth = firstDayNextMonth.plusDays(1);
+                    }
+                    // In java.util.Date umwandeln (Mitternacht in System-Zeitzone)
+                    Date result = Date.from(firstDayNextMonth.atStartOfDay(ZoneId.systemDefault()).toInstant());
+
+                    dlg2.setBeginDate(result);
+                    dlg2.setEndDate(result);
+                    dlg2.setReviewAssignee(this.caseDto.getAssistant());
+                    FrameUtils.centerDialog(dlg2, this);
+                    dlg2.setVisible(true);
+                }
+
             } catch (Exception ex) {
                 log.error("Error creating timesheet", ex);
                 JOptionPane.showMessageDialog(this, "Fehler beim Erstellen des Projekts: " + ex.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
@@ -1574,6 +1610,11 @@ public class TimesheetDialog extends javax.swing.JDialog {
             log.error("Error determining position templates for timesheet", ex);
             JOptionPane.showMessageDialog(this, "Fehler beim Laden der erlaubten Positionsvorlagen: " + ex.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
         }
+    }
+
+    @Override
+    public void entryAdded(ArchiveFileReviewsBean entry) {
+        // event is emitted by NewEventPanel
     }
 
 }
