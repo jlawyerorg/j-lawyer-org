@@ -677,6 +677,7 @@ import java.io.InputStream;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
 import javax.mail.Flags.Flag;
+import java.nio.charset.StandardCharsets;
 import javax.mail.internet.MimeMessage;
 import javax.swing.JComponent;
 import javax.swing.SwingUtilities;
@@ -757,9 +758,13 @@ public class DocumentViewerFactory {
             mdp.setMaximumSize(new Dimension(width, height));
             mdp.setPreferredSize(new Dimension(width, height));
             try {
-                mdp.showContent(id, previewProvider.getPreview().getBytes());
+                if (content == null) {
+                    mdp.showContent(id, ("FEHLER: kein Inhalt verfügbar").getBytes(StandardCharsets.UTF_8));
+                } else {
+                    mdp.showContent(id, content);
+                }
             } catch (Exception ex) {
-                mdp.showContent(id, ("FEHLER: " + ex.getMessage()).getBytes());
+                mdp.showContent(id, ("FEHLER: " + ex.getMessage()).getBytes(StandardCharsets.UTF_8));
             }
             return mdp;
         } else if (lFileName.endsWith(".wav") || lFileName.endsWith(".ogg") || lFileName.endsWith(".mp3")) {
