@@ -7286,7 +7286,7 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
             }
 
             String safeCase = (this.dto != null && this.dto.getFileNumber() != null ? this.dto.getFileNumber() : "Akte");
-            if (safeCase.trim().length() == 0) {
+            if (safeCase.isEmpty()) {
                 safeCase = "Akte";
             }
             String fileName = "Historie-" + safeCase + "-" + new java.text.SimpleDateFormat("yyyyMMdd-HHmm").format(new java.util.Date()) + ".htm";
@@ -7343,10 +7343,10 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
         Object subjectObj = this.cmbSubjectField != null ? this.cmbSubjectField.getSelectedItem() : null;
         Object lawyerObj = this.cmbLawyer != null ? this.cmbLawyer.getSelectedItem() : null;
 
-        String h1Title = (caseName != null && caseName.trim().length() > 0) ? caseName : caseTitle;
+        String h1Title = (caseName != null && !caseName.isEmpty()) ? caseName : caseTitle;
         h1Title=this.dto.getFileNumber() + " " + h1Title;
         StringBuilder meta = new StringBuilder();
-        if (reason != null && reason.trim().length() > 0) {
+        if (reason != null && !reason.isEmpty()) {
             meta.append("Wegen: ").append(escapeHtml(reason));
         }
         if (subjectObj != null) {
