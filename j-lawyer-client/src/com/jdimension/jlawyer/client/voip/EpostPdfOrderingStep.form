@@ -25,6 +25,9 @@
                   <Component id="jLabel1" alignment="1" pref="876" max="32767" attributes="0"/>
                   <Component id="jScrollPane1" alignment="0" max="32767" attributes="0"/>
                   <Group type="102" alignment="1" attributes="0">
+                      <Component id="cmdLightTable" min="-2" max="-2" attributes="0"/>
+                      <EmptySpace max="-2" attributes="0"/>
+                      <Component id="cmdReverse" min="-2" max="-2" attributes="0"/>
                       <EmptySpace min="0" pref="0" max="32767" attributes="0"/>
                       <Component id="jLabel2" min="-2" max="-2" attributes="0"/>
                       <EmptySpace max="-2" attributes="0"/>
@@ -50,6 +53,8 @@
                   <Component id="lblFileSizeMax" alignment="3" min="-2" max="-2" attributes="0"/>
                   <Component id="lblPages" alignment="3" min="-2" max="-2" attributes="0"/>
                   <Component id="jLabel2" alignment="3" min="-2" max="-2" attributes="0"/>
+                  <Component id="cmdLightTable" alignment="3" min="-2" max="-2" attributes="0"/>
+                  <Component id="cmdReverse" alignment="3" min="-2" max="-2" attributes="0"/>
               </Group>
               <EmptySpace max="-2" attributes="0"/>
               <Component id="jScrollPane1" pref="505" max="32767" attributes="0"/>
@@ -132,6 +137,30 @@
         </Property>
         <Property name="text" type="java.lang.String" value="Seiten:"/>
       </Properties>
+    </Component>
+    <Component class="javax.swing.JButton" name="cmdLightTable">
+      <Properties>
+        <Property name="icon" type="javax.swing.Icon" editor="org.netbeans.modules.form.editors2.IconEditor">
+          <Image iconType="3" name="/icons16/material/grid_on_20dp_0E72B5.png"/>
+        </Property>
+        <Property name="text" type="java.lang.String" value="&#xdc;bersicht"/>
+        <Property name="toolTipText" type="java.lang.String" value="Dokumente in der &#xdc;bersicht per Drag &amp; Drop sortieren"/>
+      </Properties>
+      <Events>
+        <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="cmdLightTableActionPerformed"/>
+      </Events>
+    </Component>
+    <Component class="javax.swing.JButton" name="cmdReverse">
+      <Properties>
+        <Property name="icon" type="javax.swing.Icon" editor="org.netbeans.modules.form.editors2.IconEditor">
+          <Image iconType="3" name="/icons16/material/import_export_20dp_0E72B5.png"/>
+        </Property>
+        <Property name="text" type="java.lang.String" value="Umkehren"/>
+        <Property name="toolTipText" type="java.lang.String" value="Reihenfolge der Dokumente umkehren"/>
+      </Properties>
+      <Events>
+        <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="cmdReverseActionPerformed"/>
+      </Events>
     </Component>
   </SubComponents>
 </Form>

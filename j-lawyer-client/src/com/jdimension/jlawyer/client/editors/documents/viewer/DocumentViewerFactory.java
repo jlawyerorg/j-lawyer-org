@@ -677,6 +677,7 @@ import java.io.InputStream;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
 import javax.mail.Flags.Flag;
+import java.nio.charset.StandardCharsets;
 import javax.mail.internet.MimeMessage;
 import javax.swing.JComponent;
 import javax.swing.SwingUtilities;
@@ -708,6 +709,16 @@ public class DocumentViewerFactory {
             pdfP.setMaximumSize(new Dimension(width, height));
             pdfP.setPreferredSize(new Dimension(width, height));
             pdfP.showContent(id, content);
+            if(previewProvider instanceof CaseDocumentPreviewProvider) {
+                try {
+                    DocumentPreview previewText = ((CaseDocumentPreviewProvider) previewProvider).getPreviewAsText();
+                    if (previewText != null) {
+                        pdfP.showContentAsText(previewText.getText());
+                    }
+                } catch (Exception prevEx) {
+                    log.error("Could not load preview as text", prevEx);
+                }
+            }
             return pdfP;
 
         } else if (lFileName.endsWith(".jpg") || lFileName.endsWith(".jpeg") || lFileName.endsWith(".gif") || lFileName.endsWith(".png")) {
@@ -757,9 +768,13 @@ public class DocumentViewerFactory {
             mdp.setMaximumSize(new Dimension(width, height));
             mdp.setPreferredSize(new Dimension(width, height));
             try {
-                mdp.showContent(id, previewProvider.getPreview().getBytes());
+                if (content == null) {
+                    mdp.showContent(id, ("FEHLER: kein Inhalt verfügbar").getBytes(StandardCharsets.UTF_8));
+                } else {
+                    mdp.showContent(id, content);
+                }
             } catch (Exception ex) {
-                mdp.showContent(id, ("FEHLER: " + ex.getMessage()).getBytes());
+                mdp.showContent(id, ("FEHLER: " + ex.getMessage()).getBytes(StandardCharsets.UTF_8));
             }
             return mdp;
         } else if (lFileName.endsWith(".wav") || lFileName.endsWith(".ogg") || lFileName.endsWith(".mp3")) {
@@ -891,6 +906,16 @@ public class DocumentViewerFactory {
                 pdfP.setMaximumSize(new Dimension(width, height));
                 pdfP.setPreferredSize(new Dimension(width, height));
                 pdfP.showContent(id, docPreview.getBytes());
+                if(previewProvider instanceof CaseDocumentPreviewProvider) {
+                try {
+                    DocumentPreview previewText = ((CaseDocumentPreviewProvider) previewProvider).getPreviewAsText();
+                    if (previewText != null) {
+                        pdfP.showContentAsText(previewText.getText());
+                    }
+                } catch (Exception prevEx) {
+                    log.error("Could not load preview as text", prevEx);
+                }
+            }
                 return pdfP;
             } else {
 
@@ -999,6 +1024,16 @@ public class DocumentViewerFactory {
             pdfP.setMaximumSize(new Dimension(width, height));
             pdfP.setPreferredSize(new Dimension(width, height));
             pdfP.showContent(id, docPreview.getBytes());
+            if(previewProvider instanceof CaseDocumentPreviewProvider) {
+                try {
+                    DocumentPreview previewText = ((CaseDocumentPreviewProvider) previewProvider).getPreviewAsText();
+                    if (previewText != null) {
+                        pdfP.showContentAsText(previewText.getText());
+                    }
+                } catch (Exception prevEx) {
+                    log.error("Could not load preview as text", prevEx);
+                }
+            }
             return pdfP;
         } else {
             // plain text preview is default

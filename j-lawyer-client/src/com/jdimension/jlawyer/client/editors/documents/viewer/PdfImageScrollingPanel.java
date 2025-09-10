@@ -664,6 +664,7 @@
 package com.jdimension.jlawyer.client.editors.documents.viewer;
 
 import com.jdimension.jlawyer.client.settings.ClientSettings;
+import com.jdimension.jlawyer.client.utils.StringUtils;
 import com.jdimension.jlawyer.client.utils.SystemUtils;
 import com.jdimension.jlawyer.client.utils.ThreadUtils;
 import com.jdimension.jlawyer.client.utils.einvoice.EInvoiceUtils;
@@ -729,6 +730,9 @@ public class PdfImageScrollingPanel extends javax.swing.JPanel implements Previe
     
     private boolean readOnly=false;
 
+    // Global key dispatcher to make LEFT/RIGHT work regardless of focus quirks
+    private transient java.awt.KeyEventDispatcher arrowKeyDispatcher;
+
     /**
      * Creates new form PlaintextPanel
      *
@@ -793,6 +797,8 @@ public class PdfImageScrollingPanel extends javax.swing.JPanel implements Previe
             }
         });
 
+        // Keyboard navigation handled via global KeyEventDispatcher
+
         String zoomFactorString = ClientSettings.getInstance().getConfiguration("pdf.zoomfactor", "100");
         this.zoomFactor = 100;
         try {
@@ -808,6 +814,93 @@ public class PdfImageScrollingPanel extends javax.swing.JPanel implements Previe
             log.warn("invalid zoom factor: " + zoomFactorString);
         }
 
+    }
+
+    @Override
+    public void addNotify() {
+        super.addNotify();
+        installArrowKeyDispatcher();
+    }
+
+    @Override
+    public void removeNotify() {
+        uninstallArrowKeyDispatcher();
+        super.removeNotify();
+    }
+
+    private void installArrowKeyDispatcher() {
+        if (arrowKeyDispatcher != null) return;
+        arrowKeyDispatcher = (java.awt.event.KeyEvent e) -> {
+            if (e.getID() != java.awt.event.KeyEvent.KEY_PRESSED) return false;
+
+            // Only when this viewer is visible in the active window and PDF tab is selected
+            java.awt.Window viewerWindow = javax.swing.SwingUtilities.windowForComponent(this);
+            java.awt.Window activeWindow = java.awt.KeyboardFocusManager.getCurrentKeyboardFocusManager().getActiveWindow();
+            if (viewerWindow == null || activeWindow == null || viewerWindow != activeWindow) return false;
+            if (!this.isShowing()) return false;
+            if (tabs.getSelectedIndex() != 0) return false;
+
+            int key = e.getKeyCode();
+            if (key == java.awt.event.KeyEvent.VK_RIGHT) {
+                navigateToPage(currentPage + 1, true);
+                e.consume();
+                return true;
+            } else if (key == java.awt.event.KeyEvent.VK_LEFT) {
+                navigateToPage(currentPage - 1, true);
+                e.consume();
+                return true;
+            }
+            return false;
+        };
+        java.awt.KeyboardFocusManager.getCurrentKeyboardFocusManager().addKeyEventDispatcher(arrowKeyDispatcher);
+    }
+
+    private void uninstallArrowKeyDispatcher() {
+        if (arrowKeyDispatcher != null) {
+            try {
+                java.awt.KeyboardFocusManager.getCurrentKeyboardFocusManager().removeKeyEventDispatcher(arrowKeyDispatcher);
+            } catch (Throwable t) {
+                log.warn("unable to remove arrow key dispatcher", t);
+            }
+            arrowKeyDispatcher = null;
+        }
+    }
+
+    // removed old local KeyBindings; handled via KeyEventDispatcher now
+
+    private void navigateToPage(int targetPage, boolean fitToScreen) {
+        if (totalPages <= 0) return;
+        if (targetPage < 0) targetPage = 0;
+        if (targetPage > totalPages - 1) targetPage = totalPages - 1;
+
+        final int desired = targetPage;
+
+        // Optionally fit to page to show the whole page when flipping
+        if (fitToScreen && this.sliderZoom.getValue() != 100) {
+            this.sliderZoom.setValue(100);
+        }
+
+        // If page is already rendered, just scroll
+        if (desired < renderedPages && desired < pnlPages.getComponentCount()) {
+            scrollToPage(desired, true);
+            return;
+        }
+
+        // Otherwise, render ahead including the desired page
+        int from = renderedPages;
+        int to = Math.max(desired, renderedPages) + MAX_RENDER_PAGES - 1;
+        renderContent(currentPage, from, to, this.zoomFactor, true);
+
+        // Wait until the page is available, then scroll to it
+        javax.swing.Timer t = new javax.swing.Timer(100, null);
+        t.addActionListener(ev -> {
+            if (!rendering && desired < renderedPages && desired < pnlPages.getComponentCount()) {
+                scrollToPage(desired, true);
+                t.stop();
+            }
+        });
+        t.setRepeats(true);
+        t.start();
     }
 
     private void setCurrentPage(int pageIndex, boolean requestFocus) {
@@ -846,6 +939,9 @@ public class PdfImageScrollingPanel extends javax.swing.JPanel implements Previe
         jScrollPane1 = new javax.swing.JScrollPane();
         pnlPages = new javax.swing.JPanel();
         lblContent = new javax.swing.JLabel();
+        pnlText = new javax.swing.JPanel();
+        jScrollPane4 = new javax.swing.JScrollPane();
+        taText = new javax.swing.JTextArea();
         pnlInvoice = new javax.swing.JPanel();
         jScrollPane2 = new javax.swing.JScrollPane();
         htmlInvoice = new javax.swing.JEditorPane();
@@ -937,17 +1033,36 @@ public class PdfImageScrollingPanel extends javax.swing.JPanel implements Previe
 
         tabs.addTab("PDF", jScrollPane1);
 
+        taText.setColumns(20);
+        taText.setLineWrap(true);
+        taText.setRows(5);
+        taText.setWrapStyleWord(true);
+        jScrollPane4.setViewportView(taText);
+
+        javax.swing.GroupLayout pnlTextLayout = new javax.swing.GroupLayout(pnlText);
+        pnlText.setLayout(pnlTextLayout);
+        pnlTextLayout.setHorizontalGroup(
+            pnlTextLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addComponent(jScrollPane4, javax.swing.GroupLayout.DEFAULT_SIZE, 391, Short.MAX_VALUE)
+        );
+        pnlTextLayout.setVerticalGroup(
+            pnlTextLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addComponent(jScrollPane4)
+        );
+
+        tabs.addTab("Text", pnlText);
+
         jScrollPane2.setViewportView(htmlInvoice);
 
         javax.swing.GroupLayout pnlInvoiceLayout = new javax.swing.GroupLayout(pnlInvoice);
         pnlInvoice.setLayout(pnlInvoiceLayout);
         pnlInvoiceLayout.setHorizontalGroup(
             pnlInvoiceLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addComponent(jScrollPane2, javax.swing.GroupLayout.DEFAULT_SIZE, 350, Short.MAX_VALUE)
+            .addComponent(jScrollPane2, javax.swing.GroupLayout.DEFAULT_SIZE, 391, Short.MAX_VALUE)
         );
         pnlInvoiceLayout.setVerticalGroup(
             pnlInvoiceLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addComponent(jScrollPane2, javax.swing.GroupLayout.Alignment.TRAILING, javax.swing.GroupLayout.DEFAULT_SIZE, 101, Short.MAX_VALUE)
+            .addComponent(jScrollPane2, javax.swing.GroupLayout.Alignment.TRAILING, javax.swing.GroupLayout.DEFAULT_SIZE, 123, Short.MAX_VALUE)
         );
 
         tabs.addTab("E-Rechnung (HTML)", pnlInvoice);
@@ -961,12 +1076,12 @@ public class PdfImageScrollingPanel extends javax.swing.JPanel implements Previe
             pnlInvoiceXmlLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(pnlInvoiceXmlLayout.createSequentialGroup()
                 .addContainerGap()
-                .addComponent(jScrollPane3, javax.swing.GroupLayout.DEFAULT_SIZE, 338, Short.MAX_VALUE)
+                .addComponent(jScrollPane3, javax.swing.GroupLayout.DEFAULT_SIZE, 379, Short.MAX_VALUE)
                 .addContainerGap())
         );
         pnlInvoiceXmlLayout.setVerticalGroup(
             pnlInvoiceXmlLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addComponent(jScrollPane3, javax.swing.GroupLayout.DEFAULT_SIZE, 101, Short.MAX_VALUE)
+            .addComponent(jScrollPane3, javax.swing.GroupLayout.DEFAULT_SIZE, 123, Short.MAX_VALUE)
         );
 
         tabs.addTab("E-Rechnung (XML)", pnlInvoiceXml);
@@ -1180,13 +1295,16 @@ public class PdfImageScrollingPanel extends javax.swing.JPanel implements Previe
     private javax.swing.JScrollPane jScrollPane1;
     private javax.swing.JScrollPane jScrollPane2;
     private javax.swing.JScrollPane jScrollPane3;
+    private javax.swing.JScrollPane jScrollPane4;
     private javax.swing.JLabel lblContent;
     private javax.swing.JLabel lblCurrentPage;
     private javax.swing.JLabel lblTotalPages;
     private javax.swing.JPanel pnlInvoice;
     private javax.swing.JPanel pnlInvoiceXml;
     private javax.swing.JPanel pnlPages;
+    private javax.swing.JPanel pnlText;
     private javax.swing.JSlider sliderZoom;
+    private javax.swing.JTextArea taText;
     private javax.swing.JTabbedPane tabs;
     private javax.swing.JTextPane xmlInvoice;
     // End of variables declaration//GEN-END:variables
@@ -1396,15 +1514,16 @@ public class PdfImageScrollingPanel extends javax.swing.JPanel implements Previe
 
         this.tabs.setEnabledAt(1, false);
         this.tabs.setEnabledAt(2, false);
+        this.tabs.setEnabledAt(3, false);
         long start = System.currentTimeMillis();
         try {
             ZUGFeRDImporter zii = new ZUGFeRDImporter(new ByteArrayInputStream(content));
             if (zii.canParse()) {
                 String invoiceHtml = EInvoiceUtils.invoiceToHTML(zii);
-                this.tabs.setEnabledAt(1, true);
                 this.tabs.setEnabledAt(2, true);
-                this.tabs.setForegroundAt(1, DefaultColorTheme.COLOR_LOGO_GREEN);
+                this.tabs.setEnabledAt(3, true);
                 this.tabs.setForegroundAt(2, DefaultColorTheme.COLOR_LOGO_GREEN);
+                this.tabs.setForegroundAt(3, DefaultColorTheme.COLOR_LOGO_GREEN);
                 this.htmlInvoice.setContentType("text/html");
                 this.htmlInvoice.setText(invoiceHtml);
                 this.htmlInvoice.setEditable(false);
@@ -1480,6 +1599,15 @@ public class PdfImageScrollingPanel extends javax.swing.JPanel implements Previe
 
     public void showContent(byte[] content) {
         this.showContent(null, content);
+
+    }
+    
+    public void showContentAsText(String text) {
+        if(!StringUtils.isEmpty(text)) {
+            this.tabs.setEnabledAt(1, true);
+            this.taText.setText(text);
+        }
+        
 
     }
 

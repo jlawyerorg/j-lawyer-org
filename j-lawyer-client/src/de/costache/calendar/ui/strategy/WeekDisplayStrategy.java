@@ -284,7 +284,10 @@ class WeekDisplayStrategy implements DisplayStrategy {
 
     @Override
     public String getDisplayInterval() {
-        return sdf.format(calendar.getConfig().getIntervalStart().getTime()) + " - " + sdf.format(calendar.getConfig().getIntervalEnd().getTime());
+        Date startDate = calendar.getConfig().getIntervalStart().getTime();
+        String base = sdf.format(startDate) + " - " + sdf.format(calendar.getConfig().getIntervalEnd().getTime());
+        int kw = de.costache.calendar.util.CalendarUtil.getIsoWeekOfYear(startDate);
+        return base + " (" + kw + ". KW)";
     }
 
     @Override

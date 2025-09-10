@@ -708,7 +708,7 @@ public class Crypto {
         System.out.println("Decrypted password: " + decryptedPassword);
         
         // 685ed8be7f0001014a634488a865f86d
-        System.out.println(Crypto.encrypt("J0644604401G", "685ed8be7f0001014a634488a865f86d".toCharArray()));
+        System.out.println(Crypto.encrypt("J0644604401G", "0333beb27f00010161df945da1ef5751".toCharArray()));
         
     }
 

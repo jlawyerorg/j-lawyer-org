@@ -694,6 +694,7 @@ import java.awt.Polygon;
 import java.awt.Window;
 import java.text.SimpleDateFormat;
 import java.util.Calendar;
+import java.util.Collection;
 import java.util.Date;
 import javax.swing.JOptionPane;
 import javax.swing.JTextField;
@@ -1119,6 +1120,35 @@ public class ReviewDueEntryPanelTransparent extends javax.swing.JPanel {
 
             } else {
                 done = true;
+            }
+            // Last-open warning for all event types when setting to done
+            if (done) {
+                try {
+                    ClientSettings settingsCheck = ClientSettings.getInstance();
+                    JLawyerServiceLocator locatorCheck = JLawyerServiceLocator.getInstance(settingsCheck.getLookupProperties());
+                    CalendarServiceRemote calServiceCheck = locatorCheck.lookupCalendarServiceRemote();
+                    Collection<ArchiveFileReviewsBean> open = calServiceCheck.getReviews(this.e.getArchiveFileId(), false);
+                    if (open != null && open.size() == 1) {
+                        String caseNumber = this.e.getArchiveFileNumber();
+                        if (caseNumber == null) {
+                            caseNumber = "";
+                        }
+                        String caseName = this.e.getArchiveFileName();
+                        if (caseName == null) {
+                            caseName = "";
+                        }
+                        String msg = java.text.MessageFormat.format(java.util.ResourceBundle.getBundle("com/jdimension/jlawyer/client/desktop/ReviewDueEntryPanel").getString("dialog.confirm.lastopen"), new Object[]{caseNumber, caseName});
+                        String title = java.util.ResourceBundle.getBundle("com/jdimension/jlawyer/client/desktop/ReviewDueEntryPanel").getString("dialog.confirm.lastopen.title");
+                        int r = JOptionPane.showConfirmDialog(this, msg, title, JOptionPane.YES_NO_OPTION, JOptionPane.WARNING_MESSAGE);
+                        if (r == JOptionPane.NO_OPTION) {
+                            this.chkDescription.setSelected(false);
+                            return;
+                        }
+                    }
+                } catch (Exception ex) {
+                    // On failure to check, proceed without last-open warning
+                    log.warn("Could not check for last-open review warning", ex);
+                }
             }
         } else {
             done = false;
