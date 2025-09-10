@@ -1776,17 +1776,11 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
         }
 
         // reset tab colors, currently used for indicating timesheets that have exceeded their limit
-        int tabIndex = tabPaneArchiveFile.indexOfTab("Finanzen");
+        int tabIndex = tabPaneArchiveFile.indexOfTab("Zeiten");
         if (tabIndex > -1) {
             tabPaneArchiveFile.setForegroundAt(tabIndex, Color.BLACK);
         } else {
-            log.warn("Tab with name Finanzen cannot be found");
-        }
-        tabIndex = subTabsFinance.indexOfTab("Zeiterfassung");
-        if (tabIndex > -1) {
-            subTabsFinance.setForegroundAt(tabIndex, Color.BLACK);
-        } else {
-            log.warn("Sub-tab with name Zeiterfassung cannot be found");
+            log.warn("Tab with name Zeiterfassung cannot be found");
         }
 
     }
@@ -2087,11 +2081,6 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
         cmdNewPayment = new javax.swing.JButton();
         jScrollPane12 = new javax.swing.JScrollPane();
         pnlPayments = new javax.swing.JPanel();
-        jPanel14 = new javax.swing.JPanel();
-        jLabel22 = new javax.swing.JLabel();
-        cmdNewTimesheet = new javax.swing.JButton();
-        jScrollPane11 = new javax.swing.JScrollPane();
-        pnlTimesheets = new javax.swing.JPanel();
         jPanel20 = new javax.swing.JPanel();
         jLabel30 = new javax.swing.JLabel();
         cmdNewClaimLedger = new javax.swing.JButton();
@@ -2107,6 +2096,11 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
         tblReviewReasonsPane = new javax.swing.JScrollPane();
         tblReviewReasons = new javax.swing.JTable();
         newEventPanel = new com.jdimension.jlawyer.client.editors.files.NewEventPanel();
+        tabTimesheets = new javax.swing.JPanel();
+        jLabel22 = new javax.swing.JLabel();
+        cmdNewTimesheet = new javax.swing.JButton();
+        jScrollPane11 = new javax.swing.JScrollPane();
+        pnlTimesheets = new javax.swing.JPanel();
         jPanel11 = new javax.swing.JPanel();
         lblCustom1 = new javax.swing.JLabel();
         txtCustom1 = new javax.swing.JTextField();
@@ -2885,7 +2879,7 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
         jPanel3Layout.setVerticalGroup(
             jPanel3Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
             .add(jPanel3Layout.createSequentialGroup()
-                .add(txtNoticePane, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 312, Short.MAX_VALUE)
+                .add(txtNoticePane, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 325, Short.MAX_VALUE)
                 .addContainerGap())
         );
 
@@ -2921,7 +2915,7 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
         pnlMessagesViewLayout.setVerticalGroup(
             pnlMessagesViewLayout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
             .add(pnlMessagesViewLayout.createSequentialGroup()
-                .add(jScrollPane9, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 424, Short.MAX_VALUE)
+                .add(jScrollPane9, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 446, Short.MAX_VALUE)
                 .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
                 .add(messageSendPanel1, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
                 .addContainerGap())
@@ -2946,7 +2940,7 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
                 .addContainerGap()
                 .add(jPanel1, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
                 .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
-                .add(splitMessages, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 529, Short.MAX_VALUE)
+                .add(splitMessages, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 537, Short.MAX_VALUE)
                 .addContainerGap())
         );
 
@@ -2963,7 +2957,7 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
         pnlInvolvedParties.setLayout(pnlInvolvedPartiesLayout);
         pnlInvolvedPartiesLayout.setHorizontalGroup(
             pnlInvolvedPartiesLayout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
-            .add(0, 1077, Short.MAX_VALUE)
+            .add(0, 1100, Short.MAX_VALUE)
         );
         pnlInvolvedPartiesLayout.setVerticalGroup(
             pnlInvolvedPartiesLayout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
@@ -2995,7 +2989,7 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
                     .add(cmdSearchClient)
                     .add(txtFilterParties, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE))
                 .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
-                .add(jScrollPane8))
+                .add(jScrollPane8, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 807, Short.MAX_VALUE))
         );
 
         tabPaneArchiveFile.addTab("Beteiligte", new javax.swing.ImageIcon(getClass().getResource("/icons/vcard.png")), tabParties); // NOI18N
@@ -3163,7 +3157,7 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
                         .add(cmdAssistantGenerate))
                     .add(cmdDocumentTagFilter))
                 .addPreferredGap(org.jdesktop.layout.LayoutStyle.UNRELATED)
-                .add(splitDocumentsMain, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 781, Short.MAX_VALUE)
+                .add(splitDocumentsMain, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 765, Short.MAX_VALUE)
                 .addContainerGap())
         );
 
@@ -3209,7 +3203,7 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
         );
         pnlInvoicesLayout.setVerticalGroup(
             pnlInvoicesLayout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
-            .add(0, 678, Short.MAX_VALUE)
+            .add(0, 753, Short.MAX_VALUE)
         );
 
         jScrollPane5.setViewportView(pnlInvoices);
@@ -3505,7 +3499,7 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
                         .add(cmdDuplicateAccountEntry))
                     .add(cmdPaymentFromAccountEntry))
                 .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
-                .add(jScrollPane10, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 693, Short.MAX_VALUE)
+                .add(jScrollPane10, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 653, Short.MAX_VALUE)
                 .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
                 .add(jPanel17, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
                 .add(0, 0, 0)
@@ -3565,63 +3559,11 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
                     .add(cmdNewPayment, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                     .add(jLabel29, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
                 .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
-                .add(jScrollPane12)
+                .add(jScrollPane12, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 755, Short.MAX_VALUE)
                 .addContainerGap())
         );
 
         subTabsFinance.addTab("Zahlungen", jPanel19);
-
-        jLabel22.setFont(jLabel22.getFont().deriveFont(jLabel22.getFont().getStyle() | java.awt.Font.BOLD));
-        jLabel22.setText("Projekte:");
-
-        cmdNewTimesheet.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/edit_add.png"))); // NOI18N
-        cmdNewTimesheet.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                cmdNewTimesheetActionPerformed(evt);
-            }
-        });
-
-        org.jdesktop.layout.GroupLayout pnlTimesheetsLayout = new org.jdesktop.layout.GroupLayout(pnlTimesheets);
-        pnlTimesheets.setLayout(pnlTimesheetsLayout);
-        pnlTimesheetsLayout.setHorizontalGroup(
-            pnlTimesheetsLayout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
-            .add(0, 0, Short.MAX_VALUE)
-        );
-        pnlTimesheetsLayout.setVerticalGroup(
-            pnlTimesheetsLayout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
-            .add(0, 766, Short.MAX_VALUE)
-        );
-
-        jScrollPane11.setViewportView(pnlTimesheets);
-
-        org.jdesktop.layout.GroupLayout jPanel14Layout = new org.jdesktop.layout.GroupLayout(jPanel14);
-        jPanel14.setLayout(jPanel14Layout);
-        jPanel14Layout.setHorizontalGroup(
-            jPanel14Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
-            .add(jPanel14Layout.createSequentialGroup()
-                .addContainerGap()
-                .add(jPanel14Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
-                    .add(jPanel14Layout.createSequentialGroup()
-                        .add(jLabel22)
-                        .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
-                        .add(cmdNewTimesheet)
-                        .add(0, 816, Short.MAX_VALUE))
-                    .add(jScrollPane11))
-                .addContainerGap())
-        );
-        jPanel14Layout.setVerticalGroup(
-            jPanel14Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
-            .add(jPanel14Layout.createSequentialGroup()
-                .addContainerGap()
-                .add(jPanel14Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
-                    .add(cmdNewTimesheet)
-                    .add(jLabel22, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 30, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE))
-                .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
-                .add(jScrollPane11, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 766, Short.MAX_VALUE)
-                .addContainerGap())
-        );
-
-        subTabsFinance.addTab("Zeiterfassung", jPanel14);
 
         jLabel30.setFont(jLabel30.getFont().deriveFont(jLabel30.getFont().getStyle() | java.awt.Font.BOLD, jLabel30.getFont().getSize()+2));
         jLabel30.setText("Forderungskonten:");
@@ -3641,7 +3583,7 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
         );
         pnlClaimLedgersLayout.setVerticalGroup(
             pnlClaimLedgersLayout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
-            .add(0, 795, Short.MAX_VALUE)
+            .add(0, 755, Short.MAX_VALUE)
         );
 
         org.jdesktop.layout.GroupLayout jPanel20Layout = new org.jdesktop.layout.GroupLayout(jPanel20);
@@ -3768,7 +3710,7 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
             jPanel9Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
             .add(jPanel9Layout.createSequentialGroup()
                 .add(jPanel9Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
-                    .add(tblReviewReasonsPane, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 745, Short.MAX_VALUE)
+                    .add(tblReviewReasonsPane, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 802, Short.MAX_VALUE)
                     .add(newEventPanel, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
                 .addContainerGap())
         );
@@ -3791,6 +3733,58 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
         );
 
         tabPaneArchiveFile.addTab("Kalender", new javax.swing.ImageIcon(getClass().getResource("/icons/schedule.png")), tabReviews); // NOI18N
+
+        jLabel22.setFont(jLabel22.getFont().deriveFont(jLabel22.getFont().getStyle() | java.awt.Font.BOLD));
+        jLabel22.setText("Projekte:");
+
+        cmdNewTimesheet.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/edit_add.png"))); // NOI18N
+        cmdNewTimesheet.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                cmdNewTimesheetActionPerformed(evt);
+            }
+        });
+
+        org.jdesktop.layout.GroupLayout pnlTimesheetsLayout = new org.jdesktop.layout.GroupLayout(pnlTimesheets);
+        pnlTimesheets.setLayout(pnlTimesheetsLayout);
+        pnlTimesheetsLayout.setHorizontalGroup(
+            pnlTimesheetsLayout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
+            .add(0, 0, Short.MAX_VALUE)
+        );
+        pnlTimesheetsLayout.setVerticalGroup(
+            pnlTimesheetsLayout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
+            .add(0, 800, Short.MAX_VALUE)
+        );
+
+        jScrollPane11.setViewportView(pnlTimesheets);
+
+        org.jdesktop.layout.GroupLayout tabTimesheetsLayout = new org.jdesktop.layout.GroupLayout(tabTimesheets);
+        tabTimesheets.setLayout(tabTimesheetsLayout);
+        tabTimesheetsLayout.setHorizontalGroup(
+            tabTimesheetsLayout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
+            .add(tabTimesheetsLayout.createSequentialGroup()
+                .addContainerGap()
+                .add(tabTimesheetsLayout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
+                    .add(tabTimesheetsLayout.createSequentialGroup()
+                        .add(jLabel22)
+                        .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
+                        .add(cmdNewTimesheet)
+                        .add(0, 1003, Short.MAX_VALUE))
+                    .add(jScrollPane11))
+                .addContainerGap())
+        );
+        tabTimesheetsLayout.setVerticalGroup(
+            tabTimesheetsLayout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
+            .add(tabTimesheetsLayout.createSequentialGroup()
+                .addContainerGap()
+                .add(tabTimesheetsLayout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
+                    .add(cmdNewTimesheet)
+                    .add(jLabel22, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 30, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE))
+                .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
+                .add(jScrollPane11)
+                .addContainerGap())
+        );
+
+        tabPaneArchiveFile.addTab("Zeiten", new javax.swing.ImageIcon(getClass().getResource("/icons16/material/baseline_timer_black_48dp.png")), tabTimesheets); // NOI18N
 
         lblCustom1.setText("Eigenes Feld 1:");
 
@@ -3837,7 +3831,7 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
                 .add(lblCustom3)
                 .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
                 .add(jScrollPane6, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
-                .addContainerGap(588, Short.MAX_VALUE))
+                .addContainerGap(548, Short.MAX_VALUE))
         );
 
         tabPaneArchiveFile.addTab("Eigene", new javax.swing.ImageIcon(getClass().getResource("/icons16/kate.png")), jPanel11); // NOI18N
@@ -3931,7 +3925,7 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
                     .add(txtFormDescription, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE))
                 .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
                 .add(cmdAddForm)
-                .addContainerGap(602, Short.MAX_VALUE))
+                .addContainerGap(644, Short.MAX_VALUE))
         );
 
         tabPaneForms.addTab("<html><b>Falldaten</b><br/>hinzuf&uuml;gen</html>", pnlAddForms);
@@ -3949,7 +3943,7 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
             jPanel5Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
             .add(jPanel5Layout.createSequentialGroup()
                 .addContainerGap()
-                .add(tabPaneForms, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 878, Short.MAX_VALUE)
+                .add(tabPaneForms)
                 .addContainerGap())
         );
 
@@ -4080,7 +4074,7 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
                             .add(cmdAddHistory)
                             .add(cmdExportHistoryTimeline))
                         .addPreferredGap(org.jdesktop.layout.LayoutStyle.UNRELATED)
-                        .add(jScrollPane4, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 725, Short.MAX_VALUE))
+                        .add(jScrollPane4, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 685, Short.MAX_VALUE))
                     .add(jPanel10Layout.createSequentialGroup()
                         .add(cmdSaveHistoryDocument)
                         .add(0, 0, Short.MAX_VALUE)))
@@ -5310,7 +5304,7 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
 
     private void tabPaneArchiveFileStateChanged(javax.swing.event.ChangeEvent evt) {//GEN-FIRST:event_tabPaneArchiveFileStateChanged
 
-        if (this.tabPaneArchiveFile.getSelectedIndex() == 1 || this.tabPaneArchiveFile.getSelectedIndex() == 2 || this.tabPaneArchiveFile.getSelectedIndex() == 3 || this.tabPaneArchiveFile.getSelectedIndex() == 4 || this.tabPaneArchiveFile.getSelectedIndex() == 6) {
+        if (this.tabPaneArchiveFile.getSelectedIndex() == 1 || this.tabPaneArchiveFile.getSelectedIndex() == 2 || this.tabPaneArchiveFile.getSelectedIndex() == 3 || this.tabPaneArchiveFile.getSelectedIndex() == 4 || this.tabPaneArchiveFile.getSelectedIndex() == 5 || this.tabPaneArchiveFile.getSelectedIndex() == 7) {
             // tabs that require the case to be save before they can be used
             if (this.dto == null || this.dto.getId() == null) {
                 this.confirmSave("Bevor Beteiligte/Dokumente/Wiedervorlagen/Falldaten hinzugefügt werden können,\nmuss die Akte gespeichert werden.\n\nJetzt speichern?", null);
@@ -5320,11 +5314,11 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
                 this.loadAccountEntries();
             }
 
-            if (this.tabPaneArchiveFile.getSelectedIndex() == 6 && this.tabPaneForms.getTabCount() == 1) {
+            if (this.tabPaneArchiveFile.getSelectedIndex() == 7 && this.tabPaneForms.getTabCount() == 1) {
                 this.loadForms();
             }
 
-        } else if (this.tabPaneArchiveFile.getSelectedIndex() == 7) {
+        } else if (this.tabPaneArchiveFile.getSelectedIndex() == 8) {
             // tabs that load data that is not loaded yet
             if (this.tblHistory.getRowCount() == 0) {
                 Date sinceDate = null;
@@ -7016,7 +7010,6 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
     }//GEN-LAST:event_cmdDocumentTagFilterActionPerformed
 
     private void cmdAddFormActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdAddFormActionPerformed
-        //tabPaneArchiveFile.addTab("allgemeine Daten", new javax.swing.ImageIcon(getClass().getResource("/icons/folder.png")), tabGeneralData);
         FormTypeBean ftb = (FormTypeBean) this.cmbFormType.getSelectedItem();
         FormPlugin plugin = new FormPlugin();
         plugin.setId(ftb.getId());
@@ -9200,7 +9193,6 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
     private javax.swing.JPanel jPanel11;
     private javax.swing.JPanel jPanel12;
     private javax.swing.JPanel jPanel13;
-    private javax.swing.JPanel jPanel14;
     private javax.swing.JPanel jPanel15;
     private javax.swing.JPanel jPanel16;
     private javax.swing.JPanel jPanel17;
@@ -9333,6 +9325,7 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
     private javax.swing.JPanel tabParties;
     private javax.swing.JTabbedPane tabPrivileges;
     private javax.swing.JPanel tabReviews;
+    private javax.swing.JPanel tabTimesheets;
     private javax.swing.JPanel tagPanel;
     private javax.swing.JTable tblAccountEntries;
     private javax.swing.JTable tblGroups;
@@ -9623,28 +9616,32 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
     }
 
     public void checkTimesheetLimits() {
+        // cases without timesheet: black tab caption
         Color tabForeGround = Color.BLACK;
+        for (int i = 0; i < this.pnlTimesheets.getComponentCount(); i++) {
+            Component c = this.pnlTimesheets.getComponent(i);
+            if (c instanceof TimesheetEntryPanel) {
+                // cases with at least one timesheet: green tab caption
+                tabForeGround=DefaultColorTheme.COLOR_LOGO_GREEN;
+                break;
+            }
+        }
         for (int i = 0; i < this.pnlTimesheets.getComponentCount(); i++) {
             Component c = this.pnlTimesheets.getComponent(i);
             if (c instanceof TimesheetEntryPanel) {
                 Timesheet t = ((TimesheetEntryPanel) c).getTimesheet();
                 if (t.isLimited() && t.getStatus() == Timesheet.STATUS_OPEN && t.getPercentageDone() > 100f) {
+                    // cases with a timesheet above limit: red tab caption
                     tabForeGround = DefaultColorTheme.COLOR_LOGO_RED;
                     break;
                 }
             }
         }
-        int tabIndex = tabPaneArchiveFile.indexOfTab("Finanzen");
+        int tabIndex = tabPaneArchiveFile.indexOfTab("Zeiten");
         if (tabIndex > -1) {
             tabPaneArchiveFile.setForegroundAt(tabIndex, tabForeGround);
         } else {
-            log.warn("Tab with name Finanzen cannot be found");
-        }
-        tabIndex = subTabsFinance.indexOfTab("Zeiterfassung");
-        if (tabIndex > -1) {
-            subTabsFinance.setForegroundAt(tabIndex, tabForeGround);
-        } else {
-            log.warn("Sub-tab with name Zeiterfassung cannot be found");
+            log.warn("Tab with name Zeiten cannot be found");
         }
     }
 }
