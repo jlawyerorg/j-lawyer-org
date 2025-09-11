@@ -749,7 +749,9 @@ public class ArchiveFileReviewsSearchThread implements Runnable {
                     if (b.getDocumentContext() != null && b.getDocumentContext().getName() != null) {
                         docName = b.getDocumentContext().getName();
                     }
-                } catch (Throwable ignore) {}
+                } catch (Exception ex) {
+                    log.error(ex);
+                }
                 Object[] row = new Object[]{new ArchiveFileReviewsRowIdentifier(b.getArchiveFileKey(), b, reviewDateString), b.getEventTypeName(), b.getArchiveFileKey().getFileNumber(), b.getArchiveFileKey().getName(), b.getSummary(), b.getDescription(), b.getArchiveFileKey().getLawyer(), b.getAssignee(), calendar, docName};
                 model.addRow(row);
             } catch (Throwable t) {

@@ -918,7 +918,9 @@ public class ArchiveFileReviewsOverviewPanel extends javax.swing.JPanel implemen
                         if (id.getReviewDTO() != null && id.getReviewDTO().getDocumentContext() != null && id.getReviewDTO().getDocumentContext().getName() != null) {
                             ((ArchiveFilePanel)editor).selectDocument(id.getReviewDTO().getDocumentContext().getName());
                         }
-                    } catch (Throwable ignore) { }
+                    } catch (Exception ex) {
+                        log.debug("Could not select document from overview panel", ex);
+                    }
                 }
                 
             } catch (Exception ex) {

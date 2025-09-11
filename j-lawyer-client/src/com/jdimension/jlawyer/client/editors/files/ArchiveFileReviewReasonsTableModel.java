@@ -665,6 +665,7 @@ package com.jdimension.jlawyer.client.editors.files;
 
 import com.jdimension.jlawyer.persistence.ArchiveFileReviewsBean;
 import javax.swing.table.DefaultTableModel;
+import org.apache.log4j.Logger;
 
 /**
  *
@@ -672,6 +673,7 @@ import javax.swing.table.DefaultTableModel;
  */
 public class ArchiveFileReviewReasonsTableModel extends DefaultTableModel {
     
+    private static final Logger log = Logger.getLogger(ArchiveFileReviewReasonsTableModel.class);
     private static String[] columnNames=new String[]{"Datum / Zeit", "Typ", "Grund", "Ort", "erledigt", "verantwortlich", "Beschreibung", "Kalender", "Dokument"};
 
     public static String[] getColumnNames() {
@@ -696,8 +698,8 @@ public class ArchiveFileReviewReasonsTableModel extends DefaultTableModel {
             if (event.getDocumentContext() != null && event.getDocumentContext().getName() != null) {
                 docName = event.getDocumentContext().getName();
             }
-        } catch (Throwable ignore) {
-            // be defensive against partially loaded entities
+        } catch (Exception ex) {
+            log.error("Could not get document name", ex);
         }
         row[8] = docName;
         return row;

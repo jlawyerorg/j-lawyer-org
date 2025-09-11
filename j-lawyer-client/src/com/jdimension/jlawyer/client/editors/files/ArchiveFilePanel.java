@@ -820,6 +820,8 @@ import org.jlawyer.plugins.calculation.StyledCalculationTable;
 import org.jlawyer.search.SearchHit;
 import themes.colors.DefaultColorTheme;
 import themes.colors.HighlightPicker;
+import javax.swing.JLabel;
+import javax.swing.JTable;
 
 /**
  *
@@ -4542,8 +4544,8 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
     // Renderer that shows the file type icon next to the document name (column "Dokument")
     private static class DocumentNameWithIconRenderer extends DefaultTableCellRenderer {
         @Override
-        public java.awt.Component getTableCellRendererComponent(javax.swing.JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
-            java.awt.Component c = super.getTableCellRendererComponent(table, value, isSelected, hasFocus, row, column);
+        public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
+            Component c = super.getTableCellRendererComponent(table, value, isSelected, hasFocus, row, column);
             try {
                 String docName = (value == null) ? "" : value.toString();
                 if (c instanceof JLabel) {
@@ -4556,7 +4558,9 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
                         lbl.setToolTipText(null);
                     }
                 }
-            } catch (Throwable ignore) { }
+            } catch (Exception ex) {
+                log.debug("Could not render document icon/name", ex);
+            }
             return c;
         }
     }
@@ -5087,7 +5091,7 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
                 ClientSettings settings = ClientSettings.getInstance();
                 JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
                 ArchiveFileServiceRemote afs = locator.lookupArchiveFileServiceRemote();
-                com.jdimension.jlawyer.persistence.ArchiveFileDocumentsBean doc = afs.getDocument(documentId);
+                ArchiveFileDocumentsBean doc = afs.getDocument(documentId);
                 if (doc != null) {
                     reviewDto.setDocumentContext(doc);
                 }

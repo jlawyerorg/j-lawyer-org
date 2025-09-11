@@ -671,6 +671,7 @@ import com.jdimension.jlawyer.client.settings.ClientSettings;
 import com.jdimension.jlawyer.services.JLawyerServiceLocator;
 import com.jdimension.jlawyer.services.ArchiveFileServiceRemote;
 import com.jdimension.jlawyer.persistence.ArchiveFileReviewsBean;
+import com.jdimension.jlawyer.persistence.ArchiveFileDocumentsBean;
 import com.jdimension.jlawyer.persistence.CalendarEntryTemplate;
 import com.jdimension.jlawyer.persistence.CalendarSetup;
 import java.util.Date;
@@ -829,7 +830,7 @@ import org.apache.log4j.Logger;
         ClientSettings settings = ClientSettings.getInstance();
         JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
         ArchiveFileServiceRemote afs = locator.lookupArchiveFileServiceRemote();
-              com.jdimension.jlawyer.persistence.ArchiveFileDocumentsBean doc = afs.getDocument(documentId);
+              ArchiveFileDocumentsBean doc = afs.getDocument(documentId);
               if (doc != null) {
                 ev.setDocumentContext(doc);
               }

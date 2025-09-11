@@ -683,10 +683,14 @@ import java.util.Calendar;
 import java.util.Date;
 import java.util.List;
 import javax.swing.DefaultListModel;
+import javax.swing.JDialog;
+import javax.swing.JFrame;
 import javax.swing.JList;
 import javax.swing.JOptionPane;
 import org.apache.log4j.Logger;
 import org.jdesktop.swingx.util.WindowUtils;
+import com.jdimension.jlawyer.client.utils.SelectAttachmentDialog;
+import com.jdimension.jlawyer.persistence.ArchiveFileDocumentsBean;
 
 /**
  *
@@ -1021,9 +1025,9 @@ public class NewEventPanel extends javax.swing.JPanel implements QuickDateSelect
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(txtEventLocation, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                    .addComponent(cmdSelectDocument)
-                    .addComponent(lblSelectedDocument))
+                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
+                    .addComponent(cmdSelectDocument, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                    .addComponent(lblSelectedDocument, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                     .addComponent(jLabel12)
@@ -1102,20 +1106,20 @@ public class NewEventPanel extends javax.swing.JPanel implements QuickDateSelect
     }
 
     java.awt.Window parent = WindowUtils.findWindow(this);
-    javax.swing.JDialog parentDialog = parent instanceof javax.swing.JDialog ? (javax.swing.JDialog) parent : null;
-    javax.swing.JFrame parentFrame = parent instanceof javax.swing.JFrame ? (javax.swing.JFrame) parent : null;
+    JDialog parentDialog = parent instanceof JDialog ? (JDialog) parent : null;
+    JFrame parentFrame = parent instanceof JFrame ? (JFrame) parent : null;
 
-    com.jdimension.jlawyer.client.utils.SelectAttachmentDialog dlg;
+    SelectAttachmentDialog dlg;
     if (parentDialog != null) {
-      dlg = new com.jdimension.jlawyer.client.utils.SelectAttachmentDialog(parentDialog, true, caseId, false);
+      dlg = new SelectAttachmentDialog(parentDialog, true, caseId, false);
     } else if (parentFrame != null) {
-      dlg = new com.jdimension.jlawyer.client.utils.SelectAttachmentDialog(parentFrame, true, caseId, false);
+      dlg = new SelectAttachmentDialog(parentFrame, true, caseId, false);
     } else {
-      dlg = new com.jdimension.jlawyer.client.utils.SelectAttachmentDialog((javax.swing.JFrame) null, true, caseId, false);
+      dlg = new SelectAttachmentDialog((JFrame) null, true, caseId, false);
     }
     dlg.setTitle("Dokument auswählen");
     dlg.setVisible(true);
-    com.jdimension.jlawyer.persistence.ArchiveFileDocumentsBean[] docs = dlg.getSelectedDocuments();
+    ArchiveFileDocumentsBean[] docs = dlg.getSelectedDocuments();
     if (docs != null && docs.length > 0) {
       this.selectedDocumentId = docs[0].getId();
       this.lblSelectedDocument.setText(docs[0].getName());

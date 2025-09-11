@@ -665,13 +665,18 @@ package com.jdimension.jlawyer.client.mail.sidebar;
 
 import com.jdimension.jlawyer.client.editors.files.NewEventPanelListener;
 import com.jdimension.jlawyer.client.editors.files.NewEventPanelListenerV2;
+import com.jdimension.jlawyer.client.settings.ClientSettings;
 import com.jdimension.jlawyer.client.settings.UserSettings;
 import com.jdimension.jlawyer.client.wizard.*;
 import com.jdimension.jlawyer.persistence.ArchiveFileBean;
+import com.jdimension.jlawyer.persistence.ArchiveFileDocumentsBean;
 import com.jdimension.jlawyer.persistence.ArchiveFileReviewsBean;
 import com.jdimension.jlawyer.persistence.CalendarEntryTemplate;
 import com.jdimension.jlawyer.persistence.CalendarSetup;
+import com.jdimension.jlawyer.services.ArchiveFileServiceRemote;
+import com.jdimension.jlawyer.services.JLawyerServiceLocator;
 import java.util.Date;
+import org.apache.log4j.Logger;
 import themes.colors.DefaultColorTheme;
 
 /**
@@ -833,15 +838,15 @@ public class AddCalendarEventStep extends javax.swing.JPanel implements WizardSt
 
         if (documentId != null && !documentId.isEmpty()) {
             try {
-                com.jdimension.jlawyer.client.settings.ClientSettings settings = com.jdimension.jlawyer.client.settings.ClientSettings.getInstance();
-                com.jdimension.jlawyer.services.JLawyerServiceLocator locator = com.jdimension.jlawyer.services.JLawyerServiceLocator.getInstance(settings.getLookupProperties());
-                com.jdimension.jlawyer.services.ArchiveFileServiceRemote afs = locator.lookupArchiveFileServiceRemote();
-                com.jdimension.jlawyer.persistence.ArchiveFileDocumentsBean doc = afs.getDocument(documentId);
+                ClientSettings settings = ClientSettings.getInstance();
+                JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
+                ArchiveFileServiceRemote afs = locator.lookupArchiveFileServiceRemote();
+                ArchiveFileDocumentsBean doc = afs.getDocument(documentId);
                 if (doc != null) {
                     reviewDto.setDocumentContext(doc);
                 }
             } catch (Exception ex) {
-                org.apache.log4j.Logger.getLogger(AddCalendarEventStep.class).warn("Dokumentkontext konnte nicht geladen werden: " + documentId, ex);
+                Logger.getLogger(AddCalendarEventStep.class).warn("Dokumentkontext konnte nicht geladen werden: " + documentId, ex);
             }
         }
 
