@@ -861,7 +861,7 @@ public class CalloutPanelComponent extends javax.swing.JPanel {
         clipboard.setContents(strSel, null);
     }
 
-    private void updateTooltip() {
+    public void updateTooltip() {
         StringBuilder sb = new StringBuilder();
         if (this.message != null && this.message.getSent() != null) {
             sb.append("gesendet: ").append(dfSent.format(this.message.getSent())).append(" (").append(DateUtils.getHumanReadableTimeInPast(this.message.getSent())).append(")");
@@ -1153,6 +1153,20 @@ public class CalloutPanelComponent extends javax.swing.JPanel {
         }
         this.updateTooltip();
     }
+
+  /**
+   * Recompute tooltip and repaint so relative timestamps change over time.
+   */
+  public void refreshRelativeTime() {
+    try {
+      // rebuild tooltip text (contains human-readable relative time)
+      updateTooltip();
+      // repaint to redraw the "vor X" timestamp in the bubble
+      repaint();
+    } catch (Exception ex) {
+      log.error("Error refreshing relative time info on callout", ex);
+    }
+  }
 
     /**
      * @return the ownMessage
