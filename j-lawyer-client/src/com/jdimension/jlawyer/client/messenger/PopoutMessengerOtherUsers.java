@@ -689,7 +689,6 @@ import javax.swing.JCheckBoxMenuItem;
 import javax.swing.JPanel;
 import javax.swing.JScrollBar;
 import javax.swing.MenuElement;
-import javax.swing.SwingUtilities;
 import org.apache.log4j.Logger;
 import java.util.Timer;
 import java.util.TimerTask;
