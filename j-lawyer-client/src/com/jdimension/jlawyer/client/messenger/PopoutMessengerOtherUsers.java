@@ -691,6 +691,9 @@ import javax.swing.JScrollBar;
 import javax.swing.MenuElement;
 import javax.swing.SwingUtilities;
 import org.apache.log4j.Logger;
+import java.util.Timer;
+import java.util.TimerTask;
+import javax.swing.SwingUtilities;
 import themes.colors.DefaultColorTheme;
 
 /**
@@ -700,6 +703,7 @@ import themes.colors.DefaultColorTheme;
 public class PopoutMessengerOtherUsers extends javax.swing.JDialog implements EventConsumer {
 
     private static final Logger log = Logger.getLogger(PopoutMessengerOtherUsers.class.getName());
+    private transient Timer refreshTimer = null;
 
     /**
      * Creates new form PopoutMessengerOtherUsers
@@ -940,6 +944,13 @@ public class PopoutMessengerOtherUsers extends javax.swing.JDialog implements Ev
             dialog.addWindowListener(new java.awt.event.WindowAdapter() {
                 @Override
                 public void windowClosing(java.awt.event.WindowEvent e) {
+                    try {
+                      if (dialog.refreshTimer != null) {
+                        dialog.refreshTimer.cancel();
+                      }
+                    } catch (Exception ex) {
+                      log.error("Error stopping refresh timer on window close (OtherUsers)", ex);
+                    }
                     System.exit(0);
                 }
             });
@@ -978,7 +989,35 @@ public class PopoutMessengerOtherUsers extends javax.swing.JDialog implements Ev
             }
         };
         vertical.addAdjustmentListener(downScroller);
-
+        
+        // lazy-init and start periodic refresh of relative time
+        if (this.refreshTimer == null) {
+            try {
+              this.refreshTimer = new Timer();
+              this.refreshTimer.schedule(new TimerTask() {
+                @Override
+                public void run() {
+                  try {
+                    SwingUtilities.invokeLater(() -> {
+                      try {
+                        for (int i = 0; i < pnlMessages.getComponentCount(); i++) {
+                          if (pnlMessages.getComponent(i) instanceof MessagePanel) {
+                            ((MessagePanel) pnlMessages.getComponent(i)).refreshRelativeTime();
+                          }
+                        }
+                      } catch (Exception ex) {
+                        log.error("Error during OtherUsers periodic refresh (EDT)", ex);
+                      }
+                    });
+                  } catch (Exception ex) {
+                    log.error("Error scheduling OtherUsers periodic refresh", ex);
+                  }
+                }
+              }, 60000, 60000);
+            } catch (Exception ex) {
+              log.error("Could not start refresh timer for PopoutMessengerOtherUsers", ex);
+            }
+        }
     }
 
     @Override
@@ -1036,5 +1075,17 @@ public class PopoutMessengerOtherUsers extends javax.swing.JDialog implements Ev
         if (removed) {
             this.pnlMessages.revalidate();
         }
+    }
+
+    @Override
+    public void dispose() {
+      try {
+        if (this.refreshTimer != null) {
+          this.refreshTimer.cancel();
+        }
+      } catch (Exception ex) {
+        log.error("Error cancelling OtherUsers refresh timer on dispose", ex);
+      }
+      super.dispose();
     }
 }

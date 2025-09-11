@@ -726,6 +726,7 @@ public class MessagingCenterPanel extends javax.swing.JPanel implements Themeabl
     private ArrayList<String> deletedMessageIds = new ArrayList<>();
 
     private transient Timer timer = new Timer();
+    private transient Timer relativeTimeRefreshTimer = null;
 
     /**
      * Creates new form MessagingCenterPanel
@@ -1145,6 +1146,70 @@ public class MessagingCenterPanel extends javax.swing.JPanel implements Themeabl
             }
         }));
         }
+
+        // Periodically refresh relative timestamps/tooltips in all lists
+        try {
+            if (this.relativeTimeRefreshTimer != null) {
+                this.relativeTimeRefreshTimer.cancel();
+            }
+            this.relativeTimeRefreshTimer = new Timer();
+            this.relativeTimeRefreshTimer.schedule(new TimerTask() {
+                @Override
+                public void run() {
+                    try {
+                        SwingUtilities.invokeLater(() -> {
+                            try {
+                                refreshAllMessagePanelsRelativeTime();
+                            } catch (Exception ex) {
+                                log.error("Error during MessagingCenterPanel periodic refresh (EDT)", ex);
+                            }
+                        });
+                    } catch (Exception ex) {
+                        log.error("Error scheduling MessagingCenterPanel periodic refresh", ex);
+                    }
+                }
+            }, 60000, 60000);
+        } catch (Exception ex) {
+            log.error("Could not start relative time refresh timer for MessagingCenterPanel", ex);
+        }
+    }
+
+    private void refreshAllMessagePanelsRelativeTime() {
+        try {
+            // main stream
+            for (int i = 0; i < this.pnlMessages.getComponentCount(); i++) {
+                if (this.pnlMessages.getComponent(i) instanceof MessagePanel) {
+                    ((MessagePanel) this.pnlMessages.getComponent(i)).refreshRelativeTime();
+                }
+            }
+            // to me
+            for (int i = 0; i < this.pnlMessagesToMe.getComponentCount(); i++) {
+                if (this.pnlMessagesToMe.getComponent(i) instanceof MessagePanel) {
+                    ((MessagePanel) this.pnlMessagesToMe.getComponent(i)).refreshRelativeTime();
+                }
+            }
+            // to others
+            for (int i = 0; i < this.pnlMessagesToOthers.getComponentCount(); i++) {
+                if (this.pnlMessagesToOthers.getComponent(i) instanceof MessagePanel) {
+                    ((MessagePanel) this.pnlMessagesToOthers.getComponent(i)).refreshRelativeTime();
+                }
+            }
+        } catch (Exception ex) {
+            log.error("Error refreshing relative time across message panels", ex);
+        }
+    }
+
+    @Override
+    public void removeNotify() {
+        // component is being removed from UI; stop timers
+        try {
+            if (this.relativeTimeRefreshTimer != null) {
+                this.relativeTimeRefreshTimer.cancel();
+            }
+        } catch (Exception ex) {
+            log.error("Error cancelling MessagingCenterPanel relative time timer on removeNotify", ex);
+        }
+        super.removeNotify();
     }
 
     private void cmbDownloadInstantMessagesActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmbDownloadInstantMessagesActionPerformed

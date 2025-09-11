@@ -781,6 +781,17 @@ public class MessagePanel extends javax.swing.JPanel {
         //return this.calloutPanelComponent1.getWidth();
     }
 
+    /**
+     * Refreshes dynamic UI parts like relative timestamps and tooltips.
+     */
+    public void refreshRelativeTime() {
+      try {
+        this.calloutPanelComponent1.refreshRelativeTime();
+      } catch (Exception ex) {
+        log.error("Error refreshing relative time in MessagePanel", ex);
+      }
+    }
+
     @Override
     public Dimension getMaximumSize() {
         Dimension calloutPreferred = this.calloutPanelComponent1.getPreferredSize(); //To change body of generated methods, choose Tools | Templates.
