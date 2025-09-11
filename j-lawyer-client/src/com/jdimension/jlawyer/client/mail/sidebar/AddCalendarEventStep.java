@@ -664,6 +664,7 @@
 package com.jdimension.jlawyer.client.mail.sidebar;
 
 import com.jdimension.jlawyer.client.editors.files.NewEventPanelListener;
+import com.jdimension.jlawyer.client.editors.files.NewEventPanelListenerV2;
 import com.jdimension.jlawyer.client.settings.UserSettings;
 import com.jdimension.jlawyer.client.wizard.*;
 import com.jdimension.jlawyer.persistence.ArchiveFileBean;
@@ -677,7 +678,7 @@ import themes.colors.DefaultColorTheme;
  *
  * @author Kutschke
  */
-public class AddCalendarEventStep extends javax.swing.JPanel implements WizardStepInterface, NewEventPanelListener {
+public class AddCalendarEventStep extends javax.swing.JPanel implements WizardStepInterface, NewEventPanelListenerV2 {
 
     private WizardDataContainer data = null;
 
@@ -814,6 +815,11 @@ public class AddCalendarEventStep extends javax.swing.JPanel implements WizardSt
 
     @Override
     public void addReview(CalendarEntryTemplate template, int eventType, String reason, String description, Date beginDate, Date endDate, String assignee, String location, CalendarSetup calSetup) throws Exception {
+        this.addReview(template, eventType, reason, description, beginDate, endDate, assignee, location, calSetup, null);
+    }
+
+    @Override
+    public void addReview(CalendarEntryTemplate template, int eventType, String reason, String description, Date beginDate, Date endDate, String assignee, String location, CalendarSetup calSetup, String documentId) throws Exception {
         ArchiveFileReviewsBean reviewDto = new ArchiveFileReviewsBean();
         reviewDto.setEventType(eventType);
         reviewDto.setDone(false);
@@ -824,6 +830,20 @@ public class AddCalendarEventStep extends javax.swing.JPanel implements WizardSt
         reviewDto.setDescription(description);
         reviewDto.setLocation(location);
         reviewDto.setCalendarSetup(calSetup);
+
+        if (documentId != null && !documentId.isEmpty()) {
+            try {
+                com.jdimension.jlawyer.client.settings.ClientSettings settings = com.jdimension.jlawyer.client.settings.ClientSettings.getInstance();
+                com.jdimension.jlawyer.services.JLawyerServiceLocator locator = com.jdimension.jlawyer.services.JLawyerServiceLocator.getInstance(settings.getLookupProperties());
+                com.jdimension.jlawyer.services.ArchiveFileServiceRemote afs = locator.lookupArchiveFileServiceRemote();
+                com.jdimension.jlawyer.persistence.ArchiveFileDocumentsBean doc = afs.getDocument(documentId);
+                if (doc != null) {
+                    reviewDto.setDocumentContext(doc);
+                }
+            } catch (Exception ex) {
+                org.apache.log4j.Logger.getLogger(AddCalendarEventStep.class).warn("Dokumentkontext konnte nicht geladen werden: " + documentId, ex);
+            }
+        }
 
         this.data.put("newevent.event", reviewDto);
         this.data.put("newevent.template", template);

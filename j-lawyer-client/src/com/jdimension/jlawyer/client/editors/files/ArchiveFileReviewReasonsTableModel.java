@@ -672,14 +672,14 @@ import javax.swing.table.DefaultTableModel;
  */
 public class ArchiveFileReviewReasonsTableModel extends DefaultTableModel {
     
-    private static String[] columnNames=new String[]{"Datum / Zeit", "Typ", "Grund", "Ort", "erledigt", "verantwortlich", "Beschreibung", "Kalender"};
+    private static String[] columnNames=new String[]{"Datum / Zeit", "Typ", "Grund", "Ort", "erledigt", "verantwortlich", "Beschreibung", "Kalender", "Dokument"};
 
     public static String[] getColumnNames() {
         return columnNames;
     }
     
     public static Object[] eventToRow(ArchiveFileReviewsBean event) {
-        Object[] row = new Object[8];
+        Object[] row = new Object[9];
         row[0] = event;
         row[1] = event.getEventTypeName();
         row[2] = event.getSummary();
@@ -691,6 +691,15 @@ public class ArchiveFileReviewReasonsTableModel extends DefaultTableModel {
         if(event.getCalendarSetup()!=null)
             calendar=event.getCalendarSetup().getDisplayName();
         row[7] = calendar;
+        String docName = "";
+        try {
+            if (event.getDocumentContext() != null && event.getDocumentContext().getName() != null) {
+                docName = event.getDocumentContext().getName();
+            }
+        } catch (Throwable ignore) {
+            // be defensive against partially loaded entities
+        }
+        row[8] = docName;
         return row;
     }
     

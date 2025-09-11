@@ -665,7 +665,11 @@ package de.costache.calendar;
 
 import com.jdimension.jlawyer.client.calendar.CalendarUtils;
 import com.jdimension.jlawyer.client.editors.files.NewEventPanelListener;
+import com.jdimension.jlawyer.client.editors.files.NewEventPanelListenerV2;
 import com.jdimension.jlawyer.persistence.ArchiveFileBean;
+import com.jdimension.jlawyer.client.settings.ClientSettings;
+import com.jdimension.jlawyer.services.JLawyerServiceLocator;
+import com.jdimension.jlawyer.services.ArchiveFileServiceRemote;
 import com.jdimension.jlawyer.persistence.ArchiveFileReviewsBean;
 import com.jdimension.jlawyer.persistence.CalendarEntryTemplate;
 import com.jdimension.jlawyer.persistence.CalendarSetup;
@@ -677,7 +681,7 @@ import org.apache.log4j.Logger;
  *
  * @author jens
  */
-public class NewEventEntryDialog extends javax.swing.JDialog implements NewEventPanelListener {
+    public class NewEventEntryDialog extends javax.swing.JDialog implements NewEventPanelListenerV2 {
 
     private static final Logger log=Logger.getLogger(NewEventEntryDialog.class.getName());
     
@@ -801,8 +805,13 @@ public class NewEventEntryDialog extends javax.swing.JDialog implements NewEvent
     private com.jdimension.jlawyer.client.editors.files.NewEventPanel newEventPanel;
     // End of variables declaration//GEN-END:variables
 
-    @Override
-    public void addReview(CalendarEntryTemplate template, int eventType, String reason, String description, Date beginDate, Date endDate, String assignee, String location, CalendarSetup calSetup) throws Exception {
+  @Override
+  public void addReview(CalendarEntryTemplate template, int eventType, String reason, String description, Date beginDate, Date endDate, String assignee, String location, CalendarSetup calSetup) throws Exception {
+    this.addReview(template, eventType, reason, description, beginDate, endDate, assignee, location, calSetup, null);
+  }
+
+  @Override
+  public void addReview(CalendarEntryTemplate template, int eventType, String reason, String description, Date beginDate, Date endDate, String assignee, String location, CalendarSetup calSetup, String documentId) throws Exception {
         ArchiveFileReviewsBean ev = new ArchiveFileReviewsBean();
         ev.setBeginDate(beginDate);
         ev.setEndDate(endDate);
@@ -814,6 +823,20 @@ public class NewEventEntryDialog extends javax.swing.JDialog implements NewEvent
         ev.setAssignee(assignee);
         ev.setLocation(location);
         ev.setCalendarSetup(calSetup);
+
+    if (documentId != null && !documentId.isEmpty()) {
+      try {
+        ClientSettings settings = ClientSettings.getInstance();
+        JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
+        ArchiveFileServiceRemote afs = locator.lookupArchiveFileServiceRemote();
+              com.jdimension.jlawyer.persistence.ArchiveFileDocumentsBean doc = afs.getDocument(documentId);
+              if (doc != null) {
+                ev.setDocumentContext(doc);
+              }
+            } catch (Exception ex) {
+              log.warn("Dokumentkontext konnte nicht geladen werden: " + documentId, ex);
+            }
+        }
 
         try {
             if(this.preventRelatedEvents)

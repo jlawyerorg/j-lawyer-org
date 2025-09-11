@@ -720,6 +720,10 @@ public class ArchiveFileReviewsBean implements Serializable, EventTypes {
     @ManyToOne
     private CalendarSetup calendarSetup;
 
+    @JoinColumn(name = "document_id", referencedColumnName = "id")
+    @ManyToOne
+    private ArchiveFileDocumentsBean documentContext;
+
     public Object getClone() {
         ArchiveFileReviewsBean a=new ArchiveFileReviewsBean();
         a.archiveFileKey=this.archiveFileKey;
@@ -727,6 +731,7 @@ public class ArchiveFileReviewsBean implements Serializable, EventTypes {
         a.beginDate=this.beginDate;
         a.endDate=this.endDate;
         a.calendarSetup=this.calendarSetup;
+    a.documentContext=this.documentContext;
         a.description=this.description;
         a.done=this.done;
         a.eventType=this.eventType;
@@ -950,6 +955,20 @@ public class ArchiveFileReviewsBean implements Serializable, EventTypes {
      */
     public void setCalendarSetup(CalendarSetup calendarSetup) {
         this.calendarSetup = calendarSetup;
+    }
+
+    /**
+     * @return the documentContext
+     */
+    public ArchiveFileDocumentsBean getDocumentContext() {
+        return documentContext;
+    }
+
+    /**
+     * @param documentContext the documentContext to set
+     */
+    public void setDocumentContext(ArchiveFileDocumentsBean documentContext) {
+        this.documentContext = documentContext;
     }
 
 }
