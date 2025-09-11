@@ -771,12 +771,12 @@ import themes.colors.DefaultColorTheme;
  * @author jens
  */
 public class SendEmailFrame extends javax.swing.JFrame implements SendCommunicationDialog, PartiesSelectionListener, AssistantFlowAdapter {
-    
+
     private static final Logger log = Logger.getLogger(SendEmailFrame.class.getName());
     private static final String SSL_FACTORY = "javax.net.ssl.SSLSocketFactory";
     private static final String LABEL_SEND_UNENCRYPTED = "unverschlüsselt senden";
-    
-    private Collection<String> allMailTemplates=null;
+
+    private Collection<String> allMailTemplates = null;
 
     private AppUserBean cu = null;
     private Collection<MailboxSetup> mailboxes = new ArrayList<>();
@@ -809,12 +809,20 @@ public class SendEmailFrame extends javax.swing.JFrame implements SendCommunicat
     // transcription
     private TargetDataLine targetDataLine;
     private ByteArrayOutputStream byteArrayOutputStream;
-    
+
     private boolean ignoreTemplateSelectionEvent = false;
     private String savedTemplateSelection = null;
 
+    // these two are set in setBody method to capture the initial content
+    // helpful, when user then selects a template - we can then re-construct the mail from scratch
+    private String initialPreSignatureTxt = null;
+    private String initialPostSignatureTxt = null;
+    private String initialPreSignatureHtml = null;
+    private String initialPostSignatureHtml = null;
+
     /**
      * Creates new form SendEmailFrame
+     *
      * @param replyOrForward
      */
     public SendEmailFrame(boolean replyOrForward) {
@@ -823,10 +831,10 @@ public class SendEmailFrame extends javax.swing.JFrame implements SendCommunicat
         this.initialize();
         this.initializing = false;
     }
-    
+
     private void initialize() {
         initComponents();
-        
+
         this.txtSubject.getDocument().addDocumentListener(new DocumentListener() {
             @Override
             public void insertUpdate(DocumentEvent e) {
@@ -847,7 +855,7 @@ public class SendEmailFrame extends javax.swing.JFrame implements SendCommunicat
                 setTitle("neue E-Mail: " + txtSubject.getText());
             }
         });
-        
+
         this.txtTemplateSearch.putClientProperty("JTextField.showClearButton", true);
         this.txtTemplateSearch.putClientProperty("JTextField.placeholderText", "Suche: ...");
 
@@ -946,12 +954,12 @@ public class SendEmailFrame extends javax.swing.JFrame implements SendCommunicat
             for (String t : this.allMailTemplates) {
                 this.cmbTemplates.addItem(t);
             }
-            if (lastUsedTemplate != null) {
+            if (lastUsedTemplate != null && !this.replyOrForward) {
                 this.cmbTemplates.setSelectedItem(lastUsedTemplate);
             } else {
                 this.cmbTemplates.setSelectedIndex(0);
             }
-            
+
             txtTemplateSearch.setToolTipText("Geben Sie Text ein, um Vorlagen zu filtern");
             txtTemplateSearch.getDocument().addDocumentListener(new javax.swing.event.DocumentListener() {
                 @Override
@@ -1117,7 +1125,7 @@ public class SendEmailFrame extends javax.swing.JFrame implements SendCommunicat
 
         this.calendarSelectionButton1.refreshCalendarSetups();
         this.calendarSelectionButton1.setEnabled(false);
-        
+
         ComponentUtils.restoreSplitPane(jSplitPane1, this.getClass(), "jSplitPane1");
         ComponentUtils.persistSplitPane(jSplitPane1, this.getClass(), "jSplitPane1");
 
@@ -1241,16 +1249,25 @@ public class SendEmailFrame extends javax.swing.JFrame implements SendCommunicat
     public void setBody(String preSignature, String postSignature, String contentType) {
         this.setBody(preSignature, postSignature, contentType, true);
     }
-    
+
     public void setBody(String preSignature, String postSignature, String contentType, boolean useSignature) {
+        if (contentType.toLowerCase().contains("html")) {
+            this.initialPreSignatureHtml = preSignature;
+            this.initialPostSignatureHtml = postSignature;
+        } else {
+            this.initialPreSignatureTxt = preSignature;
+            this.initialPostSignatureTxt = postSignature;
+        }
+
         MailboxSetup ms = this.getSelectedMailbox();
 
         if (contentType.toLowerCase().startsWith(ContentTypes.TEXT_PLAIN)) {
             if (ms != null) {
-                if(useSignature)
+                if (useSignature) {
                     this.tp.setText(preSignature + ms.getEmailSignatureTxt() + postSignature);
-                else
+                } else {
                     this.tp.setText(preSignature + postSignature);
+                }
                 this.tp.setCaretPosition(0);
             }
         } else {
@@ -1259,7 +1276,7 @@ public class SendEmailFrame extends javax.swing.JFrame implements SendCommunicat
                 if (sig == null) {
                     sig = "";
                 }
-                sig=HtmlUtils.stripHeadAndBodyTags(sig);
+                sig = HtmlUtils.stripHeadAndBodyTags(sig);
 
                 // Parse postSignature as an HTML document
                 Document doc = Jsoup.parse(postSignature);
@@ -1268,10 +1285,11 @@ public class SendEmailFrame extends javax.swing.JFrame implements SendCommunicat
                 Element body = doc.body();
                 if (body != null) {
                     // Insert preSignature and sig at the beginning of the body
-                    if(useSignature)
+                    if (useSignature) {
                         body.prepend("<div>" + preSignature + "</div><div>" + sig + "</div><br/>");
-                    else
+                    } else {
                         body.prepend("<div>" + preSignature + "</div><br/>");
+                    }
                 }
 
                 // Set the updated HTML in JEditorPane
@@ -1365,10 +1383,10 @@ public class SendEmailFrame extends javax.swing.JFrame implements SendCommunicat
         ed.setText(prependText + System.lineSeparator() + System.lineSeparator() + ed.getText());
 
     }
-    
+
     @Override
     public void processOutput(Map<String, String> output) {
-        
+
     }
 
     @Override
@@ -1376,7 +1394,7 @@ public class SendEmailFrame extends javax.swing.JFrame implements SendCommunicat
         log.error("Error executing AI request: " + status.getStatusDetails());
         JOptionPane.showMessageDialog(this, "Fehler beim Ausführen der Ingo-Anfrage: " + status.getStatusDetails(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
     }
-    
+
     private int cryptoRecipients(ArrayList<String> mails) throws Exception {
         int cryptoSupported = 0;
         ClientSettings settings = ClientSettings.getInstance();
@@ -1396,7 +1414,7 @@ public class SendEmailFrame extends javax.swing.JFrame implements SendCommunicat
         }
         return cryptoSupported;
     }
-    
+
     private void addRecipientCandidate(AddressBean ab, PartyTypeBean ptb) {
         if (ab.getEmail() != null && !("".equals(ab.getEmail()))) {
             JCheckBoxMenuItem mi = new JCheckBoxMenuItem();
@@ -1434,7 +1452,7 @@ public class SendEmailFrame extends javax.swing.JFrame implements SendCommunicat
 
         }
     }
-    
+
     public void setContentType(String contentType) {
         if (contentType.toLowerCase().startsWith(ContentTypes.TEXT_PLAIN)) {
             this.text.setSelected(true);
@@ -1444,7 +1462,7 @@ public class SendEmailFrame extends javax.swing.JFrame implements SendCommunicat
             this.htmlActionPerformed(null);
         }
     }
-    
+
     private String getThunderbirdExecutablePath() {
         if (SystemUtils.isWindows()) {
             String path = getThunderbirdExecutablePathWindows();
@@ -1686,7 +1704,7 @@ public class SendEmailFrame extends javax.swing.JFrame implements SendCommunicat
             this.txtReviewDateField.setText(null);
         }
     }
-    
+
     private void filterTemplates() {
         String searchText = txtTemplateSearch.getText().toLowerCase().trim();
         if (searchText.isEmpty()) {
@@ -1705,7 +1723,7 @@ public class SendEmailFrame extends javax.swing.JFrame implements SendCommunicat
 
             if (!matchingTemplates.isEmpty()) {
                 DefaultComboBoxModel<String> model = new DefaultComboBoxModel<>();
-                model.addElement(""); 
+                model.addElement("");
                 for (String template : matchingTemplates) {
                     model.addElement(template);
                 }
@@ -1744,8 +1762,6 @@ public class SendEmailFrame extends javax.swing.JFrame implements SendCommunicat
             log.error("Fehler beim Zurücksetzen der Vorlagen", ex);
         }
     }
-    
-    
 
     /**
      * This method is called from within the constructor to initialize the form.
@@ -2823,10 +2839,10 @@ public class SendEmailFrame extends javax.swing.JFrame implements SendCommunicat
             for (String url : this.attachments.values()) {
                 MimeBodyPart att = new MimeBodyPart();
                 FileDataSource attFile = new FileDataSource(url);
-                att.attachFile (url);
-                att.setDisposition (Part.ATTACHMENT);
-                att.setFileName (attFile.getName());
-                attachmentNames  = attachmentNames + attFile.getName() + " ";
+                att.attachFile(url);
+                att.setDisposition(Part.ATTACHMENT);
+                att.setFileName(attFile.getName());
+                attachmentNames = attachmentNames + attFile.getName() + " ";
                 multiPart.addBodyPart(att);
             }
             msg.setContent(multiPart);
@@ -2888,66 +2904,66 @@ public class SendEmailFrame extends javax.swing.JFrame implements SendCommunicat
         if (!this.attachments.isEmpty()) {
             for (String path : this.attachments.values()) {
                 attachmentList.add("file://" + path.replace("\\", "/"));
-                }
             }
+        }
 
-            // Thunderbird-Aufruf zusammenstellen
-            List<String> command = new ArrayList<>();
+        // Thunderbird-Aufruf zusammenstellen
+        List<String> command = new ArrayList<>();
 
-            // hier ggfs. Pfad vom Nutzer am Profil gespeichert
-            command.add(thunderbirdPath);
-            command.add("-compose");
+        // hier ggfs. Pfad vom Nutzer am Profil gespeichert
+        command.add(thunderbirdPath);
+        command.add("-compose");
 
-            StringBuilder composeCommand = new StringBuilder();
+        StringBuilder composeCommand = new StringBuilder();
 
-            composeCommand.append("from='").append(from).append("'");
+        composeCommand.append("from='").append(from).append("'");
 
-            if (!to.isEmpty()) {
-                composeCommand.append(",to='").append(to).append("'");
-            } else {
-                JOptionPane.showMessageDialog(this, "Empfänger ist erforderlich.");
-                return;
-            }
+        if (!to.isEmpty()) {
+            composeCommand.append(",to='").append(to).append("'");
+        } else {
+            JOptionPane.showMessageDialog(this, "Empfänger ist erforderlich.");
+            return;
+        }
 
-            if (!cc.isEmpty()) {
-                composeCommand.append(",cc='").append(cc).append("'");
-            }
+        if (!cc.isEmpty()) {
+            composeCommand.append(",cc='").append(cc).append("'");
+        }
 
-            if (!bcc.isEmpty()) {
-                composeCommand.append(",bcc='").append(bcc).append("'");
-            }
+        if (!bcc.isEmpty()) {
+            composeCommand.append(",bcc='").append(bcc).append("'");
+        }
 
-            if (!subject.isEmpty()) {
-                composeCommand.append(",subject='").append(subject).append("'");
-            }
+        if (!subject.isEmpty()) {
+            composeCommand.append(",subject='").append(subject).append("'");
+        }
 
-            // Wenn "body" vorhanden ist
-            if (!body.isEmpty()) {
-                composeCommand.append(",body='").append(body).append("'");
-            }
+        // Wenn "body" vorhanden ist
+        if (!body.isEmpty()) {
+            composeCommand.append(",body='").append(body).append("'");
+        }
 
-            // Wenn mehrere Anhänge vorhanden sind, diese als kommagetrennte Liste hinzufügen
-            if (!attachmentList.isEmpty()) {
-                composeCommand.append(",attachment='").append(String.join(",", attachmentList)).append("'");
-            }
+        // Wenn mehrere Anhänge vorhanden sind, diese als kommagetrennte Liste hinzufügen
+        if (!attachmentList.isEmpty()) {
+            composeCommand.append(",attachment='").append(String.join(",", attachmentList)).append("'");
+        }
 
-            // Füge den zusammengesetzten Compose-Befehl hinzu
-            command.add(composeCommand.toString());
+        // Füge den zusammengesetzten Compose-Befehl hinzu
+        command.add(composeCommand.toString());
 
-            // Thunderbird mit ProcessBuilder aufrufen
-            try {
-                ProcessBuilder processBuilder = new ProcessBuilder(command);
-                processBuilder.start();
-            } catch (Throwable t) {
-                log.error("Error opening Thunderbird", t);
-                JOptionPane.showMessageDialog(this, "Fehler beim Öffnen von Thunderbird: " + t);
-            }
+        // Thunderbird mit ProcessBuilder aufrufen
+        try {
+            ProcessBuilder processBuilder = new ProcessBuilder(command);
+            processBuilder.start();
+        } catch (Throwable t) {
+            log.error("Error opening Thunderbird", t);
+            JOptionPane.showMessageDialog(this, "Fehler beim Öffnen von Thunderbird: " + t);
+        }
     }//GEN-LAST:event_cmdOpenTbActionPerformed
 
     private void cmbFromActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmbFromActionPerformed
         // when replying or forwarding, to not apply mail template but leave the quoted content
         if (!this.replyOrForward)
-        this.cmbTemplatesActionPerformed(evt);
+            this.cmbTemplatesActionPerformed(evt);
     }//GEN-LAST:event_cmbFromActionPerformed
 
     private void cmdAssistantMouseReleased(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_cmdAssistantMouseReleased
@@ -3073,8 +3089,7 @@ public class SendEmailFrame extends javax.swing.JFrame implements SendCommunicat
             return;
         }
 
-        // when performing a reply, do not evaluate the template
-        if (this.initializing && this.replyOrForward) {
+        if (this.initializing) {
             return;
         }
 
@@ -3141,37 +3156,89 @@ public class SendEmailFrame extends javax.swing.JFrame implements SendCommunicat
 
                 if (tpl.isText()) {
                     if (ms != null) {
-                        String t = TemplatesUtil.replacePlaceHolders(tpl.getBody(), htValues) + System.getProperty("line.separator") + System.getProperty("line.separator") + ms.getEmailSignatureTxt();
+                        String t = TemplatesUtil.replacePlaceHolders(tpl.getBody(), htValues);
                         int cursorIndex = t.indexOf(EmailTemplate.PLACEHOLDER_CURSOR);
                         if (cursorIndex > -1) {
                             t = t.replace(EmailTemplate.PLACEHOLDER_CURSOR, "");
                         }
-                        this.tp.setText(t);
-                        this.tp.setCaretPosition(Math.max(0, cursorIndex));
-                        this.hp.setText("");
-                        this.text.setSelected(true);
-                        this.textActionPerformed(null);
-                        this.tp.requestFocus();
+
+                        if (!this.replyOrForward) {
+                            // initial mail - adjust the html vs text setting of the mail according to the selected template
+                            this.tp.setText(t + System.getProperty("line.separator") + System.getProperty("line.separator") + StringUtils.nonEmpty(ms.getEmailSignatureTxt()));
+                            this.tp.setCaretPosition(Math.max(0, cursorIndex));
+                            this.hp.setText("");
+                            this.text.setSelected(true);
+                            this.textActionPerformed(null);
+                            this.tp.requestFocus();
+                        } else {
+                            // replying or forwarding - do not adjust the mail but convert the template
+                            if (this.html.isSelected()) {
+                                // picked a text template when replying to an HTML mail
+                                
+                                Document doc = Jsoup.parse(this.initialPostSignatureHtml);
+                                Element body = doc.body();
+                                if (body != null) {
+                                    body.prepend(EmailUtils.text2Html(t) + "<br/><br/>" + this.initialPreSignatureHtml + "<br/><br/>" + StringUtils.nonEmpty(ms.getEmailSignature()) + "<br/><br/>");
+                                }
+                                this.hp.setText(doc.html());
+                                this.hp.setCaretPosition(Math.max(0, cursorIndex));
+                                this.tp.setText("");
+                                this.html.setSelected(true);
+                                this.htmlActionPerformed(null);
+                                this.hp.requestFocus();
+                            } else {
+                                // picked a text template when replying to a text mail
+                                this.tp.setText(t + System.lineSeparator() + System.lineSeparator() + this.initialPreSignatureTxt + System.lineSeparator() + StringUtils.nonEmpty(ms.getEmailSignatureTxt()) + this.initialPostSignatureTxt);
+                                this.tp.setCaretPosition(Math.max(0, cursorIndex));
+                                this.hp.setText("");
+                                this.text.setSelected(true);
+                                this.textActionPerformed(null);
+                                this.tp.requestFocus();
+                            }
+
+                        }
                     }
                 } else {
                     if (ms != null) {
-                        String sig = ms.getEmailSignature();
-                        if (sig == null) {
-                            sig = "";
-                        }
-                        sig=HtmlUtils.stripHeadAndBodyTags(sig);
-                        //String t = TemplatesUtil.replacePlaceHolders(tpl.getBody(), htValues) + "<br/><br/><div><blockquote style=\"border-left: #ccc 0px solid; margin: 0px 0px 0px 0.8ex; padding-left: 1ex\">" + sig + "</blockquote></div>";
-                        String t = TemplatesUtil.replacePlaceHolders(tpl.getBody(), htValues) + "<br/><br/>" + sig;
+                        String t = TemplatesUtil.replacePlaceHolders(tpl.getBody(), htValues);
                         int cursorIndex = t.indexOf(EmailTemplate.PLACEHOLDER_CURSOR);
                         if (cursorIndex > -1) {
                             t = t.replace(EmailTemplate.PLACEHOLDER_CURSOR, "");
                         }
-                        this.hp.setText(t);
-                        this.hp.setCaretPosition(Math.max(0, cursorIndex));
-                        this.tp.setText("");
-                        this.html.setSelected(true);
-                        this.htmlActionPerformed(null);
-                        this.hp.requestFocus();
+                        if (!this.replyOrForward) {
+                            // initial mail - adjust the html vs text setting of the mail according to the selected template
+                            this.hp.setText(t + "<br/><br/>" + HtmlUtils.stripHeadAndBodyTags(StringUtils.nonEmpty(ms.getEmailSignature())));
+                            this.hp.setCaretPosition(Math.max(0, cursorIndex));
+                            this.tp.setText("");
+                            this.html.setSelected(true);
+                            this.htmlActionPerformed(null);
+                            this.hp.requestFocus();
+                        } else {
+                            // replying or forwarding - do not adjust the mail but convert the template
+                            if (this.html.isSelected()) {
+                                // picked an HTML template when replying to an HTML mail
+                                Document doc = Jsoup.parse(this.initialPostSignatureHtml);
+                                Element body = doc.body();
+                                if (body != null) {
+                                    body.prepend(t + "<br/><br/>" + this.initialPreSignatureHtml + "<br/><br/>" + HtmlUtils.stripHeadAndBodyTags(StringUtils.nonEmpty(ms.getEmailSignature())));
+                                }
+                                this.hp.setText(doc.html());
+                                this.hp.setCaretPosition(Math.max(0, cursorIndex));
+                                this.tp.setText("");
+                                this.html.setSelected(true);
+                                this.htmlActionPerformed(null);
+                                this.hp.requestFocus();
+                            } else {
+                                // picked an HTML template when replying to a text mail
+                                this.tp.setText(EmailUtils.html2Text(t + "<br/><br/>") + this.initialPreSignatureHtml + System.lineSeparator() + StringUtils.nonEmpty(ms.getEmailSignatureTxt()) + System.lineSeparator() + this.initialPostSignatureTxt);
+                                this.tp.setCaretPosition(Math.max(0, cursorIndex));
+                                this.hp.setText("");
+                                this.text.setSelected(true);
+                                this.textActionPerformed(null);
+                                this.tp.requestFocus();
+                            }
+
+                        }
                     }
                 }
 
@@ -3327,7 +3394,6 @@ public class SendEmailFrame extends javax.swing.JFrame implements SendCommunicat
     private javax.swing.JTextField txtTo;
     // End of variables declaration//GEN-END:variables
 
-
     class RecipientsActionListener implements java.awt.event.ActionListener {
 
         private String email = null;
@@ -3365,5 +3431,5 @@ public class SendEmailFrame extends javax.swing.JFrame implements SendCommunicat
             }
         }
     }
-    
+
 }
