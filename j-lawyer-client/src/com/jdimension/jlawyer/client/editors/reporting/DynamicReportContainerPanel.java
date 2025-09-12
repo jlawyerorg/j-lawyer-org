@@ -673,6 +673,7 @@ import com.jdimension.jlawyer.services.ReportServiceRemote;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 import javax.swing.JTabbedPane;
+import javax.swing.SwingUtilities;
 import org.apache.log4j.Logger;
 import org.jlawyer.reporting.ReportResult;
 import org.jlawyer.reporting.ReportResultBarChart;
@@ -718,6 +719,12 @@ public class DynamicReportContainerPanel extends javax.swing.JPanel implements R
                 });
         tabbedTables.putClientProperty( "JTabbedPane.tabCloseToolTipText", "Tab schließen" );
 
+        // Default split: show charts and tables equally
+        try {
+            this.jSplitPane1.setResizeWeight(0.5d);
+        } catch (Throwable t) {
+            log.warn("Could not set default resize weight for split pane", t);
+        }
 
     }
 
@@ -912,11 +919,42 @@ public class DynamicReportContainerPanel extends javax.swing.JPanel implements R
                     this.tabbedCharts.addTab(chart.getChartName(), new DynamicBarChartPanel(chart));
                     objectTypes++;
                 }
-                this.jSplitPane1.setDividerLocation(0.5d);
+                // defer proportional divider updates until layout is realized
+                try {
+                    SwingUtilities.invokeLater(() -> {
+                        try {
+                            this.jSplitPane1.setDividerLocation(0.5d);
+                        } catch (Throwable t) {
+                            log.warn("Deferred divider location (charts) failed", t);
+                        }
+                    });
+                } catch (Throwable t) {
+                    log.warn("Scheduling divider update failed", t);
+                }
             }
             if(objectTypes>1) {
-                this.jSplitPane1.setDividerLocation(0.5f);
-                ComponentUtils.decorateSplitPane(jSplitPane1);
+                try {
+                    // Ensure equal split after both sides are populated
+                    SwingUtilities.invokeLater(() -> {
+                        try {
+                            this.jSplitPane1.setDividerLocation(0.5d);
+                            this.jSplitPane1.setResizeWeight(0.5d);
+                            ComponentUtils.decorateSplitPane(jSplitPane1);
+                        } catch (Throwable t) {
+                            log.warn("Deferred divider location (final) failed", t);
+                        }
+                    });
+                } catch (Throwable t) {
+                    log.warn("Scheduling final divider update failed", t);
+                    // Fallback immediate attempt
+                    try {
+                        this.jSplitPane1.setDividerLocation(0.5d);
+                        this.jSplitPane1.setResizeWeight(0.5d);
+                        ComponentUtils.decorateSplitPane(jSplitPane1);
+                    } catch (Throwable t2) {
+                        log.warn("Immediate divider update fallback failed", t2);
+                    }
+                }
             }
 
         } catch (Exception ex) {
