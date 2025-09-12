@@ -700,8 +700,6 @@ public class ClaimLedgerEntryPanel extends javax.swing.JPanel {
         StringBuilder tooltip = new StringBuilder();
         tooltip.append("<html>");
         tooltip.append(ledger.getDescription());
-        tooltip.append("<br/>");
-        tooltip.append(totalFormat.format(ledger.getTaxRateAboveBase())).append("% über Basiszinssatz");
         tooltip.append("</html>");
         this.lblName.setToolTipText(tooltip.toString());
         
