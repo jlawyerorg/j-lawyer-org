@@ -8522,14 +8522,35 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
     }//GEN-LAST:event_mnuOcrActionPerformed
 
     private void cmdNewClaimLedgerActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdNewClaimLedgerActionPerformed
+        
+        ClaimLedger ledger=new ClaimLedger();
+        ledger.setArchiveFileKey(dto);
+        ledger.setDescription("");
+        ledger.setName("Forderungskonto in " + this.dto.getFileNumber() + " (" + this.dto.getName() + ")");
+        ledger.setTaxRateAboveBase(BigDecimal.valueOf(5d));
+        
+        try {
+            ClientSettings settings = ClientSettings.getInstance();
+            JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
+            ledger=locator.lookupArchiveFileServiceRemote().addClaimLedger(this.dto.getId(), ledger);
+
+        } catch (Exception ex) {
+            log.error(ex);
+            JOptionPane.showMessageDialog(null, "Fehler beim Erstellen des Forderungskontos: " + ex.getMessage(), "Fehler", JOptionPane.ERROR_MESSAGE);
+            return;
+        }
+        
+        ClaimLedgerEntryPanel clp = new ClaimLedgerEntryPanel(this);
+        clp.setEntry(this.dto, ledger);
+        this.pnlClaimLedgers.add(clp, 0);
+        this.pnlClaimLedgers.revalidate();
+        
         ClaimLedgerDialog dlg = new ClaimLedgerDialog(this, this.dto, EditorsRegistry.getInstance().getMainWindow(), true);
+        dlg.setEntry(ledger);
         FrameUtils.centerDialog(dlg, EditorsRegistry.getInstance().getMainWindow());
         dlg.setVisible(true);
 
-        ClaimLedgerEntryPanel clp = new ClaimLedgerEntryPanel(this);
-        clp.setEntry(this.dto, dlg.getEntry());
-        this.pnlClaimLedgers.add(clp, 0);
-        this.pnlClaimLedgers.revalidate();
+
     }//GEN-LAST:event_cmdNewClaimLedgerActionPerformed
 
     public void exportSelectedDocumentsAsPdf() {
