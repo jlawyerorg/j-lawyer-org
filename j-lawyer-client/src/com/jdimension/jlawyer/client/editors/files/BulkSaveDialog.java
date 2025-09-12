@@ -708,6 +708,7 @@ import java.util.HashMap;
 import java.util.List;
 import javax.swing.JButton;
 import javax.swing.JCheckBoxMenuItem;
+import com.jdimension.jlawyer.client.utils.StayOpenCheckBoxMenuItem;
 import javax.swing.JLabel;
 import javax.swing.JMenuItem;
 import javax.swing.JPopupMenu;
@@ -860,7 +861,7 @@ public class BulkSaveDialog extends javax.swing.JDialog implements NewEventEntry
         popup.removeAll();
         boolean hasSelection = false;
         for (String t : tagsInUse) {
-            JCheckBoxMenuItem mi = new JCheckBoxMenuItem(t);
+            JCheckBoxMenuItem mi = new StayOpenCheckBoxMenuItem(t);
             if (Arrays.asList(lastFilterTags).contains(t)) {
                 mi.setSelected(true);
                 hasSelection = true;
