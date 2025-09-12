@@ -3251,8 +3251,9 @@
                           <Group type="103" groupAlignment="0" attributes="0">
                               <Group type="102" attributes="0">
                                   <Group type="103" groupAlignment="0" attributes="0">
-                                      <Component id="cmdLoadFullHistory" alignment="0" min="-2" max="-2" attributes="0"/>
                                       <Component id="cmdAddHistory" min="-2" max="-2" attributes="0"/>
+                                      <Component id="cmdRefreshHistory" alignment="0" min="-2" max="-2" attributes="0"/>
+                                      <Component id="cmdLoadFullHistory" alignment="0" min="-2" max="-2" attributes="0"/>
                                       <Component id="cmdExportHistoryTimeline" alignment="0" min="-2" max="-2" attributes="0"/>
                                   </Group>
                                   <EmptySpace type="unrelated" max="-2" attributes="0"/>
@@ -3381,6 +3382,17 @@
                   </Properties>
                   <Events>
                     <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="cmdLoadFullHistoryActionPerformed"/>
+                  </Events>
+                </Component>
+                <Component class="javax.swing.JButton" name="cmdRefreshHistory">
+                  <Properties>
+                    <Property name="icon" type="javax.swing.Icon" editor="org.netbeans.modules.form.editors2.IconEditor">
+                      <Image iconType="3" name="/icons/reload.png"/>
+                    </Property>
+                    <Property name="toolTipText" type="java.lang.String" value="Aktualisieren"/>
+                  </Properties>
+                  <Events>
+                    <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="cmdRefreshHistoryActionPerformed"/>
                   </Events>
                 </Component>
                 <Component class="javax.swing.JButton" name="cmdExportHistoryTimeline">
