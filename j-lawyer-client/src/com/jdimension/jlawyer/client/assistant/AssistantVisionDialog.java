@@ -688,20 +688,26 @@ import com.jdimension.jlawyer.pojo.PartiesTriplet;
 import com.jdimension.jlawyer.services.JLawyerServiceLocator;
 import java.awt.Component;
 import java.awt.Dimension;
+import java.awt.Graphics2D;
 import java.awt.Toolkit;
 import java.awt.datatransfer.Clipboard;
 import java.awt.datatransfer.StringSelection;
 import java.awt.event.ActionEvent;
 import java.awt.event.MouseEvent;
+import java.awt.image.BufferedImage;
+import java.io.ByteArrayOutputStream;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Base64;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Vector;
 import java.util.concurrent.atomic.AtomicReference;
+import javax.imageio.ImageIO;
 import javax.swing.AbstractAction;
 import javax.swing.DefaultListModel;
+import javax.swing.ImageIcon;
 import javax.swing.JComboBox;
 import javax.swing.JComponent;
 import javax.swing.JDialog;
@@ -1302,18 +1308,44 @@ public class AssistantVisionDialog extends javax.swing.JDialog {
             if (result.getResponse() != null && result.getResponse().getOutputData() != null) {
                 OutputData intro = new OutputData();
                 intro.setType(OutputData.TYPE_STRING);
-                intro.setStringData("Chat-Verlauf: " + System.lineSeparator() + System.lineSeparator());
+                intro.setStringData("## Chat-Verlauf: " + System.lineSeparator() + System.lineSeparator());
                 result.getResponse().getOutputData().add(intro);
                 for (Message msg : this.messages) {
                     OutputData od = new OutputData();
                     od.setType(OutputData.TYPE_STRING);
+
                     String role = msg.getRole();
+                    String displayRole;
+                    String iconBase64 = null;
+
                     if ("user".equalsIgnoreCase(role)) {
-                        role = UserSettings.getInstance().getCurrentUser().getPrincipalId();
+                        displayRole = UserSettings.getInstance().getCurrentUser().getPrincipalId();
+                        ImageIcon icon = UserSettings.getInstance().getUserSmallIcon(displayRole);
+                        iconBase64 = encodeImageIconToBase64(icon);
                     } else {
-                        role = "Assistent Ingo";
+                        displayRole = "Assistent Ingo";
+                        ImageIcon icon = new javax.swing.ImageIcon(getClass().getResource("/icons16/material/j-lawyer-ai.png"));
+                        iconBase64 = encodeImageIconToBase64(icon);
                     }
-                    od.setStringData(role + ": " + msg.getContent() + System.lineSeparator() + System.lineSeparator());
+
+                    StringBuilder md = new StringBuilder();
+
+                    // icon + role
+                    if (iconBase64 != null) {
+                        md.append("![icon](data:image/png;base64,")
+                                .append(iconBase64)
+                                .append(") ");
+                    }
+                    md.append(" **").append(displayRole).append("**\n\n");
+
+                    // message content in blockquote (line by line)
+                    String[] lines = msg.getContent().split("\\r?\\n");
+                    for (String line : lines) {
+                        md.append("> ").append(line).append("\n");
+                    }
+                    md.append("\n");
+
+                    od.setStringData(md.toString());
                     result.getResponse().getOutputData().add(od);
                 }
             }
@@ -1325,6 +1357,27 @@ public class AssistantVisionDialog extends javax.swing.JDialog {
         this.dispose();
     }//GEN-LAST:event_cmdProcessOutputActionPerformed
 
+    private static String encodeImageIconToBase64(ImageIcon icon) {
+        if (icon == null) {
+            return null;
+        }
+        try {
+            java.awt.Image img = icon.getImage();
+            BufferedImage bImg = new BufferedImage(
+                    img.getWidth(null), img.getHeight(null), BufferedImage.TYPE_INT_ARGB);
+            Graphics2D g2d = bImg.createGraphics();
+            g2d.drawImage(img, 0, 0, null);
+            g2d.dispose();
+
+            ByteArrayOutputStream baos = new ByteArrayOutputStream();
+            ImageIO.write(bImg, "png", baos);
+            return Base64.getEncoder().encodeToString(baos.toByteArray());
+        } catch (Exception e) {
+            log.error("Error rendering icon to base 64", e);
+            return null;
+        }
+    }
+    
     private void cmdInterruptActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdInterruptActionPerformed
         this.interrupted = true;
     }//GEN-LAST:event_cmdInterruptActionPerformed
