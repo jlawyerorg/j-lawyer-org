@@ -859,6 +859,11 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
     // Remember last document shown in preview to improve multi-select behavior
     private String lastPreviewDocId = null;
 
+    // History refresh behavior
+    private static final long HISTORY_REFRESH_DEBOUNCE_MS = 5000L;
+    private long lastHistoryRefreshTs = 0L;
+    private boolean historyFullLoaded = false;
+
     public void setLastPreviewDocId(String docId) {
         this.lastPreviewDocId = docId;
     }
@@ -4005,6 +4010,15 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
             }
         });
 
+        cmdRefreshHistory = new javax.swing.JButton();
+        cmdRefreshHistory.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/reload.png"))); // NOI18N
+        cmdRefreshHistory.setToolTipText("Aktualisieren");
+        cmdRefreshHistory.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                cmdRefreshHistoryActionPerformed(evt);
+            }
+        });
+
         cmdExportHistoryTimeline.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/baseline_preview_black_48dp.png"))); // NOI18N
         cmdExportHistoryTimeline.setToolTipText("Historie im Browser öffnen");
         cmdExportHistoryTimeline.addActionListener(new java.awt.event.ActionListener() {
@@ -4046,6 +4060,8 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
                             .add(jPanel10Layout.createSequentialGroup()
                                 .add(cmdAddHistory)
                                 .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                                .add(cmdRefreshHistory)
+                                .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
                                 .add(cmdLoadFullHistory)
                                 .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
                                 .add(cmdExportHistoryTimeline)
@@ -4070,6 +4086,7 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
                 .add(jPanel10Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
                     .add(jPanel10Layout.createSequentialGroup()
                         .add(jPanel10Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
+                            .add(cmdRefreshHistory)
                             .add(cmdLoadFullHistory)
                             .add(cmdAddHistory)
                             .add(cmdExportHistoryTimeline))
@@ -5175,6 +5192,22 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
                 log.error("Error enabling case sync", ex);
                 JOptionPane.showMessageDialog(this, "Synchronisation kann nicht aktiviert werden: " + ex.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
             }
+            // Preserve current sort and scroll position
+            java.util.List<? extends RowSorter.SortKey> prevSortKeys = null;
+            if (this.tblHistory.getRowSorter() != null) {
+                try {
+                    prevSortKeys = this.tblHistory.getRowSorter().getSortKeys();
+                } catch (Throwable ignore) {
+                    // ignore
+                }
+            }
+            int prevScroll = 0;
+            try {
+                prevScroll = this.jScrollPane4.getVerticalScrollBar().getValue();
+            } catch (Throwable ignore) {
+                // ignore
+            }
+
             SimpleDateFormat dfHistory = new SimpleDateFormat(DateUtils.DATEFORMAT_DATETIME_FULL, Locale.GERMAN);
             String[] colNames2 = new String[]{"Änderung", "Nutzer", "Beschreibung"};
             ArchiveFileHistoryTableModel model2 = new ArchiveFileHistoryTableModel(colNames2, 0);
@@ -5190,11 +5223,34 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
                     model2.addRow(row);
                 }
             }
-            ArrayList<RowSorter.SortKey> list = new ArrayList<>();
-            list.add(new RowSorter.SortKey(0, SortOrder.DESCENDING));
-            htrs.setSortKeys(list);
-            htrs.sort();
+            if (prevSortKeys != null && !prevSortKeys.isEmpty()) {
+                try {
+                    htrs.setSortKeys(prevSortKeys);
+                    htrs.sort();
+                } catch (Throwable ignore) {
+                    // fall back to default
+                }
+            } else {
+                ArrayList<RowSorter.SortKey> list = new ArrayList<>();
+                list.add(new RowSorter.SortKey(0, SortOrder.DESCENDING));
+                htrs.setSortKeys(list);
+                htrs.sort();
+            }
             ComponentUtils.autoSizeColumns(tblHistory);
+            final int scrollTo = prevScroll;
+            try {
+                javax.swing.SwingUtilities.invokeLater(new Runnable() {
+                    @Override
+                    public void run() {
+                        try {
+                            jScrollPane4.getVerticalScrollBar().setValue(scrollTo);
+                        } catch (Throwable ignore) {
+                        }
+                    }
+                });
+            } catch (Throwable ignore) {
+                // ignore
+            }
         } else {
             String[] colNames2 = new String[]{"Änderung", "Nutzer", "Beschreibung"};
             ArchiveFileHistoryTableModel model2 = new ArchiveFileHistoryTableModel(colNames2, 0);
@@ -5319,16 +5375,21 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
             }
 
         } else if (this.tabPaneArchiveFile.getSelectedIndex() == 8) {
-            // tabs that load data that is not loaded yet
-            if (this.tblHistory.getRowCount() == 0) {
+            // Historie automatisch aktualisieren (mit Debounce), ansonsten initial laden
+            boolean initial = (this.tblHistory.getRowCount() == 0);
+            long now = System.currentTimeMillis();
+            if (initial || (now - this.lastHistoryRefreshTs) > HISTORY_REFRESH_DEBOUNCE_MS) {
                 Date sinceDate = null;
-                if (this.dto != null && this.dto.getDateChanged() != null) {
-                    sinceDate = this.dto.getDateChanged();
-                    LocalDateTime localDateTime = sinceDate.toInstant().atZone(ZoneId.systemDefault()).toLocalDateTime();
-                    localDateTime = localDateTime.minusMonths(6);
-                    sinceDate = Date.from(localDateTime.atZone(ZoneId.systemDefault()).toInstant());
+                if (!this.historyFullLoaded) {
+                    if (this.dto != null && this.dto.getDateChanged() != null) {
+                        sinceDate = this.dto.getDateChanged();
+                        LocalDateTime localDateTime = sinceDate.toInstant().atZone(ZoneId.systemDefault()).toLocalDateTime();
+                        localDateTime = localDateTime.minusMonths(6);
+                        sinceDate = Date.from(localDateTime.atZone(ZoneId.systemDefault()).toInstant());
+                    }
                 }
                 this.loadHistoryEntries(sinceDate);
+                this.lastHistoryRefreshTs = now;
             }
 
         }
@@ -7265,6 +7326,8 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
     private void cmdLoadFullHistoryActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdLoadFullHistoryActionPerformed
         // load full history
         this.loadHistoryEntries(null);
+        this.historyFullLoaded = true;
+        this.lastHistoryRefreshTs = System.currentTimeMillis();
     }//GEN-LAST:event_cmdLoadFullHistoryActionPerformed
 
     private void cmdExportHistoryTimelineActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdExportHistoryTimelineActionPerformed
@@ -7276,6 +7339,25 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
             javax.swing.JOptionPane.showMessageDialog(this, "Fehler beim Export der Aktenhistorie: " + ex.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, javax.swing.JOptionPane.ERROR_MESSAGE);
         }
     }//GEN-LAST:event_cmdExportHistoryTimelineActionPerformed
+
+    private void cmdRefreshHistoryActionPerformed(java.awt.event.ActionEvent evt) {
+        try {
+            Date sinceDate = null;
+            if (!this.historyFullLoaded) {
+                if (this.dto != null && this.dto.getDateChanged() != null) {
+                    sinceDate = this.dto.getDateChanged();
+                    LocalDateTime localDateTime = sinceDate.toInstant().atZone(ZoneId.systemDefault()).toLocalDateTime();
+                    localDateTime = localDateTime.minusMonths(6);
+                    sinceDate = Date.from(localDateTime.atZone(ZoneId.systemDefault()).toInstant());
+                }
+            }
+            this.loadHistoryEntries(sinceDate);
+            this.lastHistoryRefreshTs = System.currentTimeMillis();
+        } catch (Throwable t) {
+            log.error("Error refreshing history", t);
+            JOptionPane.showMessageDialog(this, "Fehler beim Aktualisieren der Historie: " + t.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, javax.swing.JOptionPane.ERROR_MESSAGE);
+        }
+    }
 
     private void cmdSaveHistoryDocumentActionPerformed(java.awt.event.ActionEvent evt) {
         this.loadHistoryEntries(null);
@@ -9131,6 +9213,7 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
     private javax.swing.JButton cmdEditCaseNumber;
     private javax.swing.JButton cmdExportAccountEntries;
     private javax.swing.JButton cmdExportHistoryTimeline;
+    private javax.swing.JButton cmdRefreshHistory;
     private javax.swing.JButton cmdExportHtml;
     private javax.swing.JButton cmdFavoriteDocuments;
     private javax.swing.JButton cmdFormsManager;
