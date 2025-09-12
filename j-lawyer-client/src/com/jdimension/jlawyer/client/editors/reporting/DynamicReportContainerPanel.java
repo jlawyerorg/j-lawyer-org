@@ -908,30 +908,23 @@ public class DynamicReportContainerPanel extends javax.swing.JPanel implements R
             params[1]=d2;
             ReportResult result=reportService.invokeReport(this.reportId, params);
             
-            int objectTypes=0;
+            boolean hasTables = false;
+            boolean hasCharts = false;
+
             for(ReportResultTable table: result.getTables()) {
                 this.tabbedTables.addTab(table.getTableName(), new DynamicTablePanel(table));
-                objectTypes++;
+                hasTables = true;
             }
             
             for(ReportResultBarChart chart: result.getBarCharts()) {
                 if(chart.hasData()) {
                     this.tabbedCharts.addTab(chart.getChartName(), new DynamicBarChartPanel(chart));
-                    objectTypes++;
-                }
-                // defer proportional divider updates until layout is realized
-                try {
-                    SwingUtilities.invokeLater(() -> {
-                        try {
-                            this.jSplitPane1.setDividerLocation(0.5d);
-                        } catch (Throwable t) {
-                            log.warn("Deferred divider location (charts) failed", t);
-                        }
-                    });
-                } catch (Throwable t) {
-                    log.warn("Scheduling divider update failed", t);
+                    hasCharts = true;
                 }
             }
+
+            int objectTypes = (hasTables ? 1 : 0) + (hasCharts ? 1 : 0);
+
             if(objectTypes>1) {
                 try {
                     // Ensure equal split after both sides are populated
@@ -953,6 +946,44 @@ public class DynamicReportContainerPanel extends javax.swing.JPanel implements R
                         ComponentUtils.decorateSplitPane(jSplitPane1);
                     } catch (Throwable t2) {
                         log.warn("Immediate divider update fallback failed", t2);
+                    }
+                }
+            } else {
+                // Only one object type present: make that type fill the space
+                // Capture effectively-final values for lambda
+                final boolean hasChartsOnly = hasCharts && !hasTables;
+                final boolean hasTablesOnly = hasTables && !hasCharts;
+                try {
+                    SwingUtilities.invokeLater(() -> {
+                        try {
+                            if(hasChartsOnly) {
+                                // charts are at the top; give them all space
+                                this.jSplitPane1.setDividerLocation(1.0d);
+                                this.jSplitPane1.setResizeWeight(1.0d);
+                            } else if(hasTablesOnly) {
+                                // tables are at the bottom; give them all space
+                                this.jSplitPane1.setDividerLocation(0.0d);
+                                this.jSplitPane1.setResizeWeight(0.0d);
+                            }
+                            ComponentUtils.decorateSplitPane(jSplitPane1);
+                        } catch (Throwable t) {
+                            log.warn("Deferred divider location (single type) failed", t);
+                        }
+                    });
+                } catch (Throwable t) {
+                    log.warn("Scheduling single-type divider update failed", t);
+                    // Fallback immediate attempt
+                    try {
+                        if(hasCharts) {
+                            this.jSplitPane1.setDividerLocation(1.0d);
+                            this.jSplitPane1.setResizeWeight(1.0d);
+                        } else if(hasTables) {
+                            this.jSplitPane1.setDividerLocation(0.0d);
+                            this.jSplitPane1.setResizeWeight(0.0d);
+                        }
+                        ComponentUtils.decorateSplitPane(jSplitPane1);
+                    } catch (Throwable t2) {
+                        log.warn("Immediate single-type divider update fallback failed", t2);
                     }
                 }
             }
