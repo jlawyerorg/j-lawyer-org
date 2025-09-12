@@ -8522,14 +8522,35 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
     }//GEN-LAST:event_mnuOcrActionPerformed
 
     private void cmdNewClaimLedgerActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdNewClaimLedgerActionPerformed
+        
+        ClaimLedger ledger=new ClaimLedger();
+        ledger.setArchiveFileKey(dto);
+        ledger.setDescription("");
+        ledger.setName("Forderungskonto in " + this.dto.getFileNumber() + " (" + this.dto.getName() + ")");
+        ledger.setTaxRateAboveBase(BigDecimal.valueOf(5d));
+        
+        try {
+            ClientSettings settings = ClientSettings.getInstance();
+            JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
+            ledger=locator.lookupArchiveFileServiceRemote().addClaimLedger(this.dto.getId(), ledger);
+
+        } catch (Exception ex) {
+            log.error(ex);
+            JOptionPane.showMessageDialog(null, "Fehler beim Erstellen des Forderungskontos: " + ex.getMessage(), "Fehler", JOptionPane.ERROR_MESSAGE);
+            return;
+        }
+        
+        ClaimLedgerEntryPanel clp = new ClaimLedgerEntryPanel(this);
+        clp.setEntry(this.dto, ledger);
+        this.pnlClaimLedgers.add(clp, 0);
+        this.pnlClaimLedgers.revalidate();
+        
         ClaimLedgerDialog dlg = new ClaimLedgerDialog(this, this.dto, EditorsRegistry.getInstance().getMainWindow(), true);
+        dlg.setEntry(ledger);
         FrameUtils.centerDialog(dlg, EditorsRegistry.getInstance().getMainWindow());
         dlg.setVisible(true);
 
-        ClaimLedgerEntryPanel clp = new ClaimLedgerEntryPanel(this);
-        clp.setEntry(this.dto, dlg.getEntry());
-        this.pnlClaimLedgers.add(clp, 0);
-        this.pnlClaimLedgers.revalidate();
+
     }//GEN-LAST:event_cmdNewClaimLedgerActionPerformed
 
     public void exportSelectedDocumentsAsPdf() {
@@ -8996,11 +9017,31 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
             }
         }
 
-        AddNoteFrame dlg = new AddNoteFrame(this.dto);
-        dlg.appendToBody(System.lineSeparator() + "Assistent Ingo - Ergebnis (" + c.getName() + ")" + System.lineSeparator() + System.lineSeparator() + resultText, true);
-        FrameUtils.centerFrame(dlg, EditorsRegistry.getInstance().getMainWindow());
-        EditorsRegistry.getInstance().registerFrame(dlg);
-        dlg.setVisible(true);
+        String md="## Assistent Ingo - Ergebnis (" + c.getName() + ")" + System.lineSeparator() + System.lineSeparator() + resultText;
+        try {
+            com.jdimension.jlawyer.client.settings.ClientSettings settings = com.jdimension.jlawyer.client.settings.ClientSettings.getInstance();
+            JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
+            ArchiveFileServiceRemote remote = locator.lookupArchiveFileServiceRemote();
+            
+            String newName = "Assistent Ingo - Ergebnis (" + c.getName() + ")" + ".md";
+            boolean documentExists = remote.doesDocumentExist(dto.getId(), newName);
+            while (documentExists) {
+                newName = FileUtils.getNewFileName(dto, newName, new Date(), false, EditorsRegistry.getInstance().getMainWindow(), "Neuer Name für Assistent Ingo-Ergebnisse");
+                if (newName == null || "".equals(newName)) {
+                    this.lastPopupClosed = System.currentTimeMillis();
+                    return;
+                }
+                documentExists = remote.doesDocumentExist(dto.getId(), newName);
+            }
+            newName = FileUtils.sanitizeFileName(newName);
+            
+            ArchiveFileDocumentsBean newDoc = remote.addDocument(this.dto.getId(), newName, md.getBytes(), "", null);
+            this.caseFolderPanel1.addDocument(remote.getDocument(newDoc.getId()), null);
+            javax.swing.JOptionPane.showMessageDialog(this, "Ergebnis wurde als Dokument zur Akte gespeichert.", com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_HINT, javax.swing.JOptionPane.INFORMATION_MESSAGE);
+        } catch (Throwable ex) {
+            log.error("Error adding ingo result as MD document", ex);
+            javax.swing.JOptionPane.showMessageDialog(this, "Fehler beim Hinzufügen des Dokuments: " + ex.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, javax.swing.JOptionPane.ERROR_MESSAGE);
+        }
 
     }
 

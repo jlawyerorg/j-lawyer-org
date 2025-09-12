@@ -966,4 +966,6 @@ public interface ArchiveFileServiceRemote {
     boolean performOcr(String docId) throws Exception;
 
     List<ClaimLedger> getClaimLedgers(String caseId);
+
+    ClaimLedger addClaimLedger(String caseId, ClaimLedger ledger) throws Exception;
 }
