@@ -8527,7 +8527,6 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
         ledger.setArchiveFileKey(dto);
         ledger.setDescription("");
         ledger.setName("Forderungskonto in " + this.dto.getFileNumber() + " (" + this.dto.getName() + ")");
-        ledger.setTaxRateAboveBase(BigDecimal.valueOf(5d));
         
         try {
             ClientSettings settings = ClientSettings.getInstance();
