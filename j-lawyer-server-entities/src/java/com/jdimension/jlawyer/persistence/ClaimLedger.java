@@ -665,6 +665,8 @@ package com.jdimension.jlawyer.persistence;
 
 import java.io.Serializable;
 import java.math.BigDecimal;
+import java.util.ArrayList;
+import java.util.List;
 import javax.persistence.*;
 import javax.xml.bind.annotation.XmlRootElement;
 
@@ -681,6 +683,11 @@ import javax.xml.bind.annotation.XmlRootElement;
     @NamedQuery(name = "ClaimLedger.findByArchiveFileKey", query = "SELECT a FROM ClaimLedger a WHERE a.archiveFileKey = :archiveFileKey")})
 public class ClaimLedger implements Serializable {
     
+//ClaimLedger = die Hülle
+//ClaimComponent = Forderungsteil (HF, Kosten etc.)
+//InterestRule = Verzinsung im Zeitverlauf
+//ClaimLedgerEntry = die Buchungen, optional auf Komponente referenzierend
+    
     protected static long serialVersionUID = 1L;
     
     @Id
@@ -691,8 +698,9 @@ public class ClaimLedger implements Serializable {
     protected String name;
     @Column(name = "description")
     protected String description;
-    @Column(name = "tax_rate", precision = 10, scale = 2)
-    private BigDecimal taxRateAboveBase=BigDecimal.ZERO;
+    
+    @OneToMany(mappedBy = "ledger", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<ClaimComponent> components = new ArrayList<>();
     
     
     @JoinColumn(name = "case_id", referencedColumnName = "id")
@@ -781,20 +789,6 @@ public class ClaimLedger implements Serializable {
      */
     public void setDescription(String description) {
         this.description = description;
-    }
-
-    /**
-     * @return the taxRateAboveBase
-     */
-    public BigDecimal getTaxRateAboveBase() {
-        return taxRateAboveBase;
-    }
-
-    /**
-     * @param taxRateAboveBase the taxRateAboveBase to set
-     */
-    public void setTaxRateAboveBase(BigDecimal taxRateAboveBase) {
-        this.taxRateAboveBase = taxRateAboveBase;
     }
     
 }

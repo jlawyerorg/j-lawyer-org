@@ -681,37 +681,38 @@ import javax.xml.bind.annotation.XmlRootElement;
     @NamedQuery(name = "ClaimLedgerEntry.findById", query = "SELECT a FROM ClaimLedgerEntry a WHERE a.id = :id"),
     @NamedQuery(name = "ClaimLedgerEntry.findByLedger", query = "SELECT a FROM ClaimLedgerEntry a WHERE a.ledger = :ledger order by a.entryDate ASC")})
 public class ClaimLedgerEntry implements Serializable {
-    
+
     private static long serialVersionUID = 1L;
-    
+
     @Id
     @Basic(optional = false)
     @Column(name = "id")
     private String id;
-    
+
     @Column(name = "description")
     private String description;
-    
+
     @Column(name = "comment")
     private String comment;
-        
+
     @Column(name = "entry_date")
     @Temporal(TemporalType.TIMESTAMP)
     private Date entryDate;
-    
+
     @JoinColumn(name = "ledger_id", referencedColumnName = "id")
     @ManyToOne
     private ClaimLedger ledger;
-    
+
     @Column(name = "amount", precision = 10, scale = 2)
-    private BigDecimal amount=BigDecimal.ZERO;
-    
+    private BigDecimal amount = BigDecimal.ZERO;
+
     @Enumerated(EnumType.STRING)
     @Column(name = "entry_type", nullable = false, length = 50)
     private LedgerEntryType type;
-    
-    
-    
+
+    @JoinColumn(name = "component_id", referencedColumnName = "id")
+    @ManyToOne
+    private ClaimComponent component;
 
     public ClaimLedgerEntry() {
     }
@@ -727,8 +728,6 @@ public class ClaimLedgerEntry implements Serializable {
     public void setId(String id) {
         this.id = id;
     }
-
-    
 
     @Override
     public int hashCode() {
@@ -852,7 +851,5 @@ public class ClaimLedgerEntry implements Serializable {
     public void setType(LedgerEntryType type) {
         this.type = type;
     }
-
-    
 
 }
