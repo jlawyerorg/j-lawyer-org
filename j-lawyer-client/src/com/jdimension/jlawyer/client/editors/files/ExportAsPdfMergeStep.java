@@ -803,8 +803,8 @@ public class ExportAsPdfMergeStep extends javax.swing.JPanel implements WizardSt
                         String newName = FileUtils.getNewFileName(exportCase, proposedName, new Date(), true, EditorsRegistry.getInstance().getMainWindow(), "PDF-Export zur Akte speichern");
 
                         if (newName == null) {
-                            // User cancelled naming – keep wizard open by signalling cancellation
-                            throw new RuntimeException("Speichern abgebrochen – kein Dateiname gewählt.");
+                            JOptionPane.showMessageDialog(EditorsRegistry.getInstance().getMainWindow(), "Speichern in der Akte abgebrochen.", "Hinweis", JOptionPane.INFORMATION_MESSAGE);
+                            break; // exit loop and skip saving to case
                         }
 
                         newName = newName.trim();
