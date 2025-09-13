@@ -24,6 +24,11 @@
           <Component id="txtReviewReason" alignment="0" max="32767" attributes="0"/>
           <Component id="txtEventLocation" alignment="1" max="32767" attributes="0"/>
           <Group type="102" alignment="0" attributes="0">
+              <Component id="cmdSelectDocument" min="-2" max="-2" attributes="0"/>
+              <EmptySpace max="-2" attributes="0"/>
+              <Component id="lblSelectedDocument" max="32767" attributes="0"/>
+          </Group>
+          <Group type="102" alignment="0" attributes="0">
               <Component id="jLabel12" min="-2" max="-2" attributes="0"/>
               <EmptySpace max="-2" attributes="0"/>
               <Group type="103" groupAlignment="0" attributes="0">
@@ -121,6 +126,11 @@
               <Component id="jLabel22" min="-2" max="-2" attributes="0"/>
               <EmptySpace max="-2" attributes="0"/>
               <Component id="txtEventLocation" min="-2" max="-2" attributes="0"/>
+              <EmptySpace max="-2" attributes="0"/>
+              <Group type="103" groupAlignment="0" max="-2" attributes="0">
+                  <Component id="cmdSelectDocument" max="32767" attributes="0"/>
+                  <Component id="lblSelectedDocument" max="32767" attributes="0"/>
+              </Group>
               <EmptySpace type="unrelated" max="-2" attributes="0"/>
               <Group type="103" groupAlignment="3" attributes="0">
                   <Component id="jLabel12" alignment="3" min="-2" max="-2" attributes="0"/>
@@ -444,6 +454,22 @@
       <Properties>
         <Property name="text" type="java.lang.String" value="Ort:"/>
       </Properties>
+    </Component>
+    <Component class="javax.swing.JButton" name="cmdSelectDocument">
+      <Properties>
+        <Property name="icon" type="javax.swing.Icon" editor="org.netbeans.modules.form.editors2.IconEditor">
+          <Image iconType="3" name="/icons/attach.png"/>
+        </Property>
+        <Property name="toolTipText" type="java.lang.String" value="Dokument aus der Akte w&#xe4;hlen"/>
+        <Property name="margin" type="java.awt.Insets" editor="org.netbeans.beaninfo.editors.InsetsEditor">
+          <Insets value="[2, 4, 2, 4]"/>
+        </Property>
+      </Properties>
+      <Events>
+        <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="cmdSelectDocumentActionPerformed"/>
+      </Events>
+    </Component>
+    <Component class="javax.swing.JLabel" name="lblSelectedDocument">
     </Component>
   </SubComponents>
 </Form>

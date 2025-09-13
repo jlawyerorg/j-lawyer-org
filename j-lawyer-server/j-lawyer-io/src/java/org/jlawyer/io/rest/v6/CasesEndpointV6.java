@@ -844,7 +844,25 @@ public class CasesEndpointV6 implements CasesEndpointLocalV6 {
             } else if (RestfulDueDateV6.TYPE_EVENT.equals(dueDate.getType())) {
                 rev.setEventType(ArchiveFileReviewsBean.EVENTTYPE_EVENT);
             }
-            rev.setLocation(dueDate.getLocation());
+      rev.setLocation(dueDate.getLocation());
+      // optionales Dokument prüfen und setzen
+      if (dueDate.getDocumentId() != null && !dueDate.getDocumentId().isEmpty()) {
+        try {
+          ArchiveFileDocumentsBean d = cases.getDocument(dueDate.getDocumentId());
+          if (d == null) {
+            log.error("incoming documents context " + dueDate.getDocumentId() + " is unknown");
+            return Response.status(Response.Status.BAD_REQUEST).entity("documentId unknown").build();
+          }
+          if (!d.getArchiveFileKey().getId().equals(currentCase.getId())) {
+            log.error("document " + dueDate.getDocumentId() + " does not belong to case " + currentCase.getId());
+            return Response.status(Response.Status.BAD_REQUEST).entity("documentId not in case").build();
+          }
+          rev.setDocumentContext(d);
+        } catch (Exception ex) {
+          log.error("failed to resolve documentId " + dueDate.getDocumentId(), ex);
+          return Response.serverError().build();
+        }
+      }
             rev.setSummary(dueDate.getSummary());
             rev = cal.addReview(dueDate.getCaseId(), rev);
 
@@ -859,7 +877,12 @@ public class CasesEndpointV6 implements CasesEndpointLocalV6 {
             dd.setCaseId(rev.getArchiveFileKey().getId());
             dd.setDescription(rev.getDescription());
             dd.setLocation(rev.getLocation());
-            dd.setType(RestfulDueDateV6.TYPE_RESPITE);
+      dd.setType(RestfulDueDateV6.TYPE_RESPITE);
+      if (rev.getDocumentContext() != null) {
+        dd.setDocumentId(rev.getDocumentContext().getId());
+      } else {
+        dd.setDocumentId(null);
+      }
             if (rev.getEventType() == ArchiveFileReviewsBean.EVENTTYPE_FOLLOWUP) {
                 dd.setType(RestfulDueDateV6.TYPE_FOLLOWUP);
             } else if (rev.getEventType() == ArchiveFileReviewsBean.EVENTTYPE_EVENT) {
@@ -934,7 +957,27 @@ public class CasesEndpointV6 implements CasesEndpointLocalV6 {
             rev.setDescription(dueDate.getDescription());
             rev.setDone(dueDate.isDone());
             rev.setLocation(dueDate.getLocation());
-            rev.setSummary(dueDate.getSummary());
+      // optionales Dokument prüfen und setzen
+      if (dueDate.getDocumentId() != null && !dueDate.getDocumentId().isEmpty()) {
+        try {
+          ArchiveFileDocumentsBean d = cases.getDocument(dueDate.getDocumentId());
+          if (d == null) {
+            log.error("incoming documents context " + dueDate.getDocumentId() + " is unknown");
+            return Response.status(Response.Status.BAD_REQUEST).entity("documentId unknown").build();
+          }
+          if (!d.getArchiveFileKey().getId().equals(currentCase.getId())) {
+            log.error("document " + dueDate.getDocumentId() + " does not belong to case " + currentCase.getId());
+            return Response.status(Response.Status.BAD_REQUEST).entity("documentId not in case").build();
+          }
+          rev.setDocumentContext(d);
+        } catch (Exception ex) {
+          log.error("failed to resolve documentId " + dueDate.getDocumentId(), ex);
+          return Response.serverError().build();
+        }
+      } else {
+        rev.setDocumentContext(null);
+      }
+      rev.setSummary(dueDate.getSummary());
             rev = cal.updateReview(dueDate.getCaseId(), rev);
 
             RestfulDueDateV6 dd = new RestfulDueDateV6();
@@ -948,7 +991,12 @@ public class CasesEndpointV6 implements CasesEndpointLocalV6 {
             dd.setCaseId(rev.getArchiveFileKey().getId());
             dd.setDescription(rev.getDescription());
             dd.setLocation(rev.getLocation());
-            dd.setType(RestfulDueDateV6.TYPE_RESPITE);
+      dd.setType(RestfulDueDateV6.TYPE_RESPITE);
+      if (rev.getDocumentContext() != null) {
+        dd.setDocumentId(rev.getDocumentContext().getId());
+      } else {
+        dd.setDocumentId(null);
+      }
             if (rev.getEventType() == ArchiveFileReviewsBean.EVENTTYPE_FOLLOWUP) {
                 dd.setType(RestfulDueDateV6.TYPE_FOLLOWUP);
             } else if (rev.getEventType() == ArchiveFileReviewsBean.EVENTTYPE_EVENT) {
