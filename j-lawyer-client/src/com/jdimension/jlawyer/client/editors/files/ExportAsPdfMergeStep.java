@@ -685,6 +685,7 @@ import java.util.Date;
 import java.util.GregorianCalendar;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Collection;
 import javax.swing.JFileChooser;
 import javax.swing.JOptionPane;
 import javax.swing.SwingUtilities;
@@ -792,24 +793,67 @@ public class ExportAsPdfMergeStep extends javax.swing.JPanel implements WizardSt
 
             if (this.chkSaveToCase.isSelected()) {
                 try {
-                    ArchiveFileBean exportCase=(ArchiveFileBean)this.data.get("export.case");
+                    ArchiveFileBean exportCase = (ArchiveFileBean) this.data.get("export.case");
                     byte[] content = FileUtils.readFile(new File(resultFile));
-                    String newName = FileUtils.getNewFileName(exportCase, new File(resultFile).getName(), new Date(), true, EditorsRegistry.getInstance().getMainWindow(), "PDF-Export zur Akte speichern");
-                    if (newName == null || "".equalsIgnoreCase(newName)) {
-                        return;
-                    }
-                    if (newName.length() == 0) {
-                        JOptionPane.showMessageDialog(EditorsRegistry.getInstance().getMainWindow(), "Dateiname darf nicht leer sein.", "Hinweis", JOptionPane.INFORMATION_MESSAGE);
-                        return;
-                    }
+                    JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(s.getLookupProperties());
 
-                    JLawyerServiceLocator locator=JLawyerServiceLocator.getInstance(s.getLookupProperties());
-                    ArchiveFileDocumentsBean newDoc = locator.lookupArchiveFileServiceRemote().addDocument(exportCase.getId(), newName, content, "", null);
-                    EventBroker eb = EventBroker.getInstance();
-                    eb.publishEvent(new DocumentAddedEvent(newDoc));
+                    boolean saved = false;
+                    while (!saved) {
+                        String proposedName = new File(resultFile).getName();
+                        String newName = FileUtils.getNewFileName(exportCase, proposedName, new Date(), true, EditorsRegistry.getInstance().getMainWindow(), "PDF-Export zur Akte speichern");
+
+                        if (newName == null) {
+                            JOptionPane.showMessageDialog(EditorsRegistry.getInstance().getMainWindow(), "Speichern in der Akte abgebrochen.", "Hinweis", JOptionPane.INFORMATION_MESSAGE);
+                            break; // exit loop and skip saving to case
+                        }
+
+                        newName = newName.trim();
+                        if (newName.length() == 0) {
+                            JOptionPane.showMessageDialog(EditorsRegistry.getInstance().getMainWindow(), "Dateiname darf nicht leer sein.", "Hinweis", JOptionPane.INFORMATION_MESSAGE);
+                            continue;
+                        }
+
+                        // Check for duplicate name in case; prompt again if exists
+                        try {
+                            Collection<ArchiveFileDocumentsBean> docs = locator.lookupArchiveFileServiceRemote().getDocuments(exportCase.getId());
+                            boolean exists = false;
+                            for (ArchiveFileDocumentsBean d : docs) {
+                                if (d != null && d.getName() != null && d.getName().equalsIgnoreCase(newName)) {
+                                    exists = true;
+                                    break;
+                                }
+                            }
+                            if (exists) {
+                                JOptionPane.showMessageDialog(EditorsRegistry.getInstance().getMainWindow(), "Ein Dokument mit diesem Namen existiert bereits. Bitte einen anderen Namen wählen.", "Dateiname bereits vorhanden", JOptionPane.WARNING_MESSAGE);
+                                continue;
+                            }
+                        } catch (Exception checkEx) {
+                            log.error("Fehler beim Prüfen auf doppelte Dateinamen", checkEx);
+                            // On check failure, still try to save; server-side will validate as well
+                        }
+
+                        try {
+                            ArchiveFileDocumentsBean newDoc = locator.lookupArchiveFileServiceRemote().addDocument(exportCase.getId(), newName, content, "", null);
+                            EventBroker eb = EventBroker.getInstance();
+                            eb.publishEvent(new DocumentAddedEvent(newDoc));
+                            saved = true;
+                        } catch (Exception saveEx) {
+                            log.error("Error saving PDF export to case", saveEx);
+                            String msg = (saveEx.getMessage() == null ? "" : saveEx.getMessage()).toLowerCase();
+                            if (msg.contains("exist") || msg.contains("bereits") || msg.contains("duplicate")) {
+                                JOptionPane.showMessageDialog(EditorsRegistry.getInstance().getMainWindow(), "Ein Dokument mit diesem Namen existiert bereits. Bitte einen anderen Namen wählen.", "Dateiname bereits vorhanden", JOptionPane.WARNING_MESSAGE);
+                                // loop again for a new name
+                                continue;
+                            } else {
+                                // Keep wizard open by throwing; WizardMainPanel will display the error message
+                                throw new RuntimeException(saveEx.getMessage(), saveEx);
+                            }
+                        }
+                    }
                 } catch (Exception ioe) {
-                    log.error("Error saving PDF export to case", ioe);
-                    JOptionPane.showMessageDialog(EditorsRegistry.getInstance().getMainWindow(), "Fehler beim Speichern des Exports: " + ioe.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
+                    // Log and keep wizard open so user can retry; WizardMainPanel will display the error
+                    log.error("Fehler beim Speichern in die Akte", ioe);
+                    throw new RuntimeException(ioe);
                 }
             }
         }
