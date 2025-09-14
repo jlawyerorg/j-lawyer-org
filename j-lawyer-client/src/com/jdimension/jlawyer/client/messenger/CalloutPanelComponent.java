@@ -1198,7 +1198,6 @@ public class CalloutPanelComponent extends javax.swing.JPanel {
             }
         }
 
-        //g2d.setColor(Color.WHITE);
         if (magicText != null) {
             String prefix = line.substring(0, magicIndex);
             g2d.setFont(defaultFont);
