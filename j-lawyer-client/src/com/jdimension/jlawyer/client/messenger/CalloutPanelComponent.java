@@ -1027,18 +1027,18 @@ public class CalloutPanelComponent extends javax.swing.JPanel {
                 if (metrics.stringWidth(testLine) <= messageWidth) {
                     currentLine.append(" ").append(words[i]);
                 } else {
-                    this.drawWithHighlights(currentLine.toString(), g2d, 40, yOffset, defaultFont, defaultFontBold);
+                    this.drawWithHighlights(currentLine.toString(), g2d, 40, yOffset, defaultFont, defaultFontBold, Color.WHITE, DefaultColorTheme.COLOR_LIGHT_GREY);
                     currentLine = new StringBuilder(words[i]);
                     yOffset += lineSpacing;
                 }
             }
 
-            this.drawWithHighlights(currentLine.toString(), g2d, 40, yOffset, defaultFont, defaultFontBold);
+            this.drawWithHighlights(currentLine.toString(), g2d, 40, yOffset, defaultFont, defaultFontBold, Color.WHITE, DefaultColorTheme.COLOR_LIGHT_GREY);
             yOffset += lineSpacing;
         }
 
         g2d.setFont(miniFont);
-        g2d.setColor(DefaultColorTheme.COLOR_LIGHT_GREY);
+        g2d.setColor(DefaultColorTheme.COLOR_LOGO_GREEN);
         Date sent = null;
         if (this.message == null || this.message.getSent() == null) {
             sent = new Date();
@@ -1168,8 +1168,14 @@ public class CalloutPanelComponent extends javax.swing.JPanel {
         }
     }
 
-    private void drawWithHighlights(String line, Graphics2D g2d, int x, int y, Font defaultFont, Font defaultFontBold) {
+    private void drawWithHighlights(String line, Graphics2D g2d, int x, int y, Font defaultFont, Font defaultFontBold, Color defaultColor, Color replyColor) {
 
+        boolean isReply=line.startsWith("> ") || line.startsWith("-----");
+        if(isReply)
+            g2d.setColor(replyColor);
+        else
+            g2d.setColor(defaultColor);
+        
         // find the first occurence of a principal
         boolean magicTextIsMe = false;
         String magicText = null;
@@ -1187,7 +1193,7 @@ public class CalloutPanelComponent extends javax.swing.JPanel {
             }
         }
 
-        g2d.setColor(Color.WHITE);
+        //g2d.setColor(Color.WHITE);
         if (magicText != null) {
             String prefix = line.substring(0, magicIndex);
             g2d.setFont(defaultFont);
@@ -1205,7 +1211,12 @@ public class CalloutPanelComponent extends javax.swing.JPanel {
             if (suffix.length() == 0) {
                 return;
             }
-            drawWithHighlights(suffix, g2d, x + prefixLength + magicTextLength, y, defaultFont, defaultFontBold);
+            if(isReply) {
+                drawWithHighlights(suffix, g2d, x + prefixLength + magicTextLength, y, defaultFont, defaultFontBold, replyColor, replyColor);
+            } else {
+                drawWithHighlights(suffix, g2d, x + prefixLength + magicTextLength, y, defaultFont, defaultFontBold, defaultColor, replyColor);
+            }
+            
         } else {
             g2d.setFont(defaultFont);
             g2d.drawString(line, x, y);
