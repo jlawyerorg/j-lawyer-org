@@ -736,18 +736,31 @@ public class MessageSendPanel extends javax.swing.JPanel {
     /**
      * Prefills the message text area.
      * @param text initial text to set
+     * @param caretPosition initial cursor position
      */
-    public void setInitialText(String text) {
+    public void setInitialText(String text, int caretPosition) {
         try {
             if (text == null) {
                 this.taMessage.setText("");
             } else {
                 this.taMessage.setText(text);
-                this.taMessage.setCaretPosition(this.taMessage.getText().length());
+                if(caretPosition>-1 && this.taMessage.getText().length()>caretPosition) {
+                    this.taMessage.setCaretPosition(caretPosition);
+                } else {
+                    this.taMessage.setCaretPosition(this.taMessage.getText().length());
+                }
             }
         } catch (Exception ex) {
             log.error("Error setting initial text in MessageSendPanel", ex);
         }
+    }
+    
+    /**
+     * Prefills the message text area.
+     * @param text initial text to set
+     */
+    public void setInitialText(String text) {
+        this.setInitialText(text, -1);
     }
 
     /**

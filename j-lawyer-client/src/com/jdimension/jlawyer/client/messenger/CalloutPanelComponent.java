@@ -1132,6 +1132,7 @@ public class CalloutPanelComponent extends javax.swing.JPanel {
 
         // Build initial text: @sender + quoted original content
         StringBuilder initial = new StringBuilder();
+        int caretPosition=-1;
         try {
             String sender = (this.message != null ? this.message.getSender() : null);
             Date sent = (this.message != null ? this.message.getSent() : null);
@@ -1140,24 +1141,25 @@ public class CalloutPanelComponent extends javax.swing.JPanel {
             if (sender != null && !sender.isEmpty()) {
                 initial.append("@").append(sender).append(" ");
             }
+            caretPosition=initial.length();
+            
             // Visible separation between answer and quoted original
             initial.append(System.lineSeparator());
             initial.append(System.lineSeparator());
-            initial.append("----- Ursprüngliche Nachricht -----").append(System.lineSeparator());
             if (sent != null) {
-                initial.append("gesendet am ").append(dfSent.format(sent)).append("").append(System.lineSeparator());
+                initial.append("----- Ursprüngliche Nachricht vom ").append(dfSent.format(sent)).append(" -----").append(System.lineSeparator());
+            } else {
+                initial.append("----- Ursprüngliche Nachricht -----").append(System.lineSeparator());
             }
             
             for (String line : content.split("\n")) {
                 initial.append("> ").append(line).append(System.lineSeparator());
             }
-            initial.append("-------------------------------").append(System.lineSeparator());
-            initial.append(System.lineSeparator());
         } catch (Exception ex) {
             log.error("Error preparing initial reply text", ex);
         }
 
-        dlg.setInitialMessageText(initial.toString());
+        dlg.setInitialMessageText(initial.toString(), caretPosition);
         try {
             dlg.setLocationRelativeTo(parent);
             dlg.setVisible(true);

@@ -736,11 +736,12 @@ public class SendInstantMessageDialog extends javax.swing.JDialog implements New
      * (e.g., a quote of the original message and an @mention).
      *
      * @param text initial text to set
+     * @param caretPosition initial cursor position, so user can directly start typing
      */
-    public void setInitialMessageText(String text) {
+    public void setInitialMessageText(String text, int caretPosition) {
         try {
             if (this.messageSendPanel1 != null) {
-                this.messageSendPanel1.setInitialText(text);
+                this.messageSendPanel1.setInitialText(text, caretPosition);
             }
         } catch (Exception ex) {
             log.error("Error setting initial reply text in SendInstantMessageDialog", ex);
