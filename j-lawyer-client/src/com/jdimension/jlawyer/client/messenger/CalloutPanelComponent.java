@@ -668,6 +668,7 @@ import com.jdimension.jlawyer.client.events.EventBroker;
 import com.jdimension.jlawyer.client.events.InstantMessageDeletedEvent;
 import com.jdimension.jlawyer.client.events.InstantMessageMentionChangedEvent;
 import com.jdimension.jlawyer.client.settings.ClientSettings;
+import com.jdimension.jlawyer.client.settings.UserSettings;
 import com.jdimension.jlawyer.client.utils.DateUtils;
 import com.jdimension.jlawyer.client.utils.UserUtils;
 import com.jdimension.jlawyer.persistence.AppUserBean;
@@ -1158,8 +1159,12 @@ public class CalloutPanelComponent extends javax.swing.JPanel {
         } catch (Exception ex) {
             log.error("Error preparing initial reply text", ex);
         }
+        
+        String initialContent=initial.toString();
+        // need to replace the mentioning of the replying user - otherwise he is expected to confirm his own message
+        initialContent=initialContent.replace("@" + UserSettings.getInstance().getCurrentUser().getPrincipalId(), "@ " + UserSettings.getInstance().getCurrentUser().getPrincipalId());
 
-        dlg.setInitialMessageText(initial.toString(), caretPosition);
+        dlg.setInitialMessageText(initialContent, caretPosition);
         try {
             dlg.setLocationRelativeTo(parent);
             dlg.setVisible(true);
