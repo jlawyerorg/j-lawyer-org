@@ -712,7 +712,7 @@ public class CalloutPanelComponent extends javax.swing.JPanel {
     private static final ImageIcon ICON_COPY=new javax.swing.ImageIcon(CalloutPanelComponent.class.getResource("/icons16/material/baseline_content_copy_lightgrey_48dp.png"));
     private static final ImageIcon ICON_DELETE=new javax.swing.ImageIcon(CalloutPanelComponent.class.getResource("/icons16/material/baseline_delete_lightgrey_48dp.png"));
     private static final ImageIcon ICON_MARKREAD=new javax.swing.ImageIcon(CalloutPanelComponent.class.getResource("/icons16/material/mark_chat_read_20dp.png"));
-    private static final ImageIcon ICON_REPLY_ORIG=new javax.swing.ImageIcon(CalloutPanelComponent.class.getResource("/icons16/material/baseline_expand_more_white_48dp.png"));
+    private static final ImageIcon ICON_REPLY_ORIG=new javax.swing.ImageIcon(CalloutPanelComponent.class.getResource("/icons16/material/reply_20dp_CFCFCF.png"));
 
     private static int READ = 10;
     private static int UNREAD = 20;
