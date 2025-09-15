@@ -4703,7 +4703,6 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
 
     private void runConflictRecomputeBackground() {
         new Thread(() -> {
-            System.out.println("runConflictRecomputeBackground");
             try {
                 Set<String> newConflictIds = new java.util.HashSet<>();
                 Map<String, List<ArchiveFileReviewsBean>> newDetails = new HashMap<>();
