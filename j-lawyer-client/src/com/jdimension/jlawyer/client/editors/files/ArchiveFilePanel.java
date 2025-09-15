@@ -742,6 +742,7 @@ import com.jdimension.jlawyer.client.voip.EpostLetterValidationStep;
 import com.jdimension.jlawyer.client.voip.EpostPdfConversionStep;
 import com.jdimension.jlawyer.client.voip.EpostPdfMergeStep;
 import com.jdimension.jlawyer.client.voip.EpostPdfOrderingStep;
+import com.jdimension.jlawyer.client.utils.pdf.PdfPageReorderDialog;
 import com.jdimension.jlawyer.client.voip.EpostWizardDialog;
 import com.jdimension.jlawyer.client.voip.SendFaxDialog;
 import com.jdimension.jlawyer.client.wizard.WizardDataContainer;
@@ -1941,6 +1942,7 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
         mnuMergeToPdf = new javax.swing.JMenuItem();
         mnuSplitPdf = new javax.swing.JMenuItem();
         mnuSaveDocumentsLocallyPdf = new javax.swing.JMenuItem();
+        mnuReorderPdfPages = new javax.swing.JMenuItem();
         mnuShrinkPdf = new javax.swing.JMenuItem();
         mnuSaveDocumentEncrypted = new javax.swing.JMenuItem();
         mnuDuplicateDocumentAs = new javax.swing.JMenuItem();
@@ -2399,6 +2401,15 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
             }
         });
         mnuPdfAndConvertActions.add(mnuSaveDocumentsLocallyPdf);
+
+        mnuReorderPdfPages.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons16/material/grid_on_20dp_0E72B5.png"))); // NOI18N
+        mnuReorderPdfPages.setText("PDF Seiten umsortieren");
+        mnuReorderPdfPages.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                mnuReorderPdfPagesActionPerformed(evt);
+            }
+        });
+        mnuPdfAndConvertActions.add(mnuReorderPdfPages);
 
         mnuShrinkPdf.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons16/material/compress_24dp_0E72B5.png"))); // NOI18N
         mnuShrinkPdf.setText("PDF verkleinern");
@@ -8450,6 +8461,83 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
         this.exportSelectedDocumentsAsPdf();
     }//GEN-LAST:event_mnuMergeToPdfActionPerformed
 
+    private void mnuReorderPdfPagesActionPerformed(java.awt.event.ActionEvent evt) {
+        if (LoadDocumentPreviewThread.isRunning()) {
+            JOptionPane.showMessageDialog(this, "Bitte warten bis die Dokumentvorschau abgeschlossen ist.", "Hinweis", JOptionPane.PLAIN_MESSAGE);
+            return;
+        }
+
+        ArrayList<ArchiveFileDocumentsBean> selectedDocs = this.caseFolderPanel1.getSelectedDocuments();
+        if (selectedDocs.isEmpty() || selectedDocs.size() != 1) {
+            return;
+        }
+
+        ArchiveFileDocumentsBean doc = selectedDocs.get(0);
+        if (!doc.getName().toLowerCase().endsWith(".pdf")) {
+            JOptionPane.showMessageDialog(this, "Es können nur PDF-Dateien umsortiert werden", "Fehler", JOptionPane.ERROR_MESSAGE);
+            return;
+        }
+
+        ArrayList<ArchiveFileDocumentsBean> tmpList = new ArrayList<>();
+        tmpList.add(doc);
+        ArrayList<String> open = this.getDocumentsOpenForWrite(tmpList);
+        if (!open.isEmpty()) {
+            String question = "<html>Soll die Aktion auf geöffnete Dokumente ausgeführt werden? Es besteht das Risiko fehlender / inkonsistenter Inhalte.<br/><ul>";
+            for (String o : open) {
+                question = question + "<li>" + o + "</li>";
+            }
+            question = question + "</ul></html>";
+            int response = JOptionPane.showConfirmDialog(this, question, "Aktion auf offene Dokumente ausführen", JOptionPane.YES_NO_OPTION);
+            if (response == JOptionPane.NO_OPTION) {
+                return;
+            }
+        }
+
+        String tempPath = null;
+        try {
+            ClientSettings settings = ClientSettings.getInstance();
+            JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
+
+            byte[] content = CachingDocumentLoader.getInstance().getDocument(doc.getId());
+            tempPath = FileUtils.createTempFile(doc.getName(), content);
+
+            PdfPageReorderDialog dlg = new PdfPageReorderDialog(EditorsRegistry.getInstance().getMainWindow(), true, doc.getName(), content, tempPath);
+            FrameUtils.centerDialog(dlg, EditorsRegistry.getInstance().getMainWindow());
+            dlg.setVisible(true);
+
+            if (dlg.isSaveRequested()) {
+                byte[] newContent = FileUtils.readFile(new java.io.File(dlg.getOutputPath()));
+                if (dlg.isOverwriteRequested()) {
+                    locator.lookupArchiveFileServiceRemote().setDocumentContent(doc.getId(), newContent);
+                } else {
+                    String newName = FileUtils.getNewFileName(dto, doc.getName(), new java.util.Date(), true, EditorsRegistry.getInstance().getMainWindow(), "umsortiertes PDF speichern");
+                    if (newName == null || "".equals(newName)) {
+                        return;
+                    }
+                    if (newName.length() == 0) {
+                        JOptionPane.showMessageDialog(EditorsRegistry.getInstance().getMainWindow(), "Dateiname darf nicht leer sein.", "Hinweis", JOptionPane.INFORMATION_MESSAGE);
+                        this.lastPopupClosed = System.currentTimeMillis();
+                        return;
+                    }
+                    ArchiveFileDocumentsBean newDoc = locator.lookupArchiveFileServiceRemote().addDocument(dto.getId(), newName, newContent, doc.getDictateSign(), null);
+                    if (doc.getFolder() != null) {
+                        ArrayList<String> docId = new ArrayList<>();
+                        docId.add(newDoc.getId());
+                        locator.lookupArchiveFileServiceRemote().moveDocumentsToFolder(docId, doc.getFolder().getId());
+                    }
+                    caseFolderPanel1.addDocument(locator.lookupArchiveFileServiceRemote().getDocument(newDoc.getId()), null);
+                }
+            }
+        } catch (Exception ex) {
+            log.error("Error reordering PDF pages", ex);
+            JOptionPane.showMessageDialog(this, "Fehler beim Umsortieren der PDF-Seiten: " + ex.getMessage(), DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
+        } finally {
+            if (tempPath != null) {
+                try { FileUtils.cleanupTempFile(tempPath); } catch (Exception ignore) { log.error("Temp cleanup failed", ignore); }
+            }
+        }
+    }
+
     private void cmdNewPaymentActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdNewPaymentActionPerformed
         PaymentDialog dlg = new PaymentDialog(null, this.dto, EditorsRegistry.getInstance().getMainWindow(), true, this.pnlInvolvedParties.getInvolvedPartiesAddress());
         FrameUtils.centerDialog(dlg, EditorsRegistry.getInstance().getMainWindow());
@@ -9315,6 +9403,7 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
     private javax.swing.JMenuItem mnuRemoveDocument;
     private javax.swing.JMenuItem mnuRemoveReview;
     private javax.swing.JMenuItem mnuRenameDocument;
+    private javax.swing.JMenuItem mnuReorderPdfPages;
     private javax.swing.JMenuItem mnuSaveDocumentEncrypted;
     private javax.swing.JMenuItem mnuSaveDocumentsLocally;
     private javax.swing.JMenuItem mnuSaveDocumentsLocallyPdf;
