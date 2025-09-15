@@ -856,6 +856,10 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
     private java.util.Map<String, java.util.List<com.jdimension.jlawyer.persistence.ArchiveFileReviewsBean>> conflictDetailsByEventId = new java.util.HashMap<>();
     private javax.swing.JMenuItem mnuOpenCalendarDay; // context action to jump to day view for conflicts
 
+    // Debounced conflict recomputation control
+    private javax.swing.Timer conflictRecomputeTimer;
+    private volatile boolean conflictRecomputePending = false;
+
     // Remember last document shown in preview to improve multi-select behavior
     private String lastPreviewDocId = null;
 
@@ -4664,14 +4668,52 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
     }
 
     private void recomputeConflictsAsync() {
-        // Run on background to avoid blocking EDT
+        try {
+            // coalesce frequent triggers and defer until Kalender tab is visible
+            conflictRecomputePending = true;
+            if (conflictRecomputeTimer == null) {
+                conflictRecomputeTimer = new javax.swing.Timer(300, (ActionEvent e) -> {
+                    try {
+                        if (!isCalendarTabSelected()) {
+                            return; // keep pending; will run once tab is selected
+                        }
+                        runConflictRecomputeBackground();
+                    } catch (Throwable t) {
+                        log.error(t);
+                    }
+                });
+                conflictRecomputeTimer.setRepeats(false);
+            }
+            conflictRecomputeTimer.restart();
+        } catch (Throwable t) {
+            log.error(t);
+        }
+    }
+
+    private boolean isCalendarTabSelected() {
+        try {
+            if (tabPaneArchiveFile == null) {
+                return false;
+            }
+            Component selected = tabPaneArchiveFile.getSelectedComponent();
+            return selected == tabReviews;
+        } catch (Throwable t) {
+            log.error(t);
+            return false;
+        }
+    }
+
+    private void runConflictRecomputeBackground() {
         new Thread(() -> {
             try {
+                conflictRecomputePending = false;
                 Set<String> newConflictIds = new java.util.HashSet<>();
                 Map<String, List<ArchiveFileReviewsBean>> newDetails = new HashMap<>();
                 TableModel model = tblReviewReasons.getModel();
+                if (model == null) {
+                    return;
+                }
                 int rc = model.getRowCount();
-                // Collect events from the table
                 List<ArchiveFileReviewsBean> localEvents = new ArrayList<>();
                 for (int i = 0; i < rc; i++) {
                     Object value = model.getValueAt(i, 0);
@@ -4679,113 +4721,107 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
                         localEvents.add((ArchiveFileReviewsBean) value);
                     }
                 }
-                // Local collision detection (same calendar + same assignee + overlap + open Termine)
                 for (int i = 0; i < localEvents.size(); i++) {
-
                     ArchiveFileReviewsBean a = localEvents.get(i);
-                    if (a.getEventType() != ArchiveFileReviewsBean.EVENTTYPE_EVENT) {
-                        continue;
-                    }
-                    if (a.isDone()) {
-                        continue;
-                    }
-                    if (a.getBeginDate() == null || a.getEndDate() == null) {
-                        continue;
-                    }
-                    if (a.getCalendarSetup() == null || a.getAssignee() == null) {
-                        continue;
-                    }
+                    if (a == null) continue;
+                    if (a.getEventType() != ArchiveFileReviewsBean.EVENTTYPE_EVENT) continue;
+                    if (a.isDone()) continue; // only open entries
+                    if (a.getBeginDate() == null || a.getEndDate() == null) continue;
+                    if (a.getCalendarSetup() == null || a.getAssignee() == null) continue;
                     for (int j = i + 1; j < localEvents.size(); j++) {
                         ArchiveFileReviewsBean b = localEvents.get(j);
-                        if (b.getEventType() != ArchiveFileReviewsBean.EVENTTYPE_EVENT) {
-                            continue;
-                        }
-                        if (b.isDone()) {
-                            continue;
-                        }
-                        if (b.getBeginDate() == null || b.getEndDate() == null) {
-                            continue;
-                        }
-                        if (b.getCalendarSetup() == null || b.getAssignee() == null) {
-                            continue;
-                        }
-                        if (!a.getAssignee().equals(b.getAssignee())) {
-                            continue;
-                        }
-                        if (!a.getCalendarSetup().getId().equals(b.getCalendarSetup().getId())) {
-                            continue;
-                        }
-                        boolean overlap = a.getBeginDate().before(b.getEndDate()) && a.getEndDate().after(b.getBeginDate());
-                        if (overlap) {
-                            newConflictIds.add(a.getId());
-                            newConflictIds.add(b.getId());
-                            newDetails.computeIfAbsent(a.getId(), k -> new ArrayList<>()).add(b);
-                            newDetails.computeIfAbsent(b.getId(), k -> new ArrayList<>()).add(a);
-                        }
-                    }
-                }
-                // Remote enrichment to include conflicts from other cases
-                CalendarServiceRemote calService = null;
-                try {
-                    JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(ClientSettings.getInstance().getLookupProperties());
-                    calService = locator.lookupCalendarServiceRemote();
-                } catch (Exception ex) {
-                    calService = null;
-                }
-                if (calService != null) {
-                    for (ArchiveFileReviewsBean e : localEvents) {
-                        if (e.getEventType() != ArchiveFileReviewsBean.EVENTTYPE_EVENT) {
-                            continue;
-                        }
-                        if (e.isDone()) {
-                            continue;
-                        }
-                        if (e.getBeginDate() == null || e.getEndDate() == null) {
-                            continue;
-                        }
-                        if (e.getAssignee() == null || e.getCalendarSetup() == null) {
-                            continue;
-                        }
+                        if (b == null) continue;
+                        if (b.getEventType() != ArchiveFileReviewsBean.EVENTTYPE_EVENT) continue;
+                        if (b.isDone()) continue;
+                        if (b.getBeginDate() == null || b.getEndDate() == null) continue;
+                        if (b.getCalendarSetup() == null || b.getAssignee() == null) continue;
                         try {
-                            List<ArchiveFileReviewsBean> candidates = calService.getConflictingEvents(ArchiveFileReviewsBean.EVENTTYPE_EVENT,
-                                    e.getBeginDate(), e.getEndDate(), e.getAssignee());
-                            List<ArchiveFileReviewsBean> sameCal = new ArrayList<>();
-                            for (ArchiveFileReviewsBean c : candidates) {
-                                if (c.getId().equals(e.getId())) {
-                                    continue;
+                            boolean sameCal = a.getCalendarSetup().getId() != null && a.getCalendarSetup().getId().equals(b.getCalendarSetup().getId());
+                            boolean sameAssignee = a.getAssignee().equals(b.getAssignee());
+                            boolean overlap = a.getBeginDate().before(b.getEndDate()) && b.getBeginDate().before(a.getEndDate());
+                            if (sameCal && sameAssignee && overlap) {
+                                if (a.getId() != null) {
+                                    newConflictIds.add(a.getId());
+                                    newDetails.computeIfAbsent(a.getId(), k -> new ArrayList<>()).add(b);
                                 }
-                                if (c.getCalendarSetup() == null) {
-                                    continue;
+                                if (b.getId() != null) {
+                                    newConflictIds.add(b.getId());
+                                    newDetails.computeIfAbsent(b.getId(), k -> new ArrayList<>()).add(a);
                                 }
-                                if (e.getCalendarSetup().getId().equals(c.getCalendarSetup().getId())) {
-                                    sameCal.add(c);
-                                }
-                            }
-                            if (!sameCal.isEmpty()) {
-                                newConflictIds.add(e.getId());
-                                List<ArchiveFileReviewsBean> list = newDetails.computeIfAbsent(e.getId(), k -> new ArrayList<>());
-                                list.addAll(sameCal);
-                                list.sort((x, y) -> {
-                                    java.util.Date dx = x.getBeginDate();
-                                    java.util.Date dy = y.getBeginDate();
-                                    if (dx == null && dy == null) {
-                                        return 0;
-                                    }
-                                    if (dx == null) {
-                                        return -1;
-                                    }
-                                    if (dy == null) {
-                                        return 1;
-                                    }
-                                    return dx.compareTo(dy);
-                                });
                             }
                         } catch (Throwable ignore) {
                             log.error(ignore);
                         }
                     }
                 }
-                // De-duplicate and sort conflict lists to avoid duplicates in tooltips
+
+                // Remote enrichment to include conflicts with events outside this case, using coarse caching per assignee+day
+                CalendarServiceRemote calService = null;
+                try {
+                    JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(ClientSettings.getInstance().getLookupProperties());
+                    calService = locator.lookupCalendarServiceRemote();
+                } catch (Exception ex) {
+                    log.error(ex);
+                    calService = null;
+                }
+
+                if (calService != null) {
+                    Map<String, List<ArchiveFileReviewsBean>> remoteByKey = new HashMap<>();
+                    for (ArchiveFileReviewsBean e : localEvents) {
+                        if (e == null) continue;
+                        if (e.getEventType() != ArchiveFileReviewsBean.EVENTTYPE_EVENT) continue;
+                        if (e.isDone()) continue;
+                        if (e.getBeginDate() == null || e.getEndDate() == null) continue;
+                        if (e.getAssignee() == null || e.getCalendarSetup() == null) continue;
+                        try {
+                            // Key by assignee + day (begin date)
+                            Calendar cal = Calendar.getInstance();
+                            cal.setTime(e.getBeginDate());
+                            cal.set(Calendar.HOUR_OF_DAY, 0);
+                            cal.set(Calendar.MINUTE, 0);
+                            cal.set(Calendar.SECOND, 0);
+                            cal.set(Calendar.MILLISECOND, 0);
+                            Date dayStart = cal.getTime();
+                            cal.set(Calendar.HOUR_OF_DAY, 23);
+                            cal.set(Calendar.MINUTE, 59);
+                            cal.set(Calendar.SECOND, 59);
+                            cal.set(Calendar.MILLISECOND, 999);
+                            Date dayEnd = cal.getTime();
+                            String key = String.valueOf(e.getAssignee()) + "|" + dayStart.getTime();
+
+                            List<ArchiveFileReviewsBean> dayConflicts = remoteByKey.get(key);
+                            if (dayConflicts == null) {
+                                // single call per key (assignee+day)
+                                dayConflicts = calService.getConflictingEvents(ArchiveFileReviewsBean.EVENTTYPE_EVENT, dayStart, dayEnd, e.getAssignee());
+                                if (dayConflicts == null) {
+                                    dayConflicts = new ArrayList<>();
+                                }
+                                remoteByKey.put(key, dayConflicts);
+                            }
+
+                            // Filter to same calendar, open entries, overlap with the specific event
+                            for (ArchiveFileReviewsBean c : dayConflicts) {
+                                if (c == null) continue;
+                                if (c.getId() == null) continue;
+                                if (e.getId() != null && c.getId().equals(e.getId())) continue; // skip self
+                                if (c.getEventType() != ArchiveFileReviewsBean.EVENTTYPE_EVENT) continue;
+                                if (c.isDone()) continue;
+                                if (c.getBeginDate() == null || c.getEndDate() == null) continue;
+                                if (c.getCalendarSetup() == null) continue;
+                                boolean sameCal = e.getCalendarSetup().getId() != null && e.getCalendarSetup().getId().equals(c.getCalendarSetup().getId());
+                                boolean overlap = e.getBeginDate().before(c.getEndDate()) && c.getBeginDate().before(e.getEndDate());
+                                if (sameCal && overlap) {
+                                    if (e.getId() != null) {
+                                        newConflictIds.add(e.getId());
+                                        newDetails.computeIfAbsent(e.getId(), k -> new ArrayList<>()).add(c);
+                                    }
+                                }
+                            }
+                        } catch (Throwable ignore) {
+                            log.error(ignore);
+                        }
+                    }
+                }
                 try {
                     for (Map.Entry<String, List<ArchiveFileReviewsBean>> en : newDetails.entrySet()) {
                         List<ArchiveFileReviewsBean> lst = en.getValue();
@@ -4797,19 +4833,12 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
                         }
                         lst.clear();
                         lst.addAll(uniq.values());
-                        // sort by start time for readability
                         lst.sort((x, y) -> {
                             Date dx = x.getBeginDate();
                             Date dy = y.getBeginDate();
-                            if (dx == null && dy == null) {
-                                return 0;
-                            }
-                            if (dx == null) {
-                                return -1;
-                            }
-                            if (dy == null) {
-                                return 1;
-                            }
+                            if (dx == null && dy == null) return 0;
+                            if (dx == null) return -1;
+                            if (dy == null) return 1;
                             return dx.compareTo(dy);
                         });
                     }
@@ -4817,12 +4846,15 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
                     log.error(ignore);
                 }
 
-                // swap state and repaint
                 this.conflictingEventIds = newConflictIds;
                 this.conflictDetailsByEventId = newDetails;
                 javax.swing.SwingUtilities.invokeLater(() -> {
-                    applyConflictRenderers();
-                    tblReviewReasons.repaint();
+                    try {
+                        applyConflictRenderers();
+                        tblReviewReasons.repaint();
+                    } catch (Throwable t) {
+                        log.error(t);
+                    }
                 });
             } catch (Throwable t) {
                 log.error(t);
@@ -5331,6 +5363,15 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
                 this.loadHistoryEntries(sinceDate);
             }
 
+        }
+        // If user switches to Kalender tab, run any pending conflict computation (lazy)
+        try {
+            if (isCalendarTabSelected()) {
+                // always schedule when entering tab; debounce will prevent thrash
+                recomputeConflictsAsync();
+            }
+        } catch (Throwable t) {
+            log.error(t);
         }
     }//GEN-LAST:event_tabPaneArchiveFileStateChanged
 
