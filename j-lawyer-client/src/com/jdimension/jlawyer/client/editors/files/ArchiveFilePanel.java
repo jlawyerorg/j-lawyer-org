@@ -6437,6 +6437,101 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
         JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
         ArchiveFileServiceRemote remote = locator.lookupArchiveFileServiceRemote();
 
+        // If the file is already a PDF, ask whether to duplicate instead of appending another .pdf
+        boolean isAlreadyPdf = false;
+        try {
+            String nameLower = doc.getName() != null ? doc.getName().toLowerCase() : "";
+            isAlreadyPdf = nameLower.endsWith(".pdf");
+        } catch (Throwable t) {
+            log.error("Error checking document extension for PDF", t);
+        }
+
+        if (isAlreadyPdf) {
+            int response = JOptionPane.showConfirmDialog(
+                    EditorsRegistry.getInstance().getMainWindow(),
+                    "Dokument ist bereits im PDF-Format. Soll es dupliziert werden?",
+                    "PDF bereits vorhanden",
+                    JOptionPane.YES_NO_OPTION,
+                    JOptionPane.QUESTION_MESSAGE);
+
+            if (response != JOptionPane.YES_OPTION) {
+                this.lastPopupClosed = System.currentTimeMillis();
+                return;
+            }
+
+            try {
+                byte[] content = remote.getDocumentContent(doc.getId());
+                String newName = doc.getName();
+                if (newName == null || newName.trim().length() == 0) {
+                    JOptionPane.showMessageDialog(EditorsRegistry.getInstance().getMainWindow(), "Dateiname darf nicht leer sein.", "Hinweis", JOptionPane.INFORMATION_MESSAGE);
+                    return;
+                }
+
+                boolean documentExists = remote.doesDocumentExist(dto.getId(), newName);
+                boolean replaceDocument = false;
+                while (documentExists && !replaceDocument) {
+                    int repResp = JOptionPane.showOptionDialog(
+                            EditorsRegistry.getInstance().getMainWindow(),
+                            "Eine Datei mit dem Namen '" + newName + "' existiert bereits, soll diese ersetzt werden?",
+                            "Datei ersetzen?",
+                            JOptionPane.YES_NO_OPTION,
+                            JOptionPane.WARNING_MESSAGE,
+                            null,
+                            new String[]{"Ja", "Nein"},
+                            "Nein");
+                    replaceDocument = repResp == JOptionPane.YES_OPTION;
+                    if (!replaceDocument) {
+                        newName = FileUtils.getNewFileName(dto, newName, new Date(), false, EditorsRegistry.getInstance().getMainWindow(), "Neuer Name für PDF-Dokument");
+                        if (newName == null || "".equals(newName)) {
+                            this.lastPopupClosed = System.currentTimeMillis();
+                            return;
+                        }
+                    }
+                    documentExists = remote.doesDocumentExist(dto.getId(), newName);
+                }
+
+                if (replaceDocument) {
+                    final String searchName = newName;
+                    ArchiveFileDocumentsBean document = this.caseFolderPanel1.getDocuments().stream()
+                            .filter(iterDoc -> searchName.equals(iterDoc.getName()))
+                            .findAny()
+                            .orElse(null);
+                    if (document != null) {
+                        remote.removeDocument(document.getId());
+                        remote.removeDocumentFromBin(document.getId());
+                        caseFolderPanel1.removeDocument(document);
+                    } else {
+                        document = remote.getDocumentsBin().stream()
+                                .filter(iterDoc -> dto.getId().equals(iterDoc.getArchiveFileKey().getId()))
+                                .filter(iterDoc -> searchName.equals(iterDoc.getName()))
+                                .findAny()
+                                .orElse(null);
+                        if (document != null) {
+                            remote.removeDocumentFromBin(document.getId());
+                        }
+                    }
+                }
+
+                ArchiveFileDocumentsBean newDoc = remote.addDocument(dto.getId(), newName, content, doc.getDictateSign(), null);
+                newDoc.setSize(content.length);
+                if (doc.getFolder() != null) {
+                    newDoc.setFolder(doc.getFolder());
+                    ArrayList<String> documentIds = new ArrayList<>();
+                    documentIds.add(newDoc.getId());
+                    remote.moveDocumentsToFolder(documentIds, doc.getFolder().getId());
+                } else {
+                    log.warn("document folder of source document is null when duplicating existing PDF");
+                }
+                caseFolderPanel1.addDocument(newDoc, null);
+            } catch (Throwable t) {
+                log.error("Could not duplicate existing PDF document", t);
+                JOptionPane.showMessageDialog(EditorsRegistry.getInstance().getMainWindow(), "Fehler beim Duplizieren: " + t.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
+            }
+
+            this.lastPopupClosed = System.currentTimeMillis();
+            return;
+        }
+
         String currentExt = "";
         for (String ext : LauncherFactory.LO_OFFICEFILETYPES) {
             ext = ext.toLowerCase();
