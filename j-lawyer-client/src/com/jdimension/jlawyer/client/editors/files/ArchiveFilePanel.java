@@ -858,7 +858,6 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
 
     // Debounced conflict recomputation control
     private javax.swing.Timer conflictRecomputeTimer;
-    private volatile boolean conflictRecomputePending = false;
 
     // Remember last document shown in preview to improve multi-select behavior
     private String lastPreviewDocId = null;
@@ -4670,7 +4669,6 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
     private void recomputeConflictsAsync() {
         try {
             // coalesce frequent triggers and defer until Kalender tab is visible
-            conflictRecomputePending = true;
             if (conflictRecomputeTimer == null) {
                 conflictRecomputeTimer = new javax.swing.Timer(300, (ActionEvent e) -> {
                     try {
@@ -4705,8 +4703,8 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
 
     private void runConflictRecomputeBackground() {
         new Thread(() -> {
+            System.out.println("runConflictRecomputeBackground");
             try {
-                conflictRecomputePending = false;
                 Set<String> newConflictIds = new java.util.HashSet<>();
                 Map<String, List<ArchiveFileReviewsBean>> newDetails = new HashMap<>();
                 TableModel model = tblReviewReasons.getModel();
@@ -4723,18 +4721,38 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
                 }
                 for (int i = 0; i < localEvents.size(); i++) {
                     ArchiveFileReviewsBean a = localEvents.get(i);
-                    if (a == null) continue;
-                    if (a.getEventType() != ArchiveFileReviewsBean.EVENTTYPE_EVENT) continue;
-                    if (a.isDone()) continue; // only open entries
-                    if (a.getBeginDate() == null || a.getEndDate() == null) continue;
-                    if (a.getCalendarSetup() == null || a.getAssignee() == null) continue;
+                    if (a == null) {
+                        continue;
+                    }
+                    if (a.getEventType() != ArchiveFileReviewsBean.EVENTTYPE_EVENT) {
+                        continue;
+                    }
+                    if (a.isDone()) {
+                        continue; // only open entries
+                    }
+                    if (a.getBeginDate() == null || a.getEndDate() == null) {
+                        continue;
+                    }
+                    if (a.getCalendarSetup() == null || a.getAssignee() == null) {
+                        continue;
+                    }
                     for (int j = i + 1; j < localEvents.size(); j++) {
                         ArchiveFileReviewsBean b = localEvents.get(j);
-                        if (b == null) continue;
-                        if (b.getEventType() != ArchiveFileReviewsBean.EVENTTYPE_EVENT) continue;
-                        if (b.isDone()) continue;
-                        if (b.getBeginDate() == null || b.getEndDate() == null) continue;
-                        if (b.getCalendarSetup() == null || b.getAssignee() == null) continue;
+                        if (b == null) {
+                            continue;
+                        }
+                        if (b.getEventType() != ArchiveFileReviewsBean.EVENTTYPE_EVENT) {
+                            continue;
+                        }
+                        if (b.isDone()) {
+                            continue;
+                        }
+                        if (b.getBeginDate() == null || b.getEndDate() == null) {
+                            continue;
+                        }
+                        if (b.getCalendarSetup() == null || b.getAssignee() == null) {
+                            continue;
+                        }
                         try {
                             boolean sameCal = a.getCalendarSetup().getId() != null && a.getCalendarSetup().getId().equals(b.getCalendarSetup().getId());
                             boolean sameAssignee = a.getAssignee().equals(b.getAssignee());
@@ -4768,11 +4786,21 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
                 if (calService != null) {
                     Map<String, List<ArchiveFileReviewsBean>> remoteByKey = new HashMap<>();
                     for (ArchiveFileReviewsBean e : localEvents) {
-                        if (e == null) continue;
-                        if (e.getEventType() != ArchiveFileReviewsBean.EVENTTYPE_EVENT) continue;
-                        if (e.isDone()) continue;
-                        if (e.getBeginDate() == null || e.getEndDate() == null) continue;
-                        if (e.getAssignee() == null || e.getCalendarSetup() == null) continue;
+                        if (e == null) {
+                            continue;
+                        }
+                        if (e.getEventType() != ArchiveFileReviewsBean.EVENTTYPE_EVENT) {
+                            continue;
+                        }
+                        if (e.isDone()) {
+                            continue;
+                        }
+                        if (e.getBeginDate() == null || e.getEndDate() == null) {
+                            continue;
+                        }
+                        if (e.getAssignee() == null || e.getCalendarSetup() == null) {
+                            continue;
+                        }
                         try {
                             // Key by assignee + day (begin date)
                             Calendar cal = Calendar.getInstance();
@@ -4801,13 +4829,27 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
 
                             // Filter to same calendar, open entries, overlap with the specific event
                             for (ArchiveFileReviewsBean c : dayConflicts) {
-                                if (c == null) continue;
-                                if (c.getId() == null) continue;
-                                if (e.getId() != null && c.getId().equals(e.getId())) continue; // skip self
-                                if (c.getEventType() != ArchiveFileReviewsBean.EVENTTYPE_EVENT) continue;
-                                if (c.isDone()) continue;
-                                if (c.getBeginDate() == null || c.getEndDate() == null) continue;
-                                if (c.getCalendarSetup() == null) continue;
+                                if (c == null) {
+                                    continue;
+                                }
+                                if (c.getId() == null) {
+                                    continue;
+                                }
+                                if (e.getId() != null && c.getId().equals(e.getId())) {
+                                    continue; // skip self
+                                }
+                                if (c.getEventType() != ArchiveFileReviewsBean.EVENTTYPE_EVENT) {
+                                    continue;
+                                }
+                                if (c.isDone()) {
+                                    continue;
+                                }
+                                if (c.getBeginDate() == null || c.getEndDate() == null) {
+                                    continue;
+                                }
+                                if (c.getCalendarSetup() == null) {
+                                    continue;
+                                }
                                 boolean sameCal = e.getCalendarSetup().getId() != null && e.getCalendarSetup().getId().equals(c.getCalendarSetup().getId());
                                 boolean overlap = e.getBeginDate().before(c.getEndDate()) && c.getBeginDate().before(e.getEndDate());
                                 if (sameCal && overlap) {
@@ -4836,9 +4878,15 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
                         lst.sort((x, y) -> {
                             Date dx = x.getBeginDate();
                             Date dy = y.getBeginDate();
-                            if (dx == null && dy == null) return 0;
-                            if (dx == null) return -1;
-                            if (dy == null) return 1;
+                            if (dx == null && dy == null) {
+                                return 0;
+                            }
+                            if (dx == null) {
+                                return -1;
+                            }
+                            if (dy == null) {
+                                return 1;
+                            }
                             return dx.compareTo(dy);
                         });
                     }
