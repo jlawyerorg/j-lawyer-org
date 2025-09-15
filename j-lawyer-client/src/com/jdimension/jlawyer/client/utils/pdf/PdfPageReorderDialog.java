@@ -670,7 +670,6 @@ import java.awt.Cursor;
 import java.awt.Dimension;
 import java.awt.Image;
 import java.awt.Component;
-import java.awt.Window;
 import java.awt.datatransfer.DataFlavor;
 import java.awt.datatransfer.Transferable;
 import java.awt.image.BufferedImage;
@@ -683,20 +682,17 @@ import java.util.List;
 import javax.swing.DefaultListModel;
 import com.jdimension.jlawyer.client.utils.DesktopUtils;
 import javax.swing.ImageIcon;
-import javax.swing.JDialog;
 import javax.swing.JComponent;
 import javax.swing.JLabel;
 import javax.swing.JList;
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
-import javax.swing.JScrollPane;
 import javax.swing.ListCellRenderer;
 import javax.swing.ListSelectionModel;
 import javax.swing.SwingUtilities;
 import javax.swing.TransferHandler;
 import org.apache.log4j.Logger;
 import org.apache.pdfbox.pdmodel.PDDocument;
-import org.apache.pdfbox.pdmodel.common.PDPageLabelRange;
 import org.apache.pdfbox.rendering.PDFRenderer;
 
 /**
@@ -945,21 +941,22 @@ public class PdfPageReorderDialog extends javax.swing.JDialog {
         lblZoom = new javax.swing.JLabel();
         cmdZoomOut = new javax.swing.JButton();
         cmdZoomIn = new javax.swing.JButton();
-        pnlMain = new javax.swing.JPanel();
-        scroll = new javax.swing.JScrollPane();
-        lstPages = new javax.swing.JList<>();
-        pnlButtons = new javax.swing.JPanel();
         cmdCancel = new javax.swing.JButton();
         cmdOverwrite = new javax.swing.JButton();
         cmdSaveNew = new javax.swing.JButton();
+        scroll = new javax.swing.JScrollPane();
+        lstPages = new javax.swing.JList();
 
         setDefaultCloseOperation(javax.swing.WindowConstants.DISPOSE_ON_CLOSE);
         setTitle("PDF Seiten umsortieren");
+
+        pnlTitle.setBackground(new java.awt.Color(128, 128, 128));
 
         jLabel1.setFont(jLabel1.getFont().deriveFont(jLabel1.getFont().getStyle() | java.awt.Font.BOLD, jLabel1.getFont().getSize()+2));
         jLabel1.setForeground(new java.awt.Color(255, 255, 255));
         jLabel1.setText("PDF Seiten umsortieren");
 
+        lblFileName.setFont(lblFileName.getFont());
         lblFileName.setForeground(new java.awt.Color(255, 255, 255));
         lblFileName.setText("file.pdf");
 
@@ -969,25 +966,27 @@ public class PdfPageReorderDialog extends javax.swing.JDialog {
             pnlTitleLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(pnlTitleLayout.createSequentialGroup()
                 .addContainerGap()
-                .addComponent(jLabel1)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-                .addComponent(lblFileName, javax.swing.GroupLayout.DEFAULT_SIZE, 500, Short.MAX_VALUE)
+                .addGroup(pnlTitleLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addGroup(pnlTitleLayout.createSequentialGroup()
+                        .addComponent(jLabel1)
+                        .addGap(0, 0, Short.MAX_VALUE))
+                    .addComponent(lblFileName, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
                 .addContainerGap())
         );
         pnlTitleLayout.setVerticalGroup(
             pnlTitleLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(pnlTitleLayout.createSequentialGroup()
                 .addContainerGap()
-                .addGroup(pnlTitleLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                    .addComponent(jLabel1)
-                    .addComponent(lblFileName))
+                .addComponent(jLabel1)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addComponent(lblFileName)
                 .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
         );
 
-        scroll.setViewportView(lstPages);
-
+        lblZoom.setFont(lblZoom.getFont());
         lblZoom.setText("100%");
 
+        cmdZoomOut.setFont(cmdZoomOut.getFont());
         cmdZoomOut.setText("-");
         cmdZoomOut.setToolTipText("Verkleinern");
         cmdZoomOut.addActionListener(new java.awt.event.ActionListener() {
@@ -996,6 +995,7 @@ public class PdfPageReorderDialog extends javax.swing.JDialog {
             }
         });
 
+        cmdZoomIn.setFont(cmdZoomIn.getFont());
         cmdZoomIn.setText("+");
         cmdZoomIn.setToolTipText("Vergrößern");
         cmdZoomIn.addActionListener(new java.awt.event.ActionListener() {
@@ -1008,7 +1008,7 @@ public class PdfPageReorderDialog extends javax.swing.JDialog {
         pnlToolbar.setLayout(pnlToolbarLayout);
         pnlToolbarLayout.setHorizontalGroup(
             pnlToolbarLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, pnlToolbarLayout.createSequentialGroup()
+            .addGroup(pnlToolbarLayout.createSequentialGroup()
                 .addGap(0, 0, Short.MAX_VALUE)
                 .addComponent(lblZoom)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
@@ -1019,24 +1019,15 @@ public class PdfPageReorderDialog extends javax.swing.JDialog {
         pnlToolbarLayout.setVerticalGroup(
             pnlToolbarLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(pnlToolbarLayout.createSequentialGroup()
-                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                .addGap(0, 0, Short.MAX_VALUE)
                 .addGroup(pnlToolbarLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                     .addComponent(lblZoom)
                     .addComponent(cmdZoomOut)
                     .addComponent(cmdZoomIn)))
         );
 
-        javax.swing.GroupLayout pnlMainLayout = new javax.swing.GroupLayout(pnlMain);
-        pnlMain.setLayout(pnlMainLayout);
-        pnlMainLayout.setHorizontalGroup(
-            pnlMainLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addComponent(scroll)
-        );
-        pnlMainLayout.setVerticalGroup(
-            pnlMainLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addComponent(scroll, javax.swing.GroupLayout.DEFAULT_SIZE, 416, Short.MAX_VALUE)
-        );
-
+        cmdCancel.setFont(cmdCancel.getFont());
+        cmdCancel.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/cancel.png"))); // NOI18N
         cmdCancel.setText("Abbrechen");
         cmdCancel.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
@@ -1044,6 +1035,8 @@ public class PdfPageReorderDialog extends javax.swing.JDialog {
             }
         });
 
+        cmdOverwrite.setFont(cmdOverwrite.getFont());
+        cmdOverwrite.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/agt_action_success.png"))); // NOI18N
         cmdOverwrite.setText("Original überschreiben");
         cmdOverwrite.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
@@ -1051,6 +1044,8 @@ public class PdfPageReorderDialog extends javax.swing.JDialog {
             }
         });
 
+        cmdSaveNew.setFont(cmdSaveNew.getFont());
+        cmdSaveNew.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/agt_action_success.png"))); // NOI18N
         cmdSaveNew.setText("zur Akte speichern");
         cmdSaveNew.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
@@ -1058,28 +1053,10 @@ public class PdfPageReorderDialog extends javax.swing.JDialog {
             }
         });
 
-        javax.swing.GroupLayout pnlButtonsLayout = new javax.swing.GroupLayout(pnlButtons);
-        pnlButtons.setLayout(pnlButtonsLayout);
-        pnlButtonsLayout.setHorizontalGroup(
-            pnlButtonsLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, pnlButtonsLayout.createSequentialGroup()
-                .addGap(0, 0, Short.MAX_VALUE)
-                .addComponent(cmdSaveNew)
-                .addGap(18, 18, 18)
-                .addComponent(cmdOverwrite)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-                .addComponent(cmdCancel))
-        );
-        pnlButtonsLayout.setVerticalGroup(
-            pnlButtonsLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(pnlButtonsLayout.createSequentialGroup()
-                .addContainerGap()
-                .addGroup(pnlButtonsLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                    .addComponent(cmdCancel)
-                    .addComponent(cmdOverwrite)
-                    .addComponent(cmdSaveNew))
-                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
-        );
+        lstPages.setDragEnabled(true);
+        lstPages.setLayoutOrientation(javax.swing.JList.HORIZONTAL_WRAP);
+        lstPages.setVisibleRowCount(-1);
+        scroll.setViewportView(lstPages);
 
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(getContentPane());
         getContentPane().setLayout(layout);
@@ -1089,21 +1066,30 @@ public class PdfPageReorderDialog extends javax.swing.JDialog {
             .addGroup(layout.createSequentialGroup()
                 .addContainerGap()
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addComponent(pnlMain, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                     .addComponent(pnlToolbar, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                    .addComponent(pnlButtons, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                    .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
+                        .addGap(0, 84, Short.MAX_VALUE)
+                        .addComponent(cmdSaveNew)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addComponent(cmdOverwrite)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addComponent(cmdCancel))
+                    .addComponent(scroll))
                 .addContainerGap())
         );
         layout.setVerticalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(layout.createSequentialGroup()
                 .addComponent(pnlTitle, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
                 .addComponent(pnlToolbar, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(pnlMain, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(pnlButtons, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addComponent(scroll, javax.swing.GroupLayout.DEFAULT_SIZE, 421, Short.MAX_VALUE)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                    .addComponent(cmdCancel)
+                    .addComponent(cmdOverwrite)
+                    .addComponent(cmdSaveNew))
                 .addContainerGap())
         );
 
@@ -1153,16 +1139,14 @@ public class PdfPageReorderDialog extends javax.swing.JDialog {
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JButton cmdCancel;
-    private javax.swing.JButton cmdZoomIn;
-    private javax.swing.JButton cmdZoomOut;
     private javax.swing.JButton cmdOverwrite;
     private javax.swing.JButton cmdSaveNew;
+    private javax.swing.JButton cmdZoomIn;
+    private javax.swing.JButton cmdZoomOut;
     private javax.swing.JLabel jLabel1;
     private javax.swing.JLabel lblFileName;
     private javax.swing.JLabel lblZoom;
-    private javax.swing.JList<Integer> lstPages;
-    private javax.swing.JPanel pnlButtons;
-    private javax.swing.JPanel pnlMain;
+    private javax.swing.JList lstPages;
     private javax.swing.JPanel pnlTitle;
     private javax.swing.JPanel pnlToolbar;
     private javax.swing.JScrollPane scroll;
