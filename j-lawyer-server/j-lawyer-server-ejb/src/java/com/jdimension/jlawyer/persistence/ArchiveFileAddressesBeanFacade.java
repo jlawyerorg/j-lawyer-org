@@ -693,6 +693,12 @@ public class ArchiveFileAddressesBeanFacade extends AbstractFacade<ArchiveFileAd
     }
     
     @Override
+    public List<ArchiveFileAddressesBean> findByReference(String reference) {
+        List<ArchiveFileAddressesBean> list = em.createNamedQuery("ArchiveFileAddressesBean.findByReference").setParameter("reference", reference).getResultList();
+        return list;
+    }
+    
+    @Override
     public List<ArchiveFileAddressesBean> findByArchiveFileKey(ArchiveFileBean archiveFileKey) {
         List<ArchiveFileAddressesBean> list = getEntityManager().createQuery("from ArchiveFileAddressesBean where archiveFileKey = ?1").setParameter(1, archiveFileKey).getResultList();
         return list;

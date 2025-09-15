@@ -2167,65 +2167,52 @@ public class BeaInboxPanel extends javax.swing.JPanel implements SaveToCaseExecu
                     actionPanelEntries.add(berp);
                 }
 
+                // allow navigating to senders address
                 for (AddressBean h : hits) {
                     NavigateToAddressPanel ap = new NavigateToAddressPanel(this.getClass().getName());
                     ap.setAddress(h);
                     ap.setBackground(new Color(153, 204, 255));
                     actionPanelEntries.add(ap);
-
-                    Collection caseCol = afs.getArchiveFileAddressesForAddress(h.getId());
-                    int i = 0;
-                    ArrayList cases = new ArrayList(caseCol);
-                    Collections.sort(cases, (Object o1, Object o2) -> {
-                        ArchiveFileAddressesBean afab1 = (ArchiveFileAddressesBean) o1;
-                        ArchiveFileBean aFile1 = afab1.getArchiveFileKey();
-
-                        ArchiveFileAddressesBean afab2 = (ArchiveFileAddressesBean) o2;
-                        ArchiveFileBean aFile2 = afab2.getArchiveFileKey();
-
-                        boolean archived1 = aFile1.isArchived();
-                        boolean archived2 = aFile2.isArchived();
-
-                        if (archived1 && archived2) {
-                            // both archived
-                            // sort by changed date
-                            return new FileNumberComparatorArchiveFileBean().reversed().compare(aFile1, aFile2);
-                        } else if (archived1) {
-                            // only 1 is archived
-                            return 1;
-                        } else if (archived2) {
-                            // only 2 is archived
-                            return -1;
-                        } else {
-                            // both are non-archived
-                            // sort by changed date
-                            return new FileNumberComparatorArchiveFileBean().reversed().compare(aFile1, aFile2);
-                        }
-
-                    });
-                    for (Object c : cases) {
-                        ArchiveFileAddressesBean afab = (ArchiveFileAddressesBean) c;
-                        ArchiveFileBean aFile = afab.getArchiveFileKey();
-                        SaveToCasePanel ep = new SaveToCasePanel(this.getClass().getName());
-                        if (i % 2 == 0) {
-                            ep.setBackground(ep.getBackground().darker());
-                        }
-                        ep.setBackground(ep.getBackground().brighter());
-                        CaseForContactEntry lce = new CaseForContactEntry();
-                        lce.setFileNumber(aFile.getFileNumber());
-                        lce.setId(aFile.getId());
-                        lce.setRole("");
-                        lce.setName(aFile.getName());
-                        lce.setReason(StringUtils.nonEmpty(aFile.getReason()));
-                        lce.setArchived(aFile.isArchived());
-                        ep.setEntry(lce, this);
-
-                        actionPanelEntries.add(ep);
-                        i++;
-                    }
-
                 }
 
+                String referenceJustice = msg.getReferenceJustice();
+                boolean foundByReferenceJustice=this.addActionsByReference(afs, referenceJustice, actionPanelEntries);
+                boolean foundByReference=false;
+                if(!foundByReferenceJustice) {
+                    foundByReference=this.addActionsByReference(afs, referenceJustice, actionPanelEntries);
+                }
+                
+
+                if (!foundByReference && !foundByReferenceJustice) {
+                    // display all cases where sender is involved
+                    for (AddressBean h : hits) {
+                        Collection caseCol = afs.getArchiveFileAddressesForAddress(h.getId());
+                        int i = 0;
+                        ArrayList cases = new ArrayList(caseCol);
+                        this.sortCases(cases);
+                        for (Object c : cases) {
+                            ArchiveFileAddressesBean afab = (ArchiveFileAddressesBean) c;
+                            ArchiveFileBean aFile = afab.getArchiveFileKey();
+                            SaveToCasePanel ep = new SaveToCasePanel(this.getClass().getName());
+                            if (i % 2 == 0) {
+                                ep.setBackground(ep.getBackground().darker());
+                            }
+                            ep.setBackground(ep.getBackground().brighter());
+                            CaseForContactEntry lce = new CaseForContactEntry();
+                            lce.setFileNumber(aFile.getFileNumber());
+                            lce.setId(aFile.getId());
+                            lce.setRole("");
+                            lce.setName(aFile.getName());
+                            lce.setReason(StringUtils.nonEmpty(aFile.getReason()));
+                            lce.setArchived(aFile.isArchived());
+                            ep.setEntry(lce, this);
+
+                            actionPanelEntries.add(ep);
+                            i++;
+                        }
+
+                    }
+                }
             }
 
             this.pnlActionsChild.setLayout(new GridLayout(actionPanelEntries.size(), 1));
@@ -2244,6 +2231,83 @@ public class BeaInboxPanel extends javax.swing.JPanel implements SaveToCaseExecu
             this.tblMails.setValueAt(this.tblMails.getValueAt(selectionIndex, i), selectionIndex, i);
         }
 
+    }
+    
+    private boolean addActionsByReference(ArchiveFileServiceRemote afs, String reference, ArrayList<Component> actionPanelEntries) throws Exception {
+        boolean foundByReference = false;
+        if (!StringUtils.isEmpty(reference)) {
+            List<ArchiveFileAddressesBean> refList = afs.getArchiveFileAddressesByReference(reference);
+            this.sortCases(refList);
+            if (!refList.isEmpty()) {
+                foundByReference = true;
+                for(ArchiveFileAddressesBean aab: refList) {
+                    SaveToCasePanel ep = new SaveToCasePanel(this.getClass().getName());
+                    ep.setBackground(ep.getBackground().brighter());
+                    CaseForContactEntry lce = new CaseForContactEntry();
+                    lce.setFileNumber(aab.getArchiveFileKey().getFileNumber());
+                    lce.setId(aab.getArchiveFileKey().getId());
+                    lce.setRole("");
+                    lce.setName(aab.getArchiveFileKey().getName());
+                    lce.setReason(StringUtils.nonEmpty(aab.getArchiveFileKey().getReason()));
+                    lce.setArchived(aab.getArchiveFileKey().isArchived());
+                    ep.setEntry(lce, this);
+                    actionPanelEntries.add(ep);
+                }
+            }
+
+        }
+
+        boolean foundByFileNumber = false;
+        if (!foundByReference && !StringUtils.isEmpty(reference)) {
+            ArchiveFileBean[] byFileNumber = afs.searchSimple(reference);
+            if (byFileNumber != null) {
+                for (ArchiveFileBean afb : byFileNumber) {
+                    SaveToCasePanel ep = new SaveToCasePanel(this.getClass().getName());
+                    ep.setBackground(ep.getBackground().brighter());
+                    CaseForContactEntry lce = new CaseForContactEntry();
+                    lce.setFileNumber(afb.getFileNumber());
+                    lce.setId(afb.getId());
+                    lce.setRole("");
+                    lce.setName(afb.getName());
+                    lce.setReason(StringUtils.nonEmpty(afb.getReason()));
+                    lce.setArchived(afb.isArchived());
+                    ep.setEntry(lce, this);
+                    actionPanelEntries.add(ep);
+                    foundByFileNumber = true;
+                }
+            }
+        }
+        return foundByReference || foundByFileNumber;
+    }
+
+    private void sortCases(List cases) {
+        Collections.sort(cases, (Object o1, Object o2) -> {
+            ArchiveFileAddressesBean afab1 = (ArchiveFileAddressesBean) o1;
+            ArchiveFileBean aFile1 = afab1.getArchiveFileKey();
+
+            ArchiveFileAddressesBean afab2 = (ArchiveFileAddressesBean) o2;
+            ArchiveFileBean aFile2 = afab2.getArchiveFileKey();
+
+            boolean archived1 = aFile1.isArchived();
+            boolean archived2 = aFile2.isArchived();
+
+            if (archived1 && archived2) {
+                // both archived
+                // sort by changed date
+                return new FileNumberComparatorArchiveFileBean().reversed().compare(aFile1, aFile2);
+            } else if (archived1) {
+                // only 1 is archived
+                return 1;
+            } else if (archived2) {
+                // only 2 is archived
+                return -1;
+            } else {
+                // both are non-archived
+                // sort by changed date
+                return new FileNumberComparatorArchiveFileBean().reversed().compare(aFile1, aFile2);
+            }
+
+        });
     }
 
     @Override

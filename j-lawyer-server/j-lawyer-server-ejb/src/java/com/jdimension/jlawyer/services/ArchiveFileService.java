@@ -6853,6 +6853,25 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
     public ArrayList<String> getAllArchiveFileNumbers() throws Exception {
         return this.getAllArchiveFileNumbersUnrestricted();
     }
+    
+    @Override
+    @RolesAllowed({"loginRole"})
+    public ArrayList<String> getAllReferencedFileNumbers() throws Exception {
+        JDBCUtils utils = new JDBCUtils();
+        ArrayList<String> list = new ArrayList<>();
+        try (Connection con = utils.getConnection(); PreparedStatement st = con.prepareStatement("select distinct(reference) from case_contacts where reference is not null"); ResultSet rs = st.executeQuery()) {
+
+            while (rs.next()) {
+                String fileNumber = rs.getString(1);
+                list.add(fileNumber);
+            }
+        } catch (SQLException sqle) {
+            log.error("Error finding foreign reference numbers", sqle);
+            throw new EJBException("Aktensuche konnte nicht ausgeführt werden.", sqle);
+        }
+
+        return list;
+    }
 
     @Override
     @RolesAllowed({"writeArchiveFileRole"})
@@ -7375,6 +7394,29 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
         } else {
             throw new Exception(MSG_MISSINGPRIVILEGE_CASE);
         }
+    }
+
+    @Override
+    @RolesAllowed({"readArchiveFileRole"})
+    public List<ArchiveFileAddressesBean> getArchiveFileAddressesByReference(String reference) throws Exception {
+        List<Group> userGroups = new ArrayList<>();
+        try {
+            userGroups = this.securityFacade.getGroupsForUser(context.getCallerPrincipal().getName());
+        } catch (Throwable t) {
+            log.error("Unable to determine groups for user " + context.getCallerPrincipal().getName(), t);
+        }
+
+        List<ArchiveFileAddressesBean> l=this.archiveFileAddressesFacade.findByReference(reference);
+        ArrayList<ArchiveFileAddressesBean> l2 = new ArrayList<>();
+        for (ArchiveFileAddressesBean aab : l) {
+
+            if (SecurityUtils.checkGroupsForCase(userGroups, aab.getArchiveFileKey(), this.caseGroupsFacade)) {
+                l2.add(aab);
+            }
+
+        }
+
+        return l2;
     }
 
 }

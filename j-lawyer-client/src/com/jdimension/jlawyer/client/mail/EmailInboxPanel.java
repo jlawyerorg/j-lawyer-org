@@ -2668,24 +2668,42 @@ public class EmailInboxPanel extends javax.swing.JPanel implements SaveToCaseExe
             // find any potential cases by looking for file numbers in subject and body
             ArrayList<String> allFileNumbers = afs.getAllArchiveFileNumbers();
             ArrayList<ArchiveFileBean> subjectBodyCases = new ArrayList<>();
-            ArrayList<String> actionableFileNumbers = new ArrayList<>();
+            
             String subject = msgC.getMessage().getSubject().toLowerCase();
             String body = this.mailContentUI.getBody().toLowerCase();
             for (String fn : allFileNumbers) {
                 String fnLower = fn.toLowerCase();
                 if (subject.contains(fnLower)) {
-                    actionableFileNumbers.add(fn);
                     ArchiveFileBean a = afs.getArchiveFileByFileNumber(fn);
                     if (a != null) {
                         subjectBodyCases.add(a);
                     }
-                    continue;
-                } else {
-                    if (body.contains(fnLower)) {
-                        actionableFileNumbers.add(fn);
-                        ArchiveFileBean a = afs.getArchiveFileByFileNumber(fn);
+                } else if (body.contains(fnLower)) {
+                    ArchiveFileBean a = afs.getArchiveFileByFileNumber(fn);
+                    if (a != null) {
+                        subjectBodyCases.add(a);
+                    }
+                }
+            }
+            
+            // find by foreign file numbers
+            ArrayList<String> allForeignFileNumbers = afs.getAllReferencedFileNumbers();
+            for (String fn : allForeignFileNumbers) {
+                String fnLower = fn.toLowerCase();
+                if (!StringUtils.isEmpty(fnLower)) {
+                    if (subject.contains(fnLower)) {
+                        List<ArchiveFileAddressesBean> a = afs.getArchiveFileAddressesByReference(fn);
                         if (a != null) {
-                            subjectBodyCases.add(a);
+                            for (ArchiveFileAddressesBean aab : a) {
+                                subjectBodyCases.add(aab.getArchiveFileKey());
+                            }
+                        }
+                    } else if (body.contains(fnLower)) {
+                        List<ArchiveFileAddressesBean> a = afs.getArchiveFileAddressesByReference(fn);
+                        if (a != null) {
+                            for (ArchiveFileAddressesBean aab : a) {
+                                subjectBodyCases.add(aab.getArchiveFileKey());
+                            }
                         }
                     }
                 }
@@ -2749,50 +2767,60 @@ public class EmailInboxPanel extends javax.swing.JPanel implements SaveToCaseExe
                             pnp.setPhoneNumbers(phoneNumbers);
                             actionPanelEntries.add(pnp);
                         }
+                        
+                        ArrayList<String> addedAddressIds = new ArrayList<>();
+                        for (AddressBean h : hits) {
+                            if (!addedAddressIds.contains(h.getId())) {
+                                NavigateToAddressPanel ap = new NavigateToAddressPanel(this.getClass().getName());
+                                ap.setAddress(h);
+                                ap.setBackground(new Color(153, 204, 255));
+                                actionPanelEntries.add(ap);
+                                addedAddressIds.add(h.getId());
+                            }
+                        }
 
                         // find cases that might be relevant for the sender of the mail
-                        for (AddressBean h : hits) {
-                            NavigateToAddressPanel ap = new NavigateToAddressPanel(this.getClass().getName());
-                            ap.setAddress(h);
-                            ap.setBackground(new Color(153, 204, 255));
-                            actionPanelEntries.add(ap);
+                        if(subjectBodyCases.isEmpty())  {
+                            ArrayList<String> addedFileNumbers = new ArrayList<>();
+                            
+                            for (AddressBean h : hits) {
+                                Collection caseCol = afs.getArchiveFileAddressesForAddress(h.getId());
 
-                            Collection caseCol = afs.getArchiveFileAddressesForAddress(h.getId());
-
-                            for (Object o : caseCol) {
-                                ArchiveFileAddressesBean afab = (ArchiveFileAddressesBean) o;
-                                ArchiveFileBean a = afab.getArchiveFileKey();
-                                if (!actionableFileNumbers.contains(a.getFileNumber())) {
-                                    actionableFileNumbers.add(afab.getArchiveFileKey().getFileNumber());
-                                    addressRelatedCases.add(a);
+                                for (Object o : caseCol) {
+                                    ArchiveFileAddressesBean afab = (ArchiveFileAddressesBean) o;
+                                    ArchiveFileBean a = afab.getArchiveFileKey();
+                                    if (!addedFileNumbers.contains(a.getFileNumber())) {
+                                        addedFileNumbers.add(afab.getArchiveFileKey().getFileNumber());
+                                        addressRelatedCases.add(a);
+                                    }
                                 }
+
+                                Collections.sort(addressRelatedCases, (Object o1, Object o2) -> {
+                                    ArchiveFileBean aFile1 = (ArchiveFileBean) o1;
+                                    ArchiveFileBean aFile2 = (ArchiveFileBean) o2;
+
+                                    boolean archived1 = aFile1.isArchived();
+                                    boolean archived2 = aFile2.isArchived();
+
+                                    if (archived1 && archived2) {
+                                        // both archived
+                                        // sort by changed date
+                                        return new FileNumberComparatorArchiveFileBean().reversed().compare(aFile1, aFile2);
+                                    } else if (archived1) {
+                                        // only 1 is archived
+                                        return 1;
+                                    } else if (archived2) {
+                                        // only 2 is archived
+                                        return -1;
+                                    } else {
+                                        // both are non-archived
+                                        // sort by changed date
+                                        return new FileNumberComparatorArchiveFileBean().reversed().compare(aFile1, aFile2);
+                                    }
+
+                                });
+
                             }
-
-                            Collections.sort(addressRelatedCases, (Object o1, Object o2) -> {
-                                ArchiveFileBean aFile1 = (ArchiveFileBean) o1;
-                                ArchiveFileBean aFile2 = (ArchiveFileBean) o2;
-                                
-                                boolean archived1 = aFile1.isArchived();
-                                boolean archived2 = aFile2.isArchived();
-
-                                if (archived1 && archived2) {
-                                    // both archived
-                                    // sort by changed date
-                                    return new FileNumberComparatorArchiveFileBean().reversed().compare(aFile1, aFile2);
-                                } else if (archived1) {
-                                    // only 1 is archived
-                                    return 1;
-                                } else if (archived2) {
-                                    // only 2 is archived
-                                    return -1;
-                                } else {
-                                    // both are non-archived
-                                    // sort by changed date
-                                    return new FileNumberComparatorArchiveFileBean().reversed().compare(aFile1, aFile2);
-                                }
-
-                            });
-
                         }
                     }
 

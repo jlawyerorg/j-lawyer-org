@@ -930,6 +930,8 @@ public interface ArchiveFileServiceRemote {
     boolean transferTimesheetPositions(List<String> positionIds, String newTimesheetId) throws Exception;
 
     ArrayList<String> getAllArchiveFileNumbers() throws Exception;
+    
+    ArrayList<String> getAllReferencedFileNumbers() throws Exception;
 
     List<String> getCaseIdsSyncedForUser(String principalId) throws Exception;
 
@@ -968,4 +970,6 @@ public interface ArchiveFileServiceRemote {
     List<ClaimLedger> getClaimLedgers(String caseId);
 
     ClaimLedger addClaimLedger(String caseId, ClaimLedger ledger) throws Exception;
+
+    List<ArchiveFileAddressesBean> getArchiveFileAddressesByReference(String reference) throws Exception;
 }

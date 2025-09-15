@@ -691,6 +691,8 @@ public interface ArchiveFileAddressesBeanFacadeLocal {
     
     List<ArchiveFileAddressesBean> findByReferenceType(PartyTypeBean partyType);
     
+    List<ArchiveFileAddressesBean> findByReference(String reference);
+    
     List<ArchiveFileAddressesBean> findByAddressKey(AddressBean addressKey);
             
 }
