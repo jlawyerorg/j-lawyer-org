@@ -1501,7 +1501,7 @@ public class SystemManagement implements SystemManagementRemote, SystemManagemen
         msg.setRecipients(Message.RecipientType.TO, mailAddress);
         msg.setSubject("Testnachricht, j-lawyer.org Serverdienst");
         msg.setSentDate(new java.util.Date());
-        msg.setText("Wenn Sie diese Nachricht erhalten, funktioniert der Versand von E-Mails.");
+        msg.setText("Wenn Sie diese Nachricht erhalten, funktioniert der Versand von E-Mails. Die Nachricht wurde gesendet von " + com.jdimension.jlawyer.server.utils.ServerInformation.getHostName() + ".");
         //Transport.send(msg);
         msg.saveChanges();
         bus.send(msg);
