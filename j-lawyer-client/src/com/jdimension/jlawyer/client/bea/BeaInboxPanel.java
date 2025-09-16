@@ -2064,6 +2064,8 @@ public class BeaInboxPanel extends javax.swing.JPanel implements SaveToCaseExecu
 
     private void displayMessage() {
 
+        int splitLocationBefore=this.jSplitPane1.getDividerLocation();
+        
         this.beaMessageContentUI.clear();
         this.beaMessageContentUI.repaint();
         this.beaMessageContentUI.revalidate();
@@ -2220,7 +2222,7 @@ public class BeaInboxPanel extends javax.swing.JPanel implements SaveToCaseExecu
                 this.pnlActionsChild.add(o);
             }
 
-            this.jSplitPane1.setDividerLocation(0.8f);
+            this.jSplitPane1.setDividerLocation(splitLocationBefore);
 
         } catch (Throwable t) {
             log.error(t);
@@ -2320,24 +2322,22 @@ public class BeaInboxPanel extends javax.swing.JPanel implements SaveToCaseExecu
 
     @Override
     public void dragEnter(DropTargetDragEvent dtde) {
-//        Point p=dtde.getLocation();
-//        TreePath tp=this.treeFolders.getPathForLocation(p.x, p.y);
-//        treeFolders.getR
+        // intentional
     }
 
     @Override
     public void dragOver(DropTargetDragEvent dtde) {
-        //System.out.println("Drag Over");
+        // intentional
     }
 
     @Override
     public void dropActionChanged(DropTargetDragEvent dtde) {
-        //System.out.println("Drop Action Changed");
+        // intentional
     }
 
     @Override
     public void dragExit(DropTargetEvent dte) {
-        //System.out.println("Drag Exit");
+        // intentional
     }
 
     @Override
