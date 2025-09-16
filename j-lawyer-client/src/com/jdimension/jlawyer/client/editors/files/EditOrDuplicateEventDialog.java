@@ -678,6 +678,12 @@ import com.jdimension.jlawyer.persistence.ArchiveFileBean;
 import com.jdimension.jlawyer.persistence.ArchiveFileReviewsBean;
 import com.jdimension.jlawyer.services.CalendarServiceRemote;
 import com.jdimension.jlawyer.services.JLawyerServiceLocator;
+import com.jdimension.jlawyer.services.ArchiveFileServiceRemote;
+import com.jdimension.jlawyer.client.utils.SelectAttachmentDialog;
+import com.jdimension.jlawyer.persistence.ArchiveFileDocumentsBean;
+import javax.swing.JDialog;
+import javax.swing.JFrame;
+import org.jdesktop.swingx.util.WindowUtils;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.List;
@@ -706,6 +712,7 @@ public class EditOrDuplicateEventDialog extends javax.swing.JDialog {
     private Date oldEnd=null;
 
     private int mode = MODE_DUPLICATE;
+    private String selectedDocumentId = null;
 
     /**
      * Creates new form EditorOrDuplicateEventDialog
@@ -778,6 +785,18 @@ public class EditOrDuplicateEventDialog extends javax.swing.JDialog {
 
         this.txtEventLocation.setText(rev.getLocation());
 
+        // initialize selected document context if present
+        if (rev.getDocumentContext() != null) {
+            ArchiveFileDocumentsBean dc = rev.getDocumentContext();
+            if (dc != null) {
+                this.selectedDocumentId = dc.getId();
+                if (this.lblSelectedDocument != null) {
+                    this.lblSelectedDocument.setText(dc.getName());
+                    this.lblSelectedDocument.setToolTipText(dc.getName());
+                }
+            }
+        }
+
         this.calendarSelectionButton1.refreshCalendarSetups();
         this.toggleEventUi();
         this.calendarSelectionButton1.restrictToType(rev.getEventType(), rev.getCalendarSetup(), this.caseDto);
@@ -824,6 +843,8 @@ public class EditOrDuplicateEventDialog extends javax.swing.JDialog {
         cmbEventBeginTime = new javax.swing.JComboBox<>();
         cmbEventEndTime = new javax.swing.JComboBox<>();
         calendarSelectionButton1 = new com.jdimension.jlawyer.client.calendar.CalendarSelectionButton();
+        cmdSelectDocument = new javax.swing.JButton();
+        lblSelectedDocument = new javax.swing.JLabel();
 
         jTextArea1.setColumns(20);
         jTextArea1.setRows(5);
@@ -904,6 +925,15 @@ public class EditOrDuplicateEventDialog extends javax.swing.JDialog {
         cmbEventEndTime.setEditable(true);
         cmbEventEndTime.setModel(new javax.swing.DefaultComboBoxModel<>(new String[] { "00:00", "00:30", "01:00", "01:30", "02:00", "02:30", "03:00", "03:30", "04:00", "04:30", "05:00", "05:30", "06:00", "06:30", "07:00", "07:30", "08:00", "08:30", "09:00", "09:30", "10:00", "10:30", "11:00", "11:30", "12:00", "12:30", "13:00", "13:30", "14:00", "14:30", "15:00", "15:30", "16:00", "16:30", "17:00", "17:30", "18:00", "18:30", "19:00", "19:30", "20:00", "20:30", "21:00", "21:30", "22:00", "22:30", "23:00", "23:30" }));
 
+        cmdSelectDocument.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/attach.png"))); // NOI18N
+        cmdSelectDocument.setToolTipText("Dokument aus der Akte wählen");
+        cmdSelectDocument.setMargin(new java.awt.Insets(2, 4, 2, 4));
+        cmdSelectDocument.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                cmdSelectDocumentActionPerformed(evt);
+            }
+        });
+
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(getContentPane());
         getContentPane().setLayout(layout);
         layout.setHorizontalGroup(
@@ -950,7 +980,11 @@ public class EditOrDuplicateEventDialog extends javax.swing.JDialog {
                             .addGroup(layout.createSequentialGroup()
                                 .addComponent(jLabel6)
                                 .addGap(47, 47, 47)
-                                .addComponent(txtEventLocation, javax.swing.GroupLayout.PREFERRED_SIZE, 494, javax.swing.GroupLayout.PREFERRED_SIZE)))
+                                .addComponent(txtEventLocation, javax.swing.GroupLayout.PREFERRED_SIZE, 494, javax.swing.GroupLayout.PREFERRED_SIZE))
+                            .addGroup(layout.createSequentialGroup()
+                                .addComponent(cmdSelectDocument)
+                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                                .addComponent(lblSelectedDocument, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)))
                         .addGap(0, 69, Short.MAX_VALUE)))
                 .addContainerGap())
         );
@@ -991,6 +1025,10 @@ public class EditOrDuplicateEventDialog extends javax.swing.JDialog {
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                     .addComponent(txtEventLocation, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                     .addComponent(jLabel6))
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
+                    .addComponent(cmdSelectDocument, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                    .addComponent(lblSelectedDocument, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                     .addComponent(cmbAssignee, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
@@ -1053,6 +1091,21 @@ public class EditOrDuplicateEventDialog extends javax.swing.JDialog {
         targetReview.setAssignee(this.cmbAssignee.getSelectedItem().toString());
         targetReview.setCalendarSetup(this.calendarSelectionButton1.getSelectedSetup());
 
+        // optional document context handling
+        try {
+            if (this.selectedDocumentId != null && !this.selectedDocumentId.isEmpty()) {
+                ClientSettings settings = ClientSettings.getInstance();
+                JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
+                ArchiveFileServiceRemote afs = locator.lookupArchiveFileServiceRemote();
+                ArchiveFileDocumentsBean doc = afs.getDocument(this.selectedDocumentId);
+                targetReview.setDocumentContext(doc);
+            } else {
+                targetReview.setDocumentContext(null);
+            }
+        } catch (Exception ex) {
+            log.warn("Dokumentkontext konnte nicht geladen/gesetzt werden: " + this.selectedDocumentId, ex);
+        }
+
         if (CalendarUtils.checkForConflicts(this, targetReview)) {
             ClientSettings settings = ClientSettings.getInstance();
             try {
@@ -1089,9 +1142,21 @@ public class EditOrDuplicateEventDialog extends javax.swing.JDialog {
                                 model.setValueAt(targetReview.getAssignee(), i, 5);
                                 model.setValueAt(targetReview.getDescription(), i, 6);
                                 model.setValueAt(targetReview.getCalendarSetup().getDisplayName(), i, 7);
+                                String docName = "";
+                                try {
+                                    if (targetReview.getDocumentContext() != null && targetReview.getDocumentContext().getName() != null) {
+                                        docName = targetReview.getDocumentContext().getName();
+                                    }
+                                } catch (Exception ignore) {
+                                }
+                                model.setValueAt(docName, i, 8);
                             }
                         }
                     }
+                } else if (this.mode == MODE_DUPLICATE) {
+                    // insert new row for duplicated event so the table updates immediately
+                    Object[] row = ArchiveFileReviewReasonsTableModel.eventToRow(targetReview);
+                    model.addRow(row);
                 }
             }
         }
@@ -1115,6 +1180,35 @@ public class EditOrDuplicateEventDialog extends javax.swing.JDialog {
     private void formComponentShown(java.awt.event.ComponentEvent evt) {//GEN-FIRST:event_formComponentShown
         FrameUtils.centerDialogOnParentMonitor(this, this.getOwner().getLocation());
     }//GEN-LAST:event_formComponentShown
+
+    private void cmdSelectDocumentActionPerformed(java.awt.event.ActionEvent evt) {
+        String caseId = this.caseDto != null ? this.caseDto.getId() : null;
+
+        java.awt.Window parent = WindowUtils.findWindow(this);
+        JDialog parentDialog = parent instanceof JDialog ? (JDialog) parent : null;
+        JFrame parentFrame = parent instanceof JFrame ? (JFrame) parent : null;
+
+        SelectAttachmentDialog dlg;
+        if (parentDialog != null) {
+            dlg = new SelectAttachmentDialog(parentDialog, true, caseId, false);
+        } else if (parentFrame != null) {
+            dlg = new SelectAttachmentDialog(parentFrame, true, caseId, false);
+        } else {
+            dlg = new SelectAttachmentDialog((JFrame) null, true, caseId, false);
+        }
+        dlg.setTitle("Dokument auswählen");
+        dlg.setVisible(true);
+        ArchiveFileDocumentsBean[] docs = dlg.getSelectedDocuments();
+        if (docs != null && docs.length > 0) {
+            this.selectedDocumentId = docs[0].getId();
+            this.lblSelectedDocument.setText(docs[0].getName());
+            this.lblSelectedDocument.setToolTipText(docs[0].getName());
+        } else {
+            this.selectedDocumentId = null;
+            this.lblSelectedDocument.setText("");
+            this.lblSelectedDocument.setToolTipText(null);
+        }
+    }
 
     /**
      * @param args the command line arguments
@@ -1188,6 +1282,8 @@ public class EditOrDuplicateEventDialog extends javax.swing.JDialog {
     private javax.swing.JScrollPane jScrollPane2;
     private javax.swing.JTextArea jTextArea1;
     private com.jdimension.jlawyer.client.components.QuickDateSelectionPanel quickDateSelectionPanel;
+    private javax.swing.JButton cmdSelectDocument;
+    private javax.swing.JLabel lblSelectedDocument;
     private javax.swing.JTextArea taEventDescription;
     private javax.swing.JTextField txtEventBeginDateField;
     private javax.swing.JTextField txtEventEndDateField;
