@@ -679,6 +679,7 @@ import com.jdimension.jlawyer.services.JLawyerServiceLocator;
 import com.jdimension.jlawyer.services.SecurityServiceRemote;
 import com.jdimension.jlawyer.services.SystemManagementRemote;
 import java.awt.Color;
+import java.awt.Dimension;
 import java.awt.Font;
 import java.awt.Graphics;
 import java.awt.GraphicsConfiguration;
@@ -707,6 +708,8 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import javax.ejb.EJBAccessException;
 import javax.naming.Context;
+import javax.swing.BorderFactory;
+import javax.swing.ButtonModel;
 import javax.swing.DefaultComboBoxModel;
 import javax.swing.ImageIcon;
 import javax.swing.JOptionPane;
@@ -723,10 +726,15 @@ public class LoginDialog extends javax.swing.JFrame {
 
     private static final String SECMODE_STANDARD = "standard";
     private static final Logger log = Logger.getLogger(LoginDialog.class.getName());
+    private static final Color BTN_BACKGROUND = new Color(0, 0, 0, 120);
+    private static final Color BTN_BACKGROUND_HOVER = new Color(0, 0, 0, 160);
+    private static final Color BTN_BACKGROUND_PRESSED = new Color(0, 0, 0, 200);
     private static boolean launching = false;
 
     private ConnectionProfiles connections = null;
     private String randomBackground = null;
+    private List<String> availableBackgrounds = Collections.emptyList();
+    private int currentBackgroundIndex = -1;
 
     /**
      * Creates new form LoginDialog
@@ -744,6 +752,7 @@ public class LoginDialog extends javax.swing.JFrame {
      */
     public LoginDialog(String cmdHost, String cmdPort, String cmdUser, String cmdPassword, String cmdSecMode, String cmdSshHost, String cmdSshPort, String cmdSshUser, String cmdSshPwd, String cmdSshTargetPort) {
         initComponents();
+        configureBackgroundSwitchButton();
 
         this.lblProgress.setText(" ");
         this.progress.setForeground(DefaultColorTheme.COLOR_LOGO_GREEN);
@@ -770,6 +779,9 @@ public class LoginDialog extends javax.swing.JFrame {
 
         FileSystem fileSystem = null;
 
+        this.availableBackgrounds = Collections.emptyList();
+        this.currentBackgroundIndex = -1;
+
         try {
 
             URI uri = Main.class.getResource("/themes/default/backgroundsrandom").toURI();
@@ -794,8 +806,14 @@ public class LoginDialog extends javax.swing.JFrame {
                         .collect(Collectors.toList());
             }
 
-            int randomNum = ThreadLocalRandom.current().nextInt(0, backgroundFileNames.size());
-            this.randomBackground = backgroundFileNames.get(randomNum);
+            if (!backgroundFileNames.isEmpty()) {
+                Collections.shuffle(backgroundFileNames, ThreadLocalRandom.current());
+                this.availableBackgrounds = backgroundFileNames;
+                this.currentBackgroundIndex = 0;
+                this.randomBackground = this.availableBackgrounds.get(this.currentBackgroundIndex);
+            } else {
+                this.randomBackground = null;
+            }
         } catch (Throwable t) {
             log.error("unable to get random background image", t);
         } finally {
@@ -808,18 +826,14 @@ public class LoginDialog extends javax.swing.JFrame {
             }
         }
 
-        int backgroundWidth=800;
-        int backgroundHeight=600;
-        if (randomBackground != null) {
-            ImageIcon image = new ImageIcon(getClass().getResource("/themes/default/backgroundsrandom/" + randomBackground));
-            backgroundHeight=image.getIconHeight();
-            backgroundWidth=image.getIconWidth();
-            this.bgPanel.setBackgroundImage(image.getImage());
-        } else {
-            ImageIcon image = new ImageIcon(getClass().getResource("/images/login-background-dark.jpg"));
-            backgroundHeight=image.getIconHeight();
-            backgroundWidth=image.getIconWidth();
-            this.bgPanel.setBackgroundImage(image.getImage());
+        updateBackgroundSwitchButtonState();
+
+        Dimension backgroundDimension = applyBackgroundImage(this.randomBackground);
+        int backgroundWidth = backgroundDimension.width;
+        int backgroundHeight = backgroundDimension.height;
+        if (backgroundWidth <= 0 || backgroundHeight <= 0) {
+            backgroundWidth = 800;
+            backgroundHeight = 600;
         }
 
         // Get the screen size of the monitor where the frame will be placed
@@ -1033,6 +1047,90 @@ public class LoginDialog extends javax.swing.JFrame {
         this.pwPassword.requestFocus();
     }
 
+    private void configureBackgroundSwitchButton() {
+        if (this.btnNextBackground == null) {
+            return;
+        }
+        this.btnNextBackground.setContentAreaFilled(true);
+        this.btnNextBackground.setOpaque(true);
+        this.btnNextBackground.setBackground(BTN_BACKGROUND);
+        this.btnNextBackground.setFocusPainted(false);
+        this.btnNextBackground.setBorder(BorderFactory.createCompoundBorder(
+                BorderFactory.createLineBorder(new Color(255, 255, 255, 120), 1, true),
+                BorderFactory.createEmptyBorder(6, 10, 6, 10)));
+        this.btnNextBackground.setToolTipText("Weiteres Hintergrundbild anzeigen");
+        this.btnNextBackground.setVisible(false);
+        this.btnNextBackground.addChangeListener(evt -> updateBackgroundSwitchButtonColors());
+        this.btnNextBackground.addActionListener(evt -> showNextBackgroundImage());
+        updateBackgroundSwitchButtonColors();
+    }
+
+    private void updateBackgroundSwitchButtonState() {
+        if (this.btnNextBackground == null) {
+            return;
+        }
+        boolean hasAlternatives = this.availableBackgrounds != null && this.availableBackgrounds.size() > 1;
+        this.btnNextBackground.setVisible(hasAlternatives);
+        this.btnNextBackground.setEnabled(hasAlternatives);
+        updateBackgroundSwitchButtonColors();
+    }
+
+    private void updateBackgroundSwitchButtonColors() {
+        if (this.btnNextBackground == null) {
+            return;
+        }
+        ButtonModel model = this.btnNextBackground.getModel();
+        if (!this.btnNextBackground.isEnabled()) {
+            this.btnNextBackground.setBackground(BTN_BACKGROUND);
+            return;
+        }
+        if (model.isPressed()) {
+            this.btnNextBackground.setBackground(BTN_BACKGROUND_PRESSED);
+        } else if (model.isRollover()) {
+            this.btnNextBackground.setBackground(BTN_BACKGROUND_HOVER);
+        } else {
+            this.btnNextBackground.setBackground(BTN_BACKGROUND);
+        }
+        this.btnNextBackground.repaint();
+    }
+
+    private void showNextBackgroundImage() {
+        if (this.availableBackgrounds == null || this.availableBackgrounds.isEmpty()) {
+            return;
+        }
+        if (this.currentBackgroundIndex < 0 || this.currentBackgroundIndex >= this.availableBackgrounds.size()) {
+            this.currentBackgroundIndex = 0;
+        }
+        this.currentBackgroundIndex = (this.currentBackgroundIndex + 1) % this.availableBackgrounds.size();
+        this.randomBackground = this.availableBackgrounds.get(this.currentBackgroundIndex);
+        applyBackgroundImage(this.randomBackground);
+    }
+
+    private Dimension applyBackgroundImage(String backgroundFile) {
+        ImageIcon image = null;
+        if (backgroundFile != null) {
+            URL resource = getClass().getResource("/themes/default/backgroundsrandom/" + backgroundFile);
+            if (resource != null) {
+                image = new ImageIcon(resource);
+            } else {
+                log.warn("Background image not found: " + backgroundFile + " - falling back to default");
+            }
+        }
+
+        if (image == null || image.getIconWidth() <= 0 || image.getIconHeight() <= 0) {
+            URL fallback = getClass().getResource("/images/login-background-dark.jpg");
+            if (fallback != null) {
+                image = new ImageIcon(fallback);
+            } else {
+                return new Dimension(800, 600);
+            }
+        }
+
+        this.bgPanel.setBackgroundImage(image.getImage());
+        this.bgPanel.repaint();
+        return new Dimension(image.getIconWidth(), image.getIconHeight());
+    }
+
     /**
      * This method is called from within the constructor to initialize the form.
      * WARNING: Do NOT modify this code. The content of this method is always
@@ -1045,6 +1143,7 @@ public class LoginDialog extends javax.swing.JFrame {
         jButton1 = new javax.swing.JButton();
         btnGrpSecurity = new javax.swing.ButtonGroup();
         bgPanel = new com.jdimension.jlawyer.client.StyledPanel();
+        btnNextBackground = new javax.swing.JButton();
         jTabbedPane1 = new javax.swing.JTabbedPane();
         jPanel1 = new javax.swing.JPanel();
         jPanel7 = new javax.swing.JPanel();
@@ -1802,6 +1901,11 @@ public class LoginDialog extends javax.swing.JFrame {
         lblFullClientVersion.setForeground(new java.awt.Color(14, 113, 180));
         lblFullClientVersion.setText("1.0");
 
+        btnNextBackground.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons16/material/baseline_refresh_white_36dp.png"))); // NOI18N
+        btnNextBackground.setBorder(BorderFactory.createEmptyBorder(6, 10, 6, 10));
+        btnNextBackground.setContentAreaFilled(false);
+        btnNextBackground.setFocusable(false);
+
         org.jdesktop.layout.GroupLayout bgPanelLayout = new org.jdesktop.layout.GroupLayout(bgPanel);
         bgPanel.setLayout(bgPanelLayout);
         bgPanelLayout.setHorizontalGroup(
@@ -1817,6 +1921,10 @@ public class LoginDialog extends javax.swing.JFrame {
                 .add(lblLogo)
                 .add(36, 36, 36))
             .add(org.jdesktop.layout.GroupLayout.TRAILING, lblAutoUpdate, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+            .add(org.jdesktop.layout.GroupLayout.TRAILING, bgPanelLayout.createSequentialGroup()
+                .addContainerGap(org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                .add(btnNextBackground)
+                .add(24, 24, 24))
         );
         bgPanelLayout.setVerticalGroup(
             bgPanelLayout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
@@ -1829,7 +1937,9 @@ public class LoginDialog extends javax.swing.JFrame {
                 .add(jTabbedPane1, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
                 .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
                 .add(lblAutoUpdate)
-                .addContainerGap(org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                .addPreferredGap(org.jdesktop.layout.LayoutStyle.UNRELATED, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                .add(btnNextBackground)
+                .add(18, 18, 18))
         );
 
         org.jdesktop.layout.GroupLayout layout = new org.jdesktop.layout.GroupLayout(getContentPane());
@@ -2344,6 +2454,7 @@ public class LoginDialog extends javax.swing.JFrame {
     private com.jdimension.jlawyer.client.StyledPanel bgPanel;
     private javax.swing.JProgressBar boxProgress;
     private javax.swing.ButtonGroup btnGrpSecurity;
+    private javax.swing.JButton btnNextBackground;
     private javax.swing.JComboBox<String> cmbCurrentConnection;
     private javax.swing.JComboBox<String> cmbProfile;
     private javax.swing.JButton cmdAddProfile;
