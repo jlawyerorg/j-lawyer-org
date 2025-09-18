@@ -819,6 +819,11 @@ public class SendEmailFrame extends javax.swing.JFrame implements SendCommunicat
     private String initialPostSignatureTxt = null;
     private String initialPreSignatureHtml = null;
     private String initialPostSignatureHtml = null;
+    
+    // set via setTo / setCc / setBcc
+    private String requestedTo="";
+    private String requestedCc="";
+    private String requestedBcc="";
 
     /**
      * Creates new form SendEmailFrame
@@ -1223,14 +1228,17 @@ public class SendEmailFrame extends javax.swing.JFrame implements SendCommunicat
     }
 
     public void setTo(String t) {
+        this.requestedTo=t;
         this.txtTo.setText(t);
     }
 
     public void setCC(String cc) {
+        this.requestedCc=cc;
         this.txtCc.setText(cc);
     }
 
     public void setBCC(String bcc) {
+        this.requestedBcc=bcc;
         this.txtBcc.setText(bcc);
     }
 
@@ -3109,7 +3117,7 @@ public class SendEmailFrame extends javax.swing.JFrame implements SendCommunicat
                 EmailTemplate tpl = locator.lookupIntegrationServiceRemote().getEmailTemplate(tplName);
 
                 // get a list of placeholders
-                ArrayList<String> placeHolderNames = TemplatesUtil.getPlaceHoldersInTemplate(tpl.getSubject(), allPartyTypesPlaceholders, this.formPlaceHolders);
+                ArrayList<String> placeHolderNames = TemplatesUtil.getPlaceHoldersInTemplate(StringUtils.nonEmpty(tpl.getSubject()) + " " + StringUtils.nonEmpty(tpl.getBody()) + " " + StringUtils.nonEmpty(tpl.getTo()) + " " + StringUtils.nonEmpty(tpl.getCc()) + " " + StringUtils.nonEmpty(tpl.getBcc()), allPartyTypesPlaceholders, this.formPlaceHolders);
                 HashMap<String, Object> ht = new HashMap<>();
                 for (String ph : placeHolderNames) {
                     ht.put(ph, "");
@@ -3142,13 +3150,31 @@ public class SendEmailFrame extends javax.swing.JFrame implements SendCommunicat
                 // get all placeholder values for the given set of placeholders
                 HashMap<String, Object> htValues = locator.lookupSystemManagementRemote().getPlaceHolderValues(ht, this.contextArchiveFile, partiesTriplets, this.contextDictateSign, null, this.formPlaceHolderValues, caseLawyer, caseAssistant, author, null, null, null, null, null, null, null);
                 this.txtSubject.setText(TemplatesUtil.replacePlaceHolders(tpl.getSubject(), htValues));
-
-                placeHolderNames = TemplatesUtil.getPlaceHoldersInTemplate(tpl.getBody(), allPartyTypesPlaceholders, this.formPlaceHolders);
-                ht = new HashMap<>();
-                for (String ph : placeHolderNames) {
-                    ht.put(ph, "");
+                
+                String newTo=TemplatesUtil.replacePlaceHolders(tpl.getTo(), htValues);
+                this.txtTo.setText(this.requestedTo);
+                if(!this.txtTo.getText().toLowerCase().contains(newTo.toLowerCase())) {
+                    if(!this.txtTo.getText().trim().isEmpty()) {
+                        newTo = ", " + newTo;
+                    }
+                    this.txtTo.setText(this.txtTo.getText() + newTo);
                 }
-                htValues = locator.lookupSystemManagementRemote().getPlaceHolderValues(ht, this.contextArchiveFile, partiesTriplets, this.contextDictateSign, null, this.formPlaceHolderValues, caseLawyer, caseAssistant, author, null, null, null, null, null, null, null);
+                String newCc=TemplatesUtil.replacePlaceHolders(tpl.getCc(), htValues);
+                this.txtCc.setText(this.requestedCc);
+                if(!this.txtCc.getText().toLowerCase().contains(newCc.toLowerCase())) {
+                    if(!this.txtCc.getText().trim().isEmpty()) {
+                        newCc = ", " + newCc;
+                    }
+                    this.txtCc.setText(this.txtCc.getText() + newCc);
+                }
+                String newBcc=TemplatesUtil.replacePlaceHolders(tpl.getBcc(), htValues);
+                this.txtBcc.setText(this.requestedBcc);
+                if(!this.txtBcc.getText().toLowerCase().contains(newBcc.toLowerCase())) {
+                    if(!this.txtBcc.getText().trim().isEmpty()) {
+                        newBcc = ", " + newBcc;
+                    }
+                    this.txtBcc.setText(this.txtBcc.getText() + newBcc);
+                }
 
                 if (this.cloudLink != null) {
                     htValues.put("{{CLOUD_LINK}}", this.cloudLink);

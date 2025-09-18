@@ -678,12 +678,12 @@ import org.xml.sax.InputSource;
  * @author jens
  */
 public class EmailTemplate implements Serializable {
-    
+
     private static final long serialVersionUID = 1L;
-    
+
     public static final String PLACEHOLDER_CURSOR = "{{CURSOR}}";
-    
-    private static final Logger log=Logger.getLogger(EmailTemplate.class.getName());
+
+    private static final Logger log = Logger.getLogger(EmailTemplate.class.getName());
 
     public static String[] SUPPORTED_FORMATS = new String[]{"text/plain", "text/html"};
     private String fileName = null;
@@ -691,22 +691,29 @@ public class EmailTemplate implements Serializable {
     private String format = null;
     private String body = null;
 
+    private String to = "";
+    private String cc = "";
+    private String bcc = "";
+
     public EmailTemplate() {
     }
 
     public boolean isHtml() {
         return "text/html".equalsIgnoreCase(this.format);
     }
-    
+
     public boolean isText() {
         return "text/plain".equalsIgnoreCase(this.format);
     }
-    
+
     public String toXML() {
         StringBuilder sb = new StringBuilder();
 
         sb.append("<?xml version=\"1.0\" encoding=\"UTF-8\"?>");
         sb.append("<emailtemplate format=\"").append(this.format).append("\">");
+        sb.append("<to>").append("<![CDATA[").append(this.to).append("]]>").append("</to>");
+        sb.append("<cc>").append("<![CDATA[").append(this.cc).append("]]>").append("</cc>");
+        sb.append("<bcc>").append("<![CDATA[").append(this.bcc).append("]]>").append("</bcc>");
         sb.append("<subject>").append("<![CDATA[").append(this.subject).append("]]>").append("</subject>");
         sb.append("<body>").append("<![CDATA[").append(this.body).append("]]>").append("</body>");
 
@@ -732,15 +739,31 @@ public class EmailTemplate implements Serializable {
         NodeList nl = doc.getElementsByTagName("emailtemplate");
         String format = nl.item(0).getAttributes().getNamedItem("format").getNodeValue();
         tpl.setFormat(format);
-        
+
         nl = doc.getElementsByTagName("subject");
-        String subject=nl.item(0).getTextContent();
+        String subject = nl.item(0).getTextContent();
         tpl.setSubject(subject);
-        
+
         nl = doc.getElementsByTagName("body");
-        String body=nl.item(0).getTextContent();
+        String body = nl.item(0).getTextContent();
         tpl.setBody(body);
-        
+
+        nl = doc.getElementsByTagName("to");
+        if (nl != null && nl.getLength() == 1) {
+            String to = nl.item(0).getTextContent();
+            tpl.setTo(to);
+        }
+        nl = doc.getElementsByTagName("cc");
+        if (nl != null && nl.getLength() == 1) {
+            String cc = nl.item(0).getTextContent();
+            tpl.setCc(cc);
+        }
+        nl = doc.getElementsByTagName("bcc");
+        if (nl != null && nl.getLength() == 1) {
+            String bcc = nl.item(0).getTextContent();
+            tpl.setBcc(bcc);
+        }
+
         return tpl;
     }
 
@@ -798,5 +821,47 @@ public class EmailTemplate implements Serializable {
      */
     public void setBody(String body) {
         this.body = body;
+    }
+
+    /**
+     * @return the to
+     */
+    public String getTo() {
+        return to;
+    }
+
+    /**
+     * @param to the to to set
+     */
+    public void setTo(String to) {
+        this.to = to;
+    }
+
+    /**
+     * @return the cc
+     */
+    public String getCc() {
+        return cc;
+    }
+
+    /**
+     * @param cc the cc to set
+     */
+    public void setCc(String cc) {
+        this.cc = cc;
+    }
+
+    /**
+     * @return the bcc
+     */
+    public String getBcc() {
+        return bcc;
+    }
+
+    /**
+     * @param bcc the bcc to set
+     */
+    public void setBcc(String bcc) {
+        this.bcc = bcc;
     }
 }

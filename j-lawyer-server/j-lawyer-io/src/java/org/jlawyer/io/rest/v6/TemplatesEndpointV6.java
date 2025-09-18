@@ -1047,6 +1047,10 @@ public class TemplatesEndpointV6 implements TemplatesEndpointLocalV6 {
             // get all placeholder values for the given set of placeholders
             HashMap<String, Object> htValues = system.getPlaceHolderValues(ht, aFile, parties, "", null, formPlaceHolderValues, caseLawyer, caseAssistant, author, null, null, null, null, null, null, null);
             String subject = CommonTemplatesUtil.replacePlaceHolders(tpl.getSubject(), htValues);
+            
+            String to=CommonTemplatesUtil.replacePlaceHolders(tpl.getTo(), htValues);
+            String cc=CommonTemplatesUtil.replacePlaceHolders(tpl.getCc(), htValues);
+            String bcc=CommonTemplatesUtil.replacePlaceHolders(tpl.getBcc(), htValues);
 
             placeHolderNames = CommonTemplatesUtil.getPlaceHoldersInTemplate(tpl.getBody(), allPartyTypesPlaceholders, formPlaceHolders);
             ht = new HashMap<>();
@@ -1056,12 +1060,17 @@ public class TemplatesEndpointV6 implements TemplatesEndpointLocalV6 {
             htValues = system.getPlaceHolderValues(ht, aFile, parties, "", null, formPlaceHolderValues, caseLawyer, caseAssistant, author, null, null, null, null, null, null, null);
 
             htValues.put("{{CLOUD_LINK}}", "");
+            
+            
 
             String body = CommonTemplatesUtil.replacePlaceHolders(tpl.getBody(), htValues);
             Map<String, Object> result = new LinkedHashMap<>();
             result.put("subject", subject.trim());
             result.put("body", body);
             result.put("mimeType", tpl.getFormat());
+            result.put("to", to);
+            result.put("cc", cc);
+            result.put("bcc", bcc);
 
             return Response.ok(result).build();
 
