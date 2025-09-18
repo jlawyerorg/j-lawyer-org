@@ -6831,10 +6831,13 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
     }
 
     @Override
-    public ArrayList<String> getAllArchiveFileNumbersUnrestricted() throws Exception {
+    public ArrayList<String> getAllArchiveFileNumbersUnrestricted(boolean activeCasesOnly) throws Exception {
         JDBCUtils utils = new JDBCUtils();
         ArrayList<String> list = new ArrayList<>();
-        try (Connection con = utils.getConnection(); PreparedStatement st = con.prepareStatement("select fileNumber from cases"); ResultSet rs = st.executeQuery()) {
+        String sql="select fileNumber from cases";
+        if(activeCasesOnly)
+            sql="select fileNumber from cases where archived=0";
+        try (Connection con = utils.getConnection(); PreparedStatement st = con.prepareStatement(sql); ResultSet rs = st.executeQuery()) {
 
             while (rs.next()) {
                 String fileNumber = rs.getString(1);
@@ -6850,17 +6853,19 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
 
     @Override
     @RolesAllowed({"loginRole"})
-    public ArrayList<String> getAllArchiveFileNumbers() throws Exception {
-        return this.getAllArchiveFileNumbersUnrestricted();
+    public ArrayList<String> getAllArchiveFileNumbers(boolean activeCasesOnly) throws Exception {
+        return this.getAllArchiveFileNumbersUnrestricted(activeCasesOnly);
     }
     
     @Override
     @RolesAllowed({"loginRole"})
-    public ArrayList<String> getAllReferencedFileNumbers() throws Exception {
+    public ArrayList<String> getAllReferencedFileNumbers(int minChars, boolean activeCasesOnly) throws Exception {
         JDBCUtils utils = new JDBCUtils();
         ArrayList<String> list = new ArrayList<>();
-        try (Connection con = utils.getConnection(); PreparedStatement st = con.prepareStatement("select distinct(reference) from case_contacts where reference is not null"); ResultSet rs = st.executeQuery()) {
-
+        String sql="select distinct(reference) from case_contacts where reference is not null and length(reference) >= " + minChars;
+        if(activeCasesOnly)
+            sql="select distinct(reference) from case_contacts where reference is not null and length(reference) >= " + minChars + " and archiveFileKey in (select id from cases where archived=0)";
+        try (Connection con = utils.getConnection(); PreparedStatement st = con.prepareStatement(sql); ResultSet rs = st.executeQuery()) {
             while (rs.next()) {
                 String fileNumber = rs.getString(1);
                 list.add(fileNumber);

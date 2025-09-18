@@ -779,6 +779,11 @@ public class EmailInboxPanel extends javax.swing.JPanel implements SaveToCaseExe
 
     private boolean initializing = true;
     private boolean statusBarNotified = false;
+    
+    private ArrayList<String> allForeignFileNumbers=new ArrayList<>();
+    private long lastForeignFileNumbersUpdate=0l;
+    private ArrayList<String> allFileNumbers=new ArrayList<>();
+    private long lastFileNumbersUpdate=0l;
 
     /**
      * Creates new form EmailInboxPanel
@@ -2666,11 +2671,15 @@ public class EmailInboxPanel extends javax.swing.JPanel implements SaveToCaseExe
             }
 
             // find any potential cases by looking for file numbers in subject and body
-            ArrayList<String> allFileNumbers = afs.getAllArchiveFileNumbers();
+            if((System.currentTimeMillis()-this.lastFileNumbersUpdate)>15000l) {
+                this.allFileNumbers = afs.getAllArchiveFileNumbers(true);
+                this.lastFileNumbersUpdate=System.currentTimeMillis();
+            }
             ArrayList<ArchiveFileBean> subjectBodyCases = new ArrayList<>();
             
             String subject = msgC.getMessage().getSubject().toLowerCase();
             String body = this.mailContentUI.getBody().toLowerCase();
+            
             for (String fn : allFileNumbers) {
                 String fnLower = fn.toLowerCase();
                 if (subject.contains(fnLower)) {
@@ -2687,7 +2696,10 @@ public class EmailInboxPanel extends javax.swing.JPanel implements SaveToCaseExe
             }
             
             // find by foreign file numbers
-            ArrayList<String> allForeignFileNumbers = afs.getAllReferencedFileNumbers();
+            if((System.currentTimeMillis()-this.lastForeignFileNumbersUpdate)>15000l) {
+                this.allForeignFileNumbers = afs.getAllReferencedFileNumbers(5, true);
+                this.lastForeignFileNumbersUpdate=System.currentTimeMillis();
+            }
             for (String fn : allForeignFileNumbers) {
                 String fnLower = fn.toLowerCase();
                 if (!StringUtils.isEmpty(fnLower)) {
@@ -2698,6 +2710,8 @@ public class EmailInboxPanel extends javax.swing.JPanel implements SaveToCaseExe
                                 subjectBodyCases.add(aab.getArchiveFileKey());
                             }
                         }
+                        if(subjectBodyCases.size()>20)
+                            break;
                     } else if (body.contains(fnLower)) {
                         List<ArchiveFileAddressesBean> a = afs.getArchiveFileAddressesByReference(fn);
                         if (a != null) {
@@ -2705,10 +2719,12 @@ public class EmailInboxPanel extends javax.swing.JPanel implements SaveToCaseExe
                                 subjectBodyCases.add(aab.getArchiveFileKey());
                             }
                         }
+                        if(subjectBodyCases.size()>20)
+                            break;
                     }
                 }
             }
-
+            
             Address[] senders = msgC.getMessage().getFrom();
             AddressBean[] relevantAddresses = null;
             String senderName = "";
@@ -2826,7 +2842,7 @@ public class EmailInboxPanel extends javax.swing.JPanel implements SaveToCaseExe
 
                 }
             }
-
+            
             subjectBodyCases.addAll(addressRelatedCases);
             int i = 0;
             for (Object c : subjectBodyCases) {

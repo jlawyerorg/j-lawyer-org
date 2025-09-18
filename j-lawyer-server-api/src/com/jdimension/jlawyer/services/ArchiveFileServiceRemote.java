@@ -929,9 +929,9 @@ public interface ArchiveFileServiceRemote {
     
     boolean transferTimesheetPositions(List<String> positionIds, String newTimesheetId) throws Exception;
 
-    ArrayList<String> getAllArchiveFileNumbers() throws Exception;
+    ArrayList<String> getAllArchiveFileNumbers(boolean activeCasesOnly) throws Exception;
     
-    ArrayList<String> getAllReferencedFileNumbers() throws Exception;
+    ArrayList<String> getAllReferencedFileNumbers(int minChars, boolean activeCasesOnly) throws Exception;
 
     List<String> getCaseIdsSyncedForUser(String principalId) throws Exception;
 

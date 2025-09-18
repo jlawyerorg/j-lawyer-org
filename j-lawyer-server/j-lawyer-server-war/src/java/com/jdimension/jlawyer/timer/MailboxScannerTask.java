@@ -742,7 +742,7 @@ public class MailboxScannerTask extends java.util.TimerTask {
             MailboxSetupFacadeLocal mailboxes = (MailboxSetupFacadeLocal) ic.lookup("java:global/j-lawyer-server/j-lawyer-server-ejb/MailboxSetupFacade!com.jdimension.jlawyer.persistence.MailboxSetupFacadeLocal");
             List<MailboxSetup> entries = mailboxes.findAll();
 
-            ArrayList<String> allFileNumbers = caseSvc.getAllArchiveFileNumbersUnrestricted();
+            ArrayList<String> allFileNumbers = caseSvc.getAllArchiveFileNumbersUnrestricted(false);
             List<PartyTypeBean> allPartyTypes = sysSvc.getPartyTypes();
             for (MailboxSetup ms : entries) {
                 if (ms.isScanInbox()) {

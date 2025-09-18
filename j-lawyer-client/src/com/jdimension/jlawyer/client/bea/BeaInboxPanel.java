@@ -2211,6 +2211,8 @@ public class BeaInboxPanel extends javax.swing.JPanel implements SaveToCaseExecu
 
                             actionPanelEntries.add(ep);
                             i++;
+                            if(actionPanelEntries.size()>20)
+                                break;
                         }
 
                     }
@@ -2254,6 +2256,8 @@ public class BeaInboxPanel extends javax.swing.JPanel implements SaveToCaseExecu
                     lce.setArchived(aab.getArchiveFileKey().isArchived());
                     ep.setEntry(lce, this);
                     actionPanelEntries.add(ep);
+                    if(actionPanelEntries.size()>20)
+                        break;
                 }
             }
 
@@ -2276,6 +2280,8 @@ public class BeaInboxPanel extends javax.swing.JPanel implements SaveToCaseExecu
                     ep.setEntry(lce, this);
                     actionPanelEntries.add(ep);
                     foundByFileNumber = true;
+                    if(actionPanelEntries.size()>20)
+                        break;
                 }
             }
         }
