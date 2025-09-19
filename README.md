@@ -28,7 +28,8 @@ We use [SemVer](http://semver.org/) for versioning. For the versions available, 
 
 ## Authors
 
-* **Jens Kutschke** - *Initial work* - [j-dimension](https://github.com/j-dimension)
+* **Jens Kutschke** - *Project founder, main dev* - [j-dimension](https://github.com/j-dimension)
+* **Maximilian Steinert** - *Numerous enhancements, mainly user interface. Author of the j-lawyer.org Thunderbird Add-On* - [iradraconis](https://github.com/iradraconis)
 * **Anatol Anuschewski** - *plugins* - [an-mus](https://github.com/an-mus)
 * **Benjamin Pabst** - *various improvements in j-lawyer.org Client* - [Bentipa](https://github.com/Bentipa)
 * **Karin Beck** - *urteile-gesetze.de integration* - [karbek](https://github.com/karbek)
