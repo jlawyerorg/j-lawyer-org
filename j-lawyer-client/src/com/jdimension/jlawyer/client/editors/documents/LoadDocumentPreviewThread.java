@@ -752,17 +752,6 @@ public class LoadDocumentPreviewThread implements Runnable {
                 log.error("invalid setting for maximum document previes bytes: " +maxPreviewBytesString);
             }
             
-            
-            
-
-//            JComponent preview = null;
-//            if(this.docDto.getSize()>maxPreviewBytes && !this.forceAnyDocumentSize) {
-//                preview=new DocumentPreviewTooLarge(this.caseDto, this.docDto, this.readOnly, this.pnlPreview, this.saveCallback);
-//            } else {
-//                byte[] data=CachingDocumentLoader.getInstance().getDocument(this.docDto.getId());
-//                preview=DocumentViewerFactory.getDocumentViewer(this.caseDto, this.docDto.getId(), this.docDto.getName(), readOnly, new CaseDocumentPreviewProvider(afs, this.docDto.getId()), data, this.pnlPreview.getWidth(), this.pnlPreview.getHeight(), this.saveCallback);
-//            }
-            
             final long maxPreviewBytesFinal = maxPreviewBytes;
             JComponent[] previewWrapper = new JComponent[1];  // Use an array as a mutable container
             SwingUtilities.invokeAndWait(() -> {
