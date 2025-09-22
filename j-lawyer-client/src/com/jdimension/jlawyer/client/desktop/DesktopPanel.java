@@ -664,10 +664,14 @@
 package com.jdimension.jlawyer.client.desktop;
 
 import com.jdimension.jlawyer.client.bea.BeaCheckTimerTask;
+import com.jdimension.jlawyer.client.bea.BeaInboxPanel;
+import com.jdimension.jlawyer.client.configuration.PopulateOptionsEditor;
 import com.jdimension.jlawyer.client.configuration.UserProfileDialog;
 import com.jdimension.jlawyer.client.editors.*;
+import com.jdimension.jlawyer.client.editors.documents.ScannerPanel;
 import com.jdimension.jlawyer.client.editors.addresses.EditAddressPanel;
 import com.jdimension.jlawyer.client.editors.files.EditArchiveFilePanel;
+import com.jdimension.jlawyer.client.mail.EmailInboxPanel;
 import com.jdimension.jlawyer.client.events.AutoUpdateEvent;
 import com.jdimension.jlawyer.client.events.BeaStatusEvent;
 import com.jdimension.jlawyer.client.events.CasesChangedEvent;
@@ -684,6 +688,7 @@ import com.jdimension.jlawyer.client.events.ReviewAddedEvent;
 import com.jdimension.jlawyer.client.events.ReviewUpdatedEvent;
 import com.jdimension.jlawyer.client.events.ScannerStatusEvent;
 import com.jdimension.jlawyer.client.launcher.DocumentObserverTask;
+import com.jdimension.jlawyer.client.messenger.MessagingCenterPanel;
 import com.jdimension.jlawyer.client.settings.ClientSettings;
 import com.jdimension.jlawyer.client.settings.UserSettings;
 import com.jdimension.jlawyer.client.utils.ComponentUtils;
@@ -691,9 +696,12 @@ import com.jdimension.jlawyer.client.utils.DateUtils;
 import com.jdimension.jlawyer.client.utils.FrameUtils;
 import com.jdimension.jlawyer.client.utils.StringUtils;
 import com.jdimension.jlawyer.client.voip.MailingQueueEntry;
+import com.jdimension.jlawyer.client.voip.MailingStatusPanel;
 import com.jdimension.jlawyer.persistence.AppUserBean;
 import com.jdimension.jlawyer.persistence.ArchiveFileReviewsBean;
+import java.awt.Component;
 import java.awt.Color;
+import java.awt.Cursor;
 import java.awt.Font;
 import java.awt.Graphics;
 import java.awt.Image;
@@ -704,11 +712,13 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Date;
 import java.util.List;
+import java.util.ResourceBundle;
 import java.util.Timer;
 import java.util.TimerTask;
 import javax.swing.BoxLayout;
 import javax.swing.JCheckBoxMenuItem;
 import javax.swing.JFileChooser;
+import javax.swing.JButton;
 import javax.swing.JLabel;
 import javax.swing.JOptionPane;
 import javax.swing.JPopupMenu;
@@ -743,7 +753,8 @@ public class DesktopPanel extends javax.swing.JPanel implements ThemeableEditor,
      */
     public DesktopPanel() {
         initComponents();
-        
+        configureStatusButtons();
+
         this.lblNewsStatus.setText(" ");
         this.lblUpdateStatus.setText(" ");
         this.lblUpdateStatusFormPlugins.setText(" ");
@@ -954,6 +965,30 @@ public class DesktopPanel extends javax.swing.JPanel implements ThemeableEditor,
         UserSettings us = UserSettings.getInstance();
         this.lblUserName.setText(us.getCurrentUser().getPrincipalId());
         this.lblUserIcon.setIcon(us.getCurrentUserBigIcon());
+    }
+
+    private void configureStatusButtons() {
+        configureStatusButton(this.lblUnreadMail);
+        configureStatusButton(this.lblScans);
+        configureStatusButton(this.lblMailingStatus);
+        configureStatusButton(this.lblUnreadBea);
+        configureStatusButton(this.lblUnreadInstantMessages);
+    }
+
+    private void configureStatusButton(JButton button) {
+        if (button == null) {
+            return;
+        }
+        button.setContentAreaFilled(false);
+        button.setBorderPainted(false);
+        button.setFocusPainted(false);
+        button.setOpaque(false);
+        button.setCursor(new Cursor(Cursor.HAND_CURSOR));
+        button.setHorizontalTextPosition(SwingConstants.TRAILING);
+        button.setVerticalTextPosition(SwingConstants.CENTER);
+        button.setIconTextGap(6);
+        button.setMargin(new java.awt.Insets(0, 0, 0, 0));
+        button.setFocusable(false);
     }
     
     public void updateCurrentDay() {
@@ -1184,11 +1219,11 @@ public class DesktopPanel extends javax.swing.JPanel implements ThemeableEditor,
         pnlTagged = new javax.swing.JPanel();
         jLabel10 = new javax.swing.JLabel();
         messagesWidget = new com.jdimension.jlawyer.client.desktop.DesktopWidgetPanel();
-        lblUnreadMail = new javax.swing.JLabel();
-        lblUnreadBea = new javax.swing.JLabel();
-        lblScans = new javax.swing.JLabel();
-        lblMailingStatus = new javax.swing.JLabel();
-        lblUnreadInstantMessages = new javax.swing.JLabel();
+        lblUnreadMail = new javax.swing.JButton();
+        lblUnreadBea = new javax.swing.JButton();
+        lblScans = new javax.swing.JButton();
+        lblMailingStatus = new javax.swing.JButton();
+        lblUnreadInstantMessages = new javax.swing.JButton();
         lblUpdateStatus = new javax.swing.JLabel();
         lblNewsStatus = new javax.swing.JLabel();
         lblUpdateStatusFormPlugins = new javax.swing.JLabel();
@@ -1555,6 +1590,11 @@ public class DesktopPanel extends javax.swing.JPanel implements ThemeableEditor,
         lblUnreadMail.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/Icons2-30.png"))); // NOI18N
         lblUnreadMail.setText("0");
         lblUnreadMail.setEnabled(false);
+        lblUnreadMail.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                lblUnreadMailActionPerformed(evt);
+            }
+        });
 
         lblUnreadBea.setFont(lblUnreadBea.getFont().deriveFont(lblUnreadBea.getFont().getStyle() | java.awt.Font.BOLD, lblUnreadBea.getFont().getSize()+2));
         lblUnreadBea.setForeground(java.awt.Color.white);
@@ -1563,6 +1603,11 @@ public class DesktopPanel extends javax.swing.JPanel implements ThemeableEditor,
         lblUnreadBea.setText("?");
         lblUnreadBea.setToolTipText("noch nicht eingeloggt");
         lblUnreadBea.setEnabled(false);
+        lblUnreadBea.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                lblUnreadBeaActionPerformed(evt);
+            }
+        });
 
         lblScans.setFont(lblScans.getFont().deriveFont(lblScans.getFont().getStyle() | java.awt.Font.BOLD, lblScans.getFont().getSize()+2));
         lblScans.setForeground(java.awt.Color.white);
@@ -1570,12 +1615,23 @@ public class DesktopPanel extends javax.swing.JPanel implements ThemeableEditor,
         lblScans.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/scanner_big.png"))); // NOI18N
         lblScans.setText("0");
         lblScans.setEnabled(false);
+        lblScans.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                lblScansActionPerformed(evt);
+            }
+        });
 
         lblMailingStatus.setFont(lblMailingStatus.getFont().deriveFont(lblMailingStatus.getFont().getStyle() | java.awt.Font.BOLD, lblMailingStatus.getFont().getSize()+2));
         lblMailingStatus.setForeground(new java.awt.Color(255, 0, 0));
+        lblMailingStatus.setHorizontalAlignment(javax.swing.SwingConstants.CENTER);
         lblMailingStatus.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/fax_big.png"))); // NOI18N
         lblMailingStatus.setText("?");
         lblMailingStatus.setEnabled(false);
+        lblMailingStatus.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                lblMailingStatusActionPerformed(evt);
+            }
+        });
 
         lblUnreadInstantMessages.setFont(lblUnreadInstantMessages.getFont().deriveFont(lblUnreadInstantMessages.getFont().getStyle() | java.awt.Font.BOLD, lblUnreadInstantMessages.getFont().getSize()+2));
         lblUnreadInstantMessages.setForeground(new java.awt.Color(255, 255, 255));
@@ -1584,6 +1640,11 @@ public class DesktopPanel extends javax.swing.JPanel implements ThemeableEditor,
         lblUnreadInstantMessages.setText("?");
         lblUnreadInstantMessages.setToolTipText("unbearbeitete Erwähnungen im Nachrichtencenter");
         lblUnreadInstantMessages.setEnabled(false);
+        lblUnreadInstantMessages.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                lblUnreadInstantMessagesActionPerformed(evt);
+            }
+        });
 
         lblUpdateStatus.setFont(lblUpdateStatus.getFont().deriveFont(lblUpdateStatus.getFont().getStyle() & ~java.awt.Font.BOLD));
         lblUpdateStatus.setForeground(java.awt.Color.white);
@@ -1795,6 +1856,56 @@ public class DesktopPanel extends javax.swing.JPanel implements ThemeableEditor,
         // TODO add your handling code here:
     }//GEN-LAST:event_formComponentResized
 
+    private void lblUnreadMailActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_lblUnreadMailActionPerformed
+        openModule(EmailInboxPanel.class, "desktop-mail");
+    }//GEN-LAST:event_lblUnreadMailActionPerformed
+
+    private void lblScansActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_lblScansActionPerformed
+        openModule(ScannerPanel.class, "desktop-scans");
+    }//GEN-LAST:event_lblScansActionPerformed
+
+    private void lblMailingStatusActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_lblMailingStatusActionPerformed
+        openModule(MailingStatusPanel.class, "desktop-mailingstatus");
+    }//GEN-LAST:event_lblMailingStatusActionPerformed
+
+    private void lblUnreadBeaActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_lblUnreadBeaActionPerformed
+        openModule(BeaInboxPanel.class, "desktop-bea");
+    }//GEN-LAST:event_lblUnreadBeaActionPerformed
+
+    private void lblUnreadInstantMessagesActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_lblUnreadInstantMessagesActionPerformed
+        openModule(MessagingCenterPanel.class, "desktop-messages");
+    }//GEN-LAST:event_lblUnreadInstantMessagesActionPerformed
+
+    private void openModule(Class<?> editorClass, String source) {
+        if (editorClass == null) {
+            log.warn("No editor class provided for source " + source);
+            return;
+        }
+
+        log.info("Opening module " + editorClass.getSimpleName() + " from " + source + " button");
+        try {
+            Object editor = EditorsRegistry.getInstance().getEditor(editorClass.getName());
+            if (editor == null) {
+                log.warn("EditorsRegistry returned null for " + editorClass.getName());
+                return;
+            }
+            if (editor instanceof PopulateOptionsEditor) {
+                ((PopulateOptionsEditor) editor).populateOptions();
+            }
+
+            if (editor instanceof Component) {
+                EditorsRegistry.getInstance().setMainEditorsPaneView((Component) editor);
+            } else {
+                log.warn("Editor " + editorClass.getName() + " is not a Component instance");
+            }
+        } catch (Exception ex) {
+            log.error("Failed to open editor " + editorClass.getName() + " from " + source + " button", ex);
+            String errorMessage = ResourceBundle.getBundle("com/jdimension/jlawyer/client/JKanzleiGUI").getString("error.loadingeditor");
+            String errorTitle = ResourceBundle.getBundle("com/jdimension/jlawyer/client/JKanzleiGUI").getString("msg.title.error");
+            JOptionPane.showMessageDialog(this, errorMessage + ex.getMessage(), errorTitle, JOptionPane.ERROR_MESSAGE);
+        }
+    }
+
     public void updateUserIcon() {
         UserSettings us = UserSettings.getInstance();
         this.lblUserIcon.setIcon(us.getCurrentUserBigIcon());
@@ -1892,12 +2003,12 @@ public class DesktopPanel extends javax.swing.JPanel implements ThemeableEditor,
     private javax.swing.JLabel lblDay;
     private javax.swing.JLabel lblDocumentCount;
     private javax.swing.JLabel lblDueSinceDays;
-    private javax.swing.JLabel lblMailingStatus;
+    private javax.swing.JButton lblMailingStatus;
     private javax.swing.JLabel lblNewsStatus;
-    private javax.swing.JLabel lblScans;
-    private javax.swing.JLabel lblUnreadBea;
-    private javax.swing.JLabel lblUnreadInstantMessages;
-    private javax.swing.JLabel lblUnreadMail;
+    private javax.swing.JButton lblScans;
+    private javax.swing.JButton lblUnreadBea;
+    private javax.swing.JButton lblUnreadInstantMessages;
+    private javax.swing.JButton lblUnreadMail;
     private javax.swing.JLabel lblUpdateStatus;
     private javax.swing.JLabel lblUpdateStatusFormPlugins;
     private javax.swing.JLabel lblUserFilterCount;
