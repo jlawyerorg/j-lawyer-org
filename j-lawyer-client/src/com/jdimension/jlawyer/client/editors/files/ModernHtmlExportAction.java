@@ -677,6 +677,7 @@ import com.jdimension.jlawyer.persistence.ArchiveFileBean;
 import com.jdimension.jlawyer.persistence.ArchiveFileDocumentsBean;
 import com.jdimension.jlawyer.persistence.ArchiveFileTagsBean;
 import com.jdimension.jlawyer.persistence.ArchiveFileHistoryBean;
+import com.jdimension.jlawyer.persistence.ArchiveFileReviewsBean;
 import com.jdimension.jlawyer.persistence.CaseFolder;
 import com.jdimension.jlawyer.persistence.EventTypes;
 import com.jdimension.jlawyer.services.ArchiveFileServiceRemote;
@@ -684,6 +685,7 @@ import com.jdimension.jlawyer.services.CalendarServiceRemote;
 import com.jdimension.jlawyer.services.JLawyerServiceLocator;
 import java.awt.Component;
 import java.io.File;
+import java.io.FileOutputStream;
 import java.io.FileWriter;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
@@ -745,19 +747,19 @@ public class ModernHtmlExportAction extends ProgressableAction {
             this.progress("Lade Akten-Daten...");
             ArchiveFileBean aCase = afs.getArchiveFile(this.caseId);
             if (aCase == null) {
-                JOptionPane.showMessageDialog(this.indicator, "Akte nicht gefunden.", com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
+                JOptionPane.showMessageDialog(this.indicator, "Akte nicht gefunden.", DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
                 return true;
             }
 
             String exportFolderName = buildExportFolderName(aCase);
             File exportDir = new File(this.baseDir, exportFolderName);
             if (exportDir.exists()) {
-                JOptionPane.showMessageDialog(this.indicator, "Verzeichnis '" + exportDir.getAbsolutePath() + "' existiert bereits.", com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
+                JOptionPane.showMessageDialog(this.indicator, "Verzeichnis '" + exportDir.getAbsolutePath() + "' existiert bereits.", DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
                 return true;
             }
 
             if (!exportDir.mkdirs()) {
-                JOptionPane.showMessageDialog(this.indicator, "Verzeichnis konnte nicht erstellt werden: " + exportDir.getAbsolutePath(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
+                JOptionPane.showMessageDialog(this.indicator, "Verzeichnis konnte nicht erstellt werden: " + exportDir.getAbsolutePath(), DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
                 return true;
             }
 
@@ -770,7 +772,7 @@ public class ModernHtmlExportAction extends ProgressableAction {
             this.progress("Lade Beteiligte / Dokumente / Fälligkeiten / Historie...");
             Collection<ArchiveFileAddressesBean> parties = afs.getInvolvementDetailsForCase(this.caseId);
             Collection<ArchiveFileDocumentsBean> documents = afs.getDocuments(this.caseId);
-            Collection<com.jdimension.jlawyer.persistence.ArchiveFileReviewsBean> reviews = cal.getReviews(this.caseId);
+            Collection<ArchiveFileReviewsBean> reviews = cal.getReviews(this.caseId);
             Collection<ArchiveFileTagsBean> tags = null;
             try {
                 tags = afs.getTags(this.caseId);
@@ -814,7 +816,7 @@ public class ModernHtmlExportAction extends ProgressableAction {
                         File targetDir = folderPath.isEmpty() ? filesDir : new File(filesDir, folderPath);
                         if (!targetDir.exists()) targetDir.mkdirs();
                         File outFile = uniqueFile(targetDir, safeName);
-                        try (java.io.FileOutputStream fos = new java.io.FileOutputStream(outFile)) {
+                        try (FileOutputStream fos = new FileOutputStream(outFile)) {
                             fos.write(content);
                         }
                         if (d.getCreationDate() != null) {
@@ -857,7 +859,7 @@ public class ModernHtmlExportAction extends ProgressableAction {
 
         } catch (Throwable t) {
             log.error("Fehler beim HTML-Export", t);
-            ThreadUtils.showErrorDialog(EditorsRegistry.getInstance().getMainWindow(), "Fehler beim HTML-Export: " + t.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR);
+            ThreadUtils.showErrorDialog(EditorsRegistry.getInstance().getMainWindow(), "Fehler beim HTML-Export: " + t.getMessage(), DesktopUtils.POPUP_TITLE_ERROR);
             EditorsRegistry.getInstance().clearStatus(true);
             ThreadUtils.setDefaultCursor(this.owner);
         }
@@ -910,7 +912,7 @@ public class ModernHtmlExportAction extends ProgressableAction {
     private String buildDataScript(ArchiveFileBean aCase,
                                    Collection<ArchiveFileAddressesBean> parties,
                                    Collection<ArchiveFileDocumentsBean> documents,
-                                   Collection<com.jdimension.jlawyer.persistence.ArchiveFileReviewsBean> reviews,
+                                   Collection<ArchiveFileReviewsBean> reviews,
                                    Collection<ArchiveFileTagsBean> tags) {
 
         StringBuilder sb = new StringBuilder();
@@ -955,6 +957,7 @@ public class ModernHtmlExportAction extends ProgressableAction {
                 sb.append("{");
                 sb.append("\"name\":\"").append(jsonEscape(StringUtils.nonEmpty(ab != null ? ab.toDisplayName() : ""))).append("\",");
                 sb.append("\"type\":\"").append(jsonEscape(pab.getReferenceType() != null ? pab.getReferenceType().getName() : "")).append("\",");
+                sb.append("\"reference\":\"").append(jsonEscape(StringUtils.nonEmpty(pab.getReference()))).append("\",");
                 StringBuilder addr = new StringBuilder();
                 if (ab != null) {
                     if (!StringUtils.isEmpty(ab.getStreet())) {
@@ -1006,7 +1009,7 @@ public class ModernHtmlExportAction extends ProgressableAction {
         sb.append("\"reviews\":[");
         first = true;
         if (reviews != null) {
-            for (com.jdimension.jlawyer.persistence.ArchiveFileReviewsBean r : reviews) {
+            for (ArchiveFileReviewsBean r : reviews) {
                 if (!first) sb.append(',');
                 first = false;
                 sb.append("{");
@@ -1171,6 +1174,9 @@ public class ModernHtmlExportAction extends ProgressableAction {
                ".review.open{opacity:1;} .review.done{opacity:.6;border-left-style:dashed;}\n" +
                ".review .state{margin-left:8px;font-size:12px;} .review.open .state{color:var(--ok);} .review.done .state{color:var(--muted);}\n" +
                ".history-frame{width:100%;height:80vh;border:0;background:#fff;border-radius:8px;}\n" +
+               ".party-item{padding-bottom:8px;margin-bottom:8px;border-bottom:1px solid rgba(255,255,255,.08);}\n" +
+               ".party-item:last-child{border-bottom:none;margin-bottom:0;padding-bottom:0;}\n" +
+               ".party-item .when{font-size:90%;color:var(--muted);}\n" +
                ".footer{padding:12px 16px;color:var(--muted);}\n" +
                "@media (max-width: 900px){ .cards.overview{grid-template-columns:1fr;} }\n" +
                "@media (max-width: 720px){ .doc{flex-direction:column;align-items:flex-start;} .tabs{gap:6px;} .tab{padding:8px 10px;} }\n";
@@ -1200,7 +1206,7 @@ public class ModernHtmlExportAction extends ProgressableAction {
         // helper renderers
         js.append("function renderDashboard(data){\n");
         js.append("  const tags=(data.tags||[]).map(t=>`<span class=\\\"chip\\\">${escapeHtml(t.name)}</span>`).join(' ');\n");
-        js.append("  const parties=(data.parties||[]).map(p=>`<div><div class=\\\"title\\\">${escapeHtml(p.name)} (${escapeHtml(p.type)})</div><div class=\\\"when\\\">${escapeHtml(p.address)}${p.phone? ' · Tel: '+escapeHtml(p.phone): ''}${p.mobile? ' · Mob: '+escapeHtml(p.mobile): ''}</div></div>`).join('');\n");
+        js.append("  const parties=(data.parties||[]).map(p=>`<div class=\"party-item\"><div class=\\\"title\\\">${escapeHtml(p.name)} (${escapeHtml(p.type)})</div><div class=\\\"when\\\">${escapeHtml(p.address)}${p.phone? ' · Tel: '+escapeHtml(p.phone): ''}${p.mobile? ' · Mob: '+escapeHtml(p.mobile): ''}${p.reference ? `<br>Zeichen: ${escapeHtml(p.reference)}` : ''}</div></div>`).join('');\n");
         js.append("  const notes=escapeHtml(data.notice||'');\n");
         js.append("  return `\n");
         js.append("    <div class=\\\"cards overview\\\">\n");
