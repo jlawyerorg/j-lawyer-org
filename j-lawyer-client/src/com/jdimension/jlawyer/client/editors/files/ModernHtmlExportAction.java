@@ -721,6 +721,16 @@ public class ModernHtmlExportAction extends ProgressableAction {
     private HashMap<String,String> relPathByDocIdForExport = new HashMap<>();
     private Collection<Invoice> invoices = new ArrayList<>();
     private Collection<CaseAccountEntry> accountEntries = new ArrayList<>();
+    private boolean openBrowserAfterExport = true;
+    private File exportDir;
+
+    public File getExportDir() {
+        return exportDir;
+    }
+
+    public void setOpenBrowserAfterExport(boolean openBrowserAfterExport) {
+        this.openBrowserAfterExport = openBrowserAfterExport;
+    }
 
     public ModernHtmlExportAction(ProgressIndicator indicator, Component owner, File baseDir, String caseId) {
         super(indicator, false);
@@ -756,7 +766,7 @@ public class ModernHtmlExportAction extends ProgressableAction {
             }
 
             String exportFolderName = buildExportFolderName(aCase);
-            File exportDir = new File(this.baseDir, exportFolderName);
+            this.exportDir = new File(this.baseDir, exportFolderName);
             if (exportDir.exists()) {
                 JOptionPane.showMessageDialog(this.indicator, "Verzeichnis '" + exportDir.getAbsolutePath() + "' existiert bereits.", DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
                 return true;
@@ -860,15 +870,17 @@ public class ModernHtmlExportAction extends ProgressableAction {
             String indexHtml = buildIndexHtml(aCase, dataScript);
             writeText(new File(exportDir, "index.html"), indexHtml);
 
-            this.progress("Öffne Browser...");
-            try {
-                java.net.URI uri = new File(exportDir, "index.html").toURI();
-                DesktopUtils.openBrowserFromDialog(uri.toString(), this.indicator);
-            } catch (Throwable t) {
-                // Fallback: try legacy approach with manual escaping
-                String p = exportDir.getAbsolutePath().replace("\\", "/");
-                String browserUrl = "file://" + p + "/index.html";
-                DesktopUtils.openBrowserFromDialog(browserUrl.replace(" ", "%20"), this.indicator);
+            if (openBrowserAfterExport) {
+                this.progress("Öffne Browser...");
+                try {
+                    java.net.URI uri = new File(exportDir, "index.html").toURI();
+                    DesktopUtils.openBrowserFromDialog(uri.toString(), this.indicator);
+                } catch (Throwable t) {
+                    // Fallback: try legacy approach with manual escaping
+                    String p = exportDir.getAbsolutePath().replace("\\", "/");
+                    String browserUrl = "file://" + p + "/index.html";
+                    DesktopUtils.openBrowserFromDialog(browserUrl.replace(" ", "%20"), this.indicator);
+                }
             }
 
         } catch (Throwable t) {
