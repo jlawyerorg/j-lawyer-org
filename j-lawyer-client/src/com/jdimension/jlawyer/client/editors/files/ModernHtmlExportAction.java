@@ -678,6 +678,8 @@ import com.jdimension.jlawyer.persistence.ArchiveFileDocumentsBean;
 import com.jdimension.jlawyer.persistence.ArchiveFileTagsBean;
 import com.jdimension.jlawyer.persistence.ArchiveFileHistoryBean;
 import com.jdimension.jlawyer.persistence.ArchiveFileReviewsBean;
+import com.jdimension.jlawyer.persistence.CaseAccountEntry;
+import com.jdimension.jlawyer.persistence.Invoice;
 import com.jdimension.jlawyer.persistence.CaseFolder;
 import com.jdimension.jlawyer.persistence.EventTypes;
 import com.jdimension.jlawyer.services.ArchiveFileServiceRemote;
@@ -717,6 +719,8 @@ public class ModernHtmlExportAction extends ProgressableAction {
     private int max = 8;
     private HashMap<String,String> folderPathByIdForExport = new HashMap<>();
     private HashMap<String,String> relPathByDocIdForExport = new HashMap<>();
+    private Collection<Invoice> invoices = new ArrayList<>();
+    private Collection<CaseAccountEntry> accountEntries = new ArrayList<>();
 
     public ModernHtmlExportAction(ProgressIndicator indicator, Component owner, File baseDir, String caseId) {
         super(indicator, false);
@@ -769,10 +773,20 @@ public class ModernHtmlExportAction extends ProgressableAction {
             cssDir.mkdirs();
             jsDir.mkdirs();
 
-            this.progress("Lade Beteiligte / Dokumente / Fälligkeiten / Historie...");
+            this.progress("Lade Beteiligte / Dokumente / Fälligkeiten / Finanzen / Historie...");
             Collection<ArchiveFileAddressesBean> parties = afs.getInvolvementDetailsForCase(this.caseId);
             Collection<ArchiveFileDocumentsBean> documents = afs.getDocuments(this.caseId);
             Collection<ArchiveFileReviewsBean> reviews = cal.getReviews(this.caseId);
+            try {
+                this.invoices = afs.getInvoices(this.caseId);
+            } catch (Throwable t) {
+                log.warn("Rechnungen konnten nicht geladen werden", t);
+            }
+            try {
+                this.accountEntries = afs.getAccountEntries(this.caseId);
+            } catch (Throwable t) {
+                log.warn("Aktenkonto konnte nicht geladen werden", t);
+            }
             Collection<ArchiveFileTagsBean> tags = null;
             try {
                 tags = afs.getTags(this.caseId);
@@ -842,7 +856,7 @@ public class ModernHtmlExportAction extends ProgressableAction {
 
             // Build data script and HTML
             this.progress("Erstelle HTML...");
-            String dataScript = buildDataScript(aCase, parties, documents, reviews, tags);
+            String dataScript = buildDataScript(aCase, parties, documents, reviews, tags, this.invoices, this.accountEntries);
             String indexHtml = buildIndexHtml(aCase, dataScript);
             writeText(new File(exportDir, "index.html"), indexHtml);
 
@@ -913,7 +927,9 @@ public class ModernHtmlExportAction extends ProgressableAction {
                                    Collection<ArchiveFileAddressesBean> parties,
                                    Collection<ArchiveFileDocumentsBean> documents,
                                    Collection<ArchiveFileReviewsBean> reviews,
-                                   Collection<ArchiveFileTagsBean> tags) {
+                                   Collection<ArchiveFileTagsBean> tags,
+                                   Collection<Invoice> invoices,
+                                   Collection<CaseAccountEntry> accountEntries) {
 
         StringBuilder sb = new StringBuilder();
         sb.append("<script>\n");
@@ -1023,6 +1039,52 @@ public class ModernHtmlExportAction extends ProgressableAction {
                 sb.append("\"done\":").append(r.isDone()).append("}");
             }
         }
+        sb.append("],");
+
+        // invoices
+        sb.append("\"invoices\":[");
+        first = true;
+        if (invoices != null) {
+            for (Invoice i : invoices) {
+                if (!first) sb.append(',');
+                first = false;
+                sb.append("{");
+                sb.append("\"invoiceNumber\":\"").append(jsonEscape(StringUtils.nonEmpty(i.getInvoiceNumber()))).append("\",");
+                sb.append("\"name\":\"").append(jsonEscape(StringUtils.nonEmpty(i.getName()))).append("\",");
+                sb.append("\"description\":\"").append(jsonEscape(StringUtils.nonEmpty(i.getDescription()))).append("\",");
+                sb.append("\"creationDate\":\"").append(i.getCreationDate() != null ? dfDate.format(i.getCreationDate()) : "").append("\",");
+                sb.append("\"dueDate\":\"").append(i.getDueDate() != null ? dfDate.format(i.getDueDate()) : "").append("\",");
+                sb.append("\"total\":").append(i.getTotal()).append(",");
+                sb.append("\"totalGross\":").append(i.getTotalGross()).append(",");
+                sb.append("\"currency\":\"").append(jsonEscape(StringUtils.nonEmpty(i.getCurrency()))).append("\",");
+                sb.append("\"status\":\"").append(jsonEscape(i.getStatusString())).append("\",");
+                sb.append("\"contact\":\"").append(jsonEscape(i.getContact() != null ? i.getContact().toDisplayName() : "")).append("\"");
+                sb.append("}");
+            }
+        }
+        sb.append("],");
+
+        // accountEntries
+        sb.append("\"accountEntries\":[");
+        first = true;
+        if (accountEntries != null) {
+            for (CaseAccountEntry e : accountEntries) {
+                if (!first) sb.append(',');
+                first = false;
+                sb.append("{");
+                sb.append("\"entryDate\":\"").append(e.getEntryDate() != null ? dfDate.format(e.getEntryDate()) : "").append("\",");
+                sb.append("\"contact\":\"").append(jsonEscape(e.getContact() != null ? e.getContact().toDisplayName() : "")).append("\",");
+                sb.append("\"description\":\"").append(jsonEscape(StringUtils.nonEmpty(e.getDescription()))).append("\",");
+                sb.append("\"earnings\":").append(e.getEarnings()).append(",");
+                sb.append("\"spendings\":").append(e.getSpendings()).append(",");
+                sb.append("\"escrowIn\":").append(e.getEscrowIn()).append(",");
+                sb.append("\"escrowOut\":").append(e.getEscrowOut()).append(",");
+                sb.append("\"expendituresIn\":").append(e.getExpendituresIn()).append(",");
+                sb.append("\"expendituresOut\":").append(e.getExpendituresOut()).append(",");
+                sb.append("\"invoice\":\"").append(jsonEscape(e.getInvoice() != null ? e.getInvoice().getInvoiceNumber() : "")).append("\"");
+                sb.append("}");
+            }
+        }
         sb.append("]");
 
         // Close CASE_DATA and append helper maps for links/paths
@@ -1083,8 +1145,8 @@ public class ModernHtmlExportAction extends ProgressableAction {
         html.append("<header class=\"topbar\">\n  <div class=\"title\">Akte</div>\n  <div class=\"subtitle\">");
         html.append(StringUtils.nonEmpty(aCase.getFileNumber())).append(" · ").append(StringUtils.nonEmpty(aCase.getName()));
         html.append("</div>\n</header>\n");
-        html.append("<nav class=\"tabs\">\n  <button class=\"tab active\" data-tab=\"dashboard\">Übersicht</button>\n  <button class=\"tab\" data-tab=\"documents\">Dokumente</button>\n  <button class=\"tab\" data-tab=\"deadlines\">Fälligkeiten</button>\n  <button class=\"tab\" data-tab=\"history\">Aktenhistorie</button>\n</nav>\n");
-        html.append("<main class=\"content\">\n  <section id=\"dashboard\" class=\"view active\"></section>\n  <section id=\"documents\" class=\"view\"></section>\n  <section id=\"deadlines\" class=\"view\"></section>\n  <section id=\"history\" class=\"view\"></section>\n</main>\n<footer class=\"footer\">Export erstellt am ");
+        html.append("<nav class=\"tabs\">\n  <button class=\"tab active\" data-tab=\"dashboard\">Übersicht</button>\n  <button class=\"tab\" data-tab=\"documents\">Dokumente</button>\n  <button class=\"tab\" data-tab=\"deadlines\">Fälligkeiten</button>\n  <button class=\"tab\" data-tab=\"finance\">Finanzen</button>\n  <button class=\"tab\" data-tab=\"history\">Aktenhistorie</button>\n</nav>\n");
+        html.append("<main class=\"content\">\n  <section id=\"dashboard\" class=\"view active\"></section>\n  <section id=\"documents\" class=\"view\"></section>\n  <section id=\"deadlines\" class=\"view\"></section>\n  <section id=\"finance\" class=\"view\"></section>\n  <section id=\"history\" class=\"view\"></section>\n</main>\n<footer class=\"footer\">Export erstellt am ");
         html.append(dfDateTime.format(new Date()));
         html.append("</footer>\n");
         // embed data and app
@@ -1174,6 +1236,11 @@ public class ModernHtmlExportAction extends ProgressableAction {
                ".review.open{opacity:1;} .review.done{opacity:.6;border-left-style:dashed;}\n" +
                ".review .state{margin-left:8px;font-size:12px;} .review.open .state{color:var(--ok);} .review.done .state{color:var(--muted);}\n" +
                ".history-frame{width:100%;height:80vh;border:0;background:#fff;border-radius:8px;}\n" +
+               ".table-wrapper{overflow-x:auto;}\n" +
+               ".data-table{width:100%;border-collapse:collapse;margin-top:12px;white-space:nowrap;}\n" +
+               ".data-table th,.data-table td{padding:8px 10px;border:1px solid rgba(255,255,255,.1);text-align:left;}\n" +
+               ".data-table th{background:rgba(255,255,255,.05);font-weight:600;}\n" +
+               ".data-table td.num{text-align:right;}\n" +
                ".party-item{padding-bottom:8px;margin-bottom:8px;border-bottom:1px solid rgba(255,255,255,.08);}\n" +
                ".party-item:last-child{border-bottom:none;margin-bottom:0;padding-bottom:0;}\n" +
                ".party-item .when{font-size:90%;color:var(--muted);}\n" +
@@ -1199,9 +1266,20 @@ public class ModernHtmlExportAction extends ProgressableAction {
         // render deadlines
         js.append("  const dl=document.getElementById(\'deadlines\');\n");
         js.append("  dl.innerHTML = renderDeadlines(CASE_DATA);\n");
+        js.append("  const fin=document.getElementById('finance');\n");
+        js.append("  fin.innerHTML = renderFinance(CASE_DATA);\n");
         js.append("  const hist=document.getElementById(\'history\');\n");
         js.append("  if(hist){ hist.innerHTML = '<iframe class=\\\"history-frame\\\" src=\\\"history.html\\\" title=\\\"Aktenhistorie\\\"></iframe>'; }\n");
         js.append("});\n");
+
+        js.append("function renderFinance(data) {\n");
+        js.append("  const invoices = (data.invoices || []).map(i => `<tr><td>${escapeHtml(i.invoiceNumber)}</td><td>${escapeHtml(i.name)}</td><td>${escapeHtml(i.creationDate)}</td><td>${escapeHtml(i.dueDate)}</td><td class=\"num\">${(i.totalGross || 0).toFixed(2)} ${escapeHtml(i.currency)}</td><td>${escapeHtml(i.status)}</td><td>${escapeHtml(i.contact)}</td></tr>`).join('');\n");
+        js.append("  const accountEntries = (data.accountEntries || []).map(e => `<tr><td>${escapeHtml(e.entryDate)}</td><td>${escapeHtml(e.description)}</td><td class=\"num\">${(e.earnings || 0).toFixed(2)}</td><td class=\"num\">${(e.spendings || 0).toFixed(2)}</td><td class=\"num\">${(e.escrowIn || 0).toFixed(2)}</td><td class=\"num\">${(e.escrowOut || 0).toFixed(2)}</td><td class=\"num\">${(e.expendituresIn || 0).toFixed(2)}</td><td class=\"num\">${(e.expendituresOut || 0).toFixed(2)}</td><td>${escapeHtml(e.invoice)}</td><td>${escapeHtml(e.contact)}</td></tr>`).join('');\n");
+        js.append("  return `<h3>Belege</h3>\n");
+        js.append("    <div class=\"table-wrapper\"><table class=\"data-table\"><thead><tr><th>Beleg-Nr.</th><th>Name</th><th>Erstellt</th><th>Fällig</th><th>Betrag</th><th>Status</th><th>Kontakt</th></tr></thead><tbody>${invoices || '<tr><td colspan=\"7\">Keine Belege vorhanden.</td></tr>'}</tbody></table></div>\n");
+        js.append("    <h3 style=\"margin-top:24px\">Aktenkonto</h3>\n");
+        js.append("    <div class=\"table-wrapper\"><table class=\"data-table\"><thead><tr><th>Datum</th><th>Buchungstext</th><th>Einnahmen</th><th>Ausgaben</th><th>Fremdgeld Ein</th><th>Fremdgeld Aus</th><th>Auslagen Ein</th><th>Auslagen Aus</th><th>Beleg</th><th>Kontakt</th></tr></thead><tbody>${accountEntries || '<tr><td colspan=10>Keine Buchungen vorhanden.</td></tr>'}</tbody></table></div>`;\n");
+        js.append("}\n");
 
         // helper renderers
         js.append("function renderDashboard(data){\n");
