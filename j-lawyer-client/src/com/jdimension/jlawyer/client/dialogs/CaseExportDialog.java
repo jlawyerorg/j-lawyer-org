@@ -18,6 +18,7 @@ import java.awt.Component;
 import java.awt.FlowLayout;
 import java.io.File;
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.List;
 import javax.swing.BoxLayout;
 import javax.swing.JCheckBox;
@@ -140,13 +141,21 @@ public class CaseExportDialog extends javax.swing.JDialog {
             String principalId = UserSettings.getInstance().getCurrentUser().getPrincipalId();
             List<String> caseIds = fileService.getCaseIdsSyncedForUser(principalId);
 
+            List<ArchiveFileBean> cases = new ArrayList<>();
             for (String caseId : caseIds) {
                 ArchiveFileBean caseBean = fileService.getArchiveFile(caseId);
                 if (caseBean != null) {
-                    CaseSelectionPanel panel = new CaseSelectionPanel(caseBean);
-                    caseSelectionPanels.add(panel);
-                    caseListPanel.add(panel);
+                    cases.add(caseBean);
                 }
+            }
+
+            cases.sort(Comparator.comparing(ArchiveFileBean::getFileNumber,
+                    Comparator.nullsLast(String.CASE_INSENSITIVE_ORDER)));
+
+            for (ArchiveFileBean caseBean : cases) {
+                CaseSelectionPanel panel = new CaseSelectionPanel(caseBean);
+                caseSelectionPanels.add(panel);
+                caseListPanel.add(panel);
             }
             caseListPanel.revalidate();
             caseListPanel.repaint();
