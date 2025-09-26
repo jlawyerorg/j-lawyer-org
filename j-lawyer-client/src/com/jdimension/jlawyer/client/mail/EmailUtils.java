@@ -681,6 +681,7 @@ import java.io.InputStream;
 import java.io.UnsupportedEncodingException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Date;
 import java.util.Enumeration;
 import java.util.List;
@@ -1444,6 +1445,29 @@ public class EmailUtils extends CommonMailUtils {
         return dlg;
     }
 
+    /**
+     * Filters out a specific email address from an Address[].
+     *
+     * @param addresses the original array of addresses (may be null)
+     * @param emailToRemove the email address to remove (case-insensitive)
+     * @return a new Address[] without the removed email, or empty if none remain
+     */
+    public static Address[] filterOut(Address[] addresses, String emailToRemove) {
+        if (addresses == null || emailToRemove == null) {
+            return new Address[0];
+        }
+
+        return Arrays.stream(addresses)
+                .filter(addr -> {
+                    if (addr instanceof InternetAddress) {
+                        String email = ((InternetAddress) addr).getAddress();
+                        return !email.equalsIgnoreCase(emailToRemove);
+                    }
+                    return true; // keep non-InternetAddress entries
+                })
+                .toArray(Address[]::new);
+    }
+    
     public static String getAddressesAsList(Address[] a) throws UnsupportedEncodingException {
         StringBuilder listString = new StringBuilder();
         if (a != null) {

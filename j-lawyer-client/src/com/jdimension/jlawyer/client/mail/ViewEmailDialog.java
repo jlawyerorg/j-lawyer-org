@@ -885,12 +885,18 @@ public class ViewEmailDialog extends javax.swing.JDialog {
 
                 try {
                     Address[] to = m.getRecipients(RecipientType.TO);
+                    if(ms!=null)
+                        to=EmailUtils.filterOut(to, ms.getEmailAddress());
                     String toString = EmailUtils.getAddressesAsList(to);
 
                     Address[] cc = m.getRecipients(RecipientType.CC);
+                    if(ms!=null)
+                        cc=EmailUtils.filterOut(cc, ms.getEmailAddress());
                     String ccString = EmailUtils.getAddressesAsList(cc);
 
                     Address[] bcc = m.getRecipients(RecipientType.BCC);
+                    if(ms!=null)
+                        bcc=EmailUtils.filterOut(bcc, ms.getEmailAddress());
                     String bccString = EmailUtils.getAddressesAsList(bcc);
 
                     dlg.setTo(toString);
