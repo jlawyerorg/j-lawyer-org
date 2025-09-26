@@ -1143,7 +1143,6 @@ public class LoginDialog extends javax.swing.JFrame {
         jButton1 = new javax.swing.JButton();
         btnGrpSecurity = new javax.swing.ButtonGroup();
         bgPanel = new com.jdimension.jlawyer.client.StyledPanel();
-        btnNextBackground = new javax.swing.JButton();
         jTabbedPane1 = new javax.swing.JTabbedPane();
         jPanel1 = new javax.swing.JPanel();
         jPanel7 = new javax.swing.JPanel();
@@ -1239,6 +1238,7 @@ public class LoginDialog extends javax.swing.JFrame {
         jLabel15 = new javax.swing.JLabel();
         lblLogo = new javax.swing.JLabel();
         lblAutoUpdate = new javax.swing.JLabel();
+        btnNextBackground = new javax.swing.JButton();
         lblFullClientVersion = new javax.swing.JLabel();
 
         jButton1.setText("jButton1");
@@ -1897,14 +1897,14 @@ public class LoginDialog extends javax.swing.JFrame {
         lblAutoUpdate.setHorizontalAlignment(javax.swing.SwingConstants.CENTER);
         lblAutoUpdate.setText("jLabel18");
 
+        btnNextBackground.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons16/material/baseline_refresh_white_36dp.png"))); // NOI18N
+        btnNextBackground.setBorder(null);
+        btnNextBackground.setContentAreaFilled(false);
+        btnNextBackground.setFocusable(false);
+
         lblFullClientVersion.setFont(lblFullClientVersion.getFont().deriveFont(lblFullClientVersion.getFont().getStyle() | java.awt.Font.BOLD, lblFullClientVersion.getFont().getSize()+36));
         lblFullClientVersion.setForeground(new java.awt.Color(14, 113, 180));
         lblFullClientVersion.setText("1.0");
-
-        btnNextBackground.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons16/material/baseline_refresh_white_36dp.png"))); // NOI18N
-        btnNextBackground.setBorder(BorderFactory.createEmptyBorder(6, 10, 6, 10));
-        btnNextBackground.setContentAreaFilled(false);
-        btnNextBackground.setFocusable(false);
 
         org.jdesktop.layout.GroupLayout bgPanelLayout = new org.jdesktop.layout.GroupLayout(bgPanel);
         bgPanel.setLayout(bgPanelLayout);
@@ -1922,7 +1922,7 @@ public class LoginDialog extends javax.swing.JFrame {
                 .add(36, 36, 36))
             .add(org.jdesktop.layout.GroupLayout.TRAILING, lblAutoUpdate, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
             .add(org.jdesktop.layout.GroupLayout.TRAILING, bgPanelLayout.createSequentialGroup()
-                .addContainerGap(org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                .add(0, 0, Short.MAX_VALUE)
                 .add(btnNextBackground)
                 .add(24, 24, 24))
         );
@@ -1937,7 +1937,7 @@ public class LoginDialog extends javax.swing.JFrame {
                 .add(jTabbedPane1, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
                 .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
                 .add(lblAutoUpdate)
-                .addPreferredGap(org.jdesktop.layout.LayoutStyle.UNRELATED, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                .add(0, 0, Short.MAX_VALUE)
                 .add(btnNextBackground)
                 .add(18, 18, 18))
         );
