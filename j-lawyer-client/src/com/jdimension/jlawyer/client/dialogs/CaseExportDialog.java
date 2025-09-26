@@ -60,7 +60,6 @@ public class CaseExportDialog extends javax.swing.JDialog {
         hintLabel = new javax.swing.JLabel();
         scrollPane = new javax.swing.JScrollPane();
         caseListPanel = new javax.swing.JPanel();
-        buttonPanel = new javax.swing.JPanel();
         selectAllButton = new javax.swing.JButton();
         deselectAllButton = new javax.swing.JButton();
         cancelButton = new javax.swing.JButton();
@@ -69,50 +68,84 @@ public class CaseExportDialog extends javax.swing.JDialog {
         setDefaultCloseOperation(javax.swing.WindowConstants.DISPOSE_ON_CLOSE);
         setTitle("Akten für den Export auswählen");
 
+        hintLabel.setFont(hintLabel.getFont());
         hintLabel.setText("Export von Akten, für die Synchronisation mit der App aktiviert ist");
         hintLabel.setBorder(javax.swing.BorderFactory.createEmptyBorder(10, 10, 10, 10));
-        getContentPane().add(hintLabel, java.awt.BorderLayout.NORTH);
 
         caseListPanel.setLayout(new javax.swing.BoxLayout(caseListPanel, javax.swing.BoxLayout.Y_AXIS));
         scrollPane.setViewportView(caseListPanel);
 
-        getContentPane().add(scrollPane, java.awt.BorderLayout.CENTER);
-
-        buttonPanel.setLayout(new java.awt.FlowLayout(java.awt.FlowLayout.RIGHT));
-
-        selectAllButton.setText("Alle auswählen");
+        selectAllButton.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons16/baseline_select_all_black_48dp.png"))); // NOI18N
+        selectAllButton.setToolTipText("Alle auswählen");
         selectAllButton.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 selectAllButtonActionPerformed(evt);
             }
         });
-        buttonPanel.add(selectAllButton);
 
-        deselectAllButton.setText("Keine auswählen");
+        deselectAllButton.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons16/baseline_select_none_black_48dp.png"))); // NOI18N
+        deselectAllButton.setToolTipText("Keine auswählen");
         deselectAllButton.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 deselectAllButtonActionPerformed(evt);
             }
         });
-        buttonPanel.add(deselectAllButton);
 
+        cancelButton.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/cancel.png"))); // NOI18N
         cancelButton.setText("Abbrechen");
         cancelButton.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 cancelButtonActionPerformed(evt);
             }
         });
-        buttonPanel.add(cancelButton);
 
+        exportButton.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/agt_action_success.png"))); // NOI18N
         exportButton.setText("Export");
         exportButton.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 exportButtonActionPerformed(evt);
             }
         });
-        buttonPanel.add(exportButton);
 
-        getContentPane().add(buttonPanel, java.awt.BorderLayout.SOUTH);
+        javax.swing.GroupLayout layout = new javax.swing.GroupLayout(getContentPane());
+        getContentPane().setLayout(layout);
+        layout.setHorizontalGroup(
+            layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(layout.createSequentialGroup()
+                .addContainerGap()
+                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addComponent(scrollPane)
+                    .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
+                        .addGap(0, 0, Short.MAX_VALUE)
+                        .addComponent(cancelButton)
+                        .addGap(5, 5, 5)
+                        .addComponent(exportButton))
+                    .addGroup(layout.createSequentialGroup()
+                        .addComponent(selectAllButton)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addComponent(deselectAllButton)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                        .addComponent(hintLabel, javax.swing.GroupLayout.DEFAULT_SIZE, 828, Short.MAX_VALUE)))
+                .addContainerGap())
+        );
+        layout.setVerticalGroup(
+            layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(layout.createSequentialGroup()
+                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
+                    .addGroup(layout.createSequentialGroup()
+                        .addContainerGap()
+                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                            .addComponent(selectAllButton)
+                            .addComponent(deselectAllButton)))
+                    .addComponent(hintLabel, javax.swing.GroupLayout.PREFERRED_SIZE, 0, Short.MAX_VALUE))
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addComponent(scrollPane, javax.swing.GroupLayout.PREFERRED_SIZE, 448, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addComponent(cancelButton)
+                    .addComponent(exportButton))
+                .addContainerGap())
+        );
 
         pack();
     }// </editor-fold>//GEN-END:initComponents
@@ -200,7 +233,6 @@ public class CaseExportDialog extends javax.swing.JDialog {
     }
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
-    private javax.swing.JPanel buttonPanel;
     private javax.swing.JButton cancelButton;
     private javax.swing.JPanel caseListPanel;
     private javax.swing.JButton deselectAllButton;
