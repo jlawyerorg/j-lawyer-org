@@ -683,10 +683,14 @@ import java.util.Calendar;
 import java.util.Date;
 import java.util.List;
 import javax.swing.DefaultListModel;
+import javax.swing.JDialog;
+import javax.swing.JFrame;
 import javax.swing.JList;
 import javax.swing.JOptionPane;
 import org.apache.log4j.Logger;
 import org.jdesktop.swingx.util.WindowUtils;
+import com.jdimension.jlawyer.client.utils.SelectAttachmentDialog;
+import com.jdimension.jlawyer.persistence.ArchiveFileDocumentsBean;
 
 /**
  *
@@ -699,7 +703,8 @@ public class NewEventPanel extends javax.swing.JPanel implements QuickDateSelect
     SimpleDateFormat timeFormat = new SimpleDateFormat("HH:mm");
     SimpleDateFormat dateFormat = new SimpleDateFormat("dd.MM.yyyy");
 
-    protected NewEventPanelListener newEventListener = null;
+  protected NewEventPanelListener newEventListener = null;
+  private String selectedDocumentId = null; // optional document context
 
     /**
      * Creates new form NewEventPanel
@@ -810,6 +815,8 @@ public class NewEventPanel extends javax.swing.JPanel implements QuickDateSelect
         jScrollPane9 = new javax.swing.JScrollPane();
         lstReviewReasons = new javax.swing.JList<>();
         jLabel22 = new javax.swing.JLabel();
+        cmdSelectDocument = new javax.swing.JButton();
+        lblSelectedDocument = new javax.swing.JLabel();
 
         btGrpReviewType.add(radioEventTypeFollowUp);
         radioEventTypeFollowUp.setSelected(true);
@@ -919,6 +926,15 @@ public class NewEventPanel extends javax.swing.JPanel implements QuickDateSelect
 
         jLabel22.setText("Ort:");
 
+        cmdSelectDocument.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/attach.png"))); // NOI18N
+        cmdSelectDocument.setToolTipText("Dokument aus der Akte wählen");
+        cmdSelectDocument.setMargin(new java.awt.Insets(2, 4, 2, 4));
+        cmdSelectDocument.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                cmdSelectDocumentActionPerformed(evt);
+            }
+        });
+
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(this);
         this.setLayout(layout);
         layout.setHorizontalGroup(
@@ -926,6 +942,10 @@ public class NewEventPanel extends javax.swing.JPanel implements QuickDateSelect
             .addComponent(jScrollPane5)
             .addComponent(txtReviewReason)
             .addComponent(txtEventLocation, javax.swing.GroupLayout.Alignment.TRAILING)
+            .addGroup(layout.createSequentialGroup()
+                .addComponent(cmdSelectDocument)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addComponent(lblSelectedDocument, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
             .addGroup(layout.createSequentialGroup()
                 .addComponent(jLabel12)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
@@ -1004,6 +1024,10 @@ public class NewEventPanel extends javax.swing.JPanel implements QuickDateSelect
                 .addComponent(jLabel22)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(txtEventLocation, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
+                    .addComponent(cmdSelectDocument, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                    .addComponent(lblSelectedDocument, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                     .addComponent(jLabel12)
@@ -1073,6 +1097,39 @@ public class NewEventPanel extends javax.swing.JPanel implements QuickDateSelect
         MultiCalDialog dlg = new MultiCalDialog(this.txtEventEndDateField, EditorsRegistry.getInstance().getMainWindow(), true);
         dlg.setVisible(true);
     }//GEN-LAST:event_cmdEventEndDateSelectorActionPerformed
+
+  private void cmdSelectDocumentActionPerformed(java.awt.event.ActionEvent evt) {
+    // open document picker scoped to the current case (if any)
+    String caseId = null;
+    if (this.newEventListener != null && this.newEventListener.getCase() != null) {
+      caseId = this.newEventListener.getCase().getId();
+    }
+
+    java.awt.Window parent = WindowUtils.findWindow(this);
+    JDialog parentDialog = parent instanceof JDialog ? (JDialog) parent : null;
+    JFrame parentFrame = parent instanceof JFrame ? (JFrame) parent : null;
+
+    SelectAttachmentDialog dlg;
+    if (parentDialog != null) {
+      dlg = new SelectAttachmentDialog(parentDialog, true, caseId, false);
+    } else if (parentFrame != null) {
+      dlg = new SelectAttachmentDialog(parentFrame, true, caseId, false);
+    } else {
+      dlg = new SelectAttachmentDialog((JFrame) null, true, caseId, false);
+    }
+    dlg.setTitle("Dokument auswählen");
+    dlg.setVisible(true);
+    ArchiveFileDocumentsBean[] docs = dlg.getSelectedDocuments();
+    if (docs != null && docs.length > 0) {
+      this.selectedDocumentId = docs[0].getId();
+      this.lblSelectedDocument.setText(docs[0].getName());
+      this.lblSelectedDocument.setToolTipText(docs[0].getName());
+    } else {
+      this.selectedDocumentId = null;
+      this.lblSelectedDocument.setText("");
+      this.lblSelectedDocument.setToolTipText(null);
+    }
+  }
 
     private void toggleEventUi() {
 
@@ -1165,7 +1222,12 @@ public class NewEventPanel extends javax.swing.JPanel implements QuickDateSelect
                 Window parentWindow = WindowUtils.findWindow(this);
                 if (selectionCount == 0 && !StringUtils.isEmpty(this.txtReviewReason.getText())) {
                     if (CalendarUtils.checkForConflicts(parentWindow, newOrChangedEvent)) {
-                        this.newEventListener.addReview(null, eventType, this.txtReviewReason.getText(), this.taEventDescription.getText(), beginDate, endDate, this.cmbReviewAssignee.getSelectedItem().toString(), this.txtEventLocation.getText(), this.calendarSelectionButton.getSelectedSetup());
+                        // Prefer V2 listener to pass documentId, else fall back
+                        if (this.newEventListener instanceof NewEventPanelListenerV2) {
+                          ((NewEventPanelListenerV2)this.newEventListener).addReview(null, eventType, this.txtReviewReason.getText(), this.taEventDescription.getText(), beginDate, endDate, this.cmbReviewAssignee.getSelectedItem().toString(), this.txtEventLocation.getText(), this.calendarSelectionButton.getSelectedSetup(), this.selectedDocumentId);
+                        } else {
+                          this.newEventListener.addReview(null, eventType, this.txtReviewReason.getText(), this.taEventDescription.getText(), beginDate, endDate, this.cmbReviewAssignee.getSelectedItem().toString(), this.txtEventLocation.getText(), this.calendarSelectionButton.getSelectedSetup());
+                        }
                         if (this.newEventListener.getCase() != null) {
                             this.newEventListener.getCase().setLastCalendarSetup(eventType, this.calendarSelectionButton.getSelectedSetup().getId());
                         }
@@ -1182,7 +1244,11 @@ public class NewEventPanel extends javax.swing.JPanel implements QuickDateSelect
                     if (selectionCount==1 && !StringUtils.isEmpty(this.txtReviewReason.getText()) && this.newEventListener != null) {
                         if (CalendarUtils.checkForConflicts(parentWindow, newOrChangedEvent)) {
                             CalendarEntryTemplateListItem item = (CalendarEntryTemplateListItem) ((DefaultListModel) this.lstReviewReasons.getModel()).getElementAt(this.lstReviewReasons.getSelectedIndex());
-                            this.newEventListener.addReview(item.getEntry(), eventType, this.txtReviewReason.getText(), this.taEventDescription.getText(), beginDate, endDate, this.cmbReviewAssignee.getSelectedItem().toString(), this.txtEventLocation.getText(), this.calendarSelectionButton.getSelectedSetup());
+                            if (this.newEventListener instanceof NewEventPanelListenerV2) {
+                              ((NewEventPanelListenerV2)this.newEventListener).addReview(item.getEntry(), eventType, this.txtReviewReason.getText(), this.taEventDescription.getText(), beginDate, endDate, this.cmbReviewAssignee.getSelectedItem().toString(), this.txtEventLocation.getText(), this.calendarSelectionButton.getSelectedSetup(), this.selectedDocumentId);
+                            } else {
+                              this.newEventListener.addReview(item.getEntry(), eventType, this.txtReviewReason.getText(), this.taEventDescription.getText(), beginDate, endDate, this.cmbReviewAssignee.getSelectedItem().toString(), this.txtEventLocation.getText(), this.calendarSelectionButton.getSelectedSetup());
+                            }
                             if (this.newEventListener.getCase() != null) {
                                 this.newEventListener.getCase().setLastCalendarSetup(eventType, this.calendarSelectionButton.getSelectedSetup().getId());
                             }
@@ -1194,7 +1260,11 @@ public class NewEventPanel extends javax.swing.JPanel implements QuickDateSelect
                             for (int i = 0; i < ((DefaultListModel) this.lstReviewReasons.getModel()).size(); i++) {
                                 CalendarEntryTemplateListItem item = (CalendarEntryTemplateListItem) ((DefaultListModel) this.lstReviewReasons.getModel()).getElementAt(i);
                                 if (item.isSelected() && this.newEventListener != null) {
-                                    this.newEventListener.addReview(item.getEntry(), eventType, item.toString(), this.taEventDescription.getText(), beginDate, endDate, this.cmbReviewAssignee.getSelectedItem().toString(), this.txtEventLocation.getText(), this.calendarSelectionButton.getSelectedSetup());
+                                    if (this.newEventListener instanceof NewEventPanelListenerV2) {
+                                      ((NewEventPanelListenerV2)this.newEventListener).addReview(item.getEntry(), eventType, item.toString(), this.taEventDescription.getText(), beginDate, endDate, this.cmbReviewAssignee.getSelectedItem().toString(), this.txtEventLocation.getText(), this.calendarSelectionButton.getSelectedSetup(), this.selectedDocumentId);
+                                    } else {
+                                      this.newEventListener.addReview(item.getEntry(), eventType, item.toString(), this.taEventDescription.getText(), beginDate, endDate, this.cmbReviewAssignee.getSelectedItem().toString(), this.txtEventLocation.getText(), this.calendarSelectionButton.getSelectedSetup());
+                                    }
                                     if (this.newEventListener.getCase() != null) {
                                         this.newEventListener.getCase().setLastCalendarSetup(eventType, this.calendarSelectionButton.getSelectedSetup().getId());
                                     }
@@ -1251,6 +1321,8 @@ public class NewEventPanel extends javax.swing.JPanel implements QuickDateSelect
             this.calendarSelectionButton.restrictToType(CalendarSetup.EVENTTYPE_FOLLOWUP, this.newEventListener.getCase());
         else
             this.calendarSelectionButton.restrictToType(CalendarSetup.EVENTTYPE_FOLLOWUP, null);
+        this.selectedDocumentId = null;
+        this.lblSelectedDocument.setText("");
     }
 
     public void setReadOnly(boolean readOnly, boolean archived) {
@@ -1332,6 +1404,7 @@ public class NewEventPanel extends javax.swing.JPanel implements QuickDateSelect
     private javax.swing.JButton cmdEventBeginDateSelector;
     private javax.swing.JButton cmdEventEndDateSelector;
     private javax.swing.JButton cmdNewReview;
+    private javax.swing.JButton cmdSelectDocument;
     private javax.swing.JLabel jLabel12;
     private javax.swing.JLabel jLabel21;
     private javax.swing.JLabel jLabel22;
@@ -1339,6 +1412,7 @@ public class NewEventPanel extends javax.swing.JPanel implements QuickDateSelect
     private javax.swing.JLabel jLabel7;
     private javax.swing.JScrollPane jScrollPane5;
     private javax.swing.JScrollPane jScrollPane9;
+    private javax.swing.JLabel lblSelectedDocument;
     private javax.swing.JList<String> lstReviewReasons;
     private com.jdimension.jlawyer.client.components.QuickDateSelectionPanel quickDateSelectionPanel;
     private javax.swing.JRadioButton radioEventTypeEvent;

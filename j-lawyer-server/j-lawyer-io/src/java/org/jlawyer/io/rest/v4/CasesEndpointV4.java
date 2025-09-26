@@ -741,8 +741,12 @@ public class CasesEndpointV4 implements CasesEndpointLocalV4 {
                 } else if (rev.getEventType() == ArchiveFileReviewsBean.EVENTTYPE_EVENT) {
                     dd.setType(RestfulDueDateV6.TYPE_EVENT);
                 }
-                if(rev.getCalendarSetup()!=null)
+        if(rev.getCalendarSetup()!=null)
                     dd.setCalendar(rev.getCalendarSetup().getId());
+        if(rev.getDocumentContext()!=null)
+          dd.setDocumentId(rev.getDocumentContext().getId());
+        else
+          dd.setDocumentId(null);
                 ddList.add(dd);
             }
 
@@ -793,8 +797,12 @@ public class CasesEndpointV4 implements CasesEndpointLocalV4 {
                 } else if (rev.getEventType() == ArchiveFileReviewsBean.EVENTTYPE_EVENT) {
                     dd.setType(RestfulDueDateV6.TYPE_EVENT);
                 }
-                if(rev.getCalendarSetup()!=null)
+        if(rev.getCalendarSetup()!=null)
                     dd.setCalendar(rev.getCalendarSetup().getId());
+        if(rev.getDocumentContext()!=null)
+          dd.setDocumentId(rev.getDocumentContext().getId());
+        else
+          dd.setDocumentId(null);
                 ddList.add(dd);
             }
 

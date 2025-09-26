@@ -684,7 +684,8 @@ public class RestfulDueDateV4 {
     private boolean done=false;
     private String assignee=null;
     private String type=null;
-    protected String calendar=null;
+  protected String calendar=null;
+  protected String documentId=null;
 
     public RestfulDueDateV4() {
     }
@@ -829,6 +830,20 @@ public class RestfulDueDateV4 {
         this.calendar = calendar;
     }
 
+    /**
+     * @return the documentId
+     */
+    public String getDocumentId() {
+  return documentId;
+    }
+
+    /**
+     * @param documentId the documentId to set
+     */
+    public void setDocumentId(String documentId) {
+    this.documentId = documentId;
+    }
+    
     
     
     
