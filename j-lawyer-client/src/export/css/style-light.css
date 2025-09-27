@@ -1,0 +1,29 @@
+/* Theme variables for light mode */
+body.theme-light {
+  --bg: ${LIGHT_BG};
+  --fg: ${LIGHT_FG};
+  --muted: ${LIGHT_MUTED};
+  --card: ${LIGHT_CARD};
+  --tab: ${PRIMARY_COLOR_SOFT};
+  --accent: ${PRIMARY_COLOR};
+  --accent-contrast: #ffffff;
+  --surface-border: ${LIGHT_BORDER};
+  --surface-muted: ${LIGHT_SURFACE_MUTED};
+  --surface-raised: ${LIGHT_SURFACE_RAISED};
+  --surface-shadow: 0 8px 24px rgba(15, 31, 46, .08);
+  --icon-btn-bg: ${PRIMARY_COLOR_TINT};
+  --icon-btn-border: ${PRIMARY_COLOR_SOFT};
+  --icon-btn-shadow: ${PRIMARY_COLOR_SHADOW};
+  --chip-followup-bg: ${PRIMARY_COLOR_TINT};
+  --chip-followup-fg: ${PRIMARY_COLOR};
+  --chip-respite-bg: rgba(240, 173, 78, .18);
+  --chip-respite-fg: #b46a0a;
+  --chip-event-bg: rgba(43, 182, 115, .18);
+  --chip-event-fg: #2a8b56;
+  --history-frame-bg: ${LIGHT_HISTORY_BG};
+  --ok: #2bb673;
+  --warn: #f0ad4e;
+  --danger: #d9534f;
+  --tabsH: 54px;
+  --color-scheme: light;
+}

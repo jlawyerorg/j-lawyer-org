@@ -216,7 +216,7 @@
  *     permission to license the work in any other way, but it does not
  *     invalidate such permission if you have separately received it.
  *
- *     beginDate) If the work has interactive user interfaces, each must display
+*     d) If the work has interactive user interfaces, each must display
  *     Appropriate Legal Notices; however, if the Program has interactive
  *     interfaces that do not display Appropriate Legal Notices, your
  *     work need not make them do so.
@@ -261,7 +261,7 @@
  *     only if you received the object code with such an offer, in accord
  *     with subsection 6b.
  *
- *     beginDate) Convey the object code by offering access from a designated
+*     d) Convey the object code by offering access from a designated
  *     place (gratis or for a charge), and offer equivalent access to the
  *     Corresponding Source in the same way through the same place at no
  *     further charge.  You need not require recipients to copy the
@@ -362,7 +362,7 @@
  *     requiring that modified versions of such material be marked in
  *     reasonable ways as different from the original version; or
  *
- *     beginDate) Limiting the use for publicity purposes of names of licensors or
+*     d) Limiting the use for publicity purposes of names of licensors or
  *     authors of the material; or
  *
  *     e) Declining to grant rights under trademark law for use of some
@@ -685,19 +685,28 @@ import com.jdimension.jlawyer.persistence.EventTypes;
 import com.jdimension.jlawyer.services.ArchiveFileServiceRemote;
 import com.jdimension.jlawyer.services.CalendarServiceRemote;
 import com.jdimension.jlawyer.services.JLawyerServiceLocator;
+import java.awt.Color;
 import java.awt.Component;
+import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileOutputStream;
-import java.io.FileWriter;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStreamWriter;
+import java.nio.charset.StandardCharsets;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Date;
 import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Locale;
+import java.util.Map;
+import java.util.regex.Pattern;
 import javax.swing.JOptionPane;
 import org.apache.log4j.Logger;
+import themes.colors.DefaultColorTheme;
 
 /**
  * Client-side HTML exporter with modern dashboard UI (CSS/JS + tabs).
@@ -713,8 +722,8 @@ public class ModernHtmlExportAction extends ProgressableAction {
     private final Component owner;
     private final File baseDir;
     private final String caseId;
-    private final SimpleDateFormat dfDate = new SimpleDateFormat("yyyy-MM-dd", Locale.GERMANY);
-    private final SimpleDateFormat dfDateTime = new SimpleDateFormat("yyyy-MM-dd HH:mm", Locale.GERMANY);
+    private final SimpleDateFormat dfDate = new SimpleDateFormat("dd.MM.yyyy", Locale.GERMANY);
+    private final SimpleDateFormat dfDateTime = new SimpleDateFormat("dd.MM.yyyy 'um' HH:mm 'Uhr'", Locale.GERMANY);
 
     private int max = 8;
     private HashMap<String,String> folderPathByIdForExport = new HashMap<>();
@@ -807,6 +816,18 @@ public class ModernHtmlExportAction extends ProgressableAction {
             ArchiveFileHistoryBean[] history = null;
             try {
                 history = afs.getHistoryForArchiveFile(this.caseId, null);
+                if (history != null) {
+                    java.util.List<ArchiveFileHistoryBean> historyList = new java.util.ArrayList<>(java.util.Arrays.asList(history));
+                    historyList.sort((h1, h2) -> {
+                        java.util.Date d1 = h1.getChangeDate();
+                        java.util.Date d2 = h2.getChangeDate();
+                        if (d1 == null && d2 == null) return 0;
+                        if (d1 == null) return 1; // nulls last
+                        if (d2 == null) return -1;
+                        return d2.compareTo(d1); // descending order
+                    });
+                    history = historyList.toArray(new ArchiveFileHistoryBean[0]);
+                }
             } catch (Throwable t) {
                 log.warn("Historie konnte nicht geladen werden", t);
             }
@@ -816,8 +837,12 @@ public class ModernHtmlExportAction extends ProgressableAction {
             this.folderPathByIdForExport = folderPathById;
 
             this.progress("Schreibe Ressourcen...");
-            writeText(new File(cssDir, "style.css"), buildCss());
-            writeText(new File(jsDir, "app.js"), buildJs());
+            writeAsset(cssDir, "style-base.css", "export/css/style-base.css", null);
+            writeAsset(cssDir, "style-dark.css", "export/css/style-dark.css", null);
+            writeAsset(cssDir, "style-light.css", "export/css/style-light.css", buildLightThemePlaceholders());
+            writeAsset(cssDir, "history-base.css", "export/css/history-base.css", null);
+            writeAsset(jsDir, "app.js", "export/js/app.js", buildAppJsPlaceholders());
+            writeAsset(jsDir, "history.js", "export/js/history.js", null);
 
             // Save documents into files/ subfolder mirroring folder structure
             File filesDir = new File(exportDir, "files");
@@ -923,10 +948,108 @@ public class ModernHtmlExportAction extends ProgressableAction {
     }
 
     private void writeText(File target, String content) throws Exception {
-        try (FileWriter fw = new FileWriter(target)) {
-            fw.write(content);
-            fw.flush();
+        try (OutputStreamWriter writer = new OutputStreamWriter(new FileOutputStream(target), StandardCharsets.UTF_8)) {
+            writer.write(content);
         }
+    }
+
+    private void writeAsset(File targetDir, String fileName, String resourcePath, Map<String,String> placeholders) throws Exception {
+        if (!targetDir.exists() && !targetDir.mkdirs()) {
+            throw new IOException("Could not create asset directory " + targetDir.getAbsolutePath());
+        }
+        String content = readResource(resourcePath);
+        if (placeholders != null && !placeholders.isEmpty()) {
+            for (Map.Entry<String,String> entry : placeholders.entrySet()) {
+                content = content.replaceAll(Pattern.quote(entry.getKey()), entry.getValue());
+            }
+        }
+        writeText(new File(targetDir, fileName), content);
+    }
+
+    private String readResource(String resourcePath) throws IOException {
+        try (InputStream in = ModernHtmlExportAction.class.getClassLoader().getResourceAsStream(resourcePath)) {
+            if (in == null) {
+                throw new IOException("Resource not found: " + resourcePath);
+            }
+            ByteArrayOutputStream buffer = new ByteArrayOutputStream();
+            byte[] chunk = new byte[4096];
+            int read;
+            while ((read = in.read(chunk)) != -1) {
+                buffer.write(chunk, 0, read);
+            }
+            return buffer.toString(StandardCharsets.UTF_8.name());
+        }
+    }
+
+    private Map<String,String> buildLightThemePlaceholders() {
+        Map<String,String> placeholders = new LinkedHashMap<>();
+        Color primary = DefaultColorTheme.COLOR_LOGO_BLUE;
+        Color mutedBase = DefaultColorTheme.COLOR_DARK_GREY;
+
+        Color primarySoft = lighten(primary, 0.65);
+        Color primaryTint = tint(primary, 0.18);
+        Color background = tint(primary, 0.06);
+        Color foreground = mix(Color.BLACK, primary, 0.15);
+        Color muted = lighten(mutedBase, 0.35);
+        Color border = lighten(primary, 0.85);
+        Color surfaceMuted = tint(primary, 0.08);
+        Color surfaceRaised = tint(primary, 0.12);
+        Color historyBg = tint(primary, 0.04);
+
+        placeholders.put("${PRIMARY_COLOR}", toHex(primary));
+        placeholders.put("${PRIMARY_COLOR_SOFT}", toHex(primarySoft));
+        placeholders.put("${PRIMARY_COLOR_TINT}", toHex(primaryTint));
+        placeholders.put("${PRIMARY_COLOR_SHADOW}", toRgba(primary, 0.24));
+        placeholders.put("${LIGHT_BG}", toHex(background));
+        placeholders.put("${LIGHT_FG}", toHex(foreground));
+        placeholders.put("${LIGHT_MUTED}", toHex(muted));
+        placeholders.put("${LIGHT_CARD}", toHex(Color.WHITE));
+        placeholders.put("${LIGHT_BORDER}", toHex(border));
+        placeholders.put("${LIGHT_SURFACE_MUTED}", toHex(surfaceMuted));
+        placeholders.put("${LIGHT_SURFACE_RAISED}", toHex(surfaceRaised));
+        placeholders.put("${LIGHT_HISTORY_BG}", toHex(historyBg));
+        return placeholders;
+    }
+
+    private Map<String,String> buildAppJsPlaceholders() {
+        Map<String,String> placeholders = new LinkedHashMap<>();
+        placeholders.put("${EVENTTYPE_FOLLOWUP}", String.valueOf(EventTypes.EVENTTYPE_FOLLOWUP));
+        placeholders.put("${EVENTTYPE_RESPITE}", String.valueOf(EventTypes.EVENTTYPE_RESPITE));
+        placeholders.put("${EVENTTYPE_EVENT}", String.valueOf(EventTypes.EVENTTYPE_EVENT));
+        return placeholders;
+    }
+
+    private static Color mix(Color base, Color other, double factor) {
+        factor = clamp(factor, 0d, 1d);
+        int r = (int)Math.round(base.getRed() * (1d - factor) + other.getRed() * factor);
+        int g = (int)Math.round(base.getGreen() * (1d - factor) + other.getGreen() * factor);
+        int b = (int)Math.round(base.getBlue() * (1d - factor) + other.getBlue() * factor);
+        return new Color(clampChannel(r), clampChannel(g), clampChannel(b));
+    }
+
+    private static Color lighten(Color color, double factor) {
+        return mix(color, Color.WHITE, factor);
+    }
+
+    private static Color tint(Color color, double factor) {
+        return mix(Color.WHITE, color, factor);
+    }
+
+    private static int clampChannel(int value) {
+        return (int)Math.max(0, Math.min(255, value));
+    }
+
+    private static double clamp(double value, double min, double max) {
+        return Math.max(min, Math.min(max, value));
+    }
+
+    private static String toHex(Color color) {
+        return String.format("#%02X%02X%02X", color.getRed(), color.getGreen(), color.getBlue());
+    }
+
+    private static String toRgba(Color color, double alpha) {
+        alpha = clamp(alpha, 0d, 1d);
+        return String.format("rgba(%d,%d,%d,%.2f)", color.getRed(), color.getGreen(), color.getBlue(), alpha);
     }
 
     private static String jsonEscape(String s) {
@@ -1044,7 +1167,9 @@ public class ModernHtmlExportAction extends ProgressableAction {
                 sb.append("\"id\":\"").append(jsonEscape(r.getId())).append("\",");
                 sb.append("\"summary\":\"").append(jsonEscape(StringUtils.nonEmpty(r.getSummary()))).append("\",");
                 sb.append("\"beginDate\":\"").append(r.getBeginDate() != null ? dfDateTime.format(r.getBeginDate()) : "").append("\",");
+                sb.append("\"beginTs\":").append(r.getBeginDate() != null ? r.getBeginDate().getTime() : 0).append(",");
                 sb.append("\"endDate\":\"").append(r.getEndDate() != null ? dfDateTime.format(r.getEndDate()) : "").append("\",");
+                sb.append("\"endTs\":").append(r.getEndDate() != null ? r.getEndDate().getTime() : 0).append(",");
                 sb.append("\"type\":").append(r.getEventType()).append(',');
                 sb.append("\"typeName\":\"").append(jsonEscape(r.getEventTypeName())).append("\",");
                 sb.append("\"assignee\":\"").append(jsonEscape(StringUtils.nonEmpty(r.getAssignee()))).append("\",");
@@ -1148,20 +1273,33 @@ public class ModernHtmlExportAction extends ProgressableAction {
 
     private String buildIndexHtml(ArchiveFileBean aCase, String dataScript) {
         String safeTitle = StringUtils.nonEmpty(aCase.getFileNumber()) + " — " + StringUtils.nonEmpty(aCase.getName());
+        String headerSubtitle = StringUtils.nonEmpty(aCase.getFileNumber()) + " · " + StringUtils.nonEmpty(aCase.getName());
+
         StringBuilder html = new StringBuilder();
         html.append("<!doctype html>\n");
         html.append("<html lang=\"de\">\n<head>\n<meta charset=\"utf-8\">\n<meta name=\"viewport\" content=\"width=device-width, initial-scale=1\">\n");
         html.append("<title>").append(StringUtils.nonEmpty(safeTitle)).append("</title>\n");
-        html.append("<link rel=\"stylesheet\" href=\"assets/css/style.css\">\n");
-        html.append("</head>\n<body>\n");
-        html.append("<header class=\"topbar\">\n  <div class=\"title\">Akte</div>\n  <div class=\"subtitle\">");
-        html.append(StringUtils.nonEmpty(aCase.getFileNumber())).append(" · ").append(StringUtils.nonEmpty(aCase.getName()));
-        html.append("</div>\n</header>\n");
+        html.append("<link rel=\"stylesheet\" href=\"assets/css/style-base.css\">\n");
+        html.append("<link rel=\"stylesheet\" href=\"assets/css/style-dark.css\">\n");
+        html.append("<link rel=\"stylesheet\" href=\"assets/css/style-light.css\">\n");
+        html.append("</head>\n<body class=\"theme-dark\" data-theme=\"dark\">\n");
+        html.append("<header class=\"topbar\">\n");
+        html.append("  <div class=\"titles\">\n");
+        html.append("    <div class=\"title\">Akte</div>\n");
+        html.append("    <div class=\"subtitle\">").append(headerSubtitle).append("</div>\n");
+        html.append("  </div>\n");
+        html.append("  <div class=\"actions\">\n");
+        html.append("    <button type=\"button\" id=\"themeToggle\" class=\"theme-toggle\" aria-pressed=\"false\" aria-label=\"Zu hellem Theme wechseln\">\n");
+        html.append("      <span class=\"icon icon-dark\"><svg width=\"18\" height=\"18\" viewBox=\"0 0 24 24\" fill=\"currentColor\" aria-hidden=\"true\"><path d=\"M21 12.79A9 9 0 0111.21 3a7 7 0 000 14 9 9 0 009.79-4.21z\"/></svg></span>\n");
+        html.append("      <span class=\"icon icon-light\"><svg width=\"18\" height=\"18\" viewBox=\"0 0 24 24\" fill=\"currentColor\" aria-hidden=\"true\"><path d=\"M12 18a6 6 0 100-12 6 6 0 000 12zm0 4a1 1 0 01-1-1v-1a1 1 0 112 0v1a1 1 0 01-1 1zm0-18a1 1 0 011-1V2a1 1 0 01-2 0V1a1 1 0 011-1zm11 11a1 1 0 01-1 1h-1a1 1 0 110-2h1a1 1 0 011 1zm-18 0a1 1 0 01-1 1H2a1 1 0 110-2h1a1 1 0 011 1zm15.07 6.07a1 1 0 01-1.41 0l-.7-.7a1 1 0 011.42-1.42l.7.7a1 1 0 010 1.42zm-12.72 0a1 1 0 010-1.42l.7-.7a1 1 0 011.42 1.42l-.7.7a1 1 0 01-1.42 0zm12.02-15.2a1 1 0 010 1.42l-.7.7a1 1 0 01-1.42-1.42l.7-.7a1 1 0 011.42 0zm-11.32 0l.7.7a1 1 0 01-1.42 1.42l-.7-.7a1 1 0 111.42-1.42z\"/></svg></span>\n");
+        html.append("      <span class=\"label\">Hell</span>\n");
+        html.append("    </button>\n");
+        html.append("  </div>\n");
+        html.append("</header>\n");
         html.append("<nav class=\"tabs\">\n  <button class=\"tab active\" data-tab=\"dashboard\">Übersicht</button>\n  <button class=\"tab\" data-tab=\"documents\">Dokumente</button>\n  <button class=\"tab\" data-tab=\"deadlines\">Fälligkeiten</button>\n  <button class=\"tab\" data-tab=\"finance\">Finanzen</button>\n  <button class=\"tab\" data-tab=\"history\">Aktenhistorie</button>\n</nav>\n");
         html.append("<main class=\"content\">\n  <section id=\"dashboard\" class=\"view active\"></section>\n  <section id=\"documents\" class=\"view\"></section>\n  <section id=\"deadlines\" class=\"view\"></section>\n  <section id=\"finance\" class=\"view\"></section>\n  <section id=\"history\" class=\"view\"></section>\n</main>\n<footer class=\"footer\">Export erstellt am ");
-        html.append(dfDateTime.format(new Date()));
-        html.append("</footer>\n");
-        // embed data and app
+        html.append(dfDateTime.format(new Date()))
+            .append("</footer>\n");
         html.append(dataScript);
         html.append("<script src=\"assets/js/app.js\"></script>\n");
         html.append("</body>\n</html>");
@@ -1172,174 +1310,27 @@ public class ModernHtmlExportAction extends ProgressableAction {
         StringBuilder sb = new StringBuilder(4096);
         sb.append("<!doctype html><html lang=\"de\"><head><meta charset=\"utf-8\"><meta name=\"viewport\" content=\"width=device-width, initial-scale=1\">");
         sb.append("<title>Aktenhistorie</title>");
-        sb.append("<style>body{font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif;margin:16px;background:#fff;color:#222} h1{font-size:18px;margin:0 0 8px} .sub{color:#666;margin-bottom:12px} table{width:100%;border-collapse:collapse;background:#fafafa;border:1px solid #e0e0e0;border-radius:8px;overflow:hidden} th,td{padding:10px 12px;border-bottom:1px solid #eee;font-size:13px;vertical-align:top} th{background:#f0f3f7;text-align:left;color:#37474f} tr:hover{background:#fdfdfd} .dt{white-space:nowrap;color:#455a64} .user{color:#1a73e8;font-weight:600} .desc{white-space:pre-wrap}</style>");
-        sb.append("</head><body>");
+        sb.append("<link rel=\"stylesheet\" href=\"assets/css/style-dark.css\">");
+        sb.append("<link rel=\"stylesheet\" href=\"assets/css/style-light.css\">");
+        sb.append("<link rel=\"stylesheet\" href=\"assets/css/history-base.css\">");
+        sb.append("</head><body class=\"theme-dark\" data-theme=\"dark\">");
         sb.append("<h1>Aktenhistorie</h1>");
         sb.append("<div class=\"sub\">");
         sb.append(StringUtils.nonEmpty(aCase.getFileNumber())).append(" · ").append(StringUtils.nonEmpty(aCase.getName()));
         sb.append("</div>");
         sb.append("<table><thead><tr><th>Datum</th><th>Nutzer</th><th>Beschreibung</th></tr></thead><tbody>");
-        SimpleDateFormat dfl = new SimpleDateFormat("yyyy-MM-dd HH:mm");
         if (history != null) {
             for (ArchiveFileHistoryBean h : history) {
-                String dt = h.getChangeDate() != null ? dfl.format(h.getChangeDate()) : "";
-                String u = StringUtils.nonEmpty(h.getPrincipal());
-                String d = StringUtils.nonEmpty(h.getChangeDescription());
-                sb.append("<tr><td class=\"dt\">").append(jsonEscape(dt)).append("</td><td class=\"user\">").append(jsonEscape(u)).append("</td><td class=\"desc\">").append(jsonEscape(d)).append("</td></tr>");
+                String dt = h.getChangeDate() != null ? dfDateTime.format(h.getChangeDate()) : "";
+                String principal = StringUtils.nonEmpty(h.getPrincipal());
+                String description = StringUtils.nonEmpty(h.getChangeDescription());
+                sb.append("<tr><td class=\"dt\" data-label=\"Datum\">").append(jsonEscape(dt)).append("</td><td class=\"user\" data-label=\"Nutzer\">").append(jsonEscape(principal)).append("</td><td class=\"desc\" data-label=\"Beschreibung\">").append(jsonEscape(description)).append("</td></tr>");
             }
         }
         sb.append("</tbody></table>");
+        sb.append("<script src=\"assets/js/history.js\"></script>");
         sb.append("</body></html>");
         return sb.toString();
-    }
-
-    private String buildCss() {
-        return "/* minimal modern styling */\n" +
-               ":root{--bg:#0b132b;--fg:#f5f7fa;--muted:#9aa5b1;--card:#1c2541;--accent:#5bc0be;--tab:#3a506b;--ok:#2bb673;--warn:#f0ad4e;--danger:#d9534f;--tabsH:48px;}\n" +
-               "html,body{margin:0;padding:0;font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif;background:var(--bg);color:var(--fg);}\n" +
-               ".topbar{padding:16px 20px;background:linear-gradient(90deg,var(--card),var(--tab));box-shadow:0 2px 4px rgba(0,0,0,.3);}\n" +
-               ".topbar .title{font-weight:700;letter-spacing:.08em;text-transform:uppercase;font-size:12px;color:var(--accent);}\n" +
-               ".topbar .subtitle{font-size:18px;margin-top:2px;}\n" +
-               ".tabs{display:flex;gap:8px;padding:10px 12px;background:var(--card);position:sticky;top:0;z-index:5;border-bottom:1px solid rgba(255,255,255,.08);flex-wrap:wrap;min-height:var(--tabsH);align-items:center;}\n" +
-               ".tab{background:var(--tab);color:var(--fg);border:0;border-radius:8px;padding:8px 12px;cursor:pointer;opacity:.9;transition:all .15s;}\n" +
-               ".tab:hover{opacity:1;transform:translateY(-1px);}\n" +
-               ".tab.active{background:var(--accent);color:#0b132b;font-weight:600;}\n" +
-               ".content{padding:16px;}\n" +
-               ".view{display:none;} .view.active{display:block;}\n" +
-               ".cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:12px;margin-bottom:16px;}\n" +
-               ".cards.overview{grid-template-columns:repeat(2,minmax(320px,1fr));}\n" +
-               ".card{background:var(--card);border-radius:10px;padding:14px 16px;border:1px solid rgba(255,255,255,.06);}\n" +
-               ".card h3{margin:0 0 8px 0;font-size:14px;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;}\n" +
-               ".kv{display:grid;grid-template-columns:140px 1fr;gap:4px 10px;}\n" +
-               ".kv div.label{color:var(--muted);}\n" +
-               ".tree ul{list-style:none;margin:0;padding-left:14px;}\n" +
-               ".tree li{margin:6px 0;}\n" +
-               ".tree details{margin:6px 0;}\n" +
-               ".tree summary{list-style:none;cursor:pointer;padding:8px 10px;border:1px solid rgba(255,255,255,.08);border-radius:10px;background:rgba(255,255,255,.035);font-weight:600;}\n" +
-               ".tree summary::-webkit-details-marker{display:none;}\n" +
-               ".tree details[open] > summary{background:rgba(255,255,255,.06);}\n" +
-               ".tree summary:before{content:'▸';display:inline-block;width:14px;margin-right:6px;color:var(--muted);}\n" +
-               ".tree details[open] > summary:before{content:'▾';}\n" +
-               ".doc{display:flex;justify-content:space-between;gap:10px;padding:6px 10px;border-radius:10px;background:rgba(255,255,255,.03);}\n" +
-               ".doc:hover{background:rgba(255,255,255,.06);}\n" +
-               ".doc .meta{color:var(--muted);font-size:12px;}\n" +
-               ".doc .name{flex:1 1 auto;min-width:0;}\n" +
-               ".doc .name a{display:-webkit-box;max-width:100%;white-space:normal;word-break:break-word;overflow-wrap:anywhere;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;}\n" +
-               "a{color:inherit;text-decoration:none;} a:hover{color:var(--accent);text-decoration:underline;}\n" +
-               ".search{margin:8px 0 12px 0;} .search input{width:100%;padding:10px 12px;border-radius:8px;border:1px solid rgba(255,255,255,.12);background:rgba(255,255,255,.04);color:var(--fg);}\n" +
-               ".toolbar{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin:8px 0 0 0;}\n" +
-               ".toolbar .grow{flex:1 1 260px;} .toolbar .controls{display:flex;gap:8px;align-items:center;flex-wrap:wrap;} .toolbar select,.toolbar button{background:rgba(255,255,255,.04);color:var(--fg);border:1px solid rgba(255,255,255,.12);border-radius:8px;padding:8px 10px;transition:background .15s ease,border-color .15s ease,color .15s ease,box-shadow .15s ease;} .toolbar button{cursor:pointer;} .toolbar .toggle.active{background:var(--warn);color:#0b132b;border-color:var(--warn);}\n" +
-               ".toolbar select option{color:#000;background:#fff;} .toolbar select option:checked{color:#000;background:#e6f7ff;}\n" +
-               ".toolbar + .tree{margin-top:25px;}\n" +
-               ".icon-btn{width:40px;height:40px;border-radius:10px;display:inline-flex;align-items:center;justify-content:center;padding:0;color:var(--accent);background:rgba(91,192,190,.18);border:1px solid rgba(91,192,190,.5);box-shadow:0 0 0 rgba(0,0,0,0);transition:background .2s ease,border-color .2s ease,color .2s ease,box-shadow .2s ease;}\n" +
-               ".icon-btn:hover,.icon-btn:focus{background:var(--accent);color:#0b132b;border-color:var(--accent);box-shadow:0 0 0 2px rgba(91,192,190,.35);}\n" +
-               "#documents .toolbar{position:sticky;top:var(--tabsH);z-index:6;background:var(--card);border-bottom:1px solid rgba(255,255,255,.08);}\n" +
-               ".icon-btn svg{display:block;width:28px;height:28px;pointer-events:none;}\n" +
-               ".chip{display:inline-block;padding:2px 8px;border-radius:999px;font-size:12px;margin-right:6px;}\n" +
-               ".chip.followup{background:rgba(91,192,190,.2);color:var(--accent);}\n" +
-               ".chip.respite{background:rgba(240,173,78,.2);color:var(--warn);}\n" +
-               ".chip.event{background:rgba(43,182,115,.2);color:var(--ok);}\n" +
-               ".review{background:var(--card);border:1px solid rgba(255,255,255,.06);border-left-width:5px;border-left-color:var(--accent);border-radius:8px;padding:10px 12px;margin:8px 0;}\n" +
-               ".review .title{font-weight:600;}\n" +
-               ".review .when{color:var(--muted);font-size:12px;}\n" +
-               ".review.followup{border-left-color: var(--accent);}\n" +
-               ".review.respite{border-left-color: var(--warn);}\n" +
-               ".review.event{border-left-color: var(--ok);}\n" +
-               ".review.open{opacity:1;} .review.done{opacity:.6;border-left-style:dashed;}\n" +
-               ".review .state{margin-left:8px;font-size:12px;} .review.open .state{color:var(--ok);} .review.done .state{color:var(--muted);}\n" +
-               ".history-frame{width:100%;height:80vh;border:0;background:#fff;border-radius:8px;}\n" +
-               ".table-wrapper{overflow-x:auto;}\n" +
-               ".data-table{width:100%;border-collapse:collapse;margin-top:12px;white-space:nowrap;}\n" +
-               ".data-table th,.data-table td{padding:8px 10px;border:1px solid rgba(255,255,255,.1);text-align:left;}\n" +
-               ".data-table th{background:rgba(255,255,255,.05);font-weight:600;}\n" +
-               ".data-table td.num{text-align:right;}\n" +
-               ".party-item{padding-bottom:8px;margin-bottom:8px;border-bottom:1px solid rgba(255,255,255,.08);}\n" +
-               ".party-item:last-child{border-bottom:none;margin-bottom:0;padding-bottom:0;}\n" +
-               ".party-item .when{font-size:90%;color:var(--muted);}\n" +
-               ".footer{padding:12px 16px;color:var(--muted);}\n" +
-               "@media (max-width: 900px){ .cards.overview{grid-template-columns:1fr;} .data-table thead { display: none; } .data-table tr { display: block; border: 1px solid rgba(255,255,255,.1); border-radius: 8px; margin-bottom: 16px; } .data-table td { display: block; text-align: right; border-bottom: 1px dotted rgba(255,255,255,.2); padding: 10px; } .data-table td:last-child { border-bottom: none; } .data-table td:before { content: attr(data-label); float: left; font-weight: 600; color: var(--muted); } .data-table td.num { text-align: right; } }\n" +
-               "@media (max-width: 720px){ .doc{flex-direction:column;align-items:flex-start;} .tabs{gap:6px;} .tab{padding:8px 10px;} }\n";
-    }
-
-    private String buildJs() {
-        StringBuilder js = new StringBuilder();
-        js.append("document.addEventListener('DOMContentLoaded',()=>{\n");
-        js.append("  window.DOC_STATE={q:'',sortBy:'name',sortDir:'asc',hidden:{medien:false,bilder:false,docs:false,pdf:false,html:false,eml:false,bea:false,md:false}};\n");
-        js.append("  window.FILE_TYPE_GROUPS={medien:['mp3','wav','flac','aac','m4a','ogg','wma','mp4','mkv','avi','mov','wmv','webm','mpeg','mpg','m4v'],bilder:['png','jpg','jpeg','gif','bmp','tif','tiff','webp'],docs:['odt','doc','docx','rtf','txt','xls','xlsx','ppt','pptx','odp','ods'],pdf:['pdf'],html:['html','htm'],eml:['eml'],bea:['bea'],md:['md']};\n");
-        // tabs
-        js.append("  document.querySelectorAll('.tab').forEach(btn=>{btn.addEventListener('click',()=>{document.querySelectorAll('.tab').forEach(b=>b.classList.remove('active'));btn.classList.add('active');const id=btn.getAttribute('data-tab');document.querySelectorAll('.view').forEach(v=>v.classList.remove('active'));document.getElementById(id).classList.add('active');});});\n");
-        // render dashboard
-        js.append("  const dash=document.getElementById('dashboard');\n");
-        js.append("  dash.innerHTML = renderDashboard(CASE_DATA);\n");
-        // render documents
-        js.append("  const docs=document.getElementById('documents');\n");
-        js.append("  docs.innerHTML = renderDocuments(CASE_DATA,DOC_STATE);\n");
-        js.append("  bindDocControls(CASE_DATA);\n");
-        // render deadlines
-        js.append("  const dl=document.getElementById(\'deadlines\');\n");
-        js.append("  dl.innerHTML = renderDeadlines(CASE_DATA);\n");
-        js.append("  const fin=document.getElementById('finance');\n");
-        js.append("  fin.innerHTML = renderFinance(CASE_DATA);\n");
-        js.append("  const hist=document.getElementById(\'history\');\n");
-        js.append("  if(hist){ hist.innerHTML = '<iframe class=\\\"history-frame\\\" src=\\\"history.html\\\" title=\\\"Aktenhistorie\\\"></iframe>'; }\n");
-        js.append("});\n");
-
-        js.append("function renderFinance(data) {\n");
-        js.append("  const invoices = (data.invoices || []).map(i => `<tr><td data-label=\"Beleg-Nr.\">${escapeHtml(i.invoiceNumber)}</td><td data-label=\"Name\">${escapeHtml(i.name)}</td><td data-label=\"Erstellt\">${escapeHtml(i.creationDate)}</td><td data-label=\"Fällig\">${escapeHtml(i.dueDate)}</td><td data-label=\"Betrag\" class=\"num\">${(i.totalGross || 0).toFixed(2)} ${escapeHtml(i.currency)}</td><td data-label=\"Status\">${escapeHtml(i.status)}</td><td data-label=\"Kontakt\">${escapeHtml(i.contact)}</td></tr>`).join('');\n");
-        js.append("  const accountEntries = (data.accountEntries || []).map(e => `<tr><td data-label=\"Datum\">${escapeHtml(e.entryDate)}</td><td data-label=\"Buchungstext\">${escapeHtml(e.description)}</td><td data-label=\"Einnahmen\" class=\"num\">${(e.earnings || 0).toFixed(2)}</td><td data-label=\"Ausgaben\" class=\"num\">${(e.spendings || 0).toFixed(2)}</td><td data-label=\"Fremdgeld Ein\" class=\"num\">${(e.escrowIn || 0).toFixed(2)}</td><td data-label=\"Fremdgeld Aus\" class=\"num\">${(e.escrowOut || 0).toFixed(2)}</td><td data-label=\"Auslagen Ein\" class=\"num\">${(e.expendituresIn || 0).toFixed(2)}</td><td data-label=\"Auslagen Aus\" class=\"num\">${(e.expendituresOut || 0).toFixed(2)}</td><td data-label=\"Beleg\">${escapeHtml(e.invoice)}</td><td data-label=\"Kontakt\">${escapeHtml(e.contact)}</td></tr>`).join('');\n");
-        js.append("  return `<h3>Belege</h3>\n");
-        js.append("    <div class=\"table-wrapper\"><table class=\"data-table\"><thead><tr><th>Beleg-Nr.</th><th>Name</th><th>Erstellt</th><th>Fällig</th><th>Betrag</th><th>Status</th><th>Kontakt</th></tr></thead><tbody>${invoices || '<tr><td colspan=\"7\">Keine Belege vorhanden.</td></tr>'}</tbody></table></div>\n");
-        js.append("    <h3 style=\"margin-top:24px\">Aktenkonto</h3>\n");
-        js.append("    <div class=\"table-wrapper\"><table class=\"data-table\"><thead><tr><th>Datum</th><th>Buchungstext</th><th>Einnahmen</th><th>Ausgaben</th><th>Fremdgeld Ein</th><th>Fremdgeld Aus</th><th>Auslagen Ein</th><th>Auslagen Aus</th><th>Beleg</th><th>Kontakt</th></tr></thead><tbody>${accountEntries || '<tr><td colspan=10>Keine Buchungen vorhanden.</td></tr>'}</tbody></table></div>`;\n");
-        js.append("}\n");
-
-        // helper renderers
-        js.append("function renderDashboard(data){\n");
-        js.append("  const tags=(data.tags||[]).map(t=>`<span class=\\\"chip\\\">${escapeHtml(t.name)}</span>`).join(' ');\n");
-        js.append("  const parties=(data.parties||[]).map(p=>`<div class=\"party-item\"><div class=\\\"title\\\">${escapeHtml(p.name)} (${escapeHtml(p.type)})</div><div class=\\\"when\\\">${escapeHtml(p.address)}${p.phone? ' · Tel: '+escapeHtml(p.phone): ''}${p.mobile? ' · Mob: '+escapeHtml(p.mobile): ''}${p.reference ? `<br>Zeichen: ${escapeHtml(p.reference)}` : ''}</div></div>`).join('');\n");
-        js.append("  const notes=escapeHtml(data.notice||'');\n");
-        js.append("  return `\n");
-        js.append("    <div class=\\\"cards overview\\\">\n");
-        js.append("      <div class=\\\"card\\\"><h3>Grunddaten</h3><div class=\\\"kv\\\">\n");
-        js.append("        <div class=\\\"label\\\">Aktenzeichen</div><div>${escapeHtml(data.fileNumber||'')}</div>\n");
-        js.append("        <div class=\\\"label\\\">Kurzrubrum</div><div>${escapeHtml(data.name||'')}</div>\n");
-        js.append("        <div class=\\\"label\\\">Grund</div><div>${escapeHtml(data.reason||'')}</div>\n");
-        js.append("        <div class=\\\"label\\\">Sachgebiet</div><div>${escapeHtml(data.subjectField||'')}</div>\n");
-        js.append("        <div class=\\\"label\\\">Anwalt</div><div>${escapeHtml(data.lawyer||'')}</div>\n");
-        js.append("        <div class=\\\"label\\\">Assistenz</div><div>${escapeHtml(data.assistant||'')}</div>\n");
-        js.append("        <div class=\\\"label\\\">Streitwert</div><div>${escapeHtml(data.claimValue||'')}</div>\n");
-        js.append("        <div class=\\\"label\\\">Erstellt</div><div>${escapeHtml(data.dateCreated||'')}</div>\n");
-        js.append("        <div class=\\\"label\\\">Geändert</div><div>${escapeHtml(data.dateChanged||'')}</div>\n");
-        js.append("      </div></div>\n");
-        js.append("      <div class=\\\"card\\\"><h3>Beteiligte</h3><div>${parties||'<span class=\\\"when\\\">—</span>'}</div></div>\n");
-        js.append("      <div class=\\\"card\\\"><h3>Etiketten</h3><div>${tags||'<span class=\\\"when\\\">—</span>'}</div></div>\n");
-        js.append("      <div class=\\\"card\\\"><h3>Notizen</h3><div class=\\\"note\\\">${notes||'<span class=\\\"when\\\">—</span>'}</div></div>\n");
-        js.append("    </div>`;\n");
-        js.append("}\n");
-
-        js.append("function renderDocuments(data,state){\n");
-        js.append("  const q=(state.q||'').trim().toLowerCase(); const sortBy=state.sortBy||'name'; const sortDir=state.sortDir||'asc'; const dir = (sortDir==='asc'?1:-1);\n");
-        js.append("  const filtered=(data.documents||[]).filter(d=> { const fp=(FOLDER_PATHS[d.folderId]||''); const nm=(d.name||''); const text=(nm+' '+fp).toLowerCase(); if(q && !fuzzy(text,q)) return false; const dot=nm.lastIndexOf('.'); const ext=(dot>0? nm.substring(dot+1).toLowerCase(): ''); let inAny=false; for(const k in FILE_TYPE_GROUPS){ if(FILE_TYPE_GROUPS[k].indexOf(ext)>-1){ inAny=true; if(DOC_STATE.hidden && DOC_STATE.hidden[k]) return false; } } return true; });\n");
-        js.append("  function cmpDocs(a,b){ let r=0; if(sortBy==='date'){ r=(a.creationTs||0)-(b.creationTs||0); } else if(sortBy==='size'){ r=(a.size||0)-(b.size||0); } else { r=(a.name||'').localeCompare(b.name||'', 'de', {sensitivity:'base'}); } return r*dir; }\n");
-        js.append("  function renderFolder(node){ if(!node){return '';} const docs=filtered.filter(d=>d.folderId===node.id).sort(cmpDocs).map(d=>{ const href=(FILE_LINKS[d.id]||''); return `<div class=\\\"doc\\\"><div class=\\\"name\\\"><a href=\\\"${href}\\\" target=\\\"_blank\\\">${escapeHtml(d.name)}</a></div><div class=\\\"meta\\\">${escapeHtml(d.creationDate||'')} · ${escapeHtml(d.sizeHuman||'')}</div></div>`; }).join(''); const children=(node.children||[]).slice().sort((a,b)=>(a.name||'').localeCompare(b.name||'', 'de', {sensitivity:'base'})).map(c=>{ const content=renderFolder(c); return content? `<li><details open><summary>${escapeHtml(c.name||'(Ordner)')}</summary>${content}</details></li>`:''; }).join(''); return (docs||children)? `<div class=\\\"tree\\\">${docs? `<div>${docs}</div>`:''}${children? `<ul>${children}</ul>`:''}</div>`:'';}\n");
-        js.append("  return `<div class=\"toolbar\"><div class=\"grow\"><input id=\"docSearch\" type=\"search\" placeholder=\"Dokumente suchen…\" value=\"${escapeHtml(state.q||'')}\" /></div><div class=\"controls\"><label>Sortieren:</label><select id=\"docSortBy\"><option value=\"name\" ${sortBy==='name'?'selected':''}>Name</option><option value=\"date\" ${sortBy==='date'?'selected':''}>Datum</option><option value=\"size\" ${sortBy==='size'?'selected':''}>Größe</option></select><button id=\"docSortDir\" title=\"Richtung\">${sortDir==='asc'?'▲':'▼'}</button><button id=\"docExpandAll\" class=\"icon-btn\" title=\"Alle Ordner öffnen\" aria-label=\"Alle Ordner öffnen\"><svg width=\"28\" height=\"28\" viewBox=\"0 0 24 24\" fill=\"currentColor\" xmlns=\"http://www.w3.org/2000/svg\"><path d=\"M12 4a8 8 0 110 16 8 8 0 010-16zm1 7h4v2h-4v4h-2v-4H7v-2h4V7h2z\"/></svg></button><button id=\"docCollapseAll\" class=\"icon-btn\" title=\"Alle Ordner schließen\" aria-label=\"Alle Ordner schließen\"><svg width=\"28\" height=\"28\" viewBox=\"0 0 24 24\" fill=\"currentColor\" xmlns=\"http://www.w3.org/2000/svg\"><path d=\"M12 4a8 8 0 110 16 8 8 0 010-16zm4 7H8v2h8v-2z\"/></svg></button></div><div class=\"controls\" id=\"docFilterBar\"><label>Ausblenden:</label><button data-ftype=\"medien\" class=\"toggle\">Medien</button><button data-ftype=\"bilder\" class=\"toggle\">Bilder</button><button data-ftype=\"docs\" class=\"toggle\">Dokumente</button><button data-ftype=\"pdf\" class=\"toggle\">PDF</button><button data-ftype=\"html\" class=\"toggle\">HTML</button><button data-ftype=\"eml\" class=\"toggle\">EML</button><button data-ftype=\"bea\" class=\"toggle\">BEA</button><button data-ftype=\"md\" class=\"toggle\">MD</button></div></div>` + renderFolder(data.folders);\n");
-        js.append("}\n");
-        js.append("function bindDocControls(data){ const qIn=document.getElementById(\'docSearch\'); const bySel=document.getElementById(\'docSortBy\'); const dirBtn=document.getElementById(\'docSortDir\'); const expAll=document.getElementById(\'docExpandAll\'); const colAll=document.getElementById(\'docCollapseAll\'); const filterBar=document.getElementById('docFilterBar'); if(qIn){ qIn.addEventListener('input',()=>{ DOC_STATE.q=qIn.value||''; const docs=document.getElementById('documents'); docs.innerHTML = renderDocuments(data, DOC_STATE); const newQ=document.getElementById('docSearch'); if(newQ){ newQ.value=DOC_STATE.q; try{ newQ.focus(); const L=newQ.value.length; newQ.setSelectionRange(L,L);}catch(e){} } bindDocControls(data); }); } if(bySel){ bySel.addEventListener('change',()=>{ DOC_STATE.sortBy=bySel.value; const docs=document.getElementById('documents'); docs.innerHTML = renderDocuments(data, DOC_STATE); const newQ=document.getElementById('docSearch'); if(newQ){ try{ newQ.focus(); const L=newQ.value.length; newQ.setSelectionRange(L,L);}catch(e){} } bindDocControls(data); }); } if(dirBtn){ dirBtn.addEventListener('click',()=>{ DOC_STATE.sortDir=(DOC_STATE.sortDir==='asc'?'desc':'asc'); const docs=document.getElementById('documents'); docs.innerHTML = renderDocuments(data, DOC_STATE); const newQ=document.getElementById('docSearch'); if(newQ){ try{ newQ.focus(); const L=newQ.value.length; newQ.setSelectionRange(L,L);}catch(e){} } bindDocControls(data); }); } if(expAll){ expAll.addEventListener('click',()=>{ document.querySelectorAll('#documents details').forEach(d=>{ d.open=true; }); if(qIn){ try{ qIn.focus(); const L=qIn.value.length; qIn.setSelectionRange(L,L);}catch(e){} } }); } if(colAll){ colAll.addEventListener('click',()=>{ document.querySelectorAll('#documents details').forEach(d=>{ d.open=false; }); if(qIn){ try{ qIn.focus(); const L=qIn.value.length; qIn.setSelectionRange(L,L);}catch(e){} } }); } if(filterBar){ filterBar.querySelectorAll('button[data-ftype]').forEach(btn=>{ const key=btn.getAttribute('data-ftype'); if(DOC_STATE.hidden && DOC_STATE.hidden[key]){ btn.classList.add('active'); } btn.addEventListener('click',()=>{ DOC_STATE.hidden[key]=!DOC_STATE.hidden[key]; const docs=document.getElementById('documents'); docs.innerHTML = renderDocuments(data, DOC_STATE); bindDocControls(data); }); }); } }\n");
-        js.append("function fuzzy(text,query){ if(!query) return true; if(text.indexOf(query)>=0) return true; let ti=0, qi=0; while(ti<text.length && qi<query.length){ if(text.charCodeAt(ti)===query.charCodeAt(qi)){ qi++; } ti++; } return qi===query.length; }\n");
-
-        js.append("function cssForType(t){switch(t){case ");
-        js.append(EventTypes.EVENTTYPE_FOLLOWUP).append(": return 'followup'; case ");
-        js.append(EventTypes.EVENTTYPE_RESPITE).append(": return 'respite'; case ");
-        js.append(EventTypes.EVENTTYPE_EVENT).append(": return 'event'; default: return 'followup';}}\n");
-
-        js.append("function renderDeadlines(data){\n");
-        js.append("  const items=(data.reviews||[]).sort((a,b)=> (b.beginDate||'').localeCompare(a.beginDate||''));\n");
-        js.append("  if(items.length===0){return '<div class=\\\"when\\\">Keine Fälligkeiten vorhanden.</div>'; }\n");
-        js.append("  return items.map(r=>{ const cls=cssForType(r.type); const st=r.done? 'done':'open'; const stateLabel=r.done? 'erledigt':'offen'; return `<div class=\\\"review ${cls} ${st}\\\"><div class=\\\"title\\\"><span class=\\\"chip ${cls}\\\">${escapeHtml(r.typeName)}</span> ${escapeHtml(r.summary||'')} <span class=\\\"state\\\">${stateLabel}</span></div><div class=\\\"when\\\">${escapeHtml(r.beginDate||'')}${r.endDate? ' – '+escapeHtml(r.endDate): ''}${r.assignee? ' · '+escapeHtml(r.assignee): ''}</div></div>`; }).join('');\n");
-        js.append("}\n");
-
-        js.append("function escapeHtml(str){ if(str==null) return ''; return str.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/\"/g,'&quot;').replace(/'/g,'&#39;'); }\n");
-        return js.toString();
     }
 
     private HashMap<String,String> buildFolderPathIndex(CaseFolder root){

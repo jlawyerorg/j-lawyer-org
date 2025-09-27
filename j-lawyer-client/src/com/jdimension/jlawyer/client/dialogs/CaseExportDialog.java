@@ -44,7 +44,6 @@ public class CaseExportDialog extends javax.swing.JDialog {
         super(parent, modal);
         initComponents();
         loadCases();
-        setPreferredSize(new java.awt.Dimension(600, 470));
         pack();
     }
 
@@ -67,12 +66,16 @@ public class CaseExportDialog extends javax.swing.JDialog {
 
         setDefaultCloseOperation(javax.swing.WindowConstants.DISPOSE_ON_CLOSE);
         setTitle("Akten für den Export auswählen");
+        setMinimumSize(new java.awt.Dimension(700, 520));
+        setPreferredSize(new java.awt.Dimension(780, 560));
 
         hintLabel.setFont(hintLabel.getFont());
         hintLabel.setText("Export von Akten, für die Synchronisation mit der App aktiviert ist");
         hintLabel.setBorder(javax.swing.BorderFactory.createEmptyBorder(10, 10, 10, 10));
 
         caseListPanel.setLayout(new javax.swing.BoxLayout(caseListPanel, javax.swing.BoxLayout.Y_AXIS));
+        scrollPane.setMinimumSize(new java.awt.Dimension(400, 320));
+        scrollPane.setPreferredSize(new java.awt.Dimension(400, 320));
         scrollPane.setViewportView(caseListPanel);
 
         selectAllButton.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons16/baseline_select_all_black_48dp.png"))); // NOI18N
@@ -139,7 +142,7 @@ public class CaseExportDialog extends javax.swing.JDialog {
                             .addComponent(deselectAllButton)))
                     .addComponent(hintLabel, javax.swing.GroupLayout.PREFERRED_SIZE, 0, Short.MAX_VALUE))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(scrollPane, javax.swing.GroupLayout.PREFERRED_SIZE, 448, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addComponent(scrollPane, javax.swing.GroupLayout.DEFAULT_SIZE, 400, Short.MAX_VALUE)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                     .addComponent(cancelButton)
@@ -320,7 +323,7 @@ public class CaseExportDialog extends javax.swing.JDialog {
                 for (int i = 0; i < cases.size(); i++) {
                     ArchiveFileBean caseBean = cases.get(i);
                     String folderName = exportedFolderNames.get(i);
-                    writer.write("<li><a href=\"" + folderName + "/index.html\">" + caseBean.getFileNumber() + " - " + caseBean.getName() + "</a></li>");
+                    writer.write("<li><a href=\"" + folderName + "/index.html\" target=\"_blank\" rel=\"noopener\">" + caseBean.getFileNumber() + " - " + caseBean.getName() + "</a></li>");
                 }
                 writer.write("</ul></body></html>");
             }
