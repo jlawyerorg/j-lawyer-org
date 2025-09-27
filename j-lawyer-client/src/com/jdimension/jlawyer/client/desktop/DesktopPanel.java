@@ -664,10 +664,14 @@
 package com.jdimension.jlawyer.client.desktop;
 
 import com.jdimension.jlawyer.client.bea.BeaCheckTimerTask;
+import com.jdimension.jlawyer.client.bea.BeaInboxPanel;
+import com.jdimension.jlawyer.client.configuration.PopulateOptionsEditor;
 import com.jdimension.jlawyer.client.configuration.UserProfileDialog;
 import com.jdimension.jlawyer.client.editors.*;
+import com.jdimension.jlawyer.client.editors.documents.ScannerPanel;
 import com.jdimension.jlawyer.client.editors.addresses.EditAddressPanel;
 import com.jdimension.jlawyer.client.editors.files.EditArchiveFilePanel;
+import com.jdimension.jlawyer.client.mail.EmailInboxPanel;
 import com.jdimension.jlawyer.client.events.AutoUpdateEvent;
 import com.jdimension.jlawyer.client.events.BeaStatusEvent;
 import com.jdimension.jlawyer.client.events.CasesChangedEvent;
@@ -684,6 +688,7 @@ import com.jdimension.jlawyer.client.events.ReviewAddedEvent;
 import com.jdimension.jlawyer.client.events.ReviewUpdatedEvent;
 import com.jdimension.jlawyer.client.events.ScannerStatusEvent;
 import com.jdimension.jlawyer.client.launcher.DocumentObserverTask;
+import com.jdimension.jlawyer.client.messenger.MessagingCenterPanel;
 import com.jdimension.jlawyer.client.settings.ClientSettings;
 import com.jdimension.jlawyer.client.settings.UserSettings;
 import com.jdimension.jlawyer.client.utils.ComponentUtils;
@@ -691,19 +696,25 @@ import com.jdimension.jlawyer.client.utils.DateUtils;
 import com.jdimension.jlawyer.client.utils.FrameUtils;
 import com.jdimension.jlawyer.client.utils.StringUtils;
 import com.jdimension.jlawyer.client.voip.MailingQueueEntry;
+import com.jdimension.jlawyer.client.voip.MailingStatusPanel;
 import com.jdimension.jlawyer.persistence.AppUserBean;
 import com.jdimension.jlawyer.persistence.ArchiveFileReviewsBean;
 import java.awt.Color;
+import java.awt.Cursor;
+import java.awt.Component;
 import java.awt.Font;
 import java.awt.Graphics;
 import java.awt.Image;
 import java.awt.event.ActionEvent;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
 import java.io.InputStream;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Date;
 import java.util.List;
+import java.util.ResourceBundle;
 import java.util.Timer;
 import java.util.TimerTask;
 import javax.swing.BoxLayout;
@@ -743,7 +754,8 @@ public class DesktopPanel extends javax.swing.JPanel implements ThemeableEditor,
      */
     public DesktopPanel() {
         initComponents();
-        
+        configureStatusLabels();
+
         this.lblNewsStatus.setText(" ");
         this.lblUpdateStatus.setText(" ");
         this.lblUpdateStatusFormPlugins.setText(" ");
@@ -954,6 +966,33 @@ public class DesktopPanel extends javax.swing.JPanel implements ThemeableEditor,
         UserSettings us = UserSettings.getInstance();
         this.lblUserName.setText(us.getCurrentUser().getPrincipalId());
         this.lblUserIcon.setIcon(us.getCurrentUserBigIcon());
+    }
+
+    private void configureStatusLabels() {
+        configureStatusLabel(this.lblUnreadMail, EmailInboxPanel.class, "desktop-mail");
+        configureStatusLabel(this.lblScans, ScannerPanel.class, "desktop-scans");
+        configureStatusLabel(this.lblMailingStatus, MailingStatusPanel.class, "desktop-mailingstatus");
+        configureStatusLabel(this.lblUnreadBea, BeaInboxPanel.class, "desktop-bea");
+        configureStatusLabel(this.lblUnreadInstantMessages, MessagingCenterPanel.class, "desktop-messages");
+    }
+
+    private void configureStatusLabel(JLabel label, Class<?> editorClass, String source) {
+        if (label == null) {
+            return;
+        }
+        label.setCursor(new Cursor(Cursor.HAND_CURSOR));
+        label.setHorizontalTextPosition(SwingConstants.TRAILING);
+        label.setVerticalTextPosition(SwingConstants.CENTER);
+        label.setIconTextGap(6);
+        label.addMouseListener(new MouseAdapter() {
+            @Override
+            public void mouseClicked(MouseEvent evt) {
+                if (!label.isEnabled()) {
+                    return;
+                }
+                openModule(editorClass, source);
+            }
+        });
     }
     
     public void updateCurrentDay() {
@@ -1409,10 +1448,10 @@ public class DesktopPanel extends javax.swing.JPanel implements ThemeableEditor,
                 .addContainerGap()
                 .add(jPanel1Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
                     .add(cmdRefreshLastChanged)
+                    .add(cmdUserFilterLastchanged, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 29, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
                     .add(jPanel1Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.BASELINE)
                         .add(jLabel5)
-                        .add(lblUserFilterCountLastchanged)
-                        .add(cmdUserFilterLastchanged, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 29, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)))
+                        .add(lblUserFilterCountLastchanged)))
                 .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
                 .add(jScrollPane3)
                 .addContainerGap())
@@ -1794,6 +1833,36 @@ public class DesktopPanel extends javax.swing.JPanel implements ThemeableEditor,
     private void formComponentResized(java.awt.event.ComponentEvent evt) {//GEN-FIRST:event_formComponentResized
         // TODO add your handling code here:
     }//GEN-LAST:event_formComponentResized
+
+    private void openModule(Class<?> editorClass, String source) {
+        if (editorClass == null) {
+            log.warn("No editor class provided for source " + source);
+            return;
+        }
+
+        log.info("Opening module " + editorClass.getSimpleName() + " from " + source + " status icon");
+        try {
+            Object editor = EditorsRegistry.getInstance().getEditor(editorClass.getName());
+            if (editor == null) {
+                log.warn("EditorsRegistry returned null for " + editorClass.getName());
+                return;
+            }
+            if (editor instanceof PopulateOptionsEditor) {
+                ((PopulateOptionsEditor) editor).populateOptions();
+            }
+
+            if (editor instanceof Component) {
+                EditorsRegistry.getInstance().setMainEditorsPaneView((Component) editor);
+            } else {
+                log.warn("Editor " + editorClass.getName() + " is not a Component instance");
+            }
+        } catch (Exception ex) {
+            log.error("Failed to open editor " + editorClass.getName() + " from " + source + " status icon", ex);
+            String errorMessage = ResourceBundle.getBundle("com/jdimension/jlawyer/client/JKanzleiGUI").getString("error.loadingeditor");
+            String errorTitle = ResourceBundle.getBundle("com/jdimension/jlawyer/client/JKanzleiGUI").getString("msg.title.error");
+            JOptionPane.showMessageDialog(this, errorMessage + ex.getMessage(), errorTitle, JOptionPane.ERROR_MESSAGE);
+        }
+    }
 
     public void updateUserIcon() {
         UserSettings us = UserSettings.getInstance();
