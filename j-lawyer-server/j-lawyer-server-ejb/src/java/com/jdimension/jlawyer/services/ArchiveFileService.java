@@ -6374,6 +6374,10 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
             position.setStopped(null);
             position.setPrincipal(context.getCallerPrincipal().getName());
             position.setTimesheet(sheet);
+            
+            // newly added position cannot be part of an invoice
+            position.setInvoice(null);
+            
             this.timesheetPositionsFacade.create(position);
             return this.timesheetPositionsFacade.find(id);
         } else {
@@ -6817,6 +6821,9 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
         position.setStarted(position.getStarted());
         position.setStopped(position.getStopped());
         position.setTotal(position.calculateTotal(sheet.getInterval()));
+        
+        // newly added position cannot be part of an invoice
+        position.setInvoice(null);
 
         this.timesheetPositionsFacade.create(position);
 
