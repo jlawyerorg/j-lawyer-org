@@ -703,6 +703,7 @@ public class ClaimLedgerEntryPanel extends javax.swing.JPanel {
         tooltip.append("</html>");
         this.lblName.setToolTipText(tooltip.toString());
         
+        
     }
 
     /**

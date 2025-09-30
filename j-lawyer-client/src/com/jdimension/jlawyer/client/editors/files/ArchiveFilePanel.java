@@ -8834,8 +8834,8 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
         
         ClaimLedger ledger=new ClaimLedger();
         ledger.setArchiveFileKey(dto);
-        ledger.setDescription("");
-        ledger.setName("Forderungskonto in " + this.dto.getFileNumber() + " (" + this.dto.getName() + ")");
+        ledger.setDescription("erstellt: " + this.dfDay.format(new Date()));
+        ledger.setName("Forderungskonto in " + this.dto.getName() + " (" + this.dto.getFileNumber() + ")");
         
         try {
             ClientSettings settings = ClientSettings.getInstance();

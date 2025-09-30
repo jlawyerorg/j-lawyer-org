@@ -774,7 +774,7 @@ public class ClaimLedgerDialog extends javax.swing.JDialog implements EventConsu
         initComponents();
         ComponentUtils.restoreDialogSize(this);
         this.jScrollPane1.getVerticalScrollBar().setUnitIncrement(16);
-        
+
         this.lblHeader.setBackground(DefaultColorTheme.COLOR_DARK_GREY);
 
         this.setEntry(null);
@@ -787,25 +787,19 @@ public class ClaimLedgerDialog extends javax.swing.JDialog implements EventConsu
 
     public final void setEntry(ClaimLedger ledger) {
 
-        
         this.cmdSave.setEnabled(ledger != null && ledger.getId() != null);
 
         this.currentEntry = ledger;
 
-
         if (ledger == null) {
             this.setTitle("neues Forderungskonto erstellen");
 
-            
-
         } else {
             this.setTitle("Forderungskonto " + ledger.getName());
-
-            
-            
+            this.txtName.setText(ledger.getName());
+            this.taDescription.setText(ledger.getDescription());
 
         }
-
 
     }
 
@@ -829,6 +823,9 @@ public class ClaimLedgerDialog extends javax.swing.JDialog implements EventConsu
         lblHeader = new javax.swing.JPanel();
         jLabel1 = new javax.swing.JLabel();
         txtName = new javax.swing.JTextField();
+        jScrollPane2 = new javax.swing.JScrollPane();
+        taDescription = new javax.swing.JTextArea();
+        jLabel4 = new javax.swing.JLabel();
         jLabel2 = new javax.swing.JLabel();
         txtPctMain = new javax.swing.JFormattedTextField();
         txtPctOther = new javax.swing.JFormattedTextField();
@@ -876,6 +873,41 @@ public class ClaimLedgerDialog extends javax.swing.JDialog implements EventConsu
 
         jLabel1.setText("Name:");
 
+        taDescription.setColumns(20);
+        taDescription.setRows(3);
+        jScrollPane2.setViewportView(taDescription);
+
+        jLabel4.setText("Beschreibung:");
+
+        javax.swing.GroupLayout lblHeaderLayout = new javax.swing.GroupLayout(lblHeader);
+        lblHeader.setLayout(lblHeaderLayout);
+        lblHeaderLayout.setHorizontalGroup(
+            lblHeaderLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(lblHeaderLayout.createSequentialGroup()
+                .addContainerGap()
+                .addGroup(lblHeaderLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
+                    .addComponent(jLabel1)
+                    .addComponent(jLabel4))
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addGroup(lblHeaderLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addComponent(jScrollPane2)
+                    .addComponent(txtName, javax.swing.GroupLayout.DEFAULT_SIZE, 872, Short.MAX_VALUE))
+                .addContainerGap())
+        );
+        lblHeaderLayout.setVerticalGroup(
+            lblHeaderLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(lblHeaderLayout.createSequentialGroup()
+                .addContainerGap()
+                .addGroup(lblHeaderLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                    .addComponent(jLabel1)
+                    .addComponent(txtName, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addGroup(lblHeaderLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addComponent(jScrollPane2, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(jLabel4))
+                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+        );
+
         jLabel2.setText("Prozentsatz Hauptforderung:");
 
         txtPctMain.setFormatterFactory(new javax.swing.text.DefaultFormatterFactory(new javax.swing.text.NumberFormatter(java.text.NumberFormat.getPercentInstance())));
@@ -900,59 +932,6 @@ public class ClaimLedgerDialog extends javax.swing.JDialog implements EventConsu
         rdPctOtherRelative.setSelected(true);
         rdPctOtherRelative.setText("über Basiszinssatz");
 
-        javax.swing.GroupLayout lblHeaderLayout = new javax.swing.GroupLayout(lblHeader);
-        lblHeader.setLayout(lblHeaderLayout);
-        lblHeaderLayout.setHorizontalGroup(
-            lblHeaderLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(lblHeaderLayout.createSequentialGroup()
-                .addContainerGap()
-                .addComponent(jLabel1)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addGroup(lblHeaderLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addComponent(txtName)
-                    .addGroup(lblHeaderLayout.createSequentialGroup()
-                        .addGroup(lblHeaderLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                            .addComponent(jLabel2)
-                            .addComponent(jLabel3))
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addGroup(lblHeaderLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                            .addGroup(lblHeaderLayout.createSequentialGroup()
-                                .addComponent(txtPctOther, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                                .addGap(18, 18, 18)
-                                .addComponent(rdPctOtherFix)
-                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-                                .addComponent(rdPctOtherRelative))
-                            .addGroup(lblHeaderLayout.createSequentialGroup()
-                                .addComponent(txtPctMain, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                                .addGap(18, 18, 18)
-                                .addComponent(rdPctMainFix)
-                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-                                .addComponent(rdPctMainRelative)))
-                        .addGap(0, 0, Short.MAX_VALUE)))
-                .addContainerGap())
-        );
-        lblHeaderLayout.setVerticalGroup(
-            lblHeaderLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(lblHeaderLayout.createSequentialGroup()
-                .addContainerGap()
-                .addGroup(lblHeaderLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                    .addComponent(jLabel1)
-                    .addComponent(txtName, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addGroup(lblHeaderLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                    .addComponent(jLabel2)
-                    .addComponent(txtPctMain, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addComponent(rdPctMainFix)
-                    .addComponent(rdPctMainRelative))
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                .addGroup(lblHeaderLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                    .addComponent(txtPctOther, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addComponent(jLabel3)
-                    .addComponent(rdPctOtherFix)
-                    .addComponent(rdPctOtherRelative))
-                .addContainerGap())
-        );
-
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(getContentPane());
         getContentPane().setLayout(layout);
         layout.setHorizontalGroup(
@@ -968,13 +947,45 @@ public class ClaimLedgerDialog extends javax.swing.JDialog implements EventConsu
                         .addComponent(cmdCancel))
                     .addComponent(jScrollPane1))
                 .addContainerGap())
+            .addGroup(layout.createSequentialGroup()
+                .addGap(62, 62, 62)
+                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addComponent(jLabel2)
+                    .addComponent(jLabel3))
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addGroup(layout.createSequentialGroup()
+                        .addComponent(txtPctOther, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addGap(18, 18, 18)
+                        .addComponent(rdPctOtherFix)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                        .addComponent(rdPctOtherRelative))
+                    .addGroup(layout.createSequentialGroup()
+                        .addComponent(txtPctMain, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addGap(18, 18, 18)
+                        .addComponent(rdPctMainFix)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                        .addComponent(rdPctMainRelative)))
+                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
         );
         layout.setVerticalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(layout.createSequentialGroup()
                 .addComponent(lblHeader, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-                .addComponent(jScrollPane1, javax.swing.GroupLayout.DEFAULT_SIZE, 481, Short.MAX_VALUE)
+                .addGap(56, 56, 56)
+                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                    .addComponent(jLabel2)
+                    .addComponent(txtPctMain, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(rdPctMainFix)
+                    .addComponent(rdPctMainRelative))
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                    .addComponent(txtPctOther, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(jLabel3)
+                    .addComponent(rdPctOtherFix)
+                    .addComponent(rdPctOtherRelative))
+                .addGap(18, 18, 18)
+                .addComponent(jScrollPane1, javax.swing.GroupLayout.PREFERRED_SIZE, 351, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                     .addComponent(cmdCancel)
@@ -1046,7 +1057,6 @@ public class ClaimLedgerDialog extends javax.swing.JDialog implements EventConsu
 
 //            JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
 //            locator.lookupArchiveFileServiceRemote().updateInvoice(this.caseDto.getId(), this.currentEntry);
-
         } catch (Exception ex) {
             log.error("error saving invoice", ex);
             JOptionPane.showMessageDialog(this, "Fehler beim Speichern der Rechnung: " + ex.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
@@ -1060,8 +1070,6 @@ public class ClaimLedgerDialog extends javax.swing.JDialog implements EventConsu
         this.setVisible(false);
         this.dispose();
     }//GEN-LAST:event_cmdSaveActionPerformed
-
-    
 
 //    public void updateTotals(InvoicePositionEntryPanel ep) {
 //        if (ep != null) {
@@ -1151,7 +1159,6 @@ public class ClaimLedgerDialog extends javax.swing.JDialog implements EventConsu
 //        this.pnlInvoicePositions.doLayout();
 //        this.bumpSplitPane();
 //    }
-
     /**
      * @param args the command line arguments
      */
@@ -1201,7 +1208,9 @@ public class ClaimLedgerDialog extends javax.swing.JDialog implements EventConsu
     private javax.swing.JLabel jLabel1;
     private javax.swing.JLabel jLabel2;
     private javax.swing.JLabel jLabel3;
+    private javax.swing.JLabel jLabel4;
     private javax.swing.JScrollPane jScrollPane1;
+    private javax.swing.JScrollPane jScrollPane2;
     private javax.swing.JTable jTable1;
     private javax.swing.JPanel lblHeader;
     private javax.swing.JPopupMenu popCalculations;
@@ -1210,6 +1219,7 @@ public class ClaimLedgerDialog extends javax.swing.JDialog implements EventConsu
     private javax.swing.JRadioButton rdPctMainRelative;
     private javax.swing.JRadioButton rdPctOtherFix;
     private javax.swing.JRadioButton rdPctOtherRelative;
+    private javax.swing.JTextArea taDescription;
     private javax.swing.JTextField txtName;
     private javax.swing.JFormattedTextField txtPctMain;
     private javax.swing.JFormattedTextField txtPctOther;
@@ -1217,10 +1227,8 @@ public class ClaimLedgerDialog extends javax.swing.JDialog implements EventConsu
 
     @Override
     public void onEvent(Event e) {
-        
-    }
 
-    
+    }
 
     /**
      * @return the cancelled
