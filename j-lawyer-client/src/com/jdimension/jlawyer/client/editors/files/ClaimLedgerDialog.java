@@ -691,7 +691,9 @@ import com.jdimension.jlawyer.persistence.AppUserBean;
 import com.jdimension.jlawyer.persistence.ArchiveFileBean;
 import com.jdimension.jlawyer.persistence.ArchiveFileDocumentsBean;
 import com.jdimension.jlawyer.persistence.CaseAccountEntry;
+import com.jdimension.jlawyer.persistence.ClaimComponent;
 import com.jdimension.jlawyer.persistence.ClaimLedger;
+import com.jdimension.jlawyer.persistence.ClaimLedgerEntry;
 import com.jdimension.jlawyer.persistence.Invoice;
 import com.jdimension.jlawyer.persistence.InvoicePool;
 import com.jdimension.jlawyer.persistence.InvoicePosition;
@@ -729,6 +731,7 @@ import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.JTable;
 import static javax.swing.SwingConstants.RIGHT;
+import javax.swing.table.AbstractTableModel;
 import javax.swing.table.DefaultTableCellRenderer;
 import javax.swing.table.DefaultTableModel;
 import javax.swing.table.TableRowSorter;
@@ -799,6 +802,30 @@ public class ClaimLedgerDialog extends javax.swing.JDialog implements EventConsu
             this.txtName.setText(ledger.getName());
             this.taDescription.setText(ledger.getDescription());
 
+            try {
+                JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(ClientSettings.getInstance().getLookupProperties());
+                List<ClaimComponent> components = locator.lookupArchiveFileServiceRemote().getClaimComponents(ledger.getId());
+                List<ClaimLedgerEntry> entries = locator.lookupArchiveFileServiceRemote().getClaimLedgerEntries(ledger.getId());
+
+                this.tblComponents.setModel(new ComponentTableModel(components));
+                this.tblLedger.setModel(new LedgerTableModel(entries));
+
+            } catch (Exception ex) {
+                log.error("Error updating invoice position", ex);
+                JOptionPane.showMessageDialog(this, "Fehler beim Speichern der Rechnungsposition: " + ex.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
+            }
+
+            // Dummy-Daten
+//            ClaimComponent hf = new ClaimComponent("C1", "Hauptforderung", "HF");
+//            ClaimComponent kosten = new ClaimComponent("C2", "Gerichtskosten", "NF");
+//            List<ClaimComponent> components = new ArrayList<>();
+//            components.add(hf);
+//            components.add(kosten);
+//
+//            List<ClaimLedgerEntry> entries = new ArrayList<>();
+//            entries.add(new ClaimLedgerEntry("E1", "2025-01-01", "INTEREST", 112.50, hf));
+//            entries.add(new ClaimLedgerEntry("E2", "2025-01-05", "PAYMENT", -1000.00, null));
+//            entries.add(new ClaimLedgerEntry("E3", "2025-01-15", "COST", 20.00, kosten));
         }
 
     }
@@ -814,26 +841,27 @@ public class ClaimLedgerDialog extends javax.swing.JDialog implements EventConsu
 
         popCalculations = new javax.swing.JPopupMenu();
         popRecipients = new javax.swing.JPopupMenu();
-        btGrpPctMain = new javax.swing.ButtonGroup();
-        btGrpPctOther = new javax.swing.ButtonGroup();
         cmdCancel = new javax.swing.JButton();
         cmdSave = new javax.swing.JButton();
-        jScrollPane1 = new javax.swing.JScrollPane();
-        jTable1 = new javax.swing.JTable();
         lblHeader = new javax.swing.JPanel();
         jLabel1 = new javax.swing.JLabel();
         txtName = new javax.swing.JTextField();
         jScrollPane2 = new javax.swing.JScrollPane();
         taDescription = new javax.swing.JTextArea();
         jLabel4 = new javax.swing.JLabel();
-        jLabel2 = new javax.swing.JLabel();
-        txtPctMain = new javax.swing.JFormattedTextField();
-        txtPctOther = new javax.swing.JFormattedTextField();
-        jLabel3 = new javax.swing.JLabel();
-        rdPctMainFix = new javax.swing.JRadioButton();
-        rdPctMainRelative = new javax.swing.JRadioButton();
-        rdPctOtherFix = new javax.swing.JRadioButton();
-        rdPctOtherRelative = new javax.swing.JRadioButton();
+        jTabbedPane1 = new javax.swing.JTabbedPane();
+        jPanel1 = new javax.swing.JPanel();
+        jPanel3 = new javax.swing.JPanel();
+        jScrollPane3 = new javax.swing.JScrollPane();
+        tblComponents = new javax.swing.JTable();
+        cmdAddComponent = new javax.swing.JButton();
+        cmdEditComponent = new javax.swing.JButton();
+        jPanel2 = new javax.swing.JPanel();
+        jPanel4 = new javax.swing.JPanel();
+        jScrollPane1 = new javax.swing.JScrollPane();
+        tblLedger = new javax.swing.JTable();
+        cmdAddEntry = new javax.swing.JButton();
+        cmdEditEntry = new javax.swing.JButton();
 
         setDefaultCloseOperation(javax.swing.WindowConstants.DISPOSE_ON_CLOSE);
         addComponentListener(new java.awt.event.ComponentAdapter() {
@@ -842,6 +870,7 @@ public class ClaimLedgerDialog extends javax.swing.JDialog implements EventConsu
             }
         });
 
+        cmdCancel.setFont(cmdCancel.getFont());
         cmdCancel.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/cancel.png"))); // NOI18N
         cmdCancel.setText("Abbrechen");
         cmdCancel.addActionListener(new java.awt.event.ActionListener() {
@@ -850,6 +879,7 @@ public class ClaimLedgerDialog extends javax.swing.JDialog implements EventConsu
             }
         });
 
+        cmdSave.setFont(cmdSave.getFont());
         cmdSave.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/agt_action_success.png"))); // NOI18N
         cmdSave.setText("Speichern");
         cmdSave.addActionListener(new java.awt.event.ActionListener() {
@@ -858,25 +888,19 @@ public class ClaimLedgerDialog extends javax.swing.JDialog implements EventConsu
             }
         });
 
-        jTable1.setModel(new javax.swing.table.DefaultTableModel(
-            new Object [][] {
-                {null, null, null, null},
-                {null, null, null, null},
-                {null, null, null, null},
-                {null, null, null, null}
-            },
-            new String [] {
-                "Title 1", "Title 2", "Title 3", "Title 4"
-            }
-        ));
-        jScrollPane1.setViewportView(jTable1);
-
+        jLabel1.setFont(jLabel1.getFont());
+        jLabel1.setForeground(new java.awt.Color(255, 255, 255));
         jLabel1.setText("Name:");
 
+        txtName.setFont(txtName.getFont());
+
         taDescription.setColumns(20);
+        taDescription.setFont(taDescription.getFont());
         taDescription.setRows(3);
         jScrollPane2.setViewportView(taDescription);
 
+        jLabel4.setFont(jLabel4.getFont());
+        jLabel4.setForeground(new java.awt.Color(255, 255, 255));
         jLabel4.setText("Beschreibung:");
 
         javax.swing.GroupLayout lblHeaderLayout = new javax.swing.GroupLayout(lblHeader);
@@ -891,7 +915,7 @@ public class ClaimLedgerDialog extends javax.swing.JDialog implements EventConsu
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addGroup(lblHeaderLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                     .addComponent(jScrollPane2)
-                    .addComponent(txtName, javax.swing.GroupLayout.DEFAULT_SIZE, 872, Short.MAX_VALUE))
+                    .addComponent(txtName))
                 .addContainerGap())
         );
         lblHeaderLayout.setVerticalGroup(
@@ -908,29 +932,134 @@ public class ClaimLedgerDialog extends javax.swing.JDialog implements EventConsu
                 .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
         );
 
-        jLabel2.setText("Prozentsatz Hauptforderung:");
+        jTabbedPane1.setTabPlacement(javax.swing.JTabbedPane.LEFT);
+        jTabbedPane1.setFont(jTabbedPane1.getFont());
 
-        txtPctMain.setFormatterFactory(new javax.swing.text.DefaultFormatterFactory(new javax.swing.text.NumberFormatter(java.text.NumberFormat.getPercentInstance())));
-        txtPctMain.setText("0");
+        tblComponents.setFont(tblComponents.getFont());
+        tblComponents.setModel(new javax.swing.table.DefaultTableModel(
+            new Object [][] {
+                {null, null, null, null},
+                {null, null, null, null},
+                {null, null, null, null},
+                {null, null, null, null}
+            },
+            new String [] {
+                "Title 1", "Title 2", "Title 3", "Title 4"
+            }
+        ));
+        jScrollPane3.setViewportView(tblComponents);
 
-        txtPctOther.setFormatterFactory(new javax.swing.text.DefaultFormatterFactory(new javax.swing.text.NumberFormatter(java.text.NumberFormat.getPercentInstance())));
-        txtPctOther.setText("0");
+        cmdAddComponent.setFont(cmdAddComponent.getFont());
+        cmdAddComponent.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/edit_add.png"))); // NOI18N
 
-        jLabel3.setText("Prozentsatz Nebenforderung:");
+        cmdEditComponent.setFont(cmdEditComponent.getFont());
+        cmdEditComponent.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons16/kate.png"))); // NOI18N
 
-        btGrpPctMain.add(rdPctMainFix);
-        rdPctMainFix.setText("fest");
+        javax.swing.GroupLayout jPanel3Layout = new javax.swing.GroupLayout(jPanel3);
+        jPanel3.setLayout(jPanel3Layout);
+        jPanel3Layout.setHorizontalGroup(
+            jPanel3Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(jPanel3Layout.createSequentialGroup()
+                .addContainerGap()
+                .addGroup(jPanel3Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addComponent(jScrollPane3, javax.swing.GroupLayout.DEFAULT_SIZE, 840, Short.MAX_VALUE)
+                    .addGroup(jPanel3Layout.createSequentialGroup()
+                        .addComponent(cmdAddComponent)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addComponent(cmdEditComponent)
+                        .addGap(0, 0, Short.MAX_VALUE)))
+                .addContainerGap())
+        );
+        jPanel3Layout.setVerticalGroup(
+            jPanel3Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, jPanel3Layout.createSequentialGroup()
+                .addContainerGap()
+                .addGroup(jPanel3Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                    .addComponent(cmdAddComponent)
+                    .addComponent(cmdEditComponent))
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addComponent(jScrollPane3, javax.swing.GroupLayout.DEFAULT_SIZE, 441, Short.MAX_VALUE)
+                .addContainerGap())
+        );
 
-        btGrpPctMain.add(rdPctMainRelative);
-        rdPctMainRelative.setSelected(true);
-        rdPctMainRelative.setText("über Basiszinssatz");
+        javax.swing.GroupLayout jPanel1Layout = new javax.swing.GroupLayout(jPanel1);
+        jPanel1.setLayout(jPanel1Layout);
+        jPanel1Layout.setHorizontalGroup(
+            jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(jPanel1Layout.createSequentialGroup()
+                .addContainerGap()
+                .addComponent(jPanel3, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                .addContainerGap())
+        );
+        jPanel1Layout.setVerticalGroup(
+            jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addComponent(jPanel3, javax.swing.GroupLayout.Alignment.TRAILING, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+        );
 
-        btGrpPctOther.add(rdPctOtherFix);
-        rdPctOtherFix.setText("fest");
+        jTabbedPane1.addTab("Positionen", jPanel1);
 
-        btGrpPctOther.add(rdPctOtherRelative);
-        rdPctOtherRelative.setSelected(true);
-        rdPctOtherRelative.setText("über Basiszinssatz");
+        tblLedger.setFont(tblLedger.getFont());
+        tblLedger.setModel(new javax.swing.table.DefaultTableModel(
+            new Object [][] {
+                {null, null, null, null},
+                {null, null, null, null},
+                {null, null, null, null},
+                {null, null, null, null}
+            },
+            new String [] {
+                "Title 1", "Title 2", "Title 3", "Title 4"
+            }
+        ));
+        jScrollPane1.setViewportView(tblLedger);
+
+        cmdAddEntry.setFont(cmdAddEntry.getFont());
+        cmdAddEntry.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/edit_add.png"))); // NOI18N
+
+        cmdEditEntry.setFont(cmdEditEntry.getFont());
+        cmdEditEntry.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons16/kate.png"))); // NOI18N
+
+        javax.swing.GroupLayout jPanel4Layout = new javax.swing.GroupLayout(jPanel4);
+        jPanel4.setLayout(jPanel4Layout);
+        jPanel4Layout.setHorizontalGroup(
+            jPanel4Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(jPanel4Layout.createSequentialGroup()
+                .addContainerGap()
+                .addGroup(jPanel4Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addComponent(jScrollPane1, javax.swing.GroupLayout.DEFAULT_SIZE, 840, Short.MAX_VALUE)
+                    .addGroup(jPanel4Layout.createSequentialGroup()
+                        .addComponent(cmdAddEntry)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addComponent(cmdEditEntry)
+                        .addGap(0, 0, Short.MAX_VALUE)))
+                .addContainerGap())
+        );
+        jPanel4Layout.setVerticalGroup(
+            jPanel4Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, jPanel4Layout.createSequentialGroup()
+                .addContainerGap()
+                .addGroup(jPanel4Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
+                    .addComponent(cmdAddEntry)
+                    .addComponent(cmdEditEntry))
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addComponent(jScrollPane1, javax.swing.GroupLayout.DEFAULT_SIZE, 441, Short.MAX_VALUE)
+                .addContainerGap())
+        );
+
+        javax.swing.GroupLayout jPanel2Layout = new javax.swing.GroupLayout(jPanel2);
+        jPanel2.setLayout(jPanel2Layout);
+        jPanel2Layout.setHorizontalGroup(
+            jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(jPanel2Layout.createSequentialGroup()
+                .addContainerGap()
+                .addComponent(jPanel4, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                .addContainerGap())
+        );
+        jPanel2Layout.setVerticalGroup(
+            jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addComponent(jPanel4, javax.swing.GroupLayout.Alignment.TRAILING, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+        );
+
+        jTabbedPane1.addTab("Buchungen", jPanel2);
 
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(getContentPane());
         getContentPane().setLayout(layout);
@@ -941,51 +1070,19 @@ public class ClaimLedgerDialog extends javax.swing.JDialog implements EventConsu
                 .addContainerGap()
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                     .addGroup(layout.createSequentialGroup()
-                        .addGap(0, 696, Short.MAX_VALUE)
+                        .addGap(0, 0, Short.MAX_VALUE)
                         .addComponent(cmdSave)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                         .addComponent(cmdCancel))
-                    .addComponent(jScrollPane1))
+                    .addComponent(jTabbedPane1))
                 .addContainerGap())
-            .addGroup(layout.createSequentialGroup()
-                .addGap(62, 62, 62)
-                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addComponent(jLabel2)
-                    .addComponent(jLabel3))
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addGroup(layout.createSequentialGroup()
-                        .addComponent(txtPctOther, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                        .addGap(18, 18, 18)
-                        .addComponent(rdPctOtherFix)
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-                        .addComponent(rdPctOtherRelative))
-                    .addGroup(layout.createSequentialGroup()
-                        .addComponent(txtPctMain, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                        .addGap(18, 18, 18)
-                        .addComponent(rdPctMainFix)
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-                        .addComponent(rdPctMainRelative)))
-                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
         );
         layout.setVerticalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(layout.createSequentialGroup()
                 .addComponent(lblHeader, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addGap(56, 56, 56)
-                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                    .addComponent(jLabel2)
-                    .addComponent(txtPctMain, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addComponent(rdPctMainFix)
-                    .addComponent(rdPctMainRelative))
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                    .addComponent(txtPctOther, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addComponent(jLabel3)
-                    .addComponent(rdPctOtherFix)
-                    .addComponent(rdPctOtherRelative))
-                .addGap(18, 18, 18)
-                .addComponent(jScrollPane1, javax.swing.GroupLayout.PREFERRED_SIZE, 351, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addComponent(jTabbedPane1)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                     .addComponent(cmdCancel)
@@ -1014,10 +1111,10 @@ public class ClaimLedgerDialog extends javax.swing.JDialog implements EventConsu
     }
 
     private void fillCurrentEntry() throws Exception {
-//        this.currentEntry.setDescription(this.taDescription.getText());
+        this.currentEntry.setDescription(this.taDescription.getText());
 //        this.currentEntry.setCreationDate(df.parse(this.dtCreated.getText()));
 //        this.currentEntry.setDueDate(df.parse(this.dtDue.getText()));
-//        this.currentEntry.setName(this.txtName.getText());
+        this.currentEntry.setName(this.txtName.getText());
 //        this.currentEntry.setPeriodFrom(df.parse(this.dtFrom.getText()));
 //        this.currentEntry.setPeriodTo(df.parse(this.dtTo.getText()));
 //        this.currentEntry.setStatus(this.currentEntry.getStatusInt(this.cmbStatus.getSelectedItem().toString()));
@@ -1055,11 +1152,11 @@ public class ClaimLedgerDialog extends javax.swing.JDialog implements EventConsu
         try {
             this.fillCurrentEntry();
 
-//            JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
-//            locator.lookupArchiveFileServiceRemote().updateInvoice(this.caseDto.getId(), this.currentEntry);
+            JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
+            locator.lookupArchiveFileServiceRemote().updateClaimLedger(this.caseDto.getId(), this.currentEntry);
         } catch (Exception ex) {
-            log.error("error saving invoice", ex);
-            JOptionPane.showMessageDialog(this, "Fehler beim Speichern der Rechnung: " + ex.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
+            log.error("error saving claim ledger", ex);
+            JOptionPane.showMessageDialog(this, "Fehler beim Speichern des Forderungskontos: " + ex.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
         }
     }
 
@@ -1201,28 +1298,29 @@ public class ClaimLedgerDialog extends javax.swing.JDialog implements EventConsu
     }
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
-    private javax.swing.ButtonGroup btGrpPctMain;
-    private javax.swing.ButtonGroup btGrpPctOther;
+    private javax.swing.JButton cmdAddComponent;
+    private javax.swing.JButton cmdAddEntry;
     private javax.swing.JButton cmdCancel;
+    private javax.swing.JButton cmdEditComponent;
+    private javax.swing.JButton cmdEditEntry;
     private javax.swing.JButton cmdSave;
     private javax.swing.JLabel jLabel1;
-    private javax.swing.JLabel jLabel2;
-    private javax.swing.JLabel jLabel3;
     private javax.swing.JLabel jLabel4;
+    private javax.swing.JPanel jPanel1;
+    private javax.swing.JPanel jPanel2;
+    private javax.swing.JPanel jPanel3;
+    private javax.swing.JPanel jPanel4;
     private javax.swing.JScrollPane jScrollPane1;
     private javax.swing.JScrollPane jScrollPane2;
-    private javax.swing.JTable jTable1;
+    private javax.swing.JScrollPane jScrollPane3;
+    private javax.swing.JTabbedPane jTabbedPane1;
     private javax.swing.JPanel lblHeader;
     private javax.swing.JPopupMenu popCalculations;
     private javax.swing.JPopupMenu popRecipients;
-    private javax.swing.JRadioButton rdPctMainFix;
-    private javax.swing.JRadioButton rdPctMainRelative;
-    private javax.swing.JRadioButton rdPctOtherFix;
-    private javax.swing.JRadioButton rdPctOtherRelative;
     private javax.swing.JTextArea taDescription;
+    private javax.swing.JTable tblComponents;
+    private javax.swing.JTable tblLedger;
     private javax.swing.JTextField txtName;
-    private javax.swing.JFormattedTextField txtPctMain;
-    private javax.swing.JFormattedTextField txtPctOther;
     // End of variables declaration//GEN-END:variables
 
     @Override
@@ -1235,5 +1333,89 @@ public class ClaimLedgerDialog extends javax.swing.JDialog implements EventConsu
      */
     public boolean isCancelled() {
         return cancelled;
+    }
+
+    class ComponentTableModel extends AbstractTableModel {
+
+        private final String[] columns = {"ID", "Name", "Typ"};
+        private final List<ClaimComponent> data;
+
+        ComponentTableModel(List<ClaimComponent> data) {
+            this.data = data;
+        }
+
+        @Override
+        public int getRowCount() {
+            return data.size();
+        }
+
+        @Override
+        public int getColumnCount() {
+            return columns.length;
+        }
+
+        @Override
+        public String getColumnName(int col) {
+            return columns[col];
+        }
+
+        @Override
+        public Object getValueAt(int row, int col) {
+            ClaimComponent c = data.get(row);
+            switch (col) {
+                case 0:
+                    return c.getId();
+                case 1:
+                    return c.getName();
+                case 2:
+                    return c.getType();
+                default:
+                    return "";
+            }
+        }
+    }
+
+    class LedgerTableModel extends AbstractTableModel {
+
+        private final String[] columns = {"ID", "Datum", "Typ", "Betrag", "Komponente"};
+        private final List<ClaimLedgerEntry> data;
+
+        LedgerTableModel(List<ClaimLedgerEntry> data) {
+            this.data = data;
+        }
+
+        @Override
+        public int getRowCount() {
+            return data.size();
+        }
+
+        @Override
+        public int getColumnCount() {
+            return columns.length;
+        }
+
+        @Override
+        public String getColumnName(int col) {
+            return columns[col];
+        }
+
+        @Override
+        public Object getValueAt(int row, int col) {
+            ClaimLedgerEntry e = data.get(row);
+            switch (col) {
+                case 0:
+                    return e.getId();
+                case 1:
+                    return e.getEntryDate();
+                case 2:
+                    return e.getType();
+                case 3:
+                    return e.getAmount();
+                case 4:
+                    return (e.getComponent() != null) ? e.getComponent().getComment() : "–";
+                default:
+                    return "";
+            }
+        }
     }
 }

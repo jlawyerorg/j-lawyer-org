@@ -684,6 +684,8 @@ public interface ClaimLedgerEntryFacadeLocal {
     List<ClaimLedgerEntry> findAll();
 
     List<ClaimLedgerEntry> findRange(int[] range);
+    
+    List<ClaimLedgerEntry> findByLedger(ClaimLedger ledger);
 
     int count();
     

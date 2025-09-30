@@ -972,4 +972,12 @@ public interface ArchiveFileServiceRemote {
     ClaimLedger addClaimLedger(String caseId, ClaimLedger ledger) throws Exception;
 
     List<ArchiveFileAddressesBean> getArchiveFileAddressesByReference(String reference) throws Exception;
+
+    ClaimLedger updateClaimLedger(String caseId, ClaimLedger claimLedger) throws Exception;
+
+    void removeClaimLedger(String ledgerId) throws Exception;
+
+    List<ClaimComponent> getClaimComponents(String ledgerId) throws Exception;
+
+    List<ClaimLedgerEntry> getClaimLedgerEntries(String ledgerId) throws Exception;
 }

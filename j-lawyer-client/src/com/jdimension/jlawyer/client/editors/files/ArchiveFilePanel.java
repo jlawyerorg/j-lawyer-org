@@ -8857,6 +8857,8 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
         dlg.setEntry(ledger);
         FrameUtils.centerDialog(dlg, EditorsRegistry.getInstance().getMainWindow());
         dlg.setVisible(true);
+        
+        clp.setEntry(this.dto, dlg.getEntry());
 
 
     }//GEN-LAST:event_cmdNewClaimLedgerActionPerformed

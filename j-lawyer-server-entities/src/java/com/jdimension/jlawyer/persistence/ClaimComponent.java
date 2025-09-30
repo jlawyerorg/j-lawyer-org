@@ -709,6 +709,9 @@ public class ClaimComponent implements Serializable {
     @Column(name = "component_type", nullable = false, length = 50)
     private ClaimComponentType type;
 
+    @Column(name = "name")
+    private String name;
+    
     @Column(name = "comment")
     private String comment;
 
@@ -819,6 +822,20 @@ public class ClaimComponent implements Serializable {
      */
     public void setComment(String comment) {
         this.comment = comment;
+    }
+
+    /**
+     * @return the name
+     */
+    public String getName() {
+        return name;
+    }
+
+    /**
+     * @param name the name to set
+     */
+    public void setName(String name) {
+        this.name = name;
     }
     
 }

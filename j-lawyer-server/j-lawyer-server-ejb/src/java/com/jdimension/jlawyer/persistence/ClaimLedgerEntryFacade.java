@@ -663,6 +663,7 @@ For more information on this, and how to apply and follow the GNU AGPL, see
  */
 package com.jdimension.jlawyer.persistence;
 
+import java.util.List;
 import javax.ejb.Stateless;
 import javax.persistence.EntityManager;
 import javax.persistence.PersistenceContext;
@@ -684,6 +685,13 @@ public class ClaimLedgerEntryFacade extends AbstractFacade<ClaimLedgerEntry> imp
 
     public ClaimLedgerEntryFacade() {
         super(ClaimLedgerEntry.class);
+    }
+    
+    @Override
+    public List<ClaimLedgerEntry> findByLedger(ClaimLedger ledger) {
+        
+        return (List<ClaimLedgerEntry>) em.createNamedQuery("ClaimLedgerEntry.findByLedger").setParameter("ledger", ledger).getResultList();
+        
     }
     
 }

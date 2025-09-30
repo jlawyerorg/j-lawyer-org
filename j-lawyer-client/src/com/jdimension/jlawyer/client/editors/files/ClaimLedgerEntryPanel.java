@@ -663,10 +663,16 @@ For more information on this, and how to apply and follow the GNU AGPL, see
  */
 package com.jdimension.jlawyer.client.editors.files;
 
+import com.jdimension.jlawyer.client.editors.EditorsRegistry;
+import com.jdimension.jlawyer.client.settings.ClientSettings;
+import com.jdimension.jlawyer.client.utils.FrameUtils;
 import com.jdimension.jlawyer.persistence.ArchiveFileBean;
 import com.jdimension.jlawyer.persistence.ClaimLedger;
+import com.jdimension.jlawyer.services.JLawyerServiceLocator;
+import java.awt.Container;
 import java.text.DecimalFormat;
 import java.text.SimpleDateFormat;
+import javax.swing.JOptionPane;
 import org.apache.log4j.Logger;
 
 /**
@@ -702,8 +708,7 @@ public class ClaimLedgerEntryPanel extends javax.swing.JPanel {
         tooltip.append(ledger.getDescription());
         tooltip.append("</html>");
         this.lblName.setToolTipText(tooltip.toString());
-        
-        
+
     }
 
     /**
@@ -766,35 +771,33 @@ public class ClaimLedgerEntryPanel extends javax.swing.JPanel {
     }// </editor-fold>//GEN-END:initComponents
 
     private void cmdOpenActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdOpenActionPerformed
-//        InvoiceDialog dlg = new InvoiceDialog(this.caseView, this.caseDto, EditorsRegistry.getInstance().getMainWindow(), true, this.addresses);
-//        dlg.setEntry(this.getInvoice());
-//        FrameUtils.centerDialog(dlg, EditorsRegistry.getInstance().getMainWindow());
-//        dlg.setVisible(true);
-//        if(!dlg.isCancelled()) {
-//            this.setEntry(caseDto, dlg.getEntry(), addresses);
-//            if(dlg.getEntry().isSmallBusiness())
-//                this.setPaidTotal(dlg.getEntry().getTotalGross(), BigDecimal.valueOf(Float.MIN_VALUE), dlg.getEntry().getCurrency());
-//            else
-//                this.setPaidTotal(dlg.getEntry().getTotal(), BigDecimal.valueOf(Float.MIN_VALUE), dlg.getEntry().getCurrency());
-//        }
+
+        ClaimLedgerDialog dlg = new ClaimLedgerDialog(this.caseView, this.caseDto, EditorsRegistry.getInstance().getMainWindow(), true);
+        dlg.setEntry(this.getClaimLedger());
+        FrameUtils.centerDialog(dlg, EditorsRegistry.getInstance().getMainWindow());
+        dlg.setVisible(true);
+        if (!dlg.isCancelled()) {
+            this.setEntry(caseDto, dlg.getEntry());
+        }
+
     }//GEN-LAST:event_cmdOpenActionPerformed
 
     private void cmdDeleteActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdDeleteActionPerformed
-//        int response = JOptionPane.showConfirmDialog(this, "Beleg '" + this.getInvoice().getInvoiceNumber() + "' unwiderruflich löschen?", "Beleg löschen", JOptionPane.YES_NO_OPTION);
-//        if (response == JOptionPane.YES_OPTION) {
-//            try {
-//                ClientSettings settings = ClientSettings.getInstance();
-//                JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
-//                locator.lookupArchiveFileServiceRemote().removeInvoice(this.getInvoice().getId());
-//                Container parent = this.getParent();
-//                parent.remove(this);
-//                parent.invalidate();
-//                parent.repaint();
-//            } catch (Exception ex) {
-//                log.error("Error deleting invoice", ex);
-//                JOptionPane.showMessageDialog(this, "Fehler beim Löschen der Rechnung: " + ex.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
-//            }
-//        }
+        int response = JOptionPane.showConfirmDialog(this, "Forderungskonto '" + this.getClaimLedger().getName() + "' unwiderruflich löschen?", "Forderungskonto löschen", JOptionPane.YES_NO_OPTION);
+        if (response == JOptionPane.YES_OPTION) {
+            try {
+                ClientSettings settings = ClientSettings.getInstance();
+                JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
+                locator.lookupArchiveFileServiceRemote().removeClaimLedger(this.getClaimLedger().getId());
+                Container parent = this.getParent();
+                parent.remove(this);
+                parent.invalidate();
+                parent.repaint();
+            } catch (Exception ex) {
+                log.error("Error deleting claim ledger", ex);
+                JOptionPane.showMessageDialog(this, "Fehler beim Löschen des Forderungskontos: " + ex.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
+            }
+        }
     }//GEN-LAST:event_cmdDeleteActionPerformed
 
 

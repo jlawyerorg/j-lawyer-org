@@ -740,6 +740,7 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
 
     private static final String MSG_MISSINGPRIVILEGE_CASE = "Keine Berechtigung für diese Akte";
     private static final String MSG_MISSING_INVOICE = "Rechnung kann nicht gefunden werden";
+    private static final String MSG_MISSING_LEDGER = "Forderungskonto kann nicht gefunden werden";
     private static final String MSG_MISSING_PAYMENT = "Zahlung kann nicht gefunden werden";
     private static final String MSG_MISSING_TIMESHEET = "Zeiterfassungsprojekt kann nicht gefunden werden";
     private static final String MSG_MISSING_TIMESHEETPOS = "Zeiterfassungsposition kann nicht gefunden werden";
@@ -790,6 +791,10 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
     private InvoiceFacadeLocal invoicesFacade;
     @EJB
     private ClaimLedgerFacadeLocal claimLedgersFacade;
+    @EJB
+    private ClaimComponentFacadeLocal claimComponentsFacade;
+    @EJB
+    private ClaimLedgerEntryFacadeLocal claimLedgerEntriesFacade;
     @EJB
     private PaymentFacadeLocal paymentsFacade;
     @EJB
@@ -7429,6 +7434,143 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
         }
 
         return l2;
+    }
+
+    @Override
+    @RolesAllowed({"writeArchiveFileRole"})
+    public ClaimLedger updateClaimLedger(String caseId, ClaimLedger claimLedger) throws Exception {
+        String principalId = context.getCallerPrincipal().getName();
+
+        ArchiveFileBean aFile = this.archiveFileFacade.find(caseId);
+        boolean allowed = false;
+        if (principalId != null) {
+            List<Group> userGroups = new ArrayList<>();
+            try {
+                userGroups = this.securityFacade.getGroupsForUser(principalId);
+            } catch (Throwable t) {
+                log.error("Unable to determine groups for user " + principalId, t);
+            }
+            if (SecurityUtils.checkGroupsForCase(userGroups, aFile, this.caseGroupsFacade)) {
+                allowed = true;
+            }
+        } else {
+            allowed = true;
+        }
+
+        if (allowed) {
+
+            ClaimLedger updatedLedger = this.claimLedgersFacade.find(claimLedger.getId());
+            updatedLedger.setName(claimLedger.getName());
+            updatedLedger.setDescription(claimLedger.getDescription());
+
+            this.claimLedgersFacade.edit(updatedLedger);
+            
+            this.addCaseHistory(new StringGenerator().getID().toString(), aFile, "Forderungskonto geändert (" + updatedLedger.getName() + ")");
+
+            return this.claimLedgersFacade.find(claimLedger.getId());
+        } else {
+            throw new Exception(MSG_MISSINGPRIVILEGE_CASE);
+        }
+    }
+
+    @Override
+    @RolesAllowed({"writeArchiveFileRole"})
+    public void removeClaimLedger(String ledgerId) throws Exception {
+        String principalId = context.getCallerPrincipal().getName();
+
+        ClaimLedger ledger = this.claimLedgersFacade.find(ledgerId);
+        if (ledger == null) {
+            throw new Exception(MSG_MISSING_LEDGER);
+        }
+
+        ArchiveFileBean aFile = this.archiveFileFacade.find(ledger.getArchiveFileKey().getId());
+        boolean allowed = false;
+        if (principalId != null) {
+            List<Group> userGroups = new ArrayList<>();
+            try {
+                userGroups = this.securityFacade.getGroupsForUser(principalId);
+            } catch (Throwable t) {
+                log.error("Unable to determine groups for user " + principalId, t);
+            }
+            if (SecurityUtils.checkGroupsForCase(userGroups, aFile, this.caseGroupsFacade)) {
+                allowed = true;
+            }
+        } else {
+            allowed = true;
+        }
+
+        if (allowed) {
+            this.claimLedgersFacade.remove(ledger);
+            this.addCaseHistory(new StringGenerator().getID().toString(), aFile, "Forderungskonto gelöscht (" + ledger.getName() + ")");
+        } else {
+            throw new Exception(MSG_MISSINGPRIVILEGE_CASE);
+        }
+    }
+
+    @Override
+    public List<ClaimComponent> getClaimComponents(String ledgerId) throws Exception {
+        String principalId = context.getCallerPrincipal().getName();
+        
+        ClaimLedger ledger=this.claimLedgersFacade.find(ledgerId);
+        if(ledger==null) {
+            log.error("Claim ledger with id " + ledgerId + " not found");
+            return new ArrayList<>();
+        }
+        
+        ArchiveFileBean aFile = ledger.getArchiveFileKey();
+        boolean allowed = false;
+        if (principalId != null) {
+            List<Group> userGroups = new ArrayList<>();
+            try {
+                userGroups = this.securityFacade.getGroupsForUser(principalId);
+            } catch (Throwable t) {
+                log.error("Unable to determine groups for user " + principalId, t);
+            }
+            if (SecurityUtils.checkGroupsForCase(userGroups, aFile, this.caseGroupsFacade)) {
+                allowed = true;
+            }
+        } else {
+            allowed = true;
+        }
+
+        if (allowed) {
+            return this.claimComponentsFacade.findByLedger(ledger);
+        } else {
+            return new ArrayList<>();
+        }
+    }
+
+    @Override
+    public List<ClaimLedgerEntry> getClaimLedgerEntries(String ledgerId) throws Exception {
+        String principalId = context.getCallerPrincipal().getName();
+        
+        ClaimLedger ledger=this.claimLedgersFacade.find(ledgerId);
+        if(ledger==null) {
+            log.error("Claim ledger with id " + ledgerId + " not found");
+            return new ArrayList<>();
+        }
+        
+        ArchiveFileBean aFile = ledger.getArchiveFileKey();
+        boolean allowed = false;
+        if (principalId != null) {
+            List<Group> userGroups = new ArrayList<>();
+            try {
+                userGroups = this.securityFacade.getGroupsForUser(principalId);
+            } catch (Throwable t) {
+                log.error("Unable to determine groups for user " + principalId, t);
+            }
+            if (SecurityUtils.checkGroupsForCase(userGroups, aFile, this.caseGroupsFacade)) {
+                allowed = true;
+            }
+        } else {
+            allowed = true;
+        }
+
+        if (allowed) {
+            return this.claimLedgerEntriesFacade.findByLedger(ledger);
+        } else {
+            return new ArrayList<>();
+        }
     }
 
 }

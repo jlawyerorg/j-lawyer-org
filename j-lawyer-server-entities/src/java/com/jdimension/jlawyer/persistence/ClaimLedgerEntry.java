@@ -852,4 +852,18 @@ public class ClaimLedgerEntry implements Serializable {
         this.type = type;
     }
 
+    /**
+     * @return the component
+     */
+    public ClaimComponent getComponent() {
+        return component;
+    }
+
+    /**
+     * @param component the component to set
+     */
+    public void setComponent(ClaimComponent component) {
+        this.component = component;
+    }
+
 }
