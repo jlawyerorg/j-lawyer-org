@@ -819,11 +819,11 @@ public class SendEmailFrame extends javax.swing.JFrame implements SendCommunicat
     private String initialPostSignatureTxt = null;
     private String initialPreSignatureHtml = null;
     private String initialPostSignatureHtml = null;
-    
+
     // set via setTo / setCc / setBcc
-    private String requestedTo="";
-    private String requestedCc="";
-    private String requestedBcc="";
+    private String requestedTo = "";
+    private String requestedCc = "";
+    private String requestedBcc = "";
 
     /**
      * Creates new form SendEmailFrame
@@ -1228,17 +1228,17 @@ public class SendEmailFrame extends javax.swing.JFrame implements SendCommunicat
     }
 
     public void setTo(String t) {
-        this.requestedTo=t;
+        this.requestedTo = t;
         this.txtTo.setText(t);
     }
 
     public void setCC(String cc) {
-        this.requestedCc=cc;
+        this.requestedCc = cc;
         this.txtCc.setText(cc);
     }
 
     public void setBCC(String bcc) {
-        this.requestedBcc=bcc;
+        this.requestedBcc = bcc;
         this.txtBcc.setText(bcc);
     }
 
@@ -1428,7 +1428,7 @@ public class SendEmailFrame extends javax.swing.JFrame implements SendCommunicat
             JCheckBoxMenuItem mi = new JCheckBoxMenuItem();
             mi.setState(false);
             mi.setText(ab.toDisplayName() + " (" + ptb.getName() + ")");
-            mi.addActionListener(new RecipientsActionListener(ab.getEmail(), this.txtTo));
+            mi.addActionListener(new RecipientsActionListener(ab.getEmail(), this.txtTo, RecipientsActionListener.TYPE_TO));
             mi.setBackground(new Color(ptb.getColor()));
             mi.setOpaque(true);
             if (!StringUtils.isEmpty(ab.getEncryptionPwd())) {
@@ -1439,7 +1439,7 @@ public class SendEmailFrame extends javax.swing.JFrame implements SendCommunicat
             JCheckBoxMenuItem mi2 = new JCheckBoxMenuItem();
             mi2.setState(false);
             mi2.setText(ab.toDisplayName() + " (" + ptb.getName() + ")");
-            mi2.addActionListener(new RecipientsActionListener(ab.getEmail(), this.txtCc));
+            mi2.addActionListener(new RecipientsActionListener(ab.getEmail(), this.txtCc, RecipientsActionListener.TYPE_CC));
             mi2.setOpaque(true);
             mi2.setBackground(new Color(ptb.getColor()));
             if (!StringUtils.isEmpty(ab.getEncryptionPwd())) {
@@ -1450,7 +1450,7 @@ public class SendEmailFrame extends javax.swing.JFrame implements SendCommunicat
             JCheckBoxMenuItem mi3 = new JCheckBoxMenuItem();
             mi3.setState(false);
             mi3.setText(ab.toDisplayName() + " (" + ptb.getName() + ")");
-            mi3.addActionListener(new RecipientsActionListener(ab.getEmail(), this.txtBcc));
+            mi3.addActionListener(new RecipientsActionListener(ab.getEmail(), this.txtBcc, RecipientsActionListener.TYPE_BCC));
             mi3.setBackground(new Color(ptb.getColor()));
             mi3.setOpaque(true);
             if (!StringUtils.isEmpty(ab.getEncryptionPwd())) {
@@ -3150,27 +3150,27 @@ public class SendEmailFrame extends javax.swing.JFrame implements SendCommunicat
                 // get all placeholder values for the given set of placeholders
                 HashMap<String, Object> htValues = locator.lookupSystemManagementRemote().getPlaceHolderValues(ht, this.contextArchiveFile, partiesTriplets, this.contextDictateSign, null, this.formPlaceHolderValues, caseLawyer, caseAssistant, author, null, null, null, null, null, null, null);
                 this.txtSubject.setText(TemplatesUtil.replacePlaceHolders(tpl.getSubject(), htValues));
-                
-                String newTo=TemplatesUtil.replacePlaceHolders(tpl.getTo(), htValues);
+
+                String newTo = TemplatesUtil.replacePlaceHolders(tpl.getTo(), htValues);
                 this.txtTo.setText(this.requestedTo);
-                if(!this.txtTo.getText().toLowerCase().contains(newTo.toLowerCase())) {
-                    if(!this.txtTo.getText().trim().isEmpty()) {
+                if (!this.txtTo.getText().toLowerCase().contains(newTo.toLowerCase())) {
+                    if (!this.txtTo.getText().trim().isEmpty()) {
                         newTo = ", " + newTo;
                     }
                     this.txtTo.setText(this.txtTo.getText() + newTo);
                 }
-                String newCc=TemplatesUtil.replacePlaceHolders(tpl.getCc(), htValues);
+                String newCc = TemplatesUtil.replacePlaceHolders(tpl.getCc(), htValues);
                 this.txtCc.setText(this.requestedCc);
-                if(!this.txtCc.getText().toLowerCase().contains(newCc.toLowerCase())) {
-                    if(!this.txtCc.getText().trim().isEmpty()) {
+                if (!this.txtCc.getText().toLowerCase().contains(newCc.toLowerCase())) {
+                    if (!this.txtCc.getText().trim().isEmpty()) {
                         newCc = ", " + newCc;
                     }
                     this.txtCc.setText(this.txtCc.getText() + newCc);
                 }
-                String newBcc=TemplatesUtil.replacePlaceHolders(tpl.getBcc(), htValues);
+                String newBcc = TemplatesUtil.replacePlaceHolders(tpl.getBcc(), htValues);
                 this.txtBcc.setText(this.requestedBcc);
-                if(!this.txtBcc.getText().toLowerCase().contains(newBcc.toLowerCase())) {
-                    if(!this.txtBcc.getText().trim().isEmpty()) {
+                if (!this.txtBcc.getText().toLowerCase().contains(newBcc.toLowerCase())) {
+                    if (!this.txtBcc.getText().trim().isEmpty()) {
                         newBcc = ", " + newBcc;
                     }
                     this.txtBcc.setText(this.txtBcc.getText() + newBcc);
@@ -3200,7 +3200,7 @@ public class SendEmailFrame extends javax.swing.JFrame implements SendCommunicat
                             // replying or forwarding - do not adjust the mail but convert the template
                             if (this.html.isSelected()) {
                                 // picked a text template when replying to an HTML mail
-                                
+
                                 Document doc = Jsoup.parse(this.initialPostSignatureHtml);
                                 Element body = doc.body();
                                 if (body != null) {
@@ -3422,12 +3422,18 @@ public class SendEmailFrame extends javax.swing.JFrame implements SendCommunicat
 
     class RecipientsActionListener implements java.awt.event.ActionListener {
 
+        public static final int TYPE_TO=10;
+        public static final int TYPE_CC=20;
+        public static final int TYPE_BCC=30;
+        
         private String email = null;
         private JTextField to = null;
+        private int type=TYPE_TO;
 
-        public RecipientsActionListener(String email, JTextField to) {
+        public RecipientsActionListener(String email, JTextField to, int type) {
             this.email = email;
             this.to = to;
+            this.type=type;
         }
 
         @Override
@@ -3454,6 +3460,20 @@ public class SendEmailFrame extends javax.swing.JFrame implements SendCommunicat
                     }
                     this.to.setText(currentTo);
                 }
+            }
+            
+            switch (type) {
+                case TYPE_TO:
+                    requestedTo=currentTo;
+                    break;
+                case TYPE_CC:
+                    requestedCc=currentTo;
+                    break;
+                case TYPE_BCC:
+                    requestedBcc=currentTo;
+                    break;
+                default:
+                    break;
             }
         }
     }
