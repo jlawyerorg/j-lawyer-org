@@ -687,4 +687,6 @@ public interface InterestRuleFacadeLocal {
 
     int count();
     
+    List<InterestRule> findByComponent(ClaimComponent cmp);
+    
 }

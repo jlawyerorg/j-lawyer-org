@@ -980,4 +980,12 @@ public interface ArchiveFileServiceRemote {
     List<ClaimComponent> getClaimComponents(String ledgerId) throws Exception;
 
     List<ClaimLedgerEntry> getClaimLedgerEntries(String ledgerId) throws Exception;
+
+    ClaimComponent addClaimComponent(ClaimComponent component, List<InterestRule> interestRules, String ledgerId) throws Exception;
+
+    ClaimComponent updateClaimComponent(ClaimComponent component, List<InterestRule> interestRules) throws Exception;
+
+    void removeClaimComponent(String componentId) throws Exception;
+
+    List<InterestRule> getClaimComponentInterestRules(String componentId) throws Exception;
 }

@@ -694,6 +694,7 @@ import com.jdimension.jlawyer.persistence.CaseAccountEntry;
 import com.jdimension.jlawyer.persistence.ClaimComponent;
 import com.jdimension.jlawyer.persistence.ClaimLedger;
 import com.jdimension.jlawyer.persistence.ClaimLedgerEntry;
+import com.jdimension.jlawyer.persistence.InterestRule;
 import com.jdimension.jlawyer.persistence.Invoice;
 import com.jdimension.jlawyer.persistence.InvoicePool;
 import com.jdimension.jlawyer.persistence.InvoicePosition;
@@ -858,6 +859,7 @@ public class ClaimLedgerDialog extends javax.swing.JDialog implements EventConsu
         tblComponents = new javax.swing.JTable();
         cmdAddComponent = new javax.swing.JButton();
         cmdEditComponent = new javax.swing.JButton();
+        cmdRemoveComponent = new javax.swing.JButton();
         jPanel2 = new javax.swing.JPanel();
         jPanel4 = new javax.swing.JPanel();
         jScrollPane1 = new javax.swing.JScrollPane();
@@ -961,6 +963,18 @@ public class ClaimLedgerDialog extends javax.swing.JDialog implements EventConsu
 
         cmdEditComponent.setFont(cmdEditComponent.getFont());
         cmdEditComponent.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons16/kate.png"))); // NOI18N
+        cmdEditComponent.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                cmdEditComponentActionPerformed(evt);
+            }
+        });
+
+        cmdRemoveComponent.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/editdelete.png"))); // NOI18N
+        cmdRemoveComponent.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                cmdRemoveComponentActionPerformed(evt);
+            }
+        });
 
         javax.swing.GroupLayout jPanel3Layout = new javax.swing.GroupLayout(jPanel3);
         jPanel3.setLayout(jPanel3Layout);
@@ -974,6 +988,8 @@ public class ClaimLedgerDialog extends javax.swing.JDialog implements EventConsu
                         .addComponent(cmdAddComponent)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                         .addComponent(cmdEditComponent)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addComponent(cmdRemoveComponent)
                         .addGap(0, 0, Short.MAX_VALUE)))
                 .addContainerGap())
         );
@@ -981,9 +997,11 @@ public class ClaimLedgerDialog extends javax.swing.JDialog implements EventConsu
             jPanel3Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, jPanel3Layout.createSequentialGroup()
                 .addContainerGap()
-                .addGroup(jPanel3Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                    .addComponent(cmdAddComponent)
-                    .addComponent(cmdEditComponent))
+                .addGroup(jPanel3Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addGroup(jPanel3Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                        .addComponent(cmdAddComponent)
+                        .addComponent(cmdEditComponent))
+                    .addComponent(cmdRemoveComponent))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(jScrollPane3, javax.swing.GroupLayout.DEFAULT_SIZE, 441, Short.MAX_VALUE)
                 .addContainerGap())
@@ -1180,9 +1198,79 @@ public class ClaimLedgerDialog extends javax.swing.JDialog implements EventConsu
         FrameUtils.centerDialog(dlg, this);
         dlg.setVisible(true);
         if (dlg.isOkPressed()) {
-            ((ComponentTableModel) this.tblComponents.getModel()).addComponent(dlg.getEntry());
+            try {
+                ClientSettings settings = ClientSettings.getInstance();
+                JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
+                ClaimComponent cmp = dlg.getEntry();
+                locator.lookupArchiveFileServiceRemote().addClaimComponent(cmp, dlg.getInterestRules(), this.currentEntry.getId());
+                ((ComponentTableModel) this.tblComponents.getModel()).addComponent(cmp);
+            } catch (Exception ex) {
+                log.error("error saving claim component", ex);
+                JOptionPane.showMessageDialog(this, "Fehler beim Speichern des Forderungsposition: " + ex.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
+            }
+
         }
     }//GEN-LAST:event_cmdAddComponentActionPerformed
+
+    private void cmdEditComponentActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdEditComponentActionPerformed
+
+        if (this.tblComponents.getSelectedRowCount() != 1) {
+            return;
+        }
+
+        ClaimComponent cmp = ((ComponentTableModel) this.tblComponents.getModel()).getComponentAt(this.tblComponents.convertRowIndexToModel(this.tblComponents.getSelectedRow()));
+        
+        List<InterestRule> existingRules=new ArrayList<>();
+        try {
+                ClientSettings settings = ClientSettings.getInstance();
+                JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
+                existingRules=locator.lookupArchiveFileServiceRemote().getClaimComponentInterestRules(cmp.getId());
+            } catch (Exception ex) {
+                log.error("error getting interest rules", ex);
+                JOptionPane.showMessageDialog(this, "Fehler beim Laden der Zinsregeln: " + ex.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
+            }
+        
+        
+
+        ClaimComponentEditorDialog dlg = new ClaimComponentEditorDialog(this.currentEntry, cmp, existingRules, this, true);
+        FrameUtils.centerDialog(dlg, this);
+        dlg.setVisible(true);
+        if (dlg.isOkPressed()) {
+            try {
+                ClientSettings settings = ClientSettings.getInstance();
+                JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
+                cmp = dlg.getEntry();
+                locator.lookupArchiveFileServiceRemote().updateClaimComponent(cmp, dlg.getInterestRules());
+                ((ComponentTableModel) this.tblComponents.getModel()).setComponentAt(this.tblComponents.convertRowIndexToModel(this.tblComponents.getSelectedRow()), cmp);
+            } catch (Exception ex) {
+                log.error("error saving claim component", ex);
+                JOptionPane.showMessageDialog(this, "Fehler beim Speichern der Forderungsposition: " + ex.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
+            }
+
+        }
+    }//GEN-LAST:event_cmdEditComponentActionPerformed
+
+    private void cmdRemoveComponentActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdRemoveComponentActionPerformed
+
+        int[] selected = this.tblComponents.getSelectedRows();
+        for (int sel = selected.length - 1; sel > -1; sel--) {
+
+            int tableIndex=selected[sel];
+            ClaimComponent cmp = ((ComponentTableModel) this.tblComponents.getModel()).getComponentAt(this.tblComponents.convertRowIndexToModel(tableIndex));
+
+            try {
+                ClientSettings settings = ClientSettings.getInstance();
+                JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
+
+                locator.lookupArchiveFileServiceRemote().removeClaimComponent(cmp.getId());
+                ((ComponentTableModel) this.tblComponents.getModel()).removeComponentAt(this.tblComponents.convertRowIndexToModel(this.tblComponents.getSelectedRow()));
+            } catch (Exception ex) {
+                log.error("error deleting claim component", ex);
+                JOptionPane.showMessageDialog(this, "Fehler beim Löchen der Forderungsposition: " + ex.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
+            }
+
+        }
+    }//GEN-LAST:event_cmdRemoveComponentActionPerformed
 
 //    public void updateTotals(InvoicePositionEntryPanel ep) {
 //        if (ep != null) {
@@ -1319,6 +1407,7 @@ public class ClaimLedgerDialog extends javax.swing.JDialog implements EventConsu
     private javax.swing.JButton cmdCancel;
     private javax.swing.JButton cmdEditComponent;
     private javax.swing.JButton cmdEditEntry;
+    private javax.swing.JButton cmdRemoveComponent;
     private javax.swing.JButton cmdSave;
     private javax.swing.JLabel jLabel1;
     private javax.swing.JLabel jLabel4;
@@ -1397,6 +1486,16 @@ public class ClaimLedgerDialog extends javax.swing.JDialog implements EventConsu
 
         public ClaimComponent getComponentAt(int row) {
             return data.get(row);
+        }
+
+        public void setComponentAt(int row, ClaimComponent c) {
+            data.set(row, c);
+            fireTableRowsUpdated(row, row);
+        }
+
+        public void removeComponentAt(int row) {
+            data.remove(row);
+            fireTableRowsDeleted(row, row);
         }
     }
 

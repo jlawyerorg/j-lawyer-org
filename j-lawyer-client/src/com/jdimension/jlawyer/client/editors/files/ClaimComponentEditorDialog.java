@@ -208,7 +208,7 @@ terms of section 4, provided that you also meet all of these conditions:
     7.  This requirement modifies the requirement in section 4 to
     "keep intact all notices".
 
-    c) You must license the entire work, as a whole, under this
+    ir) You must license the entire work, as a whole, under this
     License to anyone who comes into possession of a copy.  This
     License will therefore apply, along with any applicable section 7
     additional terms, to the whole of the work, and all its parts,
@@ -255,7 +255,7 @@ in one of these ways:
     conveying of source, or (2) access to copy the
     Corresponding Source from a network server at no charge.
 
-    c) Convey individual copies of the object code with a copy of the
+    ir) Convey individual copies of the object code with a copy of the
     written offer to provide the Corresponding Source.  This
     alternative is allowed only occasionally and noncommercially, and
     only if you received the object code with such an offer, in accord
@@ -358,7 +358,7 @@ that material) supplement the terms of this License with terms:
     author attributions in that material or in the Appropriate Legal
     Notices displayed by works containing it; or
 
-    c) Prohibiting misrepresentation of the origin of that material, or
+    ir) Prohibiting misrepresentation of the origin of that material, or
     requiring that modified versions of such material be marked in
     reasonable ways as different from the original version; or
 
@@ -663,11 +663,21 @@ For more information on this, and how to apply and follow the GNU AGPL, see
  */
 package com.jdimension.jlawyer.client.editors.files;
 
+import com.jdimension.jlawyer.client.components.MultiCalDialog;
+import com.jdimension.jlawyer.client.editors.EditorsRegistry;
 import com.jdimension.jlawyer.persistence.ClaimComponent;
 import com.jdimension.jlawyer.persistence.ClaimComponentType;
 import com.jdimension.jlawyer.persistence.ClaimLedger;
+import com.jdimension.jlawyer.persistence.InterestRule;
+import com.jdimension.jlawyer.persistence.InterestType;
 import java.math.BigDecimal;
+import java.text.SimpleDateFormat;
+import java.util.ArrayList;
+import java.util.List;
 import javax.swing.JDialog;
+import javax.swing.JOptionPane;
+import javax.swing.table.AbstractTableModel;
+import org.apache.log4j.Logger;
 
 /**
  *
@@ -675,12 +685,15 @@ import javax.swing.JDialog;
  */
 public class ClaimComponentEditorDialog extends javax.swing.JDialog {
 
+    private static final Logger log = Logger.getLogger(ClaimComponentEditorDialog.class.getName());
+
     private boolean okPressed = false;
-    private ClaimComponent entry=null;
-    private ClaimLedger ledger=null;
+    private ClaimComponent entry = null;
+    private ClaimLedger ledger = null;
 
     /**
-     * Creates new form ClaimComponentEditorDialog
+     * Creates new form ClaimComponentEditorDialog Called for new claim
+     * components
      *
      * @param ledger
      * @param parent
@@ -689,44 +702,62 @@ public class ClaimComponentEditorDialog extends javax.swing.JDialog {
     public ClaimComponentEditorDialog(ClaimLedger ledger, JDialog parent, boolean modal) {
         super(parent, modal);
         initComponents();
-        
-        this.ledger=ledger;
+
+        this.ledger = ledger;
         this.cmbType.removeAllItems();
-        for(ClaimComponentType t: ClaimComponentType.values()) {
+        for (ClaimComponentType t : ClaimComponentType.values()) {
             this.cmbType.addItem(t);
         }
-        
+        this.tblInterestRules.setModel(new InterestRuleTableModel(new ArrayList<>()));
+
     }
-    
-    public ClaimComponentEditorDialog(ClaimLedger ledger, ClaimComponent entry, JDialog parent, boolean modal) {
+
+    /**
+     * Creates new form ClaimComponentEditorDialog Called for existing claim
+     * components
+     *
+     * @param ledger
+     * @param entry
+     * @param interestRules
+     * @param parent
+     * @param modal
+     */
+    public ClaimComponentEditorDialog(ClaimLedger ledger, ClaimComponent entry, List<InterestRule> interestRules, JDialog parent, boolean modal) {
         super(parent, modal);
         initComponents();
-        
-        this.ledger=ledger;
+
+        this.ledger = ledger;
         this.cmbType.removeAllItems();
-        for(ClaimComponentType t: ClaimComponentType.values()) {
+        for (ClaimComponentType t : ClaimComponentType.values()) {
             this.cmbType.addItem(t);
         }
+        this.setEntry(entry, interestRules);
     }
-    
-    public void setEntry(ClaimComponent entry) {
-        this.entry=entry;
+
+    public void setEntry(ClaimComponent entry, List<InterestRule> interestRules) {
+        this.entry = entry;
         this.txtName.setText(entry.getName());
         this.txtDescription.setText(entry.getComment());
         this.txtAmount.setValue(entry.getPrincipalAmount());
         this.cmbType.setSelectedItem(entry.getType());
+        this.tblInterestRules.setModel(new InterestRuleTableModel(interestRules));
     }
-    
+
     public ClaimComponent getEntry() {
-        if(this.entry==null)
-            this.entry=new ClaimComponent();
-        
+        if (this.entry == null) {
+            this.entry = new ClaimComponent();
+        }
+
         this.entry.setComment(this.txtDescription.getText());
         this.entry.setLedger(this.ledger);
         this.entry.setName(this.txtName.getText());
-        this.entry.setPrincipalAmount(new BigDecimal(((Number)this.txtAmount.getValue()).doubleValue()));
-        this.entry.setType((ClaimComponentType)this.cmbType.getSelectedItem());
+        this.entry.setPrincipalAmount(new BigDecimal(((Number) this.txtAmount.getValue()).doubleValue()));
+        this.entry.setType((ClaimComponentType) this.cmbType.getSelectedItem());
         return this.entry;
+    }
+
+    public List<InterestRule> getInterestRules() {
+        return ((InterestRuleTableModel) this.tblInterestRules.getModel()).getRules();
     }
 
     /**
@@ -738,6 +769,7 @@ public class ClaimComponentEditorDialog extends javax.swing.JDialog {
     // <editor-fold defaultstate="collapsed" desc="Generated Code">//GEN-BEGIN:initComponents
     private void initComponents() {
 
+        btnGrpInterestType = new javax.swing.ButtonGroup();
         jLabel1 = new javax.swing.JLabel();
         txtName = new javax.swing.JTextField();
         txtDescription = new javax.swing.JTextField();
@@ -748,17 +780,39 @@ public class ClaimComponentEditorDialog extends javax.swing.JDialog {
         jLabel4 = new javax.swing.JLabel();
         cmdCancel = new javax.swing.JButton();
         cmdSave = new javax.swing.JButton();
+        jLabel5 = new javax.swing.JLabel();
+        jScrollPane1 = new javax.swing.JScrollPane();
+        tblInterestRules = new javax.swing.JTable();
+        cmdAddInterestRule = new javax.swing.JButton();
+        cmdRemoveInterestRule = new javax.swing.JButton();
+        jLabel6 = new javax.swing.JLabel();
+        txtValidFrom = new javax.swing.JTextField();
+        cmdValidFrom = new javax.swing.JButton();
+        jSeparator1 = new javax.swing.JSeparator();
+        jLabel7 = new javax.swing.JLabel();
+        rdInterestFixed = new javax.swing.JRadioButton();
+        rdInterestBaseRelated = new javax.swing.JRadioButton();
+        txtInterestFixed = new javax.swing.JFormattedTextField();
+        txtInterestBaseRelated = new javax.swing.JFormattedTextField();
+        jLabel8 = new javax.swing.JLabel();
+        jLabel9 = new javax.swing.JLabel();
+        txtComment = new javax.swing.JTextField();
+        jLabel10 = new javax.swing.JLabel();
 
         setDefaultCloseOperation(javax.swing.WindowConstants.DISPOSE_ON_CLOSE);
 
+        jLabel1.setFont(jLabel1.getFont());
         jLabel1.setText("Name:");
 
+        jLabel2.setFont(jLabel2.getFont());
         jLabel2.setText("Beschreibung:");
 
+        jLabel3.setFont(jLabel3.getFont());
         jLabel3.setText("Typ:");
 
         txtAmount.setFormatterFactory(new javax.swing.text.DefaultFormatterFactory(new javax.swing.text.NumberFormatter()));
 
+        jLabel4.setFont(jLabel4.getFont());
         jLabel4.setText("Betrag:");
 
         cmdCancel.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/cancel.png"))); // NOI18N
@@ -777,6 +831,71 @@ public class ClaimComponentEditorDialog extends javax.swing.JDialog {
             }
         });
 
+        jLabel5.setFont(jLabel5.getFont().deriveFont(jLabel5.getFont().getStyle() | java.awt.Font.BOLD));
+        jLabel5.setText("Zinsregeln:");
+
+        tblInterestRules.setModel(new javax.swing.table.DefaultTableModel(
+            new Object [][] {
+                {null, null, null, null},
+                {null, null, null, null},
+                {null, null, null, null},
+                {null, null, null, null}
+            },
+            new String [] {
+                "Title 1", "Title 2", "Title 3", "Title 4"
+            }
+        ));
+        jScrollPane1.setViewportView(tblInterestRules);
+
+        cmdAddInterestRule.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/edit_add.png"))); // NOI18N
+        cmdAddInterestRule.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                cmdAddInterestRuleActionPerformed(evt);
+            }
+        });
+
+        cmdRemoveInterestRule.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/editdelete.png"))); // NOI18N
+        cmdRemoveInterestRule.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                cmdRemoveInterestRuleActionPerformed(evt);
+            }
+        });
+
+        jLabel6.setFont(jLabel6.getFont());
+        jLabel6.setText("gültig ab:");
+
+        txtValidFrom.setEnabled(false);
+
+        cmdValidFrom.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/schedule.png"))); // NOI18N
+        cmdValidFrom.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                cmdValidFromActionPerformed(evt);
+            }
+        });
+
+        jLabel7.setFont(jLabel7.getFont());
+        jLabel7.setText("Zinsmodell:");
+
+        rdInterestFixed.setFont(rdInterestFixed.getFont());
+        rdInterestFixed.setText("fester Zinssatz:");
+
+        rdInterestBaseRelated.setFont(rdInterestBaseRelated.getFont());
+        rdInterestBaseRelated.setSelected(true);
+        rdInterestBaseRelated.setText("Basiszinssatz + Aufschlag:");
+
+        txtInterestFixed.setFormatterFactory(new javax.swing.text.DefaultFormatterFactory(new javax.swing.text.NumberFormatter(java.text.NumberFormat.getPercentInstance())));
+
+        txtInterestBaseRelated.setFormatterFactory(new javax.swing.text.DefaultFormatterFactory(new javax.swing.text.NumberFormatter(java.text.NumberFormat.getPercentInstance())));
+
+        jLabel8.setFont(jLabel8.getFont());
+        jLabel8.setText("%");
+
+        jLabel9.setFont(jLabel9.getFont());
+        jLabel9.setText("%");
+
+        jLabel10.setFont(jLabel10.getFont());
+        jLabel10.setText("Kommentar:");
+
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(getContentPane());
         getContentPane().setLayout(layout);
         layout.setHorizontalGroup(
@@ -784,27 +903,65 @@ public class ClaimComponentEditorDialog extends javax.swing.JDialog {
             .addGroup(layout.createSequentialGroup()
                 .addContainerGap()
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
+                        .addComponent(cmdRemoveInterestRule)
+                        .addGap(0, 0, Short.MAX_VALUE))
                     .addGroup(layout.createSequentialGroup()
                         .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                            .addComponent(jLabel1)
-                            .addComponent(jLabel2)
-                            .addComponent(jLabel3)
-                            .addComponent(jLabel4))
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                            .addComponent(txtName)
-                            .addComponent(txtDescription)
+                            .addComponent(jSeparator1)
                             .addGroup(layout.createSequentialGroup()
-                                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
-                                    .addComponent(cmbType, 0, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                                    .addComponent(txtAmount))
-                                .addGap(0, 0, Short.MAX_VALUE))))
-                    .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
-                        .addGap(0, 402, Short.MAX_VALUE)
-                        .addComponent(cmdSave)
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addComponent(cmdCancel)))
-                .addContainerGap())
+                                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                                    .addComponent(jLabel1)
+                                    .addComponent(jLabel2)
+                                    .addComponent(jLabel3)
+                                    .addComponent(jLabel4))
+                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                                    .addComponent(txtName)
+                                    .addComponent(txtDescription)
+                                    .addGroup(layout.createSequentialGroup()
+                                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
+                                            .addComponent(cmbType, 0, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                                            .addComponent(txtAmount))
+                                        .addGap(0, 0, Short.MAX_VALUE))))
+                            .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
+                                .addGap(0, 0, Short.MAX_VALUE)
+                                .addComponent(cmdSave)
+                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                                .addComponent(cmdCancel))
+                            .addGroup(layout.createSequentialGroup()
+                                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                                    .addComponent(jLabel10)
+                                    .addComponent(jLabel7)
+                                    .addComponent(cmdAddInterestRule)
+                                    .addComponent(jLabel5)
+                                    .addComponent(jLabel6))
+                                .addGap(14, 14, 14)
+                                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                                    .addComponent(txtComment)
+                                    .addGroup(layout.createSequentialGroup()
+                                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                                            .addGroup(layout.createSequentialGroup()
+                                                .addComponent(txtValidFrom, javax.swing.GroupLayout.PREFERRED_SIZE, 120, javax.swing.GroupLayout.PREFERRED_SIZE)
+                                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                                                .addComponent(cmdValidFrom))
+                                            .addGroup(layout.createSequentialGroup()
+                                                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                                                    .addComponent(rdInterestBaseRelated)
+                                                    .addComponent(rdInterestFixed))
+                                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                                                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                                                    .addGroup(layout.createSequentialGroup()
+                                                        .addComponent(txtInterestFixed, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                                                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                                                        .addComponent(jLabel8))
+                                                    .addGroup(layout.createSequentialGroup()
+                                                        .addComponent(txtInterestBaseRelated, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                                                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                                                        .addComponent(jLabel9)))))
+                                        .addGap(0, 0, Short.MAX_VALUE)))))
+                        .addContainerGap())
+                    .addComponent(jScrollPane1, javax.swing.GroupLayout.DEFAULT_SIZE, 700, Short.MAX_VALUE)))
         );
         layout.setVerticalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
@@ -825,7 +982,37 @@ public class ClaimComponentEditorDialog extends javax.swing.JDialog {
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                     .addComponent(txtAmount, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                     .addComponent(jLabel4))
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addComponent(jSeparator1, javax.swing.GroupLayout.PREFERRED_SIZE, 10, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addGap(10, 10, 10)
+                .addComponent(jLabel5)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addComponent(cmdAddInterestRule)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                    .addComponent(jLabel6)
+                    .addComponent(txtValidFrom, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(cmdValidFrom))
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                    .addComponent(rdInterestBaseRelated)
+                    .addComponent(txtInterestFixed, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(jLabel8)
+                    .addComponent(jLabel7))
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                    .addComponent(rdInterestFixed)
+                    .addComponent(txtInterestBaseRelated, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(jLabel9))
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                    .addComponent(txtComment, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(jLabel10))
+                .addGap(18, 18, 18)
+                .addComponent(cmdRemoveInterestRule)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addComponent(jScrollPane1, javax.swing.GroupLayout.DEFAULT_SIZE, 254, Short.MAX_VALUE)
+                .addGap(18, 18, 18)
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                     .addComponent(cmdCancel)
                     .addComponent(cmdSave))
@@ -842,10 +1029,48 @@ public class ClaimComponentEditorDialog extends javax.swing.JDialog {
     }//GEN-LAST:event_cmdCancelActionPerformed
 
     private void cmdSaveActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdSaveActionPerformed
+        if (this.tblInterestRules.getRowCount() == 0) {
+            JOptionPane.showMessageDialog(this, "Es muss mindestens eine Zinsregel hinterlegt sein.", com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_WARNING, JOptionPane.WARNING_MESSAGE);
+            return;
+        }
+
         okPressed = true;
         setVisible(false);
         this.dispose();
     }//GEN-LAST:event_cmdSaveActionPerformed
+
+    private void cmdValidFromActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdValidFromActionPerformed
+        MultiCalDialog dlg = new MultiCalDialog(this.txtValidFrom, EditorsRegistry.getInstance().getMainWindow(), true);
+        dlg.setVisible(true);
+    }//GEN-LAST:event_cmdValidFromActionPerformed
+
+    private void cmdAddInterestRuleActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdAddInterestRuleActionPerformed
+        try {
+            InterestRule ir = new InterestRule();
+            ir.setBaseMargin(new BigDecimal((double) this.txtInterestBaseRelated.getValue()));
+            ir.setComment(this.txtComment.getText());
+            ir.setComponent(this.entry);
+            ir.setFixedRate(new BigDecimal((double) this.txtInterestFixed.getValue()));
+            ir.setInterestType(this.rdInterestFixed.isSelected() ? InterestType.FIXED : InterestType.BASIS_RELATED);
+            ir.setValidFrom(new SimpleDateFormat("dd.MM.yyyy").parse(this.txtValidFrom.getText()));
+            ((InterestRuleTableModel) this.tblInterestRules.getModel()).addRule(ir);
+        } catch (Exception ex) {
+            log.error(ex);
+            JOptionPane.showMessageDialog(this, "Fehler beim Übernehmen der Zinsregel: " + ex.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_WARNING, JOptionPane.WARNING_MESSAGE);
+        }
+    }//GEN-LAST:event_cmdAddInterestRuleActionPerformed
+
+    private void cmdRemoveInterestRuleActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdRemoveInterestRuleActionPerformed
+        int[] selected = this.tblInterestRules.getSelectedRows();
+        for (int sel = selected.length - 1; sel > -1; sel--) {
+
+            int tableIndex = selected[sel];
+            InterestRule cmp = ((InterestRuleTableModel) this.tblInterestRules.getModel()).getRuleAt(this.tblInterestRules.convertRowIndexToModel(tableIndex));
+
+            ((InterestRuleTableModel) this.tblInterestRules.getModel()).removeRuleAt(this.tblInterestRules.convertRowIndexToModel(this.tblInterestRules.getSelectedRow()));
+
+        }
+    }//GEN-LAST:event_cmdRemoveInterestRuleActionPerformed
 
     public boolean isOkPressed() {
         return okPressed;
@@ -892,15 +1117,100 @@ public class ClaimComponentEditorDialog extends javax.swing.JDialog {
     }
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
+    private javax.swing.ButtonGroup btnGrpInterestType;
     private javax.swing.JComboBox<ClaimComponentType> cmbType;
+    private javax.swing.JButton cmdAddInterestRule;
     private javax.swing.JButton cmdCancel;
+    private javax.swing.JButton cmdRemoveInterestRule;
     private javax.swing.JButton cmdSave;
+    private javax.swing.JButton cmdValidFrom;
     private javax.swing.JLabel jLabel1;
+    private javax.swing.JLabel jLabel10;
     private javax.swing.JLabel jLabel2;
     private javax.swing.JLabel jLabel3;
     private javax.swing.JLabel jLabel4;
+    private javax.swing.JLabel jLabel5;
+    private javax.swing.JLabel jLabel6;
+    private javax.swing.JLabel jLabel7;
+    private javax.swing.JLabel jLabel8;
+    private javax.swing.JLabel jLabel9;
+    private javax.swing.JScrollPane jScrollPane1;
+    private javax.swing.JSeparator jSeparator1;
+    private javax.swing.JRadioButton rdInterestBaseRelated;
+    private javax.swing.JRadioButton rdInterestFixed;
+    private javax.swing.JTable tblInterestRules;
     private javax.swing.JFormattedTextField txtAmount;
+    private javax.swing.JTextField txtComment;
     private javax.swing.JTextField txtDescription;
+    private javax.swing.JFormattedTextField txtInterestBaseRelated;
+    private javax.swing.JFormattedTextField txtInterestFixed;
     private javax.swing.JTextField txtName;
+    private javax.swing.JTextField txtValidFrom;
     // End of variables declaration//GEN-END:variables
+
+    class InterestRuleTableModel extends AbstractTableModel {
+
+        private final String[] columns = {"ab", "Zinsmodell", "%", "Kommentar"};
+        private final List<InterestRule> data;
+
+        InterestRuleTableModel(List<InterestRule> data) {
+            this.data = data;
+        }
+
+        @Override
+        public int getRowCount() {
+            return data.size();
+        }
+
+        @Override
+        public int getColumnCount() {
+            return columns.length;
+        }
+
+        @Override
+        public String getColumnName(int col) {
+            return columns[col];
+        }
+
+        @Override
+        public Object getValueAt(int row, int col) {
+            InterestRule ir = data.get(row);
+            switch (col) {
+                case 0:
+                    return ir.getValidFrom();
+                case 1:
+                    return ir.getInterestType().toString();
+                case 2:
+                    return ir.getInterestType() == InterestType.FIXED ? ir.getFixedRate() : ir.getBaseMargin();
+                case 3:
+                    return ir.getComment();
+                default:
+                    return "";
+            }
+        }
+
+        public void addRule(InterestRule ir) {
+            data.add(ir);
+            fireTableRowsInserted(data.size() - 1, data.size() - 1);
+        }
+
+        public InterestRule getRuleAt(int row) {
+            return data.get(row);
+        }
+
+        public void setRuleAt(int row, InterestRule ir) {
+            data.set(row, ir);
+            fireTableRowsUpdated(row, row);
+        }
+
+        public void removeRuleAt(int row) {
+            data.remove(row);
+            fireTableRowsDeleted(row, row);
+        }
+
+        public List<InterestRule> getRules() {
+            return this.data;
+        }
+    }
+
 }

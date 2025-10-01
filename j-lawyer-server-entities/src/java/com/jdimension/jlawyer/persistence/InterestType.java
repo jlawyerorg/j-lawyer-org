@@ -667,6 +667,17 @@ package com.jdimension.jlawyer.persistence;
  * @author jens
  */
 public enum InterestType {
-    FIXED,          // fester Zinssatz
-    BASIS_RELATED   // Basiszins + Aufschlag
+    FIXED("fester Zinssatz"),
+    BASIS_RELATED("Basiszins + Aufschlag");
+    
+    private final String label;
+    
+    InterestType(String label) {
+        this.label = label;
+    }
+
+    @Override
+    public String toString() {
+        return label;
+    }
 }

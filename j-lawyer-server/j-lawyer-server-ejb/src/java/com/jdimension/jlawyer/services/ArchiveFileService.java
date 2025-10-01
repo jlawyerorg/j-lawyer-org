@@ -796,6 +796,8 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
     @EJB
     private ClaimLedgerEntryFacadeLocal claimLedgerEntriesFacade;
     @EJB
+    private InterestRuleFacadeLocal claimComponentInterestRuleFacade;
+    @EJB
     private PaymentFacadeLocal paymentsFacade;
     @EJB
     private InvoicePositionFacadeLocal invoicePositionsFacade;
@@ -7508,6 +7510,7 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
     }
 
     @Override
+    @RolesAllowed({"readArchiveFileRole"})
     public List<ClaimComponent> getClaimComponents(String ledgerId) throws Exception {
         String principalId = context.getCallerPrincipal().getName();
         
@@ -7541,6 +7544,7 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
     }
 
     @Override
+    @RolesAllowed({"readArchiveFileRole"})
     public List<ClaimLedgerEntry> getClaimLedgerEntries(String ledgerId) throws Exception {
         String principalId = context.getCallerPrincipal().getName();
         
@@ -7571,6 +7575,162 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
         } else {
             return new ArrayList<>();
         }
+    }
+
+    @Override
+    @RolesAllowed({"writeArchiveFileRole"})
+    public ClaimComponent addClaimComponent(ClaimComponent component, List<InterestRule> interestRules, String ledgerId) throws Exception {
+        String principalId = context.getCallerPrincipal().getName();
+        
+        if(interestRules==null || interestRules.isEmpty()) {
+            throw new Exception("Forderungskomponente benötigt mindestens eine Zinsregel");
+        }
+        
+        ClaimLedger ledger=this.claimLedgersFacade.find(ledgerId);
+        if(ledger==null) {
+            log.error("Claim ledger with id " + ledgerId + " not found");
+            throw new Exception("Forderungskonto mit ID " + ledgerId + " existiert nicht!");
+        }
+        
+        ArchiveFileBean aFile = ledger.getArchiveFileKey();
+        boolean allowed = false;
+        if (principalId != null) {
+            List<Group> userGroups = new ArrayList<>();
+            try {
+                userGroups = this.securityFacade.getGroupsForUser(principalId);
+            } catch (Throwable t) {
+                log.error("Unable to determine groups for user " + principalId, t);
+            }
+            if (SecurityUtils.checkGroupsForCase(userGroups, aFile, this.caseGroupsFacade)) {
+                allowed = true;
+            }
+        } else {
+            allowed = true;
+        }
+        
+        if(!allowed)
+            throw new Exception("Forderungskonto darf von diesem Nutzer nicht bearbeitet werden!");
+        
+        component.setLedger(ledger);
+        
+        StringGenerator idGen = new StringGenerator();
+        component.setId(idGen.getID().toString());
+        this.claimComponentsFacade.create(component);
+        
+        for(InterestRule ir: interestRules) {
+            ir.setId(idGen.getID().toString());
+            ir.setComponent(component);
+            this.claimComponentInterestRuleFacade.create(ir);
+        }
+        
+        return this.claimComponentsFacade.find(component.getId());
+        
+        
+    }
+
+    @Override
+    @RolesAllowed({"writeArchiveFileRole"})
+    public ClaimComponent updateClaimComponent(ClaimComponent component, List<InterestRule> interestRules) throws Exception {
+        String principalId = context.getCallerPrincipal().getName();
+        
+        if(interestRules==null || interestRules.isEmpty()) {
+            throw new Exception("Forderungskomponente benötigt mindestens eine Zinsregel");
+        }
+        
+        ClaimComponent before=this.claimComponentsFacade.find(component.getId());
+        ClaimLedger ledger=before.getLedger();
+        if(ledger==null) {
+            log.error("Claim ledger with id " + ledger.getId() + " not found");
+            throw new Exception("Forderungskonto mit ID " + ledger.getId() + " existiert nicht!");
+        }
+        
+        ArchiveFileBean aFile = ledger.getArchiveFileKey();
+        boolean allowed = false;
+        if (principalId != null) {
+            List<Group> userGroups = new ArrayList<>();
+            try {
+                userGroups = this.securityFacade.getGroupsForUser(principalId);
+            } catch (Throwable t) {
+                log.error("Unable to determine groups for user " + principalId, t);
+            }
+            if (SecurityUtils.checkGroupsForCase(userGroups, aFile, this.caseGroupsFacade)) {
+                allowed = true;
+            }
+        } else {
+            allowed = true;
+        }
+        
+        if(!allowed)
+            throw new Exception("Forderungskonto darf von diesem Nutzer nicht bearbeitet werden!");
+        
+        before.setComment(component.getComment());
+        before.setName(component.getName());
+        before.setPrincipalAmount(component.getPrincipalAmount());
+        before.setType(component.getType());
+        
+        this.claimComponentsFacade.edit(before);
+        
+        List<InterestRule> existingRules=this.claimComponentInterestRuleFacade.findByComponent(before);
+        for(InterestRule ir: existingRules) {
+            this.claimComponentInterestRuleFacade.remove(ir);
+        }
+        StringGenerator idGen=new StringGenerator();
+        for(InterestRule ir: interestRules) {
+            ir.setId(idGen.getID().toString());
+            ir.setComponent(before);
+            this.claimComponentInterestRuleFacade.create(ir);
+        }
+        
+        return this.claimComponentsFacade.find(component.getId());
+    }
+
+    @Override
+    @RolesAllowed({"writeArchiveFileRole"})
+    public void removeClaimComponent(String componentId) throws Exception {
+        String principalId = context.getCallerPrincipal().getName();
+        
+        ClaimComponent currentComponent=this.claimComponentsFacade.find(componentId);
+        ClaimLedger ledger=currentComponent.getLedger();
+        if(ledger==null) {
+            log.error("Claim ledger with id " + ledger.getId() + " not found");
+            throw new Exception("Forderungskonto mit ID " + ledger.getId() + " existiert nicht!");
+        }
+        
+        ArchiveFileBean aFile = ledger.getArchiveFileKey();
+        boolean allowed = false;
+        if (principalId != null) {
+            List<Group> userGroups = new ArrayList<>();
+            try {
+                userGroups = this.securityFacade.getGroupsForUser(principalId);
+            } catch (Throwable t) {
+                log.error("Unable to determine groups for user " + principalId, t);
+            }
+            if (SecurityUtils.checkGroupsForCase(userGroups, aFile, this.caseGroupsFacade)) {
+                allowed = true;
+            }
+        } else {
+            allowed = true;
+        }
+        
+        if(!allowed)
+            throw new Exception("Forderungskonto darf von diesem Nutzer nicht bearbeitet werden!");
+        
+        List<InterestRule> iRules=this.claimComponentInterestRuleFacade.findByComponent(currentComponent);
+        for(InterestRule ir: iRules) {
+            this.claimComponentInterestRuleFacade.remove(ir);
+        }
+        
+        this.claimComponentsFacade.remove(currentComponent);
+    }
+
+    @Override
+    @RolesAllowed({"readArchiveFileRole"})
+    public List<InterestRule> getClaimComponentInterestRules(String componentId) throws Exception {
+        ClaimComponent cmp=this.claimComponentsFacade.find(componentId);
+        if(cmp!=null)
+            return this.claimComponentInterestRuleFacade.findByComponent(cmp);
+        else
+            return new ArrayList<>();
     }
 
 }
