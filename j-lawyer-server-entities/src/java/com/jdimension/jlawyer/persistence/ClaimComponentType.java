@@ -667,8 +667,19 @@ package com.jdimension.jlawyer.persistence;
  * @author jens
  */
 public enum ClaimComponentType {
-    MAIN_CLAIM,
-    COST_INTEREST_BEARING,
-    COST_NON_INTEREST_BEARING
+    MAIN_CLAIM("Hauptforderung"),
+    COST_INTEREST_BEARING("Kosten (verzinslich)"),
+    COST_NON_INTEREST_BEARING("Kosten (unverzinslich)");
+
+    private final String label;
+
+    ClaimComponentType(String label) {
+        this.label = label;
+    }
+
+    @Override
+    public String toString() {
+        return label;
+    }
     
 }

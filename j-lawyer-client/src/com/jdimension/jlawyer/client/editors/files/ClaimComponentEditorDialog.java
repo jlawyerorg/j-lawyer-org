@@ -663,18 +663,70 @@ For more information on this, and how to apply and follow the GNU AGPL, see
  */
 package com.jdimension.jlawyer.client.editors.files;
 
+import com.jdimension.jlawyer.persistence.ClaimComponent;
+import com.jdimension.jlawyer.persistence.ClaimComponentType;
+import com.jdimension.jlawyer.persistence.ClaimLedger;
+import java.math.BigDecimal;
+import javax.swing.JDialog;
+
 /**
  *
  * @author jens
  */
 public class ClaimComponentEditorDialog extends javax.swing.JDialog {
 
+    private boolean okPressed = false;
+    private ClaimComponent entry=null;
+    private ClaimLedger ledger=null;
+
     /**
      * Creates new form ClaimComponentEditorDialog
+     *
+     * @param ledger
+     * @param parent
+     * @param modal
      */
-    public ClaimComponentEditorDialog(java.awt.Frame parent, boolean modal) {
+    public ClaimComponentEditorDialog(ClaimLedger ledger, JDialog parent, boolean modal) {
         super(parent, modal);
         initComponents();
+        
+        this.ledger=ledger;
+        this.cmbType.removeAllItems();
+        for(ClaimComponentType t: ClaimComponentType.values()) {
+            this.cmbType.addItem(t);
+        }
+        
+    }
+    
+    public ClaimComponentEditorDialog(ClaimLedger ledger, ClaimComponent entry, JDialog parent, boolean modal) {
+        super(parent, modal);
+        initComponents();
+        
+        this.ledger=ledger;
+        this.cmbType.removeAllItems();
+        for(ClaimComponentType t: ClaimComponentType.values()) {
+            this.cmbType.addItem(t);
+        }
+    }
+    
+    public void setEntry(ClaimComponent entry) {
+        this.entry=entry;
+        this.txtName.setText(entry.getName());
+        this.txtDescription.setText(entry.getComment());
+        this.txtAmount.setValue(entry.getPrincipalAmount());
+        this.cmbType.setSelectedItem(entry.getType());
+    }
+    
+    public ClaimComponent getEntry() {
+        if(this.entry==null)
+            this.entry=new ClaimComponent();
+        
+        this.entry.setComment(this.txtDescription.getText());
+        this.entry.setLedger(this.ledger);
+        this.entry.setName(this.txtName.getText());
+        this.entry.setPrincipalAmount(new BigDecimal(((Number)this.txtAmount.getValue()).doubleValue()));
+        this.entry.setType((ClaimComponentType)this.cmbType.getSelectedItem());
+        return this.entry;
     }
 
     /**
@@ -686,21 +738,118 @@ public class ClaimComponentEditorDialog extends javax.swing.JDialog {
     // <editor-fold defaultstate="collapsed" desc="Generated Code">//GEN-BEGIN:initComponents
     private void initComponents() {
 
+        jLabel1 = new javax.swing.JLabel();
+        txtName = new javax.swing.JTextField();
+        txtDescription = new javax.swing.JTextField();
+        jLabel2 = new javax.swing.JLabel();
+        cmbType = new javax.swing.JComboBox<>();
+        jLabel3 = new javax.swing.JLabel();
+        txtAmount = new javax.swing.JFormattedTextField();
+        jLabel4 = new javax.swing.JLabel();
+        cmdCancel = new javax.swing.JButton();
+        cmdSave = new javax.swing.JButton();
+
         setDefaultCloseOperation(javax.swing.WindowConstants.DISPOSE_ON_CLOSE);
+
+        jLabel1.setText("Name:");
+
+        jLabel2.setText("Beschreibung:");
+
+        jLabel3.setText("Typ:");
+
+        txtAmount.setFormatterFactory(new javax.swing.text.DefaultFormatterFactory(new javax.swing.text.NumberFormatter()));
+
+        jLabel4.setText("Betrag:");
+
+        cmdCancel.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/cancel.png"))); // NOI18N
+        cmdCancel.setText("Abbrechen");
+        cmdCancel.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                cmdCancelActionPerformed(evt);
+            }
+        });
+
+        cmdSave.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/agt_action_success.png"))); // NOI18N
+        cmdSave.setText("Speichern");
+        cmdSave.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                cmdSaveActionPerformed(evt);
+            }
+        });
 
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(getContentPane());
         getContentPane().setLayout(layout);
         layout.setHorizontalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGap(0, 706, Short.MAX_VALUE)
+            .addGroup(layout.createSequentialGroup()
+                .addContainerGap()
+                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addGroup(layout.createSequentialGroup()
+                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                            .addComponent(jLabel1)
+                            .addComponent(jLabel2)
+                            .addComponent(jLabel3)
+                            .addComponent(jLabel4))
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                            .addComponent(txtName)
+                            .addComponent(txtDescription)
+                            .addGroup(layout.createSequentialGroup()
+                                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
+                                    .addComponent(cmbType, 0, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                                    .addComponent(txtAmount))
+                                .addGap(0, 0, Short.MAX_VALUE))))
+                    .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
+                        .addGap(0, 402, Short.MAX_VALUE)
+                        .addComponent(cmdSave)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addComponent(cmdCancel)))
+                .addContainerGap())
         );
         layout.setVerticalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGap(0, 502, Short.MAX_VALUE)
+            .addGroup(layout.createSequentialGroup()
+                .addContainerGap()
+                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                    .addComponent(jLabel1)
+                    .addComponent(txtName, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                    .addComponent(txtDescription, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(jLabel2))
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                    .addComponent(cmbType, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(jLabel3))
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                    .addComponent(txtAmount, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(jLabel4))
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                    .addComponent(cmdCancel)
+                    .addComponent(cmdSave))
+                .addContainerGap())
         );
 
         pack();
     }// </editor-fold>//GEN-END:initComponents
+
+    private void cmdCancelActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdCancelActionPerformed
+        okPressed = false;
+        setVisible(false);
+        this.dispose();
+    }//GEN-LAST:event_cmdCancelActionPerformed
+
+    private void cmdSaveActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdSaveActionPerformed
+        okPressed = true;
+        setVisible(false);
+        this.dispose();
+    }//GEN-LAST:event_cmdSaveActionPerformed
+
+    public boolean isOkPressed() {
+        return okPressed;
+    }
 
     /**
      * @param args the command line arguments
@@ -730,20 +879,28 @@ public class ClaimComponentEditorDialog extends javax.swing.JDialog {
         //</editor-fold>
 
         /* Create and display the dialog */
-        java.awt.EventQueue.invokeLater(new Runnable() {
-            public void run() {
-                ClaimComponentEditorDialog dialog = new ClaimComponentEditorDialog(new javax.swing.JFrame(), true);
-                dialog.addWindowListener(new java.awt.event.WindowAdapter() {
-                    @Override
-                    public void windowClosing(java.awt.event.WindowEvent e) {
-                        System.exit(0);
-                    }
-                });
-                dialog.setVisible(true);
-            }
+        java.awt.EventQueue.invokeLater(() -> {
+            ClaimComponentEditorDialog dialog = new ClaimComponentEditorDialog(null, null, true);
+            dialog.addWindowListener(new java.awt.event.WindowAdapter() {
+                @Override
+                public void windowClosing(java.awt.event.WindowEvent e) {
+                    System.exit(0);
+                }
+            });
+            dialog.setVisible(true);
         });
     }
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
+    private javax.swing.JComboBox<ClaimComponentType> cmbType;
+    private javax.swing.JButton cmdCancel;
+    private javax.swing.JButton cmdSave;
+    private javax.swing.JLabel jLabel1;
+    private javax.swing.JLabel jLabel2;
+    private javax.swing.JLabel jLabel3;
+    private javax.swing.JLabel jLabel4;
+    private javax.swing.JFormattedTextField txtAmount;
+    private javax.swing.JTextField txtDescription;
+    private javax.swing.JTextField txtName;
     // End of variables declaration//GEN-END:variables
 }

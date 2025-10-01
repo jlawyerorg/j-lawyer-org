@@ -312,6 +312,9 @@
                       <Image iconType="3" name="/icons/edit_add.png"/>
                     </Property>
                   </Properties>
+                  <Events>
+                    <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="cmdAddComponentActionPerformed"/>
+                  </Events>
                 </Component>
                 <Component class="javax.swing.JButton" name="cmdEditComponent">
                   <Properties>

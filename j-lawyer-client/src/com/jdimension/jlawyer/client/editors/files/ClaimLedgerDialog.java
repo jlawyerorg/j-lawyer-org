@@ -796,6 +796,8 @@ public class ClaimLedgerDialog extends javax.swing.JDialog implements EventConsu
 
         if (ledger == null) {
             this.setTitle("neues Forderungskonto erstellen");
+            this.tblComponents.setModel(new ComponentTableModel(new ArrayList<>()));
+            this.tblLedger.setModel(new LedgerTableModel(new ArrayList<>()));
 
         } else {
             this.setTitle("Forderungskonto " + ledger.getName());
@@ -951,6 +953,11 @@ public class ClaimLedgerDialog extends javax.swing.JDialog implements EventConsu
 
         cmdAddComponent.setFont(cmdAddComponent.getFont());
         cmdAddComponent.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/edit_add.png"))); // NOI18N
+        cmdAddComponent.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                cmdAddComponentActionPerformed(evt);
+            }
+        });
 
         cmdEditComponent.setFont(cmdEditComponent.getFont());
         cmdEditComponent.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons16/kate.png"))); // NOI18N
@@ -1168,6 +1175,15 @@ public class ClaimLedgerDialog extends javax.swing.JDialog implements EventConsu
         this.dispose();
     }//GEN-LAST:event_cmdSaveActionPerformed
 
+    private void cmdAddComponentActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdAddComponentActionPerformed
+        ClaimComponentEditorDialog dlg = new ClaimComponentEditorDialog(this.currentEntry, this, true);
+        FrameUtils.centerDialog(dlg, this);
+        dlg.setVisible(true);
+        if (dlg.isOkPressed()) {
+            ((ComponentTableModel) this.tblComponents.getModel()).addComponent(dlg.getEntry());
+        }
+    }//GEN-LAST:event_cmdAddComponentActionPerformed
+
 //    public void updateTotals(InvoicePositionEntryPanel ep) {
 //        if (ep != null) {
 //            ep.updateEntryTotal();
@@ -1337,7 +1353,7 @@ public class ClaimLedgerDialog extends javax.swing.JDialog implements EventConsu
 
     class ComponentTableModel extends AbstractTableModel {
 
-        private final String[] columns = {"ID", "Name", "Typ"};
+        private final String[] columns = {"Betrag", "Typ", "Name"};
         private final List<ClaimComponent> data;
 
         ComponentTableModel(List<ClaimComponent> data) {
@@ -1364,14 +1380,23 @@ public class ClaimLedgerDialog extends javax.swing.JDialog implements EventConsu
             ClaimComponent c = data.get(row);
             switch (col) {
                 case 0:
-                    return c.getId();
+                    return c.getPrincipalAmount();
                 case 1:
-                    return c.getName();
-                case 2:
                     return c.getType();
+                case 2:
+                    return c.getName();
                 default:
                     return "";
             }
+        }
+
+        public void addComponent(ClaimComponent c) {
+            data.add(c);
+            fireTableRowsInserted(data.size() - 1, data.size() - 1);
+        }
+
+        public ClaimComponent getComponentAt(int row) {
+            return data.get(row);
         }
     }
 

@@ -663,6 +663,8 @@ For more information on this, and how to apply and follow the GNU AGPL, see
  */
 package com.jdimension.jlawyer.client.editors.files;
 
+import javax.swing.JDialog;
+
 /**
  *
  * @author jens
@@ -671,8 +673,10 @@ public class ClaimLedgerEntryEditorDialog extends javax.swing.JDialog {
 
     /**
      * Creates new form ClaimLedgerEntryEditorDialog
+     * @param parent
+     * @param modal
      */
-    public ClaimLedgerEntryEditorDialog(java.awt.Frame parent, boolean modal) {
+    public ClaimLedgerEntryEditorDialog(JDialog parent, boolean modal) {
         super(parent, modal);
         initComponents();
     }
@@ -730,17 +734,15 @@ public class ClaimLedgerEntryEditorDialog extends javax.swing.JDialog {
         //</editor-fold>
 
         /* Create and display the dialog */
-        java.awt.EventQueue.invokeLater(new Runnable() {
-            public void run() {
-                ClaimLedgerEntryEditorDialog dialog = new ClaimLedgerEntryEditorDialog(new javax.swing.JFrame(), true);
-                dialog.addWindowListener(new java.awt.event.WindowAdapter() {
-                    @Override
-                    public void windowClosing(java.awt.event.WindowEvent e) {
-                        System.exit(0);
-                    }
-                });
-                dialog.setVisible(true);
-            }
+        java.awt.EventQueue.invokeLater(() -> {
+            ClaimLedgerEntryEditorDialog dialog = new ClaimLedgerEntryEditorDialog(null, true);
+            dialog.addWindowListener(new java.awt.event.WindowAdapter() {
+                @Override
+                public void windowClosing(java.awt.event.WindowEvent e) {
+                    System.exit(0);
+                }
+            });
+            dialog.setVisible(true);
         });
     }
 
