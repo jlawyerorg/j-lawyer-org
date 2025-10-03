@@ -582,10 +582,26 @@ public class DayContentPanel extends JPanel {
                 final int column = columnInfo.getColumn(event);
                 final int maxColumns = columnInfo.getMaxColumns(event);
 
-                graphics2d.fillRoundRect(column * (getWidth() - 4)
-                                / maxColumns, eventStart, (getWidth() - 4)
-                                / maxColumns - 2, eventYEnd - eventStart,
-                        12, 12);
+                final int rectX = column * (getWidth() - 4) / maxColumns;
+                final int rectWidth = (getWidth() - 4) / maxColumns - 2;
+                final int rectHeight = eventYEnd - eventStart;
+
+                // Fill event background
+                graphics2d.fillRoundRect(rectX, eventStart, rectWidth, rectHeight, 12, 12);
+
+                // Draw inner border (1.5x darker than background)
+                Color borderColor = new Color(
+                    (int)(bgColor.getRed() * 0.67),
+                    (int)(bgColor.getGreen() * 0.67),
+                    (int)(bgColor.getBlue() * 0.67)
+                );
+                if (event.isSelected()) {
+                    borderColor = borderColor.darker();
+                }
+                graphics2d.setColor(borderColor);
+                graphics2d.setStroke(new BasicStroke(1f));
+                graphics2d.drawRoundRect(rectX, eventStart, rectWidth, rectHeight, 12, 12);
+
                 final String eventString = sdf.format(event.getStart()) + " - "
                         + sdf.format(event.getEnd()) + " " + event.getSummary();
 
