@@ -885,15 +885,43 @@ public class MarkdownPanel extends javax.swing.JPanel implements PreviewPanel {
         doCompound(() -> {
             int start = taEdit.getSelectionStart();
             int end = taEdit.getSelectionEnd();
+            String text = taEdit.getText();
+
             try {
                 if (start == end) {
+                    // No selection: insert markers and place cursor between them
                     taEdit.getDocument().insertString(start, prefix + suffix, null);
                     taEdit.setCaretPosition(start + prefix.length());
                 } else {
                     String sel = taEdit.getSelectedText();
-                    taEdit.getDocument().remove(start, end - start);
-                    taEdit.getDocument().insertString(start, prefix + sel + suffix, null);
-                    taEdit.select(start + prefix.length(), start + prefix.length() + sel.length());
+                    int prefixLen = prefix.length();
+                    int suffixLen = suffix.length();
+
+                    // Case 1: Check if markers are OUTSIDE the selection: **|Text|**
+                    boolean hasOuterPrefix = start >= prefixLen && text.substring(start - prefixLen, start).equals(prefix);
+                    boolean hasOuterSuffix = end + suffixLen <= text.length() && text.substring(end, end + suffixLen).equals(suffix);
+
+                    // Case 2: Check if markers are INSIDE the selection: |**Text**|
+                    boolean hasInnerPrefix = sel.startsWith(prefix);
+                    boolean hasInnerSuffix = sel.endsWith(suffix);
+
+                    if (hasOuterPrefix && hasOuterSuffix) {
+                        // Remove outer markers (unwrap): **|Text|** → Text
+                        taEdit.getDocument().remove(end, suffixLen); // Remove suffix first
+                        taEdit.getDocument().remove(start - prefixLen, prefixLen); // Then prefix
+                        taEdit.select(start - prefixLen, start - prefixLen + sel.length());
+                    } else if (hasInnerPrefix && hasInnerSuffix && sel.length() > prefixLen + suffixLen) {
+                        // Remove inner markers (unwrap): |**Text**| → |Text|
+                        String unwrapped = sel.substring(prefixLen, sel.length() - suffixLen);
+                        taEdit.getDocument().remove(start, end - start);
+                        taEdit.getDocument().insertString(start, unwrapped, null);
+                        taEdit.select(start, start + unwrapped.length());
+                    } else {
+                        // Add markers (wrap): |Text| → |**Text**|
+                        taEdit.getDocument().remove(start, end - start);
+                        taEdit.getDocument().insertString(start, prefix + sel + suffix, null);
+                        taEdit.select(start + prefix.length(), start + prefix.length() + sel.length());
+                    }
                 }
             } catch (Exception ex) {
                 log.error(ex);
@@ -1524,12 +1552,14 @@ public class MarkdownPanel extends javax.swing.JPanel implements PreviewPanel {
             return false;
         }
         String[] words = target.split(" ");
+        // Allow common markdown chars, but limit to max 3 chars before/after to avoid over-matching
         String punct = "\\\\*`_~\\\\[\\\\]\\\\(\\\\)!\\\\\\\\>#+\\\\-\\\\.\\\\d";
         StringBuilder rx = new StringBuilder();
         rx.append("(?s)"); // DOTALL to match across lines
         for (int i = 0; i < words.length; i++) {
             String w = java.util.regex.Pattern.quote(words[i]);
-            rx.append("(?:[").append(punct).append("]*)").append(w).append("(?:[").append(punct).append("]*)");
+            // Limit markdown chars to 0-3 occurrences (e.g., **, ***, _Text_, **_Text_**)
+            rx.append("(?:[").append(punct).append("]{0,3})").append(w).append("(?:[").append(punct).append("]{0,3})");
             if (i < words.length - 1) {
                 rx.append("[\\s]+");
             }
@@ -1741,45 +1771,84 @@ public class MarkdownPanel extends javax.swing.JPanel implements PreviewPanel {
         if (end > text.length()) {
             end = text.length();
         }
-        String sel = text.substring(start, end);
 
-        // Trim closing markers first
         boolean changed = false;
-        if (sel.endsWith("**") && end - start >= 2) {
-            end -= 2;
-            changed = true;
-            sel = text.substring(start, end);
-        } else if (sel.endsWith("`") && end - start >= 1) {
-            end -= 1;
-            changed = true;
-            sel = text.substring(start, end);
-        } else if (sel.endsWith("*") && end - start >= 1) {
-            end -= 1;
-            changed = true;
-            sel = text.substring(start, end);
-        } else if (sel.endsWith("_") && end - start >= 1) {
-            end -= 1;
-            changed = true;
-            sel = text.substring(start, end);
+
+        // Trim closing markers first (order: longer patterns first)
+        // Check ** (bold)
+        if (end >= start + 2 && end >= 2 && text.charAt(end - 1) == '*' && text.charAt(end - 2) == '*') {
+            // Check if matching opening ** exists
+            if (start >= 2 && text.charAt(start) == '*' && text.charAt(start + 1) == '*') {
+                end -= 2;
+                changed = true;
+            }
         }
 
-        // Trim opening markers
-        if (sel.startsWith("**") && end - start >= 2) {
+        // Check __ (bold alternative)
+        if (end >= start + 2 && end >= 2 && text.charAt(end - 1) == '_' && text.charAt(end - 2) == '_') {
+            // Check if matching opening __ exists
+            if (start >= 2 && text.charAt(start) == '_' && text.charAt(start + 1) == '_') {
+                end -= 2;
+                changed = true;
+            }
+        }
+
+        // Check ` (inline code)
+        if (end >= start + 1 && end >= 1 && text.charAt(end - 1) == '`') {
+            // Check if matching opening ` exists
+            if (start < text.length() && text.charAt(start) == '`') {
+                end -= 1;
+                changed = true;
+            }
+        }
+
+        // Check * (italic)
+        if (end >= start + 1 && end >= 1 && text.charAt(end - 1) == '*') {
+            // Check if matching opening * exists
+            if (start < text.length() && text.charAt(start) == '*') {
+                end -= 1;
+                changed = true;
+            }
+        }
+
+        // Check _ (italic alternative)
+        if (end >= start + 1 && end >= 1 && text.charAt(end - 1) == '_') {
+            // Check if matching opening _ exists
+            if (start < text.length() && text.charAt(start) == '_') {
+                end -= 1;
+                changed = true;
+            }
+        }
+
+        // Trim opening markers (order: longer patterns first)
+        // Check ** (bold)
+        if (start + 2 <= end && start + 1 < text.length() && text.charAt(start) == '*' && text.charAt(start + 1) == '*') {
             start += 2;
             changed = true;
-            sel = text.substring(start, end);
-        } else if (sel.startsWith("`") && end - start >= 1) {
+        }
+
+        // Check __ (bold alternative)
+        if (start + 2 <= end && start + 1 < text.length() && text.charAt(start) == '_' && text.charAt(start + 1) == '_') {
+            start += 2;
+            changed = true;
+        }
+
+        // Check ` (inline code)
+        if (start + 1 <= end && start < text.length() && text.charAt(start) == '`') {
             start += 1;
             changed = true;
-            sel = text.substring(start, end);
-        } else if (sel.startsWith("*") && end - start >= 1) {
+        }
+
+        // Check * (italic)
+        if (start + 1 <= end && start < text.length() && text.charAt(start) == '*') {
             start += 1;
             changed = true;
-            sel = text.substring(start, end);
-        } else if (sel.startsWith("_") && end - start >= 1) {
+        }
+
+        // Check _ (italic alternative)
+        if (start + 1 <= end && start < text.length() && text.charAt(start) == '_') {
             start += 1;
             changed = true;
-            sel = text.substring(start, end);
         }
 
         if (changed && end > start) {
