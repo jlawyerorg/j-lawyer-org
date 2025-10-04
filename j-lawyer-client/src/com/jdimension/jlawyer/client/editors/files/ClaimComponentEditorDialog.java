@@ -751,7 +751,7 @@ public class ClaimComponentEditorDialog extends javax.swing.JDialog {
         this.entry.setComment(this.txtDescription.getText());
         this.entry.setLedger(this.ledger);
         this.entry.setName(this.txtName.getText());
-        this.entry.setPrincipalAmount(new BigDecimal(((Number) this.txtAmount.getValue()).doubleValue()));
+        this.entry.setPrincipalAmount(BigDecimal.valueOf(((Number) this.txtAmount.getValue()).doubleValue()));
         this.entry.setType((ClaimComponentType) this.cmbType.getSelectedItem());
         return this.entry;
     }
@@ -876,9 +876,11 @@ public class ClaimComponentEditorDialog extends javax.swing.JDialog {
         jLabel7.setFont(jLabel7.getFont());
         jLabel7.setText("Zinsmodell:");
 
+        btnGrpInterestType.add(rdInterestFixed);
         rdInterestFixed.setFont(rdInterestFixed.getFont());
         rdInterestFixed.setText("fester Zinssatz:");
 
+        btnGrpInterestType.add(rdInterestBaseRelated);
         rdInterestBaseRelated.setFont(rdInterestBaseRelated.getFont());
         rdInterestBaseRelated.setSelected(true);
         rdInterestBaseRelated.setText("Basiszinssatz + Aufschlag:");
@@ -1047,10 +1049,10 @@ public class ClaimComponentEditorDialog extends javax.swing.JDialog {
     private void cmdAddInterestRuleActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdAddInterestRuleActionPerformed
         try {
             InterestRule ir = new InterestRule();
-            ir.setBaseMargin(new BigDecimal((double) this.txtInterestBaseRelated.getValue()));
+            ir.setBaseMargin(BigDecimal.valueOf((double) this.txtInterestBaseRelated.getValue()));
             ir.setComment(this.txtComment.getText());
             ir.setComponent(this.entry);
-            ir.setFixedRate(new BigDecimal((double) this.txtInterestFixed.getValue()));
+            ir.setFixedRate(BigDecimal.valueOf((double) this.txtInterestFixed.getValue()));
             ir.setInterestType(this.rdInterestFixed.isSelected() ? InterestType.FIXED : InterestType.BASIS_RELATED);
             ir.setValidFrom(new SimpleDateFormat("dd.MM.yyyy").parse(this.txtValidFrom.getText()));
             ((InterestRuleTableModel) this.tblInterestRules.getModel()).addRule(ir);
@@ -1065,9 +1067,7 @@ public class ClaimComponentEditorDialog extends javax.swing.JDialog {
         for (int sel = selected.length - 1; sel > -1; sel--) {
 
             int tableIndex = selected[sel];
-            InterestRule cmp = ((InterestRuleTableModel) this.tblInterestRules.getModel()).getRuleAt(this.tblInterestRules.convertRowIndexToModel(tableIndex));
-
-            ((InterestRuleTableModel) this.tblInterestRules.getModel()).removeRuleAt(this.tblInterestRules.convertRowIndexToModel(this.tblInterestRules.getSelectedRow()));
+            ((InterestRuleTableModel) this.tblInterestRules.getModel()).removeRuleAt(this.tblInterestRules.convertRowIndexToModel(tableIndex));
 
         }
     }//GEN-LAST:event_cmdRemoveInterestRuleActionPerformed

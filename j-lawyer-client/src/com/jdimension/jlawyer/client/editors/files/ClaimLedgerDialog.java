@@ -663,84 +663,25 @@ For more information on this, and how to apply and follow the GNU AGPL, see
  */
 package com.jdimension.jlawyer.client.editors.files;
 
-import com.jdimension.jlawyer.client.components.MultiCalDialog;
-import com.jdimension.jlawyer.client.configuration.UserListCellRenderer;
-import com.jdimension.jlawyer.client.editors.EditorsRegistry;
-import com.jdimension.jlawyer.client.events.DocumentAddedEvent;
 import com.jdimension.jlawyer.client.events.Event;
-import com.jdimension.jlawyer.client.events.EventBroker;
 import com.jdimension.jlawyer.client.events.EventConsumer;
-import com.jdimension.jlawyer.client.events.InvoicePositionAddedEvent;
-import com.jdimension.jlawyer.client.plugins.calculation.CalculationPlugin;
-import com.jdimension.jlawyer.client.plugins.calculation.CalculationPluginDialog;
-import com.jdimension.jlawyer.client.plugins.calculation.CalculationPluginUtil;
-import com.jdimension.jlawyer.client.processing.ProgressIndicator;
 import com.jdimension.jlawyer.client.settings.ClientSettings;
 import com.jdimension.jlawyer.client.settings.ServerSettings;
-import com.jdimension.jlawyer.client.settings.UserSettings;
-import com.jdimension.jlawyer.client.utils.CaseUtils;
 import com.jdimension.jlawyer.client.utils.ComponentUtils;
-import com.jdimension.jlawyer.client.utils.FileUtils;
 import com.jdimension.jlawyer.client.utils.FrameUtils;
-import com.jdimension.jlawyer.client.utils.StringUtils;
-import com.jdimension.jlawyer.client.utils.TableUtils;
-import com.jdimension.jlawyer.client.utils.einvoice.EInvoiceUtils;
-import com.jdimension.jlawyer.persistence.AddressBean;
-import com.jdimension.jlawyer.persistence.AppOptionGroupBean;
-import com.jdimension.jlawyer.persistence.AppUserBean;
 import com.jdimension.jlawyer.persistence.ArchiveFileBean;
-import com.jdimension.jlawyer.persistence.ArchiveFileDocumentsBean;
-import com.jdimension.jlawyer.persistence.CaseAccountEntry;
 import com.jdimension.jlawyer.persistence.ClaimComponent;
 import com.jdimension.jlawyer.persistence.ClaimLedger;
 import com.jdimension.jlawyer.persistence.ClaimLedgerEntry;
 import com.jdimension.jlawyer.persistence.InterestRule;
-import com.jdimension.jlawyer.persistence.Invoice;
-import com.jdimension.jlawyer.persistence.InvoicePool;
-import com.jdimension.jlawyer.persistence.InvoicePosition;
-import com.jdimension.jlawyer.persistence.InvoicePositionTemplate;
-import com.jdimension.jlawyer.persistence.InvoiceType;
-import com.jdimension.jlawyer.persistence.TimesheetPosition;
-import com.jdimension.jlawyer.server.constants.OptionConstants;
-import com.jdimension.jlawyer.services.ArchiveFileServiceRemote;
 import com.jdimension.jlawyer.services.JLawyerServiceLocator;
-import java.awt.Color;
-import java.awt.Component;
-import java.awt.event.ActionEvent;
-import java.math.BigDecimal;
-import java.math.RoundingMode;
 import java.text.DecimalFormat;
-import java.text.DecimalFormatSymbols;
 import java.text.SimpleDateFormat;
-import java.time.LocalDateTime;
-import java.time.ZoneId;
 import java.util.ArrayList;
-import java.util.Collections;
-import java.util.Date;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Locale;
-import java.util.Map;
-import java.util.TreeMap;
-import java.util.stream.Collectors;
-import javax.swing.BoxLayout;
-import javax.swing.DefaultComboBoxModel;
-import javax.swing.DefaultListModel;
-import javax.swing.JLabel;
-import javax.swing.JMenuItem;
 import javax.swing.JOptionPane;
-import javax.swing.JPanel;
-import javax.swing.JTable;
-import static javax.swing.SwingConstants.RIGHT;
 import javax.swing.table.AbstractTableModel;
-import javax.swing.table.DefaultTableCellRenderer;
-import javax.swing.table.DefaultTableModel;
-import javax.swing.table.TableRowSorter;
 import org.apache.log4j.Logger;
-import org.jlawyer.plugins.calculation.Cell;
-import org.jlawyer.plugins.calculation.StyledCalculationTable;
-import org.mustangproject.ZUGFeRD.Profiles;
-import org.mustangproject.ZUGFeRD.ZUGFeRD2PullProvider;
 import themes.colors.DefaultColorTheme;
 
 /**
@@ -764,7 +705,7 @@ public class ClaimLedgerDialog extends javax.swing.JDialog implements EventConsu
     private boolean cancelled = true;
 
     /**
-     * Creates new form InvoiceDialog
+     * Creates new form ClaimLedgerDialog
      *
      * @param caseView
      * @param caseDto
@@ -818,17 +759,6 @@ public class ClaimLedgerDialog extends javax.swing.JDialog implements EventConsu
                 JOptionPane.showMessageDialog(this, "Fehler beim Speichern der Rechnungsposition: " + ex.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
             }
 
-            // Dummy-Daten
-//            ClaimComponent hf = new ClaimComponent("C1", "Hauptforderung", "HF");
-//            ClaimComponent kosten = new ClaimComponent("C2", "Gerichtskosten", "NF");
-//            List<ClaimComponent> components = new ArrayList<>();
-//            components.add(hf);
-//            components.add(kosten);
-//
-//            List<ClaimLedgerEntry> entries = new ArrayList<>();
-//            entries.add(new ClaimLedgerEntry("E1", "2025-01-01", "INTEREST", 112.50, hf));
-//            entries.add(new ClaimLedgerEntry("E2", "2025-01-05", "PAYMENT", -1000.00, null));
-//            entries.add(new ClaimLedgerEntry("E3", "2025-01-15", "COST", 20.00, kosten));
         }
 
     }
@@ -1272,94 +1202,6 @@ public class ClaimLedgerDialog extends javax.swing.JDialog implements EventConsu
         }
     }//GEN-LAST:event_cmdRemoveComponentActionPerformed
 
-//    public void updateTotals(InvoicePositionEntryPanel ep) {
-//        if (ep != null) {
-//            ep.updateEntryTotal();
-//        }
-//
-//        BigDecimal totalTax = BigDecimal.ZERO;
-//        BigDecimal totalGross = BigDecimal.ZERO;
-//        BigDecimal totalNet = BigDecimal.ZERO;
-//
-//        Map<BigDecimal, BigDecimal> taxRateToNetSum = new HashMap<>();
-//
-//        for (Component c : this.pnlInvoicePositions.getComponents()) {
-//            if (c instanceof InvoicePositionEntryPanel) {
-//                InvoicePosition pos = ((InvoicePositionEntryPanel) c).getEntry();
-//                BigDecimal u = pos.getUnits();
-//                BigDecimal up = pos.getUnitPrice();
-//                BigDecimal t = pos.getTaxRate();
-//
-//                // Netto = Menge * Einzelpreis, kaufmännisch runden
-//                BigDecimal netAmount = u.multiply(up).setScale(2, RoundingMode.HALF_UP);
-//                totalNet = totalNet.add(netAmount);
-//
-//                if (this.chkTaxes.isSelected()) {
-//                    // Basisbetrag je Steuersatz sammeln
-//                    taxRateToNetSum.put(t, taxRateToNetSum.getOrDefault(t, BigDecimal.ZERO).add(netAmount));
-//                } else {
-//                    // Falls keine Steuer berechnet wird
-//                    totalGross = totalGross.add(netAmount);
-//                }
-//            }
-//        }
-//
-//        // Steuern korrekt auf Basis kumulierter Netto-Beträge berechnen
-//        if (this.chkTaxes.isSelected()) {
-//            for (Map.Entry<BigDecimal, BigDecimal> entry : taxRateToNetSum.entrySet()) {
-//                BigDecimal taxRate = entry.getKey();
-//                BigDecimal netSum = entry.getValue();
-//
-//                BigDecimal taxAmount = netSum
-//                        .multiply(taxRate.divide(BigDecimal.valueOf(100), 4, RoundingMode.HALF_UP))
-//                        .setScale(2, RoundingMode.HALF_UP);
-//
-//                totalTax = totalTax.add(taxAmount);
-//                totalGross = totalGross.add(netSum.add(taxAmount)); // Netto + Steuer
-//            }
-//        }
-//
-//        // Finales kaufmännisches Runden (sicherheitshalber)
-//        totalNet = totalNet.setScale(2, RoundingMode.HALF_UP);
-//        totalTax = totalTax.setScale(2, RoundingMode.HALF_UP);
-//        totalGross = totalGross.setScale(2, RoundingMode.HALF_UP);
-//
-//        this.lblNetValue.setText(cf.format(totalNet));
-//        this.lblInvoiceTax.setText(cf.format(totalTax));
-//        this.lblInvoiceTotal.setText(cf.format(totalGross));
-//        this.lblInvoiceTotal2.setText(cf.format(totalGross));
-//
-//        if (this.currentEntry != null) {
-//            this.currentEntry.setTotal(totalNet);
-//            this.currentEntry.setTotalGross(totalGross);
-//        }
-//    }
-//
-//    private void addPosition(InvoicePosition pos) {
-//        ClientSettings settings = ClientSettings.getInstance();
-//        try {
-//            JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
-//            InvoicePosition newPos = locator.lookupArchiveFileServiceRemote().addInvoicePosition(this.currentEntry.getId(), pos);
-//
-//            InvoicePositionEntryPanel posPanel = new InvoicePositionEntryPanel(this, this.taxRates);
-//            posPanel.setEntry(this.currentEntry.getId(), newPos);
-//            posPanel.updateEntryTotal();
-//            this.pnlInvoicePositions.add(posPanel);
-//            this.pnlInvoicePositions.doLayout();
-//            this.bumpSplitPane();
-//            this.updateTotals(posPanel);
-//
-//        } catch (Exception ex) {
-//            log.error("Error creating invoice position", ex);
-//            JOptionPane.showMessageDialog(this, "Fehler beim Hinzufügen der Rechnungsposition: " + ex.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
-//        }
-//    }
-//
-//    private void clearPositionsPanel() {
-//        this.pnlInvoicePositions.removeAll();
-//        this.pnlInvoicePositions.doLayout();
-//        this.bumpSplitPane();
-//    }
     /**
      * @param args the command line arguments
      */
