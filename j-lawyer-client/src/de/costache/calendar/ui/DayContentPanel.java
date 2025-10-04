@@ -542,15 +542,15 @@ public class DayContentPanel extends JPanel {
         final Collection<CalendarEvent> events = eventsCollection
                 .getEvents(owner.getDate());
 
-        final Map<CalendarEvent, List<CalendarEvent>> conflictingEvents = CalendarUtil
-                .getConflicting(events);
+        // Use smart column assignment instead of simple conflict grouping
+        final CalendarUtil.EventColumnInfo columnInfo = CalendarUtil.assignEventColumns(events);
 
         final Config config = owner.getOwner().getConfig();
         if (events.size() > 0) {
-            
+
             JLabel dummyLabel = new JLabel();
             final Font font = new JLabel().getFont().deriveFont(dummyLabel.getFont().getStyle() & ~java.awt.Font.BOLD);
-            
+
             for (final CalendarEvent event : CalendarUtil.sortEvents(new ArrayList<>(events))) {
                 if (event.isAllDay() || event.isHoliday())
                     continue;
@@ -578,20 +578,30 @@ public class DayContentPanel extends JPanel {
                             getHeight());
                 }
 
-                final int conflictIndex = conflictingEvents.get(event).indexOf(
-                        event);
-                int conflictingEventsSize = conflictingEvents.get(event)
-                        .size();
+                // Get column assignment from smart packing algorithm
+                final int column = columnInfo.getColumn(event);
+                final int maxColumns = columnInfo.getMaxColumns(event);
 
-                // start jens
-                if (conflictingEventsSize == 0)
-                    conflictingEventsSize = 1;
-                // stop jens
+                final int rectX = column * (getWidth() - 4) / maxColumns;
+                final int rectWidth = (getWidth() - 4) / maxColumns - 2;
+                final int rectHeight = eventYEnd - eventStart;
 
-                graphics2d.fillRoundRect(conflictIndex * (getWidth() - 4)
-                                / conflictingEventsSize, eventStart, (getWidth() - 4)
-                                / conflictingEventsSize - 2, eventYEnd - eventStart,
-                        12, 12);
+                // Fill event background
+                graphics2d.fillRoundRect(rectX, eventStart, rectWidth, rectHeight, 12, 12);
+
+                // Draw inner border (1.5x darker than background)
+                Color borderColor = new Color(
+                    (int)(bgColor.getRed() * 0.67),
+                    (int)(bgColor.getGreen() * 0.67),
+                    (int)(bgColor.getBlue() * 0.67)
+                );
+                if (event.isSelected()) {
+                    borderColor = borderColor.darker();
+                }
+                graphics2d.setColor(borderColor);
+                graphics2d.setStroke(new BasicStroke(1f));
+                graphics2d.drawRoundRect(rectX, eventStart, rectWidth, rectHeight, 12, 12);
+
                 final String eventString = sdf.format(event.getStart()) + " - "
                         + sdf.format(event.getEnd()) + " " + event.getSummary();
 
@@ -602,10 +612,10 @@ public class DayContentPanel extends JPanel {
                 RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
                 graphics2d.setRenderingHints(hints);
 
-                GraphicsUtil.drawString(graphics2d, eventString, conflictIndex
-                                * (getWidth() - 4) / conflictingEventsSize + 3,
+                GraphicsUtil.drawString(graphics2d, eventString, column
+                                * (getWidth() - 4) / maxColumns + 3,
                         eventStart + 15, (getWidth() - 4)
-                                / conflictingEventsSize - 3, eventYEnd
+                                / maxColumns - 3, eventYEnd
                                 - eventStart);
 
             }
@@ -619,8 +629,8 @@ public class DayContentPanel extends JPanel {
         final Collection<CalendarEvent> events = eventsCollection
                 .getEvents(owner.getDate());
 
-        final Map<CalendarEvent, List<CalendarEvent>> conflictingEvents = CalendarUtil
-                .getConflicting(events);
+        // Use smart column assignment for hit detection
+        final CalendarUtil.EventColumnInfo columnInfo = CalendarUtil.assignEventColumns(events);
 
         if (events.size() > 0) {
             for (final CalendarEvent event : CalendarUtil.sortEvents(new ArrayList<>(events))) {
@@ -641,17 +651,13 @@ public class DayContentPanel extends JPanel {
                             getHeight());
                 }
 
-                final int conflictIndex = conflictingEvents.get(event).indexOf(
-                        event);
-                final int conflictingEventsSize = conflictingEvents.get(event)
-                        .size();
+                final int column = columnInfo.getColumn(event);
+                final int maxColumns = columnInfo.getMaxColumns(event);
 
-                final int rectXStart = conflictIndex * (getWidth() - 4)
-                        / conflictingEventsSize;
+                final int rectXStart = column * (getWidth() - 4) / maxColumns;
                 final int rectYStart = eventYStart;
 
-                final int rectWidth = (getWidth() - 4) / conflictingEventsSize
-                        - 2;
+                final int rectWidth = (getWidth() - 4) / maxColumns - 2;
 
                 final int rectHeight = eventYEnd - eventYStart;
 

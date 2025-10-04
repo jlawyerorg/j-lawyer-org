@@ -263,4 +263,120 @@ public class CalendarUtil {
         return c.getTime();
     }
 
+    /**
+     * Container for event column assignment results.
+     */
+    public static class EventColumnInfo {
+        private final Map<CalendarEvent, Integer> columnMap;
+        private final Map<CalendarEvent, Integer> maxColumnsMap;
+
+        public EventColumnInfo(Map<CalendarEvent, Integer> columnMap, Map<CalendarEvent, Integer> maxColumnsMap) {
+            this.columnMap = columnMap;
+            this.maxColumnsMap = maxColumnsMap;
+        }
+
+        public int getColumn(CalendarEvent event) {
+            return columnMap.getOrDefault(event, 0);
+        }
+
+        public int getMaxColumns(CalendarEvent event) {
+            return maxColumnsMap.getOrDefault(event, 1);
+        }
+    }
+
+    /**
+     * Assigns column indices to events using a greedy column-packing algorithm.
+     * Events that don't overlap can share the same column, minimizing the total number of columns.
+     *
+     * @param calendarEvents Collection of events to assign columns to
+     * @return EventColumnInfo containing column assignments and max columns per event group
+     */
+    public static EventColumnInfo assignEventColumns(final Collection<CalendarEvent> calendarEvents) {
+        final List<CalendarEvent> events = new ArrayList<>(calendarEvents);
+        // Filter out all-day and holiday events (they are rendered separately)
+        events.removeIf(e -> e.isAllDay() || e.isHoliday());
+
+        if (events.isEmpty()) {
+            return new EventColumnInfo(new HashMap<>(), new HashMap<>());
+        }
+
+        // Sort events by start time, then by end time (earlier end first for better packing)
+        events.sort((e1, e2) -> {
+            int cmp = e1.getStart().compareTo(e2.getStart());
+            if (cmp != 0) return cmp;
+            return e1.getEnd().compareTo(e2.getEnd());
+        });
+
+        final Map<CalendarEvent, Integer> columnMap = new HashMap<>();
+        final Map<CalendarEvent, Integer> maxColumnsMap = new HashMap<>();
+
+        // Track which events are in each column (for overlap detection)
+        final List<List<CalendarEvent>> columns = new ArrayList<>();
+
+        for (final CalendarEvent event : events) {
+            int assignedColumn = -1;
+
+            // Find the first column where this event doesn't overlap with any existing event
+            for (int col = 0; col < columns.size(); col++) {
+                boolean canFit = true;
+                for (final CalendarEvent existing : columns.get(col)) {
+                    if (eventsOverlap(event, existing)) {
+                        canFit = false;
+                        break;
+                    }
+                }
+                if (canFit) {
+                    assignedColumn = col;
+                    break;
+                }
+            }
+
+            // If no existing column works, create a new one
+            if (assignedColumn == -1) {
+                assignedColumn = columns.size();
+                columns.add(new ArrayList<>());
+            }
+
+            columns.get(assignedColumn).add(event);
+            columnMap.put(event, assignedColumn);
+        }
+
+        // Now compute max columns for each event (how many columns overlap with it)
+        for (final CalendarEvent event : events) {
+            int maxCols = 1;
+            for (final CalendarEvent other : events) {
+                if (event == other) continue;
+                if (eventsOverlap(event, other)) {
+                    // Find the maximum column index among overlapping events
+                    int otherCol = columnMap.get(other);
+                    maxCols = Math.max(maxCols, otherCol + 1);
+                }
+            }
+            // Ensure at least the event's own column is counted
+            maxCols = Math.max(maxCols, columnMap.get(event) + 1);
+            maxColumnsMap.put(event, maxCols);
+        }
+
+        return new EventColumnInfo(columnMap, maxColumnsMap);
+    }
+
+    /**
+     * Checks if two events overlap in time.
+     * Events that touch exactly (end == start) are NOT considered overlapping.
+     *
+     * @param e1 First event
+     * @param e2 Second event
+     * @return true if events overlap, false otherwise
+     */
+    private static boolean eventsOverlap(final CalendarEvent e1, final CalendarEvent e2) {
+        final Date start1 = e1.getStart();
+        final Date end1 = e1.getEnd();
+        final Date start2 = e2.getStart();
+        final Date end2 = e2.getEnd();
+
+        // Events overlap if: start1 < end2 AND end1 > start2
+        // Using strict comparison (>) ensures touching events don't count as overlapping
+        return start1.compareTo(end2) < 0 && end1.compareTo(start2) > 0;
+    }
+
 }
