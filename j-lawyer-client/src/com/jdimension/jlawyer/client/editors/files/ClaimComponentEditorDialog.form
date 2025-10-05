@@ -354,6 +354,9 @@
     </Component>
     <Component class="javax.swing.JRadioButton" name="rdInterestFixed">
       <Properties>
+        <Property name="buttonGroup" type="javax.swing.ButtonGroup" editor="org.netbeans.modules.form.RADComponent$ButtonGroupPropertyEditor">
+          <ComponentRef name="btnGrpInterestType"/>
+        </Property>
         <Property name="font" type="java.awt.Font" editor="org.netbeans.modules.form.editors2.FontEditor">
           <FontInfo relative="true">
             <Font component="rdInterestFixed" property="font" relativeSize="true" size="0"/>
@@ -364,6 +367,9 @@
     </Component>
     <Component class="javax.swing.JRadioButton" name="rdInterestBaseRelated">
       <Properties>
+        <Property name="buttonGroup" type="javax.swing.ButtonGroup" editor="org.netbeans.modules.form.RADComponent$ButtonGroupPropertyEditor">
+          <ComponentRef name="btnGrpInterestType"/>
+        </Property>
         <Property name="font" type="java.awt.Font" editor="org.netbeans.modules.form.editors2.FontEditor">
           <FontInfo relative="true">
             <Font component="rdInterestBaseRelated" property="font" relativeSize="true" size="0"/>
