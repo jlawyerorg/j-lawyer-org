@@ -676,7 +676,7 @@ import com.jdimension.jlawyer.events.DocumentCreatedEvent;
 import com.jdimension.jlawyer.events.DocumentRemovedEvent;
 import com.jdimension.jlawyer.events.DocumentTagChangedEvent;
 import com.jdimension.jlawyer.events.DocumentUpdatedEvent;
-import com.jdimension.jlawyer.export.HTMLExport;
+import com.jdimension.jlawyer.export.AdvancedHtmlExport;
 import com.jdimension.jlawyer.persistence.*;
 import com.jdimension.jlawyer.persistence.utils.JDBCUtils;
 import com.jdimension.jlawyer.persistence.utils.StringGenerator;
@@ -1558,8 +1558,17 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
     }
 
     @Override
+    public List<Invoice> getInvoicesUnrestricted(String caseId) {
+        return getInvoicesImpl(caseId);
+    }
+    
+    @Override
     @RolesAllowed({"readArchiveFileRole"})
     public List<Invoice> getInvoices(String caseId) {
+        return getInvoicesImpl(caseId);
+    }
+    
+    private List<Invoice> getInvoicesImpl(String caseId) {
         String principalId = context.getCallerPrincipal().getName();
 
         ArchiveFileBean aFile = this.archiveFileFacade.find(caseId);
@@ -2217,9 +2226,9 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
             ServerSettingsBean sb = this.settingsFacade.find(ServerSettingsKeys.SERVERCONF_STIRLINGPDF_ENDPOINT);
             StirlingPdfAPI pdfApi = null;
             if (sb != null && !ServerStringUtils.isEmpty(sb.getSettingValue())) {
-                
+
                 log.info("performing OCR on document " + docId + " " + doc.getName() + " using Stirling PDF");
-                
+
                 pdfApi = new StirlingPdfAPI(sb.getSettingValue(), 5000, 120000);
                 byte[] docContent = this.getDocumentContent(docId);
                 if (docContent == null) {
@@ -2525,8 +2534,9 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
                 String tagId = idGen.getID().toString();
                 tag.setId(tagId);
                 tag.setArchiveFileKey(aFile);
-                if(tag.getDateSet()==null)
+                if (tag.getDateSet() == null) {
                     tag.setDateSet(new Date());
+                }
                 this.archiveFileTagsFacade.create(tag);
                 historyText = "Akten-Etikett gesetzt: " + tag.getTagName();
             } else {
@@ -2577,8 +2587,9 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
                 String tagId = idGen.getID().toString();
                 tag.setId(tagId);
                 tag.setArchiveFileKey(aFile);
-                if(tag.getDateSet()==null)
+                if (tag.getDateSet() == null) {
                     tag.setDateSet(new Date());
+                }
                 this.documentTagsFacade.create(tag);
                 historyText = "Dokument-Etikett gesetzt an " + aFile.getName() + ": " + tag.getTagName();
             }
@@ -3218,27 +3229,55 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
 
     @Override
     @RolesAllowed({"readArchiveFileRole"})
-    public byte[] exportCaseToHtml(String caseId) throws Exception {
+    public DataBucket loadHtmlCaseExport(List<String> caseIds) throws Exception {
+
         String tmpDir = System.getProperty("java.io.tmpdir");
-
-        ArchiveFileBean dto = this.archiveFileFacade.find(caseId);
-        SecurityUtils.checkGroupsForCase(context.getCallerPrincipal().getName(), dto, this.securityFacade, this.getAllowedGroups(dto));
-        HTMLExport export = new HTMLExport(new File(tmpDir), this, this.calendarFacade);
-        String path = export.export(dto, null);
-
-        String zipFile = tmpDir + System.getProperty("file.separator") + new StringGenerator().getID().toString() + ".zip";
-        export.zipDirectory(path, zipFile);
-        File zip = new File(zipFile);
-        byte[] zipBytes = null;
+        if (!tmpDir.endsWith(File.separator)) {
+            tmpDir = tmpDir + File.separator;
+        }
+        String uniqueDirName = new SimpleDateFormat("yyyy-MM-dd_HHmmss").format(new Date()) + "-Aktenexport";
+        tmpDir = tmpDir + uniqueDirName;
         try {
-            // may fail for files larger than 2GB because arrays may only have Integer.MAXVALUE elements
-            zipBytes = ServerFileUtils.readFile(zip);
+            List<String> exportedFolderNames = new ArrayList<>();
+            List<ArchiveFileBean> cases = new ArrayList<>();
+            for (String caseId : caseIds) {
+                ArchiveFileBean dto = this.archiveFileFacade.find(caseId);
+                SecurityUtils.checkGroupsForCase(context.getCallerPrincipal().getName(), dto, this.securityFacade, this.getAllowedGroups(dto));
+                cases.add(dto);
+                AdvancedHtmlExport export = new AdvancedHtmlExport(tmpDir, this, this.calendarFacade);
+                String path = export.export(dto, null);
+                exportedFolderNames.add(new File(path).getName());
+            }
+
+            // Generate root index.html
+            File indexFile = new File(tmpDir, "index.html");
+            try (java.io.FileWriter writer = new java.io.FileWriter(indexFile)) {
+                writer.write("<!DOCTYPE html><html><head><title>Aktenexport</title><style>");
+                writer.write("body { font-family: sans-serif; background-color: #f4f4f4; color: #333; padding: 2em; }");
+                writer.write("h1 { color: #0056b3; } ul { list-style-type: none; padding: 0; }");
+                writer.write("li { background: #fff; margin: 10px 0; padding: 1em; border-radius: 5px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }");
+                writer.write("a { text-decoration: none; color: #0056b3; font-weight: bold; } a:hover { text-decoration: underline; }");
+                writer.write("</style></head><body>");
+                writer.write("<h1>Exportierte Akten</h1><ul>");
+                for (int i = 0; i < cases.size(); i++) {
+                    ArchiveFileBean caseBean = cases.get(i);
+                    String folderName = exportedFolderNames.get(i);
+                    writer.write("<li><a href=\"" + folderName + "/index.html\" target=\"_blank\" rel=\"noopener\">" + caseBean.getFileNumber() + " - " + caseBean.getName() + "</a></li>");
+                }
+                writer.write("</ul></body></html>");
+            }
+
+            DataBucket bucket = DataBucketUtils.newBucket(uniqueDirName + ".zip");
+            String zipFile = DataBucketUtils.getLocalFile(bucket);
+            AdvancedHtmlExport.zipDirectory(tmpDir, zipFile);
+            File zip = new File(zipFile);
+            bucket.setTotalSize(zip.length());
+            DataBucketUtils.fillBucket(bucket);
+            return bucket;
         } finally {
-            zip.delete();
-            File exportPath = new File(path);
+            File exportPath = new File(tmpDir);
             ServerFileUtils.getInstance().deleteRecursively(exportPath);
         }
-        return zipBytes;
 
     }
 
@@ -3246,28 +3285,24 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
     @RolesAllowed({"readArchiveFileRole"})
     public DataBucket loadHtmlCaseExport(String caseId) throws Exception {
         String tmpDir = System.getProperty("java.io.tmpdir");
-
-        ArchiveFileBean dto = this.archiveFileFacade.find(caseId);
-        SecurityUtils.checkGroupsForCase(context.getCallerPrincipal().getName(), dto, this.securityFacade, this.getAllowedGroups(dto));
-        HTMLExport export = new HTMLExport(new File(tmpDir), this, this.calendarFacade);
-        String path = export.export(dto, null);
-
-        DataBucket bucket = DataBucketUtils.newBucket(caseId + ".zip");
-        String zipFile = DataBucketUtils.getLocalFile(bucket);
-        export.zipDirectory(path, zipFile);
-        File zip = new File(zipFile);
-        bucket.setTotalSize(zip.length());
-        DataBucketUtils.fillBucket(bucket);
-
+        String exportPath=null;
         try {
+            ArchiveFileBean dto = this.archiveFileFacade.find(caseId);
+            SecurityUtils.checkGroupsForCase(context.getCallerPrincipal().getName(), dto, this.securityFacade, this.getAllowedGroups(dto));
+            AdvancedHtmlExport export = new AdvancedHtmlExport(tmpDir, this, this.calendarFacade);
+            exportPath = export.export(dto, null);
 
+            DataBucket bucket = DataBucketUtils.newBucket(caseId + ".zip");
+            String zipFile = DataBucketUtils.getLocalFile(bucket);
+            AdvancedHtmlExport.zipDirectory(exportPath, zipFile);
+            File zip = new File(zipFile);
+            bucket.setTotalSize(zip.length());
+            DataBucketUtils.fillBucket(bucket);
+            return bucket;
         } finally {
-            File exportPath = new File(path);
-            ServerFileUtils.getInstance().deleteRecursively(exportPath);
+            File deletePath = new File(exportPath);
+            ServerFileUtils.getInstance().deleteRecursively(deletePath);
         }
-
-        return bucket;
-
     }
 
     @Override
@@ -6226,7 +6261,7 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
         return allOpenAllowed;
 
     }
-    
+
     @Override
     @RolesAllowed({"readArchiveFileRole"})
     public List<Timesheet> getOpenTimesheets() throws Exception {
@@ -6703,17 +6738,17 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
         } else {
             allowed = true;
         }
-        
-        for(String positionId : positionIds) {
+
+        for (String positionId : positionIds) {
             TimesheetPosition updatePos = this.timesheetPositionsFacade.find(positionId);
-            if(updatePos.getInvoice()!=null) {
+            if (updatePos.getInvoice() != null) {
                 throw new Exception("Mindestens eine Buchung ist aktuell einer Rechnung zugeordnet. Bitte Rechnung (oder deren Position(en)) löschen.");
             }
         }
 
         if (allowed) {
-            
-            for(String positionId: positionIds) {
+
+            for (String positionId : positionIds) {
                 TimesheetPosition updatePos = this.timesheetPositionsFacade.find(positionId);
                 updatePos.setTimesheet(timesheet);
                 this.timesheetPositionsFacade.edit(updatePos);
@@ -6723,7 +6758,7 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
             throw new Exception(MSG_MISSINGPRIVILEGE_CASE);
         }
     }
-    
+
     @Override
     @RolesAllowed({"writeArchiveFileRole"})
     public TimesheetPosition updateTimesheetPositionBilling(String timesheetId, TimesheetPosition position, String invoiceId) throws Exception {
@@ -6834,9 +6869,10 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
     public ArrayList<String> getAllArchiveFileNumbersUnrestricted(boolean activeCasesOnly) throws Exception {
         JDBCUtils utils = new JDBCUtils();
         ArrayList<String> list = new ArrayList<>();
-        String sql="select fileNumber from cases";
-        if(activeCasesOnly)
-            sql="select fileNumber from cases where archived=0";
+        String sql = "select fileNumber from cases";
+        if (activeCasesOnly) {
+            sql = "select fileNumber from cases where archived=0";
+        }
         try (Connection con = utils.getConnection(); PreparedStatement st = con.prepareStatement(sql); ResultSet rs = st.executeQuery()) {
 
             while (rs.next()) {
@@ -6856,15 +6892,16 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
     public ArrayList<String> getAllArchiveFileNumbers(boolean activeCasesOnly) throws Exception {
         return this.getAllArchiveFileNumbersUnrestricted(activeCasesOnly);
     }
-    
+
     @Override
     @RolesAllowed({"loginRole"})
     public ArrayList<String> getAllReferencedFileNumbers(int minChars, boolean activeCasesOnly) throws Exception {
         JDBCUtils utils = new JDBCUtils();
         ArrayList<String> list = new ArrayList<>();
-        String sql="select distinct(reference) from case_contacts where reference is not null and length(reference) >= " + minChars;
-        if(activeCasesOnly)
-            sql="select distinct(reference) from case_contacts where reference is not null and length(reference) >= " + minChars + " and archiveFileKey in (select id from cases where archived=0)";
+        String sql = "select distinct(reference) from case_contacts where reference is not null and length(reference) >= " + minChars;
+        if (activeCasesOnly) {
+            sql = "select distinct(reference) from case_contacts where reference is not null and length(reference) >= " + minChars + " and archiveFileKey in (select id from cases where archived=0)";
+        }
         try (Connection con = utils.getConnection(); PreparedStatement st = con.prepareStatement(sql); ResultSet rs = st.executeQuery()) {
             while (rs.next()) {
                 String fileNumber = rs.getString(1);
@@ -6926,8 +6963,17 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
     }
 
     @Override
+    public List<CaseAccountEntry> getAccountEntriesUnrestricted(String caseId) throws Exception {
+        return getAccountEntriesImpl(caseId);
+    }
+    
+    @Override
     @RolesAllowed({"readArchiveFileRole"})
     public List<CaseAccountEntry> getAccountEntries(String caseId) throws Exception {
+        return getAccountEntriesImpl(caseId);
+    }
+    
+    private List<CaseAccountEntry> getAccountEntriesImpl(String caseId) throws Exception {
         String principalId = context.getCallerPrincipal().getName();
 
         ArchiveFileBean aFile = this.archiveFileFacade.find(caseId);
@@ -7370,7 +7416,7 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
     }
 
     @Override
-     @RolesAllowed({"writeArchiveFileRole"})
+    @RolesAllowed({"writeArchiveFileRole"})
     public ClaimLedger addClaimLedger(String caseId, ClaimLedger ledger) throws Exception {
         String principalId = context.getCallerPrincipal().getName();
 
@@ -7411,7 +7457,7 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
             log.error("Unable to determine groups for user " + context.getCallerPrincipal().getName(), t);
         }
 
-        List<ArchiveFileAddressesBean> l=this.archiveFileAddressesFacade.findByReference(reference);
+        List<ArchiveFileAddressesBean> l = this.archiveFileAddressesFacade.findByReference(reference);
         ArrayList<ArchiveFileAddressesBean> l2 = new ArrayList<>();
         for (ArchiveFileAddressesBean aab : l) {
 

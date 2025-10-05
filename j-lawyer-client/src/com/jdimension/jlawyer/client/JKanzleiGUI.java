@@ -665,7 +665,7 @@ package com.jdimension.jlawyer.client;
 
 import com.jdimension.jlawyer.client.bea.BeaAccess;
 import com.jdimension.jlawyer.client.cloud.CloudInstance;
-import com.jdimension.jlawyer.client.dialogs.CaseExportDialog;
+import com.jdimension.jlawyer.client.editors.files.CaseExportDialog;
 import com.jdimension.jlawyer.client.plugins.form.FormsManagementDialog;
 import com.jdimension.jlawyer.client.configuration.*;
 import com.jdimension.jlawyer.client.desktop.UpdateAddressTagsTask;
@@ -1491,7 +1491,8 @@ public class JKanzleiGUI extends javax.swing.JFrame implements com.jdimension.jl
         mnuFile.add(mnuImportFromSheet);
 
         mnuExportSyncedCases.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons16/webexport.png"))); // NOI18N
-        mnuExportSyncedCases.setText("Export von Akten");
+        mnuExportSyncedCases.setText("Export: Akten");
+        mnuExportSyncedCases.setToolTipText("Exportieren von zur Synchronisation markierten Akten");
         mnuExportSyncedCases.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 mnuExportSyncedCasesActionPerformed(evt);

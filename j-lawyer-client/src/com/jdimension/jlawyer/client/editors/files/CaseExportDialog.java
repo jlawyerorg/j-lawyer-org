@@ -3,24 +3,30 @@
  * To change this template file, choose Tools | Templates
  * and open the template in the editor.
  */
-package com.jdimension.jlawyer.client.dialogs;
+package com.jdimension.jlawyer.client.editors.files;
 
 import com.jdimension.jlawyer.client.editors.EditorsRegistry;
-import com.jdimension.jlawyer.client.editors.files.ModernHtmlExportAction;
 import com.jdimension.jlawyer.client.processing.ProgressIndicator;
 import com.jdimension.jlawyer.client.processing.ProgressableAction;
 import com.jdimension.jlawyer.client.settings.ClientSettings;
 import com.jdimension.jlawyer.client.settings.UserSettings;
+import com.jdimension.jlawyer.client.utils.DesktopUtils;
+import com.jdimension.jlawyer.client.utils.ThreadUtils;
 import com.jdimension.jlawyer.persistence.ArchiveFileBean;
+import com.jdimension.jlawyer.pojo.DataBucket;
 import com.jdimension.jlawyer.services.ArchiveFileServiceRemote;
+import com.jdimension.jlawyer.services.DataBucketLoaderRemote;
 import com.jdimension.jlawyer.services.JLawyerServiceLocator;
 import java.awt.Component;
 import java.awt.FlowLayout;
 import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
-import javax.swing.BoxLayout;
+import java.util.zip.ZipEntry;
+import java.util.zip.ZipInputStream;
 import javax.swing.JCheckBox;
 import javax.swing.JFileChooser;
 import javax.swing.JLabel;
@@ -39,6 +45,9 @@ public class CaseExportDialog extends javax.swing.JDialog {
 
     /**
      * Creates new form CaseExportDialog
+     *
+     * @param parent
+     * @param modal
      */
     public CaseExportDialog(javax.swing.JFrame parent, boolean modal) {
         super(parent, modal);
@@ -67,15 +76,15 @@ public class CaseExportDialog extends javax.swing.JDialog {
         setDefaultCloseOperation(javax.swing.WindowConstants.DISPOSE_ON_CLOSE);
         setTitle("Akten für den Export auswählen");
         setMinimumSize(new java.awt.Dimension(700, 520));
-        setPreferredSize(new java.awt.Dimension(780, 560));
 
         hintLabel.setFont(hintLabel.getFont());
-        hintLabel.setText("Export von Akten, für die Synchronisation mit der App aktiviert ist");
+        hintLabel.setText("Export von Akten, für die Synchronisation mit der App aktiviert sind");
         hintLabel.setBorder(javax.swing.BorderFactory.createEmptyBorder(10, 10, 10, 10));
 
-        caseListPanel.setLayout(new javax.swing.BoxLayout(caseListPanel, javax.swing.BoxLayout.Y_AXIS));
         scrollPane.setMinimumSize(new java.awt.Dimension(400, 320));
         scrollPane.setPreferredSize(new java.awt.Dimension(400, 320));
+
+        caseListPanel.setLayout(new javax.swing.BoxLayout(caseListPanel, javax.swing.BoxLayout.Y_AXIS));
         scrollPane.setViewportView(caseListPanel);
 
         selectAllButton.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons16/baseline_select_all_black_48dp.png"))); // NOI18N
@@ -117,7 +126,7 @@ public class CaseExportDialog extends javax.swing.JDialog {
             .addGroup(layout.createSequentialGroup()
                 .addContainerGap()
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addComponent(scrollPane)
+                    .addComponent(scrollPane, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                     .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
                         .addGap(0, 0, Short.MAX_VALUE)
                         .addComponent(cancelButton)
@@ -142,7 +151,7 @@ public class CaseExportDialog extends javax.swing.JDialog {
                             .addComponent(deselectAllButton)))
                     .addComponent(hintLabel, javax.swing.GroupLayout.PREFERRED_SIZE, 0, Short.MAX_VALUE))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(scrollPane, javax.swing.GroupLayout.DEFAULT_SIZE, 400, Short.MAX_VALUE)
+                .addComponent(scrollPane, javax.swing.GroupLayout.PREFERRED_SIZE, 400, Short.MAX_VALUE)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                     .addComponent(cancelButton)
@@ -246,6 +255,7 @@ public class CaseExportDialog extends javax.swing.JDialog {
     // End of variables declaration//GEN-END:variables
 
     private class CaseSelectionPanel extends JPanel {
+
         private JCheckBox checkBox;
         private ArchiveFileBean caseBean;
 
@@ -272,6 +282,7 @@ public class CaseExportDialog extends javax.swing.JDialog {
     }
 
     private class BatchExportAction extends ProgressableAction {
+
         private final Component owner;
         private final File baseDir;
         private final List<ArchiveFileBean> cases;
@@ -295,43 +306,104 @@ public class CaseExportDialog extends javax.swing.JDialog {
 
         @Override
         public boolean execute() throws Exception {
-            List<String> exportedFolderNames = new ArrayList<>();
-            for (int i = 0; i < cases.size(); i++) {
-                ArchiveFileBean caseBean = cases.get(i);
-                String caseId = caseBean.getId();
-                progress("Exportiere Akte " + (i + 1) + " von " + cases.size() + ": " + caseBean.getFileNumber(), i);
-                ModernHtmlExportAction exportAction = new ModernHtmlExportAction(this.indicator, this.owner, baseDir, caseId);
-                exportAction.setOpenBrowserAfterExport(false);
-                if (!exportAction.execute()) {
-                    // if a single export fails, we stop and inform the user
-                    JOptionPane.showMessageDialog(owner, "Export der Akte " + caseBean.getFileNumber() + " ist fehlgeschlagen.", "Exportfehler", JOptionPane.ERROR_MESSAGE);
-                    return false;
-                }
-                exportedFolderNames.add(exportAction.getExportDir().getName());
+
+            List<String> caseIds=new ArrayList<>();
+            for(ArchiveFileBean afb: this.cases) {
+                caseIds.add(afb.getId());
             }
 
-            // Generate root index.html
-            File indexFile = new File(baseDir, "index.html");
-            try (java.io.FileWriter writer = new java.io.FileWriter(indexFile)) {
-                writer.write("<!DOCTYPE html><html><head><title>Aktenexport</title><style>");
-                writer.write("body { font-family: sans-serif; background-color: #f4f4f4; color: #333; padding: 2em; }");
-                writer.write("h1 { color: #0056b3; } ul { list-style-type: none; padding: 0; }");
-                writer.write("li { background: #fff; margin: 10px 0; padding: 1em; border-radius: 5px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }");
-                writer.write("a { text-decoration: none; color: #0056b3; font-weight: bold; } a:hover { text-decoration: underline; }");
-                writer.write("</style></head><body>");
-                writer.write("<h1>Exportierte Akten</h1><ul>");
-                for (int i = 0; i < cases.size(); i++) {
-                    ArchiveFileBean caseBean = cases.get(i);
-                    String folderName = exportedFolderNames.get(i);
-                    writer.write("<li><a href=\"" + folderName + "/index.html\" target=\"_blank\" rel=\"noopener\">" + caseBean.getFileNumber() + " - " + caseBean.getName() + "</a></li>");
+            try {
+                ClientSettings settings = ClientSettings.getInstance();
+                JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
+                ArchiveFileServiceRemote fileService = locator.lookupArchiveFileServiceRemote();
+                this.progress("Export wird erstellt...", 2);
+                DataBucket bucket = fileService.loadHtmlCaseExport(caseIds);
+                int max = bucket.getTotalNumberOfBuckets() + 2;
+                try (FileOutputStream output = new FileOutputStream(baseDir.getPath() + File.separator + bucket.getFileName(), true)) {
+                    output.write(bucket.getPayload());
                 }
-                writer.write("</ul></body></html>");
-            }
+                DataBucketLoaderRemote bucketLoader = locator.lookupDataBucketLoaderRemote();
+                while (bucket.hasNext()) {
+                    if (this.isCancelled()) {
+                        return true;
+                    }
+                    double percentage = bucket.getPercentage();
+                    this.progress("Lade Export vom Server... " + (int) percentage + "%", max);
+                    bucket.resetPayload();
+                    bucket = bucketLoader.nextBucket(bucket);
+                    try (FileOutputStream output = new FileOutputStream(baseDir.getPath() + File.separator + bucket.getFileName(), true)) {
+                        output.write(bucket.getPayload());
+                    }
+                }
 
-            // Open root index.html
-            com.jdimension.jlawyer.client.utils.DesktopUtils.openBrowserFromDialog(indexFile.toURI().toString(), this.indicator);
+                //get the zip file content
+                FileInputStream bucketInStream = new FileInputStream(baseDir.getPath() + File.separator + bucket.getFileName());
+                ZipInputStream zis
+                        = new ZipInputStream(bucketInStream);
+                //get the zipped file list entry
+                ZipEntry ze = zis.getNextEntry();
+
+                String browserUrl = "file://" + baseDir.getPath() + "/";
+                String indexHtml = null;
+
+                while (ze != null) {
+
+                    String fileName = ze.getName();
+                    this.progress("Entpacke Datei " + fileName);
+                    if (fileName.endsWith("index.html")) {
+                        if(indexHtml==null)
+                            indexHtml=fileName;
+                        if(indexHtml.length()>fileName.length())
+                            indexHtml=fileName;
+                    }
+                    File newFile = new File(baseDir.getPath() + File.separator + fileName);
+                    byte[] buffer = new byte[1024];
+                    //create all non exists folders
+                    //else you will hit FileNotFoundException for compressed folder
+                    new File(newFile.getParent()).mkdirs();
+
+                    try (FileOutputStream fos = new FileOutputStream(newFile)) {
+
+                        int len;
+                        while ((len = zis.read(buffer)) > 0) {
+                            fos.write(buffer, 0, len);
+                        }
+                    }
+
+                    try {
+                        if (ze.getLastModifiedTime() != null) {
+                            newFile.setLastModified(ze.getLastModifiedTime().toMillis());
+                        } else {
+                            log.warn("ZIP entry does not have a last modified timestamp for " + newFile.getName());
+                        }
+                    } catch (Throwable t) {
+                        log.error("Unable to set last modified time", t);
+                    }
+
+                    ze = zis.getNextEntry();
+                }
+
+                zis.closeEntry();
+                zis.close();
+                bucketInStream.close();
+                String bucketFile = baseDir.getPath() + File.separator + bucket.getFileName();
+                if (!(new File(bucketFile).delete())) {
+                    log.error("Could not delete data bucket file " + bucketFile);
+                }
+
+                DesktopUtils.openBrowserFromDialog(browserUrl + indexHtml, this.indicator);
+
+            } catch (Throwable t) {
+                log.error("Could not unzip exported case", t);
+                ThreadUtils.showErrorDialog(EditorsRegistry.getInstance().getMainWindow(), "Fehler beim Exportieren der Akte: " + t.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR);
+                EditorsRegistry.getInstance().clearStatus(true);
+                ThreadUtils.setDefaultCursor(this.owner);
+            }
+            EditorsRegistry.getInstance().clearStatus(true);
+            ThreadUtils.setDefaultCursor(this.owner);
 
             return true;
+
         }
     }
 }

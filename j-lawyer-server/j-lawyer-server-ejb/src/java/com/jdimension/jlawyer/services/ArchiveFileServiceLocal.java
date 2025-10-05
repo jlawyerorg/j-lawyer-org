@@ -670,6 +670,7 @@ import com.jdimension.jlawyer.persistence.ArchiveFileDocumentsBean;
 import com.jdimension.jlawyer.persistence.ArchiveFileGroupsBean;
 import com.jdimension.jlawyer.persistence.ArchiveFileHistoryBean;
 import com.jdimension.jlawyer.persistence.ArchiveFileTagsBean;
+import com.jdimension.jlawyer.persistence.CaseAccountEntry;
 import com.jdimension.jlawyer.persistence.CaseFolder;
 import com.jdimension.jlawyer.persistence.CaseSyncSettings;
 import com.jdimension.jlawyer.persistence.DocumentFolder;
@@ -722,8 +723,6 @@ public interface ArchiveFileServiceLocal {
     
     public ArchiveFileHistoryBean[] getHistoryForArchiveFile(String archiveFileKey, Date since) throws Exception;
     
-    byte[] exportCaseToHtml(String caseId) throws Exception;
-
     ArchiveFileBean getArchiveFileUnrestricted(String archiveFileKey);
 
     ArchiveFileHistoryBean[] getHistoryForArchiveFileUnrestricted(String archiveFileKey) throws Exception;
@@ -839,8 +838,12 @@ public interface ArchiveFileServiceLocal {
     boolean performOcr(String docId) throws Exception;
     
     List<Invoice> getInvoices(String caseId);
+    List<Invoice> getInvoicesUnrestricted(String caseId);
     List<InvoicePosition> getInvoicePositions(String invoiceId) throws Exception;
     Invoice addInvoice(String caseId, InvoicePool invoicePool, InvoiceType invoiceType, String currency) throws Exception;
     InvoicePosition addInvoicePosition(String invoiceId, InvoicePosition position) throws Exception;
+    
+    List<CaseAccountEntry> getAccountEntries(String caseId) throws Exception;
+    List<CaseAccountEntry> getAccountEntriesUnrestricted(String caseId) throws Exception;
     
 }

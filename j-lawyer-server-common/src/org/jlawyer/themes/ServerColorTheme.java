@@ -661,64 +661,28 @@ if any, to sign a "copyright disclaimer" for the program, if necessary.
 For more information on this, and how to apply and follow the GNU AGPL, see
 <https://www.gnu.org/licenses/>.
  */
-package themes.colors;
+package org.jlawyer.themes;
 
 import java.awt.Color;
-import java.util.ArrayList;
-import java.util.List;
-import org.jlawyer.themes.ServerColorTheme;
 
 /**
  *
  * @author jens
  */
-public class DefaultColorTheme extends ServerColorTheme {
+public class ServerColorTheme {
     
-    private static final ArrayList<Color> highlightColors=new ArrayList<>();
+    // HEX: #de313b
+    public static final Color COLOR_LOGO_RED=new Color(222, 49, 59);
     
-    public static final float DESKTOP_ALPHA_DEFAULT=0.8f;
-    public static final float DESKTOP_ALPHA_HIGHLIGHT=0.99f;
-    public static final Color DESKTOP_ENTRY_BACKGROUND=new Color(238,238,238);
+    // HEX: #97bf0d    
+    public static final Color COLOR_LOGO_GREEN=new Color(151, 191, 13);
     
-    static {
-        
-        
-        highlightColors.add(new Color(-3407821));
-        highlightColors.add(new Color(-13312));
-        highlightColors.add(new Color(-16751616)); // Dark green
-        //highlightColors.add(COLOR_LOGO_GREEN);
-        
-        // red-ish
-        //highlightColors.add(COLOR_LOGO_RED);
-        //highlightColors.add(new Color(-3407821));
-        highlightColors.add(new Color(170,30,202));
-        //highlightColors.add(new Color(191,13,152));
-        
-        // yellow-ish
-        //highlightColors.add(new Color(-13312));
-        //highlightColors.add(new Color(207,133,30));
-        highlightColors.add(new Color(181,81,14));
-        
-        // green-ish
-        //highlightColors.add(COLOR_LOGO_GREEN);
-//        highlightColors.add(new Color(14,186,68));
-//        highlightColors.add(new Color(57,222,49));
-        
-        // blue-ish
-        highlightColors.add(new Color(51,13,191));
-        //highlightColors.add(COLOR_LOGO_BLUE);
-        highlightColors.add(new Color(49,222,213));
-        
-        
-        
-        highlightColors.add(Color.WHITE);
-        //highlightColors.add(COLOR_LIGHT_GREY);
-        highlightColors.add(COLOR_DARK_GREY);
-        highlightColors.add(Color.BLACK);
-    }
+    // HEX: #0e72b5
+    public static final Color COLOR_LOGO_BLUE=new Color(14, 114, 181);
     
-    public static List<Color> getHighlightColors() {
-        return highlightColors;
-    }
+    // HEX: #666666
+    public static final Color COLOR_DARK_GREY=new Color(102, 102, 102);
+    
+    public static final Color COLOR_LIGHT_GREY=new Color(102, 102, 102).brighter().brighter();
     
 }

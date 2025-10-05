@@ -6243,9 +6243,9 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
             ProgressIndicator dlg = new ProgressIndicator(EditorsRegistry.getInstance().getMainWindow(), true);
             dlg.setShowCancelButton(true);
             dlg.setInfinite(false);
-            dlg.progress("Erstelle HTML-Export...");
-            ModernHtmlExportAction action = new ModernHtmlExportAction(dlg, this, dir, this.dto.getId());
-            action.start();
+            dlg.progress("Erstelle Aktenexport...");
+            ExportAsHtmlAction exact = new ExportAsHtmlAction(dlg, this, dir, this.dto.getId());
+            exact.start();
 
         }
 

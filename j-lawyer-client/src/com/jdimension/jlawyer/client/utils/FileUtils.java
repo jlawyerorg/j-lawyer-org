@@ -820,20 +820,6 @@ public class FileUtils extends ServerFileUtils {
         }
     }
 
-    public static String getFileSizeHumanReadable(long size) {
-        DecimalFormat megaBytes = new DecimalFormat("0");
-
-        if (size < 1024) {
-            size = 1024l;
-        }
-
-        if (size > (1024 * 1024)) {
-            return megaBytes.format(size / 1024l / 1024l) + " MB";
-        } else {
-            return megaBytes.format(size / 1024l) + " KB";
-        }
-    }
-
     public static String getNewFileName(ArchiveFileBean selectedCase, String currentFileName, boolean applyNameTemplate) {
         return getNewFileName(selectedCase, currentFileName, new java.util.Date(), applyNameTemplate);
     }
@@ -864,13 +850,6 @@ public class FileUtils extends ServerFileUtils {
             name = "Anhang_" + System.currentTimeMillis() + name;
         }
         return name;
-    }
-
-    public static String sanitizeFolderName(String folderName) {
-        String sanitized = sanitizeFileName(folderName);
-        sanitized = sanitized.replace("  ", " ");
-        sanitized = sanitized.replace("  ", " ");
-        return sanitized;
     }
 
     public static String createTempFile(String fileName, byte[] content) throws Exception {
