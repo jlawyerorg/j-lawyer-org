@@ -1,0 +1,29 @@
+/* Theme variables for dark mode */
+body.theme-dark {
+  --bg: #0b132b;
+  --fg: #f5f7fa;
+  --muted: #9aa5b1;
+  --card: #1c2541;
+  --tab: #3a506b;
+  --accent: #5bc0be;
+  --accent-contrast: #0b132b;
+  --surface-border: rgba(255, 255, 255, .08);
+  --surface-muted: rgba(255, 255, 255, .035);
+  --surface-raised: rgba(255, 255, 255, .06);
+  --surface-shadow: 0 6px 18px rgba(0, 0, 0, .35);
+  --icon-btn-bg: rgba(91, 192, 190, .18);
+  --icon-btn-border: rgba(91, 192, 190, .5);
+  --icon-btn-shadow: rgba(91, 192, 190, .35);
+  --chip-followup-bg: rgba(91, 192, 190, .2);
+  --chip-followup-fg: var(--accent);
+  --chip-respite-bg: rgba(240, 173, 78, .2);
+  --chip-respite-fg: var(--warn);
+  --chip-event-bg: rgba(43, 182, 115, .2);
+  --chip-event-fg: var(--ok);
+  --history-frame-bg: #101c38;
+  --ok: #2bb673;
+  --warn: #f0ad4e;
+  --danger: #d9534f;
+  --tabsH: 54px;
+  --color-scheme: dark;
+}

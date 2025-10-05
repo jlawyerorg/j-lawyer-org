@@ -717,7 +717,6 @@ public class DesktopUtils {
                     desktop.browse(uri);
                 } catch (Throwable t) {
                     log.error("Error opening browser", t);
-                    //JOptionPane.showMessageDialog(EditorsRegistry.getInstance().getMainWindow(), "Internetbrowser kann auf Ihrem System nicht automatisch gestartet werden. Der Inhalt ist verfügbar unter " + url, "Hinweis", JOptionPane.INFORMATION_MESSAGE);
                     if (owner == null) {
                         ShowURLDialog dlg = new ShowURLDialog(EditorsRegistry.getInstance().getMainWindow(), true, url);
                         dlg.setVisible(true);
@@ -736,7 +735,6 @@ public class DesktopUtils {
 
         }
         if (!browserSupport) {
-            //JOptionPane.showMessageDialog(EditorsRegistry.getInstance().getMainWindow(), "Internetbrowser kann auf Ihrem System nicht automatisch gestartet werden. Die Inhalt ist verfügbar unter " + url, "Hinweis", JOptionPane.INFORMATION_MESSAGE);
             if (owner == null) {
                 ShowURLDialog dlg = new ShowURLDialog(EditorsRegistry.getInstance().getMainWindow(), true, url);
                 dlg.setVisible(true);
@@ -764,7 +762,6 @@ public class DesktopUtils {
                     desktop.browse(uri);
                 } catch (Throwable t) {
                     log.error("Error opening browser", t);
-                    //JOptionPane.showMessageDialog(EditorsRegistry.getInstance().getMainWindow(), "Internetbrowser kann auf Ihrem System nicht automatisch gestartet werden. Der Inhalt ist verfügbar unter " + url, "Hinweis", JOptionPane.INFORMATION_MESSAGE);
                     ShowURLDialog dlg = new ShowURLDialog(owner, true, url);
                     dlg.setVisible(true);
                 }
@@ -777,7 +774,6 @@ public class DesktopUtils {
 
         }
         if (!browserSupport) {
-            //JOptionPane.showMessageDialog(EditorsRegistry.getInstance().getMainWindow(), "Internetbrowser kann auf Ihrem System nicht automatisch gestartet werden. Die Inhalt ist verfügbar unter " + url, "Hinweis", JOptionPane.INFORMATION_MESSAGE);
             if (owner == null) {
                 ShowURLDialog dlg = new ShowURLDialog(EditorsRegistry.getInstance().getMainWindow(), true, url);
                 dlg.setVisible(true);

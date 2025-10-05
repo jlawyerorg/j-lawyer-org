@@ -763,9 +763,8 @@ public interface ArchiveFileServiceRemote {
     Collection<ArchiveFileBean> getAllWithMissingCalendarEntries();
     Collection<ArchiveFileBean> getAllWithMissingCalendarEntries(int type) throws Exception;
 
-    byte[] exportCaseToHtml(String caseId) throws Exception;
-    
     DataBucket loadHtmlCaseExport(String caseId) throws Exception;
+    DataBucket loadHtmlCaseExport(List<String> caseIds) throws Exception;
 
     List<ArchiveFileBean> getTagged(String[] tagName, String[] docTagName, int limit);
 

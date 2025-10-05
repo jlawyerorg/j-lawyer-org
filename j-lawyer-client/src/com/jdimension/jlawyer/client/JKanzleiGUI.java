@@ -665,6 +665,7 @@ package com.jdimension.jlawyer.client;
 
 import com.jdimension.jlawyer.client.bea.BeaAccess;
 import com.jdimension.jlawyer.client.cloud.CloudInstance;
+import com.jdimension.jlawyer.client.editors.files.CaseExportDialog;
 import com.jdimension.jlawyer.client.plugins.form.FormsManagementDialog;
 import com.jdimension.jlawyer.client.configuration.*;
 import com.jdimension.jlawyer.client.desktop.UpdateAddressTagsTask;
@@ -1232,6 +1233,7 @@ public class JKanzleiGUI extends javax.swing.JFrame implements com.jdimension.jl
         mnuAddressImport = new javax.swing.JMenuItem();
         mnuBeaCourtAddressImport = new javax.swing.JMenuItem();
         mnuImportFromSheet = new javax.swing.JMenuItem();
+        mnuExportSyncedCases = new javax.swing.JMenuItem();
         jSeparator3 = new javax.swing.JSeparator();
         mnuExit = new javax.swing.JMenuItem();
         mnuView = new javax.swing.JMenu();
@@ -1487,6 +1489,16 @@ public class JKanzleiGUI extends javax.swing.JFrame implements com.jdimension.jl
             }
         });
         mnuFile.add(mnuImportFromSheet);
+
+        mnuExportSyncedCases.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons16/webexport.png"))); // NOI18N
+        mnuExportSyncedCases.setText("Export: Akten");
+        mnuExportSyncedCases.setToolTipText("Exportieren von zur Synchronisation markierten Akten");
+        mnuExportSyncedCases.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                mnuExportSyncedCasesActionPerformed(evt);
+            }
+        });
+        mnuFile.add(mnuExportSyncedCases);
         mnuFile.add(jSeparator3);
 
         mnuExit.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons16/logout.png"))); // NOI18N
@@ -3105,6 +3117,13 @@ public class JKanzleiGUI extends javax.swing.JFrame implements com.jdimension.jl
         mpf.setVisible(true);
     }//GEN-LAST:event_mnuPaymentsActionPerformed
 
+    private void mnuExportSyncedCasesActionPerformed(java.awt.event.ActionEvent evt) {
+        CaseExportDialog dlg = new CaseExportDialog(this, true);
+        FrameUtils.centerDialog(dlg, this);
+        dlg.setVisible(true);
+    }
+
+
     /**
      * @param args the command line arguments
      */
@@ -3180,6 +3199,7 @@ public class JKanzleiGUI extends javax.swing.JFrame implements com.jdimension.jl
     private javax.swing.JMenuItem mnuDocumentTags;
     private javax.swing.JMenuItem mnuDocumentsBin;
     private javax.swing.JMenuItem mnuExit;
+    private javax.swing.JMenuItem mnuExportSyncedCases;
     private javax.swing.JMenu mnuFile;
     private javax.swing.JMenu mnuFinance;
     private javax.swing.JMenuItem mnuFontSize;

@@ -663,88 +663,772 @@
  */
 package com.jdimension.jlawyer.export;
 
-import com.jdimension.jlawyer.comparator.DocumentsComparator;
-import com.jdimension.jlawyer.comparator.HistoryComparator;
-import com.jdimension.jlawyer.comparator.ReviewsComparator;
 import com.jdimension.jlawyer.server.utils.ServerFileUtils;
 import com.jdimension.jlawyer.server.utils.ServerStringUtils;
 import com.jdimension.jlawyer.persistence.*;
 import java.io.File;
 import java.io.FileOutputStream;
-import java.io.FileWriter;
 import java.io.InputStream;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collection;
-import java.util.Collections;
-
-import static com.jdimension.jlawyer.server.utils.ServerStringUtils.toHtml4;
-import static com.jdimension.jlawyer.server.utils.ServerStringUtils.removeSonderzeichen;
 import com.jdimension.jlawyer.services.ArchiveFileServiceLocal;
 import com.jdimension.jlawyer.services.CalendarServiceLocal;
+import java.awt.Color;
+import java.io.ByteArrayOutputStream;
 import java.io.FileInputStream;
+import java.io.FileWriter;
+import java.io.IOException;
+import java.io.OutputStreamWriter;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.attribute.FileTime;
-import java.text.NumberFormat;
 import java.util.Date;
 import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Locale;
+import java.util.Map;
+import java.util.regex.Pattern;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipOutputStream;
 import org.apache.log4j.Logger;
+import org.jlawyer.themes.ServerColorTheme;
 
 /**
  *
  * @author jens
  */
-public class HTMLExport {
+public class AdvancedHtmlExport {
 
-    private static final Logger log = Logger.getLogger(HTMLExport.class.getName());
-
-    private final SimpleDateFormat dtf = new SimpleDateFormat("dd.MM.yyyy HH:mm");
-    private final SimpleDateFormat df = new SimpleDateFormat("dd.MM.yyyy");
+    private static final Logger log = Logger.getLogger(AdvancedHtmlExport.class.getName());
 
     private static final String CELL_BREAK = "\t";
     private static final String LINE_BREAK = System.getProperty("line.separator");
 
-    private File targetDirectory = null;
+    private final SimpleDateFormat dfDate = new SimpleDateFormat("dd.MM.yyyy", Locale.GERMANY);
+    private final SimpleDateFormat dfDateTime = new SimpleDateFormat("dd.MM.yyyy 'um' HH:mm 'Uhr'", Locale.GERMANY);
+
+    private String targetDirectory = null;
+    private boolean onlyFileNumberForExportDir = false;
 
     private ArchiveFileServiceLocal caseFacade;
     private CalendarServiceLocal calendarFacade;
 
-    public HTMLExport(File targetDirectory, ArchiveFileServiceLocal caseFacade, CalendarServiceLocal calendarFacade) {
+    public AdvancedHtmlExport(String targetDirectory, ArchiveFileServiceLocal caseFacade, CalendarServiceLocal calendarFacade) {
         this.targetDirectory = targetDirectory;
         this.caseFacade = caseFacade;
         this.calendarFacade = calendarFacade;
+        this.onlyFileNumberForExportDir = false;
     }
 
-    public File getExportFolderName(ArchiveFileBean dto) {
+    public AdvancedHtmlExport(String targetDirectory, ArchiveFileServiceLocal caseFacade, CalendarServiceLocal calendarFacade, boolean onlyFileNumberForExportDir) {
+        this.targetDirectory = targetDirectory;
+        this.caseFacade = caseFacade;
+        this.calendarFacade = calendarFacade;
+        this.onlyFileNumberForExportDir = onlyFileNumberForExportDir;
+    }
 
-        String afs = "";
-        if (dto.getFileNumber() != null) {
-            afs = dto.getFileNumber().replace('/', '-');
+    public String getExportFolderName(ArchiveFileBean aCase) {
+
+        // Base: Aktenzeichen (ersatzweise ID), Slash -> '-' und bereinigt
+        String base = "";
+        if (aCase.getFileNumber() != null) {
+            base = aCase.getFileNumber().replace('/', '-');
         } else {
-            afs = dto.getId();
+            base = aCase.getId();
         }
-        afs = ServerStringUtils.removeSonderzeichen(afs);
-        return new File(this.targetDirectory.getAbsolutePath() + File.separator + afs);
+        base = ServerStringUtils.removeSonderzeichen(base);
+        if (base == null || base.trim().isEmpty()) {
+            base = "Akte";
+        }
+
+        String rubrum=null;
+        if (!this.onlyFileNumberForExportDir) {
+            // Aktenrubrum (Kurzrubrum) anhängen: _AKTENRUBRUM, sicher für Dateisystem
+            rubrum = ServerStringUtils.nonEmpty(aCase.getName());
+            rubrum = ServerFileUtils.sanitizeFolderName(rubrum);
+            rubrum = ServerStringUtils.removeSonderzeichen(rubrum);
+            if (rubrum != null) {
+                rubrum = rubrum.trim();
+                // spaces not valid in URLs, and client tries to open the unzipped export in browser
+                rubrum = rubrum.replace(" ", "");
+            }
+        }
+
+        if (!ServerStringUtils.isEmpty(rubrum)) {
+            return base + "_" + rubrum;
+        } else {
+            return base;
+        }
+
     }
 
-    private static String escape(Object cell) {
-        if (cell == null) {
+    public String export(ArchiveFileBean dto, Date lastModified) throws Exception {
+        File exportDir = null;
+        try {
+            String exportFolderName = getExportFolderName(dto);
+            exportDir = new File(this.targetDirectory, exportFolderName);
+            if (exportDir.exists()) {
+                throw new Exception("Verzeichnis '" + exportDir.getAbsolutePath() + "' existiert bereits.");
+            }
+
+            if (!exportDir.mkdirs()) {
+                throw new Exception("Verzeichnis konnte nicht erstellt werden: " + exportDir.getAbsolutePath());
+            }
+
+            File assetsDir = new File(exportDir, "assets");
+            File cssDir = new File(assetsDir, "css");
+            File jsDir = new File(assetsDir, "js");
+            cssDir.mkdirs();
+            jsDir.mkdirs();
+
+            Collection<ArchiveFileAddressesBean> parties = caseFacade.getInvolvementDetailsForCaseUnrestricted(dto.getId());
+            Collection<ArchiveFileDocumentsBean> documents = caseFacade.getDocumentsUnrestricted(dto.getId());
+            Collection<ArchiveFileReviewsBean> reviews = calendarFacade.getReviewsUnrestricted(dto.getId());
+            Collection<Invoice> invoices = new ArrayList<>();
+            try {
+                invoices = caseFacade.getInvoicesUnrestricted(dto.getId());
+            } catch (Throwable t) {
+                log.warn("Rechnungen konnten nicht geladen werden", t);
+            }
+            Collection<CaseAccountEntry> accountEntries = new ArrayList<>();
+            try {
+                accountEntries = caseFacade.getAccountEntriesUnrestricted(dto.getId());
+            } catch (Throwable t) {
+                log.warn("Aktenkonto konnte nicht geladen werden", t);
+            }
+            Collection<ArchiveFileTagsBean> tags = null;
+            try {
+                tags = caseFacade.getTagsUnrestricted(dto.getId());
+            } catch (Throwable t) {
+                log.warn("Tags konnten nicht geladen werden", t);
+                tags = new ArrayList<>();
+            }
+            ArchiveFileHistoryBean[] history = null;
+            try {
+                history = caseFacade.getHistoryForArchiveFileUnrestricted(dto.getId());
+                if (history != null) {
+                    java.util.List<ArchiveFileHistoryBean> historyList = new java.util.ArrayList<>(java.util.Arrays.asList(history));
+                    historyList.sort((h1, h2) -> {
+                        java.util.Date d1 = h1.getChangeDate();
+                        java.util.Date d2 = h2.getChangeDate();
+                        if (d1 == null && d2 == null) {
+                            return 0;
+                        }
+                        if (d1 == null) {
+                            return 1; // nulls last
+                        }
+                        if (d2 == null) {
+                            return -1;
+                        }
+                        return d2.compareTo(d1); // descending order
+                    });
+                    history = historyList.toArray(ArchiveFileHistoryBean[]::new);
+                }
+            } catch (Throwable t) {
+                log.warn("Historie konnte nicht geladen werden", t);
+            }
+
+            // Prepare folder mapping and write assets
+            HashMap<String, String> folderPathById = buildFolderPathIndex(dto.getRootFolder());
+            HashMap<String, String> folderPathByIdForExport = folderPathById;
+
+            writeAsset(cssDir, "style-base.css", "templates/caseexport/css/style-base.css", null);
+            writeAsset(cssDir, "style-dark.css", "templates/caseexport/css/style-dark.css", null);
+            writeAsset(cssDir, "style-light.css", "templates/caseexport/css/style-light.css", buildLightThemePlaceholders());
+            writeAsset(cssDir, "history-base.css", "templates/caseexport/css/history-base.css", null);
+            writeAsset(jsDir, "app.js", "templates/caseexport/js/app.js", buildAppJsPlaceholders());
+            writeAsset(jsDir, "history.js", "templates/caseexport/js/history.js", null);
+
+            // Save documents into files/ subfolder mirroring folder structure
+            File filesDir = new File(exportDir, "Dokumente");
+            if (!filesDir.exists()) {
+                filesDir.mkdirs();
+            }
+            HashMap<String, String> relPathByDocId = new HashMap<>();
+            int iDoc = 0;
+            if (documents != null) {
+                for (ArchiveFileDocumentsBean d : documents) {
+                    if (d.isDeleted()) {
+                        continue;
+                    }
+                    iDoc++;
+                    try {
+                        byte[] content = caseFacade.getDocumentContentUnrestricted(d.getId());
+                        String folderId = (d.getFolder() != null ? d.getFolder().getId() : null);
+                        String folderPath = folderPathById.getOrDefault(folderId, "");
+                        String safeName = ServerFileUtils.sanitizeFileName(ServerStringUtils.nonEmpty(d.getName()));
+                        if (safeName.trim().isEmpty()) {
+                            safeName = System.currentTimeMillis() + "_document";
+                        }
+                        File targetDir = folderPath.isEmpty() ? filesDir : new File(filesDir, folderPath);
+                        if (!targetDir.exists()) {
+                            targetDir.mkdirs();
+                        }
+                        File outFile = uniqueFile(targetDir, safeName);
+                        try (FileOutputStream fos = new FileOutputStream(outFile)) {
+                            fos.write(content);
+                        }
+                        if (d.getCreationDate() != null) {
+                            try {
+                                outFile.setLastModified(d.getCreationDate().getTime());
+                            } catch (Throwable ignore) {
+                                log.warn("Konnte Dateizeit nicht setzen", ignore);
+                            }
+                        }
+                        String rel = toRelPath(filesDir, outFile);
+                        relPathByDocId.put(d.getId(), rel);
+                    } catch (Throwable t) {
+                        log.error("Fehler beim Speichern von Dokument " + d.getId(), t);
+                    }
+                }
+            }
+            HashMap<String, String> relPathByDocIdForExport = relPathByDocId;
+
+            // Build history.html
+            try {
+                String historyHtml = buildHistoryHtml(dto, history);
+                writeText(new File(exportDir, "history.html"), historyHtml);
+            } catch (Throwable t) {
+                log.error("Fehler beim Erstellen der Aktenhistorie", t);
+            }
+
+            // Build data script and HTML
+            String dataScript = buildDataScript(dto, parties, documents, reviews, tags, invoices, accountEntries, relPathByDocIdForExport, folderPathByIdForExport);
+            String indexHtml = buildIndexHtml(dto, dataScript);
+            writeText(new File(exportDir, "index.html"), indexHtml);
+
+        } catch (Throwable t) {
+            log.error("Error during HTML export", t);
+            throw new Exception(t);
+        }
+
+        if (lastModified != null) {
+            try (FileWriter fwmod = new FileWriter(exportDir.getPath() + File.separator + ".lastchanged")) {
+                fwmod.write("" + lastModified.getTime());
+            }
+        }
+
+        return exportDir.getAbsolutePath();
+
+    }
+
+    private String buildDataScript(ArchiveFileBean aCase,
+            Collection<ArchiveFileAddressesBean> parties,
+            Collection<ArchiveFileDocumentsBean> documents,
+            Collection<ArchiveFileReviewsBean> reviews,
+            Collection<ArchiveFileTagsBean> tags,
+            Collection<Invoice> invoices,
+            Collection<CaseAccountEntry> accountEntries,
+            HashMap<String, String> relPathByDocIdForExport,
+            HashMap<String, String> folderPathByIdForExport) {
+
+        StringBuilder sb = new StringBuilder();
+        sb.append("<script>\n");
+        sb.append("const CASE_DATA = {");
+
+        // case core
+        sb.append("\"id\":\"").append(jsonEscape(aCase.getId())).append("\",");
+        sb.append("\"fileNumber\":\"").append(jsonEscape(ServerStringUtils.nonEmpty(aCase.getFileNumber()))).append("\",");
+        sb.append("\"name\":\"").append(jsonEscape(ServerStringUtils.nonEmpty(aCase.getName()))).append("\",");
+        sb.append("\"reason\":\"").append(jsonEscape(ServerStringUtils.nonEmpty(aCase.getReason()))).append("\",");
+        sb.append("\"subjectField\":\"").append(jsonEscape(ServerStringUtils.nonEmpty(aCase.getSubjectField()))).append("\",");
+        sb.append("\"lawyer\":\"").append(jsonEscape(ServerStringUtils.nonEmpty(aCase.getLawyer()))).append("\",");
+        sb.append("\"assistant\":\"").append(jsonEscape(ServerStringUtils.nonEmpty(aCase.getAssistant()))).append("\",");
+        sb.append("\"claimNumber\":\"").append(jsonEscape(ServerStringUtils.nonEmpty(aCase.getClaimNumber()))).append("\",");
+        sb.append("\"claimValue\":\"").append(String.valueOf(aCase.getClaimValue())).append("\",");
+        sb.append("\"dateCreated\":\"").append(aCase.getDateCreated() != null ? dfDate.format(aCase.getDateCreated()) : "").append("\",");
+        sb.append("\"dateChanged\":\"").append(aCase.getDateChanged() != null ? dfDate.format(aCase.getDateChanged()) : "").append("\",");
+        sb.append("\"archived\":").append(aCase.isArchived()).append(",");
+        sb.append("\"notice\":\"").append(jsonEscape(ServerStringUtils.nonEmpty(aCase.getNotice()))).append("\",");
+
+        // tags
+        sb.append("\"tags\":[");
+        boolean first = true;
+        if (tags != null) {
+            for (ArchiveFileTagsBean t : tags) {
+                if (!first) {
+                    sb.append(',');
+                }
+                first = false;
+                sb.append("{\"name\":\"").append(jsonEscape(String.valueOf(t))).append("\"}");
+            }
+        }
+        sb.append("],");
+
+        // parties
+        sb.append("\"parties\":[");
+        first = true;
+        if (parties != null) {
+            for (ArchiveFileAddressesBean pab : parties) {
+                AddressBean ab = pab.getAddressKey();
+                if (!first) {
+                    sb.append(',');
+                }
+                first = false;
+                sb.append("{");
+                sb.append("\"name\":\"").append(jsonEscape(ServerStringUtils.nonEmpty(ab != null ? ab.toDisplayName() : ""))).append("\",");
+                sb.append("\"type\":\"").append(jsonEscape(pab.getReferenceType() != null ? pab.getReferenceType().getName() : "")).append("\",");
+                sb.append("\"reference\":\"").append(jsonEscape(ServerStringUtils.nonEmpty(pab.getReference()))).append("\",");
+                StringBuilder addr = new StringBuilder();
+                if (ab != null) {
+                    if (!ServerStringUtils.isEmpty(ab.getStreet())) {
+                        addr.append(ab.getStreet());
+                        if (!ServerStringUtils.isEmpty(ab.getStreetNumber())) {
+                            addr.append(" ").append(ab.getStreetNumber());
+                        }
+                    }
+                    if (!ServerStringUtils.isEmpty(ab.getZipCode()) || !ServerStringUtils.isEmpty(ab.getCity())) {
+                        if (addr.length() > 0) {
+                            addr.append(", ");
+                        }
+                        addr.append(ServerStringUtils.nonEmpty(ab.getZipCode())).append(" ").append(ServerStringUtils.nonEmpty(ab.getCity()));
+                    }
+                }
+                sb.append("\"address\":\"").append(jsonEscape(addr.toString())).append("\",");
+                sb.append("\"phone\":\"").append(jsonEscape(ab != null ? ServerStringUtils.nonEmpty(ab.getPhone()) : "")).append("\",");
+                sb.append("\"mobile\":\"").append(jsonEscape(ab != null ? ServerStringUtils.nonEmpty(ab.getMobile()) : "")).append("\"}");
+            }
+        }
+        sb.append("],");
+
+        // folders (as tree) - use root folder from case
+        CaseFolder root = aCase.getRootFolder();
+        sb.append("\"folders\":");
+        appendFolderJson(sb, root);
+        sb.append(',');
+
+        // documents
+        sb.append("\"documents\":[");
+        first = true;
+        if (documents != null) {
+            for (ArchiveFileDocumentsBean d : documents) {
+                if (d.isDeleted()) {
+                    continue; // skip deleted docs
+                }
+                if (!first) {
+                    sb.append(',');
+                }
+                first = false;
+                sb.append("{");
+                sb.append("\"id\":\"").append(jsonEscape(d.getId())).append("\",");
+                sb.append("\"name\":\"").append(jsonEscape(ServerStringUtils.nonEmpty(d.getName()))).append("\",");
+                sb.append("\"size\":").append(d.getSize()).append(',');
+                sb.append("\"sizeHuman\":\"").append(jsonEscape(ServerFileUtils.getFileSizeHumanReadable(d.getSize()))).append("\",");
+                sb.append("\"folderId\":\"").append(jsonEscape(d.getFolder() != null ? d.getFolder().getId() : "")).append("\",");
+                sb.append("\"creationTs\":").append(d.getCreationDate() != null ? d.getCreationDate().getTime() : 0).append(",");
+                sb.append("\"creationDate\":\"").append(d.getCreationDate() != null ? dfDate.format(d.getCreationDate()) : "").append("\"");
+                sb.append("}");
+            }
+        }
+        sb.append("],");
+
+        // reviews
+        sb.append("\"reviews\":[");
+        first = true;
+        if (reviews != null) {
+            for (ArchiveFileReviewsBean r : reviews) {
+                if (!first) {
+                    sb.append(',');
+                }
+                first = false;
+                sb.append("{");
+                sb.append("\"id\":\"").append(jsonEscape(r.getId())).append("\",");
+                sb.append("\"summary\":\"").append(jsonEscape(ServerStringUtils.nonEmpty(r.getSummary()))).append("\",");
+                sb.append("\"beginDate\":\"").append(r.getBeginDate() != null ? dfDateTime.format(r.getBeginDate()) : "").append("\",");
+                sb.append("\"beginTs\":").append(r.getBeginDate() != null ? r.getBeginDate().getTime() : 0).append(",");
+                sb.append("\"endDate\":\"").append(r.getEndDate() != null ? dfDateTime.format(r.getEndDate()) : "").append("\",");
+                sb.append("\"endTs\":").append(r.getEndDate() != null ? r.getEndDate().getTime() : 0).append(",");
+                sb.append("\"type\":").append(r.getEventType()).append(',');
+                sb.append("\"typeName\":\"").append(jsonEscape(r.getEventTypeName())).append("\",");
+                sb.append("\"assignee\":\"").append(jsonEscape(ServerStringUtils.nonEmpty(r.getAssignee()))).append("\",");
+                sb.append("\"done\":").append(r.isDone()).append("}");
+            }
+        }
+        sb.append("],");
+
+        // invoices
+        sb.append("\"invoices\":[");
+        first = true;
+        if (invoices != null) {
+            for (Invoice i : invoices) {
+                if (!first) {
+                    sb.append(',');
+                }
+                first = false;
+                sb.append("{");
+                sb.append("\"invoiceNumber\":\"").append(jsonEscape(ServerStringUtils.nonEmpty(i.getInvoiceNumber()))).append("\",");
+                sb.append("\"name\":\"").append(jsonEscape(ServerStringUtils.nonEmpty(i.getName()))).append("\",");
+                sb.append("\"description\":\"").append(jsonEscape(ServerStringUtils.nonEmpty(i.getDescription()))).append("\",");
+                sb.append("\"creationDate\":\"").append(i.getCreationDate() != null ? dfDate.format(i.getCreationDate()) : "").append("\",");
+                sb.append("\"dueDate\":\"").append(i.getDueDate() != null ? dfDate.format(i.getDueDate()) : "").append("\",");
+                sb.append("\"total\":").append(i.getTotal()).append(",");
+                sb.append("\"totalGross\":").append(i.getTotalGross()).append(",");
+                sb.append("\"currency\":\"").append(jsonEscape(ServerStringUtils.nonEmpty(i.getCurrency()))).append("\",");
+                sb.append("\"status\":\"").append(jsonEscape(i.getStatusString())).append("\",");
+                sb.append("\"contact\":\"").append(jsonEscape(i.getContact() != null ? i.getContact().toDisplayName() : "")).append("\"");
+                sb.append("}");
+            }
+        }
+        sb.append("],");
+
+        // accountEntries
+        sb.append("\"accountEntries\":[");
+        first = true;
+        if (accountEntries != null) {
+            for (CaseAccountEntry e : accountEntries) {
+                if (!first) {
+                    sb.append(',');
+                }
+                first = false;
+                sb.append("{");
+                sb.append("\"entryDate\":\"").append(e.getEntryDate() != null ? dfDate.format(e.getEntryDate()) : "").append("\",");
+                sb.append("\"contact\":\"").append(jsonEscape(e.getContact() != null ? e.getContact().toDisplayName() : "")).append("\",");
+                sb.append("\"description\":\"").append(jsonEscape(ServerStringUtils.nonEmpty(e.getDescription()))).append("\",");
+                sb.append("\"earnings\":").append(e.getEarnings()).append(",");
+                sb.append("\"spendings\":").append(e.getSpendings()).append(",");
+                sb.append("\"escrowIn\":").append(e.getEscrowIn()).append(",");
+                sb.append("\"escrowOut\":").append(e.getEscrowOut()).append(",");
+                sb.append("\"expendituresIn\":").append(e.getExpendituresIn()).append(",");
+                sb.append("\"expendituresOut\":").append(e.getExpendituresOut()).append(",");
+                sb.append("\"invoice\":\"").append(jsonEscape(e.getInvoice() != null ? e.getInvoice().getInvoiceNumber() : "")).append("\"");
+                sb.append("}");
+            }
+        }
+        sb.append("]");
+
+        // Close CASE_DATA and append helper maps for links/paths
+        sb.append("};\n");
+        // FILE_LINKS: docId -> relative file path
+        sb.append("const FILE_LINKS = {");
+        boolean firstLink = true;
+        for (java.util.Map.Entry<String, String> e : relPathByDocIdForExport.entrySet()) {
+            if (!firstLink) {
+                sb.append(',');
+            }
+            firstLink = false;
+            sb.append("\"").append(jsonEscape(e.getKey())).append("\":\"").append(jsonEscape(e.getValue())).append("\"");
+        }
+        sb.append("};\n");
+        // FOLDER_PATHS: folderId -> folder path string
+        sb.append("const FOLDER_PATHS = {");
+        boolean firstFp = true;
+        for (java.util.Map.Entry<String, String> e : folderPathByIdForExport.entrySet()) {
+            if (e.getKey() == null || e.getKey().isEmpty()) {
+                continue;
+            }
+            if (!firstFp) {
+                sb.append(',');
+            }
+            firstFp = false;
+            sb.append("\"").append(jsonEscape(e.getKey())).append("\":\"").append(jsonEscape(e.getValue())).append("\"");
+        }
+        sb.append("};\n</script>\n");
+        return sb.toString();
+    }
+
+    private String buildIndexHtml(ArchiveFileBean aCase, String dataScript) {
+        String safeTitle = ServerStringUtils.nonEmpty(aCase.getFileNumber()) + " — " + ServerStringUtils.nonEmpty(aCase.getName());
+        String headerSubtitle = ServerStringUtils.nonEmpty(aCase.getFileNumber()) + " · " + ServerStringUtils.nonEmpty(aCase.getName());
+
+        StringBuilder html = new StringBuilder();
+        html.append("<!doctype html>\n");
+        html.append("<html lang=\"de\">\n<head>\n<meta charset=\"utf-8\">\n<meta name=\"viewport\" content=\"width=device-width, initial-scale=1\">\n");
+        html.append("<title>").append(ServerStringUtils.nonEmpty(safeTitle)).append("</title>\n");
+        html.append("<link rel=\"stylesheet\" href=\"assets/css/style-base.css\">\n");
+        html.append("<link rel=\"stylesheet\" href=\"assets/css/style-dark.css\">\n");
+        html.append("<link rel=\"stylesheet\" href=\"assets/css/style-light.css\">\n");
+        html.append("</head>\n<body class=\"theme-dark\" data-theme=\"dark\">\n");
+        html.append("<header class=\"topbar\">\n");
+        html.append("  <div class=\"titles\">\n");
+        html.append("    <div class=\"title\">Akte</div>\n");
+        html.append("    <div class=\"subtitle\">").append(headerSubtitle).append("</div>\n");
+        html.append("  </div>\n");
+        html.append("  <div class=\"actions\">\n");
+        html.append("    <button type=\"button\" id=\"themeToggle\" class=\"theme-toggle\" aria-pressed=\"false\" aria-label=\"Zu hellem Theme wechseln\">\n");
+        html.append("      <span class=\"icon icon-dark\"><svg width=\"18\" height=\"18\" viewBox=\"0 0 24 24\" fill=\"currentColor\" aria-hidden=\"true\"><path d=\"M21 12.79A9 9 0 0111.21 3a7 7 0 000 14 9 9 0 009.79-4.21z\"/></svg></span>\n");
+        html.append("      <span class=\"icon icon-light\"><svg width=\"18\" height=\"18\" viewBox=\"0 0 24 24\" fill=\"currentColor\" aria-hidden=\"true\"><path d=\"M12 18a6 6 0 100-12 6 6 0 000 12zm0 4a1 1 0 01-1-1v-1a1 1 0 112 0v1a1 1 0 01-1 1zm0-18a1 1 0 011-1V2a1 1 0 01-2 0V1a1 1 0 011-1zm11 11a1 1 0 01-1 1h-1a1 1 0 110-2h1a1 1 0 011 1zm-18 0a1 1 0 01-1 1H2a1 1 0 110-2h1a1 1 0 011 1zm15.07 6.07a1 1 0 01-1.41 0l-.7-.7a1 1 0 011.42-1.42l.7.7a1 1 0 010 1.42zm-12.72 0a1 1 0 010-1.42l.7-.7a1 1 0 011.42 1.42l-.7.7a1 1 0 01-1.42 0zm12.02-15.2a1 1 0 010 1.42l-.7.7a1 1 0 01-1.42-1.42l.7-.7a1 1 0 011.42 0zm-11.32 0l.7.7a1 1 0 01-1.42 1.42l-.7-.7a1 1 0 111.42-1.42z\"/></svg></span>\n");
+        html.append("      <span class=\"label\">Hell</span>\n");
+        html.append("    </button>\n");
+        html.append("  </div>\n");
+        html.append("</header>\n");
+        html.append("<nav class=\"tabs\">\n  <button class=\"tab active\" data-tab=\"dashboard\">Übersicht</button>\n  <button class=\"tab\" data-tab=\"documents\">Dokumente</button>\n  <button class=\"tab\" data-tab=\"deadlines\">Fälligkeiten</button>\n  <button class=\"tab\" data-tab=\"finance\">Finanzen</button>\n  <button class=\"tab\" data-tab=\"history\">Aktenhistorie</button>\n</nav>\n");
+        html.append("<main class=\"content\">\n  <section id=\"dashboard\" class=\"view active\"></section>\n  <section id=\"documents\" class=\"view\"></section>\n  <section id=\"deadlines\" class=\"view\"></section>\n  <section id=\"finance\" class=\"view\"></section>\n  <section id=\"history\" class=\"view\"></section>\n</main>\n<footer class=\"footer\">Export erstellt am ");
+        html.append(dfDateTime.format(new Date()))
+                .append("</footer>\n");
+        html.append(dataScript);
+        html.append("<script src=\"assets/js/app.js\"></script>\n");
+        html.append("</body>\n</html>");
+        return html.toString();
+    }
+
+    private String buildHistoryHtml(ArchiveFileBean aCase, ArchiveFileHistoryBean[] history) {
+        StringBuilder sb = new StringBuilder(4096);
+        sb.append("<!doctype html><html lang=\"de\"><head><meta charset=\"utf-8\"><meta name=\"viewport\" content=\"width=device-width, initial-scale=1\">");
+        sb.append("<title>Aktenhistorie</title>");
+        sb.append("<link rel=\"stylesheet\" href=\"assets/css/style-dark.css\">");
+        sb.append("<link rel=\"stylesheet\" href=\"assets/css/style-light.css\">");
+        sb.append("<link rel=\"stylesheet\" href=\"assets/css/history-base.css\">");
+        sb.append("</head><body class=\"theme-dark\" data-theme=\"dark\">");
+        sb.append("<h1>Aktenhistorie</h1>");
+        sb.append("<div class=\"sub\">");
+        sb.append(ServerStringUtils.nonEmpty(aCase.getFileNumber())).append(" · ").append(ServerStringUtils.nonEmpty(aCase.getName()));
+        sb.append("</div>");
+        sb.append("<table><thead><tr><th>Datum</th><th>Nutzer</th><th>Beschreibung</th></tr></thead><tbody>");
+        if (history != null) {
+            for (ArchiveFileHistoryBean h : history) {
+                String dt = h.getChangeDate() != null ? dfDateTime.format(h.getChangeDate()) : "";
+                String principal = ServerStringUtils.nonEmpty(h.getPrincipal());
+                String description = ServerStringUtils.nonEmpty(h.getChangeDescription());
+                sb.append("<tr><td class=\"dt\" data-label=\"Datum\">").append(jsonEscape(dt)).append("</td><td class=\"user\" data-label=\"Nutzer\">").append(jsonEscape(principal)).append("</td><td class=\"desc\" data-label=\"Beschreibung\">").append(jsonEscape(description)).append("</td></tr>");
+            }
+        }
+        sb.append("</tbody></table>");
+        sb.append("<script src=\"assets/js/history.js\"></script>");
+        sb.append("</body></html>");
+        return sb.toString();
+    }
+
+    private String toRelPath(File root, File file) {
+        String rp = root.toPath().relativize(file.toPath()).toString();
+        return ("Dokumente/" + rp).replace("\\", "/");
+    }
+
+    private File uniqueFile(File dir, String baseName) {
+        String name = baseName;
+        String ext = "";
+        int dot = baseName.lastIndexOf('.');
+        if (dot > 0) {
+            name = baseName.substring(0, dot);
+            ext = baseName.substring(dot);
+        }
+        File f = new File(dir, baseName);
+        int i = 1;
+        while (f.exists()) {
+            f = new File(dir, name + " (" + i + ")" + ext);
+            i++;
+        }
+        return f;
+    }
+
+    private HashMap<String, String> buildFolderPathIndex(CaseFolder root) {
+        HashMap<String, String> map = new HashMap<>();
+        if (root == null) {
+            return map;
+        }
+        map.put(root.getId(), "");
+        buildFolderPathIndexRec(root, "", map);
+        return map;
+    }
+
+    private void buildFolderPathIndexRec(CaseFolder f, String prefix, HashMap<String, String> map) {
+        if (f == null) {
+            return;
+        }
+        List<CaseFolder> children = f.getChildren();
+        if (children == null) {
+            return;
+        }
+        for (CaseFolder c : children) {
+            String name = ServerFileUtils.sanitizeFolderName(ServerStringUtils.nonEmpty(c.getName()));
+            if (name.isEmpty()) {
+                name = "---";
+            }
+            String path = prefix.isEmpty() ? name : (prefix + File.separator + name);
+            map.put(c.getId(), path);
+            buildFolderPathIndexRec(c, path, map);
+        }
+    }
+
+    private Map<String, String> buildLightThemePlaceholders() {
+        Map<String, String> placeholders = new LinkedHashMap<>();
+        Color primary = ServerColorTheme.COLOR_LOGO_BLUE;
+        Color mutedBase = ServerColorTheme.COLOR_DARK_GREY;
+
+        Color primarySoft = lighten(primary, 0.65);
+        Color primaryTint = tint(primary, 0.18);
+        Color background = tint(primary, 0.06);
+        Color foreground = mix(Color.BLACK, primary, 0.15);
+        Color muted = lighten(mutedBase, 0.35);
+        Color border = lighten(primary, 0.85);
+        Color surfaceMuted = tint(primary, 0.08);
+        Color surfaceRaised = tint(primary, 0.12);
+        Color historyBg = tint(primary, 0.04);
+
+        placeholders.put("${PRIMARY_COLOR}", toHex(primary));
+        placeholders.put("${PRIMARY_COLOR_SOFT}", toHex(primarySoft));
+        placeholders.put("${PRIMARY_COLOR_TINT}", toHex(primaryTint));
+        placeholders.put("${PRIMARY_COLOR_SHADOW}", toRgba(primary, 0.24));
+        placeholders.put("${LIGHT_BG}", toHex(background));
+        placeholders.put("${LIGHT_FG}", toHex(foreground));
+        placeholders.put("${LIGHT_MUTED}", toHex(muted));
+        placeholders.put("${LIGHT_CARD}", toHex(Color.WHITE));
+        placeholders.put("${LIGHT_BORDER}", toHex(border));
+        placeholders.put("${LIGHT_SURFACE_MUTED}", toHex(surfaceMuted));
+        placeholders.put("${LIGHT_SURFACE_RAISED}", toHex(surfaceRaised));
+        placeholders.put("${LIGHT_HISTORY_BG}", toHex(historyBg));
+        return placeholders;
+    }
+
+    private Map<String, String> buildAppJsPlaceholders() {
+        Map<String, String> placeholders = new LinkedHashMap<>();
+        placeholders.put("${EVENTTYPE_FOLLOWUP}", String.valueOf(EventTypes.EVENTTYPE_FOLLOWUP));
+        placeholders.put("${EVENTTYPE_RESPITE}", String.valueOf(EventTypes.EVENTTYPE_RESPITE));
+        placeholders.put("${EVENTTYPE_EVENT}", String.valueOf(EventTypes.EVENTTYPE_EVENT));
+        return placeholders;
+    }
+
+    private static Color mix(Color base, Color other, double factor) {
+        factor = clamp(factor, 0d, 1d);
+        int r = (int) Math.round(base.getRed() * (1d - factor) + other.getRed() * factor);
+        int g = (int) Math.round(base.getGreen() * (1d - factor) + other.getGreen() * factor);
+        int b = (int) Math.round(base.getBlue() * (1d - factor) + other.getBlue() * factor);
+        return new Color(clampChannel(r), clampChannel(g), clampChannel(b));
+    }
+
+    private static Color lighten(Color color, double factor) {
+        return mix(color, Color.WHITE, factor);
+    }
+
+    private static Color tint(Color color, double factor) {
+        return mix(Color.WHITE, color, factor);
+    }
+
+    private static int clampChannel(int value) {
+        return (int) Math.max(0, Math.min(255, value));
+    }
+
+    private static double clamp(double value, double min, double max) {
+        return Math.max(min, Math.min(max, value));
+    }
+
+    private static String toHex(Color color) {
+        return String.format("#%02X%02X%02X", color.getRed(), color.getGreen(), color.getBlue());
+    }
+
+    private static String toRgba(Color color, double alpha) {
+        alpha = clamp(alpha, 0d, 1d);
+        return String.format("rgba(%d,%d,%d,%.2f)", color.getRed(), color.getGreen(), color.getBlue(), alpha);
+    }
+
+    private static String jsonEscape(String s) {
+        if (s == null) {
             return "";
         }
-        return cell.toString().replace(LINE_BREAK, " ").replace(CELL_BREAK, " ");
+        String out = s.replace("\\", "\\\\").replace("\"", "\\\"").replace("\n", "\\n").replace("\r", "\\r");
+        return out;
     }
 
-    public String exportReviews() throws Exception {
-        Collection<ArchiveFileReviewsBean> reviews = this.calendarFacade.getAllOpenReviewsUnrestricted();
+    private void appendFolderJson(StringBuilder sb, CaseFolder f) {
+        if (f == null) {
+            sb.append("null");
+            return;
+        }
+        sb.append("{");
+        sb.append("\"id\":\"").append(jsonEscape(ServerStringUtils.nonEmpty(f.getId()))).append("\",");
+        sb.append("\"name\":\"").append(jsonEscape(ServerStringUtils.nonEmpty(f.getName()))).append("\",");
+        sb.append("\"parentId\":\"").append(jsonEscape(ServerStringUtils.nonEmpty(f.getParentId()))).append("\",");
+        sb.append("\"children\":[");
+        boolean first = true;
+        List<CaseFolder> children = f.getChildren();
+        if (children != null) {
+            for (CaseFolder c : children) {
+                if (!first) {
+                    sb.append(',');
+                }
+                first = false;
+                appendFolderJson(sb, c);
+            }
+        }
+        sb.append("]");
+        sb.append("}");
+    }
 
-        if (!this.targetDirectory.exists()) {
-            this.targetDirectory.mkdirs();
+    private void writeAsset(File targetDir, String fileName, String resourcePath, Map<String, String> placeholders) throws Exception {
+        if (!targetDir.exists() && !targetDir.mkdirs()) {
+            throw new IOException("Could not create asset directory " + targetDir.getAbsolutePath());
+        }
+        String content = readResource(resourcePath);
+        if (placeholders != null && !placeholders.isEmpty()) {
+            for (Map.Entry<String, String> entry : placeholders.entrySet()) {
+                content = content.replaceAll(Pattern.quote(entry.getKey()), entry.getValue());
+            }
+        }
+        writeText(new File(targetDir, fileName), content);
+    }
+
+    private String readResource(String resourcePath) throws IOException {
+        try (InputStream in = AdvancedHtmlExport.class.getClassLoader().getResourceAsStream(resourcePath)) {
+            if (in == null) {
+                throw new IOException("Resource not found: " + resourcePath);
+            }
+            ByteArrayOutputStream buffer = new ByteArrayOutputStream();
+            byte[] chunk = new byte[4096];
+            int read;
+            while ((read = in.read(chunk)) != -1) {
+                buffer.write(chunk, 0, read);
+            }
+            return buffer.toString(StandardCharsets.UTF_8.name());
+        }
+    }
+
+    private void writeText(File target, String content) throws Exception {
+        try (OutputStreamWriter writer = new OutputStreamWriter(new FileOutputStream(target), StandardCharsets.UTF_8)) {
+            writer.write(content);
+        }
+    }
+
+    public static void zipDirectory(String dirToZip, String targetFile) throws Exception {
+        try (FileOutputStream fos = new FileOutputStream(targetFile); ZipOutputStream zos = new ZipOutputStream(fos)) {
+            addDirToZipArchive(zos, new File(dirToZip), null);
+            zos.flush();
+            fos.flush();
+        }
+    }
+
+    private static void addDirToZipArchive(ZipOutputStream zos, File fileToZip, String parrentDirectoryName) throws Exception {
+        if (fileToZip == null || !fileToZip.exists()) {
+            return;
         }
 
-        File revCsv = new File(this.targetDirectory.getAbsolutePath() + File.separator + "wiedervorlagen-fristen.csv");
+        String zipEntryName = fileToZip.getName();
+        if (parrentDirectoryName != null && !parrentDirectoryName.isEmpty()) {
+            zipEntryName = parrentDirectoryName + "/" + fileToZip.getName();
+        }
+
+        if (fileToZip.isDirectory()) {
+            System.out.println("+" + zipEntryName);
+            for (File file : fileToZip.listFiles()) {
+                addDirToZipArchive(zos, file, zipEntryName);
+            }
+        } else {
+            System.out.println("   " + zipEntryName);
+            byte[] buffer = new byte[1024];
+            try (FileInputStream fis = new FileInputStream(fileToZip)) {
+                ZipEntry ze = new ZipEntry(zipEntryName);
+                try {
+                    ze.setLastModifiedTime(FileTime.fromMillis(fileToZip.lastModified()));
+                } catch (Throwable t) {
+                    log.error("Could not set last modified time of " + fileToZip.getName(), t);
+                }
+                zos.putNextEntry(ze);
+                int length;
+                while ((length = fis.read(buffer)) > 0) {
+                    zos.write(buffer, 0, length);
+                }
+                zos.closeEntry();
+            }
+        }
+    }
+
+    public String exportReviews(File targetDirectory) throws Exception {
+        Collection<ArchiveFileReviewsBean> reviews = this.calendarFacade.getAllOpenReviewsUnrestricted();
+
+        if (!targetDirectory.exists()) {
+            targetDirectory.mkdirs();
+        }
+
+        File revCsv = new File(targetDirectory.getAbsolutePath() + File.separator + "wiedervorlagen-fristen.csv");
         if (revCsv.exists()) {
             revCsv.delete();
         }
@@ -775,7 +1459,7 @@ public class HTMLExport {
 
         for (ArchiveFileReviewsBean rev : reviews) {
 
-            excelStr.append(toDate(df, rev.getBeginDate()));
+            excelStr.append(toDate(dfDate, rev.getBeginDate()));
             excelStr.append(CELL_BREAK);
             excelStr.append(escape(rev.getEventTypeName()));
             excelStr.append(CELL_BREAK);
@@ -820,197 +1504,11 @@ public class HTMLExport {
         return revCsv.getPath();
     }
 
-    public String export(ArchiveFileBean dto, Date lastModified) throws Exception {
-
-        File newDir = this.getExportFolderName(dto);
-        if (newDir.exists()) {
-            throw new Exception("Verzeichnis " + newDir.getAbsolutePath() + " existiert bereits!");
+    private static String escape(Object cell) {
+        if (cell == null) {
+            return "";
         }
-
-        newDir.mkdirs();
-
-        copyToLocal("templates/exporthtml/index.html", "index.html", newDir, "");
-        copyToLocal("templates/exporthtml/j-lawyer_style.css", "j-lawyer_style.css", newDir, "");
-
-        File newDir2 = new File(newDir.getAbsolutePath() + File.separator + "images");
-        newDir2.mkdirs();
-
-        copyToLocal("templates/exporthtml/images/j-lawyer_body.jpg", "j-lawyer_body.jpg", newDir, "images/");
-        copyToLocal("templates/exporthtml/images/j-lawyer_content_bottom.jpg", "j-lawyer_content_bottom.jpg", newDir, "images/");
-        copyToLocal("templates/exporthtml/images/j-lawyer_footer_top.jpg", "j-lawyer_footer_top.jpg", newDir, "images/");
-        copyToLocal("templates/exporthtml/images/j-lawyer_header.jpg", "j-lawyer_header.jpg", newDir, "images/");
-        copyToLocal("templates/exporthtml/images/j-lawyer_menu.jpg", "j-lawyer_menu.jpg", newDir, "images/");
-        copyToLocal("templates/exporthtml/images/j-lawyer_menu_hover.jpg", "j-lawyer_menu_hover.jpg", newDir, "images/");
-        copyToLocal("templates/exporthtml/images/j-lawyer_sidebar_section_bottom.jpg", "j-lawyer_sidebar_section_bottom.jpg", newDir, "images/");
-
-        File indexFile = new File(newDir.getAbsolutePath() + File.separator + "index.html");
-        byte[] content = ServerFileUtils.readFile(indexFile);
-        String sContent = new String(content, "UTF-8");
-        sContent = sContent.replaceAll("\\{\\{filenumber\\}\\}", dto.getFileNumber());
-        sContent = sContent.replaceAll("\\{\\{filename\\}\\}", toHtml4(ServerStringUtils.nonEmpty(dto.getName())));
-        sContent = sContent.replaceAll("\\{\\{filenotice\\}\\}", toHtml4(ServerStringUtils.nonEmpty(dto.getNotice())));
-        sContent = sContent.replaceAll("\\{\\{filereason\\}\\}", toHtml4(ServerStringUtils.nonEmpty(dto.getReason())));
-        sContent = sContent.replaceAll("\\{\\{filesubjectfield\\}\\}", toHtml4(ServerStringUtils.nonEmpty(dto.getSubjectField())));
-        sContent = sContent.replaceAll("\\{\\{lawyer\\}\\}", toHtml4(ServerStringUtils.nonEmpty(dto.getLawyer())));
-        sContent = sContent.replaceAll("\\{\\{assistant\\}\\}", toHtml4(ServerStringUtils.nonEmpty(dto.getAssistant())));
-        sContent = sContent.replaceAll("\\{\\{claimnumber\\}\\}", toHtml4(ServerStringUtils.nonEmpty(dto.getClaimNumber())));
-        NumberFormat currencyFormat = NumberFormat.getNumberInstance();
-        currencyFormat.setMinimumFractionDigits(2);
-        currencyFormat.setMaximumFractionDigits(2);
-        currencyFormat.setParseIntegerOnly(false);
-        sContent = sContent.replaceAll("\\{\\{claimvalue\\}\\}", "" + currencyFormat.format(dto.getClaimValue()));
-
-        ArchiveFileHistoryBean[] history = null;
-        Collection documents = null;
-        Collection parties = null;
-        Collection reviews = null;
-
-        history = caseFacade.getHistoryForArchiveFileUnrestricted(dto.getId());
-        parties = caseFacade.getInvolvementDetailsForCaseUnrestricted(dto.getId());
-        reviews = calendarFacade.getReviewsUnrestricted(dto.getId());
-        documents = caseFacade.getDocumentsUnrestricted(dto.getId());
-
-        Arrays.sort(history, new HistoryComparator());
-        StringBuffer sb = new StringBuffer();
-        for (ArchiveFileHistoryBean h : history) {
-            // <tr><td><p class="post_info">01.01.2013</p></td><td><p class="post_info">dings</p></td></tr>
-            sb.append("<tr valign=\"top\"><td><p class=\"post_info\">");
-            sb.append(toDate(dtf, h.getChangeDate()));
-            sb.append("</p></td><td><p class=\"post_info\">");
-            sb.append(toHtml4(h.getPrincipal()));
-            sb.append("</p></td><td><p class=\"post_info\">");
-            sb.append(toHtml4(h.getChangeDescription()));
-            sb.append("</p></td></tr>");
-        }
-        try {
-            sContent = sContent.replace("{{history}}", sb.toString());
-        } catch (Exception t) {
-            log.error("failed to add history to export, replacement string was " + sb.toString(), t);
-        }
-
-        ArrayList reviewsList = new ArrayList(reviews);
-        Collections.sort(reviewsList, new ReviewsComparator());
-        sb = new StringBuffer();
-        for (Object r : reviewsList) {
-            if (r instanceof ArchiveFileReviewsBean) {
-                ArchiveFileReviewsBean rb = (ArchiveFileReviewsBean) r;
-                sb.append("<tr valign=\"top\"><td><p class=\"post_info\">");
-                sb.append(toDate(dtf, rb.getBeginDate()));
-                sb.append("</p></td><td><p class=\"post_info\">");
-                sb.append(toHtml4(rb.getSummary()));
-                sb.append("</p></td><td><p class=\"post_info\">");
-                sb.append("(" + toHtml4(rb.getEventTypeName()) + ")");
-                sb.append("</p></td></tr>");
-            }
-        }
-        sContent = sContent.replace("{{reviews}}", sb.toString());
-
-        sContent = sContent.replace("{{parties}}", this.getPartiesList(parties));
-
-        ArrayList docList = new ArrayList(documents);
-        Collections.sort(docList, new DocumentsComparator());
-        sb = new StringBuffer();
-        HashMap<String,List<CaseFolder>> folderHierarchies=new HashMap<>();
-        for (Object d : docList) {
-            if (d instanceof ArchiveFileDocumentsBean) {
-                ArchiveFileDocumentsBean db = (ArchiveFileDocumentsBean) d;
-
-                String dbNewName = removeSonderzeichen(db.getName());
-                dbNewName=ServerFileUtils.sanitizeFileName(dbNewName);
-                
-                if(dbNewName.length()==0) {
-                    log.warn("invalid file name: " + dbNewName);
-                    dbNewName=""+System.currentTimeMillis();
-                }
-                
-                
-                List<CaseFolder> hierarchy = new ArrayList<>();
-                if (db.getFolder() != null) {
-                    if(!folderHierarchies.containsKey(db.getFolder().getId())) {
-                        hierarchy=caseFacade.getFolderHierarchyUnrestricted(db.getFolder().getId());
-                        folderHierarchies.put(db.getFolder().getId(), hierarchy);
-                    }
-                    hierarchy=folderHierarchies.get(db.getFolder().getId());
-                }
-
-                String subPath=toFilePath(hierarchy);
-                try {
-                    byte[] docContent = caseFacade.getDocumentContentUnrestricted(db.getId());
-                    File docFolders=new File(newDir.getAbsolutePath() + subPath);
-                    docFolders.mkdirs();
-                    try (FileOutputStream docOut = new FileOutputStream(newDir.getAbsolutePath() + subPath + File.separator + dbNewName)) {
-                        docOut.write(docContent);
-                    }
-                    File docOutFile = new File(newDir.getAbsolutePath() + subPath + File.separator + dbNewName);
-                    if (db.getChangeDate() != null) {
-                        docOutFile.setLastModified(db.getChangeDate().getTime());
-                    }
-                } catch (Throwable t) {
-                    log.error("Could not export document " + db.getName() + " from case " + dto.getFileNumber(), t);
-
-                }
-
-                // <tr><td><p class="post_info">01.01.2013</p></td><td><p class="post_info">dings</p></td></tr>
-                
-                
-                sb.append("<tr valign=\"top\"><td><p class=\"post_info\">");
-                sb.append(toDate(df, db.getChangeDate()));
-                subPath=subPath.replace(File.separator, "/");
-                if(subPath.startsWith("/") && subPath.length()>1)
-                    subPath=subPath.substring(1);
-                sb.append("</p></td><td><p class=\"post_info\"><a href=\"").append(subPath);
-                if(!subPath.isEmpty())
-                    sb.append(File.separator);
-                sb.append(dbNewName);
-                sb.append("\">");
-                sb.append(dbNewName);
-                sb.append("</a></p></td><td><p class=\"post_info\">");
-                if (db.getDictateSign() != null) {
-                    sb.append(db.getDictateSign());
-                }
-                sb.append("</p></td></tr><tr>");
-                sb.append("<td></td><td><p class=\"folder_info\"><nobr>");
-                sb.append(toFolderPath(hierarchy));
-                sb.append("</nobr></p></td>");
-                sb.append("</tr>");
-            }
-        }
-        sContent = sContent.replace("{{documents}}", sb.toString());
-
-        try (FileWriter fw = new FileWriter(indexFile)) {
-            fw.write(sContent);
-        }
-
-        if (lastModified != null) {
-            try (FileWriter fwmod = new FileWriter(newDir.getPath() + File.separator + ".lastchanged")) {
-                fwmod.write("" + lastModified.getTime());
-            }
-        }
-
-        return newDir.getAbsolutePath();
-
-    }
-    
-    private String toFolderPath(List<CaseFolder> hierarchy) {
-        StringBuilder sb=new StringBuilder();
-        for(CaseFolder f: hierarchy) {
-            sb.append(" > ").append(f.getName());
-        }
-        String path=sb.toString().trim();
-        if(path.isEmpty())
-            path=">";
-        return path;
-    }
-    
-    private String toFilePath(List<CaseFolder> hierarchy) {
-        StringBuilder sb=new StringBuilder();
-        for(CaseFolder f: hierarchy) {
-            String fName=ServerFileUtils.sanitizeFileName(f.getName());
-            if(fName.isEmpty())
-                fName="---";
-            sb.append(File.separator).append(fName);
-        }
-        return sb.toString();
+        return cell.toString().replace(LINE_BREAK, " ").replace(CELL_BREAK, " ");
     }
 
     private String toDate(SimpleDateFormat dateFormat, Date d) {
@@ -1018,92 +1516,6 @@ public class HTMLExport {
             return "";
         } else {
             return dateFormat.format(d);
-        }
-    }
-
-    public void zipDirectory(String dirToZip, String targetFile) throws Exception {
-        try (FileOutputStream fos = new FileOutputStream(targetFile); ZipOutputStream zos = new ZipOutputStream(fos)) {
-            addDirToZipArchive(zos, new File(dirToZip), null);
-            zos.flush();
-            fos.flush();
-        }
-    }
-
-    private void addDirToZipArchive(ZipOutputStream zos, File fileToZip, String parrentDirectoryName) throws Exception {
-        if (fileToZip == null || !fileToZip.exists()) {
-            return;
-        }
-
-        String zipEntryName = fileToZip.getName();
-        if (parrentDirectoryName != null && !parrentDirectoryName.isEmpty()) {
-            zipEntryName = parrentDirectoryName + "/" + fileToZip.getName();
-        }
-
-        if (fileToZip.isDirectory()) {
-            System.out.println("+" + zipEntryName);
-            for (File file : fileToZip.listFiles()) {
-                addDirToZipArchive(zos, file, zipEntryName);
-            }
-        } else {
-            System.out.println("   " + zipEntryName);
-            byte[] buffer = new byte[1024];
-            try (FileInputStream fis = new FileInputStream(fileToZip)) {
-                ZipEntry ze = new ZipEntry(zipEntryName);
-                try {
-                    ze.setLastModifiedTime(FileTime.fromMillis(fileToZip.lastModified()));
-                } catch (Throwable t) {
-                    log.error("Could not set last modified time of " + fileToZip.getName(), t);
-                }
-                zos.putNextEntry(ze);
-                int length;
-                while ((length = fis.read(buffer)) > 0) {
-                    zos.write(buffer, 0, length);
-                }
-                zos.closeEntry();
-            }
-        }
-    }
-
-    private String getPartiesList(Collection parties) {
-        ArrayList partiesList = new ArrayList(parties);
-        StringBuilder sb = new StringBuilder();
-        for (Object p : partiesList) {
-            if (p instanceof ArchiveFileAddressesBean) {
-                AddressBean ab = ((ArchiveFileAddressesBean) p).getAddressKey();
-                PartyTypeBean pt = ((ArchiveFileAddressesBean) p).getReferenceType();
-                // <tr><td><p class="post_info">01.01.2013</p></td><td><p class="post_info">dings</p></td></tr>
-                //sb.append("<tr valign=\"top\"><td><p class=\"post_info\">");
-                sb.append("<p class=\"post_info\">");
-                sb.append(toHtml4(ab.toDisplayName() + " (" + pt.getName() + ")"));
-                if (ab.getStreet() != null && ab.getZipCode() != null && ab.getCity() != null) {
-                    if (!("".equals(ab.getStreet())) && !("".equals(ab.getZipCode())) && !("".equals(ab.getCity()))) {
-                        sb.append(toHtml4(", " + ab.getStreet()));
-                        if (ab.getStreetNumber() != null && !"".equals(ab.getStreetNumber())) {
-                            sb.append(toHtml4(" " + ab.getStreetNumber()));
-                        }
-                        sb.append(toHtml4(", " + ab.getZipCode() + " " + ab.getCity()));
-                    }
-                }
-                if (ab.getPhone() != null) {
-                    sb.append(", Tel: ").append(ab.getPhone());
-                }
-                if (ab.getMobile() != null) {
-                    sb.append(", Mob: ").append(ab.getMobile());
-                }
-                sb.append("</p>");
-            }
-        }
-        return sb.toString();
-    }
-
-    private void copyToLocal(String resource, String name, File dir, String subDir) throws Exception {
-        try (InputStream is = this.getClass().getClassLoader().getResourceAsStream(resource); FileOutputStream fOut = new FileOutputStream(dir.getAbsolutePath() + File.separator + subDir + name);) {
-            byte[] buffer = new byte[256];
-            int len = 0;
-            while ((len = is.read(buffer)) > 0) {
-                fOut.write(buffer, 0, len);
-
-            }
         }
     }
 }
