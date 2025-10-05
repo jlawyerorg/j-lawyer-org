@@ -967,9 +967,9 @@ public class IterativeBackupTask extends java.util.TimerTask implements Cancella
                     String caseDir = export.getExportFolderName(afb);
                     Date lastModified = caseSvc.getLastChangedForArchiveFile(id);
                     boolean needsExport = true;
-                    if (new File(caseDir).exists()) {
+                    if (new File(exportDir, caseDir).exists()) {
 
-                        File lastExported = new File(caseDir + File.separator + ".lastchanged");
+                        File lastExported = new File(exportDir, caseDir + File.separator + ".lastchanged");
                         if (lastExported.exists()) {
                             String lastExportedTime = ServerFileUtils.readFileAsString(lastExported);
                             String lastModifiedTime = "" + lastModified.getTime();
@@ -980,7 +980,7 @@ public class IterativeBackupTask extends java.util.TimerTask implements Cancella
                     }
                     if (needsExport) {
                         try {
-                            ServerFileUtils.getInstance().deleteRecursively(new File(caseDir));
+                            ServerFileUtils.getInstance().deleteRecursively(new File(exportDir, caseDir));
                             export.export(afb, lastModified);
                         } catch (Throwable t) {
                             log.error("Error exporting " + afb.getFileNumber(), t);
