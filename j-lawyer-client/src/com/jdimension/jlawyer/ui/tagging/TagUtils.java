@@ -679,6 +679,7 @@ import javax.swing.JButton;
 import javax.swing.JCheckBoxMenuItem;
 import javax.swing.JPopupMenu;
 import javax.swing.MenuElement;
+import com.jdimension.jlawyer.client.utils.StayOpenCheckBoxMenuItem;
 
 /**
  *
@@ -784,7 +785,7 @@ public class TagUtils {
 
             popTagFilter.removeAll();
             for (String t : tags) {
-                JCheckBoxMenuItem mi = new JCheckBoxMenuItem(t);
+                JCheckBoxMenuItem mi = new StayOpenCheckBoxMenuItem(t);
                 if (lastFilterTags.contains(t)) {
                     mi.setSelected(true);
                 } else {
