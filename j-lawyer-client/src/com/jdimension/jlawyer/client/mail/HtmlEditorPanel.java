@@ -670,10 +670,10 @@ import java.awt.Container;
 import java.awt.Toolkit;
 import java.awt.datatransfer.Clipboard;
 import java.awt.datatransfer.DataFlavor;
+import java.awt.datatransfer.Transferable;
 import java.awt.event.ActionEvent;
 import java.awt.event.KeyEvent;
 import javax.swing.AbstractAction;
-import javax.swing.Action;
 import javax.swing.JButton;
 import javax.swing.JComboBox;
 import javax.swing.JComponent;
@@ -883,7 +883,7 @@ public class HtmlEditorPanel extends javax.swing.JPanel implements EditorImpleme
         if (c instanceof JButton || c instanceof JComboBox) {
             c.setEnabled(enabled);
         }
-        if (c.getComponents() != null) {
+        if (c!=null && c.getComponents() != null) {
             for (Component child : c.getComponents()) {
                 if (child instanceof Container) {
                     setEnabledRecursive((Container) child, enabled);
@@ -991,8 +991,37 @@ public class HtmlEditorPanel extends javax.swing.JPanel implements EditorImpleme
                     public void actionPerformed(ActionEvent e) {
                         try {
                             Clipboard clipboard = Toolkit.getDefaultToolkit().getSystemClipboard();
-                            if (clipboard.isDataFlavorAvailable(DataFlavor.stringFlavor)) {
-                                String text = (String) clipboard.getData(DataFlavor.stringFlavor);
+                            Transferable t = clipboard.getContents(null);
+//                            if (t.isDataFlavorSupported(new DataFlavor("text/rtf;class=java.io.InputStream"))) {
+//                                log.info("pasting clipboard content as RTF");
+//                                InputStream is = (InputStream) t.getTransferData(new DataFlavor("text/rtf;class=java.io.InputStream"));
+//                                RTFEditorKit rtfKit = new RTFEditorKit();
+//                                StyledDocument doc = (StyledDocument) rtfKit.createDefaultDocument();
+//                                rtfKit.read(is, doc, 0);
+//                                editorPane.getDocument().insertString(editorPane.getCaretPosition(), doc.getText(0, doc.getLength()), null);
+                            if (t.isDataFlavorSupported(DataFlavor.selectionHtmlFlavor)) {
+                                log.info("pasting clipboard content as selectionHtml");
+                                String html = (String) t.getTransferData(DataFlavor.selectionHtmlFlavor);
+
+                                HTMLEditorKit kit = (HTMLEditorKit) editorPane.getEditorKit();
+                                HTMLDocument doc = (HTMLDocument) editorPane.getDocument();
+                                int pos = editorPane.getCaretPosition();
+
+                                kit.insertHTML(doc, pos, html, 0, 0, null);
+
+                            } else if (t.isDataFlavorSupported(DataFlavor.allHtmlFlavor)) {
+                                log.info("pasting clipboard content as allHtml");
+                                String html = (String) t.getTransferData(DataFlavor.allHtmlFlavor);
+
+                                HTMLEditorKit kit = (HTMLEditorKit) editorPane.getEditorKit();
+                                HTMLDocument doc = (HTMLDocument) editorPane.getDocument();
+                                int pos = editorPane.getCaretPosition();
+
+                                kit.insertHTML(doc, pos, html, 0, 0, null);
+
+                            } else if (t.isDataFlavorSupported(DataFlavor.stringFlavor)) {
+                                log.info("pasting clipboard content as string");
+                                String text = (String) t.getTransferData(DataFlavor.stringFlavor);
 
                                 // Replace line breaks with <br>
                                 text = text.replace("\r\n", "\n").replace("\r", "\n").replace("\n", "<br>");
@@ -1006,7 +1035,7 @@ public class HtmlEditorPanel extends javax.swing.JPanel implements EditorImpleme
                                 kit.insertHTML(doc, pos, text, 0, 0, null);
                             }
                         } catch (Exception ex) {
-                            log.error("Error pasting plain text into HTML editor pane", ex);
+                            log.error("Error pasting clipboard content into HTML editor pane", ex);
                         }
                     }
                 });
