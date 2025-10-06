@@ -1335,8 +1335,18 @@ public class MailContentUI extends javax.swing.JPanel implements HyperlinkListen
 
     private static boolean messagesAreEqual(Message msg, Message copiedMsg) throws Exception {
 
-        InternetAddress[] originalFrom = (InternetAddress[]) msg.getFrom();
-        InternetAddress[] copiedFrom = (InternetAddress[]) copiedMsg.getFrom();
+        InternetAddress[] originalFrom = new InternetAddress[0];
+        try {
+            originalFrom=(InternetAddress[]) msg.getFrom();
+        } catch (Exception ex) {
+            log.error("unable to determine FROM of original message");
+        }
+        InternetAddress[] copiedFrom = new InternetAddress[0];
+        try {
+            copiedFrom = (InternetAddress[]) copiedMsg.getFrom();
+        } catch (Exception ex) {
+            log.error("unable to determine FROM of copied message");
+        }
 
         boolean fromMatches = Arrays.equals(originalFrom, copiedFrom);
 
