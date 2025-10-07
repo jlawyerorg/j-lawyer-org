@@ -688,6 +688,8 @@ import com.jdimension.jlawyer.services.JLawyerServiceLocator;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.text.SimpleDateFormat;
+import java.time.ZoneId;
+import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
@@ -953,7 +955,8 @@ public class SendEncryptedAction extends ProgressableAction {
                 msg.setRecipients(Message.RecipientType.TO, currentRecipientMail);
 
                 msg.setSubject(MimeUtility.encodeText(subject, "utf-8", "B"));
-                msg.setSentDate(new Date());
+                ZonedDateTime zdt = ZonedDateTime.now(ZoneId.of("Europe/Berlin"));
+                msg.setSentDate(Date.from(zdt.toInstant()));
 
                 Multipart multiPart = new MimeMultipart();
 

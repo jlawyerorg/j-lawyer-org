@@ -684,6 +684,8 @@ import com.jdimension.jlawyer.services.ArchiveFileServiceRemote;
 import com.jdimension.jlawyer.services.JLawyerServiceLocator;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
+import java.time.ZoneId;
+import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
@@ -919,7 +921,8 @@ public class SendAction extends ProgressableAction {
             msg.setRecipients(Message.RecipientType.BCC, bcc);
 
             msg.setSubject(MimeUtility.encodeText(subject, "utf-8", "B"));
-            msg.setSentDate(new Date());
+            ZonedDateTime zdt = ZonedDateTime.now(ZoneId.of("Europe/Berlin"));
+            msg.setSentDate(Date.from(zdt.toInstant()));
 
             Multipart multiPart = new MimeMultipart();
 

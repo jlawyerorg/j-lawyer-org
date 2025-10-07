@@ -680,6 +680,8 @@ import java.io.ByteArrayOutputStream;
 import java.io.InputStream;
 import java.io.UnsupportedEncodingException;
 import java.text.SimpleDateFormat;
+import java.time.ZoneId;
+import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Date;
@@ -1264,7 +1266,8 @@ public class EmailUtils extends CommonMailUtils {
             msg.setRecipients(Message.RecipientType.TO, to);
 
             msg.setSubject(MimeUtility.encodeText("Gelesen: " + subject, "utf-8", "B"));
-            msg.setSentDate(new Date());
+            ZonedDateTime zdt = ZonedDateTime.now(ZoneId.of("Europe/Berlin"));
+            msg.setSentDate(Date.from(zdt.toInstant()));
 
             Multipart multiPart = new MimeMultipart();
 

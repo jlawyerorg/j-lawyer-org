@@ -729,6 +729,8 @@ import java.io.File;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.text.SimpleDateFormat;
+import java.time.ZoneId;
+import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -2829,7 +2831,8 @@ public class SendEmailFrame extends javax.swing.JFrame implements SendCommunicat
             msg.setRecipients(javax.mail.Message.RecipientType.BCC, this.txtBcc.getText());
 
             msg.setSubject(MimeUtility.encodeText(this.txtSubject.getText(), "utf-8", "B"));
-            msg.setSentDate(new Date());
+            ZonedDateTime zdt = ZonedDateTime.now(ZoneId.of("Europe/Berlin"));
+            msg.setSentDate(Date.from(zdt.toInstant()));
 
             Multipart multiPart = new MimeMultipart();
 
