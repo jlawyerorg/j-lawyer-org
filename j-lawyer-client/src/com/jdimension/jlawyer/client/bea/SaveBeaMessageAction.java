@@ -866,6 +866,10 @@ public class SaveBeaMessageAction extends ProgressableAction {
                 }
 
                 if (this.folder != null) {
+                    String folderName = this.folder.getName() != null ? this.folder.getName() : "";
+                    String folderId = this.folder.getId() != null ? this.folder.getId() : "";
+                    String documentName = newDoc.getName() != null ? newDoc.getName() : newDoc.getId();
+                    log.debug("Moving beA copy " + documentName + " into folder " + folderName + " (" + folderId + ")");
                     ArrayList<String> docIds = new ArrayList<>();
                     docIds.add(newDoc.getId());
                     afs.moveDocumentsToFolder(docIds, this.folder.getId());
