@@ -672,10 +672,12 @@ import com.jdimension.jlawyer.client.wizard.*;
 import com.jdimension.jlawyer.epost.EpostLetter;
 import com.jdimension.jlawyer.persistence.ArchiveFileBean;
 import com.jdimension.jlawyer.persistence.ArchiveFileDocumentsBean;
+import com.jdimension.jlawyer.persistence.CaseFolder;
 import com.jdimension.jlawyer.persistence.ArchiveFileHistoryBean;
 import com.jdimension.jlawyer.services.ArchiveFileServiceRemote;
 import com.jdimension.jlawyer.services.JLawyerServiceLocator;
 import java.io.File;
+import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 import javax.swing.JOptionPane;
@@ -916,6 +918,20 @@ public class EpostLetterSendStatus extends javax.swing.JPanel implements WizardS
                             if (newName != null) {
                                 
                                 ArchiveFileDocumentsBean newDoc = afs.addDocument(this.data.get("epost.letter.caseid").toString(), newName, (byte[]) this.data.get("pdf.bytes"), "", null);
+
+                                CaseFolder targetFolder = (CaseFolder) this.data.get("epost.letter.folder");
+                                if (targetFolder != null && targetFolder.getId() != null) {
+                                    String folderName = StringUtils.nonNull(targetFolder.getName());
+                                    String folderId = StringUtils.nonNull(targetFolder.getId());
+                                    String documentName = newDoc.getName() != null ? newDoc.getName() : newDoc.getId();
+                                    log.debug("Moving E-POST document " + documentName + " into folder " + folderName + " (" + folderId + ")");
+                                    ArrayList<String> docIds = new ArrayList<>();
+                                    docIds.add(newDoc.getId());
+                                    afs.moveDocumentsToFolder(docIds, targetFolder.getId());
+                                    newDoc.setFolder(targetFolder);
+                                } else {
+                                    log.debug("No target folder resolved for E-POST document; keeping it in archive root.");
+                                }
 
                                 ArchiveFileHistoryBean historyDto = new ArchiveFileHistoryBean();
                                 historyDto.setChangeDate(new Date());

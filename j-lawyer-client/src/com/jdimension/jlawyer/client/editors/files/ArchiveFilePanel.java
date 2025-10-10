@@ -6794,6 +6794,8 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
 
         SendBeaMessageFrame dlg = new SendBeaMessageFrame();
 
+        CaseFolder targetFolder = this.resolveOutgoingDocumentFolder(selectedDocs);
+        dlg.setContextFolder(targetFolder);
         dlg.setArchiveFile(dto);
         dlg.setInvolvedInCase(this.pnlInvolvedParties.getInvolvedParties());
 
@@ -6859,6 +6861,8 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
 
         SendBeaMessageFrame dlg = new SendBeaMessageFrame();
 
+        CaseFolder targetFolder = this.resolveOutgoingDocumentFolder(selectedDocs);
+        dlg.setContextFolder(targetFolder);
         dlg.setArchiveFile(dto);
         dlg.setInvolvedInCase(this.pnlInvolvedParties.getInvolvedParties());
         for (ArchiveFileAddressesBean aab : this.pnlInvolvedParties.getInvolvedParties()) {
@@ -6871,6 +6875,48 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
 
         a.start();
     }//GEN-LAST:event_mnuSendBeaDocumentPDFActionPerformed
+
+    private CaseFolder resolveOutgoingDocumentFolder(List<ArchiveFileDocumentsBean> documents) {
+        if (documents == null || documents.isEmpty()) {
+            log.debug("No document selected for outgoing transmission; storing copy in archive root.");
+            return null;
+        }
+
+        CaseFolder resolved = null;
+        boolean missingFolderLogged = false;
+        boolean mismatchLogged = false;
+
+        for (ArchiveFileDocumentsBean doc : documents) {
+            if (doc == null) {
+                continue;
+            }
+
+            CaseFolder docFolder = doc.getFolder();
+            if (docFolder == null) {
+                if (!missingFolderLogged) {
+                    log.debug("At least one selected document has no folder assigned; copy will stay in archive root unless another folder is resolved.");
+                    missingFolderLogged = true;
+                }
+                continue;
+            }
+
+            if (resolved == null) {
+                resolved = docFolder;
+                continue;
+            }
+
+            if (!Objects.equals(resolved.getId(), docFolder.getId()) && !mismatchLogged) {
+                log.debug("Selected documents reside in different folders; using folder " + StringUtils.nonNull(resolved.getName()) + " (" + StringUtils.nonNull(resolved.getId()) + ") for outgoing copy.");
+                mismatchLogged = true;
+            }
+        }
+
+        if (resolved == null) {
+            log.debug("No folder resolved from selected documents; storing copy in archive root.");
+        }
+
+        return resolved;
+    }
 
     private void mnuOpenDocumentMicrosoftOfficeActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_mnuOpenDocumentMicrosoftOfficeActionPerformed
         try {
@@ -7859,6 +7905,9 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
         WizardDataContainer data = steps.getData();
         data.put("epost.letter.documents", selectedDocs);
         data.put("epost.letter.caseid", this.dto.getId());
+
+        CaseFolder epostTargetFolder = this.resolveOutgoingDocumentFolder(selectedDocs);
+        data.put("epost.letter.folder", epostTargetFolder);
 
         List<AddressBean> addresses = new ArrayList<>();
         for (ArchiveFileAddressesBean aab : this.pnlInvolvedParties.getInvolvedParties()) {

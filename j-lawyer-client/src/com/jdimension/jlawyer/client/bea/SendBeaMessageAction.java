@@ -920,9 +920,13 @@ public class SendBeaMessageAction extends ProgressableAction {
                             }
 
                             if (this.folder != null) {
+                                String folderName = this.folder.getName() != null ? this.folder.getName() : "";
+                                String folderId = this.folder.getId() != null ? this.folder.getId() : "";
+                                String documentName = newDoc.getName() != null ? newDoc.getName() : newDoc.getId();
+                                log.debug("Moving beA copy " + documentName + " into folder " + folderName + " (" + folderId + ")");
                                 ArrayList<String> docList = new ArrayList<>();
                                 docList.add(newDoc.getId());
-                                afs.moveDocumentsToFolder(docList, folder.getId());
+                                afs.moveDocumentsToFolder(docList, this.folder.getId());
                             }
 
                             ArchiveFileHistoryBean historyDto = new ArchiveFileHistoryBean();
