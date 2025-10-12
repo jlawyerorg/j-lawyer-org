@@ -35,9 +35,10 @@
                                   <Component id="cmbTitle" min="-2" max="-2" attributes="0"/>
                                   <Component id="cmbTitleInAddress" min="-2" max="-2" attributes="0"/>
                                   <Component id="cmbCountry" min="-2" max="-2" attributes="0"/>
+                                  <Component id="txtEmail" alignment="0" min="-2" pref="208" max="-2" attributes="0"/>
+                                  <Component id="cmbGender" alignment="0" min="-2" max="-2" attributes="0"/>
                                   <Component id="cmbSalutation" alignment="0" min="-2" max="-2" attributes="0"/>
                                   <Component id="cmbComplimentaryClose" alignment="0" min="-2" max="-2" attributes="0"/>
-                                  <Component id="txtEmail" alignment="0" min="-2" pref="208" max="-2" attributes="0"/>
                                   <Component id="txtMobile" alignment="0" min="-2" pref="208" max="-2" attributes="0"/>
                                   <Component id="txtFax" alignment="0" min="-2" pref="208" max="-2" attributes="0"/>
                                   <Component id="txtPhone" alignment="0" min="-2" pref="208" max="-2" attributes="0"/>
@@ -81,6 +82,7 @@
                                           <Component id="jLabel16" alignment="0" min="-2" max="-2" attributes="0"/>
                                           <Component id="jLabel17" alignment="0" min="-2" max="-2" attributes="0"/>
                                           <Component id="jLabel18" alignment="0" min="-2" max="-2" attributes="0"/>
+                                          <Component id="jLabel21" alignment="0" min="-2" max="-2" attributes="0"/>
                                           <Component id="jLabel19" alignment="0" min="-2" max="-2" attributes="0"/>
                                           <Component id="jLabel20" alignment="0" min="-2" max="-2" attributes="0"/>
                                       </Group>
@@ -191,6 +193,11 @@
               </Group>
               <EmptySpace type="separate" max="-2" attributes="0"/>
               <Group type="103" groupAlignment="3" attributes="0">
+                  <Component id="cmbGender" alignment="3" min="-2" max="-2" attributes="0"/>
+                  <Component id="jLabel21" alignment="3" min="-2" max="-2" attributes="0"/>
+              </Group>
+              <EmptySpace max="-2" attributes="0"/>
+              <Group type="103" groupAlignment="3" attributes="0">
                   <Component id="cmbSalutation" alignment="3" min="-2" max="-2" attributes="0"/>
                   <Component id="jLabel19" alignment="3" min="-2" max="-2" attributes="0"/>
               </Group>
@@ -216,7 +223,7 @@
         <Property name="text" type="java.lang.String" value="&lt;html&gt;&lt;p&gt;Vervollst&amp;auml;ndigen Sie hier die wichtigsten Adressinformationen.&lt;/html&gt;"/>
         <Property name="border" type="javax.swing.border.Border" editor="org.netbeans.modules.form.editors2.BorderEditor">
           <Border info="org.netbeans.modules.form.compat2.border.LineBorderInfo">
-            <LineBorder roundedCorners="true"/>
+            <LineBorder/>
           </Border>
         </Property>
         <Property name="opaque" type="boolean" value="true"/>
@@ -405,6 +412,27 @@
       <Properties>
         <Property name="text" type="java.lang.String" value="E-Mail:"/>
       </Properties>
+    </Component>
+    <Component class="javax.swing.JLabel" name="jLabel21">
+      <Properties>
+        <Property name="text" type="java.lang.String" value="Geschlecht:"/>
+      </Properties>
+    </Component>
+    <Component class="javax.swing.JComboBox" name="cmbGender">
+      <Properties>
+        <Property name="model" type="javax.swing.ComboBoxModel" editor="org.netbeans.modules.form.editors2.ComboBoxModelEditor">
+          <StringArray count="5">
+            <StringItem index="0" value="männlich"/>
+            <StringItem index="1" value="weiblich"/>
+            <StringItem index="2" value="divers"/>
+            <StringItem index="3" value="juristische Person"/>
+            <StringItem index="4" value="nicht definiert"/>
+          </StringArray>
+        </Property>
+      </Properties>
+      <AuxValues>
+        <AuxValue name="JavaCodeGenerator_TypeParameters" type="java.lang.String" value="&lt;String&gt;"/>
+      </AuxValues>
     </Component>
     <Component class="javax.swing.JComboBox" name="cmbSalutation">
       <Properties>

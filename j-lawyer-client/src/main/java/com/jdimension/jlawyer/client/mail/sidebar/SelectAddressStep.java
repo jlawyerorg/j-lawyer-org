@@ -663,101 +663,115 @@
  */
 package com.jdimension.jlawyer.client.mail.sidebar;
 
-import com.jdimension.jlawyer.client.editors.files.AddressBeanListCellRenderer;
-import com.jdimension.jlawyer.client.settings.ClientSettings;
+import com.jdimension.jlawyer.client.editors.EditorsRegistry;
+import com.jdimension.jlawyer.client.editors.files.AddAddressSearchDialog;
 import com.jdimension.jlawyer.client.settings.UserSettings;
-import com.jdimension.jlawyer.client.wizard.*;
+import com.jdimension.jlawyer.client.utils.DesktopUtils;
+import com.jdimension.jlawyer.client.utils.FrameUtils;
+import com.jdimension.jlawyer.client.wizard.PartyEntry;
+import com.jdimension.jlawyer.client.wizard.PartyPanelRenderer;
+import com.jdimension.jlawyer.client.wizard.WizardDataContainer;
+import com.jdimension.jlawyer.client.wizard.WizardMainPanel;
+import com.jdimension.jlawyer.client.wizard.WizardStepInterface;
 import com.jdimension.jlawyer.persistence.AddressBean;
+import com.jdimension.jlawyer.persistence.ArchiveFileAddressesBean;
 import com.jdimension.jlawyer.persistence.PartyTypeBean;
 import com.jdimension.jlawyer.services.JLawyerServiceLocator;
 import com.jdimension.jlawyer.services.SystemManagementRemote;
+import java.awt.Component;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Set;
+import javax.swing.BoxLayout;
+import javax.swing.DefaultComboBoxModel;
+import javax.swing.DefaultListCellRenderer;
+import javax.swing.JList;
+import javax.swing.JOptionPane;
+import javax.swing.SwingUtilities;
 import org.apache.log4j.Logger;
 
 /**
- *
- * @author Kutschke
+ * Step that allows collecting multiple parties before creating the case.
  */
 public class SelectAddressStep extends javax.swing.JPanel implements WizardStepInterface {
 
     private static final Logger log = Logger.getLogger(SelectAddressStep.class.getName());
 
-    private WizardDataContainer data = null;
-    
-    private List<PartyTypeBean> partyTypes=null;
+    private WizardDataContainer data;
+    private WizardMainPanel wizardPanel;
+    private final DefaultComboBoxModel<PartyEntry> recipientModel = new DefaultComboBoxModel<>();
+    private final List<PartyTypeBean> partyTypes = new ArrayList<>();
+    private final List<PartyPanelRenderer> partyPanels = new ArrayList<>();
+    private List<PartyEntry> currentParties = new ArrayList<>();
 
     /**
      * Creates new form SelectAddressStep
      */
     public SelectAddressStep() {
         initComponents();
-        
-        this.cmbRecipient.removeAllItems();
-        this.cmbRecipient.setRenderer(new AddressBeanListCellRenderer());
+        this.setName("Beteiligte auswählen");
+
+        this.cmbRecipient.setModel(recipientModel);
+        this.cmbRecipient.setRenderer(new RecipientRenderer());
+        this.pnlParties.setLayout(new BoxLayout(this.pnlParties, BoxLayout.Y_AXIS));
+        this.scrollParties.getVerticalScrollBar().setUnitIncrement(16);
+
+        loadPartyTypes();
+    }
+
+    private void loadPartyTypes() {
+        this.cmbRefType.removeAllItems();
 
         try {
-            ClientSettings settings = ClientSettings.getInstance();
+            com.jdimension.jlawyer.client.settings.ClientSettings settings = com.jdimension.jlawyer.client.settings.ClientSettings.getInstance();
             JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
             SystemManagementRemote sys = locator.lookupSystemManagementRemote();
-            this.partyTypes=sys.getPartyTypes();
-            
-            this.cmbRefType.removeAllItems();
-            ArrayList<String> refTypeNames = new ArrayList<>();
-            for (PartyTypeBean p : this.partyTypes) {
-                refTypeNames.add(p.getName());
+            List<PartyTypeBean> fetched = sys.getPartyTypes();
+            if (fetched != null) {
+                this.partyTypes.clear();
+                this.partyTypes.addAll(fetched);
+                Collections.sort(this.partyTypes, (a, b) -> a.getName().compareToIgnoreCase(b.getName()));
+                for (PartyTypeBean pt : this.partyTypes) {
+                    this.cmbRefType.addItem(pt.getName());
+                }
             }
-            Collections.sort(refTypeNames);
-            for (String s : refTypeNames) {
-                this.cmbRefType.addItem(s);
-            }
-            
-            UserSettings uset=UserSettings.getInstance();
-            String lastPartyType = uset.getSetting(UserSettings.CONF_CASE_LASTPARTYTYPE_NEWCASEASSISTANT, "");
-            if(lastPartyType!=null) {
-                this.cmbRefType.setSelectedItem(lastPartyType);
-            }
-            
-
         } catch (Throwable t) {
             log.error("Unable to get party types", t);
+            JOptionPane.showMessageDialog(this, "Parteitypen konnten nicht geladen werden: " + t.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
         }
-        
     }
 
     @Override
     public void nextEvent() {
-        
-        String refType=this.cmbRefType.getSelectedItem().toString();
-        PartyTypeBean selectedType=null;
-        for(PartyTypeBean ptb: this.partyTypes) {
-            if(refType.equals(ptb.getName())) {
-                selectedType=ptb;
+        persistParties();
+        if (this.currentParties.isEmpty()) {
+            throw new IllegalStateException("Bitte mindestens einen Beteiligten übernehmen.");
+        }
+        for (PartyEntry entry : this.currentParties) {
+            if (entry.getRole() == null) {
+                throw new IllegalStateException("Bitte weisen Sie allen Beteiligten eine Rolle zu.");
             }
         }
-        
-        this.data.put("newaddress.partytype", selectedType);
-        this.data.put("newaddress.selectedaddress", this.cmbRecipient.getSelectedItem());
-        
-        UserSettings uset=UserSettings.getInstance();
-        uset.setSetting(UserSettings.CONF_CASE_LASTPARTYTYPE_NEWCASEASSISTANT, refType);
-
+        this.data.put("newcase.parties", new ArrayList<>(this.currentParties));
     }
 
     @Override
     public void previousEvent() {
-
+        persistParties();
     }
 
     @Override
     public void cancelledEvent() {
-        
+        persistParties();
     }
 
     @Override
     public void finishedEvent() {
-        
+        persistParties();
     }
 
     /**
@@ -772,23 +786,56 @@ public class SelectAddressStep extends javax.swing.JPanel implements WizardStepI
         jLabel1 = new javax.swing.JLabel();
         jLabel2 = new javax.swing.JLabel();
         cmbRecipient = new javax.swing.JComboBox<>();
-        cmbRefType = new javax.swing.JComboBox<>();
+        cmdAcceptParty = new javax.swing.JButton();
+        cmdAddExisting = new javax.swing.JButton();
         jLabel3 = new javax.swing.JLabel();
+        cmbRefType = new javax.swing.JComboBox<>();
+        cmdAddMore = new javax.swing.JButton();
+        lblSelected = new javax.swing.JLabel();
+        scrollParties = new javax.swing.JScrollPane();
+        pnlParties = new javax.swing.JPanel();
 
         setName("Beteiligte auswählen"); // NOI18N
 
         jLabel1.setBackground(new java.awt.Color(153, 153, 153));
         jLabel1.setForeground(new java.awt.Color(255, 255, 255));
-        jLabel1.setText("<html><p>Beteiligten auswählen oder erstellen. Die wichtigsten Daten zu einer neuen Adresse k&ouml;nnen hier direkt eingegeben werden. Nach Erstellung sollte eine Detaillierung separat erfolgen.</html>");
+        jLabel1.setText("<html><p>Beteiligte auswählen oder erstellen. Bereits erfasste Beteiligte werden unten aufgelistet und können dort bearbeitet oder entfernt werden.</p></html>");
         jLabel1.setBorder(new javax.swing.border.LineBorder(new java.awt.Color(0, 0, 0), 1, true));
         jLabel1.setOpaque(true);
 
         jLabel2.setFont(jLabel2.getFont().deriveFont(jLabel2.getFont().getStyle() | java.awt.Font.BOLD));
         jLabel2.setText("Beteiligte:");
 
-        cmbRefType.setModel(new javax.swing.DefaultComboBoxModel<>(new String[] { "Item 1", "Item 2", "Item 3", "Item 4" }));
+        cmdAcceptParty.setText("Beteiligten übernehmen");
+        cmdAcceptParty.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/agt_action_success.png"))); // NOI18N
+        cmdAcceptParty.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                cmdAcceptPartyActionPerformed(evt);
+            }
+        });
+
+        cmdAddExisting.setText("Bestehende Adresse hinzufügen");
+        cmdAddExisting.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/vcard.png"))); // NOI18N
+        cmdAddExisting.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                cmdAddExistingActionPerformed(evt);
+            }
+        });
 
         jLabel3.setText("als:");
+
+        cmdAddMore.setText("Weitere Beteiligte aus Dokument extrahieren");
+        cmdAddMore.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/find.png"))); // NOI18N
+        cmdAddMore.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                cmdAddMoreActionPerformed(evt);
+            }
+        });
+
+        lblSelected.setFont(lblSelected.getFont().deriveFont(lblSelected.getFont().getStyle() | java.awt.Font.BOLD));
+        lblSelected.setText("Ausgewählte Beteiligte:");
+
+        scrollParties.setViewportView(pnlParties);
 
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(this);
         this.setLayout(layout);
@@ -797,16 +844,25 @@ public class SelectAddressStep extends javax.swing.JPanel implements WizardStepI
             .addGroup(layout.createSequentialGroup()
                 .addContainerGap()
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addComponent(jLabel1, javax.swing.GroupLayout.DEFAULT_SIZE, 876, Short.MAX_VALUE)
+                    .addComponent(jLabel1, javax.swing.GroupLayout.PREFERRED_SIZE, 0, Short.MAX_VALUE)
                     .addGroup(layout.createSequentialGroup()
                         .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                             .addComponent(jLabel2)
                             .addComponent(jLabel3))
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                         .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                            .addComponent(cmbRefType, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                            .addComponent(cmbRecipient, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
-                        .addGap(0, 0, Short.MAX_VALUE)))
+                            .addGroup(layout.createSequentialGroup()
+                                .addComponent(cmbRecipient, 0, 619, Short.MAX_VALUE)
+                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                                .addComponent(cmdAcceptParty))
+                            .addGroup(layout.createSequentialGroup()
+                                .addComponent(cmbRefType, javax.swing.GroupLayout.PREFERRED_SIZE, 200, javax.swing.GroupLayout.PREFERRED_SIZE)
+                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                                .addComponent(cmdAddMore)
+                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                                .addComponent(cmdAddExisting))))
+                    .addComponent(lblSelected, javax.swing.GroupLayout.PREFERRED_SIZE, 0, Short.MAX_VALUE)
+                    .addComponent(scrollParties, javax.swing.GroupLayout.PREFERRED_SIZE, 0, Short.MAX_VALUE))
                 .addContainerGap())
         );
         layout.setVerticalGroup(
@@ -816,22 +872,110 @@ public class SelectAddressStep extends javax.swing.JPanel implements WizardStepI
                 .addComponent(jLabel1, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                    .addComponent(jLabel2)
                     .addComponent(cmbRecipient, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addComponent(jLabel2))
+                    .addComponent(cmdAcceptParty))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                    .addComponent(jLabel3)
                     .addComponent(cmbRefType, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addComponent(jLabel3))
-                .addContainerGap(556, Short.MAX_VALUE))
+                    .addComponent(cmdAddMore)
+                    .addComponent(cmdAddExisting))
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addComponent(lblSelected)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addComponent(scrollParties, javax.swing.GroupLayout.DEFAULT_SIZE, 314, Short.MAX_VALUE)
+                .addContainerGap())
         );
     }// </editor-fold>//GEN-END:initComponents
 
+    private void cmdAcceptPartyActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdAcceptPartyActionPerformed
+        PartyEntry candidate = (PartyEntry) this.cmbRecipient.getSelectedItem();
+        if (candidate == null) {
+            JOptionPane.showMessageDialog(this, "Bitte wählen Sie zunächst einen Beteiligten aus.", DesktopUtils.POPUP_TITLE_HINT, JOptionPane.INFORMATION_MESSAGE);
+            return;
+        }
+
+        PartyTypeBean selectedType = resolveSelectedPartyType();
+        if (selectedType == null) {
+            JOptionPane.showMessageDialog(this, "Bitte wählen Sie eine Beteiligtenrolle aus.", DesktopUtils.POPUP_TITLE_HINT, JOptionPane.INFORMATION_MESSAGE);
+            return;
+        }
+
+        PartyEntry newEntry = copyPartyEntry(candidate);
+        newEntry.setRole(selectedType);
+
+        addPartyEntry(newEntry);
+        this.recipientModel.removeElement(candidate);
+        if (this.recipientModel.getSize() > 0) {
+            this.cmbRecipient.setSelectedIndex(0);
+        }
+
+        persistParties();
+        updateSelectedLabel();
+        storeLastPartyType(selectedType);
+
+        if (candidate.isCreateNewAddress()) {
+            this.data.put("newaddress.addressbean", null);
+            this.data.put("newaddress.create", false);
+            this.data.put("newaddress.reference", "");
+        }
+    }//GEN-LAST:event_cmdAcceptPartyActionPerformed
+
+    private void cmdAddExistingActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdAddExistingActionPerformed
+        try {
+            AddAddressSearchDialog dlg = new AddAddressSearchDialog(EditorsRegistry.getInstance().getMainWindow(), true, null);
+            dlg.setTitle("Adresse auswählen");
+            FrameUtils.centerDialog(dlg, EditorsRegistry.getInstance().getMainWindow());
+            dlg.setVisible(true);
+            AddressBean address = dlg.getResultAddress();
+            ArchiveFileAddressesBean involvement = dlg.getResultInvolvement();
+            if (address == null) {
+                return;
+            }
+
+            PartyEntry entry = new PartyEntry();
+            entry.setAddress(address);
+            entry.setCreateNewAddress(false);
+            entry.setSource("search");
+            if (involvement != null) {
+                entry.setRole(involvement.getReferenceType());
+                entry.setReference(involvement.getReference());
+            }
+
+            addPartyEntry(entry);
+            persistParties();
+            updateSelectedLabel();
+        } catch (Throwable t) {
+            log.error("Unable to add existing address", t);
+            JOptionPane.showMessageDialog(this, "Die Adresse konnte nicht hinzugefügt werden: " + t.getMessage(), DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
+        }
+    }//GEN-LAST:event_cmdAddExistingActionPerformed
+
+    private void cmdAddMoreActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdAddMoreActionPerformed
+        persistParties();
+        if (this.wizardPanel != null) {
+            try {
+                this.wizardPanel.goStepsBack(2);
+            } catch (Exception ex) {
+                log.error("Unable to navigate to previous step", ex);
+                JOptionPane.showMessageDialog(this, "Der Assistent konnte nicht zurück navigiert werden: " + ex.getMessage(), DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
+            }
+        }
+    }//GEN-LAST:event_cmdAddMoreActionPerformed
+
     // Variables declaration - do not modify//GEN-BEGIN:variables
-    private javax.swing.JComboBox<AddressBean> cmbRecipient;
+    private javax.swing.JComboBox<PartyEntry> cmbRecipient;
     private javax.swing.JComboBox<String> cmbRefType;
+    private javax.swing.JButton cmdAcceptParty;
+    private javax.swing.JButton cmdAddExisting;
+    private javax.swing.JButton cmdAddMore;
     private javax.swing.JLabel jLabel1;
     private javax.swing.JLabel jLabel2;
     private javax.swing.JLabel jLabel3;
+    private javax.swing.JLabel lblSelected;
+    private javax.swing.JPanel pnlParties;
+    private javax.swing.JScrollPane scrollParties;
     // End of variables declaration//GEN-END:variables
 
     @Override
@@ -841,21 +985,27 @@ public class SelectAddressStep extends javax.swing.JPanel implements WizardStepI
 
     @Override
     public void display() {
-        
-        this.cmbRecipient.removeAllItems();
-        AddressBean[] relevantAddresses=(AddressBean[])this.data.get("newcase.addresses");
-        if(relevantAddresses!=null) {
-            for(AddressBean ab: relevantAddresses) {
-                this.cmbRecipient.addItem(ab);
-            }
-        }
-        if(this.data.get("newaddress.addressbean")!=null) {
-            AddressBean newAddress=(AddressBean)this.data.get("newaddress.addressbean");
-            this.cmbRecipient.addItem(newAddress);
-        }
-
+        loadPartiesFromData();
+        rebuildPartyPanels();
+        refreshCandidates();
+        restoreLastPartyTypeSelection();
+        updateSelectedLabel();
+        updateButtonLabels();
     }
-    
+
+    private void updateButtonLabels() {
+        String source = "";
+        if (this.data.get("newcase.source") != null) {
+            source = this.data.get("newcase.source").toString();
+        }
+        boolean fromScanner = "scanner".equalsIgnoreCase(source);
+        if (fromScanner) {
+            this.cmdAddMore.setText("Weitere Beteiligte aus Dokument extrahieren");
+        } else {
+            this.cmdAddMore.setText("Weitere Beteiligte aus Signatur extrahieren");
+        }
+    }
+
     @Override
     public void setData(WizardDataContainer data) {
         this.data = data;
@@ -863,6 +1013,221 @@ public class SelectAddressStep extends javax.swing.JPanel implements WizardStepI
 
     @Override
     public void setWizardPanel(WizardMainPanel wizard) {
-        
+        this.wizardPanel = wizard;
+    }
+
+    private void loadPartiesFromData() {
+        Object stored = this.data.get("newcase.parties");
+        if (stored instanceof List) {
+            this.currentParties = new ArrayList<>((List<PartyEntry>) stored);
+        } else {
+            this.currentParties = new ArrayList<>();
+        }
+    }
+
+    private void rebuildPartyPanels() {
+        this.partyPanels.clear();
+        this.pnlParties.removeAll();
+
+        for (PartyEntry entry : this.currentParties) {
+            PartyPanelRenderer renderer = new PartyPanelRenderer();
+            renderer.setPartyEntry(copyPartyEntry(entry), this.partyTypes);
+            renderer.addRemoveListener(new RemovePartyListener(renderer));
+            this.partyPanels.add(renderer);
+            this.pnlParties.add(renderer);
+        }
+        refreshPartyContainer();
+    }
+
+    private void refreshCandidates() {
+        this.recipientModel.removeAllElements();
+
+        AddressBean[] relevant = (AddressBean[]) this.data.get("newcase.addresses");
+        if (relevant != null) {
+            Set<String> alreadyUsed = collectUsedAddressIds();
+            for (AddressBean address : relevant) {
+                if (address == null) {
+                    continue;
+                }
+                if (address.getId() != null && alreadyUsed.contains(address.getId())) {
+                    continue;
+                }
+                PartyEntry entry = new PartyEntry();
+                entry.setAddress(address);
+                entry.setCreateNewAddress(false);
+                entry.setSource(resolveSource());
+                this.recipientModel.addElement(entry);
+            }
+        }
+
+        AddressBean newAddress = (AddressBean) this.data.get("newaddress.addressbean");
+        if (newAddress != null) {
+            PartyEntry entry = new PartyEntry();
+            entry.setAddress(newAddress);
+            entry.setCreateNewAddress(Boolean.TRUE.equals(this.data.get("newaddress.create")));
+            entry.setSource(resolveSource());
+            Object ref = this.data.get("newaddress.reference");
+            if (ref != null) {
+                entry.setReference(ref.toString());
+            }
+            this.recipientModel.addElement(entry);
+        }
+
+        if (this.recipientModel.getSize() > 0) {
+            this.cmbRecipient.setSelectedIndex(0);
+        }
+        updateCandidateControls();
+    }
+
+    private Set<String> collectUsedAddressIds() {
+        Set<String> ids = new LinkedHashSet<>();
+        for (PartyEntry entry : this.currentParties) {
+            AddressBean address = entry.getAddress();
+            if (address != null && address.getId() != null) {
+                ids.add(address.getId());
+            }
+        }
+        return ids;
+    }
+
+    private String resolveSource() {
+        Object src = this.data.get("newcase.source");
+        if (src == null) {
+            return "";
+        }
+        return src.toString();
+    }
+
+    private void restoreLastPartyTypeSelection() {
+        try {
+            String lastPartyType = UserSettings.getInstance().getSetting(UserSettings.CONF_CASE_LASTPARTYTYPE_NEWCASEASSISTANT, "");
+            if (lastPartyType != null && !lastPartyType.isEmpty()) {
+                this.cmbRefType.setSelectedItem(lastPartyType);
+            }
+        } catch (Throwable t) {
+            log.warn("Could not restore last party type", t);
+        }
+    }
+
+    private void storeLastPartyType(PartyTypeBean selectedType) {
+        try {
+            UserSettings.getInstance().setSetting(UserSettings.CONF_CASE_LASTPARTYTYPE_NEWCASEASSISTANT, selectedType.getName());
+        } catch (Throwable t) {
+            log.warn("Could not store last party type", t);
+        }
+    }
+
+    private PartyTypeBean resolveSelectedPartyType() {
+        Object selected = this.cmbRefType.getSelectedItem();
+        if (selected == null) {
+            return null;
+        }
+        for (PartyTypeBean type : this.partyTypes) {
+            if (selected.toString().equals(type.getName())) {
+                return type;
+            }
+        }
+        return null;
+    }
+
+    private PartyEntry copyPartyEntry(PartyEntry source) {
+        PartyEntry copy = new PartyEntry();
+        if (source != null) {
+            copy.setAddress(source.getAddress());
+            copy.setCreateNewAddress(source.isCreateNewAddress());
+            copy.setRole(source.getRole());
+            copy.setReference(source.getReference());
+            copy.setSource(source.getSource());
+        }
+        return copy;
+    }
+
+    private void addPartyEntry(PartyEntry entry) {
+        this.currentParties.add(entry);
+        PartyPanelRenderer renderer = new PartyPanelRenderer();
+        renderer.setPartyEntry(copyPartyEntry(entry), this.partyTypes);
+        renderer.addRemoveListener(new RemovePartyListener(renderer));
+        this.partyPanels.add(renderer);
+        this.pnlParties.add(renderer);
+        refreshPartyContainer();
+    }
+
+    private void removePartyPanel(PartyPanelRenderer panel) {
+        this.partyPanels.remove(panel);
+        this.pnlParties.remove(panel);
+        refreshPartyContainer();
+        persistParties();
+        updateSelectedLabel();
+    }
+
+    private void persistParties() {
+        List<PartyEntry> updated = new ArrayList<>();
+        for (PartyPanelRenderer renderer : this.partyPanels) {
+            PartyEntry entry = renderer.getPartyEntry();
+            updated.add(entry);
+        }
+        this.currentParties = updated;
+        this.data.put("newcase.parties", new ArrayList<>(this.currentParties));
+    }
+
+    private void updateSelectedLabel() {
+        this.lblSelected.setText("Ausgewählte Beteiligte: " + this.currentParties.size());
+    }
+
+    private void updateCandidateControls() {
+        boolean hasCandidates = this.recipientModel.getSize() > 0;
+        this.cmbRecipient.setEnabled(hasCandidates);
+        this.cmdAcceptParty.setEnabled(hasCandidates);
+    }
+
+    private void refreshPartyContainer() {
+        SwingUtilities.invokeLater(() -> {
+            this.pnlParties.revalidate();
+            this.pnlParties.repaint();
+        });
+    }
+
+    private class RemovePartyListener implements ActionListener {
+
+        private final PartyPanelRenderer panel;
+
+        RemovePartyListener(PartyPanelRenderer panel) {
+            this.panel = panel;
+        }
+
+        @Override
+        public void actionPerformed(ActionEvent e) {
+            removePartyPanel(this.panel);
+        }
+    }
+
+    private static class RecipientRenderer extends DefaultListCellRenderer {
+
+        @Override
+        public Component getListCellRendererComponent(JList<?> list, Object value, int index, boolean isSelected, boolean cellHasFocus) {
+            super.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
+            if (value instanceof PartyEntry) {
+                PartyEntry entry = (PartyEntry) value;
+                AddressBean address = entry.getAddress();
+                if (address != null) {
+                    StringBuilder text = new StringBuilder();
+                    if (address.getCompany() != null && !address.getCompany().isEmpty()) {
+                        text.append(address.getCompany()).append(" - ");
+                    }
+                    if (address.getName() != null && !address.getName().isEmpty()) {
+                        text.append(address.getName());
+                    } else if (address.getFirstName() != null && !address.getFirstName().isEmpty()) {
+                        text.append(address.getFirstName());
+                    }
+                    if (text.length() == 0 && address.getEmail() != null) {
+                        text.append(address.getEmail());
+                    }
+                    setText(text.length() == 0 ? "Adresse" : text.toString());
+                } else {
+                    setText("Adresse");
+                }
+            }
+            return this;
+        }
     }
 }
