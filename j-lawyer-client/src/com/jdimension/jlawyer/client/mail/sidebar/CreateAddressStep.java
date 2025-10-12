@@ -689,6 +689,10 @@ import org.apache.log4j.Logger;
 public class CreateAddressStep extends javax.swing.JPanel implements WizardStepInterface {
     
     private static final Logger log = Logger.getLogger(CreateAddressStep.class.getName());
+
+   
+    private static final String STEP_TEXT_MAIL = "<html><p>Optionale Erstellung einer Adresse aus dem Text der E-Mail, bspw. einer Signatur.<br/>Die relevante Textpassage wird so angepasst, dass jedes Attribut auf einer eigenen Zeile steht.<br/>Anschlie&szlig;end die relevanten Zeilen markieren und im rechten Teil des Dialogs eine Zuordnung vornehmen.<br/>Die Daten k&ouml;nnen im nächsten Schritt vervollst&auml;ndigt werden.</html>";
+    private static final String STEP_TEXT_DOCUMENT = "<html><p>Optionale Erstellung einer Adresse aus dem Text eines Dokuments, z.B. einer Signatur.<br/>Die relevante Textpassage wird so angepasst, dass jedes Attribut auf einer eigenen Zeile steht.<br/>Anschlie&szlig;end die relevanten Zeilen markieren und im rechten Teil des Dialogs eine Zuordnung vornehmen.<br/>Die Daten k&ouml;nnen im nächsten Schritt vervollst&auml;ndigt werden.</html>";
     
     private WizardDataContainer data = null;
     
@@ -798,11 +802,11 @@ public class CreateAddressStep extends javax.swing.JPanel implements WizardStepI
         chkGenerateAddress = new javax.swing.JCheckBox();
         cmdExtract = new javax.swing.JButton();
 
-        setName("Beteiligte aus Signatur erstellen"); // NOI18N
+        setName("Adressdaten extrahieren"); // NOI18N
 
         jLabel1.setBackground(new java.awt.Color(153, 153, 153));
         jLabel1.setForeground(new java.awt.Color(255, 255, 255));
-        jLabel1.setText("<html><p>Optionale Erstellung einer Adresse aus dem Text der E-Mail, bspw. einer Signatur.<br/>Die relevante Textpassage wird so angepasst, dass jedes Attribut auf einer eigenen Zeile steht.<br/>Anschlie&szlig;end die relevanten Zeilen markieren und im rechten Teil des Dialogs eine Zuordnung vornehmen.<br/>Die Daten k&ouml;nnen im nächsten Schritt vervollst&auml;ndigt werden.</html>");
+        jLabel1.setText("<html><p>Optionale Erstellung einer Adresse aus dem Text eines Dokuments, z.B. einer Signatur.<br/>Die relevante Textpassage wird so angepasst, dass jedes Attribut auf einer eigenen Zeile steht.<br/>Anschlie&szlig;end die relevanten Zeilen markieren und im rechten Teil des Dialogs eine Zuordnung vornehmen.<br/>Die Daten k&ouml;nnen im nächsten Schritt vervollst&auml;ndigt werden.</html>");
         jLabel1.setBorder(new javax.swing.border.LineBorder(new java.awt.Color(0, 0, 0), 1, true));
         jLabel1.setOpaque(true);
 
@@ -988,8 +992,37 @@ public class CreateAddressStep extends javax.swing.JPanel implements WizardStepI
     
     @Override
     public void display() {
-        
-        this.taBody.setText(this.data.get("newcase.body").toString());
+        // Clear previous address data when returning to this step
+        this.data.put("newaddress.attributes", new HashMap<String, String>());
+        this.data.put("newaddress.addressbean", null);
+        this.data.put("newaddress.reference", "");
+
+        // Clear the attributes table
+        DefaultTableModel tm = (DefaultTableModel) this.tblAttributes.getModel();
+        tm.setRowCount(0);
+
+        // Reset checkbox state
+        this.chkGenerateAddress.setSelected(false);
+        this.taBody.setEnabled(false);
+        this.tblAttributes.setEnabled(false);
+
+        String source = "";
+        if (this.data.get("newcase.source") != null) {
+            source = this.data.get("newcase.source").toString();
+        }
+        boolean fromScanner = "scanner".equalsIgnoreCase(source);
+        if (fromScanner) {
+            this.jLabel1.setText(STEP_TEXT_DOCUMENT);
+        } else {
+            this.jLabel1.setText(STEP_TEXT_MAIL);
+        }
+
+        String body = null;
+        if (this.data.get("newcase.body") != null) {
+            body = this.data.get("newcase.body").toString();
+        }
+        this.taBody.setText(body != null ? body : "");
+        this.taBody.setCaretPosition(0);
 
         this.jSplitPane1.setDividerLocation(0.5d);
     }

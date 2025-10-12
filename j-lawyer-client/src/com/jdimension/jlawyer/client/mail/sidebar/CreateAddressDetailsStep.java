@@ -667,18 +667,12 @@ import com.jdimension.jlawyer.client.configuration.OptionGroupListCellRenderer;
 import com.jdimension.jlawyer.client.settings.ClientSettings;
 import com.jdimension.jlawyer.client.utils.ComponentUtils;
 import com.jdimension.jlawyer.client.utils.JTextFieldLimit;
-import com.jdimension.jlawyer.client.utils.StringUtils;
 import com.jdimension.jlawyer.client.wizard.*;
 import com.jdimension.jlawyer.persistence.AddressBean;
 import com.jdimension.jlawyer.persistence.AppOptionGroupBean;
 import java.awt.Component;
-import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.List;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 import javax.swing.DefaultComboBoxModel;
-import javax.swing.JComboBox;
 import javax.swing.JLabel;
 import org.apache.log4j.Logger;
 
@@ -735,8 +729,10 @@ public class CreateAddressDetailsStep extends javax.swing.JPanel implements Wiza
     
     @Override
     public void nextEvent() {
-        
-        
+
+        // Reference field was removed - it belongs to parties, not addresses
+        this.data.put("newaddress.reference", "");
+
         boolean create=(Boolean)this.data.get("newaddress.create");
         if(!create)
             return;
@@ -784,6 +780,7 @@ public class CreateAddressDetailsStep extends javax.swing.JPanel implements Wiza
         newAddress.setTitle(this.cmbTitle.getEditor().getItem().toString());
         newAddress.setTitleInAddress(this.cmbTitleInAddress.getEditor().getItem().toString());
         newAddress.setZipCode(this.txtZip.getText());
+        newAddress.setGender(getGenderConstantFromDisplayValue(this.cmbGender.getSelectedItem().toString()));
         this.data.put("newaddress.addressbean", newAddress);
 
     }
@@ -847,6 +844,8 @@ public class CreateAddressDetailsStep extends javax.swing.JPanel implements Wiza
         jLabel16 = new javax.swing.JLabel();
         jLabel17 = new javax.swing.JLabel();
         jLabel18 = new javax.swing.JLabel();
+        jLabel21 = new javax.swing.JLabel();
+        cmbGender = new javax.swing.JComboBox<>();
         cmbSalutation = new javax.swing.JComboBox<>();
         cmbComplimentaryClose = new javax.swing.JComboBox<>();
         jLabel19 = new javax.swing.JLabel();
@@ -857,7 +856,7 @@ public class CreateAddressDetailsStep extends javax.swing.JPanel implements Wiza
         jLabel1.setBackground(new java.awt.Color(153, 153, 153));
         jLabel1.setForeground(new java.awt.Color(255, 255, 255));
         jLabel1.setText("<html><p>Vervollst&auml;ndigen Sie hier die wichtigsten Adressinformationen.</html>");
-        jLabel1.setBorder(new javax.swing.border.LineBorder(new java.awt.Color(0, 0, 0), 1, true));
+        jLabel1.setBorder(javax.swing.BorderFactory.createLineBorder(new java.awt.Color(0, 0, 0)));
         jLabel1.setOpaque(true);
 
         jLabel2.setText("Anrede:");
@@ -904,6 +903,10 @@ public class CreateAddressDetailsStep extends javax.swing.JPanel implements Wiza
 
         jLabel18.setText("E-Mail:");
 
+        jLabel21.setText("Geschlecht:");
+
+        cmbGender.setModel(new javax.swing.DefaultComboBoxModel<>(new String[] { "männlich", "weiblich", "divers", "juristische Person", "nicht definiert" }));
+
         cmbSalutation.setModel(new javax.swing.DefaultComboBoxModel<>(new String[] { "Item 1", "Item 2", "Item 3", "Item 4" }));
 
         cmbComplimentaryClose.setModel(new javax.swing.DefaultComboBoxModel<>(new String[] { "Item 1", "Item 2", "Item 3", "Item 4" }));
@@ -931,9 +934,10 @@ public class CreateAddressDetailsStep extends javax.swing.JPanel implements Wiza
                                     .addComponent(cmbTitle, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                                     .addComponent(cmbTitleInAddress, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                                     .addComponent(cmbCountry, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                                    .addComponent(txtEmail, javax.swing.GroupLayout.PREFERRED_SIZE, 208, javax.swing.GroupLayout.PREFERRED_SIZE)
+                                    .addComponent(cmbGender, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                                     .addComponent(cmbSalutation, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                                     .addComponent(cmbComplimentaryClose, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                                    .addComponent(txtEmail, javax.swing.GroupLayout.PREFERRED_SIZE, 208, javax.swing.GroupLayout.PREFERRED_SIZE)
                                     .addComponent(txtMobile, javax.swing.GroupLayout.PREFERRED_SIZE, 208, javax.swing.GroupLayout.PREFERRED_SIZE)
                                     .addComponent(txtFax, javax.swing.GroupLayout.PREFERRED_SIZE, 208, javax.swing.GroupLayout.PREFERRED_SIZE)
                                     .addComponent(txtPhone, javax.swing.GroupLayout.PREFERRED_SIZE, 208, javax.swing.GroupLayout.PREFERRED_SIZE)
@@ -969,6 +973,7 @@ public class CreateAddressDetailsStep extends javax.swing.JPanel implements Wiza
                                             .addComponent(jLabel16, javax.swing.GroupLayout.Alignment.LEADING)
                                             .addComponent(jLabel17, javax.swing.GroupLayout.Alignment.LEADING)
                                             .addComponent(jLabel18, javax.swing.GroupLayout.Alignment.LEADING)
+                                            .addComponent(jLabel21, javax.swing.GroupLayout.Alignment.LEADING)
                                             .addComponent(jLabel19, javax.swing.GroupLayout.Alignment.LEADING)
                                             .addComponent(jLabel20, javax.swing.GroupLayout.Alignment.LEADING))
                                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)))
@@ -1054,6 +1059,10 @@ public class CreateAddressDetailsStep extends javax.swing.JPanel implements Wiza
                     .addComponent(jLabel18))
                 .addGap(18, 18, 18)
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                    .addComponent(cmbGender, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(jLabel21))
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                     .addComponent(cmbSalutation, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                     .addComponent(jLabel19))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
@@ -1067,6 +1076,7 @@ public class CreateAddressDetailsStep extends javax.swing.JPanel implements Wiza
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JComboBox<String> cmbComplimentaryClose;
     private javax.swing.JComboBox<String> cmbCountry;
+    private javax.swing.JComboBox<String> cmbGender;
     private javax.swing.JComboBox<String> cmbProfession;
     private javax.swing.JComboBox<String> cmbRole;
     private javax.swing.JComboBox<String> cmbSalutation;
@@ -1085,6 +1095,7 @@ public class CreateAddressDetailsStep extends javax.swing.JPanel implements Wiza
     private javax.swing.JLabel jLabel19;
     private javax.swing.JLabel jLabel2;
     private javax.swing.JLabel jLabel20;
+    private javax.swing.JLabel jLabel21;
     private javax.swing.JLabel jLabel3;
     private javax.swing.JLabel jLabel4;
     private javax.swing.JLabel jLabel5;
@@ -1113,49 +1124,90 @@ public class CreateAddressDetailsStep extends javax.swing.JPanel implements Wiza
 
     @Override
     public void display() {
-        
-        HashMap<String,String> attributes=(HashMap<String,String>)this.data.get("newaddress.attributes");
-        boolean create=(Boolean)this.data.get("newaddress.create");
-        for(Component c: this.getComponents()) {
-            if(!(c instanceof JLabel) && c!=null)
-                c.setEnabled(create);
+        // First, clear ALL fields to ensure no old data remains
+        this.txtName.setText("");
+        this.txtFirstName.setText("");
+        this.txtCompany.setText("");
+        this.txtDepartment.setText("");
+        this.txtStreet.setText("");
+        this.txtStreetNo.setText("");
+        this.txtZip.setText("");
+        this.txtCity.setText("");
+        this.txtPhone.setText("");
+        this.txtFax.setText("");
+        this.txtMobile.setText("");
+        this.txtEmail.setText("");
+
+        // Reset comboboxes to first item (usually empty or default)
+        if (this.cmbTitle.getItemCount() > 0) {
+            this.cmbTitle.setSelectedIndex(0);
         }
-        
-        for(String att: attributes.keySet()) {
-            if(att.equals(AttributeCellEditor.ATTRIBUTE_ABTEILUNG)) {
-                this.txtDepartment.setText(attributes.get(att));
-            } else if(att.equals(AttributeCellEditor.ATTRIBUTE_BERUF)) {
-                this.cmbProfession.setSelectedItem(attributes.get(att));
-            } else if(att.equals(AttributeCellEditor.ATTRIBUTE_EMAIL)) {
-                this.txtEmail.setText(attributes.get(att));
-            } else if(att.equals(AttributeCellEditor.ATTRIBUTE_FAX)) {
-                this.txtFax.setText(attributes.get(att));
-            } else if(att.equals(AttributeCellEditor.ATTRIBUTE_FUNKTION)) {
-                this.cmbRole.setSelectedItem(attributes.get(att));
-            } else if(att.equals(AttributeCellEditor.ATTRIBUTE_HAUSNR)) {
-                this.txtStreetNo.setText(attributes.get(att));
-            } else if(att.equals(AttributeCellEditor.ATTRIBUTE_LAND)) {
-                this.cmbCountry.setSelectedItem(attributes.get(att));
-            } else if(att.equals(AttributeCellEditor.ATTRIBUTE_MOBIL)) {
-                this.txtMobile.setText(attributes.get(att));
-            } else if(att.equals(AttributeCellEditor.ATTRIBUTE_NAME)) {
-                this.txtName.setText(attributes.get(att));
-            } else if(att.equals(AttributeCellEditor.ATTRIBUTE_ORT)) {
-                this.txtCity.setText(attributes.get(att));
-            } else if(att.equals(AttributeCellEditor.ATTRIBUTE_PLZ)) {
-                this.txtZip.setText(attributes.get(att));
-            } else if(att.equals(AttributeCellEditor.ATTRIBUTE_STRASSE)) {
-                this.txtStreet.setText(attributes.get(att));
-            } else if(att.equals(AttributeCellEditor.ATTRIBUTE_TEL)) {
-                this.txtPhone.setText(attributes.get(att));
-            } else if(att.equals(AttributeCellEditor.ATTRIBUTE_UNTERNEHMEN)) {
-                this.txtCompany.setText(attributes.get(att));
-            } else if(att.equals(AttributeCellEditor.ATTRIBUTE_VORNAME)) {
-                this.txtFirstName.setText(attributes.get(att));
-            }
-                
+        if (this.cmbTitleInAddress.getItemCount() > 0) {
+            this.cmbTitleInAddress.setSelectedIndex(0);
+        }
+        if (this.cmbProfession.getItemCount() > 0) {
+            this.cmbProfession.setSelectedIndex(0);
+        }
+        if (this.cmbRole.getItemCount() > 0) {
+            this.cmbRole.setSelectedIndex(0);
+        }
+        if (this.cmbCountry.getItemCount() > 0) {
+            this.cmbCountry.setSelectedIndex(0);
+        }
+        if (this.cmbSalutation.getItemCount() > 0) {
+            this.cmbSalutation.setSelectedIndex(0);
+        }
+        if (this.cmbComplimentaryClose.getItemCount() > 0) {
+            this.cmbComplimentaryClose.setSelectedIndex(0);
+        }
+        if (this.cmbGender.getItemCount() > 0) {
+            this.cmbGender.setSelectedIndex(4); // "nicht definiert" as default
         }
 
+        HashMap<String, String> attributes = (HashMap<String, String>) this.data.get("newaddress.attributes");
+        boolean create = (Boolean) this.data.get("newaddress.create");
+        for (Component c : this.getComponents()) {
+            if (!(c instanceof JLabel) && c != null) {
+                c.setEnabled(create);
+            }
+        }
+
+        // Now populate with new data from attributes
+        if (attributes != null) {
+            for (String att : attributes.keySet()) {
+                if (att.equals(AttributeCellEditor.ATTRIBUTE_ABTEILUNG)) {
+                    this.txtDepartment.setText(attributes.get(att));
+                } else if (att.equals(AttributeCellEditor.ATTRIBUTE_BERUF)) {
+                    this.cmbProfession.setSelectedItem(attributes.get(att));
+                } else if (att.equals(AttributeCellEditor.ATTRIBUTE_EMAIL)) {
+                    this.txtEmail.setText(attributes.get(att));
+                } else if (att.equals(AttributeCellEditor.ATTRIBUTE_FAX)) {
+                    this.txtFax.setText(attributes.get(att));
+                } else if (att.equals(AttributeCellEditor.ATTRIBUTE_FUNKTION)) {
+                    this.cmbRole.setSelectedItem(attributes.get(att));
+                } else if (att.equals(AttributeCellEditor.ATTRIBUTE_HAUSNR)) {
+                    this.txtStreetNo.setText(attributes.get(att));
+                } else if (att.equals(AttributeCellEditor.ATTRIBUTE_LAND)) {
+                    this.cmbCountry.setSelectedItem(attributes.get(att));
+                } else if (att.equals(AttributeCellEditor.ATTRIBUTE_MOBIL)) {
+                    this.txtMobile.setText(attributes.get(att));
+                } else if (att.equals(AttributeCellEditor.ATTRIBUTE_NAME)) {
+                    this.txtName.setText(attributes.get(att));
+                } else if (att.equals(AttributeCellEditor.ATTRIBUTE_ORT)) {
+                    this.txtCity.setText(attributes.get(att));
+                } else if (att.equals(AttributeCellEditor.ATTRIBUTE_PLZ)) {
+                    this.txtZip.setText(attributes.get(att));
+                } else if (att.equals(AttributeCellEditor.ATTRIBUTE_STRASSE)) {
+                    this.txtStreet.setText(attributes.get(att));
+                } else if (att.equals(AttributeCellEditor.ATTRIBUTE_TEL)) {
+                    this.txtPhone.setText(attributes.get(att));
+                } else if (att.equals(AttributeCellEditor.ATTRIBUTE_UNTERNEHMEN)) {
+                    this.txtCompany.setText(attributes.get(att));
+                } else if (att.equals(AttributeCellEditor.ATTRIBUTE_VORNAME)) {
+                    this.txtFirstName.setText(attributes.get(att));
+                }
+            }
+        }
     }
     
     @Override
@@ -1165,13 +1217,20 @@ public class CreateAddressDetailsStep extends javax.swing.JPanel implements Wiza
 
     @Override
     public void setWizardPanel(WizardMainPanel wizard) {
-        
-    }
-    
-    final class OptionsComboBoxModel extends DefaultComboBoxModel {
 
-        public OptionsComboBoxModel(Object[] items) {
-            super(items);
+    }
+
+    private String getGenderConstantFromDisplayValue(String displayValue) {
+        if ("männlich".equals(displayValue)) {
+            return AddressBean.GENDER_MALE;
+        } else if ("weiblich".equals(displayValue)) {
+            return AddressBean.GENDER_FEMALE;
+        } else if ("divers".equals(displayValue)) {
+            return AddressBean.GENDER_OTHER;
+        } else if ("juristische Person".equals(displayValue)) {
+            return AddressBean.GENDER_LEGALENTITY;
+        } else {
+            return AddressBean.GENDER_UNDEFINED;
         }
     }
 }
