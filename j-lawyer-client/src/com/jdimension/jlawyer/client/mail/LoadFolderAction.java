@@ -668,8 +668,6 @@ import com.jdimension.jlawyer.client.processing.ProgressableAction;
 import com.jdimension.jlawyer.client.settings.ClientSettings;
 import com.jdimension.jlawyer.client.utils.ComponentUtils;
 import com.jdimension.jlawyer.client.utils.StringUtils;
-import com.sun.mail.imap.IMAPFolder;
-import com.sun.mail.imap.SortTerm;
 import java.awt.Rectangle;
 import java.text.SimpleDateFormat;
 import java.time.ZonedDateTime;

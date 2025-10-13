@@ -668,20 +668,27 @@ import com.jdimension.jlawyer.client.utils.ComponentUtils;
 import com.jdimension.jlawyer.client.utils.StringUtils;
 import java.awt.Rectangle;
 import java.text.SimpleDateFormat;
+import java.time.ZonedDateTime;
+import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Comparator;
+import java.util.Date;
 import java.util.HashMap;
 import javax.mail.Address;
 import javax.mail.FetchProfile;
 import javax.mail.Flags;
 import javax.mail.Folder;
 import javax.mail.Message;
+import javax.mail.MessagingException;
 import javax.mail.UIDFolder;
 import javax.mail.search.AndTerm;
 import javax.mail.search.BodyTerm;
+import javax.mail.search.ComparisonTerm;
 import javax.mail.search.FlagTerm;
 import javax.mail.search.FromStringTerm;
 import javax.mail.search.OrTerm;
+import javax.mail.search.ReceivedDateTerm;
 import javax.mail.search.RecipientStringTerm;
 import javax.mail.search.SearchTerm;
 import javax.mail.search.SubjectTerm;
@@ -747,26 +754,50 @@ public class LoadFolderThread implements Runnable {
             }
 
             int fromIndex = 1;
-            int toIndex = this.getMessageCount();
-            int maxQuantity = Integer.MAX_VALUE-1;
+            int toIndex = Integer.MAX_VALUE;
+            int maxQuantity = Integer.MAX_VALUE - 1;
+            ZonedDateTime timeAgo=null;
             switch (currentRestriction.getRestriction()) {
                 case LoadFolderRestriction.RESTRICTION_20:
+                    toIndex = this.getMessageCount();
                     fromIndex = Math.max(1, toIndex - 20);
                     maxQuantity = 20;
                     break;
                 case LoadFolderRestriction.RESTRICTION_50:
+                    toIndex = this.getMessageCount();
                     fromIndex = Math.max(1, toIndex - 50);
                     maxQuantity = 50;
                     break;
                 case LoadFolderRestriction.RESTRICTION_100:
+                    toIndex = this.getMessageCount();
                     fromIndex = Math.max(1, toIndex - 100);
                     maxQuantity = 100;
                     break;
                 case LoadFolderRestriction.RESTRICTION_500:
+                    toIndex = this.getMessageCount();
                     fromIndex = Math.max(1, toIndex - 500);
                     maxQuantity = 500;
                     break;
+                case LoadFolderRestriction.RESTRICTION_LAST1W:
+                    timeAgo = ZonedDateTime.now().minus(7, ChronoUnit.DAYS);
+                    break;
+                case LoadFolderRestriction.RESTRICTION_LAST2W:
+                    timeAgo = ZonedDateTime.now().minus(14, ChronoUnit.DAYS);
+                    break;
+                case LoadFolderRestriction.RESTRICTION_LAST4W:
+                    timeAgo = ZonedDateTime.now().minus(28, ChronoUnit.DAYS);
+                    break;
+                case LoadFolderRestriction.RESTRICTION_LAST2M:
+                    timeAgo = ZonedDateTime.now().minus(2, ChronoUnit.MONTHS);
+                    break;
+                case LoadFolderRestriction.RESTRICTION_LAST6M:
+                    timeAgo = ZonedDateTime.now().minus(6, ChronoUnit.MONTHS);
+                    break;
+                case LoadFolderRestriction.RESTRICTION_LAST1Y:
+                    timeAgo = ZonedDateTime.now().minus(1, ChronoUnit.YEARS);
+                    break;
                 default:
+                    toIndex = this.getMessageCount();
                     break;
             }
 
@@ -778,14 +809,61 @@ public class LoadFolderThread implements Runnable {
                     FlagTerm unread = new FlagTerm(new Flags(Flags.Flag.SEEN), false);
                     AndTerm filter = new AndTerm(unread, notDeleted);
                     messages = f.getFolder().search(filter);
+                } else if(currentRestriction.getRestriction() == LoadFolderRestriction.RESTRICTION_20 || currentRestriction.getRestriction() == LoadFolderRestriction.RESTRICTION_50 || currentRestriction.getRestriction() == LoadFolderRestriction.RESTRICTION_100 || currentRestriction.getRestriction() == LoadFolderRestriction.RESTRICTION_500) {
+                    messages = f.getFolder().getMessages(fromIndex, toIndex);
+
+                    // Apply the filter to the subset of messages
+                    messages = f.getFolder().search(notDeleted, messages);
+                    
+                    messages = Arrays.stream(messages)
+                    .limit(maxQuantity + 1)
+                    .toArray(Message[]::new);
+                    
+                } else if (currentRestriction.getRestriction() == LoadFolderRestriction.RESTRICTION_LAST1W || currentRestriction.getRestriction() == LoadFolderRestriction.RESTRICTION_LAST2W || currentRestriction.getRestriction() == LoadFolderRestriction.RESTRICTION_LAST4W || currentRestriction.getRestriction() == LoadFolderRestriction.RESTRICTION_LAST2M || currentRestriction.getRestriction() == LoadFolderRestriction.RESTRICTION_LAST6M || currentRestriction.getRestriction() == LoadFolderRestriction.RESTRICTION_LAST1Y) {
+                    
+                    Date minReceivedDate = Date.from(timeAgo.toInstant());
+                    ReceivedDateTerm receivedAfter = new ReceivedDateTerm(ComparisonTerm.GE, minReceivedDate);
+
+                    // Combine all filters using AndTerm
+                    SearchTerm filter = new AndTerm(new SearchTerm[]{
+                        notDeleted,
+                        receivedAfter
+                    });
+
+                    // Search using the combined filter
+                    messages = f.getFolder().search(filter);
+
+                    // Fetch headers to avoid lazy loading later
+                    FetchProfile fp = new FetchProfile();
+                    fp.add(FetchProfile.Item.ENVELOPE);
+                    //fp.add(FetchProfile.Item.FLAGS);
+                    f.getFolder().fetch(messages, fp);
+
+                    // Sort by ReceivedDate descending (latest first)
+                    Arrays.sort(messages, Comparator.comparing((Message m) -> {
+                        try {
+                            return m.getReceivedDate();
+                        } catch (MessagingException e) {
+                            return new Date(0); // fallback
+                        }
+                    }).reversed());
+
+//                    // Limit to max 500 messages
+//                    messages = Arrays.copyOfRange(
+//                            messages, 0, Math.min(messages.length, maxQuantity)
+//                    );
                 } else {
                     messages = f.getFolder().getMessages(fromIndex, toIndex);
 
                     // Apply the filter to the subset of messages
                     messages = f.getFolder().search(notDeleted, messages);
+                    
+                    messages = Arrays.stream(messages)
+                    .limit(maxQuantity + 1)
+                    .toArray(Message[]::new);
                 }
             } else {
-                maxQuantity = Integer.MAX_VALUE-1;
+                maxQuantity = Integer.MAX_VALUE - 1;
                 // Build the OR search term for subject, sender, recipients, and body
                 OrTerm orTerm = new OrTerm(new SearchTerm[]{
                     new SubjectTerm(this.searchTerm),
@@ -801,14 +879,6 @@ public class LoadFolderThread implements Runnable {
                 messages = f.getFolder().search(filter);
             }
             
-            messages = Arrays.stream(messages)
-                                       .limit(maxQuantity+1)
-                                       .toArray(Message[]::new);
-            
-            if (!(f.getFolder().isOpen())) {
-                System.out.println("open 25");
-                f.getFolder().open(Folder.READ_WRITE);
-            }
             if (f.getFolder() instanceof UIDFolder) {
                 // get all the UIDs
                 FetchProfile fpUid = new FetchProfile();
@@ -816,25 +886,16 @@ public class LoadFolderThread implements Runnable {
                 f.getFolder().fetch(messages, fpUid);
             }
             
-            if (!(f.getFolder().isOpen())) {
-                System.out.println("open 26");
-                f.getFolder().open(Folder.READ_WRITE);
-            }
             Message[] uncachedMessages = f.getUncachedMessages(messages);
             
-            if (!(f.getFolder().isOpen())) {
-                System.out.println("open 27");
-                f.getFolder().open(Folder.READ_WRITE);
-            }
             FetchProfile fp = new FetchProfile();
             fp.add(FetchProfile.Item.ENVELOPE);
             fp.add(FetchProfile.Item.FLAGS);
             f.getFolder().fetch(uncachedMessages, fp);
             
-            
             f.addCachedMessages(uncachedMessages);
             
-            messages=f.getCachedMessages(messages);
+            messages = f.getCachedMessages(messages);
             
             HashMap<String, String> decodedMap = new HashMap<>();
             final int indexMax = messages.length - 1;
