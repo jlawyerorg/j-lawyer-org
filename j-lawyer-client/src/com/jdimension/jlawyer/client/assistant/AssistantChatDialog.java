@@ -671,9 +671,11 @@ import com.jdimension.jlawyer.ai.Message;
 import com.jdimension.jlawyer.ai.OutputData;
 import com.jdimension.jlawyer.ai.Parameter;
 import com.jdimension.jlawyer.ai.ParameterData;
+import com.jdimension.jlawyer.client.assistant.AssistantAccess;
 import com.jdimension.jlawyer.client.editors.files.ArchiveFilePanel;
 import com.jdimension.jlawyer.client.settings.ClientSettings;
 import com.jdimension.jlawyer.client.settings.UserSettings;
+import com.jdimension.jlawyer.client.utils.AudioUtils;
 import com.jdimension.jlawyer.client.utils.ComponentUtils;
 import com.jdimension.jlawyer.client.utils.FrameUtils;
 import com.jdimension.jlawyer.client.utils.TemplatesUtil;
@@ -685,6 +687,8 @@ import com.jdimension.jlawyer.persistence.AssistantConfig;
 import com.jdimension.jlawyer.persistence.PartyTypeBean;
 import com.jdimension.jlawyer.pojo.PartiesTriplet;
 import com.jdimension.jlawyer.services.JLawyerServiceLocator;
+import com.jdimension.jlawyer.client.utils.DesktopUtils;
+import java.awt.Color;
 import java.awt.Component;
 import java.awt.Dimension;
 import java.awt.Graphics2D;
@@ -695,6 +699,7 @@ import java.awt.event.ActionEvent;
 import java.awt.event.MouseEvent;
 import java.awt.image.BufferedImage;
 import java.io.ByteArrayOutputStream;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Base64;
@@ -716,6 +721,10 @@ import javax.swing.JTextField;
 import javax.swing.KeyStroke;
 import javax.swing.SwingUtilities;
 import javax.swing.SwingWorker;
+import javax.sound.sampled.AudioFormat;
+import javax.sound.sampled.AudioSystem;
+import javax.sound.sampled.DataLine;
+import javax.sound.sampled.TargetDataLine;
 import org.apache.log4j.Logger;
 import themes.colors.DefaultColorTheme;
 
@@ -734,6 +743,14 @@ public class AssistantChatDialog extends javax.swing.JDialog {
     private AiRequestStatus result = null;
 
     private boolean interrupted = false;
+
+    // variables for transcription
+    private boolean isRecording = false;
+    private AiCapability transcribeCapability = null;
+    private AssistantConfig transcribeConfig = null;
+    private TargetDataLine targetDataLine;
+    private ByteArrayOutputStream byteArrayOutputStream;
+    private Color cmdTranscribeOriginalBackground = null;
 
     // variables used for placeholder support in prompts
     private List<PartyTypeBean> allPartyTypes = null;
@@ -907,6 +924,24 @@ public class AssistantChatDialog extends javax.swing.JDialog {
         ComponentUtils.decorateSplitPane(this.splitInputOutput);
         ComponentUtils.restoreSplitPane(this.splitInputOutput, this.getClass(), "splitInputOutput");
         ComponentUtils.persistSplitPane(this.splitInputOutput, this.getClass(), "splitInputOutput");
+
+        // Initialize transcription capabilities
+        AssistantAccess ingo = AssistantAccess.getInstance();
+        try {
+            java.util.Map<AssistantConfig, List<AiCapability>> capabilities = ingo.filterCapabilities(AiCapability.REQUESTTYPE_TRANSCRIBE, AiCapability.INPUTTYPE_FILE, AiCapability.USAGETYPE_AUTOMATED);
+
+            if (!capabilities.isEmpty()) {
+                // use first capability that can transcribe
+                this.transcribeCapability = capabilities.get(capabilities.keySet().iterator().next()).get(0);
+                this.transcribeConfig = capabilities.keySet().iterator().next();
+                this.cmdTranscribe.setEnabled(true);
+            }
+        } catch (Exception ex) {
+            log.error("Error initializing transcription capabilities", ex);
+        }
+
+        // Save original button background
+        this.cmdTranscribeOriginalBackground = this.cmdTranscribe.getBackground();
     }
 
     @Override
@@ -941,6 +976,7 @@ public class AssistantChatDialog extends javax.swing.JDialog {
         lblRequestType = new javax.swing.JLabel();
         cmdSubmit = new javax.swing.JButton();
         cmdInterrupt = new javax.swing.JButton();
+        cmdTranscribe = new javax.swing.JButton();
         cmdResetChat = new javax.swing.JButton();
         progress = new javax.swing.JProgressBar();
         pnlParameters = new javax.swing.JPanel();
@@ -991,6 +1027,7 @@ public class AssistantChatDialog extends javax.swing.JDialog {
         lblRequestType.setText("Transkribieren");
 
         cmdSubmit.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons16/material/baseline_slideshow_black_48dp.png"))); // NOI18N
+        cmdSubmit.setToolTipText("Anfrage an Assistent Ingo senden");
         cmdSubmit.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 cmdSubmitActionPerformed(evt);
@@ -998,9 +1035,19 @@ public class AssistantChatDialog extends javax.swing.JDialog {
         });
 
         cmdInterrupt.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons16/material/stop_circle_24dp_0E72B5.png"))); // NOI18N
+        cmdInterrupt.setToolTipText("Laufende Anfrage unterbrechen");
         cmdInterrupt.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 cmdInterruptActionPerformed(evt);
+            }
+        });
+
+        cmdTranscribe.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons16/material/baseline_mic_black_48dp.png"))); // NOI18N
+        cmdTranscribe.setToolTipText("Sprachaufnahme starten und transkribieren");
+        cmdTranscribe.setEnabled(false);
+        cmdTranscribe.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                cmdTranscribeActionPerformed(evt);
             }
         });
 
@@ -1024,6 +1071,8 @@ public class AssistantChatDialog extends javax.swing.JDialog {
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(cmdInterrupt)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addComponent(cmdTranscribe)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(cmdResetChat)
                 .addContainerGap())
         );
@@ -1037,6 +1086,7 @@ public class AssistantChatDialog extends javax.swing.JDialog {
                         .addGroup(pnlTitleLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                             .addComponent(cmdResetChat)
                             .addGroup(pnlTitleLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                                .addComponent(cmdTranscribe)
                                 .addComponent(cmdInterrupt)
                                 .addComponent(cmdSubmit, javax.swing.GroupLayout.Alignment.TRAILING)))
                         .addGap(0, 0, Short.MAX_VALUE)))
@@ -1427,6 +1477,19 @@ public class AssistantChatDialog extends javax.swing.JDialog {
         }
     }//GEN-LAST:event_cmdNewDocumentActionPerformed
 
+    private void cmdTranscribeActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdTranscribeActionPerformed
+        if (!isRecording) {
+            startRecording();
+        } else {
+            try {
+                stopRecording();
+            } catch (IOException ex) {
+                log.error("Error stopping recording", ex);
+                ThreadUtils.showErrorDialog(this, "Fehler beim Stoppen der Aufnahme: " + ex.getMessage(), DesktopUtils.POPUP_TITLE_ERROR);
+            }
+        }
+    }//GEN-LAST:event_cmdTranscribeActionPerformed
+
     /**
      * @param args the command line arguments
      */
@@ -1478,6 +1541,7 @@ public class AssistantChatDialog extends javax.swing.JDialog {
     private javax.swing.JButton cmdProcessOutput;
     private javax.swing.JButton cmdResetChat;
     private javax.swing.JButton cmdSubmit;
+    private javax.swing.JButton cmdTranscribe;
     private javax.swing.JScrollPane jScrollPane1;
     private javax.swing.JScrollPane jScrollPane5;
     private javax.swing.JLabel lblRequestType;
@@ -1508,6 +1572,159 @@ public class AssistantChatDialog extends javax.swing.JDialog {
             parameters.add(d);
         }
         return parameters;
+
+    }
+
+    private List<InputData> getTranscribeInputs(byte[] wavContent) {
+        ArrayList<InputData> inputs = new ArrayList<>();
+        InputData i = new InputData();
+        i.setFileName("recording.wav");
+        i.setType("file");
+        i.setBase64(true);
+        i.setData(wavContent);
+        inputs.add(i);
+        return inputs;
+    }
+
+    private void startRecording() {
+        try {
+            AudioFormat audioFormat = AudioUtils.getAudioFormat();
+
+            // Use default microphone (no device selection)
+            DataLine.Info dataLineInfo = new DataLine.Info(TargetDataLine.class, audioFormat);
+            targetDataLine = (TargetDataLine) AudioSystem.getLine(dataLineInfo);
+            targetDataLine.open(audioFormat);
+            targetDataLine.start();
+
+            byteArrayOutputStream = new ByteArrayOutputStream();
+
+            isRecording = true;
+            cmdTranscribe.setOpaque(true);
+            cmdTranscribe.setBackground(DefaultColorTheme.COLOR_LOGO_GREEN);
+            cmdTranscribe.setForeground(Color.WHITE);
+
+            new Thread(() -> {
+                try {
+                    byte[] buffer = new byte[4096];
+                    while (isRecording) {
+                        int bytesRead = targetDataLine.read(buffer, 0, buffer.length);
+                        byteArrayOutputStream.write(buffer, 0, bytesRead);
+                    }
+                } catch (Exception e) {
+                    log.error("Unable to read microphone audio stream", e);
+                    ThreadUtils.showErrorDialog(this, "Aufnahmefehler: " + e.getMessage(), DesktopUtils.POPUP_TITLE_ERROR);
+                }
+            }).start();
+        } catch (Exception ex) {
+            log.error("Unable to start recording microphone audio stream", ex);
+            ThreadUtils.showErrorDialog(this, "Aufnahme konnte nicht gestartet werden: " + ex.getMessage(), DesktopUtils.POPUP_TITLE_ERROR);
+        }
+    }
+
+    private void stopRecording() throws IOException {
+        isRecording = false;
+
+        if (targetDataLine != null) {
+            targetDataLine.stop();
+            targetDataLine.close();
+        }
+        byteArrayOutputStream.flush();
+        byte[] dictatePart = byteArrayOutputStream.toByteArray();
+
+        this.cmdTranscribe.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons16/material/baseline_hourglass_top_black_48dp.png")));
+        this.cmdTranscribe.setOpaque(true);
+        this.cmdTranscribe.setBackground(Color.ORANGE);
+        this.cmdTranscribe.setForeground(Color.WHITE);
+        try {
+
+            List<ParameterData> params = new ArrayList<>();
+            if (transcribeCapability.getParameters() != null && !transcribeCapability.getParameters().isEmpty()) {
+                params = getParameters();
+            }
+
+            final List<ParameterData> fParams = params;
+
+            AtomicReference<AiRequestStatus> resultRef = new AtomicReference<>();
+
+            SwingWorker<Void, Void> worker = new SwingWorker<>() {
+
+                @Override
+                protected Void doInBackground() throws Exception {
+                    cmdTranscribe.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons16/material/baseline_hourglass_top_black_48dp.png")));
+                    cmdTranscribe.setOpaque(true);
+                    cmdTranscribe.setBackground(Color.ORANGE);
+                    cmdTranscribe.setForeground(Color.WHITE);
+
+                    List<InputData> inputs = getTranscribeInputs(AudioUtils.generateWAV(dictatePart));
+
+                    ClientSettings settings = ClientSettings.getInstance();
+                    try {
+                        JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
+
+                        AiRequestStatus status = locator.lookupIntegrationServiceRemote().submitAssistantRequest(
+                            transcribeConfig,
+                            transcribeCapability.getRequestType(),
+                            transcribeCapability.getModelType(),
+                            null,
+                            fParams,
+                            inputs,
+                            null
+                        );
+
+                        resultRef.set(status);
+
+                    } catch (Throwable t) {
+                        log.error("Error processing AI transcription request", t);
+                        AiRequestStatus status = new AiRequestStatus();
+                        status.setStatus("failed");
+                        status.setStatusDetails(t.getMessage());
+                        resultRef.set(status);
+                    }
+                    return null;
+                }
+
+                @Override
+                protected void done() {
+                    cmdTranscribe.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons16/material/baseline_mic_black_48dp.png")));
+                    cmdTranscribe.setOpaque(true);
+                    cmdTranscribe.setBackground(cmdTranscribeOriginalBackground);
+                    cmdTranscribe.setForeground(Color.BLACK);
+
+                    AiRequestStatus status = resultRef.get();
+                    if (status != null) {
+                        String resultText = "";
+                        if (status.getStatus().equalsIgnoreCase("failed")) {
+                            resultText = status.getStatus() + ": " + status.getStatusDetails();
+                            log.error("Transcription failed: " + status.getStatusDetails());
+                            ThreadUtils.showErrorDialog(AssistantChatDialog.this, "Transkription fehlgeschlagen: " + status.getStatusDetails(), DesktopUtils.POPUP_TITLE_ERROR);
+                        } else {
+                            StringBuilder resultString = new StringBuilder();
+                            for (OutputData o : status.getResponse().getOutputData()) {
+                                if (o.getType().equalsIgnoreCase(OutputData.TYPE_STRING)) {
+                                    resultString.append(o.getStringData());
+                                }
+                            }
+                            resultText = resultString.toString();
+                        }
+
+                        // Append transcribed text at the end of taPrompt
+                        if (!resultText.isEmpty() && !status.getStatus().equalsIgnoreCase("failed")) {
+                            String currentText = taPrompt.getText();
+                            if (!currentText.isEmpty() && !currentText.endsWith(" ") && !currentText.endsWith("\n")) {
+                                currentText += " ";
+                            }
+                            taPrompt.setText(currentText + resultText);
+                        }
+                    }
+                }
+            };
+
+            worker.execute();
+
+        } catch (Exception ex) {
+            log.error("Error during transcription", ex);
+            ThreadUtils.showErrorDialog(this, "Transkriptionsfehler: " + ex.getMessage(), DesktopUtils.POPUP_TITLE_ERROR);
+        }
 
     }
 

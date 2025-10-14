@@ -130,6 +130,8 @@
                   <EmptySpace max="-2" attributes="0"/>
                   <Component id="cmdInterrupt" min="-2" max="-2" attributes="0"/>
                   <EmptySpace max="-2" attributes="0"/>
+                  <Component id="cmdTranscribe" min="-2" max="-2" attributes="0"/>
+                  <EmptySpace max="-2" attributes="0"/>
                   <Component id="cmdResetChat" min="-2" max="-2" attributes="0"/>
                   <EmptySpace max="-2" attributes="0"/>
               </Group>
@@ -145,6 +147,7 @@
                           <Group type="103" groupAlignment="0" attributes="0">
                               <Component id="cmdResetChat" min="-2" max="-2" attributes="0"/>
                               <Group type="103" groupAlignment="0" attributes="0">
+                                  <Component id="cmdTranscribe" min="-2" max="-2" attributes="0"/>
                                   <Component id="cmdInterrupt" min="-2" max="-2" attributes="0"/>
                                   <Component id="cmdSubmit" alignment="1" min="-2" max="-2" attributes="0"/>
                               </Group>
@@ -176,6 +179,7 @@
             <Property name="icon" type="javax.swing.Icon" editor="org.netbeans.modules.form.editors2.IconEditor">
               <Image iconType="3" name="/icons16/material/baseline_slideshow_black_48dp.png"/>
             </Property>
+            <Property name="toolTipText" type="java.lang.String" value="Anfrage an Assistent Ingo senden"/>
           </Properties>
           <Events>
             <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="cmdSubmitActionPerformed"/>
@@ -186,9 +190,22 @@
             <Property name="icon" type="javax.swing.Icon" editor="org.netbeans.modules.form.editors2.IconEditor">
               <Image iconType="3" name="/icons16/material/stop_circle_24dp_0E72B5.png"/>
             </Property>
+            <Property name="toolTipText" type="java.lang.String" value="Laufende Anfrage unterbrechen"/>
           </Properties>
           <Events>
             <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="cmdInterruptActionPerformed"/>
+          </Events>
+        </Component>
+        <Component class="javax.swing.JButton" name="cmdTranscribe">
+          <Properties>
+            <Property name="icon" type="javax.swing.Icon" editor="org.netbeans.modules.form.editors2.IconEditor">
+              <Image iconType="3" name="/icons16/material/baseline_mic_black_48dp.png"/>
+            </Property>
+            <Property name="toolTipText" type="java.lang.String" value="Sprachaufnahme starten und transkribieren"/>
+            <Property name="enabled" type="boolean" value="false"/>
+          </Properties>
+          <Events>
+            <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="cmdTranscribeActionPerformed"/>
           </Events>
         </Component>
         <Component class="javax.swing.JButton" name="cmdResetChat">
