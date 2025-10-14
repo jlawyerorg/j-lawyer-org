@@ -1264,8 +1264,12 @@ public class AssistantChatDialog extends javax.swing.JDialog {
                         pnlMessages.add(incomingMsgPanel);
                         incomingMsgPanel.revalidate();
                         incomingMsgPanel.repaint();
-                        JScrollBar verticalBar = scrollMessages.getVerticalScrollBar();
-                        verticalBar.setValue(verticalBar.getMaximum());
+
+                        // Smart Auto-Scroll: scroll to bottom (initial message)
+                        SwingUtilities.invokeLater(() -> {
+                            JScrollBar bar = scrollMessages.getVerticalScrollBar();
+                            bar.setValue(bar.getMaximum());
+                        });
                     });
 
                     AiRequestStatus status = locator.lookupIntegrationServiceRemote().submitAssistantRequest(config, capability.getRequestType(), capability.getModelType(), fullPrompt, fParams, null, messages);
@@ -1287,12 +1291,25 @@ public class AssistantChatDialog extends javax.swing.JDialog {
 
                             }
                             SwingUtilities.invokeAndWait(() -> {
+                                // Check if user was at bottom BEFORE update
+                                JScrollBar verticalBar = scrollMessages.getVerticalScrollBar();
+                                int currentValue = verticalBar.getValue();
+                                int maximum = verticalBar.getMaximum();
+                                int extent = verticalBar.getVisibleAmount();
+                                boolean wasAtBottom = (currentValue + extent >= maximum - 50);
+
                                 incomingMsgPanel.getMessage().setContent(resultString.toString());
                                 incomingMsgPanel.setMessage(incomingMsgPanel.getMessage(), owner);
                                 incomingMsgPanel.repaint();
                                 incomingMsgPanel.updateUI();
-                                JScrollBar verticalBar = scrollMessages.getVerticalScrollBar();
-                                verticalBar.setValue(verticalBar.getMaximum());
+
+                                // Only scroll to bottom if user was already there
+                                if (wasAtBottom) {
+                                    SwingUtilities.invokeLater(() -> {
+                                        JScrollBar bar = scrollMessages.getVerticalScrollBar();
+                                        bar.setValue(bar.getMaximum());
+                                    });
+                                }
                             });
 
                             if (interrupted) {
@@ -1316,8 +1333,6 @@ public class AssistantChatDialog extends javax.swing.JDialog {
                     status.setStatusDetails(t.getMessage());
                     resultRef.set(status);
                     incomingMessageRef.set(incomingMsgPanel);
-                    JScrollBar verticalBar = scrollMessages.getVerticalScrollBar();
-                    verticalBar.setValue(verticalBar.getMaximum());
                 }
                 cmdSubmit.setEnabled(true);
                 cmdInterrupt.setEnabled(false);
@@ -1332,6 +1347,13 @@ public class AssistantChatDialog extends javax.swing.JDialog {
                 result = status;
                 if (status != null) {
                     if (status.getStatus().equalsIgnoreCase("failed")) {
+                        // Check if user was at bottom BEFORE update
+                        JScrollBar verticalBar = scrollMessages.getVerticalScrollBar();
+                        int currentValue = verticalBar.getValue();
+                        int maximum = verticalBar.getMaximum();
+                        int extent = verticalBar.getVisibleAmount();
+                        boolean wasAtBottom = (currentValue + extent >= maximum - 50);
+
                         Message errorMsg = new Message();
                         errorMsg.setContent(status.getStatus() + ": " + status.getStatusDetails());
                         errorMsg.setRole(Message.ROLE_ASSISTANT);
@@ -1340,9 +1362,22 @@ public class AssistantChatDialog extends javax.swing.JDialog {
                         maxSize.setSize(pnlMessages.getWidth(), maxSize.getHeight());
                         msgPanel.setPreferredSize(maxSize);
                         pnlMessages.add(msgPanel);
-                        JScrollBar verticalBar = scrollMessages.getVerticalScrollBar();
-                        verticalBar.setValue(verticalBar.getMaximum());
+
+                        // Only scroll to bottom if user was already there
+                        if (wasAtBottom) {
+                            SwingUtilities.invokeLater(() -> {
+                                JScrollBar bar = scrollMessages.getVerticalScrollBar();
+                                bar.setValue(bar.getMaximum());
+                            });
+                        }
                     } else {
+                        // Check if user was at bottom BEFORE update
+                        JScrollBar verticalBar = scrollMessages.getVerticalScrollBar();
+                        int currentValue = verticalBar.getValue();
+                        int maximum = verticalBar.getMaximum();
+                        int extent = verticalBar.getVisibleAmount();
+                        boolean wasAtBottom = (currentValue + extent >= maximum - 50);
+
                         StringBuilder resultString = new StringBuilder();
                         for (OutputData o : status.getResponse().getOutputData()) {
                             if (o.getType().equalsIgnoreCase(OutputData.TYPE_STRING)) {
@@ -1356,8 +1391,14 @@ public class AssistantChatDialog extends javax.swing.JDialog {
                         msgPanel.setMessage(msgPanel.getMessage(), owner);
                         msgPanel.repaint();
                         msgPanel.updateUI();
-                        JScrollBar verticalBar = scrollMessages.getVerticalScrollBar();
-                        verticalBar.setValue(verticalBar.getMaximum());
+
+                        // Only scroll to bottom if user was already there
+                        if (wasAtBottom) {
+                            SwingUtilities.invokeLater(() -> {
+                                JScrollBar bar = scrollMessages.getVerticalScrollBar();
+                                bar.setValue(bar.getMaximum());
+                            });
+                        }
                     }
                 }
 
