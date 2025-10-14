@@ -671,6 +671,7 @@ import com.jdimension.jlawyer.ai.Message;
 import com.jdimension.jlawyer.ai.OutputData;
 import com.jdimension.jlawyer.ai.Parameter;
 import com.jdimension.jlawyer.ai.ParameterData;
+import com.jdimension.jlawyer.persistence.AssistantPrompt;
 import com.jdimension.jlawyer.client.assistant.AssistantAccess;
 import com.jdimension.jlawyer.client.editors.files.ArchiveFilePanel;
 import com.jdimension.jlawyer.client.settings.ClientSettings;
@@ -716,6 +717,7 @@ import javax.swing.JComponent;
 import javax.swing.JDialog;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
+import javax.swing.JMenuItem;
 import javax.swing.JScrollBar;
 import javax.swing.JTextField;
 import javax.swing.KeyStroke;
@@ -968,6 +970,7 @@ public class AssistantChatDialog extends javax.swing.JDialog {
     // <editor-fold defaultstate="collapsed" desc="Generated Code">//GEN-BEGIN:initComponents
     private void initComponents() {
 
+        popAssistant = new javax.swing.JPopupMenu();
         jScrollPane1 = new javax.swing.JScrollPane();
         taPrompt = new javax.swing.JTextArea();
         cmdCopy = new javax.swing.JButton();
@@ -977,6 +980,7 @@ public class AssistantChatDialog extends javax.swing.JDialog {
         cmdSubmit = new javax.swing.JButton();
         cmdInterrupt = new javax.swing.JButton();
         cmdTranscribe = new javax.swing.JButton();
+        cmdPrompt = new javax.swing.JButton();
         cmdResetChat = new javax.swing.JButton();
         progress = new javax.swing.JProgressBar();
         pnlParameters = new javax.swing.JPanel();
@@ -1051,6 +1055,14 @@ public class AssistantChatDialog extends javax.swing.JDialog {
             }
         });
 
+        cmdPrompt.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons16/material/j-lawyer-ai.png"))); // NOI18N
+        cmdPrompt.setToolTipText("Eigene Prompts auswählen");
+        cmdPrompt.addMouseListener(new java.awt.event.MouseAdapter() {
+            public void mouseReleased(java.awt.event.MouseEvent evt) {
+                cmdPromptMouseReleased(evt);
+            }
+        });
+
         cmdResetChat.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons16/material/restart_alt_24dp_0E72B5.png"))); // NOI18N
         cmdResetChat.setToolTipText("Chat-Historie zurücksetzen und neuen Chat beginnen");
         cmdResetChat.addActionListener(new java.awt.event.ActionListener() {
@@ -1073,6 +1085,8 @@ public class AssistantChatDialog extends javax.swing.JDialog {
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(cmdTranscribe)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addComponent(cmdPrompt)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(cmdResetChat)
                 .addContainerGap())
         );
@@ -1086,6 +1100,7 @@ public class AssistantChatDialog extends javax.swing.JDialog {
                         .addGroup(pnlTitleLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                             .addComponent(cmdResetChat)
                             .addGroup(pnlTitleLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                                .addComponent(cmdPrompt)
                                 .addComponent(cmdTranscribe)
                                 .addComponent(cmdInterrupt)
                                 .addComponent(cmdSubmit, javax.swing.GroupLayout.Alignment.TRAILING)))
@@ -1490,6 +1505,35 @@ public class AssistantChatDialog extends javax.swing.JDialog {
         }
     }//GEN-LAST:event_cmdTranscribeActionPerformed
 
+    private void cmdPromptMouseReleased(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_cmdPromptMouseReleased
+        try {
+            AssistantAccess ingo = AssistantAccess.getInstance();
+            this.popAssistant.removeAll();
+            List<AssistantPrompt> customPrompts = ingo.getCustomPrompts(AiCapability.REQUESTTYPE_CHAT);
+            for (AssistantPrompt p : customPrompts) {
+                JMenuItem mi = new JMenuItem();
+                mi.setText(p.getName());
+                mi.addActionListener((ActionEvent e) -> {
+                    if (!p.getPrompt().contains("{{")) {
+                        // no placeholders in prompt
+                        this.taPrompt.setText(p.getPrompt());
+                    } else {
+                        // placeholders present in prompt
+                        HashMap<String, Object> placeHolders = TemplatesUtil.getPlaceHolderValues(p.getPrompt(), selectedCase, this.parties, null, null, this.allPartyTypes, this.formPlaceHolders, this.formPlaceHolderValues, this.caseLawyer, this.caseAssistant);
+                        String promptWithValues = TemplatesUtil.replacePlaceHolders(p.getPrompt(), placeHolders);
+                        this.taPrompt.setText(promptWithValues);
+                    }
+                });
+                popAssistant.add(mi);
+            }
+
+            this.popAssistant.show(this.cmdPrompt, evt.getX(), evt.getY());
+        } catch (Exception ex) {
+            log.error("Error loading custom prompts", ex);
+            ThreadUtils.showErrorDialog(this, "Fehler beim Laden der eigenen Prompts: " + ex.getMessage(), DesktopUtils.POPUP_TITLE_ERROR);
+        }
+    }//GEN-LAST:event_cmdPromptMouseReleased
+
     /**
      * @param args the command line arguments
      */
@@ -1539,6 +1583,7 @@ public class AssistantChatDialog extends javax.swing.JDialog {
     private javax.swing.JButton cmdInterrupt;
     private javax.swing.JButton cmdNewDocument;
     private javax.swing.JButton cmdProcessOutput;
+    private javax.swing.JButton cmdPrompt;
     private javax.swing.JButton cmdResetChat;
     private javax.swing.JButton cmdSubmit;
     private javax.swing.JButton cmdTranscribe;
@@ -1548,6 +1593,7 @@ public class AssistantChatDialog extends javax.swing.JDialog {
     private javax.swing.JPanel pnlMessages;
     private javax.swing.JPanel pnlParameters;
     private javax.swing.JPanel pnlTitle;
+    private javax.swing.JPopupMenu popAssistant;
     private javax.swing.JProgressBar progress;
     private javax.swing.JScrollPane scrollMessages;
     private javax.swing.JSplitPane splitInputOutput;
