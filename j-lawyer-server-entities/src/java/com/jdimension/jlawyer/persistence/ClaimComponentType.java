@@ -682,4 +682,13 @@ public enum ClaimComponentType {
         return label;
     }
     
+    public static ClaimComponentType fromLabel(String label) {
+        for (ClaimComponentType t : values()) {
+            if (t.label.equalsIgnoreCase(label)) {
+                return t;
+            }
+        }
+        throw new IllegalArgumentException("Unknown label: " + label);
+    }
+    
 }

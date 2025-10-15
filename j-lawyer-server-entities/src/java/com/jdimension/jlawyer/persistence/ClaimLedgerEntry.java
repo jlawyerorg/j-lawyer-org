@@ -679,6 +679,7 @@ import javax.xml.bind.annotation.XmlRootElement;
 @NamedQueries({
     @NamedQuery(name = "ClaimLedgerEntry.findAll", query = "SELECT a FROM ClaimLedgerEntry a"),
     @NamedQuery(name = "ClaimLedgerEntry.findById", query = "SELECT a FROM ClaimLedgerEntry a WHERE a.id = :id"),
+    @NamedQuery(name = "ClaimLedgerEntry.findByComponent", query = "SELECT a FROM ClaimLedgerEntry a WHERE a.component = :component order by a.entryDate ASC"),
     @NamedQuery(name = "ClaimLedgerEntry.findByLedger", query = "SELECT a FROM ClaimLedgerEntry a WHERE a.ledger = :ledger order by a.entryDate ASC")})
 public class ClaimLedgerEntry implements Serializable {
 

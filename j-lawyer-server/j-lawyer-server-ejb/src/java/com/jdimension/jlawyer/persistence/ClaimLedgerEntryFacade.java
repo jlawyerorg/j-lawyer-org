@@ -663,6 +663,7 @@ For more information on this, and how to apply and follow the GNU AGPL, see
  */
 package com.jdimension.jlawyer.persistence;
 
+import java.util.Comparator;
 import java.util.List;
 import javax.ejb.Stateless;
 import javax.persistence.EntityManager;
@@ -691,6 +692,41 @@ public class ClaimLedgerEntryFacade extends AbstractFacade<ClaimLedgerEntry> imp
     public List<ClaimLedgerEntry> findByLedger(ClaimLedger ledger) {
         
         return (List<ClaimLedgerEntry>) em.createNamedQuery("ClaimLedgerEntry.findByLedger").setParameter("ledger", ledger).getResultList();
+        
+    }
+    
+    @Override
+    public List<ClaimLedgerEntry> findByComponent(ClaimComponent component) {
+        
+        return (List<ClaimLedgerEntry>) em.createNamedQuery("ClaimLedgerEntry.findByComponenet").setParameter("component", component).getResultList();
+        
+    }
+    
+    @Override
+    public ClaimLedgerEntry findLatestInterestEntry(ClaimComponent component) {
+        List<ClaimLedgerEntry> entries=this.findByComponent(component);
+        return entries.stream()
+                  .filter(e -> e.getType() == LedgerEntryType.INTEREST)
+                  .max(Comparator.comparing(ClaimLedgerEntry::getEntryDate))
+                  .orElse(null);
+        
+    }
+    
+    @Override
+    public ClaimLedgerEntry findLatestEntry(ClaimComponent component) {
+        List<ClaimLedgerEntry> entries=this.findByComponent(component);
+        return entries.stream()
+                  .max(Comparator.comparing(ClaimLedgerEntry::getEntryDate))
+                  .orElse(null);
+        
+    }
+    
+    @Override
+    public ClaimLedgerEntry findEarliestEntry(ClaimComponent component) {
+        List<ClaimLedgerEntry> entries=this.findByComponent(component);
+        return entries.stream()
+                  .min(Comparator.comparing(ClaimLedgerEntry::getEntryDate))
+                  .orElse(null);
         
     }
     

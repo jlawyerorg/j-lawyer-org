@@ -663,22 +663,67 @@ For more information on this, and how to apply and follow the GNU AGPL, see
  */
 package com.jdimension.jlawyer.client.editors.files;
 
+import com.jdimension.jlawyer.client.components.MultiCalDialog;
+import com.jdimension.jlawyer.client.editors.EditorsRegistry;
+import com.jdimension.jlawyer.persistence.ClaimComponent;
+import com.jdimension.jlawyer.persistence.ClaimLedger;
+import com.jdimension.jlawyer.persistence.ClaimLedgerEntry;
+import com.jdimension.jlawyer.persistence.LedgerEntryType;
+import java.math.BigDecimal;
+import java.text.SimpleDateFormat;
+import java.util.Date;
+import java.util.List;
 import javax.swing.JDialog;
+import javax.swing.JOptionPane;
+import org.apache.log4j.Logger;
 
 /**
  *
  * @author jens
  */
 public class ClaimLedgerEntryEditorDialog extends javax.swing.JDialog {
+    
+    private static final Logger log = Logger.getLogger(ClaimLedgerEntryEditorDialog.class.getName());
+    
+    private SimpleDateFormat df = new SimpleDateFormat("dd.MM.yyyy");
+    private boolean okPressed = false;
+    
+    private ClaimLedger ledger = null;
+    private ClaimLedgerEntry entry = null;
+    private List<ClaimComponent> components = null;
 
     /**
      * Creates new form ClaimLedgerEntryEditorDialog
+     *
      * @param parent
      * @param modal
+     * @param entry
+     * @param ledger
+     * @param components
      */
-    public ClaimLedgerEntryEditorDialog(JDialog parent, boolean modal) {
+    public ClaimLedgerEntryEditorDialog(JDialog parent, boolean modal, ClaimLedgerEntry entry, ClaimLedger ledger, List<ClaimComponent> components) {
         super(parent, modal);
         initComponents();
+        
+        this.entry = entry;
+        this.ledger = ledger;
+        this.components = components;
+        
+        this.cmbType.removeAllItems();
+        for (LedgerEntryType t : LedgerEntryType.values()) {
+            // Hauptforderungen nur bei Anlage einer Komponente, niemals manuell als Buchung
+            if (!t.equals(LedgerEntryType.MAIN_CLAIM)) {
+                this.cmbType.addItem(t);
+            }
+        }
+        
+        this.cmbComponent.removeAllItems();
+        for (ClaimComponent c : components) {
+            this.cmbComponent.addItem(c);
+        }
+        
+        this.txtValue.setValue(0);
+        this.txtDate.setText(df.format(new Date()));
     }
 
     /**
@@ -690,21 +735,159 @@ public class ClaimLedgerEntryEditorDialog extends javax.swing.JDialog {
     // <editor-fold defaultstate="collapsed" desc="Generated Code">//GEN-BEGIN:initComponents
     private void initComponents() {
 
+        jLabel1 = new javax.swing.JLabel();
+        txtDate = new javax.swing.JTextField();
+        cmdDate = new javax.swing.JButton();
+        jLabel2 = new javax.swing.JLabel();
+        cmbType = new javax.swing.JComboBox<>();
+        jLabel3 = new javax.swing.JLabel();
+        cmbComponent = new javax.swing.JComboBox<>();
+        jLabel4 = new javax.swing.JLabel();
+        txtValue = new javax.swing.JFormattedTextField();
+        txtDescription = new javax.swing.JTextField();
+        jLabel5 = new javax.swing.JLabel();
+        txtComment = new javax.swing.JTextField();
+        jLabel6 = new javax.swing.JLabel();
+        cmdCancel = new javax.swing.JButton();
+        cmdOk = new javax.swing.JButton();
+
         setDefaultCloseOperation(javax.swing.WindowConstants.DISPOSE_ON_CLOSE);
+        setTitle("Forderungskonto: Buchung");
+
+        jLabel1.setFont(jLabel1.getFont());
+        jLabel1.setText("Buchungsdatum:");
+
+        txtDate.setEditable(false);
+
+        cmdDate.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/schedule.png"))); // NOI18N
+        cmdDate.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                cmdDateActionPerformed(evt);
+            }
+        });
+
+        jLabel2.setText("Buchungstyp:");
+
+        jLabel3.setText("Position:");
+
+        jLabel4.setText("Betrag:");
+
+        txtValue.setFormatterFactory(new javax.swing.text.DefaultFormatterFactory(new javax.swing.text.NumberFormatter(new java.text.DecimalFormat("#,##0.00"))));
+
+        jLabel5.setText("Bezeichung:");
+
+        jLabel6.setText("Kommentar:");
+
+        cmdCancel.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/cancel.png"))); // NOI18N
+        cmdCancel.setText("Abbrechen");
+        cmdCancel.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                cmdCancelActionPerformed(evt);
+            }
+        });
+
+        cmdOk.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/agt_action_success.png"))); // NOI18N
+        cmdOk.setText("Speichern");
+        cmdOk.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                cmdOkActionPerformed(evt);
+            }
+        });
 
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(getContentPane());
         getContentPane().setLayout(layout);
         layout.setHorizontalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGap(0, 400, Short.MAX_VALUE)
+            .addGroup(layout.createSequentialGroup()
+                .addContainerGap()
+                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addGroup(layout.createSequentialGroup()
+                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                            .addComponent(jLabel1)
+                            .addComponent(jLabel2)
+                            .addComponent(jLabel3)
+                            .addComponent(jLabel4)
+                            .addComponent(jLabel5)
+                            .addComponent(jLabel6))
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                            .addComponent(txtDescription)
+                            .addGroup(layout.createSequentialGroup()
+                                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                                    .addComponent(txtValue, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                                    .addComponent(cmbComponent, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                                    .addGroup(layout.createSequentialGroup()
+                                        .addComponent(txtDate, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                                        .addComponent(cmdDate))
+                                    .addComponent(cmbType, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
+                                .addGap(0, 0, Short.MAX_VALUE))
+                            .addComponent(txtComment)))
+                    .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
+                        .addGap(0, 451, Short.MAX_VALUE)
+                        .addComponent(cmdOk)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addComponent(cmdCancel)))
+                .addContainerGap())
         );
         layout.setVerticalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGap(0, 300, Short.MAX_VALUE)
+            .addGroup(layout.createSequentialGroup()
+                .addContainerGap()
+                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                    .addComponent(jLabel1)
+                    .addComponent(txtDate, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(cmdDate, javax.swing.GroupLayout.PREFERRED_SIZE, 31, javax.swing.GroupLayout.PREFERRED_SIZE))
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                    .addComponent(jLabel2)
+                    .addComponent(cmbType, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                    .addComponent(jLabel3)
+                    .addComponent(cmbComponent, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addComponent(jLabel4)
+                    .addComponent(txtValue, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                    .addComponent(txtDescription, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(jLabel5))
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                    .addComponent(txtComment, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(jLabel6))
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                    .addComponent(cmdCancel)
+                    .addComponent(cmdOk))
+                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
         );
 
         pack();
     }// </editor-fold>//GEN-END:initComponents
+
+    private void cmdDateActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdDateActionPerformed
+        MultiCalDialog dlg = new MultiCalDialog(this.txtDate, EditorsRegistry.getInstance().getMainWindow(), true);
+        dlg.setVisible(true);
+    }//GEN-LAST:event_cmdDateActionPerformed
+
+    private void cmdCancelActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdCancelActionPerformed
+        okPressed = false;
+        setVisible(false);
+        this.dispose();
+    }//GEN-LAST:event_cmdCancelActionPerformed
+
+    private void cmdOkActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdOkActionPerformed
+        okPressed = true;
+        setVisible(false);
+        this.dispose();
+    }//GEN-LAST:event_cmdOkActionPerformed
+    
+    public boolean isOkPressed() {
+        return okPressed;
+    }
 
     /**
      * @param args the command line arguments
@@ -735,7 +918,7 @@ public class ClaimLedgerEntryEditorDialog extends javax.swing.JDialog {
 
         /* Create and display the dialog */
         java.awt.EventQueue.invokeLater(() -> {
-            ClaimLedgerEntryEditorDialog dialog = new ClaimLedgerEntryEditorDialog(null, true);
+            ClaimLedgerEntryEditorDialog dialog = new ClaimLedgerEntryEditorDialog(null, true, null, null, null);
             dialog.addWindowListener(new java.awt.event.WindowAdapter() {
                 @Override
                 public void windowClosing(java.awt.event.WindowEvent e) {
@@ -747,5 +930,42 @@ public class ClaimLedgerEntryEditorDialog extends javax.swing.JDialog {
     }
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
+    private javax.swing.JComboBox<ClaimComponent> cmbComponent;
+    private javax.swing.JComboBox<LedgerEntryType> cmbType;
+    private javax.swing.JButton cmdCancel;
+    private javax.swing.JButton cmdDate;
+    private javax.swing.JButton cmdOk;
+    private javax.swing.JLabel jLabel1;
+    private javax.swing.JLabel jLabel2;
+    private javax.swing.JLabel jLabel3;
+    private javax.swing.JLabel jLabel4;
+    private javax.swing.JLabel jLabel5;
+    private javax.swing.JLabel jLabel6;
+    private javax.swing.JTextField txtComment;
+    private javax.swing.JTextField txtDate;
+    private javax.swing.JTextField txtDescription;
+    private javax.swing.JFormattedTextField txtValue;
     // End of variables declaration//GEN-END:variables
+
+    ClaimLedgerEntry getEntry() {
+        if (this.entry == null) {
+            this.entry = new ClaimLedgerEntry();
+        }
+        
+        this.entry.setAmount(BigDecimal.valueOf(((Number) this.txtValue.getValue()).doubleValue()));
+        this.entry.setComment(this.txtComment.getText());
+        this.entry.setComponent((ClaimComponent) this.cmbComponent.getSelectedItem());
+        this.entry.setDescription(this.txtDescription.getText());
+        try {
+            this.entry.setEntryDate(df.parse(this.txtDate.getText()));
+        } catch (Exception ex) {
+            log.error(ex);
+            this.entry.setEntryDate(new Date());
+            JOptionPane.showMessageDialog(this, "Ungültiges Datum - verwende aktuelles Datum.", com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_WARNING, JOptionPane.WARNING_MESSAGE);
+        }
+        this.entry.setLedger(this.ledger);
+        this.entry.setType((LedgerEntryType) this.cmbType.getSelectedItem());
+        
+        return this.entry;
+    }
 }

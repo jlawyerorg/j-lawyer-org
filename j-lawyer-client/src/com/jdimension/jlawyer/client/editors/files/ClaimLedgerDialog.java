@@ -674,10 +674,12 @@ import com.jdimension.jlawyer.persistence.ClaimComponent;
 import com.jdimension.jlawyer.persistence.ClaimLedger;
 import com.jdimension.jlawyer.persistence.ClaimLedgerEntry;
 import com.jdimension.jlawyer.persistence.InterestRule;
+import com.jdimension.jlawyer.persistence.LedgerEntryType;
 import com.jdimension.jlawyer.services.JLawyerServiceLocator;
 import java.text.DecimalFormat;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
 import javax.swing.JOptionPane;
 import javax.swing.table.AbstractTableModel;
@@ -969,6 +971,11 @@ public class ClaimLedgerDialog extends javax.swing.JDialog implements EventConsu
 
         cmdAddEntry.setFont(cmdAddEntry.getFont());
         cmdAddEntry.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/edit_add.png"))); // NOI18N
+        cmdAddEntry.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                cmdAddEntryActionPerformed(evt);
+            }
+        });
 
         cmdEditEntry.setFont(cmdEditEntry.getFont());
         cmdEditEntry.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons16/kate.png"))); // NOI18N
@@ -1132,8 +1139,46 @@ public class ClaimLedgerDialog extends javax.swing.JDialog implements EventConsu
                 ClientSettings settings = ClientSettings.getInstance();
                 JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
                 ClaimComponent cmp = dlg.getEntry();
-                locator.lookupArchiveFileServiceRemote().addClaimComponent(cmp, dlg.getInterestRules(), this.currentEntry.getId());
+                cmp = locator.lookupArchiveFileServiceRemote().addClaimComponent(cmp, dlg.getInterestRules(), this.currentEntry.getId());
                 ((ComponentTableModel) this.tblComponents.getModel()).addComponent(cmp);
+
+                // 1. ComponentType → LedgerEntryType mappen
+                LedgerEntryType entryType=null;
+                switch (cmp.getType()) {
+                    case MAIN_CLAIM:
+                        entryType = LedgerEntryType.MAIN_CLAIM;
+                        break;
+                    case COST_INTEREST_BEARING:
+                        entryType = LedgerEntryType.COST;
+                        break;
+                    case COST_NON_INTEREST_BEARING:
+                        entryType = LedgerEntryType.COST;
+                        break;
+                    default:
+                        throw new IllegalArgumentException("Unbekannter ComponentType: " + cmp.getType());
+                }
+
+                // 2. Initiales Buchungsdatum festlegen
+                Date initialDate = null;
+                if(dlg.getInterestRules()!=null && !dlg.getInterestRules().isEmpty())
+                    initialDate=dlg.getInterestRules().get(0).getValidFrom();
+                else
+                    initialDate=new Date();
+                
+                ClaimLedgerEntry initialEntry = new ClaimLedgerEntry();
+                initialEntry.setAmount(cmp.getPrincipalAmount());     // Startbetrag
+                initialEntry.setComment(cmp.getName());               // Name der Komponente
+                initialEntry.setComponent(cmp);                       // Referenz auf Komponente
+                initialEntry.setDescription(cmp.getComment());       // Beschreibung
+                initialEntry.setEntryDate(initialDate);              // Datum
+                initialEntry.setLedger(currentEntry);              // Ledger-Zuordnung
+                initialEntry.setType(entryType);                     // Typ
+                
+                List<ClaimLedgerEntry> initialEntries=locator.lookupArchiveFileServiceRemote().addClaimLedgerEntry(initialEntry, this.currentEntry.getId());
+                for(ClaimLedgerEntry cle: initialEntries) {
+                    ((LedgerTableModel) this.tblLedger.getModel()).addEntry(initialEntry);
+                }
+
             } catch (Exception ex) {
                 log.error("error saving claim component", ex);
                 JOptionPane.showMessageDialog(this, "Fehler beim Speichern des Forderungsposition: " + ex.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
@@ -1149,18 +1194,16 @@ public class ClaimLedgerDialog extends javax.swing.JDialog implements EventConsu
         }
 
         ClaimComponent cmp = ((ComponentTableModel) this.tblComponents.getModel()).getComponentAt(this.tblComponents.convertRowIndexToModel(this.tblComponents.getSelectedRow()));
-        
-        List<InterestRule> existingRules=new ArrayList<>();
+
+        List<InterestRule> existingRules = new ArrayList<>();
         try {
-                ClientSettings settings = ClientSettings.getInstance();
-                JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
-                existingRules=locator.lookupArchiveFileServiceRemote().getClaimComponentInterestRules(cmp.getId());
-            } catch (Exception ex) {
-                log.error("error getting interest rules", ex);
-                JOptionPane.showMessageDialog(this, "Fehler beim Laden der Zinsregeln: " + ex.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
-            }
-        
-        
+            ClientSettings settings = ClientSettings.getInstance();
+            JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
+            existingRules = locator.lookupArchiveFileServiceRemote().getClaimComponentInterestRules(cmp.getId());
+        } catch (Exception ex) {
+            log.error("error getting interest rules", ex);
+            JOptionPane.showMessageDialog(this, "Fehler beim Laden der Zinsregeln: " + ex.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
+        }
 
         ClaimComponentEditorDialog dlg = new ClaimComponentEditorDialog(this.currentEntry, cmp, existingRules, this, true);
         FrameUtils.centerDialog(dlg, this);
@@ -1170,7 +1213,7 @@ public class ClaimLedgerDialog extends javax.swing.JDialog implements EventConsu
                 ClientSettings settings = ClientSettings.getInstance();
                 JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
                 cmp = dlg.getEntry();
-                locator.lookupArchiveFileServiceRemote().updateClaimComponent(cmp, dlg.getInterestRules());
+                cmp = locator.lookupArchiveFileServiceRemote().updateClaimComponent(cmp, dlg.getInterestRules());
                 ((ComponentTableModel) this.tblComponents.getModel()).setComponentAt(this.tblComponents.convertRowIndexToModel(this.tblComponents.getSelectedRow()), cmp);
             } catch (Exception ex) {
                 log.error("error saving claim component", ex);
@@ -1185,7 +1228,7 @@ public class ClaimLedgerDialog extends javax.swing.JDialog implements EventConsu
         int[] selected = this.tblComponents.getSelectedRows();
         for (int sel = selected.length - 1; sel > -1; sel--) {
 
-            int tableIndex=selected[sel];
+            int tableIndex = selected[sel];
             ClaimComponent cmp = ((ComponentTableModel) this.tblComponents.getModel()).getComponentAt(this.tblComponents.convertRowIndexToModel(tableIndex));
 
             try {
@@ -1201,6 +1244,27 @@ public class ClaimLedgerDialog extends javax.swing.JDialog implements EventConsu
 
         }
     }//GEN-LAST:event_cmdRemoveComponentActionPerformed
+
+    private void cmdAddEntryActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdAddEntryActionPerformed
+        ClaimLedgerEntryEditorDialog dlg = new ClaimLedgerEntryEditorDialog(this, true, null, this.currentEntry, ((ComponentTableModel) this.tblComponents.getModel()).getData());
+        FrameUtils.centerDialog(dlg, this);
+        dlg.setVisible(true);
+        if (dlg.isOkPressed()) {
+            try {
+                ClientSettings settings = ClientSettings.getInstance();
+                JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
+                ClaimLedgerEntry entry = dlg.getEntry();
+                List<ClaimLedgerEntry> entries = locator.lookupArchiveFileServiceRemote().addClaimLedgerEntry(entry, this.currentEntry.getId());
+                for(ClaimLedgerEntry e: entries) {
+                    ((LedgerTableModel) this.tblLedger.getModel()).addEntry(entry);
+                }
+            } catch (Exception ex) {
+                log.error("error saving claim ledger entry", ex);
+                JOptionPane.showMessageDialog(this, "Fehler beim Speichern der Buchung: " + ex.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
+            }
+
+        }
+    }//GEN-LAST:event_cmdAddEntryActionPerformed
 
     /**
      * @param args the command line arguments
@@ -1339,6 +1403,10 @@ public class ClaimLedgerDialog extends javax.swing.JDialog implements EventConsu
             data.remove(row);
             fireTableRowsDeleted(row, row);
         }
+
+        private List<ClaimComponent> getData() {
+            return data;
+        }
     }
 
     class LedgerTableModel extends AbstractTableModel {
@@ -1348,6 +1416,11 @@ public class ClaimLedgerDialog extends javax.swing.JDialog implements EventConsu
 
         LedgerTableModel(List<ClaimLedgerEntry> data) {
             this.data = data;
+        }
+
+        public void addEntry(ClaimLedgerEntry e) {
+            data.add(e);
+            fireTableRowsInserted(data.size() - 1, data.size() - 1);
         }
 
         @Override
@@ -1378,7 +1451,7 @@ public class ClaimLedgerDialog extends javax.swing.JDialog implements EventConsu
                 case 3:
                     return e.getAmount();
                 case 4:
-                    return (e.getComponent() != null) ? e.getComponent().getComment() : "–";
+                    return (e.getComponent() != null) ? e.getComponent().toString() : "–";
                 default:
                     return "";
             }

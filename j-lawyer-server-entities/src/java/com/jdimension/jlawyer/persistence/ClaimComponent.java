@@ -664,7 +664,10 @@ package com.jdimension.jlawyer.persistence;
 
 import java.io.Serializable;
 import java.math.BigDecimal;
+import java.util.ArrayList;
+import java.util.List;
 import javax.persistence.Basic;
+import javax.persistence.CascadeType;
 import javax.persistence.Column;
 import javax.persistence.Entity;
 import javax.persistence.EnumType;
@@ -674,6 +677,7 @@ import javax.persistence.JoinColumn;
 import javax.persistence.ManyToOne;
 import javax.persistence.NamedQueries;
 import javax.persistence.NamedQuery;
+import javax.persistence.OneToMany;
 import javax.persistence.Table;
 import javax.xml.bind.annotation.XmlRootElement;
 
@@ -714,6 +718,16 @@ public class ClaimComponent implements Serializable {
     
     @Column(name = "comment")
     private String comment;
+    
+    @OneToMany(mappedBy = "component", cascade = CascadeType.REMOVE)
+    private List<InterestRule> interestRules = new ArrayList<>();
+    
+    /**
+     * Eine Komponente ist verzinslich, wenn mindestens eine Zinsregel existiert.
+     */
+    public boolean isInterestBearing() {
+        return getInterestRules() != null && !interestRules.isEmpty();
+    }
 
     @Override
     public int hashCode() {
@@ -737,7 +751,7 @@ public class ClaimComponent implements Serializable {
 
     @Override
     public String toString() {
-        return "com.jdimension.jlawyer.persistence.ClaimComponent[ id=" + getId() + " ]";
+        return this.name + " (" + this.type.toString() + ")";
     }
 
     /**
@@ -836,6 +850,20 @@ public class ClaimComponent implements Serializable {
      */
     public void setName(String name) {
         this.name = name;
+    }
+
+    /**
+     * @return the interestRules
+     */
+    public List<InterestRule> getInterestRules() {
+        return interestRules;
+    }
+
+    /**
+     * @param interestRules the interestRules to set
+     */
+    public void setInterestRules(List<InterestRule> interestRules) {
+        this.interestRules = interestRules;
     }
     
 }

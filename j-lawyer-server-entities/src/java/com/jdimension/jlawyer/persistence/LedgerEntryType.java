@@ -667,10 +667,38 @@ package com.jdimension.jlawyer.persistence;
  * @author jens
  */
 public enum LedgerEntryType {
-    MAIN_CLAIM,
-    INTEREST,
-    COST_INTEREST_BEARING,
-    COST_NON_INTEREST_BEARING,
-    PAYMENT
-    
+    MAIN_CLAIM("Hauptforderung"),
+    INTEREST("Zinsen"),
+    COST("Kosten"),
+    PAYMENT("Zahlung"),
+    ADJUSTMENT("Korrekturbuchung");
+
+    private final String label;
+
+    LedgerEntryType(String label) {
+        this.label = label;
+    }
+
+    public String getLabel() {
+        return label;
+    }
+
+    @Override
+    public String toString() {
+        return label;
+    }
+
+    /**
+     * Liefert den Enum-Wert anhand des Labels (optional, falls du mal das Label speichern willst).
+     * @param label
+     * @return 
+     */
+    public static LedgerEntryType fromLabel(String label) {
+        for (LedgerEntryType t : values()) {
+            if (t.label.equalsIgnoreCase(label)) {
+                return t;
+            }
+        }
+        throw new IllegalArgumentException("Unknown label: " + label);
+    }
 }

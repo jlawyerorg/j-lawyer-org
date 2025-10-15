@@ -686,6 +686,12 @@ public interface ClaimLedgerEntryFacadeLocal {
     List<ClaimLedgerEntry> findRange(int[] range);
     
     List<ClaimLedgerEntry> findByLedger(ClaimLedger ledger);
+    
+    List<ClaimLedgerEntry> findByComponent(ClaimComponent component);
+    
+    ClaimLedgerEntry findLatestInterestEntry(ClaimComponent component);
+    ClaimLedgerEntry findLatestEntry(ClaimComponent component);
+    ClaimLedgerEntry findEarliestEntry(ClaimComponent component);
 
     int count();
     

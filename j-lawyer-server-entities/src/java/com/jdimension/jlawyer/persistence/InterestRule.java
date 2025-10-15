@@ -664,6 +664,7 @@ package com.jdimension.jlawyer.persistence;
 
 import java.io.Serializable;
 import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.util.Date;
 import javax.persistence.Basic;
 import javax.persistence.Column;
@@ -719,6 +720,22 @@ public class InterestRule implements Serializable {
 
     @Column(name = "comment")
     private String comment;
+    
+    /**
+     * Liefert den effektiven Zinssatz für diese Rule als Dezimalwert (z.B.5% = 0.05)
+     * @param baseRate
+     * @return 
+     */
+    public BigDecimal getEffectiveRate(BigDecimal baseRate) {
+        if (this.interestType.equals(InterestType.BASIS_RELATED)) {
+            if (baseRate == null) baseRate = BigDecimal.ZERO;
+            return baseRate.add(baseMargin).divide(BigDecimal.valueOf(100), 6, RoundingMode.HALF_UP);
+        } else if (fixedRate != null) {
+            return fixedRate.divide(BigDecimal.valueOf(100), 6, RoundingMode.HALF_UP);
+        } else {
+            return BigDecimal.ZERO;
+        }
+    }
 
     @Override
     public int hashCode() {
