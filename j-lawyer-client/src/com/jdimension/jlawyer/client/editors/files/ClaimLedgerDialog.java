@@ -675,7 +675,10 @@ import com.jdimension.jlawyer.persistence.ClaimLedger;
 import com.jdimension.jlawyer.persistence.ClaimLedgerEntry;
 import com.jdimension.jlawyer.persistence.InterestRule;
 import com.jdimension.jlawyer.persistence.LedgerEntryType;
+import com.jdimension.jlawyer.pojo.ClaimLedgerTotals;
 import com.jdimension.jlawyer.services.JLawyerServiceLocator;
+import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.text.DecimalFormat;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
@@ -728,6 +731,39 @@ public class ClaimLedgerDialog extends javax.swing.JDialog implements EventConsu
 
     }
 
+    private void updateTotals() {
+        BigDecimal totalMain = BigDecimal.ZERO;
+        BigDecimal totalCost = BigDecimal.ZERO;
+        BigDecimal totalPaid = BigDecimal.ZERO;
+        BigDecimal totalOpen = BigDecimal.ZERO;
+        BigDecimal totalInterest = BigDecimal.ZERO;
+        if (this.currentEntry != null) {
+            try {
+                JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(ClientSettings.getInstance().getLookupProperties());
+                ClaimLedgerTotals totals=locator.lookupArchiveFileServiceRemote().calculateClaimLedgerTotals(this.currentEntry.getId(), new Date());
+                totalMain=totals.getTotalMain();
+                totalCost=totals.getTotalCosts();
+                totalInterest=totals.getTotalInterestCosts().add(totals.getTotalInterestMain());
+                totalPaid=totals.getTotalPayments();
+                totalOpen=totals.getOpenClaim();
+                
+
+            } catch (Exception ex) {
+                log.error("Error updating ledger totals", ex);
+                JOptionPane.showMessageDialog(this, "Fehler beim Berechnen des Forderungskontos: " + ex.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
+            }
+        }
+        this.lblSumMain.setText(cf.format(totalMain.setScale(2, RoundingMode.HALF_UP)));
+        this.lblSumCost.setText(cf.format(totalCost.setScale(2, RoundingMode.HALF_UP)));
+        this.lblSumInterest.setText(cf.format(totalInterest.setScale(2, RoundingMode.HALF_UP)));
+        this.lblSumPaid.setText(cf.format(totalPaid.setScale(2, RoundingMode.HALF_UP)));
+        this.lblSumOpen.setText(cf.format(totalOpen.setScale(2, RoundingMode.HALF_UP)));
+        
+        this.lblTotalValue.setText(cf.format(totalMain.add(totalCost).setScale(2, RoundingMode.HALF_UP)));
+        this.lblOpenValue.setText(cf.format(totalOpen.setScale(2, RoundingMode.HALF_UP)));
+        
+    }
+
     public ClaimLedger getEntry() {
         return this.currentEntry;
     }
@@ -760,6 +796,8 @@ public class ClaimLedgerDialog extends javax.swing.JDialog implements EventConsu
                 log.error("Error updating invoice position", ex);
                 JOptionPane.showMessageDialog(this, "Fehler beim Speichern der Rechnungsposition: " + ex.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
             }
+            
+            this.updateTotals();
 
         }
 
@@ -784,6 +822,10 @@ public class ClaimLedgerDialog extends javax.swing.JDialog implements EventConsu
         jScrollPane2 = new javax.swing.JScrollPane();
         taDescription = new javax.swing.JTextArea();
         jLabel4 = new javax.swing.JLabel();
+        jLabel2 = new javax.swing.JLabel();
+        lblTotalValue = new javax.swing.JLabel();
+        jLabel5 = new javax.swing.JLabel();
+        lblOpenValue = new javax.swing.JLabel();
         jTabbedPane1 = new javax.swing.JTabbedPane();
         jPanel1 = new javax.swing.JPanel();
         jPanel3 = new javax.swing.JPanel();
@@ -798,6 +840,17 @@ public class ClaimLedgerDialog extends javax.swing.JDialog implements EventConsu
         tblLedger = new javax.swing.JTable();
         cmdAddEntry = new javax.swing.JButton();
         cmdEditEntry = new javax.swing.JButton();
+        jPanel5 = new javax.swing.JPanel();
+        jLabel3 = new javax.swing.JLabel();
+        jLabel6 = new javax.swing.JLabel();
+        jLabel7 = new javax.swing.JLabel();
+        jLabel8 = new javax.swing.JLabel();
+        jLabel9 = new javax.swing.JLabel();
+        lblSumCost = new javax.swing.JLabel();
+        lblSumMain = new javax.swing.JLabel();
+        lblSumInterest = new javax.swing.JLabel();
+        lblSumPaid = new javax.swing.JLabel();
+        lblSumOpen = new javax.swing.JLabel();
 
         setDefaultCloseOperation(javax.swing.WindowConstants.DISPOSE_ON_CLOSE);
         addComponentListener(new java.awt.event.ComponentAdapter() {
@@ -824,7 +877,7 @@ public class ClaimLedgerDialog extends javax.swing.JDialog implements EventConsu
             }
         });
 
-        jLabel1.setFont(jLabel1.getFont());
+        jLabel1.setFont(jLabel1.getFont().deriveFont(jLabel1.getFont().getStyle() | java.awt.Font.BOLD));
         jLabel1.setForeground(new java.awt.Color(255, 255, 255));
         jLabel1.setText("Name:");
 
@@ -835,9 +888,25 @@ public class ClaimLedgerDialog extends javax.swing.JDialog implements EventConsu
         taDescription.setRows(3);
         jScrollPane2.setViewportView(taDescription);
 
-        jLabel4.setFont(jLabel4.getFont());
+        jLabel4.setFont(jLabel4.getFont().deriveFont(jLabel4.getFont().getStyle() | java.awt.Font.BOLD));
         jLabel4.setForeground(new java.awt.Color(255, 255, 255));
         jLabel4.setText("Beschreibung:");
+
+        jLabel2.setFont(jLabel2.getFont().deriveFont(jLabel2.getFont().getStyle() | java.awt.Font.BOLD));
+        jLabel2.setForeground(new java.awt.Color(255, 255, 255));
+        jLabel2.setText("Forderungen:");
+
+        lblTotalValue.setFont(lblTotalValue.getFont().deriveFont(lblTotalValue.getFont().getStyle() | java.awt.Font.BOLD));
+        lblTotalValue.setForeground(new java.awt.Color(255, 255, 255));
+        lblTotalValue.setText("0,00");
+
+        jLabel5.setFont(jLabel5.getFont().deriveFont(jLabel5.getFont().getStyle() | java.awt.Font.BOLD));
+        jLabel5.setForeground(new java.awt.Color(255, 255, 255));
+        jLabel5.setText("Offen:");
+
+        lblOpenValue.setFont(lblOpenValue.getFont().deriveFont(lblOpenValue.getFont().getStyle() | java.awt.Font.BOLD));
+        lblOpenValue.setForeground(new java.awt.Color(255, 255, 255));
+        lblOpenValue.setText("0,00");
 
         javax.swing.GroupLayout lblHeaderLayout = new javax.swing.GroupLayout(lblHeader);
         lblHeader.setLayout(lblHeaderLayout);
@@ -850,6 +919,15 @@ public class ClaimLedgerDialog extends javax.swing.JDialog implements EventConsu
                     .addComponent(jLabel4))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addGroup(lblHeaderLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addGroup(lblHeaderLayout.createSequentialGroup()
+                        .addComponent(jLabel2)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addComponent(lblTotalValue)
+                        .addGap(18, 18, 18)
+                        .addComponent(jLabel5)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addComponent(lblOpenValue)
+                        .addGap(0, 0, Short.MAX_VALUE))
                     .addComponent(jScrollPane2)
                     .addComponent(txtName))
                 .addContainerGap())
@@ -865,6 +943,12 @@ public class ClaimLedgerDialog extends javax.swing.JDialog implements EventConsu
                 .addGroup(lblHeaderLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                     .addComponent(jScrollPane2, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                     .addComponent(jLabel4))
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addGroup(lblHeaderLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                    .addComponent(jLabel2)
+                    .addComponent(lblTotalValue)
+                    .addComponent(jLabel5)
+                    .addComponent(lblOpenValue))
                 .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
         );
 
@@ -935,7 +1019,7 @@ public class ClaimLedgerDialog extends javax.swing.JDialog implements EventConsu
                         .addComponent(cmdEditComponent))
                     .addComponent(cmdRemoveComponent))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(jScrollPane3, javax.swing.GroupLayout.DEFAULT_SIZE, 441, Short.MAX_VALUE)
+                .addComponent(jScrollPane3, javax.swing.GroupLayout.DEFAULT_SIZE, 405, Short.MAX_VALUE)
                 .addContainerGap())
         );
 
@@ -1003,7 +1087,7 @@ public class ClaimLedgerDialog extends javax.swing.JDialog implements EventConsu
                     .addComponent(cmdAddEntry)
                     .addComponent(cmdEditEntry))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(jScrollPane1, javax.swing.GroupLayout.DEFAULT_SIZE, 441, Short.MAX_VALUE)
+                .addComponent(jScrollPane1, javax.swing.GroupLayout.DEFAULT_SIZE, 405, Short.MAX_VALUE)
                 .addContainerGap())
         );
 
@@ -1022,6 +1106,89 @@ public class ClaimLedgerDialog extends javax.swing.JDialog implements EventConsu
         );
 
         jTabbedPane1.addTab("Buchungen", jPanel2);
+
+        jLabel3.setFont(jLabel3.getFont());
+        jLabel3.setText("Hauptforderungen:");
+
+        jLabel6.setFont(jLabel6.getFont());
+        jLabel6.setText("Nebenforderungen:");
+
+        jLabel7.setFont(jLabel7.getFont());
+        jLabel7.setText("Zinsen:");
+
+        jLabel8.setFont(jLabel8.getFont());
+        jLabel8.setText("bereits bezahlt:");
+
+        jLabel9.setFont(jLabel9.getFont());
+        jLabel9.setText("offen:");
+
+        lblSumCost.setFont(lblSumCost.getFont());
+        lblSumCost.setText("jLabel10");
+
+        lblSumMain.setFont(lblSumMain.getFont());
+        lblSumMain.setText("jLabel11");
+
+        lblSumInterest.setFont(lblSumInterest.getFont());
+        lblSumInterest.setText("jLabel12");
+
+        lblSumPaid.setFont(lblSumPaid.getFont());
+        lblSumPaid.setText("jLabel13");
+
+        lblSumOpen.setFont(lblSumOpen.getFont());
+        lblSumOpen.setText("jLabel14");
+
+        javax.swing.GroupLayout jPanel5Layout = new javax.swing.GroupLayout(jPanel5);
+        jPanel5.setLayout(jPanel5Layout);
+        jPanel5Layout.setHorizontalGroup(
+            jPanel5Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(jPanel5Layout.createSequentialGroup()
+                .addContainerGap()
+                .addGroup(jPanel5Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addGroup(jPanel5Layout.createSequentialGroup()
+                        .addComponent(jLabel3)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                        .addComponent(lblSumMain))
+                    .addGroup(jPanel5Layout.createSequentialGroup()
+                        .addGroup(jPanel5Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                            .addComponent(jLabel6)
+                            .addComponent(jLabel7)
+                            .addComponent(jLabel8)
+                            .addComponent(jLabel9))
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addGroup(jPanel5Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                            .addComponent(lblSumOpen)
+                            .addComponent(lblSumPaid)
+                            .addComponent(lblSumInterest)
+                            .addComponent(lblSumCost))))
+                .addContainerGap(632, Short.MAX_VALUE))
+        );
+        jPanel5Layout.setVerticalGroup(
+            jPanel5Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(jPanel5Layout.createSequentialGroup()
+                .addContainerGap()
+                .addGroup(jPanel5Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                    .addComponent(jLabel3)
+                    .addComponent(lblSumMain))
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addGroup(jPanel5Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                    .addComponent(jLabel6)
+                    .addComponent(lblSumCost))
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addGroup(jPanel5Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                    .addComponent(jLabel7)
+                    .addComponent(lblSumInterest))
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addGroup(jPanel5Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                    .addComponent(jLabel8)
+                    .addComponent(lblSumPaid))
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addGroup(jPanel5Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                    .addComponent(jLabel9)
+                    .addComponent(lblSumOpen))
+                .addContainerGap(306, Short.MAX_VALUE))
+        );
+
+        jTabbedPane1.addTab("Summen", jPanel5);
 
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(getContentPane());
         getContentPane().setLayout(layout);
@@ -1043,8 +1210,8 @@ public class ClaimLedgerDialog extends javax.swing.JDialog implements EventConsu
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(layout.createSequentialGroup()
                 .addComponent(lblHeader, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(jTabbedPane1)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                .addComponent(jTabbedPane1, javax.swing.GroupLayout.PREFERRED_SIZE, 451, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                     .addComponent(cmdCancel)
@@ -1143,7 +1310,7 @@ public class ClaimLedgerDialog extends javax.swing.JDialog implements EventConsu
                 ((ComponentTableModel) this.tblComponents.getModel()).addComponent(cmp);
 
                 // 1. ComponentType → LedgerEntryType mappen
-                LedgerEntryType entryType=null;
+                LedgerEntryType entryType = null;
                 switch (cmp.getType()) {
                     case MAIN_CLAIM:
                         entryType = LedgerEntryType.MAIN_CLAIM;
@@ -1160,11 +1327,12 @@ public class ClaimLedgerDialog extends javax.swing.JDialog implements EventConsu
 
                 // 2. Initiales Buchungsdatum festlegen
                 Date initialDate = null;
-                if(dlg.getInterestRules()!=null && !dlg.getInterestRules().isEmpty())
-                    initialDate=dlg.getInterestRules().get(0).getValidFrom();
-                else
-                    initialDate=new Date();
-                
+                if (dlg.getInterestRules() != null && !dlg.getInterestRules().isEmpty()) {
+                    initialDate = dlg.getInterestRules().get(0).getValidFrom();
+                } else {
+                    initialDate = new Date();
+                }
+
                 ClaimLedgerEntry initialEntry = new ClaimLedgerEntry();
                 initialEntry.setAmount(cmp.getPrincipalAmount());     // Startbetrag
                 initialEntry.setComment(cmp.getName());               // Name der Komponente
@@ -1173,9 +1341,9 @@ public class ClaimLedgerDialog extends javax.swing.JDialog implements EventConsu
                 initialEntry.setEntryDate(initialDate);              // Datum
                 initialEntry.setLedger(currentEntry);              // Ledger-Zuordnung
                 initialEntry.setType(entryType);                     // Typ
-                
-                List<ClaimLedgerEntry> initialEntries=locator.lookupArchiveFileServiceRemote().addClaimLedgerEntry(initialEntry, this.currentEntry.getId());
-                for(ClaimLedgerEntry cle: initialEntries) {
+
+                List<ClaimLedgerEntry> initialEntries = locator.lookupArchiveFileServiceRemote().addClaimLedgerEntry(initialEntry, this.currentEntry.getId());
+                for (ClaimLedgerEntry cle : initialEntries) {
                     ((LedgerTableModel) this.tblLedger.getModel()).addEntry(initialEntry);
                 }
 
@@ -1183,6 +1351,8 @@ public class ClaimLedgerDialog extends javax.swing.JDialog implements EventConsu
                 log.error("error saving claim component", ex);
                 JOptionPane.showMessageDialog(this, "Fehler beim Speichern des Forderungsposition: " + ex.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
             }
+            
+            this.updateTotals();
 
         }
     }//GEN-LAST:event_cmdAddComponentActionPerformed
@@ -1219,6 +1389,8 @@ public class ClaimLedgerDialog extends javax.swing.JDialog implements EventConsu
                 log.error("error saving claim component", ex);
                 JOptionPane.showMessageDialog(this, "Fehler beim Speichern der Forderungsposition: " + ex.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
             }
+            
+            this.updateTotals();
 
         }
     }//GEN-LAST:event_cmdEditComponentActionPerformed
@@ -1241,6 +1413,8 @@ public class ClaimLedgerDialog extends javax.swing.JDialog implements EventConsu
                 log.error("error deleting claim component", ex);
                 JOptionPane.showMessageDialog(this, "Fehler beim Löchen der Forderungsposition: " + ex.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
             }
+            
+            this.updateTotals();
 
         }
     }//GEN-LAST:event_cmdRemoveComponentActionPerformed
@@ -1255,13 +1429,15 @@ public class ClaimLedgerDialog extends javax.swing.JDialog implements EventConsu
                 JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
                 ClaimLedgerEntry entry = dlg.getEntry();
                 List<ClaimLedgerEntry> entries = locator.lookupArchiveFileServiceRemote().addClaimLedgerEntry(entry, this.currentEntry.getId());
-                for(ClaimLedgerEntry e: entries) {
+                for (ClaimLedgerEntry e : entries) {
                     ((LedgerTableModel) this.tblLedger.getModel()).addEntry(entry);
                 }
             } catch (Exception ex) {
                 log.error("error saving claim ledger entry", ex);
                 JOptionPane.showMessageDialog(this, "Fehler beim Speichern der Buchung: " + ex.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
             }
+            
+            this.updateTotals();
 
         }
     }//GEN-LAST:event_cmdAddEntryActionPerformed
@@ -1316,16 +1492,31 @@ public class ClaimLedgerDialog extends javax.swing.JDialog implements EventConsu
     private javax.swing.JButton cmdRemoveComponent;
     private javax.swing.JButton cmdSave;
     private javax.swing.JLabel jLabel1;
+    private javax.swing.JLabel jLabel2;
+    private javax.swing.JLabel jLabel3;
     private javax.swing.JLabel jLabel4;
+    private javax.swing.JLabel jLabel5;
+    private javax.swing.JLabel jLabel6;
+    private javax.swing.JLabel jLabel7;
+    private javax.swing.JLabel jLabel8;
+    private javax.swing.JLabel jLabel9;
     private javax.swing.JPanel jPanel1;
     private javax.swing.JPanel jPanel2;
     private javax.swing.JPanel jPanel3;
     private javax.swing.JPanel jPanel4;
+    private javax.swing.JPanel jPanel5;
     private javax.swing.JScrollPane jScrollPane1;
     private javax.swing.JScrollPane jScrollPane2;
     private javax.swing.JScrollPane jScrollPane3;
     private javax.swing.JTabbedPane jTabbedPane1;
     private javax.swing.JPanel lblHeader;
+    private javax.swing.JLabel lblOpenValue;
+    private javax.swing.JLabel lblSumCost;
+    private javax.swing.JLabel lblSumInterest;
+    private javax.swing.JLabel lblSumMain;
+    private javax.swing.JLabel lblSumOpen;
+    private javax.swing.JLabel lblSumPaid;
+    private javax.swing.JLabel lblTotalValue;
     private javax.swing.JPopupMenu popCalculations;
     private javax.swing.JPopupMenu popRecipients;
     private javax.swing.JTextArea taDescription;

@@ -705,7 +705,7 @@ public class InterestRule implements Serializable {
     private ClaimComponent component;
 
     @Column(name = "valid_from")
-    @Temporal(TemporalType.DATE)
+    @Temporal(TemporalType.TIMESTAMP)
     private Date validFrom;
 
     @Enumerated(EnumType.STRING)

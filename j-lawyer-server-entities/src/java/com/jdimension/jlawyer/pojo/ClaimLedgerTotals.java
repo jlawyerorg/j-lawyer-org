@@ -662,13 +662,16 @@ For more information on this, and how to apply and follow the GNU AGPL, see
  */
 package com.jdimension.jlawyer.pojo;
 
+import java.io.Serializable;
 import java.math.BigDecimal;
 
 /**
  *
  * @author jens
  */
-public class ClaimLedgerTotals {
+public class ClaimLedgerTotals implements Serializable {
+    
+    private static final long serialVersionUID = 1L;
     
     private BigDecimal totalMain=BigDecimal.ZERO;
     private BigDecimal totalCosts=BigDecimal.ZERO;
