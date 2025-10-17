@@ -750,6 +750,7 @@ public class SendBeaMessageFrame extends javax.swing.JFrame implements SendCommu
     private AppUserBean cu = null;
     private Hashtable<String, String> attachments = new Hashtable<>();
     private ArchiveFileBean contextArchiveFile = null;
+    private CaseFolder contextFolder = null;
     private String contextDictateSign = null;
     private TextEditorPanel tp;
 
@@ -1125,6 +1126,15 @@ public class SendBeaMessageFrame extends javax.swing.JFrame implements SendCommu
 
         if (this.contextArchiveFile != null && this.contextArchiveFile.getAssistant() != null) {
             this.cmbReviewAssignee.setSelectedItem(this.contextArchiveFile.getAssistant());
+        }
+    }
+
+    public void setContextFolder(CaseFolder folder) {
+        this.contextFolder = folder;
+        if (folder != null) {
+            log.debug("Context folder for beA message set to " + StringUtils.nonNull(folder.getName()) + " (" + StringUtils.nonNull(folder.getId()) + ")");
+        } else {
+            log.debug("Context folder for beA message cleared.");
         }
     }
 
@@ -2083,13 +2093,14 @@ public class SendBeaMessageFrame extends javax.swing.JFrame implements SendCommu
         String fromSafeId = ((Identity) this.cmbFrom.getSelectedItem()).getSafeId();
         SendBeaMessageAction a = null;
 
-        CaseFolder folder = null;
+        CaseFolder folder = this.contextFolder;
         if (this.chkSaveAsDocument.isSelected() || !(this.radioReviewTypeNone.isSelected())) {
             if (this.contextArchiveFile == null) {
                 SearchAndAssignDialog saDlg = new SearchAndAssignDialog(this, true, "" + this.cmbAzRecipient.getEditor().getItem().toString() + this.txtAzSender.getText() + this.txtSubject.getText(), null);
                 saDlg.setVisible(true);
                 this.contextArchiveFile = saDlg.getCaseSelection();
                 folder = saDlg.getFolderSelection();
+                this.setContextFolder(folder);
 
                 saDlg.dispose();
 
@@ -2243,13 +2254,14 @@ public class SendBeaMessageFrame extends javax.swing.JFrame implements SendCommu
         String fromSafeId = ((Identity) this.cmbFrom.getSelectedItem()).getSafeId();
         SaveBeaMessageAction a = null;
 
-        CaseFolder folder = null;
+        CaseFolder folder = this.contextFolder;
         if (this.chkSaveAsDocument.isSelected() || !(this.radioReviewTypeNone.isSelected())) {
             if (this.contextArchiveFile == null) {
                 SearchAndAssignDialog saDlg = new SearchAndAssignDialog(this, true, "" + this.cmbAzRecipient.getEditor().getItem().toString() + this.txtAzSender.getText() + this.txtSubject.getText(), null);
                 saDlg.setVisible(true);
                 this.contextArchiveFile = saDlg.getCaseSelection();
                 folder = saDlg.getFolderSelection();
+                this.setContextFolder(folder);
                 saDlg.dispose();
 
             }
