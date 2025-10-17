@@ -671,9 +671,11 @@ import com.jdimension.jlawyer.ai.Message;
 import com.jdimension.jlawyer.ai.OutputData;
 import com.jdimension.jlawyer.ai.Parameter;
 import com.jdimension.jlawyer.ai.ParameterData;
+import com.jdimension.jlawyer.persistence.AssistantPrompt;
 import com.jdimension.jlawyer.client.editors.files.ArchiveFilePanel;
 import com.jdimension.jlawyer.client.settings.ClientSettings;
 import com.jdimension.jlawyer.client.settings.UserSettings;
+import com.jdimension.jlawyer.client.utils.AudioUtils;
 import com.jdimension.jlawyer.client.utils.ComponentUtils;
 import com.jdimension.jlawyer.client.utils.FrameUtils;
 import com.jdimension.jlawyer.client.utils.TemplatesUtil;
@@ -685,6 +687,8 @@ import com.jdimension.jlawyer.persistence.AssistantConfig;
 import com.jdimension.jlawyer.persistence.PartyTypeBean;
 import com.jdimension.jlawyer.pojo.PartiesTriplet;
 import com.jdimension.jlawyer.services.JLawyerServiceLocator;
+import com.jdimension.jlawyer.client.utils.DesktopUtils;
+import java.awt.Color;
 import java.awt.Component;
 import java.awt.Dimension;
 import java.awt.Graphics2D;
@@ -692,9 +696,9 @@ import java.awt.Toolkit;
 import java.awt.datatransfer.Clipboard;
 import java.awt.datatransfer.StringSelection;
 import java.awt.event.ActionEvent;
-import java.awt.event.MouseEvent;
 import java.awt.image.BufferedImage;
 import java.io.ByteArrayOutputStream;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Base64;
@@ -711,11 +715,17 @@ import javax.swing.JComponent;
 import javax.swing.JDialog;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
+import javax.swing.JMenuItem;
 import javax.swing.JScrollBar;
 import javax.swing.JTextField;
 import javax.swing.KeyStroke;
 import javax.swing.SwingUtilities;
 import javax.swing.SwingWorker;
+import javax.sound.sampled.AudioFormat;
+import javax.sound.sampled.AudioSystem;
+import javax.sound.sampled.DataLine;
+import javax.sound.sampled.Mixer;
+import javax.sound.sampled.TargetDataLine;
 import org.apache.log4j.Logger;
 import themes.colors.DefaultColorTheme;
 
@@ -734,6 +744,14 @@ public class AssistantChatDialog extends javax.swing.JDialog {
     private AiRequestStatus result = null;
 
     private boolean interrupted = false;
+
+    // variables for transcription
+    private boolean isRecording = false;
+    private AiCapability transcribeCapability = null;
+    private AssistantConfig transcribeConfig = null;
+    private TargetDataLine targetDataLine;
+    private ByteArrayOutputStream byteArrayOutputStream;
+    private Color cmdTranscribeOriginalBackground = null;
 
     // variables used for placeholder support in prompts
     private List<PartyTypeBean> allPartyTypes = null;
@@ -907,6 +925,27 @@ public class AssistantChatDialog extends javax.swing.JDialog {
         ComponentUtils.decorateSplitPane(this.splitInputOutput);
         ComponentUtils.restoreSplitPane(this.splitInputOutput, this.getClass(), "splitInputOutput");
         ComponentUtils.persistSplitPane(this.splitInputOutput, this.getClass(), "splitInputOutput");
+
+        // Initialize transcription capabilities
+        AssistantAccess ingo = AssistantAccess.getInstance();
+        try {
+            java.util.Map<AssistantConfig, List<AiCapability>> capabilities = ingo.filterCapabilities(AiCapability.REQUESTTYPE_TRANSCRIBE, AiCapability.INPUTTYPE_FILE, AiCapability.USAGETYPE_AUTOMATED);
+
+            if (!capabilities.isEmpty()) {
+                // use first capability that can transcribe
+                this.transcribeCapability = capabilities.get(capabilities.keySet().iterator().next()).get(0);
+                this.transcribeConfig = capabilities.keySet().iterator().next();
+                this.cmdTranscribe.setEnabled(true);
+            }
+        } catch (Exception ex) {
+            log.error("Error initializing transcription capabilities", ex);
+        }
+
+        // Save original button background
+        this.cmdTranscribeOriginalBackground = this.cmdTranscribe.getBackground();
+        
+        this.cmbDevices.removeAllItems();
+        AudioUtils.populateMicrophoneDevices(this.cmbDevices);
     }
 
     @Override
@@ -933,6 +972,7 @@ public class AssistantChatDialog extends javax.swing.JDialog {
     // <editor-fold defaultstate="collapsed" desc="Generated Code">//GEN-BEGIN:initComponents
     private void initComponents() {
 
+        popAssistant = new javax.swing.JPopupMenu();
         jScrollPane1 = new javax.swing.JScrollPane();
         taPrompt = new javax.swing.JTextArea();
         cmdCopy = new javax.swing.JButton();
@@ -941,7 +981,10 @@ public class AssistantChatDialog extends javax.swing.JDialog {
         lblRequestType = new javax.swing.JLabel();
         cmdSubmit = new javax.swing.JButton();
         cmdInterrupt = new javax.swing.JButton();
+        cmdTranscribe = new javax.swing.JButton();
+        cmdPrompt = new javax.swing.JButton();
         cmdResetChat = new javax.swing.JButton();
+        cmbDevices = new javax.swing.JComboBox<>();
         progress = new javax.swing.JProgressBar();
         pnlParameters = new javax.swing.JPanel();
         splitInputOutput = new javax.swing.JSplitPane();
@@ -991,6 +1034,7 @@ public class AssistantChatDialog extends javax.swing.JDialog {
         lblRequestType.setText("Transkribieren");
 
         cmdSubmit.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons16/material/baseline_slideshow_black_48dp.png"))); // NOI18N
+        cmdSubmit.setToolTipText("Anfrage an Assistent Ingo senden");
         cmdSubmit.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 cmdSubmitActionPerformed(evt);
@@ -998,9 +1042,27 @@ public class AssistantChatDialog extends javax.swing.JDialog {
         });
 
         cmdInterrupt.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons16/material/stop_circle_24dp_0E72B5.png"))); // NOI18N
+        cmdInterrupt.setToolTipText("Laufende Anfrage unterbrechen");
         cmdInterrupt.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 cmdInterruptActionPerformed(evt);
+            }
+        });
+
+        cmdTranscribe.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons16/material/baseline_mic_black_48dp.png"))); // NOI18N
+        cmdTranscribe.setToolTipText("KI-Anfrage diktieren");
+        cmdTranscribe.setEnabled(false);
+        cmdTranscribe.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                cmdTranscribeActionPerformed(evt);
+            }
+        });
+
+        cmdPrompt.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons16/material/j-lawyer-ai.png"))); // NOI18N
+        cmdPrompt.setToolTipText("Eigene Prompts ausw\\u00e4hlen");
+        cmdPrompt.addMouseListener(new java.awt.event.MouseAdapter() {
+            public void mouseReleased(java.awt.event.MouseEvent evt) {
+                cmdPromptMouseReleased(evt);
             }
         });
 
@@ -1012,17 +1074,25 @@ public class AssistantChatDialog extends javax.swing.JDialog {
             }
         });
 
+        cmbDevices.setModel(new javax.swing.DefaultComboBoxModel<>(new String[] { "Item 1", "Item 2", "Item 3", "Item 4" }));
+
         javax.swing.GroupLayout pnlTitleLayout = new javax.swing.GroupLayout(pnlTitle);
         pnlTitle.setLayout(pnlTitleLayout);
         pnlTitleLayout.setHorizontalGroup(
             pnlTitleLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(pnlTitleLayout.createSequentialGroup()
                 .addContainerGap()
-                .addComponent(lblRequestType, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                .addComponent(lblRequestType, javax.swing.GroupLayout.PREFERRED_SIZE, 184, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                .addComponent(cmbDevices, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addComponent(cmdTranscribe)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(cmdSubmit)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(cmdInterrupt)
+                .addGap(18, 18, 18)
+                .addComponent(cmdPrompt)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(cmdResetChat)
                 .addContainerGap())
@@ -1032,13 +1102,16 @@ public class AssistantChatDialog extends javax.swing.JDialog {
             .addGroup(pnlTitleLayout.createSequentialGroup()
                 .addContainerGap()
                 .addGroup(pnlTitleLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addComponent(lblRequestType, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                    .addComponent(cmdTranscribe, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                    .addComponent(cmdInterrupt, javax.swing.GroupLayout.Alignment.TRAILING, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                    .addComponent(cmdSubmit, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                    .addGroup(pnlTitleLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                        .addComponent(lblRequestType, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                        .addComponent(cmbDevices))
                     .addGroup(pnlTitleLayout.createSequentialGroup()
-                        .addGroup(pnlTitleLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                            .addComponent(cmdResetChat)
-                            .addGroup(pnlTitleLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                                .addComponent(cmdInterrupt)
-                                .addComponent(cmdSubmit, javax.swing.GroupLayout.Alignment.TRAILING)))
+                        .addGroup(pnlTitleLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
+                            .addComponent(cmdResetChat, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                            .addComponent(cmdPrompt, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
                         .addGap(0, 0, Short.MAX_VALUE)))
                 .addContainerGap())
         );
@@ -1123,7 +1196,7 @@ public class AssistantChatDialog extends javax.swing.JDialog {
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(pnlParameters, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(splitInputOutput, javax.swing.GroupLayout.DEFAULT_SIZE, 391, Short.MAX_VALUE)
+                .addComponent(splitInputOutput, javax.swing.GroupLayout.DEFAULT_SIZE, 388, Short.MAX_VALUE)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
                     .addComponent(cmdClose)
@@ -1199,8 +1272,12 @@ public class AssistantChatDialog extends javax.swing.JDialog {
                         pnlMessages.add(incomingMsgPanel);
                         incomingMsgPanel.revalidate();
                         incomingMsgPanel.repaint();
-                        JScrollBar verticalBar = scrollMessages.getVerticalScrollBar();
-                        verticalBar.setValue(verticalBar.getMaximum());
+
+                        // Smart Auto-Scroll: scroll to bottom (initial message)
+                        SwingUtilities.invokeLater(() -> {
+                            JScrollBar bar = scrollMessages.getVerticalScrollBar();
+                            bar.setValue(bar.getMaximum());
+                        });
                     });
 
                     AiRequestStatus status = locator.lookupIntegrationServiceRemote().submitAssistantRequest(config, capability.getRequestType(), capability.getModelType(), fullPrompt, fParams, null, messages);
@@ -1222,12 +1299,25 @@ public class AssistantChatDialog extends javax.swing.JDialog {
 
                             }
                             SwingUtilities.invokeAndWait(() -> {
+                                // Check if user was at bottom BEFORE update
+                                JScrollBar verticalBar = scrollMessages.getVerticalScrollBar();
+                                int currentValue = verticalBar.getValue();
+                                int maximum = verticalBar.getMaximum();
+                                int extent = verticalBar.getVisibleAmount();
+                                boolean wasAtBottom = (currentValue + extent >= maximum - 50);
+
                                 incomingMsgPanel.getMessage().setContent(resultString.toString());
                                 incomingMsgPanel.setMessage(incomingMsgPanel.getMessage(), owner);
                                 incomingMsgPanel.repaint();
                                 incomingMsgPanel.updateUI();
-                                JScrollBar verticalBar = scrollMessages.getVerticalScrollBar();
-                                verticalBar.setValue(verticalBar.getMaximum());
+
+                                // Only scroll to bottom if user was already there
+                                if (wasAtBottom) {
+                                    SwingUtilities.invokeLater(() -> {
+                                        JScrollBar bar = scrollMessages.getVerticalScrollBar();
+                                        bar.setValue(bar.getMaximum());
+                                    });
+                                }
                             });
 
                             if (interrupted) {
@@ -1251,8 +1341,6 @@ public class AssistantChatDialog extends javax.swing.JDialog {
                     status.setStatusDetails(t.getMessage());
                     resultRef.set(status);
                     incomingMessageRef.set(incomingMsgPanel);
-                    JScrollBar verticalBar = scrollMessages.getVerticalScrollBar();
-                    verticalBar.setValue(verticalBar.getMaximum());
                 }
                 cmdSubmit.setEnabled(true);
                 cmdInterrupt.setEnabled(false);
@@ -1267,6 +1355,13 @@ public class AssistantChatDialog extends javax.swing.JDialog {
                 result = status;
                 if (status != null) {
                     if (status.getStatus().equalsIgnoreCase("failed")) {
+                        // Check if user was at bottom BEFORE update
+                        JScrollBar verticalBar = scrollMessages.getVerticalScrollBar();
+                        int currentValue = verticalBar.getValue();
+                        int maximum = verticalBar.getMaximum();
+                        int extent = verticalBar.getVisibleAmount();
+                        boolean wasAtBottom = (currentValue + extent >= maximum - 50);
+
                         Message errorMsg = new Message();
                         errorMsg.setContent(status.getStatus() + ": " + status.getStatusDetails());
                         errorMsg.setRole(Message.ROLE_ASSISTANT);
@@ -1275,9 +1370,22 @@ public class AssistantChatDialog extends javax.swing.JDialog {
                         maxSize.setSize(pnlMessages.getWidth(), maxSize.getHeight());
                         msgPanel.setPreferredSize(maxSize);
                         pnlMessages.add(msgPanel);
-                        JScrollBar verticalBar = scrollMessages.getVerticalScrollBar();
-                        verticalBar.setValue(verticalBar.getMaximum());
+
+                        // Only scroll to bottom if user was already there
+                        if (wasAtBottom) {
+                            SwingUtilities.invokeLater(() -> {
+                                JScrollBar bar = scrollMessages.getVerticalScrollBar();
+                                bar.setValue(bar.getMaximum());
+                            });
+                        }
                     } else {
+                        // Check if user was at bottom BEFORE update
+                        JScrollBar verticalBar = scrollMessages.getVerticalScrollBar();
+                        int currentValue = verticalBar.getValue();
+                        int maximum = verticalBar.getMaximum();
+                        int extent = verticalBar.getVisibleAmount();
+                        boolean wasAtBottom = (currentValue + extent >= maximum - 50);
+
                         StringBuilder resultString = new StringBuilder();
                         for (OutputData o : status.getResponse().getOutputData()) {
                             if (o.getType().equalsIgnoreCase(OutputData.TYPE_STRING)) {
@@ -1291,8 +1399,14 @@ public class AssistantChatDialog extends javax.swing.JDialog {
                         msgPanel.setMessage(msgPanel.getMessage(), owner);
                         msgPanel.repaint();
                         msgPanel.updateUI();
-                        JScrollBar verticalBar = scrollMessages.getVerticalScrollBar();
-                        verticalBar.setValue(verticalBar.getMaximum());
+
+                        // Only scroll to bottom if user was already there
+                        if (wasAtBottom) {
+                            SwingUtilities.invokeLater(() -> {
+                                JScrollBar bar = scrollMessages.getVerticalScrollBar();
+                                bar.setValue(bar.getMaximum());
+                            });
+                        }
                     }
                 }
 
@@ -1427,6 +1541,49 @@ public class AssistantChatDialog extends javax.swing.JDialog {
         }
     }//GEN-LAST:event_cmdNewDocumentActionPerformed
 
+    private void cmdTranscribeActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdTranscribeActionPerformed
+        if (!isRecording) {
+            startRecording();
+            ClientSettings.getInstance().setConfiguration(ClientSettings.CONF_SOUND_LASTRECORDINGDEVICE, (String) this.cmbDevices.getSelectedItem());
+        } else {
+            try {
+                stopRecording();
+            } catch (IOException ex) {
+                log.error("Error stopping recording", ex);
+                ThreadUtils.showErrorDialog(this, "Fehler beim Stoppen der Aufnahme: " + ex.getMessage(), DesktopUtils.POPUP_TITLE_ERROR);
+            }
+        }
+    }//GEN-LAST:event_cmdTranscribeActionPerformed
+
+    private void cmdPromptMouseReleased(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_cmdPromptMouseReleased
+        try {
+            AssistantAccess ingo = AssistantAccess.getInstance();
+            this.popAssistant.removeAll();
+            List<AssistantPrompt> customPrompts = ingo.getCustomPrompts(AiCapability.REQUESTTYPE_CHAT);
+            for (AssistantPrompt p : customPrompts) {
+                JMenuItem mi = new JMenuItem();
+                mi.setText(p.getName());
+                mi.addActionListener((ActionEvent e) -> {
+                    if (!p.getPrompt().contains("{{")) {
+                        // no placeholders in prompt
+                        this.taPrompt.setText(p.getPrompt());
+                    } else {
+                        // placeholders present in prompt
+                        HashMap<String, Object> placeHolders = TemplatesUtil.getPlaceHolderValues(p.getPrompt(), selectedCase, this.parties, null, null, this.allPartyTypes, this.formPlaceHolders, this.formPlaceHolderValues, this.caseLawyer, this.caseAssistant);
+                        String promptWithValues = TemplatesUtil.replacePlaceHolders(p.getPrompt(), placeHolders);
+                        this.taPrompt.setText(promptWithValues);
+                    }
+                });
+                popAssistant.add(mi);
+            }
+
+            this.popAssistant.show(this.cmdPrompt, evt.getX(), evt.getY());
+        } catch (Exception ex) {
+            log.error("Error loading custom prompts", ex);
+            ThreadUtils.showErrorDialog(this, "Fehler beim Laden der eigenen Prompts: " + ex.getMessage(), DesktopUtils.POPUP_TITLE_ERROR);
+        }
+    }//GEN-LAST:event_cmdPromptMouseReleased
+
     /**
      * @param args the command line arguments
      */
@@ -1471,19 +1628,23 @@ public class AssistantChatDialog extends javax.swing.JDialog {
     }
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
+    private javax.swing.JComboBox<String> cmbDevices;
     private javax.swing.JButton cmdClose;
     private javax.swing.JButton cmdCopy;
     private javax.swing.JButton cmdInterrupt;
     private javax.swing.JButton cmdNewDocument;
     private javax.swing.JButton cmdProcessOutput;
+    private javax.swing.JButton cmdPrompt;
     private javax.swing.JButton cmdResetChat;
     private javax.swing.JButton cmdSubmit;
+    private javax.swing.JButton cmdTranscribe;
     private javax.swing.JScrollPane jScrollPane1;
     private javax.swing.JScrollPane jScrollPane5;
     private javax.swing.JLabel lblRequestType;
     private javax.swing.JPanel pnlMessages;
     private javax.swing.JPanel pnlParameters;
     private javax.swing.JPanel pnlTitle;
+    private javax.swing.JPopupMenu popAssistant;
     private javax.swing.JProgressBar progress;
     private javax.swing.JScrollPane scrollMessages;
     private javax.swing.JSplitPane splitInputOutput;
@@ -1508,6 +1669,173 @@ public class AssistantChatDialog extends javax.swing.JDialog {
             parameters.add(d);
         }
         return parameters;
+
+    }
+
+    private List<InputData> getTranscribeInputs(byte[] wavContent) {
+        ArrayList<InputData> inputs = new ArrayList<>();
+        InputData i = new InputData();
+        i.setFileName("Sounddatei.wav");
+        i.setType("file");
+        i.setBase64(true);
+        i.setData(wavContent);
+        inputs.add(i);
+        return inputs;
+    }
+
+    private void startRecording() {
+        try {
+            AudioFormat audioFormat = AudioUtils.getAudioFormat();
+
+            // Get selected mixer device name from dropdown
+            String selectedDeviceName = (String) this.cmbDevices.getSelectedItem();
+
+            Mixer.Info[] mixerInfos = AudioSystem.getMixerInfo();
+            Mixer.Info selectedMixerInfo = null;
+            for (Mixer.Info mixerInfo : mixerInfos) {
+                if (mixerInfo.getName().equals(selectedDeviceName)) {
+                    selectedMixerInfo = mixerInfo;
+                    break;
+                }
+            }
+
+            if (selectedMixerInfo == null) {
+                log.error("Selected mixer device not found.");
+                return;
+            }
+
+            Mixer mixer = AudioSystem.getMixer(selectedMixerInfo);
+
+            DataLine.Info dataLineInfo = new DataLine.Info(TargetDataLine.class, audioFormat);
+            targetDataLine = (TargetDataLine) mixer.getLine(dataLineInfo);
+            targetDataLine.open(audioFormat);
+            targetDataLine.start();
+
+            byteArrayOutputStream = new ByteArrayOutputStream();
+
+            isRecording = true;
+            cmdTranscribe.setOpaque(true);
+            cmdTranscribe.setBackground(DefaultColorTheme.COLOR_LOGO_GREEN);
+
+            new Thread(() -> {
+                try {
+                    byte[] buffer = new byte[4096];
+                    while (isRecording) {
+                        int bytesRead = targetDataLine.read(buffer, 0, buffer.length);
+                        byteArrayOutputStream.write(buffer, 0, bytesRead);
+                    }
+                } catch (Exception e) {
+                    log.error("Unable to read microphone audio stream", e);
+                    ThreadUtils.showErrorDialog(this, "Aufnahmefehler: " + e.getMessage(), DesktopUtils.POPUP_TITLE_ERROR);
+                }
+            }).start();
+        } catch (Exception ex) {
+            log.error("Unable to start recording microphone audio stream", ex);
+            ThreadUtils.showErrorDialog(this, "Aufnahme konnte nicht gestartet werden: " + ex.getMessage(), DesktopUtils.POPUP_TITLE_ERROR);
+        }
+    }
+
+    private void stopRecording() throws IOException {
+        isRecording = false;
+
+        if (targetDataLine != null) {
+            targetDataLine.stop();
+            targetDataLine.close();
+        }
+        byteArrayOutputStream.flush();
+        byte[] dictatePart = byteArrayOutputStream.toByteArray();
+
+        this.cmdTranscribe.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons16/material/baseline_hourglass_top_black_48dp.png")));
+        this.cmdTranscribe.setOpaque(true);
+        this.cmdTranscribe.setBackground(Color.ORANGE);
+        try {
+
+            List<ParameterData> params = new ArrayList<>();
+            if (transcribeCapability.getParameters() != null && !transcribeCapability.getParameters().isEmpty()) {
+                params = getParameters();
+            }
+
+            final List<ParameterData> fParams = params;
+
+            AtomicReference<AiRequestStatus> resultRef = new AtomicReference<>();
+
+            SwingWorker<Void, Void> worker = new SwingWorker<>() {
+
+                @Override
+                protected Void doInBackground() throws Exception {
+                    cmdTranscribe.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons16/material/baseline_hourglass_top_black_48dp.png")));
+                    cmdTranscribe.setOpaque(true);
+                    cmdTranscribe.setBackground(Color.ORANGE);
+
+                    List<InputData> inputs = getTranscribeInputs(AudioUtils.generateWAV(dictatePart));
+
+                    ClientSettings settings = ClientSettings.getInstance();
+                    try {
+                        JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
+
+                        AiRequestStatus status = locator.lookupIntegrationServiceRemote().submitAssistantRequest(
+                            transcribeConfig,
+                            transcribeCapability.getRequestType(),
+                            transcribeCapability.getModelType(),
+                            null,
+                            fParams,
+                            inputs,
+                            null
+                        );
+
+                        resultRef.set(status);
+
+                    } catch (Throwable t) {
+                        log.error("Error processing AI transcription request", t);
+                        AiRequestStatus status = new AiRequestStatus();
+                        status.setStatus("failed");
+                        status.setStatusDetails(t.getMessage());
+                        resultRef.set(status);
+                    }
+                    return null;
+                }
+
+                @Override
+                protected void done() {
+                    cmdTranscribe.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons16/material/baseline_mic_black_48dp.png")));
+                    cmdTranscribe.setOpaque(true);
+                    cmdTranscribe.setBackground(cmdTranscribeOriginalBackground);
+
+                    AiRequestStatus status = resultRef.get();
+                    if (status != null) {
+                        String resultText = "";
+                        if (status.getStatus().equalsIgnoreCase("failed")) {
+                            resultText = status.getStatus() + ": " + status.getStatusDetails();
+                            log.error("Transcription failed: " + status.getStatusDetails());
+                            ThreadUtils.showErrorDialog(AssistantChatDialog.this, "Transkription fehlgeschlagen: " + status.getStatusDetails(), DesktopUtils.POPUP_TITLE_ERROR);
+                        } else {
+                            StringBuilder resultString = new StringBuilder();
+                            for (OutputData o : status.getResponse().getOutputData()) {
+                                if (o.getType().equalsIgnoreCase(OutputData.TYPE_STRING)) {
+                                    resultString.append(o.getStringData());
+                                }
+                            }
+                            resultText = resultString.toString();
+                        }
+
+                        // Append transcribed text at the end of taPrompt
+                        if (!resultText.isEmpty() && !status.getStatus().equalsIgnoreCase("failed")) {
+                            String currentText = taPrompt.getText();
+                            if (!currentText.isEmpty() && !currentText.endsWith(" ") && !currentText.endsWith("\n")) {
+                                currentText += " ";
+                            }
+                            taPrompt.setText(currentText + resultText);
+                        }
+                    }
+                }
+            };
+
+            worker.execute();
+
+        } catch (Exception ex) {
+            log.error("Error during transcription", ex);
+            ThreadUtils.showErrorDialog(this, "Transkriptionsfehler: " + ex.getMessage(), DesktopUtils.POPUP_TITLE_ERROR);
+        }
 
     }
 
