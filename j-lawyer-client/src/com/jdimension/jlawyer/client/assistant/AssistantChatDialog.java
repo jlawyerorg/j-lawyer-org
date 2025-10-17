@@ -672,7 +672,6 @@ import com.jdimension.jlawyer.ai.OutputData;
 import com.jdimension.jlawyer.ai.Parameter;
 import com.jdimension.jlawyer.ai.ParameterData;
 import com.jdimension.jlawyer.persistence.AssistantPrompt;
-import com.jdimension.jlawyer.client.assistant.AssistantAccess;
 import com.jdimension.jlawyer.client.editors.files.ArchiveFilePanel;
 import com.jdimension.jlawyer.client.settings.ClientSettings;
 import com.jdimension.jlawyer.client.settings.UserSettings;
@@ -697,7 +696,6 @@ import java.awt.Toolkit;
 import java.awt.datatransfer.Clipboard;
 import java.awt.datatransfer.StringSelection;
 import java.awt.event.ActionEvent;
-import java.awt.event.MouseEvent;
 import java.awt.image.BufferedImage;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
@@ -726,6 +724,7 @@ import javax.swing.SwingWorker;
 import javax.sound.sampled.AudioFormat;
 import javax.sound.sampled.AudioSystem;
 import javax.sound.sampled.DataLine;
+import javax.sound.sampled.Mixer;
 import javax.sound.sampled.TargetDataLine;
 import org.apache.log4j.Logger;
 import themes.colors.DefaultColorTheme;
@@ -944,6 +943,9 @@ public class AssistantChatDialog extends javax.swing.JDialog {
 
         // Save original button background
         this.cmdTranscribeOriginalBackground = this.cmdTranscribe.getBackground();
+        
+        this.cmbDevices.removeAllItems();
+        AudioUtils.populateMicrophoneDevices(this.cmbDevices);
     }
 
     @Override
@@ -982,6 +984,7 @@ public class AssistantChatDialog extends javax.swing.JDialog {
         cmdTranscribe = new javax.swing.JButton();
         cmdPrompt = new javax.swing.JButton();
         cmdResetChat = new javax.swing.JButton();
+        cmbDevices = new javax.swing.JComboBox<>();
         progress = new javax.swing.JProgressBar();
         pnlParameters = new javax.swing.JPanel();
         splitInputOutput = new javax.swing.JSplitPane();
@@ -1047,7 +1050,7 @@ public class AssistantChatDialog extends javax.swing.JDialog {
         });
 
         cmdTranscribe.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons16/material/baseline_mic_black_48dp.png"))); // NOI18N
-        cmdTranscribe.setToolTipText("Sprachaufnahme starten und transkribieren");
+        cmdTranscribe.setToolTipText("KI-Anfrage diktieren");
         cmdTranscribe.setEnabled(false);
         cmdTranscribe.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
@@ -1056,7 +1059,7 @@ public class AssistantChatDialog extends javax.swing.JDialog {
         });
 
         cmdPrompt.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons16/material/j-lawyer-ai.png"))); // NOI18N
-        cmdPrompt.setToolTipText("Eigene Prompts auswählen");
+        cmdPrompt.setToolTipText("Eigene Prompts ausw\\u00e4hlen");
         cmdPrompt.addMouseListener(new java.awt.event.MouseAdapter() {
             public void mouseReleased(java.awt.event.MouseEvent evt) {
                 cmdPromptMouseReleased(evt);
@@ -1071,20 +1074,24 @@ public class AssistantChatDialog extends javax.swing.JDialog {
             }
         });
 
+        cmbDevices.setModel(new javax.swing.DefaultComboBoxModel<>(new String[] { "Item 1", "Item 2", "Item 3", "Item 4" }));
+
         javax.swing.GroupLayout pnlTitleLayout = new javax.swing.GroupLayout(pnlTitle);
         pnlTitle.setLayout(pnlTitleLayout);
         pnlTitleLayout.setHorizontalGroup(
             pnlTitleLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(pnlTitleLayout.createSequentialGroup()
                 .addContainerGap()
-                .addComponent(lblRequestType, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                .addComponent(lblRequestType, javax.swing.GroupLayout.PREFERRED_SIZE, 184, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                .addComponent(cmbDevices, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addComponent(cmdTranscribe)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(cmdSubmit)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(cmdInterrupt)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(cmdTranscribe)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addGap(18, 18, 18)
                 .addComponent(cmdPrompt)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(cmdResetChat)
@@ -1095,15 +1102,16 @@ public class AssistantChatDialog extends javax.swing.JDialog {
             .addGroup(pnlTitleLayout.createSequentialGroup()
                 .addContainerGap()
                 .addGroup(pnlTitleLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addComponent(lblRequestType, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                    .addComponent(cmdTranscribe, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                    .addComponent(cmdInterrupt, javax.swing.GroupLayout.Alignment.TRAILING, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                    .addComponent(cmdSubmit, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                    .addGroup(pnlTitleLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                        .addComponent(lblRequestType, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                        .addComponent(cmbDevices))
                     .addGroup(pnlTitleLayout.createSequentialGroup()
-                        .addGroup(pnlTitleLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                            .addComponent(cmdResetChat)
-                            .addGroup(pnlTitleLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                                .addComponent(cmdPrompt)
-                                .addComponent(cmdTranscribe)
-                                .addComponent(cmdInterrupt)
-                                .addComponent(cmdSubmit, javax.swing.GroupLayout.Alignment.TRAILING)))
+                        .addGroup(pnlTitleLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
+                            .addComponent(cmdResetChat, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                            .addComponent(cmdPrompt, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
                         .addGap(0, 0, Short.MAX_VALUE)))
                 .addContainerGap())
         );
@@ -1188,7 +1196,7 @@ public class AssistantChatDialog extends javax.swing.JDialog {
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(pnlParameters, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(splitInputOutput, javax.swing.GroupLayout.DEFAULT_SIZE, 391, Short.MAX_VALUE)
+                .addComponent(splitInputOutput, javax.swing.GroupLayout.DEFAULT_SIZE, 388, Short.MAX_VALUE)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
                     .addComponent(cmdClose)
@@ -1536,6 +1544,7 @@ public class AssistantChatDialog extends javax.swing.JDialog {
     private void cmdTranscribeActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdTranscribeActionPerformed
         if (!isRecording) {
             startRecording();
+            ClientSettings.getInstance().setConfiguration(ClientSettings.CONF_SOUND_LASTRECORDINGDEVICE, (String) this.cmbDevices.getSelectedItem());
         } else {
             try {
                 stopRecording();
@@ -1619,6 +1628,7 @@ public class AssistantChatDialog extends javax.swing.JDialog {
     }
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
+    private javax.swing.JComboBox<String> cmbDevices;
     private javax.swing.JButton cmdClose;
     private javax.swing.JButton cmdCopy;
     private javax.swing.JButton cmdInterrupt;
@@ -1665,7 +1675,7 @@ public class AssistantChatDialog extends javax.swing.JDialog {
     private List<InputData> getTranscribeInputs(byte[] wavContent) {
         ArrayList<InputData> inputs = new ArrayList<>();
         InputData i = new InputData();
-        i.setFileName("recording.wav");
+        i.setFileName("Sounddatei.wav");
         i.setType("file");
         i.setBase64(true);
         i.setData(wavContent);
@@ -1677,9 +1687,27 @@ public class AssistantChatDialog extends javax.swing.JDialog {
         try {
             AudioFormat audioFormat = AudioUtils.getAudioFormat();
 
-            // Use default microphone (no device selection)
+            // Get selected mixer device name from dropdown
+            String selectedDeviceName = (String) this.cmbDevices.getSelectedItem();
+
+            Mixer.Info[] mixerInfos = AudioSystem.getMixerInfo();
+            Mixer.Info selectedMixerInfo = null;
+            for (Mixer.Info mixerInfo : mixerInfos) {
+                if (mixerInfo.getName().equals(selectedDeviceName)) {
+                    selectedMixerInfo = mixerInfo;
+                    break;
+                }
+            }
+
+            if (selectedMixerInfo == null) {
+                log.error("Selected mixer device not found.");
+                return;
+            }
+
+            Mixer mixer = AudioSystem.getMixer(selectedMixerInfo);
+
             DataLine.Info dataLineInfo = new DataLine.Info(TargetDataLine.class, audioFormat);
-            targetDataLine = (TargetDataLine) AudioSystem.getLine(dataLineInfo);
+            targetDataLine = (TargetDataLine) mixer.getLine(dataLineInfo);
             targetDataLine.open(audioFormat);
             targetDataLine.start();
 
