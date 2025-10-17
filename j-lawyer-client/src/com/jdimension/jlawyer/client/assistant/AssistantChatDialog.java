@@ -1688,7 +1688,6 @@ public class AssistantChatDialog extends javax.swing.JDialog {
             isRecording = true;
             cmdTranscribe.setOpaque(true);
             cmdTranscribe.setBackground(DefaultColorTheme.COLOR_LOGO_GREEN);
-            cmdTranscribe.setForeground(Color.WHITE);
 
             new Thread(() -> {
                 try {
@@ -1721,7 +1720,6 @@ public class AssistantChatDialog extends javax.swing.JDialog {
         this.cmdTranscribe.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons16/material/baseline_hourglass_top_black_48dp.png")));
         this.cmdTranscribe.setOpaque(true);
         this.cmdTranscribe.setBackground(Color.ORANGE);
-        this.cmdTranscribe.setForeground(Color.WHITE);
         try {
 
             List<ParameterData> params = new ArrayList<>();
@@ -1740,7 +1738,6 @@ public class AssistantChatDialog extends javax.swing.JDialog {
                     cmdTranscribe.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons16/material/baseline_hourglass_top_black_48dp.png")));
                     cmdTranscribe.setOpaque(true);
                     cmdTranscribe.setBackground(Color.ORANGE);
-                    cmdTranscribe.setForeground(Color.WHITE);
 
                     List<InputData> inputs = getTranscribeInputs(AudioUtils.generateWAV(dictatePart));
 
@@ -1775,7 +1772,6 @@ public class AssistantChatDialog extends javax.swing.JDialog {
                     cmdTranscribe.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons16/material/baseline_mic_black_48dp.png")));
                     cmdTranscribe.setOpaque(true);
                     cmdTranscribe.setBackground(cmdTranscribeOriginalBackground);
-                    cmdTranscribe.setForeground(Color.BLACK);
 
                     AiRequestStatus status = resultRef.get();
                     if (status != null) {

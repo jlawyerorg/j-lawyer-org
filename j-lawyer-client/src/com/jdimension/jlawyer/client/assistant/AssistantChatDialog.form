@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8" ?>
 
-<Form version="1.5" maxVersion="1.9" type="org.netbeans.modules.form.forminfo.JDialogFormInfo">
+<Form version="1.8" maxVersion="1.9" type="org.netbeans.modules.form.forminfo.JDialogFormInfo">
   <Properties>
     <Property name="defaultCloseOperation" type="int" value="2"/>
     <Property name="title" type="java.lang.String" value="Assistent Ingo"/>
@@ -216,7 +216,7 @@
             <Property name="icon" type="javax.swing.Icon" editor="org.netbeans.modules.form.editors2.IconEditor">
               <Image iconType="3" name="/icons16/material/j-lawyer-ai.png"/>
             </Property>
-            <Property name="toolTipText" type="java.lang.String" value="Eigene Prompts ausw\u00e4hlen"/>
+            <Property name="toolTipText" type="java.lang.String" value="Eigene Prompts ausw\u005cu00e4hlen" containsInvalidXMLChars="true"/>
           </Properties>
           <Events>
             <EventHandler event="mouseReleased" listener="java.awt.event.MouseListener" parameters="java.awt.event.MouseEvent" handler="cmdPromptMouseReleased"/>
