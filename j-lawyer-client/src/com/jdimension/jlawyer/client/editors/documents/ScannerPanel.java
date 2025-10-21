@@ -686,6 +686,7 @@ import com.jdimension.jlawyer.client.processing.ProgressIndicator;
 import com.jdimension.jlawyer.client.settings.ClientSettings;
 import com.jdimension.jlawyer.client.settings.UserSettings;
 import com.jdimension.jlawyer.client.utils.ComponentUtils;
+import com.jdimension.jlawyer.client.utils.DesktopUtils;
 import com.jdimension.jlawyer.client.utils.FileUtils;
 import com.jdimension.jlawyer.client.utils.FrameUtils;
 import com.jdimension.jlawyer.client.utils.StringUtils;
@@ -924,7 +925,7 @@ public class ScannerPanel extends javax.swing.JPanel implements ThemeableEditor,
 
         } catch (Exception ex) {
             log.error(ex);
-            ThreadUtils.showErrorDialog(this, "Fehler bei der Ermittlung neuer Scans: " + ex.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR);
+            ThreadUtils.showErrorDialog(this, "Fehler bei der Ermittlung neuer Scans: " + ex.getMessage(), DesktopUtils.POPUP_TITLE_ERROR);
         }
 
     }
@@ -1299,7 +1300,7 @@ public class ScannerPanel extends javax.swing.JPanel implements ThemeableEditor,
                     launcher.launch(false);
                 } catch (Exception ex) {
                     log.error(ex);
-                    ThreadUtils.showErrorDialog(this, "Fehler beim Öffnen der Datei: " + ex.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR);
+                    ThreadUtils.showErrorDialog(this, "Fehler beim Öffnen der Datei: " + ex.getMessage(), DesktopUtils.POPUP_TITLE_ERROR);
 
                 }
             }
@@ -1470,7 +1471,7 @@ public class ScannerPanel extends javax.swing.JPanel implements ThemeableEditor,
             } catch (Exception ex) {
                 log.error("Error loading case suggestions", ex);
                 javax.swing.SwingUtilities.invokeLater(() -> {
-                    ThreadUtils.showErrorDialog(this, "Fehler beim Ermitteln der Aktionsvorschläge: " + ex.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR);
+                    ThreadUtils.showErrorDialog(this, "Fehler beim Ermitteln der Aktionsvorschläge: " + ex.getMessage(), DesktopUtils.POPUP_TITLE_ERROR);
                 });
             }
         }, "CaseSuggestionsLoader").start();
@@ -1616,7 +1617,7 @@ public class ScannerPanel extends javax.swing.JPanel implements ThemeableEditor,
 
                 } catch (Exception ex) {
                     log.error(ex);
-                    ThreadUtils.showErrorDialog(EditorsRegistry.getInstance().getMainWindow(), "Fehler beim Speichern des Scans: " + ex.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR);
+                    ThreadUtils.showErrorDialog(EditorsRegistry.getInstance().getMainWindow(), "Fehler beim Speichern des Scans: " + ex.getMessage(), DesktopUtils.POPUP_TITLE_ERROR);
                 }
             }
 
@@ -1646,7 +1647,7 @@ public class ScannerPanel extends javax.swing.JPanel implements ThemeableEditor,
                 is = locator.lookupIntegrationServiceRemote();
             } catch (Exception ex) {
                 log.error(ex);
-                ThreadUtils.showErrorDialog(EditorsRegistry.getInstance().getMainWindow(), "Fehler beim Umbenennen des Scans: " + ex.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR);
+                ThreadUtils.showErrorDialog(EditorsRegistry.getInstance().getMainWindow(), "Fehler beim Umbenennen des Scans: " + ex.getMessage(), DesktopUtils.POPUP_TITLE_ERROR);
                 return false;
             }
 
@@ -1667,7 +1668,7 @@ public class ScannerPanel extends javax.swing.JPanel implements ThemeableEditor,
 
                 } catch (Exception ex) {
                     log.error(ex);
-                    ThreadUtils.showErrorDialog(EditorsRegistry.getInstance().getMainWindow(), "Fehler beim Umbenennen des Scans: " + ex.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR);
+                    ThreadUtils.showErrorDialog(EditorsRegistry.getInstance().getMainWindow(), "Fehler beim Umbenennen des Scans: " + ex.getMessage(), DesktopUtils.POPUP_TITLE_ERROR);
                 }
             }
             if (renamedCount > 0) {
@@ -1696,7 +1697,7 @@ public class ScannerPanel extends javax.swing.JPanel implements ThemeableEditor,
                     is = locator.lookupIntegrationServiceRemote();
                 } catch (Exception ex) {
                     log.error(ex);
-                    ThreadUtils.showErrorDialog(EditorsRegistry.getInstance().getMainWindow(), "Fehler beim Löschen des Scans: " + ex.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR);
+                    ThreadUtils.showErrorDialog(EditorsRegistry.getInstance().getMainWindow(), "Fehler beim Löschen des Scans: " + ex.getMessage(), DesktopUtils.POPUP_TITLE_ERROR);
                     return false;
                 }
 
@@ -1713,7 +1714,7 @@ public class ScannerPanel extends javax.swing.JPanel implements ThemeableEditor,
 
                     } catch (Exception ex) {
                         log.error(ex);
-                        ThreadUtils.showErrorDialog(EditorsRegistry.getInstance().getMainWindow(), "Fehler beim Löschen des Scans: " + ex.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR);
+                        ThreadUtils.showErrorDialog(EditorsRegistry.getInstance().getMainWindow(), "Fehler beim Löschen des Scans: " + ex.getMessage(), DesktopUtils.POPUP_TITLE_ERROR);
                     }
                 }
                 if (removedCount > 0) {
@@ -1756,7 +1757,7 @@ public class ScannerPanel extends javax.swing.JPanel implements ThemeableEditor,
 
             } catch (Exception ex) {
                 log.error(ex);
-                ThreadUtils.showErrorDialog(EditorsRegistry.getInstance().getMainWindow(), "Fehler beim PDF-Split: " + ex.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR);
+                ThreadUtils.showErrorDialog(EditorsRegistry.getInstance().getMainWindow(), "Fehler beim PDF-Split: " + ex.getMessage(), DesktopUtils.POPUP_TITLE_ERROR);
             }
 
         }
@@ -1771,7 +1772,7 @@ public class ScannerPanel extends javax.swing.JPanel implements ThemeableEditor,
             locator.lookupIntegrationServiceRemote().updateObservedFile(fileName, data);
         } catch (Exception ex) {
             log.error(ex);
-            ThreadUtils.showErrorDialog(EditorsRegistry.getInstance().getMainWindow(), "Fehler beim Bearbeiten des Scans: " + ex.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR);
+            ThreadUtils.showErrorDialog(EditorsRegistry.getInstance().getMainWindow(), "Fehler beim Bearbeiten des Scans: " + ex.getMessage(), DesktopUtils.POPUP_TITLE_ERROR);
         }
     }
 }
