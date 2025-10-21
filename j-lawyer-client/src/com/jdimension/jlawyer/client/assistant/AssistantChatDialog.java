@@ -1305,19 +1305,22 @@ public class AssistantChatDialog extends javax.swing.JDialog {
                                 int maximum = verticalBar.getMaximum();
                                 int extent = verticalBar.getVisibleAmount();
                                 boolean wasAtBottom = (currentValue + extent >= maximum - 50);
+                                int savedScrollPosition = currentValue;
 
                                 incomingMsgPanel.getMessage().setContent(resultString.toString());
                                 incomingMsgPanel.setMessage(incomingMsgPanel.getMessage(), owner);
                                 incomingMsgPanel.repaint();
                                 incomingMsgPanel.updateUI();
 
-                                // Only scroll to bottom if user was already there
-                                if (wasAtBottom) {
-                                    SwingUtilities.invokeLater(() -> {
-                                        JScrollBar bar = scrollMessages.getVerticalScrollBar();
+                                // Restore scroll position: scroll to bottom if at bottom, otherwise restore saved position
+                                SwingUtilities.invokeLater(() -> {
+                                    JScrollBar bar = scrollMessages.getVerticalScrollBar();
+                                    if (wasAtBottom) {
                                         bar.setValue(bar.getMaximum());
-                                    });
-                                }
+                                    } else {
+                                        bar.setValue(savedScrollPosition);
+                                    }
+                                });
                             });
 
                             if (interrupted) {
@@ -1361,6 +1364,7 @@ public class AssistantChatDialog extends javax.swing.JDialog {
                         int maximum = verticalBar.getMaximum();
                         int extent = verticalBar.getVisibleAmount();
                         boolean wasAtBottom = (currentValue + extent >= maximum - 50);
+                        int savedScrollPosition = currentValue;
 
                         Message errorMsg = new Message();
                         errorMsg.setContent(status.getStatus() + ": " + status.getStatusDetails());
@@ -1371,13 +1375,15 @@ public class AssistantChatDialog extends javax.swing.JDialog {
                         msgPanel.setPreferredSize(maxSize);
                         pnlMessages.add(msgPanel);
 
-                        // Only scroll to bottom if user was already there
-                        if (wasAtBottom) {
-                            SwingUtilities.invokeLater(() -> {
-                                JScrollBar bar = scrollMessages.getVerticalScrollBar();
+                        // Restore scroll position: scroll to bottom if at bottom, otherwise restore saved position
+                        SwingUtilities.invokeLater(() -> {
+                            JScrollBar bar = scrollMessages.getVerticalScrollBar();
+                            if (wasAtBottom) {
                                 bar.setValue(bar.getMaximum());
-                            });
-                        }
+                            } else {
+                                bar.setValue(savedScrollPosition);
+                            }
+                        });
                     } else {
                         // Check if user was at bottom BEFORE update
                         JScrollBar verticalBar = scrollMessages.getVerticalScrollBar();
@@ -1385,6 +1391,7 @@ public class AssistantChatDialog extends javax.swing.JDialog {
                         int maximum = verticalBar.getMaximum();
                         int extent = verticalBar.getVisibleAmount();
                         boolean wasAtBottom = (currentValue + extent >= maximum - 50);
+                        int savedScrollPosition = currentValue;
 
                         StringBuilder resultString = new StringBuilder();
                         for (OutputData o : status.getResponse().getOutputData()) {
@@ -1400,13 +1407,15 @@ public class AssistantChatDialog extends javax.swing.JDialog {
                         msgPanel.repaint();
                         msgPanel.updateUI();
 
-                        // Only scroll to bottom if user was already there
-                        if (wasAtBottom) {
-                            SwingUtilities.invokeLater(() -> {
-                                JScrollBar bar = scrollMessages.getVerticalScrollBar();
+                        // Restore scroll position: scroll to bottom if at bottom, otherwise restore saved position
+                        SwingUtilities.invokeLater(() -> {
+                            JScrollBar bar = scrollMessages.getVerticalScrollBar();
+                            if (wasAtBottom) {
                                 bar.setValue(bar.getMaximum());
-                            });
-                        }
+                            } else {
+                                bar.setValue(savedScrollPosition);
+                            }
+                        });
                     }
                 }
 

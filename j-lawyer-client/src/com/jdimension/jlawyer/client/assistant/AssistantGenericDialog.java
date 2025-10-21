@@ -1190,8 +1190,12 @@ public class AssistantGenericDialog extends javax.swing.JDialog {
                         pnlMessages.add(incomingMsgPanel);
                         incomingMsgPanel.revalidate();
                         incomingMsgPanel.repaint();
-                        JScrollBar verticalBar = scrollMessages.getVerticalScrollBar();
-                        verticalBar.setValue(verticalBar.getMaximum());
+
+                        // Smart Auto-Scroll: scroll to bottom (initial message)
+                        SwingUtilities.invokeLater(() -> {
+                            JScrollBar bar = scrollMessages.getVerticalScrollBar();
+                            bar.setValue(bar.getMaximum());
+                        });
                     });
 
                     AiRequestStatus status = locator.lookupIntegrationServiceRemote().submitAssistantRequest(config, capability.getRequestType(), capability.getModelType(), taPrompt.getText(), fParams, inputs, null);
@@ -1211,12 +1215,28 @@ public class AssistantGenericDialog extends javax.swing.JDialog {
                             }
 
                             SwingUtilities.invokeAndWait(() -> {
+                                // Check if user was at bottom BEFORE update
+                                JScrollBar verticalBar = scrollMessages.getVerticalScrollBar();
+                                int currentValue = verticalBar.getValue();
+                                int maximum = verticalBar.getMaximum();
+                                int extent = verticalBar.getVisibleAmount();
+                                boolean wasAtBottom = (currentValue + extent >= maximum - 50);
+                                int savedScrollPosition = currentValue;
+
                                 incomingMsgPanel.getMessage().setContent(resultString.toString());
                                 incomingMsgPanel.setMessage(incomingMsgPanel.getMessage(), owner);
                                 incomingMsgPanel.repaint();
                                 incomingMsgPanel.updateUI();
-                                JScrollBar verticalBar = scrollMessages.getVerticalScrollBar();
-                                verticalBar.setValue(verticalBar.getMaximum());
+
+                                // Restore scroll position: scroll to bottom if at bottom, otherwise restore saved position
+                                SwingUtilities.invokeLater(() -> {
+                                    JScrollBar bar = scrollMessages.getVerticalScrollBar();
+                                    if (wasAtBottom) {
+                                        bar.setValue(bar.getMaximum());
+                                    } else {
+                                        bar.setValue(savedScrollPosition);
+                                    }
+                                });
                             });
 
                             if (interrupted) {
@@ -1240,8 +1260,6 @@ public class AssistantGenericDialog extends javax.swing.JDialog {
                     status.setStatusDetails(t.getMessage());
                     resultRef.set(status);
                     incomingMessageRef.set(incomingMsgPanel);
-                    JScrollBar verticalBar = scrollMessages.getVerticalScrollBar();
-                    verticalBar.setValue(verticalBar.getMaximum());
                 }
                 cmdSubmit.setEnabled(true);
                 cmdInterrupt.setEnabled(false);
@@ -1255,14 +1273,38 @@ public class AssistantGenericDialog extends javax.swing.JDialog {
                 result = status;
                 if (status != null) {
                     if (status.getStatus().equalsIgnoreCase("failed")) {
+                        // Check if user was at bottom BEFORE update
+                        JScrollBar verticalBar = scrollMessages.getVerticalScrollBar();
+                        int currentValue = verticalBar.getValue();
+                        int maximum = verticalBar.getMaximum();
+                        int extent = verticalBar.getVisibleAmount();
+                        boolean wasAtBottom = (currentValue + extent >= maximum - 50);
+                        int savedScrollPosition = currentValue;
+
                         AiChatMessageMarkdownPanel incomingMsgPanel = incomingMessageRef.get();
                         incomingMsgPanel.getMessage().setContent(status.getStatus() + ": " + status.getStatusDetails());
                         incomingMsgPanel.setMessage(incomingMsgPanel.getMessage(), owner);
                         incomingMsgPanel.repaint();
                         incomingMsgPanel.updateUI();
-                        JScrollBar verticalBar = scrollMessages.getVerticalScrollBar();
-                        verticalBar.setValue(verticalBar.getMaximum());
+
+                        // Restore scroll position: scroll to bottom if at bottom, otherwise restore saved position
+                        SwingUtilities.invokeLater(() -> {
+                            JScrollBar bar = scrollMessages.getVerticalScrollBar();
+                            if (wasAtBottom) {
+                                bar.setValue(bar.getMaximum());
+                            } else {
+                                bar.setValue(savedScrollPosition);
+                            }
+                        });
                     } else {
+                        // Check if user was at bottom BEFORE update
+                        JScrollBar verticalBar = scrollMessages.getVerticalScrollBar();
+                        int currentValue = verticalBar.getValue();
+                        int maximum = verticalBar.getMaximum();
+                        int extent = verticalBar.getVisibleAmount();
+                        boolean wasAtBottom = (currentValue + extent >= maximum - 50);
+                        int savedScrollPosition = currentValue;
+
                         StringBuilder resultString = new StringBuilder();
                         for (OutputData o : status.getResponse().getOutputData()) {
                             if (o.getType().equalsIgnoreCase(OutputData.TYPE_STRING)) {
@@ -1275,8 +1317,16 @@ public class AssistantGenericDialog extends javax.swing.JDialog {
                         msgPanel.setMessage(msgPanel.getMessage(), owner);
                         msgPanel.repaint();
                         msgPanel.updateUI();
-                        JScrollBar verticalBar = scrollMessages.getVerticalScrollBar();
-                        verticalBar.setValue(verticalBar.getMaximum());
+
+                        // Restore scroll position: scroll to bottom if at bottom, otherwise restore saved position
+                        SwingUtilities.invokeLater(() -> {
+                            JScrollBar bar = scrollMessages.getVerticalScrollBar();
+                            if (wasAtBottom) {
+                                bar.setValue(bar.getMaximum());
+                            } else {
+                                bar.setValue(savedScrollPosition);
+                            }
+                        });
                     }
                 }
 
