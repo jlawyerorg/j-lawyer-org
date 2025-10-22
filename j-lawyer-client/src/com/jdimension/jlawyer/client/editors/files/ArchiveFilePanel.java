@@ -7629,7 +7629,7 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
             html.append("<li><span class=\\\"chip cat-note\\\">Notiz</span> <span class=\\\"kw\\\">(notiz, hinweis, memo)</span></li>");
             html.append("<li><span class=\\\"chip cat-fin\\\">Rechnung</span> <span class=\\\"kw\\\">(rechnung, gebühr, kosten, honorar, rvg, beleg erstellt)</span></li>");
             html.append("<li><span class=\\\"chip cat-pay\\\">Zahlung</span> <span class=\\\"kw\\\">(zahlung, ausgleich, überweisung, zahlungseingang)</span></li>");
-            html.append("<li><span class=\\\"chip cat-tag\\\">Tags</span> <span class=\\\"kw\\\">(etikett, akten-etikett, dokument-etikett, tag, schlagwort, label)</span></li>");
+            html.append("<li><span class=\\\"chip cat-tag\\\">Etikett</span> <span class=\\\"kw\\\">(etikett, akten-etikett, dokument-etikett, tag, schlagwort, label)</span></li>");
             html.append("<li><span class=\\\"chip cat-casechg\\\">Akte geändert</span> <span class=\\\"kw\\\">(akte geändert)</span></li>");
             html.append("<li><span class=\\\"chip cat-oth\\\">Sonstiges</span></li>");
             html.append("</ul></span></span>");
@@ -7779,9 +7779,9 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
         if (containsAny(d, "termin")) {
             return new String[]{"cat-termin", "Termin"};
         }
-        // Etiketten (Case- or Document-Labels) → Tags
+        // Etiketten (Case- or Document-Labels) → Etikett
         if (containsAny(d, "etikett", "akten-etikett", "dokument-etikett", "tag ", "schlagwort", "label")) {
-            return new String[]{"cat-tag", "Tags"};
+            return new String[]{"cat-tag", "Etikett"};
         }
         // General categories (Rechnung vor Dokument)
         if (containsAny(d, "rechnung", "gebühr", "kosten", "honorar", "rvg", "beleg erstellt")) {

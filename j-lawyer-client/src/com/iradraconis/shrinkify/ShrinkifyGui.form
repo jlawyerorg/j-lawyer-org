@@ -158,7 +158,6 @@
     </Component>
     <Component class="javax.swing.JCheckBox" name="overwriteCheckBox">
       <Properties>
-        <Property name="selected" type="boolean" value="true"/>
         <Property name="text" type="java.lang.String" value="Urspr. Dateien &#xfc;berschreiben"/>
       </Properties>
       <Events>

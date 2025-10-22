@@ -845,7 +845,6 @@ public class ShrinkifyGui extends javax.swing.JFrame {
             }
         });
 
-        overwriteCheckBox.setSelected(true);
         overwriteCheckBox.setText("Urspr. Dateien überschreiben");
         overwriteCheckBox.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
