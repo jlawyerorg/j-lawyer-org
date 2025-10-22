@@ -851,8 +851,8 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
     private long lastSearchIndexSkipCheck = -1;
     private boolean skipSearchIndex = false;
 
-    private static final String PS_SEARCHENHANCED_2 = "select id from cases where ucase(name) like ? or ucase(fileNumber) like ? or ucase(filenumberext) like ? or ucase(reason) like ? or ucase(custom1) like ? or ucase(custom2) like ? or ucase(custom3) like ? or ucase(subjectField) like ? or ucase(lawyer) like ? or ucase(assistant) like ?";
-    private static final String PS_SEARCHENHANCED_4 = "select id from cases where (ucase(name) like ? or ucase(fileNumber) like ? or ucase(filenumberext) like ? or ucase(reason) like ? or ucase(custom1) like ? or ucase(custom2) like ? or ucase(custom3) like ? or ucase(subjectField) like ? or ucase(lawyer) like ? or ucase(assistant) like ?) and archived=0";
+    private static final String PS_SEARCHENHANCED_2 = "select distinct(t1.id) from (select id from cases where ucase(name) like ? or ucase(fileNumber) like ? or ucase(filenumberext) like ? or ucase(reason) like ? or ucase(custom1) like ? or ucase(custom2) like ? or ucase(custom3) like ? or ucase(subjectField) like ? or ucase(lawyer) like ? or ucase(assistant) like ? union select archiveFileKey as id from case_contacts where ucase(reference) like ?) t1";
+    private static final String PS_SEARCHENHANCED_4 = "select distinct(t1.id) from (select id from cases where (ucase(name) like ? or ucase(fileNumber) like ? or ucase(filenumberext) like ? or ucase(reason) like ? or ucase(custom1) like ? or ucase(custom2) like ? or ucase(custom3) like ? or ucase(subjectField) like ? or ucase(lawyer) like ? or ucase(assistant) like ?) and archived=0 union select archiveFileKey as id from case_contacts where ucase(reference) like ?) t1";
 
     @Override
     @RolesAllowed({"loginRole"})
@@ -1084,7 +1084,7 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
         ArrayList<ArchiveFileBean> list = new ArrayList<>();
         try {
             con = utils.getConnection();
-            st = con.prepareStatement("select id from cases where ucase(name) like ? or ucase(fileNumber) like ? or ucase(filenumberext) like ? or ucase(reason) like ? or ucase(custom1) like ? or ucase(custom2) like ? or ucase(custom3) like ? or ucase(subjectField) like ? or ucase(lawyer) like ? or ucase(assistant) like ?");
+            st = con.prepareStatement("select distinct(t1.id) from (select id from cases where ucase(name) like ? or ucase(fileNumber) like ? or ucase(filenumberext) like ? or ucase(reason) like ? or ucase(custom1) like ? or ucase(custom2) like ? or ucase(custom3) like ? or ucase(subjectField) like ? or ucase(lawyer) like ? or ucase(assistant) like ? union select archiveFileKey as id from case_contacts where ucase(reference) like ?) t1");
             String wildCard = "%" + StringUtils.germanToUpperCase(query) + "%";
             st.setString(1, wildCard);
             st.setString(2, wildCard);
@@ -1096,6 +1096,7 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
             st.setString(8, wildCard);
             st.setString(9, wildCard);
             st.setString(10, wildCard);
+            st.setString(11, wildCard);
             rs = st.executeQuery();
 
             while (rs.next()) {
@@ -2828,7 +2829,7 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
                             + "left join case_tags on (case_tags.archiveFileKey=cases.id and case_tags.tagName in (" + inClauseCase + ")) \n"
                             + "left join case_documents on (case_documents.archiveFileKey=cases.id and case_documents.deleted=0) \n"
                             + "left join document_tags on (document_tags.documentKey=case_documents.id and document_tags.tagName in (" + inClauseDoc + ")) \n"
-                            + "where not (case_tags.tagName is null and document_tags.tagName is null) and (ucase(cases.name) like ? or ucase(fileNumber) like ? or ucase(filenumberext) like ? or ucase(reason) like ? or ucase(custom1) like ? or ucase(custom2) like ? or ucase(custom3) like ? or ucase(subjectField) like ? or ucase(lawyer) like ? or ucase(assistant) like ?)");
+                            + "where not (case_tags.tagName is null and document_tags.tagName is null) and (ucase(cases.name) like ? or ucase(fileNumber) like ? or ucase(filenumberext) like ? or ucase(reason) like ? or ucase(cases.custom1) like ? or ucase(cases.custom2) like ? or ucase(cases.custom3) like ? or ucase(subjectField) like ? or ucase(lawyer) like ? or ucase(assistant) like ?)");
 
                     int index = 1;
                     for (String t : tagName) {
@@ -2863,6 +2864,7 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
                     st.setString(8, wildCard);
                     st.setString(9, wildCard);
                     st.setString(10, wildCard);
+                    st.setString(11, wildCard);
                 }
             } else // without archive
             if (withTag || withDocumentTag) {
@@ -2890,7 +2892,7 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
                         + "left join case_tags on (case_tags.archiveFileKey=cases.id and case_tags.tagName in (" + inClauseCase + ")) \n"
                         + "left join case_documents on (case_documents.archiveFileKey=cases.id and case_documents.deleted=0) \n"
                         + "left join document_tags on (document_tags.documentKey=case_documents.id and document_tags.tagName in (" + inClauseDoc + ")) \n"
-                        + "where cases.archived=0 and not (case_tags.tagName is null and document_tags.tagName is null) and (ucase(cases.name) like ? or ucase(fileNumber) like ? or ucase(filenumberext) like ? or ucase(reason) like ? or ucase(custom1) like ? or ucase(custom2) like ? or ucase(custom3) like ? or ucase(subjectField) like ? or ucase(lawyer) like ? or ucase(assistant) like ?)");
+                        + "where cases.archived=0 and not (case_tags.tagName is null and document_tags.tagName is null) and (ucase(cases.name) like ? or ucase(fileNumber) like ? or ucase(filenumberext) like ? or ucase(reason) like ? or ucase(cases.custom1) like ? or ucase(cases.custom2) like ? or ucase(cases.custom3) like ? or ucase(subjectField) like ? or ucase(lawyer) like ? or ucase(assistant) like ?)");
 
                 int index = 1;
                 for (String t : tagName) {
@@ -2924,6 +2926,7 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
                 st.setString(8, wildCard);
                 st.setString(9, wildCard);
                 st.setString(10, wildCard);
+                st.setString(11, wildCard);
             }
 
             rs = st.executeQuery();
@@ -3713,6 +3716,7 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
                     st.setString(8, wildCard);
                     st.setString(9, wildCard);
                     st.setString(10, wildCard);
+                    st.setString(11, wildCard);
                 }
             } else // without archive
             if (withTag || withDocumentTag) {
@@ -3785,6 +3789,7 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
                 st.setString(8, wildCard);
                 st.setString(9, wildCard);
                 st.setString(10, wildCard);
+                st.setString(11, wildCard);
             }
 
             rs = st.executeQuery();
