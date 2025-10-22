@@ -7861,8 +7861,6 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
             }
             periods.add(new ClaimInterestPeriod(periodStart, endDate)); // letzter Zeitraum bis entryDate
 
-            ClaimLedgerEntry lastCreatedEntry = null;
-
             // 3️⃣ Für jeden Zeitraum eine Buchung erstellen
             for (ClaimInterestPeriod p : periods) {
 
