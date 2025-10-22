@@ -686,6 +686,7 @@ import com.jdimension.jlawyer.client.processing.ProgressIndicator;
 import com.jdimension.jlawyer.client.settings.ClientSettings;
 import com.jdimension.jlawyer.client.settings.UserSettings;
 import com.jdimension.jlawyer.client.utils.ComponentUtils;
+import com.jdimension.jlawyer.client.utils.DesktopUtils;
 import com.jdimension.jlawyer.client.utils.FileUtils;
 import com.jdimension.jlawyer.client.utils.FrameUtils;
 import com.jdimension.jlawyer.client.utils.StringUtils;
@@ -735,6 +736,12 @@ public class ScannerPanel extends javax.swing.JPanel implements ThemeableEditor,
     private static final Logger log = Logger.getLogger(ScannerPanel.class.getName());
     private Image backgroundImage = null;
     private HashMap<FileMetadata, Date> lastEventFileMetadata = new HashMap<>();
+
+    // Performance optimization: cache case suggestions
+    private List<ArchiveFileBean> cachedMyCases = null;
+    private List<ArchiveFileBean> cachedOthersCases = null;
+    private long cacheTimestamp = 0;
+    private static final long CACHE_VALIDITY_MS = 60000; // 1 minute
 
     @Override
     public void notifyStatusBarReady() {
@@ -901,6 +908,11 @@ public class ScannerPanel extends javax.swing.JPanel implements ThemeableEditor,
 
     public void refreshList() {
 
+        // Performance optimization: invalidate cache when user explicitly refreshes
+        cachedMyCases = null;
+        cachedOthersCases = null;
+        cacheTimestamp = 0;
+
         ClientSettings settings = ClientSettings.getInstance();
         try {
             JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
@@ -913,7 +925,7 @@ public class ScannerPanel extends javax.swing.JPanel implements ThemeableEditor,
 
         } catch (Exception ex) {
             log.error(ex);
-            ThreadUtils.showErrorDialog(this, "Fehler bei der Ermittlung neuer Scans: " + ex.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR);
+            ThreadUtils.showErrorDialog(this, "Fehler bei der Ermittlung neuer Scans: " + ex.getMessage(), DesktopUtils.POPUP_TITLE_ERROR);
         }
 
     }
@@ -1197,58 +1209,10 @@ public class ScannerPanel extends javax.swing.JPanel implements ThemeableEditor,
             sp.setEntry(cce, this);
             actionPanelEntries.add(sp);
 
-            try {
-                log.info("querying last changed");
-                ClientSettings settings = ClientSettings.getInstance();
-                JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
-                ArchiveFileServiceRemote fileService = locator.lookupArchiveFileServiceRemote();
-
-                ArrayList<String> caseCandidates = new ArrayList<>();
-                log.info("querying last changed for current user");
-                List<ArchiveFileBean> myNewList = fileService.getLastChanged(UserSettings.getInstance().getCurrentUser().getPrincipalId(), true, 10);
-                log.info("querying last changed for other users");
-                List<ArchiveFileBean> othersNewList = fileService.getLastChanged(UserSettings.getInstance().getCurrentUser().getPrincipalId(), false, 10);
-                log.info("building suggestion list 1");
-                for (ArchiveFileBean af : myNewList) {
-                    if (!caseCandidates.contains(af.getFileNumber())) {
-                        caseCandidates.add(af.getFileNumber());
-
-                        SaveScanToCasePanel ep = this.getSaveToCasePanel(af);
-                        if (i % 2 == 0) {
-                            ep.setBackground(ep.getBackground().darker());
-                        }
-                        ep.setBackground(ep.getBackground().brighter());
-                        actionPanelEntries.add(ep);
-                        i++;
-
-                    }
-                }
-                log.info("building suggestion list 2");
-                for (ArchiveFileBean af : othersNewList) {
-                    if (!caseCandidates.contains(af.getFileNumber())) {
-                        caseCandidates.add(af.getFileNumber());
-
-                        SaveScanToCasePanel ep = this.getSaveToCasePanel(af);
-                        if (i % 2 == 0) {
-                            ep.setBackground(ep.getBackground().darker());
-                        }
-                        ep.setBackground(ep.getBackground().brighter());
-                        actionPanelEntries.add(ep);
-                        i++;
-
-                    }
-                }
-            } catch (Exception ex) {
-                log.error(ex);
-                ThreadUtils.showErrorDialog(this, "Fehler beim Ermitteln der Aktionsvorschläge: " + ex.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR);
-
-            }
-
-            log.info("updating UI (sidebar)");
-            this.pnlActionsChild.setLayout(new GridLayout(actionPanelEntries.size(), 1));
-            for (Component o : actionPanelEntries) {
-                this.pnlActionsChild.add(o);
-            }
+            // Performance optimization: load case suggestions asynchronously
+            final ArrayList<Component> finalEntries = actionPanelEntries;
+            final int initialIndex = i;
+            loadCaseSuggestionsAsync(finalEntries, initialIndex);
 
             log.info("displaying preview");
             // display document preview
@@ -1336,7 +1300,7 @@ public class ScannerPanel extends javax.swing.JPanel implements ThemeableEditor,
                     launcher.launch(false);
                 } catch (Exception ex) {
                     log.error(ex);
-                    ThreadUtils.showErrorDialog(this, "Fehler beim Öffnen der Datei: " + ex.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR);
+                    ThreadUtils.showErrorDialog(this, "Fehler beim Öffnen der Datei: " + ex.getMessage(), DesktopUtils.POPUP_TITLE_ERROR);
 
                 }
             }
@@ -1421,6 +1385,147 @@ public class ScannerPanel extends javax.swing.JPanel implements ThemeableEditor,
         ScannerUtils.getInstance().setLocalScanDir("");
         this.displayLocalScanDir();
     }//GEN-LAST:event_mnuDeactivateLocalFolderActionPerformed
+
+    /**
+     * Performance optimization: Load case suggestions asynchronously with caching
+     */
+    private void loadCaseSuggestionsAsync(final ArrayList<Component> actionPanelEntries, final int initialIndex) {
+        // Check if cache is still valid
+        long now = System.currentTimeMillis();
+        if (cachedMyCases != null && cachedOthersCases != null && (now - cacheTimestamp) < CACHE_VALIDITY_MS) {
+            if (log.isDebugEnabled()) {
+                log.debug("Using cached case suggestions");
+            }
+            // Use cached data immediately
+            addCaseSuggestionsToUI(cachedMyCases, cachedOthersCases, actionPanelEntries, initialIndex);
+            return;
+        }
+
+        // Cache invalid or empty - load asynchronously
+        new Thread(() -> {
+            try {
+                if (log.isDebugEnabled()) {
+                    log.debug("Loading case suggestions from server (cache expired or empty)");
+                }
+
+                ClientSettings settings = ClientSettings.getInstance();
+                JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
+                ArchiveFileServiceRemote fileService = locator.lookupArchiveFileServiceRemote();
+                String currentUserId = UserSettings.getInstance().getCurrentUser().getPrincipalId();
+
+                // Performance optimization: load both lists in parallel
+                final List<ArchiveFileBean>[] results = new List[2];
+                final Exception[] errors = new Exception[2];
+
+                Thread t1 = new Thread(() -> {
+                    try {
+                        if (log.isDebugEnabled()) {
+                            log.debug("querying last changed for current user");
+                        }
+                        results[0] = fileService.getLastChanged(currentUserId, true, 10);
+                    } catch (Exception ex) {
+                        errors[0] = ex;
+                    }
+                });
+
+                Thread t2 = new Thread(() -> {
+                    try {
+                        if (log.isDebugEnabled()) {
+                            log.debug("querying last changed for other users");
+                        }
+                        results[1] = fileService.getLastChanged(currentUserId, false, 10);
+                    } catch (Exception ex) {
+                        errors[1] = ex;
+                    }
+                });
+
+                // Start both threads in parallel
+                t1.start();
+                t2.start();
+
+                // Wait for both to complete
+                t1.join();
+                t2.join();
+
+                // Check for errors
+                if (errors[0] != null) {
+                    throw errors[0];
+                }
+                if (errors[1] != null) {
+                    throw errors[1];
+                }
+
+                final List<ArchiveFileBean> myNewList = results[0];
+                final List<ArchiveFileBean> othersNewList = results[1];
+
+                // Update cache
+                cachedMyCases = myNewList;
+                cachedOthersCases = othersNewList;
+                cacheTimestamp = System.currentTimeMillis();
+
+                // Update UI on EDT
+                javax.swing.SwingUtilities.invokeLater(() -> {
+                    addCaseSuggestionsToUI(myNewList, othersNewList, actionPanelEntries, initialIndex);
+                });
+
+            } catch (Exception ex) {
+                log.error("Error loading case suggestions", ex);
+                javax.swing.SwingUtilities.invokeLater(() -> {
+                    ThreadUtils.showErrorDialog(this, "Fehler beim Ermitteln der Aktionsvorschläge: " + ex.getMessage(), DesktopUtils.POPUP_TITLE_ERROR);
+                });
+            }
+        }, "CaseSuggestionsLoader").start();
+    }
+
+    /**
+     * Helper method to add case suggestions to UI
+     */
+    private void addCaseSuggestionsToUI(List<ArchiveFileBean> myNewList, List<ArchiveFileBean> othersNewList,
+                                       ArrayList<Component> actionPanelEntries, int initialIndex) {
+        ArrayList<String> caseCandidates = new ArrayList<>();
+        int i = initialIndex;
+
+        if (log.isDebugEnabled()) {
+            log.debug("building suggestion list from " + myNewList.size() + " own cases and " + othersNewList.size() + " other cases");
+        }
+
+        for (ArchiveFileBean af : myNewList) {
+            if (!caseCandidates.contains(af.getFileNumber())) {
+                caseCandidates.add(af.getFileNumber());
+
+                SaveScanToCasePanel ep = this.getSaveToCasePanel(af);
+                if (i % 2 == 0) {
+                    ep.setBackground(ep.getBackground().darker());
+                }
+                ep.setBackground(ep.getBackground().brighter());
+                actionPanelEntries.add(ep);
+                i++;
+            }
+        }
+
+        for (ArchiveFileBean af : othersNewList) {
+            if (!caseCandidates.contains(af.getFileNumber())) {
+                caseCandidates.add(af.getFileNumber());
+
+                SaveScanToCasePanel ep = this.getSaveToCasePanel(af);
+                if (i % 2 == 0) {
+                    ep.setBackground(ep.getBackground().darker());
+                }
+                ep.setBackground(ep.getBackground().brighter());
+                actionPanelEntries.add(ep);
+                i++;
+            }
+        }
+
+        // Update UI layout
+        this.pnlActionsChild.setLayout(new GridLayout(actionPanelEntries.size(), 1));
+        this.pnlActionsChild.removeAll();
+        for (Component o : actionPanelEntries) {
+            this.pnlActionsChild.add(o);
+        }
+        this.pnlActionsChild.revalidate();
+        this.pnlActionsChild.repaint();
+    }
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JCheckBox chkDeleteAfterAction;
@@ -1512,7 +1617,7 @@ public class ScannerPanel extends javax.swing.JPanel implements ThemeableEditor,
 
                 } catch (Exception ex) {
                     log.error(ex);
-                    ThreadUtils.showErrorDialog(EditorsRegistry.getInstance().getMainWindow(), "Fehler beim Speichern des Scans: " + ex.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR);
+                    ThreadUtils.showErrorDialog(EditorsRegistry.getInstance().getMainWindow(), "Fehler beim Speichern des Scans: " + ex.getMessage(), DesktopUtils.POPUP_TITLE_ERROR);
                 }
             }
 
@@ -1542,7 +1647,7 @@ public class ScannerPanel extends javax.swing.JPanel implements ThemeableEditor,
                 is = locator.lookupIntegrationServiceRemote();
             } catch (Exception ex) {
                 log.error(ex);
-                ThreadUtils.showErrorDialog(EditorsRegistry.getInstance().getMainWindow(), "Fehler beim Umbenennen des Scans: " + ex.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR);
+                ThreadUtils.showErrorDialog(EditorsRegistry.getInstance().getMainWindow(), "Fehler beim Umbenennen des Scans: " + ex.getMessage(), DesktopUtils.POPUP_TITLE_ERROR);
                 return false;
             }
 
@@ -1563,7 +1668,7 @@ public class ScannerPanel extends javax.swing.JPanel implements ThemeableEditor,
 
                 } catch (Exception ex) {
                     log.error(ex);
-                    ThreadUtils.showErrorDialog(EditorsRegistry.getInstance().getMainWindow(), "Fehler beim Umbenennen des Scans: " + ex.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR);
+                    ThreadUtils.showErrorDialog(EditorsRegistry.getInstance().getMainWindow(), "Fehler beim Umbenennen des Scans: " + ex.getMessage(), DesktopUtils.POPUP_TITLE_ERROR);
                 }
             }
             if (renamedCount > 0) {
@@ -1592,7 +1697,7 @@ public class ScannerPanel extends javax.swing.JPanel implements ThemeableEditor,
                     is = locator.lookupIntegrationServiceRemote();
                 } catch (Exception ex) {
                     log.error(ex);
-                    ThreadUtils.showErrorDialog(EditorsRegistry.getInstance().getMainWindow(), "Fehler beim Löschen des Scans: " + ex.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR);
+                    ThreadUtils.showErrorDialog(EditorsRegistry.getInstance().getMainWindow(), "Fehler beim Löschen des Scans: " + ex.getMessage(), DesktopUtils.POPUP_TITLE_ERROR);
                     return false;
                 }
 
@@ -1609,7 +1714,7 @@ public class ScannerPanel extends javax.swing.JPanel implements ThemeableEditor,
 
                     } catch (Exception ex) {
                         log.error(ex);
-                        ThreadUtils.showErrorDialog(EditorsRegistry.getInstance().getMainWindow(), "Fehler beim Löschen des Scans: " + ex.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR);
+                        ThreadUtils.showErrorDialog(EditorsRegistry.getInstance().getMainWindow(), "Fehler beim Löschen des Scans: " + ex.getMessage(), DesktopUtils.POPUP_TITLE_ERROR);
                     }
                 }
                 if (removedCount > 0) {
@@ -1652,7 +1757,7 @@ public class ScannerPanel extends javax.swing.JPanel implements ThemeableEditor,
 
             } catch (Exception ex) {
                 log.error(ex);
-                ThreadUtils.showErrorDialog(EditorsRegistry.getInstance().getMainWindow(), "Fehler beim PDF-Split: " + ex.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR);
+                ThreadUtils.showErrorDialog(EditorsRegistry.getInstance().getMainWindow(), "Fehler beim PDF-Split: " + ex.getMessage(), DesktopUtils.POPUP_TITLE_ERROR);
             }
 
         }
@@ -1667,7 +1772,7 @@ public class ScannerPanel extends javax.swing.JPanel implements ThemeableEditor,
             locator.lookupIntegrationServiceRemote().updateObservedFile(fileName, data);
         } catch (Exception ex) {
             log.error(ex);
-            ThreadUtils.showErrorDialog(EditorsRegistry.getInstance().getMainWindow(), "Fehler beim Bearbeiten des Scans: " + ex.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR);
+            ThreadUtils.showErrorDialog(EditorsRegistry.getInstance().getMainWindow(), "Fehler beim Bearbeiten des Scans: " + ex.getMessage(), DesktopUtils.POPUP_TITLE_ERROR);
         }
     }
 }
