@@ -676,6 +676,10 @@ public class TimesheetUtils {
         if (inputText.matches("\\d+m")) {
             // Format "xxm" - only minutes
             return Integer.parseInt(inputText.replaceAll("(\\d+)m", "$1"));
+        } else if (inputText.matches("\\d+h")) {
+            // Format "xxh" - only hours
+            int hours = Integer.parseInt(inputText.replaceAll("(\\d+)h", "$1"));
+            return hours * 60;
         } else {
             // Format "xxhyym" - hours and minutes
             int hours = Integer.parseInt(inputText.replaceAll("(\\d+)h\\d+m", "$1"));

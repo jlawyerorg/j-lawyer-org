@@ -1045,7 +1045,7 @@ public class TimesheetLogEntryPanel extends javax.swing.JPanel {
     }
 
     private boolean isValidTimeFormat(String text) {
-        return text.matches("\\d+h\\d+m") || text.matches("\\d+m");
+        return text.matches("\\d+h\\d+m") || text.matches("\\d+m") || text.matches("\\d+h");
     }
 
     
