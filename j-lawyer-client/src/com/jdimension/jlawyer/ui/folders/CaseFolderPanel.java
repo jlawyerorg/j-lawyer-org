@@ -1407,6 +1407,8 @@ public class CaseFolderPanel extends javax.swing.JPanel implements EventConsumer
                 ((DocumentEntryPanel) c).setSelected(selected);
             }
         }
+        if(this.caseContainer!=null)
+            this.caseContainer.documentSelectionChanged();
     }
 
     public void selectDocumentsRangeTo(String docId) {
