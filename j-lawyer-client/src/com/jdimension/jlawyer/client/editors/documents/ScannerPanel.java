@@ -682,6 +682,13 @@ import com.jdimension.jlawyer.client.launcher.Launcher;
 import com.jdimension.jlawyer.client.launcher.LauncherFactory;
 import com.jdimension.jlawyer.client.launcher.ReadOnlyDocumentStore;
 import com.jdimension.jlawyer.client.mail.SaveToCaseExecutor;
+import com.jdimension.jlawyer.client.mail.sidebar.AddCalendarEventStep;
+import com.jdimension.jlawyer.client.mail.sidebar.ConfirmationStep;
+import com.jdimension.jlawyer.client.mail.sidebar.CreateAddressDetailsStep;
+import com.jdimension.jlawyer.client.mail.sidebar.CreateAddressStep;
+import com.jdimension.jlawyer.client.mail.sidebar.NewCaseStep;
+import com.jdimension.jlawyer.client.mail.sidebar.NewCaseWizardDialog;
+import com.jdimension.jlawyer.client.mail.sidebar.SelectAddressStep;
 import com.jdimension.jlawyer.client.processing.ProgressIndicator;
 import com.jdimension.jlawyer.client.settings.ClientSettings;
 import com.jdimension.jlawyer.client.settings.UserSettings;
@@ -693,6 +700,10 @@ import com.jdimension.jlawyer.client.utils.StringUtils;
 import com.jdimension.jlawyer.client.utils.ThreadUtils;
 import com.jdimension.jlawyer.persistence.ArchiveFileBean;
 import com.jdimension.jlawyer.persistence.CaseFolder;
+import com.jdimension.jlawyer.client.wizard.PartyEntry;
+import com.jdimension.jlawyer.client.wizard.WizardDataContainer;
+import com.jdimension.jlawyer.client.wizard.WizardSteps;
+import com.jdimension.jlawyer.documents.DocumentPreview;
 import com.jdimension.jlawyer.pojo.FileMetadata;
 import com.jdimension.jlawyer.services.ArchiveFileServiceRemote;
 import com.jdimension.jlawyer.services.IntegrationServiceRemote;
@@ -725,6 +736,8 @@ import javax.swing.table.DefaultTableCellRenderer;
 import javax.swing.table.DefaultTableModel;
 import javax.swing.table.TableModel;
 import javax.swing.table.TableRowSorter;
+import org.apache.pdfbox.pdmodel.PDDocument;
+import org.apache.pdfbox.text.PDFTextStripper;
 import org.apache.log4j.Logger;
 
 /**
@@ -1380,6 +1393,115 @@ public class ScannerPanel extends javax.swing.JPanel implements ThemeableEditor,
             this.displayLocalScanDir();
         }
     }//GEN-LAST:event_mnuSelectLocalFolderActionPerformed
+
+    public void startCreateCaseWizardForSelectedScan() {
+        int selectedRow = this.tblDirContent.getSelectedRow();
+        if (selectedRow < 0) {
+            JOptionPane.showMessageDialog(this, "Bitte wählen Sie zunächst ein Dokument aus.", DesktopUtils.POPUP_TITLE_HINT, JOptionPane.INFORMATION_MESSAGE);
+            return;
+        }
+
+        int modelRow = this.tblDirContent.convertRowIndexToModel(selectedRow);
+        Object metaObj = this.tblDirContent.getModel().getValueAt(modelRow, 1);
+        if (!(metaObj instanceof FileMetadata)) {
+            JOptionPane.showMessageDialog(this, "Zu dem ausgewählten Dokument konnten keine Metadaten ermittelt werden.", DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
+            return;
+        }
+
+        FileMetadata metadata = (FileMetadata) metaObj;
+
+        try {
+            ClientSettings settings = ClientSettings.getInstance();
+            JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
+            IntegrationServiceRemote integrationService = locator.lookupIntegrationServiceRemote();
+
+            DocumentPreview preview = integrationService.getObservedFilePreview(metadata.getFileName());
+            log.info("DocumentPreview object retrieved for " + metadata.getFileName());
+            log.info("Preview has text: " + (preview != null && preview.getText() != null));
+            log.info("Preview text length: " + (preview != null && preview.getText() != null ? preview.getText().length() : "null"));
+
+            String textBody = extractPreviewText(preview, integrationService, metadata.getFileName());
+            log.info("FINAL extracted text length for wizard: " + (textBody != null ? textBody.length() : "null"));
+            if (textBody != null && textBody.length() > 0) {
+                log.info("First 100 chars of extracted text: " + textBody.substring(0, Math.min(100, textBody.length())));
+            }
+
+            NewCaseWizardDialog dlg = new NewCaseWizardDialog(EditorsRegistry.getInstance().getMainWindow(), true);
+            WizardSteps steps = new WizardSteps(dlg);
+            steps.addStep(new NewCaseStep());
+            steps.addStep(new CreateAddressStep());
+            steps.addStep(new CreateAddressDetailsStep());
+            steps.addStep(new SelectAddressStep());
+            steps.addStep(new AddCalendarEventStep());
+            steps.addStep(new ConfirmationStep());
+
+            WizardDataContainer data = steps.getData();
+            data.put("newcase.addresses", null);
+            data.put("newcase.subject", deriveSubject(metadata));
+            data.put("newcase.body", textBody);
+            log.info("Text body stored in wizard data container with key 'newcase.body'");
+            data.put("newcase.source", "scanner");
+            data.put("newcase.parties", new ArrayList<PartyEntry>());
+            data.put("newcase.sendername", metadata.getPrincipalId() != null ? metadata.getPrincipalId() : "Scan");
+            data.put("newcase.senderaddress", "");
+
+            dlg.setSteps(steps);
+            FrameUtils.centerDialog(dlg, EditorsRegistry.getInstance().getMainWindow());
+            dlg.setVisible(true);
+        } catch (Throwable t) {
+            log.error("Unable to start case wizard from scan", t);
+            JOptionPane.showMessageDialog(this, "Der Assistent zum Anlegen einer Akte konnte nicht gestartet werden: " + t.getMessage(), DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
+        }
+    }
+
+    private String deriveSubject(FileMetadata metadata) {
+        if (metadata == null || metadata.getFileName() == null) {
+            return "Scan";
+        }
+        String fileName = metadata.getFileName();
+        int idx = fileName.lastIndexOf('.');
+        if (idx > 0) {
+            fileName = fileName.substring(0, idx);
+        }
+        return fileName;
+    }
+
+    private String extractPreviewText(DocumentPreview preview, IntegrationServiceRemote integrationService, String fileName) {
+        String textBody = "";
+
+        // Try to get text from preview object first
+        if (preview != null && preview.getText() != null && !preview.getText().trim().isEmpty()) {
+            log.info("Using text from DocumentPreview object for " + fileName);
+            textBody = preview.getText();
+            return textBody;
+        }
+
+        // If preview text is empty, try to extract from PDF bytes
+        byte[] bytes = preview != null ? preview.getBytes() : null;
+        if ((bytes == null || bytes.length == 0) && integrationService != null) {
+            try {
+                log.info("Loading observed file bytes for text extraction: " + fileName);
+                bytes = integrationService.getObservedFile(fileName);
+            } catch (Exception ex) {
+                log.warn("Unable to download observed file for text extraction: " + fileName, ex);
+            }
+        }
+
+        // Try to extract text from PDF bytes if we have them
+        if (bytes != null && bytes.length > 0) {
+            try (PDDocument document = PDDocument.load(bytes)) {
+                PDFTextStripper stripper = new PDFTextStripper();
+                textBody = stripper.getText(document);
+                log.info("Extracted " + textBody.length() + " characters from PDF using PDFTextStripper for " + fileName);
+            } catch (Exception ex) {
+                log.warn("Unable to extract text from document: " + fileName + " (maybe not a PDF or corrupted)", ex);
+            }
+        } else {
+            log.warn("Cannot extract text from " + fileName + " - no bytes available");
+        }
+
+        return textBody != null ? textBody : "";
+    }
 
     private void mnuDeactivateLocalFolderActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_mnuDeactivateLocalFolderActionPerformed
         ScannerUtils.getInstance().setLocalScanDir("");

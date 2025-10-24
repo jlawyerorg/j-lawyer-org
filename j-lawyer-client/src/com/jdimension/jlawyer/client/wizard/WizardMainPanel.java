@@ -927,6 +927,33 @@ public class WizardMainPanel extends javax.swing.JPanel {
         this.cmdCancel.setEnabled(cancel);
         this.cmdDone.setEnabled(done);
     }
+
+    public void goStepsBack(int count) throws Exception {
+        if (count <= 0) {
+            return;
+        }
+        for (int i = 0; i < count; i++) {
+            if (this.steps.isFirstStep(this.steps.current())) {
+                break;
+            }
+            WizardStepInterface current = this.steps.current();
+            current.previousEvent();
+            this.stepPanel.removeAll();
+
+            WizardStepInterface previousStep = this.steps.previous();
+            JComponent previousComponent = (JComponent) previousStep;
+            previousStep.display();
+            previousComponent.setLocation(0, 0);
+            previousComponent.setSize(this.stepPanel.getSize());
+            previousComponent.repaint();
+            this.stepPanel.add(previousComponent);
+            this.stepPanel.repaint();
+
+            this.lblStepTitles.setText(this.steps.stepTitlesHtml());
+            this.lblTitle.setText(this.steps.current().getStepName());
+        }
+        this.toggleButtonState();
+    }
     
     private void stepPanelComponentResized(java.awt.event.ComponentEvent evt) {//GEN-FIRST:event_stepPanelComponentResized
         JComponent current=(JComponent)steps.current();

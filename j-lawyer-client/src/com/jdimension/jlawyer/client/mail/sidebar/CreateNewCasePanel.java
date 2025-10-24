@@ -781,8 +781,10 @@ public class CreateNewCasePanel extends javax.swing.JPanel {
         data.put("newcase.addresses", this.relevantAddresses);
         data.put("newcase.subject", this.subject);
         data.put("newcase.body", textBody);
+        data.put("newcase.source", "email");
         data.put("newcase.senderaddress", this.senderAddress);
         data.put("newcase.sendername", this.senderName);
+        data.put("newcase.parties", new java.util.ArrayList<com.jdimension.jlawyer.client.wizard.PartyEntry>());
                         
         
         dlg.setSteps(steps);

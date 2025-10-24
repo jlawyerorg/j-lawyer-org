@@ -661,263 +661,70 @@
  * For more information on this, and how to apply and follow the GNU AGPL, see
  * <https://www.gnu.org/licenses/>.
  */
-package com.jdimension.jlawyer.client.editors.documents;
+package com.jdimension.jlawyer.client.wizard;
 
-import com.jdimension.jlawyer.client.mail.SaveToCaseExecutor;
-import com.jdimension.jlawyer.client.settings.ClientSettings;
-import com.jdimension.jlawyer.pojo.FileMetadata;
-import com.jdimension.jlawyer.services.IntegrationServiceRemote;
-import com.jdimension.jlawyer.services.JLawyerServiceLocator;
-import java.awt.Color;
-import java.util.ArrayList;
-import java.util.List;
-import org.apache.log4j.Logger;
+import com.jdimension.jlawyer.persistence.AddressBean;
+import com.jdimension.jlawyer.persistence.PartyTypeBean;
 
 /**
- *
- * @author jens
+ * Represents a candidate party that should be added to the case once the wizard finishes.
  */
-public class EditScanPanel extends javax.swing.JPanel {
+public class PartyEntry {
 
-    private static final Logger log = Logger.getLogger(EditScanPanel.class.getName());
+    private AddressBean address;
+    private PartyTypeBean role;
+    private String reference;
+    private boolean createNewAddress;
+    private String source;
 
-    private SaveToCaseExecutor executor = null;
-
-    private String openedFromEditorClass = null;
-
-    private ArrayList<FileMetadata> noOcrFiles = new ArrayList<>();
-
-    /**
-     * Creates new form EditScanPanel
-     *
-     * @param openedFromClassName
-     */
-    public EditScanPanel(String openedFromClassName) {
-        initComponents();
-        this.openedFromEditorClass = openedFromClassName;
-        this.cmdCreateCase.setEnabled(false);
-
+    public PartyEntry() {
     }
 
-    public void setDetails(List<String> selectedDocuments, SaveToCaseExecutor executor) {
-        this.executor = executor;
-
-        String scans = "Scan";
-        if (selectedDocuments.size() > 1) {
-            scans = "Scans";
-        }
-        this.lblDescription.setText("<html><b>" + selectedDocuments.size() + " " + scans + "</b></html>");
-        this.lblDescription.setToolTipText("" + selectedDocuments.size() + " " + scans + " umbenennen oder aus dem Scaneingang löschen");
-
-        this.cmdSplitPdf.setEnabled(false);
-        if (selectedDocuments.size() == 1) {
-            for (String f : selectedDocuments) {
-                if (f.toLowerCase().endsWith(".pdf")) {
-                    this.cmdSplitPdf.setEnabled(true);
-                }
-            }
-        }
-
-        this.cmdCreateCase.setEnabled(selectedDocuments.size() == 1 && this.executor instanceof ScannerPanel);
-
-        this.cmdOcr.setEnabled(false);
-        this.cmdOcr.setToolTipText(null);
-        this.noOcrFiles.clear();
-
-        // Performance optimization: load OCR status asynchronously
-        final List<String> pdfFiles = new ArrayList<>();
-        for (String f : selectedDocuments) {
-            if (f.toLowerCase().endsWith(".pdf")) {
-                pdfFiles.add(f);
-            }
-        }
-
-        if (!pdfFiles.isEmpty()) {
-            new Thread(() -> {
-                try {
-                    ClientSettings settings = ClientSettings.getInstance();
-                    JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
-                    IntegrationServiceRemote isr = locator.lookupIntegrationServiceRemote();
-
-                    final ArrayList<FileMetadata> filesWithoutOcr = new ArrayList<>();
-                    for (String f : pdfFiles) {
-                        FileMetadata meta = isr.getObservedFileMetadata(f);
-                        if (meta != null && meta.getOcrStatus() == FileMetadata.OCRSTATUS_WITHOUTOCR) {
-                            filesWithoutOcr.add(meta);
-                        }
-                    }
-
-                    // Update UI on EDT
-                    javax.swing.SwingUtilities.invokeLater(() -> {
-                        noOcrFiles.addAll(filesWithoutOcr);
-                        if (!noOcrFiles.isEmpty()) {
-                            cmdOcr.setEnabled(true);
-                            cmdOcr.setToolTipText(noOcrFiles.size() + " PDF-Dokumente sind nicht durchsuchbar - Klick für OCR/Texterkennung");
-                        }
-                    });
-
-                } catch (Exception ex) {
-                    log.error("Error loading OCR status", ex);
-                }
-            }, "OcrStatusLoader").start();
-        }
-
+    public PartyEntry(AddressBean address, PartyTypeBean role, String reference, boolean createNewAddress, String source) {
+        this.address = address;
+        this.role = role;
+        this.reference = reference;
+        this.createNewAddress = createNewAddress;
+        this.source = source;
     }
 
-    /**
-     * This method is called from within the constructor to initialize the form.
-     * WARNING: Do NOT modify this code. The content of this method is always
-     * regenerated by the Form Editor.
-     */
-    @SuppressWarnings("unchecked")
-    // <editor-fold defaultstate="collapsed" desc="Generated Code">//GEN-BEGIN:initComponents
-    private void initComponents() {
+    public AddressBean getAddress() {
+        return address;
+    }
 
-        lblDescription = new javax.swing.JLabel();
-        cmdDeleteScan = new javax.swing.JButton();
-        cmdRenameScan = new javax.swing.JButton();
-        cmdSplitPdf = new javax.swing.JButton();
-        cmdOcr = new javax.swing.JButton();
-        cmdCreateCase = new javax.swing.JButton();
+    public void setAddress(AddressBean address) {
+        this.address = address;
+    }
 
-        lblDescription.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/folder_documents.png"))); // NOI18N
-        java.util.ResourceBundle bundle = java.util.ResourceBundle.getBundle("com/jdimension/jlawyer/client/editors/addresses/CaseForContactEntryPanel"); // NOI18N
-        lblDescription.setText(bundle.getString("label.case.name")); // NOI18N
-        lblDescription.setCursor(new java.awt.Cursor(java.awt.Cursor.HAND_CURSOR));
+    public PartyTypeBean getRole() {
+        return role;
+    }
 
-        cmdDeleteScan.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/trashcan_full.png"))); // NOI18N
-        cmdDeleteScan.setToolTipText("aus dem Scaneingang löschen");
-        cmdDeleteScan.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                cmdDeleteScanActionPerformed(evt);
-            }
-        });
+    public void setRole(PartyTypeBean role) {
+        this.role = role;
+    }
 
-        cmdRenameScan.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons16/kate.png"))); // NOI18N
-        cmdRenameScan.setToolTipText("im Scaneingang umbenennen");
-        cmdRenameScan.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                cmdRenameScanActionPerformed(evt);
-            }
-        });
+    public String getReference() {
+        return reference;
+    }
 
-        cmdSplitPdf.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons16/material/baseline_splitscreen_black_48dp.png"))); // NOI18N
-        cmdSplitPdf.setToolTipText("PDF teilen");
-        cmdSplitPdf.setEnabled(false);
-        cmdSplitPdf.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                cmdSplitPdfActionPerformed(evt);
-            }
-        });
+    public void setReference(String reference) {
+        this.reference = reference;
+    }
 
-        cmdOcr.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons16/material/baseline_font_download_off_red_48dp.png"))); // NOI18N
-        cmdOcr.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                cmdOcrActionPerformed(evt);
-            }
-        });
+    public boolean isCreateNewAddress() {
+        return createNewAddress;
+    }
 
-        cmdCreateCase.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/filesave.png"))); // NOI18N
-        cmdCreateCase.setToolTipText("Neue Akte anlegen");
-        cmdCreateCase.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                cmdCreateCaseActionPerformed(evt);
-            }
-        });
+    public void setCreateNewAddress(boolean createNewAddress) {
+        this.createNewAddress = createNewAddress;
+    }
 
-        javax.swing.GroupLayout layout = new javax.swing.GroupLayout(this);
-        this.setLayout(layout);
-        layout.setHorizontalGroup(
-            layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(layout.createSequentialGroup()
-                .addContainerGap()
-                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addComponent(lblDescription)
-                    .addGroup(layout.createSequentialGroup()
-                        .addComponent(cmdDeleteScan)
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addComponent(cmdRenameScan)
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addComponent(cmdSplitPdf)
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addComponent(cmdOcr)
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addComponent(cmdCreateCase)))
-                .addContainerGap(115, Short.MAX_VALUE))
-        );
-        layout.setVerticalGroup(
-            layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(layout.createSequentialGroup()
-                .addContainerGap()
-                .addComponent(lblDescription)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addComponent(cmdDeleteScan)
-                    .addComponent(cmdRenameScan)
-                    .addComponent(cmdSplitPdf)
-                    .addComponent(cmdOcr)
-                    .addComponent(cmdCreateCase))
-                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
-        );
-    }// </editor-fold>//GEN-END:initComponents
+    public String getSource() {
+        return source;
+    }
 
-    private void cmdDeleteScanActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdDeleteScanActionPerformed
-        boolean removed = this.executor.removeCallback();
-        if (removed) {
-            this.cmdDeleteScan.setEnabled(false);
-            this.cmdDeleteScan.setBackground(Color.green.darker().darker());
-        } else {
-            this.cmdDeleteScan.setBackground(Color.red.darker().darker());
-        }
-    }//GEN-LAST:event_cmdDeleteScanActionPerformed
-
-    private void cmdRenameScanActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdRenameScanActionPerformed
-        boolean renamed = this.executor.renameCallback();
-        if (renamed) {
-            this.cmdRenameScan.setEnabled(false);
-            this.cmdRenameScan.setBackground(Color.green.darker().darker());
-        } else {
-            this.cmdRenameScan.setBackground(Color.red.darker().darker());
-        }
-    }//GEN-LAST:event_cmdRenameScanActionPerformed
-
-    private void cmdSplitPdfActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdSplitPdfActionPerformed
-        this.executor.splitPdfCallback();
-    }//GEN-LAST:event_cmdSplitPdfActionPerformed
-
-    private void cmdOcrActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdOcrActionPerformed
-        try {
-
-            ClientSettings settings = ClientSettings.getInstance();
-            JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
-            IntegrationServiceRemote isr = locator.lookupIntegrationServiceRemote();
-
-            for (FileMetadata meta : this.noOcrFiles) {
-                isr.performOcrForObservedFile(meta.getFileName());
-            }
-
-        } catch (Exception ex) {
-            log.error(ex);
-
-        }
-
-
-    }//GEN-LAST:event_cmdOcrActionPerformed
-
-    private void cmdCreateCaseActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdCreateCaseActionPerformed
-        if (this.executor instanceof ScannerPanel) {
-            ((ScannerPanel) this.executor).startCreateCaseWizardForSelectedScan();
-        } else {
-            log.warn("Create case wizard not supported for executor " + (this.executor != null ? this.executor.getClass().getName() : "null"));
-        }
-    }//GEN-LAST:event_cmdCreateCaseActionPerformed
-
-    // Variables declaration - do not modify//GEN-BEGIN:variables
-    private javax.swing.JButton cmdDeleteScan;
-    private javax.swing.JButton cmdCreateCase;
-    private javax.swing.JButton cmdOcr;
-    private javax.swing.JButton cmdRenameScan;
-    private javax.swing.JButton cmdSplitPdf;
-    private javax.swing.JLabel lblDescription;
-    // End of variables declaration//GEN-END:variables
+    public void setSource(String source) {
+        this.source = source;
+    }
 }
