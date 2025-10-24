@@ -1435,6 +1435,7 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
                         // gemischter Zustand: kursiv und Fett + Tooltip
                         try {
                             tb.setFont(tb.getFont().deriveFont(java.awt.Font.BOLD | java.awt.Font.ITALIC));
+                            tb.setForeground(DefaultColorTheme.COLOR_LOGO_GREEN);
                         } catch (Throwable t) {
                             // falls Font nicht gesetzt werden kann: ignorieren, aber loggen
                             log.warn("Could not set mixed-state bold/italic font", t);
