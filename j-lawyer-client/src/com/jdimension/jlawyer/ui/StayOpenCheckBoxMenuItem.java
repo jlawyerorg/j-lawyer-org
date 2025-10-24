@@ -661,7 +661,7 @@ if any, to sign a "copyright disclaimer" for the program, if necessary.
 For more information on this, and how to apply and follow the GNU AGPL, see
 <https://www.gnu.org/licenses/>.
  */
-package com.jdimension.jlawyer.client.utils;
+package com.jdimension.jlawyer.ui;
 
 import javax.swing.JCheckBoxMenuItem;
 import javax.swing.MenuElement;
@@ -695,9 +695,8 @@ public class StayOpenCheckBoxMenuItem extends JCheckBoxMenuItem {
         MenuElement[] pathBefore = msm.getSelectedPath();
         try {
             super.doClick(pressTime);
-        } catch (Throwable t) {
-            // Never ignore exceptions; log and continue attempting to keep popup open
-            Logger.getLogger(StayOpenCheckBoxMenuItem.class).error("Error during menu item click handling", t);
+        } catch (Throwable t) {            
+            log.error("Error during menu item click handling", t);
         }
         try {
             // Restore selection path to keep popup open
@@ -705,7 +704,7 @@ public class StayOpenCheckBoxMenuItem extends JCheckBoxMenuItem {
                 msm.setSelectedPath(pathBefore);
             }
         } catch (Throwable t) {
-            Logger.getLogger(StayOpenCheckBoxMenuItem.class).warn("Could not restore popup selection path after click", t);
+            log.warn("Could not restore popup selection path after click", t);
         }
     }
 }

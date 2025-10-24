@@ -9,7 +9,6 @@ import com.jdimension.jlawyer.persistence.DocumentTagsBean;
 import com.jdimension.jlawyer.services.ArchiveFileServiceRemote;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.util.ArrayList;
 import java.util.List;
 import javax.swing.JOptionPane;
 import org.apache.log4j.Logger;
@@ -46,22 +45,14 @@ public class MultiDocumentTagActionListener implements ActionListener {
             DocumentTagsBean tagBean = new DocumentTagsBean();
             tagBean.setTagName(tagName);
 
-            List<String> failed = new ArrayList<>();
-            for (String docId : this.documentIds) {
-                try {
-                    this.fileService.setDocumentTag(docId, tagBean, active);
-                } catch (Throwable t) {
-                    failed.add(docId);
-                    log.error("Error setting tag '" + tagName + "' for document " + docId, t);
-                }
-            }
-
-            this.caller.updateDocumentTagsOverview();
-
-            if (!failed.isEmpty()) {
+            try {
+                this.fileService.setDocumentTags(this.documentIds, tagBean, active);
+                this.caller.updateDocumentTagsOverview();
+            } catch (Throwable t) {
+                log.error("Error setting tag '" + tagName + "' for multiple documents", t);
                 JOptionPane.showMessageDialog(
                         EditorsRegistry.getInstance().getMainWindow(),
-                        "Fehler beim Setzen des Dokumentetiketts für " + failed.size() + " von " + this.documentIds.size() + " Dokument(en).",
+                        "Fehler beim Setzen des Dokumentetiketts: " + t.getMessage(),
                         DesktopUtils.POPUP_TITLE_ERROR,
                         JOptionPane.ERROR_MESSAGE
                 );

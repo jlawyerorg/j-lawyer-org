@@ -677,6 +677,7 @@ import com.jdimension.jlawyer.persistence.ArchiveFileTagsBean;
 import com.jdimension.jlawyer.persistence.DocumentTagsBean;
 import com.jdimension.jlawyer.services.ArchiveFileServiceRemote;
 import com.jdimension.jlawyer.services.JLawyerServiceLocator;
+import com.jdimension.jlawyer.ui.StayOpenCheckBoxMenuItem;
 
 import java.awt.Component;
 import java.awt.event.ActionEvent;
@@ -684,7 +685,6 @@ import java.nio.channels.ClosedChannelException;
 import java.util.*;
 import javax.ejb.EJBException;
 import javax.swing.*;
-import com.jdimension.jlawyer.client.utils.StayOpenCheckBoxMenuItem;
 
 import org.apache.log4j.Logger;
 

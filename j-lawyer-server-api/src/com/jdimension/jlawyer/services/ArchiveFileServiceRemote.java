@@ -734,6 +734,8 @@ public interface ArchiveFileServiceRemote {
     
     void setDocumentTag(String documentId, DocumentTagsBean tag, boolean active) throws Exception;
 
+    void setDocumentTags(List<String> documentIds, DocumentTagsBean tag, boolean active) throws Exception;
+
     Collection<ArchiveFileTagsBean> getTags(String archiveFileId) throws Exception;
     
     HashMap<String,ArrayList<ArchiveFileTagsBean>> getTags(List<String> archiveFileId) throws Exception;

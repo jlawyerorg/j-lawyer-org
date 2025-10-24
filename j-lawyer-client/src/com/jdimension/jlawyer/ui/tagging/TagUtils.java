@@ -679,7 +679,7 @@ import javax.swing.JButton;
 import javax.swing.JCheckBoxMenuItem;
 import javax.swing.JPopupMenu;
 import javax.swing.MenuElement;
-import com.jdimension.jlawyer.client.utils.StayOpenCheckBoxMenuItem;
+import com.jdimension.jlawyer.ui.StayOpenCheckBoxMenuItem;
 
 /**
  *

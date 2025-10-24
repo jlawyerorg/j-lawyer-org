@@ -1436,19 +1436,34 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
                             log.warn("Could not set mixed-state bold/italic font", t);
                         }
                         ArrayList<String> docNames = tagToDocNames.get(tagString);
-                        String details = "";
                         if (docNames != null && !docNames.isEmpty()) {
                             // Begrenze die Auflistung für bessere Lesbarkeit
-                            int limit = 10;
-                            String joined;
-                            if (docNames.size() > limit) {
-                                joined = String.join(", ", docNames.subList(0, limit)) + ", …";
-                            } else {
-                                joined = String.join(", ", docNames);
+                            // HTML-Tooltips unterstützen Zeilenumbrüche
+                            int maxDocs = 15;
+                            int docsPerLine = 5;
+                            StringBuilder tooltip = new StringBuilder("<html><b>teilweise vergeben (");
+                            tooltip.append(usedIn).append("/").append(selectionSize).append(")</b><br/>");
+
+                            int docsToShow = Math.min(docNames.size(), maxDocs);
+                            for (int i = 0; i < docsToShow; i++) {
+                                if (i > 0) {
+                                    tooltip.append(", ");
+                                }
+                                // Zeilenumbruch nach jeweils docsPerLine Dokumenten
+                                if (i > 0 && i % docsPerLine == 0) {
+                                    tooltip.append("<br/>");
+                                }
+                                tooltip.append(docNames.get(i));
                             }
-                            details = ": " + joined;
+
+                            if (docNames.size() > maxDocs) {
+                                tooltip.append("<br/>... und ").append(docNames.size() - maxDocs).append(" weitere");
+                            }
+                            tooltip.append("</html>");
+                            tb.setToolTipText(tooltip.toString());
+                        } else {
+                            tb.setToolTipText("teilweise vergeben (" + usedIn + "/" + selectionSize + ")");
                         }
-                        tb.setToolTipText("teilweise vergeben (" + usedIn + "/" + selectionSize + ")" + details);
                     } else if (allHave) {
                         tb.setToolTipText("aktiv in allen ausgewählten Dokumenten");
                     } else {
