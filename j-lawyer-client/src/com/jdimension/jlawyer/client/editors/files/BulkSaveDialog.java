@@ -695,6 +695,7 @@ import com.jdimension.jlawyer.pojo.PartiesTriplet;
 import com.jdimension.jlawyer.ui.folders.JMenuItemWithFolder;
 import com.jdimension.jlawyer.ui.tagging.TagToggleButton;
 import com.jdimension.jlawyer.ui.tagging.WrapLayout;
+import com.jdimension.jlawyer.ui.StayOpenCheckBoxMenuItem;
 import de.costache.calendar.NewEventEntryCallbacks;
 import de.costache.calendar.NewEventEntryDialog;
 import java.awt.Dialog;
@@ -860,7 +861,7 @@ public class BulkSaveDialog extends javax.swing.JDialog implements NewEventEntry
         popup.removeAll();
         boolean hasSelection = false;
         for (String t : tagsInUse) {
-            JCheckBoxMenuItem mi = new JCheckBoxMenuItem(t);
+            JCheckBoxMenuItem mi = new StayOpenCheckBoxMenuItem(t);
             if (Arrays.asList(lastFilterTags).contains(t)) {
                 mi.setSelected(true);
                 hasSelection = true;

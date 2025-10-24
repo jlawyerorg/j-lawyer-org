@@ -1943,10 +1943,22 @@ public class DesktopPanel extends javax.swing.JPanel implements ThemeableEditor,
     }//GEN-LAST:event_cmdRefreshTaggedActionPerformed
 
     private void cmdTagFilterMousePressed(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_cmdTagFilterMousePressed
+        try {
+            this.popTagFilter.putClientProperty("jlawyer.anchorX", Integer.valueOf(evt.getX()));
+            this.popTagFilter.putClientProperty("jlawyer.anchorY", Integer.valueOf(evt.getY()));
+        } catch (Exception ex) {
+            org.apache.log4j.Logger.getLogger(DesktopPanel.class).warn("Could not store tag popup anchor", ex);
+        }
         this.popTagFilter.show(this.cmdTagFilter, evt.getX(), evt.getY());
     }//GEN-LAST:event_cmdTagFilterMousePressed
 
     private void cmdDocumentTagFilterMousePressed(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_cmdDocumentTagFilterMousePressed
+        try {
+            this.popDocumentTagFilter.putClientProperty("jlawyer.anchorX", Integer.valueOf(evt.getX()));
+            this.popDocumentTagFilter.putClientProperty("jlawyer.anchorY", Integer.valueOf(evt.getY()));
+        } catch (Exception ex) {
+            org.apache.log4j.Logger.getLogger(DesktopPanel.class).warn("Could not store document tag popup anchor", ex);
+        }
         this.popDocumentTagFilter.show(this.cmdDocumentTagFilter, evt.getX(), evt.getY());
     }//GEN-LAST:event_cmdDocumentTagFilterMousePressed
 

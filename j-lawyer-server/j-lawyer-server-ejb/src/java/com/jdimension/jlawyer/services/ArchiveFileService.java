@@ -2622,6 +2622,81 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
     }
 
     @Override
+    @RolesAllowed({"writeArchiveFileRole"})
+    public void setDocumentTags(List<String> documentIds, DocumentTagsBean tag, boolean active) throws Exception {
+        if (documentIds == null || documentIds.isEmpty()) {
+            return;
+        }
+
+        StringGenerator idGen = new StringGenerator();
+        String caseId = null;
+        int successCount = 0;
+
+        for (String documentId : documentIds) {
+            try {
+                ArchiveFileDocumentsBean aFile = this.archiveFileDocumentsFacade.find(documentId);
+
+                if (aFile == null) {
+                    log.warn("Document not found: " + documentId);
+                    continue;
+                }
+
+                // Role check only for first document to get case
+                if (caseId == null) {
+                    caseId = aFile.getArchiveFileKey().getId();
+                    SecurityUtils.checkGroupsForCase(context.getCallerPrincipal().getName(), aFile.getArchiveFileKey(), this.securityFacade, this.getAllowedGroups(aFile.getArchiveFileKey()));
+                }
+
+                List check = this.documentTagsFacade.findByDocumentKeyAndTagName(aFile, tag.getTagName());
+
+                if (active) {
+                    if (check.isEmpty()) {
+                        String tagId = idGen.getID().toString();
+                        DocumentTagsBean newTag = new DocumentTagsBean();
+                        newTag.setId(tagId);
+                        newTag.setTagName(tag.getTagName());
+                        newTag.setArchiveFileKey(aFile);
+                        if (tag.getDateSet() == null) {
+                            newTag.setDateSet(new Date());
+                        } else {
+                            newTag.setDateSet(tag.getDateSet());
+                        }
+                        this.documentTagsFacade.create(newTag);
+                        successCount++;
+                    }
+                } else if (!check.isEmpty()) {
+                    DocumentTagsBean remove = (DocumentTagsBean) check.get(0);
+                    this.documentTagsFacade.remove(remove);
+                    successCount++;
+                }
+
+            } catch (Throwable t) {
+                log.error("Error setting tag '" + tag.getTagName() + "' for document " + documentId, t);
+            }
+        }
+
+        // Add single history entry for batch operation
+        if (caseId != null && successCount > 0) {
+            String historyText = active
+                    ? "Dokument-Etikett gesetzt für " + successCount + " Dokument(e): " + tag.getTagName()
+                    : "Dokument-Etikett entfernt von " + successCount + " Dokument(e): " + tag.getTagName();
+            this.addCaseHistory(idGen.getID().toString(), this.archiveFileFacade.find(caseId), historyText);
+        }
+
+        // Fire events for each document
+        if (caseId != null) {
+            for (String documentId : documentIds) {
+                DocumentTagChangedEvent evt = new DocumentTagChangedEvent();
+                evt.setCaseId(caseId);
+                evt.setDocumentId(documentId);
+                evt.setActive(active);
+                evt.setTagName(tag.getTagName());
+                this.docTagChangedEvent.fireAsync(evt);
+            }
+        }
+    }
+
+    @Override
     @RolesAllowed({"readArchiveFileRole"})
     public Collection<ArchiveFileTagsBean> getTags(String archiveFileId) throws Exception {
         ArchiveFileBean aFile = this.archiveFileFacade.find(archiveFileId);

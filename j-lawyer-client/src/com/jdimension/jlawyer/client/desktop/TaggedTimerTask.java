@@ -677,6 +677,7 @@ import com.jdimension.jlawyer.persistence.ArchiveFileTagsBean;
 import com.jdimension.jlawyer.persistence.DocumentTagsBean;
 import com.jdimension.jlawyer.services.ArchiveFileServiceRemote;
 import com.jdimension.jlawyer.services.JLawyerServiceLocator;
+import com.jdimension.jlawyer.ui.StayOpenCheckBoxMenuItem;
 
 import java.awt.Component;
 import java.awt.event.ActionEvent;
@@ -766,7 +767,7 @@ public class TaggedTimerTask extends java.util.TimerTask {
             popup.removeAll();
             boolean hasSelection = false;
             for (String t : tagsInUse) {
-                JCheckBoxMenuItem mi = new JCheckBoxMenuItem(t);
+                JCheckBoxMenuItem mi = new StayOpenCheckBoxMenuItem(t);
                 if (Arrays.asList(lastFilterTags).contains(t)) {
                     mi.setSelected(true);
                     hasSelection = true;
@@ -798,6 +799,16 @@ public class TaggedTimerTask extends java.util.TimerTask {
                         button.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons16/material/baseline_label_white_36dp.png")));
                     }
                     UserSettings.getInstance().setSettingArray(userSettingsKey, al.toArray(new String[al.size()]));
+                    // Re-show popup at the same anchor position to keep it open without shifting
+                    try {
+                        Object ax = popup.getClientProperty("jlawyer.anchorX");
+                        Object ay = popup.getClientProperty("jlawyer.anchorY");
+                        int anchorX = (ax instanceof Integer) ? ((Integer) ax).intValue() : 0;
+                        int anchorY = (ay instanceof Integer) ? ((Integer) ay).intValue() : button.getHeight();
+                        popup.show(button, anchorX, anchorY);
+                    } catch (Exception ex) {
+                        log.warn("Could not keep tag popup open at stored anchor", ex);
+                    }
                     TimerTask taggedTask = new TaggedTimerTask(EditorsRegistry.getInstance().getMainWindow(), tagsPane, resultUI, split, tagMenu, tagDocumentMenu, popTags, popDocumentTags, true, false);
                     new java.util.Timer().schedule(taggedTask, 1000);
                 });

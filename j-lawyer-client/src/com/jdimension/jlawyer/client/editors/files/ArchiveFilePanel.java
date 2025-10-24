@@ -761,6 +761,10 @@ import com.jdimension.jlawyer.ui.tagging.TagSelectedAction;
 import com.jdimension.jlawyer.ui.tagging.TagToggleButton;
 import com.jdimension.jlawyer.ui.tagging.TagUtils;
 import com.jdimension.jlawyer.ui.tagging.WrapLayout;
+import com.jdimension.jlawyer.ui.tagging.MultiDocumentTagActionListener;
+import java.util.Hashtable;
+import java.util.Map;
+import javax.swing.JOptionPane;
 import java.awt.Adjustable;
 import java.awt.BorderLayout;
 import java.awt.Color;
@@ -1356,6 +1360,124 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
                     //ThreadUtils.addComponent(documentTagPanel, tb);
                     this.documentTagPanel.add(tb);
                 }
+                this.documentTagPanel.revalidate();
+                this.documentTagPanel.repaint();
+            } else if (selectedDocs.size() > 1) {
+                // Mehrfachselektion: Tags-Übersicht anzeigen und Massenbearbeitung erlauben
+                this.documentTagPanel.removeAll();
+                this.documentTagPanel.revalidate();
+
+                ClientSettings settings = ClientSettings.getInstance();
+                JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
+                ArchiveFileServiceRemote remote = locator.lookupArchiveFileServiceRemote();
+
+                // Dokument-IDs der Auswahl
+                ArrayList<String> selectedDocIds = new ArrayList<>();
+                for (ArchiveFileDocumentsBean d : selectedDocs) {
+                    selectedDocIds.add(d.getId());
+                }
+
+                // Alle potenziellen Tags aus Optionen
+                ArrayList<String> allTags = new ArrayList<>();
+                AppOptionGroupBean[] tagOptions = settings.getDocumentTagDtos();
+                for (AppOptionGroupBean aog : tagOptions) {
+                    if (!allTags.contains(aog.getValue())) {
+                        allTags.add(aog.getValue());
+                    }
+                }
+
+                // Bestehende Tags der Auswahl sammeln (für Darstellung gemischt/alle/keine)
+                Map<String, Integer> tagUsageCount = new java.util.HashMap<>();
+                Map<String, ArrayList<String>> tagToDocNames = new java.util.HashMap<>();
+                try {
+                    // effizient: hole für den Fall alle Dokument-Tags und filtere auf Auswahl
+                    Hashtable<String, ArrayList<String>> caseTags = remote.getDocumentTagsForCase(this.dto.getId());
+                    for (ArchiveFileDocumentsBean d : selectedDocs) {
+                        String docId = d.getId();
+                        String docName = d.getName();
+                        ArrayList<String> t = caseTags.get(docId);
+                        if (t == null) {
+                            continue;
+                        }
+                        for (String tagName : t) {
+                            // zur Gesamtliste hinzufügen, falls noch nicht enthalten
+                            if (!allTags.contains(tagName)) {
+                                allTags.add(tagName);
+                            }
+                            tagUsageCount.put(tagName, tagUsageCount.getOrDefault(tagName, 0) + 1);
+                            // Dokumentnamen für Tooltip sammeln
+                            ArrayList<String> docList = tagToDocNames.get(tagName);
+                            if (docList == null) {
+                                docList = new ArrayList<>();
+                                tagToDocNames.put(tagName, docList);
+                            }
+                            docList.add(docName);
+                        }
+                    }
+                } catch (Throwable t) {
+                    log.error("Could not read document tags for selection", t);
+                    JOptionPane.showMessageDialog(this, "Fehler beim Laden der Dokumentetiketten: " + t.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
+                }
+
+                StringUtils.sortIgnoreCase(allTags);
+
+                int selectionSize = selectedDocs.size();
+                for (String tagString : allTags) {
+                    TagToggleButton tb = new TagToggleButton(tagString, null);
+                    Integer usedIn = tagUsageCount.getOrDefault(tagString, 0);
+                    boolean allHave = usedIn == selectionSize;
+                    boolean noneHave = usedIn == 0;
+
+                    // Darstellung: ausgewählt = alle, nicht ausgewählt = keine, kursiv und fett = gemischt
+                    tb.setSelected(allHave);
+                    tb.setEnabled(!this.readOnly);
+                    if (!allHave && !noneHave) {
+                        // gemischter Zustand: kursiv und Fett + Tooltip
+                        try {
+                            tb.setFont(tb.getFont().deriveFont(java.awt.Font.BOLD | java.awt.Font.ITALIC));
+                        } catch (Throwable t) {
+                            // falls Font nicht gesetzt werden kann: ignorieren, aber loggen
+                            log.warn("Could not set mixed-state bold/italic font", t);
+                        }
+                        ArrayList<String> docNames = tagToDocNames.get(tagString);
+                        if (docNames != null && !docNames.isEmpty()) {
+                            // Begrenze die Auflistung für bessere Lesbarkeit
+                            // HTML-Tooltips unterstützen Zeilenumbrüche
+                            int maxDocs = 15;
+                            int docsPerLine = 5;
+                            StringBuilder tooltip = new StringBuilder("<html><b>teilweise vergeben (");
+                            tooltip.append(usedIn).append("/").append(selectionSize).append(")</b><br/>");
+
+                            int docsToShow = Math.min(docNames.size(), maxDocs);
+                            for (int i = 0; i < docsToShow; i++) {
+                                if (i > 0) {
+                                    tooltip.append(", ");
+                                }
+                                // Zeilenumbruch nach jeweils docsPerLine Dokumenten
+                                if (i > 0 && i % docsPerLine == 0) {
+                                    tooltip.append("<br/>");
+                                }
+                                tooltip.append(docNames.get(i));
+                            }
+
+                            if (docNames.size() > maxDocs) {
+                                tooltip.append("<br/>... und ").append(docNames.size() - maxDocs).append(" weitere");
+                            }
+                            tooltip.append("</html>");
+                            tb.setToolTipText(tooltip.toString());
+                        } else {
+                            tb.setToolTipText("teilweise vergeben (" + usedIn + "/" + selectionSize + ")");
+                        }
+                    } else if (allHave) {
+                        tb.setToolTipText("aktiv in allen ausgewählten Dokumenten");
+                    } else {
+                        tb.setToolTipText("nicht vergeben in der Auswahl");
+                    }
+
+                    tb.addActionListener(new MultiDocumentTagActionListener(selectedDocIds, remote, this));
+                    this.documentTagPanel.add(tb);
+                }
+
                 this.documentTagPanel.revalidate();
                 this.documentTagPanel.repaint();
             } else {
