@@ -2610,13 +2610,16 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
                 if (check.isEmpty()) {
 
                     String tagId = idGen.getID().toString();
-                    tag.setId(tagId);
-                    tag.setArchiveFileKey(aFile);
+                    DocumentTagsBean newTag=new DocumentTagsBean(tagId);
+                    newTag.setArchiveFileKey(aFile);
                     if (tag.getDateSet() == null) {
-                        tag.setDateSet(new Date());
+                        newTag.setDateSet(new Date());
+                    } else {
+                        newTag.setDateSet(tag.getDateSet());
                     }
-                    this.documentTagsFacade.create(tag);
-                    historyText = "Dokument-Etikett gesetzt an " + aFile.getName() + ": " + tag.getTagName();
+                    newTag.setTagName(tag.getTagName());
+                    this.documentTagsFacade.create(newTag);
+                    historyText = "Dokument-Etikett gesetzt an " + aFile.getName() + ": " + newTag.getTagName();
                 }
             } else if (!check.isEmpty()) {
                 DocumentTagsBean remove = (DocumentTagsBean) check.get(0);
