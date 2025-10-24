@@ -724,6 +724,7 @@ import javax.swing.JLabel;
 import javax.swing.JOptionPane;
 import javax.swing.JPopupMenu;
 import javax.swing.JRadioButtonMenuItem;
+import javax.swing.JSeparator;
 import javax.swing.MenuElement;
 import javax.swing.SwingConstants;
 import org.apache.log4j.Logger;
@@ -1006,29 +1007,62 @@ public class DesktopPanel extends javax.swing.JPanel implements ThemeableEditor,
     }
     
     private void buildDueSinceDaysPopup() {
-        int daysSince=UserSettings.getInstance().getSettingAsInt(UserSettings.CONF_DESKTOP_LASTFILTERDUESINCEDAYS, 1);
-        
-        this.lblDueSinceDays.setText("" + daysSince);
+        this.updateDueSinceDaysLabel();
 
+        int daysSince=UserSettings.getInstance().getSettingAsInt(UserSettings.CONF_DESKTOP_LASTFILTERDUESINCEDAYS, 1);
+        int inDays=UserSettings.getInstance().getSettingAsInt(UserSettings.CONF_DESKTOP_LASTFILTERDUEINDAYS, 0);
         this.popDueSinceDays.removeAll();
-        for (int days: new int[]{1,3,7,14,31,180,365}) {
+        for (int days: new int[]{-1,-3,-7,-14,-31,-180,-365}) {
             JRadioButtonMenuItem mi = new JRadioButtonMenuItem("" + days);
-            mi.setSelected(days==daysSince);
+            mi.setSelected(Math.abs(days)==Math.abs(daysSince));
             mi.setHorizontalTextPosition(SwingConstants.RIGHT);
             mi.setHorizontalAlignment(SwingConstants.RIGHT);
             btnGrpDueSinceDays.add(mi);
             popDueSinceDays.add(mi);
-        }
-        for (MenuElement me : popDueSinceDays.getSubElements()) {
-            ((JRadioButtonMenuItem) me.getComponent()).addActionListener((ActionEvent e) -> {
-                this.lblDueSinceDays.setText(((JRadioButtonMenuItem) me.getComponent()).getText());
-                UserSettings.getInstance().setSetting(UserSettings.CONF_DESKTOP_LASTFILTERDUESINCEDAYS, this.lblDueSinceDays.getText());
+            
+            mi.addActionListener((ActionEvent e) -> {
+                UserSettings.getInstance().setSetting(UserSettings.CONF_DESKTOP_LASTFILTERDUESINCEDAYS, mi.getText());
+                this.updateDueSinceDaysLabel();
                 TimerTask revDueTask = new ReviewsDueTimerTask(this, this.tabPaneDue, this.pnlRevDue, this.jSplitPane1, true);
                 new java.util.Timer().schedule(revDueTask, 100);
             });
         }
+        
+        popDueSinceDays.add(new JSeparator());
+        
+        for (int days: new int[]{0,1,3,7,14,31}) {
+            JRadioButtonMenuItem mi = new JRadioButtonMenuItem("" + days);
+            mi.setSelected(days==inDays);
+            mi.setHorizontalTextPosition(SwingConstants.RIGHT);
+            mi.setHorizontalAlignment(SwingConstants.RIGHT);
+            btnGrpDueInDays.add(mi);
+            popDueSinceDays.add(mi);
+            
+            mi.addActionListener((ActionEvent e) -> {
+                UserSettings.getInstance().setSetting(UserSettings.CONF_DESKTOP_LASTFILTERDUEINDAYS, mi.getText());
+                this.updateDueSinceDaysLabel();
+                TimerTask revDueTask = new ReviewsDueTimerTask(this, this.tabPaneDue, this.pnlRevDue, this.jSplitPane1, true);
+                new java.util.Timer().schedule(revDueTask, 100);
+            });
+        }
+        
 
         
+    }
+    
+    private void updateDueSinceDaysLabel() {
+        int daysSince=UserSettings.getInstance().getSettingAsInt(UserSettings.CONF_DESKTOP_LASTFILTERDUESINCEDAYS, 1);
+        if(daysSince>0)
+            daysSince=-1*daysSince;
+        
+        int inDays=UserSettings.getInstance().getSettingAsInt(UserSettings.CONF_DESKTOP_LASTFILTERDUEINDAYS, 0);
+        
+        if(inDays>0)
+            this.lblDueSinceDays.setText(daysSince + " .. +" + inDays);
+        else
+           this.lblDueSinceDays.setText(""+daysSince); 
+        
+        this.lblDueSinceDays.setToolTipText("Der Desktop schaut " + (-1*daysSince) + " Tage in die Vergangenheit und " + inDays + " Tage in die Zukunft");
     }
     
     private void buildUsersPopupCalendarEntries() {
@@ -1190,6 +1224,7 @@ public class DesktopPanel extends javax.swing.JPanel implements ThemeableEditor,
         btnGrpDueSinceDays = new javax.swing.ButtonGroup();
         popUserFilterTagged = new javax.swing.JPopupMenu();
         popUserFilterLastchanged = new javax.swing.JPopupMenu();
+        btnGrpDueInDays = new javax.swing.ButtonGroup();
         jSplitPane1 = new javax.swing.JSplitPane();
         jPanel2 = new javax.swing.JPanel();
         jLabel6 = new javax.swing.JLabel();
@@ -1929,6 +1964,7 @@ public class DesktopPanel extends javax.swing.JPanel implements ThemeableEditor,
 
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
+    private javax.swing.ButtonGroup btnGrpDueInDays;
     private javax.swing.ButtonGroup btnGrpDueSinceDays;
     private javax.swing.JButton cmdDocumentTagFilter;
     private javax.swing.JButton cmdDueSinceDays;

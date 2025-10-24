@@ -704,6 +704,7 @@ public class UserSettingsKeys {
     public static final String CONF_DESKTOP_LASTFILTERUSERS_TAGGED = "client.desktop.lastfilterusers.tagged";
     public static final String CONF_DESKTOP_LASTFILTERUSERS_LASTCHANGED = "client.desktop.lastfilterusers.lastchanged";
     public static final String CONF_DESKTOP_LASTFILTERDUESINCEDAYS = "client.desktop.lastfilterduesincedays";
+    public static final String CONF_DESKTOP_LASTFILTERDUEINDAYS = "client.desktop.lastfilterdueindays";
     public static final String CONF_DESKTOP_LASTFILTERDOCUMENTTAG = "client.desktop.lastfilterdocumenttag";
 
     public static final String CONF_CALENDAR_DEFAULTTAB = "user.calendar.defaulttab";
