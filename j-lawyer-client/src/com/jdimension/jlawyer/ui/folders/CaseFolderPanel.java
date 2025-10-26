@@ -742,6 +742,7 @@ public class CaseFolderPanel extends javax.swing.JPanel implements EventConsumer
      */
     public CaseFolderPanel(boolean readonly) {
         initComponents();
+        this.updateDocumentCount();
         this.foldersListPanel.setCaseFolderPanel(this);
         this.readonly = readonly;
         this.jScrollPane1.getVerticalScrollBar().setUnitIncrement(16);
@@ -1139,6 +1140,7 @@ public class CaseFolderPanel extends javax.swing.JPanel implements EventConsumer
         sortFileType = new com.jdimension.jlawyer.ui.folders.SortButton();
         sortCreationDate = new com.jdimension.jlawyer.ui.folders.SortButton();
         cmdExportSelectedAsPdf = new javax.swing.JButton();
+        lblDocumentCount = new javax.swing.JLabel();
         jScrollPane2 = new javax.swing.JScrollPane();
         pnlDocumentEntries = new javax.swing.JPanel();
         documentEntryPanel1 = new com.jdimension.jlawyer.ui.folders.DocumentEntryPanel();
@@ -1308,6 +1310,9 @@ public class CaseFolderPanel extends javax.swing.JPanel implements EventConsumer
             }
         });
 
+        lblDocumentCount.setFont(lblDocumentCount.getFont());
+        lblDocumentCount.setText("0");
+
         javax.swing.GroupLayout jPanel2Layout = new javax.swing.GroupLayout(jPanel2);
         jPanel2.setLayout(jPanel2Layout);
         jPanel2Layout.setHorizontalGroup(
@@ -1334,6 +1339,8 @@ public class CaseFolderPanel extends javax.swing.JPanel implements EventConsumer
                 .addComponent(sortFolder, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addGap(2, 2, 2)
                 .addComponent(sortFileType, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addComponent(lblDocumentCount)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                 .addComponent(cmdExportSelectedAsPdf)
                 .addContainerGap())
@@ -1343,12 +1350,11 @@ public class CaseFolderPanel extends javax.swing.JPanel implements EventConsumer
             .addGroup(jPanel2Layout.createSequentialGroup()
                 .addGroup(jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING, false)
                     .addComponent(cmdSelectAll1, javax.swing.GroupLayout.Alignment.LEADING, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                    .addGroup(javax.swing.GroupLayout.Alignment.LEADING, jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
-                        .addComponent(cmdActions, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                        .addGroup(jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                            .addComponent(sortChangeDate, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                            .addComponent(cmdMoveToFolder))
-                        .addComponent(cmdSelectNone1, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                    .addComponent(cmdActions, javax.swing.GroupLayout.Alignment.LEADING, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                    .addGroup(javax.swing.GroupLayout.Alignment.LEADING, jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                        .addComponent(sortChangeDate, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addComponent(cmdMoveToFolder))
+                    .addComponent(cmdSelectNone1, javax.swing.GroupLayout.Alignment.LEADING, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                     .addGroup(javax.swing.GroupLayout.Alignment.LEADING, jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                         .addComponent(sortFolder, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                         .addComponent(sortName, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
@@ -1356,7 +1362,8 @@ public class CaseFolderPanel extends javax.swing.JPanel implements EventConsumer
                         .addComponent(sortSize, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
                     .addComponent(sortFileType, javax.swing.GroupLayout.Alignment.LEADING, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                     .addComponent(sortCreationDate, javax.swing.GroupLayout.Alignment.LEADING, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                    .addComponent(cmdExportSelectedAsPdf, javax.swing.GroupLayout.Alignment.LEADING))
+                    .addComponent(cmdExportSelectedAsPdf, javax.swing.GroupLayout.Alignment.LEADING)
+                    .addComponent(lblDocumentCount, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
                 .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
         );
 
@@ -1653,6 +1660,7 @@ public class CaseFolderPanel extends javax.swing.JPanel implements EventConsumer
     private javax.swing.JPanel jPanel2;
     private javax.swing.JScrollPane jScrollPane1;
     private javax.swing.JScrollPane jScrollPane2;
+    private javax.swing.JLabel lblDocumentCount;
     private javax.swing.JPanel pnlDocumentEntries;
     private javax.swing.JPopupMenu popFolderTemplates;
     private javax.swing.JPopupMenu popMoveToFolder;
@@ -1742,6 +1750,22 @@ public class CaseFolderPanel extends javax.swing.JPanel implements EventConsumer
             }
         }
     }
+    
+    private void updateDocumentCount() {
+        int count=this.pnlDocumentEntries.getComponentCount();
+        count=Math.max(0, count-1);
+        
+        if(count==0) {
+            this.lblDocumentCount.setText("");
+            this.lblDocumentCount.setToolTipText("");
+        } else if(count==1) {
+            this.lblDocumentCount.setText("1");
+            this.lblDocumentCount.setToolTipText("1 Dokument");
+        } else {
+            this.lblDocumentCount.setText("" + count);
+            this.lblDocumentCount.setToolTipText(count + " Dokumente");
+        }
+    }
 
     /**
      * @param documents the documents to set
@@ -1819,6 +1843,7 @@ public class CaseFolderPanel extends javax.swing.JPanel implements EventConsumer
         this.jScrollPane2.revalidate();
 
         this.foldersListPanel.renderEmptyFullState();
+        this.updateDocumentCount();
     }
 
     public void addDocument(ArchiveFileDocumentsBean newDoc, Invoice invoice) {
@@ -1843,6 +1868,7 @@ public class CaseFolderPanel extends javax.swing.JPanel implements EventConsumer
         this.pnlDocumentEntries.revalidate();
         this.sort();
         this.foldersListPanel.renderEmptyFullState();
+        this.updateDocumentCount();
     }
 
     public void clearDocuments() {
@@ -1850,6 +1876,7 @@ public class CaseFolderPanel extends javax.swing.JPanel implements EventConsumer
         this.linkedInvoices.clear();
         this.pnlDocumentEntries.removeAll();
         this.foldersListPanel.renderEmptyFullState();
+        this.updateDocumentCount();
     }
 
     public void removeDocument(ArchiveFileDocumentsBean doc) {
@@ -1871,6 +1898,7 @@ public class CaseFolderPanel extends javax.swing.JPanel implements EventConsumer
 
         this.pnlDocumentEntries.repaint();
         this.pnlDocumentEntries.revalidate();
+        this.updateDocumentCount();
     }
 
     public void updateDocument(ArchiveFileDocumentsBean doc) {
@@ -1980,6 +2008,7 @@ public class CaseFolderPanel extends javax.swing.JPanel implements EventConsumer
         this.pnlDocumentEntries.revalidate();
 
         this.foldersListPanel.renderEmptyFullState();
+        this.updateDocumentCount();
     }
 
     void updateDocumentsInFolder(CaseFolder folder) {
