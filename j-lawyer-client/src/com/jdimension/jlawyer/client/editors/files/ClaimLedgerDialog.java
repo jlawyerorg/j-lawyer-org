@@ -677,15 +677,22 @@ import com.jdimension.jlawyer.persistence.InterestRule;
 import com.jdimension.jlawyer.persistence.LedgerEntryType;
 import com.jdimension.jlawyer.pojo.ClaimLedgerTotals;
 import com.jdimension.jlawyer.services.JLawyerServiceLocator;
+import java.awt.Component;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.text.DecimalFormat;
+import java.text.DecimalFormatSymbols;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
+import java.util.Locale;
+import javax.swing.JLabel;
 import javax.swing.JOptionPane;
+import javax.swing.JTable;
+import javax.swing.SwingConstants;
 import javax.swing.table.AbstractTableModel;
+import javax.swing.table.DefaultTableCellRenderer;
 import org.apache.log4j.Logger;
 import themes.colors.DefaultColorTheme;
 
@@ -779,6 +786,10 @@ public class ClaimLedgerDialog extends javax.swing.JDialog implements EventConsu
             this.tblComponents.setModel(new ComponentTableModel(new ArrayList<>()));
             this.tblLedger.setModel(new LedgerTableModel(new ArrayList<>()));
 
+            // Währungsformatierung für Betrag-Spalten
+            this.tblComponents.getColumnModel().getColumn(0).setCellRenderer(new CurrencyRenderer());
+            this.tblLedger.getColumnModel().getColumn(2).setCellRenderer(new CurrencyRenderer());
+
         } else {
             this.setTitle("Forderungskonto " + ledger.getName());
             this.txtName.setText(ledger.getName());
@@ -791,6 +802,10 @@ public class ClaimLedgerDialog extends javax.swing.JDialog implements EventConsu
 
                 this.tblComponents.setModel(new ComponentTableModel(components));
                 this.tblLedger.setModel(new LedgerTableModel(entries));
+
+                // Währungsformatierung für Betrag-Spalten
+                this.tblComponents.getColumnModel().getColumn(0).setCellRenderer(new CurrencyRenderer());
+                this.tblLedger.getColumnModel().getColumn(2).setCellRenderer(new CurrencyRenderer());
 
             } catch (Exception ex) {
                 log.error("Error updating invoice position", ex);
@@ -1123,18 +1138,23 @@ public class ClaimLedgerDialog extends javax.swing.JDialog implements EventConsu
         jLabel9.setText("offen:");
 
         lblSumCost.setFont(lblSumCost.getFont());
+        lblSumCost.setHorizontalAlignment(javax.swing.SwingConstants.RIGHT);
         lblSumCost.setText("jLabel10");
 
         lblSumMain.setFont(lblSumMain.getFont());
+        lblSumMain.setHorizontalAlignment(javax.swing.SwingConstants.RIGHT);
         lblSumMain.setText("jLabel11");
 
         lblSumInterest.setFont(lblSumInterest.getFont());
+        lblSumInterest.setHorizontalAlignment(javax.swing.SwingConstants.RIGHT);
         lblSumInterest.setText("jLabel12");
 
         lblSumPaid.setFont(lblSumPaid.getFont());
+        lblSumPaid.setHorizontalAlignment(javax.swing.SwingConstants.RIGHT);
         lblSumPaid.setText("jLabel13");
 
         lblSumOpen.setFont(lblSumOpen.getFont());
+        lblSumOpen.setHorizontalAlignment(javax.swing.SwingConstants.RIGHT);
         lblSumOpen.setText("jLabel14");
 
         javax.swing.GroupLayout jPanel5Layout = new javax.swing.GroupLayout(jPanel5);
@@ -1143,11 +1163,11 @@ public class ClaimLedgerDialog extends javax.swing.JDialog implements EventConsu
             jPanel5Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(jPanel5Layout.createSequentialGroup()
                 .addContainerGap()
-                .addGroup(jPanel5Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                .addGroup(jPanel5Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
                     .addGroup(jPanel5Layout.createSequentialGroup()
                         .addComponent(jLabel3)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-                        .addComponent(lblSumMain))
+                        .addComponent(lblSumMain, javax.swing.GroupLayout.PREFERRED_SIZE, 200, javax.swing.GroupLayout.PREFERRED_SIZE))
                     .addGroup(jPanel5Layout.createSequentialGroup()
                         .addGroup(jPanel5Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                             .addComponent(jLabel6)
@@ -1156,11 +1176,11 @@ public class ClaimLedgerDialog extends javax.swing.JDialog implements EventConsu
                             .addComponent(jLabel9))
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                         .addGroup(jPanel5Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                            .addComponent(lblSumOpen)
-                            .addComponent(lblSumPaid)
-                            .addComponent(lblSumInterest)
-                            .addComponent(lblSumCost))))
-                .addContainerGap(632, Short.MAX_VALUE))
+                            .addComponent(lblSumCost, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                            .addComponent(lblSumInterest, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                            .addComponent(lblSumPaid, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                            .addComponent(lblSumOpen, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))))
+                .addContainerGap(497, Short.MAX_VALUE))
         );
         jPanel5Layout.setVerticalGroup(
             jPanel5Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
@@ -1535,6 +1555,32 @@ public class ClaimLedgerDialog extends javax.swing.JDialog implements EventConsu
      */
     public boolean isCancelled() {
         return cancelled;
+    }
+
+    /**
+     * TableCellRenderer für Beträge mit deutscher Formatierung (0,00)
+     * und rechtsbündiger Ausrichtung
+     */
+    class CurrencyRenderer extends DefaultTableCellRenderer {
+        private final DecimalFormat currencyFormat;
+
+        public CurrencyRenderer() {
+            setHorizontalAlignment(SwingConstants.RIGHT);
+            // Deutsches Locale für Komma als Dezimaltrennzeichen
+            DecimalFormatSymbols symbols = new DecimalFormatSymbols(Locale.GERMAN);
+            currencyFormat = new DecimalFormat("0.00", symbols);
+        }
+
+        @Override
+        public Component getTableCellRendererComponent(JTable table, Object value,
+                boolean isSelected, boolean hasFocus, int row, int column) {
+            if (value instanceof BigDecimal) {
+                value = currencyFormat.format(value);
+            } else if (value instanceof Number) {
+                value = currencyFormat.format(((Number) value).doubleValue());
+            }
+            return super.getTableCellRendererComponent(table, value, isSelected, hasFocus, row, column);
+        }
     }
 
     class ComponentTableModel extends AbstractTableModel {

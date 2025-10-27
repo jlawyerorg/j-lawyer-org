@@ -552,11 +552,11 @@
               <Group type="103" groupAlignment="0" attributes="0">
                   <Group type="102" attributes="0">
                       <EmptySpace max="-2" attributes="0"/>
-                      <Group type="103" groupAlignment="0" attributes="0">
+                      <Group type="103" groupAlignment="0" max="-2" attributes="0">
                           <Group type="102" alignment="0" attributes="0">
                               <Component id="jLabel3" min="-2" max="-2" attributes="0"/>
                               <EmptySpace type="unrelated" max="-2" attributes="0"/>
-                              <Component id="lblSumMain" min="-2" max="-2" attributes="0"/>
+                              <Component id="lblSumMain" min="-2" pref="200" max="-2" attributes="0"/>
                           </Group>
                           <Group type="102" alignment="0" attributes="0">
                               <Group type="103" groupAlignment="0" attributes="0">
@@ -567,14 +567,14 @@
                               </Group>
                               <EmptySpace max="-2" attributes="0"/>
                               <Group type="103" groupAlignment="0" attributes="0">
-                                  <Component id="lblSumOpen" min="-2" max="-2" attributes="0"/>
-                                  <Component id="lblSumPaid" min="-2" max="-2" attributes="0"/>
-                                  <Component id="lblSumInterest" min="-2" max="-2" attributes="0"/>
-                                  <Component id="lblSumCost" min="-2" max="-2" attributes="0"/>
+                                  <Component id="lblSumCost" alignment="0" max="32767" attributes="0"/>
+                                  <Component id="lblSumInterest" alignment="0" max="32767" attributes="0"/>
+                                  <Component id="lblSumPaid" max="32767" attributes="0"/>
+                                  <Component id="lblSumOpen" alignment="0" max="32767" attributes="0"/>
                               </Group>
                           </Group>
                       </Group>
-                      <EmptySpace pref="632" max="32767" attributes="0"/>
+                      <EmptySpace pref="497" max="32767" attributes="0"/>
                   </Group>
               </Group>
             </DimensionLayout>
@@ -669,6 +669,7 @@
                     <Font component="lblSumCost" property="font" relativeSize="true" size="0"/>
                   </FontInfo>
                 </Property>
+                <Property name="horizontalAlignment" type="int" value="4"/>
                 <Property name="text" type="java.lang.String" value="jLabel10"/>
               </Properties>
             </Component>
@@ -679,6 +680,7 @@
                     <Font component="lblSumMain" property="font" relativeSize="true" size="0"/>
                   </FontInfo>
                 </Property>
+                <Property name="horizontalAlignment" type="int" value="4"/>
                 <Property name="text" type="java.lang.String" value="jLabel11"/>
               </Properties>
             </Component>
@@ -689,6 +691,7 @@
                     <Font component="lblSumInterest" property="font" relativeSize="true" size="0"/>
                   </FontInfo>
                 </Property>
+                <Property name="horizontalAlignment" type="int" value="4"/>
                 <Property name="text" type="java.lang.String" value="jLabel12"/>
               </Properties>
             </Component>
@@ -699,6 +702,7 @@
                     <Font component="lblSumPaid" property="font" relativeSize="true" size="0"/>
                   </FontInfo>
                 </Property>
+                <Property name="horizontalAlignment" type="int" value="4"/>
                 <Property name="text" type="java.lang.String" value="jLabel13"/>
               </Properties>
             </Component>
@@ -709,6 +713,7 @@
                     <Font component="lblSumOpen" property="font" relativeSize="true" size="0"/>
                   </FontInfo>
                 </Property>
+                <Property name="horizontalAlignment" type="int" value="4"/>
                 <Property name="text" type="java.lang.String" value="jLabel14"/>
               </Properties>
             </Component>
