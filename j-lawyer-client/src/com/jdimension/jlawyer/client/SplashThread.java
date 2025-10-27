@@ -677,6 +677,7 @@ import com.jdimension.jlawyer.client.settings.ClientSettings;
 import com.jdimension.jlawyer.client.settings.ServerSettings;
 import com.jdimension.jlawyer.client.settings.ThemeSettings;
 import com.jdimension.jlawyer.client.settings.UserSettings;
+import com.jdimension.jlawyer.client.utils.ComponentUtils;
 import com.jdimension.jlawyer.client.utils.FrameUtils;
 import com.jdimension.jlawyer.client.utils.ThreadUtils;
 import com.jdimension.jlawyer.client.utils.UserUtils;
@@ -1037,6 +1038,7 @@ public class SplashThread implements Runnable {
             }
             gui.restoreWindowSize();
             gui.confirmOpenTimesheetPositions();
+            ComponentUtils.installColorChooserInterceptor();
             
         });
     }
