@@ -7860,6 +7860,9 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
         // Prüfen, ob es sich um eine Zinsbuchung handelt
         if (entry.getType() == LedgerEntryType.INTEREST) {
             ClaimComponent cmp = entry.getComponent();
+            // need to load claim component from database, becuase it came in as a parameter and will not automatically load its interest rules
+            cmp=this.claimComponentsFacade.find(cmp.getId());
+            
             LocalDate startDate = this.claimLedgerEntriesFacade.findLatestInterestEntry(cmp) != null
                     ? this.claimLedgerEntriesFacade.findLatestInterestEntry(cmp).getEntryDate().toInstant().atZone(ZoneId.systemDefault()).toLocalDate()
                     : this.claimLedgerEntriesFacade.findEarliestEntry(cmp).getEntryDate().toInstant().atZone(ZoneId.systemDefault()).toLocalDate();

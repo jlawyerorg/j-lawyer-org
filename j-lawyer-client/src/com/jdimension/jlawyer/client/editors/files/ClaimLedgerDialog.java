@@ -1602,8 +1602,9 @@ public class ClaimLedgerDialog extends javax.swing.JDialog implements EventConsu
 
     class LedgerTableModel extends AbstractTableModel {
 
-        private final String[] columns = {"ID", "Datum", "Typ", "Betrag", "Komponente"};
+        private final String[] columns = {"Datum", "Typ", "Betrag", "Komponente"};
         private final List<ClaimLedgerEntry> data;
+        private final SimpleDateFormat df=new SimpleDateFormat("dd.MM.yyyy");
 
         LedgerTableModel(List<ClaimLedgerEntry> data) {
             this.data = data;
@@ -1634,14 +1635,12 @@ public class ClaimLedgerDialog extends javax.swing.JDialog implements EventConsu
             ClaimLedgerEntry e = data.get(row);
             switch (col) {
                 case 0:
-                    return e.getId();
+                    return df.format(e.getEntryDate());
                 case 1:
-                    return e.getEntryDate();
-                case 2:
                     return e.getType();
-                case 3:
+                case 2:
                     return e.getAmount();
-                case 4:
+                case 3:
                     return (e.getComponent() != null) ? e.getComponent().toString() : "–";
                 default:
                     return "";
