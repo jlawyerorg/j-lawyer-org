@@ -52,7 +52,7 @@
                       <EmptySpace max="32767" attributes="0"/>
                       <Component id="cmdClose" min="-2" max="-2" attributes="0"/>
                   </Group>
-                  <Component id="jTabbedPane1" max="32767" attributes="0"/>
+                  <Component id="jTabbedPane1" pref="0" max="32767" attributes="0"/>
               </Group>
               <EmptySpace max="-2" attributes="0"/>
           </Group>
@@ -105,6 +105,7 @@
                   <Group type="103" groupAlignment="0" attributes="0">
                       <Component id="cmdAdd" min="-2" max="-2" attributes="0"/>
                       <Component id="cmdRemove" min="-2" max="-2" attributes="0"/>
+                      <Component id="cmdDuplicate" min="-2" max="-2" attributes="0"/>
                   </Group>
                   <EmptySpace max="-2" attributes="0"/>
               </Group>
@@ -120,6 +121,8 @@
                           <Component id="cmdAdd" min="-2" max="-2" attributes="0"/>
                           <EmptySpace max="-2" attributes="0"/>
                           <Component id="cmdRemove" min="-2" max="-2" attributes="0"/>
+                          <EmptySpace max="-2" attributes="0"/>
+                          <Component id="cmdDuplicate" min="-2" max="-2" attributes="0"/>
                           <EmptySpace min="0" pref="0" max="32767" attributes="0"/>
                       </Group>
                   </Group>
@@ -197,6 +200,16 @@
             <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="cmdRemoveActionPerformed"/>
           </Events>
         </Component>
+        <Component class="javax.swing.JButton" name="cmdDuplicate">
+          <Properties>
+            <Property name="icon" type="javax.swing.Icon" editor="org.netbeans.modules.form.editors2.IconEditor">
+              <Image iconType="3" name="/icons/kmultiple.png"/>
+            </Property>
+          </Properties>
+          <Events>
+            <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="cmdDuplicateActionPerformed"/>
+          </Events>
+        </Component>
       </SubComponents>
     </Container>
     <Component class="javax.swing.JButton" name="cmdClose">
@@ -265,7 +278,7 @@
                       <EmptySpace min="-2" pref="16" max="-2" attributes="0"/>
                       <Group type="103" groupAlignment="0" attributes="0">
                           <Component id="txtDisplayName" max="32767" attributes="0"/>
-                          <Component id="txtEmailAddress" pref="584" max="32767" attributes="0"/>
+                          <Component id="txtEmailAddress" pref="687" max="32767" attributes="0"/>
                           <Component id="txtEmailSender" max="32767" attributes="0"/>
                       </Group>
                       <EmptySpace max="-2" attributes="0"/>
@@ -380,7 +393,7 @@
                                       <Group type="103" groupAlignment="0" attributes="0">
                                           <Group type="102" alignment="0" attributes="0">
                                               <Group type="103" groupAlignment="0" attributes="0">
-                                                  <Component id="txtOutServer" pref="215" max="32767" attributes="0"/>
+                                                  <Component id="txtOutServer" pref="262" max="32767" attributes="0"/>
                                                   <Component id="txtOutUsername" max="32767" attributes="0"/>
                                               </Group>
                                               <EmptySpace type="separate" min="-2" max="-2" attributes="0"/>
@@ -392,7 +405,7 @@
                                               <Group type="103" groupAlignment="0" attributes="0">
                                                   <Group type="102" attributes="0">
                                                       <Component id="txtOutPort" min="-2" pref="109" max="-2" attributes="0"/>
-                                                      <EmptySpace min="0" pref="135" max="32767" attributes="0"/>
+                                                      <EmptySpace min="0" pref="182" max="32767" attributes="0"/>
                                                   </Group>
                                                   <Component id="pwdOutPassword" max="32767" attributes="0"/>
                                               </Group>
@@ -711,7 +724,7 @@
               <Group type="103" groupAlignment="0" attributes="0">
                   <Group type="102" alignment="0" attributes="0">
                       <EmptySpace max="-2" attributes="0"/>
-                      <Component id="htmlEmailSig" pref="731" max="32767" attributes="0"/>
+                      <Component id="htmlEmailSig" pref="825" max="32767" attributes="0"/>
                       <EmptySpace max="-2" attributes="0"/>
                   </Group>
               </Group>
@@ -744,7 +757,7 @@
               <Group type="103" groupAlignment="0" attributes="0">
                   <Group type="102" alignment="0" attributes="0">
                       <EmptySpace max="-2" attributes="0"/>
-                      <Component id="jScrollPane4" pref="731" max="32767" attributes="0"/>
+                      <Component id="jScrollPane4" pref="825" max="32767" attributes="0"/>
                       <EmptySpace max="-2" attributes="0"/>
                   </Group>
               </Group>
@@ -805,7 +818,7 @@
                               <EmptySpace min="27" pref="27" max="-2" attributes="0"/>
                               <Group type="103" groupAlignment="0" attributes="0">
                                   <Component id="txtScanBlacklist" alignment="1" max="32767" attributes="0"/>
-                                  <Component id="jLabel12" pref="704" max="32767" attributes="0"/>
+                                  <Component id="jLabel12" pref="798" max="32767" attributes="0"/>
                                   <Group type="102" alignment="0" attributes="0">
                                       <Component id="cmdScanTags" min="-2" max="-2" attributes="0"/>
                                       <EmptySpace max="-2" attributes="0"/>
@@ -1067,7 +1080,7 @@
                     <DimensionLayout dim="0">
                       <Group type="103" groupAlignment="0" attributes="0">
                           <Group type="102" alignment="0" attributes="0">
-                              <Component id="jScrollPane2" pref="589" max="32767" attributes="0"/>
+                              <Component id="jScrollPane2" pref="683" max="32767" attributes="0"/>
                               <EmptySpace max="-2" attributes="0"/>
                           </Group>
                       </Group>
@@ -1109,7 +1122,7 @@
                     <DimensionLayout dim="0">
                       <Group type="103" groupAlignment="0" attributes="0">
                           <Group type="102" alignment="0" attributes="0">
-                              <Component id="jScrollPane3" pref="589" max="32767" attributes="0"/>
+                              <Component id="jScrollPane3" pref="683" max="32767" attributes="0"/>
                               <EmptySpace max="-2" attributes="0"/>
                           </Group>
                       </Group>
