@@ -801,6 +801,8 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
     @EJB
     private InterestRuleFacadeLocal claimComponentInterestRuleFacade;
     @EJB
+    private BaseInterestFacadeLocal baseInterestFacade;
+    @EJB
     private PaymentFacadeLocal paymentsFacade;
     @EJB
     private InvoicePositionFacadeLocal invoicePositionsFacade;
@@ -8188,8 +8190,21 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
             }
 
             BigDecimal principal = cmp.getPrincipalAmount();
-            System.out.println("TODO: BASISZINS NACH DATUM");
-            BigDecimal rate = rule.getEffectiveRate(BigDecimal.ZERO); // Basis + Marge zum Startdatum der Rule
+
+            // Ermittle den Basiszinssatz zum Startdatum der Rule
+            BigDecimal baseRate = null;
+            if (rule.getInterestType() == InterestType.BASIS_RELATED) {
+                Date ruleStartDate = Date.from(interestStart.atStartOfDay(ZoneId.systemDefault()).toInstant());
+                baseRate = this.baseInterestFacade.findRateByDate(ruleStartDate);
+                if (baseRate == null) {
+                    log.error("kein Basiszinssatz gefunden für Datum " + ruleStartDate);
+                    baseRate = BigDecimal.ZERO; // Fallback, falls kein Basiszinssatz gefunden
+                }
+            } else {
+                baseRate = BigDecimal.ZERO; // Für FIXED wird baseRate nicht benötigt
+            }
+
+            BigDecimal rate = rule.getEffectiveRate(baseRate); // Basis + Marge zum Startdatum der Rule
 
             BigDecimal interest = principal
                     .multiply(rate)
