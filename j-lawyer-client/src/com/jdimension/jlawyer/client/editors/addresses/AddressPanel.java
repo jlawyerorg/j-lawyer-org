@@ -677,6 +677,7 @@ import com.jdimension.jlawyer.client.configuration.PopulateOptionsEditor;
 import com.jdimension.jlawyer.client.editors.EditorsRegistry;
 import com.jdimension.jlawyer.client.editors.SaveableEditor;
 import com.jdimension.jlawyer.client.editors.ThemeableEditor;
+import com.jdimension.jlawyer.client.editors.files.ArchiveFilePanel;
 import com.jdimension.jlawyer.client.editors.files.NewArchiveFilePanel;
 import com.jdimension.jlawyer.client.encryption.PasswordGenerator;
 import com.jdimension.jlawyer.client.events.ContactUpdatedEvent;
@@ -1447,6 +1448,7 @@ public class AddressPanel extends javax.swing.JPanel implements BeaLoginCallback
         lblOverviewPhone = new javax.swing.JLabel();
         lblOverviewEmail = new javax.swing.JLabel();
         cmdAttributesFromClipboard = new javax.swing.JButton();
+        cmdNewCase = new javax.swing.JButton();
         pnlInvoicesChart = new javax.swing.JPanel();
         jPanel7 = new javax.swing.JPanel();
         rdGenderFemale = new javax.swing.JRadioButton();
@@ -1722,6 +1724,14 @@ public class AddressPanel extends javax.swing.JPanel implements BeaLoginCallback
             }
         });
 
+        cmdNewCase.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/folder.png"))); // NOI18N
+        cmdNewCase.setToolTipText("neue Akte erstellen");
+        cmdNewCase.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                cmdNewCaseActionPerformed(evt);
+            }
+        });
+
         org.jdesktop.layout.GroupLayout jPanel28Layout = new org.jdesktop.layout.GroupLayout(jPanel28);
         jPanel28.setLayout(jPanel28Layout);
         jPanel28Layout.setHorizontalGroup(
@@ -1734,9 +1744,11 @@ public class AddressPanel extends javax.swing.JPanel implements BeaLoginCallback
                         .add(jPanel28Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
                             .add(org.jdesktop.layout.GroupLayout.TRAILING, lblOverviewDept, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                             .add(jPanel28Layout.createSequentialGroup()
-                                .add(lblOverviewOrg, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                                .add(lblOverviewOrg, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 380, Short.MAX_VALUE)
+                                .add(155, 155, 155)
+                                .add(cmdAttributesFromClipboard)
                                 .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
-                                .add(cmdAttributesFromClipboard))
+                                .add(cmdNewCase))
                             .add(lblOverviewName, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                             .add(lblOverviewStreet, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                             .add(lblOverviewCity, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
@@ -1759,7 +1771,8 @@ public class AddressPanel extends javax.swing.JPanel implements BeaLoginCallback
                         .add(jLabel48)
                         .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
                         .add(lblOverviewOrg))
-                    .add(cmdAttributesFromClipboard))
+                    .add(cmdAttributesFromClipboard)
+                    .add(cmdNewCase))
                 .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
                 .add(lblOverviewDept)
                 .add(18, 18, 18)
@@ -3565,6 +3578,118 @@ public class AddressPanel extends javax.swing.JPanel implements BeaLoginCallback
         dlg.setVisible(true);
     }//GEN-LAST:event_cmdSelectSepaSinceActionPerformed
 
+    private void cmdNewCaseActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdNewCaseActionPerformed
+        try {
+            // Prompt for case reason ("Wegen")
+            String reason = (String) JOptionPane.showInputDialog(
+                this,
+                "Wegen:",
+                "Neue Akte anlegen",
+                JOptionPane.QUESTION_MESSAGE,
+                null,
+                null,
+                ""
+            );
+
+            // If user cancelled or entered empty string, abort
+            if (reason == null || reason.trim().isEmpty()) {
+                return;
+            }
+
+            ClientSettings settings = ClientSettings.getInstance();
+            JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
+            ArchiveFileServiceRemote afRem = locator.lookupArchiveFileServiceRemote();
+
+            // Get current user
+            String currentUser = UserSettings.getInstance().getCurrentUser().getPrincipalId();
+
+            // Determine the most frequently used role for this address
+            PartyTypeBean partyType = null;
+            Collection<ArchiveFileAddressesBean> addressInvolvements = afRem.getArchiveFileAddressesForAddress(this.dto.getId());
+
+            if (addressInvolvements != null && !addressInvolvements.isEmpty()) {
+                // Count frequency of each party type
+                HashMap<String, PartyTypeBean> partyTypeMap = new HashMap<>();
+                HashMap<String, Integer> frequencyMap = new HashMap<>();
+
+                for (ArchiveFileAddressesBean involvement : addressInvolvements) {
+                    if (involvement.getReferenceType() != null) {
+                        String typeId = involvement.getReferenceType().getId();
+                        partyTypeMap.put(typeId, involvement.getReferenceType());
+                        frequencyMap.put(typeId, frequencyMap.getOrDefault(typeId, 0) + 1);
+                    }
+                }
+
+                // Find the most frequent party type
+                if (!frequencyMap.isEmpty()) {
+                    String mostFrequentTypeId = frequencyMap.entrySet().stream()
+                        .max((a, b) -> a.getValue().compareTo(b.getValue()))
+                        .map(entry -> entry.getKey())
+                        .orElse(null);
+
+                    if (mostFrequentTypeId != null) {
+                        partyType = partyTypeMap.get(mostFrequentTypeId);
+                    }
+                }
+            }
+
+            // If no previous role found, use the first available party type (default)
+            if (partyType == null) {
+                List<PartyTypeBean> partyTypes = locator.lookupSystemManagementRemote().getPartyTypes();
+                if (partyTypes != null && !partyTypes.isEmpty()) {
+                    // Try to find "Mandant" role, otherwise use first available
+                    partyType = partyTypes.stream()
+                        .filter(pt -> pt.getName() != null && pt.getName().equalsIgnoreCase("Mandant"))
+                        .findFirst()
+                        .orElse(partyTypes.get(0));
+                }
+            }
+
+            // Create new case
+            ArchiveFileBean newCase = new ArchiveFileBean();
+            newCase.setLawyer(currentUser);
+            newCase.setAssistant(currentUser);
+            newCase.setName(this.dto.toDisplayName()); // Rubrum
+            newCase.setReason(reason.trim()); // Wegen
+
+            // Add address as party
+            if (partyType != null) {
+                ArchiveFileAddressesBean aab = new ArchiveFileAddressesBean();
+                aab.setAddressKey(this.dto);
+                aab.setArchiveFileKey(newCase);
+                aab.setReferenceType(partyType);
+                newCase.addParty(aab);
+            }
+
+            // Save case to server
+            newCase = afRem.createArchiveFile(newCase);
+
+            // Navigate to the new case
+            Object editor = EditorsRegistry.getInstance().getEditor("com.jdimension.jlawyer.client.editors.files.EditArchiveFileDetailsPanel");
+
+            if (editor instanceof ThemeableEditor) {
+                ((ThemeableEditor) editor).setBackgroundImage(this.backgroundImage);
+            }
+
+            if (editor instanceof PopulateOptionsEditor) {
+                ((PopulateOptionsEditor) editor).populateOptions();
+            }
+
+            ((ArchiveFilePanel) editor).setArchiveFileDTO(newCase);
+            ((ArchiveFilePanel) editor).setOpenedFromEditorClass(this.getClass().getName());
+            EditorsRegistry.getInstance().setMainEditorsPaneView((Component) editor);
+
+        } catch (Exception ex) {
+            log.error("Error creating new case from address", ex);
+            JOptionPane.showMessageDialog(
+                this,
+                "Fehler beim Anlegen der Akte: " + ex.getMessage(),
+                com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR,
+                JOptionPane.ERROR_MESSAGE
+            );
+        }
+    }//GEN-LAST:event_cmdNewCaseActionPerformed
+
     private void updateAge() {
         Date birth = null;
         Date death = null;
@@ -3753,6 +3878,7 @@ public class AddressPanel extends javax.swing.JPanel implements BeaLoginCallback
     private javax.swing.JButton cmdGetDataFromBea;
     private javax.swing.JButton cmdNewCall1;
     private javax.swing.JButton cmdNewCall2;
+    private javax.swing.JButton cmdNewCase;
     private javax.swing.JButton cmdNewFax;
     private javax.swing.JButton cmdNewSms;
     private javax.swing.JButton cmdNewSmsWithEncryptionPassword;
