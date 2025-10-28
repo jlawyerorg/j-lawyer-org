@@ -7658,6 +7658,12 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
     }
 
     @Override
+    @RolesAllowed({"loginRole"})
+    public List<BaseInterest> getBaseInterestRates() throws Exception {
+        return this.baseInterestFacade.findAll();
+    }
+
+    @Override
     @RolesAllowed({"writeArchiveFileRole"})
     public ClaimComponent addClaimComponent(ClaimComponent component, List<InterestRule> interestRules, String ledgerId) throws Exception {
         String principalId = context.getCallerPrincipal().getName();

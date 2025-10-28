@@ -670,6 +670,7 @@ import com.jdimension.jlawyer.client.settings.ServerSettings;
 import com.jdimension.jlawyer.client.utils.ComponentUtils;
 import com.jdimension.jlawyer.client.utils.FrameUtils;
 import com.jdimension.jlawyer.persistence.ArchiveFileBean;
+import com.jdimension.jlawyer.persistence.BaseInterest;
 import com.jdimension.jlawyer.persistence.ClaimComponent;
 import com.jdimension.jlawyer.persistence.ClaimLedger;
 import com.jdimension.jlawyer.persistence.ClaimLedgerEntry;
@@ -883,6 +884,9 @@ public class ClaimLedgerDialog extends javax.swing.JDialog implements EventConsu
             this.tblComponents.getColumnModel().getColumn(0).setCellRenderer(new CurrencyRenderer());
             this.tblLedger.getColumnModel().getColumn(2).setCellRenderer(new CurrencyRenderer());
 
+            // Load base interest rates
+            this.loadBaseInterestRates();
+
         } else {
             this.setTitle("Forderungskonto " + ledger.getName());
             this.txtName.setText(ledger.getName());
@@ -900,15 +904,48 @@ public class ClaimLedgerDialog extends javax.swing.JDialog implements EventConsu
                 this.tblComponents.getColumnModel().getColumn(0).setCellRenderer(new CurrencyRenderer());
                 this.tblLedger.getColumnModel().getColumn(2).setCellRenderer(new CurrencyRenderer());
 
+                // Load base interest rates
+                this.loadBaseInterestRates();
+
             } catch (Exception ex) {
                 log.error("Error updating invoice position", ex);
                 JOptionPane.showMessageDialog(this, "Fehler beim Speichern der Rechnungsposition: " + ex.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
             }
-            
+
             this.updateTotals();
 
         }
 
+    }
+
+    private void loadBaseInterestRates() {
+        try {
+            JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(ClientSettings.getInstance().getLookupProperties());
+            List<BaseInterest> baseInterests = locator.lookupArchiveFileServiceRemote().getBaseInterestRates();
+
+            this.tblBaseInterest.setModel(new BaseInterestTableModel(baseInterests));
+
+            // Set column widths
+            this.tblBaseInterest.getColumnModel().getColumn(0).setPreferredWidth(100); // Gültig ab
+            this.tblBaseInterest.getColumnModel().getColumn(1).setPreferredWidth(120); // Basiszinssatz
+            this.tblBaseInterest.getColumnModel().getColumn(2).setPreferredWidth(200); // Quelle
+
+            // Right-align the rate column
+            this.tblBaseInterest.getColumnModel().getColumn(1).setCellRenderer(new javax.swing.table.DefaultTableCellRenderer() {
+                @Override
+                public java.awt.Component getTableCellRendererComponent(javax.swing.JTable table, Object value,
+                        boolean isSelected, boolean hasFocus, int row, int column) {
+                    java.awt.Component c = super.getTableCellRendererComponent(table, value, isSelected, hasFocus, row, column);
+                    ((javax.swing.JLabel) c).setHorizontalAlignment(javax.swing.SwingConstants.RIGHT);
+                    return c;
+                }
+            });
+
+        } catch (Exception ex) {
+            log.error("Error loading base interest rates", ex);
+            JOptionPane.showMessageDialog(this, "Fehler beim Laden der Basiszinssätze: " + ex.getMessage(),
+                    com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
+        }
     }
 
     /**
@@ -1312,6 +1349,47 @@ public class ClaimLedgerDialog extends javax.swing.JDialog implements EventConsu
 
         jTabbedPane1.addTab("Summen", jPanel5);
 
+        jPanel6 = new javax.swing.JPanel();
+        jScrollPane4 = new javax.swing.JScrollPane();
+        tblBaseInterest = new javax.swing.JTable();
+
+        tblBaseInterest.setModel(new javax.swing.table.DefaultTableModel(
+            new Object [][] {
+
+            },
+            new String [] {
+                "Gültig ab", "Basiszinssatz", "Quelle"
+            }
+        ) {
+            boolean[] canEdit = new boolean [] {
+                false, false, false
+            };
+
+            public boolean isCellEditable(int rowIndex, int columnIndex) {
+                return canEdit [columnIndex];
+            }
+        });
+        jScrollPane4.setViewportView(tblBaseInterest);
+
+        javax.swing.GroupLayout jPanel6Layout = new javax.swing.GroupLayout(jPanel6);
+        jPanel6.setLayout(jPanel6Layout);
+        jPanel6Layout.setHorizontalGroup(
+            jPanel6Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(jPanel6Layout.createSequentialGroup()
+                .addContainerGap()
+                .addComponent(jScrollPane4, javax.swing.GroupLayout.DEFAULT_SIZE, 840, Short.MAX_VALUE)
+                .addContainerGap())
+        );
+        jPanel6Layout.setVerticalGroup(
+            jPanel6Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(jPanel6Layout.createSequentialGroup()
+                .addContainerGap()
+                .addComponent(jScrollPane4, javax.swing.GroupLayout.DEFAULT_SIZE, 440, Short.MAX_VALUE)
+                .addContainerGap())
+        );
+
+        jTabbedPane1.addTab("Basiszinsen", jPanel6);
+
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(getContentPane());
         getContentPane().setLayout(layout);
         layout.setHorizontalGroup(
@@ -1627,9 +1705,11 @@ public class ClaimLedgerDialog extends javax.swing.JDialog implements EventConsu
     private javax.swing.JPanel jPanel3;
     private javax.swing.JPanel jPanel4;
     private javax.swing.JPanel jPanel5;
+    private javax.swing.JPanel jPanel6;
     private javax.swing.JScrollPane jScrollPane1;
     private javax.swing.JScrollPane jScrollPane2;
     private javax.swing.JScrollPane jScrollPane3;
+    private javax.swing.JScrollPane jScrollPane4;
     private javax.swing.JTabbedPane jTabbedPane1;
     private javax.swing.JPanel lblHeader;
     private javax.swing.JLabel lblOpenValue;
@@ -1643,6 +1723,7 @@ public class ClaimLedgerDialog extends javax.swing.JDialog implements EventConsu
     private javax.swing.JPopupMenu popCalculations;
     private javax.swing.JPopupMenu popRecipients;
     private javax.swing.JTextArea taDescription;
+    private javax.swing.JTable tblBaseInterest;
     private javax.swing.JTable tblComponents;
     private javax.swing.JTable tblLedger;
     private javax.swing.JTextField txtName;
@@ -1791,6 +1872,48 @@ public class ClaimLedgerDialog extends javax.swing.JDialog implements EventConsu
                     return e.getAmount();
                 case 3:
                     return (e.getComponent() != null) ? e.getComponent().toString() : "–";
+                default:
+                    return "";
+            }
+        }
+    }
+
+    class BaseInterestTableModel extends AbstractTableModel {
+
+        private final String[] columns = {"Gültig ab", "Basiszinssatz", "Quelle"};
+        private final List<BaseInterest> data;
+        private final SimpleDateFormat df = new SimpleDateFormat("dd.MM.yyyy");
+        private final DecimalFormat percentFormat = new DecimalFormat("0.00");
+
+        BaseInterestTableModel(List<BaseInterest> data) {
+            this.data = data;
+        }
+
+        @Override
+        public int getRowCount() {
+            return data.size();
+        }
+
+        @Override
+        public int getColumnCount() {
+            return columns.length;
+        }
+
+        @Override
+        public String getColumnName(int col) {
+            return columns[col];
+        }
+
+        @Override
+        public Object getValueAt(int row, int col) {
+            BaseInterest bi = data.get(row);
+            switch (col) {
+                case 0:
+                    return df.format(bi.getValidFrom());
+                case 1:
+                    return percentFormat.format(bi.getRate()) + " %";
+                case 2:
+                    return bi.getSource() != null ? bi.getSource() : "–";
                 default:
                     return "";
             }
