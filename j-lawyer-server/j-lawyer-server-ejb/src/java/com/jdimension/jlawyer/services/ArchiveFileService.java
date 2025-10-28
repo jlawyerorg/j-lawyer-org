@@ -7957,6 +7957,13 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
     public ClaimLedgerTotals calculateClaimLedgerTotals(String ledgerId, Date forDate) throws Exception {
 
         String principalId = context.getCallerPrincipal().getName();
+        
+        if(forDate==null) {
+            forDate=new Date();
+        }
+        forDate.setHours(23);
+        forDate.setMinutes(59);
+        forDate.setSeconds(59);
 
         ClaimLedger ledger = this.claimLedgersFacade.find(ledgerId);
         if (ledger == null) {
@@ -8068,6 +8075,10 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
 
         // 1️⃣ Summierung existierender Buchungen
         for (ClaimLedgerEntry entry : this.claimLedgerEntriesFacade.findByLedger(ledger)) {
+            // only calculate for entries up to forDate
+            if(entry.getEntryDate().getTime()>forDate.getTime())
+                break;
+            
             BigDecimal amount = entry.getAmount();
             ClaimComponent cmp = entry.getComponent();
             ClaimComponentType cmpType = cmp.getType();

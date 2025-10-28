@@ -677,6 +677,7 @@ import com.jdimension.jlawyer.persistence.InterestRule;
 import com.jdimension.jlawyer.persistence.LedgerEntryType;
 import com.jdimension.jlawyer.pojo.ClaimLedgerTotals;
 import com.jdimension.jlawyer.services.JLawyerServiceLocator;
+import java.awt.Color;
 import java.awt.Component;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
@@ -694,6 +695,12 @@ import javax.swing.SwingConstants;
 import javax.swing.table.AbstractTableModel;
 import javax.swing.table.DefaultTableCellRenderer;
 import org.apache.log4j.Logger;
+import org.knowm.xchart.XChartPanel;
+import org.knowm.xchart.XYChart;
+import org.knowm.xchart.XYChartBuilder;
+import org.knowm.xchart.XYSeries;
+import org.knowm.xchart.style.Styler;
+import org.knowm.xchart.style.markers.SeriesMarkers;
 import themes.colors.DefaultColorTheme;
 
 /**
@@ -753,7 +760,7 @@ public class ClaimLedgerDialog extends javax.swing.JDialog implements EventConsu
                 totalInterest=totals.getTotalInterestCosts().add(totals.getTotalInterestMain());
                 totalPaid=totals.getTotalPayments();
                 totalOpen=totals.getOpenClaim();
-                
+
 
             } catch (Exception ex) {
                 log.error("Error updating ledger totals", ex);
@@ -765,10 +772,96 @@ public class ClaimLedgerDialog extends javax.swing.JDialog implements EventConsu
         this.lblSumInterest.setText(cf.format(totalInterest.setScale(2, RoundingMode.HALF_UP)));
         this.lblSumPaid.setText(cf.format(totalPaid.setScale(2, RoundingMode.HALF_UP)));
         this.lblSumOpen.setText(cf.format(totalOpen.setScale(2, RoundingMode.HALF_UP)));
-        
+
         this.lblTotalValue.setText(cf.format(totalMain.add(totalCost).setScale(2, RoundingMode.HALF_UP)));
         this.lblOpenValue.setText(cf.format(totalOpen.setScale(2, RoundingMode.HALF_UP)));
-        
+
+        // Update balance chart
+        this.updateBalanceChart();
+    }
+
+    private void updateBalanceChart() {
+        if (this.currentEntry == null || this.currentEntry.getId() == null) {
+            pnlBalanceChart.removeAll();
+            pnlBalanceChart.revalidate();
+            pnlBalanceChart.repaint();
+            return;
+        }
+
+        try {
+            JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(ClientSettings.getInstance().getLookupProperties());
+            List<ClaimLedgerEntry> entries = locator.lookupArchiveFileServiceRemote().getClaimLedgerEntries(this.currentEntry.getId());
+
+            if (entries == null || entries.isEmpty()) {
+                pnlBalanceChart.removeAll();
+                pnlBalanceChart.revalidate();
+                pnlBalanceChart.repaint();
+                return;
+            }
+
+            // Sortiere Einträge nach Datum
+            entries.sort((e1, e2) -> e1.getEntryDate().compareTo(e2.getEntryDate()));
+
+            // Berechne Saldoverlauf durch Aufruf der Server-Methode für jedes Datum
+            List<Date> dates = new ArrayList<>();
+            List<Double> balances = new ArrayList<>();
+
+            for (ClaimLedgerEntry entry : entries) {
+                Date entryDate = entry.getEntryDate();
+                dates.add(entryDate);
+
+                // Rufe Server-Methode für korrekten Saldo zu diesem Zeitpunkt auf
+                ClaimLedgerTotals totals = locator.lookupArchiveFileServiceRemote().calculateClaimLedgerTotals(this.currentEntry.getId(), entryDate);
+                BigDecimal openClaim = totals.getOpenClaim();
+                balances.add(openClaim.doubleValue());
+            }
+
+            // Erstelle Chart
+            XYChart chart = new XYChartBuilder()
+                .width(800)
+                .height(300)
+                .title("Saldoverlauf")
+                .xAxisTitle("Datum")
+                .yAxisTitle("Saldo (€)")
+                .build();
+
+            // Styling mit DefaultColorTheme-Farben
+            chart.getStyler().setLegendVisible(false);
+            chart.getStyler().setDatePattern("dd.MM.yyyy");
+            chart.getStyler().setDecimalPattern("#,##0.00");
+            chart.getStyler().setLocale(java.util.Locale.GERMAN);
+            chart.getStyler().setPlotGridLinesVisible(true);
+            chart.getStyler().setXAxisLabelRotation(45);
+
+            // Farben aus DefaultColorTheme
+            chart.getStyler().setChartBackgroundColor(Color.WHITE);
+            chart.getStyler().setPlotBackgroundColor(new Color(248, 248, 248));
+            chart.getStyler().setPlotBorderColor(DefaultColorTheme.COLOR_DARK_GREY);
+            chart.getStyler().setPlotGridLinesColor(DefaultColorTheme.COLOR_LIGHT_GREY);
+            chart.getStyler().setAxisTickLabelsColor(DefaultColorTheme.COLOR_DARK_GREY);
+            chart.getStyler().setChartTitleBoxBackgroundColor(Color.WHITE);
+            chart.getStyler().setChartTitleBoxBorderColor(Color.WHITE);
+
+            // Füge Daten hinzu
+            XYSeries series = chart.addSeries("Saldo", dates, balances);
+            series.setMarker(SeriesMarkers.CIRCLE);
+            series.setLineColor(DefaultColorTheme.COLOR_LOGO_BLUE);
+            series.setMarkerColor(DefaultColorTheme.COLOR_LOGO_BLUE);
+            series.setLineWidth(2.5f);
+
+            // Erstelle Chart Panel
+            XChartPanel<XYChart> chartPanel = new XChartPanel<>(chart);
+
+            // Füge Chart zum Panel hinzu
+            pnlBalanceChart.removeAll();
+            pnlBalanceChart.add(chartPanel, java.awt.BorderLayout.CENTER);
+            pnlBalanceChart.revalidate();
+            pnlBalanceChart.repaint();
+
+        } catch (Exception ex) {
+            log.error("Error updating balance chart", ex);
+            // Kein Fehler-Dialog, da Chart optional ist
+        }
     }
 
     public ClaimLedger getEntry() {
@@ -1157,30 +1250,37 @@ public class ClaimLedgerDialog extends javax.swing.JDialog implements EventConsu
         lblSumOpen.setHorizontalAlignment(javax.swing.SwingConstants.RIGHT);
         lblSumOpen.setText("jLabel14");
 
+        pnlBalanceChart = new javax.swing.JPanel();
+        pnlBalanceChart.setLayout(new java.awt.BorderLayout());
+
         javax.swing.GroupLayout jPanel5Layout = new javax.swing.GroupLayout(jPanel5);
         jPanel5.setLayout(jPanel5Layout);
         jPanel5Layout.setHorizontalGroup(
             jPanel5Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(jPanel5Layout.createSequentialGroup()
                 .addContainerGap()
-                .addGroup(jPanel5Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
+                .addGroup(jPanel5Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addComponent(pnlBalanceChart, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                     .addGroup(jPanel5Layout.createSequentialGroup()
-                        .addComponent(jLabel3)
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-                        .addComponent(lblSumMain, javax.swing.GroupLayout.PREFERRED_SIZE, 200, javax.swing.GroupLayout.PREFERRED_SIZE))
-                    .addGroup(jPanel5Layout.createSequentialGroup()
-                        .addGroup(jPanel5Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                            .addComponent(jLabel6)
-                            .addComponent(jLabel7)
-                            .addComponent(jLabel8)
-                            .addComponent(jLabel9))
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addGroup(jPanel5Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                            .addComponent(lblSumCost, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                            .addComponent(lblSumInterest, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                            .addComponent(lblSumPaid, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                            .addComponent(lblSumOpen, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))))
-                .addContainerGap(497, Short.MAX_VALUE))
+                        .addGroup(jPanel5Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
+                            .addGroup(jPanel5Layout.createSequentialGroup()
+                                .addComponent(jLabel3)
+                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                                .addComponent(lblSumMain, javax.swing.GroupLayout.PREFERRED_SIZE, 200, javax.swing.GroupLayout.PREFERRED_SIZE))
+                            .addGroup(jPanel5Layout.createSequentialGroup()
+                                .addGroup(jPanel5Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                                    .addComponent(jLabel6)
+                                    .addComponent(jLabel7)
+                                    .addComponent(jLabel8)
+                                    .addComponent(jLabel9))
+                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                                .addGroup(jPanel5Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                                    .addComponent(lblSumCost, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                                    .addComponent(lblSumInterest, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                                    .addComponent(lblSumPaid, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                                    .addComponent(lblSumOpen, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))))
+                        .addGap(0, 497, Short.MAX_VALUE)))
+                .addContainerGap())
         );
         jPanel5Layout.setVerticalGroup(
             jPanel5Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
@@ -1205,7 +1305,9 @@ public class ClaimLedgerDialog extends javax.swing.JDialog implements EventConsu
                 .addGroup(jPanel5Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                     .addComponent(jLabel9)
                     .addComponent(lblSumOpen))
-                .addContainerGap(306, Short.MAX_VALUE))
+                .addGap(18, 18, 18)
+                .addComponent(pnlBalanceChart, javax.swing.GroupLayout.DEFAULT_SIZE, 174, Short.MAX_VALUE)
+                .addContainerGap())
         );
 
         jTabbedPane1.addTab("Summen", jPanel5);
@@ -1537,6 +1639,7 @@ public class ClaimLedgerDialog extends javax.swing.JDialog implements EventConsu
     private javax.swing.JLabel lblSumOpen;
     private javax.swing.JLabel lblSumPaid;
     private javax.swing.JLabel lblTotalValue;
+    private javax.swing.JPanel pnlBalanceChart;
     private javax.swing.JPopupMenu popCalculations;
     private javax.swing.JPopupMenu popRecipients;
     private javax.swing.JTextArea taDescription;

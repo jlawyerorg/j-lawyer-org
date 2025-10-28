@@ -1158,7 +1158,6 @@ public class ComponentUtils {
                     Field recentPanelField = panel.getClass().getDeclaredField("recentSwatchPanel");
                     recentPanelField.setAccessible(true);
                     Object recentPanel = recentPanelField.get(panel);
-                    //Field colorsField = recentPanel.getClass().getDeclaredField("colors");
                     Field colorsField = findField(recentPanel.getClass(), "colors");
                     colorsField.setAccessible(true);
                     return (Color[]) colorsField.get(recentPanel);
@@ -1203,19 +1202,6 @@ public class ComponentUtils {
                 f.setAccessible(true);
                 return f;
             } catch (NoSuchFieldException e) {
-                clazz = clazz.getSuperclass(); // climb up
-            }
-        }
-        return null;
-    }
-
-    private static Method findMethod(Class<?> clazz, String name, Class<?>... params) {
-        while (clazz != null) {
-            try {
-                Method m = clazz.getDeclaredMethod(name, params);
-                m.setAccessible(true);
-                return m;
-            } catch (NoSuchMethodException e) {
                 clazz = clazz.getSuperclass(); // climb up
             }
         }
