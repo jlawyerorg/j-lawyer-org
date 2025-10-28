@@ -701,6 +701,7 @@ import java.awt.event.KeyEvent;
 import java.awt.event.MouseEvent;
 import java.io.File;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.Enumeration;
 import java.util.Hashtable;
 import javax.swing.DefaultComboBoxModel;
@@ -2674,6 +2675,7 @@ public class UserAdministrationDialog extends javax.swing.JDialog {
             for (CalendarRegion cr : regions) {
                 regionNames.add(cr.getRegionName());
             }
+            Collections.sort(regionNames);
             DefaultComboBoxModel countryModel = new DefaultComboBoxModel(regionNames.toArray());
             this.cmbArea.setModel(countryModel);
         } catch (Exception ex) {
