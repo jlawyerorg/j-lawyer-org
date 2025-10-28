@@ -734,7 +734,11 @@ public class FolderListCell extends javax.swing.JPanel implements DropTargetList
         this.defaultBackground = this.getBackground();
 
         this.txtFolderName.setDropMode(DropMode.INSERT);
-        DropTarget dt = new DropTarget(this.txtFolderName, this);
+        // Register drop target for multiple components to make the entire panel droppable
+        new DropTarget(this.txtFolderName, this);
+        new DropTarget(this.lblFolderName, this);
+        new DropTarget(this.lblExpanded, this);
+        new DropTarget(this, this);
 
         this.txtFolderName.setTransferHandler(new DocumentsTransferHandler());
         this.setTransferHandler(new DocumentsTransferHandler());
