@@ -712,7 +712,8 @@ public class AddDocumentFromTemplateDialog extends javax.swing.JDialog implement
     private static final Logger log = Logger.getLogger(AddDocumentFromTemplateDialog.class.getName());
     private CaseFolderPanel targetTable = null;
     private CaseFolder targetFolder=null;
-    
+    private ArrayList<JCheckboxMenuItemWithFolder> folderMenuItems = new ArrayList<>();
+
     private ArchiveFileBean aFile = null;
     private AppUserBean caseLawyer = null;
     private AppUserBean caseAssistant = null;
@@ -906,24 +907,30 @@ public class AddDocumentFromTemplateDialog extends javax.swing.JDialog implement
         
         this.popMoveToFolder.removeAll();
 
-        ArrayList<JMenuItem> items = new ArrayList<>();
-        this.buildMoveToFolderMenu(items, targetTable.getRootFolder(), "");
-        Collections.sort(items, Comparator.comparing(JMenuItem::getText, String.CASE_INSENSITIVE_ORDER));
+        this.folderMenuItems.clear();
+        this.buildMoveToFolderMenu(this.folderMenuItems, targetTable.getRootFolder(), "");
+        Collections.sort(this.folderMenuItems, Comparator.comparing(JMenuItem::getText, String.CASE_INSENSITIVE_ORDER));
 
-        for (JMenuItem m : items) {
+        for (JMenuItem m : this.folderMenuItems) {
             this.popMoveToFolder.add(m);
         }
 
 
     }
     
-    private void buildMoveToFolderMenu(ArrayList<JMenuItem> items, CaseFolder folder, String path) {
+    private void buildMoveToFolderMenu(ArrayList<JCheckboxMenuItemWithFolder> items, CaseFolder folder, String path) {
         JCheckboxMenuItemWithFolder menu = new JCheckboxMenuItemWithFolder();
         menu.setFolder(folder);
         menu.addActionListener((ActionEvent ae) -> {
-
-            targetFolder=folder;
-
+            // Deselect all other menu items first
+            for (JCheckboxMenuItemWithFolder item : this.folderMenuItems) {
+                if (item != menu) {
+                    item.setSelected(false);
+                }
+            }
+            // Select current item and set target folder
+            menu.setSelected(true);
+            targetFolder = folder;
         });
 
         String itemName = path;
