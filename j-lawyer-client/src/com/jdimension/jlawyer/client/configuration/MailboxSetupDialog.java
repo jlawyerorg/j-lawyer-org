@@ -974,6 +974,7 @@ public class MailboxSetupDialog extends javax.swing.JDialog {
         });
 
         cmdDuplicate.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/kmultiple.png"))); // NOI18N
+        cmdDuplicate.setToolTipText("Postfach duplizieren");
         cmdDuplicate.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 cmdDuplicateActionPerformed(evt);
