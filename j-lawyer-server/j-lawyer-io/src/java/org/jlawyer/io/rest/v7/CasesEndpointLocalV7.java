@@ -695,7 +695,9 @@ public interface CasesEndpointLocalV7 {
     Response getCaseByExternalId(String extId);
     
     Response getCasesByTag(String tag);
-    
+
+    Response getCasesByReference(String reference);
+
     Response getDocumentsByTag(String tag);
     
     Response getDocumentByExternalId(String extId);

@@ -834,7 +834,8 @@ public interface ArchiveFileServiceLocal {
     ArchiveFileBean[] searchEnhanced(String query, boolean withArchive, String[] tagName, String[] documentTagNames);
     List<ArchiveFileBean> getTagged(String[] tagName, String[] docTagName, int limit);
     List<ArchiveFileDocumentsBean> getTaggedDocuments(java.lang.String[] docTagName, int limit);
-    
+    List<ArchiveFileAddressesBean> getArchiveFileAddressesByReference(String reference) throws Exception;
+
     boolean performOcr(String docId) throws Exception;
     
     List<Invoice> getInvoices(String caseId);

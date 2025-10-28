@@ -664,6 +664,7 @@ For more information on this, and how to apply and follow the GNU AGPL, see
 package org.jlawyer.io.rest.v7;
 
 import com.jdimension.jlawyer.persistence.AddressBean;
+import com.jdimension.jlawyer.persistence.ArchiveFileAddressesBean;
 import com.jdimension.jlawyer.persistence.ArchiveFileBean;
 import com.jdimension.jlawyer.persistence.ArchiveFileDocumentsBean;
 import com.jdimension.jlawyer.persistence.ArchiveFileDocumentsBeanFacadeLocal;
@@ -682,7 +683,9 @@ import com.jdimension.jlawyer.services.InvoiceServiceLocal;
 import com.jdimension.jlawyer.services.MessagingServiceLocal;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 import javax.annotation.security.RolesAllowed;
 import javax.ejb.Stateless;
 import javax.naming.InitialContext;
@@ -1151,6 +1154,54 @@ public class CasesEndpointV7 implements CasesEndpointLocalV7 {
             return Response.ok(rcoList).build();
         } catch (Exception ex) {
             log.error("Can not list cases with tag " + tag, ex);
+            return Response.serverError().build();
+        }
+
+    }
+
+    /**
+     * Returns cases that have a given reference in their case-contact relationships
+     *
+     * @param reference the reference text to search for
+     * @response 401 User not authorized
+     * @response 403 User not authenticated
+     */
+    @Override
+    @GET
+    @Produces(MediaType.APPLICATION_JSON + ";charset=utf-8")
+    @Path("/byreference/{reference}")
+    @RolesAllowed({"readArchiveFileRole"})
+    public Response getCasesByReference(@PathParam("reference") String reference) {
+
+        try {
+
+            InitialContext ic = new InitialContext();
+            ArchiveFileServiceLocal cases = (ArchiveFileServiceLocal) ic.lookup(LOOKUP_CASES);
+            List<ArchiveFileAddressesBean> caseContacts = cases.getArchiveFileAddressesByReference(reference);
+
+            // Extract unique cases from the case-contact relationships
+            Set<String> seenCaseIds = new HashSet<>();
+            ArrayList<RestfulCaseOverviewV1> rcoList = new ArrayList<>();
+
+            if (caseContacts != null) {
+                for (ArchiveFileAddressesBean caseContact : caseContacts) {
+                    ArchiveFileBean afb = caseContact.getArchiveFileKey();
+                    if (afb != null && !seenCaseIds.contains(afb.getId())) {
+                        seenCaseIds.add(afb.getId());
+                        RestfulCaseOverviewV1 rco = new RestfulCaseOverviewV1();
+                        rco.setId(afb.getId());
+                        rco.setExternalId(afb.getExternalId());
+                        rco.setName(afb.getName());
+                        rco.setReason(afb.getReason());
+                        rco.setFileNumber(afb.getFileNumber());
+                        rco.setDateChanged(afb.getDateChanged());
+                        rcoList.add(rco);
+                    }
+                }
+            }
+            return Response.ok(rcoList).build();
+        } catch (Exception ex) {
+            log.error("Can not list cases with reference " + reference, ex);
             return Response.serverError().build();
         }
 
