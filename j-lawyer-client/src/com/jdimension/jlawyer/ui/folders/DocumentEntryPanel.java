@@ -679,7 +679,6 @@ import java.awt.Color;
 import java.awt.dnd.DnDConstants;
 import java.awt.dnd.DragGestureEvent;
 import java.awt.dnd.DragGestureListener;
-import java.awt.dnd.DragGestureRecognizer;
 import java.awt.dnd.DragSource;
 import java.awt.event.InputEvent;
 import java.awt.event.KeyEvent;
@@ -735,11 +734,13 @@ public class DocumentEntryPanel extends javax.swing.JPanel implements DragGestur
         this.lblSearchMatch.setText("");
 
         this.dragSource = new DragSource();
-        DragGestureRecognizer dgr
-                = dragSource.createDefaultDragGestureRecognizer(
-                        this.lblFileName,
-                        DnDConstants.ACTION_MOVE,
-                        this);
+        // Register drag gesture for multiple components to make the entire panel draggable
+        dragSource.createDefaultDragGestureRecognizer(this.lblFileName, DnDConstants.ACTION_MOVE, this);
+        dragSource.createDefaultDragGestureRecognizer(this.lblFileIcon, DnDConstants.ACTION_MOVE, this);
+        dragSource.createDefaultDragGestureRecognizer(this.lblDisplayedDate, DnDConstants.ACTION_MOVE, this);
+        dragSource.createDefaultDragGestureRecognizer(this.lblFileSize, DnDConstants.ACTION_MOVE, this);
+        dragSource.createDefaultDragGestureRecognizer(this.lblDictateSign, DnDConstants.ACTION_MOVE, this);
+        dragSource.createDefaultDragGestureRecognizer(this.lblFolder, DnDConstants.ACTION_MOVE, this);
 
         this.lblDisplayedDate.setForeground(DefaultColorTheme.COLOR_DARK_GREY);
         this.lblDictateSign.setForeground(DefaultColorTheme.COLOR_DARK_GREY);
@@ -762,11 +763,13 @@ public class DocumentEntryPanel extends javax.swing.JPanel implements DragGestur
         this.setDocument(doc, invoice);
 
         this.dragSource = new DragSource();
-        DragGestureRecognizer dgr
-                = dragSource.createDefaultDragGestureRecognizer(
-                        this.lblFileName,
-                        DnDConstants.ACTION_MOVE,
-                        this);
+        // Register drag gesture for multiple components to make the entire panel draggable
+        dragSource.createDefaultDragGestureRecognizer(this.lblFileName, DnDConstants.ACTION_MOVE, this);
+        dragSource.createDefaultDragGestureRecognizer(this.lblFileIcon, DnDConstants.ACTION_MOVE, this);
+        dragSource.createDefaultDragGestureRecognizer(this.lblDisplayedDate, DnDConstants.ACTION_MOVE, this);
+        dragSource.createDefaultDragGestureRecognizer(this.lblFileSize, DnDConstants.ACTION_MOVE, this);
+        dragSource.createDefaultDragGestureRecognizer(this.lblDictateSign, DnDConstants.ACTION_MOVE, this);
+        dragSource.createDefaultDragGestureRecognizer(this.lblFolder, DnDConstants.ACTION_MOVE, this);
 
         this.lblDisplayedDate.setForeground(DefaultColorTheme.COLOR_DARK_GREY);
         this.lblDictateSign.setForeground(DefaultColorTheme.COLOR_DARK_GREY);
@@ -1433,7 +1436,8 @@ public class DocumentEntryPanel extends javax.swing.JPanel implements DragGestur
             selDocs = new ArrayList<>();
             selDocs.add(this.document);
         }
-        this.dragSource.startDrag(dge, null, new DocumentsTransferable(selDocs), null);
+        // Use hand cursor during drag operation
+        this.dragSource.startDrag(dge, DragSource.DefaultMoveDrop, new DocumentsTransferable(selDocs), null);
     }
 
 }
