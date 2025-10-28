@@ -923,12 +923,30 @@ public class ClaimLedgerDialog extends javax.swing.JDialog implements EventConsu
             JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(ClientSettings.getInstance().getLookupProperties());
             List<BaseInterest> baseInterests = locator.lookupArchiveFileServiceRemote().getBaseInterestRates();
 
-            this.tblBaseInterest.setModel(new BaseInterestTableModel(baseInterests));
+            BaseInterestTableModel model = new BaseInterestTableModel(baseInterests);
+            this.tblBaseInterest.setModel(model);
+
+            // Enable sorting
+            javax.swing.table.TableRowSorter<BaseInterestTableModel> sorter = new javax.swing.table.TableRowSorter<>(model);
+            this.tblBaseInterest.setRowSorter(sorter);
 
             // Set column widths
             this.tblBaseInterest.getColumnModel().getColumn(0).setPreferredWidth(100); // Gültig ab
             this.tblBaseInterest.getColumnModel().getColumn(1).setPreferredWidth(120); // Basiszinssatz
             this.tblBaseInterest.getColumnModel().getColumn(2).setPreferredWidth(200); // Quelle
+
+            // Date renderer for the date column
+            final SimpleDateFormat dateFormat = new SimpleDateFormat("dd.MM.yyyy");
+            this.tblBaseInterest.getColumnModel().getColumn(0).setCellRenderer(new javax.swing.table.DefaultTableCellRenderer() {
+                @Override
+                public java.awt.Component getTableCellRendererComponent(javax.swing.JTable table, Object value,
+                        boolean isSelected, boolean hasFocus, int row, int column) {
+                    if (value instanceof java.util.Date) {
+                        value = dateFormat.format((java.util.Date) value);
+                    }
+                    return super.getTableCellRendererComponent(table, value, isSelected, hasFocus, row, column);
+                }
+            });
 
             // Right-align the rate column
             this.tblBaseInterest.getColumnModel().getColumn(1).setCellRenderer(new javax.swing.table.DefaultTableCellRenderer() {
@@ -1905,11 +1923,21 @@ public class ClaimLedgerDialog extends javax.swing.JDialog implements EventConsu
         }
 
         @Override
+        public Class<?> getColumnClass(int col) {
+            switch (col) {
+                case 0:
+                    return java.util.Date.class;
+                default:
+                    return String.class;
+            }
+        }
+
+        @Override
         public Object getValueAt(int row, int col) {
             BaseInterest bi = data.get(row);
             switch (col) {
                 case 0:
-                    return df.format(bi.getValidFrom());
+                    return bi.getValidFrom();
                 case 1:
                     return percentFormat.format(bi.getRate()) + " %";
                 case 2:

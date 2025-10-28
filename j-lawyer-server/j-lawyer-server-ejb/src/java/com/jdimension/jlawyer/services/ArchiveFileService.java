@@ -7660,7 +7660,10 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
     @Override
     @RolesAllowed({"loginRole"})
     public List<BaseInterest> getBaseInterestRates() throws Exception {
-        return this.baseInterestFacade.findAll();
+        List<BaseInterest> rates = this.baseInterestFacade.findAll();
+        // Sort by validFrom descending (newest first)
+        rates.sort((a, b) -> b.getValidFrom().compareTo(a.getValidFrom()));
+        return rates;
     }
 
     @Override
