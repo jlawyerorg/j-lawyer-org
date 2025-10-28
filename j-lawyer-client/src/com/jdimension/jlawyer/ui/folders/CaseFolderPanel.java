@@ -904,6 +904,10 @@ public class CaseFolderPanel extends javax.swing.JPanel implements EventConsumer
             }
         }
     }
+    
+    public CaseFolder getRootFolder() {
+        return this.foldersListPanel.getRootFolder();
+    }
 
     public void sort() {
 
