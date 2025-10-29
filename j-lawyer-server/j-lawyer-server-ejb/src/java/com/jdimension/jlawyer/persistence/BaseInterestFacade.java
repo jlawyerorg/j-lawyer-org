@@ -22,6 +22,7 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 package com.jdimension.jlawyer.persistence;
 
 import java.math.BigDecimal;
+import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 import javax.ejb.Stateless;
@@ -65,6 +66,21 @@ public class BaseInterestFacade extends AbstractFacade<BaseInterest> implements 
         } catch (Exception ex) {
             // Log exception if needed
             return null;
+        }
+    }
+
+    @Override
+    public List<BaseInterest> findByDateRange(Date fromDate, Date toDate) {
+        try {
+            return em.createQuery(
+                    "SELECT b FROM BaseInterest b WHERE b.validFrom >= :fromDate AND b.validFrom <= :toDate ORDER BY b.validFrom ASC",
+                    BaseInterest.class)
+                    .setParameter("fromDate", fromDate)
+                    .setParameter("toDate", toDate)
+                    .getResultList();
+        } catch (Exception ex) {
+            // Log exception if needed
+            return new ArrayList<>();
         }
     }
 

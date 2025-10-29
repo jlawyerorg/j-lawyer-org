@@ -730,11 +730,11 @@ public class BaseInterest implements Serializable {
         this.id = id;
     }
 
-    public Date getValidFrom() {
+    public java.util.Date getValidFrom() {
         return validFrom;
     }
 
-    public void setValidFrom(Date validFrom) {
+    public void setValidFrom(java.util.Date validFrom) {
         this.validFrom = validFrom;
     }
 

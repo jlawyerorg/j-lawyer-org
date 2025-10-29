@@ -58,6 +58,15 @@ public interface BaseInterestFacadeLocal {
     BigDecimal findRateByDate(Date date);
 
     /**
+     * Finds all base interest rate entries with validFrom dates between the given dates (inclusive).
+     *
+     * @param fromDate The start date (inclusive)
+     * @param toDate The end date (inclusive)
+     * @return List of BaseInterest entries in the date range, ordered by validFrom ascending
+     */
+    List<BaseInterest> findByDateRange(Date fromDate, Date toDate);
+
+    /**
      * Removes all base interest rate entries from the database.
      */
     void removeAll();

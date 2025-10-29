@@ -8043,16 +8043,35 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
     }
 
     /**
-     * Dummy-Methode: gibt alle Tage zurück, an denen sich der Basiszins im
-     * Zeitraum geändert hat
+     * Gibt alle Tage zurück, an denen sich der Basiszins im Zeitraum geändert hat
      */
     private List<LocalDate> getBaseRateChangeDatesBetween(LocalDate start, LocalDate end) {
-        // TODO: echte Basiszins-Änderungen abfragen
-        return new ArrayList<>(); // aktuell keine Änderungen
+        // Konvertiere LocalDate zu Date
+        java.util.Date startDate = java.util.Date.from(start.atStartOfDay(ZoneId.systemDefault()).toInstant());
+        java.util.Date endDate = java.util.Date.from(end.atStartOfDay(ZoneId.systemDefault()).toInstant());
+
+        // Hole alle BaseInterest-Einträge im Zeitraum
+        List<BaseInterest> rates = this.baseInterestFacade.findByDateRange(startDate, endDate);
+
+        // Konvertiere validFrom Dates zu LocalDates
+        List<LocalDate> changeDates = new ArrayList<>();
+        for (BaseInterest rate : rates) {
+            LocalDate changeDate = ((java.util.Date)rate.getValidFrom()).toInstant().atZone(ZoneId.systemDefault()).toLocalDate();
+            changeDates.add(changeDate);
+        }
+
+        return changeDates;
     }
-    
+
     private BigDecimal getBaseRateForDate(LocalDate start) {
-        return BigDecimal.ZERO;
+        // Konvertiere LocalDate zu Date
+        java.util.Date date = java.util.Date.from(start.atStartOfDay(ZoneId.systemDefault()).toInstant());
+
+        // Hole Basiszinssatz für das Datum
+        BigDecimal rate = this.baseInterestFacade.findRateByDate(date);
+
+        // Wenn kein Zinssatz gefunden wurde, gib 0.0 zurück
+        return (rate != null) ? rate : BigDecimal.ZERO;
     }
 
     @Override
