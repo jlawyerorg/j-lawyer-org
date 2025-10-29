@@ -8409,15 +8409,21 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
 
     /**
      * Berechnet den dynamischen Principal einer Komponente zu einem bestimmten Datum.
-     * Der Principal wird reduziert durch Zahlungen (PAYMENT) und kann durch Anpassungen (ADJUSTMENT)
-     * verändert werden. Zinsbuchungen (INTEREST) haben keinen Einfluss auf den Principal.
+     * Der Principal ergibt sich aus der Summe aller relevanten Buchungen:
+     * - Forderungen (MAIN_CLAIM, COST) erhöhen den Principal
+     * - Zahlungen (PAYMENT) reduzieren den Principal
+     * - Anpassungen (ADJUSTMENT) können den Principal erhöhen oder verringern
+     * - Zinsbuchungen (INTEREST) haben keinen Einfluss auf den Principal
+     *
+     * WICHTIG: Der principalAmount der Component wird NICHT verwendet, da dieser Wert
+     * redundant zur ersten MAIN_CLAIM/COST Buchung ist und sonst doppelt gezählt würde.
      *
      * @param cmp Die Komponente
      * @param upTo Das Datum, bis zu dem berechnet werden soll
      * @return Der dynamische Principal zu diesem Datum
      */
     private BigDecimal calculateDynamicPrincipal(ClaimComponent cmp, Date upTo) {
-        BigDecimal principal = cmp.getPrincipalAmount(); // Ausgangswert
+        BigDecimal principal = BigDecimal.ZERO; // Start bei 0, nicht bei cmp.getPrincipalAmount()!
 
         // Alle Buchungen dieser Component bis zum Stichtag
         List<ClaimLedgerEntry> entries = this.claimLedgerEntriesFacade.findByComponent(cmp);
@@ -8439,7 +8445,7 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
                     break;
                 case MAIN_CLAIM:
                 case COST:
-                    // Zusätzliche Forderungen erhöhen den Principal
+                    // Forderungen erhöhen den Principal (inkl. initialer Buchung)
                     principal = principal.add(entry.getAmount());
                     break;
                 case INTEREST:
