@@ -675,6 +675,7 @@ import com.jdimension.jlawyer.persistence.ClaimComponent;
 import com.jdimension.jlawyer.persistence.ClaimLedger;
 import com.jdimension.jlawyer.persistence.ClaimLedgerEntry;
 import com.jdimension.jlawyer.persistence.InterestRule;
+import com.jdimension.jlawyer.persistence.InterestType;
 import com.jdimension.jlawyer.persistence.LedgerEntryType;
 import com.jdimension.jlawyer.pojo.ClaimLedgerTotals;
 import com.jdimension.jlawyer.services.JLawyerServiceLocator;
@@ -1587,7 +1588,17 @@ public class ClaimLedgerDialog extends javax.swing.JDialog implements EventConsu
 
                 ClaimLedgerEntry initialEntry = new ClaimLedgerEntry();
                 initialEntry.setAmount(cmp.getPrincipalAmount());     // Startbetrag
-                initialEntry.setComment(cmp.getName());               // Name der Komponente
+                initialEntry.setComment(cmp.getName() + ", initiale Buchung");               // Name der Komponente
+                if(dlg.getInterestRules()==null || dlg.getInterestRules().isEmpty()) {
+                    initialEntry.setComment(initialEntry.getComment() + ", unverzinst");
+                } else {
+                    InterestRule interestRule=dlg.getInterestRules().get(0);
+                    if(interestRule.getInterestType().equals(InterestType.FIXED)) {
+                        initialEntry.setComment(initialEntry.getComment() + ", fest verzinst mit " + percentageFormat.format(interestRule.getFixedRate()) + "% Zinsen");
+                    } else {
+                        initialEntry.setComment(initialEntry.getComment() + ", verzinst mit " + percentageFormat.format(interestRule.getBaseMargin()) + "% Zinsen über dem Basizinssatz");
+                    }
+                }
                 initialEntry.setComponent(cmp);                       // Referenz auf Komponente
                 initialEntry.setDescription(cmp.getComment());       // Beschreibung
                 initialEntry.setEntryDate(initialDate);              // Datum
