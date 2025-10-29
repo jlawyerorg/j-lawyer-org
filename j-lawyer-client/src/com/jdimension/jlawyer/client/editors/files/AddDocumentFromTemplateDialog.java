@@ -934,7 +934,7 @@ public class AddDocumentFromTemplateDialog extends javax.swing.JDialog implement
         });
 
         String itemName = path;
-        if (path.length() > 0) {
+        if (!path.isEmpty()) {
             itemName = itemName + " > ";
         }
         itemName = itemName + folder.getName();

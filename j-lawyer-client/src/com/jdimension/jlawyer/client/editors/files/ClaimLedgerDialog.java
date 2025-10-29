@@ -1014,6 +1014,11 @@ public class ClaimLedgerDialog extends javax.swing.JDialog implements EventConsu
         lblSumInterest = new javax.swing.JLabel();
         lblSumPaid = new javax.swing.JLabel();
         lblSumOpen = new javax.swing.JLabel();
+        pnlBalanceChart = new javax.swing.JPanel();
+        jPanel6 = new javax.swing.JPanel();
+        jScrollPane4 = new javax.swing.JScrollPane();
+        tblBaseInterest = new javax.swing.JTable();
+        cmdUpdateBaseInterestRates = new javax.swing.JButton();
 
         setDefaultCloseOperation(javax.swing.WindowConstants.DISPOSE_ON_CLOSE);
         addComponentListener(new java.awt.event.ComponentAdapter() {
@@ -1305,7 +1310,6 @@ public class ClaimLedgerDialog extends javax.swing.JDialog implements EventConsu
         lblSumOpen.setHorizontalAlignment(javax.swing.SwingConstants.RIGHT);
         lblSumOpen.setText("jLabel14");
 
-        pnlBalanceChart = new javax.swing.JPanel();
         pnlBalanceChart.setLayout(new java.awt.BorderLayout());
 
         javax.swing.GroupLayout jPanel5Layout = new javax.swing.GroupLayout(jPanel5);
@@ -1367,10 +1371,7 @@ public class ClaimLedgerDialog extends javax.swing.JDialog implements EventConsu
 
         jTabbedPane1.addTab("Summen", jPanel5);
 
-        jPanel6 = new javax.swing.JPanel();
-        jScrollPane4 = new javax.swing.JScrollPane();
-        tblBaseInterest = new javax.swing.JTable();
-
+        tblBaseInterest.setFont(tblBaseInterest.getFont());
         tblBaseInterest.setModel(new javax.swing.table.DefaultTableModel(
             new Object [][] {
 
@@ -1389,20 +1390,35 @@ public class ClaimLedgerDialog extends javax.swing.JDialog implements EventConsu
         });
         jScrollPane4.setViewportView(tblBaseInterest);
 
+        cmdUpdateBaseInterestRates.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/reload.png"))); // NOI18N
+        cmdUpdateBaseInterestRates.setText("Aktualisieren");
+        cmdUpdateBaseInterestRates.setToolTipText("Online auf Änderungen prüfen und ggf. abgleichen");
+        cmdUpdateBaseInterestRates.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                cmdUpdateBaseInterestRatesActionPerformed(evt);
+            }
+        });
+
         javax.swing.GroupLayout jPanel6Layout = new javax.swing.GroupLayout(jPanel6);
         jPanel6.setLayout(jPanel6Layout);
         jPanel6Layout.setHorizontalGroup(
             jPanel6Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(jPanel6Layout.createSequentialGroup()
                 .addContainerGap()
-                .addComponent(jScrollPane4, javax.swing.GroupLayout.DEFAULT_SIZE, 840, Short.MAX_VALUE)
+                .addGroup(jPanel6Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addComponent(jScrollPane4, javax.swing.GroupLayout.DEFAULT_SIZE, 858, Short.MAX_VALUE)
+                    .addGroup(jPanel6Layout.createSequentialGroup()
+                        .addComponent(cmdUpdateBaseInterestRates)
+                        .addGap(0, 0, Short.MAX_VALUE)))
                 .addContainerGap())
         );
         jPanel6Layout.setVerticalGroup(
             jPanel6Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(jPanel6Layout.createSequentialGroup()
+            .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, jPanel6Layout.createSequentialGroup()
                 .addContainerGap()
-                .addComponent(jScrollPane4, javax.swing.GroupLayout.DEFAULT_SIZE, 440, Short.MAX_VALUE)
+                .addComponent(cmdUpdateBaseInterestRates)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addComponent(jScrollPane4, javax.swing.GroupLayout.DEFAULT_SIZE, 402, Short.MAX_VALUE)
                 .addContainerGap())
         );
 
@@ -1660,6 +1676,10 @@ public class ClaimLedgerDialog extends javax.swing.JDialog implements EventConsu
         }
     }//GEN-LAST:event_cmdAddEntryActionPerformed
 
+    private void cmdUpdateBaseInterestRatesActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdUpdateBaseInterestRatesActionPerformed
+        // TODO add your handling code here:
+    }//GEN-LAST:event_cmdUpdateBaseInterestRatesActionPerformed
+
     /**
      * @param args the command line arguments
      */
@@ -1709,6 +1729,7 @@ public class ClaimLedgerDialog extends javax.swing.JDialog implements EventConsu
     private javax.swing.JButton cmdEditEntry;
     private javax.swing.JButton cmdRemoveComponent;
     private javax.swing.JButton cmdSave;
+    private javax.swing.JButton cmdUpdateBaseInterestRates;
     private javax.swing.JLabel jLabel1;
     private javax.swing.JLabel jLabel2;
     private javax.swing.JLabel jLabel3;
@@ -1900,7 +1921,6 @@ public class ClaimLedgerDialog extends javax.swing.JDialog implements EventConsu
 
         private final String[] columns = {"Gültig ab", "Basiszinssatz", "Quelle"};
         private final List<BaseInterest> data;
-        private final SimpleDateFormat df = new SimpleDateFormat("dd.MM.yyyy");
         private final DecimalFormat percentFormat = new DecimalFormat("0.00");
 
         BaseInterestTableModel(List<BaseInterest> data) {
