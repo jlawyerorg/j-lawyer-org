@@ -1838,7 +1838,9 @@
                                       <Component id="jLabel7" min="-2" max="-2" attributes="0"/>
                                       <EmptySpace max="-2" attributes="0"/>
                                       <Component id="cmdNewInvoice" min="-2" max="-2" attributes="0"/>
-                                      <EmptySpace min="0" pref="832" max="32767" attributes="0"/>
+                                      <EmptySpace type="separate" max="-2" attributes="0"/>
+                                      <Component id="jLabel32" min="-2" max="-2" attributes="0"/>
+                                      <EmptySpace min="0" pref="571" max="32767" attributes="0"/>
                                   </Group>
                                   <Component id="jScrollPane5" alignment="0" max="32767" attributes="0"/>
                               </Group>
@@ -1850,9 +1852,10 @@
                       <Group type="103" groupAlignment="0" attributes="0">
                           <Group type="102" attributes="0">
                               <EmptySpace max="-2" attributes="0"/>
-                              <Group type="103" groupAlignment="1" max="-2" attributes="0">
+                              <Group type="103" groupAlignment="1" attributes="0">
                                   <Component id="jLabel7" max="32767" attributes="0"/>
-                                  <Component id="cmdNewInvoice" min="-2" max="-2" attributes="0"/>
+                                  <Component id="cmdNewInvoice" max="32767" attributes="0"/>
+                                  <Component id="jLabel32" max="32767" attributes="0"/>
                               </Group>
                               <EmptySpace max="-2" attributes="0"/>
                               <Component id="jScrollPane5" max="32767" attributes="0"/>
@@ -1911,6 +1914,11 @@
                         </Container>
                       </SubComponents>
                     </Container>
+                    <Component class="javax.swing.JLabel" name="jLabel32">
+                      <Properties>
+                        <Property name="text" type="java.lang.String" value="erstellte Rechnungen und Belege"/>
+                      </Properties>
+                    </Component>
                   </SubComponents>
                 </Container>
                 <Container class="javax.swing.JPanel" name="jPanel15">
@@ -2478,11 +2486,13 @@
                           <Group type="102" alignment="0" attributes="0">
                               <EmptySpace max="-2" attributes="0"/>
                               <Group type="103" groupAlignment="0" attributes="0">
-                                  <Component id="jScrollPane12" pref="928" max="32767" attributes="0"/>
+                                  <Component id="jScrollPane12" pref="937" max="32767" attributes="0"/>
                                   <Group type="102" attributes="0">
                                       <Component id="jLabel29" min="-2" max="-2" attributes="0"/>
                                       <EmptySpace max="-2" attributes="0"/>
                                       <Component id="cmdNewPayment" min="-2" max="-2" attributes="0"/>
+                                      <EmptySpace type="separate" max="-2" attributes="0"/>
+                                      <Component id="jLabel31" min="-2" max="-2" attributes="0"/>
                                       <EmptySpace min="0" pref="0" max="32767" attributes="0"/>
                                   </Group>
                               </Group>
@@ -2497,6 +2507,7 @@
                               <Group type="103" groupAlignment="0" max="-2" attributes="0">
                                   <Component id="cmdNewPayment" max="32767" attributes="0"/>
                                   <Component id="jLabel29" max="32767" attributes="0"/>
+                                  <Component id="jLabel31" max="32767" attributes="0"/>
                               </Group>
                               <EmptySpace max="-2" attributes="0"/>
                               <Component id="jScrollPane12" pref="755" max="32767" attributes="0"/>
@@ -2550,6 +2561,17 @@
                         </Container>
                       </SubComponents>
                     </Container>
+                    <Component class="javax.swing.JLabel" name="jLabel31">
+                      <Properties>
+                        <Property name="font" type="java.awt.Font" editor="org.netbeans.modules.form.editors2.FontEditor">
+                          <FontInfo relative="true">
+                            <Font component="jLabel31" property="font" relativeSize="true" size="0"/>
+                          </FontInfo>
+                        </Property>
+                        <Property name="text" type="java.lang.String" value="ausgehende Zahlungen"/>
+                        <Property name="toolTipText" type="java.lang.String" value="ausgehende Zahlungen vorbereiten und &#xfc;ber &quot;Finanzen&quot; - &quot;Zahlungen verwalten&quot; eine Stapel&#xfc;berweisung vorbereiten"/>
+                      </Properties>
+                    </Component>
                   </SubComponents>
                 </Container>
                 <Container class="javax.swing.JPanel" name="jPanel20">
@@ -2599,7 +2621,7 @@
                       <Properties>
                         <Property name="font" type="java.awt.Font" editor="org.netbeans.modules.form.editors2.FontEditor">
                           <FontInfo relative="true">
-                            <Font bold="true" component="jLabel30" property="font" relativeSize="true" size="2"/>
+                            <Font bold="true" component="jLabel30" property="font" relativeSize="true" size="0"/>
                           </FontInfo>
                         </Property>
                         <Property name="text" type="java.lang.String" value="Forderungskonten:"/>
