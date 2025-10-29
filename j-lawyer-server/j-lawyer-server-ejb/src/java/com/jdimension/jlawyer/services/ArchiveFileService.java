@@ -7953,6 +7953,8 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
         }
 
         StringGenerator idGen = new StringGenerator();
+        DecimalFormat decf=new DecimalFormat("0.00");
+        SimpleDateFormat datef=new SimpleDateFormat("dd.MM.yyyy");
 //        entry.setId(idGen.getID().toString());
 //        this.claimLedgerEntriesFacade.create(entry);
 //
@@ -8015,7 +8017,8 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
                 // Zinsberechnung: Kapital × Zinssatz (dezimal) × Tage / 360 (deutsche Zinsmethode)
                 BigDecimal interestAmount = principal.multiply(rate)
                         .multiply(BigDecimal.valueOf(days))
-                        .divide(BigDecimal.valueOf(360), 2, RoundingMode.HALF_UP);
+                        .divide(BigDecimal.valueOf(365), 2, RoundingMode.HALF_UP)
+                        .setScale(2, RoundingMode.HALF_UP);
 
                 ClaimLedgerEntry periodEntry = new ClaimLedgerEntry();
                 periodEntry.setLedger(entry.getLedger());
@@ -8025,6 +8028,12 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
                 periodEntry.setAmount(interestAmount);
                 periodEntry.setDescription(entry.getDescription());
                 periodEntry.setComment(entry.getComment());
+                if(periodEntry.getComment()!=null) {
+                    if(!periodEntry.getComment().trim().isEmpty())
+                        periodEntry.setComment(periodEntry.getComment() + ", " );
+                }
+                // davon 7,27% Zinsen aus 100,00 EUR ab dem 01.01.2025 bis zum 30.06.2025 (181 Zinstage) aus "kosten verz"
+                periodEntry.setComment(periodEntry.getComment() + decf.format(rate.multiply(BigDecimal.valueOf(100d)).setScale(2, RoundingMode.HALF_UP)) + "% Zinsen aus " +decf.format(principal) + " EUR ab dem " + datef.format(Date.from(p.getStart().atStartOfDay(ZoneId.systemDefault()).toInstant())) + " bis zum " + datef.format(Date.from(p.getEnd().atStartOfDay(ZoneId.systemDefault()).toInstant())) + " (" + days + " Zinstage) aus " + cmp.getName());
 
                 periodEntry.setId(idGen.getID().toString());
                 this.claimLedgerEntriesFacade.create(periodEntry);
