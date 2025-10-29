@@ -1677,7 +1677,36 @@ public class ClaimLedgerDialog extends javax.swing.JDialog implements EventConsu
     }//GEN-LAST:event_cmdAddEntryActionPerformed
 
     private void cmdUpdateBaseInterestRatesActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdUpdateBaseInterestRatesActionPerformed
-        // TODO add your handling code here:
+        try {
+            // Show progress cursor
+            this.setCursor(java.awt.Cursor.getPredefinedCursor(java.awt.Cursor.WAIT_CURSOR));
+
+            // Call service to update base interest rates
+            JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(ClientSettings.getInstance().getLookupProperties());
+            locator.lookupArchiveFileServiceRemote().updateBaseInterestRates();
+
+            // Reload table with updated data
+            this.loadBaseInterestRates();
+
+            // Reset cursor
+            this.setCursor(java.awt.Cursor.getDefaultCursor());
+
+            // Show success message
+            JOptionPane.showMessageDialog(this,
+                "Die Basiszinssätze wurden erfolgreich aktualisiert.",
+                "Aktualisierung erfolgreich",
+                JOptionPane.INFORMATION_MESSAGE);
+
+        } catch (Exception ex) {
+            // Reset cursor
+            this.setCursor(java.awt.Cursor.getDefaultCursor());
+
+            log.error("Error updating base interest rates", ex);
+            JOptionPane.showMessageDialog(this,
+                "Fehler beim Aktualisieren der Basiszinssätze: " + ex.getMessage(),
+                "Fehler",
+                JOptionPane.ERROR_MESSAGE);
+        }
     }//GEN-LAST:event_cmdUpdateBaseInterestRatesActionPerformed
 
     /**

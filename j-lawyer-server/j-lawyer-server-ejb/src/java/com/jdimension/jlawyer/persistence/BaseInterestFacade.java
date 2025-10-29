@@ -68,4 +68,9 @@ public class BaseInterestFacade extends AbstractFacade<BaseInterest> implements 
         }
     }
 
+    @Override
+    public void removeAll() {
+        em.createQuery("DELETE FROM BaseInterest").executeUpdate();
+    }
+
 }

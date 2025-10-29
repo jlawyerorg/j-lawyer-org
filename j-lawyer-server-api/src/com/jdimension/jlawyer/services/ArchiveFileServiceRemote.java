@@ -985,6 +985,8 @@ public interface ArchiveFileServiceRemote {
 
     List<BaseInterest> getBaseInterestRates() throws Exception;
 
+    void updateBaseInterestRates() throws Exception;
+
     ClaimComponent addClaimComponent(ClaimComponent component, List<InterestRule> interestRules, String ledgerId) throws Exception;
 
     ClaimComponent updateClaimComponent(ClaimComponent component, List<InterestRule> interestRules) throws Exception;

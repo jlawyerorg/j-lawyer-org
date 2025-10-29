@@ -57,4 +57,9 @@ public interface BaseInterestFacadeLocal {
      */
     BigDecimal findRateByDate(Date date);
 
+    /**
+     * Removes all base interest rate entries from the database.
+     */
+    void removeAll();
+
 }

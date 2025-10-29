@@ -7667,6 +7667,81 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
     }
 
     @Override
+    @RolesAllowed({"loginRole"})
+    public void updateBaseInterestRates() throws Exception {
+        String xmlUrl = "https://www.j-lawyer.org/downloads/baseinterestrates.xml";
+
+        try {
+            // Download XML file
+            java.net.URL url = new java.net.URL(xmlUrl);
+            java.net.HttpURLConnection connection = (java.net.HttpURLConnection) url.openConnection();
+            connection.setRequestMethod("GET");
+            connection.setConnectTimeout(10000);
+            connection.setReadTimeout(10000);
+
+            int responseCode = connection.getResponseCode();
+            if (responseCode != 200) {
+                throw new Exception("Failed to download base interest rates. HTTP response code: " + responseCode);
+            }
+
+            // Parse XML
+            javax.xml.parsers.DocumentBuilderFactory factory = javax.xml.parsers.DocumentBuilderFactory.newInstance();
+            javax.xml.parsers.DocumentBuilder builder = factory.newDocumentBuilder();
+            org.w3c.dom.Document doc = builder.parse(connection.getInputStream());
+            doc.getDocumentElement().normalize();
+
+            // Get all rate elements
+            org.w3c.dom.NodeList rateNodes = doc.getElementsByTagName("rate");
+
+            if (rateNodes.getLength() == 0) {
+                throw new Exception("No base interest rates found in XML file");
+            }
+
+            // Delete all existing entries
+            this.baseInterestFacade.removeAll();
+
+            // Parse and insert new entries
+            SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd");
+
+            for (int i = 0; i < rateNodes.getLength(); i++) {
+                org.w3c.dom.Node rateNode = rateNodes.item(i);
+
+                if (rateNode.getNodeType() == org.w3c.dom.Node.ELEMENT_NODE) {
+                    org.w3c.dom.Element rateElement = (org.w3c.dom.Element) rateNode;
+
+                    String id = rateElement.getElementsByTagName("id").item(0).getTextContent();
+                    String validFromStr = rateElement.getElementsByTagName("validFrom").item(0).getTextContent();
+                    String rateStr = rateElement.getElementsByTagName("rate").item(0).getTextContent();
+                    String source = rateElement.getElementsByTagName("source").item(0).getTextContent();
+
+                    Date validFrom = dateFormat.parse(validFromStr);
+                    BigDecimal rate = new BigDecimal(rateStr);
+
+                    BaseInterest baseInterest = new BaseInterest(id, validFrom, rate);
+                    baseInterest.setSource(source);
+
+                    this.baseInterestFacade.create(baseInterest);
+                }
+            }
+
+            connection.disconnect();
+
+        } catch (java.net.MalformedURLException e) {
+            throw new Exception("Invalid URL for base interest rates: " + xmlUrl, e);
+        } catch (java.net.SocketTimeoutException e) {
+            throw new Exception("Timeout while downloading base interest rates from " + xmlUrl, e);
+        } catch (java.io.IOException e) {
+            throw new Exception("Failed to download base interest rates from " + xmlUrl, e);
+        } catch (javax.xml.parsers.ParserConfigurationException e) {
+            throw new Exception("XML parser configuration error", e);
+        } catch (org.xml.sax.SAXException e) {
+            throw new Exception("Failed to parse base interest rates XML", e);
+        } catch (java.text.ParseException e) {
+            throw new Exception("Failed to parse date in base interest rates XML", e);
+        }
+    }
+
+    @Override
     @RolesAllowed({"writeArchiveFileRole"})
     public ClaimComponent addClaimComponent(ClaimComponent component, List<InterestRule> interestRules, String ledgerId) throws Exception {
         String principalId = context.getCallerPrincipal().getName();
