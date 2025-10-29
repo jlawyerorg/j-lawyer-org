@@ -7973,7 +7973,7 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
             LocalDate endDate = entry.getEntryDate().toInstant().atZone(ZoneId.systemDefault()).toLocalDate();
 
             if (!startDate.isBefore(endDate)) {
-                return null; // nichts zu tun
+                return new ArrayList<>(); // nichts zu tun
             }
 
             // 1️⃣ Liste der Basiszinsänderungen im Zeitraum ermitteln

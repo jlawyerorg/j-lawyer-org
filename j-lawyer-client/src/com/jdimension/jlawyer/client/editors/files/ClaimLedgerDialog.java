@@ -882,6 +882,10 @@ public class ClaimLedgerDialog extends javax.swing.JDialog implements EventConsu
             this.tblComponents.getColumnModel().getColumn(0).setCellRenderer(new CurrencyRenderer());
             this.tblLedger.getColumnModel().getColumn(2).setCellRenderer(new CurrencyRenderer());
 
+            // Auto-size columns
+            ComponentUtils.autoSizeColumns(this.tblComponents);
+            ComponentUtils.autoSizeColumns(this.tblLedger);
+
             // Load base interest rates
             this.loadBaseInterestRates();
 
@@ -901,6 +905,10 @@ public class ClaimLedgerDialog extends javax.swing.JDialog implements EventConsu
                 // Währungsformatierung für Betrag-Spalten
                 this.tblComponents.getColumnModel().getColumn(0).setCellRenderer(new CurrencyRenderer());
                 this.tblLedger.getColumnModel().getColumn(2).setCellRenderer(new CurrencyRenderer());
+
+                // Auto-size columns
+                ComponentUtils.autoSizeColumns(this.tblComponents);
+                ComponentUtils.autoSizeColumns(this.tblLedger);
 
                 // Load base interest rates
                 this.loadBaseInterestRates();
@@ -1595,7 +1603,9 @@ public class ClaimLedgerDialog extends javax.swing.JDialog implements EventConsu
                 log.error("error saving claim component", ex);
                 JOptionPane.showMessageDialog(this, "Fehler beim Speichern des Forderungsposition: " + ex.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
             }
-            
+
+            ComponentUtils.autoSizeColumns(this.tblComponents);
+            ComponentUtils.autoSizeColumns(this.tblLedger);
             this.updateTotals();
 
         }
@@ -1633,7 +1643,8 @@ public class ClaimLedgerDialog extends javax.swing.JDialog implements EventConsu
                 log.error("error saving claim component", ex);
                 JOptionPane.showMessageDialog(this, "Fehler beim Speichern der Forderungsposition: " + ex.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
             }
-            
+
+            ComponentUtils.autoSizeColumns(this.tblComponents);
             this.updateTotals();
 
         }
@@ -1657,7 +1668,8 @@ public class ClaimLedgerDialog extends javax.swing.JDialog implements EventConsu
                 log.error("error deleting claim component", ex);
                 JOptionPane.showMessageDialog(this, "Fehler beim Löchen der Forderungsposition: " + ex.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
             }
-            
+
+            ComponentUtils.autoSizeColumns(this.tblComponents);
             this.updateTotals();
 
         }
@@ -1680,7 +1692,8 @@ public class ClaimLedgerDialog extends javax.swing.JDialog implements EventConsu
                 log.error("error saving claim ledger entry", ex);
                 JOptionPane.showMessageDialog(this, "Fehler beim Speichern der Buchung: " + ex.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
             }
-            
+
+            ComponentUtils.autoSizeColumns(this.tblLedger);
             this.updateTotals();
 
         }
@@ -1777,6 +1790,7 @@ public class ClaimLedgerDialog extends javax.swing.JDialog implements EventConsu
         }
 
         // Summen aktualisieren nach dem Löschen
+        ComponentUtils.autoSizeColumns(this.tblLedger);
         this.updateTotals();
     }//GEN-LAST:event_cmdDeleteEntryActionPerformed
 
@@ -1909,7 +1923,7 @@ public class ClaimLedgerDialog extends javax.swing.JDialog implements EventConsu
 
     class ComponentTableModel extends AbstractTableModel {
 
-        private final String[] columns = {"Betrag", "Typ", "Name"};
+        private final String[] columns = {"Betrag", "Typ", "Name", "Beschreibung"};
         private final List<ClaimComponent> data;
 
         ComponentTableModel(List<ClaimComponent> data) {
@@ -1941,6 +1955,8 @@ public class ClaimLedgerDialog extends javax.swing.JDialog implements EventConsu
                     return c.getType();
                 case 2:
                     return c.getName();
+                case 3:
+                    return c.getComment() != null ? c.getComment() : "";
                 default:
                     return "";
             }
@@ -1972,7 +1988,7 @@ public class ClaimLedgerDialog extends javax.swing.JDialog implements EventConsu
 
     class LedgerTableModel extends AbstractTableModel {
 
-        private final String[] columns = {"Datum", "Typ", "Betrag", "Komponente"};
+        private final String[] columns = {"Datum", "Typ", "Betrag", "Komponente", "Bezeichnung", "Kommentar"};
         private final List<ClaimLedgerEntry> data;
         private final SimpleDateFormat df=new SimpleDateFormat("dd.MM.yyyy");
 
@@ -2021,6 +2037,10 @@ public class ClaimLedgerDialog extends javax.swing.JDialog implements EventConsu
                     return e.getAmount();
                 case 3:
                     return (e.getComponent() != null) ? e.getComponent().toString() : "–";
+                case 4:
+                    return e.getDescription() != null ? e.getDescription() : "";
+                case 5:
+                    return e.getComment() != null ? e.getComment() : "";
                 default:
                     return "";
             }
