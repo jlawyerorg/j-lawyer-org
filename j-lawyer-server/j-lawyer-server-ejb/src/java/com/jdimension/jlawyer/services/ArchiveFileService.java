@@ -8014,9 +8014,10 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
                 BigDecimal principal = cmp.getPrincipalAmount();
 
                 long days = ChronoUnit.DAYS.between(p.getStart(), p.getEnd());
+                // Zinsberechnung: Kapital × Zinssatz (dezimal) × Tage / 360 (deutsche Zinsmethode)
                 BigDecimal interestAmount = principal.multiply(rate)
                         .multiply(BigDecimal.valueOf(days))
-                        .divide(BigDecimal.valueOf(36000), 2, RoundingMode.HALF_UP);
+                        .divide(BigDecimal.valueOf(360), 2, RoundingMode.HALF_UP);
 
                 ClaimLedgerEntry periodEntry = new ClaimLedgerEntry();
                 periodEntry.setLedger(entry.getLedger());
