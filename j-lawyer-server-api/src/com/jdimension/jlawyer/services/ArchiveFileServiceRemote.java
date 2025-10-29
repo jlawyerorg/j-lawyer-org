@@ -997,5 +997,7 @@ public interface ArchiveFileServiceRemote {
 
     List<ClaimLedgerEntry> addClaimLedgerEntry(ClaimLedgerEntry entry, String ledgerId) throws Exception;
 
+    void removeClaimLedgerEntry(String entryId) throws Exception;
+
     ClaimLedgerTotals calculateClaimLedgerTotals(String ledgerId, Date forDate) throws Exception;
 }

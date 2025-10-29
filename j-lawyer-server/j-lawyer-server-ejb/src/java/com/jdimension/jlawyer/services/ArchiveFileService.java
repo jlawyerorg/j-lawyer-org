@@ -8042,6 +8042,46 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
 
     }
 
+    @Override
+    @RolesAllowed({"writeArchiveFileRole"})
+    public void removeClaimLedgerEntry(String entryId) throws Exception {
+        String principalId = context.getCallerPrincipal().getName();
+
+        ClaimLedgerEntry currentEntry = this.claimLedgerEntriesFacade.find(entryId);
+        if (currentEntry == null) {
+            log.error("Claim ledger entry with id " + entryId + " not found");
+            throw new Exception("Buchung mit ID " + entryId + " existiert nicht!");
+        }
+
+        ClaimLedger ledger = currentEntry.getLedger();
+        if (ledger == null) {
+            log.error("Claim ledger for entry " + entryId + " not found");
+            throw new Exception("Forderungskonto für Buchung existiert nicht!");
+        }
+
+        ArchiveFileBean aFile = ledger.getArchiveFileKey();
+        boolean allowed = false;
+        if (principalId != null) {
+            List<Group> userGroups = new ArrayList<>();
+            try {
+                userGroups = this.securityFacade.getGroupsForUser(principalId);
+            } catch (Throwable t) {
+                log.error("Unable to determine groups for user " + principalId, t);
+            }
+            if (SecurityUtils.checkGroupsForCase(userGroups, aFile, this.caseGroupsFacade)) {
+                allowed = true;
+            }
+        } else {
+            allowed = true;
+        }
+
+        if (!allowed) {
+            throw new Exception("Forderungskonto darf von diesem Nutzer nicht bearbeitet werden!");
+        }
+
+        this.claimLedgerEntriesFacade.remove(currentEntry);
+    }
+
     /**
      * Gibt alle Tage zurück, an denen sich der Basiszins im Zeitraum geändert hat
      */

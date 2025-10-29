@@ -689,7 +689,6 @@ import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 import java.util.Locale;
-import javax.swing.JLabel;
 import javax.swing.JOptionPane;
 import javax.swing.JTable;
 import javax.swing.SwingConstants;
@@ -700,7 +699,6 @@ import org.knowm.xchart.XChartPanel;
 import org.knowm.xchart.XYChart;
 import org.knowm.xchart.XYChartBuilder;
 import org.knowm.xchart.XYSeries;
-import org.knowm.xchart.style.Styler;
 import org.knowm.xchart.style.markers.SeriesMarkers;
 import themes.colors.DefaultColorTheme;
 
@@ -1722,7 +1720,64 @@ public class ClaimLedgerDialog extends javax.swing.JDialog implements EventConsu
     }//GEN-LAST:event_cmdUpdateBaseInterestRatesActionPerformed
 
     private void cmdDeleteEntryActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdDeleteEntryActionPerformed
-        // TODO add your handling code here:
+        int[] selected = this.tblLedger.getSelectedRows();
+
+        if (selected.length == 0) {
+            JOptionPane.showMessageDialog(this,
+                "Bitte wählen Sie mindestens eine Buchung zum Löschen aus.",
+                "Keine Auswahl",
+                JOptionPane.INFORMATION_MESSAGE);
+            return;
+        }
+
+        // Sicherheitsabfrage
+        int confirm = JOptionPane.showConfirmDialog(this,
+            "Möchten Sie " + selected.length + " Buchung(en) wirklich löschen?",
+            "Löschen bestätigen",
+            JOptionPane.YES_NO_OPTION,
+            JOptionPane.WARNING_MESSAGE);
+
+        if (confirm != JOptionPane.YES_OPTION) {
+            return;
+        }
+
+        // Von hinten nach vorne iterieren, um Index-Probleme zu vermeiden
+        for (int sel = selected.length - 1; sel >= 0; sel--) {
+            try {
+                // Show progress cursor
+                this.setCursor(java.awt.Cursor.getPredefinedCursor(java.awt.Cursor.WAIT_CURSOR));
+
+                int tableIndex = selected[sel];
+                int modelIndex = this.tblLedger.convertRowIndexToModel(tableIndex);
+                ClaimLedgerEntry entry = ((LedgerTableModel) this.tblLedger.getModel()).getEntryAt(modelIndex);
+
+                ClientSettings settings = ClientSettings.getInstance();
+                JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
+
+                // Buchung auf dem Server löschen
+                locator.lookupArchiveFileServiceRemote().removeClaimLedgerEntry(entry.getId());
+
+                // Buchung aus dem Tabellenmodell entfernen
+                ((LedgerTableModel) this.tblLedger.getModel()).removeEntryAt(modelIndex);
+
+                // Reset cursor
+                this.setCursor(java.awt.Cursor.getDefaultCursor());
+
+            } catch (Exception ex) {
+                // Reset cursor
+                this.setCursor(java.awt.Cursor.getDefaultCursor());
+
+                log.error("Error deleting claim ledger entry", ex);
+                JOptionPane.showMessageDialog(this,
+                    "Fehler beim Löschen der Buchung: " + ex.getMessage(),
+                    com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR,
+                    JOptionPane.ERROR_MESSAGE);
+                break; // Stop processing on error
+            }
+        }
+
+        // Summen aktualisieren nach dem Löschen
+        this.updateTotals();
     }//GEN-LAST:event_cmdDeleteEntryActionPerformed
 
     /**
@@ -1928,6 +1983,15 @@ public class ClaimLedgerDialog extends javax.swing.JDialog implements EventConsu
         public void addEntry(ClaimLedgerEntry e) {
             data.add(e);
             fireTableRowsInserted(data.size() - 1, data.size() - 1);
+        }
+
+        public ClaimLedgerEntry getEntryAt(int row) {
+            return data.get(row);
+        }
+
+        public void removeEntryAt(int row) {
+            data.remove(row);
+            fireTableRowsDeleted(row, row);
         }
 
         @Override
