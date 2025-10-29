@@ -721,9 +721,19 @@ public class ClaimLedgerEntryEditorDialog extends javax.swing.JDialog {
         for (ClaimComponent c : components) {
             this.cmbComponent.addItem(c);
         }
-        
+
         this.txtValue.setValue(0);
         this.txtDate.setText(df.format(new Date()));
+
+        // Listener für Typ-Änderung hinzufügen
+        this.cmbType.addItemListener(e -> {
+            if (e.getStateChange() == java.awt.event.ItemEvent.SELECTED) {
+                updateValueFieldEnabled();
+            }
+        });
+
+        // Initialen Status setzen
+        updateValueFieldEnabled();
     }
 
     /**
@@ -887,6 +897,16 @@ public class ClaimLedgerEntryEditorDialog extends javax.swing.JDialog {
     
     public boolean isOkPressed() {
         return okPressed;
+    }
+
+    /**
+     * Aktiviert oder deaktiviert das Betragsfeld basierend auf dem ausgewählten Typ.
+     * Bei INTEREST wird das Feld deaktiviert, da der Betrag automatisch berechnet wird.
+     */
+    private void updateValueFieldEnabled() {
+        LedgerEntryType selectedType = (LedgerEntryType) cmbType.getSelectedItem();
+        boolean enabled = (selectedType != LedgerEntryType.INTEREST);
+        txtValue.setEnabled(enabled);
     }
 
     /**
