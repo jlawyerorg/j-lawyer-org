@@ -1003,6 +1003,7 @@ public class ClaimLedgerDialog extends javax.swing.JDialog implements EventConsu
         tblLedger = new javax.swing.JTable();
         cmdAddEntry = new javax.swing.JButton();
         cmdEditEntry = new javax.swing.JButton();
+        cmdDeleteEntry = new javax.swing.JButton();
         jPanel5 = new javax.swing.JPanel();
         jLabel3 = new javax.swing.JLabel();
         jLabel6 = new javax.swing.JLabel();
@@ -1232,6 +1233,13 @@ public class ClaimLedgerDialog extends javax.swing.JDialog implements EventConsu
         cmdEditEntry.setFont(cmdEditEntry.getFont());
         cmdEditEntry.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons16/kate.png"))); // NOI18N
 
+        cmdDeleteEntry.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/editdelete.png"))); // NOI18N
+        cmdDeleteEntry.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                cmdDeleteEntryActionPerformed(evt);
+            }
+        });
+
         javax.swing.GroupLayout jPanel4Layout = new javax.swing.GroupLayout(jPanel4);
         jPanel4.setLayout(jPanel4Layout);
         jPanel4Layout.setHorizontalGroup(
@@ -1239,11 +1247,13 @@ public class ClaimLedgerDialog extends javax.swing.JDialog implements EventConsu
             .addGroup(jPanel4Layout.createSequentialGroup()
                 .addContainerGap()
                 .addGroup(jPanel4Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addComponent(jScrollPane1, javax.swing.GroupLayout.DEFAULT_SIZE, 840, Short.MAX_VALUE)
+                    .addComponent(jScrollPane1, javax.swing.GroupLayout.DEFAULT_SIZE, 846, Short.MAX_VALUE)
                     .addGroup(jPanel4Layout.createSequentialGroup()
                         .addComponent(cmdAddEntry)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                         .addComponent(cmdEditEntry)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addComponent(cmdDeleteEntry)
                         .addGap(0, 0, Short.MAX_VALUE)))
                 .addContainerGap())
         );
@@ -1251,9 +1261,11 @@ public class ClaimLedgerDialog extends javax.swing.JDialog implements EventConsu
             jPanel4Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, jPanel4Layout.createSequentialGroup()
                 .addContainerGap()
-                .addGroup(jPanel4Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
-                    .addComponent(cmdAddEntry)
-                    .addComponent(cmdEditEntry))
+                .addGroup(jPanel4Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addGroup(jPanel4Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
+                        .addComponent(cmdAddEntry)
+                        .addComponent(cmdEditEntry))
+                    .addComponent(cmdDeleteEntry))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(jScrollPane1, javax.swing.GroupLayout.DEFAULT_SIZE, 405, Short.MAX_VALUE)
                 .addContainerGap())
@@ -1709,6 +1721,10 @@ public class ClaimLedgerDialog extends javax.swing.JDialog implements EventConsu
         }
     }//GEN-LAST:event_cmdUpdateBaseInterestRatesActionPerformed
 
+    private void cmdDeleteEntryActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdDeleteEntryActionPerformed
+        // TODO add your handling code here:
+    }//GEN-LAST:event_cmdDeleteEntryActionPerformed
+
     /**
      * @param args the command line arguments
      */
@@ -1754,6 +1770,7 @@ public class ClaimLedgerDialog extends javax.swing.JDialog implements EventConsu
     private javax.swing.JButton cmdAddComponent;
     private javax.swing.JButton cmdAddEntry;
     private javax.swing.JButton cmdCancel;
+    private javax.swing.JButton cmdDeleteEntry;
     private javax.swing.JButton cmdEditComponent;
     private javax.swing.JButton cmdEditEntry;
     private javax.swing.JButton cmdRemoveComponent;
