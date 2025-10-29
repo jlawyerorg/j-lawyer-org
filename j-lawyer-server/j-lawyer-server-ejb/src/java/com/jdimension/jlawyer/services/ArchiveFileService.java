@@ -7703,16 +7703,28 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
             // Parse and insert new entries
             SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd");
 
+            int processedCount = 0;
             for (int i = 0; i < rateNodes.getLength(); i++) {
                 org.w3c.dom.Node rateNode = rateNodes.item(i);
 
                 if (rateNode.getNodeType() == org.w3c.dom.Node.ELEMENT_NODE) {
                     org.w3c.dom.Element rateElement = (org.w3c.dom.Element) rateNode;
 
-                    String id = rateElement.getElementsByTagName("id").item(0).getTextContent();
-                    String validFromStr = rateElement.getElementsByTagName("validFrom").item(0).getTextContent();
-                    String rateStr = rateElement.getElementsByTagName("rate").item(0).getTextContent();
-                    String source = rateElement.getElementsByTagName("source").item(0).getTextContent();
+                    // Get child elements with null checks
+                    org.w3c.dom.NodeList idNodes = rateElement.getElementsByTagName("id");
+                    org.w3c.dom.NodeList validFromNodes = rateElement.getElementsByTagName("validFrom");
+                    org.w3c.dom.NodeList valueNodes = rateElement.getElementsByTagName("value");
+                    org.w3c.dom.NodeList sourceNodes = rateElement.getElementsByTagName("source");
+
+                    if (idNodes.getLength() == 0 || validFromNodes.getLength() == 0 ||
+                        valueNodes.getLength() == 0 || sourceNodes.getLength() == 0) {
+                        throw new Exception("Incomplete rate entry at index " + i + " in XML file");
+                    }
+
+                    String id = idNodes.item(0).getTextContent().trim();
+                    String validFromStr = validFromNodes.item(0).getTextContent().trim();
+                    String rateStr = valueNodes.item(0).getTextContent().trim();
+                    String source = sourceNodes.item(0).getTextContent().trim();
 
                     Date validFrom = dateFormat.parse(validFromStr);
                     BigDecimal rate = new BigDecimal(rateStr);
@@ -7721,7 +7733,12 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
                     baseInterest.setSource(source);
 
                     this.baseInterestFacade.create(baseInterest);
+                    processedCount++;
                 }
+            }
+
+            if (processedCount == 0) {
+                throw new Exception("No valid base interest rate entries were processed from XML file");
             }
 
             connection.disconnect();
