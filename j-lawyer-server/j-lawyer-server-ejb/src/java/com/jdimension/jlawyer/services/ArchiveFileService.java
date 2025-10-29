@@ -8056,7 +8056,17 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
         // Konvertiere validFrom Dates zu LocalDates
         List<LocalDate> changeDates = new ArrayList<>();
         for (BaseInterest rate : rates) {
-            LocalDate changeDate = ((java.util.Date)rate.getValidFrom()).toInstant().atZone(ZoneId.systemDefault()).toLocalDate();
+            java.util.Date validFrom = rate.getValidFrom();
+            LocalDate changeDate;
+
+            // JPA kann java.sql.Date zurückgeben, das direkt toLocalDate() unterstützt
+            if (validFrom instanceof java.sql.Date) {
+                changeDate = ((java.sql.Date) validFrom).toLocalDate();
+            } else {
+                // Fallback für java.util.Date
+                changeDate = validFrom.toInstant().atZone(ZoneId.systemDefault()).toLocalDate();
+            }
+
             changeDates.add(changeDate);
         }
 
