@@ -8387,7 +8387,8 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
             BigDecimal interest = principal
                     .multiply(rate)
                     .multiply(BigDecimal.valueOf(days))
-                    .divide(BigDecimal.valueOf(360), 2, RoundingMode.HALF_UP);
+                    .divide(BigDecimal.valueOf(365), 2, RoundingMode.HALF_UP)
+                    .setScale(2, RoundingMode.HALF_UP);
 
             totalInterest = totalInterest.add(interest);
         }
