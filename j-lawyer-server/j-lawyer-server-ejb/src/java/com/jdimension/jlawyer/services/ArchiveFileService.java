@@ -8011,7 +8011,8 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
                 }
 
                 BigDecimal rate = effectiveRule.getEffectiveRate(getBaseRateForDate(p.getStart()));
-                BigDecimal principal = cmp.getPrincipalAmount();
+                // Dynamischer Principal: berücksichtigt Zahlungen und Anpassungen bis zum Start des Zinszeitraums
+                BigDecimal principal = calculateDynamicPrincipal(cmp, Date.from(p.getStart().atStartOfDay(ZoneId.systemDefault()).toInstant()));
 
                 long days = ChronoUnit.DAYS.between(p.getStart(), p.getEnd());
                 // Zinsberechnung: Kapital × Zinssatz (dezimal) × Tage / 360 (deutsche Zinsmethode)
@@ -8367,7 +8368,8 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
                 continue;
             }
 
-            BigDecimal principal = cmp.getPrincipalAmount();
+            // Dynamischer Principal: berücksichtigt Zahlungen und Anpassungen bis zum Start des Zinszeitraums
+            BigDecimal principal = calculateDynamicPrincipal(cmp, Date.from(interestStart.atStartOfDay(ZoneId.systemDefault()).toInstant()));
 
             // Ermittle den Basiszinssatz zum Startdatum der Rule
             BigDecimal baseRate = null;
@@ -8394,6 +8396,50 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
         }
 
         return totalInterest;
+    }
+
+    /**
+     * Berechnet den dynamischen Principal einer Komponente zu einem bestimmten Datum.
+     * Der Principal wird reduziert durch Zahlungen (PAYMENT) und kann durch Anpassungen (ADJUSTMENT)
+     * verändert werden. Zinsbuchungen (INTEREST) haben keinen Einfluss auf den Principal.
+     *
+     * @param cmp Die Komponente
+     * @param upTo Das Datum, bis zu dem berechnet werden soll
+     * @return Der dynamische Principal zu diesem Datum
+     */
+    private BigDecimal calculateDynamicPrincipal(ClaimComponent cmp, Date upTo) {
+        BigDecimal principal = cmp.getPrincipalAmount(); // Ausgangswert
+
+        // Alle Buchungen dieser Component bis zum Stichtag
+        List<ClaimLedgerEntry> entries = this.claimLedgerEntriesFacade.findByComponent(cmp);
+
+        for (ClaimLedgerEntry entry : entries) {
+            // Nur Buchungen bis zum Stichtag berücksichtigen
+            if (entry.getEntryDate().after(upTo)) {
+                break; // Einträge sind nach Datum sortiert
+            }
+
+            switch (entry.getType()) {
+                case PAYMENT:
+                    // Zahlungen reduzieren den Principal
+                    principal = principal.subtract(entry.getAmount());
+                    break;
+                case ADJUSTMENT:
+                    // Anpassungen können den Principal erhöhen oder verringern
+                    principal = principal.add(entry.getAmount());
+                    break;
+                case MAIN_CLAIM:
+                case COST:
+                    // Zusätzliche Forderungen erhöhen den Principal
+                    principal = principal.add(entry.getAmount());
+                    break;
+                case INTEREST:
+                    // Zinsen erhöhen NICHT den Principal für zukünftige Zinsberechnungen
+                    break;
+            }
+        }
+
+        return principal.max(BigDecimal.ZERO); // Principal kann nicht negativ werden
     }
 
     /**
