@@ -711,6 +711,15 @@ public class ClaimComponentEditorDialog extends javax.swing.JDialog {
         this.tblInterestRules.setModel(new InterestRuleTableModel(new ArrayList<>()));
         this.txtAmount.setValue(0f);
 
+        // Listener für Typ-Änderung hinzufügen
+        this.cmbType.addItemListener(e -> {
+            if (e.getStateChange() == java.awt.event.ItemEvent.SELECTED) {
+                updateInterestRulesEnabled();
+            }
+        });
+
+        // Initialen Status setzen
+        updateInterestRulesEnabled();
     }
 
     /**
@@ -732,6 +741,14 @@ public class ClaimComponentEditorDialog extends javax.swing.JDialog {
         for (ClaimComponentType t : ClaimComponentType.values()) {
             this.cmbType.addItem(t);
         }
+
+        // Listener für Typ-Änderung hinzufügen
+        this.cmbType.addItemListener(e -> {
+            if (e.getStateChange() == java.awt.event.ItemEvent.SELECTED) {
+                updateInterestRulesEnabled();
+            }
+        });
+
         this.setEntry(entry, interestRules);
     }
 
@@ -742,6 +759,9 @@ public class ClaimComponentEditorDialog extends javax.swing.JDialog {
         this.txtAmount.setValue(entry.getPrincipalAmount());
         this.cmbType.setSelectedItem(entry.getType());
         this.tblInterestRules.setModel(new InterestRuleTableModel(interestRules));
+
+        // Status der Zinsregel-Elemente aktualisieren
+        updateInterestRulesEnabled();
     }
 
     public ClaimComponent getEntry() {
@@ -1083,6 +1103,41 @@ public class ClaimComponentEditorDialog extends javax.swing.JDialog {
 
         }
     }//GEN-LAST:event_cmdRemoveInterestRuleActionPerformed
+
+    /**
+     * Aktiviert oder deaktiviert alle UI-Elemente für Zinsregeln basierend auf dem ausgewählten Typ.
+     * Bei COST_NON_INTEREST_BEARING werden alle Zinsregel-Elemente deaktiviert.
+     */
+    private void updateInterestRulesEnabled() {
+        ClaimComponentType selectedType = (ClaimComponentType) cmbType.getSelectedItem();
+        boolean enabled = (selectedType != ClaimComponentType.COST_NON_INTEREST_BEARING);
+
+        // Zinsregel-Tabelle und Buttons
+        jLabel5.setEnabled(enabled);
+        jScrollPane1.setEnabled(enabled);
+        tblInterestRules.setEnabled(enabled);
+        cmdAddInterestRule.setEnabled(enabled);
+        cmdRemoveInterestRule.setEnabled(enabled);
+
+        // Separator
+        jSeparator1.setEnabled(enabled);
+
+        // Gültig-ab-Felder
+        jLabel6.setEnabled(enabled);
+        txtValidFrom.setEnabled(false); // bleibt immer disabled (ist read-only)
+        cmdValidFrom.setEnabled(enabled);
+
+        // Zinsmodell
+        jLabel7.setEnabled(enabled);
+        rdInterestFixed.setEnabled(enabled);
+        rdInterestBaseRelated.setEnabled(enabled);
+        txtInterestFixed.setEnabled(enabled);
+        txtInterestBaseRelated.setEnabled(enabled);
+        jLabel8.setEnabled(enabled);
+        jLabel9.setEnabled(enabled);
+        
+        txtComment.setEnabled(enabled);
+    }
 
     public boolean isOkPressed() {
         return okPressed;
