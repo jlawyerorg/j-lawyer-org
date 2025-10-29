@@ -283,3 +283,5 @@ Each EJB service has two interfaces:
 - Project Website: https://www.j-lawyer.org/
 - Contributing Guidelines: See CONTRIBUTING.md
 - License: AGPLv3 (see LICENSE file)
+- Always add JavaDoc comments when changing an EJB remote interface (class in j-lawyer-server-api, ending with "Remote" in the class name). Always use english for JavaDoc comments.
+- Never invoke a build after a code change, this will be done manually.

@@ -7979,6 +7979,15 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
             // 1️⃣ Liste der Basiszinsänderungen im Zeitraum ermitteln
             List<LocalDate> changeDates = getBaseRateChangeDatesBetween(startDate, endDate);
 
+            // 1.5️⃣ Zusätzlich alle Daten hinzufügen, an denen sich der Principal ändert
+            List<LocalDate> principalChangeDates = getPrincipalChangeDatesBetween(cmp, startDate, endDate);
+            for (LocalDate principalChangeDate : principalChangeDates) {
+                if (!changeDates.contains(principalChangeDate)) {
+                    changeDates.add(principalChangeDate);
+                }
+            }
+            Collections.sort(changeDates); // Kombinierte Liste sortieren
+
             // 2️⃣ Erstelle Teilzeiträume
             List<ClaimInterestPeriod> periods = new ArrayList<>();
             LocalDate periodStart = startDate;
@@ -8440,6 +8449,52 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
         }
 
         return principal.max(BigDecimal.ZERO); // Principal kann nicht negativ werden
+    }
+
+    /**
+     * Ermittelt alle Daten zwischen startDate und endDate, an denen sich der Principal
+     * einer Component ändert (durch Zahlungen, Anpassungen oder zusätzliche Forderungen).
+     * Zinsbuchungen (INTEREST) werden NICHT berücksichtigt, da sie den Principal nicht ändern.
+     *
+     * @param cmp Die Component
+     * @param startDate Startdatum des Zeitraums
+     * @param endDate Enddatum des Zeitraums
+     * @return Liste der Daten, an denen sich der Principal ändert (sortiert)
+     */
+    private List<LocalDate> getPrincipalChangeDatesBetween(ClaimComponent cmp, LocalDate startDate, LocalDate endDate) {
+        List<LocalDate> changeDates = new ArrayList<>();
+
+        // Alle Buchungen dieser Component durchsuchen
+        List<ClaimLedgerEntry> entries = this.claimLedgerEntriesFacade.findByComponent(cmp);
+
+        for (ClaimLedgerEntry entry : entries) {
+            LocalDate entryDate = entry.getEntryDate().toInstant().atZone(ZoneId.systemDefault()).toLocalDate();
+
+            // Nur Buchungen im relevanten Zeitraum
+            if (entryDate.isBefore(startDate) || !entryDate.isBefore(endDate)) {
+                continue;
+            }
+
+            // Nur Buchungstypen, die den Principal ändern
+            switch (entry.getType()) {
+                case PAYMENT:
+                case ADJUSTMENT:
+                case MAIN_CLAIM:
+                case COST:
+                    if (!changeDates.contains(entryDate)) {
+                        changeDates.add(entryDate);
+                    }
+                    break;
+                case INTEREST:
+                    // Zinsbuchungen ändern den Principal NICHT
+                    break;
+            }
+        }
+
+        // Sortieren
+        Collections.sort(changeDates);
+
+        return changeDates;
     }
 
     /**
