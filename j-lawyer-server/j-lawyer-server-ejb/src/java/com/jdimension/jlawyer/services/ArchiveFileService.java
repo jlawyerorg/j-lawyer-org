@@ -7763,10 +7763,9 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
     public ClaimComponent addClaimComponent(ClaimComponent component, List<InterestRule> interestRules, String ledgerId) throws Exception {
         String principalId = context.getCallerPrincipal().getName();
 
-        if (interestRules == null || interestRules.isEmpty()) {
-            throw new Exception("Forderungskomponente benötigt mindestens eine Zinsregel");
-        }
-
+        if(interestRules==null)
+            interestRules=new ArrayList<>();
+        
         ClaimLedger ledger = this.claimLedgersFacade.find(ledgerId);
         if (ledger == null) {
             log.error("Claim ledger with id " + ledgerId + " not found");
@@ -7813,10 +7812,9 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
     @RolesAllowed({"writeArchiveFileRole"})
     public ClaimComponent updateClaimComponent(ClaimComponent component, List<InterestRule> interestRules) throws Exception {
         String principalId = context.getCallerPrincipal().getName();
-
-        if (interestRules == null || interestRules.isEmpty()) {
-            throw new Exception("Forderungskomponente benötigt mindestens eine Zinsregel");
-        }
+        
+        if(interestRules==null)
+            interestRules=new ArrayList<>();
 
         ClaimComponent before = this.claimComponentsFacade.find(component.getId());
         ClaimLedger ledger = before.getLedger();

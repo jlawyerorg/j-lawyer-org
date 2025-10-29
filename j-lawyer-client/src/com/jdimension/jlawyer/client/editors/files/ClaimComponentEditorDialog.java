@@ -1033,11 +1033,6 @@ public class ClaimComponentEditorDialog extends javax.swing.JDialog {
     }//GEN-LAST:event_cmdCancelActionPerformed
 
     private void cmdSaveActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdSaveActionPerformed
-        // es kann auch unverzinsliche komponenten geben - validierung weglassen!
-//        if (this.tblInterestRules.getRowCount() == 0) {
-//            JOptionPane.showMessageDialog(this, "Es muss mindestens eine Zinsregel hinterlegt sein.", com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_WARNING, JOptionPane.WARNING_MESSAGE);
-//            return;
-//        }
 
         okPressed = true;
         setVisible(false);

@@ -1674,7 +1674,7 @@ public class ClaimLedgerDialog extends javax.swing.JDialog implements EventConsu
                 ClaimLedgerEntry entry = dlg.getEntry();
                 List<ClaimLedgerEntry> entries = locator.lookupArchiveFileServiceRemote().addClaimLedgerEntry(entry, this.currentEntry.getId());
                 for (ClaimLedgerEntry e : entries) {
-                    ((LedgerTableModel) this.tblLedger.getModel()).addEntry(entry);
+                    ((LedgerTableModel) this.tblLedger.getModel()).addEntry(e);
                 }
             } catch (Exception ex) {
                 log.error("error saving claim ledger entry", ex);
