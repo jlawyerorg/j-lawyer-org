@@ -1685,7 +1685,7 @@ public class MicrosoftOfficeAccess {
         }
 
         // Save the document as imageFile (result document)
-        FileOutputStream fos = new FileOutputStream(imageFile);
+        FileOutputStream fos = new FileOutputStream(templateDocument);
         doc.write(fos);
         fos.close();
         doc.close();

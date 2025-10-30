@@ -680,6 +680,7 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Locale;
 import java.util.Set;
 import org.apache.log4j.Logger;
 import org.jlawyer.plugins.calculation.CalculationTable;
@@ -804,6 +805,8 @@ public class LibreOfficeAccess {
         double pageWidth = dimensions[0];
         double pageHeight = dimensions[1];
 
+        log.info("Page dimensions for image background: width=" + pageWidth + "cm, height=" + pageHeight + "cm");
+
         // Load image file
         File imgFile = new File(imageFile);
         byte[] imageBytes = Files.readAllBytes(imgFile.toPath());
@@ -828,10 +831,16 @@ public class LibreOfficeAccess {
         // Set frame properties
         frame.setTextAnchorTypeAttribute("page");
         frame.setTextAnchorPageNumberAttribute(1); // Anchor to page 1
-        frame.setSvgXAttribute(String.format("%.2fcm", 0.0));
-        frame.setSvgYAttribute(String.format("%.2fcm", 0.0));
-        frame.setSvgWidthAttribute(String.format("%.2fcm", pageWidth));
-        frame.setSvgHeightAttribute(String.format("%.2fcm", pageHeight));
+        frame.setSvgXAttribute(String.format(Locale.US, "%.2fcm", 0.0));
+        frame.setSvgYAttribute(String.format(Locale.US, "%.2fcm", 0.0));
+        frame.setSvgWidthAttribute(String.format(Locale.US, "%.2fcm", pageWidth));
+        frame.setSvgHeightAttribute(String.format(Locale.US, "%.2fcm", pageHeight));
+
+        // Set z-index to place image in background (lowest layer)
+        frame.setDrawZIndexAttribute(0);
+
+        // Set layer to background
+        frame.setDrawLayerAttribute("layout");
 
         // Create a unique style name for the frame
         String styleName = "BackgroundImageStyle";
@@ -845,6 +854,11 @@ public class LibreOfficeAccess {
         image.setXlinkTypeAttribute("simple");
         image.setXlinkShowAttribute("embed");
         image.setXlinkActuateAttribute("onLoad");
+
+        // Set image dimensions to match frame using setAttribute (important for visibility!)
+        // DrawImageElement doesn't have setSvgWidthAttribute, so we use the generic setAttribute
+        image.setAttribute("svg:width", String.format(Locale.US, "%.2fcm", pageWidth));
+        image.setAttribute("svg:height", String.format(Locale.US, "%.2fcm", pageHeight));
 
         // Create graphic style for the frame (to set z-order and wrapping)
         try {
@@ -878,18 +892,30 @@ public class LibreOfficeAccess {
 
                 // Add graphic properties for background positioning
                 StyleGraphicPropertiesElement graphicProps = (StyleGraphicPropertiesElement) contentDom.newOdfElement(StyleGraphicPropertiesElement.class);
+
+                // Wrapping and z-order properties
                 graphicProps.setStyleWrapAttribute("run-through");
                 graphicProps.setStyleRunThroughAttribute("background");
                 graphicProps.setStyleFlowWithTextAttribute(false);
+
+                // Positioning properties (absolute positioning relative to page)
+                graphicProps.setStyleVerticalPosAttribute("from-top");
+                graphicProps.setStyleVerticalRelAttribute("page");
+                graphicProps.setStyleHorizontalPosAttribute("from-left");
+                graphicProps.setStyleHorizontalRelAttribute("page");
 
                 // Append properties to style
                 style.appendChild(graphicProps);
 
                 // Append style to automatic styles
                 autoStyles.appendChild(style);
+
+                log.info("Created graphic style '" + styleName + "' with background positioning");
+            } else {
+                log.warn("Could not find or create automatic-styles element");
             }
         } catch (Exception e) {
-            log.warn("Could not create graphic style, image may not appear behind text: " + e.getMessage());
+            log.warn("Could not create graphic style, image may not appear behind text: " + e.getMessage(), e);
         }
 
         // Move frame to the beginning of the document (before first element)
