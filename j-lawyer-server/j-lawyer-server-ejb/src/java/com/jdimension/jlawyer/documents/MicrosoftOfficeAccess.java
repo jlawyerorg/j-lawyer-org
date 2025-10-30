@@ -1611,6 +1611,8 @@ public class MicrosoftOfficeAccess {
         long pageWidthEMU = dimensions[0];
         long pageHeightEMU = dimensions[1];
 
+        log.info("Page dimensions for DOCX image background: width=" + pageWidthEMU + " EMU, height=" + pageHeightEMU + " EMU");
+
         // Load image file
         File imgFile = new File(imageFile);
         byte[] imageBytes = Files.readAllBytes(imgFile.toPath());
@@ -1622,66 +1624,97 @@ public class MicrosoftOfficeAccess {
             pictureType = Document.PICTURE_TYPE_JPEG;
         }
 
-        // Create a header for the document (watermarks are typically placed in headers)
-        XWPFHeader header = doc.createHeader(HeaderFooterType.DEFAULT);
-
-        // Create a paragraph in the header
-        XWPFParagraph paragraph = header.createParagraph();
-        paragraph.setAlignment(ParagraphAlignment.LEFT);
-
-        // Create a run and add the picture
-        XWPFRun run = paragraph.createRun();
-
-        // Add the picture with full page dimensions
-        run.addPicture(
-                new ByteArrayInputStream(imageBytes),
-                pictureType,
-                imgFile.getName(),
-                Long.valueOf(pageWidthEMU).intValue(),
-                Long.valueOf(pageHeightEMU).intValue()
-        );
-
-        // Get the underlying XML to set the picture as behind text
-        // Note: Apache POI doesn't provide high-level API for this, so we need to use low-level XML manipulation
-        // The picture needs to be anchored behind text with proper positioning
-        org.apache.xmlbeans.XmlObject[] pictures = paragraph.getCTP().selectPath(
-                "declare namespace pic='http://schemas.openxmlformats.org/drawingml/2006/picture' .//pic:pic");
-
-        if (pictures != null && pictures.length > 0) {
-            // Get the drawing element
-            org.apache.xmlbeans.XmlObject[] drawings = paragraph.getCTP().selectPath(
-                    "declare namespace w='http://schemas.openxmlformats.org/wordprocessingml/2006/main' .//w:drawing");
-
-            if (drawings != null && drawings.length > 0) {
-                for (org.apache.xmlbeans.XmlObject drawing : drawings) {
-                    // Try to set the drawing as behind text
-                    // This would require accessing wp:anchor and setting behindDoc="1"
-                    String xmlText = drawing.xmlText();
-                    if (xmlText.contains("wp:anchor")) {
-                        // Replace inline with anchor and set behind text
-                        xmlText = xmlText.replaceAll("behindDoc=\"0\"", "behindDoc=\"1\"");
-                        xmlText = xmlText.replaceAll("behindDoc=\"false\"", "behindDoc=\"1\"");
-
-                        // If behindDoc is not present, we need to add it
-                        if (!xmlText.contains("behindDoc=")) {
-                            xmlText = xmlText.replaceFirst("wp:anchor", "wp:anchor behindDoc=\"1\"");
-                        }
-
-                        // Note: This is a simplified approach. In a production environment,
-                        // proper XML manipulation should be used
-                    }
-                }
-            }
+        // Get or create the first paragraph in the document body
+        XWPFParagraph paragraph;
+        if (doc.getParagraphs().isEmpty()) {
+            paragraph = doc.createParagraph();
+        } else {
+            paragraph = doc.getParagraphs().get(0);
         }
 
-        // Alternative approach: Set the picture position to background using XML manipulation
-        // Get the CTR element and modify it to position behind text
-        if (run.getCTR() != null && run.getCTR().getDrawingArray() != null && run.getCTR().getDrawingArray().length > 0) {
-            // The drawing is embedded in the run, we would need to convert it from inline to anchor
-            // and set proper wrapping. This is complex in POI and would require significant XML manipulation.
+        // Create a run at the beginning of the first paragraph
+        XWPFRun run = paragraph.insertNewRun(0);
 
-            // For now, we use the header approach which places the image on every page by default,
-            // but since it's in the header, it will be behind the text content.
+        // Add the picture - this creates an inline picture by default
+        String pictureId = doc.addPictureData(imageBytes, pictureType);
+        int picId = doc.getAllPictures().size();
+
+        // Now we need to manually create an anchor-based picture instead of inline
+        // Get the CTR (run) element
+        CTR ctr = run.getCTR();
+
+        // Create the drawing XML manually as an anchor
+        String drawingXml =
+            "<w:drawing xmlns:w=\"http://schemas.openxmlformats.org/wordprocessingml/2006/main\" " +
+            "xmlns:wp=\"http://schemas.openxmlformats.org/drawingml/2006/wordprocessingDrawing\" " +
+            "xmlns:a=\"http://schemas.openxmlformats.org/drawingml/2006/main\" " +
+            "xmlns:pic=\"http://schemas.openxmlformats.org/drawingml/2006/picture\" " +
+            "xmlns:r=\"http://schemas.openxmlformats.org/officeDocument/2006/relationships\">" +
+            "<wp:anchor distT=\"0\" distB=\"0\" distL=\"0\" distR=\"0\" simplePos=\"0\" relativeHeight=\"0\" " +
+            "behindDoc=\"1\" locked=\"0\" layoutInCell=\"0\" allowOverlap=\"1\">" +
+            "<wp:simplePos x=\"0\" y=\"0\"/>" +
+            "<wp:positionH relativeFrom=\"page\">" +
+            "<wp:posOffset>0</wp:posOffset>" +
+            "</wp:positionH>" +
+            "<wp:positionV relativeFrom=\"page\">" +
+            "<wp:posOffset>0</wp:posOffset>" +
+            "</wp:positionV>" +
+            "<wp:extent cx=\"" + pageWidthEMU + "\" cy=\"" + pageHeightEMU + "\"/>" +
+            "<wp:effectExtent l=\"0\" t=\"0\" r=\"0\" b=\"0\"/>" +
+            "<wp:wrapNone/>" +
+            "<wp:docPr id=\"" + picId + "\" name=\"Background Image\"/>" +
+            "<wp:cNvGraphicFramePr/>" +
+            "<a:graphic>" +
+            "<a:graphicData uri=\"http://schemas.openxmlformats.org/drawingml/2006/picture\">" +
+            "<pic:pic>" +
+            "<pic:nvPicPr>" +
+            "<pic:cNvPr id=\"" + picId + "\" name=\"" + imgFile.getName() + "\"/>" +
+            "<pic:cNvPicPr/>" +
+            "</pic:nvPicPr>" +
+            "<pic:blipFill>" +
+            "<a:blip r:embed=\"" + pictureId + "\"/>" +
+            "<a:stretch>" +
+            "<a:fillRect/>" +
+            "</a:stretch>" +
+            "</pic:blipFill>" +
+            "<pic:spPr>" +
+            "<a:xfrm>" +
+            "<a:off x=\"0\" y=\"0\"/>" +
+            "<a:ext cx=\"" + pageWidthEMU + "\" cy=\"" + pageHeightEMU + "\"/>" +
+            "</a:xfrm>" +
+            "<a:prstGeom prst=\"rect\">" +
+            "<a:avLst/>" +
+            "</a:prstGeom>" +
+            "</pic:spPr>" +
+            "</pic:pic>" +
+            "</a:graphicData>" +
+            "</a:graphic>" +
+            "</wp:anchor>" +
+            "</w:drawing>";
+
+        try {
+            // Parse the drawing XML
+            org.apache.xmlbeans.XmlObject xmlObject = org.apache.xmlbeans.XmlObject.Factory.parse(drawingXml);
+
+            // Use XmlCursor to copy the drawing into the CTR
+            XmlCursor srcCursor = xmlObject.newCursor();
+            XmlCursor dstCursor = ctr.newCursor();
+
+            // Move source cursor to the first child element (the w:drawing element)
+            srcCursor.toFirstChild();
+
+            // Move destination cursor to the end of CTR where we want to insert
+            dstCursor.toEndToken();
+
+            // Copy the drawing element
+            srcCursor.copyXml(dstCursor);
+
+            srcCursor.dispose();
+            dstCursor.dispose();
+
+            log.info("Successfully created anchor-based background image for DOCX");
+        } catch (Exception e) {
+            log.error("Failed to create anchor-based image, image may not be visible: " + e.getMessage(), e);
         }
 
         // Save the document as imageFile (result document)
@@ -1690,7 +1723,7 @@ public class MicrosoftOfficeAccess {
         fos.close();
         doc.close();
     }
-
+    
     /**
      * Gets the page dimensions (width and height) from a DOCX document.
      *
@@ -1735,10 +1768,12 @@ public class MicrosoftOfficeAccess {
                         // Convert from TWIPs to EMUs
                         // 1 inch = 1440 TWIPs, 1 TWIP = 635 EMUs
                         if (wAttr != null) {
-                            width = Long.parseLong(wAttr.getNodeValue()) * 635 / 20;
+                            //width = Long.parseLong(wAttr.getNodeValue()) * 635 / 20;
+                            width = Long.parseLong(wAttr.getNodeValue()) * 635;
                         }
                         if (hAttr != null) {
-                            height = Long.parseLong(hAttr.getNodeValue()) * 635 / 20;
+                            //height = Long.parseLong(hAttr.getNodeValue()) * 635 / 20;
+                            height = Long.parseLong(hAttr.getNodeValue()) * 635;
                         }
                     }
                 }
