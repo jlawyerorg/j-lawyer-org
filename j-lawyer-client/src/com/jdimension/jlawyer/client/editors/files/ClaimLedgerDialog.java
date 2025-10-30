@@ -663,6 +663,8 @@ For more information on this, and how to apply and follow the GNU AGPL, see
  */
 package com.jdimension.jlawyer.client.editors.files;
 
+import com.jdimension.jlawyer.client.components.MultiCalDialog;
+import com.jdimension.jlawyer.client.editors.EditorsRegistry;
 import com.jdimension.jlawyer.client.events.Event;
 import com.jdimension.jlawyer.client.events.EventConsumer;
 import com.jdimension.jlawyer.client.settings.ClientSettings;
@@ -723,6 +725,8 @@ public class ClaimLedgerDialog extends javax.swing.JDialog implements EventConsu
 
     private boolean cancelled = true;
 
+    private Date dateTo = null;
+
     /**
      * Creates new form ClaimLedgerDialog
      *
@@ -735,11 +739,15 @@ public class ClaimLedgerDialog extends javax.swing.JDialog implements EventConsu
         super(parent, modal);
         this.caseDto = caseDto;
         this.caseView = caseView;
+
         initComponents();
         ComponentUtils.restoreDialogSize(this);
         this.jScrollPane1.getVerticalScrollBar().setUnitIncrement(16);
 
         this.lblHeader.setBackground(DefaultColorTheme.COLOR_DARK_GREY);
+
+        this.dateTo = new Date();
+        this.txtDateTo.setText(df.format(this.dateTo));
 
         this.setEntry(null);
 
@@ -754,13 +762,12 @@ public class ClaimLedgerDialog extends javax.swing.JDialog implements EventConsu
         if (this.currentEntry != null) {
             try {
                 JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(ClientSettings.getInstance().getLookupProperties());
-                ClaimLedgerTotals totals=locator.lookupArchiveFileServiceRemote().calculateClaimLedgerTotals(this.currentEntry.getId(), new Date());
-                totalMain=totals.getTotalMain();
-                totalCost=totals.getTotalCosts();
-                totalInterest=totals.getTotalInterestCosts().add(totals.getTotalInterestMain());
-                totalPaid=totals.getTotalPayments();
-                totalOpen=totals.getOpenClaim();
-
+                ClaimLedgerTotals totals = locator.lookupArchiveFileServiceRemote().calculateClaimLedgerTotals(this.currentEntry.getId(), this.dateTo);
+                totalMain = totals.getTotalMain();
+                totalCost = totals.getTotalCosts();
+                totalInterest = totals.getTotalInterestCosts().add(totals.getTotalInterestMain());
+                totalPaid = totals.getTotalPayments();
+                totalOpen = totals.getOpenClaim();
 
             } catch (Exception ex) {
                 log.error("Error updating ledger totals", ex);
@@ -815,15 +822,25 @@ public class ClaimLedgerDialog extends javax.swing.JDialog implements EventConsu
                 BigDecimal openClaim = totals.getOpenClaim();
                 balances.add(openClaim.doubleValue());
             }
+            if (!dates.isEmpty()) {
+                if (this.dateTo.after(dates.get(balances.size() - 1))) {
+                    dates.add(this.dateTo);
+
+                    // Rufe Server-Methode für korrekten Saldo zu diesem Zeitpunkt auf
+                    ClaimLedgerTotals totals = locator.lookupArchiveFileServiceRemote().calculateClaimLedgerTotals(this.currentEntry.getId(), this.dateTo);
+                    BigDecimal openClaim = totals.getOpenClaim();
+                    balances.add(openClaim.doubleValue());
+                }
+            }
 
             // Erstelle Chart
             XYChart chart = new XYChartBuilder()
-                .width(800)
-                .height(300)
-                .title("Saldoverlauf")
-                .xAxisTitle("Datum")
-                .yAxisTitle("Saldo (€)")
-                .build();
+                    .width(800)
+                    .height(300)
+                    .title("Saldoverlauf")
+                    .xAxisTitle("Datum")
+                    .yAxisTitle("Saldo (€)")
+                    .build();
 
             // Styling mit DefaultColorTheme-Farben
             chart.getStyler().setLegendVisible(false);
@@ -996,6 +1013,8 @@ public class ClaimLedgerDialog extends javax.swing.JDialog implements EventConsu
         lblTotalValue = new javax.swing.JLabel();
         jLabel5 = new javax.swing.JLabel();
         lblOpenValue = new javax.swing.JLabel();
+        txtDateTo = new javax.swing.JTextField();
+        cmdSelectDateTo = new javax.swing.JButton();
         jTabbedPane1 = new javax.swing.JTabbedPane();
         jPanel1 = new javax.swing.JPanel();
         jPanel3 = new javax.swing.JPanel();
@@ -1084,6 +1103,16 @@ public class ClaimLedgerDialog extends javax.swing.JDialog implements EventConsu
         lblOpenValue.setForeground(new java.awt.Color(255, 255, 255));
         lblOpenValue.setText("0,00");
 
+        txtDateTo.setEditable(false);
+        txtDateTo.setText("jTextField1");
+
+        cmdSelectDateTo.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/schedule.png"))); // NOI18N
+        cmdSelectDateTo.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                cmdSelectDateToActionPerformed(evt);
+            }
+        });
+
         javax.swing.GroupLayout lblHeaderLayout = new javax.swing.GroupLayout(lblHeader);
         lblHeader.setLayout(lblHeaderLayout);
         lblHeaderLayout.setHorizontalGroup(
@@ -1103,6 +1132,10 @@ public class ClaimLedgerDialog extends javax.swing.JDialog implements EventConsu
                         .addComponent(jLabel5)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                         .addComponent(lblOpenValue)
+                        .addGap(18, 18, 18)
+                        .addComponent(txtDateTo, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addComponent(cmdSelectDateTo)
                         .addGap(0, 0, Short.MAX_VALUE))
                     .addComponent(jScrollPane2)
                     .addComponent(txtName))
@@ -1124,8 +1157,10 @@ public class ClaimLedgerDialog extends javax.swing.JDialog implements EventConsu
                     .addComponent(jLabel2)
                     .addComponent(lblTotalValue)
                     .addComponent(jLabel5)
-                    .addComponent(lblOpenValue))
-                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                    .addComponent(lblOpenValue)
+                    .addComponent(txtDateTo, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(cmdSelectDateTo, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                .addContainerGap())
         );
 
         jTabbedPane1.setTabPlacement(javax.swing.JTabbedPane.LEFT);
@@ -1195,7 +1230,7 @@ public class ClaimLedgerDialog extends javax.swing.JDialog implements EventConsu
                         .addComponent(cmdEditComponent))
                     .addComponent(cmdRemoveComponent))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(jScrollPane3, javax.swing.GroupLayout.DEFAULT_SIZE, 405, Short.MAX_VALUE)
+                .addComponent(jScrollPane3, javax.swing.GroupLayout.DEFAULT_SIZE, 416, Short.MAX_VALUE)
                 .addContainerGap())
         );
 
@@ -1274,7 +1309,7 @@ public class ClaimLedgerDialog extends javax.swing.JDialog implements EventConsu
                         .addComponent(cmdEditEntry))
                     .addComponent(cmdDeleteEntry))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(jScrollPane1, javax.swing.GroupLayout.DEFAULT_SIZE, 405, Short.MAX_VALUE)
+                .addComponent(jScrollPane1, javax.swing.GroupLayout.DEFAULT_SIZE, 416, Short.MAX_VALUE)
                 .addContainerGap())
         );
 
@@ -1384,7 +1419,7 @@ public class ClaimLedgerDialog extends javax.swing.JDialog implements EventConsu
                     .addComponent(jLabel9)
                     .addComponent(lblSumOpen))
                 .addGap(18, 18, 18)
-                .addComponent(pnlBalanceChart, javax.swing.GroupLayout.DEFAULT_SIZE, 174, Short.MAX_VALUE)
+                .addComponent(pnlBalanceChart, javax.swing.GroupLayout.DEFAULT_SIZE, 293, Short.MAX_VALUE)
                 .addContainerGap())
         );
 
@@ -1437,7 +1472,7 @@ public class ClaimLedgerDialog extends javax.swing.JDialog implements EventConsu
                 .addContainerGap()
                 .addComponent(cmdUpdateBaseInterestRates)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(jScrollPane4, javax.swing.GroupLayout.DEFAULT_SIZE, 402, Short.MAX_VALUE)
+                .addComponent(jScrollPane4, javax.swing.GroupLayout.DEFAULT_SIZE, 413, Short.MAX_VALUE)
                 .addContainerGap())
         );
 
@@ -1464,12 +1499,12 @@ public class ClaimLedgerDialog extends javax.swing.JDialog implements EventConsu
             .addGroup(layout.createSequentialGroup()
                 .addComponent(lblHeader, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-                .addComponent(jTabbedPane1, javax.swing.GroupLayout.PREFERRED_SIZE, 451, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addComponent(jTabbedPane1, javax.swing.GroupLayout.DEFAULT_SIZE, 462, Short.MAX_VALUE)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                     .addComponent(cmdCancel)
                     .addComponent(cmdSave))
-                .addGap(6, 6, 6))
+                .addContainerGap())
         );
 
         pack();
@@ -1589,11 +1624,11 @@ public class ClaimLedgerDialog extends javax.swing.JDialog implements EventConsu
                 ClaimLedgerEntry initialEntry = new ClaimLedgerEntry();
                 initialEntry.setAmount(cmp.getPrincipalAmount());     // Startbetrag
                 initialEntry.setComment(cmp.getName() + ", initiale Buchung");               // Name der Komponente
-                if(dlg.getInterestRules()==null || dlg.getInterestRules().isEmpty()) {
+                if (dlg.getInterestRules() == null || dlg.getInterestRules().isEmpty()) {
                     initialEntry.setComment(initialEntry.getComment() + ", unverzinst");
                 } else {
-                    InterestRule interestRule=dlg.getInterestRules().get(0);
-                    if(interestRule.getInterestType().equals(InterestType.FIXED)) {
+                    InterestRule interestRule = dlg.getInterestRules().get(0);
+                    if (interestRule.getInterestType().equals(InterestType.FIXED)) {
                         initialEntry.setComment(initialEntry.getComment() + ", fest verzinst mit " + percentageFormat.format(interestRule.getFixedRate()) + "% Zinsen");
                     } else {
                         initialEntry.setComment(initialEntry.getComment() + ", verzinst mit " + percentageFormat.format(interestRule.getBaseMargin()) + "% Zinsen über dem Basizinssatz");
@@ -1727,9 +1762,9 @@ public class ClaimLedgerDialog extends javax.swing.JDialog implements EventConsu
 
             // Show success message
             JOptionPane.showMessageDialog(this,
-                "Die Basiszinssätze wurden erfolgreich aktualisiert.",
-                "Aktualisierung erfolgreich",
-                JOptionPane.INFORMATION_MESSAGE);
+                    "Die Basiszinssätze wurden erfolgreich aktualisiert.",
+                    "Aktualisierung erfolgreich",
+                    JOptionPane.INFORMATION_MESSAGE);
 
         } catch (Exception ex) {
             // Reset cursor
@@ -1737,9 +1772,9 @@ public class ClaimLedgerDialog extends javax.swing.JDialog implements EventConsu
 
             log.error("Error updating base interest rates", ex);
             JOptionPane.showMessageDialog(this,
-                "Fehler beim Aktualisieren der Basiszinssätze: " + ex.getMessage(),
-                "Fehler",
-                JOptionPane.ERROR_MESSAGE);
+                    "Fehler beim Aktualisieren der Basiszinssätze: " + ex.getMessage(),
+                    "Fehler",
+                    JOptionPane.ERROR_MESSAGE);
         }
     }//GEN-LAST:event_cmdUpdateBaseInterestRatesActionPerformed
 
@@ -1748,18 +1783,18 @@ public class ClaimLedgerDialog extends javax.swing.JDialog implements EventConsu
 
         if (selected.length == 0) {
             JOptionPane.showMessageDialog(this,
-                "Bitte wählen Sie mindestens eine Buchung zum Löschen aus.",
-                "Keine Auswahl",
-                JOptionPane.INFORMATION_MESSAGE);
+                    "Bitte wählen Sie mindestens eine Buchung zum Löschen aus.",
+                    "Keine Auswahl",
+                    JOptionPane.INFORMATION_MESSAGE);
             return;
         }
 
         // Sicherheitsabfrage
         int confirm = JOptionPane.showConfirmDialog(this,
-            "Möchten Sie " + selected.length + " Buchung(en) wirklich löschen?",
-            "Löschen bestätigen",
-            JOptionPane.YES_NO_OPTION,
-            JOptionPane.WARNING_MESSAGE);
+                "Möchten Sie " + selected.length + " Buchung(en) wirklich löschen?",
+                "Löschen bestätigen",
+                JOptionPane.YES_NO_OPTION,
+                JOptionPane.WARNING_MESSAGE);
 
         if (confirm != JOptionPane.YES_OPTION) {
             return;
@@ -1793,9 +1828,9 @@ public class ClaimLedgerDialog extends javax.swing.JDialog implements EventConsu
 
                 log.error("Error deleting claim ledger entry", ex);
                 JOptionPane.showMessageDialog(this,
-                    "Fehler beim Löschen der Buchung: " + ex.getMessage(),
-                    com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR,
-                    JOptionPane.ERROR_MESSAGE);
+                        "Fehler beim Löschen der Buchung: " + ex.getMessage(),
+                        com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR,
+                        JOptionPane.ERROR_MESSAGE);
                 break; // Stop processing on error
             }
         }
@@ -1804,6 +1839,17 @@ public class ClaimLedgerDialog extends javax.swing.JDialog implements EventConsu
         ComponentUtils.autoSizeColumns(this.tblLedger);
         this.updateTotals();
     }//GEN-LAST:event_cmdDeleteEntryActionPerformed
+
+    private void cmdSelectDateToActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdSelectDateToActionPerformed
+        MultiCalDialog dlg = new MultiCalDialog(this.txtDateTo, this, true);
+        dlg.setVisible(true);
+        try {
+            this.dateTo = this.df.parse(this.txtDateTo.getText());
+            this.updateTotals();
+        } catch (Exception ex) {
+            log.error(ex);
+        }
+    }//GEN-LAST:event_cmdSelectDateToActionPerformed
 
     /**
      * @param args the command line arguments
@@ -1855,6 +1901,7 @@ public class ClaimLedgerDialog extends javax.swing.JDialog implements EventConsu
     private javax.swing.JButton cmdEditEntry;
     private javax.swing.JButton cmdRemoveComponent;
     private javax.swing.JButton cmdSave;
+    private javax.swing.JButton cmdSelectDateTo;
     private javax.swing.JButton cmdUpdateBaseInterestRates;
     private javax.swing.JLabel jLabel1;
     private javax.swing.JLabel jLabel2;
@@ -1891,6 +1938,7 @@ public class ClaimLedgerDialog extends javax.swing.JDialog implements EventConsu
     private javax.swing.JTable tblBaseInterest;
     private javax.swing.JTable tblComponents;
     private javax.swing.JTable tblLedger;
+    private javax.swing.JTextField txtDateTo;
     private javax.swing.JTextField txtName;
     // End of variables declaration//GEN-END:variables
 
@@ -1907,10 +1955,11 @@ public class ClaimLedgerDialog extends javax.swing.JDialog implements EventConsu
     }
 
     /**
-     * TableCellRenderer für Beträge mit deutscher Formatierung (0,00)
-     * und rechtsbündiger Ausrichtung
+     * TableCellRenderer für Beträge mit deutscher Formatierung (0,00) und
+     * rechtsbündiger Ausrichtung
      */
     class CurrencyRenderer extends DefaultTableCellRenderer {
+
         private final DecimalFormat currencyFormat;
 
         public CurrencyRenderer() {
@@ -2001,7 +2050,7 @@ public class ClaimLedgerDialog extends javax.swing.JDialog implements EventConsu
 
         private final String[] columns = {"Datum", "Typ", "Betrag", "Komponente", "Bezeichnung", "Kommentar"};
         private final List<ClaimLedgerEntry> data;
-        private final SimpleDateFormat df=new SimpleDateFormat("dd.MM.yyyy");
+        private final SimpleDateFormat df = new SimpleDateFormat("dd.MM.yyyy");
 
         LedgerTableModel(List<ClaimLedgerEntry> data) {
             this.data = data;

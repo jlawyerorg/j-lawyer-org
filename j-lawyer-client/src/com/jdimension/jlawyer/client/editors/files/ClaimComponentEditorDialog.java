@@ -664,7 +664,6 @@ For more information on this, and how to apply and follow the GNU AGPL, see
 package com.jdimension.jlawyer.client.editors.files;
 
 import com.jdimension.jlawyer.client.components.MultiCalDialog;
-import com.jdimension.jlawyer.client.editors.EditorsRegistry;
 import com.jdimension.jlawyer.persistence.ClaimComponent;
 import com.jdimension.jlawyer.persistence.ClaimComponentType;
 import com.jdimension.jlawyer.persistence.ClaimLedger;
@@ -1060,7 +1059,7 @@ public class ClaimComponentEditorDialog extends javax.swing.JDialog {
     }//GEN-LAST:event_cmdSaveActionPerformed
 
     private void cmdValidFromActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdValidFromActionPerformed
-        MultiCalDialog dlg = new MultiCalDialog(this.txtValidFrom, EditorsRegistry.getInstance().getMainWindow(), true);
+        MultiCalDialog dlg = new MultiCalDialog(this.txtValidFrom, this, true);
         dlg.setVisible(true);
     }//GEN-LAST:event_cmdValidFromActionPerformed
 
