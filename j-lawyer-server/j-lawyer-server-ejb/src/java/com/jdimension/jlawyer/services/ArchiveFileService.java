@@ -3917,6 +3917,15 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
         if (ServerStringUtils.isEmpty(letterHead)) {
             // new document equals the body template
             ServerFileUtils.copyFile(src, dstId);
+        } else if (letterHead.toLowerCase().endsWith(".png") || letterHead.toLowerCase().endsWith(".jpg") || letterHead.toLowerCase().endsWith(".jpeg")) {
+            ServerFileUtils.copyFile(src, dstId);
+            String srcHead = localBaseDir + "letterheads" + System.getProperty("file.separator") + letterHead;
+            //ServerFileUtils.copyFile(srcHead, dstId);
+            if (!(new File(srcHead).exists())) {
+                throw new Exception("Briefkopf " + letterHead + " existiert nicht!");
+            }
+            // migrate body template into head template
+            LibreOfficeAccess.applyHeaderGraphic(srcHead, dstId, templateName);
         } else {
             // new document equals the head template
             String srcHead = localBaseDir + "letterheads" + System.getProperty("file.separator") + letterHead;
@@ -3925,7 +3934,7 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
                 throw new Exception("Briefkopf " + letterHead + " existiert nicht!");
             }
             // migrate body template into head template
-            LibreOfficeAccess.mergeDocuments(dstId, src);
+            LibreOfficeAccess.applyHeaderDocument(dstId, src);
         }
 
         try {

@@ -670,9 +670,11 @@ import java.awt.Graphics;
 import java.awt.image.BufferedImage;
 import java.io.BufferedReader;
 import java.io.File;
+import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.nio.file.Files;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -685,8 +687,12 @@ import org.jlawyer.plugins.calculation.Cell;
 import org.jlawyer.plugins.calculation.StyledCalculationTable;
 import org.odftoolkit.odfdom.dom.element.draw.DrawFrameElement;
 import org.odftoolkit.odfdom.dom.element.draw.DrawImageElement;
+import org.odftoolkit.odfdom.dom.element.office.OfficeAutomaticStylesElement;
+import org.odftoolkit.odfdom.dom.element.office.OfficeDocumentContentElement;
 import org.odftoolkit.odfdom.dom.element.office.OfficeTextElement;
+import org.odftoolkit.odfdom.dom.element.style.StyleGraphicPropertiesElement;
 import org.odftoolkit.odfdom.dom.element.style.StyleParagraphPropertiesElement;
+import org.odftoolkit.odfdom.dom.element.style.StyleStyleElement;
 import org.odftoolkit.odfdom.dom.element.style.StyleTextPropertiesElement;
 import org.odftoolkit.odfdom.dom.element.table.TableTableCellElement;
 import org.odftoolkit.odfdom.dom.element.table.TableTableCellElementBase;
@@ -729,7 +735,22 @@ public class LibreOfficeAccess {
     private static final String EXT_DOCX = ".docx";
     private static final String EXT_PDF = ".pdf";
 
-    public static void mergeDocuments(String intoDocument, String mergeDocument) throws Exception {
+    public static void applyHeaderGraphic(String intoDocument, String mergeDocument, String templateName) throws Exception {
+        // note: intoDocument is just an ID as filename, does not have an .odt / .docx extension
+
+        
+            // Image as letterhead: insert image as full-page background watermark on page 1
+            if (templateName.toLowerCase().endsWith(".odt")) {
+                mergeImageAsBackground(intoDocument, mergeDocument);
+            } else if (templateName.toLowerCase().endsWith(EXT_DOCX)) {
+                MicrosoftOfficeAccess.mergeImageAsBackgroundDocx(intoDocument, mergeDocument);
+            } else {
+                throw new Exception("Bild-Briefkopf nicht unterstützt für dieses Format: " + new File(mergeDocument).getName());
+            }
+        
+    }
+    
+    public static void applyHeaderDocument(String intoDocument, String mergeDocument) throws Exception {
         // note: intoDocument is just an ID as filename, does not have an .odt / .docx extension
         if (mergeDocument.toLowerCase().endsWith(".odt")) {
             merge(intoDocument, mergeDocument);
@@ -764,6 +785,212 @@ public class LibreOfficeAccess {
 
         // Close all the documents
         bodyDoc.close();
+    }
+
+    /**
+     * Merges an image file as a full-page background watermark on page 1 of a document.
+     *
+     * @param imageFile Path to the image file (PNG/JPG/JPEG)
+     * @param templateDocument Path to the template document (ODT)
+     * @throws Exception if an error occurs during the merge
+     */
+    private static void mergeImageAsBackground(String imageFile, String templateDocument) throws Exception {
+        // Load the template document
+        TextDocument doc = TextDocument.loadDocument(new File(templateDocument));
+        OdfPackage docPackage = doc.getPackage();
+
+        // Get page dimensions
+        double[] dimensions = getPageDimensions(doc);
+        double pageWidth = dimensions[0];
+        double pageHeight = dimensions[1];
+
+        // Load image file
+        File imgFile = new File(imageFile);
+        byte[] imageBytes = Files.readAllBytes(imgFile.toPath());
+
+        // Determine MIME type based on file extension
+        String mimeType = "image/png";
+        String fileName = imgFile.getName().toLowerCase();
+        if (fileName.endsWith(".jpg") || fileName.endsWith(".jpeg")) {
+            mimeType = "image/jpeg";
+        }
+
+        // Insert image into package
+        String imagePath = "Pictures/" + imgFile.getName();
+        docPackage.insert(imageBytes, imagePath, mimeType);
+
+        // Get content root
+        OfficeTextElement contentRoot = doc.getContentRoot();
+
+        // Create a frame for the image
+        DrawFrameElement frame = contentRoot.newDrawFrameElement();
+
+        // Set frame properties
+        frame.setTextAnchorTypeAttribute("page");
+        frame.setTextAnchorPageNumberAttribute(1); // Anchor to page 1
+        frame.setSvgXAttribute(String.format("%.2fcm", 0.0));
+        frame.setSvgYAttribute(String.format("%.2fcm", 0.0));
+        frame.setSvgWidthAttribute(String.format("%.2fcm", pageWidth));
+        frame.setSvgHeightAttribute(String.format("%.2fcm", pageHeight));
+
+        // Create a unique style name for the frame
+        String styleName = "BackgroundImageStyle";
+
+        // Set style name
+        frame.setDrawStyleNameAttribute(styleName);
+
+        // Create the image element inside the frame
+        DrawImageElement image = frame.newDrawImageElement();
+        image.setXlinkHrefAttribute(imagePath);
+        image.setXlinkTypeAttribute("simple");
+        image.setXlinkShowAttribute("embed");
+        image.setXlinkActuateAttribute("onLoad");
+
+        // Create graphic style for the frame (to set z-order and wrapping)
+        try {
+            org.odftoolkit.odfdom.pkg.OdfFileDom contentDom = doc.getContentDom();
+            OfficeDocumentContentElement root = (OfficeDocumentContentElement) contentDom.getRootElement();
+
+            // Find or create automatic styles element
+            NodeList nl = root.getElementsByTagNameNS(
+                    "urn:oasis:names:tc:opendocument:xmlns:office:1.0", "automatic-styles");
+
+            OfficeAutomaticStylesElement autoStyles = null;
+            if (nl.getLength() > 0) {
+                autoStyles = (OfficeAutomaticStylesElement) nl.item(0);
+            } else {
+                // Create automatic-styles element if it doesn't exist
+                autoStyles = (OfficeAutomaticStylesElement) contentDom.newOdfElement(OfficeAutomaticStylesElement.class);
+                Node body = root.getElementsByTagNameNS(
+                        "urn:oasis:names:tc:opendocument:xmlns:office:1.0", "body").item(0);
+                if (body != null) {
+                    root.insertBefore(autoStyles, body);
+                } else {
+                    root.appendChild(autoStyles);
+                }
+            }
+
+            if (autoStyles != null) {
+                // Create a new style element using the DOM
+                StyleStyleElement style = (StyleStyleElement) contentDom.newOdfElement(StyleStyleElement.class);
+                style.setStyleNameAttribute(styleName);
+                style.setStyleFamilyAttribute("graphic");
+
+                // Add graphic properties for background positioning
+                StyleGraphicPropertiesElement graphicProps = (StyleGraphicPropertiesElement) contentDom.newOdfElement(StyleGraphicPropertiesElement.class);
+                graphicProps.setStyleWrapAttribute("run-through");
+                graphicProps.setStyleRunThroughAttribute("background");
+                graphicProps.setStyleFlowWithTextAttribute(false);
+
+                // Append properties to style
+                style.appendChild(graphicProps);
+
+                // Append style to automatic styles
+                autoStyles.appendChild(style);
+            }
+        } catch (Exception e) {
+            log.warn("Could not create graphic style, image may not appear behind text: " + e.getMessage());
+        }
+
+        // Move frame to the beginning of the document (before first element)
+        Node firstChild = contentRoot.getFirstChild();
+        if (firstChild != null) {
+            contentRoot.insertBefore(frame, firstChild);
+        } else {
+            contentRoot.appendChild(frame);
+        }
+
+        // Save the document as imageFile (result document)
+        doc.save(new FileOutputStream(templateDocument));
+
+        // Close the document
+        doc.close();
+    }
+
+    /**
+     * Gets the page dimensions (width and height) from a TextDocument.
+     *
+     * @param doc The TextDocument to extract dimensions from
+     * @return Array with [width, height] in centimeters, defaults to A4 (21.0 x 29.7) if not found
+     * @throws Exception if an error occurs
+     */
+    private static double[] getPageDimensions(TextDocument doc) throws Exception {
+        // Default to A4 size
+        double width = 21.0;  // cm
+        double height = 29.7; // cm
+
+        try {
+            // Access the styles DOM to get page layout information
+            org.w3c.dom.Document stylesDom = doc.getStylesDom();
+
+            // Look for page-layout elements in automatic styles
+            NodeList pageLayouts = stylesDom.getElementsByTagNameNS(
+                "urn:oasis:names:tc:opendocument:xmlns:style:1.0",
+                "page-layout"
+            );
+
+            if (pageLayouts.getLength() > 0) {
+                // Get the first page layout (typically the default)
+                org.w3c.dom.Element pageLayout = (org.w3c.dom.Element) pageLayouts.item(0);
+
+                // Get page-layout-properties element
+                NodeList props = pageLayout.getElementsByTagNameNS(
+                    "urn:oasis:names:tc:opendocument:xmlns:style:1.0",
+                    "page-layout-properties"
+                );
+
+                if (props.getLength() > 0) {
+                    org.w3c.dom.Element layoutProps = (org.w3c.dom.Element) props.item(0);
+
+                    // Get width and height attributes
+                    String widthStr = layoutProps.getAttributeNS(
+                        "urn:oasis:names:tc:opendocument:xmlns:xsl-fo-compatible:1.0",
+                        "page-width"
+                    );
+                    String heightStr = layoutProps.getAttributeNS(
+                        "urn:oasis:names:tc:opendocument:xmlns:xsl-fo-compatible:1.0",
+                        "page-height"
+                    );
+
+                    if (!widthStr.isEmpty()) {
+                        width = parseDimension(widthStr);
+                    }
+                    if (!heightStr.isEmpty()) {
+                        height = parseDimension(heightStr);
+                    }
+                }
+            }
+        } catch (Exception e) {
+            log.warn("Could not extract page dimensions, using A4 default: " + e.getMessage());
+        }
+
+        return new double[]{width, height};
+    }
+
+    /**
+     * Parses a dimension string (e.g., "21cm", "8.5in") and returns the value in centimeters.
+     *
+     * @param dimension The dimension string
+     * @return The dimension in centimeters
+     */
+    private static double parseDimension(String dimension) {
+        dimension = dimension.trim();
+
+        // Extract numeric value
+        String numStr = dimension.replaceAll("[^0-9.]", "");
+        double value = Double.parseDouble(numStr);
+
+        // Convert to cm if necessary
+        if (dimension.endsWith("in")) {
+            value = value * 2.54; // inches to cm
+        } else if (dimension.endsWith("mm")) {
+            value = value / 10.0; // mm to cm
+        } else if (dimension.endsWith("pt")) {
+            value = value * 0.0352778; // points to cm
+        }
+        // else assume cm
+
+        return value;
     }
 
     // Define a recursive function to browse through all elements in the document
