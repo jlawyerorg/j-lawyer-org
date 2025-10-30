@@ -916,9 +916,9 @@ public class SendAction extends ProgressableAction {
                 msg.setHeader("Return-Receipt-To", ms.getEmailAddress());
             }
 
-            msg.setRecipients(Message.RecipientType.TO, to);
-            msg.setRecipients(Message.RecipientType.CC, cc);
-            msg.setRecipients(Message.RecipientType.BCC, bcc);
+            msg.setRecipients(Message.RecipientType.TO, EmailUtils.parseAndEncodeRecipients(to));
+            msg.setRecipients(Message.RecipientType.CC, EmailUtils.parseAndEncodeRecipients(cc));
+            msg.setRecipients(Message.RecipientType.BCC, EmailUtils.parseAndEncodeRecipients(bcc));
 
             msg.setSubject(MimeUtility.encodeText(subject, "utf-8", "B"));
             ZonedDateTime zdt = ZonedDateTime.now(ZoneId.of("Europe/Berlin"));

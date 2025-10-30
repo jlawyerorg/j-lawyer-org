@@ -1153,6 +1153,96 @@ public class EmailUtils extends CommonMailUtils {
         return mails;
     }
 
+    /**
+     * Extracts all email addresses from a comma-separated string and maps them to their full recipient strings.
+     * For example, if the input is "John Doe <john@example.com>, jane@example.com", the result will be:
+     * {"john@example.com" -> "John Doe <john@example.com>", "jane@example.com" -> "jane@example.com"}
+     *
+     * @param recipients Comma-separated string of email recipients
+     * @return Map of email addresses to full recipient strings
+     */
+    public static java.util.Map<String, String> getMailAddressToRecipientMap(String recipients) {
+        java.util.Map<String, String> map = new java.util.HashMap<>();
+        if (recipients == null || recipients.trim().isEmpty()) {
+            return map;
+        }
+
+        String[] parts = recipients.split(",");
+        for (String part : parts) {
+            part = part.trim();
+            if (part.isEmpty()) {
+                continue;
+            }
+
+            // Extract email address
+            Pattern pattern = Pattern.compile("[a-zA-Z0-9-_.]+@[a-zA-Z0-9-_.]+");
+            Matcher matcher = pattern.matcher(part);
+            if (matcher.find()) {
+                String email = matcher.group();
+                map.put(email, part);
+            }
+        }
+
+        return map;
+    }
+
+    /**
+     * Parses a comma-separated string of email recipients and returns properly encoded InternetAddress objects.
+     * This method handles recipients in various formats:
+     * - Plain email addresses: email@example.com
+     * - Name and email: "Name" <email@example.com>
+     * - Name and email without quotes: Name <email@example.com>
+     *
+     * Names containing special characters (like umlauts) are properly MIME-encoded to ensure
+     * compatibility with all mail servers.
+     *
+     * @param recipients Comma-separated string of email recipients
+     * @return Array of properly encoded InternetAddress objects
+     * @throws UnsupportedEncodingException If the encoding is not supported
+     * @throws AddressException If an email address is malformed
+     */
+    public static InternetAddress[] parseAndEncodeRecipients(String recipients) throws UnsupportedEncodingException, AddressException {
+        if (recipients == null || recipients.trim().isEmpty()) {
+            return new InternetAddress[0];
+        }
+
+        ArrayList<InternetAddress> addresses = new ArrayList<>();
+
+        // Split by comma, but be careful with commas inside quoted names
+        String[] parts = recipients.split(",");
+
+        for (String part : parts) {
+            part = part.trim();
+            if (part.isEmpty()) {
+                continue;
+            }
+
+            // Check if this is in the format: "Name" <email> or Name <email>
+            Pattern pattern = Pattern.compile("^\"?(.+?)\"?\\s*<(.+?)>$");
+            Matcher matcher = pattern.matcher(part);
+
+            if (matcher.matches()) {
+                // Extract name and email
+                String name = matcher.group(1).trim();
+                String email = matcher.group(2).trim();
+
+                // Encode the name to handle umlauts and special characters
+                String encodedName = MimeUtility.encodeText(name, "utf-8", "B");
+
+                // Create InternetAddress with encoded name
+                InternetAddress addr = new InternetAddress(email);
+                addr.setPersonal(encodedName, "utf-8");
+                addresses.add(addr);
+            } else {
+                // Plain email address without name
+                InternetAddress addr = new InternetAddress(part);
+                addresses.add(addr);
+            }
+        }
+
+        return addresses.toArray(new InternetAddress[0]);
+    }
+
     public static boolean isReceiptRequested(Message msg) {
         boolean unread = false;
         boolean receiptHeader = false;

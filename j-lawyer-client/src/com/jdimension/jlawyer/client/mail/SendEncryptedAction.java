@@ -723,6 +723,7 @@ public class SendEncryptedAction extends ProgressableAction {
     private ArchiveFileBean archiveFile = null;
     private CaseFolder caseFolder = null;
     private ArrayList<String> mails = null;
+    private java.util.Map<String, String> mailToRecipientMap = null;
     private String documentTag = null;
 
     public SendEncryptedAction(ProgressIndicator i, JDialog cleanAfter, List<String> attachments, MailboxSetup ms, boolean readReceipt, String to, String cc, String bcc, String subject, String body, String contentType, String documentTag) {
@@ -741,6 +742,11 @@ public class SendEncryptedAction extends ProgressableAction {
         this.mails = EmailUtils.getAllMailAddressesFromString(this.to);
         mails.addAll(EmailUtils.getAllMailAddressesFromString(this.cc));
         mails.addAll(EmailUtils.getAllMailAddressesFromString(this.bcc));
+
+        this.mailToRecipientMap = new java.util.HashMap<>();
+        this.mailToRecipientMap.putAll(EmailUtils.getMailAddressToRecipientMap(this.to));
+        this.mailToRecipientMap.putAll(EmailUtils.getMailAddressToRecipientMap(this.cc));
+        this.mailToRecipientMap.putAll(EmailUtils.getMailAddressToRecipientMap(this.bcc));
     }
 
     public SendEncryptedAction(ProgressIndicator i, JDialog cleanAfter, List<String> attachments, MailboxSetup ms, boolean readReceipt, String to, String cc, String bcc, String subject, String body, String contentType, ArchiveFileBean af, String documentTag, CaseFolder folder) {
@@ -765,6 +771,11 @@ public class SendEncryptedAction extends ProgressableAction {
         this.mails = EmailUtils.getAllMailAddressesFromString(this.to);
         mails.addAll(EmailUtils.getAllMailAddressesFromString(this.cc));
         mails.addAll(EmailUtils.getAllMailAddressesFromString(this.bcc));
+
+        this.mailToRecipientMap = new java.util.HashMap<>();
+        this.mailToRecipientMap.putAll(EmailUtils.getMailAddressToRecipientMap(this.to));
+        this.mailToRecipientMap.putAll(EmailUtils.getMailAddressToRecipientMap(this.cc));
+        this.mailToRecipientMap.putAll(EmailUtils.getMailAddressToRecipientMap(this.bcc));
     }
 
     public SendEncryptedAction(ProgressIndicator i, JFrame cleanAfter, List<String> attachments, MailboxSetup ms, boolean readReceipt, String to, String cc, String bcc, String subject, String body, String contentType, ArchiveFileBean af, String documentTag, CaseFolder folder) {
@@ -952,7 +963,8 @@ public class SendEncryptedAction extends ProgressableAction {
                     msg.setHeader("Return-Receipt-To", ms.getEmailAddress());
                 }
 
-                msg.setRecipients(Message.RecipientType.TO, currentRecipientMail);
+                String fullRecipient = this.mailToRecipientMap.getOrDefault(currentRecipientMail, currentRecipientMail);
+                msg.setRecipients(Message.RecipientType.TO, EmailUtils.parseAndEncodeRecipients(fullRecipient));
 
                 msg.setSubject(MimeUtility.encodeText(subject, "utf-8", "B"));
                 ZonedDateTime zdt = ZonedDateTime.now(ZoneId.of("Europe/Berlin"));

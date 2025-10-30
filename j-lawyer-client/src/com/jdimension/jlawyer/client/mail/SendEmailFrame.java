@@ -2826,9 +2826,9 @@ public class SendEmailFrame extends javax.swing.JFrame implements SendCommunicat
                 msg.setHeader("Return-Receipt-To", ms.getEmailAddress());
             }
 
-            msg.setRecipients(javax.mail.Message.RecipientType.TO, this.txtTo.getText());
-            msg.setRecipients(javax.mail.Message.RecipientType.CC, this.txtCc.getText());
-            msg.setRecipients(javax.mail.Message.RecipientType.BCC, this.txtBcc.getText());
+            msg.setRecipients(javax.mail.Message.RecipientType.TO, EmailUtils.parseAndEncodeRecipients(this.txtTo.getText()));
+            msg.setRecipients(javax.mail.Message.RecipientType.CC, EmailUtils.parseAndEncodeRecipients(this.txtCc.getText()));
+            msg.setRecipients(javax.mail.Message.RecipientType.BCC, EmailUtils.parseAndEncodeRecipients(this.txtBcc.getText()));
 
             msg.setSubject(MimeUtility.encodeText(this.txtSubject.getText(), "utf-8", "B"));
             ZonedDateTime zdt = ZonedDateTime.now(ZoneId.of("Europe/Berlin"));
