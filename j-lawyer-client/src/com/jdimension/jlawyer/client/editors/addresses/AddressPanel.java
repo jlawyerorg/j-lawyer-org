@@ -887,6 +887,7 @@ public class AddressPanel extends javax.swing.JPanel implements BeaLoginCallback
         this.cmbTitle.setEnabled(!readOnly);
         this.cmbTitleInAddress.setEnabled(!readOnly);
         this.cmbCountry.setEnabled(!readOnly);
+        this.cmbState.setEnabled(!readOnly);
         this.txtEmail.setEnabled(!readOnly);
         this.txtFax.setEnabled(!readOnly);
         this.txtFirstName.setEnabled(!readOnly);
@@ -974,6 +975,7 @@ public class AddressPanel extends javax.swing.JPanel implements BeaLoginCallback
         this.cmbTitle.setSelectedItem(dto.getTitle());
         this.cmbTitleInAddress.setSelectedItem(dto.getTitleInAddress());
         this.cmbCountry.setSelectedItem(dto.getCountry());
+        this.cmbState.setSelectedItem(dto.getState());
         this.txtEmail.setText(dto.getEmail());
         this.enableEmailButton();
         this.txtFax.setText(dto.getFax());
@@ -1276,6 +1278,7 @@ public class AddressPanel extends javax.swing.JPanel implements BeaLoginCallback
         this.cmbTitle.setSelectedItem("");
         this.cmbTitleInAddress.setSelectedItem("");
         this.cmbCountry.setSelectedItem("");
+        this.cmbState.setSelectedItem("");
         this.txtEmail.setText("");
         this.enableEmailButton();
         this.txtFax.setText("");
@@ -1381,6 +1384,7 @@ public class AddressPanel extends javax.swing.JPanel implements BeaLoginCallback
         AppOptionGroupBean[] titles = settings.getTitles();
         AppOptionGroupBean[] titlesInAddress = settings.getTitlesInAddress();
         AppOptionGroupBean[] countries = settings.getCountries();
+        AppOptionGroupBean[] states = settings.getStates();
         AppOptionGroupBean[] nationalities = settings.getNationalities();
         AppOptionGroupBean[] legalForms = settings.getLegalForms();
         AppOptionGroupBean[] degreePrefixes = settings.getDegreePrefixes();
@@ -1394,6 +1398,7 @@ public class AddressPanel extends javax.swing.JPanel implements BeaLoginCallback
         ComponentUtils.populateOptionsCombobox(titlesInAddress, this.cmbTitleInAddress);
         ComponentUtils.populateOptionsCombobox(nationalities, this.cmbNationality);
         ComponentUtils.populateOptionsCombobox(countries, this.cmbCountry);
+        ComponentUtils.populateOptionsCombobox(states, this.cmbState);
         ComponentUtils.populateOptionsCombobox(legalForms, this.cmbLegalForm);
         ComponentUtils.populateOptionsCombobox(degreePrefixes, this.cmbDegreePrefix);
         ComponentUtils.populateOptionsCombobox(degreeSuffixes, this.cmbDegreeSuffix);
@@ -1406,6 +1411,7 @@ public class AddressPanel extends javax.swing.JPanel implements BeaLoginCallback
         ComponentUtils.addAutoComplete(this.cmbTitleInAddress);
         ComponentUtils.addAutoComplete(this.cmbNationality);
         ComponentUtils.addAutoComplete(this.cmbCountry);
+        ComponentUtils.addAutoComplete(this.cmbState);
         ComponentUtils.addAutoComplete(this.cmbLegalForm);
         ComponentUtils.addAutoComplete(this.cmbDegreePrefix);
         ComponentUtils.addAutoComplete(this.cmbDegreeSuffix);
@@ -1525,6 +1531,8 @@ public class AddressPanel extends javax.swing.JPanel implements BeaLoginCallback
         jLabel46 = new javax.swing.JLabel();
         cmbCountry = new javax.swing.JComboBox<>();
         cmdCopyAddressToClipboard = new javax.swing.JButton();
+        cmbState = new javax.swing.JComboBox<>();
+        jLabel55 = new javax.swing.JLabel();
         jPanel3 = new javax.swing.JPanel();
         jLabel8 = new javax.swing.JLabel();
         jLabel9 = new javax.swing.JLabel();
@@ -1681,7 +1689,7 @@ public class AddressPanel extends javax.swing.JPanel implements BeaLoginCallback
         jPanel19Layout.setVerticalGroup(
             jPanel19Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
             .add(jPanel19Layout.createSequentialGroup()
-                .add(txtNoticePane, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 300, Short.MAX_VALUE)
+                .add(txtNoticePane, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 360, Short.MAX_VALUE)
                 .addContainerGap())
         );
 
@@ -2098,7 +2106,7 @@ public class AddressPanel extends javax.swing.JPanel implements BeaLoginCallback
                     .add(rdGenderUndefined))
                 .addPreferredGap(org.jdesktop.layout.LayoutStyle.UNRELATED)
                 .add(jPanel24, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
-                .addContainerGap(180, Short.MAX_VALUE))
+                .addContainerGap(184, Short.MAX_VALUE))
         );
 
         jTabbedPane1.addTab("Person", new javax.swing.ImageIcon(getClass().getResource("/icons16/identity.png")), jPanel7); // NOI18N
@@ -2213,7 +2221,7 @@ public class AddressPanel extends javax.swing.JPanel implements BeaLoginCallback
                 .add(jPanel20, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
                 .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
                 .add(jPanel25, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
-                .addContainerGap(419, Short.MAX_VALUE))
+                .addContainerGap(444, Short.MAX_VALUE))
         );
 
         jTabbedPane1.addTab("Organisation", new javax.swing.ImageIcon(getClass().getResource("/icons16/material/baseline_business_black_48dp.png")), jPanel26); // NOI18N
@@ -2252,6 +2260,11 @@ public class AddressPanel extends javax.swing.JPanel implements BeaLoginCallback
             }
         });
 
+        cmbState.setEditable(true);
+        cmbState.setModel(new javax.swing.DefaultComboBoxModel<>(new String[] { "Item 1", "Item 2", "Item 3", "Item 4" }));
+
+        jLabel55.setText("Bundesland:");
+
         org.jdesktop.layout.GroupLayout jPanel2Layout = new org.jdesktop.layout.GroupLayout(jPanel2);
         jPanel2.setLayout(jPanel2Layout);
         jPanel2Layout.setHorizontalGroup(
@@ -2263,15 +2276,17 @@ public class AddressPanel extends javax.swing.JPanel implements BeaLoginCallback
                     .add(jLabel6)
                     .add(jLabel7)
                     .add(jLabel28)
-                    .add(jLabel46))
+                    .add(jLabel46)
+                    .add(jLabel55))
                 .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
                 .add(jPanel2Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
+                    .add(cmbState, 0, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                     .add(txtAdjunct)
                     .add(txtZipCode)
                     .add(txtCity)
                     .add(org.jdesktop.layout.GroupLayout.TRAILING, txtDistrict)
                     .add(jPanel2Layout.createSequentialGroup()
-                        .add(txtStreet)
+                        .add(txtStreet, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 986, Short.MAX_VALUE)
                         .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
                         .add(jLabel39)
                         .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
@@ -2311,11 +2326,15 @@ public class AddressPanel extends javax.swing.JPanel implements BeaLoginCallback
                 .add(jPanel2Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.BASELINE)
                     .add(txtDistrict, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
                     .add(jLabel28))
-                .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
+                .add(jPanel2Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.BASELINE)
+                    .add(cmbState, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
+                    .add(jLabel55))
+                .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
                 .add(jPanel2Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.BASELINE)
                     .add(cmbCountry, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
                     .add(jLabel7))
-                .addContainerGap())
+                .addContainerGap(org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
         );
 
         jPanel3.setBorder(javax.swing.BorderFactory.createTitledBorder(javax.swing.BorderFactory.createTitledBorder("Kontaktdaten")));
@@ -2523,7 +2542,7 @@ public class AddressPanel extends javax.swing.JPanel implements BeaLoginCallback
                 .add(jPanel3, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
                 .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
                 .add(jPanel17, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
-                .addContainerGap(org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                .addContainerGap(150, Short.MAX_VALUE))
         );
 
         jTabbedPane1.addTab("Kontakt", new javax.swing.ImageIcon(getClass().getResource("/icons16/baseline_home_black_48dp.png")), jPanel18); // NOI18N
@@ -2792,7 +2811,7 @@ public class AddressPanel extends javax.swing.JPanel implements BeaLoginCallback
                 .add(jPanel8Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING, false)
                     .add(jPanel11, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                     .add(jPanel12, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE))
-                .addContainerGap(156, Short.MAX_VALUE))
+                .addContainerGap(160, Short.MAX_VALUE))
         );
 
         jTabbedPane1.addTab("Bank / Versicherung", new javax.swing.ImageIcon(getClass().getResource("/icons/money.png")), jPanel8); // NOI18N
@@ -2852,7 +2871,7 @@ public class AddressPanel extends javax.swing.JPanel implements BeaLoginCallback
             .add(jPanel9Layout.createSequentialGroup()
                 .addContainerGap()
                 .add(jPanel6, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
-                .addContainerGap(533, Short.MAX_VALUE))
+                .addContainerGap(615, Short.MAX_VALUE))
         );
 
         jTabbedPane1.addTab("Textbausteine", new javax.swing.ImageIcon(getClass().getResource("/icons/folder_documents.png")), jPanel9); // NOI18N
@@ -2904,7 +2923,7 @@ public class AddressPanel extends javax.swing.JPanel implements BeaLoginCallback
                 .add(lblCustom3)
                 .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
                 .add(jScrollPane1, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
-                .addContainerGap(381, Short.MAX_VALUE))
+                .addContainerGap(442, Short.MAX_VALUE))
         );
 
         jTabbedPane1.addTab("Eigene", new javax.swing.ImageIcon(getClass().getResource("/icons16/kate.png")), jPanel15); // NOI18N
@@ -2935,7 +2954,7 @@ public class AddressPanel extends javax.swing.JPanel implements BeaLoginCallback
             jPanel10Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
             .add(org.jdesktop.layout.GroupLayout.TRAILING, jPanel10Layout.createSequentialGroup()
                 .addContainerGap()
-                .add(jScrollPane2, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 641, Short.MAX_VALUE)
+                .add(jScrollPane2, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 732, Short.MAX_VALUE)
                 .addContainerGap())
         );
 
@@ -3476,7 +3495,7 @@ public class AddressPanel extends javax.swing.JPanel implements BeaLoginCallback
 
     private void cmdCopyAddressToClipboardActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdCopyAddressToClipboardActionPerformed
 
-        AddressUtils.copyToClipboard(this.txtCompany.getText(), txtDepartment.getText(), this.cmbTitleInAddress.getEditor().getItem().toString(), this.cmbDegreePrefix.getEditor().getItem().toString(), this.txtFirstName.getText(), this.txtFirstName2.getText(), this.txtName.getText(), this.cmbDegreeSuffix.getEditor().getItem().toString(), this.txtStreet.getText(), this.txtStreetNr.getText(), this.txtAdjunct.getText(), this.txtZipCode.getText(), this.txtCity.getText(), this.txtDistrict.getText(), this.cmbCountry.getEditor().getItem().toString());
+        AddressUtils.copyToClipboard(this.txtCompany.getText(), txtDepartment.getText(), this.cmbTitleInAddress.getEditor().getItem().toString(), this.cmbDegreePrefix.getEditor().getItem().toString(), this.txtFirstName.getText(), this.txtFirstName2.getText(), this.txtName.getText(), this.cmbDegreeSuffix.getEditor().getItem().toString(), this.txtStreet.getText(), this.txtStreetNr.getText(), this.txtAdjunct.getText(), this.txtZipCode.getText(), this.txtCity.getText(), this.txtDistrict.getText(), this.cmbCountry.getEditor().getItem().toString(), this.cmbState.getEditor().getItem().toString());
 
     }//GEN-LAST:event_cmdCopyAddressToClipboardActionPerformed
 
@@ -3868,6 +3887,7 @@ public class AddressPanel extends javax.swing.JPanel implements BeaLoginCallback
     private javax.swing.JComboBox<String> cmbProfession;
     private javax.swing.JComboBox<String> cmbRole;
     protected javax.swing.JComboBox cmbSalutation;
+    private javax.swing.JComboBox<String> cmbState;
     protected javax.swing.JComboBox cmbTitle;
     protected javax.swing.JComboBox<String> cmbTitleInAddress;
     private javax.swing.JButton cmdAttributesFromClipboard;
@@ -3941,6 +3961,7 @@ public class AddressPanel extends javax.swing.JPanel implements BeaLoginCallback
     private javax.swing.JLabel jLabel52;
     private javax.swing.JLabel jLabel53;
     private javax.swing.JLabel jLabel54;
+    private javax.swing.JLabel jLabel55;
     private javax.swing.JLabel jLabel6;
     private javax.swing.JLabel jLabel7;
     private javax.swing.JLabel jLabel8;
@@ -4092,6 +4113,9 @@ public class AddressPanel extends javax.swing.JPanel implements BeaLoginCallback
             return true;
         }
         if (!StringUtils.equals(dto.getCountry(), (String) this.cmbCountry.getSelectedItem())) {
+            return true;
+        }
+        if (!StringUtils.equals(dto.getState(), (String) this.cmbState.getSelectedItem())) {
             return true;
         }
         if (!StringUtils.equals(dto.getEmail(), this.txtEmail.getText())) {
@@ -4273,6 +4297,11 @@ public class AddressPanel extends javax.swing.JPanel implements BeaLoginCallback
             adr.setCountry(this.cmbCountry.getSelectedItem().toString());
         } else {
             adr.setCountry("");
+        }
+        if (this.cmbState.getSelectedItem() != null) {
+            adr.setState(this.cmbState.getSelectedItem().toString());
+        } else {
+            adr.setState("");
         }
         adr.setEmail(this.txtEmail.getText());
         adr.setFax(this.txtFax.getText());

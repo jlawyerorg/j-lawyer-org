@@ -1245,6 +1245,7 @@ public class JKanzleiGUI extends javax.swing.JFrame implements com.jdimension.jl
         mnuAddressOptionsComplimentaryClose = new javax.swing.JMenuItem();
         mnuAddressOptionsTitle = new javax.swing.JMenuItem();
         mnuAddressOptionsTitleInAddress = new javax.swing.JMenuItem();
+        mnuAddressOptionsStates = new javax.swing.JMenuItem();
         mnuAddressOptionsCountry = new javax.swing.JMenuItem();
         mnuAddressOptionsNationality = new javax.swing.JMenuItem();
         mnuAddressOptionsLegalForm = new javax.swing.JMenuItem();
@@ -1574,6 +1575,15 @@ public class JKanzleiGUI extends javax.swing.JFrame implements com.jdimension.jl
             }
         });
         mnuAddressOptions.add(mnuAddressOptionsTitleInAddress);
+
+        mnuAddressOptionsStates.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/file_doc.png"))); // NOI18N
+        mnuAddressOptionsStates.setText("Bundesländer");
+        mnuAddressOptionsStates.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                mnuAddressOptionsStatesActionPerformed(evt);
+            }
+        });
+        mnuAddressOptions.add(mnuAddressOptionsStates);
 
         mnuAddressOptionsCountry.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/file_doc.png"))); // NOI18N
         mnuAddressOptionsCountry.setText("Länder");
@@ -3117,6 +3127,14 @@ public class JKanzleiGUI extends javax.swing.JFrame implements com.jdimension.jl
         mpf.setVisible(true);
     }//GEN-LAST:event_mnuPaymentsActionPerformed
 
+    private void mnuAddressOptionsStatesActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_mnuAddressOptionsStatesActionPerformed
+        OptionGroupConfigurationDialog dlg = new OptionGroupConfigurationDialog(this, true);
+        dlg.setTitle("Bundesländer");
+        dlg.setOptionGroup(OptionConstants.OPTIONGROUP_STATE);
+        FrameUtils.centerDialog(dlg, this);
+        dlg.setVisible(true);
+    }//GEN-LAST:event_mnuAddressOptionsStatesActionPerformed
+
     private void mnuExportSyncedCasesActionPerformed(java.awt.event.ActionEvent evt) {
         CaseExportDialog dlg = new CaseExportDialog(this, true);
         FrameUtils.centerDialog(dlg, this);
@@ -3160,6 +3178,7 @@ public class JKanzleiGUI extends javax.swing.JFrame implements com.jdimension.jl
     private javax.swing.JMenuItem mnuAddressOptionsNationality;
     private javax.swing.JMenuItem mnuAddressOptionsRole;
     private javax.swing.JMenuItem mnuAddressOptionsSalutation;
+    private javax.swing.JMenuItem mnuAddressOptionsStates;
     private javax.swing.JMenuItem mnuAddressOptionsTitle;
     private javax.swing.JMenuItem mnuAddressOptionsTitleInAddress;
     private javax.swing.JMenuItem mnuAddressTags;

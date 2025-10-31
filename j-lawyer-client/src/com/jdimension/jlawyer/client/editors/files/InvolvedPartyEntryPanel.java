@@ -1512,7 +1512,7 @@ public class InvolvedPartyEntryPanel extends javax.swing.JPanel implements Event
 
     private void mnuCopyActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_mnuCopyActionPerformed
         if (this.a != null) {
-            AddressUtils.copyToClipboard(a.getCompany(), a.getDepartment(), a.getTitleInAddress(), a.getDegreePrefix(), a.getFirstName(), a.getFirstName2(), a.getName(), a.getDegreeSuffix(), a.getStreet(), a.getStreetNumber(), a.getAdjunct(), a.getZipCode(), a.getCity(), a.getDistrict(), a.getCountry());
+            AddressUtils.copyToClipboard(a.getCompany(), a.getDepartment(), a.getTitleInAddress(), a.getDegreePrefix(), a.getFirstName(), a.getFirstName2(), a.getName(), a.getDegreeSuffix(), a.getStreet(), a.getStreetNumber(), a.getAdjunct(), a.getZipCode(), a.getCity(), a.getDistrict(), a.getCountry(),a.getState());
         }
     }//GEN-LAST:event_mnuCopyActionPerformed
 

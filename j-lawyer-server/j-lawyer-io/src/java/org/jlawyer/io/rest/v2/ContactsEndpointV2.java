@@ -981,6 +981,7 @@ public class ContactsEndpointV2 implements ContactsEndpointLocalV2 {
             currentContact.setCompany(contact.getCompany());
             currentContact.setComplimentaryClose(contact.getComplimentaryClose());
             currentContact.setCountry(contact.getCountry());
+            currentContact.setState(contact.getState());
             currentContact.setCustom1(contact.getCustom1());
             currentContact.setCustom2(contact.getCustom2());
             currentContact.setCustom3(contact.getCustom3());

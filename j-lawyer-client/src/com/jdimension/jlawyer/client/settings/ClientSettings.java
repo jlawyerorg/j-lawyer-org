@@ -828,6 +828,7 @@ public class ClientSettings {
     private AppOptionGroupBean[] titles=null;
     private AppOptionGroupBean[] titlesInAddress=null;
     private AppOptionGroupBean[] countries=null;
+    private AppOptionGroupBean[] states=null;
     private AppOptionGroupBean[] nationalities=null;
     private AppOptionGroupBean[] legalForms=null;
     private AppOptionGroupBean[] degreePrefixes=null;
@@ -1164,6 +1165,20 @@ public class ClientSettings {
      */
     public void setCountries(AppOptionGroupBean[] countries) {
         this.countries = countries;
+    }
+
+    /**
+     * @return the states
+     */
+    public AppOptionGroupBean[] getStates() {
+        return states;
+    }
+
+    /**
+     * @param states the states to set
+     */
+    public void setStates(AppOptionGroupBean[] states) {
+        this.states = states;
     }
 
     /**

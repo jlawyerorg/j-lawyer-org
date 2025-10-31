@@ -770,6 +770,8 @@ public class AddressBean implements Serializable {
     private String street;
     @Column(name = "country")
     private String country;
+    @Column(name = "state")
+    private String state;
     @Column(name = "zipCode")
     private String zipCode;
     @Column(name = "city")
@@ -999,6 +1001,14 @@ public class AddressBean implements Serializable {
 
     public void setCountry(String country) {
         this.country = country;
+    }
+
+    public String getState() {
+        return state;
+    }
+
+    public void setState(String state) {
+        this.state = state;
     }
 
     public String getZipCode() {

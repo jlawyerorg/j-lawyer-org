@@ -700,6 +700,7 @@ public class RestfulContactV2 {
     
     private String street=null;
     private String country=null;
+    private String state=null;
     private String zipCode=null;
     private String city=null;
     private String phone=null;
@@ -762,6 +763,7 @@ public class RestfulContactV2 {
         ad.setCompany(this.getCompany());
         ad.setComplimentaryClose(this.getComplimentaryClose());
         ad.setCountry(this.getCountry());
+        ad.setState(this.getState());
         ad.setCreator(this.getCreator());
         ad.setCustom1(this.getCustom1());
         ad.setCustom2(this.getCustom2());
@@ -833,6 +835,7 @@ public class RestfulContactV2 {
         ad.setCompany(a.getCompany());
         ad.setComplimentaryClose(a.getComplimentaryClose());
         ad.setCountry(a.getCountry());
+        ad.setState(a.getState());
         ad.setCreator(a.getCreator());
         ad.setCustom1(a.getCustom1());
         ad.setCustom2(a.getCustom2());
@@ -1146,6 +1149,20 @@ public class RestfulContactV2 {
      */
     public void setCountry(String country) {
         this.country = country;
+    }
+
+    /**
+     * @return the state
+     */
+    public String getState() {
+        return state;
+    }
+
+    /**
+     * @param state the state to set
+     */
+    public void setState(String state) {
+        this.state = state;
     }
 
     /**

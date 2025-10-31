@@ -786,6 +786,7 @@ public class SplashThread implements Runnable {
         AppOptionGroupBean[] titles = null;
         AppOptionGroupBean[] titlesInAddress = null;
         AppOptionGroupBean[] countries = null;
+        AppOptionGroupBean[] states = null;
         AppOptionGroupBean[] nationalities = null;
         AppOptionGroupBean[] legalForms = null;
         AppOptionGroupBean[] degreePrefixes = null;
@@ -855,6 +856,7 @@ public class SplashThread implements Runnable {
             titles = mgmt.getOptionGroup(OptionConstants.OPTIONGROUP_TITLES);
             titlesInAddress = mgmt.getOptionGroup(OptionConstants.OPTIONGROUP_TITLESINADDRESS);
             countries = mgmt.getOptionGroup(OptionConstants.OPTIONGROUP_COUNTRY);
+            states = mgmt.getOptionGroup(OptionConstants.OPTIONGROUP_STATE);
             nationalities = mgmt.getOptionGroup(OptionConstants.OPTIONGROUP_NATIONALITY);
             legalForms = mgmt.getOptionGroup(OptionConstants.OPTIONGROUP_LEGALFORM);
             degreePrefixes = mgmt.getOptionGroup(OptionConstants.OPTIONGROUP_DEGREEPREFIX);
@@ -883,6 +885,7 @@ public class SplashThread implements Runnable {
         settings.setTitles(titles);
         settings.setTitlesInAddress(titlesInAddress);
         settings.setCountries(countries);
+        settings.setStates(states);
         settings.setNationalities(nationalities);
         settings.setLegalForms(legalForms);
         settings.setDegreePrefixes(degreePrefixes);
