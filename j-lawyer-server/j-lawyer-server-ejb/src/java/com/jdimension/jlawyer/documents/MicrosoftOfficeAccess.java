@@ -1733,7 +1733,7 @@ public class MicrosoftOfficeAccess {
      */
     private static long[] getPageDimensionsDocx(XWPFDocument doc) throws Exception {
         // Default to A4 size in EMUs (1 inch = 914400 EMUs, 1 cm = 360000 EMUs)
-        long width = 21 * 360000;   // 21 cm = 7560000 EMUs
+        long width = 21l * 360000l;   // 21 cm = 7560000 EMUs
         long height = (long) (29.7 * 360000); // 29.7 cm ≈ 10692000 EMUs (rounded to 10800000)
 
         try {

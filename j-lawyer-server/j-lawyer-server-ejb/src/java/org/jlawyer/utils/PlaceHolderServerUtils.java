@@ -842,6 +842,9 @@ public class PlaceHolderServerUtils extends PlaceHolders {
             if (placeHolders.containsKey(getPlaceHolderForType(_LAND, ptb.getPlaceHolder()))) {
                 placeHolders.put(getPlaceHolderForType(_LAND, ptb.getPlaceHolder()), val(selected.getCountry()));
             }
+            if (placeHolders.containsKey(getPlaceHolderForType(_BLAND, ptb.getPlaceHolder()))) {
+                placeHolders.put(getPlaceHolderForType(_BLAND, ptb.getPlaceHolder()), val(selected.getState()));
+            }
             if (placeHolders.containsKey(getPlaceHolderForType(_TEL, ptb.getPlaceHolder()))) {
                 placeHolders.put(getPlaceHolderForType(_TEL, ptb.getPlaceHolder()), val(selected.getPhone()));
             }

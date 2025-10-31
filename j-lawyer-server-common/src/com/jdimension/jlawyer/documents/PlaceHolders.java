@@ -712,6 +712,7 @@ public class PlaceHolders {
     public static final String _ORT = "{{###_ORT}}";
     public static final String _PLZ = "{{###_PLZ}}";
     public static final String _LAND = "{{###_LAND}}";
+    public static final String _BLAND = "{{###_BLAND}}";
     public static final String _TEL = "{{###_TEL}}";
     public static final String _MOBIL = "{{###_MOBIL}}";
     public static final String _FAX = "{{###_FAX}}";
@@ -926,6 +927,7 @@ public class PlaceHolders {
             ALLPLACEHOLDERS.add(_ORT.replace("###", typePlaceHolder));
             ALLPLACEHOLDERS.add(_PLZ.replace("###", typePlaceHolder));
             ALLPLACEHOLDERS.add(_LAND.replace("###", typePlaceHolder));
+            ALLPLACEHOLDERS.add(_BLAND.replace("###", typePlaceHolder));
             ALLPLACEHOLDERS.add(_TEL.replace("###", typePlaceHolder));
             ALLPLACEHOLDERS.add(_MOBIL.replace("###", typePlaceHolder));
             ALLPLACEHOLDERS.add(_FAX.replace("###", typePlaceHolder));

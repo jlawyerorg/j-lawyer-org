@@ -3920,7 +3920,6 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
         } else if (letterHead.toLowerCase().endsWith(".png") || letterHead.toLowerCase().endsWith(".jpg") || letterHead.toLowerCase().endsWith(".jpeg")) {
             ServerFileUtils.copyFile(src, dstId);
             String srcHead = localBaseDir + "letterheads" + System.getProperty("file.separator") + letterHead;
-            //ServerFileUtils.copyFile(srcHead, dstId);
             if (!(new File(srcHead).exists())) {
                 throw new Exception("Briefkopf " + letterHead + " existiert nicht!");
             }
