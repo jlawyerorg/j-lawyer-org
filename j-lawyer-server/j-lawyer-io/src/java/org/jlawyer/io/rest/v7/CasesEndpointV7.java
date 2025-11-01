@@ -726,6 +726,11 @@ public class CasesEndpointV7 implements CasesEndpointLocalV7 {
     private static final Logger log = Logger.getLogger(CasesEndpointV7.class.getName());
     private static final String LOOKUP_CASES = "java:global/j-lawyer-server/j-lawyer-server-ejb/ArchiveFileService!com.jdimension.jlawyer.services.ArchiveFileServiceLocal";
     private static final String LOOKUP_INVOICES = "java:global/j-lawyer-server/j-lawyer-server-ejb/InvoiceService!com.jdimension.jlawyer.services.InvoiceServiceLocal";
+    private static final String LOOKUP_DOCS = "java:global/j-lawyer-server/j-lawyer-server-ejb/ArchiveFileDocumentsBeanFacade!com.jdimension.jlawyer.persistence.ArchiveFileDocumentsBeanFacadeLocal";
+    private static final String LOOKUP_MESSAGING = "java:global/j-lawyer-server/j-lawyer-server-ejb/MessagingService!com.jdimension.jlawyer.services.MessagingServiceLocal";
+    private static final String LOOKUP_INVOICE_FACADE = "java:global/j-lawyer-server/j-lawyer-server-ejb/InvoiceFacade!com.jdimension.jlawyer.persistence.InvoiceFacadeLocal";
+    private static final String LOOKUP_ADDRESSES = "java:global/j-lawyer-server/j-lawyer-server-ejb/AddressService!com.jdimension.jlawyer.services.AddressServiceLocal";
+    private static final String LOOKUP_ACCOUNT_ENTRIES = "java:global/j-lawyer-server/j-lawyer-server-ejb/CaseAccountEntryFacade!com.jdimension.jlawyer.persistence.CaseAccountEntryFacadeLocal";
 
     /**
      * Checks whether or not a document (as specified in the request) may
@@ -754,7 +759,7 @@ public class CasesEndpointV7 implements CasesEndpointLocalV7 {
             InitialContext ic = new InitialContext();
 
             ArchiveFileServiceLocal cases = (ArchiveFileServiceLocal) ic.lookup(LOOKUP_CASES);
-            ArchiveFileDocumentsBeanFacadeLocal docs = (ArchiveFileDocumentsBeanFacadeLocal) ic.lookup("java:global/j-lawyer-server/j-lawyer-server-ejb/ArchiveFileDocumentsBeanFacade!com.jdimension.jlawyer.persistence.ArchiveFileDocumentsBeanFacadeLocal");
+            ArchiveFileDocumentsBeanFacadeLocal docs = (ArchiveFileDocumentsBeanFacadeLocal) ic.lookup(LOOKUP_DOCS);
 
             RestfulStatusResponseV7 response = new RestfulStatusResponseV7();
 
@@ -823,7 +828,7 @@ public class CasesEndpointV7 implements CasesEndpointLocalV7 {
                 return Response.serverError().build();
             }
 
-            MessagingServiceLocal msgService = (MessagingServiceLocal) ic.lookup("java:global/j-lawyer-server/j-lawyer-server-ejb/MessagingService!com.jdimension.jlawyer.services.MessagingServiceLocal");
+            MessagingServiceLocal msgService = (MessagingServiceLocal) ic.lookup(LOOKUP_MESSAGING);
             List<InstantMessage> messages = msgService.getMessagesForCase(id);
 
             ArrayList<RestfulInstantMessageV7> msgList = new ArrayList<>();
@@ -896,7 +901,7 @@ public class CasesEndpointV7 implements CasesEndpointLocalV7 {
 
             InitialContext ic = new InitialContext();
             
-            InvoiceFacadeLocal invoiceFacade = (InvoiceFacadeLocal) ic.lookup("java:global/j-lawyer-server/j-lawyer-server-ejb/InvoiceFacade!com.jdimension.jlawyer.persistence.InvoiceFacadeLocal");
+            InvoiceFacadeLocal invoiceFacade = (InvoiceFacadeLocal) ic.lookup(LOOKUP_INVOICE_FACADE);
             Invoice found=invoiceFacade.find(id);
             if(found==null)
                 return Response.status(Response.Status.NOT_FOUND).build();
@@ -943,7 +948,7 @@ public class CasesEndpointV7 implements CasesEndpointLocalV7 {
                 return Response.serverError().build();
             }
             
-            AddressServiceLocal addresses = (AddressServiceLocal) ic.lookup("java:global/j-lawyer-server/j-lawyer-server-ejb/AddressService!com.jdimension.jlawyer.services.AddressServiceLocal");
+            AddressServiceLocal addresses = (AddressServiceLocal) ic.lookup(LOOKUP_ADDRESSES);
             AddressBean address=null;
             if(invoice.getContactId()!=null) {
                 address=addresses.getAddress(invoice.getContactId());
@@ -1034,7 +1039,7 @@ public class CasesEndpointV7 implements CasesEndpointLocalV7 {
         try {
 
             InitialContext ic = new InitialContext();
-            InvoiceFacadeLocal invoiceFacade = (InvoiceFacadeLocal) ic.lookup("java:global/j-lawyer-server/j-lawyer-server-ejb/InvoiceFacade!com.jdimension.jlawyer.persistence.InvoiceFacadeLocal");
+            InvoiceFacadeLocal invoiceFacade = (InvoiceFacadeLocal) ic.lookup(LOOKUP_INVOICE_FACADE);
             Invoice found=invoiceFacade.find(id);
             if(found==null)
                 return Response.status(Response.Status.NOT_FOUND).build();
@@ -1420,7 +1425,7 @@ public class CasesEndpointV7 implements CasesEndpointLocalV7 {
             // Validate contact if provided
             AddressBean contact = null;
             if (accountEntry.getContactId() != null && !accountEntry.getContactId().isEmpty()) {
-                AddressServiceLocal addresses = (AddressServiceLocal) ic.lookup("java:global/j-lawyer-server/j-lawyer-server-ejb/AddressService!com.jdimension.jlawyer.services.AddressServiceLocal");
+                AddressServiceLocal addresses = (AddressServiceLocal) ic.lookup(LOOKUP_ADDRESSES);
                 contact = addresses.getAddress(accountEntry.getContactId());
                 if (contact == null) {
                     log.error("contact with id " + accountEntry.getContactId() + " does not exist");
@@ -1431,7 +1436,7 @@ public class CasesEndpointV7 implements CasesEndpointLocalV7 {
             // Validate invoice if provided
             Invoice invoice = null;
             if (accountEntry.getInvoiceId() != null && !accountEntry.getInvoiceId().isEmpty()) {
-                InvoiceFacadeLocal invoiceFacade = (InvoiceFacadeLocal) ic.lookup("java:global/j-lawyer-server/j-lawyer-server-ejb/InvoiceFacade!com.jdimension.jlawyer.persistence.InvoiceFacadeLocal");
+                InvoiceFacadeLocal invoiceFacade = (InvoiceFacadeLocal) ic.lookup(LOOKUP_INVOICE_FACADE);
                 invoice = invoiceFacade.find(accountEntry.getInvoiceId());
                 if (invoice == null) {
                     log.error("invoice with id " + accountEntry.getInvoiceId() + " does not exist");
@@ -1477,7 +1482,7 @@ public class CasesEndpointV7 implements CasesEndpointLocalV7 {
         try {
 
             InitialContext ic = new InitialContext();
-            CaseAccountEntryFacadeLocal entryFacade = (CaseAccountEntryFacadeLocal) ic.lookup("java:global/j-lawyer-server/j-lawyer-server-ejb/CaseAccountEntryFacade!com.jdimension.jlawyer.persistence.CaseAccountEntryFacadeLocal");
+            CaseAccountEntryFacadeLocal entryFacade = (CaseAccountEntryFacadeLocal) ic.lookup(LOOKUP_ACCOUNT_ENTRIES);
             CaseAccountEntry found = entryFacade.find(id);
             if (found == null) {
                 return Response.status(Response.Status.NOT_FOUND).build();
@@ -1508,7 +1513,7 @@ public class CasesEndpointV7 implements CasesEndpointLocalV7 {
         try {
 
             InitialContext ic = new InitialContext();
-            CaseAccountEntryFacadeLocal entryFacade = (CaseAccountEntryFacadeLocal) ic.lookup("java:global/j-lawyer-server/j-lawyer-server-ejb/CaseAccountEntryFacade!com.jdimension.jlawyer.persistence.CaseAccountEntryFacadeLocal");
+            CaseAccountEntryFacadeLocal entryFacade = (CaseAccountEntryFacadeLocal) ic.lookup(LOOKUP_ACCOUNT_ENTRIES);
             CaseAccountEntry found = entryFacade.find(id);
             if (found == null) {
                 return Response.status(Response.Status.NOT_FOUND).build();
@@ -1517,7 +1522,7 @@ public class CasesEndpointV7 implements CasesEndpointLocalV7 {
             // Validate contact if provided
             AddressBean contact = null;
             if (accountEntry.getContactId() != null && !accountEntry.getContactId().isEmpty()) {
-                AddressServiceLocal addresses = (AddressServiceLocal) ic.lookup("java:global/j-lawyer-server/j-lawyer-server-ejb/AddressService!com.jdimension.jlawyer.services.AddressServiceLocal");
+                AddressServiceLocal addresses = (AddressServiceLocal) ic.lookup(LOOKUP_ADDRESSES);
                 contact = addresses.getAddress(accountEntry.getContactId());
                 if (contact == null) {
                     log.error("contact with id " + accountEntry.getContactId() + " does not exist");
@@ -1528,7 +1533,7 @@ public class CasesEndpointV7 implements CasesEndpointLocalV7 {
             // Validate invoice if provided
             Invoice invoice = null;
             if (accountEntry.getInvoiceId() != null && !accountEntry.getInvoiceId().isEmpty()) {
-                InvoiceFacadeLocal invoiceFacade = (InvoiceFacadeLocal) ic.lookup("java:global/j-lawyer-server/j-lawyer-server-ejb/InvoiceFacade!com.jdimension.jlawyer.persistence.InvoiceFacadeLocal");
+                InvoiceFacadeLocal invoiceFacade = (InvoiceFacadeLocal) ic.lookup(LOOKUP_INVOICE_FACADE);
                 invoice = invoiceFacade.find(accountEntry.getInvoiceId());
                 if (invoice == null) {
                     log.error("invoice with id " + accountEntry.getInvoiceId() + " does not exist");
@@ -1573,7 +1578,7 @@ public class CasesEndpointV7 implements CasesEndpointLocalV7 {
         try {
 
             InitialContext ic = new InitialContext();
-            CaseAccountEntryFacadeLocal entryFacade = (CaseAccountEntryFacadeLocal) ic.lookup("java:global/j-lawyer-server/j-lawyer-server-ejb/CaseAccountEntryFacade!com.jdimension.jlawyer.persistence.CaseAccountEntryFacadeLocal");
+            CaseAccountEntryFacadeLocal entryFacade = (CaseAccountEntryFacadeLocal) ic.lookup(LOOKUP_ACCOUNT_ENTRIES);
             CaseAccountEntry found = entryFacade.find(id);
             if (found == null) {
                 return Response.status(Response.Status.NOT_FOUND).build();
