@@ -663,89 +663,42 @@
  */
 package com.jdimension.jlawyer.client.events;
 
+import com.jdimension.jlawyer.persistence.ArchiveFileDocumentsBean;
+
 /**
  *
  * @author jens
  */
-public abstract class Event {
+public class DocumentRemovedEvent extends Event {
+
+    private ArchiveFileDocumentsBean document;
     
-    public static final Integer TYPE_DEFAULT=0;
-    
-    public static final Integer TYPE_UPDATE_APPLICATION=10;
-    public static final Integer TYPE_UPDATE_FORMPLUGIN=12;
-    
-    public static final Integer TYPE_SERVICES=11;
-    
-    public static final Integer TYPE_NEWS=20;
-    public static final Integer TYPE_SYSTEMSTATUS=30;
-    public static final Integer TYPE_SCANNERSTATUS=40;
-    public static final Integer TYPE_MAILINGSTATUS=50;
-    public static final Integer TYPE_MAILINGFAILED=60;
-    public static final Integer TYPE_MAILSTATUS=70;
-    public static final Integer TYPE_BEASTATUS=80;
-    public static final Integer TYPE_ALLCASETAGS=100;
-    public static final Integer TYPE_ALLDOCUMENTTAGS=100;
-    public static final Integer TYPE_DOCUMENTADDED=110;
-    public static final Integer TYPE_DOCUMENTLOCK=111;
-    public static final Integer TYPE_DOCUMENTREMOVED=112;
-    public static final Integer TYPE_CONTACTUPDATED=120;
-    public static final Integer TYPE_REVIEWADDED=130;
-    public static final Integer TYPE_REVIEWUPDATED=131;
-    public static final Integer TYPE_INVOICEPOSITIONADDED=140;
-    public static final Integer TYPE_OPENTIMESHEETPOSITIONS=150;
-    
-    public static final Integer TYPE_INSTANTMESSAGING_NEWMESSAGES=160;
-    public static final Integer TYPE_INSTANTMESSAGING_MENTIONCHANGED=170;
-    public static final Integer TYPE_INSTANTMESSAGING_OPENMENTIONS=180;
-    public static final Integer TYPE_INSTANTMESSAGING_MESSAGEDELETED=190;
-    
-    public static final Integer TYPE_CASESCHANGED=200;
-    
-    public static final Integer TYPE_CASESMISSINGEVENT=210;
-    
-    
-    private Integer type=TYPE_DEFAULT;
-    private Object payload=null;
-    
-    public Event(Integer type) {
-        this.type=type;
+    public DocumentRemovedEvent(ArchiveFileDocumentsBean newDoc) {
+        super(Event.TYPE_DOCUMENTREMOVED);
+        this.document=newDoc;
         
     }
+
+    @Override
+    public boolean isUiUpdateTrigger() {
+        return true;
+    }
+
+    /**
+     * @return the document
+     */
+    public ArchiveFileDocumentsBean getDocument() {
+        return document;
+    }
+
+    /**
+     * @param document the document to set
+     */
+    public void setDocument(ArchiveFileDocumentsBean document) {
+        this.document = document;
+    }
+
+
     
-    public Event(Integer type, Object payload) {
-        this.type=type;
-        this.payload=payload;
-        
-    }
-    
-    public abstract boolean isUiUpdateTrigger();
 
-    /**
-     * @return the type
-     */
-    public Integer getType() {
-        return type;
-    }
-
-    /**
-     * @param type the type to set
-     */
-    public void setType(Integer type) {
-        this.type = type;
-    }
-
-    /**
-     * @return the payload
-     */
-    public Object getPayload() {
-        return payload;
-    }
-
-    /**
-     * @param payload the payload to set
-     */
-    public void setPayload(Object payload) {
-        this.payload = payload;
-    }
-    
 }

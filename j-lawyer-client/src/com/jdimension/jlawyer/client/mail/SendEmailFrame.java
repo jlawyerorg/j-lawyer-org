@@ -683,6 +683,7 @@ import com.jdimension.jlawyer.client.editors.files.OptionsComboBoxModel;
 import com.jdimension.jlawyer.client.editors.files.PartiesPanelEntry;
 import com.jdimension.jlawyer.client.editors.files.PartiesSelectionListener;
 import com.jdimension.jlawyer.client.events.DocumentAddedEvent;
+import com.jdimension.jlawyer.client.events.DocumentRemovedEvent;
 import com.jdimension.jlawyer.client.events.EventBroker;
 import com.jdimension.jlawyer.client.launcher.Launcher;
 import com.jdimension.jlawyer.client.launcher.LauncherFactory;
@@ -1187,8 +1188,18 @@ public class SendEmailFrame extends javax.swing.JFrame implements SendCommunicat
                     ClientSettings settings = ClientSettings.getInstance();
                     JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
                     ArchiveFileServiceRemote afs = locator.lookupArchiveFileServiceRemote();
+
+                    // Fetch document before deletion to publish event
+                    ArchiveFileDocumentsBean draftDoc = afs.getDocument(this.currentDraftDocumentId);
+
+                    // Delete from server
                     afs.removeDocument(this.currentDraftDocumentId);
                     this.currentDraftDocumentId = null;
+
+                    // Publish event for UI update
+                    EventBroker eb = EventBroker.getInstance();
+                    eb.publishEvent(new DocumentRemovedEvent(draftDoc));
+
                 } catch (Exception ex) {
                     log.error("Failed to delete draft document", ex);
                 }

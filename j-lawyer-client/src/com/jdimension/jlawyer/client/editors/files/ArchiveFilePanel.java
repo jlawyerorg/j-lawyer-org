@@ -703,6 +703,7 @@ import com.jdimension.jlawyer.client.editors.documents.viewer.FixedStringPreview
 import com.jdimension.jlawyer.client.encryption.PDFEncryptionDialog;
 import com.jdimension.jlawyer.client.events.CasesChangedEvent;
 import com.jdimension.jlawyer.client.events.DocumentAddedEvent;
+import com.jdimension.jlawyer.client.events.DocumentRemovedEvent;
 import com.jdimension.jlawyer.client.events.Event;
 import com.jdimension.jlawyer.client.events.EventBroker;
 import com.jdimension.jlawyer.client.events.InstantMessageDeletedEvent;
@@ -1174,6 +1175,7 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
 
         EventBroker b = EventBroker.getInstance();
         b.subscribeConsumer(this, Event.TYPE_DOCUMENTADDED);
+        b.subscribeConsumer(this, Event.TYPE_DOCUMENTREMOVED);
         b.subscribeConsumer(this, Event.TYPE_REVIEWADDED);
         b.subscribeConsumer(this, Event.TYPE_INSTANTMESSAGING_MESSAGEDELETED);
         b.subscribeConsumer(this, Event.TYPE_INSTANTMESSAGING_NEWMESSAGES);
@@ -9255,6 +9257,16 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
                     ArchiveFileDocumentsBean eventDoc = ((DocumentAddedEvent) e).getDocument();
                     if (this.dto.getId().equals(eventDoc.getArchiveFileKey().getId())) {
                         caseFolderPanel1.addDocument(eventDoc, ((DocumentAddedEvent) e).getInvoice());
+                    }
+                }
+            }
+        } else if (e instanceof DocumentRemovedEvent) {
+            if (this.dto != null) {
+                // can be null in subclass of ArchiveFilePanel
+                if (this.dto.getId() != null) {
+                    ArchiveFileDocumentsBean eventDoc = ((DocumentRemovedEvent) e).getDocument();
+                    if (this.dto.getId().equals(eventDoc.getArchiveFileKey().getId())) {
+                        caseFolderPanel1.removeDocument(eventDoc);
                     }
                 }
             }
