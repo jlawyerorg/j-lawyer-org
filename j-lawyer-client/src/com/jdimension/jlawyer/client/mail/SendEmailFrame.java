@@ -682,6 +682,8 @@ import com.jdimension.jlawyer.client.editors.documents.SearchAndAssignDialog;
 import com.jdimension.jlawyer.client.editors.files.OptionsComboBoxModel;
 import com.jdimension.jlawyer.client.editors.files.PartiesPanelEntry;
 import com.jdimension.jlawyer.client.editors.files.PartiesSelectionListener;
+import com.jdimension.jlawyer.client.events.DocumentAddedEvent;
+import com.jdimension.jlawyer.client.events.EventBroker;
 import com.jdimension.jlawyer.client.launcher.Launcher;
 import com.jdimension.jlawyer.client.launcher.LauncherFactory;
 import com.jdimension.jlawyer.client.launcher.ReadOnlyDocumentStore;
@@ -1299,10 +1301,15 @@ public class SendEmailFrame extends javax.swing.JFrame implements SendCommunicat
                         ArrayList<String> docList = new ArrayList<>();
                         docList.add(draftDoc.getId());
                         afs.moveDocumentsToFolder(docList, contextArchiveFileFolder.getId());
+                        draftDoc.setFolder(contextArchiveFileFolder);
                     } catch (Exception ex) {
                         log.warn("Could not move draft to folder", ex);
                     }
                 }
+
+                // Publish event for draft document added
+                EventBroker eb = EventBroker.getInstance();
+                eb.publishEvent(new DocumentAddedEvent(draftDoc));
             }
 
         } catch (Exception ex) {
