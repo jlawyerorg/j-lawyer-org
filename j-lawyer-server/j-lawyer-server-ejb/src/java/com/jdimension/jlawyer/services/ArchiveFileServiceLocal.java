@@ -842,6 +842,7 @@ public interface ArchiveFileServiceLocal {
     List<Invoice> getInvoicesUnrestricted(String caseId);
     List<InvoicePosition> getInvoicePositions(String invoiceId) throws Exception;
     Invoice addInvoice(String caseId, InvoicePool invoicePool, InvoiceType invoiceType, String currency) throws Exception;
+    CaseAccountEntry addAccountEntry(String caseId, CaseAccountEntry accountEntry) throws Exception;
     InvoicePosition addInvoicePosition(String invoiceId, InvoicePosition position) throws Exception;
     
     List<CaseAccountEntry> getAccountEntries(String caseId) throws Exception;

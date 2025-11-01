@@ -669,6 +669,8 @@ import com.jdimension.jlawyer.persistence.ArchiveFileBean;
 import com.jdimension.jlawyer.persistence.ArchiveFileDocumentsBean;
 import com.jdimension.jlawyer.persistence.ArchiveFileDocumentsBeanFacadeLocal;
 import com.jdimension.jlawyer.persistence.ArchiveFileGroupsBean;
+import com.jdimension.jlawyer.persistence.CaseAccountEntry;
+import com.jdimension.jlawyer.persistence.CaseAccountEntryFacadeLocal;
 import com.jdimension.jlawyer.persistence.Group;
 import com.jdimension.jlawyer.persistence.InstantMessage;
 import com.jdimension.jlawyer.persistence.Invoice;
@@ -690,7 +692,9 @@ import javax.annotation.security.RolesAllowed;
 import javax.ejb.Stateless;
 import javax.naming.InitialContext;
 import javax.ws.rs.Consumes;
+import javax.ws.rs.DELETE;
 import javax.ws.rs.GET;
+import javax.ws.rs.POST;
 import javax.ws.rs.PUT;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
@@ -702,6 +706,7 @@ import org.jlawyer.io.rest.v1.pojo.RestfulCaseOverviewV1;
 import org.jlawyer.io.rest.v1.pojo.RestfulCaseV2;
 import org.jlawyer.io.rest.v1.pojo.RestfulDocumentV1;
 import org.jlawyer.io.rest.v6.pojo.RestfulGroupV6;
+import org.jlawyer.io.rest.v7.pojo.RestfulCaseAccountEntryV7;
 import org.jlawyer.io.rest.v7.pojo.RestfulDocumentValidationRequestV7;
 import org.jlawyer.io.rest.v7.pojo.RestfulInstantMessageV7;
 import org.jlawyer.io.rest.v7.pojo.RestfulInvoicePositionV7;
@@ -1346,6 +1351,239 @@ public class CasesEndpointV7 implements CasesEndpointLocalV7 {
             return Response.ok(resultList).build();
         } catch (Exception ex) {
             log.error("can not create history entry " + id, ex);
+            return Response.serverError().build();
+        }
+    }
+
+    /**
+     * Returns a list of account entries for a given case
+     *
+     * @param id case ID
+     * @response 401 User not authorized
+     * @response 403 User not authenticated
+     */
+    @GET
+    @Produces(MediaType.APPLICATION_JSON + ";charset=utf-8")
+    @Path("/{id}/accountentries")
+    @RolesAllowed({"readArchiveFileRole"})
+    public Response getCaseAccountEntries(@PathParam("id") String id) {
+        try {
+
+            InitialContext ic = new InitialContext();
+            ArchiveFileServiceLocal cases = (ArchiveFileServiceLocal) ic.lookup(LOOKUP_CASES);
+            ArchiveFileBean currentCase = cases.getArchiveFile(id);
+            if (currentCase == null) {
+                log.error("case with id " + id + " does not exist");
+                return Response.serverError().build();
+            }
+
+            List<CaseAccountEntry> entries = cases.getAccountEntries(id);
+
+            ArrayList<RestfulCaseAccountEntryV7> entryList = new ArrayList<>();
+            for (CaseAccountEntry entry : entries) {
+                RestfulCaseAccountEntryV7 re = RestfulCaseAccountEntryV7.fromCaseAccountEntry(entry);
+                entryList.add(re);
+            }
+
+            return Response.ok(entryList).build();
+        } catch (Exception ex) {
+            log.error("can not get account entries for case " + id, ex);
+            return Response.serverError().build();
+        }
+    }
+
+    /**
+     * Creates a new account entry within an existing case. An ID for the entry is
+     * not required in the request.
+     *
+     * @param id case ID
+     * @param accountEntry account entry data
+     * @response 401 User not authorized
+     * @response 403 User not authenticated
+     */
+    @PUT
+    @Produces(MediaType.APPLICATION_JSON+";charset=utf-8")
+    @Consumes(MediaType.APPLICATION_JSON)
+    @Path("/{id}/accountentries/create")
+    @RolesAllowed({"writeArchiveFileRole"})
+    public Response createAccountEntry(@PathParam("id") String id, RestfulCaseAccountEntryV7 accountEntry) {
+        try {
+
+            InitialContext ic = new InitialContext();
+            ArchiveFileServiceLocal cases = (ArchiveFileServiceLocal) ic.lookup(LOOKUP_CASES);
+            ArchiveFileBean currentCase = cases.getArchiveFile(id);
+            if (currentCase == null) {
+                log.error("case with id " + id + " does not exist");
+                return Response.serverError().build();
+            }
+
+            // Validate contact if provided
+            AddressBean contact = null;
+            if (accountEntry.getContactId() != null && !accountEntry.getContactId().isEmpty()) {
+                AddressServiceLocal addresses = (AddressServiceLocal) ic.lookup("java:global/j-lawyer-server/j-lawyer-server-ejb/AddressService!com.jdimension.jlawyer.services.AddressServiceLocal");
+                contact = addresses.getAddress(accountEntry.getContactId());
+                if (contact == null) {
+                    log.error("contact with id " + accountEntry.getContactId() + " does not exist");
+                    return Response.serverError().build();
+                }
+            }
+
+            // Validate invoice if provided
+            Invoice invoice = null;
+            if (accountEntry.getInvoiceId() != null && !accountEntry.getInvoiceId().isEmpty()) {
+                InvoiceFacadeLocal invoiceFacade = (InvoiceFacadeLocal) ic.lookup("java:global/j-lawyer-server/j-lawyer-server-ejb/InvoiceFacade!com.jdimension.jlawyer.persistence.InvoiceFacadeLocal");
+                invoice = invoiceFacade.find(accountEntry.getInvoiceId());
+                if (invoice == null) {
+                    log.error("invoice with id " + accountEntry.getInvoiceId() + " does not exist");
+                    return Response.serverError().build();
+                }
+            }
+
+            CaseAccountEntry newEntry = new CaseAccountEntry();
+            newEntry.setArchiveFileKey(currentCase);
+            newEntry.setContact(contact);
+            newEntry.setInvoice(invoice);
+            newEntry.setEntryDate(accountEntry.getEntryDate());
+            newEntry.setDescription(accountEntry.getDescription());
+            newEntry.setEarnings(accountEntry.getEarnings());
+            newEntry.setSpendings(accountEntry.getSpendings());
+            newEntry.setEscrowIn(accountEntry.getEscrowIn());
+            newEntry.setEscrowOut(accountEntry.getEscrowOut());
+            newEntry.setExpendituresIn(accountEntry.getExpendituresIn());
+            newEntry.setExpendituresOut(accountEntry.getExpendituresOut());
+
+            CaseAccountEntry createdEntry = cases.addAccountEntry(id, newEntry);
+
+            return Response.ok(RestfulCaseAccountEntryV7.fromCaseAccountEntry(createdEntry)).build();
+        } catch (Exception ex) {
+            log.error("can not create account entry for case " + id, ex);
+            return Response.serverError().build();
+        }
+    }
+
+    /**
+     * Returns a single account entry by ID
+     *
+     * @param id account entry ID
+     * @response 401 User not authorized
+     * @response 403 User not authenticated
+     * @response 404 Account entry not found
+     */
+    @GET
+    @Produces(MediaType.APPLICATION_JSON + ";charset=utf-8")
+    @Path("/accountentries/{id}")
+    @RolesAllowed({"readArchiveFileRole"})
+    public Response getAccountEntry(@PathParam("id") String id) {
+        try {
+
+            InitialContext ic = new InitialContext();
+            CaseAccountEntryFacadeLocal entryFacade = (CaseAccountEntryFacadeLocal) ic.lookup("java:global/j-lawyer-server/j-lawyer-server-ejb/CaseAccountEntryFacade!com.jdimension.jlawyer.persistence.CaseAccountEntryFacadeLocal");
+            CaseAccountEntry found = entryFacade.find(id);
+            if (found == null) {
+                return Response.status(Response.Status.NOT_FOUND).build();
+            }
+
+            return Response.ok(RestfulCaseAccountEntryV7.fromCaseAccountEntry(found)).build();
+        } catch (Exception ex) {
+            log.error("can not get account entry " + id, ex);
+            return Response.serverError().build();
+        }
+    }
+
+    /**
+     * Updates an existing account entry
+     *
+     * @param id account entry ID
+     * @param accountEntry updated account entry data
+     * @response 401 User not authorized
+     * @response 403 User not authenticated
+     * @response 404 Account entry not found
+     */
+    @POST
+    @Produces(MediaType.APPLICATION_JSON+";charset=utf-8")
+    @Consumes(MediaType.APPLICATION_JSON)
+    @Path("/accountentries/{id}/update")
+    @RolesAllowed({"writeArchiveFileRole"})
+    public Response updateAccountEntry(@PathParam("id") String id, RestfulCaseAccountEntryV7 accountEntry) {
+        try {
+
+            InitialContext ic = new InitialContext();
+            CaseAccountEntryFacadeLocal entryFacade = (CaseAccountEntryFacadeLocal) ic.lookup("java:global/j-lawyer-server/j-lawyer-server-ejb/CaseAccountEntryFacade!com.jdimension.jlawyer.persistence.CaseAccountEntryFacadeLocal");
+            CaseAccountEntry found = entryFacade.find(id);
+            if (found == null) {
+                return Response.status(Response.Status.NOT_FOUND).build();
+            }
+
+            // Validate contact if provided
+            AddressBean contact = null;
+            if (accountEntry.getContactId() != null && !accountEntry.getContactId().isEmpty()) {
+                AddressServiceLocal addresses = (AddressServiceLocal) ic.lookup("java:global/j-lawyer-server/j-lawyer-server-ejb/AddressService!com.jdimension.jlawyer.services.AddressServiceLocal");
+                contact = addresses.getAddress(accountEntry.getContactId());
+                if (contact == null) {
+                    log.error("contact with id " + accountEntry.getContactId() + " does not exist");
+                    return Response.serverError().build();
+                }
+            }
+
+            // Validate invoice if provided
+            Invoice invoice = null;
+            if (accountEntry.getInvoiceId() != null && !accountEntry.getInvoiceId().isEmpty()) {
+                InvoiceFacadeLocal invoiceFacade = (InvoiceFacadeLocal) ic.lookup("java:global/j-lawyer-server/j-lawyer-server-ejb/InvoiceFacade!com.jdimension.jlawyer.persistence.InvoiceFacadeLocal");
+                invoice = invoiceFacade.find(accountEntry.getInvoiceId());
+                if (invoice == null) {
+                    log.error("invoice with id " + accountEntry.getInvoiceId() + " does not exist");
+                    return Response.serverError().build();
+                }
+            }
+
+            // Update fields
+            found.setContact(contact);
+            found.setInvoice(invoice);
+            found.setEntryDate(accountEntry.getEntryDate());
+            found.setDescription(accountEntry.getDescription());
+            found.setEarnings(accountEntry.getEarnings());
+            found.setSpendings(accountEntry.getSpendings());
+            found.setEscrowIn(accountEntry.getEscrowIn());
+            found.setEscrowOut(accountEntry.getEscrowOut());
+            found.setExpendituresIn(accountEntry.getExpendituresIn());
+            found.setExpendituresOut(accountEntry.getExpendituresOut());
+
+            entryFacade.edit(found);
+
+            return Response.ok(RestfulCaseAccountEntryV7.fromCaseAccountEntry(found)).build();
+        } catch (Exception ex) {
+            log.error("can not update account entry " + id, ex);
+            return Response.serverError().build();
+        }
+    }
+
+    /**
+     * Deletes an account entry
+     *
+     * @param id account entry ID
+     * @response 401 User not authorized
+     * @response 403 User not authenticated
+     * @response 404 Account entry not found
+     */
+    @DELETE
+    @Produces(MediaType.APPLICATION_JSON+";charset=utf-8")
+    @Path("/accountentries/{id}")
+    @RolesAllowed({"writeArchiveFileRole"})
+    public Response deleteAccountEntry(@PathParam("id") String id) {
+        try {
+
+            InitialContext ic = new InitialContext();
+            CaseAccountEntryFacadeLocal entryFacade = (CaseAccountEntryFacadeLocal) ic.lookup("java:global/j-lawyer-server/j-lawyer-server-ejb/CaseAccountEntryFacade!com.jdimension.jlawyer.persistence.CaseAccountEntryFacadeLocal");
+            CaseAccountEntry found = entryFacade.find(id);
+            if (found == null) {
+                return Response.status(Response.Status.NOT_FOUND).build();
+            }
+
+            entryFacade.remove(found);
+
+            return Response.ok().build();
+        } catch (Exception ex) {
+            log.error("can not delete account entry " + id, ex);
             return Response.serverError().build();
         }
     }

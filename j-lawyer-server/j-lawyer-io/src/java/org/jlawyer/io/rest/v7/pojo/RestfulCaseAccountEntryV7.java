@@ -692,7 +692,7 @@ public class RestfulCaseAccountEntryV7 {
     public RestfulCaseAccountEntryV7() {
     }
     
-    public static RestfulCaseAccountEntryV7 fromAccountEntry(CaseAccountEntry e) {
+    public static RestfulCaseAccountEntryV7 fromCaseAccountEntry(CaseAccountEntry e) {
         RestfulCaseAccountEntryV7 entry=new RestfulCaseAccountEntryV7();
         entry.setId(e.getId());
         entry.setEntryDate(e.getEntryDate());
