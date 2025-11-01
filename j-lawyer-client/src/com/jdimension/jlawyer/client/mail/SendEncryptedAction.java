@@ -725,6 +725,7 @@ public class SendEncryptedAction extends ProgressableAction {
     private ArrayList<String> mails = null;
     private java.util.Map<String, String> mailToRecipientMap = null;
     private String documentTag = null;
+    private String draftDocumentId = null;
 
     public SendEncryptedAction(ProgressIndicator i, JDialog cleanAfter, List<String> attachments, MailboxSetup ms, boolean readReceipt, String to, String cc, String bcc, String subject, String body, String contentType, String documentTag) {
         super(i, false, cleanAfter);
@@ -754,6 +755,11 @@ public class SendEncryptedAction extends ProgressableAction {
         this.archiveFile = af;
         this.caseFolder = folder;
     }
+
+    public SendEncryptedAction(ProgressIndicator i, JDialog cleanAfter, List<String> attachments, MailboxSetup ms, boolean readReceipt, String to, String cc, String bcc, String subject, String body, String contentType, ArchiveFileBean af, String documentTag, CaseFolder folder, String draftDocumentId) {
+        this(i, cleanAfter, attachments, ms, readReceipt, to, cc, bcc, subject, body, contentType, af, documentTag, folder);
+        this.draftDocumentId = draftDocumentId;
+    }
     
     public SendEncryptedAction(ProgressIndicator i, JFrame cleanAfter, List<String> attachments, MailboxSetup ms, boolean readReceipt, String to, String cc, String bcc, String subject, String body, String contentType, String documentTag) {
         super(i, false, cleanAfter);
@@ -782,6 +788,11 @@ public class SendEncryptedAction extends ProgressableAction {
         this(i, cleanAfter, attachments, ms, readReceipt, to, cc, bcc, subject, body, contentType, documentTag);
         this.archiveFile = af;
         this.caseFolder = folder;
+    }
+
+    public SendEncryptedAction(ProgressIndicator i, JFrame cleanAfter, List<String> attachments, MailboxSetup ms, boolean readReceipt, String to, String cc, String bcc, String subject, String body, String contentType, ArchiveFileBean af, String documentTag, CaseFolder folder, String draftDocumentId) {
+        this(i, cleanAfter, attachments, ms, readReceipt, to, cc, bcc, subject, body, contentType, af, documentTag, folder);
+        this.draftDocumentId = draftDocumentId;
     }
 
     @Override
@@ -1170,6 +1181,21 @@ public class SendEncryptedAction extends ProgressableAction {
                 File f = new File(url);
                 if (f.exists()) {
                     LauncherFactory.cleanupTempFile(url);
+                }
+            }
+
+            // Delete draft document after all emails have been sent successfully
+            if (this.draftDocumentId != null && this.archiveFile != null) {
+                try {
+                    this.progress("Lösche Entwurf...");
+                    ClientSettings settings = ClientSettings.getInstance();
+                    JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
+                    ArchiveFileServiceRemote afs = locator.lookupArchiveFileServiceRemote();
+                    afs.removeDocument(this.draftDocumentId);
+                    log.info("Draft document deleted after successful send: " + this.draftDocumentId);
+                } catch (Exception ex) {
+                    log.warn("Could not delete draft document after send: " + this.draftDocumentId, ex);
+                    // Don't fail the entire send operation if draft deletion fails
                 }
             }
 

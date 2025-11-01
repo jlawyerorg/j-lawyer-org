@@ -716,7 +716,10 @@ import com.jdimension.jlawyer.persistence.MailboxSetup;
 import com.jdimension.jlawyer.persistence.PartyTypeBean;
 import com.jdimension.jlawyer.server.utils.ContentTypes;
 import com.jdimension.jlawyer.services.AddressServiceRemote;
+import com.jdimension.jlawyer.services.ArchiveFileServiceRemote;
 import com.jdimension.jlawyer.services.JLawyerServiceLocator;
+import com.jdimension.jlawyer.persistence.ArchiveFileDocumentsBean;
+import com.jdimension.jlawyer.persistence.DocumentTagsBean;
 import com.jdimension.jlawyer.pojo.PartiesTriplet;
 import com.jdimension.jlawyer.security.CryptoProvider;
 import java.awt.Color;
@@ -786,6 +789,11 @@ public class SendEmailFrame extends javax.swing.JFrame implements SendCommunicat
 
     private ArchiveFileBean contextArchiveFile = null;
     private CaseFolder contextArchiveFileFolder = null;
+
+    // Auto-save draft functionality
+    private javax.swing.Timer autoSaveTimer = null;
+    private String currentDraftDocumentId = null;
+    private static final int AUTO_SAVE_INTERVAL = 60000; // 60 seconds
 
     private String contextDictateSign = null;
     private TextEditorPanel tp;
@@ -1136,6 +1144,171 @@ public class SendEmailFrame extends javax.swing.JFrame implements SendCommunicat
         ComponentUtils.restoreSplitPane(jSplitPane1, this.getClass(), "jSplitPane1");
         ComponentUtils.persistSplitPane(jSplitPane1, this.getClass(), "jSplitPane1");
 
+        // Initialize auto-save timer for draft functionality
+        initAutoSave();
+
+        // Add window listener to handle draft deletion on close
+        this.addWindowListener(new java.awt.event.WindowAdapter() {
+            @Override
+            public void windowClosing(java.awt.event.WindowEvent e) {
+                handleWindowClosing();
+            }
+        });
+
+    }
+
+    private void initAutoSave() {
+        this.autoSaveTimer = new javax.swing.Timer(AUTO_SAVE_INTERVAL, new java.awt.event.ActionListener() {
+            @Override
+            public void actionPerformed(java.awt.event.ActionEvent e) {
+                performAutoSave();
+            }
+        });
+        this.autoSaveTimer.setRepeats(true);
+        this.autoSaveTimer.start();
+    }
+
+    private void handleWindowClosing() {
+        // If there's a draft document, ask user if they want to keep it
+        if (this.currentDraftDocumentId != null) {
+            int response = JOptionPane.showConfirmDialog(
+                this,
+                "Möchten Sie den gespeicherten Entwurf behalten?",
+                "Entwurf behalten",
+                JOptionPane.YES_NO_OPTION,
+                JOptionPane.QUESTION_MESSAGE
+            );
+
+            if (response == JOptionPane.NO_OPTION) {
+                // Delete the draft document
+                try {
+                    ClientSettings settings = ClientSettings.getInstance();
+                    JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
+                    ArchiveFileServiceRemote afs = locator.lookupArchiveFileServiceRemote();
+                    afs.removeDocument(this.currentDraftDocumentId);
+                    this.currentDraftDocumentId = null;
+                } catch (Exception ex) {
+                    log.error("Failed to delete draft document", ex);
+                }
+            }
+        }
+    }
+
+    private void performAutoSave() {
+        // Only auto-save if a case is selected
+        if (this.contextArchiveFile == null) {
+            return;
+        }
+
+        // Check if there's content to save
+        String subject = this.txtSubject.getText();
+        EditorImplementation ed = (EditorImplementation) this.contentPanel.getComponent(0);
+        String body = ed.getText();
+
+        if ((subject == null || subject.trim().isEmpty()) && (body == null || body.trim().isEmpty())) {
+            return; // Nothing to save
+        }
+
+        try {
+            // Build MimeMessage similar to SendAction
+            MailboxSetup ms = this.getSelectedMailbox();
+            if (ms == null) {
+                return;
+            }
+
+            Session session = Session.getInstance(new Properties());
+            MimeMessage msg = new MimeMessage(session);
+
+            msg.setFrom(new InternetAddress(ms.getEmailAddress(), ms.getEmailSenderName()));
+
+            // Set recipients (even if empty for draft)
+            String toText = this.txtTo.getText();
+            String ccText = this.txtCc.getText();
+            String bccText = this.txtBcc.getText();
+
+            if (toText != null && !toText.trim().isEmpty()) {
+                msg.setRecipients(javax.mail.Message.RecipientType.TO, EmailUtils.parseAndEncodeRecipients(toText));
+            }
+            if (ccText != null && !ccText.trim().isEmpty()) {
+                msg.setRecipients(javax.mail.Message.RecipientType.CC, EmailUtils.parseAndEncodeRecipients(ccText));
+            }
+            if (bccText != null && !bccText.trim().isEmpty()) {
+                msg.setRecipients(javax.mail.Message.RecipientType.BCC, EmailUtils.parseAndEncodeRecipients(bccText));
+            }
+
+            msg.setSubject(subject != null ? subject : "");
+            msg.setSentDate(new Date());
+
+            Multipart multiPart = new MimeMultipart();
+            MimeBodyPart messageText = new MimeBodyPart();
+            String contentType = ed.getContentType();
+            messageText.setContent(body, contentType + "; charset=UTF-8");
+            multiPart.addBodyPart(messageText);
+
+            // Add attachments
+            for (String url : this.attachments.values()) {
+                MimeBodyPart att = new MimeBodyPart();
+                att.attachFile(url);
+                att.setDisposition(Part.ATTACHMENT);
+                multiPart.addBodyPart(att);
+            }
+
+            msg.setContent(multiPart);
+            msg.saveChanges();
+
+            // Convert to bytes
+            ByteArrayOutputStream bOut = new ByteArrayOutputStream();
+            msg.writeTo(bOut);
+            byte[] data = bOut.toByteArray();
+            bOut.close();
+
+            // Save or update document
+            ClientSettings settings = ClientSettings.getInstance();
+            JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
+            ArchiveFileServiceRemote afs = locator.lookupArchiveFileServiceRemote();
+
+            if (currentDraftDocumentId != null) {
+                // Update existing draft
+                afs.setDocumentContent(currentDraftDocumentId, data);
+            } else {
+                // Create new draft document with static filename
+                SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+                String subjectPart = (subject != null && !subject.trim().isEmpty()) ? subject : "Kein Betreff";
+                String draftName = "ENTWURF - " + sdf.format(new Date()) + " - " + subjectPart + ".eml";
+                draftName = FileUtils.sanitizeFileName(draftName);
+
+                ArchiveFileDocumentsBean draftDoc = afs.addDocument(
+                    this.contextArchiveFile.getId(),
+                    draftName,
+                    data,
+                    "",
+                    null
+                );
+                currentDraftDocumentId = draftDoc.getId();
+
+                // Add document tag "Entwurf"
+                try {
+                    afs.setDocumentTag(draftDoc.getId(), new DocumentTagsBean(draftDoc.getId(), "Entwurf"), true);
+                } catch (Exception ex) {
+                    log.warn("Could not set document tag 'Entwurf'", ex);
+                }
+
+                // Move to folder if specified
+                if (this.contextArchiveFileFolder != null) {
+                    try {
+                        ArrayList<String> docList = new ArrayList<>();
+                        docList.add(draftDoc.getId());
+                        afs.moveDocumentsToFolder(docList, contextArchiveFileFolder.getId());
+                    } catch (Exception ex) {
+                        log.warn("Could not move draft to folder", ex);
+                    }
+                }
+            }
+
+        } catch (Exception ex) {
+            log.error("Auto-save draft failed", ex);
+            // Don't show error dialog - just log it to avoid interrupting user
+        }
     }
 
     public void setCloudLink(String link) {
@@ -1149,6 +1322,11 @@ public class SendEmailFrame extends javax.swing.JFrame implements SendCommunicat
 
     @Override
     public void dispose() {
+        // Stop auto-save timer
+        if (this.autoSaveTimer != null) {
+            this.autoSaveTimer.stop();
+        }
+
         for (String url : this.attachments.values()) {
             File f = new File(url);
             if (f.exists()) {
@@ -2663,11 +2841,14 @@ public class SendEmailFrame extends javax.swing.JFrame implements SendCommunicat
                         return;
                     }
                 }
-                a = new SendEncryptedAction(dlg, this, new ArrayList<>(this.attachments.values()), ms, this.chkReadReceipt.isSelected(), this.txtTo.getText(), this.txtCc.getText(), this.txtBcc.getText(), this.txtSubject.getText(), editorContent, contentType, this.contextArchiveFile, createDocumentTag, this.contextArchiveFileFolder);
+                a = new SendEncryptedAction(dlg, this, new ArrayList<>(this.attachments.values()), ms, this.chkReadReceipt.isSelected(), this.txtTo.getText(), this.txtCc.getText(), this.txtBcc.getText(), this.txtSubject.getText(), editorContent, contentType, this.contextArchiveFile, createDocumentTag, this.contextArchiveFileFolder, this.currentDraftDocumentId);
             } else {
 
-                a = new SendAction(dlg, this, new ArrayList<>(this.attachments.values()), ms, this.chkReadReceipt.isSelected(), this.txtTo.getText(), this.txtCc.getText(), this.txtBcc.getText(), this.txtSubject.getText(), editorContent, contentType, this.contextArchiveFile, createDocumentTag, this.contextArchiveFileFolder);
+                a = new SendAction(dlg, this, new ArrayList<>(this.attachments.values()), ms, this.chkReadReceipt.isSelected(), this.txtTo.getText(), this.txtCc.getText(), this.txtBcc.getText(), this.txtSubject.getText(), editorContent, contentType, this.contextArchiveFile, createDocumentTag, this.contextArchiveFileFolder, this.currentDraftDocumentId);
             }
+
+            // Reset draft document ID as it will be deleted by SendAction/SendEncryptedAction after successful send
+            this.currentDraftDocumentId = null;
 
         } else if (this.chkEncryption.isSelected()) {
             int crypto = 0;

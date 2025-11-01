@@ -718,6 +718,7 @@ public class SendAction extends ProgressableAction {
     private ArchiveFileBean archiveFile = null;
     private CaseFolder caseFolder = null;
     private String documentTag = null;
+    private String draftDocumentId = null;
 
     public SendAction(ProgressIndicator i, JDialog cleanAfter, List<String> attachments, MailboxSetup ms, boolean readReceipt, String to, String cc, String bcc, String subject, String body, String contentType, String documentTag) {
         super(i, false, cleanAfter);
@@ -738,6 +739,11 @@ public class SendAction extends ProgressableAction {
         this.archiveFile = af;
         this.caseFolder = folder;
     }
+
+    public SendAction(ProgressIndicator i, JDialog cleanAfter, List<String> attachments, MailboxSetup ms, boolean readReceipt, String to, String cc, String bcc, String subject, String body, String contentType, ArchiveFileBean af, String documentTag, CaseFolder folder, String draftDocumentId) {
+        this(i, cleanAfter, attachments, ms, readReceipt, to, cc, bcc, subject, body, contentType, af, documentTag, folder);
+        this.draftDocumentId = draftDocumentId;
+    }
     
     public SendAction(ProgressIndicator i, JFrame cleanAfter, List<String> attachments, MailboxSetup ms, boolean readReceipt, String to, String cc, String bcc, String subject, String body, String contentType, String documentTag) {
         super(i, false, cleanAfter);
@@ -757,6 +763,11 @@ public class SendAction extends ProgressableAction {
         this(i, cleanAfter, attachments, ms, readReceipt, to, cc, bcc, subject, body, contentType, documentTag);
         this.archiveFile = af;
         this.caseFolder = folder;
+    }
+
+    public SendAction(ProgressIndicator i, JFrame cleanAfter, List<String> attachments, MailboxSetup ms, boolean readReceipt, String to, String cc, String bcc, String subject, String body, String contentType, ArchiveFileBean af, String documentTag, CaseFolder folder, String draftDocumentId) {
+        this(i, cleanAfter, attachments, ms, readReceipt, to, cc, bcc, subject, body, contentType, af, documentTag, folder);
+        this.draftDocumentId = draftDocumentId;
     }
 
     @Override
@@ -1018,6 +1029,18 @@ public class SendAction extends ProgressableAction {
                         }
                         EventBroker eb = EventBroker.getInstance();
                         eb.publishEvent(new DocumentAddedEvent(newDoc));
+                    }
+
+                    // Delete draft document after successful send
+                    if (this.draftDocumentId != null) {
+                        try {
+                            this.progress("Lösche Entwurf...");
+                            afs.removeDocument(this.draftDocumentId);
+                            log.info("Draft document deleted after successful send: " + this.draftDocumentId);
+                        } catch (Exception ex) {
+                            log.warn("Could not delete draft document after send: " + this.draftDocumentId, ex);
+                            // Don't fail the entire send operation if draft deletion fails
+                        }
                     }
 
                 } else {
