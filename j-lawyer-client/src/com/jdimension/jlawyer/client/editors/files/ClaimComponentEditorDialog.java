@@ -717,6 +717,9 @@ public class ClaimComponentEditorDialog extends javax.swing.JDialog {
             }
         });
 
+        // ComboBox für Zinssatz-Schnellauswahl initialisieren
+        initializeInterestBaseRelatedComboBox();
+
         // Initialen Status setzen
         updateInterestRulesEnabled();
     }
@@ -747,6 +750,9 @@ public class ClaimComponentEditorDialog extends javax.swing.JDialog {
                 updateInterestRulesEnabled();
             }
         });
+
+        // ComboBox für Zinssatz-Schnellauswahl initialisieren
+        initializeInterestBaseRelatedComboBox();
 
         this.setEntry(entry, interestRules);
     }
@@ -818,6 +824,7 @@ public class ClaimComponentEditorDialog extends javax.swing.JDialog {
         jLabel9 = new javax.swing.JLabel();
         txtComment = new javax.swing.JTextField();
         jLabel10 = new javax.swing.JLabel();
+        cmbInterestBaseRelated = new javax.swing.JComboBox<>();
 
         setDefaultCloseOperation(javax.swing.WindowConstants.DISPOSE_ON_CLOSE);
 
@@ -919,6 +926,8 @@ public class ClaimComponentEditorDialog extends javax.swing.JDialog {
         jLabel10.setFont(jLabel10.getFont());
         jLabel10.setText("Kommentar:");
 
+        cmbInterestBaseRelated.setModel(new javax.swing.DefaultComboBoxModel<>(new String[] { "Item 1", "Item 2", "Item 3", "Item 4" }));
+
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(getContentPane());
         getContentPane().setLayout(layout);
         layout.setHorizontalGroup(
@@ -961,28 +970,28 @@ public class ClaimComponentEditorDialog extends javax.swing.JDialog {
                                 .addGap(14, 14, 14)
                                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                                     .addComponent(txtComment)
-                                    .addGroup(layout.createSequentialGroup()
-                                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                                            .addComponent(cmdAddInterestRule)
-                                            .addGroup(layout.createSequentialGroup()
-                                                .addComponent(txtValidFrom, javax.swing.GroupLayout.PREFERRED_SIZE, 120, javax.swing.GroupLayout.PREFERRED_SIZE)
-                                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                                                .addComponent(cmdValidFrom))
-                                            .addGroup(layout.createSequentialGroup()
-                                                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                                                    .addComponent(rdInterestBaseRelated)
-                                                    .addComponent(rdInterestFixed))
-                                                .addGap(6, 6, 6)
-                                                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                                                    .addGroup(layout.createSequentialGroup()
-                                                        .addComponent(txtInterestFixed, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                                                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                                                        .addComponent(jLabel9))
-                                                    .addGroup(layout.createSequentialGroup()
-                                                        .addComponent(txtInterestBaseRelated, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                                                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                                                        .addComponent(jLabel8)))))
-                                        .addGap(0, 0, Short.MAX_VALUE)))))
+                                    .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                                        .addComponent(cmdAddInterestRule)
+                                        .addGroup(layout.createSequentialGroup()
+                                            .addComponent(txtValidFrom, javax.swing.GroupLayout.PREFERRED_SIZE, 120, javax.swing.GroupLayout.PREFERRED_SIZE)
+                                            .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                                            .addComponent(cmdValidFrom))
+                                        .addGroup(layout.createSequentialGroup()
+                                            .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                                                .addComponent(rdInterestBaseRelated)
+                                                .addComponent(rdInterestFixed))
+                                            .addGap(6, 6, 6)
+                                            .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                                                .addGroup(layout.createSequentialGroup()
+                                                    .addComponent(txtInterestFixed, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                                                    .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                                                    .addComponent(jLabel9))
+                                                .addGroup(layout.createSequentialGroup()
+                                                    .addComponent(txtInterestBaseRelated, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                                                    .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                                                    .addComponent(jLabel8)
+                                                    .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                                                    .addComponent(cmbInterestBaseRelated, 0, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))))))))
                         .addContainerGap())
                     .addComponent(jScrollPane1, javax.swing.GroupLayout.DEFAULT_SIZE, 700, Short.MAX_VALUE)))
         );
@@ -1019,7 +1028,8 @@ public class ClaimComponentEditorDialog extends javax.swing.JDialog {
                     .addComponent(rdInterestBaseRelated)
                     .addComponent(jLabel8)
                     .addComponent(jLabel7)
-                    .addComponent(txtInterestBaseRelated, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
+                    .addComponent(txtInterestBaseRelated, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(cmbInterestBaseRelated, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                     .addComponent(rdInterestFixed)
@@ -1104,6 +1114,37 @@ public class ClaimComponentEditorDialog extends javax.swing.JDialog {
     }//GEN-LAST:event_cmdRemoveInterestRuleActionPerformed
 
     /**
+     * Initialisiert die ComboBox für die Zinssatz-Schnellauswahl mit typischen Zinssätzen
+     * im deutschen Rechtsverkehr und fügt einen ActionListener für die automatische
+     * Übernahme des Zinssatzes hinzu.
+     */
+    private void initializeInterestBaseRelatedComboBox() {
+        this.cmbInterestBaseRelated.removeAllItems();
+        this.cmbInterestBaseRelated.addItem("-- Bitte wählen --");
+        this.cmbInterestBaseRelated.addItem("Verzugszinsen Verbrauchergeschäft (Basiszins + 5%)");
+        this.cmbInterestBaseRelated.addItem("Verzugszinsen Handelsgeschäft (Basiszins + 9%)");
+        this.cmbInterestBaseRelated.addItem("Verzugszinsen Verbraucher bis 28.07.2014 (Basiszins + 8%)");
+        this.cmbInterestBaseRelated.addItem("Allgemeine gesetzliche Zinsen (Basiszins + 5%)");
+
+        // ActionListener für automatische Übernahme des Zinssatzes
+        this.cmbInterestBaseRelated.addActionListener(e -> {
+            String selected = (String) this.cmbInterestBaseRelated.getSelectedItem();
+            if (selected != null && !selected.equals("-- Bitte wählen --")) {
+                // Zinssatz aus dem Text extrahieren
+                if (selected.contains("5%)")) {
+                    this.txtInterestBaseRelated.setValue(5.0);
+                } else if (selected.contains("9%)")) {
+                    this.txtInterestBaseRelated.setValue(9.0);
+                } else if (selected.contains("8%)")) {
+                    this.txtInterestBaseRelated.setValue(8.0);
+                }
+                // Automatisch den Basiszins-Radio-Button aktivieren
+                this.rdInterestBaseRelated.setSelected(true);
+            }
+        });
+    }
+
+    /**
      * Aktiviert oder deaktiviert alle UI-Elemente für Zinsregeln basierend auf dem ausgewählten Typ.
      * Bei COST_NON_INTEREST_BEARING werden alle Zinsregel-Elemente deaktiviert.
      */
@@ -1134,7 +1175,8 @@ public class ClaimComponentEditorDialog extends javax.swing.JDialog {
         txtInterestBaseRelated.setEnabled(enabled);
         jLabel8.setEnabled(enabled);
         jLabel9.setEnabled(enabled);
-        
+        cmbInterestBaseRelated.setEnabled(enabled);
+
         txtComment.setEnabled(enabled);
     }
 
@@ -1184,6 +1226,7 @@ public class ClaimComponentEditorDialog extends javax.swing.JDialog {
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.ButtonGroup btnGrpInterestType;
+    private javax.swing.JComboBox<String> cmbInterestBaseRelated;
     private javax.swing.JComboBox<ClaimComponentType> cmbType;
     private javax.swing.JButton cmdAddInterestRule;
     private javax.swing.JButton cmdCancel;
