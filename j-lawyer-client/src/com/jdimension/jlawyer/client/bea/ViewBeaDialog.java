@@ -789,6 +789,7 @@ public class ViewBeaDialog extends javax.swing.JDialog {
         jToolBar1.add(cmdForward);
 
         cmdEditDraft.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons32/baseline_edit_square_black_48dp.png"))); // NOI18N
+        cmdEditDraft.setToolTipText("Bearbeiten");
         cmdEditDraft.setFocusable(false);
         cmdEditDraft.setHorizontalTextPosition(javax.swing.SwingConstants.CENTER);
         cmdEditDraft.setVerticalTextPosition(javax.swing.SwingConstants.BOTTOM);
