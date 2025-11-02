@@ -675,6 +675,7 @@ import com.jdimension.jlawyer.persistence.Group;
 import com.jdimension.jlawyer.persistence.InstantMessage;
 import com.jdimension.jlawyer.persistence.Invoice;
 import com.jdimension.jlawyer.persistence.InvoiceFacadeLocal;
+import com.jdimension.jlawyer.persistence.InvoicePoolFacadeLocal;
 import com.jdimension.jlawyer.persistence.InvoicePool;
 import com.jdimension.jlawyer.persistence.InvoicePosition;
 import com.jdimension.jlawyer.persistence.InvoiceType;
@@ -729,6 +730,7 @@ public class CasesEndpointV7 implements CasesEndpointLocalV7 {
     private static final String LOOKUP_DOCS = "java:global/j-lawyer-server/j-lawyer-server-ejb/ArchiveFileDocumentsBeanFacade!com.jdimension.jlawyer.persistence.ArchiveFileDocumentsBeanFacadeLocal";
     private static final String LOOKUP_MESSAGING = "java:global/j-lawyer-server/j-lawyer-server-ejb/MessagingService!com.jdimension.jlawyer.services.MessagingServiceLocal";
     private static final String LOOKUP_INVOICE_FACADE = "java:global/j-lawyer-server/j-lawyer-server-ejb/InvoiceFacade!com.jdimension.jlawyer.persistence.InvoiceFacadeLocal";
+    private static final String LOOKUP_INVOICE_POOL_FACADE = "java:global/j-lawyer-server/j-lawyer-server-ejb/InvoicePoolFacade!com.jdimension.jlawyer.persistence.InvoicePoolFacadeLocal";
     private static final String LOOKUP_ADDRESSES = "java:global/j-lawyer-server/j-lawyer-server-ejb/AddressService!com.jdimension.jlawyer.services.AddressServiceLocal";
     private static final String LOOKUP_ACCOUNT_ENTRIES = "java:global/j-lawyer-server/j-lawyer-server-ejb/CaseAccountEntryFacade!com.jdimension.jlawyer.persistence.CaseAccountEntryFacadeLocal";
 
@@ -1019,7 +1021,132 @@ public class CasesEndpointV7 implements CasesEndpointLocalV7 {
             return Response.serverError().build();
         }
     }
-    
+
+    /**
+     * Updates an existing invoice. Automatically detects pool changes:
+     * - Pool unchanged: Preserves invoice number
+     * - Pool changed: Generates new invoice number from new pool
+     *
+     * @param id invoice ID
+     * @param invoice invoice data with lastPoolId
+     * @response 401 User not authorized
+     * @response 403 User not authenticated
+     * @response 404 Invoice not found
+     */
+    @Override
+    @POST
+    @Produces(MediaType.APPLICATION_JSON+";charset=utf-8")
+    @Consumes(MediaType.APPLICATION_JSON)
+    @Path("/invoices/{id}/update")
+    @RolesAllowed({"writeArchiveFileRole"})
+    public Response updateInvoice(@PathParam("id") String id, RestfulInvoiceV7 invoice) {
+        try {
+            InitialContext ic = new InitialContext();
+            InvoiceFacadeLocal invoiceFacade = (InvoiceFacadeLocal) ic.lookup(LOOKUP_INVOICE_FACADE);
+
+            // Check if invoice exists
+            Invoice existingInvoice = invoiceFacade.find(id);
+            if (existingInvoice == null) {
+                log.error("Invoice with id " + id + " does not exist");
+                return Response.status(Response.Status.NOT_FOUND).build();
+            }
+
+            ArchiveFileServiceLocal cases = (ArchiveFileServiceLocal) ic.lookup(LOOKUP_CASES);
+            AddressServiceLocal addresses = (AddressServiceLocal) ic.lookup(LOOKUP_ADDRESSES);
+            InvoicePoolFacadeLocal invoicePoolFacade = (InvoicePoolFacadeLocal) ic.lookup(LOOKUP_INVOICE_POOL_FACADE);
+
+            // Check if pool has changed
+            boolean poolChanged = false;
+            String newPoolId = invoice.getLastPoolId();
+            String existingPoolId = existingInvoice.getLastPoolId();
+
+            if (newPoolId != null && existingPoolId != null) {
+                poolChanged = !newPoolId.equals(existingPoolId);
+            } else if (newPoolId != null || existingPoolId != null) {
+                poolChanged = true;
+            }
+
+            // Prepare contact
+            AddressBean address = null;
+            if (invoice.getContactId() != null) {
+                address = addresses.getAddress(invoice.getContactId());
+            }
+
+            // Validate payment type
+            boolean validPaymentType = false;
+            if (Invoice.PAYMENTTYPE_BANKTRANSFER.equals(invoice.getPaymentType()) ||
+                Invoice.PAYMENTTYPE_DIRECTDEBIT.equals(invoice.getPaymentType()) ||
+                Invoice.PAYMENTTYPE_OTHER.equals(invoice.getPaymentType())) {
+                validPaymentType = true;
+            }
+            if (!validPaymentType) {
+                log.error("Invoice with invalid payment type '" + invoice.getPaymentType() + "'");
+                return Response.serverError().build();
+            }
+
+            Invoice updatedInvoice;
+
+            if (poolChanged) {
+                // Pool has changed -> use updateInvoiceType (generates new invoice number)
+                log.info("Invoice pool changed from " + existingPoolId + " to " + newPoolId + " - generating new invoice number");
+
+                InvoicePool newPool = invoicePoolFacade.find(newPoolId);
+                if (newPool == null) {
+                    log.error("Invoice pool with id '" + newPoolId + "' not found");
+                    return Response.serverError().build();
+                }
+
+                // Build invoice with all updated fields
+                Invoice invoiceToUpdate = new Invoice();
+                invoiceToUpdate.setId(id);
+                invoiceToUpdate.setContact(address);
+                invoiceToUpdate.setDescription(invoice.getDescription());
+                invoiceToUpdate.setCreationDate(invoice.getCreationDate());
+                invoiceToUpdate.setDueDate(invoice.getDueDate());
+                invoiceToUpdate.setName(invoice.getName());
+                invoiceToUpdate.setPeriodFrom(invoice.getPeriodFrom());
+                invoiceToUpdate.setPeriodTo(invoice.getPeriodTo());
+                invoiceToUpdate.setStatus(existingInvoice.getStatusInt(invoice.getStatus()));
+                invoiceToUpdate.setSmallBusiness(invoice.isSmallBusiness());
+                invoiceToUpdate.setCurrency(invoice.getCurrency());
+                invoiceToUpdate.setSender(invoice.getSender());
+                invoiceToUpdate.setPaymentType(invoice.getPaymentType());
+
+                // Use updateInvoiceType which handles pool changes and generates new invoice number
+                updatedInvoice = cases.updateInvoiceType(invoice.getCaseId(), invoiceToUpdate, newPool, existingInvoice.getInvoiceType());
+
+            } else {
+                // Pool unchanged -> use updateInvoice (preserves invoice number)
+                log.info("Invoice pool unchanged - preserving invoice number");
+
+                Invoice invoiceToUpdate = new Invoice();
+                invoiceToUpdate.setId(id);
+                invoiceToUpdate.setContact(address);
+                invoiceToUpdate.setDescription(invoice.getDescription());
+                invoiceToUpdate.setCreationDate(invoice.getCreationDate());
+                invoiceToUpdate.setDueDate(invoice.getDueDate());
+                invoiceToUpdate.setInvoiceNumber(invoice.getInvoiceNumber());
+                invoiceToUpdate.setName(invoice.getName());
+                invoiceToUpdate.setPeriodFrom(invoice.getPeriodFrom());
+                invoiceToUpdate.setPeriodTo(invoice.getPeriodTo());
+                invoiceToUpdate.setStatus(existingInvoice.getStatusInt(invoice.getStatus()));
+                invoiceToUpdate.setSmallBusiness(invoice.isSmallBusiness());
+                invoiceToUpdate.setCurrency(invoice.getCurrency());
+                invoiceToUpdate.setSender(invoice.getSender());
+                invoiceToUpdate.setPaymentType(invoice.getPaymentType());
+
+                // Use updateInvoice which preserves pool and invoice number
+                updatedInvoice = cases.updateInvoice(invoice.getCaseId(), invoiceToUpdate);
+            }
+
+            return Response.ok(RestfulInvoiceV7.fromInvoice(updatedInvoice)).build();
+
+        } catch (Exception ex) {
+            log.error("Cannot update invoice " + id, ex);
+            return Response.serverError().build();
+        }
+    }
+
     /**
      * Creates a new invoice position within an existing invoice. An ID for the position is
      * not required in the request.
