@@ -703,10 +703,12 @@ public class TagToggleButton extends JToggleButton {
             if (isSelected()) {
                 setIcon(selectedIcon);
                 setFont(getFont().deriveFont(Font.BOLD));
+                setForeground(DefaultColorTheme.COLOR_DARK_GREY);
             } else {
                 setIcon(unselectedIcon);
                 setFont(getFont().deriveFont(Font.PLAIN));
                 setToolTipText(null);
+                setForeground(DefaultColorTheme.COLOR_DARK_GREY);
             }
         });
         
