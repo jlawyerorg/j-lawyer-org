@@ -8209,14 +8209,15 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
                 description += " - " + allocation.getAllocationDescription();
             }
 
-            entry.setDescription(description);
+            entry.setDescription("");
 
             // Add comment with legal reference
             String comment = proposal.getComment() != null ? proposal.getComment() + "\n\n" : "";
-            comment += allocation.getLegalReference();
+            comment += "Split nach " + allocation.getLegalReference();
             if (!proposal.isFollowsLegalOrder()) {
-                comment += "\nHinweis: Abweichung von gesetzlicher Tilgungsreihenfolge";
+                comment += "; Hinweis: Abweichung von gesetzlicher Tilgungsreihenfolge";
             }
+            comment=comment + "; " + description;
             entry.setComment(comment.trim());
 
             // Persist entry
