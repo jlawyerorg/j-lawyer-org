@@ -683,6 +683,7 @@ import com.jdimension.jlawyer.persistence.ServerSettingsBeanFacadeLocal;
 import com.jdimension.jlawyer.security.CryptoProvider;
 import com.jdimension.jlawyer.server.utils.ContentTypes;
 import com.jdimension.jlawyer.server.utils.ServerFileUtils;
+import com.jdimension.jlawyer.server.utils.ServerStringUtils;
 import com.jdimension.jlawyer.services.AddressServiceLocal;
 import com.jdimension.jlawyer.services.ArchiveFileServiceLocal;
 import com.jdimension.jlawyer.services.FormsServiceLocal;
@@ -757,10 +758,10 @@ public class MailboxScannerTask extends java.util.TimerTask {
                         if (t == null) {
                             t = "";
                         }
-                        long processingStart=System.currentTimeMillis();
+                        long processingStart = System.currentTimeMillis();
                         log.info("Processing mailbox " + ms.getEmailAddress());
                         this.processMailbox(ms, caseSvc, adrSvc, sysSvc, formsSvc, allFileNumbers, documentTags, blacklistedTypes, t, ms.isScanIgnoreInline(), ms.getScanMinAttachmentSize(), allPartyTypes, sysSvc.getDefaultDocumentNameTemplate());
-                        log.info("Finished processing mailbox " + ms.getEmailAddress() + " in " + ((System.currentTimeMillis()-processingStart)/1000) + " seconds");
+                        log.info("Finished processing mailbox " + ms.getEmailAddress() + " in " + ((System.currentTimeMillis() - processingStart) / 1000) + " seconds");
                     } catch (Throwable ex) {
                         log.error("Error processing scanned inbox " + ms.getEmailAddress(), ex);
                     }
@@ -807,7 +808,7 @@ public class MailboxScannerTask extends java.util.TimerTask {
                 props.setProperty("mail.imaps.socketFactory.fallback", "false");
                 props.setProperty("mail.imaps.socketFactory.port", "993");
                 props.setProperty("mail.imaps.starttls.enable", "true");
-                
+
                 ms.applyCustomProperties(ms.customConfigurationsReceiveProperties(), props);
 
                 session = Session.getInstance(props);
@@ -888,12 +889,11 @@ public class MailboxScannerTask extends java.util.TimerTask {
                 log.error("Folder for imported mails could not be checked / created!", ex);
             }
 
-            Message[] allMessages=new Message[0];
-            boolean fallbackNeeded=false;
+            Message[] allMessages = new Message[0];
+            boolean fallbackNeeded = false;
             try {
 
                 // try server-side filtering for messages in a relevant timeframe (last x days)
-                
                 // Calculate the date two days ago
                 Calendar cal = Calendar.getInstance();
                 cal.add(Calendar.DATE, -1 * ms.getScanDays());
@@ -902,20 +902,19 @@ public class MailboxScannerTask extends java.util.TimerTask {
                 // Use SentDateTerm for better compatibility
                 SearchTerm newerThanDays = new SentDateTerm(ComparisonTerm.GT, daysAgo);
                 allMessages = inboxFolder.search(newerThanDays);
-                if(allMessages==null || allMessages.length==0) {
-                    fallbackNeeded=true;
+                if (allMessages == null || allMessages.length == 0) {
+                    fallbackNeeded = true;
                     log.warn("Mailserver does not support search by sent date or returned an empty message list - executing fallback");
                 }
             } catch (Exception ex) {
                 log.error("Mailserver does not support search by sent date - executing fallback", ex);
-                fallbackNeeded=true;
+                fallbackNeeded = true;
             }
-            
-            if(fallbackNeeded) {
+
+            if (fallbackNeeded) {
                 allMessages = inboxFolder.getMessages();
             }
-            
-            
+
             // try fetching all headers at once to avoid server roundtrips
             try {
                 FetchProfile fp = new FetchProfile();
@@ -924,13 +923,12 @@ public class MailboxScannerTask extends java.util.TimerTask {
             } catch (Exception ex) {
                 log.warn("Fetching mail headers failed", ex);
             }
-            
-            
-            
+
             ArrayList<Message> deleteMessages = new ArrayList<>();
             long currentTimeStamp = System.currentTimeMillis();
-            if(allMessages!=null)
-                log.info("processing " +allMessages.length + " messages in mailbox " + ms.getEmailAddress());
+            if (allMessages != null) {
+                log.info("processing " + allMessages.length + " messages in mailbox " + ms.getEmailAddress());
+            }
             for (Message msg : allMessages) {
 
                 if (msg.getReceivedDate() != null) {
@@ -1209,6 +1207,18 @@ public class MailboxScannerTask extends java.util.TimerTask {
                     continue;
                 }
 
+                if (!ServerStringUtils.isEmpty(ms.getScanDefaultCase())) {
+                    // check if default case exists
+                    ArchiveFileBean defaultCase = caseSvc.getArchiveFileUnrestricted(ms.getScanDefaultCase());
+                    if (defaultCase != null) {
+                        log.info("message from " + from + " with subject '" + copiedMsg.getSubject() + "' will be assigned to default case " + defaultCase.getFileNumber());
+                        boolean saved = this.saveToCase(copiedMsg, msg.getReceivedDate(), defaultCase, caseSvc, sysSvc, formsSvc, tags, blacklistedFileTypes, ignoreInline, minAttachmentSize, defaultNameTemplate, allPartyTypes);
+                        if (saved) {
+                            deleteMessages.add(msg);
+                        }
+                    }
+                }
+
             }
 
             if (!deleteMessages.isEmpty()) {
@@ -1286,23 +1296,25 @@ public class MailboxScannerTask extends java.util.TimerTask {
             Collection<String> formPlaceHolders = formsSvc.getPlaceHoldersForCaseUnrestricted(toCase.getId());
             HashMap<String, String> formPlaceHolderValues = formsSvc.getPlaceHolderValuesForCaseUnrestricted(toCase.getId());
 
-            String docName=getEmailFilename(-1, msg.getSubject(), caseSvc, serverTemplates, received, nameTemplate, toCase, allPartyTypes, formPlaceHolders, formPlaceHolderValues, involved, caseLawyer, caseAssistant);
-            if(caseSvc.doesDocumentExistUnrestricted(toCase.getId(), docName)) {
+            String docName = getEmailFilename(-1, msg.getSubject(), caseSvc, serverTemplates, received, nameTemplate, toCase, allPartyTypes, formPlaceHolders, formPlaceHolderValues, involved, caseLawyer, caseAssistant);
+            if (caseSvc.doesDocumentExistUnrestricted(toCase.getId(), docName)) {
                 // naming clash - find alternative name
-                int fileNameIndex=2;
-                boolean fileNameClash=true;
-                while(fileNameClash && fileNameIndex<=5) {
-                    docName=getEmailFilename(fileNameIndex, msg.getSubject(), caseSvc, serverTemplates, received, nameTemplate, toCase, allPartyTypes, formPlaceHolders, formPlaceHolderValues, involved, caseLawyer, caseAssistant);
-                    fileNameClash=caseSvc.doesDocumentExistUnrestricted(toCase.getId(), docName);
-                    fileNameIndex=fileNameIndex+1;
-                    if(fileNameClash)
-                        docName=null;
-                    if(!fileNameClash)
+                int fileNameIndex = 2;
+                boolean fileNameClash = true;
+                while (fileNameClash && fileNameIndex <= 5) {
+                    docName = getEmailFilename(fileNameIndex, msg.getSubject(), caseSvc, serverTemplates, received, nameTemplate, toCase, allPartyTypes, formPlaceHolders, formPlaceHolderValues, involved, caseLawyer, caseAssistant);
+                    fileNameClash = caseSvc.doesDocumentExistUnrestricted(toCase.getId(), docName);
+                    fileNameIndex = fileNameIndex + 1;
+                    if (fileNameClash) {
+                        docName = null;
+                    }
+                    if (!fileNameClash) {
                         break;
+                    }
                 }
             }
-            
-            if (docName==null) {
+
+            if (docName == null) {
                 log.error("There is a naming conflict for email '" + msg.getSubject() + "' in case " + toCase.getFileNumber() + " - skipping entire message");
                 return false;
             } else {
@@ -1411,10 +1423,11 @@ public class MailboxScannerTask extends java.util.TimerTask {
         if (newNameMsg == null) {
             newNameMsg = "E-Mail ohne Betreff";
         }
-        
-        if(fileNameIndex>=2)
-            newNameMsg=newNameMsg+ " (" + fileNameIndex+")";
-        
+
+        if (fileNameIndex >= 2) {
+            newNameMsg = newNameMsg + " (" + fileNameIndex + ")";
+        }
+
         newNameMsg = newNameMsg + ".eml";
         newNameMsg = ServerFileUtils.sanitizeFileName(newNameMsg);
         String extension = ServerFileUtils.getExtension(newNameMsg);

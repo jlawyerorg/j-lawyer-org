@@ -664,6 +664,7 @@ For more information on this, and how to apply and follow the GNU AGPL, see
 package com.jdimension.jlawyer.client.configuration;
 
 import com.jdimension.jlawyer.client.editors.EditorsRegistry;
+import com.jdimension.jlawyer.client.editors.documents.SearchAndAssignDialog;
 import com.jdimension.jlawyer.client.mail.EmailUtils;
 import com.jdimension.jlawyer.client.processing.ProgressIndicator;
 import com.jdimension.jlawyer.client.settings.ClientSettings;
@@ -673,6 +674,7 @@ import com.jdimension.jlawyer.client.utils.FrameUtils;
 import com.jdimension.jlawyer.client.utils.StringUtils;
 import com.jdimension.jlawyer.client.utils.TableUtils;
 import com.jdimension.jlawyer.persistence.AppOptionGroupBean;
+import com.jdimension.jlawyer.persistence.ArchiveFileBean;
 import com.jdimension.jlawyer.persistence.MailboxSetup;
 import com.jdimension.jlawyer.security.CryptoProvider;
 import com.jdimension.jlawyer.services.JLawyerServiceLocator;
@@ -698,6 +700,8 @@ public class MailboxSetupDialog extends javax.swing.JDialog {
     private static final Logger log = Logger.getLogger(MailboxSetupDialog.class.getName());
 
     private ArrayList<String> availableDocumentTags = new ArrayList<>();
+
+    private String defaultCaseId = null;
 
     /**
      * Creates new form MailboxSetupDialog
@@ -771,9 +775,13 @@ public class MailboxSetupDialog extends javax.swing.JDialog {
         this.sldMinAttachmentSizeKb.setValue(0);
         this.chkIgnoreInlineAttachments.setSelected(true);
         this.spnScanDays.setValue(2);
-        
+
         this.taCustomConfigIn.setText("");
         this.taCustomConfigOut.setText("");
+
+        this.lblCase.setText("");
+        this.lblCase.setIcon(null);
+        this.defaultCaseId = null;
 
     }
 
@@ -912,6 +920,9 @@ public class MailboxSetupDialog extends javax.swing.JDialog {
         sldMinAttachmentSizeKb = new javax.swing.JSlider();
         jLabel26 = new javax.swing.JLabel();
         spnScanDays = new javax.swing.JSpinner();
+        jLabel27 = new javax.swing.JLabel();
+        lblCase = new javax.swing.JLabel();
+        cmdSearchCase = new javax.swing.JButton();
         jPanel6 = new javax.swing.JPanel();
         jLabel25 = new javax.swing.JLabel();
         jTabbedPane2 = new javax.swing.JTabbedPane();
@@ -1071,7 +1082,7 @@ public class MailboxSetupDialog extends javax.swing.JDialog {
                 .addGroup(jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                     .addComponent(txtEmailSender, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                     .addComponent(jLabel10))
-                .addContainerGap(456, Short.MAX_VALUE))
+                .addContainerGap(538, Short.MAX_VALUE))
         );
 
         jTabbedPane1.addTab("Postfach", jPanel2);
@@ -1305,7 +1316,7 @@ public class MailboxSetupDialog extends javax.swing.JDialog {
             jPanel4Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(jPanel4Layout.createSequentialGroup()
                 .addContainerGap()
-                .addComponent(htmlEmailSig, javax.swing.GroupLayout.DEFAULT_SIZE, 561, Short.MAX_VALUE))
+                .addComponent(htmlEmailSig, javax.swing.GroupLayout.DEFAULT_SIZE, 643, Short.MAX_VALUE))
         );
 
         jTabbedPane1.addTab("Signatur (HTML)", jPanel4);
@@ -1329,7 +1340,7 @@ public class MailboxSetupDialog extends javax.swing.JDialog {
             jPanel9Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(jPanel9Layout.createSequentialGroup()
                 .addContainerGap()
-                .addComponent(jScrollPane4, javax.swing.GroupLayout.DEFAULT_SIZE, 555, Short.MAX_VALUE)
+                .addComponent(jScrollPane4, javax.swing.GroupLayout.DEFAULT_SIZE, 637, Short.MAX_VALUE)
                 .addContainerGap())
         );
 
@@ -1343,7 +1354,7 @@ public class MailboxSetupDialog extends javax.swing.JDialog {
         jLabel12.setForeground(new java.awt.Color(255, 255, 255));
         jLabel12.setHorizontalAlignment(javax.swing.SwingConstants.LEFT);
         jLabel12.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/warning.png"))); // NOI18N
-        jLabel12.setText("<html>Hinweise:\n<ul>\n<li>Postfach wird &uuml;berwacht</li>\n<li><b>alle</b> Nachrichten im Posteingang werden automatisch zur Akte gespeichert</li>\n<li>es wird ein optionales Etikett angebracht</li>\n<li>die Nachricht wird in einen Ordner <b>&quot;in Akte importiert&quot;</b> verschoben</li>\n<li>ist eine Nachricht nicht eindeutig zuzuordnen, verbleibt sie im Posteingang</li>\n</ul>\n\n</html>");
+        jLabel12.setText("<html>Hinweise:\n<ul>\n<li>Postfach wird &uuml;berwacht</li>\n<li><b>alle</b> Nachrichten im Posteingang werden automatisch zur Akte gespeichert</li>\n<li>es wird ein optionales Etikett angebracht</li>\n<li>die Nachricht wird in einen Ordner <b>&quot;in Akte importiert&quot;</b> verschoben</li>\n<li>ist eine Nachricht nicht eindeutig zuzuordnen, verbleibt sie im Posteingang<br/>oder kann einer Standardakte zugeordnet werden</li>\n</ul>\n\n</html>");
         jLabel12.setOpaque(true);
 
         jLabel19.setText("Anhänge ausschließen (kommaseparierte Liste):");
@@ -1382,6 +1393,19 @@ public class MailboxSetupDialog extends javax.swing.JDialog {
         spnScanDays.setFont(spnScanDays.getFont());
         spnScanDays.setModel(new javax.swing.SpinnerNumberModel(2, 1, 50, 1));
 
+        jLabel27.setText("Standardakte:");
+
+        lblCase.setFont(lblCase.getFont());
+        lblCase.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons16/material/baseline_folder_blue_36dp.png"))); // NOI18N
+        lblCase.setText("der ./. den");
+
+        cmdSearchCase.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/find.png"))); // NOI18N
+        cmdSearchCase.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                cmdSearchCaseActionPerformed(evt);
+            }
+        });
+
         javax.swing.GroupLayout jPanel5Layout = new javax.swing.GroupLayout(jPanel5);
         jPanel5.setLayout(jPanel5Layout);
         jPanel5Layout.setHorizontalGroup(
@@ -1399,7 +1423,7 @@ public class MailboxSetupDialog extends javax.swing.JDialog {
                         .addGap(27, 27, 27)
                         .addGroup(jPanel5Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                             .addComponent(txtScanBlacklist, javax.swing.GroupLayout.Alignment.TRAILING)
-                            .addComponent(jLabel12, javax.swing.GroupLayout.DEFAULT_SIZE, 798, Short.MAX_VALUE)
+                            .addComponent(jLabel12, javax.swing.GroupLayout.DEFAULT_SIZE, 696, Short.MAX_VALUE)
                             .addGroup(jPanel5Layout.createSequentialGroup()
                                 .addComponent(cmdScanTags)
                                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
@@ -1410,16 +1434,22 @@ public class MailboxSetupDialog extends javax.swing.JDialog {
                                     .addComponent(txtScanExclusionList)
                                     .addComponent(jLabel21, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)))
                             .addGroup(jPanel5Layout.createSequentialGroup()
+                                .addComponent(lblMinAttachmentSize)
+                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                                .addComponent(sldMinAttachmentSizeKb, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                            .addGroup(jPanel5Layout.createSequentialGroup()
                                 .addGroup(jPanel5Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                                     .addComponent(jLabel22)
                                     .addComponent(jLabel20)
-                                    .addComponent(jLabel19)
-                                    .addComponent(chkIgnoreInlineAttachments))
+                                    .addComponent(chkIgnoreInlineAttachments)
+                                    .addComponent(jLabel19))
                                 .addGap(0, 0, Short.MAX_VALUE))
                             .addGroup(jPanel5Layout.createSequentialGroup()
-                                .addComponent(lblMinAttachmentSize)
+                                .addComponent(jLabel27)
                                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                                .addComponent(sldMinAttachmentSizeKb, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)))))
+                                .addComponent(cmdSearchCase)
+                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                                .addComponent(lblCase, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)))))
                 .addContainerGap())
         );
         jPanel5Layout.setVerticalGroup(
@@ -1433,6 +1463,11 @@ public class MailboxSetupDialog extends javax.swing.JDialog {
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(jLabel12, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                .addGroup(jPanel5Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
+                    .addComponent(cmdSearchCase, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                    .addComponent(jLabel27, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                    .addComponent(lblCase, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
                 .addComponent(jLabel19)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(txtScanBlacklist, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
@@ -1441,7 +1476,7 @@ public class MailboxSetupDialog extends javax.swing.JDialog {
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addGroup(jPanel5Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
                     .addComponent(cmdScanTags, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                    .addComponent(lblScanTags, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                    .addComponent(lblScanTags, javax.swing.GroupLayout.PREFERRED_SIZE, 28, javax.swing.GroupLayout.PREFERRED_SIZE))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
                 .addComponent(jLabel22)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
@@ -1454,7 +1489,7 @@ public class MailboxSetupDialog extends javax.swing.JDialog {
                 .addGroup(jPanel5Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                     .addComponent(lblMinAttachmentSize)
                     .addComponent(sldMinAttachmentSizeKb, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
-                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                .addContainerGap(64, Short.MAX_VALUE))
         );
 
         jTabbedPane1.addTab("Automation", jPanel5);
@@ -1479,7 +1514,7 @@ public class MailboxSetupDialog extends javax.swing.JDialog {
         );
         jPanel7Layout.setVerticalGroup(
             jPanel7Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addComponent(jScrollPane2, javax.swing.GroupLayout.DEFAULT_SIZE, 526, Short.MAX_VALUE)
+            .addComponent(jScrollPane2, javax.swing.GroupLayout.DEFAULT_SIZE, 608, Short.MAX_VALUE)
         );
 
         jTabbedPane2.addTab("Posteingang", jPanel7);
@@ -1498,7 +1533,7 @@ public class MailboxSetupDialog extends javax.swing.JDialog {
         );
         jPanel8Layout.setVerticalGroup(
             jPanel8Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addComponent(jScrollPane3, javax.swing.GroupLayout.DEFAULT_SIZE, 526, Short.MAX_VALUE)
+            .addComponent(jScrollPane3, javax.swing.GroupLayout.DEFAULT_SIZE, 608, Short.MAX_VALUE)
         );
 
         jTabbedPane2.addTab("Postausgang", jPanel8);
@@ -1655,8 +1690,9 @@ public class MailboxSetupDialog extends javax.swing.JDialog {
             ms.setScanExclusionList(this.txtScanExclusionList.getText());
             ms.setScanIgnoreInline(this.chkIgnoreInlineAttachments.isSelected());
             ms.setScanMinAttachmentSize(this.sldMinAttachmentSizeKb.getValue() * 1024);
-            ms.setScanDays((Integer)this.spnScanDays.getValue());
-            
+            ms.setScanDays((Integer) this.spnScanDays.getValue());
+            ms.setScanDefaultCase(this.defaultCaseId);
+
             ms.setCustomConfigurationsReceive(this.taCustomConfigIn.getText());
             ms.setCustomConfigurationsSend(this.taCustomConfigOut.getText());
 
@@ -1720,7 +1756,7 @@ public class MailboxSetupDialog extends javax.swing.JDialog {
 
     private void cmdTestMailActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdTestMailActionPerformed
 
-        String authToken=null;
+        String authToken = null;
         if (this.chkMsExchange.isSelected()) {
 
             try {
@@ -1737,12 +1773,12 @@ public class MailboxSetupDialog extends javax.swing.JDialog {
                 JOptionPane.showMessageDialog(this, ex.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
             }
         }
-        
+
         ProgressIndicator pi = new ProgressIndicator(EditorsRegistry.getInstance().getMainWindow(), true);
         pi.setShowCancelButton(false);
 
-        Properties customSendProps=new Properties();
-        Properties customReceiveProps=new Properties();
+        Properties customSendProps = new Properties();
+        Properties customReceiveProps = new Properties();
         try {
             StringReader sr = new StringReader(this.taCustomConfigOut.getText());
             customSendProps.load(sr);
@@ -1755,7 +1791,7 @@ public class MailboxSetupDialog extends javax.swing.JDialog {
             log.error("Error reading custom properties", ex);
             JOptionPane.showMessageDialog(this, "Fehler beim Lesen der erweiterten Konfiguration: " + ex.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
         }
-        
+
         MailSettingsTestAction a = new MailSettingsTestAction(pi, this, this.cmdTestMail, this.txtEmailAddress.getText(), this.txtOutServer.getText(), this.txtOutPort.getText(), this.txtOutUsername.getText(), new String(this.pwdOutPassword.getPassword()), this.chkEmailOutSsl.isSelected(), this.chkEmailStartTls.isSelected(), this.txtInServer.getText(), this.txtInUser.getText(), new String(this.pwdInPassword.getPassword()), this.chkEmailInSsl.isSelected(), this.cmbAccountType.getSelectedItem().toString(), this.chkMsExchange.isSelected(), authToken, customSendProps, customReceiveProps);
 
         a.start();
@@ -1801,7 +1837,7 @@ public class MailboxSetupDialog extends javax.swing.JDialog {
         MailboxSetup selectedMailbox = (MailboxSetup) this.tblMailboxes.getValueAt(row, 0);
 
         Object newNameObject = JOptionPane.showInputDialog(this, "Postfachname: ", "Postfach duplizieren",
-            JOptionPane.QUESTION_MESSAGE, null, null, selectedMailbox.getDisplayName() + " (Kopie)");
+                JOptionPane.QUESTION_MESSAGE, null, null, selectedMailbox.getDisplayName() + " (Kopie)");
         if (newNameObject == null) {
             return;
         }
@@ -1843,6 +1879,7 @@ public class MailboxSetupDialog extends javax.swing.JDialog {
             duplicate.setScanIgnoreInline(selectedMailbox.isScanIgnoreInline());
             duplicate.setScanMinAttachmentSize(selectedMailbox.getScanMinAttachmentSize());
             duplicate.setScanDays(selectedMailbox.getScanDays());
+            duplicate.setScanDefaultCase(selectedMailbox.getScanDefaultCase());
 
             // Copy custom configurations
             duplicate.setCustomConfigurationsReceive(selectedMailbox.getCustomConfigurationsReceive());
@@ -1862,9 +1899,26 @@ public class MailboxSetupDialog extends javax.swing.JDialog {
         } catch (Exception ex) {
             log.error("Error duplicating mailbox", ex);
             JOptionPane.showMessageDialog(this, ex.getMessage(),
-                com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
+                    com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
         }
     }//GEN-LAST:event_cmdDuplicateActionPerformed
+
+    private void cmdSearchCaseActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdSearchCaseActionPerformed
+        SearchAndAssignDialog dlg = new SearchAndAssignDialog(this, true, null, null);
+        dlg.setVisible(true);
+        ArchiveFileBean targetCase = dlg.getCaseSelection();
+        if (targetCase != null) {
+            this.lblCase.setText(targetCase.getFileNumber() + " " + targetCase.getName());
+            this.lblCase.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons16/material/baseline_folder_blue_36dp.png")));
+            this.defaultCaseId = targetCase.getId();
+        } else {
+            this.lblCase.setText("");
+            this.lblCase.setIcon(null);
+            this.defaultCaseId = null;
+        }
+        dlg.dispose();
+        this.requestFocus();
+    }//GEN-LAST:event_cmdSearchCaseActionPerformed
 
     private void updatedUI(MailboxSetup ms) {
 
@@ -1881,13 +1935,13 @@ public class MailboxSetupDialog extends javax.swing.JDialog {
             sig = "";
         }
         this.htmlEmailSig.setText(sig);
-        
+
         sig = ms.getEmailSignatureTxt();
         if (sig == null) {
             sig = "";
         }
         this.txtEmailSig.setText(sig);
-        
+
         this.txtInServer.setText(ms.getEmailInServer());
         this.txtInUser.setText(ms.getEmailInUser());
         String inPwd = ms.getEmailInPwd();
@@ -1924,7 +1978,24 @@ public class MailboxSetupDialog extends javax.swing.JDialog {
         this.chkIgnoreInlineAttachments.setSelected(ms.isScanIgnoreInline());
         this.sldMinAttachmentSizeKb.setValue((int) ((int) ms.getScanMinAttachmentSize() / (int) 1024));
         this.spnScanDays.setValue(ms.getScanDays());
-        
+        this.lblCase.setIcon(null);
+        this.lblCase.setText("");
+        this.defaultCaseId = null;
+        if (!StringUtils.isEmpty(ms.getScanDefaultCase())) {
+            ClientSettings settings = ClientSettings.getInstance();
+            try {
+                JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
+                ArchiveFileBean defaultCase = locator.lookupArchiveFileServiceRemote().getArchiveFile(ms.getScanDefaultCase());
+                if (defaultCase != null) {
+                    this.lblCase.setText(defaultCase.getFileNumber() + " " + defaultCase.getName());
+                    this.lblCase.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons16/material/baseline_folder_blue_36dp.png")));
+                    this.defaultCaseId = defaultCase.getId();
+                }
+            } catch (Exception ex) {
+                log.error("Error getting default case", ex);
+            }
+        }
+
         this.taCustomConfigIn.setText(ms.getCustomConfigurationsReceive());
         this.taCustomConfigOut.setText(ms.getCustomConfigurationsSend());
 
@@ -1987,6 +2058,7 @@ public class MailboxSetupDialog extends javax.swing.JDialog {
     private javax.swing.JButton cmdRemove;
     private javax.swing.JButton cmdSave;
     private javax.swing.JButton cmdScanTags;
+    private javax.swing.JButton cmdSearchCase;
     private javax.swing.JButton cmdTestMail;
     private com.jdimension.jlawyer.client.mail.HtmlEditorPanel htmlEmailSig;
     private javax.swing.JLabel jLabel1;
@@ -2008,6 +2080,7 @@ public class MailboxSetupDialog extends javax.swing.JDialog {
     private javax.swing.JLabel jLabel24;
     private javax.swing.JLabel jLabel25;
     private javax.swing.JLabel jLabel26;
+    private javax.swing.JLabel jLabel27;
     private javax.swing.JLabel jLabel3;
     private javax.swing.JLabel jLabel4;
     private javax.swing.JLabel jLabel5;
@@ -2032,6 +2105,7 @@ public class MailboxSetupDialog extends javax.swing.JDialog {
     private javax.swing.JSeparator jSeparator2;
     private javax.swing.JTabbedPane jTabbedPane1;
     private javax.swing.JTabbedPane jTabbedPane2;
+    private javax.swing.JLabel lblCase;
     private javax.swing.JLabel lblMinAttachmentSize;
     private javax.swing.JLabel lblScanTags;
     private javax.swing.JLabel lblTestProgress;

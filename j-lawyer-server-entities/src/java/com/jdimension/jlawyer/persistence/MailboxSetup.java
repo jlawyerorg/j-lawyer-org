@@ -766,6 +766,8 @@ public class MailboxSetup implements Serializable, EventTypes {
     private int scanMinAttachmentSize=0;
     @Column(name = "scan_days", columnDefinition = "INTEGER DEFAULT 2")
     private int scanDays=2;
+    @Column(name = "scan_defaultcase")
+    private String scanDefaultCase=null;
     
     @Column(name = "props_in")
     private String customConfigurationsReceive="";
@@ -1367,6 +1369,20 @@ public class MailboxSetup implements Serializable, EventTypes {
      */
     public void setEmailSignatureTxt(String emailSignatureTxt) {
         this.emailSignatureTxt = emailSignatureTxt;
+    }
+
+    /**
+     * @return the scanDefaultCase
+     */
+    public String getScanDefaultCase() {
+        return scanDefaultCase;
+    }
+
+    /**
+     * @param scanDefaultCase the scanDefaultCase to set
+     */
+    public void setScanDefaultCase(String scanDefaultCase) {
+        this.scanDefaultCase = scanDefaultCase;
     }
 
     

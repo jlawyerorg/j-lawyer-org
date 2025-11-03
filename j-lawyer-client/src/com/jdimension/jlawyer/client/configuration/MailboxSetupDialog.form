@@ -304,7 +304,7 @@
                           <Component id="txtEmailSender" alignment="3" min="-2" max="-2" attributes="0"/>
                           <Component id="jLabel10" alignment="3" min="-2" max="-2" attributes="0"/>
                       </Group>
-                      <EmptySpace pref="456" max="32767" attributes="0"/>
+                      <EmptySpace pref="538" max="32767" attributes="0"/>
                   </Group>
               </Group>
             </DimensionLayout>
@@ -734,7 +734,7 @@
               <Group type="103" groupAlignment="0" attributes="0">
                   <Group type="102" alignment="0" attributes="0">
                       <EmptySpace max="-2" attributes="0"/>
-                      <Component id="htmlEmailSig" pref="561" max="32767" attributes="0"/>
+                      <Component id="htmlEmailSig" pref="643" max="32767" attributes="0"/>
                   </Group>
               </Group>
             </DimensionLayout>
@@ -767,7 +767,7 @@
               <Group type="103" groupAlignment="0" attributes="0">
                   <Group type="102" alignment="0" attributes="0">
                       <EmptySpace max="-2" attributes="0"/>
-                      <Component id="jScrollPane4" pref="555" max="32767" attributes="0"/>
+                      <Component id="jScrollPane4" pref="637" max="32767" attributes="0"/>
                       <EmptySpace max="-2" attributes="0"/>
                   </Group>
               </Group>
@@ -819,7 +819,7 @@
                               <EmptySpace min="27" pref="27" max="-2" attributes="0"/>
                               <Group type="103" groupAlignment="0" attributes="0">
                                   <Component id="txtScanBlacklist" alignment="1" max="32767" attributes="0"/>
-                                  <Component id="jLabel12" pref="798" max="32767" attributes="0"/>
+                                  <Component id="jLabel12" pref="696" max="32767" attributes="0"/>
                                   <Group type="102" alignment="0" attributes="0">
                                       <Component id="cmdScanTags" min="-2" max="-2" attributes="0"/>
                                       <EmptySpace max="-2" attributes="0"/>
@@ -832,19 +832,26 @@
                                           <Component id="jLabel21" max="32767" attributes="0"/>
                                       </Group>
                                   </Group>
-                                  <Group type="102" attributes="0">
-                                      <Group type="103" groupAlignment="0" attributes="0">
-                                          <Component id="jLabel22" min="-2" max="-2" attributes="0"/>
-                                          <Component id="jLabel20" min="-2" max="-2" attributes="0"/>
-                                          <Component id="jLabel19" min="-2" max="-2" attributes="0"/>
-                                          <Component id="chkIgnoreInlineAttachments" alignment="0" min="-2" max="-2" attributes="0"/>
-                                      </Group>
-                                      <EmptySpace min="0" pref="0" max="32767" attributes="0"/>
-                                  </Group>
                                   <Group type="102" alignment="0" attributes="0">
                                       <Component id="lblMinAttachmentSize" min="-2" max="-2" attributes="0"/>
                                       <EmptySpace max="-2" attributes="0"/>
                                       <Component id="sldMinAttachmentSizeKb" max="32767" attributes="0"/>
+                                  </Group>
+                                  <Group type="102" attributes="0">
+                                      <Group type="103" groupAlignment="0" attributes="0">
+                                          <Component id="jLabel22" min="-2" max="-2" attributes="0"/>
+                                          <Component id="jLabel20" min="-2" max="-2" attributes="0"/>
+                                          <Component id="chkIgnoreInlineAttachments" alignment="0" min="-2" max="-2" attributes="0"/>
+                                          <Component id="jLabel19" min="-2" max="-2" attributes="0"/>
+                                      </Group>
+                                      <EmptySpace min="0" pref="0" max="32767" attributes="0"/>
+                                  </Group>
+                                  <Group type="102" alignment="0" attributes="0">
+                                      <Component id="jLabel27" min="-2" max="-2" attributes="0"/>
+                                      <EmptySpace max="-2" attributes="0"/>
+                                      <Component id="cmdSearchCase" min="-2" max="-2" attributes="0"/>
+                                      <EmptySpace max="-2" attributes="0"/>
+                                      <Component id="lblCase" max="32767" attributes="0"/>
                                   </Group>
                               </Group>
                           </Group>
@@ -865,6 +872,12 @@
                       <EmptySpace max="-2" attributes="0"/>
                       <Component id="jLabel12" min="-2" max="-2" attributes="0"/>
                       <EmptySpace type="unrelated" max="-2" attributes="0"/>
+                      <Group type="103" groupAlignment="0" max="-2" attributes="0">
+                          <Component id="cmdSearchCase" max="32767" attributes="0"/>
+                          <Component id="jLabel27" alignment="0" max="32767" attributes="0"/>
+                          <Component id="lblCase" alignment="0" max="32767" attributes="0"/>
+                      </Group>
+                      <EmptySpace type="unrelated" max="-2" attributes="0"/>
                       <Component id="jLabel19" min="-2" max="-2" attributes="0"/>
                       <EmptySpace max="-2" attributes="0"/>
                       <Component id="txtScanBlacklist" min="-2" max="-2" attributes="0"/>
@@ -873,7 +886,7 @@
                       <EmptySpace max="-2" attributes="0"/>
                       <Group type="103" groupAlignment="0" max="-2" attributes="0">
                           <Component id="cmdScanTags" max="32767" attributes="0"/>
-                          <Component id="lblScanTags" max="32767" attributes="0"/>
+                          <Component id="lblScanTags" min="-2" pref="28" max="-2" attributes="0"/>
                       </Group>
                       <EmptySpace type="unrelated" max="-2" attributes="0"/>
                       <Component id="jLabel22" min="-2" max="-2" attributes="0"/>
@@ -888,7 +901,7 @@
                           <Component id="lblMinAttachmentSize" alignment="3" min="-2" max="-2" attributes="0"/>
                           <Component id="sldMinAttachmentSizeKb" alignment="3" min="-2" max="-2" attributes="0"/>
                       </Group>
-                      <EmptySpace max="32767" attributes="0"/>
+                      <EmptySpace pref="64" max="32767" attributes="0"/>
                   </Group>
               </Group>
             </DimensionLayout>
@@ -921,7 +934,7 @@
                 <Property name="icon" type="javax.swing.Icon" editor="org.netbeans.modules.form.editors2.IconEditor">
                   <Image iconType="3" name="/icons/warning.png"/>
                 </Property>
-                <Property name="text" type="java.lang.String" value="&lt;html&gt;Hinweise:&#xa;&lt;ul&gt;&#xa;&lt;li&gt;Postfach wird &amp;uuml;berwacht&lt;/li&gt;&#xa;&lt;li&gt;&lt;b&gt;alle&lt;/b&gt; Nachrichten im Posteingang werden automatisch zur Akte gespeichert&lt;/li&gt;&#xa;&lt;li&gt;es wird ein optionales Etikett angebracht&lt;/li&gt;&#xa;&lt;li&gt;die Nachricht wird in einen Ordner &lt;b&gt;&amp;quot;in Akte importiert&amp;quot;&lt;/b&gt; verschoben&lt;/li&gt;&#xa;&lt;li&gt;ist eine Nachricht nicht eindeutig zuzuordnen, verbleibt sie im Posteingang&lt;/li&gt;&#xa;&lt;/ul&gt;&#xa;&#xa;&lt;/html&gt;"/>
+                <Property name="text" type="java.lang.String" value="&lt;html&gt;Hinweise:&#xa;&lt;ul&gt;&#xa;&lt;li&gt;Postfach wird &amp;uuml;berwacht&lt;/li&gt;&#xa;&lt;li&gt;&lt;b&gt;alle&lt;/b&gt; Nachrichten im Posteingang werden automatisch zur Akte gespeichert&lt;/li&gt;&#xa;&lt;li&gt;es wird ein optionales Etikett angebracht&lt;/li&gt;&#xa;&lt;li&gt;die Nachricht wird in einen Ordner &lt;b&gt;&amp;quot;in Akte importiert&amp;quot;&lt;/b&gt; verschoben&lt;/li&gt;&#xa;&lt;li&gt;ist eine Nachricht nicht eindeutig zuzuordnen, verbleibt sie im Posteingang&lt;br/&gt;oder kann einer Standardakte zugeordnet werden&lt;/li&gt;&#xa;&lt;/ul&gt;&#xa;&#xa;&lt;/html&gt;"/>
                 <Property name="opaque" type="boolean" value="true"/>
               </Properties>
             </Component>
@@ -1006,6 +1019,34 @@
                 </Property>
               </Properties>
             </Component>
+            <Component class="javax.swing.JLabel" name="jLabel27">
+              <Properties>
+                <Property name="text" type="java.lang.String" value="Standardakte:"/>
+              </Properties>
+            </Component>
+            <Component class="javax.swing.JLabel" name="lblCase">
+              <Properties>
+                <Property name="font" type="java.awt.Font" editor="org.netbeans.modules.form.editors2.FontEditor">
+                  <FontInfo relative="true">
+                    <Font component="lblCase" property="font" relativeSize="true" size="0"/>
+                  </FontInfo>
+                </Property>
+                <Property name="icon" type="javax.swing.Icon" editor="org.netbeans.modules.form.editors2.IconEditor">
+                  <Image iconType="3" name="/icons16/material/baseline_folder_blue_36dp.png"/>
+                </Property>
+                <Property name="text" type="java.lang.String" value="der ./. den"/>
+              </Properties>
+            </Component>
+            <Component class="javax.swing.JButton" name="cmdSearchCase">
+              <Properties>
+                <Property name="icon" type="javax.swing.Icon" editor="org.netbeans.modules.form.editors2.IconEditor">
+                  <Image iconType="3" name="/icons/find.png"/>
+                </Property>
+              </Properties>
+              <Events>
+                <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="cmdSearchCaseActionPerformed"/>
+              </Events>
+            </Component>
           </SubComponents>
         </Container>
         <Container class="javax.swing.JPanel" name="jPanel6">
@@ -1088,7 +1129,7 @@
                     </DimensionLayout>
                     <DimensionLayout dim="1">
                       <Group type="103" groupAlignment="0" attributes="0">
-                          <Component id="jScrollPane2" alignment="0" pref="526" max="32767" attributes="0"/>
+                          <Component id="jScrollPane2" alignment="0" pref="608" max="32767" attributes="0"/>
                       </Group>
                     </DimensionLayout>
                   </Layout>
@@ -1130,7 +1171,7 @@
                     </DimensionLayout>
                     <DimensionLayout dim="1">
                       <Group type="103" groupAlignment="0" attributes="0">
-                          <Component id="jScrollPane3" alignment="0" pref="526" max="32767" attributes="0"/>
+                          <Component id="jScrollPane3" alignment="0" pref="608" max="32767" attributes="0"/>
                       </Group>
                     </DimensionLayout>
                   </Layout>
