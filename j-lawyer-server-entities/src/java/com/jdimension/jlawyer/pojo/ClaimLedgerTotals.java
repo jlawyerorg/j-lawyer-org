@@ -664,21 +664,35 @@ package com.jdimension.jlawyer.pojo;
 
 import java.io.Serializable;
 import java.math.BigDecimal;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 /**
  *
  * @author jens
  */
 public class ClaimLedgerTotals implements Serializable {
-    
+
     private static final long serialVersionUID = 1L;
-    
+
     private BigDecimal totalMain=BigDecimal.ZERO;
     private BigDecimal totalCosts=BigDecimal.ZERO;
     private BigDecimal totalInterestMain=BigDecimal.ZERO;
     private BigDecimal totalInterestCosts=BigDecimal.ZERO;
     private BigDecimal totalPayments=BigDecimal.ZERO;
     private BigDecimal openClaim=BigDecimal.ZERO;
+
+    /**
+     * Balance information for each component
+     */
+    private List<ClaimComponentBalance> componentBalances = new ArrayList<>();
+
+    /**
+     * Map of component ID to balance for quick lookup
+     */
+    private Map<String, ClaimComponentBalance> componentBalanceMap = new HashMap<>();
 
     /**
      * @return the totalMain
@@ -763,5 +777,64 @@ public class ClaimLedgerTotals implements Serializable {
     public void setOpenClaim(BigDecimal openClaim) {
         this.openClaim = openClaim;
     }
-    
+
+    /**
+     * @return the componentBalances
+     */
+    public List<ClaimComponentBalance> getComponentBalances() {
+        return componentBalances;
+    }
+
+    /**
+     * @param componentBalances the componentBalances to set
+     */
+    public void setComponentBalances(List<ClaimComponentBalance> componentBalances) {
+        this.componentBalances = componentBalances;
+        // Rebuild map when list is set
+        this.componentBalanceMap.clear();
+        if (componentBalances != null) {
+            for (ClaimComponentBalance balance : componentBalances) {
+                if (balance.getComponent() != null) {
+                    this.componentBalanceMap.put(balance.getComponent().getId(), balance);
+                }
+            }
+        }
+    }
+
+    /**
+     * Adds a component balance to the list and map
+     * @param balance the balance to add
+     */
+    public void addComponentBalance(ClaimComponentBalance balance) {
+        if (balance != null) {
+            this.componentBalances.add(balance);
+            if (balance.getComponent() != null) {
+                this.componentBalanceMap.put(balance.getComponent().getId(), balance);
+            }
+        }
+    }
+
+    /**
+     * Gets the balance for a specific component by ID
+     * @param componentId the component ID
+     * @return the balance, or null if not found
+     */
+    public ClaimComponentBalance getComponentBalance(String componentId) {
+        return this.componentBalanceMap.get(componentId);
+    }
+
+    /**
+     * Checks if a payment amount would exceed the open balance of a component
+     * @param componentId the component ID
+     * @param paymentAmount the payment amount
+     * @return true if payment exceeds balance
+     */
+    public boolean wouldExceedBalance(String componentId, BigDecimal paymentAmount) {
+        ClaimComponentBalance balance = getComponentBalance(componentId);
+        if (balance == null) {
+            return false;
+        }
+        return paymentAmount.compareTo(balance.getTotalOpenBalance()) > 0;
+    }
+
 }

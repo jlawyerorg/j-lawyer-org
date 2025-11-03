@@ -664,14 +664,24 @@ For more information on this, and how to apply and follow the GNU AGPL, see
 package com.jdimension.jlawyer.client.editors.files;
 
 import com.jdimension.jlawyer.client.components.MultiCalDialog;
+import com.jdimension.jlawyer.client.settings.ClientSettings;
 import com.jdimension.jlawyer.persistence.ClaimComponent;
 import com.jdimension.jlawyer.persistence.ClaimLedger;
 import com.jdimension.jlawyer.persistence.ClaimLedgerEntry;
 import com.jdimension.jlawyer.persistence.LedgerEntryType;
+import com.jdimension.jlawyer.persistence.PaymentAllocation;
+import com.jdimension.jlawyer.persistence.PaymentSplitProposal;
+import com.jdimension.jlawyer.pojo.ClaimComponentBalance;
+import com.jdimension.jlawyer.pojo.ClaimLedgerTotals;
+import com.jdimension.jlawyer.services.ArchiveFileServiceRemote;
+import com.jdimension.jlawyer.services.JLawyerServiceLocator;
 import java.math.BigDecimal;
+import java.text.DecimalFormat;
 import java.text.SimpleDateFormat;
+import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
+import java.util.logging.Level;
 import javax.swing.JDialog;
 import javax.swing.JOptionPane;
 import org.apache.log4j.Logger;
@@ -690,6 +700,8 @@ public class ClaimLedgerEntryEditorDialog extends javax.swing.JDialog {
     private ClaimLedger ledger = null;
     private ClaimLedgerEntry entry = null;
     private List<ClaimComponent> components = null;
+    private ClaimLedgerTotals currentTotals = null;
+    private PaymentSplitProposal splitProposal = null;
 
     /**
      * Creates new form ClaimLedgerEntryEditorDialog
@@ -728,7 +740,22 @@ public class ClaimLedgerEntryEditorDialog extends javax.swing.JDialog {
         this.cmbType.addItemListener(e -> {
             if (e.getStateChange() == java.awt.event.ItemEvent.SELECTED) {
                 updateValueFieldEnabled();
+                checkOverpayment();
             }
+        });
+
+        // Listener für Komponenten-Änderung
+        this.cmbComponent.addItemListener(e -> {
+            if (e.getStateChange() == java.awt.event.ItemEvent.SELECTED) {
+                checkOverpayment();
+            }
+        });
+
+        // Listener für Betrag-Änderung
+        this.txtValue.getDocument().addDocumentListener(new javax.swing.event.DocumentListener() {
+            public void changedUpdate(javax.swing.event.DocumentEvent e) { checkOverpayment(); }
+            public void removeUpdate(javax.swing.event.DocumentEvent e) { checkOverpayment(); }
+            public void insertUpdate(javax.swing.event.DocumentEvent e) { checkOverpayment(); }
         });
 
         // Initialen Status setzen
@@ -757,6 +784,8 @@ public class ClaimLedgerEntryEditorDialog extends javax.swing.JDialog {
         jLabel5 = new javax.swing.JLabel();
         txtComment = new javax.swing.JTextField();
         jLabel6 = new javax.swing.JLabel();
+        lblOverpaymentWarning = new javax.swing.JLabel();
+        cmdShowSplit = new javax.swing.JButton();
         cmdCancel = new javax.swing.JButton();
         cmdOk = new javax.swing.JButton();
 
@@ -787,6 +816,16 @@ public class ClaimLedgerEntryEditorDialog extends javax.swing.JDialog {
 
         jLabel6.setText("Kommentar:");
 
+        lblOverpaymentWarning.setForeground(new java.awt.Color(255, 102, 0));
+        lblOverpaymentWarning.setText(" ");
+
+        cmdShowSplit.setText("Verteilung anzeigen...");
+        cmdShowSplit.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                cmdShowSplitActionPerformed(evt);
+            }
+        });
+
         cmdCancel.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/cancel.png"))); // NOI18N
         cmdCancel.setText("Abbrechen");
         cmdCancel.addActionListener(new java.awt.event.ActionListener() {
@@ -807,10 +846,11 @@ public class ClaimLedgerEntryEditorDialog extends javax.swing.JDialog {
         getContentPane().setLayout(layout);
         layout.setHorizontalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(layout.createSequentialGroup()
+            .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
                 .addContainerGap()
-                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addGroup(layout.createSequentialGroup()
+                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
+                    .addComponent(lblOverpaymentWarning, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                    .addGroup(javax.swing.GroupLayout.Alignment.LEADING, layout.createSequentialGroup()
                         .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                             .addComponent(jLabel1)
                             .addComponent(jLabel2)
@@ -832,11 +872,14 @@ public class ClaimLedgerEntryEditorDialog extends javax.swing.JDialog {
                                     .addComponent(cmbType, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
                                 .addGap(0, 0, Short.MAX_VALUE))
                             .addComponent(txtComment)))
-                    .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
+                    .addGroup(layout.createSequentialGroup()
                         .addGap(0, 451, Short.MAX_VALUE)
-                        .addComponent(cmdOk)
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addComponent(cmdCancel)))
+                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                            .addComponent(cmdShowSplit, javax.swing.GroupLayout.Alignment.TRAILING)
+                            .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
+                                .addComponent(cmdOk)
+                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                                .addComponent(cmdCancel)))))
                 .addContainerGap())
         );
         layout.setVerticalGroup(
@@ -867,6 +910,10 @@ public class ClaimLedgerEntryEditorDialog extends javax.swing.JDialog {
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                     .addComponent(txtComment, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                     .addComponent(jLabel6))
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addComponent(lblOverpaymentWarning)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addComponent(cmdShowSplit)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                     .addComponent(cmdCancel)
@@ -906,6 +953,163 @@ public class ClaimLedgerEntryEditorDialog extends javax.swing.JDialog {
         LedgerEntryType selectedType = (LedgerEntryType) cmbType.getSelectedItem();
         boolean enabled = (selectedType != LedgerEntryType.INTEREST);
         txtValue.setEnabled(enabled);
+    }
+
+    /**
+     * Prüft, ob eine Überzahlung vorliegt und zeigt entsprechende Warnung an.
+     */
+    private void checkOverpayment() {
+        try {
+            // Only check for PAYMENT type
+            LedgerEntryType selectedType = (LedgerEntryType) cmbType.getSelectedItem();
+            if (selectedType != LedgerEntryType.PAYMENT) {
+                lblOverpaymentWarning.setVisible(false);
+                cmdShowSplit.setVisible(false);
+                return;
+            }
+
+            ClaimComponent selectedComponent = (ClaimComponent) cmbComponent.getSelectedItem();
+            if (selectedComponent == null || currentTotals == null) {
+                lblOverpaymentWarning.setVisible(false);
+                cmdShowSplit.setVisible(false);
+                return;
+            }
+
+            // Get payment amount
+            Object valueObj = txtValue.getValue();
+            if (valueObj == null) {
+                lblOverpaymentWarning.setVisible(false);
+                cmdShowSplit.setVisible(false);
+                return;
+            }
+
+            BigDecimal paymentAmount = BigDecimal.valueOf(((Number) valueObj).doubleValue());
+            if (paymentAmount.compareTo(BigDecimal.ZERO) <= 0) {
+                lblOverpaymentWarning.setVisible(false);
+                cmdShowSplit.setVisible(false);
+                return;
+            }
+
+            ClaimComponentBalance balance = currentTotals.getComponentBalance(selectedComponent.getId());
+            if (balance != null && paymentAmount.compareTo(balance.getTotalOpenBalance()) > 0) {
+                DecimalFormat df = new DecimalFormat("#,##0.00 €");
+                lblOverpaymentWarning.setText("⚠ Warnung: Zahlung übersteigt offenen Betrag (" +
+                        df.format(balance.getTotalOpenBalance()) + ")");
+                lblOverpaymentWarning.setVisible(true);
+                cmdShowSplit.setVisible(true);
+            } else {
+                lblOverpaymentWarning.setVisible(false);
+                cmdShowSplit.setVisible(false);
+            }
+        } catch (Exception e) {
+            // Invalid number or other error, hide warnings
+            lblOverpaymentWarning.setVisible(false);
+            cmdShowSplit.setVisible(false);
+        }
+    }
+
+    private void cmdShowSplitActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdShowSplitActionPerformed
+        try {
+            ClaimComponent selectedComponent = (ClaimComponent) cmbComponent.getSelectedItem();
+            BigDecimal paymentAmount = BigDecimal.valueOf(((Number) txtValue.getValue()).doubleValue());
+            Date paymentDate = df.parse(txtDate.getText());
+
+            // Create calculator with server-side entity manager
+            // Since we're on client-side, we need to call the server
+            JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(ClientSettings.getInstance().getLookupProperties());
+            ArchiveFileServiceRemote afs = locator.lookupArchiveFileServiceRemote();
+
+            // Calculate totals to get fresh data
+            ClaimLedgerTotals totals = afs.calculateClaimLedgerTotals(ledger.getId(), paymentDate);
+
+            // Create a basic proposal for the calculator
+            PaymentSplitProposal proposal = new PaymentSplitProposal(ledger, paymentAmount, paymentDate);
+            proposal.setOriginalComponent(selectedComponent);
+            proposal.setDescription(txtDescription.getText());
+            proposal.setComment(txtComment.getText());
+
+            // Calculate automatic split using server-side calculator
+            // For now, we do a simple client-side calculation
+            // TODO: Add server method to calculate split proposal
+            List<PaymentAllocation> allocations = new ArrayList<>();
+
+            // Get components sorted by legal order
+            List<ClaimComponent> sortedComponents = new ArrayList<>(components);
+            sortedComponents.sort((c1, c2) -> {
+                int p1 = getTilgungsPriority(c1);
+                int p2 = getTilgungsPriority(c2);
+                return Integer.compare(p1, p2);
+            });
+
+            BigDecimal remainingAmount = paymentAmount;
+
+            for (ClaimComponent comp : sortedComponents) {
+                if (remainingAmount.compareTo(BigDecimal.ZERO) <= 0) {
+                    break;
+                }
+
+                ClaimComponentBalance balance = totals.getComponentBalance(comp.getId());
+                if (balance == null || balance.getTotalOpenBalance().compareTo(BigDecimal.ZERO) <= 0) {
+                    continue;
+                }
+
+                BigDecimal allocationAmount = remainingAmount.min(balance.getTotalOpenBalance());
+
+                PaymentAllocation allocation = new PaymentAllocation(comp, allocationAmount);
+                allocation.setOriginalOpenAmount(balance.getTotalOpenBalance());
+                allocation.setRemainingBalance(balance.getTotalOpenBalance().subtract(allocationAmount));
+                allocation.setFullyPaid(allocation.getRemainingBalance().compareTo(BigDecimal.ZERO) == 0);
+                allocation.setAllocationDescription(comp.getName());
+                allocation.setLegalReference("§ 366 Abs. 2 BGB");
+
+                allocations.add(allocation);
+                remainingAmount = remainingAmount.subtract(allocationAmount);
+            }
+
+            proposal.setAllocations(allocations);
+            proposal.setSurplus(remainingAmount);
+            proposal.setFollowsLegalOrder(true);
+
+            // Open preview dialog
+            PaymentSplitPreviewDialog previewDialog = new PaymentSplitPreviewDialog(this, true, proposal);
+            previewDialog.setVisible(true);
+
+            if (previewDialog.isApproved()) {
+                // User approved the split - store it and close this dialog
+                splitProposal = proposal;
+                okPressed = true;
+                dispose();
+            }
+        } catch (Exception ex) {
+            log.error("Error creating payment split", ex);
+            javax.swing.JOptionPane.showMessageDialog(this,
+                    "Fehler beim Erstellen der Zahlungsverteilung: " + ex.getMessage(),
+                    "Fehler", javax.swing.JOptionPane.ERROR_MESSAGE);
+        }
+    }//GEN-LAST:event_cmdShowSplitActionPerformed
+
+    private int getTilgungsPriority(ClaimComponent component) {
+        if (component.getType() == null) {
+            return 99;
+        }
+        switch (component.getType()) {
+            case COST_NON_INTEREST_BEARING:
+                return 1;
+            case COST_INTEREST_BEARING:
+                return 2;
+            case MAIN_CLAIM:
+                return 3;
+            default:
+                return 99;
+        }
+    }
+
+    public void setCurrentTotals(ClaimLedgerTotals totals) {
+        this.currentTotals = totals;
+    }
+
+    public PaymentSplitProposal getSplitProposal() {
+        return splitProposal;
     }
 
     /**
@@ -954,12 +1158,14 @@ public class ClaimLedgerEntryEditorDialog extends javax.swing.JDialog {
     private javax.swing.JButton cmdCancel;
     private javax.swing.JButton cmdDate;
     private javax.swing.JButton cmdOk;
+    private javax.swing.JButton cmdShowSplit;
     private javax.swing.JLabel jLabel1;
     private javax.swing.JLabel jLabel2;
     private javax.swing.JLabel jLabel3;
     private javax.swing.JLabel jLabel4;
     private javax.swing.JLabel jLabel5;
     private javax.swing.JLabel jLabel6;
+    private javax.swing.JLabel lblOverpaymentWarning;
     private javax.swing.JTextField txtComment;
     private javax.swing.JTextField txtDate;
     private javax.swing.JTextField txtDescription;

@@ -664,6 +664,7 @@ For more information on this, and how to apply and follow the GNU AGPL, see
 package com.jdimension.jlawyer.persistence;
 
 import java.util.Comparator;
+import java.util.Date;
 import java.util.List;
 import javax.ejb.Stateless;
 import javax.persistence.EntityManager;
@@ -699,6 +700,20 @@ public class ClaimLedgerEntryFacade extends AbstractFacade<ClaimLedgerEntry> imp
     public List<ClaimLedgerEntry> findByComponent(ClaimComponent component) {
         
         return (List<ClaimLedgerEntry>) em.createNamedQuery("ClaimLedgerEntry.findByComponent").setParameter("component", component).getResultList();
+        
+    }
+    
+    @Override
+    public List<ClaimLedgerEntry> findByComponentAndType(ClaimComponent component, LedgerEntryType type) {
+        
+        return (List<ClaimLedgerEntry>) em.createNamedQuery("ClaimLedgerEntry.findByComponent").setParameter("component", component).setParameter("type", type).getResultList();
+        
+    }
+    
+    @Override
+    public List<ClaimLedgerEntry> findByComponentAndTypeUpToDate(ClaimComponent component, LedgerEntryType type, Date upToDate) {
+        
+        return (List<ClaimLedgerEntry>) em.createNamedQuery("ClaimLedgerEntry.findByComponent").setParameter("component", component).setParameter("upToDate", upToDate).getResultList();
         
     }
     

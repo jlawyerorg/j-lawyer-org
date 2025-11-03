@@ -680,6 +680,7 @@ import com.jdimension.jlawyer.export.AdvancedHtmlExport;
 import com.jdimension.jlawyer.persistence.*;
 import com.jdimension.jlawyer.persistence.utils.JDBCUtils;
 import com.jdimension.jlawyer.persistence.utils.StringGenerator;
+import com.jdimension.jlawyer.pojo.ClaimComponentBalance;
 import com.jdimension.jlawyer.pojo.ClaimLedgerTotals;
 import com.jdimension.jlawyer.pojo.DataBucket;
 import com.jdimension.jlawyer.server.services.settings.ServerSettingsKeys;
@@ -8068,6 +8069,114 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
 
     }
 
+    /**
+     * Creates multiple payment entries from a payment split proposal.
+     * This method implements payment allocation according to § 366/367 BGB.
+     *
+     * @param proposal The payment split proposal containing all allocations
+     * @return List of created ledger entries
+     * @throws Exception if validation fails or user is not authorized
+     */
+    @RolesAllowed({"writeArchiveFileRole"})
+    public List<ClaimLedgerEntry> createPaymentSplit(PaymentSplitProposal proposal) throws Exception {
+        String principalId = context.getCallerPrincipal().getName();
+
+        if (proposal == null || proposal.getLedger() == null) {
+            throw new Exception("Ungültiger Zahlungsaufteilungs-Vorschlag!");
+        }
+
+        ClaimLedger ledger = this.claimLedgersFacade.find(proposal.getLedger().getId());
+        if (ledger == null) {
+            log.error("Claim ledger with id " + proposal.getLedger().getId() + " not found");
+            throw new Exception("Forderungskonto mit ID " + proposal.getLedger().getId() + " existiert nicht!");
+        }
+
+        // Check permissions
+        ArchiveFileBean aFile = ledger.getArchiveFileKey();
+        boolean allowed = false;
+        if (principalId != null) {
+            List<Group> userGroups = new ArrayList<>();
+            try {
+                userGroups = this.securityFacade.getGroupsForUser(principalId);
+            } catch (Throwable t) {
+                log.error("Unable to determine groups for user " + principalId, t);
+            }
+            if (SecurityUtils.checkGroupsForCase(userGroups, aFile, this.caseGroupsFacade)) {
+                allowed = true;
+            }
+        } else {
+            allowed = true;
+        }
+
+        if (!allowed) {
+            throw new Exception("Forderungskonto darf von diesem Nutzer nicht bearbeitet werden!");
+        }
+
+        // Validate proposal
+        PaymentSplitCalculator calculator = new PaymentSplitCalculator(claimComponentsFacade, claimComponentInterestRuleFacade, claimLedgerEntriesFacade);
+        if (!calculator.validateProposal(proposal)) {
+            throw new Exception("Ungültiger Zahlungsaufteilungs-Vorschlag: Summe der Teilzahlungen stimmt nicht mit Gesamtbetrag überein!");
+        }
+
+        // Check for surplus (overpayment)
+        if (proposal.getSurplus().compareTo(BigDecimal.ZERO) > 0) {
+            throw new Exception("Zahlungsbetrag übersteigt die Gesamtforderung! Überschuss: "
+                    + proposal.getSurplus().setScale(2, RoundingMode.HALF_UP) + " €");
+        }
+
+        List<ClaimLedgerEntry> createdEntries = new ArrayList<>();
+        StringGenerator idGen = new StringGenerator();
+        int totalAllocations = proposal.getAllocations().size();
+        int currentIndex = 1;
+
+        // Create entry for each allocation
+        for (PaymentAllocation allocation : proposal.getAllocations()) {
+            ClaimLedgerEntry entry = new ClaimLedgerEntry();
+            entry.setId(idGen.getID().toString());
+            entry.setLedger(ledger);
+            entry.setComponent(allocation.getComponent());
+            entry.setAmount(allocation.getAmount());
+            entry.setType(LedgerEntryType.PAYMENT);
+            entry.setEntryDate(proposal.getPaymentDate());
+
+            // Build description
+            String description = proposal.getDescription();
+            if (description == null || description.trim().isEmpty()) {
+                description = "Zahlung";
+            }
+
+            // Add split information to description
+            if (totalAllocations > 1) {
+                description += " (Teilzahlung " + currentIndex + "/" + totalAllocations + ")";
+            }
+
+            // Add allocation type (interest vs. principal)
+            if (allocation.isInterestAllocation()) {
+                description += " - Zinsen";
+            } else {
+                description += " - " + allocation.getAllocationDescription();
+            }
+
+            entry.setDescription(description);
+
+            // Add comment with legal reference
+            String comment = proposal.getComment() != null ? proposal.getComment() + "\n\n" : "";
+            comment += allocation.getLegalReference();
+            if (!proposal.isFollowsLegalOrder()) {
+                comment += "\nHinweis: Abweichung von gesetzlicher Tilgungsreihenfolge";
+            }
+            entry.setComment(comment.trim());
+
+            // Persist entry
+            this.claimLedgerEntriesFacade.create(entry);
+            createdEntries.add(entry);
+
+            currentIndex++;
+        }
+
+        return createdEntries;
+    }
+
     @Override
     @RolesAllowed({"writeArchiveFileRole"})
     public void removeClaimLedgerEntry(String entryId) throws Exception {
@@ -8346,6 +8455,12 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
         totals.setTotalMain(totalMain);
         totals.setTotalPayments(totalPayments);
 
+        // Calculate component balances
+        for (ClaimComponent cmp : this.claimComponentsFacade.findByLedger(ledger)) {
+            ClaimComponentBalance balance = calculateComponentBalance(cmp, forDate);
+            totals.addComponentBalance(balance);
+        }
+
         return totals;
     }
 
@@ -8509,6 +8624,74 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
         Collections.sort(changeDates);
 
         return changeDates;
+    }
+
+    /**
+     * Calculates the balance information for a single claim component.
+     *
+     * @param cmp The claim component
+     * @param upTo Calculate balance up to this date
+     * @return ClaimComponentBalance with detailed balance information
+     */
+    private ClaimComponentBalance calculateComponentBalance(ClaimComponent cmp, Date upTo) {
+        ClaimComponentBalance balance = new ClaimComponentBalance(cmp);
+
+        BigDecimal principalFromEntries = BigDecimal.ZERO;
+        BigDecimal interestFromEntries = BigDecimal.ZERO;
+        BigDecimal paymentsToComponent = BigDecimal.ZERO;
+
+        // Iterate through all entries for this component up to the date
+        List<ClaimLedgerEntry> entries = this.claimLedgerEntriesFacade.findByComponent(cmp);
+
+        for (ClaimLedgerEntry entry : entries) {
+            if (entry.getEntryDate().after(upTo)) {
+                break; // Entries are sorted by date
+            }
+
+            switch (entry.getType()) {
+                case MAIN_CLAIM:
+                case COST:
+                    // Principal bookings increase the principal
+                    principalFromEntries = principalFromEntries.add(entry.getAmount());
+                    break;
+                case INTEREST:
+                    // Interest bookings
+                    interestFromEntries = interestFromEntries.add(entry.getAmount());
+                    break;
+                case PAYMENT:
+                    // Payments reduce the balance
+                    paymentsToComponent = paymentsToComponent.add(entry.getAmount());
+                    break;
+                case ADJUSTMENT:
+                    // Adjustments affect principal
+                    principalFromEntries = principalFromEntries.add(entry.getAmount());
+                    break;
+            }
+        }
+
+        // Add accrued (not yet booked) interest
+        BigDecimal accruedInterest = calculateAccruedInterest(cmp, upTo);
+        BigDecimal totalInterest = interestFromEntries.add(accruedInterest);
+
+        // According to § 367 BGB: payments first go to interest, then to principal
+        // For simplicity in balance display, we show total payments
+        // The split logic will handle the § 367 BGB allocation when creating payment entries
+
+        BigDecimal openPrincipal = principalFromEntries.subtract(paymentsToComponent).max(BigDecimal.ZERO);
+        BigDecimal openInterest = totalInterest.max(BigDecimal.ZERO);
+
+        // If payments exceed principal, the excess would reduce interest
+        // But we simplify: we assume payments are allocated optimally
+        // The detailed allocation happens in PaymentSplitCalculator
+
+        balance.setPrincipalAmount(principalFromEntries.setScale(2, RoundingMode.HALF_UP));
+        balance.setInterestAmount(totalInterest.setScale(2, RoundingMode.HALF_UP));
+        balance.setPaymentsAmount(paymentsToComponent.setScale(2, RoundingMode.HALF_UP));
+        balance.setOpenPrincipal(openPrincipal.setScale(2, RoundingMode.HALF_UP));
+        balance.setOpenInterest(openInterest.setScale(2, RoundingMode.HALF_UP));
+        balance.calculateTotalOpenBalance();
+
+        return balance;
     }
 
     /**

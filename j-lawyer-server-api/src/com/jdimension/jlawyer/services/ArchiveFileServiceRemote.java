@@ -997,6 +997,41 @@ public interface ArchiveFileServiceRemote {
 
     List<ClaimLedgerEntry> addClaimLedgerEntry(ClaimLedgerEntry entry, String ledgerId) throws Exception;
 
+    /**
+     * Creates multiple payment entries from a payment split proposal.
+     * This method is used when a single payment amount needs to be allocated across multiple claim components,
+     * following the legal payment allocation order according to § 366 and § 367 BGB (German Civil Code).
+     *
+     * According to § 366 BGB, if no specific allocation is designated, payments are allocated in the following order:
+     * 1. Costs (non-interest-bearing)
+     * 2. Costs (interest-bearing)
+     * 3. Interest on costs
+     * 4. Principal of costs
+     * 5. Interest on main claim
+     * 6. Principal of main claim
+     *
+     * According to § 367 BGB, within each category, interest is paid before principal.
+     *
+     * The proposal must be valid (sum of allocations equals total amount) and must not result in overpayment.
+     * Each allocation in the proposal results in a separate ClaimLedgerEntry of type PAYMENT.
+     * All entries are created atomically within a single transaction.
+     *
+     * @param proposal The payment split proposal containing:
+     *                 - Total payment amount
+     *                 - Payment date
+     *                 - List of allocations to individual components
+     *                 - Description and comment
+     *                 - Information about whether the allocation follows legal order
+     * @return List of created ClaimLedgerEntry objects, one for each allocation in the proposal
+     * @throws Exception if:
+     *                   - The proposal is null or invalid (sum of allocations does not match total amount)
+     *                   - The claim ledger does not exist
+     *                   - The user does not have write permission for the associated case
+     *                   - The payment amount exceeds the total open balance (surplus > 0)
+     *                   - Any database operation fails
+     */
+    List<ClaimLedgerEntry> createPaymentSplit(PaymentSplitProposal proposal) throws Exception;
+
     void removeClaimLedgerEntry(String entryId) throws Exception;
 
     ClaimLedgerTotals calculateClaimLedgerTotals(String ledgerId, Date forDate) throws Exception;

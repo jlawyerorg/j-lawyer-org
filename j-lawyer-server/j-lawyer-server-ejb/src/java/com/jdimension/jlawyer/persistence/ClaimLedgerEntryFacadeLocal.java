@@ -663,6 +663,7 @@ For more information on this, and how to apply and follow the GNU AGPL, see
  */
 package com.jdimension.jlawyer.persistence;
 
+import java.util.Date;
 import java.util.List;
 import javax.ejb.Local;
 
@@ -688,6 +689,8 @@ public interface ClaimLedgerEntryFacadeLocal {
     List<ClaimLedgerEntry> findByLedger(ClaimLedger ledger);
     
     List<ClaimLedgerEntry> findByComponent(ClaimComponent component);
+    List<ClaimLedgerEntry> findByComponentAndType(ClaimComponent component, LedgerEntryType type);
+    List<ClaimLedgerEntry> findByComponentAndTypeUpToDate(ClaimComponent component, LedgerEntryType type, Date upToDate);
     
     ClaimLedgerEntry findLatestInterestEntry(ClaimComponent component);
     ClaimLedgerEntry findLatestEntry(ClaimComponent component);
