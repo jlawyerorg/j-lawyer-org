@@ -998,6 +998,18 @@ public interface ArchiveFileServiceRemote {
     List<ClaimLedgerEntry> addClaimLedgerEntry(ClaimLedgerEntry entry, String ledgerId) throws Exception;
 
     /**
+     * Updates an existing claim ledger entry.
+     *
+     * IMPORTANT: INTEREST type entries cannot be edited as they are auto-calculated.
+     * Attempting to update an INTEREST entry will throw an exception.
+     *
+     * @param entry The entry to update (must have valid ID and type != INTEREST)
+     * @return The updated entry
+     * @throws Exception if entry not found, type is INTEREST, user not authorized, or update fails
+     */
+    ClaimLedgerEntry updateClaimLedgerEntry(ClaimLedgerEntry entry) throws Exception;
+
+    /**
      * Creates multiple payment entries from a payment split proposal.
      * This method is used when a single payment amount needs to be allocated across multiple claim components,
      * following the legal payment allocation order according to § 366 and § 367 BGB (German Civil Code).

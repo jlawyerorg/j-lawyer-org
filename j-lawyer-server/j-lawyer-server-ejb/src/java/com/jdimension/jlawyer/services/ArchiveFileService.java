@@ -8069,6 +8069,58 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
 
     }
 
+    @Override
+    @RolesAllowed({"writeArchiveFileRole"})
+    public ClaimLedgerEntry updateClaimLedgerEntry(ClaimLedgerEntry entry) throws Exception {
+        String principalId = context.getCallerPrincipal().getName();
+
+        ClaimLedgerEntry existingEntry = this.claimLedgerEntriesFacade.find(entry.getId());
+        if (existingEntry == null) {
+            log.error("Claim ledger entry with id " + entry.getId() + " not found");
+            throw new Exception("Buchung mit ID " + entry.getId() + " existiert nicht!");
+        }
+
+        if (existingEntry.getType() == LedgerEntryType.INTEREST) {
+            throw new Exception("Zinsbuchungen können nicht bearbeitet werden!");
+        }
+
+        ClaimLedger ledger = existingEntry.getLedger();
+        ArchiveFileBean aFile = ledger.getArchiveFileKey();
+        boolean allowed = false;
+        if (principalId != null) {
+            List<Group> userGroups = new ArrayList<>();
+            try {
+                userGroups = this.securityFacade.getGroupsForUser(principalId);
+            } catch (Throwable t) {
+                log.error("Unable to determine groups for user " + principalId, t);
+            }
+            if (SecurityUtils.checkGroupsForCase(userGroups, aFile, this.caseGroupsFacade)) {
+                allowed = true;
+            }
+        } else {
+            allowed = true;
+        }
+
+        if (!allowed) {
+            throw new Exception("Forderungskonto darf von diesem Nutzer nicht bearbeitet werden!");
+        }
+
+        if (entry.getAmount().compareTo(BigDecimal.ZERO) < 0) {
+            entry.setAmount(entry.getAmount().negate());
+        }
+
+        existingEntry.setAmount(entry.getAmount());
+        existingEntry.setDescription(entry.getDescription());
+        existingEntry.setComment(entry.getComment());
+        existingEntry.setEntryDate(entry.getEntryDate());
+        existingEntry.setType(entry.getType());
+        existingEntry.setComponent(entry.getComponent());
+
+        this.claimLedgerEntriesFacade.edit(existingEntry);
+
+        return this.claimLedgerEntriesFacade.find(existingEntry.getId());
+    }
+
     /**
      * Creates multiple payment entries from a payment split proposal.
      * This method implements payment allocation according to § 366/367 BGB.

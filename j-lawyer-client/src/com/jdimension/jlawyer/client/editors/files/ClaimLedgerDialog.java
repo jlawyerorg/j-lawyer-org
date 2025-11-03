@@ -1892,7 +1892,63 @@ public class ClaimLedgerDialog extends javax.swing.JDialog implements EventConsu
     }//GEN-LAST:event_cmdSelectDateToActionPerformed
 
     private void cmdEditEntryActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdEditEntryActionPerformed
-        // TODO add your handling code here:
+        if (this.tblLedger.getSelectedRowCount() != 1) {
+            return;
+        }
+
+        int modelIndex = this.tblLedger.convertRowIndexToModel(this.tblLedger.getSelectedRow());
+        ClaimLedgerEntry entry = ((LedgerTableModel) this.tblLedger.getModel()).getEntryAt(modelIndex);
+
+        // Zinsbuchungen können nicht bearbeitet werden
+        if (entry.getType() == LedgerEntryType.INTEREST) {
+            JOptionPane.showMessageDialog(this,
+                    "Zinsbuchungen können nicht bearbeitet werden, da sie automatisch berechnet sind.",
+                    "Bearbeitung nicht möglich",
+                    JOptionPane.INFORMATION_MESSAGE);
+            return;
+        }
+
+        try {
+            ClientSettings settings = ClientSettings.getInstance();
+            JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
+            ClaimLedgerTotals totals = locator.lookupArchiveFileServiceRemote()
+                    .calculateClaimLedgerTotals(this.currentEntry.getId(), new Date());
+
+            // Dialog mit bestehendem Entry öffnen (Split-Button wird automatisch versteckt)
+            ClaimLedgerEntryEditorDialog dlg = new ClaimLedgerEntryEditorDialog(
+                    this, true, entry, this.currentEntry,
+                    ((ComponentTableModel) this.tblComponents.getModel()).getData()
+            );
+            dlg.setCurrentTotals(totals);
+            FrameUtils.centerDialog(dlg, this);
+            dlg.setVisible(true);
+
+            if (dlg.isOkPressed()) {
+                try {
+                    ClaimLedgerEntry updatedEntry = dlg.getEntry();
+                    ClaimLedgerEntry result = locator.lookupArchiveFileServiceRemote()
+                            .updateClaimLedgerEntry(updatedEntry);
+
+                    ((LedgerTableModel) this.tblLedger.getModel()).removeEntryAt(modelIndex);
+                    ((LedgerTableModel) this.tblLedger.getModel()).addEntry(result);
+                } catch (Exception ex) {
+                    log.error("error updating claim ledger entry", ex);
+                    JOptionPane.showMessageDialog(this,
+                            "Fehler beim Aktualisieren der Buchung: " + ex.getMessage(),
+                            com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR,
+                            JOptionPane.ERROR_MESSAGE);
+                }
+
+                ComponentUtils.autoSizeColumns(this.tblLedger);
+                this.updateTotals();
+            }
+        } catch (Exception ex) {
+            log.error("error getting claim ledger totals", ex);
+            JOptionPane.showMessageDialog(this,
+                    "Fehler beim Abrufen der Saldoinformationen: " + ex.getMessage(),
+                    com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR,
+                    JOptionPane.ERROR_MESSAGE);
+        }
     }//GEN-LAST:event_cmdEditEntryActionPerformed
 
     private void cmdExportActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdExportActionPerformed

@@ -760,6 +760,27 @@ public class ClaimLedgerEntryEditorDialog extends javax.swing.JDialog {
 
         // Initialen Status setzen
         updateValueFieldEnabled();
+
+        // Split-Button nur bei neuen Buchungen anzeigen, nicht beim Bearbeiten
+        if (entry != null) {
+            this.cmdShowSplit.setVisible(false);
+
+            // UI-Felder mit Werten des zu bearbeitenden Entries befüllen
+            this.txtDate.setText(df.format(entry.getEntryDate()));
+            this.cmbType.setSelectedItem(entry.getType());
+            this.cmbType.setEnabled(false);
+            this.cmbComponent.setSelectedItem(entry.getComponent());
+            this.cmbComponent.setEnabled(false);
+            this.txtValue.setValue(entry.getAmount());
+
+            if (entry.getDescription() != null) {
+                this.txtDescription.setText(entry.getDescription());
+            }
+
+            if (entry.getComment() != null) {
+                this.txtComment.setText(entry.getComment());
+            }
+        }
     }
 
     /**
