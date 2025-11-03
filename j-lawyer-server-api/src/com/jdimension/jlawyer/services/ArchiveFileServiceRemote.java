@@ -1039,7 +1039,7 @@ public interface ArchiveFileServiceRemote {
      *                   - The proposal is null or invalid (sum of allocations does not match total amount)
      *                   - The claim ledger does not exist
      *                   - The user does not have write permission for the associated case
-     *                   - The payment amount exceeds the total open balance (surplus > 0)
+     *                   - The payment amount exceeds the total open balance (surplus greater than 0)
      *                   - Any database operation fails
      */
     List<ClaimLedgerEntry> createPaymentSplit(PaymentSplitProposal proposal) throws Exception;
