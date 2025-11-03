@@ -63,10 +63,26 @@ public class PaymentAllocation implements Serializable {
      */
     private BigDecimal originalOpenAmount;
 
+    /**
+     * Open interest amount for the component before this allocation.
+     * This field is populated for both interest and principal allocations to enable
+     * detailed reporting in the split preview table.
+     */
+    private BigDecimal openInterestAmount;
+
+    /**
+     * Open principal amount for the component before this allocation.
+     * This field is populated for both interest and principal allocations to enable
+     * detailed reporting in the split preview table.
+     */
+    private BigDecimal openPrincipalAmount;
+
     public PaymentAllocation() {
         this.amount = BigDecimal.ZERO;
         this.remainingBalance = BigDecimal.ZERO;
         this.originalOpenAmount = BigDecimal.ZERO;
+        this.openInterestAmount = BigDecimal.ZERO;
+        this.openPrincipalAmount = BigDecimal.ZERO;
         this.fullyPaid = false;
         this.isInterestAllocation = false;
     }
@@ -141,6 +157,22 @@ public class PaymentAllocation implements Serializable {
         this.originalOpenAmount = originalOpenAmount;
     }
 
+    public BigDecimal getOpenInterestAmount() {
+        return openInterestAmount;
+    }
+
+    public void setOpenInterestAmount(BigDecimal openInterestAmount) {
+        this.openInterestAmount = openInterestAmount;
+    }
+
+    public BigDecimal getOpenPrincipalAmount() {
+        return openPrincipalAmount;
+    }
+
+    public void setOpenPrincipalAmount(BigDecimal openPrincipalAmount) {
+        this.openPrincipalAmount = openPrincipalAmount;
+    }
+
     @Override
     public String toString() {
         return "PaymentAllocation{" +
@@ -149,6 +181,8 @@ public class PaymentAllocation implements Serializable {
                 ", remainingBalance=" + remainingBalance +
                 ", fullyPaid=" + fullyPaid +
                 ", isInterest=" + isInterestAllocation +
+                ", openInterest=" + openInterestAmount +
+                ", openPrincipal=" + openPrincipalAmount +
                 ", description=" + allocationDescription +
                 '}';
     }

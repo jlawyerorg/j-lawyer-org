@@ -25,7 +25,8 @@ public class PaymentSplitTableModel extends AbstractTableModel {
     private static final String[] COLUMN_NAMES = {
         "Nr.",
         "Komponente",
-        "Offen",
+        "Zinsen offen",
+        "Kapital offen",
         "Zahlung",
         "Rest",
         "Status"
@@ -70,7 +71,7 @@ public class PaymentSplitTableModel extends AbstractTableModel {
         switch (columnIndex) {
             case 0: // Nr.
                 return Integer.class;
-            case 5: // Status
+            case 6: // Status (shifted from 5 due to new columns)
                 return String.class;
             default:
                 return String.class;
@@ -98,23 +99,32 @@ public class PaymentSplitTableModel extends AbstractTableModel {
                 if (allocation.getComponent() != null) {
                     String name = allocation.getComponent().getName();
                     if (allocation.isInterestAllocation()) {
-                        return "  └─ Zinsen (" + name + ")";
+                        return "Zinsen (" + name + ")";
                     } else {
                         return name;
                     }
                 }
                 return "";
 
-            case 2: // Offen
-                return currencyFormat.format(allocation.getOriginalOpenAmount());
+            case 2: // Zinsen offen (NEW)
+                if (allocation.getOpenInterestAmount() != null) {
+                    return currencyFormat.format(allocation.getOpenInterestAmount());
+                }
+                return "-";
 
-            case 3: // Zahlung
+            case 3: // Kapital offen (NEW)
+                if (allocation.getOpenPrincipalAmount() != null) {
+                    return currencyFormat.format(allocation.getOpenPrincipalAmount());
+                }
+                return "-";
+
+            case 4: // Zahlung (shifted from 3)
                 return currencyFormat.format(allocation.getAmount());
 
-            case 4: // Rest
+            case 5: // Rest (shifted from 4)
                 return currencyFormat.format(allocation.getRemainingBalance());
 
-            case 5: // Status
+            case 6: // Status (shifted from 5)
                 if (allocation.isFullyPaid()) {
                     return "✓ getilgt";
                 } else {

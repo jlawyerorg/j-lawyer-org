@@ -1063,7 +1063,9 @@ public class ClaimLedgerEntryEditorDialog extends javax.swing.JDialog {
             });
 
             BigDecimal remainingAmount = paymentAmount;
+            DecimalFormat currencyFormat = new DecimalFormat("#,##0.00");
 
+            // Payment allocation according to § 366/367 BGB: Interest before Principal
             for (ClaimComponent comp : sortedComponents) {
                 if (remainingAmount.compareTo(BigDecimal.ZERO) <= 0) {
                     break;
@@ -1074,17 +1076,52 @@ public class ClaimLedgerEntryEditorDialog extends javax.swing.JDialog {
                     continue;
                 }
 
-                BigDecimal allocationAmount = remainingAmount.min(balance.getTotalOpenBalance());
+                BigDecimal openInterest = balance.getOpenInterest();
+                BigDecimal openPrincipal = balance.getOpenPrincipal();
 
-                PaymentAllocation allocation = new PaymentAllocation(comp, allocationAmount);
-                allocation.setOriginalOpenAmount(balance.getTotalOpenBalance());
-                allocation.setRemainingBalance(balance.getTotalOpenBalance().subtract(allocationAmount));
-                allocation.setFullyPaid(allocation.getRemainingBalance().compareTo(BigDecimal.ZERO) == 0);
-                allocation.setAllocationDescription(comp.getName());
-                allocation.setLegalReference("§ 366 Abs. 2 BGB");
+                // First: Pay interest (§ 367 BGB - Interest before Principal)
+                if (openInterest.compareTo(BigDecimal.ZERO) > 0 && remainingAmount.compareTo(BigDecimal.ZERO) > 0) {
+                    BigDecimal interestPayment = remainingAmount.min(openInterest);
 
-                allocations.add(allocation);
-                remainingAmount = remainingAmount.subtract(allocationAmount);
+                    PaymentAllocation interestAllocation = new PaymentAllocation(comp, interestPayment);
+                    interestAllocation.setInterestAllocation(true);
+                    interestAllocation.setOriginalOpenAmount(openInterest);
+                    interestAllocation.setOpenInterestAmount(openInterest);
+                    interestAllocation.setOpenPrincipalAmount(openPrincipal);
+                    interestAllocation.setRemainingBalance(openInterest.subtract(interestPayment));
+                    interestAllocation.setFullyPaid(interestAllocation.getRemainingBalance().compareTo(BigDecimal.ZERO) == 0);
+                    interestAllocation.setLegalReference("§ 367 BGB (Zinsen vor Kapital)");
+
+                    // Enhanced description with amount and context
+                    String desc = "Zinsen: " + currencyFormat.format(interestPayment) + " € (von "
+                        + currencyFormat.format(openInterest) + " € offen)";
+                    interestAllocation.setAllocationDescription(desc);
+
+                    allocations.add(interestAllocation);
+                    remainingAmount = remainingAmount.subtract(interestPayment);
+                }
+
+                // Second: Pay principal
+                if (openPrincipal.compareTo(BigDecimal.ZERO) > 0 && remainingAmount.compareTo(BigDecimal.ZERO) > 0) {
+                    BigDecimal principalPayment = remainingAmount.min(openPrincipal);
+
+                    PaymentAllocation principalAllocation = new PaymentAllocation(comp, principalPayment);
+                    principalAllocation.setInterestAllocation(false);
+                    principalAllocation.setOriginalOpenAmount(openPrincipal);
+                    principalAllocation.setOpenInterestAmount(openInterest);
+                    principalAllocation.setOpenPrincipalAmount(openPrincipal);
+                    principalAllocation.setRemainingBalance(openPrincipal.subtract(principalPayment));
+                    principalAllocation.setFullyPaid(principalAllocation.getRemainingBalance().compareTo(BigDecimal.ZERO) == 0);
+                    principalAllocation.setLegalReference("§ 366 BGB (Tilgungsreihenfolge)");
+
+                    // Enhanced description with amount and context
+                    String desc = "Kapital: " + currencyFormat.format(principalPayment) + " € (von "
+                        + currencyFormat.format(openPrincipal) + " € offen)";
+                    principalAllocation.setAllocationDescription(desc);
+
+                    allocations.add(principalAllocation);
+                    remainingAmount = remainingAmount.subtract(principalPayment);
+                }
             }
 
             proposal.setAllocations(allocations);

@@ -8194,31 +8194,48 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
             // Build description
             String description = proposal.getDescription();
             if (description == null || description.trim().isEmpty()) {
-                description = "Zahlung";
+                description = "";
             }
 
             // Add split information to description
             if (totalAllocations > 1) {
-                description += " (Teilzahlung " + currentIndex + "/" + totalAllocations + ")";
+                description += " Teilzahlung " + currentIndex + "/" + totalAllocations;
             }
 
             // Add allocation type (interest vs. principal)
-            if (allocation.isInterestAllocation()) {
-                description += " - Zinsen";
-            } else {
-                description += " - " + allocation.getAllocationDescription();
-            }
+//            if (allocation.isInterestAllocation()) {
+//                description += " - Zinsen";
+//            } else {
+//                description += " - " + allocation.getAllocationDescription();
+//            }
 
             entry.setDescription("");
 
-            // Add comment with legal reference
-            String comment = proposal.getComment() != null ? proposal.getComment() + "\n\n" : "";
-            comment += "Split nach " + allocation.getLegalReference();
-            if (!proposal.isFollowsLegalOrder()) {
-                comment += "; Hinweis: Abweichung von gesetzlicher Tilgungsreihenfolge";
+            // Build detailed comment with interest/principal breakdown
+            StringBuilder commentBuilder = new StringBuilder();
+
+            // User's original comment
+            if (proposal.getComment() != null && !proposal.getComment().trim().isEmpty()) {
+                commentBuilder.append(proposal.getComment()).append("; ");
             }
-            comment=comment + "; " + description;
-            entry.setComment(comment.trim());
+
+            // Component information
+            commentBuilder.append("Position: ").append(allocation.getComponent().getName()).append("; ");
+
+            // Detailed breakdown from allocation description
+            // Contains: "Zinsen: 150,00 € (von 500,00 € offen)" or "Kapital: 1.200,00 € (von 5.000,00 € offen)"
+            commentBuilder.append("Aufschlüsselung: ").append(allocation.getAllocationDescription()).append("; ");
+
+            // Legal reference
+            commentBuilder.append("Rechtsgrundlage: ").append(allocation.getLegalReference());
+
+            // Warning if deviates from legal order
+            if (!proposal.isFollowsLegalOrder()) {
+                commentBuilder.append("; Hinweis: Abweichung von gesetzlicher Tilgungsreihenfolge");
+            }
+
+            commentBuilder.append("; ").append(description);
+            entry.setComment(commentBuilder.toString().trim());
 
             // Persist entry
             this.claimLedgerEntriesFacade.create(entry);
