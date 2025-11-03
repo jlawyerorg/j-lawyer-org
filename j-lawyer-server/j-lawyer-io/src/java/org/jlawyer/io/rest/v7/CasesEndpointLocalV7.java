@@ -687,7 +687,9 @@ public interface CasesEndpointLocalV7 {
     Response getInvoicePositions(String id);
     
     Response createInvoice(RestfulInvoiceV7 invoice);
-    
+
+    Response updateInvoice(String id, RestfulInvoiceV7 invoice);
+
     Response createInvoicePosition(String id, RestfulInvoicePositionV7 invoicePos);
     
     Response getAllInvoices();
