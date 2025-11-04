@@ -678,6 +678,7 @@ import com.jdimension.jlawyer.persistence.InvoiceFacadeLocal;
 import com.jdimension.jlawyer.persistence.InvoicePoolFacadeLocal;
 import com.jdimension.jlawyer.persistence.InvoicePool;
 import com.jdimension.jlawyer.persistence.InvoicePosition;
+import com.jdimension.jlawyer.persistence.InvoicePositionFacadeLocal;
 import com.jdimension.jlawyer.persistence.InvoiceType;
 import com.jdimension.jlawyer.server.utils.ServerStringUtils;
 import com.jdimension.jlawyer.services.AddressServiceLocal;
@@ -731,6 +732,7 @@ public class CasesEndpointV7 implements CasesEndpointLocalV7 {
     private static final String LOOKUP_MESSAGING = "java:global/j-lawyer-server/j-lawyer-server-ejb/MessagingService!com.jdimension.jlawyer.services.MessagingServiceLocal";
     private static final String LOOKUP_INVOICE_FACADE = "java:global/j-lawyer-server/j-lawyer-server-ejb/InvoiceFacade!com.jdimension.jlawyer.persistence.InvoiceFacadeLocal";
     private static final String LOOKUP_INVOICE_POOL_FACADE = "java:global/j-lawyer-server/j-lawyer-server-ejb/InvoicePoolFacade!com.jdimension.jlawyer.persistence.InvoicePoolFacadeLocal";
+    private static final String LOOKUP_INVOICE_POSITION_FACADE = "java:global/j-lawyer-server/j-lawyer-server-ejb/InvoicePositionFacade!com.jdimension.jlawyer.persistence.InvoicePositionFacadeLocal";
     private static final String LOOKUP_ADDRESSES = "java:global/j-lawyer-server/j-lawyer-server-ejb/AddressService!com.jdimension.jlawyer.services.AddressServiceLocal";
     private static final String LOOKUP_ACCOUNT_ENTRIES = "java:global/j-lawyer-server/j-lawyer-server-ejb/CaseAccountEntryFacade!com.jdimension.jlawyer.persistence.CaseAccountEntryFacadeLocal";
 
@@ -1222,9 +1224,24 @@ public class CasesEndpointV7 implements CasesEndpointLocalV7 {
 
             InitialContext ic = new InitialContext();
             ArchiveFileServiceLocal cases = (ArchiveFileServiceLocal) ic.lookup(LOOKUP_CASES);
+            InvoicePositionFacadeLocal positionFacade = (InvoicePositionFacadeLocal) ic.lookup(LOOKUP_INVOICE_POSITION_FACADE);
 
-            // Create InvoicePosition entity from DTO
+            // Load existing position to get invoice
+            InvoicePosition existingPosition = positionFacade.find(positionId);
+            if (existingPosition == null) {
+                log.error("Invoice position with ID " + positionId + " not found");
+                return Response.status(Response.Status.NOT_FOUND).entity("Invoice position with ID " + positionId + " not found").build();
+            }
+
+            Invoice invoice = existingPosition.getInvoice();
+            if (invoice == null) {
+                log.error("Invoice position is not associated with an invoice");
+                return Response.status(Response.Status.BAD_REQUEST).entity("Invoice position is not associated with an invoice").build();
+            }
+
+            // Create InvoicePosition entity from DTO with ID set
             InvoicePosition position = new InvoicePosition();
+            position.setId(positionId);
             position.setName(restfulPosition.getName());
             position.setDescription(restfulPosition.getDescription());
             position.setPosition(restfulPosition.getPosition());
@@ -1234,7 +1251,7 @@ public class CasesEndpointV7 implements CasesEndpointLocalV7 {
             position.setTotal(restfulPosition.getTotal());
 
             // Update via service (includes recalculation and permission check)
-            InvoicePosition updated = cases.updateInvoicePosition(positionId, position);
+            InvoicePosition updated = cases.updateInvoicePosition(invoice.getId(), position);
 
             // Convert back to DTO
             RestfulInvoicePositionV7 result = RestfulInvoicePositionV7.fromInvoicePosition(updated);
@@ -1274,9 +1291,23 @@ public class CasesEndpointV7 implements CasesEndpointLocalV7 {
 
             InitialContext ic = new InitialContext();
             ArchiveFileServiceLocal cases = (ArchiveFileServiceLocal) ic.lookup(LOOKUP_CASES);
+            InvoicePositionFacadeLocal positionFacade = (InvoicePositionFacadeLocal) ic.lookup(LOOKUP_INVOICE_POSITION_FACADE);
 
-            // Delete position (includes renumbering, recalculation and permission check)
-            cases.deleteInvoicePosition(positionId);
+            // Load existing position to get invoice
+            InvoicePosition position = positionFacade.find(positionId);
+            if (position == null) {
+                log.error("Invoice position with ID " + positionId + " not found");
+                return Response.status(Response.Status.NOT_FOUND).entity("Invoice position with ID " + positionId + " not found").build();
+            }
+
+            Invoice invoice = position.getInvoice();
+            if (invoice == null) {
+                log.error("Invoice position is not associated with an invoice");
+                return Response.status(Response.Status.BAD_REQUEST).entity("Invoice position is not associated with an invoice").build();
+            }
+
+            // Delete position (includes recalculation and permission check)
+            cases.removeInvoicePosition(invoice.getId(), position);
 
             return Response.ok().build();
 

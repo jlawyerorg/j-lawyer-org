@@ -871,9 +871,9 @@ public interface ArchiveFileServiceRemote {
     
     List<Invoice> getInvoicesForDocument(String docId) throws Exception;
 
-    InvoicePosition updateInvoicePosition(String positionId, InvoicePosition position) throws Exception;
+    InvoicePosition updateInvoicePosition(String invoiceId, InvoicePosition position) throws Exception;
 
-    void deleteInvoicePosition(String positionId) throws Exception;
+    void removeInvoicePosition(String invoiceId, InvoicePosition position) throws Exception;
 
     Invoice updateInvoice(String caseId, Invoice invoice) throws Exception;
     
