@@ -941,7 +941,7 @@ public class InvoicePositionEntryPanel extends javax.swing.JPanel {
         ClientSettings settings = ClientSettings.getInstance();
         try {
             JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
-            locator.lookupArchiveFileServiceRemote().removeInvoicePosition(invoiceId, this.position);
+            locator.lookupArchiveFileServiceRemote().deleteInvoicePosition(this.position.getId());
             Container parentContainer=this.getParent();
             parentContainer.remove(this);
             try {

@@ -5476,6 +5476,109 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
         }
     }
 
+    @Override
+    @RolesAllowed({"writeArchiveFileRole"})
+    public InvoicePosition updateInvoicePosition(String positionId, InvoicePosition position) throws Exception {
+        String principalId = context.getCallerPrincipal().getName();
+
+        InvoicePosition existingPosition = this.invoicePositionsFacade.find(positionId);
+        if (existingPosition == null) {
+            throw new Exception("Invoice position with ID " + positionId + " not found");
+        }
+
+        Invoice invoice = existingPosition.getInvoice();
+        if (invoice == null) {
+            throw new Exception("Invoice position is not associated with an invoice");
+        }
+
+        ArchiveFileBean aFile = this.archiveFileFacade.find(invoice.getArchiveFileKey().getId());
+        boolean allowed = false;
+        if (principalId != null) {
+            List<Group> userGroups = new ArrayList<>();
+            try {
+                userGroups = this.securityFacade.getGroupsForUser(principalId);
+            } catch (Throwable t) {
+                log.error("Unable to determine groups for user " + principalId, t);
+            }
+            if (SecurityUtils.checkGroupsForCase(userGroups, aFile, this.caseGroupsFacade)) {
+                allowed = true;
+            }
+        } else {
+            allowed = true;
+        }
+
+        if (allowed) {
+            // Update fields (preserve ID and invoice relationship)
+            existingPosition.setName(position.getName());
+            existingPosition.setDescription(position.getDescription());
+            existingPosition.setPosition(position.getPosition());
+            existingPosition.setTaxRate(position.getTaxRate());
+            existingPosition.setUnits(position.getUnits());
+            existingPosition.setUnitPrice(position.getUnitPrice());
+            existingPosition.setTotal(position.getTotal());
+
+            this.invoicePositionsFacade.edit(existingPosition);
+            this.updateInvoiceTotal(invoice.getId());
+
+            this.addCaseHistory(new StringGenerator().getID().toString(), aFile, "Belegposition aktualisiert (" + invoice.getInvoiceNumber() + ")");
+
+            return this.invoicePositionsFacade.find(positionId);
+        } else {
+            throw new Exception(MSG_MISSINGPRIVILEGE_CASE);
+        }
+    }
+
+    @Override
+    @RolesAllowed({"writeArchiveFileRole"})
+    public void deleteInvoicePosition(String positionId) throws Exception {
+        String principalId = context.getCallerPrincipal().getName();
+
+        InvoicePosition position = this.invoicePositionsFacade.find(positionId);
+        if (position == null) {
+            throw new Exception("Invoice position with ID " + positionId + " not found");
+        }
+
+        Invoice invoice = position.getInvoice();
+        if (invoice == null) {
+            throw new Exception("Invoice position is not associated with an invoice");
+        }
+
+        ArchiveFileBean aFile = this.archiveFileFacade.find(invoice.getArchiveFileKey().getId());
+        boolean allowed = false;
+        if (principalId != null) {
+            List<Group> userGroups = new ArrayList<>();
+            try {
+                userGroups = this.securityFacade.getGroupsForUser(principalId);
+            } catch (Throwable t) {
+                log.error("Unable to determine groups for user " + principalId, t);
+            }
+            if (SecurityUtils.checkGroupsForCase(userGroups, aFile, this.caseGroupsFacade)) {
+                allowed = true;
+            }
+        } else {
+            allowed = true;
+        }
+
+        if (allowed) {
+            this.invoicePositionsFacade.remove(position);
+
+            // Renumber remaining positions
+            List<InvoicePosition> remainingPositions = this.invoicePositionsFacade.findByInvoice(invoice);
+            int newPosition = 1;
+            for (InvoicePosition pos : remainingPositions) {
+                pos.setPosition(newPosition);
+                this.invoicePositionsFacade.edit(pos);
+                newPosition++;
+            }
+
+            this.updateInvoiceTotal(invoice.getId());
+
+            this.addCaseHistory(new StringGenerator().getID().toString(), aFile, "Belegposition gelöscht (" + invoice.getInvoiceNumber() + ")");
+        } else {
+            throw new Exception(MSG_MISSINGPRIVILEGE_CASE);
+        }
+    }
+
     private void updateInvoiceTotal(String invoiceId) throws Exception {
         Invoice invoice = this.invoicesFacade.find(invoiceId);
         if (invoice == null) {
@@ -5597,83 +5700,6 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
         }
     }
 
-    @Override
-    @RolesAllowed({"writeArchiveFileRole"})
-    public InvoicePosition updateInvoicePosition(String invoiceId, InvoicePosition position) throws Exception {
-        String principalId = context.getCallerPrincipal().getName();
-
-        Invoice invoice = this.invoicesFacade.find(invoiceId);
-        if (invoice == null) {
-            throw new Exception(MSG_MISSING_INVOICE);
-        }
-
-        ArchiveFileBean aFile = this.archiveFileFacade.find(invoice.getArchiveFileKey().getId());
-        boolean allowed = false;
-        if (principalId != null) {
-            List<Group> userGroups = new ArrayList<>();
-            try {
-                userGroups = this.securityFacade.getGroupsForUser(principalId);
-            } catch (Throwable t) {
-                log.error("Unable to determine groups for user " + principalId, t);
-            }
-            if (SecurityUtils.checkGroupsForCase(userGroups, aFile, this.caseGroupsFacade)) {
-                allowed = true;
-            }
-        } else {
-            allowed = true;
-        }
-
-        if (allowed) {
-            InvoicePosition updatePos = this.invoicePositionsFacade.find(position.getId());
-            updatePos.setDescription(position.getDescription());
-            updatePos.setName(position.getName());
-            updatePos.setPosition(position.getPosition());
-            updatePos.setTaxRate(position.getTaxRate());
-            updatePos.setTotal(position.getTotal());
-            updatePos.setUnitPrice(position.getUnitPrice());
-            updatePos.setUnits(position.getUnits());
-            this.invoicePositionsFacade.edit(updatePos);
-            this.updateInvoiceTotal(invoiceId);
-            return this.invoicePositionsFacade.find(updatePos.getId());
-        } else {
-            throw new Exception(MSG_MISSINGPRIVILEGE_CASE);
-        }
-    }
-
-    @Override
-    @RolesAllowed({"writeArchiveFileRole"})
-    public void removeInvoicePosition(String invoiceId, InvoicePosition position) throws Exception {
-        String principalId = context.getCallerPrincipal().getName();
-
-        Invoice invoice = this.invoicesFacade.find(invoiceId);
-        if (invoice == null) {
-            throw new Exception(MSG_MISSING_INVOICE);
-        }
-
-        ArchiveFileBean aFile = this.archiveFileFacade.find(invoice.getArchiveFileKey().getId());
-        boolean allowed = false;
-        if (principalId != null) {
-            List<Group> userGroups = new ArrayList<>();
-            try {
-                userGroups = this.securityFacade.getGroupsForUser(principalId);
-            } catch (Throwable t) {
-                log.error("Unable to determine groups for user " + principalId, t);
-            }
-            if (SecurityUtils.checkGroupsForCase(userGroups, aFile, this.caseGroupsFacade)) {
-                allowed = true;
-            }
-        } else {
-            allowed = true;
-        }
-
-        if (allowed) {
-            InvoicePosition removePos = this.invoicePositionsFacade.find(position.getId());
-            this.invoicePositionsFacade.remove(removePos);
-            this.updateInvoiceTotal(invoiceId);
-        } else {
-            throw new Exception(MSG_MISSINGPRIVILEGE_CASE);
-        }
-    }
 
     @Override
     @RolesAllowed({"writeArchiveFileRole"})
