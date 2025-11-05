@@ -1154,6 +1154,56 @@ public class EmailUtils extends CommonMailUtils {
     }
 
     /**
+     * Splits a comma-separated string of email recipients while respecting quoted names and angle brackets.
+     * This method correctly handles cases like "Müller, Otto" <otto@mueller.de> where the comma is part of the name.
+     *
+     * @param recipients Comma-separated string of email recipients
+     * @return List of individual recipient strings
+     */
+    private static List<String> splitRecipients(String recipients) {
+        List<String> result = new ArrayList<>();
+        if (recipients == null || recipients.trim().isEmpty()) {
+            return result;
+        }
+
+        StringBuilder current = new StringBuilder();
+        boolean inQuotes = false;
+        boolean inAngleBrackets = false;
+
+        for (int i = 0; i < recipients.length(); i++) {
+            char c = recipients.charAt(i);
+
+            if (c == '"') {
+                inQuotes = !inQuotes;
+                current.append(c);
+            } else if (c == '<' && !inQuotes) {
+                inAngleBrackets = true;
+                current.append(c);
+            } else if (c == '>' && !inQuotes) {
+                inAngleBrackets = false;
+                current.append(c);
+            } else if (c == ',' && !inQuotes && !inAngleBrackets) {
+                // This is a real separator, not part of a name or email
+                String part = current.toString().trim();
+                if (!part.isEmpty()) {
+                    result.add(part);
+                }
+                current.setLength(0);
+            } else {
+                current.append(c);
+            }
+        }
+
+        // Add the last part
+        String part = current.toString().trim();
+        if (!part.isEmpty()) {
+            result.add(part);
+        }
+
+        return result;
+    }
+
+    /**
      * Extracts all email addresses from a comma-separated string and maps them to their full recipient strings.
      * For example, if the input is "John Doe <john@example.com>, jane@example.com", the result will be:
      * {"john@example.com" -> "John Doe <john@example.com>", "jane@example.com" -> "jane@example.com"}
@@ -1167,9 +1217,8 @@ public class EmailUtils extends CommonMailUtils {
             return map;
         }
 
-        String[] parts = recipients.split(",");
+        List<String> parts = splitRecipients(recipients);
         for (String part : parts) {
-            part = part.trim();
             if (part.isEmpty()) {
                 continue;
             }
@@ -1208,11 +1257,10 @@ public class EmailUtils extends CommonMailUtils {
 
         ArrayList<InternetAddress> addresses = new ArrayList<>();
 
-        // Split by comma, but be careful with commas inside quoted names
-        String[] parts = recipients.split(",");
+        // Split by comma, respecting commas inside quoted names
+        List<String> parts = splitRecipients(recipients);
 
         for (String part : parts) {
-            part = part.trim();
             if (part.isEmpty()) {
                 continue;
             }
