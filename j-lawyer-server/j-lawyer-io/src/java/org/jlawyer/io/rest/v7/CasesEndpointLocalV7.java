@@ -696,6 +696,8 @@ public interface CasesEndpointLocalV7 {
 
     Response deleteInvoicePosition(String positionId);
 
+    Response deleteInvoice(String id);
+
     Response getAllInvoices();
     
     Response getCaseByExternalId(String extId);

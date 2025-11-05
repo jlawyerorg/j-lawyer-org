@@ -1321,6 +1321,54 @@ public class CasesEndpointV7 implements CasesEndpointLocalV7 {
     }
 
     /**
+     * Deletes an invoice from a case
+     *
+     * @param id Invoice ID
+     * @response 200 Invoice deleted successfully
+     * @response 400 Bad request (invalid invoice ID)
+     * @response 401 User not authorized
+     * @response 403 User not authenticated
+     * @response 404 Invoice not found
+     * @response 500 Server error
+     */
+    @Override
+    @DELETE
+    @Produces(MediaType.APPLICATION_JSON + ";charset=utf-8")
+    @Path("/invoices/{id}")
+    @RolesAllowed({"writeArchiveFileRole"})
+    public Response deleteInvoice(@PathParam("id") String id) {
+        try {
+            if (id == null || id.isEmpty()) {
+                log.error("Invoice ID is required");
+                return Response.status(Response.Status.BAD_REQUEST).entity("Invoice ID is required").build();
+            }
+
+            InitialContext ic = new InitialContext();
+            ArchiveFileServiceLocal cases = (ArchiveFileServiceLocal) ic.lookup(LOOKUP_CASES);
+            InvoiceFacadeLocal invoiceFacade = (InvoiceFacadeLocal) ic.lookup(LOOKUP_INVOICE_FACADE);
+
+            // Check if invoice exists
+            Invoice invoice = invoiceFacade.find(id);
+            if (invoice == null) {
+                log.error("Invoice with ID " + id + " not found");
+                return Response.status(Response.Status.NOT_FOUND).entity("Invoice with ID " + id + " not found").build();
+            }
+
+            // Delete invoice (includes permission check and case history entry)
+            cases.removeInvoice(id);
+
+            return Response.ok().build();
+
+        } catch (Exception ex) {
+            log.error("Cannot delete invoice " + id, ex);
+            if (ex.getMessage() != null && ex.getMessage().contains("not found")) {
+                return Response.status(Response.Status.NOT_FOUND).entity(ex.getMessage()).build();
+            }
+            return Response.serverError().entity(ex.getMessage()).build();
+        }
+    }
+
+    /**
      * Returns all invoices currently open or in draft for all non-archived cases
      *
      * @response 401 User not authorized
