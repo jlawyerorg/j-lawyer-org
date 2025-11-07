@@ -678,6 +678,7 @@ import com.jdimension.jlawyer.persistence.InvoiceFacadeLocal;
 import com.jdimension.jlawyer.persistence.InvoicePoolFacadeLocal;
 import com.jdimension.jlawyer.persistence.InvoicePool;
 import com.jdimension.jlawyer.persistence.InvoicePosition;
+import com.jdimension.jlawyer.persistence.InvoicePositionFacadeLocal;
 import com.jdimension.jlawyer.persistence.InvoiceType;
 import com.jdimension.jlawyer.server.utils.ServerStringUtils;
 import com.jdimension.jlawyer.services.AddressServiceLocal;
@@ -731,6 +732,7 @@ public class CasesEndpointV7 implements CasesEndpointLocalV7 {
     private static final String LOOKUP_MESSAGING = "java:global/j-lawyer-server/j-lawyer-server-ejb/MessagingService!com.jdimension.jlawyer.services.MessagingServiceLocal";
     private static final String LOOKUP_INVOICE_FACADE = "java:global/j-lawyer-server/j-lawyer-server-ejb/InvoiceFacade!com.jdimension.jlawyer.persistence.InvoiceFacadeLocal";
     private static final String LOOKUP_INVOICE_POOL_FACADE = "java:global/j-lawyer-server/j-lawyer-server-ejb/InvoicePoolFacade!com.jdimension.jlawyer.persistence.InvoicePoolFacadeLocal";
+    private static final String LOOKUP_INVOICE_POSITION_FACADE = "java:global/j-lawyer-server/j-lawyer-server-ejb/InvoicePositionFacade!com.jdimension.jlawyer.persistence.InvoicePositionFacadeLocal";
     private static final String LOOKUP_ADDRESSES = "java:global/j-lawyer-server/j-lawyer-server-ejb/AddressService!com.jdimension.jlawyer.services.AddressServiceLocal";
     private static final String LOOKUP_ACCOUNT_ENTRIES = "java:global/j-lawyer-server/j-lawyer-server-ejb/CaseAccountEntryFacade!com.jdimension.jlawyer.persistence.CaseAccountEntryFacadeLocal";
 
@@ -1191,7 +1193,181 @@ public class CasesEndpointV7 implements CasesEndpointLocalV7 {
             return Response.serverError().build();
         }
     }
-    
+
+    /**
+     * Updates an invoice position and recalculates the invoice totals
+     *
+     * @response 200 Invoice position updated successfully
+     * @response 400 Bad request (invalid data)
+     * @response 401 User not authorized
+     * @response 403 User not authenticated
+     * @response 404 Invoice position not found
+     * @response 500 Server error
+     */
+    @Override
+    @POST
+    @Produces(MediaType.APPLICATION_JSON + ";charset=utf-8")
+    @Consumes(MediaType.APPLICATION_JSON)
+    @Path("/invoices/positions/{positionId}/update")
+    @RolesAllowed({"writeArchiveFileRole"})
+    public Response updateInvoicePosition(@PathParam("positionId") String positionId, RestfulInvoicePositionV7 restfulPosition) {
+        try {
+            if (positionId == null || positionId.isEmpty()) {
+                log.error("Position ID is required");
+                return Response.status(Response.Status.BAD_REQUEST).entity("Position ID is required").build();
+            }
+
+            if (restfulPosition == null) {
+                log.error("Invoice position data is required");
+                return Response.status(Response.Status.BAD_REQUEST).entity("Invoice position data is required").build();
+            }
+
+            InitialContext ic = new InitialContext();
+            ArchiveFileServiceLocal cases = (ArchiveFileServiceLocal) ic.lookup(LOOKUP_CASES);
+            InvoicePositionFacadeLocal positionFacade = (InvoicePositionFacadeLocal) ic.lookup(LOOKUP_INVOICE_POSITION_FACADE);
+
+            // Load existing position to get invoice
+            InvoicePosition existingPosition = positionFacade.find(positionId);
+            if (existingPosition == null) {
+                log.error("Invoice position with ID " + positionId + " not found");
+                return Response.status(Response.Status.NOT_FOUND).entity("Invoice position with ID " + positionId + " not found").build();
+            }
+
+            Invoice invoice = existingPosition.getInvoice();
+            if (invoice == null) {
+                log.error("Invoice position is not associated with an invoice");
+                return Response.status(Response.Status.BAD_REQUEST).entity("Invoice position is not associated with an invoice").build();
+            }
+
+            // Create InvoicePosition entity from DTO with ID set
+            InvoicePosition position = new InvoicePosition();
+            position.setId(positionId);
+            position.setName(restfulPosition.getName());
+            position.setDescription(restfulPosition.getDescription());
+            position.setPosition(restfulPosition.getPosition());
+            position.setTaxRate(restfulPosition.getTaxRate());
+            position.setUnits(restfulPosition.getUnits());
+            position.setUnitPrice(restfulPosition.getUnitPrice());
+            position.setTotal(restfulPosition.getTotal());
+
+            // Update via service (includes recalculation and permission check)
+            InvoicePosition updated = cases.updateInvoicePosition(invoice.getId(), position);
+
+            // Convert back to DTO
+            RestfulInvoicePositionV7 result = RestfulInvoicePositionV7.fromInvoicePosition(updated);
+
+            return Response.ok(result).build();
+
+        } catch (Exception ex) {
+            log.error("Cannot update invoice position " + positionId, ex);
+            if (ex.getMessage() != null && ex.getMessage().contains("not found")) {
+                return Response.status(Response.Status.NOT_FOUND).entity(ex.getMessage()).build();
+            }
+            return Response.serverError().entity(ex.getMessage()).build();
+        }
+    }
+
+    /**
+     * Deletes an invoice position and recalculates the invoice totals
+     *
+     * @response 200 Invoice position deleted successfully
+     * @response 400 Bad request (invalid position ID)
+     * @response 401 User not authorized
+     * @response 403 User not authenticated
+     * @response 404 Invoice position not found
+     * @response 500 Server error
+     */
+    @Override
+    @DELETE
+    @Produces(MediaType.APPLICATION_JSON + ";charset=utf-8")
+    @Path("/invoices/positions/{positionId}")
+    @RolesAllowed({"writeArchiveFileRole"})
+    public Response deleteInvoicePosition(@PathParam("positionId") String positionId) {
+        try {
+            if (positionId == null || positionId.isEmpty()) {
+                log.error("Position ID is required");
+                return Response.status(Response.Status.BAD_REQUEST).entity("Position ID is required").build();
+            }
+
+            InitialContext ic = new InitialContext();
+            ArchiveFileServiceLocal cases = (ArchiveFileServiceLocal) ic.lookup(LOOKUP_CASES);
+            InvoicePositionFacadeLocal positionFacade = (InvoicePositionFacadeLocal) ic.lookup(LOOKUP_INVOICE_POSITION_FACADE);
+
+            // Load existing position to get invoice
+            InvoicePosition position = positionFacade.find(positionId);
+            if (position == null) {
+                log.error("Invoice position with ID " + positionId + " not found");
+                return Response.status(Response.Status.NOT_FOUND).entity("Invoice position with ID " + positionId + " not found").build();
+            }
+
+            Invoice invoice = position.getInvoice();
+            if (invoice == null) {
+                log.error("Invoice position is not associated with an invoice");
+                return Response.status(Response.Status.BAD_REQUEST).entity("Invoice position is not associated with an invoice").build();
+            }
+
+            // Delete position (includes recalculation and permission check)
+            cases.removeInvoicePosition(invoice.getId(), position);
+
+            return Response.ok().build();
+
+        } catch (Exception ex) {
+            log.error("Cannot delete invoice position " + positionId, ex);
+            if (ex.getMessage() != null && ex.getMessage().contains("not found")) {
+                return Response.status(Response.Status.NOT_FOUND).entity(ex.getMessage()).build();
+            }
+            return Response.serverError().entity(ex.getMessage()).build();
+        }
+    }
+
+    /**
+     * Deletes an invoice from a case
+     *
+     * @param id Invoice ID
+     * @response 200 Invoice deleted successfully
+     * @response 400 Bad request (invalid invoice ID)
+     * @response 401 User not authorized
+     * @response 403 User not authenticated
+     * @response 404 Invoice not found
+     * @response 500 Server error
+     */
+    @Override
+    @DELETE
+    @Produces(MediaType.APPLICATION_JSON + ";charset=utf-8")
+    @Path("/invoices/{id}")
+    @RolesAllowed({"writeArchiveFileRole"})
+    public Response deleteInvoice(@PathParam("id") String id) {
+        try {
+            if (id == null || id.isEmpty()) {
+                log.error("Invoice ID is required");
+                return Response.status(Response.Status.BAD_REQUEST).entity("Invoice ID is required").build();
+            }
+
+            InitialContext ic = new InitialContext();
+            ArchiveFileServiceLocal cases = (ArchiveFileServiceLocal) ic.lookup(LOOKUP_CASES);
+            InvoiceFacadeLocal invoiceFacade = (InvoiceFacadeLocal) ic.lookup(LOOKUP_INVOICE_FACADE);
+
+            // Check if invoice exists
+            Invoice invoice = invoiceFacade.find(id);
+            if (invoice == null) {
+                log.error("Invoice with ID " + id + " not found");
+                return Response.status(Response.Status.NOT_FOUND).entity("Invoice with ID " + id + " not found").build();
+            }
+
+            // Delete invoice (includes permission check and case history entry)
+            cases.removeInvoice(id);
+
+            return Response.ok().build();
+
+        } catch (Exception ex) {
+            log.error("Cannot delete invoice " + id, ex);
+            if (ex.getMessage() != null && ex.getMessage().contains("not found")) {
+                return Response.status(Response.Status.NOT_FOUND).entity(ex.getMessage()).build();
+            }
+            return Response.serverError().entity(ex.getMessage()).build();
+        }
+    }
+
     /**
      * Returns all invoices currently open or in draft for all non-archived cases
      *
