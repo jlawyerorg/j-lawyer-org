@@ -1017,7 +1017,15 @@ public class CasesEndpointV7 implements CasesEndpointLocalV7 {
             
             Invoice createdInvoice=cases.addInvoice(invoice.getCaseId(), foundPool, foundType, invoice.getCurrency());
 
-            return Response.ok(RestfulInvoiceV7.fromInvoice(createdInvoice)).build();
+            // Setze die im Request übergebenen Felder, die von addInvoice() ignoriert wurden
+            createdInvoice.setContact(address);
+            createdInvoice.setName(invoice.getName());
+            createdInvoice.setSender(invoice.getSender());
+
+            // Update durchführen um die Felder zu speichern
+            Invoice updatedInvoice = cases.updateInvoice(invoice.getCaseId(), createdInvoice);
+
+            return Response.ok(RestfulInvoiceV7.fromInvoice(updatedInvoice)).build();
         } catch (Exception ex) {
             log.error("can not create invoice for case " + invoice.getCaseId(), ex);
             return Response.serverError().build();
