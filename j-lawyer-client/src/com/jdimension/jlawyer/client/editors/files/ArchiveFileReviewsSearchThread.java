@@ -720,7 +720,7 @@ public class ArchiveFileReviewsSearchThread implements Runnable {
             return;
         }
 
-        String[] colNames = new String[]{"Datum / Zeit", "Typ", "Aktenzeichen", "Kurzrubrum", "Grund", "Beschreibung", "Anwalt", "verantwortlich", "Kalender"};
+        String[] colNames = new String[]{"Datum / Zeit", "Typ", "Aktenzeichen", "Kurzrubrum", "Grund", "Beschreibung", "Anwalt", "verantwortlich", "Kalender", "Dokument"};
         DefaultTableModel model = new DefaultTableModel(colNames, 0) {
 
             @Override
@@ -744,7 +744,15 @@ public class ArchiveFileReviewsSearchThread implements Runnable {
                 if (b.getCalendarSetup() != null) {
                     calendar = b.getCalendarSetup().getDisplayName();
                 }
-                Object[] row = new Object[]{new ArchiveFileReviewsRowIdentifier(b.getArchiveFileKey(), b, reviewDateString), b.getEventTypeName(), b.getArchiveFileKey().getFileNumber(), b.getArchiveFileKey().getName(), b.getSummary(), b.getDescription(), b.getArchiveFileKey().getLawyer(), b.getAssignee(), calendar};
+                String docName = "";
+                try {
+                    if (b.getDocumentContext() != null && b.getDocumentContext().getName() != null) {
+                        docName = b.getDocumentContext().getName();
+                    }
+                } catch (Exception ex) {
+                    log.error(ex);
+                }
+                Object[] row = new Object[]{new ArchiveFileReviewsRowIdentifier(b.getArchiveFileKey(), b, reviewDateString), b.getEventTypeName(), b.getArchiveFileKey().getFileNumber(), b.getArchiveFileKey().getName(), b.getSummary(), b.getDescription(), b.getArchiveFileKey().getLawyer(), b.getAssignee(), calendar, docName};
                 model.addRow(row);
             } catch (Throwable t) {
                 log.error(t);

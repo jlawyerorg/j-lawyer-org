@@ -894,7 +894,7 @@ public class ArchiveFileReviewsOverviewPanel extends javax.swing.JPanel implemen
     }//GEN-LAST:event_mnuOpenArchiveFileActionPerformed
 
     private void tblResultsMouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_tblResultsMouseClicked
-        if(evt.getClickCount()==2 && evt.getButton()==MouseEvent.BUTTON1) {
+    if(evt.getClickCount()==2 && evt.getButton()==MouseEvent.BUTTON1) {
             int row=this.tblResults.getSelectedRow();
             ArchiveFileReviewsRowIdentifier id=(ArchiveFileReviewsRowIdentifier)this.tblResults.getValueAt(row, 0);
             Object editor=null;
@@ -912,6 +912,16 @@ public class ArchiveFileReviewsOverviewPanel extends javax.swing.JPanel implemen
                 ((ArchiveFilePanel)editor).setOpenedFromEditorClass(this.getClass().getName());
                 EditorsRegistry.getInstance().setMainEditorsPaneView((Component)editor);
                 ((ArchiveFilePanel)editor).selectEvent(id.getReviewDTO().getId());
+                int col = this.tblResults.getSelectedColumn();
+                if (col == 9) {
+                    try {
+                        if (id.getReviewDTO() != null && id.getReviewDTO().getDocumentContext() != null && id.getReviewDTO().getDocumentContext().getName() != null) {
+                            ((ArchiveFilePanel)editor).selectDocument(id.getReviewDTO().getDocumentContext().getName());
+                        }
+                    } catch (Exception ex) {
+                        log.debug("Could not select document from overview panel", ex);
+                    }
+                }
                 
             } catch (Exception ex) {
                 log.error("Error creating editor from class " + this.detailsEditorClass, ex);

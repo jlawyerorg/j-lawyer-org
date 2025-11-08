@@ -1070,6 +1070,11 @@ public class AddDocumentFromTemplateDialog extends javax.swing.JDialog implement
             }
         });
 
+        chkLinkToReview = new javax.swing.JCheckBox();
+        chkLinkToReview.setText("Mit Fälligkeit verknüpfen?");
+        chkLinkToReview.setEnabled(false);
+        chkLinkToReview.setSelected(true);
+
         txtReviewDateField.setEditable(false);
         txtReviewDateField.setHorizontalAlignment(javax.swing.JTextField.RIGHT);
         txtReviewDateField.setToolTipText("Doppelklick um heutiges Datum zu übernehmen");
@@ -1108,6 +1113,8 @@ public class AddDocumentFromTemplateDialog extends javax.swing.JDialog implement
                         .add(radioReviewTypeRespite)
                         .addPreferredGap(org.jdesktop.layout.LayoutStyle.UNRELATED)
                         .add(calendarSelectionButton1, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
+                        .addPreferredGap(org.jdesktop.layout.LayoutStyle.UNRELATED)
+                        .add(chkLinkToReview)
                         .add(0, 0, Short.MAX_VALUE))
                     .add(jPanel4Layout.createSequentialGroup()
                         .add(jPanel4Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
@@ -1134,7 +1141,8 @@ public class AddDocumentFromTemplateDialog extends javax.swing.JDialog implement
                         .add(radioReviewTypeFollowUp)
                         .add(radioReviewTypeRespite)
                         .add(radioReviewTypeNone))
-                    .add(org.jdesktop.layout.GroupLayout.TRAILING, calendarSelectionButton1, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE))
+                    .add(org.jdesktop.layout.GroupLayout.TRAILING, calendarSelectionButton1, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
+                    .add(chkLinkToReview))
                 .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
                 .add(cmbReviewReason, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
                 .add(7, 7, 7)
@@ -1555,6 +1563,15 @@ public class AddDocumentFromTemplateDialog extends javax.swing.JDialog implement
             reviewDto.setAssignee(this.cmbReviewAssignee.getSelectedItem().toString());
             reviewDto.setSummary(this.cmbReviewReason.getEditor().getItem().toString());
             reviewDto.setCalendarSetup(this.calendarSelectionButton1.getSelectedSetup());
+
+            // optional: link created document to this due date
+            if (this.chkLinkToReview.isSelected() && db != null) {
+                try {
+                    reviewDto.setDocumentContext(db);
+                } catch (Throwable t) {
+                    log.warn("Dokumentkontext konnte nicht gesetzt werden", t);
+                }
+            }
 
             if (CalendarUtils.checkForConflicts(this, reviewDto)) {
                 try {
@@ -2010,6 +2027,7 @@ public class AddDocumentFromTemplateDialog extends javax.swing.JDialog implement
         this.cmbReviewReason.setEnabled(enable);
         this.txtReviewDateField.setEnabled(enable);
         this.cmdShowReviewSelector.setEnabled(enable);
+        this.chkLinkToReview.setEnabled(enable);
         this.jLabel8.setEnabled(enable);
         this.jLabel12.setEnabled(enable);
         if (!enable) {
@@ -2042,6 +2060,7 @@ public class AddDocumentFromTemplateDialog extends javax.swing.JDialog implement
     private javax.swing.JButton cmdMoveToFolder;
     private javax.swing.JButton cmdNameTemplate;
     private javax.swing.JButton cmdShowReviewSelector;
+    private javax.swing.JCheckBox chkLinkToReview;
     private javax.swing.JLabel jLabel1;
     private javax.swing.JLabel jLabel12;
     private javax.swing.JLabel jLabel2;

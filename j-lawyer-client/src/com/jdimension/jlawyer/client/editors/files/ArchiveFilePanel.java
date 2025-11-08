@@ -826,12 +826,14 @@ import org.jlawyer.plugins.calculation.StyledCalculationTable;
 import org.jlawyer.search.SearchHit;
 import themes.colors.DefaultColorTheme;
 import themes.colors.HighlightPicker;
+import javax.swing.JLabel;
+import javax.swing.JTable;
 
 /**
  *
  * @author jens
  */
-public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEditor, PopulateOptionsEditor, SaveableEditor, SelfValidatingEditor, com.jdimension.jlawyer.client.events.EventConsumer, NewEventPanelListener, NewMessageConsumer, DocumentPreviewSaveCallback, AssistantFlowAdapter {
+public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEditor, PopulateOptionsEditor, SaveableEditor, SelfValidatingEditor, com.jdimension.jlawyer.client.events.EventConsumer, NewEventPanelListenerV2, NewMessageConsumer, DocumentPreviewSaveCallback, AssistantFlowAdapter {
 
     private static final Logger log = Logger.getLogger(ArchiveFilePanel.class.getName());
 
@@ -4645,6 +4647,13 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
                 base = new UserTableCellRenderer();
                 col.setCellRenderer(new ConflictAwareUserRenderer(base));
             }
+            // Add icon renderer for new Dokument column (index 8)
+            if (this.tblReviewReasons.getColumnModel().getColumnCount() > 8) {
+                TableColumn docCol = this.tblReviewReasons.getColumnModel().getColumn(8);
+                if (!(docCol.getCellRenderer() instanceof DocumentNameWithIconRenderer)) {
+                    docCol.setCellRenderer(new DocumentNameWithIconRenderer());
+                }
+            }
         } catch (Throwable t) {
             // ignore if column not available yet
             log.error(t);
@@ -4680,6 +4689,30 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
                 }
             } catch (Throwable t) {
                 log.error(t);
+            }
+            return c;
+        }
+    }
+
+    // Renderer that shows the file type icon next to the document name (column "Dokument")
+    private static class DocumentNameWithIconRenderer extends DefaultTableCellRenderer {
+        @Override
+        public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
+            Component c = super.getTableCellRendererComponent(table, value, isSelected, hasFocus, row, column);
+            try {
+                String docName = (value == null) ? "" : value.toString();
+                if (c instanceof JLabel) {
+                    JLabel lbl = (JLabel) c;
+                    if (docName != null && !docName.isEmpty()) {
+                        lbl.setIcon(FileUtils.getInstance().getFileTypeIcon(docName));
+                        lbl.setToolTipText(docName);
+                    } else {
+                        lbl.setIcon(null);
+                        lbl.setToolTipText(null);
+                    }
+                }
+            } catch (Exception ex) {
+                log.debug("Could not render document icon/name", ex);
             }
             return c;
         }
@@ -5264,6 +5297,12 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
 
     @Override
     public void addReview(CalendarEntryTemplate template, int eventType, String reason, String description, Date beginDate, Date endDate, String assignee, String location, CalendarSetup calSetup) throws Exception {
+        // delegate to V2 with no document context
+        this.addReview(template, eventType, reason, description, beginDate, endDate, assignee, location, calSetup, null);
+    }
+
+    @Override
+    public void addReview(CalendarEntryTemplate template, int eventType, String reason, String description, Date beginDate, Date endDate, String assignee, String location, CalendarSetup calSetup, String documentId) throws Exception {
         ArchiveFileReviewsBean reviewDto = new ArchiveFileReviewsBean();
         reviewDto.setEventType(eventType);
         reviewDto.setDone(false);
@@ -5274,6 +5313,21 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
         reviewDto.setDescription(description);
         reviewDto.setLocation(location);
         reviewDto.setCalendarSetup(calSetup);
+
+        // Attach optional document context if provided
+        if (documentId != null && !documentId.isEmpty()) {
+            try {
+                ClientSettings settings = ClientSettings.getInstance();
+                JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
+                ArchiveFileServiceRemote afs = locator.lookupArchiveFileServiceRemote();
+                ArchiveFileDocumentsBean doc = afs.getDocument(documentId);
+                if (doc != null) {
+                    reviewDto.setDocumentContext(doc);
+                }
+            } catch (Exception ex) {
+                log.warn("Dokumentkontext konnte nicht geladen werden: " + documentId, ex);
+            }
+        }
 
         reviewDto = CalendarUtils.getInstance().storeCalendarEntry(reviewDto, this.dto, template, EditorsRegistry.getInstance().getMainWindow());
 
@@ -6048,6 +6102,20 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
                 }
 
                 this.tblReviewReasons.setValueAt(reviewDto.isDone(), row, col);
+            } else if (col == 8) {
+                // click on Dokument column -> select/open the referenced document within the case
+                int row = this.tblReviewReasons.rowAtPoint(p);
+                Object evtObj = this.tblReviewReasons.getValueAt(row, 0);
+                if (evtObj instanceof ArchiveFileReviewsBean) {
+                    ArchiveFileReviewsBean review = (ArchiveFileReviewsBean) evtObj;
+                    try {
+                        if (review.getDocumentContext() != null && review.getDocumentContext().getName() != null) {
+                            this.selectDocument(review.getDocumentContext().getName());
+                        }
+                    } catch (Throwable ignore) {
+                        // ignore
+                    }
+                }
             }
         } else if (evt.getClickCount() == 2 && !evt.isConsumed()) {
             this.mnuEditReviewActionPerformed(null);

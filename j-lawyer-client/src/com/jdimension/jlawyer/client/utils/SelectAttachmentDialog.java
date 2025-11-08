@@ -675,6 +675,7 @@ import java.util.Collections;
 import javax.swing.DefaultListModel;
 import javax.swing.JDialog;
 import javax.swing.JFrame;
+import javax.swing.ListSelectionModel;
 import javax.swing.JOptionPane;
 import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
@@ -696,6 +697,14 @@ public class SelectAttachmentDialog extends javax.swing.JDialog {
         super(parent, modal);
         initComponents();
         this.initialize(caseId);
+        try {
+            // ensure single selection and center over parent window
+            this.lstCaseDocuments.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
+            this.fileChooser.setMultiSelectionEnabled(false);
+            this.setLocationRelativeTo(parent);
+        } catch (Exception ex) {
+            log.error("Error initializing SelectAttachmentDialog (JFrame parent)", ex);
+        }
     }
     
     public SelectAttachmentDialog(JFrame parent, boolean modal, String caseId, boolean allowLocalFiles) {
@@ -705,6 +714,14 @@ public class SelectAttachmentDialog extends javax.swing.JDialog {
         this.jTabbedPane1.setEnabledAt(0, allowLocalFiles);
         if(!allowLocalFiles)
             this.jTabbedPane1.setSelectedIndex(1);
+        try {
+            // enforce single selection and center over parent window
+            this.lstCaseDocuments.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
+            this.fileChooser.setMultiSelectionEnabled(false);
+            this.setLocationRelativeTo(parent);
+        } catch (Exception ex) {
+            log.error("Error initializing SelectAttachmentDialog (JFrame parent, allowLocalFiles)", ex);
+        }
     }
     
     /**
@@ -718,7 +735,14 @@ public class SelectAttachmentDialog extends javax.swing.JDialog {
         super(parent, modal);
         initComponents();
         this.initialize(caseId);
-        
+        try {
+            // ensure single selection and center over parent window
+            this.lstCaseDocuments.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
+            this.fileChooser.setMultiSelectionEnabled(false);
+            this.setLocationRelativeTo(parent);
+        } catch (Exception ex) {
+            log.error("Error initializing SelectAttachmentDialog (JDialog parent)", ex);
+        }
 
     }
     
@@ -729,7 +753,14 @@ public class SelectAttachmentDialog extends javax.swing.JDialog {
         this.jTabbedPane1.setEnabledAt(0, allowLocalFiles);
         if(!allowLocalFiles)
             this.jTabbedPane1.setSelectedIndex(1);
-
+        try {
+            // enforce single selection and center over parent window
+            this.lstCaseDocuments.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
+            this.fileChooser.setMultiSelectionEnabled(false);
+            this.setLocationRelativeTo(parent);
+        } catch (Exception ex) {
+            log.error("Error initializing SelectAttachmentDialog (JDialog parent, allowLocalFiles)", ex);
+        }
     }
     
     private void initialize(String caseId) {

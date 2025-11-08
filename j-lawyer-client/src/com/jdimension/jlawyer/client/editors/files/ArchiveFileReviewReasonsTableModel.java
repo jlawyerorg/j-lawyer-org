@@ -665,6 +665,7 @@ package com.jdimension.jlawyer.client.editors.files;
 
 import com.jdimension.jlawyer.persistence.ArchiveFileReviewsBean;
 import javax.swing.table.DefaultTableModel;
+import org.apache.log4j.Logger;
 
 /**
  *
@@ -672,14 +673,15 @@ import javax.swing.table.DefaultTableModel;
  */
 public class ArchiveFileReviewReasonsTableModel extends DefaultTableModel {
     
-    private static String[] columnNames=new String[]{"Datum / Zeit", "Typ", "Grund", "Ort", "erledigt", "verantwortlich", "Beschreibung", "Kalender"};
+    private static final Logger log = Logger.getLogger(ArchiveFileReviewReasonsTableModel.class);
+    private static String[] columnNames=new String[]{"Datum / Zeit", "Typ", "Grund", "Ort", "erledigt", "verantwortlich", "Beschreibung", "Kalender", "Dokument"};
 
     public static String[] getColumnNames() {
         return columnNames;
     }
     
     public static Object[] eventToRow(ArchiveFileReviewsBean event) {
-        Object[] row = new Object[8];
+        Object[] row = new Object[9];
         row[0] = event;
         row[1] = event.getEventTypeName();
         row[2] = event.getSummary();
@@ -691,6 +693,15 @@ public class ArchiveFileReviewReasonsTableModel extends DefaultTableModel {
         if(event.getCalendarSetup()!=null)
             calendar=event.getCalendarSetup().getDisplayName();
         row[7] = calendar;
+        String docName = "";
+        try {
+            if (event.getDocumentContext() != null && event.getDocumentContext().getName() != null) {
+                docName = event.getDocumentContext().getName();
+            }
+        } catch (Exception ex) {
+            log.error("Could not get document name", ex);
+        }
+        row[8] = docName;
         return row;
     }
     

@@ -862,6 +862,23 @@ public class CalendarService implements CalendarServiceRemote, CalendarServiceLo
         ArchiveFileBean aFile = this.archiveFileFacade.find(archiveFileId);
         SecurityUtils.checkGroupsForCase(context.getCallerPrincipal().getName(), aFile, this.securityFacade, this.archiveFileService.getAllowedGroups(aFile));
 
+        // Validate that referenced document (if any) belongs to the same case
+        try {
+            if (review.getDocumentContext() != null && review.getDocumentContext().getArchiveFileKey() != null) {
+                String docCaseId = review.getDocumentContext().getArchiveFileKey().getId();
+                if (!aFile.getId().equals(docCaseId)) {
+                    log.warn("Document context case mismatch for calendar entry: case=" + aFile.getId() + ", docCase=" + docCaseId + ", docId=" + review.getDocumentContext().getId());
+                    throw new Exception("Das gewählte Dokument gehört nicht zur Akte des Kalendereintrags.");
+                }
+            }
+        } catch (Exception e) {
+            // rethrow meaningful validation exception
+            throw e;
+        } catch (Throwable t) {
+            log.error("Failed to validate document context for calendar entry", t);
+            throw new Exception("Fehler bei der Validierung des Dokumentbezugs für den Kalendereintrag");
+        }
+
         String revId = idGen.getID().toString();
         review.setId(revId);
         review.setArchiveFileKey(aFile);
@@ -1255,6 +1272,22 @@ public class CalendarService implements CalendarServiceRemote, CalendarServiceLo
         StringGenerator idGen = new StringGenerator();
         ArchiveFileBean aFile = this.archiveFileFacade.find(archiveFileId);
         SecurityUtils.checkGroupsForCase(context.getCallerPrincipal().getName(), aFile, this.securityFacade, this.archiveFileService.getAllowedGroups(aFile));
+
+        // Validate that referenced document (if any) belongs to the same case
+        try {
+            if (review.getDocumentContext() != null && review.getDocumentContext().getArchiveFileKey() != null) {
+                String docCaseId = review.getDocumentContext().getArchiveFileKey().getId();
+                if (!aFile.getId().equals(docCaseId)) {
+                    log.warn("Document context case mismatch for calendar entry update: case=" + aFile.getId() + ", docCase=" + docCaseId + ", docId=" + review.getDocumentContext().getId());
+                    throw new Exception("Das gewählte Dokument gehört nicht zur Akte des Kalendereintrags.");
+                }
+            }
+        } catch (Exception e) {
+            throw e;
+        } catch (Throwable t) {
+            log.error("Failed to validate document context for calendar entry update", t);
+            throw new Exception("Fehler bei der Validierung des Dokumentbezugs für den Kalendereintrag");
+        }
 
         review.setArchiveFileKey(aFile);
         if (!review.hasEndDateAndTime() && review.getBeginDate() != null) {
