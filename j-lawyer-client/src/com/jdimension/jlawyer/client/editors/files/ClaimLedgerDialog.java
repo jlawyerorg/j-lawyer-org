@@ -664,9 +664,9 @@ For more information on this, and how to apply and follow the GNU AGPL, see
 package com.jdimension.jlawyer.client.editors.files;
 
 import com.jdimension.jlawyer.client.components.MultiCalDialog;
-import com.jdimension.jlawyer.client.editors.EditorsRegistry;
 import com.jdimension.jlawyer.client.events.Event;
 import com.jdimension.jlawyer.client.events.EventConsumer;
+import com.jdimension.jlawyer.client.plugins.form.FormPluginCallback;
 import com.jdimension.jlawyer.client.settings.ClientSettings;
 import com.jdimension.jlawyer.client.settings.ServerSettings;
 import com.jdimension.jlawyer.client.utils.ComponentUtils;
@@ -685,6 +685,8 @@ import com.jdimension.jlawyer.pojo.ClaimLedgerTotals;
 import com.jdimension.jlawyer.services.JLawyerServiceLocator;
 import java.awt.Color;
 import java.awt.Component;
+import java.awt.Toolkit;
+import java.awt.datatransfer.Clipboard;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.text.DecimalFormat;
@@ -700,6 +702,8 @@ import javax.swing.SwingConstants;
 import javax.swing.table.AbstractTableModel;
 import javax.swing.table.DefaultTableCellRenderer;
 import org.apache.log4j.Logger;
+import org.jlawyer.plugins.calculation.StyledCalculationTable;
+import org.jlawyer.plugins.calculation.Cell;
 import org.knowm.xchart.XChartPanel;
 import org.knowm.xchart.XYChart;
 import org.knowm.xchart.XYChartBuilder;
@@ -1033,6 +1037,7 @@ public class ClaimLedgerDialog extends javax.swing.JDialog implements EventConsu
         cmdEditEntry = new javax.swing.JButton();
         cmdDeleteEntry = new javax.swing.JButton();
         cmdExport = new javax.swing.JButton();
+        cmdCopyLedgerToClipboard = new javax.swing.JButton();
         jPanel5 = new javax.swing.JPanel();
         jLabel3 = new javax.swing.JLabel();
         jLabel6 = new javax.swing.JLabel();
@@ -1182,6 +1187,11 @@ public class ClaimLedgerDialog extends javax.swing.JDialog implements EventConsu
                 "Title 1", "Title 2", "Title 3", "Title 4"
             }
         ));
+        tblComponents.addMouseListener(new java.awt.event.MouseAdapter() {
+            public void mouseClicked(java.awt.event.MouseEvent evt) {
+                tblComponentsMouseClicked(evt);
+            }
+        });
         jScrollPane3.setViewportView(tblComponents);
 
         cmdAddComponent.setFont(cmdAddComponent.getFont());
@@ -1266,6 +1276,11 @@ public class ClaimLedgerDialog extends javax.swing.JDialog implements EventConsu
                 "Title 1", "Title 2", "Title 3", "Title 4"
             }
         ));
+        tblLedger.addMouseListener(new java.awt.event.MouseAdapter() {
+            public void mouseClicked(java.awt.event.MouseEvent evt) {
+                tblLedgerMouseClicked(evt);
+            }
+        });
         jScrollPane1.setViewportView(tblLedger);
 
         cmdAddEntry.setFont(cmdAddEntry.getFont());
@@ -1299,6 +1314,14 @@ public class ClaimLedgerDialog extends javax.swing.JDialog implements EventConsu
             }
         });
 
+        cmdCopyLedgerToClipboard.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons16/editpaste.png"))); // NOI18N
+        cmdCopyLedgerToClipboard.setToolTipText("in Zwischenablage kopieren");
+        cmdCopyLedgerToClipboard.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                cmdCopyLedgerToClipboardActionPerformed(evt);
+            }
+        });
+
         javax.swing.GroupLayout jPanel4Layout = new javax.swing.GroupLayout(jPanel4);
         jPanel4.setLayout(jPanel4Layout);
         jPanel4Layout.setHorizontalGroup(
@@ -1314,6 +1337,8 @@ public class ClaimLedgerDialog extends javax.swing.JDialog implements EventConsu
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                         .addComponent(cmdDeleteEntry)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                        .addComponent(cmdCopyLedgerToClipboard)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                         .addComponent(cmdExport)))
                 .addContainerGap())
         );
@@ -1321,12 +1346,12 @@ public class ClaimLedgerDialog extends javax.swing.JDialog implements EventConsu
             jPanel4Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, jPanel4Layout.createSequentialGroup()
                 .addContainerGap()
-                .addGroup(jPanel4Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addGroup(jPanel4Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
-                        .addComponent(cmdAddEntry)
-                        .addComponent(cmdEditEntry))
-                    .addComponent(cmdDeleteEntry)
-                    .addComponent(cmdExport))
+                .addGroup(jPanel4Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
+                    .addComponent(cmdAddEntry, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                    .addComponent(cmdEditEntry, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                    .addComponent(cmdDeleteEntry, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                    .addComponent(cmdExport, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                    .addComponent(cmdCopyLedgerToClipboard, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(jScrollPane1, javax.swing.GroupLayout.DEFAULT_SIZE, 416, Short.MAX_VALUE)
                 .addContainerGap())
@@ -1960,6 +1985,64 @@ public class ClaimLedgerDialog extends javax.swing.JDialog implements EventConsu
         }
     }//GEN-LAST:event_cmdExportActionPerformed
 
+    private void tblComponentsMouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_tblComponentsMouseClicked
+        if (evt.getClickCount() == 2)
+            this.cmdEditComponentActionPerformed(null);
+    }//GEN-LAST:event_tblComponentsMouseClicked
+
+    private void tblLedgerMouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_tblLedgerMouseClicked
+        if (evt.getClickCount() == 2)
+            this.cmdEditEntryActionPerformed(null);
+    }//GEN-LAST:event_tblLedgerMouseClicked
+
+    private void cmdCopyLedgerToClipboardActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdCopyLedgerToClipboardActionPerformed
+        StyledCalculationTable ct = new StyledCalculationTable();
+        ct.addHeaders("Datum", "Typ", "Betrag", "Komponente", "Bezeichnung", "Kommentar");
+
+        for(int r=0;r<this.tblLedger.getRowCount();r++) {
+            ct.addRow(tblLedger.getValueAt(r, 0).toString(), tblLedger.getValueAt(r, 1).toString(), new DecimalFormat("0.00").format((Number)tblLedger.getValueAt(r, 2)), tblLedger.getValueAt(r, 3).toString(), tblLedger.getValueAt(r, 4).toString(), tblLedger.getValueAt(r, 5).toString());
+        }
+        ct.addRow("", "", "", "", "");
+        ct.addRow(txtDateTo.getText(), "Hauptforderungen", lblSumMain.getText(), "", "");
+        ct.addRow("", "Nebenforderungen", lblSumCost.getText(), "", "");
+        ct.addRow("", "Zinsen", lblSumInterest.getText(), "", "");
+        ct.addRow("", "bereits gezahlt", lblSumPaid.getText(), "", "");
+        ct.addRow("", "offen", lblSumOpen.getText(), "", "");
+        
+
+        int rgb = ServerSettings.getInstance().getSettingAsInt("plugins.global.tableproperties.header.fore.color", Color.BLACK.getRGB());
+        ct.setRowForeGround(0, new Color(rgb));
+        rgb = ServerSettings.getInstance().getSettingAsInt("plugins.global.tableproperties.header.back.color", Color.LIGHT_GRAY.getRGB());
+        ct.setRowBackGround(0, new Color(rgb));
+        if (ServerSettings.getInstance().getSettingAsBoolean("plugins.global.tableproperties.header.Bold", true)) {
+            ct.setRowBold(0, true);
+        } else {
+            ct.setRowBold(0, false);
+        }
+
+        //TableLayout
+        ct.setColumnAlignment(3, Cell.ALIGNMENT_RIGHT);
+        ct.getCellAt(0, 2).setAlignment(Cell.ALIGNMENT_LEFT);
+        ct.setRowFontSize(0, 12);
+        ct.setColumnWidth(0, 25);
+        ct.setColumnWidth(1, 120);
+        ct.setColumnWidth(2, 35);
+        ct.setFontFamily(ServerSettings.getInstance().getSetting("plugins.global.tableproperties.table.fontfamily", "Arial"));
+        if (ServerSettings.getInstance().getSettingAsBoolean("plugins.global.tableproperties.table.lines", true)) {
+            ct.setLineBorder(true);
+        } else {
+            ct.setLineBorder(false);
+        }
+        rgb = ServerSettings.getInstance().getSettingAsInt("plugins.global.tableproperties.table.lines.color", Color.BLACK.getRGB());
+        ct.setBorderColor(new Color(rgb));
+        ct.setFontSize(ServerSettings.getInstance().getSettingAsInt("plugins.global.tableproperties.table.fontsize", 12));
+
+        FormPluginCallback.HtmlSelection stsel = new FormPluginCallback.HtmlSelection(ct.toHtml());
+        Clipboard system = Toolkit.getDefaultToolkit().getSystemClipboard();
+        system.setContents(stsel, null);
+
+    }//GEN-LAST:event_cmdCopyLedgerToClipboardActionPerformed
+
     /**
      * @param args the command line arguments
      */
@@ -2005,6 +2088,7 @@ public class ClaimLedgerDialog extends javax.swing.JDialog implements EventConsu
     private javax.swing.JButton cmdAddComponent;
     private javax.swing.JButton cmdAddEntry;
     private javax.swing.JButton cmdCancel;
+    private javax.swing.JButton cmdCopyLedgerToClipboard;
     private javax.swing.JButton cmdDeleteEntry;
     private javax.swing.JButton cmdEditComponent;
     private javax.swing.JButton cmdEditEntry;
