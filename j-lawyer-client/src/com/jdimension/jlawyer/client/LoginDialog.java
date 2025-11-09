@@ -1948,7 +1948,7 @@ public class LoginDialog extends javax.swing.JFrame {
         jLabel23.setFont(jLabel23.getFont().deriveFont(jLabel23.getFont().getStyle() | java.awt.Font.BOLD));
         jLabel23.setForeground(new java.awt.Color(255, 255, 255));
         jLabel23.setHorizontalAlignment(javax.swing.SwingConstants.CENTER);
-        jLabel23.setText("übernommen wird das zuletzt genutzte Profil");
+        jLabel23.setText("übernommen wird das im \"Login\"-Tab gewählte Profil");
 
         lblProfileQrCode.setHorizontalAlignment(javax.swing.SwingConstants.CENTER);
         lblProfileQrCode.setText("QR-Code");

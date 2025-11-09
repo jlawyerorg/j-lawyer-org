@@ -1330,7 +1330,7 @@
                       <Color blue="ff" green="ff" red="ff" type="rgb"/>
                     </Property>
                     <Property name="horizontalAlignment" type="int" value="0"/>
-                    <Property name="text" type="java.lang.String" value="&#xfc;bernommen wird das zuletzt genutzte Profil"/>
+                    <Property name="text" type="java.lang.String" value="&#xfc;bernommen wird das im &quot;Login&quot;-Tab gew&#xe4;hlte Profil"/>
                   </Properties>
                 </Component>
                 <Component class="javax.swing.JLabel" name="lblProfileQrCode">
