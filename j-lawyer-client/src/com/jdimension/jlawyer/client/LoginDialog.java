@@ -716,6 +716,16 @@ import javax.swing.JProgressBar;
 import javax.swing.SwingUtilities;
 import org.apache.log4j.Logger;
 import themes.colors.DefaultColorTheme;
+import com.google.zxing.BarcodeFormat;
+import com.google.zxing.EncodeHintType;
+import com.google.zxing.WriterException;
+import com.google.zxing.common.BitMatrix;
+import com.google.zxing.qrcode.QRCodeWriter;
+import com.google.zxing.client.j2se.MatrixToImageWriter;
+import java.io.ByteArrayOutputStream;
+import java.util.HashMap;
+import java.util.Map;
+import org.json.simple.JsonObject;
 
 /**
  *
@@ -868,6 +878,7 @@ public class LoginDialog extends javax.swing.JFrame {
         this.jTabbedPane1.setForegroundAt(0, DefaultColorTheme.COLOR_LOGO_BLUE);
         this.jTabbedPane1.setForegroundAt(1, DefaultColorTheme.COLOR_LOGO_BLUE);
         this.jTabbedPane1.setForegroundAt(2, DefaultColorTheme.COLOR_LOGO_BLUE);
+        this.jTabbedPane1.setForegroundAt(3, DefaultColorTheme.COLOR_LOGO_BLUE);
         this.jTabbedPane1.putClientProperty("JTabbedPane.tabType", "card");
         // begin: required so the tabbed pane is transparent on macOS. reason unknown.
         this.jTabbedPane1.setOpaque(false);
@@ -1038,6 +1049,14 @@ public class LoginDialog extends javax.swing.JFrame {
             this.setFocusToPasswordField();
         }
         this.highlightSecuritySelection();
+
+        // Add tab listener to update QR code when "App koppeln" tab is selected
+        this.jTabbedPane1.addChangeListener(e -> {
+            // Tab index 3 is "App koppeln"
+            if (this.jTabbedPane1.getSelectedIndex() == 3) {
+                updateProfileQrCodeDisplay();
+            }
+        });
 
     }
 
@@ -1233,6 +1252,14 @@ public class LoginDialog extends javax.swing.JFrame {
         jLabel13 = new javax.swing.JLabel();
         jLabel14 = new javax.swing.JLabel();
         jLabel15 = new javax.swing.JLabel();
+        jPanel9 = new javax.swing.JPanel();
+        jLabel3 = new javax.swing.JLabel();
+        jLabel18 = new javax.swing.JLabel();
+        jLabel20 = new javax.swing.JLabel();
+        jLabel21 = new javax.swing.JLabel();
+        jLabel22 = new javax.swing.JLabel();
+        jLabel23 = new javax.swing.JLabel();
+        lblProfileQrCode = new javax.swing.JLabel();
         lblLogo = new javax.swing.JLabel();
         lblAutoUpdate = new javax.swing.JLabel();
         cmdNextBackground = new javax.swing.JButton();
@@ -1414,7 +1441,7 @@ public class LoginDialog extends javax.swing.JFrame {
             .add(jPanel1Layout.createSequentialGroup()
                 .addContainerGap()
                 .add(jPanel1Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
-                    .add(jPanel7, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 672, Short.MAX_VALUE)
+                    .add(jPanel7, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 803, Short.MAX_VALUE)
                     .add(jPanel11, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
                 .addContainerGap())
         );
@@ -1636,7 +1663,7 @@ public class LoginDialog extends javax.swing.JFrame {
                         .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
                         .add(cmdDeleteProfile))
                     .add(jPanel4, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
-                .addContainerGap(org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                .addContainerGap(158, Short.MAX_VALUE))
         );
         jPanel6Layout.setVerticalGroup(
             jPanel6Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
@@ -1667,7 +1694,7 @@ public class LoginDialog extends javax.swing.JFrame {
                 .add(jPanel4, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
                 .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
                 .add(cmdSaveProfile)
-                .addContainerGap(org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                .addContainerGap(112, Short.MAX_VALUE))
         );
 
         org.jdesktop.layout.GroupLayout jPanel2Layout = new org.jdesktop.layout.GroupLayout(jPanel2);
@@ -1682,8 +1709,8 @@ public class LoginDialog extends javax.swing.JFrame {
         jPanel2Layout.setVerticalGroup(
             jPanel2Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
             .add(org.jdesktop.layout.GroupLayout.TRAILING, jPanel2Layout.createSequentialGroup()
-                .addContainerGap(org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                .add(jPanel6, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE))
+                .addContainerGap()
+                .add(jPanel6, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
         );
 
         jTabbedPane1.addTab("Profile", jPanel2);
@@ -1887,6 +1914,83 @@ public class LoginDialog extends javax.swing.JFrame {
 
         jTabbedPane1.addTab("j-lawyer.BOX ", new javax.swing.ImageIcon(getClass().getResource("/icons/greyled.png")), jPanel3); // NOI18N
 
+        jPanel9.setOpaque(false);
+
+        jLabel3.setFont(jLabel3.getFont().deriveFont(jLabel3.getFont().getStyle() | java.awt.Font.BOLD));
+        jLabel3.setForeground(new java.awt.Color(255, 255, 255));
+        jLabel3.setHorizontalAlignment(javax.swing.SwingConstants.CENTER);
+        jLabel3.setText("1. App installieren: \"j-lawyer.CLOUD\" in den Stores");
+
+        jLabel18.setFont(jLabel18.getFont().deriveFont(jLabel18.getFont().getStyle() | java.awt.Font.BOLD));
+        jLabel18.setForeground(new java.awt.Color(255, 255, 255));
+        jLabel18.setHorizontalAlignment(javax.swing.SwingConstants.CENTER);
+        jLabel18.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons16/material/android_20dp_FFFFFF.png"))); // NOI18N
+        jLabel18.setText("Android: https://play.google.com/store/apps/details?id=org.jlawyer.mobile&hl=de");
+        jLabel18.setToolTipText("Android / Google Play Store");
+
+        jLabel20.setFont(jLabel20.getFont().deriveFont(jLabel20.getFont().getStyle() | java.awt.Font.BOLD));
+        jLabel20.setForeground(new java.awt.Color(255, 255, 255));
+        jLabel20.setHorizontalAlignment(javax.swing.SwingConstants.CENTER);
+        jLabel20.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons16/material/phone_iphone_20dp_FFFFFF.png"))); // NOI18N
+        jLabel20.setText("iPhone / iPad: https://apps.apple.com/de/app/j-lawyer-cloud/id6477718420");
+        jLabel20.setToolTipText("iOS / Apple App Store");
+
+        jLabel21.setFont(jLabel21.getFont().deriveFont(jLabel21.getFont().getStyle() | java.awt.Font.BOLD));
+        jLabel21.setForeground(new java.awt.Color(255, 255, 255));
+        jLabel21.setHorizontalAlignment(javax.swing.SwingConstants.CENTER);
+        jLabel21.setText("2. App starten und Profile-Dialog öffnen");
+
+        jLabel22.setFont(jLabel22.getFont().deriveFont(jLabel22.getFont().getStyle() | java.awt.Font.BOLD));
+        jLabel22.setForeground(new java.awt.Color(255, 255, 255));
+        jLabel22.setHorizontalAlignment(javax.swing.SwingConstants.CENTER);
+        jLabel22.setText("3. Profil durch scannen des QR-Codes übernehmen");
+
+        jLabel23.setFont(jLabel23.getFont().deriveFont(jLabel23.getFont().getStyle() | java.awt.Font.BOLD));
+        jLabel23.setForeground(new java.awt.Color(255, 255, 255));
+        jLabel23.setHorizontalAlignment(javax.swing.SwingConstants.CENTER);
+        jLabel23.setText("übernommen wird das zuletzt genutzte Profil");
+
+        lblProfileQrCode.setHorizontalAlignment(javax.swing.SwingConstants.CENTER);
+        lblProfileQrCode.setText("QR-Code");
+
+        org.jdesktop.layout.GroupLayout jPanel9Layout = new org.jdesktop.layout.GroupLayout(jPanel9);
+        jPanel9.setLayout(jPanel9Layout);
+        jPanel9Layout.setHorizontalGroup(
+            jPanel9Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
+            .add(jPanel9Layout.createSequentialGroup()
+                .addContainerGap()
+                .add(jPanel9Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
+                    .add(org.jdesktop.layout.GroupLayout.TRAILING, jLabel18, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 803, Short.MAX_VALUE)
+                    .add(jLabel3, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                    .add(org.jdesktop.layout.GroupLayout.TRAILING, jLabel20, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                    .add(jLabel21, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                    .add(jLabel22, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                    .add(jLabel23, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                    .add(lblProfileQrCode, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                .addContainerGap())
+        );
+        jPanel9Layout.setVerticalGroup(
+            jPanel9Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
+            .add(jPanel9Layout.createSequentialGroup()
+                .addContainerGap()
+                .add(jLabel3)
+                .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
+                .add(jLabel18)
+                .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
+                .add(jLabel20)
+                .add(18, 18, 18)
+                .add(jLabel21)
+                .add(18, 18, 18)
+                .add(jLabel22)
+                .add(18, 18, 18)
+                .add(jLabel23)
+                .add(18, 18, 18)
+                .add(lblProfileQrCode)
+                .addContainerGap(252, Short.MAX_VALUE))
+        );
+
+        jTabbedPane1.addTab("App koppeln", jPanel9);
+
         lblLogo.setHorizontalAlignment(javax.swing.SwingConstants.RIGHT);
         lblLogo.setIcon(new javax.swing.ImageIcon(getClass().getResource("/images/j-lawyer-logo-125px.png"))); // NOI18N
 
@@ -1943,7 +2047,7 @@ public class LoginDialog extends javax.swing.JFrame {
                 .add(jTabbedPane1, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
                 .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
                 .add(lblAutoUpdate)
-                .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED, 14, Short.MAX_VALUE)
+                .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                 .add(bgPanelLayout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING, false)
                     .add(org.jdesktop.layout.GroupLayout.TRAILING, cmdNextBackground, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                     .add(org.jdesktop.layout.GroupLayout.TRAILING, lblBackgroundLocation, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
@@ -2450,6 +2554,84 @@ public class LoginDialog extends javax.swing.JFrame {
     }
 
     /**
+     * Generates a QR code containing the current connection profile settings.
+     * @return byte array containing the QR code image in PNG format, or null if generation fails
+     */
+    private byte[] generateProfileQrCode() {
+        try {
+            // Get current connection profile
+            String selectedProfileName = (String) this.cmbCurrentConnection.getSelectedItem();
+            if (selectedProfileName == null || selectedProfileName.trim().isEmpty()) {
+                log.warn("No connection profile selected for QR code generation");
+                return null;
+            }
+
+            ConnectionProfile profile = this.connections.getProfile(selectedProfileName);
+            if (profile == null) {
+                log.warn("Selected connection profile not found: " + selectedProfileName);
+                return null;
+            }
+
+            // Build JSON object with connection settings
+            JsonObject json = new JsonObject();
+            json.put("server", profile.getServer() != null ? profile.getServer() : "");
+            json.put("port", profile.getPort() != null ? profile.getPort() : "");
+            json.put("securityMode", profile.getSecurityMode() != null ? profile.getSecurityMode() : "");
+            json.put("sshServer", profile.getSshHost() != null ? profile.getSshHost() : "");
+            json.put("sshPort", profile.getSshPort() != null ? profile.getSshPort() : "");
+            json.put("sshUser", profile.getSshUser() != null ? profile.getSshUser() : "");
+            json.put("sshPassword", profile.getSshPassword() != null ? profile.getSshPassword() : "");
+            json.put("sshTargetPort", profile.getSshTargetPort() != null ? profile.getSshTargetPort() : "");
+
+            String jsonData = json.toJson();
+            log.info("Generating QR code for profile: " + selectedProfileName);
+
+            // Generate QR code
+            int pixels = 300;
+            Map<EncodeHintType, Object> hints = new HashMap<>();
+            hints.put(EncodeHintType.CHARACTER_SET, "UTF-8");
+            hints.put(EncodeHintType.MARGIN, 1);
+
+            QRCodeWriter qrWriter = new QRCodeWriter();
+            BitMatrix matrix = qrWriter.encode(jsonData, BarcodeFormat.QR_CODE, pixels, pixels, hints);
+
+            ByteArrayOutputStream pngStream = new ByteArrayOutputStream();
+            MatrixToImageWriter.writeToStream(matrix, "PNG", pngStream);
+
+            return pngStream.toByteArray();
+
+        } catch (WriterException | IOException ex) {
+            log.error("Error generating QR code for connection profile", ex);
+            return null;
+        }
+    }
+
+    /**
+     * Updates the QR code display in the "App koppeln" tab with the current connection profile.
+     */
+    private void updateProfileQrCodeDisplay() {
+        try {
+            byte[] qrCodeBytes = generateProfileQrCode();
+
+            if (qrCodeBytes != null) {
+                ImageIcon qrIcon = new ImageIcon(qrCodeBytes);
+                this.lblProfileQrCode.setIcon(qrIcon);
+                this.lblProfileQrCode.setText("");
+                log.debug("QR code display updated successfully");
+            } else {
+                // Show error message in label if QR code generation failed
+                this.lblProfileQrCode.setIcon(null);
+                this.lblProfileQrCode.setText("QR-Code konnte nicht generiert werden");
+                log.warn("QR code generation returned null");
+            }
+        } catch (Exception ex) {
+            log.error("Error updating QR code display", ex);
+            this.lblProfileQrCode.setIcon(null);
+            this.lblProfileQrCode.setText("Fehler bei QR-Code Generierung");
+        }
+    }
+
+    /**
      * @param args the command line arguments
      */
     public static void main(String args[]) {
@@ -2487,8 +2669,14 @@ public class LoginDialog extends javax.swing.JFrame {
     private javax.swing.JLabel jLabel15;
     private javax.swing.JLabel jLabel16;
     private javax.swing.JLabel jLabel17;
+    private javax.swing.JLabel jLabel18;
     private javax.swing.JLabel jLabel19;
     private javax.swing.JLabel jLabel2;
+    private javax.swing.JLabel jLabel20;
+    private javax.swing.JLabel jLabel21;
+    private javax.swing.JLabel jLabel22;
+    private javax.swing.JLabel jLabel23;
+    private javax.swing.JLabel jLabel3;
     private javax.swing.JLabel jLabel4;
     private javax.swing.JLabel jLabel5;
     private javax.swing.JLabel jLabel6;
@@ -2506,6 +2694,7 @@ public class LoginDialog extends javax.swing.JFrame {
     private javax.swing.JPanel jPanel6;
     private javax.swing.JPanel jPanel7;
     private javax.swing.JPanel jPanel8;
+    private javax.swing.JPanel jPanel9;
     private javax.swing.JTabbedPane jTabbedPane1;
     private javax.swing.JLabel lblAutoUpdate;
     private javax.swing.JLabel lblBackgroundLocation;
@@ -2515,6 +2704,7 @@ public class LoginDialog extends javax.swing.JFrame {
     private javax.swing.JLabel lblFullClientVersion;
     private javax.swing.JLabel lblLogo;
     private javax.swing.JLabel lblProfile;
+    private javax.swing.JLabel lblProfileQrCode;
     private javax.swing.JLabel lblProgress;
     private javax.swing.JLabel lblRole;
     private javax.swing.JLabel lblUser;
