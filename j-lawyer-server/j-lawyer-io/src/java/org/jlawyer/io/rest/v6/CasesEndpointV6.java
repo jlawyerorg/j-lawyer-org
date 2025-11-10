@@ -857,6 +857,9 @@ public class CasesEndpointV6 implements CasesEndpointLocalV6 {
             dd.setSummary(rev.getSummary());
             dd.setCalendar(rev.getCalendarSetup().getId());
             dd.setCaseId(rev.getArchiveFileKey().getId());
+            dd.setCaseName(rev.getArchiveFileKey().getName());
+            dd.setCaseNumber(rev.getArchiveFileKey().getFileNumber());
+            dd.setCaseReason(rev.getArchiveFileKey().getReason());
             dd.setDescription(rev.getDescription());
             dd.setLocation(rev.getLocation());
             dd.setType(RestfulDueDateV6.TYPE_RESPITE);
@@ -946,6 +949,9 @@ public class CasesEndpointV6 implements CasesEndpointLocalV6 {
             dd.setSummary(rev.getSummary());
             dd.setCalendar(rev.getCalendarSetup().getId());
             dd.setCaseId(rev.getArchiveFileKey().getId());
+            dd.setCaseName(rev.getArchiveFileKey().getName());
+            dd.setCaseNumber(rev.getArchiveFileKey().getFileNumber());
+            dd.setCaseReason(rev.getArchiveFileKey().getReason());
             dd.setDescription(rev.getDescription());
             dd.setLocation(rev.getLocation());
             dd.setType(RestfulDueDateV6.TYPE_RESPITE);

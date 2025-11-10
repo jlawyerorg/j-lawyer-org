@@ -672,6 +672,9 @@ import org.jlawyer.io.rest.v4.pojo.RestfulDueDateV4;
 public class RestfulDueDateV6 extends RestfulDueDateV4 {
     
     protected String caseId=null;
+    protected String caseName=null;
+    protected String caseReason=null;
+    protected String caseNumber=null;
 
     /**
      * @return the caseId
@@ -685,6 +688,48 @@ public class RestfulDueDateV6 extends RestfulDueDateV4 {
      */
     public void setCaseId(String caseId) {
         this.caseId = caseId;
+    }
+
+    /**
+     * @return the caseName
+     */
+    public String getCaseName() {
+        return caseName;
+    }
+
+    /**
+     * @param caseName the caseName to set
+     */
+    public void setCaseName(String caseName) {
+        this.caseName = caseName;
+    }
+
+    /**
+     * @return the caseReason
+     */
+    public String getCaseReason() {
+        return caseReason;
+    }
+
+    /**
+     * @param caseReason the caseReason to set
+     */
+    public void setCaseReason(String caseReason) {
+        this.caseReason = caseReason;
+    }
+
+    /**
+     * @return the caseNumber
+     */
+    public String getCaseNumber() {
+        return caseNumber;
+    }
+
+    /**
+     * @param caseNumber the caseNumber to set
+     */
+    public void setCaseNumber(String caseNumber) {
+        this.caseNumber = caseNumber;
     }
     
 }

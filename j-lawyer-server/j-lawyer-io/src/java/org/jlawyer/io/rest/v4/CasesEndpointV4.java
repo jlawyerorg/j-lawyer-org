@@ -731,6 +731,9 @@ public class CasesEndpointV4 implements CasesEndpointLocalV4 {
                 RestfulDueDateV6 dd = new RestfulDueDateV6();
                 dd.setId(rev.getId());
                 dd.setCaseId(id);
+                dd.setCaseName(currentCase.getName());
+                dd.setCaseNumber(currentCase.getFileNumber());
+                dd.setCaseReason(currentCase.getReason());
                 dd.setAssignee(rev.getAssignee());
                 dd.setDone(rev.isDone());
                 dd.setBeginDate(rev.getBeginDate());
@@ -783,6 +786,9 @@ public class CasesEndpointV4 implements CasesEndpointLocalV4 {
                 RestfulDueDateV6 dd = new RestfulDueDateV6();
                 dd.setId(rev.getId());
                 dd.setCaseId(rev.getArchiveFileKey().getId());
+                dd.setCaseName(rev.getArchiveFileKey().getName());
+                dd.setCaseNumber(rev.getArchiveFileKey().getFileNumber());
+                dd.setCaseReason(rev.getArchiveFileKey().getReason());
                 dd.setAssignee(rev.getAssignee());
                 dd.setDone(rev.isDone());
                 dd.setBeginDate(rev.getBeginDate());
@@ -884,6 +890,9 @@ public class CasesEndpointV4 implements CasesEndpointLocalV4 {
                 dd.setId(rev.getId());
                 if (rev.getArchiveFileKey() != null) {
                     dd.setCaseId(rev.getArchiveFileKey().getId());
+                    dd.setCaseName(rev.getArchiveFileKey().getName());
+                    dd.setCaseNumber(rev.getArchiveFileKey().getFileNumber());
+                    dd.setCaseReason(rev.getArchiveFileKey().getReason());
                 }
                 dd.setAssignee(rev.getAssignee());
                 dd.setDone(rev.isDone());
