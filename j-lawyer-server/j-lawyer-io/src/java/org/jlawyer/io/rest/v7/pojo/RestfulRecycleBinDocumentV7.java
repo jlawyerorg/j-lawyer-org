@@ -661,63 +661,83 @@ if any, to sign a "copyright disclaimer" for the program, if necessary.
 For more information on this, and how to apply and follow the GNU AGPL, see
 <https://www.gnu.org/licenses/>.
  */
-package org.jlawyer.io.rest.v7;
+package org.jlawyer.io.rest.v7.pojo;
 
-import java.util.Collection;
-import javax.ejb.Local;
-import javax.ws.rs.core.Response;
-import org.jlawyer.io.rest.v6.pojo.RestfulGroupV6;
-import org.jlawyer.io.rest.v7.pojo.RestfulDocumentValidationRequestV7;
-import org.jlawyer.io.rest.v7.pojo.RestfulInvoicePositionV7;
-import org.jlawyer.io.rest.v7.pojo.RestfulInvoiceV7;
+import com.jdimension.jlawyer.persistence.ArchiveFileBean;
+import com.jdimension.jlawyer.persistence.ArchiveFileDocumentsBean;
+import java.util.Date;
 
-/**
- *
- * @author jens
- */
-@Local
-public interface CasesEndpointLocalV7 {
+public class RestfulRecycleBinDocumentV7 {
 
-    Response validateDocumentName(String id, RestfulDocumentValidationRequestV7 request);
-    
-    Response getCaseMessages(String id);
-    
-    Response getCaseInvoices(String id);
-    
-    Response getInvoicePositions(String id);
-    
-    Response createInvoice(RestfulInvoiceV7 invoice);
+    private String id;
+    private String name;
+    private String caseId;
+    private String caseNumber;
+    private String deletedBy;
+    private Date deletionDate;
 
-    Response updateInvoice(String id, RestfulInvoiceV7 invoice);
+    public static RestfulRecycleBinDocumentV7 fromDocumentsBean(ArchiveFileDocumentsBean bean) {
+        RestfulRecycleBinDocumentV7 dto = new RestfulRecycleBinDocumentV7();
+        if (bean == null) {
+            return dto;
+        }
+        dto.setId(bean.getId());
+        dto.setName(bean.getName());
+        dto.setDeletedBy(bean.getDeletedBy());
+        dto.setDeletionDate(bean.getDeletionDate());
+        ArchiveFileBean archiveFile = bean.getArchiveFileKey();
+        if (archiveFile != null) {
+            dto.setCaseId(archiveFile.getId());
+            dto.setCaseNumber(archiveFile.getFileNumber());
+        }
+        return dto;
+    }
 
-    Response createInvoicePosition(String id, RestfulInvoicePositionV7 invoicePos);
+    public String getId() {
+        return id;
+    }
 
-    Response updateInvoicePosition(String positionId, RestfulInvoicePositionV7 restfulPosition);
+    public void setId(String id) {
+        this.id = id;
+    }
 
-    Response deleteInvoicePosition(String positionId);
+    public String getName() {
+        return name;
+    }
 
-    Response deleteInvoice(String id);
+    public void setName(String name) {
+        this.name = name;
+    }
 
-    Response getAllInvoices();
-    
-    Response getCaseByExternalId(String extId);
-    
-    Response getCasesByTag(String tag);
+    public String getCaseId() {
+        return caseId;
+    }
 
-    Response getCasesByReference(String reference);
+    public void setCaseId(String caseId) {
+        this.caseId = caseId;
+    }
 
-    Response getDocumentsByTag(String tag);
-    
-    Response getDocumentByExternalId(String extId);
-    
-    Response updateAllowedGroups(String id, Collection<RestfulGroupV6> allowedGroups);
-    
-    Response getAllowedGroups(String id);
+    public String getCaseNumber() {
+        return caseNumber;
+    }
 
-    Response getRecycleBin(String caseId);
+    public void setCaseNumber(String caseNumber) {
+        this.caseNumber = caseNumber;
+    }
 
-    Response restoreDocumentFromRecycleBin(String documentId);
+    public String getDeletedBy() {
+        return deletedBy;
+    }
 
-    Response removeDocumentFromRecycleBin(String documentId);
-        
+    public void setDeletedBy(String deletedBy) {
+        this.deletedBy = deletedBy;
+    }
+
+    public Date getDeletionDate() {
+        return deletionDate;
+    }
+
+    public void setDeletionDate(Date deletionDate) {
+        this.deletionDate = deletionDate;
+    }
 }
