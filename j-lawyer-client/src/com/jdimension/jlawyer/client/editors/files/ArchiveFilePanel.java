@@ -1809,8 +1809,12 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
         this.pnlInvolvedParties.removeAll();
         this.pnlMessages.removeAll();
         //this.cmbDictateSign.setSelectedItem("");
-        this.cmbLawyer.setSelectedItem("");
-        this.cmbAssistant.setSelectedItem("");
+        if(UserSettings.getInstance().getCurrentUser().isLawyer()) {
+            this.cmbLawyer.setSelectedItem(UserSettings.getInstance().getCurrentUser().getPrincipalId());
+        } else {
+            this.cmbLawyer.setSelectedItem("");
+        }
+        this.cmbAssistant.setSelectedItem(UserSettings.getInstance().getCurrentUser().getPrincipalId());
         this.cmbGroup.setSelectedIndex(0);
         for (int r = 0; r < this.tblGroups.getRowCount(); r++) {
             this.tblGroups.setValueAt(false, r, 0);
