@@ -1,0 +1,180 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema"
+           xmlns:tns="http://www.xjustiz.de"
+           xmlns:din91379="urn:xoev-de:kosit:xoev:datentyp:din-91379_2022-08"
+           targetNamespace="http://www.xjustiz.de"
+           version="3.1.1"
+           elementFormDefault="qualified"
+           attributeFormDefault="unqualified">
+   <xs:annotation>
+      <xs:appinfo>
+         <standard>
+            <nameLang>Strukturierte Fachdaten für die Kommunikation im elektronischen Rechtsverkehr</nameLang>
+            <nameKurz>XJustiz</nameKurz>
+            <nameTechnisch>xjustiz</nameTechnisch>
+            <kennung>urn:xoev-de:blk-ag-it-standards:standard:xjustiz</kennung>
+            <beschreibung>XJustiz ist der bundesweit einheitliche Standard für den Austausch strukturierter elektronischer Informationen mit der Justiz.</beschreibung>
+         </standard>
+         <versionStandard>
+            <version>3.5.1</version>
+            <beschreibung>XJustiz beschreibt ein standardisiertes Datenaustauschformat für die elektronische Kommunikation innerhalb und mit der Justizverwaltung.</beschreibung>
+            <versionXOEVProfil>1.7.2</versionXOEVProfil>
+            <versionXOEVHandbuch>2.3.1</versionXOEVHandbuch>
+            <versionXGenerator>3.1.1</versionXGenerator>
+            <versionModellierungswerkzeug>19.0 SP3</versionModellierungswerkzeug>
+            <nameModellierungswerkzeug>MagicDraw</nameModellierungswerkzeug>
+         </versionStandard>
+      </xs:appinfo>
+   </xs:annotation>
+   <xs:include schemaLocation="xjustiz_0000_grunddatensatz_3_5.xsd"/>
+   <xs:include schemaLocation="xjustiz_2410_cl_ezoll_3_0.xsd"/>
+   <xs:import schemaLocation="din-norm-91379-datatypes.xsd"
+              namespace="urn:xoev-de:kosit:xoev:datentyp:din-91379_2022-08"/>
+   <xs:element name="nachricht.ezoll.auskunft.2400001">
+      <xs:complexType>
+         <xs:sequence>
+            <xs:element name="nachrichtenkopf" type="tns:Type.GDS.Nachrichtenkopf"/>
+            <xs:element name="grunddaten" type="tns:Type.GDS.Grunddaten"/>
+            <xs:element name="fachdaten">
+               <xs:complexType>
+                  <xs:sequence>
+                     <xs:element name="nachrichtenID" type="din91379:datatypeC">
+                        <xs:annotation>
+                           <xs:documentation>Eindeutige Kennzeichnung einer Nachricht, mit der ein Kommunikationsprozess begonnen wird.</xs:documentation>
+                        </xs:annotation>
+                     </xs:element>
+                     <xs:element name="auskunftID" type="din91379:datatypeC">
+                        <xs:annotation>
+                           <xs:documentation>Eindeutige Kennzeichnung einer Nachricht, mit der auf eine Nachricht geantwortet wird. (DRV: MonitorID der Anfrage)</xs:documentation>
+                        </xs:annotation>
+                     </xs:element>
+                  </xs:sequence>
+               </xs:complexType>
+            </xs:element>
+         </xs:sequence>
+      </xs:complexType>
+   </xs:element>
+   <xs:element name="nachricht.ezoll.auskunftsersuchen.2400002">
+      <xs:complexType>
+         <xs:sequence>
+            <xs:element name="nachrichtenkopf" type="tns:Type.GDS.Nachrichtenkopf"/>
+            <xs:element name="grunddaten" type="tns:Type.GDS.Grunddaten"/>
+            <xs:element name="fachdaten">
+               <xs:complexType>
+                  <xs:sequence>
+                     <xs:element name="nachrichtenID" type="din91379:datatypeC">
+                        <xs:annotation>
+                           <xs:documentation>Eindeutige Kennzeichnung einer Nachricht, mit der ein Kommunikationsprozess begonnen wird.</xs:documentation>
+                        </xs:annotation>
+                     </xs:element>
+                     <xs:element name="auskunftID" type="din91379:datatypeC">
+                        <xs:annotation>
+                           <xs:documentation>Eindeutige Kennzeichnung einer Nachricht, mit der auf eine Nachricht geantwortet wird. (DRV: MonitorID der Anfrage)</xs:documentation>
+                        </xs:annotation>
+                     </xs:element>
+                     <xs:element name="voraussetzungenAuskunftsersuchen">
+                        <xs:complexType>
+                           <xs:sequence>
+                              <xs:element name="forderung.einordnung" type="tns:Code.EZOLL.Forderung">
+                                 <xs:annotation>
+                                    <xs:documentation>Die Forderung muss in eine von 4 übergeordneten Forderungsarten eingeordnet werden.</xs:documentation>
+                                 </xs:annotation>
+                              </xs:element>
+                              <xs:element name="forderung.bezeichnung" type="tns:Code.EZOLL.Forderung">
+                                 <xs:annotation>
+                                    <xs:documentation>Die Forderung muss genau bezeichnet werden.</xs:documentation>
+                                 </xs:annotation>
+                              </xs:element>
+                              <xs:element name="benennungGlaeubiger" type="tns:Code.EZOLL.Glaeubiger">
+                                 <xs:annotation>
+                                    <xs:documentation>Der Gläubiger muss benannt werden.</xs:documentation>
+                                 </xs:annotation>
+                              </xs:element>
+                              <xs:element name="bisherigeBemuehungenErfolglos" type="xs:boolean">
+                                 <xs:annotation>
+                                    <xs:documentation>Die Anschrift oder der Arbeitgeber des Schuldners ist trotz vorheriger Bemühungen an anderer Stelle unbekannt.</xs:documentation>
+                                 </xs:annotation>
+                              </xs:element>
+                              <xs:element name="bestaetigungDatenNotwendig" type="xs:boolean">
+                                 <xs:annotation>
+                                    <xs:documentation>Bestätigung, dass die Daten zur Erfüllung der Aufgaben notwendig sind.</xs:documentation>
+                                 </xs:annotation>
+                              </xs:element>
+                           </xs:sequence>
+                        </xs:complexType>
+                     </xs:element>
+                  </xs:sequence>
+               </xs:complexType>
+            </xs:element>
+         </xs:sequence>
+      </xs:complexType>
+   </xs:element>
+   <xs:element name="nachricht.ezoll.fehlermeldung.2400003">
+      <xs:complexType>
+         <xs:sequence>
+            <xs:element name="nachrichtenkopf" type="tns:Type.GDS.Nachrichtenkopf"/>
+            <xs:element name="grunddaten" type="tns:Type.GDS.Grunddaten"/>
+            <xs:element name="fachdaten">
+               <xs:complexType>
+                  <xs:sequence>
+                     <xs:element name="nachrichtenID" type="din91379:datatypeC">
+                        <xs:annotation>
+                           <xs:documentation>Eindeutige Kennzeichnung einer Nachricht, mit der ein Kommunikationsprozess begonnen wird.</xs:documentation>
+                        </xs:annotation>
+                     </xs:element>
+                     <xs:element name="auskunftID" type="din91379:datatypeC">
+                        <xs:annotation>
+                           <xs:documentation>Eindeutige Kennzeichnung einer Nachricht, mit der auf eine Nachricht geantwortet wird. (DRV: MonitorID der Anfrage)</xs:documentation>
+                        </xs:annotation>
+                     </xs:element>
+                     <xs:element name="fehlercode" type="tns:Code.EZOLL.Fehler">
+                        <xs:annotation>
+                           <xs:documentation>Hier wird der nummerische Fehlercode aus der Codeliste angegeben.</xs:documentation>
+                        </xs:annotation>
+                     </xs:element>
+                     <xs:element name="fehlertext" minOccurs="0" type="din91379:datatypeC">
+                        <xs:annotation>
+                           <xs:documentation>Weitere Erläuterung zur Fehlersituation</xs:documentation>
+                        </xs:annotation>
+                     </xs:element>
+                  </xs:sequence>
+               </xs:complexType>
+            </xs:element>
+         </xs:sequence>
+      </xs:complexType>
+   </xs:element>
+   <xs:element name="nachricht.ezoll.prueffallmeldung.2400004">
+      <xs:complexType>
+         <xs:sequence>
+            <xs:element name="nachrichtenkopf" type="tns:Type.GDS.Nachrichtenkopf"/>
+            <xs:element name="grunddaten" type="tns:Type.GDS.Grunddaten"/>
+            <xs:element name="fachdaten">
+               <xs:complexType>
+                  <xs:sequence>
+                     <xs:element name="nachrichtenID" type="din91379:datatypeC">
+                        <xs:annotation>
+                           <xs:documentation>Eindeutige Kennzeichnung einer Nachricht, mit der ein Kommunikationsprozess begonnen wird.</xs:documentation>
+                        </xs:annotation>
+                     </xs:element>
+                     <xs:element name="auskunftID" type="din91379:datatypeC">
+                        <xs:annotation>
+                           <xs:documentation>Eindeutige Kennzeichnung einer Nachricht, mit der auf eine Nachricht geantwortet wird. (DRV: MonitorID der Anfrage)</xs:documentation>
+                        </xs:annotation>
+                     </xs:element>
+                     <xs:element name="prueffall.ID" type="din91379:datatypeC">
+                        <xs:annotation>
+                           <xs:documentation>Prüffallnummer der DRV</xs:documentation>
+                        </xs:annotation>
+                     </xs:element>
+                     <xs:element name="prueffall.erklaerung" type="din91379:datatypeC">
+                        <xs:annotation>
+                           <xs:documentation>Zwischennachricht mit Erklärung zum Prüffall (fester Text)</xs:documentation>
+                        </xs:annotation>
+                     </xs:element>
+                  </xs:sequence>
+               </xs:complexType>
+            </xs:element>
+         </xs:sequence>
+      </xs:complexType>
+   </xs:element>
+</xs:schema>

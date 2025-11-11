@@ -1,0 +1,52 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema"
+           xmlns:xoev-code="http://xoev.de/schemata/code/1_0"
+           targetNamespace="http://xoev.de/schemata/code/1_0"
+           version="1.0"
+           elementFormDefault="qualified"
+           attributeFormDefault="unqualified">
+   <xs:complexType name="Code">
+      <xs:annotation>
+         <xs:appinfo>
+            <datentyp>
+               <nameLang>XÖV-Datentyp Code</nameLang>
+               <nameKurz>Code</nameKurz>
+               <nameTechnisch>Code</nameTechnisch>
+               <kennung>urn:xoev-de:kosit:xoev:datentyp:code</kennung>
+               <externeWebsite>http://www.xoev.de/de/code</externeWebsite>
+            </datentyp>
+            <versionDatentyp>
+               <version>1.0</version>
+               <lizenz>Creative Commons Namensnennung - Keine Bearbeitung 4.0 International</lizenz>
+               <bezugsort>http://www.xoev.de/de/bibliothek</bezugsort>
+            </versionDatentyp>
+         </xs:appinfo>
+         <xs:documentation>Der XÖV-Datentyp Code ermöglicht die Übermittlung von Werten, so genannter Codes, aus vordefinierten Codelisten. Eine Codeliste ist eine Liste von Codes und der Beschreibung ihrer jeweiligen Bedeutung. Eine entscheidende Eigenschaft des Datentyps ist die Möglichkeit auf differenzierte Weise Bezug zu Codelisten zu nehmen (Code-Typ 1 bis 4). In jedem Fall erlauben die übermittelten Daten eine eindeutige Identifizierung der zugrundeliegenden Codeliste.</xs:documentation>
+      </xs:annotation>
+      <xs:sequence>
+         <xs:element name="code" type="xs:token" form="unqualified">
+            <xs:annotation>
+               <xs:documentation>In diesem XML-Element wird der Code einer Codeliste übermittelt.</xs:documentation>
+            </xs:annotation>
+         </xs:element>
+         <xs:element name="name"
+                     minOccurs="0"
+                     type="xs:normalizedString"
+                     form="unqualified">
+            <xs:annotation>
+               <xs:documentation>Mit diesem optionalen XML-Element kann die Beschreibung des Codes, wie in der jeweiligen Beschreibungsspalte der Codeliste vorgegeben, übermittelt werden.</xs:documentation>
+            </xs:annotation>
+         </xs:element>
+      </xs:sequence>
+      <xs:attribute name="listURI" type="xs:anyURI" use="optional">
+         <xs:annotation>
+            <xs:documentation>Mit diesem XML-Attribut wird die Kennung der Codeliste übermittelt, in deren Kontext der jeweilige Code zu interpretieren ist. Die Kennung identifiziert die Codeliste, nicht jedoch deren Version eindeutig. Wird bereits im Rahmen des XÖV-Standards eine Kennung vorgegeben (es handelt sich in diesem Fall um einen Code-Typ 1, 2 oder 3) darf auf eine nochmalige Angabe der Kennung bei der Übermittlung eines Codes verzichtet werden. Aus diesem Grund ist das XML-Attribut listURI zunächst als optional deklariert.</xs:documentation>
+         </xs:annotation>
+      </xs:attribute>
+      <xs:attribute name="listVersionID" type="xs:normalizedString" use="optional">
+         <xs:annotation>
+            <xs:documentation>Die konkrete Version der zu nutzenden Codeliste wird mit diesem XML-Attribut übertragen. Analog zum listURI ist die Bestimmung der Version einer Codeliste bei der Übertragung eines Codes zwingend. Die Version kann jedoch ebenfalls bereits im XÖV-Standard festgelegt werden (es handelt sich in diesem Fall um einen Code-Typ 1 oder 2).</xs:documentation>
+         </xs:annotation>
+      </xs:attribute>
+   </xs:complexType>
+</xs:schema>

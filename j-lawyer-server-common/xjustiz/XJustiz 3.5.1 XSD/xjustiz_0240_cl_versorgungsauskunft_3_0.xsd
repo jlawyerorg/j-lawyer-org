@@ -1,0 +1,1269 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema"
+           xmlns:tns="http://www.xjustiz.de"
+           xmlns:xoev-code="http://xoev.de/schemata/code/1_0"
+           targetNamespace="http://www.xjustiz.de"
+           version="3.0.0"
+           elementFormDefault="unqualified"
+           attributeFormDefault="unqualified">
+   <xs:annotation>
+      <xs:appinfo>
+         <standard>
+            <nameLang>Strukturierte Fachdaten für die Kommunikation im elektronischen Rechtsverkehr</nameLang>
+            <nameKurz>XJustiz</nameKurz>
+            <nameTechnisch>xjustiz</nameTechnisch>
+            <kennung>urn:xoev-de:blk-ag-it-standards:standard:xjustiz</kennung>
+            <beschreibung>XJustiz ist der bundesweit einheitliche Standard für den Austausch strukturierter elektronischer Informationen mit der Justiz.</beschreibung>
+         </standard>
+         <versionStandard>
+            <version>3.5.1</version>
+            <beschreibung>XJustiz beschreibt ein standardisiertes Datenaustauschformat für die elektronische Kommunikation innerhalb und mit der Justizverwaltung.</beschreibung>
+            <versionXOEVProfil>1.7.2</versionXOEVProfil>
+            <versionXOEVHandbuch>2.3.1</versionXOEVHandbuch>
+            <versionXGenerator>3.1.1</versionXGenerator>
+            <versionModellierungswerkzeug>19.0 SP3</versionModellierungswerkzeug>
+            <nameModellierungswerkzeug>MagicDraw</nameModellierungswerkzeug>
+         </versionStandard>
+      </xs:appinfo>
+   </xs:annotation>
+   <xs:import schemaLocation="xoev-code.xsd"
+              namespace="http://xoev.de/schemata/code/1_0"/>
+   <xs:complexType name="Code.VAG.Ausgleich">
+      <xs:annotation>
+         <xs:appinfo>
+            <codeliste>
+               <nameLang>VAG.Ausgleich</nameLang>
+               <nameKurz>VAG.Ausgleich</nameKurz>
+               <nameTechnisch>vag.ausgleich</nameTechnisch>
+               <kennung>urn:xoev-de:xjustiz:codeliste:vag.ausgleich</kennung>
+               <beschreibung>Codeliste der verschiedenen Ausgleichsarten.</beschreibung>
+               <herausgebernameLang>BLK-AG IT-Standards in der Justiz</herausgebernameLang>
+               <herausgebernameKurz>AG IT-Standards</herausgebernameKurz>
+            </codeliste>
+            <versionCodeliste>
+               <version>2.0</version>
+               <versionCodelistenHandbuch>1.1</versionCodelistenHandbuch>
+            </versionCodeliste>
+            <codelistenspalten>
+               <code>
+                  <spaltennameLang>Schlüssel</spaltennameLang>
+                  <datentyp>string</datentyp>
+                  <codeSpalte>true</codeSpalte>
+                  <verwendung>required</verwendung>
+                  <empfohleneCodeSpalte>true</empfohleneCodeSpalte>
+               </code>
+               <wert>
+                  <spaltennameLang>Wert</spaltennameLang>
+                  <datentyp>string</datentyp>
+                  <codeSpalte>false</codeSpalte>
+                  <verwendung>required</verwendung>
+                  <empfohleneCodeSpalte>false</empfohleneCodeSpalte>
+               </wert>
+            </codelistenspalten>
+            <genutzteCodeSpalte>code</genutzteCodeSpalte>
+         </xs:appinfo>
+      </xs:annotation>
+      <xs:complexContent>
+         <xs:restriction base="xoev-code:Code">
+            <xs:sequence>
+               <xs:element name="code" type="tns:vag.ausgleich"/>
+            </xs:sequence>
+            <xs:attribute name="listURI"
+                          type="xs:anyURI"
+                          use="optional"
+                          fixed="urn:xoev-de:xjustiz:codeliste:vag.ausgleich"/>
+            <xs:attribute name="listVersionID"
+                          type="xs:normalizedString"
+                          use="optional"
+                          fixed="2.0"/>
+         </xs:restriction>
+      </xs:complexContent>
+   </xs:complexType>
+   <xs:complexType name="Code.VAG.Bezugsgroesse">
+      <xs:annotation>
+         <xs:appinfo>
+            <codeliste>
+               <nameLang>VAG.Bezugsgroesse</nameLang>
+               <nameKurz>VAG.Bezugsgroesse</nameKurz>
+               <nameTechnisch>vag.bezugsgroesse</nameTechnisch>
+               <kennung>urn:xoev-de:xjustiz:codeliste:vag.bezugsgroesse</kennung>
+               <beschreibung>Codeliste der verschiedenen Bezugsgrössen.</beschreibung>
+               <herausgebernameLang>BLK-AG IT-Standards in der Justiz</herausgebernameLang>
+               <herausgebernameKurz>AG IT-Standards</herausgebernameKurz>
+            </codeliste>
+            <versionCodeliste>
+               <version>2.2</version>
+               <versionCodelistenHandbuch>1.1</versionCodelistenHandbuch>
+            </versionCodeliste>
+            <codelistenspalten>
+               <code>
+                  <spaltennameLang>Schlüssel</spaltennameLang>
+                  <datentyp>string</datentyp>
+                  <codeSpalte>true</codeSpalte>
+                  <verwendung>required</verwendung>
+                  <empfohleneCodeSpalte>true</empfohleneCodeSpalte>
+               </code>
+               <wert>
+                  <spaltennameLang>Wert</spaltennameLang>
+                  <datentyp>string</datentyp>
+                  <codeSpalte>false</codeSpalte>
+                  <verwendung>required</verwendung>
+                  <empfohleneCodeSpalte>false</empfohleneCodeSpalte>
+               </wert>
+            </codelistenspalten>
+            <genutzteCodeSpalte>code</genutzteCodeSpalte>
+         </xs:appinfo>
+      </xs:annotation>
+      <xs:complexContent>
+         <xs:restriction base="xoev-code:Code">
+            <xs:sequence>
+               <xs:element name="code" type="tns:vag.bezugsgroesse"/>
+            </xs:sequence>
+            <xs:attribute name="listURI"
+                          type="xs:anyURI"
+                          use="optional"
+                          fixed="urn:xoev-de:xjustiz:codeliste:vag.bezugsgroesse"/>
+            <xs:attribute name="listVersionID"
+                          type="xs:normalizedString"
+                          use="optional"
+                          fixed="2.2"/>
+         </xs:restriction>
+      </xs:complexContent>
+   </xs:complexType>
+   <xs:complexType name="Code.VAG.Fehler">
+      <xs:annotation>
+         <xs:appinfo>
+            <codeliste>
+               <nameLang>VAG.Fehler</nameLang>
+               <nameKurz>VAG.Fehler</nameKurz>
+               <nameTechnisch>vag.fehler</nameTechnisch>
+               <kennung>urn:xoev-de:xjustiz:codeliste:vag.fehler</kennung>
+               <beschreibung>Codeliste der verschiedenen Fehlerarten.</beschreibung>
+               <herausgebernameLang>BLK-AG IT-Standards in der Justiz</herausgebernameLang>
+               <herausgebernameKurz>AG IT-Standards</herausgebernameKurz>
+            </codeliste>
+            <versionCodeliste>
+               <version>2.0</version>
+               <versionCodelistenHandbuch>1.1</versionCodelistenHandbuch>
+            </versionCodeliste>
+            <codelistenspalten>
+               <code>
+                  <spaltennameLang>Schlüssel</spaltennameLang>
+                  <datentyp>string</datentyp>
+                  <codeSpalte>true</codeSpalte>
+                  <verwendung>required</verwendung>
+                  <empfohleneCodeSpalte>true</empfohleneCodeSpalte>
+               </code>
+               <wert>
+                  <spaltennameLang>Wert</spaltennameLang>
+                  <datentyp>string</datentyp>
+                  <codeSpalte>false</codeSpalte>
+                  <verwendung>required</verwendung>
+                  <empfohleneCodeSpalte>false</empfohleneCodeSpalte>
+               </wert>
+            </codelistenspalten>
+            <genutzteCodeSpalte>code</genutzteCodeSpalte>
+         </xs:appinfo>
+      </xs:annotation>
+      <xs:complexContent>
+         <xs:restriction base="xoev-code:Code">
+            <xs:sequence>
+               <xs:element name="code" type="tns:vag.fehler"/>
+            </xs:sequence>
+            <xs:attribute name="listURI"
+                          type="xs:anyURI"
+                          use="optional"
+                          fixed="urn:xoev-de:xjustiz:codeliste:vag.fehler"/>
+            <xs:attribute name="listVersionID"
+                          type="xs:normalizedString"
+                          use="optional"
+                          fixed="2.0"/>
+         </xs:restriction>
+      </xs:complexContent>
+   </xs:complexType>
+   <xs:complexType name="Code.VAG.Leistungsform">
+      <xs:annotation>
+         <xs:appinfo>
+            <codeliste>
+               <nameLang>VAG.Leistungsform</nameLang>
+               <nameKurz>VAG.Leistungsform</nameKurz>
+               <nameTechnisch>vag.leistungsform</nameTechnisch>
+               <kennung>urn:xoev-de:xjustiz:codeliste:vag.leistungsform</kennung>
+               <beschreibung>Codeliste der verschiedenen Leistungsformen.</beschreibung>
+               <herausgebernameLang>BLK-AG IT-Standards in der Justiz</herausgebernameLang>
+               <herausgebernameKurz>AG IT-Standards</herausgebernameKurz>
+            </codeliste>
+            <versionCodeliste>
+               <version>2.0</version>
+               <versionCodelistenHandbuch>1.1</versionCodelistenHandbuch>
+            </versionCodeliste>
+            <codelistenspalten>
+               <code>
+                  <spaltennameLang>Schlüssel</spaltennameLang>
+                  <datentyp>string</datentyp>
+                  <codeSpalte>true</codeSpalte>
+                  <verwendung>required</verwendung>
+                  <empfohleneCodeSpalte>true</empfohleneCodeSpalte>
+               </code>
+               <wert>
+                  <spaltennameLang>Wert</spaltennameLang>
+                  <datentyp>string</datentyp>
+                  <codeSpalte>false</codeSpalte>
+                  <verwendung>required</verwendung>
+                  <empfohleneCodeSpalte>false</empfohleneCodeSpalte>
+               </wert>
+            </codelistenspalten>
+            <genutzteCodeSpalte>code</genutzteCodeSpalte>
+         </xs:appinfo>
+      </xs:annotation>
+      <xs:complexContent>
+         <xs:restriction base="xoev-code:Code">
+            <xs:sequence>
+               <xs:element name="code" type="tns:vag.leistungsform"/>
+            </xs:sequence>
+            <xs:attribute name="listURI"
+                          type="xs:anyURI"
+                          use="optional"
+                          fixed="urn:xoev-de:xjustiz:codeliste:vag.leistungsform"/>
+            <xs:attribute name="listVersionID"
+                          type="xs:normalizedString"
+                          use="optional"
+                          fixed="2.0"/>
+         </xs:restriction>
+      </xs:complexContent>
+   </xs:complexType>
+   <xs:complexType name="Code.VAG.Sachstandsmitteilung.Kurzmitteilung.VersorgungstraegerZuGericht">
+      <xs:annotation>
+         <xs:appinfo>
+            <codeliste>
+               <nameLang>VAG.Sachstandsmitteilung.Kurzmitteilung.VersorgungstraegerZuGericht</nameLang>
+               <nameKurz>VAG.Sachstandsmitteilung.Kurzmitteilung.VersorgungstraegerZuGericht</nameKurz>
+               <nameTechnisch>vag.sachstandsmitteilung.kurzmitteilung.versorgungstraeger-zu-gericht</nameTechnisch>
+               <kennung>urn:xoev-de:xjustiz:codeliste:vag.sachstandsmitteilung.kurzmitteilung.versorgungstraeger-zu-gericht</kennung>
+               <beschreibung>Diese Codeliste listet die Sachverhalte auf, die zum Versenden einer Sachstandsmitteilung führen.</beschreibung>
+               <herausgebernameLang>BLK-AG IT-Standards in der Justiz</herausgebernameLang>
+               <herausgebernameKurz>AG IT-Standards</herausgebernameKurz>
+            </codeliste>
+            <versionCodeliste>
+               <version>2.0</version>
+               <versionCodelistenHandbuch>1.1</versionCodelistenHandbuch>
+            </versionCodeliste>
+            <codelistenspalten>
+               <code>
+                  <spaltennameLang>Schlüssel</spaltennameLang>
+                  <datentyp>string</datentyp>
+                  <codeSpalte>true</codeSpalte>
+                  <verwendung>required</verwendung>
+                  <empfohleneCodeSpalte>true</empfohleneCodeSpalte>
+               </code>
+               <wert>
+                  <spaltennameLang>Wert</spaltennameLang>
+                  <datentyp>string</datentyp>
+                  <codeSpalte>false</codeSpalte>
+                  <verwendung>required</verwendung>
+                  <empfohleneCodeSpalte>false</empfohleneCodeSpalte>
+               </wert>
+               <beschreibung>
+                  <spaltennameLang>Beschreibung</spaltennameLang>
+                  <datentyp>string</datentyp>
+                  <codeSpalte>false</codeSpalte>
+                  <verwendung>optional</verwendung>
+                  <empfohleneCodeSpalte>false</empfohleneCodeSpalte>
+               </beschreibung>
+            </codelistenspalten>
+            <genutzteCodeSpalte>code</genutzteCodeSpalte>
+         </xs:appinfo>
+      </xs:annotation>
+      <xs:complexContent>
+         <xs:restriction base="xoev-code:Code">
+            <xs:sequence>
+               <xs:element name="code"
+                           type="tns:vag.sachstandsmitteilung.kurzmitteilung.versorgungstraeger-zu-gericht"/>
+            </xs:sequence>
+            <xs:attribute name="listURI"
+                          type="xs:anyURI"
+                          use="optional"
+                          fixed="urn:xoev-de:xjustiz:codeliste:vag.sachstandsmitteilung.kurzmitteilung.versorgungstraeger-zu-gericht"/>
+            <xs:attribute name="listVersionID"
+                          type="xs:normalizedString"
+                          use="optional"
+                          fixed="2.0"/>
+         </xs:restriction>
+      </xs:complexContent>
+   </xs:complexType>
+   <xs:complexType name="Code.VAG.Teilungsart">
+      <xs:annotation>
+         <xs:appinfo>
+            <codeliste>
+               <nameLang>VAG.Teilungsart</nameLang>
+               <nameKurz>VAG.Teilungsart</nameKurz>
+               <nameTechnisch>vag.teilungsart</nameTechnisch>
+               <kennung>urn:xoev-de:xjustiz:codeliste:vag.teilungsart</kennung>
+               <beschreibung>Codeliste der verschiedenen Teilungsarten.</beschreibung>
+               <herausgebernameLang>BLK-AG IT-Standards in der Justiz</herausgebernameLang>
+               <herausgebernameKurz>AG IT-Standards</herausgebernameKurz>
+            </codeliste>
+            <versionCodeliste>
+               <version>2.0</version>
+               <versionCodelistenHandbuch>1.1</versionCodelistenHandbuch>
+            </versionCodeliste>
+            <codelistenspalten>
+               <code>
+                  <spaltennameLang>Schlüssel</spaltennameLang>
+                  <datentyp>string</datentyp>
+                  <codeSpalte>true</codeSpalte>
+                  <verwendung>required</verwendung>
+                  <empfohleneCodeSpalte>true</empfohleneCodeSpalte>
+               </code>
+               <wert>
+                  <spaltennameLang>Wert</spaltennameLang>
+                  <datentyp>string</datentyp>
+                  <codeSpalte>false</codeSpalte>
+                  <verwendung>required</verwendung>
+                  <empfohleneCodeSpalte>false</empfohleneCodeSpalte>
+               </wert>
+            </codelistenspalten>
+            <genutzteCodeSpalte>code</genutzteCodeSpalte>
+         </xs:appinfo>
+      </xs:annotation>
+      <xs:complexContent>
+         <xs:restriction base="xoev-code:Code">
+            <xs:sequence>
+               <xs:element name="code" type="tns:vag.teilungsart"/>
+            </xs:sequence>
+            <xs:attribute name="listURI"
+                          type="xs:anyURI"
+                          use="optional"
+                          fixed="urn:xoev-de:xjustiz:codeliste:vag.teilungsart"/>
+            <xs:attribute name="listVersionID"
+                          type="xs:normalizedString"
+                          use="optional"
+                          fixed="2.0"/>
+         </xs:restriction>
+      </xs:complexContent>
+   </xs:complexType>
+   <xs:complexType name="Code.VAG.Teilungsart.Entscheidung">
+      <xs:annotation>
+         <xs:appinfo>
+            <codeliste>
+               <nameLang>VAG.Teilungsart.Entscheidung</nameLang>
+               <nameKurz>VAG.Teilungsart.Entscheidung</nameKurz>
+               <nameTechnisch>vag.teilungsart.entscheidung</nameTechnisch>
+               <kennung>urn:xoev-de:xjustiz:codeliste:vag.teilungsart.entscheidung</kennung>
+               <beschreibung>Codeliste der verschiedenen Entscheidungsarten bei Teilungen.</beschreibung>
+               <herausgebernameLang>BLK-AG IT-Standards in der Justiz</herausgebernameLang>
+               <herausgebernameKurz>AG IT-Standards</herausgebernameKurz>
+            </codeliste>
+            <versionCodeliste>
+               <version>2.0</version>
+               <versionCodelistenHandbuch>1.1</versionCodelistenHandbuch>
+            </versionCodeliste>
+            <codelistenspalten>
+               <code>
+                  <spaltennameLang>Schlüssel</spaltennameLang>
+                  <datentyp>string</datentyp>
+                  <codeSpalte>true</codeSpalte>
+                  <verwendung>required</verwendung>
+                  <empfohleneCodeSpalte>true</empfohleneCodeSpalte>
+               </code>
+               <wert>
+                  <spaltennameLang>Wert</spaltennameLang>
+                  <datentyp>string</datentyp>
+                  <codeSpalte>false</codeSpalte>
+                  <verwendung>required</verwendung>
+                  <empfohleneCodeSpalte>false</empfohleneCodeSpalte>
+               </wert>
+            </codelistenspalten>
+            <genutzteCodeSpalte>code</genutzteCodeSpalte>
+         </xs:appinfo>
+      </xs:annotation>
+      <xs:complexContent>
+         <xs:restriction base="xoev-code:Code">
+            <xs:sequence>
+               <xs:element name="code" type="tns:vag.teilungsart.entscheidung"/>
+            </xs:sequence>
+            <xs:attribute name="listURI"
+                          type="xs:anyURI"
+                          use="optional"
+                          fixed="urn:xoev-de:xjustiz:codeliste:vag.teilungsart.entscheidung"/>
+            <xs:attribute name="listVersionID"
+                          type="xs:normalizedString"
+                          use="optional"
+                          fixed="2.0"/>
+         </xs:restriction>
+      </xs:complexContent>
+   </xs:complexType>
+   <xs:complexType name="Code.VAG.Versorgungsart">
+      <xs:annotation>
+         <xs:appinfo>
+            <codeliste>
+               <nameLang>VAG.Versorgungsart</nameLang>
+               <nameKurz>VAG.Versorgungsart</nameKurz>
+               <nameTechnisch>vag.versorgungsart</nameTechnisch>
+               <kennung>urn:xoev-de:xjustiz:codeliste:vag.versorgungsart</kennung>
+               <beschreibung>Codeliste der verschiedenen Versorgungsarten.</beschreibung>
+               <herausgebernameLang>BLK-AG IT-Standards in der Justiz</herausgebernameLang>
+               <herausgebernameKurz>AG IT-Standards</herausgebernameKurz>
+            </codeliste>
+            <versionCodeliste>
+               <version>2.0</version>
+               <versionCodelistenHandbuch>1.1</versionCodelistenHandbuch>
+            </versionCodeliste>
+            <codelistenspalten>
+               <code>
+                  <spaltennameLang>Schlüssel</spaltennameLang>
+                  <datentyp>string</datentyp>
+                  <codeSpalte>true</codeSpalte>
+                  <verwendung>required</verwendung>
+                  <empfohleneCodeSpalte>true</empfohleneCodeSpalte>
+               </code>
+               <wert>
+                  <spaltennameLang>Wert</spaltennameLang>
+                  <datentyp>string</datentyp>
+                  <codeSpalte>false</codeSpalte>
+                  <verwendung>required</verwendung>
+                  <empfohleneCodeSpalte>false</empfohleneCodeSpalte>
+               </wert>
+            </codelistenspalten>
+            <genutzteCodeSpalte>code</genutzteCodeSpalte>
+         </xs:appinfo>
+      </xs:annotation>
+      <xs:complexContent>
+         <xs:restriction base="xoev-code:Code">
+            <xs:sequence>
+               <xs:element name="code" type="tns:vag.versorgungsart"/>
+            </xs:sequence>
+            <xs:attribute name="listURI"
+                          type="xs:anyURI"
+                          use="optional"
+                          fixed="urn:xoev-de:xjustiz:codeliste:vag.versorgungsart"/>
+            <xs:attribute name="listVersionID"
+                          type="xs:normalizedString"
+                          use="optional"
+                          fixed="2.0"/>
+         </xs:restriction>
+      </xs:complexContent>
+   </xs:complexType>
+   <xs:simpleType name="vag.ausgleich">
+      <xs:annotation>
+         <xs:appinfo>
+            <codeliste>
+               <nameLang>VAG.Ausgleich</nameLang>
+               <nameKurz>VAG.Ausgleich</nameKurz>
+               <nameTechnisch>vag.ausgleich</nameTechnisch>
+               <kennung>urn:xoev-de:xjustiz:codeliste:vag.ausgleich</kennung>
+               <beschreibung>Codeliste der verschiedenen Ausgleichsarten.</beschreibung>
+               <herausgebernameLang>BLK-AG IT-Standards in der Justiz</herausgebernameLang>
+               <herausgebernameKurz>AG IT-Standards</herausgebernameKurz>
+            </codeliste>
+            <versionCodeliste>
+               <version>2.0</version>
+               <versionCodelistenHandbuch>1.1</versionCodelistenHandbuch>
+            </versionCodeliste>
+            <codelistenspalten>
+               <code>
+                  <spaltennameLang>Schlüssel</spaltennameLang>
+                  <datentyp>string</datentyp>
+                  <codeSpalte>true</codeSpalte>
+                  <verwendung>required</verwendung>
+                  <empfohleneCodeSpalte>true</empfohleneCodeSpalte>
+               </code>
+               <wert>
+                  <spaltennameLang>Wert</spaltennameLang>
+                  <datentyp>string</datentyp>
+                  <codeSpalte>false</codeSpalte>
+                  <verwendung>required</verwendung>
+                  <empfohleneCodeSpalte>false</empfohleneCodeSpalte>
+               </wert>
+            </codelistenspalten>
+         </xs:appinfo>
+      </xs:annotation>
+      <xs:restriction base="xs:token">
+         <xs:enumeration value="01">
+            <xs:annotation>
+               <xs:appinfo>
+                  <wert>Anrechte vorhanden</wert>
+               </xs:appinfo>
+            </xs:annotation>
+         </xs:enumeration>
+         <xs:enumeration value="02">
+            <xs:annotation>
+               <xs:appinfo>
+                  <wert>keine Anrechte vorhanden</wert>
+               </xs:appinfo>
+            </xs:annotation>
+         </xs:enumeration>
+         <xs:enumeration value="03">
+            <xs:annotation>
+               <xs:appinfo>
+                  <wert>Anrechte vorhanden, aber keine Übermittlung im elektronischen Datensatz</wert>
+               </xs:appinfo>
+            </xs:annotation>
+         </xs:enumeration>
+      </xs:restriction>
+   </xs:simpleType>
+   <xs:simpleType name="vag.bezugsgroesse">
+      <xs:annotation>
+         <xs:appinfo>
+            <codeliste>
+               <nameLang>VAG.Bezugsgroesse</nameLang>
+               <nameKurz>VAG.Bezugsgroesse</nameKurz>
+               <nameTechnisch>vag.bezugsgroesse</nameTechnisch>
+               <kennung>urn:xoev-de:xjustiz:codeliste:vag.bezugsgroesse</kennung>
+               <beschreibung>Codeliste der verschiedenen Bezugsgrössen.</beschreibung>
+               <herausgebernameLang>BLK-AG IT-Standards in der Justiz</herausgebernameLang>
+               <herausgebernameKurz>AG IT-Standards</herausgebernameKurz>
+            </codeliste>
+            <versionCodeliste>
+               <version>2.2</version>
+               <versionCodelistenHandbuch>1.1</versionCodelistenHandbuch>
+            </versionCodeliste>
+            <codelistenspalten>
+               <code>
+                  <spaltennameLang>Schlüssel</spaltennameLang>
+                  <datentyp>string</datentyp>
+                  <codeSpalte>true</codeSpalte>
+                  <verwendung>required</verwendung>
+                  <empfohleneCodeSpalte>true</empfohleneCodeSpalte>
+               </code>
+               <wert>
+                  <spaltennameLang>Wert</spaltennameLang>
+                  <datentyp>string</datentyp>
+                  <codeSpalte>false</codeSpalte>
+                  <verwendung>required</verwendung>
+                  <empfohleneCodeSpalte>false</empfohleneCodeSpalte>
+               </wert>
+            </codelistenspalten>
+         </xs:appinfo>
+      </xs:annotation>
+      <xs:restriction base="xs:token">
+         <xs:enumeration value="01">
+            <xs:annotation>
+               <xs:appinfo>
+                  <wert>Entgeltpunkte Knappschaft Ost</wert>
+               </xs:appinfo>
+            </xs:annotation>
+         </xs:enumeration>
+         <xs:enumeration value="02">
+            <xs:annotation>
+               <xs:appinfo>
+                  <wert>Entgeltpunkte Knappschaft West</wert>
+               </xs:appinfo>
+            </xs:annotation>
+         </xs:enumeration>
+         <xs:enumeration value="03">
+            <xs:annotation>
+               <xs:appinfo>
+                  <wert>Entgeltpunkte Ost</wert>
+               </xs:appinfo>
+            </xs:annotation>
+         </xs:enumeration>
+         <xs:enumeration value="04">
+            <xs:annotation>
+               <xs:appinfo>
+                  <wert>Entgeltpunkte West</wert>
+               </xs:appinfo>
+            </xs:annotation>
+         </xs:enumeration>
+         <xs:enumeration value="05">
+            <xs:annotation>
+               <xs:appinfo>
+                  <wert>Kapitalwert in Euro</wert>
+               </xs:appinfo>
+            </xs:annotation>
+         </xs:enumeration>
+         <xs:enumeration value="06">
+            <xs:annotation>
+               <xs:appinfo>
+                  <wert>Rentenbetrag monatlich in Euro Ost</wert>
+               </xs:appinfo>
+            </xs:annotation>
+         </xs:enumeration>
+         <xs:enumeration value="07">
+            <xs:annotation>
+               <xs:appinfo>
+                  <wert>Rentenbetrag monatlich in Euro West</wert>
+               </xs:appinfo>
+            </xs:annotation>
+         </xs:enumeration>
+         <xs:enumeration value="08">
+            <xs:annotation>
+               <xs:appinfo>
+                  <wert>statischer Rentenbetrag aus Höherversicherung monatlich in Euro</wert>
+               </xs:appinfo>
+            </xs:annotation>
+         </xs:enumeration>
+         <xs:enumeration value="09">
+            <xs:annotation>
+               <xs:appinfo>
+                  <wert>Steigerungszahl</wert>
+               </xs:appinfo>
+            </xs:annotation>
+         </xs:enumeration>
+         <xs:enumeration value="10">
+            <xs:annotation>
+               <xs:appinfo>
+                  <wert>Versorgungspunkt</wert>
+               </xs:appinfo>
+            </xs:annotation>
+         </xs:enumeration>
+         <xs:enumeration value="11">
+            <xs:annotation>
+               <xs:appinfo>
+                  <wert>Anzahl der Fondsanteile</wert>
+               </xs:appinfo>
+            </xs:annotation>
+         </xs:enumeration>
+         <xs:enumeration value="12">
+            <xs:annotation>
+               <xs:appinfo>
+                  <wert>Entgeltpunkte Ost (Grundrente)</wert>
+               </xs:appinfo>
+            </xs:annotation>
+         </xs:enumeration>
+         <xs:enumeration value="13">
+            <xs:annotation>
+               <xs:appinfo>
+                  <wert>Entgeltpunkte West (Grundrente)</wert>
+               </xs:appinfo>
+            </xs:annotation>
+         </xs:enumeration>
+         <xs:enumeration value="99">
+            <xs:annotation>
+               <xs:appinfo>
+                  <wert>andere</wert>
+               </xs:appinfo>
+            </xs:annotation>
+         </xs:enumeration>
+      </xs:restriction>
+   </xs:simpleType>
+   <xs:simpleType name="vag.fehler">
+      <xs:annotation>
+         <xs:appinfo>
+            <codeliste>
+               <nameLang>VAG.Fehler</nameLang>
+               <nameKurz>VAG.Fehler</nameKurz>
+               <nameTechnisch>vag.fehler</nameTechnisch>
+               <kennung>urn:xoev-de:xjustiz:codeliste:vag.fehler</kennung>
+               <beschreibung>Codeliste der verschiedenen Fehlerarten.</beschreibung>
+               <herausgebernameLang>BLK-AG IT-Standards in der Justiz</herausgebernameLang>
+               <herausgebernameKurz>AG IT-Standards</herausgebernameKurz>
+            </codeliste>
+            <versionCodeliste>
+               <version>2.0</version>
+               <versionCodelistenHandbuch>1.1</versionCodelistenHandbuch>
+            </versionCodeliste>
+            <codelistenspalten>
+               <code>
+                  <spaltennameLang>Schlüssel</spaltennameLang>
+                  <datentyp>string</datentyp>
+                  <codeSpalte>true</codeSpalte>
+                  <verwendung>required</verwendung>
+                  <empfohleneCodeSpalte>true</empfohleneCodeSpalte>
+               </code>
+               <wert>
+                  <spaltennameLang>Wert</spaltennameLang>
+                  <datentyp>string</datentyp>
+                  <codeSpalte>false</codeSpalte>
+                  <verwendung>required</verwendung>
+                  <empfohleneCodeSpalte>false</empfohleneCodeSpalte>
+               </wert>
+            </codelistenspalten>
+         </xs:appinfo>
+      </xs:annotation>
+      <xs:restriction base="xs:token">
+         <xs:enumeration value="FA00000">
+            <xs:annotation>
+               <xs:appinfo>
+                  <wert>Allgemeiner Fehler</wert>
+               </xs:appinfo>
+            </xs:annotation>
+         </xs:enumeration>
+         <xs:enumeration value="FA00001">
+            <xs:annotation>
+               <xs:appinfo>
+                  <wert>Erhaltener XJustiz-Datensatz ist nicht valide.</wert>
+               </xs:appinfo>
+            </xs:annotation>
+         </xs:enumeration>
+         <xs:enumeration value="FA00002">
+            <xs:annotation>
+               <xs:appinfo>
+                  <wert>Es wurde ein ungültiges Absenderzertifikat verwendet.</wert>
+               </xs:appinfo>
+            </xs:annotation>
+         </xs:enumeration>
+         <xs:enumeration value="FE00001">
+            <xs:annotation>
+               <xs:appinfo>
+                  <wert>Der Familienname fehlt.</wert>
+               </xs:appinfo>
+            </xs:annotation>
+         </xs:enumeration>
+         <xs:enumeration value="FE00002">
+            <xs:annotation>
+               <xs:appinfo>
+                  <wert>Der Familienname enthält unzulässige Zeichen.</wert>
+               </xs:appinfo>
+            </xs:annotation>
+         </xs:enumeration>
+         <xs:enumeration value="FE00003">
+            <xs:annotation>
+               <xs:appinfo>
+                  <wert>Der Familienname enthält in der 1. Stelle einen Bindestrich (-) oder einen Punkt (.).</wert>
+               </xs:appinfo>
+            </xs:annotation>
+         </xs:enumeration>
+         <xs:enumeration value="FE00004">
+            <xs:annotation>
+               <xs:appinfo>
+                  <wert>Der Geburtsname enthält unzulässige Zeichen.</wert>
+               </xs:appinfo>
+            </xs:annotation>
+         </xs:enumeration>
+         <xs:enumeration value="FE00005">
+            <xs:annotation>
+               <xs:appinfo>
+                  <wert>Der Vorname fehlt.</wert>
+               </xs:appinfo>
+            </xs:annotation>
+         </xs:enumeration>
+         <xs:enumeration value="FE00006">
+            <xs:annotation>
+               <xs:appinfo>
+                  <wert>Der Vorname enthält unzulässige Zeichen.</wert>
+               </xs:appinfo>
+            </xs:annotation>
+         </xs:enumeration>
+         <xs:enumeration value="FE00007">
+            <xs:annotation>
+               <xs:appinfo>
+                  <wert>Der Vorname enthält in der 1. Stelle einen Bindestrich (-).</wert>
+               </xs:appinfo>
+            </xs:annotation>
+         </xs:enumeration>
+         <xs:enumeration value="FE00021">
+            <xs:annotation>
+               <xs:appinfo>
+                  <wert>Der Tag der Geburt enthält ein ungültiges Datum.</wert>
+               </xs:appinfo>
+            </xs:annotation>
+         </xs:enumeration>
+         <xs:enumeration value="FE00031">
+            <xs:annotation>
+               <xs:appinfo>
+                  <wert>Der Geburtsort enthält unzulässige Zeichen.</wert>
+               </xs:appinfo>
+            </xs:annotation>
+         </xs:enumeration>
+         <xs:enumeration value="FE00042">
+            <xs:annotation>
+               <xs:appinfo>
+                  <wert>Die Postleitzahl ist ungültig.</wert>
+               </xs:appinfo>
+            </xs:annotation>
+         </xs:enumeration>
+         <xs:enumeration value="FE00043">
+            <xs:annotation>
+               <xs:appinfo>
+                  <wert>Der Wohnort fehlt.</wert>
+               </xs:appinfo>
+            </xs:annotation>
+         </xs:enumeration>
+         <xs:enumeration value="FE00044">
+            <xs:annotation>
+               <xs:appinfo>
+                  <wert>Der Wohnort enthält unzulässige Zeichen.</wert>
+               </xs:appinfo>
+            </xs:annotation>
+         </xs:enumeration>
+         <xs:enumeration value="FE00045">
+            <xs:annotation>
+               <xs:appinfo>
+                  <wert>Die Straße enthält unzulässige Zeichen.</wert>
+               </xs:appinfo>
+            </xs:annotation>
+         </xs:enumeration>
+         <xs:enumeration value="FE00046">
+            <xs:annotation>
+               <xs:appinfo>
+                  <wert>Die Hausnummer enthält unzulässige Zeichen.</wert>
+               </xs:appinfo>
+            </xs:annotation>
+         </xs:enumeration>
+         <xs:enumeration value="FE00100">
+            <xs:annotation>
+               <xs:appinfo>
+                  <wert>Die Datei "xjustiz_nachricht.xml" ist mit einem Virus infiziert! Eine weitere Verarbeitung ist nicht erfolgt!</wert>
+               </xs:appinfo>
+            </xs:annotation>
+         </xs:enumeration>
+         <xs:enumeration value="FE00110">
+            <xs:annotation>
+               <xs:appinfo>
+                  <wert>Beim Validieren gegen das Schema ist ein Fehler aufgetreten! Details: "Fehlermeldung aus Parser".</wert>
+               </xs:appinfo>
+            </xs:annotation>
+         </xs:enumeration>
+         <xs:enumeration value="FE00120">
+            <xs:annotation>
+               <xs:appinfo>
+                  <wert>Der Vorgang beim Versorgungsträger ist bereits abgeschlossen. Bitte neue Anfrage starten.</wert>
+               </xs:appinfo>
+            </xs:annotation>
+         </xs:enumeration>
+         <xs:enumeration value="FE01001">
+            <xs:annotation>
+               <xs:appinfo>
+                  <wert>Die Transportsignatur konnte nicht erfolgreich geprüft werden.</wert>
+               </xs:appinfo>
+            </xs:annotation>
+         </xs:enumeration>
+         <xs:enumeration value="FE01002">
+            <xs:annotation>
+               <xs:appinfo>
+                  <wert>Die Betriebsnummer des Familiengerichtes fehlt bzw. ist fehlerhaft.</wert>
+               </xs:appinfo>
+            </xs:annotation>
+         </xs:enumeration>
+         <xs:enumeration value="FE01003">
+            <xs:annotation>
+               <xs:appinfo>
+                  <wert>Die im Datensatz verwendeten Aktenzeichen des Empfängers bzw. unseres Versicherten sind nicht konsistent.</wert>
+               </xs:appinfo>
+            </xs:annotation>
+         </xs:enumeration>
+         <xs:enumeration value="FE01101">
+            <xs:annotation>
+               <xs:appinfo>
+                  <wert>Für die angegebene Person ist keine Versicherungsnummer vorhanden.</wert>
+               </xs:appinfo>
+            </xs:annotation>
+         </xs:enumeration>
+         <xs:enumeration value="FE02001">
+            <xs:annotation>
+               <xs:appinfo>
+                  <wert>Das Ende der Ehe liegt nach dem Datum des Auskunftsersuchens.</wert>
+               </xs:appinfo>
+            </xs:annotation>
+         </xs:enumeration>
+         <xs:enumeration value="FE02002">
+            <xs:annotation>
+               <xs:appinfo>
+                  <wert>Das Ende der Ehe liegt vor dem Beginn der Ehe.</wert>
+               </xs:appinfo>
+            </xs:annotation>
+         </xs:enumeration>
+         <xs:enumeration value="FE02003">
+            <xs:annotation>
+               <xs:appinfo>
+                  <wert>Das Ende der Ehe liegt nach dem Datum der gerichtlichen Entscheidung.</wert>
+               </xs:appinfo>
+            </xs:annotation>
+         </xs:enumeration>
+         <xs:enumeration value="FE09999">
+            <xs:annotation>
+               <xs:appinfo>
+                  <wert>Sonstiger Fehler.</wert>
+               </xs:appinfo>
+            </xs:annotation>
+         </xs:enumeration>
+      </xs:restriction>
+   </xs:simpleType>
+   <xs:simpleType name="vag.leistungsform">
+      <xs:annotation>
+         <xs:appinfo>
+            <codeliste>
+               <nameLang>VAG.Leistungsform</nameLang>
+               <nameKurz>VAG.Leistungsform</nameKurz>
+               <nameTechnisch>vag.leistungsform</nameTechnisch>
+               <kennung>urn:xoev-de:xjustiz:codeliste:vag.leistungsform</kennung>
+               <beschreibung>Codeliste der verschiedenen Leistungsformen.</beschreibung>
+               <herausgebernameLang>BLK-AG IT-Standards in der Justiz</herausgebernameLang>
+               <herausgebernameKurz>AG IT-Standards</herausgebernameKurz>
+            </codeliste>
+            <versionCodeliste>
+               <version>2.0</version>
+               <versionCodelistenHandbuch>1.1</versionCodelistenHandbuch>
+            </versionCodeliste>
+            <codelistenspalten>
+               <code>
+                  <spaltennameLang>Schlüssel</spaltennameLang>
+                  <datentyp>string</datentyp>
+                  <codeSpalte>true</codeSpalte>
+                  <verwendung>required</verwendung>
+                  <empfohleneCodeSpalte>true</empfohleneCodeSpalte>
+               </code>
+               <wert>
+                  <spaltennameLang>Wert</spaltennameLang>
+                  <datentyp>string</datentyp>
+                  <codeSpalte>false</codeSpalte>
+                  <verwendung>required</verwendung>
+                  <empfohleneCodeSpalte>false</empfohleneCodeSpalte>
+               </wert>
+            </codelistenspalten>
+         </xs:appinfo>
+      </xs:annotation>
+      <xs:restriction base="xs:token">
+         <xs:enumeration value="01">
+            <xs:annotation>
+               <xs:appinfo>
+                  <wert>gemischt</wert>
+               </xs:appinfo>
+            </xs:annotation>
+         </xs:enumeration>
+         <xs:enumeration value="02">
+            <xs:annotation>
+               <xs:appinfo>
+                  <wert>Kapital</wert>
+               </xs:appinfo>
+            </xs:annotation>
+         </xs:enumeration>
+         <xs:enumeration value="03">
+            <xs:annotation>
+               <xs:appinfo>
+                  <wert>Rente lebenslang</wert>
+               </xs:appinfo>
+            </xs:annotation>
+         </xs:enumeration>
+         <xs:enumeration value="04">
+            <xs:annotation>
+               <xs:appinfo>
+                  <wert>Rente nicht lebenslang</wert>
+               </xs:appinfo>
+            </xs:annotation>
+         </xs:enumeration>
+      </xs:restriction>
+   </xs:simpleType>
+   <xs:simpleType name="vag.sachstandsmitteilung.kurzmitteilung.versorgungstraeger-zu-gericht">
+      <xs:annotation>
+         <xs:appinfo>
+            <codeliste>
+               <nameLang>VAG.Sachstandsmitteilung.Kurzmitteilung.VersorgungstraegerZuGericht</nameLang>
+               <nameKurz>VAG.Sachstandsmitteilung.Kurzmitteilung.VersorgungstraegerZuGericht</nameKurz>
+               <nameTechnisch>vag.sachstandsmitteilung.kurzmitteilung.versorgungstraeger-zu-gericht</nameTechnisch>
+               <kennung>urn:xoev-de:xjustiz:codeliste:vag.sachstandsmitteilung.kurzmitteilung.versorgungstraeger-zu-gericht</kennung>
+               <beschreibung>Diese Codeliste listet die Sachverhalte auf, die zum Versenden einer Sachstandsmitteilung führen.</beschreibung>
+               <herausgebernameLang>BLK-AG IT-Standards in der Justiz</herausgebernameLang>
+               <herausgebernameKurz>AG IT-Standards</herausgebernameKurz>
+            </codeliste>
+            <versionCodeliste>
+               <version>2.0</version>
+               <versionCodelistenHandbuch>1.1</versionCodelistenHandbuch>
+            </versionCodeliste>
+            <codelistenspalten>
+               <code>
+                  <spaltennameLang>Schlüssel</spaltennameLang>
+                  <datentyp>string</datentyp>
+                  <codeSpalte>true</codeSpalte>
+                  <verwendung>required</verwendung>
+                  <empfohleneCodeSpalte>true</empfohleneCodeSpalte>
+               </code>
+               <wert>
+                  <spaltennameLang>Wert</spaltennameLang>
+                  <datentyp>string</datentyp>
+                  <codeSpalte>false</codeSpalte>
+                  <verwendung>required</verwendung>
+                  <empfohleneCodeSpalte>false</empfohleneCodeSpalte>
+               </wert>
+               <beschreibung>
+                  <spaltennameLang>Beschreibung</spaltennameLang>
+                  <datentyp>string</datentyp>
+                  <codeSpalte>false</codeSpalte>
+                  <verwendung>optional</verwendung>
+                  <empfohleneCodeSpalte>false</empfohleneCodeSpalte>
+               </beschreibung>
+            </codelistenspalten>
+         </xs:appinfo>
+      </xs:annotation>
+      <xs:restriction base="xs:token">
+         <xs:enumeration value="01">
+            <xs:annotation>
+               <xs:appinfo>
+                  <wert>fehlende Unterlagen</wert>
+               </xs:appinfo>
+            </xs:annotation>
+         </xs:enumeration>
+         <xs:enumeration value="02">
+            <xs:annotation>
+               <xs:appinfo>
+                  <wert>ungeklärte Versicherungszeiten</wert>
+               </xs:appinfo>
+            </xs:annotation>
+         </xs:enumeration>
+         <xs:enumeration value="03">
+            <xs:annotation>
+               <xs:appinfo>
+                  <wert>Kontenklärung dauert trotz Mitwirkung des Versicherten an</wert>
+               </xs:appinfo>
+            </xs:annotation>
+         </xs:enumeration>
+         <xs:enumeration value="04">
+            <xs:annotation>
+               <xs:appinfo>
+                  <wert>keine Mitwirkung des Versicherten</wert>
+               </xs:appinfo>
+            </xs:annotation>
+         </xs:enumeration>
+         <xs:enumeration value="05">
+            <xs:annotation>
+               <xs:appinfo>
+                  <wert>keine Mitwirkung des Versicherten trotz Erinnerung</wert>
+               </xs:appinfo>
+            </xs:annotation>
+         </xs:enumeration>
+         <xs:enumeration value="06">
+            <xs:annotation>
+               <xs:appinfo>
+                  <wert>Auslandsermittlung</wert>
+               </xs:appinfo>
+            </xs:annotation>
+         </xs:enumeration>
+         <xs:enumeration value="07">
+            <xs:annotation>
+               <xs:appinfo>
+                  <wert>Ankündigung einer berichtigten Auskunft</wert>
+                  <beschreibung>Es wird eine erneute Auskunft ohne Aufforderung des Gerichts angekündigt. Neue Mitteilung kommt, zum Beispiel wenn die alte Auskunft gegenstandslos ist und eine neue Auskunft angekündigt wird, weil Auskunft aus einer zwischenzeitlich bewilligten Rente zu erteilen ist oder fehlerhaft war.</beschreibung>
+               </xs:appinfo>
+            </xs:annotation>
+         </xs:enumeration>
+      </xs:restriction>
+   </xs:simpleType>
+   <xs:simpleType name="vag.teilungsart">
+      <xs:annotation>
+         <xs:appinfo>
+            <codeliste>
+               <nameLang>VAG.Teilungsart</nameLang>
+               <nameKurz>VAG.Teilungsart</nameKurz>
+               <nameTechnisch>vag.teilungsart</nameTechnisch>
+               <kennung>urn:xoev-de:xjustiz:codeliste:vag.teilungsart</kennung>
+               <beschreibung>Codeliste der verschiedenen Teilungsarten.</beschreibung>
+               <herausgebernameLang>BLK-AG IT-Standards in der Justiz</herausgebernameLang>
+               <herausgebernameKurz>AG IT-Standards</herausgebernameKurz>
+            </codeliste>
+            <versionCodeliste>
+               <version>2.0</version>
+               <versionCodelistenHandbuch>1.1</versionCodelistenHandbuch>
+            </versionCodeliste>
+            <codelistenspalten>
+               <code>
+                  <spaltennameLang>Schlüssel</spaltennameLang>
+                  <datentyp>string</datentyp>
+                  <codeSpalte>true</codeSpalte>
+                  <verwendung>required</verwendung>
+                  <empfohleneCodeSpalte>true</empfohleneCodeSpalte>
+               </code>
+               <wert>
+                  <spaltennameLang>Wert</spaltennameLang>
+                  <datentyp>string</datentyp>
+                  <codeSpalte>false</codeSpalte>
+                  <verwendung>required</verwendung>
+                  <empfohleneCodeSpalte>false</empfohleneCodeSpalte>
+               </wert>
+            </codelistenspalten>
+         </xs:appinfo>
+      </xs:annotation>
+      <xs:restriction base="xs:token">
+         <xs:enumeration value="01">
+            <xs:annotation>
+               <xs:appinfo>
+                  <wert>intern, abweichender Risikoschutz</wert>
+               </xs:appinfo>
+            </xs:annotation>
+         </xs:enumeration>
+         <xs:enumeration value="02">
+            <xs:annotation>
+               <xs:appinfo>
+                  <wert>intern, gleicher Risikoschutz</wert>
+               </xs:appinfo>
+            </xs:annotation>
+         </xs:enumeration>
+         <xs:enumeration value="03">
+            <xs:annotation>
+               <xs:appinfo>
+                  <wert>extern, beabsichtigt (§ 14 Abs. 2 Nr. 1), Vereinbarung abgeschlossen</wert>
+               </xs:appinfo>
+            </xs:annotation>
+         </xs:enumeration>
+         <xs:enumeration value="04">
+            <xs:annotation>
+               <xs:appinfo>
+                  <wert>extern, beabsichtigt (§ 14 Abs. 2 Nr. 1), Vereinbarung noch nicht abgeschlossen</wert>
+               </xs:appinfo>
+            </xs:annotation>
+         </xs:enumeration>
+         <xs:enumeration value="05">
+            <xs:annotation>
+               <xs:appinfo>
+                  <wert>extern, wird durchgeführt (§ 14 Abs. 2 Nr. 2)</wert>
+               </xs:appinfo>
+            </xs:annotation>
+         </xs:enumeration>
+         <xs:enumeration value="06">
+            <xs:annotation>
+               <xs:appinfo>
+                  <wert>extern, wird durchgeführt (§ 17)</wert>
+               </xs:appinfo>
+            </xs:annotation>
+         </xs:enumeration>
+      </xs:restriction>
+   </xs:simpleType>
+   <xs:simpleType name="vag.teilungsart.entscheidung">
+      <xs:annotation>
+         <xs:appinfo>
+            <codeliste>
+               <nameLang>VAG.Teilungsart.Entscheidung</nameLang>
+               <nameKurz>VAG.Teilungsart.Entscheidung</nameKurz>
+               <nameTechnisch>vag.teilungsart.entscheidung</nameTechnisch>
+               <kennung>urn:xoev-de:xjustiz:codeliste:vag.teilungsart.entscheidung</kennung>
+               <beschreibung>Codeliste der verschiedenen Entscheidungsarten bei Teilungen.</beschreibung>
+               <herausgebernameLang>BLK-AG IT-Standards in der Justiz</herausgebernameLang>
+               <herausgebernameKurz>AG IT-Standards</herausgebernameKurz>
+            </codeliste>
+            <versionCodeliste>
+               <version>2.0</version>
+               <versionCodelistenHandbuch>1.1</versionCodelistenHandbuch>
+            </versionCodeliste>
+            <codelistenspalten>
+               <code>
+                  <spaltennameLang>Schlüssel</spaltennameLang>
+                  <datentyp>string</datentyp>
+                  <codeSpalte>true</codeSpalte>
+                  <verwendung>required</verwendung>
+                  <empfohleneCodeSpalte>true</empfohleneCodeSpalte>
+               </code>
+               <wert>
+                  <spaltennameLang>Wert</spaltennameLang>
+                  <datentyp>string</datentyp>
+                  <codeSpalte>false</codeSpalte>
+                  <verwendung>required</verwendung>
+                  <empfohleneCodeSpalte>false</empfohleneCodeSpalte>
+               </wert>
+            </codelistenspalten>
+         </xs:appinfo>
+      </xs:annotation>
+      <xs:restriction base="xs:token">
+         <xs:enumeration value="01">
+            <xs:annotation>
+               <xs:appinfo>
+                  <wert>intern</wert>
+               </xs:appinfo>
+            </xs:annotation>
+         </xs:enumeration>
+         <xs:enumeration value="02">
+            <xs:annotation>
+               <xs:appinfo>
+                  <wert>extern nach §16 VersAusglG</wert>
+               </xs:appinfo>
+            </xs:annotation>
+         </xs:enumeration>
+         <xs:enumeration value="03">
+            <xs:annotation>
+               <xs:appinfo>
+                  <wert>extern mit Wahl des Zielversorgungsträgers nach §15 Abs. 1 VersAusglG</wert>
+               </xs:appinfo>
+            </xs:annotation>
+         </xs:enumeration>
+         <xs:enumeration value="04">
+            <xs:annotation>
+               <xs:appinfo>
+                  <wert>extern ohne Wahl des Zielversorgungsträgers §15 Abs. 5 VersAusglG</wert>
+               </xs:appinfo>
+            </xs:annotation>
+         </xs:enumeration>
+         <xs:enumeration value="05">
+            <xs:annotation>
+               <xs:appinfo>
+                  <wert>extern durch Parteienvereinbarung über Beitragszahlung</wert>
+               </xs:appinfo>
+            </xs:annotation>
+         </xs:enumeration>
+      </xs:restriction>
+   </xs:simpleType>
+   <xs:simpleType name="vag.versorgungsart">
+      <xs:annotation>
+         <xs:appinfo>
+            <codeliste>
+               <nameLang>VAG.Versorgungsart</nameLang>
+               <nameKurz>VAG.Versorgungsart</nameKurz>
+               <nameTechnisch>vag.versorgungsart</nameTechnisch>
+               <kennung>urn:xoev-de:xjustiz:codeliste:vag.versorgungsart</kennung>
+               <beschreibung>Codeliste der verschiedenen Versorgungsarten.</beschreibung>
+               <herausgebernameLang>BLK-AG IT-Standards in der Justiz</herausgebernameLang>
+               <herausgebernameKurz>AG IT-Standards</herausgebernameKurz>
+            </codeliste>
+            <versionCodeliste>
+               <version>2.0</version>
+               <versionCodelistenHandbuch>1.1</versionCodelistenHandbuch>
+            </versionCodeliste>
+            <codelistenspalten>
+               <code>
+                  <spaltennameLang>Schlüssel</spaltennameLang>
+                  <datentyp>string</datentyp>
+                  <codeSpalte>true</codeSpalte>
+                  <verwendung>required</verwendung>
+                  <empfohleneCodeSpalte>true</empfohleneCodeSpalte>
+               </code>
+               <wert>
+                  <spaltennameLang>Wert</spaltennameLang>
+                  <datentyp>string</datentyp>
+                  <codeSpalte>false</codeSpalte>
+                  <verwendung>required</verwendung>
+                  <empfohleneCodeSpalte>false</empfohleneCodeSpalte>
+               </wert>
+            </codelistenspalten>
+         </xs:appinfo>
+      </xs:annotation>
+      <xs:restriction base="xs:token">
+         <xs:enumeration value="01">
+            <xs:annotation>
+               <xs:appinfo>
+                  <wert>Beamtenversorgung</wert>
+               </xs:appinfo>
+            </xs:annotation>
+         </xs:enumeration>
+         <xs:enumeration value="02">
+            <xs:annotation>
+               <xs:appinfo>
+                  <wert>berufsständische Altersversorgung</wert>
+               </xs:appinfo>
+            </xs:annotation>
+         </xs:enumeration>
+         <xs:enumeration value="03">
+            <xs:annotation>
+               <xs:appinfo>
+                  <wert>betriebliche Altersversorgung</wert>
+               </xs:appinfo>
+            </xs:annotation>
+         </xs:enumeration>
+         <xs:enumeration value="04">
+            <xs:annotation>
+               <xs:appinfo>
+                  <wert>gesetzliche Rentenversicherung</wert>
+               </xs:appinfo>
+            </xs:annotation>
+         </xs:enumeration>
+         <xs:enumeration value="05">
+            <xs:annotation>
+               <xs:appinfo>
+                  <wert>private Altersvorsorge</wert>
+               </xs:appinfo>
+            </xs:annotation>
+         </xs:enumeration>
+         <xs:enumeration value="06">
+            <xs:annotation>
+               <xs:appinfo>
+                  <wert>sonstige Altersversorgung</wert>
+               </xs:appinfo>
+            </xs:annotation>
+         </xs:enumeration>
+         <xs:enumeration value="07">
+            <xs:annotation>
+               <xs:appinfo>
+                  <wert>Zusatzversorgung öffentlicher Dienst</wert>
+               </xs:appinfo>
+            </xs:annotation>
+         </xs:enumeration>
+      </xs:restriction>
+   </xs:simpleType>
+</xs:schema>

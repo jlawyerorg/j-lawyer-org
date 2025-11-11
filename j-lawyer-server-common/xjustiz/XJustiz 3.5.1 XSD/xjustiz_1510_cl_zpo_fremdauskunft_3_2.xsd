@@ -1,0 +1,398 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema"
+           xmlns:tns="http://www.xjustiz.de"
+           xmlns:xoev-code="http://xoev.de/schemata/code/1_0"
+           targetNamespace="http://www.xjustiz.de"
+           version="3.2.0"
+           elementFormDefault="unqualified"
+           attributeFormDefault="unqualified">
+   <xs:annotation>
+      <xs:appinfo>
+         <standard>
+            <nameLang>Strukturierte Fachdaten für die Kommunikation im elektronischen Rechtsverkehr</nameLang>
+            <nameKurz>XJustiz</nameKurz>
+            <nameTechnisch>xjustiz</nameTechnisch>
+            <kennung>urn:xoev-de:blk-ag-it-standards:standard:xjustiz</kennung>
+            <beschreibung>XJustiz ist der bundesweit einheitliche Standard für den Austausch strukturierter elektronischer Informationen mit der Justiz.</beschreibung>
+         </standard>
+         <versionStandard>
+            <version>3.5.1</version>
+            <beschreibung>XJustiz beschreibt ein standardisiertes Datenaustauschformat für die elektronische Kommunikation innerhalb und mit der Justizverwaltung.</beschreibung>
+            <versionXOEVProfil>1.7.2</versionXOEVProfil>
+            <versionXOEVHandbuch>2.3.1</versionXOEVHandbuch>
+            <versionXGenerator>3.1.1</versionXGenerator>
+            <versionModellierungswerkzeug>19.0 SP3</versionModellierungswerkzeug>
+            <nameModellierungswerkzeug>MagicDraw</nameModellierungswerkzeug>
+         </versionStandard>
+      </xs:appinfo>
+   </xs:annotation>
+   <xs:import schemaLocation="xoev-code.xsd"
+              namespace="http://xoev.de/schemata/code/1_0"/>
+   <xs:complexType name="Code.ZPO.Anfragetyp">
+      <xs:annotation>
+         <xs:appinfo>
+            <codeliste>
+               <nameLang>ZPO.Anfragetyp</nameLang>
+               <nameKurz>ZPO.Anfragetyp</nameKurz>
+               <nameTechnisch>zpo.anfragetyp</nameTechnisch>
+               <kennung>urn:xoev-de:xjustiz:codeliste:zpo.anfragetyp</kennung>
+               <beschreibung>Codeliste der verschiedenen Anfragetypen.</beschreibung>
+               <herausgebernameLang>BLK-AG IT-Standards in der Justiz</herausgebernameLang>
+               <herausgebernameKurz>AG IT-Standards</herausgebernameKurz>
+            </codeliste>
+            <versionCodeliste>
+               <version>2.0</version>
+               <versionCodelistenHandbuch>1.1</versionCodelistenHandbuch>
+            </versionCodeliste>
+            <codelistenspalten>
+               <code>
+                  <spaltennameLang>Schlüssel</spaltennameLang>
+                  <datentyp>string</datentyp>
+                  <codeSpalte>true</codeSpalte>
+                  <verwendung>required</verwendung>
+                  <empfohleneCodeSpalte>true</empfohleneCodeSpalte>
+               </code>
+               <wert>
+                  <spaltennameLang>Wert</spaltennameLang>
+                  <datentyp>string</datentyp>
+                  <codeSpalte>false</codeSpalte>
+                  <verwendung>required</verwendung>
+                  <empfohleneCodeSpalte>false</empfohleneCodeSpalte>
+               </wert>
+            </codelistenspalten>
+            <genutzteCodeSpalte>code</genutzteCodeSpalte>
+         </xs:appinfo>
+      </xs:annotation>
+      <xs:complexContent>
+         <xs:restriction base="xoev-code:Code">
+            <xs:sequence>
+               <xs:element name="code" type="tns:zpo.anfragetyp"/>
+            </xs:sequence>
+            <xs:attribute name="listURI"
+                          type="xs:anyURI"
+                          use="optional"
+                          fixed="urn:xoev-de:xjustiz:codeliste:zpo.anfragetyp"/>
+            <xs:attribute name="listVersionID"
+                          type="xs:normalizedString"
+                          use="optional"
+                          fixed="2.0"/>
+         </xs:restriction>
+      </xs:complexContent>
+   </xs:complexType>
+   <xs:complexType name="Code.ZPO.Fehlercode">
+      <xs:annotation>
+         <xs:appinfo>
+            <codeliste>
+               <nameLang>ZPO.Fehlercode</nameLang>
+               <nameKurz>ZPO.Fehlercode</nameKurz>
+               <nameTechnisch>zpo.fehlercode</nameTechnisch>
+               <kennung>urn:xoev-de:xjustiz:codeliste:zpo.fehlercode</kennung>
+               <beschreibung>Codeliste der verschiedenen Fehlercodes.</beschreibung>
+               <herausgebernameLang>BLK-AG IT-Standards in der Justiz</herausgebernameLang>
+               <herausgebernameKurz>AG IT-Standards</herausgebernameKurz>
+            </codeliste>
+            <versionCodeliste>
+               <version>2.2</version>
+               <versionCodelistenHandbuch>1.1</versionCodelistenHandbuch>
+               <aenderungZurVorversion>Die Codeliste wurde um die Fehlercodes 21 und 22 erweitert.</aenderungZurVorversion>
+            </versionCodeliste>
+            <codelistenspalten>
+               <code>
+                  <spaltennameLang>Schlüssel</spaltennameLang>
+                  <datentyp>string</datentyp>
+                  <codeSpalte>true</codeSpalte>
+                  <verwendung>required</verwendung>
+                  <empfohleneCodeSpalte>true</empfohleneCodeSpalte>
+               </code>
+               <wert>
+                  <spaltennameLang>Wert</spaltennameLang>
+                  <datentyp>string</datentyp>
+                  <codeSpalte>false</codeSpalte>
+                  <verwendung>required</verwendung>
+                  <empfohleneCodeSpalte>false</empfohleneCodeSpalte>
+               </wert>
+            </codelistenspalten>
+            <genutzteCodeSpalte>code</genutzteCodeSpalte>
+         </xs:appinfo>
+      </xs:annotation>
+      <xs:complexContent>
+         <xs:restriction base="xoev-code:Code">
+            <xs:sequence>
+               <xs:element name="code" type="tns:zpo.fehlercode"/>
+            </xs:sequence>
+            <xs:attribute name="listURI"
+                          type="xs:anyURI"
+                          use="optional"
+                          fixed="urn:xoev-de:xjustiz:codeliste:zpo.fehlercode"/>
+            <xs:attribute name="listVersionID"
+                          type="xs:normalizedString"
+                          use="optional"
+                          fixed="2.2"/>
+         </xs:restriction>
+      </xs:complexContent>
+   </xs:complexType>
+   <xs:simpleType name="zpo.anfragetyp">
+      <xs:annotation>
+         <xs:appinfo>
+            <codeliste>
+               <nameLang>ZPO.Anfragetyp</nameLang>
+               <nameKurz>ZPO.Anfragetyp</nameKurz>
+               <nameTechnisch>zpo.anfragetyp</nameTechnisch>
+               <kennung>urn:xoev-de:xjustiz:codeliste:zpo.anfragetyp</kennung>
+               <beschreibung>Codeliste der verschiedenen Anfragetypen.</beschreibung>
+               <herausgebernameLang>BLK-AG IT-Standards in der Justiz</herausgebernameLang>
+               <herausgebernameKurz>AG IT-Standards</herausgebernameKurz>
+            </codeliste>
+            <versionCodeliste>
+               <version>2.0</version>
+               <versionCodelistenHandbuch>1.1</versionCodelistenHandbuch>
+            </versionCodeliste>
+            <codelistenspalten>
+               <code>
+                  <spaltennameLang>Schlüssel</spaltennameLang>
+                  <datentyp>string</datentyp>
+                  <codeSpalte>true</codeSpalte>
+                  <verwendung>required</verwendung>
+                  <empfohleneCodeSpalte>true</empfohleneCodeSpalte>
+               </code>
+               <wert>
+                  <spaltennameLang>Wert</spaltennameLang>
+                  <datentyp>string</datentyp>
+                  <codeSpalte>false</codeSpalte>
+                  <verwendung>required</verwendung>
+                  <empfohleneCodeSpalte>false</empfohleneCodeSpalte>
+               </wert>
+            </codelistenspalten>
+         </xs:appinfo>
+      </xs:annotation>
+      <xs:restriction base="xs:token">
+         <xs:enumeration value="001">
+            <xs:annotation>
+               <xs:appinfo>
+                  <wert>Person_phonetisch</wert>
+               </xs:appinfo>
+            </xs:annotation>
+         </xs:enumeration>
+         <xs:enumeration value="002">
+            <xs:annotation>
+               <xs:appinfo>
+                  <wert>Person_normal</wert>
+               </xs:appinfo>
+            </xs:annotation>
+         </xs:enumeration>
+         <xs:enumeration value="003">
+            <xs:annotation>
+               <xs:appinfo>
+                  <wert>Person_exakt</wert>
+               </xs:appinfo>
+            </xs:annotation>
+         </xs:enumeration>
+         <xs:enumeration value="004">
+            <xs:annotation>
+               <xs:appinfo>
+                  <wert>Fahrzeugakte</wert>
+               </xs:appinfo>
+            </xs:annotation>
+         </xs:enumeration>
+      </xs:restriction>
+   </xs:simpleType>
+   <xs:simpleType name="zpo.fehlercode">
+      <xs:annotation>
+         <xs:appinfo>
+            <codeliste>
+               <nameLang>ZPO.Fehlercode</nameLang>
+               <nameKurz>ZPO.Fehlercode</nameKurz>
+               <nameTechnisch>zpo.fehlercode</nameTechnisch>
+               <kennung>urn:xoev-de:xjustiz:codeliste:zpo.fehlercode</kennung>
+               <beschreibung>Codeliste der verschiedenen Fehlercodes.</beschreibung>
+               <herausgebernameLang>BLK-AG IT-Standards in der Justiz</herausgebernameLang>
+               <herausgebernameKurz>AG IT-Standards</herausgebernameKurz>
+            </codeliste>
+            <versionCodeliste>
+               <version>2.2</version>
+               <versionCodelistenHandbuch>1.1</versionCodelistenHandbuch>
+               <aenderungZurVorversion>Die Codeliste wurde um die Fehlercodes 21 und 22 erweitert.</aenderungZurVorversion>
+            </versionCodeliste>
+            <codelistenspalten>
+               <code>
+                  <spaltennameLang>Schlüssel</spaltennameLang>
+                  <datentyp>string</datentyp>
+                  <codeSpalte>true</codeSpalte>
+                  <verwendung>required</verwendung>
+                  <empfohleneCodeSpalte>true</empfohleneCodeSpalte>
+               </code>
+               <wert>
+                  <spaltennameLang>Wert</spaltennameLang>
+                  <datentyp>string</datentyp>
+                  <codeSpalte>false</codeSpalte>
+                  <verwendung>required</verwendung>
+                  <empfohleneCodeSpalte>false</empfohleneCodeSpalte>
+               </wert>
+            </codelistenspalten>
+         </xs:appinfo>
+      </xs:annotation>
+      <xs:restriction base="xs:token">
+         <xs:enumeration value="01">
+            <xs:annotation>
+               <xs:appinfo>
+                  <wert>Strukturfehler (Parserfehler)</wert>
+               </xs:appinfo>
+            </xs:annotation>
+         </xs:enumeration>
+         <xs:enumeration value="02">
+            <xs:annotation>
+               <xs:appinfo>
+                  <wert>falscher Nachrichtentyp</wert>
+               </xs:appinfo>
+            </xs:annotation>
+         </xs:enumeration>
+         <xs:enumeration value="03">
+            <xs:annotation>
+               <xs:appinfo>
+                  <wert>fehlende Berechtigung</wert>
+               </xs:appinfo>
+            </xs:annotation>
+         </xs:enumeration>
+         <xs:enumeration value="04">
+            <xs:annotation>
+               <xs:appinfo>
+                  <wert>Den in Ihrer Anfrage angegebenen Daten konnte keine Person eindeutig zugeordnet werden. Keine Treffer; Ihre Angaben haben zu keinem Treffer geführt bzw. die Person ist nicht im Bestand der DSRV. Ggf. ist die Anfrage mit optimierten Angaben erneut zu senden, z.B. unter Ergänzung des Geburtsnamens zu den Pflichtfeldern (Name, Vorname, Geburtsdatum) oder Angabe nur der Pflichtfelder. Diese Meldung ist kostenfrei.</wert>
+               </xs:appinfo>
+            </xs:annotation>
+         </xs:enumeration>
+         <xs:enumeration value="05">
+            <xs:annotation>
+               <xs:appinfo>
+                  <wert>zu viele Treffer (&gt;100)</wert>
+               </xs:appinfo>
+            </xs:annotation>
+         </xs:enumeration>
+         <xs:enumeration value="06">
+            <xs:annotation>
+               <xs:appinfo>
+                  <wert>Der Familienname muss gemeldet werden</wert>
+               </xs:appinfo>
+            </xs:annotation>
+         </xs:enumeration>
+         <xs:enumeration value="07">
+            <xs:annotation>
+               <xs:appinfo>
+                  <wert>Der Vorname muss gemeldet werden</wert>
+               </xs:appinfo>
+            </xs:annotation>
+         </xs:enumeration>
+         <xs:enumeration value="08">
+            <xs:annotation>
+               <xs:appinfo>
+                  <wert>Das Geburtsdatum enthält kein gültiges Datum</wert>
+               </xs:appinfo>
+            </xs:annotation>
+         </xs:enumeration>
+         <xs:enumeration value="09">
+            <xs:annotation>
+               <xs:appinfo>
+                  <wert>Das Geburtsdatum ist nicht vorhanden</wert>
+               </xs:appinfo>
+            </xs:annotation>
+         </xs:enumeration>
+         <xs:enumeration value="10">
+            <xs:annotation>
+               <xs:appinfo>
+                  <wert>Die Postleitzahl muss gemeldet werden</wert>
+               </xs:appinfo>
+            </xs:annotation>
+         </xs:enumeration>
+         <xs:enumeration value="11">
+            <xs:annotation>
+               <xs:appinfo>
+                  <wert>Die Strasse muss gemeldet werden</wert>
+               </xs:appinfo>
+            </xs:annotation>
+         </xs:enumeration>
+         <xs:enumeration value="12">
+            <xs:annotation>
+               <xs:appinfo>
+                  <wert>Der Ort muss gemeldet werden</wert>
+               </xs:appinfo>
+            </xs:annotation>
+         </xs:enumeration>
+         <xs:enumeration value="13">
+            <xs:annotation>
+               <xs:appinfo>
+                  <wert>Versicherungsnummer ist nicht plausibel</wert>
+               </xs:appinfo>
+            </xs:annotation>
+         </xs:enumeration>
+         <xs:enumeration value="14">
+            <xs:annotation>
+               <xs:appinfo>
+                  <wert>Voraussetzungen nach § 74a Absatz 2 SGB X sind nicht erfüllt</wert>
+               </xs:appinfo>
+            </xs:annotation>
+         </xs:enumeration>
+         <xs:enumeration value="15">
+            <xs:annotation>
+               <xs:appinfo>
+                  <wert>mehr als 100 Fahrzeuge gefunden</wert>
+               </xs:appinfo>
+            </xs:annotation>
+         </xs:enumeration>
+         <xs:enumeration value="16">
+            <xs:annotation>
+               <xs:appinfo>
+                  <wert>mehr als 20 Personen gefunden</wert>
+               </xs:appinfo>
+            </xs:annotation>
+         </xs:enumeration>
+         <xs:enumeration value="17">
+            <xs:annotation>
+               <xs:appinfo>
+                  <wert>Die gesuchte Person ist verstorben. Diese Mitteilung ist kostenfrei.</wert>
+               </xs:appinfo>
+            </xs:annotation>
+         </xs:enumeration>
+         <xs:enumeration value="18">
+            <xs:annotation>
+               <xs:appinfo>
+                  <wert>Ihr Auskunftersuchen kann nicht beantwortet werden, da eine aktuelle Anschrift in den Beständen der DSRV nicht gespeichert ist. Diese Auskunft ist kostenfrei.</wert>
+               </xs:appinfo>
+            </xs:annotation>
+         </xs:enumeration>
+         <xs:enumeration value="19">
+            <xs:annotation>
+               <xs:appinfo>
+                  <wert>Ereignis enthält unzulässigen Wert.</wert>
+               </xs:appinfo>
+            </xs:annotation>
+         </xs:enumeration>
+         <xs:enumeration value="20">
+            <xs:annotation>
+               <xs:appinfo>
+                  <wert>Rollenbezeichnung enthält unzulässigen Wert.</wert>
+               </xs:appinfo>
+            </xs:annotation>
+         </xs:enumeration>
+         <xs:enumeration value="21">
+            <xs:annotation>
+               <xs:appinfo>
+                  <wert>Die angegebene VSNR stimmt nicht mit angegebenen persönlichen Daten überein. Dies ist eine abschließende, kostenfreie Rückmeldung.</wert>
+               </xs:appinfo>
+            </xs:annotation>
+         </xs:enumeration>
+         <xs:enumeration value="22">
+            <xs:annotation>
+               <xs:appinfo>
+                  <wert>AnfrageID bereits vorhanden. Sie haben diese Anfrage bereits gestellt.</wert>
+               </xs:appinfo>
+            </xs:annotation>
+         </xs:enumeration>
+         <xs:enumeration value="99">
+            <xs:annotation>
+               <xs:appinfo>
+                  <wert>sonstiger Fehler</wert>
+               </xs:appinfo>
+            </xs:annotation>
+         </xs:enumeration>
+      </xs:restriction>
+   </xs:simpleType>
+</xs:schema>

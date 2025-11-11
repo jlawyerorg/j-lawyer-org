@@ -1,0 +1,264 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema"
+           xmlns:tns="http://www.xjustiz.de"
+           xmlns:din91379="urn:xoev-de:kosit:xoev:datentyp:din-91379_2022-08"
+           targetNamespace="http://www.xjustiz.de"
+           version="3.3.0"
+           elementFormDefault="qualified"
+           attributeFormDefault="unqualified">
+   <xs:annotation>
+      <xs:appinfo>
+         <standard>
+            <nameLang>Strukturierte Fachdaten für die Kommunikation im elektronischen Rechtsverkehr</nameLang>
+            <nameKurz>XJustiz</nameKurz>
+            <nameTechnisch>xjustiz</nameTechnisch>
+            <kennung>urn:xoev-de:blk-ag-it-standards:standard:xjustiz</kennung>
+            <beschreibung>XJustiz ist der bundesweit einheitliche Standard für den Austausch strukturierter elektronischer Informationen mit der Justiz.</beschreibung>
+         </standard>
+         <versionStandard>
+            <version>3.5.1</version>
+            <beschreibung>XJustiz beschreibt ein standardisiertes Datenaustauschformat für die elektronische Kommunikation innerhalb und mit der Justizverwaltung.</beschreibung>
+            <versionXOEVProfil>1.7.2</versionXOEVProfil>
+            <versionXOEVHandbuch>2.3.1</versionXOEVHandbuch>
+            <versionXGenerator>3.1.1</versionXGenerator>
+            <versionModellierungswerkzeug>19.0 SP3</versionModellierungswerkzeug>
+            <nameModellierungswerkzeug>MagicDraw</nameModellierungswerkzeug>
+         </versionStandard>
+      </xs:appinfo>
+   </xs:annotation>
+   <xs:include schemaLocation="xjustiz_0000_grunddatensatz_3_5.xsd"/>
+   <xs:include schemaLocation="xjustiz_2510_cl_gerichtsvollzieher_3_1.xsd"/>
+   <xs:import schemaLocation="din-norm-91379-datatypes.xsd"
+              namespace="urn:xoev-de:kosit:xoev:datentyp:din-91379_2022-08"/>
+   <xs:complexType name="Type.GVZ.Forderung">
+      <xs:sequence>
+         <xs:element name="verrechnungsart" minOccurs="0">
+            <xs:annotation>
+               <xs:documentation>Information zur Art der Verrechnung von Zahlungen des Schuldners. Zulässige Werte: '§ 367 ZPO' oder '§ 497 ZPO'</xs:documentation>
+            </xs:annotation>
+            <xs:simpleType>
+               <xs:restriction base="xs:token">
+                  <xs:enumeration value="§ 367 ZPO"/>
+                  <xs:enumeration value="§ 497 ZPO"/>
+               </xs:restriction>
+            </xs:simpleType>
+         </xs:element>
+         <xs:element name="buchung" maxOccurs="unbounded">
+            <xs:complexType>
+               <xs:sequence>
+                  <xs:element name="datum" type="xs:date">
+                     <xs:annotation>
+                        <xs:documentation>Im Sinne einer chronologischen Kontenführung, die für Zahlungsverrechnung erforderlich ist, hat JEDE Buchung ein Datum.</xs:documentation>
+                     </xs:annotation>
+                  </xs:element>
+                  <xs:element name="buchungsart" type="tns:Code.GDS.Forderungsteil"/>
+                  <xs:element name="buchungstext" minOccurs="0" type="tns:Code.GVZ.Buchungstext">
+                     <xs:annotation>
+                        <xs:documentation>Als Information zur weiteren Differenzierung für den Anwender.</xs:documentation>
+                     </xs:annotation>
+                  </xs:element>
+                  <xs:element name="betrag" type="tns:Type.GDS.Geldbetrag"/>
+                  <xs:element name="forderungsnummer" minOccurs="0" type="din91379:datatypeC">
+                     <xs:annotation>
+                        <xs:documentation>Bei Buchungsarten wie z. B. "Zinsänderung" muss die zugehörige Forderung referenziert werden können.</xs:documentation>
+                     </xs:annotation>
+                  </xs:element>
+                  <xs:element name="zinssatz" minOccurs="0" type="xs:decimal">
+                     <xs:annotation>
+                        <xs:documentation>Erforderlich bei Zinsenberechung</xs:documentation>
+                     </xs:annotation>
+                  </xs:element>
+                  <xs:element name="zinsmethode" minOccurs="0" type="tns:Code.GVZ.Zinsmethode">
+                     <xs:annotation>
+                        <xs:documentation>Wenn ein Zinssatz angegeben wird, so muss auch die Zinssatzmethode angegegen werden.</xs:documentation>
+                     </xs:annotation>
+                  </xs:element>
+                  <xs:element name="zinsbeginndatum" minOccurs="0" type="xs:date">
+                     <xs:annotation>
+                        <xs:documentation>Erforderlich bei Zinsenberechung</xs:documentation>
+                     </xs:annotation>
+                  </xs:element>
+                  <xs:element name="zinsendedatum" minOccurs="0" type="xs:date"/>
+               </xs:sequence>
+            </xs:complexType>
+         </xs:element>
+      </xs:sequence>
+   </xs:complexType>
+   <xs:complexType name="Type.GVZ.Schuldtitel">
+      <xs:sequence>
+         <xs:element name="titelart" type="tns:Code.GVZ.Titelart"/>
+         <xs:element name="titelbezeichnung" minOccurs="0" type="din91379:datatypeC">
+            <xs:annotation>
+               <xs:documentation>Z.B. wenn in Element 'titelart' Sonstiger ausgewählt worden ist.</xs:documentation>
+            </xs:annotation>
+         </xs:element>
+         <xs:element name="aktenzeichen" type="tns:Type.GDS.Aktenzeichen"/>
+         <xs:element name="auswahl_ausstellendeBehoerde">
+            <xs:annotation>
+               <xs:documentation>Wer hat den Schuldtitel ausgestellt / erlassen?</xs:documentation>
+            </xs:annotation>
+            <xs:complexType>
+               <xs:choice>
+                  <xs:element name="gericht" type="tns:Code.GDS.Gerichte.Typ3"/>
+                  <xs:element name="sonstige" type="din91379:datatypeD"/>
+               </xs:choice>
+            </xs:complexType>
+         </xs:element>
+         <xs:element name="titeldatum" type="xs:date">
+            <xs:annotation>
+               <xs:documentation>Wann wurde der Schuldtitel ausgestellt / erlassen?</xs:documentation>
+            </xs:annotation>
+         </xs:element>
+         <xs:element name="zustelldatum" minOccurs="0" type="xs:date">
+            <xs:annotation>
+               <xs:documentation>Wann wurde der Schuldtitel zugestellt?</xs:documentation>
+            </xs:annotation>
+         </xs:element>
+         <xs:element name="rechtsnachfolgedatum" minOccurs="0" type="xs:date">
+            <xs:annotation>
+               <xs:documentation>Enthält der Schuldtitel eine Rechtsnachfolgeklausel, wenn ja, von wann?</xs:documentation>
+            </xs:annotation>
+         </xs:element>
+         <xs:element name="rechtsnachfolgezustelldatum" minOccurs="0" type="xs:date">
+            <xs:annotation>
+               <xs:documentation>Wann wurde der Schuldtitel mit Rechtsnachfolgeklausel zugestellt?</xs:documentation>
+            </xs:annotation>
+         </xs:element>
+      </xs:sequence>
+   </xs:complexType>
+   <xs:complexType name="Type.GVZ.Sonderakte">
+      <xs:sequence>
+         <xs:element name="dr.nummer" type="xs:integer">
+            <xs:annotation>
+               <xs:documentation>Die lfd. Nummer aus dem Dienstregister der exportierten Sonderakte - ohne Jahreszahl</xs:documentation>
+            </xs:annotation>
+         </xs:element>
+         <xs:element name="dr.jahrgang" type="xs:integer">
+            <xs:annotation>
+               <xs:documentation>Der Jahrgang der exportierten Sonderakte - vierstellig - z.B. 2020</xs:documentation>
+            </xs:annotation>
+         </xs:element>
+         <xs:element name="dr.register" type="xs:integer">
+            <xs:annotation>
+               <xs:documentation>Das Register der exportierten Sonderakte: 1=Dienstregister I 2=Dienstregister II</xs:documentation>
+            </xs:annotation>
+         </xs:element>
+         <xs:element name="eingangsdatum" type="xs:date">
+            <xs:annotation>
+               <xs:documentation>Eingangsdatum der exportierten Sonderakte</xs:documentation>
+            </xs:annotation>
+         </xs:element>
+         <xs:element name="bemerkung" minOccurs="0" type="din91379:datatypeC">
+            <xs:annotation>
+               <xs:documentation>Allgemeine Bemerkung zur Akte</xs:documentation>
+            </xs:annotation>
+         </xs:element>
+         <xs:element name="auftrag">
+            <xs:complexType>
+               <xs:sequence>
+                  <xs:element name="auftragsart" maxOccurs="unbounded">
+                     <xs:complexType>
+                        <xs:sequence>
+                           <xs:element name="auftragsart.code" type="tns:Code.GVZ.Auftragsart">
+                              <xs:annotation>
+                                 <xs:documentation>Hier werden die Gläubigeranträge (Auftragsarten) übergeben, die innerhalb eines Auftrages gestellt sind.</xs:documentation>
+                              </xs:annotation>
+                           </xs:element>
+                           <xs:element name="auftragsart.datum" type="xs:date">
+                              <xs:annotation>
+                                 <xs:documentation>Datum ab wann die jeweilige Auftragsart statistisch gezählt wird.</xs:documentation>
+                              </xs:annotation>
+                           </xs:element>
+                        </xs:sequence>
+                     </xs:complexType>
+                  </xs:element>
+               </xs:sequence>
+            </xs:complexType>
+         </xs:element>
+         <xs:element name="ref.rollennummer"
+                     minOccurs="2"
+                     maxOccurs="unbounded"
+                     type="tns:Type.GDS.Ref.Rollennummer">
+            <xs:annotation>
+               <xs:documentation>In jeder Sonderakte werden mindestens zwei Beteiligte (Gläubiger, Schuldner) über ihre Rollennummer referenziert.</xs:documentation>
+            </xs:annotation>
+         </xs:element>
+         <xs:element name="schuldtitel"
+                     maxOccurs="unbounded"
+                     type="tns:Type.GVZ.Schuldtitel"/>
+         <xs:element name="forderung" minOccurs="0" type="tns:Type.GVZ.Forderung"/>
+      </xs:sequence>
+   </xs:complexType>
+   <xs:element name="nachricht.gvz.datenaustausch.2500001">
+      <xs:complexType>
+         <xs:sequence>
+            <xs:element name="nachrichtenkopf" type="tns:Type.GDS.Nachrichtenkopf"/>
+            <xs:element name="grunddaten" type="tns:Type.GDS.Grunddaten"/>
+            <xs:element name="schriftgutobjekte"
+                        minOccurs="0"
+                        type="tns:Type.GDS.Schriftgutobjekte">
+               <xs:annotation>
+                  <xs:documentation>Dieses Element wird nur für die Kommunikation mit der elektronischen Aktenablage für Gerichtsvollzieher verwendet.</xs:documentation>
+               </xs:annotation>
+            </xs:element>
+            <xs:element name="fachdaten">
+               <xs:complexType>
+                  <xs:sequence>
+                     <xs:element name="sonderakte"
+                                 maxOccurs="unbounded"
+                                 type="tns:Type.GVZ.Sonderakte"/>
+                  </xs:sequence>
+               </xs:complexType>
+            </xs:element>
+         </xs:sequence>
+      </xs:complexType>
+   </xs:element>
+   <xs:element name="nachricht.gvz.uebernahmebestaetigung.2500002">
+      <xs:complexType>
+         <xs:sequence>
+            <xs:element name="nachrichtenkopf" type="tns:Type.GDS.Nachrichtenkopf"/>
+            <xs:element name="fachdaten">
+               <xs:complexType>
+                  <xs:sequence>
+                     <xs:element name="uebernahmebestaetigung" maxOccurs="unbounded">
+                        <xs:annotation>
+                           <xs:documentation>Für jede Sonderakte eine Übernahmebestätigung</xs:documentation>
+                        </xs:annotation>
+                        <xs:complexType>
+                           <xs:sequence>
+                              <xs:element name="az.abgebenderGV">
+                                 <xs:complexType>
+                                    <xs:sequence>
+                                       <xs:element name="dr.nummer" type="xs:integer">
+                                          <xs:annotation>
+                                             <xs:documentation>Bisherige DR-Nummer</xs:documentation>
+                                          </xs:annotation>
+                                       </xs:element>
+                                       <xs:element name="dr.jahrgang" type="xs:integer"/>
+                                       <xs:element name="dr.register" type="din91379:datatypeC"/>
+                                    </xs:sequence>
+                                 </xs:complexType>
+                              </xs:element>
+                              <xs:element name="az.uebernehmenderGV">
+                                 <xs:complexType>
+                                    <xs:sequence>
+                                       <xs:element name="dr.nummer" type="xs:integer">
+                                          <xs:annotation>
+                                             <xs:documentation>Neue DR-Nummer</xs:documentation>
+                                          </xs:annotation>
+                                       </xs:element>
+                                       <xs:element name="dr.jahrgang" type="xs:integer"/>
+                                       <xs:element name="dr.register" type="din91379:datatypeC"/>
+                                    </xs:sequence>
+                                 </xs:complexType>
+                              </xs:element>
+                           </xs:sequence>
+                        </xs:complexType>
+                     </xs:element>
+                  </xs:sequence>
+               </xs:complexType>
+            </xs:element>
+         </xs:sequence>
+      </xs:complexType>
+   </xs:element>
+</xs:schema>

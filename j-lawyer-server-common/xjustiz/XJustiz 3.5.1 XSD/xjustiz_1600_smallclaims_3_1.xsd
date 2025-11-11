@@ -1,0 +1,556 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema"
+           xmlns:tns="http://www.xjustiz.de"
+           xmlns:din91379="urn:xoev-de:kosit:xoev:datentyp:din-91379_2022-08"
+           targetNamespace="http://www.xjustiz.de"
+           version="3.1.1"
+           elementFormDefault="qualified"
+           attributeFormDefault="unqualified">
+   <xs:annotation>
+      <xs:appinfo>
+         <standard>
+            <nameLang>Strukturierte Fachdaten für die Kommunikation im elektronischen Rechtsverkehr</nameLang>
+            <nameKurz>XJustiz</nameKurz>
+            <nameTechnisch>xjustiz</nameTechnisch>
+            <kennung>urn:xoev-de:blk-ag-it-standards:standard:xjustiz</kennung>
+            <beschreibung>XJustiz ist der bundesweit einheitliche Standard für den Austausch strukturierter elektronischer Informationen mit der Justiz.</beschreibung>
+         </standard>
+         <versionStandard>
+            <version>3.5.1</version>
+            <beschreibung>XJustiz beschreibt ein standardisiertes Datenaustauschformat für die elektronische Kommunikation innerhalb und mit der Justizverwaltung.</beschreibung>
+            <versionXOEVProfil>1.7.2</versionXOEVProfil>
+            <versionXOEVHandbuch>2.3.1</versionXOEVHandbuch>
+            <versionXGenerator>3.1.1</versionXGenerator>
+            <versionModellierungswerkzeug>19.0 SP3</versionModellierungswerkzeug>
+            <nameModellierungswerkzeug>MagicDraw</nameModellierungswerkzeug>
+         </versionStandard>
+      </xs:appinfo>
+   </xs:annotation>
+   <xs:include schemaLocation="xjustiz_0000_grunddatensatz_3_5.xsd"/>
+   <xs:include schemaLocation="xjustiz_1610_cl_smallclaims_3_0.xsd"/>
+   <xs:import schemaLocation="din-norm-91379-datatypes.xsd"
+              namespace="urn:xoev-de:kosit:xoev:datentyp:din-91379_2022-08"/>
+   <xs:complexType name="Type.SC.MuendlicheVerhandlung">
+      <xs:sequence>
+         <xs:element name="flag.muendlicheVerhandlung" default="false" type="xs:boolean"/>
+         <xs:element name="begruendungMuendlicheVerhandlung"
+                     minOccurs="0"
+                     type="din91379:datatypeC"/>
+      </xs:sequence>
+   </xs:complexType>
+   <xs:complexType name="Type.SC.OrtDatumUnterschrift">
+      <xs:sequence>
+         <xs:element name="ort" type="din91379:datatypeB"/>
+         <xs:element name="datum" type="xs:date"/>
+         <xs:element name="unterschrift" minOccurs="0" type="din91379:datatypeC">
+            <xs:annotation>
+               <xs:documentation>EGVP; elektronische Signatur</xs:documentation>
+            </xs:annotation>
+         </xs:element>
+      </xs:sequence>
+   </xs:complexType>
+   <xs:complexType name="Type.SC.SonstigeAngabenBeteiligter">
+      <xs:sequence>
+         <xs:element name="ref.rollennummer" type="tns:Type.GDS.Ref.Rollennummer">
+            <xs:annotation>
+               <xs:documentation>Die weiteren Angaben werden über ref.rollennummer referenziert</xs:documentation>
+            </xs:annotation>
+         </xs:element>
+         <xs:element name="freitext" type="din91379:datatypeC">
+            <xs:annotation>
+               <xs:documentation>Freitexteingabe; weitere Angaben zum Beteiligten</xs:documentation>
+            </xs:annotation>
+         </xs:element>
+      </xs:sequence>
+   </xs:complexType>
+   <xs:complexType name="Type.SC.Zahlung">
+      <xs:sequence>
+         <xs:element name="zahlungsart" minOccurs="0" type="tns:Code.SC.Zahlungsart"/>
+         <xs:element name="sonstigeZahlungsart" minOccurs="0" type="din91379:datatypeC"/>
+         <xs:element name="bankverbindung"
+                     minOccurs="0"
+                     type="tns:Type.GDS.Bankverbindung"/>
+         <xs:element name="kreditkartendaten"
+                     minOccurs="0"
+                     type="tns:Type.GDS.Kreditkartendaten"/>
+      </xs:sequence>
+   </xs:complexType>
+   <xs:complexType name="Type.SC.Zinsforderung">
+      <xs:sequence>
+         <xs:element name="flag.zinsforderung" default="false" type="xs:boolean"/>
+         <xs:element name="zinsen" minOccurs="0">
+            <xs:annotation>
+               <xs:documentation>Beim gesetzlichen Zinssatz wird der %-Wert nicht angegeben. Der Zinsbeginn muß sowohl beim gesetzlichen als auch beim vertraglichen Zinssatz angegeben werden.</xs:documentation>
+            </xs:annotation>
+            <xs:complexType>
+               <xs:sequence>
+                  <xs:element name="vertraglicherZinssatz" minOccurs="0">
+                     <xs:annotation>
+                        <xs:documentation>Im Formular muß mindestens ein Wert angegeben werden; es können alle drei Werte angegeben werden.</xs:documentation>
+                     </xs:annotation>
+                     <xs:complexType>
+                        <xs:sequence>
+                           <xs:element name="zinssatz" minOccurs="0" type="xs:decimal">
+                              <xs:annotation>
+                                 <xs:documentation>vertraglicher Zinssatz in %</xs:documentation>
+                              </xs:annotation>
+                           </xs:element>
+                           <xs:element name="basiszinssatz" minOccurs="0" type="xs:decimal">
+                              <xs:annotation>
+                                 <xs:documentation>Bitte geben Sie die Prozentpunktezahl über dem Zinssatz der EZB an; wenn der EZB Zinssatz z.B. 4 % beträgt und Sie 5 % Zinsen fordern, geben Sie "1" an.</xs:documentation>
+                              </xs:annotation>
+                           </xs:element>
+                           <xs:element name="andererWert" minOccurs="0" type="xs:decimal"/>
+                        </xs:sequence>
+                     </xs:complexType>
+                  </xs:element>
+                  <xs:element name="zinsbeginn" minOccurs="0" type="xs:date">
+                     <xs:annotation>
+                        <xs:documentation>Der Zinsbeginn muß sowohl bei einem vertraglichen Zinssatz, als auch bei einem gesetzlichen Zinssatz angegeben werden.</xs:documentation>
+                     </xs:annotation>
+                  </xs:element>
+               </xs:sequence>
+            </xs:complexType>
+         </xs:element>
+      </xs:sequence>
+   </xs:complexType>
+   <xs:element name="nachricht.sc.form_a_klageformblatt.1600001">
+      <xs:complexType>
+         <xs:sequence>
+            <xs:element name="nachrichtenkopf" type="tns:Type.GDS.Nachrichtenkopf"/>
+            <xs:element name="grunddaten" minOccurs="0" type="tns:Type.GDS.Grunddaten"/>
+            <xs:element name="schriftgutobjekte"
+                        minOccurs="0"
+                        type="tns:Type.GDS.Schriftgutobjekte"/>
+            <xs:element name="fachdaten">
+               <xs:complexType>
+                  <xs:sequence>
+                     <xs:element name="forderung" maxOccurs="2">
+                        <xs:complexType>
+                           <xs:sequence>
+                              <xs:element name="verfahrensgegenstand">
+                                 <xs:complexType>
+                                    <xs:sequence>
+                                       <xs:element name="gegenstand" minOccurs="0" type="din91379:datatypeC">
+                                          <xs:annotation>
+                                             <xs:documentation>Gegenstand der Forderung</xs:documentation>
+                                          </xs:annotation>
+                                       </xs:element>
+                                       <xs:element name="gegenstandswert">
+                                          <xs:complexType>
+                                             <xs:sequence>
+                                                <xs:element name="zahl" type="xs:double"/>
+                                                <xs:element name="auswahl_waehrung">
+                                                   <xs:complexType>
+                                                      <xs:choice>
+                                                         <xs:element name="waehrungArt" type="tns:Code.GDS.Waehrung.Typ3"/>
+                                                         <xs:element name="sonstigeWaehrung" type="din91379:datatypeC"/>
+                                                      </xs:choice>
+                                                   </xs:complexType>
+                                                </xs:element>
+                                                <xs:element name="zinsforderungGegenstandswert" type="tns:Type.SC.Zinsforderung"/>
+                                             </xs:sequence>
+                                          </xs:complexType>
+                                       </xs:element>
+                                    </xs:sequence>
+                                 </xs:complexType>
+                              </xs:element>
+                              <xs:element name="beweismittel" maxOccurs="3">
+                                 <xs:complexType>
+                                    <xs:sequence>
+                                       <xs:element name="urkundenbeweis" minOccurs="0" type="din91379:datatypeC"/>
+                                       <xs:element name="zeugenbeweis" minOccurs="0" type="din91379:datatypeC"/>
+                                       <xs:element name="sonstigeBeweismittel" minOccurs="0" type="din91379:datatypeC"/>
+                                    </xs:sequence>
+                                 </xs:complexType>
+                              </xs:element>
+                              <xs:element name="klageBegruendung" minOccurs="0" type="din91379:datatypeC"/>
+                              <xs:element name="erstattungVerfahrenskosten">
+                                 <xs:complexType>
+                                    <xs:sequence>
+                                       <xs:element name="flag.erstattung" default="false" type="xs:boolean"/>
+                                       <xs:element name="naehereAngabenErstattung"
+                                                   minOccurs="0"
+                                                   type="din91379:datatypeC"/>
+                                       <xs:element name="zinsforderungErstattung" type="tns:Type.SC.Zinsforderung"/>
+                                    </xs:sequence>
+                                 </xs:complexType>
+                              </xs:element>
+                           </xs:sequence>
+                        </xs:complexType>
+                     </xs:element>
+                     <xs:element name="gerichtlicheZustaendigkeit">
+                        <xs:complexType>
+                           <xs:sequence>
+                              <xs:element name="begruendung"
+                                          maxOccurs="8"
+                                          type="tns:Code.SC.GerichtlicheZustaendigkeit"/>
+                              <xs:element name="sonstigerZustaendigkeitsgrund"
+                                          minOccurs="0"
+                                          type="din91379:datatypeC"/>
+                           </xs:sequence>
+                        </xs:complexType>
+                     </xs:element>
+                     <xs:element name="grenzueberschreitenderSachverhalt">
+                        <xs:complexType>
+                           <xs:sequence>
+                              <xs:element name="staat.aufenthaltKlaeger" type="tns:Code.GDS.Staaten.Typ3">
+                                 <xs:annotation>
+                                    <xs:documentation>Staat des Wohnsitzes oder gewöhlichen Aufenthalts des Klägers</xs:documentation>
+                                 </xs:annotation>
+                              </xs:element>
+                              <xs:element name="staat.aufenthaltBeklagter" type="tns:Code.GDS.Staaten.Typ3">
+                                 <xs:annotation>
+                                    <xs:documentation>Staat des Wohnsitzes oder gewöhlichen Aufenthalts des Beklagten</xs:documentation>
+                                 </xs:annotation>
+                              </xs:element>
+                              <xs:element name="staat.gericht" type="tns:Code.GDS.Staaten.Typ3"/>
+                           </xs:sequence>
+                        </xs:complexType>
+                     </xs:element>
+                     <xs:element name="bezahlungGerichtsgebuehren">
+                        <xs:complexType>
+                           <xs:sequence>
+                              <xs:element name="eingangBeiGericht" minOccurs="0" type="xs:date"/>
+                              <xs:element name="zahlungGebuehren" type="tns:Type.SC.Zahlung"/>
+                              <xs:element name="sprachCode" type="din91379:datatypeC"/>
+                           </xs:sequence>
+                        </xs:complexType>
+                     </xs:element>
+                     <xs:element name="zahlungUrteil" type="tns:Type.SC.Zahlung"/>
+                     <xs:element name="statement">
+                        <xs:complexType>
+                           <xs:sequence>
+                              <xs:element name="unterschrift">
+                                 <xs:complexType>
+                                    <xs:sequence>
+                                       <xs:element name="name" type="din91379:datatypeE">
+                                          <xs:annotation>
+                                             <xs:documentation>Name des Klägers</xs:documentation>
+                                          </xs:annotation>
+                                       </xs:element>
+                                       <xs:element name="ortDatumUnterschrift" type="tns:Type.SC.OrtDatumUnterschrift"/>
+                                    </xs:sequence>
+                                 </xs:complexType>
+                              </xs:element>
+                              <xs:element name="muendlicheVerhandlung" type="tns:Type.SC.MuendlicheVerhandlung"/>
+                              <xs:element name="flag.bestaetigungUrteil" default="false" type="xs:boolean"/>
+                           </xs:sequence>
+                        </xs:complexType>
+                     </xs:element>
+                  </xs:sequence>
+               </xs:complexType>
+            </xs:element>
+         </xs:sequence>
+      </xs:complexType>
+   </xs:element>
+   <xs:element name="nachricht.sc.form_b_korrekturformblatt.1600002">
+      <xs:complexType>
+         <xs:sequence>
+            <xs:element name="nachrichtenkopf" type="tns:Type.GDS.Nachrichtenkopf"/>
+            <xs:element name="grunddaten" minOccurs="0" type="tns:Type.GDS.Grunddaten"/>
+            <xs:element name="schriftgutobjekte"
+                        minOccurs="0"
+                        type="tns:Type.GDS.Schriftgutobjekte"/>
+            <xs:element name="fachdaten">
+               <xs:complexType>
+                  <xs:sequence>
+                     <xs:element name="eingabefehler">
+                        <xs:complexType>
+                           <xs:sequence>
+                              <xs:element name="fristdatum" type="xs:date"/>
+                              <xs:element name="spracheFormA"
+                                          minOccurs="0"
+                                          maxOccurs="3"
+                                          type="tns:Code.GDS.Sprachen">
+                                 <xs:annotation>
+                                    <xs:documentation>Das Klageformblatt wurde nicht in der richtigen Sprache ausgefüllt.</xs:documentation>
+                                 </xs:annotation>
+                              </xs:element>
+                              <xs:element name="sonstigeFehler" minOccurs="0" type="din91379:datatypeC"/>
+                           </xs:sequence>
+                        </xs:complexType>
+                     </xs:element>
+                     <xs:element name="ortDatumUnterschrift" type="tns:Type.SC.OrtDatumUnterschrift"/>
+                  </xs:sequence>
+               </xs:complexType>
+            </xs:element>
+         </xs:sequence>
+      </xs:complexType>
+   </xs:element>
+   <xs:element name="nachricht.sc.form_c1_antwortformblatt.1600003">
+      <xs:complexType>
+         <xs:sequence>
+            <xs:element name="nachrichtenkopf" type="tns:Type.GDS.Nachrichtenkopf"/>
+            <xs:element name="grunddaten" minOccurs="0" type="tns:Type.GDS.Grunddaten"/>
+            <xs:element name="schriftgutobjekte"
+                        minOccurs="0"
+                        type="tns:Type.GDS.Schriftgutobjekte"/>
+            <xs:element name="fachdaten">
+               <xs:complexType>
+                  <xs:sequence>
+                     <xs:element name="anerkennungForderung">
+                        <xs:complexType>
+                           <xs:choice>
+                              <xs:element name="flag.ja" fixed="true" type="xs:boolean"/>
+                              <xs:element name="auswahl_neinTeilweise">
+                                 <xs:annotation>
+                                    <xs:documentation>Wenn mit "Nein" oder "Teilweise" geantwortet wurde, sollten die Gründe dafür angegeben werden.</xs:documentation>
+                                 </xs:annotation>
+                                 <xs:complexType>
+                                    <xs:sequence>
+                                       <xs:element name="flag.nein" default="false" type="xs:boolean"/>
+                                       <xs:element name="flag.teilweise" default="false" type="xs:boolean"/>
+                                       <xs:element name="begruendungKeinSmallClaims"
+                                                   minOccurs="0"
+                                                   type="din91379:datatypeC">
+                                          <xs:annotation>
+                                             <xs:documentation>Begründung, warum die Klage nicht in den Anwendungsbereich des europäischen Verfahrens für geringfügige Forderungen fällt.</xs:documentation>
+                                          </xs:annotation>
+                                       </xs:element>
+                                       <xs:element name="sonstigeGruende" minOccurs="0" type="din91379:datatypeC"/>
+                                    </xs:sequence>
+                                 </xs:complexType>
+                              </xs:element>
+                           </xs:choice>
+                        </xs:complexType>
+                     </xs:element>
+                     <xs:element name="beweismittelBestreitung" minOccurs="0">
+                        <xs:complexType>
+                           <xs:sequence>
+                              <xs:element name="urkundenbeweis.bestreitung"
+                                          minOccurs="0"
+                                          type="din91379:datatypeC"/>
+                              <xs:element name="zeugenbeweis.bestreitung"
+                                          minOccurs="0"
+                                          type="din91379:datatypeC"/>
+                              <xs:element name="sonstigeBeweismittel.bestreitung"
+                                          minOccurs="0"
+                                          type="din91379:datatypeC"/>
+                           </xs:sequence>
+                        </xs:complexType>
+                     </xs:element>
+                     <xs:element name="muendlicheVerhandlung">
+                        <xs:complexType>
+                           <xs:sequence>
+                              <xs:element name="flag.muendlicheVerhandlung" default="false" type="xs:boolean"/>
+                              <xs:element name="begruendungMuendlicheVerhandlung"
+                                          minOccurs="0"
+                                          type="din91379:datatypeC"/>
+                           </xs:sequence>
+                        </xs:complexType>
+                     </xs:element>
+                     <xs:element name="erstattungVerfahrenskosten">
+                        <xs:complexType>
+                           <xs:sequence>
+                              <xs:element name="flag.erstattungVerfahrenskosten"
+                                          default="false"
+                                          type="xs:boolean"/>
+                              <xs:element name="begruendungErstattungVerfahrenskosten"
+                                          minOccurs="0"
+                                          type="din91379:datatypeC"/>
+                           </xs:sequence>
+                        </xs:complexType>
+                     </xs:element>
+                     <xs:element name="widerklage">
+                        <xs:complexType>
+                           <xs:sequence>
+                              <xs:element name="flag.widerklage" default="false" type="xs:boolean"/>
+                              <xs:element name="begruendungWiderklage"
+                                          minOccurs="0"
+                                          type="din91379:datatypeC"/>
+                           </xs:sequence>
+                        </xs:complexType>
+                     </xs:element>
+                     <xs:element name="sonstigeAngaben" minOccurs="0" type="din91379:datatypeC"/>
+                     <xs:element name="ortDatumUnterschrift" type="tns:Type.SC.OrtDatumUnterschrift"/>
+                  </xs:sequence>
+               </xs:complexType>
+            </xs:element>
+         </xs:sequence>
+      </xs:complexType>
+   </xs:element>
+   <xs:element name="nachricht.sc.form_d_urteil.1600004">
+      <xs:complexType>
+         <xs:sequence>
+            <xs:element name="nachrichtenkopf" type="tns:Type.GDS.Nachrichtenkopf"/>
+            <xs:element name="grunddaten" minOccurs="0" type="tns:Type.GDS.Grunddaten"/>
+            <xs:element name="schriftgutobjekte"
+                        minOccurs="0"
+                        type="tns:Type.GDS.Schriftgutobjekte"/>
+            <xs:element name="fachdaten">
+               <xs:complexType>
+                  <xs:sequence>
+                     <xs:element name="urteil">
+                        <xs:complexType>
+                           <xs:sequence>
+                              <xs:element name="datum" type="xs:date"/>
+                              <xs:element name="aktenzeichen" type="tns:Type.GDS.Aktenzeichen"/>
+                              <xs:element name="inhaltUrteil" type="din91379:datatypeC"/>
+                              <xs:element name="nameBeklagter" type="din91379:datatypeE"/>
+                              <xs:element name="nameKlaeger" type="din91379:datatypeE"/>
+                              <xs:element name="hauptforderung" type="xs:double"/>
+                              <xs:element name="zinsen" type="xs:double"/>
+                              <xs:element name="kosten" type="xs:double"/>
+                              <xs:element name="urteilText" type="din91379:datatypeC"/>
+                           </xs:sequence>
+                        </xs:complexType>
+                     </xs:element>
+                     <xs:element name="berufungsgerichtPruefung">
+                        <xs:complexType>
+                           <xs:sequence>
+                              <xs:element name="flag.berufungsgerichtPruefung"
+                                          default="false"
+                                          type="xs:boolean"/>
+                              <xs:element name="vorrang" minOccurs="0">
+                                 <xs:complexType>
+                                    <xs:sequence>
+                                       <xs:element name="datumVorrang" type="xs:date"/>
+                                       <xs:element name="aktenzeichenVorrang" type="tns:Type.GDS.Aktenzeichen">
+                                          <xs:annotation>
+                                             <xs:documentation>Referenz zu einem vorherergangenen Urteil</xs:documentation>
+                                          </xs:annotation>
+                                       </xs:element>
+                                    </xs:sequence>
+                                 </xs:complexType>
+                              </xs:element>
+                           </xs:sequence>
+                        </xs:complexType>
+                     </xs:element>
+                     <xs:element name="ortDatumUnterschrift" type="tns:Type.SC.OrtDatumUnterschrift"/>
+                  </xs:sequence>
+               </xs:complexType>
+            </xs:element>
+         </xs:sequence>
+      </xs:complexType>
+   </xs:element>
+   <xs:element name="nachricht.sc.form_c2_antwortformblatt.1600005">
+      <xs:complexType>
+         <xs:sequence>
+            <xs:element name="nachrichtenkopf" type="tns:Type.GDS.Nachrichtenkopf"/>
+            <xs:element name="grunddaten" minOccurs="0" type="tns:Type.GDS.Grunddaten"/>
+            <xs:element name="schriftgutobjekte"
+                        minOccurs="0"
+                        type="tns:Type.GDS.Schriftgutobjekte"/>
+            <xs:element name="fachdaten">
+               <xs:complexType>
+                  <xs:sequence>
+                     <xs:element name="anerkennungForderung">
+                        <xs:complexType>
+                           <xs:choice>
+                              <xs:element name="flag.ja" fixed="true" type="xs:boolean"/>
+                              <xs:element name="auswahl_neinTeilweise">
+                                 <xs:annotation>
+                                    <xs:documentation>Wenn mit "Nein" oder "Teilweise" geantwortet wurde, sollten die Gründe dafür angegeben werden.</xs:documentation>
+                                 </xs:annotation>
+                                 <xs:complexType>
+                                    <xs:sequence>
+                                       <xs:element name="flag.nein" default="false" type="xs:boolean"/>
+                                       <xs:element name="flag.teilweise" default="false" type="xs:boolean"/>
+                                       <xs:element name="begruendungKeinSmallClaims"
+                                                   minOccurs="0"
+                                                   type="din91379:datatypeC">
+                                          <xs:annotation>
+                                             <xs:documentation>Begründung, warum die Klage nicht in den Anwendungsbereich des europäischen Verfahrens für geringfügige Forderungen fällt.</xs:documentation>
+                                          </xs:annotation>
+                                       </xs:element>
+                                       <xs:element name="sonstigeGruende" minOccurs="0" type="din91379:datatypeC"/>
+                                    </xs:sequence>
+                                 </xs:complexType>
+                              </xs:element>
+                           </xs:choice>
+                        </xs:complexType>
+                     </xs:element>
+                     <xs:element name="beweismittelBestreitung" minOccurs="0">
+                        <xs:complexType>
+                           <xs:sequence>
+                              <xs:element name="urkundenbeweis.bestreitung"
+                                          minOccurs="0"
+                                          type="din91379:datatypeC"/>
+                              <xs:element name="zeugenbeweis.bestreitung"
+                                          minOccurs="0"
+                                          type="din91379:datatypeC"/>
+                              <xs:element name="sonstigeBeweismittel.bestreitung"
+                                          minOccurs="0"
+                                          type="din91379:datatypeC"/>
+                           </xs:sequence>
+                        </xs:complexType>
+                     </xs:element>
+                     <xs:element name="muendlicheVerhandlung">
+                        <xs:complexType>
+                           <xs:sequence>
+                              <xs:element name="flag.muendlicheVerhandlung" default="false" type="xs:boolean"/>
+                              <xs:element name="begruendungMuendlicheVerhandlung"
+                                          minOccurs="0"
+                                          type="din91379:datatypeC"/>
+                           </xs:sequence>
+                        </xs:complexType>
+                     </xs:element>
+                     <xs:element name="erstattungVerfahrenskosten">
+                        <xs:complexType>
+                           <xs:sequence>
+                              <xs:element name="flag.erstattungVerfahrenskosten"
+                                          default="false"
+                                          type="xs:boolean"/>
+                              <xs:element name="begruendungErstattungVerfahrenskosten"
+                                          minOccurs="0"
+                                          type="din91379:datatypeC"/>
+                           </xs:sequence>
+                        </xs:complexType>
+                     </xs:element>
+                     <xs:element name="widerklage">
+                        <xs:complexType>
+                           <xs:sequence>
+                              <xs:element name="flag.widerklage" default="false" type="xs:boolean"/>
+                              <xs:element name="begruendungWiderklage"
+                                          minOccurs="0"
+                                          type="din91379:datatypeC"/>
+                           </xs:sequence>
+                        </xs:complexType>
+                     </xs:element>
+                     <xs:element name="sonstigeAngaben" minOccurs="0" type="din91379:datatypeC"/>
+                     <xs:element name="ortDatumUnterschrift" type="tns:Type.SC.OrtDatumUnterschrift"/>
+                  </xs:sequence>
+               </xs:complexType>
+            </xs:element>
+         </xs:sequence>
+      </xs:complexType>
+   </xs:element>
+   <xs:element name="nachricht.sc.freeformletter.1600006">
+      <xs:complexType>
+         <xs:sequence>
+            <xs:element name="nachrichtenkopf" type="tns:Type.GDS.Nachrichtenkopf"/>
+            <xs:element name="grunddaten" minOccurs="0" type="tns:Type.GDS.Grunddaten"/>
+            <xs:element name="schriftgutobjekte"
+                        minOccurs="0"
+                        type="tns:Type.GDS.Schriftgutobjekte"/>
+            <xs:element name="fachdaten">
+               <xs:complexType>
+                  <xs:sequence>
+                     <xs:element name="freitextBrief" type="din91379:datatypeC"/>
+                     <xs:element name="ortDatumUnterschrift" type="tns:Type.SC.OrtDatumUnterschrift"/>
+                  </xs:sequence>
+               </xs:complexType>
+            </xs:element>
+         </xs:sequence>
+      </xs:complexType>
+   </xs:element>
+   <xs:element name="nachricht.sc.withdrawal.1600007">
+      <xs:complexType>
+         <xs:sequence>
+            <xs:element name="nachrichtenkopf" type="tns:Type.GDS.Nachrichtenkopf"/>
+            <xs:element name="grunddaten" minOccurs="0" type="tns:Type.GDS.Grunddaten"/>
+            <xs:element name="schriftgutobjekte"
+                        minOccurs="0"
+                        type="tns:Type.GDS.Schriftgutobjekte"/>
+            <xs:element name="fachdaten">
+               <xs:complexType>
+                  <xs:sequence>
+                     <xs:element name="ortDatumUnterschrift" type="tns:Type.SC.OrtDatumUnterschrift"/>
+                  </xs:sequence>
+               </xs:complexType>
+            </xs:element>
+         </xs:sequence>
+      </xs:complexType>
+   </xs:element>
+</xs:schema>

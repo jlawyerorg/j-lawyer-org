@@ -1,0 +1,1475 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema"
+           xmlns:tns="http://www.xjustiz.de"
+           xmlns:xoev-code="http://xoev.de/schemata/code/1_0"
+           targetNamespace="http://www.xjustiz.de"
+           version="3.1.0"
+           elementFormDefault="unqualified"
+           attributeFormDefault="unqualified">
+   <xs:annotation>
+      <xs:appinfo>
+         <standard>
+            <nameLang>Strukturierte Fachdaten für die Kommunikation im elektronischen Rechtsverkehr</nameLang>
+            <nameKurz>XJustiz</nameKurz>
+            <nameTechnisch>xjustiz</nameTechnisch>
+            <kennung>urn:xoev-de:blk-ag-it-standards:standard:xjustiz</kennung>
+            <beschreibung>XJustiz ist der bundesweit einheitliche Standard für den Austausch strukturierter elektronischer Informationen mit der Justiz.</beschreibung>
+         </standard>
+         <versionStandard>
+            <version>3.5.1</version>
+            <beschreibung>XJustiz beschreibt ein standardisiertes Datenaustauschformat für die elektronische Kommunikation innerhalb und mit der Justizverwaltung.</beschreibung>
+            <versionXOEVProfil>1.7.2</versionXOEVProfil>
+            <versionXOEVHandbuch>2.3.1</versionXOEVHandbuch>
+            <versionXGenerator>3.1.1</versionXGenerator>
+            <versionModellierungswerkzeug>19.0 SP3</versionModellierungswerkzeug>
+            <nameModellierungswerkzeug>MagicDraw</nameModellierungswerkzeug>
+         </versionStandard>
+      </xs:appinfo>
+   </xs:annotation>
+   <xs:import schemaLocation="xoev-code.xsd"
+              namespace="http://xoev.de/schemata/code/1_0"/>
+   <xs:complexType name="Code.VSTR.Anrede.Partei">
+      <xs:annotation>
+         <xs:appinfo>
+            <codeliste>
+               <nameLang>VSTR.Anrede.Partei</nameLang>
+               <nameKurz>VSTR.Anrede.Partei</nameKurz>
+               <nameTechnisch>vstr.anrede.partei</nameTechnisch>
+               <kennung>urn:xoev-de:xjustiz:codeliste:vstr.anrede.partei</kennung>
+               <beschreibung>Codeliste der verschiedenen Anrede-Varianten zu einem Beteiligten im Fachmodul 'Zentrales Vollstreckungsgericht'.</beschreibung>
+               <herausgebernameLang>BLK-AG IT-Standards in der Justiz</herausgebernameLang>
+               <herausgebernameKurz>AG IT-Standards</herausgebernameKurz>
+            </codeliste>
+            <versionCodeliste>
+               <version>1.0</version>
+               <versionCodelistenHandbuch>1.1</versionCodelistenHandbuch>
+            </versionCodeliste>
+            <codelistenspalten>
+               <code>
+                  <spaltennameLang>Schlüssel</spaltennameLang>
+                  <datentyp>string</datentyp>
+                  <codeSpalte>true</codeSpalte>
+                  <verwendung>required</verwendung>
+                  <empfohleneCodeSpalte>true</empfohleneCodeSpalte>
+               </code>
+               <wert>
+                  <spaltennameLang>Wert</spaltennameLang>
+                  <datentyp>string</datentyp>
+                  <codeSpalte>false</codeSpalte>
+                  <verwendung>required</verwendung>
+                  <empfohleneCodeSpalte>false</empfohleneCodeSpalte>
+               </wert>
+            </codelistenspalten>
+            <genutzteCodeSpalte>code</genutzteCodeSpalte>
+         </xs:appinfo>
+      </xs:annotation>
+      <xs:complexContent>
+         <xs:restriction base="xoev-code:Code">
+            <xs:sequence>
+               <xs:element name="code" type="tns:vstr.anrede.partei"/>
+            </xs:sequence>
+            <xs:attribute name="listURI"
+                          type="xs:anyURI"
+                          use="optional"
+                          fixed="urn:xoev-de:xjustiz:codeliste:vstr.anrede.partei"/>
+            <xs:attribute name="listVersionID"
+                          type="xs:normalizedString"
+                          use="optional"
+                          fixed="1.0"/>
+         </xs:restriction>
+      </xs:complexContent>
+   </xs:complexType>
+   <xs:complexType name="Code.VSTR.Eintragungsgruende.Gerichtsvollzieher.Vollstreckungsbehoerde">
+      <xs:annotation>
+         <xs:appinfo>
+            <codeliste>
+               <nameLang>VSTR.Eintragungsgruende.Gerichtsvollzieher.Vollstreckungsbehoerde</nameLang>
+               <nameKurz>VSTR.Eintragungsgruende.Gerichtsvollzieher.Vollstreckungsbehoerde</nameKurz>
+               <nameTechnisch>vstr.eintragungsgruende.gerichtsvollzieher.vollstreckungsbehoerde</nameTechnisch>
+               <kennung>urn:xoev-de:xjustiz:codeliste:vstr.eintragungsgruende.gerichtsvollzieher.vollstreckungsbehoerde</kennung>
+               <beschreibung>Codeliste der verschiedenen Eintragungsgründe der Gerichtsvollzieher bei Vollstreckung.</beschreibung>
+               <herausgebernameLang>BLK-AG IT-Standards in der Justiz</herausgebernameLang>
+               <herausgebernameKurz>AG IT-Standards</herausgebernameKurz>
+            </codeliste>
+            <versionCodeliste>
+               <version>2.0</version>
+               <versionCodelistenHandbuch>1.1</versionCodelistenHandbuch>
+            </versionCodeliste>
+            <codelistenspalten>
+               <code>
+                  <spaltennameLang>Schlüssel</spaltennameLang>
+                  <datentyp>string</datentyp>
+                  <codeSpalte>true</codeSpalte>
+                  <verwendung>required</verwendung>
+                  <empfohleneCodeSpalte>true</empfohleneCodeSpalte>
+               </code>
+               <wert>
+                  <spaltennameLang>Wert</spaltennameLang>
+                  <datentyp>string</datentyp>
+                  <codeSpalte>false</codeSpalte>
+                  <verwendung>required</verwendung>
+                  <empfohleneCodeSpalte>false</empfohleneCodeSpalte>
+               </wert>
+            </codelistenspalten>
+            <genutzteCodeSpalte>code</genutzteCodeSpalte>
+         </xs:appinfo>
+      </xs:annotation>
+      <xs:complexContent>
+         <xs:restriction base="xoev-code:Code">
+            <xs:sequence>
+               <xs:element name="code"
+                           type="tns:vstr.eintragungsgruende.gerichtsvollzieher.vollstreckungsbehoerde"/>
+            </xs:sequence>
+            <xs:attribute name="listURI"
+                          type="xs:anyURI"
+                          use="optional"
+                          fixed="urn:xoev-de:xjustiz:codeliste:vstr.eintragungsgruende.gerichtsvollzieher.vollstreckungsbehoerde"/>
+            <xs:attribute name="listVersionID"
+                          type="xs:normalizedString"
+                          use="optional"
+                          fixed="2.0"/>
+         </xs:restriction>
+      </xs:complexContent>
+   </xs:complexType>
+   <xs:complexType name="Code.VSTR.Eintragungsgruende.Insolvenzgericht">
+      <xs:annotation>
+         <xs:appinfo>
+            <codeliste>
+               <nameLang>VSTR.Eintragungsgruende.Insolvenzgericht</nameLang>
+               <nameKurz>VSTR.Eintragungsgruende.Insolvenzgericht</nameKurz>
+               <nameTechnisch>vstr.eintragungsgruende.insolvenzgericht</nameTechnisch>
+               <kennung>urn:xoev-de:xjustiz:codeliste:vstr.eintragungsgruende.insolvenzgericht</kennung>
+               <beschreibung>Codeliste der verschiedenen Eintragungsgründe im Insolvenzgericht.</beschreibung>
+               <herausgebernameLang>BLK-AG IT-Standards in der Justiz</herausgebernameLang>
+               <herausgebernameKurz>AG IT-Standards</herausgebernameKurz>
+            </codeliste>
+            <versionCodeliste>
+               <version>2.1</version>
+               <versionCodelistenHandbuch>1.1</versionCodelistenHandbuch>
+            </versionCodeliste>
+            <codelistenspalten>
+               <code>
+                  <spaltennameLang>Schlüssel</spaltennameLang>
+                  <datentyp>string</datentyp>
+                  <codeSpalte>true</codeSpalte>
+                  <verwendung>required</verwendung>
+                  <empfohleneCodeSpalte>true</empfohleneCodeSpalte>
+               </code>
+               <wert>
+                  <spaltennameLang>Wert</spaltennameLang>
+                  <datentyp>string</datentyp>
+                  <codeSpalte>false</codeSpalte>
+                  <verwendung>required</verwendung>
+                  <empfohleneCodeSpalte>false</empfohleneCodeSpalte>
+               </wert>
+            </codelistenspalten>
+            <genutzteCodeSpalte>code</genutzteCodeSpalte>
+         </xs:appinfo>
+      </xs:annotation>
+      <xs:complexContent>
+         <xs:restriction base="xoev-code:Code">
+            <xs:sequence>
+               <xs:element name="code" type="tns:vstr.eintragungsgruende.insolvenzgericht"/>
+            </xs:sequence>
+            <xs:attribute name="listURI"
+                          type="xs:anyURI"
+                          use="optional"
+                          fixed="urn:xoev-de:xjustiz:codeliste:vstr.eintragungsgruende.insolvenzgericht"/>
+            <xs:attribute name="listVersionID"
+                          type="xs:normalizedString"
+                          use="optional"
+                          fixed="2.1"/>
+         </xs:restriction>
+      </xs:complexContent>
+   </xs:complexType>
+   <xs:complexType name="Code.VSTR.Entscheidungsinhalt.Schuldnerwiderspruch">
+      <xs:annotation>
+         <xs:appinfo>
+            <codeliste>
+               <nameLang>VSTR.Entscheidungsinhalt.Schuldnerwiderspruch</nameLang>
+               <nameKurz>VSTR.Entscheidungsinhalt.Schuldnerwiderspruch</nameKurz>
+               <nameTechnisch>vstr.entscheidungsinhalt.schuldnerwiderspruch</nameTechnisch>
+               <kennung>urn:xoev-de:xjustiz:codeliste:vstr.entscheidungsinhalt.schuldnerwiderspruch</kennung>
+               <beschreibung>Codeliste der verschiedenen Entscheidungsinhalte bei einem Schuldnerwiderspruch.</beschreibung>
+               <herausgebernameLang>BLK-AG IT-Standards in der Justiz</herausgebernameLang>
+               <herausgebernameKurz>AG IT-Standards</herausgebernameKurz>
+            </codeliste>
+            <versionCodeliste>
+               <version>2.0</version>
+               <versionCodelistenHandbuch>1.1</versionCodelistenHandbuch>
+            </versionCodeliste>
+            <codelistenspalten>
+               <code>
+                  <spaltennameLang>Schlüssel</spaltennameLang>
+                  <datentyp>string</datentyp>
+                  <codeSpalte>true</codeSpalte>
+                  <verwendung>required</verwendung>
+                  <empfohleneCodeSpalte>true</empfohleneCodeSpalte>
+               </code>
+               <wert>
+                  <spaltennameLang>Wert</spaltennameLang>
+                  <datentyp>string</datentyp>
+                  <codeSpalte>false</codeSpalte>
+                  <verwendung>required</verwendung>
+                  <empfohleneCodeSpalte>false</empfohleneCodeSpalte>
+               </wert>
+            </codelistenspalten>
+            <genutzteCodeSpalte>code</genutzteCodeSpalte>
+         </xs:appinfo>
+      </xs:annotation>
+      <xs:complexContent>
+         <xs:restriction base="xoev-code:Code">
+            <xs:sequence>
+               <xs:element name="code" type="tns:vstr.entscheidungsinhalt.schuldnerwiderspruch"/>
+            </xs:sequence>
+            <xs:attribute name="listURI"
+                          type="xs:anyURI"
+                          use="optional"
+                          fixed="urn:xoev-de:xjustiz:codeliste:vstr.entscheidungsinhalt.schuldnerwiderspruch"/>
+            <xs:attribute name="listVersionID"
+                          type="xs:normalizedString"
+                          use="optional"
+                          fixed="2.0"/>
+         </xs:restriction>
+      </xs:complexContent>
+   </xs:complexType>
+   <xs:complexType name="Code.VSTR.Gerichtsvollzieher.Dienstbezeichnung">
+      <xs:annotation>
+         <xs:appinfo>
+            <codeliste>
+               <nameLang>VSTR.Gerichtsvollzieher.Dienstbezeichnung</nameLang>
+               <nameKurz>VSTR.Gerichtsvollzieher.Dienstbezeichnung</nameKurz>
+               <nameTechnisch>vstr.gerichtsvollzieher.dienstbezeichnung</nameTechnisch>
+               <kennung>urn:xoev-de:xjustiz:codeliste:vstr.gerichtsvollzieher.dienstbezeichnung</kennung>
+               <beschreibung>Codeliste der verschiedenen Dienstbezeichnungen der Gerichtsvollzieher.</beschreibung>
+               <herausgebernameLang>BLK-AG IT-Standards in der Justiz</herausgebernameLang>
+               <herausgebernameKurz>AG IT-Standards</herausgebernameKurz>
+            </codeliste>
+            <versionCodeliste>
+               <version>2.0</version>
+               <versionCodelistenHandbuch>1.1</versionCodelistenHandbuch>
+            </versionCodeliste>
+            <codelistenspalten>
+               <code>
+                  <spaltennameLang>Schlüssel</spaltennameLang>
+                  <datentyp>string</datentyp>
+                  <codeSpalte>true</codeSpalte>
+                  <verwendung>required</verwendung>
+                  <empfohleneCodeSpalte>true</empfohleneCodeSpalte>
+               </code>
+               <wert>
+                  <spaltennameLang>Wert</spaltennameLang>
+                  <datentyp>string</datentyp>
+                  <codeSpalte>false</codeSpalte>
+                  <verwendung>required</verwendung>
+                  <empfohleneCodeSpalte>false</empfohleneCodeSpalte>
+               </wert>
+            </codelistenspalten>
+            <genutzteCodeSpalte>code</genutzteCodeSpalte>
+         </xs:appinfo>
+      </xs:annotation>
+      <xs:complexContent>
+         <xs:restriction base="xoev-code:Code">
+            <xs:sequence>
+               <xs:element name="code" type="tns:vstr.gerichtsvollzieher.dienstbezeichnung"/>
+            </xs:sequence>
+            <xs:attribute name="listURI"
+                          type="xs:anyURI"
+                          use="optional"
+                          fixed="urn:xoev-de:xjustiz:codeliste:vstr.gerichtsvollzieher.dienstbezeichnung"/>
+            <xs:attribute name="listVersionID"
+                          type="xs:normalizedString"
+                          use="optional"
+                          fixed="2.0"/>
+         </xs:restriction>
+      </xs:complexContent>
+   </xs:complexType>
+   <xs:complexType name="Code.VSTR.KorrekturLoeschung">
+      <xs:annotation>
+         <xs:appinfo>
+            <codeliste>
+               <nameLang>VSTR.KorrekturLoeschung</nameLang>
+               <nameKurz>VSTR.KorrekturLoeschung</nameKurz>
+               <nameTechnisch>vstr.korrektur-loeschung</nameTechnisch>
+               <kennung>urn:xoev-de:xjustiz:codeliste:vstr.korrektur-loeschung</kennung>
+               <beschreibung>Codeliste der verschiedenen Korrekturarten bei Löschung.</beschreibung>
+               <herausgebernameLang>BLK-AG IT-Standards in der Justiz</herausgebernameLang>
+               <herausgebernameKurz>AG IT-Standards</herausgebernameKurz>
+            </codeliste>
+            <versionCodeliste>
+               <version>2.1</version>
+               <versionCodelistenHandbuch>1.1</versionCodelistenHandbuch>
+            </versionCodeliste>
+            <codelistenspalten>
+               <code>
+                  <spaltennameLang>Schlüssel</spaltennameLang>
+                  <datentyp>string</datentyp>
+                  <codeSpalte>true</codeSpalte>
+                  <verwendung>required</verwendung>
+                  <empfohleneCodeSpalte>true</empfohleneCodeSpalte>
+               </code>
+               <wert>
+                  <spaltennameLang>Wert</spaltennameLang>
+                  <datentyp>string</datentyp>
+                  <codeSpalte>false</codeSpalte>
+                  <verwendung>required</verwendung>
+                  <empfohleneCodeSpalte>false</empfohleneCodeSpalte>
+               </wert>
+            </codelistenspalten>
+            <genutzteCodeSpalte>code</genutzteCodeSpalte>
+         </xs:appinfo>
+      </xs:annotation>
+      <xs:complexContent>
+         <xs:restriction base="xoev-code:Code">
+            <xs:sequence>
+               <xs:element name="code" type="tns:vstr.korrektur-loeschung"/>
+            </xs:sequence>
+            <xs:attribute name="listURI"
+                          type="xs:anyURI"
+                          use="optional"
+                          fixed="urn:xoev-de:xjustiz:codeliste:vstr.korrektur-loeschung"/>
+            <xs:attribute name="listVersionID"
+                          type="xs:normalizedString"
+                          use="optional"
+                          fixed="2.1"/>
+         </xs:restriction>
+      </xs:complexContent>
+   </xs:complexType>
+   <xs:complexType name="Code.VSTR.Schuldnerverzeichnis.Loeschungsgruende">
+      <xs:annotation>
+         <xs:appinfo>
+            <codeliste>
+               <nameLang>VSTR.Schuldnerverzeichnis.Loeschungsgruende</nameLang>
+               <nameKurz>VSTR.Schuldnerverzeichnis.Loeschungsgruende</nameKurz>
+               <nameTechnisch>vstr.schuldnerverzeichnis.loeschungsgruende</nameTechnisch>
+               <kennung>urn:xoev-de:xjustiz:codeliste:vstr.schuldnerverzeichnis.loeschungsgruende</kennung>
+               <beschreibung>Codeliste der verschiedenen Löschungsgründe im Schuldnerverzeichnis.</beschreibung>
+               <herausgebernameLang>BLK-AG IT-Standards in der Justiz</herausgebernameLang>
+               <herausgebernameKurz>AG IT-Standards</herausgebernameKurz>
+            </codeliste>
+            <versionCodeliste>
+               <version>2.1</version>
+               <versionCodelistenHandbuch>1.1</versionCodelistenHandbuch>
+            </versionCodeliste>
+            <codelistenspalten>
+               <code>
+                  <spaltennameLang>Schlüssel</spaltennameLang>
+                  <datentyp>string</datentyp>
+                  <codeSpalte>true</codeSpalte>
+                  <verwendung>required</verwendung>
+                  <empfohleneCodeSpalte>true</empfohleneCodeSpalte>
+               </code>
+               <wert>
+                  <spaltennameLang>Wert</spaltennameLang>
+                  <datentyp>string</datentyp>
+                  <codeSpalte>false</codeSpalte>
+                  <verwendung>required</verwendung>
+                  <empfohleneCodeSpalte>false</empfohleneCodeSpalte>
+               </wert>
+            </codelistenspalten>
+            <genutzteCodeSpalte>code</genutzteCodeSpalte>
+         </xs:appinfo>
+      </xs:annotation>
+      <xs:complexContent>
+         <xs:restriction base="xoev-code:Code">
+            <xs:sequence>
+               <xs:element name="code" type="tns:vstr.schuldnerverzeichnis.loeschungsgruende"/>
+            </xs:sequence>
+            <xs:attribute name="listURI"
+                          type="xs:anyURI"
+                          use="optional"
+                          fixed="urn:xoev-de:xjustiz:codeliste:vstr.schuldnerverzeichnis.loeschungsgruende"/>
+            <xs:attribute name="listVersionID"
+                          type="xs:normalizedString"
+                          use="optional"
+                          fixed="2.1"/>
+         </xs:restriction>
+      </xs:complexContent>
+   </xs:complexType>
+   <xs:complexType name="Code.VSTR.Verarbeitungsergebnis.Schuldnerverzeichnis">
+      <xs:annotation>
+         <xs:appinfo>
+            <codeliste>
+               <nameLang>VSTR.Verarbeitungsergebnis.Schuldnerverzeichnis</nameLang>
+               <nameKurz>VSTR.Verarbeitungsergebnis.Schuldnerverzeichnis</nameKurz>
+               <nameTechnisch>vstr.verarbeitungsergebnis.schuldnerverzeichnis</nameTechnisch>
+               <kennung>urn:xoev-de:xjustiz:codeliste:vstr.verarbeitungsergebnis.schuldnerverzeichnis</kennung>
+               <beschreibung>Codeliste der verschiedenen Verarbeitungsergebnisse im Schuldnerverzeichnis.</beschreibung>
+               <herausgebernameLang>BLK-AG IT-Standards in der Justiz</herausgebernameLang>
+               <herausgebernameKurz>AG IT-Standards</herausgebernameKurz>
+            </codeliste>
+            <versionCodeliste>
+               <version>2.2</version>
+               <versionCodelistenHandbuch>1.1</versionCodelistenHandbuch>
+            </versionCodeliste>
+            <codelistenspalten>
+               <code>
+                  <spaltennameLang>Schlüssel</spaltennameLang>
+                  <datentyp>string</datentyp>
+                  <codeSpalte>true</codeSpalte>
+                  <verwendung>required</verwendung>
+                  <empfohleneCodeSpalte>true</empfohleneCodeSpalte>
+               </code>
+               <wert>
+                  <spaltennameLang>Wert</spaltennameLang>
+                  <datentyp>string</datentyp>
+                  <codeSpalte>false</codeSpalte>
+                  <verwendung>required</verwendung>
+                  <empfohleneCodeSpalte>false</empfohleneCodeSpalte>
+               </wert>
+            </codelistenspalten>
+            <genutzteCodeSpalte>code</genutzteCodeSpalte>
+         </xs:appinfo>
+      </xs:annotation>
+      <xs:complexContent>
+         <xs:restriction base="xoev-code:Code">
+            <xs:sequence>
+               <xs:element name="code" type="tns:vstr.verarbeitungsergebnis.schuldnerverzeichnis"/>
+            </xs:sequence>
+            <xs:attribute name="listURI"
+                          type="xs:anyURI"
+                          use="optional"
+                          fixed="urn:xoev-de:xjustiz:codeliste:vstr.verarbeitungsergebnis.schuldnerverzeichnis"/>
+            <xs:attribute name="listVersionID"
+                          type="xs:normalizedString"
+                          use="optional"
+                          fixed="2.2"/>
+         </xs:restriction>
+      </xs:complexContent>
+   </xs:complexType>
+   <xs:complexType name="Code.VSTR.Vermoegensverzeichnis.Art">
+      <xs:annotation>
+         <xs:appinfo>
+            <codeliste>
+               <nameLang>VSTR.Vermoegensverzeichnis.Art</nameLang>
+               <nameKurz>VSTR.Vermoegensverzeichnis.Art</nameKurz>
+               <nameTechnisch>vstr.vermoegensverzeichnis.art</nameTechnisch>
+               <kennung>urn:xoev-de:xjustiz:codeliste:vstr.vermoegensverzeichnis.art</kennung>
+               <beschreibung>Codeliste der verschiedenen Vermögensverzeichnisarten.</beschreibung>
+               <herausgebernameLang>BLK-AG IT-Standards in der Justiz</herausgebernameLang>
+               <herausgebernameKurz>AG IT-Standards</herausgebernameKurz>
+            </codeliste>
+            <versionCodeliste>
+               <version>2.1</version>
+               <versionCodelistenHandbuch>1.1</versionCodelistenHandbuch>
+            </versionCodeliste>
+            <codelistenspalten>
+               <code>
+                  <spaltennameLang>Schlüssel</spaltennameLang>
+                  <datentyp>string</datentyp>
+                  <codeSpalte>true</codeSpalte>
+                  <verwendung>required</verwendung>
+                  <empfohleneCodeSpalte>true</empfohleneCodeSpalte>
+               </code>
+               <wert>
+                  <spaltennameLang>Wert</spaltennameLang>
+                  <datentyp>string</datentyp>
+                  <codeSpalte>false</codeSpalte>
+                  <verwendung>required</verwendung>
+                  <empfohleneCodeSpalte>false</empfohleneCodeSpalte>
+               </wert>
+            </codelistenspalten>
+            <genutzteCodeSpalte>code</genutzteCodeSpalte>
+         </xs:appinfo>
+      </xs:annotation>
+      <xs:complexContent>
+         <xs:restriction base="xoev-code:Code">
+            <xs:sequence>
+               <xs:element name="code" type="tns:vstr.vermoegensverzeichnis.art"/>
+            </xs:sequence>
+            <xs:attribute name="listURI"
+                          type="xs:anyURI"
+                          use="optional"
+                          fixed="urn:xoev-de:xjustiz:codeliste:vstr.vermoegensverzeichnis.art"/>
+            <xs:attribute name="listVersionID"
+                          type="xs:normalizedString"
+                          use="optional"
+                          fixed="2.1"/>
+         </xs:restriction>
+      </xs:complexContent>
+   </xs:complexType>
+   <xs:simpleType name="vstr.anrede.partei">
+      <xs:annotation>
+         <xs:appinfo>
+            <codeliste>
+               <nameLang>VSTR.Anrede.Partei</nameLang>
+               <nameKurz>VSTR.Anrede.Partei</nameKurz>
+               <nameTechnisch>vstr.anrede.partei</nameTechnisch>
+               <kennung>urn:xoev-de:xjustiz:codeliste:vstr.anrede.partei</kennung>
+               <beschreibung>Codeliste der verschiedenen Anrede-Varianten zu einem Beteiligten im Fachmodul 'Zentrales Vollstreckungsgericht'.</beschreibung>
+               <herausgebernameLang>BLK-AG IT-Standards in der Justiz</herausgebernameLang>
+               <herausgebernameKurz>AG IT-Standards</herausgebernameKurz>
+            </codeliste>
+            <versionCodeliste>
+               <version>1.0</version>
+               <versionCodelistenHandbuch>1.1</versionCodelistenHandbuch>
+            </versionCodeliste>
+            <codelistenspalten>
+               <code>
+                  <spaltennameLang>Schlüssel</spaltennameLang>
+                  <datentyp>string</datentyp>
+                  <codeSpalte>true</codeSpalte>
+                  <verwendung>required</verwendung>
+                  <empfohleneCodeSpalte>true</empfohleneCodeSpalte>
+               </code>
+               <wert>
+                  <spaltennameLang>Wert</spaltennameLang>
+                  <datentyp>string</datentyp>
+                  <codeSpalte>false</codeSpalte>
+                  <verwendung>required</verwendung>
+                  <empfohleneCodeSpalte>false</empfohleneCodeSpalte>
+               </wert>
+            </codelistenspalten>
+         </xs:appinfo>
+      </xs:annotation>
+      <xs:restriction base="xs:token">
+         <xs:enumeration value="001">
+            <xs:annotation>
+               <xs:appinfo>
+                  <wert>Herr / Frau</wert>
+               </xs:appinfo>
+            </xs:annotation>
+         </xs:enumeration>
+         <xs:enumeration value="002">
+            <xs:annotation>
+               <xs:appinfo>
+                  <wert>Herr</wert>
+               </xs:appinfo>
+            </xs:annotation>
+         </xs:enumeration>
+         <xs:enumeration value="003">
+            <xs:annotation>
+               <xs:appinfo>
+                  <wert>Frau</wert>
+               </xs:appinfo>
+            </xs:annotation>
+         </xs:enumeration>
+         <xs:enumeration value="004">
+            <xs:annotation>
+               <xs:appinfo>
+                  <wert>Firma (Einzelfirma)</wert>
+               </xs:appinfo>
+            </xs:annotation>
+         </xs:enumeration>
+         <xs:enumeration value="005">
+            <xs:annotation>
+               <xs:appinfo>
+                  <wert>GmbH &amp; Co KG (zweistufige Vertretung)</wert>
+               </xs:appinfo>
+            </xs:annotation>
+         </xs:enumeration>
+         <xs:enumeration value="006">
+            <xs:annotation>
+               <xs:appinfo>
+                  <wert>AG, OHG, GmbH usw.</wert>
+               </xs:appinfo>
+            </xs:annotation>
+         </xs:enumeration>
+         <xs:enumeration value="007">
+            <xs:annotation>
+               <xs:appinfo>
+                  <wert>Körperschaft des Öffentlichen Rechts (Gemeinde, Landkreis)</wert>
+               </xs:appinfo>
+            </xs:annotation>
+         </xs:enumeration>
+         <xs:enumeration value="008">
+            <xs:annotation>
+               <xs:appinfo>
+                  <wert>Partei kraft Amtes</wert>
+               </xs:appinfo>
+            </xs:annotation>
+         </xs:enumeration>
+         <xs:enumeration value="009">
+            <xs:annotation>
+               <xs:appinfo>
+                  <wert>Rechtsanwalt in eigener Sache</wert>
+               </xs:appinfo>
+            </xs:annotation>
+         </xs:enumeration>
+         <xs:enumeration value="010">
+            <xs:annotation>
+               <xs:appinfo>
+                  <wert>WEG (Wohnungseigentumsgemeinschaft, altes Recht)</wert>
+               </xs:appinfo>
+            </xs:annotation>
+         </xs:enumeration>
+         <xs:enumeration value="011">
+            <xs:annotation>
+               <xs:appinfo>
+                  <wert>WEG neues Recht (nat. Pers.)</wert>
+               </xs:appinfo>
+            </xs:annotation>
+         </xs:enumeration>
+         <xs:enumeration value="012">
+            <xs:annotation>
+               <xs:appinfo>
+                  <wert>WEG neues Recht (jur. Pers.)</wert>
+               </xs:appinfo>
+            </xs:annotation>
+         </xs:enumeration>
+      </xs:restriction>
+   </xs:simpleType>
+   <xs:simpleType name="vstr.eintragungsgruende.gerichtsvollzieher.vollstreckungsbehoerde">
+      <xs:annotation>
+         <xs:appinfo>
+            <codeliste>
+               <nameLang>VSTR.Eintragungsgruende.Gerichtsvollzieher.Vollstreckungsbehoerde</nameLang>
+               <nameKurz>VSTR.Eintragungsgruende.Gerichtsvollzieher.Vollstreckungsbehoerde</nameKurz>
+               <nameTechnisch>vstr.eintragungsgruende.gerichtsvollzieher.vollstreckungsbehoerde</nameTechnisch>
+               <kennung>urn:xoev-de:xjustiz:codeliste:vstr.eintragungsgruende.gerichtsvollzieher.vollstreckungsbehoerde</kennung>
+               <beschreibung>Codeliste der verschiedenen Eintragungsgründe der Gerichtsvollzieher bei Vollstreckung.</beschreibung>
+               <herausgebernameLang>BLK-AG IT-Standards in der Justiz</herausgebernameLang>
+               <herausgebernameKurz>AG IT-Standards</herausgebernameKurz>
+            </codeliste>
+            <versionCodeliste>
+               <version>2.0</version>
+               <versionCodelistenHandbuch>1.1</versionCodelistenHandbuch>
+            </versionCodeliste>
+            <codelistenspalten>
+               <code>
+                  <spaltennameLang>Schlüssel</spaltennameLang>
+                  <datentyp>string</datentyp>
+                  <codeSpalte>true</codeSpalte>
+                  <verwendung>required</verwendung>
+                  <empfohleneCodeSpalte>true</empfohleneCodeSpalte>
+               </code>
+               <wert>
+                  <spaltennameLang>Wert</spaltennameLang>
+                  <datentyp>string</datentyp>
+                  <codeSpalte>false</codeSpalte>
+                  <verwendung>required</verwendung>
+                  <empfohleneCodeSpalte>false</empfohleneCodeSpalte>
+               </wert>
+            </codelistenspalten>
+         </xs:appinfo>
+      </xs:annotation>
+      <xs:restriction base="xs:token">
+         <xs:enumeration value="Gläubigerbefriedigung ausgeschlossen">
+            <xs:annotation>
+               <xs:appinfo>
+                  <wert>§ 882c Abs. 1 Nr. 2 ZPO, § 284 Abs. 9 Nr. 2 AO</wert>
+               </xs:appinfo>
+            </xs:annotation>
+         </xs:enumeration>
+         <xs:enumeration value="Gläubigerbefriedigung nicht nachgewiesen">
+            <xs:annotation>
+               <xs:appinfo>
+                  <wert>§ 882c Abs. 1 Nr. 3 ZPO, § 284 Abs. 9 Nr. 3 AO</wert>
+               </xs:appinfo>
+            </xs:annotation>
+         </xs:enumeration>
+         <xs:enumeration value="Nichtabgabe der Vermögensauskunft">
+            <xs:annotation>
+               <xs:appinfo>
+                  <wert>§ 882c Abs. 1 Nr. 1 ZPO, § 284 Abs. 9 Nr. 1 AO</wert>
+               </xs:appinfo>
+            </xs:annotation>
+         </xs:enumeration>
+      </xs:restriction>
+   </xs:simpleType>
+   <xs:simpleType name="vstr.eintragungsgruende.insolvenzgericht">
+      <xs:annotation>
+         <xs:appinfo>
+            <codeliste>
+               <nameLang>VSTR.Eintragungsgruende.Insolvenzgericht</nameLang>
+               <nameKurz>VSTR.Eintragungsgruende.Insolvenzgericht</nameKurz>
+               <nameTechnisch>vstr.eintragungsgruende.insolvenzgericht</nameTechnisch>
+               <kennung>urn:xoev-de:xjustiz:codeliste:vstr.eintragungsgruende.insolvenzgericht</kennung>
+               <beschreibung>Codeliste der verschiedenen Eintragungsgründe im Insolvenzgericht.</beschreibung>
+               <herausgebernameLang>BLK-AG IT-Standards in der Justiz</herausgebernameLang>
+               <herausgebernameKurz>AG IT-Standards</herausgebernameKurz>
+            </codeliste>
+            <versionCodeliste>
+               <version>2.1</version>
+               <versionCodelistenHandbuch>1.1</versionCodelistenHandbuch>
+            </versionCodeliste>
+            <codelistenspalten>
+               <code>
+                  <spaltennameLang>Schlüssel</spaltennameLang>
+                  <datentyp>string</datentyp>
+                  <codeSpalte>true</codeSpalte>
+                  <verwendung>required</verwendung>
+                  <empfohleneCodeSpalte>true</empfohleneCodeSpalte>
+               </code>
+               <wert>
+                  <spaltennameLang>Wert</spaltennameLang>
+                  <datentyp>string</datentyp>
+                  <codeSpalte>false</codeSpalte>
+                  <verwendung>required</verwendung>
+                  <empfohleneCodeSpalte>false</empfohleneCodeSpalte>
+               </wert>
+            </codelistenspalten>
+         </xs:appinfo>
+      </xs:annotation>
+      <xs:restriction base="xs:token">
+         <xs:enumeration value="001">
+            <xs:annotation>
+               <xs:appinfo>
+                  <wert>§ 290 InsO, Versagung der Restschuldbefreiung</wert>
+               </xs:appinfo>
+            </xs:annotation>
+         </xs:enumeration>
+         <xs:enumeration value="002">
+            <xs:annotation>
+               <xs:appinfo>
+                  <wert>§ 296 InsO, Versagung der Restschuldbefreiung</wert>
+               </xs:appinfo>
+            </xs:annotation>
+         </xs:enumeration>
+         <xs:enumeration value="003">
+            <xs:annotation>
+               <xs:appinfo>
+                  <wert>§ 297 InsO, Versagung der Restschuldbefreiung</wert>
+               </xs:appinfo>
+            </xs:annotation>
+         </xs:enumeration>
+         <xs:enumeration value="004">
+            <xs:annotation>
+               <xs:appinfo>
+                  <wert>§ 297a InsO, Versagung der Restschuldbefreiung</wert>
+               </xs:appinfo>
+            </xs:annotation>
+         </xs:enumeration>
+         <xs:enumeration value="005">
+            <xs:annotation>
+               <xs:appinfo>
+                  <wert>§ 303 InsO, Widerruf der Restschuldbefreiung</wert>
+               </xs:appinfo>
+            </xs:annotation>
+         </xs:enumeration>
+         <xs:enumeration value="006">
+            <xs:annotation>
+               <xs:appinfo>
+                  <wert>§§ 296, 297 InsO, Versagung der Restschuldbefreiung</wert>
+               </xs:appinfo>
+            </xs:annotation>
+         </xs:enumeration>
+         <xs:enumeration value="007">
+            <xs:annotation>
+               <xs:appinfo>
+                  <wert>§§ 296, 297a InsO, Versagung der Restschuldbefreiung</wert>
+               </xs:appinfo>
+            </xs:annotation>
+         </xs:enumeration>
+         <xs:enumeration value="008">
+            <xs:annotation>
+               <xs:appinfo>
+                  <wert>§ 26 Abs. 2 InsO, Abweisung mangels Masse</wert>
+               </xs:appinfo>
+            </xs:annotation>
+         </xs:enumeration>
+      </xs:restriction>
+   </xs:simpleType>
+   <xs:simpleType name="vstr.entscheidungsinhalt.schuldnerwiderspruch">
+      <xs:annotation>
+         <xs:appinfo>
+            <codeliste>
+               <nameLang>VSTR.Entscheidungsinhalt.Schuldnerwiderspruch</nameLang>
+               <nameKurz>VSTR.Entscheidungsinhalt.Schuldnerwiderspruch</nameKurz>
+               <nameTechnisch>vstr.entscheidungsinhalt.schuldnerwiderspruch</nameTechnisch>
+               <kennung>urn:xoev-de:xjustiz:codeliste:vstr.entscheidungsinhalt.schuldnerwiderspruch</kennung>
+               <beschreibung>Codeliste der verschiedenen Entscheidungsinhalte bei einem Schuldnerwiderspruch.</beschreibung>
+               <herausgebernameLang>BLK-AG IT-Standards in der Justiz</herausgebernameLang>
+               <herausgebernameKurz>AG IT-Standards</herausgebernameKurz>
+            </codeliste>
+            <versionCodeliste>
+               <version>2.0</version>
+               <versionCodelistenHandbuch>1.1</versionCodelistenHandbuch>
+            </versionCodeliste>
+            <codelistenspalten>
+               <code>
+                  <spaltennameLang>Schlüssel</spaltennameLang>
+                  <datentyp>string</datentyp>
+                  <codeSpalte>true</codeSpalte>
+                  <verwendung>required</verwendung>
+                  <empfohleneCodeSpalte>true</empfohleneCodeSpalte>
+               </code>
+               <wert>
+                  <spaltennameLang>Wert</spaltennameLang>
+                  <datentyp>string</datentyp>
+                  <codeSpalte>false</codeSpalte>
+                  <verwendung>required</verwendung>
+                  <empfohleneCodeSpalte>false</empfohleneCodeSpalte>
+               </wert>
+            </codelistenspalten>
+         </xs:appinfo>
+      </xs:annotation>
+      <xs:restriction base="xs:token">
+         <xs:enumeration value="001">
+            <xs:annotation>
+               <xs:appinfo>
+                  <wert>Aufhebung der Eintragungsanordnung</wert>
+               </xs:appinfo>
+            </xs:annotation>
+         </xs:enumeration>
+         <xs:enumeration value="002">
+            <xs:annotation>
+               <xs:appinfo>
+                  <wert>Eintragung im Schuldnerverzeichnis wird einstweilen ausgesetzt</wert>
+               </xs:appinfo>
+            </xs:annotation>
+         </xs:enumeration>
+         <xs:enumeration value="003">
+            <xs:annotation>
+               <xs:appinfo>
+                  <wert>Zurückweisung des Schuldnerwiderspruchs</wert>
+               </xs:appinfo>
+            </xs:annotation>
+         </xs:enumeration>
+      </xs:restriction>
+   </xs:simpleType>
+   <xs:simpleType name="vstr.gerichtsvollzieher.dienstbezeichnung">
+      <xs:annotation>
+         <xs:appinfo>
+            <codeliste>
+               <nameLang>VSTR.Gerichtsvollzieher.Dienstbezeichnung</nameLang>
+               <nameKurz>VSTR.Gerichtsvollzieher.Dienstbezeichnung</nameKurz>
+               <nameTechnisch>vstr.gerichtsvollzieher.dienstbezeichnung</nameTechnisch>
+               <kennung>urn:xoev-de:xjustiz:codeliste:vstr.gerichtsvollzieher.dienstbezeichnung</kennung>
+               <beschreibung>Codeliste der verschiedenen Dienstbezeichnungen der Gerichtsvollzieher.</beschreibung>
+               <herausgebernameLang>BLK-AG IT-Standards in der Justiz</herausgebernameLang>
+               <herausgebernameKurz>AG IT-Standards</herausgebernameKurz>
+            </codeliste>
+            <versionCodeliste>
+               <version>2.0</version>
+               <versionCodelistenHandbuch>1.1</versionCodelistenHandbuch>
+            </versionCodeliste>
+            <codelistenspalten>
+               <code>
+                  <spaltennameLang>Schlüssel</spaltennameLang>
+                  <datentyp>string</datentyp>
+                  <codeSpalte>true</codeSpalte>
+                  <verwendung>required</verwendung>
+                  <empfohleneCodeSpalte>true</empfohleneCodeSpalte>
+               </code>
+               <wert>
+                  <spaltennameLang>Wert</spaltennameLang>
+                  <datentyp>string</datentyp>
+                  <codeSpalte>false</codeSpalte>
+                  <verwendung>required</verwendung>
+                  <empfohleneCodeSpalte>false</empfohleneCodeSpalte>
+               </wert>
+            </codelistenspalten>
+         </xs:appinfo>
+      </xs:annotation>
+      <xs:restriction base="xs:token">
+         <xs:enumeration value="001">
+            <xs:annotation>
+               <xs:appinfo>
+                  <wert>Abwickler(in)</wert>
+               </xs:appinfo>
+            </xs:annotation>
+         </xs:enumeration>
+         <xs:enumeration value="002">
+            <xs:annotation>
+               <xs:appinfo>
+                  <wert>Beauftragte(r) Gerichtsvollzieher(in)</wert>
+               </xs:appinfo>
+            </xs:annotation>
+         </xs:enumeration>
+         <xs:enumeration value="003">
+            <xs:annotation>
+               <xs:appinfo>
+                  <wert>Gerichtsvollzieher(in)</wert>
+               </xs:appinfo>
+            </xs:annotation>
+         </xs:enumeration>
+         <xs:enumeration value="004">
+            <xs:annotation>
+               <xs:appinfo>
+                  <wert>Hauptgerichtsvollzieher(in)</wert>
+               </xs:appinfo>
+            </xs:annotation>
+         </xs:enumeration>
+         <xs:enumeration value="005">
+            <xs:annotation>
+               <xs:appinfo>
+                  <wert>Obergerichtsvollzieher(in)</wert>
+               </xs:appinfo>
+            </xs:annotation>
+         </xs:enumeration>
+      </xs:restriction>
+   </xs:simpleType>
+   <xs:simpleType name="vstr.korrektur-loeschung">
+      <xs:annotation>
+         <xs:appinfo>
+            <codeliste>
+               <nameLang>VSTR.KorrekturLoeschung</nameLang>
+               <nameKurz>VSTR.KorrekturLoeschung</nameKurz>
+               <nameTechnisch>vstr.korrektur-loeschung</nameTechnisch>
+               <kennung>urn:xoev-de:xjustiz:codeliste:vstr.korrektur-loeschung</kennung>
+               <beschreibung>Codeliste der verschiedenen Korrekturarten bei Löschung.</beschreibung>
+               <herausgebernameLang>BLK-AG IT-Standards in der Justiz</herausgebernameLang>
+               <herausgebernameKurz>AG IT-Standards</herausgebernameKurz>
+            </codeliste>
+            <versionCodeliste>
+               <version>2.1</version>
+               <versionCodelistenHandbuch>1.1</versionCodelistenHandbuch>
+            </versionCodeliste>
+            <codelistenspalten>
+               <code>
+                  <spaltennameLang>Schlüssel</spaltennameLang>
+                  <datentyp>string</datentyp>
+                  <codeSpalte>true</codeSpalte>
+                  <verwendung>required</verwendung>
+                  <empfohleneCodeSpalte>true</empfohleneCodeSpalte>
+               </code>
+               <wert>
+                  <spaltennameLang>Wert</spaltennameLang>
+                  <datentyp>string</datentyp>
+                  <codeSpalte>false</codeSpalte>
+                  <verwendung>required</verwendung>
+                  <empfohleneCodeSpalte>false</empfohleneCodeSpalte>
+               </wert>
+            </codelistenspalten>
+         </xs:appinfo>
+      </xs:annotation>
+      <xs:restriction base="xs:token">
+         <xs:enumeration value="Korrektur">
+            <xs:annotation>
+               <xs:appinfo>
+                  <wert>Der ursprünglich übermittelte Datensatz ist aufgrund nachträglich eingetretener Umstände zu korrigieren. Der ursprüngliche Datensatz ist durch den Inhalt der Korrekturnachricht zu ersetzen.</wert>
+               </xs:appinfo>
+            </xs:annotation>
+         </xs:enumeration>
+         <xs:enumeration value="Korrektur irriger Eintrag">
+            <xs:annotation>
+               <xs:appinfo>
+                  <wert>Der ursprünglich übermittelte Datensatz war von Anfang an fehlerhaft. Der ursprüngliche Datensatz ist durch den Inhalt der Korrekturnachricht zu ersetzen.</wert>
+               </xs:appinfo>
+            </xs:annotation>
+         </xs:enumeration>
+         <xs:enumeration value="Löschung">
+            <xs:annotation>
+               <xs:appinfo>
+                  <wert>Der ursprünglich übermittelte Datensatz ist aufgrund nachträglich eingetretener Umstände vollständig zu löschen.</wert>
+               </xs:appinfo>
+            </xs:annotation>
+         </xs:enumeration>
+         <xs:enumeration value="Löschung irriger Eintrag">
+            <xs:annotation>
+               <xs:appinfo>
+                  <wert>Der ursprünglich übermittelte Datensatz war von Anfang an fehlerhaft. Der ursprüngliche Datensatz ist vollständig zu löschen.</wert>
+               </xs:appinfo>
+            </xs:annotation>
+         </xs:enumeration>
+         <xs:enumeration value="Vorzeitige Ersetzung einer Vermögensauskunft">
+            <xs:annotation>
+               <xs:appinfo>
+                  <wert>Dieser Wert wird verwendet, wenn mit der 'nachricht.vstr.vermoegensverzeichnis.uebermittlung.korrektur.0900006' die Art des Vermögensverzeichnisses geändert werden soll zu "Nachbesserung der Vermögensauskunft" oder zu "Erneute Vermögensauskunft, § 802d ZPO".</wert>
+               </xs:appinfo>
+            </xs:annotation>
+         </xs:enumeration>
+      </xs:restriction>
+   </xs:simpleType>
+   <xs:simpleType name="vstr.schuldnerverzeichnis.loeschungsgruende">
+      <xs:annotation>
+         <xs:appinfo>
+            <codeliste>
+               <nameLang>VSTR.Schuldnerverzeichnis.Loeschungsgruende</nameLang>
+               <nameKurz>VSTR.Schuldnerverzeichnis.Loeschungsgruende</nameKurz>
+               <nameTechnisch>vstr.schuldnerverzeichnis.loeschungsgruende</nameTechnisch>
+               <kennung>urn:xoev-de:xjustiz:codeliste:vstr.schuldnerverzeichnis.loeschungsgruende</kennung>
+               <beschreibung>Codeliste der verschiedenen Löschungsgründe im Schuldnerverzeichnis.</beschreibung>
+               <herausgebernameLang>BLK-AG IT-Standards in der Justiz</herausgebernameLang>
+               <herausgebernameKurz>AG IT-Standards</herausgebernameKurz>
+            </codeliste>
+            <versionCodeliste>
+               <version>2.1</version>
+               <versionCodelistenHandbuch>1.1</versionCodelistenHandbuch>
+            </versionCodeliste>
+            <codelistenspalten>
+               <code>
+                  <spaltennameLang>Schlüssel</spaltennameLang>
+                  <datentyp>string</datentyp>
+                  <codeSpalte>true</codeSpalte>
+                  <verwendung>required</verwendung>
+                  <empfohleneCodeSpalte>true</empfohleneCodeSpalte>
+               </code>
+               <wert>
+                  <spaltennameLang>Wert</spaltennameLang>
+                  <datentyp>string</datentyp>
+                  <codeSpalte>false</codeSpalte>
+                  <verwendung>required</verwendung>
+                  <empfohleneCodeSpalte>false</empfohleneCodeSpalte>
+               </wert>
+            </codelistenspalten>
+         </xs:appinfo>
+      </xs:annotation>
+      <xs:restriction base="xs:token">
+         <xs:enumeration value="Korrektur">
+            <xs:annotation>
+               <xs:appinfo>
+                  <wert>Der ursprünglich übermittelte Datensatz ist aufgrund nachträglich eingetretener Umstände zu korrigieren. Der ursprüngliche Datensatz ist durch den Inhalt der Korrekturnachricht zu ersetzen.</wert>
+               </xs:appinfo>
+            </xs:annotation>
+         </xs:enumeration>
+         <xs:enumeration value="Korrektur irriger Eintrag">
+            <xs:annotation>
+               <xs:appinfo>
+                  <wert>Der ursprünglich übermittelte Datensatz war von Anfang an fehlerhaft. Der ursprüngliche Datensatz ist durch den Inhalt der Korrekturnachricht zu ersetzen.</wert>
+               </xs:appinfo>
+            </xs:annotation>
+         </xs:enumeration>
+         <xs:enumeration value="Löschung">
+            <xs:annotation>
+               <xs:appinfo>
+                  <wert>Der ursprünglich übermittelte Datensatz ist aufgrund nachträglich eingetretener Umstände vollständig zu löschen.</wert>
+               </xs:appinfo>
+            </xs:annotation>
+         </xs:enumeration>
+         <xs:enumeration value="Löschung der Eintragung wegen Fristablaufs">
+            <xs:annotation>
+               <xs:appinfo>
+                  <wert>Die Eintragung im Schuldnerverzeichnis wurde aufgrund des Ablaufs der für die Dauer der Eintragung bestimmten Frist gelöscht.</wert>
+               </xs:appinfo>
+            </xs:annotation>
+         </xs:enumeration>
+         <xs:enumeration value="Löschung irriger Eintrag">
+            <xs:annotation>
+               <xs:appinfo>
+                  <wert>Der ursprünglich übermittelte Datensatz war von Anfang an fehlerhaft. Der ursprüngliche Datensatz ist vollständig zu löschen.</wert>
+               </xs:appinfo>
+            </xs:annotation>
+         </xs:enumeration>
+         <xs:enumeration value="vorzeitige Löschung der Eintragung im Schuldnerverzeichnis">
+            <xs:annotation>
+               <xs:appinfo>
+                  <wert>Die Eintragung im Schuldnerverzeichnis wurde durch Beschluss des zentralen Vollstreckungsgerichts gelöscht.</wert>
+               </xs:appinfo>
+            </xs:annotation>
+         </xs:enumeration>
+      </xs:restriction>
+   </xs:simpleType>
+   <xs:simpleType name="vstr.verarbeitungsergebnis.schuldnerverzeichnis">
+      <xs:annotation>
+         <xs:appinfo>
+            <codeliste>
+               <nameLang>VSTR.Verarbeitungsergebnis.Schuldnerverzeichnis</nameLang>
+               <nameKurz>VSTR.Verarbeitungsergebnis.Schuldnerverzeichnis</nameKurz>
+               <nameTechnisch>vstr.verarbeitungsergebnis.schuldnerverzeichnis</nameTechnisch>
+               <kennung>urn:xoev-de:xjustiz:codeliste:vstr.verarbeitungsergebnis.schuldnerverzeichnis</kennung>
+               <beschreibung>Codeliste der verschiedenen Verarbeitungsergebnisse im Schuldnerverzeichnis.</beschreibung>
+               <herausgebernameLang>BLK-AG IT-Standards in der Justiz</herausgebernameLang>
+               <herausgebernameKurz>AG IT-Standards</herausgebernameKurz>
+            </codeliste>
+            <versionCodeliste>
+               <version>2.2</version>
+               <versionCodelistenHandbuch>1.1</versionCodelistenHandbuch>
+            </versionCodeliste>
+            <codelistenspalten>
+               <code>
+                  <spaltennameLang>Schlüssel</spaltennameLang>
+                  <datentyp>string</datentyp>
+                  <codeSpalte>true</codeSpalte>
+                  <verwendung>required</verwendung>
+                  <empfohleneCodeSpalte>true</empfohleneCodeSpalte>
+               </code>
+               <wert>
+                  <spaltennameLang>Wert</spaltennameLang>
+                  <datentyp>string</datentyp>
+                  <codeSpalte>false</codeSpalte>
+                  <verwendung>required</verwendung>
+                  <empfohleneCodeSpalte>false</empfohleneCodeSpalte>
+               </wert>
+            </codelistenspalten>
+         </xs:appinfo>
+      </xs:annotation>
+      <xs:restriction base="xs:token">
+         <xs:enumeration value="001 Eintragung erfolgt">
+            <xs:annotation>
+               <xs:appinfo>
+                  <wert>Eintragung erfolgt</wert>
+               </xs:appinfo>
+            </xs:annotation>
+         </xs:enumeration>
+         <xs:enumeration value="002 Sonstiger Fehler">
+            <xs:annotation>
+               <xs:appinfo>
+                  <wert>Sonstiger Fehler</wert>
+               </xs:appinfo>
+            </xs:annotation>
+         </xs:enumeration>
+         <xs:enumeration value="003 Verfahrensnummer nicht vorhanden">
+            <xs:annotation>
+               <xs:appinfo>
+                  <wert>Zu der übermittelten Verfahrensnummer wurde kein Eintrag gefunden.</wert>
+               </xs:appinfo>
+            </xs:annotation>
+         </xs:enumeration>
+         <xs:enumeration value="004 Element 'korrekturLoeschung' fehlt">
+            <xs:annotation>
+               <xs:appinfo>
+                  <wert>Es wurde nicht mitgeteilt, ob eine Korrektur oder Löschung des beim zentralen Vollstreckungsgerichts bereits vorhandenen Datensatzes erfolgen soll.</wert>
+               </xs:appinfo>
+            </xs:annotation>
+         </xs:enumeration>
+         <xs:enumeration value="005 Verfahrensnummer fehlt">
+            <xs:annotation>
+               <xs:appinfo>
+                  <wert>Es wurde keine Verfahrensnummer angegeben, obwohl die eingegangene Nachricht das Element 'korrekturLoeschung' enthielt.</wert>
+               </xs:appinfo>
+            </xs:annotation>
+         </xs:enumeration>
+         <xs:enumeration value="006 Falsche Art des Vermögensverzeichnisses">
+            <xs:annotation>
+               <xs:appinfo>
+                  <wert>Aufgrund der in der Nachricht vorhandenen Informationen kann kein Vermögensverzeichnis der Art "Neue Vermögensauskunft" eingereicht werden.</wert>
+               </xs:appinfo>
+            </xs:annotation>
+         </xs:enumeration>
+         <xs:enumeration value="007 Datensatz bereits vorhanden">
+            <xs:annotation>
+               <xs:appinfo>
+                  <wert>Der übermittelte Datensatz ist bereits vorhanden.</wert>
+               </xs:appinfo>
+            </xs:annotation>
+         </xs:enumeration>
+         <xs:enumeration value="008 Eintragungshemmnis vorhanden">
+            <xs:annotation>
+               <xs:appinfo>
+                  <wert>Der Vollzug der Eintragung wurde vom lokalen Vollstreckungsgericht untersagt.</wert>
+               </xs:appinfo>
+            </xs:annotation>
+         </xs:enumeration>
+         <xs:enumeration value="009 keine Korrektur / Löschung">
+            <xs:annotation>
+               <xs:appinfo>
+                  <wert>Das zentrale Vollstreckungsgericht hat die Vornahme der gewünschten Korrektur / Löschung abgelehnt.</wert>
+               </xs:appinfo>
+            </xs:annotation>
+         </xs:enumeration>
+         <xs:enumeration value="010 Eingang Zurückweisung Schuldnerwiderspruch">
+            <xs:annotation>
+               <xs:appinfo>
+                  <wert>Da keine vorhergehende Eintragung einer einstweiligen Aussetzung erfolgte, hat die Zurückweisung des Schuldnerwiderspruchs keine Auswirkungen auf das Schuldnerverzeichnis.</wert>
+               </xs:appinfo>
+            </xs:annotation>
+         </xs:enumeration>
+         <xs:enumeration value="020 Aktenzeichen inkonsistent">
+            <xs:annotation>
+               <xs:appinfo>
+                  <wert>Das Aktenzeichen ist nicht in allen Nachrichtenteilen konsistent angegeben.</wert>
+               </xs:appinfo>
+            </xs:annotation>
+         </xs:enumeration>
+         <xs:enumeration value="021 Verfahrensnummer ungültig">
+            <xs:annotation>
+               <xs:appinfo>
+                  <wert>Länge unzulässig, Prüfziffer fehlerhaft oder Verfahrensnummer nicht numerisch.</wert>
+               </xs:appinfo>
+            </xs:annotation>
+         </xs:enumeration>
+         <xs:enumeration value="022 Falsches ZenVG in Verfahrensnummer">
+            <xs:annotation>
+               <xs:appinfo>
+                  <wert>ZenVG in Verfahrensnummer ungültig für Einlieferer.</wert>
+               </xs:appinfo>
+            </xs:annotation>
+         </xs:enumeration>
+         <xs:enumeration value="023 XJustiz Kode ZenVG ungültig">
+            <xs:annotation>
+               <xs:appinfo>
+                  <wert>XJustiz Kode ZenVG ungültig</wert>
+               </xs:appinfo>
+            </xs:annotation>
+         </xs:enumeration>
+         <xs:enumeration value="024 Ereignis ungültig">
+            <xs:annotation>
+               <xs:appinfo>
+                  <wert>Im Nachrichtenkopf wurde kein gültiges Nachrichtenereignis angegeben.</wert>
+               </xs:appinfo>
+            </xs:annotation>
+         </xs:enumeration>
+         <xs:enumeration value="025 Instanzdaten ungültig">
+            <xs:annotation>
+               <xs:appinfo>
+                  <wert>Instanzdaten ungültig</wert>
+               </xs:appinfo>
+            </xs:annotation>
+         </xs:enumeration>
+         <xs:enumeration value="026 Rollennummer ungültig">
+            <xs:annotation>
+               <xs:appinfo>
+                  <wert>Rollennummer ungültig</wert>
+               </xs:appinfo>
+            </xs:annotation>
+         </xs:enumeration>
+         <xs:enumeration value="027 Falsches Sachgebiet">
+            <xs:annotation>
+               <xs:appinfo>
+                  <wert>Falsches Sachgebiet</wert>
+               </xs:appinfo>
+            </xs:annotation>
+         </xs:enumeration>
+         <xs:enumeration value="028 Vorname, Vorkommen ungültig">
+            <xs:annotation>
+               <xs:appinfo>
+                  <wert>Das Element Vorname darf nur einmal übergeben werden.</wert>
+               </xs:appinfo>
+            </xs:annotation>
+         </xs:enumeration>
+         <xs:enumeration value="029 'weitererName', Vorkommen ungültig">
+            <xs:annotation>
+               <xs:appinfo>
+                  <wert>Das Element 'weitererName' darf nur einmal übergeben werden.</wert>
+               </xs:appinfo>
+            </xs:annotation>
+         </xs:enumeration>
+         <xs:enumeration value="030 Rufname ungültig">
+            <xs:annotation>
+               <xs:appinfo>
+                  <wert>Der angegebene Rufname ist nicht im Vornamen enthalten.</wert>
+               </xs:appinfo>
+            </xs:annotation>
+         </xs:enumeration>
+         <xs:enumeration value="031 'bezeichnung.alt', Vorkommen ungültig">
+            <xs:annotation>
+               <xs:appinfo>
+                  <wert>Das Element 'bezeichnung.alt' darf nur einmal übergeben werden.</wert>
+               </xs:appinfo>
+            </xs:annotation>
+         </xs:enumeration>
+         <xs:enumeration value="032 Verfahrens-/Zustellanschrift, Vorkommen ungültig">
+            <xs:annotation>
+               <xs:appinfo>
+                  <wert>Es darf nur eine Verfahrens-/Zustellanschrift übergeben werden.</wert>
+               </xs:appinfo>
+            </xs:annotation>
+         </xs:enumeration>
+         <xs:enumeration value="033 Eintragungsanordnung ungültig">
+            <xs:annotation>
+               <xs:appinfo>
+                  <wert>Eintragungsanordnung ungültig</wert>
+               </xs:appinfo>
+            </xs:annotation>
+         </xs:enumeration>
+         <xs:enumeration value="035 Korrektur_Loeschung ungültig">
+            <xs:annotation>
+               <xs:appinfo>
+                  <wert>Korrektur_Loeschung ungültig</wert>
+               </xs:appinfo>
+            </xs:annotation>
+         </xs:enumeration>
+         <xs:enumeration value="037 Sitz, Vorkommen ungültig">
+            <xs:annotation>
+               <xs:appinfo>
+                  <wert>Das Element Sitz darf nur einmal übergeben werden.</wert>
+               </xs:appinfo>
+            </xs:annotation>
+         </xs:enumeration>
+         <xs:enumeration value="038 'handelndUnter', Vorkommen ungültig">
+            <xs:annotation>
+               <xs:appinfo>
+                  <wert>Das Element 'handelndUnter' darf nur einmal übergeben werden.</wert>
+               </xs:appinfo>
+            </xs:annotation>
+         </xs:enumeration>
+         <xs:enumeration value="039 Vermögensverzeichnis fehlt">
+            <xs:annotation>
+               <xs:appinfo>
+                  <wert>Der Nachricht wurde kein Anhang beigefügt, obwohl ein Vermögensverzeichnis übermittelt werden sollte.</wert>
+               </xs:appinfo>
+            </xs:annotation>
+         </xs:enumeration>
+         <xs:enumeration value="040 Falscher Dokumententyp im Anhang">
+            <xs:annotation>
+               <xs:appinfo>
+                  <wert>Das Vermögensverzeichnis wurde nicht im PDF-Format übersandt.</wert>
+               </xs:appinfo>
+            </xs:annotation>
+         </xs:enumeration>
+         <xs:enumeration value="041 Mehr als ein Dokument übersandt">
+            <xs:annotation>
+               <xs:appinfo>
+                  <wert>Es darf einer Nachricht nur ein PDF-Dokument als Anhang beigefügt werden.</wert>
+               </xs:appinfo>
+            </xs:annotation>
+         </xs:enumeration>
+         <xs:enumeration value="042 Absender INSO falsch">
+            <xs:annotation>
+               <xs:appinfo>
+                  <wert>Bei einer INSO Eintragung stimmen Absender im Nachrichtenkopf und Gericht in der Eintragungsanordnung nicht überein.</wert>
+               </xs:appinfo>
+            </xs:annotation>
+         </xs:enumeration>
+         <xs:enumeration value="043 Kein Aktenzeichen angegeben">
+            <xs:annotation>
+               <xs:appinfo>
+                  <wert>Es wurde in der Eintragungsanordnung kein Aktenzeichen mit Länge größer 0 angegeben.</wert>
+               </xs:appinfo>
+            </xs:annotation>
+         </xs:enumeration>
+         <xs:enumeration value="044 Anordnungsbehörde, fehlende / falsche Berechtigung Einlieferer">
+            <xs:annotation>
+               <xs:appinfo>
+                  <wert>Der Einlieferer hat keine Berechtigung zur Einlieferung oder für diese Anordnung.</wert>
+               </xs:appinfo>
+            </xs:annotation>
+         </xs:enumeration>
+         <xs:enumeration value="045 Kein Name angegeben">
+            <xs:annotation>
+               <xs:appinfo>
+                  <wert>Es wurde kein Name mit einer Länge größer 0 angegeben.</wert>
+               </xs:appinfo>
+            </xs:annotation>
+         </xs:enumeration>
+         <xs:enumeration value="046 Ungültige Zeitzone Datum">
+            <xs:annotation>
+               <xs:appinfo>
+                  <wert>Für Datumsfelder wird implizit die deutsche Zeitzone angenommen.</wert>
+               </xs:appinfo>
+            </xs:annotation>
+         </xs:enumeration>
+         <xs:enumeration value="047 Registereintragung, Vorkommen ungültig">
+            <xs:annotation>
+               <xs:appinfo>
+                  <wert>Das Element Registereintragung darf nur einmal übergeben werden.</wert>
+               </xs:appinfo>
+            </xs:annotation>
+         </xs:enumeration>
+         <xs:enumeration value="048 Korrektur / Löschung, Wert ungültig">
+            <xs:annotation>
+               <xs:appinfo>
+                  <wert>Der Wert 'Vorzeitige Ersetzung einer Vermögensauskunft' darf hier nicht übergeben werden.</wert>
+               </xs:appinfo>
+            </xs:annotation>
+         </xs:enumeration>
+         <xs:enumeration value="049 Keine ausreichende Datenübereinstimmung">
+            <xs:annotation>
+               <xs:appinfo>
+                  <wert>Dieser Return Code kann von einem Landesverfahren bei zusätzlichen Plausibilisierungen, die die Implementierung des Landesverfahrens vornimmt, zurückgeschickt werden.</wert>
+               </xs:appinfo>
+            </xs:annotation>
+         </xs:enumeration>
+         <xs:enumeration value="501 Eintragung erfolgt">
+            <xs:annotation>
+               <xs:appinfo>
+                  <wert>Der XJustiz-Datensatz wurde vom Vollstreckungsportal ohne Fehler übernommen.</wert>
+               </xs:appinfo>
+            </xs:annotation>
+         </xs:enumeration>
+         <xs:enumeration value="502 Sonstiger Fehler">
+            <xs:annotation>
+               <xs:appinfo>
+                  <wert>Sonstiger Fehler</wert>
+               </xs:appinfo>
+            </xs:annotation>
+         </xs:enumeration>
+         <xs:enumeration value="503 Syntaktischer Fehler im Datensatz">
+            <xs:annotation>
+               <xs:appinfo>
+                  <wert>Syntaktischer Fehler im Datensatz</wert>
+               </xs:appinfo>
+            </xs:annotation>
+         </xs:enumeration>
+         <xs:enumeration value="504 Verfahrensnummer nicht vorhanden">
+            <xs:annotation>
+               <xs:appinfo>
+                  <wert>Verfahrensnummer nicht vorhanden</wert>
+               </xs:appinfo>
+            </xs:annotation>
+         </xs:enumeration>
+         <xs:enumeration value="505 Keine Eintragung (Vollstreckungportal-interner Fehler)">
+            <xs:annotation>
+               <xs:appinfo>
+                  <wert>Keine Eintragung (Vollstreckungportal-interner Fehler)</wert>
+               </xs:appinfo>
+            </xs:annotation>
+         </xs:enumeration>
+         <xs:enumeration value="506 Keine Korrektur (Vollstreckungportal-interner Fehler)">
+            <xs:annotation>
+               <xs:appinfo>
+                  <wert>Keine Korrektur (Vollstreckungportal-interner Fehler)</wert>
+               </xs:appinfo>
+            </xs:annotation>
+         </xs:enumeration>
+         <xs:enumeration value="507 Keine Löschung (Vollstreckungportal-interner Fehler)">
+            <xs:annotation>
+               <xs:appinfo>
+                  <wert>Keine Löschung (Vollstreckungportal-interner Fehler)</wert>
+               </xs:appinfo>
+            </xs:annotation>
+         </xs:enumeration>
+         <xs:enumeration value="508 Authentisierung Aufrufer fehlgeschlagen">
+            <xs:annotation>
+               <xs:appinfo>
+                  <wert>Authentisierung Aufrufer fehlgeschlagen</wert>
+               </xs:appinfo>
+            </xs:annotation>
+         </xs:enumeration>
+         <xs:enumeration value="509 Aufrufer für die Nutzung des Web-Service nicht autorisiert">
+            <xs:annotation>
+               <xs:appinfo>
+                  <wert>Aufrufer für die Nutzung des Web-Service nicht autorisiert</wert>
+               </xs:appinfo>
+            </xs:annotation>
+         </xs:enumeration>
+         <xs:enumeration value="510 Portal: Einlieferung Fachdaten abgeschaltet">
+            <xs:annotation>
+               <xs:appinfo>
+                  <wert>Die Einlieferung von Fachdaten ist für diesen Mandanten zur Zeit im Portal abgeschaltet (Ampel rot)</wert>
+               </xs:appinfo>
+            </xs:annotation>
+         </xs:enumeration>
+      </xs:restriction>
+   </xs:simpleType>
+   <xs:simpleType name="vstr.vermoegensverzeichnis.art">
+      <xs:annotation>
+         <xs:appinfo>
+            <codeliste>
+               <nameLang>VSTR.Vermoegensverzeichnis.Art</nameLang>
+               <nameKurz>VSTR.Vermoegensverzeichnis.Art</nameKurz>
+               <nameTechnisch>vstr.vermoegensverzeichnis.art</nameTechnisch>
+               <kennung>urn:xoev-de:xjustiz:codeliste:vstr.vermoegensverzeichnis.art</kennung>
+               <beschreibung>Codeliste der verschiedenen Vermögensverzeichnisarten.</beschreibung>
+               <herausgebernameLang>BLK-AG IT-Standards in der Justiz</herausgebernameLang>
+               <herausgebernameKurz>AG IT-Standards</herausgebernameKurz>
+            </codeliste>
+            <versionCodeliste>
+               <version>2.1</version>
+               <versionCodelistenHandbuch>1.1</versionCodelistenHandbuch>
+            </versionCodeliste>
+            <codelistenspalten>
+               <code>
+                  <spaltennameLang>Schlüssel</spaltennameLang>
+                  <datentyp>string</datentyp>
+                  <codeSpalte>true</codeSpalte>
+                  <verwendung>required</verwendung>
+                  <empfohleneCodeSpalte>true</empfohleneCodeSpalte>
+               </code>
+               <wert>
+                  <spaltennameLang>Wert</spaltennameLang>
+                  <datentyp>string</datentyp>
+                  <codeSpalte>false</codeSpalte>
+                  <verwendung>required</verwendung>
+                  <empfohleneCodeSpalte>false</empfohleneCodeSpalte>
+               </wert>
+            </codelistenspalten>
+         </xs:appinfo>
+      </xs:annotation>
+      <xs:restriction base="xs:token">
+         <xs:enumeration value="Erneute Vermögensauskunft">
+            <xs:annotation>
+               <xs:appinfo>
+                  <wert>Erneute Vermögensauskunft, § 802d ZPO</wert>
+               </xs:appinfo>
+            </xs:annotation>
+         </xs:enumeration>
+         <xs:enumeration value="Nachbesserung der Vermögensauskunft">
+            <xs:annotation>
+               <xs:appinfo>
+                  <wert>Das bereits vorliegende Vermögensverzeichnis ist nachzubessern, ohne dass die Voraussetzungen des § 802d ZPO gegeben sind, weil die im Vermögensverzeichnis enthaltenen Angaben lückenhaft, ungenau oder unklar sind.</wert>
+               </xs:appinfo>
+            </xs:annotation>
+         </xs:enumeration>
+         <xs:enumeration value="Neue Vermögensauskunft">
+            <xs:annotation>
+               <xs:appinfo>
+                  <wert>Für den Schuldner liegt kein Vermögensverzeichnis vor, da er entweder bisher keine Vermögensauskunft abgegeben hat oder ein früher bereits errichtetes Vermögensverzeichnis gelöscht wurde.</wert>
+               </xs:appinfo>
+            </xs:annotation>
+         </xs:enumeration>
+      </xs:restriction>
+   </xs:simpleType>
+</xs:schema>

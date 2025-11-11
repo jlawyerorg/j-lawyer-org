@@ -1,0 +1,382 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema"
+           xmlns:tns="http://www.xjustiz.de"
+           xmlns:din91379="urn:xoev-de:kosit:xoev:datentyp:din-91379_2022-08"
+           targetNamespace="http://www.xjustiz.de"
+           version="3.3.0"
+           elementFormDefault="qualified"
+           attributeFormDefault="unqualified">
+   <xs:annotation>
+      <xs:appinfo>
+         <standard>
+            <nameLang>Strukturierte Fachdaten für die Kommunikation im elektronischen Rechtsverkehr</nameLang>
+            <nameKurz>XJustiz</nameKurz>
+            <nameTechnisch>xjustiz</nameTechnisch>
+            <kennung>urn:xoev-de:blk-ag-it-standards:standard:xjustiz</kennung>
+            <beschreibung>XJustiz ist der bundesweit einheitliche Standard für den Austausch strukturierter elektronischer Informationen mit der Justiz.</beschreibung>
+         </standard>
+         <versionStandard>
+            <version>3.5.1</version>
+            <beschreibung>XJustiz beschreibt ein standardisiertes Datenaustauschformat für die elektronische Kommunikation innerhalb und mit der Justizverwaltung.</beschreibung>
+            <versionXOEVProfil>1.7.2</versionXOEVProfil>
+            <versionXOEVHandbuch>2.3.1</versionXOEVHandbuch>
+            <versionXGenerator>3.1.1</versionXGenerator>
+            <versionModellierungswerkzeug>19.0 SP3</versionModellierungswerkzeug>
+            <nameModellierungswerkzeug>MagicDraw</nameModellierungswerkzeug>
+         </versionStandard>
+      </xs:appinfo>
+   </xs:annotation>
+   <xs:include schemaLocation="xjustiz_0000_grunddatensatz_3_5.xsd"/>
+   <xs:include schemaLocation="xjustiz_1510_cl_zpo_fremdauskunft_3_2.xsd"/>
+   <xs:import schemaLocation="din-norm-91379-datatypes.xsd"
+              namespace="urn:xoev-de:kosit:xoev:datentyp:din-91379_2022-08"/>
+   <xs:element name="nachricht.zpo.auskunft.anschrift.1500001">
+      <xs:complexType>
+         <xs:sequence>
+            <xs:element name="nachrichtenkopf" type="tns:Type.GDS.Nachrichtenkopf"/>
+            <xs:element name="grunddaten" type="tns:Type.GDS.Grunddaten"/>
+            <xs:element name="fachdaten">
+               <xs:complexType>
+                  <xs:sequence>
+                     <xs:element name="nachrichtID" minOccurs="0" type="din91379:datatypeC">
+                        <xs:annotation>
+                           <xs:documentation>Eindeutige Kennzeichnung einer Nachricht, mit der ein Kommunikationsprozess begonnen wird.</xs:documentation>
+                        </xs:annotation>
+                     </xs:element>
+                     <xs:element name="antwortID" minOccurs="0" type="din91379:datatypeC">
+                        <xs:annotation>
+                           <xs:documentation>Eindeutige Kennzeichnung einer Nachricht, mit der auf eine Nachricht geantwortet wird. DRV: Ticketnummer (wie beim elektronischen Versorgungsausgleich)</xs:documentation>
+                        </xs:annotation>
+                     </xs:element>
+                     <xs:element name="weitereAngaben" minOccurs="0" type="din91379:datatypeC">
+                        <xs:annotation>
+                           <xs:documentation>Von der DRV werden keine weiteren Angaben gemacht.</xs:documentation>
+                        </xs:annotation>
+                     </xs:element>
+                  </xs:sequence>
+               </xs:complexType>
+            </xs:element>
+         </xs:sequence>
+      </xs:complexType>
+   </xs:element>
+   <xs:element name="nachricht.zpo.auskunft.arbeitgeber.1500002">
+      <xs:complexType>
+         <xs:sequence>
+            <xs:element name="nachrichtenkopf" type="tns:Type.GDS.Nachrichtenkopf"/>
+            <xs:element name="grunddaten" type="tns:Type.GDS.Grunddaten"/>
+            <xs:element name="fachdaten">
+               <xs:complexType>
+                  <xs:sequence>
+                     <xs:element name="nachrichtID" minOccurs="0" type="din91379:datatypeC">
+                        <xs:annotation>
+                           <xs:documentation>Eindeutige Kennzeichnung einer Nachricht, mit der ein Kommunikationsprozess begonnen wird.</xs:documentation>
+                        </xs:annotation>
+                     </xs:element>
+                     <xs:element name="antwortID" minOccurs="0" type="din91379:datatypeC">
+                        <xs:annotation>
+                           <xs:documentation>Eindeutige Kennzeichnung einer Nachricht, mit der auf eine Nachricht geantwortet wird. DRV: Ticketnummer (wie beim elektronischen Versorgungsausgleich)</xs:documentation>
+                        </xs:annotation>
+                     </xs:element>
+                     <xs:element name="weitereAngaben" minOccurs="0" type="din91379:datatypeC">
+                        <xs:annotation>
+                           <xs:documentation>Von der DRV werden keine weiteren Angaben gemacht.</xs:documentation>
+                        </xs:annotation>
+                     </xs:element>
+                     <xs:element name="hinweistext"
+                                 minOccurs="0"
+                                 default="Für die angegebene Person ist ein aktueller Arbeitgeber bei der Rentenversicherung nicht bekannt. Dies ist eine kostenpflichtige Auskunft."
+                                 type="din91379:datatypeC"/>
+                  </xs:sequence>
+               </xs:complexType>
+            </xs:element>
+         </xs:sequence>
+      </xs:complexType>
+   </xs:element>
+   <xs:element name="nachricht.zpo.auskunft.fahrzeug.1500003">
+      <xs:complexType>
+         <xs:sequence>
+            <xs:element name="nachrichtenkopf" type="tns:Type.GDS.Nachrichtenkopf"/>
+            <xs:element name="grunddaten" type="tns:Type.GDS.Grunddaten"/>
+            <xs:element name="fachdaten">
+               <xs:complexType>
+                  <xs:sequence>
+                     <xs:element name="nachrichtID" minOccurs="0" type="din91379:datatypeC">
+                        <xs:annotation>
+                           <xs:documentation>Eindeutige Kennzeichnung einer Nachricht, mit der ein Kommunikationsprozess begonnen wird.</xs:documentation>
+                        </xs:annotation>
+                     </xs:element>
+                     <xs:element name="antwortID" minOccurs="0" type="din91379:datatypeC">
+                        <xs:annotation>
+                           <xs:documentation>Eindeutige Kennzeichnung einer Nachricht, mit der auf eine Nachricht geantwortet wird. DRV: Ticketnummer (wie beim elektronischen Versorgungsausgleich)</xs:documentation>
+                        </xs:annotation>
+                     </xs:element>
+                     <xs:element name="anfrage.parameter" type="din91379:datatypeC">
+                        <xs:annotation>
+                           <xs:documentation>Wiedergabe der Parameter aus der Anfrage</xs:documentation>
+                        </xs:annotation>
+                     </xs:element>
+                     <xs:element name="fahrzeug" minOccurs="0" maxOccurs="unbounded">
+                        <xs:complexType>
+                           <xs:sequence>
+                              <xs:element name="zulassungsabschnittID"
+                                          minOccurs="0"
+                                          type="din91379:datatypeC"/>
+                              <xs:element name="erstzulassung" minOccurs="0" type="tns:Type.GDS.Datumsangabe"/>
+                              <xs:element name="kennzeichen" minOccurs="0" type="din91379:datatypeC"/>
+                              <xs:element name="fahrzeugklasse" minOccurs="0" type="din91379:datatypeC">
+                                 <xs:annotation>
+                                    <xs:documentation>Klasse des Fahrzeugs (z.B. PKW)</xs:documentation>
+                                 </xs:annotation>
+                              </xs:element>
+                              <xs:element name="hersteller" minOccurs="0" type="din91379:datatypeC"/>
+                              <xs:element name="marke" minOccurs="0" type="din91379:datatypeC"/>
+                              <xs:element name="typ" minOccurs="0" type="din91379:datatypeC"/>
+                              <xs:element name="arbeitsgang" minOccurs="0" type="din91379:datatypeC"/>
+                              <xs:element name="zeitpunktaenderung"
+                                          minOccurs="0"
+                                          type="tns:Type.GDS.Datumsangabe"/>
+                           </xs:sequence>
+                        </xs:complexType>
+                     </xs:element>
+                  </xs:sequence>
+               </xs:complexType>
+            </xs:element>
+         </xs:sequence>
+      </xs:complexType>
+   </xs:element>
+   <xs:element name="nachricht.zpo.auskunftsersuchen.1500004">
+      <xs:complexType>
+         <xs:sequence>
+            <xs:element name="nachrichtenkopf" type="tns:Type.GDS.Nachrichtenkopf"/>
+            <xs:element name="grunddaten" type="tns:Type.GDS.Grunddaten"/>
+            <xs:element name="fachdaten">
+               <xs:complexType>
+                  <xs:sequence>
+                     <xs:element name="nachrichtID" minOccurs="0" type="din91379:datatypeC">
+                        <xs:annotation>
+                           <xs:documentation>Eindeutige Kennzeichnung einer Nachricht, mit der ein Kommunikationsprozess begonnen wird.</xs:documentation>
+                        </xs:annotation>
+                     </xs:element>
+                     <xs:element name="antwortID" minOccurs="0" type="din91379:datatypeC">
+                        <xs:annotation>
+                           <xs:documentation>Eindeutige Kennzeichnung einer Nachricht, mit der auf eine Nachricht geantwortet wird. DRV: Ticketnummer (wie beim elektronischen Versorgungsausgleich)</xs:documentation>
+                        </xs:annotation>
+                     </xs:element>
+                     <xs:element name="voraussetzungenDesAuskunftsersuchens">
+                        <xs:complexType>
+                           <xs:sequence>
+                              <xs:element name="gueltigerVollstreckungstitel"
+                                          default="false"
+                                          type="xs:boolean">
+                                 <xs:annotation>
+                                    <xs:documentation>Das Auskunftsersuchen wird im Rahmen eines laufenden Vollstreckungsverfahren gestellt. Es liegt ein gültiger Vollstreckungstitel vor.</xs:documentation>
+                                 </xs:annotation>
+                              </xs:element>
+                              <xs:element name="anfrage.meldebehoerde"
+                                          minOccurs="0"
+                                          default="false"
+                                          type="xs:boolean">
+                                 <xs:annotation>
+                                    <xs:documentation>Die Anschrift oder der derzeitige oder zukünftige Aufenthaltsort des Schuldners ist trotz Anfrage bei der Meldebehörde nicht bekannt.</xs:documentation>
+                                 </xs:annotation>
+                              </xs:element>
+                              <xs:element name="vermoegensauskunft"
+                                          minOccurs="0"
+                                          default="false"
+                                          type="xs:boolean">
+                                 <xs:annotation>
+                                    <xs:documentation>Der Schuldner ist seiner Pflicht zur Abgabe der Vermögensauskunft nach § 802c ZPO nicht nachgekommen.</xs:documentation>
+                                 </xs:annotation>
+                              </xs:element>
+                              <xs:element name="keineVollstaendigeBefriedigung"
+                                          minOccurs="0"
+                                          default="false"
+                                          type="xs:boolean">
+                                 <xs:annotation>
+                                    <xs:documentation>Bei einer Vollstreckung in die in der Vermögensauskunft aufgeführten Vermögensgegenstände ist eine vollständige Befriedigung des Gläubigers voraussichtlich nicht zu erwarten.</xs:documentation>
+                                 </xs:annotation>
+                              </xs:element>
+                              <xs:element name="ladungNichtZustellbar"
+                                          minOccurs="0"
+                                          default="false"
+                                          type="xs:boolean">
+                                 <xs:annotation>
+                                    <xs:documentation>Die Ladung zu dem Termin zur Abgabe der Vermögensauskunft an den Schuldner ist gem. § 802l ZPO nicht zustellbar.</xs:documentation>
+                                 </xs:annotation>
+                              </xs:element>
+                           </xs:sequence>
+                        </xs:complexType>
+                     </xs:element>
+                     <xs:element name="anfrage.parameter" minOccurs="0">
+                        <xs:annotation>
+                           <xs:documentation>Die Anfrageparameter werden nur von der KBA benötigt. Für die Anfrage bei der DRV sind keine Parameter anzugeben.</xs:documentation>
+                        </xs:annotation>
+                        <xs:complexType>
+                           <xs:sequence>
+                              <xs:element name="anfrage.typ" type="tns:Code.ZPO.Anfragetyp"/>
+                              <xs:element name="zeitraumVon" minOccurs="0" type="tns:Type.GDS.Datumsangabe">
+                                 <xs:annotation>
+                                    <xs:documentation>Beginn des Abfragezeitraums</xs:documentation>
+                                 </xs:annotation>
+                              </xs:element>
+                              <xs:element name="zulassungsabschnittID"
+                                          minOccurs="0"
+                                          type="din91379:datatypeC">
+                                 <xs:annotation>
+                                    <xs:documentation>ID aus zuvor ermittelter Fahrzeugliste zur Anforderung der Fahrzeugakte</xs:documentation>
+                                 </xs:annotation>
+                              </xs:element>
+                           </xs:sequence>
+                        </xs:complexType>
+                     </xs:element>
+                  </xs:sequence>
+               </xs:complexType>
+            </xs:element>
+         </xs:sequence>
+      </xs:complexType>
+   </xs:element>
+   <xs:element name="nachricht.zpo.fehlermeldung.1500005">
+      <xs:complexType>
+         <xs:sequence>
+            <xs:element name="nachrichtenkopf" type="tns:Type.GDS.Nachrichtenkopf"/>
+            <xs:element name="grunddaten" type="tns:Type.GDS.Grunddaten"/>
+            <xs:element name="fachdaten">
+               <xs:complexType>
+                  <xs:sequence>
+                     <xs:element name="nachrichtID" minOccurs="0" type="din91379:datatypeC">
+                        <xs:annotation>
+                           <xs:documentation>Eindeutige Kennzeichnung einer Nachricht, mit der ein Kommunikationsprozess begonnen wird.</xs:documentation>
+                        </xs:annotation>
+                     </xs:element>
+                     <xs:element name="antwortID" minOccurs="0" type="din91379:datatypeC">
+                        <xs:annotation>
+                           <xs:documentation>Eindeutige Kennzeichnung einer Nachricht, mit der auf eine Nachricht geantwortet wird. DRV: Ticketnummer (wie beim elektronischen Versorgungsausgleich)</xs:documentation>
+                        </xs:annotation>
+                     </xs:element>
+                     <xs:element name="fehlercode" type="tns:Code.ZPO.Fehlercode">
+                        <xs:annotation>
+                           <xs:documentation>Hier wird der nummerische Fehlercode aus der Codeliste angegeben. Der Klartext kann von den Fachverfahren aus der Codeliste entnommen werden.</xs:documentation>
+                        </xs:annotation>
+                     </xs:element>
+                     <xs:element name="fehlertext" minOccurs="0" type="din91379:datatypeC">
+                        <xs:annotation>
+                           <xs:documentation>Weitere Erläuterung zur Fehlersituation</xs:documentation>
+                        </xs:annotation>
+                     </xs:element>
+                     <xs:element name="anfrage.parameter" minOccurs="0" type="din91379:datatypeC">
+                        <xs:annotation>
+                           <xs:documentation>Wiedergabe der Parameter aus der Anfrage</xs:documentation>
+                        </xs:annotation>
+                     </xs:element>
+                  </xs:sequence>
+               </xs:complexType>
+            </xs:element>
+         </xs:sequence>
+      </xs:complexType>
+   </xs:element>
+   <xs:element name="nachricht.zpo.prueffallmeldung.1500006">
+      <xs:complexType>
+         <xs:sequence>
+            <xs:element name="nachrichtenkopf" type="tns:Type.GDS.Nachrichtenkopf"/>
+            <xs:element name="grunddaten" type="tns:Type.GDS.Grunddaten"/>
+            <xs:element name="fachdaten">
+               <xs:complexType>
+                  <xs:sequence>
+                     <xs:element name="nachrichtID" minOccurs="0" type="din91379:datatypeC">
+                        <xs:annotation>
+                           <xs:documentation>Eindeutige Kennzeichnung einer Nachricht, mit der ein Kommunikationsprozess begonnen wird.</xs:documentation>
+                        </xs:annotation>
+                     </xs:element>
+                     <xs:element name="antwortID" minOccurs="0" type="din91379:datatypeC">
+                        <xs:annotation>
+                           <xs:documentation>Eindeutige Kennzeichnung einer Nachricht, mit der auf eine Nachricht geantwortet wird. DRV: Ticketnummer (wie beim elektronischen Versorgungsausgleich)</xs:documentation>
+                        </xs:annotation>
+                     </xs:element>
+                     <xs:element name="prueffall.ID" minOccurs="0" type="din91379:datatypeC">
+                        <xs:annotation>
+                           <xs:documentation>DRV: Prüffallnummer</xs:documentation>
+                        </xs:annotation>
+                     </xs:element>
+                     <xs:element name="prueffall.erklaerung"
+                                 minOccurs="0"
+                                 default="Zwischennachricht (kostenfrei): Wir können Ihre Anfrage noch nicht abschließend bearbeiten. Ihr Auskunftersuchen hat zu einem Mehrfachtreffer geführt. Das bedeutet, Name und Identifizierungsdaten der betroffenen Person sind mehrfach gefunden worden. Wir versuchen in einem manuellen Verfahren eine eindeutige Zuordnung vorzunehmen. Das wird einige Zeit in Anspruch nehmen. Haben Sie bitte Geduld! Senden Sie uns das Auskunftersuchen bitte nicht erneut zu! Auch telefonische Rückfragen zu diesen Fällen können nicht beantwortet werden!  Sie erhalten nach Klärung in jedem Fall eine abschließende elektronische Nachricht. Diese Zwischennachricht ist kostenfrei."
+                                 type="din91379:datatypeC">
+                        <xs:annotation>
+                           <xs:documentation>Zwischennachricht</xs:documentation>
+                        </xs:annotation>
+                     </xs:element>
+                  </xs:sequence>
+               </xs:complexType>
+            </xs:element>
+         </xs:sequence>
+      </xs:complexType>
+   </xs:element>
+   <xs:element name="nachricht.zpo.rechnung.1500007">
+      <xs:complexType>
+         <xs:sequence>
+            <xs:element name="nachrichtenkopf" type="tns:Type.GDS.Nachrichtenkopf"/>
+            <xs:element name="grunddaten" type="tns:Type.GDS.Grunddaten"/>
+            <xs:element name="fachdaten">
+               <xs:complexType>
+                  <xs:sequence>
+                     <xs:element name="nachrichtID" minOccurs="0" type="din91379:datatypeC">
+                        <xs:annotation>
+                           <xs:documentation>Eindeutige Kennzeichnung einer Nachricht, mit der ein Kommunikationsprozess begonnen wird.</xs:documentation>
+                        </xs:annotation>
+                     </xs:element>
+                     <xs:element name="antwortID" minOccurs="0" type="din91379:datatypeC">
+                        <xs:annotation>
+                           <xs:documentation>Eindeutige Kennzeichnung einer Nachricht, mit der auf eine Nachricht geantwortet wird. DRV: Ticketnummer (wie beim elektronischen Versorgungsausgleich)</xs:documentation>
+                        </xs:annotation>
+                     </xs:element>
+                     <xs:element name="anfrage.datum" type="tns:Type.GDS.Datumsangabe"/>
+                     <xs:element name="auswahl_auskunfttyp">
+                        <xs:complexType>
+                           <xs:choice>
+                              <xs:element name="p.755.ZPO" type="tns:Code.GDS.Ereignis.Typ3">
+                                 <xs:annotation>
+                                    <xs:documentation>Auskunft Anschrift nach § 755 ZPO</xs:documentation>
+                                 </xs:annotation>
+                              </xs:element>
+                              <xs:element name="p.802l.ZPO" type="tns:Code.GDS.Ereignis.Typ3">
+                                 <xs:annotation>
+                                    <xs:documentation>Auskunft Arbeitgeber nach § 802l ZPO</xs:documentation>
+                                 </xs:annotation>
+                              </xs:element>
+                           </xs:choice>
+                        </xs:complexType>
+                     </xs:element>
+                     <xs:element name="rechnung">
+                        <xs:complexType>
+                           <xs:sequence>
+                              <xs:element name="gebuehr" type="tns:Type.GDS.Geldbetrag">
+                                 <xs:annotation>
+                                    <xs:documentation>Höhe der Gebühr</xs:documentation>
+                                 </xs:annotation>
+                              </xs:element>
+                              <xs:element name="zahlungsfrist" type="tns:Type.GDS.Datumsangabe">
+                                 <xs:annotation>
+                                    <xs:documentation>zwei Monate nach Rechnungsstellung</xs:documentation>
+                                 </xs:annotation>
+                              </xs:element>
+                              <xs:element name="kassenzeichen" type="din91379:datatypeC">
+                                 <xs:annotation>
+                                    <xs:documentation>eindeutiges Kassenzeichen für den einzelnen Geschäftsvorfall</xs:documentation>
+                                 </xs:annotation>
+                              </xs:element>
+                              <xs:element name="datum.rechnungsstellung" type="tns:Type.GDS.Datumsangabe">
+                                 <xs:annotation>
+                                    <xs:documentation>Datum der Rechnungsstellung durch die DSRV</xs:documentation>
+                                 </xs:annotation>
+                              </xs:element>
+                           </xs:sequence>
+                        </xs:complexType>
+                     </xs:element>
+                     <xs:element name="versicherungsnummer" type="din91379:datatypeC"/>
+                  </xs:sequence>
+               </xs:complexType>
+            </xs:element>
+         </xs:sequence>
+      </xs:complexType>
+   </xs:element>
+</xs:schema>

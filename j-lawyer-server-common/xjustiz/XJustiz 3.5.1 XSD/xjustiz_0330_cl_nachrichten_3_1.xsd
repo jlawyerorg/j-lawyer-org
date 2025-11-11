@@ -1,0 +1,577 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema"
+           xmlns:tns="http://www.xjustiz.de"
+           xmlns:xoev-code="http://xoev.de/schemata/code/1_0"
+           targetNamespace="http://www.xjustiz.de"
+           version="3.1.0"
+           elementFormDefault="unqualified"
+           attributeFormDefault="unqualified">
+   <xs:annotation>
+      <xs:appinfo>
+         <standard>
+            <nameLang>Strukturierte Fachdaten für die Kommunikation im elektronischen Rechtsverkehr</nameLang>
+            <nameKurz>XJustiz</nameKurz>
+            <nameTechnisch>xjustiz</nameTechnisch>
+            <kennung>urn:xoev-de:blk-ag-it-standards:standard:xjustiz</kennung>
+            <beschreibung>XJustiz ist der bundesweit einheitliche Standard für den Austausch strukturierter elektronischer Informationen mit der Justiz.</beschreibung>
+         </standard>
+         <versionStandard>
+            <version>3.5.1</version>
+            <beschreibung>XJustiz beschreibt ein standardisiertes Datenaustauschformat für die elektronische Kommunikation innerhalb und mit der Justizverwaltung.</beschreibung>
+            <versionXOEVProfil>1.7.2</versionXOEVProfil>
+            <versionXOEVHandbuch>2.3.1</versionXOEVHandbuch>
+            <versionXGenerator>3.1.1</versionXGenerator>
+            <versionModellierungswerkzeug>19.0 SP3</versionModellierungswerkzeug>
+            <nameModellierungswerkzeug>MagicDraw</nameModellierungswerkzeug>
+         </versionStandard>
+      </xs:appinfo>
+   </xs:annotation>
+   <xs:import schemaLocation="xoev-code.xsd"
+              namespace="http://xoev.de/schemata/code/1_0"/>
+   <xs:complexType name="Code.INSO.Ergebnis.VOE_Verarbeitungsbestaetigung">
+      <xs:annotation>
+         <xs:appinfo>
+            <codeliste>
+               <nameLang>INSO.Ergebnis.VOE_Verarbeitungsbestaetigung</nameLang>
+               <nameKurz>INSO.Ergebnis.VOE_Verarbeitungsbestaetigung</nameKurz>
+               <nameTechnisch>inso.ergebnis.voe-verarbeitungsbestaetigung</nameTechnisch>
+               <kennung>urn:xoev-de:xjustiz:codeliste:inso.ergebnis.voe-verarbeitungsbestaetigung</kennung>
+               <beschreibung>Codeliste der verschiedenen Ereignisse im Fachverfahren INSO für die VOE-Veröffentlichungsbestätigungen.</beschreibung>
+               <herausgebernameLang>BLK-AG IT-Standards in der Justiz</herausgebernameLang>
+               <herausgebernameKurz>AG IT-Standards</herausgebernameKurz>
+            </codeliste>
+            <versionCodeliste>
+               <version>2.1</version>
+               <versionCodelistenHandbuch>1.1</versionCodelistenHandbuch>
+               <aenderungZurVorversion>Die Codeliste wurde um den Wert 'Sonstiger Fehler' erweitert.</aenderungZurVorversion>
+            </versionCodeliste>
+            <codelistenspalten>
+               <code>
+                  <spaltennameLang>Schlüssel</spaltennameLang>
+                  <datentyp>string</datentyp>
+                  <codeSpalte>true</codeSpalte>
+                  <verwendung>required</verwendung>
+                  <empfohleneCodeSpalte>true</empfohleneCodeSpalte>
+               </code>
+               <wert>
+                  <spaltennameLang>Wert</spaltennameLang>
+                  <datentyp>string</datentyp>
+                  <codeSpalte>false</codeSpalte>
+                  <verwendung>required</verwendung>
+                  <empfohleneCodeSpalte>false</empfohleneCodeSpalte>
+               </wert>
+               <beschreibung>
+                  <spaltennameLang>Beschreibung</spaltennameLang>
+                  <datentyp>string</datentyp>
+                  <codeSpalte>false</codeSpalte>
+                  <verwendung>optional</verwendung>
+                  <empfohleneCodeSpalte>false</empfohleneCodeSpalte>
+               </beschreibung>
+            </codelistenspalten>
+            <genutzteCodeSpalte>code</genutzteCodeSpalte>
+         </xs:appinfo>
+      </xs:annotation>
+      <xs:complexContent>
+         <xs:restriction base="xoev-code:Code">
+            <xs:sequence>
+               <xs:element name="code" type="tns:inso.ergebnis.voe-verarbeitungsbestaetigung"/>
+            </xs:sequence>
+            <xs:attribute name="listURI"
+                          type="xs:anyURI"
+                          use="optional"
+                          fixed="urn:xoev-de:xjustiz:codeliste:inso.ergebnis.voe-verarbeitungsbestaetigung"/>
+            <xs:attribute name="listVersionID"
+                          type="xs:normalizedString"
+                          use="optional"
+                          fixed="2.1"/>
+         </xs:restriction>
+      </xs:complexContent>
+   </xs:complexType>
+   <xs:complexType name="Code.INSO.Verfahrensart_International">
+      <xs:annotation>
+         <xs:appinfo>
+            <codeliste>
+               <nameLang>INSO.Verfahrensart.International</nameLang>
+               <nameKurz>INSO.Verfahrensart.International</nameKurz>
+               <nameTechnisch>inso.verfahrensart.international</nameTechnisch>
+               <kennung>urn:xoev-de:xjustiz:codeliste:inso.verfahrensart.international</kennung>
+               <beschreibung>Codeliste der verschiedenen Ereignisse im Fachverfahren INSO für die gemeldeten Verfahren.</beschreibung>
+               <herausgebernameLang>BLK-AG IT-Standards in der Justiz</herausgebernameLang>
+               <herausgebernameKurz>AG IT-Standards</herausgebernameKurz>
+            </codeliste>
+            <versionCodeliste>
+               <version>2.1</version>
+               <versionCodelistenHandbuch>1.1</versionCodelistenHandbuch>
+               <aenderungZurVorversion>Die Codeliste wurde um den Wert 'Restrukturierungssache' erweitert.</aenderungZurVorversion>
+            </versionCodeliste>
+            <codelistenspalten>
+               <code>
+                  <spaltennameLang>Schlüssel</spaltennameLang>
+                  <datentyp>string</datentyp>
+                  <codeSpalte>true</codeSpalte>
+                  <verwendung>required</verwendung>
+                  <empfohleneCodeSpalte>true</empfohleneCodeSpalte>
+               </code>
+               <wert>
+                  <spaltennameLang>Wert</spaltennameLang>
+                  <datentyp>string</datentyp>
+                  <codeSpalte>false</codeSpalte>
+                  <verwendung>required</verwendung>
+                  <empfohleneCodeSpalte>false</empfohleneCodeSpalte>
+               </wert>
+            </codelistenspalten>
+            <genutzteCodeSpalte>code</genutzteCodeSpalte>
+         </xs:appinfo>
+      </xs:annotation>
+      <xs:complexContent>
+         <xs:restriction base="xoev-code:Code">
+            <xs:sequence>
+               <xs:element name="code" type="tns:inso.verfahrensart.international"/>
+            </xs:sequence>
+            <xs:attribute name="listURI"
+                          type="xs:anyURI"
+                          use="optional"
+                          fixed="urn:xoev-de:xjustiz:codeliste:inso.verfahrensart.international"/>
+            <xs:attribute name="listVersionID"
+                          type="xs:normalizedString"
+                          use="optional"
+                          fixed="2.1"/>
+         </xs:restriction>
+      </xs:complexContent>
+   </xs:complexType>
+   <xs:complexType name="Code.INSO.Verfahrensart_National">
+      <xs:annotation>
+         <xs:appinfo>
+            <codeliste>
+               <nameLang>INSO.Verfahrensart.National</nameLang>
+               <nameKurz>INSO.Verfahrensart.National</nameKurz>
+               <nameTechnisch>inso.verfahrensart.national</nameTechnisch>
+               <kennung>urn:xoev-de:xjustiz:codeliste:inso.verfahrensart.national</kennung>
+               <beschreibung>Codeliste der verschiedenen Ereignisse im Fachverfahren INSO für die gemeldeten Verfahren.</beschreibung>
+               <herausgebernameLang>BLK-AG IT-Standards in der Justiz</herausgebernameLang>
+               <herausgebernameKurz>AG IT-Standards</herausgebernameKurz>
+            </codeliste>
+            <versionCodeliste>
+               <version>2.1</version>
+               <versionCodelistenHandbuch>1.1</versionCodelistenHandbuch>
+               <aenderungZurVorversion>Die Codeliste wurde um den Wert 'die Restrukturierungssache' erweitert.</aenderungZurVorversion>
+            </versionCodeliste>
+            <codelistenspalten>
+               <code>
+                  <spaltennameLang>Schlüssel</spaltennameLang>
+                  <datentyp>string</datentyp>
+                  <codeSpalte>true</codeSpalte>
+                  <verwendung>required</verwendung>
+                  <empfohleneCodeSpalte>true</empfohleneCodeSpalte>
+               </code>
+               <wert>
+                  <spaltennameLang>Wert</spaltennameLang>
+                  <datentyp>string</datentyp>
+                  <codeSpalte>false</codeSpalte>
+                  <verwendung>required</verwendung>
+                  <empfohleneCodeSpalte>false</empfohleneCodeSpalte>
+               </wert>
+            </codelistenspalten>
+            <genutzteCodeSpalte>code</genutzteCodeSpalte>
+         </xs:appinfo>
+      </xs:annotation>
+      <xs:complexContent>
+         <xs:restriction base="xoev-code:Code">
+            <xs:sequence>
+               <xs:element name="code" type="tns:inso.verfahrensart.national"/>
+            </xs:sequence>
+            <xs:attribute name="listURI"
+                          type="xs:anyURI"
+                          use="optional"
+                          fixed="urn:xoev-de:xjustiz:codeliste:inso.verfahrensart.national"/>
+            <xs:attribute name="listVersionID"
+                          type="xs:normalizedString"
+                          use="optional"
+                          fixed="2.1"/>
+         </xs:restriction>
+      </xs:complexContent>
+   </xs:complexType>
+   <xs:complexType name="Code.INSO.Verfahrensart_National_Unterart">
+      <xs:annotation>
+         <xs:appinfo>
+            <codeliste>
+               <nameLang>INSO.Verfahrensart.National.Unterart</nameLang>
+               <nameKurz>INSO.Verfahrensart.National.Unterart</nameKurz>
+               <nameTechnisch>inso.verfahrensart.national.unterart</nameTechnisch>
+               <kennung>urn:xoev-de:xjustiz:codeliste:inso.verfahrensart.national.unterart</kennung>
+               <beschreibung>Codeliste der verschiedenen Ereignisse im Fachverfahren INSO für die gemeldeten Verfahren.</beschreibung>
+               <herausgebernameLang>BLK-AG IT-Standards in der Justiz</herausgebernameLang>
+               <herausgebernameKurz>AG IT-Standards</herausgebernameKurz>
+            </codeliste>
+            <versionCodeliste>
+               <version>2.0</version>
+               <versionCodelistenHandbuch>1.1</versionCodelistenHandbuch>
+            </versionCodeliste>
+            <codelistenspalten>
+               <code>
+                  <spaltennameLang>Schlüssel</spaltennameLang>
+                  <datentyp>string</datentyp>
+                  <codeSpalte>true</codeSpalte>
+                  <verwendung>required</verwendung>
+                  <empfohleneCodeSpalte>true</empfohleneCodeSpalte>
+               </code>
+               <wert>
+                  <spaltennameLang>Wert</spaltennameLang>
+                  <datentyp>string</datentyp>
+                  <codeSpalte>false</codeSpalte>
+                  <verwendung>required</verwendung>
+                  <empfohleneCodeSpalte>false</empfohleneCodeSpalte>
+               </wert>
+            </codelistenspalten>
+            <genutzteCodeSpalte>code</genutzteCodeSpalte>
+         </xs:appinfo>
+      </xs:annotation>
+      <xs:complexContent>
+         <xs:restriction base="xoev-code:Code">
+            <xs:sequence>
+               <xs:element name="code" type="tns:inso.verfahrensart.national.unterart"/>
+            </xs:sequence>
+            <xs:attribute name="listURI"
+                          type="xs:anyURI"
+                          use="optional"
+                          fixed="urn:xoev-de:xjustiz:codeliste:inso.verfahrensart.national.unterart"/>
+            <xs:attribute name="listVersionID"
+                          type="xs:normalizedString"
+                          use="optional"
+                          fixed="2.0"/>
+         </xs:restriction>
+      </xs:complexContent>
+   </xs:complexType>
+   <xs:simpleType name="inso.ergebnis.voe-verarbeitungsbestaetigung">
+      <xs:annotation>
+         <xs:appinfo>
+            <codeliste>
+               <nameLang>INSO.Ergebnis.VOE_Verarbeitungsbestaetigung</nameLang>
+               <nameKurz>INSO.Ergebnis.VOE_Verarbeitungsbestaetigung</nameKurz>
+               <nameTechnisch>inso.ergebnis.voe-verarbeitungsbestaetigung</nameTechnisch>
+               <kennung>urn:xoev-de:xjustiz:codeliste:inso.ergebnis.voe-verarbeitungsbestaetigung</kennung>
+               <beschreibung>Codeliste der verschiedenen Ereignisse im Fachverfahren INSO für die VOE-Veröffentlichungsbestätigungen.</beschreibung>
+               <herausgebernameLang>BLK-AG IT-Standards in der Justiz</herausgebernameLang>
+               <herausgebernameKurz>AG IT-Standards</herausgebernameKurz>
+            </codeliste>
+            <versionCodeliste>
+               <version>2.1</version>
+               <versionCodelistenHandbuch>1.1</versionCodelistenHandbuch>
+               <aenderungZurVorversion>Die Codeliste wurde um den Wert 'Sonstiger Fehler' erweitert.</aenderungZurVorversion>
+            </versionCodeliste>
+            <codelistenspalten>
+               <code>
+                  <spaltennameLang>Schlüssel</spaltennameLang>
+                  <datentyp>string</datentyp>
+                  <codeSpalte>true</codeSpalte>
+                  <verwendung>required</verwendung>
+                  <empfohleneCodeSpalte>true</empfohleneCodeSpalte>
+               </code>
+               <wert>
+                  <spaltennameLang>Wert</spaltennameLang>
+                  <datentyp>string</datentyp>
+                  <codeSpalte>false</codeSpalte>
+                  <verwendung>required</verwendung>
+                  <empfohleneCodeSpalte>false</empfohleneCodeSpalte>
+               </wert>
+               <beschreibung>
+                  <spaltennameLang>Beschreibung</spaltennameLang>
+                  <datentyp>string</datentyp>
+                  <codeSpalte>false</codeSpalte>
+                  <verwendung>optional</verwendung>
+                  <empfohleneCodeSpalte>false</empfohleneCodeSpalte>
+               </beschreibung>
+            </codelistenspalten>
+         </xs:appinfo>
+      </xs:annotation>
+      <xs:restriction base="xs:token">
+         <xs:enumeration value="1">
+            <xs:annotation>
+               <xs:appinfo>
+                  <wert>Veröffentlichungsbestätigung</wert>
+                  <beschreibung>Mitteilung, dass eine Veröffentlichung durchgeführt wurde</beschreibung>
+               </xs:appinfo>
+            </xs:annotation>
+         </xs:enumeration>
+         <xs:enumeration value="10">
+            <xs:annotation>
+               <xs:appinfo>
+                  <wert>Sonstiger Fehler</wert>
+               </xs:appinfo>
+            </xs:annotation>
+         </xs:enumeration>
+         <xs:enumeration value="2">
+            <xs:annotation>
+               <xs:appinfo>
+                  <wert>Löschungsbestätigung</wert>
+                  <beschreibung>Mitteilung, dass eine Löschung durchgeführt wurde</beschreibung>
+               </xs:appinfo>
+            </xs:annotation>
+         </xs:enumeration>
+         <xs:enumeration value="3">
+            <xs:annotation>
+               <xs:appinfo>
+                  <wert>Fehlerhafte Signatur</wert>
+                  <beschreibung>Die Veröffentlichungsnachricht ist mindestens fortgeschritten zu signieren, Signaturprüfung war nicht erfolgreich</beschreibung>
+               </xs:appinfo>
+            </xs:annotation>
+         </xs:enumeration>
+         <xs:enumeration value="4">
+            <xs:annotation>
+               <xs:appinfo>
+                  <wert>Fehlerhaftes Format der Veröffentlichung</wert>
+                  <beschreibung>Der Text ist als String oder in HTML-Format zu übergeben, ist das Flag HTML_Format in der Veröffentlichungsnachricht nicht gesetzt, dürfen öffnende und schließende Tags nicht vorhanden sein.</beschreibung>
+               </xs:appinfo>
+            </xs:annotation>
+         </xs:enumeration>
+         <xs:enumeration value="5">
+            <xs:annotation>
+               <xs:appinfo>
+                  <wert>Bezugsveröffentlichung nicht gefunden</wert>
+                  <beschreibung>Es wurde eine Löschung zu einer Veröffentlichung versucht, die nicht mehr (?) auf dem Portal vorhanden ist.</beschreibung>
+               </xs:appinfo>
+            </xs:annotation>
+         </xs:enumeration>
+         <xs:enumeration value="6">
+            <xs:annotation>
+               <xs:appinfo>
+                  <wert>Fehlerhaftes Löschdatum oder Löschfrist</wert>
+                  <beschreibung>Es wurde eine Löschung versucht mit einem Löschdatum in der Vergangenheit oder mit einer Löschfrist, die nicht interpretiert werden kann.</beschreibung>
+               </xs:appinfo>
+            </xs:annotation>
+         </xs:enumeration>
+         <xs:enumeration value="7">
+            <xs:annotation>
+               <xs:appinfo>
+                  <wert>SAFE-Authentifizierung fehlgeschlagen</wert>
+               </xs:appinfo>
+            </xs:annotation>
+         </xs:enumeration>
+         <xs:enumeration value="8">
+            <xs:annotation>
+               <xs:appinfo>
+                  <wert>Löschungsauftrag erhalten</wert>
+               </xs:appinfo>
+            </xs:annotation>
+         </xs:enumeration>
+         <xs:enumeration value="9">
+            <xs:annotation>
+               <xs:appinfo>
+                  <wert>Löschdatum korrigiert</wert>
+               </xs:appinfo>
+            </xs:annotation>
+         </xs:enumeration>
+      </xs:restriction>
+   </xs:simpleType>
+   <xs:simpleType name="inso.verfahrensart.international">
+      <xs:annotation>
+         <xs:appinfo>
+            <codeliste>
+               <nameLang>INSO.Verfahrensart.International</nameLang>
+               <nameKurz>INSO.Verfahrensart.International</nameKurz>
+               <nameTechnisch>inso.verfahrensart.international</nameTechnisch>
+               <kennung>urn:xoev-de:xjustiz:codeliste:inso.verfahrensart.international</kennung>
+               <beschreibung>Codeliste der verschiedenen Ereignisse im Fachverfahren INSO für die gemeldeten Verfahren.</beschreibung>
+               <herausgebernameLang>BLK-AG IT-Standards in der Justiz</herausgebernameLang>
+               <herausgebernameKurz>AG IT-Standards</herausgebernameKurz>
+            </codeliste>
+            <versionCodeliste>
+               <version>2.1</version>
+               <versionCodelistenHandbuch>1.1</versionCodelistenHandbuch>
+               <aenderungZurVorversion>Die Codeliste wurde um den Wert 'Restrukturierungssache' erweitert.</aenderungZurVorversion>
+            </versionCodeliste>
+            <codelistenspalten>
+               <code>
+                  <spaltennameLang>Schlüssel</spaltennameLang>
+                  <datentyp>string</datentyp>
+                  <codeSpalte>true</codeSpalte>
+                  <verwendung>required</verwendung>
+                  <empfohleneCodeSpalte>true</empfohleneCodeSpalte>
+               </code>
+               <wert>
+                  <spaltennameLang>Wert</spaltennameLang>
+                  <datentyp>string</datentyp>
+                  <codeSpalte>false</codeSpalte>
+                  <verwendung>required</verwendung>
+                  <empfohleneCodeSpalte>false</empfohleneCodeSpalte>
+               </wert>
+            </codelistenspalten>
+         </xs:appinfo>
+      </xs:annotation>
+      <xs:restriction base="xs:token">
+         <xs:enumeration value="1">
+            <xs:annotation>
+               <xs:appinfo>
+                  <wert>Kein internationaler Bezug</wert>
+               </xs:appinfo>
+            </xs:annotation>
+         </xs:enumeration>
+         <xs:enumeration value="2">
+            <xs:annotation>
+               <xs:appinfo>
+                  <wert>Hauptinsolvenzverfahren</wert>
+               </xs:appinfo>
+            </xs:annotation>
+         </xs:enumeration>
+         <xs:enumeration value="3">
+            <xs:annotation>
+               <xs:appinfo>
+                  <wert>Sekundärinsolvenzverfahren</wert>
+               </xs:appinfo>
+            </xs:annotation>
+         </xs:enumeration>
+         <xs:enumeration value="4">
+            <xs:annotation>
+               <xs:appinfo>
+                  <wert>Partikularverfahren</wert>
+               </xs:appinfo>
+            </xs:annotation>
+         </xs:enumeration>
+         <xs:enumeration value="5">
+            <xs:annotation>
+               <xs:appinfo>
+                  <wert>Restrukturierungssache</wert>
+               </xs:appinfo>
+            </xs:annotation>
+         </xs:enumeration>
+      </xs:restriction>
+   </xs:simpleType>
+   <xs:simpleType name="inso.verfahrensart.national">
+      <xs:annotation>
+         <xs:appinfo>
+            <codeliste>
+               <nameLang>INSO.Verfahrensart.National</nameLang>
+               <nameKurz>INSO.Verfahrensart.National</nameKurz>
+               <nameTechnisch>inso.verfahrensart.national</nameTechnisch>
+               <kennung>urn:xoev-de:xjustiz:codeliste:inso.verfahrensart.national</kennung>
+               <beschreibung>Codeliste der verschiedenen Ereignisse im Fachverfahren INSO für die gemeldeten Verfahren.</beschreibung>
+               <herausgebernameLang>BLK-AG IT-Standards in der Justiz</herausgebernameLang>
+               <herausgebernameKurz>AG IT-Standards</herausgebernameKurz>
+            </codeliste>
+            <versionCodeliste>
+               <version>2.1</version>
+               <versionCodelistenHandbuch>1.1</versionCodelistenHandbuch>
+               <aenderungZurVorversion>Die Codeliste wurde um den Wert 'die Restrukturierungssache' erweitert.</aenderungZurVorversion>
+            </versionCodeliste>
+            <codelistenspalten>
+               <code>
+                  <spaltennameLang>Schlüssel</spaltennameLang>
+                  <datentyp>string</datentyp>
+                  <codeSpalte>true</codeSpalte>
+                  <verwendung>required</verwendung>
+                  <empfohleneCodeSpalte>true</empfohleneCodeSpalte>
+               </code>
+               <wert>
+                  <spaltennameLang>Wert</spaltennameLang>
+                  <datentyp>string</datentyp>
+                  <codeSpalte>false</codeSpalte>
+                  <verwendung>required</verwendung>
+                  <empfohleneCodeSpalte>false</empfohleneCodeSpalte>
+               </wert>
+            </codelistenspalten>
+         </xs:appinfo>
+      </xs:annotation>
+      <xs:restriction base="xs:token">
+         <xs:enumeration value="1">
+            <xs:annotation>
+               <xs:appinfo>
+                  <wert>das Konkursverfahren</wert>
+               </xs:appinfo>
+            </xs:annotation>
+         </xs:enumeration>
+         <xs:enumeration value="2">
+            <xs:annotation>
+               <xs:appinfo>
+                  <wert>das gerichtliche Vergleichsverfahren</wert>
+               </xs:appinfo>
+            </xs:annotation>
+         </xs:enumeration>
+         <xs:enumeration value="3">
+            <xs:annotation>
+               <xs:appinfo>
+                  <wert>das Gesamtvollstreckungsverfahren</wert>
+               </xs:appinfo>
+            </xs:annotation>
+         </xs:enumeration>
+         <xs:enumeration value="4">
+            <xs:annotation>
+               <xs:appinfo>
+                  <wert>das Insolvenzverfahren</wert>
+               </xs:appinfo>
+            </xs:annotation>
+         </xs:enumeration>
+         <xs:enumeration value="5">
+            <xs:annotation>
+               <xs:appinfo>
+                  <wert>die Restrukturierungssache</wert>
+               </xs:appinfo>
+            </xs:annotation>
+         </xs:enumeration>
+      </xs:restriction>
+   </xs:simpleType>
+   <xs:simpleType name="inso.verfahrensart.national.unterart">
+      <xs:annotation>
+         <xs:appinfo>
+            <codeliste>
+               <nameLang>INSO.Verfahrensart.National.Unterart</nameLang>
+               <nameKurz>INSO.Verfahrensart.National.Unterart</nameKurz>
+               <nameTechnisch>inso.verfahrensart.national.unterart</nameTechnisch>
+               <kennung>urn:xoev-de:xjustiz:codeliste:inso.verfahrensart.national.unterart</kennung>
+               <beschreibung>Codeliste der verschiedenen Ereignisse im Fachverfahren INSO für die gemeldeten Verfahren.</beschreibung>
+               <herausgebernameLang>BLK-AG IT-Standards in der Justiz</herausgebernameLang>
+               <herausgebernameKurz>AG IT-Standards</herausgebernameKurz>
+            </codeliste>
+            <versionCodeliste>
+               <version>2.0</version>
+               <versionCodelistenHandbuch>1.1</versionCodelistenHandbuch>
+            </versionCodeliste>
+            <codelistenspalten>
+               <code>
+                  <spaltennameLang>Schlüssel</spaltennameLang>
+                  <datentyp>string</datentyp>
+                  <codeSpalte>true</codeSpalte>
+                  <verwendung>required</verwendung>
+                  <empfohleneCodeSpalte>true</empfohleneCodeSpalte>
+               </code>
+               <wert>
+                  <spaltennameLang>Wert</spaltennameLang>
+                  <datentyp>string</datentyp>
+                  <codeSpalte>false</codeSpalte>
+                  <verwendung>required</verwendung>
+                  <empfohleneCodeSpalte>false</empfohleneCodeSpalte>
+               </wert>
+            </codelistenspalten>
+         </xs:appinfo>
+      </xs:annotation>
+      <xs:restriction base="xs:token">
+         <xs:enumeration value="1">
+            <xs:annotation>
+               <xs:appinfo>
+                  <wert>Insolvenzverfahren</wert>
+               </xs:appinfo>
+            </xs:annotation>
+         </xs:enumeration>
+         <xs:enumeration value="2">
+            <xs:annotation>
+               <xs:appinfo>
+                  <wert>Verbraucherinsolvenzverfahren</wert>
+               </xs:appinfo>
+            </xs:annotation>
+         </xs:enumeration>
+         <xs:enumeration value="3">
+            <xs:annotation>
+               <xs:appinfo>
+                  <wert>Nachlassinsolvenzverfahren</wert>
+               </xs:appinfo>
+            </xs:annotation>
+         </xs:enumeration>
+         <xs:enumeration value="4">
+            <xs:annotation>
+               <xs:appinfo>
+                  <wert>Insolvenzverfahren n. ausl. Recht (§§ 343 ff InsO)</wert>
+               </xs:appinfo>
+            </xs:annotation>
+         </xs:enumeration>
+      </xs:restriction>
+   </xs:simpleType>
+</xs:schema>

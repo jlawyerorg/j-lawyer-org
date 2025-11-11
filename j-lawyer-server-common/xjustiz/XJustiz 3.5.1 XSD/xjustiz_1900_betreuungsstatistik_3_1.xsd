@@ -1,0 +1,261 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema"
+           xmlns:tns="http://www.xjustiz.de"
+           xmlns:din91379="urn:xoev-de:kosit:xoev:datentyp:din-91379_2022-08"
+           targetNamespace="http://www.xjustiz.de"
+           version="3.1.1"
+           elementFormDefault="qualified"
+           attributeFormDefault="unqualified">
+   <xs:annotation>
+      <xs:appinfo>
+         <standard>
+            <nameLang>Strukturierte Fachdaten für die Kommunikation im elektronischen Rechtsverkehr</nameLang>
+            <nameKurz>XJustiz</nameKurz>
+            <nameTechnisch>xjustiz</nameTechnisch>
+            <kennung>urn:xoev-de:blk-ag-it-standards:standard:xjustiz</kennung>
+            <beschreibung>XJustiz ist der bundesweit einheitliche Standard für den Austausch strukturierter elektronischer Informationen mit der Justiz.</beschreibung>
+         </standard>
+         <versionStandard>
+            <version>3.5.1</version>
+            <beschreibung>XJustiz beschreibt ein standardisiertes Datenaustauschformat für die elektronische Kommunikation innerhalb und mit der Justizverwaltung.</beschreibung>
+            <versionXOEVProfil>1.7.2</versionXOEVProfil>
+            <versionXOEVHandbuch>2.3.1</versionXOEVHandbuch>
+            <versionXGenerator>3.1.1</versionXGenerator>
+            <versionModellierungswerkzeug>19.0 SP3</versionModellierungswerkzeug>
+            <nameModellierungswerkzeug>MagicDraw</nameModellierungswerkzeug>
+         </versionStandard>
+      </xs:appinfo>
+   </xs:annotation>
+   <xs:include schemaLocation="xjustiz_0000_grunddatensatz_3_5.xsd"/>
+   <xs:include schemaLocation="xjustiz_1910_cl_betreuungsstatistik_3_0.xsd"/>
+   <xs:import schemaLocation="din-norm-91379-datatypes.xsd"
+              namespace="urn:xoev-de:kosit:xoev:datentyp:din-91379_2022-08"/>
+   <xs:complexType name="Type.BESTAT.Verfahrenserhebung">
+      <xs:sequence>
+         <xs:element name="verfahren.ID" type="din91379:datatypeC">
+            <xs:annotation>
+               <xs:documentation>Hier kann später auch die bundesweit eindeutige ID des gerichtlichen Verfahrens verwendet werden - bis dahin muss es eine für dieses Dokument eindeutige Nummer sein.</xs:documentation>
+            </xs:annotation>
+         </xs:element>
+         <xs:element name="aktenzeichen" type="tns:Type.GDS.Aktenzeichen"/>
+         <xs:element name="schluesselzahl.erhebungseinheit" type="din91379:datatypeC">
+            <xs:annotation>
+               <xs:documentation>5-stellige Zahl mit führender 9</xs:documentation>
+            </xs:annotation>
+         </xs:element>
+         <xs:element name="lfdNr.ve" type="din91379:datatypeC">
+            <xs:annotation>
+               <xs:documentation>4-stellig</xs:documentation>
+            </xs:annotation>
+         </xs:element>
+         <xs:element name="_002_tagDesEingangsDerSache" type="xs:date"/>
+         <xs:element name="_003_abgabe.innerhalb" minOccurs="0" type="xs:boolean">
+            <xs:annotation>
+               <xs:documentation>zu liefern, wenn ja</xs:documentation>
+            </xs:annotation>
+         </xs:element>
+         <xs:element name="einleitungDesVerfahrens"
+                     type="tns:Code.BESTAT.EinleitungBetreuung"/>
+         <xs:element name="person.betroffener">
+            <xs:complexType>
+               <xs:sequence>
+                  <xs:element name="_005_geschlecht" minOccurs="0" type="tns:Code.GDS.Geschlecht"/>
+                  <xs:element name="_006_geburtsjahr" minOccurs="0" type="din91379:datatypeC">
+                     <xs:annotation>
+                        <xs:documentation>nicht liefern wenn unbekannt, sonst 4-stellig</xs:documentation>
+                     </xs:annotation>
+                  </xs:element>
+               </xs:sequence>
+            </xs:complexType>
+         </xs:element>
+         <xs:element name="entscheidungEinrichtung" minOccurs="0" maxOccurs="2">
+            <xs:annotation>
+               <xs:documentation>nicht öfter als zweimal, aber nur einmal je für vorläufig und einmal endgültig. Nicht liefern, wenn noch keine Einleitung</xs:documentation>
+            </xs:annotation>
+            <xs:complexType>
+               <xs:sequence>
+                  <xs:element name="art.entscheidungEinrichtung"
+                              type="tns:Code.BESTAT.Entscheidung.UeberEinrichtungDerBetreuung"/>
+                  <xs:element name="vorlaeufig" type="xs:boolean"/>
+                  <xs:element name="datum.entscheidung" type="xs:date"/>
+               </xs:sequence>
+            </xs:complexType>
+         </xs:element>
+         <xs:element name="art.betreuer" minOccurs="16" maxOccurs="16">
+            <xs:complexType>
+               <xs:sequence>
+                  <xs:element name="betreuungDurch" type="tns:Code.BESTAT.Betreuerauswahl"/>
+                  <xs:element name="zahl" type="xs:integer">
+                     <xs:annotation>
+                        <xs:documentation>Werte 0-9 zulässig</xs:documentation>
+                     </xs:annotation>
+                  </xs:element>
+                  <xs:element name="vorlaeufig" type="xs:boolean"/>
+               </xs:sequence>
+            </xs:complexType>
+         </xs:element>
+         <xs:element name="aufgabenkreise" minOccurs="0" maxOccurs="12">
+            <xs:complexType>
+               <xs:sequence>
+                  <xs:element name="art.aufgabenkreis" type="tns:Code.BESTAT.Aufgabenkreis"/>
+                  <xs:element name="vorlaeufig" type="xs:boolean"/>
+               </xs:sequence>
+            </xs:complexType>
+         </xs:element>
+         <xs:element name="veraenderungImBerichtszeitraum" minOccurs="0" maxOccurs="2">
+            <xs:annotation>
+               <xs:documentation>nicht öfter als zweimal, aber nur einmal je für vorläufig und einmal endgültig</xs:documentation>
+            </xs:annotation>
+            <xs:complexType>
+               <xs:sequence>
+                  <xs:element name="art.veraenderung" type="tns:Code.BESTAT.Veraenderung"/>
+                  <xs:element name="vorlaeufig" type="xs:boolean"/>
+               </xs:sequence>
+            </xs:complexType>
+         </xs:element>
+         <xs:element name="entscheidungImLaufendenVerfahren" minOccurs="0" maxOccurs="6">
+            <xs:annotation>
+               <xs:documentation>darf 6-mal, aber nur je dreimal je für vorläufig und dreimal endgültig</xs:documentation>
+            </xs:annotation>
+            <xs:complexType>
+               <xs:sequence>
+                  <xs:element name="art.entscheidungLaufend"
+                              type="tns:Code.BESTAT.Entscheidung.ImLaufendenVerfahren"/>
+                  <xs:element name="vorlaeufig" type="xs:boolean"/>
+               </xs:sequence>
+            </xs:complexType>
+         </xs:element>
+         <xs:element name="_007_anzahl.sachverstaendigengutachten" type="xs:integer">
+            <xs:annotation>
+               <xs:documentation>0 bis höchstens 99 in der Periode</xs:documentation>
+            </xs:annotation>
+         </xs:element>
+         <xs:element name="anordnungEinwilligungsvorbehalt">
+            <xs:complexType>
+               <xs:sequence>
+                  <xs:element name="anzahlVorl" type="xs:integer">
+                     <xs:annotation>
+                        <xs:documentation>0 bis höchstens 99 in der Periode</xs:documentation>
+                     </xs:annotation>
+                  </xs:element>
+                  <xs:element name="anzahlOrd" type="xs:integer">
+                     <xs:annotation>
+                        <xs:documentation>0 bis höchstens 99 in der Periode</xs:documentation>
+                     </xs:annotation>
+                  </xs:element>
+               </xs:sequence>
+            </xs:complexType>
+         </xs:element>
+         <xs:element name="genehmigungen" minOccurs="60" maxOccurs="60">
+            <xs:annotation>
+               <xs:documentation>30-mal vorläufig ja und 30-mal vorläufig nein</xs:documentation>
+            </xs:annotation>
+            <xs:complexType>
+               <xs:sequence>
+                  <xs:element name="art.genehmigung" type="tns:Code.BESTAT.Art.Genehmigung"/>
+                  <xs:element name="zahl" type="xs:integer"/>
+                  <xs:element name="vorlaeufig" type="xs:boolean"/>
+               </xs:sequence>
+            </xs:complexType>
+         </xs:element>
+         <xs:element name="_008_anzahl.ehrenamtlicheVerfahrenspfleger" type="xs:integer">
+            <xs:annotation>
+               <xs:documentation>0 bis höchstens 99 in der Periode</xs:documentation>
+            </xs:annotation>
+         </xs:element>
+         <xs:element name="_009_anzahl.berufsmaessigeVerfahrenspfleger" type="xs:integer">
+            <xs:annotation>
+               <xs:documentation>0 bis höchstens 99 in der Periode</xs:documentation>
+            </xs:annotation>
+         </xs:element>
+         <xs:element name="beendigung" minOccurs="0" maxOccurs="2">
+            <xs:annotation>
+               <xs:documentation>0 bis 2-mal, wenn verschieden von 0 dann einmal vorläufig ja</xs:documentation>
+            </xs:annotation>
+            <xs:complexType>
+               <xs:sequence>
+                  <xs:element name="art.beendigung" type="tns:Code.BESTAT.BeendigungBetreuung"/>
+                  <xs:element name="vorlaeufig" type="xs:boolean"/>
+                  <xs:element name="datum.beendigung" type="xs:date"/>
+               </xs:sequence>
+            </xs:complexType>
+         </xs:element>
+         <xs:element name="_010_mittellosigkeit" minOccurs="0" type="xs:boolean">
+            <xs:annotation>
+               <xs:documentation>wird nicht geliefert, wenn nicht bekannt</xs:documentation>
+            </xs:annotation>
+         </xs:element>
+         <xs:element name="_011_aufenthaltImHeim" minOccurs="0" type="xs:boolean">
+            <xs:annotation>
+               <xs:documentation>wird nicht geliefert, wenn nicht bekannt</xs:documentation>
+            </xs:annotation>
+         </xs:element>
+         <xs:element name="zahlungen" minOccurs="0">
+            <xs:annotation>
+               <xs:documentation>nach Maßgabe der LJV</xs:documentation>
+            </xs:annotation>
+            <xs:complexType>
+               <xs:sequence>
+                  <xs:element name="art.zahlung" type="tns:Code.BESTAT.Art.Zahlung"/>
+                  <xs:element name="betrag.zahlung" type="tns:Type.GDS.Geldbetrag"/>
+               </xs:sequence>
+            </xs:complexType>
+         </xs:element>
+         <xs:element name="_017_tagWeglegung" minOccurs="0" type="xs:date">
+            <xs:annotation>
+               <xs:documentation>auch endgültige Abgabe</xs:documentation>
+            </xs:annotation>
+         </xs:element>
+      </xs:sequence>
+   </xs:complexType>
+   <xs:element name="nachricht.bestat.monatsmeldung.1900001">
+      <xs:complexType>
+         <xs:sequence>
+            <xs:element name="nachrichtenkopf" type="tns:Type.GDS.Nachrichtenkopf"/>
+            <xs:element name="grunddaten" type="tns:Type.GDS.Grunddaten"/>
+            <xs:element name="fachdaten">
+               <xs:complexType>
+                  <xs:sequence>
+                     <xs:element name="berichtsmonat">
+                        <xs:complexType>
+                           <xs:sequence>
+                              <xs:element name="monat" type="din91379:datatypeC"/>
+                              <xs:element name="verfahrenserhebung"
+                                          maxOccurs="unbounded"
+                                          type="tns:Type.BESTAT.Verfahrenserhebung"/>
+                              <xs:element name="besondereErhebung" maxOccurs="unbounded">
+                                 <xs:complexType>
+                                    <xs:sequence>
+                                       <xs:element name="schluesselzahl.erhebungseinheit" type="din91379:datatypeC">
+                                          <xs:annotation>
+                                             <xs:documentation>5-stellige Zahl mit führender 9</xs:documentation>
+                                          </xs:annotation>
+                                       </xs:element>
+                                       <xs:element name="sonstigerGeschaeftsanfall" minOccurs="42" maxOccurs="42">
+                                          <xs:annotation>
+                                             <xs:documentation>Jedes Element der Codeliste genau einmal</xs:documentation>
+                                          </xs:annotation>
+                                          <xs:complexType>
+                                             <xs:sequence>
+                                                <xs:element name="geschaeftsanfall" type="tns:Code.BESTAT.Geschaeftsanfall"/>
+                                                <xs:element name="zahl" type="din91379:datatypeC">
+                                                   <xs:annotation>
+                                                      <xs:documentation>4-stellig mit führenden Nullen</xs:documentation>
+                                                   </xs:annotation>
+                                                </xs:element>
+                                             </xs:sequence>
+                                          </xs:complexType>
+                                       </xs:element>
+                                    </xs:sequence>
+                                 </xs:complexType>
+                              </xs:element>
+                           </xs:sequence>
+                        </xs:complexType>
+                     </xs:element>
+                  </xs:sequence>
+               </xs:complexType>
+            </xs:element>
+         </xs:sequence>
+      </xs:complexType>
+   </xs:element>
+</xs:schema>

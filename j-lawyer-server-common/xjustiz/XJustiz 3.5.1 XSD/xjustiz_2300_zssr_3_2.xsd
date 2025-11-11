@@ -1,0 +1,284 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema"
+           xmlns:tns="http://www.xjustiz.de"
+           xmlns:din91379="urn:xoev-de:kosit:xoev:datentyp:din-91379_2022-08"
+           targetNamespace="http://www.xjustiz.de"
+           version="3.2.1"
+           elementFormDefault="qualified"
+           attributeFormDefault="unqualified">
+   <xs:annotation>
+      <xs:appinfo>
+         <standard>
+            <nameLang>Strukturierte Fachdaten für die Kommunikation im elektronischen Rechtsverkehr</nameLang>
+            <nameKurz>XJustiz</nameKurz>
+            <nameTechnisch>xjustiz</nameTechnisch>
+            <kennung>urn:xoev-de:blk-ag-it-standards:standard:xjustiz</kennung>
+            <beschreibung>XJustiz ist der bundesweit einheitliche Standard für den Austausch strukturierter elektronischer Informationen mit der Justiz.</beschreibung>
+         </standard>
+         <versionStandard>
+            <version>3.5.1</version>
+            <beschreibung>XJustiz beschreibt ein standardisiertes Datenaustauschformat für die elektronische Kommunikation innerhalb und mit der Justizverwaltung.</beschreibung>
+            <versionXOEVProfil>1.7.2</versionXOEVProfil>
+            <versionXOEVHandbuch>2.3.1</versionXOEVHandbuch>
+            <versionXGenerator>3.1.1</versionXGenerator>
+            <versionModellierungswerkzeug>19.0 SP3</versionModellierungswerkzeug>
+            <nameModellierungswerkzeug>MagicDraw</nameModellierungswerkzeug>
+         </versionStandard>
+      </xs:appinfo>
+   </xs:annotation>
+   <xs:include schemaLocation="xjustiz_0000_grunddatensatz_3_5.xsd"/>
+   <xs:include schemaLocation="xjustiz_2310_cl_zssr_3_0.xsd"/>
+   <xs:import schemaLocation="din-norm-91379-datatypes.xsd"
+              namespace="urn:xoev-de:kosit:xoev:datentyp:din-91379_2022-08"/>
+   <xs:element name="nachricht.zssr.bestaetigung.2300001">
+      <xs:annotation>
+         <xs:documentation>Diese Nachricht dient der Bestätigung von Eingängen (Schutzschriften und Rücknahmen).</xs:documentation>
+      </xs:annotation>
+      <xs:complexType>
+         <xs:sequence>
+            <xs:element name="nachrichtenkopf" type="tns:Type.GDS.Nachrichtenkopf"/>
+            <xs:element name="schriftgutobjekte" type="tns:Type.GDS.Schriftgutobjekte"/>
+            <xs:element name="fachdaten">
+               <xs:complexType>
+                  <xs:sequence>
+                     <xs:element name="auswahl_ZSSR.rueckmeldung">
+                        <xs:complexType>
+                           <xs:choice>
+                              <xs:element name="einstellbestaetigung"
+                                          default="Einstellbestätigung"
+                                          type="din91379:datatypeC"/>
+                              <xs:element name="ruecknahmebestaetigung"
+                                          default="Rücknahmebestätigung"
+                                          type="din91379:datatypeC"/>
+                           </xs:choice>
+                        </xs:complexType>
+                     </xs:element>
+                     <xs:element name="verfahrensdaten">
+                        <xs:annotation>
+                           <xs:documentation>Die vom ZSSR erfassten Daten werden zur Kontrolle bei der Bestätigung mitgeliefert.</xs:documentation>
+                        </xs:annotation>
+                        <xs:complexType>
+                           <xs:sequence>
+                              <xs:element name="registernummer" type="din91379:datatypeC">
+                                 <xs:annotation>
+                                    <xs:documentation>Registernummer der hinterlegten Schutzschrift</xs:documentation>
+                                 </xs:annotation>
+                              </xs:element>
+                              <xs:element name="ruecknahmecode" type="din91379:datatypeC">
+                                 <xs:annotation>
+                                    <xs:documentation>Code zur Rücknahme einer Schutzschrift. Dieser wird neben der Registernummer benötigt für Rücknahmen. Dies soll eine missbräuchliche Rücknahme vermeiden.</xs:documentation>
+                                 </xs:annotation>
+                              </xs:element>
+                              <xs:element name="auswahl_datum">
+                                 <xs:complexType>
+                                    <xs:choice>
+                                       <xs:element name="einstellungsdatum" type="xs:dateTime">
+                                          <xs:annotation>
+                                             <xs:documentation>Datum und Uhrzeit der Einstellung der Schutzschrift</xs:documentation>
+                                          </xs:annotation>
+                                       </xs:element>
+                                       <xs:element name="ruecknahmedatum" type="xs:dateTime">
+                                          <xs:annotation>
+                                             <xs:documentation>Datum und Uhrzeit der Rücknahme der Schutzschrift</xs:documentation>
+                                          </xs:annotation>
+                                       </xs:element>
+                                    </xs:choice>
+                                 </xs:complexType>
+                              </xs:element>
+                              <xs:element name="antragssteller"
+                                          maxOccurs="unbounded"
+                                          type="din91379:datatypeD">
+                                 <xs:annotation>
+                                    <xs:documentation>Bezeichnungen der Antragsteller</xs:documentation>
+                                 </xs:annotation>
+                              </xs:element>
+                              <xs:element name="antragsgegner"
+                                          maxOccurs="unbounded"
+                                          type="din91379:datatypeD">
+                                 <xs:annotation>
+                                    <xs:documentation>Bezeichnungen der Antragsgegner</xs:documentation>
+                                 </xs:annotation>
+                              </xs:element>
+                              <xs:element name="verfahrensgegenstand" type="din91379:datatypeD">
+                                 <xs:annotation>
+                                    <xs:documentation>Bestätigung des Streitgegenstands der Einreichung</xs:documentation>
+                                 </xs:annotation>
+                              </xs:element>
+                           </xs:sequence>
+                        </xs:complexType>
+                     </xs:element>
+                  </xs:sequence>
+               </xs:complexType>
+            </xs:element>
+         </xs:sequence>
+      </xs:complexType>
+   </xs:element>
+   <xs:element name="nachricht.zssr.einreichungSchutzschrift.2300002">
+      <xs:annotation>
+         <xs:documentation>Nachricht für die Einreichung einer Schutzschrift</xs:documentation>
+      </xs:annotation>
+      <xs:complexType>
+         <xs:sequence>
+            <xs:element name="nachrichtenkopf" type="tns:Type.GDS.Nachrichtenkopf"/>
+            <xs:element name="grunddaten" type="tns:Type.GDS.Grunddaten"/>
+            <xs:element name="schriftgutobjekte" type="tns:Type.GDS.Schriftgutobjekte"/>
+            <xs:element name="fachdaten">
+               <xs:complexType>
+                  <xs:sequence>
+                     <xs:element name="unbekannterAntragsteller" default="false" type="xs:boolean">
+                        <xs:annotation>
+                           <xs:documentation>Sofern unbekannte(r) Antragsteller vorhanden sind/ist, ist dieses Feld true.</xs:documentation>
+                        </xs:annotation>
+                     </xs:element>
+                  </xs:sequence>
+               </xs:complexType>
+            </xs:element>
+         </xs:sequence>
+      </xs:complexType>
+   </xs:element>
+   <xs:element name="nachricht.zssr.fehlermeldung.2300003">
+      <xs:annotation>
+         <xs:documentation>Diese Nachricht dient der Übermittlung von Fehlermeldungen vom ZSSR.</xs:documentation>
+      </xs:annotation>
+      <xs:complexType>
+         <xs:sequence>
+            <xs:element name="nachrichtenkopf" type="tns:Type.GDS.Nachrichtenkopf"/>
+            <xs:element name="schriftgutobjekte" type="tns:Type.GDS.Schriftgutobjekte"/>
+            <xs:element name="fachdaten">
+               <xs:complexType>
+                  <xs:sequence>
+                     <xs:element name="sendungsdaten">
+                        <xs:complexType>
+                           <xs:sequence>
+                              <xs:element name="fehlerquelle" type="tns:Code.ZSSR.Fehler"/>
+                              <xs:element name="fehlermeldung" type="din91379:datatypeC">
+                                 <xs:annotation>
+                                    <xs:documentation>Informationen zu dem aufgetretenen Fehler</xs:documentation>
+                                 </xs:annotation>
+                              </xs:element>
+                           </xs:sequence>
+                        </xs:complexType>
+                     </xs:element>
+                     <xs:element name="verfahrensdaten" minOccurs="0">
+                        <xs:complexType>
+                           <xs:sequence>
+                              <xs:element name="registernummer" minOccurs="0" type="din91379:datatypeC">
+                                 <xs:annotation>
+                                    <xs:documentation>Registernummer der Schutzschrift</xs:documentation>
+                                 </xs:annotation>
+                              </xs:element>
+                              <xs:element name="ruecknahmecode" minOccurs="0" type="din91379:datatypeC">
+                                 <xs:annotation>
+                                    <xs:documentation>Code zur Rücknahme, der bei der Eintragung an den Einreicher übermittelt wird. Schutz vor Missbrauch der Rücknahme.</xs:documentation>
+                                 </xs:annotation>
+                              </xs:element>
+                              <xs:element name="antragssteller"
+                                          minOccurs="0"
+                                          maxOccurs="unbounded"
+                                          type="din91379:datatypeD">
+                                 <xs:annotation>
+                                    <xs:documentation>Bezeichnungen der Antragsteller</xs:documentation>
+                                 </xs:annotation>
+                              </xs:element>
+                              <xs:element name="antragsgegner"
+                                          minOccurs="0"
+                                          maxOccurs="unbounded"
+                                          type="din91379:datatypeD">
+                                 <xs:annotation>
+                                    <xs:documentation>Bezeichnungen der Antragsgegner</xs:documentation>
+                                 </xs:annotation>
+                              </xs:element>
+                              <xs:element name="verfahrensgegenstand" minOccurs="0" type="din91379:datatypeD">
+                                 <xs:annotation>
+                                    <xs:documentation>Streitgegenstand der Schutzschrift</xs:documentation>
+                                 </xs:annotation>
+                              </xs:element>
+                           </xs:sequence>
+                        </xs:complexType>
+                     </xs:element>
+                  </xs:sequence>
+               </xs:complexType>
+            </xs:element>
+         </xs:sequence>
+      </xs:complexType>
+   </xs:element>
+   <xs:element name="nachricht.zssr.mitteilungEinschlaegig.2300004">
+      <xs:complexType>
+         <xs:sequence>
+            <xs:element name="nachrichtenkopf" type="tns:Type.GDS.Nachrichtenkopf"/>
+            <xs:element name="grunddaten" type="tns:Type.GDS.Grunddaten"/>
+            <xs:element name="schriftgutobjekte" type="tns:Type.GDS.Schriftgutobjekte"/>
+            <xs:element name="fachdaten">
+               <xs:complexType>
+                  <xs:sequence>
+                     <xs:element name="verfahrensdaten">
+                        <xs:complexType>
+                           <xs:sequence>
+                              <xs:element name="registernummer" type="din91379:datatypeC"/>
+                              <xs:element name="datum.einschlaegigkeitsmarkierung" type="xs:date">
+                                 <xs:annotation>
+                                    <xs:documentation>Datum der Markierung der Schutzschrift durch ein Gericht</xs:documentation>
+                                 </xs:annotation>
+                              </xs:element>
+                              <xs:element name="einstellungsdatum" type="xs:dateTime">
+                                 <xs:annotation>
+                                    <xs:documentation>Datum und Uhrzeit der Einstellung in das ZSSR</xs:documentation>
+                                 </xs:annotation>
+                              </xs:element>
+                              <xs:element name="antragsgegner"
+                                          maxOccurs="unbounded"
+                                          type="din91379:datatypeD">
+                                 <xs:annotation>
+                                    <xs:documentation>Bezeichnungen der Antragsgegner</xs:documentation>
+                                 </xs:annotation>
+                              </xs:element>
+                              <xs:element name="antragssteller"
+                                          maxOccurs="unbounded"
+                                          type="din91379:datatypeD">
+                                 <xs:annotation>
+                                    <xs:documentation>Bezeichnungen der Antragsteller</xs:documentation>
+                                 </xs:annotation>
+                              </xs:element>
+                           </xs:sequence>
+                        </xs:complexType>
+                     </xs:element>
+                  </xs:sequence>
+               </xs:complexType>
+            </xs:element>
+         </xs:sequence>
+      </xs:complexType>
+   </xs:element>
+   <xs:element name="nachricht.zssr.ruecknahmeSchutzschrift.2300005">
+      <xs:complexType>
+         <xs:sequence>
+            <xs:element name="nachrichtenkopf" type="tns:Type.GDS.Nachrichtenkopf"/>
+            <xs:element name="schriftgutobjekte" type="tns:Type.GDS.Schriftgutobjekte"/>
+            <xs:element name="fachdaten">
+               <xs:complexType>
+                  <xs:sequence>
+                     <xs:element name="verfahrensdaten">
+                        <xs:annotation>
+                           <xs:documentation>Verfahrensspezifische Daten, die für die Rücknahme benötigt werden.</xs:documentation>
+                        </xs:annotation>
+                        <xs:complexType>
+                           <xs:sequence>
+                              <xs:element name="registernummer" type="din91379:datatypeC">
+                                 <xs:annotation>
+                                    <xs:documentation>Registernummer der Schutzschrift, die zurückgenommen werden soll.</xs:documentation>
+                                 </xs:annotation>
+                              </xs:element>
+                              <xs:element name="ruecknahmecode" type="din91379:datatypeC">
+                                 <xs:annotation>
+                                    <xs:documentation>Code zur Rücknahme der bei der Eintragung an den Einreicher übermittelt wird. Schutz vor Missbrauch der Rücknahme.</xs:documentation>
+                                 </xs:annotation>
+                              </xs:element>
+                           </xs:sequence>
+                        </xs:complexType>
+                     </xs:element>
+                  </xs:sequence>
+               </xs:complexType>
+            </xs:element>
+         </xs:sequence>
+      </xs:complexType>
+   </xs:element>
+</xs:schema>

@@ -1,0 +1,717 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema"
+           xmlns:tns="http://www.xjustiz.de"
+           xmlns:din91379="urn:xoev-de:kosit:xoev:datentyp:din-91379_2022-08"
+           targetNamespace="http://www.xjustiz.de"
+           version="3.3.0"
+           elementFormDefault="qualified"
+           attributeFormDefault="unqualified">
+   <xs:annotation>
+      <xs:appinfo>
+         <standard>
+            <nameLang>Strukturierte Fachdaten für die Kommunikation im elektronischen Rechtsverkehr</nameLang>
+            <nameKurz>XJustiz</nameKurz>
+            <nameTechnisch>xjustiz</nameTechnisch>
+            <kennung>urn:xoev-de:blk-ag-it-standards:standard:xjustiz</kennung>
+            <beschreibung>XJustiz ist der bundesweit einheitliche Standard für den Austausch strukturierter elektronischer Informationen mit der Justiz.</beschreibung>
+         </standard>
+         <versionStandard>
+            <version>3.5.1</version>
+            <beschreibung>XJustiz beschreibt ein standardisiertes Datenaustauschformat für die elektronische Kommunikation innerhalb und mit der Justizverwaltung.</beschreibung>
+            <versionXOEVProfil>1.7.2</versionXOEVProfil>
+            <versionXOEVHandbuch>2.3.1</versionXOEVHandbuch>
+            <versionXGenerator>3.1.1</versionXGenerator>
+            <versionModellierungswerkzeug>19.0 SP3</versionModellierungswerkzeug>
+            <nameModellierungswerkzeug>MagicDraw</nameModellierungswerkzeug>
+         </versionStandard>
+      </xs:appinfo>
+   </xs:annotation>
+   <xs:include schemaLocation="xjustiz_0000_grunddatensatz_3_5.xsd"/>
+   <xs:include schemaLocation="xjustiz_0240_cl_versorgungsauskunft_3_0.xsd"/>
+   <xs:import schemaLocation="din-norm-91379-datatypes.xsd"
+              namespace="urn:xoev-de:kosit:xoev:datentyp:din-91379_2022-08"/>
+   <xs:complexType name="Type.VAG.Auskunft">
+      <xs:sequence>
+         <xs:element name="auskunft.ID" type="din91379:datatypeC">
+            <xs:annotation>
+               <xs:documentation>Die Auskunfts-ID ist das Zuordnungsmerkmal der Auskunft beim Versorgungsträger. Diese ist vom Gericht bei allen Folgenachrichten mitzuteilen.</xs:documentation>
+            </xs:annotation>
+         </xs:element>
+         <xs:element name="anfrage.ID" type="din91379:datatypeC">
+            <xs:annotation>
+               <xs:documentation>Referenz auf das Auskunftsersuchen des Gerichts (siehe Element anfrage.ID des Typs Type.VAG.Auskunftsersuchen).</xs:documentation>
+            </xs:annotation>
+         </xs:element>
+         <xs:element name="familie" type="tns:Type.VAG.Familie"/>
+         <xs:element name="versorgungsart" type="tns:Code.VAG.Versorgungsart"/>
+         <xs:element name="anrecht" minOccurs="0" maxOccurs="unbounded">
+            <xs:annotation>
+               <xs:documentation>Hier sind die Anrechte anzugeben. Ist als Ereignis "keine Anrechte" angegeben, ist dieser Block nicht zu übermitteln.</xs:documentation>
+            </xs:annotation>
+            <xs:complexType>
+               <xs:sequence>
+                  <xs:element name="anrecht.ID" type="din91379:datatypeC">
+                     <xs:annotation>
+                        <xs:documentation>Durch die Anrechts-ID wird das auszugleichende Anrecht identifiziert.</xs:documentation>
+                     </xs:annotation>
+                  </xs:element>
+                  <xs:element name="berechnungszeitpunkt" type="xs:date">
+                     <xs:annotation>
+                        <xs:documentation>Als Berechnungszeitpunkt ist der vom Versorgungsträger festgelegte Stichtag für die Berechnung anzugeben. Dies ist nicht das Datum der Erteilung der Auskunft. Als frühester Berechnungszeitpunkt kann das Ende der Ehezeit angegeben werden.</xs:documentation>
+                     </xs:annotation>
+                  </xs:element>
+                  <xs:element name="versorgungstraeger"
+                              minOccurs="0"
+                              type="tns:Type.GDS.Ref.Rollennummer">
+                     <xs:annotation>
+                        <xs:documentation>In diesem Feld wird der für dieses Anrecht zuständige Versorgungsträger aus den Grunddaten referenziert, falls der Auskunftserteilende nicht der zuständige Versorgungsträger ist (dabei ist davon auszugehen, dass dieser dem Gericht erstmalig mit der Auskunft bekannt wird). Beispiel: Ein Dienstleister oder Dachverband erteilt die Auskunft/Auskünfte für die zuständigen Versorgungsträger.</xs:documentation>
+                     </xs:annotation>
+                  </xs:element>
+                  <xs:element name="ordnungskriterium" type="din91379:datatypeC">
+                     <xs:annotation>
+                        <xs:documentation>Hier ist das Ordnungskriterium des Versorgungsträgers anzugeben. Im Falle der Rentenversicherung soll die Versicherungsnummer angegeben werden (z.B. 69010160H519). Ist das Ordnungskriterium nicht bekannt, wird das Element ohne Inhalt übermittelt.</xs:documentation>
+                     </xs:annotation>
+                  </xs:element>
+                  <xs:element name="leistungsform" type="tns:Code.VAG.Leistungsform"/>
+                  <xs:element name="unverfallbarkeit" minOccurs="0" type="xs:date">
+                     <xs:annotation>
+                        <xs:documentation>Zeitpunkt, bis zu dem das Arbeits-/Versicherungsverhältnis fortbestehen muss, damit Unverfallbarkeit eintritt. null = Unverfallbarkeit ist bereits eingetreten [Noch verfallbare Rechte müssen NICHT betragsmäßig mitgeteilt werden. Teilweise verfallbare Rechte sind Sonderfälle und außerhalb des Datensatzes mitzuteilen (Papier!).]</xs:documentation>
+                     </xs:annotation>
+                  </xs:element>
+                  <xs:element name="endgehaltsbezogenheit" type="xs:boolean">
+                     <xs:annotation>
+                        <xs:documentation>Versorgung ist endgehaltsbezogen? (Z.B. Beamtenversorgung)</xs:documentation>
+                     </xs:annotation>
+                  </xs:element>
+                  <xs:element name="bezugsgroesse" type="tns:Code.VAG.Bezugsgroesse">
+                     <xs:annotation>
+                        <xs:documentation>Die Bezugsgröße spezifiziert den Ehezeitanteil und Ausgleichswert.</xs:documentation>
+                     </xs:annotation>
+                  </xs:element>
+                  <xs:element name="andereBezugsgroesse" minOccurs="0" type="din91379:datatypeC">
+                     <xs:annotation>
+                        <xs:documentation>wenn in Bezugsgröße "andere" gewählt</xs:documentation>
+                     </xs:annotation>
+                  </xs:element>
+                  <xs:element name="wert.ehezeitanteil" type="xs:decimal">
+                     <xs:annotation>
+                        <xs:documentation>Entgeltpunkte auf 4 Nachkommastellen, Geldbeträge auf zwei Nachstellen.</xs:documentation>
+                     </xs:annotation>
+                  </xs:element>
+                  <xs:element name="ausgleichswert" type="xs:decimal">
+                     <xs:annotation>
+                        <xs:documentation>[übermittelt wird der "Nettowert", also der verbleibende Wert nach Abzug der Teilungskosten]</xs:documentation>
+                     </xs:annotation>
+                  </xs:element>
+                  <xs:element name="garantiewert" minOccurs="0" type="xs:decimal">
+                     <xs:annotation>
+                        <xs:documentation>[nur bei fondsgebundenen Versicherungen]</xs:documentation>
+                     </xs:annotation>
+                  </xs:element>
+                  <xs:element name="teilungskosten.par13.versAusglG"
+                              minOccurs="0"
+                              type="xs:decimal">
+                     <xs:annotation>
+                        <xs:documentation>Betrag in Euro. [gefragt ist nach dem Gesamtbetrag für beide Ehegatten. Anzugeben ist ein einmaliger Kapitalabzug, sonst Leereingabe im Datensatz; die Details ergeben sich aus dem Text der Auskunft]</xs:documentation>
+                     </xs:annotation>
+                  </xs:element>
+                  <xs:element name="korrespondierenderKapitalwert"
+                              minOccurs="0"
+                              type="tns:Type.VAG.Decimal.9_2">
+                     <xs:annotation>
+                        <xs:documentation>Betrag in Euro</xs:documentation>
+                     </xs:annotation>
+                  </xs:element>
+                  <xs:element name="bu.versicherung" minOccurs="0">
+                     <xs:complexType>
+                        <xs:sequence>
+                           <xs:element name="eintrittWaehrendEhezeit" type="xs:boolean">
+                              <xs:annotation>
+                                 <xs:documentation>Ist der Versorgungsfall während der Ehezeit eingetreten?</xs:documentation>
+                              </xs:annotation>
+                           </xs:element>
+                           <xs:element name="aktuelleMonatsrente" type="xs:decimal">
+                              <xs:annotation>
+                                 <xs:documentation>aktuelle Höhe einer (bei Jahresleistung ggf. umzurechnenden) Monatsrente in Euro</xs:documentation>
+                              </xs:annotation>
+                           </xs:element>
+                           <xs:element name="erhoehungszeitpunkt" type="din91379:datatypeC">
+                              <xs:annotation>
+                                 <xs:documentation>Nächster Erhöhungszeitpunkt der Monatsrente</xs:documentation>
+                              </xs:annotation>
+                           </xs:element>
+                        </xs:sequence>
+                     </xs:complexType>
+                  </xs:element>
+                  <xs:element name="teilungsart" type="tns:Code.VAG.Teilungsart">
+                     <xs:annotation>
+                        <xs:documentation>Art der Teilung</xs:documentation>
+                     </xs:annotation>
+                  </xs:element>
+                  <xs:element name="teilungsregelung" minOccurs="0" type="din91379:datatypeC">
+                     <xs:annotation>
+                        <xs:documentation>Grundlage der internen Teilung [Kurzbezeichnung in Textform wie z.B. "Satzung", "Satzung vom 23.12.2008" oder "Tarif 3122"; kann vom Versorgungsträger frei eingegeben werden]</xs:documentation>
+                     </xs:annotation>
+                  </xs:element>
+                  <xs:element name="fundstelleDerTeilungsregelung"
+                              minOccurs="0"
+                              type="din91379:datatypeC">
+                     <xs:annotation>
+                        <xs:documentation>Fundstelle der Satzung oder des Versicherungstarifes, z.B. Link auf eine Veröffentlichung im Internet oder Aktenzeichen eines Verfahrens beim gleichen Gericht, zu dem der Text bereits übermittelt worden ist.</xs:documentation>
+                     </xs:annotation>
+                  </xs:element>
+               </xs:sequence>
+            </xs:complexType>
+         </xs:element>
+         <xs:element name="auskunftAusUngeklaertemKonto" minOccurs="0" type="xs:boolean">
+            <xs:annotation>
+               <xs:documentation>Dieses Feld soll den Wert "true" haben, wenn es sich um eine Auskunft aus einem unklärten Versicherungskonto handelt (ausschließlich als Reaktion auf eine entsprechende Kurznachricht vom Gericht).</xs:documentation>
+            </xs:annotation>
+         </xs:element>
+      </xs:sequence>
+   </xs:complexType>
+   <xs:complexType name="Type.VAG.Auskunftsersuchen">
+      <xs:sequence>
+         <xs:element name="anfrage.ID" type="din91379:datatypeC">
+            <xs:annotation>
+               <xs:documentation>Die Anfrage-ID ist die Grundlage zur Identifikation des Vorgangs. Sie wird durch das Gericht gebildet und ist in allen Nachrichten zum gleichen Vorgang zu verwenden.</xs:documentation>
+            </xs:annotation>
+         </xs:element>
+         <xs:element name="datumDesAuskunftsersuchens" type="xs:date">
+            <xs:annotation>
+               <xs:documentation>Das Datum wird vom Gericht erstellt.</xs:documentation>
+            </xs:annotation>
+         </xs:element>
+         <xs:element name="familie" type="tns:Type.VAG.Familie"/>
+         <xs:element name="versicherter" type="tns:Type.GDS.Ref.Rollennummer">
+            <xs:annotation>
+               <xs:documentation>Referenz auf den Beteiligten im Grunddatensatz, für den die Auskunft benötigt wird.</xs:documentation>
+            </xs:annotation>
+         </xs:element>
+         <xs:element name="andererEhegatte" type="tns:Type.GDS.Ref.Rollennummer">
+            <xs:annotation>
+               <xs:documentation>Referenz auf den anderen Ehegatten</xs:documentation>
+            </xs:annotation>
+         </xs:element>
+         <xs:element name="empfaengerDesAuskunftsersuchens"
+                     type="tns:Type.GDS.Ref.Rollennummer">
+            <xs:annotation>
+               <xs:documentation>Referenz auf den Beteiligten im Grunddatensatz, an den das Auskunftsersuchen übermittelt wird (Versorgungsträger, Arbeitgeber).</xs:documentation>
+            </xs:annotation>
+         </xs:element>
+         <xs:element name="frist" type="xs:nonNegativeInteger">
+            <xs:annotation>
+               <xs:documentation>In diesem Feld ist die Anzahl der Wochen als Frist für die Erteilung der Auskunft anzugeben.</xs:documentation>
+            </xs:annotation>
+         </xs:element>
+         <xs:element name="betriebsnummer">
+            <xs:annotation>
+               <xs:documentation>Bei der Betriebsnummer (BBNR) handelt es sich um eine achtstellige numerische Kennzahl, die zentral durch die Bundesagentur für Arbeit vergeben wird. Sofern für ein Gericht mehrere Betriebsnummern existieren, ist hier die BBNR für das Gericht und nicht der Personalstelle anzugeben. Die Betriebsnummer darf maximal 15 Zeichen umfassen.</xs:documentation>
+            </xs:annotation>
+            <xs:simpleType>
+               <xs:restriction base="din91379:datatypeC">
+                  <xs:maxLength value="15"/>
+                  <xs:minLength value="1"/>
+               </xs:restriction>
+            </xs:simpleType>
+         </xs:element>
+         <xs:element name="ausschlusszeitraum"
+                     minOccurs="0"
+                     maxOccurs="unbounded"
+                     type="tns:Type.GDS.Xdomea.ZeitraumType">
+            <xs:annotation>
+               <xs:documentation>Hier werden Zeiträume während der Ehe angegeben, die bei der Berechnung des Ehezeitanteils nicht berücksichtigt werden sollen.</xs:documentation>
+            </xs:annotation>
+         </xs:element>
+         <xs:element name="auskunftMitErgaenzendenAnlagen"
+                     minOccurs="0"
+                     default="false"
+                     type="xs:boolean">
+            <xs:annotation>
+               <xs:documentation>false = Kurzauskunft (Standardfall); true = Auskunft mit allen Berechnungsanlagen</xs:documentation>
+            </xs:annotation>
+         </xs:element>
+      </xs:sequence>
+   </xs:complexType>
+   <xs:simpleType name="Type.VAG.Decimal.4_2">
+      <xs:restriction base="xs:decimal">
+         <xs:fractionDigits value="2"/>
+         <xs:totalDigits value="4"/>
+      </xs:restriction>
+   </xs:simpleType>
+   <xs:simpleType name="Type.VAG.Decimal.9_2">
+      <xs:restriction base="xs:decimal">
+         <xs:fractionDigits value="2"/>
+         <xs:totalDigits value="9"/>
+      </xs:restriction>
+   </xs:simpleType>
+   <xs:complexType name="Type.VAG.Empfangsbestaetigung">
+      <xs:sequence>
+         <xs:element name="anfrage.ID" type="din91379:datatypeC">
+            <xs:annotation>
+               <xs:documentation>Referenz auf Auskunftsersuchen des Gerichts</xs:documentation>
+            </xs:annotation>
+         </xs:element>
+         <xs:element name="auskunft.ID" minOccurs="0" type="din91379:datatypeC">
+            <xs:annotation>
+               <xs:documentation>Die Empfangsbestätigung zur Entscheidung muss auch die Auskunfts-ID enthalten, weil die Entscheidungs-ID bei verschiedenen Versorgungsträgern gleich sein kann (eine Entscheidung wird an mehrere Versorgungsträger übermittelt).</xs:documentation>
+            </xs:annotation>
+         </xs:element>
+         <xs:element name="entscheidung.ID" minOccurs="0" type="din91379:datatypeC">
+            <xs:annotation>
+               <xs:documentation>Dies ist in der Regel die ID der gerichtlichen Entscheidung im Fachsystem des Gerichts. Da diese Entscheidung mit derselben Entscheidungs-ID an verschiedene Versorgungsträger übersandt wird, muss die Empfangsbestätigung zur Entscheidung die Auskunfts-ID enthalten.</xs:documentation>
+            </xs:annotation>
+         </xs:element>
+         <xs:element name="versicherungstraeger" type="tns:Type.GDS.Ref.Rollennummer">
+            <xs:annotation>
+               <xs:documentation>Referenz auf den tatsächlich zuständigen Versorgungsträger im Grunddatensatz. (Bei Empfangsbestätigung der Kontoführer, der die Antwort schickt; beim Prüffall derjenige, der prüft.)</xs:documentation>
+            </xs:annotation>
+         </xs:element>
+         <xs:element name="schluesselnummer.versorgungstraeger"
+                     minOccurs="0"
+                     type="din91379:datatypeC"/>
+      </xs:sequence>
+   </xs:complexType>
+   <xs:complexType name="Type.VAG.Familie">
+      <xs:sequence>
+         <xs:element name="familienart">
+            <xs:annotation>
+               <xs:documentation>Ehepaar oder Lebenspartner</xs:documentation>
+            </xs:annotation>
+            <xs:simpleType>
+               <xs:restriction base="xs:token">
+                  <xs:enumeration value="Ehepaar"/>
+                  <xs:enumeration value="Lebenspartner"/>
+               </xs:restriction>
+            </xs:simpleType>
+         </xs:element>
+         <xs:element name="ehezeit" type="tns:Type.GDS.Xdomea.ZeitraumType">
+            <xs:annotation>
+               <xs:documentation>Im Feld 'beginn' wird der Beginn der Ehezeit mitgeteilt. Im Feld 'ende' wird das Ende der Ehezeit mitgeteilt.</xs:documentation>
+            </xs:annotation>
+         </xs:element>
+      </xs:sequence>
+   </xs:complexType>
+   <xs:complexType name="Type.VAG.Fehler">
+      <xs:sequence>
+         <xs:element name="anfrage.ID" type="din91379:datatypeC">
+            <xs:annotation>
+               <xs:documentation>Referenz auf Auskunftsersuchen des Gerichts</xs:documentation>
+            </xs:annotation>
+         </xs:element>
+         <xs:element name="fehler" maxOccurs="unbounded">
+            <xs:complexType>
+               <xs:sequence>
+                  <xs:element name="fehlercode" type="tns:Code.VAG.Fehler">
+                     <xs:annotation>
+                        <xs:documentation>Hier kann ein Fehlercode übergeben werden. (Hierfür kann nicht das Ereignis im Nachrichtenkopf verwendet werden, weil eine Fehlernachricht mehrere Fehlermeldungen enthalten kann.) Der Text zum jeweiligen Fehlercode findet sich als Dokumentation mit in der Codeliste.</xs:documentation>
+                     </xs:annotation>
+                  </xs:element>
+                  <xs:element name="zusatzinformationen" minOccurs="0" type="din91379:datatypeC">
+                     <xs:annotation>
+                        <xs:documentation>Dies kann zum Beispiel bei einem Validierungsfehler die Meldung vom Parser sein oder bei dem Fehler "Sonstiger Fehler." die Fehlerbeschreibung.</xs:documentation>
+                     </xs:annotation>
+                  </xs:element>
+               </xs:sequence>
+            </xs:complexType>
+         </xs:element>
+      </xs:sequence>
+   </xs:complexType>
+   <xs:complexType name="Type.VAG.GerichtlicheEntscheidung">
+      <xs:sequence>
+         <xs:element name="entscheidung.ID" type="din91379:datatypeC">
+            <xs:annotation>
+               <xs:documentation>Dies ist in der Regel die ID der gerichtlichen Entscheidung im Fachsystem des Gerichts. Die Rechtskraftmitteilung verweist auf diese Entscheidungs-ID. Da eine Entscheidung mit derselben Entscheidungs-ID an verschiedene Versorgungsträger übersandt wird, muss die Empfangsbestätigung zur Entscheidung die Auskunfts-ID enthalten.</xs:documentation>
+            </xs:annotation>
+         </xs:element>
+         <xs:element name="entscheidung.ID.erstinstanz"
+                     minOccurs="0"
+                     type="din91379:datatypeC">
+            <xs:annotation>
+               <xs:documentation>Dies ist in der Regel die ID der gerichtlichen Entscheidung im Fachsystem des Gerichts. Da diese Entscheidung mit derselben Entscheidungs-ID an verschiedene Versorgungsträger übersandt wird, muss die Empfangsbestätigung zur Entscheidung die Auskunfts-ID enthalten.</xs:documentation>
+            </xs:annotation>
+         </xs:element>
+         <xs:element name="auskunft.ID" type="din91379:datatypeC">
+            <xs:annotation>
+               <xs:documentation>Referenz auf die Auskunft des Versorgungsträgers. Muss angegeben werden, da die Empfangsbestätigung diese mit zurücksendet (vgl. auch Kommentar zur Entscheidungs-ID). Wenn von dem Versorgungsträger, der Empfänger der Nachricht ist, keine Auskunft zu der betreffenden Person erteilt wurde, muss das Gericht eine Auskunfts-ID zur Unterscheidung generieren.</xs:documentation>
+            </xs:annotation>
+         </xs:element>
+         <xs:element name="entscheidungsdatum" type="xs:date"/>
+         <xs:element name="datum.antrag.abaenderung" minOccurs="0" type="xs:date">
+            <xs:annotation>
+               <xs:documentation>Nur bei Abänderungsentscheidung. [Von der gesetzliche Rentenversicherung wegen §§ 76, 187 SGB VI gefordert.]</xs:documentation>
+            </xs:annotation>
+         </xs:element>
+         <xs:element name="datum.antrag.isolierteErstentscheidung"
+                     minOccurs="0"
+                     type="xs:date">
+            <xs:annotation>
+               <xs:documentation>Nur bei isolierter Erstentscheidung [Von der gesetzliche Rentenversicherung wegen §§ 76, 187 SGB VI gefordert.]</xs:documentation>
+            </xs:annotation>
+         </xs:element>
+         <xs:element name="datum.wiederaufnahme" minOccurs="0" type="xs:date">
+            <xs:annotation>
+               <xs:documentation>Nur bei Entscheidung nach Wiederaufnahme des Verfahrens [Von der gesetzliche Rentenversicherung wegen §§ 76, 187 SGB VI gefordert.]</xs:documentation>
+            </xs:annotation>
+         </xs:element>
+         <xs:element name="datum.urspruenglicheEntscheidung"
+                     minOccurs="0"
+                     type="xs:date">
+            <xs:annotation>
+               <xs:documentation>Urspruenglich bedeutet abgeändert (bei rechtskräftigen oder auch nicht rechtskräftigen Entscheidungen) oder berichtigt</xs:documentation>
+            </xs:annotation>
+         </xs:element>
+         <xs:element name="datum.parteienvereinbarung" minOccurs="0" type="xs:date"/>
+         <xs:element name="gericht.urspruenglicheEntscheidung"
+                     minOccurs="0"
+                     type="tns:Code.GDS.Gerichte.Typ3">
+            <xs:annotation>
+               <xs:documentation>Urspruenglich bedeutet abgeändert (bei rechtskräftigen oder auch nicht rechtskräftigen Entscheidungen) oder berichtigt. Hier ist die Gerichtskennzahl anzugeben.</xs:documentation>
+            </xs:annotation>
+         </xs:element>
+         <xs:element name="aktenzeichen.urspruenglicheEntscheidung"
+                     minOccurs="0"
+                     type="din91379:datatypeC">
+            <xs:annotation>
+               <xs:documentation>Urspruenglich bedeutet abgeändert (bei rechtskräftigen oder auch nicht rechtskräftigen Entscheidungen) oder berichtigt.</xs:documentation>
+            </xs:annotation>
+         </xs:element>
+         <xs:element name="entscheidung.ID.urspruenglicheEntscheidung"
+                     minOccurs="0"
+                     type="din91379:datatypeC">
+            <xs:annotation>
+               <xs:documentation>Urspruenglich bedeutet abgeändert (bei rechtskräftigen oder auch nicht rechtskräftigen Entscheidungen) oder berichtigt.</xs:documentation>
+            </xs:annotation>
+         </xs:element>
+         <xs:element name="familie" type="tns:Type.VAG.Familie"/>
+         <xs:element name="versicherter" type="tns:Type.GDS.Ref.Rollennummer">
+            <xs:annotation>
+               <xs:documentation>Referenz auf den Beteiligten im Grunddatensatz, für den die Auskunft benötigt wird.</xs:documentation>
+            </xs:annotation>
+         </xs:element>
+         <xs:element name="andererEhegatte" type="tns:Type.GDS.Ref.Rollennummer">
+            <xs:annotation>
+               <xs:documentation>Referenz auf den anderen Ehegatten</xs:documentation>
+            </xs:annotation>
+         </xs:element>
+         <xs:element name="istTeilentscheidung" fixed="false" type="xs:boolean">
+            <xs:annotation>
+               <xs:documentation>Wird grundsätzlich mit false beschickt. Derzeit erfolgt keine technische Umsetzung in den Fachverfahren.</xs:documentation>
+            </xs:annotation>
+         </xs:element>
+         <xs:element name="ausgleich" type="tns:Code.VAG.Ausgleich"/>
+         <xs:element name="zumAnrecht" minOccurs="0" maxOccurs="unbounded">
+            <xs:complexType>
+               <xs:sequence>
+                  <xs:element name="anrecht.ID" type="din91379:datatypeC">
+                     <xs:annotation>
+                        <xs:documentation>Referenz auf das Anrecht, das ausgeglichen wird. Diese muss immer übermittelt werden, da die Rechtskraft unter Bezug auf diese Anrechts-ID mitgeteilt wird. Dabei kann es sein, dass das betreffende Anrecht nicht von demselben Versorgungsträger übermittelt wurde, der Empfänger dieses Entscheidungsdatensatzes ist. Der Versorgungsträger muss also ggf. intern zusätzlich zur Anrechts-ID auch den jeweiligen Versorgungsträger mit abspeichern, da sonst die Anrechts-ID evtl. nicht eindeutig ist. Ggf. kann der Versorgungsträger auch an der Teilungsart die eigenen von fremden Anrechten unterscheiden.</xs:documentation>
+                     </xs:annotation>
+                  </xs:element>
+                  <xs:element name="ordnungskriterium" type="din91379:datatypeC">
+                     <xs:annotation>
+                        <xs:documentation>Hier ist das Ordnungskriterium des Versorgungsträgers anzugeben. Im Falle der Rentenversicherung soll die Versicherungsnummer angegeben werden (z.B. 69010160H519). Ist das Ordnungskriterium nicht bekannt, wird das Element ohne Inhalt übermittelt.</xs:documentation>
+                     </xs:annotation>
+                  </xs:element>
+                  <xs:element name="ausgleichswert" type="xs:decimal">
+                     <xs:annotation>
+                        <xs:documentation>In diesem Feld ist der auszugleichende Wert in Abhängigkeit von der Bezugsgröße vorzugeben.</xs:documentation>
+                     </xs:annotation>
+                  </xs:element>
+                  <xs:element name="bezugsgroesse" type="tns:Code.VAG.Bezugsgroesse">
+                     <xs:annotation>
+                        <xs:documentation>Die Bezugsgröße spezifiziert den Ehezeitanteil und Ausgleichswert.</xs:documentation>
+                     </xs:annotation>
+                  </xs:element>
+                  <xs:element name="andereBezugsgroesse" minOccurs="0" type="din91379:datatypeC">
+                     <xs:annotation>
+                        <xs:documentation>Für Sonstiges</xs:documentation>
+                     </xs:annotation>
+                  </xs:element>
+                  <xs:element name="mindestkapitalbetrag" minOccurs="0" type="xs:decimal">
+                     <xs:annotation>
+                        <xs:documentation>Wird neben der Anordnung über die Begründung von Fondsanteilen vom Familiengericht zusätzlich ein Mindestkapitalbetrag festgelegt, ist dieser in diesem Feld in Euro vorzugeben.</xs:documentation>
+                     </xs:annotation>
+                  </xs:element>
+                  <xs:element name="teilungsart" type="tns:Code.VAG.Teilungsart.Entscheidung"/>
+                  <xs:element name="verzinsung" minOccurs="0" maxOccurs="unbounded">
+                     <xs:complexType>
+                        <xs:sequence>
+                           <xs:element name="auswahl_zinssatz">
+                              <xs:complexType>
+                                 <xs:choice>
+                                    <xs:element name="zinssatzInProzent" type="tns:Type.VAG.Decimal.4_2">
+                                       <xs:annotation>
+                                          <xs:documentation>Zinsatz in %</xs:documentation>
+                                       </xs:annotation>
+                                    </xs:element>
+                                    <xs:element name="prozentUeberBasiszinssatz" type="tns:Type.VAG.Decimal.4_2">
+                                       <xs:annotation>
+                                          <xs:documentation>% über Basiszinssatz</xs:documentation>
+                                       </xs:annotation>
+                                    </xs:element>
+                                 </xs:choice>
+                              </xs:complexType>
+                           </xs:element>
+                           <xs:element name="kapitalbetrag" minOccurs="0" type="tns:Type.VAG.Decimal.9_2">
+                              <xs:annotation>
+                                 <xs:documentation>Hier wird ein Betrag für die Zinsberechnung eingegeben, wenn dieser abweichend vom Ausgleichsbetrag ist.</xs:documentation>
+                              </xs:annotation>
+                           </xs:element>
+                           <xs:element name="auswahl_zinsbeginn">
+                              <xs:complexType>
+                                 <xs:choice>
+                                    <xs:element name="datum" type="xs:date"/>
+                                    <xs:element name="sonstigerZeitpunkt" type="din91379:datatypeC"/>
+                                 </xs:choice>
+                              </xs:complexType>
+                           </xs:element>
+                           <xs:element name="auswahl_zinsende">
+                              <xs:complexType>
+                                 <xs:choice>
+                                    <xs:element name="zinsende.rechtskraft" fixed="true" type="xs:boolean">
+                                       <xs:annotation>
+                                          <xs:documentation>Das Datum des Zinsendes ist das Datum der Rechtskraft.</xs:documentation>
+                                       </xs:annotation>
+                                    </xs:element>
+                                    <xs:element name="bisZum" type="xs:date"/>
+                                 </xs:choice>
+                              </xs:complexType>
+                           </xs:element>
+                        </xs:sequence>
+                     </xs:complexType>
+                  </xs:element>
+                  <xs:element name="tarif" minOccurs="0" type="din91379:datatypeC">
+                     <xs:annotation>
+                        <xs:documentation>Bezeichnung des Tarifes etc. des Zielversorgungsträgers</xs:documentation>
+                     </xs:annotation>
+                  </xs:element>
+                  <xs:element name="ausgleichspflichtiger" type="tns:Type.GDS.Ref.Rollennummer">
+                     <xs:annotation>
+                        <xs:documentation>Referenz auf die Beteiligtendaten des Ausgleichspflichtigen</xs:documentation>
+                     </xs:annotation>
+                  </xs:element>
+                  <xs:element name="ausgleichsberechtigter" type="tns:Type.GDS.Ref.Rollennummer">
+                     <xs:annotation>
+                        <xs:documentation>Referenz auf die Beteiligtendaten des Ausgleichsberechtigen</xs:documentation>
+                     </xs:annotation>
+                  </xs:element>
+                  <xs:element name="zielversorgungstraeger.ausgleichsberechtigter"
+                              minOccurs="0"
+                              type="tns:Type.GDS.Ref.Rollennummer">
+                     <xs:annotation>
+                        <xs:documentation>Referenz auf die Beteiligtendaten des Versorgungsträgers des Ausgleichsberechtigten bei externer Teilung.</xs:documentation>
+                     </xs:annotation>
+                  </xs:element>
+                  <xs:element name="versorgungstraeger.ausgleichpflichtiger"
+                              minOccurs="0"
+                              type="tns:Type.GDS.Ref.Rollennummer">
+                     <xs:annotation>
+                        <xs:documentation>Referenz auf die Beteiligtendaten des Versorgungsträgers des Ausgleichspflichtigen bei externer Teilung.</xs:documentation>
+                     </xs:annotation>
+                  </xs:element>
+                  <xs:element name="internationaleWertpapierkennnummer"
+                              minOccurs="0"
+                              type="tns:Type.VAG.ISIN">
+                     <xs:annotation>
+                        <xs:documentation>"International Securities Identification Number" (ISIN) gemäß Norm ISO 6166 (zwölfstellige Buchstaben-Zahlen-Kombination)</xs:documentation>
+                     </xs:annotation>
+                  </xs:element>
+               </xs:sequence>
+            </xs:complexType>
+         </xs:element>
+      </xs:sequence>
+   </xs:complexType>
+   <xs:simpleType name="Type.VAG.ISIN">
+      <xs:restriction base="din91379:datatypeC">
+         <xs:pattern value="[a-z|A-Z]{2}[a-z|A-Z|0-9]{9}\d"/>
+      </xs:restriction>
+   </xs:simpleType>
+   <xs:complexType name="Type.VAG.Kurzmitteilung">
+      <xs:sequence>
+         <xs:element name="anfrage.ID" type="din91379:datatypeC">
+            <xs:annotation>
+               <xs:documentation>Referenz auf Auskunftsersuchen des Gerichts</xs:documentation>
+            </xs:annotation>
+         </xs:element>
+         <xs:element name="auskunft.ID" minOccurs="0" type="din91379:datatypeC">
+            <xs:annotation>
+               <xs:documentation>Referenz auf Auskunft des Versorgungsträgers</xs:documentation>
+            </xs:annotation>
+         </xs:element>
+         <xs:element name="ordnungskriterium" type="din91379:datatypeC">
+            <xs:annotation>
+               <xs:documentation>Hier ist das Ordnungskriterium des Versorgungsträgers anzugeben. Im Falle der Rentenversicherung soll die Versicherungsnummer angegeben werden (z.B. 69010160H519). Ist das Ordnungskriterium nicht bekannt, wird das Element ohne Inhalt übermittelt.</xs:documentation>
+            </xs:annotation>
+         </xs:element>
+      </xs:sequence>
+   </xs:complexType>
+   <xs:complexType name="Type.VAG.Rechtskraftmitteilung">
+      <xs:sequence>
+         <xs:element name="mitteilung.ID" type="din91379:datatypeC"/>
+         <xs:element name="entscheidung.ID" type="din91379:datatypeC">
+            <xs:annotation>
+               <xs:documentation>Referenz auf Entscheidung des Gerichts</xs:documentation>
+            </xs:annotation>
+         </xs:element>
+         <xs:element name="anfrage.ID" minOccurs="0" type="din91379:datatypeC">
+            <xs:annotation>
+               <xs:documentation>Referenz auf Anfrage des Gerichts</xs:documentation>
+            </xs:annotation>
+         </xs:element>
+         <xs:element name="entscheidungsdatum" minOccurs="0" type="xs:date">
+            <xs:annotation>
+               <xs:documentation>Entscheidungsdatum ist das Datum der Entscheidung.</xs:documentation>
+            </xs:annotation>
+         </xs:element>
+         <xs:element name="zumAnrecht" minOccurs="0" maxOccurs="unbounded">
+            <xs:annotation>
+               <xs:documentation>Anrechtsbezogene Daten.</xs:documentation>
+            </xs:annotation>
+            <xs:complexType>
+               <xs:sequence>
+                  <xs:element name="anrecht.ID" type="din91379:datatypeC">
+                     <xs:annotation>
+                        <xs:documentation>Referenz auf das Anrecht, das ausgeglichen wird. Dies ist grundsätzlich die Anrechts-ID aus der Auskunft des Versorgungsträgers. Sofern eine Entscheidung ohne vorherige Auskunft erteilt wurde, ist die vom Gericht in der Entscheidung vergebene Anrechts-ID einzutragen.</xs:documentation>
+                     </xs:annotation>
+                  </xs:element>
+                  <xs:element name="rechtskraftdatum" type="xs:date">
+                     <xs:annotation>
+                        <xs:documentation>Rechtskraftdatum ist das Datum der Rechtskraft.</xs:documentation>
+                     </xs:annotation>
+                  </xs:element>
+                  <xs:element name="ordnungskriterium" type="din91379:datatypeC">
+                     <xs:annotation>
+                        <xs:documentation>Hier ist das Ordnungskriterium des Versorgungsträgers anzugeben. Im Falle der Rentenversicherung soll die Versicherungsnummer angegeben werden (z.B. 69010160H519). Ist das Ordnungskriterium nicht bekannt, wird das Element ohne Inhalt übermittelt.</xs:documentation>
+                     </xs:annotation>
+                  </xs:element>
+               </xs:sequence>
+            </xs:complexType>
+         </xs:element>
+      </xs:sequence>
+   </xs:complexType>
+   <xs:element name="nachricht.vag.auskunft.0250001">
+      <xs:complexType>
+         <xs:sequence>
+            <xs:element name="nachrichtenkopf" type="tns:Type.GDS.Nachrichtenkopf"/>
+            <xs:element name="grunddaten" type="tns:Type.GDS.Grunddaten"/>
+            <xs:element name="schriftgutobjekte"
+                        minOccurs="0"
+                        type="tns:Type.GDS.Schriftgutobjekte"/>
+            <xs:element name="fachdaten" type="tns:Type.VAG.Auskunft"/>
+         </xs:sequence>
+      </xs:complexType>
+   </xs:element>
+   <xs:element name="nachricht.vag.auskunftsersuchen.0250002">
+      <xs:complexType>
+         <xs:sequence>
+            <xs:element name="nachrichtenkopf" type="tns:Type.GDS.Nachrichtenkopf"/>
+            <xs:element name="grunddaten" type="tns:Type.GDS.Grunddaten"/>
+            <xs:element name="schriftgutobjekte"
+                        minOccurs="0"
+                        type="tns:Type.GDS.Schriftgutobjekte"/>
+            <xs:element name="fachdaten" type="tns:Type.VAG.Auskunftsersuchen"/>
+         </xs:sequence>
+      </xs:complexType>
+   </xs:element>
+   <xs:element name="nachricht.vag.empfangsbestaetigung.0250003">
+      <xs:complexType>
+         <xs:sequence>
+            <xs:element name="nachrichtenkopf" type="tns:Type.GDS.Nachrichtenkopf"/>
+            <xs:element name="grunddaten" type="tns:Type.GDS.Grunddaten"/>
+            <xs:element name="schriftgutobjekte"
+                        minOccurs="0"
+                        type="tns:Type.GDS.Schriftgutobjekte"/>
+            <xs:element name="fachdaten" type="tns:Type.VAG.Empfangsbestaetigung"/>
+         </xs:sequence>
+      </xs:complexType>
+   </xs:element>
+   <xs:element name="nachricht.vag.fehler.gerichtZuVersorgungstraeger.0250004">
+      <xs:complexType>
+         <xs:sequence>
+            <xs:element name="nachrichtenkopf" type="tns:Type.GDS.Nachrichtenkopf"/>
+            <xs:element name="grunddaten" type="tns:Type.GDS.Grunddaten"/>
+            <xs:element name="schriftgutobjekte"
+                        minOccurs="0"
+                        type="tns:Type.GDS.Schriftgutobjekte"/>
+            <xs:element name="fachdaten" type="tns:Type.VAG.Fehler"/>
+         </xs:sequence>
+      </xs:complexType>
+   </xs:element>
+   <xs:element name="nachricht.vag.fehler.versorgungstraegerZuGericht.0250005">
+      <xs:complexType>
+         <xs:sequence>
+            <xs:element name="nachrichtenkopf" type="tns:Type.GDS.Nachrichtenkopf"/>
+            <xs:element name="grunddaten" type="tns:Type.GDS.Grunddaten"/>
+            <xs:element name="schriftgutobjekte"
+                        minOccurs="0"
+                        type="tns:Type.GDS.Schriftgutobjekte"/>
+            <xs:element name="fachdaten" type="tns:Type.VAG.Fehler"/>
+         </xs:sequence>
+      </xs:complexType>
+   </xs:element>
+   <xs:element name="nachricht.vag.gerichtlicheEntscheidung.0250006">
+      <xs:annotation>
+         <xs:documentation>Zustellungsnachweis ist die technische Eingangsbestätigung. Wenn beide Ehepartner bei demselben Versorgungsträger sind, werden zwei Entscheidungsdatensätze übermittelt.</xs:documentation>
+      </xs:annotation>
+      <xs:complexType>
+         <xs:sequence>
+            <xs:element name="nachrichtenkopf" type="tns:Type.GDS.Nachrichtenkopf"/>
+            <xs:element name="grunddaten" type="tns:Type.GDS.Grunddaten"/>
+            <xs:element name="schriftgutobjekte"
+                        minOccurs="0"
+                        type="tns:Type.GDS.Schriftgutobjekte"/>
+            <xs:element name="fachdaten" type="tns:Type.VAG.GerichtlicheEntscheidung"/>
+         </xs:sequence>
+      </xs:complexType>
+   </xs:element>
+   <xs:element name="nachricht.vag.kurzmitteilung.gerichtZuVersorgungstraeger.0250007">
+      <xs:complexType>
+         <xs:sequence>
+            <xs:element name="nachrichtenkopf" type="tns:Type.GDS.Nachrichtenkopf"/>
+            <xs:element name="grunddaten" type="tns:Type.GDS.Grunddaten"/>
+            <xs:element name="schriftgutobjekte"
+                        minOccurs="0"
+                        type="tns:Type.GDS.Schriftgutobjekte"/>
+            <xs:element name="fachdaten" type="tns:Type.VAG.Kurzmitteilung"/>
+         </xs:sequence>
+      </xs:complexType>
+   </xs:element>
+   <xs:element name="nachricht.vag.kurzmitteilung.versorgungstraegerZuGericht.0250008">
+      <xs:complexType>
+         <xs:sequence>
+            <xs:element name="nachrichtenkopf" type="tns:Type.GDS.Nachrichtenkopf"/>
+            <xs:element name="grunddaten" type="tns:Type.GDS.Grunddaten"/>
+            <xs:element name="schriftgutobjekte"
+                        minOccurs="0"
+                        type="tns:Type.GDS.Schriftgutobjekte"/>
+            <xs:element name="fachdaten">
+               <xs:complexType>
+                  <xs:complexContent>
+                     <xs:extension base="tns:Type.VAG.Kurzmitteilung">
+                        <xs:sequence>
+                           <xs:element name="sachstandsmitteilung"
+                                       minOccurs="0"
+                                       maxOccurs="unbounded"
+                                       type="tns:Code.VAG.Sachstandsmitteilung.Kurzmitteilung.VersorgungstraegerZuGericht"/>
+                        </xs:sequence>
+                     </xs:extension>
+                  </xs:complexContent>
+               </xs:complexType>
+            </xs:element>
+         </xs:sequence>
+      </xs:complexType>
+   </xs:element>
+   <xs:element name="nachricht.vag.rechtskraftmitteilung.0250009">
+      <xs:complexType>
+         <xs:sequence>
+            <xs:element name="nachrichtenkopf" type="tns:Type.GDS.Nachrichtenkopf"/>
+            <xs:element name="grunddaten" type="tns:Type.GDS.Grunddaten"/>
+            <xs:element name="schriftgutobjekte"
+                        minOccurs="0"
+                        type="tns:Type.GDS.Schriftgutobjekte"/>
+            <xs:element name="fachdaten" type="tns:Type.VAG.Rechtskraftmitteilung"/>
+         </xs:sequence>
+      </xs:complexType>
+   </xs:element>
+</xs:schema>

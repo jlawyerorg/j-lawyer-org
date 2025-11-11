@@ -1,0 +1,1083 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema"
+           xmlns:tns="http://www.xjustiz.de"
+           xmlns:xoev-code="http://xoev.de/schemata/code/1_0"
+           targetNamespace="http://www.xjustiz.de"
+           version="3.1.0"
+           elementFormDefault="unqualified"
+           attributeFormDefault="unqualified">
+   <xs:annotation>
+      <xs:appinfo>
+         <standard>
+            <nameLang>Strukturierte Fachdaten für die Kommunikation im elektronischen Rechtsverkehr</nameLang>
+            <nameKurz>XJustiz</nameKurz>
+            <nameTechnisch>xjustiz</nameTechnisch>
+            <kennung>urn:xoev-de:blk-ag-it-standards:standard:xjustiz</kennung>
+            <beschreibung>XJustiz ist der bundesweit einheitliche Standard für den Austausch strukturierter elektronischer Informationen mit der Justiz.</beschreibung>
+         </standard>
+         <versionStandard>
+            <version>3.5.1</version>
+            <beschreibung>XJustiz beschreibt ein standardisiertes Datenaustauschformat für die elektronische Kommunikation innerhalb und mit der Justizverwaltung.</beschreibung>
+            <versionXOEVProfil>1.7.2</versionXOEVProfil>
+            <versionXOEVHandbuch>2.3.1</versionXOEVHandbuch>
+            <versionXGenerator>3.1.1</versionXGenerator>
+            <versionModellierungswerkzeug>19.0 SP3</versionModellierungswerkzeug>
+            <nameModellierungswerkzeug>MagicDraw</nameModellierungswerkzeug>
+         </versionStandard>
+      </xs:appinfo>
+   </xs:annotation>
+   <xs:import schemaLocation="xoev-code.xsd"
+              namespace="http://xoev.de/schemata/code/1_0"/>
+   <xs:complexType name="Code.GVZ.Auftragsart">
+      <xs:annotation>
+         <xs:appinfo>
+            <codeliste>
+               <nameLang>GVZ.Auftragsart</nameLang>
+               <nameKurz>GVZ.Auftragsart</nameKurz>
+               <nameTechnisch>gvz.auftragsart</nameTechnisch>
+               <kennung>urn:xoev-de:xjustiz:codeliste:gvz.auftragsart</kennung>
+               <beschreibung>Codeliste der verschiedenen Auftragsarten.</beschreibung>
+               <herausgebernameLang>BLK-AG IT-Standards in der Justiz</herausgebernameLang>
+               <herausgebernameKurz>AG IT-Standards</herausgebernameKurz>
+            </codeliste>
+            <versionCodeliste>
+               <version>2.0</version>
+               <versionCodelistenHandbuch>1.1</versionCodelistenHandbuch>
+            </versionCodeliste>
+            <codelistenspalten>
+               <code>
+                  <spaltennameLang>Schlüssel</spaltennameLang>
+                  <datentyp>string</datentyp>
+                  <codeSpalte>true</codeSpalte>
+                  <verwendung>required</verwendung>
+                  <empfohleneCodeSpalte>true</empfohleneCodeSpalte>
+               </code>
+               <wert>
+                  <spaltennameLang>Wert</spaltennameLang>
+                  <datentyp>string</datentyp>
+                  <codeSpalte>false</codeSpalte>
+                  <verwendung>required</verwendung>
+                  <empfohleneCodeSpalte>false</empfohleneCodeSpalte>
+               </wert>
+            </codelistenspalten>
+            <genutzteCodeSpalte>code</genutzteCodeSpalte>
+         </xs:appinfo>
+      </xs:annotation>
+      <xs:complexContent>
+         <xs:restriction base="xoev-code:Code">
+            <xs:sequence>
+               <xs:element name="code" type="tns:gvz.auftragsart"/>
+            </xs:sequence>
+            <xs:attribute name="listURI"
+                          type="xs:anyURI"
+                          use="optional"
+                          fixed="urn:xoev-de:xjustiz:codeliste:gvz.auftragsart"/>
+            <xs:attribute name="listVersionID"
+                          type="xs:normalizedString"
+                          use="optional"
+                          fixed="2.0"/>
+         </xs:restriction>
+      </xs:complexContent>
+   </xs:complexType>
+   <xs:complexType name="Code.GVZ.Buchungstext">
+      <xs:annotation>
+         <xs:appinfo>
+            <codeliste>
+               <nameLang>GVZ.Buchungstext</nameLang>
+               <nameKurz>GVZ.Buchungstext</nameKurz>
+               <nameTechnisch>gvz.buchungstext</nameTechnisch>
+               <kennung>urn:xoev-de:xjustiz:codeliste:gvz.buchungstext</kennung>
+               <beschreibung>Der Buchungstext hat bei der Verrechnung von Zahlungen keinerlei Bedeutung. Er dient lediglich der besseren Nachvollziehbarkeit der Forderungsaufstellung.</beschreibung>
+               <herausgebernameLang>BLK-AG IT-Standards in der Justiz</herausgebernameLang>
+               <herausgebernameKurz>AG IT-Standards</herausgebernameKurz>
+            </codeliste>
+            <versionCodeliste>
+               <version>1.0</version>
+               <versionCodelistenHandbuch>1.1</versionCodelistenHandbuch>
+            </versionCodeliste>
+            <codelistenspalten>
+               <code>
+                  <spaltennameLang>Schlüssel</spaltennameLang>
+                  <datentyp>string</datentyp>
+                  <codeSpalte>true</codeSpalte>
+                  <verwendung>required</verwendung>
+                  <empfohleneCodeSpalte>true</empfohleneCodeSpalte>
+               </code>
+               <wert>
+                  <spaltennameLang>Wert</spaltennameLang>
+                  <datentyp>string</datentyp>
+                  <codeSpalte>false</codeSpalte>
+                  <verwendung>required</verwendung>
+                  <empfohleneCodeSpalte>false</empfohleneCodeSpalte>
+               </wert>
+            </codelistenspalten>
+            <genutzteCodeSpalte>code</genutzteCodeSpalte>
+         </xs:appinfo>
+      </xs:annotation>
+      <xs:complexContent>
+         <xs:restriction base="xoev-code:Code">
+            <xs:sequence>
+               <xs:element name="code" type="tns:gvz.buchungstext"/>
+            </xs:sequence>
+            <xs:attribute name="listURI"
+                          type="xs:anyURI"
+                          use="optional"
+                          fixed="urn:xoev-de:xjustiz:codeliste:gvz.buchungstext"/>
+            <xs:attribute name="listVersionID"
+                          type="xs:normalizedString"
+                          use="optional"
+                          fixed="1.0"/>
+         </xs:restriction>
+      </xs:complexContent>
+   </xs:complexType>
+   <xs:complexType name="Code.GVZ.Titelart">
+      <xs:annotation>
+         <xs:appinfo>
+            <codeliste>
+               <nameLang>GVZ.Titelart</nameLang>
+               <nameKurz>GVZ.Titelart</nameKurz>
+               <nameTechnisch>gvz.titelart</nameTechnisch>
+               <kennung>urn:xoev-de:xjustiz:codeliste:gvz.titelart</kennung>
+               <beschreibung>Codeliste der verschiedenen Titelarten.</beschreibung>
+               <herausgebernameLang>BLK-AG IT-Standards in der Justiz</herausgebernameLang>
+               <herausgebernameKurz>AG IT-Standards</herausgebernameKurz>
+            </codeliste>
+            <versionCodeliste>
+               <version>2.0</version>
+               <versionCodelistenHandbuch>1.1</versionCodelistenHandbuch>
+            </versionCodeliste>
+            <codelistenspalten>
+               <code>
+                  <spaltennameLang>Schlüssel</spaltennameLang>
+                  <datentyp>string</datentyp>
+                  <codeSpalte>true</codeSpalte>
+                  <verwendung>required</verwendung>
+                  <empfohleneCodeSpalte>true</empfohleneCodeSpalte>
+               </code>
+               <wert>
+                  <spaltennameLang>Wert</spaltennameLang>
+                  <datentyp>string</datentyp>
+                  <codeSpalte>false</codeSpalte>
+                  <verwendung>required</verwendung>
+                  <empfohleneCodeSpalte>false</empfohleneCodeSpalte>
+               </wert>
+            </codelistenspalten>
+            <genutzteCodeSpalte>code</genutzteCodeSpalte>
+         </xs:appinfo>
+      </xs:annotation>
+      <xs:complexContent>
+         <xs:restriction base="xoev-code:Code">
+            <xs:sequence>
+               <xs:element name="code" type="tns:gvz.titelart"/>
+            </xs:sequence>
+            <xs:attribute name="listURI"
+                          type="xs:anyURI"
+                          use="optional"
+                          fixed="urn:xoev-de:xjustiz:codeliste:gvz.titelart"/>
+            <xs:attribute name="listVersionID"
+                          type="xs:normalizedString"
+                          use="optional"
+                          fixed="2.0"/>
+         </xs:restriction>
+      </xs:complexContent>
+   </xs:complexType>
+   <xs:complexType name="Code.GVZ.Zinsmethode">
+      <xs:annotation>
+         <xs:appinfo>
+            <codeliste>
+               <nameLang>GVZ.Zinsmethode</nameLang>
+               <nameKurz>GVZ.Zinsmethode</nameKurz>
+               <nameTechnisch>gvz.zinsmethode</nameTechnisch>
+               <kennung>urn:xoev-de:xjustiz:codeliste:gvz.zinsmethode</kennung>
+               <beschreibung>Codeliste der verschiedenen Zinsmethoden.</beschreibung>
+               <herausgebernameLang>BLK-AG IT-Standards in der Justiz</herausgebernameLang>
+               <herausgebernameKurz>AG IT-Standards</herausgebernameKurz>
+            </codeliste>
+            <versionCodeliste>
+               <version>2.0</version>
+               <versionCodelistenHandbuch>1.1</versionCodelistenHandbuch>
+            </versionCodeliste>
+            <codelistenspalten>
+               <code>
+                  <spaltennameLang>Schlüssel</spaltennameLang>
+                  <datentyp>string</datentyp>
+                  <codeSpalte>true</codeSpalte>
+                  <verwendung>required</verwendung>
+                  <empfohleneCodeSpalte>true</empfohleneCodeSpalte>
+               </code>
+               <wert>
+                  <spaltennameLang>Wert</spaltennameLang>
+                  <datentyp>string</datentyp>
+                  <codeSpalte>false</codeSpalte>
+                  <verwendung>required</verwendung>
+                  <empfohleneCodeSpalte>false</empfohleneCodeSpalte>
+               </wert>
+            </codelistenspalten>
+            <genutzteCodeSpalte>code</genutzteCodeSpalte>
+         </xs:appinfo>
+      </xs:annotation>
+      <xs:complexContent>
+         <xs:restriction base="xoev-code:Code">
+            <xs:sequence>
+               <xs:element name="code" type="tns:gvz.zinsmethode"/>
+            </xs:sequence>
+            <xs:attribute name="listURI"
+                          type="xs:anyURI"
+                          use="optional"
+                          fixed="urn:xoev-de:xjustiz:codeliste:gvz.zinsmethode"/>
+            <xs:attribute name="listVersionID"
+                          type="xs:normalizedString"
+                          use="optional"
+                          fixed="2.0"/>
+         </xs:restriction>
+      </xs:complexContent>
+   </xs:complexType>
+   <xs:simpleType name="gvz.auftragsart">
+      <xs:annotation>
+         <xs:appinfo>
+            <codeliste>
+               <nameLang>GVZ.Auftragsart</nameLang>
+               <nameKurz>GVZ.Auftragsart</nameKurz>
+               <nameTechnisch>gvz.auftragsart</nameTechnisch>
+               <kennung>urn:xoev-de:xjustiz:codeliste:gvz.auftragsart</kennung>
+               <beschreibung>Codeliste der verschiedenen Auftragsarten.</beschreibung>
+               <herausgebernameLang>BLK-AG IT-Standards in der Justiz</herausgebernameLang>
+               <herausgebernameKurz>AG IT-Standards</herausgebernameKurz>
+            </codeliste>
+            <versionCodeliste>
+               <version>2.0</version>
+               <versionCodelistenHandbuch>1.1</versionCodelistenHandbuch>
+            </versionCodeliste>
+            <codelistenspalten>
+               <code>
+                  <spaltennameLang>Schlüssel</spaltennameLang>
+                  <datentyp>string</datentyp>
+                  <codeSpalte>true</codeSpalte>
+                  <verwendung>required</verwendung>
+                  <empfohleneCodeSpalte>true</empfohleneCodeSpalte>
+               </code>
+               <wert>
+                  <spaltennameLang>Wert</spaltennameLang>
+                  <datentyp>string</datentyp>
+                  <codeSpalte>false</codeSpalte>
+                  <verwendung>required</verwendung>
+                  <empfohleneCodeSpalte>false</empfohleneCodeSpalte>
+               </wert>
+            </codelistenspalten>
+         </xs:appinfo>
+      </xs:annotation>
+      <xs:restriction base="xs:token">
+         <xs:enumeration value="001">
+            <xs:annotation>
+               <xs:appinfo>
+                  <wert>Zustellung</wert>
+               </xs:appinfo>
+            </xs:annotation>
+         </xs:enumeration>
+         <xs:enumeration value="002">
+            <xs:annotation>
+               <xs:appinfo>
+                  <wert>Pfändung</wert>
+               </xs:appinfo>
+            </xs:annotation>
+         </xs:enumeration>
+         <xs:enumeration value="003">
+            <xs:annotation>
+               <xs:appinfo>
+                  <wert>Vermögensauskunft §802 c ZPO</wert>
+               </xs:appinfo>
+            </xs:annotation>
+         </xs:enumeration>
+         <xs:enumeration value="004">
+            <xs:annotation>
+               <xs:appinfo>
+                  <wert>Vermögensauskunft §802 d ZPO</wert>
+               </xs:appinfo>
+            </xs:annotation>
+         </xs:enumeration>
+         <xs:enumeration value="005">
+            <xs:annotation>
+               <xs:appinfo>
+                  <wert>Aufenthaltsermittlung §755 Abs. 1 ZPO</wert>
+               </xs:appinfo>
+            </xs:annotation>
+         </xs:enumeration>
+         <xs:enumeration value="006">
+            <xs:annotation>
+               <xs:appinfo>
+                  <wert>Aufenthaltsermittlung §755 Abs. 2 ZPO</wert>
+               </xs:appinfo>
+            </xs:annotation>
+         </xs:enumeration>
+         <xs:enumeration value="007">
+            <xs:annotation>
+               <xs:appinfo>
+                  <wert>Aufenthaltsermittlung §755 Abs. 3 ZPO</wert>
+               </xs:appinfo>
+            </xs:annotation>
+         </xs:enumeration>
+         <xs:enumeration value="008">
+            <xs:annotation>
+               <xs:appinfo>
+                  <wert>Auskunft §802 l Abs. 1 Nr. 1 ZPO</wert>
+               </xs:appinfo>
+            </xs:annotation>
+         </xs:enumeration>
+         <xs:enumeration value="009">
+            <xs:annotation>
+               <xs:appinfo>
+                  <wert>Auskunft §802 l Abs. 1 Nr. 2 ZPO</wert>
+               </xs:appinfo>
+            </xs:annotation>
+         </xs:enumeration>
+         <xs:enumeration value="010">
+            <xs:annotation>
+               <xs:appinfo>
+                  <wert>Auskunft §802 l Abs. 1 Nr. 3 ZPO</wert>
+               </xs:appinfo>
+            </xs:annotation>
+         </xs:enumeration>
+         <xs:enumeration value="011">
+            <xs:annotation>
+               <xs:appinfo>
+                  <wert>Verhaftung</wert>
+               </xs:appinfo>
+            </xs:annotation>
+         </xs:enumeration>
+         <xs:enumeration value="012">
+            <xs:annotation>
+               <xs:appinfo>
+                  <wert>Vorpfändung</wert>
+               </xs:appinfo>
+            </xs:annotation>
+         </xs:enumeration>
+         <xs:enumeration value="013">
+            <xs:annotation>
+               <xs:appinfo>
+                  <wert>Wegnahme</wert>
+               </xs:appinfo>
+            </xs:annotation>
+         </xs:enumeration>
+         <xs:enumeration value="014">
+            <xs:annotation>
+               <xs:appinfo>
+                  <wert>Beseitigung von Widerstand</wert>
+               </xs:appinfo>
+            </xs:annotation>
+         </xs:enumeration>
+         <xs:enumeration value="015">
+            <xs:annotation>
+               <xs:appinfo>
+                  <wert>Räumung</wert>
+               </xs:appinfo>
+            </xs:annotation>
+         </xs:enumeration>
+         <xs:enumeration value="016">
+            <xs:annotation>
+               <xs:appinfo>
+                  <wert>Räumung Berliner Modell</wert>
+               </xs:appinfo>
+            </xs:annotation>
+         </xs:enumeration>
+         <xs:enumeration value="017">
+            <xs:annotation>
+               <xs:appinfo>
+                  <wert>Räumung §885 a ZPO</wert>
+               </xs:appinfo>
+            </xs:annotation>
+         </xs:enumeration>
+         <xs:enumeration value="018">
+            <xs:annotation>
+               <xs:appinfo>
+                  <wert>Vorführung</wert>
+               </xs:appinfo>
+            </xs:annotation>
+         </xs:enumeration>
+         <xs:enumeration value="019">
+            <xs:annotation>
+               <xs:appinfo>
+                  <wert>Protest</wert>
+               </xs:appinfo>
+            </xs:annotation>
+         </xs:enumeration>
+         <xs:enumeration value="020">
+            <xs:annotation>
+               <xs:appinfo>
+                  <wert>Eidesstattliche Versicherung §836 ZPO</wert>
+               </xs:appinfo>
+            </xs:annotation>
+         </xs:enumeration>
+         <xs:enumeration value="021">
+            <xs:annotation>
+               <xs:appinfo>
+                  <wert>Eidesstattliche Versicherung §883 ZPO</wert>
+               </xs:appinfo>
+            </xs:annotation>
+         </xs:enumeration>
+         <xs:enumeration value="022">
+            <xs:annotation>
+               <xs:appinfo>
+                  <wert>Sonstiger</wert>
+               </xs:appinfo>
+            </xs:annotation>
+         </xs:enumeration>
+         <xs:enumeration value="023">
+            <xs:annotation>
+               <xs:appinfo>
+                  <wert>Isolierte gütliche Erledigung</wert>
+               </xs:appinfo>
+            </xs:annotation>
+         </xs:enumeration>
+         <xs:enumeration value="024">
+            <xs:annotation>
+               <xs:appinfo>
+                  <wert>gütliche Erledigung</wert>
+               </xs:appinfo>
+            </xs:annotation>
+         </xs:enumeration>
+      </xs:restriction>
+   </xs:simpleType>
+   <xs:simpleType name="gvz.buchungstext">
+      <xs:annotation>
+         <xs:appinfo>
+            <codeliste>
+               <nameLang>GVZ.Buchungstext</nameLang>
+               <nameKurz>GVZ.Buchungstext</nameKurz>
+               <nameTechnisch>gvz.buchungstext</nameTechnisch>
+               <kennung>urn:xoev-de:xjustiz:codeliste:gvz.buchungstext</kennung>
+               <beschreibung>Der Buchungstext hat bei der Verrechnung von Zahlungen keinerlei Bedeutung. Er dient lediglich der besseren Nachvollziehbarkeit der Forderungsaufstellung.</beschreibung>
+               <herausgebernameLang>BLK-AG IT-Standards in der Justiz</herausgebernameLang>
+               <herausgebernameKurz>AG IT-Standards</herausgebernameKurz>
+            </codeliste>
+            <versionCodeliste>
+               <version>1.0</version>
+               <versionCodelistenHandbuch>1.1</versionCodelistenHandbuch>
+            </versionCodeliste>
+            <codelistenspalten>
+               <code>
+                  <spaltennameLang>Schlüssel</spaltennameLang>
+                  <datentyp>string</datentyp>
+                  <codeSpalte>true</codeSpalte>
+                  <verwendung>required</verwendung>
+                  <empfohleneCodeSpalte>true</empfohleneCodeSpalte>
+               </code>
+               <wert>
+                  <spaltennameLang>Wert</spaltennameLang>
+                  <datentyp>string</datentyp>
+                  <codeSpalte>false</codeSpalte>
+                  <verwendung>required</verwendung>
+                  <empfohleneCodeSpalte>false</empfohleneCodeSpalte>
+               </wert>
+            </codelistenspalten>
+         </xs:appinfo>
+      </xs:annotation>
+      <xs:restriction base="xs:token">
+         <xs:enumeration value="001">
+            <xs:annotation>
+               <xs:appinfo>
+                  <wert>Gesamtforderung</wert>
+               </xs:appinfo>
+            </xs:annotation>
+         </xs:enumeration>
+         <xs:enumeration value="002">
+            <xs:annotation>
+               <xs:appinfo>
+                  <wert>Teilforderung</wert>
+               </xs:appinfo>
+            </xs:annotation>
+         </xs:enumeration>
+         <xs:enumeration value="003">
+            <xs:annotation>
+               <xs:appinfo>
+                  <wert>Restforderung</wert>
+               </xs:appinfo>
+            </xs:annotation>
+         </xs:enumeration>
+         <xs:enumeration value="004">
+            <xs:annotation>
+               <xs:appinfo>
+                  <wert>berechnete Forderung</wert>
+               </xs:appinfo>
+            </xs:annotation>
+         </xs:enumeration>
+         <xs:enumeration value="005">
+            <xs:annotation>
+               <xs:appinfo>
+                  <wert>Titulierter Zinsbetrag</wert>
+               </xs:appinfo>
+            </xs:annotation>
+         </xs:enumeration>
+         <xs:enumeration value="006">
+            <xs:annotation>
+               <xs:appinfo>
+                  <wert>laufende Zinsen</wert>
+               </xs:appinfo>
+            </xs:annotation>
+         </xs:enumeration>
+         <xs:enumeration value="007">
+            <xs:annotation>
+               <xs:appinfo>
+                  <wert>Säumniszuschlag</wert>
+               </xs:appinfo>
+            </xs:annotation>
+         </xs:enumeration>
+         <xs:enumeration value="008">
+            <xs:annotation>
+               <xs:appinfo>
+                  <wert>Nebenforderung</wert>
+               </xs:appinfo>
+            </xs:annotation>
+         </xs:enumeration>
+         <xs:enumeration value="009">
+            <xs:annotation>
+               <xs:appinfo>
+                  <wert>Vorgerichtliche Mahnkosten</wert>
+               </xs:appinfo>
+            </xs:annotation>
+         </xs:enumeration>
+         <xs:enumeration value="010">
+            <xs:annotation>
+               <xs:appinfo>
+                  <wert>Kosten des Mahnverfahrens</wert>
+               </xs:appinfo>
+            </xs:annotation>
+         </xs:enumeration>
+         <xs:enumeration value="011">
+            <xs:annotation>
+               <xs:appinfo>
+                  <wert>Festgesetzte Kosten</wert>
+               </xs:appinfo>
+            </xs:annotation>
+         </xs:enumeration>
+         <xs:enumeration value="012">
+            <xs:annotation>
+               <xs:appinfo>
+                  <wert>Kosten bish. Zwangsvollstreckung</wert>
+               </xs:appinfo>
+            </xs:annotation>
+         </xs:enumeration>
+         <xs:enumeration value="013">
+            <xs:annotation>
+               <xs:appinfo>
+                  <wert>Gerichtskosten</wert>
+               </xs:appinfo>
+            </xs:annotation>
+         </xs:enumeration>
+         <xs:enumeration value="014">
+            <xs:annotation>
+               <xs:appinfo>
+                  <wert>Gerichtsvollzieherkosten</wert>
+               </xs:appinfo>
+            </xs:annotation>
+         </xs:enumeration>
+         <xs:enumeration value="015">
+            <xs:annotation>
+               <xs:appinfo>
+                  <wert>Sonstige Kosten</wert>
+               </xs:appinfo>
+            </xs:annotation>
+         </xs:enumeration>
+         <xs:enumeration value="016">
+            <xs:annotation>
+               <xs:appinfo>
+                  <wert>Gl.Vtr.-Kosten für den ZV-Auftrag</wert>
+               </xs:appinfo>
+            </xs:annotation>
+         </xs:enumeration>
+         <xs:enumeration value="017">
+            <xs:annotation>
+               <xs:appinfo>
+                  <wert>Gl.Vtr.-Kosten für den EV-Auftrag</wert>
+               </xs:appinfo>
+            </xs:annotation>
+         </xs:enumeration>
+         <xs:enumeration value="018">
+            <xs:annotation>
+               <xs:appinfo>
+                  <wert>Gl.Vtr.-Kosten für den VAK-Auftrag</wert>
+               </xs:appinfo>
+            </xs:annotation>
+         </xs:enumeration>
+         <xs:enumeration value="019">
+            <xs:annotation>
+               <xs:appinfo>
+                  <wert>Zahlung</wert>
+               </xs:appinfo>
+            </xs:annotation>
+         </xs:enumeration>
+         <xs:enumeration value="020">
+            <xs:annotation>
+               <xs:appinfo>
+                  <wert>Zahlung auf Hauptforderung</wert>
+               </xs:appinfo>
+            </xs:annotation>
+         </xs:enumeration>
+      </xs:restriction>
+   </xs:simpleType>
+   <xs:simpleType name="gvz.titelart">
+      <xs:annotation>
+         <xs:appinfo>
+            <codeliste>
+               <nameLang>GVZ.Titelart</nameLang>
+               <nameKurz>GVZ.Titelart</nameKurz>
+               <nameTechnisch>gvz.titelart</nameTechnisch>
+               <kennung>urn:xoev-de:xjustiz:codeliste:gvz.titelart</kennung>
+               <beschreibung>Codeliste der verschiedenen Titelarten.</beschreibung>
+               <herausgebernameLang>BLK-AG IT-Standards in der Justiz</herausgebernameLang>
+               <herausgebernameKurz>AG IT-Standards</herausgebernameKurz>
+            </codeliste>
+            <versionCodeliste>
+               <version>2.0</version>
+               <versionCodelistenHandbuch>1.1</versionCodelistenHandbuch>
+            </versionCodeliste>
+            <codelistenspalten>
+               <code>
+                  <spaltennameLang>Schlüssel</spaltennameLang>
+                  <datentyp>string</datentyp>
+                  <codeSpalte>true</codeSpalte>
+                  <verwendung>required</verwendung>
+                  <empfohleneCodeSpalte>true</empfohleneCodeSpalte>
+               </code>
+               <wert>
+                  <spaltennameLang>Wert</spaltennameLang>
+                  <datentyp>string</datentyp>
+                  <codeSpalte>false</codeSpalte>
+                  <verwendung>required</verwendung>
+                  <empfohleneCodeSpalte>false</empfohleneCodeSpalte>
+               </wert>
+            </codelistenspalten>
+         </xs:appinfo>
+      </xs:annotation>
+      <xs:restriction base="xs:token">
+         <xs:enumeration value="001">
+            <xs:annotation>
+               <xs:appinfo>
+                  <wert>Anerkenntnisurteil</wert>
+               </xs:appinfo>
+            </xs:annotation>
+         </xs:enumeration>
+         <xs:enumeration value="002">
+            <xs:annotation>
+               <xs:appinfo>
+                  <wert>Arrestbeschluss</wert>
+               </xs:appinfo>
+            </xs:annotation>
+         </xs:enumeration>
+         <xs:enumeration value="003">
+            <xs:annotation>
+               <xs:appinfo>
+                  <wert>Arresturteil</wert>
+               </xs:appinfo>
+            </xs:annotation>
+         </xs:enumeration>
+         <xs:enumeration value="004">
+            <xs:annotation>
+               <xs:appinfo>
+                  <wert>Ausstandsverzeichnis</wert>
+               </xs:appinfo>
+            </xs:annotation>
+         </xs:enumeration>
+         <xs:enumeration value="005">
+            <xs:annotation>
+               <xs:appinfo>
+                  <wert>Auszug Insolvenztabelle</wert>
+               </xs:appinfo>
+            </xs:annotation>
+         </xs:enumeration>
+         <xs:enumeration value="006">
+            <xs:annotation>
+               <xs:appinfo>
+                  <wert>Beitragsbescheid</wert>
+               </xs:appinfo>
+            </xs:annotation>
+         </xs:enumeration>
+         <xs:enumeration value="007">
+            <xs:annotation>
+               <xs:appinfo>
+                  <wert>Beschluss</wert>
+               </xs:appinfo>
+            </xs:annotation>
+         </xs:enumeration>
+         <xs:enumeration value="008">
+            <xs:annotation>
+               <xs:appinfo>
+                  <wert>Beschluss gem. § 758a Absatz 1 ZPO</wert>
+               </xs:appinfo>
+            </xs:annotation>
+         </xs:enumeration>
+         <xs:enumeration value="009">
+            <xs:annotation>
+               <xs:appinfo>
+                  <wert>Beschluss gem. § 758a Absatz 1, 4 ZPO</wert>
+               </xs:appinfo>
+            </xs:annotation>
+         </xs:enumeration>
+         <xs:enumeration value="010">
+            <xs:annotation>
+               <xs:appinfo>
+                  <wert>Beschluss gem. § 758a Absatz 4 ZPO</wert>
+               </xs:appinfo>
+            </xs:annotation>
+         </xs:enumeration>
+         <xs:enumeration value="011">
+            <xs:annotation>
+               <xs:appinfo>
+                  <wert>Duldungsbescheid</wert>
+               </xs:appinfo>
+            </xs:annotation>
+         </xs:enumeration>
+         <xs:enumeration value="012">
+            <xs:annotation>
+               <xs:appinfo>
+                  <wert>Einstweilige Anordnung</wert>
+               </xs:appinfo>
+            </xs:annotation>
+         </xs:enumeration>
+         <xs:enumeration value="013">
+            <xs:annotation>
+               <xs:appinfo>
+                  <wert>Einstweilige Verfügung</wert>
+               </xs:appinfo>
+            </xs:annotation>
+         </xs:enumeration>
+         <xs:enumeration value="014">
+            <xs:annotation>
+               <xs:appinfo>
+                  <wert>Endurteil</wert>
+               </xs:appinfo>
+            </xs:annotation>
+         </xs:enumeration>
+         <xs:enumeration value="015">
+            <xs:annotation>
+               <xs:appinfo>
+                  <wert>Grundschuldbestellungsurkunde</wert>
+               </xs:appinfo>
+            </xs:annotation>
+         </xs:enumeration>
+         <xs:enumeration value="016">
+            <xs:annotation>
+               <xs:appinfo>
+                  <wert>Haftbefehl</wert>
+               </xs:appinfo>
+            </xs:annotation>
+         </xs:enumeration>
+         <xs:enumeration value="017">
+            <xs:annotation>
+               <xs:appinfo>
+                  <wert>Hypothekenbestellungsurkunde</wert>
+               </xs:appinfo>
+            </xs:annotation>
+         </xs:enumeration>
+         <xs:enumeration value="018">
+            <xs:annotation>
+               <xs:appinfo>
+                  <wert>Kindesunterhaltsbeschluss</wert>
+               </xs:appinfo>
+            </xs:annotation>
+         </xs:enumeration>
+         <xs:enumeration value="019">
+            <xs:annotation>
+               <xs:appinfo>
+                  <wert>Kostenfestsetzungsbeschluss</wert>
+               </xs:appinfo>
+            </xs:annotation>
+         </xs:enumeration>
+         <xs:enumeration value="020">
+            <xs:annotation>
+               <xs:appinfo>
+                  <wert>Kostenrechnung</wert>
+               </xs:appinfo>
+            </xs:annotation>
+         </xs:enumeration>
+         <xs:enumeration value="021">
+            <xs:annotation>
+               <xs:appinfo>
+                  <wert>Leistungsbescheid</wert>
+               </xs:appinfo>
+            </xs:annotation>
+         </xs:enumeration>
+         <xs:enumeration value="022">
+            <xs:annotation>
+               <xs:appinfo>
+                  <wert>Notarielle Kostenrechnung</wert>
+               </xs:appinfo>
+            </xs:annotation>
+         </xs:enumeration>
+         <xs:enumeration value="023">
+            <xs:annotation>
+               <xs:appinfo>
+                  <wert>Notarielle Urkunde</wert>
+               </xs:appinfo>
+            </xs:annotation>
+         </xs:enumeration>
+         <xs:enumeration value="024">
+            <xs:annotation>
+               <xs:appinfo>
+                  <wert>Ordnungsgeldbeschluss</wert>
+               </xs:appinfo>
+            </xs:annotation>
+         </xs:enumeration>
+         <xs:enumeration value="025">
+            <xs:annotation>
+               <xs:appinfo>
+                  <wert>Pfändungs- und Überweisungsbeschluss</wert>
+               </xs:appinfo>
+            </xs:annotation>
+         </xs:enumeration>
+         <xs:enumeration value="026">
+            <xs:annotation>
+               <xs:appinfo>
+                  <wert>Prozessbürgschaft</wert>
+               </xs:appinfo>
+            </xs:annotation>
+         </xs:enumeration>
+         <xs:enumeration value="027">
+            <xs:annotation>
+               <xs:appinfo>
+                  <wert>Scheck-Urteil</wert>
+               </xs:appinfo>
+            </xs:annotation>
+         </xs:enumeration>
+         <xs:enumeration value="028">
+            <xs:annotation>
+               <xs:appinfo>
+                  <wert>Scheck-Vollstreckungsbescheid</wert>
+               </xs:appinfo>
+            </xs:annotation>
+         </xs:enumeration>
+         <xs:enumeration value="029">
+            <xs:annotation>
+               <xs:appinfo>
+                  <wert>Sonstiger</wert>
+               </xs:appinfo>
+            </xs:annotation>
+         </xs:enumeration>
+         <xs:enumeration value="030">
+            <xs:annotation>
+               <xs:appinfo>
+                  <wert>Teilanerkenntnis- und Endurteil</wert>
+               </xs:appinfo>
+            </xs:annotation>
+         </xs:enumeration>
+         <xs:enumeration value="031">
+            <xs:annotation>
+               <xs:appinfo>
+                  <wert>Teilurteil</wert>
+               </xs:appinfo>
+            </xs:annotation>
+         </xs:enumeration>
+         <xs:enumeration value="032">
+            <xs:annotation>
+               <xs:appinfo>
+                  <wert>Urkunde</wert>
+               </xs:appinfo>
+            </xs:annotation>
+         </xs:enumeration>
+         <xs:enumeration value="033">
+            <xs:annotation>
+               <xs:appinfo>
+                  <wert>Urteil</wert>
+               </xs:appinfo>
+            </xs:annotation>
+         </xs:enumeration>
+         <xs:enumeration value="034">
+            <xs:annotation>
+               <xs:appinfo>
+                  <wert>Vergleich</wert>
+               </xs:appinfo>
+            </xs:annotation>
+         </xs:enumeration>
+         <xs:enumeration value="035">
+            <xs:annotation>
+               <xs:appinfo>
+                  <wert>Versäumnisurteil</wert>
+               </xs:appinfo>
+            </xs:annotation>
+         </xs:enumeration>
+         <xs:enumeration value="036">
+            <xs:annotation>
+               <xs:appinfo>
+                  <wert>vollstreckbarer Verwaltungsakt</wert>
+               </xs:appinfo>
+            </xs:annotation>
+         </xs:enumeration>
+         <xs:enumeration value="037">
+            <xs:annotation>
+               <xs:appinfo>
+                  <wert>Vollstreckbarerklärung eines Schiedsspruch</wert>
+               </xs:appinfo>
+            </xs:annotation>
+         </xs:enumeration>
+         <xs:enumeration value="038">
+            <xs:annotation>
+               <xs:appinfo>
+                  <wert>Vollstreckungsauftrag</wert>
+               </xs:appinfo>
+            </xs:annotation>
+         </xs:enumeration>
+         <xs:enumeration value="039">
+            <xs:annotation>
+               <xs:appinfo>
+                  <wert>Vollstreckungsbefehl</wert>
+               </xs:appinfo>
+            </xs:annotation>
+         </xs:enumeration>
+         <xs:enumeration value="040">
+            <xs:annotation>
+               <xs:appinfo>
+                  <wert>Vollstreckungsbescheid</wert>
+               </xs:appinfo>
+            </xs:annotation>
+         </xs:enumeration>
+         <xs:enumeration value="041">
+            <xs:annotation>
+               <xs:appinfo>
+                  <wert>Vollstreckungsersuchen</wert>
+               </xs:appinfo>
+            </xs:annotation>
+         </xs:enumeration>
+         <xs:enumeration value="042">
+            <xs:annotation>
+               <xs:appinfo>
+                  <wert>Vollstreckungsurteil</wert>
+               </xs:appinfo>
+            </xs:annotation>
+         </xs:enumeration>
+         <xs:enumeration value="043">
+            <xs:annotation>
+               <xs:appinfo>
+                  <wert>Vollstreckungsverfügung</wert>
+               </xs:appinfo>
+            </xs:annotation>
+         </xs:enumeration>
+         <xs:enumeration value="044">
+            <xs:annotation>
+               <xs:appinfo>
+                  <wert>Vorführbefehl</wert>
+               </xs:appinfo>
+            </xs:annotation>
+         </xs:enumeration>
+         <xs:enumeration value="045">
+            <xs:annotation>
+               <xs:appinfo>
+                  <wert>Vorläufiges Zahlungsverbot</wert>
+               </xs:appinfo>
+            </xs:annotation>
+         </xs:enumeration>
+         <xs:enumeration value="046">
+            <xs:annotation>
+               <xs:appinfo>
+                  <wert>Vorpfändung</wert>
+               </xs:appinfo>
+            </xs:annotation>
+         </xs:enumeration>
+         <xs:enumeration value="047">
+            <xs:annotation>
+               <xs:appinfo>
+                  <wert>Wechsel-Urteil</wert>
+               </xs:appinfo>
+            </xs:annotation>
+         </xs:enumeration>
+         <xs:enumeration value="048">
+            <xs:annotation>
+               <xs:appinfo>
+                  <wert>Wechsel-Vollstreckungsbescheid</wert>
+               </xs:appinfo>
+            </xs:annotation>
+         </xs:enumeration>
+         <xs:enumeration value="049">
+            <xs:annotation>
+               <xs:appinfo>
+                  <wert>Zuschlagsbeschluss</wert>
+               </xs:appinfo>
+            </xs:annotation>
+         </xs:enumeration>
+         <xs:enumeration value="050">
+            <xs:annotation>
+               <xs:appinfo>
+                  <wert>Zwangsgeldbeschluss</wert>
+               </xs:appinfo>
+            </xs:annotation>
+         </xs:enumeration>
+      </xs:restriction>
+   </xs:simpleType>
+   <xs:simpleType name="gvz.zinsmethode">
+      <xs:annotation>
+         <xs:appinfo>
+            <codeliste>
+               <nameLang>GVZ.Zinsmethode</nameLang>
+               <nameKurz>GVZ.Zinsmethode</nameKurz>
+               <nameTechnisch>gvz.zinsmethode</nameTechnisch>
+               <kennung>urn:xoev-de:xjustiz:codeliste:gvz.zinsmethode</kennung>
+               <beschreibung>Codeliste der verschiedenen Zinsmethoden.</beschreibung>
+               <herausgebernameLang>BLK-AG IT-Standards in der Justiz</herausgebernameLang>
+               <herausgebernameKurz>AG IT-Standards</herausgebernameKurz>
+            </codeliste>
+            <versionCodeliste>
+               <version>2.0</version>
+               <versionCodelistenHandbuch>1.1</versionCodelistenHandbuch>
+            </versionCodeliste>
+            <codelistenspalten>
+               <code>
+                  <spaltennameLang>Schlüssel</spaltennameLang>
+                  <datentyp>string</datentyp>
+                  <codeSpalte>true</codeSpalte>
+                  <verwendung>required</verwendung>
+                  <empfohleneCodeSpalte>true</empfohleneCodeSpalte>
+               </code>
+               <wert>
+                  <spaltennameLang>Wert</spaltennameLang>
+                  <datentyp>string</datentyp>
+                  <codeSpalte>false</codeSpalte>
+                  <verwendung>required</verwendung>
+                  <empfohleneCodeSpalte>false</empfohleneCodeSpalte>
+               </wert>
+            </codelistenspalten>
+         </xs:appinfo>
+      </xs:annotation>
+      <xs:restriction base="xs:token">
+         <xs:enumeration value="001">
+            <xs:annotation>
+               <xs:appinfo>
+                  <wert>jährlicher Zinssatz</wert>
+               </xs:appinfo>
+            </xs:annotation>
+         </xs:enumeration>
+         <xs:enumeration value="002">
+            <xs:annotation>
+               <xs:appinfo>
+                  <wert>jährlicher Zinssatz über Basiszins</wert>
+               </xs:appinfo>
+            </xs:annotation>
+         </xs:enumeration>
+         <xs:enumeration value="003">
+            <xs:annotation>
+               <xs:appinfo>
+                  <wert>monatlicher Säumniszuschlag</wert>
+               </xs:appinfo>
+            </xs:annotation>
+         </xs:enumeration>
+         <xs:enumeration value="004">
+            <xs:annotation>
+               <xs:appinfo>
+                  <wert>monatlicher Säumniszuschlag SGB IV</wert>
+               </xs:appinfo>
+            </xs:annotation>
+         </xs:enumeration>
+         <xs:enumeration value="005">
+            <xs:annotation>
+               <xs:appinfo>
+                  <wert>monatlicher Zinssatz</wert>
+               </xs:appinfo>
+            </xs:annotation>
+         </xs:enumeration>
+         <xs:enumeration value="006">
+            <xs:annotation>
+               <xs:appinfo>
+                  <wert>monatlicher Zinssatz über Basiszins</wert>
+               </xs:appinfo>
+            </xs:annotation>
+         </xs:enumeration>
+      </xs:restriction>
+   </xs:simpleType>
+</xs:schema>

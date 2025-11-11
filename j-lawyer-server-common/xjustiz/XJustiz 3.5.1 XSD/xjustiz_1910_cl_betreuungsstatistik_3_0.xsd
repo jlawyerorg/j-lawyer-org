@@ -1,0 +1,1689 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema"
+           xmlns:tns="http://www.xjustiz.de"
+           xmlns:xoev-code="http://xoev.de/schemata/code/1_0"
+           targetNamespace="http://www.xjustiz.de"
+           version="3.0.0"
+           elementFormDefault="unqualified"
+           attributeFormDefault="unqualified">
+   <xs:annotation>
+      <xs:appinfo>
+         <standard>
+            <nameLang>Strukturierte Fachdaten für die Kommunikation im elektronischen Rechtsverkehr</nameLang>
+            <nameKurz>XJustiz</nameKurz>
+            <nameTechnisch>xjustiz</nameTechnisch>
+            <kennung>urn:xoev-de:blk-ag-it-standards:standard:xjustiz</kennung>
+            <beschreibung>XJustiz ist der bundesweit einheitliche Standard für den Austausch strukturierter elektronischer Informationen mit der Justiz.</beschreibung>
+         </standard>
+         <versionStandard>
+            <version>3.5.1</version>
+            <beschreibung>XJustiz beschreibt ein standardisiertes Datenaustauschformat für die elektronische Kommunikation innerhalb und mit der Justizverwaltung.</beschreibung>
+            <versionXOEVProfil>1.7.2</versionXOEVProfil>
+            <versionXOEVHandbuch>2.3.1</versionXOEVHandbuch>
+            <versionXGenerator>3.1.1</versionXGenerator>
+            <versionModellierungswerkzeug>19.0 SP3</versionModellierungswerkzeug>
+            <nameModellierungswerkzeug>MagicDraw</nameModellierungswerkzeug>
+         </versionStandard>
+      </xs:appinfo>
+   </xs:annotation>
+   <xs:import schemaLocation="xoev-code.xsd"
+              namespace="http://xoev.de/schemata/code/1_0"/>
+   <xs:complexType name="Code.BESTAT.Art.Genehmigung">
+      <xs:annotation>
+         <xs:appinfo>
+            <codeliste>
+               <nameLang>BESTAT.Art.Genehmigung</nameLang>
+               <nameKurz>BESTAT.Art.Genehmigung</nameKurz>
+               <nameTechnisch>bestat.art.genehmigung</nameTechnisch>
+               <kennung>urn:xoev-de:xjustiz:codeliste:bestat.art.genehmigung</kennung>
+               <beschreibung>Codeliste der verschiedenen Genehmigungsarten.</beschreibung>
+               <herausgebernameLang>BLK-AG IT-Standards in der Justiz</herausgebernameLang>
+               <herausgebernameKurz>AG IT-Standards</herausgebernameKurz>
+            </codeliste>
+            <versionCodeliste>
+               <version>2.0</version>
+               <versionCodelistenHandbuch>1.1</versionCodelistenHandbuch>
+            </versionCodeliste>
+            <codelistenspalten>
+               <code>
+                  <spaltennameLang>Schlüssel</spaltennameLang>
+                  <datentyp>string</datentyp>
+                  <codeSpalte>true</codeSpalte>
+                  <verwendung>required</verwendung>
+                  <empfohleneCodeSpalte>true</empfohleneCodeSpalte>
+               </code>
+               <wert>
+                  <spaltennameLang>Wert</spaltennameLang>
+                  <datentyp>string</datentyp>
+                  <codeSpalte>false</codeSpalte>
+                  <verwendung>required</verwendung>
+                  <empfohleneCodeSpalte>false</empfohleneCodeSpalte>
+               </wert>
+            </codelistenspalten>
+            <genutzteCodeSpalte>code</genutzteCodeSpalte>
+         </xs:appinfo>
+      </xs:annotation>
+      <xs:complexContent>
+         <xs:restriction base="xoev-code:Code">
+            <xs:sequence>
+               <xs:element name="code" type="tns:bestat.art.genehmigung"/>
+            </xs:sequence>
+            <xs:attribute name="listURI"
+                          type="xs:anyURI"
+                          use="optional"
+                          fixed="urn:xoev-de:xjustiz:codeliste:bestat.art.genehmigung"/>
+            <xs:attribute name="listVersionID"
+                          type="xs:normalizedString"
+                          use="optional"
+                          fixed="2.0"/>
+         </xs:restriction>
+      </xs:complexContent>
+   </xs:complexType>
+   <xs:complexType name="Code.BESTAT.Art.Zahlung">
+      <xs:annotation>
+         <xs:appinfo>
+            <codeliste>
+               <nameLang>BESTAT.Art.Zahlung</nameLang>
+               <nameKurz>BESTAT.Art.Zahlung</nameKurz>
+               <nameTechnisch>bestat.art.zahlung</nameTechnisch>
+               <kennung>urn:xoev-de:xjustiz:codeliste:bestat.art.zahlung</kennung>
+               <beschreibung>Codeliste der verschiedenen Zahlungsarten.</beschreibung>
+               <herausgebernameLang>BLK-AG IT-Standards in der Justiz</herausgebernameLang>
+               <herausgebernameKurz>AG IT-Standards</herausgebernameKurz>
+            </codeliste>
+            <versionCodeliste>
+               <version>2.0</version>
+               <versionCodelistenHandbuch>1.1</versionCodelistenHandbuch>
+            </versionCodeliste>
+            <codelistenspalten>
+               <code>
+                  <spaltennameLang>Schlüssel</spaltennameLang>
+                  <datentyp>string</datentyp>
+                  <codeSpalte>true</codeSpalte>
+                  <verwendung>required</verwendung>
+                  <empfohleneCodeSpalte>true</empfohleneCodeSpalte>
+               </code>
+               <wert>
+                  <spaltennameLang>Wert</spaltennameLang>
+                  <datentyp>string</datentyp>
+                  <codeSpalte>false</codeSpalte>
+                  <verwendung>required</verwendung>
+                  <empfohleneCodeSpalte>false</empfohleneCodeSpalte>
+               </wert>
+            </codelistenspalten>
+            <genutzteCodeSpalte>code</genutzteCodeSpalte>
+         </xs:appinfo>
+      </xs:annotation>
+      <xs:complexContent>
+         <xs:restriction base="xoev-code:Code">
+            <xs:sequence>
+               <xs:element name="code" type="tns:bestat.art.zahlung"/>
+            </xs:sequence>
+            <xs:attribute name="listURI"
+                          type="xs:anyURI"
+                          use="optional"
+                          fixed="urn:xoev-de:xjustiz:codeliste:bestat.art.zahlung"/>
+            <xs:attribute name="listVersionID"
+                          type="xs:normalizedString"
+                          use="optional"
+                          fixed="2.0"/>
+         </xs:restriction>
+      </xs:complexContent>
+   </xs:complexType>
+   <xs:complexType name="Code.BESTAT.Aufgabenkreis">
+      <xs:annotation>
+         <xs:appinfo>
+            <codeliste>
+               <nameLang>BESTAT.Aufgabenkreis</nameLang>
+               <nameKurz>BESTAT.Aufgabenkreis</nameKurz>
+               <nameTechnisch>bestat.aufgabenkreis</nameTechnisch>
+               <kennung>urn:xoev-de:xjustiz:codeliste:bestat.aufgabenkreis</kennung>
+               <beschreibung>Codeliste der verschiedenen Aufgabenkreise.</beschreibung>
+               <herausgebernameLang>BLK-AG IT-Standards in der Justiz</herausgebernameLang>
+               <herausgebernameKurz>AG IT-Standards</herausgebernameKurz>
+            </codeliste>
+            <versionCodeliste>
+               <version>2.0</version>
+               <versionCodelistenHandbuch>1.1</versionCodelistenHandbuch>
+            </versionCodeliste>
+            <codelistenspalten>
+               <code>
+                  <spaltennameLang>Schlüssel</spaltennameLang>
+                  <datentyp>string</datentyp>
+                  <codeSpalte>true</codeSpalte>
+                  <verwendung>required</verwendung>
+                  <empfohleneCodeSpalte>true</empfohleneCodeSpalte>
+               </code>
+               <wert>
+                  <spaltennameLang>Wert</spaltennameLang>
+                  <datentyp>string</datentyp>
+                  <codeSpalte>false</codeSpalte>
+                  <verwendung>required</verwendung>
+                  <empfohleneCodeSpalte>false</empfohleneCodeSpalte>
+               </wert>
+            </codelistenspalten>
+            <genutzteCodeSpalte>code</genutzteCodeSpalte>
+         </xs:appinfo>
+      </xs:annotation>
+      <xs:complexContent>
+         <xs:restriction base="xoev-code:Code">
+            <xs:sequence>
+               <xs:element name="code" type="tns:bestat.aufgabenkreis"/>
+            </xs:sequence>
+            <xs:attribute name="listURI"
+                          type="xs:anyURI"
+                          use="optional"
+                          fixed="urn:xoev-de:xjustiz:codeliste:bestat.aufgabenkreis"/>
+            <xs:attribute name="listVersionID"
+                          type="xs:normalizedString"
+                          use="optional"
+                          fixed="2.0"/>
+         </xs:restriction>
+      </xs:complexContent>
+   </xs:complexType>
+   <xs:complexType name="Code.BESTAT.BeendigungBetreuung">
+      <xs:annotation>
+         <xs:appinfo>
+            <codeliste>
+               <nameLang>BESTAT.BeendigungBetreuung</nameLang>
+               <nameKurz>BESTAT.BeendigungBetreuung</nameKurz>
+               <nameTechnisch>bestat.beendigung-betreuung</nameTechnisch>
+               <kennung>urn:xoev-de:xjustiz:codeliste:bestat.beendigung-betreuung</kennung>
+               <beschreibung>Codeliste der verschiedenen Beendigungsarten bei der Betreuung.</beschreibung>
+               <herausgebernameLang>BLK-AG IT-Standards in der Justiz</herausgebernameLang>
+               <herausgebernameKurz>AG IT-Standards</herausgebernameKurz>
+            </codeliste>
+            <versionCodeliste>
+               <version>2.0</version>
+               <versionCodelistenHandbuch>1.1</versionCodelistenHandbuch>
+            </versionCodeliste>
+            <codelistenspalten>
+               <code>
+                  <spaltennameLang>Schlüssel</spaltennameLang>
+                  <datentyp>string</datentyp>
+                  <codeSpalte>true</codeSpalte>
+                  <verwendung>required</verwendung>
+                  <empfohleneCodeSpalte>true</empfohleneCodeSpalte>
+               </code>
+               <wert>
+                  <spaltennameLang>Wert</spaltennameLang>
+                  <datentyp>string</datentyp>
+                  <codeSpalte>false</codeSpalte>
+                  <verwendung>required</verwendung>
+                  <empfohleneCodeSpalte>false</empfohleneCodeSpalte>
+               </wert>
+            </codelistenspalten>
+            <genutzteCodeSpalte>code</genutzteCodeSpalte>
+         </xs:appinfo>
+      </xs:annotation>
+      <xs:complexContent>
+         <xs:restriction base="xoev-code:Code">
+            <xs:sequence>
+               <xs:element name="code" type="tns:bestat.beendigung-betreuung"/>
+            </xs:sequence>
+            <xs:attribute name="listURI"
+                          type="xs:anyURI"
+                          use="optional"
+                          fixed="urn:xoev-de:xjustiz:codeliste:bestat.beendigung-betreuung"/>
+            <xs:attribute name="listVersionID"
+                          type="xs:normalizedString"
+                          use="optional"
+                          fixed="2.0"/>
+         </xs:restriction>
+      </xs:complexContent>
+   </xs:complexType>
+   <xs:complexType name="Code.BESTAT.Betreuerauswahl">
+      <xs:annotation>
+         <xs:appinfo>
+            <codeliste>
+               <nameLang>BESTAT.Betreuerauswahl</nameLang>
+               <nameKurz>BESTAT.Betreuerauswahl</nameKurz>
+               <nameTechnisch>bestat.betreuerauswahl</nameTechnisch>
+               <kennung>urn:xoev-de:xjustiz:codeliste:bestat.betreuerauswahl</kennung>
+               <beschreibung>Codeliste der verschiedenen Betreuer.</beschreibung>
+               <herausgebernameLang>BLK-AG IT-Standards in der Justiz</herausgebernameLang>
+               <herausgebernameKurz>AG IT-Standards</herausgebernameKurz>
+            </codeliste>
+            <versionCodeliste>
+               <version>2.0</version>
+               <versionCodelistenHandbuch>1.1</versionCodelistenHandbuch>
+            </versionCodeliste>
+            <codelistenspalten>
+               <code>
+                  <spaltennameLang>Schlüssel</spaltennameLang>
+                  <datentyp>string</datentyp>
+                  <codeSpalte>true</codeSpalte>
+                  <verwendung>required</verwendung>
+                  <empfohleneCodeSpalte>true</empfohleneCodeSpalte>
+               </code>
+               <wert>
+                  <spaltennameLang>Wert</spaltennameLang>
+                  <datentyp>string</datentyp>
+                  <codeSpalte>false</codeSpalte>
+                  <verwendung>required</verwendung>
+                  <empfohleneCodeSpalte>false</empfohleneCodeSpalte>
+               </wert>
+            </codelistenspalten>
+            <genutzteCodeSpalte>code</genutzteCodeSpalte>
+         </xs:appinfo>
+      </xs:annotation>
+      <xs:complexContent>
+         <xs:restriction base="xoev-code:Code">
+            <xs:sequence>
+               <xs:element name="code" type="tns:bestat.betreuerauswahl"/>
+            </xs:sequence>
+            <xs:attribute name="listURI"
+                          type="xs:anyURI"
+                          use="optional"
+                          fixed="urn:xoev-de:xjustiz:codeliste:bestat.betreuerauswahl"/>
+            <xs:attribute name="listVersionID"
+                          type="xs:normalizedString"
+                          use="optional"
+                          fixed="2.0"/>
+         </xs:restriction>
+      </xs:complexContent>
+   </xs:complexType>
+   <xs:complexType name="Code.BESTAT.EinleitungBetreuung">
+      <xs:annotation>
+         <xs:appinfo>
+            <codeliste>
+               <nameLang>BESTAT.EinleitungBetreuung</nameLang>
+               <nameKurz>BESTAT.EinleitungBetreuung</nameKurz>
+               <nameTechnisch>bestat.einleitung-betreuung</nameTechnisch>
+               <kennung>urn:xoev-de:xjustiz:codeliste:bestat.einleitung-betreuung</kennung>
+               <beschreibung>Codeliste der verschiedenen Betreuungseinleitungen.</beschreibung>
+               <herausgebernameLang>BLK-AG IT-Standards in der Justiz</herausgebernameLang>
+               <herausgebernameKurz>AG IT-Standards</herausgebernameKurz>
+            </codeliste>
+            <versionCodeliste>
+               <version>2.0</version>
+               <versionCodelistenHandbuch>1.1</versionCodelistenHandbuch>
+            </versionCodeliste>
+            <codelistenspalten>
+               <code>
+                  <spaltennameLang>Schlüssel</spaltennameLang>
+                  <datentyp>string</datentyp>
+                  <codeSpalte>true</codeSpalte>
+                  <verwendung>required</verwendung>
+                  <empfohleneCodeSpalte>true</empfohleneCodeSpalte>
+               </code>
+               <wert>
+                  <spaltennameLang>Wert</spaltennameLang>
+                  <datentyp>string</datentyp>
+                  <codeSpalte>false</codeSpalte>
+                  <verwendung>required</verwendung>
+                  <empfohleneCodeSpalte>false</empfohleneCodeSpalte>
+               </wert>
+            </codelistenspalten>
+            <genutzteCodeSpalte>code</genutzteCodeSpalte>
+         </xs:appinfo>
+      </xs:annotation>
+      <xs:complexContent>
+         <xs:restriction base="xoev-code:Code">
+            <xs:sequence>
+               <xs:element name="code" type="tns:bestat.einleitung-betreuung"/>
+            </xs:sequence>
+            <xs:attribute name="listURI"
+                          type="xs:anyURI"
+                          use="optional"
+                          fixed="urn:xoev-de:xjustiz:codeliste:bestat.einleitung-betreuung"/>
+            <xs:attribute name="listVersionID"
+                          type="xs:normalizedString"
+                          use="optional"
+                          fixed="2.0"/>
+         </xs:restriction>
+      </xs:complexContent>
+   </xs:complexType>
+   <xs:complexType name="Code.BESTAT.Entscheidung.ImLaufendenVerfahren">
+      <xs:annotation>
+         <xs:appinfo>
+            <codeliste>
+               <nameLang>BESTAT.Entscheidung.ImLaufendenVerfahren</nameLang>
+               <nameKurz>BESTAT.Entscheidung.ImLaufendenVerfahren</nameKurz>
+               <nameTechnisch>bestat.entscheidung.im-laufenden-verfahren</nameTechnisch>
+               <kennung>urn:xoev-de:xjustiz:codeliste:bestat.entscheidung.im-laufenden-verfahren</kennung>
+               <beschreibung>Codeliste der verschiedenen Entscheidungsarten im laufenden Verfahren.</beschreibung>
+               <herausgebernameLang>BLK-AG IT-Standards in der Justiz</herausgebernameLang>
+               <herausgebernameKurz>AG IT-Standards</herausgebernameKurz>
+            </codeliste>
+            <versionCodeliste>
+               <version>2.0</version>
+               <versionCodelistenHandbuch>1.1</versionCodelistenHandbuch>
+            </versionCodeliste>
+            <codelistenspalten>
+               <code>
+                  <spaltennameLang>Schlüssel</spaltennameLang>
+                  <datentyp>string</datentyp>
+                  <codeSpalte>true</codeSpalte>
+                  <verwendung>required</verwendung>
+                  <empfohleneCodeSpalte>true</empfohleneCodeSpalte>
+               </code>
+               <wert>
+                  <spaltennameLang>Wert</spaltennameLang>
+                  <datentyp>string</datentyp>
+                  <codeSpalte>false</codeSpalte>
+                  <verwendung>required</verwendung>
+                  <empfohleneCodeSpalte>false</empfohleneCodeSpalte>
+               </wert>
+            </codelistenspalten>
+            <genutzteCodeSpalte>code</genutzteCodeSpalte>
+         </xs:appinfo>
+      </xs:annotation>
+      <xs:complexContent>
+         <xs:restriction base="xoev-code:Code">
+            <xs:sequence>
+               <xs:element name="code" type="tns:bestat.entscheidung.im-laufenden-verfahren"/>
+            </xs:sequence>
+            <xs:attribute name="listURI"
+                          type="xs:anyURI"
+                          use="optional"
+                          fixed="urn:xoev-de:xjustiz:codeliste:bestat.entscheidung.im-laufenden-verfahren"/>
+            <xs:attribute name="listVersionID"
+                          type="xs:normalizedString"
+                          use="optional"
+                          fixed="2.0"/>
+         </xs:restriction>
+      </xs:complexContent>
+   </xs:complexType>
+   <xs:complexType name="Code.BESTAT.Entscheidung.UeberEinrichtungDerBetreuung">
+      <xs:annotation>
+         <xs:appinfo>
+            <codeliste>
+               <nameLang>BESTAT.Entscheidung.UeberEinrichtungDerBetreuung</nameLang>
+               <nameKurz>BESTAT.Entscheidung.UeberEinrichtungDerBetreuung</nameKurz>
+               <nameTechnisch>bestat.entscheidung.ueber-einrichtung-der-betreuung</nameTechnisch>
+               <kennung>urn:xoev-de:xjustiz:codeliste:bestat.entscheidung.ueber-einrichtung-der-betreuung</kennung>
+               <beschreibung>Codeliste der verschiedenen Entscheidungsarten bei der Einrichtung der Betreuung.</beschreibung>
+               <herausgebernameLang>BLK-AG IT-Standards in der Justiz</herausgebernameLang>
+               <herausgebernameKurz>AG IT-Standards</herausgebernameKurz>
+            </codeliste>
+            <versionCodeliste>
+               <version>2.0</version>
+               <versionCodelistenHandbuch>1.1</versionCodelistenHandbuch>
+            </versionCodeliste>
+            <codelistenspalten>
+               <code>
+                  <spaltennameLang>Schlüssel</spaltennameLang>
+                  <datentyp>string</datentyp>
+                  <codeSpalte>true</codeSpalte>
+                  <verwendung>required</verwendung>
+                  <empfohleneCodeSpalte>true</empfohleneCodeSpalte>
+               </code>
+               <wert>
+                  <spaltennameLang>Wert</spaltennameLang>
+                  <datentyp>string</datentyp>
+                  <codeSpalte>false</codeSpalte>
+                  <verwendung>required</verwendung>
+                  <empfohleneCodeSpalte>false</empfohleneCodeSpalte>
+               </wert>
+            </codelistenspalten>
+            <genutzteCodeSpalte>code</genutzteCodeSpalte>
+         </xs:appinfo>
+      </xs:annotation>
+      <xs:complexContent>
+         <xs:restriction base="xoev-code:Code">
+            <xs:sequence>
+               <xs:element name="code"
+                           type="tns:bestat.entscheidung.ueber-einrichtung-der-betreuung"/>
+            </xs:sequence>
+            <xs:attribute name="listURI"
+                          type="xs:anyURI"
+                          use="optional"
+                          fixed="urn:xoev-de:xjustiz:codeliste:bestat.entscheidung.ueber-einrichtung-der-betreuung"/>
+            <xs:attribute name="listVersionID"
+                          type="xs:normalizedString"
+                          use="optional"
+                          fixed="2.0"/>
+         </xs:restriction>
+      </xs:complexContent>
+   </xs:complexType>
+   <xs:complexType name="Code.BESTAT.Geschaeftsanfall">
+      <xs:annotation>
+         <xs:appinfo>
+            <codeliste>
+               <nameLang>BESTAT.Geschaeftsanfall</nameLang>
+               <nameKurz>BESTAT.Geschaeftsanfall</nameKurz>
+               <nameTechnisch>bestat.geschaeftsanfall</nameTechnisch>
+               <kennung>urn:xoev-de:xjustiz:codeliste:bestat.geschaeftsanfall</kennung>
+               <beschreibung>Codeliste der verschiedenen Geschäftsanfälle.</beschreibung>
+               <herausgebernameLang>BLK-AG IT-Standards in der Justiz</herausgebernameLang>
+               <herausgebernameKurz>AG IT-Standards</herausgebernameKurz>
+            </codeliste>
+            <versionCodeliste>
+               <version>2.0</version>
+               <versionCodelistenHandbuch>1.1</versionCodelistenHandbuch>
+            </versionCodeliste>
+            <codelistenspalten>
+               <code>
+                  <spaltennameLang>Schlüssel</spaltennameLang>
+                  <datentyp>string</datentyp>
+                  <codeSpalte>true</codeSpalte>
+                  <verwendung>required</verwendung>
+                  <empfohleneCodeSpalte>true</empfohleneCodeSpalte>
+               </code>
+               <wert>
+                  <spaltennameLang>Wert</spaltennameLang>
+                  <datentyp>string</datentyp>
+                  <codeSpalte>false</codeSpalte>
+                  <verwendung>required</verwendung>
+                  <empfohleneCodeSpalte>false</empfohleneCodeSpalte>
+               </wert>
+            </codelistenspalten>
+            <genutzteCodeSpalte>code</genutzteCodeSpalte>
+         </xs:appinfo>
+      </xs:annotation>
+      <xs:complexContent>
+         <xs:restriction base="xoev-code:Code">
+            <xs:sequence>
+               <xs:element name="code" type="tns:bestat.geschaeftsanfall"/>
+            </xs:sequence>
+            <xs:attribute name="listURI"
+                          type="xs:anyURI"
+                          use="optional"
+                          fixed="urn:xoev-de:xjustiz:codeliste:bestat.geschaeftsanfall"/>
+            <xs:attribute name="listVersionID"
+                          type="xs:normalizedString"
+                          use="optional"
+                          fixed="2.0"/>
+         </xs:restriction>
+      </xs:complexContent>
+   </xs:complexType>
+   <xs:complexType name="Code.BESTAT.Veraenderung">
+      <xs:annotation>
+         <xs:appinfo>
+            <codeliste>
+               <nameLang>BESTAT.Veraenderung</nameLang>
+               <nameKurz>BESTAT.Veraenderung</nameKurz>
+               <nameTechnisch>bestat.veraenderung</nameTechnisch>
+               <kennung>urn:xoev-de:xjustiz:codeliste:bestat.veraenderung</kennung>
+               <beschreibung>Codeliste der verschiedenen Veränderungsarten.</beschreibung>
+               <herausgebernameLang>BLK-AG IT-Standards in der Justiz</herausgebernameLang>
+               <herausgebernameKurz>AG IT-Standards</herausgebernameKurz>
+            </codeliste>
+            <versionCodeliste>
+               <version>2.0</version>
+               <versionCodelistenHandbuch>1.1</versionCodelistenHandbuch>
+            </versionCodeliste>
+            <codelistenspalten>
+               <code>
+                  <spaltennameLang>Schlüssel</spaltennameLang>
+                  <datentyp>string</datentyp>
+                  <codeSpalte>true</codeSpalte>
+                  <verwendung>required</verwendung>
+                  <empfohleneCodeSpalte>true</empfohleneCodeSpalte>
+               </code>
+               <wert>
+                  <spaltennameLang>Wert</spaltennameLang>
+                  <datentyp>string</datentyp>
+                  <codeSpalte>false</codeSpalte>
+                  <verwendung>required</verwendung>
+                  <empfohleneCodeSpalte>false</empfohleneCodeSpalte>
+               </wert>
+            </codelistenspalten>
+            <genutzteCodeSpalte>code</genutzteCodeSpalte>
+         </xs:appinfo>
+      </xs:annotation>
+      <xs:complexContent>
+         <xs:restriction base="xoev-code:Code">
+            <xs:sequence>
+               <xs:element name="code" type="tns:bestat.veraenderung"/>
+            </xs:sequence>
+            <xs:attribute name="listURI"
+                          type="xs:anyURI"
+                          use="optional"
+                          fixed="urn:xoev-de:xjustiz:codeliste:bestat.veraenderung"/>
+            <xs:attribute name="listVersionID"
+                          type="xs:normalizedString"
+                          use="optional"
+                          fixed="2.0"/>
+         </xs:restriction>
+      </xs:complexContent>
+   </xs:complexType>
+   <xs:simpleType name="bestat.art.genehmigung">
+      <xs:annotation>
+         <xs:appinfo>
+            <codeliste>
+               <nameLang>BESTAT.Art.Genehmigung</nameLang>
+               <nameKurz>BESTAT.Art.Genehmigung</nameKurz>
+               <nameTechnisch>bestat.art.genehmigung</nameTechnisch>
+               <kennung>urn:xoev-de:xjustiz:codeliste:bestat.art.genehmigung</kennung>
+               <beschreibung>Codeliste der verschiedenen Genehmigungsarten.</beschreibung>
+               <herausgebernameLang>BLK-AG IT-Standards in der Justiz</herausgebernameLang>
+               <herausgebernameKurz>AG IT-Standards</herausgebernameKurz>
+            </codeliste>
+            <versionCodeliste>
+               <version>2.0</version>
+               <versionCodelistenHandbuch>1.1</versionCodelistenHandbuch>
+            </versionCodeliste>
+            <codelistenspalten>
+               <code>
+                  <spaltennameLang>Schlüssel</spaltennameLang>
+                  <datentyp>string</datentyp>
+                  <codeSpalte>true</codeSpalte>
+                  <verwendung>required</verwendung>
+                  <empfohleneCodeSpalte>true</empfohleneCodeSpalte>
+               </code>
+               <wert>
+                  <spaltennameLang>Wert</spaltennameLang>
+                  <datentyp>string</datentyp>
+                  <codeSpalte>false</codeSpalte>
+                  <verwendung>required</verwendung>
+                  <empfohleneCodeSpalte>false</empfohleneCodeSpalte>
+               </wert>
+            </codelistenspalten>
+         </xs:appinfo>
+      </xs:annotation>
+      <xs:restriction base="xs:token">
+         <xs:enumeration value="1">
+            <xs:annotation>
+               <xs:appinfo>
+                  <wert>122/222_ÄrztlMaßn1904Antrag</wert>
+               </xs:appinfo>
+            </xs:annotation>
+         </xs:enumeration>
+         <xs:enumeration value="10">
+            <xs:annotation>
+               <xs:appinfo>
+                  <wert>131/231_UnterbringungGenehmigungVerlDarunter</wert>
+               </xs:appinfo>
+            </xs:annotation>
+         </xs:enumeration>
+         <xs:enumeration value="11">
+            <xs:annotation>
+               <xs:appinfo>
+                  <wert>132/232_UnterbringungAblehnung</wert>
+               </xs:appinfo>
+            </xs:annotation>
+         </xs:enumeration>
+         <xs:enumeration value="12">
+            <xs:annotation>
+               <xs:appinfo>
+                  <wert>133/233_UnterbringungAblehnungVerlDarunter</wert>
+               </xs:appinfo>
+            </xs:annotation>
+         </xs:enumeration>
+         <xs:enumeration value="13">
+            <xs:annotation>
+               <xs:appinfo>
+                  <wert>134/234_UnterbringungAnordnung1846</wert>
+               </xs:appinfo>
+            </xs:annotation>
+         </xs:enumeration>
+         <xs:enumeration value="14">
+            <xs:annotation>
+               <xs:appinfo>
+                  <wert>135/235_UnterbringungAnordnung1846VerlDarunter</wert>
+               </xs:appinfo>
+            </xs:annotation>
+         </xs:enumeration>
+         <xs:enumeration value="15">
+            <xs:annotation>
+               <xs:appinfo>
+                  <wert>136/236_ÄrztlZwangsmaßnAntrag</wert>
+               </xs:appinfo>
+            </xs:annotation>
+         </xs:enumeration>
+         <xs:enumeration value="16">
+            <xs:annotation>
+               <xs:appinfo>
+                  <wert>137/237_ÄrztlZwangsmaßnAntragVerlDarunter</wert>
+               </xs:appinfo>
+            </xs:annotation>
+         </xs:enumeration>
+         <xs:enumeration value="17">
+            <xs:annotation>
+               <xs:appinfo>
+                  <wert>138/238_ÄrztlZwangsmaßnGenehmigung</wert>
+               </xs:appinfo>
+            </xs:annotation>
+         </xs:enumeration>
+         <xs:enumeration value="18">
+            <xs:annotation>
+               <xs:appinfo>
+                  <wert>139/239_ÄrztlZwangsmaßnGenehmigungVerlDarunter</wert>
+               </xs:appinfo>
+            </xs:annotation>
+         </xs:enumeration>
+         <xs:enumeration value="19">
+            <xs:annotation>
+               <xs:appinfo>
+                  <wert>140/240_ÄrztlZwangsmaßnAblehnung</wert>
+               </xs:appinfo>
+            </xs:annotation>
+         </xs:enumeration>
+         <xs:enumeration value="2">
+            <xs:annotation>
+               <xs:appinfo>
+                  <wert>123/223_ÄrztlMaßn1904Genehmigung</wert>
+               </xs:appinfo>
+            </xs:annotation>
+         </xs:enumeration>
+         <xs:enumeration value="20">
+            <xs:annotation>
+               <xs:appinfo>
+                  <wert>141/241_ÄrztlZwangsmaßnAblehnungVerlDarunter</wert>
+               </xs:appinfo>
+            </xs:annotation>
+         </xs:enumeration>
+         <xs:enumeration value="21">
+            <xs:annotation>
+               <xs:appinfo>
+                  <wert>142/242_ÄrztlZwangsmaßnAnordnung1846</wert>
+               </xs:appinfo>
+            </xs:annotation>
+         </xs:enumeration>
+         <xs:enumeration value="22">
+            <xs:annotation>
+               <xs:appinfo>
+                  <wert>143/243_ÄrztlZwangsmaßnAnordnung1846VerlDarunter</wert>
+               </xs:appinfo>
+            </xs:annotation>
+         </xs:enumeration>
+         <xs:enumeration value="23">
+            <xs:annotation>
+               <xs:appinfo>
+                  <wert>144/244_UÄMaßnahmeAntrag</wert>
+               </xs:appinfo>
+            </xs:annotation>
+         </xs:enumeration>
+         <xs:enumeration value="24">
+            <xs:annotation>
+               <xs:appinfo>
+                  <wert>145/245_UÄMaßnahmeAntragVerlDarunter</wert>
+               </xs:appinfo>
+            </xs:annotation>
+         </xs:enumeration>
+         <xs:enumeration value="25">
+            <xs:annotation>
+               <xs:appinfo>
+                  <wert>146/246_UÄMaßnahmeGenehmigung</wert>
+               </xs:appinfo>
+            </xs:annotation>
+         </xs:enumeration>
+         <xs:enumeration value="26">
+            <xs:annotation>
+               <xs:appinfo>
+                  <wert>147/247_UÄMaßnahmeGenehmigungVerlDarunter</wert>
+               </xs:appinfo>
+            </xs:annotation>
+         </xs:enumeration>
+         <xs:enumeration value="27">
+            <xs:annotation>
+               <xs:appinfo>
+                  <wert>148/248_UÄMaßnahmeAblehnung</wert>
+               </xs:appinfo>
+            </xs:annotation>
+         </xs:enumeration>
+         <xs:enumeration value="28">
+            <xs:annotation>
+               <xs:appinfo>
+                  <wert>149/249_UÄMaßnahmeAblehnungVerlDarunter</wert>
+               </xs:appinfo>
+            </xs:annotation>
+         </xs:enumeration>
+         <xs:enumeration value="29">
+            <xs:annotation>
+               <xs:appinfo>
+                  <wert>150/250_UÄMaßnahmeAnordnung1846</wert>
+               </xs:appinfo>
+            </xs:annotation>
+         </xs:enumeration>
+         <xs:enumeration value="3">
+            <xs:annotation>
+               <xs:appinfo>
+                  <wert>124/224_ÄrztlMaßn1904Ablehnung</wert>
+               </xs:appinfo>
+            </xs:annotation>
+         </xs:enumeration>
+         <xs:enumeration value="30">
+            <xs:annotation>
+               <xs:appinfo>
+                  <wert>151/251_UÄMaßnahmeAnordnung1846VerlDarunter</wert>
+               </xs:appinfo>
+            </xs:annotation>
+         </xs:enumeration>
+         <xs:enumeration value="4">
+            <xs:annotation>
+               <xs:appinfo>
+                  <wert>125/225_SterilisationAntrag</wert>
+               </xs:appinfo>
+            </xs:annotation>
+         </xs:enumeration>
+         <xs:enumeration value="5">
+            <xs:annotation>
+               <xs:appinfo>
+                  <wert>126/226_SterilisationGenehmigung</wert>
+               </xs:appinfo>
+            </xs:annotation>
+         </xs:enumeration>
+         <xs:enumeration value="6">
+            <xs:annotation>
+               <xs:appinfo>
+                  <wert>127/227_SterilisationAblehnung</wert>
+               </xs:appinfo>
+            </xs:annotation>
+         </xs:enumeration>
+         <xs:enumeration value="7">
+            <xs:annotation>
+               <xs:appinfo>
+                  <wert>128/228_UnterbringungAntrag</wert>
+               </xs:appinfo>
+            </xs:annotation>
+         </xs:enumeration>
+         <xs:enumeration value="8">
+            <xs:annotation>
+               <xs:appinfo>
+                  <wert>129/229_UnterbringungAntragVerlDarunter</wert>
+               </xs:appinfo>
+            </xs:annotation>
+         </xs:enumeration>
+         <xs:enumeration value="9">
+            <xs:annotation>
+               <xs:appinfo>
+                  <wert>130/230_UnterbringungGenehmigung</wert>
+               </xs:appinfo>
+            </xs:annotation>
+         </xs:enumeration>
+      </xs:restriction>
+   </xs:simpleType>
+   <xs:simpleType name="bestat.art.zahlung">
+      <xs:annotation>
+         <xs:appinfo>
+            <codeliste>
+               <nameLang>BESTAT.Art.Zahlung</nameLang>
+               <nameKurz>BESTAT.Art.Zahlung</nameKurz>
+               <nameTechnisch>bestat.art.zahlung</nameTechnisch>
+               <kennung>urn:xoev-de:xjustiz:codeliste:bestat.art.zahlung</kennung>
+               <beschreibung>Codeliste der verschiedenen Zahlungsarten.</beschreibung>
+               <herausgebernameLang>BLK-AG IT-Standards in der Justiz</herausgebernameLang>
+               <herausgebernameKurz>AG IT-Standards</herausgebernameKurz>
+            </codeliste>
+            <versionCodeliste>
+               <version>2.0</version>
+               <versionCodelistenHandbuch>1.1</versionCodelistenHandbuch>
+            </versionCodeliste>
+            <codelistenspalten>
+               <code>
+                  <spaltennameLang>Schlüssel</spaltennameLang>
+                  <datentyp>string</datentyp>
+                  <codeSpalte>true</codeSpalte>
+                  <verwendung>required</verwendung>
+                  <empfohleneCodeSpalte>true</empfohleneCodeSpalte>
+               </code>
+               <wert>
+                  <spaltennameLang>Wert</spaltennameLang>
+                  <datentyp>string</datentyp>
+                  <codeSpalte>false</codeSpalte>
+                  <verwendung>required</verwendung>
+                  <empfohleneCodeSpalte>false</empfohleneCodeSpalte>
+               </wert>
+            </codelistenspalten>
+         </xs:appinfo>
+      </xs:annotation>
+      <xs:restriction base="xs:token">
+         <xs:enumeration value="1">
+            <xs:annotation>
+               <xs:appinfo>
+                  <wert>012_beruflicher Aufwendungsersatz</wert>
+               </xs:appinfo>
+            </xs:annotation>
+         </xs:enumeration>
+         <xs:enumeration value="2">
+            <xs:annotation>
+               <xs:appinfo>
+                  <wert>013_ehrenamtlicher Aufwendungsersatz</wert>
+               </xs:appinfo>
+            </xs:annotation>
+         </xs:enumeration>
+         <xs:enumeration value="3">
+            <xs:annotation>
+               <xs:appinfo>
+                  <wert>014_Aufwandsentschädigung</wert>
+               </xs:appinfo>
+            </xs:annotation>
+         </xs:enumeration>
+         <xs:enumeration value="4">
+            <xs:annotation>
+               <xs:appinfo>
+                  <wert>015_Vergütung § 4 VBVG</wert>
+               </xs:appinfo>
+            </xs:annotation>
+         </xs:enumeration>
+         <xs:enumeration value="5">
+            <xs:annotation>
+               <xs:appinfo>
+                  <wert>016_Vergütung §277 FamFG</wert>
+               </xs:appinfo>
+            </xs:annotation>
+         </xs:enumeration>
+      </xs:restriction>
+   </xs:simpleType>
+   <xs:simpleType name="bestat.aufgabenkreis">
+      <xs:annotation>
+         <xs:appinfo>
+            <codeliste>
+               <nameLang>BESTAT.Aufgabenkreis</nameLang>
+               <nameKurz>BESTAT.Aufgabenkreis</nameKurz>
+               <nameTechnisch>bestat.aufgabenkreis</nameTechnisch>
+               <kennung>urn:xoev-de:xjustiz:codeliste:bestat.aufgabenkreis</kennung>
+               <beschreibung>Codeliste der verschiedenen Aufgabenkreise.</beschreibung>
+               <herausgebernameLang>BLK-AG IT-Standards in der Justiz</herausgebernameLang>
+               <herausgebernameKurz>AG IT-Standards</herausgebernameKurz>
+            </codeliste>
+            <versionCodeliste>
+               <version>2.0</version>
+               <versionCodelistenHandbuch>1.1</versionCodelistenHandbuch>
+            </versionCodeliste>
+            <codelistenspalten>
+               <code>
+                  <spaltennameLang>Schlüssel</spaltennameLang>
+                  <datentyp>string</datentyp>
+                  <codeSpalte>true</codeSpalte>
+                  <verwendung>required</verwendung>
+                  <empfohleneCodeSpalte>true</empfohleneCodeSpalte>
+               </code>
+               <wert>
+                  <spaltennameLang>Wert</spaltennameLang>
+                  <datentyp>string</datentyp>
+                  <codeSpalte>false</codeSpalte>
+                  <verwendung>required</verwendung>
+                  <empfohleneCodeSpalte>false</empfohleneCodeSpalte>
+               </wert>
+            </codelistenspalten>
+         </xs:appinfo>
+      </xs:annotation>
+      <xs:restriction base="xs:token">
+         <xs:enumeration value="1">
+            <xs:annotation>
+               <xs:appinfo>
+                  <wert>111/211_AufgabeAlle</wert>
+               </xs:appinfo>
+            </xs:annotation>
+         </xs:enumeration>
+         <xs:enumeration value="2">
+            <xs:annotation>
+               <xs:appinfo>
+                  <wert>112/212_AufgabeVermögen</wert>
+               </xs:appinfo>
+            </xs:annotation>
+         </xs:enumeration>
+         <xs:enumeration value="3">
+            <xs:annotation>
+               <xs:appinfo>
+                  <wert>113/213_AufgabeGesundheit</wert>
+               </xs:appinfo>
+            </xs:annotation>
+         </xs:enumeration>
+         <xs:enumeration value="4">
+            <xs:annotation>
+               <xs:appinfo>
+                  <wert>114/214_AufgabeAufenthalt</wert>
+               </xs:appinfo>
+            </xs:annotation>
+         </xs:enumeration>
+         <xs:enumeration value="5">
+            <xs:annotation>
+               <xs:appinfo>
+                  <wert>115/215_AufgabeKontrolle</wert>
+               </xs:appinfo>
+            </xs:annotation>
+         </xs:enumeration>
+         <xs:enumeration value="6">
+            <xs:annotation>
+               <xs:appinfo>
+                  <wert>116/216_AufgabeSonstige</wert>
+               </xs:appinfo>
+            </xs:annotation>
+         </xs:enumeration>
+      </xs:restriction>
+   </xs:simpleType>
+   <xs:simpleType name="bestat.beendigung-betreuung">
+      <xs:annotation>
+         <xs:appinfo>
+            <codeliste>
+               <nameLang>BESTAT.BeendigungBetreuung</nameLang>
+               <nameKurz>BESTAT.BeendigungBetreuung</nameKurz>
+               <nameTechnisch>bestat.beendigung-betreuung</nameTechnisch>
+               <kennung>urn:xoev-de:xjustiz:codeliste:bestat.beendigung-betreuung</kennung>
+               <beschreibung>Codeliste der verschiedenen Beendigungsarten bei der Betreuung.</beschreibung>
+               <herausgebernameLang>BLK-AG IT-Standards in der Justiz</herausgebernameLang>
+               <herausgebernameKurz>AG IT-Standards</herausgebernameKurz>
+            </codeliste>
+            <versionCodeliste>
+               <version>2.0</version>
+               <versionCodelistenHandbuch>1.1</versionCodelistenHandbuch>
+            </versionCodeliste>
+            <codelistenspalten>
+               <code>
+                  <spaltennameLang>Schlüssel</spaltennameLang>
+                  <datentyp>string</datentyp>
+                  <codeSpalte>true</codeSpalte>
+                  <verwendung>required</verwendung>
+                  <empfohleneCodeSpalte>true</empfohleneCodeSpalte>
+               </code>
+               <wert>
+                  <spaltennameLang>Wert</spaltennameLang>
+                  <datentyp>string</datentyp>
+                  <codeSpalte>false</codeSpalte>
+                  <verwendung>required</verwendung>
+                  <empfohleneCodeSpalte>false</empfohleneCodeSpalte>
+               </wert>
+            </codelistenspalten>
+         </xs:appinfo>
+      </xs:annotation>
+      <xs:restriction base="xs:token">
+         <xs:enumeration value="1">
+            <xs:annotation>
+               <xs:appinfo>
+                  <wert>152/252_BeendigungBetreuungAufhebung</wert>
+               </xs:appinfo>
+            </xs:annotation>
+         </xs:enumeration>
+         <xs:enumeration value="2">
+            <xs:annotation>
+               <xs:appinfo>
+                  <wert>152/252_BeendigungBetreuungAuslaufen</wert>
+               </xs:appinfo>
+            </xs:annotation>
+         </xs:enumeration>
+         <xs:enumeration value="3">
+            <xs:annotation>
+               <xs:appinfo>
+                  <wert>152/252_BeendigungBetreuungTod</wert>
+               </xs:appinfo>
+            </xs:annotation>
+         </xs:enumeration>
+         <xs:enumeration value="4">
+            <xs:annotation>
+               <xs:appinfo>
+                  <wert>152/252_BeendigungAbgabeAndGericht</wert>
+               </xs:appinfo>
+            </xs:annotation>
+         </xs:enumeration>
+         <xs:enumeration value="5">
+            <xs:annotation>
+               <xs:appinfo>
+                  <wert>152/252_BeendigungSonstige</wert>
+               </xs:appinfo>
+            </xs:annotation>
+         </xs:enumeration>
+      </xs:restriction>
+   </xs:simpleType>
+   <xs:simpleType name="bestat.betreuerauswahl">
+      <xs:annotation>
+         <xs:appinfo>
+            <codeliste>
+               <nameLang>BESTAT.Betreuerauswahl</nameLang>
+               <nameKurz>BESTAT.Betreuerauswahl</nameKurz>
+               <nameTechnisch>bestat.betreuerauswahl</nameTechnisch>
+               <kennung>urn:xoev-de:xjustiz:codeliste:bestat.betreuerauswahl</kennung>
+               <beschreibung>Codeliste der verschiedenen Betreuer.</beschreibung>
+               <herausgebernameLang>BLK-AG IT-Standards in der Justiz</herausgebernameLang>
+               <herausgebernameKurz>AG IT-Standards</herausgebernameKurz>
+            </codeliste>
+            <versionCodeliste>
+               <version>2.0</version>
+               <versionCodelistenHandbuch>1.1</versionCodelistenHandbuch>
+            </versionCodeliste>
+            <codelistenspalten>
+               <code>
+                  <spaltennameLang>Schlüssel</spaltennameLang>
+                  <datentyp>string</datentyp>
+                  <codeSpalte>true</codeSpalte>
+                  <verwendung>required</verwendung>
+                  <empfohleneCodeSpalte>true</empfohleneCodeSpalte>
+               </code>
+               <wert>
+                  <spaltennameLang>Wert</spaltennameLang>
+                  <datentyp>string</datentyp>
+                  <codeSpalte>false</codeSpalte>
+                  <verwendung>required</verwendung>
+                  <empfohleneCodeSpalte>false</empfohleneCodeSpalte>
+               </wert>
+            </codelistenspalten>
+         </xs:appinfo>
+      </xs:annotation>
+      <xs:restriction base="xs:token">
+         <xs:enumeration value="1">
+            <xs:annotation>
+               <xs:appinfo>
+                  <wert>103/203_BetreuerFamAng</wert>
+               </xs:appinfo>
+            </xs:annotation>
+         </xs:enumeration>
+         <xs:enumeration value="2">
+            <xs:annotation>
+               <xs:appinfo>
+                  <wert>104/204_BetreuerEhrenamt</wert>
+               </xs:appinfo>
+            </xs:annotation>
+         </xs:enumeration>
+         <xs:enumeration value="3">
+            <xs:annotation>
+               <xs:appinfo>
+                  <wert>105/205_BetreuerRA</wert>
+               </xs:appinfo>
+            </xs:annotation>
+         </xs:enumeration>
+         <xs:enumeration value="4">
+            <xs:annotation>
+               <xs:appinfo>
+                  <wert>106/206_BetreuerBeruf</wert>
+               </xs:appinfo>
+            </xs:annotation>
+         </xs:enumeration>
+         <xs:enumeration value="5">
+            <xs:annotation>
+               <xs:appinfo>
+                  <wert>107/207_BetreuerVereinsbetreuer</wert>
+               </xs:appinfo>
+            </xs:annotation>
+         </xs:enumeration>
+         <xs:enumeration value="6">
+            <xs:annotation>
+               <xs:appinfo>
+                  <wert>108/208_BetreuerBehördenbetreuer</wert>
+               </xs:appinfo>
+            </xs:annotation>
+         </xs:enumeration>
+         <xs:enumeration value="7">
+            <xs:annotation>
+               <xs:appinfo>
+                  <wert>109/209_BetreuerVerein</wert>
+               </xs:appinfo>
+            </xs:annotation>
+         </xs:enumeration>
+         <xs:enumeration value="8">
+            <xs:annotation>
+               <xs:appinfo>
+                  <wert>110/210_BetreuerBehörde</wert>
+               </xs:appinfo>
+            </xs:annotation>
+         </xs:enumeration>
+      </xs:restriction>
+   </xs:simpleType>
+   <xs:simpleType name="bestat.einleitung-betreuung">
+      <xs:annotation>
+         <xs:appinfo>
+            <codeliste>
+               <nameLang>BESTAT.EinleitungBetreuung</nameLang>
+               <nameKurz>BESTAT.EinleitungBetreuung</nameKurz>
+               <nameTechnisch>bestat.einleitung-betreuung</nameTechnisch>
+               <kennung>urn:xoev-de:xjustiz:codeliste:bestat.einleitung-betreuung</kennung>
+               <beschreibung>Codeliste der verschiedenen Betreuungseinleitungen.</beschreibung>
+               <herausgebernameLang>BLK-AG IT-Standards in der Justiz</herausgebernameLang>
+               <herausgebernameKurz>AG IT-Standards</herausgebernameKurz>
+            </codeliste>
+            <versionCodeliste>
+               <version>2.0</version>
+               <versionCodelistenHandbuch>1.1</versionCodelistenHandbuch>
+            </versionCodeliste>
+            <codelistenspalten>
+               <code>
+                  <spaltennameLang>Schlüssel</spaltennameLang>
+                  <datentyp>string</datentyp>
+                  <codeSpalte>true</codeSpalte>
+                  <verwendung>required</verwendung>
+                  <empfohleneCodeSpalte>true</empfohleneCodeSpalte>
+               </code>
+               <wert>
+                  <spaltennameLang>Wert</spaltennameLang>
+                  <datentyp>string</datentyp>
+                  <codeSpalte>false</codeSpalte>
+                  <verwendung>required</verwendung>
+                  <empfohleneCodeSpalte>false</empfohleneCodeSpalte>
+               </wert>
+            </codelistenspalten>
+         </xs:appinfo>
+      </xs:annotation>
+      <xs:restriction base="xs:token">
+         <xs:enumeration value="1">
+            <xs:annotation>
+               <xs:appinfo>
+                  <wert>004_EinleitungÜbernahme</wert>
+               </xs:appinfo>
+            </xs:annotation>
+         </xs:enumeration>
+         <xs:enumeration value="2">
+            <xs:annotation>
+               <xs:appinfo>
+                  <wert>004_EinleitungBetroffener</wert>
+               </xs:appinfo>
+            </xs:annotation>
+         </xs:enumeration>
+         <xs:enumeration value="3">
+            <xs:annotation>
+               <xs:appinfo>
+                  <wert>004_EinleitungBetrBehörde</wert>
+               </xs:appinfo>
+            </xs:annotation>
+         </xs:enumeration>
+         <xs:enumeration value="4">
+            <xs:annotation>
+               <xs:appinfo>
+                  <wert>004_EinleitungKrankenhaus</wert>
+               </xs:appinfo>
+            </xs:annotation>
+         </xs:enumeration>
+         <xs:enumeration value="5">
+            <xs:annotation>
+               <xs:appinfo>
+                  <wert>004_EinleitungFamilie</wert>
+               </xs:appinfo>
+            </xs:annotation>
+         </xs:enumeration>
+      </xs:restriction>
+   </xs:simpleType>
+   <xs:simpleType name="bestat.entscheidung.im-laufenden-verfahren">
+      <xs:annotation>
+         <xs:appinfo>
+            <codeliste>
+               <nameLang>BESTAT.Entscheidung.ImLaufendenVerfahren</nameLang>
+               <nameKurz>BESTAT.Entscheidung.ImLaufendenVerfahren</nameKurz>
+               <nameTechnisch>bestat.entscheidung.im-laufenden-verfahren</nameTechnisch>
+               <kennung>urn:xoev-de:xjustiz:codeliste:bestat.entscheidung.im-laufenden-verfahren</kennung>
+               <beschreibung>Codeliste der verschiedenen Entscheidungsarten im laufenden Verfahren.</beschreibung>
+               <herausgebernameLang>BLK-AG IT-Standards in der Justiz</herausgebernameLang>
+               <herausgebernameKurz>AG IT-Standards</herausgebernameKurz>
+            </codeliste>
+            <versionCodeliste>
+               <version>2.0</version>
+               <versionCodelistenHandbuch>1.1</versionCodelistenHandbuch>
+            </versionCodeliste>
+            <codelistenspalten>
+               <code>
+                  <spaltennameLang>Schlüssel</spaltennameLang>
+                  <datentyp>string</datentyp>
+                  <codeSpalte>true</codeSpalte>
+                  <verwendung>required</verwendung>
+                  <empfohleneCodeSpalte>true</empfohleneCodeSpalte>
+               </code>
+               <wert>
+                  <spaltennameLang>Wert</spaltennameLang>
+                  <datentyp>string</datentyp>
+                  <codeSpalte>false</codeSpalte>
+                  <verwendung>required</verwendung>
+                  <empfohleneCodeSpalte>false</empfohleneCodeSpalte>
+               </wert>
+            </codelistenspalten>
+         </xs:appinfo>
+      </xs:annotation>
+      <xs:restriction base="xs:token">
+         <xs:enumeration value="1">
+            <xs:annotation>
+               <xs:appinfo>
+                  <wert>118/218_BetreuungVerlängerungZeitl</wert>
+               </xs:appinfo>
+            </xs:annotation>
+         </xs:enumeration>
+         <xs:enumeration value="2">
+            <xs:annotation>
+               <xs:appinfo>
+                  <wert>119/219_BetreuungErweiterungAufgaben</wert>
+               </xs:appinfo>
+            </xs:annotation>
+         </xs:enumeration>
+         <xs:enumeration value="3">
+            <xs:annotation>
+               <xs:appinfo>
+                  <wert>120/220_BetreuungEinschränkungAufgaben</wert>
+               </xs:appinfo>
+            </xs:annotation>
+         </xs:enumeration>
+      </xs:restriction>
+   </xs:simpleType>
+   <xs:simpleType name="bestat.entscheidung.ueber-einrichtung-der-betreuung">
+      <xs:annotation>
+         <xs:appinfo>
+            <codeliste>
+               <nameLang>BESTAT.Entscheidung.UeberEinrichtungDerBetreuung</nameLang>
+               <nameKurz>BESTAT.Entscheidung.UeberEinrichtungDerBetreuung</nameKurz>
+               <nameTechnisch>bestat.entscheidung.ueber-einrichtung-der-betreuung</nameTechnisch>
+               <kennung>urn:xoev-de:xjustiz:codeliste:bestat.entscheidung.ueber-einrichtung-der-betreuung</kennung>
+               <beschreibung>Codeliste der verschiedenen Entscheidungsarten bei der Einrichtung der Betreuung.</beschreibung>
+               <herausgebernameLang>BLK-AG IT-Standards in der Justiz</herausgebernameLang>
+               <herausgebernameKurz>AG IT-Standards</herausgebernameKurz>
+            </codeliste>
+            <versionCodeliste>
+               <version>2.0</version>
+               <versionCodelistenHandbuch>1.1</versionCodelistenHandbuch>
+            </versionCodeliste>
+            <codelistenspalten>
+               <code>
+                  <spaltennameLang>Schlüssel</spaltennameLang>
+                  <datentyp>string</datentyp>
+                  <codeSpalte>true</codeSpalte>
+                  <verwendung>required</verwendung>
+                  <empfohleneCodeSpalte>true</empfohleneCodeSpalte>
+               </code>
+               <wert>
+                  <spaltennameLang>Wert</spaltennameLang>
+                  <datentyp>string</datentyp>
+                  <codeSpalte>false</codeSpalte>
+                  <verwendung>required</verwendung>
+                  <empfohleneCodeSpalte>false</empfohleneCodeSpalte>
+               </wert>
+            </codelistenspalten>
+         </xs:appinfo>
+      </xs:annotation>
+      <xs:restriction base="xs:token">
+         <xs:enumeration value="1">
+            <xs:annotation>
+               <xs:appinfo>
+                  <wert>101/201_EntschEinrBetrÜbern</wert>
+               </xs:appinfo>
+            </xs:annotation>
+         </xs:enumeration>
+         <xs:enumeration value="2">
+            <xs:annotation>
+               <xs:appinfo>
+                  <wert>101/201_EntschEinrBetrEinr</wert>
+               </xs:appinfo>
+            </xs:annotation>
+         </xs:enumeration>
+         <xs:enumeration value="3">
+            <xs:annotation>
+               <xs:appinfo>
+                  <wert>101/201_EntschEinrBetrAblVV</wert>
+               </xs:appinfo>
+            </xs:annotation>
+         </xs:enumeration>
+         <xs:enumeration value="4">
+            <xs:annotation>
+               <xs:appinfo>
+                  <wert>101/201_EntschEinrBetrAblsonst</wert>
+               </xs:appinfo>
+            </xs:annotation>
+         </xs:enumeration>
+         <xs:enumeration value="5">
+            <xs:annotation>
+               <xs:appinfo>
+                  <wert>101/201_EntschEinrBetrSonstErl</wert>
+               </xs:appinfo>
+            </xs:annotation>
+         </xs:enumeration>
+      </xs:restriction>
+   </xs:simpleType>
+   <xs:simpleType name="bestat.geschaeftsanfall">
+      <xs:annotation>
+         <xs:appinfo>
+            <codeliste>
+               <nameLang>BESTAT.Geschaeftsanfall</nameLang>
+               <nameKurz>BESTAT.Geschaeftsanfall</nameKurz>
+               <nameTechnisch>bestat.geschaeftsanfall</nameTechnisch>
+               <kennung>urn:xoev-de:xjustiz:codeliste:bestat.geschaeftsanfall</kennung>
+               <beschreibung>Codeliste der verschiedenen Geschäftsanfälle.</beschreibung>
+               <herausgebernameLang>BLK-AG IT-Standards in der Justiz</herausgebernameLang>
+               <herausgebernameKurz>AG IT-Standards</herausgebernameKurz>
+            </codeliste>
+            <versionCodeliste>
+               <version>2.0</version>
+               <versionCodelistenHandbuch>1.1</versionCodelistenHandbuch>
+            </versionCodeliste>
+            <codelistenspalten>
+               <code>
+                  <spaltennameLang>Schlüssel</spaltennameLang>
+                  <datentyp>string</datentyp>
+                  <codeSpalte>true</codeSpalte>
+                  <verwendung>required</verwendung>
+                  <empfohleneCodeSpalte>true</empfohleneCodeSpalte>
+               </code>
+               <wert>
+                  <spaltennameLang>Wert</spaltennameLang>
+                  <datentyp>string</datentyp>
+                  <codeSpalte>false</codeSpalte>
+                  <verwendung>required</verwendung>
+                  <empfohleneCodeSpalte>false</empfohleneCodeSpalte>
+               </wert>
+            </codelistenspalten>
+         </xs:appinfo>
+      </xs:annotation>
+      <xs:restriction base="xs:token">
+         <xs:enumeration value="1">
+            <xs:annotation>
+               <xs:appinfo>
+                  <wert>301_ÄrztlMaßn1904Antrag</wert>
+               </xs:appinfo>
+            </xs:annotation>
+         </xs:enumeration>
+         <xs:enumeration value="10">
+            <xs:annotation>
+               <xs:appinfo>
+                  <wert>310_UnterbringungAnordnung1846</wert>
+               </xs:appinfo>
+            </xs:annotation>
+         </xs:enumeration>
+         <xs:enumeration value="11">
+            <xs:annotation>
+               <xs:appinfo>
+                  <wert>311_UnterbringungAnordnung1846VerlDarunter</wert>
+               </xs:appinfo>
+            </xs:annotation>
+         </xs:enumeration>
+         <xs:enumeration value="12">
+            <xs:annotation>
+               <xs:appinfo>
+                  <wert>312_ÄrztlZwangsmaßnAntrag</wert>
+               </xs:appinfo>
+            </xs:annotation>
+         </xs:enumeration>
+         <xs:enumeration value="13">
+            <xs:annotation>
+               <xs:appinfo>
+                  <wert>313_ÄrztlZwangsmaßnAntragVerlDarunter</wert>
+               </xs:appinfo>
+            </xs:annotation>
+         </xs:enumeration>
+         <xs:enumeration value="14">
+            <xs:annotation>
+               <xs:appinfo>
+                  <wert>314_ÄrztlZwangsmaßnGenehmigung</wert>
+               </xs:appinfo>
+            </xs:annotation>
+         </xs:enumeration>
+         <xs:enumeration value="15">
+            <xs:annotation>
+               <xs:appinfo>
+                  <wert>315_ÄrztlZwangsmaßnGenehmigungVerlDarunter</wert>
+               </xs:appinfo>
+            </xs:annotation>
+         </xs:enumeration>
+         <xs:enumeration value="16">
+            <xs:annotation>
+               <xs:appinfo>
+                  <wert>316_ÄrztlZwangsmaßnAblehnung</wert>
+               </xs:appinfo>
+            </xs:annotation>
+         </xs:enumeration>
+         <xs:enumeration value="17">
+            <xs:annotation>
+               <xs:appinfo>
+                  <wert>317_ÄrztlZwangsmaßnAblehnungVerlDarunter</wert>
+               </xs:appinfo>
+            </xs:annotation>
+         </xs:enumeration>
+         <xs:enumeration value="18">
+            <xs:annotation>
+               <xs:appinfo>
+                  <wert>318_ÄrztlZwangsmaßnAnordnung1846</wert>
+               </xs:appinfo>
+            </xs:annotation>
+         </xs:enumeration>
+         <xs:enumeration value="19">
+            <xs:annotation>
+               <xs:appinfo>
+                  <wert>319_ÄrztlZwangsmaßnAnordnung1846VerlDarunter</wert>
+               </xs:appinfo>
+            </xs:annotation>
+         </xs:enumeration>
+         <xs:enumeration value="2">
+            <xs:annotation>
+               <xs:appinfo>
+                  <wert>302_ÄrztlMaßn1904Genehmigung</wert>
+               </xs:appinfo>
+            </xs:annotation>
+         </xs:enumeration>
+         <xs:enumeration value="20">
+            <xs:annotation>
+               <xs:appinfo>
+                  <wert>320_UÄMaßnahmeAntrag</wert>
+               </xs:appinfo>
+            </xs:annotation>
+         </xs:enumeration>
+         <xs:enumeration value="21">
+            <xs:annotation>
+               <xs:appinfo>
+                  <wert>321_UÄMaßnahmeAntragVerlDarunter</wert>
+               </xs:appinfo>
+            </xs:annotation>
+         </xs:enumeration>
+         <xs:enumeration value="22">
+            <xs:annotation>
+               <xs:appinfo>
+                  <wert>322_UÄMaßnahmeGenehmigung</wert>
+               </xs:appinfo>
+            </xs:annotation>
+         </xs:enumeration>
+         <xs:enumeration value="23">
+            <xs:annotation>
+               <xs:appinfo>
+                  <wert>323_UÄMaßnahmeGenehmigungVerlDarunter</wert>
+               </xs:appinfo>
+            </xs:annotation>
+         </xs:enumeration>
+         <xs:enumeration value="24">
+            <xs:annotation>
+               <xs:appinfo>
+                  <wert>324_UÄMaßnahmeAblehnung</wert>
+               </xs:appinfo>
+            </xs:annotation>
+         </xs:enumeration>
+         <xs:enumeration value="25">
+            <xs:annotation>
+               <xs:appinfo>
+                  <wert>325_UÄMaßnahmeAblehnungVerlDarunter</wert>
+               </xs:appinfo>
+            </xs:annotation>
+         </xs:enumeration>
+         <xs:enumeration value="26">
+            <xs:annotation>
+               <xs:appinfo>
+                  <wert>326_UÄMaßnahmeAnordnung1846</wert>
+               </xs:appinfo>
+            </xs:annotation>
+         </xs:enumeration>
+         <xs:enumeration value="27">
+            <xs:annotation>
+               <xs:appinfo>
+                  <wert>327_UÄMaßnahmeAnordnung1846VerlDarunter</wert>
+               </xs:appinfo>
+            </xs:annotation>
+         </xs:enumeration>
+         <xs:enumeration value="28">
+            <xs:annotation>
+               <xs:appinfo>
+                  <wert>328_UÄMaßnahmeAntrag</wert>
+               </xs:appinfo>
+            </xs:annotation>
+         </xs:enumeration>
+         <xs:enumeration value="29">
+            <xs:annotation>
+               <xs:appinfo>
+                  <wert>329_UÄMaßnahmeAntragVerlDarunter</wert>
+               </xs:appinfo>
+            </xs:annotation>
+         </xs:enumeration>
+         <xs:enumeration value="3">
+            <xs:annotation>
+               <xs:appinfo>
+                  <wert>303_ÄrztlMaßn1904Ablehnung</wert>
+               </xs:appinfo>
+            </xs:annotation>
+         </xs:enumeration>
+         <xs:enumeration value="30">
+            <xs:annotation>
+               <xs:appinfo>
+                  <wert>330_UÄMaßnahmeGenehmigung</wert>
+               </xs:appinfo>
+            </xs:annotation>
+         </xs:enumeration>
+         <xs:enumeration value="31">
+            <xs:annotation>
+               <xs:appinfo>
+                  <wert>331_UÄMaßnahmeGenehmigungVerlDarunter</wert>
+               </xs:appinfo>
+            </xs:annotation>
+         </xs:enumeration>
+         <xs:enumeration value="32">
+            <xs:annotation>
+               <xs:appinfo>
+                  <wert>332_UÄMaßnahmeAblehnung</wert>
+               </xs:appinfo>
+            </xs:annotation>
+         </xs:enumeration>
+         <xs:enumeration value="33">
+            <xs:annotation>
+               <xs:appinfo>
+                  <wert>333_UÄMaßnahmeAblehnungVerlDarunter</wert>
+               </xs:appinfo>
+            </xs:annotation>
+         </xs:enumeration>
+         <xs:enumeration value="34">
+            <xs:annotation>
+               <xs:appinfo>
+                  <wert>334_PflegschaftBestandBeginn</wert>
+               </xs:appinfo>
+            </xs:annotation>
+         </xs:enumeration>
+         <xs:enumeration value="35">
+            <xs:annotation>
+               <xs:appinfo>
+                  <wert>335_PflegschaftBestandKorrektur</wert>
+               </xs:appinfo>
+            </xs:annotation>
+         </xs:enumeration>
+         <xs:enumeration value="36">
+            <xs:annotation>
+               <xs:appinfo>
+                  <wert>336_PflegschaftEingänge</wert>
+               </xs:appinfo>
+            </xs:annotation>
+         </xs:enumeration>
+         <xs:enumeration value="37">
+            <xs:annotation>
+               <xs:appinfo>
+                  <wert>337_PflegschaftErledigungen</wert>
+               </xs:appinfo>
+            </xs:annotation>
+         </xs:enumeration>
+         <xs:enumeration value="38">
+            <xs:annotation>
+               <xs:appinfo>
+                  <wert>338_PflegschaftBestandEnde</wert>
+               </xs:appinfo>
+            </xs:annotation>
+         </xs:enumeration>
+         <xs:enumeration value="39">
+            <xs:annotation>
+               <xs:appinfo>
+                  <wert>339_Zuweisungssachen</wert>
+               </xs:appinfo>
+            </xs:annotation>
+         </xs:enumeration>
+         <xs:enumeration value="4">
+            <xs:annotation>
+               <xs:appinfo>
+                  <wert>304_UnterbringungAntrag</wert>
+               </xs:appinfo>
+            </xs:annotation>
+         </xs:enumeration>
+         <xs:enumeration value="40">
+            <xs:annotation>
+               <xs:appinfo>
+                  <wert>340_RechtshilfeersuchenRichter</wert>
+               </xs:appinfo>
+            </xs:annotation>
+         </xs:enumeration>
+         <xs:enumeration value="41">
+            <xs:annotation>
+               <xs:appinfo>
+                  <wert>341_RechtshilfeersuchenRechtspfl</wert>
+               </xs:appinfo>
+            </xs:annotation>
+         </xs:enumeration>
+         <xs:enumeration value="42">
+            <xs:annotation>
+               <xs:appinfo>
+                  <wert>342_RechtshilfeersuchenGeschäftsst</wert>
+               </xs:appinfo>
+            </xs:annotation>
+         </xs:enumeration>
+         <xs:enumeration value="5">
+            <xs:annotation>
+               <xs:appinfo>
+                  <wert>305_UnterbringungAntragVerlDarunter</wert>
+               </xs:appinfo>
+            </xs:annotation>
+         </xs:enumeration>
+         <xs:enumeration value="6">
+            <xs:annotation>
+               <xs:appinfo>
+                  <wert>306_UnterbringungGenehmigung</wert>
+               </xs:appinfo>
+            </xs:annotation>
+         </xs:enumeration>
+         <xs:enumeration value="7">
+            <xs:annotation>
+               <xs:appinfo>
+                  <wert>307_UnterbringungGenehmigungVerlDarunter</wert>
+               </xs:appinfo>
+            </xs:annotation>
+         </xs:enumeration>
+         <xs:enumeration value="8">
+            <xs:annotation>
+               <xs:appinfo>
+                  <wert>308_UnterbringungAblehnung</wert>
+               </xs:appinfo>
+            </xs:annotation>
+         </xs:enumeration>
+         <xs:enumeration value="9">
+            <xs:annotation>
+               <xs:appinfo>
+                  <wert>309_UnterbringungAblehnungVerlDarunter</wert>
+               </xs:appinfo>
+            </xs:annotation>
+         </xs:enumeration>
+      </xs:restriction>
+   </xs:simpleType>
+   <xs:simpleType name="bestat.veraenderung">
+      <xs:annotation>
+         <xs:appinfo>
+            <codeliste>
+               <nameLang>BESTAT.Veraenderung</nameLang>
+               <nameKurz>BESTAT.Veraenderung</nameKurz>
+               <nameTechnisch>bestat.veraenderung</nameTechnisch>
+               <kennung>urn:xoev-de:xjustiz:codeliste:bestat.veraenderung</kennung>
+               <beschreibung>Codeliste der verschiedenen Veränderungsarten.</beschreibung>
+               <herausgebernameLang>BLK-AG IT-Standards in der Justiz</herausgebernameLang>
+               <herausgebernameKurz>AG IT-Standards</herausgebernameKurz>
+            </codeliste>
+            <versionCodeliste>
+               <version>2.0</version>
+               <versionCodelistenHandbuch>1.1</versionCodelistenHandbuch>
+            </versionCodeliste>
+            <codelistenspalten>
+               <code>
+                  <spaltennameLang>Schlüssel</spaltennameLang>
+                  <datentyp>string</datentyp>
+                  <codeSpalte>true</codeSpalte>
+                  <verwendung>required</verwendung>
+                  <empfohleneCodeSpalte>true</empfohleneCodeSpalte>
+               </code>
+               <wert>
+                  <spaltennameLang>Wert</spaltennameLang>
+                  <datentyp>string</datentyp>
+                  <codeSpalte>false</codeSpalte>
+                  <verwendung>required</verwendung>
+                  <empfohleneCodeSpalte>false</empfohleneCodeSpalte>
+               </wert>
+            </codelistenspalten>
+         </xs:appinfo>
+      </xs:annotation>
+      <xs:restriction base="xs:token">
+         <xs:enumeration value="1">
+            <xs:annotation>
+               <xs:appinfo>
+                  <wert>117/217_WechselBeruflichZuEhrenamtlich</wert>
+               </xs:appinfo>
+            </xs:annotation>
+         </xs:enumeration>
+         <xs:enumeration value="2">
+            <xs:annotation>
+               <xs:appinfo>
+                  <wert>117/217_WechselEhrenamtlichZuBeruflich</wert>
+               </xs:appinfo>
+            </xs:annotation>
+         </xs:enumeration>
+      </xs:restriction>
+   </xs:simpleType>
+</xs:schema>

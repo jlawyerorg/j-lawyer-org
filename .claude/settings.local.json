@@ -3,7 +3,8 @@
     "allow": [
       "Bash(find:*)",
       "Bash(openspec list:*)",
-      "Bash(openspec validate:*)"
+      "Bash(openspec validate:*)",
+      "Bash(mkdir:*)"
     ],
     "deny": [],
     "ask": []
