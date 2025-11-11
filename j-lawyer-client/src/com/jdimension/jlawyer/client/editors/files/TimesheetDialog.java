@@ -1289,7 +1289,7 @@ public class TimesheetDialog extends javax.swing.JDialog implements NewEventEntr
 
                     dlg2.setBeginDate(result);
                     dlg2.setEndDate(result);
-                    dlg2.setReviewAssignee(this.caseDto.getAssistant());
+                    dlg2.setReviewAssignees(this.caseDto.getAssistant(), this.caseDto.getLawyer());
                     FrameUtils.centerDialog(dlg2, this);
                     dlg2.setVisible(true);
                 }

@@ -687,7 +687,7 @@ public class AddCalendarEventStep extends javax.swing.JPanel implements WizardSt
     public AddCalendarEventStep() {
         initComponents();
 
-        this.newEventPanel1.setReviewAssignee(UserSettings.getInstance().getCurrentUser().getPrincipalId());
+        this.newEventPanel1.setReviewAssignees(UserSettings.getInstance().getCurrentUser().getPrincipalId(), UserSettings.getInstance().getCurrentUser().getPrincipalId());
         this.newEventPanel1.populateOptions();
         this.newEventPanel1.setNewEventListener(this);
         
