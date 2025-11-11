@@ -1019,6 +1019,15 @@ public class InvoiceDialog extends javax.swing.JDialog implements EventConsumer 
         this.cmdUploadInvoiceDocument.setEnabled(invoice != null && invoice.getId() != null);
         this.textSearchPositionTemplate.setEnabled(invoice != null && invoice.getId() != null);
         this.lstPositionTemplates.setEnabled(invoice != null && invoice.getId() != null);
+        this.cmbPaymentMethods.setEnabled(invoice != null && invoice.getId() != null);
+        this.taDescription.setEnabled(invoice != null && invoice.getId() != null);
+        this.txtName.setEnabled(invoice != null && invoice.getId() != null);
+        this.cmdSearchRecipient.setEnabled(invoice != null && invoice.getId() != null);
+        this.cmbCurrency.setEnabled(invoice != null && invoice.getId() != null);
+        this.cmbInvoiceSender.setEnabled(invoice != null && invoice.getId() != null);
+        this.jTabbedPane1.setEnabledAt(1, invoice != null && invoice.getId() != null);
+        this.jTabbedPane1.setEnabledAt(2, invoice != null && invoice.getId() != null);
+        this.jTabbedPane1.setEnabledAt(3, invoice != null && invoice.getId() != null);
         this.cmdSave.setEnabled(invoice != null && invoice.getId() != null);
 
         this.cmbInvoiceSender.setSelectedItem(UserSettings.getInstance().getCurrentUser().getPrincipalId());
@@ -1036,6 +1045,9 @@ public class InvoiceDialog extends javax.swing.JDialog implements EventConsumer 
 
         if (invoice == null) {
             this.setTitle("neue Rechnung erstellen");
+
+            this.lblError.setText("bitte zuerst Rechnungstyp bestätigen");
+            this.lblError.setForeground(DefaultColorTheme.COLOR_LOGO_RED);
 
             this.cmbInvoicePool.setEnabled(true);
             this.cmbInvoiceType.setEnabled(true);
@@ -1056,6 +1068,9 @@ public class InvoiceDialog extends javax.swing.JDialog implements EventConsumer 
 
         } else {
             this.setTitle("Rechnung " + invoice.getInvoiceNumber());
+
+            this.lblError.setText("");
+            this.lblError.setForeground(DefaultColorTheme.COLOR_LOGO_RED);
 
             this.cmdConfirmInvoiceNumber.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons16/kate.png")));
 
@@ -1208,6 +1223,7 @@ public class InvoiceDialog extends javax.swing.JDialog implements EventConsumer 
         lblDirectDebit = new javax.swing.JLabel();
         cmbPaymentMethods = new javax.swing.JComboBox<>();
         jLabel20 = new javax.swing.JLabel();
+        lblError = new javax.swing.JLabel();
         splitMain = new javax.swing.JSplitPane();
         jPanel2 = new javax.swing.JPanel();
         cmdAddPosition = new javax.swing.JButton();
@@ -1458,6 +1474,10 @@ public class InvoiceDialog extends javax.swing.JDialog implements EventConsumer 
 
         jLabel20.setText("Zahlung:");
 
+        lblError.setFont(lblError.getFont());
+        lblError.setHorizontalAlignment(javax.swing.SwingConstants.CENTER);
+        lblError.setText("jLabel21");
+
         javax.swing.GroupLayout jPanel4Layout = new javax.swing.GroupLayout(jPanel4);
         jPanel4.setLayout(jPanel4Layout);
         jPanel4Layout.setHorizontalGroup(
@@ -1479,7 +1499,7 @@ public class InvoiceDialog extends javax.swing.JDialog implements EventConsumer 
                         .addGap(21, 21, 21)
                         .addGroup(jPanel4Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                             .addComponent(txtName)
-                            .addComponent(jScrollPane1, javax.swing.GroupLayout.Alignment.TRAILING, javax.swing.GroupLayout.DEFAULT_SIZE, 701, Short.MAX_VALUE)
+                            .addComponent(jScrollPane1, javax.swing.GroupLayout.Alignment.TRAILING, javax.swing.GroupLayout.DEFAULT_SIZE, 718, Short.MAX_VALUE)
                             .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, jPanel4Layout.createSequentialGroup()
                                 .addGroup(jPanel4Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                                     .addComponent(lblRecipient, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
@@ -1515,7 +1535,8 @@ public class InvoiceDialog extends javax.swing.JDialog implements EventConsumer 
                                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                                         .addComponent(cmdDateDue))
                                     .addComponent(cmbPaymentMethods, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
-                                .addGap(0, 0, Short.MAX_VALUE)))))
+                                .addGap(0, 0, Short.MAX_VALUE))
+                            .addComponent(lblError, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))))
                 .addContainerGap())
         );
         jPanel4Layout.setVerticalGroup(
@@ -1523,12 +1544,14 @@ public class InvoiceDialog extends javax.swing.JDialog implements EventConsumer 
             .addGroup(jPanel4Layout.createSequentialGroup()
                 .addContainerGap()
                 .addComponent(lblHeader, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addComponent(lblError)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addGroup(jPanel4Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
                     .addGroup(jPanel4Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                         .addComponent(cmbInvoiceSender, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                         .addComponent(jLabel17))
-                    .addComponent(jLabel18, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                    .addComponent(jLabel18, javax.swing.GroupLayout.PREFERRED_SIZE, 31, javax.swing.GroupLayout.PREFERRED_SIZE))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addGroup(jPanel4Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                     .addGroup(jPanel4Layout.createSequentialGroup()
@@ -1719,7 +1742,7 @@ public class InvoiceDialog extends javax.swing.JDialog implements EventConsumer 
                     .addGroup(jPanel2Layout.createSequentialGroup()
                         .addComponent(cmdApplyPositionTemplate)
                         .addGap(0, 0, Short.MAX_VALUE))
-                    .addComponent(jScrollPane3, javax.swing.GroupLayout.DEFAULT_SIZE, 439, Short.MAX_VALUE))
+                    .addComponent(jScrollPane3, javax.swing.GroupLayout.DEFAULT_SIZE, 474, Short.MAX_VALUE))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addGroup(jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                     .addComponent(lblNetValue)
@@ -1963,7 +1986,7 @@ public class InvoiceDialog extends javax.swing.JDialog implements EventConsumer 
             jPanel3Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(jPanel3Layout.createSequentialGroup()
                 .addContainerGap()
-                .addComponent(jScrollPane4, javax.swing.GroupLayout.DEFAULT_SIZE, 534, Short.MAX_VALUE)
+                .addComponent(jScrollPane4, javax.swing.GroupLayout.DEFAULT_SIZE, 569, Short.MAX_VALUE)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addGroup(jPanel3Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                     .addComponent(jLabel14)
@@ -1996,12 +2019,12 @@ public class InvoiceDialog extends javax.swing.JDialog implements EventConsumer 
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(layout.createSequentialGroup()
                 .addContainerGap()
-                .addComponent(jTabbedPane1, javax.swing.GroupLayout.PREFERRED_SIZE, 604, Short.MAX_VALUE)
+                .addComponent(jTabbedPane1, javax.swing.GroupLayout.DEFAULT_SIZE, 639, Short.MAX_VALUE)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                     .addComponent(cmdCancel)
                     .addComponent(cmdSave))
-                .addGap(6, 6, 6))
+                .addContainerGap())
         );
 
         pack();
@@ -3124,6 +3147,7 @@ public class InvoiceDialog extends javax.swing.JDialog implements EventConsumer 
     private javax.swing.JSeparator jSeparator1;
     private javax.swing.JTabbedPane jTabbedPane1;
     private javax.swing.JLabel lblDirectDebit;
+    private javax.swing.JLabel lblError;
     private javax.swing.JPanel lblHeader;
     private javax.swing.JLabel lblInvoiceDocument;
     private javax.swing.JLabel lblInvoiceDocumentChanged;
