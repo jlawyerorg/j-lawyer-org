@@ -1505,6 +1505,7 @@ public class ReportService implements ReportServiceRemote {
                     table.getValues().add(emptyRow);
                     table.getValues().add(sumCaptionRow);
                     table.getValues().add(sumValueRow);
+                    table.setHasSumRows(true);
                 }
             }
 
