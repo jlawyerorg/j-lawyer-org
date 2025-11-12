@@ -663,11 +663,28 @@ For more information on this, and how to apply and follow the GNU AGPL, see
  */
 package com.jdimension.jlawyer.client.editors.reporting;
 
+import com.jdimension.jlawyer.client.configuration.PopulateOptionsEditor;
+import com.jdimension.jlawyer.client.editors.EditorsRegistry;
+import com.jdimension.jlawyer.client.editors.ThemeableEditor;
+import com.jdimension.jlawyer.client.editors.files.ArchiveFilePanel;
+import com.jdimension.jlawyer.client.editors.files.EditArchiveFileDetailsPanel;
+import com.jdimension.jlawyer.client.editors.files.ViewArchiveFileDetailsPanel;
+import com.jdimension.jlawyer.client.settings.ClientSettings;
+import com.jdimension.jlawyer.client.settings.UserSettings;
 import com.jdimension.jlawyer.client.utils.ComponentUtils;
 import com.jdimension.jlawyer.client.utils.FileUtils;
 import com.jdimension.jlawyer.client.utils.TableUtils;
+import com.jdimension.jlawyer.persistence.ArchiveFileBean;
+import com.jdimension.jlawyer.services.ArchiveFileServiceRemote;
+import com.jdimension.jlawyer.services.JLawyerServiceLocator;
+import java.awt.Component;
+import java.awt.Image;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
 import java.text.DecimalFormat;
+import javax.swing.JMenuItem;
 import javax.swing.JOptionPane;
+import javax.swing.JPopupMenu;
 import javax.swing.table.DefaultTableModel;
 import org.apache.log4j.Logger;
 import org.jlawyer.reporting.ReportResultTable;
@@ -704,7 +721,44 @@ public class DynamicTablePanel extends javax.swing.JPanel {
             }
         }
         ComponentUtils.autoSizeColumns(tblResult);
-        
+
+        // Hide first column if it contains case_id
+        if (table.isHasCaseIdColumn()) {
+            tblResult.getColumnModel().getColumn(0).setMinWidth(0);
+            tblResult.getColumnModel().getColumn(0).setMaxWidth(0);
+            tblResult.getColumnModel().getColumn(0).setWidth(0);
+
+            // Add right-click menu for case navigation
+            JPopupMenu popupMenu = new JPopupMenu();
+            JMenuItem menuItem = new JMenuItem("Zur Akte springen");
+            menuItem.addActionListener(e -> openCase());
+            popupMenu.add(menuItem);
+
+            tblResult.addMouseListener(new MouseAdapter() {
+                @Override
+                public void mousePressed(MouseEvent e) {
+                    if (e.isPopupTrigger()) {
+                        showPopup(e);
+                    }
+                }
+
+                @Override
+                public void mouseReleased(MouseEvent e) {
+                    if (e.isPopupTrigger()) {
+                        showPopup(e);
+                    }
+                }
+
+                private void showPopup(MouseEvent e) {
+                    int row = tblResult.rowAtPoint(e.getPoint());
+                    if (row >= 0) {
+                        tblResult.setRowSelectionInterval(row, row);
+                        popupMenu.show(e.getComponent(), e.getX(), e.getY());
+                    }
+                }
+            });
+        }
+
     }
     
     /**
@@ -776,6 +830,66 @@ public class DynamicTablePanel extends javax.swing.JPanel {
         }
     }//GEN-LAST:event_cmdExportTableActionPerformed
 
+    private void openCase() {
+        int selectedRow = tblResult.getSelectedRow();
+        if (selectedRow < 0) {
+            return;
+        }
+
+        // convertRowIndexToModel is important for correct row mapping after sorting
+        int modelRow = tblResult.convertRowIndexToModel(selectedRow);
+        Object caseIdObj = tblResult.getModel().getValueAt(modelRow, 0);
+
+        if (caseIdObj == null) {
+            return;
+        }
+        String caseId = caseIdObj.toString();
+
+        try {
+            
+            Object editor=null;
+            if(UserSettings.getInstance().isCurrentUserInRole(UserSettings.ROLE_WRITECASE)) {
+                editor = EditorsRegistry.getInstance().getEditor(EditArchiveFileDetailsPanel.class.getName());
+            } else {
+                editor = EditorsRegistry.getInstance().getEditor(ViewArchiveFileDetailsPanel.class.getName());
+            }
+            Object searcheditor = EditorsRegistry.getInstance().getEditor(ReportingPanel.class.getName());
+            Image bgi=((ReportingPanel)searcheditor).getBackgroundImage();
+            
+            if (editor instanceof ThemeableEditor) {
+                // inherit the background to newly created child editors
+                ((ThemeableEditor) editor).setBackgroundImage(bgi);
+            }
+
+            if (editor instanceof PopulateOptionsEditor) {
+                ((PopulateOptionsEditor) editor).populateOptions();
+            }
+            
+            JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(
+                ClientSettings.getInstance().getLookupProperties());
+            ArchiveFileServiceRemote fileService = locator.lookupArchiveFileServiceRemote();
+            ArchiveFileBean aFile = fileService.getArchiveFile(caseId);
+
+            if (aFile == null) {
+                JOptionPane.showMessageDialog(this,
+                    "Akte konnte nicht gefunden werden.",
+                    com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR,
+                    JOptionPane.ERROR_MESSAGE);
+                return;
+            }
+
+            ((ArchiveFilePanel) editor).setArchiveFileDTO(aFile, null);
+            ((ArchiveFilePanel) editor).setOpenedFromEditorClass(ReportingPanel.class.getName());
+            EditorsRegistry.getInstance().setMainEditorsPaneView((Component) editor);
+
+        } catch (Exception ex) {
+            log.error("Error opening case " + caseId, ex);
+            JOptionPane.showMessageDialog(this,
+                "Fehler beim Öffnen der Akte: " + ex.getMessage(),
+                com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR,
+                JOptionPane.ERROR_MESSAGE);
+        }
+    }
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JButton cmdExportTable;
