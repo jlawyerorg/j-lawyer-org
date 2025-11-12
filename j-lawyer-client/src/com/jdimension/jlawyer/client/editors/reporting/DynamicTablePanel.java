@@ -730,7 +730,7 @@ public class DynamicTablePanel extends javax.swing.JPanel {
 
             // Add right-click menu for case navigation
             JPopupMenu popupMenu = new JPopupMenu();
-            JMenuItem menuItem = new JMenuItem("Zur Akte springen");
+            JMenuItem menuItem = new JMenuItem("Zur Akte wechseln");
             menuItem.addActionListener(e -> openCase());
             popupMenu.add(menuItem);
 
