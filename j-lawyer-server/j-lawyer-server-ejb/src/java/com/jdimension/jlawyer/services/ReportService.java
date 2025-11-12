@@ -732,6 +732,7 @@ public class ReportService implements ReportServiceRemote {
 
         reportPrivs.put(Reports.RPT_CASES_BYSIZE, PRIVILEGE_COMMON);
         reportPrivs.put(Reports.RPT_CASES_UNSECURED, PRIVILEGE_COMMON);
+        reportPrivs.put(Reports.RPT_CASES_WITHOUT_INVOICE, PRIVILEGE_COMMON);
 
         reportPrivs.put(Reports.RPT_REVENUE_BYCUSTOMER, PRIVILEGE_CONFIDENTIAL);
 
@@ -1291,6 +1292,22 @@ public class ReportService implements ReportServiceRemote {
         } else if (Reports.RPT_CASES_UNSECURED.equals(reportId)) {
             String query = "select c.id as cid, c.fileNumber as Aktenzeichen, c.name as Rubrum, c.reason as wegen, case when c.archived = 1 then 'archiviert' else '' end as archiviert from cases c where c.id not in (select case_id from case_groups) and c.date_created>=? and c.date_created<=?";
             ReportResultTable mainTable = getTable(true, "Akten ohne Zugriffsbeschränkungen", query, null, params);
+
+            result.getTables().add(mainTable);
+        } else if (Reports.RPT_CASES_WITHOUT_INVOICE.equals(reportId)) {
+            String query = "select c.id as cid, c.fileNumber as Aktenzeichen, c.name as Rubrum, c.reason as wegen, "
+                    + "c.lawyer as Anwalt, c.assistant as Sachbearbeiter, "
+                    + "DATE_FORMAT(c.date_created,'%Y-%m-%d') as erstellt, "
+                    + "case when c.archived = 1 then 'archiviert' else '' end as archiviert "
+                    + "from cases c "
+                    + "where c.id not in ("
+                    + "  select distinct inv.case_id from invoices inv "
+                    + "  left join invoice_types invt on inv.invoice_type=invt.id "
+                    + "  where invt.turnover=1 and inv.case_id is not null"
+                    + ") "
+                    + "and c.date_created>=? and c.date_created<=? "
+                    + "order by c.date_created desc";
+            ReportResultTable mainTable = getTable(true, "Akten ohne Rechnung", query, null, params);
 
             result.getTables().add(mainTable);
         } else if (Reports.RPT_REVENUE_BYCUSTOMER.equals(reportId)) {
