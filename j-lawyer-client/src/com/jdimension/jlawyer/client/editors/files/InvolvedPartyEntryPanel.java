@@ -698,6 +698,7 @@ import com.jdimension.jlawyer.client.utils.OsmUtils;
 
 
 import java.awt.Color;
+import java.awt.Component;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -705,6 +706,7 @@ import javax.swing.JDialog;
 import javax.swing.JOptionPane;
 
 import org.apache.log4j.Logger;
+import com.jdimension.jlawyer.client.bea.BeaAccess;
 import org.jlawyer.bea.model.Identity;
 import themes.colors.DefaultColorTheme;
 
@@ -1297,6 +1299,40 @@ public class InvolvedPartyEntryPanel extends javax.swing.JPanel implements Event
             }
         }
 
+        // Trigger insurer suggestion when switching role to Mandant on an existing party
+        if (!this.initializing && this.a != null) {
+            try {
+                if ("Mandant".equalsIgnoreCase(refType) && hasInsuranceData(this.a)) {
+                    InsuranceSuggestDialog suggest = new InsuranceSuggestDialog(EditorsRegistry.getInstance().getMainWindow(), true, this.caseDto, this.a, this.partyTypes);
+                    suggest.setTitle("Zu Adresse " + a.toDisplayName() + " (Mandant) bestehen Versicherungen");
+                    FrameUtils.centerDialog(suggest, EditorsRegistry.getInstance().getMainWindow());
+                    suggest.setVisible(true);
+                    // add selected insurer to UI if any
+                    try {
+                        List<ArchiveFileAddressesBean> inv = suggest.getSelectedInvolvements();
+                        if (inv != null) {
+                            for (int i = 0; i < inv.size(); i++) {
+                                ArchiveFileAddressesBean added = inv.get(i);
+                                AddressBean ins = added != null ? added.getAddressKey() : null;
+                                if (ins == null || existsPartyWithAddress(ins.getId())) continue;
+
+                                InvolvedPartyEntryPanel ipepIns = new InvolvedPartyEntryPanel(this.caseDto, this.casePanel, this.container, this.getClass().getName(), BeaAccess.isBeaEnabled(), this.partyTypes);
+                                ipepIns.setEntry(ins, added, false);
+                                ipepIns.setAlignmentX(Component.LEFT_ALIGNMENT);
+                                this.container.add(ipepIns);
+                            }
+                            this.container.revalidate();
+                            this.container.repaint();
+                        }
+                    } catch (Throwable t2) {
+                        log.debug("could not add insurer panel after selection", t2);
+                    }
+                }
+            } catch (Throwable t) {
+                log.warn("Error suggesting insurer addresses on role change", t);
+            }
+        }
+
     }//GEN-LAST:event_cmbRefTypeActionPerformed
 
     private void mnuRemovePartyActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_mnuRemovePartyActionPerformed
@@ -1307,6 +1343,40 @@ public class InvolvedPartyEntryPanel extends javax.swing.JPanel implements Event
 
 
     }//GEN-LAST:event_mnuRemovePartyActionPerformed
+
+    private boolean hasInsuranceData(AddressBean ab) {
+        try {
+            if (ab == null) return false;
+            if (ab.isLegalProtection()) return true;
+            if (ab.isTrafficLegalProtection()) return true;
+            if (ab.getInsuranceName() != null && !"".equals(ab.getInsuranceName().trim())) return true;
+            if (ab.getInsuranceNumber() != null && !"".equals(ab.getInsuranceNumber().trim())) return true;
+            if (ab.getTrafficInsuranceName() != null && !"".equals(ab.getTrafficInsuranceName().trim())) return true;
+            if (ab.getTrafficInsuranceNumber() != null && !"".equals(ab.getTrafficInsuranceNumber().trim())) return true;
+            if (ab.getMotorInsuranceName() != null && !"".equals(ab.getMotorInsuranceName().trim())) return true;
+            if (ab.getMotorInsuranceNumber() != null && !"".equals(ab.getMotorInsuranceNumber().trim())) return true;
+            return false;
+        } catch (Throwable t) {
+            return false;
+        }
+    }
+
+    private boolean existsPartyWithAddress(String addressId) {
+        try {
+            for (Component c : this.container.getComponents()) {
+                if (c instanceof InvolvedPartyEntryPanel) {
+                    InvolvedPartyEntryPanel p = (InvolvedPartyEntryPanel) c;
+                    AddressBean ab = p.getAdress();
+                    if (ab != null && addressId.equals(ab.getId())) {
+                        return true;
+                    }
+                }
+            }
+        } catch (Throwable t) {
+            log.error("Error checking existing parties for address " + addressId, t);
+        }
+        return false;
+    }
 
 
     private void mnuSendEmailActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_mnuSendEmailActionPerformed
