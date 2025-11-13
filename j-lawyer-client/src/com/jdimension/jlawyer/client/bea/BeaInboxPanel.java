@@ -1691,51 +1691,93 @@ public class BeaInboxPanel extends javax.swing.JPanel implements SaveToCaseExecu
     }//GEN-LAST:event_tblMailsMousePressed
 
     private void cmdDeleteActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdDeleteActionPerformed
-        int[] selected = this.tblMails.getSelectedRows();
-        int scrollToRow = -1;
+        final int[] selected = this.tblMails.getSelectedRows();
         if (!(selected.length > 0)) {
             return;
-
         }
 
-        scrollToRow = tblMails.getSelectedRow();
-        for (int i = selected.length - 1; i > -1; i--) {
+        final int scrollToRow = tblMails.getSelectedRow();
+        final DefaultMutableTreeNode tn = (DefaultMutableTreeNode) this.treeFolders.getSelectionPath().getLastPathComponent();
+        final org.jlawyer.bea.model.Folder tf = (org.jlawyer.bea.model.Folder) tn.getUserObject();
 
-            org.jlawyer.bea.model.MessageHeader mh = (org.jlawyer.bea.model.MessageHeader) this.tblMails.getValueAt(selected[i], 1);
-            try {
-                BeaAccess bea = BeaAccess.getInstance();
+        // Collect message headers and their model indices
+        final MessageHeader[] headers = new MessageHeader[selected.length];
+        final int[] modelIndices = new int[selected.length];
+        for (int i = 0; i < selected.length; i++) {
+            headers[i] = (MessageHeader) this.tblMails.getValueAt(selected[i], 1);
+            modelIndices[i] = this.tblMails.convertRowIndexToModel(selected[i]);
+        }
 
-                DefaultMutableTreeNode tn = (DefaultMutableTreeNode) this.treeFolders.getSelectionPath().getLastPathComponent();
-                org.jlawyer.bea.model.Folder tf = (org.jlawyer.bea.model.Folder) tn.getUserObject();
-                if (tf.getType().equals(Folder.TYPE_TRASH)) {
-                    boolean deleted = bea.deleteMessage(mh);
-                    if (deleted) {
-                        ((DefaultTableModel) this.tblMails.getModel()).removeRow(this.tblMails.convertRowIndexToModel(selected[i]));
+        // Execute deletion in background
+        new javax.swing.SwingWorker<java.util.List<Integer>, Void>() {
+            private Exception error = null;
+
+            @Override
+            protected java.util.List<Integer> doInBackground() throws Exception {
+                java.util.List<Integer> successfulIndices = new java.util.ArrayList<>();
+                try {
+                    setCursor(java.awt.Cursor.getPredefinedCursor(java.awt.Cursor.WAIT_CURSOR));
+                    EditorsRegistry.getInstance().updateStatus("Lösche Nachrichten...");
+
+                    BeaAccess bea = BeaAccess.getInstance();
+                    boolean isTrash = tf.getType().equals(Folder.TYPE_TRASH);
+
+                    for (int i = selected.length - 1; i > -1; i--) {
+                        if (isCancelled()) break;
+
+                        try {
+                            MessageHeader mh = headers[i];
+                            boolean success;
+                            if (isTrash) {
+                                success = bea.deleteMessage(mh);
+                            } else {
+                                success = bea.moveMessageToTrash(mh);
+                            }
+                            if (success) {
+                                successfulIndices.add(modelIndices[i]);
+                            }
+                        } catch (Throwable ex) {
+                            log.error(ex);
+                        }
                     }
-                } else {
-                    boolean moved = bea.moveMessageToTrash(mh);
-                    if (moved) {
-                        ((DefaultTableModel) this.tblMails.getModel()).removeRow(this.tblMails.convertRowIndexToModel(selected[i]));
-                    }
+                } catch (Exception ex) {
+                    error = ex;
+                    log.error("Error deleting messages", ex);
+                }
+                return successfulIndices;
+            }
+
+            @Override
+            protected void done() {
+                setCursor(java.awt.Cursor.getDefaultCursor());
+                EditorsRegistry.getInstance().clearStatus();
+
+                if (error != null) {
+                    JOptionPane.showMessageDialog(BeaInboxPanel.this, "Fehler beim Löschen: " + error.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
                 }
 
-            } catch (Throwable ex) {
-                log.error(ex);
+                try {
+                    java.util.List<Integer> successfulIndices = get();
+                    // Remove rows in reverse order to maintain correct indices
+                    java.util.Collections.sort(successfulIndices, java.util.Collections.reverseOrder());
+                    for (Integer idx : successfulIndices) {
+                        ((DefaultTableModel) tblMails.getModel()).removeRow(idx);
+                    }
+
+                    beaMessageContentUI.clear();
+                    pnlActionsChild.removeAll();
+
+                    int sortCol = -1;
+                    List<? extends SortKey> sortKeys = tblMails.getRowSorter().getSortKeys();
+                    if (sortKeys != null && !sortKeys.isEmpty()) {
+                        sortCol = sortKeys.get(0).getColumn();
+                    }
+                    treeFoldersValueChangedImpl(new TreeSelectionEvent(tblMails, treeFolders.getSelectionPath(), false, null, null), sortCol, scrollToRow);
+                } catch (Exception ex) {
+                    log.error("Error updating UI after delete", ex);
+                }
             }
-        }
-
-        this.beaMessageContentUI.clear();
-        this.pnlActionsChild.removeAll();
-
-        int sortCol = -1;
-        List<? extends SortKey> sortKeys = this.tblMails.getRowSorter().getSortKeys();
-        if (sortKeys != null) {
-            if (!sortKeys.isEmpty()) {
-                sortCol = sortKeys.get(0).getColumn();
-            }
-        }
-        this.treeFoldersValueChangedImpl(new TreeSelectionEvent(this.tblMails, this.treeFolders.getSelectionPath(), false, null, null), sortCol, scrollToRow);
-
+        }.execute();
 
     }//GEN-LAST:event_cmdDeleteActionPerformed
 
