@@ -2067,54 +2067,106 @@ public class BeaInboxPanel extends javax.swing.JPanel implements SaveToCaseExecu
     }//GEN-LAST:event_cmdForwardActionPerformed
 
     private void cmdReplyAllActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdReplyAllActionPerformed
-        SendBeaMessageFrame dlg = new SendBeaMessageFrame();
+        final int[] selected = this.tblMails.getSelectedRows();
+        if (selected.length == 0) {
+            return;
+        }
 
-        int[] selected = this.tblMails.getSelectedRows();
+        final org.jlawyer.bea.model.MessageHeader mh = (org.jlawyer.bea.model.MessageHeader) this.tblMails.getValueAt(selected[0], 1);
+        final String currentBody = this.beaMessageContentUI.getBody();
 
-        org.jlawyer.bea.model.MessageHeader mh = (org.jlawyer.bea.model.MessageHeader) this.tblMails.getValueAt(selected[0], 1);
-        try {
-            Message m = null;
-            try {
+        // Load message and all recipient identities in background
+        new javax.swing.SwingWorker<java.util.Map<String, Object>, Void>() {
+            private Message msg = null;
+            private java.util.List<Identity> recipients = new java.util.ArrayList<>();
+            private Exception error = null;
 
-                BeaAccess bea = BeaAccess.getInstance();
-                m = bea.getMessage(mh.getId(), bea.getLoggedInSafeId());
-                ArrayList<Recipient> to = m.getRecipients();
+            @Override
+            protected java.util.Map<String, Object> doInBackground() throws Exception {
+                try {
+                    setCursor(java.awt.Cursor.getPredefinedCursor(java.awt.Cursor.WAIT_CURSOR));
+                    EditorsRegistry.getInstance().updateStatus("Lade Empfängerdaten...");
 
-                String azSender = m.getReferenceNumber();
-                String azRecipient = m.getReferenceJustice();
+                    BeaAccess bea = BeaAccess.getInstance();
+                    msg = bea.getMessage(mh.getId(), bea.getLoggedInSafeId());
+
+                    if (!isCancelled()) {
+                        ArrayList<Recipient> to = msg.getRecipients();
+
+                        // Load all recipient identities - this can be slow with many recipients
+                        for (Recipient r : to) {
+                            if (isCancelled()) break;
+                            try {
+                                Identity identity = bea.getIdentity(r.getSafeId());
+                                recipients.add(identity);
+                            } catch (Throwable t) {
+                                log.error("Error loading recipient identity: " + r.getSafeId(), t);
+                            }
+                        }
+
+                        // Add sender identity
+                        if (!isCancelled()) {
+                            try {
+                                Identity senderIdentity = bea.getIdentity(msg.getSenderSafeId());
+                                recipients.add(senderIdentity);
+                            } catch (Throwable t) {
+                                log.error("Error loading sender identity: " + msg.getSenderSafeId(), t);
+                            }
+                        }
+                    }
+                } catch (Exception ex) {
+                    error = ex;
+                    log.error("Error loading message for reply all", ex);
+                }
+                return null;
+            }
+
+            @Override
+            protected void done() {
+                setCursor(java.awt.Cursor.getDefaultCursor());
+                EditorsRegistry.getInstance().clearStatus();
+
+                if (isCancelled()) {
+                    return;
+                }
+
+                if (error != null) {
+                    JOptionPane.showMessageDialog(BeaInboxPanel.this, "Fehler beim Laden der Nachricht: " + error.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
+                    return;
+                }
+
+                if (msg == null) {
+                    return;
+                }
+
+                // Now populate and show the dialog on EDT
+                SendBeaMessageFrame dlg = new SendBeaMessageFrame();
+
+                String azSender = msg.getReferenceNumber();
+                String azRecipient = msg.getReferenceJustice();
                 dlg.setAzRecipient(azSender);
                 dlg.setAzSender(azRecipient);
 
-                for (Recipient r : to) {
-                    dlg.addTo(bea.getIdentity(r.getSafeId()));
+                for (Identity identity : recipients) {
+                    dlg.addTo(identity);
                 }
-                dlg.addTo(bea.getIdentity(m.getSenderSafeId()));
 
-            } catch (Throwable t) {
-                log.error(t);
-                dlg.clearTo();
-                return;
+                String subject = msg.getSubject();
+                if (subject == null) {
+                    subject = "";
+                }
+                if (!subject.startsWith("Re: ")) {
+                    subject = "Re: " + subject;
+                }
+                dlg.setSubject(subject);
+
+                dlg.setBody(currentBody);
+
+                FrameUtils.centerFrame(dlg, null);
+                EditorsRegistry.getInstance().registerFrame(dlg);
+                dlg.setVisible(true);
             }
-
-            String subject = m.getSubject();
-            if (subject == null) {
-                subject = "";
-            }
-            if (!subject.startsWith("Re: ")) {
-                subject = "Re: " + subject;
-            }
-            dlg.setSubject(subject);
-
-            dlg.setBody(this.beaMessageContentUI.getBody());
-
-        } catch (Exception ex) {
-            log.error(ex);
-            JOptionPane.showMessageDialog(this, "Nachricht nicht gesendet: " + ex.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
-        }
-
-        FrameUtils.centerFrame(dlg, null);
-        EditorsRegistry.getInstance().registerFrame(dlg);
-        dlg.setVisible(true);
+        }.execute();
     }//GEN-LAST:event_cmdReplyAllActionPerformed
 
     private void mnuSearchSaveNoAttachmentsActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_mnuSearchSaveNoAttachmentsActionPerformed
