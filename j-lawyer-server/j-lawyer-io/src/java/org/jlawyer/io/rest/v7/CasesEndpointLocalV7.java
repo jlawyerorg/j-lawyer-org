@@ -713,5 +713,7 @@ public interface CasesEndpointLocalV7 {
     Response updateAllowedGroups(String id, Collection<RestfulGroupV6> allowedGroups);
     
     Response getAllowedGroups(String id);
+    
+    Response searchCases(String searchString, Boolean includeArchived);
         
 }
