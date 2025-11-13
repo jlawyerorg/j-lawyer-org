@@ -2318,17 +2318,36 @@ public class BeaInboxPanel extends javax.swing.JPanel implements SaveToCaseExecu
         }
     }//GEN-LAST:event_cmbDownloadMailsActionPerformed
 
-    private void displayMessage() {
+    // Timer for debouncing message display to avoid loading every message when quickly navigating
+    private javax.swing.Timer displayMessageTimer = null;
 
-        int splitLocationBefore=this.jSplitPane1.getDividerLocation();
-        
+    private void displayMessage() {
+        // Cancel any pending timer
+        if (displayMessageTimer != null) {
+            displayMessageTimer.stop();
+        }
+
+        // Clear UI immediately for responsive feedback
         this.beaMessageContentUI.clear();
         this.beaMessageContentUI.repaint();
         this.beaMessageContentUI.revalidate();
-
         this.pnlActionsChild.removeAll();
         this.pnlActionsChild.repaint();
         this.pnlActionsChild.revalidate();
+
+        if (this.tblMails.getSelectedRow() < 0 || this.tblMails.getSelectedRows().length > 1) {
+            return;
+        }
+
+        // Debounce: wait 200ms before actually loading the message
+        displayMessageTimer = new javax.swing.Timer(200, (e) -> displayMessageImpl());
+        displayMessageTimer.setRepeats(false);
+        displayMessageTimer.start();
+    }
+
+    private void displayMessageImpl() {
+
+        int splitLocationBefore=this.jSplitPane1.getDividerLocation();
 
         if (this.tblMails.getSelectedRow() < 0 || this.tblMails.getSelectedRows().length > 1) {
             return;
