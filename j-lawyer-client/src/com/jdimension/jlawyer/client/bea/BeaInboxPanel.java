@@ -1741,39 +1741,79 @@ public class BeaInboxPanel extends javax.swing.JPanel implements SaveToCaseExecu
 
     private void mnuEmptyTrashActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_mnuEmptyTrashActionPerformed
         DefaultMutableTreeNode tn = (DefaultMutableTreeNode) this.treeFolders.getSelectionPath().getLastPathComponent();
-        org.jlawyer.bea.model.Folder tf = (org.jlawyer.bea.model.Folder) tn.getUserObject();
+        final org.jlawyer.bea.model.Folder tf = (org.jlawyer.bea.model.Folder) tn.getUserObject();
 
         if (!(tf.getType().equals(Folder.TYPE_TRASH))) {
             return;
         }
 
-        try {
-            BeaAccess bea = BeaAccess.getInstance();
-            ArrayList<MessageHeader> all = new ArrayList<>(bea.getFolderOverview(tf, BeaAccess.getFilter()));
-            int failed = 0;
-            String lastFailure = "";
-            for (int i = 0; i < all.size(); i++) {
+        // Use ProgressIndicator for better UX with cancellable progress dialog
+        final ProgressIndicator pi = new ProgressIndicator(EditorsRegistry.getInstance().getMainWindow(), true);
+
+        new javax.swing.SwingWorker<Integer, Integer>() {
+            private Exception error = null;
+            private int failed = 0;
+            private String lastFailure = "";
+            private ArrayList<MessageHeader> all = null;
+
+            @Override
+            protected Integer doInBackground() throws Exception {
                 try {
-                    org.jlawyer.bea.model.MessageHeader m = all.get(i);
-                    EditorsRegistry.getInstance().updateStatus("Lösche Nachricht " + (i + 1) + " von " + all.size() + "...", true);
-                    bea.deleteMessage(m);
-                } catch (Throwable t) {
-                    log.error(t);
-                    failed++;
-                    lastFailure = t.getMessage();
+                    BeaAccess bea = BeaAccess.getInstance();
+                    all = new ArrayList<>(bea.getFolderOverview(tf, BeaAccess.getFilter()));
+
+                    pi.setMax(all.size());
+                    pi.progress("Lösche Nachrichten...");
+                    SwingUtilities.invokeLater(() -> pi.setVisible(true));
+
+                    for (int i = 0; i < all.size(); i++) {
+                        if (isCancelled()) {
+                            break;
+                        }
+
+                        try {
+                            org.jlawyer.bea.model.MessageHeader m = all.get(i);
+                            final int current = i + 1;
+                            publish(current);
+                            bea.deleteMessage(m);
+                        } catch (Throwable t) {
+                            log.error(t);
+                            failed++;
+                            lastFailure = t.getMessage();
+                        }
+                    }
+                } catch (Exception ex) {
+                    error = ex;
+                    log.error("Error emptying trash", ex);
+                }
+                return failed;
+            }
+
+            @Override
+            protected void process(java.util.List<Integer> chunks) {
+                if (!chunks.isEmpty()) {
+                    int latest = chunks.get(chunks.size() - 1);
+                    //pi.progress("Lösche Nachricht " + latest + " von " + (all != null ? all.size() : "?") + "...", latest);
+                    pi.progress("Lösche Nachricht " + latest + " von " + (all != null ? all.size() : "?") + "...");
                 }
             }
-            this.tblMails.setModel(new DefaultTableModel(new String[]{"", "", "", "Betreff", "Absender", "Empfänger", "Datum", "Az Absender", "Az Empfänger"}, 0));
 
-            if (failed > 0) {
-                JOptionPane.showMessageDialog(this, "" + failed + " Vorgänge fehlgeschlagen, letzte Meldung: " + lastFailure, com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
+            @Override
+            protected void done() {
+                pi.setVisible(false);
+                pi.dispose();
+
+                if (error != null) {
+                    JOptionPane.showMessageDialog(BeaInboxPanel.this, "Papierkorb konnte nicht geleert werden: " + error.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
+                } else {
+                    tblMails.setModel(new DefaultTableModel(new String[]{"", "", "", "Betreff", "Absender", "Empfänger", "Datum", "Az Absender", "Az Empfänger"}, 0));
+
+                    if (failed > 0) {
+                        JOptionPane.showMessageDialog(BeaInboxPanel.this, "" + failed + " Vorgänge fehlgeschlagen, letzte Meldung: " + lastFailure, com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
+                    }
+                }
             }
-
-            EditorsRegistry.getInstance().clearStatus();
-        } catch (Exception ex) {
-            JOptionPane.showMessageDialog(this, "Papierkorb konnte nicht geleert werden: " + ex.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
-            EditorsRegistry.getInstance().clearStatus();
-        }
+        }.execute();
 
     }//GEN-LAST:event_mnuEmptyTrashActionPerformed
 
