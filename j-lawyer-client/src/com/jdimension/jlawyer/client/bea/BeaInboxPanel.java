@@ -1976,46 +1976,94 @@ public class BeaInboxPanel extends javax.swing.JPanel implements SaveToCaseExecu
     }//GEN-LAST:event_tblMailsMouseReleased
 
     private void cmdForwardActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdForwardActionPerformed
-        SendBeaMessageFrame dlg = new SendBeaMessageFrame();
+        final int[] selected = this.tblMails.getSelectedRows();
+        if (selected.length == 0) {
+            return;
+        }
 
-        int[] selected = this.tblMails.getSelectedRows();
+        final MessageHeader mh = (MessageHeader) this.tblMails.getValueAt(selected[0], 1);
+        final String currentBody = this.beaMessageContentUI.getBody();
 
-        try {
-            MessageHeader mh = (MessageHeader) this.tblMails.getValueAt(selected[0], 1);
-            Message m = BeaAccess.getInstance().getMessage(mh.getId(), BeaAccess.getInstance().getLoggedInSafeId());
+        // Load message and attachments in background
+        new javax.swing.SwingWorker<java.util.Map<String, Object>, Void>() {
+            private Message msg = null;
+            private java.util.List<String> attachmentUrls = new java.util.ArrayList<>();
+            private Exception error = null;
 
-            String azSender = m.getReferenceNumber();
-            String azRecipient = m.getReferenceJustice();
-            dlg.setAzRecipient(azRecipient);
-            dlg.setAzSender(azSender);
+            @Override
+            protected java.util.Map<String, Object> doInBackground() throws Exception {
+                try {
+                    setCursor(java.awt.Cursor.getPredefinedCursor(java.awt.Cursor.WAIT_CURSOR));
+                    EditorsRegistry.getInstance().updateStatus("Lade Nachricht und Anhänge...");
 
-            String subject = m.getSubject();
-            if (subject == null) {
-                subject = "";
+                    BeaAccess bea = BeaAccess.getInstance();
+                    msg = bea.getMessage(mh.getId(), bea.getLoggedInSafeId());
+
+                    if (!isCancelled()) {
+                        // Load attachments - this can be slow for large files
+                        for (Attachment att : msg.getAttachments()) {
+                            if (isCancelled()) break;
+                            byte[] data = att.getContent();
+                            if (data != null) {
+                                String attachmentUrl = FileUtils.createTempFile(att.getFileName(), data);
+                                new File(attachmentUrl).deleteOnExit();
+                                attachmentUrls.add(attachmentUrl);
+                            }
+                        }
+                    }
+                } catch (Exception ex) {
+                    error = ex;
+                    log.error("Error loading message for forward", ex);
+                }
+                return null;
             }
-            if (!subject.startsWith("Fw: ")) {
-                subject = "Fw: " + subject;
-            }
-            dlg.setSubject(subject);
 
-            dlg.setBody(BeaUtils.getQuotedBody(this.beaMessageContentUI.getBody(), m.getSenderName()));
+            @Override
+            protected void done() {
+                setCursor(java.awt.Cursor.getDefaultCursor());
+                EditorsRegistry.getInstance().clearStatus();
 
-            for (Attachment att : m.getAttachments()) {
-                byte[] data = att.getContent();
-                if (data != null) {
-                    String attachmentUrl = FileUtils.createTempFile(att.getFileName(), data);
-                    new File(attachmentUrl).deleteOnExit();
+                if (isCancelled()) {
+                    return;
+                }
+
+                if (error != null) {
+                    JOptionPane.showMessageDialog(BeaInboxPanel.this, "Fehler beim Laden der Nachricht: " + error.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
+                    return;
+                }
+
+                if (msg == null) {
+                    return;
+                }
+
+                // Now populate and show the dialog on EDT
+                SendBeaMessageFrame dlg = new SendBeaMessageFrame();
+
+                String azSender = msg.getReferenceNumber();
+                String azRecipient = msg.getReferenceJustice();
+                dlg.setAzRecipient(azRecipient);
+                dlg.setAzSender(azSender);
+
+                String subject = msg.getSubject();
+                if (subject == null) {
+                    subject = "";
+                }
+                if (!subject.startsWith("Fw: ")) {
+                    subject = "Fw: " + subject;
+                }
+                dlg.setSubject(subject);
+
+                dlg.setBody(BeaUtils.getQuotedBody(currentBody, msg.getSenderName()));
+
+                for (String attachmentUrl : attachmentUrls) {
                     dlg.addAttachment(attachmentUrl, "");
                 }
-            }
 
-            FrameUtils.centerFrame(dlg, null);
-            EditorsRegistry.getInstance().registerFrame(dlg);
-            dlg.setVisible(true);
-        } catch (Exception ex) {
-            log.error(ex);
-            JOptionPane.showMessageDialog(this, "Fehler beim Laden der Nachricht: " + ex.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
-        }
+                FrameUtils.centerFrame(dlg, null);
+                EditorsRegistry.getInstance().registerFrame(dlg);
+                dlg.setVisible(true);
+            }
+        }.execute();
     }//GEN-LAST:event_cmdForwardActionPerformed
 
     private void cmdReplyAllActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdReplyAllActionPerformed
