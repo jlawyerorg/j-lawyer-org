@@ -707,5 +707,7 @@ public interface FormsServiceLocal {
     
     boolean installRepositoryPlugin(ServerFormPlugin plugin) throws Exception;
     Map<String, ServerFormPlugin> getPluginsInRepository(String clientVersion) throws Exception;
+
+    List<ArchiveFileFormsBean> getFormsByType(String typeId) throws Exception;
     
 }

@@ -686,4 +686,6 @@ public interface FormsEndpointV1Local {
 
     Response createForm(RestfulFormV1 form);
     
+    Response getFormsByType(String id);
+    
 }
