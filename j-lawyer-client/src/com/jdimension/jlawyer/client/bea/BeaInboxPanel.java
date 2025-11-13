@@ -2026,18 +2026,49 @@ public class BeaInboxPanel extends javax.swing.JPanel implements SaveToCaseExecu
     }//GEN-LAST:event_lblTempFilesWarningMouseClicked
 
     private void mnuMarkReadActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_mnuMarkReadActionPerformed
-        int[] selected = this.tblMails.getSelectedRows();
-        try {
-            for (int sel : selected) {
-                MessageHeader mh = (MessageHeader) this.tblMails.getValueAt(sel, 1);
-                BeaAccess.getInstance().setMessageReadByUser(mh);
-                mh.setRead(true);
-                this.tblMails.setValueAt(mh, sel, 1);
-            }
-        } catch (Throwable t) {
-            log.error("Could not mark message(s) as read", t);
-            JOptionPane.showMessageDialog(this, "Fehler beim Markieren der Nachricht(en): " + t.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
+        final int[] selected = this.tblMails.getSelectedRows();
+        final MessageHeader[] headers = new MessageHeader[selected.length];
+        for (int i = 0; i < selected.length; i++) {
+            headers[i] = (MessageHeader) this.tblMails.getValueAt(selected[i], 1);
         }
+
+        // Execute in background to avoid UI blocking
+        new javax.swing.SwingWorker<Void, Void>() {
+            private Exception error = null;
+
+            @Override
+            protected Void doInBackground() throws Exception {
+                try {
+                    setCursor(java.awt.Cursor.getPredefinedCursor(java.awt.Cursor.WAIT_CURSOR));
+                    EditorsRegistry.getInstance().updateStatus("Markiere Nachrichten als gelesen...");
+
+                    for (MessageHeader mh : headers) {
+                        if (isCancelled()) break;
+                        BeaAccess.getInstance().setMessageReadByUser(mh);
+                        mh.setRead(true);
+                    }
+                } catch (Exception ex) {
+                    error = ex;
+                    log.error("Could not mark message(s) as read", ex);
+                }
+                return null;
+            }
+
+            @Override
+            protected void done() {
+                setCursor(java.awt.Cursor.getDefaultCursor());
+                EditorsRegistry.getInstance().clearStatus();
+
+                if (error != null) {
+                    JOptionPane.showMessageDialog(BeaInboxPanel.this, "Fehler beim Markieren der Nachricht(en): " + error.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
+                } else {
+                    // Update UI on EDT
+                    for (int i = 0; i < selected.length; i++) {
+                        tblMails.setValueAt(headers[i], selected[i], 1);
+                    }
+                }
+            }
+        }.execute();
     }//GEN-LAST:event_mnuMarkReadActionPerformed
 
     private void cmbDownloadMailsActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmbDownloadMailsActionPerformed
