@@ -691,6 +691,10 @@ public class DocumentSearchPanel extends javax.swing.JPanel implements Themeable
     private Image backgroundImage = null;
     DecimalFormat df = new DecimalFormat("0.000");
 
+    // Debounced search control
+    private javax.swing.Timer searchTimer;
+    private javax.swing.SwingWorker<Void, Void> searchWorker;
+
     /**
      * Creates new form DocumentSearchPanel
      */
@@ -838,53 +842,113 @@ public class DocumentSearchPanel extends javax.swing.JPanel implements Themeable
     }//GEN-LAST:event_txtSearchStringKeyPressed
 
     private void cmdQuickSearchActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdQuickSearchActionPerformed
-        // perform search here
-        
-        HitPanel hp = new HitPanel();
-        hp.doLayout();
-        hp.getPreferredSize();
+        // Cancel any pending search timer
+        if (searchTimer != null) {
+            searchTimer.stop();
+        }
 
+        // Cancel any running search worker
+        if (searchWorker != null && !searchWorker.isDone()) {
+            searchWorker.cancel(true);
+        }
+
+        // Debounce the search by 300ms
+        searchTimer = new javax.swing.Timer(300, (e) -> {
+            cmdQuickSearchActionPerformedImpl();
+        });
+        searchTimer.setRepeats(false);
+        searchTimer.start();
+    }//GEN-LAST:event_cmdQuickSearchActionPerformed
+
+    private void cmdQuickSearchActionPerformedImpl() {
+        // Clear results immediately for responsive feedback
         this.pnlResults.removeAll();
-        
-        if("".equals(this.txtSearchString.getText().trim()))
+        this.scrollResults.repaint();
+
+        if("".equals(this.txtSearchString.getText().trim())) {
+            this.lblResultCount.setText("0 Ergebnisse");
             return;
-        
-        int maxDocs=100;
+        }
+
+        final String searchText = this.txtSearchString.getText();
+        final int maxDocs;
         try {
-            maxDocs=Integer.parseInt(this.cmbMaxDocs.getSelectedItem().toString());
+            maxDocs = Integer.parseInt(this.cmbMaxDocs.getSelectedItem().toString());
         } catch (Throwable t) {
             log.error("Error parsing max docs", t);
-        }
-        
-        ClientSettings settings = ClientSettings.getInstance();
-        JLawyerServiceLocator locator = null;
-        try {
-            locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
-            long start=System.currentTimeMillis();
-            ArrayList<SearchHit> hits = locator.lookupSearchServiceRemote().search(this.txtSearchString.getText(), maxDocs);
-            long end=System.currentTimeMillis();
-            this.lblResultCount.setText(hits.size() + " Ergebnisse in " + df.format(((end-start)/1000f)) + " Sekunden");
-            this.pnlResults.setLayout(new GridLayout(hits.size(),1));
-            float maxScore=100f;
-            if(hits.size()>0)
-                maxScore=hits.get(0).getScore();
-            for (int i=0;i<hits.size();i++) {
-                HitPanel hp2=new HitPanel();
-                if(i%2==0)
-                    hp2.setBackground(hp2.getBackground().brighter());
-                hits.get(i).setScore(hits.get(i).getScore()/maxScore);
-                hp2.setSearchHit(hits.get(i));
-                this.pnlResults.add(hp2);
-            }
-            this.scrollResults.repaint();
-            this.scrollResults.revalidate();
-        } catch (Exception ex) {
-            log.error("Error performing index search", ex);
-            JOptionPane.showMessageDialog(this, "Fehler bei der Suche: " + ex.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
-            EditorsRegistry.getInstance().clearStatus();
+            return;
         }
 
-    }//GEN-LAST:event_cmdQuickSearchActionPerformed
+        // Execute search in background
+        searchWorker = new javax.swing.SwingWorker<Void, Void>() {
+            private ArrayList<SearchHit> hits = null;
+            private long searchDuration = 0;
+            private Exception error = null;
+
+            @Override
+            protected Void doInBackground() throws Exception {
+                try {
+                    setCursor(java.awt.Cursor.getPredefinedCursor(java.awt.Cursor.WAIT_CURSOR));
+                    EditorsRegistry.getInstance().updateStatus("Suche Dokumente...");
+
+                    ClientSettings settings = ClientSettings.getInstance();
+                    JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
+
+                    long start = System.currentTimeMillis();
+                    hits = locator.lookupSearchServiceRemote().search(searchText, maxDocs);
+                    long end = System.currentTimeMillis();
+                    searchDuration = end - start;
+                } catch (Exception ex) {
+                    log.error("Error performing index search", ex);
+                    error = ex;
+                }
+                return null;
+            }
+
+            @Override
+            protected void done() {
+                setCursor(java.awt.Cursor.getDefaultCursor());
+                EditorsRegistry.getInstance().clearStatus();
+
+                if (isCancelled()) {
+                    return;
+                }
+
+                if (error != null) {
+                    JOptionPane.showMessageDialog(DocumentSearchPanel.this,
+                        "Fehler bei der Suche: " + error.getMessage(),
+                        com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR,
+                        JOptionPane.ERROR_MESSAGE);
+                    lblResultCount.setText("Fehler");
+                    return;
+                }
+
+                if (hits != null) {
+                    lblResultCount.setText(hits.size() + " Ergebnisse in " + df.format((searchDuration/1000f)) + " Sekunden");
+                    pnlResults.setLayout(new GridLayout(hits.size(), 1));
+
+                    float maxScore = 100f;
+                    if (hits.size() > 0) {
+                        maxScore = hits.get(0).getScore();
+                    }
+
+                    for (int i = 0; i < hits.size(); i++) {
+                        HitPanel hp2 = new HitPanel();
+                        if (i % 2 == 0) {
+                            hp2.setBackground(hp2.getBackground().brighter());
+                        }
+                        hits.get(i).setScore(hits.get(i).getScore() / maxScore);
+                        hp2.setSearchHit(hits.get(i));
+                        pnlResults.add(hp2);
+                    }
+
+                    scrollResults.repaint();
+                    scrollResults.revalidate();
+                }
+            }
+        };
+        searchWorker.execute();
+    }
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JComboBox cmbMaxDocs;
     private javax.swing.JButton cmdQuickSearch;
