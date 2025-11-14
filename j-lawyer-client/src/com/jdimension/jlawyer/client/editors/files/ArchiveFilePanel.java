@@ -9066,35 +9066,72 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
             return;
         }
 
-        try {
+        final ArrayList<ArchiveFileDocumentsBean> selected = this.caseFolderPanel1.getSelectedDocuments();
+        if (selected.isEmpty()) {
+            return;
+        }
 
-            ArrayList<ArchiveFileDocumentsBean> selected = this.caseFolderPanel1.getSelectedDocuments();
-            if (selected.isEmpty()) {
+        ArrayList<String> open = this.getDocumentsOpenForWrite(selected);
+        if (!open.isEmpty()) {
+            String question = "<html>Soll die Aktion auf geöffnete Dokumente ausgeführt werden? Es besteht das Risiko fehlender / inkonsistenter Inhalte.<br/><ul>";
+            for (String o : open) {
+                question = question + "<li>" + o + "</li>";
+            }
+            question = question + "</ul></html>";
+            int response = JOptionPane.showConfirmDialog(this, question, "Aktion auf offene Dokumente ausführen", JOptionPane.YES_NO_OPTION);
+            if (response == JOptionPane.NO_OPTION) {
                 return;
             }
+        }
 
-            ArrayList<String> open = this.getDocumentsOpenForWrite(selected);
-            if (!open.isEmpty()) {
-                String question = "<html>Soll die Aktion auf geöffnete Dokumente ausgeführt werden? Es besteht das Risiko fehlender / inkonsistenter Inhalte.<br/><ul>";
-                for (String o : open) {
-                    question = question + "<li>" + o + "</li>";
+        // Execute OCR in background to avoid blocking the EDT
+        javax.swing.SwingWorker<Void, Void> ocrWorker = new javax.swing.SwingWorker<Void, Void>() {
+            private int successCount = 0;
+            private Exception error = null;
+
+            @Override
+            protected Void doInBackground() throws Exception {
+                try {
+                    setCursor(java.awt.Cursor.getPredefinedCursor(java.awt.Cursor.WAIT_CURSOR));
+                    EditorsRegistry.getInstance().updateStatus("Führe Texterkennung durch...");
+
+                    for (ArchiveFileDocumentsBean doc : selected) {
+                        if (isCancelled()) {
+                            break;
+                        }
+                        performOcr(doc);
+                        successCount++;
+                    }
+                } catch (Exception ex) {
+                    log.error("Error OCRing document", ex);
+                    error = ex;
                 }
-                question = question + "</ul></html>";
-                int response = JOptionPane.showConfirmDialog(this, question, "Aktion auf offene Dokumente ausführen", JOptionPane.YES_NO_OPTION);
-                if (response == JOptionPane.NO_OPTION) {
+                return null;
+            }
+
+            @Override
+            protected void done() {
+                setCursor(java.awt.Cursor.getDefaultCursor());
+                EditorsRegistry.getInstance().clearStatus();
+
+                if (isCancelled()) {
                     return;
                 }
-            }
 
-            for (ArchiveFileDocumentsBean doc : selected) {
-                this.performOcr(doc);
+                if (error != null) {
+                    JOptionPane.showMessageDialog(ArchiveFilePanel.this,
+                        "Fehler bei der Texterkennung für das Dokument: " + error.getMessage(),
+                        com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR,
+                        JOptionPane.ERROR_MESSAGE);
+                } else {
+                    JOptionPane.showMessageDialog(EditorsRegistry.getInstance().getMainWindow(),
+                        "Texterkennung für " + successCount + " Dokument(e) abgeschlossen.",
+                        com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_HINT,
+                        JOptionPane.INFORMATION_MESSAGE);
+                }
             }
-            JOptionPane.showMessageDialog(EditorsRegistry.getInstance().getMainWindow(), "Texterkennung für " + selected.size() + " Dokument(e) abgeschlossen.", com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_HINT, JOptionPane.INFORMATION_MESSAGE);
-
-        } catch (Exception ioe) {
-            log.error("Error OCRing document", ioe);
-            JOptionPane.showMessageDialog(this, "Fehler bei der Texterkennung für das Dokument: " + ioe.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
-        }
+        };
+        ocrWorker.execute();
     }//GEN-LAST:event_mnuOcrActionPerformed
 
     private void cmdNewClaimLedgerActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdNewClaimLedgerActionPerformed
