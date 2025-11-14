@@ -684,10 +684,14 @@ public class RestfulInstantMessageV7 implements Serializable {
     protected String content;
 
     protected String caseContext;
+    private String caseFileNumber;
+    private String caseName;
+    private String caseReason;
 
     protected String documentContext;
+    private String documentFileName;
 
-    protected List<RestfulInstantMessageMentionV7> mentions = new ArrayList<RestfulInstantMessageMentionV7>();
+    protected List<RestfulInstantMessageMentionV7> mentions = new ArrayList<>();
 
     public InstantMessage toInstantMessage(InstantMessage im) {
         //im.setCaseContext(caseContext);
@@ -714,11 +718,17 @@ public class RestfulInstantMessageV7 implements Serializable {
     
     public static RestfulInstantMessageV7 fromInstantMessage(InstantMessage im) {
         RestfulInstantMessageV7 m=new RestfulInstantMessageV7();
-        if(im.getCaseContext()!=null)
+        if(im.getCaseContext()!=null) {
             m.setCaseContext(im.getCaseContext().getId());
+            m.setCaseFileNumber(im.getCaseContext().getFileNumber());
+            m.setCaseName(im.getCaseContext().getName());
+            m.setCaseReason(im.getCaseContext().getReason());
+        }
         m.setContent(im.getContent());
-        if(im.getDocumentContext()!=null)
+        if(im.getDocumentContext()!=null) {
             m.setDocumentContext(im.getDocumentContext().getId());
+            m.setDocumentFileName(im.getDocumentContext().getName());
+        }
         m.setId(im.getId());
         if(im.getMentions()!=null) {
             ArrayList<RestfulInstantMessageMentionV7> immList=new ArrayList<>();
@@ -834,6 +844,62 @@ public class RestfulInstantMessageV7 implements Serializable {
      */
     public void setMentions(List<RestfulInstantMessageMentionV7> mentions) {
         this.mentions = mentions;
+    }
+
+    /**
+     * @return the caseFileNumber
+     */
+    public String getCaseFileNumber() {
+        return caseFileNumber;
+    }
+
+    /**
+     * @param caseFileNumber the caseFileNumber to set
+     */
+    public void setCaseFileNumber(String caseFileNumber) {
+        this.caseFileNumber = caseFileNumber;
+    }
+
+    /**
+     * @return the caseName
+     */
+    public String getCaseName() {
+        return caseName;
+    }
+
+    /**
+     * @param caseName the caseName to set
+     */
+    public void setCaseName(String caseName) {
+        this.caseName = caseName;
+    }
+
+    /**
+     * @return the caseReason
+     */
+    public String getCaseReason() {
+        return caseReason;
+    }
+
+    /**
+     * @param caseReason the caseReason to set
+     */
+    public void setCaseReason(String caseReason) {
+        this.caseReason = caseReason;
+    }
+
+    /**
+     * @return the documentFileName
+     */
+    public String getDocumentFileName() {
+        return documentFileName;
+    }
+
+    /**
+     * @param documentFileName the documentFileName to set
+     */
+    public void setDocumentFileName(String documentFileName) {
+        this.documentFileName = documentFileName;
     }
 
 }
