@@ -1691,89 +1691,171 @@ public class BeaInboxPanel extends javax.swing.JPanel implements SaveToCaseExecu
     }//GEN-LAST:event_tblMailsMousePressed
 
     private void cmdDeleteActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdDeleteActionPerformed
-        int[] selected = this.tblMails.getSelectedRows();
-        int scrollToRow = -1;
+        final int[] selected = this.tblMails.getSelectedRows();
         if (!(selected.length > 0)) {
             return;
-
         }
 
-        scrollToRow = tblMails.getSelectedRow();
-        for (int i = selected.length - 1; i > -1; i--) {
+        final int scrollToRow = tblMails.getSelectedRow();
+        final DefaultMutableTreeNode tn = (DefaultMutableTreeNode) this.treeFolders.getSelectionPath().getLastPathComponent();
+        final org.jlawyer.bea.model.Folder tf = (org.jlawyer.bea.model.Folder) tn.getUserObject();
 
-            org.jlawyer.bea.model.MessageHeader mh = (org.jlawyer.bea.model.MessageHeader) this.tblMails.getValueAt(selected[i], 1);
-            try {
-                BeaAccess bea = BeaAccess.getInstance();
+        // Collect message headers and their model indices
+        final MessageHeader[] headers = new MessageHeader[selected.length];
+        final int[] modelIndices = new int[selected.length];
+        for (int i = 0; i < selected.length; i++) {
+            headers[i] = (MessageHeader) this.tblMails.getValueAt(selected[i], 1);
+            modelIndices[i] = this.tblMails.convertRowIndexToModel(selected[i]);
+        }
 
-                DefaultMutableTreeNode tn = (DefaultMutableTreeNode) this.treeFolders.getSelectionPath().getLastPathComponent();
-                org.jlawyer.bea.model.Folder tf = (org.jlawyer.bea.model.Folder) tn.getUserObject();
-                if (tf.getType().equals(Folder.TYPE_TRASH)) {
-                    boolean deleted = bea.deleteMessage(mh);
-                    if (deleted) {
-                        ((DefaultTableModel) this.tblMails.getModel()).removeRow(this.tblMails.convertRowIndexToModel(selected[i]));
+        // Execute deletion in background
+        new javax.swing.SwingWorker<java.util.List<Integer>, Void>() {
+            private Exception error = null;
+
+            @Override
+            protected java.util.List<Integer> doInBackground() throws Exception {
+                java.util.List<Integer> successfulIndices = new java.util.ArrayList<>();
+                try {
+                    setCursor(java.awt.Cursor.getPredefinedCursor(java.awt.Cursor.WAIT_CURSOR));
+                    EditorsRegistry.getInstance().updateStatus("Lösche Nachrichten...");
+
+                    BeaAccess bea = BeaAccess.getInstance();
+                    boolean isTrash = tf.getType().equals(Folder.TYPE_TRASH);
+
+                    for (int i = selected.length - 1; i > -1; i--) {
+                        if (isCancelled()) break;
+
+                        try {
+                            MessageHeader mh = headers[i];
+                            boolean success;
+                            if (isTrash) {
+                                success = bea.deleteMessage(mh);
+                            } else {
+                                success = bea.moveMessageToTrash(mh);
+                            }
+                            if (success) {
+                                successfulIndices.add(modelIndices[i]);
+                            }
+                        } catch (Throwable ex) {
+                            log.error(ex);
+                        }
                     }
-                } else {
-                    boolean moved = bea.moveMessageToTrash(mh);
-                    if (moved) {
-                        ((DefaultTableModel) this.tblMails.getModel()).removeRow(this.tblMails.convertRowIndexToModel(selected[i]));
-                    }
+                } catch (Exception ex) {
+                    error = ex;
+                    log.error("Error deleting messages", ex);
+                }
+                return successfulIndices;
+            }
+
+            @Override
+            protected void done() {
+                setCursor(java.awt.Cursor.getDefaultCursor());
+                EditorsRegistry.getInstance().clearStatus();
+
+                if (error != null) {
+                    JOptionPane.showMessageDialog(BeaInboxPanel.this, "Fehler beim Löschen: " + error.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
                 }
 
-            } catch (Throwable ex) {
-                log.error(ex);
+                try {
+                    java.util.List<Integer> successfulIndices = get();
+                    // Remove rows in reverse order to maintain correct indices
+                    java.util.Collections.sort(successfulIndices, java.util.Collections.reverseOrder());
+                    for (Integer idx : successfulIndices) {
+                        ((DefaultTableModel) tblMails.getModel()).removeRow(idx);
+                    }
+
+                    beaMessageContentUI.clear();
+                    pnlActionsChild.removeAll();
+
+                    int sortCol = -1;
+                    List<? extends SortKey> sortKeys = tblMails.getRowSorter().getSortKeys();
+                    if (sortKeys != null && !sortKeys.isEmpty()) {
+                        sortCol = sortKeys.get(0).getColumn();
+                    }
+                    treeFoldersValueChangedImpl(new TreeSelectionEvent(tblMails, treeFolders.getSelectionPath(), false, null, null), sortCol, scrollToRow);
+                } catch (Exception ex) {
+                    log.error("Error updating UI after delete", ex);
+                }
             }
-        }
-
-        this.beaMessageContentUI.clear();
-        this.pnlActionsChild.removeAll();
-
-        int sortCol = -1;
-        List<? extends SortKey> sortKeys = this.tblMails.getRowSorter().getSortKeys();
-        if (sortKeys != null) {
-            if (!sortKeys.isEmpty()) {
-                sortCol = sortKeys.get(0).getColumn();
-            }
-        }
-        this.treeFoldersValueChangedImpl(new TreeSelectionEvent(this.tblMails, this.treeFolders.getSelectionPath(), false, null, null), sortCol, scrollToRow);
-
+        }.execute();
 
     }//GEN-LAST:event_cmdDeleteActionPerformed
 
     private void mnuEmptyTrashActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_mnuEmptyTrashActionPerformed
         DefaultMutableTreeNode tn = (DefaultMutableTreeNode) this.treeFolders.getSelectionPath().getLastPathComponent();
-        org.jlawyer.bea.model.Folder tf = (org.jlawyer.bea.model.Folder) tn.getUserObject();
+        final org.jlawyer.bea.model.Folder tf = (org.jlawyer.bea.model.Folder) tn.getUserObject();
 
         if (!(tf.getType().equals(Folder.TYPE_TRASH))) {
             return;
         }
 
-        try {
-            BeaAccess bea = BeaAccess.getInstance();
-            ArrayList<MessageHeader> all = new ArrayList<>(bea.getFolderOverview(tf, BeaAccess.getFilter()));
-            int failed = 0;
-            String lastFailure = "";
-            for (int i = 0; i < all.size(); i++) {
+        // Use ProgressIndicator for better UX with cancellable progress dialog
+        final ProgressIndicator pi = new ProgressIndicator(EditorsRegistry.getInstance().getMainWindow(), true);
+
+        new javax.swing.SwingWorker<Integer, Integer>() {
+            private Exception error = null;
+            private int failed = 0;
+            private String lastFailure = "";
+            private ArrayList<MessageHeader> all = null;
+
+            @Override
+            protected Integer doInBackground() throws Exception {
                 try {
-                    org.jlawyer.bea.model.MessageHeader m = all.get(i);
-                    EditorsRegistry.getInstance().updateStatus("Lösche Nachricht " + (i + 1) + " von " + all.size() + "...", true);
-                    bea.deleteMessage(m);
-                } catch (Throwable t) {
-                    log.error(t);
-                    failed++;
-                    lastFailure = t.getMessage();
+                    BeaAccess bea = BeaAccess.getInstance();
+                    all = new ArrayList<>(bea.getFolderOverview(tf, BeaAccess.getFilter()));
+
+                    pi.setMax(all.size());
+                    pi.progress("Lösche Nachrichten...");
+                    SwingUtilities.invokeLater(() -> pi.setVisible(true));
+
+                    for (int i = 0; i < all.size(); i++) {
+                        if (isCancelled()) {
+                            break;
+                        }
+
+                        try {
+                            org.jlawyer.bea.model.MessageHeader m = all.get(i);
+                            final int current = i + 1;
+                            publish(current);
+                            bea.deleteMessage(m);
+                        } catch (Throwable t) {
+                            log.error(t);
+                            failed++;
+                            lastFailure = t.getMessage();
+                        }
+                    }
+                } catch (Exception ex) {
+                    error = ex;
+                    log.error("Error emptying trash", ex);
+                }
+                return failed;
+            }
+
+            @Override
+            protected void process(java.util.List<Integer> chunks) {
+                if (!chunks.isEmpty()) {
+                    int latest = chunks.get(chunks.size() - 1);
+                    //pi.progress("Lösche Nachricht " + latest + " von " + (all != null ? all.size() : "?") + "...", latest);
+                    pi.progress("Lösche Nachricht " + latest + " von " + (all != null ? all.size() : "?") + "...");
                 }
             }
-            this.tblMails.setModel(new DefaultTableModel(new String[]{"", "", "", "Betreff", "Absender", "Empfänger", "Datum", "Az Absender", "Az Empfänger"}, 0));
 
-            if (failed > 0) {
-                JOptionPane.showMessageDialog(this, "" + failed + " Vorgänge fehlgeschlagen, letzte Meldung: " + lastFailure, com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
+            @Override
+            protected void done() {
+                pi.setVisible(false);
+                pi.dispose();
+
+                if (error != null) {
+                    JOptionPane.showMessageDialog(BeaInboxPanel.this, "Papierkorb konnte nicht geleert werden: " + error.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
+                } else {
+                    tblMails.setModel(new DefaultTableModel(new String[]{"", "", "", "Betreff", "Absender", "Empfänger", "Datum", "Az Absender", "Az Empfänger"}, 0));
+
+                    if (failed > 0) {
+                        JOptionPane.showMessageDialog(BeaInboxPanel.this, "" + failed + " Vorgänge fehlgeschlagen, letzte Meldung: " + lastFailure, com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
+                    }
+                }
             }
-
-            EditorsRegistry.getInstance().clearStatus();
-        } catch (Exception ex) {
-            JOptionPane.showMessageDialog(this, "Papierkorb konnte nicht geleert werden: " + ex.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
-            EditorsRegistry.getInstance().clearStatus();
-        }
+        }.execute();
 
     }//GEN-LAST:event_mnuEmptyTrashActionPerformed
 
@@ -1786,43 +1868,86 @@ public class BeaInboxPanel extends javax.swing.JPanel implements SaveToCaseExecu
     }//GEN-LAST:event_cmdNewActionPerformed
 
     private void cmdReplyActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdReplyActionPerformed
-        SendBeaMessageFrame dlg = new SendBeaMessageFrame();
-
-        int[] selected = this.tblMails.getSelectedRows();
-
-        org.jlawyer.bea.model.MessageHeader mh = (org.jlawyer.bea.model.MessageHeader) this.tblMails.getValueAt(selected[0], 1);
-        try {
-            Message m = BeaAccess.getInstance().getMessage(mh.getId(), BeaAccess.getInstance().getLoggedInSafeId());
-
-            String azSender = m.getReferenceNumber();
-            String azRecipient = m.getReferenceJustice();
-            dlg.setAzRecipient(azSender);
-            dlg.setAzSender(azRecipient);
-
-            String senderSafeId = m.getSenderSafeId();
-            BeaAccess bea = BeaAccess.getInstance();
-            Identity sender = bea.getIdentity(senderSafeId);
-            dlg.setTo(sender);
-
-            String subject = m.getSubject();
-            if (subject == null) {
-                subject = "";
-            }
-            if (!subject.startsWith("Re: ")) {
-                subject = "Re: " + subject;
-            }
-            dlg.setSubject(subject);
-
-            dlg.setBody(this.beaMessageContentUI.getBody());
-
-        } catch (BeaWrapperException ex) {
-            log.error(ex);
-            JOptionPane.showMessageDialog(this, "Nachricht nicht gesendet: " + ex.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
+        final int[] selected = this.tblMails.getSelectedRows();
+        if (selected.length == 0) {
+            return;
         }
 
-        FrameUtils.centerFrame(dlg, null);
-        EditorsRegistry.getInstance().registerFrame(dlg);
-        dlg.setVisible(true);
+        final org.jlawyer.bea.model.MessageHeader mh = (org.jlawyer.bea.model.MessageHeader) this.tblMails.getValueAt(selected[0], 1);
+        final String currentBody = this.beaMessageContentUI.getBody();
+
+        // Load message data in background
+        new javax.swing.SwingWorker<Message, Void>() {
+            private Message msg = null;
+            private Identity sender = null;
+            private Exception error = null;
+
+            @Override
+            protected Message doInBackground() throws Exception {
+                try {
+                    setCursor(java.awt.Cursor.getPredefinedCursor(java.awt.Cursor.WAIT_CURSOR));
+                    EditorsRegistry.getInstance().updateStatus("Lade Nachrichtendetails...");
+
+                    BeaAccess bea = BeaAccess.getInstance();
+                    msg = bea.getMessage(mh.getId(), bea.getLoggedInSafeId());
+
+                    if (!isCancelled()) {
+                        String senderSafeId = msg.getSenderSafeId();
+                        sender = bea.getIdentity(senderSafeId);
+                    }
+                } catch (Exception ex) {
+                    error = ex;
+                    log.error("Error loading message for reply", ex);
+                }
+                return msg;
+            }
+
+            @Override
+            protected void done() {
+                setCursor(java.awt.Cursor.getDefaultCursor());
+                EditorsRegistry.getInstance().clearStatus();
+
+                if (isCancelled()) {
+                    return;
+                }
+
+                if (error != null) {
+                    JOptionPane.showMessageDialog(BeaInboxPanel.this, "Fehler beim Laden der Nachricht: " + error.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
+                    return;
+                }
+
+                if (msg == null) {
+                    return;
+                }
+
+                // Now populate and show the dialog on EDT
+                SendBeaMessageFrame dlg = new SendBeaMessageFrame();
+
+                String azSender = msg.getReferenceNumber();
+                String azRecipient = msg.getReferenceJustice();
+                dlg.setAzRecipient(azSender);
+                dlg.setAzSender(azRecipient);
+
+                if (sender != null) {
+                    dlg.setTo(sender);
+                }
+
+                String subject = msg.getSubject();
+                if (subject == null) {
+                    subject = "";
+                }
+                if (!subject.startsWith("Re: ")) {
+                    subject = "Re: " + subject;
+                }
+                dlg.setSubject(subject);
+
+                dlg.setBody(currentBody);
+
+                FrameUtils.centerFrame(dlg, null);
+                EditorsRegistry.getInstance().registerFrame(dlg);
+                dlg.setVisible(true);
+            }
+        }.execute();
     }//GEN-LAST:event_cmdReplyActionPerformed
 
     private void tblMailsKeyReleased(java.awt.event.KeyEvent evt) {//GEN-FIRST:event_tblMailsKeyReleased
@@ -1851,97 +1976,197 @@ public class BeaInboxPanel extends javax.swing.JPanel implements SaveToCaseExecu
     }//GEN-LAST:event_tblMailsMouseReleased
 
     private void cmdForwardActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdForwardActionPerformed
-        SendBeaMessageFrame dlg = new SendBeaMessageFrame();
+        final int[] selected = this.tblMails.getSelectedRows();
+        if (selected.length == 0) {
+            return;
+        }
 
-        int[] selected = this.tblMails.getSelectedRows();
+        final MessageHeader mh = (MessageHeader) this.tblMails.getValueAt(selected[0], 1);
+        final String currentBody = this.beaMessageContentUI.getBody();
 
-        try {
-            MessageHeader mh = (MessageHeader) this.tblMails.getValueAt(selected[0], 1);
-            Message m = BeaAccess.getInstance().getMessage(mh.getId(), BeaAccess.getInstance().getLoggedInSafeId());
+        // Load message and attachments in background
+        new javax.swing.SwingWorker<java.util.Map<String, Object>, Void>() {
+            private Message msg = null;
+            private java.util.List<String> attachmentUrls = new java.util.ArrayList<>();
+            private Exception error = null;
 
-            String azSender = m.getReferenceNumber();
-            String azRecipient = m.getReferenceJustice();
-            dlg.setAzRecipient(azRecipient);
-            dlg.setAzSender(azSender);
+            @Override
+            protected java.util.Map<String, Object> doInBackground() throws Exception {
+                try {
+                    setCursor(java.awt.Cursor.getPredefinedCursor(java.awt.Cursor.WAIT_CURSOR));
+                    EditorsRegistry.getInstance().updateStatus("Lade Nachricht und Anhänge...");
 
-            String subject = m.getSubject();
-            if (subject == null) {
-                subject = "";
+                    BeaAccess bea = BeaAccess.getInstance();
+                    msg = bea.getMessage(mh.getId(), bea.getLoggedInSafeId());
+
+                    if (!isCancelled()) {
+                        // Load attachments - this can be slow for large files
+                        for (Attachment att : msg.getAttachments()) {
+                            if (isCancelled()) break;
+                            byte[] data = att.getContent();
+                            if (data != null) {
+                                String attachmentUrl = FileUtils.createTempFile(att.getFileName(), data);
+                                new File(attachmentUrl).deleteOnExit();
+                                attachmentUrls.add(attachmentUrl);
+                            }
+                        }
+                    }
+                } catch (Exception ex) {
+                    error = ex;
+                    log.error("Error loading message for forward", ex);
+                }
+                return null;
             }
-            if (!subject.startsWith("Fw: ")) {
-                subject = "Fw: " + subject;
-            }
-            dlg.setSubject(subject);
 
-            dlg.setBody(BeaUtils.getQuotedBody(this.beaMessageContentUI.getBody(), m.getSenderName()));
+            @Override
+            protected void done() {
+                setCursor(java.awt.Cursor.getDefaultCursor());
+                EditorsRegistry.getInstance().clearStatus();
 
-            for (Attachment att : m.getAttachments()) {
-                byte[] data = att.getContent();
-                if (data != null) {
-                    String attachmentUrl = FileUtils.createTempFile(att.getFileName(), data);
-                    new File(attachmentUrl).deleteOnExit();
+                if (isCancelled()) {
+                    return;
+                }
+
+                if (error != null) {
+                    JOptionPane.showMessageDialog(BeaInboxPanel.this, "Fehler beim Laden der Nachricht: " + error.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
+                    return;
+                }
+
+                if (msg == null) {
+                    return;
+                }
+
+                // Now populate and show the dialog on EDT
+                SendBeaMessageFrame dlg = new SendBeaMessageFrame();
+
+                String azSender = msg.getReferenceNumber();
+                String azRecipient = msg.getReferenceJustice();
+                dlg.setAzRecipient(azRecipient);
+                dlg.setAzSender(azSender);
+
+                String subject = msg.getSubject();
+                if (subject == null) {
+                    subject = "";
+                }
+                if (!subject.startsWith("Fw: ")) {
+                    subject = "Fw: " + subject;
+                }
+                dlg.setSubject(subject);
+
+                dlg.setBody(BeaUtils.getQuotedBody(currentBody, msg.getSenderName()));
+
+                for (String attachmentUrl : attachmentUrls) {
                     dlg.addAttachment(attachmentUrl, "");
                 }
-            }
 
-            FrameUtils.centerFrame(dlg, null);
-            EditorsRegistry.getInstance().registerFrame(dlg);
-            dlg.setVisible(true);
-        } catch (Exception ex) {
-            log.error(ex);
-            JOptionPane.showMessageDialog(this, "Fehler beim Laden der Nachricht: " + ex.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
-        }
+                FrameUtils.centerFrame(dlg, null);
+                EditorsRegistry.getInstance().registerFrame(dlg);
+                dlg.setVisible(true);
+            }
+        }.execute();
     }//GEN-LAST:event_cmdForwardActionPerformed
 
     private void cmdReplyAllActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdReplyAllActionPerformed
-        SendBeaMessageFrame dlg = new SendBeaMessageFrame();
+        final int[] selected = this.tblMails.getSelectedRows();
+        if (selected.length == 0) {
+            return;
+        }
 
-        int[] selected = this.tblMails.getSelectedRows();
+        final org.jlawyer.bea.model.MessageHeader mh = (org.jlawyer.bea.model.MessageHeader) this.tblMails.getValueAt(selected[0], 1);
+        final String currentBody = this.beaMessageContentUI.getBody();
 
-        org.jlawyer.bea.model.MessageHeader mh = (org.jlawyer.bea.model.MessageHeader) this.tblMails.getValueAt(selected[0], 1);
-        try {
-            Message m = null;
-            try {
+        // Load message and all recipient identities in background
+        new javax.swing.SwingWorker<java.util.Map<String, Object>, Void>() {
+            private Message msg = null;
+            private java.util.List<Identity> recipients = new java.util.ArrayList<>();
+            private Exception error = null;
 
-                BeaAccess bea = BeaAccess.getInstance();
-                m = bea.getMessage(mh.getId(), bea.getLoggedInSafeId());
-                ArrayList<Recipient> to = m.getRecipients();
+            @Override
+            protected java.util.Map<String, Object> doInBackground() throws Exception {
+                try {
+                    setCursor(java.awt.Cursor.getPredefinedCursor(java.awt.Cursor.WAIT_CURSOR));
+                    EditorsRegistry.getInstance().updateStatus("Lade Empfängerdaten...");
 
-                String azSender = m.getReferenceNumber();
-                String azRecipient = m.getReferenceJustice();
+                    BeaAccess bea = BeaAccess.getInstance();
+                    msg = bea.getMessage(mh.getId(), bea.getLoggedInSafeId());
+
+                    if (!isCancelled()) {
+                        ArrayList<Recipient> to = msg.getRecipients();
+
+                        // Load all recipient identities - this can be slow with many recipients
+                        for (Recipient r : to) {
+                            if (isCancelled()) break;
+                            try {
+                                Identity identity = bea.getIdentity(r.getSafeId());
+                                recipients.add(identity);
+                            } catch (Throwable t) {
+                                log.error("Error loading recipient identity: " + r.getSafeId(), t);
+                            }
+                        }
+
+                        // Add sender identity
+                        if (!isCancelled()) {
+                            try {
+                                Identity senderIdentity = bea.getIdentity(msg.getSenderSafeId());
+                                recipients.add(senderIdentity);
+                            } catch (Throwable t) {
+                                log.error("Error loading sender identity: " + msg.getSenderSafeId(), t);
+                            }
+                        }
+                    }
+                } catch (Exception ex) {
+                    error = ex;
+                    log.error("Error loading message for reply all", ex);
+                }
+                return null;
+            }
+
+            @Override
+            protected void done() {
+                setCursor(java.awt.Cursor.getDefaultCursor());
+                EditorsRegistry.getInstance().clearStatus();
+
+                if (isCancelled()) {
+                    return;
+                }
+
+                if (error != null) {
+                    JOptionPane.showMessageDialog(BeaInboxPanel.this, "Fehler beim Laden der Nachricht: " + error.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
+                    return;
+                }
+
+                if (msg == null) {
+                    return;
+                }
+
+                // Now populate and show the dialog on EDT
+                SendBeaMessageFrame dlg = new SendBeaMessageFrame();
+
+                String azSender = msg.getReferenceNumber();
+                String azRecipient = msg.getReferenceJustice();
                 dlg.setAzRecipient(azSender);
                 dlg.setAzSender(azRecipient);
 
-                for (Recipient r : to) {
-                    dlg.addTo(bea.getIdentity(r.getSafeId()));
+                for (Identity identity : recipients) {
+                    dlg.addTo(identity);
                 }
-                dlg.addTo(bea.getIdentity(m.getSenderSafeId()));
 
-            } catch (Throwable t) {
-                log.error(t);
-                dlg.clearTo();
-                return;
+                String subject = msg.getSubject();
+                if (subject == null) {
+                    subject = "";
+                }
+                if (!subject.startsWith("Re: ")) {
+                    subject = "Re: " + subject;
+                }
+                dlg.setSubject(subject);
+
+                dlg.setBody(currentBody);
+
+                FrameUtils.centerFrame(dlg, null);
+                EditorsRegistry.getInstance().registerFrame(dlg);
+                dlg.setVisible(true);
             }
-
-            String subject = m.getSubject();
-            if (subject == null) {
-                subject = "";
-            }
-            if (!subject.startsWith("Re: ")) {
-                subject = "Re: " + subject;
-            }
-            dlg.setSubject(subject);
-
-            dlg.setBody(this.beaMessageContentUI.getBody());
-
-        } catch (Exception ex) {
-            log.error(ex);
-            JOptionPane.showMessageDialog(this, "Nachricht nicht gesendet: " + ex.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
-        }
-
-        FrameUtils.centerFrame(dlg, null);
-        EditorsRegistry.getInstance().registerFrame(dlg);
-        dlg.setVisible(true);
+        }.execute();
     }//GEN-LAST:event_cmdReplyAllActionPerformed
 
     private void mnuSearchSaveNoAttachmentsActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_mnuSearchSaveNoAttachmentsActionPerformed
@@ -2026,18 +2251,49 @@ public class BeaInboxPanel extends javax.swing.JPanel implements SaveToCaseExecu
     }//GEN-LAST:event_lblTempFilesWarningMouseClicked
 
     private void mnuMarkReadActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_mnuMarkReadActionPerformed
-        int[] selected = this.tblMails.getSelectedRows();
-        try {
-            for (int sel : selected) {
-                MessageHeader mh = (MessageHeader) this.tblMails.getValueAt(sel, 1);
-                BeaAccess.getInstance().setMessageReadByUser(mh);
-                mh.setRead(true);
-                this.tblMails.setValueAt(mh, sel, 1);
-            }
-        } catch (Throwable t) {
-            log.error("Could not mark message(s) as read", t);
-            JOptionPane.showMessageDialog(this, "Fehler beim Markieren der Nachricht(en): " + t.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
+        final int[] selected = this.tblMails.getSelectedRows();
+        final MessageHeader[] headers = new MessageHeader[selected.length];
+        for (int i = 0; i < selected.length; i++) {
+            headers[i] = (MessageHeader) this.tblMails.getValueAt(selected[i], 1);
         }
+
+        // Execute in background to avoid UI blocking
+        new javax.swing.SwingWorker<Void, Void>() {
+            private Exception error = null;
+
+            @Override
+            protected Void doInBackground() throws Exception {
+                try {
+                    setCursor(java.awt.Cursor.getPredefinedCursor(java.awt.Cursor.WAIT_CURSOR));
+                    EditorsRegistry.getInstance().updateStatus("Markiere Nachrichten als gelesen...");
+
+                    for (MessageHeader mh : headers) {
+                        if (isCancelled()) break;
+                        BeaAccess.getInstance().setMessageReadByUser(mh);
+                        mh.setRead(true);
+                    }
+                } catch (Exception ex) {
+                    error = ex;
+                    log.error("Could not mark message(s) as read", ex);
+                }
+                return null;
+            }
+
+            @Override
+            protected void done() {
+                setCursor(java.awt.Cursor.getDefaultCursor());
+                EditorsRegistry.getInstance().clearStatus();
+
+                if (error != null) {
+                    JOptionPane.showMessageDialog(BeaInboxPanel.this, "Fehler beim Markieren der Nachricht(en): " + error.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
+                } else {
+                    // Update UI on EDT
+                    for (int i = 0; i < selected.length; i++) {
+                        tblMails.setValueAt(headers[i], selected[i], 1);
+                    }
+                }
+            }
+        }.execute();
     }//GEN-LAST:event_mnuMarkReadActionPerformed
 
     private void cmbDownloadMailsActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmbDownloadMailsActionPerformed
@@ -2062,17 +2318,36 @@ public class BeaInboxPanel extends javax.swing.JPanel implements SaveToCaseExecu
         }
     }//GEN-LAST:event_cmbDownloadMailsActionPerformed
 
-    private void displayMessage() {
+    // Timer for debouncing message display to avoid loading every message when quickly navigating
+    private javax.swing.Timer displayMessageTimer = null;
 
-        int splitLocationBefore=this.jSplitPane1.getDividerLocation();
-        
+    private void displayMessage() {
+        // Cancel any pending timer
+        if (displayMessageTimer != null) {
+            displayMessageTimer.stop();
+        }
+
+        // Clear UI immediately for responsive feedback
         this.beaMessageContentUI.clear();
         this.beaMessageContentUI.repaint();
         this.beaMessageContentUI.revalidate();
-
         this.pnlActionsChild.removeAll();
         this.pnlActionsChild.repaint();
         this.pnlActionsChild.revalidate();
+
+        if (this.tblMails.getSelectedRow() < 0 || this.tblMails.getSelectedRows().length > 1) {
+            return;
+        }
+
+        // Debounce: wait 200ms before actually loading the message
+        displayMessageTimer = new javax.swing.Timer(200, (e) -> displayMessageImpl());
+        displayMessageTimer.setRepeats(false);
+        displayMessageTimer.start();
+    }
+
+    private void displayMessageImpl() {
+
+        int splitLocationBefore=this.jSplitPane1.getDividerLocation();
 
         if (this.tblMails.getSelectedRow() < 0 || this.tblMails.getSelectedRows().length > 1) {
             return;

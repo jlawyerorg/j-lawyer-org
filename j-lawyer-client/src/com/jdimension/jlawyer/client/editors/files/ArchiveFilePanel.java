@@ -865,6 +865,10 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
     // Debounced conflict recomputation control
     private javax.swing.Timer conflictRecomputeTimer;
 
+    // Debounced document search control
+    private javax.swing.Timer searchInputTimer;
+    private javax.swing.SwingWorker<Void, Void> searchWorker;
+
     // Remember last document shown in preview to improve multi-select behavior
     private String lastPreviewDocId = null;
 
@@ -7222,39 +7226,110 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
     }//GEN-LAST:event_mnuSaveDocumentEncryptedActionPerformed
 
     private void searchInputChanged(boolean clearOnly) {
-        String[] selectedTags = ComponentUtils.getSelectedMenuItems(this.popDocumentTagFilter);
-        try {
-            ClientSettings settings = ClientSettings.getInstance();
-            JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
-
-            // perform full-text search, but do not fail the search in general if this does not work
-            List<SearchHit> fullTextMatches = new ArrayList<>();
-            if (!clearOnly) {
-                try {
-                    boolean performFulltextSearch = ServerSettings.getInstance().getSettingAsBoolean(ServerSettings.SERVERCONF_SEARCH_FULLTEXT_INCASE, true);
-                    if (performFulltextSearch && !this.txtSearchDocumentNames.getText().trim().isEmpty()) {
-                        fullTextMatches = locator.lookupSearchServiceRemote().search(this.txtSearchDocumentNames.getText(), 5000, this.dto.getId());
-                    }
-                } catch (Throwable t) {
-                    log.error("full-text search failed", t);
-                    JOptionPane.showMessageDialog(this, "Volltextsuche fehlgeschlagen: " + t.getMessage() + " - suche anhand Dateinamen", com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
-                }
-            }
-
-            ArchiveFileServiceRemote remote = locator.lookupArchiveFileServiceRemote();
-            Hashtable<String, ArrayList<String>> allTags = remote.getDocumentTagsForCase(this.dto.getId());
-            int matches = this.caseFolderPanel1.toggleSearchFilter(clearOnly, this.txtSearchDocumentNames.getText(), selectedTags, allTags, fullTextMatches);
-            lblDocumentHits.setText(matches + " Treffer");
-        } catch (Exception ioe) {
-            log.error("Error loading document tags", ioe);
-            JOptionPane.showMessageDialog(this, "Fehler beim Laden der Dokumentetiketten: " + ioe.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
+        // Cancel any pending search timer
+        if (searchInputTimer != null) {
+            searchInputTimer.stop();
         }
 
-        if (this.txtSearchDocumentNames.getText().length() > 0 || selectedTags.length > 0) {
+        // Cancel any running search worker
+        if (searchWorker != null && !searchWorker.isDone()) {
+            searchWorker.cancel(true);
+        }
+
+        // If clearOnly, execute immediately without debouncing
+        if (clearOnly) {
+            searchInputChangedImpl(clearOnly);
+            return;
+        }
+
+        // Otherwise, debounce the search by 300ms
+        searchInputTimer = new javax.swing.Timer(300, (e) -> {
+            searchInputChangedImpl(false);
+        });
+        searchInputTimer.setRepeats(false);
+        searchInputTimer.start();
+    }
+
+    private void searchInputChangedImpl(boolean clearOnly) {
+        final String[] selectedTags = ComponentUtils.getSelectedMenuItems(this.popDocumentTagFilter);
+        final String searchText = this.txtSearchDocumentNames.getText();
+
+        // Update button state immediately for responsive UI
+        if (searchText.length() > 0 || selectedTags.length > 0) {
             this.cmdClearSearch.setEnabled(true);
         } else {
             this.cmdClearSearch.setEnabled(false);
         }
+
+        // Execute search in background
+        searchWorker = new javax.swing.SwingWorker<Void, Void>() {
+            private List<SearchHit> fullTextMatches = new ArrayList<>();
+            private Hashtable<String, ArrayList<String>> allTags = null;
+            private int matches = 0;
+            private Exception error = null;
+            private Exception fulltextError = null;
+
+            @Override
+            protected Void doInBackground() throws Exception {
+                try {
+                    setCursor(java.awt.Cursor.getPredefinedCursor(java.awt.Cursor.WAIT_CURSOR));
+                    EditorsRegistry.getInstance().updateStatus("Suche Dokumente...");
+
+                    ClientSettings settings = ClientSettings.getInstance();
+                    JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
+
+                    // Perform full-text search, but do not fail the search in general if this does not work
+                    if (!clearOnly && !isCancelled()) {
+                        try {
+                            boolean performFulltextSearch = ServerSettings.getInstance().getSettingAsBoolean(ServerSettings.SERVERCONF_SEARCH_FULLTEXT_INCASE, true);
+                            if (performFulltextSearch && !searchText.trim().isEmpty()) {
+                                fullTextMatches = locator.lookupSearchServiceRemote().search(searchText, 5000, dto.getId());
+                            }
+                        } catch (Throwable t) {
+                            log.error("full-text search failed", t);
+                            fulltextError = new Exception(t);
+                        }
+                    }
+
+                    if (!isCancelled()) {
+                        ArchiveFileServiceRemote remote = locator.lookupArchiveFileServiceRemote();
+                        allTags = remote.getDocumentTagsForCase(dto.getId());
+                        matches = caseFolderPanel1.toggleSearchFilter(clearOnly, searchText, selectedTags, allTags, fullTextMatches);
+                    }
+                } catch (Exception ioe) {
+                    log.error("Error loading document tags", ioe);
+                    error = ioe;
+                }
+                return null;
+            }
+
+            @Override
+            protected void done() {
+                setCursor(java.awt.Cursor.getDefaultCursor());
+                EditorsRegistry.getInstance().clearStatus();
+
+                if (isCancelled()) {
+                    return;
+                }
+
+                if (fulltextError != null) {
+                    JOptionPane.showMessageDialog(ArchiveFilePanel.this,
+                        "Volltextsuche fehlgeschlagen: " + fulltextError.getMessage() + " - suche anhand Dateinamen",
+                        com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR,
+                        JOptionPane.ERROR_MESSAGE);
+                }
+
+                if (error != null) {
+                    JOptionPane.showMessageDialog(ArchiveFilePanel.this,
+                        "Fehler beim Laden der Dokumentetiketten: " + error.getMessage(),
+                        com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR,
+                        JOptionPane.ERROR_MESSAGE);
+                } else {
+                    lblDocumentHits.setText(matches + " Treffer");
+                }
+            }
+        };
+        searchWorker.execute();
     }
 
     private void txtSearchDocumentNamesKeyReleased(java.awt.event.KeyEvent evt) {//GEN-FIRST:event_txtSearchDocumentNamesKeyReleased
