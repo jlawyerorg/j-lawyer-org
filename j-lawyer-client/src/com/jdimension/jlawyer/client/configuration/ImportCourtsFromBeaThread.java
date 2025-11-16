@@ -758,6 +758,7 @@ public class ImportCourtsFromBeaThread implements Runnable {
                         result = new ArrayList<>();
                         for (int k = 0; k < 10; k++) {
                             result.addAll(bea.searchIdentity(null, "*gericht*", null, null, zip + k + "*", null));
+                            //result.addAll(bea.searchIdentity(null, null, null, null, zip + k + "*", "*gericht*"));
                         }
                     }
 
