@@ -802,8 +802,7 @@ public class FormsEndpointV1 implements FormsEndpointV1Local {
             return Response.ok(resultList).build();
         } catch (Exception ex) {
             log.error("Can not list forms by type", ex);
-            Response res = Response.serverError().build();
-            return res;
+            return Response.serverError().build();
         }
     }
 

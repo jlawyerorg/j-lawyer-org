@@ -1835,7 +1835,6 @@ public class BeaInboxPanel extends javax.swing.JPanel implements SaveToCaseExecu
             protected void process(java.util.List<Integer> chunks) {
                 if (!chunks.isEmpty()) {
                     int latest = chunks.get(chunks.size() - 1);
-                    //pi.progress("Lösche Nachricht " + latest + " von " + (all != null ? all.size() : "?") + "...", latest);
                     pi.progress("Lösche Nachricht " + latest + " von " + (all != null ? all.size() : "?") + "...");
                 }
             }
