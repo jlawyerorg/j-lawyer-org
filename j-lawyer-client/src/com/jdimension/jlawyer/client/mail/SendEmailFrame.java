@@ -2392,7 +2392,7 @@ public class SendEmailFrame extends javax.swing.JFrame implements SendCommunicat
             }
         });
 
-        cmbPriority.setModel(new javax.swing.DefaultComboBoxModel<>(new String[] { "Item 1", "Item 2", "Item 3", "Item 4" }));
+        cmbPriority.setModel(new javax.swing.DefaultComboBoxModel<>(new String[] { "Normal", "Hoch (High)", "Niedrig (Low)" }));
 
         javax.swing.GroupLayout jPanel2Layout = new javax.swing.GroupLayout(jPanel2);
         jPanel2.setLayout(jPanel2Layout);
@@ -2867,10 +2867,10 @@ public class SendEmailFrame extends javax.swing.JFrame implements SendCommunicat
                         return;
                     }
                 }
-                a = new SendEncryptedAction(dlg, this, new ArrayList<>(this.attachments.values()), ms, this.chkReadReceipt.isSelected(), this.txtTo.getText(), this.txtCc.getText(), this.txtBcc.getText(), this.txtSubject.getText(), editorContent, contentType, this.contextArchiveFile, createDocumentTag, this.contextArchiveFileFolder, this.currentDraftDocumentId);
+                a = new SendEncryptedAction(dlg, this, new ArrayList<>(this.attachments.values()), ms, this.chkReadReceipt.isSelected(), this.txtTo.getText(), this.txtCc.getText(), this.txtBcc.getText(), this.txtSubject.getText(), editorContent, contentType, this.contextArchiveFile, createDocumentTag, this.contextArchiveFileFolder, this.currentDraftDocumentId, (String) this.cmbPriority.getSelectedItem());
             } else {
 
-                a = new SendAction(dlg, this, new ArrayList<>(this.attachments.values()), ms, this.chkReadReceipt.isSelected(), this.txtTo.getText(), this.txtCc.getText(), this.txtBcc.getText(), this.txtSubject.getText(), editorContent, contentType, this.contextArchiveFile, createDocumentTag, this.contextArchiveFileFolder, this.currentDraftDocumentId);
+                a = new SendAction(dlg, this, new ArrayList<>(this.attachments.values()), ms, this.chkReadReceipt.isSelected(), this.txtTo.getText(), this.txtCc.getText(), this.txtBcc.getText(), this.txtSubject.getText(), editorContent, contentType, this.contextArchiveFile, createDocumentTag, this.contextArchiveFileFolder, this.currentDraftDocumentId, (String) this.cmbPriority.getSelectedItem());
             }
 
             // Reset draft document ID as it will be deleted by SendAction/SendEncryptedAction after successful send
@@ -2890,9 +2890,9 @@ public class SendEmailFrame extends javax.swing.JFrame implements SendCommunicat
                     return;
                 }
             }
-            a = new SendEncryptedAction(dlg, this, new ArrayList<>(this.attachments.values()), ms, this.chkReadReceipt.isSelected(), this.txtTo.getText(), this.txtCc.getText(), this.txtBcc.getText(), this.txtSubject.getText(), editorContent, contentType, createDocumentTag);
+            a = new SendEncryptedAction(dlg, this, new ArrayList<>(this.attachments.values()), ms, this.chkReadReceipt.isSelected(), this.txtTo.getText(), this.txtCc.getText(), this.txtBcc.getText(), this.txtSubject.getText(), editorContent, contentType, createDocumentTag, (String) this.cmbPriority.getSelectedItem());
         } else {
-            a = new SendAction(dlg, this, new ArrayList<>(this.attachments.values()), ms, this.chkReadReceipt.isSelected(), this.txtTo.getText(), this.txtCc.getText(), this.txtBcc.getText(), this.txtSubject.getText(), editorContent, contentType, createDocumentTag);
+            a = new SendAction(dlg, this, new ArrayList<>(this.attachments.values()), ms, this.chkReadReceipt.isSelected(), this.txtTo.getText(), this.txtCc.getText(), this.txtBcc.getText(), this.txtSubject.getText(), editorContent, contentType, createDocumentTag, (String) this.cmbPriority.getSelectedItem());
         }
         a.start();
 
