@@ -1,0 +1,433 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema"
+           xmlns:tns="http://www.xjustiz.de"
+           xmlns:din91379="urn:xoev-de:kosit:xoev:datentyp:din-91379_2022-08"
+           targetNamespace="http://www.xjustiz.de"
+           version="3.3.0"
+           elementFormDefault="qualified"
+           attributeFormDefault="unqualified">
+   <xs:annotation>
+      <xs:appinfo>
+         <standard>
+            <nameLang>Strukturierte Fachdaten für die Kommunikation im elektronischen Rechtsverkehr</nameLang>
+            <nameKurz>XJustiz</nameKurz>
+            <nameTechnisch>xjustiz</nameTechnisch>
+            <kennung>urn:xoev-de:blk-ag-it-standards:standard:xjustiz</kennung>
+            <beschreibung>XJustiz ist der bundesweit einheitliche Standard für den Austausch strukturierter elektronischer Informationen mit der Justiz.</beschreibung>
+         </standard>
+         <versionStandard>
+            <version>3.5.1</version>
+            <beschreibung>XJustiz beschreibt ein standardisiertes Datenaustauschformat für die elektronische Kommunikation innerhalb und mit der Justizverwaltung.</beschreibung>
+            <versionXOEVProfil>1.7.2</versionXOEVProfil>
+            <versionXOEVHandbuch>2.3.1</versionXOEVHandbuch>
+            <versionXGenerator>3.1.1</versionXGenerator>
+            <versionModellierungswerkzeug>19.0 SP3</versionModellierungswerkzeug>
+            <nameModellierungswerkzeug>MagicDraw</nameModellierungswerkzeug>
+         </versionStandard>
+      </xs:appinfo>
+   </xs:annotation>
+   <xs:include schemaLocation="xjustiz_0000_grunddatensatz_3_5.xsd"/>
+   <xs:include schemaLocation="xjustiz_0910_cl_vollstreckung_3_1.xsd"/>
+   <xs:import schemaLocation="din-norm-91379-datatypes.xsd"
+              namespace="urn:xoev-de:kosit:xoev:datentyp:din-91379_2022-08"/>
+   <xs:complexType name="Type.VSTR.Beteiligter.Zusatz">
+      <xs:sequence>
+         <xs:element name="beteiligter.referenz" type="tns:Type.GDS.Ref.Beteiligtennummer">
+            <xs:annotation>
+               <xs:documentation>Referenz auf den im Grunddatensatz angegebenen Beteiligten</xs:documentation>
+            </xs:annotation>
+         </xs:element>
+         <xs:element name="anrede" type="tns:Code.VSTR.Anrede.Partei"/>
+         <xs:choice minOccurs="0">
+            <xs:element name="person.handelndUnter"
+                        maxOccurs="unbounded"
+                        type="din91379:datatypeD"/>
+            <xs:element name="organisation.namenszusatz" type="din91379:datatypeD"/>
+         </xs:choice>
+      </xs:sequence>
+   </xs:complexType>
+   <xs:complexType name="Type.VSTR.Eintragungsanordnung.Allgemein">
+      <xs:annotation>
+         <xs:documentation>Dieser Typ ist die Basis für die Typen 'Type.VSTR.Eintragungsanordnung.Schuldnerverzeichnis' und 'Type.VSTR.Eintragungsanordnung.Schuldnerverzeichnis.Portal'.</xs:documentation>
+      </xs:annotation>
+      <xs:sequence>
+         <xs:element name="auswahl_anordnungsbehoerde.eintragungsgrund">
+            <xs:annotation>
+               <xs:documentation>Hier ist die Stelle, von der die Eintragungsanordnung stammt, anzugeben und der Grund der Eintragung.</xs:documentation>
+            </xs:annotation>
+            <xs:complexType>
+               <xs:choice>
+                  <xs:element name="anordnung.gerichtsvollzieherVollstreckungsbehoerde">
+                     <xs:complexType>
+                        <xs:sequence>
+                           <xs:element name="auswahl_gerichtsvollzieherVollstreckungsbehoerde">
+                              <xs:complexType>
+                                 <xs:choice>
+                                    <xs:element name="gerichtsvollzieher" type="tns:Type.VSTR.Gerichtsvollzieher"/>
+                                    <xs:element name="vollstreckungsbehoerde"
+                                                type="tns:Type.VSTR.Vollstreckungsbehoerde"/>
+                                 </xs:choice>
+                              </xs:complexType>
+                           </xs:element>
+                           <xs:element name="eintragungsgrund.gerichtsvollzieherVollstreckungsbehoerde"
+                                       type="tns:Code.VSTR.Eintragungsgruende.Gerichtsvollzieher.Vollstreckungsbehoerde">
+                              <xs:annotation>
+                                 <xs:documentation>Jede Eintragungsanordnung kann nur einen Eintragungsgrund enthalten.</xs:documentation>
+                              </xs:annotation>
+                           </xs:element>
+                        </xs:sequence>
+                     </xs:complexType>
+                  </xs:element>
+                  <xs:element name="anordnung.insolvenzgericht">
+                     <xs:complexType>
+                        <xs:sequence>
+                           <xs:element name="insolvenzgericht" type="tns:Code.GDS.Gerichte.Typ3"/>
+                           <xs:element name="eintragungsgrund.insolvenzgericht"
+                                       type="tns:Code.VSTR.Eintragungsgruende.Insolvenzgericht">
+                              <xs:annotation>
+                                 <xs:documentation>Jede Eintragungsanordnung kann nur einen Eintragungsgrund enthalten.</xs:documentation>
+                              </xs:annotation>
+                           </xs:element>
+                           <xs:element name="datum.erlassDesBeschlusses" type="xs:date"/>
+                        </xs:sequence>
+                     </xs:complexType>
+                  </xs:element>
+               </xs:choice>
+            </xs:complexType>
+         </xs:element>
+         <xs:element name="aktenzeichen.eintragungsanordnung"
+                     type="tns:Type.GDS.Aktenzeichen"/>
+         <xs:element name="datumDerEintragungsanordnung" type="xs:date"/>
+      </xs:sequence>
+   </xs:complexType>
+   <xs:complexType name="Type.VSTR.Eintragungsanordnung.Schuldnerverzeichnis">
+      <xs:complexContent>
+         <xs:extension base="tns:Type.VSTR.Eintragungsanordnung.Allgemein">
+            <xs:sequence>
+               <xs:element name="korrekturLoeschung"
+                           minOccurs="0"
+                           type="tns:Code.VSTR.KorrekturLoeschung">
+                  <xs:annotation>
+                     <xs:documentation>Soll eine bereits übermittelte Eintragung geändert werden, ist hier festzulegen, (1) ob der Datensatz durch einen korrigierten Datensatz zu ersetzen ist oder der gesamte Datensatz gelöscht werden muss, (2) ob der Datensatz von Anfang an fehlerhaft war (irriger Eintrag) oder sich die Daten nachträglich geändert haben.</xs:documentation>
+                  </xs:annotation>
+               </xs:element>
+            </xs:sequence>
+         </xs:extension>
+      </xs:complexContent>
+   </xs:complexType>
+   <xs:complexType name="Type.VSTR.Eintragungsanordnung.Schuldnerverzeichnis.Portal">
+      <xs:complexContent>
+         <xs:extension base="tns:Type.VSTR.Eintragungsanordnung.Allgemein">
+            <xs:sequence>
+               <xs:element name="loeschungAenderungDerEintragungImSchuldnerverzeichnis"
+                           minOccurs="0"
+                           type="tns:Code.VSTR.Schuldnerverzeichnis.Loeschungsgruende">
+                  <xs:annotation>
+                     <xs:documentation>Dieses Element findet Verwendung im Datenaustausch zwischen zentralem Vollstreckungsgericht und Vollstreckungsportal. Es wird außerdem durch das Vollstreckungsportal für die Nachrichten an die Abdruckempfänger genutzt.</xs:documentation>
+                  </xs:annotation>
+               </xs:element>
+            </xs:sequence>
+         </xs:extension>
+      </xs:complexContent>
+   </xs:complexType>
+   <xs:complexType name="Type.VSTR.Entscheidung.Schuldnerwiderspruch">
+      <xs:sequence>
+         <xs:element name="eintragungsanordnung.allgemein"
+                     type="tns:Type.VSTR.Eintragungsanordnung.Allgemein"/>
+         <xs:element name="datumDerEntscheidung" type="xs:date">
+            <xs:annotation>
+               <xs:documentation>Hier ist das Datum der Entscheidung über den Schuldnerwiderspruch anzugeben.</xs:documentation>
+            </xs:annotation>
+         </xs:element>
+         <xs:element name="inhaltDerEntscheidung"
+                     type="tns:Code.VSTR.Entscheidungsinhalt.Schuldnerwiderspruch">
+            <xs:annotation>
+               <xs:documentation>Hier ist der Inhalt der Entscheidung über den Schuldnerwiderspruch anzugeben.</xs:documentation>
+            </xs:annotation>
+         </xs:element>
+         <xs:element name="korrekturLoeschung"
+                     minOccurs="0"
+                     type="tns:Code.VSTR.KorrekturLoeschung">
+            <xs:annotation>
+               <xs:documentation>Soll eine bereits übermittelte Eintragung geändert werden, ist hier festzulegen, (1) ob der Datensatz durch einen korrigierten Datensatz zu ersetzen ist oder der gesamte Datensatz gelöscht werden muss, (2) ob der Datensatz von Anfang an fehlerhaft war (irriger Eintrag) oder sich die Daten nachträglich geändert haben.</xs:documentation>
+            </xs:annotation>
+         </xs:element>
+      </xs:sequence>
+   </xs:complexType>
+   <xs:complexType name="Type.VSTR.Gerichtsvollzieher">
+      <xs:sequence>
+         <xs:element name="dienstbezeichnung"
+                     type="tns:Code.VSTR.Gerichtsvollzieher.Dienstbezeichnung"/>
+         <xs:element name="vorname" type="din91379:datatypeA"/>
+         <xs:element name="name" type="din91379:datatypeA"/>
+         <xs:element name="amtsgericht" type="tns:Code.GDS.Gerichte.Typ3"/>
+      </xs:sequence>
+   </xs:complexType>
+   <xs:complexType name="Type.VSTR.Uebermittlung.Vermoegensverzeichnis">
+      <xs:sequence>
+         <xs:element name="auswahl_anordnendeStelle">
+            <xs:annotation>
+               <xs:documentation>Hier ist d. Gerichtsvollzieher(in) oder die Vollstreckungsbehörde anzugeben, der/die das Vermögensverzeichnis abnimmt.</xs:documentation>
+            </xs:annotation>
+            <xs:complexType>
+               <xs:choice>
+                  <xs:element name="gerichtsvollzieher" type="tns:Type.VSTR.Gerichtsvollzieher"/>
+                  <xs:element name="vollstreckungsbehoerde"
+                              type="tns:Type.VSTR.Vollstreckungsbehoerde"/>
+               </xs:choice>
+            </xs:complexType>
+         </xs:element>
+         <xs:element name="aktenzeichen.anordnendeStelle" type="tns:Type.GDS.Aktenzeichen"/>
+         <xs:element name="datumDesVermoegensverzeichnisses" type="xs:date"/>
+         <xs:element name="artDesVermoegensverzeichnisses"
+                     type="tns:Code.VSTR.Vermoegensverzeichnis.Art">
+            <xs:annotation>
+               <xs:documentation>Hier wird klargestellt, ob das Vermögensverzeichnis beruht auf (1) der erstmaligen Vermögensauskunft d. Schuldners/Schuldnerin, ggf. nach Ablauf der zweijährigen Löschfrist, (2) einer erneuten Vermögensauskunft nach § 802d ZPO oder (3) der Nachbesserung (Ergänzung) eines bereits übermittelten Vermögensverzeichnisses.</xs:documentation>
+            </xs:annotation>
+         </xs:element>
+         <xs:element name="korrekturLoeschung"
+                     minOccurs="0"
+                     type="tns:Code.VSTR.KorrekturLoeschung">
+            <xs:annotation>
+               <xs:documentation>Soll eine bereits übermittelte Eintragung geändert werden, ist hier festzulegen, (1) ob der Datensatz durch einen korrigierten Datensatz zu ersetzen ist oder der gesamte Datensatz gelöscht werden muss, (2) ob der Datensatz von Anfang an fehlerhaft war (irriger Eintrag) oder sich die Daten nachträglich geändert haben.</xs:documentation>
+            </xs:annotation>
+         </xs:element>
+         <xs:element name="dokumentenname" type="din91379:datatypeC">
+            <xs:annotation>
+               <xs:documentation>Hier ist der Dateiname des beigefügten Vermögensverzeichnisses anzugeben.</xs:documentation>
+            </xs:annotation>
+         </xs:element>
+      </xs:sequence>
+   </xs:complexType>
+   <xs:complexType name="Type.VSTR.Vollstreckungsbehoerde">
+      <xs:sequence>
+         <xs:element name="name" type="din91379:datatypeD"/>
+         <xs:element name="ort" type="din91379:datatypeB"/>
+      </xs:sequence>
+   </xs:complexType>
+   <xs:element name="nachricht.vstr.entscheidung.schuldnerwiderspruch.0900001">
+      <xs:complexType>
+         <xs:sequence>
+            <xs:element name="nachrichtenkopf" type="tns:Type.GDS.Nachrichtenkopf"/>
+            <xs:element name="grunddaten" type="tns:Type.GDS.Grunddaten"/>
+            <xs:element name="fachdaten">
+               <xs:complexType>
+                  <xs:sequence>
+                     <xs:element name="entscheidung.schuldnerwiderspruch"
+                                 type="tns:Type.VSTR.Entscheidung.Schuldnerwiderspruch"/>
+                     <xs:element name="beteiligter.zusatz" type="tns:Type.VSTR.Beteiligter.Zusatz">
+                        <xs:annotation>
+                           <xs:documentation>Für den im Grunddatensatz angegebenen Beteiligten werden weitergehende Informationen übergeben.</xs:documentation>
+                        </xs:annotation>
+                     </xs:element>
+                  </xs:sequence>
+               </xs:complexType>
+            </xs:element>
+         </xs:sequence>
+      </xs:complexType>
+   </xs:element>
+   <xs:element name="nachricht.vstr.entscheidung.schuldnerwiderspruch.eintragungsbestaetigung.0900002">
+      <xs:complexType>
+         <xs:sequence>
+            <xs:element name="nachrichtenkopf" type="tns:Type.GDS.Nachrichtenkopf"/>
+            <xs:element name="grunddaten" type="tns:Type.GDS.Grunddaten"/>
+            <xs:element name="fachdaten">
+               <xs:complexType>
+                  <xs:sequence>
+                     <xs:element name="entscheidung.schuldnerwiderspruch"
+                                 type="tns:Type.VSTR.Entscheidung.Schuldnerwiderspruch"/>
+                     <xs:element name="beteiligter.zusatz" type="tns:Type.VSTR.Beteiligter.Zusatz">
+                        <xs:annotation>
+                           <xs:documentation>Für den im Grunddatensatz angegebenen Beteiligten werden weitergehende Informationen übergeben.</xs:documentation>
+                        </xs:annotation>
+                     </xs:element>
+                     <xs:element name="ergebnisDerVerarbeitung">
+                        <xs:annotation>
+                           <xs:documentation>Hier wird nicht das Ergebnis formaler Prüfungen (z.B. Signaturprüfung, Virenprüfung, Authentifizierung usw.) mitgeteilt.</xs:documentation>
+                        </xs:annotation>
+                        <xs:complexType>
+                           <xs:sequence>
+                              <xs:element name="ergebnis.code"
+                                          type="tns:Code.VSTR.Verarbeitungsergebnis.Schuldnerverzeichnis"/>
+                              <xs:element name="ergebnis.ergaenzenderFehlertext"
+                                          minOccurs="0"
+                                          type="din91379:datatypeE"/>
+                           </xs:sequence>
+                        </xs:complexType>
+                     </xs:element>
+                  </xs:sequence>
+               </xs:complexType>
+            </xs:element>
+         </xs:sequence>
+      </xs:complexType>
+   </xs:element>
+   <xs:element name="nachricht.vstr.schuldnerverzeichnis.eintragung.korrektur.0900003">
+      <xs:complexType>
+         <xs:sequence>
+            <xs:element name="nachrichtenkopf" type="tns:Type.GDS.Nachrichtenkopf"/>
+            <xs:element name="grunddaten" type="tns:Type.GDS.Grunddaten"/>
+            <xs:element name="fachdaten">
+               <xs:complexType>
+                  <xs:sequence>
+                     <xs:element name="eintragungsanordnung"
+                                 type="tns:Type.VSTR.Eintragungsanordnung.Schuldnerverzeichnis"/>
+                     <xs:element name="beteiligter.zusatz" type="tns:Type.VSTR.Beteiligter.Zusatz">
+                        <xs:annotation>
+                           <xs:documentation>Für den im Grunddatensatz angegebenen Beteiligten werden weitergehende Informationen übergeben.</xs:documentation>
+                        </xs:annotation>
+                     </xs:element>
+                  </xs:sequence>
+               </xs:complexType>
+            </xs:element>
+         </xs:sequence>
+      </xs:complexType>
+   </xs:element>
+   <xs:element name="nachricht.vstr.schuldnerverzeichnis.verarbeitungsbestaetigung.portal.0900004">
+      <xs:complexType>
+         <xs:sequence>
+            <xs:element name="nachrichtenkopf" type="tns:Type.GDS.Nachrichtenkopf"/>
+            <xs:element name="grunddaten" type="tns:Type.GDS.Grunddaten"/>
+            <xs:element name="fachdaten">
+               <xs:complexType>
+                  <xs:sequence>
+                     <xs:element name="eintragungsanordnung"
+                                 type="tns:Type.VSTR.Eintragungsanordnung.Schuldnerverzeichnis.Portal"/>
+                     <xs:element name="beteiligter.zusatz" type="tns:Type.VSTR.Beteiligter.Zusatz">
+                        <xs:annotation>
+                           <xs:documentation>Für den im Grunddatensatz angegebenen Beteiligten werden weitergehende Informationen übergeben.</xs:documentation>
+                        </xs:annotation>
+                     </xs:element>
+                     <xs:element name="ergebnisDerVerarbeitung">
+                        <xs:annotation>
+                           <xs:documentation>Hier wird nicht das Ergebnis formaler Prüfungen (z.B. Signaturprüfung, Virenprüfung, Authentifizierung usw.) mitgeteilt.</xs:documentation>
+                        </xs:annotation>
+                        <xs:complexType>
+                           <xs:sequence>
+                              <xs:element name="ergebnis.code"
+                                          type="tns:Code.VSTR.Verarbeitungsergebnis.Schuldnerverzeichnis"/>
+                              <xs:element name="ergebnis.ergaenzenderFehlertext"
+                                          minOccurs="0"
+                                          type="din91379:datatypeE"/>
+                           </xs:sequence>
+                        </xs:complexType>
+                     </xs:element>
+                  </xs:sequence>
+               </xs:complexType>
+            </xs:element>
+         </xs:sequence>
+      </xs:complexType>
+   </xs:element>
+   <xs:element name="nachricht.vstr.schuldnerverzeichnis.abdrucke.0900005">
+      <xs:complexType>
+         <xs:sequence>
+            <xs:element name="nachrichtenkopf" type="tns:Type.GDS.Nachrichtenkopf"/>
+            <xs:element name="grunddaten" type="tns:Type.GDS.Grunddaten"/>
+            <xs:element name="fachdaten">
+               <xs:complexType>
+                  <xs:sequence>
+                     <xs:element name="mitteilungsdaten" maxOccurs="unbounded">
+                        <xs:complexType>
+                           <xs:sequence>
+                              <xs:element name="eintragungsanordnung"
+                                          type="tns:Type.VSTR.Eintragungsanordnung.Schuldnerverzeichnis.Portal"/>
+                              <xs:element name="verfahrensnummer" type="din91379:datatypeC">
+                                 <xs:annotation>
+                                    <xs:documentation>In dieser XJustiz-Nachricht wird die Verfahrensnummer im Fachdatenbereich und nicht in den Grunddaten angegeben!</xs:documentation>
+                                 </xs:annotation>
+                              </xs:element>
+                              <xs:element name="beteiligter.zusatz" type="tns:Type.VSTR.Beteiligter.Zusatz">
+                                 <xs:annotation>
+                                    <xs:documentation>Für den im Grunddatensatz angegebenen Beteiligten werden weitergehende Informationen übergeben.</xs:documentation>
+                                 </xs:annotation>
+                              </xs:element>
+                           </xs:sequence>
+                        </xs:complexType>
+                     </xs:element>
+                     <xs:element name="abdruckzeitraum">
+                        <xs:complexType>
+                           <xs:sequence>
+                              <xs:element name="beginn" type="xs:dateTime"/>
+                              <xs:element name="ende" type="xs:dateTime"/>
+                           </xs:sequence>
+                        </xs:complexType>
+                     </xs:element>
+                  </xs:sequence>
+               </xs:complexType>
+            </xs:element>
+         </xs:sequence>
+      </xs:complexType>
+   </xs:element>
+   <xs:element name="nachricht.vstr.vermoegensverzeichnis.uebermittlung.korrektur.0900006">
+      <xs:complexType>
+         <xs:sequence>
+            <xs:element name="nachrichtenkopf" type="tns:Type.GDS.Nachrichtenkopf"/>
+            <xs:element name="grunddaten" type="tns:Type.GDS.Grunddaten"/>
+            <xs:element name="fachdaten">
+               <xs:complexType>
+                  <xs:sequence>
+                     <xs:element name="uebermittlung.vermoegensverzeichnis"
+                                 type="tns:Type.VSTR.Uebermittlung.Vermoegensverzeichnis"/>
+                     <xs:element name="beteiligter.zusatz" type="tns:Type.VSTR.Beteiligter.Zusatz">
+                        <xs:annotation>
+                           <xs:documentation>Für den im Grunddatensatz angegebenen Beteiligten werden weitergehende Informationen übergeben.</xs:documentation>
+                        </xs:annotation>
+                     </xs:element>
+                  </xs:sequence>
+               </xs:complexType>
+            </xs:element>
+         </xs:sequence>
+      </xs:complexType>
+   </xs:element>
+   <xs:element name="nachricht.vstr.vermoegensverzeichnis.uebermittlungsbestaetigung.portal.0900007">
+      <xs:complexType>
+         <xs:sequence>
+            <xs:element name="nachrichtenkopf" type="tns:Type.GDS.Nachrichtenkopf"/>
+            <xs:element name="grunddaten" type="tns:Type.GDS.Grunddaten"/>
+            <xs:element name="fachdaten">
+               <xs:complexType>
+                  <xs:sequence>
+                     <xs:element name="uebermittlung.vermoegensverzeichnis"
+                                 type="tns:Type.VSTR.Uebermittlung.Vermoegensverzeichnis"/>
+                     <xs:element name="beteiligter.zusatz" type="tns:Type.VSTR.Beteiligter.Zusatz">
+                        <xs:annotation>
+                           <xs:documentation>Für den im Grunddatensatz angegebenen Beteiligten werden weitergehende Informationen übergeben.</xs:documentation>
+                        </xs:annotation>
+                     </xs:element>
+                     <xs:element name="ergebnisDerVerarbeitung">
+                        <xs:annotation>
+                           <xs:documentation>Hier wird nicht das Ergebnis formaler Prüfungen (z.B. Signaturprüfung, Virenprüfung, Authentifizierung usw.) mitgeteilt.</xs:documentation>
+                        </xs:annotation>
+                        <xs:complexType>
+                           <xs:sequence>
+                              <xs:element name="ergebnis.code"
+                                          type="tns:Code.VSTR.Verarbeitungsergebnis.Schuldnerverzeichnis"/>
+                              <xs:element name="ergebnis.ergaenzenderFehlertext"
+                                          minOccurs="0"
+                                          type="din91379:datatypeE"/>
+                           </xs:sequence>
+                        </xs:complexType>
+                     </xs:element>
+                  </xs:sequence>
+               </xs:complexType>
+            </xs:element>
+         </xs:sequence>
+      </xs:complexType>
+   </xs:element>
+   <xs:element name="nachricht.vstr.fehlermeldung.0900008">
+      <xs:complexType>
+         <xs:complexContent>
+            <xs:extension base="tns:Type.GDS.Basisnachricht">
+               <xs:sequence>
+                  <xs:element name="fachdaten">
+                     <xs:complexType>
+                        <xs:sequence>
+                           <xs:element name="fehlertext" type="din91379:datatypeE"/>
+                        </xs:sequence>
+                     </xs:complexType>
+                  </xs:element>
+               </xs:sequence>
+            </xs:extension>
+         </xs:complexContent>
+      </xs:complexType>
+   </xs:element>
+</xs:schema>

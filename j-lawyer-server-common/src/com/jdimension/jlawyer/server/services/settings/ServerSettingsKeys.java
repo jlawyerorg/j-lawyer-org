@@ -789,6 +789,8 @@ public class ServerSettingsKeys {
     public static final String SERVERCONF_USAGELIMIT_MAXUSERS="jlawyer.server.usagelimit.maxusers";
     
     public static final String SERVERCONF_TIMESHEET_PARALLELLOGS_WARNING="jlawyer.server.timesheets.parallellogswarning";
+    // can have values "minutes", "hours", "reject"
+    public static final String SERVERCONF_TIMESHEET_NUMERICINPUT="jlawyer.server.timesheets.numericinput";
     
     public static final String SERVERCONF_INSTANTMESSAGING_POLLING_ENABLED="jlawyer.server.instantmessaging.polling.enabled";
     

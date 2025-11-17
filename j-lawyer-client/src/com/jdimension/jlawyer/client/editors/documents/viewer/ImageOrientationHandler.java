@@ -684,9 +684,9 @@ public class ImageOrientationHandler {
             // EXIF Orientierung auslesen
             int orientation = getExifOrientation(imageData);
             log.info("Found EXIF orientation: " + orientation);
-            
-            // Wenn keine spezielle Orientierung, Original zurückgeben
-            if (orientation == 1) {
+
+            // Wenn keine spezielle Orientierung (1) oder ungültige Orientierung (0 oder außerhalb 1-8), Original zurückgeben
+            if (orientation <= 0 || orientation == 1 || orientation > 8) {
                 return imageData;
             }
             

@@ -1356,7 +1356,7 @@ public class BulkSaveDialog extends javax.swing.JDialog implements NewEventEntry
     private void cmdAddCalendarEntryActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdAddCalendarEntryActionPerformed
         NewEventEntryDialog newEventDlg = new NewEventEntryDialog(this, EditorsRegistry.getInstance().getMainWindow(), Dialog.ModalityType.APPLICATION_MODAL, this.selectedCase, false);
         newEventDlg.setEventType(ArchiveFileReviewsBean.EVENTTYPE_FOLLOWUP);
-        newEventDlg.setReviewAssignee(this.selectedCase.getAssistant());
+        newEventDlg.setReviewAssignees(this.selectedCase.getAssistant(), this.selectedCase.getLawyer());
 
         FrameUtils.centerDialog(newEventDlg, EditorsRegistry.getInstance().getMainWindow());
         newEventDlg.setVisible(true);

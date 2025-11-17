@@ -1,0 +1,1370 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema"
+           xmlns:tns="http://www.xjustiz.de"
+           xmlns:xoev-code="http://xoev.de/schemata/code/1_0"
+           targetNamespace="http://www.xjustiz.de"
+           version="3.0.0"
+           elementFormDefault="unqualified"
+           attributeFormDefault="unqualified">
+   <xs:annotation>
+      <xs:appinfo>
+         <standard>
+            <nameLang>Strukturierte Fachdaten für die Kommunikation im elektronischen Rechtsverkehr</nameLang>
+            <nameKurz>XJustiz</nameKurz>
+            <nameTechnisch>xjustiz</nameTechnisch>
+            <kennung>urn:xoev-de:blk-ag-it-standards:standard:xjustiz</kennung>
+            <beschreibung>XJustiz ist der bundesweit einheitliche Standard für den Austausch strukturierter elektronischer Informationen mit der Justiz.</beschreibung>
+         </standard>
+         <versionStandard>
+            <version>3.5.1</version>
+            <beschreibung>XJustiz beschreibt ein standardisiertes Datenaustauschformat für die elektronische Kommunikation innerhalb und mit der Justizverwaltung.</beschreibung>
+            <versionXOEVProfil>1.7.2</versionXOEVProfil>
+            <versionXOEVHandbuch>2.3.1</versionXOEVHandbuch>
+            <versionXGenerator>3.1.1</versionXGenerator>
+            <versionModellierungswerkzeug>19.0 SP3</versionModellierungswerkzeug>
+            <nameModellierungswerkzeug>MagicDraw</nameModellierungswerkzeug>
+         </versionStandard>
+      </xs:appinfo>
+   </xs:annotation>
+   <xs:import schemaLocation="xoev-code.xsd"
+              namespace="http://xoev.de/schemata/code/1_0"/>
+   <xs:complexType name="Code.FAM.Betragsart">
+      <xs:annotation>
+         <xs:appinfo>
+            <codeliste>
+               <nameLang>FAM.Betragsart</nameLang>
+               <nameKurz>FAM.Betragsart</nameKurz>
+               <nameTechnisch>fam.betragsart</nameTechnisch>
+               <kennung>urn:xoev-de:xjustiz:codeliste:fam.betragsart</kennung>
+               <beschreibung>Codeliste der verschiedenen Betragsarten</beschreibung>
+               <herausgebernameLang>BLK-AG IT-Standards in der Justiz</herausgebernameLang>
+               <herausgebernameKurz>AG IT-Standards</herausgebernameKurz>
+            </codeliste>
+            <versionCodeliste>
+               <version>2.0</version>
+               <versionCodelistenHandbuch>1.1</versionCodelistenHandbuch>
+            </versionCodeliste>
+            <codelistenspalten>
+               <code>
+                  <spaltennameLang>Schlüssel</spaltennameLang>
+                  <datentyp>string</datentyp>
+                  <codeSpalte>true</codeSpalte>
+                  <verwendung>required</verwendung>
+                  <empfohleneCodeSpalte>true</empfohleneCodeSpalte>
+               </code>
+               <wert>
+                  <spaltennameLang>Wert</spaltennameLang>
+                  <datentyp>string</datentyp>
+                  <codeSpalte>false</codeSpalte>
+                  <verwendung>required</verwendung>
+                  <empfohleneCodeSpalte>false</empfohleneCodeSpalte>
+               </wert>
+            </codelistenspalten>
+            <genutzteCodeSpalte>code</genutzteCodeSpalte>
+         </xs:appinfo>
+      </xs:annotation>
+      <xs:complexContent>
+         <xs:restriction base="xoev-code:Code">
+            <xs:sequence>
+               <xs:element name="code" type="tns:fam.betragsart"/>
+            </xs:sequence>
+            <xs:attribute name="listURI"
+                          type="xs:anyURI"
+                          use="optional"
+                          fixed="urn:xoev-de:xjustiz:codeliste:fam.betragsart"/>
+            <xs:attribute name="listVersionID"
+                          type="xs:normalizedString"
+                          use="optional"
+                          fixed="2.0"/>
+         </xs:restriction>
+      </xs:complexContent>
+   </xs:complexType>
+   <xs:complexType name="Code.FAM.Familienart">
+      <xs:annotation>
+         <xs:appinfo>
+            <codeliste>
+               <nameLang>FAM.Familienart</nameLang>
+               <nameKurz>FAM.Familienart</nameKurz>
+               <nameTechnisch>fam.familienart</nameTechnisch>
+               <kennung>urn:xoev-de:xjustiz:codeliste:fam.familienart</kennung>
+               <beschreibung>Codeliste der verschiedenen Familienarten</beschreibung>
+               <herausgebernameLang>BLK-AG IT-Standards in der Justiz</herausgebernameLang>
+               <herausgebernameKurz>AG IT-Standards</herausgebernameKurz>
+            </codeliste>
+            <versionCodeliste>
+               <version>2.0</version>
+               <versionCodelistenHandbuch>1.1</versionCodelistenHandbuch>
+            </versionCodeliste>
+            <codelistenspalten>
+               <code>
+                  <spaltennameLang>Schlüssel</spaltennameLang>
+                  <datentyp>string</datentyp>
+                  <codeSpalte>true</codeSpalte>
+                  <verwendung>required</verwendung>
+                  <empfohleneCodeSpalte>true</empfohleneCodeSpalte>
+               </code>
+               <wert>
+                  <spaltennameLang>Wert</spaltennameLang>
+                  <datentyp>string</datentyp>
+                  <codeSpalte>false</codeSpalte>
+                  <verwendung>required</verwendung>
+                  <empfohleneCodeSpalte>false</empfohleneCodeSpalte>
+               </wert>
+            </codelistenspalten>
+            <genutzteCodeSpalte>code</genutzteCodeSpalte>
+         </xs:appinfo>
+      </xs:annotation>
+      <xs:complexContent>
+         <xs:restriction base="xoev-code:Code">
+            <xs:sequence>
+               <xs:element name="code" type="tns:fam.familienart"/>
+            </xs:sequence>
+            <xs:attribute name="listURI"
+                          type="xs:anyURI"
+                          use="optional"
+                          fixed="urn:xoev-de:xjustiz:codeliste:fam.familienart"/>
+            <xs:attribute name="listVersionID"
+                          type="xs:normalizedString"
+                          use="optional"
+                          fixed="2.0"/>
+         </xs:restriction>
+      </xs:complexContent>
+   </xs:complexType>
+   <xs:complexType name="Code.FAM.Gegenstandsbezeichnung">
+      <xs:annotation>
+         <xs:appinfo>
+            <codeliste>
+               <nameLang>FAM.Gegenstandsbezeichnung</nameLang>
+               <nameKurz>FAM.Gegenstandsbezeichnung</nameKurz>
+               <nameTechnisch>fam.gegenstandsbezeichnung</nameTechnisch>
+               <kennung>urn:xoev-de:xjustiz:codeliste:fam.gegenstandsbezeichnung</kennung>
+               <beschreibung>Codeliste der verschiedenen Gegenstandsbezeichnungen</beschreibung>
+               <herausgebernameLang>BLK-AG IT-Standards in der Justiz</herausgebernameLang>
+               <herausgebernameKurz>AG IT-Standards</herausgebernameKurz>
+            </codeliste>
+            <versionCodeliste>
+               <version>2.0</version>
+               <versionCodelistenHandbuch>1.1</versionCodelistenHandbuch>
+            </versionCodeliste>
+            <codelistenspalten>
+               <code>
+                  <spaltennameLang>Schlüssel</spaltennameLang>
+                  <datentyp>string</datentyp>
+                  <codeSpalte>true</codeSpalte>
+                  <verwendung>required</verwendung>
+                  <empfohleneCodeSpalte>true</empfohleneCodeSpalte>
+               </code>
+               <wert>
+                  <spaltennameLang>Wert</spaltennameLang>
+                  <datentyp>string</datentyp>
+                  <codeSpalte>false</codeSpalte>
+                  <verwendung>required</verwendung>
+                  <empfohleneCodeSpalte>false</empfohleneCodeSpalte>
+               </wert>
+            </codelistenspalten>
+            <genutzteCodeSpalte>code</genutzteCodeSpalte>
+         </xs:appinfo>
+      </xs:annotation>
+      <xs:complexContent>
+         <xs:restriction base="xoev-code:Code">
+            <xs:sequence>
+               <xs:element name="code" type="tns:fam.gegenstandsbezeichnung"/>
+            </xs:sequence>
+            <xs:attribute name="listURI"
+                          type="xs:anyURI"
+                          use="optional"
+                          fixed="urn:xoev-de:xjustiz:codeliste:fam.gegenstandsbezeichnung"/>
+            <xs:attribute name="listVersionID"
+                          type="xs:normalizedString"
+                          use="optional"
+                          fixed="2.0"/>
+         </xs:restriction>
+      </xs:complexContent>
+   </xs:complexType>
+   <xs:complexType name="Code.FAM.Vermoegenstyp">
+      <xs:annotation>
+         <xs:appinfo>
+            <codeliste>
+               <nameLang>FAM.Vermoegenstyp</nameLang>
+               <nameKurz>FAM.Vermoegenstyp</nameKurz>
+               <nameTechnisch>fam.vermoegenstyp</nameTechnisch>
+               <kennung>urn:xoev-de:xjustiz:codeliste:fam.vermoegenstyp</kennung>
+               <beschreibung>Codeliste der verschiedenen Vermögenstypen</beschreibung>
+               <herausgebernameLang>BLK-AG IT-Standards in der Justiz</herausgebernameLang>
+               <herausgebernameKurz>AG IT-Standards</herausgebernameKurz>
+            </codeliste>
+            <versionCodeliste>
+               <version>2.0</version>
+               <versionCodelistenHandbuch>1.1</versionCodelistenHandbuch>
+            </versionCodeliste>
+            <codelistenspalten>
+               <code>
+                  <spaltennameLang>Schlüssel</spaltennameLang>
+                  <datentyp>string</datentyp>
+                  <codeSpalte>true</codeSpalte>
+                  <verwendung>required</verwendung>
+                  <empfohleneCodeSpalte>true</empfohleneCodeSpalte>
+               </code>
+               <wert>
+                  <spaltennameLang>Wert</spaltennameLang>
+                  <datentyp>string</datentyp>
+                  <codeSpalte>false</codeSpalte>
+                  <verwendung>required</verwendung>
+                  <empfohleneCodeSpalte>false</empfohleneCodeSpalte>
+               </wert>
+            </codelistenspalten>
+            <genutzteCodeSpalte>code</genutzteCodeSpalte>
+         </xs:appinfo>
+      </xs:annotation>
+      <xs:complexContent>
+         <xs:restriction base="xoev-code:Code">
+            <xs:sequence>
+               <xs:element name="code" type="tns:fam.vermoegenstyp"/>
+            </xs:sequence>
+            <xs:attribute name="listURI"
+                          type="xs:anyURI"
+                          use="optional"
+                          fixed="urn:xoev-de:xjustiz:codeliste:fam.vermoegenstyp"/>
+            <xs:attribute name="listVersionID"
+                          type="xs:normalizedString"
+                          use="optional"
+                          fixed="2.0"/>
+         </xs:restriction>
+      </xs:complexContent>
+   </xs:complexType>
+   <xs:simpleType name="fam.betragsart">
+      <xs:annotation>
+         <xs:appinfo>
+            <codeliste>
+               <nameLang>FAM.Betragsart</nameLang>
+               <nameKurz>FAM.Betragsart</nameKurz>
+               <nameTechnisch>fam.betragsart</nameTechnisch>
+               <kennung>urn:xoev-de:xjustiz:codeliste:fam.betragsart</kennung>
+               <beschreibung>Codeliste der verschiedenen Betragsarten</beschreibung>
+               <herausgebernameLang>BLK-AG IT-Standards in der Justiz</herausgebernameLang>
+               <herausgebernameKurz>AG IT-Standards</herausgebernameKurz>
+            </codeliste>
+            <versionCodeliste>
+               <version>2.0</version>
+               <versionCodelistenHandbuch>1.1</versionCodelistenHandbuch>
+            </versionCodeliste>
+            <codelistenspalten>
+               <code>
+                  <spaltennameLang>Schlüssel</spaltennameLang>
+                  <datentyp>string</datentyp>
+                  <codeSpalte>true</codeSpalte>
+                  <verwendung>required</verwendung>
+                  <empfohleneCodeSpalte>true</empfohleneCodeSpalte>
+               </code>
+               <wert>
+                  <spaltennameLang>Wert</spaltennameLang>
+                  <datentyp>string</datentyp>
+                  <codeSpalte>false</codeSpalte>
+                  <verwendung>required</verwendung>
+                  <empfohleneCodeSpalte>false</empfohleneCodeSpalte>
+               </wert>
+            </codelistenspalten>
+         </xs:appinfo>
+      </xs:annotation>
+      <xs:restriction base="xs:token">
+         <xs:enumeration value="001">
+            <xs:annotation>
+               <xs:appinfo>
+                  <wert>Angleichsdynamisch</wert>
+               </xs:appinfo>
+            </xs:annotation>
+         </xs:enumeration>
+         <xs:enumeration value="002">
+            <xs:annotation>
+               <xs:appinfo>
+                  <wert>Deckungskapital</wert>
+               </xs:appinfo>
+            </xs:annotation>
+         </xs:enumeration>
+         <xs:enumeration value="003">
+            <xs:annotation>
+               <xs:appinfo>
+                  <wert>Dynamisch</wert>
+               </xs:appinfo>
+            </xs:annotation>
+         </xs:enumeration>
+         <xs:enumeration value="004">
+            <xs:annotation>
+               <xs:appinfo>
+                  <wert>Jährlich</wert>
+               </xs:appinfo>
+            </xs:annotation>
+         </xs:enumeration>
+         <xs:enumeration value="005">
+            <xs:annotation>
+               <xs:appinfo>
+                  <wert>Monatlich</wert>
+               </xs:appinfo>
+            </xs:annotation>
+         </xs:enumeration>
+      </xs:restriction>
+   </xs:simpleType>
+   <xs:simpleType name="fam.familienart">
+      <xs:annotation>
+         <xs:appinfo>
+            <codeliste>
+               <nameLang>FAM.Familienart</nameLang>
+               <nameKurz>FAM.Familienart</nameKurz>
+               <nameTechnisch>fam.familienart</nameTechnisch>
+               <kennung>urn:xoev-de:xjustiz:codeliste:fam.familienart</kennung>
+               <beschreibung>Codeliste der verschiedenen Familienarten</beschreibung>
+               <herausgebernameLang>BLK-AG IT-Standards in der Justiz</herausgebernameLang>
+               <herausgebernameKurz>AG IT-Standards</herausgebernameKurz>
+            </codeliste>
+            <versionCodeliste>
+               <version>2.0</version>
+               <versionCodelistenHandbuch>1.1</versionCodelistenHandbuch>
+            </versionCodeliste>
+            <codelistenspalten>
+               <code>
+                  <spaltennameLang>Schlüssel</spaltennameLang>
+                  <datentyp>string</datentyp>
+                  <codeSpalte>true</codeSpalte>
+                  <verwendung>required</verwendung>
+                  <empfohleneCodeSpalte>true</empfohleneCodeSpalte>
+               </code>
+               <wert>
+                  <spaltennameLang>Wert</spaltennameLang>
+                  <datentyp>string</datentyp>
+                  <codeSpalte>false</codeSpalte>
+                  <verwendung>required</verwendung>
+                  <empfohleneCodeSpalte>false</empfohleneCodeSpalte>
+               </wert>
+            </codelistenspalten>
+         </xs:appinfo>
+      </xs:annotation>
+      <xs:restriction base="xs:token">
+         <xs:enumeration value="001">
+            <xs:annotation>
+               <xs:appinfo>
+                  <wert>Ehepaar</wert>
+               </xs:appinfo>
+            </xs:annotation>
+         </xs:enumeration>
+         <xs:enumeration value="002">
+            <xs:annotation>
+               <xs:appinfo>
+                  <wert>Geschiedenes Paar</wert>
+               </xs:appinfo>
+            </xs:annotation>
+         </xs:enumeration>
+         <xs:enumeration value="003">
+            <xs:annotation>
+               <xs:appinfo>
+                  <wert>Lebenspartner</wert>
+               </xs:appinfo>
+            </xs:annotation>
+         </xs:enumeration>
+         <xs:enumeration value="004">
+            <xs:annotation>
+               <xs:appinfo>
+                  <wert>Unverheiratetes Paar</wert>
+               </xs:appinfo>
+            </xs:annotation>
+         </xs:enumeration>
+      </xs:restriction>
+   </xs:simpleType>
+   <xs:simpleType name="fam.gegenstandsbezeichnung">
+      <xs:annotation>
+         <xs:appinfo>
+            <codeliste>
+               <nameLang>FAM.Gegenstandsbezeichnung</nameLang>
+               <nameKurz>FAM.Gegenstandsbezeichnung</nameKurz>
+               <nameTechnisch>fam.gegenstandsbezeichnung</nameTechnisch>
+               <kennung>urn:xoev-de:xjustiz:codeliste:fam.gegenstandsbezeichnung</kennung>
+               <beschreibung>Codeliste der verschiedenen Gegenstandsbezeichnungen</beschreibung>
+               <herausgebernameLang>BLK-AG IT-Standards in der Justiz</herausgebernameLang>
+               <herausgebernameKurz>AG IT-Standards</herausgebernameKurz>
+            </codeliste>
+            <versionCodeliste>
+               <version>2.0</version>
+               <versionCodelistenHandbuch>1.1</versionCodelistenHandbuch>
+            </versionCodeliste>
+            <codelistenspalten>
+               <code>
+                  <spaltennameLang>Schlüssel</spaltennameLang>
+                  <datentyp>string</datentyp>
+                  <codeSpalte>true</codeSpalte>
+                  <verwendung>required</verwendung>
+                  <empfohleneCodeSpalte>true</empfohleneCodeSpalte>
+               </code>
+               <wert>
+                  <spaltennameLang>Wert</spaltennameLang>
+                  <datentyp>string</datentyp>
+                  <codeSpalte>false</codeSpalte>
+                  <verwendung>required</verwendung>
+                  <empfohleneCodeSpalte>false</empfohleneCodeSpalte>
+               </wert>
+            </codelistenspalten>
+         </xs:appinfo>
+      </xs:annotation>
+      <xs:restriction base="xs:token">
+         <xs:enumeration value="001">
+            <xs:annotation>
+               <xs:appinfo>
+                  <wert>Abänderung des Versorgungsausgleichs (§ 10a VAHRG)</wert>
+               </xs:appinfo>
+            </xs:annotation>
+         </xs:enumeration>
+         <xs:enumeration value="002">
+            <xs:annotation>
+               <xs:appinfo>
+                  <wert>Allgemeines Register (AR)</wert>
+               </xs:appinfo>
+            </xs:annotation>
+         </xs:enumeration>
+         <xs:enumeration value="003">
+            <xs:annotation>
+               <xs:appinfo>
+                  <wert>Allgemeines Register; Zuständigkeit der Geschäftsstelle (AR)</wert>
+               </xs:appinfo>
+            </xs:annotation>
+         </xs:enumeration>
+         <xs:enumeration value="004">
+            <xs:annotation>
+               <xs:appinfo>
+                  <wert>Allgemeines Register; Zuständigkeit des Rechtspfl. (AR)</wert>
+               </xs:appinfo>
+            </xs:annotation>
+         </xs:enumeration>
+         <xs:enumeration value="005">
+            <xs:annotation>
+               <xs:appinfo>
+                  <wert>Allgemeines Register; Zuständigkeit des Richters (AR)</wert>
+               </xs:appinfo>
+            </xs:annotation>
+         </xs:enumeration>
+         <xs:enumeration value="006">
+            <xs:annotation>
+               <xs:appinfo>
+                  <wert>Altbestanderfasstes Verfahren</wert>
+               </xs:appinfo>
+            </xs:annotation>
+         </xs:enumeration>
+         <xs:enumeration value="007">
+            <xs:annotation>
+               <xs:appinfo>
+                  <wert>Änderung gerichtlicher Anordnungen (§ 1696 BGB); Erstentsch. durch Rechtspfleger</wert>
+               </xs:appinfo>
+            </xs:annotation>
+         </xs:enumeration>
+         <xs:enumeration value="008">
+            <xs:annotation>
+               <xs:appinfo>
+                  <wert>Änderung gerichtlicher Anordnungen (§ 1696 BGB); Erstentsch. durch Richter</wert>
+               </xs:appinfo>
+            </xs:annotation>
+         </xs:enumeration>
+         <xs:enumeration value="009">
+            <xs:annotation>
+               <xs:appinfo>
+                  <wert>Anfechtung Vaterschaftsanerkennung bzw. Ehelichkeit (§ 640 Abs. 2 Nr. 2 ZPO)</wert>
+               </xs:appinfo>
+            </xs:annotation>
+         </xs:enumeration>
+         <xs:enumeration value="010">
+            <xs:annotation>
+               <xs:appinfo>
+                  <wert>Anordnung des Verbleibens bei dem Stiefelternteil (§ 1682 BGB)</wert>
+               </xs:appinfo>
+            </xs:annotation>
+         </xs:enumeration>
+         <xs:enumeration value="011">
+            <xs:annotation>
+               <xs:appinfo>
+                  <wert>Anordnung des Verbleibens des Kindes bei der Pflegeperson (§ 1632 Abs. 4 BGB)</wert>
+               </xs:appinfo>
+            </xs:annotation>
+         </xs:enumeration>
+         <xs:enumeration value="012">
+            <xs:annotation>
+               <xs:appinfo>
+                  <wert>Anordnung Vermögensverzeichnis / Geldanlage / Sicherheitsleistung (§ 1667 BGB)</wert>
+               </xs:appinfo>
+            </xs:annotation>
+         </xs:enumeration>
+         <xs:enumeration value="013">
+            <xs:annotation>
+               <xs:appinfo>
+                  <wert>Ansprüche aus dem ehelichen Güterrecht (§§ 1378 ff BGB)</wert>
+               </xs:appinfo>
+            </xs:annotation>
+         </xs:enumeration>
+         <xs:enumeration value="014">
+            <xs:annotation>
+               <xs:appinfo>
+                  <wert>Anträge auf Einstellung der Zwangsvollstreckung außerhalb einer anhängigen Sache</wert>
+               </xs:appinfo>
+            </xs:annotation>
+         </xs:enumeration>
+         <xs:enumeration value="015">
+            <xs:annotation>
+               <xs:appinfo>
+                  <wert>Arrest zu Ansprüchen aus dem ehelichen Güterrecht</wert>
+               </xs:appinfo>
+            </xs:annotation>
+         </xs:enumeration>
+         <xs:enumeration value="016">
+            <xs:annotation>
+               <xs:appinfo>
+                  <wert>Arrest zum durch Ehe begründeten Unterhalt</wert>
+               </xs:appinfo>
+            </xs:annotation>
+         </xs:enumeration>
+         <xs:enumeration value="017">
+            <xs:annotation>
+               <xs:appinfo>
+                  <wert>Arrest zum durch Verwandtschaft begründeten Unterhalt</wert>
+               </xs:appinfo>
+            </xs:annotation>
+         </xs:enumeration>
+         <xs:enumeration value="018">
+            <xs:annotation>
+               <xs:appinfo>
+                  <wert>Arrest zum Ehegatten- und Kindesunterhalt in einem Verfahren</wert>
+               </xs:appinfo>
+            </xs:annotation>
+         </xs:enumeration>
+         <xs:enumeration value="019">
+            <xs:annotation>
+               <xs:appinfo>
+                  <wert>Aufhebung einer Ehe (§ 1313 BGB)</wert>
+               </xs:appinfo>
+            </xs:annotation>
+         </xs:enumeration>
+         <xs:enumeration value="020">
+            <xs:annotation>
+               <xs:appinfo>
+                  <wert>Auswahl von Vormund oder Pfleger (§ 1697 BGB)</wert>
+               </xs:appinfo>
+            </xs:annotation>
+         </xs:enumeration>
+         <xs:enumeration value="021">
+            <xs:annotation>
+               <xs:appinfo>
+                  <wert>Befreiung vom Eheverbot bei durch Adoption begr. Verwandtschaft (§ 1308 Abs. 2 BGB)</wert>
+               </xs:appinfo>
+            </xs:annotation>
+         </xs:enumeration>
+         <xs:enumeration value="022">
+            <xs:annotation>
+               <xs:appinfo>
+                  <wert>Befreiung vom Erfordernis der Volljährigk. bei der Eheschließung (§ 1303 Abs. 2 BGB)</wert>
+               </xs:appinfo>
+            </xs:annotation>
+         </xs:enumeration>
+         <xs:enumeration value="023">
+            <xs:annotation>
+               <xs:appinfo>
+                  <wert>Durch Ehe begründete gesetzliche Unterhaltspflicht (§ 1361 BGB und §§ 1569 ff BGB)</wert>
+               </xs:appinfo>
+            </xs:annotation>
+         </xs:enumeration>
+         <xs:enumeration value="024">
+            <xs:annotation>
+               <xs:appinfo>
+                  <wert>Durch Verwandtschaft begründete gesetzliche Unterhaltspflicht (§ 1601 BGB)</wert>
+               </xs:appinfo>
+            </xs:annotation>
+         </xs:enumeration>
+         <xs:enumeration value="025">
+            <xs:annotation>
+               <xs:appinfo>
+                  <wert>Ehegatten- und Kindesunterhalt in einer Klage</wert>
+               </xs:appinfo>
+            </xs:annotation>
+         </xs:enumeration>
+         <xs:enumeration value="026">
+            <xs:annotation>
+               <xs:appinfo>
+                  <wert>Eingreifen des Familiengerichts bei Verhinderung der Eltern (§ 1693 BGB)</wert>
+               </xs:appinfo>
+            </xs:annotation>
+         </xs:enumeration>
+         <xs:enumeration value="027">
+            <xs:annotation>
+               <xs:appinfo>
+                  <wert>Einschr. der Befugnis, in Angel. d. tägl. Lebens allein zu entscheiden (§§ 1687 f BGB)</wert>
+               </xs:appinfo>
+            </xs:annotation>
+         </xs:enumeration>
+         <xs:enumeration value="028">
+            <xs:annotation>
+               <xs:appinfo>
+                  <wert>Einschränkung und Ausschluss der Vertretungsbefugnisse von Pflegeeltern (§ 1688 BGB)</wert>
+               </xs:appinfo>
+            </xs:annotation>
+         </xs:enumeration>
+         <xs:enumeration value="029">
+            <xs:annotation>
+               <xs:appinfo>
+                  <wert>Einstw. Anordnung zum durch Verwandtschaft begründeten Unterhalt (isoliertes Verf.)</wert>
+               </xs:appinfo>
+            </xs:annotation>
+         </xs:enumeration>
+         <xs:enumeration value="030">
+            <xs:annotation>
+               <xs:appinfo>
+                  <wert>Einstw. Anordnung zum Ehegatten- und Kindesunt. in einem Verfahren (isoliertes Verf.)</wert>
+               </xs:appinfo>
+            </xs:annotation>
+         </xs:enumeration>
+         <xs:enumeration value="031">
+            <xs:annotation>
+               <xs:appinfo>
+                  <wert>Einstw. Anordnung zum Ehegatten- und Kindesunt. in einem Verfahren (Unterakte)</wert>
+               </xs:appinfo>
+            </xs:annotation>
+         </xs:enumeration>
+         <xs:enumeration value="032">
+            <xs:annotation>
+               <xs:appinfo>
+                  <wert>Einstweilige (vorläufige) Anordnung zum Umgang mit einem Kind (isoliertes Verfahren)</wert>
+               </xs:appinfo>
+            </xs:annotation>
+         </xs:enumeration>
+         <xs:enumeration value="033">
+            <xs:annotation>
+               <xs:appinfo>
+                  <wert>Einstweilige (vorläufige) Anordnung zum Umgang mit einem Kind (Unterakte)</wert>
+               </xs:appinfo>
+            </xs:annotation>
+         </xs:enumeration>
+         <xs:enumeration value="034">
+            <xs:annotation>
+               <xs:appinfo>
+                  <wert>Einstweilige (vorläufige) Anordnung zur Herausgabe des Kindes (isoliertes Verfahren)</wert>
+               </xs:appinfo>
+            </xs:annotation>
+         </xs:enumeration>
+         <xs:enumeration value="035">
+            <xs:annotation>
+               <xs:appinfo>
+                  <wert>Einstweilige (vorläufige) Anordnung zur Herausgabe des Kindes (Unterakte)</wert>
+               </xs:appinfo>
+            </xs:annotation>
+         </xs:enumeration>
+         <xs:enumeration value="036">
+            <xs:annotation>
+               <xs:appinfo>
+                  <wert>Einstweilige (vorläufige) Anordnung zur Sorge für ein Kind (isoliertes Verfahren)</wert>
+               </xs:appinfo>
+            </xs:annotation>
+         </xs:enumeration>
+         <xs:enumeration value="037">
+            <xs:annotation>
+               <xs:appinfo>
+                  <wert>Einstweilige (vorläufige) Anordnung zur Sorge für ein Kind (Unterakte)</wert>
+               </xs:appinfo>
+            </xs:annotation>
+         </xs:enumeration>
+         <xs:enumeration value="038">
+            <xs:annotation>
+               <xs:appinfo>
+                  <wert>Einstweilige Anordnung auf Unterhalt gem. § 641d (isoliertes Verfahren)</wert>
+               </xs:appinfo>
+            </xs:annotation>
+         </xs:enumeration>
+         <xs:enumeration value="039">
+            <xs:annotation>
+               <xs:appinfo>
+                  <wert>Einstweilige Anordnung auf Unterhalt gem. § 641d (Unterakte)</wert>
+               </xs:appinfo>
+            </xs:annotation>
+         </xs:enumeration>
+         <xs:enumeration value="040">
+            <xs:annotation>
+               <xs:appinfo>
+                  <wert>Einstweilige Anordnung nach § 1 GewSchG -Nachstellung- (isoliertes Verfahren)</wert>
+               </xs:appinfo>
+            </xs:annotation>
+         </xs:enumeration>
+         <xs:enumeration value="041">
+            <xs:annotation>
+               <xs:appinfo>
+                  <wert>Einstweilige Anordnung nach § 1 GewSchG -Nachstellung- (Unterakte)</wert>
+               </xs:appinfo>
+            </xs:annotation>
+         </xs:enumeration>
+         <xs:enumeration value="042">
+            <xs:annotation>
+               <xs:appinfo>
+                  <wert>Einstweilige Anordnung nach § 2 GewSchG -Wohnungsüberlassung- (isoliertes Verfahren)</wert>
+               </xs:appinfo>
+            </xs:annotation>
+         </xs:enumeration>
+         <xs:enumeration value="043">
+            <xs:annotation>
+               <xs:appinfo>
+                  <wert>Einstweilige Anordnung nach § 2 GewSchG -Wohnungsüberlassung- (Unterakte)</wert>
+               </xs:appinfo>
+            </xs:annotation>
+         </xs:enumeration>
+         <xs:enumeration value="044">
+            <xs:annotation>
+               <xs:appinfo>
+                  <wert>Einstweilige Anordnung nach dem Gewaltschutzgesetz (isoliertes Verfahren)</wert>
+               </xs:appinfo>
+            </xs:annotation>
+         </xs:enumeration>
+         <xs:enumeration value="045">
+            <xs:annotation>
+               <xs:appinfo>
+                  <wert>Einstweilige Anordnung nach dem Gewaltschutzgesetz (Unterakte)</wert>
+               </xs:appinfo>
+            </xs:annotation>
+         </xs:enumeration>
+         <xs:enumeration value="046">
+            <xs:annotation>
+               <xs:appinfo>
+                  <wert>Einstweilige Anordnung zum durch Ehe begründeten Unterhalt (isoliertes Verfahren)</wert>
+               </xs:appinfo>
+            </xs:annotation>
+         </xs:enumeration>
+         <xs:enumeration value="047">
+            <xs:annotation>
+               <xs:appinfo>
+                  <wert>Einstweilige Anordnung zum durch Ehe begründeten Unterhalt (Unterakte)</wert>
+               </xs:appinfo>
+            </xs:annotation>
+         </xs:enumeration>
+         <xs:enumeration value="048">
+            <xs:annotation>
+               <xs:appinfo>
+                  <wert>Einstweilige Anordnung zum durch Verwandtschaft begründeten Unterhalt (Unterakte)</wert>
+               </xs:appinfo>
+            </xs:annotation>
+         </xs:enumeration>
+         <xs:enumeration value="049">
+            <xs:annotation>
+               <xs:appinfo>
+                  <wert>Einstweilige Anordnung zum Getrenntleben der Ehegatten (isoliertes Verfahren)</wert>
+               </xs:appinfo>
+            </xs:annotation>
+         </xs:enumeration>
+         <xs:enumeration value="050">
+            <xs:annotation>
+               <xs:appinfo>
+                  <wert>Einstweilige Anordnung zum Getrenntleben der Ehegatten (Unterakte)</wert>
+               </xs:appinfo>
+            </xs:annotation>
+         </xs:enumeration>
+         <xs:enumeration value="051">
+            <xs:annotation>
+               <xs:appinfo>
+                  <wert>Einstweilige Anordnung zur Benutzung von Wohnung und Hausrat (isoliertes Verfahren)</wert>
+               </xs:appinfo>
+            </xs:annotation>
+         </xs:enumeration>
+         <xs:enumeration value="052">
+            <xs:annotation>
+               <xs:appinfo>
+                  <wert>Einstweilige Anordnung zur Benutzung von Wohnung und Hausrat (Unterakte)</wert>
+               </xs:appinfo>
+            </xs:annotation>
+         </xs:enumeration>
+         <xs:enumeration value="053">
+            <xs:annotation>
+               <xs:appinfo>
+                  <wert>Einstweilige Anordnung zur Herausgabe persönlicher Sachen (isoliertes Verfahren)</wert>
+               </xs:appinfo>
+            </xs:annotation>
+         </xs:enumeration>
+         <xs:enumeration value="054">
+            <xs:annotation>
+               <xs:appinfo>
+                  <wert>Einstweilige Anordnung zur Herausgabe persönlicher Sachen (Unterakte)</wert>
+               </xs:appinfo>
+            </xs:annotation>
+         </xs:enumeration>
+         <xs:enumeration value="055">
+            <xs:annotation>
+               <xs:appinfo>
+                  <wert>Einstweilige Anordnung zur Leistung eines Prozesskostenvorschusses (isoliertes Verf.)</wert>
+               </xs:appinfo>
+            </xs:annotation>
+         </xs:enumeration>
+         <xs:enumeration value="056">
+            <xs:annotation>
+               <xs:appinfo>
+                  <wert>Einstweilige Anordnung zur Leistung eines Prozesskostenvorschusses (Unterakte)</wert>
+               </xs:appinfo>
+            </xs:annotation>
+         </xs:enumeration>
+         <xs:enumeration value="057">
+            <xs:annotation>
+               <xs:appinfo>
+                  <wert>Einstweilige Verfügung auf Unterhalt gemäß § 1615o BGB.</wert>
+               </xs:appinfo>
+            </xs:annotation>
+         </xs:enumeration>
+         <xs:enumeration value="058">
+            <xs:annotation>
+               <xs:appinfo>
+                  <wert>Einstweilige Verfügung zum durch Verwandtschaft begründeten Unterhalt</wert>
+               </xs:appinfo>
+            </xs:annotation>
+         </xs:enumeration>
+         <xs:enumeration value="059">
+            <xs:annotation>
+               <xs:appinfo>
+                  <wert>Einstweilige Verfügung zum Ehegatten- und Kindesunterhalt in einem Verfahren</wert>
+               </xs:appinfo>
+            </xs:annotation>
+         </xs:enumeration>
+         <xs:enumeration value="060">
+            <xs:annotation>
+               <xs:appinfo>
+                  <wert>Einstweilige Verfügung zum Ehegattenunterhalt</wert>
+               </xs:appinfo>
+            </xs:annotation>
+         </xs:enumeration>
+         <xs:enumeration value="061">
+            <xs:annotation>
+               <xs:appinfo>
+                  <wert>Einstweilige Verfügung zum ehelichen Güterrecht</wert>
+               </xs:appinfo>
+            </xs:annotation>
+         </xs:enumeration>
+         <xs:enumeration value="062">
+            <xs:annotation>
+               <xs:appinfo>
+                  <wert>Entzug Vertretungsmacht eines Elternteils (§ 1629 Abs. 2 S. 3 BGB) - RE -</wert>
+               </xs:appinfo>
+            </xs:annotation>
+         </xs:enumeration>
+         <xs:enumeration value="063">
+            <xs:annotation>
+               <xs:appinfo>
+                  <wert>Entzug Vertretungsmacht eines Elternteils (§ 1629 Abs. 2 S. 3 BGB) - RI -</wert>
+               </xs:appinfo>
+            </xs:annotation>
+         </xs:enumeration>
+         <xs:enumeration value="064">
+            <xs:annotation>
+               <xs:appinfo>
+                  <wert>Ermächtigung zur Zustellung zur Nachtzeit</wert>
+               </xs:appinfo>
+            </xs:annotation>
+         </xs:enumeration>
+         <xs:enumeration value="065">
+            <xs:annotation>
+               <xs:appinfo>
+                  <wert>Ersetzung der Einwilligung in die Namensänderung (§ 1618 S. 4 BGB)</wert>
+               </xs:appinfo>
+            </xs:annotation>
+         </xs:enumeration>
+         <xs:enumeration value="066">
+            <xs:annotation>
+               <xs:appinfo>
+                  <wert>Ersetzung der elterlichen Unterhaltsbestimmung (§ 1612 Abs. 2 Satz 2 BGB)</wert>
+               </xs:appinfo>
+            </xs:annotation>
+         </xs:enumeration>
+         <xs:enumeration value="067">
+            <xs:annotation>
+               <xs:appinfo>
+                  <wert>Ersetzung der Zustimmung des ges. Vertreters zur Sorgeerklärung (§ 1626c Abs. 2 BGB)</wert>
+               </xs:appinfo>
+            </xs:annotation>
+         </xs:enumeration>
+         <xs:enumeration value="068">
+            <xs:annotation>
+               <xs:appinfo>
+                  <wert>Festsetzung des Betrages zur Begründung von Anwartschaftes (§§ 1587o BGB, 53e FGG)</wert>
+               </xs:appinfo>
+            </xs:annotation>
+         </xs:enumeration>
+         <xs:enumeration value="069">
+            <xs:annotation>
+               <xs:appinfo>
+                  <wert>Feststellung Bestehen o. Nichtbestehen elt. Sorge (§ 640 Abs. 2 Nr. 3 ZPO)</wert>
+               </xs:appinfo>
+            </xs:annotation>
+         </xs:enumeration>
+         <xs:enumeration value="070">
+            <xs:annotation>
+               <xs:appinfo>
+                  <wert>Feststellung des Bestehens einer Ehe</wert>
+               </xs:appinfo>
+            </xs:annotation>
+         </xs:enumeration>
+         <xs:enumeration value="071">
+            <xs:annotation>
+               <xs:appinfo>
+                  <wert>Feststellung des Nichtbestehens einer Ehe</wert>
+               </xs:appinfo>
+            </xs:annotation>
+         </xs:enumeration>
+         <xs:enumeration value="072">
+            <xs:annotation>
+               <xs:appinfo>
+                  <wert>Feststellung des Rechts zum Getrenntleben</wert>
+               </xs:appinfo>
+            </xs:annotation>
+         </xs:enumeration>
+         <xs:enumeration value="073">
+            <xs:annotation>
+               <xs:appinfo>
+                  <wert>Feststellung o. Anfechtung Vaterschaft nach Tod (§ 1600e Abs. 2 BGB)</wert>
+               </xs:appinfo>
+            </xs:annotation>
+         </xs:enumeration>
+         <xs:enumeration value="074">
+            <xs:annotation>
+               <xs:appinfo>
+                  <wert>Feststellung oder Anfechtung der Vaterschaft (§ 1600e Abs. 1 BGB)</wert>
+               </xs:appinfo>
+            </xs:annotation>
+         </xs:enumeration>
+         <xs:enumeration value="075">
+            <xs:annotation>
+               <xs:appinfo>
+                  <wert>Feststellung Ruhen / Wiederaufleben elt. Sorge -ausl. Kind- (§ 1674 BGB)</wert>
+               </xs:appinfo>
+            </xs:annotation>
+         </xs:enumeration>
+         <xs:enumeration value="076">
+            <xs:annotation>
+               <xs:appinfo>
+                  <wert>Feststellung Ruhen / Wiederaufleben elt. Sorge -dt. Kind- (§ 1674 BGB)</wert>
+               </xs:appinfo>
+            </xs:annotation>
+         </xs:enumeration>
+         <xs:enumeration value="077">
+            <xs:annotation>
+               <xs:appinfo>
+                  <wert>Feststellung Vaterschaft o. Wirksamkeit Anerkennung (§ 640 Abs. 2 Nr. 1 ZPO)</wert>
+               </xs:appinfo>
+            </xs:annotation>
+         </xs:enumeration>
+         <xs:enumeration value="078">
+            <xs:annotation>
+               <xs:appinfo>
+                  <wert>Genehmigung der Unterbringung eines Kindes (§ 1631b BGB)</wert>
+               </xs:appinfo>
+            </xs:annotation>
+         </xs:enumeration>
+         <xs:enumeration value="079">
+            <xs:annotation>
+               <xs:appinfo>
+                  <wert>Genehmigung einer ohne Befreiung vorgenommenen Eheschließung (§ 1315 Abs. 1 BGB)</wert>
+               </xs:appinfo>
+            </xs:annotation>
+         </xs:enumeration>
+         <xs:enumeration value="080">
+            <xs:annotation>
+               <xs:appinfo>
+                  <wert>Genehmigung von Rechtsgeschäften (§§ 1643, 1644, 1645 BGB)</wert>
+               </xs:appinfo>
+            </xs:annotation>
+         </xs:enumeration>
+         <xs:enumeration value="081">
+            <xs:annotation>
+               <xs:appinfo>
+                  <wert>Herausgabe eines Kindes (§ 1632 Abs. 1 BGB)</wert>
+               </xs:appinfo>
+            </xs:annotation>
+         </xs:enumeration>
+         <xs:enumeration value="082">
+            <xs:annotation>
+               <xs:appinfo>
+                  <wert>Herstellung des ehelichen Lebens (§ 1353 BGB)</wert>
+               </xs:appinfo>
+            </xs:annotation>
+         </xs:enumeration>
+         <xs:enumeration value="083">
+            <xs:annotation>
+               <xs:appinfo>
+                  <wert>Isol. Antrag auf Stundung der Ausgleichford. und Übertr. von Vermögen (§§ 1382 f BGB)</wert>
+               </xs:appinfo>
+            </xs:annotation>
+         </xs:enumeration>
+         <xs:enumeration value="084">
+            <xs:annotation>
+               <xs:appinfo>
+                  <wert>Kindesunterhalt u. zwischen Eltern, die nicht miteinander verheir. sind.</wert>
+               </xs:appinfo>
+            </xs:annotation>
+         </xs:enumeration>
+         <xs:enumeration value="085">
+            <xs:annotation>
+               <xs:appinfo>
+                  <wert>Maßnahmen bei Gefährdung des Kindeswohls (§ 1666 BGB) im übrigen</wert>
+               </xs:appinfo>
+            </xs:annotation>
+         </xs:enumeration>
+         <xs:enumeration value="086">
+            <xs:annotation>
+               <xs:appinfo>
+                  <wert>Maßnahmen bei Gefährdung des Kindeswohls (§ 1666 BGB) nur Vermögenssorge</wert>
+               </xs:appinfo>
+            </xs:annotation>
+         </xs:enumeration>
+         <xs:enumeration value="087">
+            <xs:annotation>
+               <xs:appinfo>
+                  <wert>Maßnahmen nach § 1 des Gewaltschutzgesetzes (Nachstellung)</wert>
+               </xs:appinfo>
+            </xs:annotation>
+         </xs:enumeration>
+         <xs:enumeration value="088">
+            <xs:annotation>
+               <xs:appinfo>
+                  <wert>Maßnahmen nach § 2 des Gewaltschutzgesetzes (Wohnungsüberlassung)</wert>
+               </xs:appinfo>
+            </xs:annotation>
+         </xs:enumeration>
+         <xs:enumeration value="089">
+            <xs:annotation>
+               <xs:appinfo>
+                  <wert>Maßnahmen nach den §§ 1 und 2 des Gewaltschutzgesetzes</wert>
+               </xs:appinfo>
+            </xs:annotation>
+         </xs:enumeration>
+         <xs:enumeration value="090">
+            <xs:annotation>
+               <xs:appinfo>
+                  <wert>Prozesskostenhilfe für Ag./Bekl.; Zuständigkeit des Rechtspflegers</wert>
+               </xs:appinfo>
+            </xs:annotation>
+         </xs:enumeration>
+         <xs:enumeration value="091">
+            <xs:annotation>
+               <xs:appinfo>
+                  <wert>Prozesskostenhilfe für Ag./Bekl.; Zuständigkeit des Richters</wert>
+               </xs:appinfo>
+            </xs:annotation>
+         </xs:enumeration>
+         <xs:enumeration value="092">
+            <xs:annotation>
+               <xs:appinfo>
+                  <wert>Prozesskostenhilfe für Ast./Kl.; Zuständigkeit des Rechtspflegers</wert>
+               </xs:appinfo>
+            </xs:annotation>
+         </xs:enumeration>
+         <xs:enumeration value="093">
+            <xs:annotation>
+               <xs:appinfo>
+                  <wert>Prozesskostenhilfe für Ast./Kl.; Zuständigkeit des Richters</wert>
+               </xs:appinfo>
+            </xs:annotation>
+         </xs:enumeration>
+         <xs:enumeration value="094">
+            <xs:annotation>
+               <xs:appinfo>
+                  <wert>Prozesskostenhilfe für Dritten; Zuständigkeit des Richters</wert>
+               </xs:appinfo>
+            </xs:annotation>
+         </xs:enumeration>
+         <xs:enumeration value="095">
+            <xs:annotation>
+               <xs:appinfo>
+                  <wert>Prozesskostenhilfe; Zuständigkeit des Rechtspflegers</wert>
+               </xs:appinfo>
+            </xs:annotation>
+         </xs:enumeration>
+         <xs:enumeration value="096">
+            <xs:annotation>
+               <xs:appinfo>
+                  <wert>Regelung der elterlichen Sorge für ein Kind (§ 1671 BGB)</wert>
+               </xs:appinfo>
+            </xs:annotation>
+         </xs:enumeration>
+         <xs:enumeration value="097">
+            <xs:annotation>
+               <xs:appinfo>
+                  <wert>Regelung der Rechtsverh. an Ehewohnung und Hausrat (HausratsVO und §§ 1361a, 1361b BGB)</wert>
+               </xs:appinfo>
+            </xs:annotation>
+         </xs:enumeration>
+         <xs:enumeration value="098">
+            <xs:annotation>
+               <xs:appinfo>
+                  <wert>Regelung des Umgangs mit einem Kind (§ 1684 BGB)</wert>
+               </xs:appinfo>
+            </xs:annotation>
+         </xs:enumeration>
+         <xs:enumeration value="099">
+            <xs:annotation>
+               <xs:appinfo>
+                  <wert>Regelung des Versorgungsausgleichs (§§ 1587 ff BGB)</wert>
+               </xs:appinfo>
+            </xs:annotation>
+         </xs:enumeration>
+         <xs:enumeration value="100">
+            <xs:annotation>
+               <xs:appinfo>
+                  <wert>Rückübertr. auf den für tot erklärten, aber noch lebenden Elternt. (§ 1681 Abs. 2 BGB)</wert>
+               </xs:appinfo>
+            </xs:annotation>
+         </xs:enumeration>
+         <xs:enumeration value="101">
+            <xs:annotation>
+               <xs:appinfo>
+                  <wert>Ruhen der Verpflichtung zur Begründung von Anwartschaftes (§ 1587d BGB)</wert>
+               </xs:appinfo>
+            </xs:annotation>
+         </xs:enumeration>
+         <xs:enumeration value="102">
+            <xs:annotation>
+               <xs:appinfo>
+                  <wert>Scheidung einer Ehe (§ 1565 BGB)</wert>
+               </xs:appinfo>
+            </xs:annotation>
+         </xs:enumeration>
+         <xs:enumeration value="103">
+            <xs:annotation>
+               <xs:appinfo>
+                  <wert>Selbständiges Beweisverfahren</wert>
+               </xs:appinfo>
+            </xs:annotation>
+         </xs:enumeration>
+         <xs:enumeration value="104">
+            <xs:annotation>
+               <xs:appinfo>
+                  <wert>Sonstige in die Zuständigkeit des Rechtspflegers fallende Familiensache</wert>
+               </xs:appinfo>
+            </xs:annotation>
+         </xs:enumeration>
+         <xs:enumeration value="105">
+            <xs:annotation>
+               <xs:appinfo>
+                  <wert>Sonstige in die Zuständigkeit des Richters fallende Familiensache</wert>
+               </xs:appinfo>
+            </xs:annotation>
+         </xs:enumeration>
+         <xs:enumeration value="106">
+            <xs:annotation>
+               <xs:appinfo>
+                  <wert>Sorgerecht zugunsten des nicht mit der Mutter verheirateten Vaters (§ 1672 BGB)</wert>
+               </xs:appinfo>
+            </xs:annotation>
+         </xs:enumeration>
+         <xs:enumeration value="107">
+            <xs:annotation>
+               <xs:appinfo>
+                  <wert>Streit über Umgang des Kindes mit einem Dritten (§ 1632 Abs. 2 BGB)</wert>
+               </xs:appinfo>
+            </xs:annotation>
+         </xs:enumeration>
+         <xs:enumeration value="108">
+            <xs:annotation>
+               <xs:appinfo>
+                  <wert>Streit zwischen Pfleger und Eltern (§ 1630 Abs. 2 BGB)</wert>
+               </xs:appinfo>
+            </xs:annotation>
+         </xs:enumeration>
+         <xs:enumeration value="109">
+            <xs:annotation>
+               <xs:appinfo>
+                  <wert>Streitigkeiten über das Auskunftsrecht (§ 1686 BGB) - RE -</wert>
+               </xs:appinfo>
+            </xs:annotation>
+         </xs:enumeration>
+         <xs:enumeration value="110">
+            <xs:annotation>
+               <xs:appinfo>
+                  <wert>Streitigkeiten über das Auskunftsrecht (§ 1686 BGB) - RI -</wert>
+               </xs:appinfo>
+            </xs:annotation>
+         </xs:enumeration>
+         <xs:enumeration value="111">
+            <xs:annotation>
+               <xs:appinfo>
+                  <wert>Streitigkeiten über den verlängerten schuldrechtl. Versorgungsausgleich (§ 3a VAHRG)</wert>
+               </xs:appinfo>
+            </xs:annotation>
+         </xs:enumeration>
+         <xs:enumeration value="112">
+            <xs:annotation>
+               <xs:appinfo>
+                  <wert>Übertr. auf einen Elternteil bei Ruhen der Sorge des anderen Elternteils (§ 1678 BGB)</wert>
+               </xs:appinfo>
+            </xs:annotation>
+         </xs:enumeration>
+         <xs:enumeration value="113">
+            <xs:annotation>
+               <xs:appinfo>
+                  <wert>Übertr. des Entscheidungsrechts in einz. Angelegenh. bei gemeins. Sorge (§ 1628 BGB)</wert>
+               </xs:appinfo>
+            </xs:annotation>
+         </xs:enumeration>
+         <xs:enumeration value="114">
+            <xs:annotation>
+               <xs:appinfo>
+                  <wert>Übertr. Namensbestimmungsrecht bei im Ausland geborenem Kind (§ 1617 Abs. 3 BGB)</wert>
+               </xs:appinfo>
+            </xs:annotation>
+         </xs:enumeration>
+         <xs:enumeration value="115">
+            <xs:annotation>
+               <xs:appinfo>
+                  <wert>Übertr. Namensbestimmungsrecht bei im Inland geborenem Kind (§ 1617 Abs. 2 BGB)</wert>
+               </xs:appinfo>
+            </xs:annotation>
+         </xs:enumeration>
+         <xs:enumeration value="116">
+            <xs:annotation>
+               <xs:appinfo>
+                  <wert>Übertragung auf den überlebenden Elternteil (§§ 1680 Abs. 2, 1681 BGB)</wert>
+               </xs:appinfo>
+            </xs:annotation>
+         </xs:enumeration>
+         <xs:enumeration value="117">
+            <xs:annotation>
+               <xs:appinfo>
+                  <wert>Übertragung von Sorgeangelegenheiten auf die Pflegeperson (§ 1630 Abs. 3 BGB)</wert>
+               </xs:appinfo>
+            </xs:annotation>
+         </xs:enumeration>
+         <xs:enumeration value="118">
+            <xs:annotation>
+               <xs:appinfo>
+                  <wert>Umgangsrecht mit Geschwistern, Großeltern, Stiefeltern, Pflegeeltern (§ 1685 BGB)</wert>
+               </xs:appinfo>
+            </xs:annotation>
+         </xs:enumeration>
+         <xs:enumeration value="119">
+            <xs:annotation>
+               <xs:appinfo>
+                  <wert>Unterhalt zwischen den Eltern eines Kindes, die nicht miteinander verh. sind (§ 1615l BGB)</wert>
+               </xs:appinfo>
+            </xs:annotation>
+         </xs:enumeration>
+         <xs:enumeration value="120">
+            <xs:annotation>
+               <xs:appinfo>
+                  <wert>Unterstützung der Eltern bei der Personensorge (§ 1631 Abs. 3 BGB)</wert>
+               </xs:appinfo>
+            </xs:annotation>
+         </xs:enumeration>
+         <xs:enumeration value="121">
+            <xs:annotation>
+               <xs:appinfo>
+                  <wert>Vereinf. Anpassung von Titeln bei Änderung des Regelbetrages / Kindergeldes (§ 655 ZPO)</wert>
+               </xs:appinfo>
+            </xs:annotation>
+         </xs:enumeration>
+         <xs:enumeration value="122">
+            <xs:annotation>
+               <xs:appinfo>
+                  <wert>Vereinfachte Umstellung bezifferter Titel auf Vomhundertsätze (Art. 5 § 3 KindUG)</wert>
+               </xs:appinfo>
+            </xs:annotation>
+         </xs:enumeration>
+         <xs:enumeration value="123">
+            <xs:annotation>
+               <xs:appinfo>
+                  <wert>Vereinfachtes Unterhaltsverfahren (§ 645 ZPO)</wert>
+               </xs:appinfo>
+            </xs:annotation>
+         </xs:enumeration>
+         <xs:enumeration value="124">
+            <xs:annotation>
+               <xs:appinfo>
+                  <wert>Verfahren nach dem Lebenspartnerschaftsgesetz</wert>
+               </xs:appinfo>
+            </xs:annotation>
+         </xs:enumeration>
+         <xs:enumeration value="125">
+            <xs:annotation>
+               <xs:appinfo>
+                  <wert>Verlängerung der Unterbringung eines Kindes (§ 1631b BGB)</wert>
+               </xs:appinfo>
+            </xs:annotation>
+         </xs:enumeration>
+         <xs:enumeration value="126">
+            <xs:annotation>
+               <xs:appinfo>
+                  <wert>Vermittlungsverfahren nach § 52a FGG</wert>
+               </xs:appinfo>
+            </xs:annotation>
+         </xs:enumeration>
+         <xs:enumeration value="127">
+            <xs:annotation>
+               <xs:appinfo>
+                  <wert>Vermögensverzeichnis bei Vermögenserwerb durch das Kind (§ 1640 Abs. 1, 3 BGB)</wert>
+               </xs:appinfo>
+            </xs:annotation>
+         </xs:enumeration>
+         <xs:enumeration value="128">
+            <xs:annotation>
+               <xs:appinfo>
+                  <wert>Vermögensverzeichnis bei Wiederheirat (§ 1683 BGB)</wert>
+               </xs:appinfo>
+            </xs:annotation>
+         </xs:enumeration>
+      </xs:restriction>
+   </xs:simpleType>
+   <xs:simpleType name="fam.vermoegenstyp">
+      <xs:annotation>
+         <xs:appinfo>
+            <codeliste>
+               <nameLang>FAM.Vermoegenstyp</nameLang>
+               <nameKurz>FAM.Vermoegenstyp</nameKurz>
+               <nameTechnisch>fam.vermoegenstyp</nameTechnisch>
+               <kennung>urn:xoev-de:xjustiz:codeliste:fam.vermoegenstyp</kennung>
+               <beschreibung>Codeliste der verschiedenen Vermögenstypen</beschreibung>
+               <herausgebernameLang>BLK-AG IT-Standards in der Justiz</herausgebernameLang>
+               <herausgebernameKurz>AG IT-Standards</herausgebernameKurz>
+            </codeliste>
+            <versionCodeliste>
+               <version>2.0</version>
+               <versionCodelistenHandbuch>1.1</versionCodelistenHandbuch>
+            </versionCodeliste>
+            <codelistenspalten>
+               <code>
+                  <spaltennameLang>Schlüssel</spaltennameLang>
+                  <datentyp>string</datentyp>
+                  <codeSpalte>true</codeSpalte>
+                  <verwendung>required</verwendung>
+                  <empfohleneCodeSpalte>true</empfohleneCodeSpalte>
+               </code>
+               <wert>
+                  <spaltennameLang>Wert</spaltennameLang>
+                  <datentyp>string</datentyp>
+                  <codeSpalte>false</codeSpalte>
+                  <verwendung>required</verwendung>
+                  <empfohleneCodeSpalte>false</empfohleneCodeSpalte>
+               </wert>
+            </codelistenspalten>
+         </xs:appinfo>
+      </xs:annotation>
+      <xs:restriction base="xs:token">
+         <xs:enumeration value="001">
+            <xs:annotation>
+               <xs:appinfo>
+                  <wert>Konto</wert>
+               </xs:appinfo>
+            </xs:annotation>
+         </xs:enumeration>
+         <xs:enumeration value="002">
+            <xs:annotation>
+               <xs:appinfo>
+                  <wert>Schenkung</wert>
+               </xs:appinfo>
+            </xs:annotation>
+         </xs:enumeration>
+         <xs:enumeration value="003">
+            <xs:annotation>
+               <xs:appinfo>
+                  <wert>Immobilie</wert>
+               </xs:appinfo>
+            </xs:annotation>
+         </xs:enumeration>
+         <xs:enumeration value="004">
+            <xs:annotation>
+               <xs:appinfo>
+                  <wert>Sonstiges</wert>
+               </xs:appinfo>
+            </xs:annotation>
+         </xs:enumeration>
+      </xs:restriction>
+   </xs:simpleType>
+</xs:schema>

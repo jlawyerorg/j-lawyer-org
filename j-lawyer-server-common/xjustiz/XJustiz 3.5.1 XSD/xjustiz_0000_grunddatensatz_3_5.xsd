@@ -1,0 +1,2127 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema"
+           xmlns:tns="http://www.xjustiz.de"
+           xmlns:din91379="urn:xoev-de:kosit:xoev:datentyp:din-91379_2022-08"
+           targetNamespace="http://www.xjustiz.de"
+           version="3.5.1"
+           elementFormDefault="qualified"
+           attributeFormDefault="unqualified">
+   <xs:annotation>
+      <xs:appinfo>
+         <standard>
+            <nameLang>Strukturierte Fachdaten für die Kommunikation im elektronischen Rechtsverkehr</nameLang>
+            <nameKurz>XJustiz</nameKurz>
+            <nameTechnisch>xjustiz</nameTechnisch>
+            <kennung>urn:xoev-de:blk-ag-it-standards:standard:xjustiz</kennung>
+            <beschreibung>XJustiz ist der bundesweit einheitliche Standard für den Austausch strukturierter elektronischer Informationen mit der Justiz.</beschreibung>
+         </standard>
+         <versionStandard>
+            <version>3.5.1</version>
+            <beschreibung>XJustiz beschreibt ein standardisiertes Datenaustauschformat für die elektronische Kommunikation innerhalb und mit der Justizverwaltung.</beschreibung>
+            <versionXOEVProfil>1.7.2</versionXOEVProfil>
+            <versionXOEVHandbuch>2.3.1</versionXOEVHandbuch>
+            <versionXGenerator>3.1.1</versionXGenerator>
+            <versionModellierungswerkzeug>19.0 SP3</versionModellierungswerkzeug>
+            <nameModellierungswerkzeug>MagicDraw</nameModellierungswerkzeug>
+         </versionStandard>
+      </xs:appinfo>
+   </xs:annotation>
+   <xs:include schemaLocation="xjustiz_0010_cl_allgemein_3_6.xsd"/>
+   <xs:include schemaLocation="xjustiz_0020_cl_gerichte_3_3.xsd"/>
+   <xs:include schemaLocation="xjustiz_0030_cl_rechtsform_3_3.xsd"/>
+   <xs:include schemaLocation="xjustiz_0040_cl_rollenbezeichnung_3_5.xsd"/>
+   <xs:include schemaLocation="xjustiz_0050_cl_staaten_3_2.xsd"/>
+   <xs:include schemaLocation="xjustiz_0060_cl_telekommunikation_3_0.xsd"/>
+   <xs:include schemaLocation="xjustiz_0070_cl_justizvollzugsanstalt_3_1.xsd"/>
+   <xs:include schemaLocation="xjustiz_0080_cl_register_3_2.xsd"/>
+   <xs:include schemaLocation="xjustiz_0095_cl_personalstatut_3_0.xsd"/>
+   <xs:import schemaLocation="din-norm-91379-datatypes.xsd"
+              namespace="urn:xoev-de:kosit:xoev:datentyp:din-91379_2022-08"/>
+   <xs:complexType name="Type.GDS.Akte">
+      <xs:sequence>
+         <xs:element name="identifikation"
+                     type="tns:Type.GDS.Xdomea.IdentifikationObjektType"/>
+         <xs:element name="vertraulichkeitsstufe"
+                     minOccurs="0"
+                     type="tns:Code.GDS.Vertraulichkeitsstufe.Typ3">
+            <xs:annotation>
+               <xs:documentation>Es kann zwischen den Werten "VERSCHLUSSSACHE - NUR FÜR DEN DIENSTGEBRAUCH" und "vertraulich zu behandeln" gewählt werden. HINWEIS: Die Werteliste wird erst gütig, wenn die Übermittlung von Nachrichten an die Justiz, die als VS-NfD-klassifizierte oder vertraulich zu behandelnde Informationen oder Dokumente enthalten, von der BLK-AG IT-Standards freigegeben ist. Ab Gültigkeit der Werteliste muss der Wert "VERSCHLUSSSACHE - NUR FÜR DEN DIENSTGEBRAUCH" angegeben werden, wenn die Nachricht Informationen oder Dokumente beinhaltet, deren Kenntnisnahme durch Unbefugte für die Interessen der Bundesrepublik Deutschland oder eines ihrer Länder nachteilig sein kann (vgl. § 2 Abs. 2 Nr. 4 Verschlusssachenanweisung). Vertraulich zu behandelnde Dokumente und Vorgänge sind solche, die nicht als Verschlusssache eingestuft sind, für die der Absender aber aus bestimmten Gründen, eine vom Regelbetrieb abweichende Behandlung, z. B. durch eingeschränkten Zugriff innerhalb der Behörde, empfiehlt (z.B. bei Verfahren gegen Personen des öffentlichen Lebens, Wirtschaftsstreitigkeiten mit sehr hohen Streitwerten, Staatsschutzsachen).</xs:documentation>
+            </xs:annotation>
+         </xs:element>
+         <xs:element name="laufzeit"
+                     minOccurs="0"
+                     type="tns:Type.GDS.Xdomea.ZeitraumType">
+            <xs:annotation>
+               <xs:documentation>Als Laufzeit werden das erste und (vorläufig) letzte Datum der Schriftstücke in der Akte vermerkt.</xs:documentation>
+            </xs:annotation>
+         </xs:element>
+         <xs:element name="anwendungsspezifischeErweiterung"
+                     minOccurs="0"
+                     type="tns:Type.GDS.Xdomea.AnwendungsspezifischeErweiterungType">
+            <xs:annotation>
+               <xs:documentation>In dieser Elementgruppe können Felder und/oder Feldgruppen, in denen mehrere Felder zusammengefasst sind, übermittelt werden. Da es hierfür keine festen Schema-Vorgaben gibt, darf diese Elementgruppe nur verwendet werden, wenn mit dem jeweiligen Kommunikationspartner Name und Inhalt der Felder und/oder Feldgruppen abgestimmt wurden. Es kann nicht davon ausgegangen werden, dass die hier hinterlegten Metadaten von Kommunikationspartnern, mit denen keine Absprachen erfolgten, ausgelesen werden können.</xs:documentation>
+            </xs:annotation>
+         </xs:element>
+         <xs:element name="xjustiz.fachspezifischeDaten">
+            <xs:complexType>
+               <xs:sequence>
+                  <xs:element name="aktentyp" type="tns:Code.GDS.Aktentyp">
+                     <xs:annotation>
+                        <xs:documentation>Bezeichnet den Aktentyp anhand der vorgegebenen Werteliste. Diese ist für einen reibungslosen Austausch bewusst knappgehalten. Für eine spezifischere Bezeichnung kann das Feld "anzeigename" verwendet werden.</xs:documentation>
+                     </xs:annotation>
+                  </xs:element>
+                  <xs:element name="anzeigename" minOccurs="0" type="din91379:datatypeC">
+                     <xs:annotation>
+                        <xs:documentation>Der Anzeigename ermöglicht als Freitext die Übermittlung der Bezeichnung der Akte, wie sie im versendenden System angezeigt wird. Hier können spezifischere Informationen zum Aktennamen übermittelt werden, als dies im Rahmen der Werteliste zum Aktentyp möglich ist, z.B. "Asylakte" als nähere Spezifizierung des Aktentyps "Behördenakte".</xs:documentation>
+                     </xs:annotation>
+                  </xs:element>
+                  <xs:element name="aktenzeichen"
+                              maxOccurs="unbounded"
+                              type="tns:Type.GDS.Aktenzeichen"/>
+                  <xs:element name="weiteresOrdnungskriteriumBehoerde"
+                              minOccurs="0"
+                              type="din91379:datatypeC">
+                     <xs:annotation>
+                        <xs:documentation>Hier können weitere Kennzeichen einer Akte, wie sie bei Behörden verbreitet sind, angegeben werden.</xs:documentation>
+                     </xs:annotation>
+                  </xs:element>
+                  <xs:element name="person"
+                              minOccurs="0"
+                              maxOccurs="unbounded"
+                              type="tns:Type.GDS.Ref.Beteiligtennummer">
+                     <xs:annotation>
+                        <xs:documentation>Das Feld ermöglicht durch die Angabe der Person, auf die sich die Akte bezieht, eine nähere Kennzeichnung der Akte. Dies ist bei Behördenakten in Ergänzung des Aktenzeichens und ggf. weiterer Ordnungskriterien teilweise üblich (z.B. Asylakten).</xs:documentation>
+                     </xs:annotation>
+                  </xs:element>
+                  <xs:element name="erstellungszeitpunktAkteVersand"
+                              minOccurs="0"
+                              type="xs:dateTime">
+                     <xs:annotation>
+                        <xs:documentation>Dieses Feld hält den Zeitpunkt des Exports der Akte, der sich gegebenenfalls vom Erstellungszeitpunkt der Nachricht unterscheiden kann, fest.</xs:documentation>
+                     </xs:annotation>
+                  </xs:element>
+                  <xs:element name="aktenreferenzen" minOccurs="0" maxOccurs="unbounded">
+                     <xs:annotation>
+                        <xs:documentation>In einer Nachricht können mehrere Akten übermittelt werden, z.B. eine Verfahrensakte mit einer Beiakte oder zwei Aktenobjekte verschiedener Instanzen. Auch kann es sein, dass in unterschiedlichen Nachrichten mehrere Aktenobjekte übermittelt werden, die in fachlichem Zusammenhang stehen.</xs:documentation>
+                     </xs:annotation>
+                     <xs:complexType>
+                        <xs:sequence>
+                           <xs:element name="aktenreferenzart" type="tns:Code.GDS.Aktenreferenzart">
+                              <xs:annotation>
+                                 <xs:documentation>Um mehrere Akten in Beziehung zueinander zu setzen, ist hier die Art der Akte im versendenden System anzugeben, z.B. führende, beigezogene Akte oder Akte anderer Instanzen.</xs:documentation>
+                              </xs:annotation>
+                           </xs:element>
+                           <xs:element name="id.referenzierteAkte" type="tns:Type.GDS.Xdomea.stringUUIDType">
+                              <xs:annotation>
+                                 <xs:documentation>Hier ist die eindeutige Identifikation der Akte, auf die sich die vorstehend beschriebene Akte bezieht, anzugeben.</xs:documentation>
+                              </xs:annotation>
+                           </xs:element>
+                        </xs:sequence>
+                     </xs:complexType>
+                  </xs:element>
+                  <xs:element name="abgebendeStelle"
+                              minOccurs="0"
+                              type="tns:Code.GDS.Gerichte.Typ3">
+                     <xs:annotation>
+                        <xs:documentation>Da sich die fachlich abgebende Stelle vom Absender der Nachricht unterscheiden kann (z.B. bei Weiterleitung nach Irrläufern) kann hier die fachlich abgebende Stelle angegeben werden.</xs:documentation>
+                     </xs:annotation>
+                  </xs:element>
+                  <xs:element name="inhalt" minOccurs="0">
+                     <xs:complexType>
+                        <xs:sequence>
+                           <xs:element name="teilakte"
+                                       minOccurs="0"
+                                       maxOccurs="unbounded"
+                                       type="tns:Type.GDS.Teilakte"/>
+                           <xs:element name="dokument"
+                                       minOccurs="0"
+                                       maxOccurs="unbounded"
+                                       type="tns:Type.GDS.Dokument"/>
+                        </xs:sequence>
+                     </xs:complexType>
+                  </xs:element>
+                  <xs:element name="ruecksendungEEB.erforderlich"
+                              minOccurs="0"
+                              fixed="true"
+                              type="xs:boolean">
+                     <xs:annotation>
+                        <xs:documentation>Mit diesem Element kann für die Akte ein elektronisches Empfangsbekenntnis (eEB) gemäß § 173 ZPO oder § 195 ZPO angefordert werden. Die Anforderung eines eEB unter Verwendung strukturierter Daten ist nur für die Zustellung durch Gerichte oder von Anwalt zu Anwalt rechtlich geregelt, so dass das Element für die Zustellung von Behörde zu Behörde oder zwischen anderen Beteiligten nicht verwendet werden kann.</xs:documentation>
+                     </xs:annotation>
+                  </xs:element>
+               </xs:sequence>
+            </xs:complexType>
+         </xs:element>
+         <xs:element name="justizinterneDaten" minOccurs="0">
+            <xs:annotation>
+               <xs:documentation>Diese Sequenz wird ausschließlich für die justizinterne Kommunikation (zwischen Gerichten oder/und Staatsanwaltschaften) genutzt. Sie darf nicht für XJustiz-Nachrichten, die externe Beteiligte an die Justiz übermitteln, verwendet werden.</xs:documentation>
+            </xs:annotation>
+            <xs:complexType>
+               <xs:sequence>
+                  <xs:element name="uebergabeAktenfuehrungsbefugnis"
+                              minOccurs="0"
+                              fixed="true"
+                              type="xs:boolean">
+                     <xs:annotation>
+                        <xs:documentation>Im Regelfall geht die Aktenführungsbefugnis beim Versand von Akten nicht auf den Empfänger über. Mit diesem Element kann darauf hingewiesen werden, dass die Aktenführungsbefugnis, anders als im Regelfall, für diese Aktenübermittlung auf den Empfänger übergehen soll. Die Übermittlung der Information innerhalb des XJustiz-Datensatzes hat jedoch nicht automatisch die Übergabe der Aktenführungsbefugnis zur Folge. Ob die Aktenführungsbefugnis übergeht, bleibt im Einzelfall der fachlichen Beurteilung des Bearbeiters vorbehalten.</xs:documentation>
+                     </xs:annotation>
+                  </xs:element>
+                  <xs:element name="zustellung41StPO" minOccurs="0" type="xs:boolean"/>
+               </xs:sequence>
+            </xs:complexType>
+         </xs:element>
+      </xs:sequence>
+   </xs:complexType>
+   <xs:complexType name="Type.GDS.Aktenzeichen">
+      <xs:sequence>
+         <xs:element name="az.art" minOccurs="0" type="tns:Code.GDS.Aktenzeichenart">
+            <xs:annotation>
+               <xs:documentation>Dieses Feld ermöglicht eine nähere Beschreibung des Aktenzeichens, zum Beispiel als hinzuverbunden oder abgetrennt.</xs:documentation>
+            </xs:annotation>
+         </xs:element>
+         <xs:element name="auswahl_az.vergebendeStation"
+                     minOccurs="0"
+                     type="tns:Type.GDS.Behoerde">
+            <xs:annotation>
+               <xs:documentation>Dieses Auswahl-Feld ermöglicht die Bezeichnung der Station, die das Aktenzeichen vergeben hat. Hierdurch ist eine eindeutige Identifikation des Verfahrens möglich, da ein identisches Aktenzeichen von mehreren Gerichten oder Behörden verwendet werden kann.</xs:documentation>
+            </xs:annotation>
+         </xs:element>
+         <xs:element name="auswahl_aktenzeichen">
+            <xs:complexType>
+               <xs:choice>
+                  <xs:element name="aktenzeichen.freitext" type="din91379:datatypeC">
+                     <xs:annotation>
+                        <xs:documentation>Hier kann das vollständige Aktenzeichen als unstrukturierter Freitext übermittelt werden.</xs:documentation>
+                     </xs:annotation>
+                  </xs:element>
+                  <xs:element name="aktenzeichen.strukturiert">
+                     <xs:annotation>
+                        <xs:documentation>Hier kann das vollständige Aktenzeichen in strukturierter Form übermittelt werden. Das justizielle Aktenzeichen besteht regelmäßig aus Abteilung, Registerzeichen, Nummer und Jahr, zum Beispiel 1 C 183/16 (Amtsgericht Zivil) oder 123 Js 29886/17 (Staatsanwaltschaft).</xs:documentation>
+                     </xs:annotation>
+                     <xs:complexType>
+                        <xs:sequence>
+                           <xs:element name="sachgebietsschluessel"
+                                       minOccurs="0"
+                                       type="din91379:datatypeC"/>
+                           <xs:element name="zusatzkennung" minOccurs="0" type="din91379:datatypeC"/>
+                           <xs:element name="abteilung" minOccurs="0" type="din91379:datatypeC">
+                              <xs:annotation>
+                                 <xs:documentation>Abteilungs-/Dezernats-/Geschäftsstellenbezeichnung. Beim Aktenzeichen 1 C 183/16 wäre hier die 1 (Abteilung 1), beim Aktenzeichen 123 Js 29886/17 die 123 (Dezernat 123) einzutragen.</xs:documentation>
+                              </xs:annotation>
+                           </xs:element>
+                           <xs:element name="register" type="tns:Code.GDS.Registerzeichen.Typ3">
+                              <xs:annotation>
+                                 <xs:documentation>Hier ist die Registerbezeichnung anzugeben. Beim Aktenzeichen 1 C 183/16 wäre hier das C (erstinstanzliche Zivilprozesse), beim Aktenzeichen 123 Js 29886/17 das Js (Straf- und Bußgeldsachen) einzutragen.</xs:documentation>
+                              </xs:annotation>
+                           </xs:element>
+                           <xs:element name="laufendeNummer" type="din91379:datatypeC">
+                              <xs:annotation>
+                                 <xs:documentation>Dieses Feld bezeichnet die laufende Nummer des Verfahrens. Beim Aktenzeichen 1 C 183/16 wäre hier die 183 (das 183. Verfahren dieses Gerichts), beim Aktenzeichen 123 Js 29886/17 die 29886 (das 29886. Verfahren dieser Behörde) einzutragen.</xs:documentation>
+                              </xs:annotation>
+                           </xs:element>
+                           <xs:element name="jahr" type="din91379:datatypeC">
+                              <xs:annotation>
+                                 <xs:documentation>Das Jahr des Eingangs bei der Staatsanwaltschaft bzw. der Anhängigkeit bei Gericht. Beim Aktenzeichen 1 C 183/16 wäre hier die 16 (Verfahren anhängig seit 2016), beim Aktenzeichen 123 Js 29886/17 die 17 (Verfahren eingegangen bei der Staatsanwaltschaft in 2017) einzutragen.</xs:documentation>
+                              </xs:annotation>
+                           </xs:element>
+                           <xs:element name="vorsatz" minOccurs="0" type="din91379:datatypeC">
+                              <xs:annotation>
+                                 <xs:documentation>Ein vorzustellender Zusatz zum Aktenzeichen, der diesem vorangestellt wird.</xs:documentation>
+                              </xs:annotation>
+                           </xs:element>
+                           <xs:element name="zusatz" minOccurs="0" type="din91379:datatypeC">
+                              <xs:annotation>
+                                 <xs:documentation>Ein nachzustellender Zusatz zum Aktenzeichen, der diesem angefügt wird.</xs:documentation>
+                              </xs:annotation>
+                           </xs:element>
+                           <xs:element name="dezernat" minOccurs="0" type="din91379:datatypeC">
+                              <xs:annotation>
+                                 <xs:documentation>Zusätzliche Dezernatskennung, falls das Dezernat von der Abteilung abweicht.</xs:documentation>
+                              </xs:annotation>
+                           </xs:element>
+                           <xs:element name="erfassungsdatum"
+                                       minOccurs="0"
+                                       type="tns:Type.GDS.Datumsangabe"/>
+                        </xs:sequence>
+                     </xs:complexType>
+                  </xs:element>
+               </xs:choice>
+            </xs:complexType>
+         </xs:element>
+         <xs:element name="sammelvorgangsnummer" minOccurs="0" type="din91379:datatypeC">
+            <xs:annotation>
+               <xs:documentation>Sofern ein Vorgang in einem Sammelvorgang (z.B. bei der Polizei) geführt wird, soll hier die Sammelvorgangsnummer angegeben werden.</xs:documentation>
+            </xs:annotation>
+         </xs:element>
+      </xs:sequence>
+   </xs:complexType>
+   <xs:complexType name="Type.GDS.Anschrift">
+      <xs:sequence>
+         <xs:element name="anschriftstyp"
+                     minOccurs="0"
+                     type="tns:Code.GDS.Anschriftstyp">
+            <xs:annotation>
+               <xs:documentation>Über dieses Element wird die Art der Adresse angegeben.</xs:documentation>
+            </xs:annotation>
+         </xs:element>
+         <xs:element name="anschriftenzusatz"
+                     minOccurs="0"
+                     maxOccurs="unbounded"
+                     type="din91379:datatypeC">
+            <xs:annotation>
+               <xs:documentation>Hier ist Raum für Adressierungszusätze, z.B. Hinterhof, Raumangabe u.ä. Für Angaben zum Wohnungsgeber muss das Element 'wohnungsgeber' verwendet werden. Für Angaben zum Bundesstaat oder Bezirk ist das Element auswahl_bundesland zu verwenden.</xs:documentation>
+            </xs:annotation>
+         </xs:element>
+         <xs:element name="strasse" minOccurs="0" type="din91379:datatypeB"/>
+         <xs:element name="hausnummer" minOccurs="0" type="din91379:datatypeB">
+            <xs:annotation>
+               <xs:documentation>Die Hausnummer ist ggf. einschliesslich Buchstaben oder dergleichen anzugeben.</xs:documentation>
+            </xs:annotation>
+         </xs:element>
+         <xs:element name="postfachnummer" minOccurs="0" type="din91379:datatypeC"/>
+         <xs:element name="postleitzahl" minOccurs="0" type="din91379:datatypeC">
+            <xs:annotation>
+               <xs:documentation>Bei einer ausländischen PLZ ist das Element "staat" zwingend anzugeben.</xs:documentation>
+            </xs:annotation>
+         </xs:element>
+         <xs:element name="ort" minOccurs="0" type="din91379:datatypeB">
+            <xs:annotation>
+               <xs:documentation>Bei postalischen Anschriften kann der hier angegebene Ort von der politischen Gemeinde abweichen. In diesem Fall sollten die postalische und die Lieferadresse separat mitgeteilt werden. Bei ausländischen Adressen empfiehlt die Deutsche Post AG, den Ort möglichst in der Landessprache zu schreiben. Dies erscheint auch im vorliegenden Zusammenhang sinnvoll.</xs:documentation>
+            </xs:annotation>
+         </xs:element>
+         <xs:element name="ortsteil" minOccurs="0" type="din91379:datatypeB"/>
+         <xs:element name="auswahl_bundesland" minOccurs="0">
+            <xs:annotation>
+               <xs:documentation>Bei Adressen innerhalb Deutschlands kann hier das Bundesland angegeben werden. Bei ausländischen Adressen kann hier eine Angabe zum Bezirk bzw. Einzelstaat erfolgen. z.B. Kalifornien</xs:documentation>
+            </xs:annotation>
+            <xs:complexType>
+               <xs:choice>
+                  <xs:element name="bundesland.BRD" type="tns:Code.GDS.Bundesland.Typ3"/>
+                  <xs:element name="bundesland.freitext" type="din91379:datatypeB"/>
+               </xs:choice>
+            </xs:complexType>
+         </xs:element>
+         <xs:element name="wohnungsgeber" minOccurs="0" type="din91379:datatypeD">
+            <xs:annotation>
+               <xs:documentation>Die Komponente "wohnungsgeber" enthält Angaben (Name/Bezeichnung) zum Hauptmieter oder Eigentümer einer Immobilie. Sie entspricht der Adressinformation c/o bzw. wohnhaft bei. Beispiele sind Untermieter, Bewohner von Krankenhäusern, Pflegeheimen oder Mitarbeiter von Firmen.</xs:documentation>
+            </xs:annotation>
+         </xs:element>
+         <xs:element name="ehemaligeAnschrift"
+                     minOccurs="0"
+                     default="false"
+                     type="xs:boolean">
+            <xs:annotation>
+               <xs:documentation>Hier kann angegeben werden, ob es sich um eine ehemalige Anschrift handelt.</xs:documentation>
+            </xs:annotation>
+         </xs:element>
+         <xs:element name="derzeitigerAufenthalt"
+                     minOccurs="0"
+                     default="false"
+                     type="xs:boolean"/>
+         <xs:element name="staat" minOccurs="0" type="tns:Code.GDS.Staaten.Typ3"/>
+         <xs:element name="erfassungsdatum" minOccurs="0" type="xs:date">
+            <xs:annotation>
+               <xs:documentation>Datum der letzten Prüfung der Adresse.</xs:documentation>
+            </xs:annotation>
+         </xs:element>
+         <xs:element name="ort.unbekannt"
+                     minOccurs="0"
+                     default="true"
+                     type="xs:boolean"/>
+         <xs:element name="postleitzahl.unbekannt"
+                     minOccurs="0"
+                     default="true"
+                     type="xs:boolean"/>
+      </xs:sequence>
+   </xs:complexType>
+   <xs:complexType name="Type.GDS.Ausweisdokument">
+      <xs:sequence>
+         <xs:element name="ausweisart" minOccurs="0" type="tns:Code.GDS.Ausweisart.Typ3">
+            <xs:annotation>
+               <xs:documentation>Dieses Element enthält Informationen zur Art des Ausweis- bzw. Identitätsdokuments (z.B. Personalausweis) oder Legitimationsdokumets (z.B. Waffenschein). Der Typ des Dokuments ist aus der Codeliste auszuwählen.</xs:documentation>
+            </xs:annotation>
+         </xs:element>
+         <xs:element name="ausstellenderStaat"
+                     minOccurs="0"
+                     type="tns:Code.GDS.Staaten.Typ3"/>
+         <xs:element name="ausstellendeBehoerde"
+                     minOccurs="0"
+                     type="tns:Type.GDS.Behoerde"/>
+         <xs:element name="ausweis.ID" minOccurs="0" type="din91379:datatypeC">
+            <xs:annotation>
+               <xs:documentation>Eine eindeutige ID/Nr. zur Identifizierung des Ausweis- bzw. Legitimationsdokuments (z.B Personalausweisnummer).</xs:documentation>
+            </xs:annotation>
+         </xs:element>
+         <xs:element name="gueltigkeit"
+                     minOccurs="0"
+                     type="tns:Type.GDS.Xdomea.ZeitraumType"/>
+         <xs:element name="zusatzinformation" minOccurs="0" type="din91379:datatypeB">
+            <xs:annotation>
+               <xs:documentation>An dieser Stelle können zusätzliche Informationen zu dem Dokument als unstrukturierter Freitext angegeben werden wie z.B. die Bezeichnung des Ausweisdokuments, wie es dem Original aufgedruckt ist. (Beispiele: „Personalausweis“; „ID-Card“; „Carte d'identité“).</xs:documentation>
+            </xs:annotation>
+         </xs:element>
+      </xs:sequence>
+   </xs:complexType>
+   <xs:complexType name="Type.GDS.Bankverbindung">
+      <xs:annotation>
+         <xs:documentation>Hier steht die allgemeine Bankverbindung.</xs:documentation>
+      </xs:annotation>
+      <xs:sequence>
+         <xs:element name="bankverbindungsnummer"
+                     minOccurs="0"
+                     type="din91379:datatypeC">
+            <xs:annotation>
+               <xs:documentation>Bei mehreren Bankverbindungen wird die Bankverbindungsnummer als eindeutige Kennziffer innerhalb des XML-Dokuments benötigt, um aus anderen Elementen innerhalb des XML-Dokuments heraus auf eine Bankverbindung verweisen zu können.</xs:documentation>
+            </xs:annotation>
+         </xs:element>
+         <xs:element name="bank" minOccurs="0" type="din91379:datatypeD">
+            <xs:annotation>
+               <xs:documentation>Der Name der Bank.</xs:documentation>
+            </xs:annotation>
+         </xs:element>
+         <xs:element name="kontoinhaber" minOccurs="0" type="din91379:datatypeD">
+            <xs:annotation>
+               <xs:documentation>Der Name braucht nur angegeben zu werden, sofern der Kontoinhaber nicht mit dem Beteiligten identisch ist.</xs:documentation>
+            </xs:annotation>
+         </xs:element>
+         <xs:element name="iban" type="din91379:datatypeC">
+            <xs:annotation>
+               <xs:documentation>IBAN der Bankverbindung</xs:documentation>
+            </xs:annotation>
+         </xs:element>
+         <xs:element name="bic" minOccurs="0" type="din91379:datatypeC">
+            <xs:annotation>
+               <xs:documentation>BIC der Bankverbindung</xs:documentation>
+            </xs:annotation>
+         </xs:element>
+         <xs:element name="sepa-mandat"
+                     minOccurs="0"
+                     default="false"
+                     type="xs:boolean">
+            <xs:annotation>
+               <xs:documentation>Liegt ein SEPA-Mandat für das Gericht vor, bei dem das Verfahren anhängig ist?</xs:documentation>
+            </xs:annotation>
+         </xs:element>
+         <xs:element name="sepa-basislastschrift" minOccurs="0">
+            <xs:complexType>
+               <xs:sequence>
+                  <xs:element name="mandatsreferenz" type="din91379:datatypeC">
+                     <xs:annotation>
+                        <xs:documentation>Eindeutige Kennzeichnung des Mandats. Die Mandatsreferenz darf aus maximal 35 Zeichen bestehen.</xs:documentation>
+                     </xs:annotation>
+                  </xs:element>
+                  <xs:element name="mandatsdatum" type="xs:date">
+                     <xs:annotation>
+                        <xs:documentation>Datum der Unterschrift des Mandats</xs:documentation>
+                     </xs:annotation>
+                  </xs:element>
+                  <xs:element name="lastschrifttyp" type="tns:Code.GDS.Lastschrifttyp">
+                     <xs:annotation>
+                        <xs:documentation>Der Lastschrifttyp gibt an, ob es sich um eine Erst-, Folge-, Einmal- oder letztmalige Lastschrift handelt.</xs:documentation>
+                     </xs:annotation>
+                  </xs:element>
+               </xs:sequence>
+            </xs:complexType>
+         </xs:element>
+         <xs:element name="verwendungszweck" minOccurs="0" type="din91379:datatypeC"/>
+      </xs:sequence>
+   </xs:complexType>
+   <xs:complexType name="Type.GDS.Basisnachricht">
+      <xs:sequence>
+         <xs:element name="nachrichtenkopf" type="tns:Type.GDS.Nachrichtenkopf"/>
+         <xs:element name="grunddaten" type="tns:Type.GDS.Grunddaten"/>
+      </xs:sequence>
+   </xs:complexType>
+   <xs:complexType name="Type.GDS.Behoerde">
+      <xs:annotation>
+         <xs:documentation>Der Typ ermöglicht die Auswahl zwischen Gerichten, Polizeibehörden und sonstigen Behörden. Sofern eine sonstige Behörde bereits unter den Beteiligtendaten erfasst wurde, ist im Element "beteiligter" die Beteiligtennummer anzugeben.</xs:documentation>
+      </xs:annotation>
+      <xs:choice>
+         <xs:element name="gericht" type="tns:Code.GDS.Gerichte.Typ3">
+            <xs:annotation>
+               <xs:documentation>Hier ist die jeweilige XJustiz-ID des Gerichts oder der Staatsanwaltschaft aus der Codeliste anzugeben.</xs:documentation>
+            </xs:annotation>
+         </xs:element>
+         <xs:element name="sonstige" type="din91379:datatypeD">
+            <xs:annotation>
+               <xs:documentation>Ist eine Behörde nicht über eine Beteiligtennummer zu referenzieren, soll ihr Name hier als Freitext angegeben werden.</xs:documentation>
+            </xs:annotation>
+         </xs:element>
+         <xs:element name="beteiligter" type="tns:Type.GDS.Ref.Beteiligtennummer">
+            <xs:annotation>
+               <xs:documentation>Sofern eine sonstige Behörde bereits unter den Beteiligtendaten erfasst wurde, ist im Element "beteiligter" die Beteiligtennummer anzugeben.</xs:documentation>
+            </xs:annotation>
+         </xs:element>
+         <xs:element name="polizeibehoerde" type="tns:Code.GDS.Polizeibehoerden.Typ3">
+            <xs:annotation>
+               <xs:documentation>Hier ist der einschlägige Code der Polizeibehörde aus der Codeliste zu wählen.</xs:documentation>
+            </xs:annotation>
+         </xs:element>
+      </xs:choice>
+   </xs:complexType>
+   <xs:complexType name="Type.GDS.Beteiligter">
+      <xs:sequence>
+         <xs:element name="beteiligtennummer" minOccurs="0" type="din91379:datatypeC"/>
+         <xs:element name="auswahl_beteiligter">
+            <xs:complexType>
+               <xs:choice>
+                  <xs:element name="ra.kanzlei" type="tns:Type.GDS.RA.Kanzlei">
+                     <xs:annotation>
+                        <xs:documentation>Jeglicher am Verfahren beteiligter Einzelanwalt oder beteiligte Sozietät ist in diesem Element einzutragen und nicht in Organisation.</xs:documentation>
+                     </xs:annotation>
+                  </xs:element>
+                  <xs:element name="natuerlichePerson" type="tns:Type.GDS.NatuerlichePerson"/>
+                  <xs:element name="organisation" type="tns:Type.GDS.Organisation">
+                     <xs:annotation>
+                        <xs:documentation>Hier werden alle Beteiligten aufgeführt, die nicht mit dem Type.GDS.NatuerlichePerson abgedeckt werden können: Gesellschaften, Vereine, Bruchteilsgemeinschaften etc. Die Abgrenzung erfolgt nicht nach juristischen Kategorien, sondern nach datentechnischer Zweckmäßigkeit.</xs:documentation>
+                     </xs:annotation>
+                  </xs:element>
+               </xs:choice>
+            </xs:complexType>
+         </xs:element>
+      </xs:sequence>
+   </xs:complexType>
+   <xs:complexType name="Type.GDS.Beteiligung">
+      <xs:annotation>
+         <xs:documentation>Hier können detaillierte Angaben (z.B. Name, Anschrift) zum Beteiligten eines Verfahrens nebst zugehöriger Rolle (z.B. Beklagter, Beschwerdeführer, Ehefrau, Rechtsanwalt, Zeuge) oder mehrerer Rollen (z.B. Kläger und Berufungsbeklagter) im Verfahren übergeben werden.</xs:documentation>
+      </xs:annotation>
+      <xs:sequence>
+         <xs:element name="rolle" minOccurs="0" maxOccurs="unbounded">
+            <xs:annotation>
+               <xs:documentation>Jeder Beteiligte kann eine oder mehrere Rollen haben, z.B. Kläger, Beklagter, Zeuge, Dolmetscher, Rechtsanwalt.</xs:documentation>
+            </xs:annotation>
+            <xs:complexType>
+               <xs:sequence>
+                  <xs:element name="rollennummer" minOccurs="0" type="din91379:datatypeC">
+                     <xs:annotation>
+                        <xs:documentation>Die Rollennummer wird als eindeutige Kennziffer innerhalb des XML-Dokuments benötigt, wenn aus anderen Elementen innerhalb des XML-Dokuments heraus auf Rollen verwiesen wird. So kann mittelbar auch auf den Beteiligten verwiesen werden.</xs:documentation>
+                     </xs:annotation>
+                  </xs:element>
+                  <xs:element name="rollenID" minOccurs="0" maxOccurs="unbounded">
+                     <xs:complexType>
+                        <xs:sequence>
+                           <xs:element name="id" type="din91379:datatypeC">
+                              <xs:annotation>
+                                 <xs:documentation>Auf diese Weise ist es möglich, bei Kommunikation zwischen verschiedenen Stationen (wobei auch außergerichtliche Teile des Verfahrens als Stationen zu verstehen sind (z. Bsp. Vorgänge bei Verwaltungsbehörden oder Polizei)) die Primärschlüssel verschiedenster Anwendungen in verschiedenen Behörden mittels XJustiz für eine erleichterte automatische Verarbeitung auszutauschen.</xs:documentation>
+                              </xs:annotation>
+                           </xs:element>
+                           <xs:element name="ref.instanznummer" type="din91379:datatypeC">
+                              <xs:annotation>
+                                 <xs:documentation>Dieses Element enthält einen Verweis auf die Station, bei der die oben angegebene ID verwendet wird. Verwiesen wird auf das Element Instanznummer.</xs:documentation>
+                              </xs:annotation>
+                           </xs:element>
+                        </xs:sequence>
+                     </xs:complexType>
+                  </xs:element>
+                  <xs:element name="rollenbezeichnung"
+                              minOccurs="0"
+                              type="tns:Code.GDS.Rollenbezeichnung.Typ3">
+                     <xs:annotation>
+                        <xs:documentation>Hier kann die fachliche Bezeichnung der Rolle des Beteiligten beschrieben werden.</xs:documentation>
+                     </xs:annotation>
+                  </xs:element>
+                  <xs:element name="nr" minOccurs="0" default="1" type="xs:integer">
+                     <xs:annotation>
+                        <xs:documentation>Wenn es in einem Verfahren mehrere gleichartige Beteiligte gibt (z. B. mehrere Kläger), sind diese fortlaufend zu nummerieren. Jede Kombination aus Rollenbezeichnung und Nummer (z.B. Kläger 1, Kläger 2, Beklagter 1 usw.) darf pro Verfahren nur einmal vorkommen. Mit XML-Mitteln kann nur die Eindeutigkeit innerhalb des jeweiligen XJustiz-Datensatzes überprüft werden. Für die Überprüfung der verfahrensweiten Eindeutigkeit sind die jeweiligen Kommunikationsteilnehmer verantwortlich.</xs:documentation>
+                     </xs:annotation>
+                  </xs:element>
+                  <xs:element name="geschaeftszeichen" minOccurs="0" type="din91379:datatypeC">
+                     <xs:annotation>
+                        <xs:documentation>Hier ist Raum für ein eigenes Geschäftszeichen des Beteiligten in dieser Rolle, z.B. die Schadensnummer einer Versicherung oder die Mandatsnummer eines Rechtsanwalts.</xs:documentation>
+                     </xs:annotation>
+                  </xs:element>
+                  <xs:element name="referenz"
+                              minOccurs="0"
+                              maxOccurs="unbounded"
+                              type="tns:Type.GDS.Ref.Rollennummer">
+                     <xs:annotation>
+                        <xs:documentation>Hier kann ein Bezug zu einer anderen Rolle angegeben werden. Einige Rollen haben einen Bezug zu einer anderen Beteiligung. Typisches Beispiel sind Rechtsanwälte. Diese handeln in aller Regel als Prozessbevollmächtigte für einen anderen Beteiligten in einer bestimmten Rolle. Im vorliegenden Feld wird dann vermerkt, für welchen Beteiligten in welcher Rolle der Rechtsanwalt handelt. Für jede Rolle, auf die verwiesen wird, muss ein entsprechendes Element "Beteiligung/Rolle" vorhanden sein. Verwiesen wird auf die Rollennummer.</xs:documentation>
+                     </xs:annotation>
+                  </xs:element>
+                  <xs:element name="auswahl_bezeichnung" minOccurs="0" maxOccurs="unbounded">
+                     <xs:complexType>
+                        <xs:choice>
+                           <xs:element name="dienstbezeichnung" type="tns:Code.GDS.Dienstbezeichnung.Typ3">
+                              <xs:annotation>
+                                 <xs:documentation>Mit diesem Element kann die Dienstbezeichnung eines Beteiligten mitgegeben werden.</xs:documentation>
+                              </xs:annotation>
+                           </xs:element>
+                           <xs:element name="sonstigeBezeichnung" type="din91379:datatypeC">
+                              <xs:annotation>
+                                 <xs:documentation>Um über die Dienstbezeichnung hinaus eine Person näher zu beschreiben, kann dieses Element verwendet werden.</xs:documentation>
+                              </xs:annotation>
+                           </xs:element>
+                        </xs:choice>
+                     </xs:complexType>
+                  </xs:element>
+               </xs:sequence>
+            </xs:complexType>
+         </xs:element>
+         <xs:element name="beteiligter" type="tns:Type.GDS.Beteiligter">
+            <xs:annotation>
+               <xs:documentation>Ein Beteiligter kann eine natürliche Person, eine Rechtsanwaltskanzlei oder eine Organisation sein.</xs:documentation>
+            </xs:annotation>
+         </xs:element>
+      </xs:sequence>
+   </xs:complexType>
+   <xs:complexType name="Type.GDS.Beurkundung">
+      <xs:sequence>
+         <xs:element name="urNr" minOccurs="0" type="din91379:datatypeC">
+            <xs:annotation>
+               <xs:documentation>Urkundennummer der Urkundsperson oder behördliches Aktenzeichen</xs:documentation>
+            </xs:annotation>
+         </xs:element>
+         <xs:element name="urkundsdatum" minOccurs="0" type="tns:Type.GDS.Datumsangabe"/>
+         <xs:element name="urkundentyp"
+                     minOccurs="0"
+                     type="tns:Code.GDS.Urkundentyp.Typ3"/>
+         <xs:element name="urkundsperson"
+                     minOccurs="0"
+                     maxOccurs="unbounded"
+                     type="tns:Type.GDS.Ref.Rollennummer">
+            <xs:annotation>
+               <xs:documentation>Person oder Institution, welche die der Eintragung zugrundeliegende Urkunde erstellt hat.</xs:documentation>
+            </xs:annotation>
+         </xs:element>
+         <xs:element name="keineBeurkundung" minOccurs="0" type="xs:boolean">
+            <xs:annotation>
+               <xs:documentation>In manchen Fällen ist keine Beurkundung nötig.</xs:documentation>
+            </xs:annotation>
+         </xs:element>
+      </xs:sequence>
+   </xs:complexType>
+   <xs:simpleType name="Type.GDS.Datumsangabe">
+      <xs:annotation>
+         <xs:documentation>Datumsfeld nach ISO 8601 (yyyy-mm-dd). Ist das Datum nicht vollständig bekannt, werden die bekannten Teile angegeben (yyyy-mm oder yyyy).</xs:documentation>
+      </xs:annotation>
+      <xs:restriction base="din91379:datatypeC">
+         <xs:pattern value="\d{4}((-\d{2}){0,1}-\d{2}){0,1}"/>
+      </xs:restriction>
+   </xs:simpleType>
+   <xs:complexType name="Type.GDS.Dokument">
+      <xs:sequence>
+         <xs:element name="identifikation"
+                     type="tns:Type.GDS.Xdomea.IdentifikationObjektType">
+            <xs:annotation>
+               <xs:documentation>Sofern zu einem Dokument, z.B. bei der Übersendung einer inzwischen fortgeschriebenen Behördenakte, erneut Dateien übermittelt werden, soll für das Dokument im Element 'identifikation/id' die gleiche UUID wie bei der ersten Übermittlung angegeben werden. Auf diese Weise kann der Empfänger durch Vergleich der UUIDs erkennen, ob zu diesem Dokument bereits Dateien übermittelt wurden.</xs:documentation>
+            </xs:annotation>
+         </xs:element>
+         <xs:element name="vertraulichkeitsstufe"
+                     minOccurs="0"
+                     type="tns:Code.GDS.Vertraulichkeitsstufe.Typ3">
+            <xs:annotation>
+               <xs:documentation>Es kann zwischen den Werten "VERSCHLUSSSACHE - NUR FÜR DEN DIENSTGEBRAUCH" und "vertraulich zu behandeln" gewählt werden. HINWEIS: Die Werteliste wird erst gütig, wenn die Übermittlung von Nachrichten an die Justiz, die als VS-NfD-klassifizierte oder vertraulich zu behandelnde Informationen oder Dokumente enthalten, von der BLK-AG IT-Standards freigegeben ist. Ab Gültigkeit der Werteliste muss der Wert "VERSCHLUSSSACHE - NUR FÜR DEN DIENSTGEBRAUCH" angegeben werden, wenn die Nachricht Informationen oder Dokumente beinhaltet, deren Kenntnisnahme durch Unbefugte für die Interessen der Bundesrepublik Deutschland oder eines ihrer Länder nachteilig sein kann (vgl. § 2 Abs. 2 Nr. 4 Verschlusssachenanweisung). Vertraulich zu behandelnde Dokumente und Vorgänge sind solche, die nicht als Verschlusssache eingestuft sind, für die der Absender aber aus bestimmten Gründen, eine vom Regelbetrieb abweichende Behandlung, z. B. durch eingeschränkten Zugriff innerhalb der Behörde, empfiehlt (z.B. bei Verfahren gegen Personen des öffentlichen Lebens, Wirtschaftsstreitigkeiten mit sehr hohen Streitwerten, Staatsschutzsachen).</xs:documentation>
+            </xs:annotation>
+         </xs:element>
+         <xs:element name="fremdesGeschaeftszeichen"
+                     minOccurs="0"
+                     type="din91379:datatypeC">
+            <xs:annotation>
+               <xs:documentation>Das Geschäftszeichen des Dokuments im absendenden System, das im Zuge eines Nachrichtentransfers übermittelt wird.</xs:documentation>
+            </xs:annotation>
+         </xs:element>
+         <xs:element name="posteingangsdatum" minOccurs="0" type="xs:dateTime">
+            <xs:annotation>
+               <xs:documentation>Im Unterschied zu xdomea wird hier nicht nur ein Datum übergeben, sondern ein Zeitpunkt, um den Eingangszeitpunkt aus dem elektronischen Rechtsverkehr exakt übermitteln zu können.</xs:documentation>
+            </xs:annotation>
+         </xs:element>
+         <xs:element name="datumDesSchreibens" minOccurs="0" type="xs:date">
+            <xs:annotation>
+               <xs:documentation>Das Dokumentendatum ist, z. B. das Datum eines Schreibens. Es handelt sich nicht um das Erstellungs- oder Veränderungsdatum des Dokuments.</xs:documentation>
+            </xs:annotation>
+         </xs:element>
+         <xs:element name="anwendungsspezifischeErweiterung"
+                     minOccurs="0"
+                     maxOccurs="unbounded"
+                     type="tns:Type.GDS.Xdomea.AnwendungsspezifischeErweiterungType">
+            <xs:annotation>
+               <xs:documentation>In dieser Elementgruppe können Felder und/oder Feldgruppen, in denen mehrere Felder zusammengefasst sind, übermittelt werden. Da es hierfür keine festen Schema-Vorgaben gibt, darf diese Elementgruppe nur verwendet werden, wenn mit dem jeweiligen Kommunikationspartner Name und Inhalt der Felder und/oder Feldgruppen abgestimmt wurden. Es kann nicht davon ausgegangen werden, dass die hier hinterlegten Metadaten von Kommunikationspartnern, mit denen keine Absprachen erfolgten, ausgelesen werden können.</xs:documentation>
+            </xs:annotation>
+         </xs:element>
+         <xs:element name="xjustiz.fachspezifischeDaten">
+            <xs:complexType>
+               <xs:sequence>
+                  <xs:element name="dokumentklasse" type="tns:Code.GDS.Dokumentklasse.Typ3">
+                     <xs:annotation>
+                        <xs:documentation>Bezeichnet die Dokumentklasse anhand der vorgegebenen Werteliste. Diese ist für einen reibungslosen, systemübergreifenden Austausch bewusst knappgehalten. Für eine spezifischere Bezeichnung kann das Element 'dokumententyp' verwendet werden.</xs:documentation>
+                     </xs:annotation>
+                  </xs:element>
+                  <xs:element name="dokumententyp"
+                              minOccurs="0"
+                              type="tns:Code.GDS.Dokumenttyp.Typ3">
+                     <xs:annotation>
+                        <xs:documentation>Bezeichnet den Dokumententyp anhand der vorgegebenen Werteliste. Für eine spezifischere Bezeichnung kann das Feld 'anzeigename' verwendet werden.</xs:documentation>
+                     </xs:annotation>
+                  </xs:element>
+                  <xs:element name="anzeigename" minOccurs="0" type="din91379:datatypeC">
+                     <xs:annotation>
+                        <xs:documentation>Der Anzeigename ermöglicht als Freitext die Übermittlung der Bezeichnung des Dokumentes, wie sie im versendenden System angezeigt wird. Hier können spezifischere Informationen zum Dokumentennamen übermittelt werden als dies im Rahmen der Werteliste zum Dokumenttyp möglich ist.</xs:documentation>
+                     </xs:annotation>
+                  </xs:element>
+                  <xs:element name="person"
+                              minOccurs="0"
+                              maxOccurs="unbounded"
+                              type="tns:Type.GDS.Ref.Beteiligtennummer">
+                     <xs:annotation>
+                        <xs:documentation>Das Feld ermöglicht durch die Angabe der Person, auf die sich das Dokument bezieht, eine nähere Kennzeichnung des Dokumentes in Hinblick auf die Akte. Dies ist bei Behördenakten in Ergänzung des Aktenzeichens und ggf. weiterer Ordnungskriterien teilweise üblich (z.B. Asylakten).</xs:documentation>
+                     </xs:annotation>
+                  </xs:element>
+                  <xs:element name="akteneinsicht"
+                              minOccurs="0"
+                              fixed="false"
+                              type="xs:boolean">
+                     <xs:annotation>
+                        <xs:documentation>Im Regelfall unterliegt jedes Dokument der Akteneinsicht. Mit diesem Feld kann der Einreicher darauf hinweisen, dass aus seiner Sicht für dieses Dokument keine Akteneinsicht gewährt werden sollte. Die Einsicht gewährende Stelle kann von diesem Hinweis abweichen.</xs:documentation>
+                     </xs:annotation>
+                  </xs:element>
+                  <xs:element name="veraktungsdatum" minOccurs="0" type="xs:date">
+                     <xs:annotation>
+                        <xs:documentation>Bezeichnet das Datum, zu dem das Dokument revisionssicher in einer elektronischen Akte gespeichert wurde.</xs:documentation>
+                     </xs:annotation>
+                  </xs:element>
+                  <xs:element name="scan" minOccurs="0">
+                     <xs:complexType>
+                        <xs:sequence>
+                           <xs:element name="scanDatum" type="xs:date">
+                              <xs:annotation>
+                                 <xs:documentation>Mit diesem Element wird das Datum des Scannens für eingescannte Dokumente angegeben.</xs:documentation>
+                              </xs:annotation>
+                           </xs:element>
+                           <xs:element name="ersetzenderScan" default="true" type="xs:boolean">
+                              <xs:annotation>
+                                 <xs:documentation>Mit diesem Element wird angegeben, ob das Dokument ersetzend eingescannt wurde und die Vernichtung erfolgt ist bzw. noch erfolgen wird.</xs:documentation>
+                              </xs:annotation>
+                           </xs:element>
+                        </xs:sequence>
+                     </xs:complexType>
+                  </xs:element>
+                  <xs:element name="absenderAnzeigename" minOccurs="0" type="din91379:datatypeD">
+                     <xs:annotation>
+                        <xs:documentation>Bezeichnet als Freitext den Absender des Dokumentes.</xs:documentation>
+                     </xs:annotation>
+                  </xs:element>
+                  <xs:element name="adressatAnzeigename" minOccurs="0" type="din91379:datatypeD">
+                     <xs:annotation>
+                        <xs:documentation>Bezeichnet als Freitext den Empfänger des Dokumentes.</xs:documentation>
+                     </xs:annotation>
+                  </xs:element>
+                  <xs:element name="verweis" minOccurs="0" maxOccurs="unbounded">
+                     <xs:annotation>
+                        <xs:documentation>Ein Verweis stellt eine inhaltliche Querbeziehung eines Schriftgutobjekts zu einem anderen Schriftgutobjekt dar. Dabei ist stets vom untergeordneten auf das übergeordnete Schriftgutobjekt zu verweisen (z.B. von einer Anlage auf einen Schriftsatz, von einem Berichtigungsbeschluss auf das Urteil).</xs:documentation>
+                     </xs:annotation>
+                     <xs:complexType>
+                        <xs:sequence>
+                           <xs:element name="verweistyp" type="tns:Code.GDS.Verweistyp">
+                              <xs:annotation>
+                                 <xs:documentation>Mit diesem Element kann die Art des Verweises näher spezifiziert werden.</xs:documentation>
+                              </xs:annotation>
+                           </xs:element>
+                           <xs:element name="bezugsdokument" type="tns:Type.GDS.Ref.SGO">
+                              <xs:annotation>
+                                 <xs:documentation>Die UUID des Schriftgutobjektes, zu dem der inhaltliche Querverweis dargestellt wird.</xs:documentation>
+                              </xs:annotation>
+                           </xs:element>
+                        </xs:sequence>
+                     </xs:complexType>
+                  </xs:element>
+                  <xs:element name="datei" maxOccurs="unbounded">
+                     <xs:complexType>
+                        <xs:sequence>
+                           <xs:element name="dateiname" type="din91379:datatypeC">
+                              <xs:annotation>
+                                 <xs:documentation>Der Dateiname soll nach der Syntax "Dokumentname_UUID.Dateiformat" gebildet werden. Die Länge von Dateinamen darf nur 90 Zeichen inkl. der Dateiendungen betragen. In Dateinamen dürfen nur noch alle Buchstaben des deutschen Alphabetes einschließlich der Umlaute Ä, ä, Ö, ö, Ü, ü und ß genutzt werden. Zudem dürfen alle Ziffern und die Zeichen "Unterstrich" und "Minus" genutzt werden. Punkte sind nur als Trenner zwischen dem Dateinamen und der Dateinamenserweiterung zulässig. Nur bei konkatenierten Dateinamensendungen, z.B. bei abgesetzten Signaturdateien, dürfen Punkte auch im Dateinamen genutzt werden (z.B. Dokument1.pdf.pkcs7). Soweit eine signierte Datei gemeinsam mit einer zugehörigen Signaturdatei übersandt wird, hat die Signaturdatei exakt denselben Dateinamen wie die signierte Datei zu erhalten, mit Ausnahme des Dateiformats, welches das Format der Signaturdatei wiedergibt (Identität bei UUID und Dokumentname, z.B. Klage_UUID.pdf und Klage_UUID.pdf.pkcs7). Dies gilt nur für die erste Signaturdatei, die zu einer Datei erstellt wird. Jede weitere Signaturdatei muss einen abweichenden Dateinamen erhalten (z.B. Ergänzung einer Ziffer), da andernfalls komplett identische Dateinamen entstehen. Die Länge von Dateinamen von Signaturdateien darf ebenfalls nur 90 Zeichen inkl. der Signaturdateiendungen betragen. Die XJustiz-Nachricht, die einer EGVP-Nachricht beigefügt wird, beschreibt den Inhalt der Nachricht und muss immer den Dateinamen xjustiz_nachricht.xml tragen. Sofern der EGVP-Nachricht weitere XJustiz-Nachrichten, z.B. bei der Weiterleitung von Nachrichten anderer Beteiligter oder als Bestandteil von Akten, beigefügt werden müssen, so muss dem Dateinamen dieser XJustiz-Datensätze eine UUID angestellt werden (xjustiz_nachricht_UUID.xml).</xs:documentation>
+                              </xs:annotation>
+                           </xs:element>
+                           <xs:element name="bestandteil" type="tns:Code.GDS.Bestandteiltyp">
+                              <xs:annotation>
+                                 <xs:documentation>Ein Dokument kann aus mehreren Dateien bestehen. So kann bspw. in einer Datei der Schriftsatz und in einer weiteren Datei die zugehörige Signatur übermittelt werden. Fachlich bilden beide Dateien gemeinsam das Dokument. Entsprechendes gilt, wenn zu einer eingereichten Originaldatei weitere Dateien erstellt werden (Repräsentate, Versionen, Transfervermerke, Signaturprüfprotokolle). Die Werteliste dient dazu, den Bestandteiltyp für die einzelnen Dateien anzugeben. Dabei darf der Bestandteiltyp "Original" für ein und dasselbe Dokument nur einmal vorkommen.</xs:documentation>
+                              </xs:annotation>
+                           </xs:element>
+                           <xs:element name="versionsnummer" minOccurs="0" type="xs:integer">
+                              <xs:annotation>
+                                 <xs:documentation>Beim Dokumenten- und Aktenaustausch sollen grundsätzlich keine unterschiedlichen Versionen eines Dokumentes übermittelt werden. Soweit dies fachlich erforderlich ist, weil ein Dokument in unterschiedlichen Versionen mehrfach qualifiziert elektronisch signiert wird (vgl. Bestandteiltyp "signierte Vorversion"), wird der Austausch gleichwohl über die Angabe der Version in diesem Feld ermöglicht.</xs:documentation>
+                              </xs:annotation>
+                           </xs:element>
+                           <xs:element name="dateiname.bezugsdatei"
+                                       minOccurs="0"
+                                       maxOccurs="unbounded"
+                                       type="din91379:datatypeC">
+                              <xs:annotation>
+                                 <xs:documentation>Dieses Element ist zwingend für die Dateien des Bestandteiltyps "Signaturdatei" anzugeben. Für die Signaturdateien ist der Dateiname der signierten Datei anzugeben. Für andere Bestandteiltypen soll das Element nicht verwendet werden.</xs:documentation>
+                              </xs:annotation>
+                           </xs:element>
+                        </xs:sequence>
+                     </xs:complexType>
+                  </xs:element>
+                  <xs:element name="ruecksendungEEB.erforderlich"
+                              minOccurs="0"
+                              fixed="true"
+                              type="xs:boolean">
+                     <xs:annotation>
+                        <xs:documentation>Mit diesem Element kann für das Dokument ein elektronisches Empfangsbekenntnis (eEB) gemäß § 173 ZPO oder § 195 ZPO angefordert werden. Die Anforderung eines eEB unter Verwendung strukturierter Daten ist nur für die Zustellung durch Gerichte oder von Anwalt zu Anwalt rechtlich geregelt, so dass das Element für die Zustellung von Behörde zu Behörde oder zwischen anderen Beteiligten nicht verwendet werden kann.</xs:documentation>
+                     </xs:annotation>
+                  </xs:element>
+               </xs:sequence>
+            </xs:complexType>
+         </xs:element>
+         <xs:element name="justizinterneDaten" minOccurs="0">
+            <xs:annotation>
+               <xs:documentation>Diese Sequenz wird ausschließlich für die justizinterne Kommunikation (zwischen Gerichten oder/und Staatsanwaltschaften) genutzt. Sie darf nicht für XJustiz-Nachrichten, die externe Beteiligte an die Justiz übermitteln, verwendet werden.</xs:documentation>
+            </xs:annotation>
+            <xs:complexType>
+               <xs:sequence>
+                  <xs:element name="nurMetadaten"
+                              minOccurs="0"
+                              fixed="true"
+                              type="xs:boolean"/>
+                  <xs:element name="ersteSeitennummer" minOccurs="0" type="din91379:datatypeC"/>
+                  <xs:element name="letzteSeitennummer" minOccurs="0" type="din91379:datatypeC"/>
+                  <xs:element name="justizkostenrelevanz"
+                              minOccurs="0"
+                              default="false"
+                              type="xs:boolean">
+                     <xs:annotation>
+                        <xs:documentation>Um die Kennzeichnung eines Dokumentes als kostenrelevant bei gerichtsinternen Aktenübermittlungen zu erhalten, kann diese hier angegeben werden. "true" entspricht dabei kostenrelevant, "false" bedeutet nicht kostenrelevant.</xs:documentation>
+                     </xs:annotation>
+                  </xs:element>
+                  <xs:element name="zustellung41StPO" minOccurs="0" type="xs:boolean"/>
+               </xs:sequence>
+            </xs:complexType>
+         </xs:element>
+         <xs:element name="erstellungszeitpunkt" minOccurs="0" type="xs:dateTime">
+            <xs:annotation>
+               <xs:documentation>Dieses Element gibt Auskunft darüber, zu welchem Zeitpunkt das Dokument im System erstellt wurde.</xs:documentation>
+            </xs:annotation>
+         </xs:element>
+      </xs:sequence>
+   </xs:complexType>
+   <xs:complexType name="Type.GDS.Geburt">
+      <xs:sequence>
+         <xs:element name="geburtsdatum" minOccurs="0" type="tns:Type.GDS.Datumsangabe"/>
+         <xs:element name="geburtsort" minOccurs="0" type="tns:Type.GDS.Ortsangabe"/>
+         <xs:element name="geburtsname.mutter" minOccurs="0" type="din91379:datatypeA"/>
+         <xs:element name="name.eltern" minOccurs="0">
+            <xs:complexType>
+               <xs:sequence>
+                  <xs:element name="nachname.vater"
+                              minOccurs="0"
+                              maxOccurs="unbounded"
+                              type="din91379:datatypeA"/>
+                  <xs:element name="vorname.vater"
+                              minOccurs="0"
+                              maxOccurs="unbounded"
+                              type="din91379:datatypeA"/>
+                  <xs:element name="nachname.mutter"
+                              minOccurs="0"
+                              maxOccurs="unbounded"
+                              type="din91379:datatypeA"/>
+                  <xs:element name="vorname.mutter"
+                              minOccurs="0"
+                              maxOccurs="unbounded"
+                              type="din91379:datatypeA"/>
+               </xs:sequence>
+            </xs:complexType>
+         </xs:element>
+         <xs:element name="geburtsdatum.unbekannt"
+                     minOccurs="0"
+                     default="false"
+                     type="xs:boolean">
+            <xs:annotation>
+               <xs:documentation>Wenn das genaue Geburtsdatum nicht bekannt ist, kann dies mit diesem Element kenntlich gemacht werden.</xs:documentation>
+            </xs:annotation>
+         </xs:element>
+      </xs:sequence>
+   </xs:complexType>
+   <xs:complexType name="Type.GDS.Geldbetrag">
+      <xs:sequence>
+         <xs:element name="zahl" type="xs:double"/>
+         <xs:element name="auswahl_waehrung">
+            <xs:complexType>
+               <xs:choice>
+                  <xs:element name="waehrung" type="tns:Code.GDS.Waehrung.Typ3">
+                     <xs:annotation>
+                        <xs:documentation>Es werden die dreistelligen Buchstaben-Abkürzungen gemäß ISO 4217 verwendet.</xs:documentation>
+                     </xs:annotation>
+                  </xs:element>
+                  <xs:element name="historischeWaehrung" type="din91379:datatypeC">
+                     <xs:annotation>
+                        <xs:documentation>Angabe einer historischen Währung als Freitext (z.B. DM, DEM, Mark, Reichsmark)</xs:documentation>
+                     </xs:annotation>
+                  </xs:element>
+               </xs:choice>
+            </xs:complexType>
+         </xs:element>
+      </xs:sequence>
+   </xs:complexType>
+   <xs:complexType name="Type.GDS.Grunddaten">
+      <xs:annotation>
+         <xs:documentation>Der Type.GDS.Grunddaten enthält Meta-Informationen zum Verfahren und dessen Beteiligte. Er kann auch Angaben zu Terminen enthalten.</xs:documentation>
+      </xs:annotation>
+      <xs:sequence>
+         <xs:element name="verfahrensdaten" minOccurs="0">
+            <xs:annotation>
+               <xs:documentation>Verfahrensdaten nehmen alle Informationen auf, die das jeweilige Verfahren mit sich bringt.</xs:documentation>
+            </xs:annotation>
+            <xs:complexType>
+               <xs:sequence>
+                  <xs:element name="verfahrensnummer" minOccurs="0" type="din91379:datatypeC">
+                     <xs:annotation>
+                        <xs:documentation>Die Verfahrensnummer ist eine eindeutige Kennzeichnung, die für das Verfahren über alle Stationen hinweg gelten soll und neben dem Aktenzeichen übermittelt werden kann. Sie kann beispielsweise in einem Fachverfahren zur eindeutigen Identifikation des Verfahrens verwendet werden.</xs:documentation>
+                     </xs:annotation>
+                  </xs:element>
+                  <xs:element name="instanzdaten"
+                              minOccurs="0"
+                              maxOccurs="unbounded"
+                              type="tns:Type.GDS.Instanzdaten">
+                     <xs:annotation>
+                        <xs:documentation>Die Instanzdaten enthalten Informationen zu den Stationen, die ein Vorgang durchlaufen hat. Dies kann ein Gericht, eine Staatsanwaltschaft, eine Justizbehörde, aber auch eine andere Behörde sein.</xs:documentation>
+                     </xs:annotation>
+                  </xs:element>
+                  <xs:element name="beteiligung"
+                              minOccurs="0"
+                              maxOccurs="unbounded"
+                              type="tns:Type.GDS.Beteiligung">
+                     <xs:annotation>
+                        <xs:documentation>Für jede Beteiligung gibt es genau einen Beteiligten. Dieser kann mehrere Rollen haben.</xs:documentation>
+                     </xs:annotation>
+                  </xs:element>
+                  <xs:element name="terminsdaten"
+                              minOccurs="0"
+                              maxOccurs="unbounded"
+                              type="tns:Type.GDS.Terminsdaten"/>
+               </xs:sequence>
+            </xs:complexType>
+         </xs:element>
+      </xs:sequence>
+   </xs:complexType>
+   <xs:complexType name="Type.GDS.Herstellerinformation">
+      <xs:annotation>
+         <xs:documentation>Mit diesem Type können Informationen zu dem Hersteller des Softwareprodukts, mit dem die XJustiz-Dateien erzeugt wurden, die Bezeichnung des Programms und seine Versionsnummer mitgeschickt werden. Durch diese Information kann im Supportfall die Fehlersuche systematisiert werden.</xs:documentation>
+      </xs:annotation>
+      <xs:sequence>
+         <xs:element name="nameDesProdukts" minOccurs="0" type="din91379:datatypeD"/>
+         <xs:element name="herstellerDesProdukts"
+                     minOccurs="0"
+                     type="din91379:datatypeD"/>
+         <xs:element name="version" minOccurs="0" type="din91379:datatypeC"/>
+      </xs:sequence>
+   </xs:complexType>
+   <xs:complexType name="Type.GDS.Instanzdaten">
+      <xs:annotation>
+         <xs:documentation>Die Instanzdaten enthalten Informationen zu den Stationen, die ein Vorgang durchlaufen hat. Dies kann ein Gericht, eine Staatsanwaltschaft, eine Justizbehörde, aber auch eine andere Behörde sein.</xs:documentation>
+      </xs:annotation>
+      <xs:sequence>
+         <xs:element name="instanznummer" minOccurs="0" type="din91379:datatypeC">
+            <xs:annotation>
+               <xs:documentation>Das Element dient als Schlüsselfeld für interne Referenzierungen. Die Instanznummer muss für das aktuelle XML-Instanzdokument eindeutig sein und identifiziert die jeweiligen Instanzdaten.</xs:documentation>
+            </xs:annotation>
+         </xs:element>
+         <xs:element name="sachgebiet" minOccurs="0" type="tns:Code.GDS.Sachgebiet.Typ3">
+            <xs:annotation>
+               <xs:documentation>Das Element beschreibt das Sachgebiet, unter dem der jeweilige Vorgang in der Station bearbeitet wird.</xs:documentation>
+            </xs:annotation>
+         </xs:element>
+         <xs:element name="sachgebietszusatz" minOccurs="0" type="din91379:datatypeC">
+            <xs:annotation>
+               <xs:documentation>Möglichkeit für zusätzliche Angaben bezüglich des Sachgebiets.</xs:documentation>
+            </xs:annotation>
+         </xs:element>
+         <xs:element name="auswahl_instanzbehoerde" type="tns:Type.GDS.Behoerde">
+            <xs:annotation>
+               <xs:documentation>Die auszuwählende Instanzbehörde ist eine Station, die der Vorgang durchlaufen hat. Dies kann ein Gericht oder eine Staatsanwaltschaft, eine Justizbehörde, aber auch eine andere Behörde sein. Meist entspricht es dem Gericht (der Staatsanwaltschaft), an das (die) die Nachricht adressiert wird. Darüber hinaus können weitere Behörden (z.B. Gericht der Vorinstanz, Polizei in Strafverfahren), die den Vorgang/das Verfahren bereits bearbeitet haben, angegeben werden.</xs:documentation>
+            </xs:annotation>
+         </xs:element>
+         <xs:element name="abteilung" minOccurs="0" type="din91379:datatypeC">
+            <xs:annotation>
+               <xs:documentation>Hier kann die zuständige Abteilung oder der zuständige Spruchkörper angegeben werden, z.B. "7.Zivilkammer", "Dezernat 77" oder "Inspektion 7".</xs:documentation>
+            </xs:annotation>
+         </xs:element>
+         <xs:element name="verfahrensinstanznummer"
+                     minOccurs="0"
+                     type="din91379:datatypeC">
+            <xs:annotation>
+               <xs:documentation>Die Verfahrensinstanznummer ist eine eindeutige Kennzeichnung, die für das Verfahren in der jeweiligen Station, die im übergeordneten Element "instanzdaten" übermittelt wird, gelten soll und neben dem Aktenzeichen übermittelt werden kann. Sie kann beispielsweise in einem Fachverfahren zur eindeutigen Identifikation des Verfahrens verwendet werden.</xs:documentation>
+            </xs:annotation>
+         </xs:element>
+         <xs:element name="aktenzeichen" minOccurs="0" type="tns:Type.GDS.Aktenzeichen">
+            <xs:annotation>
+               <xs:documentation>Hier steht das Aktenzeichen, unter dem die Station (siehe oben) das Verfahren führt.</xs:documentation>
+            </xs:annotation>
+         </xs:element>
+         <xs:element name="kurzrubrum" minOccurs="0" type="din91379:datatypeC">
+            <xs:annotation>
+               <xs:documentation>Hier wird die schlagwortartige Bezeichnung des Verfahrens angegeben, z.B. "Müller ./. Maier" oder "Strafsache gegen Erich Schulze".</xs:documentation>
+            </xs:annotation>
+         </xs:element>
+         <xs:element name="verfahrensgegenstand"
+                     minOccurs="0"
+                     maxOccurs="unbounded"
+                     type="tns:Type.GDS.Verfahrensgegenstand">
+            <xs:annotation>
+               <xs:documentation>Es können ein oder mehrere Verfahrensgegenstände angegeben werden.</xs:documentation>
+            </xs:annotation>
+         </xs:element>
+         <xs:element name="telekommunikation"
+                     minOccurs="0"
+                     maxOccurs="unbounded"
+                     type="tns:Type.GDS.Kommunikation"/>
+      </xs:sequence>
+   </xs:complexType>
+   <xs:complexType name="Type.GDS.Kommunikation">
+      <xs:sequence>
+         <xs:element name="telekommunikationsart" type="tns:Code.GDS.Telekommunikationsart"/>
+         <xs:element name="telekommunikationszusatz"
+                     minOccurs="0"
+                     type="tns:Code.GDS.Telekommunikationszusatz"/>
+         <xs:element name="verbindung" type="din91379:datatypeC">
+            <xs:annotation>
+               <xs:documentation>Hier wird die Telefonnummer, Faxnummer, E-Mail-Adresse, Safe-ID oder dergleichen mitgeteilt.</xs:documentation>
+            </xs:annotation>
+         </xs:element>
+      </xs:sequence>
+   </xs:complexType>
+   <xs:complexType name="Type.GDS.Kreditkartendaten">
+      <xs:sequence>
+         <xs:element name="kreditkartenunternehmen"
+                     minOccurs="0"
+                     type="din91379:datatypeD"/>
+         <xs:element name="gueltigkeit" minOccurs="0" type="din91379:datatypeC"/>
+         <xs:element name="kartenpruefnummer" minOccurs="0" type="din91379:datatypeC"/>
+         <xs:element name="karteninhaber" minOccurs="0" type="din91379:datatypeD"/>
+         <xs:element name="kartennummer" minOccurs="0" type="din91379:datatypeC"/>
+         <xs:element name="kartennummerGueltigkeitPruefnr"
+                     minOccurs="0"
+                     type="din91379:datatypeC"/>
+      </xs:sequence>
+   </xs:complexType>
+   <xs:complexType name="Type.GDS.Nachrichtenkopf">
+      <xs:sequence>
+         <xs:element name="aktenzeichen.absender"
+                     minOccurs="0"
+                     maxOccurs="unbounded"
+                     type="din91379:datatypeC"/>
+         <xs:element name="aktenzeichen.empfaenger"
+                     minOccurs="0"
+                     maxOccurs="unbounded"
+                     type="din91379:datatypeC">
+            <xs:annotation>
+               <xs:documentation>Hier ist das Aktenzeichen des Empfängers einzutragen. Zusätzliche Anmerkungen sind nicht zulässig. Sofern der Empfänger sein Aktenzeichen zuvor elektronisch als Zeichenkette übermittelt hat, ist hier exakt diese übermittelte Zeichenkette anzugeben. Auf diese Weise wird sichergestellt, dass der Empfänger das Aktenzeichen automatisiert weiterverarbeiten kann. Sind mehrere Aktenzeichen zu übertragen, muss für jedes Aktenzeichen ein eigenes Element übertragen werden. Bei der Übermittlung verfahrenseinleitender Dokumente ist der Wert 'neu' einzutragen. Wenn das Aktenzeichen aus sonstigen Gründen noch nicht bekannt ist, ist der Wert 'unbekannt' einzutragen.</xs:documentation>
+            </xs:annotation>
+         </xs:element>
+         <xs:element name="erstellungszeitpunkt" type="xs:dateTime"/>
+         <xs:element name="auswahl_absender">
+            <xs:annotation>
+               <xs:documentation>Hier ist der Absender der Nachricht einzutragen. Dabei kann zwischen einem Gericht/einer Staatsanwaltschaft, einem Rentenversicherungsträger, einer Polizeibehörde oder einem sonstigen Absender ausgewählt werden.</xs:documentation>
+            </xs:annotation>
+            <xs:complexType>
+               <xs:choice>
+                  <xs:element name="absender.gericht" type="tns:Code.GDS.Gerichte.Typ3">
+                     <xs:annotation>
+                        <xs:documentation>Hier ist die XJustiz-ID des Gerichts/der Staatsanwaltschaft aus der Codeliste zu wählen.</xs:documentation>
+                     </xs:annotation>
+                  </xs:element>
+                  <xs:element name="absender.sonstige" type="din91379:datatypeD">
+                     <xs:annotation>
+                        <xs:documentation>Hier ist der sprechende Name des Absenders einzutragen. Für die SAFE-ID und die Adressdaten sind in den Instanz- bzw. Beteiligtendaten gesonderte Elemente vorgesehen.</xs:documentation>
+                     </xs:annotation>
+                  </xs:element>
+                  <xs:element name="absender.rvTraeger" type="tns:Code.GDS.RVTraeger">
+                     <xs:annotation>
+                        <xs:documentation>Hier ist der Eintrag aus der Codeliste zu wählen.</xs:documentation>
+                     </xs:annotation>
+                  </xs:element>
+                  <xs:element name="absender.polizeibehoerde"
+                              type="tns:Code.GDS.Polizeibehoerden.Typ3">
+                     <xs:annotation>
+                        <xs:documentation>Hier ist der einschlägige Code der Polizeibehörde aus der Codeliste zu wählen.</xs:documentation>
+                     </xs:annotation>
+                  </xs:element>
+               </xs:choice>
+            </xs:complexType>
+         </xs:element>
+         <xs:element name="auswahl_empfaenger">
+            <xs:annotation>
+               <xs:documentation>Hier ist der Empfänger der Nachricht einzutragen. Dabei kann zwischen einem Gericht/einer Staatsanwaltschaft, einem Rentenversicherungsträger, einer Polizeibehörde oder einem sonstigen Empfänger ausgewählt werden.</xs:documentation>
+            </xs:annotation>
+            <xs:complexType>
+               <xs:choice>
+                  <xs:element name="empfaenger.gericht" type="tns:Code.GDS.Gerichte.Typ3">
+                     <xs:annotation>
+                        <xs:documentation>Hier ist die XJustiz-ID des Gerichts/der Staatsanwaltschaft aus der Codeliste zu wählen.</xs:documentation>
+                     </xs:annotation>
+                  </xs:element>
+                  <xs:element name="empfaenger.sonstige" type="din91379:datatypeD">
+                     <xs:annotation>
+                        <xs:documentation>Hier ist der sprechende Name des Empfängers einzutragen. Für die SAFE-ID und die Adressdaten sind in den Instanz- bzw. Beteiligtendaten gesonderte Elemente vorgesehen.</xs:documentation>
+                     </xs:annotation>
+                  </xs:element>
+                  <xs:element name="empfaenger.rvTraeger" type="tns:Code.GDS.RVTraeger">
+                     <xs:annotation>
+                        <xs:documentation>Hier ist der Eintrag aus der Codeliste zu wählen.</xs:documentation>
+                     </xs:annotation>
+                  </xs:element>
+                  <xs:element name="empfaenger.polizeibehoerde"
+                              type="tns:Code.GDS.Polizeibehoerden.Typ3">
+                     <xs:annotation>
+                        <xs:documentation>Hier ist der einschlägige Code der Polizeibehörde aus der Codeliste zu wählen.</xs:documentation>
+                     </xs:annotation>
+                  </xs:element>
+               </xs:choice>
+            </xs:complexType>
+         </xs:element>
+         <xs:element name="routingInformationAusSafeverzeichnis.empfaenger"
+                     minOccurs="0"
+                     type="din91379:datatypeC">
+            <xs:annotation>
+               <xs:documentation>Behörden und Organisationen können im SAFE-Verzeichnisdienst unter ihrem besonderen Behördenpostfach oder ihrem elektronischem Bürger- und Organisationenpostfach eine Liste von Adressaten, an die die Nachrichten innerhalb ihrer Behörde/Organisation verteilt werden sollen, hinterlegen. In diesem Element darf nur der einschlägige Wert aus dieser SAFE-Routingliste übermittelt werden. HINWEIS: Das Element darf erst verwendet werden, wenn der Standard für die Übermittlung von Routinginformationen von der BLK-AG IT-Standards freigegeben wurde.</xs:documentation>
+            </xs:annotation>
+         </xs:element>
+         <xs:element name="eigeneNachrichtenID" type="tns:Type.GDS.Xdomea.stringUUIDType">
+            <xs:annotation>
+               <xs:documentation>Hier ist eine eindeutige Identifikation der bei diesem Übermittlungsvorgang erstellten Nachricht anzugeben, um spätere Referenzen zu ermöglichen.</xs:documentation>
+            </xs:annotation>
+         </xs:element>
+         <xs:element name="fremdeNachrichtenID"
+                     minOccurs="0"
+                     type="tns:Type.GDS.Xdomea.stringUUIDType">
+            <xs:annotation>
+               <xs:documentation>Durch die Angabe der eindeutigen ID kann auf vorangegangene Nachrichten im Kommunikationsprozess Bezug genommen werden.</xs:documentation>
+            </xs:annotation>
+         </xs:element>
+         <xs:element name="nachrichtenuebergreifenderProzess"
+                     minOccurs="0"
+                     type="tns:Type.GDS.NachrichtenuebergreifenderProzess"/>
+         <xs:element name="ereignis"
+                     minOccurs="0"
+                     maxOccurs="unbounded"
+                     type="tns:Code.GDS.Ereignis.Typ3"/>
+         <xs:element name="herstellerinformation"
+                     minOccurs="0"
+                     type="tns:Type.GDS.Herstellerinformation"/>
+         <xs:element name="sendungsprioritaet"
+                     minOccurs="0"
+                     type="tns:Code.GDS.Sendungsprioritaet.Typ3">
+            <xs:annotation>
+               <xs:documentation>Durch die Sendungspriorität kann ein Hinweis zu einer Eilbedürftigkeit der Nachricht übermittelt werden.</xs:documentation>
+            </xs:annotation>
+         </xs:element>
+         <xs:element name="vertraulichkeit" minOccurs="0">
+            <xs:annotation>
+               <xs:documentation>Hier kann ein Hinweis auf die Vertraulichkeit der Nachricht gegeben werden. Dabei muss eine Vertraulichkeitsstufe (siehe Element 'vertraulichkeitsstufe') angegeben werden. Darüber hinaus muss ein Grund für die Vertraulichkeit (siehe Element 'vertraulichkeitsgrund') angegeben werden.</xs:documentation>
+            </xs:annotation>
+            <xs:complexType>
+               <xs:sequence>
+                  <xs:element name="vertraulichkeitsstufe"
+                              type="tns:Code.GDS.Vertraulichkeitsstufe.Typ3">
+                     <xs:annotation>
+                        <xs:documentation>Es kann zwischen den Werten "VERSCHLUSSSACHE - NUR FÜR DEN DIENSTGEBRAUCH" und "vertraulich zu behandeln" gewählt werden. HINWEIS: Die Werteliste wird erst gütig, wenn die Übermittlung von Nachrichten an die Justiz, die als VS-NfD-klassifizierte oder vertraulich zu behandelnde Informationen oder Dokumente enthalten, von der BLK-AG IT-Standards freigegeben ist. Ab Gültigkeit der Werteliste muss der Wert "VERSCHLUSSSACHE - NUR FÜR DEN DIENSTGEBRAUCH" angegeben werden, wenn die Nachricht Informationen oder Dokumente beinhaltet, deren Kenntnisnahme durch Unbefugte für die Interessen der Bundesrepublik Deutschland oder eines ihrer Länder nachteilig sein kann (vgl. § 2 Abs. 2 Nr. 4 Verschlusssachenanweisung). Vertraulich zu behandelnde Dokumente und Vorgänge sind solche, die nicht als Verschlusssache eingestuft sind, für die der Absender aber aus bestimmten Gründen, eine vom Regelbetrieb abweichende Behandlung, z. B. durch eingeschränkten Zugriff innerhalb der Behörde, empfiehlt (z.B. bei Verfahren gegen Personen des öffentlichen Lebens, Wirtschaftsstreitigkeiten mit sehr hohen Streitwerten, Staatsschutzsachen).</xs:documentation>
+                     </xs:annotation>
+                  </xs:element>
+                  <xs:element name="vertraulichkeitsgrund" type="din91379:datatypeC">
+                     <xs:annotation>
+                        <xs:documentation>Hier muss der Grund oder ein Hinweis auf den Adressaten angegeben werden (z. B. "Personalsache" oder "nur zu Händen von").</xs:documentation>
+                     </xs:annotation>
+                  </xs:element>
+               </xs:sequence>
+            </xs:complexType>
+         </xs:element>
+      </xs:sequence>
+      <xs:attribute name="xjustizVersion"
+                    type="din91379:datatypeC"
+                    use="required"
+                    fixed="3.5.1">
+         <xs:annotation>
+            <xs:documentation>Dieses Attribut wird verwendet um sicherzustellen, dass jedes Instanzdokument gegen die "richtige" Version des XML-Schemas geprüft wird. Angegeben werden hier alle drei Stellen der Versionsnummer. In der Dateibezeichnung sind nur die ersten beiden Stellen aufgeführt. Dies ermöglicht es, an einzelnen Dateien Fehlerbereinigungen und dergleichen vorzunehmen, ohne dass die anderen Bestandteile von XJustiz geändert werden müssen.</xs:documentation>
+         </xs:annotation>
+      </xs:attribute>
+   </xs:complexType>
+   <xs:complexType name="Type.GDS.NachrichtenuebergreifenderProzess">
+      <xs:annotation>
+         <xs:documentation>Die Elemente dieses Types dienen der Übermittlung von Informationen zu einem mehrere Nachrichten umfassenden Geschäftsprozess. Sofern diese Informationen für die automatisierte Abarbeitung des Geschäftsprozesses nicht ausreichen, müssen unter den Kommunikationspartnern bilateral weitere Regeln abgestimmt sein. Dies gilt insbesondere für den Fall, dass der Versand zusammengehöriger Dokumente (z.B. einer Akte) auf mehrere Nachrichten verteilt werden soll. Dieses sogenannte fachliche Splitting darf nur nach vorheriger Abstimmung mit der BLK-AG IT-Standards erfolgen.</xs:documentation>
+      </xs:annotation>
+      <xs:sequence>
+         <xs:element name="prozessID" type="tns:Type.GDS.Xdomea.stringUUIDType">
+            <xs:annotation>
+               <xs:documentation>Dieses Element dient der eindeutigen Identifikation eines mehrere Nachrichten umfassenden Geschäftsprozesses.</xs:documentation>
+            </xs:annotation>
+         </xs:element>
+         <xs:element name="nachrichtenNummer" minOccurs="0" type="xs:integer">
+            <xs:annotation>
+               <xs:documentation>Hier kann angegeben werden, um welche Einzelnachricht innerhalb des Geschäftsprozesses es sich handelt.</xs:documentation>
+            </xs:annotation>
+         </xs:element>
+         <xs:element name="nachrichtenAnzahl" minOccurs="0" type="xs:integer">
+            <xs:annotation>
+               <xs:documentation>Hier kann angegeben werden, aus wie vielen Einzelnachrichten der Geschäftsprozess insgesamt besteht.</xs:documentation>
+            </xs:annotation>
+         </xs:element>
+      </xs:sequence>
+   </xs:complexType>
+   <xs:complexType name="Type.GDS.NameNatuerlichePerson">
+      <xs:sequence>
+         <xs:element name="vorname" minOccurs="0" type="din91379:datatypeA">
+            <xs:annotation>
+               <xs:documentation>Bei ggfls. mehreren Vornamen werden diese alle in diesem Element in ihrer Reihenfolge eingetragen.</xs:documentation>
+            </xs:annotation>
+         </xs:element>
+         <xs:element name="rufname" minOccurs="0" type="din91379:datatypeA">
+            <xs:annotation>
+               <xs:documentation>Der Rufname gibt bei mehreren Vornamen an, welcher Vorname der Rufname ist. Der Rufname wird häufig als eindeutiges Element benötigt.</xs:documentation>
+            </xs:annotation>
+         </xs:element>
+         <xs:element name="titel" minOccurs="0" type="din91379:datatypeC">
+            <xs:annotation>
+               <xs:documentation>Hier werden akademische und nichtakademische Titel aufgeführt, die vor dem Vornamen stehen, z.B. "Professor", "Dr.", "Prof. Dr." usw.</xs:documentation>
+            </xs:annotation>
+         </xs:element>
+         <xs:element name="namensvorsatz" minOccurs="0" type="din91379:datatypeA">
+            <xs:annotation>
+               <xs:documentation>Hier werden Adelstitel aufgeführt, die vor dem Nachnamen stehen, z.B. "Graf von"</xs:documentation>
+            </xs:annotation>
+         </xs:element>
+         <xs:element name="nachname" type="din91379:datatypeA">
+            <xs:annotation>
+               <xs:documentation>Falls der Nachname nicht bekannt ist, ist "nicht bekannt" anzugegeben.</xs:documentation>
+            </xs:annotation>
+         </xs:element>
+         <xs:element name="geburtsname" minOccurs="0" type="din91379:datatypeA"/>
+         <xs:element name="vorname.alt"
+                     minOccurs="0"
+                     maxOccurs="unbounded"
+                     type="din91379:datatypeA"/>
+         <xs:element name="nachname.alt"
+                     minOccurs="0"
+                     maxOccurs="unbounded"
+                     type="din91379:datatypeA"/>
+         <xs:element name="namenszusatz" minOccurs="0" type="din91379:datatypeA">
+            <xs:annotation>
+               <xs:documentation>Hier ist Raum für Zusätze, die hinter den Nachnamen stehen, z.B. "MdB" oder "LLM."</xs:documentation>
+            </xs:annotation>
+         </xs:element>
+         <xs:element name="geburtsnamensvorsatz" minOccurs="0" type="din91379:datatypeA">
+            <xs:annotation>
+               <xs:documentation>Hier werden Adelstitel aufgeführt, die vor dem Geburtsnamen stehen, z.B. "Graf von".</xs:documentation>
+            </xs:annotation>
+         </xs:element>
+         <xs:element name="weitererName"
+                     minOccurs="0"
+                     maxOccurs="unbounded"
+                     type="din91379:datatypeA">
+            <xs:annotation>
+               <xs:documentation>z.B. Ordens-, Künstler- oder Berufsname. Soll eine vollständige Alias-Identität übermittelt werden, so ist hierfür das Element "aliasNatuerlichePerson" zu verwenden.</xs:documentation>
+            </xs:annotation>
+         </xs:element>
+      </xs:sequence>
+   </xs:complexType>
+   <xs:complexType name="Type.GDS.NatuerlichePerson">
+      <xs:sequence>
+         <xs:element name="vollerName" type="tns:Type.GDS.NameNatuerlichePerson"/>
+         <xs:element name="geburt" minOccurs="0" type="tns:Type.GDS.Geburt"/>
+         <xs:element name="tod" minOccurs="0" type="tns:Type.GDS.Tod"/>
+         <xs:element name="geschlecht" minOccurs="0" type="tns:Code.GDS.Geschlecht"/>
+         <xs:element name="familienstand"
+                     minOccurs="0"
+                     type="tns:Code.GDS.Familienstand"/>
+         <xs:element name="anschrift"
+                     minOccurs="0"
+                     maxOccurs="unbounded"
+                     type="tns:Type.GDS.Anschrift">
+            <xs:annotation>
+               <xs:documentation>Auch Postfach-Anschriften fallen hierunter.</xs:documentation>
+            </xs:annotation>
+         </xs:element>
+         <xs:element name="staatsangehoerigkeit"
+                     minOccurs="0"
+                     maxOccurs="unbounded"
+                     type="tns:Code.GDS.Staaten.Typ3"/>
+         <xs:element name="personalstatut"
+                     minOccurs="0"
+                     type="tns:Code.GDS.Personalstatut"/>
+         <xs:element name="beruf"
+                     minOccurs="0"
+                     maxOccurs="unbounded"
+                     type="din91379:datatypeC"/>
+         <xs:element name="telekommunikation"
+                     minOccurs="0"
+                     maxOccurs="unbounded"
+                     type="tns:Type.GDS.Kommunikation"/>
+         <xs:element name="bankverbindung"
+                     minOccurs="0"
+                     maxOccurs="unbounded"
+                     type="tns:Type.GDS.Bankverbindung"/>
+         <xs:element name="auswahl_auskunftssperre" minOccurs="0">
+            <xs:annotation>
+               <xs:documentation>Hier kann angegeben werden, ob die Daten der betreffenden Person nicht oder nur eingeschränkt an Dritte weitergegeben werden dürfen. Werden keine Angaben gemacht, liegt keine Auskunftssperre vor!</xs:documentation>
+            </xs:annotation>
+            <xs:complexType>
+               <xs:choice>
+                  <xs:element name="auskunftssperre.vorhanden" type="xs:boolean">
+                     <xs:annotation>
+                        <xs:documentation>Werden keine Details benötigt, kann hier angegeben werden, ob eine Auskunftssperre vorliegt.</xs:documentation>
+                     </xs:annotation>
+                  </xs:element>
+                  <xs:element name="auskunftssperre.details" minOccurs="0">
+                     <xs:complexType>
+                        <xs:sequence>
+                           <xs:element name="grundlage" type="din91379:datatypeC">
+                              <xs:annotation>
+                                 <xs:documentation>Die Grundlage der Auskunftssperre wie z.B. wegen Gewaltschutzgesetz, Adoptionen, Pflegefamilien, Zeugenschutz ist hier anzugeben.</xs:documentation>
+                              </xs:annotation>
+                           </xs:element>
+                           <xs:element name="umfang" type="din91379:datatypeC">
+                              <xs:annotation>
+                                 <xs:documentation>Hier kann angegeben werden, was geschützt ist, z.B. der Name und die Anschrift (z.B. bei Zeugenschutz) oder nur die Anschrift (bei Gewaltschutz).</xs:documentation>
+                              </xs:annotation>
+                           </xs:element>
+                           <xs:element name="sperrstufe" minOccurs="0" type="din91379:datatypeC">
+                              <xs:annotation>
+                                 <xs:documentation>Es kann für eine Auskunftssperre eine Sperrstufe vorhanden sein (z.B. für ZStV-Schutzstufen).</xs:documentation>
+                              </xs:annotation>
+                           </xs:element>
+                        </xs:sequence>
+                     </xs:complexType>
+                  </xs:element>
+               </xs:choice>
+            </xs:complexType>
+         </xs:element>
+         <xs:element name="herkunftsland"
+                     minOccurs="0"
+                     maxOccurs="unbounded"
+                     type="tns:Code.GDS.Staaten.Typ3"/>
+         <xs:element name="sprache"
+                     minOccurs="0"
+                     maxOccurs="unbounded"
+                     type="tns:Code.GDS.Sprachen"/>
+         <xs:element name="zustaendigeInstitution"
+                     minOccurs="0"
+                     maxOccurs="unbounded"
+                     type="tns:Type.GDS.Ref.Rollennummer">
+            <xs:annotation>
+               <xs:documentation>Hier können für eine Person zuständige Institutionen, wie z.B. die zuständige Polizeidienststelle oder das zuständige Jugendamt referenziert werden.</xs:documentation>
+            </xs:annotation>
+         </xs:element>
+         <xs:element name="aliasNatuerlichePerson"
+                     minOccurs="0"
+                     maxOccurs="unbounded"
+                     type="tns:Type.GDS.NatuerlichePerson">
+            <xs:annotation>
+               <xs:documentation>Hier können zu einer Person vollständige Alias-Identitäten übermittelt werden. Dieses Element kann zur Übermittlung von Alias-Identitäten, Pseudonymen oder sonstige von den korrekten Personalien abweichende Bezeichnungen verwendet werden.</xs:documentation>
+            </xs:annotation>
+         </xs:element>
+         <xs:element name="steueridentifikationsnummer"
+                     minOccurs="0"
+                     type="din91379:datatypeC"/>
+         <xs:element name="umsatzsteuerID" minOccurs="0" type="din91379:datatypeC"/>
+         <xs:element name="bundeseinheitlicheWirtschaftsnummer"
+                     minOccurs="0"
+                     type="din91379:datatypeC"/>
+         <xs:element name="registereintragungNatuerlichePerson" minOccurs="0">
+            <xs:annotation>
+               <xs:documentation>Handelt es sich bei der betreffenden Person um eine natürliche Person mit Registereintragung (typischerweise Einzelkaufleute), können hier die Angaben zu der betreffenden Firma gemacht werden.</xs:documentation>
+            </xs:annotation>
+            <xs:complexType>
+               <xs:sequence>
+                  <xs:element name="verwendeteFirma" type="din91379:datatypeD">
+                     <xs:annotation>
+                        <xs:documentation>Hier ist der Name der Firma der natürlichen Person mit Registereintragung anzugeben.</xs:documentation>
+                     </xs:annotation>
+                  </xs:element>
+                  <xs:element name="angabenZurRechtsform">
+                     <xs:annotation>
+                        <xs:documentation>Als Code sind die Einträge der Spalte Code (empfohlene Codespalte) zu verwenden. Ist die betreffende Rechtsform nicht in der Codeliste aufgeführt, ist der Code '681000' auszuwählen. In diesem Fall ist im Element 'weitereBezeichnung' die vollständige Bezeichnung anzugeben.</xs:documentation>
+                     </xs:annotation>
+                     <xs:complexType>
+                        <xs:sequence>
+                           <xs:element name="rechtsform" type="tns:Code.GDS.Rechtsform.Typ3"/>
+                           <xs:element name="weitereBezeichnung" minOccurs="0" type="din91379:datatypeC"/>
+                        </xs:sequence>
+                     </xs:complexType>
+                  </xs:element>
+                  <xs:element name="registereintragung" type="tns:Type.GDS.Registrierung"/>
+               </xs:sequence>
+            </xs:complexType>
+         </xs:element>
+         <xs:element name="ausweisdokument"
+                     minOccurs="0"
+                     maxOccurs="unbounded"
+                     type="tns:Type.GDS.Ausweisdokument">
+            <xs:annotation>
+               <xs:documentation>Hier können Angaben zu einem oder mehreren Ausweis- bzw. Legitimationsdokumenten der betreffenden Person mitgeteilt werden. (z.B. Angaben zum Personalausweis, Reisepass, Waffenschein etc.)</xs:documentation>
+            </xs:annotation>
+         </xs:element>
+      </xs:sequence>
+   </xs:complexType>
+   <xs:complexType name="Type.GDS.Organisation">
+      <xs:sequence>
+         <xs:element name="bezeichnung">
+            <xs:complexType>
+               <xs:sequence>
+                  <xs:element name="bezeichnung.aktuell" type="din91379:datatypeD">
+                     <xs:annotation>
+                        <xs:documentation>Aktueller offizieller Name der Organisation.</xs:documentation>
+                     </xs:annotation>
+                  </xs:element>
+                  <xs:element name="bezeichnung.alt"
+                              minOccurs="0"
+                              maxOccurs="unbounded"
+                              type="din91379:datatypeD">
+                     <xs:annotation>
+                        <xs:documentation>Hier können vorherig geführte offizielle Namen der Organisation übergeben werden.</xs:documentation>
+                     </xs:annotation>
+                  </xs:element>
+               </xs:sequence>
+            </xs:complexType>
+         </xs:element>
+         <xs:element name="geschlecht" minOccurs="0" type="tns:Code.GDS.Geschlecht">
+            <xs:annotation>
+               <xs:documentation>Hier kann ein biologisches oder grammatikalisches Geschlecht angegeben werden. So wird den Fachsystemen ermöglicht eine Anrede zu generieren.</xs:documentation>
+            </xs:annotation>
+         </xs:element>
+         <xs:element name="kurzbezeichnung" minOccurs="0" type="din91379:datatypeD">
+            <xs:annotation>
+               <xs:documentation>Kurzbezeichnung des Namens einer Organisation.</xs:documentation>
+            </xs:annotation>
+         </xs:element>
+         <xs:element name="angabenZurRechtsform" minOccurs="0">
+            <xs:annotation>
+               <xs:documentation>Als Code sind die Einträge der Spalte Code (empfohlene Codespalte) zu verwenden. Ist die betreffende Rechtsform nicht in der Codeliste aufgeführt, ist der Code '681000' auszuwählen. In diesem Fall ist im Element 'weitereBezeichnung' die vollständige Bezeichnung anzugeben.</xs:documentation>
+            </xs:annotation>
+            <xs:complexType>
+               <xs:sequence>
+                  <xs:element name="rechtsform" type="tns:Code.GDS.Rechtsform.Typ3"/>
+                  <xs:element name="weitereBezeichnung" minOccurs="0" type="din91379:datatypeC"/>
+               </xs:sequence>
+            </xs:complexType>
+         </xs:element>
+         <xs:element name="sitz" minOccurs="0" maxOccurs="unbounded">
+            <xs:complexType>
+               <xs:sequence>
+                  <xs:element name="ort" type="din91379:datatypeB"/>
+                  <xs:element name="postleitzahl" minOccurs="0" type="din91379:datatypeC"/>
+                  <xs:element name="staat" minOccurs="0" type="tns:Code.GDS.Staaten.Typ3"/>
+               </xs:sequence>
+            </xs:complexType>
+         </xs:element>
+         <xs:element name="registereintragung"
+                     minOccurs="0"
+                     type="tns:Type.GDS.Registrierung"/>
+         <xs:element name="anschrift"
+                     minOccurs="0"
+                     maxOccurs="unbounded"
+                     type="tns:Type.GDS.Anschrift">
+            <xs:annotation>
+               <xs:documentation>Auch Postfach-Anschriften fallen hierunter.</xs:documentation>
+            </xs:annotation>
+         </xs:element>
+         <xs:element name="telekommunikation"
+                     minOccurs="0"
+                     maxOccurs="unbounded"
+                     type="tns:Type.GDS.Kommunikation"/>
+         <xs:element name="bankverbindung"
+                     minOccurs="0"
+                     maxOccurs="unbounded"
+                     type="tns:Type.GDS.Bankverbindung"/>
+         <xs:element name="umsatzsteuerID" minOccurs="0" type="din91379:datatypeC"/>
+         <xs:element name="bundeseinheitlicheWirtschaftsnummer"
+                     minOccurs="0"
+                     type="din91379:datatypeC"/>
+      </xs:sequence>
+   </xs:complexType>
+   <xs:complexType name="Type.GDS.Ortsangabe">
+      <xs:sequence>
+         <xs:element name="ort" type="din91379:datatypeB"/>
+         <xs:element name="staat" minOccurs="0" type="tns:Code.GDS.Staaten.Typ3"/>
+      </xs:sequence>
+   </xs:complexType>
+   <xs:complexType name="Type.GDS.RA.Kanzlei">
+      <xs:sequence>
+         <xs:element name="bezeichnung">
+            <xs:annotation>
+               <xs:documentation>Kanzleiname</xs:documentation>
+            </xs:annotation>
+            <xs:complexType>
+               <xs:sequence>
+                  <xs:element name="bezeichnung.aktuell" type="din91379:datatypeD">
+                     <xs:annotation>
+                        <xs:documentation>Aktueller offizieller Name der RA-Kanzlei.</xs:documentation>
+                     </xs:annotation>
+                  </xs:element>
+                  <xs:element name="bezeichnung.alt"
+                              minOccurs="0"
+                              maxOccurs="unbounded"
+                              type="din91379:datatypeD">
+                     <xs:annotation>
+                        <xs:documentation>Hier können vorherig geführte offizielle Namen der RA-Kanzlei übergeben werden.</xs:documentation>
+                     </xs:annotation>
+                  </xs:element>
+               </xs:sequence>
+            </xs:complexType>
+         </xs:element>
+         <xs:element name="geschlecht" minOccurs="0" type="tns:Code.GDS.Geschlecht">
+            <xs:annotation>
+               <xs:documentation>Hier kann ein biologisches oder grammatikalisches Geschlecht angegeben werden. So wird den Fachsystemen ermöglicht eine Anrede zu generieren.</xs:documentation>
+            </xs:annotation>
+         </xs:element>
+         <xs:element name="rechtsform" minOccurs="0" type="tns:Code.GDS.Rechtsform.Typ3">
+            <xs:annotation>
+               <xs:documentation>Hier kann die Rechtsform der Kanzlei übergeben werden, z.B. GmbH, Partnerschaft.</xs:documentation>
+            </xs:annotation>
+         </xs:element>
+         <xs:element name="kanzleiform" type="tns:Code.GDS.Kanzleiform"/>
+         <xs:element name="anschrift"
+                     minOccurs="0"
+                     maxOccurs="unbounded"
+                     type="tns:Type.GDS.Anschrift">
+            <xs:annotation>
+               <xs:documentation>Hier muss die Kanzleianschrift angebenen werden, die verfahrensbezogen maßgeblich sein soll.</xs:documentation>
+            </xs:annotation>
+         </xs:element>
+         <xs:element name="telekommunikation"
+                     minOccurs="0"
+                     maxOccurs="unbounded"
+                     type="tns:Type.GDS.Kommunikation"/>
+         <xs:element name="raImVerfahren"
+                     minOccurs="0"
+                     type="tns:Type.GDS.NatuerlichePerson">
+            <xs:annotation>
+               <xs:documentation>Hier können die Daten des Rechtsanwalts / der Rechtsanwältin übergeben werden, der/die als Bevollmächtigte(r) im Verfahren auftritt.</xs:documentation>
+            </xs:annotation>
+         </xs:element>
+         <xs:element name="bankverbindung"
+                     minOccurs="0"
+                     maxOccurs="unbounded"
+                     type="tns:Type.GDS.Bankverbindung"/>
+         <xs:element name="umsatzsteuerID" minOccurs="0" type="din91379:datatypeC"/>
+      </xs:sequence>
+   </xs:complexType>
+   <xs:complexType name="Type.GDS.Ref.Bankverbindung">
+      <xs:sequence>
+         <xs:element name="ref.bankverbindung" type="din91379:datatypeC">
+            <xs:annotation>
+               <xs:documentation>Hier wird die Referenz auf eine Bankverbindung im Grunddatensatz definiert. Diese Referenz kann im Fachmodul mehrfach eingesetzt werden und ist deshalb ein komplexer Typ. Ein definierter "keyref", der auf dieses Element anzuwenden ist, ist in dem jeweiligen Fachmodul angelegt.</xs:documentation>
+            </xs:annotation>
+         </xs:element>
+      </xs:sequence>
+   </xs:complexType>
+   <xs:complexType name="Type.GDS.Ref.Beteiligtennummer">
+      <xs:sequence>
+         <xs:element name="ref.beteiligtennummer" type="din91379:datatypeC">
+            <xs:annotation>
+               <xs:documentation>Hier wird auf eine Beteiligtennummer im Grunddatensatz referenziert.</xs:documentation>
+            </xs:annotation>
+         </xs:element>
+      </xs:sequence>
+   </xs:complexType>
+   <xs:complexType name="Type.GDS.Ref.FremdeNachrichtenID">
+      <xs:sequence>
+         <xs:element name="ref.fremdeNachrichtenID"
+                     type="tns:Type.GDS.Xdomea.stringUUIDType"/>
+      </xs:sequence>
+   </xs:complexType>
+   <xs:complexType name="Type.GDS.Ref.Rollennummer">
+      <xs:sequence>
+         <xs:element name="ref.rollennummer" type="din91379:datatypeC">
+            <xs:annotation>
+               <xs:documentation>Hier wird auf eine Rollennummer im Grunddatensatz referenziert.</xs:documentation>
+            </xs:annotation>
+         </xs:element>
+      </xs:sequence>
+   </xs:complexType>
+   <xs:complexType name="Type.GDS.Ref.SGO">
+      <xs:sequence>
+         <xs:element name="ref.sgo" type="tns:Type.GDS.Xdomea.stringUUIDType">
+            <xs:annotation>
+               <xs:documentation>Hier kann aus Fachmodulen heraus auf Dokumente, Akten- oder Teilaktenobjekte referenziert werden.</xs:documentation>
+            </xs:annotation>
+         </xs:element>
+      </xs:sequence>
+   </xs:complexType>
+   <xs:complexType name="Type.GDS.Registrierung">
+      <xs:sequence>
+         <xs:element name="auswahl_registerbehoerde">
+            <xs:complexType>
+               <xs:choice>
+                  <xs:element name="inlaendischesRegistergericht">
+                     <xs:complexType>
+                        <xs:sequence>
+                           <xs:element name="gericht" type="tns:Code.GDS.Gerichte.Typ3"/>
+                           <xs:element name="registerart" minOccurs="0" type="tns:Code.GDS.Registerart"/>
+                        </xs:sequence>
+                     </xs:complexType>
+                  </xs:element>
+                  <xs:element name="sonstigeRegisterbehoerde">
+                     <xs:complexType>
+                        <xs:sequence>
+                           <xs:element name="registerbehoerde" type="din91379:datatypeE">
+                              <xs:annotation>
+                                 <xs:documentation>Hier wird eine Langbezeichnung der Registerbehörde übergeben, wenn diese weder ein inländisches Registergericht, noch eine ausländische Registerbehörde der EU-Mitglieder und EFTA-Staaten ist.</xs:documentation>
+                              </xs:annotation>
+                           </xs:element>
+                           <xs:element name="registerbezeichnung" type="din91379:datatypeE">
+                              <xs:annotation>
+                                 <xs:documentation>Dieses Element enthält die Bezeichnung in dem Register.</xs:documentation>
+                              </xs:annotation>
+                           </xs:element>
+                        </xs:sequence>
+                     </xs:complexType>
+                  </xs:element>
+                  <xs:element name="auslaendischeRegisterbehoerde"
+                              type="tns:Code.GDS.BRIS-ListOfRegisters.Typ3">
+                     <xs:annotation>
+                        <xs:documentation>Registerbehörden der EU-Mitglieder und EFTA-Staaten. Neben dem Code im Element 'code' ist zusätzlich im zwingend nachfolgenden Element 'name' die Bezeichnung der ausländischen Registerbehörde anzugeben. Dabei werden die Einträge der Spalte 'Original-language-name-of-register' genutzt.</xs:documentation>
+                     </xs:annotation>
+                  </xs:element>
+               </xs:choice>
+            </xs:complexType>
+         </xs:element>
+         <xs:element name="registernummer" minOccurs="0" type="din91379:datatypeC"/>
+         <xs:element name="reid" minOccurs="0" type="din91379:datatypeC">
+            <xs:annotation>
+               <xs:documentation>Registered Entity Identifier</xs:documentation>
+            </xs:annotation>
+         </xs:element>
+         <xs:element name="lei" minOccurs="0" type="din91379:datatypeC">
+            <xs:annotation>
+               <xs:documentation>Legal Entity Identifier</xs:documentation>
+            </xs:annotation>
+         </xs:element>
+         <xs:element name="euid" minOccurs="0" type="din91379:datatypeC">
+            <xs:annotation>
+               <xs:documentation>European Unique Identifier for companies and branches</xs:documentation>
+            </xs:annotation>
+         </xs:element>
+      </xs:sequence>
+   </xs:complexType>
+   <xs:complexType name="Type.GDS.Schriftgutobjekte">
+      <xs:sequence>
+         <xs:element name="anschreiben" minOccurs="0" type="tns:Type.GDS.Ref.SGO">
+            <xs:annotation>
+               <xs:documentation>Das Anschreiben beschreibt ein Dokument, das dem Empfänger zur Erläuterung der Sendung beigefügt wird. Es muss im Type.GDS.Schriftgutobjekte entweder im Kindelement Dokument oder im Kindelement Akte mit allen Metadaten beschrieben sein. Im Kindelement „anschreiben“ wird auf dieses Dokument referenziert. Für diese Referenzierung wird die uuid des Dokumentes genutzt.</xs:documentation>
+            </xs:annotation>
+         </xs:element>
+         <xs:element name="akte"
+                     minOccurs="0"
+                     maxOccurs="unbounded"
+                     type="tns:Type.GDS.Akte"/>
+         <xs:element name="dokument"
+                     minOccurs="0"
+                     maxOccurs="unbounded"
+                     type="tns:Type.GDS.Dokument"/>
+      </xs:sequence>
+   </xs:complexType>
+   <xs:complexType name="Type.GDS.Teilakte">
+      <xs:sequence>
+         <xs:element name="identifikation"
+                     type="tns:Type.GDS.Xdomea.IdentifikationObjektType"/>
+         <xs:element name="vertraulichkeitsstufe"
+                     minOccurs="0"
+                     type="tns:Code.GDS.Vertraulichkeitsstufe.Typ3">
+            <xs:annotation>
+               <xs:documentation>Es kann zwischen den Werten "VERSCHLUSSSACHE - NUR FÜR DEN DIENSTGEBRAUCH" und "vertraulich zu behandeln" gewählt werden. HINWEIS: Die Werteliste wird erst gütig, wenn die Übermittlung von Nachrichten an die Justiz, die als VS-NfD-klassifizierte oder vertraulich zu behandelnde Informationen oder Dokumente enthalten, von der BLK-AG IT-Standards freigegeben ist. Ab Gültigkeit der Werteliste muss der Wert "VERSCHLUSSSACHE - NUR FÜR DEN DIENSTGEBRAUCH" angegeben werden, wenn die Nachricht Informationen oder Dokumente beinhaltet, deren Kenntnisnahme durch Unbefugte für die Interessen der Bundesrepublik Deutschland oder eines ihrer Länder nachteilig sein kann (vgl. § 2 Abs. 2 Nr. 4 Verschlusssachenanweisung). Vertraulich zu behandelnde Dokumente und Vorgänge sind solche, die nicht als Verschlusssache eingestuft sind, für die der Absender aber aus bestimmten Gründen, eine vom Regelbetrieb abweichende Behandlung, z. B. durch eingeschränkten Zugriff innerhalb der Behörde, empfiehlt (z.B. bei Verfahren gegen Personen des öffentlichen Lebens, Wirtschaftsstreitigkeiten mit sehr hohen Streitwerten, Staatsschutzsachen).</xs:documentation>
+            </xs:annotation>
+         </xs:element>
+         <xs:element name="laufzeit"
+                     minOccurs="0"
+                     type="tns:Type.GDS.Xdomea.ZeitraumType">
+            <xs:annotation>
+               <xs:documentation>Als Laufzeit werden das erste und (vorläufig) letzte Datum der Schriftstücke in der Akte vermerkt.</xs:documentation>
+            </xs:annotation>
+         </xs:element>
+         <xs:element name="anwendungsspezifischeErweiterung"
+                     minOccurs="0"
+                     type="tns:Type.GDS.Xdomea.AnwendungsspezifischeErweiterungType">
+            <xs:annotation>
+               <xs:documentation>In dieser Elementgruppe können Felder und/oder Feldgruppen, in denen mehrere Felder zusammengefasst sind, übermittelt werden. Da es hierfür keine festen Schema-Vorgaben gibt, darf diese Elementgruppe nur verwendet werden, wenn mit dem jeweiligen Kommunikationspartner Name und Inhalt der Felder und/oder Feldgruppen abgestimmt wurden. Es kann nicht davon ausgegangen werden, dass die hier hinterlegten Metadaten von Kommunikationspartnern, mit denen keine Absprachen erfolgten, ausgelesen werden können.</xs:documentation>
+            </xs:annotation>
+         </xs:element>
+         <xs:element name="xjustiz.fachspezifischeDaten">
+            <xs:complexType>
+               <xs:sequence>
+                  <xs:element name="teilaktentyp" type="tns:Code.GDS.Teilaktentyp">
+                     <xs:annotation>
+                        <xs:documentation>Bezeichnet den Teilaktentyp anhand der vorgegebenen Werteliste. Diese ist für einen reibungslosen Austausch bewusst knappgehalten. Für eine spezifischere Bezeichnung kann das Feld "anzeigename" verwendet werden.</xs:documentation>
+                     </xs:annotation>
+                  </xs:element>
+                  <xs:element name="anzeigename" minOccurs="0" type="din91379:datatypeC">
+                     <xs:annotation>
+                        <xs:documentation>Der Anzeigename ermöglicht als Freitext die Übermittlung der Bezeichnung der Teilakte, wie sie im versendenden System angezeigt wird. Hier können spezifischere Informationen zum Teilaktennamen übermittelt werden, als dies im Rahmen der Werteliste zum Teilaktentyp möglich ist, z.B. "PKH-Heft" als nähere Spezifizierung des Teilaktentyps "Kostenhilfeheft".</xs:documentation>
+                     </xs:annotation>
+                  </xs:element>
+                  <xs:element name="aktenzeichen" minOccurs="0" type="tns:Type.GDS.Aktenzeichen">
+                     <xs:annotation>
+                        <xs:documentation>Sofern für die Teilakte ein gesondertes Aktenzeichen geführt wird, kann dies hier angegeben werden.</xs:documentation>
+                     </xs:annotation>
+                  </xs:element>
+                  <xs:element name="person"
+                              minOccurs="0"
+                              maxOccurs="unbounded"
+                              type="tns:Type.GDS.Ref.Beteiligtennummer">
+                     <xs:annotation>
+                        <xs:documentation>Das Feld ermöglicht durch die Angabe der Person, auf die sich die Teilakte bezieht, eine nähere Kennzeichnung der Teilakte in Hinblick auf die Akte. Dies ist bei Behördenakten in Ergänzung des Aktenzeichens und ggf. weiterer Ordnungskriterien teilweise üblich (z.B. Asylakten).</xs:documentation>
+                     </xs:annotation>
+                  </xs:element>
+                  <xs:element name="akteneinsicht"
+                              minOccurs="0"
+                              fixed="false"
+                              type="xs:boolean">
+                     <xs:annotation>
+                        <xs:documentation>Im Regelfall unterliegt jede Teilakte der Akteneinsicht. Mit diesem Feld kann der Einreicher darauf hinweisen, dass aus seiner Sicht für diese Teilakte keine Akteneinsicht gewährt werden sollte. Die Einsicht gewährende Stelle kann von diesem Hinweis abweichen.</xs:documentation>
+                     </xs:annotation>
+                  </xs:element>
+                  <xs:element name="letztePaginierungProTeilakte"
+                              minOccurs="0"
+                              type="din91379:datatypeC">
+                     <xs:annotation>
+                        <xs:documentation>Um bei einem gerichtsinternen Aktenaustausch eine Paginierung der Teilakten fortführen zu können, kann hier die letzte Paginierungszahl der übermittelten Teilakte angegeben werden.</xs:documentation>
+                     </xs:annotation>
+                  </xs:element>
+                  <xs:element name="inhalt" minOccurs="0">
+                     <xs:complexType>
+                        <xs:sequence>
+                           <xs:element name="teilakte"
+                                       minOccurs="0"
+                                       maxOccurs="unbounded"
+                                       type="tns:Type.GDS.Teilakte"/>
+                           <xs:element name="dokument"
+                                       minOccurs="0"
+                                       maxOccurs="unbounded"
+                                       type="tns:Type.GDS.Dokument"/>
+                        </xs:sequence>
+                     </xs:complexType>
+                  </xs:element>
+                  <xs:element name="ruecksendungEEB.erforderlich"
+                              minOccurs="0"
+                              fixed="true"
+                              type="xs:boolean">
+                     <xs:annotation>
+                        <xs:documentation>Mit diesem Element kann für die Teilakte ein elektronisches Empfangsbekenntnis (eEB) gemäß § 173 ZPO oder § 195 ZPO angefordert werden. Die Anforderung eines eEB unter Verwendung strukturierter Daten ist nur für die Zustellung durch Gerichte oder von Anwalt zu Anwalt rechtlich geregelt, so dass das Element für die Zustellung von Behörde zu Behörde oder zwischen anderen Beteiligten nicht verwendet werden kann.</xs:documentation>
+                     </xs:annotation>
+                  </xs:element>
+               </xs:sequence>
+            </xs:complexType>
+         </xs:element>
+         <xs:element name="justizinterneDaten" minOccurs="0">
+            <xs:annotation>
+               <xs:documentation>Diese Sequenz wird ausschließlich für die justizinterne Kommunikation (zwischen Gerichten oder/und Staatsanwaltschaften) genutzt. Sie darf nicht für XJustiz-Nachrichten, die externe Beteiligte an die Justiz übermitteln, verwendet werden.</xs:documentation>
+            </xs:annotation>
+            <xs:complexType>
+               <xs:sequence>
+                  <xs:element name="roemischPaginiert"
+                              minOccurs="0"
+                              fixed="true"
+                              type="xs:boolean">
+                     <xs:annotation>
+                        <xs:documentation>Sofern das Element nicht übermittelt wird, wurde arabisch paginiert.</xs:documentation>
+                     </xs:annotation>
+                  </xs:element>
+                  <xs:element name="zustellung41StPO" minOccurs="0" type="xs:boolean"/>
+               </xs:sequence>
+            </xs:complexType>
+         </xs:element>
+      </xs:sequence>
+   </xs:complexType>
+   <xs:complexType name="Type.GDS.Terminsdaten">
+      <xs:sequence>
+         <xs:element name="terminskategorie" type="tns:Code.GDS.Terminskategorie">
+            <xs:annotation>
+               <xs:documentation>Hier muss zunächst ausgewählt werden, ob es sich um einen Haupttermin, Fortsetzungstermin oder um eine Umladung handelt.</xs:documentation>
+            </xs:annotation>
+         </xs:element>
+         <xs:element name="terminsID" minOccurs="0" type="din91379:datatypeC">
+            <xs:annotation>
+               <xs:documentation>Es wird empfohlen, stets eine terminsID zu übermitteln, da diese verwendet werden muss, wenn zu diesem Termin zu einem späteren Zeitpunkt ein Fortsetzungstermin oder eine Umladung mitgeteilt werden soll.</xs:documentation>
+            </xs:annotation>
+         </xs:element>
+         <xs:element name="spruchkoerper" minOccurs="0" type="din91379:datatypeC">
+            <xs:annotation>
+               <xs:documentation>Hier kann der Spruchkörper angegeben werden, vor dem der Termin stattfindet (z.B. Große Strafkammer, Senat, aber auch Einzelrichter, beauftragter Richter, Vorsitzender usw.)</xs:documentation>
+            </xs:annotation>
+         </xs:element>
+         <xs:element name="oeffentlich" minOccurs="0" type="xs:boolean"/>
+         <xs:element name="auswahl_terminsort">
+            <xs:complexType>
+               <xs:choice>
+                  <xs:element name="gerichtsort">
+                     <xs:annotation>
+                        <xs:documentation>In diesem Feld ist der Ort des Termins anzugeben. Bei Terminen an einem Gericht handelt es sich dabei um den Gerichtsort. Es kann sich jedoch auch um einen anderen Ort handeln (bspw. bei Orts- oder Besprechungsterminen).</xs:documentation>
+                     </xs:annotation>
+                     <xs:complexType>
+                        <xs:sequence>
+                           <xs:element name="gebaeude" minOccurs="0" type="din91379:datatypeC"/>
+                           <xs:element name="anschrift" minOccurs="0" type="tns:Type.GDS.Anschrift"/>
+                           <xs:element name="stockwerk" minOccurs="0" type="din91379:datatypeC"/>
+                           <xs:element name="raum" minOccurs="0" type="din91379:datatypeC"/>
+                        </xs:sequence>
+                     </xs:complexType>
+                  </xs:element>
+                  <xs:element name="lokaltermin">
+                     <xs:complexType>
+                        <xs:sequence>
+                           <xs:element name="beschreibung" minOccurs="0" type="din91379:datatypeC">
+                              <xs:annotation>
+                                 <xs:documentation>Hier kann eine kurze Beschreibung des Lokaltermins angegeben werden.</xs:documentation>
+                              </xs:annotation>
+                           </xs:element>
+                           <xs:element name="anschrift" minOccurs="0" type="tns:Type.GDS.Anschrift"/>
+                        </xs:sequence>
+                     </xs:complexType>
+                  </xs:element>
+               </xs:choice>
+            </xs:complexType>
+         </xs:element>
+         <xs:element name="terminszeit">
+            <xs:complexType>
+               <xs:sequence>
+                  <xs:element name="terminsdatum" type="xs:date">
+                     <xs:annotation>
+                        <xs:documentation>Das Datum muss vollständig im Format jjjj-mm-tt angegeben werden.</xs:documentation>
+                     </xs:annotation>
+                  </xs:element>
+                  <xs:element name="auswahl_terminszeit">
+                     <xs:complexType>
+                        <xs:choice>
+                           <xs:element name="terminsuhrzeit" type="xs:time">
+                              <xs:annotation>
+                                 <xs:documentation>Die Uhrzeit muss vollständig im Format hh:mm:ss angegeben werden.</xs:documentation>
+                              </xs:annotation>
+                           </xs:element>
+                           <xs:element name="terminszeitangabe" type="din91379:datatypeC">
+                              <xs:annotation>
+                                 <xs:documentation>Hier ist Raum für eine textuelle Zeitangabe, z.B. "vormittags", "zwischen 14 und 16 Uhr" etc.</xs:documentation>
+                              </xs:annotation>
+                           </xs:element>
+                        </xs:choice>
+                     </xs:complexType>
+                  </xs:element>
+                  <xs:element name="terminsdauer" minOccurs="0" type="xs:duration">
+                     <xs:annotation>
+                        <xs:documentation>Zeitdauer wie ISO-Zeitformat (hh:mm)</xs:documentation>
+                     </xs:annotation>
+                  </xs:element>
+               </xs:sequence>
+            </xs:complexType>
+         </xs:element>
+         <xs:element name="terminsart" type="tns:Code.GDS.Terminsart"/>
+         <xs:element name="teilnehmer" minOccurs="0" maxOccurs="unbounded">
+            <xs:annotation>
+               <xs:documentation>Dieses Element enthält einen Verweis auf einen Beteiligten. Verwiesen wird auf den Wert der Rollennummer in "Beteiligung/Rolle". Für jeden Beteiligten, auf den verwiesen wird, muss ein entsprechendes Element "Beteiligung" vorhanden sein.</xs:documentation>
+            </xs:annotation>
+            <xs:complexType>
+               <xs:complexContent>
+                  <xs:extension base="tns:Type.GDS.Ref.Rollennummer">
+                     <xs:sequence>
+                        <xs:element name="ladungszeit" minOccurs="0">
+                           <xs:annotation>
+                              <xs:documentation>Dieses Element ermöglicht eine "gestaffelte" Ladung. Das heißt: Für jeden Beteiligten kann gesondert bestimmt werden, wann er erscheinen soll.</xs:documentation>
+                           </xs:annotation>
+                           <xs:complexType>
+                              <xs:sequence>
+                                 <xs:element name="ladungsdatum" minOccurs="0" type="xs:date">
+                                    <xs:annotation>
+                                       <xs:documentation>Das Datum muss vollständig im Format jjjj-mm-tt angegeben werden.</xs:documentation>
+                                    </xs:annotation>
+                                 </xs:element>
+                                 <xs:element name="auswahl_ladungszeit">
+                                    <xs:complexType>
+                                       <xs:choice>
+                                          <xs:element name="ladungsuhrzeit" type="xs:time">
+                                             <xs:annotation>
+                                                <xs:documentation>Die Uhrzeit muss vollständig im Format hh:mm:ss angegeben werden.</xs:documentation>
+                                             </xs:annotation>
+                                          </xs:element>
+                                          <xs:element name="ladungszeitangabe" type="din91379:datatypeC">
+                                             <xs:annotation>
+                                                <xs:documentation>Hier ist Raum für eine textuelle Zeitangabe, z.B. "vormittags", "zwischen 14 und 16 Uhr" etc.</xs:documentation>
+                                             </xs:annotation>
+                                          </xs:element>
+                                       </xs:choice>
+                                    </xs:complexType>
+                                 </xs:element>
+                                 <xs:element name="ladungsdauer" minOccurs="0" type="xs:duration">
+                                    <xs:annotation>
+                                       <xs:documentation>Zeitdauer wie ISO-Zeitformat (hh:mm)</xs:documentation>
+                                    </xs:annotation>
+                                 </xs:element>
+                              </xs:sequence>
+                           </xs:complexType>
+                        </xs:element>
+                        <xs:element name="ladungszusatz" minOccurs="0" type="din91379:datatypeC"/>
+                     </xs:sequence>
+                  </xs:extension>
+               </xs:complexContent>
+            </xs:complexType>
+         </xs:element>
+         <xs:element name="ref.bezugstermin" minOccurs="0" type="din91379:datatypeC">
+            <xs:annotation>
+               <xs:documentation>Sofern es sich um einen Fortsetzungstermin oder um eine Umladung handelt, muss hier die Termins-ID (Element 'terminsID') des ursprünglichen Termins (Bezugstermin), zu dem ein Fortsetzungstermin festgelegt wird oder eine Umladung erfolgt, angegeben werden.</xs:documentation>
+            </xs:annotation>
+         </xs:element>
+      </xs:sequence>
+   </xs:complexType>
+   <xs:complexType name="Type.GDS.Tod">
+      <xs:sequence>
+         <xs:element name="sterbedatumZeitraum"
+                     minOccurs="0"
+                     type="tns:Type.GDS.Xdomea.ZeitraumType">
+            <xs:annotation>
+               <xs:documentation>Wird nur angegeben, wenn das Sterbedatum als Zeitraum definiert ist. Datumsfelder nach ISO 8601 (jjjj-mm-tt).</xs:documentation>
+            </xs:annotation>
+         </xs:element>
+         <xs:element name="sterbedatum" minOccurs="0" type="tns:Type.GDS.Datumsangabe">
+            <xs:annotation>
+               <xs:documentation>Datumsfeld nach ISO 8601 (yyyy-mm-dd)</xs:documentation>
+            </xs:annotation>
+         </xs:element>
+         <xs:element name="sterbeort" minOccurs="0" type="tns:Type.GDS.Anschrift"/>
+         <xs:element name="sterbestandesamtBehoerdennummer"
+                     minOccurs="0"
+                     type="din91379:datatypeC">
+            <xs:annotation>
+               <xs:documentation>Wird für Standesämter in Deutschland verwendet.</xs:documentation>
+            </xs:annotation>
+         </xs:element>
+         <xs:element name="sterbestandesamtName" minOccurs="0" type="din91379:datatypeE">
+            <xs:annotation>
+               <xs:documentation>Wird vor allem für ausländische Standesämter verwendet.</xs:documentation>
+            </xs:annotation>
+         </xs:element>
+         <xs:element name="sterberegisternummer" minOccurs="0" type="din91379:datatypeC">
+            <xs:annotation>
+               <xs:documentation>Die Sterberegisternummer wird vom Standesamt im Sterbefall vergeben und folgt in der Regel dem Muster 'Nr/Jahr'. Innerhalb eines Standesamtes sollte die Sterberegisternummer immer eindeutig sein.</xs:documentation>
+            </xs:annotation>
+         </xs:element>
+         <xs:element name="sterberegisterart"
+                     minOccurs="0"
+                     type="tns:Code.GDS.Registerart">
+            <xs:annotation>
+               <xs:documentation>Ein Präfix für Personenstandsurkunden (z.B. S für Sterbeurkunden) wird von den Standesämtern im Sinne von §15 PStV an das ZTR übergeben. Das Präfix wird, falls für den Datensatz vorhanden, hier zurückgegeben.</xs:documentation>
+            </xs:annotation>
+         </xs:element>
+         <xs:element name="eintragungsdatum" minOccurs="0" type="xs:date">
+            <xs:annotation>
+               <xs:documentation>Datumsfeld nach ISO 8601 (yyyy-mm-dd).</xs:documentation>
+            </xs:annotation>
+         </xs:element>
+         <xs:element name="todErklaert" minOccurs="0" type="xs:boolean"/>
+      </xs:sequence>
+   </xs:complexType>
+   <xs:complexType name="Type.GDS.Verfahrensgegenstand">
+      <xs:sequence>
+         <xs:element name="gegenstand" type="din91379:datatypeC">
+            <xs:annotation>
+               <xs:documentation>Hier steht der Verfahrensgegenstand, z.B. "Schadensersatz" oder "Diebstahl".</xs:documentation>
+            </xs:annotation>
+         </xs:element>
+         <xs:element name="gegenstandswert" minOccurs="0" type="tns:Type.GDS.Geldbetrag">
+            <xs:annotation>
+               <xs:documentation>Hier wird - sofern vorhanden - der Streitwert oder Gegenstandswert des Verfahrens angegeben.</xs:documentation>
+            </xs:annotation>
+         </xs:element>
+         <xs:element name="auswahl_zeitraumDesVerwaltungsaktes" minOccurs="0">
+            <xs:complexType>
+               <xs:choice>
+                  <xs:element name="jahr" type="xs:gYear"/>
+                  <xs:element name="zeitraum" type="tns:Type.GDS.Xdomea.ZeitraumType"/>
+                  <xs:element name="stichtag" type="xs:date"/>
+                  <xs:element name="keinZeitraum" type="din91379:datatypeC"/>
+               </xs:choice>
+            </xs:complexType>
+         </xs:element>
+      </xs:sequence>
+   </xs:complexType>
+   <xs:complexType name="Type.GDS.Xdomea.AnwendungsspezifischeErweiterungType">
+      <xs:annotation>
+         <xs:documentation>AnwendungsspezifischeErweiterung darf nur dazu genutzt werden, weitere (z.B. fachspezifische) Metadaten zu spezifizieren, deren Übermittlung mit den bereits in XJustiz spezifizierten Metadaten nicht möglich ist.</xs:documentation>
+      </xs:annotation>
+      <xs:sequence>
+         <xs:element name="kennung" type="xs:string">
+            <xs:annotation>
+               <xs:documentation>Das Identifikationskennzeichen der anwendungsspezifischen Erweiterung.</xs:documentation>
+            </xs:annotation>
+         </xs:element>
+         <xs:element name="name" type="xs:string">
+            <xs:annotation>
+               <xs:documentation>Der Name der anwendungsspezifischen Erweiterung.</xs:documentation>
+            </xs:annotation>
+         </xs:element>
+         <xs:element name="beschreibung" minOccurs="0" type="xs:string">
+            <xs:annotation>
+               <xs:documentation>Die textuelle Erläuterung zu einer anwendungsspezifischen Erweiterung.</xs:documentation>
+            </xs:annotation>
+         </xs:element>
+         <xs:element name="versionsnummer" minOccurs="0" type="xs:string">
+            <xs:annotation>
+               <xs:documentation>Die Versionsnummer der anwendungsspezifischen Erweiterung.</xs:documentation>
+            </xs:annotation>
+         </xs:element>
+         <xs:element name="versionsdatum" minOccurs="0" type="xs:date">
+            <xs:annotation>
+               <xs:documentation>Das Datum, an dem die Version der anwendungsspezifischen Erweiterung erstellt wurde.</xs:documentation>
+            </xs:annotation>
+         </xs:element>
+         <xs:element name="feldgruppe"
+                     minOccurs="0"
+                     maxOccurs="unbounded"
+                     type="tns:Type.GDS.Xdomea.FeldgruppeType">
+            <xs:annotation>
+               <xs:documentation>Eine Feldgruppe, die der anwendungsspezifischen Erweiterung zugeordnet ist.</xs:documentation>
+            </xs:annotation>
+         </xs:element>
+         <xs:element name="feld"
+                     minOccurs="0"
+                     maxOccurs="unbounded"
+                     type="tns:Type.GDS.Xdomea.FeldType">
+            <xs:annotation>
+               <xs:documentation>Ein Feld, das der anwendungsspezifischen Erweiterung zugeordnet ist.</xs:documentation>
+            </xs:annotation>
+         </xs:element>
+      </xs:sequence>
+   </xs:complexType>
+   <xs:complexType name="Type.GDS.Xdomea.FeldType">
+      <xs:annotation>
+         <xs:documentation>Ein Feld ist ein anwendungsspezifisches Metadatum, das bei dem Austausch eines Schriftgutobjektes übergeben wird. Die Konfiguration eines Feldes in den austauschenden Systemen muss zwischen den Kommunikationspartnern abgesprochen und in den Systemen umgesetzt sein.</xs:documentation>
+      </xs:annotation>
+      <xs:sequence>
+         <xs:element name="name" type="xs:string">
+            <xs:annotation>
+               <xs:documentation>Der Name des Feldes.</xs:documentation>
+            </xs:annotation>
+         </xs:element>
+         <xs:element name="beschreibung" minOccurs="0" type="xs:string">
+            <xs:annotation>
+               <xs:documentation>Die Hinweise und Erläuterungen zu einem Feld.</xs:documentation>
+            </xs:annotation>
+         </xs:element>
+         <xs:element name="datentyp" minOccurs="0" type="tns:Code.GDS.Datentyp.Typ3">
+            <xs:annotation>
+               <xs:documentation>Der Datentyp des Feldwertes. Gültige Angaben sind die W3C-Datentypen.</xs:documentation>
+            </xs:annotation>
+         </xs:element>
+         <xs:element name="wert" minOccurs="0" type="xs:string">
+            <xs:annotation>
+               <xs:documentation>Der Wert des Feldes.</xs:documentation>
+            </xs:annotation>
+         </xs:element>
+      </xs:sequence>
+   </xs:complexType>
+   <xs:complexType name="Type.GDS.Xdomea.FeldgruppeType">
+      <xs:annotation>
+         <xs:documentation>Eine Feldgruppe gruppiert mehrere Felder als anwendungsspezifische Metadaten beim Austausch eines Schriftgutobjektes.</xs:documentation>
+      </xs:annotation>
+      <xs:sequence>
+         <xs:element name="name" type="xs:string">
+            <xs:annotation>
+               <xs:documentation>Der Name der Feldgruppe.</xs:documentation>
+            </xs:annotation>
+         </xs:element>
+         <xs:element name="beschreibung" type="xs:string">
+            <xs:annotation>
+               <xs:documentation>Die Hinweise und Erläuterungen zu einer Feldgruppe.</xs:documentation>
+            </xs:annotation>
+         </xs:element>
+         <xs:element name="unterfeldgruppe"
+                     minOccurs="0"
+                     maxOccurs="unbounded"
+                     type="tns:Type.GDS.Xdomea.FeldgruppeType">
+            <xs:annotation>
+               <xs:documentation>Über Unterfeldgruppe erfolgt die hierarchische Unterteilung einer Feldgruppe in weitere Feldgruppen.</xs:documentation>
+            </xs:annotation>
+         </xs:element>
+         <xs:element name="feld"
+                     minOccurs="0"
+                     maxOccurs="unbounded"
+                     type="tns:Type.GDS.Xdomea.FeldType">
+            <xs:annotation>
+               <xs:documentation>Über Feld erfolgt die Unterteilung einer Feldgruppe in konkrete Felder.</xs:documentation>
+            </xs:annotation>
+         </xs:element>
+      </xs:sequence>
+   </xs:complexType>
+   <xs:complexType name="Type.GDS.Xdomea.IdentifikationObjektType">
+      <xs:annotation>
+         <xs:documentation>Der Typ dient der eindeutigen Kennzeichnung von Schriftgutobjekten und entspricht dem xdomea-Typ 'IdentifikationObjektType'.</xs:documentation>
+      </xs:annotation>
+      <xs:sequence>
+         <xs:element name="id" type="tns:Type.GDS.Xdomea.stringUUIDType"/>
+         <xs:element name="nummerImUebergeordnetenContainer" type="xs:positiveInteger">
+            <xs:annotation>
+               <xs:documentation>Über die Nummer im übergeordneten Container wird den Schriftgutobjekten eine Reihenfolge mitgegeben. Unter „Container“ ist dabei jeweils das Akten-, Teilakten- oder Dokumentensegment, in dem die Schriftgutobjekte aufgeführt sind, zu verstehen. Umsetzungshinweise: Die Nummern dürfen innerhalb eines Containers nicht doppelt vergeben werden. Dies gilt auch für unterschiedliche Arten von Schriftgutobjekten innerhalb eines Containers (z.B. Teilakten und Dokumente innerhalb einer Akte). Die Nummerierung muss in dem Container mit 1 beginnen. Auslassungen sind nicht zulässig, da die Bedeutung einer fehlenden Zahl keine Rückschlüsse, z.B. auf die Vollständigkeit einer Akte, erlaubt.</xs:documentation>
+            </xs:annotation>
+         </xs:element>
+      </xs:sequence>
+   </xs:complexType>
+   <xs:complexType name="Type.GDS.Xdomea.ZeitraumType">
+      <xs:sequence>
+         <xs:element name="beginn" minOccurs="0" type="xs:date"/>
+         <xs:element name="ende" minOccurs="0" type="xs:date"/>
+      </xs:sequence>
+   </xs:complexType>
+   <xs:simpleType name="Type.GDS.Xdomea.stringUUIDType">
+      <xs:annotation>
+         <xs:documentation>Der Datentyp zur Angabe einer UUID.</xs:documentation>
+      </xs:annotation>
+      <xs:restriction base="xs:string">
+         <xs:pattern value="[0-9|A-F|a-f]{8}-[0-9|A-F|a-f]{4}-[0-9|A-F|a-f]{4}-[0-9|A-F|a-f]{4}-[0-9|A-F|a-f]{12}"/>
+      </xs:restriction>
+   </xs:simpleType>
+   <xs:simpleType name="Type.GDS.Zeitangabe">
+      <xs:annotation>
+         <xs:documentation>Variabler Typ für die Angabe der Uhrzeit in der Form hh:mm:ss. Minuten- und Sekundenangaben sind optional. Die Zeitzone wird nicht angegeben.</xs:documentation>
+      </xs:annotation>
+      <xs:restriction base="din91379:datatypeC">
+         <xs:pattern value="\d{1,2}(:\d{2}){0,2}"/>
+      </xs:restriction>
+   </xs:simpleType>
+   <xs:complexType name="Type.GDS.Zinsen">
+      <xs:sequence>
+         <xs:element name="zinsberechnung" type="tns:Code.GDS.Zinsberechnung">
+            <xs:annotation>
+               <xs:documentation>Mögliche Werte: "laufende Zinsen"; "vom Gericht ausgerechneter Zinsbetrag" (bis zum Erlass des Mahnbescheids oder bis zum Zinsende-Datum, das der Antragsteller angegeben hat und das vor MB-Antragsdatum liegt); "vom Antragsteller ausgerechnete Zinsen"...</xs:documentation>
+            </xs:annotation>
+         </xs:element>
+         <xs:element name="ref.anspruchsnummer"
+                     maxOccurs="unbounded"
+                     type="din91379:datatypeC">
+            <xs:annotation>
+               <xs:documentation>Bezug auf die Anspruchsnummer</xs:documentation>
+            </xs:annotation>
+         </xs:element>
+         <xs:choice>
+            <xs:element name="zinssatz" type="din91379:datatypeC">
+               <xs:annotation>
+                  <xs:documentation>Die Höhe des Zinssatz in %</xs:documentation>
+               </xs:annotation>
+            </xs:element>
+            <xs:element name="basiszinssatz" type="din91379:datatypeC">
+               <xs:annotation>
+                  <xs:documentation>ODER: % über Basiszinssatz</xs:documentation>
+               </xs:annotation>
+            </xs:element>
+         </xs:choice>
+         <xs:element name="zinsmerkmal" type="tns:Code.GDS.Intervall">
+            <xs:annotation>
+               <xs:documentation>Mögliche Werte sind hier: jährlich, monatlich, täglich.</xs:documentation>
+            </xs:annotation>
+         </xs:element>
+         <xs:element name="berechnungsgrundlage" minOccurs="0" type="din91379:datatypeC">
+            <xs:annotation>
+               <xs:documentation>Zu verzinsender Betrag; Hier wird ein Betrag für die Zinsberechnung angegeben, wenn dieser abweichend von der Hauptsacheforderung ist.</xs:documentation>
+            </xs:annotation>
+         </xs:element>
+         <xs:element name="zinsbeginn" minOccurs="0" type="xs:date">
+            <xs:annotation>
+               <xs:documentation>Zinsbeginn, wenn nicht ab Zustellung des Mahnbescheids angegeben ist; Berechnung für die Zeit vom</xs:documentation>
+            </xs:annotation>
+         </xs:element>
+         <xs:element name="zinsende" minOccurs="0" type="xs:date">
+            <xs:annotation>
+               <xs:documentation>Berechnung für die Zeit der Zinsen bis zu einem Enddatum.</xs:documentation>
+            </xs:annotation>
+         </xs:element>
+         <xs:element name="zinsbetrag" type="tns:Type.GDS.Geldbetrag">
+            <xs:annotation>
+               <xs:documentation>Ausgerechneter Zinsbetrag</xs:documentation>
+            </xs:annotation>
+         </xs:element>
+      </xs:sequence>
+   </xs:complexType>
+</xs:schema>

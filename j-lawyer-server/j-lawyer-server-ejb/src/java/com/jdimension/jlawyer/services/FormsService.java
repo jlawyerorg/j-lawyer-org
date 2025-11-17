@@ -1235,4 +1235,14 @@ public class FormsService implements FormsServiceRemote, FormsServiceLocal {
         return true;
     }
 
+    @Override
+    public List<ArchiveFileFormsBean> getFormsByType(String typeId) throws Exception {
+        FormTypeBean formType = this.formTypesFacade.find(typeId);
+        if (formType == null) {
+            return new ArrayList<>();
+        }
+        
+        return this.caseFormsFacade.findByFormType(formType);
+    }
+
 }

@@ -165,21 +165,21 @@
                               </Group>
                               <EmptySpace min="-2" pref="18" max="-2" attributes="0"/>
                               <Group type="103" groupAlignment="0" attributes="0">
+                                  <Component id="txtCc" alignment="0" max="32767" attributes="0"/>
+                                  <Component id="txtTo" alignment="1" max="32767" attributes="0"/>
+                                  <Component id="txtBcc" alignment="1" max="32767" attributes="0"/>
                                   <Group type="102" alignment="0" attributes="0">
-                                      <Group type="103" groupAlignment="0" attributes="0">
-                                          <Component id="txtCc" alignment="0" max="32767" attributes="0"/>
-                                          <Component id="txtTo" alignment="1" max="32767" attributes="0"/>
-                                          <Component id="txtSubject" alignment="0" max="32767" attributes="0"/>
-                                          <Component id="txtBcc" alignment="1" max="32767" attributes="0"/>
-                                      </Group>
+                                      <Component id="txtSubject" max="32767" attributes="0"/>
                                       <EmptySpace max="-2" attributes="0"/>
-                                      <Group type="103" groupAlignment="1" attributes="0">
-                                          <Component id="cmdRecipients" alignment="1" min="-2" max="-2" attributes="0"/>
-                                          <Component id="cmdRecipientsCc" alignment="1" min="-2" max="-2" attributes="0"/>
-                                          <Component id="cmdRecipientsBcc" alignment="1" min="-2" max="-2" attributes="0"/>
-                                      </Group>
+                                      <Component id="cmbPriority" min="-2" max="-2" attributes="0"/>
                                   </Group>
-                                  <Component id="cmbFrom" alignment="0" max="32767" attributes="0"/>
+                                  <Component id="cmbFrom" max="32767" attributes="0"/>
+                              </Group>
+                              <EmptySpace max="-2" attributes="0"/>
+                              <Group type="103" groupAlignment="1" attributes="0">
+                                  <Component id="cmdRecipients" alignment="1" min="-2" max="-2" attributes="0"/>
+                                  <Component id="cmdRecipientsCc" alignment="1" min="-2" max="-2" attributes="0"/>
+                                  <Component id="cmdRecipientsBcc" alignment="1" min="-2" max="-2" attributes="0"/>
                               </Group>
                           </Group>
                           <Component id="jPanel5" alignment="0" max="32767" attributes="0"/>
@@ -230,9 +230,12 @@
                           </Group>
                       </Group>
                       <EmptySpace max="-2" attributes="0"/>
-                      <Group type="103" groupAlignment="3" attributes="0">
-                          <Component id="jLabel3" alignment="3" min="-2" max="-2" attributes="0"/>
-                          <Component id="txtSubject" alignment="3" min="-2" max="-2" attributes="0"/>
+                      <Group type="103" groupAlignment="0" attributes="0">
+                          <Group type="103" groupAlignment="3" attributes="0">
+                              <Component id="jLabel3" alignment="3" min="-2" max="-2" attributes="0"/>
+                              <Component id="txtSubject" alignment="3" min="-2" max="-2" attributes="0"/>
+                          </Group>
+                          <Component id="cmbPriority" alignment="0" min="-2" max="-2" attributes="0"/>
                       </Group>
                       <EmptySpace max="-2" attributes="0"/>
                       <Group type="103" groupAlignment="0" attributes="0">
@@ -439,6 +442,20 @@
                     <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="cmdOpenTbActionPerformed"/>
                   </Events>
                 </Component>
+                <Component class="javax.swing.JButton" name="cmdApplyTemplateStyling">
+                  <Properties>
+                    <Property name="icon" type="javax.swing.Icon" editor="org.netbeans.modules.form.editors2.IconEditor">
+                      <Image iconType="3" name="/icons32/material/format_paint_32dp_0E72B5_FILL0_wght400_GRAD0_opsz40.png"/>
+                    </Property>
+                    <Property name="toolTipText" type="java.lang.String" value="Schriftformatierung der Vorlage &#xfc;bernehmen"/>
+                    <Property name="focusable" type="boolean" value="false"/>
+                    <Property name="horizontalTextPosition" type="int" value="0"/>
+                    <Property name="verticalTextPosition" type="int" value="3"/>
+                  </Properties>
+                  <Events>
+                    <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="cmdApplyTemplateStylingActionPerformed"/>
+                  </Events>
+                </Component>
               </SubComponents>
             </Container>
             <Component class="javax.swing.JTextField" name="txtCc">
@@ -505,6 +522,20 @@
                 <AuxValue name="JavaCodeGenerator_TypeParameters" type="java.lang.String" value="&lt;String&gt;"/>
               </AuxValues>
             </Component>
+            <Component class="javax.swing.JComboBox" name="cmbPriority">
+              <Properties>
+                <Property name="model" type="javax.swing.ComboBoxModel" editor="org.netbeans.modules.form.editors2.ComboBoxModelEditor">
+                  <StringArray count="3">
+                    <StringItem index="0" value="Normal"/>
+                    <StringItem index="1" value="Hoch"/>
+                    <StringItem index="2" value="Niedrig"/>
+                  </StringArray>
+                </Property>
+              </Properties>
+              <AuxValues>
+                <AuxValue name="JavaCodeGenerator_TypeParameters" type="java.lang.String" value="&lt;String&gt;"/>
+              </AuxValues>
+            </Component>
           </SubComponents>
         </Container>
         <Container class="javax.swing.JPanel" name="jPanel6">
@@ -563,7 +594,7 @@
                                   <EmptySpace max="-2" attributes="0"/>
                                   <Component id="lblEncryption" max="32767" attributes="0"/>
                               </Group>
-                              <Group type="102" alignment="0" attributes="0">
+                              <Group type="102" attributes="0">
                                   <Group type="103" groupAlignment="0" attributes="0">
                                       <Component id="chkSaveAsDocument" alignment="0" min="-2" max="-2" attributes="0"/>
                                       <Group type="102" alignment="0" attributes="0">
@@ -571,12 +602,12 @@
                                           <EmptySpace max="-2" attributes="0"/>
                                           <Component id="html" min="-2" max="-2" attributes="0"/>
                                       </Group>
-                                      <Component id="chkReadReceipt" alignment="0" min="-2" max="-2" attributes="0"/>
                                       <Group type="102" alignment="0" attributes="0">
                                           <Component id="chkDocumentTagging" min="-2" max="-2" attributes="0"/>
                                           <EmptySpace max="-2" attributes="0"/>
                                           <Component id="cmbDocumentTag" min="-2" max="-2" attributes="0"/>
                                       </Group>
+                                      <Component id="chkReadReceipt" alignment="0" min="-2" max="-2" attributes="0"/>
                                   </Group>
                                   <EmptySpace min="0" pref="0" max="32767" attributes="0"/>
                               </Group>

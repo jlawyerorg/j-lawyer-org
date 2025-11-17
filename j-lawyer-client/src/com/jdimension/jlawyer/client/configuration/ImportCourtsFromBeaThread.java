@@ -694,6 +694,10 @@ public class ImportCourtsFromBeaThread implements Runnable {
 
     /**
      * Creates a new instance of LoadOptionGroupThread
+     * @param owner
+     * @param target
+     * @param closeButton
+     * @param importButton
      */
     public ImportCourtsFromBeaThread(Component owner, JProgressBar target, JButton closeButton, JButton importButton) {
         this.owner = owner;
@@ -752,12 +756,13 @@ public class ImportCourtsFromBeaThread implements Runnable {
                 try {
                     String zip = String.format("%02d", i);
                     ThreadUtils.updateProgressBar(this.target, "Suche: PLZ " + zip + "*", ((i * 10) - 1), totalCount, false);
-                    result = bea.searchIdentity(null, "*gericht*", null, null, zip + "*", null);
+                    result = bea.searchIdentity(null, "gericht", null, null, zip, null);
                     // there is a search limit of 100. use three-digit search in case of limit reached to download all identities.
                     if (result.size() > 99) {
                         result = new ArrayList<>();
                         for (int k = 0; k < 10; k++) {
                             result.addAll(bea.searchIdentity(null, "*gericht*", null, null, zip + k + "*", null));
+                            //result.addAll(bea.searchIdentity(null, null, null, null, zip + k + "*", "*gericht*"));
                         }
                     }
 

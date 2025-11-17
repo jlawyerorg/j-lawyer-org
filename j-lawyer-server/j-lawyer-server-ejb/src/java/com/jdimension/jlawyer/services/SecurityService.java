@@ -992,6 +992,11 @@ public class SecurityService implements SecurityServiceRemote, SecurityServiceLo
                 mailboxes.add(ms);
             }
         }
+        mailboxes.sort((m1, m2) -> {
+            String name1 = m1.getDisplayName() != null ? m1.getDisplayName() : "";
+            String name2 = m2.getDisplayName() != null ? m2.getDisplayName() : "";
+            return name1.compareToIgnoreCase(name2);
+        });
         return mailboxes;
     }
 

@@ -719,5 +719,7 @@ public interface CasesEndpointLocalV7 {
     Response restoreDocumentFromRecycleBin(String documentId);
 
     Response removeDocumentFromRecycleBin(String documentId);
+    
+    Response searchCases(String searchString, Boolean includeArchived);
         
 }

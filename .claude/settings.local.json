@@ -1,7 +1,11 @@
 {
   "permissions": {
     "allow": [
-      "Bash(find:*)"
+      "Bash(find:*)",
+      "Bash(openspec list:*)",
+      "Bash(openspec validate:*)",
+      "Bash(mkdir:*)",
+      "Bash(openspec show:*)"
     ],
     "deny": [],
     "ask": []

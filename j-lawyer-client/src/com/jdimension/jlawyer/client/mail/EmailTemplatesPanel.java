@@ -669,6 +669,7 @@ import com.jdimension.jlawyer.client.settings.ClientSettings;
 import com.jdimension.jlawyer.client.utils.CommonStrings;
 import com.jdimension.jlawyer.client.utils.ComponentUtils;
 import com.jdimension.jlawyer.client.utils.FileUtils;
+import com.jdimension.jlawyer.client.utils.FontUtils;
 import com.jdimension.jlawyer.client.utils.ThreadUtils;
 import com.jdimension.jlawyer.documents.PlaceHolders;
 import com.jdimension.jlawyer.email.EmailTemplate;
@@ -719,6 +720,22 @@ public class EmailTemplatesPanel extends javax.swing.JPanel implements Themeable
         for (String s : EmailTemplate.SUPPORTED_FORMATS) {
             this.cmbFormat.addItem(s);
         }
+
+        // Populate fonts combo box
+        this.cmbFonts.removeAllItems();
+        for (String fontFamily : FontUtils.getFontFamilies()) {
+            this.cmbFonts.addItem(fontFamily);
+        }
+        this.cmbFonts.setSelectedItem("sans-serif");
+
+        // Add color picker to cmdColor button
+        this.cmdColor.addActionListener(e -> {
+            java.awt.Color currentColor = this.cmdColor.getBackground();
+            java.awt.Color newColor = javax.swing.JColorChooser.showDialog(this, "Schriftfarbe wählen", currentColor);
+            if (newColor != null) {
+                this.cmdColor.setBackground(newColor);
+            }
+        });
 
         DefaultListModel lm = new DefaultListModel();
         this.lstPlaceHolders.setModel(lm);
@@ -830,6 +847,10 @@ public class EmailTemplatesPanel extends javax.swing.JPanel implements Themeable
         txtBcc = new javax.swing.JTextField();
         jLabel5 = new javax.swing.JLabel();
         jLabel6 = new javax.swing.JLabel();
+        cmbFonts = new javax.swing.JComboBox<>();
+        cmdColor = new javax.swing.JButton();
+        spnFontSize = new javax.swing.JSpinner();
+        jLabel7 = new javax.swing.JLabel();
         jPanel2 = new javax.swing.JPanel();
         cmdAddPlaceHolder = new javax.swing.JButton();
         jScrollPane3 = new javax.swing.JScrollPane();
@@ -990,6 +1011,16 @@ public class EmailTemplatesPanel extends javax.swing.JPanel implements Themeable
         jLabel6.setFont(jLabel6.getFont());
         jLabel6.setText("BCC:");
 
+        cmbFonts.setModel(new javax.swing.DefaultComboBoxModel<>(new String[] { "Item 1", "Item 2", "Item 3", "Item 4" }));
+
+        cmdColor.setText("   ");
+
+        spnFontSize.setModel(new javax.swing.SpinnerNumberModel(0, 0, 36, 1));
+
+        jLabel7.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/help.png"))); // NOI18N
+        jLabel7.setText(" ");
+        jLabel7.setToolTipText("<html>Standardformatierung der Schrift der E-Mail (nur HTML-Mails)<br/>Schriftgr&ouml;&szlig;e 0 = keine explizite Angabe der Schriftgr&ouml;&szlig;e</html>");
+
         org.jdesktop.layout.GroupLayout jPanel1Layout = new org.jdesktop.layout.GroupLayout(jPanel1);
         jPanel1.setLayout(jPanel1Layout);
         jPanel1Layout.setHorizontalGroup(
@@ -997,14 +1028,6 @@ public class EmailTemplatesPanel extends javax.swing.JPanel implements Themeable
             .add(jPanel1Layout.createSequentialGroup()
                 .addContainerGap()
                 .add(jPanel1Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
-                    .add(jPanel1Layout.createSequentialGroup()
-                        .add(jPanel1Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
-                            .add(jLabel2)
-                            .add(jLabel3))
-                        .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
-                        .add(jPanel1Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
-                            .add(cmbFormat, 0, 505, Short.MAX_VALUE)
-                            .add(contentPanel, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)))
                     .add(jPanel1Layout.createSequentialGroup()
                         .add(jPanel1Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
                             .add(jPanel1Layout.createSequentialGroup()
@@ -1020,7 +1043,23 @@ public class EmailTemplatesPanel extends javax.swing.JPanel implements Themeable
                             .add(txtSubject)
                             .add(txtTo)
                             .add(txtCc)
-                            .add(txtBcc))))
+                            .add(txtBcc)))
+                    .add(jPanel1Layout.createSequentialGroup()
+                        .add(jPanel1Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
+                            .add(jLabel2)
+                            .add(jLabel3))
+                        .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
+                        .add(jPanel1Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
+                            .add(jPanel1Layout.createSequentialGroup()
+                                .add(cmbFonts, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
+                                .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
+                                .add(spnFontSize, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
+                                .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
+                                .add(cmdColor)
+                                .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
+                                .add(jLabel7))
+                            .add(cmbFormat, 0, 505, Short.MAX_VALUE)
+                            .add(contentPanel, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))))
                 .addContainerGap())
         );
         jPanel1Layout.setVerticalGroup(
@@ -1047,12 +1086,18 @@ public class EmailTemplatesPanel extends javax.swing.JPanel implements Themeable
                     .add(cmbFormat, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
                     .add(jLabel2))
                 .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
+                .add(jPanel1Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING, false)
+                    .add(jPanel1Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.BASELINE)
+                        .add(cmbFonts, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
+                        .add(cmdColor)
+                        .add(spnFontSize, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE))
+                    .add(jLabel7, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
                 .add(jPanel1Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
                     .add(contentPanel, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                     .add(jPanel1Layout.createSequentialGroup()
                         .add(jLabel3)
-                        .add(0, 155, Short.MAX_VALUE)))
-                .addContainerGap())
+                        .add(0, 318, Short.MAX_VALUE))))
         );
 
         jSplitPane1.setLeftComponent(jPanel1);
@@ -1130,7 +1175,7 @@ public class EmailTemplatesPanel extends javax.swing.JPanel implements Themeable
                         .add(org.jdesktop.layout.GroupLayout.LEADING, jLabel18, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
                     .add(cmdRefresh))
                 .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
-                .add(jSplitPane2, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 709, Short.MAX_VALUE)
+                .add(jSplitPane2)
                 .addContainerGap())
         );
     }// </editor-fold>//GEN-END:initComponents
@@ -1153,6 +1198,9 @@ public class EmailTemplatesPanel extends javax.swing.JPanel implements Themeable
             tpl.setTo(this.txtTo.getText());
             tpl.setCc(this.txtCc.getText());
             tpl.setBcc(this.txtBcc.getText());
+            tpl.setFontName((String) this.cmbFonts.getSelectedItem());
+            tpl.setFontSize((Integer) this.spnFontSize.getValue());
+            tpl.setFontColor(colorToHex(this.cmdColor.getBackground()));
             locator.lookupIntegrationServiceRemote().saveEmailTemplate(tpl, true);
         } catch (Exception ex) {
             JOptionPane.showMessageDialog(this, "Fehler beim Speichern der Vorlage: " + ex.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
@@ -1183,6 +1231,28 @@ public class EmailTemplatesPanel extends javax.swing.JPanel implements Themeable
             this.txtTo.setText(tpl.getTo());
             this.txtCc.setText(tpl.getCc());
             this.txtBcc.setText(tpl.getBcc());
+            this.hp.setDefaultFontColor(tpl.getFontColor());
+            this.hp.setDefaultFontFamily(tpl.getFontName());
+            this.hp.setDefaultFontSize(""+tpl.getFontSize());
+
+            // Load font properties (with null checks for backward compatibility)
+            if (tpl.getFontName() != null) {
+                this.cmbFonts.setSelectedItem(tpl.getFontName());
+            } else {
+                this.cmbFonts.setSelectedItem("sans-serif");
+            }
+
+            if (tpl.getFontSize() != null) {
+                this.spnFontSize.setValue(tpl.getFontSize());
+            } else {
+                this.spnFontSize.setValue(12);
+            }
+
+            if (tpl.getFontColor() != null) {
+                this.cmdColor.setBackground(hexToColor(tpl.getFontColor()));
+            } else {
+                this.cmdColor.setBackground(java.awt.Color.BLACK);
+            }
         } catch (Exception ex) {
             JOptionPane.showMessageDialog(this, "Fehler beim Laden der Vorlage: " + ex.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
         }
@@ -1211,6 +1281,9 @@ public class EmailTemplatesPanel extends javax.swing.JPanel implements Themeable
             tpl.setTo("");
             tpl.setCc("");
             tpl.setBcc("");
+            tpl.setFontName("sans-serif");
+            tpl.setFontSize(12);
+            tpl.setFontColor("#000000");
             locator.lookupIntegrationServiceRemote().saveEmailTemplate(tpl, false);
         } catch (Exception ex) {
             JOptionPane.showMessageDialog(this, "Fehler beim Erstellen der Vorlage: " + ex.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
@@ -1276,6 +1349,10 @@ public class EmailTemplatesPanel extends javax.swing.JPanel implements Themeable
         }
 
         if (sel.toLowerCase().contains("html")) {
+            
+            this.spnFontSize.setEnabled(true);
+            this.cmbFonts.setEnabled(true);
+            this.cmdColor.setEnabled(true);
 
             this.contentPanel.remove(0);
             this.contentPanel.add(hp);
@@ -1284,6 +1361,11 @@ public class EmailTemplatesPanel extends javax.swing.JPanel implements Themeable
             SwingUtilities.updateComponentTreeUI(tp);
             SwingUtilities.updateComponentTreeUI(hp);
         } else {
+            
+            this.spnFontSize.setEnabled(false);
+            this.cmbFonts.setEnabled(false);
+            this.cmdColor.setEnabled(false);
+            
             this.contentPanel.remove(0);
             this.contentPanel.add(tp);
             tp.setBounds(0, 0, this.contentPanel.getWidth(), this.contentPanel.getHeight());
@@ -1366,9 +1448,11 @@ public class EmailTemplatesPanel extends javax.swing.JPanel implements Themeable
     }//GEN-LAST:event_cmdDuplicateActionPerformed
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
+    private javax.swing.JComboBox<String> cmbFonts;
     private javax.swing.JComboBox cmbFormat;
     private javax.swing.JComboBox cmbPlaceHolderTarget;
     private javax.swing.JButton cmdAddPlaceHolder;
+    private javax.swing.JButton cmdColor;
     private javax.swing.JButton cmdDelete;
     private javax.swing.JButton cmdDuplicate;
     private javax.swing.JButton cmdNew;
@@ -1383,6 +1467,7 @@ public class EmailTemplatesPanel extends javax.swing.JPanel implements Themeable
     private javax.swing.JLabel jLabel4;
     private javax.swing.JLabel jLabel5;
     private javax.swing.JLabel jLabel6;
+    private javax.swing.JLabel jLabel7;
     private javax.swing.JPanel jPanel1;
     private javax.swing.JPanel jPanel2;
     private javax.swing.JPanel jPanel3;
@@ -1393,11 +1478,49 @@ public class EmailTemplatesPanel extends javax.swing.JPanel implements Themeable
     protected javax.swing.JLabel lblPanelTitle;
     private javax.swing.JList lstMailTemplates;
     private javax.swing.JList lstPlaceHolders;
+    private javax.swing.JSpinner spnFontSize;
     private javax.swing.JTextField txtBcc;
     private javax.swing.JTextField txtCc;
     private javax.swing.JTextField txtSubject;
     private javax.swing.JTextField txtTo;
     // End of variables declaration//GEN-END:variables
+
+    /**
+     * Converts a Color object to a hex string (e.g., "#FF0000")
+     * @param color the color to convert
+     * @return hex string representation
+     */
+    private String colorToHex(java.awt.Color color) {
+        if (color == null) {
+            return "#000000";
+        }
+        return String.format("#%02X%02X%02X", color.getRed(), color.getGreen(), color.getBlue());
+    }
+
+    /**
+     * Converts a hex string to a Color object
+     * @param hex the hex string (e.g., "#FF0000" or "FF0000")
+     * @return Color object, or black if parsing fails
+     */
+    private java.awt.Color hexToColor(String hex) {
+        if (hex == null || hex.isEmpty()) {
+            return java.awt.Color.BLACK;
+        }
+        try {
+            // Remove # if present
+            if (hex.startsWith("#")) {
+                hex = hex.substring(1);
+            }
+            // Parse hex string
+            int r = Integer.parseInt(hex.substring(0, 2), 16);
+            int g = Integer.parseInt(hex.substring(2, 4), 16);
+            int b = Integer.parseInt(hex.substring(4, 6), 16);
+            return new java.awt.Color(r, g, b);
+        } catch (Exception e) {
+            log.warn("Invalid hex color: " + hex + ", using black");
+            return java.awt.Color.BLACK;
+        }
+    }
 
     @Override
     public Image getBackgroundImage() {

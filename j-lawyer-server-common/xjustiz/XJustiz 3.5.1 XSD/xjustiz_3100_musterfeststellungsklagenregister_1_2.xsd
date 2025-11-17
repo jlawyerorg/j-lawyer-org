@@ -1,0 +1,449 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema"
+           xmlns:tns="http://www.xjustiz.de"
+           xmlns:din91379="urn:xoev-de:kosit:xoev:datentyp:din-91379_2022-08"
+           targetNamespace="http://www.xjustiz.de"
+           version="1.2.0"
+           elementFormDefault="qualified"
+           attributeFormDefault="unqualified">
+   <xs:annotation>
+      <xs:appinfo>
+         <standard>
+            <nameLang>Strukturierte Fachdaten für die Kommunikation im elektronischen Rechtsverkehr</nameLang>
+            <nameKurz>XJustiz</nameKurz>
+            <nameTechnisch>xjustiz</nameTechnisch>
+            <kennung>urn:xoev-de:blk-ag-it-standards:standard:xjustiz</kennung>
+            <beschreibung>XJustiz ist der bundesweit einheitliche Standard für den Austausch strukturierter elektronischer Informationen mit der Justiz.</beschreibung>
+         </standard>
+         <versionStandard>
+            <version>3.5.1</version>
+            <beschreibung>XJustiz beschreibt ein standardisiertes Datenaustauschformat für die elektronische Kommunikation innerhalb und mit der Justizverwaltung.</beschreibung>
+            <versionXOEVProfil>1.7.2</versionXOEVProfil>
+            <versionXOEVHandbuch>2.3.1</versionXOEVHandbuch>
+            <versionXGenerator>3.1.1</versionXGenerator>
+            <versionModellierungswerkzeug>19.0 SP3</versionModellierungswerkzeug>
+            <nameModellierungswerkzeug>MagicDraw</nameModellierungswerkzeug>
+         </versionStandard>
+      </xs:appinfo>
+   </xs:annotation>
+   <xs:include schemaLocation="xjustiz_0000_grunddatensatz_3_5.xsd"/>
+   <xs:include schemaLocation="xjustiz_3110_cl_musterfeststellungsklagenregister_1_2.xsd"/>
+   <xs:import schemaLocation="din-norm-91379-datatypes.xsd"
+              namespace="urn:xoev-de:kosit:xoev:datentyp:din-91379_2022-08"/>
+   <xs:complexType name="Type.MFKREG.Bekanntmachungstexte">
+      <xs:annotation>
+         <xs:documentation>Je nach Kommunikationsszenario müssen bzw. können verschiedene Bekanntmachungen, Beschlüsse, Rechtsbelehrungen etc. zu einer Musterfeststellungsklage nach ZPO a.F., zu einer Unterlassungsklage oder zu einer einstweiligen Verfügung veröffentlicht werden. Das Szenario ergibt sich aus dem Ereignis, das im Nachrichtenkopf angegeben wird. Es ist dabei immer ein passender Gliederungspunkt zum Freitext anzugeben.</xs:documentation>
+      </xs:annotation>
+      <xs:sequence>
+         <xs:element name="ref.terminsID" minOccurs="0" type="din91379:datatypeC">
+            <xs:annotation>
+               <xs:documentation>Wenn die Bekanntmachung eines Termins zu einer Musterfeststellungsklage nach ZPO a.F. einen Hinweis zu diesem Termin enthält, dann wird dieser Hinweis als Bekanntmachungstext angegeben. Über diese ID kann der Hinweis auf den Termin referenzieren.</xs:documentation>
+            </xs:annotation>
+         </xs:element>
+         <xs:element name="textnummer" type="xs:integer">
+            <xs:annotation>
+               <xs:documentation>Die Texte innerhalb einer Bekanntmachung sind fortlaufend zu nummerieren.</xs:documentation>
+            </xs:annotation>
+         </xs:element>
+         <xs:element name="ueberschrift.bekanntmachung"
+                     type="tns:Code.MFKREG.Gliederungspunkte">
+            <xs:annotation>
+               <xs:documentation>Es ist zu jedem Text einer Bekanntmachung ein Gliederungspunkt als Überschrift gemäß Codeliste anzugeben.</xs:documentation>
+            </xs:annotation>
+         </xs:element>
+         <xs:element name="inhalt.bekanntmachung" type="din91379:datatypeD">
+            <xs:annotation>
+               <xs:documentation>Es ist der zum Gliederungspunkt passende Text der Bekanntmachung als Freitext anzugeben. Sofern es sich bei dem zu veröffentlichenden Text um eine Rechtsbelehrung handelt, wird ein Default-Text für die Gerichte vorgegeben (Codeliste Rechtsbelehrungen). Anderenfalls ist hier der, je nach Ereignis und Überschrift, zu veröffentlichende Inhalt der Bekanntmachung anzugeben.</xs:documentation>
+            </xs:annotation>
+         </xs:element>
+      </xs:sequence>
+   </xs:complexType>
+   <xs:element name="nachricht.mfkreg.klagebekanntmachung_terminbestimmung.3100001">
+      <xs:annotation>
+         <xs:documentation>Diese Nachricht wird sowohl für Bekanntmachungen und Terminbestimmungen von Musterfeststellungsklagen nach ZPO a.F. als auch für Bekanntmachungen von Unterlassungsklagen und einstweiligen Verfügungen nach § 6a UKlaG (i.V.m. § 8 Absatz 1 und 5 Satz 2 UWG) genutzt. Nachricht zur Übermittlung der Formulare 1 und 2.</xs:documentation>
+      </xs:annotation>
+      <xs:complexType>
+         <xs:sequence>
+            <xs:element name="nachrichtenkopf" type="tns:Type.GDS.Nachrichtenkopf"/>
+            <xs:element name="grunddaten" type="tns:Type.GDS.Grunddaten"/>
+            <xs:element name="fachdaten" minOccurs="0">
+               <xs:complexType>
+                  <xs:sequence>
+                     <xs:element name="text.bekanntmachung"
+                                 minOccurs="0"
+                                 maxOccurs="unbounded"
+                                 type="tns:Type.MFKREG.Bekanntmachungstexte">
+                        <xs:annotation>
+                           <xs:documentation>Es sind die bekanntzumachenden Inhalte als Freitext anzugeben. Bei der Bekanntmachung einer Musterfeststellungsklage nach ZPO a.F. sind hier zwingend die „Feststellungsziele“, die „kurze Darstellung des Lebenssachverhalts“ sowie vier Rechtsbelehrungen anzugeben. Für die Rechtsbelehrungen stehen Default-Texte zur Verfügung, die bei Bedarf angepasst werden können. Bekanntmachungen von Unterlassungsklagen und von einstweiligen Verfügungen enthalten jeweils nur einen Bekanntmachungstext zu der behaupteten Zuwiderhandlung, die Anlass des Antrags auf Erlass einer einstweiligen Verfügung ist bzw. gegen die die Klage gerichtet ist. Es sind die passenden Gliederungspunkte der Bekanntmachung aus der Codeliste auszuwählen. Bei der Bekanntmachung des Antrags auf Erlass einer einstweiligen Verfügung, der dem Antragsgegner zugestellt worden ist, sind das Datum des Eingangs des Antrags bei Gericht und das Datum der Zustellung des Antrags beim Antragsgegner unverzüglich bekanntzumachen. Wurde die einstweilige Verfügung erlassen, ohne dass der Antrag auf Erlass der einstweiligen Verfügung dem Antragsgegner vorher zugestellt worden ist, tritt an die Stelle der Bekanntmachung des Datums der Zustellung des Antrags das Datum des Erlasses der einstweiligen Verfügung. Bei der Bekanntmachung der Unterlassungsklage müssen das Datum der Anhängigkeit der Klage (= Eingang der Klage bei Gericht) und das Datum der Rechtshängigkeit der Klage (= Zustellung der Klage an den Beklagten) übermittelt werden. Sowohl für Unterlassungsklagen als auch für einstweilige Verfügungen muss mindestens ein Grund für die Erhebung der Klage bzw. die Stellung des Antrags angegeben werden: Verstoß gegen Normen des Gesetzes gegen den unlauteren Wettbewerb oder Verstoß gegen Normen des Unterlassungsklagengesetzes (oder beides).</xs:documentation>
+                        </xs:annotation>
+                     </xs:element>
+                     <xs:element name="datum.eingang" minOccurs="0" type="xs:date"/>
+                     <xs:element name="datum.erlass" minOccurs="0" type="xs:date"/>
+                     <xs:element name="datum.zustellung" minOccurs="0" type="xs:date"/>
+                     <xs:element name="rechtsgrundlage.UWG" minOccurs="0" type="xs:boolean"/>
+                     <xs:element name="rechtsgrundlage.UKlaG" minOccurs="0" type="xs:boolean"/>
+                  </xs:sequence>
+               </xs:complexType>
+            </xs:element>
+         </xs:sequence>
+      </xs:complexType>
+   </xs:element>
+   <xs:element name="nachricht.mfkreg.hinweise_zwischenentscheidung.3100002">
+      <xs:annotation>
+         <xs:documentation>Diese Nachricht wird nur für Bekanntmachungen von Hinweisen und Zwischenentscheidungen zu Musterfeststellungsklagen nach ZPO a.F. genutzt. Nachricht zur Übermittlung der Formulare 3 und 4.</xs:documentation>
+      </xs:annotation>
+      <xs:complexType>
+         <xs:sequence>
+            <xs:element name="nachrichtenkopf" type="tns:Type.GDS.Nachrichtenkopf"/>
+            <xs:element name="fachdaten">
+               <xs:complexType>
+                  <xs:sequence>
+                     <xs:element name="datum.ereignis" type="xs:date">
+                        <xs:annotation>
+                           <xs:documentation>Bei der Bekanntmachung von Hinweisen oder Zwischenentscheidungen ist das Datum der jeweiligen Ereignisse anzugeben. Das Datum ist in der Regel ungleich zum Erstellungszeitpunkt der XJustiz-Nachricht.</xs:documentation>
+                        </xs:annotation>
+                     </xs:element>
+                     <xs:element name="beschlussinhalt" maxOccurs="unbounded">
+                        <xs:annotation>
+                           <xs:documentation>Bei der Bekanntmachung von Hinweisen oder Zwischenentscheidungen kann angegeben werden, ob die jeweiligen Zwischenstände mit einem Termin oder einem Feststellungsziel verknüpft werden soll.</xs:documentation>
+                        </xs:annotation>
+                        <xs:complexType>
+                           <xs:sequence>
+                              <xs:element name="text.bekanntmachung" type="tns:Type.MFKREG.Bekanntmachungstexte"/>
+                              <xs:element name="feststellungszieleVerweis" minOccurs="0">
+                                 <xs:annotation>
+                                    <xs:documentation>Unter dieser Sequenz kann abgebildet werden, ob eine Verlinkung der bekanntzumachenden Hinweise oder Zwischenentscheidungen zu den Feststellungszielen erwünscht ist und wie die Verlinkung platziert werden soll. Es ist anzugeben, ob die Feststellungsziele ergänzt, modifiziert oder ergänzt und modifiziert worden sind.</xs:documentation>
+                                 </xs:annotation>
+                                 <xs:complexType>
+                                    <xs:sequence>
+                                       <xs:element name="ergaenzt" type="xs:boolean"/>
+                                       <xs:element name="modifiziert" type="xs:boolean"/>
+                                    </xs:sequence>
+                                 </xs:complexType>
+                              </xs:element>
+                           </xs:sequence>
+                        </xs:complexType>
+                     </xs:element>
+                  </xs:sequence>
+               </xs:complexType>
+            </xs:element>
+         </xs:sequence>
+      </xs:complexType>
+   </xs:element>
+   <xs:element name="nachricht.mfkreg.beendigung.3100003">
+      <xs:annotation>
+         <xs:documentation>Diese Nachricht wird sowohl für Bekanntmachungen der Beendigung der Verfahren von Musterfeststellungsklagen nach ZPO a.F. als auch für Bekanntmachungen der Beendigung der Verfahren von Unterlassungsklagen und einstweiligen Verfügungen nach § 6a UKlaG (i.V.m. § 8 Absatz 1 und 5 Satz 2 UWG) genutzt. Nachricht zur Übermittlung des Formulars 5.</xs:documentation>
+      </xs:annotation>
+      <xs:complexType>
+         <xs:sequence>
+            <xs:element name="nachrichtenkopf" type="tns:Type.GDS.Nachrichtenkopf"/>
+            <xs:element name="fachdaten">
+               <xs:complexType>
+                  <xs:sequence>
+                     <xs:element name="datum.verfahrensende" type="xs:date">
+                        <xs:annotation>
+                           <xs:documentation>Bei der Bekanntmachung einer Beendigung des Verfahrens ist das Datum des Verfahrensendes anzugeben. Das Datum ist ungleich zum Erstellungszeitpunkt der XJustiz-Nachricht.</xs:documentation>
+                        </xs:annotation>
+                     </xs:element>
+                     <xs:element name="verfahrensendeArt">
+                        <xs:annotation>
+                           <xs:documentation>Hier wird angegeben, durch welche Art das Verfahren beendet worden ist. Teilbeendigungen können auch durch verschiedene Beendigungsarten angegeben werden. Für Musterfeststellungsverfahren nach ZPO a.F., Unterlassungsklagen und einstweilige Verfügungen sind alle sieben Optionen (auch mehrere miteinander kombiniert) möglich.</xs:documentation>
+                        </xs:annotation>
+                        <xs:complexType>
+                           <xs:sequence>
+                              <xs:element name="beendigungUrteil" type="xs:boolean"/>
+                              <xs:element name="beendigungBeschluss" type="xs:boolean"/>
+                              <xs:element name="beendigungVergleichsbeschluss" type="xs:boolean"/>
+                              <xs:element name="beendigungKlageruecknahme" type="xs:boolean"/>
+                              <xs:element name="beendigungRechtsmittelruecknahme" type="xs:boolean"/>
+                              <xs:element name="beendigungErledigungRechtsstreit" type="xs:boolean"/>
+                              <xs:element name="sonstigeBeendigung" minOccurs="0" type="din91379:datatypeC">
+                                 <xs:annotation>
+                                    <xs:documentation>Für den Fall, dass die Beendigungsart keinem der oben genannten Werte zugeordnet werden kann, kann diese weiterhin als Freitext übergeben werden.</xs:documentation>
+                                 </xs:annotation>
+                              </xs:element>
+                           </xs:sequence>
+                        </xs:complexType>
+                     </xs:element>
+                     <xs:element name="teilrechtskraftEntscheidung"
+                                 minOccurs="0"
+                                 type="din91379:datatypeC">
+                        <xs:annotation>
+                           <xs:documentation>Wenn eine BGH-Entscheidung Teilrechtskraft hat, kann das hier angegeben werden. Das Datum ist identisch mit dem Datum des Verfahrensendes (s.o.).</xs:documentation>
+                        </xs:annotation>
+                     </xs:element>
+                     <xs:element name="beschlussinhalt"
+                                 maxOccurs="unbounded"
+                                 type="tns:Type.MFKREG.Bekanntmachungstexte">
+                        <xs:annotation>
+                           <xs:documentation>Es sind die bekanntzumachenden Inhalte des Beschlusses, des Vergleichs etc., der/ die zur Beendigung des Verfahrens geführt hat, anzugeben.</xs:documentation>
+                        </xs:annotation>
+                     </xs:element>
+                  </xs:sequence>
+               </xs:complexType>
+            </xs:element>
+         </xs:sequence>
+      </xs:complexType>
+   </xs:element>
+   <xs:element name="nachricht.mfkreg.rechtskraft_veroeffentlichung_zustellung.3100004">
+      <xs:annotation>
+         <xs:documentation>Diese Nachricht wird für drei Kommunikationsszenarien genutzt. Erstens werden damit Bekanntmachungen zu rechtskräftigen Entscheidungen zu den Verfahren der Musterfeststellungsklagen nach ZPO a.F. von den Gerichten an das BfJ verschickt. Zweitens informiert so das BfJ die Gerichte über die Veröffentlichung einer Musterfeststellungsklage nach ZPO a.F. Und drittens übermitteln so die Prozessbevollmächtigten des Antragstellers auf Erlass einer einstweiligen Verfügung das Datum der Zustellung an den Antragsgegner, die Abschrift der einstweiligen Verfügung und den Zustellungsnachweis nach § 6a Absatz 1 Satz 3 bis 5 UKlaG (i.V.m. § 8 Absatz 1 und 5 Satz 2 UWG). Diese letzte Nachricht ist die einzige im gesamten Fachmodul, bei der Schriftgutobjekte mitverschickt werden.</xs:documentation>
+      </xs:annotation>
+      <xs:complexType>
+         <xs:sequence>
+            <xs:element name="nachrichtenkopf" type="tns:Type.GDS.Nachrichtenkopf"/>
+            <xs:element name="schriftgutobjekte"
+                        minOccurs="0"
+                        type="tns:Type.GDS.Schriftgutobjekte"/>
+            <xs:element name="fachdaten">
+               <xs:complexType>
+                  <xs:sequence>
+                     <xs:element name="datum.ereignis" type="xs:date">
+                        <xs:annotation>
+                           <xs:documentation>Je nach Ereignis ist entweder das Datum der Rechtskraft einer Rechtsprechung zu einer Musterfeststellungsklage, das Datum der Veröffentlichung der Bekanntmachung oder das Datum der erfolgten Zustellung des Erlasses einer einstweiligen Verfügung mitzuteilen. Das Gericht teilt die Rechtskraft einer Rechtsprechung dem BfJ mit. Das BfJ teilt das Datum der Veröffentlichung im Musterfeststellungsklagenregister mit. Der Prozessbevollmächtigte des Antragstellers auf Erlass einer einstweiligen Verfügung verschickt das Datum der erfolgten Zustellung, die Abschrift der einstweiligen Verfügung sowie den Zustellungsnachweis nach § 6a Absatz 1 Satz 3 bis 5 UKlaG (i.V.m. § 8 Absatz 1 und 5 Satz 2 UWG).</xs:documentation>
+                        </xs:annotation>
+                     </xs:element>
+                  </xs:sequence>
+               </xs:complexType>
+            </xs:element>
+         </xs:sequence>
+      </xs:complexType>
+   </xs:element>
+   <xs:element name="nachricht.mfkreg.revision.3100005">
+      <xs:annotation>
+         <xs:documentation>Diese Nachricht wird nur für Bekanntmachungen der Revision im Verfahren zu Musterfeststellungsklagen nach ZPO a.F. genutzt.</xs:documentation>
+      </xs:annotation>
+      <xs:complexType>
+         <xs:sequence>
+            <xs:element name="nachrichtenkopf" type="tns:Type.GDS.Nachrichtenkopf"/>
+            <xs:element name="grunddaten" type="tns:Type.GDS.Grunddaten"/>
+            <xs:element name="fachdaten">
+               <xs:complexType>
+                  <xs:sequence>
+                     <xs:element name="datum.revision" type="xs:date">
+                        <xs:annotation>
+                           <xs:documentation>Bei der Bekanntmachung einer Revision ist das Datum der Einlegung der Revision anzugeben.</xs:documentation>
+                        </xs:annotation>
+                     </xs:element>
+                  </xs:sequence>
+               </xs:complexType>
+            </xs:element>
+         </xs:sequence>
+      </xs:complexType>
+   </xs:element>
+   <xs:element name="nachricht.mfkreg.verhandlung_registerauszugsanforderung.3100006">
+      <xs:annotation>
+         <xs:documentation>Diese Nachricht wird nur für Bekanntmachungen zu Verhandlungen und Registerauszugsanforderungen zu Verfahren von Musterfeststellungsklagen nach ZPO a.F. genutzt.</xs:documentation>
+      </xs:annotation>
+      <xs:complexType>
+         <xs:sequence>
+            <xs:element name="nachrichtenkopf" type="tns:Type.GDS.Nachrichtenkopf"/>
+            <xs:element name="fachdaten">
+               <xs:complexType>
+                  <xs:sequence>
+                     <xs:element name="verhandlung" minOccurs="0">
+                        <xs:annotation>
+                           <xs:documentation>Unter der Sequenz werden Mitteilungen zum Beginn der Verhandlung des Musterfeststellungsverfahrens angegeben werden.</xs:documentation>
+                        </xs:annotation>
+                        <xs:complexType>
+                           <xs:sequence>
+                              <xs:element name="terminStattgefunden" type="xs:boolean">
+                                 <xs:annotation>
+                                    <xs:documentation>Es wird angegeben, ob der erste Termin stattfgefunden hat.</xs:documentation>
+                                 </xs:annotation>
+                              </xs:element>
+                              <xs:element name="datum.termin" minOccurs="0" type="xs:date">
+                                 <xs:annotation>
+                                    <xs:documentation>Sofern der erste Termin stattgefunden hat, ist hier das Datum des Termins anzugeben.</xs:documentation>
+                                 </xs:annotation>
+                              </xs:element>
+                              <xs:element name="verhandlungStattgefunden" type="xs:boolean">
+                                 <xs:annotation>
+                                    <xs:documentation>Es wird angegeben, ob die mündliche Verhandlung begonnen wurde.</xs:documentation>
+                                 </xs:annotation>
+                              </xs:element>
+                              <xs:element name="datum.verhandlung" minOccurs="0" type="xs:date">
+                                 <xs:annotation>
+                                    <xs:documentation>Sofern die mündliche Verhandlung begonnen wurde, ist hier das Datum des Beginns der mündlichen Verhandlung anzugeben.</xs:documentation>
+                                 </xs:annotation>
+                              </xs:element>
+                           </xs:sequence>
+                        </xs:complexType>
+                     </xs:element>
+                     <xs:element name="registerauszug" minOccurs="0">
+                        <xs:annotation>
+                           <xs:documentation>Unter der Sequenz kann angegeben werden, ob ein Auszug beim Register angefordert wird. Es ist der jeweilige Anforderungsgrund anzugeben.</xs:documentation>
+                        </xs:annotation>
+                        <xs:complexType>
+                           <xs:sequence>
+                              <xs:element name="auszugAnfordern" type="xs:boolean"/>
+                              <xs:element name="art.auszug" type="tns:Code.MFKREG.Registerauszugsart"/>
+                           </xs:sequence>
+                        </xs:complexType>
+                     </xs:element>
+                  </xs:sequence>
+               </xs:complexType>
+            </xs:element>
+         </xs:sequence>
+      </xs:complexType>
+   </xs:element>
+   <xs:element name="nachricht.mfkreg.registerauszug.3100007">
+      <xs:annotation>
+         <xs:documentation>Diese Nachricht wird nur für den Registerauszug von Musterfeststellungsklagen nach ZPO a.F. genutzt.</xs:documentation>
+      </xs:annotation>
+      <xs:complexType>
+         <xs:sequence>
+            <xs:element name="nachrichtenkopf" type="tns:Type.GDS.Nachrichtenkopf"/>
+            <xs:element name="fachdaten">
+               <xs:complexType>
+                  <xs:sequence>
+                     <xs:element name="art.auszug" type="tns:Code.MFKREG.Registerauszugsart">
+                        <xs:annotation>
+                           <xs:documentation>Es ist der jeweilige Anforderungsgrund anzugeben, der durch das Gericht angefordert wurde.</xs:documentation>
+                        </xs:annotation>
+                     </xs:element>
+                     <xs:element name="stichtag.auszug" type="xs:date">
+                        <xs:annotation>
+                           <xs:documentation>Hier ist das Datum des Stichtags angegeben, zu dem der Registerauszug erstellt wurde.</xs:documentation>
+                        </xs:annotation>
+                     </xs:element>
+                     <xs:element name="richtigkeit_vollstaendigkeit" type="xs:boolean">
+                        <xs:annotation>
+                           <xs:documentation>Mit diesem Element wird bestätigt, dass zu allen Anmeldungen deren Richtigkeit und Vollständigkeit vom Verbraucher oder dessen Vertreter versichert wurden.Es werden nur solche Anmeldungen durch das BfJ übermittelt.</xs:documentation>
+                        </xs:annotation>
+                     </xs:element>
+                     <xs:element name="registerAuszuege" maxOccurs="unbounded">
+                        <xs:complexType>
+                           <xs:sequence>
+                              <xs:element name="geschaeftszeichen.BfJ" type="din91379:datatypeC">
+                                 <xs:annotation>
+                                    <xs:documentation>Zu jeder Anmeldung im Register für Musterfeststellungsklagen gehört ein Geschäftszeichen des BfJ, mit der die Anmeldung eindeutig identifiziert ist.</xs:documentation>
+                                 </xs:annotation>
+                              </xs:element>
+                              <xs:element name="gegenstandUndGrund" type="din91379:datatypeD">
+                                 <xs:annotation>
+                                    <xs:documentation>Bei jeder Anmeldung muss der Gegenstand und Grund des Anspruchs oder des Rechtsverhältnisses vom Verbraucher gegenüber dem beklagten Unternehmen angegeben werden.</xs:documentation>
+                                 </xs:annotation>
+                              </xs:element>
+                              <xs:element name="betrag" minOccurs="0" type="tns:Type.GDS.Geldbetrag">
+                                 <xs:annotation>
+                                    <xs:documentation>Der Betrag der Forderung ist optional und wird in Euro angegeben.</xs:documentation>
+                                 </xs:annotation>
+                              </xs:element>
+                              <xs:element name="datum.anmeldung" type="xs:date">
+                                 <xs:annotation>
+                                    <xs:documentation>Hier wird das Datum angegeben, an dem die Anmeldung im BfJ eingegangen ist.</xs:documentation>
+                                 </xs:annotation>
+                              </xs:element>
+                              <xs:element name="datum.ruecknahme" minOccurs="0" type="xs:date">
+                                 <xs:annotation>
+                                    <xs:documentation>Hier wird das Datum angegeben, an dem die Anmeldung zurückgenommen wurde.</xs:documentation>
+                                 </xs:annotation>
+                              </xs:element>
+                              <xs:element name="aenderungshistorie" minOccurs="0" type="din91379:datatypeD">
+                                 <xs:annotation>
+                                    <xs:documentation>Sofern sich die Angaben der Beteiligten im Laufe des Verfahrens geändert haben (z.B. Name geändert), sind hier die Änderungen einzutragen.</xs:documentation>
+                                 </xs:annotation>
+                              </xs:element>
+                              <xs:element name="anmeldung.beteiligung"
+                                          maxOccurs="unbounded"
+                                          type="tns:Type.GDS.Beteiligung">
+                                 <xs:annotation>
+                                    <xs:documentation>Hier sind die zugehörigen Beteiligtendaten der Anmeldung anzugeben. Für jede Anmeldung gibt es einen Beteiligten, den Verbraucher. Im Fall einer Rechtsnachfolge können auch mehrere Verbraucher als Beteiligte zur selben Anmeldung aufgeführt werden. Jeder Verbraucher kann zudem vertreten werden durch einen Rechtsbeistand, einen Betreuer oder einen sonstigen Vertreter.</xs:documentation>
+                                 </xs:annotation>
+                              </xs:element>
+                           </xs:sequence>
+                        </xs:complexType>
+                     </xs:element>
+                  </xs:sequence>
+               </xs:complexType>
+            </xs:element>
+         </xs:sequence>
+      </xs:complexType>
+   </xs:element>
+   <xs:element name="nachricht.mfkreg.vergleichsaustritte.3100008">
+      <xs:annotation>
+         <xs:documentation>Diese Nachricht wird nur für die Vergleichsaustritte bei Verfahren zu Musterfeststellungsklagen nach ZPO a.F. genutzt.</xs:documentation>
+      </xs:annotation>
+      <xs:complexType>
+         <xs:sequence>
+            <xs:element name="nachrichtenkopf" type="tns:Type.GDS.Nachrichtenkopf"/>
+            <xs:element name="fachdaten">
+               <xs:complexType>
+                  <xs:sequence>
+                     <xs:element name="vergleichAustritt" maxOccurs="unbounded">
+                        <xs:annotation>
+                           <xs:documentation>Die Geschäftsstelle des Gerichts protokolliert die Austritte aus einem Vergleich. Dazu gehören je Austritt das Geschäftszeichen der Anmeldung des BfJ sowie das Datum der Austrittserklärung.</xs:documentation>
+                        </xs:annotation>
+                        <xs:complexType>
+                           <xs:sequence>
+                              <xs:element name="geschaeftszeichen.BfJ" type="din91379:datatypeC">
+                                 <xs:annotation>
+                                    <xs:documentation>Hier wird das BfJ-Geschäftzeichen des Beteiligten angegeben.</xs:documentation>
+                                 </xs:annotation>
+                              </xs:element>
+                              <xs:element name="austrittsdatum" type="xs:date">
+                                 <xs:annotation>
+                                    <xs:documentation>Hier wird das Datum des Austritts aus dem Vergleich angegeben.</xs:documentation>
+                                 </xs:annotation>
+                              </xs:element>
+                           </xs:sequence>
+                        </xs:complexType>
+                     </xs:element>
+                  </xs:sequence>
+               </xs:complexType>
+            </xs:element>
+         </xs:sequence>
+      </xs:complexType>
+   </xs:element>
+   <xs:element name="nachricht.mfkreg.zurueckweisungVeroeffentlichung.3100009">
+      <xs:annotation>
+         <xs:documentation>Diese Nachricht wird nur für die Zurückweisung von Veröffentlichungen zu Musterfeststellungsklagen nach ZPO a.F. genutzt.</xs:documentation>
+      </xs:annotation>
+      <xs:complexType>
+         <xs:sequence>
+            <xs:element name="nachrichtenkopf" type="tns:Type.GDS.Nachrichtenkopf"/>
+            <xs:element name="fachdaten">
+               <xs:complexType>
+                  <xs:sequence>
+                     <xs:element name="grund.zurueckweisung" type="din91379:datatypeD">
+                        <xs:annotation>
+                           <xs:documentation>Es ist anzugeben, welche Daten, die für die Veröffentlichung im Musterfeststellungsklagenregister notwendig sind, nicht durch das zuständige Gericht übermittelt bzw. nicht schlüssig angegeben worden sind, sodass eine Veröffentlichung durch das BfJ zurückgewiesen werden muss.</xs:documentation>
+                        </xs:annotation>
+                     </xs:element>
+                  </xs:sequence>
+               </xs:complexType>
+            </xs:element>
+         </xs:sequence>
+      </xs:complexType>
+   </xs:element>
+   <xs:element name="nachricht.mfkreg.berichtigungsbeschluss.3100010">
+      <xs:annotation>
+         <xs:documentation>Diese Nachricht wird nur für Bekanntmachungen der Berichtigungsbeschlüsse von Musterfeststellungsklagen nach ZPO a.F. und zu einstweiligen Verfügungen und Unterlassungsklagen nach § 6a UKlaG (i.V.m. § 8 Absatz 1 und 5 Satz 2 UWG) genutzt.</xs:documentation>
+      </xs:annotation>
+      <xs:complexType>
+         <xs:sequence>
+            <xs:element name="nachrichtenkopf" type="tns:Type.GDS.Nachrichtenkopf"/>
+            <xs:element name="fachdaten">
+               <xs:complexType>
+                  <xs:sequence>
+                     <xs:element name="datum.bekanntmachung" type="xs:date">
+                        <xs:annotation>
+                           <xs:documentation>Es ist das Datum der zu berichtigenden öffentlichen Bekanntmachung anzugeben.</xs:documentation>
+                        </xs:annotation>
+                     </xs:element>
+                     <xs:element name="datum.berichtigungsbeschluss" type="xs:date"/>
+                     <xs:element name="beschlussinhalt"
+                                 maxOccurs="unbounded"
+                                 type="tns:Type.MFKREG.Bekanntmachungstexte">
+                        <xs:annotation>
+                           <xs:documentation>Ergeht ein Berichtigungsbeschluss, wird dieser Beschluss stets in der Form im Klageregister bekannt gemacht, in der er vom Gericht übermittelt wurde. Das Gericht kann den Berichtigungsbeschluss und/ oder einen konsolidierten Text, der die berichtigten Inhalte enthält, an das BfJ übermitteln.</xs:documentation>
+                        </xs:annotation>
+                     </xs:element>
+                  </xs:sequence>
+               </xs:complexType>
+            </xs:element>
+         </xs:sequence>
+      </xs:complexType>
+   </xs:element>
+</xs:schema>

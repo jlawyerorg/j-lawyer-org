@@ -1,0 +1,518 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema"
+           xmlns:tns="http://www.xjustiz.de"
+           xmlns:din91379="urn:xoev-de:kosit:xoev:datentyp:din-91379_2022-08"
+           targetNamespace="http://www.xjustiz.de"
+           version="3.1.1"
+           elementFormDefault="qualified"
+           attributeFormDefault="unqualified">
+   <xs:annotation>
+      <xs:appinfo>
+         <standard>
+            <nameLang>Strukturierte Fachdaten für die Kommunikation im elektronischen Rechtsverkehr</nameLang>
+            <nameKurz>XJustiz</nameKurz>
+            <nameTechnisch>xjustiz</nameTechnisch>
+            <kennung>urn:xoev-de:blk-ag-it-standards:standard:xjustiz</kennung>
+            <beschreibung>XJustiz ist der bundesweit einheitliche Standard für den Austausch strukturierter elektronischer Informationen mit der Justiz.</beschreibung>
+         </standard>
+         <versionStandard>
+            <version>3.5.1</version>
+            <beschreibung>XJustiz beschreibt ein standardisiertes Datenaustauschformat für die elektronische Kommunikation innerhalb und mit der Justizverwaltung.</beschreibung>
+            <versionXOEVProfil>1.7.2</versionXOEVProfil>
+            <versionXOEVHandbuch>2.3.1</versionXOEVHandbuch>
+            <versionXGenerator>3.1.1</versionXGenerator>
+            <versionModellierungswerkzeug>19.0 SP3</versionModellierungswerkzeug>
+            <nameModellierungswerkzeug>MagicDraw</nameModellierungswerkzeug>
+         </versionStandard>
+      </xs:appinfo>
+   </xs:annotation>
+   <xs:include schemaLocation="xjustiz_0005_nachrichten_3_1.xsd"/>
+   <xs:include schemaLocation="xjustiz_1010_cl_vorsorgeregister_3_0.xsd"/>
+   <xs:import schemaLocation="din-norm-91379-datatypes.xsd"
+              namespace="urn:xoev-de:kosit:xoev:datentyp:din-91379_2022-08"/>
+   <xs:complexType name="Type.ZVR.Vollmachtdaten">
+      <xs:complexContent>
+         <xs:extension base="tns:Type.ZVR.VollmachtdatenBasis">
+            <xs:sequence>
+               <xs:element name="eintragungsart" type="tns:Code.ZVR.Eintragungsart"/>
+               <xs:element name="kennzeichenVollmacht">
+                  <xs:annotation>
+                     <xs:documentation>Vollmacht zur Erledigung von...</xs:documentation>
+                  </xs:annotation>
+                  <xs:complexType>
+                     <xs:sequence>
+                        <xs:element name="vermoegensangelegenheiten" type="xs:boolean">
+                           <xs:annotation>
+                              <xs:documentation>Vermögensangelegenheiten</xs:documentation>
+                           </xs:annotation>
+                        </xs:element>
+                        <xs:element name="gesundheitsvorsorge" type="xs:boolean">
+                           <xs:annotation>
+                              <xs:documentation>Angelegenheit zur Gesundheitsvorsorge</xs:documentation>
+                           </xs:annotation>
+                        </xs:element>
+                        <xs:element name="erklaerung.BGB1904" type="xs:boolean">
+                           <xs:annotation>
+                              <xs:documentation>Maßnahmen nach § 1904 Abs. 1 S. 1 und Abs. 2 BGB ausdrücklich umfasst</xs:documentation>
+                           </xs:annotation>
+                        </xs:element>
+                        <xs:element name="erklaerung.BGB1906a" type="xs:boolean">
+                           <xs:annotation>
+                              <xs:documentation>Maßnahmen nach § 1906a Abs. 1 und 4 BGB ausdrücklich umfasst</xs:documentation>
+                           </xs:annotation>
+                        </xs:element>
+                        <xs:element name="aufenthaltsbestimmung" type="xs:boolean">
+                           <xs:annotation>
+                              <xs:documentation>Angelegenheiten der Aufenthaltsbestimmung</xs:documentation>
+                           </xs:annotation>
+                        </xs:element>
+                        <xs:element name="erklaerung.BGB1906" type="xs:boolean">
+                           <xs:annotation>
+                              <xs:documentation>Maßnahmen nach § 1906 Abs. 1 und 4 BGB und bei Vorsorgeurkunden, die vor dem 22.07.2017 errichtet wurden auch Maßnahmen nach § 1906 Abs. 3 BGB a.F. ausdrücklich umfasst</xs:documentation>
+                           </xs:annotation>
+                        </xs:element>
+                        <xs:element name="persoenlicheAngelegenheiten" type="xs:boolean">
+                           <xs:annotation>
+                              <xs:documentation>sonstige persönliche Angelegenheiten</xs:documentation>
+                           </xs:annotation>
+                        </xs:element>
+                        <xs:element name="betreuungsverfuegung" type="xs:boolean">
+                           <xs:annotation>
+                              <xs:documentation>für den Fall, dass das Gericht einen Betreuer bestellt (Betreuungsverfügung)</xs:documentation>
+                           </xs:annotation>
+                        </xs:element>
+                        <xs:element name="patientenverfuegung" type="xs:boolean">
+                           <xs:annotation>
+                              <xs:documentation>hinsichtlich Art und Umfang medizinischer Versorgung (Patientenverfügung)</xs:documentation>
+                           </xs:annotation>
+                        </xs:element>
+                     </xs:sequence>
+                  </xs:complexType>
+               </xs:element>
+               <xs:element name="weitereAngaben" minOccurs="0" type="din91379:datatypeC">
+                  <xs:annotation>
+                     <xs:documentation>z. B. Aufbewahrungsort der Vorsorgeurkunde - keine personenbezogenen Daten</xs:documentation>
+                  </xs:annotation>
+               </xs:element>
+            </xs:sequence>
+         </xs:extension>
+      </xs:complexContent>
+   </xs:complexType>
+   <xs:complexType name="Type.ZVR.VollmachtdatenBasis">
+      <xs:sequence>
+         <xs:element name="registernummer" type="din91379:datatypeC">
+            <xs:annotation>
+               <xs:documentation>ZVR-Registernummer</xs:documentation>
+            </xs:annotation>
+         </xs:element>
+         <xs:element name="datum.eintragung" type="xs:date">
+            <xs:annotation>
+               <xs:documentation>Datum der letzten Eintragung</xs:documentation>
+            </xs:annotation>
+         </xs:element>
+         <xs:element name="datum.vollmacht" type="xs:date">
+            <xs:annotation>
+               <xs:documentation>Datum der Vorsorgevollmacht</xs:documentation>
+            </xs:annotation>
+         </xs:element>
+         <xs:element name="urkundenrollennummer" minOccurs="0" type="din91379:datatypeC">
+            <xs:annotation>
+               <xs:documentation>Angabe nur bei notarieller Registrierung</xs:documentation>
+            </xs:annotation>
+         </xs:element>
+         <xs:element name="aktenzeichen" minOccurs="0" type="tns:Type.GDS.Aktenzeichen">
+            <xs:annotation>
+               <xs:documentation>Angabe nur bei nicht-notarieller Registrierung</xs:documentation>
+            </xs:annotation>
+         </xs:element>
+      </xs:sequence>
+   </xs:complexType>
+   <xs:element name="nachricht.zvr.erstelleAbfrageProtokoll.input.1000004">
+      <xs:complexType>
+         <xs:sequence>
+            <xs:element name="nachrichtenkopf" type="tns:Type.GDS.Nachrichtenkopf"/>
+            <xs:element name="grunddaten" type="tns:Type.GDS.Grunddaten"/>
+            <xs:element name="fachdaten">
+               <xs:complexType>
+                  <xs:sequence>
+                     <xs:element name="gerichtID" type="tns:Code.GDS.Gerichte.Typ3">
+                        <xs:annotation>
+                           <xs:documentation>GvzGerichtId des Gerichts für welches ein Protokoll angefragt wird.</xs:documentation>
+                        </xs:annotation>
+                     </xs:element>
+                     <xs:element name="abfragen.von" minOccurs="0" type="xs:date"/>
+                     <xs:element name="abfragen.bis" minOccurs="0" type="xs:date"/>
+                  </xs:sequence>
+               </xs:complexType>
+            </xs:element>
+         </xs:sequence>
+      </xs:complexType>
+   </xs:element>
+   <xs:element name="nachricht.zvr.erstelleAbfrageProtokoll.output.1000005">
+      <xs:complexType>
+         <xs:sequence>
+            <xs:element name="nachrichtenkopf" type="tns:Type.GDS.Nachrichtenkopf"/>
+            <xs:element name="grunddaten" type="tns:Type.GDS.Grunddaten"/>
+            <xs:element name="schriftgutobjekte" type="tns:Type.GDS.Schriftgutobjekte"/>
+            <xs:element name="fachdaten">
+               <xs:complexType>
+                  <xs:sequence>
+                     <xs:element name="protokoll" minOccurs="0">
+                        <xs:complexType>
+                           <xs:sequence>
+                              <xs:element name="erstellzeitpunktProtokoll" type="xs:dateTime"/>
+                              <xs:element name="usernameAbfragender" minOccurs="0" type="din91379:datatypeC">
+                                 <xs:annotation>
+                                    <xs:documentation>Nur wenn der Username im SAML Token vorhanden sein wird</xs:documentation>
+                                 </xs:annotation>
+                              </xs:element>
+                              <xs:element name="nameBetreuungsgericht" type="din91379:datatypeC"/>
+                              <xs:element name="suchfelder">
+                                 <xs:complexType>
+                                    <xs:sequence>
+                                       <xs:element name="abfragen.von" type="xs:date"/>
+                                       <xs:element name="abfragen.bis" type="xs:date"/>
+                                    </xs:sequence>
+                                 </xs:complexType>
+                              </xs:element>
+                              <xs:element name="dokument" type="tns:Type.GDS.Ref.SGO"/>
+                           </xs:sequence>
+                        </xs:complexType>
+                     </xs:element>
+                     <xs:element name="abfrageeintrag" minOccurs="0" maxOccurs="unbounded">
+                        <xs:complexType>
+                           <xs:sequence>
+                              <xs:element name="abfrageID" type="din91379:datatypeC">
+                                 <xs:annotation>
+                                    <xs:documentation>Vom ZVR erzeugte Id der Abfrage.</xs:documentation>
+                                 </xs:annotation>
+                              </xs:element>
+                              <xs:element name="gerichtID" type="tns:Code.GDS.Gerichte.Typ3">
+                                 <xs:annotation>
+                                    <xs:documentation>XJustizId des Gerichts, für welches ein Prokoll angefragt wird.</xs:documentation>
+                                 </xs:annotation>
+                              </xs:element>
+                              <xs:element name="abfragezeitpunkt" type="xs:dateTime"/>
+                              <xs:element name="usernameAbfragender" type="din91379:datatypeC"/>
+                              <xs:element name="geschaeftszeichen" type="din91379:datatypeC"/>
+                              <xs:element name="suchfelder">
+                                 <xs:complexType>
+                                    <xs:sequence>
+                                       <xs:element name="nachname" minOccurs="0" type="din91379:datatypeA"/>
+                                       <xs:element name="vorname" minOccurs="0" type="din91379:datatypeA"/>
+                                       <xs:element name="geburtsname" minOccurs="0" type="din91379:datatypeA"/>
+                                       <xs:element name="geburtsdatum" minOccurs="0" type="tns:Type.GDS.Datumsangabe"/>
+                                    </xs:sequence>
+                                 </xs:complexType>
+                              </xs:element>
+                              <xs:element name="antwortart" type="tns:Code.ZVR.Antwortart"/>
+                              <xs:element name="zeitpunktDesEGVP_Versands" minOccurs="0" type="xs:dateTime">
+                                 <xs:annotation>
+                                    <xs:documentation>Zeitpunkt des Versands der Auskunft an das sichere Postfach</xs:documentation>
+                                 </xs:annotation>
+                              </xs:element>
+                              <xs:element name="aehnlichkeitssuche" type="xs:boolean">
+                                 <xs:annotation>
+                                    <xs:documentation>Gibt an, ob die Ähnlichkeitssuche in der Anfrage für ein oder mehrere Suchfelder genutzt wurde.</xs:documentation>
+                                 </xs:annotation>
+                              </xs:element>
+                              <xs:element name="registereintrag" minOccurs="0" maxOccurs="unbounded">
+                                 <xs:complexType>
+                                    <xs:sequence>
+                                       <xs:element name="registernummer" type="din91379:datatypeC"/>
+                                       <xs:element name="trefferID" type="din91379:datatypeC">
+                                          <xs:annotation>
+                                             <xs:documentation>Eindeutige Id des Abfragetreffers.</xs:documentation>
+                                          </xs:annotation>
+                                       </xs:element>
+                                       <xs:element name="vollmachtgeber" type="tns:Type.GDS.Ref.Rollennummer"/>
+                                       <xs:element name="bevollmaechtigter"
+                                                   minOccurs="0"
+                                                   maxOccurs="12"
+                                                   type="tns:Type.GDS.Ref.Rollennummer"/>
+                                       <xs:element name="vielmelder"
+                                                   minOccurs="0"
+                                                   type="tns:Type.GDS.Ref.Rollennummer"/>
+                                    </xs:sequence>
+                                    <xs:attribute name="inDetailGeladen" type="xs:boolean" use="required">
+                                       <xs:annotation>
+                                          <xs:documentation>gibt an, ob Meldung nur in Trefferliste angezeigt oder Meldung im Detail geöffnet wurde</xs:documentation>
+                                       </xs:annotation>
+                                    </xs:attribute>
+                                 </xs:complexType>
+                              </xs:element>
+                           </xs:sequence>
+                        </xs:complexType>
+                     </xs:element>
+                  </xs:sequence>
+               </xs:complexType>
+            </xs:element>
+         </xs:sequence>
+      </xs:complexType>
+   </xs:element>
+   <xs:element name="nachricht.zvr.ladeRegistrierung.input.1000006">
+      <xs:complexType>
+         <xs:sequence>
+            <xs:element name="nachrichtenkopf" type="tns:Type.GDS.Nachrichtenkopf"/>
+            <xs:element name="grunddaten" type="tns:Type.GDS.Grunddaten"/>
+            <xs:element name="fachdaten">
+               <xs:complexType>
+                  <xs:sequence>
+                     <xs:element name="abfrageID" type="din91379:datatypeC">
+                        <xs:annotation>
+                           <xs:documentation>Vom ZVR erzeugte Id einer früheren Abfrage.</xs:documentation>
+                        </xs:annotation>
+                     </xs:element>
+                     <xs:element name="registernummer" type="din91379:datatypeC"/>
+                  </xs:sequence>
+               </xs:complexType>
+            </xs:element>
+         </xs:sequence>
+      </xs:complexType>
+   </xs:element>
+   <xs:element name="nachricht.zvr.ladeRegistrierung.output.1000007">
+      <xs:complexType>
+         <xs:sequence>
+            <xs:element name="nachrichtenkopf" type="tns:Type.GDS.Nachrichtenkopf"/>
+            <xs:element name="grunddaten" type="tns:Type.GDS.Grunddaten"/>
+            <xs:element name="fachdaten">
+               <xs:complexType>
+                  <xs:sequence>
+                     <xs:element name="registerverlauf">
+                        <xs:complexType>
+                           <xs:sequence>
+                              <xs:element name="registereintrag" maxOccurs="unbounded">
+                                 <xs:complexType>
+                                    <xs:sequence>
+                                       <xs:element name="vollmachtdaten" type="tns:Type.ZVR.Vollmachtdaten"/>
+                                       <xs:element name="vollmachtgeber" type="tns:Type.GDS.Ref.Rollennummer"/>
+                                       <xs:element name="bevollmaechtigter" minOccurs="0" maxOccurs="12">
+                                          <xs:complexType>
+                                             <xs:sequence>
+                                                <xs:element name="referenzierungBevollmaechtigter"
+                                                            type="tns:Type.GDS.Ref.Rollennummer"/>
+                                                <xs:element name="weitereAngabenBevollmaechtigter"
+                                                            minOccurs="0"
+                                                            type="din91379:datatypeC"/>
+                                             </xs:sequence>
+                                          </xs:complexType>
+                                       </xs:element>
+                                       <xs:element name="vielmelder"
+                                                   minOccurs="0"
+                                                   type="tns:Type.GDS.Ref.Rollennummer"/>
+                                    </xs:sequence>
+                                    <xs:attribute name="aktuellerEintrag"
+                                                  type="xs:boolean"
+                                                  use="optional"
+                                                  fixed="true">
+                                       <xs:annotation>
+                                          <xs:documentation>gibt an, ob der Eintrag der aktuellste im Registverlauf ist</xs:documentation>
+                                       </xs:annotation>
+                                    </xs:attribute>
+                                 </xs:complexType>
+                              </xs:element>
+                           </xs:sequence>
+                        </xs:complexType>
+                     </xs:element>
+                  </xs:sequence>
+               </xs:complexType>
+            </xs:element>
+         </xs:sequence>
+      </xs:complexType>
+   </xs:element>
+   <xs:element name="nachricht.zvr.sucheRegistrierung.input.1000008">
+      <xs:complexType>
+         <xs:sequence>
+            <xs:element name="nachrichtenkopf" type="tns:Type.GDS.Nachrichtenkopf"/>
+            <xs:element name="grunddaten" type="tns:Type.GDS.Grunddaten"/>
+            <xs:element name="fachdaten">
+               <xs:complexType>
+                  <xs:sequence>
+                     <xs:element name="geschaeftszeichen" type="din91379:datatypeC">
+                        <xs:annotation>
+                           <xs:documentation>Gerichtliches Geschäftszeichen</xs:documentation>
+                        </xs:annotation>
+                     </xs:element>
+                     <xs:element name="suche">
+                        <xs:complexType>
+                           <xs:sequence>
+                              <xs:sequence>
+                                 <xs:element name="nachname" minOccurs="0" type="din91379:datatypeA"/>
+                                 <xs:element name="nachname.fehlertolerant"
+                                             minOccurs="0"
+                                             fixed="true"
+                                             type="xs:boolean">
+                                    <xs:annotation>
+                                       <xs:documentation>Gibt an, ob Ähnlichkeitssuche für den Nachnamen verwendet wird.</xs:documentation>
+                                    </xs:annotation>
+                                 </xs:element>
+                                 <xs:element name="vorname" minOccurs="0" type="din91379:datatypeA"/>
+                                 <xs:element name="vorname.fehlertolerant"
+                                             minOccurs="0"
+                                             fixed="true"
+                                             type="xs:boolean">
+                                    <xs:annotation>
+                                       <xs:documentation>Gibt an, ob Ähnlichkeitssuche für den Vornamen verwendet wird.</xs:documentation>
+                                    </xs:annotation>
+                                 </xs:element>
+                                 <xs:element name="geburtsname" minOccurs="0" type="din91379:datatypeA"/>
+                                 <xs:element name="geburtsname.fehlertolerant"
+                                             minOccurs="0"
+                                             fixed="true"
+                                             type="xs:boolean">
+                                    <xs:annotation>
+                                       <xs:documentation>Gibt an, ob Ähnlichkeitssuche für den Geburtsnamen verwendet wird.</xs:documentation>
+                                    </xs:annotation>
+                                 </xs:element>
+                                 <xs:element name="geburtsdatum" minOccurs="0" type="xs:date"/>
+                                 <xs:element name="geburtsdatum.fehlertolerant"
+                                             minOccurs="0"
+                                             fixed="true"
+                                             type="xs:boolean">
+                                    <xs:annotation>
+                                       <xs:documentation>Gibt an, ob Ähnlichkeitssuche für das Geburtsdatum verwendet wird.</xs:documentation>
+                                    </xs:annotation>
+                                 </xs:element>
+                              </xs:sequence>
+                           </xs:sequence>
+                           <xs:attribute name="menge" type="xs:long" use="optional" default="50"/>
+                           <xs:attribute name="versatz" type="xs:long" use="optional" default="0"/>
+                        </xs:complexType>
+                     </xs:element>
+                  </xs:sequence>
+               </xs:complexType>
+            </xs:element>
+         </xs:sequence>
+      </xs:complexType>
+   </xs:element>
+   <xs:element name="nachricht.zvr.sucheRegistrierung.output.1000009">
+      <xs:complexType>
+         <xs:sequence>
+            <xs:element name="nachrichtenkopf" type="tns:Type.GDS.Nachrichtenkopf"/>
+            <xs:element name="grunddaten" type="tns:Type.GDS.Grunddaten"/>
+            <xs:element name="fachdaten">
+               <xs:complexType>
+                  <xs:sequence>
+                     <xs:element name="abfrageID" type="din91379:datatypeC">
+                        <xs:annotation>
+                           <xs:documentation>Vom ZVR erzeugte Id der Abfrage, welche später beim Laden weiterer Daten und bei der Erstellung eines Protokolls genutzt wird.</xs:documentation>
+                        </xs:annotation>
+                     </xs:element>
+                     <xs:element name="suchergebnis">
+                        <xs:complexType>
+                           <xs:sequence>
+                              <xs:element name="registereintrag" minOccurs="0" maxOccurs="unbounded">
+                                 <xs:complexType>
+                                    <xs:sequence>
+                                       <xs:element name="trefferID" type="din91379:datatypeC"/>
+                                       <xs:element name="vollmachtdaten" type="tns:Type.ZVR.VollmachtdatenBasis"/>
+                                       <xs:element name="vollmachtgeber" type="tns:Type.GDS.Ref.Rollennummer"/>
+                                    </xs:sequence>
+                                 </xs:complexType>
+                              </xs:element>
+                           </xs:sequence>
+                           <xs:attribute name="menge" type="xs:long" use="required"/>
+                           <xs:attribute name="menge.insgesamt" type="xs:long" use="required"/>
+                           <xs:attribute name="versatz" type="xs:long" use="required"/>
+                        </xs:complexType>
+                     </xs:element>
+                  </xs:sequence>
+               </xs:complexType>
+            </xs:element>
+         </xs:sequence>
+      </xs:complexType>
+   </xs:element>
+   <xs:element name="nachricht.zvr.erstelleAuskunft.input.1000010">
+      <xs:complexType>
+         <xs:sequence>
+            <xs:element name="nachrichtenkopf" type="tns:Type.GDS.Nachrichtenkopf"/>
+            <xs:element name="grunddaten" type="tns:Type.GDS.Grunddaten"/>
+            <xs:element name="fachdaten">
+               <xs:complexType>
+                  <xs:sequence>
+                     <xs:element name="abfrageID" type="din91379:datatypeC">
+                        <xs:annotation>
+                           <xs:documentation>Vom ZVR erzeugte Id der Abfrage.</xs:documentation>
+                        </xs:annotation>
+                     </xs:element>
+                     <xs:element name="auswahl_auskunfttyp">
+                        <xs:complexType>
+                           <xs:choice>
+                              <xs:sequence>
+                                 <xs:element name="registernummer" type="din91379:datatypeC">
+                                    <xs:annotation>
+                                       <xs:documentation>ZVR-Registernummer</xs:documentation>
+                                    </xs:annotation>
+                                 </xs:element>
+                                 <xs:element name="inDetailGeladen" type="xs:boolean">
+                                    <xs:annotation>
+                                       <xs:documentation>Gibt an, ob Service Consumer Details zu Registrierung abgerufen hat.</xs:documentation>
+                                    </xs:annotation>
+                                 </xs:element>
+                                 <xs:element name="auskunfttyp"
+                                             fixed="Positivauskunft"
+                                             type="din91379:datatypeC">
+                                    <xs:annotation>
+                                       <xs:documentation>Legt fest, ob ZVR eine Positiv- oder Negativauskunft erstellt.</xs:documentation>
+                                    </xs:annotation>
+                                 </xs:element>
+                              </xs:sequence>
+                              <xs:sequence>
+                                 <xs:element name="auskunfttyp"
+                                             fixed="Negativauskunft"
+                                             type="din91379:datatypeC">
+                                    <xs:annotation>
+                                       <xs:documentation>Legt fest, ob ZVR eine Positiv- oder Negativauskunft erstellt.</xs:documentation>
+                                    </xs:annotation>
+                                 </xs:element>
+                              </xs:sequence>
+                           </xs:choice>
+                        </xs:complexType>
+                     </xs:element>
+                     <xs:element name="versandart" type="tns:Code.ZVR.Antwortart">
+                        <xs:annotation>
+                           <xs:documentation>Legt fest, auf welchem Weg ZVR die Auskunft versendet. Es dürfen nur die Werte: "EGVP" oder "Download" genutzt werden.</xs:documentation>
+                        </xs:annotation>
+                     </xs:element>
+                  </xs:sequence>
+               </xs:complexType>
+            </xs:element>
+         </xs:sequence>
+      </xs:complexType>
+   </xs:element>
+   <xs:element name="nachricht.zvr.erstelleAuskunft.output.1000011">
+      <xs:complexType>
+         <xs:sequence>
+            <xs:element name="nachrichtenkopf" type="tns:Type.GDS.Nachrichtenkopf"/>
+            <xs:element name="grunddaten" type="tns:Type.GDS.Grunddaten"/>
+            <xs:element name="schriftgutobjekte"
+                        minOccurs="0"
+                        type="tns:Type.GDS.Schriftgutobjekte"/>
+            <xs:element name="fachdaten">
+               <xs:complexType>
+                  <xs:sequence>
+                     <xs:element name="auswahl_versandart">
+                        <xs:complexType>
+                           <xs:choice>
+                              <xs:element name="download" type="tns:Type.GDS.Ref.SGO">
+                                 <xs:annotation>
+                                    <xs:documentation>Auskunftsdokument als pdf</xs:documentation>
+                                 </xs:annotation>
+                              </xs:element>
+                              <xs:sequence>
+                                 <xs:element name="egvpVersandEingeleitet" fixed="true" type="xs:boolean">
+                                    <xs:annotation>
+                                       <xs:documentation>Gibt an, ob der EGVP Versand eingeleitet wurde.</xs:documentation>
+                                    </xs:annotation>
+                                 </xs:element>
+                              </xs:sequence>
+                           </xs:choice>
+                        </xs:complexType>
+                     </xs:element>
+                  </xs:sequence>
+               </xs:complexType>
+            </xs:element>
+         </xs:sequence>
+      </xs:complexType>
+   </xs:element>
+</xs:schema>

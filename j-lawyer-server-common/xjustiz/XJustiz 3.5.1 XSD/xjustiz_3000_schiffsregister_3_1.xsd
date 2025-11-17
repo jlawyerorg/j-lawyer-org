@@ -1,0 +1,671 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema"
+           xmlns:tns="http://www.xjustiz.de"
+           xmlns:din91379="urn:xoev-de:kosit:xoev:datentyp:din-91379_2022-08"
+           targetNamespace="http://www.xjustiz.de"
+           version="3.1.1"
+           elementFormDefault="qualified"
+           attributeFormDefault="unqualified">
+   <xs:annotation>
+      <xs:appinfo>
+         <standard>
+            <nameLang>Strukturierte Fachdaten für die Kommunikation im elektronischen Rechtsverkehr</nameLang>
+            <nameKurz>XJustiz</nameKurz>
+            <nameTechnisch>xjustiz</nameTechnisch>
+            <kennung>urn:xoev-de:blk-ag-it-standards:standard:xjustiz</kennung>
+            <beschreibung>XJustiz ist der bundesweit einheitliche Standard für den Austausch strukturierter elektronischer Informationen mit der Justiz.</beschreibung>
+         </standard>
+         <versionStandard>
+            <version>3.5.1</version>
+            <beschreibung>XJustiz beschreibt ein standardisiertes Datenaustauschformat für die elektronische Kommunikation innerhalb und mit der Justizverwaltung.</beschreibung>
+            <versionXOEVProfil>1.7.2</versionXOEVProfil>
+            <versionXOEVHandbuch>2.3.1</versionXOEVHandbuch>
+            <versionXGenerator>3.1.1</versionXGenerator>
+            <versionModellierungswerkzeug>19.0 SP3</versionModellierungswerkzeug>
+            <nameModellierungswerkzeug>MagicDraw</nameModellierungswerkzeug>
+         </versionStandard>
+      </xs:appinfo>
+   </xs:annotation>
+   <xs:include schemaLocation="xjustiz_0000_grunddatensatz_3_5.xsd"/>
+   <xs:include schemaLocation="xjustiz_3010_cl_schiffsregister_3_0.xsd"/>
+   <xs:import schemaLocation="din-norm-91379-datatypes.xsd"
+              namespace="urn:xoev-de:kosit:xoev:datentyp:din-91379_2022-08"/>
+   <xs:complexType name="Type.SCHIR.StringList">
+      <xs:annotation>
+         <xs:documentation>Eine Liste von mit Gültigkeiten versehenen String-Einträgen</xs:documentation>
+      </xs:annotation>
+      <xs:sequence>
+         <xs:element name="eintraege"
+                     maxOccurs="unbounded"
+                     type="tns:Type.SCHIR.StringList.Value">
+            <xs:annotation>
+               <xs:documentation>Die Einträge der Liste</xs:documentation>
+            </xs:annotation>
+         </xs:element>
+      </xs:sequence>
+   </xs:complexType>
+   <xs:complexType name="Type.SCHIR.StringList.Value">
+      <xs:annotation>
+         <xs:documentation>Listeneintrag mit Gültigkeitszeitraum</xs:documentation>
+      </xs:annotation>
+      <xs:sequence>
+         <xs:element name="wert" type="din91379:datatypeE">
+            <xs:annotation>
+               <xs:documentation>Inhalt des Eintrags</xs:documentation>
+            </xs:annotation>
+         </xs:element>
+         <xs:element name="zeitraum"
+                     minOccurs="0"
+                     type="tns:Type.GDS.Xdomea.ZeitraumType">
+            <xs:annotation>
+               <xs:documentation>Zeitraum der Gültigkeit des Eintrags (beginn / ende). Es wird der hierfür vorgesehene Datentyp des Grunddatensatzes verwendet. Die Elemente "beginn" oder "ende" können dabei auch leer bleiben, um eine nicht eingeschränkte Gültigkeit in die Vergangenheit oder Zukunft anzuzeigen.</xs:documentation>
+            </xs:annotation>
+         </xs:element>
+      </xs:sequence>
+   </xs:complexType>
+   <xs:element name="nachricht.schir.schiffsdaten.3000001">
+      <xs:complexType>
+         <xs:sequence>
+            <xs:element name="nachrichtenkopf" type="tns:Type.GDS.Nachrichtenkopf"/>
+            <xs:element name="grunddaten" minOccurs="0" type="tns:Type.GDS.Grunddaten"/>
+            <xs:element name="fachdaten">
+               <xs:complexType>
+                  <xs:sequence>
+                     <xs:element name="aufschrift">
+                        <xs:annotation>
+                           <xs:documentation>Entspricht dem Registerblatt "Aufschrift"</xs:documentation>
+                        </xs:annotation>
+                        <xs:complexType>
+                           <xs:sequence>
+                              <xs:element name="amtsgericht" type="tns:Code.GDS.Gerichte.Typ3">
+                                 <xs:annotation>
+                                    <xs:documentation>Das Registergericht, in dem das zugehörige Verfahren verwaltet wird.</xs:documentation>
+                                 </xs:annotation>
+                              </xs:element>
+                              <xs:element name="registerblattnummer" type="din91379:datatypeC">
+                                 <xs:annotation>
+                                    <xs:documentation>Registerblattnummer</xs:documentation>
+                                 </xs:annotation>
+                              </xs:element>
+                              <xs:element name="freitext" minOccurs="0" type="tns:Type.SCHIR.StringList">
+                                 <xs:annotation>
+                                    <xs:documentation>Freitextfeld für z.B. Schließungs- und Umschreibungsvermerk</xs:documentation>
+                                 </xs:annotation>
+                              </xs:element>
+                           </xs:sequence>
+                        </xs:complexType>
+                     </xs:element>
+                     <xs:choice>
+                        <xs:element name="abteilung.I.SSR">
+                           <xs:annotation>
+                              <xs:documentation>Entspricht der Abteilung I des Registerblattes des Seeschiffregisters</xs:documentation>
+                           </xs:annotation>
+                           <xs:complexType>
+                              <xs:sequence>
+                                 <xs:element name="name" type="tns:Type.SCHIR.StringList">
+                                    <xs:annotation>
+                                       <xs:documentation>Spalte 1.Name des Schiffes zur Zeit der Eintragung.</xs:documentation>
+                                    </xs:annotation>
+                                 </xs:element>
+                                 <xs:element name="imoNr" type="tns:Type.SCHIR.StringList">
+                                    <xs:annotation>
+                                       <xs:documentation>Spalte 2a.IMO-Nummer, bestehend aus 7 Ziffern</xs:documentation>
+                                    </xs:annotation>
+                                 </xs:element>
+                                 <xs:element name="unterscheidungssignal"
+                                             minOccurs="0"
+                                             type="tns:Type.SCHIR.StringList">
+                                    <xs:annotation>
+                                       <xs:documentation>Spalte 2b. Unterscheidungssignal nach §31</xs:documentation>
+                                    </xs:annotation>
+                                 </xs:element>
+                                 <xs:element name="schiffsgattung" maxOccurs="unbounded">
+                                    <xs:annotation>
+                                       <xs:documentation>Spalte 3. Gattung des Schiffes nach § 31 SchRegDV</xs:documentation>
+                                    </xs:annotation>
+                                    <xs:complexType>
+                                       <xs:sequence>
+                                          <xs:element name="gattung" type="tns:Code.SCHIR.Schiffsgattung">
+                                             <xs:annotation>
+                                                <xs:documentation>Siehe Werteliste</xs:documentation>
+                                             </xs:annotation>
+                                          </xs:element>
+                                          <xs:element name="gattungSonstige" minOccurs="0" type="din91379:datatypeC">
+                                             <xs:annotation>
+                                                <xs:documentation>Falls die Schiffsgattung nicht in der Werteliste enthalten ist, wird bei der Liste "Sonstige" ausgewählt und der Schiffstyp in diesem Feld als String eingetragen.</xs:documentation>
+                                             </xs:annotation>
+                                          </xs:element>
+                                          <xs:element name="zeitraum"
+                                                      minOccurs="0"
+                                                      type="tns:Type.GDS.Xdomea.ZeitraumType">
+                                             <xs:annotation>
+                                                <xs:documentation>Zeitraum der Gültigkeit des Eintrags (beginn / ende). Die Elemente "beginn" oder "ende" können dabei auch leer bleiben, um eine nicht eingeschränkte Gültigkeit in die Vergangenheit oder Zukunft anzuzeigen.</xs:documentation>
+                                             </xs:annotation>
+                                          </xs:element>
+                                       </xs:sequence>
+                                    </xs:complexType>
+                                 </xs:element>
+                                 <xs:element name="baustoff" minOccurs="0" type="tns:Code.SCHIR.Baustoff">
+                                    <xs:annotation>
+                                       <xs:documentation>Siehe Werteliste</xs:documentation>
+                                    </xs:annotation>
+                                 </xs:element>
+                                 <xs:element name="baustoffSonstige" minOccurs="0" type="din91379:datatypeC">
+                                    <xs:annotation>
+                                       <xs:documentation>Falls der Baustoff nicht in der Werteliste enthalten ist, wird bei der Liste "Sonstiges" ausgewählt und der Baustoff in diesem Feld als String eingetragen.</xs:documentation>
+                                    </xs:annotation>
+                                 </xs:element>
+                                 <xs:element name="stapellauf" maxOccurs="unbounded">
+                                    <xs:annotation>
+                                       <xs:documentation>Spalte 4. Jahr des Stapellaufs, Bauort und Werft</xs:documentation>
+                                    </xs:annotation>
+                                    <xs:complexType>
+                                       <xs:sequence>
+                                          <xs:element name="jahr" type="xs:positiveInteger"/>
+                                          <xs:element name="bauort" type="din91379:datatypeE"/>
+                                          <xs:element name="werft" type="din91379:datatypeE"/>
+                                       </xs:sequence>
+                                    </xs:complexType>
+                                 </xs:element>
+                                 <xs:element name="heimathafen" maxOccurs="unbounded">
+                                    <xs:annotation>
+                                       <xs:documentation>Spalte 5. Heimathafen des Schiffes.</xs:documentation>
+                                    </xs:annotation>
+                                    <xs:complexType>
+                                       <xs:sequence>
+                                          <xs:element name="hafen" type="tns:Code.SCHIR.Heimathafen">
+                                             <xs:annotation>
+                                                <xs:documentation>Bezeichnung des Hafens; siehe Werteliste</xs:documentation>
+                                             </xs:annotation>
+                                          </xs:element>
+                                          <xs:element name="zeitraum"
+                                                      minOccurs="0"
+                                                      type="tns:Type.GDS.Xdomea.ZeitraumType">
+                                             <xs:annotation>
+                                                <xs:documentation>Zeitraum der Gültigkeit des Eintrags (beginn / ende). Die Elemente "beginn" oder "ende" können dabei auch leer bleiben, um eine nicht eingeschränkte Gültigkeit in die Vergangenheit oder Zukunft anzuzeigen.</xs:documentation>
+                                             </xs:annotation>
+                                          </xs:element>
+                                       </xs:sequence>
+                                    </xs:complexType>
+                                 </xs:element>
+                                 <xs:element name="laenge" minOccurs="0" type="tns:Type.SCHIR.StringList">
+                                    <xs:annotation>
+                                       <xs:documentation>Spalte 6a. Länge in m</xs:documentation>
+                                    </xs:annotation>
+                                 </xs:element>
+                                 <xs:element name="breite" minOccurs="0" type="tns:Type.SCHIR.StringList">
+                                    <xs:annotation>
+                                       <xs:documentation>Spalte 6b. Breite in m</xs:documentation>
+                                    </xs:annotation>
+                                 </xs:element>
+                                 <xs:element name="tiefeUmfangSeitenhoehe"
+                                             minOccurs="0"
+                                             type="tns:Type.SCHIR.StringList">
+                                    <xs:annotation>
+                                       <xs:documentation>Spalte 6c. aa) Tiefe, bb) Umfang in der Außenfläche oder cc) Seitenhöhe jeweils in m</xs:documentation>
+                                    </xs:annotation>
+                                 </xs:element>
+                                 <xs:element name="laengeUeberAlles"
+                                             minOccurs="0"
+                                             type="tns:Type.SCHIR.StringList">
+                                    <xs:annotation>
+                                       <xs:documentation>Spalte 6d. Länge über alles in m</xs:documentation>
+                                    </xs:annotation>
+                                 </xs:element>
+                                 <xs:element name="bruttoraumgehaltKubikmeter"
+                                             minOccurs="0"
+                                             type="tns:Type.SCHIR.StringList">
+                                    <xs:annotation>
+                                       <xs:documentation>Spalte 6e. Bruttoraumgehalt in Kubikmetern</xs:documentation>
+                                    </xs:annotation>
+                                 </xs:element>
+                                 <xs:element name="bruttoraumgehaltRegistertonnen"
+                                             minOccurs="0"
+                                             type="tns:Type.SCHIR.StringList">
+                                    <xs:annotation>
+                                       <xs:documentation>Spalte 6f. Bruttoraumgehalt in Registertonnen</xs:documentation>
+                                    </xs:annotation>
+                                 </xs:element>
+                                 <xs:element name="nettoraumgehaltKubikmeter"
+                                             minOccurs="0"
+                                             type="tns:Type.SCHIR.StringList">
+                                    <xs:annotation>
+                                       <xs:documentation>Spalte 6g. Nettoraumgehalt in Kubikmetern</xs:documentation>
+                                    </xs:annotation>
+                                 </xs:element>
+                                 <xs:element name="nettoraumgehaltRegistertonnen"
+                                             minOccurs="0"
+                                             type="tns:Type.SCHIR.StringList">
+                                    <xs:annotation>
+                                       <xs:documentation>Spalte 6h. Nettoraumgehalt in Registertonnen</xs:documentation>
+                                    </xs:annotation>
+                                 </xs:element>
+                                 <xs:element name="bruttoraumzahl"
+                                             minOccurs="0"
+                                             type="tns:Type.SCHIR.StringList">
+                                    <xs:annotation>
+                                       <xs:documentation>Spalte 6i. Bruttoraumzahl</xs:documentation>
+                                    </xs:annotation>
+                                 </xs:element>
+                                 <xs:element name="nettoraumzahl" minOccurs="0" type="tns:Type.SCHIR.StringList">
+                                    <xs:annotation>
+                                       <xs:documentation>Spalte 6k. Nettoraumzahl</xs:documentation>
+                                    </xs:annotation>
+                                 </xs:element>
+                                 <xs:element name="messbrief" type="tns:Type.SCHIR.StringList">
+                                    <xs:annotation>
+                                       <xs:documentation>Spalte 6l. Ausstellungsangaben zum Messbrief</xs:documentation>
+                                    </xs:annotation>
+                                 </xs:element>
+                                 <xs:element name="messbriefAussteller"
+                                             minOccurs="0"
+                                             type="tns:Code.SCHIR.Messbriefaussteller">
+                                    <xs:annotation>
+                                       <xs:documentation>Zusätzliche Angabe zum Aussteller (Klassifikationsgesellschaft) des Messbriefes</xs:documentation>
+                                    </xs:annotation>
+                                 </xs:element>
+                                 <xs:element name="maschinenleistung"
+                                             minOccurs="0"
+                                             type="tns:Type.SCHIR.StringList">
+                                    <xs:annotation>
+                                       <xs:documentation>Spalte 6m. Maschinenleistung. Zahl plus Maßeinheit (z.B. 1000 PS)</xs:documentation>
+                                    </xs:annotation>
+                                 </xs:element>
+                                 <xs:element name="eintragung" maxOccurs="unbounded">
+                                    <xs:annotation>
+                                       <xs:documentation>Spalte 7. Eintragung / Löschung des Schiffes mit Datum und Signatur. Bei Löschung muss auch der Löschungsgrund mit eingetragen werden.</xs:documentation>
+                                    </xs:annotation>
+                                    <xs:complexType>
+                                       <xs:sequence>
+                                          <xs:element name="datum" type="xs:date">
+                                             <xs:annotation>
+                                                <xs:documentation>Datum der Eintragung</xs:documentation>
+                                             </xs:annotation>
+                                          </xs:element>
+                                          <xs:element name="eintragungText" minOccurs="0" type="din91379:datatypeE">
+                                             <xs:annotation>
+                                                <xs:documentation>Text der Eintragung</xs:documentation>
+                                             </xs:annotation>
+                                          </xs:element>
+                                          <xs:element name="loeschgrund" minOccurs="0" type="tns:Code.SCHIR.Loeschgrund">
+                                             <xs:annotation>
+                                                <xs:documentation>Grund der Löschung (nur bei Löschung)</xs:documentation>
+                                             </xs:annotation>
+                                          </xs:element>
+                                       </xs:sequence>
+                                    </xs:complexType>
+                                 </xs:element>
+                                 <xs:element name="aenderung" minOccurs="0" maxOccurs="unbounded">
+                                    <xs:complexType>
+                                       <xs:sequence>
+                                          <xs:element name="lfdNr" type="din91379:datatypeC">
+                                             <xs:annotation>
+                                                <xs:documentation>Spalte 8. Laufende Nr. in den Spalten 1-6, auf die sich die Veränderung in Spalte 9 bezieht.</xs:documentation>
+                                             </xs:annotation>
+                                          </xs:element>
+                                          <xs:element name="aenderungArt" type="din91379:datatypeC">
+                                             <xs:annotation>
+                                                <xs:documentation>Spalte 9. Art der Änderung</xs:documentation>
+                                             </xs:annotation>
+                                          </xs:element>
+                                       </xs:sequence>
+                                    </xs:complexType>
+                                 </xs:element>
+                                 <xs:element name="flaggenrecht" maxOccurs="unbounded">
+                                    <xs:annotation>
+                                       <xs:documentation>Spalte 10. Eintragungen zum Flaggenrecht</xs:documentation>
+                                    </xs:annotation>
+                                    <xs:complexType>
+                                       <xs:sequence>
+                                          <xs:element name="ausflaggungGenehmigtAm" minOccurs="0" type="xs:date">
+                                             <xs:annotation>
+                                                <xs:documentation>Datum der Erteilung der Ausflaggungsgenehmigung</xs:documentation>
+                                             </xs:annotation>
+                                          </xs:element>
+                                          <xs:element name="flagge" type="tns:Code.GDS.Staaten.Typ3">
+                                             <xs:annotation>
+                                                <xs:documentation>Flagge (Land) des Schiffes</xs:documentation>
+                                             </xs:annotation>
+                                          </xs:element>
+                                          <xs:element name="ausflaggungBis" minOccurs="0" type="xs:date">
+                                             <xs:annotation>
+                                                <xs:documentation>Datum, bis zu dem die Ausflaggungsgenehmigung wirksam ist</xs:documentation>
+                                             </xs:annotation>
+                                          </xs:element>
+                                          <xs:element name="aufhebungAusflaggungAm" minOccurs="0" type="xs:date">
+                                             <xs:annotation>
+                                                <xs:documentation>Datum, zu dem eine bestehende Ausflaggung aufgehoben wurde</xs:documentation>
+                                             </xs:annotation>
+                                          </xs:element>
+                                          <xs:element name="gueltigNachAufhebung" minOccurs="0" type="xs:date">
+                                             <xs:annotation>
+                                                <xs:documentation>Datum, bis zu dem eine Ausflaggungsgenehmigung nach einer Aufhebung gültig ist</xs:documentation>
+                                             </xs:annotation>
+                                          </xs:element>
+                                       </xs:sequence>
+                                    </xs:complexType>
+                                 </xs:element>
+                              </xs:sequence>
+                           </xs:complexType>
+                        </xs:element>
+                        <xs:element name="abteilung.I.BSR">
+                           <xs:annotation>
+                              <xs:documentation>Entspricht der Abteilung I des Registerblattes des Binnenschiffregisters</xs:documentation>
+                           </xs:annotation>
+                           <xs:complexType>
+                              <xs:sequence>
+                                 <xs:element name="name" minOccurs="0" type="tns:Type.SCHIR.StringList">
+                                    <xs:annotation>
+                                       <xs:documentation>Spalte 1.Name oder Bezeichnung. In seltenen Fällen kann dieses Feld auch leer sein.</xs:documentation>
+                                    </xs:annotation>
+                                 </xs:element>
+                                 <xs:element name="schiffsgattung" maxOccurs="unbounded">
+                                    <xs:annotation>
+                                       <xs:documentation>Spalte 2. Gattung des Schiffes</xs:documentation>
+                                    </xs:annotation>
+                                    <xs:complexType>
+                                       <xs:sequence>
+                                          <xs:element name="gattung" type="tns:Code.SCHIR.Schiffsgattung">
+                                             <xs:annotation>
+                                                <xs:documentation>Siehe Werteliste</xs:documentation>
+                                             </xs:annotation>
+                                          </xs:element>
+                                          <xs:element name="gattungSonstige" minOccurs="0" type="din91379:datatypeC">
+                                             <xs:annotation>
+                                                <xs:documentation>Falls die Schiffsgattung nicht in der Werteliste enthalten ist, wird bei der Liste "Sonstige" ausgewählt und der Schiffstyp in diesem Feld als String eingetragen.</xs:documentation>
+                                             </xs:annotation>
+                                          </xs:element>
+                                          <xs:element name="zeitraum"
+                                                      minOccurs="0"
+                                                      type="tns:Type.GDS.Xdomea.ZeitraumType">
+                                             <xs:annotation>
+                                                <xs:documentation>Zeitraum der Gültigkeit des Eintrags (beginn / ende). Die Elemente "beginn" oder "ende" können dabei auch leer bleiben, um eine nicht eingeschränkte Gültigkeit in die Vergangenheit oder Zukunft anzuzeigen.</xs:documentation>
+                                             </xs:annotation>
+                                          </xs:element>
+                                       </xs:sequence>
+                                    </xs:complexType>
+                                 </xs:element>
+                                 <xs:element name="baustoff" minOccurs="0" type="tns:Code.SCHIR.Baustoff">
+                                    <xs:annotation>
+                                       <xs:documentation>Siehe Werteliste</xs:documentation>
+                                    </xs:annotation>
+                                 </xs:element>
+                                 <xs:element name="baustoffSonstige" minOccurs="0" type="din91379:datatypeC">
+                                    <xs:annotation>
+                                       <xs:documentation>Falls der Baustoff nicht in der Werteliste enthalten ist, wird bei der Liste "Sonstiges" ausgewählt und der Baustoff in diesem Feld als String eingetragen.</xs:documentation>
+                                    </xs:annotation>
+                                 </xs:element>
+                                 <xs:element name="stapellauf" maxOccurs="unbounded">
+                                    <xs:annotation>
+                                       <xs:documentation>Spalte 3. Jahr des Stapellaufs, Bauort und Werft</xs:documentation>
+                                    </xs:annotation>
+                                    <xs:complexType>
+                                       <xs:sequence>
+                                          <xs:element name="jahr" type="xs:positiveInteger"/>
+                                          <xs:element name="bauort" type="din91379:datatypeE"/>
+                                          <xs:element name="werft" type="din91379:datatypeE"/>
+                                       </xs:sequence>
+                                    </xs:complexType>
+                                 </xs:element>
+                                 <xs:element name="heimatort">
+                                    <xs:annotation>
+                                       <xs:documentation>Spalte 4. Heimatort des Schiffes</xs:documentation>
+                                    </xs:annotation>
+                                    <xs:complexType>
+                                       <xs:sequence>
+                                          <xs:element name="hafen" type="tns:Code.SCHIR.Heimathafen">
+                                             <xs:annotation>
+                                                <xs:documentation>Bezeichnung des Hafens; siehe Werteliste</xs:documentation>
+                                             </xs:annotation>
+                                          </xs:element>
+                                          <xs:element name="zeitraum"
+                                                      minOccurs="0"
+                                                      type="tns:Type.GDS.Xdomea.ZeitraumType">
+                                             <xs:annotation>
+                                                <xs:documentation>Zeitraum der Gültigkeit des Eintrags (beginn / ende). Die Elemente "beginn" oder "ende" können dabei auch leer bleiben, um eine nicht eingeschränkte Gültigkeit in die Vergangenheit oder Zukunft anzuzeigen.</xs:documentation>
+                                             </xs:annotation>
+                                          </xs:element>
+                                       </xs:sequence>
+                                    </xs:complexType>
+                                 </xs:element>
+                                 <xs:element name="verdraengung" minOccurs="0" type="tns:Type.SCHIR.StringList">
+                                    <xs:annotation>
+                                       <xs:documentation>Spalte 5a. Tragfähigkeit in t ODER Wasserverdrängung in Kubikmetern. Die Einheit muss eingetragen werden.</xs:documentation>
+                                    </xs:annotation>
+                                 </xs:element>
+                                 <xs:element name="maschinenleistung"
+                                             minOccurs="0"
+                                             type="tns:Type.SCHIR.StringList">
+                                    <xs:annotation>
+                                       <xs:documentation>Spalte 5b. Maschinenleistung. Zahl plus Maßeinheit (z.B. 1000 PS)</xs:documentation>
+                                    </xs:annotation>
+                                 </xs:element>
+                                 <xs:element name="angabenEichschein" type="tns:Type.SCHIR.StringList">
+                                    <xs:annotation>
+                                       <xs:documentation>Spalte 5c. Angaben zum Eichschein, z.B. Nummer und Datum der Ausstellung</xs:documentation>
+                                    </xs:annotation>
+                                 </xs:element>
+                                 <xs:element name="eintragung" maxOccurs="unbounded">
+                                    <xs:annotation>
+                                       <xs:documentation>Spalte 6. Datum Eintragung oder bei Heimatortverlgung "Zuerst eingetragen am" in ...</xs:documentation>
+                                    </xs:annotation>
+                                    <xs:complexType>
+                                       <xs:sequence>
+                                          <xs:element name="datum" type="xs:date">
+                                             <xs:annotation>
+                                                <xs:documentation>Datum der Eintragung</xs:documentation>
+                                             </xs:annotation>
+                                          </xs:element>
+                                          <xs:element name="eintragungText" minOccurs="0" type="din91379:datatypeE">
+                                             <xs:annotation>
+                                                <xs:documentation>Text der Eintragung</xs:documentation>
+                                             </xs:annotation>
+                                          </xs:element>
+                                       </xs:sequence>
+                                    </xs:complexType>
+                                 </xs:element>
+                                 <xs:element name="aenderung" minOccurs="0" maxOccurs="unbounded">
+                                    <xs:complexType>
+                                       <xs:sequence>
+                                          <xs:element name="lfdNr" type="din91379:datatypeC">
+                                             <xs:annotation>
+                                                <xs:documentation>Spalte 7: lfd. Nr. in den Sp. 1-5, auf die sich Sp. 8 bezieht</xs:documentation>
+                                             </xs:annotation>
+                                          </xs:element>
+                                          <xs:element name="aenderungArt" type="din91379:datatypeE">
+                                             <xs:annotation>
+                                                <xs:documentation>Spalte 8. Art der Änderung</xs:documentation>
+                                             </xs:annotation>
+                                          </xs:element>
+                                       </xs:sequence>
+                                    </xs:complexType>
+                                 </xs:element>
+                                 <xs:element name="loeschung" minOccurs="0">
+                                    <xs:annotation>
+                                       <xs:documentation>Spalte 9. Löschung des Schiffes</xs:documentation>
+                                    </xs:annotation>
+                                    <xs:complexType>
+                                       <xs:sequence>
+                                          <xs:element name="datum" type="xs:date">
+                                             <xs:annotation>
+                                                <xs:documentation>Datum der Löschung</xs:documentation>
+                                             </xs:annotation>
+                                          </xs:element>
+                                          <xs:element name="loeschgrund" minOccurs="0" type="tns:Code.SCHIR.Loeschgrund">
+                                             <xs:annotation>
+                                                <xs:documentation>Grund der Löschung (nur bei Löschung)</xs:documentation>
+                                             </xs:annotation>
+                                          </xs:element>
+                                       </xs:sequence>
+                                    </xs:complexType>
+                                 </xs:element>
+                              </xs:sequence>
+                           </xs:complexType>
+                        </xs:element>
+                        <xs:element name="abteilung.I.SBR">
+                           <xs:annotation>
+                              <xs:documentation>Entspricht der Abteilung I des Registerblattes Schiffbauregister</xs:documentation>
+                           </xs:annotation>
+                           <xs:complexType>
+                              <xs:sequence>
+                                 <xs:element name="name" type="tns:Type.SCHIR.StringList">
+                                    <xs:annotation>
+                                       <xs:documentation>Spalte 1: Name, Bezeichnung, Gattung als ein String</xs:documentation>
+                                    </xs:annotation>
+                                 </xs:element>
+                                 <xs:element name="bauort" type="tns:Type.SCHIR.StringList">
+                                    <xs:annotation>
+                                       <xs:documentation>Spalte 2: Bauort und Werft als ein String</xs:documentation>
+                                    </xs:annotation>
+                                 </xs:element>
+                                 <xs:element name="urkunde" type="tns:Type.SCHIR.StringList">
+                                    <xs:annotation>
+                                       <xs:documentation>Spalte 3: Bezeichnung der Urkunde</xs:documentation>
+                                    </xs:annotation>
+                                 </xs:element>
+                                 <xs:element name="eintragung" type="tns:Type.SCHIR.StringList">
+                                    <xs:annotation>
+                                       <xs:documentation>Spalte 4: Eintragung und Veränderung</xs:documentation>
+                                    </xs:annotation>
+                                 </xs:element>
+                                 <xs:element name="loeschung" minOccurs="0">
+                                    <xs:annotation>
+                                       <xs:documentation>Spalte 5. Löschung des Eintrags</xs:documentation>
+                                    </xs:annotation>
+                                    <xs:complexType>
+                                       <xs:sequence>
+                                          <xs:element name="datum" type="xs:date">
+                                             <xs:annotation>
+                                                <xs:documentation>Datum der Löschung</xs:documentation>
+                                             </xs:annotation>
+                                          </xs:element>
+                                          <xs:element name="loeschgrund" minOccurs="0" type="tns:Code.SCHIR.Loeschgrund">
+                                             <xs:annotation>
+                                                <xs:documentation>Grund der Löschung (nur bei Löschung)</xs:documentation>
+                                             </xs:annotation>
+                                          </xs:element>
+                                       </xs:sequence>
+                                    </xs:complexType>
+                                 </xs:element>
+                              </xs:sequence>
+                           </xs:complexType>
+                        </xs:element>
+                     </xs:choice>
+                     <xs:element name="abteilung.II">
+                        <xs:annotation>
+                           <xs:documentation>Entspricht der Abteilung II des Schiffregisters</xs:documentation>
+                        </xs:annotation>
+                        <xs:complexType>
+                           <xs:sequence>
+                              <xs:element name="eintrag" maxOccurs="unbounded">
+                                 <xs:complexType>
+                                    <xs:sequence>
+                                       <xs:element name="lfdNr" type="din91379:datatypeC">
+                                          <xs:annotation>
+                                             <xs:documentation>Spalte 1: Laufende Nummer</xs:documentation>
+                                          </xs:annotation>
+                                       </xs:element>
+                                       <xs:choice>
+                                          <xs:annotation>
+                                             <xs:documentation>Auswahl natürliche Person oder Organisation</xs:documentation>
+                                          </xs:annotation>
+                                          <xs:element name="eigentuemer.person" type="tns:Type.GDS.NatuerlichePerson">
+                                             <xs:annotation>
+                                                <xs:documentation>Spalte 2: Eigentümer, wenn dieser eine natürliche Person ist.</xs:documentation>
+                                             </xs:annotation>
+                                          </xs:element>
+                                          <xs:element name="eigentuemer.organisation" type="tns:Type.GDS.Organisation">
+                                             <xs:annotation>
+                                                <xs:documentation>Spalte 2: Eigentümer, wenn dieser keine natürliche Person ist.</xs:documentation>
+                                             </xs:annotation>
+                                          </xs:element>
+                                       </xs:choice>
+                                       <xs:element name="korrespondentreeder" minOccurs="0" type="din91379:datatypeE">
+                                          <xs:annotation>
+                                             <xs:documentation>Spalte 2: Bei SSR+SBR können in den Altbeständen noch Einträge für Korrespondentenreedern auftauchen.</xs:documentation>
+                                          </xs:annotation>
+                                       </xs:element>
+                                       <xs:element name="berechtigungsverhaeltnis"
+                                                   minOccurs="0"
+                                                   type="din91379:datatypeE">
+                                          <xs:annotation>
+                                             <xs:documentation>Spalte 3: Anteile in Bruchteilen (SSR, BSR). Wenn es nur einen Eigentümer gibt, bleibt diese Spalte leer.</xs:documentation>
+                                          </xs:annotation>
+                                       </xs:element>
+                                       <xs:element name="eigentumsnachweis" minOccurs="0" type="din91379:datatypeE">
+                                          <xs:annotation>
+                                             <xs:documentation>Spalte 3 (nur SBR): Eigentumsnachweis</xs:documentation>
+                                          </xs:annotation>
+                                       </xs:element>
+                                       <xs:element name="bemerkung" minOccurs="0" type="din91379:datatypeE">
+                                          <xs:annotation>
+                                             <xs:documentation>Spalte 5 (nur SSR, BSR): Feld für verschiedene weitere Angaben: Eigentumsnachweis, Veränderungen usw.</xs:documentation>
+                                          </xs:annotation>
+                                       </xs:element>
+                                       <xs:element name="zeitraum"
+                                                   minOccurs="0"
+                                                   type="tns:Type.GDS.Xdomea.ZeitraumType">
+                                          <xs:annotation>
+                                             <xs:documentation>Zeitraum der Gültigkeit des Eintrags (beginn / ende). Die Elemente "beginn" oder "ende" können dabei auch leer bleiben, um eine nicht eingeschränkte Gültigkeit in die Vergangenheit oder Zukunft anzuzeigen.</xs:documentation>
+                                          </xs:annotation>
+                                       </xs:element>
+                                    </xs:sequence>
+                                 </xs:complexType>
+                              </xs:element>
+                           </xs:sequence>
+                        </xs:complexType>
+                     </xs:element>
+                     <xs:element name="abteilung.III">
+                        <xs:annotation>
+                           <xs:documentation>Entspricht der Abteilung III des Schiffregisters</xs:documentation>
+                        </xs:annotation>
+                        <xs:complexType>
+                           <xs:sequence>
+                              <xs:element name="eintrag" minOccurs="0">
+                                 <xs:complexType>
+                                    <xs:sequence>
+                                       <xs:element name="lfdNr" type="din91379:datatypeC">
+                                          <xs:annotation>
+                                             <xs:documentation>Spalte 1: Laufende Nummer</xs:documentation>
+                                          </xs:annotation>
+                                       </xs:element>
+                                       <xs:element name="betrag" minOccurs="0" type="tns:Type.GDS.Geldbetrag">
+                                          <xs:annotation>
+                                             <xs:documentation>Spalte 2: Geldbetrag mit zwei Nachkommastallen, Währung. Bei Nießbrauch oder Pfandrecht muss kein Betrag angegeben werden.</xs:documentation>
+                                          </xs:annotation>
+                                       </xs:element>
+                                       <xs:element name="inhalt" type="din91379:datatypeE">
+                                          <xs:annotation>
+                                             <xs:documentation>Spalte 3: Inhalt der Eintragung</xs:documentation>
+                                          </xs:annotation>
+                                       </xs:element>
+                                       <xs:element name="veraenderung" type="din91379:datatypeE">
+                                          <xs:annotation>
+                                             <xs:documentation>Spalte 6: Veränderung der Eintragungen, z.B. Abtretung, Teilabtretung usw.</xs:documentation>
+                                          </xs:annotation>
+                                       </xs:element>
+                                       <xs:element name="loeschung" minOccurs="0" type="din91379:datatypeE">
+                                          <xs:annotation>
+                                             <xs:documentation>Spalte 8: Löschung oder Teillöschung, jeweils mit Angabe des gelöschten Betrags in Buchstaben</xs:documentation>
+                                          </xs:annotation>
+                                       </xs:element>
+                                       <xs:element name="zeitraum"
+                                                   minOccurs="0"
+                                                   type="tns:Type.GDS.Xdomea.ZeitraumType">
+                                          <xs:annotation>
+                                             <xs:documentation>Zeitraum der Gültigkeit des Eintrags (beginn / ende). Die Elemente "beginn" oder "ende" können dabei auch leer bleiben, um eine nicht eingeschränkte Gültigkeit in die Vergangenheit oder Zukunft anzuzeigen.</xs:documentation>
+                                          </xs:annotation>
+                                       </xs:element>
+                                    </xs:sequence>
+                                 </xs:complexType>
+                              </xs:element>
+                           </xs:sequence>
+                        </xs:complexType>
+                     </xs:element>
+                  </xs:sequence>
+               </xs:complexType>
+            </xs:element>
+         </xs:sequence>
+      </xs:complexType>
+   </xs:element>
+</xs:schema>

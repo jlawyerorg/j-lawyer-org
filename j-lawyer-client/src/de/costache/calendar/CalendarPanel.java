@@ -1384,7 +1384,7 @@ public class CalendarPanel extends javax.swing.JPanel implements NewEventEntryCa
             dlg2.setEventType(ArchiveFileReviewsBean.EVENTTYPE_EVENT);
             dlg2.setBeginDate(event.getIntervalStart());
             dlg2.setEndDate(event.getIntervalEnd());
-            dlg2.setReviewAssignee(sel.getAssistant());
+            dlg2.setReviewAssignees(sel.getAssistant(), sel.getLawyer());
 
             FrameUtils.centerDialog(dlg2, EditorsRegistry.getInstance().getMainWindow());
             dlg2.setVisible(true);

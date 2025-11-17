@@ -1,0 +1,1042 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema"
+           xmlns:tns="http://www.xjustiz.de"
+           xmlns:xoev-code="http://xoev.de/schemata/code/1_0"
+           targetNamespace="http://www.xjustiz.de"
+           version="3.1.0"
+           elementFormDefault="unqualified"
+           attributeFormDefault="unqualified">
+   <xs:annotation>
+      <xs:appinfo>
+         <standard>
+            <nameLang>Strukturierte Fachdaten für die Kommunikation im elektronischen Rechtsverkehr</nameLang>
+            <nameKurz>XJustiz</nameKurz>
+            <nameTechnisch>xjustiz</nameTechnisch>
+            <kennung>urn:xoev-de:blk-ag-it-standards:standard:xjustiz</kennung>
+            <beschreibung>XJustiz ist der bundesweit einheitliche Standard für den Austausch strukturierter elektronischer Informationen mit der Justiz.</beschreibung>
+         </standard>
+         <versionStandard>
+            <version>3.5.1</version>
+            <beschreibung>XJustiz beschreibt ein standardisiertes Datenaustauschformat für die elektronische Kommunikation innerhalb und mit der Justizverwaltung.</beschreibung>
+            <versionXOEVProfil>1.7.2</versionXOEVProfil>
+            <versionXOEVHandbuch>2.3.1</versionXOEVHandbuch>
+            <versionXGenerator>3.1.1</versionXGenerator>
+            <versionModellierungswerkzeug>19.0 SP3</versionModellierungswerkzeug>
+            <nameModellierungswerkzeug>MagicDraw</nameModellierungswerkzeug>
+         </versionStandard>
+      </xs:appinfo>
+   </xs:annotation>
+   <xs:import schemaLocation="xoev-code.xsd"
+              namespace="http://xoev.de/schemata/code/1_0"/>
+   <xs:complexType name="Code.INSO.Erklaerungstyp">
+      <xs:annotation>
+         <xs:appinfo>
+            <codeliste>
+               <nameLang>INSO.Erklaerungstyp</nameLang>
+               <nameKurz>INSO.Erklaerungstyp</nameKurz>
+               <nameTechnisch>inso.erklaerungstyp</nameTechnisch>
+               <kennung>urn:xoev-de:xjustiz:codeliste:inso.erklaerungstyp</kennung>
+               <beschreibung>Diese Codeliste ist vorgesehen für das Element Erklärungstyp.</beschreibung>
+               <herausgebernameLang>BLK-AG IT-Standards in der Justiz</herausgebernameLang>
+               <herausgebernameKurz>AG IT-Standards</herausgebernameKurz>
+            </codeliste>
+            <versionCodeliste>
+               <version>2.0</version>
+               <versionCodelistenHandbuch>1.1</versionCodelistenHandbuch>
+            </versionCodeliste>
+            <codelistenspalten>
+               <code>
+                  <spaltennameLang>Schlüssel</spaltennameLang>
+                  <datentyp>string</datentyp>
+                  <codeSpalte>true</codeSpalte>
+                  <verwendung>required</verwendung>
+                  <empfohleneCodeSpalte>true</empfohleneCodeSpalte>
+               </code>
+               <wert>
+                  <spaltennameLang>Wert</spaltennameLang>
+                  <datentyp>string</datentyp>
+                  <codeSpalte>false</codeSpalte>
+                  <verwendung>required</verwendung>
+                  <empfohleneCodeSpalte>false</empfohleneCodeSpalte>
+               </wert>
+            </codelistenspalten>
+            <genutzteCodeSpalte>code</genutzteCodeSpalte>
+         </xs:appinfo>
+      </xs:annotation>
+      <xs:complexContent>
+         <xs:restriction base="xoev-code:Code">
+            <xs:sequence>
+               <xs:element name="code" type="tns:inso.erklaerungstyp"/>
+            </xs:sequence>
+            <xs:attribute name="listURI"
+                          type="xs:anyURI"
+                          use="optional"
+                          fixed="urn:xoev-de:xjustiz:codeliste:inso.erklaerungstyp"/>
+            <xs:attribute name="listVersionID"
+                          type="xs:normalizedString"
+                          use="optional"
+                          fixed="2.0"/>
+         </xs:restriction>
+      </xs:complexContent>
+   </xs:complexType>
+   <xs:complexType name="Code.INSO.Insolvenzraenge">
+      <xs:annotation>
+         <xs:appinfo>
+            <codeliste>
+               <nameLang>INSO.Insolvenzraenge</nameLang>
+               <nameKurz>INSO.Insolvenzraenge</nameKurz>
+               <nameTechnisch>inso.insolvenzraenge</nameTechnisch>
+               <kennung>urn:xoev-de:xjustiz:codeliste:inso.insolvenzraenge</kennung>
+               <beschreibung>Diese Codeliste ist vorgesehen für die Angabe von Rängen.</beschreibung>
+               <herausgebernameLang>BLK-AG IT-Standards in der Justiz</herausgebernameLang>
+               <herausgebernameKurz>AG IT-Standards</herausgebernameKurz>
+            </codeliste>
+            <versionCodeliste>
+               <version>2.0</version>
+               <versionCodelistenHandbuch>1.1</versionCodelistenHandbuch>
+            </versionCodeliste>
+            <codelistenspalten>
+               <code>
+                  <spaltennameLang>Schlüssel</spaltennameLang>
+                  <datentyp>string</datentyp>
+                  <codeSpalte>true</codeSpalte>
+                  <verwendung>required</verwendung>
+                  <empfohleneCodeSpalte>true</empfohleneCodeSpalte>
+               </code>
+               <wert>
+                  <spaltennameLang>Wert</spaltennameLang>
+                  <datentyp>string</datentyp>
+                  <codeSpalte>false</codeSpalte>
+                  <verwendung>required</verwendung>
+                  <empfohleneCodeSpalte>false</empfohleneCodeSpalte>
+               </wert>
+            </codelistenspalten>
+            <genutzteCodeSpalte>code</genutzteCodeSpalte>
+         </xs:appinfo>
+      </xs:annotation>
+      <xs:complexContent>
+         <xs:restriction base="xoev-code:Code">
+            <xs:sequence>
+               <xs:element name="code" type="tns:inso.insolvenzraenge"/>
+            </xs:sequence>
+            <xs:attribute name="listURI"
+                          type="xs:anyURI"
+                          use="optional"
+                          fixed="urn:xoev-de:xjustiz:codeliste:inso.insolvenzraenge"/>
+            <xs:attribute name="listVersionID"
+                          type="xs:normalizedString"
+                          use="optional"
+                          fixed="2.0"/>
+         </xs:restriction>
+      </xs:complexContent>
+   </xs:complexType>
+   <xs:complexType name="Code.INSO.Registerart">
+      <xs:annotation>
+         <xs:appinfo>
+            <codeliste>
+               <nameLang>INSO.Registerart</nameLang>
+               <nameKurz>INSO.Registerart</nameKurz>
+               <nameTechnisch>inso.registerart</nameTechnisch>
+               <kennung>urn:xoev-de:xjustiz:codeliste:inso.registerart</kennung>
+               <beschreibung>Diese Codeliste ist vorgesehen für das Element Art.</beschreibung>
+               <herausgebernameLang>BLK-AG IT-Standards in der Justiz</herausgebernameLang>
+               <herausgebernameKurz>AG IT-Standards</herausgebernameKurz>
+            </codeliste>
+            <versionCodeliste>
+               <version>2.0</version>
+               <versionCodelistenHandbuch>1.1</versionCodelistenHandbuch>
+            </versionCodeliste>
+            <codelistenspalten>
+               <code>
+                  <spaltennameLang>Schlüssel</spaltennameLang>
+                  <datentyp>string</datentyp>
+                  <codeSpalte>true</codeSpalte>
+                  <verwendung>required</verwendung>
+                  <empfohleneCodeSpalte>true</empfohleneCodeSpalte>
+               </code>
+               <wert>
+                  <spaltennameLang>Wert</spaltennameLang>
+                  <datentyp>string</datentyp>
+                  <codeSpalte>false</codeSpalte>
+                  <verwendung>required</verwendung>
+                  <empfohleneCodeSpalte>false</empfohleneCodeSpalte>
+               </wert>
+            </codelistenspalten>
+            <genutzteCodeSpalte>code</genutzteCodeSpalte>
+         </xs:appinfo>
+      </xs:annotation>
+      <xs:complexContent>
+         <xs:restriction base="xoev-code:Code">
+            <xs:sequence>
+               <xs:element name="code" type="tns:inso.registerart"/>
+            </xs:sequence>
+            <xs:attribute name="listURI"
+                          type="xs:anyURI"
+                          use="optional"
+                          fixed="urn:xoev-de:xjustiz:codeliste:inso.registerart"/>
+            <xs:attribute name="listVersionID"
+                          type="xs:normalizedString"
+                          use="optional"
+                          fixed="2.0"/>
+         </xs:restriction>
+      </xs:complexContent>
+   </xs:complexType>
+   <xs:complexType name="Code.INSO.Uebertragungsweg">
+      <xs:annotation>
+         <xs:appinfo>
+            <codeliste>
+               <nameLang>INSO.Uebertragungsweg</nameLang>
+               <nameKurz>INSO.Uebertragungsweg</nameKurz>
+               <nameTechnisch>inso.uebertragungsweg</nameTechnisch>
+               <kennung>urn:xoev-de:xjustiz:codeliste:inso.uebertragungsweg</kennung>
+               <beschreibung>Diese Codeliste ist vorgesehen für das Element Uebertragungsweg.</beschreibung>
+               <herausgebernameLang>BLK-AG IT-Standards in der Justiz</herausgebernameLang>
+               <herausgebernameKurz>AG IT-Standards</herausgebernameKurz>
+            </codeliste>
+            <versionCodeliste>
+               <version>2.0</version>
+               <versionCodelistenHandbuch>1.1</versionCodelistenHandbuch>
+            </versionCodeliste>
+            <codelistenspalten>
+               <code>
+                  <spaltennameLang>Schlüssel</spaltennameLang>
+                  <datentyp>string</datentyp>
+                  <codeSpalte>true</codeSpalte>
+                  <verwendung>required</verwendung>
+                  <empfohleneCodeSpalte>true</empfohleneCodeSpalte>
+               </code>
+               <wert>
+                  <spaltennameLang>Wert</spaltennameLang>
+                  <datentyp>string</datentyp>
+                  <codeSpalte>false</codeSpalte>
+                  <verwendung>required</verwendung>
+                  <empfohleneCodeSpalte>false</empfohleneCodeSpalte>
+               </wert>
+            </codelistenspalten>
+            <genutzteCodeSpalte>code</genutzteCodeSpalte>
+         </xs:appinfo>
+      </xs:annotation>
+      <xs:complexContent>
+         <xs:restriction base="xoev-code:Code">
+            <xs:sequence>
+               <xs:element name="code" type="tns:inso.uebertragungsweg"/>
+            </xs:sequence>
+            <xs:attribute name="listURI"
+                          type="xs:anyURI"
+                          use="optional"
+                          fixed="urn:xoev-de:xjustiz:codeliste:inso.uebertragungsweg"/>
+            <xs:attribute name="listVersionID"
+                          type="xs:normalizedString"
+                          use="optional"
+                          fixed="2.0"/>
+         </xs:restriction>
+      </xs:complexContent>
+   </xs:complexType>
+   <xs:complexType name="Code.INSO.Veroeffentlichungsgegenstand">
+      <xs:annotation>
+         <xs:appinfo>
+            <codeliste>
+               <nameLang>INSO.Veroeffentlichungsgegenstand</nameLang>
+               <nameKurz>INSO.Veroeffentlichungsgegenstand</nameKurz>
+               <nameTechnisch>inso.veroeffentlichungsgegenstand</nameTechnisch>
+               <kennung>urn:xoev-de:xjustiz:codeliste:inso.veroeffentlichungsgegenstand</kennung>
+               <beschreibung>Diese Codeliste ist vorgesehen für das Element gegenstandVeroeffentlichung.</beschreibung>
+               <herausgebernameLang>BLK-AG IT-Standards in der Justiz</herausgebernameLang>
+               <herausgebernameKurz>AG IT-Standards</herausgebernameKurz>
+            </codeliste>
+            <versionCodeliste>
+               <version>2.1</version>
+               <versionCodelistenHandbuch>1.1</versionCodelistenHandbuch>
+            </versionCodeliste>
+            <codelistenspalten>
+               <code>
+                  <spaltennameLang>Schlüssel</spaltennameLang>
+                  <datentyp>string</datentyp>
+                  <codeSpalte>true</codeSpalte>
+                  <verwendung>required</verwendung>
+                  <empfohleneCodeSpalte>true</empfohleneCodeSpalte>
+               </code>
+               <wert>
+                  <spaltennameLang>Wert</spaltennameLang>
+                  <datentyp>string</datentyp>
+                  <codeSpalte>false</codeSpalte>
+                  <verwendung>required</verwendung>
+                  <empfohleneCodeSpalte>false</empfohleneCodeSpalte>
+               </wert>
+            </codelistenspalten>
+            <genutzteCodeSpalte>code</genutzteCodeSpalte>
+         </xs:appinfo>
+      </xs:annotation>
+      <xs:complexContent>
+         <xs:restriction base="xoev-code:Code">
+            <xs:sequence>
+               <xs:element name="code" type="tns:inso.veroeffentlichungsgegenstand"/>
+            </xs:sequence>
+            <xs:attribute name="listURI"
+                          type="xs:anyURI"
+                          use="optional"
+                          fixed="urn:xoev-de:xjustiz:codeliste:inso.veroeffentlichungsgegenstand"/>
+            <xs:attribute name="listVersionID"
+                          type="xs:normalizedString"
+                          use="optional"
+                          fixed="2.1"/>
+         </xs:restriction>
+      </xs:complexContent>
+   </xs:complexType>
+   <xs:complexType name="Code.INSO.Zustellungsart">
+      <xs:annotation>
+         <xs:appinfo>
+            <codeliste>
+               <nameLang>INSO.Zustellungsart</nameLang>
+               <nameKurz>INSO.Zustellungsart</nameKurz>
+               <nameTechnisch>inso.zustellungsart</nameTechnisch>
+               <kennung>urn:xoev-de:xjustiz:codeliste:inso.zustellungsart</kennung>
+               <beschreibung>Diese Codeliste ist vorgesehen für das Element Zustellungsart.</beschreibung>
+               <herausgebernameLang>BLK-AG IT-Standards in der Justiz</herausgebernameLang>
+               <herausgebernameKurz>AG IT-Standards</herausgebernameKurz>
+            </codeliste>
+            <versionCodeliste>
+               <version>2.0</version>
+               <versionCodelistenHandbuch>1.1</versionCodelistenHandbuch>
+            </versionCodeliste>
+            <codelistenspalten>
+               <code>
+                  <spaltennameLang>Schlüssel</spaltennameLang>
+                  <datentyp>string</datentyp>
+                  <codeSpalte>true</codeSpalte>
+                  <verwendung>required</verwendung>
+                  <empfohleneCodeSpalte>true</empfohleneCodeSpalte>
+               </code>
+               <wert>
+                  <spaltennameLang>Wert</spaltennameLang>
+                  <datentyp>string</datentyp>
+                  <codeSpalte>false</codeSpalte>
+                  <verwendung>required</verwendung>
+                  <empfohleneCodeSpalte>false</empfohleneCodeSpalte>
+               </wert>
+            </codelistenspalten>
+            <genutzteCodeSpalte>code</genutzteCodeSpalte>
+         </xs:appinfo>
+      </xs:annotation>
+      <xs:complexContent>
+         <xs:restriction base="xoev-code:Code">
+            <xs:sequence>
+               <xs:element name="code" type="tns:inso.zustellungsart"/>
+            </xs:sequence>
+            <xs:attribute name="listURI"
+                          type="xs:anyURI"
+                          use="optional"
+                          fixed="urn:xoev-de:xjustiz:codeliste:inso.zustellungsart"/>
+            <xs:attribute name="listVersionID"
+                          type="xs:normalizedString"
+                          use="optional"
+                          fixed="2.0"/>
+         </xs:restriction>
+      </xs:complexContent>
+   </xs:complexType>
+   <xs:simpleType name="inso.erklaerungstyp">
+      <xs:annotation>
+         <xs:appinfo>
+            <codeliste>
+               <nameLang>INSO.Erklaerungstyp</nameLang>
+               <nameKurz>INSO.Erklaerungstyp</nameKurz>
+               <nameTechnisch>inso.erklaerungstyp</nameTechnisch>
+               <kennung>urn:xoev-de:xjustiz:codeliste:inso.erklaerungstyp</kennung>
+               <beschreibung>Diese Codeliste ist vorgesehen für das Element Erklärungstyp.</beschreibung>
+               <herausgebernameLang>BLK-AG IT-Standards in der Justiz</herausgebernameLang>
+               <herausgebernameKurz>AG IT-Standards</herausgebernameKurz>
+            </codeliste>
+            <versionCodeliste>
+               <version>2.0</version>
+               <versionCodelistenHandbuch>1.1</versionCodelistenHandbuch>
+            </versionCodeliste>
+            <codelistenspalten>
+               <code>
+                  <spaltennameLang>Schlüssel</spaltennameLang>
+                  <datentyp>string</datentyp>
+                  <codeSpalte>true</codeSpalte>
+                  <verwendung>required</verwendung>
+                  <empfohleneCodeSpalte>true</empfohleneCodeSpalte>
+               </code>
+               <wert>
+                  <spaltennameLang>Wert</spaltennameLang>
+                  <datentyp>string</datentyp>
+                  <codeSpalte>false</codeSpalte>
+                  <verwendung>required</verwendung>
+                  <empfohleneCodeSpalte>false</empfohleneCodeSpalte>
+               </wert>
+            </codelistenspalten>
+         </xs:appinfo>
+      </xs:annotation>
+      <xs:restriction base="xs:token">
+         <xs:enumeration value="001">
+            <xs:annotation>
+               <xs:appinfo>
+                  <wert>Bestritten</wert>
+               </xs:appinfo>
+            </xs:annotation>
+         </xs:enumeration>
+         <xs:enumeration value="002">
+            <xs:annotation>
+               <xs:appinfo>
+                  <wert>Festgestellter Betrag</wert>
+               </xs:appinfo>
+            </xs:annotation>
+         </xs:enumeration>
+         <xs:enumeration value="003">
+            <xs:annotation>
+               <xs:appinfo>
+                  <wert>Festgestellter Betrag als auflösend bedingt</wert>
+               </xs:appinfo>
+            </xs:annotation>
+         </xs:enumeration>
+         <xs:enumeration value="004">
+            <xs:annotation>
+               <xs:appinfo>
+                  <wert>Festgestellter Betrag als aufschiebend bedingt</wert>
+               </xs:appinfo>
+            </xs:annotation>
+         </xs:enumeration>
+         <xs:enumeration value="005">
+            <xs:annotation>
+               <xs:appinfo>
+                  <wert>Festgestellter Betrag für den Ausfall</wert>
+               </xs:appinfo>
+            </xs:annotation>
+         </xs:enumeration>
+         <xs:enumeration value="006">
+            <xs:annotation>
+               <xs:appinfo>
+                  <wert>Festgestellter Betrag für den Ausfall als auflösend bedingt</wert>
+               </xs:appinfo>
+            </xs:annotation>
+         </xs:enumeration>
+         <xs:enumeration value="007">
+            <xs:annotation>
+               <xs:appinfo>
+                  <wert>Festgestellter Betrag für den Ausfall als aufschiebend bedingt</wert>
+               </xs:appinfo>
+            </xs:annotation>
+         </xs:enumeration>
+         <xs:enumeration value="008">
+            <xs:annotation>
+               <xs:appinfo>
+                  <wert>Vorläufig bestritten</wert>
+               </xs:appinfo>
+            </xs:annotation>
+         </xs:enumeration>
+      </xs:restriction>
+   </xs:simpleType>
+   <xs:simpleType name="inso.insolvenzraenge">
+      <xs:annotation>
+         <xs:appinfo>
+            <codeliste>
+               <nameLang>INSO.Insolvenzraenge</nameLang>
+               <nameKurz>INSO.Insolvenzraenge</nameKurz>
+               <nameTechnisch>inso.insolvenzraenge</nameTechnisch>
+               <kennung>urn:xoev-de:xjustiz:codeliste:inso.insolvenzraenge</kennung>
+               <beschreibung>Diese Codeliste ist vorgesehen für die Angabe von Rängen.</beschreibung>
+               <herausgebernameLang>BLK-AG IT-Standards in der Justiz</herausgebernameLang>
+               <herausgebernameKurz>AG IT-Standards</herausgebernameKurz>
+            </codeliste>
+            <versionCodeliste>
+               <version>2.0</version>
+               <versionCodelistenHandbuch>1.1</versionCodelistenHandbuch>
+            </versionCodeliste>
+            <codelistenspalten>
+               <code>
+                  <spaltennameLang>Schlüssel</spaltennameLang>
+                  <datentyp>string</datentyp>
+                  <codeSpalte>true</codeSpalte>
+                  <verwendung>required</verwendung>
+                  <empfohleneCodeSpalte>true</empfohleneCodeSpalte>
+               </code>
+               <wert>
+                  <spaltennameLang>Wert</spaltennameLang>
+                  <datentyp>string</datentyp>
+                  <codeSpalte>false</codeSpalte>
+                  <verwendung>required</verwendung>
+                  <empfohleneCodeSpalte>false</empfohleneCodeSpalte>
+               </wert>
+            </codelistenspalten>
+         </xs:appinfo>
+      </xs:annotation>
+      <xs:restriction base="xs:token">
+         <xs:enumeration value="001">
+            <xs:annotation>
+               <xs:appinfo>
+                  <wert>Rang 0</wert>
+               </xs:appinfo>
+            </xs:annotation>
+         </xs:enumeration>
+         <xs:enumeration value="002">
+            <xs:annotation>
+               <xs:appinfo>
+                  <wert>Rang N I</wert>
+               </xs:appinfo>
+            </xs:annotation>
+         </xs:enumeration>
+         <xs:enumeration value="003">
+            <xs:annotation>
+               <xs:appinfo>
+                  <wert>Rang N II</wert>
+               </xs:appinfo>
+            </xs:annotation>
+         </xs:enumeration>
+         <xs:enumeration value="004">
+            <xs:annotation>
+               <xs:appinfo>
+                  <wert>Rang N III</wert>
+               </xs:appinfo>
+            </xs:annotation>
+         </xs:enumeration>
+         <xs:enumeration value="005">
+            <xs:annotation>
+               <xs:appinfo>
+                  <wert>Rang N IV</wert>
+               </xs:appinfo>
+            </xs:annotation>
+         </xs:enumeration>
+         <xs:enumeration value="006">
+            <xs:annotation>
+               <xs:appinfo>
+                  <wert>Rang N V</wert>
+               </xs:appinfo>
+            </xs:annotation>
+         </xs:enumeration>
+         <xs:enumeration value="007">
+            <xs:annotation>
+               <xs:appinfo>
+                  <wert>Rang N VI</wert>
+               </xs:appinfo>
+            </xs:annotation>
+         </xs:enumeration>
+         <xs:enumeration value="008">
+            <xs:annotation>
+               <xs:appinfo>
+                  <wert>Rang N VI A</wert>
+               </xs:appinfo>
+            </xs:annotation>
+         </xs:enumeration>
+         <xs:enumeration value="009">
+            <xs:annotation>
+               <xs:appinfo>
+                  <wert>Rang N VII</wert>
+               </xs:appinfo>
+            </xs:annotation>
+         </xs:enumeration>
+         <xs:enumeration value="010">
+            <xs:annotation>
+               <xs:appinfo>
+                  <wert>Rang N VII A</wert>
+               </xs:appinfo>
+            </xs:annotation>
+         </xs:enumeration>
+         <xs:enumeration value="011">
+            <xs:annotation>
+               <xs:appinfo>
+                  <wert>Rang N VIII</wert>
+               </xs:appinfo>
+            </xs:annotation>
+         </xs:enumeration>
+         <xs:enumeration value="012">
+            <xs:annotation>
+               <xs:appinfo>
+                  <wert>Rang N VIII A</wert>
+               </xs:appinfo>
+            </xs:annotation>
+         </xs:enumeration>
+         <xs:enumeration value="013">
+            <xs:annotation>
+               <xs:appinfo>
+                  <wert>Rang N VIII R1</wert>
+               </xs:appinfo>
+            </xs:annotation>
+         </xs:enumeration>
+         <xs:enumeration value="014">
+            <xs:annotation>
+               <xs:appinfo>
+                  <wert>Rang N VIII R1 A</wert>
+               </xs:appinfo>
+            </xs:annotation>
+         </xs:enumeration>
+         <xs:enumeration value="015">
+            <xs:annotation>
+               <xs:appinfo>
+                  <wert>Rang N VIII R2</wert>
+               </xs:appinfo>
+            </xs:annotation>
+         </xs:enumeration>
+         <xs:enumeration value="016">
+            <xs:annotation>
+               <xs:appinfo>
+                  <wert>Rang N VIII R2 A</wert>
+               </xs:appinfo>
+            </xs:annotation>
+         </xs:enumeration>
+         <xs:enumeration value="017">
+            <xs:annotation>
+               <xs:appinfo>
+                  <wert>Rang N VIII R3</wert>
+               </xs:appinfo>
+            </xs:annotation>
+         </xs:enumeration>
+         <xs:enumeration value="018">
+            <xs:annotation>
+               <xs:appinfo>
+                  <wert>Rang N VIII R3 A</wert>
+               </xs:appinfo>
+            </xs:annotation>
+         </xs:enumeration>
+         <xs:enumeration value="019">
+            <xs:annotation>
+               <xs:appinfo>
+                  <wert>Rang N VIII R4</wert>
+               </xs:appinfo>
+            </xs:annotation>
+         </xs:enumeration>
+         <xs:enumeration value="020">
+            <xs:annotation>
+               <xs:appinfo>
+                  <wert>Rang N VIII R4 A</wert>
+               </xs:appinfo>
+            </xs:annotation>
+         </xs:enumeration>
+         <xs:enumeration value="021">
+            <xs:annotation>
+               <xs:appinfo>
+                  <wert>Rang N VIII R5</wert>
+               </xs:appinfo>
+            </xs:annotation>
+         </xs:enumeration>
+         <xs:enumeration value="022">
+            <xs:annotation>
+               <xs:appinfo>
+                  <wert>Rang N VIII R5 A</wert>
+               </xs:appinfo>
+            </xs:annotation>
+         </xs:enumeration>
+         <xs:enumeration value="023">
+            <xs:annotation>
+               <xs:appinfo>
+                  <wert>Rang N VIII R6</wert>
+               </xs:appinfo>
+            </xs:annotation>
+         </xs:enumeration>
+         <xs:enumeration value="024">
+            <xs:annotation>
+               <xs:appinfo>
+                  <wert>Rang N VIII R6 A</wert>
+               </xs:appinfo>
+            </xs:annotation>
+         </xs:enumeration>
+         <xs:enumeration value="025">
+            <xs:annotation>
+               <xs:appinfo>
+                  <wert>Rang N VIII R7</wert>
+               </xs:appinfo>
+            </xs:annotation>
+         </xs:enumeration>
+         <xs:enumeration value="026">
+            <xs:annotation>
+               <xs:appinfo>
+                  <wert>Rang N VIII R7 A</wert>
+               </xs:appinfo>
+            </xs:annotation>
+         </xs:enumeration>
+         <xs:enumeration value="027">
+            <xs:annotation>
+               <xs:appinfo>
+                  <wert>Rang N VIII R8</wert>
+               </xs:appinfo>
+            </xs:annotation>
+         </xs:enumeration>
+         <xs:enumeration value="028">
+            <xs:annotation>
+               <xs:appinfo>
+                  <wert>Rang N VIII R8 A</wert>
+               </xs:appinfo>
+            </xs:annotation>
+         </xs:enumeration>
+         <xs:enumeration value="029">
+            <xs:annotation>
+               <xs:appinfo>
+                  <wert>Rang N VIII R9</wert>
+               </xs:appinfo>
+            </xs:annotation>
+         </xs:enumeration>
+         <xs:enumeration value="030">
+            <xs:annotation>
+               <xs:appinfo>
+                  <wert>Rang N VIII R9 A</wert>
+               </xs:appinfo>
+            </xs:annotation>
+         </xs:enumeration>
+         <xs:enumeration value="031">
+            <xs:annotation>
+               <xs:appinfo>
+                  <wert>Rang N VIII R10</wert>
+               </xs:appinfo>
+            </xs:annotation>
+         </xs:enumeration>
+         <xs:enumeration value="032">
+            <xs:annotation>
+               <xs:appinfo>
+                  <wert>Rang N VIII R10 A</wert>
+               </xs:appinfo>
+            </xs:annotation>
+         </xs:enumeration>
+         <xs:enumeration value="033">
+            <xs:annotation>
+               <xs:appinfo>
+                  <wert>Vorrang</wert>
+               </xs:appinfo>
+            </xs:annotation>
+         </xs:enumeration>
+      </xs:restriction>
+   </xs:simpleType>
+   <xs:simpleType name="inso.registerart">
+      <xs:annotation>
+         <xs:appinfo>
+            <codeliste>
+               <nameLang>INSO.Registerart</nameLang>
+               <nameKurz>INSO.Registerart</nameKurz>
+               <nameTechnisch>inso.registerart</nameTechnisch>
+               <kennung>urn:xoev-de:xjustiz:codeliste:inso.registerart</kennung>
+               <beschreibung>Diese Codeliste ist vorgesehen für das Element Art.</beschreibung>
+               <herausgebernameLang>BLK-AG IT-Standards in der Justiz</herausgebernameLang>
+               <herausgebernameKurz>AG IT-Standards</herausgebernameKurz>
+            </codeliste>
+            <versionCodeliste>
+               <version>2.0</version>
+               <versionCodelistenHandbuch>1.1</versionCodelistenHandbuch>
+            </versionCodeliste>
+            <codelistenspalten>
+               <code>
+                  <spaltennameLang>Schlüssel</spaltennameLang>
+                  <datentyp>string</datentyp>
+                  <codeSpalte>true</codeSpalte>
+                  <verwendung>required</verwendung>
+                  <empfohleneCodeSpalte>true</empfohleneCodeSpalte>
+               </code>
+               <wert>
+                  <spaltennameLang>Wert</spaltennameLang>
+                  <datentyp>string</datentyp>
+                  <codeSpalte>false</codeSpalte>
+                  <verwendung>required</verwendung>
+                  <empfohleneCodeSpalte>false</empfohleneCodeSpalte>
+               </wert>
+            </codelistenspalten>
+         </xs:appinfo>
+      </xs:annotation>
+      <xs:restriction base="xs:token">
+         <xs:enumeration value="GnR">
+            <xs:annotation>
+               <xs:appinfo>
+                  <wert>Genossenschaftsregister (AG)</wert>
+               </xs:appinfo>
+            </xs:annotation>
+         </xs:enumeration>
+         <xs:enumeration value="HRA">
+            <xs:annotation>
+               <xs:appinfo>
+                  <wert>Handelsregister (Einzelkaufleute, Personengesellschaften) (AG)</wert>
+               </xs:appinfo>
+            </xs:annotation>
+         </xs:enumeration>
+         <xs:enumeration value="HRB">
+            <xs:annotation>
+               <xs:appinfo>
+                  <wert>Handelsregister (Kapitalgesellschaften) (AG)</wert>
+               </xs:appinfo>
+            </xs:annotation>
+         </xs:enumeration>
+         <xs:enumeration value="PR">
+            <xs:annotation>
+               <xs:appinfo>
+                  <wert>Partnerschaftsregistersachen (AG)</wert>
+               </xs:appinfo>
+            </xs:annotation>
+         </xs:enumeration>
+         <xs:enumeration value="VR">
+            <xs:annotation>
+               <xs:appinfo>
+                  <wert>Vereinsregister (AG)</wert>
+               </xs:appinfo>
+            </xs:annotation>
+         </xs:enumeration>
+      </xs:restriction>
+   </xs:simpleType>
+   <xs:simpleType name="inso.uebertragungsweg">
+      <xs:annotation>
+         <xs:appinfo>
+            <codeliste>
+               <nameLang>INSO.Uebertragungsweg</nameLang>
+               <nameKurz>INSO.Uebertragungsweg</nameKurz>
+               <nameTechnisch>inso.uebertragungsweg</nameTechnisch>
+               <kennung>urn:xoev-de:xjustiz:codeliste:inso.uebertragungsweg</kennung>
+               <beschreibung>Diese Codeliste ist vorgesehen für das Element Uebertragungsweg.</beschreibung>
+               <herausgebernameLang>BLK-AG IT-Standards in der Justiz</herausgebernameLang>
+               <herausgebernameKurz>AG IT-Standards</herausgebernameKurz>
+            </codeliste>
+            <versionCodeliste>
+               <version>2.0</version>
+               <versionCodelistenHandbuch>1.1</versionCodelistenHandbuch>
+            </versionCodeliste>
+            <codelistenspalten>
+               <code>
+                  <spaltennameLang>Schlüssel</spaltennameLang>
+                  <datentyp>string</datentyp>
+                  <codeSpalte>true</codeSpalte>
+                  <verwendung>required</verwendung>
+                  <empfohleneCodeSpalte>true</empfohleneCodeSpalte>
+               </code>
+               <wert>
+                  <spaltennameLang>Wert</spaltennameLang>
+                  <datentyp>string</datentyp>
+                  <codeSpalte>false</codeSpalte>
+                  <verwendung>required</verwendung>
+                  <empfohleneCodeSpalte>false</empfohleneCodeSpalte>
+               </wert>
+            </codelistenspalten>
+         </xs:appinfo>
+      </xs:annotation>
+      <xs:restriction base="xs:token">
+         <xs:enumeration value="001">
+            <xs:annotation>
+               <xs:appinfo>
+                  <wert>Brief per Fach</wert>
+               </xs:appinfo>
+            </xs:annotation>
+         </xs:enumeration>
+         <xs:enumeration value="002">
+            <xs:annotation>
+               <xs:appinfo>
+                  <wert>Brief per Post</wert>
+               </xs:appinfo>
+            </xs:annotation>
+         </xs:enumeration>
+         <xs:enumeration value="003">
+            <xs:annotation>
+               <xs:appinfo>
+                  <wert>elektronische Übertragung</wert>
+               </xs:appinfo>
+            </xs:annotation>
+         </xs:enumeration>
+         <xs:enumeration value="004">
+            <xs:annotation>
+               <xs:appinfo>
+                  <wert>Fax</wert>
+               </xs:appinfo>
+            </xs:annotation>
+         </xs:enumeration>
+      </xs:restriction>
+   </xs:simpleType>
+   <xs:simpleType name="inso.veroeffentlichungsgegenstand">
+      <xs:annotation>
+         <xs:appinfo>
+            <codeliste>
+               <nameLang>INSO.Veroeffentlichungsgegenstand</nameLang>
+               <nameKurz>INSO.Veroeffentlichungsgegenstand</nameKurz>
+               <nameTechnisch>inso.veroeffentlichungsgegenstand</nameTechnisch>
+               <kennung>urn:xoev-de:xjustiz:codeliste:inso.veroeffentlichungsgegenstand</kennung>
+               <beschreibung>Diese Codeliste ist vorgesehen für das Element gegenstandVeroeffentlichung.</beschreibung>
+               <herausgebernameLang>BLK-AG IT-Standards in der Justiz</herausgebernameLang>
+               <herausgebernameKurz>AG IT-Standards</herausgebernameKurz>
+            </codeliste>
+            <versionCodeliste>
+               <version>2.1</version>
+               <versionCodelistenHandbuch>1.1</versionCodelistenHandbuch>
+            </versionCodeliste>
+            <codelistenspalten>
+               <code>
+                  <spaltennameLang>Schlüssel</spaltennameLang>
+                  <datentyp>string</datentyp>
+                  <codeSpalte>true</codeSpalte>
+                  <verwendung>required</verwendung>
+                  <empfohleneCodeSpalte>true</empfohleneCodeSpalte>
+               </code>
+               <wert>
+                  <spaltennameLang>Wert</spaltennameLang>
+                  <datentyp>string</datentyp>
+                  <codeSpalte>false</codeSpalte>
+                  <verwendung>required</verwendung>
+                  <empfohleneCodeSpalte>false</empfohleneCodeSpalte>
+               </wert>
+            </codelistenspalten>
+         </xs:appinfo>
+      </xs:annotation>
+      <xs:restriction base="xs:token">
+         <xs:enumeration value="001">
+            <xs:annotation>
+               <xs:appinfo>
+                  <wert>Abweisungen mangels Masse</wert>
+               </xs:appinfo>
+            </xs:annotation>
+         </xs:enumeration>
+         <xs:enumeration value="002">
+            <xs:annotation>
+               <xs:appinfo>
+                  <wert>Entscheidungen im Restschuldbefreiungsverfahren</wert>
+               </xs:appinfo>
+            </xs:annotation>
+         </xs:enumeration>
+         <xs:enumeration value="003">
+            <xs:annotation>
+               <xs:appinfo>
+                  <wert>Entscheidungen im Verfahren</wert>
+               </xs:appinfo>
+            </xs:annotation>
+         </xs:enumeration>
+         <xs:enumeration value="004">
+            <xs:annotation>
+               <xs:appinfo>
+                  <wert>Entscheidungen nach Aufhebung des Verfahrens</wert>
+               </xs:appinfo>
+            </xs:annotation>
+         </xs:enumeration>
+         <xs:enumeration value="005">
+            <xs:annotation>
+               <xs:appinfo>
+                  <wert>Eröffnungen</wert>
+               </xs:appinfo>
+            </xs:annotation>
+         </xs:enumeration>
+         <xs:enumeration value="006">
+            <xs:annotation>
+               <xs:appinfo>
+                  <wert>Sicherungsmaßnahmen</wert>
+               </xs:appinfo>
+            </xs:annotation>
+         </xs:enumeration>
+         <xs:enumeration value="007">
+            <xs:annotation>
+               <xs:appinfo>
+                  <wert>Sonstiges</wert>
+               </xs:appinfo>
+            </xs:annotation>
+         </xs:enumeration>
+         <xs:enumeration value="009">
+            <xs:annotation>
+               <xs:appinfo>
+                  <wert>Überwachte Insolvenzpläne</wert>
+               </xs:appinfo>
+            </xs:annotation>
+         </xs:enumeration>
+         <xs:enumeration value="010">
+            <xs:annotation>
+               <xs:appinfo>
+                  <wert>Verteilungsverzeichnisse (§ 188 InsO) d. Verw./Treuh.</wert>
+               </xs:appinfo>
+            </xs:annotation>
+         </xs:enumeration>
+      </xs:restriction>
+   </xs:simpleType>
+   <xs:simpleType name="inso.zustellungsart">
+      <xs:annotation>
+         <xs:appinfo>
+            <codeliste>
+               <nameLang>INSO.Zustellungsart</nameLang>
+               <nameKurz>INSO.Zustellungsart</nameKurz>
+               <nameTechnisch>inso.zustellungsart</nameTechnisch>
+               <kennung>urn:xoev-de:xjustiz:codeliste:inso.zustellungsart</kennung>
+               <beschreibung>Diese Codeliste ist vorgesehen für das Element Zustellungsart.</beschreibung>
+               <herausgebernameLang>BLK-AG IT-Standards in der Justiz</herausgebernameLang>
+               <herausgebernameKurz>AG IT-Standards</herausgebernameKurz>
+            </codeliste>
+            <versionCodeliste>
+               <version>2.0</version>
+               <versionCodelistenHandbuch>1.1</versionCodelistenHandbuch>
+            </versionCodeliste>
+            <codelistenspalten>
+               <code>
+                  <spaltennameLang>Schlüssel</spaltennameLang>
+                  <datentyp>string</datentyp>
+                  <codeSpalte>true</codeSpalte>
+                  <verwendung>required</verwendung>
+                  <empfohleneCodeSpalte>true</empfohleneCodeSpalte>
+               </code>
+               <wert>
+                  <spaltennameLang>Wert</spaltennameLang>
+                  <datentyp>string</datentyp>
+                  <codeSpalte>false</codeSpalte>
+                  <verwendung>required</verwendung>
+                  <empfohleneCodeSpalte>false</empfohleneCodeSpalte>
+               </wert>
+            </codelistenspalten>
+         </xs:appinfo>
+      </xs:annotation>
+      <xs:restriction base="xs:token">
+         <xs:enumeration value="001">
+            <xs:annotation>
+               <xs:appinfo>
+                  <wert>Aufgabe zur Post</wert>
+               </xs:appinfo>
+            </xs:annotation>
+         </xs:enumeration>
+         <xs:enumeration value="002">
+            <xs:annotation>
+               <xs:appinfo>
+                  <wert>Auslandszustellung</wert>
+               </xs:appinfo>
+            </xs:annotation>
+         </xs:enumeration>
+         <xs:enumeration value="003">
+            <xs:annotation>
+               <xs:appinfo>
+                  <wert>elektronische Zustellung</wert>
+               </xs:appinfo>
+            </xs:annotation>
+         </xs:enumeration>
+         <xs:enumeration value="004">
+            <xs:annotation>
+               <xs:appinfo>
+                  <wert>Empfangsbekenntnis</wert>
+               </xs:appinfo>
+            </xs:annotation>
+         </xs:enumeration>
+         <xs:enumeration value="005">
+            <xs:annotation>
+               <xs:appinfo>
+                  <wert>Internationales Einschreiben mit Rückschein</wert>
+               </xs:appinfo>
+            </xs:annotation>
+         </xs:enumeration>
+         <xs:enumeration value="006">
+            <xs:annotation>
+               <xs:appinfo>
+                  <wert>öffentliche Zustellung</wert>
+               </xs:appinfo>
+            </xs:annotation>
+         </xs:enumeration>
+         <xs:enumeration value="007">
+            <xs:annotation>
+               <xs:appinfo>
+                  <wert>Zustellung durch Einschreiben mit Rückschein</wert>
+               </xs:appinfo>
+            </xs:annotation>
+         </xs:enumeration>
+         <xs:enumeration value="008">
+            <xs:annotation>
+               <xs:appinfo>
+                  <wert>Zustellung durch Fax</wert>
+               </xs:appinfo>
+            </xs:annotation>
+         </xs:enumeration>
+         <xs:enumeration value="009">
+            <xs:annotation>
+               <xs:appinfo>
+                  <wert>Zustellung durch Justizbedienstete</wert>
+               </xs:appinfo>
+            </xs:annotation>
+         </xs:enumeration>
+         <xs:enumeration value="010">
+            <xs:annotation>
+               <xs:appinfo>
+                  <wert>Zustellungsurkunde</wert>
+               </xs:appinfo>
+            </xs:annotation>
+         </xs:enumeration>
+      </xs:restriction>
+   </xs:simpleType>
+</xs:schema>

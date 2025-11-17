@@ -727,8 +727,9 @@ public class SendEncryptedAction extends ProgressableAction {
     private java.util.Map<String, String> mailToRecipientMap = null;
     private String documentTag = null;
     private String draftDocumentId = null;
+    private String priority = null;
 
-    public SendEncryptedAction(ProgressIndicator i, JDialog cleanAfter, List<String> attachments, MailboxSetup ms, boolean readReceipt, String to, String cc, String bcc, String subject, String body, String contentType, String documentTag) {
+    public SendEncryptedAction(ProgressIndicator i, JDialog cleanAfter, List<String> attachments, MailboxSetup ms, boolean readReceipt, String to, String cc, String bcc, String subject, String body, String contentType, String documentTag, String priority) {
         super(i, false, cleanAfter);
         this.attachments = attachments;
         this.ms = ms;
@@ -740,6 +741,7 @@ public class SendEncryptedAction extends ProgressableAction {
         this.body = body;
         this.contentType = contentType;
         this.documentTag = documentTag;
+        this.priority = priority;
 
         this.mails = EmailUtils.getAllMailAddressesFromString(this.to);
         mails.addAll(EmailUtils.getAllMailAddressesFromString(this.cc));
@@ -751,18 +753,18 @@ public class SendEncryptedAction extends ProgressableAction {
         this.mailToRecipientMap.putAll(EmailUtils.getMailAddressToRecipientMap(this.bcc));
     }
 
-    public SendEncryptedAction(ProgressIndicator i, JDialog cleanAfter, List<String> attachments, MailboxSetup ms, boolean readReceipt, String to, String cc, String bcc, String subject, String body, String contentType, ArchiveFileBean af, String documentTag, CaseFolder folder) {
-        this(i, cleanAfter, attachments, ms, readReceipt, to, cc, bcc, subject, body, contentType, documentTag);
+    public SendEncryptedAction(ProgressIndicator i, JDialog cleanAfter, List<String> attachments, MailboxSetup ms, boolean readReceipt, String to, String cc, String bcc, String subject, String body, String contentType, ArchiveFileBean af, String documentTag, CaseFolder folder, String priority) {
+        this(i, cleanAfter, attachments, ms, readReceipt, to, cc, bcc, subject, body, contentType, documentTag, priority);
         this.archiveFile = af;
         this.caseFolder = folder;
     }
 
-    public SendEncryptedAction(ProgressIndicator i, JDialog cleanAfter, List<String> attachments, MailboxSetup ms, boolean readReceipt, String to, String cc, String bcc, String subject, String body, String contentType, ArchiveFileBean af, String documentTag, CaseFolder folder, String draftDocumentId) {
-        this(i, cleanAfter, attachments, ms, readReceipt, to, cc, bcc, subject, body, contentType, af, documentTag, folder);
+    public SendEncryptedAction(ProgressIndicator i, JDialog cleanAfter, List<String> attachments, MailboxSetup ms, boolean readReceipt, String to, String cc, String bcc, String subject, String body, String contentType, ArchiveFileBean af, String documentTag, CaseFolder folder, String draftDocumentId, String priority) {
+        this(i, cleanAfter, attachments, ms, readReceipt, to, cc, bcc, subject, body, contentType, af, documentTag, folder, priority);
         this.draftDocumentId = draftDocumentId;
     }
     
-    public SendEncryptedAction(ProgressIndicator i, JFrame cleanAfter, List<String> attachments, MailboxSetup ms, boolean readReceipt, String to, String cc, String bcc, String subject, String body, String contentType, String documentTag) {
+    public SendEncryptedAction(ProgressIndicator i, JFrame cleanAfter, List<String> attachments, MailboxSetup ms, boolean readReceipt, String to, String cc, String bcc, String subject, String body, String contentType, String documentTag, String priority) {
         super(i, false, cleanAfter);
         this.attachments = attachments;
         this.ms = ms;
@@ -774,6 +776,7 @@ public class SendEncryptedAction extends ProgressableAction {
         this.body = body;
         this.contentType = contentType;
         this.documentTag = documentTag;
+        this.priority = priority;
 
         this.mails = EmailUtils.getAllMailAddressesFromString(this.to);
         mails.addAll(EmailUtils.getAllMailAddressesFromString(this.cc));
@@ -785,14 +788,14 @@ public class SendEncryptedAction extends ProgressableAction {
         this.mailToRecipientMap.putAll(EmailUtils.getMailAddressToRecipientMap(this.bcc));
     }
 
-    public SendEncryptedAction(ProgressIndicator i, JFrame cleanAfter, List<String> attachments, MailboxSetup ms, boolean readReceipt, String to, String cc, String bcc, String subject, String body, String contentType, ArchiveFileBean af, String documentTag, CaseFolder folder) {
-        this(i, cleanAfter, attachments, ms, readReceipt, to, cc, bcc, subject, body, contentType, documentTag);
+    public SendEncryptedAction(ProgressIndicator i, JFrame cleanAfter, List<String> attachments, MailboxSetup ms, boolean readReceipt, String to, String cc, String bcc, String subject, String body, String contentType, ArchiveFileBean af, String documentTag, CaseFolder folder, String priority) {
+        this(i, cleanAfter, attachments, ms, readReceipt, to, cc, bcc, subject, body, contentType, documentTag, priority);
         this.archiveFile = af;
         this.caseFolder = folder;
     }
 
-    public SendEncryptedAction(ProgressIndicator i, JFrame cleanAfter, List<String> attachments, MailboxSetup ms, boolean readReceipt, String to, String cc, String bcc, String subject, String body, String contentType, ArchiveFileBean af, String documentTag, CaseFolder folder, String draftDocumentId) {
-        this(i, cleanAfter, attachments, ms, readReceipt, to, cc, bcc, subject, body, contentType, af, documentTag, folder);
+    public SendEncryptedAction(ProgressIndicator i, JFrame cleanAfter, List<String> attachments, MailboxSetup ms, boolean readReceipt, String to, String cc, String bcc, String subject, String body, String contentType, ArchiveFileBean af, String documentTag, CaseFolder folder, String draftDocumentId, String priority) {
+        this(i, cleanAfter, attachments, ms, readReceipt, to, cc, bcc, subject, body, contentType, af, documentTag, folder, priority);
         this.draftDocumentId = draftDocumentId;
     }
 
@@ -981,6 +984,24 @@ public class SendEncryptedAction extends ProgressableAction {
                 msg.setSubject(MimeUtility.encodeText(subject, "utf-8", "B"));
                 ZonedDateTime zdt = ZonedDateTime.now(ZoneId.of("Europe/Berlin"));
                 msg.setSentDate(Date.from(zdt.toInstant()));
+
+                // Set priority headers
+                if (this.priority != null) {
+                    if (this.priority.startsWith("Hoch")) {
+                        msg.setHeader("X-Priority", "1");
+                        msg.setHeader("Priority", "Urgent");
+                        msg.setHeader("Importance", "high");
+                    } else if (this.priority.startsWith("Niedrig")) {
+                        msg.setHeader("X-Priority", "5");
+                        msg.setHeader("Priority", "Non-Urgent");
+                        msg.setHeader("Importance", "low");
+                    } else {
+                        // Normal priority
+                        msg.setHeader("X-Priority", "3");
+                        msg.setHeader("Priority", "Normal");
+                        msg.setHeader("Importance", "normal");
+                    }
+                }
 
                 Multipart multiPart = new MimeMultipart();
 

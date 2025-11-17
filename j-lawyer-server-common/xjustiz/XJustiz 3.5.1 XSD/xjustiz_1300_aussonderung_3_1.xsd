@@ -1,0 +1,375 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema"
+           xmlns:tns="http://www.xjustiz.de"
+           xmlns:din91379="urn:xoev-de:kosit:xoev:datentyp:din-91379_2022-08"
+           targetNamespace="http://www.xjustiz.de"
+           version="3.1.2"
+           elementFormDefault="qualified"
+           attributeFormDefault="unqualified">
+   <xs:annotation>
+      <xs:appinfo>
+         <standard>
+            <nameLang>Strukturierte Fachdaten für die Kommunikation im elektronischen Rechtsverkehr</nameLang>
+            <nameKurz>XJustiz</nameKurz>
+            <nameTechnisch>xjustiz</nameTechnisch>
+            <kennung>urn:xoev-de:blk-ag-it-standards:standard:xjustiz</kennung>
+            <beschreibung>XJustiz ist der bundesweit einheitliche Standard für den Austausch strukturierter elektronischer Informationen mit der Justiz.</beschreibung>
+         </standard>
+         <versionStandard>
+            <version>3.5.1</version>
+            <beschreibung>XJustiz beschreibt ein standardisiertes Datenaustauschformat für die elektronische Kommunikation innerhalb und mit der Justizverwaltung.</beschreibung>
+            <versionXOEVProfil>1.7.2</versionXOEVProfil>
+            <versionXOEVHandbuch>2.3.1</versionXOEVHandbuch>
+            <versionXGenerator>3.1.1</versionXGenerator>
+            <versionModellierungswerkzeug>19.0 SP3</versionModellierungswerkzeug>
+            <nameModellierungswerkzeug>MagicDraw</nameModellierungswerkzeug>
+         </versionStandard>
+      </xs:appinfo>
+   </xs:annotation>
+   <xs:include schemaLocation="xjustiz_0000_grunddatensatz_3_5.xsd"/>
+   <xs:include schemaLocation="xjustiz_1310_cl_aussonderung_3_0.xsd"/>
+   <xs:import schemaLocation="din-norm-91379-datatypes.xsd"
+              namespace="urn:xoev-de:kosit:xoev:datentyp:din-91379_2022-08"/>
+   <xs:complexType name="Type.AUSS.Aufbewahrungsdauer">
+      <xs:annotation>
+         <xs:documentation>Die Aufbewahrungsdauer legt fest, wie viele Jahre eine Akte oder ein Vorgang nach der Verfügung zur Akte (zdA-Verfügung) innerhalb der aktenführenden Stelle aufzubewahren ist oder ob die Aufbewahrung unbefristet erfolgen soll.</xs:documentation>
+      </xs:annotation>
+      <xs:sequence>
+         <xs:element name="auswahl_aufbewahrungsdauer">
+            <xs:complexType>
+               <xs:choice>
+                  <xs:element name="anzahlJahre" type="xs:unsignedShort">
+                     <xs:annotation>
+                        <xs:documentation>Anzahl der Jahre, die eine Akte oder ein Vorgang nach der Verfügung zur Akte (zdA-Verfügung) innerhalb der aktenführenden Stelle aufzubewahren ist.</xs:documentation>
+                     </xs:annotation>
+                  </xs:element>
+                  <xs:element name="unbefristed" fixed="true" type="xs:boolean">
+                     <xs:annotation>
+                        <xs:documentation>Eine Akte oder ein Vorgang ist nach der Verfügung zur Akte (zdA-Verfügung) innerhalb der aktenführenden Stelle unbefristet aufzubewahren.</xs:documentation>
+                     </xs:annotation>
+                  </xs:element>
+               </xs:choice>
+            </xs:complexType>
+         </xs:element>
+      </xs:sequence>
+   </xs:complexType>
+   <xs:complexType name="Type.AUSS.ErfolgOderMisserfolgAussonderung">
+      <xs:annotation>
+         <xs:documentation>Die Information zum erfolgreichen oder nicht erfolgreichen Import eines auszusondernden Schriftgutobjekts.</xs:documentation>
+      </xs:annotation>
+      <xs:sequence>
+         <xs:element name="idsgo" type="tns:Type.GDS.Xdomea.stringUUIDType">
+            <xs:annotation>
+               <xs:documentation>Die ID des Schriftgutobjekts, das ausgesondert werden sollte.</xs:documentation>
+            </xs:annotation>
+         </xs:element>
+         <xs:element name="erfolgreich" type="xs:boolean">
+            <xs:annotation>
+               <xs:documentation>Die Kennzeichnung des erfolgreichen oder nicht erfolgreichen Imports der Aussonderung zu einem Schriftgutobjekt. Der erfolgreiche Import wird mit 1 und der nicht erfolgreiche Import mit 0 gekennzeichnet.</xs:documentation>
+            </xs:annotation>
+         </xs:element>
+         <xs:element name="fehlermeldung" minOccurs="0" type="din91379:datatypeC">
+            <xs:annotation>
+               <xs:documentation>Erläuterung des Grundes für den nicht erfolgreichen Import einer Aussonderung zu einem Schriftgutobjekt.</xs:documentation>
+            </xs:annotation>
+         </xs:element>
+         <xs:element name="archivkennung" minOccurs="0" type="din91379:datatypeC">
+            <xs:annotation>
+               <xs:documentation>Die Archivsignatur, das heißt ID, unter der das auszusondernde Schriftgutobjekt im Archiv verwahrt wird. Für den Fall, dass "Erfolgreich" positiv belegt ist, können durch das archivierende System die Archivkennungen zu den einzelnen Schriftgutobjekten übergeben werden.</xs:documentation>
+            </xs:annotation>
+         </xs:element>
+      </xs:sequence>
+   </xs:complexType>
+   <xs:complexType name="Type.AUSS.Fachdaten">
+      <xs:annotation>
+         <xs:documentation>Archivspezifische Fachdaten zum Aussonderungsobjekt</xs:documentation>
+      </xs:annotation>
+      <xs:sequence>
+         <xs:element name="archivspezifischeMetadaten"
+                     minOccurs="0"
+                     type="tns:Type.AUSS.MetadatenAussonderung"/>
+         <xs:element name="bewertungsvorschlagGrund"
+                     minOccurs="0"
+                     type="din91379:datatypeC"/>
+         <xs:element name="allgemeineDaten" minOccurs="0" type="tns:Type.GDS.Grunddaten">
+            <xs:annotation>
+               <xs:documentation>Das spezielle Konzept des Fachmoduls Aussonderung erfordert diese Darstellung. Deshalb stimmt das Projektbüro der BLK-AG IT-Standards dieser Abweichung als Ausnahme zu. Die grundsätzlichen Konventionen von XJustiz bleiben davon unberührt.</xs:documentation>
+            </xs:annotation>
+         </xs:element>
+         <xs:element name="fachlicheDaten"
+                     minOccurs="0"
+                     type="tns:Type.AUSS.FachlicheDaten"/>
+      </xs:sequence>
+   </xs:complexType>
+   <xs:complexType name="Type.AUSS.FachlicheDaten">
+      <xs:sequence>
+         <xs:element name="verfahrensdauer" minOccurs="0" type="xs:integer"/>
+         <xs:element name="ansprechpartnerAnbietendeStelle"
+                     minOccurs="0"
+                     type="din91379:datatypeA"/>
+         <xs:element name="ansprechpartnerArchiv"
+                     minOccurs="0"
+                     type="din91379:datatypeA"/>
+         <xs:element name="aktenzeichenArchiv"
+                     minOccurs="0"
+                     type="tns:Type.GDS.Aktenzeichen"/>
+         <xs:element name="eingangsdatum" minOccurs="0" type="xs:date"/>
+         <xs:element name="anhaengigSeit" minOccurs="0" type="xs:date"/>
+         <xs:element name="erledigungsgrund" minOccurs="0" type="din91379:datatypeC"/>
+         <xs:element name="erledigungsdatum" minOccurs="0" type="xs:date"/>
+         <xs:element name="weglegungsdatum" minOccurs="0" type="xs:date"/>
+         <xs:element name="aufbewahrungsdatum" minOccurs="0" type="xs:date"/>
+         <xs:element name="auswahl_fachgebiet">
+            <xs:complexType>
+               <xs:choice>
+                  <xs:element name="register">
+                     <xs:complexType>
+                        <xs:sequence>
+                           <xs:element name="referenz.organisation" type="tns:Type.GDS.Ref.Rollennummer">
+                              <xs:annotation>
+                                 <xs:documentation>Hier wird auf auf die Daten der Organisation referenziert.</xs:documentation>
+                              </xs:annotation>
+                           </xs:element>
+                           <xs:element name="eintragungsdatum" minOccurs="0" type="xs:date"/>
+                           <xs:element name="gruendungsdatum" minOccurs="0" type="xs:date"/>
+                           <xs:element name="geschaeftszweck" minOccurs="0" type="din91379:datatypeC"/>
+                           <xs:element name="kapital" minOccurs="0" type="tns:Type.GDS.Geldbetrag"/>
+                           <xs:element name="loeschungsdatum" minOccurs="0" type="xs:date"/>
+                           <xs:element name="nachfolgefirmen" minOccurs="0" type="din91379:datatypeD"/>
+                        </xs:sequence>
+                     </xs:complexType>
+                  </xs:element>
+                  <xs:element name="zivil">
+                     <xs:complexType>
+                        <xs:sequence>
+                           <xs:element name="ve.verfahrensart" minOccurs="0" type="din91379:datatypeC"/>
+                           <xs:element name="gesamtstreitgegenstand"
+                                       minOccurs="0"
+                                       type="tns:Type.GDS.Verfahrensgegenstand"/>
+                           <xs:element name="uebernahmeVonGericht"
+                                       minOccurs="0"
+                                       type="tns:Code.GDS.Gerichte.Typ3"/>
+                           <xs:element name="uebernahmeVonAktenzeichen"
+                                       minOccurs="0"
+                                       type="tns:Type.GDS.Aktenzeichen"/>
+                           <xs:element name="vorVerfahrenBesonderheit"
+                                       minOccurs="0"
+                                       type="din91379:datatypeC"/>
+                           <xs:element name="vorVerfahrenGericht"
+                                       minOccurs="0"
+                                       type="tns:Code.GDS.Gerichte.Typ3"/>
+                           <xs:element name="vorVerfahrenAktenzeichen"
+                                       minOccurs="0"
+                                       type="tns:Type.GDS.Aktenzeichen"/>
+                           <xs:element name="jurisKennzeichen" default="false" type="xs:boolean"/>
+                           <xs:element name="ve.sachgebiet" minOccurs="0" type="din91379:datatypeC"/>
+                           <xs:element name="ve.erledigungsGrund" minOccurs="0" type="din91379:datatypeC"/>
+                           <xs:element name="ve.vorherigesVerfahren"
+                                       minOccurs="0"
+                                       type="din91379:datatypeC"/>
+                           <xs:element name="ve.weglegungsgrund" minOccurs="0" type="din91379:datatypeC"/>
+                           <xs:element name="ve.anbietungsgrund" minOccurs="0" type="din91379:datatypeC"/>
+                           <xs:element name="streitgegenstand" minOccurs="0" maxOccurs="unbounded">
+                              <xs:complexType>
+                                 <xs:sequence>
+                                    <xs:element name="art" minOccurs="0" type="din91379:datatypeC"/>
+                                    <xs:element name="bezeichnung" minOccurs="0" type="din91379:datatypeC"/>
+                                    <xs:element name="streitgegenstandsgrund"
+                                                minOccurs="0"
+                                                type="din91379:datatypeC"/>
+                                    <xs:element name="zeitraum"
+                                                minOccurs="0"
+                                                type="tns:Type.GDS.Xdomea.ZeitraumType"/>
+                                 </xs:sequence>
+                              </xs:complexType>
+                           </xs:element>
+                        </xs:sequence>
+                     </xs:complexType>
+                  </xs:element>
+                  <xs:element name="fach">
+                     <xs:complexType>
+                        <xs:sequence>
+                           <xs:element name="herkunftUnterlagen" minOccurs="0" type="din91379:datatypeC"/>
+                           <xs:element name="bemerkungen" minOccurs="0" type="din91379:datatypeC"/>
+                           <xs:element name="verfahrensart" minOccurs="0" type="din91379:datatypeC"/>
+                           <xs:element name="azHoechsteInstanz"
+                                       minOccurs="0"
+                                       type="tns:Type.GDS.Aktenzeichen"/>
+                           <xs:element name="gerichtHoechsteInstanz"
+                                       minOccurs="0"
+                                       type="tns:Code.GDS.Gerichte.Typ3"/>
+                           <xs:element name="rechtsmittelArt" minOccurs="0" type="din91379:datatypeC"/>
+                           <xs:element name="entscheidungsdokumentationGericht"
+                                       minOccurs="0"
+                                       type="din91379:datatypeC"/>
+                           <xs:element name="aktenzeichenVorinstanzen"
+                                       minOccurs="0"
+                                       maxOccurs="unbounded"
+                                       type="tns:Type.GDS.Aktenzeichen"/>
+                           <xs:element name="beteiligungOeffentlicherDienst"
+                                       minOccurs="0"
+                                       default="false"
+                                       type="xs:boolean"/>
+                           <xs:element name="eingereichtVon" minOccurs="0" type="din91379:datatypeC"/>
+                        </xs:sequence>
+                     </xs:complexType>
+                  </xs:element>
+               </xs:choice>
+            </xs:complexType>
+         </xs:element>
+      </xs:sequence>
+   </xs:complexType>
+   <xs:complexType name="Type.AUSS.MetadatenAussonderung">
+      <xs:annotation>
+         <xs:documentation>MetadatenAussonderung fasst die Informationen zu einem abschließend bearbeiteten Schriftgutobjekt (Vorgang oder Akte) zusammen, die für seine Aufbewahrung und Aussonderung relevant sind.</xs:documentation>
+      </xs:annotation>
+      <xs:sequence>
+         <xs:element name="aufbewahrungsdauer"
+                     minOccurs="0"
+                     type="tns:Type.AUSS.Aufbewahrungsdauer">
+            <xs:annotation>
+               <xs:documentation>Die Aufbewahrungsdauer legt fest, wie viele Jahre eine Akte oder ein Vorgang nach der Verfügung zur Akte (zdAVerfügung) innerhalb der aktenführenden Stelle aufzubewahren ist oder ob die Aufbewahrung unbefristet erfolgen soll. Nach Ablauf der Aufbewahrungsfrist erfolgt die Aussonderung in Abhängigkeit von der Aussonderungsart.</xs:documentation>
+            </xs:annotation>
+         </xs:element>
+         <xs:element name="aussonderungsart"
+                     minOccurs="0"
+                     type="tns:Code.AUSS.Aussonderungsart.Typ3">
+            <xs:annotation>
+               <xs:documentation>Die Aussonderungsart gibt das Ergebnis der archivischen Bewertung an. Damit eine automatische Selektion der auszusondernden Vorgänge erfolgen kann, muss in Vorgangsbearbeitungssystemen für Akten und Vorgänge ein Metadatum "Aussonderungsart" vorgegeben werden. Die Metainformation enthält den Status „archivwürdig“, „bewerten“ oder „vernichten“. Die Aussonderungsart wird vom Aktenplan (zweistufiges Aussonderungsverfahren) oder von der Akte (vierstufiges Aussonderungsverfahren) auf zugehörige Vorgänge und Dokumente vererbt.</xs:documentation>
+            </xs:annotation>
+         </xs:element>
+         <xs:element name="kennung" minOccurs="0" type="din91379:datatypeC">
+            <xs:annotation>
+               <xs:documentation>Die Kennung enthält bei der Durchführung einer Aussonderung die Archivkennung, bei einer Abgabe die Kennung des Schriftgutobjekts aus dem System der übernehmenden Behörde.</xs:documentation>
+            </xs:annotation>
+         </xs:element>
+         <xs:element name="bewertungsvorschlag"
+                     minOccurs="0"
+                     type="tns:Code.AUSS.Bewertungsvorschlag.Typ3">
+            <xs:annotation>
+               <xs:documentation>Der Bewertungsvorschlag ist ein Hinweis des Bearbeiters eines Schriftgutobjekts an das zuständige Archiv. Er kann die Werte „archivwürdig“ oder „vernichten“ annehmen.</xs:documentation>
+            </xs:annotation>
+         </xs:element>
+         <xs:element name="aufbewahrungsende" minOccurs="0" type="xs:gYear">
+            <xs:annotation>
+               <xs:documentation>Das Aufbewahrungsende gibt das Endjahr der Aufbewahrungsfrist an.</xs:documentation>
+            </xs:annotation>
+         </xs:element>
+      </xs:sequence>
+   </xs:complexType>
+   <xs:complexType name="Type.AUSS.RueckgabeparameterAnbietung">
+      <xs:annotation>
+         <xs:documentation>Die Rückmeldung des Archivs zu einem zur Bewertung übergegebenen Schriftgutobjekt zur Steuerung des weiteren Aussonderungsprozesses.</xs:documentation>
+      </xs:annotation>
+      <xs:sequence>
+         <xs:element name="id" type="tns:Type.GDS.Xdomea.stringUUIDType">
+            <xs:annotation>
+               <xs:documentation>Die UUID des angebotenen Schriftgutobjektes, in der Regel die eines Vorgangs.</xs:documentation>
+            </xs:annotation>
+         </xs:element>
+         <xs:element name="aussonderungsart" type="tns:Code.AUSS.Aussonderungsart.Typ3">
+            <xs:annotation>
+               <xs:documentation>Die Beschreibung des Bewertungsergebnisses für ein angebotenes Schriftgutobjekt. Das Feld kann die Werte "A" für archivwuerdig und "V" für vernichten annehmen.</xs:documentation>
+            </xs:annotation>
+         </xs:element>
+      </xs:sequence>
+   </xs:complexType>
+   <xs:element name="nachricht.auss.anbieteverzeichnis.1300001">
+      <xs:annotation>
+         <xs:documentation>Ein Objekt Aussonderungsobjekt muss unter dem Objekt Schriftgutobjekt (SGO) genau ein Aktenobjekt (ggf. mit Teilakten) führen. Jede weitere Akte muss mit einem neuen Aussonderungsobjekt aufgeführt werden.</xs:documentation>
+      </xs:annotation>
+      <xs:complexType>
+         <xs:sequence>
+            <xs:element name="nachrichtenkopf" type="tns:Type.GDS.Nachrichtenkopf"/>
+            <xs:element name="fachdaten">
+               <xs:complexType>
+                  <xs:sequence>
+                     <xs:element name="aussonderungsobjekt" maxOccurs="unbounded">
+                        <xs:complexType>
+                           <xs:sequence>
+                              <xs:element name="schriftgutobjekte" type="tns:Type.GDS.Schriftgutobjekte"/>
+                              <xs:element name="fachdatenAussonderung"
+                                          minOccurs="0"
+                                          type="tns:Type.AUSS.Fachdaten"/>
+                           </xs:sequence>
+                        </xs:complexType>
+                     </xs:element>
+                  </xs:sequence>
+               </xs:complexType>
+            </xs:element>
+         </xs:sequence>
+      </xs:complexType>
+   </xs:element>
+   <xs:element name="nachricht.auss.anbietungEmpfangBestaetigen.1300002">
+      <xs:complexType>
+         <xs:sequence>
+            <xs:element name="nachrichtenkopf" type="tns:Type.GDS.Nachrichtenkopf"/>
+         </xs:sequence>
+      </xs:complexType>
+   </xs:element>
+   <xs:element name="nachricht.auss.bewertungsverzeichnis.1300003">
+      <xs:complexType>
+         <xs:sequence>
+            <xs:element name="nachrichtenkopf" type="tns:Type.GDS.Nachrichtenkopf"/>
+            <xs:element name="fachdaten">
+               <xs:complexType>
+                  <xs:sequence>
+                     <xs:element name="bewertetesObjekt"
+                                 maxOccurs="unbounded"
+                                 type="tns:Type.AUSS.RueckgabeparameterAnbietung"/>
+                  </xs:sequence>
+               </xs:complexType>
+            </xs:element>
+         </xs:sequence>
+      </xs:complexType>
+   </xs:element>
+   <xs:element name="nachricht.auss.bewertungEmpfangBestaetigen.1300004">
+      <xs:complexType>
+         <xs:sequence>
+            <xs:element name="nachrichtenkopf" type="tns:Type.GDS.Nachrichtenkopf"/>
+         </xs:sequence>
+      </xs:complexType>
+   </xs:element>
+   <xs:element name="nachricht.auss.aussonderung.1300005">
+      <xs:annotation>
+         <xs:documentation>Ein Objekt Aussonderungsobjekt muss unter dem Objekt Schriftgutobjekt (SGO) genau ein Aktenobjekt (ggf. mit Teilakten) führen. Jede weitere Akte muss mit einem neuen Aussonderungsobjekt aufgeführt werden.</xs:documentation>
+      </xs:annotation>
+      <xs:complexType>
+         <xs:sequence>
+            <xs:element name="nachrichtenkopf" type="tns:Type.GDS.Nachrichtenkopf"/>
+            <xs:element name="fachdaten">
+               <xs:complexType>
+                  <xs:sequence>
+                     <xs:element name="aussonderungsobjekt" maxOccurs="unbounded">
+                        <xs:complexType>
+                           <xs:sequence>
+                              <xs:element name="schriftgutobjekte" type="tns:Type.GDS.Schriftgutobjekte"/>
+                              <xs:element name="fachdatenAussonderung"
+                                          minOccurs="0"
+                                          type="tns:Type.AUSS.Fachdaten"/>
+                           </xs:sequence>
+                        </xs:complexType>
+                     </xs:element>
+                  </xs:sequence>
+               </xs:complexType>
+            </xs:element>
+         </xs:sequence>
+      </xs:complexType>
+   </xs:element>
+   <xs:element name="nachricht.auss.aussonderungImportBestaetigen.1300006">
+      <xs:complexType>
+         <xs:sequence>
+            <xs:element name="nachrichtenkopf" type="tns:Type.GDS.Nachrichtenkopf"/>
+            <xs:element name="fachdaten">
+               <xs:complexType>
+                  <xs:sequence>
+                     <xs:element name="ausgesondertesSGO"
+                                 maxOccurs="unbounded"
+                                 type="tns:Type.AUSS.ErfolgOderMisserfolgAussonderung"/>
+                  </xs:sequence>
+               </xs:complexType>
+            </xs:element>
+         </xs:sequence>
+      </xs:complexType>
+   </xs:element>
+</xs:schema>

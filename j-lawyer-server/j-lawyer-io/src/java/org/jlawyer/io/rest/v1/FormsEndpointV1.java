@@ -709,7 +709,7 @@ public class FormsEndpointV1 implements FormsEndpointV1Local {
      */
     @Override
     @GET
-    @Produces(MediaType.APPLICATION_JSON+";charset=utf-8")
+    @Produces(MediaType.APPLICATION_JSON + ";charset=utf-8")
     @Path("/types/list")
     @RolesAllowed({"loginRole"})
     public Response listFormTypes() {
@@ -718,7 +718,7 @@ public class FormsEndpointV1 implements FormsEndpointV1Local {
             InitialContext ic = new InitialContext();
             FormsServiceLocal forms = (FormsServiceLocal) ic.lookup("java:global/j-lawyer-server/j-lawyer-server-ejb/FormsService!com.jdimension.jlawyer.services.FormsServiceLocal");
             List<FormTypeBean> types = forms.getAllFormTypes();
-            List<RestfulFormTypeV1> result=new ArrayList<>();
+            List<RestfulFormTypeV1> result = new ArrayList<>();
             // got lazy load errors when not doing this, even with @XmlTransient annotations on the getters of these lists
             for (FormTypeBean ft : types) {
                 result.add(RestfulFormTypeV1.fromFormTypeBean(ft));
@@ -741,7 +741,7 @@ public class FormsEndpointV1 implements FormsEndpointV1Local {
      */
     @Override
     @GET
-    @Produces(MediaType.APPLICATION_JSON+";charset=utf-8")
+    @Produces(MediaType.APPLICATION_JSON + ";charset=utf-8")
     @Path("/{id}/entries")
     @RolesAllowed({"readArchiveFileRole"})
     public Response getFormEntries(@PathParam("id") String id) {
@@ -764,6 +764,45 @@ public class FormsEndpointV1 implements FormsEndpointV1Local {
             log.error("Can not list form types", ex);
             Response res = Response.serverError().build();
             return res;
+        }
+    }
+
+    /**
+     * Returns all forms (as distributed across many cases) for a given form
+     * type
+     *
+     * @param id form type ID, e.g. verkehr01
+     * @response 401 User not authorized
+     * @response 403 User not authenticated
+     */
+    @Override
+    @GET
+    @Produces(MediaType.APPLICATION_JSON + ";charset=utf-8")
+    @Path("/type/{id}/list")
+    @RolesAllowed({"readArchiveFileRole"})
+    public Response getFormsByType(@PathParam("id") String id) {
+        try {
+            InitialContext ic = new InitialContext();
+            FormsServiceLocal forms = (FormsServiceLocal) ic.lookup("java:global/j-lawyer-server/j-lawyer-server-ejb/FormsService!com.jdimension.jlawyer.services.FormsServiceLocal");
+
+            List<ArchiveFileFormsBean> formsHavingType = forms.getFormsByType(id);
+
+            List<RestfulFormV1> resultList = new ArrayList<>();
+            for (ArchiveFileFormsBean fb : formsHavingType) {
+                RestfulFormV1 f = new RestfulFormV1();
+                f.setId(fb.getId());
+                f.setCaseId(fb.getArchiveFileKey().getId());
+                f.setCreationDate(fb.getCreationDate());
+                f.setDescription(fb.getDescription());
+                f.setFormType(id);
+                f.setPlaceHolder(fb.getPlaceHolder());
+                resultList.add(f);
+            }
+
+            return Response.ok(resultList).build();
+        } catch (Exception ex) {
+            log.error("Can not list forms by type", ex);
+            return Response.serverError().build();
         }
     }
 
@@ -796,7 +835,7 @@ public class FormsEndpointV1 implements FormsEndpointV1Local {
      */
     @Override
     @PUT
-    @Produces(MediaType.APPLICATION_JSON+";charset=utf-8")
+    @Produces(MediaType.APPLICATION_JSON + ";charset=utf-8")
     @Path("/{id}/entries/update")
     @RolesAllowed({"writeArchiveFileRole"})
     public Response setFormEntries(List<RestfulFormEntryV1> formEntries) {
@@ -869,7 +908,7 @@ public class FormsEndpointV1 implements FormsEndpointV1Local {
      */
     @Override
     @DELETE
-    @Produces(MediaType.APPLICATION_JSON+";charset=utf-8")
+    @Produces(MediaType.APPLICATION_JSON + ";charset=utf-8")
     @Consumes(MediaType.APPLICATION_JSON)
     @Path("/{id}/delete")
     @RolesAllowed({"writeArchiveFileRole"})
@@ -911,7 +950,7 @@ public class FormsEndpointV1 implements FormsEndpointV1Local {
      */
     @Override
     @PUT
-    @Produces(MediaType.APPLICATION_JSON+";charset=utf-8")
+    @Produces(MediaType.APPLICATION_JSON + ";charset=utf-8")
     @Consumes(MediaType.APPLICATION_JSON)
     @Path("/create")
     @RolesAllowed({"writeArchiveFileRole"})

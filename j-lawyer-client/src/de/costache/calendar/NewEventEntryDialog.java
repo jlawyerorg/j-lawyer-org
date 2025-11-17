@@ -715,8 +715,8 @@ public class NewEventEntryDialog extends javax.swing.JDialog implements NewEvent
         this.newEventPanel.setEventType(eventType);
     }
 
-    public void setReviewAssignee(String assignee) {
-        this.newEventPanel.setReviewAssignee(assignee);
+    public void setReviewAssignees(String assistant, String lawyer) {
+        this.newEventPanel.setReviewAssignees(assistant, lawyer);
     }
     
     public void setSummary(String summary) {

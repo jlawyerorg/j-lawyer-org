@@ -838,6 +838,8 @@ public class MessagingEndpointV7 implements MessagingEndpointLocalV7 {
             now.add(Calendar.SECOND, (-1 * seconds));
             
             List<InstantMessage> messages = msgService.getMessagesSince(now.getTime(), Integer.MAX_VALUE);
+            if(messages==null)
+                messages=new ArrayList<>();
 
             ArrayList<RestfulInstantMessageV7> msgList = new ArrayList<>();
             for (InstantMessage im : messages) {

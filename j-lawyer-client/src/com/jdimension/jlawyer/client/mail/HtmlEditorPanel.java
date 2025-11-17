@@ -699,6 +699,11 @@ public class HtmlEditorPanel extends javax.swing.JPanel implements EditorImpleme
     private final UndoManager undoManager;
     private static final Logger log = Logger.getLogger(HtmlEditorPanel.class.getName());
 
+    // Default font properties for plain text wrapping
+    private String defaultFontFamily = "sans-serif";
+    private String defaultFontSize = "12px";
+    private String defaultFontColor = "black";
+
     /**
      * Creates new form HtmlEditorPanel
      */
@@ -746,8 +751,8 @@ public class HtmlEditorPanel extends javax.swing.JPanel implements EditorImpleme
     @Override
     public String getText() {
 //        String fixedHtml = Jsoup.parse(this.htmlPane.getText()).outerHtml();
-        return cleanSHEFHtml(this.htmlPane.getText());
-        //return this.htmlPane.getText();
+        String cleaned = cleanSHEFHtml(this.htmlPane.getText());
+        return wrapPlainTextDivsInHtml(cleaned);
     }
 
     private static String mapFontSize(String sizeAttr) {
@@ -834,6 +839,92 @@ public class HtmlEditorPanel extends javax.swing.JPanel implements EditorImpleme
         result = HtmlUtils.convertTextOnlyDivsToBreaks(result);
 
         return result;
+    }
+
+    /**
+     * Wraps plain text in divs with font styling.
+     * This method processes the HTML string and adds span tags with CSS styles to divs that contain only plain text.
+     * Uses the configured default font family, size, and color.
+     * @param html the HTML string to process
+     * @return the processed HTML with wrapped plain text
+     */
+    private String wrapPlainTextDivsInHtml(String html) {
+        try {
+            Document doc = Jsoup.parse(html);
+            Elements divs = doc.select("div");
+
+            for (Element div : divs) {
+                // Check if div contains only text (no HTML children like span, font, etc.)
+                boolean hasOnlyText = div.children().isEmpty() ||
+                    (div.children().size() == 1 && div.children().first().tagName().equals("br"));
+
+                if (hasOnlyText) {
+                    String text = div.text().trim();
+
+                    // Skip empty divs
+                    if (text.isEmpty()) {
+                        continue;
+                    }
+
+                    // Check if text contains HTML entities - preserve them
+                    String htmlContent = div.html();
+
+                    // Build CSS style with font-family, font-size, and color
+                    StringBuilder style = new StringBuilder();
+                    style.append("font-family:").append(defaultFontFamily).append(";");
+                    if(defaultFontSize!=null && !defaultFontSize.startsWith("0"))
+                        style.append("font-size:").append(defaultFontSize).append(";");
+                    style.append("color:").append(defaultFontColor).append(";");
+
+                    // Wrap with span using CSS style
+                    String wrappedContent = "<span style=\"" + style.toString() + "\">" + htmlContent + "</span>";
+                    div.html(wrappedContent);
+                }
+            }
+
+            html= doc.outerHtml();
+        } catch (Exception ex) {
+            log.error("Error wrapping plain text divs in HTML", ex);
+            return html; // Return original HTML on error
+        }
+        
+        try {
+            Document doc = Jsoup.parse(html);
+            Elements divs = doc.select("p");
+
+            for (Element div : divs) {
+                // Check if div contains only text (no HTML children like span, font, etc.)
+                boolean hasOnlyText = div.children().isEmpty() ||
+                    (div.children().size() == 1 && div.children().first().tagName().equals("br"));
+
+                if (hasOnlyText) {
+                    String text = div.text().trim();
+
+                    // Skip empty divs
+                    if (text.isEmpty()) {
+                        continue;
+                    }
+
+                    // Check if text contains HTML entities - preserve them
+                    String htmlContent = div.html();
+
+                    // Build CSS style with font-family, font-size, and color
+                    StringBuilder style = new StringBuilder();
+                    style.append("font-family:").append(defaultFontFamily).append(";");
+                    style.append("font-size:").append(defaultFontSize).append(";");
+                    style.append("color:").append(defaultFontColor).append(";");
+
+                    // Wrap with span using CSS style
+                    String wrappedContent = "<span style=\"" + style.toString() + "\">" + htmlContent + "</span>";
+                    div.html(wrappedContent);
+                }
+            }
+
+            return doc.outerHtml();
+        } catch (Exception ex) {
+            log.error("Error wrapping plain text divs in HTML", ex);
+            return html; // Return original HTML on error
+        }
     }
 
     @Override
@@ -1049,6 +1140,32 @@ public class HtmlEditorPanel extends javax.swing.JPanel implements EditorImpleme
 
     public UndoManager getUndoManager() {
         return undoManager;
+    }
+
+    /**
+     * Sets the default font family for plain text divs.
+     * @param fontFamily the font family (e.g., "sans-serif", "Arial", "Times New Roman")
+     */
+    public void setDefaultFontFamily(String fontFamily) {
+        this.defaultFontFamily = fontFamily != null ? fontFamily : "sans-serif";
+    }
+
+    /**
+     * Sets the default font size for plain text divs.
+     * @param fontSize the font size in CSS format (e.g., "12px", "14px", "1em")
+     */
+    public void setDefaultFontSize(String fontSize) {
+        this.defaultFontSize = fontSize != null ? fontSize : "12px";
+        if(!this.defaultFontSize.endsWith("px"))
+            this.defaultFontSize=this.defaultFontSize+"px";
+    }
+
+    /**
+     * Sets the default font color for plain text divs.
+     * @param fontColor the font color in CSS format (e.g., "black", "#000000", "rgb(0,0,0)")
+     */
+    public void setDefaultFontColor(String fontColor) {
+        this.defaultFontColor = fontColor != null ? fontColor : "black";
     }
 
 }

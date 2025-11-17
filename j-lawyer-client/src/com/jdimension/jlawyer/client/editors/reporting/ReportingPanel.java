@@ -746,6 +746,26 @@ public class ReportingPanel extends javax.swing.JPanel implements ThemeableEdito
         invoicesDraft.setDefaultEndDate(toDate);
         allReports.add(invoicesDraft);
         
+        Report casesWithoutInvoice=new Report();
+        casesWithoutInvoice.setName("Akten ohne Rechnung");
+        casesWithoutInvoice.setDescription("<html>Tabellarische Auswertung aller <b>Akten ohne umsatzrelevante Rechnungen</b></html>");
+        casesWithoutInvoice.setReportId(Reports.RPT_CASES_WITHOUT_INVOICE);
+        casesWithoutInvoice.setClassName(DynamicReportContainerPanel.class.getName());
+        casesWithoutInvoice.setCategory("Finanzen: Rechnungen");
+        casesWithoutInvoice.setSequence(25);
+        casesWithoutInvoice.setTypeTable(true);
+        casesWithoutInvoice.setTypeChart(false);
+        casesWithoutInvoice.setSecurityType(Report.SECURITY_COMMON);
+        fromDate=new Date();
+        fromDate.setYear(fromDate.getYear()-1);
+        fromDate.setMonth(0);
+        fromDate.setDate(1);
+        casesWithoutInvoice.setDefaultBeginDate(fromDate);
+        toDate=new Date();
+        casesWithoutInvoice.setDefaultEndDate(toDate);
+        casesWithoutInvoice.setDateSelectionLabel("Erstellungsdatum der Akten");
+        allReports.add(casesWithoutInvoice);
+        
         Report invoicesAll=new Report();
         invoicesAll.setName("Alle Rechnungen / Belege");
         invoicesAll.setDescription("<html>Alle <b>Rechnungen / Belege</b> unabhängig von Belegart, Status oder Erstellungsdatum</html>");
@@ -1041,7 +1061,7 @@ public class ReportingPanel extends javax.swing.JPanel implements ThemeableEdito
         toDate=new Date();
         casesUnsecured.setDefaultEndDate(toDate);
         allReports.add(casesUnsecured);
-        
+
         DecimalFormat df=new DecimalFormat("000");
         Collections.sort(allReports, (Object arg0, Object arg1) -> {
             String s1=((Report)arg0).getCategory() + df.format(((Report)arg0).getSequence());

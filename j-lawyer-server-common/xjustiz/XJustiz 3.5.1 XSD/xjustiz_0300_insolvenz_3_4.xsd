@@ -1,0 +1,1592 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema"
+           xmlns:tns="http://www.xjustiz.de"
+           xmlns:din91379="urn:xoev-de:kosit:xoev:datentyp:din-91379_2022-08"
+           xmlns:xoev-code="http://xoev.de/schemata/code/1_0"
+           targetNamespace="http://www.xjustiz.de"
+           version="3.4.0"
+           elementFormDefault="qualified"
+           attributeFormDefault="unqualified">
+   <xs:annotation>
+      <xs:appinfo>
+         <standard>
+            <nameLang>Strukturierte Fachdaten für die Kommunikation im elektronischen Rechtsverkehr</nameLang>
+            <nameKurz>XJustiz</nameKurz>
+            <nameTechnisch>xjustiz</nameTechnisch>
+            <kennung>urn:xoev-de:blk-ag-it-standards:standard:xjustiz</kennung>
+            <beschreibung>XJustiz ist der bundesweit einheitliche Standard für den Austausch strukturierter elektronischer Informationen mit der Justiz.</beschreibung>
+         </standard>
+         <versionStandard>
+            <version>3.5.1</version>
+            <beschreibung>XJustiz beschreibt ein standardisiertes Datenaustauschformat für die elektronische Kommunikation innerhalb und mit der Justizverwaltung.</beschreibung>
+            <versionXOEVProfil>1.7.2</versionXOEVProfil>
+            <versionXOEVHandbuch>2.3.1</versionXOEVHandbuch>
+            <versionXGenerator>3.1.1</versionXGenerator>
+            <versionModellierungswerkzeug>19.0 SP3</versionModellierungswerkzeug>
+            <nameModellierungswerkzeug>MagicDraw</nameModellierungswerkzeug>
+         </versionStandard>
+      </xs:appinfo>
+   </xs:annotation>
+   <xs:include schemaLocation="xjustiz_0000_grunddatensatz_3_5.xsd"/>
+   <xs:include schemaLocation="xjustiz_0320_cl_insolvenz_3_1.xsd"/>
+   <xs:include schemaLocation="xjustiz_0330_cl_nachrichten_3_1.xsd"/>
+   <xs:include schemaLocation="xjustiz_0340_cl_iri_3_0.xsd"/>
+   <xs:import schemaLocation="din-norm-91379-datatypes.xsd"
+              namespace="urn:xoev-de:kosit:xoev:datentyp:din-91379_2022-08"/>
+   <xs:import schemaLocation="xoev-code.xsd"
+              namespace="http://xoev.de/schemata/code/1_0"/>
+   <xs:complexType name="Type.INSO.Abstimmungsgruppe">
+      <xs:sequence>
+         <xs:element name="identifier" type="din91379:datatypeC">
+            <xs:annotation>
+               <xs:documentation>Handelt es sich um die Übergabe von weiteren Daten zu einem Verfahren, zu dem schon Daten über eine andere Schnittstelle übermittelt wurden, soll der Wert - wenn identische Abstimmungsgruppen gemeint sind - wie folgt übergeben werden: Satzkennziffer aus .itr - Nr_der_Abstimmungsgruppe, z.B. "80 - 3". Dieses Element ist über das gesamte Insolvenzverfahren durch den Verwalter eindeutig und gleichlautend zu halten.</xs:documentation>
+            </xs:annotation>
+         </xs:element>
+         <xs:element name="name.abstimmungsgruppe" type="din91379:datatypeD">
+            <xs:annotation>
+               <xs:documentation>Maximal 50 Zeichen.</xs:documentation>
+            </xs:annotation>
+         </xs:element>
+      </xs:sequence>
+   </xs:complexType>
+   <xs:complexType name="Type.INSO.Anteilsinhaberschaft">
+      <xs:sequence>
+         <xs:element name="referenz" type="tns:Type.GDS.Ref.Rollennummer"/>
+         <xs:element name="anteil">
+            <xs:complexType>
+               <xs:sequence>
+                  <xs:element name="betrag" type="tns:Type.GDS.Geldbetrag"/>
+                  <xs:element name="artDesAnteilsrechts" type="din91379:datatypeB"/>
+                  <xs:element name="ref.abstimmungsgruppe"
+                              minOccurs="0"
+                              type="din91379:datatypeC"/>
+               </xs:sequence>
+            </xs:complexType>
+         </xs:element>
+      </xs:sequence>
+   </xs:complexType>
+   <xs:complexType name="Type.INSO.Berichtsjahr_Listen">
+      <xs:sequence>
+         <xs:element name="jahr" type="din91379:datatypeC">
+            <xs:annotation>
+               <xs:documentation>Hier ist das betreffende Berichtsjahr (4-stellig), für das die Verfahren gemeldet wurden, anzugeben.</xs:documentation>
+            </xs:annotation>
+         </xs:element>
+         <xs:element name="meldArtRB" minOccurs="0">
+            <xs:complexType>
+               <xs:sequence>
+                  <xs:element name="verfahren" maxOccurs="unbounded">
+                     <xs:complexType>
+                        <xs:sequence>
+                           <xs:element name="urspruenglichesAz" type="tns:Type.GDS.Aktenzeichen"/>
+                           <xs:element name="verfahrensnummer" type="din91379:datatypeC"/>
+                           <xs:element name="eroeffnungsdatum" type="xs:date"/>
+                           <xs:element name="schuldnername.firma" type="din91379:datatypeD"/>
+                        </xs:sequence>
+                     </xs:complexType>
+                  </xs:element>
+               </xs:sequence>
+            </xs:complexType>
+         </xs:element>
+         <xs:element name="meldArtVB" minOccurs="0">
+            <xs:complexType>
+               <xs:sequence>
+                  <xs:element name="verfahren" maxOccurs="unbounded">
+                     <xs:complexType>
+                        <xs:sequence>
+                           <xs:element name="urspruenglichesAz" type="tns:Type.GDS.Aktenzeichen"/>
+                           <xs:element name="verfahrensnummer" type="din91379:datatypeC"/>
+                           <xs:element name="eroeffnungsdatum" type="xs:date"/>
+                           <xs:element name="schuldnername.firma" type="din91379:datatypeD"/>
+                        </xs:sequence>
+                     </xs:complexType>
+                  </xs:element>
+               </xs:sequence>
+            </xs:complexType>
+         </xs:element>
+         <xs:element name="meldArtX" minOccurs="0">
+            <xs:complexType>
+               <xs:sequence>
+                  <xs:element name="verfahren" maxOccurs="unbounded">
+                     <xs:complexType>
+                        <xs:sequence>
+                           <xs:element name="urspruenglichesAz" type="tns:Type.GDS.Aktenzeichen"/>
+                           <xs:element name="verfahrensnummer" type="din91379:datatypeC"/>
+                           <xs:element name="eroeffnungsdatum" type="xs:date"/>
+                           <xs:element name="widerruf" type="xs:boolean">
+                              <xs:annotation>
+                                 <xs:documentation>Ja bei Widerruf der Erteilung der RSB</xs:documentation>
+                              </xs:annotation>
+                           </xs:element>
+                           <xs:element name="schuldnername.firma" type="din91379:datatypeD"/>
+                        </xs:sequence>
+                     </xs:complexType>
+                  </xs:element>
+               </xs:sequence>
+            </xs:complexType>
+         </xs:element>
+      </xs:sequence>
+   </xs:complexType>
+   <xs:complexType name="Type.INSO.Beteiligte">
+      <xs:annotation>
+         <xs:documentation>Dieser Typ dient dazu, für einen im Grunddatensatz übergebenen Beteiligten weitergehende Informationen zu übergeben.</xs:documentation>
+      </xs:annotation>
+      <xs:sequence>
+         <xs:element name="beteiligter" type="tns:Type.GDS.Ref.Beteiligtennummer">
+            <xs:annotation>
+               <xs:documentation>Verweis auf eine durch den Grunddatensatz erfasste Person durch die Beteiligtennummer.</xs:documentation>
+            </xs:annotation>
+         </xs:element>
+         <xs:element name="identifier" type="din91379:datatypeC">
+            <xs:annotation>
+               <xs:documentation>Wenn identische Beteiligte gemeint sind ist dasselbe identifizierende Kennzeichen zu verwenden; Wurde der Beteiligte über die .itr-Schnittstelle übergeben, so gilt die hierfür erarbeitete Regel aus "Satzart"-"Verwalterid" z.B. "30-4" Wird der Beteiligte mit einem anderen Identifier übergeben, so wird dieser Beteiligte als neuer Beteiligte interpretiert. Dieses Element ist über das gesamte Insolvenzverfahren durch den Verwalter eindeutig und gleichlautend zu halten.</xs:documentation>
+            </xs:annotation>
+         </xs:element>
+         <xs:element name="namenszusatzFuerOrganisationen"
+                     minOccurs="0"
+                     type="din91379:datatypeD">
+            <xs:annotation>
+               <xs:documentation>Maximal 50 Zeichen.</xs:documentation>
+            </xs:annotation>
+         </xs:element>
+         <xs:element name="ansprechpartner" minOccurs="0" type="din91379:datatypeD">
+            <xs:annotation>
+               <xs:documentation>Maximal 50 Zeichen.</xs:documentation>
+            </xs:annotation>
+         </xs:element>
+         <xs:element name="handelndUnter" minOccurs="0" type="din91379:datatypeD">
+            <xs:annotation>
+               <xs:documentation>Maximal 255 Zeichen.</xs:documentation>
+            </xs:annotation>
+         </xs:element>
+         <xs:element name="zustellungsart" type="tns:Code.INSO.Zustellungsart">
+            <xs:annotation>
+               <xs:documentation>Zulässige Werte sind definiert im Schema xj_0320_wl_insolvenz_x_x.xsd. (Vorschlagswert des Verwalters für das Gericht)</xs:documentation>
+            </xs:annotation>
+         </xs:element>
+         <xs:element name="uebertragungsweg" type="tns:Code.INSO.Uebertragungsweg">
+            <xs:annotation>
+               <xs:documentation>Zulässige Werte sind definiert im Schema xj_0320_wl_insolvenz_x_x.xsd. (Vorschlagswert des Verwalters für das Gericht)</xs:documentation>
+            </xs:annotation>
+         </xs:element>
+         <xs:element name="postempfaenger" type="xs:boolean">
+            <xs:annotation>
+               <xs:documentation>Angabe, ob der Debitor Postempfänger ist (Vorschlagswert des Verwalters für das Gericht).</xs:documentation>
+            </xs:annotation>
+         </xs:element>
+         <xs:element name="glaeubigermerkmale" minOccurs="0">
+            <xs:complexType>
+               <xs:sequence>
+                  <xs:element name="masseglaeubiger" type="xs:boolean">
+                     <xs:annotation>
+                        <xs:documentation>Angabe ob der Gläubiger Massegläubiger ist</xs:documentation>
+                     </xs:annotation>
+                  </xs:element>
+                  <xs:element name="neumasseglaeubiger" type="xs:boolean">
+                     <xs:annotation>
+                        <xs:documentation>Angabe ob der Gläubiger Neumassegläubiger ist</xs:documentation>
+                     </xs:annotation>
+                  </xs:element>
+                  <xs:element name="altmasseglaeubiger" type="xs:boolean">
+                     <xs:annotation>
+                        <xs:documentation>Angabe ob der Gläubiger Altmassegläubiger ist</xs:documentation>
+                     </xs:annotation>
+                  </xs:element>
+                  <xs:element name="absonderungsglaeubiger" type="xs:boolean">
+                     <xs:annotation>
+                        <xs:documentation>Angabe ob der Gläubiger Absonderungsgläubiger ist</xs:documentation>
+                     </xs:annotation>
+                  </xs:element>
+                  <xs:element name="nachrangglaeubiger" type="xs:boolean">
+                     <xs:annotation>
+                        <xs:documentation>Angabe ob der Gläubiger Nachranggläubiger ist</xs:documentation>
+                     </xs:annotation>
+                  </xs:element>
+               </xs:sequence>
+            </xs:complexType>
+         </xs:element>
+      </xs:sequence>
+   </xs:complexType>
+   <xs:complexType name="Type.INSO.Fachdaten.Insolvenztabelle.Uebergabe">
+      <xs:sequence>
+         <xs:element name="abstimmungsgruppen"
+                     minOccurs="0"
+                     maxOccurs="unbounded"
+                     type="tns:Type.INSO.Abstimmungsgruppe"/>
+         <xs:element name="kennzeichen.gesamtglaeubiger"
+                     minOccurs="0"
+                     maxOccurs="unbounded">
+            <xs:complexType>
+               <xs:sequence>
+                  <xs:element name="identifier" type="din91379:datatypeB">
+                     <xs:annotation>
+                        <xs:documentation>Forderungen, die zu einer "Gesamtgläubigerschaft" gehören und auf mehreren Tabellenblättern getrennt nach den Gesamtgläubigern verteilt sind, erhalten dasselbe Kennzeichen. Am einfachsten fortl. Nummer je Gesamtgläubigerschaft beginnend mit 1. Dieses Element ist über das gesamte Insolvenzverfahren eindeutig und gleichlautend zu halten Es bleibt dem jeweiligen Gerichtsprogramm überlassen, die Gesamtgläubigerschaften zu verwalten. Maximal 10 Zeichen.</xs:documentation>
+                     </xs:annotation>
+                  </xs:element>
+               </xs:sequence>
+            </xs:complexType>
+         </xs:element>
+         <xs:element name="beteiligte.inso"
+                     maxOccurs="unbounded"
+                     type="tns:Type.INSO.Beteiligte">
+            <xs:annotation>
+               <xs:documentation>Für einen im Grunddatensatz übergebenen Beteiligten können weitergehende Informationen übergeben werden.</xs:documentation>
+            </xs:annotation>
+         </xs:element>
+         <xs:element name="forderung" maxOccurs="unbounded">
+            <xs:complexType>
+               <xs:sequence>
+                  <xs:element name="referenz" type="tns:Type.GDS.Ref.Rollennummer">
+                     <xs:annotation>
+                        <xs:documentation>Verweis auf zugehörige Gläubigerrolle (mit dortigem Geschäftszeichen). Verweis auf Gläubiger und gelieferte Forderung ergibt den Anmeldegläubiger.</xs:documentation>
+                     </xs:annotation>
+                  </xs:element>
+                  <xs:element name="identifier" type="din91379:datatypeB">
+                     <xs:annotation>
+                        <xs:documentation>Handelt es sich um die Übergabe von weiteren Daten zu einem Verfahren, zu dem schon Daten über eine andere Schnittstelle übermittelt wurden, soll der Wert - wenn identische Forderungen gemeint sind - wie folgt übergeben werden: Satzkennziffer aus .itr oder .tab - Nummer des Beteiligten, z.B. "20-23". Wird die Forderung mit einem anderen Identifier übergeben, so wird diese Forderung als neue Forderung interpretiert. Dieses Element ist über das gesamte Insolvenzverfahren durch den Verwalter eindeutig und gleichlautend zu halten.</xs:documentation>
+                     </xs:annotation>
+                  </xs:element>
+                  <xs:element name="ref.kennzeichen.gesamtglaeubiger"
+                              minOccurs="0"
+                              type="din91379:datatypeB">
+                     <xs:annotation>
+                        <xs:documentation>Verweis auf das Kennzeichen der Gesamtgläubigerschaft, der die Forderung zugeordnet ist. Verweis auf Identifier des Kennzeichens der Gesamtgläubigerschaft.</xs:documentation>
+                     </xs:annotation>
+                  </xs:element>
+                  <xs:element name="datumDerAnmeldung" type="xs:date">
+                     <xs:annotation>
+                        <xs:documentation>Datumsfeld gem. DIN ISO 8601 (yyyy-mm-dd)</xs:documentation>
+                     </xs:annotation>
+                  </xs:element>
+                  <xs:element name="angemeldeterRang" type="tns:Code.INSO.Insolvenzraenge">
+                     <xs:annotation>
+                        <xs:documentation>Die Ränge ab "Rang N VI A" sind nur in Nachlassinsolvenzverfahren zulässig.</xs:documentation>
+                     </xs:annotation>
+                  </xs:element>
+                  <xs:element name="tabellenblatt.nr" type="xs:positiveInteger">
+                     <xs:annotation>
+                        <xs:documentation>Auf Verwalterseite vorgenommene Kennzeichnung der Forderung. Die Gerichtssoftware kann verlangen, dass der Insolvenzverwalter die Tabellenblattnummer über das gesamte Insolvenzverfahren und alle Ränge hinweg eindeutig und gleichlautend hält. Sofern die Gerichtssoftware diese Anforderung nicht stellt, muss sich die Eindeutigkeit der Kennzeichnung aus den Werten der Elemente Rang, Tabellenblattnummer und Unterziffer ergeben.</xs:documentation>
+                     </xs:annotation>
+                  </xs:element>
+                  <xs:element name="unterziffer" minOccurs="0" type="xs:positiveInteger">
+                     <xs:annotation>
+                        <xs:documentation>Hier darf nur ein Wert übergeben werden, wenn die Gerichtssoftware Unterziffern auf einem Tabellenblatt verarbeiten kann und mehr als eine Forderung auf einem Tabellenblatt erfasst werden soll.</xs:documentation>
+                     </xs:annotation>
+                  </xs:element>
+                  <xs:element name="hauptforderung">
+                     <xs:annotation>
+                        <xs:documentation>Es liegt keine Beschreibung vor</xs:documentation>
+                     </xs:annotation>
+                     <xs:complexType>
+                        <xs:sequence>
+                           <xs:element name="betrag" type="tns:Type.GDS.Geldbetrag">
+                              <xs:annotation>
+                                 <xs:documentation>Betrag der Hauptforderung</xs:documentation>
+                              </xs:annotation>
+                           </xs:element>
+                           <xs:element name="grund" type="din91379:datatypeB">
+                              <xs:annotation>
+                                 <xs:documentation>Grund der Hauptforderung; z.B. Kaufvertrag. Maximal 255 Zeichen.</xs:documentation>
+                              </xs:annotation>
+                           </xs:element>
+                        </xs:sequence>
+                     </xs:complexType>
+                  </xs:element>
+                  <xs:element name="zinsen" minOccurs="0">
+                     <xs:annotation>
+                        <xs:documentation>Es liegt keine Beschreibung vor</xs:documentation>
+                     </xs:annotation>
+                     <xs:complexType>
+                        <xs:sequence>
+                           <xs:element name="betrag" type="tns:Type.GDS.Geldbetrag">
+                              <xs:annotation>
+                                 <xs:documentation>Betrag der Zinsen.</xs:documentation>
+                              </xs:annotation>
+                           </xs:element>
+                           <xs:element name="grund" type="din91379:datatypeB">
+                              <xs:annotation>
+                                 <xs:documentation>Grund für die Zinsen. Maximal 255 Zeichen.</xs:documentation>
+                              </xs:annotation>
+                           </xs:element>
+                        </xs:sequence>
+                     </xs:complexType>
+                  </xs:element>
+                  <xs:element name="kosten" minOccurs="0">
+                     <xs:annotation>
+                        <xs:documentation>Es liegt keine Beschreibung vor</xs:documentation>
+                     </xs:annotation>
+                     <xs:complexType>
+                        <xs:sequence>
+                           <xs:element name="betrag" type="tns:Type.GDS.Geldbetrag">
+                              <xs:annotation>
+                                 <xs:documentation>Betrag der Kosten</xs:documentation>
+                              </xs:annotation>
+                           </xs:element>
+                           <xs:element name="grund" type="din91379:datatypeB">
+                              <xs:annotation>
+                                 <xs:documentation>Grund für die Kosten. Maximal 255 Zeichen.</xs:documentation>
+                              </xs:annotation>
+                           </xs:element>
+                        </xs:sequence>
+                     </xs:complexType>
+                  </xs:element>
+                  <xs:element name="nebenforderung" minOccurs="0">
+                     <xs:complexType>
+                        <xs:sequence>
+                           <xs:element name="betrag" type="tns:Type.GDS.Geldbetrag">
+                              <xs:annotation>
+                                 <xs:documentation>Betrag der Kosten</xs:documentation>
+                              </xs:annotation>
+                           </xs:element>
+                           <xs:element name="grund" type="din91379:datatypeB">
+                              <xs:annotation>
+                                 <xs:documentation>Grund für die Kosten. Maximal 255 Zeichen.</xs:documentation>
+                              </xs:annotation>
+                           </xs:element>
+                        </xs:sequence>
+                     </xs:complexType>
+                  </xs:element>
+                  <xs:element name="tituliert" type="xs:boolean">
+                     <xs:annotation>
+                        <xs:documentation>Angabe, ob der Forderung ein vollstreckbarer Titel (z.B. Urteil) zugrunde liegt.</xs:documentation>
+                     </xs:annotation>
+                  </xs:element>
+                  <xs:element name="titelBeiDenAkten" type="xs:boolean">
+                     <xs:annotation>
+                        <xs:documentation>Angabe, ob der vollstreckbare Titel zu den Akten gereicht worden ist, oder nicht.</xs:documentation>
+                     </xs:annotation>
+                  </xs:element>
+                  <xs:element name="fuerDenAusfall" type="xs:boolean">
+                     <xs:annotation>
+                        <xs:documentation>Angabe, ob die Forderung für den Ausfall angemeldet wurde. (Durch die Anmeldung kann der absonderungsberechtigte Gläubiger eine Aufnahme seiner Forderung in das Verteilungsverzeichnis erreichen.Voraussetzung ist allerdings der Nachweis des Verzichtes oder des Ausfalls bei der abgesonderten Befriedigung)</xs:documentation>
+                     </xs:annotation>
+                  </xs:element>
+                  <xs:element name="gzDerForderungsanmeldung"
+                              minOccurs="0"
+                              type="din91379:datatypeB">
+                     <xs:annotation>
+                        <xs:documentation>Geschäftszeichen der Forderungsanmeldung. Maximal 100 Zeichen.</xs:documentation>
+                     </xs:annotation>
+                  </xs:element>
+                  <xs:element name="bemerkungen" minOccurs="0" type="din91379:datatypeC">
+                     <xs:annotation>
+                        <xs:documentation>Maximal 255 Zeichen.</xs:documentation>
+                     </xs:annotation>
+                  </xs:element>
+                  <xs:element name="blattNrDerAnmeldung" minOccurs="0" type="din91379:datatypeC">
+                     <xs:annotation>
+                        <xs:documentation>Nr.des Blattes der schriftlichen Forderungsanmeldung im gerichtlichen Akt. Maximal 50 Zeichen.</xs:documentation>
+                     </xs:annotation>
+                  </xs:element>
+                  <xs:element name="ref.abstimmungsgruppe"
+                              minOccurs="0"
+                              type="din91379:datatypeC">
+                     <xs:annotation>
+                        <xs:documentation>Verweis auf die Gruppe, der die Forderung bzgl. der Abstimmung über den Insolvenzplan zugeordnet ist. Verweis auf Identifier der Abstimmungsgruppe.</xs:documentation>
+                     </xs:annotation>
+                  </xs:element>
+                  <xs:element name="betrag.unerlaubteHandlung" type="tns:Type.GDS.Geldbetrag"/>
+                  <xs:element name="erklaerung" minOccurs="0">
+                     <xs:annotation>
+                        <xs:documentation>Wenn im Nachrichtenkopf das Ereignis "Übergabe Forderungsanmeldungen ohne Erklärungen" ausgewählt wurde (Code 044), dann darf das Element 'erklaerung' nicht übermittelt werden, wenn das Ereignis "Übergabe Forderungsanmeldungen mit Erklärungen" ausgewählt wurde (Code 043), dann muss das Element 'erklaerung' übermittelt werden.</xs:documentation>
+                     </xs:annotation>
+                     <xs:complexType>
+                        <xs:sequence>
+                           <xs:element name="teilerklaerung" maxOccurs="unbounded">
+                              <xs:complexType>
+                                 <xs:sequence>
+                                    <xs:element name="bezugnahmeZumForderungsteil"
+                                                minOccurs="0"
+                                                type="tns:Code.GDS.Forderungsteil">
+                                       <xs:annotation>
+                                          <xs:documentation>Die Summe der Teilerklärungen entspricht der Summe der angemeldeten Beträge. Es sind nur die Werte 'Hauptforderung', 'Zinsen', 'Kosten' und 'Nebenforderung' zulässig.</xs:documentation>
+                                       </xs:annotation>
+                                    </xs:element>
+                                    <xs:element name="neuerRang" minOccurs="0" type="tns:Code.INSO.Insolvenzraenge">
+                                       <xs:annotation>
+                                          <xs:documentation>Falls der beanspruchte Rang bestritten wird, ist der neue Rang anzugeben.</xs:documentation>
+                                       </xs:annotation>
+                                    </xs:element>
+                                    <xs:element name="erklaerungstyp" type="tns:Code.INSO.Erklaerungstyp">
+                                       <xs:annotation>
+                                          <xs:documentation>Es liegt keine Beschreibung vor</xs:documentation>
+                                       </xs:annotation>
+                                    </xs:element>
+                                    <xs:element name="betrag" type="tns:Type.GDS.Geldbetrag">
+                                       <xs:annotation>
+                                          <xs:documentation>Angabe der Höhe des Betrages mit der der Forderung widersprochen bzw. mit der sie anerkannt wird.</xs:documentation>
+                                       </xs:annotation>
+                                    </xs:element>
+                                 </xs:sequence>
+                              </xs:complexType>
+                           </xs:element>
+                        </xs:sequence>
+                     </xs:complexType>
+                  </xs:element>
+                  <xs:element name="ref.teilakte.id"
+                              minOccurs="0"
+                              type="tns:Type.GDS.Xdomea.stringUUIDType"/>
+               </xs:sequence>
+            </xs:complexType>
+         </xs:element>
+         <xs:element name="vollmacht"
+                     minOccurs="0"
+                     maxOccurs="unbounded"
+                     type="tns:Type.INSO.Vollmacht"/>
+      </xs:sequence>
+   </xs:complexType>
+   <xs:complexType name="Type.INSO.IRI.Basiskontext">
+      <xs:annotation>
+         <xs:documentation>Der komplexe Typ beschreibt die Art des Ergebnisses einer Abfrageoperation.</xs:documentation>
+      </xs:annotation>
+      <xs:sequence>
+         <xs:element name="status" type="tns:Code.INSO.IRI.Status">
+            <xs:annotation>
+               <xs:documentation>Dieses Element gibt den Status der Ausführung der Abfrage an, d.h. ob die Abfageoperation erfolgreich durchgeführt werden konnte.</xs:documentation>
+            </xs:annotation>
+         </xs:element>
+         <xs:element name="hinweis"
+                     minOccurs="0"
+                     maxOccurs="unbounded"
+                     type="tns:Type.INSO.IRI.Hinweis">
+            <xs:annotation>
+               <xs:documentation>Eine optionale Liste von Hinweisen, die die erkannten Fehler oder Warnungen näher beschreiben.</xs:documentation>
+            </xs:annotation>
+         </xs:element>
+      </xs:sequence>
+   </xs:complexType>
+   <xs:complexType name="Type.INSO.IRI.Ergebnisdaten.einfach">
+      <xs:annotation>
+         <xs:documentation>Der Typ dient dazu, einen Wert mit einem einfachen generischen Typ wie z.B. Text, Datum, Uhrzeit, Boolescher Wert usw. zu übermitteln.</xs:documentation>
+      </xs:annotation>
+      <xs:sequence>
+         <xs:choice>
+            <xs:element name="boolean" type="xs:boolean"/>
+            <xs:element name="number" type="xs:long"/>
+            <xs:element name="text" type="din91379:datatypeD"/>
+            <xs:element name="ref.daten" type="tns:Type.INSO.IRI.ReferenzDaten"/>
+            <xs:element name="date" type="xs:date"/>
+            <xs:element name="time" type="xs:time"/>
+            <xs:element name="zeitpunkt" type="xs:dateTime"/>
+            <xs:element name="zeitraum" type="tns:Type.GDS.Xdomea.ZeitraumType"/>
+            <xs:element name="betrag" type="tns:Type.GDS.Geldbetrag"/>
+            <xs:element name="url" type="tns:Type.INSO.IRI.URL"/>
+         </xs:choice>
+      </xs:sequence>
+   </xs:complexType>
+   <xs:complexType name="Type.INSO.IRI.Ergebnisdaten.komplex">
+      <xs:annotation>
+         <xs:documentation>Dieser Typ erlaubt nicht nur, einen Wert einfachen Typs als Ergebnis zu übermitteln, sondern ebenso eine Ergebisliste oder -tabelle.</xs:documentation>
+      </xs:annotation>
+      <xs:sequence>
+         <xs:choice>
+            <xs:element name="boolean" type="xs:boolean"/>
+            <xs:element name="number" type="xs:long"/>
+            <xs:element name="text" type="din91379:datatypeD"/>
+            <xs:element name="ref.daten" type="tns:Type.INSO.IRI.ReferenzDaten"/>
+            <xs:element name="date" type="xs:date"/>
+            <xs:element name="time" type="xs:time"/>
+            <xs:element name="zeitpunkt" type="xs:dateTime"/>
+            <xs:element name="zeitraum" type="tns:Type.GDS.Xdomea.ZeitraumType"/>
+            <xs:element name="betrag" type="tns:Type.GDS.Geldbetrag"/>
+            <xs:element name="url" type="tns:Type.INSO.IRI.URL"/>
+            <xs:element name="tabelle" type="tns:Type.INSO.IRI.Ergebnistabelle"/>
+            <xs:element name="liste" type="tns:Type.INSO.IRI.Ergebnisliste"/>
+         </xs:choice>
+      </xs:sequence>
+   </xs:complexType>
+   <xs:complexType name="Type.INSO.IRI.Ergebnisliste">
+      <xs:annotation>
+         <xs:documentation>Dieser Typ definiert die Struktur einer generischen Ergebnisliste.</xs:documentation>
+      </xs:annotation>
+      <xs:sequence>
+         <xs:element name="format" minOccurs="0" type="tns:Type.INSO.IRI.ReferenzDaten">
+            <xs:annotation>
+               <xs:documentation>Das Element kann zum Formatieren der Liste verwendet werden.</xs:documentation>
+            </xs:annotation>
+         </xs:element>
+         <xs:element name="ergebnis"
+                     minOccurs="0"
+                     type="tns:Type.INSO.IRI.Ergebnisdaten.einfach"/>
+      </xs:sequence>
+   </xs:complexType>
+   <xs:complexType name="Type.INSO.IRI.Ergebnistabelle">
+      <xs:annotation>
+         <xs:documentation>Dieser Typ definiert eine generische Struktur für eine Ergebnistabelle.</xs:documentation>
+      </xs:annotation>
+      <xs:sequence>
+         <xs:element name="ueberschriften" minOccurs="0">
+            <xs:complexType>
+               <xs:sequence>
+                  <xs:element name="spalte" maxOccurs="unbounded">
+                     <xs:complexType>
+                        <xs:sequence>
+                           <xs:element name="schluessel" type="xs:token"/>
+                           <xs:element name="text" minOccurs="0" type="din91379:datatypeD"/>
+                        </xs:sequence>
+                     </xs:complexType>
+                  </xs:element>
+               </xs:sequence>
+            </xs:complexType>
+         </xs:element>
+         <xs:element name="datenzeile" minOccurs="0" maxOccurs="unbounded">
+            <xs:complexType>
+               <xs:sequence>
+                  <xs:element name="feld"
+                              maxOccurs="unbounded"
+                              type="tns:Type.INSO.IRI.Ergebnisdaten.komplex"/>
+               </xs:sequence>
+            </xs:complexType>
+         </xs:element>
+      </xs:sequence>
+   </xs:complexType>
+   <xs:complexType name="Type.INSO.IRI.FeldRenderingInfo">
+      <xs:annotation>
+         <xs:documentation>Dieser Typ dient dazu, die Darstellung von Datenelementen zu steuern.</xs:documentation>
+      </xs:annotation>
+      <xs:sequence>
+         <xs:element name="schluessel" type="xs:token">
+            <xs:annotation>
+               <xs:documentation>Das Element referenziert den Schlüssel des Datenelements.</xs:documentation>
+            </xs:annotation>
+         </xs:element>
+         <xs:element name="typ" type="tns:Code.INSO.IRI.Feldtyp">
+            <xs:annotation>
+               <xs:documentation>Der Typ des referenzierten Datenelements</xs:documentation>
+            </xs:annotation>
+         </xs:element>
+         <xs:element name="beschreibung"
+                     minOccurs="0"
+                     maxOccurs="unbounded"
+                     type="tns:Type.INSO.IRI.QualifizierterText">
+            <xs:annotation>
+               <xs:documentation>Das Element dient dazu, das Label des referenzierten Feldes in der Sprache des betreffenden Mitgliedstaats anzugeben.</xs:documentation>
+            </xs:annotation>
+         </xs:element>
+         <xs:element name="layoutOptionen" minOccurs="0">
+            <xs:annotation>
+               <xs:documentation>Hier wird angegeben, wie die Darstellung des referenzierten Elements angepasst werden kann.</xs:documentation>
+            </xs:annotation>
+            <xs:complexType>
+               <xs:sequence>
+                  <xs:element name="fett" minOccurs="0" default="false" type="xs:boolean"/>
+                  <xs:element name="kursiv" minOccurs="0" default="false" type="xs:boolean"/>
+                  <xs:element name="richtung" minOccurs="0" type="xs:token">
+                     <xs:annotation>
+                        <xs:documentation>Hier ist einer der Werte 'HORIZONTAL' oder 'VERTICAL' einzutragen.</xs:documentation>
+                     </xs:annotation>
+                  </xs:element>
+                  <xs:element name="sortierung"
+                              minOccurs="0"
+                              default="ALPHABETICAL"
+                              type="xs:token">
+                     <xs:annotation>
+                        <xs:documentation>Hier ist einer der Werte 'ALPHABETICAL' oder 'NATURAL' einzutragen.</xs:documentation>
+                     </xs:annotation>
+                  </xs:element>
+               </xs:sequence>
+            </xs:complexType>
+         </xs:element>
+      </xs:sequence>
+   </xs:complexType>
+   <xs:complexType name="Type.INSO.IRI.Hinweis">
+      <xs:annotation>
+         <xs:documentation>Der Typ dient dazu, die erkannten Fehler oder Warnungen zu beschreiben.</xs:documentation>
+      </xs:annotation>
+      <xs:sequence>
+         <xs:element name="code" type="xs:token">
+            <xs:annotation>
+               <xs:documentation>Mögliche Codes können der Codeliste Code.INSO.IRI.Fehlercode entnommen werden.</xs:documentation>
+            </xs:annotation>
+         </xs:element>
+         <xs:element name="xpath" minOccurs="0" type="din91379:datatypeC">
+            <xs:annotation>
+               <xs:documentation>Das Element wird derzeit nicht verwendet und ist für eine mögliche zukünftige Verwendung reserviert.</xs:documentation>
+            </xs:annotation>
+         </xs:element>
+         <xs:element name="detail" minOccurs="0" type="din91379:datatypeC">
+            <xs:annotation>
+               <xs:documentation>Das Element kann zur weiteren Charakterisierung des erkannten Fehlers oder der erkannten Warnung verwendet werden.</xs:documentation>
+            </xs:annotation>
+         </xs:element>
+      </xs:sequence>
+   </xs:complexType>
+   <xs:complexType name="Type.INSO.IRI.QualifizierterText">
+      <xs:annotation>
+         <xs:documentation>Ein qualifizierter Text ist ein Text, für den die Sprache angegeben ist, in der er ausgedrückt wird.</xs:documentation>
+      </xs:annotation>
+      <xs:sequence>
+         <xs:element name="text" type="din91379:datatypeC"/>
+         <xs:element name="sprache" type="tns:Code.GDS.Sprachen"/>
+      </xs:sequence>
+   </xs:complexType>
+   <xs:complexType name="Type.INSO.IRI.ReferenzDaten">
+      <xs:annotation>
+         <xs:documentation>Dieser Typ dient dazu, auf vordefinierte Werte zu verweisen.</xs:documentation>
+      </xs:annotation>
+      <xs:sequence>
+         <xs:element name="schluessel" type="xs:token">
+            <xs:annotation>
+               <xs:documentation>Referenz auf einen vordefinierten Wert</xs:documentation>
+            </xs:annotation>
+         </xs:element>
+         <xs:element name="uebersetzbar"
+                     minOccurs="0"
+                     default="true"
+                     type="xs:boolean">
+            <xs:annotation>
+               <xs:documentation>Hier kann angegeben werden , ob der Wert die Möglichkeit der Übersetzung unterstützt.</xs:documentation>
+            </xs:annotation>
+         </xs:element>
+         <xs:element name="beschreibung"
+                     minOccurs="0"
+                     maxOccurs="unbounded"
+                     type="tns:Type.INSO.IRI.QualifizierterText">
+            <xs:annotation>
+               <xs:documentation>Eine Liste mit einem oder mehreren 'qualifizierten' Texten, die die Übersetzung des vordefinierten Werts in die Amtssprache (n) der betreffenden Mitgliedstaaten ermöglichen.</xs:documentation>
+            </xs:annotation>
+         </xs:element>
+      </xs:sequence>
+   </xs:complexType>
+   <xs:complexType name="Type.INSO.IRI.URL">
+      <xs:sequence>
+         <xs:element name="adresse" type="din91379:datatypeB"/>
+         <xs:element name="label" minOccurs="0" type="din91379:datatypeC"/>
+         <xs:element name="sprache" minOccurs="0" type="tns:Code.GDS.Sprachen"/>
+         <xs:element name="gebuehr" minOccurs="0" type="tns:Type.GDS.Geldbetrag"/>
+      </xs:sequence>
+   </xs:complexType>
+   <xs:complexType name="Type.INSO.Vollmacht">
+      <xs:sequence>
+         <xs:element name="referenz" type="tns:Type.GDS.Ref.Rollennummer">
+            <xs:annotation>
+               <xs:documentation>Darf nur einmal pro Ref_Rollennummer vorkommen, d.h. die Referenz ist hier "unique" innerhalb des Dokuments.Verweis auf zugehörige Rolle des Bevollmächtigten.</xs:documentation>
+            </xs:annotation>
+         </xs:element>
+         <xs:element name="untervollmacht" type="xs:boolean"/>
+         <xs:element name="blattzahlDerVollmacht"
+                     minOccurs="0"
+                     type="din91379:datatypeC">
+            <xs:annotation>
+               <xs:documentation>Nr. des Blattes der schriftlichen Vollmacht im Gerichtsakt. Maximal 20 Zeichen.</xs:documentation>
+            </xs:annotation>
+         </xs:element>
+      </xs:sequence>
+   </xs:complexType>
+   <xs:element name="nachricht.inso.uebergabe_weitereBeteiligte.0300001">
+      <xs:annotation>
+         <xs:documentation>Die Nachricht dient der Übergabe der Daten der Anteilsinhaber und ihre Zuordnung zu einem Insolvenzplan, sowie der Übergabe der Daten von weiteren Antragsteller, Vermögensträgern und Debitoren.</xs:documentation>
+      </xs:annotation>
+      <xs:complexType>
+         <xs:sequence>
+            <xs:element name="nachrichtenkopf" type="tns:Type.GDS.Nachrichtenkopf"/>
+            <xs:element name="grunddaten" type="tns:Type.GDS.Grunddaten"/>
+            <xs:element name="schriftgutobjekte"
+                        minOccurs="0"
+                        type="tns:Type.GDS.Schriftgutobjekte"/>
+            <xs:element name="fachdaten">
+               <xs:complexType>
+                  <xs:sequence>
+                     <xs:element name="anteilsinformationen" minOccurs="0">
+                        <xs:annotation>
+                           <xs:documentation>Das Element ist nur im Zusammenhang mit der Übermittlung einer Nachricht mit Ereignis '038' zulässig.</xs:documentation>
+                        </xs:annotation>
+                        <xs:complexType>
+                           <xs:sequence>
+                              <xs:element name="abstimmungsgruppen"
+                                          maxOccurs="unbounded"
+                                          type="tns:Type.INSO.Abstimmungsgruppe"/>
+                              <xs:element name="anteilsinhaberschaft"
+                                          maxOccurs="unbounded"
+                                          type="tns:Type.INSO.Anteilsinhaberschaft">
+                                 <xs:annotation>
+                                    <xs:documentation>Das Element darf nur auf Rollen mit der Rollenbezeichnung 243 = Anteilsinhaber(in) referenzieren.</xs:documentation>
+                                 </xs:annotation>
+                              </xs:element>
+                           </xs:sequence>
+                        </xs:complexType>
+                     </xs:element>
+                     <xs:element name="beteiligte.inso"
+                                 minOccurs="0"
+                                 maxOccurs="unbounded"
+                                 type="tns:Type.INSO.Beteiligte">
+                        <xs:annotation>
+                           <xs:documentation>Für jeden im Grunddatensatz übergebenen Beteiligten können weitergehende Informationen übergeben werden.</xs:documentation>
+                        </xs:annotation>
+                     </xs:element>
+                     <xs:element name="vollmacht"
+                                 minOccurs="0"
+                                 maxOccurs="unbounded"
+                                 type="tns:Type.INSO.Vollmacht"/>
+                  </xs:sequence>
+               </xs:complexType>
+            </xs:element>
+         </xs:sequence>
+      </xs:complexType>
+   </xs:element>
+   <xs:element name="nachricht.inso.insolvenztabelle.uebergabe.0300005">
+      <xs:annotation>
+         <xs:documentation>Der Insolvenzverwalter erstellt aus den bei ihm eingehenden Forderungsanmeldungen der Gläubiger eine Tabelle, die er vor dem Prüfungstermin dem Insolvenzgericht übermittelt. Diese Insolvenztabelle besteht aus einzelnen Tabellenblättern, auf denen sich jeweils die Daten einer Forderungsanmeldung befinden. Die Nachricht ermöglicht die elektronische Übertragung der in einer Insolvenztabelle enthaltenen Daten vom Insolvenzverwalter zum Insolvenzgericht.</xs:documentation>
+      </xs:annotation>
+      <xs:complexType>
+         <xs:sequence>
+            <xs:element name="nachrichtenkopf" type="tns:Type.GDS.Nachrichtenkopf"/>
+            <xs:element name="grunddaten" type="tns:Type.GDS.Grunddaten"/>
+            <xs:element name="schriftgutobjekte"
+                        minOccurs="0"
+                        type="tns:Type.GDS.Schriftgutobjekte"/>
+            <xs:element name="fachdaten"
+                        type="tns:Type.INSO.Fachdaten.Insolvenztabelle.Uebergabe"/>
+         </xs:sequence>
+      </xs:complexType>
+   </xs:element>
+   <xs:element name="nachricht.inso.insolvenztabelle.uebergabe.aenderung.0300006">
+      <xs:annotation>
+         <xs:documentation>Diese Nachricht ermöglicht die elektronische Übertragung von Änderungsdaten zu einer bereits (mittels nachricht.inso.insolvenztabelle.uebergabe.0300005) übermittelten Insolvenztabelle durch den Insolvenzverwalter zum Insolvenzgericht. Die Nachricht kann mehrmals zur selben Ursprungsnachricht vom Typ nachricht.inso.insolvenztabelle.uebergabe.0300005 übermittelt werden. Ohne diese Änderungsnachricht wären keine nachträglichen Korrekturen (elektronisch) in Bezug auf die bereits zum Insolvenzgericht übermittelte Insolvenztabelle mehr möglich.</xs:documentation>
+      </xs:annotation>
+      <xs:complexType>
+         <xs:sequence>
+            <xs:element name="nachrichtenkopf" type="tns:Type.GDS.Nachrichtenkopf"/>
+            <xs:element name="grunddaten" type="tns:Type.GDS.Grunddaten"/>
+            <xs:element name="schriftgutobjekte"
+                        minOccurs="0"
+                        type="tns:Type.GDS.Schriftgutobjekte"/>
+            <xs:element name="fachdaten">
+               <xs:complexType>
+                  <xs:complexContent>
+                     <xs:extension base="tns:Type.INSO.Fachdaten.Insolvenztabelle.Uebergabe">
+                        <xs:sequence>
+                           <xs:element name="zuLoeschen" minOccurs="0" maxOccurs="unbounded">
+                              <xs:annotation>
+                                 <xs:documentation>Die hier aufgelisteten Identifier kennzeichnen die bereits übermittelten Informationsgruppen, die gelöscht werden sollen.</xs:documentation>
+                              </xs:annotation>
+                              <xs:complexType>
+                                 <xs:sequence>
+                                    <xs:element name="beteiligten.identifier"
+                                                minOccurs="0"
+                                                type="din91379:datatypeC"/>
+                                    <xs:element name="forderungen.identifier"
+                                                minOccurs="0"
+                                                type="din91379:datatypeC"/>
+                                    <xs:element name="gesamtglaeubiger.identifier"
+                                                minOccurs="0"
+                                                type="din91379:datatypeC"/>
+                                    <xs:element name="abstimmungsgruppen.identifier"
+                                                minOccurs="0"
+                                                type="din91379:datatypeC"/>
+                                 </xs:sequence>
+                              </xs:complexType>
+                           </xs:element>
+                        </xs:sequence>
+                     </xs:extension>
+                  </xs:complexContent>
+               </xs:complexType>
+            </xs:element>
+         </xs:sequence>
+      </xs:complexType>
+   </xs:element>
+   <xs:element name="nachricht.inso.verfahrenseroeffnung.0300009">
+      <xs:annotation>
+         <xs:documentation>Diese Nachricht wird vom Insolvenzgericht bei Eröffnung eines Insolvenzverfahrens an den Insolvenzverwalter versendet. Die Nachricht enthält u.a. Daten, die der Verwalter für die Übermittlung der Verfahrenserhebungen „B“ und „X“ im Rahmen der Statistikmitteilungen an die Statistischen Landesämter benötigt (bedingtes Mussfeld): Verfahrensnummer bzw. Verfahrens-ID (in grunddaten/ verfahrensdaten), ursprüngliches Aktenzeichen (grunddaten/ verfahrensdaten/ instanzdaten), Eröffnungsdatum (in fachdaten).</xs:documentation>
+      </xs:annotation>
+      <xs:complexType>
+         <xs:sequence>
+            <xs:element name="nachrichtenkopf" type="tns:Type.GDS.Nachrichtenkopf"/>
+            <xs:element name="grunddaten" type="tns:Type.GDS.Grunddaten"/>
+            <xs:element name="schriftgutobjekte" type="tns:Type.GDS.Schriftgutobjekte"/>
+            <xs:element name="fachdaten">
+               <xs:complexType>
+                  <xs:sequence>
+                     <xs:element name="verfahren">
+                        <xs:complexType>
+                           <xs:sequence>
+                              <xs:element name="eroeffnungsdatum" type="xs:date"/>
+                           </xs:sequence>
+                        </xs:complexType>
+                     </xs:element>
+                  </xs:sequence>
+               </xs:complexType>
+            </xs:element>
+         </xs:sequence>
+      </xs:complexType>
+   </xs:element>
+   <xs:element name="nachricht.inso.veroeffentlichung.0300010">
+      <xs:annotation>
+         <xs:documentation>Die Nachricht soll den Insolvenzgerichten ermöglichen, die nach der InsBekV vorgesehenen Bekanntmachungen unter www.insolvenzbekanntmachungen.de (Insolvenzbekanntmachungsportal der Länder) für ein Insolvenzverfahren vorzunehmen.</xs:documentation>
+      </xs:annotation>
+      <xs:complexType>
+         <xs:sequence>
+            <xs:element name="nachrichtenkopf" type="tns:Type.GDS.Nachrichtenkopf"/>
+            <xs:element name="grunddaten" type="tns:Type.GDS.Grunddaten"/>
+            <xs:element name="fachdaten">
+               <xs:complexType>
+                  <xs:sequence>
+                     <xs:element name="nachricht.id" type="din91379:datatypeC"/>
+                     <xs:element name="verfahren">
+                        <xs:complexType>
+                           <xs:sequence>
+                              <xs:element name="verfahren.id" type="din91379:datatypeC"/>
+                              <xs:element name="altverfahren.dateipfad"
+                                          minOccurs="0"
+                                          type="din91379:datatypeC"/>
+                              <xs:element name="betrifftSucheAbStichtagInsoBekVneu" type="xs:boolean"/>
+                              <xs:element name="eingeschraenkteSuche" type="xs:boolean"/>
+                              <xs:element name="aktenzeichen" type="tns:Type.GDS.Aktenzeichen"/>
+                              <xs:element name="az.frueher" minOccurs="0">
+                                 <xs:complexType>
+                                    <xs:sequence>
+                                       <xs:element name="aktenzeichenUndGericht"
+                                                   maxOccurs="unbounded"
+                                                   type="tns:Type.GDS.Aktenzeichen"/>
+                                    </xs:sequence>
+                                 </xs:complexType>
+                              </xs:element>
+                              <xs:element name="az.verbunden" minOccurs="0">
+                                 <xs:complexType>
+                                    <xs:sequence>
+                                       <xs:element name="aktenzeichen"
+                                                   maxOccurs="unbounded"
+                                                   type="tns:Type.GDS.Aktenzeichen"/>
+                                    </xs:sequence>
+                                 </xs:complexType>
+                              </xs:element>
+                              <xs:element name="verfahrensdatenAbEroeffnung" minOccurs="0">
+                                 <xs:complexType>
+                                    <xs:sequence>
+                                       <xs:element name="eroeffnungsdatum" type="xs:date"/>
+                                       <xs:element name="insolvenzverfahren.art"
+                                                   type="tns:Code.INSO.Verfahrensart_National"/>
+                                       <xs:element name="insolvenzverfahren.unterart"
+                                                   minOccurs="0"
+                                                   type="tns:Code.INSO.Verfahrensart_National_Unterart"/>
+                                       <xs:element name="zustaendigkeitArtikel3"
+                                                   type="tns:Code.INSO.Verfahrensart_International"/>
+                                       <xs:element name="auswahl_anmeldefrist" minOccurs="0">
+                                          <xs:complexType>
+                                             <xs:choice>
+                                                <xs:element name="frist.ende" type="xs:date"/>
+                                                <xs:element name="frist.berechnung" type="din91379:datatypeC"/>
+                                             </xs:choice>
+                                          </xs:complexType>
+                                       </xs:element>
+                                       <xs:element name="hauptinsolvenzEnde" minOccurs="0" type="xs:date"/>
+                                       <xs:element name="anfechtungEroeffnung">
+                                          <xs:complexType>
+                                             <xs:sequence>
+                                                <xs:element name="zustaendigesGericht" type="tns:Code.GDS.Gerichte.Typ3"/>
+                                                <xs:element name="auswahl_anfechtungEroeffnungFrist" minOccurs="0">
+                                                   <xs:complexType>
+                                                      <xs:choice>
+                                                         <xs:element name="frist.ende" type="xs:date"/>
+                                                         <xs:element name="frist.berechnung" type="din91379:datatypeC"/>
+                                                      </xs:choice>
+                                                   </xs:complexType>
+                                                </xs:element>
+                                             </xs:sequence>
+                                          </xs:complexType>
+                                       </xs:element>
+                                    </xs:sequence>
+                                 </xs:complexType>
+                              </xs:element>
+                              <xs:element name="auswahl_unternehmensgruppe" minOccurs="0">
+                                 <xs:complexType>
+                                    <xs:choice>
+                                       <xs:element name="gruppengerichtsstandsverfahren" type="xs:boolean">
+                                          <xs:annotation>
+                                             <xs:documentation>Verfahren gem. § 3a InsO</xs:documentation>
+                                          </xs:annotation>
+                                       </xs:element>
+                                       <xs:element name="koordinationsverfahren" type="xs:boolean">
+                                          <xs:annotation>
+                                             <xs:documentation>Verfahren gem. § 269a InsO</xs:documentation>
+                                          </xs:annotation>
+                                       </xs:element>
+                                       <xs:element name="gruppenkoordinationsverfahren" type="xs:boolean">
+                                          <xs:annotation>
+                                             <xs:documentation>Verfahren gem. Art. 61 EuInsVO</xs:documentation>
+                                          </xs:annotation>
+                                       </xs:element>
+                                    </xs:choice>
+                                 </xs:complexType>
+                              </xs:element>
+                           </xs:sequence>
+                        </xs:complexType>
+                     </xs:element>
+                     <xs:element name="schuldner" minOccurs="0">
+                        <xs:complexType>
+                           <xs:sequence>
+                              <xs:element name="natuerlichePerson" minOccurs="0">
+                                 <xs:complexType>
+                                    <xs:sequence>
+                                       <xs:element name="fruehererVorname"
+                                                   minOccurs="0"
+                                                   maxOccurs="unbounded"
+                                                   type="din91379:datatypeE">
+                                          <xs:annotation>
+                                             <xs:documentation>Für Historie des Vornamens</xs:documentation>
+                                          </xs:annotation>
+                                       </xs:element>
+                                       <xs:element name="handelndUnter" minOccurs="0" type="din91379:datatypeD">
+                                          <xs:annotation>
+                                             <xs:documentation>Einträge in diesem Feld sind bei der Namenssuche im Veröffentlichungsportal mitzuberücksichtigen.</xs:documentation>
+                                          </xs:annotation>
+                                       </xs:element>
+                                       <xs:element name="geburt" minOccurs="0">
+                                          <xs:complexType>
+                                             <xs:complexContent>
+                                                <xs:restriction base="tns:Type.GDS.Geburt">
+                                                   <xs:sequence>
+                                                      <xs:element name="geburtsdatum" minOccurs="0" type="tns:Type.GDS.Datumsangabe"/>
+                                                      <xs:element name="geburtsort" minOccurs="0" type="tns:Type.GDS.Ortsangabe"/>
+                                                   </xs:sequence>
+                                                </xs:restriction>
+                                             </xs:complexContent>
+                                          </xs:complexType>
+                                       </xs:element>
+                                    </xs:sequence>
+                                 </xs:complexType>
+                              </xs:element>
+                              <xs:element name="registereintrag" minOccurs="0">
+                                 <xs:complexType>
+                                    <xs:sequence>
+                                       <xs:element name="deutschesUnternehmen" minOccurs="0">
+                                          <xs:complexType>
+                                             <xs:sequence>
+                                                <xs:element name="registergericht" type="tns:Code.GDS.Gerichte.Typ3"/>
+                                                <xs:element name="registerart" type="tns:Code.INSO.Registerart"/>
+                                             </xs:sequence>
+                                          </xs:complexType>
+                                       </xs:element>
+                                       <xs:element name="registernummer" type="din91379:datatypeC"/>
+                                    </xs:sequence>
+                                 </xs:complexType>
+                              </xs:element>
+                           </xs:sequence>
+                        </xs:complexType>
+                     </xs:element>
+                     <xs:element name="verwalter" minOccurs="0" maxOccurs="unbounded">
+                        <xs:complexType>
+                           <xs:sequence>
+                              <xs:element name="ref.rollennummer" type="din91379:datatypeC"/>
+                              <xs:element name="telekommunikation" minOccurs="0" maxOccurs="unbounded">
+                                 <xs:complexType>
+                                    <xs:sequence>
+                                       <xs:element name="telekommunikationsart" type="tns:Code.GDS.Telekommunikationsart"/>
+                                       <xs:element name="verbindung" type="din91379:datatypeC"/>
+                                    </xs:sequence>
+                                 </xs:complexType>
+                              </xs:element>
+                           </xs:sequence>
+                        </xs:complexType>
+                     </xs:element>
+                     <xs:element name="veroeffentlichung">
+                        <xs:complexType>
+                           <xs:sequence>
+                              <xs:element name="veroeffentlichung.id" type="din91379:datatypeC"/>
+                              <xs:element name="veroeffentlichungstext" type="din91379:datatypeD"/>
+                              <xs:element name="gegenstandVeroeffentlichung"
+                                          type="tns:Code.INSO.Veroeffentlichungsgegenstand"/>
+                              <xs:element name="loeschdatum" minOccurs="0" type="xs:date"/>
+                              <xs:element name="mitarbeiterkennziffer"
+                                          minOccurs="0"
+                                          type="din91379:datatypeC"/>
+                           </xs:sequence>
+                        </xs:complexType>
+                     </xs:element>
+                  </xs:sequence>
+               </xs:complexType>
+            </xs:element>
+         </xs:sequence>
+      </xs:complexType>
+   </xs:element>
+   <xs:element name="nachricht.inso.veroeffentlichung_loeschung.0300011">
+      <xs:annotation>
+         <xs:documentation>Mit dieser Nachricht können Insolvenzgerichte für ein Insolvenzverfahren Löschaufträge für Veröffentlichungen versenden, die zuvor per nachricht.inso.veroeffentlichung.0300010 übermittelt wurden.</xs:documentation>
+      </xs:annotation>
+      <xs:complexType>
+         <xs:sequence>
+            <xs:element name="nachrichtenkopf" type="tns:Type.GDS.Nachrichtenkopf"/>
+            <xs:element name="grunddaten" type="tns:Type.GDS.Grunddaten"/>
+            <xs:element name="fachdaten">
+               <xs:complexType>
+                  <xs:sequence>
+                     <xs:element name="nachricht.id" type="din91379:datatypeC"/>
+                     <xs:element name="mitarbeiterkennziffer"
+                                 minOccurs="0"
+                                 type="din91379:datatypeC"/>
+                     <xs:element name="verfahren">
+                        <xs:complexType>
+                           <xs:sequence>
+                              <xs:element name="verfahren.id" type="din91379:datatypeC"/>
+                              <xs:element name="altverfahren.dateipfad"
+                                          minOccurs="0"
+                                          type="din91379:datatypeC"/>
+                           </xs:sequence>
+                        </xs:complexType>
+                     </xs:element>
+                     <xs:element name="auswahl_loeschart">
+                        <xs:complexType>
+                           <xs:choice>
+                              <xs:element name="loeschungNachFristablauf">
+                                 <xs:complexType>
+                                    <xs:sequence>
+                                       <xs:element name="gegenstandVeroeffentlichung"
+                                                   type="tns:Code.INSO.Veroeffentlichungsgegenstand"/>
+                                       <xs:element name="verfahrensabschnitt" minOccurs="0" type="din91379:datatypeC"/>
+                                       <xs:element name="loeschfrist">
+                                          <xs:complexType>
+                                             <xs:choice>
+                                                <xs:element name="loeschdatum" type="xs:date"/>
+                                                <xs:element name="stornoLoeschdatum" type="xs:boolean"/>
+                                             </xs:choice>
+                                          </xs:complexType>
+                                       </xs:element>
+                                    </xs:sequence>
+                                 </xs:complexType>
+                              </xs:element>
+                              <xs:element name="direktloeschung">
+                                 <xs:complexType>
+                                    <xs:sequence>
+                                       <xs:element name="veroeffentlichung.id" type="din91379:datatypeC"/>
+                                    </xs:sequence>
+                                 </xs:complexType>
+                              </xs:element>
+                           </xs:choice>
+                        </xs:complexType>
+                     </xs:element>
+                  </xs:sequence>
+               </xs:complexType>
+            </xs:element>
+         </xs:sequence>
+      </xs:complexType>
+   </xs:element>
+   <xs:element name="nachricht.inso.veroeffentlichungsportal_verarbeitungsbestaetigung.0300012">
+      <xs:annotation>
+         <xs:documentation>Die Nachricht wird als Antwort des Insolvenzportals (Positiv- und Negativfall) zu den in den Abschnitten 4.3.6 und 4.3.7. beschriebenen Nachrichten an die Insolvenzgerichte übermittelt.</xs:documentation>
+      </xs:annotation>
+      <xs:complexType>
+         <xs:sequence>
+            <xs:element name="nachrichtenkopf" type="tns:Type.GDS.Nachrichtenkopf"/>
+            <xs:element name="grunddaten" type="tns:Type.GDS.Grunddaten"/>
+            <xs:element name="fachdaten">
+               <xs:complexType>
+                  <xs:sequence>
+                     <xs:element name="verfahren">
+                        <xs:complexType>
+                           <xs:sequence>
+                              <xs:element name="verfahren.id" type="din91379:datatypeC"/>
+                              <xs:element name="altverfahren.dateipfad"
+                                          minOccurs="0"
+                                          type="din91379:datatypeC"/>
+                              <xs:element name="aktenzeichen" type="tns:Type.GDS.Aktenzeichen"/>
+                           </xs:sequence>
+                        </xs:complexType>
+                     </xs:element>
+                     <xs:element name="auswahl_portal.ergebnis">
+                        <xs:complexType>
+                           <xs:choice>
+                              <xs:element name="ergebnis.einlieferung">
+                                 <xs:complexType>
+                                    <xs:sequence>
+                                       <xs:element name="verarbeiteteNachricht" maxOccurs="unbounded">
+                                          <xs:complexType>
+                                             <xs:sequence>
+                                                <xs:element name="ref.nachricht.id" type="din91379:datatypeC"/>
+                                                <xs:element name="gegenstandVeroeffentlichung"
+                                                            type="tns:Code.INSO.Veroeffentlichungsgegenstand"/>
+                                                <xs:element name="auswahl_nachrichttyp">
+                                                   <xs:complexType>
+                                                      <xs:choice>
+                                                         <xs:element name="veroeffentlichung">
+                                                            <xs:complexType>
+                                                               <xs:sequence>
+                                                                  <xs:element name="veroeffentlichung.id" type="din91379:datatypeC"/>
+                                                                  <xs:element name="veroeffentlichungstext" type="din91379:datatypeD"/>
+                                                                  <xs:element name="veroeffentlichungsdatum" minOccurs="0" type="xs:date"/>
+                                                                  <xs:element name="loeschdatum" minOccurs="0" type="xs:date"/>
+                                                               </xs:sequence>
+                                                            </xs:complexType>
+                                                         </xs:element>
+                                                         <xs:element name="loeschfrist">
+                                                            <xs:complexType>
+                                                               <xs:choice>
+                                                                  <xs:element name="loeschdatum" type="xs:date"/>
+                                                                  <xs:element name="stornoLoeschdatum" type="xs:boolean"/>
+                                                               </xs:choice>
+                                                            </xs:complexType>
+                                                         </xs:element>
+                                                      </xs:choice>
+                                                   </xs:complexType>
+                                                </xs:element>
+                                                <xs:element name="verarbeitungszeitpunkt" type="xs:dateTime"/>
+                                                <xs:element name="verarbeitungsergebnis"
+                                                            type="tns:Code.INSO.Ergebnis.VOE_Verarbeitungsbestaetigung"/>
+                                                <xs:element name="fehlertext" minOccurs="0" type="din91379:datatypeD"/>
+                                             </xs:sequence>
+                                          </xs:complexType>
+                                       </xs:element>
+                                    </xs:sequence>
+                                 </xs:complexType>
+                              </xs:element>
+                              <xs:element name="ergebnis.loeschung">
+                                 <xs:complexType>
+                                    <xs:sequence>
+                                       <xs:element name="loeschung" maxOccurs="unbounded">
+                                          <xs:complexType>
+                                             <xs:sequence>
+                                                <xs:element name="veroeffentlichung.id" type="din91379:datatypeC"/>
+                                                <xs:element name="dateiname" minOccurs="0" type="din91379:datatypeC"/>
+                                                <xs:element name="verarbeitungszeitpunkt" type="xs:dateTime"/>
+                                                <xs:element name="verarbeitungsergebnis"
+                                                            type="tns:Code.INSO.Ergebnis.VOE_Verarbeitungsbestaetigung"/>
+                                                <xs:element name="fehlertext" minOccurs="0" type="din91379:datatypeD"/>
+                                                <xs:element name="direktloeschung" type="xs:boolean"/>
+                                             </xs:sequence>
+                                          </xs:complexType>
+                                       </xs:element>
+                                    </xs:sequence>
+                                 </xs:complexType>
+                              </xs:element>
+                           </xs:choice>
+                        </xs:complexType>
+                     </xs:element>
+                  </xs:sequence>
+               </xs:complexType>
+            </xs:element>
+         </xs:sequence>
+      </xs:complexType>
+   </xs:element>
+   <xs:element name="nachricht.inso.vollzaehligkeitsmitteilung.0300014">
+      <xs:annotation>
+         <xs:documentation>Diese Nachricht beinhaltet eine Sammelinformation des Insolvenzgerichts zu mehreren Verfahren gerichtet an das statistische Bundesamt aufgrund des Insolvenzstatistikgesetzes. Die Nachricht soll die in § 4 InsStatG vorgeschriebene jährliche Mitteilung der Insolvenzgerichte an die Statistischen Ämter in elektronischer Form ermöglichen.</xs:documentation>
+      </xs:annotation>
+      <xs:complexType>
+         <xs:sequence>
+            <xs:element name="nachrichtenkopf" type="tns:Type.GDS.Nachrichtenkopf"/>
+            <xs:element name="fachdaten" minOccurs="0">
+               <xs:complexType>
+                  <xs:sequence>
+                     <xs:element name="name.gericht" minOccurs="0" type="din91379:datatypeA">
+                        <xs:annotation>
+                           <xs:documentation>Dieses Element kommt aufgrund BEG III hinzu.</xs:documentation>
+                        </xs:annotation>
+                     </xs:element>
+                     <xs:element name="ansprechpartner.gericht" minOccurs="0" maxOccurs="unbounded">
+                        <xs:annotation>
+                           <xs:documentation>Dieses Element kommt aufgrund BEG III hinzu.</xs:documentation>
+                        </xs:annotation>
+                        <xs:complexType>
+                           <xs:sequence>
+                              <xs:element name="name" minOccurs="0" type="din91379:datatypeA"/>
+                              <xs:element name="telekommunikation"
+                                          minOccurs="0"
+                                          maxOccurs="unbounded"
+                                          type="tns:Type.GDS.Kommunikation"/>
+                           </xs:sequence>
+                        </xs:complexType>
+                     </xs:element>
+                     <xs:element name="verwalter" minOccurs="0" maxOccurs="unbounded">
+                        <xs:annotation>
+                           <xs:documentation>Hier sind zu jedem Verwalter, Sachwalter oder Treuhänder, die Meldungen an das StatBA geliefert haben, Angaben zu machen. Diese Angaben dienen nur der Zuordnung und zur Erleichterung von Rückfragen.</xs:documentation>
+                        </xs:annotation>
+                        <xs:complexType>
+                           <xs:sequence>
+                              <xs:element name="verwalternummer" type="din91379:datatypeC">
+                                 <xs:annotation>
+                                    <xs:documentation>Eindeutige Nummer innerhalb der XML-Datei.</xs:documentation>
+                                 </xs:annotation>
+                              </xs:element>
+                              <xs:element name="vollerName" type="tns:Type.GDS.NameNatuerlichePerson"/>
+                              <xs:element name="anschrift" minOccurs="0" type="tns:Type.GDS.Anschrift"/>
+                              <xs:element name="telekommunikation"
+                                          minOccurs="0"
+                                          maxOccurs="unbounded"
+                                          type="tns:Type.GDS.Kommunikation"/>
+                              <xs:element name="kennung" minOccurs="0" type="din91379:datatypeC">
+                                 <xs:annotation>
+                                    <xs:documentation>Hier ist die Angabe einer eindeutigen Kennung des Verwalters, Sachwalters oder Treuhänders für eine gesicherte Zuordnung möglich.</xs:documentation>
+                                 </xs:annotation>
+                              </xs:element>
+                           </xs:sequence>
+                        </xs:complexType>
+                     </xs:element>
+                     <xs:element name="liste.verfahren" minOccurs="0" maxOccurs="unbounded">
+                        <xs:annotation>
+                           <xs:documentation>Mindestens EINE Liste der gemeldeten Verfahren pro Verwalter. Ansonsten sind keine Vorgaben festgelegt, ob die Lieferung in einer einzigen Datei erfolgen soll oder in mehreren Dateien erfolgen kann. Die erste Lieferung im Mai 2013 kann in einer einzigen Datei erfolgen mit jeweils einer Liste pro Verwalter für die Berichtsjahre 2009 - 2012 (wie gesetzlich gefordert).</xs:documentation>
+                        </xs:annotation>
+                        <xs:complexType>
+                           <xs:sequence>
+                              <xs:element name="ref.verwalternummer" type="din91379:datatypeC">
+                                 <xs:annotation>
+                                    <xs:documentation>Referenz auf die Verwalternummer des Elements Verwalter.</xs:documentation>
+                                 </xs:annotation>
+                              </xs:element>
+                              <xs:element name="berichtsjahr"
+                                          maxOccurs="unbounded"
+                                          type="tns:Type.INSO.Berichtsjahr_Listen"/>
+                           </xs:sequence>
+                        </xs:complexType>
+                     </xs:element>
+                  </xs:sequence>
+               </xs:complexType>
+            </xs:element>
+         </xs:sequence>
+      </xs:complexType>
+   </xs:element>
+   <xs:element name="nachricht.inso.veroeffentlichung_gerichtssuche.0300016">
+      <xs:annotation>
+         <xs:documentation>Diese Nachricht dient den Insolvenzgerichten zu Recherchezwecken im Insolvenzportal.</xs:documentation>
+      </xs:annotation>
+      <xs:complexType>
+         <xs:sequence>
+            <xs:element name="nachrichtenkopf" type="tns:Type.GDS.Nachrichtenkopf"/>
+            <xs:element name="grunddaten" type="tns:Type.GDS.Grunddaten"/>
+            <xs:element name="fachdaten">
+               <xs:complexType>
+                  <xs:sequence>
+                     <xs:element name="verfahren" minOccurs="0" maxOccurs="unbounded">
+                        <xs:complexType>
+                           <xs:sequence>
+                              <xs:element name="verfahren.id" type="din91379:datatypeC"/>
+                              <xs:element name="altverfahren.dateipfad"
+                                          minOccurs="0"
+                                          type="din91379:datatypeC"/>
+                              <xs:element name="aktenzeichen" type="tns:Type.GDS.Aktenzeichen"/>
+                              <xs:element name="az.frueher" minOccurs="0">
+                                 <xs:complexType>
+                                    <xs:sequence>
+                                       <xs:element name="aktenzeichenUndGericht"
+                                                   maxOccurs="unbounded"
+                                                   type="tns:Type.GDS.Aktenzeichen"/>
+                                    </xs:sequence>
+                                 </xs:complexType>
+                              </xs:element>
+                              <xs:element name="ref.hauptverfahren.id"
+                                          minOccurs="0"
+                                          type="din91379:datatypeC"/>
+                              <xs:element name="az.verbunden" minOccurs="0">
+                                 <xs:complexType>
+                                    <xs:sequence>
+                                       <xs:element name="aktenzeichenUndVerfahrenID" maxOccurs="unbounded">
+                                          <xs:complexType>
+                                             <xs:complexContent>
+                                                <xs:extension base="tns:Type.GDS.Aktenzeichen">
+                                                   <xs:sequence>
+                                                      <xs:element name="ref.nebenverfahren.id"
+                                                                  minOccurs="0"
+                                                                  type="din91379:datatypeC"/>
+                                                   </xs:sequence>
+                                                </xs:extension>
+                                             </xs:complexContent>
+                                          </xs:complexType>
+                                       </xs:element>
+                                    </xs:sequence>
+                                 </xs:complexType>
+                              </xs:element>
+                              <xs:element name="loeschfristen">
+                                 <xs:complexType>
+                                    <xs:sequence>
+                                       <xs:element name="loeschfrist.verfahren" minOccurs="0" type="xs:date"/>
+                                       <xs:element name="loeschfrist.rsb" minOccurs="0" type="xs:date"/>
+                                       <xs:element name="loeschfrist.plan" minOccurs="0" type="xs:date"/>
+                                    </xs:sequence>
+                                 </xs:complexType>
+                              </xs:element>
+                              <xs:element name="veroeffentlichung" maxOccurs="unbounded">
+                                 <xs:complexType>
+                                    <xs:sequence>
+                                       <xs:element name="schuldnername" minOccurs="0" type="din91379:datatypeA"/>
+                                       <xs:element name="schuldnervorname" minOccurs="0" type="din91379:datatypeA"/>
+                                       <xs:element name="schuldnersitz.wohnsitz"
+                                                   minOccurs="0"
+                                                   type="din91379:datatypeB"/>
+                                       <xs:element name="veroeffentlichungsdatum" type="xs:date"/>
+                                       <xs:element name="einlieferungszeitpunkt" type="xs:dateTime"/>
+                                       <xs:element name="veroeffentlichung.id" type="din91379:datatypeC"/>
+                                       <xs:element name="dateiname" minOccurs="0" type="din91379:datatypeC"/>
+                                       <xs:element name="veroeffentlichungstext" type="din91379:datatypeD"/>
+                                       <xs:element name="gegenstandDerVeroeffentlichung"
+                                                   type="tns:Code.INSO.Veroeffentlichungsgegenstand"/>
+                                       <xs:element name="loeschdatum" minOccurs="0" type="xs:date"/>
+                                    </xs:sequence>
+                                 </xs:complexType>
+                              </xs:element>
+                           </xs:sequence>
+                        </xs:complexType>
+                     </xs:element>
+                  </xs:sequence>
+               </xs:complexType>
+            </xs:element>
+         </xs:sequence>
+      </xs:complexType>
+   </xs:element>
+   <xs:element name="nachricht.inso.iri.initialisierung.anfrage.0300017">
+      <xs:annotation>
+         <xs:documentation>Die Initialisierungsanfrage dient der Ermittlung der Felder, die vom Portal des jeweiligen Mitgliedsstaates zurückgeliefert werden können. Für die Anfragenachricht gibt es keine fachspezifischen Datenelemente.</xs:documentation>
+      </xs:annotation>
+      <xs:complexType>
+         <xs:sequence>
+            <xs:element name="nachrichtenkopf" type="tns:Type.GDS.Nachrichtenkopf"/>
+         </xs:sequence>
+      </xs:complexType>
+   </xs:element>
+   <xs:element name="nachricht.inso.iri.initialisierung.antwort.0300018">
+      <xs:annotation>
+         <xs:documentation>Die Initialisierungsantwort dient der Übermittlung der Datenfelder, die vom Portal des jeweiligen Mitgliedsstaates zurückgeliefert werden können.</xs:documentation>
+      </xs:annotation>
+      <xs:complexType>
+         <xs:sequence>
+            <xs:element name="nachrichtenkopf" type="tns:Type.GDS.Nachrichtenkopf"/>
+            <xs:element name="fachdaten">
+               <xs:complexType>
+                  <xs:sequence>
+                     <xs:element name="feld"
+                                 maxOccurs="unbounded"
+                                 type="tns:Type.INSO.IRI.FeldRenderingInfo"/>
+                     <xs:element name="abschnitt" minOccurs="0" maxOccurs="unbounded">
+                        <xs:complexType>
+                           <xs:sequence>
+                              <xs:element name="schluessel" type="xs:token"/>
+                              <xs:element name="beschreibung"
+                                          minOccurs="0"
+                                          type="tns:Type.INSO.IRI.QualifizierterText"/>
+                           </xs:sequence>
+                        </xs:complexType>
+                     </xs:element>
+                     <xs:element name="kontext" type="tns:Type.INSO.IRI.Basiskontext"/>
+                  </xs:sequence>
+               </xs:complexType>
+            </xs:element>
+         </xs:sequence>
+      </xs:complexType>
+   </xs:element>
+   <xs:element name="nachricht.inso.iri.einfacheSuche.anfrage.0300019">
+      <xs:annotation>
+         <xs:documentation>Diese Suchanfrage dient dazu, bei dem Portal des Mitgliedsstaates eine Trefferliste basierend auf einem Suchparameter abzurufen. Der Suchparameter kann nur ein Name oder eine ID sein.</xs:documentation>
+      </xs:annotation>
+      <xs:complexType>
+         <xs:sequence>
+            <xs:element name="nachrichtenkopf" type="tns:Type.GDS.Nachrichtenkopf"/>
+            <xs:element name="fachdaten">
+               <xs:complexType>
+                  <xs:sequence>
+                     <xs:element name="name" minOccurs="0" type="din91379:datatypeD">
+                        <xs:annotation>
+                           <xs:documentation>Der Name oder ein Teil des Namens, nach dem gesucht werden soll, z.B. der Nachname einer natürlichen Person oder der Firmenname eines Unternehmens.</xs:documentation>
+                        </xs:annotation>
+                     </xs:element>
+                     <xs:element name="id.national" minOccurs="0" type="din91379:datatypeC">
+                        <xs:annotation>
+                           <xs:documentation>Eine (nationale) Registrierungs-ID, z.B. die Handelsregisternummer eines Unternehmens</xs:documentation>
+                        </xs:annotation>
+                     </xs:element>
+                     <xs:element name="maxErgebnis" minOccurs="0" type="xs:positiveInteger">
+                        <xs:annotation>
+                           <xs:documentation>Die maximale Anzahl an Treffern, die vom nationalen Portal zurückgegeben werden sollen.</xs:documentation>
+                        </xs:annotation>
+                     </xs:element>
+                  </xs:sequence>
+               </xs:complexType>
+            </xs:element>
+         </xs:sequence>
+      </xs:complexType>
+   </xs:element>
+   <xs:element name="nachricht.inso.iri.einfacheSuche.antwort.0300020">
+      <xs:annotation>
+         <xs:documentation>Die Antwortnachricht zur einfachen Suchanfrage gibt zu dem angefragten Suchparameter eine Trefferliste zurück.</xs:documentation>
+      </xs:annotation>
+      <xs:complexType>
+         <xs:sequence>
+            <xs:element name="nachrichtenkopf" type="tns:Type.GDS.Nachrichtenkopf"/>
+            <xs:element name="fachdaten">
+               <xs:complexType>
+                  <xs:sequence>
+                     <xs:element name="info"
+                                 minOccurs="0"
+                                 maxOccurs="unbounded"
+                                 type="tns:Type.INSO.IRI.ReferenzDaten">
+                        <xs:annotation>
+                           <xs:documentation>Hier können zusätzliche Informationen zur Ausführung der Suche bereitgestellt werden.</xs:documentation>
+                        </xs:annotation>
+                     </xs:element>
+                     <xs:element name="ergebnistabelle"
+                                 minOccurs="0"
+                                 type="tns:Type.INSO.IRI.Ergebnistabelle">
+                        <xs:annotation>
+                           <xs:documentation>Die Trefferliste wird tabellarisch in einem generischen "Key-Value"-Format geliefert.</xs:documentation>
+                        </xs:annotation>
+                     </xs:element>
+                     <xs:element name="kontext" type="tns:Type.INSO.IRI.Basiskontext">
+                        <xs:annotation>
+                           <xs:documentation>Der Kontext der Übermittlung dient dazu, den Status der Antwort zu kennzeichnen (Ok, Warnung, Fehler).</xs:documentation>
+                        </xs:annotation>
+                     </xs:element>
+                  </xs:sequence>
+               </xs:complexType>
+            </xs:element>
+         </xs:sequence>
+      </xs:complexType>
+   </xs:element>
+   <xs:element name="nachricht.inso.iri.datensatz.anfrage.0300021">
+      <xs:annotation>
+         <xs:documentation>Diese Nachricht dient dazu, die Details eines Eintrags im Portal des Mitgliedsstaates abzurufen. Dazu muss die ID des Datensatzes, die zuvor mit einer einfachen Suche ermittelt wurde, angegeben werden.</xs:documentation>
+      </xs:annotation>
+      <xs:complexType>
+         <xs:sequence>
+            <xs:element name="nachrichtenkopf" type="tns:Type.GDS.Nachrichtenkopf"/>
+            <xs:element name="fachdaten">
+               <xs:complexType>
+                  <xs:sequence>
+                     <xs:element name="id.national" type="xs:token">
+                        <xs:annotation>
+                           <xs:documentation>Die ID eines Datensatzes in der Datenbank des Insolvenzportals des betreffenden Mitgliedsstaates.</xs:documentation>
+                        </xs:annotation>
+                     </xs:element>
+                  </xs:sequence>
+               </xs:complexType>
+            </xs:element>
+         </xs:sequence>
+      </xs:complexType>
+   </xs:element>
+   <xs:element name="nachricht.inso.iri.datensatz.antwort.0300022">
+      <xs:annotation>
+         <xs:documentation>Diese Antwortnachricht dient dazu, die Details eines angefragten Insolvenz-Datensatzes zu übermitteln. Ein obligatorischer 'Kern' von Informationen zu einem Insolvenzverfahren kann dabei durch ergänzende Informationen erweitert werden.</xs:documentation>
+      </xs:annotation>
+      <xs:complexType>
+         <xs:sequence>
+            <xs:element name="nachrichtenkopf" type="tns:Type.GDS.Nachrichtenkopf"/>
+            <xs:element name="grunddaten" type="tns:Type.GDS.Grunddaten">
+               <xs:annotation>
+                  <xs:documentation>Schuldner und ggf. Verwalter des Insolvenzverfahrens werden als Verfahrensbeteiligte in den Grunddaten übermittelt.</xs:documentation>
+               </xs:annotation>
+            </xs:element>
+            <xs:element name="fachdaten">
+               <xs:complexType>
+                  <xs:sequence>
+                     <xs:element name="info"
+                                 minOccurs="0"
+                                 maxOccurs="unbounded"
+                                 type="tns:Type.INSO.IRI.ReferenzDaten">
+                        <xs:annotation>
+                           <xs:documentation>Hier können zusätzliche Informationen zum übermittelten Datzsatz bereitgestellt werden.</xs:documentation>
+                        </xs:annotation>
+                     </xs:element>
+                     <xs:element name="datenobjekt" minOccurs="0">
+                        <xs:annotation>
+                           <xs:documentation>Dieses komplexe Element stellt die eigentlichen Daten des Insolvenzverfahrens bereit.</xs:documentation>
+                        </xs:annotation>
+                        <xs:complexType>
+                           <xs:sequence>
+                              <xs:element name="kernverfahrensdaten">
+                                 <xs:annotation>
+                                    <xs:documentation>Dieses Element enthält den Kernsatz der obligatorischen Informationen eines Insolvenzverfahrens, die zur Verfügung gestellt werden müssen. Die Beteiligtendaten (Schuldner/in, Insolvenzverwalter/in) sind in den Grunddaten verortet und werden deshalb hier nicht noch einmal aufgeführt.</xs:documentation>
+                                 </xs:annotation>
+                                 <xs:complexType>
+                                    <xs:sequence>
+                                       <xs:element name="eroeffnungsdatum" type="xs:date"/>
+                                       <xs:element name="insolvenzverfahren.art"
+                                                   type="tns:Code.INSO.Verfahrensart_National"/>
+                                       <xs:element name="insolvenzverfahren.unterart"
+                                                   minOccurs="0"
+                                                   type="tns:Code.INSO.Verfahrensart_National_Unterart"/>
+                                       <xs:element name="zustaendigkeitArtikel3"
+                                                   type="tns:Code.INSO.Verfahrensart_International"/>
+                                       <xs:element name="auswahl_anmeldefrist" minOccurs="0">
+                                          <xs:complexType>
+                                             <xs:choice>
+                                                <xs:element name="frist.ende" type="xs:date"/>
+                                                <xs:element name="frist.berechnung" type="din91379:datatypeC"/>
+                                             </xs:choice>
+                                          </xs:complexType>
+                                       </xs:element>
+                                       <xs:element name="hauptinsolvenzEnde" minOccurs="0" type="xs:date"/>
+                                       <xs:element name="anfechtungEroeffnung" minOccurs="0">
+                                          <xs:complexType>
+                                             <xs:sequence>
+                                                <xs:element name="zustaendigesGericht" type="tns:Code.GDS.Gerichte.Typ3"/>
+                                                <xs:element name="auswahl_anfechtungEroeffnungFrist" minOccurs="0">
+                                                   <xs:complexType>
+                                                      <xs:choice>
+                                                         <xs:element name="frist.ende" type="xs:date"/>
+                                                         <xs:element name="frist.berechnung" type="din91379:datatypeC"/>
+                                                      </xs:choice>
+                                                   </xs:complexType>
+                                                </xs:element>
+                                             </xs:sequence>
+                                          </xs:complexType>
+                                       </xs:element>
+                                    </xs:sequence>
+                                 </xs:complexType>
+                              </xs:element>
+                              <xs:element name="abschnitt" minOccurs="0" maxOccurs="unbounded">
+                                 <xs:annotation>
+                                    <xs:documentation>Hier können die Kerndaten eines Insolvenzverfahrens um ergänzende fakultative Informationen angereichert werden. Dies erfolgt in einem generischen Key-Value-Format.</xs:documentation>
+                                 </xs:annotation>
+                                 <xs:complexType>
+                                    <xs:sequence>
+                                       <xs:element name="schluessel" type="xs:token">
+                                          <xs:annotation>
+                                             <xs:documentation>Jeder Abschnitt hat einen Schlüssel, mit dem er identifiziert werden kann.</xs:documentation>
+                                          </xs:annotation>
+                                       </xs:element>
+                                       <xs:element name="feld" maxOccurs="unbounded">
+                                          <xs:annotation>
+                                             <xs:documentation>Ein Feld dient der Bereitstellung eines einzelnen Werts oder einer Reihe von Werten (Liste oder Tabelle).</xs:documentation>
+                                          </xs:annotation>
+                                          <xs:complexType>
+                                             <xs:complexContent>
+                                                <xs:extension base="tns:Type.INSO.IRI.Ergebnisdaten.komplex">
+                                                   <xs:attribute name="schluessel" type="xs:token" use="required"/>
+                                                </xs:extension>
+                                             </xs:complexContent>
+                                          </xs:complexType>
+                                       </xs:element>
+                                    </xs:sequence>
+                                 </xs:complexType>
+                              </xs:element>
+                           </xs:sequence>
+                        </xs:complexType>
+                     </xs:element>
+                     <xs:element name="kontext" type="tns:Type.INSO.IRI.Basiskontext">
+                        <xs:annotation>
+                           <xs:documentation>Der Kontext der Übermittlung dient dazu, den Status der Antwort zu kennzeichnen (Ok, Warnung, Fehler).</xs:documentation>
+                        </xs:annotation>
+                     </xs:element>
+                  </xs:sequence>
+               </xs:complexType>
+            </xs:element>
+         </xs:sequence>
+      </xs:complexType>
+   </xs:element>
+   <xs:element name="nachricht.inso.iri.fehlermeldung.0300023">
+      <xs:annotation>
+         <xs:documentation>Diese Nachricht wird zurückgeliefert, wenn bei der Verarbeitung einer Anfrage des EU-Portals ein Fehler auftritt. Es gibt zwei mögliche Fehlertypen: InternalServiceException: Diese Ausnahme wird ausgelöst, wenn ein technischer Fehler aufgetreten ist. Ein typischer Fall ist die Nichtverfügbarkeit der Datenbank. NotImplementedException: Diese Ausnahme wird ausgelöst, wenn ein bestimmter Anfragetyp des EU-Webdienstes im Portal des Mitgliedsstaates nicht implementiert ist.</xs:documentation>
+      </xs:annotation>
+      <xs:complexType>
+         <xs:sequence>
+            <xs:element name="nachrichtenkopf" type="tns:Type.GDS.Nachrichtenkopf"/>
+            <xs:element name="fachdaten">
+               <xs:complexType>
+                  <xs:sequence>
+                     <xs:element name="fehlerart" type="tns:Code.INSO.IRI.Fehlerart">
+                        <xs:annotation>
+                           <xs:documentation>Hier wird angegeben, welcher Fehler aufgetreten ist.</xs:documentation>
+                        </xs:annotation>
+                     </xs:element>
+                     <xs:element name="id.fehler" minOccurs="0" type="tns:Code.INSO.IRI.Fehlercode">
+                        <xs:annotation>
+                           <xs:documentation>Hier kann eine Fehler-ID übermittelt werden.</xs:documentation>
+                        </xs:annotation>
+                     </xs:element>
+                     <xs:element name="fehlermeldung" type="din91379:datatypeC">
+                        <xs:annotation>
+                           <xs:documentation>Die Fehlermeldung wird nur zu Protokollierungszwecken verwendet und dem Benutzer nicht angezeigt.</xs:documentation>
+                        </xs:annotation>
+                     </xs:element>
+                  </xs:sequence>
+               </xs:complexType>
+            </xs:element>
+         </xs:sequence>
+      </xs:complexType>
+   </xs:element>
+</xs:schema>

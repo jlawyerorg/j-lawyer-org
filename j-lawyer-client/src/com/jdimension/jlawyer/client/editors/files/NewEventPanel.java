@@ -701,6 +701,9 @@ public class NewEventPanel extends javax.swing.JPanel implements QuickDateSelect
 
     protected NewEventPanelListener newEventListener = null;
 
+    private String assistant = "";
+    private String lawyer = "";
+
     /**
      * Creates new form NewEventPanel
      */
@@ -769,10 +772,11 @@ public class NewEventPanel extends javax.swing.JPanel implements QuickDateSelect
 
         this.radioEventTypeFollowUp.setSelected(true);
         this.toggleEventUi();
-        if(this.newEventListener!=null)
+        if (this.newEventListener != null) {
             this.calendarSelectionButton.restrictToType(CalendarSetup.EVENTTYPE_FOLLOWUP, this.newEventListener.getCase(), true);
-        else
+        } else {
             this.calendarSelectionButton.restrictToType(CalendarSetup.EVENTTYPE_FOLLOWUP, null, true);
+        }
 
     }
 
@@ -1017,7 +1021,8 @@ public class NewEventPanel extends javax.swing.JPanel implements QuickDateSelect
 
     private void radioEventTypeFollowUpActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_radioEventTypeFollowUpActionPerformed
         this.toggleEventUi();
-        if(this.newEventListener!=null)
+        this.setDefaultAssignee();
+        if (this.newEventListener != null)
             this.calendarSelectionButton.restrictToType(CalendarSetup.EVENTTYPE_FOLLOWUP, this.newEventListener.getCase());
         else
             this.calendarSelectionButton.restrictToType(CalendarSetup.EVENTTYPE_FOLLOWUP, null);
@@ -1025,7 +1030,8 @@ public class NewEventPanel extends javax.swing.JPanel implements QuickDateSelect
 
     private void radioEventTypeRespiteActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_radioEventTypeRespiteActionPerformed
         this.toggleEventUi();
-        if(this.newEventListener!=null)
+        this.setDefaultAssignee();
+        if (this.newEventListener != null)
             this.calendarSelectionButton.restrictToType(CalendarSetup.EVENTTYPE_RESPITE, this.newEventListener.getCase());
         else
             this.calendarSelectionButton.restrictToType(CalendarSetup.EVENTTYPE_RESPITE, null);
@@ -1033,7 +1039,8 @@ public class NewEventPanel extends javax.swing.JPanel implements QuickDateSelect
 
     private void radioEventTypeEventActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_radioEventTypeEventActionPerformed
         this.toggleEventUi();
-        if(this.newEventListener!=null)
+        this.setDefaultAssignee();
+        if (this.newEventListener != null)
             this.calendarSelectionButton.restrictToType(CalendarSetup.EVENTTYPE_EVENT, this.newEventListener.getCase());
         else
             this.calendarSelectionButton.restrictToType(CalendarSetup.EVENTTYPE_EVENT, null);
@@ -1044,6 +1051,24 @@ public class NewEventPanel extends javax.swing.JPanel implements QuickDateSelect
             this.txtEventBeginDateField.setText(dateFormat.format(new Date()));
         }
     }//GEN-LAST:event_txtEventBeginDateFieldMouseClicked
+
+    private void setDefaultAssignee() {
+        String defaultAssignee = "";
+        if (!StringUtils.isEmpty(this.lawyer) && this.radioEventTypeRespite.isSelected()) {
+            defaultAssignee = this.lawyer;
+        } else {
+            if (!StringUtils.isEmpty(this.assistant)) {
+                defaultAssignee = this.assistant;
+            }
+        }
+
+        try {
+            this.cmbReviewAssignee.setSelectedItem(defaultAssignee);
+        } catch (Exception ex) {
+            log.warn("unable to set default review assignee", ex);
+        }
+
+    }
 
     private void cmdEventBeginDateSelectorActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdEventBeginDateSelectorActionPerformed
 
@@ -1179,7 +1204,7 @@ public class NewEventPanel extends javax.swing.JPanel implements QuickDateSelect
                     }
                 } else {
                     // for a single selected template, the user may override its name
-                    if (selectionCount==1 && !StringUtils.isEmpty(this.txtReviewReason.getText()) && this.newEventListener != null) {
+                    if (selectionCount == 1 && !StringUtils.isEmpty(this.txtReviewReason.getText()) && this.newEventListener != null) {
                         if (CalendarUtils.checkForConflicts(parentWindow, newOrChangedEvent)) {
                             CalendarEntryTemplateListItem item = (CalendarEntryTemplateListItem) ((DefaultListModel) this.lstReviewReasons.getModel()).getElementAt(this.lstReviewReasons.getSelectedIndex());
                             this.newEventListener.addReview(item.getEntry(), eventType, this.txtReviewReason.getText(), this.taEventDescription.getText(), beginDate, endDate, this.cmbReviewAssignee.getSelectedItem().toString(), this.txtEventLocation.getText(), this.calendarSelectionButton.getSelectedSetup());
@@ -1224,10 +1249,11 @@ public class NewEventPanel extends javax.swing.JPanel implements QuickDateSelect
 
             this.radioEventTypeFollowUp.setSelected(true);
             this.toggleEventUi();
-            if(this.newEventListener!=null)
+            if (this.newEventListener != null) {
                 this.calendarSelectionButton.restrictToType(CalendarSetup.EVENTTYPE_FOLLOWUP, this.newEventListener.getCase());
-            else
+            } else {
                 this.calendarSelectionButton.restrictToType(CalendarSetup.EVENTTYPE_FOLLOWUP, null);
+            }
             this.quickDateSelectionPanel.reset();
             this.newEventListener.closeNewEventListener();
         } else {
@@ -1247,10 +1273,11 @@ public class NewEventPanel extends javax.swing.JPanel implements QuickDateSelect
 
         this.radioEventTypeFollowUp.setSelected(true);
         this.toggleEventUi();
-        if(this.newEventListener!=null)
+        if (this.newEventListener != null) {
             this.calendarSelectionButton.restrictToType(CalendarSetup.EVENTTYPE_FOLLOWUP, this.newEventListener.getCase());
-        else
+        } else {
             this.calendarSelectionButton.restrictToType(CalendarSetup.EVENTTYPE_FOLLOWUP, null);
+        }
     }
 
     public void setReadOnly(boolean readOnly, boolean archived) {
@@ -1267,16 +1294,13 @@ public class NewEventPanel extends javax.swing.JPanel implements QuickDateSelect
         this.lstReviewReasons.setEnabled(!readOnly && !archived);
     }
 
-    public void setReviewAssignee(String assignee) {
-        if (assignee != null) {
-            try {
-                this.cmbReviewAssignee.setSelectedItem(assignee);
-            } catch (Exception ex) {
-                log.warn("unable to set default review assignee", ex);
-            }
-        }
+    public void setReviewAssignees(String assistant, String lawyer) {
+        this.assistant = assistant;
+        this.lawyer = lawyer;
+        this.setDefaultAssignee();
+
     }
-    
+
     public void setBeginDate(Date d) {
 
         this.txtEventBeginDateField.setText(dateFormat.format(d));
@@ -1290,11 +1314,11 @@ public class NewEventPanel extends javax.swing.JPanel implements QuickDateSelect
 
         this.cmbEventEndTime.setSelectedItem(timeFormat.format(d));
     }
-    
+
     public void setSummary(String summary) {
         this.txtReviewReason.setText(summary);
     }
-    
+
     public void setDescription(String description) {
         this.taEventDescription.setText(description);
     }

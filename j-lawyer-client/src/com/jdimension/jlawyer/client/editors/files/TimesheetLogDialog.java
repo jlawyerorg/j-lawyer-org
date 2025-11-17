@@ -665,6 +665,7 @@ package com.jdimension.jlawyer.client.editors.files;
 
 import com.jdimension.jlawyer.client.TimesheetsTimerTask;
 import com.jdimension.jlawyer.client.settings.ClientSettings;
+import com.jdimension.jlawyer.client.settings.ServerSettings;
 import com.jdimension.jlawyer.client.settings.UserSettings;
 import com.jdimension.jlawyer.client.utils.ComponentUtils;
 import com.jdimension.jlawyer.persistence.Timesheet;
@@ -697,6 +698,8 @@ public class TimesheetLogDialog extends javax.swing.JDialog {
     private List<Timesheet> openSheets = null;
 
     private Timer timer = new Timer();
+    
+    private String numericInputFormat=null;
 
     /**
      * Creates new form TimesheetLogDialog
@@ -708,6 +711,8 @@ public class TimesheetLogDialog extends javax.swing.JDialog {
     public TimesheetLogDialog(java.awt.Frame parent, boolean modal, String caseId) {
         super(parent, modal);
         initComponents();
+        
+        this.numericInputFormat=ServerSettings.getInstance().getSetting(ServerSettings.SERVERCONF_TIMESHEET_NUMERICINPUT, "minutes");
         
         this.txtSearchTimesheets.putClientProperty("JTextField.showClearButton", true);
         this.txtSearchTimesheets.putClientProperty("JTextField.placeholderText", "Suche: Zeiterfassungsprojekt");
@@ -893,7 +898,7 @@ public class TimesheetLogDialog extends javax.swing.JDialog {
 
     public final void existingTimesheetLogEntry(TimesheetPosition tsp, Map<String,List<TimesheetPositionTemplate>> positionTemplatesPerTimesheet) {
         List<TimesheetPositionTemplate> posTemplates = positionTemplatesPerTimesheet.get(tsp.getTimesheet().getId());
-        TimesheetLogEntryPanel tlep = new TimesheetLogEntryPanel(this, posTemplates);
+        TimesheetLogEntryPanel tlep = new TimesheetLogEntryPanel(this, posTemplates, this.numericInputFormat);
         tlep.setEntry(tsp.getTimesheet().getArchiveFileKey(), tsp.getTimesheet(), tsp);
 
         this.pnlLogs.add(tlep);
@@ -925,7 +930,7 @@ public class TimesheetLogDialog extends javax.swing.JDialog {
             return;
         }
         
-        TimesheetLogEntryPanel tlep = new TimesheetLogEntryPanel(this, posTemplates);
+        TimesheetLogEntryPanel tlep = new TimesheetLogEntryPanel(this, posTemplates, this.numericInputFormat);
         TimesheetPosition tsp = new TimesheetPosition();
         tsp.setTimesheet(timesheet);
         tsp.setDescription("");

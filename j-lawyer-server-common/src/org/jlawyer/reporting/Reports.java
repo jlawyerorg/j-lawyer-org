@@ -690,7 +690,8 @@ public class Reports {
     
     public static final String RPT_CASES_BYSIZE="cases.bysize";
     public static final String RPT_CASES_UNSECURED="cases.unsecured";
-    
+    public static final String RPT_CASES_WITHOUT_INVOICE="cases.withoutinvoice";
+
     public static final String RPT_REVENUE_BYCUSTOMER="revenue.bycustomer";
     
     public static final String RPT_ACCOUNTS_ESCROW="accounts.escrow";

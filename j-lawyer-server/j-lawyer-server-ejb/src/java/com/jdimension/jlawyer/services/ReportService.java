@@ -732,6 +732,7 @@ public class ReportService implements ReportServiceRemote {
 
         reportPrivs.put(Reports.RPT_CASES_BYSIZE, PRIVILEGE_COMMON);
         reportPrivs.put(Reports.RPT_CASES_UNSECURED, PRIVILEGE_COMMON);
+        reportPrivs.put(Reports.RPT_CASES_WITHOUT_INVOICE, PRIVILEGE_COMMON);
 
         reportPrivs.put(Reports.RPT_REVENUE_BYCUSTOMER, PRIVILEGE_CONFIDENTIAL);
 
@@ -1293,6 +1294,22 @@ public class ReportService implements ReportServiceRemote {
             ReportResultTable mainTable = getTable(true, "Akten ohne Zugriffsbeschränkungen", query, null, params);
 
             result.getTables().add(mainTable);
+        } else if (Reports.RPT_CASES_WITHOUT_INVOICE.equals(reportId)) {
+            String query = "select c.id as cid, c.fileNumber as Aktenzeichen, c.name as Rubrum, c.reason as wegen, "
+                    + "c.lawyer as Anwalt, c.assistant as Sachbearbeiter, "
+                    + "DATE_FORMAT(c.date_created,'%Y-%m-%d') as erstellt, "
+                    + "case when c.archived = 1 then 'archiviert' else '' end as archiviert "
+                    + "from cases c "
+                    + "where c.id not in ("
+                    + "  select distinct inv.case_id from invoices inv "
+                    + "  left join invoice_types invt on inv.invoice_type=invt.id "
+                    + "  where invt.turnover=1 and inv.case_id is not null"
+                    + ") "
+                    + "and c.date_created>=? and c.date_created<=? "
+                    + "order by c.date_created desc";
+            ReportResultTable mainTable = getTable(true, "Akten ohne Rechnung", query, null, params);
+
+            result.getTables().add(mainTable);
         } else if (Reports.RPT_REVENUE_BYCUSTOMER.equals(reportId)) {
             String query = "select Organisation, Nachname, Vorname, PLZ, Ort, Strasse, Hausnr, Umsatz from (select id, company as Organisation, name as Nachname, firstName as Vorname, zipCode as PLZ, city as Ort, street as Strasse, streetNumber as Hausnr, sum(total_gross) as Umsatz from (\n"
                     + "                    SELECT c.id, c.company, c.name, c.firstName, c.zipCode, c.city, c.street, c.streetNumber, i.contact_id, i.total_gross, i.invoice_status, i.due_date\n"
@@ -1425,23 +1442,13 @@ public class ReportService implements ReportServiceRemote {
 
             int columnCount = rs.getMetaData().getColumnCount();
 
-            // filter out the case id column
-            String[] columnNames = null;
-            if (caseIdColumn) {
-                columnNames = new String[columnCount - 1];
-            } else {
-                columnNames = new String[columnCount];
-            }
-
-            int minIndex = caseIdColumn ? 1 : 0;
-            for (int i = minIndex; i < rs.getMetaData().getColumnCount(); i++) {
-                if (caseIdColumn) {
-                    columnNames[i - 1] = rs.getMetaData().getColumnLabel(i + 1);
-                } else {
-                    columnNames[i] = rs.getMetaData().getColumnLabel(i + 1);
-                }
+            // keep case id column as first column (will be hidden in client)
+            String[] columnNames = new String[columnCount];
+            for (int i = 0; i < rs.getMetaData().getColumnCount(); i++) {
+                columnNames[i] = rs.getMetaData().getColumnLabel(i + 1);
             }
             table.setColumnNames(columnNames);
+            table.setHasCaseIdColumn(caseIdColumn);
 
             HashMap<String, Number> sumValues = new HashMap<>();
             while (rs.next()) {
@@ -1453,34 +1460,16 @@ public class ReportService implements ReportServiceRemote {
                     }
                 }
 
-                Object[] row = null;
-                if (caseIdColumn) {
-                    row = new Object[columnCount - 1];
-                } else {
-                    row = new Object[columnCount];
-                }
+                Object[] row = new Object[columnCount];
 
-                for (int i = minIndex; i < columnCount; i++) {
-                    if (caseIdColumn) {
-                        row[i - 1] = rs.getObject(i + 1);
-                        if (sumColumns != null && sumColumns.contains(columnNames[i - 1])) {
-                            if (row[i - 1] instanceof Number) {
-                                if (!sumValues.containsKey(columnNames[i - 1])) {
-                                    sumValues.put(columnNames[i - 1], (Number) row[i - 1]);
-                                } else {
-                                    sumValues.put(columnNames[i - 1], BigDecimal.valueOf(((Number) row[i - 1]).floatValue()).add(BigDecimal.valueOf(sumValues.get(columnNames[i - 1]).floatValue())));
-                                }
-                            }
-                        }
-                    } else {
-                        row[i] = rs.getObject(i + 1);
-                        if (sumColumns != null && sumColumns.contains(columnNames[i])) {
-                            if (row[i] instanceof Number) {
-                                if (!sumValues.containsKey(columnNames[i])) {
-                                    sumValues.put(columnNames[i], (Number) row[i]);
-                                } else {
-                                    sumValues.put(columnNames[i], BigDecimal.valueOf(((Number) row[i]).floatValue()).add(BigDecimal.valueOf(sumValues.get(columnNames[i]).floatValue())));
-                                }
+                for (int i = 0; i < columnCount; i++) {
+                    row[i] = rs.getObject(i + 1);
+                    if (sumColumns != null && sumColumns.contains(columnNames[i])) {
+                        if (row[i] instanceof Number) {
+                            if (!sumValues.containsKey(columnNames[i])) {
+                                sumValues.put(columnNames[i], (Number) row[i]);
+                            } else {
+                                sumValues.put(columnNames[i], BigDecimal.valueOf(((Number) row[i]).floatValue()).add(BigDecimal.valueOf(sumValues.get(columnNames[i]).floatValue())));
                             }
                         }
                     }
@@ -1494,10 +1483,16 @@ public class ReportService implements ReportServiceRemote {
                     Object[] emptyRow = new Object[colCount];
                     Object[] sumCaptionRow = new Object[colCount];
                     Object[] sumValueRow = new Object[colCount];
+                    
+                    int sumColumn = 0;
+                    if (caseIdColumn)
+                        sumColumn=1;
+                    
                     for (int i = 0; i < emptyRow.length; i++) {
                         emptyRow[i] = "";
                         sumCaptionRow[i] = "";
-                        if (i == 0) {
+                        
+                        if (i == sumColumn) {
                             sumCaptionRow[i] = "Summen:";
                         }
 
@@ -1510,6 +1505,7 @@ public class ReportService implements ReportServiceRemote {
                     table.getValues().add(emptyRow);
                     table.getValues().add(sumCaptionRow);
                     table.getValues().add(sumValueRow);
+                    table.setHasSumRows(true);
                 }
             }
 

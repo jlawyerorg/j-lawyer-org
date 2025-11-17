@@ -977,6 +977,8 @@ public class SendEmailFrame extends javax.swing.JFrame implements SendCommunicat
             } else {
                 this.cmbTemplates.setSelectedIndex(0);
             }
+            
+            this.cmdApplyTemplateStyling.setEnabled(this.html.isSelected());
 
             txtTemplateSearch.setToolTipText("Geben Sie Text ein, um Vorlagen zu filtern");
             txtTemplateSearch.getDocument().addDocumentListener(new javax.swing.event.DocumentListener() {
@@ -2014,6 +2016,7 @@ public class SendEmailFrame extends javax.swing.JFrame implements SendCommunicat
         jSeparator5 = new javax.swing.JToolBar.Separator();
         cmdSaveDraft = new javax.swing.JButton();
         cmdOpenTb = new javax.swing.JButton();
+        cmdApplyTemplateStyling = new javax.swing.JButton();
         txtCc = new javax.swing.JTextField();
         jLabel9 = new javax.swing.JLabel();
         txtTo = new javax.swing.JTextField();
@@ -2021,6 +2024,7 @@ public class SendEmailFrame extends javax.swing.JFrame implements SendCommunicat
         cmdAssistant = new javax.swing.JButton();
         cmdTranscribe = new javax.swing.JButton();
         cmbDevices = new javax.swing.JComboBox<>();
+        cmbPriority = new javax.swing.JComboBox<>();
         jPanel6 = new javax.swing.JPanel();
         jPanel2 = new javax.swing.JPanel();
         text = new javax.swing.JRadioButton();
@@ -2227,6 +2231,18 @@ public class SendEmailFrame extends javax.swing.JFrame implements SendCommunicat
         });
         jToolBar1.add(cmdOpenTb);
 
+        cmdApplyTemplateStyling.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons32/material/format_paint_32dp_0E72B5_FILL0_wght400_GRAD0_opsz40.png"))); // NOI18N
+        cmdApplyTemplateStyling.setToolTipText("Schriftformatierung der Vorlage übernehmen");
+        cmdApplyTemplateStyling.setFocusable(false);
+        cmdApplyTemplateStyling.setHorizontalTextPosition(javax.swing.SwingConstants.CENTER);
+        cmdApplyTemplateStyling.setVerticalTextPosition(javax.swing.SwingConstants.BOTTOM);
+        cmdApplyTemplateStyling.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                cmdApplyTemplateStylingActionPerformed(evt);
+            }
+        });
+        jToolBar1.add(cmdApplyTemplateStyling);
+
         jLabel9.setText("BCC:");
 
         cmbFrom.setModel(new javax.swing.DefaultComboBoxModel<>(new String[] { "Item 1", "Item 2", "Item 3", "Item 4" }));
@@ -2254,6 +2270,8 @@ public class SendEmailFrame extends javax.swing.JFrame implements SendCommunicat
 
         cmbDevices.setModel(new javax.swing.DefaultComboBoxModel<>(new String[] { "Item 1", "Item 2", "Item 3", "Item 4" }));
 
+        cmbPriority.setModel(new javax.swing.DefaultComboBoxModel<>(new String[] { "Normal", "Hoch", "Niedrig" }));
+
         javax.swing.GroupLayout jPanel3Layout = new javax.swing.GroupLayout(jPanel3);
         jPanel3.setLayout(jPanel3Layout);
         jPanel3Layout.setHorizontalGroup(
@@ -2270,18 +2288,19 @@ public class SendEmailFrame extends javax.swing.JFrame implements SendCommunicat
                             .addComponent(jLabel3))
                         .addGap(18, 18, 18)
                         .addGroup(jPanel3Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                            .addComponent(txtCc)
+                            .addComponent(txtTo, javax.swing.GroupLayout.Alignment.TRAILING)
+                            .addComponent(txtBcc, javax.swing.GroupLayout.Alignment.TRAILING)
                             .addGroup(jPanel3Layout.createSequentialGroup()
-                                .addGroup(jPanel3Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                                    .addComponent(txtCc)
-                                    .addComponent(txtTo, javax.swing.GroupLayout.Alignment.TRAILING)
-                                    .addComponent(txtSubject)
-                                    .addComponent(txtBcc, javax.swing.GroupLayout.Alignment.TRAILING))
+                                .addComponent(txtSubject)
                                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                                .addGroup(jPanel3Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
-                                    .addComponent(cmdRecipients)
-                                    .addComponent(cmdRecipientsCc)
-                                    .addComponent(cmdRecipientsBcc)))
-                            .addComponent(cmbFrom, 0, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)))
+                                .addComponent(cmbPriority, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
+                            .addComponent(cmbFrom, 0, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addGroup(jPanel3Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
+                            .addComponent(cmdRecipients)
+                            .addComponent(cmdRecipientsCc)
+                            .addComponent(cmdRecipientsBcc)))
                     .addComponent(jPanel5, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                     .addGroup(jPanel3Layout.createSequentialGroup()
                         .addComponent(jToolBar1, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
@@ -2319,9 +2338,11 @@ public class SendEmailFrame extends javax.swing.JFrame implements SendCommunicat
                         .addComponent(txtBcc, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                         .addComponent(jLabel9)))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addGroup(jPanel3Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                    .addComponent(jLabel3)
-                    .addComponent(txtSubject, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
+                .addGroup(jPanel3Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addGroup(jPanel3Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                        .addComponent(jLabel3)
+                        .addComponent(txtSubject, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
+                    .addComponent(cmbPriority, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addGroup(jPanel3Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                     .addGroup(jPanel3Layout.createSequentialGroup()
@@ -2409,11 +2430,11 @@ public class SendEmailFrame extends javax.swing.JFrame implements SendCommunicat
                                 .addComponent(text)
                                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                                 .addComponent(html))
-                            .addComponent(chkReadReceipt)
                             .addGroup(jPanel2Layout.createSequentialGroup()
                                 .addComponent(chkDocumentTagging)
                                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                                .addComponent(cmbDocumentTag, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)))
+                                .addComponent(cmbDocumentTag, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
+                            .addComponent(chkReadReceipt))
                         .addGap(0, 0, Short.MAX_VALUE)))
                 .addContainerGap())
         );
@@ -2737,6 +2758,15 @@ public class SendEmailFrame extends javax.swing.JFrame implements SendCommunicat
         this.popRecipientsBcc.show(this.cmdRecipientsBcc, 0, 0);
     }//GEN-LAST:event_cmdRecipientsBccActionPerformed
 
+    private String applyHtmlFixesAndStyle() {
+        EditorImplementation ed = (EditorImplementation) this.contentPanel.getComponent(0);
+        String editorContent = ed.getText();
+        editorContent = editorContent.replaceAll("<p>[\\s ]*</p>", "<p>&nbsp;</p>");
+        editorContent = editorContent.replaceAll("<div>[\\s ]*</div>", "<div>&nbsp;</div>");
+        ed.setText(editorContent);
+        return editorContent;
+    }
+    
     private void cmdSendActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdSendActionPerformed
 
         if (StringUtils.isEmpty(this.txtSubject.getText())) {
@@ -2763,10 +2793,9 @@ public class SendEmailFrame extends javax.swing.JFrame implements SendCommunicat
         mails.addAll(EmailUtils.getAllMailAddressesFromString(this.txtCc.getText()));
         mails.addAll(EmailUtils.getAllMailAddressesFromString(this.txtBcc.getText()));
 
-        String editorContent = ed.getText();
-        editorContent = editorContent.replaceAll("<p>[\\s ]*</p>", "<p>&nbsp;</p>");
-        editorContent = editorContent.replaceAll("<div>[\\s ]*</div>", "<div>&nbsp;</div>");
-        ed.setText(editorContent);
+        
+        
+        String editorContent=this.applyHtmlFixesAndStyle();
 
         if (mails.isEmpty()) {
             ThreadUtils.showErrorDialog(this, "Liste der Empfänger kann nicht leer sein.", com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR);
@@ -2859,10 +2888,10 @@ public class SendEmailFrame extends javax.swing.JFrame implements SendCommunicat
                         return;
                     }
                 }
-                a = new SendEncryptedAction(dlg, this, new ArrayList<>(this.attachments.values()), ms, this.chkReadReceipt.isSelected(), this.txtTo.getText(), this.txtCc.getText(), this.txtBcc.getText(), this.txtSubject.getText(), editorContent, contentType, this.contextArchiveFile, createDocumentTag, this.contextArchiveFileFolder, this.currentDraftDocumentId);
+                a = new SendEncryptedAction(dlg, this, new ArrayList<>(this.attachments.values()), ms, this.chkReadReceipt.isSelected(), this.txtTo.getText(), this.txtCc.getText(), this.txtBcc.getText(), this.txtSubject.getText(), editorContent, contentType, this.contextArchiveFile, createDocumentTag, this.contextArchiveFileFolder, this.currentDraftDocumentId, (String) this.cmbPriority.getSelectedItem());
             } else {
 
-                a = new SendAction(dlg, this, new ArrayList<>(this.attachments.values()), ms, this.chkReadReceipt.isSelected(), this.txtTo.getText(), this.txtCc.getText(), this.txtBcc.getText(), this.txtSubject.getText(), editorContent, contentType, this.contextArchiveFile, createDocumentTag, this.contextArchiveFileFolder, this.currentDraftDocumentId);
+                a = new SendAction(dlg, this, new ArrayList<>(this.attachments.values()), ms, this.chkReadReceipt.isSelected(), this.txtTo.getText(), this.txtCc.getText(), this.txtBcc.getText(), this.txtSubject.getText(), editorContent, contentType, this.contextArchiveFile, createDocumentTag, this.contextArchiveFileFolder, this.currentDraftDocumentId, (String) this.cmbPriority.getSelectedItem());
             }
 
             // Reset draft document ID as it will be deleted by SendAction/SendEncryptedAction after successful send
@@ -2882,9 +2911,9 @@ public class SendEmailFrame extends javax.swing.JFrame implements SendCommunicat
                     return;
                 }
             }
-            a = new SendEncryptedAction(dlg, this, new ArrayList<>(this.attachments.values()), ms, this.chkReadReceipt.isSelected(), this.txtTo.getText(), this.txtCc.getText(), this.txtBcc.getText(), this.txtSubject.getText(), editorContent, contentType, createDocumentTag);
+            a = new SendEncryptedAction(dlg, this, new ArrayList<>(this.attachments.values()), ms, this.chkReadReceipt.isSelected(), this.txtTo.getText(), this.txtCc.getText(), this.txtBcc.getText(), this.txtSubject.getText(), editorContent, contentType, createDocumentTag, (String) this.cmbPriority.getSelectedItem());
         } else {
-            a = new SendAction(dlg, this, new ArrayList<>(this.attachments.values()), ms, this.chkReadReceipt.isSelected(), this.txtTo.getText(), this.txtCc.getText(), this.txtBcc.getText(), this.txtSubject.getText(), editorContent, contentType, createDocumentTag);
+            a = new SendAction(dlg, this, new ArrayList<>(this.attachments.values()), ms, this.chkReadReceipt.isSelected(), this.txtTo.getText(), this.txtCc.getText(), this.txtBcc.getText(), this.txtSubject.getText(), editorContent, contentType, createDocumentTag, (String) this.cmbPriority.getSelectedItem());
         }
         a.start();
 
@@ -3225,7 +3254,7 @@ public class SendEmailFrame extends javax.swing.JFrame implements SendCommunicat
             hp.setBounds(0, 0, this.contentPanel.getWidth(), this.contentPanel.getHeight());
             SwingUtilities.updateComponentTreeUI(tp);
             SwingUtilities.updateComponentTreeUI(hp);
-
+            this.cmdApplyTemplateStyling.setEnabled(false);
         }
     }//GEN-LAST:event_textActionPerformed
 
@@ -3237,6 +3266,7 @@ public class SendEmailFrame extends javax.swing.JFrame implements SendCommunicat
             tp.setBounds(0, 0, this.contentPanel.getWidth(), this.contentPanel.getHeight());
             SwingUtilities.updateComponentTreeUI(tp);
             SwingUtilities.updateComponentTreeUI(hp);
+            this.cmdApplyTemplateStyling.setEnabled(true);
         }
     }//GEN-LAST:event_htmlActionPerformed
 
@@ -3382,6 +3412,10 @@ public class SendEmailFrame extends javax.swing.JFrame implements SendCommunicat
                     htValues.put("{{CLOUD_LINK}}", this.cloudLink);
                 }
 
+                this.hp.setDefaultFontColor(tpl.getFontColor());
+                this.hp.setDefaultFontFamily(tpl.getFontName());
+                this.hp.setDefaultFontSize("" + tpl.getFontSize());
+                
                 if (tpl.isText()) {
                     if (ms != null) {
                         String t = TemplatesUtil.replacePlaceHolders(tpl.getBody(), htValues);
@@ -3516,6 +3550,10 @@ public class SendEmailFrame extends javax.swing.JFrame implements SendCommunicat
         EditorsRegistry.getInstance().unregisterFrame(this);
     }//GEN-LAST:event_formWindowClosed
 
+    private void cmdApplyTemplateStylingActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdApplyTemplateStylingActionPerformed
+        this.applyHtmlFixesAndStyle();
+    }//GEN-LAST:event_cmdApplyTemplateStylingActionPerformed
+
     /**
      * @param args the command line arguments
      */
@@ -3560,9 +3598,11 @@ public class SendEmailFrame extends javax.swing.JFrame implements SendCommunicat
     private javax.swing.JComboBox<String> cmbDevices;
     private javax.swing.JComboBox<String> cmbDocumentTag;
     private javax.swing.JComboBox<String> cmbFrom;
+    private javax.swing.JComboBox<String> cmbPriority;
     private javax.swing.JComboBox cmbReviewAssignee;
     private javax.swing.JComboBox cmbReviewReason;
     private javax.swing.JComboBox cmbTemplates;
+    private javax.swing.JButton cmdApplyTemplateStyling;
     private javax.swing.JButton cmdAssistant;
     private javax.swing.JButton cmdAttach;
     private javax.swing.JButton cmdOpenTb;

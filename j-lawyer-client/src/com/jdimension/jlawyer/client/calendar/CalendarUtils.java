@@ -936,7 +936,7 @@ public class CalendarUtils {
                 relatedEventDlg.setEventType(entry.getEventType());
                 relatedEventDlg.setSummary(template.getRelatedName());
                 relatedEventDlg.setDescription((entry.getDescription() + System.lineSeparator() + template.getRelatedDescription()).trim());
-                relatedEventDlg.setReviewAssignee(entry.getAssignee());
+                relatedEventDlg.setReviewAssignees(entry.getAssignee(), entry.getAssignee());
                 
                 Calendar c = Calendar.getInstance();
                 c.setTime(entry.getBeginDate());

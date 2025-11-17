@@ -1531,6 +1531,70 @@ public class CasesEndpointV7 implements CasesEndpointLocalV7 {
 
     }
 
+    /**
+     * Searches for cases using enhanced search functionality
+     *
+     * @param searchString the search query (required, minimum 3 characters)
+     * @param includeArchived whether to include archived cases (optional, defaults to false)
+     * @response 401 User not authorized
+     * @response 403 User not authenticated
+     */
+    @Override
+    @GET
+    @Produces(MediaType.APPLICATION_JSON + ";charset=utf-8")
+    @Path("/search")
+    @RolesAllowed({"readArchiveFileRole"})
+    public Response searchCases(@QueryParam("searchString") String searchString,
+                                 @QueryParam("includeArchived") Boolean includeArchived) {
+
+        try {
+            // Validate searchString parameter
+            if (ServerStringUtils.isEmpty(searchString)) {
+                log.error("searchString parameter is required");
+                return Response.status(Response.Status.BAD_REQUEST)
+                        .entity("{\"error\": \"searchString parameter is required\"}")
+                        .build();
+            }
+
+            // Check minimum length requirement
+            if (searchString.trim().length() < 3) {
+                log.error("searchString must be at least 3 characters long");
+                return Response.status(Response.Status.BAD_REQUEST)
+                        .entity("{\"error\": \"searchString must be at least 3 characters long\"}")
+                        .build();
+            }
+
+            // Set default value for includeArchived
+            boolean withArchive = (includeArchived != null) ? includeArchived : false;
+
+            InitialContext ic = new InitialContext();
+            ArchiveFileServiceLocal cases = (ArchiveFileServiceLocal) ic.lookup(LOOKUP_CASES);
+
+            // Call searchEnhanced with null for tagName and documentTagNames parameters
+            ArchiveFileBean[] matches = cases.searchEnhanced(searchString, withArchive, null, null);
+
+            // Convert results to RestfulCaseOverviewV1 DTOs
+            ArrayList<RestfulCaseOverviewV1> rcoList = new ArrayList<>();
+            if (matches != null) {
+                for (ArchiveFileBean afb : matches) {
+                    RestfulCaseOverviewV1 rco = new RestfulCaseOverviewV1();
+                    rco.setId(afb.getId());
+                    rco.setExternalId(afb.getExternalId());
+                    rco.setName(afb.getName());
+                    rco.setReason(afb.getReason());
+                    rco.setFileNumber(afb.getFileNumber());
+                    rco.setDateChanged(afb.getDateChanged());
+                    rcoList.add(rco);
+                }
+            }
+            return Response.ok(rcoList).build();
+        } catch (Exception ex) {
+            log.error("Can not search cases with searchString: " + searchString, ex);
+            return Response.serverError().build();
+        }
+
+    }
+
     @Override
     @GET
     @Produces(MediaType.APPLICATION_JSON + ";charset=utf-8")
