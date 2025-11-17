@@ -677,6 +677,7 @@ public class UserUtils {
 
     private static final Logger log = Logger.getLogger(UserUtils.class.getName());
     private static Boolean currentUserAdmin = null;
+    private static Boolean currentUserSysAdmin = null;
 
     public static boolean isCurrentUserAdmin(Component parent) {
         return isCurrentUserAdmin(parent, true);
@@ -719,16 +720,16 @@ public class UserUtils {
     }
 
     public static boolean isCurrentUserSysAdmin() {
-        if (currentUserAdmin == null) {
+        if (currentUserSysAdmin == null) {
             ClientSettings settings = ClientSettings.getInstance();
             try {
                 JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
-                currentUserAdmin = locator.lookupSecurityServiceRemote().isSysAdmin();
+                currentUserSysAdmin = locator.lookupSecurityServiceRemote().isSysAdmin();
             } catch (Exception ex) {
                 log.error(ex);
                 return false;
             }
         }
-        return currentUserAdmin;
+        return currentUserSysAdmin;
     }
 }

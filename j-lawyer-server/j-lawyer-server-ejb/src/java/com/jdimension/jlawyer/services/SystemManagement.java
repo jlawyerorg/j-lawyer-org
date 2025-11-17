@@ -1093,6 +1093,14 @@ public class SystemManagement implements SystemManagementRemote, SystemManagemen
     public AppUserBean createUser(AppUserBean user, List<AppRoleBean> roles) throws Exception {
 
         this.checkUserLimit(false);
+        
+        boolean sysAdminRequest=context.isCallerInRole("sysAdminRole");
+        for (AppRoleBean r : roles) {
+            if("sysAdminRole".equalsIgnoreCase(r.getRole()) && !sysAdminRequest) {
+                // tried to delete a sys admin
+                throw new Exception("Nur Systemadministratoren dürfen weitere Systemadministratoren erstellen");
+            }
+        }
 
         StringGenerator idGen = new StringGenerator();
         // create password hash
@@ -1114,6 +1122,22 @@ public class SystemManagement implements SystemManagementRemote, SystemManagemen
         AppUserBean outdated = this.userBeanFacade.findByPrincipalId(user.getPrincipalId());
         if (outdated == null) {
             throw new Exception("No user with name " + user.getPrincipalId());
+        }
+        
+        boolean sysAdminRequest=context.isCallerInRole("sysAdminRole");
+        List<AppRoleBean> existingRoles = this.roleBeanFacade.findByPrincipalId(user.getPrincipalId());
+        for (AppRoleBean r : existingRoles) {
+            if("sysAdminRole".equalsIgnoreCase(r.getRole()) && !sysAdminRequest) {
+                // tried to delete a sys admin
+                throw new Exception("Nur Systemadministratoren dürfen andere Systemadministratoren bearbeiten");
+            }
+        }
+        
+        for (AppRoleBean r : roles) {
+            if("sysAdminRole".equalsIgnoreCase(r.getRole()) && !sysAdminRequest) {
+                // tried to delete a sys admin
+                throw new Exception("Nur Systemadministratoren dürfen Systemadministratorenrechte vergeben");
+            }
         }
 
         // in case of upates, we need to check only when loginRole is present - could be a user that is about to be re-activated
@@ -1177,9 +1201,19 @@ public class SystemManagement implements SystemManagementRemote, SystemManagemen
 
     @Override
     @RolesAllowed({"adminRole"})
-    public void deleteUser(String principalId) {
+    public void deleteUser(String principalId) throws Exception {
+        
+        boolean sysAdminRequest=context.isCallerInRole("sysAdminRole");
 
         List<AppRoleBean> delRoles = this.roleBeanFacade.findByPrincipalId(principalId);
+        
+        for (AppRoleBean r : delRoles) {
+            if("sysAdminRole".equalsIgnoreCase(r.getRole()) && !sysAdminRequest) {
+                // tried to delete a sys admin
+                throw new Exception("Nur Systemadministratoren dürfen andere Systemadministratoren entfernen");
+            }
+        }
+        
         for (AppRoleBean r : delRoles) {
             this.roleBeanFacade.remove(r);
         }
@@ -2277,6 +2311,16 @@ public class SystemManagement implements SystemManagementRemote, SystemManagemen
     @Override
     @RolesAllowed({"adminRole"})
     public boolean updatePasswordForUser(String principalId, String newPassword) throws Exception {
+        
+        boolean sysAdminRequest=context.isCallerInRole("sysAdminRole");
+        List<AppRoleBean> existingRoles = this.roleBeanFacade.findByPrincipalId(principalId);
+        for (AppRoleBean r : existingRoles) {
+            if("sysAdminRole".equalsIgnoreCase(r.getRole()) && !sysAdminRequest) {
+                // tried to delete a sys admin
+                throw new Exception("Nur Systemadministratoren dürfen andere Systemadministratoren bearbeiten");
+            }
+        }
+        
         AppUserBean u = this.userBeanFacade.findByPrincipalId(principalId);
         if (u == null) {
             throw new Exception("Error resetting password for " + principalId);

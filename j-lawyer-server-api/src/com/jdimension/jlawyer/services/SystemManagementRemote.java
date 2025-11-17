@@ -719,7 +719,7 @@ public interface SystemManagementRemote {
 
     AppUserBean updateUser(AppUserBean user, List<AppRoleBean> roles) throws Exception;
 
-    void deleteUser(String principalId);
+    void deleteUser(String principalId) throws Exception;
 
     ServerInformation getServerInformation();
     
