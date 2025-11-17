@@ -1015,11 +1015,11 @@ public class EmailTemplatesPanel extends javax.swing.JPanel implements Themeable
 
         cmdColor.setText("   ");
 
-        spnFontSize.setModel(new javax.swing.SpinnerNumberModel(12, 4, 36, 1));
+        spnFontSize.setModel(new javax.swing.SpinnerNumberModel(0, 0, 36, 1));
 
         jLabel7.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/help.png"))); // NOI18N
         jLabel7.setText(" ");
-        jLabel7.setToolTipText("Standardformatierung der Schrift der E-Mail (nur HTML-Mails)");
+        jLabel7.setToolTipText("<html>Standardformatierung der Schrift der E-Mail (nur HTML-Mails)<br/>Schriftgr&ouml;&szlig;e 0 = keine explizite Angabe der Schriftgr&ouml;&szlig;e</html>");
 
         org.jdesktop.layout.GroupLayout jPanel1Layout = new org.jdesktop.layout.GroupLayout(jPanel1);
         jPanel1.setLayout(jPanel1Layout);

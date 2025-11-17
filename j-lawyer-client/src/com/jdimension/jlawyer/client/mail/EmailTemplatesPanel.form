@@ -473,7 +473,7 @@
                 <Component class="javax.swing.JSpinner" name="spnFontSize">
                   <Properties>
                     <Property name="model" type="javax.swing.SpinnerModel" editor="org.netbeans.modules.form.editors2.SpinnerModelEditor">
-                      <SpinnerModel initial="12" maximum="36" minimum="4" numberType="java.lang.Integer" stepSize="1" type="number"/>
+                      <SpinnerModel initial="0" maximum="36" minimum="0" numberType="java.lang.Integer" stepSize="1" type="number"/>
                     </Property>
                   </Properties>
                 </Component>
@@ -483,7 +483,7 @@
                       <Image iconType="3" name="/icons/help.png"/>
                     </Property>
                     <Property name="text" type="java.lang.String" value=" "/>
-                    <Property name="toolTipText" type="java.lang.String" value="Standardformatierung der Schrift der E-Mail (nur HTML-Mails)"/>
+                    <Property name="toolTipText" type="java.lang.String" value="&lt;html&gt;Standardformatierung der Schrift der E-Mail (nur HTML-Mails)&lt;br/&gt;Schriftgr&amp;ouml;&amp;szlig;e 0 = keine explizite Angabe der Schriftgr&amp;ouml;&amp;szlig;e&lt;/html&gt;"/>
                   </Properties>
                 </Component>
               </SubComponents>

@@ -442,6 +442,20 @@
                     <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="cmdOpenTbActionPerformed"/>
                   </Events>
                 </Component>
+                <Component class="javax.swing.JButton" name="cmdApplyTemplateStyling">
+                  <Properties>
+                    <Property name="icon" type="javax.swing.Icon" editor="org.netbeans.modules.form.editors2.IconEditor">
+                      <Image iconType="3" name="/icons32/material/format_paint_32dp_0E72B5_FILL0_wght400_GRAD0_opsz40.png"/>
+                    </Property>
+                    <Property name="toolTipText" type="java.lang.String" value="Schriftformatierung der Vorlage &#xfc;bernehmen"/>
+                    <Property name="focusable" type="boolean" value="false"/>
+                    <Property name="horizontalTextPosition" type="int" value="0"/>
+                    <Property name="verticalTextPosition" type="int" value="3"/>
+                  </Properties>
+                  <Events>
+                    <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="cmdApplyTemplateStylingActionPerformed"/>
+                  </Events>
+                </Component>
               </SubComponents>
             </Container>
             <Component class="javax.swing.JTextField" name="txtCc">

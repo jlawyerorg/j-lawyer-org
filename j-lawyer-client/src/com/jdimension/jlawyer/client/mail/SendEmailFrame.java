@@ -977,6 +977,8 @@ public class SendEmailFrame extends javax.swing.JFrame implements SendCommunicat
             } else {
                 this.cmbTemplates.setSelectedIndex(0);
             }
+            
+            this.cmdApplyTemplateStyling.setEnabled(this.html.isSelected());
 
             txtTemplateSearch.setToolTipText("Geben Sie Text ein, um Vorlagen zu filtern");
             txtTemplateSearch.getDocument().addDocumentListener(new javax.swing.event.DocumentListener() {
@@ -2014,6 +2016,7 @@ public class SendEmailFrame extends javax.swing.JFrame implements SendCommunicat
         jSeparator5 = new javax.swing.JToolBar.Separator();
         cmdSaveDraft = new javax.swing.JButton();
         cmdOpenTb = new javax.swing.JButton();
+        cmdApplyTemplateStyling = new javax.swing.JButton();
         txtCc = new javax.swing.JTextField();
         jLabel9 = new javax.swing.JLabel();
         txtTo = new javax.swing.JTextField();
@@ -2227,6 +2230,18 @@ public class SendEmailFrame extends javax.swing.JFrame implements SendCommunicat
             }
         });
         jToolBar1.add(cmdOpenTb);
+
+        cmdApplyTemplateStyling.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons32/material/format_paint_32dp_0E72B5_FILL0_wght400_GRAD0_opsz40.png"))); // NOI18N
+        cmdApplyTemplateStyling.setToolTipText("Schriftformatierung der Vorlage übernehmen");
+        cmdApplyTemplateStyling.setFocusable(false);
+        cmdApplyTemplateStyling.setHorizontalTextPosition(javax.swing.SwingConstants.CENTER);
+        cmdApplyTemplateStyling.setVerticalTextPosition(javax.swing.SwingConstants.BOTTOM);
+        cmdApplyTemplateStyling.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                cmdApplyTemplateStylingActionPerformed(evt);
+            }
+        });
+        jToolBar1.add(cmdApplyTemplateStyling);
 
         jLabel9.setText("BCC:");
 
@@ -2743,6 +2758,15 @@ public class SendEmailFrame extends javax.swing.JFrame implements SendCommunicat
         this.popRecipientsBcc.show(this.cmdRecipientsBcc, 0, 0);
     }//GEN-LAST:event_cmdRecipientsBccActionPerformed
 
+    private String applyHtmlFixesAndStyle() {
+        EditorImplementation ed = (EditorImplementation) this.contentPanel.getComponent(0);
+        String editorContent = ed.getText();
+        editorContent = editorContent.replaceAll("<p>[\\s ]*</p>", "<p>&nbsp;</p>");
+        editorContent = editorContent.replaceAll("<div>[\\s ]*</div>", "<div>&nbsp;</div>");
+        ed.setText(editorContent);
+        return editorContent;
+    }
+    
     private void cmdSendActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdSendActionPerformed
 
         if (StringUtils.isEmpty(this.txtSubject.getText())) {
@@ -2769,10 +2793,9 @@ public class SendEmailFrame extends javax.swing.JFrame implements SendCommunicat
         mails.addAll(EmailUtils.getAllMailAddressesFromString(this.txtCc.getText()));
         mails.addAll(EmailUtils.getAllMailAddressesFromString(this.txtBcc.getText()));
 
-        String editorContent = ed.getText();
-        editorContent = editorContent.replaceAll("<p>[\\s ]*</p>", "<p>&nbsp;</p>");
-        editorContent = editorContent.replaceAll("<div>[\\s ]*</div>", "<div>&nbsp;</div>");
-        ed.setText(editorContent);
+        
+        
+        String editorContent=this.applyHtmlFixesAndStyle();
 
         if (mails.isEmpty()) {
             ThreadUtils.showErrorDialog(this, "Liste der Empfänger kann nicht leer sein.", com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR);
@@ -3231,7 +3254,7 @@ public class SendEmailFrame extends javax.swing.JFrame implements SendCommunicat
             hp.setBounds(0, 0, this.contentPanel.getWidth(), this.contentPanel.getHeight());
             SwingUtilities.updateComponentTreeUI(tp);
             SwingUtilities.updateComponentTreeUI(hp);
-
+            this.cmdApplyTemplateStyling.setEnabled(false);
         }
     }//GEN-LAST:event_textActionPerformed
 
@@ -3243,6 +3266,7 @@ public class SendEmailFrame extends javax.swing.JFrame implements SendCommunicat
             tp.setBounds(0, 0, this.contentPanel.getWidth(), this.contentPanel.getHeight());
             SwingUtilities.updateComponentTreeUI(tp);
             SwingUtilities.updateComponentTreeUI(hp);
+            this.cmdApplyTemplateStyling.setEnabled(true);
         }
     }//GEN-LAST:event_htmlActionPerformed
 
@@ -3526,6 +3550,10 @@ public class SendEmailFrame extends javax.swing.JFrame implements SendCommunicat
         EditorsRegistry.getInstance().unregisterFrame(this);
     }//GEN-LAST:event_formWindowClosed
 
+    private void cmdApplyTemplateStylingActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdApplyTemplateStylingActionPerformed
+        this.applyHtmlFixesAndStyle();
+    }//GEN-LAST:event_cmdApplyTemplateStylingActionPerformed
+
     /**
      * @param args the command line arguments
      */
@@ -3574,6 +3602,7 @@ public class SendEmailFrame extends javax.swing.JFrame implements SendCommunicat
     private javax.swing.JComboBox cmbReviewAssignee;
     private javax.swing.JComboBox cmbReviewReason;
     private javax.swing.JComboBox cmbTemplates;
+    private javax.swing.JButton cmdApplyTemplateStyling;
     private javax.swing.JButton cmdAssistant;
     private javax.swing.JButton cmdAttach;
     private javax.swing.JButton cmdOpenTb;

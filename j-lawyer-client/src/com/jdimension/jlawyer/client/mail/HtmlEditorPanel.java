@@ -874,7 +874,8 @@ public class HtmlEditorPanel extends javax.swing.JPanel implements EditorImpleme
                     // Build CSS style with font-family, font-size, and color
                     StringBuilder style = new StringBuilder();
                     style.append("font-family:").append(defaultFontFamily).append(";");
-                    style.append("font-size:").append(defaultFontSize).append(";");
+                    if(defaultFontSize!=null && !defaultFontSize.startsWith("0"))
+                        style.append("font-size:").append(defaultFontSize).append(";");
                     style.append("color:").append(defaultFontColor).append(";");
 
                     // Wrap with span using CSS style
