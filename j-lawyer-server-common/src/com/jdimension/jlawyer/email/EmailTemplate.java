@@ -695,6 +695,10 @@ public class EmailTemplate implements Serializable {
     private String cc = "";
     private String bcc = "";
 
+    private String fontName = "sans-serif";
+    private Integer fontSize = 12;
+    private String fontColor = "#000000";
+
     public EmailTemplate() {
     }
 
@@ -716,6 +720,9 @@ public class EmailTemplate implements Serializable {
         sb.append("<bcc>").append("<![CDATA[").append(this.bcc).append("]]>").append("</bcc>");
         sb.append("<subject>").append("<![CDATA[").append(this.subject).append("]]>").append("</subject>");
         sb.append("<body>").append("<![CDATA[").append(this.body).append("]]>").append("</body>");
+        sb.append("<fontname>").append("<![CDATA[").append(this.fontName).append("]]>").append("</fontname>");
+        sb.append("<fontsize>").append(this.fontSize).append("</fontsize>");
+        sb.append("<fontcolor>").append("<![CDATA[").append(this.fontColor).append("]]>").append("</fontcolor>");
 
         sb.append("</emailtemplate>");
 
@@ -762,6 +769,30 @@ public class EmailTemplate implements Serializable {
         if (nl != null && nl.getLength() == 1) {
             String bcc = nl.item(0).getTextContent();
             tpl.setBcc(bcc);
+        }
+
+        // Font properties (with backward compatibility)
+        nl = doc.getElementsByTagName("fontname");
+        if (nl != null && nl.getLength() == 1) {
+            String fontName = nl.item(0).getTextContent();
+            tpl.setFontName(fontName);
+        }
+
+        nl = doc.getElementsByTagName("fontsize");
+        if (nl != null && nl.getLength() == 1) {
+            try {
+                Integer fontSize = Integer.parseInt(nl.item(0).getTextContent());
+                tpl.setFontSize(fontSize);
+            } catch (NumberFormatException e) {
+                // Use default value
+                log.warn("Invalid font size in template, using default: " + e.getMessage());
+            }
+        }
+
+        nl = doc.getElementsByTagName("fontcolor");
+        if (nl != null && nl.getLength() == 1) {
+            String fontColor = nl.item(0).getTextContent();
+            tpl.setFontColor(fontColor);
         }
 
         return tpl;
@@ -863,5 +894,47 @@ public class EmailTemplate implements Serializable {
      */
     public void setBcc(String bcc) {
         this.bcc = bcc;
+    }
+
+    /**
+     * @return the fontName
+     */
+    public String getFontName() {
+        return fontName;
+    }
+
+    /**
+     * @param fontName the fontName to set
+     */
+    public void setFontName(String fontName) {
+        this.fontName = fontName;
+    }
+
+    /**
+     * @return the fontSize
+     */
+    public Integer getFontSize() {
+        return fontSize;
+    }
+
+    /**
+     * @param fontSize the fontSize to set
+     */
+    public void setFontSize(Integer fontSize) {
+        this.fontSize = fontSize;
+    }
+
+    /**
+     * @return the fontColor
+     */
+    public String getFontColor() {
+        return fontColor;
+    }
+
+    /**
+     * @param fontColor the fontColor to set
+     */
+    public void setFontColor(String fontColor) {
+        this.fontColor = fontColor;
     }
 }
