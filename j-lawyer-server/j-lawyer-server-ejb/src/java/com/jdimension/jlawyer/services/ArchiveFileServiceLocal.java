@@ -806,6 +806,12 @@ public interface ArchiveFileServiceLocal {
 
     void deleteCaseFolder(String folderId) throws Exception;
 
+    Collection<ArchiveFileDocumentsBean> getDocumentsBin();
+
+    void removeDocumentFromBin(String docId) throws Exception;
+
+    boolean restoreDocumentFromBin(String docId) throws Exception;
+
     void purgeDocumentBin() throws Exception;
     
     void enableCaseSync(List<String> caseIds, String principalId, boolean enabled) throws Exception;

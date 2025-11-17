@@ -695,6 +695,7 @@ import javax.ejb.Stateless;
 import javax.naming.InitialContext;
 import javax.ws.rs.Consumes;
 import javax.ws.rs.DELETE;
+import javax.ws.rs.DefaultValue;
 import javax.ws.rs.GET;
 import javax.ws.rs.POST;
 import javax.ws.rs.PUT;
@@ -715,6 +716,7 @@ import org.jlawyer.io.rest.v7.pojo.RestfulInstantMessageV7;
 import org.jlawyer.io.rest.v7.pojo.RestfulInvoicePositionV7;
 import org.jlawyer.io.rest.v7.pojo.RestfulInvoiceV7;
 import org.jlawyer.io.rest.v7.pojo.RestfulStatusResponseV7;
+import org.jlawyer.io.rest.v7.pojo.RestfulRecycleBinDocumentV7;
 
 /**
  *
@@ -848,7 +850,7 @@ public class CasesEndpointV7 implements CasesEndpointLocalV7 {
             return Response.serverError().build();
         }
     }
-    
+
     /**
      * Returns a list of invoices for a given case
      *
@@ -1668,6 +1670,120 @@ public class CasesEndpointV7 implements CasesEndpointLocalV7 {
         } catch (Exception ex) {
             log.error("can not get documents by tag " + tag, ex);
             return Response.serverError().build();
+        }
+    }
+
+    /**
+     * Lists all deleted documents in the recycle bin.
+     *
+     * @param caseId optional filter to only include documents of a single case
+     * @response 200 Returns a list of {@link RestfulRecycleBinDocumentV7}
+     * @response 401 User not authorized
+     * @response 403 User not authenticated
+     */
+    @Override
+    @GET
+    @Produces(MediaType.APPLICATION_JSON + ";charset=utf-8")
+    @Path("/recyclebin")
+    @RolesAllowed({"writeArchiveFileRole"})
+    public Response getRecycleBin(@QueryParam("caseId") @DefaultValue("") String caseId) {
+        try {
+            InitialContext ic = new InitialContext();
+            ArchiveFileServiceLocal cases = (ArchiveFileServiceLocal) ic.lookup(LOOKUP_CASES);
+            Collection<ArchiveFileDocumentsBean> deletedDocs = cases.getDocumentsBin();
+
+            ArrayList<RestfulRecycleBinDocumentV7> response = new ArrayList<>();
+            boolean includeAllCases = ServerStringUtils.isEmpty(caseId);
+            if (deletedDocs != null) {
+                for (ArchiveFileDocumentsBean doc : deletedDocs) {
+                    ArchiveFileBean archiveFile = doc.getArchiveFileKey();
+                    String docCaseId = archiveFile != null ? archiveFile.getId() : null;
+                    if (includeAllCases || (docCaseId != null && docCaseId.equals(caseId))) {
+                        response.add(RestfulRecycleBinDocumentV7.fromDocumentsBean(doc));
+                    }
+                }
+            }
+
+            return Response.ok(response).build();
+        } catch (Exception ex) {
+            log.error("can not load recycle bin contents", ex);
+            return Response.serverError().build();
+        }
+    }
+
+    /**
+     * Restores a document from the recycle bin.
+     *
+     * @param documentId document ID to restore
+     * @response 200 Document restored successfully
+     * @response 400 Document ID missing
+     * @response 401 User not authorized
+     * @response 403 User not authenticated
+     */
+    @Override
+    @PUT
+    @Produces(MediaType.APPLICATION_JSON + ";charset=utf-8")
+    @Path("/document/{id}/restore")
+    @RolesAllowed({"writeArchiveFileRole"})
+    public Response restoreDocumentFromRecycleBin(@PathParam("id") String documentId) {
+        RestfulStatusResponseV7 response = new RestfulStatusResponseV7();
+        try {
+            if (ServerStringUtils.isEmpty(documentId)) {
+                response.setStatus(RestfulStatusResponseV7.STATUS_ERROR);
+                response.setMessage("Document ID is required");
+                return Response.status(Response.Status.BAD_REQUEST).entity(response).build();
+            }
+
+            InitialContext ic = new InitialContext();
+            ArchiveFileServiceLocal cases = (ArchiveFileServiceLocal) ic.lookup(LOOKUP_CASES);
+            cases.restoreDocumentFromBin(documentId);
+
+            response.setStatus(RestfulStatusResponseV7.STATUS_OK);
+            response.setMessage("Document restored from recycle bin");
+            return Response.ok(response).build();
+        } catch (Exception ex) {
+            log.error("can not restore document " + documentId + " from recycle bin", ex);
+            response.setStatus(RestfulStatusResponseV7.STATUS_ERROR);
+            response.setMessage(ex.getMessage());
+            return Response.serverError().entity(response).build();
+        }
+    }
+
+    /**
+     * Permanently removes a document that is currently located in the recycle bin.
+     *
+     * @param documentId document ID to delete
+     * @response 200 Document deleted successfully
+     * @response 400 Document ID missing
+     * @response 401 User not authorized
+     * @response 403 User not authenticated
+     */
+    @Override
+    @DELETE
+    @Produces(MediaType.APPLICATION_JSON + ";charset=utf-8")
+    @Path("/document/{id}/permanent")
+    @RolesAllowed({"writeArchiveFileRole"})
+    public Response removeDocumentFromRecycleBin(@PathParam("id") String documentId) {
+        RestfulStatusResponseV7 response = new RestfulStatusResponseV7();
+        try {
+            if (ServerStringUtils.isEmpty(documentId)) {
+                response.setStatus(RestfulStatusResponseV7.STATUS_ERROR);
+                response.setMessage("Document ID is required");
+                return Response.status(Response.Status.BAD_REQUEST).entity(response).build();
+            }
+
+            InitialContext ic = new InitialContext();
+            ArchiveFileServiceLocal cases = (ArchiveFileServiceLocal) ic.lookup(LOOKUP_CASES);
+            cases.removeDocumentFromBin(documentId);
+
+            response.setStatus(RestfulStatusResponseV7.STATUS_OK);
+            response.setMessage("Document permanently removed from recycle bin");
+            return Response.ok(response).build();
+        } catch (Exception ex) {
+            log.error("can not permanently remove document " + documentId + " from recycle bin", ex);
+            response.setStatus(RestfulStatusResponseV7.STATUS_ERROR);
+            response.setMessage(ex.getMessage());
+            return Response.serverError().entity(response).build();
         }
     }
     
