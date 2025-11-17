@@ -699,20 +699,37 @@ public class TimesheetLogEntryPanel extends javax.swing.JPanel {
     TimesheetPosition entry = null;
     Timesheet entrySheet = null;
     TimesheetLogDialog containingParent = null;
+    String numericInputFormat = "minutes";
 
     /**
      * Creates new form TimesheetLogEntryPanel
      *
      * @param posTemplates
      * @param cParent
+     * @param numericInputFormat - see
+     * ServerSettingsKeys.SERVERCONF_TIMESHEET_NUMERICINPUT - can have values
+     * "minutes", "hours", "reject"
      */
-    public TimesheetLogEntryPanel(TimesheetLogDialog cParent, List<TimesheetPositionTemplate> posTemplates) {
+    public TimesheetLogEntryPanel(TimesheetLogDialog cParent, List<TimesheetPositionTemplate> posTemplates, String numericInputFormat) {
         initComponents();
+
+        this.numericInputFormat = numericInputFormat;
+
         this.cmdSave.setText("");
         this.containingParent = cParent;
 
         this.txtManualEntry.putClientProperty("JTextField.placeholderText", "2h45m");
-        this.txtManualEntry.setToolTipText("Zeit eingeben im Format 2h45m und mit Enter bestätigen, um Zeit manuell zu buchen");
+        StringBuilder hint = new StringBuilder();
+        hint.append("<html>Zeit eingeben im Format 2h45m und mit Enter best&auml;tigen, um Zeit manuell zu buchen<br>");
+        if ("minutes".equalsIgnoreCase(numericInputFormat)) {
+            hint.append("Zahleneingaben ohne Einheit werden als Minuten gewertet");
+        } else if ("hours".equalsIgnoreCase(numericInputFormat)) {
+            hint.append("Zahleneingaben ohne Einheit werden als Stunden gewertet");
+        } else {
+            hint.append("Zahleneingaben ohne Einheit werden abgelehnt");
+        }
+        hint.append("</html>");
+        this.txtManualEntry.setToolTipText(hint.toString());
 
         this.cmbTemplate.removeAllItems();
         for (TimesheetPositionTemplate t : posTemplates) {
@@ -1048,8 +1065,6 @@ public class TimesheetLogEntryPanel extends javax.swing.JPanel {
         return text.matches("\\d+h\\d+m") || text.matches("\\d+m") || text.matches("\\d+h");
     }
 
-    
-
     private void saveManualEntry() {
 
         this.setStatusColor(DefaultColorTheme.COLOR_LOGO_BLUE);
@@ -1085,14 +1100,14 @@ public class TimesheetLogEntryPanel extends javax.swing.JPanel {
         cal.set(Calendar.MILLISECOND, 0);
 
         Date start = cal.getTime();
-        
+
         this.txtEnd.setValue(start);
         this.txtStart.setValue(new Date(start.getTime() - minutes * 60l * 1000l));
 
         Date dEnd = (Date) this.txtEnd.getValue();
         Date dStart = (Date) this.txtStart.getValue();
         if (dStart != null && dEnd != null) {
-            if (dEnd.after(dStart)) {
+            if (dEnd.after(dStart) || dEnd.equals(dStart)) {
                 this.entry.setStarted(dStart);
                 this.entry.setStopped(dEnd);
             }
@@ -1167,6 +1182,48 @@ public class TimesheetLogEntryPanel extends javax.swing.JPanel {
 
     private void txtManualEntryKeyPressed(java.awt.event.KeyEvent evt) {//GEN-FIRST:event_txtManualEntryKeyPressed
         if (evt.getKeyCode() == KeyEvent.VK_ENTER) {
+
+            String trimmedInput=txtManualEntry.getText().toLowerCase().trim();
+            // check for input as 3h30
+            // h is not last character
+            if(trimmedInput.contains("h") && trimmedInput.indexOf("h")<trimmedInput.length()-1 && !trimmedInput.endsWith("m")) {
+                trimmedInput=trimmedInput+"m";
+                this.txtManualEntry.setText(trimmedInput);
+            }
+            
+            if (!trimmedInput.contains("m") && !trimmedInput.contains("h")) {
+                if ("reject".equalsIgnoreCase(this.numericInputFormat)) {
+                    JOptionPane.showMessageDialog(
+                            null,
+                            "Ungültige Eingabe - bitte im Format __h__m, bspw. 2h45m für 2 Stunden und 45 Minuten oder 2h oder 45m",
+                            "Ungültige Eingabe",
+                            JOptionPane.WARNING_MESSAGE
+                    );
+                    txtManualEntry.setText("");
+                    return;
+                } else {
+                    
+                    
+                    
+                    // try parsing as int
+                    try {
+                        int input = Integer.parseInt(trimmedInput);
+                        if ("minutes".equalsIgnoreCase(this.numericInputFormat)) {
+                            txtManualEntry.setText(input + "m");
+                        } else if ("hours".equalsIgnoreCase(this.numericInputFormat)) {
+                            txtManualEntry.setText(input + "h");
+                        }
+                    } catch (Throwable t) {
+                        JOptionPane.showMessageDialog(
+                                null,
+                                "Ungültige Eingabe - bitte im Format __h__m, bspw. 2h45m für 2 Stunden und 45 Minuten oder 2h oder 45m",
+                                "Ungültige Eingabe",
+                                JOptionPane.WARNING_MESSAGE
+                        );
+                        return;
+                    }
+                }
+            }
 
             if (!isValidTimeFormat(txtManualEntry.getText())) {
                 JOptionPane.showMessageDialog(

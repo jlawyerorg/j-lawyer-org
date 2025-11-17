@@ -1296,6 +1296,7 @@ public class JKanzleiGUI extends javax.swing.JFrame implements com.jdimension.jl
         mnuTimesheetIntervals = new javax.swing.JMenuItem();
         mnuTimesheetPositions = new javax.swing.JMenuItem();
         mnuParallelTimesheetLogs = new javax.swing.JMenuItem();
+        mnuTimesheetInput = new javax.swing.JMenuItem();
         jSeparator2 = new javax.swing.JSeparator();
         mnuUserProfile = new javax.swing.JMenuItem();
         mnuProfileInfo = new javax.swing.JMenuItem();
@@ -2019,6 +2020,15 @@ public class JKanzleiGUI extends javax.swing.JFrame implements com.jdimension.jl
             }
         });
         mnuTimesheet.add(mnuParallelTimesheetLogs);
+
+        mnuTimesheetInput.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons16/material/baseline_timer_black_48dp.png"))); // NOI18N
+        mnuTimesheetInput.setText("Eingabeformat");
+        mnuTimesheetInput.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                mnuTimesheetInputActionPerformed(evt);
+            }
+        });
+        mnuTimesheet.add(mnuTimesheetInput);
 
         mnuOptions.add(mnuTimesheet);
         mnuOptions.add(jSeparator2);
@@ -3135,6 +3145,14 @@ public class JKanzleiGUI extends javax.swing.JFrame implements com.jdimension.jl
         dlg.setVisible(true);
     }//GEN-LAST:event_mnuAddressOptionsStatesActionPerformed
 
+    private void mnuTimesheetInputActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_mnuTimesheetInputActionPerformed
+        if (checkAdmin()) {
+            TimesheetInputConfigurationDialog dlg = new TimesheetInputConfigurationDialog(this, true);
+            FrameUtils.centerDialog(dlg, this);
+            dlg.setVisible(true);
+        }
+    }//GEN-LAST:event_mnuTimesheetInputActionPerformed
+
     private void mnuExportSyncedCasesActionPerformed(java.awt.event.ActionEvent evt) {
         CaseExportDialog dlg = new CaseExportDialog(this, true);
         FrameUtils.centerDialog(dlg, this);
@@ -3252,6 +3270,7 @@ public class JKanzleiGUI extends javax.swing.JFrame implements com.jdimension.jl
     private javax.swing.JMenuItem mnuStirlingPdf;
     private javax.swing.JMenuItem mnuSystemMailbox;
     private javax.swing.JMenu mnuTimesheet;
+    private javax.swing.JMenuItem mnuTimesheetInput;
     private javax.swing.JMenuItem mnuTimesheetIntervals;
     private javax.swing.JMenuItem mnuTimesheetPositions;
     private javax.swing.JMenuItem mnuUserProfile;
