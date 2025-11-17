@@ -2271,6 +2271,7 @@ public class SendEmailFrame extends javax.swing.JFrame implements SendCommunicat
         cmbDevices.setModel(new javax.swing.DefaultComboBoxModel<>(new String[] { "Item 1", "Item 2", "Item 3", "Item 4" }));
 
         cmbPriority.setModel(new javax.swing.DefaultComboBoxModel<>(new String[] { "Normal", "Hoch", "Niedrig" }));
+        cmbPriority.setToolTipText("Sendungspriorität");
 
         javax.swing.GroupLayout jPanel3Layout = new javax.swing.GroupLayout(jPanel3);
         jPanel3.setLayout(jPanel3Layout);
