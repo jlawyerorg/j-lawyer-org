@@ -1229,33 +1229,43 @@ public class ImportBankStatementFrame extends javax.swing.JFrame {
                         .withCSVParser(parser)
                         .withSkipLines(csvConfig.getHeaderLines()) // Skip header if present
                         .build();
-                String[] nextLine;
 
                 // erst alle einlesen
+                List<String[]> allLines = reader.readAll();
+                reader.close();
+
+                // Determine how many lines to process (excluding footer)
+                int footerLines = csvConfig.getFooterLines();
+                int linesToProcess = allLines.size() - footerLines;
+                if (linesToProcess < 0) {
+                    linesToProcess = 0;
+                }
+
                 this.transactions = new ArrayList<>();
-                while ((nextLine = reader.readNext()) != null) {
+                for (int i = 0; i < linesToProcess; i++) {
+                    String[] nextLine = allLines.get(i);
                     try {
                         String date = nextLine[csvConfig.getColumnDate()].trim();
                         String fromName = nextLine[csvConfig.getColumnName()].trim();
-                        
+
                         String fromIban = "";
                         if (csvConfig.getColumnIban() > -1) {
                             fromIban = nextLine[csvConfig.getColumnIban()].trim();
                         }
-                        
+
                         String bookingType = "unbekannte Buchungsart";
                         if (csvConfig.getColumnBookingType() > -1) {
                             bookingType = nextLine[csvConfig.getColumnBookingType()].trim();
                         }
-                        
+
                         String purpose = nextLine[csvConfig.getColumnPurpose()].trim();
                         double amount = decf.parse(nextLine[csvConfig.getColumnAmount()].trim()).doubleValue();
-                        
+
                         String currency = "EUR";
                         if (csvConfig.getColumnCurrency() > -1) {
                             currency = nextLine[csvConfig.getColumnCurrency()].trim();
                         }
-                        
+
                         BankTransaction tx = new BankTransaction(date, fromName, fromIban, bookingType, purpose, amount, currency);
                         transactions.add(tx);
                     } catch (Exception ex) {
