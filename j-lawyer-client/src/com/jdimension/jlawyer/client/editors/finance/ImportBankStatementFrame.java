@@ -718,25 +718,25 @@ import themes.colors.DefaultColorTheme;
  * @author jens
  */
 public class ImportBankStatementFrame extends javax.swing.JFrame {
-
+    
     private static final Logger log = Logger.getLogger(ImportBankStatementFrame.class.getName());
-
+    
     private ArrayList<BankTransaction> transactions = null;
     private List<Invoice> openInvoices = null;
     private List<Payment> openPayments = null;
     private List<BankStatementsCSVConfig> csvConfigs = null;
-
+    
     private int txCount = 0;
     private int txIndex = 0;
-
+    
     private BankTransaction currentTransaction = null;
     private ArchiveFileBean currentCase = null;
     private AddressBean recipientAddress = null;
-
+    
     private List<String> allCaseTagsAsString = new ArrayList<>();
-
+    
     private HashMap<String, String> contactToIbanTo = null;
-
+    
     private SimpleDateFormat df = new SimpleDateFormat("dd.MM.yyyy HH:mm");
     private DecimalFormat nf = new DecimalFormat("0.00");
 
@@ -745,54 +745,54 @@ public class ImportBankStatementFrame extends javax.swing.JFrame {
      */
     public ImportBankStatementFrame() {
         initComponents();
-
+        
         this.lblTxIndex.setText("0 / 0");
         this.lblCase.setText("-");
         this.cmdCaseTags.setText("");
-
+        
         this.cmdNext.setEnabled(false);
         this.cmdPrevious.setEnabled(false);
-
+        
         this.lblDuplicateTransaction.setText("");
         this.lblDuplicateTransaction.setForeground(DefaultColorTheme.COLOR_LOGO_RED);
-
+        
         this.lblInvoiceInfo.setText("");
         this.lblInvoiceInfoAccountEntry.setText("");
         this.lblPaymentInfo.setText("");
-
+        
         this.lblRecipient.setText("...");
         this.lblRecipient.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/warning.png")));
         this.recipientAddress = null;
-
+        
         ClientSettings settings = ClientSettings.getInstance();
         try {
             JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
             this.openInvoices = locator.lookupInvoiceServiceRemote().getInvoicesByStatus(Invoice.STATUS_OPEN, Invoice.STATUS_OPEN_NONENFORCEABLE, Invoice.STATUS_OPEN_REMINDER1, Invoice.STATUS_OPEN_REMINDER2, Invoice.STATUS_OPEN_REMINDER3, Invoice.STATUS_NEW);
             this.openPayments = locator.lookupPaymentServiceRemote().getPaymentsByStatus(Payment.STATUS_APPROVED, Payment.STATUS_INITIATED, Payment.STATUS_NEW);
-
+            
             this.cmbCsvConfig.removeAllItems();
             csvConfigs = locator.lookupInvoiceServiceRemote().getAllBankStatementsCSVConfigurations();
             for (BankStatementsCSVConfig c : csvConfigs) {
                 this.cmbCsvConfig.addItem(c.getConfigurationName());
             }
-
+            
             String lastConfig = UserSettings.getInstance().getSetting(UserSettingsKeys.BANKSTATEMENT_LASTCONFIG, null);
             if (lastConfig != null) {
                 this.cmbCsvConfig.setSelectedItem(lastConfig);
             }
-
+            
             this.contactToIbanTo = locator.lookupAddressServiceRemote().getAddressesWithIban();
-
+            
         } catch (Exception ex) {
             log.error("Error connecting to server", ex);
             JOptionPane.showMessageDialog(this, "Fehler beim Laden Kontoauszugs-Einstellungen: " + ex.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
         }
-
+        
         this.initializeOptions();
     }
-
+    
     private void loadAddressesForCase(ArchiveFileBean targetCase) {
-
+        
         ClientSettings settings = ClientSettings.getInstance();
         try {
             JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
@@ -809,12 +809,12 @@ public class ImportBankStatementFrame extends javax.swing.JFrame {
                 });
                 this.popRecipients.add(mi);
             }
-
+            
         } catch (Exception ex) {
             log.error("Error connecting to server", ex);
             JOptionPane.showMessageDialog(this, "Fehler beim der Rechnungen: " + ex.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
         }
-
+        
     }
 
     /**
@@ -1183,7 +1183,7 @@ public class ImportBankStatementFrame extends javax.swing.JFrame {
         JFileChooser chooser = new JFileChooser();
         int returnVal = chooser.showOpenDialog(this);
         if (returnVal == JFileChooser.APPROVE_OPTION) {
-
+            
             BankStatementsCSVConfig csvConfig = null;
             for (BankStatementsCSVConfig c : this.csvConfigs) {
                 if (c.getConfigurationName().equals(this.cmbCsvConfig.getSelectedItem().toString())) {
@@ -1195,16 +1195,16 @@ public class ImportBankStatementFrame extends javax.swing.JFrame {
                 JOptionPane.showMessageDialog(this, "Ungültige CSV-Konfiguration", "Kontoauszug importieren", JOptionPane.ERROR_MESSAGE);
                 return;
             }
-
+            
             UserSettings.getInstance().setSetting(UserSettingsKeys.BANKSTATEMENT_LASTCONFIG, this.cmbCsvConfig.getSelectedItem().toString());
-
+            
             try {
-
+                
                 char delimiter = ';';
                 if (csvConfig.getDelimiter().length() == 1) {
                     delimiter = csvConfig.getDelimiter().charAt(0);
                 }
-
+                
                 String url = chooser.getSelectedFile().getCanonicalPath();
                 File f = new File(url);
 
@@ -1212,6 +1212,14 @@ public class ImportBankStatementFrame extends javax.swing.JFrame {
                 DecimalFormatSymbols symbols = new DecimalFormatSymbols(Locale.forLanguageTag(csvConfig.getLocale()));
                 DecimalFormat decf = new DecimalFormat(csvConfig.getDecimalFormat(), symbols); // No currency symbols
 
+                if (!StringUtils.isEmpty(csvConfig.getDecimalSeparator())) {
+                    symbols.setDecimalSeparator(csvConfig.getDecimalSeparator().charAt(0));
+                }
+                
+                decf.setGroupingUsed(csvConfig.isDecimalGrouping());
+                if (csvConfig.isDecimalGrouping() && !StringUtils.isEmpty(csvConfig.getDecimalGroupingCharacter())) {
+                    symbols.setGroupingSeparator(csvConfig.getDecimalGroupingCharacter().charAt(0));    // explicitly set!
+                }                
                 CSVParser parser = new CSVParserBuilder()
                         .withSeparator(delimiter) // Use the specified delimiter
                         .build();
@@ -1229,25 +1237,25 @@ public class ImportBankStatementFrame extends javax.swing.JFrame {
                     try {
                         String date = nextLine[csvConfig.getColumnDate()].trim();
                         String fromName = nextLine[csvConfig.getColumnName()].trim();
-
+                        
                         String fromIban = "";
                         if (csvConfig.getColumnIban() > -1) {
                             fromIban = nextLine[csvConfig.getColumnIban()].trim();
                         }
-
+                        
                         String bookingType = "unbekannte Buchungsart";
                         if (csvConfig.getColumnBookingType() > -1) {
                             bookingType = nextLine[csvConfig.getColumnBookingType()].trim();
                         }
-
+                        
                         String purpose = nextLine[csvConfig.getColumnPurpose()].trim();
                         double amount = decf.parse(nextLine[csvConfig.getColumnAmount()].trim()).doubleValue();
-
+                        
                         String currency = "EUR";
                         if (csvConfig.getColumnCurrency() > -1) {
                             currency = nextLine[csvConfig.getColumnCurrency()].trim();
                         }
-
+                        
                         BankTransaction tx = new BankTransaction(date, fromName, fromIban, bookingType, purpose, amount, currency);
                         transactions.add(tx);
                     } catch (Exception ex) {
@@ -1260,25 +1268,25 @@ public class ImportBankStatementFrame extends javax.swing.JFrame {
                     }
                 }
                 System.out.println("" + transactions.size() + " Zeilen im CSV");
-
+                
                 this.txCount = transactions.size();
                 this.txIndex = -1;
                 if (!transactions.isEmpty()) {
                     this.cmdNextActionPerformed(null);
                 }
-
+                
                 this.cmdNext.setEnabled(transactions.size() > 1);
                 this.cmdPrevious.setEnabled(false);
-
+                
             } catch (Exception ex) {
                 log.error("Unable to load bank statements from CSV", ex);
                 JOptionPane.showMessageDialog(this, "Kontoauszug kann nicht geladen werden", "Kontoauszug", JOptionPane.ERROR_MESSAGE);
             }
         }
     }//GEN-LAST:event_cmdCsvUploadActionPerformed
-
+    
     private void processActions() {
-
+        
         if (this.currentCase == null) {
             return;
         }
@@ -1287,7 +1295,7 @@ public class ImportBankStatementFrame extends javax.swing.JFrame {
         if (!this.chkMarkInvoicePaid.isSelected() && !this.chkCreateCaseAccountEntry.isSelected() && !this.chkMarkPaymentExecuted.isSelected()) {
             return;
         }
-
+        
         StringBuilder sb = new StringBuilder();
         sb.append("<html>Buchungen jetzt ausf&uuml;hren?<br/><ul>");
         if (this.chkMarkInvoicePaid.isSelected()) {
@@ -1300,7 +1308,7 @@ public class ImportBankStatementFrame extends javax.swing.JFrame {
             sb.append("<li>Buchung im Aktenkonto erstellen</li>");
         }
         sb.append("</ul></html>");
-
+        
         Object[] options = {"Ja", "Nein"}; // Custom labels, optional
         int response = JOptionPane.showOptionDialog(
                 this,
@@ -1315,11 +1323,11 @@ public class ImportBankStatementFrame extends javax.swing.JFrame {
         if (response == JOptionPane.NO_OPTION) {
             return;
         }
-
+        
         try {
-
+            
             boolean processed = false;
-
+            
             ClientSettings settings = ClientSettings.getInstance();
             JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
             List<Invoice> invoicesForCase = locator.lookupArchiveFileServiceRemote().getInvoices(this.currentCase.getId());
@@ -1364,12 +1372,12 @@ public class ImportBankStatementFrame extends javax.swing.JFrame {
                         break;
                     }
                 }
-
+                
                 AddressBean entryContact = null;
                 if (entryInvoice != null) {
                     entryContact = entryInvoice.getContact();
                 }
-
+                
                 CaseAccountEntry entry = new CaseAccountEntry();
                 entry.setArchiveFileKey(this.currentCase);
                 entry.setContact(this.recipientAddress);
@@ -1382,45 +1390,45 @@ public class ImportBankStatementFrame extends javax.swing.JFrame {
                 entry.setExpendituresOut(BigDecimal.ZERO);
                 entry.setInvoice(entryInvoice);
                 entry.setSpendings(BigDecimal.ZERO);
-
+                
                 if (this.rdEarnings.isSelected()) {
                     entry.setEarnings(BigDecimal.valueOf(Math.abs(this.currentTransaction.getAmount())).setScale(2, RoundingMode.HALF_UP));
                 }
-
+                
                 if (this.rdEscrowIn.isSelected()) {
                     entry.setEscrowIn(BigDecimal.valueOf(Math.abs(this.currentTransaction.getAmount())).setScale(2, RoundingMode.HALF_UP));
                 }
-
+                
                 if (this.rdExpenditureIn.isSelected()) {
                     entry.setExpendituresIn(BigDecimal.valueOf(Math.abs(this.currentTransaction.getAmount())).setScale(2, RoundingMode.HALF_UP));
                 }
-
+                
                 if (this.rdSpendings.isSelected()) {
                     entry.setSpendings(BigDecimal.valueOf(Math.abs(this.currentTransaction.getAmount())).setScale(2, RoundingMode.HALF_UP));
                 }
-
+                
                 if (this.rdEscrowOut.isSelected()) {
                     entry.setEscrowOut(BigDecimal.valueOf(Math.abs(this.currentTransaction.getAmount())).setScale(2, RoundingMode.HALF_UP));
                 }
-
+                
                 if (this.rdExpenditureOut.isSelected()) {
                     entry.setExpendituresOut(BigDecimal.valueOf(Math.abs(this.currentTransaction.getAmount())).setScale(2, RoundingMode.HALF_UP));
                 }
-
+                
                 locator.lookupArchiveFileServiceRemote().addAccountEntry(this.currentCase.getId(), entry);
                 processed = true;
             }
-
+            
             if (processed) {
                 // expires after 1.5yrs
                 locator.lookupSystemManagementRemote().addTransactionLog(this.currentTransaction.toHashInput(), 550);
             }
-
+            
         } catch (Exception ex) {
             log.error("Error connecting to server", ex);
             ThreadUtils.showErrorDialog(this, "Fehler beim Laden der Aktenetiketten", "Aktenetiketten");
         }
-
+        
     }
 
     private void cmdNextActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdNextActionPerformed
@@ -1438,7 +1446,7 @@ public class ImportBankStatementFrame extends javax.swing.JFrame {
         this.cmdPrevious.setEnabled(this.txIndex > 0);
         this.loadTransaction(txIndex);
     }//GEN-LAST:event_cmdPreviousActionPerformed
-
+    
     private void initializeOptions() {
         try {
             ClientSettings settings = ClientSettings.getInstance();
@@ -1446,18 +1454,18 @@ public class ImportBankStatementFrame extends javax.swing.JFrame {
             for (AppOptionGroupBean aog : allCaseTags) {
                 allCaseTagsAsString.add(aog.getValue());
             }
-
+            
             this.buildCheckboxPopup(this.cmdCaseTags, this.popCaseTags, this.allCaseTagsAsString, this.lblCaseTags);
             lblCaseTags.setText(ComponentUtils.getSelectedPopupMenuItemsAsString(this.popCaseTags));
-
+            
         } catch (Exception ex) {
             log.error("Error connecting to server", ex);
             ThreadUtils.showErrorDialog(this, "Fehler beim Laden der Aktenetiketten", "Aktenetiketten");
         }
     }
-
+    
     private void buildCheckboxPopup(JButton button, JPopupMenu popup, List<String> tagsInUse, JLabel allValues) {
-
+        
         ArrayList<String> currentCaseTags = new ArrayList<>();
         if (this.currentCase != null) {
             try {
@@ -1472,12 +1480,12 @@ public class ImportBankStatementFrame extends javax.swing.JFrame {
                 ThreadUtils.showErrorDialog(this, "Fehler beim Laden der Aktenetiketten", "Aktenetiketten");
             }
         }
-
+        
         if (tagsInUse == null) {
             tagsInUse = new ArrayList<>();
         }
         StringUtils.sortIgnoreCase(tagsInUse);
-
+        
         popup.removeAll();
         boolean hasSelection = false;
         for (String t : tagsInUse) {
@@ -1494,7 +1502,7 @@ public class ImportBankStatementFrame extends javax.swing.JFrame {
         if (allValuesText.length() > 50) {
             allValuesText = allValuesText.substring(0, 49) + "... (weitere)";
         }
-
+        
         allValues.setText(allValuesText);
         allValues.setToolTipText(allValuesTooltip);
         if (hasSelection) {
@@ -1504,13 +1512,13 @@ public class ImportBankStatementFrame extends javax.swing.JFrame {
         }
         for (MenuElement me : popup.getSubElements()) {
             ((JCheckBoxMenuItem) me.getComponent()).addItemListener((ItemEvent arg0) -> {
-
+                
                 String avte = ComponentUtils.getSelectedPopupMenuItemsAsString(popup);
                 String avto = avte;
                 if (avte.length() > 50) {
                     avte = avte.substring(0, 49) + "... (weitere)";
                 }
-
+                
                 allValues.setText(avte);
                 allValues.setToolTipText(avto);
             });
@@ -1545,9 +1553,9 @@ public class ImportBankStatementFrame extends javax.swing.JFrame {
                 }
             });
         }
-
+        
     }
-
+    
     private void loadInvoicesForCase(ArchiveFileBean targetCase) {
         this.currentCase = targetCase;
         this.cmbInvoices.removeAllItems();
@@ -1560,7 +1568,7 @@ public class ImportBankStatementFrame extends javax.swing.JFrame {
         try {
             JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
             List<Payment> casePayments = locator.lookupArchiveFileServiceRemote().getPayments(targetCase.getId());
-
+            
             for (Payment p : casePayments) {
                 this.cmbPayments.addItem(p.getPaymentNumber());
                 if (openPayment == null && p.getStatus() != Payment.STATUS_EXECUTED) {
@@ -1578,7 +1586,7 @@ public class ImportBankStatementFrame extends javax.swing.JFrame {
         try {
             JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
             List<Invoice> caseInvoices = locator.lookupArchiveFileServiceRemote().getInvoices(targetCase.getId());
-
+            
             for (Invoice i : caseInvoices) {
                 this.cmbInvoices.addItem(i.getInvoiceNumber());
                 this.cmbInvoicesAccountEntry.addItem(i.getInvoiceNumber());
@@ -1595,7 +1603,7 @@ public class ImportBankStatementFrame extends javax.swing.JFrame {
             log.error("Error connecting to server", ex);
             JOptionPane.showMessageDialog(this, "Fehler beim Laden der Rechnungen: " + ex.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
         }
-
+        
         this.lblCase.setText(targetCase.getFileNumber() + " " + targetCase.getName());
         this.enableActions(openInvoice, openPayment, targetCase, this.transactions.get(this.txIndex).getAmount());
         this.buildCheckboxPopup(this.cmdCaseTags, this.popCaseTags, this.allCaseTagsAsString, this.lblCaseTags);
@@ -1666,7 +1674,7 @@ public class ImportBankStatementFrame extends javax.swing.JFrame {
             this.lblPaymentInfo.setText("");
         }
     }//GEN-LAST:event_cmbPaymentsItemStateChanged
-
+    
     private void enableActions(Invoice matchingInvoice, Payment matchingPayment, ArchiveFileBean matchingCase, double amount) {
         this.cmdCaseTags.setEnabled(matchingCase != null);
         this.chkCreateCaseAccountEntry.setEnabled(matchingCase != null);
@@ -1683,47 +1691,47 @@ public class ImportBankStatementFrame extends javax.swing.JFrame {
         this.txtEntryDescription.setEnabled(matchingCase != null);
         this.txtAmount.setEnabled(matchingCase != null);
         this.txtAmount.setEditable(false);
-
+        
         if (amount < 0) {
             this.rdEarnings.setEnabled(false);
             this.rdExpenditureIn.setEnabled(false);
             this.rdEscrowIn.setEnabled(false);
-
+            
             this.rdSpendings.setEnabled(matchingCase != null);
             this.rdExpenditureOut.setEnabled(matchingCase != null);
             this.rdEscrowOut.setEnabled(matchingCase != null);
-
+            
             this.rdSpendings.setSelected(matchingCase != null);
         } else {
             this.rdEarnings.setEnabled(matchingCase != null);
             this.rdExpenditureIn.setEnabled(matchingCase != null);
             this.rdEscrowIn.setEnabled(matchingCase != null);
-
+            
             this.rdSpendings.setEnabled(false);
             this.rdExpenditureOut.setEnabled(false);
             this.rdEscrowOut.setEnabled(false);
-
+            
             this.rdEarnings.setSelected(matchingCase != null);
         }
     }
-
+    
     private void loadTransaction(int index) {
-
+        
         this.enableActions(null, null, null, 0);
-
+        
         this.popRecipients.removeAll();
         this.lblRecipient.setText("...");
         this.lblRecipient.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/warning.png")));
         this.recipientAddress = null;
-
+        
         this.lblTxIndex.setText(this.txIndex + 1 + " / " + this.txCount);
-
+        
         this.lblCase.setText("-");
         this.lblCase.setToolTipText(null);
         this.lblInvoiceInfo.setText("");
         this.lblInvoiceInfoAccountEntry.setText("");
         this.lblPaymentInfo.setText("");
-
+        
         this.currentTransaction = this.transactions.get(index);
         this.currentCase = null;
         this.taTransaction.setText(this.currentTransaction.toString());
@@ -1750,14 +1758,14 @@ public class ImportBankStatementFrame extends javax.swing.JFrame {
             log.error("Error connecting to server", ex);
             JOptionPane.showMessageDialog(this, "Fehler beim Prüfen der Transaktion: " + ex.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
         }
-
+        
         Invoice exactInvoiceMatch = null;
         for (Invoice inv : this.openInvoices) {
             if (this.currentTransaction.getPurpose().contains(inv.getInvoiceNumber())) {
                 exactInvoiceMatch = inv;
             }
         }
-
+        
         Invoice jaroWinklerInvoiceMatch = null;
         if (exactInvoiceMatch == null) {
             double jaroWinklerMatchDistance = 0.9d;
@@ -1770,19 +1778,19 @@ public class ImportBankStatementFrame extends javax.swing.JFrame {
                 }
             }
         }
-
+        
         Invoice invoiceMatch = exactInvoiceMatch;
         if (exactInvoiceMatch == null) {
             invoiceMatch = jaroWinklerInvoiceMatch;
         }
-
+        
         Payment exactPaymentMatch = null;
         for (Payment pay : this.openPayments) {
             if (this.currentTransaction.getPurpose().contains(pay.getPaymentNumber())) {
                 exactPaymentMatch = pay;
             }
         }
-
+        
         Payment jaroWinklerPaymentMatch = null;
         if (exactPaymentMatch == null) {
             double jaroWinklerMatchDistance = 0.9d;
@@ -1795,12 +1803,12 @@ public class ImportBankStatementFrame extends javax.swing.JFrame {
                 }
             }
         }
-
+        
         Payment paymentMatch = exactPaymentMatch;
         if (exactPaymentMatch == null) {
             paymentMatch = jaroWinklerPaymentMatch;
         }
-
+        
         ArchiveFileBean caseMatch = null;
         if (invoiceMatch == null) {
             // try to identify by sender iban
@@ -1821,34 +1829,34 @@ public class ImportBankStatementFrame extends javax.swing.JFrame {
                     log.error("Unable to determine unique case by IBAN", ex);
                 }
             }
-
+            
         } else {
             caseMatch = invoiceMatch.getArchiveFileKey();
         }
-        if(caseMatch==null && invoiceMatch==null && paymentMatch!=null) {
-            caseMatch=paymentMatch.getArchiveFileKey();
+        if (caseMatch == null && invoiceMatch == null && paymentMatch != null) {
+            caseMatch = paymentMatch.getArchiveFileKey();
         }
-
+        
         this.taTransaction.append(System.lineSeparator());
         this.taTransaction.append(System.lineSeparator());
-
+        
         this.txtAmount.setValue(this.currentTransaction.getAmount());
         this.cmbInvoices.removeAllItems();
         this.cmbInvoicesAccountEntry.removeAllItems();
         this.cmbInvoicesAccountEntry.addItem("");
-
+        
         this.cmbPayments.removeAllItems();
-
+        
         this.lblRecipient.setText("...");
         this.lblRecipient.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/warning.png")));
         this.recipientAddress = null;
-
+        
         if (this.currentTransaction.getAmount() < 0) {
             this.txtAmount.setForeground(DefaultColorTheme.COLOR_LOGO_RED);
         } else {
             this.txtAmount.setForeground(DefaultColorTheme.COLOR_LOGO_GREEN);
         }
-
+        
         if (paymentMatch != null) {
             // found a matching payment
             this.enableActions(invoiceMatch, paymentMatch, caseMatch, this.currentTransaction.getAmount());
@@ -1886,16 +1894,16 @@ public class ImportBankStatementFrame extends javax.swing.JFrame {
             this.lblCase.setText(caseMatch.getFileNumber() + " " + caseMatch.getName());
             String tooltip = "<html><b>" + caseMatch.getFileNumber() + " " + StringUtils.nonNull(caseMatch.getName()) + "</b><br/>" + StringUtils.nonNull(caseMatch.getReason()) + "<br/>" + "Anwalt: " + StringUtils.nonNull(caseMatch.getLawyer()) + "</html>";
             this.lblCase.setToolTipText(tooltip);
-
+            
         } else {
             this.lblCaseTags.setText("");
             this.cmdCaseTags.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons16/material/baseline_label_white_36dp.png")));
             this.taTransaction.append("keine Rechnung oder Zahlung gefunden");
             this.enableActions(null, null, null, this.currentTransaction.getAmount());
         }
-
+        
     }
-
+    
     private ArchiveFileAddressesBean getUniqueCase(Collection<ArchiveFileAddressesBean> parties) {
         // never return an inactive case - the tag section on desktop would never display it
         HashMap<String, ArchiveFileAddressesBean> activeCases = new HashMap<>();

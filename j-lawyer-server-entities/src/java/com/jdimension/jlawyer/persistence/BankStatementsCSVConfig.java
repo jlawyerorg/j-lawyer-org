@@ -701,6 +701,9 @@ public class BankStatementsCSVConfig implements Serializable {
     @Column(name = "header_lines")
     private int headerLines=1;
     
+    @Column(name = "footer_lines")
+    private int footerLines=0;
+    
     @Column(name = "number_locale")
     private String locale=Locale.GERMANY.toString();
     
@@ -724,6 +727,15 @@ public class BankStatementsCSVConfig implements Serializable {
     
     @Column(name = "col_currency")
     private int columnCurrency=6;
+    
+    @Column(name = "dec_separator")
+    private String decimalSeparator=",";
+    
+    @Column(name = "dec_groupingchar")
+    private String decimalGroupingCharacter=".";
+    
+    @Column(name = "dec_grouping")
+    private boolean decimalGrouping=false;
 
     public BankStatementsCSVConfig() {
     }
@@ -908,6 +920,62 @@ public class BankStatementsCSVConfig implements Serializable {
      */
     public void setHeaderLines(int headerLines) {
         this.headerLines = headerLines;
+    }
+
+    /**
+     * @return the footerLines
+     */
+    public int getFooterLines() {
+        return footerLines;
+    }
+
+    /**
+     * @param footerLines the footerLines to set
+     */
+    public void setFooterLines(int footerLines) {
+        this.footerLines = footerLines;
+    }
+
+    /**
+     * @return the decimalSeparator
+     */
+    public String getDecimalSeparator() {
+        return decimalSeparator;
+    }
+
+    /**
+     * @param decimalSeparator the decimalSeparator to set
+     */
+    public void setDecimalSeparator(String decimalSeparator) {
+        this.decimalSeparator = decimalSeparator;
+    }
+
+    /**
+     * @return the decimalGroupingCharacter
+     */
+    public String getDecimalGroupingCharacter() {
+        return decimalGroupingCharacter;
+    }
+
+    /**
+     * @param decimalGroupingCharacter the decimalGroupingCharacter to set
+     */
+    public void setDecimalGroupingCharacter(String decimalGroupingCharacter) {
+        this.decimalGroupingCharacter = decimalGroupingCharacter;
+    }
+
+    /**
+     * @return the decimalGrouping
+     */
+    public boolean isDecimalGrouping() {
+        return decimalGrouping;
+    }
+
+    /**
+     * @param decimalGrouping the decimalGrouping to set
+     */
+    public void setDecimalGrouping(boolean decimalGrouping) {
+        this.decimalGrouping = decimalGrouping;
     }
     
     
