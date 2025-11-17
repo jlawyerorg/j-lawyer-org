@@ -752,9 +752,7 @@ public class HtmlEditorPanel extends javax.swing.JPanel implements EditorImpleme
     public String getText() {
 //        String fixedHtml = Jsoup.parse(this.htmlPane.getText()).outerHtml();
         String cleaned = cleanSHEFHtml(this.htmlPane.getText());
-        String wrapped = wrapPlainTextDivsInHtml(cleaned);
-        return wrapped;
-        //return this.htmlPane.getText();
+        return wrapPlainTextDivsInHtml(cleaned);
     }
 
     private static String mapFontSize(String sizeAttr) {
