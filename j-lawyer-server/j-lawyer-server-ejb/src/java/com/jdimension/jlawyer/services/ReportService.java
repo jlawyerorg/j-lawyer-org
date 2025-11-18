@@ -1255,7 +1255,7 @@ public class ReportService implements ReportServiceRemote {
 
             result.getTables().add(mainTable);
 
-            Collection<ReportResultTable> subTables = this.splitTable(mainTable, "Projektname");
+            Collection<ReportResultTable> subTables = this.splitTable(true, mainTable, "Projektname");
             ArrayList<ReportResultTable> sortedSubTables = new ArrayList<>();
             sortedSubTables.addAll(subTables);
             Collections.sort(sortedSubTables, (ReportResultTable o1, ReportResultTable o2) -> {
@@ -1382,7 +1382,7 @@ public class ReportService implements ReportServiceRemote {
 
             result.getTables().add(mainTable);
 
-            Collection<ReportResultTable> subTables = this.splitTable(mainTable, "Anwalt");
+            Collection<ReportResultTable> subTables = this.splitTable(true, mainTable, "Anwalt");
             ArrayList<ReportResultTable> sortedSubTables = new ArrayList<>();
             sortedSubTables.addAll(subTables);
             Collections.sort(sortedSubTables, (ReportResultTable o1, ReportResultTable o2) -> {
@@ -1538,7 +1538,7 @@ public class ReportService implements ReportServiceRemote {
         return table;
     }
 
-    private Collection<ReportResultTable> splitTable(ReportResultTable mainTable, String groupColumnName) {
+    private Collection<ReportResultTable> splitTable(boolean caseIdColumn, ReportResultTable mainTable, String groupColumnName) {
 
         int columnIndex = 0;
         for (int i = 0; i < mainTable.getColumnNames().length; i++) {
@@ -1555,6 +1555,7 @@ public class ReportService implements ReportServiceRemote {
                 ReportResultTable newSubTable = new ReportResultTable();
                 newSubTable.setColumnNames(mainTable.getColumnNames());
                 newSubTable.setTableName(groupValue);
+                newSubTable.setHasCaseIdColumn(caseIdColumn);
                 splitTables.put(groupValue, newSubTable);
             }
             ReportResultTable subTable = splitTables.get(groupValue);
