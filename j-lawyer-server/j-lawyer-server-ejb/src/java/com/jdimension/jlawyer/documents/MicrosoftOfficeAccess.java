@@ -1125,8 +1125,6 @@ public class MicrosoftOfficeAccess {
                 replaceInTextfield(key, value, (XWPFParagraph) bodyElement);
             } else if (bodyElement.getElementType().compareTo(BodyElementType.TABLE) == 0) {
                 replaceInTable(key, value, (XWPFTable) bodyElement);
-            } else {
-                System.out.println("Not iterating " + bodyElement.getElementType());
             }
         }
     }
@@ -1138,8 +1136,6 @@ public class MicrosoftOfficeAccess {
                 replaceScriptsInTextfield(caseId, pattern, values, formsPrefixes, (XWPFParagraph) bodyElement);
             } else if (bodyElement.getElementType().compareTo(BodyElementType.TABLE) == 0) {
                 replaceScriptsInTable(caseId, pattern, values, formsPrefixes, (XWPFTable) bodyElement, removeParagraphs);
-            } else {
-                System.out.println("Not iterating " + bodyElement.getElementType());
             }
         }
     }
