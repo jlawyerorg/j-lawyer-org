@@ -855,7 +855,7 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
     private boolean skipSearchIndex = false;
 
     private static final String PS_SEARCHENHANCED_2 = "select distinct(t1.id) from (select id from cases where ucase(name) like ? or ucase(fileNumber) like ? or ucase(filenumberext) like ? or ucase(reason) like ? or ucase(custom1) like ? or ucase(custom2) like ? or ucase(custom3) like ? or ucase(subjectField) like ? or ucase(lawyer) like ? or ucase(assistant) like ? union select archiveFileKey as id from case_contacts where ucase(reference) like ?) t1";
-    private static final String PS_SEARCHENHANCED_4 = "select distinct(t1.id) from (select id from cases where (ucase(name) like ? or ucase(fileNumber) like ? or ucase(filenumberext) like ? or ucase(reason) like ? or ucase(custom1) like ? or ucase(custom2) like ? or ucase(custom3) like ? or ucase(subjectField) like ? or ucase(lawyer) like ? or ucase(assistant) like ?) and archived=0 union select archiveFileKey as id from case_contacts where ucase(reference) like ?) t1";
+    private static final String PS_SEARCHENHANCED_4 = "select distinct(t1.id) from (select id from cases where (ucase(name) like ? or ucase(fileNumber) like ? or ucase(filenumberext) like ? or ucase(reason) like ? or ucase(custom1) like ? or ucase(custom2) like ? or ucase(custom3) like ? or ucase(subjectField) like ? or ucase(lawyer) like ? or ucase(assistant) like ?) and archived=0 union select cc.archiveFileKey as id from case_contacts cc, cases c where ucase(reference) like ? and cc.archiveFileKey=c.id and c.archived=0) t1";
 
     @Override
     @RolesAllowed({"loginRole"})
