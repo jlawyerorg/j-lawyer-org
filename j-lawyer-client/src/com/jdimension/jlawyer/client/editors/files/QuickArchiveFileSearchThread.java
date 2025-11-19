@@ -768,13 +768,16 @@ public class QuickArchiveFileSearchThread implements Runnable {
             ThreadUtils.setTableModel(this.target, model, 0, 0);
             ThreadUtils.requestFocus(target);
 
-            TableRowSorter dtrs = new TableRowSorter(model);
-            dtrs.setComparator(0, new FileNumberComparatorRowIdentifier());
-            target.setRowSorter(dtrs);
-            ArrayList list = new ArrayList();
-            list.add(new RowSorter.SortKey(0, SortOrder.ASCENDING));
-            dtrs.setSortKeys(list);
-            dtrs.sort();
+            // Configure row sorter on EDT to avoid race conditions
+            SwingUtilities.invokeLater(() -> {
+                TableRowSorter dtrs = new TableRowSorter(model);
+                dtrs.setComparator(0, new FileNumberComparatorRowIdentifier());
+                target.setRowSorter(dtrs);
+                ArrayList list = new ArrayList();
+                list.add(new RowSorter.SortKey(0, SortOrder.ASCENDING));
+                dtrs.setSortKeys(list);
+                dtrs.sort();
+            });
 
         } else {
             ThreadUtils.setTableModel(this.target, model);
