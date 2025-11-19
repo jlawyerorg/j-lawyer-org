@@ -672,6 +672,7 @@ import com.jdimension.jlawyer.persistence.InterestType;
 import java.math.BigDecimal;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
 import javax.swing.JDialog;
 import javax.swing.JOptionPane;
@@ -1083,6 +1084,14 @@ public class ClaimComponentEditorDialog extends javax.swing.JDialog {
             return;
         }
         
+        Date fromDate = null;
+        try {
+            fromDate = new SimpleDateFormat("dd.MM.yyyy").parse(this.txtValidFrom.getText());
+        } catch (Throwable t) {
+            JOptionPane.showMessageDialog(this, "Die Datumsangabe (gültig ab) ist ungültig.", com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_HINT, JOptionPane.INFORMATION_MESSAGE);
+            return;
+        }
+        
         try {
             InterestRule ir = new InterestRule();
             ir.setComment(this.txtComment.getText());
@@ -1095,7 +1104,7 @@ public class ClaimComponentEditorDialog extends javax.swing.JDialog {
                 ir.setFixedRate(BigDecimal.ZERO);
             }
             ir.setInterestType(this.rdInterestFixed.isSelected() ? InterestType.FIXED : InterestType.BASIS_RELATED);
-            ir.setValidFrom(new SimpleDateFormat("dd.MM.yyyy").parse(this.txtValidFrom.getText()));
+            ir.setValidFrom(fromDate);
             ((InterestRuleTableModel) this.tblInterestRules.getModel()).addRule(ir);
         } catch (Exception ex) {
             log.error(ex);
