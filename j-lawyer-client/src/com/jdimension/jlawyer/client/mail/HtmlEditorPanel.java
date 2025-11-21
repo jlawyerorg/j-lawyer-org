@@ -756,6 +756,11 @@ public class HtmlEditorPanel extends javax.swing.JPanel implements EditorImpleme
     }
 
     private static String mapFontSize(String sizeAttr) {
+        // Check if already in pixel format (passthrough to prevent SHEF mutation bug)
+        if (sizeAttr != null && sizeAttr.endsWith("px")) {
+            return sizeAttr;
+        }
+
         switch (sizeAttr) {
             case "1":
                 return "8px";
@@ -858,7 +863,12 @@ public class HtmlEditorPanel extends javax.swing.JPanel implements EditorImpleme
                 boolean hasOnlyText = div.children().isEmpty() ||
                     (div.children().size() == 1 && div.children().first().tagName().equals("br"));
 
-                if (hasOnlyText) {
+                // Check if DIV already has formatting (inline styles, class, or id)
+                boolean hasExistingFormatting = div.hasAttr("style") ||
+                                                 div.hasAttr("class") ||
+                                                 div.hasAttr("id");
+
+                if (hasOnlyText && !hasExistingFormatting) {
                     String text = div.text().trim();
 
                     // Skip empty divs
@@ -897,7 +907,12 @@ public class HtmlEditorPanel extends javax.swing.JPanel implements EditorImpleme
                 boolean hasOnlyText = div.children().isEmpty() ||
                     (div.children().size() == 1 && div.children().first().tagName().equals("br"));
 
-                if (hasOnlyText) {
+                // Check if P already has formatting (inline styles, class, or id)
+                boolean hasExistingFormatting = div.hasAttr("style") ||
+                                                 div.hasAttr("class") ||
+                                                 div.hasAttr("id");
+
+                if (hasOnlyText && !hasExistingFormatting) {
                     String text = div.text().trim();
 
                     // Skip empty divs
