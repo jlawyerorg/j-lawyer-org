@@ -690,6 +690,7 @@ import com.jdimension.jlawyer.ai.OutputData;
 import com.jdimension.jlawyer.ai.ParameterData;
 import com.jdimension.jlawyer.client.assistant.AssistantAccess;
 import com.jdimension.jlawyer.client.assistant.AssistantFlowAdapter;
+import com.jdimension.jlawyer.client.editors.webview.WebViewHtmlEditorPanel;
 import com.jdimension.jlawyer.client.events.DocumentAddedEvent;
 import com.jdimension.jlawyer.client.events.EventBroker;
 import com.jdimension.jlawyer.client.mail.EditorImplementation;
@@ -700,9 +701,12 @@ import com.jdimension.jlawyer.services.IntegrationServiceRemote;
 import javax.sound.sampled.*;
 import java.io.ByteArrayOutputStream;
 import java.awt.Color;
+import java.awt.event.WindowAdapter;
+import java.awt.event.WindowEvent;
 import java.io.IOException;
 import java.util.concurrent.atomic.AtomicReference;
 import javax.swing.ImageIcon;
+import javax.swing.SwingUtilities;
 import javax.swing.SwingWorker;
 import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
@@ -713,11 +717,11 @@ import themes.colors.DefaultColorTheme;
  * @author jens
  */
 public class AddNoteFrame extends javax.swing.JFrame implements AssistantFlowAdapter {
-    
+
     private static final Logger log = Logger.getLogger(AddNoteFrame.class.getName());
     private ArchiveFileBean aFile = null;
     private boolean initializing = true;
-    
+
     private boolean isRecording = false;
     private long recordingStarted = -1;
     private AiCapability transcribeCapability = null;
@@ -725,15 +729,24 @@ public class AddNoteFrame extends javax.swing.JFrame implements AssistantFlowAda
     private TargetDataLine targetDataLine;
     private ByteArrayOutputStream byteArrayOutputStream;
 
+    private WebViewHtmlEditorPanel htmlNoteEditor = null;
+
     /**
      * Creates new form AddNoteFrame
+     *
      * @param aFile
      */
     public AddNoteFrame(ArchiveFileBean aFile) {
         this.initializing = true;
         this.aFile = aFile;
         initComponents();
-        
+
+        this.htmlNoteEditor = new WebViewHtmlEditorPanel();
+        this.htmlContainerPanel.add(this.htmlNoteEditor);
+        this.htmlNoteEditor.setBounds(0, 0, this.jPanel4.getWidth(), this.jPanel4.getHeight());
+        this.htmlNoteEditor.setBounds(0, 0, this.jPanel4.getWidth(), this.jPanel4.getHeight());
+        SwingUtilities.updateComponentTreeUI(this.htmlNoteEditor);
+
         this.txtFileName.getDocument().addDocumentListener(new DocumentListener() {
             @Override
             public void insertUpdate(DocumentEvent e) {
@@ -774,7 +787,7 @@ public class AddNoteFrame extends javax.swing.JFrame implements AssistantFlowAda
                 + "<p>\n"
                 + "  \n"
                 + "</p>";
-        this.htmlEditorPanel1.setText(html);
+        this.htmlNoteEditor.setText(html);
 
         ClientSettings settings = ClientSettings.getInstance();
 
@@ -838,27 +851,25 @@ public class AddNoteFrame extends javax.swing.JFrame implements AssistantFlowAda
         } catch (Exception ex) {
             log.error(ex);
             JOptionPane.showMessageDialog(this, "" + ex.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
-        }        
-        
+        }
+
         this.cmbDevices.removeAllItems();
         AudioUtils.populateMicrophoneDevices(this.cmbDevices);
 
-        
         this.initializing = false;
     }
-    
+
     public void setFocusToBody() {
-        this.htmlEditorPanel1.requestFocus();
+        this.htmlNoteEditor.requestFocus();
     }
-    
+
     public void appendToBody(String appendText, boolean convertToHtml) {
-        if(convertToHtml) {
-            appendText=CommonMailUtils.text2Html(appendText);
+        if (convertToHtml) {
+            appendText = CommonMailUtils.text2Html(appendText);
         }
-        this.htmlEditorPanel1.setText(this.htmlEditorPanel1.getText() + appendText);
+        this.htmlNoteEditor.setText(this.htmlNoteEditor.getText() + appendText);
     }
-    
-   
+
     public List<InputData> getTranscribeInputs(byte[] wavContent) {
         ArrayList<InputData> inputs = new ArrayList<>();
         InputData i = new InputData();
@@ -870,7 +881,6 @@ public class AddNoteFrame extends javax.swing.JFrame implements AssistantFlowAda
         return inputs;
     }
 
-    
     @Override
     public String getPrompt(AiCapability c) {
         return null;
@@ -880,7 +890,7 @@ public class AddNoteFrame extends javax.swing.JFrame implements AssistantFlowAda
     public List<ParameterData> getParameters(AiCapability c) {
         return null;
     }
-    
+
     public List<Message> getMessages(AiCapability c) {
         return null;
     }
@@ -894,14 +904,12 @@ public class AddNoteFrame extends javax.swing.JFrame implements AssistantFlowAda
         //     contentText = ed.getText();
         // if (ed.getContentType().toLowerCase().contains("html"))
         //     contentText = EmailUtils.html2Text(contentText);
-
         // ArrayList<InputData> inputs = new ArrayList<>();
         // InputData i = new InputData();
         // i.setType(InputData.TYPE_STRING);
         // i.setBase64(false);
         // i.setStringData(contentText);
         // inputs.add(i);
-
         return new ArrayList<>();  // Leere Liste zurückgeben
     }
 
@@ -923,10 +931,9 @@ public class AddNoteFrame extends javax.swing.JFrame implements AssistantFlowAda
             }
         }
 
-        EditorImplementation ed = (EditorImplementation) this.htmlEditorPanel1.getComponent(0);
+        EditorImplementation ed = (EditorImplementation) this.htmlNoteEditor;
         ed.setText(prependText + System.lineSeparator() + System.lineSeparator() + ed.getText());
-        
-        
+
     }
 
     @Override
@@ -964,12 +971,12 @@ public class AddNoteFrame extends javax.swing.JFrame implements AssistantFlowAda
         radioReviewTypeNone = new javax.swing.JRadioButton();
         quickDateSelectionPanel = new com.jdimension.jlawyer.client.components.QuickDateSelectionPanel();
         calendarSelectionButton1 = new com.jdimension.jlawyer.client.calendar.CalendarSelectionButton();
-        htmlEditorPanel1 = new com.jdimension.jlawyer.client.mail.HtmlEditorPanel();
         jPanel1 = new javax.swing.JPanel();
         chkCaseTagging = new javax.swing.JCheckBox();
         cmbCaseTag = new javax.swing.JComboBox<>();
         chkDocumentTagging = new javax.swing.JCheckBox();
         cmbDocumentTag = new javax.swing.JComboBox<>();
+        htmlContainerPanel = new javax.swing.JPanel();
 
         setDefaultCloseOperation(javax.swing.WindowConstants.DISPOSE_ON_CLOSE);
         setIconImage(new ImageIcon(getClass().getResource("/icons/windowicon-note.png")).getImage());
@@ -1141,7 +1148,7 @@ public class AddNoteFrame extends javax.swing.JFrame implements AssistantFlowAda
                                 .addComponent(cmdShowReviewSelector)
                                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                                 .addComponent(quickDateSelectionPanel, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                                .addGap(0, 0, Short.MAX_VALUE)))))
+                                .addGap(0, 18, Short.MAX_VALUE)))))
                 .addContainerGap())
         );
         jPanel4Layout.setVerticalGroup(
@@ -1206,6 +1213,17 @@ public class AddNoteFrame extends javax.swing.JFrame implements AssistantFlowAda
                     .addComponent(cmbDocumentTag, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)))
         );
 
+        javax.swing.GroupLayout htmlContainerPanelLayout = new javax.swing.GroupLayout(htmlContainerPanel);
+        htmlContainerPanel.setLayout(htmlContainerPanelLayout);
+        htmlContainerPanelLayout.setHorizontalGroup(
+            htmlContainerPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGap(0, 0, Short.MAX_VALUE)
+        );
+        htmlContainerPanelLayout.setVerticalGroup(
+            htmlContainerPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGap(0, 173, Short.MAX_VALUE)
+        );
+
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(getContentPane());
         getContentPane().setLayout(layout);
         layout.setHorizontalGroup(
@@ -1216,12 +1234,12 @@ public class AddNoteFrame extends javax.swing.JFrame implements AssistantFlowAda
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                     .addComponent(jPanel1, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                     .addComponent(jPanel4, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                    .addComponent(htmlEditorPanel1, javax.swing.GroupLayout.Alignment.TRAILING, javax.swing.GroupLayout.DEFAULT_SIZE, 721, Short.MAX_VALUE)
                     .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
                         .addGap(0, 0, Short.MAX_VALUE)
                         .addComponent(cmdAddDocument)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addComponent(cmdCancel)))
+                        .addComponent(cmdCancel))
+                    .addComponent(htmlContainerPanel, javax.swing.GroupLayout.Alignment.TRAILING, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
                 .addContainerGap())
         );
         layout.setVerticalGroup(
@@ -1229,7 +1247,7 @@ public class AddNoteFrame extends javax.swing.JFrame implements AssistantFlowAda
             .addGroup(layout.createSequentialGroup()
                 .addComponent(jPanel2, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(htmlEditorPanel1, javax.swing.GroupLayout.DEFAULT_SIZE, 173, Short.MAX_VALUE)
+                .addComponent(htmlContainerPanel, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(jPanel4, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
@@ -1245,7 +1263,7 @@ public class AddNoteFrame extends javax.swing.JFrame implements AssistantFlowAda
     }// </editor-fold>//GEN-END:initComponents
 
     private void cmdCancelActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdCancelActionPerformed
-        if (this.htmlEditorPanel1.getText().length() > 200) {
+        if (this.htmlNoteEditor.getText().length() > 200) {
             int response = JOptionPane.showConfirmDialog(this, "Notiz verwerfen und Dialog schliessen?", "Notiz verwerfen", JOptionPane.YES_NO_OPTION);
             if (response == JOptionPane.NO_OPTION) {
                 return;
@@ -1273,7 +1291,7 @@ public class AddNoteFrame extends javax.swing.JFrame implements AssistantFlowAda
         try {
             JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
             ArchiveFileServiceRemote afs = locator.lookupArchiveFileServiceRemote();
-            ArchiveFileDocumentsBean db = afs.addDocument(this.aFile.getId(), FileUtils.sanitizeFileName(fileName), this.htmlEditorPanel1.getText().getBytes(), "", null);
+            ArchiveFileDocumentsBean db = afs.addDocument(this.aFile.getId(), FileUtils.sanitizeFileName(fileName), this.htmlNoteEditor.getText().getBytes(), "", null);
             EventBroker eb = EventBroker.getInstance();
             eb.publishEvent(new DocumentAddedEvent(db));
 
@@ -1390,10 +1408,20 @@ public class AddNoteFrame extends javax.swing.JFrame implements AssistantFlowAda
 
     private void formComponentResized(java.awt.event.ComponentEvent evt) {//GEN-FIRST:event_formComponentResized
         ComponentUtils.storeFrameSize(this);
+
+        this.htmlNoteEditor.setBounds(0, 0, this.htmlContainerPanel.getWidth(), this.htmlContainerPanel.getHeight());
+        this.htmlNoteEditor.setBounds(0, 0, this.htmlContainerPanel.getWidth(), this.htmlContainerPanel.getHeight());
+        SwingUtilities.updateComponentTreeUI(this.htmlNoteEditor);
+
     }//GEN-LAST:event_formComponentResized
 
     private void formWindowClosed(java.awt.event.WindowEvent evt) {//GEN-FIRST:event_formWindowClosed
         EditorsRegistry.getInstance().unregisterFrame(this);
+
+        if (htmlNoteEditor != null) {
+            htmlNoteEditor.dispose();  // ← Memory-Leak verhindert!
+        }
+
     }//GEN-LAST:event_formWindowClosed
 
     private void enableReviewElements(boolean enable) {
@@ -1409,7 +1437,7 @@ public class AddNoteFrame extends javax.swing.JFrame implements AssistantFlowAda
             this.txtReviewDateField.setText(null);
         }
     }
-    
+
     private void startRecording() {
         try {
             AudioFormat audioFormat = AudioUtils.getAudioFormat();
@@ -1508,13 +1536,13 @@ public class AddNoteFrame extends javax.swing.JFrame implements AssistantFlowAda
 
                         IntegrationServiceRemote integrationService = locator.lookupIntegrationServiceRemote();
                         AiRequestStatus status = integrationService.submitAssistantRequest(
-                            transcribeConfig,
-                            transcribeCapability.getRequestType(),
-                            transcribeCapability.getModelType(),
-                            getPrompt(transcribeCapability),
-                            fParams,
-                            inputs,
-                            null // Assuming no conversation
+                                transcribeConfig,
+                                transcribeCapability.getRequestType(),
+                                transcribeCapability.getModelType(),
+                                getPrompt(transcribeCapability),
+                                fParams,
+                                inputs,
+                                null // Assuming no conversation
                         );
 
                         resultRef.set(status);
@@ -1552,7 +1580,7 @@ public class AddNoteFrame extends javax.swing.JFrame implements AssistantFlowAda
                         }
 
                         // Insert transcribed text at the caret position
-                        htmlEditorPanel1.insert(resultText, -1);
+                        htmlNoteEditor.insert(resultText, -1);
                     }
                 }
             };
@@ -1565,7 +1593,7 @@ public class AddNoteFrame extends javax.swing.JFrame implements AssistantFlowAda
         }
 
     }
-    
+
     /**
      * @param args the command line arguments
      */
@@ -1613,7 +1641,7 @@ public class AddNoteFrame extends javax.swing.JFrame implements AssistantFlowAda
     private javax.swing.JButton cmdCancel;
     private javax.swing.JButton cmdShowReviewSelector;
     private javax.swing.JButton cmdTranscribe;
-    private com.jdimension.jlawyer.client.mail.HtmlEditorPanel htmlEditorPanel1;
+    private javax.swing.JPanel htmlContainerPanel;
     private javax.swing.JLabel jLabel1;
     private javax.swing.JLabel jLabel12;
     private javax.swing.JLabel jLabel8;
@@ -1630,6 +1658,6 @@ public class AddNoteFrame extends javax.swing.JFrame implements AssistantFlowAda
 
     @Override
     public void processOutput(Map<String, String> output) {
-        
+
     }
 }

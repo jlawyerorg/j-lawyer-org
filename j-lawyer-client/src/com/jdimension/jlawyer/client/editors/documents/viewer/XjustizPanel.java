@@ -846,4 +846,9 @@ public class XjustizPanel extends javax.swing.JPanel implements PreviewPanel {
         return this.docId;
     }
 
+    @Override
+    public void dispose() {
+        
+    }
+
 }

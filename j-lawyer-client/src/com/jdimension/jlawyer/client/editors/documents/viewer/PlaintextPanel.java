@@ -731,6 +731,11 @@ public class PlaintextPanel extends javax.swing.JPanel implements PreviewPanel {
     public String getDocumentId() {
         return this.documentId;
     }
+
+    @Override
+    public void dispose() {
+        
+    }
     
     
 }

@@ -768,4 +768,9 @@ public class OutlookMessagePanel extends javax.swing.JPanel implements PreviewPa
         return this.documentId;
     }
 
+    @Override
+    public void dispose() {
+        
+    }
+
 }

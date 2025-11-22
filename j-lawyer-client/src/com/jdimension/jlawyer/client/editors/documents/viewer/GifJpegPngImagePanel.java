@@ -825,6 +825,11 @@ public class GifJpegPngImagePanel extends javax.swing.JPanel implements PreviewP
     public String getDocumentId() {
         return this.documentId;
     }
+
+    @Override
+    public void dispose() {
+        
+    }
     
     
 }

@@ -663,6 +663,7 @@
  */
 package com.jdimension.jlawyer.client.utils;
 
+import com.jdimension.jlawyer.client.editors.webview.WebViewHtmlEditorPanel;
 import com.jdimension.jlawyer.client.mail.HtmlEditorPanel;
 import com.jdimension.jlawyer.persistence.ArchiveFileReviewsBean;
 import de.costache.calendar.CalendarPanel;
@@ -815,6 +816,13 @@ public class ThreadUtils {
     }
     
     public static void updateHtmlEditor(final HtmlEditorPanel hep, final String html) {
+        SwingUtilities.invokeLater(() -> {
+            hep.setText(html);
+            hep.setCaretPosition(0);
+        });
+    }
+    
+    public static void updateHtmlEditor(final WebViewHtmlEditorPanel hep, final String html) {
         SwingUtilities.invokeLater(() -> {
             hep.setText(html);
             hep.setCaretPosition(0);

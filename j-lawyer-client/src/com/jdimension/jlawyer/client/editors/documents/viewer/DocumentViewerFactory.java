@@ -666,6 +666,7 @@ package com.jdimension.jlawyer.client.editors.documents.viewer;
 import com.jdimension.jlawyer.client.launcher.LauncherFactory;
 import com.jdimension.jlawyer.client.mail.EmailUtils;
 import com.jdimension.jlawyer.client.mail.MessageContainer;
+import com.jdimension.jlawyer.client.utils.ComponentUtils;
 import com.jdimension.jlawyer.client.utils.einvoice.EInvoiceUtils;
 import com.jdimension.jlawyer.documents.DocumentPreview;
 import com.jdimension.jlawyer.persistence.ArchiveFileBean;
@@ -680,6 +681,7 @@ import javax.mail.Flags.Flag;
 import java.nio.charset.StandardCharsets;
 import javax.mail.internet.MimeMessage;
 import javax.swing.JComponent;
+import javax.swing.JSplitPane;
 import javax.swing.SwingUtilities;
 import org.apache.log4j.Logger;
 import org.simplejavamail.outlookmessageparser.OutlookMessageParser;
@@ -709,7 +711,7 @@ public class DocumentViewerFactory {
             pdfP.setMaximumSize(new Dimension(width, height));
             pdfP.setPreferredSize(new Dimension(width, height));
             pdfP.showContent(id, content);
-            if(previewProvider instanceof CaseDocumentPreviewProvider) {
+            if (previewProvider instanceof CaseDocumentPreviewProvider) {
                 try {
                     DocumentPreview previewText = ((CaseDocumentPreviewProvider) previewProvider).getPreviewAsText();
                     if (previewText != null) {
@@ -794,7 +796,32 @@ public class DocumentViewerFactory {
             hp.setFileName(fileName);
             hp.setMaximumSize(new Dimension(width, height));
             hp.setPreferredSize(new Dimension(width, height));
+            hp.setOnEditorReadyCallback(() -> {
+                // Aktualisieren Sie die UI wenn der Editor bereit ist
+//                Container parent = editorPanel.getParent();
+//                if (parent != null) {
+//                    parent.revalidate();
+//                    parent.repaint();
+//                }
+
+//                hp.revalidate();
+//                hp.repaint();
+                JSplitPane split = ComponentUtils.getContainingSplitPane(hp);
+                try {
+                    Thread.sleep(150);
+                } catch (Throwable t) {
+                    log.error(t);
+                }
+                if (split != null) {
+                    
+                    ComponentUtils.bumpSplitPane((JSplitPane) split);
+                    split.revalidate();
+                    split.repaint();
+                }
+
+            });
             hp.showContent(id, content);
+
             return hp;
         } else if (lFileName.endsWith(".htm")) {
             JavaFxBrowserPanel hp = new JavaFxBrowserPanel();
@@ -906,16 +933,16 @@ public class DocumentViewerFactory {
                 pdfP.setMaximumSize(new Dimension(width, height));
                 pdfP.setPreferredSize(new Dimension(width, height));
                 pdfP.showContent(id, docPreview.getBytes());
-                if(previewProvider instanceof CaseDocumentPreviewProvider) {
-                try {
-                    DocumentPreview previewText = ((CaseDocumentPreviewProvider) previewProvider).getPreviewAsText();
-                    if (previewText != null) {
-                        pdfP.showContentAsText(previewText.getText());
+                if (previewProvider instanceof CaseDocumentPreviewProvider) {
+                    try {
+                        DocumentPreview previewText = ((CaseDocumentPreviewProvider) previewProvider).getPreviewAsText();
+                        if (previewText != null) {
+                            pdfP.showContentAsText(previewText.getText());
+                        }
+                    } catch (Exception prevEx) {
+                        log.error("Could not load preview as text", prevEx);
                     }
-                } catch (Exception prevEx) {
-                    log.error("Could not load preview as text", prevEx);
                 }
-            }
                 return pdfP;
             } else {
 
@@ -1024,7 +1051,7 @@ public class DocumentViewerFactory {
             pdfP.setMaximumSize(new Dimension(width, height));
             pdfP.setPreferredSize(new Dimension(width, height));
             pdfP.showContent(id, docPreview.getBytes());
-            if(previewProvider instanceof CaseDocumentPreviewProvider) {
+            if (previewProvider instanceof CaseDocumentPreviewProvider) {
                 try {
                     DocumentPreview previewText = ((CaseDocumentPreviewProvider) previewProvider).getPreviewAsText();
                     if (previewText != null) {

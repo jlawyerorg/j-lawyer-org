@@ -1031,6 +1031,19 @@ public class ComponentUtils {
             }
         }
     }
+    
+    public static JSplitPane getContainingSplitPane(JComponent jc) {
+        Container container=jc.getParent();
+        while(!(container instanceof JSplitPane) && !(container==null)) {
+            container=container.getParent();
+        }
+        
+        if(container!=null && container instanceof JSplitPane) {
+            
+            return (JSplitPane)container;
+        }
+        return null;
+    }
 
     public static void decorateSplitPane(JSplitPane split) {
         decorateSplitPane(split, null);

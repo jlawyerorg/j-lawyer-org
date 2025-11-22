@@ -665,6 +665,7 @@ package com.jdimension.jlawyer.client.configuration;
 
 import com.jdimension.jlawyer.client.editors.EditorsRegistry;
 import com.jdimension.jlawyer.client.editors.documents.SearchAndAssignDialog;
+import com.jdimension.jlawyer.client.editors.webview.WebViewHtmlEditorPanel;
 import com.jdimension.jlawyer.client.mail.EmailUtils;
 import com.jdimension.jlawyer.client.processing.ProgressIndicator;
 import com.jdimension.jlawyer.client.settings.ClientSettings;
@@ -680,6 +681,8 @@ import com.jdimension.jlawyer.security.CryptoProvider;
 import com.jdimension.jlawyer.services.JLawyerServiceLocator;
 import java.awt.event.ActionEvent;
 import java.awt.event.ItemEvent;
+import java.awt.event.WindowAdapter;
+import java.awt.event.WindowEvent;
 import java.io.StringReader;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -688,6 +691,7 @@ import java.util.Properties;
 import javax.swing.JCheckBoxMenuItem;
 import javax.swing.JOptionPane;
 import javax.swing.MenuElement;
+import javax.swing.SwingUtilities;
 import javax.swing.table.DefaultTableModel;
 import org.apache.log4j.Logger;
 
@@ -702,6 +706,7 @@ public class MailboxSetupDialog extends javax.swing.JDialog {
     private ArrayList<String> availableDocumentTags = new ArrayList<>();
 
     private String defaultCaseId = null;
+    WebViewHtmlEditorPanel htmlEmailSig = null;
 
     /**
      * Creates new form MailboxSetupDialog
@@ -712,6 +717,21 @@ public class MailboxSetupDialog extends javax.swing.JDialog {
     public MailboxSetupDialog(java.awt.Frame parent, boolean modal) {
         super(parent, modal);
         initComponents();
+
+        this.htmlEmailSig = new WebViewHtmlEditorPanel();
+        this.jPanel4.add(this.htmlEmailSig);
+        this.htmlEmailSig.setBounds(0, 0, this.jPanel4.getWidth(), this.jPanel4.getHeight());
+        this.htmlEmailSig.setBounds(0, 0, this.jPanel4.getWidth(), this.jPanel4.getHeight());
+        SwingUtilities.updateComponentTreeUI(this.htmlEmailSig);
+
+        addWindowListener(new WindowAdapter() {
+            @Override
+            public void windowClosing(WindowEvent e) {
+                if (htmlEmailSig != null) {
+                    htmlEmailSig.dispose();  // ← Memory-Leak verhindert!
+                }
+            }
+        });
 
         this.lblTestProgress.setText("");
 
@@ -900,7 +920,6 @@ public class MailboxSetupDialog extends javax.swing.JDialog {
         cmdO365Coupling = new javax.swing.JButton();
         jLabel24 = new javax.swing.JLabel();
         jPanel4 = new javax.swing.JPanel();
-        htmlEmailSig = new com.jdimension.jlawyer.client.mail.HtmlEditorPanel();
         jPanel9 = new javax.swing.JPanel();
         jScrollPane4 = new javax.swing.JScrollPane();
         txtEmailSig = new javax.swing.JTextArea();
@@ -937,6 +956,11 @@ public class MailboxSetupDialog extends javax.swing.JDialog {
 
         setDefaultCloseOperation(javax.swing.WindowConstants.DISPOSE_ON_CLOSE);
         setTitle("E-Mail - Postfächer");
+        addComponentListener(new java.awt.event.ComponentAdapter() {
+            public void componentResized(java.awt.event.ComponentEvent evt) {
+                formComponentResized(evt);
+            }
+        });
 
         jPanel1.setBorder(javax.swing.BorderFactory.createTitledBorder("Postfächer"));
 
@@ -1307,16 +1331,11 @@ public class MailboxSetupDialog extends javax.swing.JDialog {
         jPanel4.setLayout(jPanel4Layout);
         jPanel4Layout.setHorizontalGroup(
             jPanel4Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(jPanel4Layout.createSequentialGroup()
-                .addContainerGap()
-                .addComponent(htmlEmailSig, javax.swing.GroupLayout.DEFAULT_SIZE, 825, Short.MAX_VALUE)
-                .addContainerGap())
+            .addGap(0, 735, Short.MAX_VALUE)
         );
         jPanel4Layout.setVerticalGroup(
             jPanel4Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(jPanel4Layout.createSequentialGroup()
-                .addContainerGap()
-                .addComponent(htmlEmailSig, javax.swing.GroupLayout.DEFAULT_SIZE, 643, Short.MAX_VALUE))
+            .addGap(0, 649, Short.MAX_VALUE)
         );
 
         jTabbedPane1.addTab("Signatur (HTML)", jPanel4);
@@ -1920,6 +1939,12 @@ public class MailboxSetupDialog extends javax.swing.JDialog {
         this.requestFocus();
     }//GEN-LAST:event_cmdSearchCaseActionPerformed
 
+    private void formComponentResized(java.awt.event.ComponentEvent evt) {//GEN-FIRST:event_formComponentResized
+        this.htmlEmailSig.setBounds(0, 0, this.jPanel4.getWidth(), this.jPanel4.getHeight());
+        this.htmlEmailSig.setBounds(0, 0, this.jPanel4.getWidth(), this.jPanel4.getHeight());
+        SwingUtilities.updateComponentTreeUI(this.htmlEmailSig);
+    }//GEN-LAST:event_formComponentResized
+
     private void updatedUI(MailboxSetup ms) {
 
         this.txtDisplayName.setText(ms.getDisplayName());
@@ -2060,7 +2085,6 @@ public class MailboxSetupDialog extends javax.swing.JDialog {
     private javax.swing.JButton cmdScanTags;
     private javax.swing.JButton cmdSearchCase;
     private javax.swing.JButton cmdTestMail;
-    private com.jdimension.jlawyer.client.mail.HtmlEditorPanel htmlEmailSig;
     private javax.swing.JLabel jLabel1;
     private javax.swing.JLabel jLabel10;
     private javax.swing.JLabel jLabel11;

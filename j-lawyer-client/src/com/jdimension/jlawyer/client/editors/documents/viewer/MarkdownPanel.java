@@ -1659,6 +1659,11 @@ public class MarkdownPanel extends javax.swing.JPanel implements PreviewPanel {
         return i;
     }
 
+    @Override
+    public void dispose() {
+        
+    }
+
     private static class NormalizedEditor {
 
         final String norm;

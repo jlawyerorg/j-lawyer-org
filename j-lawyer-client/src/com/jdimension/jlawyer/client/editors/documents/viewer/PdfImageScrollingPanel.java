@@ -1745,4 +1745,9 @@ public class PdfImageScrollingPanel extends javax.swing.JPanel implements Previe
 
     }
 
+    @Override
+    public void dispose() {
+        
+    }
+
 }

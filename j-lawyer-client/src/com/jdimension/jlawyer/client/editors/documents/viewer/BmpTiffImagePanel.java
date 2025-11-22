@@ -765,4 +765,9 @@ public class BmpTiffImagePanel extends javax.swing.JPanel implements PreviewPane
         return this.documentId;
     }
 
+    @Override
+    public void dispose() {
+        
+    }
+
 }

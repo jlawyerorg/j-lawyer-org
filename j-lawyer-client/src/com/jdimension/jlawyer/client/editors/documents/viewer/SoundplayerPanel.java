@@ -1483,4 +1483,9 @@ public class SoundplayerPanel extends javax.swing.JPanel implements PreviewPanel
     public void processOutput(Map<String, String> output) {
         
     }
+
+    @Override
+    public void dispose() {
+        
+    }
 }

@@ -665,6 +665,7 @@ package com.jdimension.jlawyer.client.mail;
 
 import com.jdimension.jlawyer.client.editors.EditorsRegistry;
 import com.jdimension.jlawyer.client.editors.ThemeableEditor;
+import com.jdimension.jlawyer.client.editors.webview.WebViewHtmlEditorPanel;
 import com.jdimension.jlawyer.client.settings.ClientSettings;
 import com.jdimension.jlawyer.client.utils.CommonStrings;
 import com.jdimension.jlawyer.client.utils.ComponentUtils;
@@ -678,6 +679,8 @@ import com.jdimension.jlawyer.server.utils.ContentTypes;
 import com.jdimension.jlawyer.services.JLawyerServiceLocator;
 import java.awt.Graphics;
 import java.awt.Image;
+import java.awt.event.WindowAdapter;
+import java.awt.event.WindowEvent;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Date;
@@ -698,7 +701,7 @@ public class EmailTemplatesPanel extends javax.swing.JPanel implements Themeable
     private static final String PLACEHOLDERTARGET_BODY = "in Inhalt";
 
     private TextEditorPanel tp;
-    private HtmlEditorPanel hp;
+    private WebViewHtmlEditorPanel hp;
 
     /**
      * Creates new form AddressPanel
@@ -711,7 +714,7 @@ public class EmailTemplatesPanel extends javax.swing.JPanel implements Themeable
         ComponentUtils.decorateSplitPane(jSplitPane2);
 
         tp = new TextEditorPanel();
-        hp = new HtmlEditorPanel();
+        hp = new WebViewHtmlEditorPanel();
 
         this.contentPanel.add(tp);
         tp.setBounds(0, 0, this.contentPanel.getWidth(), this.contentPanel.getHeight());
@@ -1231,9 +1234,9 @@ public class EmailTemplatesPanel extends javax.swing.JPanel implements Themeable
             this.txtTo.setText(tpl.getTo());
             this.txtCc.setText(tpl.getCc());
             this.txtBcc.setText(tpl.getBcc());
-            this.hp.setDefaultFontColor(tpl.getFontColor());
-            this.hp.setDefaultFontFamily(tpl.getFontName());
-            this.hp.setDefaultFontSize(""+tpl.getFontSize());
+//            this.hp.setDefaultFontColor(tpl.getFontColor());
+//            this.hp.setDefaultFontFamily(tpl.getFontName());
+//            this.hp.setDefaultFontSize(""+tpl.getFontSize());
 
             // Load font properties (with null checks for backward compatibility)
             if (tpl.getFontName() != null) {

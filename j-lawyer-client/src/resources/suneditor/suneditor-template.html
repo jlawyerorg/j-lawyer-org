@@ -1,0 +1,666 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SunEditor - j-lawyer.org</title>
+
+    <!-- SunEditor CSS (loaded from local resources) -->
+    <link rel="stylesheet" href="SUNEDITOR_CSS_PATH">
+
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            font-family: Arial, sans-serif;
+            overflow: hidden;
+        }
+
+        #editor {
+            width: 100%;
+            height: 100vh;
+        }
+
+        /* Customize SunEditor toolbar */
+        .sun-editor {
+            height: 100%;
+            border: none;
+        }
+
+        .sun-editor .se-toolbar {
+            background-color: #f5f5f5;
+        }
+
+        /* Toolbar icon color customization */
+        .sun-editor .se-toolbar button svg {
+            fill: #0e72b5 !important;
+        }
+
+        .sun-editor .se-toolbar button i {
+            color: #0e72b5 !important;
+        }
+
+        /* Hover effect (slightly darker) */
+        .sun-editor .se-toolbar button:hover svg {
+            fill: #0a5a91 !important;
+        }
+
+        .sun-editor .se-toolbar button:hover i {
+            color: #0a5a91 !important;
+        }
+
+        /* Active/Selected button */
+        .sun-editor .se-toolbar button.active svg,
+        .sun-editor .se-toolbar button._se_command_active svg {
+            fill: #0e72b5 !important;
+        }
+
+        .sun-editor .se-toolbar button.active i,
+        .sun-editor .se-toolbar button._se_command_active i {
+            color: #0e72b5 !important;
+        }
+
+        .sun-editor .se-wrapper {
+            height: calc(100vh - 50px);
+        }
+
+        .sun-editor .se-wrapper-inner {
+            height: 100%;
+        }
+    </style>
+</head>
+<body>
+    <!-- SunEditor container -->
+    <textarea id="editor"></textarea>
+
+    <!-- SunEditor JavaScript (loaded from local resources) -->
+    <script src="SUNEDITOR_JS_PATH"></script>
+    <script src="SUNEDITOR_LANG_PATH"></script>
+
+    <script>
+        // Initialize SunEditor
+        const editor = SUNEDITOR.create('editor', {
+            lang: SUNEDITOR_LANG.de,
+            width: '100%',
+            height: '100%',
+
+            // Toolbar buttons
+            buttonList: [
+                ['undo', 'redo'],
+                ['font', 'fontSize', 'formatBlock'],
+                ['bold', 'underline', 'italic', 'strike', 'subscript', 'superscript'],
+                ['fontColor', 'hiliteColor'],
+                ['removeFormat'],
+                ['outdent', 'indent'],
+                ['align', 'horizontalRule', 'list', 'lineHeight'],
+                ['table', 'link', 'image'],
+                ['fullScreen', 'showBlocks', 'codeView']
+            ],
+
+            // Font options (common fonts available on Windows/Linux/Mac)
+            font: [
+                'Arial',
+                'Arial Black',
+                'Calibri',
+                'Cambria',
+                'Comic Sans MS',
+                'Courier New',
+                'Georgia',
+                'Helvetica',
+                'Impact',
+                'Lucida Console',
+                'Lucida Sans Unicode',
+                'Palatino Linotype',
+                'Tahoma',
+                'Times New Roman',
+                'Trebuchet MS',
+                'Verdana',
+                // Generic font families (fallbacks)
+                'sans-serif',
+                'serif',
+                'monospace',
+                'cursive',
+                'fantasy'
+            ],
+
+            // Font size options (in px)
+            fontSize: [8, 10, 12, 14, 16, 18, 20, 24, 28, 32, 36, 48, 72],
+
+            // Format block options
+            formats: ['p', 'div', 'h1', 'h2', 'h3', 'h4', 'h5', 'h6', 'blockquote', 'pre'],
+
+            // Color palette
+            colorList: [
+                ['#000000', '#ffffff', '#ff0000', '#00ff00', '#0000ff', '#ffff00', '#ff00ff', '#00ffff'],
+                ['#800000', '#808080', '#c0c0c0', '#800080', '#008000', '#808000', '#000080', '#008080'],
+                ['#ff6600', '#ff9900', '#ffcc00', '#99cc00', '#339966', '#33cccc', '#3366ff', '#6633ff', '#cc33ff']
+            ],
+
+            // Table options
+            tableCellControllerPosition: 'top',
+
+            // Image options
+            imageGalleryUrl: null,  // Disable external image gallery
+            imageUrlInput: true,     // Allow image URL input
+            imageUploadUrl: null,    // Disable image upload (for PoC)
+
+            // Paste options - NOTE: We override the paste handler completely below
+            // These settings are kept for reference but our custom handler takes precedence
+            pastePlainText: false,  // Allow HTML paste (but we handle it manually)
+
+            // Other options
+            resizingBar: false,  // Hide resizing bar (we control size via container)
+            showPathLabel: false,  // Hide path label
+            charCounter: false,    // Disable character counter
+            maxCharCount: null     // No character limit
+        });
+
+        // Track whether editor is ready
+        let editorReady = false;
+
+        // Wait for editor to be fully initialized
+        editor.onload = function(core, reload) {
+            editorReady = true;
+
+            // Notify Java that editor is ready
+            if (window.javaConnector && window.javaConnector.onEditorReady) {
+                window.javaConnector.onEditorReady();
+            }
+
+            // CRITICAL FIX: Override the paste handler to preserve formatting
+            // SunEditor's default paste behavior strips formatting, so we handle it manually
+            setupCustomPasteHandler();
+        };
+
+        /**
+         * Setup custom paste handler that preserves formatting from clipboard
+         */
+        function setupCustomPasteHandler() {
+            const editorElement = editor.core.context.element.wysiwyg;
+
+            // CRITICAL: Use capture phase to intercept BEFORE SunEditor
+            editorElement.addEventListener('paste', handlePaste, {
+                capture: true,  // Intercept in capture phase (before SunEditor)
+                passive: false  // Allow preventDefault
+            });
+
+            console.log('Custom paste handler installed on:', editorElement);
+        }
+
+        /**
+         * Log to both console and Java (if available)
+         */
+        function log(message, data) {
+            console.log(message, data || '');
+            if (window.javaConnector && window.javaConnector.log) {
+                try {
+                    window.javaConnector.log(message + (data ? ': ' + JSON.stringify(data).substring(0, 100) : ''));
+                } catch (e) {
+                    console.error('Error logging to Java:', e);
+                }
+            }
+        }
+
+        /**
+         * Custom paste handler that preserves HTML formatting
+         * This bypasses SunEditor completely and uses Java's clipboard API
+         */
+        function handlePaste(e) {
+            log('=== PASTE EVENT TRIGGERED ===');
+
+            // CRITICAL: Stop SunEditor from processing this event
+            e.preventDefault();
+            e.stopPropagation();
+            e.stopImmediatePropagation();
+
+            // CRITICAL FIX: JavaFX WebView cannot access HTML clipboard data
+            // Use Java's AWT Clipboard API instead via javaConnector
+            let html = null;
+            let plainText = null;
+
+            // Try to get HTML from Java clipboard API
+            if (window.javaConnector && window.javaConnector.getClipboardHTML) {
+                try {
+                    html = window.javaConnector.getClipboardHTML();
+                    log('Got HTML from Java clipboard: ' + (html ? html.length : 0) + ' chars');
+                    if (html) {
+                        log('Java HTML sample: ' + html.substring(0, 300));
+                    }
+                } catch (error) {
+                    log('ERROR getting clipboard from Java: ' + error);
+                }
+            }
+
+            // Fallback: Try JavaScript clipboard API (won't get HTML in JavaFX, but get plain text)
+            const clipboardData = e.clipboardData || window.clipboardData;
+            if (clipboardData) {
+                if (!html) {
+                    // JavaScript API won't give us HTML in JavaFX WebView, but try anyway
+                    html = clipboardData.getData('text/html');
+                }
+                plainText = clipboardData.getData('text/plain');
+
+                log('Clipboard types: ' + Array.from(clipboardData.types).join(', '));
+                log('JS HTML length: ' + (html ? html.length : 0));
+                log('Plain text length: ' + (plainText ? plainText.length : 0));
+            }
+
+            // Determine what to paste
+            let contentToInsert = '';
+
+            if (html && html.trim()) {
+                // We got HTML (from Java) - clean and use it
+                contentToInsert = cleanPastedHTML(html);
+                log('Using HTML content (first 500 chars): ' + contentToInsert.substring(0, 500));
+                log('Using HTML content (last 200 chars): ' + contentToInsert.substring(Math.max(0, contentToInsert.length - 200)));
+            } else if (plainText) {
+                // No HTML available - use plain text and wrap in paragraphs
+                log('No HTML available - using plain text');
+                contentToInsert = '<p>' + plainText
+                    .replace(/&/g, '&amp;')
+                    .replace(/</g, '&lt;')
+                    .replace(/>/g, '&gt;')
+                    .replace(/\n\n+/g, '</p><p>')
+                    .replace(/\n/g, '<br>') + '</p>';
+            } else {
+                log('ERROR: No content to paste');
+                return false;
+            }
+
+            // Insert using native browser API instead of SunEditor
+            try {
+                const selection = window.getSelection();
+                if (!selection.rangeCount) {
+                    log('ERROR: No selection range');
+                    return false;
+                }
+
+                // Delete current selection if any
+                const range = selection.getRangeAt(0);
+                range.deleteContents();
+
+                // Create a document fragment from the HTML
+                const tempDiv = document.createElement('div');
+                tempDiv.innerHTML = contentToInsert;
+
+                // Insert all nodes from the fragment
+                const fragment = document.createDocumentFragment();
+                let node;
+                while ((node = tempDiv.firstChild)) {
+                    fragment.appendChild(node);
+                }
+
+                range.insertNode(fragment);
+
+                // Move cursor to end of inserted content
+                range.collapse(false);
+                selection.removeAllRanges();
+                selection.addRange(range);
+
+                log('✓ SUCCESS: Content inserted with formatting preserved');
+
+                // Notify SunEditor that content changed (for undo/redo)
+                editor.core.history.push(false);
+
+                return false;
+            } catch (error) {
+                log('ERROR: ' + error.message);
+                console.error('Error details:', error);
+                // Fallback to SunEditor's method
+                editor.insertHTML(contentToInsert);
+            }
+
+            return false;
+        }
+
+        /**
+         * Clean pasted HTML while preserving formatting
+         */
+        function cleanPastedHTML(html) {
+            log('Cleaning HTML, original length: ' + html.length);
+
+            // If it's a complete HTML document, extract just the body content
+            if (html.includes('<body')) {
+                // Parse the HTML to extract body content
+                const parser = new DOMParser();
+                const doc = parser.parseFromString(html, 'text/html');
+
+                // Extract CSS rules from style tags and convert to inline styles
+                const styleElements = doc.querySelectorAll('style');
+                const cssRules = [];
+
+                styleElements.forEach(style => {
+                    cssRules.push(style.textContent);
+                });
+
+                // Get the body content
+                const body = doc.body;
+                if (body) {
+                    // Apply CSS rules as inline styles
+                    if (cssRules.length > 0) {
+                        applyCSSRulesToElements(body, cssRules.join('\n'));
+                    }
+
+                    html = body.innerHTML;
+                    log('Extracted body content, new length: ' + html.length);
+                }
+            }
+
+            // Remove XML declarations
+            html = html.replace(/<\?xml[^>]*>/gi, '');
+
+            // Remove Office namespace tags (Word/LibreOffice)
+            html = html.replace(/<\/?[ovwxp]:[^>]*>/gi, '');
+
+            // Remove conditional comments
+            html = html.replace(/<!--\[if[^\]]*\]>[\s\S]*?<!\[endif\]-->/gi, '');
+
+            // Remove regular comments
+            html = html.replace(/<!--[\s\S]*?-->/g, '');
+
+            // Remove meta tags and script tags (but NOT style tags - we need them!)
+            html = html.replace(/<meta[^>]*>/gi, '');
+            html = html.replace(/<script[^>]*>[\s\S]*?<\/script>/gi, '');
+
+            // CRITICAL: Convert <font> attributes to inline styles
+            // LibreOffice uses <font color="#xxx"> which SunEditor doesn't preserve
+            html = convertFontTagsToStyles(html);
+
+            // Remove empty tags
+            html = html.replace(/<(\w+)[^>]*>\s*<\/\1>/gi, '');
+
+            // Remove duplicate spaces
+            html = html.replace(/\s+/g, ' ');
+
+            log('Cleaned HTML, final length: ' + html.length);
+            return html;
+        }
+
+        /**
+         * Convert <font> tags with attributes to <span> tags with inline styles
+         * LibreOffice uses <font color="#xxx" face="..." size="..."> which SunEditor may not preserve
+         */
+        function convertFontTagsToStyles(html) {
+            log('Converting <font> tags to inline styles');
+
+            // Parse HTML into DOM for manipulation
+            const parser = new DOMParser();
+            const doc = parser.parseFromString('<div>' + html + '</div>', 'text/html');
+            const container = doc.body.firstChild;
+
+            // Find all <font> tags
+            const fontTags = container.querySelectorAll('font');
+            log('Found ' + fontTags.length + ' <font> tags to convert');
+
+            fontTags.forEach(font => {
+                const color = font.getAttribute('color');
+                const face = font.getAttribute('face');
+                const size = font.getAttribute('size');
+
+                // Build inline style
+                let styleProps = [];
+
+                if (color) {
+                    styleProps.push('color: ' + color);
+                    log('  -> Converting color: ' + color);
+                }
+
+                if (face) {
+                    styleProps.push('font-family: ' + face);
+                }
+
+                if (size) {
+                    // Convert HTML size (1-7) to pt values
+                    const sizeMap = {
+                        '1': '8pt',
+                        '2': '10pt',
+                        '3': '12pt',
+                        '4': '14pt',
+                        '5': '18pt',
+                        '6': '24pt',
+                        '7': '32pt'
+                    };
+
+                    // If size contains "pt" or "px", use as-is, otherwise map it
+                    let fontSize = size;
+                    if (!size.includes('pt') && !size.includes('px') && sizeMap[size]) {
+                        fontSize = sizeMap[size];
+                    }
+                    styleProps.push('font-size: ' + fontSize);
+                }
+
+                // Create a <span> to replace the <font>
+                const span = doc.createElement('span');
+
+                // Copy existing style attribute if any
+                const existingStyle = font.getAttribute('style');
+                if (existingStyle) {
+                    styleProps.push(existingStyle);
+                }
+
+                // Set the combined style
+                if (styleProps.length > 0) {
+                    span.setAttribute('style', styleProps.join('; '));
+                }
+
+                // Move all child nodes from <font> to <span>
+                while (font.firstChild) {
+                    span.appendChild(font.firstChild);
+                }
+
+                // Replace <font> with <span>
+                font.parentNode.replaceChild(span, font);
+            });
+
+            // Return the modified HTML
+            const result = container.innerHTML;
+            log('Converted <font> tags, colors should now be preserved');
+            return result;
+        }
+
+        /**
+         * Apply CSS rules to elements as inline styles
+         * This converts LibreOffice's CSS-based formatting to inline styles
+         */
+        function applyCSSRulesToElements(container, css) {
+            log('Applying CSS rules to elements, CSS length: ' + css.length);
+            log('CSS sample: ' + css.substring(0, 300));
+
+            // Parse CSS rules (simple parser for basic rules)
+            const rulePattern = /([^{]+)\{([^}]+)\}/g;
+            let match;
+            let ruleCount = 0;
+
+            while ((match = rulePattern.exec(css)) !== null) {
+                const selector = match[1].trim();
+                const styles = match[2].trim();
+
+                // Skip @page and other @ rules
+                if (selector.startsWith('@')) {
+                    log('Skipping @ rule: ' + selector);
+                    continue;
+                }
+
+                try {
+                    // Find elements matching this selector
+                    const elements = container.querySelectorAll(selector);
+
+                    log('Selector "' + selector + '" matched ' + elements.length + ' elements');
+
+                    if (elements.length > 0 && styles.includes('color')) {
+                        log('  -> Styles include color! Styles: ' + styles);
+                    }
+
+                    elements.forEach(element => {
+                        // Parse style properties
+                        const styleProps = styles.split(';');
+                        styleProps.forEach(prop => {
+                            const [name, value] = prop.split(':').map(s => s.trim());
+                            if (name && value && !name.startsWith('mso-')) {
+                                // Apply the style (merge with existing inline styles)
+                                element.style.setProperty(name, value);
+
+                                if (name === 'color') {
+                                    log('  -> Applied color: ' + value + ' to ' + element.tagName);
+                                }
+                            }
+                        });
+                    });
+
+                    ruleCount++;
+                } catch (e) {
+                    // Ignore selector errors (complex selectors might not work)
+                    log('Could not apply selector: ' + selector + ' - ' + e.message);
+                }
+            }
+
+            log('Applied ' + ruleCount + ' CSS rules');
+        }
+
+        // JavaScript API Bridge for Java integration
+        window.editorAPI = {
+            /**
+             * Get the current HTML content from the editor
+             * @returns {string} HTML content
+             */
+            getText: function() {
+                return editor.getContents();
+            },
+
+            /**
+             * Set HTML content in the editor
+             * @param {string} html - HTML content to set
+             */
+            setText: function(html) {
+                if (!html) {
+                    html = '';
+                }
+                editor.setContents(html);
+            },
+
+            /**
+             * Insert text/HTML at the current cursor position
+             * @param {string} text - Text or HTML to insert
+             * @param {number} pos - Position to insert at (currently ignored, inserts at cursor)
+             */
+            insert: function(text, pos) {
+                // SunEditor doesn't support inserting at arbitrary position easily
+                // So we insert at cursor position (which is the typical use case)
+                editor.insertHTML(text);
+            },
+
+            /**
+             * Get the current caret position (character offset from start)
+             * @returns {number} Caret position
+             */
+            getCaretPosition: function() {
+                try {
+                    const sel = window.getSelection();
+                    if (!sel || sel.rangeCount === 0) {
+                        return 0;
+                    }
+
+                    const range = sel.getRangeAt(0);
+                    const editorElement = editor.core.context.element.wysiwyg;
+
+                    // Check if selection is within editor
+                    if (!editorElement.contains(range.startContainer)) {
+                        return 0;
+                    }
+
+                    // Create a range from start of editor to current position
+                    const preCaretRange = range.cloneRange();
+                    preCaretRange.selectNodeContents(editorElement);
+                    preCaretRange.setEnd(range.startContainer, range.startOffset);
+
+                    return preCaretRange.toString().length;
+                } catch (e) {
+                    console.error('Error getting caret position:', e);
+                    return 0;
+                }
+            },
+
+            /**
+             * Set the caret position (character offset from start)
+             * @param {number} pos - Position to set caret to
+             */
+            setCaretPosition: function(pos) {
+                const editorElement = editor.core.context.element.wysiwyg;
+                const range = document.createRange();
+                const sel = window.getSelection();
+
+                let currentPos = 0;
+                let found = false;
+
+                // Walk through text nodes to find position
+                function walkNodes(node) {
+                    if (found) return;
+
+                    if (node.nodeType === Node.TEXT_NODE) {
+                        const textLength = node.textContent.length;
+                        if (currentPos + textLength >= pos) {
+                            range.setStart(node, pos - currentPos);
+                            range.collapse(true);
+                            found = true;
+                            return;
+                        }
+                        currentPos += textLength;
+                    } else if (node.nodeType === Node.ELEMENT_NODE) {
+                        for (let child of node.childNodes) {
+                            walkNodes(child);
+                            if (found) return;
+                        }
+                    }
+                }
+
+                walkNodes(editorElement);
+
+                if (found) {
+                    sel.removeAllRanges();
+                    sel.addRange(range);
+                    editor.core.focus();
+                }
+            },
+
+            /**
+             * Get the currently selected text
+             * @returns {string} Selected text (plain text, not HTML)
+             */
+            getSelectedText: function() {
+                const sel = window.getSelection();
+                if (!sel || sel.rangeCount === 0) {
+                    return '';
+                }
+                return sel.toString();
+            },
+
+            /**
+             * Check if editor is ready
+             * @returns {boolean} True if editor is initialized and ready
+             */
+            isReady: function() {
+                return editorReady;
+            },
+
+            /**
+             * Focus the editor
+             */
+            focus: function() {
+                editor.core.focus();
+            },
+
+            /**
+             * Get editor instance (for debugging)
+             * @returns {object} SunEditor instance
+             */
+            getEditorInstance: function() {
+                return editor;
+            }
+        };
+
+        // For debugging: log when API is ready
+        console.log('SunEditor initialized and editorAPI bridge ready');
+
+    </script>
+</body>
+</html>
