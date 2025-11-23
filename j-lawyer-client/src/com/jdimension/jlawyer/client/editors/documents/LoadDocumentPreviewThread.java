@@ -780,7 +780,8 @@ public class LoadDocumentPreviewThread implements Runnable {
             }
 
             // Update UI on EDT with the prepared preview component
-            // Bundle all UI updates in a single invokeLater to ensure atomic update
+            // Simple approach: add panel immediately (like EmailTemplatesPanel)
+            // WebViewHtmlEditorPanel will update itself via onEditorReady() when ready
             final JComponent previewFinal = preview;
             SwingUtilities.invokeLater(() -> {
                 pnlPreview.setVisible(false);
@@ -789,19 +790,15 @@ public class LoadDocumentPreviewThread implements Runnable {
                 pnlPreview.add(previewFinal, BorderLayout.CENTER);
                 pnlPreview.setVisible(true);
 
+                // For HtmlPanel: ensure proper layout updates
                 if (previewFinal instanceof HtmlPanel) {
-                    
-                        pnlPreview.revalidate();
-                        pnlPreview.repaint();
-                        JSplitPane split = ComponentUtils.getContainingSplitPane(pnlPreview);
-                        if (split != null) {
-                            ComponentUtils.bumpSplitPane((JSplitPane) split);
-                        }
-
-                    
-
+                    pnlPreview.revalidate();
+                    pnlPreview.repaint();
+                    JSplitPane split = ComponentUtils.getContainingSplitPane(pnlPreview);
+                    if (split != null) {
+                        ComponentUtils.bumpSplitPane(split);
+                    }
                 }
-
             });
 
             if (preview instanceof GifJpegPngImageWithTextPanel) {

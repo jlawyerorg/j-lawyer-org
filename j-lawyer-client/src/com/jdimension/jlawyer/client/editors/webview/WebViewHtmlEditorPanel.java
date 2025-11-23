@@ -59,10 +59,56 @@ public class WebViewHtmlEditorPanel extends JPanel implements EditorImplementati
         jfxPanel = new JFXPanel();
         add(jfxPanel, BorderLayout.CENTER);
 
+        // Set minimum and preferred size to ensure panel is visible even with absolute positioning
+        // This is critical for HtmlPanel which uses setBounds() with potentially 0x0 parent
+        setMinimumSize(new Dimension(100, 100));
+        setPreferredSize(new Dimension(800, 600));
+
+        // Prevent JavaFX from exiting when last window is closed
+        Platform.setImplicitExit(false);
+
+        // Add ComponentListener to handle size changes
+        addComponentListener(new java.awt.event.ComponentAdapter() {
+            @Override
+            public void componentResized(java.awt.event.ComponentEvent e) {
+                // Force repaint when size changes
+                int newWidth = getWidth();
+                int newHeight = getHeight();
+                if (newWidth > 0 && newHeight > 0) {
+                    SwingUtilities.invokeLater(() -> {
+                        revalidate();
+                        repaint();
+                    });
+                }
+            }
+        });
+
         // Initialize JavaFX components on JavaFX Application Thread
         Platform.runLater(this::initializeFX);
+    }
 
-        log.info("WebViewHtmlEditorPanel created");
+    /**
+     * Override setBounds to handle 0x0 sizing from absolute positioning in HtmlPanel.
+     * When HtmlPanel calls setBounds(0,0,0,0), we try to find a reasonable size.
+     */
+    @Override
+    public void setBounds(int x, int y, int width, int height) {
+        // If being set to 0x0, try to get size from grandparent or use default
+        if (width == 0 || height == 0) {
+            Container parent = getParent();
+            if (parent != null) {
+                Container grandparent = parent.getParent();
+                if (grandparent != null && grandparent.getWidth() > 0 && grandparent.getHeight() > 0) {
+                    width = grandparent.getWidth();
+                    height = grandparent.getHeight();
+                } else if (getPreferredSize() != null) {
+                    width = Math.max(width, getPreferredSize().width);
+                    height = Math.max(height, getPreferredSize().height);
+                }
+            }
+        }
+
+        super.setBounds(x, y, width, height);
     }
 
     /**
@@ -72,7 +118,7 @@ public class WebViewHtmlEditorPanel extends JPanel implements EditorImplementati
         try {
             // Create WebView
             webView = new WebView();
-            webView.setZoom(1.25);  // Scale editor to 115%
+            webView.setZoom(1.25);  // Scale editor to 125%
             webEngine = webView.getEngine();
 
             // Enable JavaScript
@@ -164,6 +210,10 @@ public class WebViewHtmlEditorPanel extends JPanel implements EditorImplementati
             // Get reference to JavaScript editorAPI object
             JSObject window = (JSObject) webEngine.executeScript("window");
             editorAPI = (JSObject) webEngine.executeScript("window.editorAPI");
+
+            if (editorAPI == null) {
+                log.warn("editorAPI is null - JavaScript may not have initialized correctly");
+            }
 
             // Set up Java callback connector
             window.setMember("javaConnector", new JavaScriptConnector());
@@ -269,8 +319,29 @@ public class WebViewHtmlEditorPanel extends JPanel implements EditorImplementati
         if (text == null) {
             text = "";
         }
+
         final String finalText = text;
         callEditorAPI("setText", finalText);
+
+        // Force UI update after setting content to ensure it becomes visible
+        SwingUtilities.invokeLater(() -> {
+            // Update size if parent has been laid out
+            Container parent = this.getParent();
+            if (parent != null && parent.getWidth() > 0 && parent.getHeight() > 0) {
+                int width = parent.getWidth();
+                int height = parent.getHeight();
+                if (this.getWidth() != width || this.getHeight() != height) {
+                    this.setBounds(0, 0, width, height);
+                }
+            }
+
+            this.revalidate();
+            this.repaint();
+            if (parent != null) {
+                parent.revalidate();
+                parent.repaint();
+            }
+        });
     }
 
     @Override
@@ -315,10 +386,31 @@ public class WebViewHtmlEditorPanel extends JPanel implements EditorImplementati
             editorReady = true;
             log.info("SunEditor is ready");
 
-            // Notify callback on EDT (Event Dispatch Thread) for safe UI updates
-            if (onEditorReadyCallback != null) {
-                SwingUtilities.invokeLater(onEditorReadyCallback);
-            }
+            // Force UI update on EDT (Event Dispatch Thread)
+            SwingUtilities.invokeLater(() -> {
+                // Update size based on parent (important for absolute positioning in HtmlPanel)
+                Container parent = WebViewHtmlEditorPanel.this.getParent();
+                if (parent != null) {
+                    int width = parent.getWidth();
+                    int height = parent.getHeight();
+                    WebViewHtmlEditorPanel.this.setBounds(0, 0, width, height);
+                }
+
+                // Revalidate and repaint this panel AND parent containers
+                WebViewHtmlEditorPanel.this.revalidate();
+                WebViewHtmlEditorPanel.this.repaint();
+
+                // Also update parent container (critical for visibility)
+                if (parent != null) {
+                    parent.revalidate();
+                    parent.repaint();
+                }
+
+                // Notify callback if set
+                if (onEditorReadyCallback != null) {
+                    onEditorReadyCallback.run();
+                }
+            });
         }
 
         /**

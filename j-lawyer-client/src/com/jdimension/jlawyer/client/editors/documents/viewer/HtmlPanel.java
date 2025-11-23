@@ -733,6 +733,7 @@ public class HtmlPanel extends javax.swing.JPanel implements PreviewPanel, Assis
         this.readOnly = readOnly;
         
         this.htmlEditor = new WebViewHtmlEditorPanel();
+
         this.pnlHtml.add(this.htmlEditor);
         this.htmlEditor.setBounds(0, 0, this.pnlHtml.getWidth(), this.pnlHtml.getHeight());
         this.htmlEditor.setBounds(0, 0, this.pnlHtml.getWidth(), this.pnlHtml.getHeight());
@@ -827,7 +828,7 @@ public class HtmlPanel extends javax.swing.JPanel implements PreviewPanel, Assis
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
                     .addComponent(pnlHtml, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                     .addGroup(layout.createSequentialGroup()
-                        .addComponent(lblFileName, javax.swing.GroupLayout.DEFAULT_SIZE, 371, Short.MAX_VALUE)
+                        .addComponent(lblFileName, javax.swing.GroupLayout.DEFAULT_SIZE, 373, Short.MAX_VALUE)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                         .addComponent(cmbDevices, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
@@ -885,7 +886,10 @@ public class HtmlPanel extends javax.swing.JPanel implements PreviewPanel, Assis
     public void showContent(String documentId, byte[] content) {
         this.id = documentId;
         this.initialContent = content;
-        ThreadUtils.updateHtmlEditor(htmlEditor, new String(content));
+        htmlEditor.setText(new String(content));
+        htmlEditor.setCaretPosition(0);
+        //ThreadUtils.updateHtmlEditor(htmlEditor, new String(content));
+        
     }
 
     @Override
