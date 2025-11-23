@@ -987,7 +987,8 @@ public class IntegrationService implements IntegrationServiceRemote, Integration
         File[] files = f.listFiles();
         ArrayList list = new ArrayList();
         for (File curFile : files) {
-            list.add(curFile.getName());
+            if(curFile.isFile())
+                list.add(curFile.getName());
         }
         Collections.sort(list, String.CASE_INSENSITIVE_ORDER);
         return list;
