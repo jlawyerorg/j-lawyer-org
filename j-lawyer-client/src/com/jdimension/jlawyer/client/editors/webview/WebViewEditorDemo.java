@@ -114,7 +114,6 @@ public class WebViewEditorDemo extends JFrame {
                 action.run();
             } catch (Exception ex) {
                 logError("Error: " + ex.getMessage());
-                ex.printStackTrace();
             }
         });
         panel.add(button);
@@ -267,7 +266,7 @@ public class WebViewEditorDemo extends JFrame {
         try {
             UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
         } catch (Exception e) {
-            e.printStackTrace();
+            // do nothing
         }
 
         // Create and show demo
