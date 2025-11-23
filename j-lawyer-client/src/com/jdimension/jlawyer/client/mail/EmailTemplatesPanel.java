@@ -1401,43 +1401,6 @@ public class EmailTemplatesPanel extends javax.swing.JPanel implements Themeable
     private javax.swing.JTextField txtTo;
     // End of variables declaration//GEN-END:variables
 
-    /**
-     * Converts a Color object to a hex string (e.g., "#FF0000")
-     * @param color the color to convert
-     * @return hex string representation
-     */
-    private String colorToHex(java.awt.Color color) {
-        if (color == null) {
-            return "#000000";
-        }
-        return String.format("#%02X%02X%02X", color.getRed(), color.getGreen(), color.getBlue());
-    }
-
-    /**
-     * Converts a hex string to a Color object
-     * @param hex the hex string (e.g., "#FF0000" or "FF0000")
-     * @return Color object, or black if parsing fails
-     */
-    private java.awt.Color hexToColor(String hex) {
-        if (hex == null || hex.isEmpty()) {
-            return java.awt.Color.BLACK;
-        }
-        try {
-            // Remove # if present
-            if (hex.startsWith("#")) {
-                hex = hex.substring(1);
-            }
-            // Parse hex string
-            int r = Integer.parseInt(hex.substring(0, 2), 16);
-            int g = Integer.parseInt(hex.substring(2, 4), 16);
-            int b = Integer.parseInt(hex.substring(4, 6), 16);
-            return new java.awt.Color(r, g, b);
-        } catch (Exception e) {
-            log.warn("Invalid hex color: " + hex + ", using black");
-            return java.awt.Color.BLACK;
-        }
-    }
-
     @Override
     public Image getBackgroundImage() {
         return this.backgroundImage;

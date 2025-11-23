@@ -319,6 +319,34 @@
         function cleanPastedHTML(html) {
             log('Cleaning HTML, original length: ' + html.length);
 
+            // CRITICAL: Strip Windows HTML Format metadata headers (fallback)
+            // These headers look like: "Version:1.0\nStartHTML:000000254\n..."
+            // This should normally be handled by Java, but we check here as a safety fallback
+            if (html.startsWith('Version:')) {
+                log('DETECTED Windows HTML Format metadata headers - stripping...');
+
+                // Look for <!--StartFragment--> and <!--EndFragment--> HTML comments
+                const fragmentStart = html.indexOf('<!--StartFragment-->');
+                const fragmentEnd = html.indexOf('<!--EndFragment-->');
+
+                if (fragmentStart !== -1 && fragmentEnd !== -1) {
+                    // Extract content between fragment markers
+                    html = html.substring(
+                        fragmentStart + '<!--StartFragment-->'.length,
+                        fragmentEnd
+                    );
+                    log('Extracted Windows HTML fragment using comment markers, new length: ' + html.length);
+                } else {
+                    // No comment markers found - try to find the start of actual HTML
+                    // Look for the first HTML tag (usually <!DOCTYPE or <html)
+                    const htmlStart = html.search(/<[!]?[a-z]/i);
+                    if (htmlStart > 0) {
+                        html = html.substring(htmlStart);
+                        log('Stripped Windows metadata by finding first HTML tag, new length: ' + html.length);
+                    }
+                }
+            }
+
             // If it's a complete HTML document, extract just the body content
             if (html.includes('<body')) {
                 // Parse the HTML to extract body content

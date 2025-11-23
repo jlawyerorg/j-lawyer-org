@@ -888,7 +888,6 @@ public class HtmlPanel extends javax.swing.JPanel implements PreviewPanel, Assis
         this.initialContent = content;
         htmlEditor.setText(new String(content));
         htmlEditor.setCaretPosition(0);
-        //ThreadUtils.updateHtmlEditor(htmlEditor, new String(content));
         
     }
 

@@ -20,6 +20,7 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.net.URL;
 import java.nio.charset.StandardCharsets;
+import java.util.Arrays;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
@@ -439,6 +440,10 @@ public class WebViewHtmlEditorPanel extends JPanel implements EditorImplementati
                 if (clipboard.isDataFlavorAvailable(htmlFlavor)) {
                     String html = (String) clipboard.getData(htmlFlavor);
                     log.info("Got HTML from system clipboard: " + html.length() + " chars");
+
+                    // Parse Windows HTML Format if present
+                    html = parseWindowsHtmlFormat(html);
+
                     return html;
                 }
 
@@ -457,7 +462,10 @@ public class WebViewHtmlEditorPanel extends JPanel implements EditorImplementati
                             Object data = clipboard.getData(flavor);
                             if (data instanceof String) {
                                 log.info("Found HTML in flavor: " + flavor.getMimeType());
-                                return (String) data;
+                                String html = (String) data;
+                                // Parse Windows HTML Format if present
+                                html = parseWindowsHtmlFormat(html);
+                                return html;
                             } else if (data instanceof java.io.InputStream) {
                                 // Read from input stream
                                 java.io.InputStream is = (java.io.InputStream) data;
@@ -467,7 +475,10 @@ public class WebViewHtmlEditorPanel extends JPanel implements EditorImplementati
                                     sb.append((char) ch);
                                 }
                                 log.info("Read HTML from stream: " + sb.length() + " chars");
-                                return sb.toString();
+                                String html = sb.toString();
+                                // Parse Windows HTML Format if present
+                                html = parseWindowsHtmlFormat(html);
+                                return html;
                             }
                         } catch (Exception e) {
                             log.warn("Could not read flavor " + flavor.getMimeType() + ": " + e.getMessage());
@@ -482,6 +493,90 @@ public class WebViewHtmlEditorPanel extends JPanel implements EditorImplementati
                 log.error("Error reading clipboard HTML", e);
                 return null;
             }
+        }
+
+        /**
+         * Parses Windows HTML Format clipboard data and extracts the actual HTML fragment.
+         *
+         * Windows uses a special "HTML Format" specification when copying HTML to the clipboard.
+         * This format includes metadata headers like:
+         * <pre>
+         * Version:1.0
+         * StartHTML:0000000254
+         * EndHTML:0000041346
+         * StartFragment:0000039489
+         * EndFragment:0000041306
+         * SourceURL:file:///...
+         * </pre>
+         *
+         * The StartFragment and EndFragment values are byte offsets indicating where the
+         * actual content fragment is located. Only this fragment should be pasted.
+         *
+         * @param html The raw HTML string from clipboard (may include Windows HTML Format headers)
+         * @return The cleaned HTML (without metadata headers), or the original string if not Windows format
+         */
+        private String parseWindowsHtmlFormat(String html) {
+            if (html == null || html.isEmpty()) {
+                return html;
+            }
+
+            // Check for Windows HTML Format header
+            if (!html.startsWith("Version:")) {
+                // Not Windows HTML Format - return unchanged
+                return html;
+            }
+
+            try {
+                int startFragmentPos = -1;
+                int endFragmentPos = -1;
+
+                // Parse header lines to extract byte offsets
+                String[] lines = html.split("\\r?\\n");
+
+                // Look for StartFragment and EndFragment headers (usually in first 10 lines)
+                for (int i = 0; i < Math.min(lines.length, 10); i++) {
+                    String line = lines[i];
+
+                    if (line.startsWith("StartFragment:")) {
+                        String value = line.substring("StartFragment:".length()).trim();
+                        startFragmentPos = Integer.parseInt(value);
+                        log.info("Found StartFragment: " + startFragmentPos);
+                    } else if (line.startsWith("EndFragment:")) {
+                        String value = line.substring("EndFragment:".length()).trim();
+                        endFragmentPos = Integer.parseInt(value);
+                        log.info("Found EndFragment: " + endFragmentPos);
+                    }
+                }
+
+                // Extract fragment using byte offsets if both are present
+                if (startFragmentPos > 0 && endFragmentPos > startFragmentPos) {
+                    // IMPORTANT: Offsets are byte positions, not character positions
+                    // We need to work with the UTF-8 byte representation
+                    byte[] bytes = html.getBytes(StandardCharsets.UTF_8);
+
+                    if (endFragmentPos <= bytes.length) {
+                        // Extract the fragment bytes
+                        byte[] fragment = Arrays.copyOfRange(bytes, startFragmentPos, endFragmentPos);
+                        String result = new String(fragment, StandardCharsets.UTF_8);
+
+                        log.info("Successfully extracted Windows HTML Format fragment: " +
+                                 result.length() + " chars (was " + html.length() + " chars)");
+
+                        return result;
+                    } else {
+                        log.warn("EndFragment offset (" + endFragmentPos + ") exceeds byte array length (" +
+                                bytes.length + ") - returning original HTML");
+                    }
+                } else {
+                    log.warn("Could not find valid StartFragment/EndFragment offsets - returning original HTML");
+                }
+
+            } catch (Exception e) {
+                log.error("Error parsing Windows HTML Format: " + e.getMessage(), e);
+            }
+
+            // If anything goes wrong, return the original HTML
+            return html;
         }
     }
 

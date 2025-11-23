@@ -796,30 +796,6 @@ public class DocumentViewerFactory {
             hp.setFileName(fileName);
             hp.setMaximumSize(new Dimension(width, height));
             hp.setPreferredSize(new Dimension(width, height));
-//            hp.setOnEditorReadyCallback(() -> {
-//                // Aktualisieren Sie die UI wenn der Editor bereit ist
-////                Container parent = editorPanel.getParent();
-////                if (parent != null) {
-////                    parent.revalidate();
-////                    parent.repaint();
-////                }
-//
-////                hp.revalidate();
-////                hp.repaint();
-//                JSplitPane split = ComponentUtils.getContainingSplitPane(hp);
-//                try {
-//                    Thread.sleep(150);
-//                } catch (Throwable t) {
-//                    log.error(t);
-//                }
-//                if (split != null) {
-//                    
-//                    ComponentUtils.bumpSplitPane((JSplitPane) split);
-//                    split.revalidate();
-//                    split.repaint();
-//                }
-//
-//            });
             hp.showContent(id, content);
 
             return hp;
