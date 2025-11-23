@@ -822,6 +822,19 @@ public class SystemManagement implements SystemManagementRemote, SystemManagemen
 
     @Override
     @RolesAllowed({"loginRole"})
+    public HashMap<String, AppOptionGroupBean[]> getOptionGroups(List<String> optionGroups) {
+        HashMap<String, AppOptionGroupBean[]> result = new HashMap<>();
+
+        for (String optionGroup : optionGroups) {
+            AppOptionGroupBean[] beans = appOptionGroupBeanFacade.findByOptionGroup(optionGroup);
+            result.put(optionGroup, beans);
+        }
+
+        return result;
+    }
+
+    @Override
+    @RolesAllowed({"loginRole"})
     public List<String> getAllOptionGroups() {
         List<AppOptionGroupBean> fullList = appOptionGroupBeanFacade.findAll();
         List<String> optionGroups = new ArrayList<>();

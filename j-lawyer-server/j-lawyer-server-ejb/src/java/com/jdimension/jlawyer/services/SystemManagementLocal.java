@@ -722,7 +722,16 @@ public interface SystemManagementLocal {
     void removeOptionGroup(String id);
     
     AppOptionGroupBean[] getOptionGroup(String optionGroup);
-    
+
+    /**
+     * Retrieves multiple option groups in a single call for improved performance.
+     * This method reduces network roundtrips by batching multiple getOptionGroup() calls into one.
+     *
+     * @param optionGroups List of option group names to retrieve
+     * @return Map where keys are option group names and values are arrays of AppOptionGroupBean for each group
+     */
+    HashMap<String, AppOptionGroupBean[]> getOptionGroups(List<String> optionGroups);
+
     GenericNode getAllTemplatesTree(int templateType) throws Exception;
 
     String getTemplatesBaseDir(int templateType) throws Exception;
