@@ -765,7 +765,6 @@ public class EmailInboxPanel extends javax.swing.JPanel implements SaveToCaseExe
     private Image backgroundImage = null;
     private EmailFolderTreeCellRenderer renderer = null;
     private HashMap<MailboxSetup, Store> stores = new HashMap<>();
-    private boolean connected = false;
 
     private HashMap<MailboxSetup, IDLEThread> idleThreads = new HashMap<>();
 
@@ -889,92 +888,101 @@ public class EmailInboxPanel extends javax.swing.JPanel implements SaveToCaseExe
     }
 
     private void connect(boolean showErrorDialogOnFailure, MailboxSetup ms) throws Exception {
-        if (!this.connected) {
-            String server = null;
-            try {
-                String emailInPwd = CryptoProvider.defaultCrypto().decrypt(ms.getEmailInPwd());
+        // Check if this specific mailbox is already connected (thread-safe)
+        synchronized (this.stores) {
+            if (this.stores.containsKey(ms)) {
+                return; // Already connected
+            }
+        }
 
-                //Properties props = System.getProperties();
-                // using system properties would require to clean some properties for each new mailbox --> use new ones
-                Properties props = new Properties();
-                props.setProperty("mail.imap.partialfetch", "false");
-                props.setProperty("mail.imaps.partialfetch", "false");
-                props.setProperty("mail.store.protocol", ms.getEmailInType());
+        String server = null;
+        try {
+            String emailInPwd = CryptoProvider.defaultCrypto().decrypt(ms.getEmailInPwd());
 
-                if (ms.isEmailInSsl()) {
-                    props.setProperty("mail." + ms.getEmailInType() + ".ssl.enable", "true");
-                }
+            //Properties props = System.getProperties();
+            // using system properties would require to clean some properties for each new mailbox --> use new ones
+            Properties props = new Properties();
+            props.setProperty("mail.imap.partialfetch", "false");
+            props.setProperty("mail.imaps.partialfetch", "false");
+            props.setProperty("mail.store.protocol", ms.getEmailInType());
 
-                Session session = null;
-                Store store = null;
-                server = ms.getEmailInServer();
+            if (ms.isEmailInSsl()) {
+                props.setProperty("mail." + ms.getEmailInType() + ".ssl.enable", "true");
+            }
 
-                if (ms.isMsExchange()) {
-                    String authToken = EmailUtils.getOffice365AuthToken(ms.getId());
-                    props.put("mail.imaps.sasl.enable", "true");
-                    props.put("mail.imaps.port", "993");
+            Session session = null;
+            Store store = null;
+            server = ms.getEmailInServer();
 
-                    props.put("mail.imaps.auth.mechanisms", "XOAUTH2");
-                    props.put("mail.imaps.sasl.mechanisms", "XOAUTH2");
+            if (ms.isMsExchange()) {
+                String authToken = EmailUtils.getOffice365AuthToken(ms.getId());
+                props.put("mail.imaps.sasl.enable", "true");
+                props.put("mail.imaps.port", "993");
 
-                    props.put("mail.imaps.auth.login.disable", "true");
-                    props.put("mail.imaps.auth.plain.disable", "true");
+                props.put("mail.imaps.auth.mechanisms", "XOAUTH2");
+                props.put("mail.imaps.sasl.mechanisms", "XOAUTH2");
 
-                    props.setProperty("mail.imaps.socketFactory.class", SSL_FACTORY);
-                    props.setProperty("mail.imaps.socketFactory.fallback", "false");
-                    props.setProperty("mail.imaps.socketFactory.port", "993");
-                    props.setProperty("mail.imaps.starttls.enable", "true");
+                props.put("mail.imaps.auth.login.disable", "true");
+                props.put("mail.imaps.auth.plain.disable", "true");
 
-                    ms.applyCustomProperties(ms.customConfigurationsReceiveProperties(), props);
+                props.setProperty("mail.imaps.socketFactory.class", SSL_FACTORY);
+                props.setProperty("mail.imaps.socketFactory.fallback", "false");
+                props.setProperty("mail.imaps.socketFactory.port", "993");
+                props.setProperty("mail.imaps.starttls.enable", "true");
 
-                    session = Session.getInstance(props);
+                ms.applyCustomProperties(ms.customConfigurationsReceiveProperties(), props);
 
-                    // should be imaps for Office 365
-                    store = session.getStore("imaps");
-                    // server should be outlook.office365.com
+                session = Session.getInstance(props);
+
+                // should be imaps for Office 365
+                store = session.getStore("imaps");
+                // server should be outlook.office365.com
+                synchronized (this.stores) {
                     this.stores.put(ms, store);
-                    store.connect(server, ms.getEmailInUser(), authToken);
+                }
+                store.connect(server, ms.getEmailInUser(), authToken);
 
-                } else {
+            } else {
 
-                    props.setProperty("mail.imaps.host", server);
-                    props.setProperty("mail.imap.host", server);
+                props.setProperty("mail.imaps.host", server);
+                props.setProperty("mail.imap.host", server);
 
-                    // sample properties required for ms exchange shared mailboxes. may be set using the "custom properties" of a mailboxsetup
+                // sample properties required for ms exchange shared mailboxes. may be set using the "custom properties" of a mailboxsetup
 //                    props.put("mail.imap.port", "143");
 //                    props.put("mail.imap.sasl.enable", "false");
 //                    props.setProperty("mail.imap.ssl.enable", "false");
 //                    props.put("mail.imap.auth", "true");
 //                    props.put("mail.debug", "true");
 //                    props.put("mail.imap.auth.mechanisms", "LOGIN");
-                    if (ms.isEmailInSsl()) {
-                        props.setProperty("mail.store.protocol", "imaps");
+                if (ms.isEmailInSsl()) {
+                    props.setProperty("mail.store.protocol", "imaps");
+                }
+                ms.applyCustomProperties(ms.customConfigurationsReceiveProperties(), props);
+
+                ServerSettings sset = ServerSettings.getInstance();
+                String trustedServers = sset.getSetting("mail.imaps.ssl.trust", "");
+                if (trustedServers.length() > 0) {
+                    props.put("mail.imaps.ssl.trust", trustedServers);
+                }
+
+                session = Session.getInstance(props, new Authenticator() {
+                    @Override
+                    protected PasswordAuthentication getPasswordAuthentication() {
+                        return new PasswordAuthentication(ms.getEmailInUser(), emailInPwd);
                     }
-                    ms.applyCustomProperties(ms.customConfigurationsReceiveProperties(), props);
+                });
 
-                    ServerSettings sset = ServerSettings.getInstance();
-                    String trustedServers = sset.getSetting("mail.imaps.ssl.trust", "");
-                    if (trustedServers.length() > 0) {
-                        props.put("mail.imaps.ssl.trust", trustedServers);
-                    }
-
-                    session = Session.getInstance(props, new Authenticator() {
-                        @Override
-                        protected PasswordAuthentication getPasswordAuthentication() {
-                            return new PasswordAuthentication(ms.getEmailInUser(), emailInPwd);
-                        }
-                    });
-
-                    store = session.getStore();
+                store = session.getStore();
+                synchronized (this.stores) {
                     this.stores.put(ms, store);
-                    store.connect();
                 }
+                store.connect();
+            }
 
-            } catch (Exception ex) {
-                log.error("Error connecting to server " + server, ex);
-                if (showErrorDialogOnFailure) {
-                    JOptionPane.showMessageDialog(this, "Keine Verbindung zum Mailserver: " + ex.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
-                }
+        } catch (Exception ex) {
+            log.error("Error connecting to server " + server, ex);
+            if (showErrorDialogOnFailure) {
+                JOptionPane.showMessageDialog(this, "Keine Verbindung zum Mailserver: " + ex.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
             }
         }
     }
@@ -986,96 +994,112 @@ public class EmailInboxPanel extends javax.swing.JPanel implements SaveToCaseExe
         UserSettings uset = UserSettings.getInstance();
         List<MailboxSetup> mailboxes = uset.getMailboxes(uset.getCurrentUser().getPrincipalId());
 
-        ExecutorService pool = Executors.newFixedThreadPool(mailboxes.size());
+        // Limit thread pool to max 6 threads for better resource management
+        int poolSize = Math.min(mailboxes.size(), 6);
+        ExecutorService pool = Executors.newFixedThreadPool(poolSize);
 
+        long initStart = System.currentTimeMillis();
+
+        // Parallelize entire mailbox initialization (auth token, connect, folder listing)
         for (MailboxSetup ms : mailboxes) {
 
-            try {
-
-                if (ms.isMsExchange()) {
-                    try {
-                        ClientSettings settings = ClientSettings.getInstance();
-                        JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
-                        locator.lookupEmailServiceRemote().updateAuthToken(ms.getId());
-                    } catch (Exception ex) {
-                        log.error("unable to update auth token for mailbox " + ms.getEmailAddress(), ex);
-                    }
-                }
-
-                this.connect(showErrorDialogOnFailure, ms);
-
-                Folder[] accountFolders = null;
+            Runnable mailboxInitTask = () -> {
                 try {
-                    accountFolders = stores.get(ms).getDefaultFolder().list();
-                } catch (Throwable t) {
-                    log.warn("Unable to get email accounts folder list - falling back to inbox listing...", t);
-                    accountFolders = new Folder[1];
-                    accountFolders[0] = (Folder) stores.get(ms).getFolder(CommonMailUtils.INBOX);
-                }
 
-                Folder inboxFolderF = EmailUtils.getInboxFolder(accountFolders);
-                Folder trashFolderF = EmailUtils.getTrashFolder(accountFolders);
-                Folder sentFolderF = EmailUtils.getSentFolder(accountFolders);
-
-                if (EmailUtils.isIMAP(accountFolders[0])) {
-                    if (sentFolderF == null) {
-                        sentFolderF = inboxFolderF.getFolder(CommonMailUtils.SENT);
-                        if (!sentFolderF.exists()) {
-                            sentFolderF.create(Folder.HOLDS_MESSAGES);
+                    if (ms.isMsExchange()) {
+                        try {
+                            ClientSettings settings = ClientSettings.getInstance();
+                            JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
+                            locator.lookupEmailServiceRemote().updateAuthToken(ms.getId());
+                        } catch (Exception ex) {
+                            log.error("unable to update auth token for mailbox " + ms.getEmailAddress(), ex);
                         }
                     }
 
-                    if (trashFolderF == null) {
-                        trashFolderF = inboxFolderF.getFolder(CommonMailUtils.TRASH);
-                        if (!trashFolderF.exists()) {
-                            trashFolderF.create(Folder.HOLDS_MESSAGES);
+                    this.connect(showErrorDialogOnFailure, ms);
+
+                    Folder[] accountFolders = null;
+                    try {
+                        accountFolders = stores.get(ms).getDefaultFolder().list();
+                    } catch (Throwable t) {
+                        log.warn("Unable to get email accounts folder list - falling back to inbox listing...", t);
+                        accountFolders = new Folder[1];
+                        accountFolders[0] = (Folder) stores.get(ms).getFolder(CommonMailUtils.INBOX);
+                    }
+
+                    Folder inboxFolderF = EmailUtils.getInboxFolder(accountFolders);
+                    Folder trashFolderF = EmailUtils.getTrashFolder(accountFolders);
+                    Folder sentFolderF = EmailUtils.getSentFolder(accountFolders);
+
+                    if (EmailUtils.isIMAP(accountFolders[0])) {
+                        if (sentFolderF == null) {
+                            sentFolderF = inboxFolderF.getFolder(CommonMailUtils.SENT);
+                            if (!sentFolderF.exists()) {
+                                sentFolderF.create(Folder.HOLDS_MESSAGES);
+                            }
+                        }
+
+                        if (trashFolderF == null) {
+                            trashFolderF = inboxFolderF.getFolder(CommonMailUtils.TRASH);
+                            if (!trashFolderF.exists()) {
+                                trashFolderF.create(Folder.HOLDS_MESSAGES);
+                            }
                         }
                     }
-                }
 
-                this.inboxFolders.put(ms, new FolderContainer(inboxFolderF));
-                this.trashFolders.put(ms, new FolderContainer(trashFolderF));
-                this.sentFolders.put(ms, new FolderContainer(sentFolderF));
+                    // Thread-safe access to shared collections
+                    synchronized (this.inboxFolders) {
+                        this.inboxFolders.put(ms, new FolderContainer(inboxFolderF));
+                    }
+                    synchronized (this.trashFolders) {
+                        this.trashFolders.put(ms, new FolderContainer(trashFolderF));
+                    }
+                    synchronized (this.sentFolders) {
+                        this.sentFolders.put(ms, new FolderContainer(sentFolderF));
+                    }
 
-                IMAPFolderObserver folderObserver = new IMAPFolderObserver(this, ms);
-                inboxFolderF.addMessageCountListener(folderObserver);
-                inboxFolderF.addMessageChangedListener(folderObserver);
+                    IMAPFolderObserver folderObserver = new IMAPFolderObserver(this, ms);
+                    inboxFolderF.addMessageCountListener(folderObserver);
+                    inboxFolderF.addMessageChangedListener(folderObserver);
 
-                if (this.idleThreads.containsKey(ms)) {
-                    this.idleThreads.get(ms).cancel();
-                }
+                    synchronized (this.idleThreads) {
+                        if (this.idleThreads.containsKey(ms)) {
+                            this.idleThreads.get(ms).cancel();
+                        }
+                        this.idleThreads.put(ms, new IDLEThread((Folder) inboxFolderF));
+                        new Thread(this.idleThreads.get(ms)).start();
+                    }
 
-                this.idleThreads.put(ms, new IDLEThread((Folder) inboxFolderF));
+                    DefaultMutableTreeNode mailboxRootNode = new DefaultMutableTreeNode(ms.getEmailAddress());
+                    // Thread-safe tree node addition
+                    synchronized (rootNode) {
+                        rootNode.add(mailboxRootNode);
+                    }
 
-                new Thread(this.idleThreads.get(ms)).start();
+                    final Folder[] accountFoldersFinal = accountFolders;
 
-                DefaultMutableTreeNode mailboxRootNode = new DefaultMutableTreeNode(ms.getEmailAddress());
-                rootNode.add(mailboxRootNode);
-                final Folder[] accountFoldersFinal = accountFolders;
-
-                Runnable r = () -> {
+                    // Traverse folders for this mailbox
                     try {
                         traverseFolders(ms, accountFoldersFinal, mailboxRootNode);
                     } catch (Throwable t) {
-                        log.error("Could not load folder");
+                        log.error("Could not load folder for mailbox " + ms.getEmailAddress(), t);
                     }
-                };
-                pool.execute(r);
-            } catch (Exception ex) {
-                log.error("Unable to load mailbox " + ms.getEmailAddress(), ex);
 
-            }
+                } catch (Exception ex) {
+                    log.error("Unable to load mailbox " + ms.getEmailAddress(), ex);
+                }
+            };
 
+            pool.execute(mailboxInitTask);
         }
 
-        long traversalStart = System.currentTimeMillis();
         pool.shutdown();
         try {
             pool.awaitTermination(60, TimeUnit.SECONDS);
         } catch (Throwable t) {
             log.error("error loading mailboxes", t);
         }
-        log.info("Mailbox folder traversals took " + (System.currentTimeMillis() - traversalStart) + "ms");
+        log.info("Parallel mailbox initialization took " + (System.currentTimeMillis() - initStart) + "ms");
 
         Runnable r = () -> {
             try {
@@ -1148,8 +1172,13 @@ public class EmailInboxPanel extends javax.swing.JPanel implements SaveToCaseExe
             boolean isHidden = MailboxSettings.getInstance().isFolderHidden(ms, fullChildPath);
             if (!isHidden) {
                 DefaultMutableTreeNode childNode = new DefaultMutableTreeNode(childContainer);
-                if (childContainer.getFolder().equals(this.inboxFolders.get(ms).getFolder())) {
-                    this.inboxFolderNodes.put(ms, childNode);
+                // Thread-safe access to inboxFolders and inboxFolderNodes
+                synchronized (this.inboxFolders) {
+                    if (this.inboxFolders.get(ms) != null && childContainer.getFolder().equals(this.inboxFolders.get(ms).getFolder())) {
+                        synchronized (this.inboxFolderNodes) {
+                            this.inboxFolderNodes.put(ms, childNode);
+                        }
+                    }
                 }
                 currentNode.add(childNode);
                 traverseFolders(ms, childContainer.getFolder().list(), childNode);
