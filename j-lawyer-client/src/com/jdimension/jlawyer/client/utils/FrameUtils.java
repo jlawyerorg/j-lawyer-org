@@ -665,6 +665,7 @@ package com.jdimension.jlawyer.client.utils;
 
 import java.awt.Container;
 import java.awt.Dimension;
+import java.awt.GraphicsConfiguration;
 import java.awt.GraphicsDevice;
 import java.awt.GraphicsEnvironment;
 import java.awt.Point;
@@ -743,33 +744,17 @@ public class FrameUtils {
     }
 
     public static void centerDialog(JDialog dlg, Window parent) {
-        Dimension d = null; // size of what we're positioning against
-        Point p = null;
-
-        if (parent != null) // w is what we are positioning against, null means desktop
-        {
-            d = parent.getSize();
-            p = parent.getLocation();
+        if (parent != null) {
+            // Use setLocationRelativeTo which handles HiDPI scaling correctly
+            dlg.setLocationRelativeTo(parent);
         } else {
-            d = Toolkit.getDefaultToolkit().getScreenSize();
-            p = new Point();
+            // Center on primary screen
+            Dimension screenSize = Toolkit.getDefaultToolkit().getScreenSize();
+            Dimension dialogSize = dlg.getSize();
+            int x = (screenSize.width - dialogSize.width) / 2;
+            int y = (screenSize.height - dialogSize.height) / 2;
+            dlg.setLocation(x, y);
         }
-
-        double centreX = p.getX() + d.getWidth() / 2;
-        double centreY = p.getY() + d.getHeight() / 2;
-
-        dlg.getSize(d);
-        p.setLocation(centreX - d.getWidth() / 2,
-                centreY - d.getHeight() / 2);
-        if (p.getX() < 0) {
-            p.setLocation(0, p.getY());
-        }
-
-        if (p.getY() < 0) {
-            p.setLocation(p.getX(), 0);
-        }
-
-        dlg.setLocation(p);
     }
 
     public static Container getDialogOfComponent(Container c) {
