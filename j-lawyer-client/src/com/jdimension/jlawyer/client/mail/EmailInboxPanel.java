@@ -1740,58 +1740,100 @@ public class EmailInboxPanel extends javax.swing.JPanel implements SaveToCaseExe
 
         FolderContainer folderC = (FolderContainer) selNode.getUserObject();
         Folder folder = folderC.getFolder();
-        try {
-            if (!folder.isOpen()) {
-                try {
-                    System.out.println("open 1");
-                    folder.open(Folder.READ_WRITE);
-                } catch (Exception ex) {
-                    MailboxSetup ms = this.getMailboxSetup(selNode);
-                    log.warn("Attempting to reconnect to " + ms.getEmailAddress());
-                    String pw = ms.getEmailInPwd();
-                    if (ms.isMsExchange()) {
-                        pw = EmailUtils.getOffice365AuthToken(ms.getId());
-                    }
-                    Store store = folder.getStore();
-                    if (store.isConnected()) {
-                        store.close(); // Ensure the store is clean
-                    }
-                    store.connect(ms.getEmailInServer(), ms.getEmailInUser(), pw);
-                    EmailUtils.closeIfIMAP(folder, false);
-                    System.out.println("open 2");
-                    folder.open(Folder.READ_WRITE);
-                }
+
+        // Set up empty table model immediately for better perceived performance
+        DefaultTableModel tm = new DefaultTableModel(new String[]{"Gesendet", "Absender", "Betreff", "Empfänger"}, 0) {
+
+            @Override
+            public boolean isCellEditable(int row, int column) {
+                //all cells false
+                return false;
             }
+        };
+        this.tblMails.setModel(tm);
+        TableRowSorter<TableModel> sorter = new TableRowSorter<>(tm);
+        sorter.setComparator(0, new DescendingDateTimeStringComparator());
+        this.tblMails.setRowSorter(sorter);
+        this.tblMails.setDefaultRenderer(Object.class, new EmailTableCellRenderer());
 
-            DefaultTableModel tm = new DefaultTableModel(new String[]{"Gesendet", "Absender", "Betreff", "Empfänger"}, 0) {
+        // Open folder asynchronously to avoid blocking the UI thread
+        openFolderInBackground(folderC, folder, selNode, sortCol, scrollToRow, searchTerm, silent);
+    }
 
-                @Override
-                public boolean isCellEditable(int row, int column) {
-                    //all cells false
-                    return false;
+    /**
+     * Opens a mail folder in a background thread to prevent UI freezing.
+     * After successful opening, starts the LoadFolderAction or LoadFolderThread.
+     *
+     * @param folderC The FolderContainer to load
+     * @param folder The JavaMail Folder to open
+     * @param selNode The tree node (needed for getMailboxSetup in case of reconnection)
+     * @param sortCol The column to sort by
+     * @param scrollToRow The row to scroll to after loading
+     * @param searchTerm Optional search term filter
+     * @param silent If true, uses LoadFolderThread without progress indicator
+     */
+    private void openFolderInBackground(FolderContainer folderC, Folder folder, DefaultMutableTreeNode selNode,
+                                       int sortCol, int scrollToRow, String searchTerm, boolean silent) {
+        // Set wait cursor to indicate loading
+        this.setCursor(java.awt.Cursor.getPredefinedCursor(java.awt.Cursor.WAIT_CURSOR));
+
+        Thread openThread = new Thread(() -> {
+            try {
+                if (!folder.isOpen()) {
+                    try {
+                        System.out.println("open 1 (background)");
+                        folder.open(Folder.READ_WRITE);
+                    } catch (Exception ex) {
+                        // Attempt reconnection if initial open fails
+                        MailboxSetup ms = this.getMailboxSetup(selNode);
+                        log.warn("Attempting to reconnect to " + ms.getEmailAddress());
+                        String pw = ms.getEmailInPwd();
+                        if (ms.isMsExchange()) {
+                            pw = EmailUtils.getOffice365AuthToken(ms.getId());
+                        }
+                        Store store = folder.getStore();
+                        if (store.isConnected()) {
+                            store.close(); // Ensure the store is clean
+                        }
+                        store.connect(ms.getEmailInServer(), ms.getEmailInUser(), pw);
+                        EmailUtils.closeIfIMAP(folder, false);
+                        System.out.println("open 2 (background reconnect)");
+                        folder.open(Folder.READ_WRITE);
+                    }
                 }
-            };
-            this.tblMails.setModel(tm);
-            TableRowSorter<TableModel> sorter = new TableRowSorter<>(tm);
-            sorter.setComparator(0, new DescendingDateTimeStringComparator());
-            this.tblMails.setRowSorter(sorter);
-            this.tblMails.setDefaultRenderer(Object.class, new EmailTableCellRenderer());
 
-            if (silent) {
-                LoadFolderThread t = new LoadFolderThread(folderC, tblMails, sortCol, scrollToRow, searchTerm);
-                new Thread(t).start();
+                // Folder successfully opened, now start loading messages on EDT
+                SwingUtilities.invokeLater(() -> {
+                    try {
+                        if (silent) {
+                            LoadFolderThread t = new LoadFolderThread(folderC, tblMails, sortCol, scrollToRow, searchTerm);
+                            new Thread(t).start();
+                        } else {
+                            ProgressIndicator dlg = new ProgressIndicator(EditorsRegistry.getInstance().getMainWindow(), true);
+                            LoadFolderAction a = new LoadFolderAction(dlg, folderC, tblMails, sortCol, scrollToRow, searchTerm);
+                            a.start();
+                        }
+                    } finally {
+                        // Reset cursor after starting load operation
+                        this.setCursor(java.awt.Cursor.getDefaultCursor());
+                    }
+                });
 
-            } else {
-                ProgressIndicator dlg = new ProgressIndicator(EditorsRegistry.getInstance().getMainWindow(), true);
-                LoadFolderAction a = new LoadFolderAction(dlg, folderC, tblMails, sortCol, scrollToRow, searchTerm);
-                a.start();
+            } catch (Exception ex) {
+                // Show error on EDT
+                SwingUtilities.invokeLater(() -> {
+                    log.error("Error opening folder", ex);
+                    JOptionPane.showMessageDialog(this, "Fehler Öffnen des E-Mail - Ordners: " + ex.getMessage(),
+                                                com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR,
+                                                JOptionPane.ERROR_MESSAGE);
+                    EditorsRegistry.getInstance().clearStatus();
+                    // Reset cursor on error
+                    this.setCursor(java.awt.Cursor.getDefaultCursor());
+                });
             }
+        }, "FolderOpenThread");
 
-        } catch (Exception ex) {
-            log.error("Error getting contents of folder", ex);
-            JOptionPane.showMessageDialog(this, "Fehler Öffnen des E-Mail - Ordners: " + ex.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
-            EditorsRegistry.getInstance().clearStatus();
-        }
+        openThread.start();
     }
 
     public void tblMailsMouseClicked() {
