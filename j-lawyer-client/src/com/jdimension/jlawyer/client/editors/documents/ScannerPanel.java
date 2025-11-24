@@ -1621,7 +1621,6 @@ public class ScannerPanel extends javax.swing.JPanel implements ThemeableEditor,
                 }
             }
 
-            bulkSaveDlg.pack();
             FrameUtils.centerDialog(bulkSaveDlg, EditorsRegistry.getInstance().getMainWindow());
             bulkSaveDlg.setVisible(true);
 
