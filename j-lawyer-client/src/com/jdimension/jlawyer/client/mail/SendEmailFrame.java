@@ -2206,7 +2206,7 @@ public class SendEmailFrame extends javax.swing.JFrame implements SendCommunicat
         jToolBar1.add(jSeparator5);
 
         cmdSaveDraft.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons32/baseline_edit_square_black_48dp.png"))); // NOI18N
-        cmdSaveDraft.setToolTipText("als Entwurf speichern");
+        cmdSaveDraft.setToolTipText("<html>als Entwurf im Postfach speichern<br/>(in der Akte wird die Nachricht automatisch als Entwurf gespeichert, bis sie gesendet oder verworfen wird)</html>");
         cmdSaveDraft.setFocusable(false);
         cmdSaveDraft.setHorizontalTextPosition(javax.swing.SwingConstants.CENTER);
         cmdSaveDraft.setVerticalTextPosition(javax.swing.SwingConstants.BOTTOM);
