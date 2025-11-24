@@ -2839,6 +2839,13 @@ public class SendEmailFrame extends javax.swing.JFrame implements SendCommunicat
 
         }
 
+        // Stop auto-save timer to prevent race condition with draft deletion
+        // The timer could create a new draft between setting currentDraftDocumentId to null
+        // and the actual deletion by SendAction/SendEncryptedAction
+        if (this.autoSaveTimer != null) {
+            this.autoSaveTimer.stop();
+        }
+
         ProgressableAction a = null;
         if (this.chkSaveAsDocument.isSelected()) {
 
@@ -2871,6 +2878,7 @@ public class SendEmailFrame extends javax.swing.JFrame implements SendCommunicat
             }
 
             // Reset draft document ID as it will be deleted by SendAction/SendEncryptedAction after successful send
+            // Auto-save timer is already stopped, so no new draft will be created
             this.currentDraftDocumentId = null;
 
         } else if (this.chkEncryption.isSelected()) {
