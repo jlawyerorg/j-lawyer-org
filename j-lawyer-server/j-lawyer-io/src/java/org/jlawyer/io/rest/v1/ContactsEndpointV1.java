@@ -812,10 +812,10 @@ public class ContactsEndpointV1 implements ContactsEndpointLocalV1 {
             InitialContext ic = new InitialContext();
             AddressServiceLocal addresses = (AddressServiceLocal) ic.lookup("java:global/j-lawyer-server/j-lawyer-server-ejb/AddressService!com.jdimension.jlawyer.services.AddressServiceLocal");
             
-            AddressBean a=new AddressBean();
-            a = addresses.createAddress(contact.toAddressBean(a));
+            AddressBean a = new AddressBean();
+            a=contact.toAddressBean(a);
             
-            List<AddressBean> similars=addresses.similaritySearch(a, 0.85f);
+            List<AddressBean> similars=addresses.similaritySearch(a, 0.6f);
             ArrayList<RestfulContactOverviewV1> rcoList = new ArrayList<>();
             for (AddressBean sim : similars) {
                 RestfulContactOverviewV1 rco = new RestfulContactOverviewV1();
