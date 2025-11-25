@@ -965,9 +965,10 @@ public class ExportAsPdfMergeStep extends javax.swing.JPanel implements WizardSt
         }
 
         new Thread(() -> {
+            List<String> skippedFiles = null;
             try {
                 String tempFile = FileUtils.createTempFile(FileUtils.sanitizeFileName(new SimpleDateFormat("yyyy-MM-dd").format(new Date()) + "_" + caseDto.getFileNumber() + " " + caseDto.getName() + ".pdf"), new byte[0]);
-                mergePDFsWithTOC(pdfFiles, tempFile, caseDto);
+                skippedFiles = mergePDFsWithTOC(pdfFiles, tempFile, caseDto);
                 this.resultFile = tempFile;
                 FileUtils.cleanupTempFile(tempFile);
                 ThreadUtils.updateLabel(this.lblProgress, "Lade Vorschau...");
@@ -977,6 +978,7 @@ public class ExportAsPdfMergeStep extends javax.swing.JPanel implements WizardSt
                 // Aktualisiere die Bytes im data Container
                 this.data.put("pdf.bytes", tfBytes);
 
+                final List<String> finalSkippedFiles = skippedFiles;
                 SwingUtilities.invokeLater(() -> {
                     // Altes Panel entfernen
                     this.pnlPreview.removeAll();
@@ -1001,6 +1003,22 @@ public class ExportAsPdfMergeStep extends javax.swing.JPanel implements WizardSt
                     pdfP.showContent(tfBytes);
 
                     this.lblProgress.setText("Datei: " + tempFile);
+
+                    // Show info about skipped files if any
+                    if (finalSkippedFiles != null && !finalSkippedFiles.isEmpty()) {
+                        StringBuilder message = new StringBuilder();
+                        message.append("Folgende PDFs konnten nicht zusammengeführt werden\n");
+                        message.append("(verschlüsselt oder fehlerhaft):\n\n");
+                        for (String skippedFile : finalSkippedFiles) {
+                            message.append("• ").append(skippedFile).append("\n");
+                        }
+                        JOptionPane.showMessageDialog(
+                            EditorsRegistry.getInstance().getMainWindow(),
+                            message.toString(),
+                            "Hinweis: Übersprungene Dokumente",
+                            JOptionPane.WARNING_MESSAGE
+                        );
+                    }
                 });
 
             } catch (Exception e) {
@@ -1027,7 +1045,7 @@ public class ExportAsPdfMergeStep extends javax.swing.JPanel implements WizardSt
         this.data = data;
     }
 
-    private void mergePDFsWithTOC(List<File> pdfFiles, String outputFile, ArchiveFileBean caseDto) throws Exception {
+    private List<String> mergePDFsWithTOC(List<File> pdfFiles, String outputFile, ArchiveFileBean caseDto) throws Exception {
         // Status der Checkboxen aus data container lesen
         Boolean createToc = (Boolean)data.get("export.createToc");
         Boolean createPageNumbers = (Boolean)data.get("export.createPageNumbers");
@@ -1039,6 +1057,8 @@ public class ExportAsPdfMergeStep extends javax.swing.JPanel implements WizardSt
         PDDocument mergedDoc = new PDDocument();
         // Keep track of opened documents to close them after saving
         List<PDDocument> openedDocuments = new ArrayList<>();
+        // Track skipped files (encrypted or corrupted PDFs)
+        List<String> skippedFiles = new ArrayList<>();
 
         PDDocument tocDoc = null;
         File tocTempFile = null;
@@ -1099,8 +1119,22 @@ public class ExportAsPdfMergeStep extends javax.swing.JPanel implements WizardSt
 
             int currentPageCount = 0;
             for (File file : pdfFiles) {
-                // Load with memory usage setting to prevent issues with large/complex PDFs
-                PDDocument doc = PDDocument.load(file, MemoryUsageSetting.setupTempFileOnly());
+                PDDocument doc = null;
+                try {
+                    // Load with memory usage setting to prevent issues with large/complex PDFs
+                    doc = PDDocument.load(file, MemoryUsageSetting.setupTempFileOnly());
+                } catch (org.apache.pdfbox.pdmodel.encryption.InvalidPasswordException ipe) {
+                    // PDF is encrypted and cannot be opened without password
+                    log.warn("Skipping encrypted PDF: " + file.getName(), ipe);
+                    skippedFiles.add(file.getName());
+                    continue;
+                } catch (Exception loadEx) {
+                    // Other loading errors (corrupted PDFs, etc.)
+                    log.error("Error loading PDF, skipping: " + file.getName(), loadEx);
+                    skippedFiles.add(file.getName());
+                    continue;
+                }
+
                 openedDocuments.add(doc);
                 startPages.put(file.getName(), currentPageCount);
 
@@ -1219,6 +1253,8 @@ public class ExportAsPdfMergeStep extends javax.swing.JPanel implements WizardSt
                 tocTempFile.delete();
             }
         }
+
+        return skippedFiles;
     }
 
     private void processTocPage(int currentTocPage, PDDocument mergedDoc, List<File> pdfFiles, HashMap<String, Integer> startPages, ArchiveFileBean caseDto, PDDocumentOutline outline) throws IOException {
