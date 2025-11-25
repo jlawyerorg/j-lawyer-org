@@ -1371,21 +1371,27 @@ public class AddressService implements AddressServiceRemote, AddressServiceLocal
     @Override
     @RolesAllowed({"readAddressRole"})
     public List<AddressBean> similaritySearch(AddressBean candidate, float minimumSimilarityPercentage) throws Exception {
-        
+
         ArrayList<AddressBean> resultList=new ArrayList<>();
         if(ServerStringUtils.isEmpty(candidate.getZipCode())) {
             log.info("similarity search requires at least a zip code - skipping!");
             return resultList;
         }
-        
+
+        Map<AddressBean, Double> similarityMap = new HashMap<>();
+
         AddressBean[] comparisonList=this.searchSimple(candidate.getZipCode());
         if(comparisonList!=null) {
             for(AddressBean c: comparisonList) {
                 double sim=calculateSimilarity(c, candidate);
                 if(sim>=minimumSimilarityPercentage)
-                    resultList.add(c);
+                    similarityMap.put(c, sim);
             }
         }
+
+        resultList.addAll(similarityMap.keySet());
+        resultList.sort((a1, a2) -> Double.compare(similarityMap.get(a2), similarityMap.get(a1)));
+
         return resultList;
     }
     
