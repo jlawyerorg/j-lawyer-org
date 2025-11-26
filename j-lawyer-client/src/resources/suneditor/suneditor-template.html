@@ -9,10 +9,90 @@
     <link rel="stylesheet" href="SUNEDITOR_CSS_PATH">
 
     <style>
+        /* Liberation Sans - Helvetica/Arial Alternative */
+        @font-face {
+            font-family: 'Liberation Sans';
+            src: url('FONT_LIBERATION_SANS_REGULAR') format('woff2');
+            font-weight: normal;
+            font-style: normal;
+        }
+        @font-face {
+            font-family: 'Liberation Sans';
+            src: url('FONT_LIBERATION_SANS_BOLD') format('woff2');
+            font-weight: bold;
+            font-style: normal;
+        }
+        @font-face {
+            font-family: 'Liberation Sans';
+            src: url('FONT_LIBERATION_SANS_ITALIC') format('woff2');
+            font-weight: normal;
+            font-style: italic;
+        }
+        @font-face {
+            font-family: 'Liberation Sans';
+            src: url('FONT_LIBERATION_SANS_BOLDITALIC') format('woff2');
+            font-weight: bold;
+            font-style: italic;
+        }
+
+        /* Liberation Serif - Times New Roman Alternative */
+        @font-face {
+            font-family: 'Liberation Serif';
+            src: url('FONT_LIBERATION_SERIF_REGULAR') format('woff2');
+            font-weight: normal;
+            font-style: normal;
+        }
+        @font-face {
+            font-family: 'Liberation Serif';
+            src: url('FONT_LIBERATION_SERIF_BOLD') format('woff2');
+            font-weight: bold;
+            font-style: normal;
+        }
+        @font-face {
+            font-family: 'Liberation Serif';
+            src: url('FONT_LIBERATION_SERIF_ITALIC') format('woff2');
+            font-weight: normal;
+            font-style: italic;
+        }
+        @font-face {
+            font-family: 'Liberation Serif';
+            src: url('FONT_LIBERATION_SERIF_BOLDITALIC') format('woff2');
+            font-weight: bold;
+            font-style: italic;
+        }
+
+        /* Liberation Mono - Courier New Alternative */
+        @font-face {
+            font-family: 'Liberation Mono';
+            src: url('FONT_LIBERATION_MONO_REGULAR') format('woff2');
+            font-weight: normal;
+            font-style: normal;
+        }
+        @font-face {
+            font-family: 'Liberation Mono';
+            src: url('FONT_LIBERATION_MONO_BOLD') format('woff2');
+            font-weight: bold;
+            font-style: normal;
+        }
+        @font-face {
+            font-family: 'Liberation Mono';
+            src: url('FONT_LIBERATION_MONO_ITALIC') format('woff2');
+            font-weight: normal;
+            font-style: italic;
+        }
+        @font-face {
+            font-family: 'Liberation Mono';
+            src: url('FONT_LIBERATION_MONO_BOLDITALIC') format('woff2');
+            font-weight: bold;
+            font-style: italic;
+        }
+    </style>
+
+    <style>
         body {
             margin: 0;
             padding: 0;
-            font-family: Arial, sans-serif;
+            font-family: Arial, 'Liberation Sans', sans-serif;
             overflow: hidden;
         }
 
@@ -99,6 +179,9 @@
 
             // Font options (common fonts available on Windows/Linux/Mac)
             font: [
+                'Liberation Sans',
+                'Liberation Serif',
+                'Liberation Mono',
                 'Arial',
                 'Arial Black',
                 'Calibri',
@@ -152,7 +235,10 @@
             resizingBar: false,  // Hide resizing bar (we control size via container)
             showPathLabel: false,  // Hide path label
             charCounter: false,    // Disable character counter
-            maxCharCount: null     // No character limit
+            maxCharCount: null,     // No character limit
+
+            // Default style for editor content
+            defaultStyle: "font-family: Arial, 'Liberation Sans', sans-serif; font-size: 12px;"
         });
 
         // Track whether editor is ready

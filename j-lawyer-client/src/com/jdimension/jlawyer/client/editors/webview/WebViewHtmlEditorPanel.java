@@ -54,6 +54,23 @@ public class WebViewHtmlEditorPanel extends JPanel implements EditorImplementati
     private static final String SUNEDITOR_CSS_PATH = "/resources/suneditor/css/suneditor.min.css";
     private static final String SUNEDITOR_LANG_DE_PATH = "/resources/suneditor/lang/de.js";
 
+    // Font resource paths
+    private static final String FONTS_BASE_PATH = "/resources/suneditor/fonts/";
+    private static final String[][] FONT_FILES = {
+        {"FONT_LIBERATION_SANS_REGULAR", "LiberationSans-Regular.woff2"},
+        {"FONT_LIBERATION_SANS_BOLD", "LiberationSans-Bold.woff2"},
+        {"FONT_LIBERATION_SANS_ITALIC", "LiberationSans-Italic.woff2"},
+        {"FONT_LIBERATION_SANS_BOLDITALIC", "LiberationSans-BoldItalic.woff2"},
+        {"FONT_LIBERATION_SERIF_REGULAR", "LiberationSerif-Regular.woff2"},
+        {"FONT_LIBERATION_SERIF_BOLD", "LiberationSerif-Bold.woff2"},
+        {"FONT_LIBERATION_SERIF_ITALIC", "LiberationSerif-Italic.woff2"},
+        {"FONT_LIBERATION_SERIF_BOLDITALIC", "LiberationSerif-BoldItalic.woff2"},
+        {"FONT_LIBERATION_MONO_REGULAR", "LiberationMono-Regular.woff2"},
+        {"FONT_LIBERATION_MONO_BOLD", "LiberationMono-Bold.woff2"},
+        {"FONT_LIBERATION_MONO_ITALIC", "LiberationMono-Italic.woff2"},
+        {"FONT_LIBERATION_MONO_BOLDITALIC", "LiberationMono-BoldItalic.woff2"}
+    };
+
     /**
      * Creates a new WebViewHtmlEditorPanel.
      * Initializes the JavaFX WebView and loads the SunEditor.
@@ -194,6 +211,19 @@ public class WebViewHtmlEditorPanel extends JPanel implements EditorImplementati
             htmlContent = htmlContent.replace("SUNEDITOR_LANG_PATH",
                 "data:text/javascript;base64," + java.util.Base64.getEncoder().encodeToString(langDe.getBytes(StandardCharsets.UTF_8)));
 
+            // Load fonts and replace placeholders with data URLs
+            for (String[] fontDef : FONT_FILES) {
+                String placeholder = fontDef[0];
+                String filename = fontDef[1];
+                try {
+                    byte[] fontData = loadResourceAsBytes(FONTS_BASE_PATH + filename);
+                    String dataUrl = "data:font/woff2;base64," + java.util.Base64.getEncoder().encodeToString(fontData);
+                    htmlContent = htmlContent.replace(placeholder, dataUrl);
+                } catch (Exception e) {
+                    log.warn("Could not load font: " + filename + " - " + e.getMessage());
+                }
+            }
+
             // Load the HTML content
             webEngine.loadContent(htmlContent);
 
@@ -213,6 +243,20 @@ public class WebViewHtmlEditorPanel extends JPanel implements EditorImplementati
 
         try (BufferedReader reader = new BufferedReader(new InputStreamReader(is, StandardCharsets.UTF_8))) {
             return reader.lines().collect(Collectors.joining("\n"));
+        }
+    }
+
+    /**
+     * Loads a resource file as a byte array.
+     */
+    private byte[] loadResourceAsBytes(String path) throws Exception {
+        InputStream is = getClass().getResourceAsStream(path);
+        if (is == null) {
+            throw new Exception("Resource not found: " + path);
+        }
+
+        try (is) {
+            return is.readAllBytes();
         }
     }
 
