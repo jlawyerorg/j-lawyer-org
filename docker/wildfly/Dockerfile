@@ -1,58 +1,42 @@
-# Use latest jboss/base-jdk:11 image as the base
-FROM jboss/base-jdk:11
-MAINTAINER j-dimension "info@j-lawyer.org"
+# Use Eclipse Temurin JDK 17 on Ubuntu
+FROM eclipse-temurin:17-jdk-jammy
+
+LABEL maintainer="j-dimension <info@j-lawyer.org>"
 
 # Set the WILDFLY_VERSION env variable
-ENV WILDFLY_VERSION 26.1.3.Final
-ENV WILDFLY_SHA1 b9f52ba41df890e09bb141d72947d2510caf758c
-ENV JBOSS_HOME /opt/jboss/wildfly
+ENV WILDFLY_VERSION=26.1.3.Final
+ENV WILDFLY_SHA1=b9f52ba41df890e09bb141d72947d2510caf758c
+ENV JBOSS_HOME=/opt/jboss/wildfly
 
-USER root
+# Create jboss user and group
+RUN groupadd -r jboss -g 1000 && \
+    useradd -u 1000 -r -g jboss -m -d /opt/jboss -s /sbin/nologin -c "JBoss user" jboss
 
-# https://stackoverflow.com/questions/78692851/could-not-retrieve-mirrorlist-http-mirrorlist-centos-org-release-7arch-x86-6
-RUN sed -i 's/mirrorlist/#mirrorlist/g' /etc/yum.repos.d/CentOS-*
-RUN sed -i 's|#baseurl=http://mirror.centos.org|baseurl=http://vault.centos.org|g' /etc/yum.repos.d/CentOS-*
+# Install required packages
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    curl \
+    mariadb-client \
+    locales \
+    && rm -rf /var/lib/apt/lists/* \
+    && localedef -i en_US -f UTF-8 en_US.UTF-8
 
-RUN mkdir -p /opt/jboss/j-lawyer-data/templates
-RUN mkdir -p /opt/jboss/j-lawyer-data/emailtemplates
-RUN mkdir -p /opt/jboss/j-lawyer-data/mastertemplates
-RUN mkdir -p /opt/jboss/j-lawyer-data/archivefiles
-RUN mkdir -p /opt/jboss/j-lawyer-data/searchindex
-RUN mkdir -p /opt/jboss/j-lawyer-data/faxqueue
-RUN mkdir -p /opt/jboss/j-lawyer-data/letterheads
-RUN chmod -R 777 /opt/jboss/j-lawyer-data
-RUN yum -y install mysql
+# Create data directories
+RUN mkdir -p /opt/jboss/j-lawyer-data/templates \
+    /opt/jboss/j-lawyer-data/emailtemplates \
+    /opt/jboss/j-lawyer-data/mastertemplates \
+    /opt/jboss/j-lawyer-data/archivefiles \
+    /opt/jboss/j-lawyer-data/searchindex \
+    /opt/jboss/j-lawyer-data/faxqueue \
+    /opt/jboss/j-lawyer-data/letterheads \
+    && chmod -R 777 /opt/jboss/j-lawyer-data
 
-RUN localedef -i en_US -f UTF-8 en_US.UTF-8
-
-
-#RUN yum-config-manager --add-repo https://download.opensuse.org/repositories/home:/Alexander_Pozdnyakov/CentOS_7/
-#RUN rpm --import https://build.opensuse.org/projects/home:Alexander_Pozdnyakov/public_key
-#RUN yum update
-#RUN yum install tesseract 
-#RUN yum install tesseract-langpack-deu
-#
-#RUN yum -y install ghostscript \
-#      icc-profiles-free \
-#      libxml2 \
-#      pngquant \
-#      python3-pip \
-#      liblept5 \
-#      libsm6 libxext6 libxrender-dev \
-#      zlib1g \
-#      pngquant \
-#      python3 \
-#      qpdf \
-#      unpaper
-
-# Add the WildFly distribution to /opt, and make wildfly the owner of the extracted tar content
-# Make sure the distribution is available from a well-known place
-RUN cd $HOME \
-    && curl -LO https://github.com/wildfly/wildfly/releases/download/26.1.3.Final/wildfly-26.1.3.Final.tar.gz \
-    && sha1sum wildfly-$WILDFLY_VERSION.tar.gz | grep $WILDFLY_SHA1 \
-    && tar xf wildfly-$WILDFLY_VERSION.tar.gz \
-    && mv $HOME/wildfly-$WILDFLY_VERSION $JBOSS_HOME \
-    && rm wildfly-$WILDFLY_VERSION.tar.gz \
+# Download and install WildFly
+RUN cd /tmp \
+    && curl -LO https://github.com/wildfly/wildfly/releases/download/${WILDFLY_VERSION}/wildfly-${WILDFLY_VERSION}.tar.gz \
+    && sha1sum wildfly-${WILDFLY_VERSION}.tar.gz | grep ${WILDFLY_SHA1} \
+    && tar xf wildfly-${WILDFLY_VERSION}.tar.gz \
+    && mv wildfly-${WILDFLY_VERSION} ${JBOSS_HOME} \
+    && rm wildfly-${WILDFLY_VERSION}.tar.gz \
     && chown -R jboss:0 ${JBOSS_HOME} \
     && chmod -R g+rw ${JBOSS_HOME}
 
@@ -65,6 +49,10 @@ ENV LAUNCH_JBOSS_IN_BACKGROUND true
 COPY ./startup.sh /opt/jboss/startup.sh
 RUN chmod 777 /opt/jboss/startup.sh
 
+# MariaDB JDBC driver
+RUN mkdir -p /opt/jboss/wildfly/modules/org/mariadb/driver/main
+COPY ./mariadb/driver/main/ /opt/jboss/wildfly/modules/org/mariadb/driver/main/
+RUN chown -R jboss:0 /opt/jboss/wildfly/modules/org/mariadb
 
 USER jboss
 
@@ -76,7 +64,6 @@ COPY j-lawyer-data/ /opt/jboss/j-lawyer-data/
 COPY ./standalone.xml /opt/jboss/wildfly/standalone/configuration/standalone.xml
 COPY ./standalone.conf /opt/jboss/wildfly/bin/standalone.conf
 COPY ./j-lawyer-server.ear /opt/jboss/wildfly/standalone/deployments/j-lawyer-server.ear
-COPY ./mysql/driver8/main/* /opt/jboss/wildfly/modules/system/layers/base/com/mysql/driver8/main/
 
 
 # Expose the ports we're interested in

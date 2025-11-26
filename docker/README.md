@@ -10,13 +10,13 @@ wget https://raw.githubusercontent.com/jlawyerorg/j-lawyer-org/master/docker/run
 sh run.sh
 ```
 
-The container(s) expose port 8000. 
+The container(s) expose port 8000.
 The database schema is named "jlawyerdb" and can be accessed by a user jlawyer:jlawyer.
 
 There are two volumes that are kept on the host:
 
 * /var/docker_data/j-lawyer-data/ contains documents, templates etc.
-* /var/docker_data/j-lawyer-db/ contains the MySQL database
+* /var/docker_data/j-lawyer-db/ contains the MariaDB database
 
 ## Health Check
 
@@ -70,7 +70,7 @@ or as root
     sudo docker-compose down
     sudo docker-compose up -d
 
-### Connecting to MySQL running inside a container
+### Connecting to MariaDB running inside a container
 
 Find its IP:
 
@@ -78,5 +78,5 @@ Find its IP:
 
 Then connect as follows:
 
-    mysql -h <IP> -P 3306 -u jlawyer -p
+    mariadb -h <IP> -P 3306 -u jlawyer -p
 

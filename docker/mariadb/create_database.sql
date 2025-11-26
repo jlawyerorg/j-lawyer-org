@@ -1,7 +1,3 @@
-drop database if exists jlawyerdb;
-
-create database jlawyerdb;
-
 use jlawyerdb;
 
 CREATE TABLE AddressBean (
@@ -1344,4 +1340,3 @@ insert into ServerSettingsBean(settingKey, settingValue) values('jlawyer.server.
 
 
 commit;
-
