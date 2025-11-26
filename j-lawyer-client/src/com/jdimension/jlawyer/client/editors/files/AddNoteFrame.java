@@ -786,7 +786,7 @@ public class AddNoteFrame extends javax.swing.JFrame implements AssistantFlowAda
                 + "<hr/>\n"
                 + "<p>\n"
                 + "  \n"
-                + "</p>";
+                + "</p><p>&nbsp;</p><p>&nbsp;</p>";
         this.htmlNoteEditor.setText(html);
 
         ClientSettings settings = ClientSettings.getInstance();
