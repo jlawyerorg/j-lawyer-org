@@ -736,7 +736,6 @@ public class HtmlPanel extends javax.swing.JPanel implements PreviewPanel, Assis
 
         this.pnlHtml.add(this.htmlEditor);
         this.htmlEditor.setBounds(0, 0, this.pnlHtml.getWidth(), this.pnlHtml.getHeight());
-        this.htmlEditor.setBounds(0, 0, this.pnlHtml.getWidth(), this.pnlHtml.getHeight());
         SwingUtilities.updateComponentTreeUI(this.htmlEditor);
 
         ThreadUtils.enableComponent(this, !readOnly);
@@ -863,7 +862,6 @@ public class HtmlPanel extends javax.swing.JPanel implements PreviewPanel, Assis
     }//GEN-LAST:event_cmdTranscribeActionPerformed
 
     private void formComponentResized(java.awt.event.ComponentEvent evt) {//GEN-FIRST:event_formComponentResized
-        this.htmlEditor.setBounds(0, 0, this.pnlHtml.getWidth(), this.pnlHtml.getHeight());
         this.htmlEditor.setBounds(0, 0, this.pnlHtml.getWidth(), this.pnlHtml.getHeight());
         SwingUtilities.updateComponentTreeUI(this.htmlEditor);
     }//GEN-LAST:event_formComponentResized

@@ -43,6 +43,10 @@ public class WebViewHtmlEditorPanel extends JPanel implements EditorImplementati
     private volatile boolean disposed = false;
     private Runnable onEditorReadyCallback = null;
 
+    // Pending content to set when editor becomes ready (non-blocking pattern)
+    private String pendingContent = null;
+    private int pendingCaretPosition = -1;
+
     // Clipboard cache to avoid deadlock between EDT and JavaFX threads
     private volatile String cachedClipboardHTML = null;
     private volatile long clipboardCacheTimestamp = 0;
@@ -285,10 +289,12 @@ public class WebViewHtmlEditorPanel extends JPanel implements EditorImplementati
 
     /**
      * Waits for the editor to be ready (blocking with timeout).
+     * Note: This should only be used for getter methods that need to return a value.
+     * Setter methods should use the non-blocking pendingContent pattern instead.
      */
     private void waitForEditor() {
         int attempts = 0;
-        while (!editorReady && attempts < 100) {  // 10 seconds timeout
+        while (!editorReady && attempts < 30) {  // 3 seconds timeout (reduced from 10s)
             try {
                 Thread.sleep(100);
                 attempts++;
@@ -299,7 +305,7 @@ public class WebViewHtmlEditorPanel extends JPanel implements EditorImplementati
         }
 
         if (!editorReady) {
-            log.warn("Editor not ready after timeout");
+            log.warn("Editor not ready after timeout (" + attempts * 100 + "ms)");
         }
     }
 
@@ -359,6 +365,22 @@ public class WebViewHtmlEditorPanel extends JPanel implements EditorImplementati
         }
     }
 
+    /**
+     * Calls a JavaScript API method asynchronously (fire-and-forget, non-blocking).
+     * Use this for setter methods where we don't need to wait for a result.
+     */
+    private void callEditorAPIAsync(String methodName, Object... args) {
+        Platform.runLater(() -> {
+            try {
+                if (editorAPI != null) {
+                    editorAPI.call(methodName, args);
+                }
+            } catch (Exception e) {
+                log.error("Error calling editorAPI." + methodName + " asynchronously", e);
+            }
+        });
+    }
+
     // ========== EditorImplementation Interface Methods ==========
 
     @Override
@@ -368,6 +390,16 @@ public class WebViewHtmlEditorPanel extends JPanel implements EditorImplementati
 
     @Override
     public String getText() {
+        // If editor is not ready yet, return pending content if available
+        // This prevents data loss when the panel is closed before editor initialization completes
+        if (!editorReady) {
+            if (pendingContent != null) {
+                return pendingContent;
+            }
+            // Editor not ready and no pending content - wait for it
+            waitForEditor();
+        }
+
         Object result = callEditorAPI("getText");
         return result != null ? result.toString() : "";
     }
@@ -379,7 +411,15 @@ public class WebViewHtmlEditorPanel extends JPanel implements EditorImplementati
         }
 
         final String finalText = text;
-        callEditorAPI("setText", finalText);
+
+        if (!editorReady) {
+            // Store content to set when editor becomes ready (non-blocking)
+            this.pendingContent = finalText;
+            return;
+        }
+
+        // Editor is ready, set content asynchronously (non-blocking)
+        callEditorAPIAsync("setText", finalText);
 
         // Force UI update after setting content to ensure it becomes visible
         SwingUtilities.invokeLater(() -> {
@@ -413,7 +453,12 @@ public class WebViewHtmlEditorPanel extends JPanel implements EditorImplementati
 
     @Override
     public void setCaretPosition(int pos) {
-        callEditorAPI("setCaretPosition", pos);
+        if (!editorReady) {
+            // Store position to set when editor becomes ready (non-blocking)
+            this.pendingCaretPosition = pos;
+            return;
+        }
+        callEditorAPIAsync("setCaretPosition", pos);
     }
 
     @Override
@@ -620,6 +665,33 @@ public class WebViewHtmlEditorPanel extends JPanel implements EditorImplementati
         public void onEditorReady() {
             editorReady = true;
             log.info("SunEditor is ready");
+
+            // Apply any pending content that was set before editor was ready
+            // Note: pendingCaretPosition is applied AFTER content is set (in same Platform.runLater block)
+            // to ensure content is loaded before positioning the caret
+            if (pendingContent != null || pendingCaretPosition >= 0) {
+                final String contentToSet = pendingContent;
+                final int caretToSet = pendingCaretPosition;
+                pendingContent = null;
+                pendingCaretPosition = -1;
+
+                Platform.runLater(() -> {
+                    try {
+                        if (contentToSet != null && editorAPI != null) {
+                            log.info("Applying pending content (" + contentToSet.length() + " chars)");
+                            editorAPI.call("setText", contentToSet);
+                        }
+                        // Caret position is set after content in the same runLater block,
+                        // ensuring sequential execution on the JavaFX thread
+                        if (caretToSet >= 0 && editorAPI != null) {
+                            log.info("Applying pending caret position: " + caretToSet);
+                            editorAPI.call("setCaretPosition", caretToSet);
+                        }
+                    } catch (Exception e) {
+                        log.error("Error applying pending content/caret", e);
+                    }
+                });
+            }
 
             // Force UI update on EDT (Event Dispatch Thread)
             SwingUtilities.invokeLater(() -> {
