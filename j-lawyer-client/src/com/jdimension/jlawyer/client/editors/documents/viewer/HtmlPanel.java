@@ -892,18 +892,21 @@ public class HtmlPanel extends javax.swing.JPanel implements PreviewPanel, Assis
     @Override
     public void removeNotify() {
         if (this.id != null && !this.readOnly) {
-
-            byte[] currentBytes = this.htmlEditor.getText().getBytes();
-            if (this.initialContent!=null && !Arrays.equals(this.initialContent, currentBytes)) {
-                try {
+            try {
+                String currentText = this.htmlEditor.getText();
+                if (currentText == null || currentText.isEmpty()) {
+                    // getText() may return empty if editor is being disposed - skip saving
+                    return;
+                }
+                byte[] currentBytes = currentText.getBytes();
+                if (this.initialContent != null && !Arrays.equals(this.initialContent, currentBytes)) {
                     ClientSettings settings = ClientSettings.getInstance();
                     JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
-                    locator.lookupArchiveFileServiceRemote().setDocumentContent(this.id, this.htmlEditor.getText().getBytes());
-                } catch (Throwable t) {
-                    log.error("Error saving document with id " + this.id, t);
-                    ThreadUtils.showErrorDialog(EditorsRegistry.getInstance().getMainWindow(), "Fehler beim Speichern: " + t.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR);
-
+                    locator.lookupArchiveFileServiceRemote().setDocumentContent(this.id, currentBytes);
                 }
+            } catch (Throwable t) {
+                log.error("Error saving document with id " + this.id, t);
+                ThreadUtils.showErrorDialog(EditorsRegistry.getInstance().getMainWindow(), "Fehler beim Speichern: " + t.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR);
             }
         }
     }

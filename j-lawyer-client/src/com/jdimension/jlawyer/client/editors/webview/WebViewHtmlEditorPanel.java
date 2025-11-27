@@ -435,6 +435,12 @@ public class WebViewHtmlEditorPanel extends JPanel implements EditorImplementati
 
     @Override
     public String getText() {
+        // If panel is disposed, return pending content or empty string to avoid blocking
+        // This prevents TimeoutException during UI teardown (especially on macOS)
+        if (disposed) {
+            return pendingContent != null ? pendingContent : "";
+        }
+
         // If editor is not ready yet, return pending content if available
         // This prevents data loss when the panel is closed before editor initialization completes
         if (!editorReady) {

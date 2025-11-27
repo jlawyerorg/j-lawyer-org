@@ -2031,80 +2031,170 @@ public class EmailInboxPanel extends javax.swing.JPanel implements SaveToCaseExe
 
     private void cmdDeleteActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdDeleteActionPerformed
         int[] selected = this.tblMails.getSelectedRows();
-        if (selected.length == 0) {
+        Folder expungeFolder = null;
+        boolean expungeClosed = true;
+        int scrollToRow = -1;
+        MessageContainer msgC = null;
+        if (selected.length > 0) {
+            msgC = (MessageContainer) this.tblMails.getValueAt(selected[0], 2);
+
+            expungeFolder = msgC.getMessage().getFolder();
+            expungeClosed = !expungeFolder.isOpen();
+
+            try {
+                if (expungeClosed) {
+                    System.out.println("open 4");
+                    expungeFolder.open(Folder.READ_WRITE);
+                }
+            } catch (MessagingException mex) {
+                log.error(mex);
+            }
+        } else {
             return;
+
         }
 
-        // Collect messages to delete (fast operation on EDT)
-        ArrayList<MessageContainer> toDelete = new ArrayList<>();
-        for (int sel : selected) {
-            MessageContainer msgC = (MessageContainer) this.tblMails.getValueAt(sel, 2);
-            toDelete.add(msgC);
-        }
-
-        // Determine mailbox setup from first message
         MailboxSetup ms = null;
         try {
-            ms = EmailUtils.getMailboxSetup(toDelete.get(0).getMessage());
+            ms = EmailUtils.getMailboxSetup(msgC.getMessage());
         } catch (Exception ex) {
             try {
-                log.error("Unable to determine mailbox for message " + toDelete.get(0).getMessage().getSubject());
+                log.error("Unable to determine mailbox for message " + msgC.getMessage().getSubject());
             } catch (Throwable t) {
-                log.error("Unable to determine mailbox for message " + toDelete.get(0).getMessage().getMessageNumber());
+                log.error("Unable to determine mailbox for message " + msgC.getMessage().getMessageNumber());
+            }
+        }
+        Folder trashFolderCheck = null;
+        if (this.trashFolders.containsKey(ms)) {
+            trashFolderCheck = this.trashFolders.get(ms).getFolder();
+            try {
+                if (!trashFolderCheck.isOpen()) {
+                    System.out.println("open 5");
+                    trashFolderCheck.open(Folder.READ_WRITE);
+                }
+            } catch (MessagingException mex) {
+                log.error(mex);
             }
         }
 
-        // Remember scroll position and folder for refresh
-        final int scrollToRow = tblMails.getSelectedRow();
-        final Folder expungeFolder = toDelete.get(0).getMessage().getFolder();
-
-        int sortCol = -1;
-        List<? extends SortKey> sortKeys = this.tblMails.getRowSorter().getSortKeys();
-        if (sortKeys != null && !sortKeys.isEmpty()) {
-            sortCol = sortKeys.get(0).getColumn();
+        ArrayList<Message> messages = new ArrayList<>();
+        for (int i = selected.length - 1; i > -1; i--) {
+            msgC = (MessageContainer) this.tblMails.getValueAt(selected[i], 2);
+            messages.add(msgC.getMessage());
         }
-        final int finalSortCol = sortCol;
 
-        // Clear UI immediately
+        try {
+            if (EmailUtils.isIMAP(expungeFolder)) {
+
+                if (!(expungeFolder.getName().equalsIgnoreCase(CommonMailUtils.TRASH))) {
+                    // when deleting from trash, we don't move it to trash again :-)
+
+                    try {
+                        if (!expungeFolder.isOpen()) {
+                            System.out.println("open 6");
+                            expungeFolder.open(Folder.READ_WRITE);
+                        }
+                    } catch (MessagingException mex) {
+                        log.error(mex);
+                    }
+
+                    Message[] msgArray = new Message[0];
+                    msgArray = messages.toArray(msgArray);
+                    try {
+                        expungeFolder.copyMessages(msgArray, this.trashFolders.get(ms).getFolder());
+                    } catch (Throwable t) {
+                        log.warn("Unable to delete messages", t);
+                        // retry in case of closed folder
+                        trashFolderCheck = null;
+                        if (this.trashFolders.containsKey(ms)) {
+                            trashFolderCheck = this.trashFolders.get(ms).getFolder();
+                            try {
+                                if (!trashFolderCheck.isOpen()) {
+                                    System.out.println("open 7");
+                                    trashFolderCheck.open(Folder.READ_WRITE);
+                                    expungeFolder.copyMessages(msgArray, this.trashFolders.get(ms).getFolder());
+                                }
+                            } catch (MessagingException mex) {
+                                log.error(mex);
+                            }
+                        }
+                    }
+                    Flags deleteFlags = new Flags(Flag.DELETED);
+                    expungeFolder.setFlags(msgArray, deleteFlags, true);
+                }
+
+            } else {
+                for (Message m : messages) {
+                    m.setFlag(Flags.Flag.DELETED, true);
+                }
+            }
+
+        } catch (Throwable ex) {
+            log.error(ex);
+        }
+
+        scrollToRow = tblMails.getSelectedRow();
+
         this.mailContentUI.clear();
         this.pnlActionsChild.removeAll();
 
-        // Set wait cursor
-        this.setCursor(java.awt.Cursor.getPredefinedCursor(java.awt.Cursor.WAIT_CURSOR));
+        try {
+            if (trashFolderCheck != null) {
+                //trashFolderCheck.close(true);
+                EmailUtils.closeIfIMAP(trashFolderCheck);
+            }
+        } catch (Throwable t) {
+            log.error(t);
+        }
 
-        // Start async deletion
-        final MailboxSetup finalMs = ms;
-        DeleteMessagesThread deleteThread = new DeleteMessagesThread(
-                toDelete,
-                finalMs,
-                this.trashFolders,
-                this.inboxFolders,
-                () -> {
-                    // Callback on EDT after deletion completes
-                    this.setCursor(java.awt.Cursor.getDefaultCursor());
-                    this.resetCacheForSelectedFolder(expungeFolder);
+        try {
+            if (expungeFolder != null) {
 
-                    TreePath selectedPath = this.treeFolders.getSelectionPath();
-                    if (selectedPath == null) {
-                        DefaultMutableTreeNode selectedFolder = this.findFolder(
-                                (DefaultMutableTreeNode) this.treeFolders.getModel().getRoot(), expungeFolder);
-                        if (selectedFolder != null) {
-                            selectedPath = new TreePath(selectedFolder.getPath());
-                        }
-                    }
-
-                    if (selectedPath != null) {
-                        this.treeFoldersValueChangedImpl(
-                                new TreeSelectionEvent(this.tblMails, selectedPath, false, null, null),
-                                finalSortCol, scrollToRow, null, false);
-                    }
-
-                    if (expungeFolder != null && !EmailUtils.isInbox(expungeFolder)) {
-                        EmailUtils.closeIfIMAP(expungeFolder);
-                    }
+                if (EmailUtils.isIMAP(expungeFolder)) {
+                    // change: only expunge in LoadFolderAction before loading messages
+//                    if (!expungeFolder.isOpen()) {
+//                        expungeFolder.open(Folder.READ_WRITE);
+//                    }
+//                    expungeFolder.expunge();
+//                    if (expungeClosed) {
+//                        expungeFolder.close(true);
+//                    }
+                } else {
+//                    if(!expungeFolder.isOpen())
+//                        expungeFolder.open(Folder.READ_WRITE);
+//                    expungeFolder.close(true);
+                    this.inboxFolders.get(ms).getFolder().close(true);
                 }
-        );
-        new Thread(deleteThread, "DeleteMessagesThread").start();
+
+            }
+
+        } catch (MessagingException ex) {
+            log.error(ex);
+        }
+
+        int sortCol = -1;
+        List<? extends SortKey> sortKeys = this.tblMails.getRowSorter().getSortKeys();
+        if (sortKeys != null) {
+            if (!sortKeys.isEmpty()) {
+                sortCol = sortKeys.get(0).getColumn();
+            }
+        }
+        this.resetCacheForSelectedFolder(expungeFolder);
+        TreePath selectedPath = this.treeFolders.getSelectionPath();
+        if (selectedPath == null) {
+            DefaultMutableTreeNode selectedFolder = this.findFolder((DefaultMutableTreeNode) this.treeFolders.getModel().getRoot(), expungeFolder);
+            if (selectedFolder != null) {
+                selectedPath = new TreePath(selectedFolder.getPath());
+            }
+        }
+
+        if (selectedPath != null) {
+            this.treeFoldersValueChangedImpl(new TreeSelectionEvent(this.tblMails, selectedPath, false, null, null), sortCol, scrollToRow, null, false);
+        }
+
+        if (expungeFolder != null && !EmailUtils.isInbox(expungeFolder)) {
+            EmailUtils.closeIfIMAP(expungeFolder);
+        }
 
     }//GEN-LAST:event_cmdDeleteActionPerformed
 
