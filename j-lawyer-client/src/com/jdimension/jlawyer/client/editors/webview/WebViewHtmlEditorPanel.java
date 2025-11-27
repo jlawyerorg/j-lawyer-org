@@ -282,9 +282,54 @@ public class WebViewHtmlEditorPanel extends JPanel implements EditorImplementati
 
             log.info("SunEditor loaded successfully");
 
+            // Check if editor.onload already fired before javaConnector was set
+            // This handles the race condition where SunEditor initializes before
+            // the Java-JavaScript bridge is established
+            Object jsEditorReady = webEngine.executeScript("window.editorReady === true");
+            if (Boolean.TRUE.equals(jsEditorReady) && !editorReady) {
+                log.info("Editor was already ready, triggering onEditorReady manually");
+                new JavaScriptConnector().onEditorReady();
+            } else if (!editorReady) {
+                // Schedule a fallback check in case editor.onload doesn't fire
+                // This can happen if SunEditor initialization fails silently
+                scheduleEditorReadyFallback();
+            }
+
         } catch (Exception e) {
             log.error("Error accessing JavaScript API", e);
         }
+    }
+
+    /**
+     * Schedules a fallback check for editor readiness.
+     * If editor.onload doesn't fire within 500ms, we check the JavaScript state
+     * and trigger onEditorReady manually if the editor API is available.
+     */
+    private void scheduleEditorReadyFallback() {
+        new Thread(() -> {
+            try {
+                Thread.sleep(500);
+                if (!editorReady && !disposed) {
+                    Platform.runLater(() -> {
+                        try {
+                            // Check if editorAPI is available even though onload didn't fire
+                            Object apiAvailable = webEngine.executeScript("window.editorAPI !== null && window.editorAPI !== undefined");
+
+                            if (Boolean.TRUE.equals(apiAvailable) && !editorReady) {
+                                log.info("Editor onload did not fire, but API is available - triggering onEditorReady via fallback");
+                                // Re-fetch editorAPI reference
+                                editorAPI = (JSObject) webEngine.executeScript("window.editorAPI");
+                                new JavaScriptConnector().onEditorReady();
+                            }
+                        } catch (Exception e) {
+                            log.error("Error in editor ready fallback", e);
+                        }
+                    });
+                }
+            } catch (InterruptedException e) {
+                Thread.currentThread().interrupt();
+            }
+        }, "EditorReadyFallback").start();
     }
 
     /**
