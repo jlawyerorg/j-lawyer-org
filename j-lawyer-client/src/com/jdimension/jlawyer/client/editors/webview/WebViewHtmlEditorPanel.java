@@ -891,16 +891,23 @@ public class WebViewHtmlEditorPanel extends JPanel implements EditorImplementati
                     // Stop loading any pending resources
                     webEngine.getLoadWorker().cancel();
 
+                    // Execute JavaScript cleanup BEFORE clearing content
+                    try {
+                        // SunEditor's destroy method - check if editor and method exist
+                        webEngine.executeScript(
+                            "if (window.editor && typeof window.editor.destroy === 'function') { " +
+                            "  window.editor.destroy(); " +
+                            "  window.editor = null; " +
+                            "} " +
+                            "if (window.editorAPI) { window.editorAPI = null; }"
+                        );
+                    } catch (Exception e) {
+                        // Ignore - page might already be unloaded or editor not initialized
+                        log.debug("JavaScript cleanup skipped: " + e.getMessage());
+                    }
+
                     // Clear the page content to free memory
                     webEngine.loadContent("");
-
-                    // Execute JavaScript cleanup (destroy editor instance)
-                    try {
-                        webEngine.executeScript("if (window.editor) { window.editor.destroy(); window.editor = null; }");
-                        webEngine.executeScript("if (window.editorAPI) { window.editorAPI = null; }");
-                    } catch (Exception e) {
-                        log.warn("Error during JavaScript cleanup: " + e.getMessage());
-                    }
 
                     log.info("WebEngine cleaned up");
                 }
