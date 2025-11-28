@@ -698,6 +698,8 @@ import javax.annotation.Resource;
 import javax.annotation.security.PermitAll;
 import javax.annotation.security.RolesAllowed;
 import javax.ejb.EJB;
+import javax.ejb.Lock;
+import javax.ejb.LockType;
 import javax.ejb.Singleton;
 import javax.inject.Inject;
 import javax.jms.JMSConnectionFactory;
@@ -762,6 +764,7 @@ public class SingletonService implements SingletonServiceRemote, SingletonServic
 
     @Override
     @RolesAllowed(value = {"loginRole"})
+    @Lock(LockType.READ)
     public int getSystemStatus() {
         return this.systemStatus;
     }
@@ -774,6 +777,7 @@ public class SingletonService implements SingletonServiceRemote, SingletonServic
 
     @Override
     @RolesAllowed(value = {"loginRole"})
+    @Lock(LockType.READ)
     public HashMap<FileMetadata, Date> getObservedFiles() {
         return this.getObservedFiles(false);
     }
@@ -881,12 +885,14 @@ public class SingletonService implements SingletonServiceRemote, SingletonServic
 
     @Override
     @RolesAllowed(value = {"loginRole"})
+    @Lock(LockType.READ)
     public FaxQueueBean getFailedFax() {
         return this.failedFax;
     }
 
     @Override
     @RolesAllowed(value = {"loginRole"})
+    @Lock(LockType.READ)
     public ArrayList<FaxQueueBean> getFaxQueue() {
         return this.faxQueue;
     }
@@ -903,6 +909,7 @@ public class SingletonService implements SingletonServiceRemote, SingletonServic
 
     @Override
     @PermitAll
+    @Lock(LockType.READ)
     public long getLatestInstantMessageReceived() {
         return this.latestInstantMessageReceived;
     }
@@ -915,6 +922,7 @@ public class SingletonService implements SingletonServiceRemote, SingletonServic
 
     @Override
     @PermitAll
+    @Lock(LockType.READ)
     public long getLatestInstantMessageStatusUpdated() {
         return latestInstantMessageStatusUpdated;
     }
@@ -927,6 +935,7 @@ public class SingletonService implements SingletonServiceRemote, SingletonServic
 
     @Override
     @RolesAllowed(value = {"loginRole"})
+    @Lock(LockType.READ)
     public EpostQueueBean getFailedLetter() {
         return failedLetter;
     }
@@ -944,6 +953,7 @@ public class SingletonService implements SingletonServiceRemote, SingletonServic
      */
     @Override
     @RolesAllowed(value = {"loginRole"})
+    @Lock(LockType.READ)
     public ArrayList<EpostQueueBean> getEpostQueue() {
         return epostQueue;
     }
@@ -998,6 +1008,7 @@ public class SingletonService implements SingletonServiceRemote, SingletonServic
 
     @Override
     @RolesAllowed(value = {"loginRole"})
+    @Lock(LockType.READ)
     public Collection<JobStatus> listJobs() {
         return this.jobStatus.values();
     }
