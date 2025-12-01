@@ -891,7 +891,13 @@ public class EmailInboxPanel extends javax.swing.JPanel implements SaveToCaseExe
         // Check if this specific mailbox is already connected (thread-safe)
         synchronized (this.stores) {
             if (this.stores.containsKey(ms)) {
-                return; // Already connected
+                Store existingStore = this.stores.get(ms);
+                if (existingStore.isConnected()) {
+                    return; // Already connected
+                } else {
+                    // Store exists but connection is closed - remove it so we can reconnect
+                    this.stores.remove(ms);
+                }
             }
         }
 
