@@ -937,6 +937,17 @@ public class CalloutPanelComponent extends javax.swing.JPanel {
     }
     
     public void deleteMessage(String messageId) {
+        int response = JOptionPane.showConfirmDialog(
+            EditorsRegistry.getInstance().getMainWindow(),
+            "Nachricht wirklich löschen?",
+            "Nachricht löschen",
+            JOptionPane.YES_NO_OPTION,
+            JOptionPane.QUESTION_MESSAGE);
+
+        if (response != JOptionPane.YES_OPTION) {
+            return;
+        }
+
         try {
 
             ClientSettings settings = ClientSettings.getInstance();
