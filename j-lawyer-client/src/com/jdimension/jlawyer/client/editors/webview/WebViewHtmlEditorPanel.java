@@ -22,8 +22,11 @@ import java.net.URL;
 import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
+import com.jdimension.jlawyer.client.utils.SystemUtils;
 
 /**
  * HTML editor implementation using SunEditor embedded in JavaFX WebView.
@@ -51,6 +54,17 @@ public class WebViewHtmlEditorPanel extends JPanel implements EditorImplementati
     private volatile String cachedClipboardHTML = null;
     private volatile long clipboardCacheTimestamp = 0;
     private static final long CLIPBOARD_CACHE_TTL_MS = 2000; // 2 second cache validity
+
+    // Background executor for clipboard operations (avoids EDT/JavaFX/AppKit deadlock on macOS)
+    private static final ExecutorService clipboardExecutor =
+        Executors.newSingleThreadExecutor(r -> {
+            Thread t = new Thread(r, "ClipboardCache-Worker");
+            t.setDaemon(true);
+            return t;
+        });
+
+    // Flag for clipboard refresh coordination
+    private volatile boolean clipboardRefreshInProgress = false;
 
     // Resource paths
     private static final String TEMPLATE_PATH = "/resources/suneditor/suneditor-template.html";
@@ -176,9 +190,11 @@ public class WebViewHtmlEditorPanel extends JPanel implements EditorImplementati
 
             // Add focus listener to proactively cache clipboard when editor gains focus
             // This prevents deadlock when paste event tries to access clipboard while EDT is blocked
+            // CRITICAL: On macOS, clipboard access from EDT can cause deadlock with AppKit thread
+            // Solution: Use background thread that doesn't block either EDT or JavaFX thread
             webView.focusedProperty().addListener((obs, wasFocused, isFocused) -> {
                 if (isFocused) {
-                    SwingUtilities.invokeLater(this::refreshClipboardCache);
+                    triggerAsyncClipboardRefresh();
                 }
             });
 
@@ -530,49 +546,95 @@ public class WebViewHtmlEditorPanel extends JPanel implements EditorImplementati
     // ========== Clipboard Caching ==========
 
     /**
-     * Refreshes the clipboard cache by reading HTML from the system clipboard.
-     * This method must be called on EDT to avoid deadlocks.
+     * Triggers an asynchronous clipboard refresh in a background thread.
+     * This method is safe to call from any thread (JavaFX, EDT, or other).
+     *
+     * The background approach prevents deadlocks on macOS where:
+     * - JavaFX thread waits for EDT (via SwingUtilities.invokeLater)
+     * - EDT waits for AppKit thread (via Toolkit.getSystemClipboard)
+     * - AppKit thread may be waiting for JavaFX (native event loop)
      */
-    private void refreshClipboardCache() {
-        // Only run on EDT
-        if (!SwingUtilities.isEventDispatchThread()) {
-            SwingUtilities.invokeLater(this::refreshClipboardCache);
+    private void triggerAsyncClipboardRefresh() {
+        // Skip if refresh is already in progress
+        if (clipboardRefreshInProgress) {
+            log.debug("Clipboard refresh already in progress, skipping");
             return;
         }
 
+        clipboardExecutor.submit(() -> {
+            clipboardRefreshInProgress = true;
+            try {
+                refreshClipboardCacheInBackground();
+            } finally {
+                clipboardRefreshInProgress = false;
+            }
+        });
+    }
+
+    /**
+     * Performs clipboard refresh in background thread.
+     * This method accesses the system clipboard directly without going through EDT,
+     * which is safe because we only read (not write) and use volatile fields for the cache.
+     *
+     * Note: On some platforms, clipboard access outside EDT may have limitations,
+     * but for reading HTML content this approach is reliable and avoids deadlocks.
+     */
+    private void refreshClipboardCacheInBackground() {
         try {
+            // Access clipboard directly from background thread
+            // This is safe for read operations and avoids EDT/AppKit deadlock on macOS
             Toolkit toolkit = Toolkit.getDefaultToolkit();
             Clipboard clipboard = toolkit.getSystemClipboard();
 
+            String html = readHtmlFromClipboard(clipboard);
+
+            if (html != null) {
+                cachedClipboardHTML = parseWindowsHtmlFormat(html);
+                clipboardCacheTimestamp = System.currentTimeMillis();
+                log.info("Background cached HTML from clipboard: " + cachedClipboardHTML.length() + " chars");
+            } else {
+                cachedClipboardHTML = null;
+                clipboardCacheTimestamp = System.currentTimeMillis();
+                log.info("No HTML flavor found in clipboard (background refresh)");
+            }
+
+        } catch (Exception e) {
+            log.warn("Error in background clipboard refresh: " + e.getMessage());
+            // Don't update cache on error - keep stale value if available
+        }
+    }
+
+    /**
+     * Reads HTML content from clipboard, trying multiple flavors.
+     * This method is thread-safe for read operations.
+     *
+     * @param clipboard The system clipboard
+     * @return HTML content or null if not available
+     */
+    private String readHtmlFromClipboard(Clipboard clipboard) {
+        try {
             // Try standard HTML flavor first
             DataFlavor htmlFlavor = new DataFlavor("text/html; class=java.lang.String");
             if (clipboard.isDataFlavorAvailable(htmlFlavor)) {
                 String html = (String) clipboard.getData(htmlFlavor);
-                log.info("Cached HTML from system clipboard (standard flavor): " + html.length() + " chars");
-                cachedClipboardHTML = parseWindowsHtmlFormat(html);
-                clipboardCacheTimestamp = System.currentTimeMillis();
-                return;
+                log.info("Read HTML from clipboard (standard flavor): " + html.length() + " chars");
+                return html;
             }
 
-            // Check all available flavors for HTML content (needed for LibreOffice on Linux)
+            // Check all available flavors for HTML content
             DataFlavor[] flavors = clipboard.getAvailableDataFlavors();
-            log.info("Standard HTML flavor not available, checking " + flavors.length + " alternate flavors");
+            log.debug("Standard HTML flavor not available, checking " + flavors.length + " alternate flavors");
 
             for (DataFlavor flavor : flavors) {
                 String mimeType = flavor.getMimeType();
 
-                // Look for any text/html flavor
                 if (mimeType.contains("text/html")) {
                     try {
                         Object data = clipboard.getData(flavor);
                         if (data instanceof String) {
-                            String html = (String) data;
-                            log.info("Cached HTML from flavor " + mimeType + ": " + html.length() + " chars");
-                            cachedClipboardHTML = parseWindowsHtmlFormat(html);
-                            clipboardCacheTimestamp = System.currentTimeMillis();
-                            return;
+                            log.info("Read HTML from flavor " + mimeType);
+                            return (String) data;
                         } else if (data instanceof java.io.InputStream) {
-                            // Read from input stream (common on Linux)
                             java.io.InputStream is = (java.io.InputStream) data;
                             StringBuilder sb = new StringBuilder();
                             byte[] buffer = new byte[4096];
@@ -581,13 +643,9 @@ public class WebViewHtmlEditorPanel extends JPanel implements EditorImplementati
                                 sb.append(new String(buffer, 0, bytesRead, StandardCharsets.UTF_8));
                             }
                             is.close();
-                            String html = sb.toString();
-                            log.info("Cached HTML from stream flavor " + mimeType + ": " + html.length() + " chars");
-                            cachedClipboardHTML = parseWindowsHtmlFormat(html);
-                            clipboardCacheTimestamp = System.currentTimeMillis();
-                            return;
+                            log.info("Read HTML from stream flavor " + mimeType);
+                            return sb.toString();
                         } else if (data instanceof java.io.Reader) {
-                            // Read from reader
                             java.io.Reader reader = (java.io.Reader) data;
                             StringBuilder sb = new StringBuilder();
                             char[] buffer = new char[4096];
@@ -596,11 +654,8 @@ public class WebViewHtmlEditorPanel extends JPanel implements EditorImplementati
                                 sb.append(buffer, 0, charsRead);
                             }
                             reader.close();
-                            String html = sb.toString();
-                            log.info("Cached HTML from reader flavor " + mimeType + ": " + html.length() + " chars");
-                            cachedClipboardHTML = parseWindowsHtmlFormat(html);
-                            clipboardCacheTimestamp = System.currentTimeMillis();
-                            return;
+                            log.info("Read HTML from reader flavor " + mimeType);
+                            return sb.toString();
                         }
                     } catch (Exception e) {
                         log.warn("Could not read flavor " + mimeType + ": " + e.getMessage());
@@ -608,10 +663,47 @@ public class WebViewHtmlEditorPanel extends JPanel implements EditorImplementati
                 }
             }
 
-            // No HTML found
-            cachedClipboardHTML = null;
-            clipboardCacheTimestamp = System.currentTimeMillis();
-            log.info("No HTML flavor found in clipboard for caching");
+        } catch (Exception e) {
+            log.warn("Error reading clipboard: " + e.getMessage());
+        }
+
+        return null;
+    }
+
+    /**
+     * Refreshes the clipboard cache synchronously.
+     *
+     * WARNING: On macOS, calling this from EDT while JavaFX thread is waiting
+     * can cause a deadlock. Prefer triggerAsyncClipboardRefresh() instead.
+     */
+    private void refreshClipboardCache() {
+        // If not on EDT, use background refresh to avoid potential issues
+        if (!SwingUtilities.isEventDispatchThread()) {
+            if (SystemUtils.isMacOs()) {
+                // On macOS, prefer background refresh to avoid potential deadlock
+                log.debug("refreshClipboardCache called off-EDT on macOS - using background refresh instead");
+                triggerAsyncClipboardRefresh();
+                return;
+            }
+            SwingUtilities.invokeLater(this::refreshClipboardCache);
+            return;
+        }
+
+        try {
+            Toolkit toolkit = Toolkit.getDefaultToolkit();
+            Clipboard clipboard = toolkit.getSystemClipboard();
+
+            String html = readHtmlFromClipboard(clipboard);
+
+            if (html != null) {
+                cachedClipboardHTML = parseWindowsHtmlFormat(html);
+                clipboardCacheTimestamp = System.currentTimeMillis();
+                log.info("EDT cached HTML from clipboard: " + cachedClipboardHTML.length() + " chars");
+            } else {
+                cachedClipboardHTML = null;
+                clipboardCacheTimestamp = System.currentTimeMillis();
+                log.info("No HTML flavor found in clipboard for caching");
+            }
 
         } catch (Exception e) {
             log.warn("Error caching clipboard: " + e.getMessage());
@@ -780,9 +872,11 @@ public class WebViewHtmlEditorPanel extends JPanel implements EditorImplementati
         }
 
         /**
-         * Get HTML from system clipboard using cached data with fallback to synchronous read.
-         * This method first tries the cache, then attempts a synchronous clipboard read
-         * with timeout to avoid deadlocks between JavaFX and Swing EDT threads.
+         * Get HTML from system clipboard using cached data with fallback to background refresh.
+         *
+         * CRITICAL: This method is called from JavaFX thread (via JavaScript bridge).
+         * On macOS, we must NOT wait for EDT synchronously, as this can cause deadlock
+         * with AppKit thread. Instead, we return cached data and trigger async refresh.
          *
          * @return HTML string from clipboard, or null if not available
          */
@@ -794,10 +888,27 @@ public class WebViewHtmlEditorPanel extends JPanel implements EditorImplementati
                 return cachedClipboardHTML;
             }
 
-            // Cache is stale or empty - try synchronous refresh with timeout
-            log.info("Clipboard cache stale or empty (age=" + age + "ms), attempting sync refresh");
+            // Cache is stale or empty
+            log.info("Clipboard cache stale or empty (age=" + age + "ms)");
 
-            // Use CompletableFuture with timeout to avoid deadlock
+            // On macOS, never wait for EDT - return stale cache and trigger async refresh
+            if (SystemUtils.isMacOs()) {
+                log.info("macOS detected - triggering async refresh, returning cached value to avoid deadlock");
+                triggerAsyncClipboardRefresh();
+
+                // Return whatever we have (may be stale or null)
+                if (cachedClipboardHTML != null) {
+                    log.info("Returning stale cached clipboard HTML: " + cachedClipboardHTML.length() + " chars");
+                } else {
+                    log.info("No cached clipboard HTML available");
+                }
+                return cachedClipboardHTML;
+            }
+
+            // On Windows/Linux, we can try a quick synchronous refresh with short timeout
+            // This is less risky as there's no AppKit thread involvement
+            log.info("Non-macOS platform - attempting sync refresh with timeout");
+
             CompletableFuture<String> future = new CompletableFuture<>();
 
             SwingUtilities.invokeLater(() -> {
