@@ -1544,7 +1544,16 @@ public class MailContentUI extends javax.swing.JPanel implements HyperlinkListen
 
                 Object mimePartContent = null;
                 try {
-                    mimePartContent = mimePart.getContent();
+                    // Check if content type is valid before attempting to get content
+                    String contentType = mimePart.getContentType();
+                    if (contentType == null || contentType.trim().isEmpty()) {
+                        log.warn("Skipping MIME part with empty content type");
+                    } else {
+                        mimePartContent = mimePart.getContent();
+                    }
+                } catch (IllegalArgumentException e) {
+                    // This happens when the content type cannot be parsed (e.g., empty MIME type)
+                    log.warn("Unable to get content of MimeBodyPart - invalid content type: " + e.getMessage());
                 } catch (Throwable t) {
                     log.error("Unable to get content of MimeBodyPart", t);
                 }
