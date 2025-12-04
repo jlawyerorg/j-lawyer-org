@@ -32,30 +32,162 @@ import com.jdimension.jlawyer.client.utils.SystemUtils;
  * HTML editor implementation using SunEditor embedded in JavaFX WebView.
  * This is a proof-of-concept replacement for the SHEF-based HtmlEditorPanel.
  *
+ * <h2>Architecture Overview</h2>
+ * This component bridges three different UI technologies:
+ * <ul>
+ *   <li><b>Swing</b> - The main application UI framework (runs on EDT - Event Dispatch Thread)</li>
+ *   <li><b>JavaFX</b> - Used for WebView rendering (runs on JavaFX Application Thread)</li>
+ *   <li><b>JavaScript/SunEditor</b> - The actual HTML editor running inside the WebView</li>
+ * </ul>
+ *
+ * <h2>macOS Threading Problem</h2>
+ * On macOS, there is a critical threading issue that can cause application freezes (deadlocks).
+ * The problem occurs because:
+ * <ol>
+ *   <li>Swing's EDT, JavaFX Application Thread, and macOS AppKit thread share native resources</li>
+ *   <li>When the EDT calls a blocking method that waits for JavaFX (e.g., {@code CompletableFuture.get()}),
+ *       it can deadlock with the AppKit thread</li>
+ *   <li>Similarly, {@code Thread.sleep()} on the EDT (used in {@link #waitForEditor()}) blocks the UI</li>
+ *   <li>Clipboard access from JavaFX thread can also cause deadlocks with AppKit</li>
+ * </ol>
+ *
+ * <h2>Solution: Asynchronous Content Caching</h2>
+ * To avoid deadlocks on macOS, this class implements a content caching mechanism:
+ * <ol>
+ *   <li><b>JavaScript onChange Handler</b>: The SunEditor in {@code suneditor-template.html} registers
+ *       an {@code onChange} callback that notifies Java whenever content changes (with 300ms debounce)</li>
+ *   <li><b>Java Content Cache</b>: The {@link #cachedEditorContent} field stores the latest editor content,
+ *       updated by {@link JavaScriptConnector#onContentChanged(String)}</li>
+ *   <li><b>Non-blocking getText()</b>: On macOS, when called from EDT, {@link #getText()} returns the
+ *       cached content immediately instead of blocking to query the editor synchronously</li>
+ *   <li><b>Async Clipboard Access</b>: Clipboard operations run in a background thread
+ *       ({@link #clipboardExecutor}) to avoid AppKit deadlocks</li>
+ * </ol>
+ *
+ * <h2>Java-JavaScript Interaction</h2>
+ * Communication between Java and JavaScript happens through:
+ * <ul>
+ *   <li><b>Java → JavaScript</b>: Via {@link #editorAPI} (JSObject) calling methods defined in
+ *       {@code window.editorAPI} in the HTML template</li>
+ *   <li><b>JavaScript → Java</b>: Via {@code window.javaConnector} which references
+ *       {@link JavaScriptConnector} instance, allowing JavaScript to call Java methods like
+ *       {@link JavaScriptConnector#onEditorReady()}, {@link JavaScriptConnector#onContentChanged(String)},
+ *       and {@link JavaScriptConnector#getClipboardHTML()}</li>
+ * </ul>
+ *
+ * <h2>Key Files</h2>
+ * <ul>
+ *   <li>{@code suneditor-template.html} - HTML template containing:
+ *     <ul>
+ *       <li>SunEditor initialization and configuration</li>
+ *       <li>{@code editor.onChange} handler that calls {@code javaConnector.onContentChanged()}</li>
+ *       <li>{@code editor.onload} handler that calls {@code javaConnector.onEditorReady()}</li>
+ *       <li>Custom paste handler that preserves formatting and line breaks</li>
+ *       <li>{@code window.editorAPI} object exposing editor methods to Java</li>
+ *     </ul>
+ *   </li>
+ * </ul>
+ *
+ * <h2>Platform-Specific Behavior</h2>
+ * <ul>
+ *   <li><b>macOS</b>: Uses cached content for {@link #getText()}, {@link #getCaretPosition()},
+ *       {@link #getSelectedText()} when called from EDT to prevent deadlocks</li>
+ *   <li><b>Windows/Linux</b>: Uses synchronous calls to the editor as these platforms don't have
+ *       the same threading constraints</li>
+ * </ul>
+ *
  * @author j-lawyer.org
+ * @see JavaScriptConnector
+ * @see #cachedEditorContent
+ * @see #getText()
  */
 public class WebViewHtmlEditorPanel extends JPanel implements EditorImplementation {
 
     private static final Logger log = Logger.getLogger(WebViewHtmlEditorPanel.class.getName());
 
+    /** JFXPanel that hosts the JavaFX WebView within Swing. */
     private final JFXPanel jfxPanel;
+
+    /** The JavaFX WebView component that renders the HTML editor. */
     private WebView webView;
+
+    /** WebEngine that executes JavaScript and manages the web content. */
     private WebEngine webEngine;
+
+    /**
+     * JavaScript object reference to {@code window.editorAPI} in the HTML template.
+     * Used to call editor methods from Java (e.g., getText, setText, insert).
+     */
     private JSObject editorAPI;
+
+    /**
+     * Flag indicating whether the SunEditor has finished initialization.
+     * Set to true when {@link JavaScriptConnector#onEditorReady()} is called from JavaScript.
+     * Volatile to ensure visibility across threads.
+     */
     private volatile boolean editorReady = false;
+
+    /** Flag indicating whether this panel has been disposed. */
     private volatile boolean disposed = false;
+
+    /** Optional callback to execute when the editor becomes ready. */
     private Runnable onEditorReadyCallback = null;
 
-    // Pending content to set when editor becomes ready (non-blocking pattern)
+    /**
+     * Content to be set when the editor becomes ready.
+     * Used for non-blocking initialization: if {@link #setText(String)} is called before
+     * the editor is ready, the content is stored here and applied in {@link JavaScriptConnector#onEditorReady()}.
+     */
     private String pendingContent = null;
+
+    /**
+     * Caret position to be set when the editor becomes ready.
+     * Similar to {@link #pendingContent}, this enables non-blocking caret positioning.
+     */
     private int pendingCaretPosition = -1;
 
-    // Clipboard cache to avoid deadlock between EDT and JavaFX threads
-    private volatile String cachedClipboardHTML = null;
-    private volatile long clipboardCacheTimestamp = 0;
-    private static final long CLIPBOARD_CACHE_TTL_MS = 2000; // 2 second cache validity
+    /**
+     * Cache for editor content, updated asynchronously by JavaScript's onChange handler.
+     * <p>
+     * <b>macOS Threading Solution:</b> On macOS, calling blocking methods from EDT causes deadlocks.
+     * Instead of synchronously querying the editor, we maintain this cache which is updated
+     * by the JavaScript {@code editor.onChange} callback (with 300ms debounce) calling
+     * {@link JavaScriptConnector#onContentChanged(String)}.
+     * </p>
+     * <p>
+     * When {@link #getText()} is called from EDT on macOS, it returns this cached value
+     * immediately instead of blocking. The cache is also updated by:
+     * <ul>
+     *   <li>{@link #setText(String)} - immediately when content is set from Java</li>
+     *   <li>{@link JavaScriptConnector#onEditorReady()} - when pending content is applied</li>
+     * </ul>
+     * </p>
+     *
+     * @see JavaScriptConnector#onContentChanged(String)
+     * @see #getText()
+     */
+    private volatile String cachedEditorContent = null;
 
-    // Background executor for clipboard operations (avoids EDT/JavaFX/AppKit deadlock on macOS)
+    /**
+     * Cache for clipboard HTML content to avoid EDT/JavaFX/AppKit deadlock.
+     * Updated asynchronously by {@link #refreshClipboardCacheInBackground()}.
+     */
+    private volatile String cachedClipboardHTML = null;
+
+    /** Timestamp when {@link #cachedClipboardHTML} was last updated. */
+    private volatile long clipboardCacheTimestamp = 0;
+
+    /** Time-to-live for clipboard cache in milliseconds. */
+    private static final long CLIPBOARD_CACHE_TTL_MS = 2000;
+
+    /**
+     * Background executor for clipboard operations.
+     * <p>
+     * On macOS, accessing the system clipboard from JavaFX thread can cause deadlocks
+     * with the AppKit thread. This executor runs clipboard access in a separate daemon
+     * thread to avoid blocking any UI thread.
+     * </p>
+     */
     private static final ExecutorService clipboardExecutor =
         Executors.newSingleThreadExecutor(r -> {
             Thread t = new Thread(r, "ClipboardCache-Worker");
@@ -63,7 +195,7 @@ public class WebViewHtmlEditorPanel extends JPanel implements EditorImplementati
             return t;
         });
 
-    // Flag for clipboard refresh coordination
+    /** Flag to prevent multiple concurrent clipboard refresh operations. */
     private volatile boolean clipboardRefreshInProgress = false;
 
     // Resource paths
@@ -350,8 +482,21 @@ public class WebViewHtmlEditorPanel extends JPanel implements EditorImplementati
 
     /**
      * Waits for the editor to be ready (blocking with timeout).
-     * Note: This should only be used for getter methods that need to return a value.
-     * Setter methods should use the non-blocking pendingContent pattern instead.
+     * <p>
+     * <b>WARNING:</b> This method uses {@code Thread.sleep()} and will block the calling thread.
+     * On macOS, this MUST NOT be called from EDT as it will cause UI freeze. The macOS-specific
+     * code paths in {@link #getText()}, {@link #callEditorAPI(String, Object...)}, and
+     * {@link #executeScript(String)} check for EDT and return cached/default values instead
+     * of calling this method.
+     * </p>
+     * <p>
+     * This method should only be used for getter methods that need to return a value on
+     * non-macOS platforms. Setter methods should use the non-blocking {@link #pendingContent}
+     * pattern instead.
+     * </p>
+     *
+     * @see #pendingContent
+     * @see #pendingCaretPosition
      */
     private void waitForEditor() {
         int attempts = 0;
@@ -372,8 +517,29 @@ public class WebViewHtmlEditorPanel extends JPanel implements EditorImplementati
 
     /**
      * Executes JavaScript and returns the result (thread-safe).
+     * <p>
+     * This method schedules script execution on the JavaFX Application Thread via
+     * {@link Platform#runLater(Runnable)} and waits for the result using a
+     * {@link CompletableFuture} with a 5-second timeout.
+     * </p>
+     * <p>
+     * <b>CRITICAL - macOS Deadlock Prevention:</b> On macOS, calling this from EDT can cause
+     * deadlock because JavaFX and AWT share the same AppKit main thread for native operations.
+     * When the EDT waits on {@code future.get()}, and the JavaFX thread needs AppKit resources
+     * that are held by EDT, both threads deadlock. Therefore, if called from EDT on macOS,
+     * this method will log a warning and return null immediately.
+     * </p>
+     *
+     * @param script the JavaScript code to execute
+     * @return the result of the JavaScript execution, or null if on macOS/EDT or on error
      */
     private Object executeScript(String script) {
+        // CRITICAL: Check macOS/EDT FIRST, before any blocking code (including waitForEditor)
+        if (SystemUtils.isMacOs() && SwingUtilities.isEventDispatchThread()) {
+            log.warn("executeScript called from EDT on macOS - this can cause deadlock! Returning null.");
+            return null;
+        }
+
         if (!editorReady) {
             waitForEditor();
         }
@@ -399,9 +565,29 @@ public class WebViewHtmlEditorPanel extends JPanel implements EditorImplementati
     }
 
     /**
-     * Calls a JavaScript API method (thread-safe).
+     * Calls a method on {@link #editorAPI} (the JavaScript {@code window.editorAPI} object).
+     * <p>
+     * This method schedules the API call on the JavaFX Application Thread and waits for
+     * the result using a {@link CompletableFuture} with a 5-second timeout.
+     * </p>
+     * <p>
+     * <b>CRITICAL - macOS Deadlock Prevention:</b> Same as {@link #executeScript(String)},
+     * this method can cause deadlock on macOS when called from EDT. The check for macOS/EDT
+     * is performed FIRST, before any blocking code including {@link #waitForEditor()}.
+     * </p>
+     *
+     * @param methodName the name of the method to call on editorAPI
+     * @param args the arguments to pass to the method
+     * @return the result of the method call, or null if on macOS/EDT or on error
+     * @see #callEditorAPIAsync(String, Object...)
      */
     private Object callEditorAPI(String methodName, Object... args) {
+        // CRITICAL: Check macOS/EDT FIRST, before any blocking code (including waitForEditor)
+        if (SystemUtils.isMacOs() && SwingUtilities.isEventDispatchThread()) {
+            log.warn("callEditorAPI(" + methodName + ") called from EDT on macOS - this can cause deadlock! Returning null.");
+            return null;
+        }
+
         if (!editorReady) {
             waitForEditor();
         }
@@ -427,8 +613,18 @@ public class WebViewHtmlEditorPanel extends JPanel implements EditorImplementati
     }
 
     /**
-     * Calls a JavaScript API method asynchronously (fire-and-forget, non-blocking).
-     * Use this for setter methods where we don't need to wait for a result.
+     * Calls a method on {@link #editorAPI} asynchronously (fire-and-forget, non-blocking).
+     * <p>
+     * Unlike {@link #callEditorAPI(String, Object...)}, this method does not wait for a result.
+     * It schedules the call on the JavaFX Application Thread and returns immediately.
+     * This is safe to call from any thread, including EDT on macOS.
+     * </p>
+     * <p>
+     * Use this for setter methods where we don't need to wait for a result (e.g., setText, insert).
+     * </p>
+     *
+     * @param methodName the name of the method to call on editorAPI
+     * @param args the arguments to pass to the method
      */
     private void callEditorAPIAsync(String methodName, Object... args) {
         Platform.runLater(() -> {
@@ -449,11 +645,56 @@ public class WebViewHtmlEditorPanel extends JPanel implements EditorImplementati
         return ContentTypes.TEXT_HTML;
     }
 
+    /**
+     * Returns the current HTML content of the editor.
+     * <p>
+     * <b>macOS Threading Behavior:</b> When called from EDT on macOS, this method returns
+     * the cached content from {@link #cachedEditorContent} instead of querying the editor
+     * synchronously. This prevents deadlocks. The cache is kept up-to-date by:
+     * <ul>
+     *   <li>JavaScript's {@code editor.onChange} handler (300ms debounce) calling
+     *       {@link JavaScriptConnector#onContentChanged(String)}</li>
+     *   <li>{@link #setText(String)} updating the cache immediately</li>
+     *   <li>{@link JavaScriptConnector#onEditorReady()} initializing the cache</li>
+     * </ul>
+     * </p>
+     * <p>
+     * <b>Fallback Chain on macOS/EDT:</b>
+     * <ol>
+     *   <li>Return {@link #cachedEditorContent} if available</li>
+     *   <li>Return {@link #pendingContent} if editor not yet ready</li>
+     *   <li>Return empty string as last resort</li>
+     * </ol>
+     * </p>
+     * <p>
+     * On Windows/Linux or when not called from EDT, the content is fetched synchronously
+     * from the editor via {@link #callEditorAPI(String, Object...)}.
+     * </p>
+     *
+     * @return the current HTML content of the editor
+     */
     @Override
     public String getText() {
-        // If panel is disposed, return pending content or empty string to avoid blocking
-        // This prevents TimeoutException during UI teardown (especially on macOS)
+        // CRITICAL: On macOS, calling blocking methods from EDT causes deadlock.
+        // Check this FIRST, before any potentially blocking code.
+        // The cache is kept up-to-date by JavaScript's onChange handler (300ms debounce).
+        if (SystemUtils.isMacOs() && SwingUtilities.isEventDispatchThread()) {
+            log.debug("getText() called from EDT on macOS - returning cached content to avoid deadlock");
+            if (cachedEditorContent != null) {
+                return cachedEditorContent;
+            }
+            if (pendingContent != null) {
+                return pendingContent;
+            }
+            return "";
+        }
+
+        // If panel is disposed, return cached/pending content or empty string to avoid blocking
+        // This prevents TimeoutException during UI teardown
         if (disposed) {
+            if (cachedEditorContent != null) {
+                return cachedEditorContent;
+            }
             return pendingContent != null ? pendingContent : "";
         }
 
@@ -468,7 +709,10 @@ public class WebViewHtmlEditorPanel extends JPanel implements EditorImplementati
         }
 
         Object result = callEditorAPI("getText");
-        return result != null ? result.toString() : "";
+        String text = result != null ? result.toString() : "";
+        // Update cache with fresh content
+        cachedEditorContent = text;
+        return text;
     }
 
     @Override
@@ -478,6 +722,9 @@ public class WebViewHtmlEditorPanel extends JPanel implements EditorImplementati
         }
 
         final String finalText = text;
+
+        // Update cache immediately so getText() returns correct value on macOS
+        this.cachedEditorContent = finalText;
 
         if (!editorReady) {
             // Store content to set when editor becomes ready (non-blocking)
@@ -515,7 +762,10 @@ public class WebViewHtmlEditorPanel extends JPanel implements EditorImplementati
             text = "";
         }
         final String finalText = text;
-        callEditorAPI("insert", finalText, pos);
+        // Use async version to avoid blocking - insert doesn't need return value
+        callEditorAPIAsync("insert", finalText, pos);
+        // Invalidate content cache since content changed
+        cachedEditorContent = null;
     }
 
     @Override
@@ -530,6 +780,11 @@ public class WebViewHtmlEditorPanel extends JPanel implements EditorImplementati
 
     @Override
     public int getCaretPosition() {
+        // On macOS from EDT, return 0 to avoid deadlock - caret position is not critical
+        if (SystemUtils.isMacOs() && SwingUtilities.isEventDispatchThread()) {
+            log.debug("getCaretPosition() called from EDT on macOS - returning 0 to avoid deadlock");
+            return 0;
+        }
         Object result = callEditorAPI("getCaretPosition");
         if (result instanceof Number) {
             return ((Number) result).intValue();
@@ -539,6 +794,11 @@ public class WebViewHtmlEditorPanel extends JPanel implements EditorImplementati
 
     @Override
     public String getSelectedText() {
+        // On macOS from EDT, return empty string to avoid deadlock
+        if (SystemUtils.isMacOs() && SwingUtilities.isEventDispatchThread()) {
+            log.debug("getSelectedText() called from EDT on macOS - returning empty string to avoid deadlock");
+            return "";
+        }
         Object result = callEditorAPI("getSelectedText");
         return result != null ? result.toString() : "";
     }
@@ -682,6 +942,7 @@ public class WebViewHtmlEditorPanel extends JPanel implements EditorImplementati
             if (SystemUtils.isMacOs()) {
                 // On macOS, prefer background refresh to avoid potential deadlock
                 log.debug("refreshClipboardCache called off-EDT on macOS - using background refresh instead");
+                log.error("TODO: re-enable triggerAsyncClipboardRefresh on macOS");
                 triggerAsyncClipboardRefresh();
                 return;
             }
@@ -800,10 +1061,43 @@ public class WebViewHtmlEditorPanel extends JPanel implements EditorImplementati
 
     /**
      * Java object exposed to JavaScript for callbacks.
+     * <p>
+     * This class is instantiated and registered with the WebEngine as {@code window.javaConnector}
+     * (see the state change listener in constructor). JavaScript code in {@code suneditor-template.html}
+     * can then call methods on this object.
+     * </p>
+     *
+     * <h3>Key Methods Called from JavaScript:</h3>
+     * <ul>
+     *   <li>{@link #onEditorReady()} - Called by {@code editor.onload} when SunEditor initialization completes</li>
+     *   <li>{@link #onContentChanged(String)} - Called by {@code editor.onChange} (with 300ms debounce)
+     *       whenever the editor content changes. This is critical for maintaining the content cache on macOS.</li>
+     *   <li>{@link #getClipboardHTML()} - Called by the custom paste handler to get HTML from system clipboard</li>
+     *   <li>{@link #log(String)} - Called for debug logging from JavaScript</li>
+     * </ul>
+     *
+     * <h3>Threading Context:</h3>
+     * All methods in this class are called from the JavaFX Application Thread (since they're invoked
+     * from JavaScript running in the WebView). When accessing shared state like {@link #cachedEditorContent},
+     * the volatile keyword ensures visibility across threads.
+     *
+     * @see #cachedEditorContent
+     * @see WebViewHtmlEditorPanel
      */
     public class JavaScriptConnector {
         /**
          * Called by JavaScript when the SunEditor is ready.
+         * <p>
+         * This method is invoked from {@code editor.onload} in {@code suneditor-template.html}.
+         * It sets {@link #editorReady} to true and applies any pending content/caret position
+         * that was set via {@link #setText(String)} or {@link #setCaretPosition(int)} before
+         * the editor was ready.
+         * </p>
+         * <p>
+         * Additionally, this method initializes {@link #cachedEditorContent} to ensure
+         * {@link #getText()} returns the correct value on macOS even before the JavaScript
+         * {@code onChange} handler fires.
+         * </p>
          */
         public void onEditorReady() {
             editorReady = true;
@@ -823,6 +1117,9 @@ public class WebViewHtmlEditorPanel extends JPanel implements EditorImplementati
                         if (contentToSet != null && editorAPI != null) {
                             log.info("Applying pending content (" + contentToSet.length() + " chars)");
                             editorAPI.call("setText", contentToSet);
+                            // Update cache immediately after setting content
+                            // This ensures getText() returns correct value on macOS before onChange fires
+                            cachedEditorContent = contentToSet;
                         }
                         // Caret position is set after content in the same runLater block,
                         // ensuring sequential execution on the JavaFX thread
@@ -832,6 +1129,22 @@ public class WebViewHtmlEditorPanel extends JPanel implements EditorImplementati
                         }
                     } catch (Exception e) {
                         log.error("Error applying pending content/caret", e);
+                    }
+                });
+            } else {
+                // No pending content - initialize cache from editor's current content
+                // This handles the case where editor is opened without setText() being called first
+                Platform.runLater(() -> {
+                    try {
+                        if (editorAPI != null) {
+                            Object result = editorAPI.call("getText");
+                            if (result != null) {
+                                cachedEditorContent = result.toString();
+                                log.debug("Initialized content cache on editor ready: " + cachedEditorContent.length() + " chars");
+                            }
+                        }
+                    } catch (Exception e) {
+                        log.debug("Could not initialize content cache on editor ready", e);
                     }
                 });
             }
@@ -872,13 +1185,56 @@ public class WebViewHtmlEditorPanel extends JPanel implements EditorImplementati
         }
 
         /**
-         * Get HTML from system clipboard using cached data with fallback to background refresh.
+         * Called by JavaScript when editor content changes.
+         * <p>
+         * This method is invoked by the {@code editor.onChange} handler in {@code suneditor-template.html}
+         * with a 300ms debounce to avoid flooding Java with updates during rapid typing.
+         * </p>
+         * <p>
+         * <b>macOS Content Cache:</b> This method is the primary mechanism for keeping
+         * {@link #cachedEditorContent} in sync with the actual editor content. On macOS,
+         * {@link #getText()} cannot synchronously query the editor from EDT (it would cause deadlock),
+         * so it relies on this cached value. The cache is updated:
+         * <ul>
+         *   <li>By this method (called from JavaScript every 300ms during editing)</li>
+         *   <li>By {@link #setText(String)} when content is set from Java</li>
+         *   <li>By {@link #onEditorReady()} when pending content is applied</li>
+         * </ul>
+         * </p>
          *
-         * CRITICAL: This method is called from JavaFX thread (via JavaScript bridge).
-         * On macOS, we must NOT wait for EDT synchronously, as this can cause deadlock
-         * with AppKit thread. Instead, we return cached data and trigger async refresh.
+         * @param content The current HTML content of the editor
+         * @see #cachedEditorContent
+         * @see #getText()
+         */
+        public void onContentChanged(String content) {
+            cachedEditorContent = content;
+            log.debug("Editor content cache updated: " + (content != null ? content.length() : 0) + " chars");
+        }
+
+        /**
+         * Get HTML from system clipboard using cached data with fallback to background refresh.
+         * <p>
+         * This method is called from the custom paste handler in {@code suneditor-template.html}
+         * when the user pastes content into the editor.
+         * </p>
+         * <p>
+         * <b>macOS Deadlock Prevention:</b> This method is called from the JavaFX thread
+         * (via JavaScript bridge). On macOS, we must NOT wait for EDT synchronously, as this
+         * can cause deadlock with the AppKit thread. Instead, we:
+         * <ol>
+         *   <li>Return cached clipboard content if available and fresh (within {@link #CLIPBOARD_CACHE_TTL_MS})</li>
+         *   <li>Trigger an async refresh via {@link #triggerAsyncClipboardRefresh()} for future pastes</li>
+         *   <li>Return stale cache or null rather than blocking</li>
+         * </ol>
+         * </p>
+         * <p>
+         * The clipboard cache is refreshed in background via {@link #clipboardExecutor} when the
+         * editor gains focus (see focus listener in constructor).
+         * </p>
          *
          * @return HTML string from clipboard, or null if not available
+         * @see #cachedClipboardHTML
+         * @see #refreshClipboardCacheInBackground()
          */
         public String getClipboardHTML() {
             // Return cached value if fresh enough

@@ -244,6 +244,9 @@
         // Track whether editor is ready
         let editorReady = false;
 
+        // Debounce timer for content change notifications
+        let contentChangeTimer = null;
+
         // Wait for editor to be fully initialized
         editor.onload = function(core, reload) {
             editorReady = true;
@@ -256,6 +259,24 @@
             // CRITICAL FIX: Override the paste handler to preserve formatting
             // SunEditor's default paste behavior strips formatting, so we handle it manually
             setupCustomPasteHandler();
+        };
+
+        // Register onChange handler to notify Java of content changes
+        // This is critical for macOS where we can't synchronously get content from EDT
+        editor.onChange = function(contents, core) {
+            // Debounce to avoid flooding Java with updates during rapid typing
+            if (contentChangeTimer) {
+                clearTimeout(contentChangeTimer);
+            }
+            contentChangeTimer = setTimeout(function() {
+                if (window.javaConnector && window.javaConnector.onContentChanged) {
+                    try {
+                        window.javaConnector.onContentChanged(contents);
+                    } catch (e) {
+                        console.error('Error notifying Java of content change:', e);
+                    }
+                }
+            }, 300); // 300ms debounce
         };
 
         /**
@@ -483,8 +504,21 @@
             // Remove empty tags
             html = html.replace(/<(\w+)[^>]*>\s*<\/\1>/gi, '');
 
-            // Remove duplicate spaces
-            html = html.replace(/\s+/g, ' ');
+            // CRITICAL: Convert plain newlines to <br> tags BEFORE removing duplicate spaces
+            // This preserves line breaks from plain text sources that wrap content in minimal HTML
+            // First, check if the HTML has meaningful block structure
+            const hasBlockStructure = /<(p|div|br|li|tr|h[1-6])[^>]*>/i.test(html);
+
+            if (!hasBlockStructure) {
+                // No block elements - this is likely plain text wrapped in HTML
+                // Convert newlines to <br> tags
+                log('No block structure detected - converting newlines to <br>');
+                html = html.replace(/\r\n/g, '<br>').replace(/\n/g, '<br>').replace(/\r/g, '<br>');
+            }
+
+            // Remove duplicate spaces (but NOT newlines - we've already handled those)
+            // Only collapse multiple spaces, not all whitespace
+            html = html.replace(/  +/g, ' ');
 
             log('Cleaned HTML, final length: ' + html.length);
             return html;
