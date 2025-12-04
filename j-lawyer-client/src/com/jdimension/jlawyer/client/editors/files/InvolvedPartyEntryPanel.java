@@ -1318,7 +1318,7 @@ public class InvolvedPartyEntryPanel extends javax.swing.JPanel implements Event
 
             if (this.casePanel != null) {
                 this.casePanel.saveFormData();
-                this.casePanel.saveInvolvements();
+                this.casePanel.saveInvolvements(this.caseDto.getId());
             }
 
             SendEmailFrame dlg = new SendEmailFrame(false);
@@ -1368,7 +1368,7 @@ public class InvolvedPartyEntryPanel extends javax.swing.JPanel implements Event
 
             if (this.casePanel != null) {
                 this.casePanel.saveFormData();
-                this.casePanel.saveInvolvements();
+                this.casePanel.saveInvolvements(this.caseDto.getId());
             }
 
             SendBeaMessageFrame dlg = new SendBeaMessageFrame();
