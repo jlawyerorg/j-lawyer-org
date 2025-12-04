@@ -727,7 +727,34 @@ public class CommonMailUtils {
         defaultAliases = new ArrayList<>();
 
     }
-    
+
+    /**
+     * Safely retrieves the content of a MimeBodyPart. Some malformed emails have
+     * empty or invalid Content-Type headers which cause IllegalArgumentException
+     * when trying to parse them with JavaMail/JAF.
+     *
+     * @param mimePart the MimeBodyPart to get content from
+     * @return the content object, or null if the content could not be retrieved
+     */
+    private static Object safeGetContent(MimeBodyPart mimePart) {
+        try {
+            // Check if content type is valid before attempting to get content
+            String contentType = mimePart.getContentType();
+            if (contentType == null || contentType.trim().isEmpty()) {
+                log.warn("Skipping MIME part with empty content type");
+                return null;
+            }
+            return mimePart.getContent();
+        } catch (IllegalArgumentException e) {
+            // This happens when the content type cannot be parsed (e.g., empty MIME type)
+            log.warn("Unable to get content of MIME part - invalid content type: " + e.getMessage());
+            return null;
+        } catch (Exception e) {
+            log.warn("Unable to get content of MIME part: " + e.getMessage());
+            return null;
+        }
+    }
+
     public static Folder getSentFolder(Store store) throws Exception {
         Folder[] accountFolders = null;
         try {
@@ -954,12 +981,9 @@ public class CommonMailUtils {
                 if (disposition == null) {
                     MimeBodyPart mimePart = (MimeBodyPart) part;
 
-                    try {
-                        if (mimePart.getContent() instanceof Multipart) {
-                            attachmentInfos.addAll(getAttachmentInfo(mimePart.getContent()));
-                        }
-                    } catch (Throwable t) {
-                        log.warn("Unable to detect attachment names for mime part - is the mime type information empty?", t);
+                    Object mimeContent = safeGetContent(mimePart);
+                    if (mimeContent instanceof Multipart) {
+                        attachmentInfos.addAll(getAttachmentInfo(mimeContent));
                     }
 
                 } else if (Part.ATTACHMENT.equalsIgnoreCase(disposition)) {
@@ -1031,8 +1055,9 @@ public class CommonMailUtils {
             if (disposition == null) {
                 MimeBodyPart mimePart = (MimeBodyPart) part;
 
-                if (mimePart.getContent() instanceof Multipart) {
-                    Part attPart = getAttachmentPart(name, mimePart.getContent());
+                Object mimeContent = safeGetContent(mimePart);
+                if (mimeContent instanceof Multipart) {
+                    Part attPart = getAttachmentPart(name, mimeContent);
                     if (attPart != null) {
                         return attPart;
                     }
@@ -1105,20 +1130,18 @@ public class CommonMailUtils {
             if (disposition == null) {
                 MimeBodyPart mimePart = (MimeBodyPart) part;
 
-                try {
-                    if (mimePart.getContent() instanceof Multipart) {
-                        recursiveFindPart(mimePart.getContent(), mimeType, resultList);
+                Object mimeContent = safeGetContent(mimePart);
+                if (mimeContent instanceof Multipart) {
+                    recursiveFindPart(mimeContent, mimeType, resultList);
+                } else if (mimeContent != null) {
+                    try {
+                        String contentType = mimePart.getContentType();
+                        if (contentType != null && contentType.toLowerCase().startsWith(mimeType)) {
+                            resultList.add(mimeContent.toString());
+                        }
+                    } catch (Throwable t) {
+                        log.error("Unable to get content type of MIME part as result - skipping", t);
                     }
-                } catch (Throwable t) {
-                    log.error("Unable to get content of MIME part for further traversal - skipping", t);
-                }
-
-                try {
-                    if (mimePart.getContentType().toLowerCase().startsWith(mimeType)) {
-                        resultList.add(mimePart.getContent().toString());
-                    }
-                } catch (Throwable t) {
-                    log.error("Unable to get content of MIME part as result - skipping", t);
                 }
 
             } else if (disposition.equalsIgnoreCase(Part.ATTACHMENT)) {
