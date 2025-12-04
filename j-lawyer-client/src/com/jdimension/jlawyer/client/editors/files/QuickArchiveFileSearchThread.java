@@ -765,10 +765,9 @@ public class QuickArchiveFileSearchThread implements Runnable {
             model.addRow(row);
         }
         if (dtos.length > 0) {
-            ThreadUtils.setTableModel(this.target, model, 0, 0);
-            ThreadUtils.requestFocus(target);
+            ThreadUtils.setTableModel(this.target, model);
 
-            // Configure row sorter on EDT to avoid race conditions
+            // Configure row sorter on EDT, then select first row and focus
             SwingUtilities.invokeLater(() -> {
                 TableRowSorter dtrs = new TableRowSorter(model);
                 dtrs.setComparator(0, new FileNumberComparatorRowIdentifier());
@@ -777,6 +776,13 @@ public class QuickArchiveFileSearchThread implements Runnable {
                 list.add(new RowSorter.SortKey(0, SortOrder.ASCENDING));
                 dtrs.setSortKeys(list);
                 dtrs.sort();
+
+                // Select first row and focus after sorting
+                if (target.getRowCount() > 0) {
+                    target.setRowSelectionInterval(0, 0);
+                    target.setColumnSelectionInterval(0, 0);
+                }
+                target.requestFocus();
             });
 
         } else {
