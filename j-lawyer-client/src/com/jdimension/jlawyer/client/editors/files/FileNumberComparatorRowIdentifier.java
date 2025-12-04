@@ -678,28 +678,37 @@ public class FileNumberComparatorRowIdentifier implements Comparator<QuickArchiv
 
     @Override
     public int compare(QuickArchiveFileSearchRowIdentifier t, QuickArchiveFileSearchRowIdentifier t1) {
-        try {
 
-            String s1=null;
-            String s2=null;
-            
-            if(t!=null)
-                s1=t.getArchiveFileDTO().getFileNumber();
-            if(t1!=null)
-                s2=t1.getArchiveFileDTO().getFileNumber();
-            
-            if (s1 == null && s2 == null) return 0;
-            
-            if(s1==null)
-                return -1;
-            
-            if(s2==null)
-                return 1;
-            
-            if (s1.matches("\\d{3,5}/\\d{2,4}") && s2.matches("\\d{3,5}/\\d{2,4}")) {
-                // in case of default file number schema
-                String year1 = s1.substring(s1.indexOf("/")+1);
-                String year2 = s2.substring(s2.indexOf("/")+1);
+        String s1 = null;
+        String s2 = null;
+
+        try {
+            if (t != null && t.getArchiveFileDTO() != null)
+                s1 = t.getArchiveFileDTO().getFileNumber();
+        } catch (Throwable thr) {
+            log.error("error getting file number for comparison", thr);
+        }
+
+        try {
+            if (t1 != null && t1.getArchiveFileDTO() != null)
+                s2 = t1.getArchiveFileDTO().getFileNumber();
+        } catch (Throwable thr) {
+            log.error("error getting file number for comparison", thr);
+        }
+
+        if (s1 == null && s2 == null) return 0;
+
+        if (s1 == null)
+            return -1;
+
+        if (s2 == null)
+            return 1;
+
+        if (s1.matches("\\d{3,5}/\\d{2,4}") && s2.matches("\\d{3,5}/\\d{2,4}")) {
+            // in case of default file number schema
+            try {
+                String year1 = s1.substring(s1.indexOf("/") + 1);
+                String year2 = s2.substring(s2.indexOf("/") + 1);
 
                 Integer y1 = Integer.parseInt(year1);
                 Integer y2 = Integer.parseInt(year2);
@@ -732,14 +741,13 @@ public class FileNumberComparatorRowIdentifier implements Comparator<QuickArchiv
                 Integer in2 = Integer.parseInt(index2);
 
                 return in1.compareTo(in2);
-            } else {
-                // default comparison
-                return s1.compareTo(s2);
+            } catch (Throwable thr) {
+                log.error("error sorting by archive file number", thr);
+                // fall through to default comparison
             }
-
-        } catch (Throwable thr) {
-            log.error("error sorting by archive file number", thr);
-            return 0;
         }
+
+        // default comparison
+        return s1.compareTo(s2);
     }
 }
