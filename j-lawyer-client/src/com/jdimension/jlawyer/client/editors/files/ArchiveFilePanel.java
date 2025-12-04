@@ -5610,17 +5610,17 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
         }
     }
 
-    public void saveInvolvements() {
+    public void saveInvolvements(String caseId) {
         try {
             ClientSettings settings = ClientSettings.getInstance();
             JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
 
             ArchiveFileServiceRemote fileService = locator.lookupArchiveFileServiceRemote();
-            List<ArchiveFileAddressesBean> involved = fileService.getInvolvementDetailsForCase(this.dto.getId(), false);
+            List<ArchiveFileAddressesBean> involved = fileService.getInvolvementDetailsForCase(caseId, false);
 
             for (ArchiveFileAddressesBean ab : this.pnlInvolvedParties.getInvolvedParties()) {
                 if (isInvolvementChanged(involved, ab)) {
-                    fileService.updateParty(this.dto.getId(), ab);
+                    fileService.updateParty(caseId, ab);
                 }
             }
 
@@ -5633,7 +5633,7 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
 
         // save all forms to have the latest data available for document creation
         this.saveFormData();
-        this.saveInvolvements();
+        this.saveInvolvements(this.dto.getId());
 
         List<ArchiveFileAddressesBean> involved = new ArrayList<>();
 
@@ -6124,7 +6124,7 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
         // save form data so changes are available immediately for mail templates
         if (!this.readOnly) {
             this.saveFormData();
-            this.saveInvolvements();
+            this.saveInvolvements(this.dto.getId());
         }
 
         SendEmailFrame dlg = new SendEmailFrame(false);
@@ -6187,7 +6187,7 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
         // save form data so changes are available immediately for mail templates
         if (!this.readOnly) {
             this.saveFormData();
-            this.saveInvolvements();
+            this.saveInvolvements(this.dto.getId());
         }
 
         SendEmailFrame dlg = new SendEmailFrame(false);
@@ -6888,7 +6888,7 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
 
         if (!this.readOnly) {
             this.saveFormData();
-            this.saveInvolvements();
+            this.saveInvolvements(this.dto.getId());
         }
 
         SendBeaMessageFrame dlg = new SendBeaMessageFrame();
@@ -6955,7 +6955,7 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
 
         if (!this.readOnly) {
             this.saveFormData();
-            this.saveInvolvements();
+            this.saveInvolvements(this.dto.getId());
         }
 
         SendBeaMessageFrame dlg = new SendBeaMessageFrame();
@@ -9984,7 +9984,7 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
         }
 
         this.saveFormData();
-        this.saveInvolvements();
+        this.saveInvolvements(this.dto.getId());
 
         // todo: check all data here for changes
         if (this.dto.isArchived() != this.chkArchived.isSelected()) {
@@ -10183,7 +10183,7 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
             }
 
             this.saveFormData();
-            this.saveInvolvements();
+            this.saveInvolvements(caseId);
 
             if (this.groupPrivilegesChanged) {
                 ArrayList<Group> allowedGroups = new ArrayList<>();
