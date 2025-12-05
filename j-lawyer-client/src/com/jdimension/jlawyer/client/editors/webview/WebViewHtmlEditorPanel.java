@@ -337,6 +337,9 @@ public class WebViewHtmlEditorPanel extends JPanel implements EditorImplementati
             // JavaFX WebView on macOS crashes when handling certain modifier keys
             // that have no "real" keycode. This filter consumes these events before
             // they reach the WebView's native event handling.
+            // See: https://bugs.openjdk.org/browse/JDK-8322703
+            // Fixed in JavaFX 17.0.11+ / 22+ / 23+ - this workaround can be removed
+            // once the minimum JavaFX version is updated accordingly.
             if (SystemUtils.isMacOs()) {
                 scene.addEventFilter(javafx.scene.input.KeyEvent.ANY, event -> {
                     if (event.getCode() == javafx.scene.input.KeyCode.CAPS ||
