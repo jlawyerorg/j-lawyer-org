@@ -332,6 +332,20 @@ public class WebViewHtmlEditorPanel extends JPanel implements EditorImplementati
 
             // Create scene and set it to jfxPanel
             Scene scene = new Scene(webView);
+
+            // WORKAROUND: Prevent macOS crash when pressing Caps Lock in WebView
+            // JavaFX WebView on macOS crashes when handling certain modifier keys
+            // that have no "real" keycode. This filter consumes these events before
+            // they reach the WebView's native event handling.
+            if (SystemUtils.isMacOs()) {
+                scene.addEventFilter(javafx.scene.input.KeyEvent.ANY, event -> {
+                    if (event.getCode() == javafx.scene.input.KeyCode.CAPS ||
+                        event.getCode() == javafx.scene.input.KeyCode.UNDEFINED) {
+                        event.consume();
+                    }
+                });
+            }
+
             jfxPanel.setScene(scene);
 
             // Load the editor HTML
