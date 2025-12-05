@@ -1029,7 +1029,7 @@ public class MessagingService implements MessagingServiceRemote, MessagingServic
 
         InstantMessageMention m = this.mentionFacade.find(mentionId);
         if (m == null) {
-            throw new Exception("Mention " + mentionId + " existiert nicht!");
+            throw new Exception("Erwähung mit ID '" + mentionId + "' existiert nicht!");
         }
 
         m.setDone(done);
