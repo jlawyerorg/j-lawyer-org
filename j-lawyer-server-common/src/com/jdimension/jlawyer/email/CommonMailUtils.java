@@ -997,9 +997,16 @@ public class CommonMailUtils {
                         }
                     }
                 } else if (Part.INLINE.equalsIgnoreCase(disposition)) {
-                    //Anhang wird in ein Verzeichnis gespeichert
-                    //saveFile(part.getFileName(), part.getInputStream());
-                    if (part.getFileName() != null) {
+                    // Check if inline content is a Multipart (e.g., in S/MIME signed messages)
+                    if (part instanceof MimeBodyPart) {
+                        MimeBodyPart mimePart = (MimeBodyPart) part;
+                        Object inlineContent = safeGetContent(mimePart);
+                        if (inlineContent instanceof Multipart) {
+                            attachmentInfos.addAll(getAttachmentInfo(inlineContent));
+                        } else if (part.getFileName() != null) {
+                            attachmentInfos.add(new AttachmentInfo(decodeText(part.getFileName()), true));
+                        }
+                    } else if (part.getFileName() != null) {
                         attachmentInfos.add(new AttachmentInfo(decodeText(part.getFileName()), true));
                     }
 
@@ -1070,6 +1077,17 @@ public class CommonMailUtils {
                     return part;
                 }
             } else if (disposition.equalsIgnoreCase(Part.INLINE)) {
+                // Check if inline content is a Multipart (e.g., in S/MIME signed messages)
+                if (part instanceof MimeBodyPart) {
+                    MimeBodyPart mimePart = (MimeBodyPart) part;
+                    Object inlineContent = safeGetContent(mimePart);
+                    if (inlineContent instanceof Multipart) {
+                        Part attPart = getAttachmentPart(name, inlineContent);
+                        if (attPart != null) {
+                            return attPart;
+                        }
+                    }
+                }
                 if (name.equals(decodeText(part.getFileName()))) {
                     return part;
                 }
@@ -1148,17 +1166,20 @@ public class CommonMailUtils {
                 //Anhang wird in ein Verzeichnis gespeichert
                 //saveFile(part.getFileName(), part.getInputStream());
             } else if (disposition.equalsIgnoreCase(Part.INLINE)) {
-                //Anhang wird in ein Verzeichnis gespeichert
-                //saveFile(part.getFileName(), part.getInputStream());
-
                 MimeBodyPart mimePart = (MimeBodyPart) part;
 
-                try {
-                    if (mimePart.isMimeType(mimeType)) {
-                        resultList.add(mimePart.getContent().toString());
+                // Check if inline content is a Multipart (e.g., in S/MIME signed messages)
+                Object inlineContent = safeGetContent(mimePart);
+                if (inlineContent instanceof Multipart) {
+                    recursiveFindPart(inlineContent, mimeType, resultList);
+                } else {
+                    try {
+                        if (mimePart.isMimeType(mimeType)) {
+                            resultList.add(mimePart.getContent().toString());
+                        }
+                    } catch (Throwable t) {
+                        log.error("Unable to get content of inline MIME part as result - skipping", t);
                     }
-                } catch (Throwable t) {
-                    log.error("Unable to get content of inline MIME part as result - skipping", t);
                 }
             }
         }

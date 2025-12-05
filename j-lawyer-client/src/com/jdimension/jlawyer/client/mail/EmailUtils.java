@@ -911,6 +911,19 @@ public class EmailUtils extends CommonMailUtils {
                     return part;
                 }
             } else if (disposition.equalsIgnoreCase(Part.INLINE)) {
+                // Check if inline content is a Multipart (e.g., in S/MIME signed messages)
+                if (part instanceof MimeBodyPart) {
+                    MimeBodyPart mimePart = (MimeBodyPart) part;
+                    if (mimePart.getContent() instanceof Multipart) {
+                        Part attPart = getAttachmentPart(name, mimePart.getContent(), folder);
+                        if (attPart != null) {
+                            if (opened) {
+                                closeIfIMAP(folder);
+                            }
+                            return attPart;
+                        }
+                    }
+                }
                 if (name.equals(EmailUtils.decodeText(part.getFileName()))) {
                     if (opened) {
                         closeIfIMAP(folder);
