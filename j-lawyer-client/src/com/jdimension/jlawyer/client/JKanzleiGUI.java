@@ -3109,11 +3109,13 @@ public class JKanzleiGUI extends javax.swing.JFrame implements com.jdimension.jl
     }//GEN-LAST:event_mnuBankstatementCsvConfigsActionPerformed
 
     private void mnuPdfStampsActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_mnuPdfStampsActionPerformed
-        OptionGroupConfigurationDialog dlg = new OptionGroupConfigurationDialog(this, true);
-        dlg.setTitle("verfügbare PDF-Stempel");
-        dlg.setOptionGroup(OptionConstants.OPTIONGROUP_PDFSTAMPS);
-        FrameUtils.centerDialog(dlg, this);
-        dlg.setVisible(true);
+        if (checkAdmin()) {
+            OptionGroupConfigurationDialog dlg = new OptionGroupConfigurationDialog(this, true);
+            dlg.setTitle("verfügbare PDF-Stempel");
+            dlg.setOptionGroup(OptionConstants.OPTIONGROUP_PDFSTAMPS);
+            FrameUtils.centerDialog(dlg, this);
+            dlg.setVisible(true);
+        }
     }//GEN-LAST:event_mnuPdfStampsActionPerformed
 
     private void mnuAssistantReplacementsActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_mnuAssistantReplacementsActionPerformed
