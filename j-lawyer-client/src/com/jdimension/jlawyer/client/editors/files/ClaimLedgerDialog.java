@@ -675,6 +675,7 @@ import com.jdimension.jlawyer.client.utils.TableUtils;
 import com.jdimension.jlawyer.persistence.ArchiveFileBean;
 import com.jdimension.jlawyer.persistence.BaseInterest;
 import com.jdimension.jlawyer.persistence.ClaimComponent;
+import com.jdimension.jlawyer.persistence.ClaimComponentType;
 import com.jdimension.jlawyer.persistence.ClaimLedger;
 import com.jdimension.jlawyer.persistence.ClaimLedgerEntry;
 import com.jdimension.jlawyer.persistence.InterestRule;
@@ -755,6 +756,12 @@ public class ClaimLedgerDialog extends javax.swing.JDialog implements EventConsu
         this.dateTo = new Date();
         this.txtDateTo.setText(df.format(this.dateTo));
 
+        this.jTabbedPane1.addChangeListener((javax.swing.event.ChangeEvent e) -> {
+            if (jTabbedPane1.getSelectedIndex() == 3) {
+                refreshSummaryTable();
+            }
+        });
+
         this.setEntry(null);
 
     }
@@ -791,6 +798,27 @@ public class ClaimLedgerDialog extends javax.swing.JDialog implements EventConsu
 
         // Update balance chart
         this.updateBalanceChart();
+    }
+
+    private void refreshSummaryTable() {
+        if (this.currentEntry == null || this.currentEntry.getId() == null) {
+            this.tblSummary.setModel(new SummaryTableModel(new ArrayList<>()));
+            return;
+        }
+
+        try {
+            JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(ClientSettings.getInstance().getLookupProperties());
+            List<ClaimLedgerEntry> entries = locator.lookupArchiveFileServiceRemote().getClaimLedgerEntries(this.currentEntry.getId());
+
+            this.tblSummary.setModel(new SummaryTableModel(entries));
+            for (int col = 2; col <= 6; col++) {
+                this.tblSummary.getColumnModel().getColumn(col).setCellRenderer(new CurrencyRenderer());
+            }
+            ComponentUtils.autoSizeColumns(this.tblSummary);
+
+        } catch (Exception ex) {
+            log.error("Error refreshing summary table", ex);
+        }
     }
 
     private void updateBalanceChart() {
@@ -901,14 +929,19 @@ public class ClaimLedgerDialog extends javax.swing.JDialog implements EventConsu
             this.setTitle("neues Forderungskonto erstellen");
             this.tblComponents.setModel(new ComponentTableModel(new ArrayList<>()));
             this.tblLedger.setModel(new LedgerTableModel(new ArrayList<>()));
+            this.tblSummary.setModel(new SummaryTableModel(new ArrayList<>()));
 
             // Währungsformatierung für Betrag-Spalten
             this.tblComponents.getColumnModel().getColumn(0).setCellRenderer(new CurrencyRenderer());
             this.tblLedger.getColumnModel().getColumn(2).setCellRenderer(new CurrencyRenderer());
+            for (int col = 2; col <= 6; col++) {
+                this.tblSummary.getColumnModel().getColumn(col).setCellRenderer(new CurrencyRenderer());
+            }
 
             // Auto-size columns
             ComponentUtils.autoSizeColumns(this.tblComponents);
             ComponentUtils.autoSizeColumns(this.tblLedger);
+            ComponentUtils.autoSizeColumns(this.tblSummary);
 
             // Load base interest rates
             this.loadBaseInterestRates();
@@ -925,14 +958,19 @@ public class ClaimLedgerDialog extends javax.swing.JDialog implements EventConsu
 
                 this.tblComponents.setModel(new ComponentTableModel(components));
                 this.tblLedger.setModel(new LedgerTableModel(entries));
+                this.tblSummary.setModel(new SummaryTableModel(entries));
 
                 // Währungsformatierung für Betrag-Spalten
                 this.tblComponents.getColumnModel().getColumn(0).setCellRenderer(new CurrencyRenderer());
                 this.tblLedger.getColumnModel().getColumn(2).setCellRenderer(new CurrencyRenderer());
+                for (int col = 2; col <= 6; col++) {
+                    this.tblSummary.getColumnModel().getColumn(col).setCellRenderer(new CurrencyRenderer());
+                }
 
                 // Auto-size columns
                 ComponentUtils.autoSizeColumns(this.tblComponents);
                 ComponentUtils.autoSizeColumns(this.tblLedger);
+                ComponentUtils.autoSizeColumns(this.tblSummary);
 
                 // Load base interest rates
                 this.loadBaseInterestRates();
@@ -1050,6 +1088,11 @@ public class ClaimLedgerDialog extends javax.swing.JDialog implements EventConsu
         lblSumPaid = new javax.swing.JLabel();
         lblSumOpen = new javax.swing.JLabel();
         pnlBalanceChart = new javax.swing.JPanel();
+        jPanel7 = new javax.swing.JPanel();
+        jButton1 = new javax.swing.JButton();
+        jButton2 = new javax.swing.JButton();
+        jScrollPane5 = new javax.swing.JScrollPane();
+        tblSummary = new javax.swing.JTable();
         jPanel6 = new javax.swing.JPanel();
         jScrollPane4 = new javax.swing.JScrollPane();
         tblBaseInterest = new javax.swing.JTable();
@@ -1244,7 +1287,7 @@ public class ClaimLedgerDialog extends javax.swing.JDialog implements EventConsu
                         .addComponent(cmdEditComponent))
                     .addComponent(cmdRemoveComponent))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(jScrollPane3, javax.swing.GroupLayout.DEFAULT_SIZE, 416, Short.MAX_VALUE)
+                .addComponent(jScrollPane3, javax.swing.GroupLayout.DEFAULT_SIZE, 436, Short.MAX_VALUE)
                 .addContainerGap())
         );
 
@@ -1353,7 +1396,7 @@ public class ClaimLedgerDialog extends javax.swing.JDialog implements EventConsu
                     .addComponent(cmdExport, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                     .addComponent(cmdCopyLedgerToClipboard, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(jScrollPane1, javax.swing.GroupLayout.DEFAULT_SIZE, 416, Short.MAX_VALUE)
+                .addComponent(jScrollPane1, javax.swing.GroupLayout.DEFAULT_SIZE, 436, Short.MAX_VALUE)
                 .addContainerGap())
         );
 
@@ -1463,11 +1506,57 @@ public class ClaimLedgerDialog extends javax.swing.JDialog implements EventConsu
                     .addComponent(jLabel9)
                     .addComponent(lblSumOpen))
                 .addGap(18, 18, 18)
-                .addComponent(pnlBalanceChart, javax.swing.GroupLayout.DEFAULT_SIZE, 293, Short.MAX_VALUE)
+                .addComponent(pnlBalanceChart, javax.swing.GroupLayout.DEFAULT_SIZE, 313, Short.MAX_VALUE)
                 .addContainerGap())
         );
 
         jTabbedPane1.addTab("Summen", jPanel5);
+
+        jButton1.setText("jButton1");
+
+        jButton2.setText("jButton2");
+
+        tblSummary.setModel(new javax.swing.table.DefaultTableModel(
+            new Object [][] {
+                {null, null, null, null},
+                {null, null, null, null},
+                {null, null, null, null},
+                {null, null, null, null}
+            },
+            new String [] {
+                "Title 1", "Title 2", "Title 3", "Title 4"
+            }
+        ));
+        jScrollPane5.setViewportView(tblSummary);
+
+        javax.swing.GroupLayout jPanel7Layout = new javax.swing.GroupLayout(jPanel7);
+        jPanel7.setLayout(jPanel7Layout);
+        jPanel7Layout.setHorizontalGroup(
+            jPanel7Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, jPanel7Layout.createSequentialGroup()
+                .addContainerGap()
+                .addGroup(jPanel7Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
+                    .addComponent(jScrollPane5, javax.swing.GroupLayout.DEFAULT_SIZE, 858, Short.MAX_VALUE)
+                    .addGroup(jPanel7Layout.createSequentialGroup()
+                        .addGap(0, 0, Short.MAX_VALUE)
+                        .addComponent(jButton2)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addComponent(jButton1)))
+                .addContainerGap())
+        );
+        jPanel7Layout.setVerticalGroup(
+            jPanel7Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(jPanel7Layout.createSequentialGroup()
+                .addContainerGap()
+                .addGroup(jPanel7Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                    .addComponent(jButton1)
+                    .addComponent(jButton2))
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addComponent(jScrollPane5, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+        );
+
+        jTabbedPane1.addTab("Aufstellung", jPanel7);
 
         tblBaseInterest.setFont(tblBaseInterest.getFont());
         tblBaseInterest.setModel(new javax.swing.table.DefaultTableModel(
@@ -1516,7 +1605,7 @@ public class ClaimLedgerDialog extends javax.swing.JDialog implements EventConsu
                 .addContainerGap()
                 .addComponent(cmdUpdateBaseInterestRates)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(jScrollPane4, javax.swing.GroupLayout.DEFAULT_SIZE, 413, Short.MAX_VALUE)
+                .addComponent(jScrollPane4)
                 .addContainerGap())
         );
 
@@ -2097,6 +2186,8 @@ public class ClaimLedgerDialog extends javax.swing.JDialog implements EventConsu
     private javax.swing.JButton cmdSave;
     private javax.swing.JButton cmdSelectDateTo;
     private javax.swing.JButton cmdUpdateBaseInterestRates;
+    private javax.swing.JButton jButton1;
+    private javax.swing.JButton jButton2;
     private javax.swing.JLabel jLabel1;
     private javax.swing.JLabel jLabel2;
     private javax.swing.JLabel jLabel3;
@@ -2112,10 +2203,12 @@ public class ClaimLedgerDialog extends javax.swing.JDialog implements EventConsu
     private javax.swing.JPanel jPanel4;
     private javax.swing.JPanel jPanel5;
     private javax.swing.JPanel jPanel6;
+    private javax.swing.JPanel jPanel7;
     private javax.swing.JScrollPane jScrollPane1;
     private javax.swing.JScrollPane jScrollPane2;
     private javax.swing.JScrollPane jScrollPane3;
     private javax.swing.JScrollPane jScrollPane4;
+    private javax.swing.JScrollPane jScrollPane5;
     private javax.swing.JTabbedPane jTabbedPane1;
     private javax.swing.JPanel lblHeader;
     private javax.swing.JLabel lblOpenValue;
@@ -2132,6 +2225,7 @@ public class ClaimLedgerDialog extends javax.swing.JDialog implements EventConsu
     private javax.swing.JTable tblBaseInterest;
     private javax.swing.JTable tblComponents;
     private javax.swing.JTable tblLedger;
+    private javax.swing.JTable tblSummary;
     private javax.swing.JTextField txtDateTo;
     private javax.swing.JTextField txtName;
     // End of variables declaration//GEN-END:variables
@@ -2349,6 +2443,193 @@ public class ClaimLedgerDialog extends javax.swing.JDialog implements EventConsu
                 default:
                     return "";
             }
+        }
+    }
+
+    class SummaryTableModel extends AbstractTableModel {
+
+        private static final int COL_DATUM = 0;
+        private static final int COL_BEZEICHNUNG = 1;
+        private static final int COL_ZAHLUNG = 2;
+        private static final int COL_UNVERZ_KOSTEN = 3;
+        private static final int COL_VERZ_KOSTEN = 4;
+        private static final int COL_ZINSEN = 5;
+        private static final int COL_FORDERUNG = 6;
+
+        private static final int ROW_TYPE_DATA = 0;
+        private static final int ROW_TYPE_EMPTY = 1;
+        private static final int ROW_TYPE_SUM = 2;
+
+        private final String[] columns = {
+            "Datum",
+            "Bezeichnung",
+            "Zahlung",
+            "unverz. Kosten",
+            "verz. Kosten",
+            "Zinsen",
+            "Forderung"
+        };
+
+        private final List<ClaimLedgerEntry> data;
+        private final SimpleDateFormat df = new SimpleDateFormat("dd.MM.yyyy");
+
+        private BigDecimal sumZahlung = BigDecimal.ZERO;
+        private BigDecimal sumUnverzKosten = BigDecimal.ZERO;
+        private BigDecimal sumVerzKosten = BigDecimal.ZERO;
+        private BigDecimal sumZinsen = BigDecimal.ZERO;
+        private BigDecimal sumForderung = BigDecimal.ZERO;
+
+        SummaryTableModel(List<ClaimLedgerEntry> data) {
+            this.data = data;
+            calculateSums();
+        }
+
+        private void calculateSums() {
+            sumZahlung = BigDecimal.ZERO;
+            sumUnverzKosten = BigDecimal.ZERO;
+            sumVerzKosten = BigDecimal.ZERO;
+            sumZinsen = BigDecimal.ZERO;
+            sumForderung = BigDecimal.ZERO;
+
+            for (ClaimLedgerEntry entry : data) {
+                BigDecimal amount = entry.getAmount();
+                if (amount == null) {
+                    continue;
+                }
+
+                switch (entry.getType()) {
+                    case PAYMENT:
+                        sumZahlung = sumZahlung.add(amount);
+                        break;
+                    case COST:
+                        if (entry.getComponent() != null) {
+                            if (entry.getComponent().getType() == ClaimComponentType.COST_NON_INTEREST_BEARING) {
+                                sumUnverzKosten = sumUnverzKosten.add(amount);
+                            } else if (entry.getComponent().getType() == ClaimComponentType.COST_INTEREST_BEARING) {
+                                sumVerzKosten = sumVerzKosten.add(amount);
+                            }
+                        }
+                        break;
+                    case INTEREST:
+                        sumZinsen = sumZinsen.add(amount);
+                        break;
+                    case MAIN_CLAIM:
+                        sumForderung = sumForderung.add(amount);
+                        break;
+                    default:
+                        break;
+                }
+            }
+        }
+
+        private int getRowType(int row) {
+            if (row < data.size()) {
+                return ROW_TYPE_DATA;
+            } else if (row == data.size()) {
+                return ROW_TYPE_EMPTY;
+            } else {
+                return ROW_TYPE_SUM;
+            }
+        }
+
+        @Override
+        public int getRowCount() {
+            if (data.isEmpty()) {
+                return 0;
+            }
+            return data.size() + 2;
+        }
+
+        @Override
+        public int getColumnCount() {
+            return columns.length;
+        }
+
+        @Override
+        public String getColumnName(int col) {
+            return columns[col];
+        }
+
+        @Override
+        public Class<?> getColumnClass(int col) {
+            switch (col) {
+                case COL_DATUM:
+                case COL_BEZEICHNUNG:
+                    return String.class;
+                default:
+                    return BigDecimal.class;
+            }
+        }
+
+        @Override
+        public Object getValueAt(int row, int col) {
+            int rowType = getRowType(row);
+
+            if (rowType == ROW_TYPE_EMPTY) {
+                return null;
+            }
+
+            if (rowType == ROW_TYPE_SUM) {
+                return getSumValueAt(col);
+            }
+
+            ClaimLedgerEntry e = data.get(row);
+            switch (col) {
+                case COL_DATUM:
+                    return df.format(e.getEntryDate());
+                case COL_BEZEICHNUNG:
+                    return e.getComment() != null ? e.getComment() : "";
+                case COL_ZAHLUNG:
+                    return getAmountForColumn(e, LedgerEntryType.PAYMENT, null);
+                case COL_UNVERZ_KOSTEN:
+                    return getAmountForColumn(e, LedgerEntryType.COST, ClaimComponentType.COST_NON_INTEREST_BEARING);
+                case COL_VERZ_KOSTEN:
+                    return getAmountForColumn(e, LedgerEntryType.COST, ClaimComponentType.COST_INTEREST_BEARING);
+                case COL_ZINSEN:
+                    return getAmountForColumn(e, LedgerEntryType.INTEREST, null);
+                case COL_FORDERUNG:
+                    return getAmountForColumn(e, LedgerEntryType.MAIN_CLAIM, null);
+                default:
+                    return null;
+            }
+        }
+
+        private Object getSumValueAt(int col) {
+            switch (col) {
+                case COL_BEZEICHNUNG:
+                    return "Summe";
+                case COL_ZAHLUNG:
+                    return sumZahlung;
+                case COL_UNVERZ_KOSTEN:
+                    return sumUnverzKosten;
+                case COL_VERZ_KOSTEN:
+                    return sumVerzKosten;
+                case COL_ZINSEN:
+                    return sumZinsen;
+                case COL_FORDERUNG:
+                    return sumForderung;
+                default:
+                    return null;
+            }
+        }
+
+        private BigDecimal getAmountForColumn(ClaimLedgerEntry entry,
+                                              LedgerEntryType requiredType,
+                                              ClaimComponentType requiredComponentType) {
+            if (entry.getType() != requiredType) {
+                return null;
+            }
+
+            if (requiredType == LedgerEntryType.COST) {
+                if (entry.getComponent() == null) {
+                    return null;
+                }
+                if (entry.getComponent().getType() != requiredComponentType) {
+                    return null;
+                }
+            }
+
+            return entry.getAmount();
         }
     }
 }
