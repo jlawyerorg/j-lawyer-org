@@ -2564,7 +2564,6 @@ public class ClaimLedgerDialog extends javax.swing.JDialog implements EventConsu
         private BigDecimal sumForderung = BigDecimal.ZERO;
 
         private BigDecimal dynSumZahlung = BigDecimal.ZERO;
-        private BigDecimal dynSumKosten = BigDecimal.ZERO;
         private BigDecimal dynSumZinsen = BigDecimal.ZERO;
         private BigDecimal dynSumForderung = BigDecimal.ZERO;
         private Date dynDate = new Date();
@@ -2577,7 +2576,6 @@ public class ClaimLedgerDialog extends javax.swing.JDialog implements EventConsu
         void setDynamicTotals(ClaimLedgerTotals totals, Date forDate) {
             if (totals != null) {
                 this.dynSumZahlung = totals.getTotalPayments();
-                this.dynSumKosten = totals.getTotalCosts();
                 this.dynSumZinsen = totals.getTotalInterestMain().add(totals.getTotalInterestCosts());
                 this.dynSumForderung = totals.getTotalMain();
                 this.dynDate = forDate;
