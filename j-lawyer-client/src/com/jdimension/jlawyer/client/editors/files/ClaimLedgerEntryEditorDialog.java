@@ -1090,7 +1090,7 @@ public class ClaimLedgerEntryEditorDialog extends javax.swing.JDialog {
                     interestAllocation.setOpenPrincipalAmount(openPrincipal);
                     interestAllocation.setRemainingBalance(openInterest.subtract(interestPayment));
                     interestAllocation.setFullyPaid(interestAllocation.getRemainingBalance().compareTo(BigDecimal.ZERO) == 0);
-                    interestAllocation.setLegalReference("§ 367 BGB (Zinsen vor Kapital)");
+                    interestAllocation.setLegalReference("§ 367 BGB (Zinsen vor Forderungsbetrag)");
 
                     // Enhanced description with amount and context
                     String desc = "Zinsen: " + currencyFormat.format(interestPayment) + " € (von "
@@ -1115,7 +1115,7 @@ public class ClaimLedgerEntryEditorDialog extends javax.swing.JDialog {
                     principalAllocation.setLegalReference("§ 366 BGB (Tilgungsreihenfolge)");
 
                     // Enhanced description with amount and context
-                    String desc = "Kapital: " + currencyFormat.format(principalPayment) + " € (von "
+                    String desc = "Forderungsbetrag: " + currencyFormat.format(principalPayment) + " € (von "
                         + currencyFormat.format(openPrincipal) + " € offen)";
                     principalAllocation.setAllocationDescription(desc);
 

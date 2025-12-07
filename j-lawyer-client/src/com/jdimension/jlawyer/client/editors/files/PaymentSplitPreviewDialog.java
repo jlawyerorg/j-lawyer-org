@@ -60,7 +60,7 @@ public class PaymentSplitPreviewDialog extends javax.swing.JDialog {
         tblSplit.getColumnModel().getColumn(0).setPreferredWidth(40);  // Nr.
         tblSplit.getColumnModel().getColumn(1).setPreferredWidth(200); // Komponente
         tblSplit.getColumnModel().getColumn(2).setPreferredWidth(100); // Zinsen offen (NEW)
-        tblSplit.getColumnModel().getColumn(3).setPreferredWidth(100); // Kapital offen (NEW)
+        tblSplit.getColumnModel().getColumn(3).setPreferredWidth(100); // Forderungsbetrag offen (NEW)
         tblSplit.getColumnModel().getColumn(4).setPreferredWidth(100); // Zahlung (shifted from 3)
         tblSplit.getColumnModel().getColumn(5).setPreferredWidth(100); // Rest (shifted from 4)
         tblSplit.getColumnModel().getColumn(6).setPreferredWidth(100); // Status (shifted from 5)
@@ -69,7 +69,7 @@ public class PaymentSplitPreviewDialog extends javax.swing.JDialog {
         javax.swing.table.DefaultTableCellRenderer rightRenderer = new javax.swing.table.DefaultTableCellRenderer();
         rightRenderer.setHorizontalAlignment(javax.swing.SwingConstants.RIGHT);
         tblSplit.getColumnModel().getColumn(2).setCellRenderer(rightRenderer); // Zinsen offen
-        tblSplit.getColumnModel().getColumn(3).setCellRenderer(rightRenderer); // Kapital offen
+        tblSplit.getColumnModel().getColumn(3).setCellRenderer(rightRenderer); // Forderungsbetrag offen
         tblSplit.getColumnModel().getColumn(4).setCellRenderer(rightRenderer); // Zahlung
         tblSplit.getColumnModel().getColumn(5).setCellRenderer(rightRenderer); // Rest
 

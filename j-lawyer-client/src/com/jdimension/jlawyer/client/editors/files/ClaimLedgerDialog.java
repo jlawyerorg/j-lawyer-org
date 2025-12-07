@@ -1099,8 +1099,8 @@ public class ClaimLedgerDialog extends javax.swing.JDialog implements EventConsu
         lblSumOpen = new javax.swing.JLabel();
         pnlBalanceChart = new javax.swing.JPanel();
         jPanel7 = new javax.swing.JPanel();
-        jButton1 = new javax.swing.JButton();
-        jButton2 = new javax.swing.JButton();
+        cmdExportSummary = new javax.swing.JButton();
+        cmdCopySummaryToClipboard = new javax.swing.JButton();
         jScrollPane5 = new javax.swing.JScrollPane();
         tblSummary = new javax.swing.JTable();
         jPanel6 = new javax.swing.JPanel();
@@ -1522,9 +1522,19 @@ public class ClaimLedgerDialog extends javax.swing.JDialog implements EventConsu
 
         jTabbedPane1.addTab("Summen", jPanel5);
 
-        jButton1.setText("jButton1");
+        cmdExportSummary.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons16/calc.png"))); // NOI18N
+        cmdExportSummary.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                cmdExportSummaryActionPerformed(evt);
+            }
+        });
 
-        jButton2.setText("jButton2");
+        cmdCopySummaryToClipboard.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons16/editpaste.png"))); // NOI18N
+        cmdCopySummaryToClipboard.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                cmdCopySummaryToClipboardActionPerformed(evt);
+            }
+        });
 
         tblSummary.setModel(new javax.swing.table.DefaultTableModel(
             new Object [][] {
@@ -1549,21 +1559,21 @@ public class ClaimLedgerDialog extends javax.swing.JDialog implements EventConsu
                     .addComponent(jScrollPane5, javax.swing.GroupLayout.DEFAULT_SIZE, 858, Short.MAX_VALUE)
                     .addGroup(jPanel7Layout.createSequentialGroup()
                         .addGap(0, 0, Short.MAX_VALUE)
-                        .addComponent(jButton2)
+                        .addComponent(cmdCopySummaryToClipboard)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addComponent(jButton1)))
+                        .addComponent(cmdExportSummary)))
                 .addContainerGap())
         );
         jPanel7Layout.setVerticalGroup(
             jPanel7Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(jPanel7Layout.createSequentialGroup()
                 .addContainerGap()
-                .addGroup(jPanel7Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                    .addComponent(jButton1)
-                    .addComponent(jButton2))
+                .addGroup(jPanel7Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
+                    .addComponent(cmdExportSummary, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                    .addComponent(cmdCopySummaryToClipboard, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(jScrollPane5, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                .addContainerGap(9, Short.MAX_VALUE))
         );
 
         jTabbedPane1.addTab("Aufstellung", jPanel7);
@@ -2142,6 +2152,69 @@ public class ClaimLedgerDialog extends javax.swing.JDialog implements EventConsu
 
     }//GEN-LAST:event_cmdCopyLedgerToClipboardActionPerformed
 
+    private void cmdExportSummaryActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdExportSummaryActionPerformed
+        try {
+            TableUtils.exportAndLaunch("aktenkonto-aufstellung.csv", this.tblSummary, this.accountEntryFormat);
+        } catch (Exception ex) {
+            log.error("Error exporting table to CSV", ex);
+            JOptionPane.showMessageDialog(this, "Fehler beim Export: " + ex.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
+        }
+    }//GEN-LAST:event_cmdExportSummaryActionPerformed
+
+    private void cmdCopySummaryToClipboardActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdCopySummaryToClipboardActionPerformed
+        StyledCalculationTable ct = new StyledCalculationTable();
+        ct.addHeaders("Datum", "Bezeichnung", "Zahlung", "unverz. Kosten", "verz. Kosten", "Zinsen", "Forderung");
+
+        DecimalFormat df = new DecimalFormat("0.00");
+        for (int r = 0; r < this.tblSummary.getRowCount(); r++) {
+            String datum = tblSummary.getValueAt(r, 0) != null ? tblSummary.getValueAt(r, 0).toString() : "";
+            String bezeichnung = tblSummary.getValueAt(r, 1) != null ? tblSummary.getValueAt(r, 1).toString() : "";
+            String zahlung = tblSummary.getValueAt(r, 2) != null ? df.format((Number) tblSummary.getValueAt(r, 2)) : "";
+            String unverzKosten = tblSummary.getValueAt(r, 3) != null ? df.format((Number) tblSummary.getValueAt(r, 3)) : "";
+            String verzKosten = tblSummary.getValueAt(r, 4) != null ? df.format((Number) tblSummary.getValueAt(r, 4)) : "";
+            String zinsen = tblSummary.getValueAt(r, 5) != null ? df.format((Number) tblSummary.getValueAt(r, 5)) : "";
+            String forderung = tblSummary.getValueAt(r, 6) != null ? df.format((Number) tblSummary.getValueAt(r, 6)) : "";
+            ct.addRow(datum, bezeichnung, zahlung, unverzKosten, verzKosten, zinsen, forderung);
+        }
+
+        int rgb = ServerSettings.getInstance().getSettingAsInt("plugins.global.tableproperties.header.fore.color", Color.BLACK.getRGB());
+        ct.setRowForeGround(0, new Color(rgb));
+        rgb = ServerSettings.getInstance().getSettingAsInt("plugins.global.tableproperties.header.back.color", Color.LIGHT_GRAY.getRGB());
+        ct.setRowBackGround(0, new Color(rgb));
+        if (ServerSettings.getInstance().getSettingAsBoolean("plugins.global.tableproperties.header.Bold", true)) {
+            ct.setRowBold(0, true);
+        } else {
+            ct.setRowBold(0, false);
+        }
+
+        ct.setColumnAlignment(2, Cell.ALIGNMENT_RIGHT);
+        ct.setColumnAlignment(3, Cell.ALIGNMENT_RIGHT);
+        ct.setColumnAlignment(4, Cell.ALIGNMENT_RIGHT);
+        ct.setColumnAlignment(5, Cell.ALIGNMENT_RIGHT);
+        ct.setColumnAlignment(6, Cell.ALIGNMENT_RIGHT);
+        ct.getCellAt(0, 2).setAlignment(Cell.ALIGNMENT_LEFT);
+        ct.getCellAt(0, 3).setAlignment(Cell.ALIGNMENT_LEFT);
+        ct.getCellAt(0, 4).setAlignment(Cell.ALIGNMENT_LEFT);
+        ct.getCellAt(0, 5).setAlignment(Cell.ALIGNMENT_LEFT);
+        ct.getCellAt(0, 6).setAlignment(Cell.ALIGNMENT_LEFT);
+        ct.setRowFontSize(0, 12);
+        ct.setColumnWidth(0, 25);
+        ct.setColumnWidth(1, 120);
+        ct.setFontFamily(ServerSettings.getInstance().getSetting("plugins.global.tableproperties.table.fontfamily", "Arial"));
+        if (ServerSettings.getInstance().getSettingAsBoolean("plugins.global.tableproperties.table.lines", true)) {
+            ct.setLineBorder(true);
+        } else {
+            ct.setLineBorder(false);
+        }
+        rgb = ServerSettings.getInstance().getSettingAsInt("plugins.global.tableproperties.table.lines.color", Color.BLACK.getRGB());
+        ct.setBorderColor(new Color(rgb));
+        ct.setFontSize(ServerSettings.getInstance().getSettingAsInt("plugins.global.tableproperties.table.fontsize", 12));
+
+        FormPluginCallback.HtmlSelection stsel = new FormPluginCallback.HtmlSelection(ct.toHtml());
+        Clipboard system = Toolkit.getDefaultToolkit().getSystemClipboard();
+        system.setContents(stsel, null);
+    }//GEN-LAST:event_cmdCopySummaryToClipboardActionPerformed
+
     /**
      * @param args the command line arguments
      */
@@ -2188,16 +2261,16 @@ public class ClaimLedgerDialog extends javax.swing.JDialog implements EventConsu
     private javax.swing.JButton cmdAddEntry;
     private javax.swing.JButton cmdCancel;
     private javax.swing.JButton cmdCopyLedgerToClipboard;
+    private javax.swing.JButton cmdCopySummaryToClipboard;
     private javax.swing.JButton cmdDeleteEntry;
     private javax.swing.JButton cmdEditComponent;
     private javax.swing.JButton cmdEditEntry;
     private javax.swing.JButton cmdExport;
+    private javax.swing.JButton cmdExportSummary;
     private javax.swing.JButton cmdRemoveComponent;
     private javax.swing.JButton cmdSave;
     private javax.swing.JButton cmdSelectDateTo;
     private javax.swing.JButton cmdUpdateBaseInterestRates;
-    private javax.swing.JButton jButton1;
-    private javax.swing.JButton jButton2;
     private javax.swing.JLabel jLabel1;
     private javax.swing.JLabel jLabel2;
     private javax.swing.JLabel jLabel3;

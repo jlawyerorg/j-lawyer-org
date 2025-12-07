@@ -26,7 +26,7 @@ public class PaymentSplitTableModel extends AbstractTableModel {
         "Nr.",
         "Komponente",
         "Zinsen offen",
-        "Kapital offen",
+        "Forderungsbetrag offen",
         "Zahlung",
         "Rest",
         "Status"
@@ -112,7 +112,7 @@ public class PaymentSplitTableModel extends AbstractTableModel {
                 }
                 return "-";
 
-            case 3: // Kapital offen (NEW)
+            case 3: // Forderungsbetrag offen (NEW)
                 if (allocation.getOpenPrincipalAmount() != null) {
                     return currencyFormat.format(allocation.getOpenPrincipalAmount());
                 }
