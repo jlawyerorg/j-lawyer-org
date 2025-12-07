@@ -810,10 +810,15 @@ public class ClaimLedgerDialog extends javax.swing.JDialog implements EventConsu
             JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(ClientSettings.getInstance().getLookupProperties());
             List<ClaimLedgerEntry> entries = locator.lookupArchiveFileServiceRemote().getClaimLedgerEntries(this.currentEntry.getId());
 
-            this.tblSummary.setModel(new SummaryTableModel(entries));
+            SummaryTableModel model = new SummaryTableModel(entries);
+            this.tblSummary.setModel(model);
             for (int col = 2; col <= 6; col++) {
                 this.tblSummary.getColumnModel().getColumn(col).setCellRenderer(new CurrencyRenderer());
             }
+
+            ClaimLedgerTotals totals = locator.lookupArchiveFileServiceRemote().calculateClaimLedgerTotals(this.currentEntry.getId(), this.dateTo);
+            model.setDynamicTotals(totals, this.dateTo);
+
             ComponentUtils.autoSizeColumns(this.tblSummary);
 
         } catch (Exception ex) {
@@ -958,7 +963,8 @@ public class ClaimLedgerDialog extends javax.swing.JDialog implements EventConsu
 
                 this.tblComponents.setModel(new ComponentTableModel(components));
                 this.tblLedger.setModel(new LedgerTableModel(entries));
-                this.tblSummary.setModel(new SummaryTableModel(entries));
+                SummaryTableModel summaryModel = new SummaryTableModel(entries);
+                this.tblSummary.setModel(summaryModel);
 
                 // Währungsformatierung für Betrag-Spalten
                 this.tblComponents.getColumnModel().getColumn(0).setCellRenderer(new CurrencyRenderer());
@@ -966,6 +972,10 @@ public class ClaimLedgerDialog extends javax.swing.JDialog implements EventConsu
                 for (int col = 2; col <= 6; col++) {
                     this.tblSummary.getColumnModel().getColumn(col).setCellRenderer(new CurrencyRenderer());
                 }
+
+                // Dynamische Summen laden
+                ClaimLedgerTotals totals = locator.lookupArchiveFileServiceRemote().calculateClaimLedgerTotals(ledger.getId(), this.dateTo);
+                summaryModel.setDynamicTotals(totals, this.dateTo);
 
                 // Auto-size columns
                 ComponentUtils.autoSizeColumns(this.tblComponents);
@@ -2459,6 +2469,7 @@ public class ClaimLedgerDialog extends javax.swing.JDialog implements EventConsu
         private static final int ROW_TYPE_DATA = 0;
         private static final int ROW_TYPE_EMPTY = 1;
         private static final int ROW_TYPE_SUM = 2;
+        private static final int ROW_TYPE_SUM_DYNAMIC = 3;
 
         private final String[] columns = {
             "Datum",
@@ -2479,9 +2490,26 @@ public class ClaimLedgerDialog extends javax.swing.JDialog implements EventConsu
         private BigDecimal sumZinsen = BigDecimal.ZERO;
         private BigDecimal sumForderung = BigDecimal.ZERO;
 
+        private BigDecimal dynSumZahlung = BigDecimal.ZERO;
+        private BigDecimal dynSumKosten = BigDecimal.ZERO;
+        private BigDecimal dynSumZinsen = BigDecimal.ZERO;
+        private BigDecimal dynSumForderung = BigDecimal.ZERO;
+        private Date dynDate = new Date();
+
         SummaryTableModel(List<ClaimLedgerEntry> data) {
             this.data = data;
             calculateSums();
+        }
+
+        void setDynamicTotals(ClaimLedgerTotals totals, Date forDate) {
+            if (totals != null) {
+                this.dynSumZahlung = totals.getTotalPayments();
+                this.dynSumKosten = totals.getTotalCosts();
+                this.dynSumZinsen = totals.getTotalInterestMain().add(totals.getTotalInterestCosts());
+                this.dynSumForderung = totals.getTotalMain();
+                this.dynDate = forDate;
+                fireTableRowsUpdated(data.size() + 2, data.size() + 2);
+            }
         }
 
         private void calculateSums() {
@@ -2527,8 +2555,10 @@ public class ClaimLedgerDialog extends javax.swing.JDialog implements EventConsu
                 return ROW_TYPE_DATA;
             } else if (row == data.size()) {
                 return ROW_TYPE_EMPTY;
-            } else {
+            } else if (row == data.size() + 1) {
                 return ROW_TYPE_SUM;
+            } else {
+                return ROW_TYPE_SUM_DYNAMIC;
             }
         }
 
@@ -2537,7 +2567,7 @@ public class ClaimLedgerDialog extends javax.swing.JDialog implements EventConsu
             if (data.isEmpty()) {
                 return 0;
             }
-            return data.size() + 2;
+            return data.size() + 3;
         }
 
         @Override
@@ -2573,6 +2603,10 @@ public class ClaimLedgerDialog extends javax.swing.JDialog implements EventConsu
                 return getSumValueAt(col);
             }
 
+            if (rowType == ROW_TYPE_SUM_DYNAMIC) {
+                return getDynamicSumValueAt(col);
+            }
+
             ClaimLedgerEntry e = data.get(row);
             switch (col) {
                 case COL_DATUM:
@@ -2597,7 +2631,7 @@ public class ClaimLedgerDialog extends javax.swing.JDialog implements EventConsu
         private Object getSumValueAt(int col) {
             switch (col) {
                 case COL_BEZEICHNUNG:
-                    return "Summe";
+                    return "Summe (ohne dyn. Zinsen)";
                 case COL_ZAHLUNG:
                     return sumZahlung;
                 case COL_UNVERZ_KOSTEN:
@@ -2608,6 +2642,25 @@ public class ClaimLedgerDialog extends javax.swing.JDialog implements EventConsu
                     return sumZinsen;
                 case COL_FORDERUNG:
                     return sumForderung;
+                default:
+                    return null;
+            }
+        }
+
+        private Object getDynamicSumValueAt(int col) {
+            switch (col) {
+                case COL_BEZEICHNUNG:
+                    return "Summe (Stand " + df.format(dynDate) + ")";
+                case COL_ZAHLUNG:
+                    return dynSumZahlung;
+                case COL_UNVERZ_KOSTEN:
+                    return sumUnverzKosten;
+                case COL_VERZ_KOSTEN:
+                    return sumVerzKosten;
+                case COL_ZINSEN:
+                    return dynSumZinsen;
+                case COL_FORDERUNG:
+                    return dynSumForderung;
                 default:
                     return null;
             }
