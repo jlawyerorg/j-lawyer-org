@@ -2165,15 +2165,15 @@ public class ClaimLedgerDialog extends javax.swing.JDialog implements EventConsu
         StyledCalculationTable ct = new StyledCalculationTable();
         ct.addHeaders("Datum", "Bezeichnung", "Zahlung", "unverz. Kosten", "verz. Kosten", "Zinsen", "Forderung");
 
-        DecimalFormat df = new DecimalFormat("0.00");
+        DecimalFormat decf = new DecimalFormat("0.00");
         for (int r = 0; r < this.tblSummary.getRowCount(); r++) {
             String datum = tblSummary.getValueAt(r, 0) != null ? tblSummary.getValueAt(r, 0).toString() : "";
             String bezeichnung = tblSummary.getValueAt(r, 1) != null ? tblSummary.getValueAt(r, 1).toString() : "";
-            String zahlung = tblSummary.getValueAt(r, 2) != null ? df.format((Number) tblSummary.getValueAt(r, 2)) : "";
-            String unverzKosten = tblSummary.getValueAt(r, 3) != null ? df.format((Number) tblSummary.getValueAt(r, 3)) : "";
-            String verzKosten = tblSummary.getValueAt(r, 4) != null ? df.format((Number) tblSummary.getValueAt(r, 4)) : "";
-            String zinsen = tblSummary.getValueAt(r, 5) != null ? df.format((Number) tblSummary.getValueAt(r, 5)) : "";
-            String forderung = tblSummary.getValueAt(r, 6) != null ? df.format((Number) tblSummary.getValueAt(r, 6)) : "";
+            String zahlung = tblSummary.getValueAt(r, 2) != null ? decf.format((Number) tblSummary.getValueAt(r, 2)) : "";
+            String unverzKosten = tblSummary.getValueAt(r, 3) != null ? decf.format((Number) tblSummary.getValueAt(r, 3)) : "";
+            String verzKosten = tblSummary.getValueAt(r, 4) != null ? decf.format((Number) tblSummary.getValueAt(r, 4)) : "";
+            String zinsen = tblSummary.getValueAt(r, 5) != null ? decf.format((Number) tblSummary.getValueAt(r, 5)) : "";
+            String forderung = tblSummary.getValueAt(r, 6) != null ? decf.format((Number) tblSummary.getValueAt(r, 6)) : "";
             ct.addRow(datum, bezeichnung, zahlung, unverzKosten, verzKosten, zinsen, forderung);
         }
 
