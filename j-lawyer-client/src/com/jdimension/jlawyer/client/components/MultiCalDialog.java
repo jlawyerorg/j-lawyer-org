@@ -1047,11 +1047,12 @@ public class MultiCalDialog extends javax.swing.JDialog {
                 }
 
                 if (holiday) {
-                    
+
                     Object[] options = {
-                        "Trotzdem verwenden",
+                        "Ausgewählten Tag",
                         "Abbrechen",
-                        "Nächstmöglichen Werktag verwenden"
+                        "Nächstmöglichen Werktag",
+                        "Vorhergehenden Werktag"
                     };
 
                     int response = JOptionPane.showOptionDialog(
@@ -1072,8 +1073,11 @@ public class MultiCalDialog extends javax.swing.JDialog {
                         // No
                         return;
                     } else if (response == 2) {
-                        // Custom button
+                        // Nächstmöglichen Werktag
                         d=CalendarUtils.getInstance().getNextAvailableWorkday(d);
+                    } else if (response == 3) {
+                        // Vorhergehenden Werktag
+                        d=CalendarUtils.getInstance().getPreviousAvailableWorkday(d);
                     } else {
                         // Closed dialog (response == JOptionPane.CLOSED_OPTION)
                         return;

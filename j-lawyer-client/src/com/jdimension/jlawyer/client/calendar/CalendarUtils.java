@@ -733,6 +733,16 @@ public class CalendarUtils {
         return date;
     }
 
+    public Date getPreviousAvailableWorkday(Date date) throws Exception {
+        Calendar c = Calendar.getInstance();
+        c.setTime(date);
+        while(isHolidayForCurrentUser(date) || c.get(Calendar.DAY_OF_WEEK) == Calendar.SATURDAY || c.get(Calendar.DAY_OF_WEEK) == Calendar.SUNDAY) {
+            c.add(Calendar.DAY_OF_YEAR, -1);
+            date=c.getTime();
+        }
+        return date;
+    }
+
     public boolean isHoliday(Date date, String countryId, String regionId) throws Exception {
         ClientSettings settings = ClientSettings.getInstance();
         JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
