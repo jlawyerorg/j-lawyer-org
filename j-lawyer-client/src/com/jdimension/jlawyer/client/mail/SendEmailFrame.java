@@ -1172,6 +1172,34 @@ public class SendEmailFrame extends javax.swing.JFrame implements SendCommunicat
         this.autoSaveTimer.start();
     }
 
+    /**
+     * Waits for the HTML editor content cache to be synchronized on macOS.
+     * <p>
+     * On macOS, the WebViewHtmlEditorPanel uses a cached content mechanism to avoid
+     * EDT/JavaFX deadlocks. The cache is updated via JavaScript's onChange handler
+     * with a 300ms debounce. This method waits 500ms (300ms debounce + buffer) to
+     * ensure the cache contains the latest editor content before reading it.
+     * </p>
+     * <p>
+     * This method only waits if:
+     * <ul>
+     *   <li>Running on macOS</li>
+     *   <li>The editor is a WebViewHtmlEditorPanel (not needed for plain text editors)</li>
+     * </ul>
+     * </p>
+     *
+     * @param ed the editor implementation to check
+     */
+    private void waitForHtmlContentOnMac(EditorImplementation ed) {
+        if (SystemUtils.isMacOs() && ed instanceof WebViewHtmlEditorPanel) {
+            try {
+                Thread.sleep(1500);
+            } catch (InterruptedException e) {
+                Thread.currentThread().interrupt();
+            }
+        }
+    }
+
     private void handleWindowClosing() {
         // If there's a draft document, ask user if they want to keep it
         if (this.currentDraftDocumentId != null) {
@@ -1217,6 +1245,8 @@ public class SendEmailFrame extends javax.swing.JFrame implements SendCommunicat
         // Check if there's content to save
         String subject = this.txtSubject.getText();
         EditorImplementation ed = (EditorImplementation) this.contentPanel.getComponent(0);
+        // Note: No wait needed here - AutoSave runs every 60s, so a slightly stale cache is acceptable.
+        // The 300ms debounce will have long since completed between auto-save intervals.
         String body = ed.getText();
 
         if ((subject == null || subject.trim().isEmpty()) && (body == null || body.trim().isEmpty())) {
@@ -2771,6 +2801,7 @@ public class SendEmailFrame extends javax.swing.JFrame implements SendCommunicat
         mails.addAll(EmailUtils.getAllMailAddressesFromString(this.txtCc.getText()));
         mails.addAll(EmailUtils.getAllMailAddressesFromString(this.txtBcc.getText()));
 
+        waitForHtmlContentOnMac(ed);
         String editorContent = ed.getText();
 
         if (mails.isEmpty()) {
@@ -3051,11 +3082,13 @@ public class SendEmailFrame extends javax.swing.JFrame implements SendCommunicat
             MimeBodyPart messageText = new MimeBodyPart();
             EditorImplementation ed = (EditorImplementation) this.contentPanel.getComponent(0);
             String contentType = ed.getContentType();
+            waitForHtmlContentOnMac(ed);
             String editorContent = ed.getText();
             editorContent = editorContent.replaceAll("<p>[\\s ]*</p>", "<p>&nbsp;</p>");
             editorContent = editorContent.replaceAll("<div>[\\s ]*</div>", "<div>&nbsp;</div>");
             ed.setText(editorContent);
-            messageText.setContent(ed.getText(), contentType + "; charset=UTF-8");
+            //messageText.setContent(ed.getText(), contentType + "; charset=UTF-8");
+            messageText.setContent(editorContent, contentType + "; charset=UTF-8");
             multiPart.addBodyPart(messageText);
 
             String attachmentNames = "";
@@ -3120,6 +3153,7 @@ public class SendEmailFrame extends javax.swing.JFrame implements SendCommunicat
 
         // Text des Editors holen
         EditorImplementation ed = (EditorImplementation) this.contentPanel.getComponent(0);
+        waitForHtmlContentOnMac(ed);
         String body = ed.getText().trim();
 
         // Überprüfen, ob Anhänge in der attachments-Map vorhanden sind

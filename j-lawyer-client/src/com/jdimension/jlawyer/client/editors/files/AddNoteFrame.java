@@ -695,14 +695,13 @@ import com.jdimension.jlawyer.client.events.DocumentAddedEvent;
 import com.jdimension.jlawyer.client.events.EventBroker;
 import com.jdimension.jlawyer.client.mail.EditorImplementation;
 import com.jdimension.jlawyer.client.utils.AudioUtils;
+import com.jdimension.jlawyer.client.utils.SystemUtils;
 import com.jdimension.jlawyer.client.utils.ThreadUtils;
 import com.jdimension.jlawyer.email.CommonMailUtils;
 import com.jdimension.jlawyer.services.IntegrationServiceRemote;
 import javax.sound.sampled.*;
 import java.io.ByteArrayOutputStream;
 import java.awt.Color;
-import java.awt.event.WindowAdapter;
-import java.awt.event.WindowEvent;
 import java.io.IOException;
 import java.util.concurrent.atomic.AtomicReference;
 import javax.swing.ImageIcon;
@@ -861,6 +860,25 @@ public class AddNoteFrame extends javax.swing.JFrame implements AssistantFlowAda
 
     public void setFocusToBody() {
         this.htmlNoteEditor.requestFocus();
+    }
+
+    /**
+     * Waits for the HTML editor content cache to be synchronized on macOS.
+     * <p>
+     * On macOS, the WebViewHtmlEditorPanel uses a cached content mechanism to avoid
+     * EDT/JavaFX deadlocks. The cache is updated via JavaScript's onChange handler
+     * with a 300ms debounce. This method waits 500ms (300ms debounce + buffer) to
+     * ensure the cache contains the latest editor content before reading it.
+     * </p>
+     */
+    private void waitForHtmlContentOnMac() {
+        if (SystemUtils.isMacOs()) {
+            try {
+                Thread.sleep(1000);
+            } catch (InterruptedException e) {
+                Thread.currentThread().interrupt();
+            }
+        }
     }
 
     public void appendToBody(String appendText, boolean convertToHtml) {
@@ -1291,6 +1309,7 @@ public class AddNoteFrame extends javax.swing.JFrame implements AssistantFlowAda
         try {
             JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
             ArchiveFileServiceRemote afs = locator.lookupArchiveFileServiceRemote();
+            waitForHtmlContentOnMac();
             ArchiveFileDocumentsBean db = afs.addDocument(this.aFile.getId(), FileUtils.sanitizeFileName(fileName), this.htmlNoteEditor.getText().getBytes(), "", null);
             EventBroker eb = EventBroker.getInstance();
             eb.publishEvent(new DocumentAddedEvent(db));

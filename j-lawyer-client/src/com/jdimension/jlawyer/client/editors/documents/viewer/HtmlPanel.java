@@ -676,6 +676,7 @@ import com.jdimension.jlawyer.client.editors.webview.WebViewHtmlEditorPanel;
 import com.jdimension.jlawyer.client.mail.EditorImplementation;
 import com.jdimension.jlawyer.client.settings.ClientSettings;
 import com.jdimension.jlawyer.client.utils.AudioUtils;
+import com.jdimension.jlawyer.client.utils.SystemUtils;
 import com.jdimension.jlawyer.client.utils.ThreadUtils;
 import com.jdimension.jlawyer.persistence.AssistantConfig;
 import com.jdimension.jlawyer.services.IntegrationServiceRemote;
@@ -886,13 +887,33 @@ public class HtmlPanel extends javax.swing.JPanel implements PreviewPanel, Assis
         this.initialContent = content;
         htmlEditor.setText(new String(content));
         htmlEditor.setCaretPosition(0);
-        
+
+    }
+
+    /**
+     * Waits for the HTML editor content cache to be synchronized on macOS.
+     * <p>
+     * On macOS, the WebViewHtmlEditorPanel uses a cached content mechanism to avoid
+     * EDT/JavaFX deadlocks. The cache is updated via JavaScript's onChange handler
+     * with a 300ms debounce. This method waits 500ms (300ms debounce + buffer) to
+     * ensure the cache contains the latest editor content before reading it.
+     * </p>
+     */
+    private void waitForHtmlContentOnMac() {
+        if (SystemUtils.isMacOs()) {
+            try {
+                Thread.sleep(1000);
+            } catch (InterruptedException e) {
+                Thread.currentThread().interrupt();
+            }
+        }
     }
 
     @Override
     public void removeNotify() {
         if (this.id != null && !this.readOnly) {
             try {
+                waitForHtmlContentOnMac();
                 String currentText = this.htmlEditor.getText();
                 if (currentText == null || currentText.isEmpty()) {
                     // getText() may return empty if editor is being disposed - skip saving
