@@ -667,6 +667,8 @@ import com.jdimension.jlawyer.events.InstantMessageCreatedEvent;
 import com.jdimension.jlawyer.persistence.AppUserBean;
 import com.jdimension.jlawyer.persistence.ArchiveFileBean;
 import com.jdimension.jlawyer.persistence.ArchiveFileBeanFacadeLocal;
+import com.jdimension.jlawyer.persistence.ArchiveFileGroupsBeanFacadeLocal;
+import com.jdimension.jlawyer.persistence.Group;
 import com.jdimension.jlawyer.persistence.ArchiveFileDocumentsBean;
 import com.jdimension.jlawyer.persistence.ArchiveFileDocumentsBeanFacadeLocal;
 import com.jdimension.jlawyer.persistence.InstantMessage;
@@ -676,11 +678,14 @@ import com.jdimension.jlawyer.persistence.InstantMessageMentionFacadeLocal;
 import com.jdimension.jlawyer.persistence.utils.StringGenerator;
 import com.jdimension.jlawyer.server.services.settings.UserSettingsKeys;
 import com.jdimension.jlawyer.server.utils.InstantMessagingUtil;
+import com.jdimension.jlawyer.server.utils.SecurityUtils;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import javax.annotation.Resource;
 import javax.annotation.security.RolesAllowed;
 import javax.ejb.EJB;
@@ -715,6 +720,8 @@ public class MessagingService implements MessagingServiceRemote, MessagingServic
     private InstantMessageMentionFacadeLocal mentionFacade;
     @EJB
     private ArchiveFileBeanFacadeLocal caseFacade;
+    @EJB
+    private ArchiveFileGroupsBeanFacadeLocal caseGroupsFacade;
     @EJB
     private ArchiveFileDocumentsBeanFacadeLocal docFacade;
     @EJB
@@ -881,9 +888,20 @@ public class MessagingService implements MessagingServiceRemote, MessagingServic
         List<InstantMessage> relevantMessages = new ArrayList<>();
         List<InstantMessage> openMentionMessages = new ArrayList<>();
 
+        // Performance: load user groups only once
+        List<Group> userGroups = new ArrayList<>();
+        try {
+            userGroups = securityFacade.getGroupsForUser(principalId);
+        } catch (Throwable t) {
+            log.error("Unable to determine groups for user " + principalId, t);
+        }
+
+        // Performance: cache for already checked cases (many messages per case)
+        Map<String, Boolean> caseAccessCache = new HashMap<>();
+
         // Separate the messages with open mentions, those will never be filtered out
         for (InstantMessage m : unfiltered) {
-            if (messageRelevantForUser(m, principalId)) {
+            if (messageRelevantForUser(m, principalId, userGroups, caseAccessCache)) {
                 if (m.hasOpenMentions()) {
                     openMentionMessages.add(m);
                 } else {
@@ -906,10 +924,18 @@ public class MessagingService implements MessagingServiceRemote, MessagingServic
         return finalMessages;
     }
 
-    private boolean messageRelevantForUser(InstantMessage m, String principalId) {
-        // message sent in a case context
+    private boolean messageRelevantForUser(InstantMessage m, String principalId, List<Group> userGroups, Map<String, Boolean> caseAccessCache) {
+        // message sent in a case context - check case access
         if (m.getCaseContext() != null) {
-            return true;
+            String caseId = m.getCaseContext().getId();
+            // cache lookup: has this case already been checked?
+            if (caseAccessCache.containsKey(caseId)) {
+                return caseAccessCache.get(caseId);
+            }
+            // perform authorization check
+            boolean hasAccess = SecurityUtils.checkGroupsForCase(userGroups, m.getCaseContext(), caseGroupsFacade);
+            caseAccessCache.put(caseId, hasAccess);
+            return hasAccess;
         }
 
         // message sent by the user
@@ -939,6 +965,15 @@ public class MessagingService implements MessagingServiceRemote, MessagingServic
             log.error("message requested for an invalid case id: " + caseId);
             throw new Exception("Akte mit ID " + caseId + " kann nicht gefunden werden!");
         }
+
+        // check case access permissions
+        SecurityUtils.checkGroupsForCase(
+            context.getCallerPrincipal().getName(),
+            caseContext,
+            this.securityFacade,
+            this.caseGroupsFacade.findByCase(caseContext)
+        );
+
         return this.messageFacade.findByCaseContext(caseContext);
     }
 
@@ -950,6 +985,15 @@ public class MessagingService implements MessagingServiceRemote, MessagingServic
             log.error("message requested for an invalid case id: " + caseId);
             throw new Exception("Akte mit ID " + caseId + " kann nicht gefunden werden!");
         }
+
+        // check case access permissions
+        SecurityUtils.checkGroupsForCase(
+            context.getCallerPrincipal().getName(),
+            caseContext,
+            this.securityFacade,
+            this.caseGroupsFacade.findByCase(caseContext)
+        );
+
         List<InstantMessage> messages = this.messageFacade.findByCaseContext(caseContext);
         if (withOpenMentionsOnly) {
             ArrayList<InstantMessage> filtered = new ArrayList<>();
