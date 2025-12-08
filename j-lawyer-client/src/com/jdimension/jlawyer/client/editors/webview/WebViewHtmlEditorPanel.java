@@ -342,8 +342,9 @@ public class WebViewHtmlEditorPanel extends JPanel implements EditorImplementati
             // once the minimum JavaFX version is updated accordingly.
             if (SystemUtils.isMacOs()) {
                 scene.addEventFilter(javafx.scene.input.KeyEvent.ANY, event -> {
-                    if (event.getCode() == javafx.scene.input.KeyCode.CAPS ||
-                        event.getCode() == javafx.scene.input.KeyCode.UNDEFINED) {
+                    // Only filter CAPS lock, not UNDEFINED - filtering UNDEFINED blocks all typing
+                    // on some macOS configurations where normal key events are reported as UNDEFINED
+                    if (event.getCode() == javafx.scene.input.KeyCode.CAPS) {
                         event.consume();
                     }
                 });
