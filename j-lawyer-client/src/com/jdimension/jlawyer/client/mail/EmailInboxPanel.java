@@ -1884,7 +1884,7 @@ public class EmailInboxPanel extends javax.swing.JPanel implements SaveToCaseExe
 
             MessageContainer msgC = (MessageContainer) this.tblMails.getValueAt(this.tblMails.getSelectedRow(), 2);
 
-            ViewEmailDialog view = new ViewEmailDialog(EditorsRegistry.getInstance().getMainWindow(), null, null);
+            ViewEmailFrame view = new ViewEmailFrame(null, null);
             try {
                 view.setMessage(msgC, EmailUtils.getMailboxSetup(msgC.getMessage()));
                 view.setTitle(msgC.getMessage().getSubject());
@@ -1892,7 +1892,10 @@ public class EmailInboxPanel extends javax.swing.JPanel implements SaveToCaseExe
                 log.error(t);
                 view.setTitle("Emailansicht");
             }
+            EditorsRegistry.getInstance().registerFrame(view);
             view.setVisible(true);
+            FrameUtils.centerFrame(view, null);
+            FrameUtils.focusFrame(view);
         }
     }//GEN-LAST:event_tblMailsMouseClicked
 

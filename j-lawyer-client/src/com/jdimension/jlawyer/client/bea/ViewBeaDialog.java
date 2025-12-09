@@ -692,9 +692,8 @@ public class ViewBeaDialog extends javax.swing.JDialog {
     private ObservedDocument odoc = null;
 
     /**
-     * Creates new form ViewEmailDialog
+     * Creates new form ViewBeaDialog
      * @param parent
-     * @param modal
      * @param contextArchiveFile
      */
     public ViewBeaDialog(java.awt.Window parent, ArchiveFileBean contextArchiveFile) {
