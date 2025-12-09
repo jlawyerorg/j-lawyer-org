@@ -704,6 +704,7 @@ public class WebViewHtmlEditorPanel extends JPanel implements EditorImplementati
             if (pendingContent != null) {
                 return pendingContent;
             }
+            log.warn("getText() on macOS/EDT with no cached content - returning empty string. This may indicate a race condition.");
             return "";
         }
 
@@ -728,8 +729,11 @@ public class WebViewHtmlEditorPanel extends JPanel implements EditorImplementati
 
         Object result = callEditorAPI("getText");
         String text = result != null ? result.toString() : "";
-        // Update cache with fresh content
-        cachedEditorContent = text;
+        // Update cache with fresh content, but only if we got actual content.
+        // Prevents overwriting valid cache with empty string on transient failures.
+        if (text != null && !text.isEmpty()) {
+            cachedEditorContent = text;
+        }
         return text;
     }
 
@@ -782,8 +786,10 @@ public class WebViewHtmlEditorPanel extends JPanel implements EditorImplementati
         final String finalText = text;
         // Use async version to avoid blocking - insert doesn't need return value
         callEditorAPIAsync("insert", finalText, pos);
-        // Invalidate content cache since content changed
-        cachedEditorContent = null;
+        // Note: Do NOT invalidate cache here - the JavaScript onChange handler
+        // will fire and update the cache with the correct merged content.
+        // Setting cachedEditorContent = null here causes empty emails when
+        // insert() is followed by getText() before onChange fires.
     }
 
     @Override
