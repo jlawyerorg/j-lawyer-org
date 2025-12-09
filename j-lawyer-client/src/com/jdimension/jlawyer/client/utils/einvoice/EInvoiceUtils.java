@@ -799,7 +799,7 @@ public class EInvoiceUtils {
             if (!caseInvoice.isSmallBusiness()) {
                 taxRate = BigDecimal.ZERO;
             }
-            i.addItem(new Item(new Product(pos.getName(), pos.getDescription(), "C62", taxRate), /*price*/ pos.getUnitPrice(), /*qty*/ pos.getUnits()));
+            i.addItem(new Item(new Product(pos.getName(), pos.getDescription(), "H87", taxRate), /*price*/ pos.getUnitPrice(), /*qty*/ pos.getUnits()));
         }
 
         return i;
