@@ -1202,6 +1202,40 @@ public class ReportService implements ReportServiceRemote {
                     + "GROUP BY Jahr, Mitarbeiter "
                     + "ORDER BY Jahr ASC, Mitarbeiter ASC";
             result.getTables().add(getTable(false, "Gebuchte Zeiten pro Mitarbeiter und Jahr", query2, List.of("UmsatzNetto"), params));
+            String query3 = "SELECT "
+                    + "DATE_FORMAT(tsp.time_stopped, '%Y-%m') AS Monat, "
+                    + "CONCAT(tsp.principal, ', ', DATE_FORMAT(MIN(tsp.time_stopped), '%Y-%m')) AS MitarbeiterMonat, "
+                    + "tsp.principal AS Mitarbeiter, "
+                    + "SUM((GREATEST(1, CEILING(TIMESTAMPDIFF(MINUTE, tsp.time_started, tsp.time_stopped)))) / 60) AS Stunden, "
+                    + "SUM((GREATEST(1, CEILING(TIMESTAMPDIFF(MINUTE, tsp.time_started, tsp.time_stopped) / ts.interval_minutes)) * ts.interval_minutes DIV 1) / 60) AS StundenInTaktung, "
+                    + "SUM(GREATEST(1, CEILING(TIMESTAMPDIFF(MINUTE, tsp.time_started, tsp.time_stopped)))) AS Minuten, "
+                    + "SUM(GREATEST(1, CEILING(TIMESTAMPDIFF(MINUTE, tsp.time_started, tsp.time_stopped) / ts.interval_minutes)) * ts.interval_minutes DIV 1) AS MinutenInTaktung, "
+                    + "SUM((GREATEST(1, CEILING(TIMESTAMPDIFF(MINUTE, tsp.time_started, tsp.time_stopped) / ts.interval_minutes)) * ts.interval_minutes DIV 1) / 60 * tsp.unit_price) AS UmsatzNetto "
+                    + "FROM timesheet_positions tsp "
+                    + "LEFT JOIN timesheets ts ON ts.id = tsp.timesheet_id "
+                    + "WHERE tsp.time_stopped >= ? "
+                    + "AND tsp.time_stopped <= ? "
+                    + "AND tsp.invoice IS NULL "
+                    + "GROUP BY Monat, Mitarbeiter "
+                    + "ORDER BY Monat ASC, Mitarbeiter ASC";
+            result.getTables().add(getTable(false, "Nicht abgerechnete Zeiten pro Mitarbeiter und Monat", query3, List.of("UmsatzNetto"), params));
+            String query4 = "SELECT "
+                    + "DATE_FORMAT(tsp.time_stopped, '%Y') AS Jahr, "
+                    + "CONCAT(tsp.principal, ', ', DATE_FORMAT(MIN(tsp.time_stopped), '%Y')) AS MitarbeiterJahr, "
+                    + "tsp.principal AS Mitarbeiter, "
+                    + "SUM((GREATEST(1, CEILING(TIMESTAMPDIFF(MINUTE, tsp.time_started, tsp.time_stopped)))) / 60) AS Stunden, "
+                    + "SUM((GREATEST(1, CEILING(TIMESTAMPDIFF(MINUTE, tsp.time_started, tsp.time_stopped) / ts.interval_minutes)) * ts.interval_minutes DIV 1) / 60) AS StundenInTaktung, "
+                    + "SUM(GREATEST(1, CEILING(TIMESTAMPDIFF(MINUTE, tsp.time_started, tsp.time_stopped)))) AS Minuten, "
+                    + "SUM(GREATEST(1, CEILING(TIMESTAMPDIFF(MINUTE, tsp.time_started, tsp.time_stopped) / ts.interval_minutes)) * ts.interval_minutes DIV 1) AS MinutenInTaktung, "
+                    + "SUM((GREATEST(1, CEILING(TIMESTAMPDIFF(MINUTE, tsp.time_started, tsp.time_stopped) / ts.interval_minutes)) * ts.interval_minutes DIV 1) / 60 * tsp.unit_price) AS UmsatzNetto "
+                    + "FROM timesheet_positions tsp "
+                    + "LEFT JOIN timesheets ts ON ts.id = tsp.timesheet_id "
+                    + "WHERE tsp.time_stopped >= ? "
+                    + "AND tsp.time_stopped <= ? "
+                    + "AND tsp.invoice IS NULL "
+                    + "GROUP BY Jahr, Mitarbeiter "
+                    + "ORDER BY Jahr ASC, Mitarbeiter ASC";
+            result.getTables().add(getTable(false, "Nicht abgerechnete Zeiten pro Mitarbeiter und Jahr", query4, List.of("UmsatzNetto"), params));
         } else if (Reports.RPT_TSHEETS_VALUES_USER.equals(reportId)) {
             String principal = context.getCallerPrincipal().getName();
             Object[] newParams = Arrays.copyOf(params, params.length + 1);
