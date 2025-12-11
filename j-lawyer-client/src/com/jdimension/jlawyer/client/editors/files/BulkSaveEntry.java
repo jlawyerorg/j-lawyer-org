@@ -698,6 +698,7 @@ import javax.swing.JButton;
 import javax.swing.JCheckBoxMenuItem;
 import javax.swing.JLabel;
 import javax.swing.JMenuItem;
+import com.jdimension.jlawyer.ui.StayOpenCheckBoxMenuItem;
 import javax.swing.JOptionPane;
 import javax.swing.JPopupMenu;
 import javax.swing.MenuElement;
@@ -934,6 +935,8 @@ public class BulkSaveEntry extends javax.swing.JPanel {
     }//GEN-LAST:event_togSaveItemStateChanged
 
     private void cmdDocTagsMousePressed(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_cmdDocTagsMousePressed
+        this.popDocTags.putClientProperty("jlawyer.anchorX", evt.getX());
+        this.popDocTags.putClientProperty("jlawyer.anchorY", evt.getY());
         this.popDocTags.show(this.cmdDocTags, evt.getX(), evt.getY());
     }//GEN-LAST:event_cmdDocTagsMousePressed
 
@@ -1053,13 +1056,13 @@ public class BulkSaveEntry extends javax.swing.JPanel {
 
         popup.removeAll();
         for (String t : tagsInUse) {
-            JCheckBoxMenuItem mi = new JCheckBoxMenuItem(t);
+            JCheckBoxMenuItem mi = new StayOpenCheckBoxMenuItem(t);
             mi.setSelected(false);
             popup.add(mi);
 
         }
         button.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons16/material/baseline_label_white_36dp.png")));
-        
+
         for (MenuElement me : popup.getSubElements()) {
             ((JCheckBoxMenuItem) me.getComponent()).addItemListener((ItemEvent arg0) -> {
                 allValues.setText(ComponentUtils.getSelectedPopupMenuItemsAsString(popup));
@@ -1077,6 +1080,12 @@ public class BulkSaveEntry extends javax.swing.JPanel {
                 } else {
                     button.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons16/material/baseline_label_white_36dp.png")));
                 }
+                // Re-show popup at the same anchor position to keep it open without shifting
+                Object ax = popup.getClientProperty("jlawyer.anchorX");
+                Object ay = popup.getClientProperty("jlawyer.anchorY");
+                int anchorX = (ax instanceof Integer) ? ((Integer) ax).intValue() : 0;
+                int anchorY = (ay instanceof Integer) ? ((Integer) ay).intValue() : button.getHeight();
+                popup.show(button, anchorX, anchorY);
             });
         }
 

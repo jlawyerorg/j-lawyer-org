@@ -896,6 +896,12 @@ public class BulkSaveDialog extends javax.swing.JDialog implements NewEventEntry
                     button.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons16/material/baseline_label_white_36dp.png")));
                 }
                 UserSettings.getInstance().setSettingArray(userSettingsKey, al.toArray(new String[al.size()]));
+                // Re-show popup at the same anchor position to keep it open without shifting
+                Object ax = popup.getClientProperty("jlawyer.anchorX");
+                Object ay = popup.getClientProperty("jlawyer.anchorY");
+                int anchorX = (ax instanceof Integer) ? ((Integer) ax).intValue() : 0;
+                int anchorY = (ay instanceof Integer) ? ((Integer) ay).intValue() : button.getHeight();
+                popup.show(button, anchorX, anchorY);
             });
         }
 
@@ -1143,10 +1149,11 @@ public class BulkSaveDialog extends javax.swing.JDialog implements NewEventEntry
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(layout.createSequentialGroup()
                 .addContainerGap()
-                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                    .addComponent(lblCase)
-                    .addComponent(cmdAddCalendarEntry)
-                    .addComponent(lblCalendarEntries, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addComponent(lblCalendarEntries, javax.swing.GroupLayout.Alignment.TRAILING, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                    .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                        .addComponent(lblCase)
+                        .addComponent(cmdAddCalendarEntry, javax.swing.GroupLayout.PREFERRED_SIZE, 32, javax.swing.GroupLayout.PREFERRED_SIZE)))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
                     .addComponent(cmdCaseTags, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
@@ -1321,11 +1328,15 @@ public class BulkSaveDialog extends javax.swing.JDialog implements NewEventEntry
     }//GEN-LAST:event_formComponentResized
 
     private void cmdCaseTagsMousePressed(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_cmdCaseTagsMousePressed
+        this.popCaseTags.putClientProperty("jlawyer.anchorX", evt.getX());
+        this.popCaseTags.putClientProperty("jlawyer.anchorY", evt.getY());
         this.popCaseTags.show(this.cmdCaseTags, evt.getX(), evt.getY());
     }//GEN-LAST:event_cmdCaseTagsMousePressed
 
     private void cmdCommonTagsMousePressed(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_cmdCommonTagsMousePressed
-        this.popCommonDocumentTags.show(this.cmdCaseTags, evt.getX(), evt.getY());
+        this.popCommonDocumentTags.putClientProperty("jlawyer.anchorX", evt.getX());
+        this.popCommonDocumentTags.putClientProperty("jlawyer.anchorY", evt.getY());
+        this.popCommonDocumentTags.show(this.cmdCommonTags, evt.getX(), evt.getY());
     }//GEN-LAST:event_cmdCommonTagsMousePressed
 
     private void cmdTagAllActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdTagAllActionPerformed
