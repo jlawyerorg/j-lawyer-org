@@ -884,7 +884,7 @@ public class ContactsEndpointV2 implements ContactsEndpointLocalV2 {
     }
     
     /**
-     * Deletes a new contact
+     * Deletes an existing contact
      *
      * @param id contact id
      * @response 401 User not authorized
