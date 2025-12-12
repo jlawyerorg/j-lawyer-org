@@ -884,7 +884,7 @@ public class ContactsEndpointV2 implements ContactsEndpointLocalV2 {
     }
     
     /**
-     * Creates a new contact
+     * Deletes a new contact
      *
      * @param id contact id
      * @response 401 User not authorized
@@ -895,7 +895,7 @@ public class ContactsEndpointV2 implements ContactsEndpointLocalV2 {
     @DELETE
     @Produces(MediaType.APPLICATION_JSON + ";charset=utf-8")
     @Path("/{id}/delete")
-    @RolesAllowed({"createAddressRole"})
+    @RolesAllowed({"removeAddressRole"})
     public Response deleteContact(@PathParam("id") String id) {
         try {
 
