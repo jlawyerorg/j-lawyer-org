@@ -8,7 +8,8 @@
       "Bash(openspec show:*)",
       "Bash(openspec archive:*)",
       "WebFetch(domain:bugs.openjdk.org)",
-      "Bash(grep:*)"
+      "Bash(grep:*)",
+      "WebSearch"
     ],
     "deny": [],
     "ask": []
