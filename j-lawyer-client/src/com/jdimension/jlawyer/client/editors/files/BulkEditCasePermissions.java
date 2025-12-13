@@ -723,6 +723,15 @@ public class BulkEditCasePermissions extends javax.swing.JDialog {
                     if (col == 0) {
                         int row = tblGroups.rowAtPoint(p);
                         Boolean newValue = !((Boolean) tblGroups.getValueAt(row, 0));
+                        if (newValue) {
+                            // Validierung: Eigentuemergruppe muss gesetzt sein, um Zugriffsrechte zu aktivieren
+                            if (cmbGroup.getSelectedIndex() == 0 || !(cmbGroup.getSelectedItem() instanceof Group)) {
+                                JOptionPane.showMessageDialog(BulkEditCasePermissions.this,
+                                    "Um Zugriffsrechte zu aktivieren, muss zuerst eine Eigentümergruppe gesetzt werden!",
+                                    "Hinweis", JOptionPane.INFORMATION_MESSAGE);
+                                return;
+                            }
+                        }
                         tblGroups.setValueAt(newValue, row, col);
                     }
                 }
@@ -896,6 +905,14 @@ public class BulkEditCasePermissions extends javax.swing.JDialog {
             if (selected) {
                 allowedGroups.add((Group) this.tblGroups.getValueAt(i, 1));
             }
+        }
+
+        // Validierung: Wenn Zugriffsrechte gesetzt werden, muss auch eine Eigentuemegruppe gewaehlt sein
+        if (!allowedGroups.isEmpty() && group == null) {
+            JOptionPane.showMessageDialog(this,
+                "Um Zugriffsrechte zu setzen, muss auch eine Eigentümergruppe gewählt werden!",
+                "Hinweis", JOptionPane.INFORMATION_MESSAGE);
+            return;
         }
 
         // Lokale finale Variablen fuer SwingWorker
