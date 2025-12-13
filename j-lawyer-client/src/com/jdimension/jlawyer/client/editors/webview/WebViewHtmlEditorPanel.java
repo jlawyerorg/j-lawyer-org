@@ -784,12 +784,30 @@ public class WebViewHtmlEditorPanel extends JPanel implements EditorImplementati
             text = "";
         }
         final String finalText = text;
+
         // Use async version to avoid blocking - insert doesn't need return value
         callEditorAPIAsync("insert", finalText, pos);
-        // Note: Do NOT invalidate cache here - the JavaScript onChange handler
-        // will fire and update the cache with the correct merged content.
-        // Setting cachedEditorContent = null here causes empty emails when
-        // insert() is followed by getText() before onChange fires.
+
+        // CRITICAL for macOS: Trigger cache refresh after insert completes.
+        // Platform.runLater() executes tasks in order, so this will run
+        // AFTER the insert() call above has been processed by JavaScript.
+        // This ensures getText() returns the updated content without waiting
+        // for the 300ms debounced onChange handler.
+        if (SystemUtils.isMacOs()) {
+            Platform.runLater(() -> {
+                try {
+                    if (editorAPI != null && editorReady && !disposed) {
+                        Object result = editorAPI.call("getText");
+                        if (result != null) {
+                            cachedEditorContent = result.toString();
+                            log.debug("Cache refreshed after insert: " + cachedEditorContent.length() + " chars");
+                        }
+                    }
+                } catch (Exception e) {
+                    log.warn("Error refreshing cache after insert: " + e.getMessage());
+                }
+            });
+        }
     }
 
     @Override
