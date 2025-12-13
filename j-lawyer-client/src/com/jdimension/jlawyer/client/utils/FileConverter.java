@@ -935,31 +935,32 @@ public class FileConverter {
                 throw new Exception("Konvertierung nach " + targetFileExtension + " ist nicht verfügbar!");
             }
 
-            File inputFile = new File(url);
-            File outputDir = inputFile.getParentFile();
-            String parentPath = null;
-            if (outputDir != null) {
-                parentPath = outputDir.getAbsolutePath();
-
-                // Remove trailing slash if it exists
-                if (parentPath.endsWith(File.separator)) {
-                    parentPath = parentPath.substring(0, parentPath.length() - 1);
-                }
+            String clientLocation = System.getenv("JLAWYERCLIENTHOME");
+            if (clientLocation == null) {
+                log.error("JLAWYERCLIENTHOME environment variable not set - document conversion not possible");
+                throw new Exception("Umgebungsvariable JLAWYERCLIENTHOME nicht gesetzt - Dokumentkonvertierung nicht möglich.");
             }
 
-            String loExe = findLibreOfficeExecutable();
+            if (!clientLocation.endsWith(File.separator)) {
+                clientLocation = clientLocation + File.separator;
+            }
 
-            Process p = Runtime.getRuntime().exec(new String[]{loExe, "--headless", "--convert-to", targetFileExtension, "--outdir", parentPath, url});
+            Process p = Runtime.getRuntime().exec(new String[]{"python.exe", clientLocation + "unoconv-master\\unoconv", "-f", targetFileExtension, url});
             int exit = p.waitFor();
             if (exit != 0) {
-                log.error("Conversion failed with exit code " + exit);
+                log.error("Conversion failed with exit code " + exit + ", command line was 'python.exe " + clientLocation + "unoconv-master\\unoconv -f " + targetFileExtension + " " + url);
                 throw new Exception("Konvertierung fehlgeschlagen: " + exit);
             }
 
             File org = new File(url);
             String orgName = org.getName();
             String path = url.substring(0, url.indexOf(orgName));
-            return path + orgName.substring(0, orgName.lastIndexOf('.')) + "." + targetFileExtension;
+            String newPath = path + orgName.substring(0, orgName.lastIndexOf('.')) + "." + targetFileExtension;
+            if (!(new File(newPath).exists())) {
+                throw new Exception("Konvertierung kann nur durchgeführt werden wenn kein soffice.exe/soffice.bin läuft!");
+            }
+
+            return newPath;
 
         }
 
@@ -1046,30 +1047,24 @@ public class FileConverter {
                 throw new Exception("Format nicht unterstützt: " + new File(url).getName());
             }
 
-            File inputFile = new File(url);
-            File outputDir = inputFile.getParentFile();
-            String parentPath = null;
-            if (outputDir != null) {
-                parentPath = outputDir.getAbsolutePath();
-
-                // Remove trailing slash if it exists
-                if (parentPath.endsWith(File.separator)) {
-                    parentPath = parentPath.substring(0, parentPath.length() - 1);
-                }
+            String clientLocation = System.getenv("JLAWYERCLIENTHOME");
+            if (clientLocation == null) {
+                log.error("JLAWYERCLIENTHOME environment variable not set - PDF conversion not possible");
+                throw new Exception("Umgebungsvariable JLAWYERCLIENTHOME nicht gesetzt - PDF-Konvertierung nicht möglich.");
             }
 
-            String loExe = findLibreOfficeExecutable();
+            if (!clientLocation.endsWith(File.separator)) {
+                clientLocation = clientLocation + File.separator;
+            }
 
             boolean isRetry = false;
             for (int i = 0; i < 2; i++) {
-                Process p = Runtime.getRuntime().exec(new String[]{loExe, "--headless", "--convert-to", "pdf:writer_pdf_Export:{\n" +
-"  \"SelectPdfVersion\":{\"type\":\"long\",\"value\":3}\n" +
-"}", "--outdir", parentPath, url});
+                Process p = Runtime.getRuntime().exec(new String[]{"python.exe", clientLocation + "unoconv-master\\unoconv", "-eSelectPdfVersion=3", "-f", "pdf", url});
                 int exit = p.waitFor();
 
                 if (exit != 0) {
                     if (isRetry) {
-                        log.error("PDF conversion failed with exit code " + exit);
+                        log.error("PDF conversion failed with exit code " + exit + ", command line was 'python.exe " + clientLocation + "unoconv-master\\unoconv -f pdf " + url);
                         throw new Exception("Konvertierung nach PDF fehlgeschlagen: " + exit);
                     } else {
                         isRetry = true;
@@ -1086,35 +1081,16 @@ public class FileConverter {
                 File org = new File(url);
                 String orgName = org.getName();
                 String path = url.substring(0, url.indexOf(orgName));
-                return path + orgName.substring(0, orgName.lastIndexOf('.')) + ".pdf";
+                String pdf = path + orgName.substring(0, orgName.lastIndexOf('.')) + ".pdf";
+                if (!(new File(pdf).exists())) {
+                    throw new Exception("Konvertierung kann nur durchgeführt werden wenn kein soffice.exe/soffice.bin läuft!");
+                }
+
+                return pdf;
             }
 
             // should never be reached
             throw new Exception("Konvertierung nach PDF fehlgeschlagen (2 Versuche)");
-        }
-
-        private String findLibreOfficeExecutable() throws Exception {
-            // Versuche soffice.exe (Standard unter Windows)
-            try {
-                Process p = Runtime.getRuntime().exec(new String[]{"where", "soffice.exe"});
-                if (p.waitFor() == 0) {
-                    return "soffice.exe";
-                }
-            } catch (Exception e) {
-                // ignorieren, weiter versuchen
-            }
-
-            // Versuche libreoffice.exe
-            try {
-                Process p = Runtime.getRuntime().exec(new String[]{"where", "libreoffice.exe"});
-                if (p.waitFor() == 0) {
-                    return "libreoffice.exe";
-                }
-            } catch (Exception e) {
-                // ignorieren
-            }
-
-            throw new Exception("Weder soffice.exe noch libreoffice.exe im PATH gefunden");
         }
     }
 
