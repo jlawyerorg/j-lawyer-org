@@ -672,9 +672,11 @@ import com.jdimension.jlawyer.client.events.EventBroker;
 import com.jdimension.jlawyer.client.settings.ClientSettings;
 import com.jdimension.jlawyer.client.settings.UserSettings;
 import com.jdimension.jlawyer.client.utils.ComponentUtils;
+import com.jdimension.jlawyer.client.utils.FrameUtils;
 import com.jdimension.jlawyer.client.utils.StringUtils;
 import com.jdimension.jlawyer.client.utils.TableUtils;
 import com.jdimension.jlawyer.client.utils.ThreadUtils;
+import com.jdimension.jlawyer.client.utils.UserUtils;
 import com.jdimension.jlawyer.persistence.ArchiveFileAddressesBean;
 import com.jdimension.jlawyer.persistence.ArchiveFileBean;
 import com.jdimension.jlawyer.persistence.ArchiveFileFormEntriesBean;
@@ -822,6 +824,7 @@ public class QuickArchiveFileSearchPanel extends javax.swing.JPanel implements T
         mnuDeleteSelectedArchiveFiles = new javax.swing.JMenuItem();
         mnuEnableCaseSync = new javax.swing.JMenuItem();
         mnuDisableCaseSync = new javax.swing.JMenuItem();
+        mnuEditPermissions = new javax.swing.JMenuItem();
         popTagFilter = new javax.swing.JPopupMenu();
         popDocumentTagFilter = new javax.swing.JPopupMenu();
         cmdTagFilter = new javax.swing.JButton();
@@ -898,6 +901,15 @@ public class QuickArchiveFileSearchPanel extends javax.swing.JPanel implements T
             }
         });
         popupArchiveFileActions.add(mnuDisableCaseSync);
+
+        mnuEditPermissions.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/agt_forum.png"))); // NOI18N
+        mnuEditPermissions.setText("Gruppen und Berechtigungen bearbeiten");
+        mnuEditPermissions.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                mnuEditPermissionsActionPerformed(evt);
+            }
+        });
+        popupArchiveFileActions.add(mnuEditPermissions);
 
         cmdTagFilter.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons16/favorites.png"))); // NOI18N
         cmdTagFilter.setToolTipText("nach Akten-Etiketten filtern");
@@ -1402,6 +1414,29 @@ public class QuickArchiveFileSearchPanel extends javax.swing.JPanel implements T
         this.duplicateSelectedArchiveFiles(true);
     }//GEN-LAST:event_mnuDuplicateSelectedArchiveFilesWithFormsActionPerformed
 
+    private void mnuEditPermissionsActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_mnuEditPermissionsActionPerformed
+        if (UserUtils.isCurrentUserAdmin()) {
+
+            int[] selectedIndices = this.tblResults.getSelectedRows();
+            Arrays.sort(selectedIndices);
+            ArrayList<String> ids = new ArrayList<>();
+            for (int i = 0; i < selectedIndices.length; i++) {
+                QuickArchiveFileSearchRowIdentifier id = (QuickArchiveFileSearchRowIdentifier) this.tblResults.getValueAt(selectedIndices[i], 0);
+                ids.add(id.getArchiveFileDTO().getId());
+            }
+
+            if (!ids.isEmpty()) {
+                BulkEditCasePermissions dlg = new BulkEditCasePermissions(EditorsRegistry.getInstance().getMainWindow(), true, ids);
+                FrameUtils.centerDialog(dlg, EditorsRegistry.getInstance().getMainWindow());
+                dlg.setVisible(true);
+                this.updateTable();
+            }
+        } else {
+            JOptionPane.showMessageDialog(this, "Für diese Aktion ist die Administrator-Berechtigung notwendig.", com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_HINT, JOptionPane.INFORMATION_MESSAGE);
+        }
+        
+    }//GEN-LAST:event_mnuEditPermissionsActionPerformed
+
     private void toggleCaseSync(boolean enable) {
         int[] selectedIndices = this.tblResults.getSelectedRows();
         Arrays.sort(selectedIndices);
@@ -1467,6 +1502,7 @@ public class QuickArchiveFileSearchPanel extends javax.swing.JPanel implements T
     private javax.swing.JMenuItem mnuDisableCaseSync;
     private javax.swing.JMenuItem mnuDuplicateSelectedArchiveFiles;
     private javax.swing.JMenuItem mnuDuplicateSelectedArchiveFilesWithForms;
+    private javax.swing.JMenuItem mnuEditPermissions;
     private javax.swing.JMenuItem mnuEnableCaseSync;
     private javax.swing.JMenuItem mnuOpenSelectedArchiveFile;
     private javax.swing.JPopupMenu popDocumentTagFilter;
