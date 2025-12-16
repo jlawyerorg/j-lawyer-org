@@ -263,6 +263,8 @@
 
         // Register onChange handler to notify Java of content changes
         // This is critical for macOS where we can't synchronously get content from EDT
+        // NOTE: On macOS JavaFX WebView, this handler may not fire reliably during user input.
+        // The MutationObserver below serves as a reliable backup.
         editor.onChange = function(contents, core) {
             // Debounce to avoid flooding Java with updates during rapid typing
             if (contentChangeTimer) {
@@ -278,6 +280,37 @@
                 }
             }, 300); // 300ms debounce
         };
+
+        // WORKAROUND for macOS JavaFX WebView: SunEditor events don't fire reliably
+        // Use MutationObserver to detect DOM changes directly
+        (function setupMutationObserver() {
+            var editorElement = editor.core.context.element.wysiwyg;
+            if (!editorElement) {
+                console.warn('Could not find editor element for MutationObserver');
+                return;
+            }
+
+            var mutationTimer = null;
+            var observer = new MutationObserver(function(mutations) {
+                // Debounce mutation notifications
+                if (mutationTimer) {
+                    clearTimeout(mutationTimer);
+                }
+                mutationTimer = setTimeout(function() {
+                    var contents = editor.getContents();
+                    if (window.javaConnector && window.javaConnector.onContentChanged) {
+                        window.javaConnector.onContentChanged(contents);
+                    }
+                }, 300);
+            });
+
+            observer.observe(editorElement, {
+                childList: true,
+                subtree: true,
+                characterData: true,
+                characterDataOldValue: true
+            });
+        })();
 
         /**
          * Setup custom paste handler that preserves formatting from clipboard

@@ -873,11 +873,14 @@ public class AddNoteFrame extends javax.swing.JFrame implements AssistantFlowAda
      */
     private void waitForHtmlContentOnMac() {
         if (SystemUtils.isMacOs()) {
+            log.debug("waitForHtmlContentOnMac(): macOS detected, waiting 1000ms for cache sync");
             try {
                 Thread.sleep(1000);
             } catch (InterruptedException e) {
                 Thread.currentThread().interrupt();
+                log.warn("waitForHtmlContentOnMac(): interrupted while waiting");
             }
+            log.debug("waitForHtmlContentOnMac(): wait completed");
         }
     }
 
@@ -1281,7 +1284,9 @@ public class AddNoteFrame extends javax.swing.JFrame implements AssistantFlowAda
     }// </editor-fold>//GEN-END:initComponents
 
     private void cmdCancelActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdCancelActionPerformed
-        if (this.htmlNoteEditor.getText().length() > 200) {
+        String currentContent = this.htmlNoteEditor.getText();
+        log.debug("AddNoteFrame: Cancel clicked, current editor content length: " + currentContent.length() + " chars");
+        if (currentContent.length() > 200) {
             int response = JOptionPane.showConfirmDialog(this, "Notiz verwerfen und Dialog schliessen?", "Notiz verwerfen", JOptionPane.YES_NO_OPTION);
             if (response == JOptionPane.NO_OPTION) {
                 return;
@@ -1309,8 +1314,12 @@ public class AddNoteFrame extends javax.swing.JFrame implements AssistantFlowAda
         try {
             JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
             ArchiveFileServiceRemote afs = locator.lookupArchiveFileServiceRemote();
+            log.debug("AddNoteFrame: Saving note '" + fileName + "'");
             waitForHtmlContentOnMac();
-            ArchiveFileDocumentsBean db = afs.addDocument(this.aFile.getId(), FileUtils.sanitizeFileName(fileName), this.htmlNoteEditor.getText().getBytes(), "", null);
+            String contentToSave = this.htmlNoteEditor.getText();
+            log.debug("AddNoteFrame: Saving " + contentToSave.length() + " chars for note '" + fileName + "'");
+            ArchiveFileDocumentsBean db = afs.addDocument(this.aFile.getId(), FileUtils.sanitizeFileName(fileName), contentToSave.getBytes(), "", null);
+            log.debug("AddNoteFrame: Note '" + fileName + "' saved successfully");
             EventBroker eb = EventBroker.getInstance();
             eb.publishEvent(new DocumentAddedEvent(db));
 

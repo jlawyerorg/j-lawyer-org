@@ -695,13 +695,16 @@ public class WebViewHtmlEditorPanel extends JPanel implements EditorImplementati
     public String getText() {
         // CRITICAL: On macOS, calling blocking methods from EDT causes deadlock.
         // Check this FIRST, before any potentially blocking code.
-        // The cache is kept up-to-date by JavaScript's onChange handler (300ms debounce).
+        // The cache is kept up-to-date by JavaScript's onChange handler and MutationObserver (300ms debounce).
         if (SystemUtils.isMacOs() && SwingUtilities.isEventDispatchThread()) {
             log.debug("getText() called from EDT on macOS - returning cached content to avoid deadlock");
+            log.debug("getText() editorReady=" + editorReady + ", disposed=" + disposed + ", cachedEditorContent=" + (cachedEditorContent != null ? cachedEditorContent.length() + " chars" : "null") + ", pendingContent=" + (pendingContent != null ? pendingContent.length() + " chars" : "null"));
             if (cachedEditorContent != null) {
+                log.debug("getText() returning cachedEditorContent: " + cachedEditorContent.length() + " chars");
                 return cachedEditorContent;
             }
             if (pendingContent != null) {
+                log.debug("getText() returning pendingContent: " + pendingContent.length() + " chars");
                 return pendingContent;
             }
             log.warn("getText() on macOS/EDT with no cached content - returning empty string. This may indicate a race condition.");
@@ -711,24 +714,32 @@ public class WebViewHtmlEditorPanel extends JPanel implements EditorImplementati
         // If panel is disposed, return cached/pending content or empty string to avoid blocking
         // This prevents TimeoutException during UI teardown
         if (disposed) {
+            log.debug("getText() panel disposed, returning cached/pending content");
             if (cachedEditorContent != null) {
+                log.debug("getText() disposed, returning cachedEditorContent: " + cachedEditorContent.length() + " chars");
                 return cachedEditorContent;
             }
+            log.debug("getText() disposed, returning pendingContent: " + (pendingContent != null ? pendingContent.length() + " chars" : "null"));
             return pendingContent != null ? pendingContent : "";
         }
 
         // If editor is not ready yet, return pending content if available
         // This prevents data loss when the panel is closed before editor initialization completes
         if (!editorReady) {
+            log.debug("getText() editor not ready, editorReady=" + editorReady);
             if (pendingContent != null) {
+                log.debug("getText() editor not ready, returning pendingContent: " + pendingContent.length() + " chars");
                 return pendingContent;
             }
             // Editor not ready and no pending content - wait for it
+            log.debug("getText() editor not ready and no pending content - waiting for editor");
             waitForEditor();
         }
 
+        log.debug("getText() calling editorAPI.getText() synchronously (non-macOS or non-EDT)");
         Object result = callEditorAPI("getText");
         String text = result != null ? result.toString() : "";
+        log.debug("getText() editorAPI.getText() returned " + text.length() + " chars");
         // Update cache with fresh content, but only if we got actual content.
         // Prevents overwriting valid cache with empty string on transient failures.
         if (text != null && !text.isEmpty()) {
@@ -739,11 +750,13 @@ public class WebViewHtmlEditorPanel extends JPanel implements EditorImplementati
 
     @Override
     public void setText(String text) {
+        log.debug("setText() called with " + (text != null ? text.length() : 0) + " chars, editorReady=" + editorReady);
         if (text == null) {
             text = "";
         }
 
         final String finalText = text;
+        log.debug("setText() setting cachedEditorContent to " + finalText.length() + " chars");
 
         // Update cache immediately so getText() returns correct value on macOS
         this.cachedEditorContent = finalText;
@@ -751,10 +764,12 @@ public class WebViewHtmlEditorPanel extends JPanel implements EditorImplementati
         if (!editorReady) {
             // Store content to set when editor becomes ready (non-blocking)
             this.pendingContent = finalText;
+            log.debug("setText() editor not ready, stored as pendingContent");
             return;
         }
 
         // Editor is ready, set content asynchronously (non-blocking)
+        log.debug("setText() editor ready, calling editorAPI.setText asynchronously");
         callEditorAPIAsync("setText", finalText);
 
         // Force UI update after setting content to ensure it becomes visible
@@ -1143,7 +1158,7 @@ public class WebViewHtmlEditorPanel extends JPanel implements EditorImplementati
          */
         public void onEditorReady() {
             editorReady = true;
-            log.info("SunEditor is ready");
+            log.debug("SunEditor is ready, pendingContent=" + (pendingContent != null ? pendingContent.length() + " chars" : "null") + ", pendingCaretPosition=" + pendingCaretPosition + ", cachedEditorContent=" + (cachedEditorContent != null ? cachedEditorContent.length() + " chars" : "null"));
 
             // Apply any pending content that was set before editor was ready
             // Note: pendingCaretPosition is applied AFTER content is set (in same Platform.runLater block)
@@ -1157,16 +1172,17 @@ public class WebViewHtmlEditorPanel extends JPanel implements EditorImplementati
                 Platform.runLater(() -> {
                     try {
                         if (contentToSet != null && editorAPI != null) {
-                            log.info("Applying pending content (" + contentToSet.length() + " chars)");
+                            log.debug("onEditorReady: Applying pending content (" + contentToSet.length() + " chars)");
                             editorAPI.call("setText", contentToSet);
                             // Update cache immediately after setting content
                             // This ensures getText() returns correct value on macOS before onChange fires
                             cachedEditorContent = contentToSet;
+                            log.debug("onEditorReady: Updated cachedEditorContent to " + cachedEditorContent.length() + " chars");
                         }
                         // Caret position is set after content in the same runLater block,
                         // ensuring sequential execution on the JavaFX thread
                         if (caretToSet >= 0 && editorAPI != null) {
-                            log.info("Applying pending caret position: " + caretToSet);
+                            log.debug("onEditorReady: Applying pending caret position: " + caretToSet);
                             editorAPI.call("setCaretPosition", caretToSet);
                         }
                     } catch (Exception e) {
@@ -1182,11 +1198,11 @@ public class WebViewHtmlEditorPanel extends JPanel implements EditorImplementati
                             Object result = editorAPI.call("getText");
                             if (result != null) {
                                 cachedEditorContent = result.toString();
-                                log.debug("Initialized content cache on editor ready: " + cachedEditorContent.length() + " chars");
+                                log.debug("onEditorReady: Initialized content cache on editor ready: " + cachedEditorContent.length() + " chars");
                             }
                         }
                     } catch (Exception e) {
-                        log.debug("Could not initialize content cache on editor ready", e);
+                        log.debug("onEditorReady: Could not initialize content cache on editor ready", e);
                     }
                 });
             }
@@ -1250,7 +1266,7 @@ public class WebViewHtmlEditorPanel extends JPanel implements EditorImplementati
          */
         public void onContentChanged(String content) {
             cachedEditorContent = content;
-            log.debug("Editor content cache updated: " + (content != null ? content.length() : 0) + " chars");
+            log.debug("onContentChanged: Editor content cache updated: " + (content != null ? content.length() : 0) + " chars");
         }
 
         /**
@@ -1395,7 +1411,7 @@ public class WebViewHtmlEditorPanel extends JPanel implements EditorImplementati
         }
 
         disposed = true;
-        log.info("Disposing WebViewHtmlEditorPanel - cleaning up resources");
+        log.debug("Disposing WebViewHtmlEditorPanel - cleaning up resources");
 
         editorReady = false;
 
