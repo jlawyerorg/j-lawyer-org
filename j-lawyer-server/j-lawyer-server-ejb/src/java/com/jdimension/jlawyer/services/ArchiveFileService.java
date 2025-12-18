@@ -1087,12 +1087,13 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
         ArrayList<ArchiveFileBean> list = new ArrayList<>();
         try {
             con = utils.getConnection();
-            st = con.prepareStatement("select distinct(t1.id) from (select id from cases where ucase(name) like ? or ucase(fileNumber) like ? or ucase(filenumberext) like ? or ucase(reason) like ? or ucase(custom1) like ? or ucase(custom2) like ? or ucase(custom3) like ? or ucase(subjectField) like ? or ucase(lawyer) like ? or ucase(assistant) like ? union select archiveFileKey as id from case_contacts where ucase(reference) like ?) t1");
+            // ? LIKE CONCAT(ucase(fileNumber), '%') --> user may search by full filenumber including extension, therefore need to match by the search term, beginning with the filenumber
+            st = con.prepareStatement("select distinct(t1.id) from (select id from cases where ucase(name) like ? or ucase(fileNumber) like ? or ucase(filenumberext) like ? or ? LIKE CONCAT(ucase(fileNumber), '%') or ucase(reason) like ? or ucase(custom1) like ? or ucase(custom2) like ? or ucase(custom3) like ? or ucase(subjectField) like ? or ucase(lawyer) like ? or ucase(assistant) like ? union select archiveFileKey as id from case_contacts where ucase(reference) like ?) t1");
             String wildCard = "%" + StringUtils.germanToUpperCase(query) + "%";
             st.setString(1, wildCard);
             st.setString(2, wildCard);
             st.setString(3, wildCard);
-            st.setString(4, wildCard);
+            st.setString(4, StringUtils.germanToUpperCase(query));
             st.setString(5, wildCard);
             st.setString(6, wildCard);
             st.setString(7, wildCard);
@@ -1100,6 +1101,7 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
             st.setString(9, wildCard);
             st.setString(10, wildCard);
             st.setString(11, wildCard);
+            st.setString(12, wildCard);
             rs = st.executeQuery();
 
             while (rs.next()) {
