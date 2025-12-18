@@ -121,6 +121,17 @@ public class WebViewHtmlEditorPanel extends JPanel implements EditorImplementati
     private JSObject editorAPI;
 
     /**
+     * Strong reference to the JavaScriptConnector instance.
+     * <p>
+     * <b>CRITICAL:</b> This reference MUST be kept to prevent garbage collection!
+     * JavaFX WebView's {@code setMember()} does NOT hold a strong reference to the Java object.
+     * If this object is garbage collected, the JavaScript-to-Java bridge breaks silently,
+     * causing all calls from JavaScript (like onChange, onContentChanged) to fail.
+     * </p>
+     */
+    private JavaScriptConnector javaScriptConnector;
+
+    /**
      * Flag indicating whether the SunEditor has finished initialization.
      * Set to true when {@link JavaScriptConnector#onEditorReady()} is called from JavaScript.
      * Volatile to ensure visibility across threads.
@@ -129,6 +140,10 @@ public class WebViewHtmlEditorPanel extends JPanel implements EditorImplementati
 
     /** Flag indicating whether this panel has been disposed. */
     private volatile boolean disposed = false;
+
+    /** Unique instance ID for debugging multiple panel instances. */
+    private static int instanceCounter = 0;
+    private final int instanceId;
 
     /** Optional callback to execute when the editor becomes ready. */
     private Runnable onEditorReadyCallback = null;
@@ -227,6 +242,10 @@ public class WebViewHtmlEditorPanel extends JPanel implements EditorImplementati
      */
     public WebViewHtmlEditorPanel() {
         super(new BorderLayout());
+
+        // Assign unique instance ID for debugging
+        instanceId = ++instanceCounter;
+        log.info("[Instance " + instanceId + "] Creating new WebViewHtmlEditorPanel");
 
         // Create JFXPanel (bridge between Swing and JavaFX)
         jfxPanel = new JFXPanel();
@@ -444,9 +463,15 @@ public class WebViewHtmlEditorPanel extends JPanel implements EditorImplementati
             }
 
             // Set up Java callback connector
-            window.setMember("javaConnector", new JavaScriptConnector());
+            // CRITICAL: Store reference in instance field to prevent garbage collection!
+            // Without this, the GC may collect the connector, breaking the JS-to-Java bridge.
+            javaScriptConnector = new JavaScriptConnector();
+            window.setMember("javaConnector", javaScriptConnector);
 
-            log.info("SunEditor loaded successfully");
+            // Pass instance ID to JavaScript for debugging
+            webEngine.executeScript("window._javaInstanceId = " + instanceId);
+
+            log.info("[Instance " + instanceId + "] SunEditor loaded successfully");
 
             // Check if editor.onload already fired before javaConnector was set
             // This handles the race condition where SunEditor initializes before
@@ -454,7 +479,7 @@ public class WebViewHtmlEditorPanel extends JPanel implements EditorImplementati
             Object jsEditorReady = webEngine.executeScript("window.editorReady === true");
             if (Boolean.TRUE.equals(jsEditorReady) && !editorReady) {
                 log.info("Editor was already ready, triggering onEditorReady manually");
-                new JavaScriptConnector().onEditorReady();
+                javaScriptConnector.onEditorReady();
             } else if (!editorReady) {
                 // Schedule a fallback check in case editor.onload doesn't fire
                 // This can happen if SunEditor initialization fails silently
@@ -1266,7 +1291,7 @@ public class WebViewHtmlEditorPanel extends JPanel implements EditorImplementati
          */
         public void onContentChanged(String content) {
             cachedEditorContent = content;
-            log.debug("onContentChanged: Editor content cache updated: " + (content != null ? content.length() : 0) + " chars");
+            log.info("onContentChanged: Editor content cache updated: " + (content != null ? content.length() : 0) + " chars");
         }
 
         /**
@@ -1411,7 +1436,7 @@ public class WebViewHtmlEditorPanel extends JPanel implements EditorImplementati
         }
 
         disposed = true;
-        log.debug("Disposing WebViewHtmlEditorPanel - cleaning up resources");
+        log.info("[Instance " + instanceId + "] Disposing WebViewHtmlEditorPanel - cleaning up resources");
 
         editorReady = false;
 
@@ -1424,17 +1449,37 @@ public class WebViewHtmlEditorPanel extends JPanel implements EditorImplementati
 
                     // Execute JavaScript cleanup BEFORE clearing content
                     try {
-                        // SunEditor's destroy method - check if editor and method exist
-                        webEngine.executeScript(
-                            "if (window.editor && typeof window.editor.destroy === 'function') { " +
-                            "  window.editor.destroy(); " +
-                            "  window.editor = null; " +
-                            "} " +
-                            "if (window.editorAPI) { window.editorAPI = null; }"
+                        // Clear heartbeat interval, disconnect MutationObserver, and destroy SunEditor
+                        log.info("Executing JavaScript cleanup...");
+                        Object result = webEngine.executeScript(
+                            "(function() { " +
+                            "  var cleaned = []; " +
+                            "  if (window._heartbeatInterval) { " +
+                            "    clearInterval(window._heartbeatInterval); " +
+                            "    window._heartbeatInterval = null; " +
+                            "    cleaned.push('heartbeat'); " +
+                            "  } " +
+                            "  if (window._mutationObserver) { " +
+                            "    window._mutationObserver.disconnect(); " +
+                            "    window._mutationObserver = null; " +
+                            "    cleaned.push('mutationObserver'); " +
+                            "  } " +
+                            "  if (window.editor && typeof window.editor.destroy === 'function') { " +
+                            "    window.editor.destroy(); " +
+                            "    window.editor = null; " +
+                            "    cleaned.push('editor'); " +
+                            "  } " +
+                            "  if (window.editorAPI) { " +
+                            "    window.editorAPI = null; " +
+                            "    cleaned.push('editorAPI'); " +
+                            "  } " +
+                            "  return 'Cleaned: ' + (cleaned.length > 0 ? cleaned.join(', ') : 'nothing'); " +
+                            "})()"
                         );
+                        log.info("JavaScript cleanup result: " + result);
                     } catch (Exception e) {
                         // Ignore - page might already be unloaded or editor not initialized
-                        log.debug("JavaScript cleanup skipped: " + e.getMessage());
+                        log.info("JavaScript cleanup skipped: " + e.getMessage());
                     }
 
                     // Clear the page content to free memory
@@ -1453,6 +1498,7 @@ public class WebViewHtmlEditorPanel extends JPanel implements EditorImplementati
                 webEngine = null;
                 webView = null;
                 editorAPI = null;
+                javaScriptConnector = null;
 
             } catch (Exception e) {
                 log.error("Error during JavaFX cleanup", e);

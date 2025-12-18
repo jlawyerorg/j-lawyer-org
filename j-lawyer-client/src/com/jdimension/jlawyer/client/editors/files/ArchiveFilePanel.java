@@ -1646,8 +1646,10 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
     }
 
     public void setArchiveFileDTO(ArchiveFileBean inDto, String selectDocumentWithFileName) {
+        log.info("[AKTE-LOAD] setArchiveFileDTO START: " + (inDto != null ? inDto.getFileNumber() : "null"));
         this.dto = inDto;
         this.lastPreviewDocId=null;
+        log.info("[AKTE-LOAD] setArchiveFileDTO: DTO zugewiesen");
 
         if (this.dto != null) {
             this.cmdEditCaseNumber.setEnabled(UserUtils.isCurrentUserAdmin());
@@ -1679,6 +1681,7 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
         this.clearDocumentPreview("");
 
         this.lblHeaderInfo.setText(this.dto.getFileNumber() + " " + StringUtils.nonEmpty(this.dto.getName()) + " " + StringUtils.nonEmpty(this.dto.getReason()));
+        log.info("[AKTE-LOAD] setArchiveFileDTO: Header-Info gesetzt");
 
         this.txtClaimNumber.setText(dto.getClaimNumber());
         this.txtClaimValue.setText(this.currencyFormat.format(dto.getClaimValue()));
@@ -1702,6 +1705,7 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
         this.newEventPanel.setReviewAssignees(dto.getAssistant(), dto.getLawyer());
         this.cmbSubjectField.setSelectedItem(dto.getSubjectField());
         this.txtReason.setText(dto.getReason());
+        log.info("[AKTE-LOAD] setArchiveFileDTO: Basis-Felder befuellt");
 
         this.txtCustom1.setText(dto.getCustom1());
         this.txtCustom2.setText(dto.getCustom2());
@@ -1718,6 +1722,7 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
                 this.setReadOnly(this.readOnly, false);
             }
         }
+        log.info("[AKTE-LOAD] setArchiveFileDTO: ReadOnly-Status gesetzt");
 
         ThreadUtils.setWaitCursor(this);
 
@@ -1734,6 +1739,7 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
 
         // clear the document preview panel
         this.updateDocumentPreview();
+        log.info("[AKTE-LOAD] setArchiveFileDTO: GUI-Vorbereitung abgeschlossen, starte ArchiveFileDetailLoadAction");
 
         ProgressIndicator pi = new ProgressIndicator(EditorsRegistry.getInstance().getMainWindow(), true);
         pi.setShowCancelButton(false);
@@ -1750,6 +1756,7 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
         };
 
         TagUtils.populateTags(ClientSettings.getInstance().getDocumentTagsInUse(), this.cmdDocumentTagFilter, this.popDocumentTagFilter, tagAction);
+        log.info("[AKTE-LOAD] setArchiveFileDTO ENDE: ArchiveFileDetailLoadAction gestartet");
 
     }
 

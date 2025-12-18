@@ -266,17 +266,23 @@
         // NOTE: On macOS JavaFX WebView, this handler may not fire reliably during user input.
         // The MutationObserver below serves as a reliable backup.
         editor.onChange = function(contents, core) {
+            log('[onChange] SunEditor onChange fired, content length: ' + (contents ? contents.length : 0));
             // Debounce to avoid flooding Java with updates during rapid typing
             if (contentChangeTimer) {
                 clearTimeout(contentChangeTimer);
             }
             contentChangeTimer = setTimeout(function() {
+                log('[onChange] Debounce timer expired, notifying Java');
                 if (window.javaConnector && window.javaConnector.onContentChanged) {
                     try {
                         window.javaConnector.onContentChanged(contents);
+                        log('[onChange] Successfully called javaConnector.onContentChanged');
                     } catch (e) {
+                        log('[onChange] ERROR calling javaConnector.onContentChanged: ' + e);
                         console.error('Error notifying Java of content change:', e);
                     }
+                } else {
+                    log('[onChange] javaConnector.onContentChanged not available');
                 }
             }, 300); // 300ms debounce
         };
@@ -286,20 +292,50 @@
         (function setupMutationObserver() {
             var editorElement = editor.core.context.element.wysiwyg;
             if (!editorElement) {
+                log('[MutationObserver] ERROR: Could not find editor element');
                 console.warn('Could not find editor element for MutationObserver');
                 return;
             }
+            log('[MutationObserver] Setting up observer on editor element: ' + editorElement.tagName + '#' + editorElement.id);
+
+            // Store reference globally for debugging
+            window._mutationObserver = null;
+            window._observedElement = editorElement;
 
             var mutationTimer = null;
+            var lastReportedLength = 0;
+            var mutationCount = 0;
             var observer = new MutationObserver(function(mutations) {
+                mutationCount++;
+                // Log mutation types for debugging
+                var mutationTypes = mutations.map(function(m) {
+                    return m.type + (m.type === 'characterData' ? '(' + (m.target.textContent || '').length + ')' : '');
+                }).join(', ');
+                log('[MutationObserver] #' + mutationCount + ' Detected ' + mutations.length + ' mutation(s): ' + mutationTypes);
+
                 // Debounce mutation notifications
                 if (mutationTimer) {
                     clearTimeout(mutationTimer);
                 }
                 mutationTimer = setTimeout(function() {
                     var contents = editor.getContents();
+                    var domContent = editorElement.innerHTML;
+                    var contentLen = contents ? contents.length : 0;
+                    var domLen = domContent ? domContent.length : 0;
+
+                    // Only log if content actually changed
+                    if (contentLen !== lastReportedLength) {
+                        log('[MutationObserver] Content CHANGED: ' + lastReportedLength + ' -> ' + contentLen + ' (DOM innerHTML: ' + domLen + ')');
+                        lastReportedLength = contentLen;
+                    } else {
+                        log('[MutationObserver] Content UNCHANGED at ' + contentLen + ' (DOM innerHTML: ' + domLen + ')');
+                    }
+
                     if (window.javaConnector && window.javaConnector.onContentChanged) {
                         window.javaConnector.onContentChanged(contents);
+                        log('[MutationObserver] Successfully called javaConnector.onContentChanged');
+                    } else {
+                        log('[MutationObserver] javaConnector.onContentChanged not available');
                     }
                 }, 300);
             });
@@ -310,6 +346,36 @@
                 characterData: true,
                 characterDataOldValue: true
             });
+            window._mutationObserver = observer;
+            log('[MutationObserver] Observer started');
+
+            // Heartbeat: Check every 5 seconds if observer is still working
+            // Store interval handle globally so it can be cleared on dispose
+            window._heartbeatInterval = setInterval(function() {
+                var currentElement = editor.core.context.element.wysiwyg;
+                var elementChanged = (currentElement !== window._observedElement);
+                var elementInDom = document.body.contains(window._observedElement);
+                var instanceId = window._javaInstanceId || '?';
+                log('[Instance ' + instanceId + '] HEARTBEAT - Total mutations: ' + mutationCount +
+                    ', Element changed: ' + elementChanged +
+                    ', Element in DOM: ' + elementInDom +
+                    ', javaConnector available: ' + !!(window.javaConnector && window.javaConnector.log));
+
+                // If element changed, re-attach observer
+                if (elementChanged && currentElement) {
+                    log('[MutationObserver] WARNING: Editor element changed! Re-attaching observer...');
+                    observer.disconnect();
+                    window._observedElement = currentElement;
+                    editorElement = currentElement;
+                    observer.observe(currentElement, {
+                        childList: true,
+                        subtree: true,
+                        characterData: true,
+                        characterDataOldValue: true
+                    });
+                    log('[MutationObserver] Observer re-attached to new element');
+                }
+            }, 5000);
         })();
 
         /**

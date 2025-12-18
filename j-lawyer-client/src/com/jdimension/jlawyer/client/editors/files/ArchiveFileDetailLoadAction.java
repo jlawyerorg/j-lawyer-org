@@ -789,6 +789,7 @@ public class ArchiveFileDetailLoadAction extends ProgressableAction {
 
     @Override
     public boolean execute() throws Exception {
+        log.info("[AKTE-LOAD] execute START: archiveFileKey=" + this.archiveFileKey);
 
         this.progress("Lade Akte...");
 
@@ -811,15 +812,18 @@ public class ArchiveFileDetailLoadAction extends ProgressableAction {
 
         ClientSettings settings = ClientSettings.getInstance();
         JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
+        log.info("[AKTE-LOAD] execute: ServiceLocator initialisiert");
 
         // Lookup services once
         ArchiveFileServiceRemote fileService = locator.lookupArchiveFileServiceRemote();
+        log.info("[AKTE-LOAD] execute: ArchiveFileService gesucht");
 
         // Create thread pool for parallel execution
         ExecutorService executor = Executors.newFixedThreadPool(8);
 
         try {
             this.progress("Lade Akte: Starte parallele Abfragen...");
+            log.info("[AKTE-LOAD] execute: Starte parallele Server-Abfragen");
 
             // Submit all independent server calls in parallel
             Future<List<InstantMessage>> futureMessages = executor.submit(() ->
@@ -888,36 +892,56 @@ public class ArchiveFileDetailLoadAction extends ProgressableAction {
 
             // Wait for and retrieve all results
             this.progress("Lade Akte: Empfange Daten...");
+            log.info("[AKTE-LOAD] execute: Warte auf parallele Abfragen...");
 
             List<InstantMessage> instantMessages = futureMessages.get();
+            log.info("[AKTE-LOAD] execute: Messages empfangen");
             Collection<Group> allGroups = futureAllGroups.get();
+            log.info("[AKTE-LOAD] execute: AllGroups empfangen");
             Collection<Group> userGroups = futureUserGroups.get();
+            log.info("[AKTE-LOAD] execute: UserGroups empfangen");
             Collection<ArchiveFileGroupsBean> allowedGroups = futureAllowedGroups.get();
+            log.info("[AKTE-LOAD] execute: AllowedGroups empfangen");
             addressesForCase = futureAddresses.get();
+            log.info("[AKTE-LOAD] execute: Addresses empfangen");
             involvementForCase = futureInvolvement.get();
+            log.info("[AKTE-LOAD] execute: Involvement empfangen");
             events = futureEvents.get();
+            log.info("[AKTE-LOAD] execute: Events empfangen");
             invoices = futureInvoices.get();
+            log.info("[AKTE-LOAD] execute: Invoices empfangen");
             ledgers = futureLedgers.get();
+            log.info("[AKTE-LOAD] execute: Ledgers empfangen");
             payments = futurePayments.get();
+            log.info("[AKTE-LOAD] execute: Payments empfangen");
             timesheets = futureTimesheets.get();
+            log.info("[AKTE-LOAD] execute: Timesheets empfangen");
             documents = futureDocuments.get();
+            log.info("[AKTE-LOAD] execute: Documents empfangen");
             allTemplates = futureTemplates.get();
+            log.info("[AKTE-LOAD] execute: Templates empfangen");
             tags = futureTags.get();
+            log.info("[AKTE-LOAD] execute: Tags empfangen");
             allPartyTypes = futurePartyTypes.get();
+            log.info("[AKTE-LOAD] execute: PartyTypes empfangen");
             syncSettings = futureSyncSettings.get();
+            log.info("[AKTE-LOAD] execute: SyncSettings empfangen - alle Server-Daten erhalten");
 
             // Shutdown executor
             executor.shutdown();
 
             this.progress("Lade Akte: Verarbeite Sofortnachrichten...");
+            log.info("[AKTE-LOAD] execute: Beginne GUI-Aktualisierung - Sofortnachrichten");
             this.pnlMessages.removeAll();
             SwingUtilities.invokeLater(() -> {
                 for(InstantMessage im: instantMessages) {
                     this.owner.addMessageToView(im);
                 }
             });
+            log.info("[AKTE-LOAD] execute: Sofortnachrichten verarbeitet");
 
             this.progress("Lade Akte: Verarbeite Berechtigungen...");
+            log.info("[AKTE-LOAD] execute: Verarbeite Berechtigungen");
             boolean userIsInOwnerGroup = false;
             if (this.caseDto.getGroup() == null) {
                 userIsInOwnerGroup = true;
@@ -965,8 +989,10 @@ public class ArchiveFileDetailLoadAction extends ProgressableAction {
             this.tblGroups.setEnabled(userIsInOwnerGroup && !this.readOnly && !this.caseDto.isArchived());
             this.cmbGroups.setEnabled(userIsInOwnerGroup && !this.readOnly && !this.caseDto.isArchived());
             ComponentUtils.autoSizeColumns(tblGroups);
+            log.info("[AKTE-LOAD] execute: Berechtigungen verarbeitet");
 
             this.progress("Lade Akte: Verarbeite Belege und Zeiterfassung...");
+            log.info("[AKTE-LOAD] execute: Verarbeite Belege und Zeiterfassung");
             HashMap <String,Invoice> docToInvoice=new HashMap<>();
             this.invoicesPanel.removeAll();
             for(Invoice inv: invoices) {
@@ -995,8 +1021,10 @@ public class ArchiveFileDetailLoadAction extends ProgressableAction {
                 this.timesheetsPanel.add(tp);
             }
             this.owner.checkTimesheetLimits();
+            log.info("[AKTE-LOAD] execute: Belege und Zeiterfassung verarbeitet");
 
             this.progress("Lade Akte: Verarbeite Dokumente...");
+            log.info("[AKTE-LOAD] execute: Verarbeite Dokumente");
             List<String> folderIds = new ArrayList<>();
             if (this.caseDto.getRootFolder() != null) {
                 folderIds = this.caseDto.getRootFolder().getAllFolderIds();
@@ -1014,9 +1042,10 @@ public class ArchiveFileDetailLoadAction extends ProgressableAction {
                 allTemplateNames.add(t.getName());
             }
             this.caseFolders.setFolderTemplateNames(allTemplateNames);
+            log.info("[AKTE-LOAD] execute: Dokumente verarbeitet");
 
         } catch (Exception ex) {
-            log.error("Error connecting to server", ex);
+            log.error("[AKTE-LOAD] execute FEHLER bei Server-Kommunikation oder GUI-Update", ex);
             executor.shutdownNow();
             JOptionPane.showMessageDialog(this.owner, ex.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
             return false;
@@ -1031,15 +1060,19 @@ public class ArchiveFileDetailLoadAction extends ProgressableAction {
             sArchivedSince = "(seit: " + dateTimeFormat.format(caseDto.getDateArchived()) + ")";
         }
         ThreadUtils.setLabel(this.lblArchivedSince, sArchivedSince);
-        
+        log.info("[AKTE-LOAD] execute: History-Tabelle und Archiv-Label gesetzt");
+
         this.progress("Aktualisiere Dialog: Dokumente...");
+        log.info("[AKTE-LOAD] execute: Aktualisiere Dialog - Dokumente");
         if (documents != null && !documents.isEmpty()) {
 
             ArchiveFilePanel.updateFavoriteDocuments(caseDto, readOnly, documents, popDocumentFavorites);
 
         }
-        
+        log.info("[AKTE-LOAD] execute: Favoriten-Dokumente aktualisiert");
+
         this.progress("Aktualisiere Dialog: Beteiligte...");
+        log.info("[AKTE-LOAD] execute: Aktualisiere Dialog - Beteiligte");
 
         this.contactsForCasePanel.removeAll();
         int i = 0;
@@ -1064,8 +1097,10 @@ public class ArchiveFileDetailLoadAction extends ProgressableAction {
             i++;
 
         }
-        
+        log.info("[AKTE-LOAD] execute: Beteiligte verarbeitet, Anzahl: " + i);
+
         this.progress("Aktualisiere Dialog: Kalender...");
+        log.info("[AKTE-LOAD] execute: Aktualisiere Dialog - Kalender");
         String[] colNames3 = ArchiveFileReviewReasonsTableModel.getColumnNames();
         ArchiveFileReviewReasonsTableModel model3 = new ArchiveFileReviewReasonsTableModel(colNames3, 0);
         this.tblReviews.setModel(model3);
@@ -1085,8 +1120,10 @@ public class ArchiveFileDetailLoadAction extends ProgressableAction {
         list.add(new RowSorter.SortKey(0, SortOrder.DESCENDING));
         rtrs.setSortKeys(list);
         rtrs.sort();
-        
+        log.info("[AKTE-LOAD] execute: Kalender verarbeitet");
+
         this.progress("Aktualisiere Dialog: Etiketten...");
+        log.info("[AKTE-LOAD] execute: Aktualisiere Dialog - Etiketten");
         ArrayList<String> activeTags = new ArrayList<>();
         this.tagPanel.removeAll();
         this.documentTagPanel.removeAll();
@@ -1125,14 +1162,16 @@ public class ArchiveFileDetailLoadAction extends ProgressableAction {
         ThreadUtils.repaintComponent(tagPanel);
 
         this.owner.updateDocumentTagsOverview();
+        log.info("[AKTE-LOAD] execute: Etiketten verarbeitet");
 
         SwingUtilities.invokeLater(
                 new Thread(() -> {
                     ComponentUtils.autoSizeColumns(historyTarget);
                     ComponentUtils.autoSizeColumns(tblReviews);
         }));
-        
+
         this.progress("Aktualisiere Dialog: Dokumentselektion...");
+        log.info("[AKTE-LOAD] execute: Aktualisiere Dialog - Dokumentselektion");
         if (selectDocumentWithFileName != null) {
             SwingUtilities.invokeLater(
                     new Thread(() -> {
@@ -1156,6 +1195,7 @@ public class ArchiveFileDetailLoadAction extends ProgressableAction {
         
         EditorsRegistry.getInstance().clearStatus(true);
         ThreadUtils.setDefaultCursor(this.owner);
+        log.info("[AKTE-LOAD] execute ENDE: Akte erfolgreich geladen");
 
         return true;
 
