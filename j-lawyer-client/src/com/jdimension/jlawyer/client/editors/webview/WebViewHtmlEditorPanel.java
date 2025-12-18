@@ -245,7 +245,7 @@ public class WebViewHtmlEditorPanel extends JPanel implements EditorImplementati
 
         // Assign unique instance ID for debugging
         instanceId = ++instanceCounter;
-        log.info("[Instance " + instanceId + "] Creating new WebViewHtmlEditorPanel");
+        log.debug("[Instance " + instanceId + "] Creating new WebViewHtmlEditorPanel");
 
         // Create JFXPanel (bridge between Swing and JavaFX)
         jfxPanel = new JFXPanel();
@@ -471,14 +471,14 @@ public class WebViewHtmlEditorPanel extends JPanel implements EditorImplementati
             // Pass instance ID to JavaScript for debugging
             webEngine.executeScript("window._javaInstanceId = " + instanceId);
 
-            log.info("[Instance " + instanceId + "] SunEditor loaded successfully");
+            log.debug("[Instance " + instanceId + "] SunEditor loaded successfully");
 
             // Check if editor.onload already fired before javaConnector was set
             // This handles the race condition where SunEditor initializes before
             // the Java-JavaScript bridge is established
             Object jsEditorReady = webEngine.executeScript("window.editorReady === true");
             if (Boolean.TRUE.equals(jsEditorReady) && !editorReady) {
-                log.info("Editor was already ready, triggering onEditorReady manually");
+                log.debug("Editor was already ready, triggering onEditorReady manually");
                 javaScriptConnector.onEditorReady();
             } else if (!editorReady) {
                 // Schedule a fallback check in case editor.onload doesn't fire
@@ -507,7 +507,7 @@ public class WebViewHtmlEditorPanel extends JPanel implements EditorImplementati
                             Object apiAvailable = webEngine.executeScript("window.editorAPI !== null && window.editorAPI !== undefined");
 
                             if (Boolean.TRUE.equals(apiAvailable) && !editorReady) {
-                                log.info("Editor onload did not fire, but API is available - triggering onEditorReady via fallback");
+                                log.debug("Editor onload did not fire, but API is available - triggering onEditorReady via fallback");
                                 // Re-fetch editorAPI reference
                                 editorAPI = (JSObject) webEngine.executeScript("window.editorAPI");
                                 new JavaScriptConnector().onEditorReady();
@@ -933,11 +933,11 @@ public class WebViewHtmlEditorPanel extends JPanel implements EditorImplementati
             if (html != null) {
                 cachedClipboardHTML = parseWindowsHtmlFormat(html);
                 clipboardCacheTimestamp = System.currentTimeMillis();
-                log.info("Background cached HTML from clipboard: " + cachedClipboardHTML.length() + " chars");
+                log.debug("Background cached HTML from clipboard: " + cachedClipboardHTML.length() + " chars");
             } else {
                 cachedClipboardHTML = null;
                 clipboardCacheTimestamp = System.currentTimeMillis();
-                log.info("No HTML flavor found in clipboard (background refresh)");
+                log.debug("No HTML flavor found in clipboard (background refresh)");
             }
 
         } catch (Exception e) {
@@ -959,7 +959,7 @@ public class WebViewHtmlEditorPanel extends JPanel implements EditorImplementati
             DataFlavor htmlFlavor = new DataFlavor("text/html; class=java.lang.String");
             if (clipboard.isDataFlavorAvailable(htmlFlavor)) {
                 String html = (String) clipboard.getData(htmlFlavor);
-                log.info("Read HTML from clipboard (standard flavor): " + html.length() + " chars");
+                log.debug("Read HTML from clipboard (standard flavor): " + html.length() + " chars");
                 return html;
             }
 
@@ -974,7 +974,7 @@ public class WebViewHtmlEditorPanel extends JPanel implements EditorImplementati
                     try {
                         Object data = clipboard.getData(flavor);
                         if (data instanceof String) {
-                            log.info("Read HTML from flavor " + mimeType);
+                            log.debug("Read HTML from flavor " + mimeType);
                             return (String) data;
                         } else if (data instanceof java.io.InputStream) {
                             java.io.InputStream is = (java.io.InputStream) data;
@@ -985,7 +985,7 @@ public class WebViewHtmlEditorPanel extends JPanel implements EditorImplementati
                                 sb.append(new String(buffer, 0, bytesRead, StandardCharsets.UTF_8));
                             }
                             is.close();
-                            log.info("Read HTML from stream flavor " + mimeType);
+                            log.debug("Read HTML from stream flavor " + mimeType);
                             return sb.toString();
                         } else if (data instanceof java.io.Reader) {
                             java.io.Reader reader = (java.io.Reader) data;
@@ -996,7 +996,7 @@ public class WebViewHtmlEditorPanel extends JPanel implements EditorImplementati
                                 sb.append(buffer, 0, charsRead);
                             }
                             reader.close();
-                            log.info("Read HTML from reader flavor " + mimeType);
+                            log.debug("Read HTML from reader flavor " + mimeType);
                             return sb.toString();
                         }
                     } catch (Exception e) {
@@ -1041,11 +1041,11 @@ public class WebViewHtmlEditorPanel extends JPanel implements EditorImplementati
             if (html != null) {
                 cachedClipboardHTML = parseWindowsHtmlFormat(html);
                 clipboardCacheTimestamp = System.currentTimeMillis();
-                log.info("EDT cached HTML from clipboard: " + cachedClipboardHTML.length() + " chars");
+                log.debug("EDT cached HTML from clipboard: " + cachedClipboardHTML.length() + " chars");
             } else {
                 cachedClipboardHTML = null;
                 clipboardCacheTimestamp = System.currentTimeMillis();
-                log.info("No HTML flavor found in clipboard for caching");
+                log.debug("No HTML flavor found in clipboard for caching");
             }
 
         } catch (Exception e) {
@@ -1100,11 +1100,11 @@ public class WebViewHtmlEditorPanel extends JPanel implements EditorImplementati
                 if (line.startsWith("StartFragment:")) {
                     String value = line.substring("StartFragment:".length()).trim();
                     startFragmentPos = Integer.parseInt(value);
-                    log.info("Found StartFragment: " + startFragmentPos);
+                    log.debug("Found StartFragment: " + startFragmentPos);
                 } else if (line.startsWith("EndFragment:")) {
                     String value = line.substring("EndFragment:".length()).trim();
                     endFragmentPos = Integer.parseInt(value);
-                    log.info("Found EndFragment: " + endFragmentPos);
+                    log.debug("Found EndFragment: " + endFragmentPos);
                 }
             }
 
@@ -1119,7 +1119,7 @@ public class WebViewHtmlEditorPanel extends JPanel implements EditorImplementati
                     byte[] fragment = java.util.Arrays.copyOfRange(bytes, startFragmentPos, endFragmentPos);
                     String result = new String(fragment, StandardCharsets.UTF_8);
 
-                    log.info("Successfully extracted Windows HTML Format fragment: " +
+                    log.debug("Successfully extracted Windows HTML Format fragment: " +
                              result.length() + " chars (was " + html.length() + " chars)");
 
                     return result;
@@ -1264,7 +1264,7 @@ public class WebViewHtmlEditorPanel extends JPanel implements EditorImplementati
          * This is useful for debugging paste and other JavaScript operations.
          */
         public void log(String message) {
-            log.info("[JS] " + message);
+            log.debug("[JS] " + message);
         }
 
         /**
@@ -1291,7 +1291,7 @@ public class WebViewHtmlEditorPanel extends JPanel implements EditorImplementati
          */
         public void onContentChanged(String content) {
             cachedEditorContent = content;
-            log.info("onContentChanged: Editor content cache updated: " + (content != null ? content.length() : 0) + " chars");
+            log.debug("onContentChanged: Editor content cache updated: " + (content != null ? content.length() : 0) + " chars");
         }
 
         /**
@@ -1323,30 +1323,30 @@ public class WebViewHtmlEditorPanel extends JPanel implements EditorImplementati
             // Return cached value if fresh enough
             long age = System.currentTimeMillis() - clipboardCacheTimestamp;
             if (age < CLIPBOARD_CACHE_TTL_MS && cachedClipboardHTML != null) {
-                log.info("Returning cached clipboard HTML: " + cachedClipboardHTML.length() + " chars (age=" + age + "ms)");
+                log.debug("Returning cached clipboard HTML: " + cachedClipboardHTML.length() + " chars (age=" + age + "ms)");
                 return cachedClipboardHTML;
             }
 
             // Cache is stale or empty
-            log.info("Clipboard cache stale or empty (age=" + age + "ms)");
+            log.debug("Clipboard cache stale or empty (age=" + age + "ms)");
 
             // On macOS, never wait for EDT - return stale cache and trigger async refresh
             if (SystemUtils.isMacOs()) {
-                log.info("macOS detected - triggering async refresh, returning cached value to avoid deadlock");
+                log.debug("macOS detected - triggering async refresh, returning cached value to avoid deadlock");
                 triggerAsyncClipboardRefresh();
 
                 // Return whatever we have (may be stale or null)
                 if (cachedClipboardHTML != null) {
-                    log.info("Returning stale cached clipboard HTML: " + cachedClipboardHTML.length() + " chars");
+                    log.debug("Returning stale cached clipboard HTML: " + cachedClipboardHTML.length() + " chars");
                 } else {
-                    log.info("No cached clipboard HTML available");
+                    log.debug("No cached clipboard HTML available");
                 }
                 return cachedClipboardHTML;
             }
 
             // On Windows/Linux, we can try a quick synchronous refresh with short timeout
             // This is less risky as there's no AppKit thread involvement
-            log.info("Non-macOS platform - attempting sync refresh with timeout");
+            log.debug("Non-macOS platform - attempting sync refresh with timeout");
 
             CompletableFuture<String> future = new CompletableFuture<>();
 
@@ -1364,20 +1364,20 @@ public class WebViewHtmlEditorPanel extends JPanel implements EditorImplementati
                 // Wait up to 200ms for clipboard refresh - short enough to not freeze UI
                 String result = future.get(200, TimeUnit.MILLISECONDS);
                 if (result != null) {
-                    log.info("Got HTML from sync clipboard refresh: " + result.length() + " chars");
+                    log.debug("Got HTML from sync clipboard refresh: " + result.length() + " chars");
                     return result;
                 }
             } catch (java.util.concurrent.TimeoutException e) {
-                log.info("Clipboard refresh timed out, returning cached value");
+                log.debug("Clipboard refresh timed out, returning cached value");
             } catch (Exception e) {
                 log.warn("Error waiting for clipboard refresh: " + e.getMessage());
             }
 
             // Return whatever we have (may be null or stale)
             if (cachedClipboardHTML != null) {
-                log.info("Returning stale cached clipboard HTML: " + cachedClipboardHTML.length() + " chars");
+                log.debug("Returning stale cached clipboard HTML: " + cachedClipboardHTML.length() + " chars");
             } else {
-                log.info("No HTML flavor found in clipboard cache");
+                log.debug("No HTML flavor found in clipboard cache");
             }
             return cachedClipboardHTML;
         }
@@ -1436,7 +1436,7 @@ public class WebViewHtmlEditorPanel extends JPanel implements EditorImplementati
         }
 
         disposed = true;
-        log.info("[Instance " + instanceId + "] Disposing WebViewHtmlEditorPanel - cleaning up resources");
+        log.debug("[Instance " + instanceId + "] Disposing WebViewHtmlEditorPanel - cleaning up resources");
 
         editorReady = false;
 
@@ -1450,7 +1450,7 @@ public class WebViewHtmlEditorPanel extends JPanel implements EditorImplementati
                     // Execute JavaScript cleanup BEFORE clearing content
                     try {
                         // Clear heartbeat interval, disconnect MutationObserver, and destroy SunEditor
-                        log.info("Executing JavaScript cleanup...");
+                        log.debug("Executing JavaScript cleanup...");
                         Object result = webEngine.executeScript(
                             "(function() { " +
                             "  var cleaned = []; " +
@@ -1476,22 +1476,22 @@ public class WebViewHtmlEditorPanel extends JPanel implements EditorImplementati
                             "  return 'Cleaned: ' + (cleaned.length > 0 ? cleaned.join(', ') : 'nothing'); " +
                             "})()"
                         );
-                        log.info("JavaScript cleanup result: " + result);
+                        log.debug("JavaScript cleanup result: " + result);
                     } catch (Exception e) {
                         // Ignore - page might already be unloaded or editor not initialized
-                        log.info("JavaScript cleanup skipped: " + e.getMessage());
+                        log.debug("JavaScript cleanup skipped: " + e.getMessage());
                     }
 
                     // Clear the page content to free memory
                     webEngine.loadContent("");
 
-                    log.info("WebEngine cleaned up");
+                    log.debug("WebEngine cleaned up");
                 }
 
                 if (webView != null) {
                     // Remove the WebView from scene
                     webView.getEngine().getLoadWorker().cancel();
-                    log.info("WebView cleaned up");
+                    log.debug("WebView cleaned up");
                 }
 
                 // Clear references
@@ -1508,6 +1508,6 @@ public class WebViewHtmlEditorPanel extends JPanel implements EditorImplementati
         // Remove all components from the panel
         this.removeAll();
 
-        log.info("WebViewHtmlEditorPanel disposed successfully");
+        log.debug("WebViewHtmlEditorPanel disposed successfully");
     }
 }
