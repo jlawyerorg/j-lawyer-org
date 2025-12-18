@@ -9,7 +9,9 @@
       "Bash(openspec archive:*)",
       "WebFetch(domain:bugs.openjdk.org)",
       "Bash(grep:*)",
-      "WebSearch"
+      "WebSearch",
+      "WebFetch(domain:github.com)",
+      "WebFetch(domain:gluonhq.com)"
     ],
     "deny": [],
     "ask": []

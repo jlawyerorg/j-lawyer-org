@@ -901,11 +901,14 @@ public class HtmlPanel extends javax.swing.JPanel implements PreviewPanel, Assis
      */
     private void waitForHtmlContentOnMac() {
         if (SystemUtils.isMacOs()) {
+            log.debug("HtmlPanel.waitForHtmlContentOnMac(): macOS detected, waiting 1000ms for cache sync (docId=" + this.id + ")");
             try {
                 Thread.sleep(1000);
             } catch (InterruptedException e) {
                 Thread.currentThread().interrupt();
+                log.warn("HtmlPanel.waitForHtmlContentOnMac(): interrupted while waiting (docId=" + this.id + ")");
             }
+            log.debug("HtmlPanel.waitForHtmlContentOnMac(): wait completed (docId=" + this.id + ")");
         }
     }
 
@@ -913,22 +916,31 @@ public class HtmlPanel extends javax.swing.JPanel implements PreviewPanel, Assis
     public void removeNotify() {
         if (this.id != null && !this.readOnly) {
             try {
+                log.debug("HtmlPanel.removeNotify(): saving document (docId=" + this.id + ")");
                 waitForHtmlContentOnMac();
                 String currentText = this.htmlEditor.getText();
+                log.debug("HtmlPanel.removeNotify(): getText() returned " + (currentText != null ? currentText.length() : 0) + " chars (docId=" + this.id + ")");
                 if (currentText == null || currentText.isEmpty()) {
                     // getText() may return empty if editor is being disposed - skip saving
+                    log.warn("HtmlPanel.removeNotify(): getText() returned null/empty, skipping save (docId=" + this.id + ")");
                     return;
                 }
                 byte[] currentBytes = currentText.getBytes();
                 if (this.initialContent != null && !Arrays.equals(this.initialContent, currentBytes)) {
+                    log.debug("HtmlPanel.removeNotify(): content changed, saving " + currentBytes.length + " bytes (docId=" + this.id + ")");
                     ClientSettings settings = ClientSettings.getInstance();
                     JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
                     locator.lookupArchiveFileServiceRemote().setDocumentContent(this.id, currentBytes);
+                    log.debug("HtmlPanel.removeNotify(): document saved successfully (docId=" + this.id + ")");
+                } else {
+                    log.debug("HtmlPanel.removeNotify(): content unchanged, skipping save (docId=" + this.id + ")");
                 }
             } catch (Throwable t) {
                 log.error("Error saving document with id " + this.id, t);
                 ThreadUtils.showErrorDialog(EditorsRegistry.getInstance().getMainWindow(), "Fehler beim Speichern: " + t.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR);
             }
+        } else {
+            log.debug("HtmlPanel.removeNotify(): skipping save - id=" + this.id + ", readOnly=" + this.readOnly);
         }
     }
 
