@@ -11,7 +11,8 @@
       "Bash(grep:*)",
       "WebSearch",
       "WebFetch(domain:github.com)",
-      "WebFetch(domain:gluonhq.com)"
+      "WebFetch(domain:gluonhq.com)",
+      "WebFetch(domain:gist.github.com)"
     ],
     "deny": [],
     "ask": []

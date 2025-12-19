@@ -1863,12 +1863,14 @@ public class ClaimLedgerDialog extends javax.swing.JDialog implements EventConsu
 
                 locator.lookupArchiveFileServiceRemote().removeClaimComponent(cmp.getId());
                 ((ComponentTableModel) this.tblComponents.getModel()).removeComponentAt(this.tblComponents.convertRowIndexToModel(this.tblComponents.getSelectedRow()));
+                ((LedgerTableModel) this.tblLedger.getModel()).removeEntriesByComponentId(cmp.getId());
             } catch (Exception ex) {
                 log.error("error deleting claim component", ex);
                 JOptionPane.showMessageDialog(this, "Fehler beim Löchen der Forderungsposition: " + ex.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
             }
 
             ComponentUtils.autoSizeColumns(this.tblComponents);
+            ComponentUtils.autoSizeColumns(this.tblLedger);
             this.updateTotals();
 
         }
@@ -2439,6 +2441,16 @@ public class ClaimLedgerDialog extends javax.swing.JDialog implements EventConsu
         public void removeEntryAt(int row) {
             data.remove(row);
             fireTableRowsDeleted(row, row);
+        }
+
+        public void removeEntriesByComponentId(String componentId) {
+            for (int i = data.size() - 1; i >= 0; i--) {
+                ClaimLedgerEntry entry = data.get(i);
+                if (entry.getComponent() != null && componentId.equals(entry.getComponent().getId())) {
+                    data.remove(i);
+                }
+            }
+            fireTableDataChanged();
         }
 
         @Override
