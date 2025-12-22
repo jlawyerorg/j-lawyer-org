@@ -951,8 +951,17 @@ public class TemplatesEndpointV6 implements TemplatesEndpointLocalV6 {
             List<Map<String, String>> resultList = new ArrayList<>();
 
             for (String templateName : templates) {
+                
+                EmailTemplate tpl=intSvc.getEmailTemplate(templateName);
+                
                 Map<String, String> template = new LinkedHashMap<>();
                 template.put("name", templateName);
+                template.put("format", tpl.getFormat());
+                template.put("to", tpl.getTo());
+                template.put("cc", tpl.getCc());
+                template.put("bcc", tpl.getBcc());
+                template.put("subject", tpl.getSubject());
+                template.put("body", tpl.getBody());
                 resultList.add(template);
             }
 
