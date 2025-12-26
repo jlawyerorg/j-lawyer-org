@@ -818,9 +818,9 @@ public class Main {
 
         ToolTipManager.sharedInstance().setDismissDelay(30000);
         ToolTipManager.sharedInstance().setInitialDelay(200);
-        
+
         FlatLaf.registerCustomDefaultsSource( "themes" );
-        
+
         FlatInterFont.install();
         FlatLaf.setPreferredFontFamily(FlatInterFont.FAMILY);
         FlatLaf.setPreferredLightFontFamily(FlatInterFont.FAMILY_LIGHT);
@@ -828,7 +828,7 @@ public class Main {
 
         FlatIntelliJLaf.setup();
         //FlatDarkLaf.setup();
-        
+
         String userHomeConf = System.getProperty(USER_HOME) + System.getProperty(FILE_SEPARATOR) + ClientSettings.JLAWYERCLIENT_SETTINGDIR;
         File userHomeConfDir = new File(userHomeConf);
         if (!userHomeConfDir.exists()) {
@@ -852,7 +852,7 @@ public class Main {
         } catch (Throwable t) {
             log.error("Could not set font size", t);
         }
-        
+
         // todo: load this from the server
         ModuleMetadata root = new ModuleMetadata(java.util.ResourceBundle.getBundle("com/jdimension/jlawyer/client/Modules").getString("mod.mydesktop"));
 

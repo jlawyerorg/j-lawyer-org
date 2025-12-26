@@ -1,7 +1,7 @@
 
 #!/bin/bash
  
-# echo 3.4.0.18
+# echo 3.4.0.19
 
 # Determine the directory of the script
 script_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"

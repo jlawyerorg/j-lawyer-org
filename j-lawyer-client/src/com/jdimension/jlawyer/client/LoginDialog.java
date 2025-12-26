@@ -714,6 +714,7 @@ import javax.swing.ImageIcon;
 import javax.swing.JOptionPane;
 import javax.swing.JProgressBar;
 import javax.swing.SwingUtilities;
+import javax.swing.SwingWorker;
 import org.apache.log4j.Logger;
 import themes.colors.DefaultColorTheme;
 import com.google.zxing.BarcodeFormat;
@@ -784,65 +785,12 @@ public class LoginDialog extends javax.swing.JFrame {
             log.error(t);
         }
 
-        FileSystem fileSystem = null;
-
         this.availableBackgrounds = Collections.emptyList();
         this.currentBackgroundIndex = -1;
 
-        try {
-
-            URI uri = Main.class.getResource("/themes/default/backgroundsrandom").toURI();
-            Path path;
-            if (uri.getScheme().equals("jar")) {
-                fileSystem = FileSystems.newFileSystem(uri, Collections.<String, Object>emptyMap());
-                path = fileSystem.getPath("/themes/default/backgroundsrandom");
-
-            } else {
-                path = Paths.get(uri);
-            }
-
-            Predicate<String> con1 = s -> s.endsWith(".jpg");
-            Predicate<String> con2 = s -> s.endsWith(".png");
-
-            List<String> backgroundFileNames = new ArrayList<>();
-            try (Stream<Path> walk = Files.walk(path)) {
-                backgroundFileNames = walk
-                        .map(Path::getFileName)
-                        .map(Path::toString)
-                        .filter(con1.or(con2))
-                        .collect(Collectors.toList());
-            }
-
-            if (!backgroundFileNames.isEmpty()) {
-                Collections.shuffle(backgroundFileNames, ThreadLocalRandom.current());
-                this.availableBackgrounds = backgroundFileNames;
-                this.currentBackgroundIndex = 0;
-                this.randomBackground = this.availableBackgrounds.get(this.currentBackgroundIndex);
-                this.applyBackgroundLocation(randomBackground);
-            } else {
-                this.randomBackground = null;
-            }
-        } catch (Throwable t) {
-            log.error("unable to get random background image", t);
-        } finally {
-            if (fileSystem != null) {
-                try {
-                    fileSystem.close();
-                } catch (Exception ex) {
-                    log.warn("Could not close filesystem object", ex);
-                }
-            }
-        }
-
-        updateBackgroundSwitchButtonState();
-
-        Dimension backgroundDimension = applyBackgroundImage(this.randomBackground);
-        int backgroundWidth = backgroundDimension.width;
-        int backgroundHeight = backgroundDimension.height;
-        if (backgroundWidth <= 0 || backgroundHeight <= 0) {
-            backgroundWidth = 800;
-            backgroundHeight = 600;
-        }
+        // Use default 16:9 aspect ratio for initial size - background loads asynchronously
+        int defaultWidth = 1920;
+        int defaultHeight = 1080;
 
         // Get the screen size of the monitor where the frame will be placed
         GraphicsEnvironment ge = GraphicsEnvironment.getLocalGraphicsEnvironment();
@@ -852,13 +800,16 @@ public class LoginDialog extends javax.swing.JFrame {
 
         // Set frame size to 80% of the screen's width and height
         int height = (int) (bounds.height * 0.8);
-        int width=(int)((float)height*((float)backgroundWidth/(float)backgroundHeight));
+        int width = (int) ((float) height * ((float) defaultWidth / (float) defaultHeight));
         setSize(width, height);
 
         // Center the frame within the screen bounds
         int x = bounds.x + (bounds.width - width) / 2;
         int y = bounds.y + (bounds.height - height) / 2;
         setLocation(x, y);
+
+        // Load background image asynchronously
+        loadBackgroundAsync();
 
         this.lblAutoUpdate.setText(" ");
 
@@ -1097,7 +1048,7 @@ public class LoginDialog extends javax.swing.JFrame {
 
     private Dimension applyBackgroundImage(String backgroundFile) {
         this.applyBackgroundLocation(backgroundFile);
-        
+
         ImageIcon image = null;
         if (backgroundFile != null) {
             URL resource = getClass().getResource("/themes/default/backgroundsrandom/" + backgroundFile);
@@ -1117,8 +1068,8 @@ public class LoginDialog extends javax.swing.JFrame {
             }
         }
 
-        this.bgPanel.setBackgroundImage(image.getImage());
-        this.bgPanel.repaint();
+        // Use fade transition for smooth background switching
+        this.bgPanel.fadeToImage(image.getImage());
         return new Dimension(image.getIconWidth(), image.getIconHeight());
     }
     
@@ -1145,6 +1096,97 @@ public class LoginDialog extends javax.swing.JFrame {
             this.lblBackgroundLocation.setText("");
             this.lblBackgroundLocation.setToolTipText("");
         }
+    }
+
+    /**
+     * Loads the background image list and first image asynchronously.
+     * The dialog is shown immediately with a fallback color, and the
+     * background image fades in once loaded.
+     */
+    private void loadBackgroundAsync() {
+        SwingWorker<ImageIcon, Void> worker = new SwingWorker<ImageIcon, Void>() {
+            private List<String> loadedBackgrounds = new ArrayList<>();
+            private String selectedBackground = null;
+
+            @Override
+            protected ImageIcon doInBackground() throws Exception {
+                FileSystem fileSystem = null;
+                try {
+                    URI uri = Main.class.getResource("/themes/default/backgroundsrandom").toURI();
+                    Path path;
+                    if (uri.getScheme().equals("jar")) {
+                        fileSystem = FileSystems.newFileSystem(uri, Collections.<String, Object>emptyMap());
+                        path = fileSystem.getPath("/themes/default/backgroundsrandom");
+                    } else {
+                        path = Paths.get(uri);
+                    }
+
+                    Predicate<String> con1 = s -> s.endsWith(".jpg");
+                    Predicate<String> con2 = s -> s.endsWith(".png");
+
+                    try (Stream<Path> walk = Files.walk(path)) {
+                        loadedBackgrounds = walk
+                                .map(Path::getFileName)
+                                .map(Path::toString)
+                                .filter(con1.or(con2))
+                                .collect(Collectors.toList());
+                    }
+
+                    if (!loadedBackgrounds.isEmpty()) {
+                        Collections.shuffle(loadedBackgrounds, ThreadLocalRandom.current());
+                        selectedBackground = loadedBackgrounds.get(0);
+
+                        // Load the actual image
+                        URL resource = getClass().getResource("/themes/default/backgroundsrandom/" + selectedBackground);
+                        if (resource != null) {
+                            return new ImageIcon(resource);
+                        }
+                    }
+                } finally {
+                    if (fileSystem != null) {
+                        try {
+                            fileSystem.close();
+                        } catch (Exception ex) {
+                            log.warn("Could not close filesystem object", ex);
+                        }
+                    }
+                }
+                return null;
+            }
+
+            @Override
+            protected void done() {
+                try {
+                    ImageIcon image = get();
+
+                    // Update the background list
+                    if (!loadedBackgrounds.isEmpty()) {
+                        availableBackgrounds = loadedBackgrounds;
+                        currentBackgroundIndex = 0;
+                        randomBackground = selectedBackground;
+                        applyBackgroundLocation(randomBackground);
+                    }
+
+                    updateBackgroundSwitchButtonState();
+
+                    // Fade in the background image
+                    if (image != null && image.getIconWidth() > 0 && image.getIconHeight() > 0) {
+                        bgPanel.fadeToImage(image.getImage());
+                    } else {
+                        // Try fallback image
+                        URL fallback = getClass().getResource("/images/login-background-dark.jpg");
+                        if (fallback != null) {
+                            ImageIcon fallbackImage = new ImageIcon(fallback);
+                            bgPanel.fadeToImage(fallbackImage.getImage());
+                        }
+                    }
+                } catch (Exception e) {
+                    log.error("Error loading background image", e);
+                    updateBackgroundSwitchButtonState();
+                }
+            }
+        };
+        worker.execute();
     }
 
     /**
