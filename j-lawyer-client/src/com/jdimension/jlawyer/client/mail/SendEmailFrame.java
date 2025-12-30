@@ -1313,7 +1313,7 @@ public class SendEmailFrame extends javax.swing.JFrame implements SendCommunicat
 
             if (currentDraftDocumentId != null) {
                 // Update existing draft
-                afs.setDocumentContent(currentDraftDocumentId, data);
+                afs.setDocumentContent(currentDraftDocumentId, data, false);
             } else {
                 // Create new draft document with static filename
                 SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");

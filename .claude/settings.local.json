@@ -12,7 +12,11 @@
       "WebSearch",
       "WebFetch(domain:github.com)",
       "WebFetch(domain:gluonhq.com)",
-      "WebFetch(domain:gist.github.com)"
+      "WebFetch(domain:gist.github.com)",
+      "WebFetch(domain:documentation.red-gate.com)",
+      "Bash(ls:*)",
+      "WebFetch(domain:www.formdev.com)",
+      "WebFetch(domain:www.ej-technologies.com)"
     ],
     "deny": [],
     "ask": []

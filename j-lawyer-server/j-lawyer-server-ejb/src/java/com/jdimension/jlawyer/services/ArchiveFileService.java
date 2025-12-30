@@ -2073,6 +2073,12 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
     @Override
     @RolesAllowed({"writeArchiveFileRole"})
     public boolean setDocumentContent(String id, byte[] content) throws Exception {
+        return this.setDocumentContent(id, content, true);
+    }
+    
+    @Override
+    @RolesAllowed({"writeArchiveFileRole"})
+    public boolean setDocumentContent(String id, byte[] content, boolean createHistoryEntry) throws Exception {
 
         ArchiveFileDocumentsBean db = this.archiveFileDocumentsFacade.find(id);
 
@@ -2142,8 +2148,10 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
             log.error("Error publishing search index request UPDATE", t);
         }
 
-        StringGenerator idGen = new StringGenerator();
-        this.addCaseHistory(idGen.getID().toString(), db.getArchiveFileKey(), "Dokument geändert: " + db.getName());
+        if(createHistoryEntry) {
+            StringGenerator idGen = new StringGenerator();
+            this.addCaseHistory(idGen.getID().toString(), db.getArchiveFileKey(), "Dokument geändert: " + db.getName());
+        }
 
         DocumentUpdatedEvent evt = new DocumentUpdatedEvent();
         evt.setDocumentId(id);

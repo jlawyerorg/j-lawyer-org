@@ -716,6 +716,7 @@ public interface ArchiveFileServiceRemote {
     void removeDocument(String id) throws Exception;
 
     boolean setDocumentContent(String id, byte[] content) throws Exception;
+    boolean setDocumentContent(String id, byte[] content, boolean createHistoryEntry) throws Exception;
 
     byte[] getDocumentContent(String id) throws Exception;
     
