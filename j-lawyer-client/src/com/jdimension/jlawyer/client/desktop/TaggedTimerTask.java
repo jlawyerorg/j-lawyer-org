@@ -1100,6 +1100,41 @@ public class TaggedTimerTask extends java.util.TimerTask {
                                 tagToTep.get(s).forEach(taggedEntryPanel -> addEntryToTab(s, taggedEntryPanel));
                             });
 
+                            // Format tabs with icons and tooltips based on element count
+                            int maxElementCount = 0;
+                            // First pass: find maximum element count (skip "alle" tab at index 0)
+                            for (int t = 1; t < tagsPane.getTabCount(); t++) {
+                                JScrollPane sp = (JScrollPane) tagsPane.getComponentAt(t);
+                                JViewport p = (JViewport) sp.getComponent(0);
+                                int count = ((JPanel) p.getComponent(0)).getComponentCount();
+                                if (count > maxElementCount) {
+                                    maxElementCount = count;
+                                }
+                            }
+
+                            // Second pass: set icons and tooltips
+                            if (maxElementCount > 0) {
+                                for (int t = 1; t < tagsPane.getTabCount(); t++) {
+                                    String tabTitle = tagsPane.getTitleAt(t);
+                                    JScrollPane sp = (JScrollPane) tagsPane.getComponentAt(t);
+                                    JViewport p = (JViewport) sp.getComponent(0);
+                                    int count = ((JPanel) p.getComponent(0)).getComponentCount();
+
+                                    // Set tooltip
+                                    tagsPane.setToolTipTextAt(t, count + " Elemente mit dem Etikett " + tabTitle);
+
+                                    // Calculate percentage and set icon
+                                    double percentage = (count * 100.0) / maxElementCount;
+                                    if (percentage <= 25) {
+                                        tagsPane.setIconAt(t, new javax.swing.ImageIcon(getClass().getResource("/icons16/material/arrow_circle_down_20dp_97BF0D.png")));
+                                    } else if (percentage <= 75) {
+                                        tagsPane.setIconAt(t, new javax.swing.ImageIcon(getClass().getResource("/icons16/material/arrow_circle_right_20dp_0E72B5.png")));
+                                    } else {
+                                        tagsPane.setIconAt(t, new javax.swing.ImageIcon(getClass().getResource("/icons16/material/arrow_circle_up_20dp_DE313B.png")));
+                                    }
+                                }
+                            }
+
                             split.setDividerLocation(split.getDividerLocation() + 1);
                             split.setDividerLocation(split.getDividerLocation() - 1);
                             
