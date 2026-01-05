@@ -369,6 +369,53 @@ public class WebViewHtmlEditorPanel extends JPanel implements EditorImplementati
                 });
             }
 
+            // ============================================================================
+            // WORKAROUND: JavaFX WebKit Drag Image Crash (JDK-8284580)
+            // ============================================================================
+            //
+            // PROBLEM:
+            // JavaFX WebKit crashes when users click on selected text and move the mouse.
+            // WebKit attempts to create a "drag image" for the selection, but the native
+            // image creation fails with a null pointer, causing SIGSEGV/SIGABRT.
+            //
+            // Affected platforms:
+            // - macOS ARM64 (Apple Silicon)
+            // - Linux x86_64
+            //
+            // Crash path (from native crash logs):
+            //   twkProcessMouseEvent → handleMouseMoveEvent → handleMouseDraggedEvent
+            //   → handleDrag → startDrag → createDragImageForSelection
+            //   → createDragImageFromSnapshot → BitmapImage::create
+            //   → PlatformImageNativeImageBackend::size() → CRASH (null pointer)
+            //
+            // THIS FILTER:
+            // Consumes DRAG_DETECTED events as an additional safety layer. However, this
+            // filter alone does NOT prevent the crash because the drag is initiated in
+            // native WebKit code before JavaFX fires the DRAG_DETECTED event.
+            //
+            // PRIMARY FIX:
+            // The JavaScript mousedown handler in suneditor-template.html clears the
+            // text selection when clicking on already-selected text. This prevents
+            // WebKit from entering "drag mode" because there's no selection to drag.
+            //
+            // TRADE-OFF:
+            // Users cannot drag-and-drop selected text. The selection is cleared when
+            // clicking on it. This is acceptable because:
+            // 1. Drag-to-move text is rarely used
+            // 2. Copy/paste provides the same functionality
+            // 3. The alternative is application crash
+            //
+            // See also:
+            // - suneditor-template.html: setupDragPreventionHandler() (primary fix)
+            // - suneditor-template.html: CSS -webkit-user-drag: none (secondary fix)
+            // - https://bugs.openjdk.org/browse/JDK-8284580
+            // - https://bugs.openjdk.org/browse/JDK-8315495
+            // ============================================================================
+            scene.addEventFilter(javafx.scene.input.MouseEvent.DRAG_DETECTED, event -> {
+                log.debug("Consuming DRAG_DETECTED event to prevent WebKit drag image crash");
+                event.consume();
+            });
+
             jfxPanel.setScene(scene);
 
             // Load the editor HTML

@@ -96,6 +96,51 @@
             overflow: hidden;
         }
 
+        /*
+         * ============================================================================
+         * WORKAROUND: JavaFX WebKit Drag Image Crash (JDK-8284580)
+         * ============================================================================
+         *
+         * PROBLEM:
+         * JavaFX WebKit crashes when the user selects text and then moves the mouse
+         * while holding down the mouse button over the selected text. WebKit interprets
+         * this as a drag operation and attempts to create a "drag image" for the
+         * selection. The crash occurs in native code:
+         *
+         *   WebCore::createDragImageForSelection()
+         *     → WebCore::createDragImageFromSnapshot()
+         *       → WebCore::BitmapImage::create()
+         *         → WebCore::PlatformImageNativeImageBackend::size()
+         *           → CRASH (NativeImage is null/invalid)
+         *
+         * This affects:
+         * - macOS ARM64 (Apple Silicon): SIGSEGV/SIGABRT
+         * - Linux x86_64: SIGSEGV in libjfxwebkit.so
+         *
+         * IMPACT:
+         * The application crashes completely when users try to:
+         * - Drag selected text to move it
+         * - Click on selected text and move the mouse (even unintentionally)
+         * - Use color pickers or other toolbar functions that involve mouse movement
+         *   after text selection
+         *
+         * THIS CSS RULE:
+         * Disables native drag behavior via CSS. This is one layer of a multi-layer
+         * fix (defense in depth). The primary fix is the JavaScript mousedown handler
+         * in setupDragPreventionHandler() that clears selections before a drag can start.
+         *
+         * See also:
+         * - setupDragPreventionHandler() in this file (JavaScript fix)
+         * - WebViewHtmlEditorPanel.java DRAG_DETECTED event filter (JavaFX fix)
+         * - https://bugs.openjdk.org/browse/JDK-8284580
+         * - https://bugs.openjdk.org/browse/JDK-8315495
+         * ============================================================================
+         */
+        * {
+            -webkit-user-drag: none !important;
+            user-drag: none !important;
+        }
+
         #editor {
             width: 100%;
             height: 100vh;
@@ -259,6 +304,17 @@
             // CRITICAL FIX: Override the paste handler to preserve formatting
             // SunEditor's default paste behavior strips formatting, so we handle it manually
             setupCustomPasteHandler();
+
+            // WORKAROUND: Prevent JavaFX WebKit crash when creating drag image for selection.
+            // On macOS ARM64 and Linux, WebKit crashes in WebCore::createDragImageForSelection
+            // when trying to create a drag image for text selection.
+            // The CSS workaround (-webkit-user-drag: none) and JavaFX DRAG_DETECTED filter
+            // don't work because the drag is detected internally by WebKit before these can act.
+            // This JavaScript handler intercepts the dragstart event at DOM level, preventing
+            // WebKit from ever calling createDragImageForSelection.
+            // Text selection still works - only Drag & Drop of selected text is disabled.
+            // See: https://bugs.openjdk.org/browse/JDK-8284580
+            setupDragPreventionHandler();
         };
 
         // Register onChange handler to notify Java of content changes
@@ -377,6 +433,143 @@
                 }
             }, 5000);
         })();
+
+        /**
+         * ============================================================================
+         * WORKAROUND: JavaFX WebKit Drag Image Crash (JDK-8284580)
+         * ============================================================================
+         *
+         * PROBLEM:
+         * JavaFX WebKit crashes when users click on selected text and move the mouse.
+         * WebKit interprets this as a "drag selected text" operation and attempts to
+         * create a visual drag image. The image creation fails with a null pointer.
+         *
+         * CRASH SEQUENCE (from crash logs):
+         * 1. User selects text in the editor
+         * 2. User clicks on the selected text (mousedown)
+         * 3. User moves mouse while holding button (mousemove/mousedrag)
+         * 4. WebKit native code processes the mouse movement:
+         *      Java_com_sun_webkit_WebPage_twkProcessMouseEvent()
+         *        → WebCore::EventHandler::mouseMoved()
+         *          → WebCore::EventHandler::handleMouseMoveEvent()
+         *            → WebCore::EventHandler::handleMouseDraggedEvent()
+         *              → WebCore::EventHandler::handleDrag()
+         *                → WebCore::DragController::startDrag()
+         *                  → WebCore::createDragImageForSelection()
+         *                    → WebCore::createDragImageFromSnapshot()
+         *                      → WebCore::BitmapImage::create()
+         *                        → WebCore::PlatformImageNativeImageBackend::size()
+         *                          → CRASH! (NativeImage pointer is null)
+         *
+         * WHY OTHER APPROACHES FAILED:
+         * - CSS "-webkit-user-drag: none": WebKit ignores this for text selections
+         * - JavaScript "dragstart" event: Fired AFTER createDragImageForSelection crashes
+         * - JavaFX DRAG_DETECTED filter: Event never fires; drag is handled in native WebKit
+         * - HTML "draggable=false" attribute: Ignored for text selections
+         *
+         * SOLUTION:
+         * Intercept the mousedown event BEFORE WebKit processes subsequent mousemove events.
+         * If the click is on already-selected text, clear the selection immediately.
+         * This prevents WebKit from entering "drag mode" because there's no selection to drag.
+         *
+         * TIMING:
+         *   mousedown event → JavaScript clears selection → mousemove event
+         *                                                   ↓
+         *                                    WebKit sees no selection → no drag → no crash
+         *
+         * TRADE-OFF:
+         * Users cannot drag-and-drop selected text to move it. When clicking on selected
+         * text, the selection is cleared and a new selection starts. This is acceptable
+         * because:
+         * 1. Drag-to-move text is rarely used in note editors
+         * 2. Copy/paste provides the same functionality
+         * 3. The alternative is a complete application crash
+         *
+         * AFFECTED PLATFORMS:
+         * - macOS ARM64 (Apple Silicon) with JavaFX 17+
+         * - Linux x86_64 with JavaFX 17+
+         * - Possibly other platforms (applied universally for consistency)
+         *
+         * RELATED BUG REPORTS:
+         * - https://bugs.openjdk.org/browse/JDK-8284580
+         * - https://bugs.openjdk.org/browse/JDK-8315495
+         * ============================================================================
+         */
+        function setupDragPreventionHandler() {
+            const editorElement = editor.core.context.element.wysiwyg;
+
+            // CRITICAL: On mousedown, check if clicking on existing selection.
+            // If so, clear the selection to prevent WebKit from starting a drag.
+            // This must happen in capture phase, before WebKit processes the event.
+            editorElement.addEventListener('mousedown', function(e) {
+                const selection = window.getSelection();
+                if (!selection || selection.isCollapsed || selection.rangeCount === 0) {
+                    // No selection or collapsed selection - nothing to do
+                    return;
+                }
+
+                // Check if the click is within the selected range
+                const range = selection.getRangeAt(0);
+                const clickX = e.clientX;
+                const clickY = e.clientY;
+
+                // Get all rects of the selection (handles multi-line selections)
+                const rects = range.getClientRects();
+                let clickedOnSelection = false;
+
+                for (let i = 0; i < rects.length; i++) {
+                    const rect = rects[i];
+                    if (clickX >= rect.left && clickX <= rect.right &&
+                        clickY >= rect.top && clickY <= rect.bottom) {
+                        clickedOnSelection = true;
+                        break;
+                    }
+                }
+
+                if (clickedOnSelection) {
+                    // Clicking on selected text would trigger a drag - clear selection first
+                    console.log('Clearing selection on mousedown to prevent WebKit drag crash');
+                    selection.removeAllRanges();
+                    // The click will now start a new selection instead of dragging
+                }
+            }, { capture: true, passive: true });
+
+            // Keep existing dragstart prevention as additional safety layer
+            editorElement.setAttribute('draggable', 'false');
+
+            editorElement.addEventListener('dragstart', function(e) {
+                console.log('Preventing dragstart to avoid WebKit crash');
+                e.preventDefault();
+                e.stopPropagation();
+                return false;
+            }, { capture: true, passive: false });
+
+            document.addEventListener('dragstart', function(e) {
+                if (editorElement.contains(e.target)) {
+                    console.log('Preventing document dragstart to avoid WebKit crash');
+                    e.preventDefault();
+                    e.stopPropagation();
+                    return false;
+                }
+            }, { capture: true, passive: false });
+
+            // Use MutationObserver to ensure all new elements also have draggable=false
+            const dragObserver = new MutationObserver(function(mutations) {
+                mutations.forEach(function(mutation) {
+                    mutation.addedNodes.forEach(function(node) {
+                        if (node.nodeType === Node.ELEMENT_NODE) {
+                            node.setAttribute('draggable', 'false');
+                            node.querySelectorAll('*').forEach(function(el) {
+                                el.setAttribute('draggable', 'false');
+                            });
+                        }
+                    });
+                });
+            });
+            dragObserver.observe(editorElement, { childList: true, subtree: true });
+
+            console.log('Drag prevention handler installed to avoid WebKit crash');
+        }
 
         /**
          * Setup custom paste handler that preserves formatting from clipboard
