@@ -1378,12 +1378,6 @@ public class MailboxScannerTask extends java.util.TimerTask {
                     continue;
                 } else {
                     ArchiveFileDocumentsBean newDoc = caseSvc.addDocumentUnrestricted(toCase.getId(), docName, attachmentData, "", null);
-                    for (String tag : documentTags) {
-                        DocumentTagsBean dtb = new DocumentTagsBean();
-                        dtb.setArchiveFileKey(newDoc);
-                        dtb.setTagName(tag);
-                        caseSvc.setDocumentTagUnrestricted(newDoc.getId(), dtb, true);
-                    }
                 }
 
             }
