@@ -790,6 +790,7 @@ import java.awt.dnd.DropTargetListener;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.AdjustmentEvent;
+import java.awt.event.KeyEvent;
 import java.awt.event.AdjustmentListener;
 import java.awt.event.MouseEvent;
 import java.io.File;
@@ -963,6 +964,19 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
 
         this.caseFolderPanel1.setCaseContainer(this);
         this.caseFolderPanel1.setDocumentsPopup(this.documentsPopup);
+
+        // Keyboard shortcut: Ctrl+C (Windows/Linux) / Cmd+C (macOS) to copy documents to clipboard
+        KeyStroke copyKeyStroke = KeyStroke.getKeyStroke(KeyEvent.VK_C,
+            Toolkit.getDefaultToolkit().getMenuShortcutKeyMaskEx());
+        this.caseFolderPanel1.getInputMap(JComponent.WHEN_ANCESTOR_OF_FOCUSED_COMPONENT)
+            .put(copyKeyStroke, "copyDocumentsToClipboard");
+        this.caseFolderPanel1.getActionMap()
+            .put("copyDocumentsToClipboard", new AbstractAction() {
+                @Override
+                public void actionPerformed(ActionEvent e) {
+                    mnuCopyFilesToClipboardActionPerformed(e);
+                }
+            });
 
         if (this instanceof NewArchiveFilePanel) {
             jLabel2.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/Icons2-12.png")));
