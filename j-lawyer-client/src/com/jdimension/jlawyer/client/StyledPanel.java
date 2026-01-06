@@ -698,25 +698,28 @@ public class StyledPanel extends javax.swing.JPanel {
         Graphics2D g2d = (Graphics2D) g.create();
         g2d.setRenderingHint(RenderingHints.KEY_INTERPOLATION, RenderingHints.VALUE_INTERPOLATION_BILINEAR);
 
-        // Draw fallback color first
-        if (this.backgroundImage == null && this.fadeTargetImage == null) {
-            g2d.setColor(fallbackColor);
-            g2d.fillRect(0, 0, this.getWidth(), this.getHeight());
-        }
+        // Always draw fallback color as background (needed for fade-through-dark effect)
+        g2d.setColor(fallbackColor);
+        g2d.fillRect(0, 0, this.getWidth(), this.getHeight());
 
-        // Draw current background image
-        if (this.backgroundImage != null) {
-            if (fadeTargetImage != null && fadeAlpha > 0f) {
-                // During fade: draw current image with decreasing opacity
-                g2d.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, 1f - fadeAlpha));
-            }
-            g2d.drawImage(this.backgroundImage, 0, 0, this.getWidth(), this.getHeight(), this);
-        }
-
-        // Draw fade target image with increasing opacity
+        // Draw current or target image based on fade progress (fade through dark background)
         if (fadeTargetImage != null && fadeAlpha > 0f) {
-            g2d.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, fadeAlpha));
-            g2d.drawImage(fadeTargetImage, 0, 0, this.getWidth(), this.getHeight(), this);
+            if (fadeAlpha < 0.5f) {
+                // First half: draw old image, fading out to reveal dark background
+                float oldImageAlpha = 1f - (fadeAlpha * 2f);  // 1.0 -> 0.0
+                g2d.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, oldImageAlpha));
+                if (this.backgroundImage != null) {
+                    g2d.drawImage(this.backgroundImage, 0, 0, this.getWidth(), this.getHeight(), this);
+                }
+            } else {
+                // Second half: draw new image, fading in from dark background
+                float newImageAlpha = (fadeAlpha - 0.5f) * 2f;  // 0.0 -> 1.0
+                g2d.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, newImageAlpha));
+                g2d.drawImage(fadeTargetImage, 0, 0, this.getWidth(), this.getHeight(), this);
+            }
+        } else if (this.backgroundImage != null) {
+            // No fade in progress, draw current image normally
+            g2d.drawImage(this.backgroundImage, 0, 0, this.getWidth(), this.getHeight(), this);
         }
 
         g2d.dispose();
