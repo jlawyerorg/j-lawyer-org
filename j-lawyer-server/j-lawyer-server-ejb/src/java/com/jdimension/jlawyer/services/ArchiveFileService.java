@@ -6030,7 +6030,15 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
         }
 
         Invoice newInvoice = this.addInvoice(toCaseId, invoicePool, oldInvoice.getInvoiceType(), oldInvoice.getCurrency());
-        newInvoice.setContact(oldInvoice.getContact());
+        
+        if(oldInvoice.getArchiveFileKey().getId().equals(toCaseId)) {
+            newInvoice.setContact(oldInvoice.getContact());
+            newInvoice.setPaymentType(oldInvoice.getPaymentType());
+        } else {
+            newInvoice.setContact(null);
+            newInvoice.setPaymentType(Invoice.PAYMENTTYPE_BANKTRANSFER);
+        }
+        
         newInvoice.setCreationDate(new Date());
         newInvoice.setCurrency(oldInvoice.getCurrency());
         newInvoice.setDescription(oldInvoice.getDescription());
@@ -6061,7 +6069,6 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
             newInvoice.setPeriodTo(periodTo);
             
         newInvoice.setStatus(Invoice.STATUS_NEW);
-        newInvoice.setPaymentType(oldInvoice.getPaymentType());
         if (oldInvoice.getTotal() != null && oldInvoice.getTotalGross() != null && asCredit) {
             newInvoice.setTotal(oldInvoice.getTotal().negate());
             newInvoice.setTotalGross(oldInvoice.getTotalGross().negate());
