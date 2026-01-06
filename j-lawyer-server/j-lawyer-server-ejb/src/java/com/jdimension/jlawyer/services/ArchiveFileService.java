@@ -6013,26 +6013,55 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
     @Override
     @RolesAllowed({"writeArchiveFileRole"})
     public Invoice copyInvoice(String invoiceId, String toCaseId, InvoicePool invoicePool, boolean asCredit) throws Exception {
+        return copyInvoice(invoiceId, toCaseId, invoicePool, asCredit, true, null, null, null);
+    }
+    
+    @Override
+    @RolesAllowed({"writeArchiveFileRole"})
+    public Invoice copyInvoice(String invoiceId, String toCaseId, InvoicePool invoicePool, boolean asCredit, boolean markAsCopy, Date periodFrom, Date periodTo, Date due) throws Exception {
 
         Invoice oldInvoice = this.invoicesFacade.find(invoiceId);
+        
+        if(invoicePool==null) {
+            invoicePool=this.invoicesPoolsFacade.find(oldInvoice.getLastPoolId());
+        }
+        if(toCaseId==null) {
+            toCaseId=oldInvoice.getArchiveFileKey().getId();
+        }
 
         Invoice newInvoice = this.addInvoice(toCaseId, invoicePool, oldInvoice.getInvoiceType(), oldInvoice.getCurrency());
-        newInvoice.setContact(null);
+        newInvoice.setContact(oldInvoice.getContact());
         newInvoice.setCreationDate(new Date());
         newInvoice.setCurrency(oldInvoice.getCurrency());
         newInvoice.setDescription(oldInvoice.getDescription());
 
-        Date paymentDate = new Date();
-        LocalDateTime localDateTime = paymentDate.toInstant().atZone(ZoneId.systemDefault()).toLocalDateTime();
-        localDateTime = localDateTime.plusDays(invoicePool.getPaymentTerm());
-        paymentDate = Date.from(localDateTime.atZone(ZoneId.systemDefault()).toInstant());
-        newInvoice.setDueDate(paymentDate);
+        if(due == null) {
+            Date paymentDate = new Date();
+            LocalDateTime localDateTime = paymentDate.toInstant().atZone(ZoneId.systemDefault()).toLocalDateTime();
+            localDateTime = localDateTime.plusDays(invoicePool.getPaymentTerm());
+            paymentDate = Date.from(localDateTime.atZone(ZoneId.systemDefault()).toInstant());
+            newInvoice.setDueDate(paymentDate);
+        } else {
+            newInvoice.setDueDate(due);
+        }
 
-        newInvoice.setName("Kopie von '" + oldInvoice.getName() + "'");
-        newInvoice.setPeriodFrom(oldInvoice.getPeriodFrom());
-        newInvoice.setPeriodTo(oldInvoice.getPeriodTo());
+        if(markAsCopy)
+            newInvoice.setName("Kopie von '" + oldInvoice.getName() + "'");
+        else
+            newInvoice.setName(oldInvoice.getName());
+        
+        if(periodFrom==null)
+            newInvoice.setPeriodFrom(oldInvoice.getPeriodFrom());
+        else
+            newInvoice.setPeriodFrom(periodFrom);
+        
+        if(periodTo==null)
+            newInvoice.setPeriodTo(oldInvoice.getPeriodTo());
+        else
+            newInvoice.setPeriodTo(periodTo);
+            
         newInvoice.setStatus(Invoice.STATUS_NEW);
-        newInvoice.setPaymentType(Invoice.PAYMENTTYPE_BANKTRANSFER);
+        newInvoice.setPaymentType(oldInvoice.getPaymentType());
         if (oldInvoice.getTotal() != null && oldInvoice.getTotalGross() != null && asCredit) {
             newInvoice.setTotal(oldInvoice.getTotal().negate());
             newInvoice.setTotalGross(oldInvoice.getTotalGross().negate());

@@ -668,6 +668,7 @@ import javax.ejb.Local;
 import javax.ws.rs.core.Response;
 import org.jlawyer.io.rest.v6.pojo.RestfulGroupV6;
 import org.jlawyer.io.rest.v7.pojo.RestfulDocumentValidationRequestV7;
+import org.jlawyer.io.rest.v7.pojo.RestfulInvoiceDuplicateRequestV7;
 import org.jlawyer.io.rest.v7.pojo.RestfulInvoicePositionV7;
 import org.jlawyer.io.rest.v7.pojo.RestfulInvoiceV7;
 
@@ -721,5 +722,7 @@ public interface CasesEndpointLocalV7 {
     Response removeDocumentFromRecycleBin(String documentId);
     
     Response searchCases(String searchString, Boolean includeArchived);
-        
+
+    Response duplicateInvoice(String id, RestfulInvoiceDuplicateRequestV7 request);
+
 }

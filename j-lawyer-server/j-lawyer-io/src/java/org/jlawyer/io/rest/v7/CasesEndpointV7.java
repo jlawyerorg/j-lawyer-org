@@ -687,6 +687,7 @@ import com.jdimension.jlawyer.services.InvoiceServiceLocal;
 import com.jdimension.jlawyer.services.MessagingServiceLocal;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Date;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -713,6 +714,7 @@ import org.jlawyer.io.rest.v6.pojo.RestfulGroupV6;
 import org.jlawyer.io.rest.v7.pojo.RestfulCaseAccountEntryV7;
 import org.jlawyer.io.rest.v7.pojo.RestfulDocumentValidationRequestV7;
 import org.jlawyer.io.rest.v7.pojo.RestfulInstantMessageV7;
+import org.jlawyer.io.rest.v7.pojo.RestfulInvoiceDuplicateRequestV7;
 import org.jlawyer.io.rest.v7.pojo.RestfulInvoicePositionV7;
 import org.jlawyer.io.rest.v7.pojo.RestfulInvoiceV7;
 import org.jlawyer.io.rest.v7.pojo.RestfulStatusResponseV7;
@@ -1376,6 +1378,62 @@ public class CasesEndpointV7 implements CasesEndpointLocalV7 {
                 return Response.status(Response.Status.NOT_FOUND).entity(ex.getMessage()).build();
             }
             return Response.serverError().entity(ex.getMessage()).build();
+        }
+    }
+
+    /**
+     * Duplicates an existing invoice
+     *
+     * @param id the invoice ID to duplicate
+     * @param request the duplicate request containing target case, pool and options
+     * @return the duplicated invoice
+     * @response 401 User not authorized
+     * @response 403 User not authenticated
+     * @response 404 Invoice not found
+     * @response 500 Server error
+     */
+    @Override
+    @PUT
+    @Produces(MediaType.APPLICATION_JSON + ";charset=utf-8")
+    @Consumes(MediaType.APPLICATION_JSON)
+    @Path("/invoices/{id}/duplicate")
+    @RolesAllowed({"writeArchiveFileRole"})
+    public Response duplicateInvoice(@PathParam("id") String id, RestfulInvoiceDuplicateRequestV7 request) {
+        try {
+            InitialContext ic = new InitialContext();
+            ArchiveFileServiceLocal cases = (ArchiveFileServiceLocal) ic.lookup(LOOKUP_CASES);
+            InvoiceFacadeLocal invoiceFacade = (InvoiceFacadeLocal) ic.lookup(LOOKUP_INVOICE_FACADE);
+            InvoicePoolFacadeLocal invoicePoolFacade = (InvoicePoolFacadeLocal) ic.lookup(LOOKUP_INVOICE_POOL_FACADE);
+
+            // Check if source invoice exists
+            Invoice sourceInvoice = invoiceFacade.find(id);
+            if (sourceInvoice == null) {
+                return Response.status(Response.Status.NOT_FOUND).build();
+            }
+
+            // Resolve InvoicePool if specified
+            InvoicePool pool = null;
+            if (request != null && request.getInvoicePoolId() != null) {
+                pool = invoicePoolFacade.find(request.getInvoicePoolId());
+            }
+
+            // Extract request parameters with defaults
+            String toCaseId = (request != null) ? request.getToCaseId() : null;
+            boolean asCredit = (request != null) && request.isAsCredit();
+            boolean markAsCopy = (request == null) || request.isMarkAsCopy();
+            Date periodFrom = (request != null) ? request.getPeriodFrom() : null;
+            Date periodTo = (request != null) ? request.getPeriodTo() : null;
+            Date due = (request != null) ? request.getDue() : null;
+
+            // Call copyInvoice
+            Invoice copiedInvoice = cases.copyInvoice(id, toCaseId, pool, asCredit, markAsCopy, periodFrom, periodTo, due);
+
+            // Return result as RestfulInvoiceV7
+            return Response.ok(RestfulInvoiceV7.fromInvoice(copiedInvoice)).build();
+
+        } catch (Exception ex) {
+            log.error("Error duplicating invoice", ex);
+            return Response.serverError().build();
         }
     }
 
