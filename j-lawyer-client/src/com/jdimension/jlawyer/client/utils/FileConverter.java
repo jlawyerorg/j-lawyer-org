@@ -1064,37 +1064,37 @@ public class FileConverter {
             boolean isRetry = false;
             for (int i = 0; i < 2; i++) {
                 boolean success = false;
-                String usedBinary = LO_BINARY;
+                String usedBinary = OOO_BINARY;
                 int exit = -1;
 
-                // Try libreoffice.exe first
+                // Try soffice.exe first
                 try {
-                    Process p = Runtime.getRuntime().exec(new String[]{LO_BINARY, "--headless", "--convert-to", "pdf:writer_pdf_Export:{\n" +
+                    Process p = Runtime.getRuntime().exec(new String[]{OOO_BINARY, "--headless", "--convert-to", "pdf:writer_pdf_Export:{\n" +
                             "  \"SelectPdfVersion\":{\"type\":\"long\",\"value\":3}\n" +
                             "}", "--outdir", parentPath, url});
                     exit = p.waitFor();
                     if (exit == 0) {
-                        log.info("PDF conversion succeeded with " + LO_BINARY);
+                        log.info("PDF conversion succeeded with " + OOO_BINARY);
                         success = true;
                     }
                 } catch (Throwable ex) {
-                    log.debug("libreoffice.exe not found, trying soffice.exe: " + ex.getMessage());
+                    log.debug("soffice.exe not found, trying libreoffice.exe: " + ex.getMessage());
                 }
 
-                // Fallback to soffice.exe
+                // Fallback to libreoffice.exe
                 if (!success) {
-                    usedBinary = OOO_BINARY;
+                    usedBinary = LO_BINARY;
                     try {
-                        Process p = Runtime.getRuntime().exec(new String[]{OOO_BINARY, "--headless", "--convert-to", "pdf:writer_pdf_Export:{\n" +
+                        Process p = Runtime.getRuntime().exec(new String[]{LO_BINARY, "--headless", "--convert-to", "pdf:writer_pdf_Export:{\n" +
                                 "  \"SelectPdfVersion\":{\"type\":\"long\",\"value\":3}\n" +
                                 "}", "--outdir", parentPath, url});
                         exit = p.waitFor();
                         if (exit == 0) {
-                            log.info("PDF conversion succeeded with " + OOO_BINARY);
+                            log.info("PDF conversion succeeded with " + LO_BINARY);
                             success = true;
                         }
                     } catch (Throwable ex) {
-                        log.error("soffice.exe also not found: " + ex.getMessage());
+                        log.error("libreoffice.exe also not found: " + ex.getMessage());
                     }
                 }
 
