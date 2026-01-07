@@ -899,6 +899,9 @@ public class FileConverter {
 
     public static class WindowsFileConverter extends FileConverter {
 
+        private static final String LO_BINARY = "libreoffice.exe";
+        private static final String OOO_BINARY = "soffice.exe";
+
         private WindowsFileConverter() {
         }
 
@@ -1048,24 +1051,56 @@ public class FileConverter {
                 throw new Exception("Format nicht unterstützt: " + new File(url).getName());
             }
 
-            String clientLocation = System.getenv("JLAWYERCLIENTHOME");
-            if (clientLocation == null) {
-                log.error("JLAWYERCLIENTHOME environment variable not set - PDF conversion not possible");
-                throw new Exception("Umgebungsvariable JLAWYERCLIENTHOME nicht gesetzt - PDF-Konvertierung nicht möglich.");
-            }
-
-            if (!clientLocation.endsWith(File.separator)) {
-                clientLocation = clientLocation + File.separator;
+            File inputFile = new File(url);
+            File outputDir = inputFile.getParentFile();
+            String parentPath = null;
+            if (outputDir != null) {
+                parentPath = outputDir.getAbsolutePath();
+                if (parentPath.endsWith(File.separator)) {
+                    parentPath = parentPath.substring(0, parentPath.length() - 1);
+                }
             }
 
             boolean isRetry = false;
             for (int i = 0; i < 2; i++) {
-                Process p = Runtime.getRuntime().exec(new String[]{"python.exe", clientLocation + "unoconv-master\\unoconv", "-eSelectPdfVersion=3", "-f", "pdf", url});
-                int exit = p.waitFor();
+                boolean success = false;
+                String usedBinary = LO_BINARY;
+                int exit = -1;
 
-                if (exit != 0) {
+                // Try libreoffice.exe first
+                try {
+                    Process p = Runtime.getRuntime().exec(new String[]{LO_BINARY, "--headless", "--convert-to", "pdf:writer_pdf_Export:{\n" +
+                            "  \"SelectPdfVersion\":{\"type\":\"long\",\"value\":3}\n" +
+                            "}", "--outdir", parentPath, url});
+                    exit = p.waitFor();
+                    if (exit == 0) {
+                        log.info("PDF conversion succeeded with " + LO_BINARY);
+                        success = true;
+                    }
+                } catch (Throwable ex) {
+                    log.debug("libreoffice.exe not found, trying soffice.exe: " + ex.getMessage());
+                }
+
+                // Fallback to soffice.exe
+                if (!success) {
+                    usedBinary = OOO_BINARY;
+                    try {
+                        Process p = Runtime.getRuntime().exec(new String[]{OOO_BINARY, "--headless", "--convert-to", "pdf:writer_pdf_Export:{\n" +
+                                "  \"SelectPdfVersion\":{\"type\":\"long\",\"value\":3}\n" +
+                                "}", "--outdir", parentPath, url});
+                        exit = p.waitFor();
+                        if (exit == 0) {
+                            log.info("PDF conversion succeeded with " + OOO_BINARY);
+                            success = true;
+                        }
+                    } catch (Throwable ex) {
+                        log.error("soffice.exe also not found: " + ex.getMessage());
+                    }
+                }
+
+                if (!success) {
                     if (isRetry) {
-                        log.error("PDF conversion failed with exit code " + exit + ", command line was 'python.exe " + clientLocation + "unoconv-master\\unoconv -f pdf " + url);
+                        log.error("PDF conversion failed with exit code " + exit + " using " + usedBinary);
                         throw new Exception("Konvertierung nach PDF fehlgeschlagen: " + exit);
                     } else {
                         isRetry = true;
@@ -1073,18 +1108,15 @@ public class FileConverter {
                         try {
                             Thread.sleep(1000);
                         } catch (Throwable t) {
-
                         }
                         continue;
                     }
                 }
 
-                File org = new File(url);
-                String orgName = org.getName();
-                String path = url.substring(0, url.indexOf(orgName));
-                String pdf = path + orgName.substring(0, orgName.lastIndexOf('.')) + ".pdf";
+                String orgName = inputFile.getName();
+                String pdf = parentPath + File.separator + orgName.substring(0, orgName.lastIndexOf('.')) + ".pdf";
                 if (!(new File(pdf).exists())) {
-                    throw new Exception("Konvertierung kann nur durchgeführt werden wenn kein soffice.exe/soffice.bin läuft!");
+                    throw new Exception("Konvertierung fehlgeschlagen - PDF wurde nicht erstellt");
                 }
 
                 return pdf;
