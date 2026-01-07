@@ -687,6 +687,7 @@ import org.jlawyer.bea.model.MessageExport;
 import org.jmarkdownviewer.jmdviewer.parser.MarkdownParser;
 import org.mustangproject.ZUGFeRD.IZUGFeRDExporter;
 import org.mustangproject.ZUGFeRD.ZUGFeRDExporterFromPDFA;
+import org.mustangproject.ZUGFeRD.ZUGFeRDExporterFromA3;
 
 /**
  *
@@ -756,7 +757,7 @@ public class FileConverter {
             org.mustangproject.Invoice i = EInvoiceUtils.getEInvoice(sourceInvoice, sender);
             
         
-            IZUGFeRDExporter ze = new ZUGFeRDExporterFromPDFA().load(pdfTempFile).setProducer("j-lawyer.org " + VersionUtils.getFullClientVersion()).setCreator(UserSettings.getInstance().getCurrentUser().getDisplayName());
+            IZUGFeRDExporter ze = new ZUGFeRDExporterFromA3().load(pdfTempFile).setProducer("j-lawyer.org " + VersionUtils.getFullClientVersion()).setCreator(UserSettings.getInstance().getCurrentUser().getDisplayName());
             ze.setTransaction(i);
             ze.export(pdfTempFile);
         }
