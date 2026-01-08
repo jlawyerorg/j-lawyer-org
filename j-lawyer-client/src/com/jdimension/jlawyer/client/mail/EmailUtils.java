@@ -766,7 +766,12 @@ public class EmailUtils extends CommonMailUtils {
 
     public static boolean hasAttachment(Message msg) throws Exception {
         if (msg.isMimeType("multipart/*")) {
-            return checkForAttachments(msg.getContent());
+            try {
+                return checkForAttachments(msg.getContent());
+            } catch (IllegalArgumentException e) {
+                log.warn("Unable to get content - invalid content type: " + e.getMessage());
+                return false;
+            }
         }
         return false;
     }
@@ -888,14 +893,18 @@ public class EmailUtils extends CommonMailUtils {
             if (disposition == null) {
                 MimeBodyPart mimePart = (MimeBodyPart) part;
 
-                if (mimePart.getContent() instanceof Multipart) {
-                    Part attPart = getAttachmentPart(name, mimePart.getContent(), folder);
-                    if (attPart != null) {
-                        if (opened) {
-                            closeIfIMAP(folder);
+                try {
+                    if (mimePart.getContent() instanceof Multipart) {
+                        Part attPart = getAttachmentPart(name, mimePart.getContent(), folder);
+                        if (attPart != null) {
+                            if (opened) {
+                                closeIfIMAP(folder);
+                            }
+                            return attPart;
                         }
-                        return attPart;
                     }
+                } catch (IllegalArgumentException e) {
+                    log.warn("Unable to get content - invalid content type: " + e.getMessage());
                 }
 
             } else if (disposition.equalsIgnoreCase(Part.ATTACHMENT)) {
@@ -914,14 +923,18 @@ public class EmailUtils extends CommonMailUtils {
                 // Check if inline content is a Multipart (e.g., in S/MIME signed messages)
                 if (part instanceof MimeBodyPart) {
                     MimeBodyPart mimePart = (MimeBodyPart) part;
-                    if (mimePart.getContent() instanceof Multipart) {
-                        Part attPart = getAttachmentPart(name, mimePart.getContent(), folder);
-                        if (attPart != null) {
-                            if (opened) {
-                                closeIfIMAP(folder);
+                    try {
+                        if (mimePart.getContent() instanceof Multipart) {
+                            Part attPart = getAttachmentPart(name, mimePart.getContent(), folder);
+                            if (attPart != null) {
+                                if (opened) {
+                                    closeIfIMAP(folder);
+                                }
+                                return attPart;
                             }
-                            return attPart;
                         }
+                    } catch (IllegalArgumentException e) {
+                        log.warn("Unable to get content - invalid content type: " + e.getMessage());
                     }
                 }
                 if (name.equals(EmailUtils.decodeText(part.getFileName()))) {
@@ -962,7 +975,12 @@ public class EmailUtils extends CommonMailUtils {
     public static byte[] getAttachmentBytes(String name, MessageContainer msgContainer) throws Exception {
 
         boolean opened = openFolder(msgContainer.getMessage().getFolder());
-        Part att = getAttachmentPart(name, msgContainer.getMessage().getContent(), msgContainer.getMessage().getFolder());
+        Part att = null;
+        try {
+            att = getAttachmentPart(name, msgContainer.getMessage().getContent(), msgContainer.getMessage().getFolder());
+        } catch (IllegalArgumentException e) {
+            log.warn("Unable to get content - invalid content type: " + e.getMessage());
+        }
 
         opened = opened || openFolder(msgContainer.getMessage().getFolder());
         if (att != null) {
@@ -1013,11 +1031,15 @@ public class EmailUtils extends CommonMailUtils {
             if (disposition == null) {
                 MimeBodyPart mimePart = (MimeBodyPart) part;
 
-                if (mimePart.getContent() instanceof Multipart) {
-                    boolean att = checkForAttachments(mimePart.getContent());
-                    if (att) {
-                        return true;
+                try {
+                    if (mimePart.getContent() instanceof Multipart) {
+                        boolean att = checkForAttachments(mimePart.getContent());
+                        if (att) {
+                            return true;
+                        }
                     }
+                } catch (IllegalArgumentException e) {
+                    log.warn("Unable to get content - invalid content type: " + e.getMessage());
                 }
 
             } else if (disposition.equalsIgnoreCase(Part.ATTACHMENT)) {
@@ -1699,7 +1721,13 @@ public class EmailUtils extends CommonMailUtils {
         if (!message.isMimeType("multipart/*")) {
             return message;
         }
-        Object content = message.getContent();
+        Object content = null;
+        try {
+            content = message.getContent();
+        } catch (IllegalArgumentException e) {
+            log.warn("Unable to get content - invalid content type: " + e.getMessage());
+            return message;
+        }
         if (!(content instanceof Multipart)) {
             return message;
         }
@@ -1736,7 +1764,13 @@ public class EmailUtils extends CommonMailUtils {
             BodyPart part = multipart.getBodyPart(i);
             // Falls der Part selbst ein Multipart ist, rekursiv verarbeiten
             if (part.isMimeType("multipart/*")) {
-                Multipart subMultipart = (Multipart) part.getContent();
+                Multipart subMultipart = null;
+                try {
+                    subMultipart = (Multipart) part.getContent();
+                } catch (IllegalArgumentException e) {
+                    log.warn("Unable to get content - invalid content type: " + e.getMessage());
+                    continue;
+                }
                 Multipart newSubMultipart = removeAttachmentsFromMultipart(subMultipart, attachmentNames);
                 if (newSubMultipart.getCount() > 0) {
                     MimeBodyPart newPart = new MimeBodyPart();
