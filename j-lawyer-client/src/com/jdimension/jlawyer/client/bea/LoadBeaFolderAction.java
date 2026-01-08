@@ -672,7 +672,9 @@ import com.jdimension.jlawyer.client.utils.StringUtils;
 import com.jdimension.jlawyer.client.utils.ThreadUtils;
 import java.awt.Rectangle;
 import java.text.SimpleDateFormat;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 import javax.swing.JSplitPane;
 import javax.swing.JTable;
 import javax.swing.SwingUtilities;
@@ -703,6 +705,8 @@ public class LoadBeaFolderAction extends ProgressableAction {
 
     private List<MessageHeader> headers = null;
 
+    private final Set<String> addedMessageIds = new HashSet<>();
+
     private int max = 1;
 
     public LoadBeaFolderAction(ProgressIndicator i, org.jlawyer.bea.model.Folder f, JTable table, int sortCol, int scrollToRow, JSplitPane mainSplitter) throws BeaWrapperException {
@@ -716,6 +720,21 @@ public class LoadBeaFolderAction extends ProgressableAction {
         headers = bea.getFolderOverview(f, BeaAccess.getFilter());
         this.max = headers.size();
         this.mainSplitter=mainSplitter;
+
+        log.info("LoadBeaFolderAction created for folder: " + f.getName() + " (id=" + f.getId() + "), headers count: " + headers.size());
+
+        // Check for duplicates in headers list
+        Set<String> seenIds = new HashSet<>();
+        int duplicatesInHeaders = 0;
+        for (MessageHeader mh : headers) {
+            if (!seenIds.add(mh.getId())) {
+                duplicatesInHeaders++;
+                log.warn("Duplicate message in headers list: id=" + mh.getId() + ", subject=" + mh.getSubject());
+            }
+        }
+        if (duplicatesInHeaders > 0) {
+            log.warn("Total duplicates found in headers list: " + duplicatesInHeaders);
+        }
     }
 
     @Override
@@ -771,7 +790,12 @@ public class LoadBeaFolderAction extends ProgressableAction {
 
                 SwingUtilities.invokeLater(() -> {
                     try {
-                        
+                        // Check for duplicate - skip if already added
+                        if (!addedMessageIds.add(msgh.getId())) {
+                            log.warn("Skipping duplicate message (already added to table): id=" + msgh.getId() + ", subject=" + msgh.getSubject());
+                            return;
+                        }
+
                         if (Folder.TYPE_TRASH.equalsIgnoreCase(f.getType())) {
                             // trash folder - show permanent deletion date
                             if (msgh.getReceptionTime() != null) {
@@ -782,7 +806,7 @@ public class LoadBeaFolderAction extends ProgressableAction {
                                 } else {
                                     ((DefaultTableModel) table.getModel()).addRow(new Object[]{msgh.isConfidential(), msgh, msgh.getSender(), toString, null, msgh.getReferenceNumber(), msgh.getReferenceJustice(), dfDate.format(msgh.getPermanentDeletion())});
                                 }
-                                
+
                             }
                         } else {
                             // not the trash folder
@@ -794,7 +818,7 @@ public class LoadBeaFolderAction extends ProgressableAction {
                                 } else {
                                     ((DefaultTableModel) table.getModel()).addRow(new Object[]{msgh.isConfidential(), msgh, msgh.getSender(), toString, null, msgh.getReferenceNumber(), msgh.getReferenceJustice()});
                                 }
-                                
+
                             }
                         }
                         if (scrollToRow > 0) {

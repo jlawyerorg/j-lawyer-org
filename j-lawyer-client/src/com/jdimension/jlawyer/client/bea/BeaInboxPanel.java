@@ -1464,6 +1464,7 @@ public class BeaInboxPanel extends javax.swing.JPanel implements SaveToCaseExecu
         if (selNode.getUserObject() != null && selNode.getUserObject() instanceof org.jlawyer.bea.model.Folder) {
             mainSplitter.setRightComponent(this.splitterFolderDetails);
             org.jlawyer.bea.model.Folder folder = (org.jlawyer.bea.model.Folder) selNode.getUserObject();
+            log.info("treeFoldersValueChangedImpl called for folder: " + folder.getName() + " (id=" + folder.getId() + "), thread: " + Thread.currentThread().getName());
 
             try {
 
