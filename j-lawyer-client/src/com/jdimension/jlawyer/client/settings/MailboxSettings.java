@@ -667,8 +667,10 @@ import com.jdimension.jlawyer.persistence.MailboxSetup;
 import com.jdimension.jlawyer.server.services.settings.MailboxSettingsKeys;
 import com.jdimension.jlawyer.services.JLawyerServiceLocator;
 import com.jdimension.jlawyer.services.SecurityServiceRemote;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Hashtable;
+import java.util.List;
 import java.util.Properties;
 import org.apache.log4j.Logger;
 
@@ -778,37 +780,77 @@ public class MailboxSettings extends MailboxSettingsKeys {
     public void setSettingAsBoolean(MailboxSetup mailbox, String key, boolean value) {
         setSetting(mailbox, key, "" + value);
     }
-    
-    public void hideFolder(MailboxSetup mailbox, String fullPath) {
-        String[] hiddenFolders=this.getSettingArray(mailbox, FOLDERS_HIDDEN, new String[0]);
-        String[] newArray = Arrays.copyOf(hiddenFolders, hiddenFolders.length + 1);
-        newArray[newArray.length - 1] = fullPath;
-        this.setSettingArray(mailbox, FOLDERS_HIDDEN, newArray);
+
+    /**
+     * Normalizes a folder path by replacing backslashes with forward slashes.
+     * This ensures consistent path comparison across different operating systems.
+     *
+     * @param path the folder path to normalize
+     * @return the normalized path, or null if the input was null
+     */
+    private String normalizeFolderPath(String path) {
+        if (path == null) {
+            return null;
+        }
+        return path.replace('\\', '/');
     }
-    
-    public void showFolder(MailboxSetup mailbox, String fullPath) {
-        String[] hiddenFolders=this.getSettingArray(mailbox, FOLDERS_HIDDEN, new String[0]);
-        String[] newArray = new String[hiddenFolders.length - 1];
-        int index = 0;
-        for (String element : hiddenFolders) {
-            if (!element.equals(fullPath)) {
-                newArray[index++] = element;
+
+    /**
+     * Compares two folder paths for equality, ignoring differences in path separators.
+     * This handles backward compatibility with paths stored using different OS separators.
+     *
+     * @param path1 the first path to compare
+     * @param path2 the second path to compare
+     * @return true if the paths are equal after normalization, false otherwise
+     */
+    private boolean folderPathsEqual(String path1, String path2) {
+        if (path1 == null || path2 == null) {
+            return path1 == path2;
+        }
+        return normalizeFolderPath(path1).equals(normalizeFolderPath(path2));
+    }
+
+    public void hideFolder(MailboxSetup mailbox, String fullPath) {
+        String normalizedPath = normalizeFolderPath(fullPath);
+        String[] hiddenFolders = this.getSettingArray(mailbox, FOLDERS_HIDDEN, new String[0]);
+        // Check if already hidden (with normalized comparison)
+        for (String f : hiddenFolders) {
+            if (folderPathsEqual(f, normalizedPath)) {
+                return; // Already hidden
             }
         }
+        String[] newArray = Arrays.copyOf(hiddenFolders, hiddenFolders.length + 1);
+        newArray[newArray.length - 1] = normalizedPath;
         this.setSettingArray(mailbox, FOLDERS_HIDDEN, newArray);
     }
-    
+
+    public void showFolder(MailboxSetup mailbox, String fullPath) {
+        String[] hiddenFolders = this.getSettingArray(mailbox, FOLDERS_HIDDEN, new String[0]);
+        List<String> remaining = new ArrayList<>();
+        for (String element : hiddenFolders) {
+            if (!folderPathsEqual(element, fullPath)) {
+                remaining.add(element);
+            }
+        }
+        this.setSettingArray(mailbox, FOLDERS_HIDDEN, remaining.toArray(new String[0]));
+    }
+
     public boolean isFolderHidden(MailboxSetup mailbox, String fullPath) {
-        String[] hiddenFolders=this.getSettingArray(mailbox, FOLDERS_HIDDEN, new String[0]);
-        for(String f: hiddenFolders) {
-            if(f.equals(fullPath))
+        String[] hiddenFolders = this.getSettingArray(mailbox, FOLDERS_HIDDEN, new String[0]);
+        for (String f : hiddenFolders) {
+            if (folderPathsEqual(f, fullPath)) {
                 return true;
+            }
         }
         return false;
     }
-    
+
     public String[] getHiddenFolders(MailboxSetup mailbox) {
-        String[] hidden=getSettingArray(mailbox, FOLDERS_HIDDEN, new String[0]);
+        String[] hidden = getSettingArray(mailbox, FOLDERS_HIDDEN, new String[0]);
+        // Normalize paths for display consistency (handles migration of old paths)
+        for (int i = 0; i < hidden.length; i++) {
+            hidden[i] = normalizeFolderPath(hidden[i]);
+        }
         Arrays.sort(hidden);
         return hidden;
     }
