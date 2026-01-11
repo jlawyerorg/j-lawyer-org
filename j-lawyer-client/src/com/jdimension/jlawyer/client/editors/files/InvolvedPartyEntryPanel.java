@@ -668,7 +668,7 @@ import com.jdimension.jlawyer.client.bea.BeaInboxPanel;
 import com.jdimension.jlawyer.client.bea.BeaLoginCallback;
 import com.jdimension.jlawyer.client.bea.BeaLoginDialog;
 import com.jdimension.jlawyer.client.bea.IdentityPanel;
-import com.jdimension.jlawyer.client.bea.SendBeaMessageDialog;
+import com.jdimension.jlawyer.client.bea.SendBeaMessageFrame;
 import com.jdimension.jlawyer.client.editors.EditorsRegistry;
 import com.jdimension.jlawyer.client.editors.addresses.AddressUtils;
 import com.jdimension.jlawyer.client.editors.addresses.ConflictOfInterestUtils;
@@ -676,7 +676,7 @@ import com.jdimension.jlawyer.client.events.ContactUpdatedEvent;
 import com.jdimension.jlawyer.client.events.Event;
 import com.jdimension.jlawyer.client.events.EventBroker;
 import com.jdimension.jlawyer.client.events.EventConsumer;
-import com.jdimension.jlawyer.client.mail.SendEmailDialog;
+import com.jdimension.jlawyer.client.mail.SendEmailFrame;
 import com.jdimension.jlawyer.client.settings.ClientSettings;
 import com.jdimension.jlawyer.client.settings.ServerSettings;
 import com.jdimension.jlawyer.client.settings.UserSettings;
@@ -693,7 +693,6 @@ import com.jdimension.jlawyer.persistence.ArchiveFileBean;
 import com.jdimension.jlawyer.persistence.PartyTypeBean;
 import com.jdimension.jlawyer.services.AddressServiceRemote;
 import com.jdimension.jlawyer.services.JLawyerServiceLocator;
-import com.jdimension.jlawyer.services.SystemManagementRemote;
 import com.jdimension.jlawyer.client.utils.OsmUtils;
 
 
@@ -1318,10 +1317,10 @@ public class InvolvedPartyEntryPanel extends javax.swing.JPanel implements Event
 
             if (this.casePanel != null) {
                 this.casePanel.saveFormData();
-                this.casePanel.saveInvolvements();
+                this.casePanel.saveInvolvements(this.caseDto.getId());
             }
 
-            SendEmailDialog dlg = new SendEmailDialog(false, EditorsRegistry.getInstance().getMainWindow(), false);
+            SendEmailFrame dlg = new SendEmailFrame(false);
             dlg.setArchiveFile(this.caseDto, null);
             dlg.setTo(this.a.getEmail());
             ArrayList<ArchiveFileAddressesBean> involved = this.container.getInvolvedParties();
@@ -1329,7 +1328,8 @@ public class InvolvedPartyEntryPanel extends javax.swing.JPanel implements Event
                 dlg.addParty(aab, true);
             }
 
-            FrameUtils.centerDialog(dlg, null);
+            FrameUtils.centerFrame(dlg, null);
+            EditorsRegistry.getInstance().registerFrame(dlg);
             dlg.setVisible(true);
         }
 
@@ -1367,10 +1367,10 @@ public class InvolvedPartyEntryPanel extends javax.swing.JPanel implements Event
 
             if (this.casePanel != null) {
                 this.casePanel.saveFormData();
-                this.casePanel.saveInvolvements();
+                this.casePanel.saveInvolvements(this.caseDto.getId());
             }
 
-            SendBeaMessageDialog dlg = new SendBeaMessageDialog(EditorsRegistry.getInstance().getMainWindow(), false);
+            SendBeaMessageFrame dlg = new SendBeaMessageFrame();
             dlg.setArchiveFile(this.caseDto);
             dlg.setTo(iTo);
 
@@ -1379,7 +1379,8 @@ public class InvolvedPartyEntryPanel extends javax.swing.JPanel implements Event
                 dlg.addParty(aab);
             }
             dlg.setAzRecipient(this.txtReference.getText());
-            FrameUtils.centerDialog(dlg, null);
+            FrameUtils.centerFrame(dlg, null);
+            EditorsRegistry.getInstance().registerFrame(dlg);
             dlg.setVisible(true);
         }
 
@@ -1510,7 +1511,7 @@ public class InvolvedPartyEntryPanel extends javax.swing.JPanel implements Event
 
     private void mnuCopyActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_mnuCopyActionPerformed
         if (this.a != null) {
-            AddressUtils.copyToClipboard(a.getCompany(), a.getDepartment(), a.getTitleInAddress(), a.getDegreePrefix(), a.getFirstName(), a.getFirstName2(), a.getName(), a.getDegreeSuffix(), a.getStreet(), a.getStreetNumber(), a.getAdjunct(), a.getZipCode(), a.getCity(), a.getDistrict(), a.getCountry());
+            AddressUtils.copyToClipboard(a.getCompany(), a.getDepartment(), a.getTitleInAddress(), a.getDegreePrefix(), a.getFirstName(), a.getFirstName2(), a.getName(), a.getDegreeSuffix(), a.getStreet(), a.getStreetNumber(), a.getAdjunct(), a.getZipCode(), a.getCity(), a.getDistrict(), a.getCountry(),a.getState());
         }
     }//GEN-LAST:event_mnuCopyActionPerformed
 

@@ -693,6 +693,7 @@ public interface AddressServiceLocal {
     ArrayList<String> getAllAddressIds();
     
     public void updateAddress(AddressBean dto);
+    public void removeAddress(String id);
     
     Collection<AddressTagsBean> getTags(String addressId);
     

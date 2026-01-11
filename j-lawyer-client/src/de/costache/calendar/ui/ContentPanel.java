@@ -16,9 +16,7 @@ package de.costache.calendar.ui;
  * the License. 
  */
 import javax.swing.JPanel;
-import java.awt.event.MouseWheelEvent;
-import java.awt.event.MouseWheelListener;
-
+ 
 import de.costache.calendar.JCalendar;
 import de.costache.calendar.ui.strategy.DisplayStrategy;
 import de.costache.calendar.ui.strategy.DisplayStrategy.Type;
@@ -47,37 +45,6 @@ public class ContentPanel extends JPanel {
         this.strategy = DisplayStrategyFactory.getStrategy(this, Type.WEEK);
         this.strategy.display();
 
-        // Add mouse wheel listener to handle scrolling for specified type
-        addMouseWheelListener(new MouseWheelListener() {
-            @Override
-            public void mouseWheelMoved(MouseWheelEvent e) {
-                if (strategy.getType() == Type.MONTH) {
-                    if (e.getWheelRotation() < 0) {
-                        strategy.moveIntervalLeft();
-                    } else {
-                        strategy.moveIntervalRight();
-                    }
-                }
-                if (strategy.getType() == Type.WEEK) {
-                    if (e.getWheelRotation() < 0) {
-                        strategy.moveIntervalLeft();
-                    } else {
-                        strategy.moveIntervalRight();
-                    }
-                }
-                
-                if (strategy.getType() == Type.DAY) {
-                    if (e.getWheelRotation() < 0) {
-                        strategy.moveIntervalLeft();
-                    } else {
-                        strategy.moveIntervalRight();
-                    }
-                }
-                
-                // Update the interval label in the header panel
-                owner.getHeaderPanel().getIntervalLabel().setText(strategy.getDisplayInterval());
-            }
-        });
     }
 
     public JCalendar getOwner() {

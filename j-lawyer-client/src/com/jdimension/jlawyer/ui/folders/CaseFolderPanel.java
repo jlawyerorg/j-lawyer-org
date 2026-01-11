@@ -698,6 +698,7 @@ import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.JPopupMenu;
 import org.apache.log4j.Logger;
+import org.jlawyer.search.SearchHit;
 import themes.colors.DefaultColorTheme;
 
 /**
@@ -705,37 +706,43 @@ import themes.colors.DefaultColorTheme;
  * @author jens
  */
 public class CaseFolderPanel extends javax.swing.JPanel implements EventConsumer {
-    
-    private static final Logger log=Logger.getLogger(CaseFolderPanel.class.getName());
-    
-    private static final String LASTSORT_CREATIONDATE_ASC="creationdate.asc";
-    private static final String LASTSORT_CREATIONDATE_DESC="creationdate.desc";
-    private static final String LASTSORT_CHANGEDATE_ASC="changedate.asc";
-    private static final String LASTSORT_CHANGEDATE_DESC="changedate.desc";
-    private static final String LASTSORT_SIZE_ASC="size.asc";
-    private static final String LASTSORT_SIZE_DESC="size.desc";
-    private static final String LASTSORT_NAME_ASC="name.asc";
-    private static final String LASTSORT_NAME_DESC="name.desc";
-    private static final String LASTSORT_FAVORITE_ASC="fav.asc";
-    private static final String LASTSORT_FAVORITE_DESC="fav.desc";
-    private static final String LASTSORT_FILETYPE_ASC="type.asc";
-    private static final String LASTSORT_FILETYPE_DESC="type.desc";
-    private static final String LASTSORT_FOLDER_ASC="folder.asc";
-    private static final String LASTSORT_FOLDER_DESC="folder.desc";
+
+    private static final Logger log = Logger.getLogger(CaseFolderPanel.class.getName());
+
+    private static final String LASTSORT_CREATIONDATE_ASC = "creationdate.asc";
+    private static final String LASTSORT_CREATIONDATE_DESC = "creationdate.desc";
+    private static final String LASTSORT_CHANGEDATE_ASC = "changedate.asc";
+    private static final String LASTSORT_CHANGEDATE_DESC = "changedate.desc";
+    private static final String LASTSORT_SIZE_ASC = "size.asc";
+    private static final String LASTSORT_SIZE_DESC = "size.desc";
+    private static final String LASTSORT_NAME_ASC = "name.asc";
+    private static final String LASTSORT_NAME_DESC = "name.desc";
+    private static final String LASTSORT_FAVORITE_ASC = "fav.asc";
+    private static final String LASTSORT_FAVORITE_DESC = "fav.desc";
+    private static final String LASTSORT_FILETYPE_ASC = "type.asc";
+    private static final String LASTSORT_FILETYPE_DESC = "type.desc";
+    private static final String LASTSORT_FOLDER_ASC = "folder.asc";
+    private static final String LASTSORT_FOLDER_DESC = "folder.desc";
 
     private boolean readonly = false;
+    // all documents within this view
     private ArrayList<ArchiveFileDocumentsBean> documents = new ArrayList<>();
-    private HashMap<String,Invoice> linkedInvoices=new HashMap<>();
+    // all documents that do not match a search query
+    private ArrayList<ArchiveFileDocumentsBean> nonMatchingdocuments = new ArrayList<>();
+    private Map<String,SearchHit> matchingDocumentHits=new HashMap<>();
+    private HashMap<String, Invoice> linkedInvoices = new HashMap<>();
     private ArchiveFilePanel caseContainer = null;
     private JPopupMenu documentsPopup = null;
     private ArchiveFileBean selectedCase = null;
 
     /**
      * Creates new form CaseFolderPanel
+     *
      * @param readonly
      */
     public CaseFolderPanel(boolean readonly) {
         initComponents();
+        this.updateDocumentCount();
         this.foldersListPanel.setCaseFolderPanel(this);
         this.readonly = readonly;
         this.jScrollPane1.getVerticalScrollBar().setUnitIncrement(16);
@@ -760,12 +767,12 @@ public class CaseFolderPanel extends javax.swing.JPanel implements EventConsumer
         sortFolder.setNoneIcon(sortFolderNoneIcon);
         ImageIcon sortFileTypeIcon = new ImageIcon(CaseFolderPanel.class.getResource("/com/jdimension/jlawyer/ui/folders/baseline_file_present_black_48dp.png"));
         sortFileType.setNoneIcon(sortFileTypeIcon);
-        
+
         EventBroker b = EventBroker.getInstance();
         b.subscribeConsumer(this, Event.TYPE_DOCUMENTLOCK);
 
     }
-    
+
     public FoldersListPanel getFoldersListPanel() {
         return this.foldersListPanel;
     }
@@ -776,6 +783,8 @@ public class CaseFolderPanel extends javax.swing.JPanel implements EventConsumer
 
     public void setCase(ArchiveFileBean afb) {
         this.selectedCase = afb;
+        this.nonMatchingdocuments.clear();
+        this.matchingDocumentHits.clear();
     }
 
     public CaseFolderPanel() {
@@ -804,7 +813,7 @@ public class CaseFolderPanel extends javax.swing.JPanel implements EventConsumer
         sortFolder.setNoneIcon(sortFolderNoneIcon);
         ImageIcon sortFileTypeIcon = new ImageIcon(CaseFolderPanel.class.getResource("/com/jdimension/jlawyer/ui/folders/baseline_file_present_black_48dp.png"));
         sortFileType.setNoneIcon(sortFileTypeIcon);
-        
+
         EventBroker b = EventBroker.getInstance();
         b.subscribeConsumer(this, Event.TYPE_DOCUMENTLOCK);
     }
@@ -894,6 +903,10 @@ public class CaseFolderPanel extends javax.swing.JPanel implements EventConsumer
                 buildMoveToFolderMenu(items, child, itemName);
             }
         }
+    }
+    
+    public CaseFolder getRootFolder() {
+        return this.foldersListPanel.getRootFolder();
     }
 
     public void sort() {
@@ -1000,21 +1013,21 @@ public class CaseFolderPanel extends javax.swing.JPanel implements EventConsumer
                 }
                 return s2.toLowerCase().compareTo(s1.toLowerCase());
             } else if (sortFileType.getSortState() == SortButton.SORT_ASC) {
-                String s1=FileUtils.getExtension(d1.getName());
-                String s2=FileUtils.getExtension(d2.getName());
+                String s1 = FileUtils.getExtension(d1.getName());
+                String s2 = FileUtils.getExtension(d2.getName());
                 return s1.toLowerCase().compareTo(s2.toLowerCase());
             } else if (sortFileType.getSortState() == SortButton.SORT_DESC) {
-                String s1=FileUtils.getExtension(d1.getName());
-                String s2=FileUtils.getExtension(d2.getName());
+                String s1 = FileUtils.getExtension(d1.getName());
+                String s2 = FileUtils.getExtension(d2.getName());
                 return s2.toLowerCase().compareTo(s1.toLowerCase());
             }
 
             return -1;
         });
-        
+
         this.setDocuments(documents, linkedInvoices);
     }
-    
+
     private void saveSortState() {
         if (sortChangeDate.getSortState() == SortButton.SORT_ASC) {
             UserSettings.getInstance().setSetting(UserSettings.CONF_DOCUMENTS_LASTSORTMODE, LASTSORT_CHANGEDATE_ASC);
@@ -1046,7 +1059,7 @@ public class CaseFolderPanel extends javax.swing.JPanel implements EventConsumer
             UserSettings.getInstance().setSetting(UserSettings.CONF_DOCUMENTS_LASTSORTMODE, LASTSORT_FILETYPE_DESC);
         }
     }
-    
+
     private void restoreSortState() {
         try {
             String lastSort = UserSettings.getInstance().getSetting(UserSettings.CONF_DOCUMENTS_LASTSORTMODE, LASTSORT_CREATIONDATE_DESC);
@@ -1085,7 +1098,7 @@ public class CaseFolderPanel extends javax.swing.JPanel implements EventConsumer
             log.error("Unable to restore sort state", t);
         }
     }
-    
+
     public void setCaseContainer(ArchiveFilePanel p) {
         this.caseContainer = p;
     }
@@ -1131,6 +1144,7 @@ public class CaseFolderPanel extends javax.swing.JPanel implements EventConsumer
         sortFileType = new com.jdimension.jlawyer.ui.folders.SortButton();
         sortCreationDate = new com.jdimension.jlawyer.ui.folders.SortButton();
         cmdExportSelectedAsPdf = new javax.swing.JButton();
+        lblDocumentCount = new javax.swing.JLabel();
         jScrollPane2 = new javax.swing.JScrollPane();
         pnlDocumentEntries = new javax.swing.JPanel();
         documentEntryPanel1 = new com.jdimension.jlawyer.ui.folders.DocumentEntryPanel();
@@ -1300,6 +1314,9 @@ public class CaseFolderPanel extends javax.swing.JPanel implements EventConsumer
             }
         });
 
+        lblDocumentCount.setFont(lblDocumentCount.getFont());
+        lblDocumentCount.setText("0");
+
         javax.swing.GroupLayout jPanel2Layout = new javax.swing.GroupLayout(jPanel2);
         jPanel2.setLayout(jPanel2Layout);
         jPanel2Layout.setHorizontalGroup(
@@ -1326,6 +1343,8 @@ public class CaseFolderPanel extends javax.swing.JPanel implements EventConsumer
                 .addComponent(sortFolder, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addGap(2, 2, 2)
                 .addComponent(sortFileType, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addComponent(lblDocumentCount)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                 .addComponent(cmdExportSelectedAsPdf)
                 .addContainerGap())
@@ -1335,12 +1354,11 @@ public class CaseFolderPanel extends javax.swing.JPanel implements EventConsumer
             .addGroup(jPanel2Layout.createSequentialGroup()
                 .addGroup(jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING, false)
                     .addComponent(cmdSelectAll1, javax.swing.GroupLayout.Alignment.LEADING, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                    .addGroup(javax.swing.GroupLayout.Alignment.LEADING, jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
-                        .addComponent(cmdActions, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                        .addGroup(jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                            .addComponent(sortChangeDate, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                            .addComponent(cmdMoveToFolder))
-                        .addComponent(cmdSelectNone1, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                    .addComponent(cmdActions, javax.swing.GroupLayout.Alignment.LEADING, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                    .addGroup(javax.swing.GroupLayout.Alignment.LEADING, jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                        .addComponent(sortChangeDate, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addComponent(cmdMoveToFolder))
+                    .addComponent(cmdSelectNone1, javax.swing.GroupLayout.Alignment.LEADING, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                     .addGroup(javax.swing.GroupLayout.Alignment.LEADING, jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                         .addComponent(sortFolder, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                         .addComponent(sortName, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
@@ -1348,7 +1366,8 @@ public class CaseFolderPanel extends javax.swing.JPanel implements EventConsumer
                         .addComponent(sortSize, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
                     .addComponent(sortFileType, javax.swing.GroupLayout.Alignment.LEADING, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                     .addComponent(sortCreationDate, javax.swing.GroupLayout.Alignment.LEADING, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                    .addComponent(cmdExportSelectedAsPdf, javax.swing.GroupLayout.Alignment.LEADING))
+                    .addComponent(cmdExportSelectedAsPdf, javax.swing.GroupLayout.Alignment.LEADING)
+                    .addComponent(lblDocumentCount, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
                 .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
         );
 
@@ -1399,6 +1418,8 @@ public class CaseFolderPanel extends javax.swing.JPanel implements EventConsumer
                 ((DocumentEntryPanel) c).setSelected(selected);
             }
         }
+        if(this.caseContainer!=null)
+            this.caseContainer.documentSelectionChanged();
     }
 
     public void selectDocumentsRangeTo(String docId) {
@@ -1449,7 +1470,7 @@ public class CaseFolderPanel extends javax.swing.JPanel implements EventConsumer
             this.sortFolder.setSortState(SortButton.SORT_NONE);
             this.sortFileType.setSortState(SortButton.SORT_NONE);
         }
-        if (this.sortCreationDate.getSortState()==SortButton.SORT_NONE && this.sortFileType.getSortState()==SortButton.SORT_NONE && this.sortFolder.getSortState() == SortButton.SORT_NONE && this.sortChangeDate.getSortState() == SortButton.SORT_NONE && this.sortFavorite.getSortState() == SortButton.SORT_NONE && this.sortName.getSortState() == SortButton.SORT_NONE && this.sortSize.getSortState() == SortButton.SORT_NONE) {
+        if (this.sortCreationDate.getSortState() == SortButton.SORT_NONE && this.sortFileType.getSortState() == SortButton.SORT_NONE && this.sortFolder.getSortState() == SortButton.SORT_NONE && this.sortChangeDate.getSortState() == SortButton.SORT_NONE && this.sortFavorite.getSortState() == SortButton.SORT_NONE && this.sortName.getSortState() == SortButton.SORT_NONE && this.sortSize.getSortState() == SortButton.SORT_NONE) {
             if (this.sortChangeDate.getSortState() == SortButton.SORT_NONE) {
                 this.sortChangeDate.setSortState(SortButton.SORT_ASC);
             }
@@ -1468,7 +1489,7 @@ public class CaseFolderPanel extends javax.swing.JPanel implements EventConsumer
             this.sortFolder.setSortState(SortButton.SORT_NONE);
             this.sortFileType.setSortState(SortButton.SORT_NONE);
         }
-        if (this.sortCreationDate.getSortState()==SortButton.SORT_NONE && this.sortFileType.getSortState()==SortButton.SORT_NONE && this.sortFolder.getSortState() == SortButton.SORT_NONE && this.sortChangeDate.getSortState() == SortButton.SORT_NONE && this.sortFavorite.getSortState() == SortButton.SORT_NONE && this.sortName.getSortState() == SortButton.SORT_NONE && this.sortSize.getSortState() == SortButton.SORT_NONE) {
+        if (this.sortCreationDate.getSortState() == SortButton.SORT_NONE && this.sortFileType.getSortState() == SortButton.SORT_NONE && this.sortFolder.getSortState() == SortButton.SORT_NONE && this.sortChangeDate.getSortState() == SortButton.SORT_NONE && this.sortFavorite.getSortState() == SortButton.SORT_NONE && this.sortName.getSortState() == SortButton.SORT_NONE && this.sortSize.getSortState() == SortButton.SORT_NONE) {
             this.sortChangeDate.setSortState(SortButton.SORT_DESC);
         }
 
@@ -1485,7 +1506,7 @@ public class CaseFolderPanel extends javax.swing.JPanel implements EventConsumer
             this.sortFolder.setSortState(SortButton.SORT_NONE);
             this.sortFileType.setSortState(SortButton.SORT_NONE);
         }
-        if (this.sortCreationDate.getSortState()==SortButton.SORT_NONE && this.sortFileType.getSortState()==SortButton.SORT_NONE && this.sortFolder.getSortState() == SortButton.SORT_NONE && this.sortChangeDate.getSortState() == SortButton.SORT_NONE && this.sortFavorite.getSortState() == SortButton.SORT_NONE && this.sortName.getSortState() == SortButton.SORT_NONE && this.sortSize.getSortState() == SortButton.SORT_NONE) {
+        if (this.sortCreationDate.getSortState() == SortButton.SORT_NONE && this.sortFileType.getSortState() == SortButton.SORT_NONE && this.sortFolder.getSortState() == SortButton.SORT_NONE && this.sortChangeDate.getSortState() == SortButton.SORT_NONE && this.sortFavorite.getSortState() == SortButton.SORT_NONE && this.sortName.getSortState() == SortButton.SORT_NONE && this.sortSize.getSortState() == SortButton.SORT_NONE) {
             this.sortChangeDate.setSortState(SortButton.SORT_DESC);
         }
 
@@ -1502,7 +1523,7 @@ public class CaseFolderPanel extends javax.swing.JPanel implements EventConsumer
             this.sortFolder.setSortState(SortButton.SORT_NONE);
             this.sortFileType.setSortState(SortButton.SORT_NONE);
         }
-        if (this.sortCreationDate.getSortState()==SortButton.SORT_NONE && this.sortFileType.getSortState()==SortButton.SORT_NONE && this.sortFolder.getSortState() == SortButton.SORT_NONE && this.sortChangeDate.getSortState() == SortButton.SORT_NONE && this.sortFavorite.getSortState() == SortButton.SORT_NONE && this.sortName.getSortState() == SortButton.SORT_NONE && this.sortSize.getSortState() == SortButton.SORT_NONE) {
+        if (this.sortCreationDate.getSortState() == SortButton.SORT_NONE && this.sortFileType.getSortState() == SortButton.SORT_NONE && this.sortFolder.getSortState() == SortButton.SORT_NONE && this.sortChangeDate.getSortState() == SortButton.SORT_NONE && this.sortFavorite.getSortState() == SortButton.SORT_NONE && this.sortName.getSortState() == SortButton.SORT_NONE && this.sortSize.getSortState() == SortButton.SORT_NONE) {
             this.sortChangeDate.setSortState(SortButton.SORT_DESC);
         }
 
@@ -1519,7 +1540,7 @@ public class CaseFolderPanel extends javax.swing.JPanel implements EventConsumer
             this.sortFavorite.setSortState(SortButton.SORT_NONE);
             this.sortFileType.setSortState(SortButton.SORT_NONE);
         }
-        if (this.sortCreationDate.getSortState()==SortButton.SORT_NONE && this.sortFileType.getSortState()==SortButton.SORT_NONE && this.sortFolder.getSortState() == SortButton.SORT_NONE && this.sortChangeDate.getSortState() == SortButton.SORT_NONE && this.sortFavorite.getSortState() == SortButton.SORT_NONE && this.sortName.getSortState() == SortButton.SORT_NONE && this.sortSize.getSortState() == SortButton.SORT_NONE) {
+        if (this.sortCreationDate.getSortState() == SortButton.SORT_NONE && this.sortFileType.getSortState() == SortButton.SORT_NONE && this.sortFolder.getSortState() == SortButton.SORT_NONE && this.sortChangeDate.getSortState() == SortButton.SORT_NONE && this.sortFavorite.getSortState() == SortButton.SORT_NONE && this.sortName.getSortState() == SortButton.SORT_NONE && this.sortSize.getSortState() == SortButton.SORT_NONE) {
             this.sortChangeDate.setSortState(SortButton.SORT_DESC);
         }
 
@@ -1591,7 +1612,7 @@ public class CaseFolderPanel extends javax.swing.JPanel implements EventConsumer
             this.sortFolder.setSortState(SortButton.SORT_NONE);
             this.sortFileType.setSortState(SortButton.SORT_NONE);
         }
-        if (this.sortCreationDate.getSortState()==SortButton.SORT_NONE && this.sortFileType.getSortState()==SortButton.SORT_NONE && this.sortFolder.getSortState() == SortButton.SORT_NONE && this.sortChangeDate.getSortState() == SortButton.SORT_NONE && this.sortFavorite.getSortState() == SortButton.SORT_NONE && this.sortName.getSortState() == SortButton.SORT_NONE && this.sortSize.getSortState() == SortButton.SORT_NONE) {
+        if (this.sortCreationDate.getSortState() == SortButton.SORT_NONE && this.sortFileType.getSortState() == SortButton.SORT_NONE && this.sortFolder.getSortState() == SortButton.SORT_NONE && this.sortChangeDate.getSortState() == SortButton.SORT_NONE && this.sortFavorite.getSortState() == SortButton.SORT_NONE && this.sortName.getSortState() == SortButton.SORT_NONE && this.sortSize.getSortState() == SortButton.SORT_NONE) {
             if (this.sortChangeDate.getSortState() == SortButton.SORT_NONE) {
                 this.sortChangeDate.setSortState(SortButton.SORT_ASC);
             }
@@ -1602,12 +1623,12 @@ public class CaseFolderPanel extends javax.swing.JPanel implements EventConsumer
     }//GEN-LAST:event_sortCreationDateMouseClicked
 
     private void cmdExportSelectedAsPdfActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdExportSelectedAsPdfActionPerformed
-        if(this.getSelectedDocuments().isEmpty()) {
+        if (this.getSelectedDocuments().isEmpty()) {
             JOptionPane.showMessageDialog(EditorsRegistry.getInstance().getMainWindow(), "Die zu exportierenden Dokumente müssen vorab selektiert werden.", com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_HINT, JOptionPane.INFORMATION_MESSAGE);
             return;
         }
-        
-        if(this.caseContainer!=null) {
+
+        if (this.caseContainer != null) {
             this.caseContainer.exportSelectedDocumentsAsPdf();
         }
     }//GEN-LAST:event_cmdExportSelectedAsPdfActionPerformed
@@ -1643,6 +1664,7 @@ public class CaseFolderPanel extends javax.swing.JPanel implements EventConsumer
     private javax.swing.JPanel jPanel2;
     private javax.swing.JScrollPane jScrollPane1;
     private javax.swing.JScrollPane jScrollPane2;
+    private javax.swing.JLabel lblDocumentCount;
     private javax.swing.JPanel pnlDocumentEntries;
     private javax.swing.JPopupMenu popFolderTemplates;
     private javax.swing.JPopupMenu popMoveToFolder;
@@ -1689,19 +1711,20 @@ public class CaseFolderPanel extends javax.swing.JPanel implements EventConsumer
             }
         }
     }
-    
+
     private void updateDocumentLock(String docId, boolean locked, String lockedBy, Date when) {
         for (Component c : this.pnlDocumentEntries.getComponents()) {
             if (c instanceof DocumentEntryPanel) {
-                if (((DocumentEntryPanel) c).getDocument()==null)
+                if (((DocumentEntryPanel) c).getDocument() == null) {
                     continue;
+                }
                 if (((DocumentEntryPanel) c).getDocument().getId().equals(docId)) {
                     ((DocumentEntryPanel) c).updateLock(locked, lockedBy, when);
                 }
             }
         }
     }
-    
+
     public void selectDocumentByName(String fileName) {
         // begin: if desired document is in a hidden folder, unhide the folder
         for (ArchiveFileDocumentsBean relevantDoc : this.documents) {
@@ -1732,19 +1755,35 @@ public class CaseFolderPanel extends javax.swing.JPanel implements EventConsumer
         }
     }
     
+    private void updateDocumentCount() {
+        int count=this.pnlDocumentEntries.getComponentCount();
+        count=Math.max(0, count-1);
+        
+        if(count==0) {
+            this.lblDocumentCount.setText("");
+            this.lblDocumentCount.setToolTipText("");
+        } else if(count==1) {
+            this.lblDocumentCount.setText("1");
+            this.lblDocumentCount.setToolTipText("1 Dokument");
+        } else {
+            this.lblDocumentCount.setText("" + count);
+            this.lblDocumentCount.setToolTipText(count + " Dokumente");
+        }
+    }
+
     /**
      * @param documents the documents to set
      * @param invoices
      */
-    public void setDocuments(ArrayList<ArchiveFileDocumentsBean> documents, HashMap<String,Invoice> invoices) {
-        
+    public void setDocuments(ArrayList<ArchiveFileDocumentsBean> documents, HashMap<String, Invoice> invoices) {
+
         int dateDisplayMode = DocumentEntryPanel.DATE_DISPLAY_MODE_CHANGEDATE;
         if (sortCreationDate.getSortState() == SortButton.SORT_ASC || sortCreationDate.getSortState() == SortButton.SORT_DESC) {
             dateDisplayMode = DocumentEntryPanel.DATE_DISPLAY_MODE_CREATIONDATE;
         }
-        
+
         this.documents = documents;
-        this.linkedInvoices=invoices;
+        this.linkedInvoices = invoices;
 
         ArrayList<ArchiveFileDocumentsBean> selectedDocs = this.getSelectedDocuments();
 
@@ -1761,6 +1800,10 @@ public class CaseFolderPanel extends javax.swing.JPanel implements EventConsumer
         ArrayList<ArchiveFileDocumentsBean> docsInSelectedFolders = new ArrayList<>();
         for (int i = 0; i < this.documents.size(); i++) {
             ArchiveFileDocumentsBean d = this.documents.get(i);
+            if (nonMatchingdocuments.contains(d)) {
+                continue;
+            }
+
             if (d.getFolder() != null && selectedFolderIds.contains(d.getFolder().getId())) {
                 docsInSelectedFolders.add(d);
             } else if (rootSelected && d.getFolder() == null) {
@@ -1783,6 +1826,10 @@ public class CaseFolderPanel extends javax.swing.JPanel implements EventConsumer
             if (selectedDocs.contains(d)) {
                 p.setSelected(true);
             }
+            if(this.matchingDocumentHits.containsKey(d.getId()))
+                p.setSearchMatches(this.matchingDocumentHits.get(d.getId()).getText());
+            else
+                p.setSearchMatches("");
             this.pnlDocumentEntries.add(p);
             prefHeight = prefHeight + p.getPreferredSize().getHeight();
         }
@@ -1791,23 +1838,29 @@ public class CaseFolderPanel extends javax.swing.JPanel implements EventConsumer
             glue.setPreferredSize(new Dimension(3, (this.pnlDocumentEntries.getHeight() - (int) prefHeight)));
             this.pnlDocumentEntries.add(glue);
         }
+        
+        this.pnlDocumentEntries.revalidate();
+        this.pnlDocumentEntries.repaint();
+        
         this.jScrollPane2.getVerticalScrollBar().setValue(0);
         this.jScrollPane2.repaint();
         this.jScrollPane2.revalidate();
 
         this.foldersListPanel.renderEmptyFullState();
+        this.updateDocumentCount();
     }
 
     public void addDocument(ArchiveFileDocumentsBean newDoc, Invoice invoice) {
         this.documents.add(newDoc);
-        if(invoice!=null)
+        if (invoice != null) {
             this.linkedInvoices.put(newDoc.getId(), invoice);
-        
+        }
+
         int dateDisplayMode = DocumentEntryPanel.DATE_DISPLAY_MODE_CHANGEDATE;
         if (sortCreationDate.getSortState() == SortButton.SORT_ASC || sortCreationDate.getSortState() == SortButton.SORT_DESC) {
             dateDisplayMode = DocumentEntryPanel.DATE_DISPLAY_MODE_CREATIONDATE;
         }
-        
+
         DocumentEntryPanel p = new DocumentEntryPanel(this.caseContainer, this, newDoc, invoice, this.readonly, dateDisplayMode);
         if (this.documents.size() % 2 == 0) {
             p.setBackground(javax.swing.UIManager.getDefaults().getColor("Panel.background"));
@@ -1819,6 +1872,7 @@ public class CaseFolderPanel extends javax.swing.JPanel implements EventConsumer
         this.pnlDocumentEntries.revalidate();
         this.sort();
         this.foldersListPanel.renderEmptyFullState();
+        this.updateDocumentCount();
     }
 
     public void clearDocuments() {
@@ -1826,6 +1880,7 @@ public class CaseFolderPanel extends javax.swing.JPanel implements EventConsumer
         this.linkedInvoices.clear();
         this.pnlDocumentEntries.removeAll();
         this.foldersListPanel.renderEmptyFullState();
+        this.updateDocumentCount();
     }
 
     public void removeDocument(ArchiveFileDocumentsBean doc) {
@@ -1847,6 +1902,7 @@ public class CaseFolderPanel extends javax.swing.JPanel implements EventConsumer
 
         this.pnlDocumentEntries.repaint();
         this.pnlDocumentEntries.revalidate();
+        this.updateDocumentCount();
     }
 
     public void updateDocument(ArchiveFileDocumentsBean doc) {
@@ -1870,26 +1926,31 @@ public class CaseFolderPanel extends javax.swing.JPanel implements EventConsumer
         this.foldersListPanel.renderEmptyFullState();
     }
 
-    public int highlightDocuments(String text, String[] selectedTags, Hashtable<String, ArrayList<String>> allTags) {
+    public int toggleSearchFilter(boolean clear, String text, String[] selectedTags, Hashtable<String, ArrayList<String>> allTags, List<SearchHit> searchHits) {
         int matchCount = 0;
-        for (Component c : this.pnlDocumentEntries.getComponents()) {
-            if (c instanceof DocumentEntryPanel) {
-                ArchiveFileDocumentsBean doc = ((DocumentEntryPanel) c).getDocument();
+        this.nonMatchingdocuments.clear();
+        this.matchingDocumentHits.clear();
+        if((selectedTags==null || selectedTags.length==0) && (text == null || "".equals(text)))
+            clear=true;
+        if (clear) {
+            // do not need to evaluate all documents
+        } else {
+            for(SearchHit h: searchHits) {
+                this.matchingDocumentHits.put(h.getId(), h);
+            }
+            for (ArchiveFileDocumentsBean dMatchTest : this.documents) {
+
                 boolean match = false;
                 if (text != null && !("".equals(text))) {
-                    if (doc.getName().toLowerCase().contains(text.toLowerCase())) {
+                    if (dMatchTest.getName().toLowerCase().contains(text.toLowerCase())) {
                         match = true;
-                    } else {
-                        //((DocumentEntryPanel) c).highlight(false);
                     }
-                } else {
-                    //((DocumentEntryPanel) c).highlight(false);
                 }
 
                 if (!match) {
                     if (selectedTags.length > 0) {
 
-                        String id = doc.getId();
+                        String id = dMatchTest.getId();
                         if (allTags.containsKey(id)) {
                             for (String tag : selectedTags) {
                                 if (allTags.get(id).contains(tag)) {
@@ -1902,14 +1963,26 @@ public class CaseFolderPanel extends javax.swing.JPanel implements EventConsumer
                     }
                 }
 
-                if (match) {
-                    matchCount = matchCount + 1;
+                if (!match) {
+                    for (SearchHit h : searchHits) {
+                        if (dMatchTest.getId().equals(h.getId())) {
+                            match = true;
+                            break;
+                        }
+                    }
                 }
 
-                ((DocumentEntryPanel) c).highlight(match);
+                if (match) {
+                    matchCount = matchCount + 1;
+                    //
+                } else {
+                    this.nonMatchingdocuments.add(dMatchTest);
+                }
 
             }
         }
+        this.setDocuments(documents, linkedInvoices);
+        this.sort();
         return matchCount;
     }
 
@@ -1939,6 +2012,7 @@ public class CaseFolderPanel extends javax.swing.JPanel implements EventConsumer
         this.pnlDocumentEntries.revalidate();
 
         this.foldersListPanel.renderEmptyFullState();
+        this.updateDocumentCount();
     }
 
     void updateDocumentsInFolder(CaseFolder folder) {
@@ -1976,7 +2050,7 @@ public class CaseFolderPanel extends javax.swing.JPanel implements EventConsumer
                 if (((DocumentEntryPanel) c).isSelected()) {
                     selectNext = true;
                 }
-                
+
             }
         }
     }
@@ -2006,8 +2080,8 @@ public class CaseFolderPanel extends javax.swing.JPanel implements EventConsumer
 
     @Override
     public void onEvent(Event e) {
-        if(e instanceof DocumentLockEvent) {
-            DocumentLockEvent le=(DocumentLockEvent)e;
+        if (e instanceof DocumentLockEvent) {
+            DocumentLockEvent le = (DocumentLockEvent) e;
             this.updateDocumentLock(le.getDocumentId(), le.isLocked(), le.getLockedBy(), le.getLockedDate());
         }
     }

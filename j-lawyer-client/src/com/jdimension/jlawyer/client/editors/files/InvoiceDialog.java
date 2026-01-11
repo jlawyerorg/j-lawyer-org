@@ -762,6 +762,8 @@ public class InvoiceDialog extends javax.swing.JDialog implements EventConsumer 
 
     private List<String> taxRates = new ArrayList<>();
 
+    private boolean cancelled = true;
+
     /**
      * Creates new form InvoiceDialog
      *
@@ -1017,6 +1019,15 @@ public class InvoiceDialog extends javax.swing.JDialog implements EventConsumer 
         this.cmdUploadInvoiceDocument.setEnabled(invoice != null && invoice.getId() != null);
         this.textSearchPositionTemplate.setEnabled(invoice != null && invoice.getId() != null);
         this.lstPositionTemplates.setEnabled(invoice != null && invoice.getId() != null);
+        this.cmbPaymentMethods.setEnabled(invoice != null && invoice.getId() != null);
+        this.taDescription.setEnabled(invoice != null && invoice.getId() != null);
+        this.txtName.setEnabled(invoice != null && invoice.getId() != null);
+        this.cmdSearchRecipient.setEnabled(invoice != null && invoice.getId() != null);
+        this.cmbCurrency.setEnabled(invoice != null && invoice.getId() != null);
+        this.cmbInvoiceSender.setEnabled(invoice != null && invoice.getId() != null);
+        this.jTabbedPane1.setEnabledAt(1, invoice != null && invoice.getId() != null);
+        this.jTabbedPane1.setEnabledAt(2, invoice != null && invoice.getId() != null);
+        this.jTabbedPane1.setEnabledAt(3, invoice != null && invoice.getId() != null);
         this.cmdSave.setEnabled(invoice != null && invoice.getId() != null);
 
         this.cmbInvoiceSender.setSelectedItem(UserSettings.getInstance().getCurrentUser().getPrincipalId());
@@ -1034,6 +1045,9 @@ public class InvoiceDialog extends javax.swing.JDialog implements EventConsumer 
 
         if (invoice == null) {
             this.setTitle("neue Rechnung erstellen");
+
+            this.lblError.setText("bitte zuerst Rechnungstyp bestätigen");
+            this.lblError.setForeground(DefaultColorTheme.COLOR_LOGO_RED);
 
             this.cmbInvoicePool.setEnabled(true);
             this.cmbInvoiceType.setEnabled(true);
@@ -1054,6 +1068,9 @@ public class InvoiceDialog extends javax.swing.JDialog implements EventConsumer 
 
         } else {
             this.setTitle("Rechnung " + invoice.getInvoiceNumber());
+
+            this.lblError.setText("");
+            this.lblError.setForeground(DefaultColorTheme.COLOR_LOGO_RED);
 
             this.cmdConfirmInvoiceNumber.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons16/kate.png")));
 
@@ -1206,6 +1223,7 @@ public class InvoiceDialog extends javax.swing.JDialog implements EventConsumer 
         lblDirectDebit = new javax.swing.JLabel();
         cmbPaymentMethods = new javax.swing.JComboBox<>();
         jLabel20 = new javax.swing.JLabel();
+        lblError = new javax.swing.JLabel();
         splitMain = new javax.swing.JSplitPane();
         jPanel2 = new javax.swing.JPanel();
         cmdAddPosition = new javax.swing.JButton();
@@ -1456,6 +1474,10 @@ public class InvoiceDialog extends javax.swing.JDialog implements EventConsumer 
 
         jLabel20.setText("Zahlung:");
 
+        lblError.setFont(lblError.getFont());
+        lblError.setHorizontalAlignment(javax.swing.SwingConstants.CENTER);
+        lblError.setText("jLabel21");
+
         javax.swing.GroupLayout jPanel4Layout = new javax.swing.GroupLayout(jPanel4);
         jPanel4.setLayout(jPanel4Layout);
         jPanel4Layout.setHorizontalGroup(
@@ -1477,7 +1499,7 @@ public class InvoiceDialog extends javax.swing.JDialog implements EventConsumer 
                         .addGap(21, 21, 21)
                         .addGroup(jPanel4Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                             .addComponent(txtName)
-                            .addComponent(jScrollPane1, javax.swing.GroupLayout.Alignment.TRAILING, javax.swing.GroupLayout.DEFAULT_SIZE, 701, Short.MAX_VALUE)
+                            .addComponent(jScrollPane1, javax.swing.GroupLayout.Alignment.TRAILING, javax.swing.GroupLayout.DEFAULT_SIZE, 718, Short.MAX_VALUE)
                             .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, jPanel4Layout.createSequentialGroup()
                                 .addGroup(jPanel4Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                                     .addComponent(lblRecipient, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
@@ -1513,7 +1535,8 @@ public class InvoiceDialog extends javax.swing.JDialog implements EventConsumer 
                                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                                         .addComponent(cmdDateDue))
                                     .addComponent(cmbPaymentMethods, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
-                                .addGap(0, 0, Short.MAX_VALUE)))))
+                                .addGap(0, 0, Short.MAX_VALUE))
+                            .addComponent(lblError, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))))
                 .addContainerGap())
         );
         jPanel4Layout.setVerticalGroup(
@@ -1521,12 +1544,14 @@ public class InvoiceDialog extends javax.swing.JDialog implements EventConsumer 
             .addGroup(jPanel4Layout.createSequentialGroup()
                 .addContainerGap()
                 .addComponent(lblHeader, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addComponent(lblError)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addGroup(jPanel4Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
                     .addGroup(jPanel4Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                         .addComponent(cmbInvoiceSender, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                         .addComponent(jLabel17))
-                    .addComponent(jLabel18, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                    .addComponent(jLabel18, javax.swing.GroupLayout.PREFERRED_SIZE, 31, javax.swing.GroupLayout.PREFERRED_SIZE))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addGroup(jPanel4Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                     .addGroup(jPanel4Layout.createSequentialGroup()
@@ -1717,7 +1742,7 @@ public class InvoiceDialog extends javax.swing.JDialog implements EventConsumer 
                     .addGroup(jPanel2Layout.createSequentialGroup()
                         .addComponent(cmdApplyPositionTemplate)
                         .addGap(0, 0, Short.MAX_VALUE))
-                    .addComponent(jScrollPane3, javax.swing.GroupLayout.DEFAULT_SIZE, 439, Short.MAX_VALUE))
+                    .addComponent(jScrollPane3, javax.swing.GroupLayout.DEFAULT_SIZE, 474, Short.MAX_VALUE))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addGroup(jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                     .addComponent(lblNetValue)
@@ -1961,7 +1986,7 @@ public class InvoiceDialog extends javax.swing.JDialog implements EventConsumer 
             jPanel3Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(jPanel3Layout.createSequentialGroup()
                 .addContainerGap()
-                .addComponent(jScrollPane4, javax.swing.GroupLayout.DEFAULT_SIZE, 534, Short.MAX_VALUE)
+                .addComponent(jScrollPane4, javax.swing.GroupLayout.DEFAULT_SIZE, 569, Short.MAX_VALUE)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addGroup(jPanel3Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                     .addComponent(jLabel14)
@@ -1994,12 +2019,12 @@ public class InvoiceDialog extends javax.swing.JDialog implements EventConsumer 
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(layout.createSequentialGroup()
                 .addContainerGap()
-                .addComponent(jTabbedPane1, javax.swing.GroupLayout.PREFERRED_SIZE, 604, Short.MAX_VALUE)
+                .addComponent(jTabbedPane1, javax.swing.GroupLayout.DEFAULT_SIZE, 639, Short.MAX_VALUE)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                     .addComponent(cmdCancel)
                     .addComponent(cmdSave))
-                .addGap(6, 6, 6))
+                .addContainerGap())
         );
 
         pack();
@@ -2095,6 +2120,7 @@ public class InvoiceDialog extends javax.swing.JDialog implements EventConsumer 
     }//GEN-LAST:event_cmdDateDueActionPerformed
 
     private void cmdCancelActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdCancelActionPerformed
+        this.cancelled = true;
         this.setVisible(false);
         this.dispose();
     }//GEN-LAST:event_cmdCancelActionPerformed
@@ -2163,6 +2189,7 @@ public class InvoiceDialog extends javax.swing.JDialog implements EventConsumer 
     private void cmdSaveActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdSaveActionPerformed
 
         this.save();
+        this.cancelled = false;
         this.setVisible(false);
         this.dispose();
     }//GEN-LAST:event_cmdSaveActionPerformed
@@ -2175,37 +2202,36 @@ public class InvoiceDialog extends javax.swing.JDialog implements EventConsumer 
 
         StyledCalculationTable ct = new StyledCalculationTable();
         SimpleDateFormat dfDateTime = null;
-        DecimalFormat currencyFormat=null;
+        DecimalFormat currencyFormat = null;
         if ("EN".equalsIgnoreCase(language)) {
             ct.addHeaders("Person", "Date", "Duration", "Hourly Rate", "Total", "Description");
             dfDateTime = new SimpleDateFormat("MM/dd/yyyy");
-            currencyFormat=new DecimalFormat("#,##0.00", DecimalFormatSymbols.getInstance(Locale.US));
+            currencyFormat = new DecimalFormat("#,##0.00", DecimalFormatSymbols.getInstance(Locale.US));
         } else if ("FR".equalsIgnoreCase(language)) {
-            ct.addHeaders("Personne", "Date", "Durée", "Tarif horaire"  , "Somme", "Activité");
+            ct.addHeaders("Personne", "Date", "Durée", "Tarif horaire", "Somme", "Activité");
             dfDateTime = new SimpleDateFormat("dd/MM/yyyy");
-            currencyFormat=new DecimalFormat("#,##0.00", DecimalFormatSymbols.getInstance(Locale.FRANCE));
+            currencyFormat = new DecimalFormat("#,##0.00", DecimalFormatSymbols.getInstance(Locale.FRANCE));
         } else if ("NL".equalsIgnoreCase(language)) {
             ct.addHeaders("Persoon", "Datum", "Tijd", "Uurtarief", "Totaal", "handeling");
             dfDateTime = new SimpleDateFormat("dd-MM-yyyy");
-            currencyFormat=new DecimalFormat("#,##0.00", DecimalFormatSymbols.getInstance(new Locale("nl", "NL")));
+            currencyFormat = new DecimalFormat("#,##0.00", DecimalFormatSymbols.getInstance(new Locale("nl", "NL")));
         } else {
             ct.addHeaders("Person", "Datum", "Dauer", "Stundensatz", "Total", "Aktivität");
             dfDateTime = new SimpleDateFormat("dd.MM.yyyy");
-            currencyFormat=new DecimalFormat("#,##0.00", DecimalFormatSymbols.getInstance(Locale.GERMANY));
+            currencyFormat = new DecimalFormat("#,##0.00", DecimalFormatSymbols.getInstance(Locale.GERMANY));
         }
 
         if (ServerSettings.getInstance().getSettingAsBoolean("plugins.global.tableproperties.table.emptyRows", true)) {
-            ct.addRow("", "", "", "", "");
+            ct.addRow("", "", "", "", "", "");
         }
 
-        
         for (TimesheetPosition pos : posList) {
             float totalMinutes = ((float) (pos.getStopped().getTime() - pos.getStarted().getTime())) / 1000f / 60f;
             double roundedMinutes = Math.ceil(totalMinutes / pos.getTimesheet().getInterval()) * pos.getTimesheet().getInterval();
             Float roundedMinutesFloat = new Float(roundedMinutes);
             int hours = roundedMinutesFloat.intValue() / 60;
             int minutes = roundedMinutesFloat.intValue() % 60;
-            
+
             String person = pos.getPrincipal();
             AppUserBean personUser = UserSettings.getInstance().getUser(person);
             if (personUser != null && !StringUtils.isEmpty(personUser.getDisplayName())) {
@@ -2245,7 +2271,7 @@ public class InvoiceDialog extends javax.swing.JDialog implements EventConsumer 
         return ct;
 
     }
-    
+
     private StyledCalculationTable getTimesheetSummaryAsTable(List<TimesheetPosition> posList, String language) {
 
         if (posList == null || posList.isEmpty()) {
@@ -2253,46 +2279,48 @@ public class InvoiceDialog extends javax.swing.JDialog implements EventConsumer 
         }
 
         StyledCalculationTable ct = new StyledCalculationTable();
-        DecimalFormat currencyFormat=null;
+        DecimalFormat currencyFormat = null;
         if ("EN".equalsIgnoreCase(language)) {
             ct.addHeaders("Person", "Duration", "Total");
-            currencyFormat=new DecimalFormat("#,##0.00", DecimalFormatSymbols.getInstance(Locale.US));
+            currencyFormat = new DecimalFormat("#,##0.00", DecimalFormatSymbols.getInstance(Locale.US));
         } else if ("FR".equalsIgnoreCase(language)) {
             ct.addHeaders("Personne", "Durée", "Somme");
-            currencyFormat=new DecimalFormat("#,##0.00", DecimalFormatSymbols.getInstance(Locale.FRANCE));
+            currencyFormat = new DecimalFormat("#,##0.00", DecimalFormatSymbols.getInstance(Locale.FRANCE));
         } else if ("NL".equalsIgnoreCase(language)) {
             ct.addHeaders("Persoon", "Tijd", "Totaal");
-            currencyFormat=new DecimalFormat("#,##0.00", DecimalFormatSymbols.getInstance(new Locale("nl", "NL")));
+            currencyFormat = new DecimalFormat("#,##0.00", DecimalFormatSymbols.getInstance(new Locale("nl", "NL")));
         } else {
             ct.addHeaders("Person", "Dauer", "Total");
-            currencyFormat=new DecimalFormat("#,##0.00", DecimalFormatSymbols.getInstance(Locale.GERMANY));
+            currencyFormat = new DecimalFormat("#,##0.00", DecimalFormatSymbols.getInstance(Locale.GERMANY));
         }
 
         if (ServerSettings.getInstance().getSettingAsBoolean("plugins.global.tableproperties.table.emptyRows", true)) {
             ct.addRow("", "", "");
         }
 
-        HashMap<String,Long> personMillis=new HashMap<>();
-        HashMap<String,BigDecimal> personTotal=new HashMap<>();
+        HashMap<String, Long> personMillis = new HashMap<>();
+        HashMap<String, BigDecimal> personTotal = new HashMap<>();
         for (TimesheetPosition pos : posList) {
-            
-            long millis=pos.getStopped().getTime() - pos.getStarted().getTime();
-            BigDecimal total=pos.getTotal();
-            
-            if(personMillis.containsKey(pos.getPrincipal()))
+
+            long millis = pos.getStopped().getTime() - pos.getStarted().getTime();
+            BigDecimal total = pos.getTotal();
+
+            if (personMillis.containsKey(pos.getPrincipal())) {
                 personMillis.put(pos.getPrincipal(), personMillis.get(pos.getPrincipal()) + millis);
-            else
+            } else {
                 personMillis.put(pos.getPrincipal(), millis);
-            
-            if(personTotal.containsKey(pos.getPrincipal()))
+            }
+
+            if (personTotal.containsKey(pos.getPrincipal())) {
                 personTotal.put(pos.getPrincipal(), personTotal.get(pos.getPrincipal()).add(total));
-            else
+            } else {
                 personTotal.put(pos.getPrincipal(), total);
-            
+            }
+
         }
-        
-        for(String principal: personMillis.keySet()) {
-            String person=principal;
+
+        for (String principal : personMillis.keySet()) {
+            String person = principal;
             AppUserBean personUser = UserSettings.getInstance().getUser(principal);
             if (personUser != null && !StringUtils.isEmpty(personUser.getDisplayName())) {
                 person = personUser.getDisplayName();
@@ -2337,22 +2365,20 @@ public class InvoiceDialog extends javax.swing.JDialog implements EventConsumer 
 
         HashMap<BigDecimal, BigDecimal> taxRateToTaxTotal = new HashMap<>();
 
-        int rowcount = 0;
-
         StyledCalculationTable ct = new StyledCalculationTable();
-        DecimalFormat currencyFormat=null;
+        DecimalFormat currencyFormat = null;
         if ("EN".equalsIgnoreCase(language)) {
             ct.addHeaders("", "Position", "Qty", "Rate", "Tax", "Amount");
-            currencyFormat=new DecimalFormat("#,##0.00", DecimalFormatSymbols.getInstance(Locale.US));
+            currencyFormat = new DecimalFormat("#,##0.00", DecimalFormatSymbols.getInstance(Locale.US));
         } else if ("FR".equalsIgnoreCase(language)) {
             ct.addHeaders("", "Article de facture", "Quantité", "Prix unitaire", "TPS", "Au total");
-            currencyFormat=new DecimalFormat("#,##0.00", DecimalFormatSymbols.getInstance(Locale.FRANCE));
+            currencyFormat = new DecimalFormat("#,##0.00", DecimalFormatSymbols.getInstance(Locale.FRANCE));
         } else if ("NL".equalsIgnoreCase(language)) {
             ct.addHeaders("", "Factuuritem", "Aantal", "Prijs", "BTW", "Totaal");
-            currencyFormat=new DecimalFormat("#,##0.00", DecimalFormatSymbols.getInstance(new Locale("nl", "NL")));
+            currencyFormat = new DecimalFormat("#,##0.00", DecimalFormatSymbols.getInstance(new Locale("nl", "NL")));
         } else {
             ct.addHeaders("", "Position", "Menge", "Einzel", "USt.", "Gesamt");
-            currencyFormat=new DecimalFormat("#,##0.00", DecimalFormatSymbols.getInstance(Locale.GERMANY));
+            currencyFormat = new DecimalFormat("#,##0.00", DecimalFormatSymbols.getInstance(Locale.GERMANY));
         }
         if (ServerSettings.getInstance().getSettingAsBoolean("plugins.global.tableproperties.table.emptyRows", true)) {
             ct.addRow("", "", "", "", "", "");
@@ -2363,31 +2389,68 @@ public class InvoiceDialog extends javax.swing.JDialog implements EventConsumer 
             if (c instanceof InvoicePositionEntryPanel) {
 
                 InvoicePosition pos = ((InvoicePositionEntryPanel) c).getEntry();
-                BigDecimal u = pos.getUnits();
-                BigDecimal up = pos.getUnitPrice();
-                BigDecimal t = pos.getTaxRate();
+                BigDecimal u = pos.getUnits();           // Menge
+                BigDecimal up = pos.getUnitPrice();      // Einzelpreis
+                BigDecimal t = pos.getTaxRate();         // Steuersatz z.B. 19
 
                 if (!taxRateToTaxTotal.containsKey(t)) {
                     taxRateToTaxTotal.put(t, BigDecimal.ZERO);
                 }
 
+                // Netto-Betrag berechnen (Einzelpreis × Menge) und kaufmännisch runden
+                BigDecimal netAmount = u.multiply(up).setScale(2, RoundingMode.HALF_UP);
+                totalNet = totalNet.add(netAmount);
+
+                // Steuerbetrag (optional)
+                BigDecimal taxAmount = BigDecimal.ZERO;
+                // In der Schleife (ersetze den Steuer-Block in der Schleife durch diesen)
                 if (this.chkTaxes.isSelected()) {
-                    BigDecimal taxForPosition = (u.multiply(up).multiply(t.divide(BigDecimal.valueOf(100f), 2, RoundingMode.HALF_EVEN)));
-                    taxRateToTaxTotal.put(t, taxRateToTaxTotal.get(t).add(taxForPosition));
-                    totalTax = totalTax.add(taxForPosition);
+                    // Steuer je Steuersatz: kumuliere Netto-Basis pro Steuersatz
+                    taxRateToTaxTotal.put(t, taxRateToTaxTotal.getOrDefault(t, BigDecimal.ZERO).add(netAmount));
                 }
-                total = total.add(u.multiply(up).multiply(BigDecimal.ONE.add(t.divide(BigDecimal.valueOf(100f), 2, RoundingMode.HALF_EVEN))));
+//                if (this.chkTaxes.isSelected()) {
+//                    // Steuerbetrag = Netto * (Steuersatz / 100), kaufmännisch runden
+//                    taxAmount = netAmount
+//                            .multiply(t.divide(BigDecimal.valueOf(100), 4, RoundingMode.HALF_UP))
+//                            .setScale(2, RoundingMode.HALF_UP);
+//
+//                    totalTax = totalTax.add(taxAmount);
+//
+//                    // Steuer je Steuersatz gruppieren
+//                    taxRateToTaxTotal.put(t, taxRateToTaxTotal.getOrDefault(t, BigDecimal.ZERO).add(taxAmount));
+//                }
 
-                totalNet = totalNet.add(u.multiply(up));
+                // Bruttobetrag = Netto + Steuer
+                BigDecimal grossAmount = netAmount.add(taxAmount);
+                total = total.add(grossAmount);
 
-                positionIndex = positionIndex + 1;
-                if (StringUtils.isEmpty(pos.getDescription())) {
-                    ct.addRow("" + positionIndex, pos.getName(), currencyFormat.format(pos.getUnits()), currencyFormat.format(pos.getUnitPrice()), percentageFormat.format(t), currencyFormat.format(u.multiply(up)) + " " + this.cmbCurrency.getSelectedItem());
-                } else {
-                    ct.addRow("" + positionIndex, pos.getName() + ": " + pos.getDescription(), currencyFormat.format(pos.getUnits()), currencyFormat.format(pos.getUnitPrice()), percentageFormat.format(t), currencyFormat.format(u.multiply(up)) + " " + this.cmbCurrency.getSelectedItem());
-                }
+                // Positionstext
+                String description = StringUtils.isEmpty(pos.getDescription())
+                        ? pos.getName()
+                        : pos.getName() + ": " + pos.getDescription();
 
-                rowcount = rowcount + 1;
+                // Zeile in Tabelle
+                ct.addRow(
+                        String.valueOf(++positionIndex),
+                        description,
+                        currencyFormat.format(u),
+                        currencyFormat.format(up),
+                        percentageFormat.format(t),
+                        currencyFormat.format(netAmount) + " " + this.cmbCurrency.getSelectedItem()
+                );
+            }
+        }
+
+        Map<BigDecimal, BigDecimal> taxAmountsPerRate = new TreeMap<>();
+        if (this.chkTaxes.isSelected()) {
+            for (Map.Entry<BigDecimal, BigDecimal> entry : taxRateToTaxTotal.entrySet()) {
+                BigDecimal taxRate = entry.getKey();
+                BigDecimal netSumForRate = entry.getValue();
+                BigDecimal taxAmount = netSumForRate
+                        .multiply(taxRate.divide(BigDecimal.valueOf(100), 4, RoundingMode.HALF_UP))
+                        .setScale(2, RoundingMode.HALF_UP);
+                taxAmountsPerRate.put(taxRate, taxAmount);
+                totalTax = totalTax.add(taxAmount); // Gesamtsteuerbetrag korrekt berechnen
             }
         }
 
@@ -2397,29 +2460,30 @@ public class InvoiceDialog extends javax.swing.JDialog implements EventConsumer 
         int footerRowNet = -1;
         ArrayList<Integer> footerRowTaxes = new ArrayList<>();
         int footerRowTotal = -1;
-        Map<BigDecimal, BigDecimal> taxRateToTaxTotalSorted = new TreeMap<>(taxRateToTaxTotal);
+        //Map<BigDecimal, BigDecimal> taxRateToTaxTotalSorted = new TreeMap<>(taxRateToTaxTotal);
+        Map<BigDecimal, BigDecimal> taxRateToTaxTotalSorted = new TreeMap<>(taxAmountsPerRate);
         if ("EN".equalsIgnoreCase(language)) {
             footerRowNet = ct.addRow("", "Net", "", "", "", currencyFormat.format(totalNet) + " " + this.cmbCurrency.getSelectedItem());
             for (BigDecimal taxRate : taxRateToTaxTotalSorted.keySet()) {
-                footerRowTaxes.add(ct.addRow("", "Tax " + percentageFormat.format(taxRate) + "%", "", "", "", currencyFormat.format(taxRateToTaxTotal.get(taxRate)) + " " + this.cmbCurrency.getSelectedItem()));
+                footerRowTaxes.add(ct.addRow("", "Tax " + percentageFormat.format(taxRate) + "%", "", "", "", currencyFormat.format(taxRateToTaxTotalSorted.get(taxRate)) + " " + this.cmbCurrency.getSelectedItem()));
             }
             footerRowTotal = ct.addRow("", "Balance Due", "", "", "", lblInvoiceTotal.getText() + " " + this.cmbCurrency.getSelectedItem());
         } else if ("FR".equalsIgnoreCase(language)) {
             footerRowNet = ct.addRow("", "Sous Total", "", "", "", currencyFormat.format(totalNet) + " " + this.cmbCurrency.getSelectedItem());
             for (BigDecimal taxRate : taxRateToTaxTotalSorted.keySet()) {
-                footerRowTaxes.add(ct.addRow("", "TPS " + percentageFormat.format(taxRate) + "%", "", "", "", currencyFormat.format(taxRateToTaxTotal.get(taxRate)) + " " + this.cmbCurrency.getSelectedItem()));
+                footerRowTaxes.add(ct.addRow("", "TPS " + percentageFormat.format(taxRate) + "%", "", "", "", currencyFormat.format(taxRateToTaxTotalSorted.get(taxRate)) + " " + this.cmbCurrency.getSelectedItem()));
             }
             footerRowTotal = ct.addRow("", "Montant Dû", "", "", "", lblInvoiceTotal.getText() + " " + this.cmbCurrency.getSelectedItem());
         } else if ("NL".equalsIgnoreCase(language)) {
             footerRowNet = ct.addRow("", "Subtotal", "", "", "", currencyFormat.format(totalNet) + " " + this.cmbCurrency.getSelectedItem());
             for (BigDecimal taxRate : taxRateToTaxTotalSorted.keySet()) {
-                footerRowTaxes.add(ct.addRow("", "BTW " + percentageFormat.format(taxRate) + "%", "", "", "", currencyFormat.format(taxRateToTaxTotal.get(taxRate)) + " " + this.cmbCurrency.getSelectedItem()));
+                footerRowTaxes.add(ct.addRow("", "BTW " + percentageFormat.format(taxRate) + "%", "", "", "", currencyFormat.format(taxRateToTaxTotalSorted.get(taxRate)) + " " + this.cmbCurrency.getSelectedItem()));
             }
             footerRowTotal = ct.addRow("", "Totaal te betalen", "", "", "", lblInvoiceTotal.getText() + " " + this.cmbCurrency.getSelectedItem());
         } else {
             footerRowNet = ct.addRow("", "Netto", "", "", "", currencyFormat.format(totalNet) + " " + this.cmbCurrency.getSelectedItem());
             for (BigDecimal taxRate : taxRateToTaxTotalSorted.keySet()) {
-                footerRowTaxes.add(ct.addRow("", "USt. " + percentageFormat.format(taxRate) + "%", "", "", "", currencyFormat.format(taxRateToTaxTotal.get(taxRate)) + " " + this.cmbCurrency.getSelectedItem()));
+                footerRowTaxes.add(ct.addRow("", "USt. " + percentageFormat.format(taxRate) + "%", "", "", "", currencyFormat.format(taxRateToTaxTotalSorted.get(taxRate)) + " " + this.cmbCurrency.getSelectedItem()));
             }
             footerRowTotal = ct.addRow("", "Zahlbetrag", "", "", "", lblInvoiceTotal.getText() + " " + this.cmbCurrency.getSelectedItem());
         }
@@ -2515,31 +2579,58 @@ public class InvoiceDialog extends javax.swing.JDialog implements EventConsumer 
         BigDecimal totalTax = BigDecimal.ZERO;
         BigDecimal totalGross = BigDecimal.ZERO;
         BigDecimal totalNet = BigDecimal.ZERO;
+
+        Map<BigDecimal, BigDecimal> taxRateToNetSum = new HashMap<>();
+
         for (Component c : this.pnlInvoicePositions.getComponents()) {
             if (c instanceof InvoicePositionEntryPanel) {
-
                 InvoicePosition pos = ((InvoicePositionEntryPanel) c).getEntry();
                 BigDecimal u = pos.getUnits();
                 BigDecimal up = pos.getUnitPrice();
                 BigDecimal t = pos.getTaxRate();
 
-                totalNet = totalNet.add(u.multiply(up));
+                // Netto = Menge * Einzelpreis, kaufmännisch runden
+                BigDecimal netAmount = u.multiply(up).setScale(2, RoundingMode.HALF_UP);
+                totalNet = totalNet.add(netAmount);
+
                 if (this.chkTaxes.isSelected()) {
-                    totalTax = totalTax.add(u.multiply(up).multiply(t.divide(BigDecimal.valueOf(100f), 2, RoundingMode.HALF_EVEN)));
-                    totalGross = totalGross.add(u.multiply(up).multiply(BigDecimal.ONE.add(t.divide(BigDecimal.valueOf(100f), 2, RoundingMode.HALF_EVEN))));
+                    // Basisbetrag je Steuersatz sammeln
+                    taxRateToNetSum.put(t, taxRateToNetSum.getOrDefault(t, BigDecimal.ZERO).add(netAmount));
                 } else {
-                    totalGross = totalGross.add(u.multiply(up));
+                    // Falls keine Steuer berechnet wird
+                    totalGross = totalGross.add(netAmount);
                 }
             }
         }
+
+        // Steuern korrekt auf Basis kumulierter Netto-Beträge berechnen
+        if (this.chkTaxes.isSelected()) {
+            for (Map.Entry<BigDecimal, BigDecimal> entry : taxRateToNetSum.entrySet()) {
+                BigDecimal taxRate = entry.getKey();
+                BigDecimal netSum = entry.getValue();
+
+                BigDecimal taxAmount = netSum
+                        .multiply(taxRate.divide(BigDecimal.valueOf(100), 4, RoundingMode.HALF_UP))
+                        .setScale(2, RoundingMode.HALF_UP);
+
+                totalTax = totalTax.add(taxAmount);
+                totalGross = totalGross.add(netSum.add(taxAmount)); // Netto + Steuer
+            }
+        }
+
+        // Finales kaufmännisches Runden (sicherheitshalber)
+        totalNet = totalNet.setScale(2, RoundingMode.HALF_UP);
+        totalTax = totalTax.setScale(2, RoundingMode.HALF_UP);
+        totalGross = totalGross.setScale(2, RoundingMode.HALF_UP);
+
         this.lblNetValue.setText(cf.format(totalNet));
         this.lblInvoiceTax.setText(cf.format(totalTax));
         this.lblInvoiceTotal.setText(cf.format(totalGross));
         this.lblInvoiceTotal2.setText(cf.format(totalGross));
+
         if (this.currentEntry != null) {
             this.currentEntry.setTotal(totalNet);
             this.currentEntry.setTotalGross(totalGross);
-
         }
     }
 
@@ -3056,6 +3147,7 @@ public class InvoiceDialog extends javax.swing.JDialog implements EventConsumer 
     private javax.swing.JSeparator jSeparator1;
     private javax.swing.JTabbedPane jTabbedPane1;
     private javax.swing.JLabel lblDirectDebit;
+    private javax.swing.JLabel lblError;
     private javax.swing.JPanel lblHeader;
     private javax.swing.JLabel lblInvoiceDocument;
     private javax.swing.JLabel lblInvoiceDocumentChanged;
@@ -3094,5 +3186,12 @@ public class InvoiceDialog extends javax.swing.JDialog implements EventConsumer 
     private void enableTimesheetButton(boolean enable) {
         this.lblTimesheet.setEnabled(enable);
         this.cmdCreateTimesheetDocument.setEnabled(enable);
+    }
+
+    /**
+     * @return the cancelled
+     */
+    public boolean isCancelled() {
+        return cancelled;
     }
 }

@@ -698,6 +698,10 @@ public class BackupManagerLauncher {
             String dataDir = "";
             String backupDir = "";
             String encryptionPwd = "";
+            String dbHost="localhost";
+            String dbPort="3306";
+            String dbName="jlawyerdb";
+            String dbUser="root";
             String dbPwd = "";
 
             Scanner scanner = new Scanner(System.in);
@@ -709,8 +713,21 @@ public class BackupManagerLauncher {
             encryptionPwd = scanner.next();
             if("***empty***".equals(encryptionPwd) || "-".equals(encryptionPwd))
                 encryptionPwd="";
-            System.out.print("MySQL root-Passwort: ");
+            
+            System.out.print("IP/Hostname des Datenbankservers (Standard: localhost): ");
+            dbHost = scanner.next();
+            
+            System.out.print("Port des Datenbankdienstes (Standard: 3306): ");
+            dbPort = scanner.next();
+            
+            System.out.print("MySQL-Nutzername (Standard: root): ");
+            dbUser = scanner.next();
+            
+            System.out.print("MySQL-Passwort: ");
             dbPwd = scanner.next();
+            
+            System.out.print("MySQL-Datenbankname (Standard: jlawyerdb): ");
+            dbName = scanner.next();
 
             System.out.println("Es wird die Datensicherung von " + backupDir + " nach " + dataDir + " eingespielt.");
             if (!force) {
@@ -724,7 +741,7 @@ public class BackupManagerLauncher {
                 }
             }
 
-            RestoreExecutor re = new RestoreExecutor(dataDir, backupDir, encryptionPwd, dbPwd);
+            RestoreExecutor re = new RestoreExecutor(dataDir, backupDir, encryptionPwd, dbHost, dbPort, dbName, dbUser, dbPwd);
             BackupProgressConsoleCallback callback = new BackupProgressConsoleCallback();
             boolean failed = false;
             try {

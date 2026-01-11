@@ -668,6 +668,9 @@ import javax.ejb.Local;
 import javax.ws.rs.core.Response;
 import org.jlawyer.io.rest.v6.pojo.RestfulGroupV6;
 import org.jlawyer.io.rest.v7.pojo.RestfulDocumentValidationRequestV7;
+import org.jlawyer.io.rest.v7.pojo.RestfulInvoiceDuplicateRequestV7;
+import org.jlawyer.io.rest.v7.pojo.RestfulInvoicePositionV7;
+import org.jlawyer.io.rest.v7.pojo.RestfulInvoiceV7;
 
 /**
  *
@@ -680,10 +683,30 @@ public interface CasesEndpointLocalV7 {
     
     Response getCaseMessages(String id);
     
+    Response getCaseInvoices(String id);
+    
+    Response getInvoicePositions(String id);
+    
+    Response createInvoice(RestfulInvoiceV7 invoice);
+
+    Response updateInvoice(String id, RestfulInvoiceV7 invoice);
+
+    Response createInvoicePosition(String id, RestfulInvoicePositionV7 invoicePos);
+
+    Response updateInvoicePosition(String positionId, RestfulInvoicePositionV7 restfulPosition);
+
+    Response deleteInvoicePosition(String positionId);
+
+    Response deleteInvoice(String id);
+
+    Response getAllInvoices();
+    
     Response getCaseByExternalId(String extId);
     
     Response getCasesByTag(String tag);
-    
+
+    Response getCasesByReference(String reference);
+
     Response getDocumentsByTag(String tag);
     
     Response getDocumentByExternalId(String extId);
@@ -691,5 +714,15 @@ public interface CasesEndpointLocalV7 {
     Response updateAllowedGroups(String id, Collection<RestfulGroupV6> allowedGroups);
     
     Response getAllowedGroups(String id);
-        
+
+    Response getRecycleBin(String caseId);
+
+    Response restoreDocumentFromRecycleBin(String documentId);
+
+    Response removeDocumentFromRecycleBin(String documentId);
+    
+    Response searchCases(String searchString, Boolean includeArchived);
+
+    Response duplicateInvoice(String id, RestfulInvoiceDuplicateRequestV7 request);
+
 }

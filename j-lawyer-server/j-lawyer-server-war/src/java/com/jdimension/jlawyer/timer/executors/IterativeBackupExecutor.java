@@ -691,17 +691,21 @@ public class IterativeBackupExecutor {
 
     private String dbUser = null;
     private String dbPassword = null;
+    private String dbHost = null;
     private String dbPort = null;
+    private String dbName = null;
     private String encryptionPassword = "";
     private String dataDirectory = null;
     private String backupDirectory = null;
     
-    public IterativeBackupExecutor(String dataDirectory, String backupDirectory, String dbUser, String dbPassword, String dbPort, String encryptionPassword) {
+    public IterativeBackupExecutor(String dataDirectory, String backupDirectory, String dbUser, String dbPassword, String dbHost, String dbPort, String dbName, String encryptionPassword) {
         this.dataDirectory = dataDirectory;
         this.backupDirectory = backupDirectory;
         this.dbPassword = dbPassword;
         this.dbUser = dbUser;
+        this.dbHost=dbHost;
         this.dbPort = dbPort;
+        this.dbName=dbName;
         this.encryptionPassword = encryptionPassword;
     }
 
@@ -758,7 +762,7 @@ public class IterativeBackupExecutor {
         }
 
         log.info("backup up database");
-        File dumpFile = dumpDatabase(dbUser, dbPassword, dbPort, this.backupDirectory);
+        File dumpFile = dumpDatabase(dbUser, dbPassword, dbHost, dbPort, dbName, this.backupDirectory);
         backupResult.increaseFileCounter();
         backupResult.increaseFileSize(dumpFile.length());
         if (!dumpFile.exists()) {
@@ -907,11 +911,17 @@ public class IterativeBackupExecutor {
         }
     }
 
-    private static File dumpDatabase(String user, String password, String port, String backupDir) throws Exception {
+    private static File dumpDatabase(String user, String password, String host, String port, String databaseName, String backupDir) throws Exception {
 
         String osName = System.getProperty("os.name").toLowerCase();
         String path = "";
         String backupFilePath = backupDir + System.getProperty("file.separator") + "jlawyerdb-dump.sql";
+        
+        if(databaseName==null || "".equals(databaseName))
+            databaseName="jlawyerdb";
+        
+        if(host==null || "".equals(host))
+            databaseName="localhost";
 
         if (osName.contains("win")) {
 
@@ -925,23 +935,27 @@ public class IterativeBackupExecutor {
         if ("".equals(password) || password == null) {
             cmd = new String[]{
                 path + "mysqldump",
+                "-h",
+                host,
                 "-P",
                 port,
                 "-u" + user,
                 "-r",
                 backupFilePath,
-                "jlawyerdb"
+                databaseName
             };
         } else {
             cmd = new String[]{
                 path + "mysqldump",
+                "-h",
+                host,
                 "-P",
                 port,
                 "-u" + user,
                 "-p" + password,
                 "-r",
                 backupFilePath,
-                "jlawyerdb"
+                databaseName
             };
         }
 

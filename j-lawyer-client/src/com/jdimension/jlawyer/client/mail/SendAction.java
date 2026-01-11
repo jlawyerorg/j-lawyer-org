@@ -664,6 +664,7 @@
 package com.jdimension.jlawyer.client.mail;
 
 import com.jdimension.jlawyer.client.events.DocumentAddedEvent;
+import com.jdimension.jlawyer.client.events.DocumentRemovedEvent;
 import com.jdimension.jlawyer.client.events.EventBroker;
 import com.jdimension.jlawyer.client.launcher.LauncherFactory;
 import com.jdimension.jlawyer.client.processing.ProgressIndicator;
@@ -684,6 +685,8 @@ import com.jdimension.jlawyer.services.ArchiveFileServiceRemote;
 import com.jdimension.jlawyer.services.JLawyerServiceLocator;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
+import java.time.ZoneId;
+import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
@@ -692,6 +695,7 @@ import javax.activation.FileDataSource;
 import javax.mail.*;
 import javax.mail.internet.*;
 import javax.swing.JDialog;
+import javax.swing.JFrame;
 import org.apache.log4j.Logger;
 
 /**
@@ -715,8 +719,10 @@ public class SendAction extends ProgressableAction {
     private ArchiveFileBean archiveFile = null;
     private CaseFolder caseFolder = null;
     private String documentTag = null;
+    private String draftDocumentId = null;
+    private String priority = null;
 
-    public SendAction(ProgressIndicator i, JDialog cleanAfter, List<String> attachments, MailboxSetup ms, boolean readReceipt, String to, String cc, String bcc, String subject, String body, String contentType, String documentTag) {
+    public SendAction(ProgressIndicator i, JDialog cleanAfter, List<String> attachments, MailboxSetup ms, boolean readReceipt, String to, String cc, String bcc, String subject, String body, String contentType, String documentTag, String priority) {
         super(i, false, cleanAfter);
         this.attachments = attachments;
         this.ms = ms;
@@ -728,12 +734,44 @@ public class SendAction extends ProgressableAction {
         this.body = body;
         this.contentType = contentType;
         this.documentTag = documentTag;
+        this.priority = priority;
     }
 
-    public SendAction(ProgressIndicator i, JDialog cleanAfter, List<String> attachments, MailboxSetup ms, boolean readReceipt, String to, String cc, String bcc, String subject, String body, String contentType, ArchiveFileBean af, String documentTag, CaseFolder folder) {
-        this(i, cleanAfter, attachments, ms, readReceipt, to, cc, bcc, subject, body, contentType, documentTag);
+    public SendAction(ProgressIndicator i, JDialog cleanAfter, List<String> attachments, MailboxSetup ms, boolean readReceipt, String to, String cc, String bcc, String subject, String body, String contentType, ArchiveFileBean af, String documentTag, CaseFolder folder, String priority) {
+        this(i, cleanAfter, attachments, ms, readReceipt, to, cc, bcc, subject, body, contentType, documentTag, priority);
         this.archiveFile = af;
         this.caseFolder = folder;
+    }
+
+    public SendAction(ProgressIndicator i, JDialog cleanAfter, List<String> attachments, MailboxSetup ms, boolean readReceipt, String to, String cc, String bcc, String subject, String body, String contentType, ArchiveFileBean af, String documentTag, CaseFolder folder, String draftDocumentId, String priority) {
+        this(i, cleanAfter, attachments, ms, readReceipt, to, cc, bcc, subject, body, contentType, af, documentTag, folder, priority);
+        this.draftDocumentId = draftDocumentId;
+    }
+    
+    public SendAction(ProgressIndicator i, JFrame cleanAfter, List<String> attachments, MailboxSetup ms, boolean readReceipt, String to, String cc, String bcc, String subject, String body, String contentType, String documentTag, String priority) {
+        super(i, false, cleanAfter);
+        this.attachments = attachments;
+        this.ms = ms;
+        this.readReceipt = readReceipt;
+        this.to = to;
+        this.cc = cc;
+        this.bcc = bcc;
+        this.subject = subject;
+        this.body = body;
+        this.contentType = contentType;
+        this.documentTag = documentTag;
+        this.priority = priority;
+    }
+
+    public SendAction(ProgressIndicator i, JFrame cleanAfter, List<String> attachments, MailboxSetup ms, boolean readReceipt, String to, String cc, String bcc, String subject, String body, String contentType, ArchiveFileBean af, String documentTag, CaseFolder folder, String priority) {
+        this(i, cleanAfter, attachments, ms, readReceipt, to, cc, bcc, subject, body, contentType, documentTag, priority);
+        this.archiveFile = af;
+        this.caseFolder = folder;
+    }
+
+    public SendAction(ProgressIndicator i, JFrame cleanAfter, List<String> attachments, MailboxSetup ms, boolean readReceipt, String to, String cc, String bcc, String subject, String body, String contentType, ArchiveFileBean af, String documentTag, CaseFolder folder, String draftDocumentId, String priority) {
+        this(i, cleanAfter, attachments, ms, readReceipt, to, cc, bcc, subject, body, contentType, af, documentTag, folder, priority);
+        this.draftDocumentId = draftDocumentId;
     }
 
     @Override
@@ -810,6 +848,7 @@ public class SendAction extends ProgressableAction {
         if (!authenticateSmtp) {
             smtpProps.put("mail.smtps.auth", false);
             smtpProps.put("mail.smtp.auth", false);
+            ms.applyCustomProperties(ms.customConfigurationsSendProperties(), smtpProps);
             session = Session.getInstance(smtpProps);
         } else {
             smtpProps.put("mail.smtps.auth", true);
@@ -817,6 +856,7 @@ public class SendAction extends ProgressableAction {
             smtpProps.put("mail.smtp.user", ms.getEmailOutUser());
             smtpProps.put("mail.smtps.user", ms.getEmailOutUser());
             smtpProps.put("mail.password", outPwd);
+            ms.applyCustomProperties(ms.customConfigurationsSendProperties(), smtpProps);
 
             final String smtpPwd=outPwd;
             javax.mail.Authenticator auth = new javax.mail.Authenticator() {
@@ -891,12 +931,31 @@ public class SendAction extends ProgressableAction {
                 msg.setHeader("Return-Receipt-To", ms.getEmailAddress());
             }
 
-            msg.setRecipients(Message.RecipientType.TO, to);
-            msg.setRecipients(Message.RecipientType.CC, cc);
-            msg.setRecipients(Message.RecipientType.BCC, bcc);
+            msg.setRecipients(Message.RecipientType.TO, EmailUtils.parseAndEncodeRecipients(to));
+            msg.setRecipients(Message.RecipientType.CC, EmailUtils.parseAndEncodeRecipients(cc));
+            msg.setRecipients(Message.RecipientType.BCC, EmailUtils.parseAndEncodeRecipients(bcc));
 
             msg.setSubject(MimeUtility.encodeText(subject, "utf-8", "B"));
-            msg.setSentDate(new Date());
+            ZonedDateTime zdt = ZonedDateTime.now(ZoneId.of("Europe/Berlin"));
+            msg.setSentDate(Date.from(zdt.toInstant()));
+
+            // Set priority headers
+            if (this.priority != null) {
+                if (this.priority.startsWith("Hoch")) {
+                    msg.setHeader("X-Priority", "1");
+                    msg.setHeader("Priority", "Urgent");
+                    msg.setHeader("Importance", "high");
+                } else if (this.priority.startsWith("Niedrig")) {
+                    msg.setHeader("X-Priority", "5");
+                    msg.setHeader("Priority", "Non-Urgent");
+                    msg.setHeader("Importance", "low");
+                } else {
+                    // Normal priority
+                    msg.setHeader("X-Priority", "3");
+                    msg.setHeader("Priority", "Normal");
+                    msg.setHeader("Importance", "normal");
+                }
+            }
 
             Multipart multiPart = new MimeMultipart();
 
@@ -994,6 +1053,28 @@ public class SendAction extends ProgressableAction {
                         eb.publishEvent(new DocumentAddedEvent(newDoc));
                     }
 
+                    // Delete draft document after successful send
+                    if (this.draftDocumentId != null) {
+                        try {
+                            this.progress("Lösche Entwurf...");
+
+                            // Fetch document before deletion to publish event
+                            ArchiveFileDocumentsBean draftDoc = afs.getDocument(this.draftDocumentId);
+
+                            // Delete from server
+                            afs.removeDocument(this.draftDocumentId);
+                            log.info("Draft document deleted after successful send: " + this.draftDocumentId);
+
+                            // Publish event for UI update
+                            EventBroker eb = EventBroker.getInstance();
+                            eb.publishEvent(new DocumentRemovedEvent(draftDoc));
+
+                        } catch (Exception ex) {
+                            log.warn("Could not delete draft document after send: " + this.draftDocumentId, ex);
+                            // Don't fail the entire send operation if draft deletion fails
+                        }
+                    }
+
                 } else {
                     this.progress("Überspringe Speichern in Akte...");
                 }
@@ -1039,6 +1120,7 @@ public class SendAction extends ProgressableAction {
                 imapProps.setProperty("mail.imaps.socketFactory.fallback", "false");
                 imapProps.setProperty("mail.imaps.socketFactory.port", "993");
                 imapProps.setProperty("mail.imaps.starttls.enable", "true");
+                ms.applyCustomProperties(ms.customConfigurationsReceiveProperties(), imapProps);
                 
                 String authToken = EmailUtils.getOffice365AuthToken(ms.getId());
 
@@ -1064,6 +1146,7 @@ public class SendAction extends ProgressableAction {
                 if (trustedServers.length() > 0) {
                     imapProps.put("mail.imaps.ssl.trust", trustedServers);
                 }
+                ms.applyCustomProperties(ms.customConfigurationsReceiveProperties(), imapProps);
                 
                 if(authenticateImap) {
                     final String imapPwd=inPwd;
@@ -1082,32 +1165,19 @@ public class SendAction extends ProgressableAction {
                 store.connect();
             }
 
-            Folder folder = EmailUtils.getInboxFolder(store);
-            if (!folder.isOpen()) {
-                folder.open(Folder.READ_WRITE);
-            }
-
             Folder sent = EmailUtils.getSentFolder(store);
             if (sent != null) {
                 this.progress("Kopiere Nachricht in 'Gesendet'...");
-                boolean closed = !sent.isOpen();
                 if (!sent.isOpen()) {
+                    System.out.println("open 37");
                     sent.open(Folder.READ_WRITE);
                 }
                 msg.setFlag(Flags.Flag.SEEN, true);
                 sent.appendMessages(new Message[]{msg});
-                if (closed) {
-                    EmailUtils.closeIfIMAP(sent);
-                }
+                EmailUtils.closeIfIMAP(sent);
 
             } else {
                 log.error("Unable to determine 'Sent' folder for mailbox");
-            }
-
-            try {
-                EmailUtils.closeIfIMAP(folder);
-            } catch (Throwable t) {
-                log.error(t);
             }
 
             store.close();

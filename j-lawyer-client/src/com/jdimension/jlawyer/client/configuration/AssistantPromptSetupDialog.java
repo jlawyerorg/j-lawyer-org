@@ -670,6 +670,7 @@ import com.jdimension.jlawyer.client.utils.CaseInsensitiveStringComparator;
 import com.jdimension.jlawyer.client.utils.ComponentUtils;
 import com.jdimension.jlawyer.persistence.AssistantPrompt;
 import com.jdimension.jlawyer.services.JLawyerServiceLocator;
+import java.util.Comparator;
 import java.util.List;
 import javax.swing.JOptionPane;
 import javax.swing.table.DefaultTableModel;
@@ -717,7 +718,20 @@ public class AssistantPromptSetupDialog extends javax.swing.JDialog {
 
             }
             TableRowSorter<TableModel> sorter = new TableRowSorter<>(this.tblPrompts.getModel());
-            sorter.setComparator(0, new CaseInsensitiveStringComparator());
+            sorter.setComparator(0, new Comparator<AssistantPrompt>() {
+                @Override
+                public int compare(AssistantPrompt o1, AssistantPrompt o2) {
+                    if (o1 == null && o2 == null) return 0;
+                    if (o1 == null) return 1;
+                    if (o2 == null) return -1;
+
+                    String name1 = o1.getName() != null ? o1.getName() : "";
+                    String name2 = o2.getName() != null ? o2.getName() : "";
+
+                    return name1.toLowerCase().compareTo(name2.toLowerCase());
+                }
+            });
+            sorter.setComparator(1, new CaseInsensitiveStringComparator());
             this.tblPrompts.setRowSorter(sorter);
             this.tblPrompts.getRowSorter().toggleSortOrder(0);
 

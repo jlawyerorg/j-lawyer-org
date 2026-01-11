@@ -673,8 +673,10 @@ import com.jdimension.jlawyer.client.assistant.AssistantAccess;
 import com.jdimension.jlawyer.client.assistant.AssistantFlowAdapter;
 import com.jdimension.jlawyer.client.assistant.AssistantInputAdapter;
 import com.jdimension.jlawyer.client.editors.EditorsRegistry;
+import com.jdimension.jlawyer.client.editors.files.AddVoiceMemoDialog;
 import com.jdimension.jlawyer.client.editors.files.EditArchiveFileDetailsPanel;
 import com.jdimension.jlawyer.client.settings.ClientSettings;
+import com.jdimension.jlawyer.client.utils.AudioUtils;
 import com.jdimension.jlawyer.client.utils.ThreadUtils;
 import com.jdimension.jlawyer.client.utils.WavAudioUtils;
 import com.jdimension.jlawyer.persistence.AssistantConfig;
@@ -691,9 +693,14 @@ import javax.sound.sampled.LineUnavailableException;
 import javax.sound.sampled.UnsupportedAudioFileException;
 import javax.swing.Timer;
 import java.awt.event.ActionEvent;
+import java.io.ByteArrayOutputStream;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import javax.sound.sampled.AudioFileFormat;
+import javax.sound.sampled.AudioFormat;
+import javax.sound.sampled.DataLine;
+import javax.sound.sampled.FloatControl;
 import javax.sound.sampled.LineEvent;
 import javax.swing.JOptionPane;
 import org.apache.log4j.Logger;
@@ -707,6 +714,7 @@ public class SoundplayerPanel extends javax.swing.JPanel implements PreviewPanel
     private static final Logger log = Logger.getLogger(SoundplayerPanel.class.getName());
 
     private String documentId = null;
+    private String documentName = null;
     private byte[] content = null;
     private String initialComment = null;
 
@@ -717,6 +725,9 @@ public class SoundplayerPanel extends javax.swing.JPanel implements PreviewPanel
 
     private DocumentPreviewSaveCallback saveCallback = null;
 
+    private FloatControl volumeControl;
+    
+    
     /**
      * Creates new form SoundplayerPanel
      *
@@ -724,11 +735,22 @@ public class SoundplayerPanel extends javax.swing.JPanel implements PreviewPanel
      * @param readOnly
      * @param saveCallback
      */
-    public SoundplayerPanel(String docId, boolean readOnly, DocumentPreviewSaveCallback saveCallback) {
+    public SoundplayerPanel(String docId, String docName, boolean readOnly, DocumentPreviewSaveCallback saveCallback) {
         this.documentId = docId;
+        this.documentName=docName;
         this.readOnly = readOnly;
         this.saveCallback = saveCallback;
         initComponents();
+        
+        
+        try {
+            String savedVolume = ClientSettings.getInstance().getConfiguration("soundplayer.volume", "80");
+            if (savedVolume != null && !savedVolume.isEmpty()) {
+                sliderVolume.setValue(Integer.parseInt(savedVolume));
+            }
+        } catch (Exception e) {
+            log.warn("Could not restore volume setting", e);
+        }
     }
 
     /**
@@ -752,6 +774,9 @@ public class SoundplayerPanel extends javax.swing.JPanel implements PreviewPanel
         taTranscription = new javax.swing.JTextArea();
         cmdNewDocument = new javax.swing.JButton();
         cmdCopy = new javax.swing.JButton();
+        cmdContinueRecording = new javax.swing.JButton();
+        sliderVolume = new javax.swing.JSlider();
+        waveformView = new com.jdimension.jlawyer.client.editors.documents.viewer.WaveformPanel();
 
         cmdPlayPause.setFont(cmdPlayPause.getFont());
         cmdPlayPause.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons32/material/baseline_play_circle_black_48dp.png"))); // NOI18N
@@ -809,6 +834,26 @@ public class SoundplayerPanel extends javax.swing.JPanel implements PreviewPanel
             }
         });
 
+        cmdContinueRecording.setFont(cmdContinueRecording.getFont());
+        cmdContinueRecording.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons32/material/not_started_24dp_0E72B5.png"))); // NOI18N
+        cmdContinueRecording.setText("Fortsetzen");
+        cmdContinueRecording.setToolTipText("Memo durch weitere Spracheingabe weiterführen");
+        cmdContinueRecording.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                cmdContinueRecordingActionPerformed(evt);
+            }
+        });
+
+        sliderVolume.setMinorTickSpacing(5);
+        sliderVolume.setToolTipText("Lautstärke anpassen");
+        sliderVolume.setValue(80);
+        sliderVolume.addChangeListener(new javax.swing.event.ChangeListener() {
+            public void stateChanged(javax.swing.event.ChangeEvent evt) {
+                sliderVolumeStateChanged(evt);
+            }
+        });
+
+
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(this);
         this.setLayout(layout);
         layout.setHorizontalGroup(
@@ -816,8 +861,9 @@ public class SoundplayerPanel extends javax.swing.JPanel implements PreviewPanel
             .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
                 .addContainerGap()
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
-                    .addComponent(jScrollPane1, javax.swing.GroupLayout.DEFAULT_SIZE, 452, Short.MAX_VALUE)
+                    .addComponent(jScrollPane1)
                     .addComponent(lblStatus, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                    .addComponent(waveformView, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                     .addComponent(prgTime, javax.swing.GroupLayout.Alignment.LEADING, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                     .addGroup(javax.swing.GroupLayout.Alignment.LEADING, layout.createSequentialGroup()
                         .addComponent(timeLabel, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
@@ -827,7 +873,12 @@ public class SoundplayerPanel extends javax.swing.JPanel implements PreviewPanel
                         .addComponent(cmdPlayPause)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                         .addComponent(cmdStop)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addComponent(cmdContinueRecording)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addComponent(sliderVolume, javax.swing.GroupLayout.PREFERRED_SIZE, 160, javax.swing.GroupLayout.PREFERRED_SIZE)
                         .addGap(0, 0, Short.MAX_VALUE))
+                    
                     .addGroup(javax.swing.GroupLayout.Alignment.LEADING, layout.createSequentialGroup()
                         .addComponent(cmdAssistant)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
@@ -842,8 +893,13 @@ public class SoundplayerPanel extends javax.swing.JPanel implements PreviewPanel
                 .addContainerGap()
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                     .addComponent(cmdPlayPause)
-                    .addComponent(cmdStop))
+                    .addComponent(cmdStop)
+                    .addComponent(cmdContinueRecording)
+                    .addComponent(sliderVolume, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
+                
                 .addGap(18, 18, 18)
+                .addComponent(waveformView, javax.swing.GroupLayout.PREFERRED_SIZE, 80, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(prgTime, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(timeLabel)
@@ -877,7 +933,7 @@ public class SoundplayerPanel extends javax.swing.JPanel implements PreviewPanel
             Map<AssistantConfig, List<AiCapability>> capabilities = ingo.filterCapabilities(AiCapability.REQUESTTYPE_TRANSCRIBE, AiCapability.INPUTTYPE_FILE);
             this.popAssistant.removeAll();
             //ingo.populateMenu(this.popAssistant, capabilities, this);
-            ingo.populateMenu(this.popAssistant, capabilities, (AssistantInputAdapter) this, null);
+            ingo.populateMenu(this.popAssistant, capabilities, (AssistantInputAdapter) this, null, EditorsRegistry.getInstance().getMainWindow(), false);
             this.popAssistant.show(this.cmdAssistant, evt.getX(), evt.getY());
         } catch (Exception ex) {
             log.error(ex);
@@ -902,18 +958,90 @@ public class SoundplayerPanel extends javax.swing.JPanel implements PreviewPanel
 
     }//GEN-LAST:event_cmdCopyActionPerformed
 
+    private void cmdContinueRecordingActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdContinueRecordingActionPerformed
+        // Stoppe die aktuelle Wiedergabe, falls sie läuft und gebe Ressourcen frei
+        stop();
+
+        // Stelle sicher, dass der Clip geschlossen wird
+        closeAudioResources();
+
+        try {
+            // Neuen Dialog erstellen
+            AddVoiceMemoDialog dlg = new AddVoiceMemoDialog(EditorsRegistry.getInstance().getMainWindow(), true);
+            dlg.setTitle("Sprachmemo fortsetzen");
+
+            // Bestehende Audiodaten übergeben
+            dlg.setExistingAudio(this.content, this.documentName);
+            // Mode selection is handled inside the dialog
+
+            // Dialog anzeigen
+            com.jdimension.jlawyer.client.utils.FrameUtils.centerDialog(dlg, EditorsRegistry.getInstance().getMainWindow());
+            dlg.setVisible(true);
+
+            // Ergebnis verarbeiten
+            byte[] result = dlg.getMemoBytes();
+            if (result == null) {
+                // Benutzer hat abgebrochen: ursprünglichen Inhalt wieder laden
+                try {
+                    showContent(this.documentId, this.content);
+                } catch (Exception ignore) {
+                    log.error(ignore);
+                }
+                return;
+            }
+
+            // Aktualisiere die Datei
+            try {
+                ClientSettings settings = ClientSettings.getInstance();
+                JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
+                locator.lookupArchiveFileServiceRemote().setDocumentContent(this.documentId, result);
+
+                // Aktualisiere den lokalen Content
+                this.content = result;
+
+                // Stelle sicher, dass alle audio-Ressourcen freigegeben wurden
+                closeAudioResources();
+
+                // Zeige den neuen Inhalt an
+                showContent(this.documentId, this.content);
+
+                // Bestätigungsmeldung anzeigen
+                this.lblStatus.setText("Sprachmemo wurde aktualisiert.");
+            } catch (Exception e) {
+                log.error("Error updating voice memo", e);
+                JOptionPane.showMessageDialog(this, "Fehler beim Aktualisieren des Sprachmemos: " + e.getMessage(), 
+                    com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
+            }
+        } catch (Exception ex) {
+            log.error("Error creating dialog", ex);
+            JOptionPane.showMessageDialog(this, "Fehler beim Öffnen des Aufnahmedialogs: " + ex.getMessage(), 
+                com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
+        }
+    }//GEN-LAST:event_cmdContinueRecordingActionPerformed
+
+    private void sliderVolumeStateChanged(javax.swing.event.ChangeEvent evt) {//GEN-FIRST:event_sliderVolumeStateChanged
+        updateVolume();
+    }//GEN-LAST:event_sliderVolumeStateChanged
+
+    
+
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
+    private com.jdimension.jlawyer.client.editors.documents.viewer.WaveformPanel waveformView;
+    
     private javax.swing.JButton cmdAssistant;
+    private javax.swing.JButton cmdContinueRecording;
     private javax.swing.JButton cmdCopy;
     private javax.swing.JButton cmdNewDocument;
     private javax.swing.JButton cmdPlayPause;
     private javax.swing.JButton cmdStop;
+    
     private javax.swing.JScrollPane jScrollPane1;
     private javax.swing.JSeparator jSeparator1;
     private javax.swing.JLabel lblStatus;
     private javax.swing.JPopupMenu popAssistant;
     private javax.swing.JProgressBar prgTime;
+    private javax.swing.JSlider sliderVolume;
     private javax.swing.JTextArea taTranscription;
     private javax.swing.JLabel timeLabel;
     // End of variables declaration//GEN-END:variables
@@ -925,9 +1053,13 @@ public class SoundplayerPanel extends javax.swing.JPanel implements PreviewPanel
 
     @Override
     public void removeNotify() {
+        closeAudioResources();
         super.removeNotify();
         stop(); // Stop the sound when the panel is removed or no longer displayed
 
+        ClientSettings.getInstance().setConfiguration("soundplayer.volume", 
+                                           String.valueOf(sliderVolume.getValue()));
+        
         if (this.documentId != null && !this.readOnly) {
 
             String currentComment = this.taTranscription.getText();
@@ -951,6 +1083,9 @@ public class SoundplayerPanel extends javax.swing.JPanel implements PreviewPanel
 
     @Override
     public void showContent(String documentId, byte[] content) {
+        // Bestehende Ressourcen freigeben
+        closeAudioResources();
+
         this.documentId = documentId;
         this.content = content;
 
@@ -962,10 +1097,38 @@ public class SoundplayerPanel extends javax.swing.JPanel implements PreviewPanel
             this.taTranscription.setText("");
         }
 
+        if (content == null || content.length == 0) {
+            showStatus("Keine Audiodaten vorhanden");
+            return;
+        }
+
         try {
-            AudioInputStream audioInputStream = AudioSystem.getAudioInputStream(new ByteArrayInputStream(content));
+            // Versuchen, den WAV-Header zu reparieren, falls nötig
+            byte[] fixedContent = ensureValidWavHeader(content);
+
+            ByteArrayInputStream byteStream = new ByteArrayInputStream(fixedContent);
+            AudioInputStream audioInputStream = AudioSystem.getAudioInputStream(byteStream);
+
+            // Get audio format details for better error handling
+            AudioFormat format = audioInputStream.getFormat();
+            log.info("Audio format: " + format.toString());
+
+            // Check if we have a supported format
+            DataLine.Info info = new DataLine.Info(Clip.class, format);
+            if (!AudioSystem.isLineSupported(info)) {
+                showStatus("Audioformat wird nicht unterstützt: " + format.toString());
+                log.error("Unsupported audio format: " + format.toString());
+                return;
+            }
+
+            // Continue with playback setup
             clip = AudioSystem.getClip();
             clip.open(audioInputStream);
+            
+            volumeControl = null;
+            updateVolume();
+            // Update waveform view with new content
+            updateWaveform(fixedContent);
 
             clip.addLineListener((LineEvent event) -> {
                 if (event.getType() == LineEvent.Type.STOP && (clip.getMicrosecondPosition() == clip.getMicrosecondLength())) {
@@ -979,19 +1142,184 @@ public class SoundplayerPanel extends javax.swing.JPanel implements PreviewPanel
             this.prgTime.setMinimum(0);
             this.prgTime.setMaximum((int) (clip.getMicrosecondLength() / 1000l / 1000l));
             this.prgTime.setValue(0);
-        } catch (UnsupportedAudioFileException uae) {
-            log.error(uae);
-            showStatus("Audioformat wird nicht unterstützt");
-        } catch (IOException | LineUnavailableException ex) {
-            log.error(ex);
-            showStatus("Fehler: " + ex.getMessage());
-        }
 
+            // Clear any previous error messages
+            showStatus("");
+        } catch (UnsupportedAudioFileException uae) {
+            log.error("Unsupported audio file format", uae);
+            showStatus("Audioformat wird nicht unterstützt - versuche Reparatur...");
+
+            // Versuche, den Stream als PCM-Daten zu interpretieren und zu konvertieren
+            try {
+                fixAndPlayAsPCM(content);
+            } catch (Exception e) {
+                log.error("Failed to repair audio data", e);
+                showStatus("Fehler beim Verarbeiten der Audiodaten: " + e.getMessage());
+            }
+        } catch (LineUnavailableException lue) {
+            log.error("LineUnavailableException", lue);
+            showStatus("Audio-Hardware unterstützt dieses Format nicht: " + lue.getMessage());
+        } catch (IOException ex) {
+            log.error("IO Exception when loading audio", ex);
+            showStatus("Fehler beim Laden der Audiodatei: " + ex.getMessage());
+        } catch (Exception ex) {
+            log.error("Unexpected error when loading audio", ex);
+            showStatus("Unerwarteter Fehler: " + ex.getMessage());
+        }
+        
         timer = new Timer(1000, (ActionEvent e) -> {
             updateTimeLabel();
         });
-
     }
+    
+    /**
+    * Versucht, einen korrupten WAV-Header zu reparieren
+    */
+   private byte[] ensureValidWavHeader(byte[] audioData) {
+       // Überprüfen, ob die Datei mit "RIFF" beginnt und lang genug für einen Wav-Header ist
+       if (audioData.length < 44 || 
+           audioData[0] != 'R' || audioData[1] != 'I' || audioData[2] != 'F' || audioData[3] != 'F') {
+
+           log.warn("Audio data doesn't have a valid WAV header, attempting to fix");
+
+           // Erstelle einen neuen korrekten WAV-Header
+           AudioFormat format = AudioUtils.getAudioFormat(); // Standardformat verwenden
+
+           ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
+
+           // RIFF header
+           outputStream.write("RIFF".getBytes(), 0, 4);
+
+           // Gesamtlänge berechnen (Dateigröße - 8 bytes für RIFF und Länge)
+           int totalLength = audioData.length + 36; // 36 für Header, audioData für Audiodaten
+           byte[] totalLengthBytes = new byte[4];
+           totalLengthBytes[0] = (byte) (totalLength & 0xff);
+           totalLengthBytes[1] = (byte) ((totalLength >> 8) & 0xff);
+           totalLengthBytes[2] = (byte) ((totalLength >> 16) & 0xff);
+           totalLengthBytes[3] = (byte) ((totalLength >> 24) & 0xff);
+           outputStream.write(totalLengthBytes, 0, 4);
+
+           // WAVE header
+           outputStream.write("WAVE".getBytes(), 0, 4);
+
+           // fmt chunk
+           outputStream.write("fmt ".getBytes(), 0, 4);
+
+           // Subchunk1Size (16 für PCM)
+           byte[] subchunk1Size = { 16, 0, 0, 0 };
+           outputStream.write(subchunk1Size, 0, 4);
+
+           // AudioFormat (1 für PCM)
+           byte[] audioFormat = { 1, 0 };
+           outputStream.write(audioFormat, 0, 2);
+
+           // NumChannels (1 für mono, 2 für stereo)
+           byte[] numChannels = { (byte)format.getChannels(), 0 };
+           outputStream.write(numChannels, 0, 2);
+
+           // SampleRate
+           int sampleRate = (int)format.getSampleRate();
+           byte[] sampleRateBytes = new byte[4];
+           sampleRateBytes[0] = (byte) (sampleRate & 0xff);
+           sampleRateBytes[1] = (byte) ((sampleRate >> 8) & 0xff);
+           sampleRateBytes[2] = (byte) ((sampleRate >> 16) & 0xff);
+           sampleRateBytes[3] = (byte) ((sampleRate >> 24) & 0xff);
+           outputStream.write(sampleRateBytes, 0, 4);
+
+           // ByteRate (SampleRate * NumChannels * BitsPerSample/8)
+           int byteRate = (int)(format.getSampleRate() * format.getChannels() * format.getSampleSizeInBits() / 8);
+           byte[] byteRateBytes = new byte[4];
+           byteRateBytes[0] = (byte) (byteRate & 0xff);
+           byteRateBytes[1] = (byte) ((byteRate >> 8) & 0xff);
+           byteRateBytes[2] = (byte) ((byteRate >> 16) & 0xff);
+           byteRateBytes[3] = (byte) ((byteRate >> 24) & 0xff);
+           outputStream.write(byteRateBytes, 0, 4);
+
+           // BlockAlign (NumChannels * BitsPerSample/8)
+           short blockAlign = (short)(format.getChannels() * format.getSampleSizeInBits() / 8);
+           byte[] blockAlignBytes = { (byte) (blockAlign & 0xff), (byte) ((blockAlign >> 8) & 0xff) };
+           outputStream.write(blockAlignBytes, 0, 2);
+
+           // BitsPerSample
+           short bitsPerSample = (short)format.getSampleSizeInBits();
+           byte[] bitsPerSampleBytes = { (byte) (bitsPerSample & 0xff), (byte) ((bitsPerSample >> 8) & 0xff) };
+           outputStream.write(bitsPerSampleBytes, 0, 2);
+
+           // data chunk
+           outputStream.write("data".getBytes(), 0, 4);
+
+           // Subchunk2Size (Größe der Audiodaten)
+           int subchunk2Size = audioData.length;
+           byte[] subchunk2SizeBytes = new byte[4];
+           subchunk2SizeBytes[0] = (byte) (subchunk2Size & 0xff);
+           subchunk2SizeBytes[1] = (byte) ((subchunk2Size >> 8) & 0xff);
+           subchunk2SizeBytes[2] = (byte) ((subchunk2Size >> 16) & 0xff);
+           subchunk2SizeBytes[3] = (byte) ((subchunk2Size >> 24) & 0xff);
+           outputStream.write(subchunk2SizeBytes, 0, 4);
+
+           // Audiodaten anhängen
+           try {
+               outputStream.write(audioData);
+               return outputStream.toByteArray();
+           } catch (IOException e) {
+               log.error("Error writing audio data", e);
+               return audioData; // Im Fehlerfall die Originaldaten zurückgeben
+           }
+       }
+
+       return audioData; // Wenn alles gut aussieht, die Originaldaten zurückgeben
+   }
+
+   /**
+    * Versucht, die Audiodaten als reine PCM-Daten zu interpretieren und abzuspielen
+    */
+   private void fixAndPlayAsPCM(byte[] audioData) throws Exception {
+       // PCM-Format für die Audiodaten definieren
+       AudioFormat format = AudioUtils.getAudioFormat();
+
+       // AudioInputStream aus den PCM-Daten erstellen
+       ByteArrayInputStream bais = new ByteArrayInputStream(audioData);
+       AudioInputStream ais = new AudioInputStream(
+           bais,
+           format,
+           audioData.length / format.getFrameSize()
+       );
+
+       // In korrektes WAV-Format konvertieren
+       ByteArrayOutputStream baos = new ByteArrayOutputStream();
+       AudioSystem.write(ais, AudioFileFormat.Type.WAVE, baos);
+
+       // Die konvertierten Daten als WAV-Datei abspielen
+       byte[] wavData = baos.toByteArray();
+
+       // Speichere die konvertierten Daten
+       this.content = wavData;
+
+       // Zeige die konvertierten Daten an
+       ByteArrayInputStream convertedStream = new ByteArrayInputStream(wavData);
+       AudioInputStream convertedAis = AudioSystem.getAudioInputStream(convertedStream);
+
+       // Setup playback
+       clip = AudioSystem.getClip();
+       clip.open(convertedAis);
+
+       clip.addLineListener((LineEvent event) -> {
+           if (event.getType() == LineEvent.Type.STOP && (clip.getMicrosecondPosition() == clip.getMicrosecondLength())) {
+               clip.setMicrosecondPosition(0);
+               timer.stop();
+               updateTimeLabel();
+               cmdPlayPause.setText("Play");
+           }
+       });
+
+       this.prgTime.setMinimum(0);
+       this.prgTime.setMaximum((int) (clip.getMicrosecondLength() / 1000l / 1000l));
+       this.prgTime.setValue(0);
+
+       showStatus("Audiodaten repariert");
+       // Update waveform based on converted WAV data
+       updateWaveform(wavData);
+   }
 
     @Override
     public String getDocumentId() {
@@ -1018,7 +1346,23 @@ public class SoundplayerPanel extends javax.swing.JPanel implements PreviewPanel
             clip.setMicrosecondPosition(0);
             timer.stop();
             updateTimeLabel();
-            this.cmdPlayPause.setText("Play"); // Reset button text to "Play" when stopped
+            this.cmdPlayPause.setText("Play");
+        }
+    }
+    
+    private void closeAudioResources() {
+        if (clip != null) {
+            try {
+                clip.stop();
+                clip.flush();
+                clip.close();
+                clip = null;
+            } catch (Exception e) {
+                log.warn("Error closing clip", e);
+            }
+        }
+        if (timer != null) {
+            timer.stop();
         }
     }
 
@@ -1029,6 +1373,64 @@ public class SoundplayerPanel extends javax.swing.JPanel implements PreviewPanel
         long seconds = (microseconds / 1000000) % 60;
         String timeString = String.format("%02d:%02d", minutes, seconds);
         timeLabel.setText(timeString);
+        try {
+            if (clip != null && waveformView != null && clip.getMicrosecondLength() > 0) {
+                double frac = clip.getMicrosecondPosition() / (double) clip.getMicrosecondLength();
+                waveformView.setPlayheadFraction(frac);
+            }
+        } catch (Throwable ignore) {}
+    }
+
+    private void updateWaveform(byte[] wavBytes) {
+        if (waveformView == null || wavBytes == null) return;
+        try {
+            float[] peaks = WaveformPanel.computePeaks(wavBytes, 1500);
+            waveformView.setWaveform(peaks);
+            waveformView.setSeekListener(fraction -> {
+                if (clip != null) {
+                    long target = (long) (clip.getMicrosecondLength() * Math.min(1.0, Math.max(0.0, fraction)));
+                    try {
+                        clip.setMicrosecondPosition(target);
+                        updateTimeLabel();
+                    } catch (Throwable t) {
+                        // ignore seek errors
+                    }
+                }
+            });
+            waveformView.setPlayheadFraction(0.0);
+        } catch (Exception e) {
+            waveformView.setWaveform(new float[0]);
+        }
+    }
+    
+    private void updateVolume() {
+        if (clip != null && clip.isOpen()) {
+            try {
+                // FloatControl für die Lautstärke holen
+                if (volumeControl == null) {
+                    volumeControl = (FloatControl) clip.getControl(FloatControl.Type.MASTER_GAIN);
+                }
+                // Lautstärke berechnen (von Prozent in dB umrechnen)
+                int volumePercent = sliderVolume.getValue();
+                float gain;
+
+                if (volumePercent == 0) {
+                    gain = -80.0f; // Praktisch stumm
+                } else {
+                    // Logarithmische Skala für natürlichere Lautstärkeänderung
+                    gain = (float) (Math.log10(volumePercent / 100.0) * 20.0);
+                    gain = Math.max(-40.0f, Math.min(6.0f, gain));
+                }
+
+                volumeControl.setValue(gain);
+
+                // Optional: Debug-Ausgabe
+                log.info("Volume set to " + volumePercent + "% (" + gain + " dB)");
+            } catch (Exception e) {
+                log.error("Error adjusting volume", e);
+                showStatus("Lautstärkeeinstellung nicht verfügbar: " + e.getMessage());
+            }
+        }
     }
 
     @Override
@@ -1077,4 +1479,13 @@ public class SoundplayerPanel extends javax.swing.JPanel implements PreviewPanel
         return null;
     }
 
+    @Override
+    public void processOutput(Map<String, String> output) {
+        
+    }
+
+    @Override
+    public void dispose() {
+        
+    }
 }

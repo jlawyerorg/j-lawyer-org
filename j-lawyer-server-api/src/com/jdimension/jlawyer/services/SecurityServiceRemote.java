@@ -664,6 +664,7 @@
 package com.jdimension.jlawyer.services;
 
 import com.jdimension.jlawyer.persistence.AppUserBean;
+import com.jdimension.jlawyer.persistence.ArchiveFileBean;
 import com.jdimension.jlawyer.persistence.CalendarAccess;
 import com.jdimension.jlawyer.persistence.CalendarSetup;
 import com.jdimension.jlawyer.persistence.Group;
@@ -686,6 +687,7 @@ public interface SecurityServiceRemote {
     boolean login(String principalId, String password);
 
     boolean isAdmin();
+    boolean isSysAdmin();
 
     Collection<Group> getAllGroups();
 
@@ -733,4 +735,8 @@ public interface SecurityServiceRemote {
     void setMailboxSettings(MailboxSetup mailbox, Properties settings);
 
     List<AppUserBean> getMessagingEnabledUsers() throws Exception;
+
+    List<ArchiveFileBean> getCasesByGroup(String groupId) throws Exception;
+
+    void unlinkGroup(String groupId, String newGroupId) throws Exception;
 }

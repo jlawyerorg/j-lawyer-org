@@ -663,10 +663,7 @@
  */
 package com.jdimension.jlawyer.client.launcher;
 
-import com.jdimension.jlawyer.client.utils.*;
-import java.io.File;
 import java.util.TimerTask;
-import javax.swing.SwingUtilities;
 import org.apache.log4j.Logger;
 
 /**
@@ -676,6 +673,12 @@ import org.apache.log4j.Logger;
 public class DocumentObserverTask extends TimerTask {
 
     private static final Logger log = Logger.getLogger(DocumentObserverTask.class.getName());
+    
+    private volatile boolean stopped = false;
+
+    public void stop() {
+        stopped = true;
+    }
 
     public DocumentObserverTask() {
 
@@ -685,7 +688,9 @@ public class DocumentObserverTask extends TimerTask {
         return 5000;
     }
 
+    @Override
     public void run() {
+        if (stopped) return;
         try {
             DocumentObserver observer = DocumentObserver.getInstance();
             observer.observe();

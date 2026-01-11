@@ -681,6 +681,7 @@ package com.jdimension.jlawyer.services;
 
 
 
+import com.jdimension.jlawyer.persistence.AssistantReplacement;
 import com.jdimension.jlawyer.persistence.EpostQueueBean;
 import com.jdimension.jlawyer.persistence.FaxQueueBean;
 import com.jdimension.jlawyer.pojo.FileMetadata;
@@ -690,6 +691,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Date;
 import java.util.HashMap;
+import java.util.List;
 import javax.ejb.Local;
 
 /**
@@ -735,6 +737,9 @@ public interface SingletonServiceLocal {
     void updateJobStatus(JobStatus jobStatus);
 
     Collection<JobStatus> listJobs();
+    
+    List<AssistantReplacement> getAssistantReplacements();
+    void flushAssistantReplacements();
     
     
 }

@@ -666,7 +666,7 @@ package com.jdimension.jlawyer.documents;
 import com.jdimension.jlawyer.persistence.ArchiveFileDocumentsBean;
 import com.jdimension.jlawyer.persistence.ArchiveFileDocumentsBeanFacadeLocal;
 import com.jdimension.jlawyer.server.utils.ServerFileUtils;
-import com.jdimension.jlawyer.services.SystemManagement;
+import com.jdimension.jlawyer.stirlingpdf.StirlingPdfAPI;
 import java.io.*;
 import org.apache.log4j.Logger;
 import org.apache.tika.Tika;
@@ -680,18 +680,23 @@ public class PreviewGenerator {
     private static final Logger log = Logger.getLogger(PreviewGenerator.class.getName());
 
     private ArchiveFileDocumentsBeanFacadeLocal archiveFileDocumentsFacade;
+    private StirlingPdfAPI pdfApi=null;
 
-    public PreviewGenerator(ArchiveFileDocumentsBeanFacadeLocal archiveFileDocumentsFacade) {
+    public PreviewGenerator(ArchiveFileDocumentsBeanFacadeLocal archiveFileDocumentsFacade, StirlingPdfAPI pdfApi) {
         this.archiveFileDocumentsFacade = archiveFileDocumentsFacade;
+        this.pdfApi=pdfApi;
     }
 
-    public String getDocumentPreview(String id) throws Exception {
+    public DocumentPreview getDocumentPreview(String id, String previewType) throws Exception {
 
         ArchiveFileDocumentsBean db = this.archiveFileDocumentsFacade.find(id);
         String aId = db.getArchiveFileKey().getId();
 
-        if (!this.previewExists(aId, id, db.getName())) {
-            this.createPreview(aId, id, db.getName());
+        if(!DocumentPreview.supportsPdfPreview(db.getName()))
+            previewType=DocumentPreview.TYPE_TEXT;
+        
+        if (!this.previewExists(aId, id, db.getName(), previewType)) {
+            this.createPreview(aId, id, db.getName(), previewType);
         }
 
         String localBaseDir = System.getProperty("jlawyer.server.basedirectory");
@@ -702,18 +707,23 @@ public class PreviewGenerator {
 
         String dst = localBaseDir + "archivefiles-preview" + System.getProperty("file.separator") + aId + System.getProperty("file.separator");
 
-        this.migrateDocument(dst, db.getId(), db.getName());
-        
-        String dstId = dst + db.getId();
-        File dstFile = new File(dstId);
+        this.migrateDocument(dst, db.getId(), db.getName(), previewType);
+
+        File dstFile = new File(dst + db.getId() + "." + previewType);
+
         if (!(dstFile.exists())) {
-            throw new Exception("Dokumentvorschau für " + db.getName() + " existiert nicht!");
+            throw new Exception("Dokumentvorschau (" + previewType + ") für " + db.getName() + " existiert nicht!");
+        } else {
+            if (DocumentPreview.TYPE_TEXT.equals(previewType)) {
+                return new DocumentPreview(ServerFileUtils.readTextFile(dstFile));
+            } else {
+                return new DocumentPreview(ServerFileUtils.readFile(dstFile));
+            }
         }
 
-        return ServerFileUtils.readTextFile(dstFile);
     }
 
-    public boolean previewExists(String archiveFileId, String docId, String fileName) {
+    public boolean previewExists(String archiveFileId, String docId, String fileName, String previewType) {
         String localBaseDir = System.getProperty("jlawyer.server.basedirectory");
         localBaseDir = localBaseDir.trim();
         if (!localBaseDir.endsWith(System.getProperty("file.separator"))) {
@@ -724,11 +734,24 @@ public class PreviewGenerator {
         String dstName = dst + fileName;
         String dstId = dst + docId;
 
-        return new File(dstId).exists() || new File(dstName).exists();
+        File dstFileById = new File(dstId);
+
+        File dstFileByName = new File(dstName);
+        if (dstFileByName.exists()) {
+            dstFileByName.renameTo(dstFileById);
+        }
+
+        File dstFileTxt = new File(dst + docId + "." + DocumentPreview.TYPE_TEXT);
+        if (dstFileById.exists()) {
+            dstFileById.renameTo(dstFileTxt);
+        }
+
+        File dstFileByType = new File(dst + docId + "." + previewType);
+        return dstFileByType.exists();
     }
 
-    public void deletePreview(String archiveFileId, String docId, String fileName) {
-        if (this.previewExists(archiveFileId, docId, fileName)) {
+    public void deletePreview(String archiveFileId, String docId, String fileName, String previewType) {
+        if (this.previewExists(archiveFileId, docId, fileName, previewType)) {
 
             String localBaseDir = System.getProperty("jlawyer.server.basedirectory");
             localBaseDir = localBaseDir.trim();
@@ -737,13 +760,13 @@ public class PreviewGenerator {
             }
 
             String dst = localBaseDir + "archivefiles-preview" + System.getProperty("file.separator") + archiveFileId + System.getProperty("file.separator");
-            
-            this.migrateDocument(dst, docId, fileName);
-            
-            String dstId = dst + docId;
-            File fDstId=new File(dstId);
-            if(fDstId.exists()) {
-                if(!fDstId.delete()) {
+
+            this.migrateDocument(dst, docId, fileName, previewType);
+
+            String dstId = dst + docId + "." + previewType;
+            File fDstId = new File(dstId);
+            if (fDstId.exists()) {
+                if (!fDstId.delete()) {
                     log.error("Could not delete preview file " + fDstId.getAbsolutePath());
                 }
             }
@@ -751,16 +774,16 @@ public class PreviewGenerator {
 
     }
 
-    public String updatePreview(String archiveFileId, String docId, String fileName) {
-        if (this.previewExists(archiveFileId, docId, fileName)) {
-            this.deletePreview(archiveFileId, docId, fileName);
+    public DocumentPreview updatePreview(String archiveFileId, String docId, String fileName, String previewType) {
+        if (this.previewExists(archiveFileId, docId, fileName, previewType)) {
+            this.deletePreview(archiveFileId, docId, fileName, previewType);
         }
-        return this.createPreview(archiveFileId, docId, fileName);
+        return this.createPreview(archiveFileId, docId, fileName, previewType);
     }
 
-    public String createPreview(String archiveFileId, String docId, String fileName) {
-        if (this.previewExists(archiveFileId, docId, fileName)) {
-            this.deletePreview(archiveFileId, docId, fileName);
+    public DocumentPreview createPreview(String archiveFileId, String docId, String fileName, String previewType) {
+        if (this.previewExists(archiveFileId, docId, fileName, previewType)) {
+            this.deletePreview(archiveFileId, docId, fileName, previewType);
         }
 
         String localBaseDir = System.getProperty("jlawyer.server.basedirectory");
@@ -774,48 +797,83 @@ public class PreviewGenerator {
         srcDir.mkdirs();
         String srcId = src + docId;
         String srcFile = src + fileName;
-        
-        File fSrcFile=new File(srcId);
-        if(!fSrcFile.exists())
-            fSrcFile=new File(srcFile);
+
+        File fSrcFile = new File(srcId);
+        if (!fSrcFile.exists()) {
+            fSrcFile = new File(srcFile);
+        }
 
         String dst = localBaseDir + "archivefiles-preview" + System.getProperty("file.separator") + archiveFileId + System.getProperty("file.separator");
         File dstDir = new File(dst);
         dstDir.mkdirs();
-        dst = dst + docId;
+        dst = dst + docId + "." + previewType;
 
-        Tika tika = TikaConfigurator.newTika(fileName);
-        try {
-            Reader r = tika.parse(fSrcFile);
-            try ( BufferedReader br = new BufferedReader(r);  FileWriter fw = new FileWriter(dst);  BufferedWriter bw = new BufferedWriter(fw)) {
-                char[] buffer = new char[1024];
-                int bytesRead = -1;
-                while ((bytesRead = br.read(buffer)) > -1) {
-                    bw.write(buffer, 0, bytesRead);
+        if (DocumentPreview.TYPE_TEXT.equals(previewType)) {
+            Tika tika = TikaConfigurator.newTika(fileName);
+            try {
+                Reader r = tika.parse(fSrcFile);
+                try (BufferedReader br = new BufferedReader(r); FileWriter fw = new FileWriter(dst); BufferedWriter bw = new BufferedWriter(fw)) {
+                    char[] buffer = new char[1024];
+                    int bytesRead = -1;
+                    while ((bytesRead = br.read(buffer)) > -1) {
+                        bw.write(buffer, 0, bytesRead);
+                    }
+                }
+
+                return new DocumentPreview(ServerFileUtils.readFileAsString(new File(dst)));
+
+            } catch (Throwable t) {
+                log.error("Error creating document preview", t);
+            }
+        } else if (DocumentPreview.TYPE_PDF.equals(previewType)) {
+            if(this.pdfApi!=null) {
+                byte[] pdfPreviewBytes=null;
+                try {
+                    pdfPreviewBytes=this.pdfApi.convertToPdf(fileName, ServerFileUtils.readFile(fSrcFile));
+                } catch (Exception ex) {
+                    log.error("Could not create Stirling PDF preview for file " + fileName + " with ID " + docId);
+                    return new DocumentPreview("");
+                }
+                if(pdfPreviewBytes==null || pdfPreviewBytes.length==0) {
+                    log.error("Stirling PDF preview for file " + fileName + " with ID " + docId + " is empty!");
+                    return new DocumentPreview("");
+                }
+                try (FileOutputStream fout=new FileOutputStream(dst)) {
+                    fout.write(pdfPreviewBytes);
+                    return new DocumentPreview(pdfPreviewBytes);
+                } catch (Exception ex) {
+                    log.error("Could not store PDF preview for file " + fileName + " with ID " + docId);
+                    return new DocumentPreview("");
                 }
             }
-
-            return ServerFileUtils.readFileAsString(new File(dst));
-
-        } catch (Throwable t) {
-            log.error("Error creating document preview", t);
+        } else {
+            return new DocumentPreview("");
         }
 
-        return "";
+        return new DocumentPreview("");
     }
-    
-    private void migrateDocument(String dir, String docId, String docName) {
-        
-        if(new File(dir + docId).exists())
+
+    private void migrateDocument(String dir, String docId, String docName, String previewType) {
+
+        if (new File(dir + docId).exists()) {
             return;
-        
+        }
+
         File dstDir = new File(dir);
         dstDir.mkdirs();
 
-        File oldFile=new File(dir + docName);
-        if(oldFile.exists()) {
-            File toFile=new File(dir + docId);
-            if(!oldFile.renameTo(toFile)) {
+        File oldFile = new File(dir + docName);
+        if (oldFile.exists()) {
+            File toFile = new File(dir + docId + "." + previewType);
+            if (!oldFile.renameTo(toFile)) {
+                log.error("Could not rename file " + oldFile.getAbsolutePath() + " to " + toFile.getAbsolutePath());
+            }
+        }
+
+        oldFile = new File(dir + docId);
+        if (oldFile.exists()) {
+            File toFile = new File(dir + docId + "." + previewType);
+            if (!oldFile.renameTo(toFile)) {
                 log.error("Could not rename file " + oldFile.getAbsolutePath() + " to " + toFile.getAbsolutePath());
             }
         }

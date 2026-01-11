@@ -20,6 +20,28 @@
         <Property name="useNullLayout" type="boolean" value="true"/>
       </Layout>
     </Container>
+    <Container class="javax.swing.JPopupMenu" name="popDueSinceDays">
+
+      <Layout class="org.netbeans.modules.form.compat2.layouts.DesignAbsoluteLayout">
+        <Property name="useNullLayout" type="boolean" value="true"/>
+      </Layout>
+    </Container>
+    <Component class="javax.swing.ButtonGroup" name="btnGrpDueSinceDays">
+    </Component>
+    <Container class="javax.swing.JPopupMenu" name="popUserFilterTagged">
+
+      <Layout class="org.netbeans.modules.form.compat2.layouts.DesignAbsoluteLayout">
+        <Property name="useNullLayout" type="boolean" value="true"/>
+      </Layout>
+    </Container>
+    <Container class="javax.swing.JPopupMenu" name="popUserFilterLastchanged">
+
+      <Layout class="org.netbeans.modules.form.compat2.layouts.DesignAbsoluteLayout">
+        <Property name="useNullLayout" type="boolean" value="true"/>
+      </Layout>
+    </Container>
+    <Component class="javax.swing.ButtonGroup" name="btnGrpDueInDays">
+    </Component>
   </NonVisualComponents>
   <Events>
     <EventHandler event="ancestorResized" listener="java.awt.event.HierarchyBoundsListener" parameters="java.awt.event.HierarchyEvent" handler="formAncestorResized"/>
@@ -50,7 +72,7 @@
                       <EmptySpace max="-2" attributes="0"/>
                       <Component id="desktopWidgetPanel2" min="-2" max="-2" attributes="0"/>
                   </Group>
-                  <Component id="jSplitPane1" max="32767" attributes="0"/>
+                  <Component id="jSplitPane1" pref="0" max="32767" attributes="0"/>
                   <Component id="systemInformationWidget" alignment="0" max="32767" attributes="0"/>
               </Group>
               <EmptySpace max="-2" attributes="0"/>
@@ -107,7 +129,11 @@
                               <Component id="cmdRefreshRevDue" min="-2" max="-2" attributes="0"/>
                               <EmptySpace max="-2" attributes="0"/>
                               <Component id="jLabel6" min="-2" max="-2" attributes="0"/>
-                              <EmptySpace pref="295" max="32767" attributes="0"/>
+                              <EmptySpace max="32767" attributes="0"/>
+                              <Component id="cmdDueSinceDays" min="-2" max="-2" attributes="0"/>
+                              <EmptySpace max="-2" attributes="0"/>
+                              <Component id="lblDueSinceDays" min="-2" max="-2" attributes="0"/>
+                              <EmptySpace type="separate" max="-2" attributes="0"/>
                               <Component id="cmdUserFilter" min="-2" max="-2" attributes="0"/>
                               <EmptySpace max="-2" attributes="0"/>
                               <Component id="lblUserFilterCount" min="-2" max="-2" attributes="0"/>
@@ -121,14 +147,18 @@
               <Group type="103" groupAlignment="0" attributes="0">
                   <Group type="102" alignment="0" attributes="0">
                       <EmptySpace max="-2" attributes="0"/>
-                      <Group type="103" groupAlignment="0" attributes="0">
+                      <Group type="103" groupAlignment="0" max="-2" attributes="0">
                           <Component id="cmdRefreshRevDue" alignment="0" min="-2" max="-2" attributes="0"/>
-                          <Component id="jLabel6" alignment="0" min="-2" max="-2" attributes="0"/>
-                          <Component id="lblUserFilterCount" alignment="0" min="-2" max="-2" attributes="0"/>
-                          <Component id="cmdUserFilter" min="-2" max="-2" attributes="0"/>
+                          <Group type="103" alignment="0" groupAlignment="3" attributes="0">
+                              <Component id="jLabel6" alignment="3" min="-2" max="-2" attributes="0"/>
+                              <Component id="lblDueSinceDays" alignment="3" max="32767" attributes="0"/>
+                              <Component id="cmdDueSinceDays" alignment="3" max="32767" attributes="0"/>
+                          </Group>
+                          <Component id="cmdUserFilter" alignment="0" max="32767" attributes="0"/>
+                          <Component id="lblUserFilterCount" alignment="0" max="32767" attributes="0"/>
                       </Group>
                       <EmptySpace max="-2" attributes="0"/>
-                      <Component id="tabPaneDue" pref="487" max="32767" attributes="0"/>
+                      <Component id="tabPaneDue" pref="482" max="32767" attributes="0"/>
                       <EmptySpace max="-2" attributes="0"/>
                   </Group>
               </Group>
@@ -153,7 +183,7 @@
                 <Property name="icon" type="javax.swing.Icon" editor="org.netbeans.modules.form.editors2.IconEditor">
                   <Image iconType="3" name="/icons16/material/baseline_supervisor_account_white_48dp.png"/>
                 </Property>
-                <Property name="toolTipText" type="java.lang.String" value="verantwortliche Nutzer&#xa;(Kalendereintr&#xe4;ge ohne Verantwortliche(n) werden stets angezeigt)"/>
+                <Property name="toolTipText" type="java.lang.String" value="verantwortliche Nutzer"/>
                 <Property name="border" type="javax.swing.border.Border" editor="org.netbeans.modules.form.editors2.BorderEditor">
                   <Border info="null"/>
                 </Property>
@@ -245,8 +275,39 @@
                 <Property name="foreground" type="java.awt.Color" editor="org.netbeans.beaninfo.editors.ColorEditor">
                   <Color blue="ff" green="ff" id="white" palette="1" red="ff" type="palette"/>
                 </Property>
-                <Property name="text" type="java.lang.String" value="1"/>
+                <Property name="text" type="java.lang.String" value="0"/>
               </Properties>
+            </Component>
+            <Component class="javax.swing.JLabel" name="lblDueSinceDays">
+              <Properties>
+                <Property name="font" type="java.awt.Font" editor="org.netbeans.modules.form.editors2.FontEditor">
+                  <FontInfo relative="true">
+                    <Font bold="true" component="lblDueSinceDays" property="font" relativeSize="true" size="2"/>
+                  </FontInfo>
+                </Property>
+                <Property name="foreground" type="java.awt.Color" editor="org.netbeans.beaninfo.editors.ColorEditor">
+                  <Color blue="ff" green="ff" red="ff" type="rgb"/>
+                </Property>
+                <Property name="text" type="java.lang.String" value="7"/>
+              </Properties>
+            </Component>
+            <Component class="javax.swing.JButton" name="cmdDueSinceDays">
+              <Properties>
+                <Property name="icon" type="javax.swing.Icon" editor="org.netbeans.modules.form.editors2.IconEditor">
+                  <Image iconType="3" name="/icons16/material/calendar_clock_20dp_FFFFFF_FILL0_wght400_GRAD0_opsz20.png"/>
+                </Property>
+                <Property name="toolTipText" type="java.lang.String" value="zeige offene Kalendereintr&#xe4;ge der letzten ... Tage"/>
+                <Property name="border" type="javax.swing.border.Border" editor="org.netbeans.modules.form.editors2.BorderEditor">
+                  <Border info="null"/>
+                </Property>
+                <Property name="contentAreaFilled" type="boolean" value="false"/>
+                <Property name="cursor" type="java.awt.Cursor" editor="org.netbeans.modules.form.editors2.CursorEditor">
+                  <Color id="Handcursor"/>
+                </Property>
+              </Properties>
+              <Events>
+                <EventHandler event="mousePressed" listener="java.awt.event.MouseListener" parameters="java.awt.event.MouseEvent" handler="cmdDueSinceDaysMousePressed"/>
+              </Events>
             </Component>
           </SubComponents>
         </Container>
@@ -284,8 +345,10 @@
                                   <Component id="cmdRefreshLastChanged" min="-2" max="-2" attributes="0"/>
                                   <EmptySpace max="-2" attributes="0"/>
                                   <Component id="jLabel5" min="-2" max="-2" attributes="0"/>
-                                  <EmptySpace max="32767" attributes="0"/>
-                                  <Component id="chkOnlyMyCases" min="-2" max="-2" attributes="0"/>
+                                  <EmptySpace pref="370" max="32767" attributes="0"/>
+                                  <Component id="cmdUserFilterLastchanged" min="-2" max="-2" attributes="0"/>
+                                  <EmptySpace max="-2" attributes="0"/>
+                                  <Component id="lblUserFilterCountLastchanged" min="-2" max="-2" attributes="0"/>
                               </Group>
                               <Component id="jScrollPane3" pref="0" max="32767" attributes="0"/>
                           </Group>
@@ -299,13 +362,14 @@
                           <EmptySpace max="-2" attributes="0"/>
                           <Group type="103" groupAlignment="0" attributes="0">
                               <Component id="cmdRefreshLastChanged" alignment="0" min="-2" max="-2" attributes="0"/>
+                              <Component id="cmdUserFilterLastchanged" alignment="0" min="-2" pref="29" max="-2" attributes="0"/>
                               <Group type="103" groupAlignment="3" attributes="0">
                                   <Component id="jLabel5" alignment="3" min="-2" max="-2" attributes="0"/>
-                                  <Component id="chkOnlyMyCases" alignment="3" min="-2" max="-2" attributes="0"/>
+                                  <Component id="lblUserFilterCountLastchanged" alignment="3" min="-2" max="-2" attributes="0"/>
                               </Group>
                           </Group>
                           <EmptySpace max="-2" attributes="0"/>
-                          <Component id="jScrollPane3" pref="258" max="32767" attributes="0"/>
+                          <Component id="jScrollPane3" max="32767" attributes="0"/>
                           <EmptySpace max="-2" attributes="0"/>
                       </Group>
                   </Group>
@@ -357,7 +421,7 @@
                               <Group type="102" alignment="0" attributes="0">
                                   <EmptySpace max="-2" attributes="0"/>
                                   <Component id="jLabel7" min="-2" max="-2" attributes="0"/>
-                                  <EmptySpace pref="311" max="32767" attributes="0"/>
+                                  <EmptySpace pref="324" max="32767" attributes="0"/>
                               </Group>
                           </Group>
                         </DimensionLayout>
@@ -374,22 +438,6 @@
                     </Container>
                   </SubComponents>
                 </Container>
-                <Component class="javax.swing.JCheckBox" name="chkOnlyMyCases">
-                  <Properties>
-                    <Property name="font" type="java.awt.Font" editor="org.netbeans.modules.form.editors2.FontEditor">
-                      <FontInfo relative="true">
-                        <Font bold="true" component="chkOnlyMyCases" property="font" relativeSize="true" size="0"/>
-                      </FontInfo>
-                    </Property>
-                    <Property name="foreground" type="java.awt.Color" editor="org.netbeans.beaninfo.editors.ColorEditor">
-                      <Color blue="ff" green="ff" red="ff" type="rgb"/>
-                    </Property>
-                    <Property name="text" type="java.lang.String" value="nur meine anzeigen"/>
-                  </Properties>
-                  <Events>
-                    <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="chkOnlyMyCasesActionPerformed"/>
-                  </Events>
-                </Component>
                 <Component class="javax.swing.JButton" name="cmdRefreshLastChanged">
                   <Properties>
                     <Property name="icon" type="javax.swing.Icon" editor="org.netbeans.modules.form.editors2.IconEditor">
@@ -405,6 +453,36 @@
                   </Properties>
                   <Events>
                     <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="cmdRefreshLastChangedActionPerformed"/>
+                  </Events>
+                </Component>
+                <Component class="javax.swing.JLabel" name="lblUserFilterCountLastchanged">
+                  <Properties>
+                    <Property name="font" type="java.awt.Font" editor="org.netbeans.modules.form.editors2.FontEditor">
+                      <FontInfo relative="true">
+                        <Font bold="true" component="lblUserFilterCountLastchanged" property="font" relativeSize="true" size="0"/>
+                      </FontInfo>
+                    </Property>
+                    <Property name="foreground" type="java.awt.Color" editor="org.netbeans.beaninfo.editors.ColorEditor">
+                      <Color blue="ff" green="ff" red="ff" type="rgb"/>
+                    </Property>
+                    <Property name="text" type="java.lang.String" value="0"/>
+                  </Properties>
+                </Component>
+                <Component class="javax.swing.JButton" name="cmdUserFilterLastchanged">
+                  <Properties>
+                    <Property name="icon" type="javax.swing.Icon" editor="org.netbeans.modules.form.editors2.IconEditor">
+                      <Image iconType="3" name="/icons16/material/baseline_supervisor_account_white_48dp.png"/>
+                    </Property>
+                    <Property name="border" type="javax.swing.border.Border" editor="org.netbeans.modules.form.editors2.BorderEditor">
+                      <Border info="null"/>
+                    </Property>
+                    <Property name="contentAreaFilled" type="boolean" value="false"/>
+                    <Property name="cursor" type="java.awt.Cursor" editor="org.netbeans.modules.form.editors2.CursorEditor">
+                      <Color id="Handcursor"/>
+                    </Property>
+                  </Properties>
+                  <Events>
+                    <EventHandler event="mousePressed" listener="java.awt.event.MouseListener" parameters="java.awt.event.MouseEvent" handler="cmdUserFilterLastchangedMousePressed"/>
                   </Events>
                 </Component>
               </SubComponents>
@@ -433,8 +511,10 @@
                                   <Component id="cmdTagFilter" min="-2" max="-2" attributes="0"/>
                                   <EmptySpace max="-2" attributes="0"/>
                                   <Component id="cmdDocumentTagFilter" min="-2" max="-2" attributes="0"/>
-                                  <EmptySpace pref="159" max="32767" attributes="0"/>
-                                  <Component id="chkOnlyMyTagged" min="-2" max="-2" attributes="0"/>
+                                  <EmptySpace pref="120" max="32767" attributes="0"/>
+                                  <Component id="cmdUserFilterTagged" min="-2" max="-2" attributes="0"/>
+                                  <EmptySpace max="-2" attributes="0"/>
+                                  <Component id="lblUserFilterCountTagged" min="-2" max="-2" attributes="0"/>
                               </Group>
                               <Component id="tabPaneTagged" max="32767" attributes="0"/>
                           </Group>
@@ -447,16 +527,19 @@
                       <Group type="102" alignment="0" attributes="0">
                           <EmptySpace max="-2" attributes="0"/>
                           <Group type="103" groupAlignment="0" attributes="0">
-                              <Component id="chkOnlyMyTagged" min="-2" max="-2" attributes="0"/>
                               <Component id="jLabel9" alignment="0" min="-2" max="-2" attributes="0"/>
                               <Component id="cmdRefreshTagged" alignment="0" min="-2" max="-2" attributes="0"/>
                               <Group type="103" alignment="0" groupAlignment="1" max="-2" attributes="0">
                                   <Component id="cmdDocumentTagFilter" alignment="0" max="32767" attributes="0"/>
                                   <Component id="cmdTagFilter" alignment="0" max="32767" attributes="0"/>
                               </Group>
+                              <Group type="103" alignment="0" groupAlignment="1" max="-2" attributes="0">
+                                  <Component id="cmdUserFilterTagged" alignment="0" max="32767" attributes="0"/>
+                                  <Component id="lblUserFilterCountTagged" alignment="0" max="32767" attributes="0"/>
+                              </Group>
                           </Group>
                           <EmptySpace max="-2" attributes="0"/>
-                          <Component id="tabPaneTagged" pref="78" max="32767" attributes="0"/>
+                          <Component id="tabPaneTagged" pref="76" max="32767" attributes="0"/>
                           <EmptySpace max="-2" attributes="0"/>
                       </Group>
                   </Group>
@@ -478,21 +561,36 @@
                     </Property>
                   </Properties>
                 </Component>
-                <Component class="javax.swing.JCheckBox" name="chkOnlyMyTagged">
+                <Component class="javax.swing.JButton" name="cmdUserFilterTagged">
+                  <Properties>
+                    <Property name="icon" type="javax.swing.Icon" editor="org.netbeans.modules.form.editors2.IconEditor">
+                      <Image iconType="3" name="/icons16/material/baseline_supervisor_account_white_48dp.png"/>
+                    </Property>
+                    <Property name="toolTipText" type="java.lang.String" value="verantwortliche Nutzer"/>
+                    <Property name="border" type="javax.swing.border.Border" editor="org.netbeans.modules.form.editors2.BorderEditor">
+                      <Border info="null"/>
+                    </Property>
+                    <Property name="contentAreaFilled" type="boolean" value="false"/>
+                    <Property name="cursor" type="java.awt.Cursor" editor="org.netbeans.modules.form.editors2.CursorEditor">
+                      <Color id="Handcursor"/>
+                    </Property>
+                  </Properties>
+                  <Events>
+                    <EventHandler event="mousePressed" listener="java.awt.event.MouseListener" parameters="java.awt.event.MouseEvent" handler="cmdUserFilterTaggedMousePressed"/>
+                  </Events>
+                </Component>
+                <Component class="javax.swing.JLabel" name="lblUserFilterCountTagged">
                   <Properties>
                     <Property name="font" type="java.awt.Font" editor="org.netbeans.modules.form.editors2.FontEditor">
                       <FontInfo relative="true">
-                        <Font bold="true" component="chkOnlyMyTagged" property="font" relativeSize="true" size="0"/>
+                        <Font bold="true" component="lblUserFilterCountTagged" property="font" relativeSize="true" size="0"/>
                       </FontInfo>
                     </Property>
                     <Property name="foreground" type="java.awt.Color" editor="org.netbeans.beaninfo.editors.ColorEditor">
-                      <Color blue="ff" green="ff" red="ff" type="rgb"/>
+                      <Color blue="ff" green="ff" id="white" palette="1" red="ff" type="palette"/>
                     </Property>
-                    <Property name="text" type="java.lang.String" value="nur meine anzeigen"/>
+                    <Property name="text" type="java.lang.String" value="0"/>
                   </Properties>
-                  <Events>
-                    <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="chkOnlyMyTaggedActionPerformed"/>
-                  </Events>
                 </Component>
                 <Component class="javax.swing.JButton" name="cmdRefreshTagged">
                   <Properties>
@@ -634,8 +732,6 @@
                   <EmptySpace type="separate" max="-2" attributes="0"/>
                   <Component id="lblMailingStatus" min="-2" max="-2" attributes="0"/>
                   <EmptySpace type="separate" max="-2" attributes="0"/>
-                  <Component id="lblUnreadDrebis" min="-2" pref="64" max="-2" attributes="0"/>
-                  <EmptySpace type="separate" max="-2" attributes="0"/>
                   <Component id="lblUnreadBea" min="-2" max="-2" attributes="0"/>
                   <EmptySpace type="separate" max="-2" attributes="0"/>
                   <Component id="lblUnreadInstantMessages" min="-2" max="-2" attributes="0"/>
@@ -645,32 +741,35 @@
                   <Component id="lblUpdateStatusFormPlugins" min="-2" max="-2" attributes="0"/>
                   <EmptySpace type="unrelated" max="-2" attributes="0"/>
                   <Component id="lblNewsStatus" min="-2" max="-2" attributes="0"/>
-                  <EmptySpace max="32767" attributes="0"/>
+                  <EmptySpace pref="88" max="32767" attributes="0"/>
               </Group>
           </Group>
         </DimensionLayout>
         <DimensionLayout dim="1">
           <Group type="103" groupAlignment="0" attributes="0">
-              <Group type="102" alignment="1" attributes="0">
-                  <EmptySpace min="0" pref="0" max="32767" attributes="0"/>
-                  <Group type="103" groupAlignment="3" attributes="0">
-                      <Component id="lblUnreadInstantMessages" alignment="3" min="-2" pref="40" max="-2" attributes="0"/>
-                      <Component id="lblUpdateStatus" alignment="3" min="-2" pref="40" max="-2" attributes="0"/>
-                      <Component id="lblNewsStatus" alignment="3" min="-2" pref="40" max="-2" attributes="0"/>
-                  </Group>
-              </Group>
-              <Group type="102" attributes="0">
-                  <Group type="103" groupAlignment="0" attributes="0">
+              <Group type="102" alignment="0" attributes="0">
+                  <Group type="103" groupAlignment="1" attributes="0">
+                      <Group type="103" groupAlignment="0" attributes="0">
+                          <Group type="103" alignment="1" groupAlignment="3" attributes="0">
+                              <Component id="lblUnreadInstantMessages" alignment="3" min="-2" pref="40" max="-2" attributes="0"/>
+                              <Component id="lblUpdateStatus" alignment="3" min="-2" pref="40" max="-2" attributes="0"/>
+                              <Component id="lblNewsStatus" alignment="3" min="-2" pref="40" max="-2" attributes="0"/>
+                          </Group>
+                          <Group type="102" alignment="0" attributes="0">
+                              <Group type="103" groupAlignment="0" attributes="0">
+                                  <Component id="lblUnreadBea" alignment="0" min="-2" max="-2" attributes="0"/>
+                                  <Component id="lblUpdateStatusFormPlugins" alignment="0" min="-2" pref="40" max="-2" attributes="0"/>
+                              </Group>
+                              <EmptySpace min="0" pref="0" max="32767" attributes="0"/>
+                          </Group>
+                      </Group>
                       <Group type="103" groupAlignment="3" attributes="0">
                           <Component id="lblUnreadMail" alignment="3" min="-2" max="-2" attributes="0"/>
                           <Component id="lblScans" alignment="3" min="-2" max="-2" attributes="0"/>
                           <Component id="lblMailingStatus" alignment="3" min="-2" max="-2" attributes="0"/>
-                          <Component id="lblUnreadDrebis" alignment="3" min="-2" max="-2" attributes="0"/>
-                          <Component id="lblUnreadBea" alignment="3" min="-2" max="-2" attributes="0"/>
                       </Group>
-                      <Component id="lblUpdateStatusFormPlugins" alignment="0" min="-2" pref="40" max="-2" attributes="0"/>
                   </Group>
-                  <EmptySpace min="0" pref="0" max="32767" attributes="0"/>
+                  <EmptySpace min="0" pref="1" max="32767" attributes="0"/>
               </Group>
           </Group>
         </DimensionLayout>
@@ -728,24 +827,6 @@
               <Image iconType="3" name="/icons/scanner_big.png"/>
             </Property>
             <Property name="text" type="java.lang.String" value="0"/>
-            <Property name="enabled" type="boolean" value="false"/>
-          </Properties>
-        </Component>
-        <Component class="javax.swing.JLabel" name="lblUnreadDrebis">
-          <Properties>
-            <Property name="font" type="java.awt.Font" editor="org.netbeans.modules.form.editors2.FontEditor">
-              <FontInfo relative="true">
-                <Font bold="true" component="lblUnreadDrebis" property="font" relativeSize="true" size="2"/>
-              </FontInfo>
-            </Property>
-            <Property name="foreground" type="java.awt.Color" editor="org.netbeans.beaninfo.editors.ColorEditor">
-              <Color blue="ff" green="ff" id="white" palette="1" red="ff" type="palette"/>
-            </Property>
-            <Property name="horizontalAlignment" type="int" value="0"/>
-            <Property name="icon" type="javax.swing.Icon" editor="org.netbeans.modules.form.editors2.IconEditor">
-              <Image iconType="3" name="/icons/Icons2-17.png"/>
-            </Property>
-            <Property name="text" type="java.lang.String" value="?"/>
             <Property name="enabled" type="boolean" value="false"/>
           </Properties>
         </Component>

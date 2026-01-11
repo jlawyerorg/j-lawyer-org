@@ -666,6 +666,9 @@ package org.jlawyer.search;
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.TimeUnit;
 import org.apache.log4j.Logger;
 import org.apache.lucene.analysis.Analyzer;
 import org.apache.lucene.analysis.TokenStream;
@@ -678,6 +681,7 @@ import org.apache.lucene.index.*;
 import org.apache.lucene.queryparser.classic.QueryParser;
 import org.apache.lucene.search.IndexSearcher;
 import org.apache.lucene.search.Query;
+import org.apache.lucene.search.SearcherManager;
 import org.apache.lucene.search.TopDocs;
 import org.apache.lucene.search.highlight.Highlighter;
 import org.apache.lucene.search.highlight.QueryScorer;
@@ -703,9 +707,13 @@ public class SearchAPI {
     private static final String FIELD_ARCHIVEFILENUMBER = "az";
     private static final String FIELD_DEFAULT = FIELD_TEXT;
     private static final Logger log = Logger.getLogger(SearchAPI.class.getName());
+    private static final int SEARCHER_REFRESH_INTERVAL_SECONDS = 10;
+
     private IndexWriter writer = null;
     private Directory directory = null;
     private Analyzer analyzer = null;
+    private SearcherManager searcherManager = null;
+    private ScheduledExecutorService refreshScheduler = null;
     private boolean initialized = false;
     private Throwable initError = null;
 
@@ -738,6 +746,23 @@ public class SearchAPI {
             this.directory = FSDirectory.open(dstDir);
             IndexWriterConfig config = new IndexWriterConfig(Version.LUCENE_CURRENT, analyzer);
             this.writer = new IndexWriter(directory, config);
+
+            // Initialize SearcherManager for non-blocking searches
+            this.searcherManager = new SearcherManager(this.writer, true, null);
+
+            // Start background refresh scheduler
+            this.refreshScheduler = Executors.newSingleThreadScheduledExecutor(r -> {
+                Thread t = new Thread(r, "LuceneSearcherRefresh");
+                t.setDaemon(true);
+                return t;
+            });
+            this.refreshScheduler.scheduleAtFixedRate(() -> {
+                try {
+                    this.searcherManager.maybeRefresh();
+                } catch (IOException e) {
+                    log.error("Error refreshing SearcherManager", e);
+                }
+            }, SEARCHER_REFRESH_INTERVAL_SECONDS, SEARCHER_REFRESH_INTERVAL_SECONDS, TimeUnit.SECONDS);
 
             this.initialized = true;
         } catch (Throwable t) {
@@ -787,6 +812,24 @@ public class SearchAPI {
         }
 
         try {
+            // Shutdown refresh scheduler first
+            if (this.refreshScheduler != null) {
+                this.refreshScheduler.shutdown();
+                try {
+                    if (!this.refreshScheduler.awaitTermination(5, TimeUnit.SECONDS)) {
+                        this.refreshScheduler.shutdownNow();
+                    }
+                } catch (InterruptedException e) {
+                    this.refreshScheduler.shutdownNow();
+                    Thread.currentThread().interrupt();
+                }
+            }
+
+            // Close SearcherManager before writer
+            if (this.searcherManager != null) {
+                this.searcherManager.close();
+            }
+
             this.writer.close();
             this.directory.close();
         } catch (Throwable t) {
@@ -847,6 +890,24 @@ public class SearchAPI {
         }
 
         try {
+            // Shutdown refresh scheduler first
+            if (this.refreshScheduler != null) {
+                this.refreshScheduler.shutdown();
+                try {
+                    if (!this.refreshScheduler.awaitTermination(5, TimeUnit.SECONDS)) {
+                        this.refreshScheduler.shutdownNow();
+                    }
+                } catch (InterruptedException e) {
+                    this.refreshScheduler.shutdownNow();
+                    Thread.currentThread().interrupt();
+                }
+            }
+
+            // Close SearcherManager before writer
+            if (this.searcherManager != null) {
+                this.searcherManager.close();
+            }
+
             this.writer.close();
             this.directory.close();
         } catch (Throwable t) {
@@ -887,15 +948,16 @@ public class SearchAPI {
         if (!this.initialized) {
             throw new SearchException("Search Index is not initialized: " + this.initError.getMessage());
         }
-        
+
         queryString=QueryParser.escape(queryString);
 
         ArrayList<SearchHit> returnList = new ArrayList<>();
 
+        IndexSearcher searcher = null;
         try {
-            // Now search the index:
-            DirectoryReader reader = DirectoryReader.open(writer, true);
-            IndexSearcher searcher = new IndexSearcher(reader);
+            // Acquire searcher from SearcherManager (non-blocking)
+            searcher = this.searcherManager.acquire();
+
             // Parse a simple query that searches for "text":
             QueryParser parser = new QueryParser(Version.LUCENE_CURRENT, SearchAPI.FIELD_DEFAULT, this.analyzer);
             parser.setAllowLeadingWildcard(true);
@@ -910,7 +972,7 @@ public class SearchAPI {
 
                 int id = hits.scoreDocs[i].doc;
                 Document doc = searcher.doc(id);
-                
+
                 SearchHit sh = new SearchHit();
                 sh.setScore(hits.scoreDocs[i].score);
                 sh.setArchiveFileId(doc.get(FIELD_ARCHIVEFILEID));
@@ -936,12 +998,19 @@ public class SearchAPI {
                 returnList.add(sh);
             }
 
-            reader.close();
             return returnList;
         } catch (Throwable t) {
             log.error("Error searching index", t);
             throw new SearchException(t.getMessage());
-
+        } finally {
+            // Always release the searcher back to the SearcherManager
+            if (searcher != null) {
+                try {
+                    this.searcherManager.release(searcher);
+                } catch (IOException e) {
+                    log.error("Error releasing searcher", e);
+                }
+            }
         }
 
     }

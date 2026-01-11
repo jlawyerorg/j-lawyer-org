@@ -797,6 +797,16 @@ public class JLawyerServiceLocator {
         }
     }
     
+    public PaymentServiceRemote lookupPaymentServiceRemote() {
+        try {
+            return (PaymentServiceRemote) ic.lookup("ejb:j-lawyer-server/j-lawyer-server-ejb//PaymentService!com.jdimension.jlawyer.services.PaymentServiceRemote");
+            
+        } catch (NamingException ne) {
+            Logger.getLogger(JLawyerServiceLocator.class.getName()).log(Level.SEVERE, "exception caught", ne);
+            throw new RuntimeException(ne);
+        }
+    }
+    
     public TimesheetServiceRemote lookupTimesheetServiceRemote() {
         try {
             return (TimesheetServiceRemote) ic.lookup("ejb:j-lawyer-server/j-lawyer-server-ejb//TimesheetService!com.jdimension.jlawyer.services.TimesheetServiceRemote");
@@ -838,15 +848,6 @@ public class JLawyerServiceLocator {
     public VoipServiceRemote lookupVoipServiceRemote() {
         try {
             return (VoipServiceRemote) ic.lookup("ejb:j-lawyer-server/j-lawyer-server-ejb//VoipService!com.jdimension.jlawyer.services.VoipServiceRemote");
-        } catch (NamingException ne) {
-            Logger.getLogger(JLawyerServiceLocator.class.getName()).log(Level.SEVERE, "exception caught", ne);
-            throw new RuntimeException(ne);
-        }
-    }
-    
-    public DrebisServiceRemote lookupDrebisServiceRemote() {
-        try {
-            return (DrebisServiceRemote) ic.lookup("ejb:j-lawyer-server/j-lawyer-server-ejb//DrebisService!com.jdimension.jlawyer.services.DrebisServiceRemote");
         } catch (NamingException ne) {
             Logger.getLogger(JLawyerServiceLocator.class.getName()).log(Level.SEVERE, "exception caught", ne);
             throw new RuntimeException(ne);

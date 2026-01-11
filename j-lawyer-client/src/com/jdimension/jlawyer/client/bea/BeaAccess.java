@@ -815,7 +815,7 @@ public class BeaAccess {
     }
 
     private void initializeCaches() {
-        String storagePath = System.getProperty("user.home") + System.getProperty("file.separator") + ".j-lawyer-client" + System.getProperty("file.separator") + "cache";
+        String storagePath = System.getProperty("user.home") + System.getProperty("file.separator") + ClientSettings.JLAWYERCLIENT_SETTINGDIR + System.getProperty("file.separator") + "cache";
         File storage = new File(storagePath);
         try {
             ServerFileUtils.getInstance().deleteRecursively(storage);
@@ -941,7 +941,7 @@ public class BeaAccess {
         // close cache manager
         cacheManager.close();
         
-        String storagePath = System.getProperty("user.home") + System.getProperty("file.separator") + ".j-lawyer-client" + System.getProperty("file.separator") + "cache" + System.getProperty("file.separator") + this.cachePrefix + "-bea";
+        String storagePath = System.getProperty("user.home") + System.getProperty("file.separator") + ClientSettings.JLAWYERCLIENT_SETTINGDIR + System.getProperty("file.separator") + "cache" + System.getProperty("file.separator") + this.cachePrefix + "-bea";
         File storage = new File(storagePath);
         try {
             ServerFileUtils.getInstance().deleteRecursively(storage);

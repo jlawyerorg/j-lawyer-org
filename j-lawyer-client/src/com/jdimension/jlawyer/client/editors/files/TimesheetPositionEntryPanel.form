@@ -29,6 +29,8 @@
                       <EmptySpace max="-2" attributes="0"/>
                       <Component id="cmbTaxRate" min="-2" max="-2" attributes="0"/>
                       <EmptySpace max="-2" attributes="0"/>
+                      <Component id="cmdDuplicateEntry" min="-2" max="-2" attributes="0"/>
+                      <EmptySpace max="-2" attributes="0"/>
                       <Component id="cmdRemovePosition" min="-2" max="-2" attributes="0"/>
                   </Group>
                   <Group type="102" alignment="0" attributes="0">
@@ -37,14 +39,16 @@
                       <Component id="jLabel4" min="-2" max="-2" attributes="0"/>
                       <EmptySpace max="-2" attributes="0"/>
                       <Component id="txtStopped" min="-2" pref="150" max="-2" attributes="0"/>
-                      <EmptySpace pref="19" max="32767" attributes="0"/>
-                      <Component id="txtUnitPrice" min="-2" pref="120" max="-2" attributes="0"/>
+                      <EmptySpace max="-2" attributes="0"/>
+                      <Component id="lblDuration" min="-2" max="-2" attributes="0"/>
+                      <EmptySpace max="32767" attributes="0"/>
+                      <Component id="txtUnitPrice" min="-2" max="-2" attributes="0"/>
                       <EmptySpace min="-2" pref="2" max="-2" attributes="0"/>
                       <Component id="jLabel2" min="-2" max="-2" attributes="0"/>
                       <EmptySpace type="unrelated" max="-2" attributes="0"/>
                       <Component id="jLabel3" min="-2" max="-2" attributes="0"/>
                       <EmptySpace max="-2" attributes="0"/>
-                      <Component id="txtTotal" min="-2" pref="120" max="-2" attributes="0"/>
+                      <Component id="txtTotal" min="-2" max="-2" attributes="0"/>
                       <EmptySpace max="-2" attributes="0"/>
                       <Component id="lblBilled" min="-2" max="-2" attributes="0"/>
                   </Group>
@@ -62,6 +66,7 @@
                   <Component id="cmbTaxRate" alignment="3" min="-2" max="-2" attributes="0"/>
                   <Component id="cmdRemovePosition" alignment="3" min="-2" max="-2" attributes="0"/>
                   <Component id="cmbPrincipal" alignment="3" min="-2" max="-2" attributes="0"/>
+                  <Component id="cmdDuplicateEntry" alignment="3" min="-2" max="-2" attributes="0"/>
               </Group>
               <EmptySpace max="-2" attributes="0"/>
               <Component id="jScrollPane1" min="-2" max="-2" attributes="0"/>
@@ -75,6 +80,7 @@
                       <Component id="txtTotal" alignment="3" min="-2" max="-2" attributes="0"/>
                       <Component id="txtUnitPrice" alignment="3" min="-2" max="-2" attributes="0"/>
                       <Component id="jLabel2" alignment="3" min="-2" max="-2" attributes="0"/>
+                      <Component id="lblDuration" alignment="3" min="-2" max="-2" attributes="0"/>
                   </Group>
                   <Component id="lblBilled" max="32767" attributes="0"/>
               </Group>
@@ -128,6 +134,7 @@
     </Component>
     <Component class="javax.swing.JFormattedTextField" name="txtUnitPrice">
       <Properties>
+        <Property name="columns" type="int" value="7"/>
         <Property name="formatterFactory" type="javax.swing.JFormattedTextField$AbstractFormatterFactory" editor="org.netbeans.modules.form.editors.AbstractFormatterFactoryEditor">
           <Format format="#0.00" subtype="-1" type="0"/>
         </Property>
@@ -147,12 +154,13 @@
             <Font bold="true" component="jLabel3" property="font" relativeSize="true" size="-2"/>
           </FontInfo>
         </Property>
-        <Property name="text" type="java.lang.String" value="Gesamt:"/>
+        <Property name="text" type="java.lang.String" value="&#x2211;"/>
       </Properties>
     </Component>
     <Component class="javax.swing.JFormattedTextField" name="txtTotal">
       <Properties>
         <Property name="editable" type="boolean" value="false"/>
+        <Property name="columns" type="int" value="7"/>
         <Property name="formatterFactory" type="javax.swing.JFormattedTextField$AbstractFormatterFactory" editor="org.netbeans.modules.form.editors.AbstractFormatterFactoryEditor">
           <Format format="#0.00" subtype="-1" type="0"/>
         </Property>
@@ -266,6 +274,27 @@
           <Color blue="0" green="cc" red="66" type="rgb"/>
         </Property>
         <Property name="opaque" type="boolean" value="true"/>
+      </Properties>
+    </Component>
+    <Component class="javax.swing.JButton" name="cmdDuplicateEntry">
+      <Properties>
+        <Property name="icon" type="javax.swing.Icon" editor="org.netbeans.modules.form.editors2.IconEditor">
+          <Image iconType="3" name="/icons/kmultiple.png"/>
+        </Property>
+        <Property name="toolTipText" type="java.lang.String" value="Eintrag duplizieren"/>
+      </Properties>
+      <Events>
+        <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="cmdDuplicateEntryActionPerformed"/>
+      </Events>
+    </Component>
+    <Component class="javax.swing.JLabel" name="lblDuration">
+      <Properties>
+        <Property name="font" type="java.awt.Font" editor="org.netbeans.modules.form.editors2.FontEditor">
+          <FontInfo relative="true">
+            <Font bold="true" component="lblDuration" property="font" relativeSize="true" size="-2"/>
+          </FontInfo>
+        </Property>
+        <Property name="text" type="java.lang.String" value="2h45m"/>
       </Properties>
     </Component>
   </SubComponents>

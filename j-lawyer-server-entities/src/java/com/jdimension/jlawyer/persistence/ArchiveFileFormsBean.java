@@ -664,7 +664,6 @@
 package com.jdimension.jlawyer.persistence;
 
 import java.io.Serializable;
-import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.List;
 import javax.persistence.*;

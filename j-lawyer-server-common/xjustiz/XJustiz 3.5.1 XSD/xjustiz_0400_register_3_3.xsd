@@ -1,0 +1,650 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema"
+           xmlns:tns="http://www.xjustiz.de"
+           xmlns:din91379="urn:xoev-de:kosit:xoev:datentyp:din-91379_2022-08"
+           targetNamespace="http://www.xjustiz.de"
+           version="3.3.2"
+           elementFormDefault="qualified"
+           attributeFormDefault="unqualified">
+   <xs:annotation>
+      <xs:appinfo>
+         <standard>
+            <nameLang>Strukturierte Fachdaten für die Kommunikation im elektronischen Rechtsverkehr</nameLang>
+            <nameKurz>XJustiz</nameKurz>
+            <nameTechnisch>xjustiz</nameTechnisch>
+            <kennung>urn:xoev-de:blk-ag-it-standards:standard:xjustiz</kennung>
+            <beschreibung>XJustiz ist der bundesweit einheitliche Standard für den Austausch strukturierter elektronischer Informationen mit der Justiz.</beschreibung>
+         </standard>
+         <versionStandard>
+            <version>3.5.1</version>
+            <beschreibung>XJustiz beschreibt ein standardisiertes Datenaustauschformat für die elektronische Kommunikation innerhalb und mit der Justizverwaltung.</beschreibung>
+            <versionXOEVProfil>1.7.2</versionXOEVProfil>
+            <versionXOEVHandbuch>2.3.1</versionXOEVHandbuch>
+            <versionXGenerator>3.1.1</versionXGenerator>
+            <versionModellierungswerkzeug>19.0 SP3</versionModellierungswerkzeug>
+            <nameModellierungswerkzeug>MagicDraw</nameModellierungswerkzeug>
+         </versionStandard>
+      </xs:appinfo>
+   </xs:annotation>
+   <xs:include schemaLocation="xjustiz_0000_grunddatensatz_3_5.xsd"/>
+   <xs:include schemaLocation="xjustiz_0410_cl_register_3_1.xsd"/>
+   <xs:include schemaLocation="xjustiz_0420_cl_vertretung_register_3_0.xsd"/>
+   <xs:import schemaLocation="din-norm-91379-datatypes.xsd"
+              namespace="urn:xoev-de:kosit:xoev:datentyp:din-91379_2022-08"/>
+   <xs:element name="nachricht.reg.0400003">
+      <xs:annotation>
+         <xs:documentation>Der Erweiterungsmechanismus für die Facherweiterungen des Grundmoduls sieht die Extension des im Grundmodul definierten Schemas (mit Type.GDS.Grunddaten) durch die jeweiligen fachspezifischen Erweiterungen als Sequenz vor. Zur Anwendung im Instanzdokument muss im Instanzdokument das Schema des Fachmoduls referenziert werden. Ein XML-Parser kann durch die "include"-Referenz auf das Grundmodul den gesamten Schemabaum aufbauen und validieren.</xs:documentation>
+      </xs:annotation>
+      <xs:complexType>
+         <xs:sequence>
+            <xs:element name="nachrichtenkopf" type="tns:Type.GDS.Nachrichtenkopf"/>
+            <xs:element name="grunddaten" type="tns:Type.GDS.Grunddaten"/>
+            <xs:element name="schriftgutobjekte"
+                        minOccurs="0"
+                        type="tns:Type.GDS.Schriftgutobjekte"/>
+            <xs:element name="fachdatenRegister" minOccurs="0" maxOccurs="unbounded">
+               <xs:annotation>
+                  <xs:documentation>Dieses Element enthält die Daten eines Eintragungsantrags bzw. einer Eintragungsnachricht für genau einen Rechtsträger. Zu welchem Zweck die Daten übermittelt werden, ergibt sich aus dem Element Mitteilungsart. Wenn ein Antrag mehrere Mitteilungsarten betrifft (z.B. Löschung eines Geschäftsführers und Eintragung eines neuen Geschäftsführers) oder wenn Anträge für mehrere Rechtsträger zusammen übermittelt werden sollen, ist für jeden Rechtsträger und für jede Mitteilungsart jeweils ein separates Element Fachdaten_Register zu verwenden. Das Attribut maxOccurs ist deshalb als "unbounded" definiert.</xs:documentation>
+               </xs:annotation>
+               <xs:complexType>
+                  <xs:sequence>
+                     <xs:element name="mitteilungsart" type="tns:Code.GDS.Ereignis.Typ3">
+                        <xs:annotation>
+                           <xs:documentation>Dieses Element zeigt an, zu welchem Zweck die nachfolgenden Daten übermittelt werden. Zulässige Werte sind definiert in der Codeliste Ereignis</xs:documentation>
+                        </xs:annotation>
+                     </xs:element>
+                     <xs:element name="betroffenerRechtstraeger" type="tns:Type.GDS.Ref.Rollennummer">
+                        <xs:annotation>
+                           <xs:documentation>Dieses Element enthält einen Verweis auf die Rollennummer eines Beteiligten, der im Grunddatensatz in der Liste der Beteiligten aufgeführt ist.</xs:documentation>
+                        </xs:annotation>
+                     </xs:element>
+                     <xs:element name="auszug" minOccurs="0">
+                        <xs:annotation>
+                           <xs:documentation>Zusätzliche Angaben zu einem Registerauszug.</xs:documentation>
+                        </xs:annotation>
+                        <xs:complexType>
+                           <xs:sequence>
+                              <xs:element name="eintragungstext" minOccurs="0" maxOccurs="unbounded">
+                                 <xs:annotation>
+                                    <xs:documentation>Hier können besondere Eintragungstexte übermittelt werden, deren Inhalt sich mit den übrigen Elementen dieses Fachmoduls nicht darstellen lässt.</xs:documentation>
+                                 </xs:annotation>
+                                 <xs:complexType>
+                                    <xs:sequence>
+                                       <xs:element name="spalte" type="xs:integer">
+                                          <xs:annotation>
+                                             <xs:documentation>Hier wird die Spalte angegeben, in der der Eintragungstext steht bzw. eingetragen werden soll.</xs:documentation>
+                                          </xs:annotation>
+                                       </xs:element>
+                                       <xs:element name="position" type="xs:integer"/>
+                                       <xs:element name="laufendeNummer" type="xs:integer"/>
+                                       <xs:element name="eintragungsart" type="tns:Code.REG.Eintragungstyp.Typ3"/>
+                                       <xs:element name="text" type="din91379:datatypeE">
+                                          <xs:annotation>
+                                             <xs:documentation>Hier wird der in der angegebenen Spalte enthaltene bzw. einzutragende Text mitgeteilt.</xs:documentation>
+                                          </xs:annotation>
+                                       </xs:element>
+                                    </xs:sequence>
+                                 </xs:complexType>
+                              </xs:element>
+                              <xs:element name="abrufuhrzeit" type="xs:time">
+                                 <xs:annotation>
+                                    <xs:documentation>Hier ist die Uhrzeit des Datenabrufs anzugeben.</xs:documentation>
+                                 </xs:annotation>
+                              </xs:element>
+                              <xs:element name="abrufdatum" type="xs:date">
+                                 <xs:annotation>
+                                    <xs:documentation>Hier ist das Datum des Datenabrufs anzugeben.</xs:documentation>
+                                 </xs:annotation>
+                              </xs:element>
+                              <xs:element name="letzteEintragung" type="xs:date">
+                                 <xs:annotation>
+                                    <xs:documentation>Hier ist das Datum der letzten Eintragung anzugeben.</xs:documentation>
+                                 </xs:annotation>
+                              </xs:element>
+                              <xs:element name="anzahlEintragungen" type="xs:integer">
+                                 <xs:annotation>
+                                    <xs:documentation>Die Anzahl der bisherigen Eintragungen sind hier anzugeben.</xs:documentation>
+                                 </xs:annotation>
+                              </xs:element>
+                              <xs:element name="letzteAenderung" minOccurs="0">
+                                 <xs:complexType>
+                                    <xs:sequence>
+                                       <xs:element name="aenderungsdatum" minOccurs="0" type="xs:date">
+                                          <xs:annotation>
+                                             <xs:documentation>Die letzte Änderung des Gesellschaftsvertrages im Datumsformat.</xs:documentation>
+                                          </xs:annotation>
+                                       </xs:element>
+                                       <xs:element name="aenderungsdatumFreitext"
+                                                   minOccurs="0"
+                                                   type="din91379:datatypeC"/>
+                                    </xs:sequence>
+                                 </xs:complexType>
+                              </xs:element>
+                              <xs:element name="ref.rollennummer"
+                                          minOccurs="0"
+                                          type="tns:Type.GDS.Ref.Rollennummer"/>
+                           </xs:sequence>
+                        </xs:complexType>
+                     </xs:element>
+                     <xs:element name="basisdatenRegister">
+                        <xs:annotation>
+                           <xs:documentation>Für die Auflistung der Beteiligten werden die Strukturen des Grunddatensatzes verwendet.</xs:documentation>
+                        </xs:annotation>
+                        <xs:complexType>
+                           <xs:sequence>
+                              <xs:element name="gruendungsmetadaten" minOccurs="0">
+                                 <xs:annotation>
+                                    <xs:documentation>Dieses Element enthält Angaben zur Gründung des Rechtsträgers</xs:documentation>
+                                 </xs:annotation>
+                                 <xs:complexType>
+                                    <xs:sequence>
+                                       <xs:element name="urkundsperson"
+                                                   minOccurs="0"
+                                                   type="tns:Type.GDS.Ref.Rollennummer">
+                                          <xs:annotation>
+                                             <xs:documentation>Dieses Element enthält einen Verweis auf die Rollennummer eines Beteiligten, der im Grunddatensatz in der Liste der Beteiligten aufgeführt ist.</xs:documentation>
+                                          </xs:annotation>
+                                       </xs:element>
+                                       <xs:element name="gruendungsdatum" type="xs:date"/>
+                                    </xs:sequence>
+                                 </xs:complexType>
+                              </xs:element>
+                              <xs:element name="satzungsdatum" minOccurs="0">
+                                 <xs:complexType>
+                                    <xs:sequence>
+                                       <xs:element name="aktuellesSatzungsdatum" minOccurs="0" type="xs:date">
+                                          <xs:annotation>
+                                             <xs:documentation>Hier kann das Datum der derzeit gültigen Fassung der Satzung oder des Gesellschaftsvertrages angegeben werden.</xs:documentation>
+                                          </xs:annotation>
+                                       </xs:element>
+                                       <xs:element name="satzungsdatumFreitext"
+                                                   minOccurs="0"
+                                                   type="din91379:datatypeC"/>
+                                    </xs:sequence>
+                                 </xs:complexType>
+                              </xs:element>
+                              <xs:element name="urkundsdaten" minOccurs="0" type="tns:Type.GDS.Beurkundung">
+                                 <xs:annotation>
+                                    <xs:documentation>Hier können Daten zu der Urkunde angegeben werden, mit der der Rechtsträger gegründet worden ist.</xs:documentation>
+                                 </xs:annotation>
+                              </xs:element>
+                              <xs:element name="rechtstraeger" minOccurs="0" type="tns:Type.GDS.Organisation">
+                                 <xs:annotation>
+                                    <xs:documentation>Diese Daten betreffen den vom Eintragungsantrag betroffenen Rechtsträger (Gesellschaft, Genossenschaft, Verein usw.). Dieses Element ist nur dann zu übermitteln, wenn geänderte Daten zum Rechtsträger in das Register eingetragen werden sollen. Die vollständigen Angaben zum Rechtsträger werden in den Grunddaten übermittelt.</xs:documentation>
+                                 </xs:annotation>
+                              </xs:element>
+                              <xs:element name="vertretung" minOccurs="0">
+                                 <xs:complexType>
+                                    <xs:sequence>
+                                       <xs:element name="allgemeineVertretungsregelung" minOccurs="0">
+                                          <xs:annotation>
+                                             <xs:documentation>Hier können Regelungen übermittelt werden, die für alle Vertreter gleichermaßen gelten</xs:documentation>
+                                          </xs:annotation>
+                                          <xs:complexType>
+                                             <xs:sequence>
+                                                <xs:element name="auswahl_vertretungsbefugnis" minOccurs="0">
+                                                   <xs:complexType>
+                                                      <xs:choice>
+                                                         <xs:element name="vertretungsbefugnis"
+                                                                     type="tns:Code.REG.Allgemeine_Vertretungsregelung.Typ3">
+                                                            <xs:annotation>
+                                                               <xs:documentation>Zulässige Werte für dieses Element sind in der Codeliste definiert.</xs:documentation>
+                                                            </xs:annotation>
+                                                         </xs:element>
+                                                         <xs:element name="vertretungsbefugnisFreitext" type="din91379:datatypeE"/>
+                                                      </xs:choice>
+                                                   </xs:complexType>
+                                                </xs:element>
+                                                <xs:element name="auswahl_befreiungVon181BGB" minOccurs="0">
+                                                   <xs:annotation>
+                                                      <xs:documentation>Dieses Element wird benötigt, wenn der Vertreter von den Beschränkungen des § 181 BGB befreit ist.</xs:documentation>
+                                                   </xs:annotation>
+                                                   <xs:complexType>
+                                                      <xs:choice>
+                                                         <xs:element name="befreiungVon181BGB" type="tns:Code.REG.Allgemeine_Befreiung.Typ3"/>
+                                                         <xs:element name="befreiungVon181BGBFreitext" type="din91379:datatypeE"/>
+                                                      </xs:choice>
+                                                   </xs:complexType>
+                                                </xs:element>
+                                             </xs:sequence>
+                                          </xs:complexType>
+                                       </xs:element>
+                                       <xs:element name="vertretungsberechtigte" minOccurs="0" maxOccurs="unbounded">
+                                          <xs:annotation>
+                                             <xs:documentation>Dieses Element enthält einen Verweis auf die Rollennummer eines Beteiligten, der im Grunddatensatz in der Liste der Beteiligten aufgeführt ist und zur individuellen Ausgestaltung von deren Vertretungsmacht übermittelt werden soll.</xs:documentation>
+                                          </xs:annotation>
+                                          <xs:complexType>
+                                             <xs:complexContent>
+                                                <xs:extension base="tns:Type.GDS.Ref.Rollennummer">
+                                                   <xs:sequence>
+                                                      <xs:element name="besondereVertretungsregelung"
+                                                                  minOccurs="0"
+                                                                  maxOccurs="unbounded">
+                                                         <xs:complexType>
+                                                            <xs:sequence>
+                                                               <xs:element name="auswahl_vertretungsbefugnis" minOccurs="0">
+                                                                  <xs:complexType>
+                                                                     <xs:choice>
+                                                                        <xs:element name="vertretungsbefugnis"
+                                                                                    type="tns:Code.REG.Besondere_Vertretungsregelung.Typ3">
+                                                                           <xs:annotation>
+                                                                              <xs:documentation>Zulässige Werte für dieses Element sind in der Codeliste definiert.</xs:documentation>
+                                                                           </xs:annotation>
+                                                                        </xs:element>
+                                                                        <xs:element name="vertretungsbefugnisFreitext" type="din91379:datatypeE"/>
+                                                                     </xs:choice>
+                                                                  </xs:complexType>
+                                                               </xs:element>
+                                                               <xs:element name="auswahl_befreiungVon181BGB" minOccurs="0">
+                                                                  <xs:annotation>
+                                                                     <xs:documentation>Dieses Element wird benötigt, wenn der Vertreter von den Beschränkungen des § 181 BGB befreit ist.</xs:documentation>
+                                                                  </xs:annotation>
+                                                                  <xs:complexType>
+                                                                     <xs:choice>
+                                                                        <xs:element name="befreiungVon181BGB" type="tns:Code.REG.Besondere_Befreiung.Typ3"/>
+                                                                        <xs:element name="befreiungVon181BGBFreitext" type="din91379:datatypeE"/>
+                                                                     </xs:choice>
+                                                                  </xs:complexType>
+                                                               </xs:element>
+                                                               <xs:element name="oertlicheBeschraenkung"
+                                                                           minOccurs="0"
+                                                                           type="din91379:datatypeE">
+                                                                  <xs:annotation>
+                                                                     <xs:documentation>Für dieses Element ist keine Codeliste definiert. Es kann bei Bedarf mit Freitext gefüllt werden. Beispiel: Prokura beschränkt auf eine bestimmte Zweigniederlassung)</xs:documentation>
+                                                                  </xs:annotation>
+                                                               </xs:element>
+                                                               <xs:element name="prokura" minOccurs="0">
+                                                                  <xs:complexType>
+                                                                     <xs:sequence>
+                                                                        <xs:element name="auswahl_sachlicheErweiterungProkura" minOccurs="0">
+                                                                           <xs:complexType>
+                                                                              <xs:choice>
+                                                                                 <xs:element name="sachlicheErweiterungProkura"
+                                                                                             type="tns:Code.REG.Sachliche_Erweiterung_Prokura.Typ3">
+                                                                                    <xs:annotation>
+                                                                                       <xs:documentation>Zulässige Werte für dieses Element sind in der Codeliste definiert.</xs:documentation>
+                                                                                    </xs:annotation>
+                                                                                 </xs:element>
+                                                                                 <xs:element name="sachlicheErweiterungProkuraFreitext" type="din91379:datatypeE"/>
+                                                                              </xs:choice>
+                                                                           </xs:complexType>
+                                                                        </xs:element>
+                                                                     </xs:sequence>
+                                                                  </xs:complexType>
+                                                               </xs:element>
+                                                            </xs:sequence>
+                                                         </xs:complexType>
+                                                      </xs:element>
+                                                   </xs:sequence>
+                                                </xs:extension>
+                                             </xs:complexContent>
+                                          </xs:complexType>
+                                       </xs:element>
+                                    </xs:sequence>
+                                 </xs:complexType>
+                              </xs:element>
+                              <xs:element name="gegenstand" minOccurs="0" type="din91379:datatypeE">
+                                 <xs:annotation>
+                                    <xs:documentation>Hier wird der Gegenstand des Rechtsträgers angegeben.</xs:documentation>
+                                 </xs:annotation>
+                              </xs:element>
+                              <xs:element name="geschaeftszweck" minOccurs="0" type="din91379:datatypeE">
+                                 <xs:annotation>
+                                    <xs:documentation>Hier wird der Geschäftszweck des Rechtsträgers angegeben.</xs:documentation>
+                                 </xs:annotation>
+                              </xs:element>
+                              <xs:element name="statusRechtstraeger"
+                                          minOccurs="0"
+                                          type="tns:Code.REG.Status_Rechtstraeger.Typ3"/>
+                              <xs:element name="historieRechtstraeger" minOccurs="0">
+                                 <xs:complexType>
+                                    <xs:sequence>
+                                       <xs:element name="bisher" minOccurs="0" maxOccurs="unbounded">
+                                          <xs:annotation>
+                                             <xs:documentation>Angaben zu einem Rechtsträger, aus dem der betroffene Rechtsträger hervorgegangen ist (quasi ein Vorgänger). Bei einer Verschmelzung können mehrere Vorgänger existieren.</xs:documentation>
+                                          </xs:annotation>
+                                          <xs:complexType>
+                                             <xs:sequence>
+                                                <xs:element name="ref.rechtstraeger" type="tns:Type.GDS.Ref.Rollennummer"/>
+                                                <xs:element name="wechselgrund"
+                                                            type="tns:Code.REG.Registerzeichenwechselgrund.Typ3">
+                                                   <xs:annotation>
+                                                      <xs:documentation>Grund für den vollzogenen Registerzeichenwechsel. Zulässige Werte für dieses Element sind in der hinterlegten Codeliste definiert.</xs:documentation>
+                                                   </xs:annotation>
+                                                </xs:element>
+                                             </xs:sequence>
+                                          </xs:complexType>
+                                       </xs:element>
+                                       <xs:element name="nunmehr" minOccurs="0" maxOccurs="unbounded">
+                                          <xs:annotation>
+                                             <xs:documentation>Angaben zu einem Rechtsträger, in den der betroffene Rechtsträger überführt wurde (quasi ein Nachfolger). Bei einer Spaltung können mehrere Nachfolger existieren.</xs:documentation>
+                                          </xs:annotation>
+                                          <xs:complexType>
+                                             <xs:sequence>
+                                                <xs:element name="ref.rechtstraeger" type="tns:Type.GDS.Ref.Rollennummer"/>
+                                                <xs:element name="wechselgrund"
+                                                            type="tns:Code.REG.Registerzeichenwechselgrund.Typ3">
+                                                   <xs:annotation>
+                                                      <xs:documentation>Grund für den vollzogenen Registerzeichenwechsel. Zulässige Werte für dieses Element sind in der hinterlegten Codeliste definiert.</xs:documentation>
+                                                   </xs:annotation>
+                                                </xs:element>
+                                             </xs:sequence>
+                                          </xs:complexType>
+                                       </xs:element>
+                                    </xs:sequence>
+                                 </xs:complexType>
+                              </xs:element>
+                              <xs:element name="empfangsberechtigte"
+                                          minOccurs="0"
+                                          maxOccurs="unbounded"
+                                          type="tns:Type.GDS.Ref.Rollennummer"/>
+                              <xs:element name="unternehmensteile"
+                                          minOccurs="0"
+                                          maxOccurs="unbounded"
+                                          type="tns:Type.GDS.Ref.Rollennummer"/>
+                              <xs:element name="sonstigeRegisterbeteiligte"
+                                          minOccurs="0"
+                                          maxOccurs="unbounded"
+                                          type="tns:Type.GDS.Ref.Rollennummer"/>
+                           </xs:sequence>
+                        </xs:complexType>
+                     </xs:element>
+                     <xs:element name="auswahl_zusatzangaben" minOccurs="0">
+                        <xs:complexType>
+                           <xs:choice>
+                              <xs:element name="kapitalgesellschaft">
+                                 <xs:complexType>
+                                    <xs:sequence>
+                                       <xs:element name="zusatzAktiengesellschaft" minOccurs="0">
+                                          <xs:annotation>
+                                             <xs:documentation>Aufsichtsrat und Gründer werden über die Angaben im Grunddatensatz und in der ergänzenden Codeliste abgedeckt.</xs:documentation>
+                                          </xs:annotation>
+                                          <xs:complexType>
+                                             <xs:sequence>
+                                                <xs:element name="grundkapital" minOccurs="0" maxOccurs="unbounded">
+                                                   <xs:complexType>
+                                                      <xs:sequence>
+                                                         <xs:element name="hoehe" minOccurs="0" type="tns:Type.GDS.Geldbetrag">
+                                                            <xs:annotation>
+                                                               <xs:documentation>Hier kann die Höhe des Grundkapitals angegeben werden</xs:documentation>
+                                                            </xs:annotation>
+                                                         </xs:element>
+                                                         <xs:element name="zusatz" minOccurs="0" type="din91379:datatypeE">
+                                                            <xs:annotation>
+                                                               <xs:documentation>Hier ist Raum für ergänzende Angaben (als Freitext)</xs:documentation>
+                                                            </xs:annotation>
+                                                         </xs:element>
+                                                      </xs:sequence>
+                                                   </xs:complexType>
+                                                </xs:element>
+                                             </xs:sequence>
+                                          </xs:complexType>
+                                       </xs:element>
+                                       <xs:element name="zusatzGmbH" minOccurs="0">
+                                          <xs:complexType>
+                                             <xs:sequence>
+                                                <xs:element name="stammkapital"
+                                                            minOccurs="0"
+                                                            maxOccurs="unbounded"
+                                                            type="tns:Type.GDS.Geldbetrag"/>
+                                                <xs:element name="stammeinlage" minOccurs="0" maxOccurs="unbounded">
+                                                   <xs:complexType>
+                                                      <xs:sequence>
+                                                         <xs:element name="einlage" type="tns:Type.GDS.Geldbetrag"/>
+                                                         <xs:element name="beteiligter" type="tns:Type.GDS.Ref.Rollennummer">
+                                                            <xs:annotation>
+                                                               <xs:documentation>Hier wird verwiesen auf die Rollennummer eines Beteiligten, der in der bei den Grunddaten enthaltenen Liste der Beteiligten aufgeführt ist.</xs:documentation>
+                                                            </xs:annotation>
+                                                         </xs:element>
+                                                      </xs:sequence>
+                                                   </xs:complexType>
+                                                </xs:element>
+                                             </xs:sequence>
+                                          </xs:complexType>
+                                       </xs:element>
+                                       <xs:element name="dauerDesRechtstraegers"
+                                                   minOccurs="0"
+                                                   type="din91379:datatypeC"/>
+                                       <xs:element name="sacheinlage" minOccurs="0" maxOccurs="unbounded">
+                                          <xs:complexType>
+                                             <xs:sequence>
+                                                <xs:element name="eingebrachtesWirtschaftsgut"
+                                                            minOccurs="0"
+                                                            type="din91379:datatypeE"/>
+                                                <xs:element name="zeitwert" minOccurs="0" type="tns:Type.GDS.Geldbetrag"/>
+                                                <xs:element name="anschaffungspreisOhneUST"
+                                                            minOccurs="0"
+                                                            type="tns:Type.GDS.Geldbetrag"/>
+                                                <xs:element name="anschaffungsdatum" minOccurs="0" type="xs:date"/>
+                                                <xs:element name="anrechnungswert" type="tns:Type.GDS.Geldbetrag"/>
+                                                <xs:element name="beteiligter" type="tns:Type.GDS.Ref.Rollennummer">
+                                                   <xs:annotation>
+                                                      <xs:documentation>Dieses Element enthält einen Verweis auf einen Beteiligten, der in den Grunddaten in der Liste der Beteiligten aufgeführt ist.</xs:documentation>
+                                                   </xs:annotation>
+                                                </xs:element>
+                                             </xs:sequence>
+                                          </xs:complexType>
+                                       </xs:element>
+                                    </xs:sequence>
+                                 </xs:complexType>
+                              </xs:element>
+                              <xs:element name="personengesellschaft">
+                                 <xs:complexType>
+                                    <xs:sequence>
+                                       <xs:element name="zusatzKG" minOccurs="0">
+                                          <xs:complexType>
+                                             <xs:sequence>
+                                                <xs:element name="datenKommanditist" maxOccurs="unbounded">
+                                                   <xs:annotation>
+                                                      <xs:documentation>Dieses Element enthält einen Verweis auf einen Beteiligten, der in den Grunddaten in der Liste der Beteiligten aufgeführt ist.</xs:documentation>
+                                                   </xs:annotation>
+                                                   <xs:complexType>
+                                                      <xs:complexContent>
+                                                         <xs:extension base="tns:Type.GDS.Ref.Rollennummer">
+                                                            <xs:sequence>
+                                                               <xs:element name="hafteinlage" type="tns:Type.GDS.Geldbetrag"/>
+                                                            </xs:sequence>
+                                                         </xs:extension>
+                                                      </xs:complexContent>
+                                                   </xs:complexType>
+                                                </xs:element>
+                                             </xs:sequence>
+                                          </xs:complexType>
+                                       </xs:element>
+                                       <xs:element name="zusatzEWIV" minOccurs="0">
+                                          <xs:complexType>
+                                             <xs:sequence>
+                                                <xs:element name="datenMitgliedEWIV"
+                                                            maxOccurs="unbounded"
+                                                            type="tns:Type.GDS.Ref.Rollennummer">
+                                                   <xs:annotation>
+                                                      <xs:documentation>Dieses Element enthält einen Verweis auf einen Beteiligten, der in den Grunddaten in der Liste der Beteiligten aufgeführt ist.</xs:documentation>
+                                                   </xs:annotation>
+                                                </xs:element>
+                                             </xs:sequence>
+                                          </xs:complexType>
+                                       </xs:element>
+                                    </xs:sequence>
+                                 </xs:complexType>
+                              </xs:element>
+                              <xs:element name="genossenschaft">
+                                 <xs:complexType>
+                                    <xs:sequence>
+                                       <xs:element name="haftsummeJeGeschaeftsanteil"
+                                                   minOccurs="0"
+                                                   type="tns:Type.GDS.Geldbetrag"/>
+                                       <xs:element name="hoechstzahlDerGeschaeftsanteileJeGenosse"
+                                                   minOccurs="0"
+                                                   type="din91379:datatypeC"/>
+                                       <xs:element name="nachschusspflicht" minOccurs="0" type="din91379:datatypeC"/>
+                                       <xs:element name="mindestkapital"
+                                                   minOccurs="0"
+                                                   maxOccurs="unbounded"
+                                                   type="tns:Type.GDS.Geldbetrag"/>
+                                       <xs:element name="dauerDesRechtstraegers"
+                                                   minOccurs="0"
+                                                   type="din91379:datatypeC"/>
+                                    </xs:sequence>
+                                 </xs:complexType>
+                              </xs:element>
+                           </xs:choice>
+                        </xs:complexType>
+                     </xs:element>
+                     <xs:element name="dokumentangaben" minOccurs="0" maxOccurs="unbounded">
+                        <xs:annotation>
+                           <xs:documentation>Hier sind zusätzliche Angaben zu einem in den Sendungsdaten angegebenem Dokument.</xs:documentation>
+                        </xs:annotation>
+                        <xs:complexType>
+                           <xs:sequence>
+                              <xs:element name="ref.dokumentID" type="tns:Type.GDS.Ref.SGO">
+                                 <xs:annotation>
+                                    <xs:documentation>Hier wird auf ein Dokument über die Dokument_ID dieses Dokuments Bezug genommen.</xs:documentation>
+                                 </xs:annotation>
+                              </xs:element>
+                              <xs:element name="stichtag" minOccurs="0" type="xs:date">
+                                 <xs:annotation>
+                                    <xs:documentation>Hier wird der Stichtag des Dokuments angegeben z.B. Bilanzstichtag oder bei Gesellschafterlisten wichtig.</xs:documentation>
+                                 </xs:annotation>
+                              </xs:element>
+                              <xs:element name="sprache" minOccurs="0" type="tns:Code.GDS.Sprachen"/>
+                              <xs:element name="status" minOccurs="0" type="tns:Code.REG.Dokumentstatus.Typ3"/>
+                              <xs:element name="gesperrt" minOccurs="0" type="xs:boolean"/>
+                              <xs:element name="freigabedatum" minOccurs="0" type="xs:date"/>
+                              <xs:element name="aufnahmedatum" minOccurs="0" type="xs:date">
+                                 <xs:annotation>
+                                    <xs:documentation>Einstelldatum/Aufnahmedatum in den Registerordner</xs:documentation>
+                                 </xs:annotation>
+                              </xs:element>
+                              <xs:element name="hinweis" minOccurs="0" type="din91379:datatypeC">
+                                 <xs:annotation>
+                                    <xs:documentation>Hinweistext zum Dokument, der zur Ausgabe in der Internet Registerauskunft (Regisportal, RegisWeb) vorgesehen ist.</xs:documentation>
+                                 </xs:annotation>
+                              </xs:element>
+                              <xs:element name="vorband" minOccurs="0">
+                                 <xs:annotation>
+                                    <xs:documentation>Angaben zum Geschaeftszeichen am Gericht, welches das Dokument anfangs im Besitz hatte.</xs:documentation>
+                                 </xs:annotation>
+                                 <xs:complexType>
+                                    <xs:sequence>
+                                       <xs:element name="gericht" type="tns:Code.GDS.Gerichte.Typ3">
+                                          <xs:annotation>
+                                             <xs:documentation>Zur Bezeichnung des Gerichts werden die Gerichtskennzahlen der Codeliste GDS.Gerichte verwendet.</xs:documentation>
+                                          </xs:annotation>
+                                       </xs:element>
+                                       <xs:element name="geschaeftszeichen" type="tns:Type.GDS.Aktenzeichen">
+                                          <xs:annotation>
+                                             <xs:documentation>Aktenzeichen im Format: "Registertyp", "Nummer" und optional "Ortskennzeichen", z.B. HRB 12345 Kl</xs:documentation>
+                                          </xs:annotation>
+                                       </xs:element>
+                                    </xs:sequence>
+                                 </xs:complexType>
+                              </xs:element>
+                              <xs:element name="aenderungssperre" minOccurs="0" type="xs:boolean"/>
+                              <xs:element name="bemerkung" minOccurs="0" type="din91379:datatypeC"/>
+                              <xs:element name="bezug" minOccurs="0" type="din91379:datatypeC"/>
+                              <xs:element name="doppelstueck" minOccurs="0" type="xs:boolean"/>
+                              <xs:element name="einreicher" minOccurs="0" type="din91379:datatypeD"/>
+                              <xs:element name="erstelltAm" minOccurs="0" type="xs:date"/>
+                              <xs:element name="erstelltZumStichtag" minOccurs="0" type="xs:date"/>
+                              <xs:element name="freigabeVon" minOccurs="0" type="din91379:datatypeA"/>
+                              <xs:element name="freigabeVonStammakte" minOccurs="0" type="xs:date"/>
+                              <xs:element name="freigabeVonVorband" minOccurs="0" type="xs:date"/>
+                              <xs:element name="gegenstandDerEinreichung"
+                                          minOccurs="0"
+                                          type="din91379:datatypeC"/>
+                              <xs:element name="loeschungssperre" minOccurs="0" type="xs:boolean"/>
+                              <xs:element name="merkmalAktuell" minOccurs="0" type="xs:boolean"/>
+                              <xs:element name="sperrkennzeichen" minOccurs="0" type="xs:boolean"/>
+                              <xs:element name="urkundenNummer" minOccurs="0" type="din91379:datatypeC"/>
+                              <xs:element name="urspruenglichesEingangsDatum" minOccurs="0" type="xs:date"/>
+                              <xs:element name="vorgangsnummer" minOccurs="0" type="xs:integer"/>
+                              <xs:element name="webfreigabeDatum" minOccurs="0" type="xs:date"/>
+                              <xs:element name="zustellDatum" minOccurs="0" type="xs:date"/>
+                           </xs:sequence>
+                        </xs:complexType>
+                     </xs:element>
+                     <xs:element name="datumDerWirksamkeit"
+                                 minOccurs="0"
+                                 type="tns:Type.GDS.Datumsangabe">
+                        <xs:annotation>
+                           <xs:documentation>Effective_Date</xs:documentation>
+                        </xs:annotation>
+                     </xs:element>
+                     <xs:element name="adresseEndempfaengerHandelsregister"
+                                 minOccurs="0"
+                                 type="din91379:datatypeE">
+                        <xs:annotation>
+                           <xs:documentation>ausländische Registerbehörde</xs:documentation>
+                        </xs:annotation>
+                     </xs:element>
+                     <xs:element name="auswahl_artZweigniederlassung"
+                                 minOccurs="0"
+                                 maxOccurs="unbounded">
+                        <xs:complexType>
+                           <xs:complexContent>
+                              <xs:extension base="tns:Type.GDS.Ref.Rollennummer">
+                                 <xs:choice>
+                                    <xs:element name="gleicheFirma" fixed="gleiche Firma" type="din91379:datatypeC"/>
+                                    <xs:element name="gleicheFirmaMitZusatz"
+                                                fixed="gleiche Firma mit Zusatz"
+                                                type="din91379:datatypeC"/>
+                                    <xs:element name="abweichendeFirma"
+                                                fixed="abweichende Firma"
+                                                type="din91379:datatypeC"/>
+                                 </xs:choice>
+                              </xs:extension>
+                           </xs:complexContent>
+                        </xs:complexType>
+                     </xs:element>
+                     <xs:element name="auswahl_vertragsart" minOccurs="0">
+                        <xs:complexType>
+                           <xs:choice>
+                              <xs:element name="vertragsart" type="tns:Code.REG.Vertragsart.Typ3"/>
+                              <xs:element name="vertragsartFreitext" type="din91379:datatypeC"/>
+                           </xs:choice>
+                        </xs:complexType>
+                     </xs:element>
+                  </xs:sequence>
+                  <xs:attribute name="fachdatenRegisterVersion"
+                                type="din91379:datatypeC"
+                                use="required"
+                                fixed="3.4">
+                     <xs:annotation>
+                        <xs:documentation>Dieses Attribut wird verwendet, um sicherzustellen, dass jedes Instanzdokument gegen die "richtige" Version des XML-Schemas geprüft wird. Angegeben werden hier nur die beiden ersten Stellen der Versionsnummer. Dies ermöglicht es, an einzelnen Dateien Fehlerbereinigungen und dergleichen vorzunehmen, ohne dass die anderen Bestandteile von XJustiz geändert werden müssen.</xs:documentation>
+                     </xs:annotation>
+                  </xs:attribute>
+               </xs:complexType>
+            </xs:element>
+         </xs:sequence>
+      </xs:complexType>
+      <xs:key name="schluessel_beteiligter_beteiligtennummer">
+         <xs:annotation>
+            <xs:documentation>Eindeutiger Schlüssel ist hier die Beteiligtennummer eines Beteiligten.</xs:documentation>
+         </xs:annotation>
+         <xs:selector xpath="tns:grunddaten/tns:verfahrensdaten/tns:beteiligung/tns:beteiligter"/>
+         <xs:field xpath="tns:beteiligtennummer"/>
+      </xs:key>
+      <xs:key name="schluessel_beteiligter_rollennummer">
+         <xs:annotation>
+            <xs:documentation>Eindeutiger Schlüssel ist hier die Rollennummer eines Beteiligten.</xs:documentation>
+         </xs:annotation>
+         <xs:selector xpath="tns:grunddaten/tns:verfahrensdaten/tns:beteiligung/tns:rolle"/>
+         <xs:field xpath="tns:rollennummer"/>
+      </xs:key>
+      <xs:key name="schluessel_instanz">
+         <xs:annotation>
+            <xs:documentation>Eindeutiger Schlüssel ist hier die Instanznummer einer Instanz.</xs:documentation>
+         </xs:annotation>
+         <xs:selector xpath="tns:grunddaten/tns:verfahrensdaten/tns:instanzdaten"/>
+         <xs:field xpath="tns:instanznummer"/>
+      </xs:key>
+      <xs:keyref name="ref_instanznummer" refer="tns:schluessel_instanz">
+         <xs:selector xpath=".//*"/>
+         <xs:field xpath="tns:ref.instanznummer"/>
+      </xs:keyref>
+      <xs:keyref name="ref_rollennummer" refer="tns:schluessel_beteiligter_rollennummer">
+         <xs:selector xpath=".//*"/>
+         <xs:field xpath="tns:ref.rollennummer"/>
+      </xs:keyref>
+   </xs:element>
+</xs:schema>

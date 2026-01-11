@@ -2,7 +2,7 @@
 
 <Form version="1.5" maxVersion="1.8" type="org.netbeans.modules.form.forminfo.JDialogFormInfo">
   <NonVisualComponents>
-    <Component class="javax.swing.ButtonGroup" name="btGrpReviews">
+    <Component class="javax.swing.ButtonGroup" name="btGrpModes">
     </Component>
   </NonVisualComponents>
   <Properties>
@@ -28,26 +28,38 @@
     <DimensionLayout dim="0">
       <Group type="103" groupAlignment="0" attributes="0">
           <Component id="jPanel2" alignment="0" max="32767" attributes="0"/>
-          <Group type="102" attributes="0">
-              <Group type="103" groupAlignment="0" attributes="0">
+          <Group type="102" alignment="1" attributes="0">
+              <EmptySpace max="-2" attributes="0"/>
+              <Group type="103" groupAlignment="1" attributes="0">
                   <Group type="102" alignment="0" attributes="0">
+                      <Component id="cmdRecord" min="-2" max="-2" attributes="0"/>
+                      <EmptySpace type="unrelated" max="-2" attributes="0"/>
+                      <Component id="rdoInsert" min="-2" max="-2" attributes="0"/>
                       <EmptySpace max="-2" attributes="0"/>
-                      <Group type="103" groupAlignment="0" attributes="0">
-                          <Group type="102" alignment="1" attributes="0">
-                              <EmptySpace min="0" pref="316" max="32767" attributes="0"/>
-                              <Component id="cmdAddDocument" min="-2" max="-2" attributes="0"/>
-                              <EmptySpace max="-2" attributes="0"/>
-                              <Component id="cmdCancel" min="-2" max="-2" attributes="0"/>
-                          </Group>
-                          <Group type="102" alignment="0" attributes="0">
-                              <Component id="cmdRecord" min="-2" max="-2" attributes="0"/>
-                              <EmptySpace max="32767" attributes="0"/>
-                              <Component id="cmbDevices" min="-2" max="-2" attributes="0"/>
-                          </Group>
-                      </Group>
+                      <Component id="rdoOverwrite" min="-2" max="-2" attributes="0"/>
+                      <EmptySpace max="32767" attributes="0"/>
+                      <Component id="cmbDevices" min="-2" max="-2" attributes="0"/>
+                  </Group>
+                  <Component id="waveformView" alignment="0" pref="778" max="32767" attributes="0"/>
+                  <Group type="102" alignment="0" attributes="0">
+                      <EmptySpace min="-2" pref="12" max="-2" attributes="0"/>
+                      <Component id="lblState" min="-2" max="32767" attributes="0"/>
                   </Group>
                   <Group type="102" attributes="0">
-                      <EmptySpace min="-2" pref="12" max="-2" attributes="0"/>
+                      <EmptySpace min="0" pref="0" max="32767" attributes="0"/>
+                      <Component id="cmdAddDocument" min="-2" max="-2" attributes="0"/>
+                      <EmptySpace max="-2" attributes="0"/>
+                      <Component id="cmdCancel" min="-2" max="-2" attributes="0"/>
+                  </Group>
+                  <Group type="102" alignment="1" attributes="0">
+                      <Component id="cmdPreviewPlay" min="-2" max="-2" attributes="0"/>
+                      <EmptySpace max="-2" attributes="0"/>
+                      <Component id="cmdPreviewStop" min="-2" max="-2" attributes="0"/>
+                      <EmptySpace max="-2" attributes="0"/>
+                      <Component id="cmdUndoTake" min="-2" max="-2" attributes="0"/>
+                      <EmptySpace max="-2" attributes="0"/>
+                      <Component id="cmdDeleteSelection" min="-2" max="-2" attributes="0"/>
+                      <EmptySpace max="-2" attributes="0"/>
                       <Component id="lblInfo" max="32767" attributes="0"/>
                   </Group>
               </Group>
@@ -63,9 +75,23 @@
               <Group type="103" groupAlignment="3" attributes="0">
                   <Component id="cmdRecord" alignment="3" min="-2" max="-2" attributes="0"/>
                   <Component id="cmbDevices" alignment="3" min="-2" max="-2" attributes="0"/>
+                  <Component id="rdoInsert" alignment="3" min="-2" max="-2" attributes="0"/>
+                  <Component id="rdoOverwrite" alignment="3" min="-2" max="-2" attributes="0"/>
               </Group>
+              <EmptySpace type="separate" max="-2" attributes="0"/>
+              <Component id="lblState" min="-2" max="-2" attributes="0"/>
               <EmptySpace type="unrelated" max="-2" attributes="0"/>
-              <Component id="lblInfo" min="-2" max="-2" attributes="0"/>
+              <Component id="waveformView" min="-2" pref="98" max="32767" attributes="0"/>
+              <EmptySpace type="unrelated" max="-2" attributes="0"/>
+              <Group type="103" groupAlignment="0" max="-2" attributes="0">
+                  <Group type="103" alignment="0" groupAlignment="3" attributes="0">
+                      <Component id="cmdPreviewPlay" alignment="3" min="-2" max="-2" attributes="0"/>
+                      <Component id="cmdPreviewStop" alignment="3" min="-2" max="-2" attributes="0"/>
+                      <Component id="cmdUndoTake" alignment="3" min="-2" max="-2" attributes="0"/>
+                      <Component id="cmdDeleteSelection" alignment="3" min="-2" max="-2" attributes="0"/>
+                  </Group>
+                  <Component id="lblInfo" min="-2" pref="28" max="-2" attributes="0"/>
+              </Group>
               <EmptySpace max="32767" attributes="0"/>
               <Group type="103" groupAlignment="3" attributes="0">
                   <Component id="cmdCancel" alignment="3" min="-2" max="-2" attributes="0"/>
@@ -77,6 +103,76 @@
     </DimensionLayout>
   </Layout>
   <SubComponents>
+    <Component class="javax.swing.JLabel" name="lblState">
+      <Properties>
+        <Property name="text" type="java.lang.String" value=" "/>
+      </Properties>
+    </Component>
+    <Component class="javax.swing.JRadioButton" name="rdoInsert">
+      <Properties>
+        <Property name="buttonGroup" type="javax.swing.ButtonGroup" editor="org.netbeans.modules.form.RADComponent$ButtonGroupPropertyEditor">
+          <ComponentRef name="btGrpModes"/>
+        </Property>
+        <Property name="selected" type="boolean" value="true"/>
+        <Property name="text" type="java.lang.String" value="Einf&#xfc;gen"/>
+        <Property name="toolTipText" type="java.lang.String" value="Einf&#xfc;gen an markierter Position"/>
+      </Properties>
+    </Component>
+    <Component class="javax.swing.JRadioButton" name="rdoOverwrite">
+      <Properties>
+        <Property name="buttonGroup" type="javax.swing.ButtonGroup" editor="org.netbeans.modules.form.RADComponent$ButtonGroupPropertyEditor">
+          <ComponentRef name="btGrpModes"/>
+        </Property>
+        <Property name="text" type="java.lang.String" value="&#xdc;berschreiben"/>
+        <Property name="toolTipText" type="java.lang.String" value="&#xdc;berschreiben ab markierter Position"/>
+      </Properties>
+    </Component>
+    <Component class="javax.swing.JButton" name="cmdPreviewPlay">
+      <Properties>
+        <Property name="icon" type="javax.swing.Icon" editor="org.netbeans.modules.form.editors2.IconEditor">
+          <Image iconType="3" name="/icons/1rightarrow.png"/>
+        </Property>
+        <Property name="toolTipText" type="java.lang.String" value="Abspielen"/>
+      </Properties>
+      <Events>
+        <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="cmdPreviewPlayActionPerformed"/>
+      </Events>
+    </Component>
+    <Component class="javax.swing.JButton" name="cmdPreviewStop">
+      <Properties>
+        <Property name="icon" type="javax.swing.Icon" editor="org.netbeans.modules.form.editors2.IconEditor">
+          <Image iconType="3" name="/icons16/material/stop_20dp_0E72B5.png"/>
+        </Property>
+        <Property name="toolTipText" type="java.lang.String" value="Stop"/>
+      </Properties>
+      <Events>
+        <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="cmdPreviewStopActionPerformed"/>
+      </Events>
+    </Component>
+    <Component class="javax.swing.JButton" name="cmdUndoTake">
+      <Properties>
+        <Property name="icon" type="javax.swing.Icon" editor="org.netbeans.modules.form.editors2.IconEditor">
+          <Image iconType="3" name="/icons16/material/undo_20dp_0E72B5.png"/>
+        </Property>
+        <Property name="toolTipText" type="java.lang.String" value="Letzte Aufnahme r&#xfc;ckg&#xe4;ngig"/>
+      </Properties>
+      <Events>
+        <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="cmdUndoTakeActionPerformed"/>
+      </Events>
+    </Component>
+    <Component class="javax.swing.JButton" name="cmdDeleteSelection">
+      <Properties>
+        <Property name="icon" type="javax.swing.Icon" editor="org.netbeans.modules.form.editors2.IconEditor">
+          <Image iconType="3" name="/icons16/material/baseline_delete_lightgrey_48dp.png"/>
+        </Property>
+        <Property name="toolTipText" type="java.lang.String" value="Auswahl l&#xf6;schen"/>
+      </Properties>
+      <Events>
+        <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="cmdDeleteSelectionActionPerformed"/>
+      </Events>
+    </Component>
+    <Component class="com.jdimension.jlawyer.client.editors.documents.viewer.WaveformPanel" name="waveformView">
+    </Component>
     <Component class="javax.swing.JButton" name="cmdCancel">
       <Properties>
         <Property name="icon" type="javax.swing.Icon" editor="org.netbeans.modules.form.editors2.IconEditor">
@@ -162,7 +258,7 @@
           </FontInfo>
         </Property>
         <Property name="icon" type="javax.swing.Icon" editor="org.netbeans.modules.form.editors2.IconEditor">
-          <Image iconType="3" name="/icons32/material/baseline_play_circle_black_48dp.png"/>
+          <Image iconType="3" name="/icons32/material/radio_button_checked_32dp_97BF0D_FILL0_wght400_GRAD0_opsz40.png"/>
         </Property>
         <Property name="text" type="java.lang.String" value="Aufnahme"/>
       </Properties>

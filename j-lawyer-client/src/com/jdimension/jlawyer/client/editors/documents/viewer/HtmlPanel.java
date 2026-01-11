@@ -672,11 +672,11 @@ import com.jdimension.jlawyer.ai.ParameterData;
 import com.jdimension.jlawyer.client.assistant.AssistantAccess;
 import com.jdimension.jlawyer.client.assistant.AssistantFlowAdapter;
 import com.jdimension.jlawyer.client.editors.EditorsRegistry;
+import com.jdimension.jlawyer.client.editors.webview.WebViewHtmlEditorPanel;
 import com.jdimension.jlawyer.client.mail.EditorImplementation;
-import com.jdimension.jlawyer.client.mail.EmailUtils;
 import com.jdimension.jlawyer.client.settings.ClientSettings;
 import com.jdimension.jlawyer.client.utils.AudioUtils;
-import com.jdimension.jlawyer.client.utils.StringUtils;
+import com.jdimension.jlawyer.client.utils.SystemUtils;
 import com.jdimension.jlawyer.client.utils.ThreadUtils;
 import com.jdimension.jlawyer.persistence.AssistantConfig;
 import com.jdimension.jlawyer.services.IntegrationServiceRemote;
@@ -695,6 +695,7 @@ import javax.sound.sampled.DataLine;
 import javax.sound.sampled.Mixer;
 import javax.sound.sampled.TargetDataLine;
 import javax.swing.JOptionPane;
+import javax.swing.SwingUtilities;
 import javax.swing.SwingWorker;
 import org.apache.log4j.Logger;
 import themes.colors.DefaultColorTheme;
@@ -717,6 +718,8 @@ public class HtmlPanel extends javax.swing.JPanel implements PreviewPanel, Assis
     private AssistantConfig transcribeConfig = null;
     private TargetDataLine targetDataLine;
     private ByteArrayOutputStream byteArrayOutputStream;
+    
+    private WebViewHtmlEditorPanel htmlEditor = null;
 
 
     /**
@@ -729,10 +732,15 @@ public class HtmlPanel extends javax.swing.JPanel implements PreviewPanel, Assis
         initComponents();
         this.id = docId;
         this.readOnly = readOnly;
-        ThreadUtils.updateHtmlEditor(this.html, "");
+        
+        this.htmlEditor = new WebViewHtmlEditorPanel();
+
+        this.pnlHtml.add(this.htmlEditor);
+        this.htmlEditor.setBounds(0, 0, this.pnlHtml.getWidth(), this.pnlHtml.getHeight());
+        SwingUtilities.updateComponentTreeUI(this.htmlEditor);
 
         ThreadUtils.enableComponent(this, !readOnly);
-        ThreadUtils.enableComponent(this.html, !readOnly);
+        ThreadUtils.enableComponent(this.htmlEditor, !readOnly);
         
         // Initialize transcription capabilities
         AssistantAccess ingo = AssistantAccess.getInstance();
@@ -757,12 +765,14 @@ public class HtmlPanel extends javax.swing.JPanel implements PreviewPanel, Assis
     }
 
     public void setFocusToBody() {
-        this.html.requestFocus();
+        this.htmlEditor.requestFocus();
     }
     
     public void setFileName(String fileName) {
         this.lblFileName.setText(fileName);
     }
+    
+    
 
     /**
      * This method is called from within the constructor to initialize the form.
@@ -773,14 +783,16 @@ public class HtmlPanel extends javax.swing.JPanel implements PreviewPanel, Assis
     // <editor-fold defaultstate="collapsed" desc="Generated Code">//GEN-BEGIN:initComponents
     private void initComponents() {
 
-        jScrollPane1 = new javax.swing.JScrollPane();
-        html = new com.jdimension.jlawyer.client.mail.HtmlEditorPanel();
         lblFileName = new javax.swing.JLabel();
         cmbDevices = new javax.swing.JComboBox<>();
         cmdTranscribe = new javax.swing.JButton();
+        pnlHtml = new javax.swing.JPanel();
 
-        html.setFocusable(false);
-        jScrollPane1.setViewportView(html);
+        addComponentListener(new java.awt.event.ComponentAdapter() {
+            public void componentResized(java.awt.event.ComponentEvent evt) {
+                formComponentResized(evt);
+            }
+        });
 
         lblFileName.setFont(lblFileName.getFont().deriveFont(lblFileName.getFont().getStyle() | java.awt.Font.BOLD));
         lblFileName.setText("Notizdatei.html");
@@ -796,18 +808,31 @@ public class HtmlPanel extends javax.swing.JPanel implements PreviewPanel, Assis
             }
         });
 
+        javax.swing.GroupLayout pnlHtmlLayout = new javax.swing.GroupLayout(pnlHtml);
+        pnlHtml.setLayout(pnlHtmlLayout);
+        pnlHtmlLayout.setHorizontalGroup(
+            pnlHtmlLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGap(0, 0, Short.MAX_VALUE)
+        );
+        pnlHtmlLayout.setVerticalGroup(
+            pnlHtmlLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGap(0, 298, Short.MAX_VALUE)
+        );
+
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(this);
         this.setLayout(layout);
         layout.setHorizontalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addComponent(jScrollPane1, javax.swing.GroupLayout.DEFAULT_SIZE, 600, Short.MAX_VALUE)
-            .addGroup(layout.createSequentialGroup()
+            .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
                 .addContainerGap()
-                .addComponent(lblFileName, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(cmbDevices, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(cmdTranscribe)
+                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
+                    .addComponent(pnlHtml, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                    .addGroup(layout.createSequentialGroup()
+                        .addComponent(lblFileName, javax.swing.GroupLayout.DEFAULT_SIZE, 373, Short.MAX_VALUE)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addComponent(cmbDevices, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addComponent(cmdTranscribe)))
                 .addContainerGap())
         );
         layout.setVerticalGroup(
@@ -819,7 +844,8 @@ public class HtmlPanel extends javax.swing.JPanel implements PreviewPanel, Assis
                         .addComponent(cmbDevices, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
                     .addComponent(lblFileName, javax.swing.GroupLayout.PREFERRED_SIZE, 28, javax.swing.GroupLayout.PREFERRED_SIZE))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(jScrollPane1))
+                .addComponent(pnlHtml, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                .addContainerGap())
         );
     }// </editor-fold>//GEN-END:initComponents
 
@@ -836,44 +862,85 @@ public class HtmlPanel extends javax.swing.JPanel implements PreviewPanel, Assis
         }
     }//GEN-LAST:event_cmdTranscribeActionPerformed
 
+    private void formComponentResized(java.awt.event.ComponentEvent evt) {//GEN-FIRST:event_formComponentResized
+        this.htmlEditor.setBounds(0, 0, this.pnlHtml.getWidth(), this.pnlHtml.getHeight());
+        SwingUtilities.updateComponentTreeUI(this.htmlEditor);
+    }//GEN-LAST:event_formComponentResized
+
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JComboBox<String> cmbDevices;
     private javax.swing.JButton cmdTranscribe;
-    private com.jdimension.jlawyer.client.mail.HtmlEditorPanel html;
-    private javax.swing.JScrollPane jScrollPane1;
     private javax.swing.JLabel lblFileName;
+    private javax.swing.JPanel pnlHtml;
     // End of variables declaration//GEN-END:variables
 
     @Override
     public void showStatus(String text) {
         //ThreadUtils.updateEditorPane(this.edtContent, text);
-        ThreadUtils.updateHtmlEditor(html, text);
+        ThreadUtils.updateHtmlEditor(htmlEditor, text);
     }
 
     @Override
     public void showContent(String documentId, byte[] content) {
         this.id = documentId;
         this.initialContent = content;
-        ThreadUtils.updateHtmlEditor(html, new String(content));
+        htmlEditor.setText(new String(content));
+        htmlEditor.setCaretPosition(0);
+
+    }
+
+    /**
+     * Waits for the HTML editor content cache to be synchronized on macOS.
+     * <p>
+     * On macOS, the WebViewHtmlEditorPanel uses a cached content mechanism to avoid
+     * EDT/JavaFX deadlocks. The cache is updated via JavaScript's onChange handler
+     * with a 300ms debounce. This method waits 500ms (300ms debounce + buffer) to
+     * ensure the cache contains the latest editor content before reading it.
+     * </p>
+     */
+    private void waitForHtmlContentOnMac() {
+        if (SystemUtils.isMacOs()) {
+            log.debug("HtmlPanel.waitForHtmlContentOnMac(): macOS detected, waiting 1000ms for cache sync (docId=" + this.id + ")");
+            try {
+                Thread.sleep(1000);
+            } catch (InterruptedException e) {
+                Thread.currentThread().interrupt();
+                log.warn("HtmlPanel.waitForHtmlContentOnMac(): interrupted while waiting (docId=" + this.id + ")");
+            }
+            log.debug("HtmlPanel.waitForHtmlContentOnMac(): wait completed (docId=" + this.id + ")");
+        }
     }
 
     @Override
     public void removeNotify() {
         if (this.id != null && !this.readOnly) {
-
-            byte[] currentBytes = this.html.getText().getBytes();
-            if (this.initialContent!=null && !Arrays.equals(this.initialContent, currentBytes)) {
-                try {
+            try {
+                log.debug("HtmlPanel.removeNotify(): saving document (docId=" + this.id + ")");
+                waitForHtmlContentOnMac();
+                String currentText = this.htmlEditor.getText();
+                log.debug("HtmlPanel.removeNotify(): getText() returned " + (currentText != null ? currentText.length() : 0) + " chars (docId=" + this.id + ")");
+                if (currentText == null || currentText.isEmpty()) {
+                    // getText() may return empty if editor is being disposed - skip saving
+                    log.warn("HtmlPanel.removeNotify(): getText() returned null/empty, skipping save (docId=" + this.id + ")");
+                    return;
+                }
+                byte[] currentBytes = currentText.getBytes();
+                if (this.initialContent != null && !Arrays.equals(this.initialContent, currentBytes)) {
+                    log.debug("HtmlPanel.removeNotify(): content changed, saving " + currentBytes.length + " bytes (docId=" + this.id + ")");
                     ClientSettings settings = ClientSettings.getInstance();
                     JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
-                    locator.lookupArchiveFileServiceRemote().setDocumentContent(this.id, this.html.getText().getBytes());
-                } catch (Throwable t) {
-                    log.error("Error saving document with id " + this.id, t);
-                    ThreadUtils.showErrorDialog(EditorsRegistry.getInstance().getMainWindow(), "Fehler beim Speichern: " + t.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR);
-
+                    locator.lookupArchiveFileServiceRemote().setDocumentContent(this.id, currentBytes);
+                    log.debug("HtmlPanel.removeNotify(): document saved successfully (docId=" + this.id + ")");
+                } else {
+                    log.debug("HtmlPanel.removeNotify(): content unchanged, skipping save (docId=" + this.id + ")");
                 }
+            } catch (Throwable t) {
+                log.error("Error saving document with id " + this.id, t);
+                ThreadUtils.showErrorDialog(EditorsRegistry.getInstance().getMainWindow(), "Fehler beim Speichern: " + t.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR);
             }
+        } else {
+            log.debug("HtmlPanel.removeNotify(): skipping save - id=" + this.id + ", readOnly=" + this.readOnly);
         }
     }
 
@@ -944,7 +1011,7 @@ public class HtmlPanel extends javax.swing.JPanel implements PreviewPanel, Assis
             }
         }
         
-        EditorImplementation ed = (EditorImplementation) this.html.getComponent(0);
+        EditorImplementation ed = (EditorImplementation) this.htmlEditor;
         ed.setText(prependText + System.lineSeparator() + System.lineSeparator() + ed.getText());
         
         
@@ -1098,7 +1165,7 @@ public class HtmlPanel extends javax.swing.JPanel implements PreviewPanel, Assis
                         }
 
                         // Insert transcribed text at the caret position
-                        html.insert(resultText, -1);
+                        htmlEditor.insert(resultText, -1);
                         
                     }
                 }
@@ -1110,5 +1177,19 @@ public class HtmlPanel extends javax.swing.JPanel implements PreviewPanel, Assis
             log.error(ex);
             JOptionPane.showMessageDialog(this, "" + ex.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
         }
+    }
+
+    @Override
+    public void processOutput(Map<String, String> output) {
+        
+    }
+
+    @Override
+    public void dispose() {
+        this.htmlEditor.dispose();
+    }
+    
+    public void setOnEditorReadyCallback(Runnable callback) {
+        this.htmlEditor.setOnEditorReadyCallback(callback);
     }
 }

@@ -666,15 +666,13 @@ package com.jdimension.jlawyer.client.messenger;
 import com.jdimension.jlawyer.client.settings.UserSettings;
 import com.jdimension.jlawyer.persistence.AppUserBean;
 import com.jdimension.jlawyer.persistence.InstantMessage;
-import com.jdimension.jlawyer.persistence.InstantMessageMention;
 import java.awt.Rectangle;
 import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
 import java.awt.event.KeyEvent;
-import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 import javax.swing.JMenuItem;
+import org.jboss.logging.Logger;
 
 /**
  *
@@ -682,19 +680,21 @@ import javax.swing.JMenuItem;
  */
 public class MessageSendPanel extends javax.swing.JPanel {
 
-    protected NewMessageConsumer messageConsumer=null;
-    
+    private static final Logger log = Logger.getLogger(MessageSendPanel.class.getName());
+
+    protected NewMessageConsumer messageConsumer = null;
+
     /**
      * Creates new form MessageSendPanel
      */
     public MessageSendPanel() {
         initComponents();
     }
-    
+
     public void setUsers(List<AppUserBean> userCandidates) {
         this.popUsers.removeAll();
-        
-        for(AppUserBean u: userCandidates) {
+
+        for (AppUserBean u : userCandidates) {
             JMenuItem mi = new JMenuItem();
             mi.setText(u.getPrincipalId());
             mi.addActionListener((ActionEvent arg0) -> {
@@ -702,14 +702,65 @@ public class MessageSendPanel extends javax.swing.JPanel {
                     int caret = MessageSendPanel.this.taMessage.getCaretPosition();
                     MessageSendPanel.this.taMessage.setText(MessageSendPanel.this.taMessage.getText(0, caret) + u.getPrincipalId() + " " + MessageSendPanel.this.taMessage.getText(caret, MessageSendPanel.this.taMessage.getText().length() - caret));
                     MessageSendPanel.this.taMessage.setCaretPosition(caret + (u.getPrincipalId() + " ").length());
-                }catch (Throwable t) {
-                    t.printStackTrace();
+                } catch (Throwable t) {
+                    log.error("Could not generate mention for message", t);
                 }
             });
             this.popUsers.add(mi);
-            //mi.setOpaque(true);
         }
-        
+
+        JMenuItem all = new JMenuItem();
+        all.setText("alle");
+        all.addActionListener((ActionEvent arg0) -> {
+            try {
+                StringBuilder mentions = new StringBuilder();
+                int mIndex = 0;
+                for (AppUserBean u : userCandidates) {
+                    if (mIndex > 0) {
+                        mentions.append("@");
+                    }
+                    mentions.append(u.getPrincipalId()).append(" ");
+                    mIndex++;
+                }
+                int caret = MessageSendPanel.this.taMessage.getCaretPosition();
+                MessageSendPanel.this.taMessage.setText(MessageSendPanel.this.taMessage.getText(0, caret) + mentions.toString() + " " + MessageSendPanel.this.taMessage.getText(caret, MessageSendPanel.this.taMessage.getText().length() - caret));
+                MessageSendPanel.this.taMessage.setCaretPosition(caret + (mentions.toString() + " ").length());
+            } catch (Throwable t) {
+                log.error("Could not generate mentions for all users for message", t);
+            }
+        });
+        this.popUsers.add(all);
+
+    }
+
+    /**
+     * Prefills the message text area.
+     * @param text initial text to set
+     * @param caretPosition initial cursor position
+     */
+    public void setInitialText(String text, int caretPosition) {
+        try {
+            if (text == null) {
+                this.taMessage.setText("");
+            } else {
+                this.taMessage.setText(text);
+                if(caretPosition>-1 && this.taMessage.getText().length()>caretPosition) {
+                    this.taMessage.setCaretPosition(caretPosition);
+                } else {
+                    this.taMessage.setCaretPosition(this.taMessage.getText().length());
+                }
+            }
+        } catch (Exception ex) {
+            log.error("Error setting initial text in MessageSendPanel", ex);
+        }
+    }
+    
+    /**
+     * Prefills the message text area.
+     * @param text initial text to set
+     */
+    public void setInitialText(String text) {
+        this.setInitialText(text, -1);
     }
 
     /**
@@ -775,21 +826,21 @@ public class MessageSendPanel extends javax.swing.JPanel {
 
     private void taMessageKeyReleased(java.awt.event.KeyEvent evt) {//GEN-FIRST:event_taMessageKeyReleased
         try {
-            if(evt.getKeyCode()==KeyEvent.VK_ENTER && evt.isShiftDown()) {
+            if (evt.getKeyCode() == KeyEvent.VK_ENTER && evt.isShiftDown()) {
                 // just do the line break
                 this.taMessage.setText(this.taMessage.getText() + System.lineSeparator());
-            } else if (evt.getKeyCode()==KeyEvent.VK_ENTER) {
+            } else if (evt.getKeyCode() == KeyEvent.VK_ENTER) {
                 // send message
                 this.sendMessage();
             } else {
-            int caret = this.taMessage.getCaretPosition();
-            if ((caret == 1 && this.taMessage.getText(0, 1).equals("@")) || (caret > 1 && this.taMessage.getText(caret - 2, 2).equals(" @"))) {
-                Rectangle rect=this.taMessage.modelToView(caret);
-                this.popUsers.show(this.taMessage, rect.x, rect.y);
-            }
+                int caret = this.taMessage.getCaretPosition();
+                if ((caret == 1 && this.taMessage.getText(0, 1).equals("@")) || (caret > 1 && this.taMessage.getText(caret - 2, 2).equals(" @"))) {
+                    Rectangle rect = this.taMessage.modelToView(caret);
+                    this.popUsers.show(this.taMessage, rect.x, rect.y);
+                }
             }
         } catch (Throwable t) {
-            t.printStackTrace();
+            log.error(t);
         }
     }//GEN-LAST:event_taMessageKeyReleased
 
@@ -797,16 +848,16 @@ public class MessageSendPanel extends javax.swing.JPanel {
         this.sendMessage();
     }//GEN-LAST:event_cmdSendActionPerformed
 
-    
     private void sendMessage() {
-        InstantMessage im1=new InstantMessage();
+        InstantMessage im1 = new InstantMessage();
         im1.setSender(UserSettings.getInstance().getCurrentUser().getPrincipalId());
         im1.setContent(this.taMessage.getText().trim());
         im1.setSent(new Date());
-        
-        if(this.messageConsumer!=null)
+
+        if (this.messageConsumer != null) {
             this.messageConsumer.newMessageForSubmission(im1);
-        
+        }
+
         this.taMessage.setText("");
     }
 

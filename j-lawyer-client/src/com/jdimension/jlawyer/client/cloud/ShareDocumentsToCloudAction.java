@@ -664,7 +664,7 @@
 package com.jdimension.jlawyer.client.cloud;
 
 import com.jdimension.jlawyer.client.editors.EditorsRegistry;
-import com.jdimension.jlawyer.client.mail.SendEmailDialog;
+import com.jdimension.jlawyer.client.mail.SendEmailFrame;
 import com.jdimension.jlawyer.client.processing.ProgressIndicator;
 import com.jdimension.jlawyer.client.processing.ProgressableAction;
 import com.jdimension.jlawyer.client.settings.ClientSettings;
@@ -800,9 +800,13 @@ public class ShareDocumentsToCloudAction extends ProgressableAction {
                 StringSelection strSel = new StringSelection(this.share.getUrl());
                 clipboard.setContents(strSel, null);
                 DesktopUtils.openBrowserFromDialog(this.share.getUrl(), this.indicator);
+                SwingUtilities.invokeLater(() -> {
+                    parent.setVisible(false);
+                    parent.dispose();
+                });
             } else if (this.postAction == POST_ACTION_EMAIL && this.share.getUrl() != null && !("".equals(this.share.getUrl()))) {
                 SwingUtilities.invokeLater(() -> {
-                    SendEmailDialog dlg = new SendEmailDialog(false, EditorsRegistry.getInstance().getMainWindow(), false);
+                    SendEmailFrame dlg = new SendEmailFrame(false);
                     // make share link available for use via placeholder {{CLOUD_LINK}}
                     dlg.setCloudLink(share.getUrl());
                     dlg.setBody("Freigabelink: " + share.getUrl(), "", ContentTypes.TEXT_PLAIN);
@@ -819,15 +823,18 @@ public class ShareDocumentsToCloudAction extends ProgressableAction {
                         }
                     }
 
-                    FrameUtils.centerDialog(dlg, null);
+                    FrameUtils.centerFrame(dlg, null);
+                    EditorsRegistry.getInstance().registerFrame(dlg);
                     dlg.setVisible(true);
+
+                    parent.setVisible(false);
+                    parent.dispose();
+                    
+                    dlg.toFront();
+                    dlg.requestFocus();
                 });
 
             }
-            SwingUtilities.invokeLater(() -> {
-                parent.setVisible(false);
-                parent.dispose();
-            });
 
         } catch (Exception ex) {
             log.error(ex);

@@ -679,6 +679,8 @@ import java.awt.Adjustable;
 import java.awt.event.AdjustmentEvent;
 import java.awt.event.AdjustmentListener;
 import java.util.ArrayList;
+import java.util.Timer;
+import java.util.TimerTask;
 import javax.swing.BoxLayout;
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
@@ -693,6 +695,7 @@ import org.apache.log4j.Logger;
 public class PopoutMessenger extends javax.swing.JDialog implements NewMessageConsumer, EventConsumer {
 
     private static final Logger log = Logger.getLogger(PopoutMessenger.class.getName());
+    private transient Timer refreshTimer = null;
 
     /**
      * Creates new form PopoutMessenger
@@ -730,6 +733,33 @@ public class PopoutMessenger extends javax.swing.JDialog implements NewMessageCo
         eb.subscribeConsumer(this, Event.TYPE_INSTANTMESSAGING_NEWMESSAGES);
         eb.subscribeConsumer(this, Event.TYPE_INSTANTMESSAGING_MENTIONCHANGED);
         eb.subscribeConsumer(this, Event.TYPE_INSTANTMESSAGING_MESSAGEDELETED);
+
+        // Start periodic refresh for relative timestamps/tooltips
+        try {
+          this.refreshTimer = new Timer();
+          this.refreshTimer.schedule(new TimerTask() {
+            @Override
+            public void run() {
+              try {
+                SwingUtilities.invokeLater(() -> {
+                  try {
+                    for (int i = 0; i < pnlMessages.getComponentCount(); i++) {
+                      if (pnlMessages.getComponent(i) instanceof MessagePanel) {
+                        ((MessagePanel) pnlMessages.getComponent(i)).refreshRelativeTime();
+                      }
+                    }
+                  } catch (Exception ex) {
+                    log.error("Error during PopoutMessenger periodic refresh (EDT)", ex);
+                  }
+                });
+              } catch (Exception ex) {
+                log.error("Error scheduling PopoutMessenger periodic refresh", ex);
+              }
+            }
+          }, 60000, 60000); // every minute
+        } catch (Exception ex) {
+          log.error("Could not start refresh timer for PopoutMessenger", ex);
+        }
     }
 
     /**
@@ -844,6 +874,13 @@ public class PopoutMessenger extends javax.swing.JDialog implements NewMessageCo
             dialog.addWindowListener(new java.awt.event.WindowAdapter() {
                 @Override
                 public void windowClosing(java.awt.event.WindowEvent e) {
+                    try {
+                      if (dialog.refreshTimer != null) {
+                        dialog.refreshTimer.cancel();
+                      }
+                    } catch (Exception ex) {
+                      log.error("Error stopping refresh timer on window close", ex);
+                    }
                     System.exit(0);
                 }
             });
@@ -937,5 +974,17 @@ public class PopoutMessenger extends javax.swing.JDialog implements NewMessageCo
         if(removed) {
             this.pnlMessages.revalidate();
         }
+    }
+
+    @Override
+    public void dispose() {
+      try {
+        if (this.refreshTimer != null) {
+          this.refreshTimer.cancel();
+        }
+      } catch (Exception ex) {
+        log.error("Error cancelling PopoutMessenger refresh timer on dispose", ex);
+      }
+      super.dispose();
     }
 }

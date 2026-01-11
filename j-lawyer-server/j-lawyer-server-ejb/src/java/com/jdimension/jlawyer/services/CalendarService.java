@@ -747,7 +747,7 @@ public class CalendarService implements CalendarServiceRemote, CalendarServiceLo
     private CalendarEntryTemplateFacadeLocal calendarEntryTemplates;
     @EJB
     private CalendarAccessFacadeLocal calendarAccess;
-    
+
     @Inject
     @JMSConnectionFactory("java:/JmsXA")
     private JMSContext jmsContext;
@@ -875,9 +875,9 @@ public class CalendarService implements CalendarServiceRemote, CalendarServiceLo
         }
 
         this.archiveFileReviewsFacade.create(review);
-        
-        if(review.getCalendarSetup()!=null && review.getCalendarSetup().getId()!=null) {
-            if(review.getEventType()==review.getCalendarSetup().getEventType()) {
+
+        if (review.getCalendarSetup() != null && review.getCalendarSetup().getId() != null) {
+            if (review.getEventType() == review.getCalendarSetup().getEventType()) {
                 switch (review.getEventType()) {
                     case EventTypes.EVENTTYPE_FOLLOWUP:
                         aFile.setLastCalendarSetupFollowups(review.getCalendarSetup().getId());
@@ -896,10 +896,10 @@ public class CalendarService implements CalendarServiceRemote, CalendarServiceLo
         }
 
         this.archiveFileService.addCaseHistory(idGen.getID().toString(), aFile, review.getEventTypeName() + " hinzugefügt: " + review.getSummary() + " (" + review.toString() + ")", context.getCallerPrincipal().getName(), new Date());
-        
+
         if (!ServerStringUtils.isEmpty(review.getAssignee())) {
             // only send notifications if ANOTHER person entered the review
-            if(!(review.getAssignee().equals(context.getCallerPrincipal().getName()))) {
+            if (!(review.getAssignee().equals(context.getCallerPrincipal().getName()))) {
                 AppUserBean assignee = this.userBeanFacade.find(review.getAssignee());
                 if (assignee != null) {
                     boolean notificationEnabled = assignee.getSettingAsBoolean(UserSettingsKeys.NOTIFICATION_EVENT_CALENDARENTRY, true);
@@ -908,8 +908,8 @@ public class CalendarService implements CalendarServiceRemote, CalendarServiceLo
                         omr.setTo(assignee.getEmail());
                         omr.setSubject("Neuer Kalendereintrag für Dich");
                         omr.setMainCaption("Es wurde ein(e) neue(r) " + review.getEventTypeName() + " für Dich erstellt");
-                        omr.setSubCaption(review.toString()  + " " + review.getSummary());
-                        StringBuilder body=new StringBuilder();
+                        omr.setSubCaption(review.toString() + " " + review.getSummary());
+                        StringBuilder body = new StringBuilder();
                         body.append(ServerStringUtils.nonEmpty(review.getSummary())).append("\n").append(ServerStringUtils.nonEmpty(review.getDescription())).append("\nOrt: ").append(ServerStringUtils.nonEmpty(review.getLocation())).append("\nverantwortlich: ").append(ServerStringUtils.nonEmpty(review.getAssignee())).append("\neingetragen von: ").append(context.getCallerPrincipal().getName());
                         body.append("\nAkte: ").append(aFile.getFileNumber()).append(" ").append(aFile.getName());
                         omr.setBodyContent(body.toString());
@@ -927,7 +927,7 @@ public class CalendarService implements CalendarServiceRemote, CalendarServiceLo
 
         return this.archiveFileReviewsFacade.find(revId);
     }
-    
+
     private void publishOutgoingMailRequest(OutgoingMailRequest req) {
         try {
             ObjectMessage msg = this.jmsContext.createObjectMessage(req);
@@ -1032,7 +1032,7 @@ public class CalendarService implements CalendarServiceRemote, CalendarServiceLo
         SecurityUtils.checkGroupsForCase(context.getCallerPrincipal().getName(), aFile, this.securityFacade, this.archiveFileService.getAllowedGroups(aFile));
 
         this.archiveFileService.addCaseHistory(idGen.getID().toString(), aFile, rb.getEventTypeName() + " gelöscht: " + rb.getSummary() + " (" + rb.toString() + ")", context.getCallerPrincipal().getName(), new Date());
-        
+
         this.archiveFileReviewsFacade.remove(rb);
 
         try {
@@ -1070,7 +1070,7 @@ public class CalendarService implements CalendarServiceRemote, CalendarServiceLo
         fromDate.setMinutes(0);
         fromDate.setSeconds(0);
         // still an issue with some milliseconds in the Date, but the database might have 0 milliseconds --> truncate
-        Instant fromInstant=fromDate.toInstant().truncatedTo(ChronoUnit.SECONDS);
+        Instant fromInstant = fromDate.toInstant().truncatedTo(ChronoUnit.SECONDS);
 
         toDate.setHours(23);
         toDate.setMinutes(59);
@@ -1086,30 +1086,57 @@ public class CalendarService implements CalendarServiceRemote, CalendarServiceLo
             con = utils.getConnection();
             if (status == ArchiveFileConstants.REVIEWSTATUS_ANY) {
                 if (type == ArchiveFileConstants.REVIEWTYPE_ANY) {
-                    st = con.prepareStatement("select id, archiveFileKey from case_events where beginDate >= ? and beginDate <= ? order by beginDate asc limit ?");
+//                    st = con.prepareStatement("select id, archiveFileKey from case_events where beginDate >= ? and beginDate <= ? order by beginDate asc limit ?");
+//                    st.setTimestamp(1, new java.sql.Timestamp(fromInstant.toEpochMilli()));
+//                    st.setTimestamp(2, new java.sql.Timestamp(toDate.getTime()));
+//                    st.setInt(3, dbLimit);
+
+                    // limit only applies to wv, not frist or termin
+                    st = con.prepareStatement("(select id, archiveFileKey, beginDate from case_events where beginDate >= ? and beginDate <= ? and (eventType=20 or eventType=30)) \n"
+                            + "union \n"
+                            + "(select id, archiveFileKey, beginDate from case_events where beginDate >= ? and beginDate <= ? and eventType=10 limit ?) \n"
+                            + "order by beginDate asc");
                     st.setTimestamp(1, new java.sql.Timestamp(fromInstant.toEpochMilli()));
                     st.setTimestamp(2, new java.sql.Timestamp(toDate.getTime()));
-                    st.setInt(3, dbLimit);
+                    st.setTimestamp(3, new java.sql.Timestamp(fromInstant.toEpochMilli()));
+                    st.setTimestamp(4, new java.sql.Timestamp(toDate.getTime()));
+                    st.setInt(5, dbLimit);
                 } else {
-                    st = con.prepareStatement("select id, archiveFileKey from case_events where eventType=? and beginDate >= ? and beginDate <= ? order by beginDate asc limit ?");
+                    if (type == ArchiveFileConstants.REVIEWTYPE_FOLLOWUP) {
+                        st = con.prepareStatement("select id, archiveFileKey from case_events where eventType=? and beginDate >= ? and beginDate <= ? order by beginDate asc limit ?");
+                        st.setInt(4, dbLimit);
+                    } else {
+                        st = con.prepareStatement("select id, archiveFileKey from case_events where eventType=? and beginDate >= ? and beginDate <= ? order by beginDate asc");
+                    }
                     st.setInt(1, type);
                     st.setTimestamp(2, new java.sql.Timestamp(fromInstant.toEpochMilli()));
                     st.setTimestamp(3, new java.sql.Timestamp(toDate.getTime()));
-                    st.setInt(4, dbLimit);
+
                 }
             } else if (type == ArchiveFileConstants.REVIEWTYPE_ANY) {
-                st = con.prepareStatement("select id, archiveFileKey from case_events where done=? and beginDate >= ? and beginDate <= ? order by beginDate asc limit ?");
+                st = con.prepareStatement("(select id, archiveFileKey, beginDate from case_events where done=? and beginDate >= ? and beginDate <= ? and (eventType=20 or eventType=30)) \n"
+                        + "union \n"
+                        + "(select id, archiveFileKey, beginDate from case_events where done=? and beginDate >= ? and beginDate <= ? and eventType=10 limit ?) \n"
+                        + "order by beginDate asc");
                 st.setInt(1, status);
                 st.setTimestamp(2, new java.sql.Timestamp(fromInstant.toEpochMilli()));
                 st.setTimestamp(3, new java.sql.Timestamp(toDate.getTime()));
-                st.setInt(4, dbLimit);
+                st.setInt(4, status);
+                st.setTimestamp(5, new java.sql.Timestamp(fromInstant.toEpochMilli()));
+                st.setTimestamp(6, new java.sql.Timestamp(toDate.getTime()));
+                st.setInt(7, dbLimit);
             } else {
-                st = con.prepareStatement("select id, archiveFileKey from case_events where eventType=? and done=? and beginDate >= ? and beginDate <= ? order by beginDate asc limit ?");
+                if (type == ArchiveFileConstants.REVIEWTYPE_FOLLOWUP) {
+                    st = con.prepareStatement("select id, archiveFileKey from case_events where eventType=? and done=? and beginDate >= ? and beginDate <= ? order by beginDate asc limit ?");
+                    st.setInt(5, dbLimit);
+                } else {
+                    st = con.prepareStatement("select id, archiveFileKey from case_events where eventType=? and done=? and beginDate >= ? and beginDate <= ? order by beginDate asc");
+                }
                 st.setInt(1, type);
                 st.setInt(2, status);
                 st.setTimestamp(3, new java.sql.Timestamp(fromInstant.toEpochMilli()));
                 st.setTimestamp(4, new java.sql.Timestamp(toDate.getTime()));
-                st.setInt(5, dbLimit);
+
             }
             rs = st.executeQuery();
 
@@ -1128,7 +1155,7 @@ public class CalendarService implements CalendarServiceRemote, CalendarServiceLo
                 if (allowedCases.contains(archiveFileKey)) {
                     allowed = true;
                 }
-                
+
                 if (allowed) {
                     ArchiveFileReviewsBean rev = this.archiveFileReviewsFacade.find(id);
                     ArchiveFileBean dto = this.archiveFileFacade.find(archiveFileKey);
@@ -1178,24 +1205,24 @@ public class CalendarService implements CalendarServiceRemote, CalendarServiceLo
     public void markReviewDone(String reviewId, boolean done) throws Exception {
 
         ArchiveFileReviewsBean currentReview = this.archiveFileReviewsFacade.find(reviewId);
-        if(currentReview.isDone()==done) {
+        if (currentReview.isDone() == done) {
             log.info("Calendar entry " + reviewId + " is already marked as done=" + done);
             return;
         }
-        
+
         StringGenerator idGen = new StringGenerator();
         ArchiveFileBean aFile = currentReview.getArchiveFileKey();
         SecurityUtils.checkGroupsForCase(context.getCallerPrincipal().getName(), aFile, this.securityFacade, this.archiveFileService.getAllowedGroups(aFile));
 
         currentReview.setDone(done);
         this.archiveFileReviewsFacade.edit(currentReview);
-        
+
         String status = "offen";
         if (done) {
             status = "erledigt";
         }
         this.archiveFileService.addCaseHistory(idGen.getID().toString(), aFile, currentReview.getEventTypeName() + " geändert: " + currentReview.getSummary() + " (" + currentReview.toString() + ", " + status + ")", context.getCallerPrincipal().getName(), new Date());
-        
+
         this.publishUpdatedEventMail(currentReview, aFile);
 
         try {
@@ -1205,7 +1232,7 @@ public class CalendarService implements CalendarServiceRemote, CalendarServiceLo
         }
 
     }
-    
+
     @Override
     @RolesAllowed({"writeArchiveFileRole"})
     public ArchiveFileReviewsBean updateReview(String archiveFileId, ArchiveFileReviewsBean review) throws Exception {
@@ -1238,9 +1265,9 @@ public class CalendarService implements CalendarServiceRemote, CalendarServiceLo
             review.setEndDate(endDate);
         }
         this.archiveFileReviewsFacade.edit(review);
-        
-        if(review.getCalendarSetup()!=null && review.getCalendarSetup().getId()!=null) {
-            if(review.getEventType()==review.getCalendarSetup().getEventType()) {
+
+        if (review.getCalendarSetup() != null && review.getCalendarSetup().getId() != null) {
+            if (review.getEventType() == review.getCalendarSetup().getEventType()) {
                 switch (review.getEventType()) {
                     case EventTypes.EVENTTYPE_FOLLOWUP:
                         aFile.setLastCalendarSetupFollowups(review.getCalendarSetup().getId());
@@ -1257,13 +1284,13 @@ public class CalendarService implements CalendarServiceRemote, CalendarServiceLo
                 this.archiveFileFacade.edit(aFile);
             }
         }
-        
+
         String status = "offen";
         if (review.isDone()) {
             status = "erledigt";
         }
         this.archiveFileService.addCaseHistory(idGen.getID().toString(), aFile, review.getEventTypeName() + " geändert: " + review.getSummary() + " (" + review.toString() + ", " + status + ")", context.getCallerPrincipal().getName(), new Date());
-        
+
         this.publishUpdatedEventMail(review, aFile);
 
         try {
@@ -1274,11 +1301,11 @@ public class CalendarService implements CalendarServiceRemote, CalendarServiceLo
 
         return this.archiveFileReviewsFacade.find(review.getId());
     }
-    
+
     private void publishUpdatedEventMail(ArchiveFileReviewsBean review, ArchiveFileBean aFile) {
         if (!ServerStringUtils.isEmpty(review.getAssignee())) {
             // only send notifications if ANOTHER person entered the review
-            if(!(review.getAssignee().equals(context.getCallerPrincipal().getName()))) {
+            if (!(review.getAssignee().equals(context.getCallerPrincipal().getName()))) {
                 AppUserBean assignee = this.userBeanFacade.find(review.getAssignee());
                 if (assignee != null) {
                     boolean notificationEnabled = assignee.getSettingAsBoolean(UserSettingsKeys.NOTIFICATION_EVENT_CALENDARENTRY, true);
@@ -1287,8 +1314,8 @@ public class CalendarService implements CalendarServiceRemote, CalendarServiceLo
                         omr.setTo(assignee.getEmail());
                         omr.setSubject("Geänderter Kalendereintrag für Dich");
                         omr.setMainCaption("Es wurde ein(e) neue(r) " + review.getEventTypeName() + " geändert, für den Du verantwortlich bist");
-                        omr.setSubCaption(review.toString()  + " " + review.getSummary());
-                        StringBuilder body=new StringBuilder();
+                        omr.setSubCaption(review.toString() + " " + review.getSummary());
+                        StringBuilder body = new StringBuilder();
                         body.append(ServerStringUtils.nonEmpty(review.getSummary())).append("\n").append(ServerStringUtils.nonEmpty(review.getDescription())).append("\nOrt: ").append(ServerStringUtils.nonEmpty(review.getLocation())).append("\nverantwortlich: ").append(ServerStringUtils.nonEmpty(review.getAssignee())).append("\neingetragen von: ").append(context.getCallerPrincipal().getName());
                         body.append("\nAkte: ").append(aFile.getFileNumber()).append(" ").append(aFile.getName());
                         omr.setBodyContent(body.toString());
@@ -1311,14 +1338,14 @@ public class CalendarService implements CalendarServiceRemote, CalendarServiceLo
         return getReviewsImpl(archiveFileKey, context.getCallerPrincipal().getName());
 
     }
-    
+
     @Override
     @RolesAllowed({"readArchiveFileRole"})
     public ArchiveFileReviewsBean getReview(String eventId) throws Exception {
         // no security check, a client cannot know the event id without having access to the case
         return this.archiveFileReviewsFacade.find(eventId);
     }
-    
+
     @Override
     @RolesAllowed({"readArchiveFileRole"})
     public Collection<ArchiveFileReviewsBean> getReviews(String archiveFileKey, boolean done) throws Exception {
@@ -1392,13 +1419,13 @@ public class CalendarService implements CalendarServiceRemote, CalendarServiceLo
     public void removeCalendarSetup(CalendarSetup cs) {
         this.calendarSetups.remove(cs);
     }
-    
+
     @Override
     @RolesAllowed({"adminRole"})
     public void runFullCalendarSync() {
         this.calendarSync.runFullCalendarSync();
     }
-    
+
     @Override
     @RolesAllowed({"loginRole"})
     public boolean hasEvents(CalendarSetup calendar) throws Exception {
@@ -1443,23 +1470,23 @@ public class CalendarService implements CalendarServiceRemote, CalendarServiceLo
     @Override
     @RolesAllowed({"loginRole"})
     public List<ArchiveFileReviewsBean> getConflictingEvents(int eventType, Date fromDate, Date toDate, String assignee) throws Exception {
-        Date from=fromDate;
-        Date to=toDate;
-        if(eventType==ArchiveFileReviewsBean.EVENTTYPE_FOLLOWUP || eventType==ArchiveFileReviewsBean.EVENTTYPE_RESPITE) {
-            
+        Date from = fromDate;
+        Date to = toDate;
+        if (eventType == ArchiveFileReviewsBean.EVENTTYPE_FOLLOWUP || eventType == ArchiveFileReviewsBean.EVENTTYPE_RESPITE) {
+
             fromDate.setHours(0);
             fromDate.setMinutes(0);
             fromDate.setSeconds(0);
-            from=new Date(fromDate.getTime());
-            
-            toDate=new Date(from.getTime());
+            from = new Date(fromDate.getTime());
+
+            toDate = new Date(from.getTime());
             toDate.setHours(23);
             toDate.setMinutes(59);
             toDate.setSeconds(59);
-            to=new Date(toDate.getTime());
+            to = new Date(toDate.getTime());
         }
-        
-        String principalId=this.context.getCallerPrincipal().getName();
+
+        String principalId = this.context.getCallerPrincipal().getName();
         ArrayList<String> allowedCases = new ArrayList<>();
         if (principalId != null) {
             try {
@@ -1477,12 +1504,12 @@ public class CalendarService implements CalendarServiceRemote, CalendarServiceLo
         ArrayList<ArchiveFileReviewsBean> list = new ArrayList<>();
         try {
             con = utils.getConnection();
-            if(ServerStringUtils.isEmpty(assignee)) {
+            if (ServerStringUtils.isEmpty(assignee)) {
                 // a.starttime <= b.endtime and a.endtime >= b.starttime
                 // select * from case_events where beginDate < '2022-05-28 11:05:00.000' and endDate > '2022-05-28 10:30:00.000' and done=0; 
                 st = con.prepareStatement("select id, archiveFileKey from case_events where beginDate < ? and endDate > ? and done=0 order by beginDate asc");
-                Instant fromInstant=from.toInstant().truncatedTo(ChronoUnit.SECONDS);
-                Instant toInstant=to.toInstant().truncatedTo(ChronoUnit.SECONDS);
+                Instant fromInstant = from.toInstant().truncatedTo(ChronoUnit.SECONDS);
+                Instant toInstant = to.toInstant().truncatedTo(ChronoUnit.SECONDS);
                 st.setTimestamp(1, new java.sql.Timestamp(toInstant.toEpochMilli()));
                 //st.setTimestamp(2, new java.sql.Timestamp(toDate.getTime()));
                 st.setTimestamp(2, new java.sql.Timestamp(fromInstant.toEpochMilli()));
@@ -1491,15 +1518,14 @@ public class CalendarService implements CalendarServiceRemote, CalendarServiceLo
                 // a.starttime <= b.endtime and a.endtime >= b.starttime
                 // select * from case_events where beginDate < '2022-05-28 11:05:00.000' and endDate > '2022-05-28 10:30:00.000' and done=0; 
                 st = con.prepareStatement("select id, archiveFileKey from case_events where beginDate < ? and endDate > ? and done=0 and assignee=? order by beginDate asc");
-                Instant fromInstant=from.toInstant().truncatedTo(ChronoUnit.SECONDS);
-                Instant toInstant=to.toInstant().truncatedTo(ChronoUnit.SECONDS);
+                Instant fromInstant = from.toInstant().truncatedTo(ChronoUnit.SECONDS);
+                Instant toInstant = to.toInstant().truncatedTo(ChronoUnit.SECONDS);
                 st.setTimestamp(1, new java.sql.Timestamp(toInstant.toEpochMilli()));
                 //st.setTimestamp(2, new java.sql.Timestamp(toDate.getTime()));
                 st.setTimestamp(2, new java.sql.Timestamp(fromInstant.toEpochMilli()));
                 st.setString(3, assignee);
                 rs = st.executeQuery();
             }
-            
 
             while (rs.next()) {
                 String archiveFileKey = rs.getString(2);
@@ -1558,50 +1584,51 @@ public class CalendarService implements CalendarServiceRemote, CalendarServiceLo
     public List listCalendars(String host, boolean ssl, int port, String user, String password, String path) throws Exception {
         // need to bypass CalendarSyncService because it is a singleton
         NextcloudCalendarConnector nc = new NextcloudCalendarConnector(host, ssl, port, user, password);
-            if(!ServerStringUtils.isEmpty(path))
-                nc.setSubpathPrefix(path);
-            return nc.getAllCalendars();
+        if (!ServerStringUtils.isEmpty(path)) {
+            nc.setSubpathPrefix(path);
+        }
+        return nc.getAllCalendars();
     }
-    
+
     @Override
     @PermitAll
     public void sendDailyAgenda() throws Exception {
-        
+
     }
 
     @Override
     @RolesAllowed({"loginRole"})
     public CalendarEntryTemplate addCalendarEntryTemplate(CalendarEntryTemplate template) throws Exception {
-        StringGenerator idGen=new StringGenerator();
-        String id=idGen.getID().toString();
+        StringGenerator idGen = new StringGenerator();
+        String id = idGen.getID().toString();
         template.setId(id);
         this.calendarEntryTemplates.create(template);
         return this.calendarEntryTemplates.find(id);
     }
-    
+
     @Override
     @RolesAllowed({"loginRole"})
     public CalendarEntryTemplate updateCalendarEntryTemplate(CalendarEntryTemplate template) throws Exception {
         this.calendarEntryTemplates.edit(template);
         return this.calendarEntryTemplates.find(template.getId());
     }
-    
+
     @Override
     @RolesAllowed({"loginRole"})
     public void removeCalendarEntryTemplate(CalendarEntryTemplate template) throws Exception {
         this.calendarEntryTemplates.remove(template);
     }
-    
+
     @Override
     @RolesAllowed({"loginRole"})
     public List<CalendarEntryTemplate> getCalendarEntryTemplates() throws Exception {
-        
-        List<CalendarEntryTemplate> allTemplates=this.calendarEntryTemplates.findAll();
+
+        List<CalendarEntryTemplate> allTemplates = this.calendarEntryTemplates.findAll();
         allTemplates.sort(Comparator.comparing(
-            entry -> entry.getName().toLowerCase()
+                entry -> entry.getName().toLowerCase()
         ));
         return allTemplates;
-        
+
     }
 
 }

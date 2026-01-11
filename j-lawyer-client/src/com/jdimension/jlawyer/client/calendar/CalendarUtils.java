@@ -722,6 +722,26 @@ public class CalendarUtils {
         return calService.isHolidayForCurrentUser(date);
 
     }
+    
+    public Date getNextAvailableWorkday(Date date) throws Exception {
+        Calendar c = Calendar.getInstance();
+        c.setTime(date);
+        while(isHolidayForCurrentUser(date) || c.get(Calendar.DAY_OF_WEEK) == Calendar.SATURDAY || c.get(Calendar.DAY_OF_WEEK) == Calendar.SUNDAY) {
+            c.add(Calendar.DAY_OF_YEAR, 1);
+            date=c.getTime();
+        }
+        return date;
+    }
+
+    public Date getPreviousAvailableWorkday(Date date) throws Exception {
+        Calendar c = Calendar.getInstance();
+        c.setTime(date);
+        while(isHolidayForCurrentUser(date) || c.get(Calendar.DAY_OF_WEEK) == Calendar.SATURDAY || c.get(Calendar.DAY_OF_WEEK) == Calendar.SUNDAY) {
+            c.add(Calendar.DAY_OF_YEAR, -1);
+            date=c.getTime();
+        }
+        return date;
+    }
 
     public boolean isHoliday(Date date, String countryId, String regionId) throws Exception {
         ClientSettings settings = ClientSettings.getInstance();
@@ -926,7 +946,7 @@ public class CalendarUtils {
                 relatedEventDlg.setEventType(entry.getEventType());
                 relatedEventDlg.setSummary(template.getRelatedName());
                 relatedEventDlg.setDescription((entry.getDescription() + System.lineSeparator() + template.getRelatedDescription()).trim());
-                relatedEventDlg.setReviewAssignee(entry.getAssignee());
+                relatedEventDlg.setReviewAssignees(entry.getAssignee(), entry.getAssignee());
                 
                 Calendar c = Calendar.getInstance();
                 c.setTime(entry.getBeginDate());

@@ -677,6 +677,7 @@ public class UserUtils {
 
     private static final Logger log = Logger.getLogger(UserUtils.class.getName());
     private static Boolean currentUserAdmin = null;
+    private static Boolean currentUserSysAdmin = null;
 
     public static boolean isCurrentUserAdmin(Component parent) {
         return isCurrentUserAdmin(parent, true);
@@ -703,5 +704,32 @@ public class UserUtils {
             }
         }
         return currentUserAdmin;
+    }
+    
+    public static boolean isCurrentUserSysAdmin(Component parent) {
+        return isCurrentUserSysAdmin(parent, true);
+    }
+
+    public static boolean isCurrentUserSysAdmin(Component parent, boolean displayWarning) {
+        boolean admin = isCurrentUserSysAdmin();
+
+        if (!admin && displayWarning) {
+            JOptionPane.showMessageDialog(parent, java.util.ResourceBundle.getBundle("com/jdimension/jlawyer/client/JKanzleiGUI").getString("msg.sysadminrequired"), java.util.ResourceBundle.getBundle("com/jdimension/jlawyer/client/JKanzleiGUI").getString("msg.title.hint"), JOptionPane.INFORMATION_MESSAGE);
+        }
+        return admin;
+    }
+
+    public static boolean isCurrentUserSysAdmin() {
+        if (currentUserSysAdmin == null) {
+            ClientSettings settings = ClientSettings.getInstance();
+            try {
+                JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
+                currentUserSysAdmin = locator.lookupSecurityServiceRemote().isSysAdmin();
+            } catch (Exception ex) {
+                log.error(ex);
+                return false;
+            }
+        }
+        return currentUserSysAdmin;
     }
 }

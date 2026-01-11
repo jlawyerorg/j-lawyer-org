@@ -664,6 +664,8 @@
 package com.jdimension.jlawyer.server.utils;
 
 import java.util.*;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 /**
  *
@@ -721,6 +723,19 @@ public class ServerStringUtils {
             
     }
     
+    public static String replaceCaseInsensitive(String input, String search, String replacement) {
+        if (search == null || search.isEmpty()) {
+            return input; // avoid infinite replacement loop
+        }
+
+        // Quote the search string to treat it as literal text
+        String regex = Pattern.quote(search);
+        Pattern pattern = Pattern.compile(regex, Pattern.CASE_INSENSITIVE);
+        Matcher matcher = pattern.matcher(input);
+
+        // Use Matcher.quoteReplacement to handle replacement text that may include $ or \
+        return matcher.replaceAll(Matcher.quoteReplacement(replacement));
+    }
     
     public static String removeSonderzeichen(String s) {
         String a=nonEmpty(s);
@@ -758,6 +773,20 @@ public class ServerStringUtils {
             return new String[0];
         }
         return list.split(delimiter);
+    }
+    
+    /**
+     * Normiert eine IBAN zur Vergleichbarkeit.
+     * Entfernt alle Leerzeichen und wandelt in Großbuchstaben um.
+     *
+     * @param iban die Eingabe-IBAN
+     * @return normierte IBAN oder Leerstring, wenn Eingabe null oder leer
+     */
+    public static String normalizeIban(String iban) {
+        if (iban == null || iban.isBlank()) {
+            return "";
+        }
+        return iban.replaceAll("\\s+", "").toUpperCase();
     }
     
 }

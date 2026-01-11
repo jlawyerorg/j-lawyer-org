@@ -683,6 +683,7 @@ import com.jdimension.jlawyer.persistence.ServerSettingsBeanFacadeLocal;
 import com.jdimension.jlawyer.security.CryptoProvider;
 import com.jdimension.jlawyer.server.utils.ContentTypes;
 import com.jdimension.jlawyer.server.utils.ServerFileUtils;
+import com.jdimension.jlawyer.server.utils.ServerStringUtils;
 import com.jdimension.jlawyer.services.AddressServiceLocal;
 import com.jdimension.jlawyer.services.ArchiveFileServiceLocal;
 import com.jdimension.jlawyer.services.FormsServiceLocal;
@@ -692,6 +693,7 @@ import java.io.ByteArrayOutputStream;
 import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Calendar;
 import java.util.Collection;
 import java.util.Date;
 import java.util.HashMap;
@@ -700,6 +702,7 @@ import java.util.Properties;
 import javax.annotation.security.RunAs;
 import javax.mail.Address;
 import javax.mail.Authenticator;
+import javax.mail.FetchProfile;
 import javax.mail.Flags;
 import javax.mail.Folder;
 import javax.mail.FolderClosedException;
@@ -708,6 +711,9 @@ import javax.mail.PasswordAuthentication;
 import javax.mail.Session;
 import javax.mail.Store;
 import javax.mail.internet.MimeMessage;
+import javax.mail.search.ComparisonTerm;
+import javax.mail.search.SearchTerm;
+import javax.mail.search.SentDateTerm;
 import javax.mail.util.SharedByteArrayInputStream;
 import javax.naming.InitialContext;
 import org.apache.log4j.Logger;
@@ -737,7 +743,7 @@ public class MailboxScannerTask extends java.util.TimerTask {
             MailboxSetupFacadeLocal mailboxes = (MailboxSetupFacadeLocal) ic.lookup("java:global/j-lawyer-server/j-lawyer-server-ejb/MailboxSetupFacade!com.jdimension.jlawyer.persistence.MailboxSetupFacadeLocal");
             List<MailboxSetup> entries = mailboxes.findAll();
 
-            ArrayList<String> allFileNumbers = caseSvc.getAllArchiveFileNumbersUnrestricted();
+            ArrayList<String> allFileNumbers = caseSvc.getAllArchiveFileNumbersUnrestricted(false);
             List<PartyTypeBean> allPartyTypes = sysSvc.getPartyTypes();
             for (MailboxSetup ms : entries) {
                 if (ms.isScanInbox()) {
@@ -752,7 +758,10 @@ public class MailboxScannerTask extends java.util.TimerTask {
                         if (t == null) {
                             t = "";
                         }
+                        long processingStart = System.currentTimeMillis();
+                        log.info("Processing mailbox " + ms.getEmailAddress());
                         this.processMailbox(ms, caseSvc, adrSvc, sysSvc, formsSvc, allFileNumbers, documentTags, blacklistedTypes, t, ms.isScanIgnoreInline(), ms.getScanMinAttachmentSize(), allPartyTypes, sysSvc.getDefaultDocumentNameTemplate());
+                        log.info("Finished processing mailbox " + ms.getEmailAddress() + " in " + ((System.currentTimeMillis() - processingStart) / 1000) + " seconds");
                     } catch (Throwable ex) {
                         log.error("Error processing scanned inbox " + ms.getEmailAddress(), ex);
                     }
@@ -765,8 +774,6 @@ public class MailboxScannerTask extends java.util.TimerTask {
     }
 
     private void processMailbox(MailboxSetup ms, ArchiveFileServiceLocal caseSvc, AddressServiceLocal adrSvc, SystemManagementLocal sysSvc, FormsServiceLocal formsSvc, ArrayList<String> allFileNumbers, List<String> tags, List<String> blacklistedFileTypes, String exclusionList, boolean ignoreInline, int minAttachmentSize, List<PartyTypeBean> allPartyTypes, DocumentNameTemplate defaultNameTemplate) {
-
-        log.info("Processing mailbox " + ms.getEmailAddress());
 
         String server = null;
         try {
@@ -802,6 +809,8 @@ public class MailboxScannerTask extends java.util.TimerTask {
                 props.setProperty("mail.imaps.socketFactory.port", "993");
                 props.setProperty("mail.imaps.starttls.enable", "true");
 
+                ms.applyCustomProperties(ms.customConfigurationsReceiveProperties(), props);
+
                 session = Session.getInstance(props);
 
                 // should be imaps for Office 365
@@ -824,6 +833,7 @@ public class MailboxScannerTask extends java.util.TimerTask {
                 if (trustedServers != null) {
                     props.put("mail.imaps.ssl.trust", trustedServers.getSettingValue());
                 }
+                ms.applyCustomProperties(ms.customConfigurationsReceiveProperties(), props);
 
                 session = Session.getInstance(props, new Authenticator() {
                     @Override
@@ -879,14 +889,50 @@ public class MailboxScannerTask extends java.util.TimerTask {
                 log.error("Folder for imported mails could not be checked / created!", ex);
             }
 
-            Message[] allMessages = inboxFolder.getMessages();
+            Message[] allMessages = new Message[0];
+            boolean fallbackNeeded = false;
+            try {
+
+                // try server-side filtering for messages in a relevant timeframe (last x days)
+                // Calculate the date two days ago
+                Calendar cal = Calendar.getInstance();
+                cal.add(Calendar.DATE, -1 * ms.getScanDays());
+                Date daysAgo = cal.getTime();
+
+                // Use SentDateTerm for better compatibility
+                SearchTerm newerThanDays = new SentDateTerm(ComparisonTerm.GT, daysAgo);
+                allMessages = inboxFolder.search(newerThanDays);
+                if (allMessages == null || allMessages.length == 0) {
+                    fallbackNeeded = true;
+                    log.warn("Mailserver does not support search by sent date or returned an empty message list - executing fallback");
+                }
+            } catch (Exception ex) {
+                log.error("Mailserver does not support search by sent date - executing fallback", ex);
+                fallbackNeeded = true;
+            }
+
+            if (fallbackNeeded) {
+                allMessages = inboxFolder.getMessages();
+            }
+
+            // try fetching all headers at once to avoid server roundtrips
+            try {
+                FetchProfile fp = new FetchProfile();
+                fp.add(FetchProfile.Item.ENVELOPE); // includes headers like Date, Subject, From
+                inboxFolder.fetch(allMessages, fp);
+            } catch (Exception ex) {
+                log.warn("Fetching mail headers failed", ex);
+            }
+
             ArrayList<Message> deleteMessages = new ArrayList<>();
             long currentTimeStamp = System.currentTimeMillis();
+            if (allMessages != null) {
+                log.info("processing " + allMessages.length + " messages in mailbox " + ms.getEmailAddress());
+            }
             for (Message msg : allMessages) {
 
                 if (msg.getReceivedDate() != null) {
-                    if (msg.getReceivedDate().getTime() < (currentTimeStamp - (1000l * 60l * 60l * 24l * 31l * 2l))) {
-                        log.info("Message '" + msg.getSubject() + "' is older than two months and will not be processed");
+                    if (msg.getReceivedDate().getTime() < (currentTimeStamp - (1000l * 60l * 60l * 24l * ms.getScanDays()))) {
                         continue;
                     }
                 }
@@ -1161,6 +1207,18 @@ public class MailboxScannerTask extends java.util.TimerTask {
                     continue;
                 }
 
+                if (!ServerStringUtils.isEmpty(ms.getScanDefaultCase())) {
+                    // check if default case exists
+                    ArchiveFileBean defaultCase = caseSvc.getArchiveFileUnrestricted(ms.getScanDefaultCase());
+                    if (defaultCase != null) {
+                        log.info("message from " + from + " with subject '" + copiedMsg.getSubject() + "' will be assigned to default case " + defaultCase.getFileNumber());
+                        boolean saved = this.saveToCase(copiedMsg, msg.getReceivedDate(), defaultCase, caseSvc, sysSvc, formsSvc, tags, blacklistedFileTypes, ignoreInline, minAttachmentSize, defaultNameTemplate, allPartyTypes);
+                        if (saved) {
+                            deleteMessages.add(msg);
+                        }
+                    }
+                }
+
             }
 
             if (!deleteMessages.isEmpty()) {
@@ -1238,26 +1296,26 @@ public class MailboxScannerTask extends java.util.TimerTask {
             Collection<String> formPlaceHolders = formsSvc.getPlaceHoldersForCaseUnrestricted(toCase.getId());
             HashMap<String, String> formPlaceHolderValues = formsSvc.getPlaceHolderValuesForCaseUnrestricted(toCase.getId());
 
-            String newNameMsg = msg.getSubject();
-            if (newNameMsg == null) {
-                newNameMsg = "E-Mail ohne Betreff";
-            }
-            newNameMsg = newNameMsg + ".eml";
-            newNameMsg = ServerFileUtils.sanitizeFileName(newNameMsg);
-            String extension = ServerFileUtils.getExtension(newNameMsg);
-            String docName = caseSvc.getNewDocumentNameUnrestricted(newNameMsg, received, nameTemplate);
-            HashMap<String, Object> placeHolders = serverTemplates.getPlaceHolderValues(docName, toCase, involved, null, null, allPartyTypes, formPlaceHolders, formPlaceHolderValues, caseLawyer, caseAssistant);
-            docName = ServerTemplatesUtil.replacePlaceHolders(docName, placeHolders);
-            docName = ServerFileUtils.sanitizeFileName(docName);
-
-            // remove any extension, because of the template it might be somewhere in the middle of the new name
-            docName = docName.replace("." + extension, "");
-
-            // add back extension
-            docName = ServerFileUtils.preserveExtension(newNameMsg, docName);
-
+            String docName = getEmailFilename(-1, msg.getSubject(), caseSvc, serverTemplates, received, nameTemplate, toCase, allPartyTypes, formPlaceHolders, formPlaceHolderValues, involved, caseLawyer, caseAssistant);
             if (caseSvc.doesDocumentExistUnrestricted(toCase.getId(), docName)) {
-                log.error("There is already a document '" + docName + "' in case " + toCase.getFileNumber() + " - skipping entire message");
+                // naming clash - find alternative name
+                int fileNameIndex = 2;
+                boolean fileNameClash = true;
+                while (fileNameClash && fileNameIndex <= 5) {
+                    docName = getEmailFilename(fileNameIndex, msg.getSubject(), caseSvc, serverTemplates, received, nameTemplate, toCase, allPartyTypes, formPlaceHolders, formPlaceHolderValues, involved, caseLawyer, caseAssistant);
+                    fileNameClash = caseSvc.doesDocumentExistUnrestricted(toCase.getId(), docName);
+                    fileNameIndex = fileNameIndex + 1;
+                    if (fileNameClash) {
+                        docName = null;
+                    }
+                    if (!fileNameClash) {
+                        break;
+                    }
+                }
+            }
+
+            if (docName == null) {
+                log.error("There is a naming conflict for email '" + msg.getSubject() + "' in case " + toCase.getFileNumber() + " - skipping entire message");
                 return false;
             } else {
                 ArchiveFileDocumentsBean newDoc = caseSvc.addDocumentUnrestricted(toCase.getId(), docName, msgData, "", null);
@@ -1303,15 +1361,15 @@ public class MailboxScannerTask extends java.util.TimerTask {
                     newName = "unbekannter Anhang";
                 }
                 newName = ServerFileUtils.sanitizeFileName(newName);
-                extension = ServerFileUtils.getExtension(newName);
+                String extension = ServerFileUtils.getExtension(newName);
                 docName = caseSvc.getNewDocumentNameUnrestricted(newName, received, nameTemplate);
-                placeHolders = serverTemplates.getPlaceHolderValues(docName, toCase, involved, null, null, allPartyTypes, formPlaceHolders, formPlaceHolderValues, caseLawyer, caseAssistant);
+                HashMap<String, Object> placeHolders = serverTemplates.getPlaceHolderValues(docName, toCase, involved, null, null, allPartyTypes, formPlaceHolders, formPlaceHolderValues, caseLawyer, caseAssistant);
                 docName = ServerTemplatesUtil.replacePlaceHolders(docName, placeHolders);
                 docName = ServerFileUtils.sanitizeFileName(docName);
 
                 // remove any extension, because of the template it might be somewhere in the middle of the new name
                 docName = docName.replace("." + extension, "");
-                
+
                 // add back extension
                 docName = ServerFileUtils.preserveExtension(newName, docName);
 
@@ -1320,12 +1378,6 @@ public class MailboxScannerTask extends java.util.TimerTask {
                     continue;
                 } else {
                     ArchiveFileDocumentsBean newDoc = caseSvc.addDocumentUnrestricted(toCase.getId(), docName, attachmentData, "", null);
-                    for (String tag : documentTags) {
-                        DocumentTagsBean dtb = new DocumentTagsBean();
-                        dtb.setArchiveFileKey(newDoc);
-                        dtb.setTagName(tag);
-                        caseSvc.setDocumentTagUnrestricted(newDoc.getId(), dtb, true);
-                    }
                 }
 
             }
@@ -1358,6 +1410,32 @@ public class MailboxScannerTask extends java.util.TimerTask {
         }
         // in case of multiple active cases, return nothing
         return null;
+    }
+
+    private String getEmailFilename(int fileNameIndex, String subject, ArchiveFileServiceLocal caseSvc, ServerTemplatesUtil serverTemplates, Date received, DocumentNameTemplate nameTemplate, ArchiveFileBean toCase, List<PartyTypeBean> allPartyTypes, Collection<String> formPlaceHolders, HashMap<String, String> formPlaceHolderValues, List<ArchiveFileAddressesBean> involved, AppUserBean caseLawyer, AppUserBean caseAssistant) throws Exception {
+        String newNameMsg = subject;
+        if (newNameMsg == null) {
+            newNameMsg = "E-Mail ohne Betreff";
+        }
+
+        if (fileNameIndex >= 2) {
+            newNameMsg = newNameMsg + " (" + fileNameIndex + ")";
+        }
+
+        newNameMsg = newNameMsg + ".eml";
+        newNameMsg = ServerFileUtils.sanitizeFileName(newNameMsg);
+        String extension = ServerFileUtils.getExtension(newNameMsg);
+        String docName = caseSvc.getNewDocumentNameUnrestricted(newNameMsg, received, nameTemplate);
+        HashMap<String, Object> placeHolders = serverTemplates.getPlaceHolderValues(docName, toCase, involved, null, null, allPartyTypes, formPlaceHolders, formPlaceHolderValues, caseLawyer, caseAssistant);
+        docName = ServerTemplatesUtil.replacePlaceHolders(docName, placeHolders);
+        docName = ServerFileUtils.sanitizeFileName(docName);
+
+        // remove any extension, because of the template it might be somewhere in the middle of the new name
+        docName = docName.replace("." + extension, "");
+
+        // add back extension
+        return ServerFileUtils.preserveExtension(newNameMsg, docName);
+
     }
 
 }

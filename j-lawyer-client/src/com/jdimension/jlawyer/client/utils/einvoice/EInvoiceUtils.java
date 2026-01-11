@@ -692,7 +692,7 @@ import org.mustangproject.ZUGFeRD.ZUGFeRDInvoiceImporter;
 public class EInvoiceUtils {
 
     private static final Logger log = Logger.getLogger(EInvoiceUtils.class.getName());
-    
+
     public static boolean isEInvoice(String xml) {
 
         try {
@@ -711,11 +711,11 @@ public class EInvoiceUtils {
     }
 
     public static org.mustangproject.Invoice getEInvoice(com.jdimension.jlawyer.persistence.Invoice caseInvoice, AppUserBean senderUser) throws Exception {
-        
+
         SimpleDateFormat df = new SimpleDateFormat("dd.MM.yyyy");
-        
+
         org.mustangproject.Invoice i = new org.mustangproject.Invoice();
-        
+
         i.setNumber(caseInvoice.getInvoiceNumber());
         i.setDueDate(caseInvoice.getDueDate());
         i.setIssueDate(caseInvoice.getCreationDate());
@@ -779,10 +779,10 @@ public class EInvoiceUtils {
             throw new Exception("Informationen des Rechnungsempfängers unvollständig: Adresse.");
         }
         i.setRecipient(new TradeParty(caseInvoice.getContact().toDisplayName(), caseInvoice.getContact().getStreet() + " " + caseInvoice.getContact().getStreetNumber(), caseInvoice.getContact().getZipCode(), caseInvoice.getContact().getCity(), "DE"));
-        
-        if(!StringUtils.isEmpty(caseInvoice.getContact().getLeitwegId()))
+
+        if (!StringUtils.isEmpty(caseInvoice.getContact().getLeitwegId())) {
             i.setReferenceNumber(caseInvoice.getContact().getLeitwegId());
-        
+        }
 
         List<InvoicePosition> positions = null;
         try {
@@ -799,13 +799,13 @@ public class EInvoiceUtils {
             if (!caseInvoice.isSmallBusiness()) {
                 taxRate = BigDecimal.ZERO;
             }
-            i.addItem(new Item(new Product(pos.getName(), pos.getDescription(), "C62", taxRate), /*price*/ pos.getUnitPrice(), /*qty*/ pos.getUnits()));
+            i.addItem(new Item(new Product(pos.getName(), pos.getDescription(), "H87", taxRate), /*price*/ pos.getUnitPrice(), /*qty*/ pos.getUnits()));
         }
 
         return i;
     }
 
-    public static String invoiceToHTML(ZUGFeRDInvoiceImporter zii) throws Exception {
+    public static String invoiceToHTML(ZUGFeRDImporter zii) throws Exception {
 
         Invoice invoice = zii.extractInvoice();
 
@@ -867,7 +867,7 @@ public class EInvoiceUtils {
         if (recipient != null) {
             html.append("<p>&nbsp;</p><h2>Rechnungsempf&auml;nger</h2>");
             html.append("<p>").append(recipient.getName()).append("</p>");
-            html.append("<p>").append(recipient.getStreet()).append(recipient.getZIP()).append(" ").append(recipient.getLocation()).append("</p>");
+            html.append("<p>").append(recipient.getStreet()).append(" ").append(recipient.getZIP()).append(" ").append(recipient.getLocation()).append("</p>");
             if (recipient.getTaxID() != null) {
                 html.append("<p>Steuernummer: ").append(recipient.getTaxID()).append("</p>");
             }
@@ -904,21 +904,26 @@ public class EInvoiceUtils {
         for (Item item : items) {
             BigDecimal quantity = item.getQuantity();
             BigDecimal price = item.getPrice();
-            BigDecimal total = price.multiply(quantity);
 
-            BigDecimal tax = item.getProduct().getVATPercent();
-            BigDecimal taxAmount = total.multiply(tax).divide(BigDecimal.valueOf(100), 2, RoundingMode.HALF_EVEN);
+            // Netto-Einzelbetrag (Menge * Einzelpreis), kaufmännisch gerundet
+            BigDecimal netAmount = price.multiply(quantity).setScale(2, RoundingMode.HALF_UP);
 
+            // Steuerbetrag pro Position, kaufmännisch gerundet
+            BigDecimal taxRate = item.getProduct().getVATPercent();
+            BigDecimal taxAmount = netAmount
+                    .multiply(taxRate.divide(BigDecimal.valueOf(100), 4, RoundingMode.HALF_UP))
+                    .setScale(2, RoundingMode.HALF_UP);
+
+            totalAmount = totalAmount.add(netAmount);
             totalTaxAmount = totalTaxAmount.add(taxAmount);
-            totalAmount = totalAmount.add(total);
 
             html.append("<tr>")
                     .append("<td>").append(item.getProduct().getName()).append("</td>")
                     .append("<td>").append(item.getProduct().getDescription()).append("</td>")
                     .append("<td align=\"right\">").append(moneyFormat.format(quantity)).append("</td>")
                     .append("<td align=\"right\">").append(moneyFormat.format(price)).append("</td>")
-                    .append("<td align=\"right\">").append(moneyFormat.format(total)).append("</td>")
-                    .append("<td align=\"right\">").append(item.getProduct().getVATPercent()).append("%</td>")
+                    .append("<td align=\"right\">").append(moneyFormat.format(netAmount)).append("</td>")
+                    .append("<td align=\"right\">").append(taxRate).append("%</td>")
                     .append("<td align=\"right\">").append(moneyFormat.format(taxAmount)).append("</td>")
                     .append("</tr>");
         }

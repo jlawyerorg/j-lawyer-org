@@ -670,32 +670,63 @@ import com.jdimension.jlawyer.client.settings.UserSettings;
 import com.jdimension.jlawyer.client.utils.DesktopUtils;
 import com.jdimension.jlawyer.client.utils.FileUtils;
 import com.jdimension.jlawyer.client.utils.FrameUtils;
+import com.jdimension.jlawyer.client.utils.StringUtils;
 import com.jdimension.jlawyer.client.utils.ThreadUtils;
 import com.jdimension.jlawyer.client.utils.VersionUtils;
 import com.jdimension.jlawyer.jlawyerbox.BoxAccess;
+import com.jdimension.jlawyer.persistence.AppUserBean;
 import com.jdimension.jlawyer.services.JLawyerServiceLocator;
 import com.jdimension.jlawyer.services.SecurityServiceRemote;
 import com.jdimension.jlawyer.services.SystemManagementRemote;
 import java.awt.Color;
+import java.awt.Dimension;
 import java.awt.Font;
 import java.awt.Graphics;
+import java.awt.GraphicsConfiguration;
+import java.awt.GraphicsDevice;
+import java.awt.GraphicsEnvironment;
 import java.awt.Rectangle;
 import java.awt.event.KeyEvent;
 import java.io.File;
 import java.io.FileOutputStream;
+import java.io.IOException;
 import java.io.InputStream;
+import java.net.URI;
 import java.net.URL;
 import java.net.URLConnection;
+import java.nio.file.FileSystem;
+import java.nio.file.FileSystems;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Properties;
+import java.util.concurrent.ThreadLocalRandom;
+import java.util.function.Predicate;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 import javax.ejb.EJBAccessException;
 import javax.naming.Context;
 import javax.swing.DefaultComboBoxModel;
 import javax.swing.ImageIcon;
 import javax.swing.JOptionPane;
+import javax.swing.JProgressBar;
 import javax.swing.SwingUtilities;
+import javax.swing.SwingWorker;
 import org.apache.log4j.Logger;
 import themes.colors.DefaultColorTheme;
+import com.google.zxing.BarcodeFormat;
+import com.google.zxing.EncodeHintType;
+import com.google.zxing.WriterException;
+import com.google.zxing.common.BitMatrix;
+import com.google.zxing.qrcode.QRCodeWriter;
+import com.google.zxing.client.j2se.MatrixToImageWriter;
+import java.io.ByteArrayOutputStream;
+import java.util.HashMap;
+import java.util.Map;
+import org.json.simple.JsonObject;
 
 /**
  *
@@ -707,15 +738,14 @@ public class LoginDialog extends javax.swing.JFrame {
     private static final Logger log = Logger.getLogger(LoginDialog.class.getName());
     private static boolean launching = false;
 
-    private StartupSplashFrame splash = null;
-    private String initialStatus = null;
-    
-    private ConnectionProfiles connections=null;
+    private ConnectionProfiles connections = null;
+    private String randomBackground = null;
+    private List<String> availableBackgrounds = Collections.emptyList();
+    private int currentBackgroundIndex = -1;
 
     /**
      * Creates new form LoginDialog
      *
-     * @param initialStatus
      * @param cmdHost
      * @param cmdPort
      * @param cmdSshUser
@@ -727,13 +757,64 @@ public class LoginDialog extends javax.swing.JFrame {
      * @param cmdSshPort
      * @param cmdSshTargetPort
      */
-    public LoginDialog(String initialStatus, String cmdHost, String cmdPort, String cmdUser, String cmdPassword, String cmdSecMode, String cmdSshHost, String cmdSshPort, String cmdSshUser, String cmdSshPwd, String cmdSshTargetPort) {
+    public LoginDialog(String cmdHost, String cmdPort, String cmdUser, String cmdPassword, String cmdSecMode, String cmdSshHost, String cmdSshPort, String cmdSshUser, String cmdSshPwd, String cmdSshTargetPort) {
         initComponents();
-        
-        this.lblAutoUpdate.setText(" ");
-        
+        configureBackgroundSwitchButton();
+
+        this.lblProgress.setText(" ");
+        this.progress.setForeground(DefaultColorTheme.COLOR_LOGO_GREEN);
+        this.progress.setString("");
+        this.lblUser.setText("");
+        this.lblCompany.setText("");
+        this.lblRole.setText("");
+
         try {
-            this.connections=ConnectionProfiles.getInstance();
+            InputStream is = LoginDialog.class.getResourceAsStream("/fonts/exo2/exo2-bold.ttf");
+            Font font = Font.createFont(Font.TRUETYPE_FONT, is);
+            this.lblCompany.setFont(font.deriveFont(Font.BOLD, 16));
+            this.lblProgress.setFont(font.deriveFont(Font.BOLD, 16));
+            this.lblUser.setFont(font.deriveFont(Font.BOLD, 20));
+            this.lblRole.setFont(font.deriveFont(Font.BOLD, 16));
+            this.lblFullClientVersion.setText(VersionUtils.getClientVersion());
+            this.lblFullClientVersion.setFont(font.deriveFont(Font.BOLD, 48));
+            this.lblFullClientVersion.setForeground(DefaultColorTheme.COLOR_LOGO_GREEN);
+            this.lblFullClientVersion.setToolTipText(java.util.ResourceBundle.getBundle("com/jdimension/jlawyer/client/StartupSplashFrame").getString("label.version") + " " + VersionUtils.getFullClientVersion());
+            this.lblBackgroundLocation.setFont(font.deriveFont(Font.BOLD, 16));
+
+        } catch (Throwable t) {
+            log.error(t);
+        }
+
+        this.availableBackgrounds = Collections.emptyList();
+        this.currentBackgroundIndex = -1;
+
+        // Use default 16:9 aspect ratio for initial size - background loads asynchronously
+        int defaultWidth = 1920;
+        int defaultHeight = 1080;
+
+        // Get the screen size of the monitor where the frame will be placed
+        GraphicsEnvironment ge = GraphicsEnvironment.getLocalGraphicsEnvironment();
+        GraphicsDevice gd = ge.getDefaultScreenDevice(); // Default monitor
+        GraphicsConfiguration gc = gd.getDefaultConfiguration(); // Current screen config
+        Rectangle bounds = gc.getBounds(); // Get screen bounds
+
+        // Set frame size to 80% of the screen's width and height
+        int height = (int) (bounds.height * 0.8);
+        int width = (int) ((float) height * ((float) defaultWidth / (float) defaultHeight));
+        setSize(width, height);
+
+        // Center the frame within the screen bounds
+        int x = bounds.x + (bounds.width - width) / 2;
+        int y = bounds.y + (bounds.height - height) / 2;
+        setLocation(x, y);
+
+        // Load background image asynchronously
+        loadBackgroundAsync();
+
+        this.lblAutoUpdate.setText(" ");
+
+        try {
+            this.connections = ConnectionProfiles.getInstance();
         } catch (Throwable t) {
             log.error("Could not instantiate cryptography", t);
             JOptionPane.showMessageDialog(null, "Fehler im Kryptographiesystem:" + System.lineSeparator() + t.getMessage(), "Fehler", JOptionPane.ERROR_MESSAGE);
@@ -748,24 +829,22 @@ public class LoginDialog extends javax.swing.JFrame {
         this.jTabbedPane1.setForegroundAt(0, DefaultColorTheme.COLOR_LOGO_BLUE);
         this.jTabbedPane1.setForegroundAt(1, DefaultColorTheme.COLOR_LOGO_BLUE);
         this.jTabbedPane1.setForegroundAt(2, DefaultColorTheme.COLOR_LOGO_BLUE);
+        this.jTabbedPane1.setForegroundAt(3, DefaultColorTheme.COLOR_LOGO_BLUE);
         this.jTabbedPane1.putClientProperty("JTabbedPane.tabType", "card");
         // begin: required so the tabbed pane is transparent on macOS. reason unknown.
         this.jTabbedPane1.setOpaque(false);
         this.jTabbedPane1.putClientProperty("TabbedPane.contentOpaque", Boolean.FALSE);
         this.jTabbedPane1.putClientProperty("TabbedPane.tabsOpaque", Boolean.FALSE);
-        this.jTabbedPane1.putClientProperty("JTabbedPane.tabAreaAlignment", "center");
+        //this.jTabbedPane1.putClientProperty("JTabbedPane.tabAreaAlignment", "center");
         // end
 
-        ImageIcon image = new ImageIcon(getClass().getResource("/images/login-background-dark.jpg"));
-        this.bgPanel.setBackgroundImage(image.getImage());
-
         try {
-            InputStream is = StartupSplashFrame.class.getResourceAsStream("/fonts/exo2/exo2-bold.ttf");
+            InputStream is = LoginDialog.class.getResourceAsStream("/fonts/exo2/exo2-bold.ttf");
             Font font = Font.createFont(Font.TRUETYPE_FONT, is);
 
             this.jPanel5.putClientProperty(FlatClientProperties.COMPONENT_ROUND_RECT, true);
 
-            this.txtUser.setFont(font.deriveFont(Font.BOLD, 24));
+            this.txtUser.setFont(font.deriveFont(Font.BOLD, 28));
             this.txtUser.setForeground(DefaultColorTheme.COLOR_LOGO_BLUE);
             this.txtUser.putClientProperty("JTextField.placeholderText", "Nutzername");
             this.txtUser.putClientProperty("JTextField.leadingIcon", new javax.swing.ImageIcon(getClass().getResource("/com/jdimension/jlawyer/client/baseline_face_black_24dp.png")));
@@ -775,8 +854,8 @@ public class LoginDialog extends javax.swing.JFrame {
                     txtUser.selectAll();
                 }
             });
-            
-            this.pwPassword.setFont(font.deriveFont(Font.BOLD, 24));
+
+            this.pwPassword.setFont(font.deriveFont(Font.BOLD, 28));
             this.pwPassword.setForeground(DefaultColorTheme.COLOR_LOGO_BLUE);
             this.pwPassword.putClientProperty("JTextField.leadingIcon", new javax.swing.ImageIcon(getClass().getResource("/com/jdimension/jlawyer/client/baseline_password_black_24dp.png")));
             this.pwPassword.addFocusListener(new java.awt.event.FocusAdapter() {
@@ -785,12 +864,11 @@ public class LoginDialog extends javax.swing.JFrame {
                     pwPassword.selectAll();
                 }
             });
-            
-            
-            this.cmdLogin.setFont(font.deriveFont(Font.BOLD, 24));
+
+            this.cmdLogin.setFont(font.deriveFont(Font.BOLD, 28));
             this.cmdSaveProfile.setFont(font.deriveFont(Font.BOLD, 20));
 
-            this.jTabbedPane1.setFont(font.deriveFont(Font.BOLD, 14));
+            this.jTabbedPane1.setFont(font.deriveFont(Font.BOLD, 18));
 
             this.jLabel1.setFont(font.deriveFont(Font.BOLD, 16));
             this.lblProfile.setFont(font.deriveFont(Font.BOLD, 16));
@@ -822,7 +900,7 @@ public class LoginDialog extends javax.swing.JFrame {
             this.txtTargetPort.setForeground(DefaultColorTheme.COLOR_LOGO_BLUE);
 
             this.cmbProfile.setFont(font.deriveFont(Font.BOLD, 12));
-            this.cmbCurrentConnection.setFont(font.deriveFont(Font.BOLD, 12));
+            this.cmbCurrentConnection.setFont(font.deriveFont(Font.BOLD, 24));
             this.txtServer.setFont(font.deriveFont(Font.BOLD, 12));
             this.txtPort.setFont(font.deriveFont(Font.BOLD, 12));
             this.txtBoxPassword.setFont(font.deriveFont(Font.BOLD, 12));
@@ -848,8 +926,6 @@ public class LoginDialog extends javax.swing.JFrame {
         }
 
         this.boxProgress.setVisible(false);
-
-        this.initialStatus = initialStatus;
 
         ClientSettings settings = ClientSettings.getInstance();
         String lastConnectionName = settings.getConfiguration(ClientSettings.CONF_LASTCONNECTION, null);
@@ -925,10 +1001,192 @@ public class LoginDialog extends javax.swing.JFrame {
         }
         this.highlightSecuritySelection();
 
+        // Add tab listener to update QR code when "App koppeln" tab is selected
+        this.jTabbedPane1.addChangeListener(e -> {
+            // Tab index 3 is "App koppeln"
+            if (this.jTabbedPane1.getSelectedIndex() == 3) {
+                updateProfileQrCodeDisplay();
+            }
+        });
+
     }
 
     public final void setFocusToPasswordField() {
         this.pwPassword.requestFocus();
+    }
+
+    private void configureBackgroundSwitchButton() {
+        if (this.cmdNextBackground == null) {
+            return;
+        }
+        this.cmdNextBackground.setFocusPainted(false);
+        this.cmdNextBackground.setToolTipText("Anderes Hintergrundbild anzeigen");
+        this.cmdNextBackground.setVisible(false);
+        this.cmdNextBackground.addActionListener(evt -> showNextBackgroundImage());
+    }
+
+    private void updateBackgroundSwitchButtonState() {
+        if (this.cmdNextBackground == null) {
+            return;
+        }
+        boolean hasAlternatives = this.availableBackgrounds != null && this.availableBackgrounds.size() > 1;
+        this.cmdNextBackground.setVisible(hasAlternatives);
+        this.cmdNextBackground.setEnabled(hasAlternatives);
+    }
+
+    private void showNextBackgroundImage() {
+        if (this.availableBackgrounds == null || this.availableBackgrounds.isEmpty()) {
+            return;
+        }
+        if (this.currentBackgroundIndex < 0 || this.currentBackgroundIndex >= this.availableBackgrounds.size()) {
+            this.currentBackgroundIndex = 0;
+        }
+        this.currentBackgroundIndex = (this.currentBackgroundIndex + 1) % this.availableBackgrounds.size();
+        this.randomBackground = this.availableBackgrounds.get(this.currentBackgroundIndex);
+        applyBackgroundImage(this.randomBackground);
+    }
+
+    private Dimension applyBackgroundImage(String backgroundFile) {
+        this.applyBackgroundLocation(backgroundFile);
+
+        ImageIcon image = null;
+        if (backgroundFile != null) {
+            URL resource = getClass().getResource("/themes/default/backgroundsrandom/" + backgroundFile);
+            if (resource != null) {
+                image = new ImageIcon(resource);
+            } else {
+                log.warn("Background image not found: " + backgroundFile + " - falling back to default");
+            }
+        }
+
+        if (image == null || image.getIconWidth() <= 0 || image.getIconHeight() <= 0) {
+            URL fallback = getClass().getResource("/images/login-background-dark.jpg");
+            if (fallback != null) {
+                image = new ImageIcon(fallback);
+            } else {
+                return new Dimension(800, 600);
+            }
+        }
+
+        // Use fade transition for smooth background switching
+        this.bgPanel.fadeToImage(image.getImage());
+        return new Dimension(image.getIconWidth(), image.getIconHeight());
+    }
+    
+    private void applyBackgroundLocation(String backgroundFile) {
+        String path = "/themes/default/backgroundsrandom/" + backgroundFile + ".properties";
+
+        try (InputStream in = getClass().getResourceAsStream(path)) {
+            if (in != null) {
+                Properties locationProps = new Properties();
+                locationProps.load(in);
+
+                String location = locationProps.getProperty("background.country", "");
+                String tooltip = locationProps.getProperty("background.description", "");
+
+                this.lblBackgroundLocation.setText(location);
+                this.lblBackgroundLocation.setToolTipText(tooltip);
+            } else {
+                // File not found in classpath
+                this.lblBackgroundLocation.setText("");
+                this.lblBackgroundLocation.setToolTipText("");
+            }
+        } catch (IOException e) {
+            log.error(e);
+            this.lblBackgroundLocation.setText("");
+            this.lblBackgroundLocation.setToolTipText("");
+        }
+    }
+
+    /**
+     * Loads the background image list and first image asynchronously.
+     * The dialog is shown immediately with a fallback color, and the
+     * background image fades in once loaded.
+     */
+    private void loadBackgroundAsync() {
+        SwingWorker<ImageIcon, Void> worker = new SwingWorker<ImageIcon, Void>() {
+            private List<String> loadedBackgrounds = new ArrayList<>();
+            private String selectedBackground = null;
+
+            @Override
+            protected ImageIcon doInBackground() throws Exception {
+                FileSystem fileSystem = null;
+                try {
+                    URI uri = Main.class.getResource("/themes/default/backgroundsrandom").toURI();
+                    Path path;
+                    if (uri.getScheme().equals("jar")) {
+                        fileSystem = FileSystems.newFileSystem(uri, Collections.<String, Object>emptyMap());
+                        path = fileSystem.getPath("/themes/default/backgroundsrandom");
+                    } else {
+                        path = Paths.get(uri);
+                    }
+
+                    Predicate<String> con1 = s -> s.endsWith(".jpg");
+                    Predicate<String> con2 = s -> s.endsWith(".png");
+
+                    try (Stream<Path> walk = Files.walk(path)) {
+                        loadedBackgrounds = walk
+                                .map(Path::getFileName)
+                                .map(Path::toString)
+                                .filter(con1.or(con2))
+                                .collect(Collectors.toList());
+                    }
+
+                    if (!loadedBackgrounds.isEmpty()) {
+                        Collections.shuffle(loadedBackgrounds, ThreadLocalRandom.current());
+                        selectedBackground = loadedBackgrounds.get(0);
+
+                        // Load the actual image
+                        URL resource = getClass().getResource("/themes/default/backgroundsrandom/" + selectedBackground);
+                        if (resource != null) {
+                            return new ImageIcon(resource);
+                        }
+                    }
+                } finally {
+                    if (fileSystem != null) {
+                        try {
+                            fileSystem.close();
+                        } catch (Exception ex) {
+                            log.warn("Could not close filesystem object", ex);
+                        }
+                    }
+                }
+                return null;
+            }
+
+            @Override
+            protected void done() {
+                try {
+                    ImageIcon image = get();
+
+                    // Update the background list
+                    if (!loadedBackgrounds.isEmpty()) {
+                        availableBackgrounds = loadedBackgrounds;
+                        currentBackgroundIndex = 0;
+                        randomBackground = selectedBackground;
+                        applyBackgroundLocation(randomBackground);
+                    }
+
+                    updateBackgroundSwitchButtonState();
+
+                    // Fade in the background image
+                    if (image != null && image.getIconWidth() > 0 && image.getIconHeight() > 0) {
+                        bgPanel.fadeToImage(image.getImage());
+                    } else {
+                        // Try fallback image
+                        URL fallback = getClass().getResource("/images/login-background-dark.jpg");
+                        if (fallback != null) {
+                            ImageIcon fallbackImage = new ImageIcon(fallback);
+                            bgPanel.fadeToImage(fallbackImage.getImage());
+                        }
+                    }
+                } catch (Exception e) {
+                    log.error("Error loading background image", e);
+                    updateBackgroundSwitchButtonState();
+                }
+            }
+        };
+        worker.execute();
     }
 
     /**
@@ -945,9 +1203,6 @@ public class LoginDialog extends javax.swing.JFrame {
         bgPanel = new com.jdimension.jlawyer.client.StyledPanel();
         jTabbedPane1 = new javax.swing.JTabbedPane();
         jPanel1 = new javax.swing.JPanel();
-        lblHint = new javax.swing.JLabel();
-        jPanel6 = new javax.swing.JPanel();
-        cmbCurrentConnection = new javax.swing.JComboBox<>();
         jPanel7 = new javax.swing.JPanel();
         jPanel5 = new javax.swing.JPanel() {
 
@@ -962,7 +1217,27 @@ public class LoginDialog extends javax.swing.JFrame {
         txtUser = new javax.swing.JTextField();
         pwPassword = new javax.swing.JPasswordField();
         cmdLogin = new javax.swing.JButton();
+        cmbCurrentConnection = new javax.swing.JComboBox<>();
+        progressPanel = new javax.swing.JPanel();
+        progress = new JProgressBar() {
+            @Override
+            protected void paintComponent(Graphics g) {
+                // Preserve transparency
+                g.setColor(new Color(0, 0, 0, 0)); // Fully transparent
+                g.fillRect(0, 0, getWidth(), getHeight());
+                super.paintComponent(g);
+            }
+        };
+        lblProgress = new javax.swing.JLabel();
+        jPanel11 = new javax.swing.JPanel();
+        jPanel12 = new javax.swing.JPanel();
+        lblDefaultUserIcon = new javax.swing.JLabel();
+        jPanel10 = new javax.swing.JPanel();
+        lblUser = new javax.swing.JLabel();
+        lblCompany = new javax.swing.JLabel();
+        lblRole = new javax.swing.JLabel();
         jPanel2 = new javax.swing.JPanel();
+        jPanel6 = new javax.swing.JPanel();
         jLabel1 = new javax.swing.JLabel();
         jLabel2 = new javax.swing.JLabel();
         txtPort = new javax.swing.JTextField();
@@ -999,6 +1274,7 @@ public class LoginDialog extends javax.swing.JFrame {
         cmdAddProfile = new javax.swing.JButton();
         cmdImportProfile = new javax.swing.JButton();
         jPanel3 = new javax.swing.JPanel();
+        jPanel8 = new javax.swing.JPanel();
         jLabel6 = new javax.swing.JLabel();
         txtBoxPassword = new javax.swing.JPasswordField();
         cmdBoxCheck = new javax.swing.JButton();
@@ -1018,32 +1294,29 @@ public class LoginDialog extends javax.swing.JFrame {
         jLabel13 = new javax.swing.JLabel();
         jLabel14 = new javax.swing.JLabel();
         jLabel15 = new javax.swing.JLabel();
+        jPanel9 = new javax.swing.JPanel();
         jLabel3 = new javax.swing.JLabel();
+        jLabel18 = new javax.swing.JLabel();
+        jLabel20 = new javax.swing.JLabel();
+        jLabel21 = new javax.swing.JLabel();
+        jLabel22 = new javax.swing.JLabel();
+        jLabel23 = new javax.swing.JLabel();
+        lblProfileQrCode = new javax.swing.JLabel();
+        lblLogo = new javax.swing.JLabel();
         lblAutoUpdate = new javax.swing.JLabel();
+        cmdNextBackground = new javax.swing.JButton();
+        lblFullClientVersion = new javax.swing.JLabel();
+        lblBackgroundLocation = new javax.swing.JLabel();
 
         jButton1.setText("jButton1");
 
         setDefaultCloseOperation(javax.swing.WindowConstants.EXIT_ON_CLOSE);
         setTitle("j-lawyer.org Login");
         setIconImage(new ImageIcon(getClass().getResource("/icons/windowicon.png")).getImage());
-        setResizable(false);
 
-        jTabbedPane1.setTabPlacement(javax.swing.JTabbedPane.BOTTOM);
+        jTabbedPane1.setTabPlacement(javax.swing.JTabbedPane.LEFT);
 
         jPanel1.setOpaque(false);
-
-        lblHint.setForeground(new java.awt.Color(255, 102, 0));
-
-        jPanel6.setOpaque(false);
-        jPanel6.setLayout(new java.awt.GridBagLayout());
-
-        cmbCurrentConnection.setModel(new javax.swing.DefaultComboBoxModel<>(new String[] { "Item 1", "Item 2", "Item 3", "Item 4" }));
-        cmbCurrentConnection.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                cmbCurrentConnectionActionPerformed(evt);
-            }
-        });
-        jPanel6.add(cmbCurrentConnection, new java.awt.GridBagConstraints());
 
         jPanel7.setOpaque(false);
         jPanel7.setLayout(new java.awt.GridBagLayout());
@@ -1051,6 +1324,7 @@ public class LoginDialog extends javax.swing.JFrame {
         jPanel5.setBackground(new java.awt.Color(0, 153, 51));
         jPanel5.setOpaque(false);
 
+        txtUser.setColumns(20);
         txtUser.setHorizontalAlignment(javax.swing.JTextField.CENTER);
 
         pwPassword.setHorizontalAlignment(javax.swing.JTextField.CENTER);
@@ -1061,7 +1335,7 @@ public class LoginDialog extends javax.swing.JFrame {
         });
 
         cmdLogin.setForeground(new java.awt.Color(255, 255, 255));
-        cmdLogin.setIcon(new javax.swing.ImageIcon(getClass().getResource("/images/baseline_check_circle_black_36dp.png"))); // NOI18N
+        cmdLogin.setIcon(new javax.swing.ImageIcon(getClass().getResource("/images/check_circle_36dp_97BF0D.png"))); // NOI18N
         java.util.ResourceBundle bundle = java.util.ResourceBundle.getBundle("com/jdimension/jlawyer/client/LoginDialog"); // NOI18N
         cmdLogin.setText(bundle.getString("button.login")); // NOI18N
         cmdLogin.setBorder(new javax.swing.border.LineBorder(new java.awt.Color(255, 255, 255), 3, true));
@@ -1075,6 +1349,44 @@ public class LoginDialog extends javax.swing.JFrame {
             }
         });
 
+        cmbCurrentConnection.setModel(new javax.swing.DefaultComboBoxModel<>(new String[] { "Item 1", "Item 2", "Item 3", "Item 4" }));
+        cmbCurrentConnection.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                cmbCurrentConnectionActionPerformed(evt);
+            }
+        });
+
+        progressPanel.setOpaque(false);
+
+        progress.setOpaque(true);
+        progress.setString("                                                          ");
+
+        org.jdesktop.layout.GroupLayout progressPanelLayout = new org.jdesktop.layout.GroupLayout(progressPanel);
+        progressPanel.setLayout(progressPanelLayout);
+        progressPanelLayout.setHorizontalGroup(
+            progressPanelLayout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
+            .add(0, 0, Short.MAX_VALUE)
+            .add(progressPanelLayout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
+                .add(org.jdesktop.layout.GroupLayout.TRAILING, progressPanelLayout.createSequentialGroup()
+                    .addContainerGap()
+                    .add(progress, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                    .addContainerGap()))
+        );
+        progressPanelLayout.setVerticalGroup(
+            progressPanelLayout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
+            .add(0, 17, Short.MAX_VALUE)
+            .add(progressPanelLayout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
+                .add(progressPanelLayout.createSequentialGroup()
+                    .addContainerGap()
+                    .add(progress, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                    .addContainerGap()))
+        );
+
+        lblProgress.setFont(lblProgress.getFont().deriveFont(lblProgress.getFont().getStyle() | java.awt.Font.BOLD, lblProgress.getFont().getSize()+6));
+        lblProgress.setForeground(new java.awt.Color(255, 255, 255));
+        lblProgress.setHorizontalAlignment(javax.swing.SwingConstants.CENTER);
+        lblProgress.setText("jLabel20");
+
         org.jdesktop.layout.GroupLayout jPanel5Layout = new org.jdesktop.layout.GroupLayout(jPanel5);
         jPanel5.setLayout(jPanel5Layout);
         jPanel5Layout.setHorizontalGroup(
@@ -1083,20 +1395,29 @@ public class LoginDialog extends javax.swing.JFrame {
                 .add(24, 24, 24)
                 .add(jPanel5Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING, false)
                     .add(pwPassword)
-                    .add(cmdLogin, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 330, Short.MAX_VALUE)
-                    .add(org.jdesktop.layout.GroupLayout.TRAILING, txtUser))
-                .add(24, 24, 24))
+                    .add(cmdLogin, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                    .add(org.jdesktop.layout.GroupLayout.TRAILING, txtUser)
+                    .add(cmbCurrentConnection, 0, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                    .add(progressPanel, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                    .add(lblProgress, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                .addContainerGap(24, Short.MAX_VALUE))
         );
         jPanel5Layout.setVerticalGroup(
             jPanel5Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
             .add(jPanel5Layout.createSequentialGroup()
                 .add(36, 36, 36)
-                .add(txtUser, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
+                .add(cmbCurrentConnection, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
                 .add(18, 18, 18)
+                .add(txtUser, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
+                .addPreferredGap(org.jdesktop.layout.LayoutStyle.UNRELATED)
                 .add(pwPassword, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
                 .add(18, 18, 18)
                 .add(cmdLogin)
-                .add(36, 36, 36))
+                .addPreferredGap(org.jdesktop.layout.LayoutStyle.UNRELATED)
+                .add(progressPanel, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
+                .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
+                .add(lblProgress, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 36, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
+                .addContainerGap(org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
         );
 
         gridBagConstraints = new java.awt.GridBagConstraints();
@@ -1106,38 +1427,81 @@ public class LoginDialog extends javax.swing.JFrame {
         gridBagConstraints.insets = new java.awt.Insets(12, 12, 12, 12);
         jPanel7.add(jPanel5, gridBagConstraints);
 
+        jPanel11.setOpaque(false);
+        jPanel11.setLayout(new java.awt.GridBagLayout());
+
+        jPanel12.setOpaque(false);
+
+        lblDefaultUserIcon.setHorizontalAlignment(javax.swing.SwingConstants.CENTER);
+        lblDefaultUserIcon.setIcon(new javax.swing.ImageIcon(getClass().getResource("/com/jdimension/jlawyer/client/person_outline_96dp_FFFFFF.png"))); // NOI18N
+
+        jPanel10.setOpaque(false);
+        jPanel10.setLayout(new java.awt.GridLayout(3, 1));
+
+        lblUser.setFont(lblUser.getFont().deriveFont(lblUser.getFont().getStyle() | java.awt.Font.BOLD, lblUser.getFont().getSize()+6));
+        lblUser.setForeground(new java.awt.Color(255, 255, 255));
+        lblUser.setText("jLabel20");
+        jPanel10.add(lblUser);
+
+        lblCompany.setFont(lblCompany.getFont().deriveFont(lblCompany.getFont().getStyle() | java.awt.Font.BOLD, lblCompany.getFont().getSize()+6));
+        lblCompany.setForeground(new java.awt.Color(255, 255, 255));
+        lblCompany.setText("jLabel20");
+        jPanel10.add(lblCompany);
+
+        lblRole.setFont(lblRole.getFont().deriveFont(lblRole.getFont().getStyle() | java.awt.Font.BOLD, lblRole.getFont().getSize()+6));
+        lblRole.setForeground(new java.awt.Color(255, 255, 255));
+        lblRole.setText("jLabel20");
+        jPanel10.add(lblRole);
+
+        org.jdesktop.layout.GroupLayout jPanel12Layout = new org.jdesktop.layout.GroupLayout(jPanel12);
+        jPanel12.setLayout(jPanel12Layout);
+        jPanel12Layout.setHorizontalGroup(
+            jPanel12Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
+            .add(jPanel12Layout.createSequentialGroup()
+                .addContainerGap()
+                .add(lblDefaultUserIcon)
+                .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
+                .add(jPanel10, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
+                .addContainerGap(org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+        );
+        jPanel12Layout.setVerticalGroup(
+            jPanel12Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
+            .add(jPanel12Layout.createSequentialGroup()
+                .addContainerGap()
+                .add(jPanel12Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING, false)
+                    .add(lblDefaultUserIcon, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                    .add(jPanel10, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                .addContainerGap())
+        );
+
+        jPanel11.add(jPanel12, new java.awt.GridBagConstraints());
+
         org.jdesktop.layout.GroupLayout jPanel1Layout = new org.jdesktop.layout.GroupLayout(jPanel1);
         jPanel1.setLayout(jPanel1Layout);
         jPanel1Layout.setHorizontalGroup(
             jPanel1Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
             .add(jPanel1Layout.createSequentialGroup()
-                .add(506, 506, 506)
-                .add(lblHint, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 100, Short.MAX_VALUE)
-                .add(72, 72, 72))
-            .add(jPanel1Layout.createSequentialGroup()
                 .addContainerGap()
-                .add(jPanel6, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                .addContainerGap())
-            .add(jPanel1Layout.createSequentialGroup()
-                .addContainerGap()
-                .add(jPanel7, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                .add(jPanel1Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
+                    .add(jPanel7, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 803, Short.MAX_VALUE)
+                    .add(jPanel11, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
                 .addContainerGap())
         );
         jPanel1Layout.setVerticalGroup(
             jPanel1Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
             .add(jPanel1Layout.createSequentialGroup()
                 .addContainerGap()
-                .add(jPanel6, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
-                .add(24, 24, 24)
-                .add(lblHint)
+                .add(jPanel11, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
                 .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
-                .add(jPanel7, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 260, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
-                .addContainerGap(91, Short.MAX_VALUE))
+                .add(jPanel7, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
+                .addContainerGap(org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
         );
 
         jTabbedPane1.addTab("Login", jPanel1);
 
         jPanel2.setOpaque(false);
+
+        jPanel6.setOpaque(false);
 
         jLabel1.setForeground(new java.awt.Color(255, 255, 255));
         jLabel1.setText(bundle.getString("label.server")); // NOI18N
@@ -1238,7 +1602,7 @@ public class LoginDialog extends javax.swing.JFrame {
                 .add(jLabel7)
                 .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
                 .add(txtSshPort, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 55, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
-                .addContainerGap())
+                .addContainerGap(org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
         );
         jPanel4Layout.setVerticalGroup(
             jPanel4Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
@@ -1313,59 +1677,57 @@ public class LoginDialog extends javax.swing.JFrame {
             }
         });
 
-        org.jdesktop.layout.GroupLayout jPanel2Layout = new org.jdesktop.layout.GroupLayout(jPanel2);
-        jPanel2.setLayout(jPanel2Layout);
-        jPanel2Layout.setHorizontalGroup(
-            jPanel2Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
-            .add(jPanel2Layout.createSequentialGroup()
+        org.jdesktop.layout.GroupLayout jPanel6Layout = new org.jdesktop.layout.GroupLayout(jPanel6);
+        jPanel6.setLayout(jPanel6Layout);
+        jPanel6Layout.setHorizontalGroup(
+            jPanel6Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
+            .add(jPanel6Layout.createSequentialGroup()
                 .addContainerGap()
-                .add(jPanel2Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
+                .add(jPanel6Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
                     .add(jLabel1)
                     .add(jLabel2)
                     .add(jLabel4)
                     .add(lblProfile))
                 .add(19, 19, 19)
-                .add(jPanel2Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
+                .add(jPanel6Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING, false)
+                    .add(cmdSaveProfile, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                    .add(rdSecNone, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                     .add(rdSecSsl, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                    .add(jPanel4, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                    .add(jPanel2Layout.createSequentialGroup()
-                        .add(jPanel2Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.TRAILING, false)
+                    .add(jPanel6Layout.createSequentialGroup()
+                        .add(jPanel6Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.TRAILING, false)
                             .add(org.jdesktop.layout.GroupLayout.LEADING, txtPort)
                             .add(txtServer)
-                            .add(cmbProfile, 0, 341, Short.MAX_VALUE))
+                            .add(cmbProfile, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 341, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE))
                         .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
                         .add(cmdAddProfile)
                         .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
                         .add(cmdImportProfile)
                         .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
-                        .add(cmdDeleteProfile)
-                        .add(0, 0, Short.MAX_VALUE))
-                    .add(rdSecNone, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                    .add(org.jdesktop.layout.GroupLayout.TRAILING, cmdSaveProfile, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
-                .addContainerGap())
+                        .add(cmdDeleteProfile))
+                    .add(jPanel4, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                .addContainerGap(158, Short.MAX_VALUE))
         );
-        jPanel2Layout.setVerticalGroup(
-            jPanel2Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
-            .add(jPanel2Layout.createSequentialGroup()
-                .add(24, 24, 24)
-                .add(jPanel2Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.TRAILING)
-                    .add(jPanel2Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.TRAILING, false)
-                        .add(jPanel2Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.BASELINE)
-                            .add(cmbProfile, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
-                            .add(lblProfile))
-                        .add(cmdAddProfile)
-                        .add(cmdDeleteProfile, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+        jPanel6Layout.setVerticalGroup(
+            jPanel6Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
+            .add(jPanel6Layout.createSequentialGroup()
+                .addContainerGap()
+                .add(jPanel6Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.TRAILING)
+                    .add(jPanel6Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.BASELINE)
+                        .add(cmbProfile, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
+                        .add(lblProfile))
+                    .add(cmdAddProfile)
+                    .add(cmdDeleteProfile)
                     .add(cmdImportProfile))
                 .add(18, 18, 18)
-                .add(jPanel2Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.BASELINE)
+                .add(jPanel6Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.BASELINE)
                     .add(jLabel1)
                     .add(txtServer, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE))
                 .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
-                .add(jPanel2Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.BASELINE)
+                .add(jPanel6Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.BASELINE)
                     .add(jLabel2)
                     .add(txtPort, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE))
                 .addPreferredGap(org.jdesktop.layout.LayoutStyle.UNRELATED)
-                .add(jPanel2Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.BASELINE)
+                .add(jPanel6Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.BASELINE)
                     .add(rdSecNone)
                     .add(jLabel4))
                 .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
@@ -1374,12 +1736,30 @@ public class LoginDialog extends javax.swing.JFrame {
                 .add(jPanel4, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
                 .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
                 .add(cmdSaveProfile)
-                .addContainerGap(88, Short.MAX_VALUE))
+                .addContainerGap(112, Short.MAX_VALUE))
+        );
+
+        org.jdesktop.layout.GroupLayout jPanel2Layout = new org.jdesktop.layout.GroupLayout(jPanel2);
+        jPanel2.setLayout(jPanel2Layout);
+        jPanel2Layout.setHorizontalGroup(
+            jPanel2Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
+            .add(jPanel2Layout.createSequentialGroup()
+                .add(32, 32, 32)
+                .add(jPanel6, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                .addContainerGap())
+        );
+        jPanel2Layout.setVerticalGroup(
+            jPanel2Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
+            .add(org.jdesktop.layout.GroupLayout.TRAILING, jPanel2Layout.createSequentialGroup()
+                .addContainerGap()
+                .add(jPanel6, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
         );
 
         jTabbedPane1.addTab("Profile", jPanel2);
 
         jPanel3.setOpaque(false);
+
+        jPanel8.setOpaque(false);
 
         jLabel6.setForeground(new java.awt.Color(255, 255, 255));
         jLabel6.setText("root-Passwort:");
@@ -1466,133 +1846,254 @@ public class LoginDialog extends javax.swing.JFrame {
         jLabel15.setForeground(new java.awt.Color(255, 255, 255));
         jLabel15.setText("j-lawyer.BOX suchen");
 
+        org.jdesktop.layout.GroupLayout jPanel8Layout = new org.jdesktop.layout.GroupLayout(jPanel8);
+        jPanel8.setLayout(jPanel8Layout);
+        jPanel8Layout.setHorizontalGroup(
+            jPanel8Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
+            .add(jPanel8Layout.createSequentialGroup()
+                .addContainerGap()
+                .add(jLabel6)
+                .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
+                .add(jPanel8Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
+                    .add(lblBoxOutput, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                    .add(jPanel8Layout.createSequentialGroup()
+                        .add(jPanel8Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING, false)
+                            .add(jPanel8Layout.createSequentialGroup()
+                                .add(txtBoxPassword, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 210, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
+                                .add(18, 18, 18)
+                                .add(boxProgress, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                            .add(jPanel8Layout.createSequentialGroup()
+                                .add(cmdRestore)
+                                .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
+                                .add(jLabel9))
+                            .add(jPanel8Layout.createSequentialGroup()
+                                .add(cmdBoxServiceRestart)
+                                .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
+                                .add(jLabel14))
+                            .add(jPanel8Layout.createSequentialGroup()
+                                .add(cmdMgmtConsole)
+                                .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
+                                .add(jLabel11))
+                            .add(jPanel8Layout.createSequentialGroup()
+                                .add(cmdBoxShutdown)
+                                .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
+                                .add(jLabel12))
+                            .add(jPanel8Layout.createSequentialGroup()
+                                .add(cmdBoxReboot)
+                                .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
+                                .add(jLabel13))
+                            .add(jPanel8Layout.createSequentialGroup()
+                                .add(cmdBoxCheck)
+                                .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
+                                .add(jLabel10))
+                            .add(jPanel8Layout.createSequentialGroup()
+                                .add(cmdScanNetwork)
+                                .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
+                                .add(jLabel15)
+                                .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
+                                .add(txtCurrentHost, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 350, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)))
+                        .add(0, 0, Short.MAX_VALUE)))
+                .addContainerGap())
+        );
+        jPanel8Layout.setVerticalGroup(
+            jPanel8Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
+            .add(jPanel8Layout.createSequentialGroup()
+                .addContainerGap()
+                .add(jPanel8Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING, false)
+                    .add(jPanel8Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.BASELINE)
+                        .add(jLabel6)
+                        .add(txtBoxPassword, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE))
+                    .add(boxProgress, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 28, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE))
+                .add(18, 18, 18)
+                .add(jPanel8Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING, false)
+                    .add(cmdBoxCheck, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                    .add(jLabel10, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 30, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE))
+                .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
+                .add(jPanel8Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING, false)
+                    .add(cmdBoxServiceRestart, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                    .add(jLabel14, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 30, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE))
+                .add(18, 18, 18)
+                .add(jPanel8Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING, false)
+                    .add(cmdBoxReboot, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                    .add(jLabel13, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 28, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE))
+                .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED, 21, Short.MAX_VALUE)
+                .add(jPanel8Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
+                    .add(cmdBoxShutdown)
+                    .add(jLabel12, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 30, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE))
+                .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED, 21, Short.MAX_VALUE)
+                .add(jPanel8Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING, false)
+                    .add(cmdMgmtConsole, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                    .add(jLabel11, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 28, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE))
+                .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED, 33, Short.MAX_VALUE)
+                .add(jPanel8Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
+                    .add(cmdRestore)
+                    .add(jLabel9, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 30, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE))
+                .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
+                .add(jPanel8Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
+                    .add(cmdScanNetwork)
+                    .add(jPanel8Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.BASELINE)
+                        .add(jLabel15, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 30, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
+                        .add(txtCurrentHost, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)))
+                .add(18, 18, 18)
+                .add(lblBoxOutput))
+        );
+
         org.jdesktop.layout.GroupLayout jPanel3Layout = new org.jdesktop.layout.GroupLayout(jPanel3);
         jPanel3.setLayout(jPanel3Layout);
         jPanel3Layout.setHorizontalGroup(
             jPanel3Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
             .add(jPanel3Layout.createSequentialGroup()
-                .addContainerGap()
-                .add(jLabel6)
-                .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
-                .add(jPanel3Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
-                    .add(jPanel3Layout.createSequentialGroup()
-                        .add(txtBoxPassword, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 210, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
-                        .add(18, 18, 18)
-                        .add(boxProgress, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 325, Short.MAX_VALUE))
-                    .add(lblBoxOutput, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                    .add(jPanel3Layout.createSequentialGroup()
-                        .add(jPanel3Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
-                            .add(jPanel3Layout.createSequentialGroup()
-                                .add(cmdRestore)
-                                .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
-                                .add(jLabel9))
-                            .add(jPanel3Layout.createSequentialGroup()
-                                .add(cmdBoxServiceRestart)
-                                .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
-                                .add(jLabel14))
-                            .add(jPanel3Layout.createSequentialGroup()
-                                .add(cmdMgmtConsole)
-                                .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
-                                .add(jLabel11))
-                            .add(jPanel3Layout.createSequentialGroup()
-                                .add(cmdBoxShutdown)
-                                .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
-                                .add(jLabel12))
-                            .add(jPanel3Layout.createSequentialGroup()
-                                .add(cmdBoxReboot)
-                                .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
-                                .add(jLabel13))
-                            .add(jPanel3Layout.createSequentialGroup()
-                                .add(cmdBoxCheck)
-                                .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
-                                .add(jLabel10)))
-                        .add(0, 0, Short.MAX_VALUE))
-                    .add(jPanel3Layout.createSequentialGroup()
-                        .add(cmdScanNetwork)
-                        .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
-                        .add(jLabel15)
-                        .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
-                        .add(txtCurrentHost)))
-                .addContainerGap())
+                .add(6, 6, 6)
+                .add(jPanel8, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE))
         );
         jPanel3Layout.setVerticalGroup(
             jPanel3Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
             .add(jPanel3Layout.createSequentialGroup()
-                .addContainerGap()
-                .add(jPanel3Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING, false)
-                    .add(jPanel3Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.BASELINE)
-                        .add(jLabel6)
-                        .add(txtBoxPassword, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE))
-                    .add(boxProgress, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
-                .add(18, 18, 18)
-                .add(jPanel3Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING, false)
-                    .add(cmdBoxCheck, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                    .add(jLabel10, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 30, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE))
-                .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
-                .add(jPanel3Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING, false)
-                    .add(cmdBoxServiceRestart, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                    .add(jLabel14, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 30, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE))
-                .add(18, 18, 18)
-                .add(jPanel3Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING, false)
-                    .add(cmdBoxReboot, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                    .add(jLabel13, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
-                .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                .add(jPanel3Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
-                    .add(cmdBoxShutdown)
-                    .add(jLabel12, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 30, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE))
-                .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                .add(jPanel3Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING, false)
-                    .add(cmdMgmtConsole, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                    .add(jLabel11, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
-                .add(18, 18, Short.MAX_VALUE)
-                .add(jPanel3Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
-                    .add(cmdRestore)
-                    .add(jLabel9, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 30, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE))
-                .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
-                .add(jPanel3Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
-                    .add(cmdScanNetwork)
-                    .add(jPanel3Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.BASELINE)
-                        .add(jLabel15, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 30, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
-                        .add(txtCurrentHost, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)))
-                .add(99, 99, 99)
-                .add(lblBoxOutput)
-                .add(15, 15, 15))
+                .add(36, 36, 36)
+                .add(jPanel8, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
+                .addContainerGap(org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
         );
 
         jTabbedPane1.addTab("j-lawyer.BOX ", new javax.swing.ImageIcon(getClass().getResource("/icons/greyled.png")), jPanel3); // NOI18N
 
-        jLabel3.setHorizontalAlignment(javax.swing.SwingConstants.RIGHT);
-        jLabel3.setIcon(new javax.swing.ImageIcon(getClass().getResource("/images/j-lawyer-logo-login.png"))); // NOI18N
+        jPanel9.setOpaque(false);
+
+        jLabel3.setFont(jLabel3.getFont().deriveFont(jLabel3.getFont().getStyle() | java.awt.Font.BOLD));
+        jLabel3.setForeground(new java.awt.Color(255, 255, 255));
+        jLabel3.setHorizontalAlignment(javax.swing.SwingConstants.CENTER);
+        jLabel3.setText("1. App installieren: \"j-lawyer.CLOUD\" in den Stores");
+
+        jLabel18.setFont(jLabel18.getFont().deriveFont(jLabel18.getFont().getStyle() | java.awt.Font.BOLD));
+        jLabel18.setForeground(new java.awt.Color(255, 255, 255));
+        jLabel18.setHorizontalAlignment(javax.swing.SwingConstants.CENTER);
+        jLabel18.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons16/material/android_20dp_FFFFFF.png"))); // NOI18N
+        jLabel18.setText("Android: https://play.google.com/store/apps/details?id=org.jlawyer.mobile&hl=de");
+        jLabel18.setToolTipText("Android / Google Play Store");
+
+        jLabel20.setFont(jLabel20.getFont().deriveFont(jLabel20.getFont().getStyle() | java.awt.Font.BOLD));
+        jLabel20.setForeground(new java.awt.Color(255, 255, 255));
+        jLabel20.setHorizontalAlignment(javax.swing.SwingConstants.CENTER);
+        jLabel20.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons16/material/phone_iphone_20dp_FFFFFF.png"))); // NOI18N
+        jLabel20.setText("iPhone / iPad: https://apps.apple.com/de/app/j-lawyer-cloud/id6477718420");
+        jLabel20.setToolTipText("iOS / Apple App Store");
+
+        jLabel21.setFont(jLabel21.getFont().deriveFont(jLabel21.getFont().getStyle() | java.awt.Font.BOLD));
+        jLabel21.setForeground(new java.awt.Color(255, 255, 255));
+        jLabel21.setHorizontalAlignment(javax.swing.SwingConstants.CENTER);
+        jLabel21.setText("2. App starten und Profile-Dialog öffnen");
+
+        jLabel22.setFont(jLabel22.getFont().deriveFont(jLabel22.getFont().getStyle() | java.awt.Font.BOLD));
+        jLabel22.setForeground(new java.awt.Color(255, 255, 255));
+        jLabel22.setHorizontalAlignment(javax.swing.SwingConstants.CENTER);
+        jLabel22.setText("3. Profil durch scannen des QR-Codes übernehmen");
+
+        jLabel23.setFont(jLabel23.getFont().deriveFont(jLabel23.getFont().getStyle() | java.awt.Font.BOLD));
+        jLabel23.setForeground(new java.awt.Color(255, 255, 255));
+        jLabel23.setHorizontalAlignment(javax.swing.SwingConstants.CENTER);
+        jLabel23.setText("übernommen wird das im \"Login\"-Tab gewählte Profil");
+
+        lblProfileQrCode.setHorizontalAlignment(javax.swing.SwingConstants.CENTER);
+        lblProfileQrCode.setText("QR-Code");
+
+        org.jdesktop.layout.GroupLayout jPanel9Layout = new org.jdesktop.layout.GroupLayout(jPanel9);
+        jPanel9.setLayout(jPanel9Layout);
+        jPanel9Layout.setHorizontalGroup(
+            jPanel9Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
+            .add(jPanel9Layout.createSequentialGroup()
+                .addContainerGap()
+                .add(jPanel9Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
+                    .add(org.jdesktop.layout.GroupLayout.TRAILING, jLabel18, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 803, Short.MAX_VALUE)
+                    .add(jLabel3, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                    .add(org.jdesktop.layout.GroupLayout.TRAILING, jLabel20, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                    .add(jLabel21, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                    .add(jLabel22, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                    .add(jLabel23, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                    .add(lblProfileQrCode, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                .addContainerGap())
+        );
+        jPanel9Layout.setVerticalGroup(
+            jPanel9Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
+            .add(jPanel9Layout.createSequentialGroup()
+                .addContainerGap()
+                .add(jLabel3)
+                .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
+                .add(jLabel18)
+                .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
+                .add(jLabel20)
+                .add(18, 18, 18)
+                .add(jLabel21)
+                .add(18, 18, 18)
+                .add(jLabel22)
+                .add(18, 18, 18)
+                .add(jLabel23)
+                .add(18, 18, 18)
+                .add(lblProfileQrCode)
+                .addContainerGap(252, Short.MAX_VALUE))
+        );
+
+        jTabbedPane1.addTab("App koppeln", jPanel9);
+
+        lblLogo.setHorizontalAlignment(javax.swing.SwingConstants.RIGHT);
+        lblLogo.setIcon(new javax.swing.ImageIcon(getClass().getResource("/images/j-lawyer-logo-125px.png"))); // NOI18N
 
         lblAutoUpdate.setFont(lblAutoUpdate.getFont().deriveFont(lblAutoUpdate.getFont().getStyle() | java.awt.Font.BOLD));
         lblAutoUpdate.setForeground(new java.awt.Color(255, 255, 255));
+        lblAutoUpdate.setHorizontalAlignment(javax.swing.SwingConstants.CENTER);
         lblAutoUpdate.setText("jLabel18");
+
+        cmdNextBackground.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons32/material/cameraswitch_32dp_FFFFFF.png"))); // NOI18N
+        cmdNextBackground.setBorder(null);
+        cmdNextBackground.setContentAreaFilled(false);
+        cmdNextBackground.setCursor(new java.awt.Cursor(java.awt.Cursor.HAND_CURSOR));
+        cmdNextBackground.setFocusable(false);
+
+        lblFullClientVersion.setFont(lblFullClientVersion.getFont().deriveFont(lblFullClientVersion.getFont().getStyle() | java.awt.Font.BOLD, lblFullClientVersion.getFont().getSize()+36));
+        lblFullClientVersion.setForeground(new java.awt.Color(14, 113, 180));
+        lblFullClientVersion.setText("1.0");
+
+        lblBackgroundLocation.setFont(lblBackgroundLocation.getFont().deriveFont(lblBackgroundLocation.getFont().getStyle() | java.awt.Font.BOLD));
+        lblBackgroundLocation.setForeground(new java.awt.Color(255, 255, 255));
+        lblBackgroundLocation.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons32/material/location_on_32dp_FFFFFF.png"))); // NOI18N
+        lblBackgroundLocation.setText("jLabel3");
 
         org.jdesktop.layout.GroupLayout bgPanelLayout = new org.jdesktop.layout.GroupLayout(bgPanel);
         bgPanel.setLayout(bgPanelLayout);
         bgPanelLayout.setHorizontalGroup(
             bgPanelLayout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
-            .add(org.jdesktop.layout.GroupLayout.TRAILING, bgPanelLayout.createSequentialGroup()
-                .addContainerGap(110, Short.MAX_VALUE)
-                .add(jLabel3, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 593, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
-                .add(72, 72, 72))
             .add(bgPanelLayout.createSequentialGroup()
-                .add(51, 51, 51)
-                .add(bgPanelLayout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING, false)
-                    .add(jTabbedPane1, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 683, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
-                    .add(lblAutoUpdate, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
-                .addContainerGap(org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                .add(8, 8, 8)
+                .add(jTabbedPane1)
+                .addContainerGap())
+            .add(bgPanelLayout.createSequentialGroup()
+                .add(36, 36, 36)
+                .add(lblFullClientVersion)
+                .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                .add(lblLogo)
+                .add(36, 36, 36))
+            .add(org.jdesktop.layout.GroupLayout.TRAILING, lblAutoUpdate, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+            .add(org.jdesktop.layout.GroupLayout.TRAILING, bgPanelLayout.createSequentialGroup()
+                .add(24, 24, 24)
+                .add(lblBackgroundLocation)
+                .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                .add(cmdNextBackground)
+                .add(24, 24, 24))
         );
         bgPanelLayout.setVerticalGroup(
             bgPanelLayout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
             .add(bgPanelLayout.createSequentialGroup()
                 .add(18, 18, 18)
-                .add(jLabel3)
-                .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
-                .add(jTabbedPane1, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 448, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
+                .add(bgPanelLayout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
+                    .add(lblLogo)
+                    .add(lblFullClientVersion))
+                .add(24, 24, 24)
+                .add(jTabbedPane1, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
                 .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
                 .add(lblAutoUpdate)
-                .addContainerGap(43, Short.MAX_VALUE))
+                .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                .add(bgPanelLayout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING, false)
+                    .add(org.jdesktop.layout.GroupLayout.TRAILING, cmdNextBackground, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                    .add(org.jdesktop.layout.GroupLayout.TRAILING, lblBackgroundLocation, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                .add(18, 18, 18))
         );
 
         org.jdesktop.layout.GroupLayout layout = new org.jdesktop.layout.GroupLayout(getContentPane());
@@ -1658,16 +2159,6 @@ public class LoginDialog extends javax.swing.JFrame {
         box.serviceCheck(lblBoxOutput, boxProgress, this.txtServer.getText());
     }//GEN-LAST:event_cmdBoxCheckActionPerformed
 
-    private void pwPasswordKeyPressed(java.awt.event.KeyEvent evt) {//GEN-FIRST:event_pwPasswordKeyPressed
-        if (evt.getKeyCode() == KeyEvent.VK_ENTER) {
-        this.loginPerformed(true);
-        }
-    }//GEN-LAST:event_pwPasswordKeyPressed
-
-    private void cmdLoginActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdLoginActionPerformed
-        this.loginPerformed(true);
-    }//GEN-LAST:event_cmdLoginActionPerformed
-
     private void loginPerformed(boolean saveProfile) {
         if (launching) {
             return;
@@ -1675,9 +2166,12 @@ public class LoginDialog extends javax.swing.JFrame {
 
         launching = true;
         this.cmdLogin.setEnabled(false);
+        this.txtUser.setEnabled(false);
+        this.pwPassword.setEnabled(false);
+        this.cmbCurrentConnection.setEnabled(false);
 
         log.info("login: initiated");
-        long loginStart=System.currentTimeMillis();
+        long loginStart = System.currentTimeMillis();
         ClientSettings settings = ClientSettings.getInstance();
         int sourcePort = -1;
         if (this.rdSecTunnel.isSelected()) {
@@ -1706,6 +2200,9 @@ public class LoginDialog extends javax.swing.JFrame {
                     System.exit(1);
                 }
                 this.cmdLogin.setEnabled(true);
+                this.txtUser.setEnabled(true);
+                this.pwPassword.setEnabled(true);
+                this.cmbCurrentConnection.setEnabled(true);
                 launching = false;
                 return;
             }
@@ -1787,12 +2284,19 @@ public class LoginDialog extends javax.swing.JFrame {
             this.txtUser.setForeground(Color.RED);
             this.pwPassword.setForeground(Color.RED);
             this.cmdLogin.setEnabled(true);
+            this.txtUser.setEnabled(true);
+            this.pwPassword.setEnabled(true);
+            this.cmbCurrentConnection.setEnabled(true);
+
             launching = false;
         } catch (Exception ex) {
 
             log.error("Error connecting to server", ex);
             JOptionPane.showMessageDialog(this, java.text.MessageFormat.format(java.util.ResourceBundle.getBundle("com/jdimension/jlawyer/client/LoginDialog").getString("msg.error.loginorconnectionfailed"), new Object[]{ex.getMessage()}), java.util.ResourceBundle.getBundle("com/jdimension/jlawyer/client/LoginDialog").getString("msg.error"), JOptionPane.ERROR_MESSAGE);
             this.cmdLogin.setEnabled(true);
+            this.txtUser.setEnabled(true);
+            this.pwPassword.setEnabled(true);
+            this.cmbCurrentConnection.setEnabled(true);
             launching = false;
             return;
         }
@@ -1830,7 +2334,7 @@ public class LoginDialog extends javax.swing.JFrame {
                         String userHome = System.getProperty("user.home");
                         String downloadsFolder = userHome + System.getProperty("file.separator") + "Downloads" + System.getProperty("file.separator") + "j-lawyer-Update_" + latestClientVersion;
                         new File(downloadsFolder).mkdirs();
-                        String fullTempFile=downloadsFolder + File.separator + downloadUrl.substring(downloadUrl.lastIndexOf("=") + 1);
+                        String fullTempFile = downloadsFolder + File.separator + downloadUrl.substring(downloadUrl.lastIndexOf("=") + 1);
                         File tmpF = new File(fullTempFile);
 
                         try (InputStream is = urlCon.getInputStream(); FileOutputStream fOut = new FileOutputStream(tmpF)) {
@@ -1843,7 +2347,7 @@ public class LoginDialog extends javax.swing.JFrame {
 
                                 fOut.write(buffer, 0, len);
                                 totalChunk = totalChunk + len;
-                                total=total+len;
+                                total = total + len;
 
                                 final int byteLen = total;
                                 if (totalChunk > 1000000) {
@@ -1856,13 +2360,13 @@ public class LoginDialog extends javax.swing.JFrame {
                         }
 
                         FileUtils.setPosixFilePermissions(fullTempFile, true, true, true);
-                        
+
                         SwingUtilities.invokeLater(() -> {
                             JOptionPane.showMessageDialog(this, "<html>Die Anwendung wird nun beendet. F&uuml;hren Sie anschlie&szlig;end diese Datei aus:<br/>" + tmpF.getAbsolutePath(), "bereit zur Installation", JOptionPane.INFORMATION_MESSAGE);
                             DesktopUtils.openFileManager(new File(downloadsFolder));
                             System.exit(0);
                         });
-                        
+
                     } catch (Exception ex) {
                         log.error(ex);
                     }
@@ -1884,28 +2388,17 @@ public class LoginDialog extends javax.swing.JFrame {
             int response = JOptionPane.showConfirmDialog(this, java.text.MessageFormat.format(java.util.ResourceBundle.getBundle("com/jdimension/jlawyer/client/LoginDialog").getString("msg.compatibilitycheck.failed"), new Object[]{currentClientVersion, serverVersion, System.getProperty("line.separator")}), java.util.ResourceBundle.getBundle("com/jdimension/jlawyer/client/LoginDialog").getString("msg.compatibilitycheck"), JOptionPane.YES_NO_OPTION);
             if (response == JOptionPane.NO_OPTION) {
                 this.cmdLogin.setEnabled(true);
+                this.txtUser.setEnabled(true);
+                this.pwPassword.setEnabled(true);
+                this.cmbCurrentConnection.setEnabled(true);
                 launching = false;
                 System.exit(0);
             }
         }
 
-        this.setVisible(false);
-
-        log.info("login: initiating splash frame");
-        splash = new StartupSplashFrame();
-
-        FrameUtils.centerFrame(splash, null);
-        splash.setVisible(true);
-
-        splash.addStatus(this.initialStatus);
-        splash.addStatus(System.getProperty("line.separator"));
-
-        splash.addStatus(java.util.ResourceBundle.getBundle("com/jdimension/jlawyer/client/LoginDialog").getString("label.loadingstatus"));
-        splash.addStatus(System.getProperty("line.separator"));
-        splash.repaint();
-
-        log.info("login: launching splash thread, login procedure took " + (System.currentTimeMillis()-loginStart));
-        new Thread(new SplashThread(splash, settings, this)).start();
+        log.info("login: launching splash thread, login procedure took " + (System.currentTimeMillis() - loginStart));
+        this.progress.setString(" ");
+        new Thread(new SplashThread(this, settings, this.randomBackground, this)).start();
     }
 
     private void rdSecNoneActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_rdSecNoneActionPerformed
@@ -1947,9 +2440,49 @@ public class LoginDialog extends javax.swing.JFrame {
         }
     }//GEN-LAST:event_cmbProfileActionPerformed
 
-    private void cmbCurrentConnectionActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmbCurrentConnectionActionPerformed
-        this.cmbProfile.setSelectedItem(this.cmbCurrentConnection.getSelectedItem());
-    }//GEN-LAST:event_cmbCurrentConnectionActionPerformed
+    public void setCompanyName(String s) {
+        this.lblCompany.setText(s);
+    }
+
+    public void setUserInfo(ImageIcon icon, AppUserBean principal) {
+        String name = principal.getDisplayName();
+        if (StringUtils.isEmpty(principal.getDisplayName())) {
+            name = principal.getName();
+        }
+        this.lblUser.setText(name);
+        this.lblUser.setIcon(icon);
+        this.lblDefaultUserIcon.setIcon(null);
+        this.lblRole.setText(StringUtils.nonEmpty(principal.getRole()).replace(System.lineSeparator(), " | "));
+    }
+
+    public void addStatus(String s) {
+        if (System.getProperty("line.separator").equals(s)) {
+            this.lblProgress.setText(" ");
+        } else {
+            this.lblProgress.setText(this.lblProgress.getText() + s);
+        }
+    }
+
+    public void setProgress(boolean indeterminate, int max, int value, String s) {
+        if (this.progress.isIndeterminate() != indeterminate) {
+            this.progress.setIndeterminate(indeterminate);
+        }
+
+        if (!indeterminate) {
+            if (max > this.progress.getMaximum()) {
+                this.progress.setMaximum(max);
+            }
+            // do not progress backwards
+            if (value > this.progress.getValue()) {
+                this.progress.setValue(value);
+            }
+
+        }
+
+        if (this.progress.getString() != null && !(this.progress.getString().equals(s))) {
+            this.progress.setString(s);
+        }
+    }
 
     private void txtServerFocusLost(java.awt.event.FocusEvent evt) {//GEN-FIRST:event_txtServerFocusLost
         txtServer.setText(txtServer.getText().trim());
@@ -2014,7 +2547,7 @@ public class LoginDialog extends javax.swing.JFrame {
     }//GEN-LAST:event_cmdAddProfileActionPerformed
 
     private void cmdImportProfileActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdImportProfileActionPerformed
-        ImportConnectionProfileDialog dlg = new ImportConnectionProfileDialog(this, true,this.connections);
+        ImportConnectionProfileDialog dlg = new ImportConnectionProfileDialog(this, true, this.connections);
         dlg.setTitle("Profil aus Zwischenablage einfügen");
         FrameUtils.centerDialog(dlg, this);
         dlg.setVisible(true);
@@ -2031,6 +2564,20 @@ public class LoginDialog extends javax.swing.JFrame {
             }
         }
     }//GEN-LAST:event_cmdImportProfileActionPerformed
+
+    private void cmbCurrentConnectionActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmbCurrentConnectionActionPerformed
+        this.cmbProfile.setSelectedItem(this.cmbCurrentConnection.getSelectedItem());
+    }//GEN-LAST:event_cmbCurrentConnectionActionPerformed
+
+    private void cmdLoginActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdLoginActionPerformed
+        this.loginPerformed(true);
+    }//GEN-LAST:event_cmdLoginActionPerformed
+
+    private void pwPasswordKeyPressed(java.awt.event.KeyEvent evt) {//GEN-FIRST:event_pwPasswordKeyPressed
+        if (evt.getKeyCode() == KeyEvent.VK_ENTER) {
+            this.loginPerformed(true);
+        }
+    }//GEN-LAST:event_pwPasswordKeyPressed
 
     private void highlightSecuritySelection() {
         this.rdSecNone.setBackground(new Color(100, 100, 100, 0));
@@ -2049,11 +2596,89 @@ public class LoginDialog extends javax.swing.JFrame {
     }
 
     /**
+     * Generates a QR code containing the current connection profile settings.
+     * @return byte array containing the QR code image in PNG format, or null if generation fails
+     */
+    private byte[] generateProfileQrCode() {
+        try {
+            // Get current connection profile
+            String selectedProfileName = (String) this.cmbCurrentConnection.getSelectedItem();
+            if (selectedProfileName == null || selectedProfileName.trim().isEmpty()) {
+                log.warn("No connection profile selected for QR code generation");
+                return null;
+            }
+
+            ConnectionProfile profile = this.connections.getProfile(selectedProfileName);
+            if (profile == null) {
+                log.warn("Selected connection profile not found: " + selectedProfileName);
+                return null;
+            }
+
+            // Build JSON object with connection settings
+            JsonObject json = new JsonObject();
+            json.put("server", profile.getServer() != null ? profile.getServer() : "");
+            json.put("port", profile.getPort() != null ? profile.getPort() : "");
+            json.put("securityMode", profile.getSecurityMode() != null ? profile.getSecurityMode() : "");
+            json.put("sshServer", profile.getSshHost() != null ? profile.getSshHost() : "");
+            json.put("sshPort", profile.getSshPort() != null ? profile.getSshPort() : "");
+            json.put("sshUser", profile.getSshUser() != null ? profile.getSshUser() : "");
+            json.put("sshPassword", profile.getSshPassword() != null ? profile.getSshPassword() : "");
+            json.put("sshTargetPort", profile.getSshTargetPort() != null ? profile.getSshTargetPort() : "");
+
+            String jsonData = json.toJson();
+            log.info("Generating QR code for profile: " + selectedProfileName);
+
+            // Generate QR code
+            int pixels = 300;
+            Map<EncodeHintType, Object> hints = new HashMap<>();
+            hints.put(EncodeHintType.CHARACTER_SET, "UTF-8");
+            hints.put(EncodeHintType.MARGIN, 1);
+
+            QRCodeWriter qrWriter = new QRCodeWriter();
+            BitMatrix matrix = qrWriter.encode(jsonData, BarcodeFormat.QR_CODE, pixels, pixels, hints);
+
+            ByteArrayOutputStream pngStream = new ByteArrayOutputStream();
+            MatrixToImageWriter.writeToStream(matrix, "PNG", pngStream);
+
+            return pngStream.toByteArray();
+
+        } catch (WriterException | IOException ex) {
+            log.error("Error generating QR code for connection profile", ex);
+            return null;
+        }
+    }
+
+    /**
+     * Updates the QR code display in the "App koppeln" tab with the current connection profile.
+     */
+    private void updateProfileQrCodeDisplay() {
+        try {
+            byte[] qrCodeBytes = generateProfileQrCode();
+
+            if (qrCodeBytes != null) {
+                ImageIcon qrIcon = new ImageIcon(qrCodeBytes);
+                this.lblProfileQrCode.setIcon(qrIcon);
+                this.lblProfileQrCode.setText("");
+                log.debug("QR code display updated successfully");
+            } else {
+                // Show error message in label if QR code generation failed
+                this.lblProfileQrCode.setIcon(null);
+                this.lblProfileQrCode.setText("QR-Code konnte nicht generiert werden");
+                log.warn("QR code generation returned null");
+            }
+        } catch (Exception ex) {
+            log.error("Error updating QR code display", ex);
+            this.lblProfileQrCode.setIcon(null);
+            this.lblProfileQrCode.setText("Fehler bei QR-Code Generierung");
+        }
+    }
+
+    /**
      * @param args the command line arguments
      */
     public static void main(String args[]) {
         java.awt.EventQueue.invokeLater(() -> {
-            new LoginDialog("", null, null, null, null, SECMODE_STANDARD, null, null, null, null, null).setVisible(true);
+            new LoginDialog(null, null, null, null, SECMODE_STANDARD, null, null, null, null, null).setVisible(true);
         });
     }
 
@@ -2072,6 +2697,7 @@ public class LoginDialog extends javax.swing.JFrame {
     private javax.swing.JButton cmdImportProfile;
     private javax.swing.JButton cmdLogin;
     private javax.swing.JButton cmdMgmtConsole;
+    private javax.swing.JButton cmdNextBackground;
     private javax.swing.JButton cmdRestore;
     private javax.swing.JButton cmdSaveProfile;
     private javax.swing.JButton cmdScanNetwork;
@@ -2085,8 +2711,13 @@ public class LoginDialog extends javax.swing.JFrame {
     private javax.swing.JLabel jLabel15;
     private javax.swing.JLabel jLabel16;
     private javax.swing.JLabel jLabel17;
+    private javax.swing.JLabel jLabel18;
     private javax.swing.JLabel jLabel19;
     private javax.swing.JLabel jLabel2;
+    private javax.swing.JLabel jLabel20;
+    private javax.swing.JLabel jLabel21;
+    private javax.swing.JLabel jLabel22;
+    private javax.swing.JLabel jLabel23;
     private javax.swing.JLabel jLabel3;
     private javax.swing.JLabel jLabel4;
     private javax.swing.JLabel jLabel5;
@@ -2095,17 +2726,32 @@ public class LoginDialog extends javax.swing.JFrame {
     private javax.swing.JLabel jLabel8;
     private javax.swing.JLabel jLabel9;
     private javax.swing.JPanel jPanel1;
+    private javax.swing.JPanel jPanel10;
+    private javax.swing.JPanel jPanel11;
+    private javax.swing.JPanel jPanel12;
     private javax.swing.JPanel jPanel2;
     private javax.swing.JPanel jPanel3;
     private javax.swing.JPanel jPanel4;
     private javax.swing.JPanel jPanel5;
     private javax.swing.JPanel jPanel6;
     private javax.swing.JPanel jPanel7;
+    private javax.swing.JPanel jPanel8;
+    private javax.swing.JPanel jPanel9;
     private javax.swing.JTabbedPane jTabbedPane1;
     private javax.swing.JLabel lblAutoUpdate;
+    private javax.swing.JLabel lblBackgroundLocation;
     private javax.swing.JLabel lblBoxOutput;
-    private javax.swing.JLabel lblHint;
+    private javax.swing.JLabel lblCompany;
+    private javax.swing.JLabel lblDefaultUserIcon;
+    private javax.swing.JLabel lblFullClientVersion;
+    private javax.swing.JLabel lblLogo;
     private javax.swing.JLabel lblProfile;
+    private javax.swing.JLabel lblProfileQrCode;
+    private javax.swing.JLabel lblProgress;
+    private javax.swing.JLabel lblRole;
+    private javax.swing.JLabel lblUser;
+    private javax.swing.JProgressBar progress;
+    private javax.swing.JPanel progressPanel;
     private javax.swing.JPasswordField pwPassword;
     private javax.swing.JPasswordField pwdSshPassword;
     private javax.swing.JRadioButton rdSecNone;

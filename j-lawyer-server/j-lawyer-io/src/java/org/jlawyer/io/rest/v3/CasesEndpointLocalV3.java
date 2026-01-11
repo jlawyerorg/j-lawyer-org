@@ -670,6 +670,7 @@ import javax.ws.rs.core.Response;
 import org.jlawyer.io.rest.v1.pojo.RestfulCaseV2;
 import org.jlawyer.io.rest.v1.pojo.RestfulDocumentContentV1;
 import org.jlawyer.io.rest.v1.pojo.RestfulPartyV1;
+import org.jlawyer.io.rest.v3.pojo.RestfulCaseFolderV3;
 
 /**
  *
@@ -683,6 +684,10 @@ public interface CasesEndpointLocalV3 {
     Response getCaseFolders(String caseId);
     
     Response applyFolderTemplate(String id, String templateName);
+    
+    Response createCaseFolder(String id, RestfulCaseFolderV3 folder);
+    
+    Response deleteCaseFolder(String id, String folderId);
     
     
 }

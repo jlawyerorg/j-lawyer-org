@@ -663,6 +663,7 @@
  */
 package org.jlawyer.async;
 
+import com.jdimension.jlawyer.documents.DocumentPreview;
 import com.jdimension.jlawyer.documents.PreviewGenerator;
 import com.jdimension.jlawyer.documents.TikaConfigurator;
 import com.jdimension.jlawyer.persistence.ArchiveFileDocumentsBean;
@@ -738,7 +739,7 @@ public class SearchIndexProcessor implements MessageListener {
                     } else if (req.getAction() == SearchIndexRequest.ACTION_REINDEXALL) {
                         api.deleteAll();
 
-                        PreviewGenerator pg = new PreviewGenerator(this.archiveFileDocumentsFacade);
+                        PreviewGenerator pg = new PreviewGenerator(this.archiveFileDocumentsFacade, null);
                         List<ArchiveFileDocumentsBean> allDocs = this.archiveFileDocumentsFacade.findAll();
                         for (ArchiveFileDocumentsBean db : allDocs) {
                             if (db.isDeleted()) {
@@ -750,6 +751,7 @@ public class SearchIndexProcessor implements MessageListener {
                                 log.error("Could not process search index request for " + db.getName() + ": " + message.toString(), th);
                             }
                         }
+                        log.info("full re-indexing finished");
                     }
                 } else if (o instanceof OcrRequest) {
 
@@ -859,7 +861,7 @@ public class SearchIndexProcessor implements MessageListener {
     @TransactionAttribute(TransactionAttributeType.REQUIRES_NEW)
     private void doAddToIndex(ArchiveFileDocumentsBean db, PreviewGenerator pg, SearchAPI api) throws Exception {
         log.info("indexing document " + db.getName());
-        api.addToIndex(db.getId(), db.getName(), pg.getDocumentPreview(db.getId()), db.getArchiveFileKey().getId(), db.getArchiveFileKey().getName(), db.getArchiveFileKey().getFileNumber());
+        api.addToIndex(db.getId(), db.getName(), pg.getDocumentPreview(db.getId(), DocumentPreview.TYPE_TEXT).getText(), db.getArchiveFileKey().getId(), db.getArchiveFileKey().getName(), db.getArchiveFileKey().getFileNumber());
 
     }
 

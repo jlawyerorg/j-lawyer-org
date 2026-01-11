@@ -665,6 +665,7 @@ package com.jdimension.jlawyer.client.launcher;
 
 import com.jdimension.jlawyer.client.mail.*;
 import com.jdimension.jlawyer.client.editors.EditorsRegistry;
+import com.jdimension.jlawyer.client.utils.FrameUtils;
 import com.jdimension.jlawyer.persistence.ArchiveFileBean;
 import com.jdimension.jlawyer.persistence.CaseFolder;
 import java.awt.Window;
@@ -714,11 +715,7 @@ public class OutlookMsgInternalLauncher extends InternalLauncher {
                 archiveFile=((CaseDocumentStore)store).getCase();
                 caseFolder=((CaseDocumentStore)store).getDocumentFolder();
             }
-            ViewEmailDialog view = null;
-            if(this.parent==null) 
-                view=new ViewEmailDialog(EditorsRegistry.getInstance().getMainWindow(), archiveFile, caseFolder, odoc);
-            else
-                view=new ViewEmailDialog(this.parent, archiveFile, caseFolder, odoc);
+            ViewEmailFrame view = new ViewEmailFrame(archiveFile, caseFolder, odoc);
             view.setMessage(message);
             try {
                 view.setTitle(message.getSubject());
@@ -726,7 +723,10 @@ public class OutlookMsgInternalLauncher extends InternalLauncher {
                 log.error(t);
                 view.setTitle("E-Mail-Ansicht");
             }
+            EditorsRegistry.getInstance().registerFrame(view);
             view.setVisible(true);
+            FrameUtils.centerFrame(view, null);
+            FrameUtils.focusFrame(view);
             odoc.setStatus(ObservedDocument.STATUS_OPEN);
         } catch (Exception ex) {
             log.error(ex);

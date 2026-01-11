@@ -663,6 +663,7 @@
  */
 package com.jdimension.jlawyer.services;
 
+import com.jdimension.jlawyer.documents.DocumentPreview;
 import com.jdimension.jlawyer.pojo.PartiesTriplet;
 import com.jdimension.jlawyer.persistence.*;
 import com.jdimension.jlawyer.pojo.imports.ImportLogEntry;
@@ -689,6 +690,15 @@ public interface SystemManagementRemote {
     public static final int TEMPLATE_TYPE_HEAD=20;
 
     AppOptionGroupBean[] getOptionGroup(String optionGroup);
+
+    /**
+     * Retrieves multiple option groups in a single call for improved performance.
+     * This method reduces network roundtrips by batching multiple getOptionGroup() calls into one.
+     *
+     * @param optionGroups List of option group names to retrieve
+     * @return Map where keys are option group names and values are arrays of AppOptionGroupBean for each group
+     */
+    HashMap<String, AppOptionGroupBean[]> getOptionGroups(List<String> optionGroups);
 
     BankDataBean[] searchBankData(String query);
 
@@ -718,7 +728,7 @@ public interface SystemManagementRemote {
 
     AppUserBean updateUser(AppUserBean user, List<AppRoleBean> roles) throws Exception;
 
-    void deleteUser(String principalId);
+    void deleteUser(String principalId) throws Exception;
 
     ServerInformation getServerInformation();
     
@@ -738,9 +748,9 @@ public interface SystemManagementRemote {
 
     void statusMail(String subject, String body);
     
-    void testSendMail(String smtpHost, int smtpPort, String smtpUser, String smtpPwd, boolean smtpSsl, boolean smtpStartTls, String mailAddress, boolean isMsExchange, String authToken) throws Exception;
+    void testSendMail(String smtpHost, int smtpPort, String smtpUser, String smtpPwd, boolean smtpSsl, boolean smtpStartTls, String mailAddress, boolean isMsExchange, String authToken, Properties customProps) throws Exception;
     
-    void testReceiveMail(String mailAddress, String host, String protocol, boolean ssl, String user, String pwd, boolean isMsExchange, String authToken) throws Exception;
+    void testReceiveMail(String mailAddress, String host, String protocol, boolean ssl, String user, String pwd, boolean isMsExchange, String authToken, Properties customProps) throws Exception;
 
     boolean validateFileOnServer(File file, boolean isDirectory);
 
@@ -782,7 +792,7 @@ public interface SystemManagementRemote {
 
     List<GenericNode> searchTemplateFolders(int templateType, String query) throws Exception;
 
-    String getTemplatePreview(int templateType, GenericNode folder, String fileName) throws Exception;
+    DocumentPreview getTemplatePreview(int templateType, GenericNode folder, String fileName) throws Exception;
 
     void renameTemplate(int templateType, GenericNode folder, String fromName, String toName) throws Exception;
 
@@ -841,5 +851,15 @@ public interface SystemManagementRemote {
     List<String> listImportSheets(byte[] odsData, String fullClientVersion) throws Exception;
 
     List<ImportLogEntry> importSheets(byte[] odsData, List<String> sheetNames, boolean dryRun, String fullClientVersion) throws Exception;
+
+    List<DocumentTagRule> getAllDocumentTagRules();
+    DocumentTagRule addDocumentTagRule(DocumentTagRule rule);
+    DocumentTagRule updateDocumentTagRule(DocumentTagRule rule) throws Exception;
+    void removeDocumentTagRule(DocumentTagRule rule) throws Exception;
+    void setDocumentTagRuleConditions(String ruleId, List<DocumentTagRuleCondition> conditionList) throws Exception;
+
+    TransactionLog addTransactionLog(String hashInput, int expiryDays) throws Exception;
+
+    TransactionLog getTransactionLog(String hashInput) throws Exception;
     
 }

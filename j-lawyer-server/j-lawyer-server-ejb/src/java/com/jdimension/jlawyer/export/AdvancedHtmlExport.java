@@ -1,0 +1,1521 @@
+/*
+ *                     GNU AFFERO GENERAL PUBLIC LICENSE
+ *                        Version 3, 19 November 2007
+ *
+ *  Copyright (C) 2007 Free Software Foundation, Inc. <https://fsf.org/>
+ *  Everyone is permitted to copy and distribute verbatim copies
+ *  of this license document, but changing it is not allowed.
+ *
+ *                             Preamble
+ *
+ *   The GNU Affero General Public License is a free, copyleft license for
+ * software and other kinds of works, specifically designed to ensure
+ * cooperation with the community in the case of network server software.
+ *
+ *   The licenses for most software and other practical works are designed
+ * to take away your freedom to share and change the works.  By contrast,
+ * our General Public Licenses are intended to guarantee your freedom to
+ * share and change all versions of a program--to make sure it remains free
+ * software for all its users.
+ *
+ *   When we speak of free software, we are referring to freedom, not
+ * price.  Our General Public Licenses are designed to make sure that you
+ * have the freedom to distribute copies of free software (and charge for
+ * them if you wish), that you receive source code or can get it if you
+ * want it, that you can change the software or use pieces of it in new
+ * free programs, and that you know you can do these things.
+ *
+ *   Developers that use our General Public Licenses protect your rights
+ * with two steps: (1) assert copyright on the software, and (2) offer
+ * you this License which gives you legal permission to copy, distribute
+ * and/or modify the software.
+ *
+ *   A secondary benefit of defending all users' freedom is that
+ * improvements made in alternate versions of the program, if they
+ * receive widespread use, become available for other developers to
+ * incorporate.  Many developers of free software are heartened and
+ * encouraged by the resulting cooperation.  However, in the case of
+ * software used on network servers, this result may fail to come about.
+ * The GNU General Public License permits making a modified version and
+ * letting the public access it on a server without ever releasing its
+ * source code to the public.
+ *
+ *   The GNU Affero General Public License is designed specifically to
+ * ensure that, in such cases, the modified source code becomes available
+ * to the community.  It requires the operator of a network server to
+ * provide the source code of the modified version running there to the
+ * users of that server.  Therefore, public use of a modified version, on
+ * a publicly accessible server, gives the public access to the source
+ * code of the modified version.
+ *
+ *   An older license, called the Affero General Public License and
+ * published by Affero, was designed to accomplish similar goals.  This is
+ * a different license, not a version of the Affero GPL, but Affero has
+ * released a new version of the Affero GPL which permits relicensing under
+ * this license.
+ *
+ *   The precise terms and conditions for copying, distribution and
+ * modification follow.
+ *
+ *                        TERMS AND CONDITIONS
+ *
+ *   0. Definitions.
+ *
+ *   "This License" refers to version 3 of the GNU Affero General Public License.
+ *
+ *   "Copyright" also means copyright-like laws that apply to other kinds of
+ * works, such as semiconductor masks.
+ *
+ *   "The Program" refers to any copyrightable work licensed under this
+ * License.  Each licensee is addressed as "you".  "Licensees" and
+ * "recipients" may be individuals or organizations.
+ *
+ *   To "modify" a work means to copy from or adapt all or part of the work
+ * in a fashion requiring copyright permission, other than the making of an
+ * exact copy.  The resulting work is called a "modified version" of the
+ * earlier work or a work "based on" the earlier work.
+ *
+ *   A "covered work" means either the unmodified Program or a work based
+ * on the Program.
+ *
+ *   To "propagate" a work means to do anything with it that, without
+ * permission, would make you directly or secondarily liable for
+ * infringement under applicable copyright law, except executing it on a
+ * computer or modifying a private copy.  Propagation includes copying,
+ * distribution (with or without modification), making available to the
+ * public, and in some countries other activities as well.
+ *
+ *   To "convey" a work means any kind of propagation that enables other
+ * parties to make or receive copies.  Mere interaction with a user through
+ * a computer network, with no transfer of a copy, is not conveying.
+ *
+ *   An interactive user interface displays "Appropriate Legal Notices"
+ * to the extent that it includes a convenient and prominently visible
+ * feature that (1) displays an appropriate copyright notice, and (2)
+ * tells the user that there is no warranty for the work (except to the
+ * extent that warranties are provided), that licensees may convey the
+ * work under this License, and how to view a copy of this License.  If
+ * the interface presents a list of user commands or options, such as a
+ * menu, a prominent item in the list meets this criterion.
+ *
+ *   1. Source Code.
+ *
+ *   The "source code" for a work means the preferred form of the work
+ * for making modifications to it.  "Object code" means any non-source
+ * form of a work.
+ *
+ *   A "Standard Interface" means an interface that either is an official
+ * standard defined by a recognized standards body, or, in the case of
+ * interfaces specified for a particular programming language, one that
+ * is widely used among developers working in that language.
+ *
+ *   The "System Libraries" of an executable work include anything, other
+ * than the work as a whole, that (a) is included in the normal form of
+ * packaging a Major Component, but which is not part of that Major
+ * Component, and (b) serves only to enable use of the work with that
+ * Major Component, or to implement a Standard Interface for which an
+ * implementation is available to the public in source code form.  A
+ * "Major Component", in this context, means a major essential component
+ * (kernel, window system, and so on) of the specific operating system
+ * (if any) on which the executable work runs, or a compiler used to
+ * produce the work, or an object code interpreter used to run it.
+ *
+ *   The "Corresponding Source" for a work in object code form means all
+ * the source code needed to generate, install, and (for an executable
+ * work) run the object code and to modify the work, including scripts to
+ * control those activities.  However, it does not include the work's
+ * System Libraries, or general-purpose tools or generally available free
+ * programs which are used unmodified in performing those activities but
+ * which are not part of the work.  For example, Corresponding Source
+ * includes interface definition files associated with source files for
+ * the work, and the source code for shared libraries and dynamically
+ * linked subprograms that the work is specifically designed to require,
+ * such as by intimate data communication or control flow between those
+ * subprograms and other parts of the work.
+ *
+ *   The Corresponding Source need not include anything that users
+ * can regenerate automatically from other parts of the Corresponding
+ * Source.
+ *
+ *   The Corresponding Source for a work in source code form is that
+ * same work.
+ *
+ *   2. Basic Permissions.
+ *
+ *   All rights granted under this License are granted for the term of
+ * copyright on the Program, and are irrevocable provided the stated
+ * conditions are met.  This License explicitly affirms your unlimited
+ * permission to run the unmodified Program.  The output from running a
+ * covered work is covered by this License only if the output, given its
+ * content, constitutes a covered work.  This License acknowledges your
+ * rights of fair use or other equivalent, as provided by copyright law.
+ *
+ *   You may make, run and propagate covered works that you do not
+ * convey, without conditions so long as your license otherwise remains
+ * in force.  You may convey covered works to others for the sole purpose
+ * of having them make modifications exclusively for you, or provide you
+ * with facilities for running those works, provided that you comply with
+ * the terms of this License in conveying all material for which you do
+ * not control copyright.  Those thus making or running the covered works
+ * for you must do so exclusively on your behalf, under your direction
+ * and control, on terms that prohibit them from making any copies of
+ * your copyrighted material outside their relationship with you.
+ *
+ *   Conveying under any other circumstances is permitted solely under
+ * the conditions stated below.  Sublicensing is not allowed; section 10
+ * makes it unnecessary.
+ *
+ *   3. Protecting Users' Legal Rights From Anti-Circumvention Law.
+ *
+ *   No covered work shall be deemed part of an effective technological
+ * measure under any applicable law fulfilling obligations under article
+ * 11 of the WIPO copyright treaty adopted on 20 December 1996, or
+ * similar laws prohibiting or restricting circumvention of such
+ * measures.
+ *
+ *   When you convey a covered work, you waive any legal power to forbid
+ * circumvention of technological measures to the extent such circumvention
+ * is effected by exercising rights under this License with respect to
+ * the covered work, and you disclaim any intention to limit operation or
+ * modification of the work as a means of enforcing, against the work's
+ * users, your or third parties' legal rights to forbid circumvention of
+ * technological measures.
+ *
+ *   4. Conveying Verbatim Copies.
+ *
+ *   You may convey verbatim copies of the Program's source code as you
+ * receive it, in any medium, provided that you conspicuously and
+ * appropriately publish on each copy an appropriate copyright notice;
+ * keep intact all notices stating that this License and any
+ * non-permissive terms added in accord with section 7 apply to the code;
+ * keep intact all notices of the absence of any warranty; and give all
+ * recipients a copy of this License along with the Program.
+ *
+ *   You may charge any price or no price for each copy that you convey,
+ * and you may offer support or warranty protection for a fee.
+ *
+ *   5. Conveying Modified Source Versions.
+ *
+ *   You may convey a work based on the Program, or the modifications to
+ * produce it from the Program, in the form of source code under the
+ * terms of section 4, provided that you also meet all of these conditions:
+ *
+ *     a) The work must carry prominent notices stating that you modified
+ *     it, and giving a relevant date.
+ *
+ *     b) The work must carry prominent notices stating that it is
+ *     released under this License and any conditions added under section
+ *     7.  This requirement modifies the requirement in section 4 to
+ *     "keep intact all notices".
+ *
+ *     c) You must license the entire work, as a whole, under this
+ *     License to anyone who comes into possession of a copy.  This
+ *     License will therefore apply, along with any applicable section 7
+ *     additional terms, to the whole of the work, and all its parts,
+ *     regardless of how they are packaged.  This License gives no
+ *     permission to license the work in any other way, but it does not
+ *     invalidate such permission if you have separately received it.
+ *
+ *     d) If the work has interactive user interfaces, each must display
+ *     Appropriate Legal Notices; however, if the Program has interactive
+ *     interfaces that do not display Appropriate Legal Notices, your
+ *     work need not make them do so.
+ *
+ *   A compilation of a covered work with other separate and independent
+ * works, which are not by their nature extensions of the covered work,
+ * and which are not combined with it such as to form a larger program,
+ * in or on a volume of a storage or distribution medium, is called an
+ * "aggregate" if the compilation and its resulting copyright are not
+ * used to limit the access or legal rights of the compilation's users
+ * beyond what the individual works permit.  Inclusion of a covered work
+ * in an aggregate does not cause this License to apply to the other
+ * parts of the aggregate.
+ *
+ *   6. Conveying Non-Source Forms.
+ *
+ *   You may convey a covered work in object code form under the terms
+ * of sections 4 and 5, provided that you also convey the
+ * machine-readable Corresponding Source under the terms of this License,
+ * in one of these ways:
+ *
+ *     a) Convey the object code in, or embodied in, a physical product
+ *     (including a physical distribution medium), accompanied by the
+ *     Corresponding Source fixed on a durable physical medium
+ *     customarily used for software interchange.
+ *
+ *     b) Convey the object code in, or embodied in, a physical product
+ *     (including a physical distribution medium), accompanied by a
+ *     written offer, valid for at least three years and valid for as
+ *     long as you offer spare parts or customer support for that product
+ *     model, to give anyone who possesses the object code either (1) a
+ *     copy of the Corresponding Source for all the software in the
+ *     product that is covered by this License, on a durable physical
+ *     medium customarily used for software interchange, for a price no
+ *     more than your reasonable cost of physically performing this
+ *     conveying of source, or (2) access to copy the
+ *     Corresponding Source from a network server at no charge.
+ *
+ *     c) Convey individual copies of the object code with a copy of the
+ *     written offer to provide the Corresponding Source.  This
+ *     alternative is allowed only occasionally and noncommercially, and
+ *     only if you received the object code with such an offer, in accord
+ *     with subsection 6b.
+ *
+ *     d) Convey the object code by offering access from a designated
+ *     place (gratis or for a charge), and offer equivalent access to the
+ *     Corresponding Source in the same way through the same place at no
+ *     further charge.  You need not require recipients to copy the
+ *     Corresponding Source along with the object code.  If the place to
+ *     copy the object code is a network server, the Corresponding Source
+ *     may be on a different server (operated by you or a third party)
+ *     that supports equivalent copying facilities, provided you maintain
+ *     clear directions next to the object code saying where to find the
+ *     Corresponding Source.  Regardless of what server hosts the
+ *     Corresponding Source, you remain obligated to ensure that it is
+ *     available for as long as needed to satisfy these requirements.
+ *
+ *     e) Convey the object code using peer-to-peer transmission, provided
+ *     you inform other peers where the object code and Corresponding
+ *     Source of the work are being offered to the general public at no
+ *     charge under subsection 6d.
+ *
+ *   A separable portion of the object code, whose source code is excluded
+ * from the Corresponding Source as a System Library, need not be
+ * included in conveying the object code work.
+ *
+ *   A "User Product" is either (1) a "consumer product", which means any
+ * tangible personal property which is normally used for personal, family,
+ * or household purposes, or (2) anything designed or sold for incorporation
+ * into a dwelling.  In determining whether a product is a consumer product,
+ * doubtful cases shall be resolved in favor of coverage.  For a particular
+ * product received by a particular user, "normally used" refers to a
+ * typical or common use of that class of product, regardless of the status
+ * of the particular user or of the way in which the particular user
+ * actually uses, or expects or is expected to use, the product.  A product
+ * is a consumer product regardless of whether the product has substantial
+ * commercial, industrial or non-consumer uses, unless such uses represent
+ * the only significant mode of use of the product.
+ *
+ *   "Installation Information" for a User Product means any methods,
+ * procedures, authorization keys, or other information required to install
+ * and execute modified versions of a covered work in that User Product from
+ * a modified version of its Corresponding Source.  The information must
+ * suffice to ensure that the continued functioning of the modified object
+ * code is in no case prevented or interfered with solely because
+ * modification has been made.
+ *
+ *   If you convey an object code work under this section in, or with, or
+ * specifically for use in, a User Product, and the conveying occurs as
+ * part of a transaction in which the right of possession and use of the
+ * User Product is transferred to the recipient in perpetuity or for a
+ * fixed term (regardless of how the transaction is characterized), the
+ * Corresponding Source conveyed under this section must be accompanied
+ * by the Installation Information.  But this requirement does not apply
+ * if neither you nor any third party retains the ability to install
+ * modified object code on the User Product (for example, the work has
+ * been installed in ROM).
+ *
+ *   The requirement to provide Installation Information does not include a
+ * requirement to continue to provide support service, warranty, or updates
+ * for a work that has been modified or installed by the recipient, or for
+ * the User Product in which it has been modified or installed.  Access to a
+ * network may be denied when the modification itself materially and
+ * adversely affects the operation of the network or violates the rules and
+ * protocols for communication across the network.
+ *
+ *   Corresponding Source conveyed, and Installation Information provided,
+ * in accord with this section must be in a format that is publicly
+ * documented (and with an implementation available to the public in
+ * source code form), and must require no special password or key for
+ * unpacking, reading or copying.
+ *
+ *   7. Additional Terms.
+ *
+ *   "Additional permissions" are terms that supplement the terms of this
+ * License by making exceptions from one or more of its conditions.
+ * Additional permissions that are applicable to the entire Program shall
+ * be treated as though they were included in this License, to the extent
+ * that they are valid under applicable law.  If additional permissions
+ * apply only to part of the Program, that part may be used separately
+ * under those permissions, but the entire Program remains governed by
+ * this License without regard to the additional permissions.
+ *
+ *   When you convey a copy of a covered work, you may at your option
+ * remove any additional permissions from that copy, or from any part of
+ * it.  (Additional permissions may be written to require their own
+ * removal in certain cases when you modify the work.)  You may place
+ * additional permissions on material, added by you to a covered work,
+ * for which you have or can give appropriate copyright permission.
+ *
+ *   Notwithstanding any other provision of this License, for material you
+ * add to a covered work, you may (if authorized by the copyright holders of
+ * that material) supplement the terms of this License with terms:
+ *
+ *     a) Disclaiming warranty or limiting liability differently from the
+ *     terms of sections 15 and 16 of this License; or
+ *
+ *     b) Requiring preservation of specified reasonable legal notices or
+ *     author attributions in that material or in the Appropriate Legal
+ *     Notices displayed by works containing it; or
+ *
+ *     c) Prohibiting misrepresentation of the origin of that material, or
+ *     requiring that modified versions of such material be marked in
+ *     reasonable ways as different from the original version; or
+ *
+ *     d) Limiting the use for publicity purposes of names of licensors or
+ *     authors of the material; or
+ *
+ *     e) Declining to grant rights under trademark law for use of some
+ *     trade names, trademarks, or service marks; or
+ *
+ *     f) Requiring indemnification of licensors and authors of that
+ *     material by anyone who conveys the material (or modified versions of
+ *     it) with contractual assumptions of liability to the recipient, for
+ *     any liability that these contractual assumptions directly impose on
+ *     those licensors and authors.
+ *
+ *   All other non-permissive additional terms are considered "further
+ * restrictions" within the meaning of section 10.  If the Program as you
+ * received it, or any part of it, contains a notice stating that it is
+ * governed by this License along with a term that is a further
+ * restriction, you may remove that term.  If a license document contains
+ * a further restriction but permits relicensing or conveying under this
+ * License, you may add to a covered work material governed by the terms
+ * of that license document, provided that the further restriction does
+ * not survive such relicensing or conveying.
+ *
+ *   If you add terms to a covered work in accord with this section, you
+ * must place, in the relevant source files, a statement of the
+ * additional terms that apply to those files, or a notice indicating
+ * where to find the applicable terms.
+ *
+ *   Additional terms, permissive or non-permissive, may be stated in the
+ * form of a separately written license, or stated as exceptions;
+ * the above requirements apply either way.
+ *
+ *   8. Termination.
+ *
+ *   You may not propagate or modify a covered work except as expressly
+ * provided under this License.  Any attempt otherwise to propagate or
+ * modify it is void, and will automatically terminate your rights under
+ * this License (including any patent licenses granted under the third
+ * paragraph of section 11).
+ *
+ *   However, if you cease all violation of this License, then your
+ * license from a particular copyright holder is reinstated (a)
+ * provisionally, unless and until the copyright holder explicitly and
+ * finally terminates your license, and (b) permanently, if the copyright
+ * holder fails to notify you of the violation by some reasonable means
+ * prior to 60 days after the cessation.
+ *
+ *   Moreover, your license from a particular copyright holder is
+ * reinstated permanently if the copyright holder notifies you of the
+ * violation by some reasonable means, this is the first time you have
+ * received notice of violation of this License (for any work) from that
+ * copyright holder, and you cure the violation prior to 30 days after
+ * your receipt of the notice.
+ *
+ *   Termination of your rights under this section does not terminate the
+ * licenses of parties who have received copies or rights from you under
+ * this License.  If your rights have been terminated and not permanently
+ * reinstated, you do not qualify to receive new licenses for the same
+ * material under section 10.
+ *
+ *   9. Acceptance Not Required for Having Copies.
+ *
+ *   You are not required to accept this License in order to receive or
+ * run a copy of the Program.  Ancillary propagation of a covered work
+ * occurring solely as a consequence of using peer-to-peer transmission
+ * to receive a copy likewise does not require acceptance.  However,
+ * nothing other than this License grants you permission to propagate or
+ * modify any covered work.  These actions infringe copyright if you do
+ * not accept this License.  Therefore, by modifying or propagating a
+ * covered work, you indicate your acceptance of this License to do so.
+ *
+ *   10. Automatic Licensing of Downstream Recipients.
+ *
+ *   Each time you convey a covered work, the recipient automatically
+ * receives a license from the original licensors, to run, modify and
+ * propagate that work, subject to this License.  You are not responsible
+ * for enforcing compliance by third parties with this License.
+ *
+ *   An "entity transaction" is a transaction transferring control of an
+ * organization, or substantially all assets of one, or subdividing an
+ * organization, or merging organizations.  If propagation of a covered
+ * work results from an entity transaction, each party to that
+ * transaction who receives a copy of the work also receives whatever
+ * licenses to the work the party's predecessor in interest had or could
+ * give under the previous paragraph, plus a right to possession of the
+ * Corresponding Source of the work from the predecessor in interest, if
+ * the predecessor has it or can get it with reasonable efforts.
+ *
+ *   You may not impose any further restrictions on the exercise of the
+ * rights granted or affirmed under this License.  For example, you may
+ * not impose a license fee, royalty, or other charge for exercise of
+ * rights granted under this License, and you may not initiate litigation
+ * (including a cross-claim or counterclaim in a lawsuit) alleging that
+ * any patent claim is infringed by making, using, selling, offering for
+ * sale, or importing the Program or any portion of it.
+ *
+ *   11. Patents.
+ *
+ *   A "contributor" is a copyright holder who authorizes use under this
+ * License of the Program or a work on which the Program is based.  The
+ * work thus licensed is called the contributor's "contributor version".
+ *
+ *   A contributor's "essential patent claims" are all patent claims
+ * owned or controlled by the contributor, whether already acquired or
+ * hereafter acquired, that would be infringed by some manner, permitted
+ * by this License, of making, using, or selling its contributor version,
+ * but do not include claims that would be infringed only as a
+ * consequence of further modification of the contributor version.  For
+ * purposes of this definition, "control" includes the right to grant
+ * patent sublicenses in a manner consistent with the requirements of
+ * this License.
+ *
+ *   Each contributor grants you a non-exclusive, worldwide, royalty-free
+ * patent license under the contributor's essential patent claims, to
+ * make, use, sell, offer for sale, import and otherwise run, modify and
+ * propagate the contents of its contributor version.
+ *
+ *   In the following three paragraphs, a "patent license" is any express
+ * agreement or commitment, however denominated, not to enforce a patent
+ * (such as an express permission to practice a patent or covenant not to
+ * sue for patent infringement).  To "grant" such a patent license to a
+ * party means to make such an agreement or commitment not to enforce a
+ * patent against the party.
+ *
+ *   If you convey a covered work, knowingly relying on a patent license,
+ * and the Corresponding Source of the work is not available for anyone
+ * to copy, free of charge and under the terms of this License, through a
+ * publicly available network server or other readily accessible means,
+ * then you must either (1) cause the Corresponding Source to be so
+ * available, or (2) arrange to deprive yourself of the benefit of the
+ * patent license for this particular work, or (3) arrange, in a manner
+ * consistent with the requirements of this License, to extend the patent
+ * license to downstream recipients.  "Knowingly relying" means you have
+ * actual knowledge that, but for the patent license, your conveying the
+ * covered work in a country, or your recipient's use of the covered work
+ * in a country, would infringe one or more identifiable patents in that
+ * country that you have reason to believe are valid.
+ *
+ *   If, pursuant to or in connection with a single transaction or
+ * arrangement, you convey, or propagate by procuring conveyance of, a
+ * covered work, and grant a patent license to some of the parties
+ * receiving the covered work authorizing them to use, propagate, modify
+ * or convey a specific copy of the covered work, then the patent license
+ * you grant is automatically extended to all recipients of the covered
+ * work and works based on it.
+ *
+ *   A patent license is "discriminatory" if it does not include within
+ * the scope of its coverage, prohibits the exercise of, or is
+ * conditioned on the non-exercise of one or more of the rights that are
+ * specifically granted under this License.  You may not convey a covered
+ * work if you are a party to an arrangement with a third party that is
+ * in the business of distributing software, under which you make payment
+ * to the third party based on the extent of your activity of conveying
+ * the work, and under which the third party grants, to any of the
+ * parties who would receive the covered work from you, a discriminatory
+ * patent license (a) in connection with copies of the covered work
+ * conveyed by you (or copies made from those copies), or (b) primarily
+ * for and in connection with specific products or compilations that
+ * contain the covered work, unless you entered into that arrangement,
+ * or that patent license was granted, prior to 28 March 2007.
+ *
+ *   Nothing in this License shall be construed as excluding or limiting
+ * any implied license or other defenses to infringement that may
+ * otherwise be available to you under applicable patent law.
+ *
+ *   12. No Surrender of Others' Freedom.
+ *
+ *   If conditions are imposed on you (whether by court order, agreement or
+ * otherwise) that contradict the conditions of this License, they do not
+ * excuse you from the conditions of this License.  If you cannot convey a
+ * covered work so as to satisfy simultaneously your obligations under this
+ * License and any other pertinent obligations, then as a consequence you may
+ * not convey it at all.  For example, if you agree to terms that obligate you
+ * to collect a royalty for further conveying from those to whom you convey
+ * the Program, the only way you could satisfy both those terms and this
+ * License would be to refrain entirely from conveying the Program.
+ *
+ *   13. Remote Network Interaction; Use with the GNU General Public License.
+ *
+ *   Notwithstanding any other provision of this License, if you modify the
+ * Program, your modified version must prominently offer all users
+ * interacting with it remotely through a computer network (if your version
+ * supports such interaction) an opportunity to receive the Corresponding
+ * Source of your version by providing access to the Corresponding Source
+ * from a network server at no charge, through some standard or customary
+ * means of facilitating copying of software.  This Corresponding Source
+ * shall include the Corresponding Source for any work covered by version 3
+ * of the GNU General Public License that is incorporated pursuant to the
+ * following paragraph.
+ *
+ *   Notwithstanding any other provision of this License, you have
+ * permission to link or combine any covered work with a work licensed
+ * under version 3 of the GNU General Public License into a single
+ * combined work, and to convey the resulting work.  The terms of this
+ * License will continue to apply to the part which is the covered work,
+ * but the work with which it is combined will remain governed by version
+ * 3 of the GNU General Public License.
+ *
+ *   14. Revised Versions of this License.
+ *
+ *   The Free Software Foundation may publish revised and/or new versions of
+ * the GNU Affero General Public License from time to time.  Such new versions
+ * will be similar in spirit to the present version, but may differ in detail to
+ * address new problems or concerns.
+ *
+ *   Each version is given a distinguishing version number.  If the
+ * Program specifies that a certain numbered version of the GNU Affero General
+ * Public License "or any later version" applies to it, you have the
+ * option of following the terms and conditions either of that numbered
+ * version or of any later version published by the Free Software
+ * Foundation.  If the Program does not specify a version number of the
+ * GNU Affero General Public License, you may choose any version ever published
+ * by the Free Software Foundation.
+ *
+ *   If the Program specifies that a proxy can decide which future
+ * versions of the GNU Affero General Public License can be used, that proxy's
+ * public statement of acceptance of a version permanently authorizes you
+ * to choose that version for the Program.
+ *
+ *   Later license versions may give you additional or different
+ * permissions.  However, no additional obligations are imposed on any
+ * author or copyright holder as a result of your choosing to follow a
+ * later version.
+ *
+ *   15. Disclaimer of Warranty.
+ *
+ *   THERE IS NO WARRANTY FOR THE PROGRAM, TO THE EXTENT PERMITTED BY
+ * APPLICABLE LAW.  EXCEPT WHEN OTHERWISE STATED IN WRITING THE COPYRIGHT
+ * HOLDERS AND/OR OTHER PARTIES PROVIDE THE PROGRAM "AS IS" WITHOUT WARRANTY
+ * OF ANY KIND, EITHER EXPRESSED OR IMPLIED, INCLUDING, BUT NOT LIMITED TO,
+ * THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+ * PURPOSE.  THE ENTIRE RISK AS TO THE QUALITY AND PERFORMANCE OF THE PROGRAM
+ * IS WITH YOU.  SHOULD THE PROGRAM PROVE DEFECTIVE, YOU ASSUME THE COST OF
+ * ALL NECESSARY SERVICING, REPAIR OR CORRECTION.
+ *
+ *   16. Limitation of Liability.
+ *
+ *   IN NO EVENT UNLESS REQUIRED BY APPLICABLE LAW OR AGREED TO IN WRITING
+ * WILL ANY COPYRIGHT HOLDER, OR ANY OTHER PARTY WHO MODIFIES AND/OR CONVEYS
+ * THE PROGRAM AS PERMITTED ABOVE, BE LIABLE TO YOU FOR DAMAGES, INCLUDING ANY
+ * GENERAL, SPECIAL, INCIDENTAL OR CONSEQUENTIAL DAMAGES ARISING OUT OF THE
+ * USE OR INABILITY TO USE THE PROGRAM (INCLUDING BUT NOT LIMITED TO LOSS OF
+ * DATA OR DATA BEING RENDERED INACCURATE OR LOSSES SUSTAINED BY YOU OR THIRD
+ * PARTIES OR A FAILURE OF THE PROGRAM TO OPERATE WITH ANY OTHER PROGRAMS),
+ * EVEN IF SUCH HOLDER OR OTHER PARTY HAS BEEN ADVISED OF THE POSSIBILITY OF
+ * SUCH DAMAGES.
+ *
+ *   17. Interpretation of Sections 15 and 16.
+ *
+ *   If the disclaimer of warranty and limitation of liability provided
+ * above cannot be given local legal effect according to their terms,
+ * reviewing courts shall apply local law that most closely approximates
+ * an absolute waiver of all civil liability in connection with the
+ * Program, unless a warranty or assumption of liability accompanies a
+ * copy of the Program in return for a fee.
+ *
+ *                      END OF TERMS AND CONDITIONS
+ *
+ *             How to Apply These Terms to Your New Programs
+ *
+ *   If you develop a new program, and you want it to be of the greatest
+ * possible use to the public, the best way to achieve this is to make it
+ * free software which everyone can redistribute and change under these terms.
+ *
+ *   To do so, attach the following notices to the program.  It is safest
+ * to attach them to the start of each source file to most effectively
+ * state the exclusion of warranty; and each file should have at least
+ * the "copyright" line and a pointer to where the full notice is found.
+ *
+ *     <one line to give the program's name and a brief idea of what it does.>
+ *     Copyright (C) <year>  <name of author>
+ *
+ *     This program is free software: you can redistribute it and/or modify
+ *     it under the terms of the GNU Affero General Public License as published by
+ *     the Free Software Foundation, either version 3 of the License, or
+ *     (at your option) any later version.
+ *
+ *     This program is distributed in the hope that it will be useful,
+ *     but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *     GNU Affero General Public License for more details.
+ *
+ *     You should have received a copy of the GNU Affero General Public License
+ *     along with this program.  If not, see <https://www.gnu.org/licenses/>.
+ *
+ * Also add information on how to contact you by electronic and paper mail.
+ *
+ *   If your software can interact with users remotely through a computer
+ * network, you should also make sure that it provides a way for users to
+ * get its source.  For example, if your program is a web application, its
+ * interface could display a "Source" link that leads users to an archive
+ * of the code.  There are many ways you could offer source, and different
+ * solutions will be better for different programs; see section 13 for the
+ * specific requirements.
+ *
+ *   You should also get your employer (if you work as a programmer) or school,
+ * if any, to sign a "copyright disclaimer" for the program, if necessary.
+ * For more information on this, and how to apply and follow the GNU AGPL, see
+ * <https://www.gnu.org/licenses/>.
+ */
+package com.jdimension.jlawyer.export;
+
+import com.jdimension.jlawyer.server.utils.ServerFileUtils;
+import com.jdimension.jlawyer.server.utils.ServerStringUtils;
+import com.jdimension.jlawyer.persistence.*;
+import java.io.File;
+import java.io.FileOutputStream;
+import java.io.InputStream;
+import java.text.SimpleDateFormat;
+import java.util.ArrayList;
+import java.util.Collection;
+import com.jdimension.jlawyer.services.ArchiveFileServiceLocal;
+import com.jdimension.jlawyer.services.CalendarServiceLocal;
+import java.awt.Color;
+import java.io.ByteArrayOutputStream;
+import java.io.FileInputStream;
+import java.io.FileWriter;
+import java.io.IOException;
+import java.io.OutputStreamWriter;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.attribute.FileTime;
+import java.util.Date;
+import java.util.HashMap;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Locale;
+import java.util.Map;
+import java.util.regex.Pattern;
+import java.util.zip.ZipEntry;
+import java.util.zip.ZipOutputStream;
+import org.apache.log4j.Logger;
+import org.jlawyer.themes.ServerColorTheme;
+
+/**
+ *
+ * @author jens
+ */
+public class AdvancedHtmlExport {
+
+    private static final Logger log = Logger.getLogger(AdvancedHtmlExport.class.getName());
+
+    private static final String CELL_BREAK = "\t";
+    private static final String LINE_BREAK = System.getProperty("line.separator");
+
+    private final SimpleDateFormat dfDate = new SimpleDateFormat("dd.MM.yyyy", Locale.GERMANY);
+    private final SimpleDateFormat dfDateTime = new SimpleDateFormat("dd.MM.yyyy 'um' HH:mm 'Uhr'", Locale.GERMANY);
+
+    private String targetDirectory = null;
+    private boolean onlyFileNumberForExportDir = false;
+
+    private ArchiveFileServiceLocal caseFacade;
+    private CalendarServiceLocal calendarFacade;
+
+    public AdvancedHtmlExport(String targetDirectory, ArchiveFileServiceLocal caseFacade, CalendarServiceLocal calendarFacade) {
+        this.targetDirectory = targetDirectory;
+        this.caseFacade = caseFacade;
+        this.calendarFacade = calendarFacade;
+        this.onlyFileNumberForExportDir = false;
+    }
+
+    public AdvancedHtmlExport(String targetDirectory, ArchiveFileServiceLocal caseFacade, CalendarServiceLocal calendarFacade, boolean onlyFileNumberForExportDir) {
+        this.targetDirectory = targetDirectory;
+        this.caseFacade = caseFacade;
+        this.calendarFacade = calendarFacade;
+        this.onlyFileNumberForExportDir = onlyFileNumberForExportDir;
+    }
+
+    public String getExportFolderName(ArchiveFileBean aCase) {
+
+        // Base: Aktenzeichen (ersatzweise ID), Slash -> '-' und bereinigt
+        String base = "";
+        if (aCase.getFileNumber() != null) {
+            base = aCase.getFileNumber().replace('/', '-');
+        } else {
+            base = aCase.getId();
+        }
+        base = ServerStringUtils.removeSonderzeichen(base);
+        if (base == null || base.trim().isEmpty()) {
+            base = "Akte";
+        }
+
+        String rubrum=null;
+        if (!this.onlyFileNumberForExportDir) {
+            // Aktenrubrum (Kurzrubrum) anhängen: _AKTENRUBRUM, sicher für Dateisystem
+            rubrum = ServerStringUtils.nonEmpty(aCase.getName());
+            rubrum = ServerFileUtils.sanitizeFolderName(rubrum);
+            rubrum = ServerStringUtils.removeSonderzeichen(rubrum);
+            if (rubrum != null) {
+                rubrum = rubrum.trim();
+                // spaces not valid in URLs, and client tries to open the unzipped export in browser
+                rubrum = rubrum.replace(" ", "");
+            }
+        }
+
+        if (!ServerStringUtils.isEmpty(rubrum)) {
+            return base + "_" + rubrum;
+        } else {
+            return base;
+        }
+
+    }
+
+    public String export(ArchiveFileBean dto, Date lastModified) throws Exception {
+        File exportDir = null;
+        try {
+            String exportFolderName = getExportFolderName(dto);
+            exportDir = new File(this.targetDirectory, exportFolderName);
+            if (exportDir.exists()) {
+                throw new Exception("Verzeichnis '" + exportDir.getAbsolutePath() + "' existiert bereits.");
+            }
+
+            if (!exportDir.mkdirs()) {
+                throw new Exception("Verzeichnis konnte nicht erstellt werden: " + exportDir.getAbsolutePath());
+            }
+
+            File assetsDir = new File(exportDir, "assets");
+            File cssDir = new File(assetsDir, "css");
+            File jsDir = new File(assetsDir, "js");
+            cssDir.mkdirs();
+            jsDir.mkdirs();
+
+            Collection<ArchiveFileAddressesBean> parties = caseFacade.getInvolvementDetailsForCaseUnrestricted(dto.getId());
+            Collection<ArchiveFileDocumentsBean> documents = caseFacade.getDocumentsUnrestricted(dto.getId());
+            Collection<ArchiveFileReviewsBean> reviews = calendarFacade.getReviewsUnrestricted(dto.getId());
+            Collection<Invoice> invoices = new ArrayList<>();
+            try {
+                invoices = caseFacade.getInvoicesUnrestricted(dto.getId());
+            } catch (Throwable t) {
+                log.warn("Rechnungen konnten nicht geladen werden", t);
+            }
+            Collection<CaseAccountEntry> accountEntries = new ArrayList<>();
+            try {
+                accountEntries = caseFacade.getAccountEntriesUnrestricted(dto.getId());
+            } catch (Throwable t) {
+                log.warn("Aktenkonto konnte nicht geladen werden", t);
+            }
+            Collection<ArchiveFileTagsBean> tags = null;
+            try {
+                tags = caseFacade.getTagsUnrestricted(dto.getId());
+            } catch (Throwable t) {
+                log.warn("Tags konnten nicht geladen werden", t);
+                tags = new ArrayList<>();
+            }
+            ArchiveFileHistoryBean[] history = null;
+            try {
+                history = caseFacade.getHistoryForArchiveFileUnrestricted(dto.getId());
+                if (history != null) {
+                    java.util.List<ArchiveFileHistoryBean> historyList = new java.util.ArrayList<>(java.util.Arrays.asList(history));
+                    historyList.sort((h1, h2) -> {
+                        java.util.Date d1 = h1.getChangeDate();
+                        java.util.Date d2 = h2.getChangeDate();
+                        if (d1 == null && d2 == null) {
+                            return 0;
+                        }
+                        if (d1 == null) {
+                            return 1; // nulls last
+                        }
+                        if (d2 == null) {
+                            return -1;
+                        }
+                        return d2.compareTo(d1); // descending order
+                    });
+                    history = historyList.toArray(ArchiveFileHistoryBean[]::new);
+                }
+            } catch (Throwable t) {
+                log.warn("Historie konnte nicht geladen werden", t);
+            }
+
+            // Prepare folder mapping and write assets
+            HashMap<String, String> folderPathById = buildFolderPathIndex(dto.getRootFolder());
+            HashMap<String, String> folderPathByIdForExport = folderPathById;
+
+            writeAsset(cssDir, "style-base.css", "templates/caseexport/css/style-base.css", null);
+            writeAsset(cssDir, "style-dark.css", "templates/caseexport/css/style-dark.css", null);
+            writeAsset(cssDir, "style-light.css", "templates/caseexport/css/style-light.css", buildLightThemePlaceholders());
+            writeAsset(cssDir, "history-base.css", "templates/caseexport/css/history-base.css", null);
+            writeAsset(jsDir, "app.js", "templates/caseexport/js/app.js", buildAppJsPlaceholders());
+            writeAsset(jsDir, "history.js", "templates/caseexport/js/history.js", null);
+
+            // Save documents into files/ subfolder mirroring folder structure
+            File filesDir = new File(exportDir, "Dokumente");
+            if (!filesDir.exists()) {
+                filesDir.mkdirs();
+            }
+            HashMap<String, String> relPathByDocId = new HashMap<>();
+            int iDoc = 0;
+            if (documents != null) {
+                for (ArchiveFileDocumentsBean d : documents) {
+                    if (d.isDeleted()) {
+                        continue;
+                    }
+                    iDoc++;
+                    try {
+                        byte[] content = caseFacade.getDocumentContentUnrestricted(d.getId());
+                        String folderId = (d.getFolder() != null ? d.getFolder().getId() : null);
+                        String folderPath = folderPathById.getOrDefault(folderId, "");
+                        String safeName = ServerFileUtils.sanitizeFileName(ServerStringUtils.nonEmpty(d.getName()));
+                        if (safeName.trim().isEmpty()) {
+                            safeName = System.currentTimeMillis() + "_document";
+                        }
+                        File targetDir = folderPath.isEmpty() ? filesDir : new File(filesDir, folderPath);
+                        if (!targetDir.exists()) {
+                            targetDir.mkdirs();
+                        }
+                        File outFile = uniqueFile(targetDir, safeName);
+                        try (FileOutputStream fos = new FileOutputStream(outFile)) {
+                            fos.write(content);
+                        }
+                        if (d.getCreationDate() != null) {
+                            try {
+                                outFile.setLastModified(d.getCreationDate().getTime());
+                            } catch (Throwable ignore) {
+                                log.warn("Konnte Dateizeit nicht setzen", ignore);
+                            }
+                        }
+                        String rel = toRelPath(filesDir, outFile);
+                        relPathByDocId.put(d.getId(), rel);
+                    } catch (Throwable t) {
+                        log.error("Fehler beim Speichern von Dokument " + d.getId(), t);
+                    }
+                }
+            }
+            HashMap<String, String> relPathByDocIdForExport = relPathByDocId;
+
+            // Build history.html
+            try {
+                String historyHtml = buildHistoryHtml(dto, history);
+                writeText(new File(exportDir, "history.html"), historyHtml);
+            } catch (Throwable t) {
+                log.error("Fehler beim Erstellen der Aktenhistorie", t);
+            }
+
+            // Build data script and HTML
+            String dataScript = buildDataScript(dto, parties, documents, reviews, tags, invoices, accountEntries, relPathByDocIdForExport, folderPathByIdForExport);
+            String indexHtml = buildIndexHtml(dto, dataScript);
+            writeText(new File(exportDir, "index.html"), indexHtml);
+
+        } catch (Throwable t) {
+            log.error("Error during HTML export", t);
+            throw new Exception(t);
+        }
+
+        if (lastModified != null) {
+            try (FileWriter fwmod = new FileWriter(exportDir.getPath() + File.separator + ".lastchanged")) {
+                fwmod.write("" + lastModified.getTime());
+            }
+        }
+
+        return exportDir.getAbsolutePath();
+
+    }
+
+    private String buildDataScript(ArchiveFileBean aCase,
+            Collection<ArchiveFileAddressesBean> parties,
+            Collection<ArchiveFileDocumentsBean> documents,
+            Collection<ArchiveFileReviewsBean> reviews,
+            Collection<ArchiveFileTagsBean> tags,
+            Collection<Invoice> invoices,
+            Collection<CaseAccountEntry> accountEntries,
+            HashMap<String, String> relPathByDocIdForExport,
+            HashMap<String, String> folderPathByIdForExport) {
+
+        StringBuilder sb = new StringBuilder();
+        sb.append("<script>\n");
+        sb.append("const CASE_DATA = {");
+
+        // case core
+        sb.append("\"id\":\"").append(jsonEscape(aCase.getId())).append("\",");
+        sb.append("\"fileNumber\":\"").append(jsonEscape(ServerStringUtils.nonEmpty(aCase.getFileNumber()))).append("\",");
+        sb.append("\"name\":\"").append(jsonEscape(ServerStringUtils.nonEmpty(aCase.getName()))).append("\",");
+        sb.append("\"reason\":\"").append(jsonEscape(ServerStringUtils.nonEmpty(aCase.getReason()))).append("\",");
+        sb.append("\"subjectField\":\"").append(jsonEscape(ServerStringUtils.nonEmpty(aCase.getSubjectField()))).append("\",");
+        sb.append("\"lawyer\":\"").append(jsonEscape(ServerStringUtils.nonEmpty(aCase.getLawyer()))).append("\",");
+        sb.append("\"assistant\":\"").append(jsonEscape(ServerStringUtils.nonEmpty(aCase.getAssistant()))).append("\",");
+        sb.append("\"claimNumber\":\"").append(jsonEscape(ServerStringUtils.nonEmpty(aCase.getClaimNumber()))).append("\",");
+        sb.append("\"claimValue\":\"").append(String.valueOf(aCase.getClaimValue())).append("\",");
+        sb.append("\"dateCreated\":\"").append(aCase.getDateCreated() != null ? dfDate.format(aCase.getDateCreated()) : "").append("\",");
+        sb.append("\"dateChanged\":\"").append(aCase.getDateChanged() != null ? dfDate.format(aCase.getDateChanged()) : "").append("\",");
+        sb.append("\"archived\":").append(aCase.isArchived()).append(",");
+        sb.append("\"notice\":\"").append(jsonEscape(ServerStringUtils.nonEmpty(aCase.getNotice()))).append("\",");
+
+        // tags
+        sb.append("\"tags\":[");
+        boolean first = true;
+        if (tags != null) {
+            for (ArchiveFileTagsBean t : tags) {
+                if (!first) {
+                    sb.append(',');
+                }
+                first = false;
+                sb.append("{\"name\":\"").append(jsonEscape(String.valueOf(t))).append("\"}");
+            }
+        }
+        sb.append("],");
+
+        // parties
+        sb.append("\"parties\":[");
+        first = true;
+        if (parties != null) {
+            for (ArchiveFileAddressesBean pab : parties) {
+                AddressBean ab = pab.getAddressKey();
+                if (!first) {
+                    sb.append(',');
+                }
+                first = false;
+                sb.append("{");
+                sb.append("\"name\":\"").append(jsonEscape(ServerStringUtils.nonEmpty(ab != null ? ab.toDisplayName() : ""))).append("\",");
+                sb.append("\"type\":\"").append(jsonEscape(pab.getReferenceType() != null ? pab.getReferenceType().getName() : "")).append("\",");
+                sb.append("\"reference\":\"").append(jsonEscape(ServerStringUtils.nonEmpty(pab.getReference()))).append("\",");
+                StringBuilder addr = new StringBuilder();
+                if (ab != null) {
+                    if (!ServerStringUtils.isEmpty(ab.getStreet())) {
+                        addr.append(ab.getStreet());
+                        if (!ServerStringUtils.isEmpty(ab.getStreetNumber())) {
+                            addr.append(" ").append(ab.getStreetNumber());
+                        }
+                    }
+                    if (!ServerStringUtils.isEmpty(ab.getZipCode()) || !ServerStringUtils.isEmpty(ab.getCity())) {
+                        if (addr.length() > 0) {
+                            addr.append(", ");
+                        }
+                        addr.append(ServerStringUtils.nonEmpty(ab.getZipCode())).append(" ").append(ServerStringUtils.nonEmpty(ab.getCity()));
+                    }
+                }
+                sb.append("\"address\":\"").append(jsonEscape(addr.toString())).append("\",");
+                sb.append("\"phone\":\"").append(jsonEscape(ab != null ? ServerStringUtils.nonEmpty(ab.getPhone()) : "")).append("\",");
+                sb.append("\"mobile\":\"").append(jsonEscape(ab != null ? ServerStringUtils.nonEmpty(ab.getMobile()) : "")).append("\"}");
+            }
+        }
+        sb.append("],");
+
+        // folders (as tree) - use root folder from case
+        CaseFolder root = aCase.getRootFolder();
+        sb.append("\"folders\":");
+        appendFolderJson(sb, root);
+        sb.append(',');
+
+        // documents
+        sb.append("\"documents\":[");
+        first = true;
+        if (documents != null) {
+            for (ArchiveFileDocumentsBean d : documents) {
+                if (d.isDeleted()) {
+                    continue; // skip deleted docs
+                }
+                if (!first) {
+                    sb.append(',');
+                }
+                first = false;
+                sb.append("{");
+                sb.append("\"id\":\"").append(jsonEscape(d.getId())).append("\",");
+                sb.append("\"name\":\"").append(jsonEscape(ServerStringUtils.nonEmpty(d.getName()))).append("\",");
+                sb.append("\"size\":").append(d.getSize()).append(',');
+                sb.append("\"sizeHuman\":\"").append(jsonEscape(ServerFileUtils.getFileSizeHumanReadable(d.getSize()))).append("\",");
+                sb.append("\"folderId\":\"").append(jsonEscape(d.getFolder() != null ? d.getFolder().getId() : "")).append("\",");
+                sb.append("\"creationTs\":").append(d.getCreationDate() != null ? d.getCreationDate().getTime() : 0).append(",");
+                sb.append("\"creationDate\":\"").append(d.getCreationDate() != null ? dfDate.format(d.getCreationDate()) : "").append("\"");
+                sb.append("}");
+            }
+        }
+        sb.append("],");
+
+        // reviews
+        sb.append("\"reviews\":[");
+        first = true;
+        if (reviews != null) {
+            for (ArchiveFileReviewsBean r : reviews) {
+                if (!first) {
+                    sb.append(',');
+                }
+                first = false;
+                sb.append("{");
+                sb.append("\"id\":\"").append(jsonEscape(r.getId())).append("\",");
+                sb.append("\"summary\":\"").append(jsonEscape(ServerStringUtils.nonEmpty(r.getSummary()))).append("\",");
+                sb.append("\"beginDate\":\"").append(r.getBeginDate() != null ? dfDateTime.format(r.getBeginDate()) : "").append("\",");
+                sb.append("\"beginTs\":").append(r.getBeginDate() != null ? r.getBeginDate().getTime() : 0).append(",");
+                sb.append("\"endDate\":\"").append(r.getEndDate() != null ? dfDateTime.format(r.getEndDate()) : "").append("\",");
+                sb.append("\"endTs\":").append(r.getEndDate() != null ? r.getEndDate().getTime() : 0).append(",");
+                sb.append("\"type\":").append(r.getEventType()).append(',');
+                sb.append("\"typeName\":\"").append(jsonEscape(r.getEventTypeName())).append("\",");
+                sb.append("\"assignee\":\"").append(jsonEscape(ServerStringUtils.nonEmpty(r.getAssignee()))).append("\",");
+                sb.append("\"done\":").append(r.isDone()).append("}");
+            }
+        }
+        sb.append("],");
+
+        // invoices
+        sb.append("\"invoices\":[");
+        first = true;
+        if (invoices != null) {
+            for (Invoice i : invoices) {
+                if (!first) {
+                    sb.append(',');
+                }
+                first = false;
+                sb.append("{");
+                sb.append("\"invoiceNumber\":\"").append(jsonEscape(ServerStringUtils.nonEmpty(i.getInvoiceNumber()))).append("\",");
+                sb.append("\"name\":\"").append(jsonEscape(ServerStringUtils.nonEmpty(i.getName()))).append("\",");
+                sb.append("\"description\":\"").append(jsonEscape(ServerStringUtils.nonEmpty(i.getDescription()))).append("\",");
+                sb.append("\"creationDate\":\"").append(i.getCreationDate() != null ? dfDate.format(i.getCreationDate()) : "").append("\",");
+                sb.append("\"dueDate\":\"").append(i.getDueDate() != null ? dfDate.format(i.getDueDate()) : "").append("\",");
+                sb.append("\"total\":").append(i.getTotal()).append(",");
+                sb.append("\"totalGross\":").append(i.getTotalGross()).append(",");
+                sb.append("\"currency\":\"").append(jsonEscape(ServerStringUtils.nonEmpty(i.getCurrency()))).append("\",");
+                sb.append("\"status\":\"").append(jsonEscape(i.getStatusString())).append("\",");
+                sb.append("\"contact\":\"").append(jsonEscape(i.getContact() != null ? i.getContact().toDisplayName() : "")).append("\"");
+                sb.append("}");
+            }
+        }
+        sb.append("],");
+
+        // accountEntries
+        sb.append("\"accountEntries\":[");
+        first = true;
+        if (accountEntries != null) {
+            for (CaseAccountEntry e : accountEntries) {
+                if (!first) {
+                    sb.append(',');
+                }
+                first = false;
+                sb.append("{");
+                sb.append("\"entryDate\":\"").append(e.getEntryDate() != null ? dfDate.format(e.getEntryDate()) : "").append("\",");
+                sb.append("\"contact\":\"").append(jsonEscape(e.getContact() != null ? e.getContact().toDisplayName() : "")).append("\",");
+                sb.append("\"description\":\"").append(jsonEscape(ServerStringUtils.nonEmpty(e.getDescription()))).append("\",");
+                sb.append("\"earnings\":").append(e.getEarnings()).append(",");
+                sb.append("\"spendings\":").append(e.getSpendings()).append(",");
+                sb.append("\"escrowIn\":").append(e.getEscrowIn()).append(",");
+                sb.append("\"escrowOut\":").append(e.getEscrowOut()).append(",");
+                sb.append("\"expendituresIn\":").append(e.getExpendituresIn()).append(",");
+                sb.append("\"expendituresOut\":").append(e.getExpendituresOut()).append(",");
+                sb.append("\"invoice\":\"").append(jsonEscape(e.getInvoice() != null ? e.getInvoice().getInvoiceNumber() : "")).append("\"");
+                sb.append("}");
+            }
+        }
+        sb.append("]");
+
+        // Close CASE_DATA and append helper maps for links/paths
+        sb.append("};\n");
+        // FILE_LINKS: docId -> relative file path
+        sb.append("const FILE_LINKS = {");
+        boolean firstLink = true;
+        for (java.util.Map.Entry<String, String> e : relPathByDocIdForExport.entrySet()) {
+            if (!firstLink) {
+                sb.append(',');
+            }
+            firstLink = false;
+            sb.append("\"").append(jsonEscape(e.getKey())).append("\":\"").append(jsonEscape(e.getValue())).append("\"");
+        }
+        sb.append("};\n");
+        // FOLDER_PATHS: folderId -> folder path string
+        sb.append("const FOLDER_PATHS = {");
+        boolean firstFp = true;
+        for (java.util.Map.Entry<String, String> e : folderPathByIdForExport.entrySet()) {
+            if (e.getKey() == null || e.getKey().isEmpty()) {
+                continue;
+            }
+            if (!firstFp) {
+                sb.append(',');
+            }
+            firstFp = false;
+            sb.append("\"").append(jsonEscape(e.getKey())).append("\":\"").append(jsonEscape(e.getValue())).append("\"");
+        }
+        sb.append("};\n</script>\n");
+        return sb.toString();
+    }
+
+    private String buildIndexHtml(ArchiveFileBean aCase, String dataScript) {
+        String safeTitle = ServerStringUtils.nonEmpty(aCase.getFileNumber()) + " — " + ServerStringUtils.nonEmpty(aCase.getName());
+        String headerSubtitle = ServerStringUtils.nonEmpty(aCase.getFileNumber()) + " · " + ServerStringUtils.nonEmpty(aCase.getName());
+
+        StringBuilder html = new StringBuilder();
+        html.append("<!doctype html>\n");
+        html.append("<html lang=\"de\">\n<head>\n<meta charset=\"utf-8\">\n<meta name=\"viewport\" content=\"width=device-width, initial-scale=1\">\n");
+        html.append("<title>").append(ServerStringUtils.nonEmpty(safeTitle)).append("</title>\n");
+        html.append("<link rel=\"stylesheet\" href=\"assets/css/style-base.css\">\n");
+        html.append("<link rel=\"stylesheet\" href=\"assets/css/style-dark.css\">\n");
+        html.append("<link rel=\"stylesheet\" href=\"assets/css/style-light.css\">\n");
+        html.append("</head>\n<body class=\"theme-dark\" data-theme=\"dark\">\n");
+        html.append("<header class=\"topbar\">\n");
+        html.append("  <div class=\"titles\">\n");
+        html.append("    <div class=\"title\">Akte</div>\n");
+        html.append("    <div class=\"subtitle\">").append(headerSubtitle).append("</div>\n");
+        html.append("  </div>\n");
+        html.append("  <div class=\"actions\">\n");
+        html.append("    <button type=\"button\" id=\"themeToggle\" class=\"theme-toggle\" aria-pressed=\"false\" aria-label=\"Zu hellem Theme wechseln\">\n");
+        html.append("      <span class=\"icon icon-dark\"><svg width=\"18\" height=\"18\" viewBox=\"0 0 24 24\" fill=\"currentColor\" aria-hidden=\"true\"><path d=\"M21 12.79A9 9 0 0111.21 3a7 7 0 000 14 9 9 0 009.79-4.21z\"/></svg></span>\n");
+        html.append("      <span class=\"icon icon-light\"><svg width=\"18\" height=\"18\" viewBox=\"0 0 24 24\" fill=\"currentColor\" aria-hidden=\"true\"><path d=\"M12 18a6 6 0 100-12 6 6 0 000 12zm0 4a1 1 0 01-1-1v-1a1 1 0 112 0v1a1 1 0 01-1 1zm0-18a1 1 0 011-1V2a1 1 0 01-2 0V1a1 1 0 011-1zm11 11a1 1 0 01-1 1h-1a1 1 0 110-2h1a1 1 0 011 1zm-18 0a1 1 0 01-1 1H2a1 1 0 110-2h1a1 1 0 011 1zm15.07 6.07a1 1 0 01-1.41 0l-.7-.7a1 1 0 011.42-1.42l.7.7a1 1 0 010 1.42zm-12.72 0a1 1 0 010-1.42l.7-.7a1 1 0 011.42 1.42l-.7.7a1 1 0 01-1.42 0zm12.02-15.2a1 1 0 010 1.42l-.7.7a1 1 0 01-1.42-1.42l.7-.7a1 1 0 011.42 0zm-11.32 0l.7.7a1 1 0 01-1.42 1.42l-.7-.7a1 1 0 111.42-1.42z\"/></svg></span>\n");
+        html.append("      <span class=\"label\">Hell</span>\n");
+        html.append("    </button>\n");
+        html.append("  </div>\n");
+        html.append("</header>\n");
+        html.append("<nav class=\"tabs\">\n  <button class=\"tab active\" data-tab=\"dashboard\">Übersicht</button>\n  <button class=\"tab\" data-tab=\"documents\">Dokumente</button>\n  <button class=\"tab\" data-tab=\"deadlines\">Fälligkeiten</button>\n  <button class=\"tab\" data-tab=\"finance\">Finanzen</button>\n  <button class=\"tab\" data-tab=\"history\">Aktenhistorie</button>\n</nav>\n");
+        html.append("<main class=\"content\">\n  <section id=\"dashboard\" class=\"view active\"></section>\n  <section id=\"documents\" class=\"view\"></section>\n  <section id=\"deadlines\" class=\"view\"></section>\n  <section id=\"finance\" class=\"view\"></section>\n  <section id=\"history\" class=\"view\"></section>\n</main>\n<footer class=\"footer\">Export erstellt am ");
+        html.append(dfDateTime.format(new Date()))
+                .append("</footer>\n");
+        html.append(dataScript);
+        html.append("<script src=\"assets/js/app.js\"></script>\n");
+        html.append("</body>\n</html>");
+        return html.toString();
+    }
+
+    private String buildHistoryHtml(ArchiveFileBean aCase, ArchiveFileHistoryBean[] history) {
+        StringBuilder sb = new StringBuilder(4096);
+        sb.append("<!doctype html><html lang=\"de\"><head><meta charset=\"utf-8\"><meta name=\"viewport\" content=\"width=device-width, initial-scale=1\">");
+        sb.append("<title>Aktenhistorie</title>");
+        sb.append("<link rel=\"stylesheet\" href=\"assets/css/style-dark.css\">");
+        sb.append("<link rel=\"stylesheet\" href=\"assets/css/style-light.css\">");
+        sb.append("<link rel=\"stylesheet\" href=\"assets/css/history-base.css\">");
+        sb.append("</head><body class=\"theme-dark\" data-theme=\"dark\">");
+        sb.append("<h1>Aktenhistorie</h1>");
+        sb.append("<div class=\"sub\">");
+        sb.append(ServerStringUtils.nonEmpty(aCase.getFileNumber())).append(" · ").append(ServerStringUtils.nonEmpty(aCase.getName()));
+        sb.append("</div>");
+        sb.append("<table><thead><tr><th>Datum</th><th>Nutzer</th><th>Beschreibung</th></tr></thead><tbody>");
+        if (history != null) {
+            for (ArchiveFileHistoryBean h : history) {
+                String dt = h.getChangeDate() != null ? dfDateTime.format(h.getChangeDate()) : "";
+                String principal = ServerStringUtils.nonEmpty(h.getPrincipal());
+                String description = ServerStringUtils.nonEmpty(h.getChangeDescription());
+                sb.append("<tr><td class=\"dt\" data-label=\"Datum\">").append(jsonEscape(dt)).append("</td><td class=\"user\" data-label=\"Nutzer\">").append(jsonEscape(principal)).append("</td><td class=\"desc\" data-label=\"Beschreibung\">").append(jsonEscape(description)).append("</td></tr>");
+            }
+        }
+        sb.append("</tbody></table>");
+        sb.append("<script src=\"assets/js/history.js\"></script>");
+        sb.append("</body></html>");
+        return sb.toString();
+    }
+
+    private String toRelPath(File root, File file) {
+        String rp = root.toPath().relativize(file.toPath()).toString();
+        return ("Dokumente/" + rp).replace("\\", "/");
+    }
+
+    private File uniqueFile(File dir, String baseName) {
+        String name = baseName;
+        String ext = "";
+        int dot = baseName.lastIndexOf('.');
+        if (dot > 0) {
+            name = baseName.substring(0, dot);
+            ext = baseName.substring(dot);
+        }
+        File f = new File(dir, baseName);
+        int i = 1;
+        while (f.exists()) {
+            f = new File(dir, name + " (" + i + ")" + ext);
+            i++;
+        }
+        return f;
+    }
+
+    private HashMap<String, String> buildFolderPathIndex(CaseFolder root) {
+        HashMap<String, String> map = new HashMap<>();
+        if (root == null) {
+            return map;
+        }
+        map.put(root.getId(), "");
+        buildFolderPathIndexRec(root, "", map);
+        return map;
+    }
+
+    private void buildFolderPathIndexRec(CaseFolder f, String prefix, HashMap<String, String> map) {
+        if (f == null) {
+            return;
+        }
+        List<CaseFolder> children = f.getChildren();
+        if (children == null) {
+            return;
+        }
+        for (CaseFolder c : children) {
+            String name = ServerFileUtils.sanitizeFolderName(ServerStringUtils.nonEmpty(c.getName()));
+            if (name.isEmpty()) {
+                name = "---";
+            }
+            String path = prefix.isEmpty() ? name : (prefix + File.separator + name);
+            map.put(c.getId(), path);
+            buildFolderPathIndexRec(c, path, map);
+        }
+    }
+
+    private Map<String, String> buildLightThemePlaceholders() {
+        Map<String, String> placeholders = new LinkedHashMap<>();
+        Color primary = ServerColorTheme.COLOR_LOGO_BLUE;
+        Color mutedBase = ServerColorTheme.COLOR_DARK_GREY;
+
+        Color primarySoft = lighten(primary, 0.65);
+        Color primaryTint = tint(primary, 0.18);
+        Color background = tint(primary, 0.06);
+        Color foreground = mix(Color.BLACK, primary, 0.15);
+        Color muted = lighten(mutedBase, 0.35);
+        Color border = lighten(primary, 0.85);
+        Color surfaceMuted = tint(primary, 0.08);
+        Color surfaceRaised = tint(primary, 0.12);
+        Color historyBg = tint(primary, 0.04);
+
+        placeholders.put("${PRIMARY_COLOR}", toHex(primary));
+        placeholders.put("${PRIMARY_COLOR_SOFT}", toHex(primarySoft));
+        placeholders.put("${PRIMARY_COLOR_TINT}", toHex(primaryTint));
+        placeholders.put("${PRIMARY_COLOR_SHADOW}", toRgba(primary, 0.24));
+        placeholders.put("${LIGHT_BG}", toHex(background));
+        placeholders.put("${LIGHT_FG}", toHex(foreground));
+        placeholders.put("${LIGHT_MUTED}", toHex(muted));
+        placeholders.put("${LIGHT_CARD}", toHex(Color.WHITE));
+        placeholders.put("${LIGHT_BORDER}", toHex(border));
+        placeholders.put("${LIGHT_SURFACE_MUTED}", toHex(surfaceMuted));
+        placeholders.put("${LIGHT_SURFACE_RAISED}", toHex(surfaceRaised));
+        placeholders.put("${LIGHT_HISTORY_BG}", toHex(historyBg));
+        return placeholders;
+    }
+
+    private Map<String, String> buildAppJsPlaceholders() {
+        Map<String, String> placeholders = new LinkedHashMap<>();
+        placeholders.put("${EVENTTYPE_FOLLOWUP}", String.valueOf(EventTypes.EVENTTYPE_FOLLOWUP));
+        placeholders.put("${EVENTTYPE_RESPITE}", String.valueOf(EventTypes.EVENTTYPE_RESPITE));
+        placeholders.put("${EVENTTYPE_EVENT}", String.valueOf(EventTypes.EVENTTYPE_EVENT));
+        return placeholders;
+    }
+
+    private static Color mix(Color base, Color other, double factor) {
+        factor = clamp(factor, 0d, 1d);
+        int r = (int) Math.round(base.getRed() * (1d - factor) + other.getRed() * factor);
+        int g = (int) Math.round(base.getGreen() * (1d - factor) + other.getGreen() * factor);
+        int b = (int) Math.round(base.getBlue() * (1d - factor) + other.getBlue() * factor);
+        return new Color(clampChannel(r), clampChannel(g), clampChannel(b));
+    }
+
+    private static Color lighten(Color color, double factor) {
+        return mix(color, Color.WHITE, factor);
+    }
+
+    private static Color tint(Color color, double factor) {
+        return mix(Color.WHITE, color, factor);
+    }
+
+    private static int clampChannel(int value) {
+        return (int) Math.max(0, Math.min(255, value));
+    }
+
+    private static double clamp(double value, double min, double max) {
+        return Math.max(min, Math.min(max, value));
+    }
+
+    private static String toHex(Color color) {
+        return String.format("#%02X%02X%02X", color.getRed(), color.getGreen(), color.getBlue());
+    }
+
+    private static String toRgba(Color color, double alpha) {
+        alpha = clamp(alpha, 0d, 1d);
+        return String.format("rgba(%d,%d,%d,%.2f)", color.getRed(), color.getGreen(), color.getBlue(), alpha);
+    }
+
+    private static String jsonEscape(String s) {
+        if (s == null) {
+            return "";
+        }
+        String out = s.replace("\\", "\\\\").replace("\"", "\\\"").replace("\n", "\\n").replace("\r", "\\r");
+        return out;
+    }
+
+    private void appendFolderJson(StringBuilder sb, CaseFolder f) {
+        if (f == null) {
+            sb.append("null");
+            return;
+        }
+        sb.append("{");
+        sb.append("\"id\":\"").append(jsonEscape(ServerStringUtils.nonEmpty(f.getId()))).append("\",");
+        sb.append("\"name\":\"").append(jsonEscape(ServerStringUtils.nonEmpty(f.getName()))).append("\",");
+        sb.append("\"parentId\":\"").append(jsonEscape(ServerStringUtils.nonEmpty(f.getParentId()))).append("\",");
+        sb.append("\"children\":[");
+        boolean first = true;
+        List<CaseFolder> children = f.getChildren();
+        if (children != null) {
+            for (CaseFolder c : children) {
+                if (!first) {
+                    sb.append(',');
+                }
+                first = false;
+                appendFolderJson(sb, c);
+            }
+        }
+        sb.append("]");
+        sb.append("}");
+    }
+
+    private void writeAsset(File targetDir, String fileName, String resourcePath, Map<String, String> placeholders) throws Exception {
+        if (!targetDir.exists() && !targetDir.mkdirs()) {
+            throw new IOException("Could not create asset directory " + targetDir.getAbsolutePath());
+        }
+        String content = readResource(resourcePath);
+        if (placeholders != null && !placeholders.isEmpty()) {
+            for (Map.Entry<String, String> entry : placeholders.entrySet()) {
+                content = content.replaceAll(Pattern.quote(entry.getKey()), entry.getValue());
+            }
+        }
+        writeText(new File(targetDir, fileName), content);
+    }
+
+    private String readResource(String resourcePath) throws IOException {
+        try (InputStream in = AdvancedHtmlExport.class.getClassLoader().getResourceAsStream(resourcePath)) {
+            if (in == null) {
+                throw new IOException("Resource not found: " + resourcePath);
+            }
+            ByteArrayOutputStream buffer = new ByteArrayOutputStream();
+            byte[] chunk = new byte[4096];
+            int read;
+            while ((read = in.read(chunk)) != -1) {
+                buffer.write(chunk, 0, read);
+            }
+            return buffer.toString(StandardCharsets.UTF_8.name());
+        }
+    }
+
+    private void writeText(File target, String content) throws Exception {
+        try (OutputStreamWriter writer = new OutputStreamWriter(new FileOutputStream(target), StandardCharsets.UTF_8)) {
+            writer.write(content);
+        }
+    }
+
+    public static void zipDirectory(String dirToZip, String targetFile) throws Exception {
+        try (FileOutputStream fos = new FileOutputStream(targetFile); ZipOutputStream zos = new ZipOutputStream(fos)) {
+            addDirToZipArchive(zos, new File(dirToZip), null);
+            zos.flush();
+            fos.flush();
+        }
+    }
+
+    private static void addDirToZipArchive(ZipOutputStream zos, File fileToZip, String parrentDirectoryName) throws Exception {
+        if (fileToZip == null || !fileToZip.exists()) {
+            return;
+        }
+
+        String zipEntryName = fileToZip.getName();
+        if (parrentDirectoryName != null && !parrentDirectoryName.isEmpty()) {
+            zipEntryName = parrentDirectoryName + "/" + fileToZip.getName();
+        }
+
+        if (fileToZip.isDirectory()) {
+            System.out.println("+" + zipEntryName);
+            for (File file : fileToZip.listFiles()) {
+                addDirToZipArchive(zos, file, zipEntryName);
+            }
+        } else {
+            System.out.println("   " + zipEntryName);
+            byte[] buffer = new byte[1024];
+            try (FileInputStream fis = new FileInputStream(fileToZip)) {
+                ZipEntry ze = new ZipEntry(zipEntryName);
+                try {
+                    ze.setLastModifiedTime(FileTime.fromMillis(fileToZip.lastModified()));
+                } catch (Throwable t) {
+                    log.error("Could not set last modified time of " + fileToZip.getName(), t);
+                }
+                zos.putNextEntry(ze);
+                int length;
+                while ((length = fis.read(buffer)) > 0) {
+                    zos.write(buffer, 0, length);
+                }
+                zos.closeEntry();
+            }
+        }
+    }
+
+    public String exportReviews(File targetDirectory) throws Exception {
+        Collection<ArchiveFileReviewsBean> reviews = this.calendarFacade.getAllOpenReviewsUnrestricted();
+
+        if (!targetDirectory.exists()) {
+            targetDirectory.mkdirs();
+        }
+
+        File revCsv = new File(targetDirectory.getAbsolutePath() + File.separator + "wiedervorlagen-fristen.csv");
+        if (revCsv.exists()) {
+            revCsv.delete();
+        }
+
+        StringBuilder excelStr = new StringBuilder();
+
+        // faellig, Typ, Aktenzeichen, Kurzrubrum, Grund
+        excelStr.append("faellig");
+        excelStr.append(CELL_BREAK);
+        excelStr.append("Typ");
+        excelStr.append(CELL_BREAK);
+        excelStr.append("Aktenzeichen");
+        excelStr.append(CELL_BREAK);
+        excelStr.append("Kurzrubrum");
+        excelStr.append(CELL_BREAK);
+        excelStr.append("Grund");
+        excelStr.append(CELL_BREAK);
+        excelStr.append("archiviert");
+        excelStr.append(CELL_BREAK);
+        excelStr.append("Eigene 1");
+        excelStr.append(CELL_BREAK);
+        excelStr.append("Eigene 2");
+        excelStr.append(CELL_BREAK);
+        excelStr.append("Eigene 3");
+        excelStr.append(CELL_BREAK);
+        excelStr.append("Etiketten");
+        excelStr.append(LINE_BREAK);
+
+        for (ArchiveFileReviewsBean rev : reviews) {
+
+            excelStr.append(toDate(dfDate, rev.getBeginDate()));
+            excelStr.append(CELL_BREAK);
+            excelStr.append(escape(rev.getEventTypeName()));
+            excelStr.append(CELL_BREAK);
+            excelStr.append(escape(rev.getArchiveFileKey().getFileNumber()));
+            excelStr.append(CELL_BREAK);
+            excelStr.append(escape(rev.getArchiveFileKey().getName()));
+            excelStr.append(CELL_BREAK);
+            excelStr.append(escape(rev.getSummary()));
+            excelStr.append(CELL_BREAK);
+            if (rev.getArchiveFileKey().isArchived()) {
+                excelStr.append("ja");
+            } else {
+                excelStr.append("nein");
+            }
+            excelStr.append(CELL_BREAK);
+            excelStr.append(escape(rev.getArchiveFileKey().getCustom1()));
+            excelStr.append(CELL_BREAK);
+            excelStr.append(escape(rev.getArchiveFileKey().getCustom2()));
+            excelStr.append(CELL_BREAK);
+            excelStr.append(escape(rev.getArchiveFileKey().getCustom3()));
+            excelStr.append(CELL_BREAK);
+            Collection<ArchiveFileTagsBean> tags = this.caseFacade.getTagsUnrestricted(rev.getArchiveFileKey().getId());
+            StringBuilder tagBuffer = new StringBuilder();
+            for (ArchiveFileTagsBean tag : tags) {
+                tagBuffer.append(tag);
+                tagBuffer.append(" / ");
+            }
+            String tagString = tagBuffer.toString();
+            if (tagString.endsWith(" / ")) {
+                tagString = tagString.substring(0, tagString.length() - 3);
+            }
+            excelStr.append(escape(tagString));
+            excelStr.append(LINE_BREAK);
+
+        }
+
+        try (FileWriter fw = new FileWriter(revCsv)) {
+            fw.write(excelStr.toString());
+            fw.flush();
+        }
+
+        return revCsv.getPath();
+    }
+
+    private static String escape(Object cell) {
+        if (cell == null) {
+            return "";
+        }
+        return cell.toString().replace(LINE_BREAK, " ").replace(CELL_BREAK, " ");
+    }
+
+    private String toDate(SimpleDateFormat dateFormat, Date d) {
+        if (d == null) {
+            return "";
+        } else {
+            return dateFormat.format(d);
+        }
+    }
+}

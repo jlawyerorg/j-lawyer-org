@@ -669,6 +669,7 @@ import com.jdimension.jlawyer.persistence.InstantMessage;
 import com.jdimension.jlawyer.services.ArchiveFileServiceLocal;
 import com.jdimension.jlawyer.services.MessagingServiceLocal;
 import java.util.ArrayList;
+import java.util.Calendar;
 import java.util.List;
 import javax.annotation.security.RolesAllowed;
 import javax.ejb.Stateless;
@@ -697,6 +698,31 @@ public class MessagingEndpointV7 implements MessagingEndpointLocalV7 {
     
     private static final Logger log = Logger.getLogger(MessagingEndpointV7.class.getName());
 
+    /**
+     * Marks a specific mentioning of a user in a message as done.
+     *
+     * @param id id of the mentioning
+     * @response 401 User not authorized
+     * @response 403 User not authenticated
+     */
+    @Override
+    @PUT
+    @Produces(MediaType.APPLICATION_JSON+";charset=utf-8")
+    @Path("/mentions/{id}/done")
+    @RolesAllowed({"loginRole"})
+    public Response markMentionDone(@PathParam("id") String id) {
+        try {
+            InitialContext ic = new InitialContext();
+            MessagingServiceLocal msgService = (MessagingServiceLocal) ic.lookup("java:global/j-lawyer-server/j-lawyer-server-ejb/MessagingService!com.jdimension.jlawyer.services.MessagingServiceLocal");
+            
+            msgService.markMentionDone(id, true);
+            return Response.ok().build();
+        } catch (Exception ex) {
+            log.error("can not mark mentioning as done for id " + id, ex);
+            return Response.serverError().build();
+        }
+    }
+    
     /**
      * Submits a new message. An API client should not provide mentions along with the message,
      * they will be automatically extracted based on the content of the message.
@@ -787,6 +813,44 @@ public class MessagingEndpointV7 implements MessagingEndpointLocalV7 {
             log.error("can not delete message " + id, ex);
             Response res = Response.serverError().build();
             return res;
+        }
+    }
+    
+    /**
+     * Returns a list of instant messages the requesting user has access to, created up to x seconds in the past
+     *
+     * @param seconds number of seconds - only messages created after this point in time in the past are retrieved
+     * @response 401 User not authorized
+     * @response 403 User not authenticated
+     */
+    @Override
+    @GET
+    @Produces(MediaType.APPLICATION_JSON + ";charset=utf-8")
+    @Consumes(MediaType.APPLICATION_JSON)
+    @Path("/since/{seconds}")
+    @RolesAllowed({"readArchiveFileRole"})
+    public Response getMessagesSince(@PathParam("seconds") int seconds) {
+        try {
+
+            InitialContext ic = new InitialContext();
+            MessagingServiceLocal msgService = (MessagingServiceLocal) ic.lookup("java:global/j-lawyer-server/j-lawyer-server-ejb/MessagingService!com.jdimension.jlawyer.services.MessagingServiceLocal");
+            Calendar now = Calendar.getInstance();
+            now.add(Calendar.SECOND, (-1 * seconds));
+            
+            List<InstantMessage> messages = msgService.getMessagesSince(now.getTime(), Integer.MAX_VALUE);
+            if(messages==null)
+                messages=new ArrayList<>();
+
+            ArrayList<RestfulInstantMessageV7> msgList = new ArrayList<>();
+            for (InstantMessage im : messages) {
+                RestfulInstantMessageV7 m = RestfulInstantMessageV7.fromInstantMessage(im);
+                msgList.add(m);
+            }
+
+            return Response.ok(msgList).build();
+        } catch (Exception ex) {
+            log.error("can not get messages for last " + seconds + " seconds", ex);
+            return Response.serverError().build();
         }
     }
     

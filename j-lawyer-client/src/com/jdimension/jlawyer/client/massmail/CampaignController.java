@@ -685,7 +685,7 @@ public class CampaignController {
 
     public CampaignController() {
 
-        String campaignDirString = System.getProperty("user.home") + System.getProperty("file.separator") + ".j-lawyer-client" + File.separator + "campaigns";
+        String campaignDirString = System.getProperty("user.home") + System.getProperty("file.separator") + ClientSettings.JLAWYERCLIENT_SETTINGDIR + File.separator + "campaigns";
         this.campaignDir = new File(campaignDirString);
         campaignDir.mkdirs();
 

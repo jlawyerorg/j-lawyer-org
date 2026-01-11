@@ -670,6 +670,7 @@ import java.awt.Graphics2D;
 import java.awt.RenderingHints;
 import java.awt.geom.Arc2D;
 import javax.swing.JLabel;
+import org.apache.log4j.Logger;
 import themes.colors.DefaultColorTheme;
 
 /**
@@ -677,6 +678,9 @@ import themes.colors.DefaultColorTheme;
  * @author jens
  */
 public class PieChartLabel extends JLabel {
+    
+    private static final Logger log=Logger.getLogger(PieChartLabel.class.getName());
+    
     private int percentage;
     private Color fillColor;
 
@@ -687,8 +691,13 @@ public class PieChartLabel extends JLabel {
             
     public PieChartLabel(int percentage, Color fillColor) {
         this.setText("");
-        if (percentage < 0 || percentage > 100) {
-            throw new IllegalArgumentException("Percentage must be between 0 and 100.");
+        if (percentage < 0) {
+            log.warn("invalid percentage value: " + percentage);
+            percentage=0;
+        }
+        if (percentage > 100) {
+            log.warn("invalid percentage value: " + percentage);
+            percentage=100;
         }
         this.percentage = percentage;
         this.fillColor = fillColor;
@@ -730,8 +739,13 @@ public class PieChartLabel extends JLabel {
 
     // Setters to update percentage and color if needed
     public void setPercentage(int percentage) {
-        if (percentage < 0 || percentage > 100) {
-            throw new IllegalArgumentException("Percentage must be between 0 and 100.");
+        if (percentage < 0) {
+            log.warn("invalid percentage value: " + percentage);
+            percentage=0;
+        }
+        if (percentage > 100) {
+            log.warn("invalid percentage value: " + percentage);
+            percentage=100;
         }
         this.percentage = percentage;
         repaint();

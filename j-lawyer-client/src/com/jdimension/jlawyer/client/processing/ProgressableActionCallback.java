@@ -663,16 +663,6 @@
  */
 package com.jdimension.jlawyer.client.processing;
 
-import com.jdimension.jlawyer.client.editors.EditorsRegistry;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-import java.util.concurrent.Future;
-import java.util.concurrent.TimeUnit;
-import javax.swing.JDialog;
-import javax.swing.JOptionPane;
-import javax.swing.SwingUtilities;
-import org.jboss.logging.Logger;
-
 /**
  *
  * @author Kutschke

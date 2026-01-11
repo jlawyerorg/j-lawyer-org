@@ -667,8 +667,10 @@ import com.jdimension.jlawyer.persistence.ArchiveFileBean;
 import com.jdimension.jlawyer.persistence.ArchiveFileReviewsBean;
 import com.jdimension.jlawyer.services.ArchiveFileServiceLocal;
 import com.jdimension.jlawyer.services.CalendarServiceLocal;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Date;
 import javax.annotation.security.RolesAllowed;
 import javax.ejb.Stateless;
 import javax.naming.InitialContext;
@@ -677,10 +679,11 @@ import javax.ws.rs.GET;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
+import javax.ws.rs.QueryParam;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import org.jboss.logging.Logger;
-import org.jlawyer.io.rest.v4.pojo.RestfulDueDateV4;
+import org.jlawyer.io.rest.v6.pojo.RestfulDueDateV6;
 
 /**
  *
@@ -719,15 +722,18 @@ public class CasesEndpointV4 implements CasesEndpointLocalV4 {
             ArchiveFileBean currentCase = cases.getArchiveFile(id);
             if (currentCase == null) {
                 log.error("case with id " + id + " does not exist");
-                Response res = Response.serverError().build();
-                return res;
+                return Response.serverError().build();
             }
 
             Collection<ArchiveFileReviewsBean> reviews = cal.getReviews(id);
-            ArrayList<RestfulDueDateV4> ddList = new ArrayList<>();
+            ArrayList<RestfulDueDateV6> ddList = new ArrayList<>();
             for (ArchiveFileReviewsBean rev : reviews) {
-                RestfulDueDateV4 dd = new RestfulDueDateV4();
+                RestfulDueDateV6 dd = new RestfulDueDateV6();
                 dd.setId(rev.getId());
+                dd.setCaseId(id);
+                dd.setCaseName(currentCase.getName());
+                dd.setCaseNumber(currentCase.getFileNumber());
+                dd.setCaseReason(currentCase.getReason());
                 dd.setAssignee(rev.getAssignee());
                 dd.setDone(rev.isDone());
                 dd.setBeginDate(rev.getBeginDate());
@@ -735,23 +741,217 @@ public class CasesEndpointV4 implements CasesEndpointLocalV4 {
                 dd.setSummary(rev.getSummary());
                 dd.setDescription(rev.getDescription());
                 dd.setLocation(rev.getLocation());
-                dd.setType(RestfulDueDateV4.TYPE_RESPITE);
+                dd.setType(RestfulDueDateV6.TYPE_RESPITE);
                 if (rev.getEventType() == ArchiveFileReviewsBean.EVENTTYPE_FOLLOWUP) {
-                    dd.setType(RestfulDueDateV4.TYPE_FOLLOWUP);
+                    dd.setType(RestfulDueDateV6.TYPE_FOLLOWUP);
                 } else if (rev.getEventType() == ArchiveFileReviewsBean.EVENTTYPE_EVENT) {
-                    dd.setType(RestfulDueDateV4.TYPE_EVENT);
+                    dd.setType(RestfulDueDateV6.TYPE_EVENT);
                 }
                 if(rev.getCalendarSetup()!=null)
                     dd.setCalendar(rev.getCalendarSetup().getId());
                 ddList.add(dd);
             }
 
-            Response res = Response.ok(ddList).build();
-            return res;
+            return Response.ok(ddList).build();
         } catch (Exception ex) {
             log.error("can not get case " + id, ex);
-            Response res = Response.serverError().build();
-            return res;
+            return Response.serverError().build();
+        }
+    }
+    
+    // when seeing something like
+    //  com.fasterxml.jackson.databind.JsonMappingException: failed to lazily initialize a collection of role: com.jdimension.jlawyer.persistence.ArchiveFileBean.archiveFileFormsBeanList, could not initialize proxy - no Session
+    // it is not necessarily an issue with fetch type eager or lazy, just put @XmlTransient to the getter of the list in the entity
+    /**
+     * Returns all due dates for all non-archived cases
+     *
+     * @response 401 User not authorized
+     * @response 403 User not authenticated
+     */
+    @Override
+    @GET
+    @Produces(MediaType.APPLICATION_JSON+";charset=utf-8")
+    @Path("/duedates")
+    @RolesAllowed({"readArchiveFileRole"})
+    public Response getAllDueDates() {
+        //http://localhost:8080/j-lawyer-io/rest/cases/0c79112f7f000101327bf357f0b6010c/duedates
+        try {
+
+            InitialContext ic = new InitialContext();
+            CalendarServiceLocal cal = (CalendarServiceLocal) ic.lookup("java:global/j-lawyer-server/j-lawyer-server-ejb/CalendarService!com.jdimension.jlawyer.services.CalendarServiceLocal");
+            
+            Collection<ArchiveFileReviewsBean> reviews = cal.getAllOpenReviews();
+            ArrayList<RestfulDueDateV6> ddList = new ArrayList<>();
+            for (ArchiveFileReviewsBean rev : reviews) {
+                RestfulDueDateV6 dd = new RestfulDueDateV6();
+                dd.setId(rev.getId());
+                dd.setCaseId(rev.getArchiveFileKey().getId());
+                dd.setCaseName(rev.getArchiveFileKey().getName());
+                dd.setCaseNumber(rev.getArchiveFileKey().getFileNumber());
+                dd.setCaseReason(rev.getArchiveFileKey().getReason());
+                dd.setAssignee(rev.getAssignee());
+                dd.setDone(rev.isDone());
+                dd.setBeginDate(rev.getBeginDate());
+                dd.setEndDate(rev.getEndDate());
+                dd.setSummary(rev.getSummary());
+                dd.setDescription(rev.getDescription());
+                dd.setLocation(rev.getLocation());
+                dd.setType(RestfulDueDateV6.TYPE_RESPITE);
+                if (rev.getEventType() == ArchiveFileReviewsBean.EVENTTYPE_FOLLOWUP) {
+                    dd.setType(RestfulDueDateV6.TYPE_FOLLOWUP);
+                } else if (rev.getEventType() == ArchiveFileReviewsBean.EVENTTYPE_EVENT) {
+                    dd.setType(RestfulDueDateV6.TYPE_EVENT);
+                }
+                if(rev.getCalendarSetup()!=null)
+                    dd.setCalendar(rev.getCalendarSetup().getId());
+                ddList.add(dd);
+            }
+
+            return Response.ok(ddList).build();
+        } catch (Exception ex) {
+            log.error("can not get open due dates", ex);
+            return Response.serverError().build();
+        }
+    }
+
+    /**
+     * Returns all due dates within a specified date range
+     *
+     * @param from start date (ISO 8601 format or epoch milliseconds)
+     * @param to end date (ISO 8601 format or epoch milliseconds)
+     * @param eventType event type filter: 10=followup, 20=respite, 30=event, -1=any (default: -1)
+     * @param status completion status filter: 0=open, 1=done, -1=any (default: -1)
+     * @param limit maximum number of results to return (default: 5000)
+     * @return JSON array of due dates within the specified range
+     * @response 200 Success - returns array of due dates
+     * @response 400 Bad Request - invalid date format
+     * @response 401 User not authorized
+     * @response 403 User not authenticated
+     * @response 500 Server error
+     */
+    @GET
+    @Produces(MediaType.APPLICATION_JSON+";charset=utf-8")
+    @Path("/duedates/range")
+    @RolesAllowed({"loginRole"})
+    public Response getDueDatesInRange(
+            @QueryParam("from") String from,
+            @QueryParam("to") String to,
+            @QueryParam("eventType") Integer eventType,
+            @QueryParam("status") Integer status,
+            @QueryParam("limit") Integer limit) {
+
+        try {
+            // Validate required parameters
+            if (from == null || from.trim().isEmpty()) {
+                log.error("Missing required parameter: from");
+                return Response.status(Response.Status.BAD_REQUEST)
+                        .entity("{\"error\": \"Missing required parameter: from\"}")
+                        .build();
+            }
+            if (to == null || to.trim().isEmpty()) {
+                log.error("Missing required parameter: to");
+                return Response.status(Response.Status.BAD_REQUEST)
+                        .entity("{\"error\": \"Missing required parameter: to\"}")
+                        .build();
+            }
+
+            // Set defaults for optional parameters
+            int eventTypeFilter = (eventType != null) ? eventType : -1;
+            int statusFilter = (status != null) ? status : -1;
+            int limitValue = (limit != null) ? limit : 5000;
+
+            // Parse date parameters (support ISO 8601 and epoch milliseconds)
+            Date fromDate = parseDate(from);
+            Date toDate = parseDate(to);
+
+            if (fromDate == null) {
+                log.error("Invalid date format for 'from' parameter: " + from);
+                return Response.status(Response.Status.BAD_REQUEST)
+                        .entity("{\"error\": \"Invalid date format for 'from'. Expected ISO 8601 (e.g., 2024-01-01T00:00:00Z) or epoch milliseconds.\"}")
+                        .build();
+            }
+            if (toDate == null) {
+                log.error("Invalid date format for 'to' parameter: " + to);
+                return Response.status(Response.Status.BAD_REQUEST)
+                        .entity("{\"error\": \"Invalid date format for 'to'. Expected ISO 8601 (e.g., 2024-01-01T00:00:00Z) or epoch milliseconds.\"}")
+                        .build();
+            }
+
+            // Call CalendarService to search reviews
+            InitialContext ic = new InitialContext();
+            CalendarServiceLocal cal = (CalendarServiceLocal) ic.lookup("java:global/j-lawyer-server/j-lawyer-server-ejb/CalendarService!com.jdimension.jlawyer.services.CalendarServiceLocal");
+
+            Collection<ArchiveFileReviewsBean> reviews = cal.searchReviews(statusFilter, eventTypeFilter, fromDate, toDate, limitValue);
+
+            // Transform to RestfulDueDateV6 DTOs
+            ArrayList<RestfulDueDateV6> ddList = new ArrayList<>();
+            for (ArchiveFileReviewsBean rev : reviews) {
+                RestfulDueDateV6 dd = new RestfulDueDateV6();
+                dd.setId(rev.getId());
+                if (rev.getArchiveFileKey() != null) {
+                    dd.setCaseId(rev.getArchiveFileKey().getId());
+                    dd.setCaseName(rev.getArchiveFileKey().getName());
+                    dd.setCaseNumber(rev.getArchiveFileKey().getFileNumber());
+                    dd.setCaseReason(rev.getArchiveFileKey().getReason());
+                }
+                dd.setAssignee(rev.getAssignee());
+                dd.setDone(rev.isDone());
+                dd.setBeginDate(rev.getBeginDate());
+                dd.setEndDate(rev.getEndDate());
+                dd.setSummary(rev.getSummary());
+                dd.setDescription(rev.getDescription());
+                dd.setLocation(rev.getLocation());
+                dd.setType(RestfulDueDateV6.TYPE_RESPITE);
+                if (rev.getEventType() == ArchiveFileReviewsBean.EVENTTYPE_FOLLOWUP) {
+                    dd.setType(RestfulDueDateV6.TYPE_FOLLOWUP);
+                } else if (rev.getEventType() == ArchiveFileReviewsBean.EVENTTYPE_EVENT) {
+                    dd.setType(RestfulDueDateV6.TYPE_EVENT);
+                }
+                if (rev.getCalendarSetup() != null) {
+                    dd.setCalendar(rev.getCalendarSetup().getId());
+                }
+                ddList.add(dd);
+            }
+
+            return Response.ok(ddList).build();
+        } catch (Exception ex) {
+            log.error("Error retrieving due dates in range", ex);
+            return Response.serverError().build();
+        }
+    }
+
+    /**
+     * Parse date from string - supports ISO 8601 format and epoch milliseconds
+     * @param dateStr date string to parse
+     * @return parsed Date object, or null if parsing fails
+     */
+    private Date parseDate(String dateStr) {
+        if (dateStr == null || dateStr.trim().isEmpty()) {
+            return null;
+        }
+
+        // Try to parse as epoch milliseconds first
+        try {
+            long epochMillis = Long.parseLong(dateStr);
+            return new Date(epochMillis);
+        } catch (NumberFormatException e) {
+            // Not a number, try ISO 8601 format
+        }
+
+        // Try ISO 8601 format
+        try {
+            SimpleDateFormat iso8601Format = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss'Z'");
+            iso8601Format.setTimeZone(java.util.TimeZone.getTimeZone("UTC"));
+            return iso8601Format.parse(dateStr);
+        } catch (Exception e) {
+            // Try simpler date format (yyyy-MM-dd)
+            try {
+                SimpleDateFormat simpleDateFormat = new SimpleDateFormat("yyyy-MM-dd");
+                return simpleDateFormat.parse(dateStr);
+            } catch (Exception ex) {
+                log.error("Unable to parse date: " + dateStr, ex);
+                return null;
+            }
         }
     }
 

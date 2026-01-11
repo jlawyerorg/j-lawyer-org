@@ -287,16 +287,28 @@
             <Property name="text" type="java.lang.String" value="PDF und Konvertierung"/>
           </Properties>
           <SubComponents>
-            <MenuItem class="javax.swing.JMenuItem" name="mnuShrinkPdf">
+            <MenuItem class="javax.swing.JMenuItem" name="mnuOcr">
               <Properties>
                 <Property name="icon" type="javax.swing.Icon" editor="org.netbeans.modules.form.editors2.IconEditor">
-                  <Image iconType="3" name="/icons16/material/compress_24dp_0E72B5.png"/>
+                  <Image iconType="3" name="/icons16/material/baseline_font_download_green_48dp.png"/>
                 </Property>
-                <Property name="text" type="java.lang.String" value="PDF verkleinern"/>
-                <Property name="toolTipText" type="java.lang.String" value=""/>
+                <Property name="text" type="java.lang.String" value="Texterkennung (OCR)"/>
+                <Property name="toolTipText" type="java.lang.String" value="f&#xfc;hrt eine Texterkennung f&#xfc;r die selektieren Dokumente durch"/>
               </Properties>
               <Events>
-                <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="mnuShrinkPdfActionPerformed"/>
+                <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="mnuOcrActionPerformed"/>
+              </Events>
+            </MenuItem>
+            <MenuItem class="javax.swing.JMenuItem" name="mnuMergeToPdf">
+              <Properties>
+                <Property name="icon" type="javax.swing.Icon" editor="org.netbeans.modules.form.editors2.IconEditor">
+                  <Image iconType="3" name="/icons16/pdf.png"/>
+                </Property>
+                <Property name="text" type="java.lang.String" value="als PDF zusammenf&#xfc;hren"/>
+                <Property name="toolTipText" type="java.lang.String" value="alle selektierten Dokumente in ein PDF exportieren"/>
+              </Properties>
+              <Events>
+                <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="mnuMergeToPdfActionPerformed"/>
               </Events>
             </MenuItem>
             <MenuItem class="javax.swing.JMenuItem" name="mnuSplitPdf">
@@ -320,6 +332,29 @@
               </Properties>
               <Events>
                 <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="mnuSaveDocumentsLocallyPdfActionPerformed"/>
+              </Events>
+            </MenuItem>
+            <MenuItem class="javax.swing.JMenuItem" name="mnuReorderPdfPages">
+              <Properties>
+                <Property name="icon" type="javax.swing.Icon" editor="org.netbeans.modules.form.editors2.IconEditor">
+                  <Image iconType="3" name="/icons16/material/grid_on_20dp_0E72B5.png"/>
+                </Property>
+                <Property name="text" type="java.lang.String" value="PDF Seiten umsortieren"/>
+              </Properties>
+              <Events>
+                <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="mnuReorderPdfPagesActionPerformed"/>
+              </Events>
+            </MenuItem>
+            <MenuItem class="javax.swing.JMenuItem" name="mnuShrinkPdf">
+              <Properties>
+                <Property name="icon" type="javax.swing.Icon" editor="org.netbeans.modules.form.editors2.IconEditor">
+                  <Image iconType="3" name="/icons16/material/compress_24dp_0E72B5.png"/>
+                </Property>
+                <Property name="text" type="java.lang.String" value="PDF verkleinern"/>
+                <Property name="toolTipText" type="java.lang.String" value=""/>
+              </Properties>
+              <Events>
+                <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="mnuShrinkPdfActionPerformed"/>
               </Events>
             </MenuItem>
             <MenuItem class="javax.swing.JMenuItem" name="mnuSaveDocumentEncrypted">
@@ -354,6 +389,17 @@
               </Properties>
               <Events>
                 <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="mnuAnonymizePdfActionPerformed"/>
+              </Events>
+            </MenuItem>
+            <MenuItem class="javax.swing.JMenuItem" name="mnuStampPdf">
+              <Properties>
+                <Property name="icon" type="javax.swing.Icon" editor="org.netbeans.modules.form.editors2.IconEditor">
+                  <Image iconType="3" name="/icons16/material/approval_24dp_0E72B5.png"/>
+                </Property>
+                <Property name="text" type="java.lang.String" value="PDF stempeln"/>
+              </Properties>
+              <Events>
+                <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="mnuStampPdfActionPerformed"/>
               </Events>
             </MenuItem>
           </SubComponents>
@@ -464,51 +510,6 @@
             <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="mnuSendEpostLetterActionPerformed"/>
           </Events>
         </MenuItem>
-        <Component class="javax.swing.JPopupMenu$Separator" name="jSeparator9">
-        </Component>
-        <Menu class="javax.swing.JMenu" name="mnuDrebis">
-          <Properties>
-            <Property name="icon" type="javax.swing.Icon" editor="org.netbeans.modules.form.editors2.IconEditor">
-              <Image iconType="3" name="/icons16/drebis16.png"/>
-            </Property>
-            <Property name="text" type="java.lang.String" value="Drebis"/>
-          </Properties>
-          <SubComponents>
-            <MenuItem class="javax.swing.JMenuItem" name="mnuCoverage">
-              <Properties>
-                <Property name="icon" type="javax.swing.Icon" editor="org.netbeans.modules.form.editors2.IconEditor">
-                  <Image iconType="3" name="/icons16/drebis16.png"/>
-                </Property>
-                <Property name="text" type="java.lang.String" value="Deckungsanfrage"/>
-              </Properties>
-              <Events>
-                <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="mnuCoverageActionPerformed"/>
-              </Events>
-            </MenuItem>
-            <MenuItem class="javax.swing.JMenuItem" name="mnuMotorCoverage">
-              <Properties>
-                <Property name="icon" type="javax.swing.Icon" editor="org.netbeans.modules.form.editors2.IconEditor">
-                  <Image iconType="3" name="/icons16/drebis16.png"/>
-                </Property>
-                <Property name="text" type="java.lang.String" value="Kfz-Schadenmeldung"/>
-              </Properties>
-              <Events>
-                <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="mnuMotorCoverageActionPerformed"/>
-              </Events>
-            </MenuItem>
-            <MenuItem class="javax.swing.JMenuItem" name="mnuFreeTextMessage">
-              <Properties>
-                <Property name="icon" type="javax.swing.Icon" editor="org.netbeans.modules.form.editors2.IconEditor">
-                  <Image iconType="3" name="/icons16/drebis16.png"/>
-                </Property>
-                <Property name="text" type="java.lang.String" value="Freitext senden"/>
-              </Properties>
-              <Events>
-                <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="mnuFreeTextMessageActionPerformed"/>
-              </Events>
-            </MenuItem>
-          </SubComponents>
-        </Menu>
         <Component class="javax.swing.JPopupMenu$Separator" name="jSeparator5">
         </Component>
         <MenuItem class="javax.swing.JMenuItem" name="mnuShareNextcloud">
@@ -554,38 +555,6 @@
       <Layout class="org.netbeans.modules.form.compat2.layouts.DesignAbsoluteLayout">
         <Property name="useNullLayout" type="boolean" value="true"/>
       </Layout>
-    </Container>
-    <Container class="javax.swing.JPopupMenu" name="drebisPopup">
-
-      <Layout class="org.netbeans.modules.form.compat2.layouts.DesignAbsoluteLayout">
-        <Property name="useNullLayout" type="boolean" value="true"/>
-      </Layout>
-      <SubComponents>
-        <MenuItem class="javax.swing.JMenuItem" name="mnuSendMessage">
-          <Properties>
-            <Property name="text" type="java.lang.String" value="Freitext-Nachricht"/>
-          </Properties>
-          <Events>
-            <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="mnuSendMessageActionPerformed"/>
-          </Events>
-        </MenuItem>
-        <MenuItem class="javax.swing.JMenuItem" name="mnuSendCoverage">
-          <Properties>
-            <Property name="text" type="java.lang.String" value="Deckungsanfrage senden"/>
-          </Properties>
-          <Events>
-            <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="mnuSendCoverageActionPerformed"/>
-          </Events>
-        </MenuItem>
-        <MenuItem class="javax.swing.JMenuItem" name="mnuSendMotorCoverage">
-          <Properties>
-            <Property name="text" type="java.lang.String" value="Kfz-Schadenmeldung"/>
-          </Properties>
-          <Events>
-            <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="mnuSendMotorCoverageActionPerformed"/>
-          </Events>
-        </MenuItem>
-      </SubComponents>
     </Container>
     <Container class="javax.swing.JPopupMenu" name="popHeader">
 
@@ -735,7 +704,7 @@
                       <EmptySpace max="-2" attributes="0"/>
                       <Component id="jPanel1" min="-2" max="-2" attributes="0"/>
                       <EmptySpace max="-2" attributes="0"/>
-                      <Component id="splitMessages" pref="529" max="32767" attributes="0"/>
+                      <Component id="splitMessages" pref="537" max="32767" attributes="0"/>
                       <EmptySpace max="-2" attributes="0"/>
                   </Group>
               </Group>
@@ -1299,7 +1268,7 @@
                         <DimensionLayout dim="1">
                           <Group type="103" groupAlignment="0" attributes="0">
                               <Group type="102" alignment="0" attributes="0">
-                                  <Component id="txtNoticePane" pref="312" max="32767" attributes="0"/>
+                                  <Component id="txtNoticePane" pref="325" max="32767" attributes="0"/>
                                   <EmptySpace max="-2" attributes="0"/>
                               </Group>
                           </Group>
@@ -1354,7 +1323,7 @@
                     <DimensionLayout dim="1">
                       <Group type="103" groupAlignment="0" attributes="0">
                           <Group type="102" alignment="0" attributes="0">
-                              <Component id="jScrollPane9" pref="424" max="32767" attributes="0"/>
+                              <Component id="jScrollPane9" pref="446" max="32767" attributes="0"/>
                               <EmptySpace max="-2" attributes="0"/>
                               <Component id="messageSendPanel1" min="-2" max="-2" attributes="0"/>
                               <EmptySpace max="-2" attributes="0"/>
@@ -1415,9 +1384,11 @@
                   <Group type="102" attributes="0">
                       <EmptySpace max="-2" attributes="0"/>
                       <Group type="103" groupAlignment="0" attributes="0">
-                          <Component id="jScrollPane8" max="32767" attributes="0"/>
+                          <Component id="jScrollPane8" pref="1111" max="32767" attributes="0"/>
                           <Group type="102" alignment="0" attributes="0">
                               <Component id="cmdSearchClient" min="-2" max="-2" attributes="0"/>
+                              <EmptySpace max="-2" attributes="0"/>
+                              <Component id="txtFilterParties" min="-2" pref="275" max="-2" attributes="0"/>
                               <EmptySpace min="0" pref="0" max="32767" attributes="0"/>
                           </Group>
                       </Group>
@@ -1429,9 +1400,12 @@
               <Group type="103" groupAlignment="0" attributes="0">
                   <Group type="102" alignment="1" attributes="0">
                       <EmptySpace max="-2" attributes="0"/>
-                      <Component id="cmdSearchClient" min="-2" max="-2" attributes="0"/>
+                      <Group type="103" groupAlignment="0" attributes="0">
+                          <Component id="cmdSearchClient" min="-2" max="-2" attributes="0"/>
+                          <Component id="txtFilterParties" min="-2" max="-2" attributes="0"/>
+                      </Group>
                       <EmptySpace max="-2" attributes="0"/>
-                      <Component id="jScrollPane8" max="32767" attributes="0"/>
+                      <Component id="jScrollPane8" pref="807" max="32767" attributes="0"/>
                   </Group>
               </Group>
             </DimensionLayout>
@@ -1459,18 +1433,20 @@
                   <Layout>
                     <DimensionLayout dim="0">
                       <Group type="103" groupAlignment="0" attributes="0">
-                          <EmptySpace min="0" pref="1077" max="32767" attributes="0"/>
+                          <EmptySpace min="0" pref="1100" max="32767" attributes="0"/>
                       </Group>
                     </DimensionLayout>
                     <DimensionLayout dim="1">
                       <Group type="103" groupAlignment="0" attributes="0">
-                          <EmptySpace min="0" pref="752" max="32767" attributes="0"/>
+                          <EmptySpace min="0" pref="845" max="32767" attributes="0"/>
                       </Group>
                     </DimensionLayout>
                   </Layout>
                 </Container>
               </SubComponents>
             </Container>
+            <Component class="javax.swing.JTextField" name="txtFilterParties">
+            </Component>
           </SubComponents>
         </Container>
         <Container class="javax.swing.JPanel" name="tabDocuments">
@@ -1530,7 +1506,7 @@
                                   <Component id="cmdClearSearch" min="-2" max="-2" attributes="0"/>
                                   <EmptySpace max="-2" attributes="0"/>
                                   <Component id="lblDocumentHits" min="-2" max="-2" attributes="0"/>
-                                  <EmptySpace pref="74" max="32767" attributes="0"/>
+                                  <EmptySpace max="32767" attributes="0"/>
                                   <Component id="cmdNewDocument" min="-2" max="-2" attributes="0"/>
                                   <EmptySpace max="-2" attributes="0"/>
                                   <Component id="cmdUploadDocument" min="-2" max="-2" attributes="0"/>
@@ -1539,11 +1515,9 @@
                                   <EmptySpace max="-2" attributes="0"/>
                                   <Component id="cmdAddNote" min="-2" max="-2" attributes="0"/>
                                   <EmptySpace max="-2" attributes="0"/>
-                                  <Component id="cmdDrebis" min="-2" max="-2" attributes="0"/>
-                                  <EmptySpace max="-2" attributes="0"/>
                                   <Component id="cmdAssistantGenerate" min="-2" max="-2" attributes="0"/>
                               </Group>
-                              <Component id="splitDocumentsMain" alignment="0" max="32767" attributes="0"/>
+                              <Component id="splitDocumentsMain" alignment="0" pref="1084" max="32767" attributes="0"/>
                           </Group>
                           <EmptySpace max="-2" attributes="0"/>
                       </Group>
@@ -1552,9 +1526,8 @@
                 <DimensionLayout dim="1">
                   <Group type="103" groupAlignment="0" attributes="0">
                       <Group type="102" alignment="1" attributes="0">
-                          <Group type="103" groupAlignment="0" max="-2" attributes="0">
+                          <Group type="103" groupAlignment="0" attributes="0">
                               <Component id="jLabel15" alignment="0" min="-2" max="-2" attributes="0"/>
-                              <Component id="cmdDrebis" alignment="0" max="32767" attributes="0"/>
                               <Group type="103" groupAlignment="3" attributes="0">
                                   <Component id="cmdUploadDocument" alignment="3" min="-2" max="-2" attributes="0"/>
                                   <Component id="cmdNewDocument" alignment="3" min="-2" max="-2" attributes="0"/>
@@ -1568,7 +1541,7 @@
                               <Component id="cmdDocumentTagFilter" min="-2" max="-2" attributes="0"/>
                           </Group>
                           <EmptySpace type="unrelated" max="-2" attributes="0"/>
-                          <Component id="splitDocumentsMain" pref="781" max="32767" attributes="0"/>
+                          <Component id="splitDocumentsMain" pref="765" max="32767" attributes="0"/>
                           <EmptySpace max="-2" attributes="0"/>
                       </Group>
                   </Group>
@@ -1648,16 +1621,6 @@
                   <Events>
                     <EventHandler event="mousePressed" listener="java.awt.event.MouseListener" parameters="java.awt.event.MouseEvent" handler="cmdDocumentTagFilterMousePressed"/>
                     <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="cmdDocumentTagFilterActionPerformed"/>
-                  </Events>
-                </Component>
-                <Component class="javax.swing.JButton" name="cmdDrebis">
-                  <Properties>
-                    <Property name="icon" type="javax.swing.Icon" editor="org.netbeans.modules.form.editors2.IconEditor">
-                      <Image iconType="3" name="/icons16/drebis16.png"/>
-                    </Property>
-                  </Properties>
-                  <Events>
-                    <EventHandler event="mousePressed" listener="java.awt.event.MouseListener" parameters="java.awt.event.MouseEvent" handler="cmdDrebisMousePressed"/>
                   </Events>
                 </Component>
                 <Container class="javax.swing.JSplitPane" name="splitDocumentsMain">
@@ -1856,6 +1819,108 @@
 
               <Layout class="org.netbeans.modules.form.compat2.layouts.support.JTabbedPaneSupportLayout"/>
               <SubComponents>
+                <Container class="javax.swing.JPanel" name="jPanel8">
+                  <Constraints>
+                    <Constraint layoutClass="org.netbeans.modules.form.compat2.layouts.support.JTabbedPaneSupportLayout" value="org.netbeans.modules.form.compat2.layouts.support.JTabbedPaneSupportLayout$JTabbedPaneConstraintsDescription">
+                      <JTabbedPaneConstraints tabName="Belege">
+                        <Property name="tabTitle" type="java.lang.String" value="Belege"/>
+                      </JTabbedPaneConstraints>
+                    </Constraint>
+                  </Constraints>
+
+                  <Layout>
+                    <DimensionLayout dim="0">
+                      <Group type="103" groupAlignment="0" attributes="0">
+                          <Group type="102" attributes="0">
+                              <EmptySpace max="-2" attributes="0"/>
+                              <Group type="103" groupAlignment="0" attributes="0">
+                                  <Group type="102" attributes="0">
+                                      <Component id="jLabel7" min="-2" max="-2" attributes="0"/>
+                                      <EmptySpace max="-2" attributes="0"/>
+                                      <Component id="cmdNewInvoice" min="-2" max="-2" attributes="0"/>
+                                      <EmptySpace type="separate" max="-2" attributes="0"/>
+                                      <Component id="jLabel32" min="-2" max="-2" attributes="0"/>
+                                      <EmptySpace min="0" pref="571" max="32767" attributes="0"/>
+                                  </Group>
+                                  <Component id="jScrollPane5" alignment="0" max="32767" attributes="0"/>
+                              </Group>
+                              <EmptySpace max="-2" attributes="0"/>
+                          </Group>
+                      </Group>
+                    </DimensionLayout>
+                    <DimensionLayout dim="1">
+                      <Group type="103" groupAlignment="0" attributes="0">
+                          <Group type="102" attributes="0">
+                              <EmptySpace max="-2" attributes="0"/>
+                              <Group type="103" groupAlignment="1" max="-2" attributes="0">
+                                  <Component id="jLabel7" alignment="0" max="32767" attributes="0"/>
+                                  <Component id="cmdNewInvoice" alignment="0" max="32767" attributes="0"/>
+                                  <Component id="jLabel32" max="32767" attributes="0"/>
+                              </Group>
+                              <EmptySpace max="-2" attributes="0"/>
+                              <Component id="jScrollPane5" max="32767" attributes="0"/>
+                              <EmptySpace max="-2" attributes="0"/>
+                          </Group>
+                      </Group>
+                    </DimensionLayout>
+                  </Layout>
+                  <SubComponents>
+                    <Component class="javax.swing.JLabel" name="jLabel7">
+                      <Properties>
+                        <Property name="font" type="java.awt.Font" editor="org.netbeans.modules.form.editors2.FontEditor">
+                          <FontInfo relative="true">
+                            <Font bold="true" component="jLabel7" property="font" relativeSize="true" size="0"/>
+                          </FontInfo>
+                        </Property>
+                        <Property name="text" type="java.lang.String" value="Belege:"/>
+                      </Properties>
+                    </Component>
+                    <Component class="javax.swing.JButton" name="cmdNewInvoice">
+                      <Properties>
+                        <Property name="font" type="java.awt.Font" editor="org.netbeans.modules.form.editors2.FontEditor">
+                          <FontInfo relative="true">
+                            <Font component="cmdNewInvoice" property="font" relativeSize="true" size="0"/>
+                          </FontInfo>
+                        </Property>
+                        <Property name="icon" type="javax.swing.Icon" editor="org.netbeans.modules.form.editors2.IconEditor">
+                          <Image iconType="3" name="/icons/edit_add.png"/>
+                        </Property>
+                      </Properties>
+                      <Events>
+                        <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="cmdNewInvoiceActionPerformed"/>
+                      </Events>
+                    </Component>
+                    <Container class="javax.swing.JScrollPane" name="jScrollPane5">
+                      <Properties>
+                        <Property name="horizontalScrollBarPolicy" type="int" value="31"/>
+                      </Properties>
+
+                      <Layout class="org.netbeans.modules.form.compat2.layouts.support.JScrollPaneSupportLayout"/>
+                      <SubComponents>
+                        <Container class="javax.swing.JPanel" name="pnlInvoices">
+
+                          <Layout>
+                            <DimensionLayout dim="0">
+                              <Group type="103" groupAlignment="0" attributes="0">
+                                  <EmptySpace min="0" pref="0" max="32767" attributes="0"/>
+                              </Group>
+                            </DimensionLayout>
+                            <DimensionLayout dim="1">
+                              <Group type="103" groupAlignment="0" attributes="0">
+                                  <EmptySpace min="0" pref="753" max="32767" attributes="0"/>
+                              </Group>
+                            </DimensionLayout>
+                          </Layout>
+                        </Container>
+                      </SubComponents>
+                    </Container>
+                    <Component class="javax.swing.JLabel" name="jLabel32">
+                      <Properties>
+                        <Property name="text" type="java.lang.String" value="erstellte Rechnungen und Belege"/>
+                      </Properties>
+                    </Component>
+                  </SubComponents>
+                </Container>
                 <Container class="javax.swing.JPanel" name="jPanel15">
                   <Constraints>
                     <Constraint layoutClass="org.netbeans.modules.form.compat2.layouts.support.JTabbedPaneSupportLayout" value="org.netbeans.modules.form.compat2.layouts.support.JTabbedPaneSupportLayout$JTabbedPaneConstraintsDescription">
@@ -1872,7 +1937,7 @@
                               <EmptySpace max="-2" attributes="0"/>
                               <Group type="103" groupAlignment="0" attributes="0">
                                   <Component id="jScrollPane10" alignment="0" max="32767" attributes="0"/>
-                                  <Component id="jPanel17" alignment="1" pref="943" max="32767" attributes="0"/>
+                                  <Component id="jPanel17" alignment="1" pref="928" max="32767" attributes="0"/>
                                   <Group type="102" attributes="0">
                                       <Component id="cmdAddAccountEntry" min="-2" max="-2" attributes="0"/>
                                       <EmptySpace max="-2" attributes="0"/>
@@ -1881,6 +1946,8 @@
                                       <Component id="cmdDuplicateAccountEntry" min="-2" max="-2" attributes="0"/>
                                       <EmptySpace max="-2" attributes="0"/>
                                       <Component id="cmdRemoveAccountEntry" min="-2" max="-2" attributes="0"/>
+                                      <EmptySpace type="separate" max="-2" attributes="0"/>
+                                      <Component id="cmdPaymentFromAccountEntry" min="-2" max="-2" attributes="0"/>
                                       <EmptySpace max="32767" attributes="0"/>
                                       <Component id="cmdExportAccountEntries" min="-2" max="-2" attributes="0"/>
                                   </Group>
@@ -1895,19 +1962,22 @@
                       <Group type="103" groupAlignment="0" attributes="0">
                           <Group type="102" alignment="0" attributes="0">
                               <EmptySpace max="-2" attributes="0"/>
-                              <Group type="103" groupAlignment="1" attributes="0">
-                                  <Group type="103" groupAlignment="0" attributes="0">
-                                      <Group type="103" groupAlignment="3" attributes="0">
-                                          <Component id="cmdAddAccountEntry" alignment="3" min="-2" max="-2" attributes="0"/>
-                                          <Component id="cmdEditAccountEntry" alignment="3" min="-2" max="-2" attributes="0"/>
+                              <Group type="103" groupAlignment="0" attributes="0">
+                                  <Group type="103" groupAlignment="1" attributes="0">
+                                      <Group type="103" groupAlignment="0" attributes="0">
+                                          <Group type="103" groupAlignment="3" attributes="0">
+                                              <Component id="cmdAddAccountEntry" alignment="3" min="-2" max="-2" attributes="0"/>
+                                              <Component id="cmdEditAccountEntry" alignment="3" min="-2" max="-2" attributes="0"/>
+                                          </Group>
+                                          <Component id="cmdRemoveAccountEntry" alignment="1" min="-2" max="-2" attributes="0"/>
                                       </Group>
-                                      <Component id="cmdRemoveAccountEntry" alignment="1" min="-2" max="-2" attributes="0"/>
+                                      <Component id="cmdExportAccountEntries" min="-2" max="-2" attributes="0"/>
+                                      <Component id="cmdDuplicateAccountEntry" min="-2" max="-2" attributes="0"/>
                                   </Group>
-                                  <Component id="cmdExportAccountEntries" min="-2" max="-2" attributes="0"/>
-                                  <Component id="cmdDuplicateAccountEntry" min="-2" max="-2" attributes="0"/>
+                                  <Component id="cmdPaymentFromAccountEntry" min="-2" max="-2" attributes="0"/>
                               </Group>
                               <EmptySpace max="-2" attributes="0"/>
-                              <Component id="jScrollPane10" pref="682" max="32767" attributes="0"/>
+                              <Component id="jScrollPane10" pref="653" max="32767" attributes="0"/>
                               <EmptySpace max="-2" attributes="0"/>
                               <Component id="jPanel17" min="-2" max="-2" attributes="0"/>
                               <EmptySpace min="0" pref="0" max="-2" attributes="0"/>
@@ -2388,107 +2458,24 @@
                         <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="cmdDuplicateAccountEntryActionPerformed"/>
                       </Events>
                     </Component>
-                  </SubComponents>
-                </Container>
-                <Container class="javax.swing.JPanel" name="jPanel8">
-                  <Constraints>
-                    <Constraint layoutClass="org.netbeans.modules.form.compat2.layouts.support.JTabbedPaneSupportLayout" value="org.netbeans.modules.form.compat2.layouts.support.JTabbedPaneSupportLayout$JTabbedPaneConstraintsDescription">
-                      <JTabbedPaneConstraints tabName="Belege">
-                        <Property name="tabTitle" type="java.lang.String" value="Belege"/>
-                      </JTabbedPaneConstraints>
-                    </Constraint>
-                  </Constraints>
-
-                  <Layout>
-                    <DimensionLayout dim="0">
-                      <Group type="103" groupAlignment="0" attributes="0">
-                          <Group type="102" attributes="0">
-                              <EmptySpace max="-2" attributes="0"/>
-                              <Group type="103" groupAlignment="0" attributes="0">
-                                  <Group type="102" attributes="0">
-                                      <Component id="jLabel7" min="-2" max="-2" attributes="0"/>
-                                      <EmptySpace max="-2" attributes="0"/>
-                                      <Component id="cmdNewInvoice" min="-2" max="-2" attributes="0"/>
-                                      <EmptySpace min="0" pref="829" max="32767" attributes="0"/>
-                                  </Group>
-                                  <Component id="jScrollPane5" alignment="0" max="32767" attributes="0"/>
-                              </Group>
-                              <EmptySpace max="-2" attributes="0"/>
-                          </Group>
-                      </Group>
-                    </DimensionLayout>
-                    <DimensionLayout dim="1">
-                      <Group type="103" groupAlignment="0" attributes="0">
-                          <Group type="102" attributes="0">
-                              <EmptySpace max="-2" attributes="0"/>
-                              <Group type="103" groupAlignment="1" max="-2" attributes="0">
-                                  <Component id="jLabel7" max="32767" attributes="0"/>
-                                  <Component id="cmdNewInvoice" min="-2" max="-2" attributes="0"/>
-                              </Group>
-                              <EmptySpace max="-2" attributes="0"/>
-                              <Component id="jScrollPane5" max="32767" attributes="0"/>
-                              <EmptySpace max="-2" attributes="0"/>
-                          </Group>
-                      </Group>
-                    </DimensionLayout>
-                  </Layout>
-                  <SubComponents>
-                    <Component class="javax.swing.JLabel" name="jLabel7">
+                    <Component class="javax.swing.JButton" name="cmdPaymentFromAccountEntry">
                       <Properties>
-                        <Property name="font" type="java.awt.Font" editor="org.netbeans.modules.form.editors2.FontEditor">
-                          <FontInfo relative="true">
-                            <Font bold="true" component="jLabel7" property="font" relativeSize="true" size="0"/>
-                          </FontInfo>
-                        </Property>
-                        <Property name="text" type="java.lang.String" value="Belege:"/>
-                      </Properties>
-                    </Component>
-                    <Component class="javax.swing.JButton" name="cmdNewInvoice">
-                      <Properties>
-                        <Property name="font" type="java.awt.Font" editor="org.netbeans.modules.form.editors2.FontEditor">
-                          <FontInfo relative="true">
-                            <Font component="cmdNewInvoice" property="font" relativeSize="true" size="0"/>
-                          </FontInfo>
-                        </Property>
                         <Property name="icon" type="javax.swing.Icon" editor="org.netbeans.modules.form.editors2.IconEditor">
-                          <Image iconType="3" name="/icons/edit_add.png"/>
+                          <Image iconType="3" name="/icons16/material/credit_card_20dp_0E72B5.png"/>
                         </Property>
+                        <Property name="toolTipText" type="java.lang.String" value="neue Zahlung aus Buchung im Aktenkonto"/>
                       </Properties>
                       <Events>
-                        <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="cmdNewInvoiceActionPerformed"/>
+                        <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="cmdPaymentFromAccountEntryActionPerformed"/>
                       </Events>
                     </Component>
-                    <Container class="javax.swing.JScrollPane" name="jScrollPane5">
-                      <Properties>
-                        <Property name="horizontalScrollBarPolicy" type="int" value="31"/>
-                      </Properties>
-
-                      <Layout class="org.netbeans.modules.form.compat2.layouts.support.JScrollPaneSupportLayout"/>
-                      <SubComponents>
-                        <Container class="javax.swing.JPanel" name="pnlInvoices">
-
-                          <Layout>
-                            <DimensionLayout dim="0">
-                              <Group type="103" groupAlignment="0" attributes="0">
-                                  <EmptySpace min="0" pref="0" max="32767" attributes="0"/>
-                              </Group>
-                            </DimensionLayout>
-                            <DimensionLayout dim="1">
-                              <Group type="103" groupAlignment="0" attributes="0">
-                                  <EmptySpace min="0" pref="678" max="32767" attributes="0"/>
-                              </Group>
-                            </DimensionLayout>
-                          </Layout>
-                        </Container>
-                      </SubComponents>
-                    </Container>
                   </SubComponents>
                 </Container>
-                <Container class="javax.swing.JPanel" name="jPanel14">
+                <Container class="javax.swing.JPanel" name="jPanel19">
                   <Constraints>
                     <Constraint layoutClass="org.netbeans.modules.form.compat2.layouts.support.JTabbedPaneSupportLayout" value="org.netbeans.modules.form.compat2.layouts.support.JTabbedPaneSupportLayout$JTabbedPaneConstraintsDescription">
-                      <JTabbedPaneConstraints tabName="Zeiterfassung">
-                        <Property name="tabTitle" type="java.lang.String" value="Zeiterfassung"/>
+                      <JTabbedPaneConstraints tabName="Zahlungen">
+                        <Property name="tabTitle" type="java.lang.String" value="Zahlungen"/>
                       </JTabbedPaneConstraints>
                     </Constraint>
                   </Constraints>
@@ -2496,16 +2483,18 @@
                   <Layout>
                     <DimensionLayout dim="0">
                       <Group type="103" groupAlignment="0" attributes="0">
-                          <Group type="102" attributes="0">
+                          <Group type="102" alignment="0" attributes="0">
                               <EmptySpace max="-2" attributes="0"/>
                               <Group type="103" groupAlignment="0" attributes="0">
-                                  <Group type="102" alignment="0" attributes="0">
-                                      <Component id="jLabel22" min="-2" max="-2" attributes="0"/>
+                                  <Component id="jScrollPane12" pref="937" max="32767" attributes="0"/>
+                                  <Group type="102" attributes="0">
+                                      <Component id="jLabel29" min="-2" max="-2" attributes="0"/>
                                       <EmptySpace max="-2" attributes="0"/>
-                                      <Component id="cmdNewTimesheet" min="-2" max="-2" attributes="0"/>
-                                      <EmptySpace min="0" pref="822" max="32767" attributes="0"/>
+                                      <Component id="cmdNewPayment" min="-2" max="-2" attributes="0"/>
+                                      <EmptySpace type="separate" max="-2" attributes="0"/>
+                                      <Component id="jLabel31" min="-2" max="-2" attributes="0"/>
+                                      <EmptySpace min="0" pref="0" max="32767" attributes="0"/>
                                   </Group>
-                                  <Component id="jScrollPane11" alignment="0" max="32767" attributes="0"/>
                               </Group>
                               <EmptySpace max="-2" attributes="0"/>
                           </Group>
@@ -2515,58 +2504,153 @@
                       <Group type="103" groupAlignment="0" attributes="0">
                           <Group type="102" alignment="0" attributes="0">
                               <EmptySpace max="-2" attributes="0"/>
-                              <Group type="103" groupAlignment="0" attributes="0">
-                                  <Component id="cmdNewTimesheet" alignment="0" min="-2" max="-2" attributes="0"/>
-                                  <Component id="jLabel22" min="-2" pref="30" max="-2" attributes="0"/>
+                              <Group type="103" groupAlignment="0" max="-2" attributes="0">
+                                  <Component id="cmdNewPayment" max="32767" attributes="0"/>
+                                  <Component id="jLabel29" max="32767" attributes="0"/>
+                                  <Component id="jLabel31" max="32767" attributes="0"/>
                               </Group>
                               <EmptySpace max="-2" attributes="0"/>
-                              <Component id="jScrollPane11" pref="766" max="32767" attributes="0"/>
+                              <Component id="jScrollPane12" pref="755" max="32767" attributes="0"/>
                               <EmptySpace max="-2" attributes="0"/>
                           </Group>
                       </Group>
                     </DimensionLayout>
                   </Layout>
                   <SubComponents>
-                    <Component class="javax.swing.JLabel" name="jLabel22">
+                    <Component class="javax.swing.JLabel" name="jLabel29">
                       <Properties>
                         <Property name="font" type="java.awt.Font" editor="org.netbeans.modules.form.editors2.FontEditor">
                           <FontInfo relative="true">
-                            <Font bold="true" component="jLabel22" property="font" relativeSize="true" size="0"/>
+                            <Font bold="true" component="jLabel29" property="font" relativeSize="true" size="0"/>
                           </FontInfo>
                         </Property>
-                        <Property name="text" type="java.lang.String" value="Projekte:"/>
+                        <Property name="text" type="java.lang.String" value="Zahlungen:"/>
                       </Properties>
                     </Component>
-                    <Component class="javax.swing.JButton" name="cmdNewTimesheet">
+                    <Component class="javax.swing.JButton" name="cmdNewPayment">
                       <Properties>
                         <Property name="icon" type="javax.swing.Icon" editor="org.netbeans.modules.form.editors2.IconEditor">
                           <Image iconType="3" name="/icons/edit_add.png"/>
                         </Property>
                       </Properties>
                       <Events>
-                        <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="cmdNewTimesheetActionPerformed"/>
+                        <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="cmdNewPaymentActionPerformed"/>
                       </Events>
                     </Component>
-                    <Container class="javax.swing.JScrollPane" name="jScrollPane11">
+                    <Container class="javax.swing.JScrollPane" name="jScrollPane12">
+                      <Properties>
+                        <Property name="horizontalScrollBarPolicy" type="int" value="31"/>
+                      </Properties>
 
                       <Layout class="org.netbeans.modules.form.compat2.layouts.support.JScrollPaneSupportLayout"/>
                       <SubComponents>
-                        <Container class="javax.swing.JPanel" name="pnlTimesheets">
+                        <Container class="javax.swing.JPanel" name="pnlPayments">
 
                           <Layout>
                             <DimensionLayout dim="0">
                               <Group type="103" groupAlignment="0" attributes="0">
-                                  <EmptySpace min="0" pref="0" max="32767" attributes="0"/>
+                                  <EmptySpace min="0" pref="955" max="32767" attributes="0"/>
                               </Group>
                             </DimensionLayout>
                             <DimensionLayout dim="1">
                               <Group type="103" groupAlignment="0" attributes="0">
-                                  <EmptySpace min="0" pref="766" max="32767" attributes="0"/>
+                                  <EmptySpace min="0" pref="793" max="32767" attributes="0"/>
                               </Group>
                             </DimensionLayout>
                           </Layout>
                         </Container>
                       </SubComponents>
+                    </Container>
+                    <Component class="javax.swing.JLabel" name="jLabel31">
+                      <Properties>
+                        <Property name="font" type="java.awt.Font" editor="org.netbeans.modules.form.editors2.FontEditor">
+                          <FontInfo relative="true">
+                            <Font component="jLabel31" property="font" relativeSize="true" size="0"/>
+                          </FontInfo>
+                        </Property>
+                        <Property name="text" type="java.lang.String" value="ausgehende Zahlungen"/>
+                        <Property name="toolTipText" type="java.lang.String" value="ausgehende Zahlungen vorbereiten und &#xfc;ber &quot;Finanzen&quot; - &quot;Zahlungen verwalten&quot; eine Stapel&#xfc;berweisung vorbereiten"/>
+                      </Properties>
+                    </Component>
+                  </SubComponents>
+                </Container>
+                <Container class="javax.swing.JPanel" name="jPanel20">
+                  <Constraints>
+                    <Constraint layoutClass="org.netbeans.modules.form.compat2.layouts.support.JTabbedPaneSupportLayout" value="org.netbeans.modules.form.compat2.layouts.support.JTabbedPaneSupportLayout$JTabbedPaneConstraintsDescription">
+                      <JTabbedPaneConstraints tabName="Forderungskonto">
+                        <Property name="tabTitle" type="java.lang.String" value="Forderungskonto"/>
+                      </JTabbedPaneConstraints>
+                    </Constraint>
+                  </Constraints>
+
+                  <Layout>
+                    <DimensionLayout dim="0">
+                      <Group type="103" groupAlignment="0" attributes="0">
+                          <Group type="102" alignment="0" attributes="0">
+                              <EmptySpace max="-2" attributes="0"/>
+                              <Group type="103" groupAlignment="0" attributes="0">
+                                  <Component id="pnlClaimLedgers" max="32767" attributes="0"/>
+                                  <Group type="102" attributes="0">
+                                      <Component id="jLabel30" min="-2" max="-2" attributes="0"/>
+                                      <EmptySpace max="-2" attributes="0"/>
+                                      <Component id="cmdNewClaimLedger" min="-2" max="-2" attributes="0"/>
+                                      <EmptySpace min="0" pref="739" max="32767" attributes="0"/>
+                                  </Group>
+                              </Group>
+                              <EmptySpace max="-2" attributes="0"/>
+                          </Group>
+                      </Group>
+                    </DimensionLayout>
+                    <DimensionLayout dim="1">
+                      <Group type="103" groupAlignment="0" attributes="0">
+                          <Group type="102" alignment="0" attributes="0">
+                              <EmptySpace max="-2" attributes="0"/>
+                              <Group type="103" groupAlignment="3" attributes="0">
+                                  <Component id="jLabel30" alignment="3" min="-2" max="-2" attributes="0"/>
+                                  <Component id="cmdNewClaimLedger" alignment="3" min="-2" max="-2" attributes="0"/>
+                              </Group>
+                              <EmptySpace max="-2" attributes="0"/>
+                              <Component id="pnlClaimLedgers" max="32767" attributes="0"/>
+                              <EmptySpace max="-2" attributes="0"/>
+                          </Group>
+                      </Group>
+                    </DimensionLayout>
+                  </Layout>
+                  <SubComponents>
+                    <Component class="javax.swing.JLabel" name="jLabel30">
+                      <Properties>
+                        <Property name="font" type="java.awt.Font" editor="org.netbeans.modules.form.editors2.FontEditor">
+                          <FontInfo relative="true">
+                            <Font bold="true" component="jLabel30" property="font" relativeSize="true" size="0"/>
+                          </FontInfo>
+                        </Property>
+                        <Property name="text" type="java.lang.String" value="Forderungskonten:"/>
+                      </Properties>
+                    </Component>
+                    <Component class="javax.swing.JButton" name="cmdNewClaimLedger">
+                      <Properties>
+                        <Property name="icon" type="javax.swing.Icon" editor="org.netbeans.modules.form.editors2.IconEditor">
+                          <Image iconType="3" name="/icons/edit_add.png"/>
+                        </Property>
+                      </Properties>
+                      <Events>
+                        <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="cmdNewClaimLedgerActionPerformed"/>
+                      </Events>
+                    </Component>
+                    <Container class="javax.swing.JPanel" name="pnlClaimLedgers">
+
+                      <Layout>
+                        <DimensionLayout dim="0">
+                          <Group type="103" groupAlignment="0" attributes="0">
+                              <EmptySpace min="0" pref="0" max="32767" attributes="0"/>
+                          </Group>
+                        </DimensionLayout>
+                        <DimensionLayout dim="1">
+                          <Group type="103" groupAlignment="0" attributes="0">
+                              <EmptySpace min="0" pref="755" max="32767" attributes="0"/>
+                          </Group>
+                        </DimensionLayout>
+                      </Layout>
                     </Container>
                   </SubComponents>
                 </Container>
@@ -2665,7 +2749,7 @@
                   <Group type="103" groupAlignment="0" attributes="0">
                       <Group type="102" attributes="0">
                           <Group type="103" groupAlignment="0" attributes="0">
-                              <Component id="tblReviewReasonsPane" pref="745" max="32767" attributes="0"/>
+                              <Component id="tblReviewReasonsPane" pref="802" max="32767" attributes="0"/>
                               <Component id="newEventPanel" max="32767" attributes="0"/>
                           </Group>
                           <EmptySpace max="-2" attributes="0"/>
@@ -2705,6 +2789,95 @@
                 </Container>
                 <Component class="com.jdimension.jlawyer.client.editors.files.NewEventPanel" name="newEventPanel">
                 </Component>
+              </SubComponents>
+            </Container>
+          </SubComponents>
+        </Container>
+        <Container class="javax.swing.JPanel" name="tabTimesheets">
+          <Constraints>
+            <Constraint layoutClass="org.netbeans.modules.form.compat2.layouts.support.JTabbedPaneSupportLayout" value="org.netbeans.modules.form.compat2.layouts.support.JTabbedPaneSupportLayout$JTabbedPaneConstraintsDescription">
+              <JTabbedPaneConstraints tabName="Zeiten">
+                <Property name="tabTitle" type="java.lang.String" value="Zeiten"/>
+                <Property name="tabIcon" type="javax.swing.Icon" editor="org.netbeans.modules.form.editors2.IconEditor">
+                  <Image iconType="3" name="/icons16/material/baseline_timer_black_48dp.png"/>
+                </Property>
+              </JTabbedPaneConstraints>
+            </Constraint>
+          </Constraints>
+
+          <Layout>
+            <DimensionLayout dim="0">
+              <Group type="103" groupAlignment="0" attributes="0">
+                  <Group type="102" attributes="0">
+                      <EmptySpace max="-2" attributes="0"/>
+                      <Group type="103" groupAlignment="0" attributes="0">
+                          <Group type="102" alignment="0" attributes="0">
+                              <Component id="jLabel22" min="-2" max="-2" attributes="0"/>
+                              <EmptySpace max="-2" attributes="0"/>
+                              <Component id="cmdNewTimesheet" min="-2" max="-2" attributes="0"/>
+                              <EmptySpace min="0" pref="1003" max="32767" attributes="0"/>
+                          </Group>
+                          <Component id="jScrollPane11" alignment="0" max="32767" attributes="0"/>
+                      </Group>
+                      <EmptySpace max="-2" attributes="0"/>
+                  </Group>
+              </Group>
+            </DimensionLayout>
+            <DimensionLayout dim="1">
+              <Group type="103" groupAlignment="0" attributes="0">
+                  <Group type="102" alignment="0" attributes="0">
+                      <EmptySpace max="-2" attributes="0"/>
+                      <Group type="103" groupAlignment="0" attributes="0">
+                          <Component id="cmdNewTimesheet" alignment="0" min="-2" max="-2" attributes="0"/>
+                          <Component id="jLabel22" min="-2" pref="30" max="-2" attributes="0"/>
+                      </Group>
+                      <EmptySpace max="-2" attributes="0"/>
+                      <Component id="jScrollPane11" max="32767" attributes="0"/>
+                      <EmptySpace max="-2" attributes="0"/>
+                  </Group>
+              </Group>
+            </DimensionLayout>
+          </Layout>
+          <SubComponents>
+            <Component class="javax.swing.JLabel" name="jLabel22">
+              <Properties>
+                <Property name="font" type="java.awt.Font" editor="org.netbeans.modules.form.editors2.FontEditor">
+                  <FontInfo relative="true">
+                    <Font bold="true" component="jLabel22" property="font" relativeSize="true" size="0"/>
+                  </FontInfo>
+                </Property>
+                <Property name="text" type="java.lang.String" value="Projekte:"/>
+              </Properties>
+            </Component>
+            <Component class="javax.swing.JButton" name="cmdNewTimesheet">
+              <Properties>
+                <Property name="icon" type="javax.swing.Icon" editor="org.netbeans.modules.form.editors2.IconEditor">
+                  <Image iconType="3" name="/icons/edit_add.png"/>
+                </Property>
+              </Properties>
+              <Events>
+                <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="cmdNewTimesheetActionPerformed"/>
+              </Events>
+            </Component>
+            <Container class="javax.swing.JScrollPane" name="jScrollPane11">
+
+              <Layout class="org.netbeans.modules.form.compat2.layouts.support.JScrollPaneSupportLayout"/>
+              <SubComponents>
+                <Container class="javax.swing.JPanel" name="pnlTimesheets">
+
+                  <Layout>
+                    <DimensionLayout dim="0">
+                      <Group type="103" groupAlignment="0" attributes="0">
+                          <EmptySpace min="0" pref="0" max="32767" attributes="0"/>
+                      </Group>
+                    </DimensionLayout>
+                    <DimensionLayout dim="1">
+                      <Group type="103" groupAlignment="0" attributes="0">
+                          <EmptySpace min="0" pref="800" max="32767" attributes="0"/>
+                      </Group>
+                    </DimensionLayout>
+                  </Layout>
+                </Container>
               </SubComponents>
             </Container>
           </SubComponents>
@@ -2758,7 +2931,7 @@
                       <Component id="lblCustom3" min="-2" max="-2" attributes="0"/>
                       <EmptySpace max="-2" attributes="0"/>
                       <Component id="jScrollPane6" min="-2" max="-2" attributes="0"/>
-                      <EmptySpace pref="588" max="32767" attributes="0"/>
+                      <EmptySpace pref="548" max="32767" attributes="0"/>
                   </Group>
               </Group>
             </DimensionLayout>
@@ -2832,7 +3005,7 @@
               <Group type="103" groupAlignment="0" attributes="0">
                   <Group type="102" alignment="0" attributes="0">
                       <EmptySpace max="-2" attributes="0"/>
-                      <Component id="tabPaneForms" max="32767" attributes="0"/>
+                      <Component id="tabPaneForms" pref="1115" max="32767" attributes="0"/>
                       <EmptySpace max="-2" attributes="0"/>
                   </Group>
               </Group>
@@ -2927,7 +3100,7 @@
                               </Group>
                               <EmptySpace max="-2" attributes="0"/>
                               <Component id="cmdAddForm" min="-2" max="-2" attributes="0"/>
-                              <EmptySpace pref="602" max="32767" attributes="0"/>
+                              <EmptySpace pref="644" max="32767" attributes="0"/>
                           </Group>
                       </Group>
                     </DimensionLayout>
@@ -3058,7 +3231,7 @@
                       <Group type="102" attributes="0">
                           <EmptySpace max="-2" attributes="0"/>
                           <Group type="103" groupAlignment="0" attributes="0">
-                              <Component id="jScrollPane4" pref="1057" max="32767" attributes="0"/>
+                              <Component id="jScrollPane4" pref="1093" max="32767" attributes="0"/>
                               <Group type="102" alignment="0" attributes="0">
                                   <Group type="103" groupAlignment="0" attributes="0">
                                       <Component id="jLabel14" alignment="0" min="-2" max="-2" attributes="0"/>
@@ -3079,6 +3252,10 @@
                                           <Component id="cmdAddHistory" min="-2" max="-2" attributes="0"/>
                                           <EmptySpace max="32767" attributes="0"/>
                                           <Component id="cmdLoadFullHistory" min="-2" max="-2" attributes="0"/>
+                                          <EmptySpace max="-2" attributes="0"/>
+                                          <Component id="cmdExportHistoryTimeline" min="-2" max="-2" attributes="0"/>
+                                          <EmptySpace max="-2" attributes="0"/>
+                                          <Component id="cmdSaveHistoryDocument" min="-2" max="-2" attributes="0"/>
                                       </Group>
                                   </Group>
                               </Group>
@@ -3104,12 +3281,21 @@
                               <Component id="txtHistoryDesc" alignment="3" min="-2" max="-2" attributes="0"/>
                           </Group>
                           <EmptySpace max="-2" attributes="0"/>
-                          <Group type="103" groupAlignment="3" attributes="0">
-                              <Component id="cmdAddHistory" alignment="3" min="-2" max="-2" attributes="0"/>
-                              <Component id="cmdLoadFullHistory" alignment="3" min="-2" max="-2" attributes="0"/>
+                          <Group type="103" groupAlignment="0" attributes="0">
+                              <Group type="102" attributes="0">
+                                  <Group type="103" groupAlignment="0" attributes="0">
+                                      <Component id="cmdLoadFullHistory" alignment="0" min="-2" max="-2" attributes="0"/>
+                                      <Component id="cmdAddHistory" min="-2" max="-2" attributes="0"/>
+                                      <Component id="cmdExportHistoryTimeline" alignment="0" min="-2" max="-2" attributes="0"/>
+                                  </Group>
+                                  <EmptySpace type="unrelated" max="-2" attributes="0"/>
+                                  <Component id="jScrollPane4" pref="685" max="32767" attributes="0"/>
+                              </Group>
+                              <Group type="102" attributes="0">
+                                  <Component id="cmdSaveHistoryDocument" min="-2" max="-2" attributes="0"/>
+                                  <EmptySpace min="0" pref="0" max="32767" attributes="0"/>
+                              </Group>
                           </Group>
-                          <EmptySpace type="unrelated" max="-2" attributes="0"/>
-                          <Component id="jScrollPane4" pref="642" max="32767" attributes="0"/>
                           <EmptySpace max="-2" attributes="0"/>
                       </Group>
                   </Group>
@@ -3228,6 +3414,28 @@
                   </Properties>
                   <Events>
                     <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="cmdLoadFullHistoryActionPerformed"/>
+                  </Events>
+                </Component>
+                <Component class="javax.swing.JButton" name="cmdExportHistoryTimeline">
+                  <Properties>
+                    <Property name="icon" type="javax.swing.Icon" editor="org.netbeans.modules.form.editors2.IconEditor">
+                      <Image iconType="3" name="/icons/baseline_preview_black_48dp.png"/>
+                    </Property>
+                    <Property name="toolTipText" type="java.lang.String" value="Historie im Browser &#xf6;ffnen"/>
+                  </Properties>
+                  <Events>
+                    <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="cmdExportHistoryTimelineActionPerformed"/>
+                  </Events>
+                </Component>
+                <Component class="javax.swing.JButton" name="cmdSaveHistoryDocument">
+                  <Properties>
+                    <Property name="icon" type="javax.swing.Icon" editor="org.netbeans.modules.form.editors2.IconEditor">
+                      <Image iconType="3" name="/icons/filesave.png"/>
+                    </Property>
+                    <Property name="toolTipText" type="java.lang.String" value="Historie als HTML-Dokument zur Akte speichern"/>
+                  </Properties>
+                  <Events>
+                    <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="cmdSaveHistoryDocumentActionPerformed"/>
                   </Events>
                 </Component>
               </SubComponents>

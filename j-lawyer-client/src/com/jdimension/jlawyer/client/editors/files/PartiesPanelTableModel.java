@@ -672,22 +672,22 @@ import javax.swing.table.DefaultTableModel;
 public class PartiesPanelTableModel extends DefaultTableModel {
     
     /**
-     * Creates a new instance of QuickArchiveFileSearchTableModel
+     * Creates a new instance of PartiesPanelTableModel
+     * @param colNames
+     * @param rowCount
      */
     public PartiesPanelTableModel(Object[] colNames, int rowCount) {
         super(colNames, rowCount);
     }
 
+    @Override
     public boolean isCellEditable(int row, int col) {
-        /*boolean retValue;
-        
-        retValue = super.isCellEditable(i, i0);
-        return retValue;*/
-        return col!=0;
+        return col!=getColumnCount()-1;
     }
     
+    @Override
     public Class<?> getColumnClass(int index) {
-        if (index > 0) {
+        if (index < getColumnCount()-1) {
             return Boolean.class;
         } else {
             return String.class;

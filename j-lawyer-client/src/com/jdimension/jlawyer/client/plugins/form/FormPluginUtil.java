@@ -677,11 +677,8 @@ import java.io.FileInputStream;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.StringReader;
-import java.net.URL;
-import java.net.URLConnection;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
@@ -704,11 +701,11 @@ public class FormPluginUtil {
     private static ArrayList<FormPlugin> pluginList = null;
 
     public static String getLocalDirectory() {
-        return System.getProperty("user.home") + System.getProperty("file.separator") + ".j-lawyer-client" + System.getProperty("file.separator") + "forms" + File.separator + VersionUtils.getFullClientVersion();
+        return System.getProperty("user.home") + File.separator + ClientSettings.JLAWYERCLIENT_SETTINGDIR + File.separator + "forms" + File.separator + VersionUtils.getFullClientVersion();
     }
 
     public static String getLocalDirectoryInternalPlugins() {
-        return System.getProperty("user.home") + System.getProperty("file.separator") + ".j-lawyer-client" + System.getProperty("file.separator") + "forms-internal";
+        return System.getProperty("user.home") + File.separator + ClientSettings.JLAWYERCLIENT_SETTINGDIR + File.separator + "forms-internal";
     }
 
     public static synchronized ArrayList<FormPlugin> loadLocalPlugins() {

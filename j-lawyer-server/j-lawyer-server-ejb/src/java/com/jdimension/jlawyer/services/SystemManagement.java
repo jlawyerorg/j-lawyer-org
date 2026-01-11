@@ -663,6 +663,7 @@
  */
 package com.jdimension.jlawyer.services;
 
+import com.jdimension.jlawyer.documents.DocumentPreview;
 import com.jdimension.jlawyer.pojo.PartiesTriplet;
 import com.jdimension.jlawyer.documents.LibreOfficeAccess;
 import com.jdimension.jlawyer.documents.TikaConfigurator;
@@ -684,6 +685,7 @@ import com.jdimension.jlawyer.server.utils.InvalidSchemaPatternException;
 import com.jdimension.jlawyer.server.utils.ServerFileUtils;
 import com.jdimension.jlawyer.server.utils.ServerStringUtils;
 import com.jdimension.jlawyer.server.utils.StringUtils;
+import com.jdimension.jlawyer.stirlingpdf.StirlingPdfAPI;
 import java.io.*;
 import java.lang.management.ManagementFactory;
 import java.lang.management.OperatingSystemMXBean;
@@ -691,8 +693,11 @@ import java.net.Inet4Address;
 import java.net.InetAddress;
 import java.net.NetworkInterface;
 import java.net.SocketException;
+import java.nio.charset.StandardCharsets;
+import java.security.MessageDigest;
 import java.sql.*;
 import java.util.ArrayList;
+import java.util.Calendar;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
@@ -701,12 +706,14 @@ import java.util.HashMap;
 import java.util.Hashtable;
 import java.util.List;
 import java.util.Properties;
+import java.util.concurrent.TimeUnit;
 import javax.annotation.Resource;
 import javax.annotation.security.PermitAll;
 import javax.annotation.security.RolesAllowed;
 import javax.ejb.Asynchronous;
 import javax.ejb.EJB;
 import javax.ejb.EJBException;
+import javax.ejb.Schedule;
 import javax.ejb.SessionContext;
 import javax.ejb.Stateless;
 import javax.inject.Inject;
@@ -734,6 +741,7 @@ import javax.xml.xpath.XPathExpression;
 import javax.xml.xpath.XPathFactory;
 import org.apache.log4j.Logger;
 import org.apache.tika.Tika;
+import org.jboss.ejb3.annotation.TransactionTimeout;
 import org.jlawyer.data.tree.GenericNode;
 import org.jlawyer.data.tree.TreeNodeUtils;
 import org.jlawyer.plugins.calculation.GenericCalculationTable;
@@ -790,6 +798,12 @@ public class SystemManagement implements SystemManagementRemote, SystemManagemen
     private DocumentNameTemplateFacadeLocal documentNameTemplates;
     @EJB
     private CalendarEntryTemplateFacadeLocal calendarEntryTemplates;
+    @EJB
+    private DocumentTagRuleFacadeLocal documentTagRuleFacade;
+    @EJB
+    private DocumentTagRuleConditionFacadeLocal documentTagRuleConditionFacade;
+    @EJB
+    private TransactionLogFacadeLocal txLogFacade;
 
     @Inject
     @JMSConnectionFactory("java:/JmsXA")
@@ -804,6 +818,19 @@ public class SystemManagement implements SystemManagementRemote, SystemManagemen
 
         return appOptionGroupBeanFacade.findByOptionGroup(optionGroup);
 
+    }
+
+    @Override
+    @RolesAllowed({"loginRole"})
+    public HashMap<String, AppOptionGroupBean[]> getOptionGroups(List<String> optionGroups) {
+        HashMap<String, AppOptionGroupBean[]> result = new HashMap<>();
+
+        for (String optionGroup : optionGroups) {
+            AppOptionGroupBean[] beans = appOptionGroupBeanFacade.findByOptionGroup(optionGroup);
+            result.put(optionGroup, beans);
+        }
+
+        return result;
     }
 
     @Override
@@ -901,7 +928,7 @@ public class SystemManagement implements SystemManagementRemote, SystemManagemen
 
     @Override
     @Asynchronous
-    @RolesAllowed({"adminRole"})
+    @RolesAllowed({"sysAdminRole"})
     public void clearCurrentBackup() {
         // needs to be called e.g. when encryption password has changed
         File directoryToZip = new File(System.getProperty("jlawyer.server.basedirectory").trim());
@@ -1079,6 +1106,14 @@ public class SystemManagement implements SystemManagementRemote, SystemManagemen
     public AppUserBean createUser(AppUserBean user, List<AppRoleBean> roles) throws Exception {
 
         this.checkUserLimit(false);
+        
+        boolean sysAdminRequest=context.isCallerInRole("sysAdminRole");
+        for (AppRoleBean r : roles) {
+            if("sysAdminRole".equalsIgnoreCase(r.getRole()) && !sysAdminRequest) {
+                // tried to delete a sys admin
+                throw new Exception("Nur Systemadministratoren dürfen weitere Systemadministratoren erstellen");
+            }
+        }
 
         StringGenerator idGen = new StringGenerator();
         // create password hash
@@ -1100,6 +1135,22 @@ public class SystemManagement implements SystemManagementRemote, SystemManagemen
         AppUserBean outdated = this.userBeanFacade.findByPrincipalId(user.getPrincipalId());
         if (outdated == null) {
             throw new Exception("No user with name " + user.getPrincipalId());
+        }
+        
+        boolean sysAdminRequest=context.isCallerInRole("sysAdminRole");
+        List<AppRoleBean> existingRoles = this.roleBeanFacade.findByPrincipalId(user.getPrincipalId());
+        for (AppRoleBean r : existingRoles) {
+            if("sysAdminRole".equalsIgnoreCase(r.getRole()) && !sysAdminRequest) {
+                // tried to delete a sys admin
+                throw new Exception("Nur Systemadministratoren dürfen andere Systemadministratoren bearbeiten");
+            }
+        }
+        
+        for (AppRoleBean r : roles) {
+            if("sysAdminRole".equalsIgnoreCase(r.getRole()) && !sysAdminRequest) {
+                // tried to delete a sys admin
+                throw new Exception("Nur Systemadministratoren dürfen Systemadministratorenrechte vergeben");
+            }
         }
 
         // in case of upates, we need to check only when loginRole is present - could be a user that is about to be re-activated
@@ -1163,9 +1214,19 @@ public class SystemManagement implements SystemManagementRemote, SystemManagemen
 
     @Override
     @RolesAllowed({"adminRole"})
-    public void deleteUser(String principalId) {
+    public void deleteUser(String principalId) throws Exception {
+        
+        boolean sysAdminRequest=context.isCallerInRole("sysAdminRole");
 
         List<AppRoleBean> delRoles = this.roleBeanFacade.findByPrincipalId(principalId);
+        
+        for (AppRoleBean r : delRoles) {
+            if("sysAdminRole".equalsIgnoreCase(r.getRole()) && !sysAdminRequest) {
+                // tried to delete a sys admin
+                throw new Exception("Nur Systemadministratoren dürfen andere Systemadministratoren entfernen");
+            }
+        }
+        
         for (AppRoleBean r : delRoles) {
             this.roleBeanFacade.remove(r);
         }
@@ -1225,7 +1286,7 @@ public class SystemManagement implements SystemManagementRemote, SystemManagemen
     public AppUserBean getUser(String principalId) {
         return this.userBeanFacade.findByPrincipalId(principalId);
     }
-    
+
     @Override
     public AppUserBean getUserUnrestricted(String principalId) {
         return this.userBeanFacade.findByPrincipalIdUnrestricted(principalId);
@@ -1418,14 +1479,14 @@ public class SystemManagement implements SystemManagementRemote, SystemManagemen
 
     @Override
     @RolesAllowed({"loginRole"})
-    public void testSendMail(String smtpHost, int smtpPort, String smtpUser, String smtpPwd, boolean smtpSsl, boolean smtpStartTls, String mailAddress, boolean isMsExchange, String accessToken) throws Exception {
+    public void testSendMail(String smtpHost, int smtpPort, String smtpUser, String smtpPwd, boolean smtpSsl, boolean smtpStartTls, String mailAddress, boolean isMsExchange, String accessToken, Properties customProps) throws Exception {
 
         if (smtpHost == null || smtpUser == null || smtpPwd == null || mailAddress == null) {
             throw new Exception("incomplete configuration for sending test mails");
         }
-        
+
         if (isMsExchange) {
-            smtpPwd=accessToken;
+            smtpPwd = accessToken;
         }
 
         Properties props = new Properties();
@@ -1446,7 +1507,7 @@ public class SystemManagement implements SystemManagementRemote, SystemManagemen
                 log.error("Invalid SMTP port: " + smtpHost);
             }
         }
-        
+
         props.put("mail.smtp.host", smtpHost);
         props.put("mail.smtp.user", smtpUser);
         props.put("mail.smtp.auth", true);
@@ -1457,12 +1518,14 @@ public class SystemManagement implements SystemManagementRemote, SystemManagemen
         props.put("mail.password", smtpPwd);
 
         if (isMsExchange) {
-            
+
             props.put("mail.smtp.auth.mechanisms", "XOAUTH2");
             props.put("mail.smtps.auth.mechanisms", "XOAUTH2");
         }
-        
-        final String smtpPwdFinal=smtpPwd;
+
+        this.applyCustomProperties(customProps, props);
+
+        final String smtpPwdFinal = smtpPwd;
         javax.mail.Authenticator auth = new javax.mail.Authenticator() {
 
             @Override
@@ -1485,7 +1548,7 @@ public class SystemManagement implements SystemManagementRemote, SystemManagemen
         msg.setRecipients(Message.RecipientType.TO, mailAddress);
         msg.setSubject("Testnachricht, j-lawyer.org Serverdienst");
         msg.setSentDate(new java.util.Date());
-        msg.setText("Wenn Sie diese Nachricht erhalten, funktioniert der Versand von E-Mails.");
+        msg.setText("Wenn Sie diese Nachricht erhalten, funktioniert der Versand von E-Mails. Die Nachricht wurde gesendet von " + com.jdimension.jlawyer.server.utils.ServerInformation.getHostName() + ".");
         //Transport.send(msg);
         msg.saveChanges();
         bus.send(msg);
@@ -1495,7 +1558,7 @@ public class SystemManagement implements SystemManagementRemote, SystemManagemen
 
     @Override
     @RolesAllowed({"loginRole"})
-    public void testReceiveMail(String mailAddress, String host, String protocol, boolean ssl, String user, String pwd, boolean isMsExchange, String authToken) throws Exception {
+    public void testReceiveMail(String mailAddress, String host, String protocol, boolean ssl, String user, String pwd, boolean isMsExchange, String authToken, Properties customProps) throws Exception {
         Properties props = System.getProperties();
         //Properties props = new Properties();
         props.setProperty("mail.imap.partialfetch", "false");
@@ -1521,6 +1584,7 @@ public class SystemManagement implements SystemManagementRemote, SystemManagemen
             props.setProperty("mail.imaps.socketFactory.fallback", "false");
             props.setProperty("mail.imaps.socketFactory.port", "993");
             props.setProperty("mail.imaps.starttls.enable", "true");
+            this.applyCustomProperties(customProps, props);
 
             session = Session.getInstance(props);
             session.setDebug(true);
@@ -1528,6 +1592,7 @@ public class SystemManagement implements SystemManagementRemote, SystemManagemen
             store.connect(host, user, authToken);
 
         } else {
+            this.applyCustomProperties(customProps, props);
             session = Session.getDefaultInstance(props, null);
             store = session.getStore(protocol);
             store.connect(host, user, pwd);
@@ -1541,6 +1606,12 @@ public class SystemManagement implements SystemManagementRemote, SystemManagemen
         folder.close(false);
         store.close();
 
+    }
+
+    private void applyCustomProperties(Properties customProps, Properties targetProps) {
+        for (Object k : customProps.keySet()) {
+            targetProps.setProperty(k.toString(), customProps.getProperty(k.toString()));
+        }
     }
 
     @Override
@@ -1616,7 +1687,7 @@ public class SystemManagement implements SystemManagementRemote, SystemManagemen
         this.userBeanFacade.edit(currentValues);
 
     }
-    
+
     @Override
     public String getServerIpV4() throws Exception {
         try {
@@ -1993,10 +2064,25 @@ public class SystemManagement implements SystemManagementRemote, SystemManagemen
 
     @Override
     @RolesAllowed({"loginRole"})
-    public String getTemplatePreview(int templateType, GenericNode folder, String fileName) throws Exception {
+    public DocumentPreview getTemplatePreview(int templateType, GenericNode folder, String fileName) throws Exception {
         String localBaseDir = this.getTemplatesBaseDir(templateType, TreeNodeUtils.buildNodePath(folder));
 
         String read = localBaseDir + File.separator + fileName;
+
+        ServerSettingsBean sb = this.settingsFacade.find(ServerSettingsKeys.SERVERCONF_STIRLINGPDF_ENDPOINT);
+        StirlingPdfAPI pdfApi = null;
+        if (sb != null && !ServerStringUtils.isEmpty(sb.getSettingValue())) {
+            pdfApi = new StirlingPdfAPI(sb.getSettingValue(), 5000, 120000);
+        }
+
+        try {
+            if (DocumentPreview.supportsPdfPreview(fileName) && pdfApi != null) {
+                byte[] pdfPreviewBytes = pdfApi.convertToPdf(fileName, ServerFileUtils.readFile(new File(read)));
+                return new DocumentPreview(pdfPreviewBytes);
+            }
+        } catch (Exception ex) {
+            log.error("Error creating PDF preview for document", ex);
+        }
 
         Tika tika = TikaConfigurator.newTika(fileName);
         try {
@@ -2012,12 +2098,13 @@ public class SystemManagement implements SystemManagementRemote, SystemManagemen
             bw.close();
             br.close();
 
-            return sw.toString();
+            return new DocumentPreview(sw.toString());
 
         } catch (Throwable t) {
             log.error("Error creating template preview", t);
         }
-        return "";
+
+        return new DocumentPreview("");
     }
 
     @Override
@@ -2038,43 +2125,7 @@ public class SystemManagement implements SystemManagementRemote, SystemManagemen
 
     @Override
     public List<PartyTypeBean> getPartyTypes() {
-        List<PartyTypeBean> all = this.partyTypesFacade.findAll();
-        Collections.sort(all, (Object t, Object t1) -> {
-            Object u1 = t;
-            Object u2 = t1;
-            if (u1 == null) {
-                return -1;
-            }
-            if (u2 == null) {
-                return 1;
-            }
-
-            if (!(u1 instanceof PartyTypeBean)) {
-                return -1;
-            }
-            if (!(u2 instanceof PartyTypeBean)) {
-                return 1;
-            }
-
-            PartyTypeBean f1 = (PartyTypeBean) u1;
-            PartyTypeBean f2 = (PartyTypeBean) u2;
-
-            int sequenceSortResult = Integer.compare(f1.getSequenceNumber(), f2.getSequenceNumber());
-            if (sequenceSortResult != 0) {
-                return sequenceSortResult;
-            } else {
-                String f1name = "";
-                if (f1.getName() != null) {
-                    f1name = f1.getName().toLowerCase();
-                }
-                String f2name = "";
-                if (f2.getName() != null) {
-                    f2name = f2.getName().toLowerCase();
-                }
-                return f1name.compareTo(f2name);
-            }
-        });
-        return all;
+        return this.partyTypesFacade.findAllInSequence();
     }
 
     @Override
@@ -2273,6 +2324,16 @@ public class SystemManagement implements SystemManagementRemote, SystemManagemen
     @Override
     @RolesAllowed({"adminRole"})
     public boolean updatePasswordForUser(String principalId, String newPassword) throws Exception {
+        
+        boolean sysAdminRequest=context.isCallerInRole("sysAdminRole");
+        List<AppRoleBean> existingRoles = this.roleBeanFacade.findByPrincipalId(principalId);
+        for (AppRoleBean r : existingRoles) {
+            if("sysAdminRole".equalsIgnoreCase(r.getRole()) && !sysAdminRequest) {
+                // tried to delete a sys admin
+                throw new Exception("Nur Systemadministratoren dürfen andere Systemadministratoren bearbeiten");
+            }
+        }
+        
         AppUserBean u = this.userBeanFacade.findByPrincipalId(principalId);
         if (u == null) {
             throw new Exception("Error resetting password for " + principalId);
@@ -2397,7 +2458,7 @@ public class SystemManagement implements SystemManagementRemote, SystemManagemen
     public HashMap<String, Object> getPlaceHolderValuesUnrestricted(HashMap<String, Object> placeHolders, ArchiveFileBean aFile, List<PartiesTriplet> selectedParties, String dictateSign, GenericCalculationTable calculationTable, HashMap<String, String> formsPlaceHolderValues, AppUserBean caseLawyer, AppUserBean caseAssistant, AppUserBean author, Invoice invoice, AppUserBean invoiceSender, GenericCalculationTable invoiceTable, GenericCalculationTable timesheetsTable, GenericCalculationTable timesheetSummaryTable, byte[] giroCode, String ingoText) throws Exception {
         return PlaceHolderServerUtils.getPlaceHolderValues(placeHolders, aFile, selectedParties, dictateSign, calculationTable, formsPlaceHolderValues, caseLawyer, caseAssistant, author, invoice, invoiceSender, invoiceTable, timesheetsTable, timesheetSummaryTable, giroCode, ingoText);
     }
-    
+
     @Override
     @RolesAllowed({"loginRole"})
     public HashMap<String, Object> getPlaceHolderValues(HashMap<String, Object> placeHolders, ArchiveFileBean aFile, List<PartiesTriplet> selectedParties, String dictateSign, GenericCalculationTable calculationTable, HashMap<String, String> formsPlaceHolderValues, AppUserBean caseLawyer, AppUserBean caseAssistant, AppUserBean author, Invoice invoice, AppUserBean invoiceSender, GenericCalculationTable invoiceTable, GenericCalculationTable timesheetsTable, GenericCalculationTable timesheetSummaryTable, byte[] giroCode, String ingoText) throws Exception {
@@ -2439,20 +2500,19 @@ public class SystemManagement implements SystemManagementRemote, SystemManagemen
     @Override
     @RolesAllowed({"adminRole"})
     public DocumentNameTemplate updateDocumentNameTemplate(DocumentNameTemplate template) throws Exception {
-        
-        
-        if(!template.isDefaultTemplate()) {
+
+        if (!template.isDefaultTemplate()) {
             // not a default template - make sure there is at least one default
-            boolean defaultFound=false;
+            boolean defaultFound = false;
             for (DocumentNameTemplate t : this.documentNameTemplates.findAll()) {
                 if (!t.equals(template)) {
-                    if(t.isDefaultTemplate()) {
-                        defaultFound=true;
+                    if (t.isDefaultTemplate()) {
+                        defaultFound = true;
                         break;
                     }
                 }
             }
-            if(!defaultFound) {
+            if (!defaultFound) {
                 throw new Exception("Es muss mindestens ein Standardschema existieren - Eintrag als Standard erneut speichern!");
             }
         }
@@ -2468,7 +2528,7 @@ public class SystemManagement implements SystemManagementRemote, SystemManagemen
         }
 
         this.documentNameTemplates.edit(template);
-        
+
         return this.documentNameTemplates.find(template.getId());
     }
 
@@ -2541,7 +2601,7 @@ public class SystemManagement implements SystemManagementRemote, SystemManagemen
             while ((nRead = is.read(data, 0, data.length)) != -1) {
                 buffer.write(data, 0, nRead);
             }
-            byte[] templateBytes=buffer.toByteArray();
+            byte[] templateBytes = buffer.toByteArray();
 
             if (exportCurrentData) {
                 // export into the template
@@ -2565,7 +2625,7 @@ public class SystemManagement implements SystemManagementRemote, SystemManagemen
     }
 
     @Override
-    @RolesAllowed({"adminRole"})
+    @RolesAllowed({"sysAdminRole"})
     public List<ImportLogEntry> importSheets(byte[] odsData, List<String> sheetNames, boolean dryRun, String fullClientVersion) throws Exception {
         ImporterPersistence persister = null;
         if (dryRun) {
@@ -2577,4 +2637,121 @@ public class SystemManagement implements SystemManagementRemote, SystemManagemen
         return importer.importSheets(sheetNames, dryRun);
 
     }
+
+    @Override
+    @RolesAllowed({"loginRole"})
+    public List<DocumentTagRule> getAllDocumentTagRules() {
+        return this.documentTagRuleFacade.findAllSorted();
+    }
+
+    @Override
+    @RolesAllowed(value = {"adminRole"})
+    public DocumentTagRule addDocumentTagRule(DocumentTagRule rule) {
+        StringGenerator idGen = new StringGenerator();
+        String id = idGen.getID().toString();
+        rule.setId(id);
+        this.documentTagRuleFacade.create(rule);
+        return this.documentTagRuleFacade.find(id);
+
+    }
+
+    @Override
+    @RolesAllowed(value = {"adminRole"})
+    public DocumentTagRule updateDocumentTagRule(DocumentTagRule rule) throws Exception {
+        rule.setRuleConditions(new ArrayList<>());
+        this.documentTagRuleFacade.edit(rule);
+        return rule;
+    }
+
+    @Override
+    @RolesAllowed(value = {"adminRole"})
+    public void removeDocumentTagRule(DocumentTagRule rule) throws Exception {
+        this.documentTagRuleFacade.remove(rule);
+    }
+
+    @Override
+    @RolesAllowed(value = {"adminRole"})
+    public void setDocumentTagRuleConditions(String ruleId, List<DocumentTagRuleCondition> conditionList) throws Exception {
+        DocumentTagRule rule = this.documentTagRuleFacade.find(ruleId);
+        List<DocumentTagRuleCondition> conditions = this.documentTagRuleConditionFacade.findByRule(rule);
+        if (conditions != null) {
+            for (DocumentTagRuleCondition c : conditions) {
+                this.documentTagRuleConditionFacade.remove(c);
+            }
+        }
+
+        StringGenerator idGen = new StringGenerator();
+        for (DocumentTagRuleCondition c : conditionList) {
+            if (!c.getComparisonValue().trim().isEmpty()) {
+                c.setId(idGen.getID().toString());
+                c.setRule(rule);
+                this.documentTagRuleConditionFacade.create(c);
+            }
+        }
+    }
+
+    @Override
+    @RolesAllowed(value = {"loginRole"})
+    public TransactionLog addTransactionLog(String hashInput, int expiryDays) throws Exception {
+        StringGenerator idGen = new StringGenerator();
+        String id = idGen.getID().toString();
+
+        MessageDigest digest = MessageDigest.getInstance("SHA-256");
+        byte[] hashBytes = digest.digest(hashInput.getBytes(StandardCharsets.UTF_8));
+
+        StringBuilder checksum = new StringBuilder();
+        for (byte b : hashBytes) {
+            checksum.append(String.format("%02x", b));
+        }
+
+        TransactionLog txLog = new TransactionLog(id);
+        txLog.setChecksum(checksum.toString());
+        txLog.setPrincipal(this.context.getCallerPrincipal().getName());
+        java.util.Date processedDate = new java.util.Date();
+        txLog.setProcessedDate(processedDate);
+
+        Calendar cal = Calendar.getInstance();
+        cal.setTime(processedDate);
+        cal.add(Calendar.DATE, expiryDays);
+
+        txLog.setExpiryDate(cal.getTime());
+        txLogFacade.create(txLog);
+        return txLogFacade.find(id);
+    }
+
+    @Override
+    @RolesAllowed(value = {"loginRole"})
+    public TransactionLog getTransactionLog(String hashInput) throws Exception {
+        MessageDigest digest = MessageDigest.getInstance("SHA-256");
+        byte[] hashBytes = digest.digest(hashInput.getBytes(StandardCharsets.UTF_8));
+
+        StringBuilder checksum = new StringBuilder();
+        for (byte b : hashBytes) {
+            checksum.append(String.format("%02x", b));
+        }
+        return this.txLogFacade.findByChecksum(checksum.toString());
+    }
+
+    @Schedule(dayOfWeek = "1-7", hour = "3", minute = "41", second = "0", persistent = false)
+    // testing: @Schedule(hour = "*", minute = "*/2", persistent = false)
+    //@Schedule(hour = "*", minute = "*/2", persistent = false)
+    @TransactionTimeout(value = 10, unit = TimeUnit.MINUTES)
+    public void cleanupTransactionLogs() {
+
+        log.info("cleaning up old transaction logs");
+
+        List<TransactionLog> logs = this.txLogFacade.findExpired(new java.util.Date());
+        long removed = 0;
+        if (logs != null) {
+            for (TransactionLog l : logs) {
+                this.txLogFacade.remove(l);
+                removed++;
+            }
+        }
+        if (removed > 0) {
+            log.info("removed " + removed + " old transaction logs");
+        }
+
+    }
+
 }

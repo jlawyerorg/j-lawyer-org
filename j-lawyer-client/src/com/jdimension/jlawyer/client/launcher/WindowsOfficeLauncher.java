@@ -664,10 +664,6 @@
 package com.jdimension.jlawyer.client.launcher;
 
 import com.jdimension.jlawyer.client.editors.EditorsRegistry;
-import com.jdimension.jlawyer.persistence.ArchiveFileBean;
-import com.jdimension.jlawyer.persistence.ArchiveFileDocumentsBean;
-import java.awt.Desktop;
-import java.io.File;
 import javax.swing.JOptionPane;
 import javax.swing.SwingUtilities;
 import org.apache.log4j.Logger;
@@ -693,41 +689,68 @@ public class WindowsOfficeLauncher extends OfficeLauncher {
 
         final Launcher thisLauncher = this;
 
-        new Thread(new Runnable() {
-
-            public void run() {
-
+        new Thread(() -> {
+            try {
+                
+                ObservedOfficeDocument odoc = new ObservedOfficeDocument(url, store, thisLauncher);
+                DocumentObserver observer = DocumentObserver.getInstance();
+                log.debug("observer status launching " + odoc.getName());
+                odoc.setStatus(ObservedDocument.STATUS_LAUNCHING);
+                observer.addDocument(odoc);
+                
+                Process p = null;
+                boolean success = false;
                 try {
-
-                    ObservedOfficeDocument odoc = new ObservedOfficeDocument(url, store, thisLauncher);
-                    DocumentObserver observer = DocumentObserver.getInstance();
-                    log.debug("observer status launching " + odoc.getName());
-                    odoc.setStatus(ObservedDocument.STATUS_LAUNCHING);
-                    observer.addDocument(odoc);
-
-                    Process p = null;
-                    boolean libreOffice = false;
+                    // do not use -view switch - in this case there will be no lock file, which makes it more risky
+                    p = Runtime.getRuntime().exec(new String[]{oooBinary, url});
+                    log.debug("using " + oooBinary + " for " + odoc.getName());
+                    success = true;
+                } catch (Throwable ex) {
+                    log.error("error starting soffice: " + ex.getMessage());
+                    success = false;
+                }
+                
+                if (success) {
+                    
+                    log.debug("observer status open " + odoc.getName());
+                    odoc.setStatus(ObservedDocument.STATUS_OPEN);
+                    
+                    log.debug("waitFor");
+                    int exit = p.waitFor();
+                    log.debug("exit code: " + exit);
+                    if (exit == 0) {
+                        success = true;
+                        if (odoc.getOpenDuration() > DocumentObserverTask.getDefaultInterval()) {
+                            log.debug("LO process exited after " + odoc.getOpenDuration() + " - closing document");
+                            log.debug("observer status closed " + odoc.getName());
+                            odoc.setClosed(true);
+                        } else {
+                            log.debug("LO process exited after " + odoc.getOpenDuration() + " - leaving document open!");
+                        }
+                        
+                    } else {
+                        log.error("observer NOT closing due to exit code " + exit);
+                        success = false;
+                    }
+                    
+                }
+                
+                if (!success) {
+                    log.debug(new java.util.Date().toString() + " no soffice found - falling back to libreoffice");
                     try {
+                        int exit = 0;
                         // do not use -view switch - in this case there will be no lock file, which makes it more risky
-                        //p = Runtime.getRuntime().exec(new String[]{loBinary, "-view", url});
                         p = Runtime.getRuntime().exec(new String[]{loBinary, url});
                         log.debug("using " + loBinary + " for " + odoc.getName());
-                        libreOffice = true;
-                    } catch (Throwable ex) {
-                        log.error("error starting libreoffice" + ex.getMessage());
-                        libreOffice = false;
-                    }
-
-                    if (libreOffice) {
-
-                        log.debug("observer status open " + odoc.getName());
                         odoc.setStatus(ObservedDocument.STATUS_OPEN);
-
                         log.debug("waitFor");
-                        int exit = p.waitFor();
+                        exit = p.waitFor();
                         log.debug("exit code: " + exit);
-                        if (exit == 0) {
-                            libreOffice = true;
+                        
+                        if (exit != 0) {
+                            log.error("observer NOT closing due to exit code " + exit);
+                            throw new Exception("LibreOffice nicht installiert (Exitcode: " + exit + ")!");
+                        } else {
                             if (odoc.getOpenDuration() > DocumentObserverTask.getDefaultInterval()) {
                                 log.debug("LO process exited after " + odoc.getOpenDuration() + " - closing document");
                                 log.debug("observer status closed " + odoc.getName());
@@ -735,57 +758,21 @@ public class WindowsOfficeLauncher extends OfficeLauncher {
                             } else {
                                 log.debug("LO process exited after " + odoc.getOpenDuration() + " - leaving document open!");
                             }
-
-                        } else {
-                            log.error("observer NOT closing due to exit code " + exit);
-                            libreOffice = false;
                         }
-
+                    } catch (Throwable ex) {
+                        log.error("error starting libreoffice", ex);
+                        throw new Exception("LibreOffice nicht installiert oder PATH nicht gesetzt: " + ex.getMessage());
                     }
-
-                    if (!libreOffice) {
-                        log.debug(new java.util.Date().toString() + " no LO found - falling back to OOO");
-                        try {
-                            int exit = 0;
-                            // do not use -view switch - in this case there will be no lock file, which makes it more risky
-                            //p = Runtime.getRuntime().exec(new String[]{oooBinary, "-view", url});
-                            p = Runtime.getRuntime().exec(new String[]{oooBinary, url});
-                            log.debug("using " + oooBinary + " for " + odoc.getName());
-                            odoc.setStatus(ObservedDocument.STATUS_OPEN);
-                            log.debug("waitFor");
-                            exit = p.waitFor();
-                            log.debug("exit code: " + exit);
-
-                            if (exit != 0) {
-                                log.error("observer NOT closing due to exit code " + exit);
-                                throw new Exception("LibreOffice nicht installiert (Exitcode: " + exit + ")!");
-                            } else {
-                                if (odoc.getOpenDuration() > DocumentObserverTask.getDefaultInterval()) {
-                                    log.debug("LO process exited after " + odoc.getOpenDuration() + " - closing document");
-                                    log.debug("observer status closed " + odoc.getName());
-                                    odoc.setClosed(true);
-                                } else {
-                                    log.debug("LO process exited after " + odoc.getOpenDuration() + " - leaving document open!");
-                                }
-                            }
-                        } catch (Throwable ex) {
-                            log.error("error starting soffice", ex);
-                            throw new Exception("LibreOffice nicht installiert oder PATH nicht gesetzt: " + ex.getMessage());
-                        }
-
-                    }
+                    
+                }
 //                    log.debug(new java.util.Date().toString() + " starting lock file observation");
 //                    startObservation();
 //                    log.debug(new java.util.Date().toString() + " stopped lock file observation");
 
-                } catch (final Throwable t) {
-                    SwingUtilities.invokeLater(new Runnable() {
-
-                        public void run() {
-                            JOptionPane.showMessageDialog(EditorsRegistry.getInstance().getMainWindow(), "Fehler beim Öffnen des Dokuments: " + t.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
-                        }
-                    });
-                }
+            } catch (final Throwable t) {
+                SwingUtilities.invokeLater(() -> {
+                    JOptionPane.showMessageDialog(EditorsRegistry.getInstance().getMainWindow(), "Fehler beim Öffnen des Dokuments: " + t.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
+                });
             }
         }).start();
     }

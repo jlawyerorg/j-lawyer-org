@@ -663,9 +663,13 @@ For more information on this, and how to apply and follow the GNU AGPL, see
  */
 package com.jdimension.jlawyer.client.utils;
 
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
 import java.time.LocalDate;
 import java.time.ZoneId;
+import java.util.Calendar;
 import java.util.Date;
+import java.util.Locale;
 
 /**
  *
@@ -675,6 +679,33 @@ public class DateUtils {
 
     public static final String DATEFORMAT_DATETIME_FULL = "EEE, dd.MM.yyyy HH:mm:ss";
     public static final String DATEFORMAT_DATETIME_DEFAULT = "dd.MM.yyyy, HH:mm";
+    
+    private static final String[] DATE_FORMATS = {
+        "dd.MM.yyyy", "dd.MM.yyyy HH:mm", "dd.MM.yyyy HH:mm:ss",
+        "yyyy-MM-dd", "yyyy-MM-dd HH:mm", "yyyy-MM-dd HH:mm:ss",
+        "MM/dd/yyyy", "MM/dd/yyyy HH:mm", "MM/dd/yyyy HH:mm:ss",
+        "dd MMM yyyy", "dd MMM yyyy HH:mm", "dd MMM yyyy HH:mm:ss"
+    };
+    
+    public static Date parseDate(String dateString) {
+        for (String format : DATE_FORMATS) {
+            for (Locale locale : new Locale[]{Locale.GERMANY, Locale.ENGLISH}) {
+                try {
+                    SimpleDateFormat sdf = new SimpleDateFormat(format, locale);
+                    sdf.setLenient(false);
+                    
+                    // Set pivot year to 80 years before now (adjust as needed)
+                    Calendar pivot = Calendar.getInstance();
+                    pivot.set(Calendar.YEAR, 1950); // two-digit years 00-49 => 2000-2049, 50-99 => 1950-1999
+                    sdf.set2DigitYearStart(pivot.getTime());
+                    
+                    return sdf.parse(dateString);
+                } catch (ParseException ignored) {
+                }
+            }
+        }
+        return null; // Return null if parsing fails
+    }
 
     public static boolean containsToday(Date begin, Date end) {
 
@@ -693,7 +724,7 @@ public class DateUtils {
         Date now = new Date();
         return (begin.getTime() <= now.getTime() && end.getTime() >= now.getTime());
     }
-
+    
     public static boolean isToday(Date date) {
 
         if (date == null) {

@@ -725,7 +725,7 @@ public class AddressService implements AddressServiceRemote, AddressServiceLocal
     @Inject
     Event<AddressTagChangedEvent> tagChangedEvent;
 
-    private static final String PS_SEARCHENHANCED_2 = "select id from contacts where ucase(name) like ? or ucase(firstname) like ? or ucase(company) like ? or ucase(department) like ? or ucase(custom1) like ? or ucase(custom2) like ? or ucase(custom3) like ? or ucase(email) like ? or ucase(beaSafeId) like ? or ucase(phone) like ? or ucase(mobile) like ? or ucase(district) like ? or ucase(birthName) like ? or zipCode like ?";
+    private static final String PS_SEARCHENHANCED_2 = "select id from contacts where ucase(name) like ? or ucase(firstname) like ? or ucase(company) like ? or ucase(department) like ? or ucase(custom1) like ? or ucase(custom2) like ? or ucase(custom3) like ? or ucase(email) like ? or ucase(beaSafeId) like ? or ucase(phone) like ? or ucase(mobile) like ? or ucase(city) like ? or ucase(birthName) like ? or zipCode like ?";
 
     @Override
     @RolesAllowed({"readAddressRole"})
@@ -801,7 +801,7 @@ public class AddressService implements AddressServiceRemote, AddressServiceLocal
 
         List l = this.archiveFileAddressesFacade.findByAddressKey(dto);
         if (l != null) {
-            if (l.size() > 0) {
+            if (!l.isEmpty()) {
                 throw new EJBException("Kontakt ist als Beteiligter in min. einer Akte vorhanden und kann nicht gelöscht werden.");
             }
         }
@@ -951,6 +951,26 @@ public class AddressService implements AddressServiceRemote, AddressServiceLocal
     public AddressBean getAddressByExternalId5(String extId) {
         return this.addressFacade.findByExternalId5(extId);
     }
+    
+    @Override
+    @RolesAllowed({"readAddressRole"})
+    public HashMap<String,String> getAddressesWithIban() {
+        JDBCUtils utils = new JDBCUtils();
+        HashMap<String,String> list = new HashMap<>();
+        try ( Connection con = utils.getConnection();  PreparedStatement st = con.prepareStatement("select id, bankAccount from contacts where length(bankAccount)>0");  ResultSet rs = st.executeQuery()) {
+
+            while (rs.next()) {
+                String id = rs.getString(1);
+                String iban=rs.getString(2);
+                list.put(id, ServerStringUtils.normalizeIban(iban));
+            }
+        } catch (SQLException sqle) {
+            log.error("Error finding contacts with IBAN", sqle);
+            throw new EJBException("Fehler bei der IBAN-Suche.", sqle);
+        }
+
+        return list;
+    }
 
     @Override
     @RolesAllowed({"writeAddressRole"})
@@ -965,11 +985,13 @@ public class AddressService implements AddressServiceRemote, AddressServiceLocal
                 String tagId = idGen.getID().toString();
                 tag.setId(tagId);
                 tag.setAddressKey(ab);
+                if(tag.getDateSet()==null)
+                    tag.setDateSet(new Date());
                 this.addressTagsFacade.create(tag);
 
             }
         } else {
-            if (check.size() > 0) {
+            if (!check.isEmpty()) {
                 AddressTagsBean remove = (AddressTagsBean) check.get(0);
                 this.addressTagsFacade.remove(remove);
 
@@ -1014,7 +1036,37 @@ public class AddressService implements AddressServiceRemote, AddressServiceLocal
 
     @Override
     @RolesAllowed({"readAddressRole"})
-    public AddressBean[] searchEnhanced(String query, String[] tagName) {
+    public AddressBean[] searchEnhanced(String multiTermQuery, String[] tagName) {
+        
+        if (multiTermQuery == null) {
+            multiTermQuery = "";
+        }
+        multiTermQuery=multiTermQuery.trim();
+        multiTermQuery=multiTermQuery.replace(",", " ");
+        String[] terms=multiTermQuery.split("\\s+");
+        
+        ArrayList<String> idList = new ArrayList<>();
+        boolean firstTerm=true;
+        for(String term: terms) {
+            ArrayList<String> termIdList=this.searchEnhancedSingleTerm(term, tagName);
+            if(firstTerm) {
+                // first term defines the initial list
+                firstTerm=false;
+                idList.addAll(termIdList);
+            } else {
+                // logical AND - remove all from the initial list that are not contained in the current terms result list
+                idList.retainAll(termIdList);
+            }
+        }
+        
+        ArrayList<AddressBean> list = new ArrayList<>();
+        for(String id: idList) {
+            list.add(this.addressFacade.find(id));
+        }
+        return (AddressBean[]) list.toArray(new AddressBean[list.size()]);
+    }
+    
+    private ArrayList<String> searchEnhancedSingleTerm(String query, String[] tagName) {
 
         if (query == null) {
             query = "";
@@ -1036,7 +1088,6 @@ public class AddressService implements AddressServiceRemote, AddressServiceLocal
 
         }
 
-        ArrayList<AddressBean> list = new ArrayList<>();
         ArrayList<String> idList = new ArrayList<>();
         try ( Connection con = utils.getConnection()) {
 
@@ -1048,7 +1099,7 @@ public class AddressService implements AddressServiceRemote, AddressServiceLocal
                 }
                 inClause = inClause.replaceFirst(",", "");
 
-                st = con.prepareStatement("select contacts.id from contacts, contact_tags where (ucase(name) like ? or ucase(firstname) like ? or ucase(department) like ? or ucase(company) like ? or ucase(custom1) like ? or ucase(custom2) like ? or ucase(custom3) like ? or ucase(email) like ? or ucase(beaSafeId) like ? or ucase(phone) like ? or ucase(mobile) like ? or ucase(district) like ? or ucase(birthName) like ? or zipCode like ?) and (contact_tags.tagName in (" + inClause + ") and contact_tags.addressKey=contacts.id)");
+                st = con.prepareStatement("select contacts.id from contacts, contact_tags where (ucase(name) like ? or ucase(firstname) like ? or ucase(department) like ? or ucase(company) like ? or ucase(custom1) like ? or ucase(custom2) like ? or ucase(custom3) like ? or ucase(email) like ? or ucase(beaSafeId) like ? or ucase(phone) like ? or ucase(mobile) like ? or ucase(city) like ? or ucase(birthName) like ? or zipCode like ?) and (contact_tags.tagName in (" + inClause + ") and contact_tags.addressKey=contacts.id)");
                 String wildCard = "%" + StringUtils.germanToUpperCase(query) + "%";
                 st.setString(1, wildCard);
                 st.setString(2, wildCard);
@@ -1093,8 +1144,6 @@ public class AddressService implements AddressServiceRemote, AddressServiceLocal
             while (rs.next()) {
                 String id = rs.getString(1);
                 if (!idList.contains(id)) {
-                    AddressBean address = this.addressFacade.find(id);
-                    list.add(address);
                     idList.add(id);
                 }
             }
@@ -1118,12 +1167,37 @@ public class AddressService implements AddressServiceRemote, AddressServiceLocal
             }
         }
 
-        return (AddressBean[]) list.toArray(new AddressBean[list.size()]);
+        return idList;
     }
 
     @Override
     @RolesAllowed({"readAddressRole"})
-    public Map<String, ArrayList<String>> searchTagsEnhanced(String query, String[] tagName) {
+    public Map<String, ArrayList<String>> searchTagsEnhanced(String multiTermQuery, String[] tagName) {
+        
+        if (multiTermQuery == null) {
+            multiTermQuery = "";
+        }
+        multiTermQuery=multiTermQuery.trim();
+        multiTermQuery=multiTermQuery.replace(",", " ");
+        String[] terms=multiTermQuery.split("\\s+");
+        
+        Map<String, ArrayList<String>> resultMap = new HashMap<>();
+        boolean firstTerm = true;
+        for (String term : terms) {
+            Map<String, ArrayList<String>> termMap = this.searchTagsEnhancedSingleTerm(term, tagName); // Map<String, ArrayList<String>>
+            if (firstTerm) {
+                firstTerm = false;
+                resultMap.putAll(termMap);
+            } else {
+                // Retain only keys that exist in the current termMap
+                resultMap.keySet().retainAll(termMap.keySet());
+            }
+        }
+        return resultMap;
+        
+    }
+    
+    private Map<String, ArrayList<String>> searchTagsEnhancedSingleTerm(String query, String[] tagName) {
 
         if (query == null) {
             query = "";
@@ -1156,7 +1230,7 @@ public class AddressService implements AddressServiceRemote, AddressServiceLocal
                 }
                 inClause = inClause.replaceFirst(",", "");
 
-                st = con.prepareStatement("select addressKey, tagName from contact_tags where addressKey in (" + "select contacts.id from contacts, contact_tags where (ucase(name) like ? or ucase(firstname) like ? or ucase(company) like ? or ucase(department) like ? or ucase(custom1) like ? or ucase(custom2) like ? or ucase(custom3) like ? or ucase(email) like ? or ucase(beaSafeId) like ? or ucase(phone) like ? or ucase(mobile) like ? or ucase(district) like ? or ucase(birthName) like ?) and (contact_tags.tagName in (" + inClause + ") and contact_tags.addressKey=contacts.id)" + ")");
+                st = con.prepareStatement("select addressKey, tagName from contact_tags where addressKey in (" + "select contacts.id from contacts, contact_tags where (ucase(name) like ? or ucase(firstname) like ? or ucase(company) like ? or ucase(department) like ? or ucase(custom1) like ? or ucase(custom2) like ? or ucase(custom3) like ? or ucase(email) like ? or ucase(beaSafeId) like ? or ucase(phone) like ? or ucase(mobile) like ? or ucase(city) like ? or ucase(birthName) like ?) and (contact_tags.tagName in (" + inClause + ") and contact_tags.addressKey=contacts.id)" + ")");
                 String wildCard = "%" + StringUtils.germanToUpperCase(query) + "%";
                 st.setString(1, wildCard);
                 st.setString(2, wildCard);
@@ -1297,21 +1371,27 @@ public class AddressService implements AddressServiceRemote, AddressServiceLocal
     @Override
     @RolesAllowed({"readAddressRole"})
     public List<AddressBean> similaritySearch(AddressBean candidate, float minimumSimilarityPercentage) throws Exception {
-        
+
         ArrayList<AddressBean> resultList=new ArrayList<>();
         if(ServerStringUtils.isEmpty(candidate.getZipCode())) {
             log.info("similarity search requires at least a zip code - skipping!");
             return resultList;
         }
-        
+
+        Map<AddressBean, Double> similarityMap = new HashMap<>();
+
         AddressBean[] comparisonList=this.searchSimple(candidate.getZipCode());
         if(comparisonList!=null) {
             for(AddressBean c: comparisonList) {
                 double sim=calculateSimilarity(c, candidate);
                 if(sim>=minimumSimilarityPercentage)
-                    resultList.add(c);
+                    similarityMap.put(c, sim);
             }
         }
+
+        resultList.addAll(similarityMap.keySet());
+        resultList.sort((a1, a2) -> Double.compare(similarityMap.get(a2), similarityMap.get(a1)));
+
         return resultList;
     }
     

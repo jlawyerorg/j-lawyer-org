@@ -761,7 +761,7 @@ public class FormPluginCallback {
         
     }
 
-    private static class HtmlSelection implements Transferable {
+    public static class HtmlSelection implements Transferable {
 
         private static ArrayList htmlFlavors = new ArrayList();
 

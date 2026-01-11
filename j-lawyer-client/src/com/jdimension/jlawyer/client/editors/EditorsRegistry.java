@@ -663,18 +663,22 @@
  */
 package com.jdimension.jlawyer.client.editors;
 
+import com.jdimension.jlawyer.client.JKanzleiGUI;
 import com.jdimension.jlawyer.client.utils.ThreadUtils;
 import java.awt.Component;
 import java.util.HashMap;
 import java.util.Timer;
 import java.util.TimerTask;
 import javax.swing.*;
+import org.apache.log4j.Logger;
 
 /**
  *
  * @author jens
  */
 public class EditorsRegistry {
+    
+    private static final Logger log = Logger.getLogger(EditorsRegistry.class.getName());
 
     private static EditorsRegistry instance = null;
     private static final String STATUS_READY = java.util.ResourceBundle.getBundle("com/jdimension/jlawyer/client/editors/EditorsRegistry").getString("status.ready");
@@ -692,6 +696,14 @@ public class EditorsRegistry {
         this.editors = new HashMap();
         this.statusLabel = null;
         this.timer = new Timer();
+        Runtime.getRuntime().addShutdownHook(new Thread(() -> {
+            try {
+                log.info("shutting down EditorsRegistry timer");
+                timer.cancel();
+            } catch (Throwable t) {
+                log.error("Error shutting down timer", t);
+            }
+        }));
         this.setMainWindow(null);
     }
 
@@ -856,5 +868,17 @@ public class EditorsRegistry {
 
     public void setMainWindow(JFrame mainWindow) {
         this.mainWindow = mainWindow;
+    }
+    
+    public void registerFrame(JFrame frame) {
+        if(this.mainWindow instanceof JKanzleiGUI) {
+            ((JKanzleiGUI)this.mainWindow).registerFrame(frame);
+        }
+    }
+
+    public void unregisterFrame(JFrame frame) {
+        if(this.mainWindow instanceof JKanzleiGUI) {
+            ((JKanzleiGUI)this.mainWindow).unregisterFrame(frame);
+        }
     }
 }

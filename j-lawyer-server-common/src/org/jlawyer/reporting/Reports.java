@@ -673,11 +673,15 @@ public class Reports {
     
     public static final String RPT_INV_ALL="invoices.all";
     public static final String RPT_INV_OPEN="invoices.open";
+    public static final String RPT_INV_DRAFTS="invoices.drafts";
     public static final String RPT_INV_OVERDUE="invoices.overdue";
+    
+    public static final String RPT_PAY_ALL="payments.all";
     
     public static final String RPT_TSHEETS_OPEN_OVERVIEW="timesheets.open.overview";
     public static final String RPT_TSHEETS_OPEN_POSITIONS="timesheets.open.positions";
     public static final String RPT_TSHEETS_VALUES="timesheets.values";
+    public static final String RPT_TSHEETS_VALUES_USER="timesheets.values.user";
     
     public static final String RPT_EMPLOYEE_ACTIVITY="employee.activity";
     
@@ -685,11 +689,14 @@ public class Reports {
     public static final String RPT_CASES_BYMONTH="cases.bymonth";
     
     public static final String RPT_CASES_BYSIZE="cases.bysize";
-    
+    public static final String RPT_CASES_UNSECURED="cases.unsecured";
+    public static final String RPT_CASES_WITHOUT_INVOICE="cases.withoutinvoice";
+
     public static final String RPT_REVENUE_BYCUSTOMER="revenue.bycustomer";
     
     public static final String RPT_ACCOUNTS_ESCROW="accounts.escrow";
     public static final String RPT_ACCOUNTS_EARNINGS="accounts.earnings";
     public static final String RPT_ACCOUNTS_BOOKINGS="accounts.bookings";
+    
     
 }

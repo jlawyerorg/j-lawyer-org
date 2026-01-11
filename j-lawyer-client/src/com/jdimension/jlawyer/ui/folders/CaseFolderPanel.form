@@ -169,6 +169,8 @@
                   <Component id="sortFolder" min="-2" max="-2" attributes="0"/>
                   <EmptySpace min="-2" pref="2" max="-2" attributes="0"/>
                   <Component id="sortFileType" min="-2" max="-2" attributes="0"/>
+                  <EmptySpace max="-2" attributes="0"/>
+                  <Component id="lblDocumentCount" min="-2" max="-2" attributes="0"/>
                   <EmptySpace max="32767" attributes="0"/>
                   <Component id="cmdExportSelectedAsPdf" min="-2" max="-2" attributes="0"/>
                   <EmptySpace max="-2" attributes="0"/>
@@ -177,7 +179,7 @@
         </DimensionLayout>
         <DimensionLayout dim="1">
           <Group type="103" groupAlignment="0" attributes="0">
-              <Group type="102" alignment="0" attributes="0">
+              <Group type="102" attributes="0">
                   <Group type="103" groupAlignment="1" max="-2" attributes="0">
                       <Component id="cmdSelectAll1" alignment="0" max="32767" attributes="0"/>
                       <Component id="cmdActions" alignment="0" max="32767" attributes="0"/>
@@ -195,6 +197,7 @@
                       <Component id="sortFileType" alignment="0" max="32767" attributes="0"/>
                       <Component id="sortCreationDate" alignment="0" max="32767" attributes="0"/>
                       <Component id="cmdExportSelectedAsPdf" alignment="0" min="-2" max="-2" attributes="0"/>
+                      <Component id="lblDocumentCount" max="32767" attributes="0"/>
                   </Group>
                   <EmptySpace max="32767" attributes="0"/>
               </Group>
@@ -338,6 +341,16 @@
           <Events>
             <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="cmdExportSelectedAsPdfActionPerformed"/>
           </Events>
+        </Component>
+        <Component class="javax.swing.JLabel" name="lblDocumentCount">
+          <Properties>
+            <Property name="font" type="java.awt.Font" editor="org.netbeans.modules.form.editors2.FontEditor">
+              <FontInfo relative="true">
+                <Font component="lblDocumentCount" property="font" relativeSize="true" size="0"/>
+              </FontInfo>
+            </Property>
+            <Property name="text" type="java.lang.String" value="0"/>
+          </Properties>
         </Component>
       </SubComponents>
     </Container>

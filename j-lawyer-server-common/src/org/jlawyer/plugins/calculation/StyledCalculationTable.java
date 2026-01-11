@@ -760,8 +760,11 @@ public class StyledCalculationTable extends GenericCalculationTable implements S
     }
     
     public void setColumnAlignment(int columnIndex, int alignment) {
-        for(int i=0;i<this.data.size();i++) {
-            if(this.data.get(i).size()>=columnIndex) {
+        if (columnIndex < 0) {
+            return;
+        }
+        for (int i = 0; i < this.data.size(); i++) {
+            if (this.data.get(i).size() > columnIndex) {
                 this.data.get(i).get(columnIndex).setAlignment(alignment);
             }
         }

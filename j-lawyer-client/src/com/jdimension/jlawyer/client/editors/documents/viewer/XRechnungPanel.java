@@ -675,7 +675,6 @@ import javax.swing.text.StyleContext;
 import javax.swing.text.StyledDocument;
 import org.apache.log4j.Logger;
 import org.mustangproject.ZUGFeRD.ZUGFeRDImporter;
-import org.mustangproject.ZUGFeRD.ZUGFeRDInvoiceImporter;
 import themes.colors.DefaultColorTheme;
 
 /**
@@ -764,7 +763,7 @@ public class XRechnungPanel extends javax.swing.JPanel implements PreviewPanel {
                 ByteArrayInputStream xmlInput = new ByteArrayInputStream(content);
 
                 // Create an instance of ZUGFeRDImporter
-                ZUGFeRDInvoiceImporter zii = new ZUGFeRDInvoiceImporter(new ByteArrayInputStream(content));
+                ZUGFeRDImporter zii = new ZUGFeRDImporter(new ByteArrayInputStream(content));
 
                 if (zii.canParse()) {
                     String invoiceHtml = EInvoiceUtils.invoiceToHTML(zii);
@@ -840,6 +839,11 @@ public class XRechnungPanel extends javax.swing.JPanel implements PreviewPanel {
     @Override
     public String getDocumentId() {
         return this.documentId;
+    }
+
+    @Override
+    public void dispose() {
+        
     }
 
 }

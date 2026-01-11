@@ -680,7 +680,7 @@ import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import org.jboss.logging.Logger;
 import org.jlawyer.io.rest.v4.pojo.RestfulCalendarV4;
-import org.jlawyer.io.rest.v4.pojo.RestfulDueDateV4;
+import org.jlawyer.io.rest.v6.pojo.RestfulDueDateV6;
 
 /**
  *
@@ -707,7 +707,7 @@ public class CalendarEndpointV4 implements CalendarEndpointLocalV4 {
     @GET
     @Produces(MediaType.APPLICATION_JSON+";charset=utf-8")
     @Path("/list")
-    @RolesAllowed({"adminRole"})
+    @RolesAllowed({"loginRole"})
     public Response getAllCalendars() {
         try {
 
@@ -725,11 +725,11 @@ public class CalendarEndpointV4 implements CalendarEndpointLocalV4 {
                 dd.setCloudPort(cs.getCloudPort());
                 dd.setCloudSsl(cs.isCloudSsl());
                 dd.setDisplayName(cs.getDisplayName());
-                dd.setEventType(RestfulDueDateV4.TYPE_RESPITE);
+                dd.setEventType(RestfulDueDateV6.TYPE_RESPITE);
                 if (cs.getEventType() == ArchiveFileReviewsBean.EVENTTYPE_FOLLOWUP) {
-                    dd.setEventType(RestfulDueDateV4.TYPE_FOLLOWUP);
+                    dd.setEventType(RestfulDueDateV6.TYPE_FOLLOWUP);
                 } else if (cs.getEventType() == ArchiveFileReviewsBean.EVENTTYPE_EVENT) {
-                    dd.setEventType(RestfulDueDateV4.TYPE_EVENT);
+                    dd.setEventType(RestfulDueDateV6.TYPE_EVENT);
                 }
                 dd.setHref(cs.getHref());
                 
@@ -772,11 +772,11 @@ public class CalendarEndpointV4 implements CalendarEndpointLocalV4 {
                 dd.setCloudPort(cs.getCloudPort());
                 dd.setCloudSsl(cs.isCloudSsl());
                 dd.setDisplayName(cs.getDisplayName());
-                dd.setEventType(RestfulDueDateV4.TYPE_RESPITE);
+                dd.setEventType(RestfulDueDateV6.TYPE_RESPITE);
                 if (cs.getEventType() == ArchiveFileReviewsBean.EVENTTYPE_FOLLOWUP) {
-                    dd.setEventType(RestfulDueDateV4.TYPE_FOLLOWUP);
+                    dd.setEventType(RestfulDueDateV6.TYPE_FOLLOWUP);
                 } else if (cs.getEventType() == ArchiveFileReviewsBean.EVENTTYPE_EVENT) {
-                    dd.setEventType(RestfulDueDateV4.TYPE_EVENT);
+                    dd.setEventType(RestfulDueDateV6.TYPE_EVENT);
                 }
                 dd.setHref(cs.getHref());
                 

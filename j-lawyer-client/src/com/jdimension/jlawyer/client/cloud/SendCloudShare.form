@@ -83,7 +83,6 @@
     </Container>
     <Component class="javax.swing.JTextField" name="txtFilter">
       <Events>
-        <EventHandler event="keyTyped" listener="java.awt.event.KeyListener" parameters="java.awt.event.KeyEvent" handler="txtFilterKeyTyped"/>
         <EventHandler event="keyReleased" listener="java.awt.event.KeyListener" parameters="java.awt.event.KeyEvent" handler="txtFilterKeyReleased"/>
       </Events>
     </Component>

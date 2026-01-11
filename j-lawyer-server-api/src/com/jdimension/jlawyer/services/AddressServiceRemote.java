@@ -667,6 +667,7 @@ import com.jdimension.jlawyer.persistence.AddressBean;
 import com.jdimension.jlawyer.persistence.AddressTagsBean;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import javax.ejb.Remote;
@@ -711,5 +712,7 @@ public interface AddressServiceRemote {
     void setDefaultRole(String addressId, String defaultRole) throws Exception;
 
     List<AddressBean> similaritySearch(AddressBean candidate, float minimumSimilarityPercentage) throws Exception;
+    
+    HashMap<String,String> getAddressesWithIban();
     
 }

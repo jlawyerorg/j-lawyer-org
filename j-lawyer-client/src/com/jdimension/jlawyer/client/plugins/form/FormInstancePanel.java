@@ -663,17 +663,35 @@ For more information on this, and how to apply and follow the GNU AGPL, see
  */
 package com.jdimension.jlawyer.client.plugins.form;
 
+import com.jdimension.jlawyer.ai.AiCapability;
+import com.jdimension.jlawyer.ai.AiRequestStatus;
+import com.jdimension.jlawyer.ai.InputData;
+import com.jdimension.jlawyer.ai.Message;
+import com.jdimension.jlawyer.ai.ParameterData;
+import com.jdimension.jlawyer.client.assistant.AssistantAccess;
+import com.jdimension.jlawyer.client.assistant.AssistantExtractDialog;
+import com.jdimension.jlawyer.client.assistant.AssistantFlowAdapter;
 import com.jdimension.jlawyer.client.editors.EditorsRegistry;
+import com.jdimension.jlawyer.client.events.DocumentAddedEvent;
+import com.jdimension.jlawyer.client.events.EventBroker;
 import com.jdimension.jlawyer.client.settings.ClientSettings;
 import com.jdimension.jlawyer.client.utils.FrameUtils;
+import com.jdimension.jlawyer.client.utils.SelectAttachmentDialog;
 import com.jdimension.jlawyer.client.utils.StringUtils;
+import com.jdimension.jlawyer.documents.DocumentPreview;
+import com.jdimension.jlawyer.persistence.ArchiveFileDocumentsBean;
 import com.jdimension.jlawyer.persistence.ArchiveFileFormEntriesBean;
 import com.jdimension.jlawyer.persistence.ArchiveFileFormsBean;
+import com.jdimension.jlawyer.persistence.AssistantConfig;
+import com.jdimension.jlawyer.services.ArchiveFileServiceRemote;
 import com.jdimension.jlawyer.services.JLawyerServiceLocator;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.Date;
 import java.util.Hashtable;
 import java.util.List;
+import java.util.Map;
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.JTabbedPane;
@@ -683,19 +701,24 @@ import org.jboss.logging.Logger;
  *
  * @author jens
  */
-public class FormInstancePanel extends javax.swing.JPanel {
+public class FormInstancePanel extends javax.swing.JPanel implements AssistantFlowAdapter {
 
     private static final Logger log = Logger.getLogger(FormInstancePanel.class.getName());
 
     private ArchiveFileFormsBean form = null;
     private JTabbedPane container = null;
     private FormPlugin plugin = null;
-    
+
     // used to compare before and after to determine whether saving is needed
-    private String valuesCheckSum=null;
+    private String valuesCheckSum = null;
+
+    private AiCapability extractCapability = null;
+    private AssistantConfig extractConfig = null;
+    private List<InputData> aiInputs=null;
 
     /**
      * Creates new form FormInstancePanel
+     *
      * @param container
      * @param plugin
      */
@@ -703,14 +726,35 @@ public class FormInstancePanel extends javax.swing.JPanel {
         initComponents();
         this.container = container;
         this.plugin = plugin;
+
     }
 
     public void initialize() throws Exception {
+
+        AssistantAccess ingo = AssistantAccess.getInstance();
+        try {
+            Map<AssistantConfig, List<AiCapability>> capabilities = ingo.filterCapabilities(AiCapability.REQUESTTYPE_EXTRACT, AiCapability.INPUTTYPE_STRING, AiCapability.USAGETYPE_AUTOMATED);
+
+            if (!capabilities.isEmpty()) {
+                // use first capability that can use custom prompts
+                for (AiCapability c : capabilities.get(capabilities.keySet().iterator().next())) {
+                    if (c.isCustomPrompts()) {
+                        this.extractCapability = capabilities.get(capabilities.keySet().iterator().next()).get(0);
+                        this.extractConfig = capabilities.keySet().iterator().next();
+                    }
+                }
+            }
+        } catch (Exception ex) {
+            log.error(ex);
+            JOptionPane.showMessageDialog(this, "" + ex.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
+        }
+
         JPanel ui = new JPanel();
         try {
             ui = plugin.getUi();
             this.scrollPlugin.setViewportView(ui);
             this.scrollPlugin.getVerticalScrollBar().setUnitIncrement(16);
+            this.cmdFormAi.setEnabled(this.plugin.isAiEnabled() && this.extractCapability != null);
         } catch (Exception ex) {
             log.error("Can not initialize plugin " + plugin.getId(), ex);
             this.scrollPlugin.setViewportView(ui);
@@ -721,7 +765,7 @@ public class FormInstancePanel extends javax.swing.JPanel {
             JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(ClientSettings.getInstance().getLookupProperties());
             List<ArchiveFileFormEntriesBean> entries = locator.lookupFormsServiceRemote().getFormEntries(this.form.getId());
             Hashtable placeHolderValues = new Hashtable();
-            ArrayList<String> allPlaceHolderKeys=new ArrayList<>();
+            ArrayList<String> allPlaceHolderKeys = new ArrayList<>();
             for (ArchiveFileFormEntriesBean entry : entries) {
                 if (entry.getPlaceHolder() == null || "".equals(entry.getPlaceHolder())) {
                     log.warn("Form with id " + this.form.getId() + " has an entry with a null placeholder, which is invalid!");
@@ -731,17 +775,17 @@ public class FormInstancePanel extends javax.swing.JPanel {
                 }
 
             }
-            
+
             // create a sorted list of all keys before calculating a checksum
             Collections.sort(allPlaceHolderKeys);
-            
+
             // checksum only includes values
-            StringBuilder checkSumValues=new StringBuilder();
-            for(String k: allPlaceHolderKeys) {
+            StringBuilder checkSumValues = new StringBuilder();
+            for (String k : allPlaceHolderKeys) {
                 checkSumValues.append(placeHolderValues.get(k));
             }
-            this.valuesCheckSum=StringUtils.md5(checkSumValues.toString());            
-            
+            this.valuesCheckSum = StringUtils.md5(checkSumValues.toString());
+
             this.plugin.setPlaceHolderValues(placeHolderValues);
 
         } catch (Throwable t) {
@@ -769,6 +813,8 @@ public class FormInstancePanel extends javax.swing.JPanel {
         scrollPlugin = new javax.swing.JScrollPane();
         jScrollPane1 = new javax.swing.JScrollPane();
         taDescription = new javax.swing.JTextArea();
+        cmdSaveAsDocument = new javax.swing.JButton();
+        cmdFormAi = new javax.swing.JButton();
 
         cmdRemoveForm.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/editdelete.png"))); // NOI18N
         cmdRemoveForm.setToolTipText("Falldatenblatt löschen");
@@ -798,6 +844,21 @@ public class FormInstancePanel extends javax.swing.JPanel {
         taDescription.setBorder(null);
         jScrollPane1.setViewportView(taDescription);
 
+        cmdSaveAsDocument.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/edit.png"))); // NOI18N
+        cmdSaveAsDocument.setToolTipText("Falldaten als Dokument zur Akte speichern");
+        cmdSaveAsDocument.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                cmdSaveAsDocumentActionPerformed(evt);
+            }
+        });
+
+        cmdFormAi.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons16/material/j-lawyer-ai.png"))); // NOI18N
+        cmdFormAi.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                cmdFormAiActionPerformed(evt);
+            }
+        });
+
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(this);
         this.setLayout(layout);
         layout.setHorizontalGroup(
@@ -808,20 +869,28 @@ public class FormInstancePanel extends javax.swing.JPanel {
                     .addComponent(scrollPlugin)
                     .addGroup(layout.createSequentialGroup()
                         .addComponent(cmdRemoveForm)
+                        .addGap(18, 18, 18)
+                        .addComponent(cmdSaveAsDocument)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addComponent(cmdShowPlaceHolders)
+                        .addComponent(cmdFormAi)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addComponent(jScrollPane1, javax.swing.GroupLayout.DEFAULT_SIZE, 612, Short.MAX_VALUE)))
+                        .addComponent(jScrollPane1, javax.swing.GroupLayout.DEFAULT_SIZE, 532, Short.MAX_VALUE)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addComponent(cmdShowPlaceHolders)))
                 .addContainerGap())
         );
         layout.setVerticalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(layout.createSequentialGroup()
                 .addContainerGap()
-                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
-                    .addComponent(cmdRemoveForm, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                    .addComponent(cmdShowPlaceHolders, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                    .addComponent(jScrollPane1, javax.swing.GroupLayout.PREFERRED_SIZE, 0, Short.MAX_VALUE))
+                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
+                    .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
+                            .addComponent(cmdRemoveForm, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                            .addComponent(cmdShowPlaceHolders, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                            .addComponent(jScrollPane1, javax.swing.GroupLayout.PREFERRED_SIZE, 0, Short.MAX_VALUE))
+                        .addComponent(cmdSaveAsDocument))
+                    .addComponent(cmdFormAi))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(scrollPlugin, javax.swing.GroupLayout.DEFAULT_SIZE, 372, Short.MAX_VALUE)
                 .addContainerGap())
@@ -856,6 +925,104 @@ public class FormInstancePanel extends javax.swing.JPanel {
 
     }//GEN-LAST:event_cmdShowPlaceHoldersActionPerformed
 
+    private void cmdSaveAsDocumentActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdSaveAsDocumentActionPerformed
+        String html = this.plugin.getAsHtml();
+
+        String formType = this.getForm().getFormType().getName();
+
+        SimpleDateFormat df = new SimpleDateFormat("yyyy-MM-dd");
+        String fileName = df.format(new Date()) + "_Falldaten_" + formType;
+        fileName = fileName + ".html";
+
+        try {
+            ClientSettings settings = ClientSettings.getInstance();
+            JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
+            ArchiveFileServiceRemote remote = locator.lookupArchiveFileServiceRemote();
+
+            if (!remote.doesDocumentExist(this.plugin.getCaseDto().getId(), fileName)) {
+                ArchiveFileDocumentsBean newDoc = remote.addDocument(this.plugin.getCaseDto().getId(), fileName, html.getBytes(), "", null);
+                EventBroker eb = EventBroker.getInstance();
+                eb.publishEvent(new DocumentAddedEvent(newDoc));
+
+            } else {
+                for (int i = 2; i < 50; i++) {
+                    String indexedFileName = "(" + i + ") " + fileName;
+                    if (!remote.doesDocumentExist(this.plugin.getCaseDto().getId(), indexedFileName)) {
+                        ArchiveFileDocumentsBean newDoc = remote.addDocument(this.plugin.getCaseDto().getId(), indexedFileName, html.getBytes(), "", null);
+                        EventBroker eb = EventBroker.getInstance();
+                        eb.publishEvent(new DocumentAddedEvent(newDoc));
+                        break;
+                    }
+                }
+            }
+            JOptionPane.showMessageDialog(this, "Falldaten wurden als Dokument zur Akte gespeichert.", com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_HINT, JOptionPane.INFORMATION_MESSAGE);
+
+        } catch (Exception ioe) {
+            log.error("Error saving form data as file", ioe);
+            JOptionPane.showMessageDialog(this, "Fehler beim Speichern der Falldaten: " + ioe.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
+        }
+    }//GEN-LAST:event_cmdSaveAsDocumentActionPerformed
+
+    private void cmdFormAiActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdFormAiActionPerformed
+
+        SelectAttachmentDialog sad = new SelectAttachmentDialog(EditorsRegistry.getInstance().getMainWindow(), true, this.plugin.getCaseDto().getId(), false);
+        sad.setTitle("Quelldatei(en) auswählen");
+        FrameUtils.centerDialog(sad, EditorsRegistry.getInstance().getMainWindow());
+        sad.setVisible(true);
+
+        ArchiveFileDocumentsBean[] selectedDocs = sad.getSelectedDocuments();
+        if (selectedDocs == null || selectedDocs.length == 0) {
+            return;
+        }
+        
+        this.aiInputs=this.getStringInputs(selectedDocs);
+        if(this.aiInputs==null) {
+            JOptionPane.showMessageDialog(this, "Fehler bei der Aufbereitung der Eingangsdaten", com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
+            return;
+        }
+        
+        
+        
+        AssistantExtractDialog dlg = new AssistantExtractDialog(this.plugin.getCaseDto(), extractConfig, extractCapability, this, EditorsRegistry.getInstance().getMainWindow(), true);
+        dlg.setRequestTypeLabel("Falldaten aus Dokument(en) extrahieren");
+        FrameUtils.centerDialog(dlg, EditorsRegistry.getInstance().getMainWindow());
+        dlg.setVisible(true);
+        
+        
+
+    }//GEN-LAST:event_cmdFormAiActionPerformed
+
+    private List<InputData> getStringInputs(ArchiveFileDocumentsBean[] selected) {
+        ArrayList<InputData> inputs = new ArrayList<>();
+        try {
+            ClientSettings settings = ClientSettings.getInstance();
+            JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
+            ArchiveFileServiceRemote remote = locator.lookupArchiveFileServiceRemote();
+
+            if (selected.length == 0) {
+                return inputs;
+            }
+
+            InputData i = new InputData();
+            StringBuilder sb = new StringBuilder();
+            for (ArchiveFileDocumentsBean doc : selected) {
+
+                String docText = remote.getDocumentPreview(doc.getId(), DocumentPreview.TYPE_TEXT).getText();
+                sb.append(docText).append(System.lineSeparator()).append(System.lineSeparator());
+
+            }
+            i.setType(InputData.TYPE_STRING);
+            i.setBase64(false);
+            i.setStringData(sb.toString());
+            inputs.add(i);
+            return inputs;
+
+        } catch (Exception ioe) {
+            log.error("Error getting document as text", ioe);
+            return null;
+        }
+    }
+
     public void save() {
         Hashtable placeHolders = this.plugin.getPlaceHolderValues();
         if (placeHolders == null) {
@@ -864,16 +1031,16 @@ public class FormInstancePanel extends javax.swing.JPanel {
             log.warn("Form plugin did not provide any placeholders - skip saving to avoid empty form!");
             return;
         }
-        
+
         log.info("Form plugin " + form.getId() + " has " + placeHolders.size() + " placeholder values");
-        
-        boolean save=true;
-        
-        ArrayList<String> allPlaceHolderKeys=new ArrayList<>();
-        for(Object k: placeHolders.keySet()) {
+
+        boolean save = true;
+
+        ArrayList<String> allPlaceHolderKeys = new ArrayList<>();
+        for (Object k : placeHolders.keySet()) {
             allPlaceHolderKeys.add(k.toString());
         }
-        
+
         // create a sorted list of all keys before calculating a checksum
         Collections.sort(allPlaceHolderKeys);
 
@@ -890,8 +1057,8 @@ public class FormInstancePanel extends javax.swing.JPanel {
                 save = false;
             }
         }
-        
-        if(save) {
+
+        if (save) {
             log.info("form " + form.getId() + " has been updated - saving");
             ArrayList<ArchiveFileFormEntriesBean> formEntries = new ArrayList<>();
             try {
@@ -914,12 +1081,14 @@ public class FormInstancePanel extends javax.swing.JPanel {
         } else {
             log.info("form " + form.getId() + " has not been changed - skip saving");
         }
-        this.valuesCheckSum=newCheckSum;
+        this.valuesCheckSum = newCheckSum;
 
     }
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
+    private javax.swing.JButton cmdFormAi;
     private javax.swing.JButton cmdRemoveForm;
+    private javax.swing.JButton cmdSaveAsDocument;
     private javax.swing.JButton cmdShowPlaceHolders;
     private javax.swing.JScrollPane jScrollPane1;
     private javax.swing.JScrollPane scrollPlugin;
@@ -938,5 +1107,43 @@ public class FormInstancePanel extends javax.swing.JPanel {
      */
     public void setForm(ArchiveFileFormsBean form) {
         this.form = form;
+    }
+
+    @Override
+    public List<InputData> getInputs(AiCapability c) {
+        return this.aiInputs;
+    }
+
+    @Override
+    public List<Message> getMessages(AiCapability c) {
+        return new ArrayList<>();
+    }
+
+    @Override
+    public String getPrompt(AiCapability c) {
+        String prompt = this.plugin.getExtractionPrompt();
+        log.info("extracting form data using this prompt:");
+        log.info(prompt);
+        return prompt;
+    }
+
+    @Override
+    public List<ParameterData> getParameters(AiCapability c) {
+        return new ArrayList<>();
+    }
+
+    @Override
+    public void processOutput(AiCapability c, AiRequestStatus status) {
+        
+    }
+
+    @Override
+    public void processOutput(Map<String, String> output) {
+        this.plugin.setExtractedValues(output);
+    }
+
+    @Override
+    public void processError(AiCapability c, AiRequestStatus status) {
+        
     }
 }

@@ -1146,7 +1146,7 @@ public class FormsService implements FormsServiceRemote, FormsServiceLocal {
             dbf.setAttribute(XMLConstants.ACCESS_EXTERNAL_SCHEMA, "");
         } catch (IllegalArgumentException iae) {
             // only available from JAXP 1.5+, but Wildfly still ships 1.4
-            log.warn("Unable to set external entity restrictions in XML parser", iae);
+            log.warn("Unable to set external entity restrictions in XML parser: " + iae.getMessage());
         }
         DocumentBuilder remoteDb = dbf.newDocumentBuilder();
         InputSource inSrc1 = new InputSource(new StringReader(formsContent));
@@ -1233,6 +1233,16 @@ public class FormsService implements FormsServiceRemote, FormsServiceLocal {
 
         }
         return true;
+    }
+
+    @Override
+    public List<ArchiveFileFormsBean> getFormsByType(String typeId) throws Exception {
+        FormTypeBean formType = this.formTypesFacade.find(typeId);
+        if (formType == null) {
+            return new ArrayList<>();
+        }
+        
+        return this.caseFormsFacade.findByFormType(formType);
     }
 
 }

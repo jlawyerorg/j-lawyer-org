@@ -666,6 +666,7 @@ package com.jdimension.jlawyer.client.mail;
 import com.jdimension.jlawyer.client.editors.EditorsRegistry;
 import com.jdimension.jlawyer.client.settings.ClientSettings;
 import com.jdimension.jlawyer.client.settings.UserSettings;
+import com.jdimension.jlawyer.client.utils.HtmlUtils;
 import com.jdimension.jlawyer.client.utils.StringUtils;
 import com.jdimension.jlawyer.email.CommonMailUtils;
 import com.jdimension.jlawyer.persistence.AddressBean;
@@ -679,8 +680,12 @@ import java.io.ByteArrayOutputStream;
 import java.io.InputStream;
 import java.io.UnsupportedEncodingException;
 import java.text.SimpleDateFormat;
+import java.time.ZoneId;
+import java.time.ZonedDateTime;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Date;
+import java.util.Enumeration;
 import java.util.List;
 import java.util.Properties;
 import java.util.regex.Matcher;
@@ -689,8 +694,10 @@ import javax.mail.*;
 import javax.mail.Flags;
 import javax.mail.Folder;
 import javax.mail.internet.*;
-import javax.swing.JOptionPane;
 import org.apache.log4j.Logger;
+import org.jsoup.Jsoup;
+import org.jsoup.nodes.Document;
+import org.jsoup.nodes.Element;
 import org.simplejavamail.outlookmessageparser.model.OutlookMessage;
 import org.simplejavamail.outlookmessageparser.model.OutlookRecipient;
 
@@ -701,17 +708,17 @@ import org.simplejavamail.outlookmessageparser.model.OutlookRecipient;
 public class EmailUtils extends CommonMailUtils {
 
     private static final Logger log = Logger.getLogger(EmailUtils.class.getName());
-    
+
     public static String getOffice365AuthToken(String mailboxId) throws Exception {
         ClientSettings settings = ClientSettings.getInstance();
-            try {
-                JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
-                return locator.lookupEmailServiceRemote().getAuthToken(mailboxId);
-                
-            } catch (Exception ex) {
-                log.error("Error getting Office 365 auth token", ex);
-                return null;
-            }
+        try {
+            JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
+            return locator.lookupEmailServiceRemote().getAuthToken(mailboxId);
+
+        } catch (Exception ex) {
+            log.error("Error getting Office 365 auth token", ex);
+            return null;
+        }
     }
 
     public static boolean hasConfig(AppUserBean u) {
@@ -728,7 +735,7 @@ public class EmailUtils extends CommonMailUtils {
                 return false;
             }
 
-            CachingCrypto crypto=CryptoProvider.defaultCrypto();
+            CachingCrypto crypto = CryptoProvider.defaultCrypto();
             if (StringUtils.isEmpty(crypto.decrypt(ms.getEmailInPwd()))) {
                 return false;
             }
@@ -759,7 +766,12 @@ public class EmailUtils extends CommonMailUtils {
 
     public static boolean hasAttachment(Message msg) throws Exception {
         if (msg.isMimeType("multipart/*")) {
-            return checkForAttachments(msg.getContent());
+            try {
+                return checkForAttachments(msg.getContent());
+            } catch (IllegalArgumentException e) {
+                log.warn("Unable to get content - invalid content type: " + e.getMessage());
+                return false;
+            }
         }
         return false;
     }
@@ -881,14 +893,18 @@ public class EmailUtils extends CommonMailUtils {
             if (disposition == null) {
                 MimeBodyPart mimePart = (MimeBodyPart) part;
 
-                if (mimePart.getContent() instanceof Multipart) {
-                    Part attPart = getAttachmentPart(name, mimePart.getContent(), folder);
-                    if (attPart != null) {
-                        if (opened) {
-                            closeIfIMAP(folder);
+                try {
+                    if (mimePart.getContent() instanceof Multipart) {
+                        Part attPart = getAttachmentPart(name, mimePart.getContent(), folder);
+                        if (attPart != null) {
+                            if (opened) {
+                                closeIfIMAP(folder);
+                            }
+                            return attPart;
                         }
-                        return attPart;
                     }
+                } catch (IllegalArgumentException e) {
+                    log.warn("Unable to get content - invalid content type: " + e.getMessage());
                 }
 
             } else if (disposition.equalsIgnoreCase(Part.ATTACHMENT)) {
@@ -904,6 +920,23 @@ public class EmailUtils extends CommonMailUtils {
                     return part;
                 }
             } else if (disposition.equalsIgnoreCase(Part.INLINE)) {
+                // Check if inline content is a Multipart (e.g., in S/MIME signed messages)
+                if (part instanceof MimeBodyPart) {
+                    MimeBodyPart mimePart = (MimeBodyPart) part;
+                    try {
+                        if (mimePart.getContent() instanceof Multipart) {
+                            Part attPart = getAttachmentPart(name, mimePart.getContent(), folder);
+                            if (attPart != null) {
+                                if (opened) {
+                                    closeIfIMAP(folder);
+                                }
+                                return attPart;
+                            }
+                        }
+                    } catch (IllegalArgumentException e) {
+                        log.warn("Unable to get content - invalid content type: " + e.getMessage());
+                    }
+                }
                 if (name.equals(EmailUtils.decodeText(part.getFileName()))) {
                     if (opened) {
                         closeIfIMAP(folder);
@@ -932,6 +965,7 @@ public class EmailUtils extends CommonMailUtils {
             closed = !f.isOpen();
         }
         if (closed && f != null) {
+            System.out.println("open 19");
             f.open(Folder.READ_WRITE);
             return true;
         }
@@ -941,7 +975,12 @@ public class EmailUtils extends CommonMailUtils {
     public static byte[] getAttachmentBytes(String name, MessageContainer msgContainer) throws Exception {
 
         boolean opened = openFolder(msgContainer.getMessage().getFolder());
-        Part att = getAttachmentPart(name, msgContainer.getMessage().getContent(), msgContainer.getMessage().getFolder());
+        Part att = null;
+        try {
+            att = getAttachmentPart(name, msgContainer.getMessage().getContent(), msgContainer.getMessage().getFolder());
+        } catch (IllegalArgumentException e) {
+            log.warn("Unable to get content - invalid content type: " + e.getMessage());
+        }
 
         opened = opened || openFolder(msgContainer.getMessage().getFolder());
         if (att != null) {
@@ -956,7 +995,11 @@ public class EmailUtils extends CommonMailUtils {
             is.close();
             bOut.close();
             if (opened) {
-                closeIfIMAP(msgContainer.getMessage().getFolder());
+                try {
+                    closeIfIMAP(msgContainer.getMessage().getFolder());
+                } catch (Throwable t) {
+                    log.error("Unable to close folder", t);
+                }
             }
             return bOut.toByteArray();
 
@@ -988,11 +1031,15 @@ public class EmailUtils extends CommonMailUtils {
             if (disposition == null) {
                 MimeBodyPart mimePart = (MimeBodyPart) part;
 
-                if (mimePart.getContent() instanceof Multipart) {
-                    boolean att = checkForAttachments(mimePart.getContent());
-                    if (att) {
-                        return true;
+                try {
+                    if (mimePart.getContent() instanceof Multipart) {
+                        boolean att = checkForAttachments(mimePart.getContent());
+                        if (att) {
+                            return true;
+                        }
                     }
+                } catch (IllegalArgumentException e) {
+                    log.warn("Unable to get content - invalid content type: " + e.getMessage());
                 }
 
             } else if (disposition.equalsIgnoreCase(Part.ATTACHMENT)) {
@@ -1031,8 +1078,12 @@ public class EmailUtils extends CommonMailUtils {
         return passwords.size() == 1;
     }
 
-    // will only close the folder if it is IMAP, and do nothing otherwise
     public static void closeIfIMAP(Folder f) {
+        closeIfIMAP(f, true);
+    }
+
+    // will only close the folder if it is IMAP, and do nothing otherwise
+    public static void closeIfIMAP(Folder f, boolean expunge) {
         if (f == null) {
             return;
         }
@@ -1040,7 +1091,7 @@ public class EmailUtils extends CommonMailUtils {
         try {
             if (isIMAP(f)) {
                 if (f.isOpen()) {
-                    f.close(true);
+                    f.close(expunge);
                 }
             }
         } catch (Throwable t) {
@@ -1048,30 +1099,71 @@ public class EmailUtils extends CommonMailUtils {
         }
     }
 
+//    public static String getQuotedBody(String body, String contentType, String decodedTo, Date date) {
+//        if (StringUtils.isEmpty(decodedTo)) {
+//            decodedTo = "Unbekannt";
+//        }
+//        if (contentType.toLowerCase().startsWith(ContentTypes.TEXT_HTML)) {
+//            decodedTo = decodedTo.replaceAll("<", "&lt;");
+//            decodedTo = decodedTo.replaceAll(">", "&gt;");
+//            decodedTo = decodedTo.replaceAll("\"", "&quot;");
+//            if (date != null) {
+//                SimpleDateFormat df = new SimpleDateFormat("dd.MM.yyyy HH:mm");
+//                return "<br/><br/>*** " + decodedTo + " schrieb am " + df.format(date) + ": ***<br/><br/><div><blockquote style=\"border-left: #ccc 2px solid; margin: 0px 0px 0px 0.8ex; padding-left: 1ex\"><br/><br/>" + body + "<br/><br/></blockquote></div>";
+//            } else {
+//                return "<br/><br/>*** " + decodedTo + " schrieb: ***<br/><br/><div><blockquote style=\"border-left: #ccc 2px solid; margin: 0px 0px 0px 0.8ex; padding-left: 1ex\"><br/><br/>" + body + "<br/><br/></blockquote></div>";
+//            }
+//        } else {
+//            // plain text
+//            if (date != null) {
+//                SimpleDateFormat df = new SimpleDateFormat("dd.MM.yyyy HH:mm");
+//                return System.getProperty("line.separator") + System.getProperty("line.separator") + "*** " + decodedTo + " schrieb am " + df.format(date) + ": ***" + System.getProperty("line.separator") + System.getProperty("line.separator") + body;
+//            } else {
+//                return System.getProperty("line.separator") + System.getProperty("line.separator") + "*** " + decodedTo + " schrieb: ***" + System.getProperty("line.separator") + System.getProperty("line.separator") + body;
+//            }
+//
+//        }
+//    }
     public static String getQuotedBody(String body, String contentType, String decodedTo, Date date) {
-        if (StringUtils.isEmpty(decodedTo)) {
+        if (decodedTo == null || decodedTo.isEmpty()) {
             decodedTo = "Unbekannt";
         }
-        if (contentType.toLowerCase().startsWith(ContentTypes.TEXT_HTML)) {
-            decodedTo = decodedTo.replaceAll("<", "&lt;");
-            decodedTo = decodedTo.replaceAll(">", "&gt;");
-            decodedTo = decodedTo.replaceAll("\"", "&quot;");
-            if (date != null) {
-                SimpleDateFormat df = new SimpleDateFormat("dd.MM.yyyy HH:mm");
-                return "<br/><br/>*** " + decodedTo + " schrieb am " + df.format(date) + ": ***<br/><br/><div><blockquote style=\"border-left: #ccc 2px solid; margin: 0px 0px 0px 0.8ex; padding-left: 1ex\"><br/><br/>" + body + "<br/><br/></blockquote></div>";
-            } else {
-                return "<br/><br/>*** " + decodedTo + " schrieb: ***<br/><br/><div><blockquote style=\"border-left: #ccc 2px solid; margin: 0px 0px 0px 0.8ex; padding-left: 1ex\"><br/><br/>" + body + "<br/><br/></blockquote></div>";
-            }
-        } else {
-            // plain text
-            if (date != null) {
-                SimpleDateFormat df = new SimpleDateFormat("dd.MM.yyyy HH:mm");
-                return System.getProperty("line.separator") + System.getProperty("line.separator") + "*** " + decodedTo + " schrieb am " + df.format(date) + ": ***" + System.getProperty("line.separator") + System.getProperty("line.separator") + body;
-            } else {
-                return System.getProperty("line.separator") + System.getProperty("line.separator") + "*** " + decodedTo + " schrieb: ***" + System.getProperty("line.separator") + System.getProperty("line.separator") + body;
-            }
 
+        if (contentType.toLowerCase().startsWith("text/html")) {
+            decodedTo = escapeHtml(decodedTo);
+            String dateString = (date != null) ? new SimpleDateFormat("dd.MM.yyyy HH:mm").format(date) : null;
+
+            // Parse the original HTML body
+            Document doc = Jsoup.parse(body);
+
+            // Extract the <body> content
+            Element bodyElement = doc.body();
+            String bodyContent = (bodyElement != null) ? bodyElement.html() : body; // Fallback if parsing fails
+
+            // Generate quoted block
+            String quotedBlock = "<blockquote style=\"border-left: #ccc 2px solid; margin-left: 0.8ex; padding-left: 1ex;\">"
+                    + "<br/><br/>" + bodyContent + "<br/><br/></blockquote>";
+
+            // Construct reply HTML
+            Document replyDoc = Jsoup.parse("<html><head>" + HtmlUtils.cleanHeadStylesInHead(doc.head().html()) + "</head><body></body></html>");
+            Element replyBody = replyDoc.body();
+
+            replyBody.append("<br/><br/>*** " + decodedTo + (dateString != null ? " schrieb am " + dateString : " schrieb") + ": ***<br/><br/>");
+            replyBody.append(quotedBlock);
+
+            return replyDoc.outerHtml();
+        } else {
+            // Plain text handling
+            String dateString = (date != null) ? new SimpleDateFormat("dd.MM.yyyy HH:mm").format(date) : null;
+            return "\n\n*** " + decodedTo + (dateString != null ? " schrieb am " + dateString : " schrieb") + ": ***\n\n" + body;
         }
+    }
+
+    private static String escapeHtml(String text) {
+        return text.replace("&", "&amp;")
+                .replace("<", "&lt;")
+                .replace(">", "&gt;")
+                .replace("\"", "&quot;");
     }
 
     public static boolean isValidEmailAddress(String email) {
@@ -1094,6 +1186,144 @@ public class EmailUtils extends CommonMailUtils {
             mails.add(group);
         }
         return mails;
+    }
+
+    /**
+     * Splits a comma-separated string of email recipients while respecting quoted names and angle brackets.
+     * This method correctly handles cases like "Müller, Otto" <otto@mueller.de> where the comma is part of the name.
+     *
+     * @param recipients Comma-separated string of email recipients
+     * @return List of individual recipient strings
+     */
+    private static List<String> splitRecipients(String recipients) {
+        List<String> result = new ArrayList<>();
+        if (recipients == null || recipients.trim().isEmpty()) {
+            return result;
+        }
+
+        StringBuilder current = new StringBuilder();
+        boolean inQuotes = false;
+        boolean inAngleBrackets = false;
+
+        for (int i = 0; i < recipients.length(); i++) {
+            char c = recipients.charAt(i);
+
+            if (c == '"') {
+                inQuotes = !inQuotes;
+                current.append(c);
+            } else if (c == '<' && !inQuotes) {
+                inAngleBrackets = true;
+                current.append(c);
+            } else if (c == '>' && !inQuotes) {
+                inAngleBrackets = false;
+                current.append(c);
+            } else if (c == ',' && !inQuotes && !inAngleBrackets) {
+                // This is a real separator, not part of a name or email
+                String part = current.toString().trim();
+                if (!part.isEmpty()) {
+                    result.add(part);
+                }
+                current.setLength(0);
+            } else {
+                current.append(c);
+            }
+        }
+
+        // Add the last part
+        String part = current.toString().trim();
+        if (!part.isEmpty()) {
+            result.add(part);
+        }
+
+        return result;
+    }
+
+    /**
+     * Extracts all email addresses from a comma-separated string and maps them to their full recipient strings.
+     * For example, if the input is "John Doe <john@example.com>, jane@example.com", the result will be:
+     * {"john@example.com" -> "John Doe <john@example.com>", "jane@example.com" -> "jane@example.com"}
+     *
+     * @param recipients Comma-separated string of email recipients
+     * @return Map of email addresses to full recipient strings
+     */
+    public static java.util.Map<String, String> getMailAddressToRecipientMap(String recipients) {
+        java.util.Map<String, String> map = new java.util.HashMap<>();
+        if (recipients == null || recipients.trim().isEmpty()) {
+            return map;
+        }
+
+        List<String> parts = splitRecipients(recipients);
+        for (String part : parts) {
+            if (part.isEmpty()) {
+                continue;
+            }
+
+            // Extract email address
+            Pattern pattern = Pattern.compile("[a-zA-Z0-9-_.]+@[a-zA-Z0-9-_.]+");
+            Matcher matcher = pattern.matcher(part);
+            if (matcher.find()) {
+                String email = matcher.group();
+                map.put(email, part);
+            }
+        }
+
+        return map;
+    }
+
+    /**
+     * Parses a comma-separated string of email recipients and returns properly encoded InternetAddress objects.
+     * This method handles recipients in various formats:
+     * - Plain email addresses: email@example.com
+     * - Name and email: "Name" <email@example.com>
+     * - Name and email without quotes: Name <email@example.com>
+     *
+     * Names containing special characters (like umlauts) are properly MIME-encoded to ensure
+     * compatibility with all mail servers.
+     *
+     * @param recipients Comma-separated string of email recipients
+     * @return Array of properly encoded InternetAddress objects
+     * @throws UnsupportedEncodingException If the encoding is not supported
+     * @throws AddressException If an email address is malformed
+     */
+    public static InternetAddress[] parseAndEncodeRecipients(String recipients) throws UnsupportedEncodingException, AddressException {
+        if (recipients == null || recipients.trim().isEmpty()) {
+            return new InternetAddress[0];
+        }
+
+        ArrayList<InternetAddress> addresses = new ArrayList<>();
+
+        // Split by comma, respecting commas inside quoted names
+        List<String> parts = splitRecipients(recipients);
+
+        for (String part : parts) {
+            if (part.isEmpty()) {
+                continue;
+            }
+
+            // Check if this is in the format: "Name" <email> or Name <email>
+            Pattern pattern = Pattern.compile("^\"?(.+?)\"?\\s*<(.+?)>$");
+            Matcher matcher = pattern.matcher(part);
+
+            if (matcher.matches()) {
+                // Extract name and email
+                String name = matcher.group(1).trim();
+                String email = matcher.group(2).trim();
+
+                // Encode the name to handle umlauts and special characters
+                String encodedName = MimeUtility.encodeText(name, "utf-8", "B");
+
+                // Create InternetAddress with encoded name
+                InternetAddress addr = new InternetAddress(email);
+                addr.setPersonal(encodedName, "utf-8");
+                addresses.add(addr);
+            } else {
+                // Plain email address without name
+                InternetAddress addr = new InternetAddress(part);
+                addresses.add(addr);
+            }
+        }
+
+        return addresses.toArray(new InternetAddress[0]);
     }
 
     public static boolean isReceiptRequested(Message msg) {
@@ -1123,14 +1353,15 @@ public class EmailUtils extends CommonMailUtils {
     public static void sendReceipt(final MailboxSetup ms, String subject, String to) {
         Properties props = new Properties();
 
-        boolean authenticate=true;
+        boolean authenticate = true;
         try {
-            if(StringUtils.isEmpty(ms.getEmailOutUser()) && StringUtils.isEmpty(CryptoProvider.defaultCrypto().decrypt(ms.getEmailOutPwd())))
-                authenticate=false;
+            if (StringUtils.isEmpty(ms.getEmailOutUser()) && StringUtils.isEmpty(CryptoProvider.defaultCrypto().decrypt(ms.getEmailOutPwd()))) {
+                authenticate = false;
+            }
         } catch (Throwable t) {
             log.error("Could not decrypt outgoing password", t);
         }
-        
+
         if (ms.isEmailOutSsl()) {
             props.put("mail.smtp.ssl.enable", "true");
         }
@@ -1152,11 +1383,12 @@ public class EmailUtils extends CommonMailUtils {
         props.put("mail.smtp.host", ms.getEmailOutServer());
         props.put("mail.smtps.host", ms.getEmailOutServer());
         props.put("mail.from", ms.getEmailAddress());
-        
+
         Session session = null;
         if (!authenticate) {
             props.put("mail.smtps.auth", false);
             props.put("mail.smtp.auth", false);
+            ms.applyCustomProperties(ms.customConfigurationsSendProperties(), props);
             session = Session.getInstance(props);
         } else {
             props.put("mail.smtps.auth", true);
@@ -1170,6 +1402,7 @@ public class EmailUtils extends CommonMailUtils {
                 log.error(t);
             }
             props.put("mail.password", outPwd);
+            ms.applyCustomProperties(ms.customConfigurationsSendProperties(), props);
 
             javax.mail.Authenticator auth = new javax.mail.Authenticator() {
 
@@ -1186,17 +1419,18 @@ public class EmailUtils extends CommonMailUtils {
             };
             session = Session.getInstance(props, auth);
         }
-        
+
         try {
             Transport bus = session.getTransport("smtp");
 
             // Connect only once here
             // Transport.send() disconnects after each send
             // Usually, no username and password is required for SMTP
-            if(authenticate)
+            if (authenticate) {
                 bus.connect(ms.getEmailOutServer(), ms.getEmailOutUser(), CryptoProvider.defaultCrypto().decrypt(ms.getEmailOutPwd()));
-            else
+            } else {
                 bus.connect(ms.getEmailOutServer(), null, null);
+            }
 
             MimeMessage msg = new MimeMessage(session);
 
@@ -1205,7 +1439,8 @@ public class EmailUtils extends CommonMailUtils {
             msg.setRecipients(Message.RecipientType.TO, to);
 
             msg.setSubject(MimeUtility.encodeText("Gelesen: " + subject, "utf-8", "B"));
-            msg.setSentDate(new Date());
+            ZonedDateTime zdt = ZonedDateTime.now(ZoneId.of("Europe/Berlin"));
+            msg.setSentDate(Date.from(zdt.toInstant()));
 
             Multipart multiPart = new MimeMultipart();
 
@@ -1224,12 +1459,12 @@ public class EmailUtils extends CommonMailUtils {
         }
     }
 
-    public static SendEmailDialog reply(OutlookMessage m, String content, String contentType) {
+    public static SendEmailFrame reply(OutlookMessage m, String content, String contentType) {
         return reply(m, null, content, contentType);
     }
-    
-    public static SendEmailDialog reply(OutlookMessage m, String prependContent, String content, String contentType) {
-        SendEmailDialog dlg = new SendEmailDialog(true, EditorsRegistry.getInstance().getMainWindow(), false);
+
+    public static SendEmailFrame reply(OutlookMessage m, String prependContent, String content, String contentType) {
+        SendEmailFrame dlg = new SendEmailFrame(true);
         try {
             // figure out if the message was sent from one of the users accounts
             boolean sentByCurrentUser = false;
@@ -1282,12 +1517,13 @@ public class EmailUtils extends CommonMailUtils {
 
             String decodedTo = toString.toString();
             dlg.setContentType(contentType);
-            
-            if(prependContent==null)
-                prependContent="";
-            else
-                prependContent=prependContent + System.lineSeparator() + System.lineSeparator();
-            
+
+            if (prependContent == null) {
+                prependContent = "";
+            } else {
+                prependContent = prependContent + System.lineSeparator() + System.lineSeparator();
+            }
+
             if (contentType.toLowerCase().startsWith(ContentTypes.TEXT_HTML)) {
                 dlg.setBody(prependContent, EmailUtils.getQuotedBody(EmailUtils.html2Text(content), ContentTypes.TEXT_PLAIN, decodedTo, m.getDate()), ContentTypes.TEXT_PLAIN);
             } else {
@@ -1302,12 +1538,12 @@ public class EmailUtils extends CommonMailUtils {
         return dlg;
     }
 
-    public static SendEmailDialog reply(Message m, String content, String contentType) {
+    public static SendEmailFrame reply(Message m, String content, String contentType) {
         return reply(m, null, content, contentType);
     }
-    
-    public static SendEmailDialog reply(Message m, String prependContent, String content, String contentType) {
-        SendEmailDialog dlg = new SendEmailDialog(true, EditorsRegistry.getInstance().getMainWindow(), false);
+
+    public static SendEmailFrame reply(Message m, String prependContent, String content, String contentType) {
+        SendEmailFrame dlg = new SendEmailFrame(true);
         try {
             // figure out if the message was sent from one of the users accounts
             boolean sentByCurrentUser = false;
@@ -1337,9 +1573,7 @@ public class EmailUtils extends CommonMailUtils {
             if (sentByCurrentUser) {
                 // sent by the current user - reply to the recipient of the message
                 Address[] recs = m.getRecipients(Message.RecipientType.TO);
-                for (Address a : recs) {
-                    toString.append(MimeUtility.decodeText(a.toString())).append(", ");
-                }
+                toString.append(getAddressesAsList(recs));
             } else {
                 // not sent by the current user - reply to the sender of the message
                 Address to = null;
@@ -1351,7 +1585,7 @@ public class EmailUtils extends CommonMailUtils {
                 if (to == null) {
                     to = m.getFrom()[0];
                 }
-                toString.append(MimeUtility.decodeText(to.toString()));
+                toString.append(getAddressesAsList(new Address[]{to}));
             }
             dlg.setTo(toString.toString());
 
@@ -1366,12 +1600,13 @@ public class EmailUtils extends CommonMailUtils {
 
             String decodedTo = toString.toString();
             dlg.setContentType(contentType);
-            
-            if(prependContent==null)
-                prependContent="";
-            else
-                prependContent=prependContent + System.lineSeparator() + System.lineSeparator();
-            
+
+            if (prependContent == null) {
+                prependContent = "";
+            } else {
+                prependContent = prependContent + System.lineSeparator() + System.lineSeparator();
+            }
+
             if (contentType.toLowerCase().startsWith(ContentTypes.TEXT_HTML)) {
                 dlg.setBody(prependContent, EmailUtils.getQuotedBody(EmailUtils.html2Text(content), ContentTypes.TEXT_PLAIN, decodedTo, m.getSentDate()), ContentTypes.TEXT_PLAIN);
             } else {
@@ -1386,6 +1621,29 @@ public class EmailUtils extends CommonMailUtils {
         return dlg;
     }
 
+    /**
+     * Filters out a specific email address from an Address[].
+     *
+     * @param addresses the original array of addresses (may be null)
+     * @param emailToRemove the email address to remove (case-insensitive)
+     * @return a new Address[] without the removed email, or empty if none remain
+     */
+    public static Address[] filterOut(Address[] addresses, String emailToRemove) {
+        if (addresses == null || emailToRemove == null) {
+            return new Address[0];
+        }
+
+        return Arrays.stream(addresses)
+                .filter(addr -> {
+                    if (addr instanceof InternetAddress) {
+                        String email = ((InternetAddress) addr).getAddress();
+                        return !email.equalsIgnoreCase(emailToRemove);
+                    }
+                    return true; // keep non-InternetAddress entries
+                })
+                .toArray(Address[]::new);
+    }
+    
     public static String getAddressesAsList(Address[] a) throws UnsupportedEncodingException {
         StringBuilder listString = new StringBuilder();
         if (a != null) {
@@ -1394,7 +1652,17 @@ public class EmailUtils extends CommonMailUtils {
                     continue;
                 }
                 if (adr instanceof InternetAddress) {
-                    listString.append(((InternetAddress) adr).getAddress()).append(", ");
+                    // listString.append(((InternetAddress) adr).getAddress()).append(", ");
+                    InternetAddress ia = (InternetAddress) adr;
+                    String personal = ia.getPersonal();
+                    String email = ia.getAddress();
+
+                    if (personal != null && !personal.isEmpty()) {
+                        personal = MimeUtility.decodeText(personal);
+                        listString.append("\"").append(personal).append("\" <").append(email).append(">, ");
+                    } else {
+                        listString.append(email).append(", ");
+                    }
                 } else {
                     listString.append(MimeUtility.decodeText(adr.toString())).append(", ");
                 }
@@ -1407,5 +1675,123 @@ public class EmailUtils extends CommonMailUtils {
         }
 
         return s;
+    }
+
+    public static String getAddressesAsList(List<OutlookRecipient> a) throws UnsupportedEncodingException {
+        StringBuilder listString = new StringBuilder();
+        if (a != null) {
+            for (OutlookRecipient adr : a) {
+                if (adr == null) {
+                    continue;
+                }
+
+                String personal = adr.getName();
+                String email = adr.getAddress();
+
+                if (personal != null && !personal.isEmpty()) {
+                    personal = MimeUtility.decodeText(personal);
+                    listString.append("\"").append(personal).append("\" <").append(email).append(">, ");
+                } else {
+                    listString.append(email).append(", ");
+                }
+
+            }
+        }
+
+        String s = listString.toString();
+        if (s.endsWith(", ")) {
+            s = s.substring(0, s.length() - 2);
+        }
+
+        return s;
+    }
+
+    /**
+     * Entfernt aus der gegebenen MimeMessage alle Anhänge, deren Dateinamen in
+     * attachmentNames enthalten sind. Es wird ein neues MimeMessage-Objekt
+     * erstellt, das keine der angegebenen Anhänge mehr enthält.
+     *
+     * @param message die ursprüngliche MimeMessage
+     * @param attachmentNames Liste der Dateinamen, die entfernt werden sollen
+     * @return ein neues MimeMessage-Objekt ohne die ausgewählten Anhänge
+     * @throws Exception falls ein Fehler beim Verarbeiten der Nachricht
+     * auftritt
+     */
+    public static MimeMessage removeAttachmentsFromMessage(MimeMessage message, List<String> attachmentNames) throws Exception {
+        if (!message.isMimeType("multipart/*")) {
+            return message;
+        }
+        Object content = null;
+        try {
+            content = message.getContent();
+        } catch (IllegalArgumentException e) {
+            log.warn("Unable to get content - invalid content type: " + e.getMessage());
+            return message;
+        }
+        if (!(content instanceof Multipart)) {
+            return message;
+        }
+        Multipart originalMultipart = (Multipart) content;
+        Multipart newMultipart = removeAttachmentsFromMultipart(originalMultipart, attachmentNames);
+
+        // Neues MimeMessage-Objekt mit demselben Session-Objekt erstellen
+        MimeMessage newMessage = new MimeMessage(message.getSession());
+        @SuppressWarnings("unchecked")
+        Enumeration<Header> headers = message.getAllHeaders();
+        while (headers.hasMoreElements()) {
+            Header header = headers.nextElement();
+            newMessage.setHeader(header.getName(), header.getValue());
+        }
+        newMessage.setContent(newMultipart);
+        newMessage.saveChanges();
+        return newMessage;
+    }
+
+    /**
+     * Rekursive Methode zur Verarbeitung eines Multipart-Objekts. Sie erstellt
+     * ein neues Multipart, das alle BodyParts enthält, außer denen, deren
+     * Dateiname in attachmentNames enthalten ist.
+     *
+     * @param multipart das zu verarbeitende Multipart-Objekt
+     * @param attachmentNames Liste der Dateinamen, die entfernt werden sollen
+     * @return ein neues Multipart ohne die ausgewählten Anhänge
+     * @throws Exception falls ein Fehler beim Verarbeiten der Parts auftritt
+     */
+    private static Multipart removeAttachmentsFromMultipart(Multipart multipart, List<String> attachmentNames) throws Exception {
+        MimeMultipart newMultipart = new MimeMultipart();
+        int count = multipart.getCount();
+        for (int i = 0; i < count; i++) {
+            BodyPart part = multipart.getBodyPart(i);
+            // Falls der Part selbst ein Multipart ist, rekursiv verarbeiten
+            if (part.isMimeType("multipart/*")) {
+                Multipart subMultipart = null;
+                try {
+                    subMultipart = (Multipart) part.getContent();
+                } catch (IllegalArgumentException e) {
+                    log.warn("Unable to get content - invalid content type: " + e.getMessage());
+                    continue;
+                }
+                Multipart newSubMultipart = removeAttachmentsFromMultipart(subMultipart, attachmentNames);
+                if (newSubMultipart.getCount() > 0) {
+                    MimeBodyPart newPart = new MimeBodyPart();
+                    newPart.setContent(newSubMultipart);
+                    newMultipart.addBodyPart(newPart);
+                }
+            } else {
+                String disposition = part.getDisposition();
+                boolean isAttachment = disposition != null
+                        && (disposition.equalsIgnoreCase(Part.ATTACHMENT) || disposition.equalsIgnoreCase(Part.INLINE));
+                if (isAttachment && part.getFileName() != null) {
+                    String decodedFileName = MimeUtility.decodeText(part.getFileName());
+                    if (attachmentNames.contains(decodedFileName)) {
+                        // Diese Anhängervariante wird entfernt
+                        continue;
+                    }
+                }
+                // Anderenfalls den Part übernehmen
+                newMultipart.addBodyPart(part);
+            }
+        }
+        return newMultipart;
     }
 }

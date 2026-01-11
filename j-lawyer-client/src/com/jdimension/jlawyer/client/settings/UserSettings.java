@@ -769,6 +769,8 @@ public class UserSettings extends UserSettingsKeys {
         }
 
         String[] ary = value.split(ARRAY_DELIMITER);
+        if(ary==null)
+            return defaultValue;
 
         return ary;
     }
@@ -847,6 +849,11 @@ public class UserSettings extends UserSettingsKeys {
     public boolean getSettingAsBoolean(String key, boolean defaultValue) {
         String s=getSetting(key, "" + defaultValue);
         return Boolean.parseBoolean(s);
+    }
+    
+    public int getSettingAsInt(String key, int defaultValue) {
+        String s=getSetting(key, "" + defaultValue);
+        return Integer.parseInt(s);
     }
 
     public void setSettingArray(String key, String[] value) {

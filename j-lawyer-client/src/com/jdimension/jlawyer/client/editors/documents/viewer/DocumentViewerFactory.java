@@ -666,7 +666,9 @@ package com.jdimension.jlawyer.client.editors.documents.viewer;
 import com.jdimension.jlawyer.client.launcher.LauncherFactory;
 import com.jdimension.jlawyer.client.mail.EmailUtils;
 import com.jdimension.jlawyer.client.mail.MessageContainer;
+import com.jdimension.jlawyer.client.utils.ComponentUtils;
 import com.jdimension.jlawyer.client.utils.einvoice.EInvoiceUtils;
+import com.jdimension.jlawyer.documents.DocumentPreview;
 import com.jdimension.jlawyer.persistence.ArchiveFileBean;
 import com.jdimension.jlawyer.persistence.MailboxSetup;
 import java.awt.Dimension;
@@ -676,8 +678,10 @@ import java.io.InputStream;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
 import javax.mail.Flags.Flag;
+import java.nio.charset.StandardCharsets;
 import javax.mail.internet.MimeMessage;
 import javax.swing.JComponent;
+import javax.swing.JSplitPane;
 import javax.swing.SwingUtilities;
 import org.apache.log4j.Logger;
 import org.simplejavamail.outlookmessageparser.OutlookMessageParser;
@@ -702,11 +706,21 @@ public class DocumentViewerFactory {
         String lFileName = fileName.toLowerCase();
 
         if (lFileName.endsWith(".pdf")) {
-            PdfImageScrollingPanel pdfP = new PdfImageScrollingPanel(fileName, content, saveCallback);
+            PdfImageScrollingPanel pdfP = new PdfImageScrollingPanel(false, fileName, content, saveCallback);
             pdfP.setSize(new Dimension(width, height));
             pdfP.setMaximumSize(new Dimension(width, height));
             pdfP.setPreferredSize(new Dimension(width, height));
             pdfP.showContent(id, content);
+            if (previewProvider instanceof CaseDocumentPreviewProvider) {
+                try {
+                    DocumentPreview previewText = ((CaseDocumentPreviewProvider) previewProvider).getPreviewAsText();
+                    if (previewText != null) {
+                        pdfP.showContentAsText(previewText.getText());
+                    }
+                } catch (Exception prevEx) {
+                    log.error("Could not load preview as text", prevEx);
+                }
+            }
             return pdfP;
 
         } else if (lFileName.endsWith(".jpg") || lFileName.endsWith(".jpeg") || lFileName.endsWith(".gif") || lFileName.endsWith(".png")) {
@@ -744,7 +758,8 @@ public class DocumentViewerFactory {
             ptp.setMaximumSize(new Dimension(width, height));
             ptp.setPreferredSize(new Dimension(width, height));
             try {
-                ptp.showContent(id, previewProvider.getPreview().getBytes());
+                DocumentPreview txtPreview = previewProvider.getPreview();
+                ptp.showContent(id, txtPreview.getText().getBytes());
             } catch (Exception ex) {
                 ptp.showContent(id, ("FEHLER: " + ex.getMessage()).getBytes());
             }
@@ -755,13 +770,17 @@ public class DocumentViewerFactory {
             mdp.setMaximumSize(new Dimension(width, height));
             mdp.setPreferredSize(new Dimension(width, height));
             try {
-                mdp.showContent(id, previewProvider.getPreview().getBytes());
+                if (content == null) {
+                    mdp.showContent(id, ("FEHLER: kein Inhalt verfügbar").getBytes(StandardCharsets.UTF_8));
+                } else {
+                    mdp.showContent(id, content);
+                }
             } catch (Exception ex) {
-                mdp.showContent(id, ("FEHLER: " + ex.getMessage()).getBytes());
+                mdp.showContent(id, ("FEHLER: " + ex.getMessage()).getBytes(StandardCharsets.UTF_8));
             }
             return mdp;
         } else if (lFileName.endsWith(".wav") || lFileName.endsWith(".ogg") || lFileName.endsWith(".mp3")) {
-            SoundplayerPanel spp = new SoundplayerPanel(id, readOnly, saveCallback);
+            SoundplayerPanel spp = new SoundplayerPanel(id, fileName, readOnly, saveCallback);
             spp.setSize(new Dimension(width, height));
             spp.setMaximumSize(new Dimension(width, height));
             spp.setPreferredSize(new Dimension(width, height));
@@ -771,10 +790,18 @@ public class DocumentViewerFactory {
                 spp.showStatus("FEHLER: " + ex.getMessage());
             }
             return spp;
-        } else if (lFileName.endsWith(".html") || lFileName.endsWith(".htm")) {
+        } else if (lFileName.endsWith(".html")) {
             HtmlPanel hp = new HtmlPanel(id, readOnly);
             hp.setSize(new Dimension(width, height));
             hp.setFileName(fileName);
+            hp.setMaximumSize(new Dimension(width, height));
+            hp.setPreferredSize(new Dimension(width, height));
+            hp.showContent(id, content);
+
+            return hp;
+        } else if (lFileName.endsWith(".htm")) {
+            JavaFxBrowserPanel hp = new JavaFxBrowserPanel();
+            hp.setSize(new Dimension(width, height));
             hp.setMaximumSize(new Dimension(width, height));
             hp.setPreferredSize(new Dimension(width, height));
             hp.showContent(id, content);
@@ -868,49 +895,77 @@ public class DocumentViewerFactory {
 //                log.error("could not convert file to PDF: " + fileName, t);
 //            }
         } else if (lFileName.endsWith(".odt") || lFileName.endsWith(".ods")) {
+
+            DocumentPreview docPreview = null;
             try {
-                byte[] thumbBytes = null;
-                ZipInputStream zis
-                        = new ZipInputStream(new ByteArrayInputStream(content));
-                //get the zipped file list entry
-                ZipEntry ze = zis.getNextEntry();
+                docPreview = previewProvider.getPreview();
+            } catch (Exception ex) {
+                log.error(ex);
+                docPreview = new DocumentPreview("FEHLER: " + ex.getMessage());
+            }
+            if (DocumentPreview.TYPE_PDF.equals(docPreview.getPreviewType()) && docPreview.getBytes() != null && docPreview.getBytes().length > 0) {
+                PdfImageScrollingPanel pdfP = new PdfImageScrollingPanel(true, fileName, content, null);
+                pdfP.setSize(new Dimension(width, height));
+                pdfP.setMaximumSize(new Dimension(width, height));
+                pdfP.setPreferredSize(new Dimension(width, height));
+                pdfP.showContent(id, docPreview.getBytes());
+                if (previewProvider instanceof CaseDocumentPreviewProvider) {
+                    try {
+                        DocumentPreview previewText = ((CaseDocumentPreviewProvider) previewProvider).getPreviewAsText();
+                        if (previewText != null) {
+                            pdfP.showContentAsText(previewText.getText());
+                        }
+                    } catch (Exception prevEx) {
+                        log.error("Could not load preview as text", prevEx);
+                    }
+                }
+                return pdfP;
+            } else {
 
-                while (ze != null) {
+                try {
+                    byte[] thumbBytes = null;
+                    ZipInputStream zis
+                            = new ZipInputStream(new ByteArrayInputStream(content));
+                    //get the zipped file list entry
+                    ZipEntry ze = zis.getNextEntry();
 
-                    String thumbName = ze.getName();
-                    if (thumbName.toLowerCase().endsWith("thumbnail.png")) {
-                        byte[] buffer = new byte[1024];
-                        //create all non exists folders
-                        //else you will hit FileNotFoundException for compressed folder
+                    while (ze != null) {
 
-                        ByteArrayOutputStream bos = new ByteArrayOutputStream();
+                        String thumbName = ze.getName();
+                        if (thumbName.toLowerCase().endsWith("thumbnail.png")) {
+                            byte[] buffer = new byte[1024];
+                            //create all non exists folders
+                            //else you will hit FileNotFoundException for compressed folder
 
-                        int len;
-                        while ((len = zis.read(buffer)) > 0) {
-                            bos.write(buffer, 0, len);
+                            ByteArrayOutputStream bos = new ByteArrayOutputStream();
+
+                            int len;
+                            while ((len = zis.read(buffer)) > 0) {
+                                bos.write(buffer, 0, len);
+                            }
+
+                            bos.close();
+                            thumbBytes = bos.toByteArray();
+                            break;
                         }
 
-                        bos.close();
-                        thumbBytes = bos.toByteArray();
-                        break;
+                        ze = zis.getNextEntry();
                     }
 
-                    ze = zis.getNextEntry();
-                }
+                    zis.closeEntry();
+                    zis.close();
 
-                zis.closeEntry();
-                zis.close();
-
-                if (thumbBytes != null) {
-                    GifJpegPngImageWithTextPanel ip = new GifJpegPngImageWithTextPanel(thumbBytes, previewProvider.getPreview().getBytes());
-                    ip.setSize(width, height);
-                    ip.setMaximumSize(new Dimension(width, height));
-                    ip.setPreferredSize(new Dimension(width, height));
-                    ip.showContent(id, thumbBytes);
-                    return ip;
+                    if (thumbBytes != null) {
+                        GifJpegPngImageWithTextPanel ip = new GifJpegPngImageWithTextPanel(thumbBytes, docPreview.getText().getBytes());
+                        ip.setSize(width, height);
+                        ip.setMaximumSize(new Dimension(width, height));
+                        ip.setPreferredSize(new Dimension(width, height));
+                        ip.showContent(id, thumbBytes);
+                        return ip;
+                    }
+                } catch (Throwable t) {
+                    log.error("Error extracting thumbnail from " + fileName, t);
                 }
-            } catch (Throwable t) {
-                log.error("Error extracting thumbnail from " + fileName, t);
             }
         } else if (lFileName.endsWith(".bea")) {
             try {
@@ -957,22 +1012,45 @@ public class DocumentViewerFactory {
 //                // fall back to text preview 
 //            }
         }
-        // plain text preview is default
-        PlaintextPanel ptp = new PlaintextPanel();
-        ptp.setSize(new Dimension(width, height));
-        ptp.setMaximumSize(new Dimension(width, height));
-        ptp.setPreferredSize(new Dimension(width, height));
 
-        //ptp.showStatus("Vorschau wird geladen...");
-        // we just reuse the showStatus method because it is doing the same thing
-        //ptp.showStatus(previewContent);
+        // default / fallback
+        DocumentPreview docPreview = null;
         try {
-            ptp.showContent(id, previewProvider.getPreview().getBytes());
+            docPreview = previewProvider.getPreview();
         } catch (Exception ex) {
-            ptp.showContent(id, ("FEHLER: " + ex.getMessage()).getBytes());
+            log.error(ex);
+            docPreview = new DocumentPreview("FEHLER: " + ex.getMessage());
         }
+        if (docPreview.getBytes() != null && docPreview.getBytes().length > 0) {
+            PdfImageScrollingPanel pdfP = new PdfImageScrollingPanel(true, fileName, content, null);
+            pdfP.setSize(new Dimension(width, height));
+            pdfP.setMaximumSize(new Dimension(width, height));
+            pdfP.setPreferredSize(new Dimension(width, height));
+            pdfP.showContent(id, docPreview.getBytes());
+            if (previewProvider instanceof CaseDocumentPreviewProvider) {
+                try {
+                    DocumentPreview previewText = ((CaseDocumentPreviewProvider) previewProvider).getPreviewAsText();
+                    if (previewText != null) {
+                        pdfP.showContentAsText(previewText.getText());
+                    }
+                } catch (Exception prevEx) {
+                    log.error("Could not load preview as text", prevEx);
+                }
+            }
+            return pdfP;
+        } else {
+            // plain text preview is default
+            PlaintextPanel ptp = new PlaintextPanel();
+            ptp.setSize(new Dimension(width, height));
+            ptp.setMaximumSize(new Dimension(width, height));
+            ptp.setPreferredSize(new Dimension(width, height));
 
-        return ptp;
+            //ptp.showStatus("Vorschau wird geladen...");
+            // we just reuse the showStatus method because it is doing the same thing
+            //ptp.showStatus(previewContent);
+            ptp.showContent(id, docPreview.getText().getBytes());
+            return ptp;
+        }
 
     }
 

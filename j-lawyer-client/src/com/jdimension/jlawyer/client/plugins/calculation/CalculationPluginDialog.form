@@ -56,7 +56,9 @@
   </Layout>
   <SubComponents>
     <Container class="javax.swing.JScrollPane" name="scrollMain">
-
+      <Properties>
+        <Property name="horizontalScrollBarPolicy" type="int" value="30"/>
+      </Properties>
       <Layout class="org.netbeans.modules.form.compat2.layouts.support.JScrollPaneSupportLayout"/>
     </Container>
     <Component class="javax.swing.JLabel" name="lblDescription">

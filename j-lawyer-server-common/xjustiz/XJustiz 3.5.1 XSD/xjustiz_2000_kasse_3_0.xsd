@@ -1,0 +1,1426 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema"
+           xmlns:tns="http://www.xjustiz.de"
+           xmlns:din91379="urn:xoev-de:kosit:xoev:datentyp:din-91379_2022-08"
+           targetNamespace="http://www.xjustiz.de"
+           version="3.0.1"
+           elementFormDefault="qualified"
+           attributeFormDefault="unqualified">
+   <xs:annotation>
+      <xs:appinfo>
+         <standard>
+            <nameLang>Strukturierte Fachdaten für die Kommunikation im elektronischen Rechtsverkehr</nameLang>
+            <nameKurz>XJustiz</nameKurz>
+            <nameTechnisch>xjustiz</nameTechnisch>
+            <kennung>urn:xoev-de:blk-ag-it-standards:standard:xjustiz</kennung>
+            <beschreibung>XJustiz ist der bundesweit einheitliche Standard für den Austausch strukturierter elektronischer Informationen mit der Justiz.</beschreibung>
+         </standard>
+         <versionStandard>
+            <version>3.5.1</version>
+            <beschreibung>XJustiz beschreibt ein standardisiertes Datenaustauschformat für die elektronische Kommunikation innerhalb und mit der Justizverwaltung.</beschreibung>
+            <versionXOEVProfil>1.7.2</versionXOEVProfil>
+            <versionXOEVHandbuch>2.3.1</versionXOEVHandbuch>
+            <versionXGenerator>3.1.1</versionXGenerator>
+            <versionModellierungswerkzeug>19.0 SP3</versionModellierungswerkzeug>
+            <nameModellierungswerkzeug>MagicDraw</nameModellierungswerkzeug>
+         </versionStandard>
+      </xs:appinfo>
+   </xs:annotation>
+   <xs:include schemaLocation="xjustiz_0000_grunddatensatz_3_5.xsd"/>
+   <xs:include schemaLocation="xjustiz_2010_cl_kasse_3_0.xsd"/>
+   <xs:import schemaLocation="din-norm-91379-datatypes.xsd"
+              namespace="urn:xoev-de:kosit:xoev:datentyp:din-91379_2022-08"/>
+   <xs:complexType name="Type.KASSE.Ansatz">
+      <xs:annotation>
+         <xs:documentation>Der Datentyp enthält die fachlichen Anforderungen eines Kostentatbestands.</xs:documentation>
+      </xs:annotation>
+      <xs:sequence>
+         <xs:element name="kvNummer" type="din91379:datatypeC">
+            <xs:annotation>
+               <xs:documentation>Nummer des Gebühren- oder Auslagentatbestandes (z. B. "1210"). Hier ist der entsprechende eindeutige Schlüssel des Kostentatbestandes aus einem Kostengesetz mitzugeben. Für den Fall, dass ein freier Text eingegeben werden soll, steht ein eindeutiger Schlüssel bereit.</xs:documentation>
+            </xs:annotation>
+         </xs:element>
+         <xs:element name="umschluesselung" minOccurs="0" type="din91379:datatypeC">
+            <xs:annotation>
+               <xs:documentation>Über dieses Element kann ein landesspezifischer Wert zum Element Schlüssel mitgeteilt werden.</xs:documentation>
+            </xs:annotation>
+         </xs:element>
+         <xs:element name="bezeichnung" minOccurs="0" type="din91379:datatypeC">
+            <xs:annotation>
+               <xs:documentation>Bezeichnung (z. B. "Verfahren im Allgemeinen; §§ 34-37, 39-43, 48 GKG")</xs:documentation>
+            </xs:annotation>
+         </xs:element>
+         <xs:element name="gebuehrenwert" minOccurs="0" type="xs:double">
+            <xs:annotation>
+               <xs:documentation>Gebührenwert (z. B. Verfahrenswert = 3000.00). Die Zahl muss auf zwei Stellen nach dem Komma begrenzt werden.</xs:documentation>
+            </xs:annotation>
+         </xs:element>
+         <xs:element name="gebuehrensatz" minOccurs="0" type="xs:double">
+            <xs:annotation>
+               <xs:documentation>Satz der Gebühr ( z. B. 1,5)</xs:documentation>
+            </xs:annotation>
+         </xs:element>
+         <xs:element name="bezeichnung.auslagen" minOccurs="0" type="din91379:datatypeC">
+            <xs:annotation>
+               <xs:documentation>Höhe der Auslagen (z. B. je Datei 1,50 Euro)</xs:documentation>
+            </xs:annotation>
+         </xs:element>
+         <xs:element name="hoehe.gebuehrensatzAuslagen" minOccurs="0" type="xs:double">
+            <xs:annotation>
+               <xs:documentation>Satz der Auslagen (z. B. 10)</xs:documentation>
+            </xs:annotation>
+         </xs:element>
+         <xs:element name="betrag" minOccurs="0" type="tns:Type.GDS.Geldbetrag">
+            <xs:annotation>
+               <xs:documentation>Gebühr (Festbetrag z. B. 90.00)</xs:documentation>
+            </xs:annotation>
+         </xs:element>
+         <xs:element name="anteil.rechnungsposten" type="tns:Type.KASSE.Betragsanteil">
+            <xs:annotation>
+               <xs:documentation>Es ist die Höhe und der Betrag des Anteils am Gesamtbetrag anzugeben.</xs:documentation>
+            </xs:annotation>
+         </xs:element>
+         <xs:element name="klassifikation" type="tns:Code.KASSE.Klassifikation">
+            <xs:annotation>
+               <xs:documentation>Über dieses Element wird die Klassifikation des Schlüssels (z. B. Gebühr, Auslage) mitgeteilt.</xs:documentation>
+            </xs:annotation>
+         </xs:element>
+         <xs:element name="erloesart" type="tns:Code.KASSE.Erloesart">
+            <xs:annotation>
+               <xs:documentation>Über dieses Element wird die Erlösart des Schlüssels (z. B. "Anteil Erlös Gebühren") mitgeteilt.</xs:documentation>
+            </xs:annotation>
+         </xs:element>
+      </xs:sequence>
+   </xs:complexType>
+   <xs:complexType name="Type.KASSE.Betragsanteil">
+      <xs:sequence>
+         <xs:element name="anteil" minOccurs="0" type="din91379:datatypeC">
+            <xs:annotation>
+               <xs:documentation>Es kann die Höhe des Anteils als Quote des Gesamtbetrags angegeben werden. (z.B. 50%, 1/3, in voller Höhe etc.)</xs:documentation>
+            </xs:annotation>
+         </xs:element>
+         <xs:element name="anteilsbetrag" minOccurs="0" type="tns:Type.GDS.Geldbetrag">
+            <xs:annotation>
+               <xs:documentation>Es kann der Anteilsbetrag des Gesamtbetrags angegeben werden (z.B. 200,00).</xs:documentation>
+            </xs:annotation>
+         </xs:element>
+      </xs:sequence>
+   </xs:complexType>
+   <xs:complexType name="Type.KASSE.Buchungspruefung">
+      <xs:annotation>
+         <xs:documentation>Der Datentyp enthält nähere Informationen zum Datum und zum Feststeller der Buchungsprüfung.</xs:documentation>
+      </xs:annotation>
+      <xs:sequence>
+         <xs:element name="datum.pruefung" minOccurs="0" type="xs:dateTime"/>
+         <xs:element name="feststeller"
+                     maxOccurs="unbounded"
+                     type="tns:Type.GDS.Ref.Beteiligtennummer">
+            <xs:annotation>
+               <xs:documentation>Unter dem Feststeller ist der Feststeller, der Freigebende oder der Bestätigende gemeint.</xs:documentation>
+            </xs:annotation>
+         </xs:element>
+      </xs:sequence>
+   </xs:complexType>
+   <xs:complexType name="Type.KASSE.Entscheidung">
+      <xs:sequence>
+         <xs:element name="entscheidungsnummer" type="din91379:datatypeC">
+            <xs:annotation>
+               <xs:documentation>Die Entscheidungsnummer wird für eine Referenz innerhalb des XML-Dokuments benötigt. So kann mittelbar auf die Entscheidung verwiesen werden.</xs:documentation>
+            </xs:annotation>
+         </xs:element>
+         <xs:element name="entscheidungsdatum" type="xs:date">
+            <xs:annotation>
+               <xs:documentation>Über dieses Element wird das Datum der Entscheidung mitgeteilt.</xs:documentation>
+            </xs:annotation>
+         </xs:element>
+         <xs:element name="entscheidungsaktenzeichen"
+                     minOccurs="0"
+                     type="tns:Type.GDS.Aktenzeichen">
+            <xs:annotation>
+               <xs:documentation>Über dieses Element kann das Aktenzeichen und die Referenz auf die Entscheidungsbehörde mitgeteilt werden.</xs:documentation>
+            </xs:annotation>
+         </xs:element>
+         <xs:element name="entscheidungswert" minOccurs="0" type="xs:double">
+            <xs:annotation>
+               <xs:documentation>Über dieses Element kann der Wert mitgeteilt werden (z. B. Teilstreitwert für Umfang der Bewilligung).</xs:documentation>
+            </xs:annotation>
+         </xs:element>
+         <xs:element name="ref.beteiligter"
+                     minOccurs="0"
+                     type="tns:Type.GDS.Ref.Beteiligtennummer">
+            <xs:annotation>
+               <xs:documentation>Über dieses Element kann eine Referenz zum Beteiligten mitgeteilt werden.</xs:documentation>
+            </xs:annotation>
+         </xs:element>
+      </xs:sequence>
+   </xs:complexType>
+   <xs:complexType name="Type.KASSE.Erledigungen">
+      <xs:annotation>
+         <xs:documentation>Mit dem Datentyp sollen alle Szenarien abgedeckt werden, bei denen eine Forderung ohne die Tätigung einer Zahlung erlischt.</xs:documentation>
+      </xs:annotation>
+      <xs:sequence>
+         <xs:element name="erledigung" minOccurs="0" maxOccurs="unbounded">
+            <xs:annotation>
+               <xs:documentation>Eine Erledigung kann aus mehreren Erledigungen bestehen.</xs:documentation>
+            </xs:annotation>
+            <xs:complexType>
+               <xs:sequence>
+                  <xs:element name="erledigungsbetrag" type="tns:Type.GDS.Geldbetrag">
+                     <xs:annotation>
+                        <xs:documentation>Der Betrag enthält den gezahlten Betrag mit Vorzeichen (z. B. – 1.100.96).</xs:documentation>
+                     </xs:annotation>
+                  </xs:element>
+                  <xs:element name="sachkonto" minOccurs="0" type="din91379:datatypeC">
+                     <xs:annotation>
+                        <xs:documentation>Über dieses Element kann der Sachkontoschlüssel mitgegeben werden.</xs:documentation>
+                     </xs:annotation>
+                  </xs:element>
+                  <xs:element name="erledigungsart"
+                              minOccurs="0"
+                              type="tns:Code.KASSE.Erledigungsart">
+                     <xs:annotation>
+                        <xs:documentation>Über dieses Element kann die Information zur Erledigungsart mitgegeben werden.</xs:documentation>
+                     </xs:annotation>
+                  </xs:element>
+                  <xs:element name="erledigungsdatum" type="xs:date">
+                     <xs:annotation>
+                        <xs:documentation>Es ist das Datum anzugeben, zu welchem die Forderung auf Grund der Erledigung erlischt.</xs:documentation>
+                     </xs:annotation>
+                  </xs:element>
+                  <xs:element name="buchungsdatum" minOccurs="0" type="xs:dateTime">
+                     <xs:annotation>
+                        <xs:documentation>Über dieses Element kann die Information zum Buchungsdatum im Kassen-/Zahlstellensystem mitgegeben werden.</xs:documentation>
+                     </xs:annotation>
+                  </xs:element>
+                  <xs:element name="buchungsinformationen"
+                              minOccurs="0"
+                              type="din91379:datatypeC">
+                     <xs:annotation>
+                        <xs:documentation>Über dieses Element können die Buchungsinformationen (z. B. Zeitbuchnummer der Kasse) mitgeteilt werden.</xs:documentation>
+                     </xs:annotation>
+                  </xs:element>
+                  <xs:element name="kassenzeichen" minOccurs="0" type="din91379:datatypeC">
+                     <xs:annotation>
+                        <xs:documentation>Über dieses Element kann das Kassenzeichen mitgeteilt werden.</xs:documentation>
+                     </xs:annotation>
+                  </xs:element>
+                  <xs:element name="rechnungsnummer" minOccurs="0" type="xs:integer">
+                     <xs:annotation>
+                        <xs:documentation>Über dieses Element kann eine eindeutige Rechnungsnummer zu der Zahlung angegeben werden.</xs:documentation>
+                     </xs:annotation>
+                  </xs:element>
+               </xs:sequence>
+            </xs:complexType>
+         </xs:element>
+         <xs:element name="gesamtbetrag" minOccurs="0" type="tns:Type.GDS.Geldbetrag">
+            <xs:annotation>
+               <xs:documentation>Hier kann der Gesamtbetrag aller Beträge eingetragen werden.</xs:documentation>
+            </xs:annotation>
+         </xs:element>
+      </xs:sequence>
+   </xs:complexType>
+   <xs:complexType name="Type.KASSE.Kassenanordnungsgrunddaten">
+      <xs:annotation>
+         <xs:documentation>Die Kassenanordnungsgrunddaten enthalten in Ergänzung zum Datentyp 'Type.GDS.Grunddaten' weitere Metainformationen zur festsetzenden Dienststelle, respektive Mandant, sowie Metainformationen zur Buchung und Feststellern.</xs:documentation>
+      </xs:annotation>
+      <xs:sequence>
+         <xs:element name="mitteilungLJK" minOccurs="0" type="din91379:datatypeC">
+            <xs:annotation>
+               <xs:documentation>Mitteilungstext bzgl. sofortiger Handlung der Landesjustizkasse</xs:documentation>
+            </xs:annotation>
+         </xs:element>
+         <xs:element name="ref.instanznummer" minOccurs="0" type="din91379:datatypeC">
+            <xs:annotation>
+               <xs:documentation>Hier wird auf die Instanzbehörde referenziert, zu welcher ergänzende Angaben vorgenommen werden müssen. Referenziert wird auf die Instanznummer, die in den Instanzdaten der Behörde zugeordnet wurde. Der Mandant enthält ergänzende Daten zur festsetzenden Stelle.</xs:documentation>
+            </xs:annotation>
+         </xs:element>
+         <xs:element name="zweigstellen" minOccurs="0" type="xs:integer">
+            <xs:annotation>
+               <xs:documentation>Über dieses Element kann die Nummer der Dienststelle mitgegeben werden.</xs:documentation>
+            </xs:annotation>
+         </xs:element>
+         <xs:element name="umsatzsteuerID" minOccurs="0" type="din91379:datatypeC">
+            <xs:annotation>
+               <xs:documentation>Über dieses Element kann die Steuernummer der umsatzsteuerpflichtigen Stelle mitgegeben werden.</xs:documentation>
+            </xs:annotation>
+         </xs:element>
+         <xs:element name="freiheitsstrafe" minOccurs="0" type="xs:boolean">
+            <xs:annotation>
+               <xs:documentation>Über dieses Element kann die Verfahrensart (Strafsache mit Freiheitsstrafe) mitgegeben werden, um den Inhalt der Zahlungsaufforderung steuern zu können.</xs:documentation>
+            </xs:annotation>
+         </xs:element>
+         <xs:element name="buchung" minOccurs="0">
+            <xs:annotation>
+               <xs:documentation>Das Element enthält alle Daten zur Buchung.</xs:documentation>
+            </xs:annotation>
+            <xs:complexType>
+               <xs:sequence>
+                  <xs:element name="einzelplan" minOccurs="0" type="din91379:datatypeC">
+                     <xs:annotation>
+                        <xs:documentation>Über dieses Element kann die Einzelplannr.(z. B. 05 für Justiz) mitgegeben werden. Der Einzelplan enthält die Einnahmen und Ausgaben eines Geschäftsbereichs des Staates (z. B. Justiz).</xs:documentation>
+                     </xs:annotation>
+                  </xs:element>
+                  <xs:element name="buchungskapitel" minOccurs="0" type="din91379:datatypeC">
+                     <xs:annotation>
+                        <xs:documentation>Über dieses Element kann ein Buchungskapitel (z. B. 005 für Gerichte der ordentlichen Gerichtsbarkeit) mitgegeben werden. Der Geschäftsbereich wird in der Buchführung mit einzelnen Kapiteln abgebildet (z. B. 0501 = Ministerium).</xs:documentation>
+                     </xs:annotation>
+                  </xs:element>
+                  <xs:element name="buchungstitel" minOccurs="0" type="din91379:datatypeC">
+                     <xs:annotation>
+                        <xs:documentation>Über dieses Element kann ein Buchungstitel (z. B. 11142 für Gerichtskosten) mitgegeben werden. Ein Kapitel kann einzelne Titel als Buchungsabschnitte enthalten (z. B. 412 01 = Reisekosten der Schöffinnen und Schöffen und der ehrenamtlichen Richterinnen und Richter).</xs:documentation>
+                     </xs:annotation>
+                  </xs:element>
+                  <xs:element name="buchungsuntertitel"
+                              minOccurs="0"
+                              maxOccurs="unbounded"
+                              type="din91379:datatypeC">
+                     <xs:annotation>
+                        <xs:documentation>Über dieses Element kann ein Untertitel (z. B. 0003 = Entschädigung für Zeugen) mitgegeben werden. Ein Buchungstitel kann einzelne Buchungsuntertitel als Buchungsunterabschnitte enthalten (z. B. 0003 = Entschädigungen für Zeugen).</xs:documentation>
+                     </xs:annotation>
+                  </xs:element>
+                  <xs:element name="haushaltsjahr" minOccurs="0" type="xs:gYear">
+                     <xs:annotation>
+                        <xs:documentation>Über dieses Element wird das Haushaltsjahr mitgegeben.</xs:documentation>
+                     </xs:annotation>
+                  </xs:element>
+                  <xs:element name="buchungsperiodeVon" minOccurs="0" type="xs:date">
+                     <xs:annotation>
+                        <xs:documentation>Über dieses Element kann das Anfangsdatum der Buchungsperiode mitgegeben werden.</xs:documentation>
+                     </xs:annotation>
+                  </xs:element>
+                  <xs:element name="buchungsperiodeBis" minOccurs="0" type="xs:date">
+                     <xs:annotation>
+                        <xs:documentation>Über dieses Element kann das Enddatum der Buchungsperiode mitgegeben werden.</xs:documentation>
+                     </xs:annotation>
+                  </xs:element>
+                  <xs:element name="finanzstelle" minOccurs="0" type="din91379:datatypeC">
+                     <xs:annotation>
+                        <xs:documentation>Über dieses Element kann der Finanzstellenschlüssel mitgegeben werden. Die Finanzstelle entspricht einem bestimmten Bereich (z. B. Dienststelle)</xs:documentation>
+                     </xs:annotation>
+                  </xs:element>
+                  <xs:element name="finanzposition" minOccurs="0" type="din91379:datatypeC">
+                     <xs:annotation>
+                        <xs:documentation>Über dieses Element kann der Finanzpostionenschlüssel mitgegeben werden. Die Finanzposition entspricht der Haushaltsstelle (Kapitel, Titel und Untertitel).</xs:documentation>
+                     </xs:annotation>
+                  </xs:element>
+                  <xs:element name="kostenstelle" minOccurs="0" type="din91379:datatypeC">
+                     <xs:annotation>
+                        <xs:documentation>Über dieses Element kann der Schlüssel der Kostenstelle mitgegeben werden. Die Kostenstelle entspricht dem Ort der Kostenentstehung und spezifiziert wo die die Kosten entstanden sind (z. B. Kostenstelle 020 = Jugendrichter).</xs:documentation>
+                     </xs:annotation>
+                  </xs:element>
+                  <xs:element name="kostenauftragsnummer" minOccurs="0" type="din91379:datatypeC">
+                     <xs:annotation>
+                        <xs:documentation>Über dieses Element kann der Schlüssel des Produkts bzw. des PSP-Elementes mitgegeben werden.</xs:documentation>
+                     </xs:annotation>
+                  </xs:element>
+                  <xs:element name="sachkonto" minOccurs="0" type="din91379:datatypeC">
+                     <xs:annotation>
+                        <xs:documentation>Über dieses Element kann der Sachkontoschlüssel mitgegeben werden.</xs:documentation>
+                     </xs:annotation>
+                  </xs:element>
+                  <xs:element name="freigabestatus"
+                              minOccurs="0"
+                              type="tns:Code.KASSE.Freigabestatus">
+                     <xs:annotation>
+                        <xs:documentation>Über dieses Element kann mitgeteilt werden, ob eine Transaktion dem 2-, 4- oder 6-Augen-Prinzip unterliegt.</xs:documentation>
+                     </xs:annotation>
+                  </xs:element>
+                  <xs:element name="kassenanordnungskennung"
+                              minOccurs="0"
+                              type="din91379:datatypeC">
+                     <xs:annotation>
+                        <xs:documentation>Über dieses Element kann die Kennung der Kassenanordnung (z. B. KD 11) mitgegeben werden.</xs:documentation>
+                     </xs:annotation>
+                  </xs:element>
+                  <xs:element name="belegdatum" minOccurs="0" type="xs:date">
+                     <xs:annotation>
+                        <xs:documentation>Über dieses Element kann das Datum des Geschäftsvorfalls (z. B. Rechnungsdatum, Antragsdatum) mitgegeben werden.</xs:documentation>
+                     </xs:annotation>
+                  </xs:element>
+                  <xs:element name="sachlicheRichtigkeit"
+                              minOccurs="0"
+                              type="tns:Type.KASSE.Buchungspruefung">
+                     <xs:annotation>
+                        <xs:documentation>Über dieses Element kann das Datum der Feststellung der sachlichen Richtigkeit mitgegeben werden. Weiterhin können Angaben zur Identifikation des Feststellers der sachlichen Richtigkeit übergeben werden.</xs:documentation>
+                     </xs:annotation>
+                  </xs:element>
+                  <xs:element name="rechnerischeRichtigkeit"
+                              minOccurs="0"
+                              type="tns:Type.KASSE.Buchungspruefung">
+                     <xs:annotation>
+                        <xs:documentation>Über dieses Element kann das Datum der Feststellung der rechnerischen Richtigkeit der Kassenanordnung (z. B. Datum der rechnerischen Richtigkeit) mitgegeben werden. Weiterhin können Angaben zur Identifikation des Feststellers der rechnerischen Richtigkeit übergeben werden.</xs:documentation>
+                     </xs:annotation>
+                  </xs:element>
+                  <xs:element name="freigabe.anordnung"
+                              minOccurs="0"
+                              type="tns:Type.KASSE.Buchungspruefung">
+                     <xs:annotation>
+                        <xs:documentation>Über dieses Element kann das Datum der Freigabe der Anordnung mitgegeben werden. Weiterhin können Angaben zur Identifikation des Freigebenden der Anordnung übergeben werden.</xs:documentation>
+                     </xs:annotation>
+                  </xs:element>
+                  <xs:element name="bestaetigung.anordnung"
+                              minOccurs="0"
+                              type="tns:Type.KASSE.Buchungspruefung">
+                     <xs:annotation>
+                        <xs:documentation>Über dieses Element kann das Datum der Bestätigung der Anordnung (z. B. bei einem 6-Augen-Prinzip) mitgegeben werden. Weiterhin können Angaben zur Identifikation des Bestätigenden der Anordnung übergeben werden.</xs:documentation>
+                     </xs:annotation>
+                  </xs:element>
+                  <xs:element name="gueltigkeitsende" minOccurs="0" type="xs:date">
+                     <xs:annotation>
+                        <xs:documentation>Über dieses Element kann das Ende der Gültigkeit einer Kassenanordnung mitgegeben werden.</xs:documentation>
+                     </xs:annotation>
+                  </xs:element>
+                  <xs:element name="faelligkeitsdatum.zahlung" minOccurs="0" type="xs:date">
+                     <xs:annotation>
+                        <xs:documentation>Über dieses Element kann die Fälligkeit der Zahlung mitgegeben werden.</xs:documentation>
+                     </xs:annotation>
+                  </xs:element>
+                  <xs:element name="gesamtbetrag" minOccurs="0" type="tns:Type.GDS.Geldbetrag">
+                     <xs:annotation>
+                        <xs:documentation>Über dieses Element wird der Gesamtbetrag der Kassenanordnung mitgegeben.</xs:documentation>
+                     </xs:annotation>
+                  </xs:element>
+                  <xs:element name="kassenzeichen" minOccurs="0" type="din91379:datatypeC">
+                     <xs:annotation>
+                        <xs:documentation>Über dieses Element kann das Kassenzeichen bzw. die Rechnungsnummer mitgegeben werden.</xs:documentation>
+                     </xs:annotation>
+                  </xs:element>
+                  <xs:element name="kassenzeichen.erstanordnung"
+                              minOccurs="0"
+                              type="din91379:datatypeC">
+                     <xs:annotation>
+                        <xs:documentation>Über dieses Element kann das Kassenzeichen bzw. die Rechnungsnummer der Erstanordnung mitgegeben werden.</xs:documentation>
+                     </xs:annotation>
+                  </xs:element>
+                  <xs:element name="verwendungszweck" minOccurs="0" type="din91379:datatypeD">
+                     <xs:annotation>
+                        <xs:documentation>Über dieses Element kann der Verwendungszweck einer Zahlung mitgegeben werden.</xs:documentation>
+                     </xs:annotation>
+                  </xs:element>
+                  <xs:element name="begruendung" minOccurs="0" type="din91379:datatypeC">
+                     <xs:annotation>
+                        <xs:documentation>Über dieses Element kann die Begründung einer Zahlung mitgegeben werden.</xs:documentation>
+                     </xs:annotation>
+                  </xs:element>
+                  <xs:element name="zahlweg" minOccurs="0" type="tns:Code.KASSE.Zahlwege">
+                     <xs:annotation>
+                        <xs:documentation>Über dieses Element kann der Zahlweg (z. B. SEPA-Überweisung, Verrechnung, Nichtzahlung) mitgegeben werden.</xs:documentation>
+                     </xs:annotation>
+                  </xs:element>
+                  <xs:element name="zahlungsanzeige" minOccurs="0" type="xs:boolean">
+                     <xs:annotation>
+                        <xs:documentation>Dieses Element enthält einen booleschen Wert (Ja/Nein), der aussagt, ob eine Zahlung der festsetzenden Stelle mitgeteilt werden muss (Wert = Ja).</xs:documentation>
+                     </xs:annotation>
+                  </xs:element>
+                  <xs:element name="mahnschluessel"
+                              minOccurs="0"
+                              type="tns:Code.KASSE.Mahnstatus">
+                     <xs:annotation>
+                        <xs:documentation>Über dieses Element kann mitgeteilt werden, ob und wann eine Mahnung erfolgen soll.</xs:documentation>
+                     </xs:annotation>
+                  </xs:element>
+               </xs:sequence>
+            </xs:complexType>
+         </xs:element>
+         <xs:element name="meldepflichtig" minOccurs="0" maxOccurs="unbounded">
+            <xs:complexType>
+               <xs:sequence>
+                  <xs:element name="meldekennzahl" type="xs:integer">
+                     <xs:annotation>
+                        <xs:documentation>Über dieses Element wird eine Kennzahl mitgeteilt. Z.B. eine Kennzahl nach dem AWG.</xs:documentation>
+                     </xs:annotation>
+                  </xs:element>
+                  <xs:element name="belegart" minOccurs="0" type="xs:integer">
+                     <xs:annotation>
+                        <xs:documentation>Über dieses Element kann die Belegart mitgeteilt werden.</xs:documentation>
+                     </xs:annotation>
+                  </xs:element>
+                  <xs:element name="meldetext" minOccurs="0" type="din91379:datatypeC">
+                     <xs:annotation>
+                        <xs:documentation>Über dieses Element kann der Meldetext mitgeteilt werden.</xs:documentation>
+                     </xs:annotation>
+                  </xs:element>
+               </xs:sequence>
+            </xs:complexType>
+         </xs:element>
+      </xs:sequence>
+   </xs:complexType>
+   <xs:complexType name="Type.KASSE.Kontierungsposten">
+      <xs:annotation>
+         <xs:documentation>Der Kontierungsposten enthält alle Fachdaten zu den Kontierungsposten des Kostenschuldners.</xs:documentation>
+      </xs:annotation>
+      <xs:sequence>
+         <xs:element name="kontierungsposten" minOccurs="0" maxOccurs="unbounded">
+            <xs:complexType>
+               <xs:sequence>
+                  <xs:element name="kontierungsbetrag" type="tns:Type.GDS.Geldbetrag">
+                     <xs:annotation>
+                        <xs:documentation>Der Kontierungswert enthält den Betrag mit Vorzeichen (z. B. – 1.100,96).</xs:documentation>
+                     </xs:annotation>
+                  </xs:element>
+                  <xs:element name="erloesart" type="tns:Code.KASSE.Erloesart">
+                     <xs:annotation>
+                        <xs:documentation>Über dieses Element wird die Erlösart angegeben.</xs:documentation>
+                     </xs:annotation>
+                  </xs:element>
+                  <xs:element name="kostenart" minOccurs="0" type="din91379:datatypeC">
+                     <xs:annotation>
+                        <xs:documentation>Über dieses Element kann die Kostenart angegeben werden.</xs:documentation>
+                     </xs:annotation>
+                  </xs:element>
+                  <xs:element name="kostenstelle" minOccurs="0" type="din91379:datatypeC">
+                     <xs:annotation>
+                        <xs:documentation>Über dieses Element kann die Kostenstelle angegeben werden.</xs:documentation>
+                     </xs:annotation>
+                  </xs:element>
+                  <xs:element name="kostenprodukt" minOccurs="0" type="din91379:datatypeC">
+                     <xs:annotation>
+                        <xs:documentation>Über dieses Element kann das Kostenprodukt angegeben werden.</xs:documentation>
+                     </xs:annotation>
+                  </xs:element>
+               </xs:sequence>
+            </xs:complexType>
+         </xs:element>
+      </xs:sequence>
+   </xs:complexType>
+   <xs:complexType name="Type.KASSE.Kostenfachdaten">
+      <xs:sequence>
+         <xs:element name="kostenrelevanz"
+                     minOccurs="0"
+                     default="true"
+                     type="xs:boolean">
+            <xs:annotation>
+               <xs:documentation>Dieser Datentyp enthält einen booleschen Wert (Ja/Nein), der aussagt, ob ein Repräsentat kostenrelevant ist (Wert = Ja).</xs:documentation>
+            </xs:annotation>
+         </xs:element>
+         <xs:element name="kostentyp" minOccurs="0" type="tns:Code.KASSE.Kostentyp">
+            <xs:annotation>
+               <xs:documentation>Dieser Datentyp enthält einen aus einer Codeliste bestimmten Wert. Diese Liste wird zur Gruppierung kostenrechtlich relevanter Informationen verwendet.</xs:documentation>
+            </xs:annotation>
+         </xs:element>
+         <xs:element name="kostenspezifischeVerwendung"
+                     minOccurs="0"
+                     type="din91379:datatypeC">
+            <xs:annotation>
+               <xs:documentation>Über dieses Element kann die Information zur kostenspezifischen Verwendung einer XJustiz-Nachricht mitgegeben werden. Das kann bei einer Zahlung die Information der Zuordnung zu einer eindeutigen Kassenanordnung sein.</xs:documentation>
+            </xs:annotation>
+         </xs:element>
+      </xs:sequence>
+   </xs:complexType>
+   <xs:complexType name="Type.KASSE.Niederschlagungen">
+      <xs:annotation>
+         <xs:documentation>Da einige Bundesländer sachkontenscharf niederschlagen, wird ein eigener Typ 'Niederschlagung' benötigt.</xs:documentation>
+      </xs:annotation>
+      <xs:sequence>
+         <xs:element name="niederschlagung" minOccurs="0" maxOccurs="unbounded">
+            <xs:complexType>
+               <xs:sequence>
+                  <xs:element name="faelligkeit.forderung" type="xs:date">
+                     <xs:annotation>
+                        <xs:documentation>Anzugeben ist das Fälligkeitsdatum der Forderung, die niedergeschlagen werden soll.</xs:documentation>
+                     </xs:annotation>
+                  </xs:element>
+                  <xs:element name="sachkonto" minOccurs="0" type="din91379:datatypeC">
+                     <xs:annotation>
+                        <xs:documentation>Hier kann das Sachkonto der niederzuschlagenden Forderung angegeben werden.</xs:documentation>
+                     </xs:annotation>
+                  </xs:element>
+                  <xs:element name="niederschlagung.hoehe" type="tns:Type.GDS.Geldbetrag">
+                     <xs:annotation>
+                        <xs:documentation>Anzugeben ist die Höhe der Niederschlagung, da Forderungen auch teilweise niedergeschlagen werden müssen, z. B. dann, wenn sie nur zu einem Teil beglichen sind.</xs:documentation>
+                     </xs:annotation>
+                  </xs:element>
+                  <xs:element name="niederschlagung.grund"
+                              maxOccurs="unbounded"
+                              type="din91379:datatypeC">
+                     <xs:annotation>
+                        <xs:documentation>Anzugeben ist mindestens ein Grund, der zur Niederschlagung der Forderung geführt hat.</xs:documentation>
+                     </xs:annotation>
+                  </xs:element>
+                  <xs:element name="rechnungsnummer" minOccurs="0" type="xs:integer">
+                     <xs:annotation>
+                        <xs:documentation>Hier kann eine Rechnungsnummer angegeben werden.</xs:documentation>
+                     </xs:annotation>
+                  </xs:element>
+                  <xs:element name="datum.niederschlagung" minOccurs="0" type="xs:date">
+                     <xs:annotation>
+                        <xs:documentation>Hier kann das Wertstellungsdatum der Niederschlagung mitgegeben werden. Einige Kassensysteme werden das nicht benötigen, da hier üblicherweise das Rechenlaufdatum übernommen wird. Da dies aber nicht Standard ist, wird hier vorsichtshalber dieses Datum mit aufgenommen.</xs:documentation>
+                     </xs:annotation>
+                  </xs:element>
+                  <xs:element name="hinweise.niederschlagung"
+                              minOccurs="0"
+                              maxOccurs="unbounded"
+                              type="din91379:datatypeC">
+                     <xs:annotation>
+                        <xs:documentation>Über dieses Element können weitere Informationen zur Niederschlagung angegeben werden. So kann zum Beispiel angegeben werden, ob es sich um eine befristete/ unbefristete Niederschlagung handelt.</xs:documentation>
+                     </xs:annotation>
+                  </xs:element>
+               </xs:sequence>
+            </xs:complexType>
+         </xs:element>
+         <xs:element name="gesamtbetrag" minOccurs="0" type="tns:Type.GDS.Geldbetrag">
+            <xs:annotation>
+               <xs:documentation>Hier kann der Gesamtbetrag aller Niederschlagungen eingetragen werden.</xs:documentation>
+            </xs:annotation>
+         </xs:element>
+      </xs:sequence>
+   </xs:complexType>
+   <xs:complexType name="Type.KASSE.Niederschlagungsaufhebungen">
+      <xs:annotation>
+         <xs:documentation>Falls die Gründe für eine Niederschlagung nicht mehr vorliegen, muss sie aufgehoben werden können.</xs:documentation>
+      </xs:annotation>
+      <xs:sequence>
+         <xs:element name="niederschlagungsaufhebung"
+                     minOccurs="0"
+                     maxOccurs="unbounded">
+            <xs:complexType>
+               <xs:sequence>
+                  <xs:element name="faelligkeit.forderung" type="xs:date">
+                     <xs:annotation>
+                        <xs:documentation>Anzugeben ist das Fälligkeitsdatum der niedergeschlagenen Forderung.</xs:documentation>
+                     </xs:annotation>
+                  </xs:element>
+                  <xs:element name="sachkonto" minOccurs="0" type="din91379:datatypeC">
+                     <xs:annotation>
+                        <xs:documentation>Hier kann das Sachkonto der niedergeschlagenen Forderung angegeben werden.</xs:documentation>
+                     </xs:annotation>
+                  </xs:element>
+                  <xs:element name="niederschlagung.hoehe" type="tns:Type.GDS.Geldbetrag">
+                     <xs:annotation>
+                        <xs:documentation>Anzugeben ist die Höhe der Aufhebung.</xs:documentation>
+                     </xs:annotation>
+                  </xs:element>
+                  <xs:element name="rechnungsnummer" minOccurs="0" type="xs:integer">
+                     <xs:annotation>
+                        <xs:documentation>Hier kann eine Rechnungsnummer angegeben werden.</xs:documentation>
+                     </xs:annotation>
+                  </xs:element>
+                  <xs:element name="datum.niederschlagung" minOccurs="0" type="xs:date">
+                     <xs:annotation>
+                        <xs:documentation>Hier kann das Datum der aufzuhebenden Niederschlagung übergeben werden.</xs:documentation>
+                     </xs:annotation>
+                  </xs:element>
+                  <xs:element name="hinweise.niederschlagungsaufhebung"
+                              minOccurs="0"
+                              maxOccurs="unbounded"
+                              type="din91379:datatypeC">
+                     <xs:annotation>
+                        <xs:documentation>Über dieses Element können weitere Informationen zur Niederschlagungsaufhebung angegeben werden.</xs:documentation>
+                     </xs:annotation>
+                  </xs:element>
+               </xs:sequence>
+            </xs:complexType>
+         </xs:element>
+         <xs:element name="gesamtbetrag" minOccurs="0" type="tns:Type.GDS.Geldbetrag">
+            <xs:annotation>
+               <xs:documentation>Hier kann der Gesamtbetrag aller Niederschlagungsaufhebungen eingetragen werden.</xs:documentation>
+            </xs:annotation>
+         </xs:element>
+      </xs:sequence>
+   </xs:complexType>
+   <xs:complexType name="Type.KASSE.Rechnungspostenblock">
+      <xs:annotation>
+         <xs:documentation>Der Rechnungspostenblock enthält alle Fachdaten zu den Rechnungsposten des Zahlungspartners.</xs:documentation>
+      </xs:annotation>
+      <xs:sequence>
+         <xs:element name="hinweis.rechnungspostenblock"
+                     minOccurs="0"
+                     maxOccurs="unbounded"
+                     type="din91379:datatypeC">
+            <xs:annotation>
+               <xs:documentation>Hinweis zum Rechnungspostenblock (z.B. korrigierte Rechnung auf Grund der Anweisung der Dienstaufsichtsbehörde)</xs:documentation>
+            </xs:annotation>
+         </xs:element>
+         <xs:element name="erstschuldner-kassenzeichen"
+                     minOccurs="0"
+                     maxOccurs="unbounded"
+                     type="din91379:datatypeC">
+            <xs:annotation>
+               <xs:documentation>Im Falle einer Rechnung gegen den Zweitschuldner kann hier auf das Kassenzeichen des Erstschuldners verwiesen werden. Die Daten des Erstschuldners können in den Grunddaten übergeben werden (Rolle: Erstschuldner)</xs:documentation>
+            </xs:annotation>
+         </xs:element>
+         <xs:element name="vorbehalt" minOccurs="0">
+            <xs:annotation>
+               <xs:documentation>Bei einer anteilmäßigen Inanspruchnahme des Kostenschuldners kann unter diesem Element ein eindeutiger Vorbehalt über die Möglichkeit einer weiteren Inanspruchnahme angegeben werden.</xs:documentation>
+            </xs:annotation>
+            <xs:complexType>
+               <xs:sequence>
+                  <xs:element name="vorbehaltshinweis" minOccurs="0" type="din91379:datatypeC">
+                     <xs:annotation>
+                        <xs:documentation>Hier kann ein Hinweis zum Vorbehalt angegeben werden.</xs:documentation>
+                     </xs:annotation>
+                  </xs:element>
+                  <xs:element name="vorbehaltsbetrag"
+                              minOccurs="0"
+                              type="tns:Type.GDS.Geldbetrag">
+                     <xs:annotation>
+                        <xs:documentation>Hier kann der Vorbehaltsbetrag angegeben werden, der zu einem späteren Zeitpunkt von dem Kostenschuldner eingefordert werden kann.</xs:documentation>
+                     </xs:annotation>
+                  </xs:element>
+               </xs:sequence>
+            </xs:complexType>
+         </xs:element>
+         <xs:element name="anrechnung" minOccurs="0" type="tns:Type.GDS.Geldbetrag">
+            <xs:annotation>
+               <xs:documentation>Anrechnung eines Überschusses auf die Kostenschuld eines anderen Verfahrensbeteiligten.</xs:documentation>
+            </xs:annotation>
+         </xs:element>
+         <xs:element name="rechnungsposten" minOccurs="0" maxOccurs="unbounded">
+            <xs:annotation>
+               <xs:documentation>Der Rechnungsposten enthält alle Fachdaten zum Kostentatbestand. Er ist optional, da einige Bundesländer auch Nullrechnungen unter Anrechnung von bereits geleisteten Zahlungen zulassen.</xs:documentation>
+            </xs:annotation>
+            <xs:complexType>
+               <xs:sequence>
+                  <xs:element name="rechnungspostennummer" type="din91379:datatypeC">
+                     <xs:annotation>
+                        <xs:documentation>Die Rechnungspostennummer wird für eine Referenz aus anderen Elementen innerhalb des XML-Dokuments benötigt. So kann mittelbar auf den Rechnungsposten verwiesen werden.</xs:documentation>
+                     </xs:annotation>
+                  </xs:element>
+                  <xs:element name="position" type="xs:integer">
+                     <xs:annotation>
+                        <xs:documentation>Position des Rechnungspostens im Rechnungspostenblock</xs:documentation>
+                     </xs:annotation>
+                  </xs:element>
+                  <xs:element name="ansatz" type="tns:Type.KASSE.Ansatz">
+                     <xs:annotation>
+                        <xs:documentation>Hier sind die fachlichen Anforderungen eines Kostentatbestands anzugeben.</xs:documentation>
+                     </xs:annotation>
+                  </xs:element>
+                  <xs:element name="rechnungspostenbetrag" type="tns:Type.GDS.Geldbetrag">
+                     <xs:annotation>
+                        <xs:documentation>Hier ist der gesamte Rechnungspostenbetrag bestehend aus Gebühren/ Auslagen etc. und, sofern einschlägig, Steuerbeträgen anzugeben.</xs:documentation>
+                     </xs:annotation>
+                  </xs:element>
+                  <xs:element name="vorbehaltsposten" minOccurs="0" type="xs:boolean">
+                     <xs:annotation>
+                        <xs:documentation>Unter diesem Element kann angegeben werden, ob ein Vorbehaltsposten vorliegt.</xs:documentation>
+                     </xs:annotation>
+                  </xs:element>
+                  <xs:element name="gerichtlicheFestlegung" minOccurs="0" type="xs:boolean">
+                     <xs:annotation>
+                        <xs:documentation>Sofern das Gericht die Höhe des Rechnungspostens unter Missachtung der Rechenvorschrift der Gerichtskostengesetze festlegt hat, kann die gerichtliche Festlegung an dieser Stelle mitgeteilt werden.</xs:documentation>
+                     </xs:annotation>
+                  </xs:element>
+                  <xs:element name="rechnungspostenbemerkung"
+                              minOccurs="0"
+                              type="din91379:datatypeC">
+                     <xs:annotation>
+                        <xs:documentation>Bemerkung (z. B. Hinweise zum Zurückbehaltungsrecht)</xs:documentation>
+                     </xs:annotation>
+                  </xs:element>
+                  <xs:element name="durchlaufendesGeld" minOccurs="0" type="xs:boolean">
+                     <xs:annotation>
+                        <xs:documentation>Dieses optionale Element enthält einen booleschen Wert (Ja/Nein), der aussagt, ob ein Rechnungsposten durchlaufendes Geld ist (True = Ja).</xs:documentation>
+                     </xs:annotation>
+                  </xs:element>
+                  <xs:element name="zweitschuldner" minOccurs="0" type="xs:boolean">
+                     <xs:annotation>
+                        <xs:documentation>Existiert mindestens ein weiterer Kostenschuldner, kann dies an dieser Stelle mitgeteilt werden.</xs:documentation>
+                     </xs:annotation>
+                  </xs:element>
+                  <xs:element name="ref.rechnungsposten"
+                              minOccurs="0"
+                              maxOccurs="unbounded"
+                              type="din91379:datatypeC">
+                     <xs:annotation>
+                        <xs:documentation>Ein Rechnungsposten kann mehrere Referenzen zu anderen Rechnungsposten haben. Es wird auf die eindeutige Rechnungspostennummer referenziert.</xs:documentation>
+                     </xs:annotation>
+                  </xs:element>
+               </xs:sequence>
+            </xs:complexType>
+         </xs:element>
+         <xs:element name="rechnungsposten.gesamtbetrag" type="tns:Type.GDS.Geldbetrag">
+            <xs:annotation>
+               <xs:documentation>Hier wird der Gesamtbetrag aller Rechnungsposten eingetragen.</xs:documentation>
+            </xs:annotation>
+         </xs:element>
+      </xs:sequence>
+   </xs:complexType>
+   <xs:complexType name="Type.KASSE.Rechtsbehelfe">
+      <xs:annotation>
+         <xs:documentation>Über diesen Datentyp werden die Informationen zur Rechtsbehelfsstelle und zur Rechtsbehelfsbelehrung mitgeteilt.</xs:documentation>
+      </xs:annotation>
+      <xs:sequence>
+         <xs:element name="rechtsbehelfsschluessel" type="xs:integer">
+            <xs:annotation>
+               <xs:documentation>Über dieses Element wird der Schlüssel für den Rechtsbehelf mitgeteilt.</xs:documentation>
+            </xs:annotation>
+         </xs:element>
+         <xs:element name="rechtsbehelfstext" minOccurs="0" type="din91379:datatypeC">
+            <xs:annotation>
+               <xs:documentation>Über dieses Element kann der Rechtsbehelfstext mitgeteilt werden.</xs:documentation>
+            </xs:annotation>
+         </xs:element>
+         <xs:element name="ref.rechtsbehelfsstelle"
+                     minOccurs="0"
+                     type="din91379:datatypeC">
+            <xs:annotation>
+               <xs:documentation>Über dieses Element kann die Referenz auf eine Rechtsbehelfsbehörde mitgeteilt werden. Hier wird die Instanznummer mitgeteilt.</xs:documentation>
+            </xs:annotation>
+         </xs:element>
+      </xs:sequence>
+   </xs:complexType>
+   <xs:complexType name="Type.KASSE.Stundung">
+      <xs:annotation>
+         <xs:documentation>Die Stundung ist eine Zahlungserleichterung. Sie bringt den Anspruch der Forderung nicht zum Erlöschen. Durch die Bewilligung einer Stundung wird die Fälligkeit eines Anspruchs in voller Höhe oder in Teilbeträgen hinausgeschoben. (Prozesskostenhilfe fällt nicht unter den Datentyp.)</xs:documentation>
+      </xs:annotation>
+      <xs:sequence>
+         <xs:element name="beginndatum" type="xs:date">
+            <xs:annotation>
+               <xs:documentation>Anzugeben ist das Datum, ab wann die Stundung des Anspruchs gewährt wird.</xs:documentation>
+            </xs:annotation>
+         </xs:element>
+         <xs:element name="enddatum" type="xs:date">
+            <xs:annotation>
+               <xs:documentation>Anzugeben ist das Datum, bis wann die Stundung des Anspruchs gewährt wird.</xs:documentation>
+            </xs:annotation>
+         </xs:element>
+         <xs:element name="hinweise.stundung" minOccurs="0" type="din91379:datatypeC">
+            <xs:annotation>
+               <xs:documentation>Über dieses Element können weitere Informationen zur Stundung angegeben werden. So kann zum Beispiel angegeben werden, wer die Stundung ggf. mit welchen Maßgaben (Verzinsung ggf. Sicherheitsleistung gewährt hat.</xs:documentation>
+            </xs:annotation>
+         </xs:element>
+         <xs:element name="zahlungsbestimmung"
+                     minOccurs="0"
+                     maxOccurs="unbounded"
+                     type="tns:Type.KASSE.Zahlungsbestimmungen"/>
+      </xs:sequence>
+   </xs:complexType>
+   <xs:complexType name="Type.KASSE.Zahlungen">
+      <xs:annotation>
+         <xs:documentation>Der Datentyp enthält alle erforderlichen Fachdaten zu Zahlungen.</xs:documentation>
+      </xs:annotation>
+      <xs:sequence>
+         <xs:element name="zahlung" minOccurs="0" maxOccurs="unbounded">
+            <xs:annotation>
+               <xs:documentation>Eine Zahlung kann aus mehreren Zahlungen bestehen.</xs:documentation>
+            </xs:annotation>
+            <xs:complexType>
+               <xs:sequence>
+                  <xs:element name="zahlungsbetrag" type="tns:Type.GDS.Geldbetrag">
+                     <xs:annotation>
+                        <xs:documentation>Der Betrag enthält den gezahlten Betrag mit Vorzeichen (z. B. – 1.100.96).</xs:documentation>
+                     </xs:annotation>
+                  </xs:element>
+                  <xs:element name="sachkonto" minOccurs="0" type="din91379:datatypeC">
+                     <xs:annotation>
+                        <xs:documentation>Über dieses Element kann der Sachkontoschlüssel mitgegeben werden.</xs:documentation>
+                     </xs:annotation>
+                  </xs:element>
+                  <xs:element name="zahlungsart"
+                              maxOccurs="unbounded"
+                              type="tns:Code.KASSE.Zahlwege">
+                     <xs:annotation>
+                        <xs:documentation>Über dieses Element wird die Information zur Zahlungsart mitgegeben. Das kann bei einer Zahlung die Zahlungsanzeige (im Kassen-/Zahlstellensystem vereinnahmter Betrag) sein oder eine andere Art der Einzahlung, z. B. mittels elektronischer Kostenmarke.</xs:documentation>
+                     </xs:annotation>
+                  </xs:element>
+                  <xs:element name="zahlungsdatum" minOccurs="0" type="xs:date">
+                     <xs:annotation>
+                        <xs:documentation>Über dieses Element kann die Information zum Zahlungsdatum mitgegeben werden. Das kann bei einer Einzahlung der Einzahlungstag im Kassen-/Zahlstellensystem sein.</xs:documentation>
+                     </xs:annotation>
+                  </xs:element>
+                  <xs:element name="buchungsdatum" minOccurs="0" type="xs:dateTime">
+                     <xs:annotation>
+                        <xs:documentation>Über dieses Element kann die Information zum Buchungsdatum im Kassen-/Zahlstellensystem mitgegeben werden.</xs:documentation>
+                     </xs:annotation>
+                  </xs:element>
+                  <xs:element name="buchungsinformationen"
+                              minOccurs="0"
+                              type="din91379:datatypeC">
+                     <xs:annotation>
+                        <xs:documentation>Über dieses Element können die Buchungsinformationen (z. B. Zeitbuchnummer der Kasse) mitgeteilt werden.</xs:documentation>
+                     </xs:annotation>
+                  </xs:element>
+                  <xs:element name="kassenzeichen" minOccurs="0" type="din91379:datatypeC">
+                     <xs:annotation>
+                        <xs:documentation>Über dieses Element kann das Kassenzeichen mitgeteilt werden.</xs:documentation>
+                     </xs:annotation>
+                  </xs:element>
+                  <xs:element name="rechnungsnummer" minOccurs="0" type="xs:integer">
+                     <xs:annotation>
+                        <xs:documentation>Über dieses Element kann eine eindeutige Rechnungsnummer zu der Zahlung angegeben werden.</xs:documentation>
+                     </xs:annotation>
+                  </xs:element>
+                  <xs:element name="auswahl_zahlender" minOccurs="0">
+                     <xs:complexType>
+                        <xs:choice>
+                           <xs:element name="zahlender" type="tns:Type.GDS.Ref.Beteiligtennummer">
+                              <xs:annotation>
+                                 <xs:documentation>Über dieses Element wird eine Referenz auf einen Beteiligten, der die Zahlung geleistet hat, eintragen.</xs:documentation>
+                              </xs:annotation>
+                           </xs:element>
+                           <xs:element name="einzahlender">
+                              <xs:annotation>
+                                 <xs:documentation>Über dieses Element werden Informationen zum Einzahlenden mitgeteilt, wenn auf keinen Beteiligten referenziert werden kann.</xs:documentation>
+                              </xs:annotation>
+                              <xs:complexType>
+                                 <xs:sequence>
+                                    <xs:element name="zahlender" type="din91379:datatypeD">
+                                       <xs:annotation>
+                                          <xs:documentation>Handelt es sich bei dem Zahlenden nicht um den bekannten Kostenschuldner, kann über dieses Element ein Hinweis zum Einzahlenden angegeben werden. (z.B.: Es zahlt die Mutter des Kostenschuldners).</xs:documentation>
+                                       </xs:annotation>
+                                    </xs:element>
+                                    <xs:element name="bankverbindung"
+                                                minOccurs="0"
+                                                type="tns:Type.GDS.Bankverbindung">
+                                       <xs:annotation>
+                                          <xs:documentation>Über dieses Element können Informationen zur Bankverbindung des Zahlenden mitgeteilt werden.</xs:documentation>
+                                       </xs:annotation>
+                                    </xs:element>
+                                 </xs:sequence>
+                              </xs:complexType>
+                           </xs:element>
+                        </xs:choice>
+                     </xs:complexType>
+                  </xs:element>
+                  <xs:element name="zahlungen.hinweise"
+                              minOccurs="0"
+                              maxOccurs="unbounded"
+                              type="din91379:datatypeC">
+                     <xs:annotation>
+                        <xs:documentation>Über dieses Element können zur Tilgung Hinweise (z. B. 'von der Gegenseite anzurechnende Zahlungen', angegebener Verwendungszweck, ...) eingetragen werden.</xs:documentation>
+                     </xs:annotation>
+                  </xs:element>
+                  <xs:element name="bestaetigung.zahlung"
+                              minOccurs="0"
+                              type="tns:Type.KASSE.Buchungspruefung">
+                     <xs:annotation>
+                        <xs:documentation>Über dieses Element kann das Datum der Bestätigung der Zahlung mitgegeben werden (§ 29 Abs. 10 KostVfg). Weiterhin können Angaben zur Identifikation des Bestätigenden der Zahlung übergeben werden.</xs:documentation>
+                     </xs:annotation>
+                  </xs:element>
+               </xs:sequence>
+            </xs:complexType>
+         </xs:element>
+         <xs:element name="gesamtbetrag" minOccurs="0" type="tns:Type.GDS.Geldbetrag">
+            <xs:annotation>
+               <xs:documentation>Hier kann der Gesamtbetrag aller Beträge eingetragen werden.</xs:documentation>
+            </xs:annotation>
+         </xs:element>
+      </xs:sequence>
+   </xs:complexType>
+   <xs:complexType name="Type.KASSE.Zahlungsbestimmungen">
+      <xs:annotation>
+         <xs:documentation>Der Datentyp enthält alle Fachdaten zu den Zahlungsbestimmungen (Entscheidung sowie Zahlungsbestimmung mit Art, Fälligkeit und Betrag …).</xs:documentation>
+      </xs:annotation>
+      <xs:sequence>
+         <xs:element name="zahlungsbestimmung.art"
+                     type="tns:Code.KASSE.Zahlungsbestimmung.Art">
+            <xs:annotation>
+               <xs:documentation>Über dieses Element wird die Art der Zahlungsbestimmung (z. B. Festrate, Einmalzahlung, Teilbetrag, Zahlungsfrist, Einzelrate, Aufhebung der Ratenstundung, Aufhebung Raten-PKH, Volle PKH, …) mitgeteilt.</xs:documentation>
+            </xs:annotation>
+         </xs:element>
+         <xs:element name="zahlungsbestimmung.faelligkeit" type="xs:date">
+            <xs:annotation>
+               <xs:documentation>Fälligkeit der Rate, Datum der Aufhebung der Ratenstundung oder Datum, ab wann Volle PKH (PKH ohne Zahlungsbestimmung) gewährt wird.</xs:documentation>
+            </xs:annotation>
+         </xs:element>
+         <xs:element name="zahlungsbestimmung.betrag" type="tns:Type.GDS.Geldbetrag">
+            <xs:annotation>
+               <xs:documentation>Über dieses Element wird die Höhe des Zahlungsbetrags mitgeteilt. Bei Aufhebung der Ratenstundung: 0,00 EUR. Bei Voller PKH: 0,00 EUR</xs:documentation>
+            </xs:annotation>
+         </xs:element>
+         <xs:element name="zahlungsbestimmung.anzahlMax" minOccurs="0" type="xs:integer">
+            <xs:annotation>
+               <xs:documentation>Über dieses Element kann die maximale Ratenanzahl mitgeteilt werden. Die anzurechnenden Raten sind über das entsprechende Element mitzuteilen.</xs:documentation>
+            </xs:annotation>
+         </xs:element>
+         <xs:element name="zahlungsbestimmung.endeAlterRatenplan"
+                     minOccurs="0"
+                     type="xs:date">
+            <xs:annotation>
+               <xs:documentation>Nur notwendig bei Änderungen des PKH-Ratenplans (Folgeanweisung).</xs:documentation>
+            </xs:annotation>
+         </xs:element>
+         <xs:element name="zahlungsbestimmung.geleisteteZahlungen"
+                     minOccurs="0"
+                     maxOccurs="unbounded"
+                     type="tns:Type.KASSE.Zahlungen">
+            <xs:annotation>
+               <xs:documentation>Über dieses Element können zu berücksichtigte Zahlungen mitgeteilt werden.</xs:documentation>
+            </xs:annotation>
+         </xs:element>
+         <xs:element name="zahlungsbestimmung.anzurechnendeAnzahl"
+                     minOccurs="0"
+                     type="xs:double">
+            <xs:annotation>
+               <xs:documentation>Über dieses Element kann die Anzahl der auf die maximale Ratenanzahl anzurechnenden Raten mitgeteilt werden.</xs:documentation>
+            </xs:annotation>
+         </xs:element>
+         <xs:element name="zahlungsbestimmung.hinweis"
+                     minOccurs="0"
+                     maxOccurs="unbounded"
+                     type="din91379:datatypeC">
+            <xs:annotation>
+               <xs:documentation>Über dieses Element können Hinweise zu der Zahlungsbestimmung mitgegeben werden. Wie diese im Einzelfall ausgestaltet sind, muss im Länderadapter vereinbart werden.</xs:documentation>
+            </xs:annotation>
+         </xs:element>
+         <xs:element name="mahnfrist" minOccurs="0" type="din91379:datatypeC">
+            <xs:annotation>
+               <xs:documentation>Für den Fall der ausbleibenden Zahlung kann hier die Mahnfrist mitgeteilt werden (z.B. 3 Wochen).</xs:documentation>
+            </xs:annotation>
+         </xs:element>
+         <xs:element name="ref.entscheidungsnummer"
+                     minOccurs="0"
+                     type="din91379:datatypeC">
+            <xs:annotation>
+               <xs:documentation>Über dieses Element kann die Referenz zu einer Entscheidung mitgegeben werden.</xs:documentation>
+            </xs:annotation>
+         </xs:element>
+         <xs:element name="sachkonto" minOccurs="0" type="din91379:datatypeC">
+            <xs:annotation>
+               <xs:documentation>Über dieses Element kann der Sachkontoschlüssel angegeben werden.</xs:documentation>
+            </xs:annotation>
+         </xs:element>
+         <xs:element name="rechnungsnummer" minOccurs="0" type="xs:integer">
+            <xs:annotation>
+               <xs:documentation>Über dieses Element kann eine eindeutige Rechnungsnummer zu der Zahlungsbestimmung angegeben werden.</xs:documentation>
+            </xs:annotation>
+         </xs:element>
+      </xs:sequence>
+   </xs:complexType>
+   <xs:complexType name="Type.KASSE.Zahlungspartnerdaten">
+      <xs:sequence>
+         <xs:element name="ref.beteiligter" type="tns:Type.GDS.Ref.Beteiligtennummer">
+            <xs:annotation>
+               <xs:documentation>Hier muss die Referenz auf den Beteiligten eingetragen werden.</xs:documentation>
+            </xs:annotation>
+         </xs:element>
+         <xs:element name="buchungen.zahlungspartner" minOccurs="0">
+            <xs:annotation>
+               <xs:documentation>Über dieses Element können beim originären Zahlungspartner zu berücksichtigte Zahlungen, Verrechnungen und/ oder Erledigungen mitgeteilt werden. Kein Wert bei auf originären Zahlungspartner referenzierenden Zahlungspartnern.</xs:documentation>
+            </xs:annotation>
+            <xs:complexType>
+               <xs:sequence>
+                  <xs:element name="erledigungen"
+                              minOccurs="0"
+                              maxOccurs="unbounded"
+                              type="tns:Type.KASSE.Erledigungen"/>
+                  <xs:element name="zahlungen"
+                              minOccurs="0"
+                              maxOccurs="unbounded"
+                              type="tns:Type.KASSE.Zahlungen"/>
+               </xs:sequence>
+            </xs:complexType>
+         </xs:element>
+         <xs:element name="zahlungsbetrag.netto" type="tns:Type.GDS.Geldbetrag">
+            <xs:annotation>
+               <xs:documentation>Über dieses Element wird der Zahlungsbetrag netto (z. B. Einforderungs- oder Auszahlungsbetrag ohne Steuern) mitgeteilt. Kein Wert bei auf originären Zahlungspartner referenzierenden Zahlungspartnern.</xs:documentation>
+            </xs:annotation>
+         </xs:element>
+         <xs:element name="zahlungsbetragt.brutto"
+                     minOccurs="0"
+                     type="tns:Type.GDS.Geldbetrag">
+            <xs:annotation>
+               <xs:documentation>Über dieses Element kann der Zahlungsbetrag brutto (z. B. Einforderungs- oder Auszahlungsbetrag mit Steuern) mitgeteilt werden. Kein Wert bei auf originären Zahlungspartner referenzierenden Zahlungspartnern.</xs:documentation>
+            </xs:annotation>
+         </xs:element>
+         <xs:element name="beziehung.zahlungspartner"
+                     minOccurs="0"
+                     maxOccurs="unbounded">
+            <xs:annotation>
+               <xs:documentation>Ein Zahlungspartner kann mehrere Beziehungen zu anderen Zahlungspartnern haben. In einer Nachricht können die Referenzen mitgeteilt werden.</xs:documentation>
+            </xs:annotation>
+            <xs:complexType>
+               <xs:sequence>
+                  <xs:element name="ref.zahlungspartner" type="tns:Type.GDS.Ref.Beteiligtennummer">
+                     <xs:annotation>
+                        <xs:documentation>Über dieses Element wird die Referenz auf Zahlungspartner eintragen.</xs:documentation>
+                     </xs:annotation>
+                  </xs:element>
+                  <xs:element name="beziehungszweck" type="din91379:datatypeD">
+                     <xs:annotation>
+                        <xs:documentation>Über dieses Element wird die Beziehung zum Zahlungspartner mitgeteilt (z. B. 'ist Rechnungsempfänger von').</xs:documentation>
+                     </xs:annotation>
+                  </xs:element>
+               </xs:sequence>
+            </xs:complexType>
+         </xs:element>
+      </xs:sequence>
+   </xs:complexType>
+   <xs:element name="nachricht.kasse.sollstellung.2000001">
+      <xs:annotation>
+         <xs:documentation>In der Kostenbearbeitung wird ein Kostenansatz = Schlusskostenrechnung erstellt. Der Kostenansatz kann mehrere Kostentatbestände enthalten. Ein Kostentatbestand kann einem oder mehreren Kostenschuldnern ganz oder anteilsmäßig zugewiesen werden. Für jeden Kostenschuldner wird nach Berücksichtigung von Zahlungen ein Endbetrag berechnet. Ist das Ergebnis eine Einforderung, so sind die Kosten mit Sollstellung anzufordern. Die Kostenbearbeitung erstellt eine elektronische Nachricht ‚nachricht.kasse.Sollstellung‘ und speichert die Daten in der Datenbank ab. Die Nachricht soll weiterhin verwendet werden, wenn das Ergebnis der Schlusskostenrechnung eine Nullrechnung bzw. ein Überschuss (Rückzahlung/ Auszahlung) ist. Die unterschiedlichen Szenarien sollen sich aus dem Element 'ereignis' im Nachrichtenkopf der Nachricht ergeben.</xs:documentation>
+      </xs:annotation>
+      <xs:complexType>
+         <xs:sequence>
+            <xs:element name="nachrichtenkopf" type="tns:Type.GDS.Nachrichtenkopf"/>
+            <xs:element name="grunddaten" type="tns:Type.GDS.Grunddaten"/>
+            <xs:element name="fachdaten">
+               <xs:complexType>
+                  <xs:sequence>
+                     <xs:element name="kostenfachdaten"
+                                 minOccurs="0"
+                                 type="tns:Type.KASSE.Kostenfachdaten"/>
+                     <xs:element name="rechnungspostenblock" type="tns:Type.KASSE.Rechnungspostenblock"/>
+                     <xs:element name="zahlungspartner"
+                                 maxOccurs="unbounded"
+                                 type="tns:Type.KASSE.Zahlungspartnerdaten"/>
+                     <xs:element name="kassenanordnung"
+                                 minOccurs="0"
+                                 type="tns:Type.KASSE.Kassenanordnungsgrunddaten"/>
+                     <xs:element name="kontierung"
+                                 minOccurs="0"
+                                 type="tns:Type.KASSE.Kontierungsposten"/>
+                     <xs:element name="rechtsbehelfe"
+                                 minOccurs="0"
+                                 type="tns:Type.KASSE.Rechtsbehelfe"/>
+                     <xs:element name="buchnungspruefung"
+                                 minOccurs="0"
+                                 type="tns:Type.KASSE.Buchungspruefung"/>
+                  </xs:sequence>
+               </xs:complexType>
+            </xs:element>
+         </xs:sequence>
+      </xs:complexType>
+   </xs:element>
+   <xs:element name="nachricht.kasse.kostennachricht.2000002">
+      <xs:annotation>
+         <xs:documentation>Gem. § 26 KostVfg sind vorweg zu erhebende Gebühren und Kostenvorschüsse, von deren Entrichtung die Vornahme einer Amtshandlung oder die Einleitung oder der Fortgang eines Verfahrens abhängig ist, sind ohne Sollstellung unmittelbar vom Zahlungspflichtigen anzufordern. Dafür wird der Begriff 'Kostennachricht' verwendet.</xs:documentation>
+      </xs:annotation>
+      <xs:complexType>
+         <xs:sequence>
+            <xs:element name="nachrichtenkopf" type="tns:Type.GDS.Nachrichtenkopf"/>
+            <xs:element name="grunddaten" type="tns:Type.GDS.Grunddaten"/>
+            <xs:element name="fachdaten">
+               <xs:complexType>
+                  <xs:sequence>
+                     <xs:element name="kostenfachdaten"
+                                 minOccurs="0"
+                                 type="tns:Type.KASSE.Kostenfachdaten"/>
+                     <xs:element name="rechnungspostenblock" type="tns:Type.KASSE.Rechnungspostenblock"/>
+                     <xs:element name="zahlungspartner"
+                                 minOccurs="0"
+                                 maxOccurs="unbounded"
+                                 type="tns:Type.KASSE.Zahlungspartnerdaten"/>
+                     <xs:element name="kassenanordnung"
+                                 minOccurs="0"
+                                 type="tns:Type.KASSE.Kassenanordnungsgrunddaten"/>
+                     <xs:element name="kontierung"
+                                 minOccurs="0"
+                                 type="tns:Type.KASSE.Kontierungsposten"/>
+                     <xs:element name="rechtsbehelfe"
+                                 minOccurs="0"
+                                 type="tns:Type.KASSE.Rechtsbehelfe"/>
+                  </xs:sequence>
+               </xs:complexType>
+            </xs:element>
+         </xs:sequence>
+      </xs:complexType>
+   </xs:element>
+   <xs:element name="nachricht.kasse.pkh-rechnung.2000003">
+      <xs:complexType>
+         <xs:sequence>
+            <xs:element name="nachrichtenkopf" type="tns:Type.GDS.Nachrichtenkopf"/>
+            <xs:element name="grunddaten" type="tns:Type.GDS.Grunddaten"/>
+            <xs:element name="fachdaten">
+               <xs:complexType>
+                  <xs:sequence>
+                     <xs:element name="kostenfachdaten"
+                                 minOccurs="0"
+                                 type="tns:Type.KASSE.Kostenfachdaten"/>
+                     <xs:element name="rechnungspostenblock" type="tns:Type.KASSE.Rechnungspostenblock"/>
+                     <xs:element name="zahlungspartner"
+                                 minOccurs="0"
+                                 maxOccurs="unbounded"
+                                 type="tns:Type.KASSE.Zahlungspartnerdaten"/>
+                     <xs:element name="kassenanordnung"
+                                 minOccurs="0"
+                                 type="tns:Type.KASSE.Kassenanordnungsgrunddaten"/>
+                     <xs:element name="kontierung"
+                                 minOccurs="0"
+                                 type="tns:Type.KASSE.Kontierungsposten"/>
+                     <xs:element name="entscheidung"
+                                 minOccurs="0"
+                                 maxOccurs="unbounded"
+                                 type="tns:Type.KASSE.Entscheidung"/>
+                     <xs:element name="zahlungsbestimmungen"
+                                 minOccurs="0"
+                                 maxOccurs="unbounded"
+                                 type="tns:Type.KASSE.Zahlungsbestimmungen"/>
+                     <xs:element name="rechtsbehelfe"
+                                 minOccurs="0"
+                                 type="tns:Type.KASSE.Rechtsbehelfe"/>
+                  </xs:sequence>
+               </xs:complexType>
+            </xs:element>
+         </xs:sequence>
+      </xs:complexType>
+   </xs:element>
+   <xs:element name="nachricht.kasse.pkh-zahlungserleichterung.2000004">
+      <xs:complexType>
+         <xs:sequence>
+            <xs:element name="nachrichtenkopf" type="tns:Type.GDS.Nachrichtenkopf"/>
+            <xs:element name="grunddaten" type="tns:Type.GDS.Grunddaten"/>
+            <xs:element name="fachdaten">
+               <xs:complexType>
+                  <xs:sequence>
+                     <xs:element name="kostenfachdaten"
+                                 minOccurs="0"
+                                 type="tns:Type.KASSE.Kostenfachdaten"/>
+                     <xs:element name="kassenanordnung"
+                                 minOccurs="0"
+                                 type="tns:Type.KASSE.Kassenanordnungsgrunddaten"/>
+                     <xs:element name="entscheidung"
+                                 minOccurs="0"
+                                 maxOccurs="unbounded"
+                                 type="tns:Type.KASSE.Entscheidung"/>
+                     <xs:element name="zahlungsbestimmungen"
+                                 maxOccurs="unbounded"
+                                 type="tns:Type.KASSE.Zahlungsbestimmungen"/>
+                     <xs:element name="rechtsbehelfe"
+                                 minOccurs="0"
+                                 type="tns:Type.KASSE.Rechtsbehelfe"/>
+                  </xs:sequence>
+               </xs:complexType>
+            </xs:element>
+         </xs:sequence>
+      </xs:complexType>
+   </xs:element>
+   <xs:element name="nachricht.kasse.ebao-rechnung.2000005">
+      <xs:complexType>
+         <xs:sequence>
+            <xs:element name="nachrichtenkopf" type="tns:Type.GDS.Nachrichtenkopf"/>
+            <xs:element name="grunddaten" type="tns:Type.GDS.Grunddaten"/>
+            <xs:element name="fachdaten">
+               <xs:complexType>
+                  <xs:sequence>
+                     <xs:element name="kostenfachdaten"
+                                 minOccurs="0"
+                                 type="tns:Type.KASSE.Kostenfachdaten"/>
+                     <xs:element name="rechnungspostenblock" type="tns:Type.KASSE.Rechnungspostenblock"/>
+                     <xs:element name="zahlungspartner"
+                                 minOccurs="0"
+                                 maxOccurs="unbounded"
+                                 type="tns:Type.KASSE.Zahlungspartnerdaten"/>
+                     <xs:element name="kassenanordnung"
+                                 minOccurs="0"
+                                 type="tns:Type.KASSE.Kassenanordnungsgrunddaten"/>
+                     <xs:element name="kontierung"
+                                 minOccurs="0"
+                                 type="tns:Type.KASSE.Kontierungsposten"/>
+                     <xs:element name="entscheidung"
+                                 minOccurs="0"
+                                 maxOccurs="unbounded"
+                                 type="tns:Type.KASSE.Entscheidung"/>
+                     <xs:element name="zahlungsbestimmungen"
+                                 minOccurs="0"
+                                 maxOccurs="unbounded"
+                                 type="tns:Type.KASSE.Zahlungsbestimmungen"/>
+                     <xs:element name="rechtsbehelfe"
+                                 minOccurs="0"
+                                 type="tns:Type.KASSE.Rechtsbehelfe"/>
+                  </xs:sequence>
+               </xs:complexType>
+            </xs:element>
+         </xs:sequence>
+      </xs:complexType>
+   </xs:element>
+   <xs:element name="nachricht.kasse.ebao-zahlungserleichterung.2000006">
+      <xs:complexType>
+         <xs:sequence>
+            <xs:element name="nachrichtenkopf" type="tns:Type.GDS.Nachrichtenkopf"/>
+            <xs:element name="grunddaten" type="tns:Type.GDS.Grunddaten"/>
+            <xs:element name="fachdaten">
+               <xs:complexType>
+                  <xs:sequence>
+                     <xs:element name="kostenfachdaten"
+                                 minOccurs="0"
+                                 type="tns:Type.KASSE.Kostenfachdaten"/>
+                     <xs:element name="kassenanordnung"
+                                 minOccurs="0"
+                                 type="tns:Type.KASSE.Kassenanordnungsgrunddaten"/>
+                     <xs:element name="entscheidung"
+                                 minOccurs="0"
+                                 maxOccurs="unbounded"
+                                 type="tns:Type.KASSE.Entscheidung"/>
+                     <xs:element name="zahlungsbestimmungen"
+                                 maxOccurs="unbounded"
+                                 type="tns:Type.KASSE.Zahlungsbestimmungen"/>
+                     <xs:element name="rechtsbehelfe"
+                                 minOccurs="0"
+                                 type="tns:Type.KASSE.Rechtsbehelfe"/>
+                  </xs:sequence>
+               </xs:complexType>
+            </xs:element>
+         </xs:sequence>
+      </xs:complexType>
+   </xs:element>
+   <xs:element name="nachricht.kasse.niederschlagungen.2000007">
+      <xs:annotation>
+         <xs:documentation>Die Niederschlagung einer Forderung ist ein interner Verzicht auf die weitere Vollstreckung und hat keine Außenwirkung. Sie bringt die Forderung nicht zum Erlöschen, die Vollstreckungsstelle muss sie aber dem Kassensystem mitteilen.</xs:documentation>
+      </xs:annotation>
+      <xs:complexType>
+         <xs:sequence>
+            <xs:element name="nachrichtenkopf" type="tns:Type.GDS.Nachrichtenkopf"/>
+            <xs:element name="grunddaten" type="tns:Type.GDS.Grunddaten"/>
+            <xs:element name="fachdaten">
+               <xs:complexType>
+                  <xs:sequence>
+                     <xs:element name="niederschlagungen" type="tns:Type.KASSE.Niederschlagungen"/>
+                  </xs:sequence>
+               </xs:complexType>
+            </xs:element>
+         </xs:sequence>
+      </xs:complexType>
+   </xs:element>
+   <xs:element name="nachricht.kasse.niederschlagungsaufhebungen.2000008">
+      <xs:annotation>
+         <xs:documentation>Falls die Gründe für eine Niederschlagung nicht mehr vorliegen, muss sie aufgehoben werden können.</xs:documentation>
+      </xs:annotation>
+      <xs:complexType>
+         <xs:sequence>
+            <xs:element name="nachrichtenkopf" type="tns:Type.GDS.Nachrichtenkopf"/>
+            <xs:element name="grunddaten" type="tns:Type.GDS.Grunddaten"/>
+            <xs:element name="fachdaten">
+               <xs:complexType>
+                  <xs:sequence>
+                     <xs:element name="niederschlagungsaufhebungen"
+                                 type="tns:Type.KASSE.Niederschlagungsaufhebungen"/>
+                  </xs:sequence>
+               </xs:complexType>
+            </xs:element>
+         </xs:sequence>
+      </xs:complexType>
+   </xs:element>
+   <xs:element name="nachricht.kasse.sperrfrist.2000009">
+      <xs:annotation>
+         <xs:documentation>Die Sperrfrist schaltet die maschinelle Fristenüberwachung eines Personenkontos aus, d.h. während ihrer Laufzeit findet kein Ausdruck von Mahnung und/oder Rückstandsanzeige statt. Die Sperrfrist bezieht sich stets auf sämtliche Forderungen eines Personenkontos; eine Beschränkung auf einzelne Forderungen ist nicht möglich.</xs:documentation>
+      </xs:annotation>
+      <xs:complexType>
+         <xs:sequence>
+            <xs:element name="nachrichtenkopf" type="tns:Type.GDS.Nachrichtenkopf"/>
+            <xs:element name="grunddaten" type="tns:Type.GDS.Grunddaten"/>
+            <xs:element name="fachdaten">
+               <xs:complexType>
+                  <xs:sequence>
+                     <xs:element name="endeSperrfrist" type="xs:date">
+                        <xs:annotation>
+                           <xs:documentation>Anzugeben ist das Datum des Tages, an dem die Sperrfrist enden soll.</xs:documentation>
+                        </xs:annotation>
+                     </xs:element>
+                  </xs:sequence>
+               </xs:complexType>
+            </xs:element>
+         </xs:sequence>
+      </xs:complexType>
+   </xs:element>
+   <xs:element name="nachricht.kasse.kassenzeichenuebernahme.2000010">
+      <xs:annotation>
+         <xs:documentation>Diese Nachricht wird benötigt, wenn das Personenkonto nach der Übernahme des entsprechenden gerichtlichen Verfahrens durch eine andere Abteilung des Gerichts oder durch ein anderes Gericht innerhalb des Bundeslandes von der übernehmenden Dienststelle fortgeführt werden soll. Entsprechendes gilt für die Abgabe zwischen Staatsanwaltschaften. Die übernehmende Behörde teilt dem Kassensystem die Übernahme mit.</xs:documentation>
+      </xs:annotation>
+      <xs:complexType>
+         <xs:sequence>
+            <xs:element name="nachrichtenkopf" type="tns:Type.GDS.Nachrichtenkopf"/>
+            <xs:element name="grunddaten" type="tns:Type.GDS.Grunddaten"/>
+            <xs:element name="fachdaten">
+               <xs:complexType>
+                  <xs:sequence>
+                     <xs:element name="zuUebernehmendesKassenzeichen" type="din91379:datatypeC">
+                        <xs:annotation>
+                           <xs:documentation>Anzugeben ist das zu übernehmende Kassenzeichen.</xs:documentation>
+                        </xs:annotation>
+                     </xs:element>
+                  </xs:sequence>
+               </xs:complexType>
+            </xs:element>
+         </xs:sequence>
+      </xs:complexType>
+   </xs:element>
+   <xs:element name="nachricht.kasse.zahlungsanzeige.2000011">
+      <xs:annotation>
+         <xs:documentation>Gem. § 26 KostVfg sind vorweg zu erhebende Gebühren und Kostenvorschüsse, von deren Entrichtung die Vornahme einer Amtshandlung oder die Einleitung oder der Fortgang eines Verfahrens abhängig ist, ohne Sollstellung unmittelbar vom Zahlungspflichtigen anzufordern. Bei Zahlung teilen die Kassensysteme dem Gericht den Zahlungseingang in Form einer Zahlungsanzeige mit, § 3 Abs. 1 Ziff. 6 KostVfg.</xs:documentation>
+      </xs:annotation>
+      <xs:complexType>
+         <xs:sequence>
+            <xs:element name="nachrichtenkopf" type="tns:Type.GDS.Nachrichtenkopf"/>
+            <xs:element name="grunddaten" type="tns:Type.GDS.Grunddaten"/>
+            <xs:element name="fachdaten">
+               <xs:complexType>
+                  <xs:sequence>
+                     <xs:element name="zahlungen" type="tns:Type.KASSE.Zahlungen"/>
+                  </xs:sequence>
+               </xs:complexType>
+            </xs:element>
+         </xs:sequence>
+      </xs:complexType>
+   </xs:element>
+   <xs:element name="nachricht.kasse.erledigungen.2000012">
+      <xs:annotation>
+         <xs:documentation>Der Fachbereich muss dem Kassensystem Erledigungen mitteilen können, wie z. B. den Tod des zu einer Geldstrafe Verurteilten.</xs:documentation>
+      </xs:annotation>
+      <xs:complexType>
+         <xs:sequence>
+            <xs:element name="nachrichtenkopf" type="tns:Type.GDS.Nachrichtenkopf"/>
+            <xs:element name="grunddaten" type="tns:Type.GDS.Grunddaten"/>
+            <xs:element name="fachdaten">
+               <xs:complexType>
+                  <xs:sequence>
+                     <xs:element name="erledigungen" type="tns:Type.KASSE.Erledigungen"/>
+                  </xs:sequence>
+               </xs:complexType>
+            </xs:element>
+         </xs:sequence>
+      </xs:complexType>
+   </xs:element>
+   <xs:element name="nachricht.kasse.mahnungskopie.2000013">
+      <xs:annotation>
+         <xs:documentation>Sofern der Verurteilte in Zahlungsverzug gerät, erstellt das Kassensystem eine Mahnung, erhebt die Mahngebühr und übersendet die Mahnung an den Verurteilten. Das Kassensystem kann zur Information der Vollstreckungsstelle eine Kopie der Mahnung nebst angemahnten Betrag übersenden.</xs:documentation>
+      </xs:annotation>
+      <xs:complexType>
+         <xs:sequence>
+            <xs:element name="nachrichtenkopf" type="tns:Type.GDS.Nachrichtenkopf"/>
+            <xs:element name="grunddaten" type="tns:Type.GDS.Grunddaten"/>
+            <xs:element name="schriftgutobjekte"
+                        minOccurs="0"
+                        type="tns:Type.GDS.Schriftgutobjekte"/>
+            <xs:element name="fachdaten">
+               <xs:complexType>
+                  <xs:sequence>
+                     <xs:element name="angemahnterBetrag" type="tns:Type.GDS.Geldbetrag"/>
+                  </xs:sequence>
+               </xs:complexType>
+            </xs:element>
+         </xs:sequence>
+      </xs:complexType>
+   </xs:element>
+   <xs:element name="nachricht.kasse.ratenplankopie.2000014">
+      <xs:annotation>
+         <xs:documentation>Das Kassensystem kann zur Information der Vollstreckungsstelle eine Kopie des Stundungsbescheids oder des Ratenplans übersenden (folgende Ereignisse können mitgeteilt werden: Quittung Stundung, Quittung PKH-Plan). Zusätzlich wird das Datum der letzten Rate übergeben, damit sich ggfls. das Fachsystem den Vorgang auf Frist legen kann.</xs:documentation>
+      </xs:annotation>
+      <xs:complexType>
+         <xs:sequence>
+            <xs:element name="nachrichtenkopf" type="tns:Type.GDS.Nachrichtenkopf"/>
+            <xs:element name="grunddaten" type="tns:Type.GDS.Grunddaten"/>
+            <xs:element name="schriftgutobjekte"
+                        minOccurs="0"
+                        type="tns:Type.GDS.Schriftgutobjekte"/>
+            <xs:element name="fachdaten">
+               <xs:complexType>
+                  <xs:sequence>
+                     <xs:element name="datum.letzteRate" type="xs:date"/>
+                  </xs:sequence>
+               </xs:complexType>
+            </xs:element>
+         </xs:sequence>
+      </xs:complexType>
+   </xs:element>
+   <xs:element name="nachricht.kasse.fehlermeldung.2000015">
+      <xs:annotation>
+         <xs:documentation>Falls die Verarbeitung der Kassenanordnung fehlschlägt, wird dies von dem Kassensystem mit einer Fehlermeldung an die übersendende Stelle mitgeteilt.</xs:documentation>
+      </xs:annotation>
+      <xs:complexType>
+         <xs:sequence>
+            <xs:element name="nachrichtenkopf" type="tns:Type.GDS.Nachrichtenkopf"/>
+            <xs:element name="fachdaten">
+               <xs:complexType>
+                  <xs:sequence>
+                     <xs:element name="fehlermeldung"
+                                 maxOccurs="unbounded"
+                                 type="din91379:datatypeC"/>
+                  </xs:sequence>
+               </xs:complexType>
+            </xs:element>
+         </xs:sequence>
+      </xs:complexType>
+   </xs:element>
+</xs:schema>

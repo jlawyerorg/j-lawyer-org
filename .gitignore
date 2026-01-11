@@ -67,3 +67,5 @@
 /j-lawyer-server/j-lawyer-io/addbasicauth-error.log
 /j-lawyer-server/j-lawyer-io/addbasicauth.log
 /j-lawyer-invoicing/target/
+/StirlingPDF/
+/j-lawyer-mcpserver/target/

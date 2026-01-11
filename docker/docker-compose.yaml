@@ -1,4 +1,4 @@
-version: '3.1'
+version: '3.8'
 
 services:
 
@@ -8,20 +8,31 @@ services:
         volumes:
             - /var/docker_data/j-lawyer-db/:/var/lib/mysql
         environment:
-            MYSQL_USER: jlawyer
-            MYSQL_PASSWORD: jlawyer
+            MARIADB_ROOT_PASSWORD: mysql
+            MARIADB_DATABASE: jlawyerdb
+            MARIADB_USER: jlawyer
+            MARIADB_PASSWORD: jlawyer
         healthcheck:
-            test: mysqladmin ping -h 127.0.0.1 -u $$MYSQL_USER --password=$$MYSQL_PASSWORD
+            test: ["CMD", "mariadb-admin", "ping", "-h", "localhost", "-u", "root", "-pmysql"]
             interval: 10s
             timeout: 10s
-            retries: 3
+            retries: 10
+            start_period: 30s
 
     server:
         image: jlawyerorg/jlawyer-srv:latest
         restart: always
         volumes:
+#            - jlawyer_data:/opt/jboss/j-lawyer-data
+#            - jlawyer_backup:/opt/jboss/backups
             - /var/docker_data/j-lawyer-data/:/opt/jboss/j-lawyer-data
         ports:
             - 8000:8080
         depends_on:
-            - "db"
+            db:
+                condition: service_healthy
+
+# Declare named volumes here
+# volumes:
+#   jlawyer_data:
+#   jlawyer_backup:

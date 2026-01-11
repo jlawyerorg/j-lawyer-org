@@ -685,6 +685,7 @@ import java.util.Date;
 import java.util.GregorianCalendar;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Collection;
 import javax.swing.JFileChooser;
 import javax.swing.JOptionPane;
 import javax.swing.SwingUtilities;
@@ -700,6 +701,7 @@ import org.apache.pdfbox.pdmodel.graphics.image.PDImageXObject;
 import org.apache.pdfbox.pdmodel.interactive.documentnavigation.destination.PDPageXYZDestination;
 import org.apache.pdfbox.pdmodel.interactive.documentnavigation.outline.PDDocumentOutline;
 import org.apache.pdfbox.pdmodel.interactive.documentnavigation.outline.PDOutlineItem;
+import org.apache.pdfbox.io.MemoryUsageSetting;
 
 /**
  *
@@ -792,24 +794,67 @@ public class ExportAsPdfMergeStep extends javax.swing.JPanel implements WizardSt
 
             if (this.chkSaveToCase.isSelected()) {
                 try {
-                    ArchiveFileBean exportCase=(ArchiveFileBean)this.data.get("export.case");
+                    ArchiveFileBean exportCase = (ArchiveFileBean) this.data.get("export.case");
                     byte[] content = FileUtils.readFile(new File(resultFile));
-                    String newName = FileUtils.getNewFileName(exportCase, new File(resultFile).getName(), new Date(), true, EditorsRegistry.getInstance().getMainWindow(), "PDF-Export zur Akte speichern");
-                    if (newName == null || "".equalsIgnoreCase(newName)) {
-                        return;
-                    }
-                    if (newName.length() == 0) {
-                        JOptionPane.showMessageDialog(EditorsRegistry.getInstance().getMainWindow(), "Dateiname darf nicht leer sein.", "Hinweis", JOptionPane.INFORMATION_MESSAGE);
-                        return;
-                    }
+                    JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(s.getLookupProperties());
 
-                    JLawyerServiceLocator locator=JLawyerServiceLocator.getInstance(s.getLookupProperties());
-                    ArchiveFileDocumentsBean newDoc = locator.lookupArchiveFileServiceRemote().addDocument(exportCase.getId(), newName, content, "", null);
-                    EventBroker eb = EventBroker.getInstance();
-                    eb.publishEvent(new DocumentAddedEvent(newDoc));
+                    boolean saved = false;
+                    while (!saved) {
+                        String proposedName = new File(resultFile).getName();
+                        String newName = FileUtils.getNewFileName(exportCase, proposedName, new Date(), true, EditorsRegistry.getInstance().getMainWindow(), "PDF-Export zur Akte speichern");
+
+                        if (newName == null) {
+                            JOptionPane.showMessageDialog(EditorsRegistry.getInstance().getMainWindow(), "Speichern in der Akte abgebrochen.", "Hinweis", JOptionPane.INFORMATION_MESSAGE);
+                            break; // exit loop and skip saving to case
+                        }
+
+                        newName = newName.trim();
+                        if (newName.length() == 0) {
+                            JOptionPane.showMessageDialog(EditorsRegistry.getInstance().getMainWindow(), "Dateiname darf nicht leer sein.", "Hinweis", JOptionPane.INFORMATION_MESSAGE);
+                            continue;
+                        }
+
+                        // Check for duplicate name in case; prompt again if exists
+                        try {
+                            Collection<ArchiveFileDocumentsBean> docs = locator.lookupArchiveFileServiceRemote().getDocuments(exportCase.getId());
+                            boolean exists = false;
+                            for (ArchiveFileDocumentsBean d : docs) {
+                                if (d != null && d.getName() != null && d.getName().equalsIgnoreCase(newName)) {
+                                    exists = true;
+                                    break;
+                                }
+                            }
+                            if (exists) {
+                                JOptionPane.showMessageDialog(EditorsRegistry.getInstance().getMainWindow(), "Ein Dokument mit diesem Namen existiert bereits. Bitte einen anderen Namen wählen.", "Dateiname bereits vorhanden", JOptionPane.WARNING_MESSAGE);
+                                continue;
+                            }
+                        } catch (Exception checkEx) {
+                            log.error("Fehler beim Prüfen auf doppelte Dateinamen", checkEx);
+                            // On check failure, still try to save; server-side will validate as well
+                        }
+
+                        try {
+                            ArchiveFileDocumentsBean newDoc = locator.lookupArchiveFileServiceRemote().addDocument(exportCase.getId(), newName, content, "", null);
+                            EventBroker eb = EventBroker.getInstance();
+                            eb.publishEvent(new DocumentAddedEvent(newDoc));
+                            saved = true;
+                        } catch (Exception saveEx) {
+                            log.error("Error saving PDF export to case", saveEx);
+                            String msg = (saveEx.getMessage() == null ? "" : saveEx.getMessage()).toLowerCase();
+                            if (msg.contains("exist") || msg.contains("bereits") || msg.contains("duplicate")) {
+                                JOptionPane.showMessageDialog(EditorsRegistry.getInstance().getMainWindow(), "Ein Dokument mit diesem Namen existiert bereits. Bitte einen anderen Namen wählen.", "Dateiname bereits vorhanden", JOptionPane.WARNING_MESSAGE);
+                                // loop again for a new name
+                                continue;
+                            } else {
+                                // Keep wizard open by throwing; WizardMainPanel will display the error message
+                                throw new RuntimeException(saveEx.getMessage(), saveEx);
+                            }
+                        }
+                    }
                 } catch (Exception ioe) {
-                    log.error("Error saving PDF export to case", ioe);
-                    JOptionPane.showMessageDialog(EditorsRegistry.getInstance().getMainWindow(), "Fehler beim Speichern des Exports: " + ioe.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
+                    // Log and keep wizard open so user can retry; WizardMainPanel will display the error
+                    log.error("Fehler beim Speichern in die Akte", ioe);
+                    throw new RuntimeException(ioe);
                 }
             }
         }
@@ -920,9 +965,10 @@ public class ExportAsPdfMergeStep extends javax.swing.JPanel implements WizardSt
         }
 
         new Thread(() -> {
+            List<String> skippedFiles = null;
             try {
                 String tempFile = FileUtils.createTempFile(FileUtils.sanitizeFileName(new SimpleDateFormat("yyyy-MM-dd").format(new Date()) + "_" + caseDto.getFileNumber() + " " + caseDto.getName() + ".pdf"), new byte[0]);
-                mergePDFsWithTOC(pdfFiles, tempFile, caseDto);
+                skippedFiles = mergePDFsWithTOC(pdfFiles, tempFile, caseDto);
                 this.resultFile = tempFile;
                 FileUtils.cleanupTempFile(tempFile);
                 ThreadUtils.updateLabel(this.lblProgress, "Lade Vorschau...");
@@ -932,6 +978,7 @@ public class ExportAsPdfMergeStep extends javax.swing.JPanel implements WizardSt
                 // Aktualisiere die Bytes im data Container
                 this.data.put("pdf.bytes", tfBytes);
 
+                final List<String> finalSkippedFiles = skippedFiles;
                 SwingUtilities.invokeLater(() -> {
                     // Altes Panel entfernen
                     this.pnlPreview.removeAll();
@@ -956,6 +1003,22 @@ public class ExportAsPdfMergeStep extends javax.swing.JPanel implements WizardSt
                     pdfP.showContent(tfBytes);
 
                     this.lblProgress.setText("Datei: " + tempFile);
+
+                    // Show info about skipped files if any
+                    if (finalSkippedFiles != null && !finalSkippedFiles.isEmpty()) {
+                        StringBuilder message = new StringBuilder();
+                        message.append("Folgende PDFs konnten nicht zusammengeführt werden\n");
+                        message.append("(verschlüsselt oder fehlerhaft):\n\n");
+                        for (String skippedFile : finalSkippedFiles) {
+                            message.append("• ").append(skippedFile).append("\n");
+                        }
+                        JOptionPane.showMessageDialog(
+                            EditorsRegistry.getInstance().getMainWindow(),
+                            message.toString(),
+                            "Hinweis: Übersprungene Dokumente",
+                            JOptionPane.WARNING_MESSAGE
+                        );
+                    }
                 });
 
             } catch (Exception e) {
@@ -982,7 +1045,7 @@ public class ExportAsPdfMergeStep extends javax.swing.JPanel implements WizardSt
         this.data = data;
     }
 
-    private void mergePDFsWithTOC(List<File> pdfFiles, String outputFile, ArchiveFileBean caseDto) throws Exception {
+    private List<String> mergePDFsWithTOC(List<File> pdfFiles, String outputFile, ArchiveFileBean caseDto) throws Exception {
         // Status der Checkboxen aus data container lesen
         Boolean createToc = (Boolean)data.get("export.createToc");
         Boolean createPageNumbers = (Boolean)data.get("export.createPageNumbers");
@@ -991,134 +1054,207 @@ public class ExportAsPdfMergeStep extends javax.swing.JPanel implements WizardSt
         if(createPageNumbers == null) createPageNumbers = true;  // Fallback wenn nicht gesetzt
 
         HashMap<String, Integer> startPages = new HashMap<>();
-        PDFMergerUtility merger = new PDFMergerUtility();
         PDDocument mergedDoc = new PDDocument();
+        // Keep track of opened documents to close them after saving
+        List<PDDocument> openedDocuments = new ArrayList<>();
+        // Track skipped files (encrypted or corrupted PDFs)
+        List<String> skippedFiles = new ArrayList<>();
 
         PDDocument tocDoc = null;
         File tocTempFile = null;
 
-        // Nur TOC erstellen wenn Option gewählt
-        if (createToc) {
-            tocDoc = new PDDocument();
-            // first page with metadata
-            PDPage metaPage = new PDPage(PDRectangle.A4);
-            tocDoc.addPage(metaPage);
+        try {
+            // Nur TOC erstellen wenn Option gewählt
+            if (createToc) {
+                tocDoc = new PDDocument();
+                // first page with metadata
+                PDPage metaPage = new PDPage(PDRectangle.A4);
+                tocDoc.addPage(metaPage);
 
-            try (PDPageContentStream metaStream = new PDPageContentStream(tocDoc, metaPage)) {
-                metaStream.setFont(PDType1Font.HELVETICA_BOLD, 16);
-                metaStream.beginText();
-                metaStream.setLeading(14.5f);
-                metaStream.newLineAtOffset(50, 750);
-                metaStream.showText(caseDto.getFileNumber() + " " + caseDto.getName() + " (" + new SimpleDateFormat("dd.MM.yyyy").format(new Date()) + ")");
-                metaStream.newLine();
-                metaStream.newLine();
-                metaStream.endText();
+                try (PDPageContentStream metaStream = new PDPageContentStream(tocDoc, metaPage)) {
+                    metaStream.setFont(PDType1Font.HELVETICA_BOLD, 16);
+                    metaStream.beginText();
+                    metaStream.setLeading(14.5f);
+                    metaStream.newLineAtOffset(50, 750);
+                    metaStream.showText(caseDto.getFileNumber() + " " + caseDto.getName() + " (" + new SimpleDateFormat("dd.MM.yyyy").format(new Date()) + ")");
+                    metaStream.newLine();
+                    metaStream.newLine();
+                    metaStream.endText();
 
-                // Set font for additional information
-                metaStream.setFont(PDType1Font.HELVETICA, 12);
-                metaStream.beginText();
-                metaStream.setLeading(14.5f);
-                metaStream.newLineAtOffset(50, 710);
+                    // Set font for additional information
+                    metaStream.setFont(PDType1Font.HELVETICA, 12);
+                    metaStream.beginText();
+                    metaStream.setLeading(14.5f);
+                    metaStream.newLineAtOffset(50, 710);
 
-                // Add additional lines of text
-                metaStream.showText("wegen: " + caseDto.getReason());
-                metaStream.newLine();
-                metaStream.showText("Sachgebiet: " + caseDto.getSubjectField());
-                metaStream.newLine();
-                metaStream.showText("Anwalt / Anwältin: " + caseDto.getLawyer());
-                metaStream.newLine();
-                metaStream.showText("Sachbearbeiter(-in): " + caseDto.getAssistant());
-                metaStream.newLine();
-                metaStream.showText("erstellt: " + new SimpleDateFormat("dd.MM.yyyy").format(caseDto.getDateCreated()));
-                metaStream.newLine();
-                metaStream.showText("geändert: " + new SimpleDateFormat("dd.MM.yyyy").format(caseDto.getDateChanged()));
-                metaStream.endText();
-            }
+                    // Add additional lines of text
+                    metaStream.showText("wegen: " + caseDto.getReason());
+                    metaStream.newLine();
+                    metaStream.showText("Sachgebiet: " + caseDto.getSubjectField());
+                    metaStream.newLine();
+                    metaStream.showText("Anwalt / Anwältin: " + caseDto.getLawyer());
+                    metaStream.newLine();
+                    metaStream.showText("Sachbearbeiter(-in): " + caseDto.getAssistant());
+                    metaStream.newLine();
+                    metaStream.showText("erstellt: " + new SimpleDateFormat("dd.MM.yyyy").format(caseDto.getDateCreated()));
+                    metaStream.newLine();
+                    metaStream.showText("geändert: " + new SimpleDateFormat("dd.MM.yyyy").format(caseDto.getDateChanged()));
+                    metaStream.endText();
+                }
 
-            // add empty placeholder pages for the TOC
-            for (int i = 0; i < pdfFiles.size(); i += 45) {
-                PDPage tocPage = new PDPage(PDRectangle.A4);
-                tocDoc.addPage(tocPage);
-            }
+                // add empty placeholder pages for the TOC
+                for (int i = 0; i < pdfFiles.size(); i += 45) {
+                    PDPage tocPage = new PDPage(PDRectangle.A4);
+                    tocDoc.addPage(tocPage);
+                }
 
-            // Save TOC to temp file and close
-            try {
+                // Save TOC to temp file and close
                 tocTempFile = createTempFileFromPDDocument(tocDoc);
-            } finally {
+                tocDoc.close();
+                tocDoc = null;
+
+                // TOC als erste Datei hinzufügen
+                pdfFiles.add(0, tocTempFile);
+            }
+
+            int currentPageCount = 0;
+            for (File file : pdfFiles) {
+                PDDocument doc = null;
+                try {
+                    // Load with memory usage setting to prevent issues with large/complex PDFs
+                    doc = PDDocument.load(file, MemoryUsageSetting.setupTempFileOnly());
+                } catch (org.apache.pdfbox.pdmodel.encryption.InvalidPasswordException ipe) {
+                    // PDF is encrypted and cannot be opened without password
+                    log.warn("Skipping encrypted PDF: " + file.getName(), ipe);
+                    skippedFiles.add(file.getName());
+                    continue;
+                } catch (Exception loadEx) {
+                    // Other loading errors (corrupted PDFs, etc.)
+                    log.error("Error loading PDF, skipping: " + file.getName(), loadEx);
+                    skippedFiles.add(file.getName());
+                    continue;
+                }
+
+                openedDocuments.add(doc);
+                startPages.put(file.getName(), currentPageCount);
+
+                // Remember page count before merge attempt
+                int pageCountBeforeMerge = mergedDoc.getNumberOfPages();
+
+                // Try standard merge first
+                boolean mergeSuccessful = false;
+                try {
+                    PDFMergerUtility merger = new PDFMergerUtility();
+                    merger.appendDocument(mergedDoc, doc);
+                    mergeSuccessful = true;
+                    currentPageCount += doc.getNumberOfPages();
+                } catch (StackOverflowError soe) {
+                    // Fallback: merge pages individually to avoid circular reference issues
+                    log.warn("StackOverflowError during merge of " + file.getName() + ", using alternative merge strategy", soe);
+
+                    // Remove any pages that were already added by the failed appendDocument call
+                    int pageCountAfterFailedMerge = mergedDoc.getNumberOfPages();
+                    if (pageCountAfterFailedMerge > pageCountBeforeMerge) {
+                        log.info("Removing " + (pageCountAfterFailedMerge - pageCountBeforeMerge) + " partially merged pages from " + file.getName());
+                        for (int i = pageCountAfterFailedMerge - 1; i >= pageCountBeforeMerge; i--) {
+                            mergedDoc.removePage(i);
+                        }
+                    }
+                }
+
+                // If standard merge failed, use page-by-page import
+                if (!mergeSuccessful) {
+                    int pageCount = doc.getNumberOfPages();
+                    for (int i = 0; i < pageCount; i++) {
+                        mergedDoc.importPage(doc.getPage(i));
+                    }
+                    currentPageCount += pageCount;
+                }
+            }
+
+            // Dokumentinformationen setzen
+            PDDocumentInformation info = new PDDocumentInformation();
+            info.setTitle(caseDto.getFileNumber() + " " + caseDto.getName() + " (" + new SimpleDateFormat("dd.MM.yyyy").format(new Date()) + ")");
+            info.setAuthor(UserSettings.getInstance().getCurrentUser().getPrincipalId());
+            info.setCreationDate(GregorianCalendar.getInstance());
+            mergedDoc.setDocumentInformation(info);
+
+            // Nur TOC-Einträge erstellen wenn Option gewählt
+            if (createToc) {
+                PDDocumentOutline outline = new PDDocumentOutline();
+                mergedDoc.getDocumentCatalog().setDocumentOutline(outline);
+
+                int currentTocPage = 1;
+                // remove TOC document to avoid it from being added to the TOC itself
+                pdfFiles.remove(0);
+                for (int i = 0; i < pdfFiles.size(); i += 45) {
+                    int end = Math.min(pdfFiles.size(), i + 45);
+                    List<File> batch = pdfFiles.subList(i, end);
+                    processTocPage(currentTocPage, mergedDoc, batch, startPages, caseDto, outline);
+                    currentTocPage = currentTocPage + 1;
+                }
+            }
+
+            // Nur Seitenzahlen hinzufügen wenn Option gewählt
+            if (createPageNumbers) {
+                int pageCount = mergedDoc.getNumberOfPages();
+                for (int i = 0; i < pageCount; i++) {
+                    PDPage page = mergedDoc.getPage(i);
+                    try (PDPageContentStream contentStream = new PDPageContentStream(mergedDoc, page, PDPageContentStream.AppendMode.APPEND, true, true)) {
+                        contentStream.beginText();
+                        contentStream.setFont(PDType1Font.HELVETICA, 10);
+
+                        float margin = 20;
+                        float x = (page.getMediaBox().getWidth() - margin) / 2;
+                        float y = margin;
+
+                        contentStream.newLineAtOffset(x, y);
+                        contentStream.showText("" + (i + 1) + " / " + pageCount);
+                        contentStream.endText();
+                    }
+                }
+            }
+
+            // Save merged document BEFORE closing any source documents
+            FileUtils.copyFile(createTempFileFromPDDocument(mergedDoc).getAbsolutePath(), outputFile, true);
+
+        } finally {
+            // Close all opened documents
+            for (PDDocument doc : openedDocuments) {
+                try {
+                    if (doc != null) {
+                        doc.close();
+                    }
+                } catch (Exception e) {
+                    log.warn("Error closing PDF document", e);
+                }
+            }
+
+            // Close merged document
+            try {
+                if (mergedDoc != null) {
+                    mergedDoc.close();
+                }
+            } catch (Exception e) {
+                log.warn("Error closing merged document", e);
+            }
+
+            // Close TOC document if still open
+            try {
                 if (tocDoc != null) {
                     tocDoc.close();
                 }
+            } catch (Exception e) {
+                log.warn("Error closing TOC document", e);
             }
 
-            // TOC als erste Datei hinzufügen
-            pdfFiles.add(0, tocTempFile);
-        }
-
-        int currentPageCount = 0;
-        for (File file : pdfFiles) {
-            PDDocument doc = null;
-            try {
-                doc = PDDocument.load(file);
-                startPages.put(file.getName(), currentPageCount);
-                merger.appendDocument(mergedDoc, doc);
-                currentPageCount += doc.getNumberOfPages();
-            } finally {
-                if (doc != null) {
-                    doc.close();
-                }
+            // Cleanup temp files
+            if (tocTempFile != null && tocTempFile.exists()) {
+                tocTempFile.delete();
             }
         }
 
-        // Dokumentinformationen setzen
-        PDDocumentInformation info = new PDDocumentInformation();
-        info.setTitle(caseDto.getFileNumber() + " " + caseDto.getName() + " (" + new SimpleDateFormat("dd.MM.yyyy").format(new Date()) + ")");
-        info.setAuthor(UserSettings.getInstance().getCurrentUser().getPrincipalId());
-        info.setCreationDate(GregorianCalendar.getInstance());
-        mergedDoc.setDocumentInformation(info);
-
-        // Nur TOC-Einträge erstellen wenn Option gewählt
-        if (createToc) {
-            PDDocumentOutline outline = new PDDocumentOutline();
-            mergedDoc.getDocumentCatalog().setDocumentOutline(outline);
-
-            int currentTocPage = 1;
-            // remove TOC document to avoid it from being added to the TOC itself
-            pdfFiles.remove(0);
-            for (int i = 0; i < pdfFiles.size(); i += 45) {
-                int end = Math.min(pdfFiles.size(), i + 45);
-                List<File> batch = pdfFiles.subList(i, end);
-                processTocPage(currentTocPage, mergedDoc, batch, startPages, caseDto, outline);
-                currentTocPage = currentTocPage + 1;
-            }
-        }
-
-        // Nur Seitenzahlen hinzufügen wenn Option gewählt
-        if (createPageNumbers) {
-            int pageCount = mergedDoc.getNumberOfPages();
-            for (int i = 0; i < pageCount; i++) {
-                PDPage page = mergedDoc.getPage(i);
-                try (PDPageContentStream contentStream = new PDPageContentStream(mergedDoc, page, PDPageContentStream.AppendMode.APPEND, true, true)) {
-                    contentStream.beginText();
-                    contentStream.setFont(PDType1Font.HELVETICA, 10);
-
-                    float margin = 20;
-                    float x = (page.getMediaBox().getWidth() - margin) / 2;
-                    float y = margin;
-
-                    contentStream.newLineAtOffset(x, y);
-                    contentStream.showText("" + (i + 1) + " / " + pageCount);
-                    contentStream.endText();
-                }
-            }
-        }
-
-        FileUtils.copyFile(createTempFileFromPDDocument(mergedDoc).getAbsolutePath(), outputFile, true);
-        mergedDoc.close();
-
-        // Cleanup
-        if (tocTempFile != null && tocTempFile.exists()) {
-            tocTempFile.delete();
-        }
+        return skippedFiles;
     }
 
     private void processTocPage(int currentTocPage, PDDocument mergedDoc, List<File> pdfFiles, HashMap<String, Integer> startPages, ArchiveFileBean caseDto, PDDocumentOutline outline) throws IOException {

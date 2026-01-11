@@ -1047,7 +1047,12 @@ public class SipgateAPI {
         try {
             Response response = webTarget.request(MediaType.APPLICATION_JSON).header(AUTH_HEADERNAME, AUTH_HEADERPREFIX + authStringEnc).accept(MIMETYPE_JSON).get();
             String returnValue = response.readEntity(String.class);
-            if (response.getStatus() != 200) {
+            if (response.getStatus() == 403) {
+                // likely, only admin users may query the balance
+                log.warn("unable to query sipgate balance - user not authorized");
+                retValue.setValid(new Date());
+                return retValue;
+            } else if (response.getStatus() != 200) {
                 log.error("Could not get Sipgate balance information: " + returnValue + " [" + response.getStatus() + "]");
                 throw new SipgateException("Could not get Sipgate balance information: " + returnValue + " [" + response.getStatus() + "]");
             }

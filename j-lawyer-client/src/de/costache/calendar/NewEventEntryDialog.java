@@ -681,7 +681,7 @@ public class NewEventEntryDialog extends javax.swing.JDialog implements NewEvent
 
     private static final Logger log=Logger.getLogger(NewEventEntryDialog.class.getName());
     
-    private CalendarPanel calendarPanel = null;
+    private NewEventEntryCallbacks calendarPanel = null;
     private ArchiveFileBean eventCase = null;
     private boolean preventRelatedEvents=true;
 
@@ -693,7 +693,7 @@ public class NewEventEntryDialog extends javax.swing.JDialog implements NewEvent
      * @param modalityType
      * @param eventCase
      */
-    public NewEventEntryDialog(CalendarPanel calPanel, java.awt.Window parent, java.awt.Dialog.ModalityType modalityType, ArchiveFileBean eventCase, boolean preventRelatedEvents) {
+    public NewEventEntryDialog(NewEventEntryCallbacks calPanel, java.awt.Window parent, java.awt.Dialog.ModalityType modalityType, ArchiveFileBean eventCase, boolean preventRelatedEvents) {
         super(parent, modalityType);
         initComponents();
         this.preventRelatedEvents=preventRelatedEvents;
@@ -715,8 +715,8 @@ public class NewEventEntryDialog extends javax.swing.JDialog implements NewEvent
         this.newEventPanel.setEventType(eventType);
     }
 
-    public void setReviewAssignee(String assignee) {
-        this.newEventPanel.setReviewAssignee(assignee);
+    public void setReviewAssignees(String assistant, String lawyer) {
+        this.newEventPanel.setReviewAssignees(assistant, lawyer);
     }
     
     public void setSummary(String summary) {
@@ -827,7 +827,7 @@ public class NewEventEntryDialog extends javax.swing.JDialog implements NewEvent
         }
 
         if(this.calendarPanel!=null) {
-            this.calendarPanel.addCalendarEvent(ev);
+            this.calendarPanel.entryAdded(ev);
         }
     }
 

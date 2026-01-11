@@ -716,6 +716,7 @@ public class ShrinkifyGui extends javax.swing.JFrame {
 
 
     private volatile boolean finished = false;
+    private volatile boolean busy = false;
     
     
     
@@ -758,6 +759,31 @@ public class ShrinkifyGui extends javax.swing.JFrame {
         
         
         
+    }
+
+    private void setBusy(boolean isBusy, String message) {
+        busy = isBusy;
+        SwingUtilities.invokeLater(() -> {
+            // Buttons und Eingaben sperren/freigeben
+            testButton.setEnabled(!isBusy);
+            saveButton.setEnabled(!isBusy);
+            qualityComboBox.setEnabled(!isBusy);
+            resolutionComboBox.setEnabled(!isBusy);
+            bwCheckBox.setEnabled(!isBusy);
+            greyscaleCheckBox.setEnabled(!isBusy);
+            overwriteCheckBox.setEnabled(!isBusy);
+            fileList.setEnabled(!isBusy);
+
+            // Cursor und Fortschrittsbalken
+            setCursor(isBusy ? java.awt.Cursor.getPredefinedCursor(java.awt.Cursor.WAIT_CURSOR)
+                             : java.awt.Cursor.getDefaultCursor());
+            progressBar.setStringPainted(isBusy);
+            progressBar.setIndeterminate(isBusy);
+            progressBar.setString(isBusy ? (message == null ? "Bitte warten …" : message) : "");
+            if (!isBusy) {
+                progressBar.setValue(0);
+            }
+        });
     }
     
     
@@ -819,7 +845,6 @@ public class ShrinkifyGui extends javax.swing.JFrame {
             }
         });
 
-        overwriteCheckBox.setSelected(true);
         overwriteCheckBox.setText("Urspr. Dateien überschreiben");
         overwriteCheckBox.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
@@ -1081,6 +1106,9 @@ public class ShrinkifyGui extends javax.swing.JFrame {
     }
     
     private void previewCompressedFile() {
+        if (busy) {
+            return; // bereits laufender Prozess
+        }
         if (fileListModel.isEmpty()) {
             JOptionPane.showMessageDialog(this, "Bitte wählen Sie mindestens eine PDF-Datei aus.");
             return;
@@ -1090,7 +1118,7 @@ public class ShrinkifyGui extends javax.swing.JFrame {
         float resolutionScale = getResolutionScale();
         boolean convertBW = bwCheckBox.isSelected();
         boolean convertGreyScale = greyscaleCheckBox.isSelected();
-
+        setBusy(true, "Erstelle Vorschau …");
         new Thread(() -> {
             StringBuilder compressionInfo = new StringBuilder();
             for (int i = 0; i < fileListModel.size(); i++) {
@@ -1130,12 +1158,16 @@ public class ShrinkifyGui extends javax.swing.JFrame {
                 }
             }
             compressionInfoTextArea.setText(compressionInfo.toString());
+            setBusy(false, null);
         }).start();
     }
 
 
 
     private void compressAndSaveFiles() {
+        if (busy) {
+            return; // bereits laufender Prozess
+        }
         if (fileListModel.isEmpty()) {
             JOptionPane.showMessageDialog(this, "Bitte wählen Sie mindestens eine PDF-Datei aus.");
             return;
@@ -1167,6 +1199,7 @@ public class ShrinkifyGui extends javax.swing.JFrame {
         // Startzeit erfassen
         long startTime = System.currentTimeMillis();
 
+        setBusy(true, "Komprimiere …");
         new Thread(() -> {
             progressBar.setMaximum(fileListModel.size());
             int progress = 0;
@@ -1217,7 +1250,8 @@ public class ShrinkifyGui extends javax.swing.JFrame {
                 }
 
                 progress++;
-                progressBar.setValue(progress);
+                final int current = progress;
+                SwingUtilities.invokeLater(() -> progressBar.setValue(current));
             }
 
             // Endzeit erfassen und Dauer berechnen
@@ -1237,6 +1271,7 @@ public class ShrinkifyGui extends javax.swing.JFrame {
             compressionInfoTextArea.setText(message.toString());
             finished = true;
             SwingUtilities.invokeLater(() -> closeButton.setEnabled(true)); 
+            setBusy(false, null);
             //JOptionPane.showMessageDialog(this, message.toString());
         }).start();
     }
@@ -1411,5 +1446,4 @@ public class ShrinkifyGui extends javax.swing.JFrame {
 
 
 }
-
 

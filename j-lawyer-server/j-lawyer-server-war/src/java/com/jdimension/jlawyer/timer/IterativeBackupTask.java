@@ -663,7 +663,7 @@
  */
 package com.jdimension.jlawyer.timer;
 
-import com.jdimension.jlawyer.export.HTMLExport;
+import com.jdimension.jlawyer.export.AdvancedHtmlExport;
 import com.jdimension.jlawyer.persistence.ArchiveFileBean;
 import com.jdimension.jlawyer.persistence.ServerSettingsBean;
 import com.jdimension.jlawyer.persistence.ServerSettingsBeanFacadeLocal;
@@ -745,7 +745,9 @@ public class IterativeBackupTask extends java.util.TimerTask implements Cancella
 
         String dbUser = "";
         String dbPassword = "";
+        String dbHost = "localhost";
         String dbPort = "3306";
+        String dbName = "jlawyerdb";
         String syncLocation = "";
         boolean backupSuccess=true;
         boolean syncSuccess = true;
@@ -799,9 +801,19 @@ public class IterativeBackupTask extends java.util.TimerTask implements Cancella
                 dbPassword = dbPasswordB.getSettingValue();
             }
 
+            ServerSettingsBean dbHostB = settings.find("jlawyer.server.backup.dbhost");
+            if (dbHostB != null) {
+                dbHost = dbHostB.getSettingValue();
+            }
+            
             ServerSettingsBean dbPortB = settings.find("jlawyer.server.backup.dbport");
             if (dbPortB != null) {
                 dbPort = dbPortB.getSettingValue();
+            }
+            
+            ServerSettingsBean dbNameB = settings.find("jlawyer.server.backup.dbname");
+            if (dbNameB != null) {
+                dbName = dbNameB.getSettingValue();
             }
 
             if (dbUser == null || "".equals(dbUser)) {
@@ -913,7 +925,7 @@ public class IterativeBackupTask extends java.util.TimerTask implements Cancella
 
         
         log.info("initializing backup executor");
-        IterativeBackupExecutor ibe = new IterativeBackupExecutor(dataDir, backupDir, dbUser, dbPassword, dbPort, encryptionPassword);
+        IterativeBackupExecutor ibe = new IterativeBackupExecutor(dataDir, backupDir, dbUser, dbPassword, dbHost, dbPort, dbName, encryptionPassword);
         String subject = "Erfolgreich: ";
         StringBuilder body = new StringBuilder();
         BackupResult backupResult=null;
@@ -948,16 +960,16 @@ public class IterativeBackupTask extends java.util.TimerTask implements Cancella
                 ArchiveFileServiceLocal caseSvc = (ArchiveFileServiceLocal) ic.lookup("java:global/j-lawyer-server/j-lawyer-server-ejb/ArchiveFileService!com.jdimension.jlawyer.services.ArchiveFileServiceLocal");
                 CalendarServiceLocal calendarSvc = (CalendarServiceLocal) ic.lookup("java:global/j-lawyer-server/j-lawyer-server-ejb/CalendarService!com.jdimension.jlawyer.services.CalendarServiceLocal");
                 ArrayList<String> caseIds = caseSvc.getAllArchiveFileIds();
-                HTMLExport export = new HTMLExport(exportDir, caseSvc, calendarSvc);
+                AdvancedHtmlExport export = new AdvancedHtmlExport(exportDir.getAbsolutePath(), caseSvc, calendarSvc, true);
                 for (String id : caseIds) {
                     ArchiveFileBean afb = caseSvc.getArchiveFileUnrestricted(id);
 
-                    File caseDir = export.getExportFolderName(afb);
+                    String caseDir = export.getExportFolderName(afb);
                     Date lastModified = caseSvc.getLastChangedForArchiveFile(id);
                     boolean needsExport = true;
-                    if (caseDir.exists()) {
+                    if (new File(exportDir, caseDir).exists()) {
 
-                        File lastExported = new File(caseDir + File.separator + ".lastchanged");
+                        File lastExported = new File(exportDir, caseDir + File.separator + ".lastchanged");
                         if (lastExported.exists()) {
                             String lastExportedTime = ServerFileUtils.readFileAsString(lastExported);
                             String lastModifiedTime = "" + lastModified.getTime();
@@ -968,14 +980,14 @@ public class IterativeBackupTask extends java.util.TimerTask implements Cancella
                     }
                     if (needsExport) {
                         try {
-                            ServerFileUtils.getInstance().deleteRecursively(caseDir);
+                            ServerFileUtils.getInstance().deleteRecursively(new File(exportDir, caseDir));
                             export.export(afb, lastModified);
                         } catch (Throwable t) {
                             log.error("Error exporting " + afb.getFileNumber(), t);
                         }
                     }
                 }
-                export.exportReviews();
+                export.exportReviews(exportDir);
                 log.info("Export finished");
                 this.updateJobStatus(JobStatus.STATUS_INPROGRESS, 60, "Export finished");
             }

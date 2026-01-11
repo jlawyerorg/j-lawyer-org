@@ -667,6 +667,7 @@ import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
+import java.nio.file.Files;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
@@ -675,6 +676,7 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import org.apache.log4j.Logger;
 import org.apache.poi.util.Units;
+import org.apache.poi.wp.usermodel.HeaderFooterType;
 import org.apache.poi.xwpf.usermodel.BodyElementType;
 import org.apache.poi.xwpf.usermodel.Document;
 import org.apache.poi.xwpf.usermodel.IBodyElement;
@@ -697,6 +699,7 @@ import org.jlawyer.plugins.calculation.CalculationTable;
 import org.jlawyer.plugins.calculation.Cell;
 import org.jlawyer.plugins.calculation.StyledCalculationTable;
 import org.openxmlformats.schemas.wordprocessingml.x2006.main.CTR;
+import org.openxmlformats.schemas.wordprocessingml.x2006.main.CTSectPr;
 
 /**
  *
@@ -818,7 +821,12 @@ public class MicrosoftOfficeAccess {
                             t.setInsideHBorder(XWPFTable.XWPFBorderType.SINGLE, 8, 0, Integer.toHexString(tab.getBorderColor().getRGB()).substring(2));
                             t.setInsideVBorder(XWPFTable.XWPFBorderType.SINGLE, 8, 0, Integer.toHexString(tab.getBorderColor().getRGB()).substring(2));
                         } else {
+                            t.setTopBorder(XWPFTable.XWPFBorderType.NONE, 8, 0, "000000");
                             t.setBottomBorder(XWPFTable.XWPFBorderType.NONE, 8, 0, "000000");
+                            t.setLeftBorder(XWPFTable.XWPFBorderType.NONE, 8, 0, "000000");
+                            t.setRightBorder(XWPFTable.XWPFBorderType.NONE, 8, 0, "000000");
+                            t.setInsideHBorder(XWPFTable.XWPFBorderType.NONE, 8, 0, "000000");
+                            t.setInsideVBorder(XWPFTable.XWPFBorderType.NONE, 8, 0, "000000");
                         }
 
                         if (t.getNumberOfRows() == 1 && t.getRow(0).getTableCells().size() == 1) {
@@ -1117,8 +1125,6 @@ public class MicrosoftOfficeAccess {
                 replaceInTextfield(key, value, (XWPFParagraph) bodyElement);
             } else if (bodyElement.getElementType().compareTo(BodyElementType.TABLE) == 0) {
                 replaceInTable(key, value, (XWPFTable) bodyElement);
-            } else {
-                System.out.println("Not iterating " + bodyElement.getElementType());
             }
         }
     }
@@ -1130,8 +1136,6 @@ public class MicrosoftOfficeAccess {
                 replaceScriptsInTextfield(caseId, pattern, values, formsPrefixes, (XWPFParagraph) bodyElement);
             } else if (bodyElement.getElementType().compareTo(BodyElementType.TABLE) == 0) {
                 replaceScriptsInTable(caseId, pattern, values, formsPrefixes, (XWPFTable) bodyElement, removeParagraphs);
-            } else {
-                System.out.println("Not iterating " + bodyElement.getElementType());
             }
         }
     }
@@ -1539,7 +1543,19 @@ public class MicrosoftOfficeAccess {
 
     static void mergeDocuments(String intoDocument, String mergeDocument) throws Exception {
         // note: intoDocument is just an ID as filename, does not have an .odt / .docx extension
-        if (mergeDocument.toLowerCase().endsWith(EXT_DOCX)) {
+
+        // Check if intoDocument is an image file (PNG/JPG/JPEG)
+        String lowerInto = intoDocument.toLowerCase();
+        boolean isImage = lowerInto.endsWith(".png") || lowerInto.endsWith(".jpg") || lowerInto.endsWith(".jpeg");
+
+        if (isImage) {
+            // Image as letterhead: insert image as full-page background watermark on page 1
+            if (mergeDocument.toLowerCase().endsWith(EXT_DOCX)) {
+                mergeImageAsBackgroundDocx(intoDocument, mergeDocument);
+            } else {
+                throw new Exception("Bild-Briefkopf nicht unterstützt für dieses Format: " + new File(mergeDocument).getName());
+            }
+        } else if (mergeDocument.toLowerCase().endsWith(EXT_DOCX)) {
             merge(intoDocument, mergeDocument);
         } else {
             throw new Exception("Nicht unterstützt: Briefkopf=" + new File(intoDocument).getName() + "; Vorlage=" + new File(mergeDocument).getName());
@@ -1573,6 +1589,196 @@ public class MicrosoftOfficeAccess {
         FileOutputStream fos = new FileOutputStream(mergedFile);
         mergedDoc.write(fos);
         fos.close();
+    }
+
+    /**
+     * Merges an image file as a full-page background watermark on page 1 of a DOCX document.
+     *
+     * @param imageFile Path to the image file (PNG/JPG/JPEG)
+     * @param templateDocument Path to the template document (DOCX)
+     * @throws Exception if an error occurs during the merge
+     */
+    static void mergeImageAsBackgroundDocx(String imageFile, String templateDocument) throws Exception {
+        // Load the template document
+        XWPFDocument doc = new XWPFDocument(new FileInputStream(templateDocument));
+
+        // Get page dimensions
+        long[] dimensions = getPageDimensionsDocx(doc);
+        long pageWidthEMU = dimensions[0];
+        long pageHeightEMU = dimensions[1];
+
+        log.info("Page dimensions for DOCX image background: width=" + pageWidthEMU + " EMU, height=" + pageHeightEMU + " EMU");
+
+        // Load image file
+        File imgFile = new File(imageFile);
+        byte[] imageBytes = Files.readAllBytes(imgFile.toPath());
+
+        // Determine image type based on file extension
+        int pictureType = Document.PICTURE_TYPE_PNG;
+        String fileName = imgFile.getName().toLowerCase();
+        if (fileName.endsWith(".jpg") || fileName.endsWith(".jpeg")) {
+            pictureType = Document.PICTURE_TYPE_JPEG;
+        }
+
+        // Get or create the first paragraph in the document body
+        XWPFParagraph paragraph;
+        if (doc.getParagraphs().isEmpty()) {
+            paragraph = doc.createParagraph();
+        } else {
+            paragraph = doc.getParagraphs().get(0);
+        }
+
+        // Create a run at the beginning of the first paragraph
+        XWPFRun run = paragraph.insertNewRun(0);
+
+        // Add the picture - this creates an inline picture by default
+        String pictureId = doc.addPictureData(imageBytes, pictureType);
+        int picId = doc.getAllPictures().size();
+
+        // Now we need to manually create an anchor-based picture instead of inline
+        // Get the CTR (run) element
+        CTR ctr = run.getCTR();
+
+        // Create the drawing XML manually as an anchor
+        String drawingXml =
+            "<w:drawing xmlns:w=\"http://schemas.openxmlformats.org/wordprocessingml/2006/main\" " +
+            "xmlns:wp=\"http://schemas.openxmlformats.org/drawingml/2006/wordprocessingDrawing\" " +
+            "xmlns:a=\"http://schemas.openxmlformats.org/drawingml/2006/main\" " +
+            "xmlns:pic=\"http://schemas.openxmlformats.org/drawingml/2006/picture\" " +
+            "xmlns:r=\"http://schemas.openxmlformats.org/officeDocument/2006/relationships\">" +
+            "<wp:anchor distT=\"0\" distB=\"0\" distL=\"0\" distR=\"0\" simplePos=\"0\" relativeHeight=\"0\" " +
+            "behindDoc=\"1\" locked=\"0\" layoutInCell=\"0\" allowOverlap=\"1\">" +
+            "<wp:simplePos x=\"0\" y=\"0\"/>" +
+            "<wp:positionH relativeFrom=\"page\">" +
+            "<wp:posOffset>0</wp:posOffset>" +
+            "</wp:positionH>" +
+            "<wp:positionV relativeFrom=\"page\">" +
+            "<wp:posOffset>0</wp:posOffset>" +
+            "</wp:positionV>" +
+            "<wp:extent cx=\"" + pageWidthEMU + "\" cy=\"" + pageHeightEMU + "\"/>" +
+            "<wp:effectExtent l=\"0\" t=\"0\" r=\"0\" b=\"0\"/>" +
+            "<wp:wrapNone/>" +
+            "<wp:docPr id=\"" + picId + "\" name=\"Background Image\"/>" +
+            "<wp:cNvGraphicFramePr/>" +
+            "<a:graphic>" +
+            "<a:graphicData uri=\"http://schemas.openxmlformats.org/drawingml/2006/picture\">" +
+            "<pic:pic>" +
+            "<pic:nvPicPr>" +
+            "<pic:cNvPr id=\"" + picId + "\" name=\"" + imgFile.getName() + "\"/>" +
+            "<pic:cNvPicPr/>" +
+            "</pic:nvPicPr>" +
+            "<pic:blipFill>" +
+            "<a:blip r:embed=\"" + pictureId + "\"/>" +
+            "<a:stretch>" +
+            "<a:fillRect/>" +
+            "</a:stretch>" +
+            "</pic:blipFill>" +
+            "<pic:spPr>" +
+            "<a:xfrm>" +
+            "<a:off x=\"0\" y=\"0\"/>" +
+            "<a:ext cx=\"" + pageWidthEMU + "\" cy=\"" + pageHeightEMU + "\"/>" +
+            "</a:xfrm>" +
+            "<a:prstGeom prst=\"rect\">" +
+            "<a:avLst/>" +
+            "</a:prstGeom>" +
+            "</pic:spPr>" +
+            "</pic:pic>" +
+            "</a:graphicData>" +
+            "</a:graphic>" +
+            "</wp:anchor>" +
+            "</w:drawing>";
+
+        try {
+            // Parse the drawing XML
+            org.apache.xmlbeans.XmlObject xmlObject = org.apache.xmlbeans.XmlObject.Factory.parse(drawingXml);
+
+            // Use XmlCursor to copy the drawing into the CTR
+            XmlCursor srcCursor = xmlObject.newCursor();
+            XmlCursor dstCursor = ctr.newCursor();
+
+            // Move source cursor to the first child element (the w:drawing element)
+            srcCursor.toFirstChild();
+
+            // Move destination cursor to the end of CTR where we want to insert
+            dstCursor.toEndToken();
+
+            // Copy the drawing element
+            srcCursor.copyXml(dstCursor);
+
+            srcCursor.dispose();
+            dstCursor.dispose();
+
+            log.info("Successfully created anchor-based background image for DOCX");
+        } catch (Exception e) {
+            log.error("Failed to create anchor-based image, image may not be visible: " + e.getMessage(), e);
+        }
+
+        // Save the document as imageFile (result document)
+        FileOutputStream fos = new FileOutputStream(templateDocument);
+        doc.write(fos);
+        fos.close();
+        doc.close();
+    }
+    
+    /**
+     * Gets the page dimensions (width and height) from a DOCX document.
+     *
+     * @param doc The XWPFDocument to extract dimensions from
+     * @return Array with [width, height] in EMUs (English Metric Units), defaults to A4 if not found
+     * @throws Exception if an error occurs
+     */
+    private static long[] getPageDimensionsDocx(XWPFDocument doc) throws Exception {
+        // Default to A4 size in EMUs (1 inch = 914400 EMUs, 1 cm = 360000 EMUs)
+        long width = 21l * 360000l;   // 21 cm = 7560000 EMUs
+        long height = (long) (29.7 * 360000); // 29.7 cm ≈ 10692000 EMUs (rounded to 10800000)
+
+        try {
+            // Get the document's section properties
+            CTSectPr sectPr = doc.getDocument().getBody().getSectPr();
+
+            if (sectPr != null) {
+                // Access page size via XmlBeans selectChildren
+                org.apache.xmlbeans.XmlObject[] pgSzArray = sectPr.selectChildren(
+                    new javax.xml.namespace.QName("http://schemas.openxmlformats.org/wordprocessingml/2006/main", "pgSz")
+                );
+
+                if (pgSzArray != null && pgSzArray.length > 0) {
+                    org.apache.xmlbeans.XmlObject pgSzObj = pgSzArray[0];
+
+                    // Extract w and h attributes via DOM
+                    org.w3c.dom.Node node = pgSzObj.getDomNode();
+                    if (node != null) {
+                        org.w3c.dom.NamedNodeMap attrs = node.getAttributes();
+
+                        // Try with namespace first, then without
+                        org.w3c.dom.Node wAttr = attrs.getNamedItem("w:w");
+                        if (wAttr == null) {
+                            wAttr = attrs.getNamedItem("w");
+                        }
+
+                        org.w3c.dom.Node hAttr = attrs.getNamedItem("w:h");
+                        if (hAttr == null) {
+                            hAttr = attrs.getNamedItem("h");
+                        }
+
+                        // Convert from TWIPs to EMUs
+                        // 1 inch = 1440 TWIPs, 1 TWIP = 635 EMUs
+                        if (wAttr != null) {
+                            //width = Long.parseLong(wAttr.getNodeValue()) * 635 / 20;
+                            width = Long.parseLong(wAttr.getNodeValue()) * 635;
+                        }
+                        if (hAttr != null) {
+                            //height = Long.parseLong(hAttr.getNodeValue()) * 635 / 20;
+                            height = Long.parseLong(hAttr.getNodeValue()) * 635;
+                        }
+                    }
+                }
+            }
+        } catch (Exception e) {
+            log.warn("Could not extract page dimensions from DOCX, using A4 default: " + e.getMessage());
+        }
+
+        return new long[]{width, height};
     }
 
     // Helper method to copy a table from one document to another

@@ -666,6 +666,7 @@ package com.jdimension.jlawyer.client.editors.documents.viewer;
 import com.jdimension.jlawyer.client.utils.ThreadUtils;
 import java.awt.Image;
 import javax.swing.ImageIcon;
+import org.apache.log4j.Logger;
 
 /**
  *
@@ -673,6 +674,7 @@ import javax.swing.ImageIcon;
  */
 public class GifJpegPngImagePanel extends javax.swing.JPanel implements PreviewPanel {
 
+    private static final Logger log = Logger.getLogger(GifJpegPngImagePanel.class.getName());
     private String documentId=null;
     
     /**
@@ -729,29 +731,104 @@ public class GifJpegPngImagePanel extends javax.swing.JPanel implements PreviewP
 
     @Override
     public void showContent(String documentId, byte[] content) {
-        
+
         this.documentId=documentId;
-        
-        ImageIcon imageIcon = new ImageIcon(content); // load the image to a imageIcon
-        Image image = imageIcon.getImage(); // transform it
-        
-        // need to subtract the height of the page navigation buttons, but
-        // the panel has not been layed out yet, so there is no height we could query
-        int height=Math.max(this.getHeight()-35, 200);
-        
-        float scaleFactor=(float)height/(float)imageIcon.getIconHeight();
-        int width=(int)((float)imageIcon.getIconWidth()*scaleFactor);
-        Image newimg=image.getScaledInstance(width,height,Image.SCALE_FAST);
-        
-        imageIcon = new ImageIcon(newimg);  // transform it back
-        
-        this.lblContent.setSize(this.getWidth(),this.lblContent.getHeight());
-        ThreadUtils.updateLabelIcon(this.lblContent, imageIcon);
+
+        // Process image on background thread to avoid blocking EDT
+        new Thread(() -> {
+            try {
+                // Load image using ImageIcon - this handles the image loading properly
+                ImageIcon imageIcon = new ImageIcon(content);
+
+                // Ensure the image is fully loaded by using a MediaTracker
+                java.awt.MediaTracker tracker = new java.awt.MediaTracker(GifJpegPngImagePanel.this);
+                tracker.addImage(imageIcon.getImage(), 0);
+                try {
+                    tracker.waitForAll();
+                } catch (InterruptedException e) {
+                    log.error("Image loading interrupted", e);
+                    ThreadUtils.updateLabel(lblContent, "Fehler: Laden unterbrochen");
+                    return;
+                }
+
+                if (tracker.isErrorAny()) {
+                    log.error("MediaTracker reported error loading image");
+                    ThreadUtils.updateLabel(lblContent, "Fehler: Bild konnte nicht geladen werden");
+                    return;
+                }
+
+                int originalWidth = imageIcon.getIconWidth();
+                int originalHeight = imageIcon.getIconHeight();
+
+                // Validate that we have valid dimensions
+                if (originalWidth <= 0 || originalHeight <= 0) {
+                    log.error("Invalid image dimensions: width=" + originalWidth + ", height=" + originalHeight);
+                    ThreadUtils.updateLabel(lblContent, "Fehler: Ungültige Bildabmessungen");
+                    return;
+                }
+
+                // Get the original image
+                Image originalImage = imageIcon.getImage();
+
+                // need to subtract the height of the page navigation buttons, but
+                // the panel has not been layed out yet, so there is no height we could query
+                int panelHeight = GifJpegPngImagePanel.this.getHeight();
+                int targetHeight = Math.max(panelHeight - 35, 200);
+
+                // Scale the image if needed
+                final ImageIcon finalIcon;
+
+                if (targetHeight > 50 && originalHeight != targetHeight) {
+                    float scaleFactor = (float)targetHeight / (float)originalHeight;
+                    int targetWidth = (int)((float)originalWidth * scaleFactor);
+
+                    // Ensure scaled dimensions are valid
+                    if (targetWidth > 0 && targetHeight > 0) {
+                        // Use Image.getScaledInstance with SCALE_SMOOTH
+                        Image scaledImage = originalImage.getScaledInstance(targetWidth, targetHeight, Image.SCALE_SMOOTH);
+
+                        // Wait for the scaled image to be fully created
+                        java.awt.MediaTracker scaledTracker = new java.awt.MediaTracker(GifJpegPngImagePanel.this);
+                        scaledTracker.addImage(scaledImage, 1);
+                        try {
+                            scaledTracker.waitForAll();
+                        } catch (InterruptedException e) {
+                            log.error("Scaled image loading interrupted", e);
+                        }
+
+                        finalIcon = new ImageIcon(scaledImage);
+                    } else {
+                        log.warn("Invalid scaled dimensions, using original image");
+                        finalIcon = imageIcon;
+                    }
+                } else {
+                    finalIcon = imageIcon;
+                }
+
+                // Update UI on EDT
+                javax.swing.SwingUtilities.invokeLater(() -> {
+                    lblContent.setText(""); // Clear any existing text
+                    lblContent.setSize(getWidth(), lblContent.getHeight());
+                    lblContent.setIcon(finalIcon);
+                    lblContent.revalidate();
+                    lblContent.repaint();
+                });
+
+            } catch (Exception e) {
+                log.error("Unexpected exception while loading image", e);
+                ThreadUtils.updateLabel(lblContent, "Unerwarteter Fehler: " + e.getMessage());
+            }
+        }, "ImageLoader-" + documentId).start();
     }
 
     @Override
     public String getDocumentId() {
         return this.documentId;
+    }
+
+    @Override
+    public void dispose() {
+        
     }
     
     

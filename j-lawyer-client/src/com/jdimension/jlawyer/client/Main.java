@@ -669,7 +669,6 @@ import com.formdev.flatlaf.fonts.inter.FlatInterFont;
 import com.jdimension.jlawyer.client.events.Event;
 import com.jdimension.jlawyer.client.settings.ClientSettings;
 import com.jdimension.jlawyer.client.utils.FontUtils;
-import com.jdimension.jlawyer.client.utils.FrameUtils;
 import com.jdimension.jlawyer.client.utils.SystemUtils;
 import com.jdimension.jlawyer.client.utils.VersionUtils;
 import com.jdimension.jlawyer.server.modules.ModuleMetadata;
@@ -679,7 +678,6 @@ import java.awt.event.KeyEvent;
 import java.io.File;
 import javax.swing.KeyStroke;
 
-import javax.swing.SwingUtilities;
 import javax.swing.ToolTipManager;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -695,10 +693,8 @@ public class Main {
 
     private static final String USER_HOME="user.home";
     private static final String FILE_SEPARATOR="file.separator";
-    private static final String JLAWYERCLIENT_SETTINGDIR=".j-lawyer-client";
     
     private static Logger log=null;
-    private StartupSplashFrame splash = null;
 
     /**
      * Creates a new instance of Main
@@ -712,7 +708,9 @@ public class Main {
      */
     public static void main(String[] args) {
         
-        String userHomeConfLogParent = System.getProperty(USER_HOME) + System.getProperty(FILE_SEPARATOR) + JLAWYERCLIENT_SETTINGDIR + System.getProperty(FILE_SEPARATOR) + "log";
+        ClientSettings.migrateClientSettingsDirectory();
+        
+        String userHomeConfLogParent = System.getProperty(USER_HOME) + System.getProperty(FILE_SEPARATOR) + ClientSettings.JLAWYERCLIENT_SETTINGDIR + System.getProperty(FILE_SEPARATOR) + "log";
         new File(userHomeConfLogParent).mkdirs();
         log = LogManager.getLogger();
         
@@ -820,43 +818,32 @@ public class Main {
 
         ToolTipManager.sharedInstance().setDismissDelay(30000);
         ToolTipManager.sharedInstance().setInitialDelay(200);
-        
+
         FlatLaf.registerCustomDefaultsSource( "themes" );
-        
+
         FlatInterFont.install();
         FlatLaf.setPreferredFontFamily(FlatInterFont.FAMILY);
         FlatLaf.setPreferredLightFontFamily(FlatInterFont.FAMILY_LIGHT);
         FlatLaf.setPreferredSemiboldFontFamily( FlatInterFont.FAMILY_SEMIBOLD );
 
         FlatIntelliJLaf.setup();
-        
-        splash = new StartupSplashFrame();
+        //FlatDarkLaf.setup();
 
-        FrameUtils.centerFrame(splash, null);
-        splash.setVisible(true);
-
-        this.updateStatus(java.util.ResourceBundle.getBundle("com/jdimension/jlawyer/client/Main").getString("status.starting"), true);
-        this.updateStatus(java.util.ResourceBundle.getBundle("com/jdimension/jlawyer/client/Main").getString("status.checkdir"), true);
-        String userHomeConf = System.getProperty(USER_HOME) + System.getProperty(FILE_SEPARATOR) + JLAWYERCLIENT_SETTINGDIR;
+        String userHomeConf = System.getProperty(USER_HOME) + System.getProperty(FILE_SEPARATOR) + ClientSettings.JLAWYERCLIENT_SETTINGDIR;
         File userHomeConfDir = new File(userHomeConf);
         if (!userHomeConfDir.exists()) {
             userHomeConfDir.mkdirs();
         }
-        this.splash.repaint();
-        this.updateStatus(java.util.ResourceBundle.getBundle("com/jdimension/jlawyer/client/Main").getString("status.logging"), true);
-        String userHomeConfLogParent = System.getProperty(USER_HOME) + System.getProperty(FILE_SEPARATOR) + JLAWYERCLIENT_SETTINGDIR + System.getProperty(FILE_SEPARATOR) + "log";
+        String userHomeConfLogParent = System.getProperty(USER_HOME) + System.getProperty(FILE_SEPARATOR) + ClientSettings.JLAWYERCLIENT_SETTINGDIR + System.getProperty(FILE_SEPARATOR) + "log";
         new File(userHomeConfLogParent).mkdirs();
-        updateStatus(" ", true);
 
         log.info("Java: " + System.getProperty("java.version"));
 
-        this.updateStatus(java.util.ResourceBundle.getBundle("com/jdimension/jlawyer/client/Main").getString("status.settingsinit"), true);
         ClientSettings settings = ClientSettings.getInstance();
         
         String themeName = settings.getConfiguration(ClientSettings.CONF_THEME, "default");
         settings.setConfiguration(ClientSettings.CONF_THEME, themeName);
 
-        this.updateStatus(java.util.ResourceBundle.getBundle("com/jdimension/jlawyer/client/Main").getString("status.fontsizes"), true);
         FontUtils fontUtils = FontUtils.getInstance();
         String fontSizeOffset = settings.getConfiguration(ClientSettings.CONF_UI_FONTSIZEOFFSET, "0");
         try {
@@ -865,8 +852,7 @@ public class Main {
         } catch (Throwable t) {
             log.error("Could not set font size", t);
         }
-        
-        this.updateStatus(java.util.ResourceBundle.getBundle("com/jdimension/jlawyer/client/Main").getString("status.modules.available"), true);
+
         // todo: load this from the server
         ModuleMetadata root = new ModuleMetadata(java.util.ResourceBundle.getBundle("com/jdimension/jlawyer/client/Modules").getString("mod.mydesktop"));
 
@@ -1035,16 +1021,6 @@ public class Main {
             bea.setHotKey(KeyStroke.getKeyStroke(KeyEvent.VK_F8, InputEvent.SHIFT_DOWN_MASK), "Shift+F8");
         }
         mail.addChildModule(bea);
-        ModuleMetadata drebis = new ModuleMetadata(java.util.ResourceBundle.getBundle("com/jdimension/jlawyer/client/Modules").getString("mod.comm.drebis"));
-        drebis.setEditorClass("com.jdimension.jlawyer.client.drebis.DrebisInboxPanel");
-        drebis.setBackgroundImage("emails.jpg");
-        drebis.setFullName("Drebis-Posteingang");
-        drebis.setEditorName("Drebis");
-        drebis.setModuleName("Post");
-        drebis.setDefaultIcon(new javax.swing.ImageIcon(getClass().getResource("/icons32/material/Icons2-17-blue.png")));
-        drebis.setRolloverIcon(new javax.swing.ImageIcon(getClass().getResource("/icons32/material/Icons2-17-green.png")));
-        drebis.setStatusEventType(Event.TYPE_DREBISSTATUS);
-        mail.addChildModule(drebis);
         ModuleMetadata mailingStatus = new ModuleMetadata(java.util.ResourceBundle.getBundle("com/jdimension/jlawyer/client/Modules").getString("mod.comm.fax"));
         mailingStatus.setEditorClass("com.jdimension.jlawyer.client.voip.MailingStatusPanel");
         mailingStatus.setBackgroundImage("emails.jpg");
@@ -1158,16 +1134,8 @@ public class Main {
         settings.setRootModule(root);
 
         log.debug(java.util.ResourceBundle.getBundle("com/jdimension/jlawyer/client/Main").getString("status.starting"));
-        this.updateStatus(java.util.ResourceBundle.getBundle("com/jdimension/jlawyer/client/Main").getString("status.started"), false);
 
-        String lastStatus = this.splash.getStatus();
-
-        this.splash.setVisible(false);
-        this.splash.dispose();
-        this.splash = null;
-
-        LoginDialog login = new LoginDialog(lastStatus, cmdHost, cmdPort, cmdUser, cmdPassword, cmdSecMode, cmdSshHost, cmdSshPort, cmdSshUser, cmdSshPwd, cmdSshTargetPort);
-        FrameUtils.centerFrame(login, null);
+        LoginDialog login = new LoginDialog(cmdHost, cmdPort, cmdUser, cmdPassword, cmdSecMode, cmdSshHost, cmdSshPort, cmdSshUser, cmdSshPwd, cmdSshTargetPort);
 
         if (cmdHost == null && cmdPort == null && cmdUser == null && cmdPassword == null) {
             login.setVisible(true);
@@ -1175,15 +1143,4 @@ public class Main {
         }
 
     }
-
-    private void updateStatus(final String s, final boolean newLine) {
-        SwingUtilities.invokeLater(() -> {
-            if (newLine) {
-                splash.addStatus(System.getProperty("line.separator"));
-            }
-            
-            splash.addStatus(s);
-        });
-    }
-
 }

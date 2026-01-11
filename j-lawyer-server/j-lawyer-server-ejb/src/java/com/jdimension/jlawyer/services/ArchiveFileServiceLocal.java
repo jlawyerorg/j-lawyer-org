@@ -663,12 +663,14 @@
  */
 package com.jdimension.jlawyer.services;
 
+import com.jdimension.jlawyer.documents.DocumentPreview;
 import com.jdimension.jlawyer.persistence.ArchiveFileAddressesBean;
 import com.jdimension.jlawyer.persistence.ArchiveFileBean;
 import com.jdimension.jlawyer.persistence.ArchiveFileDocumentsBean;
 import com.jdimension.jlawyer.persistence.ArchiveFileGroupsBean;
 import com.jdimension.jlawyer.persistence.ArchiveFileHistoryBean;
 import com.jdimension.jlawyer.persistence.ArchiveFileTagsBean;
+import com.jdimension.jlawyer.persistence.CaseAccountEntry;
 import com.jdimension.jlawyer.persistence.CaseFolder;
 import com.jdimension.jlawyer.persistence.CaseSyncSettings;
 import com.jdimension.jlawyer.persistence.DocumentFolder;
@@ -676,6 +678,10 @@ import com.jdimension.jlawyer.persistence.DocumentFolderTemplate;
 import com.jdimension.jlawyer.persistence.DocumentNameTemplate;
 import com.jdimension.jlawyer.persistence.DocumentTagsBean;
 import com.jdimension.jlawyer.persistence.Group;
+import com.jdimension.jlawyer.persistence.Invoice;
+import com.jdimension.jlawyer.persistence.InvoicePool;
+import com.jdimension.jlawyer.persistence.InvoicePosition;
+import com.jdimension.jlawyer.persistence.InvoiceType;
 import com.jdimension.jlawyer.pojo.DataBucket;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -702,8 +708,8 @@ public interface ArchiveFileServiceLocal {
     public ArchiveFileBean getArchiveFile(String id) throws Exception;
     public ArrayList<String> getAllArchiveFileIds();
     public Date getLastChangedForArchiveFile(String archiveFileKey);
-    public ArrayList<String> getAllArchiveFileNumbers() throws Exception;
-    public ArrayList<String> getAllArchiveFileNumbersUnrestricted() throws Exception;
+    public ArrayList<String> getAllArchiveFileNumbers(boolean activeCasesOnly) throws Exception;
+    public ArrayList<String> getAllArchiveFileNumbersUnrestricted(boolean activeCasesOnly) throws Exception;
     public ArchiveFileBean getArchiveFileByFileNumber(String fileNumber) throws Exception;
     public ArchiveFileBean getArchiveFileByFileNumberUnrestricted(String fileNumber) throws Exception;
     
@@ -712,12 +718,11 @@ public interface ArchiveFileServiceLocal {
     public Collection<ArchiveFileDocumentsBean> getDocuments(String archiveFileKey);
     public Collection<ArchiveFileDocumentsBean> getDocuments(String archiveFileKey, boolean deleted);
     public byte[] getDocumentContent(String id) throws Exception;
+    public DocumentPreview getDocumentPreview(String id, String previewType) throws Exception;
     public DataBucket getDocumentContentBucket(String id) throws Exception;
     
     public ArchiveFileHistoryBean[] getHistoryForArchiveFile(String archiveFileKey, Date since) throws Exception;
     
-    byte[] exportCaseToHtml(String caseId) throws Exception;
-
     ArchiveFileBean getArchiveFileUnrestricted(String archiveFileKey);
 
     ArchiveFileHistoryBean[] getHistoryForArchiveFileUnrestricted(String archiveFileKey) throws Exception;
@@ -795,6 +800,18 @@ public interface ArchiveFileServiceLocal {
     List<CaseFolder> getFolderHierarchy(String folderId);
     List<CaseFolder> getFolderHierarchyUnrestricted(String folderId);
 
+    CaseFolder createCaseFolder(String parentId, String name) throws Exception;
+
+    CaseFolder updateCaseFolder(CaseFolder folder) throws Exception;
+
+    void deleteCaseFolder(String folderId) throws Exception;
+
+    Collection<ArchiveFileDocumentsBean> getDocumentsBin();
+
+    void removeDocumentFromBin(String docId) throws Exception;
+
+    boolean restoreDocumentFromBin(String docId) throws Exception;
+
     void purgeDocumentBin() throws Exception;
     
     void enableCaseSync(List<String> caseIds, String principalId, boolean enabled) throws Exception;
@@ -823,5 +840,24 @@ public interface ArchiveFileServiceLocal {
     ArchiveFileBean[] searchEnhanced(String query, boolean withArchive, String[] tagName, String[] documentTagNames);
     List<ArchiveFileBean> getTagged(String[] tagName, String[] docTagName, int limit);
     List<ArchiveFileDocumentsBean> getTaggedDocuments(java.lang.String[] docTagName, int limit);
+    List<ArchiveFileAddressesBean> getArchiveFileAddressesByReference(String reference) throws Exception;
+
+    boolean performOcr(String docId) throws Exception;
     
+    List<Invoice> getInvoices(String caseId);
+    List<Invoice> getInvoicesUnrestricted(String caseId);
+    List<InvoicePosition> getInvoicePositions(String invoiceId) throws Exception;
+    Invoice addInvoice(String caseId, InvoicePool invoicePool, InvoiceType invoiceType, String currency) throws Exception;
+    Invoice updateInvoice(String caseId, Invoice invoice) throws Exception;
+    Invoice updateInvoiceType(String caseId, Invoice invoice, InvoicePool invoicePool, InvoiceType invoiceType) throws Exception;
+    CaseAccountEntry addAccountEntry(String caseId, CaseAccountEntry accountEntry) throws Exception;
+    InvoicePosition addInvoicePosition(String invoiceId, InvoicePosition position) throws Exception;
+    InvoicePosition updateInvoicePosition(String invoiceId, InvoicePosition position) throws Exception;
+    void removeInvoicePosition(String invoiceId, InvoicePosition position) throws Exception;
+    void removeInvoice(String invoiceId) throws Exception;
+    Invoice copyInvoice(String invoiceId, String toCaseId, InvoicePool invoicePool, boolean asCredit, boolean markAsCopy, Date periodFrom, Date periodTo, Date due) throws Exception;
+
+    List<CaseAccountEntry> getAccountEntries(String caseId) throws Exception;
+    List<CaseAccountEntry> getAccountEntriesUnrestricted(String caseId) throws Exception;
+
 }

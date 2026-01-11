@@ -355,7 +355,7 @@
           <Image iconType="3" name="/icons/info.png"/>
         </Property>
         <Property name="text" type="java.lang.String" value=" "/>
-        <Property name="toolTipText" type="java.lang.String" value="&lt;html&gt;zeitlicher Versatz f&#xfc;r den zweiten Eintrag, als Anzahl an Tagen:&lt;br/&gt;&lt;ul&gt;&lt;li&gt;negativer Wert: zweiter Eintrag liegt zeitlich vor dem Haupteintrag&lt;/li&gt;&lt;li&gt;negativer Wert: zweiter Eintrag liegt zeitlich nach dem Haupteintrag&lt;/li&gt;&lt;/ul&gt;&lt;/html&gt;"/>
+        <Property name="toolTipText" type="java.lang.String" value="&lt;html&gt;zeitlicher Versatz f&#xfc;r den zweiten Eintrag, als Anzahl an Tagen:&lt;br/&gt;&lt;ul&gt;&lt;li&gt;negativer Wert: zweiter Eintrag liegt zeitlich vor dem Haupteintrag&lt;/li&gt;&lt;li&gt;positiver Wert: zweiter Eintrag liegt zeitlich nach dem Haupteintrag&lt;/li&gt;&lt;/ul&gt;&lt;/html&gt;"/>
       </Properties>
     </Component>
   </SubComponents>

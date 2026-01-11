@@ -678,4 +678,8 @@ public interface MessagingEndpointLocalV7 {
     
     public Response deleteMessage(String id);
     
+    public Response getMessagesSince(int seconds);
+    
+    public Response markMentionDone(String id);
+    
 }

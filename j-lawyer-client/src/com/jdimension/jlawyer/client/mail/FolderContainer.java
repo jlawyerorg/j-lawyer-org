@@ -792,10 +792,11 @@ public class FolderContainer {
 
         if (this.cachedToStringUpdated == -1 || ((System.currentTimeMillis() - cachedToStringUpdated) > this.getRetentionTime())) {
             try {
-
+                log.info("FolderContainer.toString#1");
                 if (this.mappedName == null) {
                     this.mappedName = this.folder.getName();
 
+                    log.info("FolderContainer.toString#2");
                     Set mapKey = folderNameMapping.keySet();
                     Iterator mIt = mapKey.iterator();
                     while (mIt.hasNext()) {
@@ -805,9 +806,12 @@ public class FolderContainer {
                             break;
                         }
                     }
+                    log.info("FolderContainer.toString#3");
                 }
 
+                log.info("FolderContainer.toString#4");
                 int msgCount=this.folder.getMessageCount();
+                log.info("FolderContainer.toString#5");
                 
                 cachedToStringUpdated = System.currentTimeMillis();
                 if (msgCount < 0) {
@@ -815,9 +819,11 @@ public class FolderContainer {
                 } else {
                     cachedToString = this.mappedName + " (" + msgCount + ")";
                 }
+                log.info("FolderContainer.toString#6");
 
             } catch (Exception ex) {
                 log.error(ex);
+                log.info("FolderContainer.toString#7");
                 
                 // only set to folder name if not initialized
                 if(cachedToString==null) {
@@ -826,7 +832,7 @@ public class FolderContainer {
                     else
                         cachedToString = this.mappedName;
                 }
-                
+                log.info("FolderContainer.toString#8");
                 cachedToStringUpdated = System.currentTimeMillis();
             }
         }
@@ -870,6 +876,14 @@ public class FolderContainer {
             Set<Long> newUids = new HashSet<>(serverUids);
             newUids.removeAll(cachedMessages.keySet());
             
+            try {
+                if (!(this.folder.isOpen())) {
+                    System.out.println("open 20");
+                    this.folder.open(Folder.READ_WRITE);
+                }
+            } catch (Exception ex) {
+                log.error("Unable to open folder", ex);
+            }
             ArrayList<Message> uncached=new ArrayList<>();
             for (Message message : messages) {
                 try {

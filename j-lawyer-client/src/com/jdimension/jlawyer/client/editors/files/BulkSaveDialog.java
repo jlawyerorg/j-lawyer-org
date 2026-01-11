@@ -675,6 +675,7 @@ import com.jdimension.jlawyer.client.settings.UserSettings;
 import com.jdimension.jlawyer.client.utils.CaseUtils;
 import com.jdimension.jlawyer.client.utils.ComponentUtils;
 import com.jdimension.jlawyer.client.utils.FileUtils;
+import com.jdimension.jlawyer.client.utils.FrameUtils;
 import com.jdimension.jlawyer.client.utils.StringUtils;
 import com.jdimension.jlawyer.client.utils.ThreadUtils;
 import com.jdimension.jlawyer.persistence.AppOptionGroupBean;
@@ -682,6 +683,7 @@ import com.jdimension.jlawyer.persistence.AppUserBean;
 import com.jdimension.jlawyer.persistence.ArchiveFileAddressesBean;
 import com.jdimension.jlawyer.persistence.ArchiveFileBean;
 import com.jdimension.jlawyer.persistence.ArchiveFileDocumentsBean;
+import com.jdimension.jlawyer.persistence.ArchiveFileReviewsBean;
 import com.jdimension.jlawyer.persistence.ArchiveFileTagsBean;
 import com.jdimension.jlawyer.persistence.CaseFolder;
 import com.jdimension.jlawyer.persistence.DocumentNameTemplate;
@@ -693,6 +695,10 @@ import com.jdimension.jlawyer.pojo.PartiesTriplet;
 import com.jdimension.jlawyer.ui.folders.JMenuItemWithFolder;
 import com.jdimension.jlawyer.ui.tagging.TagToggleButton;
 import com.jdimension.jlawyer.ui.tagging.WrapLayout;
+import com.jdimension.jlawyer.ui.StayOpenCheckBoxMenuItem;
+import de.costache.calendar.NewEventEntryCallbacks;
+import de.costache.calendar.NewEventEntryDialog;
+import java.awt.Dialog;
 import java.awt.event.ActionEvent;
 import java.awt.event.ItemEvent;
 import java.util.ArrayList;
@@ -715,12 +721,11 @@ import themes.colors.DefaultColorTheme;
  *
  * @author jens
  */
-public class BulkSaveDialog extends javax.swing.JDialog {
+public class BulkSaveDialog extends javax.swing.JDialog implements NewEventEntryCallbacks {
 
     public static final String TYPE_MAIL = "mail";
     public static final String TYPE_BEA = "bea";
     public static final String TYPE_SCAN = "scan";
-    public static final String TYPE_DREBIS = "drebis";
 
     private static final Logger log = Logger.getLogger(BulkSaveDialog.class.getName());
 
@@ -748,6 +753,8 @@ public class BulkSaveDialog extends javax.swing.JDialog {
     private AppUserBean caseAssistant=null;
     private List<PartiesTriplet> parties=new ArrayList<>();
     
+    private List<ArchiveFileReviewsBean> addedEvents=new ArrayList<>();
+    
 
     /**
      * Creates new form BulkSaveDialog
@@ -763,6 +770,8 @@ public class BulkSaveDialog extends javax.swing.JDialog {
         initComponents();
 
         this.lblByFileTypes.setForeground(DefaultColorTheme.COLOR_DARK_GREY);
+        this.lblCalendarEntries.setForeground(DefaultColorTheme.COLOR_LOGO_GREEN);
+        this.lblCalendarEntries.setText("");
 
         pnlEntries.setLayout(new javax.swing.BoxLayout(pnlEntries, javax.swing.BoxLayout.Y_AXIS));
 
@@ -852,7 +861,7 @@ public class BulkSaveDialog extends javax.swing.JDialog {
         popup.removeAll();
         boolean hasSelection = false;
         for (String t : tagsInUse) {
-            JCheckBoxMenuItem mi = new JCheckBoxMenuItem(t);
+            JCheckBoxMenuItem mi = new StayOpenCheckBoxMenuItem(t);
             if (Arrays.asList(lastFilterTags).contains(t)) {
                 mi.setSelected(true);
                 hasSelection = true;
@@ -887,6 +896,12 @@ public class BulkSaveDialog extends javax.swing.JDialog {
                     button.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons16/material/baseline_label_white_36dp.png")));
                 }
                 UserSettings.getInstance().setSettingArray(userSettingsKey, al.toArray(new String[al.size()]));
+                // Re-show popup at the same anchor position to keep it open without shifting
+                Object ax = popup.getClientProperty("jlawyer.anchorX");
+                Object ay = popup.getClientProperty("jlawyer.anchorY");
+                int anchorX = (ax instanceof Integer) ? ((Integer) ax).intValue() : 0;
+                int anchorY = (ay instanceof Integer) ? ((Integer) ay).intValue() : button.getHeight();
+                popup.show(button, anchorX, anchorY);
             });
         }
 
@@ -928,6 +943,8 @@ public class BulkSaveDialog extends javax.swing.JDialog {
         cmdCommonNameTemplate = new javax.swing.JButton();
         lblCommonNameTemplate = new javax.swing.JLabel();
         cmdNameTemplateAll = new javax.swing.JButton();
+        cmdAddCalendarEntry = new javax.swing.JButton();
+        lblCalendarEntries = new javax.swing.JLabel();
 
         setDefaultCloseOperation(javax.swing.WindowConstants.DISPOSE_ON_CLOSE);
         setTitle("Dateien zur Akte speichern");
@@ -969,11 +986,11 @@ public class BulkSaveDialog extends javax.swing.JDialog {
         pnlEntries.setLayout(pnlEntriesLayout);
         pnlEntriesLayout.setHorizontalGroup(
             pnlEntriesLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGap(0, 773, Short.MAX_VALUE)
+            .addGap(0, 0, Short.MAX_VALUE)
         );
         pnlEntriesLayout.setVerticalGroup(
             pnlEntriesLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGap(0, 458, Short.MAX_VALUE)
+            .addGap(0, 0, Short.MAX_VALUE)
         );
 
         jScrollPane1.setViewportView(pnlEntries);
@@ -1015,11 +1032,11 @@ public class BulkSaveDialog extends javax.swing.JDialog {
         extensionsPanel.setLayout(extensionsPanelLayout);
         extensionsPanelLayout.setHorizontalGroup(
             extensionsPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGap(0, 776, Short.MAX_VALUE)
+            .addGap(0, 0, Short.MAX_VALUE)
         );
         extensionsPanelLayout.setVerticalGroup(
             extensionsPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGap(0, 100, Short.MAX_VALUE)
+            .addGap(0, 0, Short.MAX_VALUE)
         );
 
         jScrollPane2.setViewportView(extensionsPanel);
@@ -1062,6 +1079,18 @@ public class BulkSaveDialog extends javax.swing.JDialog {
             }
         });
 
+        cmdAddCalendarEntry.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/clicknrungrey.png"))); // NOI18N
+        cmdAddCalendarEntry.setToolTipText("Kalendereintrag hinzufügen");
+        cmdAddCalendarEntry.setEnabled(false);
+        cmdAddCalendarEntry.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                cmdAddCalendarEntryActionPerformed(evt);
+            }
+        });
+
+        lblCalendarEntries.setFont(lblCalendarEntries.getFont().deriveFont(lblCalendarEntries.getFont().getStyle() | java.awt.Font.BOLD));
+        lblCalendarEntries.setText("1");
+
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(getContentPane());
         getContentPane().setLayout(layout);
         layout.setHorizontalGroup(
@@ -1069,7 +1098,6 @@ public class BulkSaveDialog extends javax.swing.JDialog {
             .addGroup(layout.createSequentialGroup()
                 .addContainerGap()
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addComponent(lblCase, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                     .addComponent(jSeparator1)
                     .addComponent(jScrollPane1)
                     .addGroup(layout.createSequentialGroup()
@@ -1096,8 +1124,14 @@ public class BulkSaveDialog extends javax.swing.JDialog {
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                         .addComponent(cmdNameTemplateAll))
                     .addComponent(lblByFileTypes, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                    .addComponent(jSeparator2)
                     .addComponent(jScrollPane2)
+                    .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
+                        .addComponent(lblCase, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addComponent(cmdAddCalendarEntry)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addComponent(lblCalendarEntries))
+                    .addComponent(jSeparator2)
                     .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
                         .addGap(0, 0, Short.MAX_VALUE)
                         .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
@@ -1115,11 +1149,15 @@ public class BulkSaveDialog extends javax.swing.JDialog {
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(layout.createSequentialGroup()
                 .addContainerGap()
-                .addComponent(lblCase)
+                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
+                    .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                        .addComponent(lblCase)
+                        .addComponent(cmdAddCalendarEntry, javax.swing.GroupLayout.PREFERRED_SIZE, 32, javax.swing.GroupLayout.PREFERRED_SIZE))
+                    .addComponent(lblCalendarEntries, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
                     .addComponent(cmdCaseTags, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                    .addComponent(lblCaseTags, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                    .addComponent(lblCaseTags, javax.swing.GroupLayout.PREFERRED_SIZE, 28, javax.swing.GroupLayout.PREFERRED_SIZE))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(jSeparator1, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
@@ -1134,9 +1172,9 @@ public class BulkSaveDialog extends javax.swing.JDialog {
                     .addComponent(cmdFolderAll))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
-                    .addComponent(cmdCommonNameTemplate, javax.swing.GroupLayout.DEFAULT_SIZE, 30, Short.MAX_VALUE)
+                    .addComponent(cmdCommonNameTemplate, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                     .addComponent(cmdNameTemplateAll)
-                    .addComponent(lblCommonNameTemplate, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                    .addComponent(lblCommonNameTemplate, javax.swing.GroupLayout.PREFERRED_SIZE, 28, javax.swing.GroupLayout.PREFERRED_SIZE))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(lblByFileTypes)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
@@ -1148,7 +1186,7 @@ public class BulkSaveDialog extends javax.swing.JDialog {
                     .addComponent(cmdCancel)
                     .addComponent(cmdSave))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(jScrollPane1, javax.swing.GroupLayout.DEFAULT_SIZE, 414, Short.MAX_VALUE)
+                .addComponent(jScrollPane1, javax.swing.GroupLayout.DEFAULT_SIZE, 268, Short.MAX_VALUE)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                     .addComponent(lblTotalSize)
@@ -1290,11 +1328,15 @@ public class BulkSaveDialog extends javax.swing.JDialog {
     }//GEN-LAST:event_formComponentResized
 
     private void cmdCaseTagsMousePressed(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_cmdCaseTagsMousePressed
+        this.popCaseTags.putClientProperty("jlawyer.anchorX", evt.getX());
+        this.popCaseTags.putClientProperty("jlawyer.anchorY", evt.getY());
         this.popCaseTags.show(this.cmdCaseTags, evt.getX(), evt.getY());
     }//GEN-LAST:event_cmdCaseTagsMousePressed
 
     private void cmdCommonTagsMousePressed(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_cmdCommonTagsMousePressed
-        this.popCommonDocumentTags.show(this.cmdCaseTags, evt.getX(), evt.getY());
+        this.popCommonDocumentTags.putClientProperty("jlawyer.anchorX", evt.getX());
+        this.popCommonDocumentTags.putClientProperty("jlawyer.anchorY", evt.getY());
+        this.popCommonDocumentTags.show(this.cmdCommonTags, evt.getX(), evt.getY());
     }//GEN-LAST:event_cmdCommonTagsMousePressed
 
     private void cmdTagAllActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdTagAllActionPerformed
@@ -1321,6 +1363,15 @@ public class BulkSaveDialog extends javax.swing.JDialog {
             }
         }
     }//GEN-LAST:event_cmdNameTemplateAllActionPerformed
+
+    private void cmdAddCalendarEntryActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdAddCalendarEntryActionPerformed
+        NewEventEntryDialog newEventDlg = new NewEventEntryDialog(this, EditorsRegistry.getInstance().getMainWindow(), Dialog.ModalityType.APPLICATION_MODAL, this.selectedCase, false);
+        newEventDlg.setEventType(ArchiveFileReviewsBean.EVENTTYPE_FOLLOWUP);
+        newEventDlg.setReviewAssignees(this.selectedCase.getAssistant(), this.selectedCase.getLawyer());
+
+        FrameUtils.centerDialog(newEventDlg, EditorsRegistry.getInstance().getMainWindow());
+        newEventDlg.setVisible(true);
+    }//GEN-LAST:event_cmdAddCalendarEntryActionPerformed
 
     private void rebuildExtensionsPanel() {
         this.extensionsPanel.removeAll();
@@ -1449,6 +1500,7 @@ public class BulkSaveDialog extends javax.swing.JDialog {
     }
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
+    private javax.swing.JButton cmdAddCalendarEntry;
     private javax.swing.JButton cmdCancel;
     private javax.swing.JButton cmdCaseTags;
     private javax.swing.JButton cmdCommonFolder;
@@ -1464,6 +1516,7 @@ public class BulkSaveDialog extends javax.swing.JDialog {
     private javax.swing.JSeparator jSeparator1;
     private javax.swing.JSeparator jSeparator2;
     private javax.swing.JLabel lblByFileTypes;
+    private javax.swing.JLabel lblCalendarEntries;
     private javax.swing.JLabel lblCase;
     private javax.swing.JLabel lblCaseTags;
     private javax.swing.JLabel lblCommonFolder;
@@ -1490,6 +1543,7 @@ public class BulkSaveDialog extends javax.swing.JDialog {
      */
     public void setSelectedCase(ArchiveFileBean selectedCase) {
         this.selectedCase = selectedCase;
+        this.cmdAddCalendarEntry.setEnabled(this.selectedCase!=null);
         this.lblCase.setText(selectedCase.getFileNumber() + " " + selectedCase.getName());
 
         try {
@@ -1639,5 +1693,16 @@ public class BulkSaveDialog extends javax.swing.JDialog {
      */
     public BulkSaveEntryProcessor getEntryProcessor() {
         return entryProcessor;
+    }
+
+    @Override
+    public void entryAdded(ArchiveFileReviewsBean entry) {
+        this.addedEvents.add(entry);
+        this.lblCalendarEntries.setText(""+this.addedEvents.size());
+        StringBuilder sb=new StringBuilder();
+        for(ArchiveFileReviewsBean rev: this.addedEvents) {
+            sb.append(rev.toString()).append(" ").append(StringUtils.nonEmpty(rev.getSummary())).append(System.lineSeparator());
+        }
+        this.lblCalendarEntries.setToolTipText(sb.toString());
     }
 }

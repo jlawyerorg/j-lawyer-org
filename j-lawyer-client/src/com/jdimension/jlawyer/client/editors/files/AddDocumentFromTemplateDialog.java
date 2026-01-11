@@ -686,6 +686,7 @@ import com.jdimension.jlawyer.services.JLawyerServiceLocator;
 import com.jdimension.jlawyer.pojo.PartiesTriplet;
 import com.jdimension.jlawyer.services.SystemManagementRemote;
 import com.jdimension.jlawyer.ui.folders.CaseFolderPanel;
+import com.jdimension.jlawyer.ui.folders.JCheckboxMenuItemWithFolder;
 import java.awt.event.ActionEvent;
 import java.awt.event.KeyEvent;
 import java.text.SimpleDateFormat;
@@ -710,7 +711,9 @@ public class AddDocumentFromTemplateDialog extends javax.swing.JDialog implement
 
     private static final Logger log = Logger.getLogger(AddDocumentFromTemplateDialog.class.getName());
     private CaseFolderPanel targetTable = null;
-    
+    private CaseFolder targetFolder=null;
+    private ArrayList<JCheckboxMenuItemWithFolder> folderMenuItems = new ArrayList<>();
+
     private ArchiveFileBean aFile = null;
     private AppUserBean caseLawyer = null;
     private AppUserBean caseAssistant = null;
@@ -901,81 +904,52 @@ public class AddDocumentFromTemplateDialog extends javax.swing.JDialog implement
             log.error("Error connecting to server", ex);
             ThreadUtils.showErrorDialog(this, "Fehler beim Laden der Dateinamenvorlagen", "Dateinamen");
         }
+        
+        this.popMoveToFolder.removeAll();
 
-//<<<<<<< HEAD
-//=======
-//        SimpleDateFormat df = new SimpleDateFormat("yyyy-MM-dd");
-//
-//        String templateFileName = templateName;
-//        if (templateFileName == null) {
-//            templateFileName = "";
-//        }
-//
-//        if (templateFileName.lastIndexOf(".") >= 0) {
-//            templateFileName = templateFileName.substring(0, templateFileName.lastIndexOf("."));
-//        }
-//        String name = df.format(new Date()) + "_" + templateFileName;
-//
-//        // avoid ANWALT being replaced before ANWALT2 --> start with longest placeholders first
-//        ArrayList<PartyTypeBean> apt = new ArrayList(this.allPartyTypes);
-//        Comparator<PartyTypeBean> prefixLengthComparator = (PartyTypeBean t1, PartyTypeBean t2) -> {
-//            String prefix1 = null;
-//            String prefix2 = null;
-//            if (t1 != null) {
-//                prefix1 = t1.getPlaceHolder();
-//            }
-//            if (t2 != null) {
-//                prefix2 = t2.getPlaceHolder();
-//            }
-//
-//            int l1 = 0;
-//            if (prefix1 != null) {
-//                l1 = prefix1.length();
-//            }
-//            int l2 = 0;
-//            if (prefix2 != null) {
-//                l2 = prefix2.length();
-//            }
-//            return Integer.compare(l1, l2);
-//        };
-//        Collections.sort(apt, prefixLengthComparator);
-//        Collections.reverse(apt);
-//
-//        for (PartyTypeBean ptb : apt) {
-//            PartiesPanelEntry party = this.pnlPartiesPanel.getSelectedParty(ptb);
-//            if (party != null) {
-//                String contactName = party.getAddress().toDisplayName();
-//                contactName = StringUtils.removeSonderzeichen(contactName);
-//                contactName = contactName.trim();
-//                name = name.replaceAll(ptb.getPlaceHolder(), contactName);
-//            }
-//        }
-//        
-//        if(this.invoice!=null && this.invoice.getInvoiceNumber()!=null) {
-//            name = name.replace("BELNR", this.invoice.getInvoiceNumber());
-//        }
-//
-//        name = name.replaceAll(",", "");
-//        name = name.replaceAll("\"", "");
-//        name = name.replaceAll("§", "");
-//        name = name.replaceAll("%", "");
-//        name = name.replaceAll("&", "");
-//        name = name.replaceAll("/", "");
-//        name = name.replaceAll("=", "");
-//        name = name.replaceAll("\\?", "");
-//        name = name.replaceAll("\\{", "");
-//        name = name.replaceAll("\\}", "");
-//        name = name.replaceAll("\\[", "");
-//        name = name.replaceAll("\\]", "");
-//        name = name.replaceAll("\\\\", "");
-//        name = name.replaceAll("\\*", "");
-//        name = name.replaceAll("#", "");
-//        name = name.replaceAll("'", "");
-//        name = name.replaceAll(":", "");
-//        name = name.replaceAll(";", "");
-//
-//        this.txtFileName.setText(name);
-//>>>>>>> origin/master
+        this.folderMenuItems.clear();
+        this.buildMoveToFolderMenu(this.folderMenuItems, targetTable.getRootFolder(), "");
+        Collections.sort(this.folderMenuItems, Comparator.comparing(JMenuItem::getText, String.CASE_INSENSITIVE_ORDER));
+
+        for (JMenuItem m : this.folderMenuItems) {
+            this.popMoveToFolder.add(m);
+        }
+
+
+    }
+    
+    private void buildMoveToFolderMenu(ArrayList<JCheckboxMenuItemWithFolder> items, CaseFolder folder, String path) {
+        JCheckboxMenuItemWithFolder menu = new JCheckboxMenuItemWithFolder();
+        menu.setFolder(folder);
+        menu.addActionListener((ActionEvent ae) -> {
+            // Deselect all other menu items first
+            for (JCheckboxMenuItemWithFolder item : this.folderMenuItems) {
+                if (item != menu) {
+                    item.setSelected(false);
+                }
+            }
+            // Select current item and set target folder
+            menu.setSelected(true);
+            targetFolder = folder;
+        });
+
+        String itemName = path;
+        if (!path.isEmpty()) {
+            itemName = itemName + " > ";
+        }
+        itemName = itemName + folder.getName();
+
+        menu.setText(itemName);
+        menu.setIcon(new javax.swing.ImageIcon(getClass().getResource("/com/jdimension/jlawyer/ui/folders/folder-empty.png")));
+        items.add(menu);
+
+        if (folder.getChildren() != null) {
+            List<CaseFolder> sortedChildren = new ArrayList<>(folder.getChildren());
+            sortedChildren.sort(Comparator.comparing(CaseFolder::getName, String.CASE_INSENSITIVE_ORDER));
+            for (CaseFolder child : sortedChildren) {
+                buildMoveToFolderMenu(items, child, itemName);
+            }
+        }
     }
 
     /**
@@ -988,6 +962,7 @@ public class AddDocumentFromTemplateDialog extends javax.swing.JDialog implement
 
         btGrpReviews = new javax.swing.ButtonGroup();
         popNameTemplates = new javax.swing.JPopupMenu();
+        popMoveToFolder = new javax.swing.JPopupMenu();
         cmdCancel = new javax.swing.JButton();
         cmdAdd = new javax.swing.JButton();
         splitMain = new javax.swing.JSplitPane();
@@ -1028,6 +1003,7 @@ public class AddDocumentFromTemplateDialog extends javax.swing.JDialog implement
         cmbDictateSigns = new javax.swing.JComboBox();
         jLabel7 = new javax.swing.JLabel();
         cmdNameTemplate = new javax.swing.JButton();
+        cmdMoveToFolder = new javax.swing.JButton();
         cmdAddAndOpen = new javax.swing.JButton();
 
         setDefaultCloseOperation(javax.swing.WindowConstants.DISPOSE_ON_CLOSE);
@@ -1238,7 +1214,7 @@ public class AddDocumentFromTemplateDialog extends javax.swing.JDialog implement
             .add(jPanel5Layout.createSequentialGroup()
                 .addContainerGap()
                 .add(jPanel5Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
-                    .add(tabPlaceholders, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 450, Short.MAX_VALUE)
+                    .add(tabPlaceholders)
                     .add(jPanel4, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
                 .addContainerGap())
         );
@@ -1341,7 +1317,7 @@ public class AddDocumentFromTemplateDialog extends javax.swing.JDialog implement
                     .add(jLabel3)
                     .add(cmdClearFilter))
                 .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
-                .add(jSplitPane1, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 320, Short.MAX_VALUE)
+                .add(jSplitPane1, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 323, Short.MAX_VALUE)
                 .addContainerGap())
         );
 
@@ -1377,6 +1353,13 @@ public class AddDocumentFromTemplateDialog extends javax.swing.JDialog implement
             }
         });
 
+        cmdMoveToFolder.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons16/material/baseline_account_tree_black_48dp.png"))); // NOI18N
+        cmdMoveToFolder.addMouseListener(new java.awt.event.MouseAdapter() {
+            public void mouseReleased(java.awt.event.MouseEvent evt) {
+                cmdMoveToFolderMouseReleased(evt);
+            }
+        });
+
         org.jdesktop.layout.GroupLayout jPanel6Layout = new org.jdesktop.layout.GroupLayout(jPanel6);
         jPanel6.setLayout(jPanel6Layout);
         jPanel6Layout.setHorizontalGroup(
@@ -1392,14 +1375,16 @@ public class AddDocumentFromTemplateDialog extends javax.swing.JDialog implement
                         .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
                         .add(jPanel6Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
                             .add(jPanel6Layout.createSequentialGroup()
-                                .add(txtFileName)
-                                .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
-                                .add(cmdNameTemplate))
-                            .add(jPanel6Layout.createSequentialGroup()
                                 .add(jPanel6Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.TRAILING, false)
                                     .add(org.jdesktop.layout.GroupLayout.LEADING, cmbDictateSigns, 0, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                                     .add(org.jdesktop.layout.GroupLayout.LEADING, chkGeneratePDF, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
-                                .add(0, 56, Short.MAX_VALUE)))))
+                                .add(0, 294, Short.MAX_VALUE))
+                            .add(jPanel6Layout.createSequentialGroup()
+                                .add(txtFileName)
+                                .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
+                                .add(cmdNameTemplate)
+                                .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
+                                .add(cmdMoveToFolder)))))
                 .addContainerGap())
         );
         jPanel6Layout.setVerticalGroup(
@@ -1408,10 +1393,12 @@ public class AddDocumentFromTemplateDialog extends javax.swing.JDialog implement
                 .addContainerGap()
                 .add(jPanel1, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                 .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
-                .add(jPanel6Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.BASELINE)
-                    .add(txtFileName, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
-                    .add(jLabel1)
-                    .add(cmdNameTemplate))
+                .add(jPanel6Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
+                    .add(jPanel6Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.BASELINE)
+                        .add(txtFileName, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
+                        .add(jLabel1)
+                        .add(cmdNameTemplate))
+                    .add(cmdMoveToFolder))
                 .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
                 .add(chkGeneratePDF)
                 .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
@@ -1513,6 +1500,16 @@ public class AddDocumentFromTemplateDialog extends javax.swing.JDialog implement
 
             db = locator.lookupArchiveFileServiceRemote().addDocumentFromTemplate(this.aFile.getId(), this.txtFileName.getText(), letterHead, gn, this.lstTemplates.getSelectedValue().toString(), phValues, this.cmbDictateSigns.getSelectedItem().toString(), null);
             this.addedDocument = db;
+            try {
+                if(this.targetFolder!=null) {
+                    ArrayList<String> moveIds=new ArrayList<>();
+                    moveIds.add(db.getId());
+                    locator.lookupArchiveFileServiceRemote().moveDocumentsToFolder(moveIds, this.targetFolder.getId());
+                    db.setFolder(targetFolder);
+                }
+            } catch (Exception ex) {
+                log.error("Could not move new document to folder");
+            }
             targetTable.addDocument(db, this.invoice);
 
         } catch (Exception ex) {
@@ -1922,6 +1919,10 @@ public class AddDocumentFromTemplateDialog extends javax.swing.JDialog implement
         this.popNameTemplates.show(this.cmdNameTemplate, evt.getX(), evt.getY());
     }//GEN-LAST:event_cmdNameTemplateMouseReleased
 
+    private void cmdMoveToFolderMouseReleased(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_cmdMoveToFolderMouseReleased
+        this.popMoveToFolder.show(this.cmdMoveToFolder, evt.getX(), evt.getY());
+    }//GEN-LAST:event_cmdMoveToFolderMouseReleased
+
     private void traverseFolders(GenericNode current, DefaultMutableTreeNode currentNode) throws Exception {
 
         ArrayList<GenericNode> children = current.getChildren();
@@ -2038,6 +2039,7 @@ public class AddDocumentFromTemplateDialog extends javax.swing.JDialog implement
     private javax.swing.JButton cmdAddAndOpen;
     private javax.swing.JButton cmdCancel;
     private javax.swing.JButton cmdClearFilter;
+    private javax.swing.JButton cmdMoveToFolder;
     private javax.swing.JButton cmdNameTemplate;
     private javax.swing.JButton cmdShowReviewSelector;
     private javax.swing.JLabel jLabel1;
@@ -2058,6 +2060,7 @@ public class AddDocumentFromTemplateDialog extends javax.swing.JDialog implement
     private javax.swing.JSplitPane jSplitPane1;
     private javax.swing.JList lstTemplates;
     private com.jdimension.jlawyer.client.editors.files.PartiesPanel pnlPartiesPanel;
+    private javax.swing.JPopupMenu popMoveToFolder;
     private javax.swing.JPopupMenu popNameTemplates;
     private com.jdimension.jlawyer.client.components.QuickDateSelectionPanel quickDateSelectionPanel;
     private javax.swing.JRadioButton radioReviewTypeFollowUp;

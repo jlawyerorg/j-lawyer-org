@@ -667,8 +667,10 @@ import com.jdimension.jlawyer.client.editors.documents.viewer.CaseDocumentPrevie
 import com.jdimension.jlawyer.client.editors.documents.viewer.DocumentPreviewSaveCallback;
 import com.jdimension.jlawyer.client.editors.documents.viewer.DocumentViewerFactory;
 import com.jdimension.jlawyer.client.editors.documents.viewer.GifJpegPngImageWithTextPanel;
+import com.jdimension.jlawyer.client.editors.documents.viewer.HtmlPanel;
 import com.jdimension.jlawyer.client.editors.documents.viewer.PreviewPanel;
 import com.jdimension.jlawyer.client.settings.ClientSettings;
+import com.jdimension.jlawyer.client.utils.ComponentUtils;
 import com.jdimension.jlawyer.client.utils.ThreadUtils;
 import com.jdimension.jlawyer.persistence.ArchiveFileBean;
 import com.jdimension.jlawyer.persistence.ArchiveFileDocumentsBean;
@@ -681,6 +683,7 @@ import javax.swing.JComponent;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JProgressBar;
+import javax.swing.JScrollPane;
 import javax.swing.JSplitPane;
 import javax.swing.SwingUtilities;
 import org.apache.log4j.Logger;
@@ -697,18 +700,18 @@ public class LoadDocumentPreviewThread implements Runnable {
 
     private JPanel pnlPreview = null;
     private boolean readOnly = false;
-    private ArchiveFileBean caseDto=null;
-    ArchiveFileDocumentsBean docDto=null;
-    private boolean forceAnyDocumentSize=false;
-    private DocumentPreviewSaveCallback saveCallback=null;
+    private ArchiveFileBean caseDto = null;
+    ArchiveFileDocumentsBean docDto = null;
+    private boolean forceAnyDocumentSize = false;
+    private DocumentPreviewSaveCallback saveCallback = null;
 
     public LoadDocumentPreviewThread(ArchiveFileBean caseDto, ArchiveFileDocumentsBean value, boolean readOnly, JPanel pnlPreview, boolean forceAnyDocumentSize, DocumentPreviewSaveCallback saveCallback) {
-        this.docDto=value;
+        this.docDto = value;
         this.pnlPreview = pnlPreview;
         this.readOnly = readOnly;
-        this.caseDto=caseDto;
-        this.forceAnyDocumentSize=forceAnyDocumentSize;
-        this.saveCallback=saveCallback;
+        this.caseDto = caseDto;
+        this.forceAnyDocumentSize = forceAnyDocumentSize;
+        this.saveCallback = saveCallback;
     }
 
     public static boolean isRunning() {
@@ -719,76 +722,84 @@ public class LoadDocumentPreviewThread implements Runnable {
     public void run() {
 
         try {
-            
+
             running = true;
-            
-            if(pnlPreview.getComponentCount()>0) {
-                Component child=pnlPreview.getComponent(0);
-                if(child instanceof PreviewPanel) {
-                    if(((PreviewPanel)child).getDocumentId()!=null && this.docDto.getId().equals(((PreviewPanel)child).getDocumentId())) {
+
+            if (pnlPreview.getComponentCount() > 0) {
+                Component child = pnlPreview.getComponent(0);
+                if (child instanceof PreviewPanel) {
+                    if (((PreviewPanel) child).getDocumentId() != null && this.docDto.getId().equals(((PreviewPanel) child).getDocumentId())) {
                         // a preview was requested for a document that is already displayed
-                        running=false;
+                        running = false;
                         return;
                     }
                 }
             }
-            
-            ThreadUtils.setVisible(pnlPreview, false);
-            ThreadUtils.removeAll(pnlPreview);
-            ThreadUtils.setLayout(pnlPreview, new FlowLayout());
+
+            // Show loading indicator on EDT (use invokeAndWait to ensure it's displayed before heavy operations)
             JProgressBar loading = new JProgressBar();
             loading.setIndeterminate(true);
-            ThreadUtils.addComponent(this.pnlPreview, loading);
-            ThreadUtils.setVisible(pnlPreview, true);
+            SwingUtilities.invokeAndWait(() -> {
+                pnlPreview.setVisible(false);
+                pnlPreview.removeAll();
+                pnlPreview.setLayout(new FlowLayout());
+                pnlPreview.add(loading);
+                pnlPreview.setVisible(true);
+            });
             ClientSettings settings = ClientSettings.getInstance();
             JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
             ArchiveFileServiceRemote afs = locator.lookupArchiveFileServiceRemote();
 
-            long maxPreviewBytes=2l*1024l*1024l;
-            String maxPreviewBytesString=settings.getConfiguration(ClientSettings.CONF_DOCUMENTS_MAXPREVIEWBYTES, "" + maxPreviewBytes);
+            long maxPreviewBytes = 2l * 1024l * 1024l;
+            String maxPreviewBytesString = settings.getConfiguration(ClientSettings.CONF_DOCUMENTS_MAXPREVIEWBYTES, "" + maxPreviewBytes);
             try {
-                maxPreviewBytes=Long.parseLong(maxPreviewBytesString);
+                maxPreviewBytes = Long.parseLong(maxPreviewBytesString);
             } catch (Throwable t) {
-                log.error("invalid setting for maximum document previes bytes: " +maxPreviewBytesString);
+                log.error("invalid setting for maximum document previes bytes: " + maxPreviewBytesString);
             }
-            
-            
-            
 
-//            JComponent preview = null;
-//            if(this.docDto.getSize()>maxPreviewBytes && !this.forceAnyDocumentSize) {
-//                preview=new DocumentPreviewTooLarge(this.caseDto, this.docDto, this.readOnly, this.pnlPreview, this.saveCallback);
-//            } else {
-//                byte[] data=CachingDocumentLoader.getInstance().getDocument(this.docDto.getId());
-//                preview=DocumentViewerFactory.getDocumentViewer(this.caseDto, this.docDto.getId(), this.docDto.getName(), readOnly, new CaseDocumentPreviewProvider(afs, this.docDto.getId()), data, this.pnlPreview.getWidth(), this.pnlPreview.getHeight(), this.saveCallback);
-//            }
-            
-            final long maxPreviewBytesFinal = maxPreviewBytes;
-            JComponent[] previewWrapper = new JComponent[1];  // Use an array as a mutable container
-            SwingUtilities.invokeAndWait(() -> {
-                if (this.docDto.getSize() > maxPreviewBytesFinal && !this.forceAnyDocumentSize) {
-                    previewWrapper[0] = new DocumentPreviewTooLarge(this.caseDto, this.docDto, this.readOnly, this.pnlPreview, this.saveCallback);
-                } else {
-                    try {
-                        byte[] data = CachingDocumentLoader.getInstance().getDocument(this.docDto.getId());
-                        previewWrapper[0] = DocumentViewerFactory.getDocumentViewer(this.caseDto, this.docDto.getId(), this.docDto.getName(), readOnly, new CaseDocumentPreviewProvider(afs, this.docDto.getId()), data, this.pnlPreview.getWidth(), this.pnlPreview.getHeight(), this.saveCallback);
-                    } catch (Exception ex) {
-                        log.error("Could not get document preview for " + this.docDto.getName() + "[" + this.docDto.getId() + "]", ex);
-                        previewWrapper[0] = new JLabel("Fehler beim Laden der Dokumentvorschau: " + ex.getMessage());
+            // Capture panel dimensions in background thread (read-only operation)
+            final int panelWidth = pnlPreview.getWidth();
+            final int panelHeight = pnlPreview.getHeight();
+
+            // Perform heavy operations in background thread (NOT on EDT)
+            // This prevents UI freezing during document download and processing
+            JComponent preview;
+            if (this.docDto.getSize() > maxPreviewBytes && !this.forceAnyDocumentSize) {
+                preview = new DocumentPreviewTooLarge(this.caseDto, this.docDto, this.readOnly, this.pnlPreview, this.saveCallback);
+            } else {
+                try {
+                    // Heavy I/O operation: downloads document from server (can take seconds/minutes)
+                    byte[] data = CachingDocumentLoader.getInstance().getDocument(this.docDto.getId());
+                    // Heavy processing operation: creates viewer and parses document
+                    preview = DocumentViewerFactory.getDocumentViewer(this.caseDto, this.docDto.getId(), this.docDto.getName(), readOnly, new CaseDocumentPreviewProvider(afs, this.docDto.getId()), data, panelWidth, panelHeight, this.saveCallback);
+                } catch (Exception ex) {
+                    log.error("Could not get document preview for " + this.docDto.getName() + "[" + this.docDto.getId() + "]", ex);
+                    preview = new JLabel("Fehler beim Laden der Dokumentvorschau: " + ex.getMessage());
+                }
+            }
+
+            // Update UI on EDT with the prepared preview component
+            // Simple approach: add panel immediately (like EmailTemplatesPanel)
+            // WebViewHtmlEditorPanel will update itself via onEditorReady() when ready
+            final JComponent previewFinal = preview;
+            SwingUtilities.invokeLater(() -> {
+                pnlPreview.setVisible(false);
+                pnlPreview.remove(loading);
+                pnlPreview.setLayout(new BorderLayout());
+                pnlPreview.add(previewFinal, BorderLayout.CENTER);
+                pnlPreview.setVisible(true);
+
+                // For HtmlPanel: ensure proper layout updates
+                if (previewFinal instanceof HtmlPanel) {
+                    pnlPreview.revalidate();
+                    pnlPreview.repaint();
+                    JSplitPane split = ComponentUtils.getContainingSplitPane(pnlPreview);
+                    if (split != null) {
+                        ComponentUtils.bumpSplitPane(split);
                     }
                 }
             });
-            // Use the component
-            JComponent preview = previewWrapper[0];
-
-
-            
-            
-            ThreadUtils.setVisible(pnlPreview, false);
-            ThreadUtils.remove(pnlPreview, loading);
-            ThreadUtils.setLayout(pnlPreview, new BorderLayout());
-            ThreadUtils.addComponent(pnlPreview, preview, BorderLayout.CENTER);
-            ThreadUtils.setVisible(pnlPreview, true);
 
             if (preview instanceof GifJpegPngImageWithTextPanel) {
                 // automatically scroll to the most relevant part of the text
@@ -798,17 +809,17 @@ public class LoadDocumentPreviewThread implements Runnable {
                 } catch (Throwable t) {
                     log.error(t);
                 }
-                final JComponent prev=preview;
+                final JComponent prev = preview;
                 SwingUtilities.invokeLater(() -> {
                     ((GifJpegPngImageWithTextPanel) prev).intelligentScrolling();
                 });
             }
-            
+
             running = false;
         } catch (Exception ex) {
             running = false;
             log.error(ex);
-            if(ex.getCause()!=null) {
+            if (ex.getCause() != null) {
                 log.error(ex.getCause());
             }
             SwingUtilities.invokeLater(() -> {
@@ -817,7 +828,7 @@ public class LoadDocumentPreviewThread implements Runnable {
                 pnlPreview.add(new JLabel("Vorschau nicht verfügbar."));
                 pnlPreview.setVisible(true);
             });
-            
+
         }
 
     }

@@ -666,7 +666,6 @@ package com.jdimension.jlawyer.client.modulebar;
 import com.jdimension.jlawyer.client.configuration.PopulateOptionsEditor;
 import com.jdimension.jlawyer.client.editors.EditorsRegistry;
 import com.jdimension.jlawyer.client.events.BeaStatusEvent;
-import com.jdimension.jlawyer.client.events.DrebisStatusEvent;
 import com.jdimension.jlawyer.client.events.EmailStatusEvent;
 import com.jdimension.jlawyer.client.events.Event;
 import com.jdimension.jlawyer.client.events.EventBroker;
@@ -987,8 +986,6 @@ public class ModuleButton extends javax.swing.JPanel implements EventConsumer {
             updateIndicator(((BeaStatusEvent) e).getUnread());
         } else if (e instanceof OpenMentionsEvent) {
             updateIndicator(((OpenMentionsEvent) e).getOpenMentions());
-        } else if (e instanceof DrebisStatusEvent) {
-            updateIndicator(((DrebisStatusEvent) e).getMessages());
         } else if (e instanceof MissingCalendarEntriesEvent) {
             updateIndicator(((MissingCalendarEntriesEvent) e).getCasesWithoutEvent());
         }

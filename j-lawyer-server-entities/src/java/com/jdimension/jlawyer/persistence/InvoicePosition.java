@@ -678,7 +678,7 @@ import javax.xml.bind.annotation.XmlRootElement;
 @NamedQueries({
     @NamedQuery(name = "InvoicePosition.findAll", query = "SELECT a FROM InvoicePosition a"),
     @NamedQuery(name = "InvoicePosition.findById", query = "SELECT a FROM InvoicePosition a WHERE a.id = :id"),
-    @NamedQuery(name = "InvoicePosition.findByInvoice", query = "SELECT a FROM InvoicePosition a WHERE a.invoice = :invoice")})
+    @NamedQuery(name = "InvoicePosition.findByInvoice", query = "SELECT a FROM InvoicePosition a WHERE a.invoice = :invoice order by a.position ASC")})
 public class InvoicePosition implements Serializable {
     
     protected static long serialVersionUID = 1L;

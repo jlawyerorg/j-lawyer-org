@@ -32,7 +32,9 @@
                           <Component id="lblGitHubLink" min="-2" max="-2" attributes="0"/>
                           <Component id="jLabel1" alignment="0" min="-2" max="-2" attributes="0"/>
                       </Group>
-                      <EmptySpace pref="388" max="32767" attributes="0"/>
+                      <EmptySpace pref="137" max="32767" attributes="0"/>
+                      <Component id="cmdUpdateAll" min="-2" max="-2" attributes="0"/>
+                      <EmptySpace max="-2" attributes="0"/>
                       <Component id="cmdClose" min="-2" max="-2" attributes="0"/>
                   </Group>
                   <Component id="jScrollPane2" alignment="0" max="32767" attributes="0"/>
@@ -48,7 +50,10 @@
               <Component id="jScrollPane2" pref="447" max="32767" attributes="0"/>
               <EmptySpace max="-2" attributes="0"/>
               <Group type="103" groupAlignment="1" attributes="0">
-                  <Component id="cmdClose" min="-2" max="-2" attributes="0"/>
+                  <Group type="103" groupAlignment="3" attributes="0">
+                      <Component id="cmdClose" alignment="3" min="-2" max="-2" attributes="0"/>
+                      <Component id="cmdUpdateAll" alignment="3" min="-2" max="-2" attributes="0"/>
+                  </Group>
                   <Group type="102" attributes="0">
                       <Component id="jLabel1" min="-2" max="-2" attributes="0"/>
                       <EmptySpace max="-2" attributes="0"/>
@@ -110,6 +115,17 @@
         <EventHandler event="mouseClicked" listener="java.awt.event.MouseListener" parameters="java.awt.event.MouseEvent" handler="lblGitHubLinkMouseClicked"/>
         <EventHandler event="mouseExited" listener="java.awt.event.MouseListener" parameters="java.awt.event.MouseEvent" handler="lblGitHubLinkMouseExited"/>
         <EventHandler event="mouseEntered" listener="java.awt.event.MouseListener" parameters="java.awt.event.MouseEvent" handler="lblGitHubLinkMouseEntered"/>
+      </Events>
+    </Component>
+    <Component class="javax.swing.JButton" name="cmdUpdateAll">
+      <Properties>
+        <Property name="icon" type="javax.swing.Icon" editor="org.netbeans.modules.form.editors2.IconEditor">
+          <Image iconType="3" name="/icons/fileimport.png"/>
+        </Property>
+        <Property name="text" type="java.lang.String" value="alle Updates installieren"/>
+      </Properties>
+      <Events>
+        <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="cmdUpdateAllActionPerformed"/>
       </Events>
     </Component>
   </SubComponents>

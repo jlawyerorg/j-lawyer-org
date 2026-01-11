@@ -673,4 +673,6 @@ public interface PreviewPanel {
     public void showContent(String documentId, byte[] content);
     
     public String getDocumentId();
+    
+    public void dispose();
 }

@@ -663,45 +663,49 @@
  */
 package com.jdimension.jlawyer.client.mail;
 
+import com.inet.jortho.SpellChecker;
 import com.jdimension.jlawyer.server.utils.ContentTypes;
 import java.awt.Toolkit;
 import java.awt.event.ActionEvent;
 import java.awt.event.KeyEvent;
+import java.net.URL;
 import javax.swing.AbstractAction;
 import javax.swing.JComponent;
 import javax.swing.KeyStroke;
 import javax.swing.undo.UndoManager;
+import org.apache.log4j.Logger;
 
 /**
  *
  * @author Kutschke
  */
 public class TextEditorPanel extends javax.swing.JPanel implements EditorImplementation {
-    
+
+    private static final Logger log = Logger.getLogger(TextEditorPanel.class.getName());
     private final UndoManager undoManager;
-    
+
     /**
      * Creates new form TextEditorPanel
      */
     public TextEditorPanel() {
         initComponents();
-        
+
         // Initialize UndoManager
         undoManager = new UndoManager();
         taText.getDocument().addUndoableEditListener(e -> undoManager.addEdit(e.getEdit()));
-        
+
         // Setup key bindings for undo
         KeyStroke undoKeystroke = KeyStroke.getKeyStroke(
-            KeyEvent.VK_Z, 
-            Toolkit.getDefaultToolkit().getMenuShortcutKeyMaskEx()
+                KeyEvent.VK_Z,
+                Toolkit.getDefaultToolkit().getMenuShortcutKeyMaskEx()
         );
-        
+
         // Setup key bindings for redo
         KeyStroke redoKeystroke = KeyStroke.getKeyStroke(
-            KeyEvent.VK_Y, 
-            Toolkit.getDefaultToolkit().getMenuShortcutKeyMaskEx()
+                KeyEvent.VK_Y,
+                Toolkit.getDefaultToolkit().getMenuShortcutKeyMaskEx()
         );
-        
+
         taText.getInputMap(JComponent.WHEN_FOCUSED).put(undoKeystroke, "Undo");
         taText.getActionMap().put("Undo", new AbstractAction("Undo") {
             @Override
@@ -711,7 +715,7 @@ public class TextEditorPanel extends javax.swing.JPanel implements EditorImpleme
                 }
             }
         });
-        
+
         taText.getInputMap(JComponent.WHEN_FOCUSED).put(redoKeystroke, "Redo");
         taText.getActionMap().put("Redo", new AbstractAction("Redo") {
             @Override
@@ -721,10 +725,13 @@ public class TextEditorPanel extends javax.swing.JPanel implements EditorImpleme
                 }
             }
         });
-        
+
         // this is required because the scroll pane was stealing those key strokes from its jtextarea, making it impossible to scroll using the keys
         this.jScrollPane2.getInputMap().put(KeyStroke.getKeyStroke("UP"), "none");
         this.jScrollPane2.getInputMap().put(KeyStroke.getKeyStroke("DOWN"), "none");
+
+        // Rechtschreibprüfung aktivieren
+        SpellChecker.register(this.taText);
     }
 
     @Override
@@ -733,8 +740,6 @@ public class TextEditorPanel extends javax.swing.JPanel implements EditorImpleme
         this.taText.requestFocus();
     }
 
-    
-    
     /**
      * This method is called from within the constructor to initialize the form.
      * WARNING: Do NOT modify this code. The content of this method is always
@@ -784,10 +789,11 @@ public class TextEditorPanel extends javax.swing.JPanel implements EditorImpleme
 
     @Override
     public void setText(String t) {
+        
+        if(t.length()>0)
+            this.insert(" ", 0);
         this.taText.setText(t);
     }
-    
-    
 
     @Override
     public void setCaretPosition(int pos) {
@@ -808,7 +814,6 @@ public class TextEditorPanel extends javax.swing.JPanel implements EditorImpleme
     public void insert(String t, int pos) {
         this.taText.insert(t, pos);
     }
-    
 
     public UndoManager getUndoManager() {
         return undoManager;

@@ -692,9 +692,8 @@ public class ViewBeaDialog extends javax.swing.JDialog {
     private ObservedDocument odoc = null;
 
     /**
-     * Creates new form ViewEmailDialog
+     * Creates new form ViewBeaDialog
      * @param parent
-     * @param modal
      * @param contextArchiveFile
      */
     public ViewBeaDialog(java.awt.Window parent, ArchiveFileBean contextArchiveFile) {
@@ -734,6 +733,7 @@ public class ViewBeaDialog extends javax.swing.JDialog {
         cmdReply = new javax.swing.JButton();
         cmdReplyAll = new javax.swing.JButton();
         cmdForward = new javax.swing.JButton();
+        cmdEditDraft = new javax.swing.JButton();
         content = new com.jdimension.jlawyer.client.bea.BeaMessageContentUI();
 
         setDefaultCloseOperation(javax.swing.WindowConstants.DISPOSE_ON_CLOSE);
@@ -749,7 +749,6 @@ public class ViewBeaDialog extends javax.swing.JDialog {
             }
         });
 
-        jToolBar1.setFloatable(false);
         jToolBar1.setRollover(true);
 
         cmdReply.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons32/mail_reply.png"))); // NOI18N
@@ -787,6 +786,18 @@ public class ViewBeaDialog extends javax.swing.JDialog {
             }
         });
         jToolBar1.add(cmdForward);
+
+        cmdEditDraft.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons32/baseline_edit_square_black_48dp.png"))); // NOI18N
+        cmdEditDraft.setToolTipText("Bearbeiten");
+        cmdEditDraft.setFocusable(false);
+        cmdEditDraft.setHorizontalTextPosition(javax.swing.SwingConstants.CENTER);
+        cmdEditDraft.setVerticalTextPosition(javax.swing.SwingConstants.BOTTOM);
+        cmdEditDraft.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                cmdEditDraftActionPerformed(evt);
+            }
+        });
+        jToolBar1.add(cmdEditDraft);
 
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(getContentPane());
         getContentPane().setLayout(layout);
@@ -828,7 +839,7 @@ public class ViewBeaDialog extends javax.swing.JDialog {
             }
         }
 
-        SendBeaMessageDialog dlg = new SendBeaMessageDialog(EditorsRegistry.getInstance().getMainWindow(), false);
+        SendBeaMessageFrame dlg = new SendBeaMessageFrame();
         dlg.setArchiveFile(this.contextArchiveFile);
 
         Message msgC = this.msg;
@@ -858,7 +869,8 @@ public class ViewBeaDialog extends javax.swing.JDialog {
             log.error(ex);
         }
 
-        FrameUtils.centerDialog(dlg, null);
+        FrameUtils.centerFrame(dlg, null);
+        EditorsRegistry.getInstance().registerFrame(dlg);
         dlg.setVisible(true);
 
         if (this.odoc != null) {
@@ -866,6 +878,10 @@ public class ViewBeaDialog extends javax.swing.JDialog {
         }
         this.setVisible(false);
         this.dispose();
+        
+        dlg.toFront();
+        dlg.requestFocus();
+        
     }//GEN-LAST:event_cmdReplyActionPerformed
 
     private void cmdReplyAllActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdReplyAllActionPerformed
@@ -883,7 +899,7 @@ public class ViewBeaDialog extends javax.swing.JDialog {
             }
         }
 
-        SendBeaMessageDialog dlg = new SendBeaMessageDialog(EditorsRegistry.getInstance().getMainWindow(), false);
+        SendBeaMessageFrame dlg = new SendBeaMessageFrame();
         dlg.setArchiveFile(this.contextArchiveFile);
 
         Message msgC = this.msg;
@@ -920,7 +936,8 @@ public class ViewBeaDialog extends javax.swing.JDialog {
             log.error(ex);
         }
 
-        FrameUtils.centerDialog(dlg, null);
+        FrameUtils.centerFrame(dlg, null);
+        EditorsRegistry.getInstance().registerFrame(dlg);
         dlg.setVisible(true);
 
         if (this.odoc != null) {
@@ -928,6 +945,10 @@ public class ViewBeaDialog extends javax.swing.JDialog {
         }
         this.setVisible(false);
         this.dispose();
+        
+        dlg.toFront();
+        dlg.requestFocus();
+        
     }//GEN-LAST:event_cmdReplyAllActionPerformed
 
     private void cmdForwardActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdForwardActionPerformed
@@ -946,7 +967,7 @@ public class ViewBeaDialog extends javax.swing.JDialog {
             }
         }
 
-        SendBeaMessageDialog dlg = new SendBeaMessageDialog(EditorsRegistry.getInstance().getMainWindow(), false);
+        SendBeaMessageFrame dlg = new SendBeaMessageFrame();
         dlg.setArchiveFile(this.contextArchiveFile);
 
         Message msgC = this.msg;
@@ -980,7 +1001,8 @@ public class ViewBeaDialog extends javax.swing.JDialog {
             log.error(ex);
         }
 
-        FrameUtils.centerDialog(dlg, null);
+        FrameUtils.centerFrame(dlg, null);
+        EditorsRegistry.getInstance().registerFrame(dlg);
         dlg.setVisible(true);
 
         if (this.odoc != null) {
@@ -988,6 +1010,9 @@ public class ViewBeaDialog extends javax.swing.JDialog {
         }
         this.setVisible(false);
         this.dispose();
+        
+        dlg.toFront();
+        dlg.requestFocus();
 
     }//GEN-LAST:event_cmdForwardActionPerformed
 
@@ -1000,6 +1025,79 @@ public class ViewBeaDialog extends javax.swing.JDialog {
             this.odoc.setClosed(true);
         }
     }//GEN-LAST:event_formWindowClosing
+
+    private void cmdEditDraftActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdEditDraftActionPerformed
+        if (!BeaAccess.hasInstance()) {
+            BeaLoginCallback callback=null;
+            try {
+                callback=(BeaLoginCallback)EditorsRegistry.getInstance().getEditor(BeaInboxPanel.class.getName());
+            } catch (Throwable t) {
+                log.error(t);
+            }
+            BeaLoginDialog loginPanel = new BeaLoginDialog(EditorsRegistry.getInstance().getMainWindow(), true, callback);
+            loginPanel.setVisible(true);
+            if (!BeaAccess.hasInstance()) {
+                return;
+            }
+        }
+
+        SendBeaMessageFrame dlg = new SendBeaMessageFrame();
+        dlg.setArchiveFile(this.contextArchiveFile);
+        
+        Message msgC = this.msg;
+        try {
+
+            String azSender = msgC.getReferenceNumber();
+            String azRecipient = msgC.getReferenceJustice();
+            dlg.setAzRecipient(azRecipient);
+            dlg.setAzSender(azSender);
+            if(msgC.getRecipients()!=null) {
+                for(Recipient r: msgC.getRecipients()) {
+                    dlg.addTo(BeaAccess.getInstance().getIdentity(r.getSafeId()));
+                }
+            }
+
+            String subject = msgC.getSubject();
+            if (subject == null) {
+                subject = "";
+            }
+            dlg.setSubject(subject);
+            dlg.setBody(this.content.getBody());
+
+            for (Attachment att : msgC.getAttachments()) {
+                if(att.getFileName().contains("xjustiz_nachricht.xml"))
+                    continue;
+                byte[] data = att.getContent();
+                if (data != null) {
+                    String attachmentUrl = FileUtils.createTempFile(att.getFileName(), data);
+                    new File(attachmentUrl).deleteOnExit();
+                    dlg.addAttachment(attachmentUrl, "", att.getAlias());
+                }
+            }
+
+        } catch (Throwable ex) {
+            log.error(ex);
+        }
+
+        FrameUtils.centerFrame(dlg, null);
+        EditorsRegistry.getInstance().registerFrame(dlg);
+        dlg.setVisible(true);
+
+        if (this.odoc != null) {
+            this.odoc.setClosed(true);
+        }
+        
+        JOptionPane.showMessageDialog(this, "Anlagen der Nachrichten müssen ggf. neu kategorisiert / benannt werden.", "beA-Nachrichtenentwurf versenden", JOptionPane.INFORMATION_MESSAGE);
+        
+        this.setVisible(false);
+        this.dispose();
+        
+        dlg.toFront();
+        dlg.requestFocus();
+        
+        
+        
+    }//GEN-LAST:event_cmdEditDraftActionPerformed
 
     /**
      * @param args the command line arguments
@@ -1049,6 +1147,7 @@ public class ViewBeaDialog extends javax.swing.JDialog {
         });
     }
     // Variables declaration - do not modify//GEN-BEGIN:variables
+    private javax.swing.JButton cmdEditDraft;
     private javax.swing.JButton cmdForward;
     private javax.swing.JButton cmdReply;
     private javax.swing.JButton cmdReplyAll;

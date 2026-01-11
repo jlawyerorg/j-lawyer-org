@@ -663,7 +663,6 @@ For more information on this, and how to apply and follow the GNU AGPL, see
  */
 package com.jdimension.jlawyer.client.plugins.form;
 
-import com.jdimension.jlawyer.pojo.FormPluginSetting;
 import com.jdimension.jlawyer.client.settings.ClientSettings;
 import com.jdimension.jlawyer.client.utils.FileUtils;
 import com.jdimension.jlawyer.client.utils.VersionUtils;
@@ -682,6 +681,7 @@ import java.net.URL;
 import java.net.URLConnection;
 import java.util.ArrayList;
 import java.util.Hashtable;
+import java.util.Map;
 import javax.swing.JPanel;
 import org.apache.log4j.Logger;
 
@@ -725,6 +725,36 @@ public class FormPlugin extends ServerFormPlugin implements Comparable {
         this.versionInRepository=sfp.getVersionInRepository();
     }
 
+    public String getExtractionPrompt() {
+        try {
+
+            if(scriptInstance instanceof FormAiMethods) {
+                return ((FormAiMethods) scriptInstance).getExtractionPrompt();
+            } else {
+                return "";
+            }
+
+        } catch (Throwable t) {
+            log.error(t);
+        }
+        return "";
+    }
+    
+    public boolean isAiEnabled() {
+        try {
+
+            if(scriptInstance instanceof FormAiMethods) {
+                return ((FormAiMethods) scriptInstance).isAiEnabled();
+            } else {
+                return false;
+            }
+
+        } catch (Throwable t) {
+            log.error(t);
+        }
+        return false;
+    }
+    
     public ArrayList<String> getPlaceHolders() {
         try {
 
@@ -768,6 +798,16 @@ public class FormPlugin extends ServerFormPlugin implements Comparable {
         try {
 
             ((FormPluginMethods) scriptInstance).setPlaceHolderValues(this.placeHolder, placeHolders);
+
+        } catch (Throwable t) {
+            log.error(t);
+        }
+    }
+    
+    public void setExtractedValues(Map<String,String> attributes) {
+        try {
+
+            ((FormAiMethods) scriptInstance).setExtractedValues(attributes);
 
         } catch (Throwable t) {
             log.error(t);
@@ -989,6 +1029,17 @@ public class FormPlugin extends ServerFormPlugin implements Comparable {
      */
     public void setVersionInstalled(String versionInRepository) {
         this.versionInstalled = versionInRepository;
+    }
+
+    public String getAsHtml() {
+        try {
+
+            return ((FormPluginMethods) scriptInstance).getAsHtml();
+
+        } catch (Throwable t) {
+            log.error(t);
+            return null;
+        }
     }
 
 }

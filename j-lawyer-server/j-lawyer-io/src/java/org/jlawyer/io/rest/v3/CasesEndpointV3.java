@@ -673,6 +673,7 @@ import javax.annotation.security.RolesAllowed;
 import javax.ejb.Stateless;
 import javax.naming.InitialContext;
 import javax.ws.rs.Consumes;
+import javax.ws.rs.DELETE;
 import javax.ws.rs.GET;
 import javax.ws.rs.PUT;
 import javax.ws.rs.Path;
@@ -830,6 +831,123 @@ public class CasesEndpointV3 implements CasesEndpointLocalV3 {
            
         } catch (Exception ex) {
             log.error("can not apply folder template to case " + id, ex);
+            Response res = Response.serverError().build();
+            return res;
+        }
+    }
+
+    /**
+    * Creates a new folder in a case under the given parent folder.
+    * @param id the case id
+    * @param folder contains parentId (target parent folder) and name (new folder name)
+    * @response 401 User not authorized
+    * @response 403 User not authenticated
+    */
+    @Override
+    @PUT
+    @Produces(MediaType.APPLICATION_JSON+";charset=utf-8")
+    @Consumes(MediaType.APPLICATION_JSON)
+    @Path("/{id}/folders/create")
+    @RolesAllowed({"writeArchiveFileRole"})
+    public Response createCaseFolder(@PathParam("id") String id, RestfulCaseFolderV3 folder) {
+        try {
+
+            InitialContext ic = new InitialContext();
+            ArchiveFileServiceLocal cases = (ArchiveFileServiceLocal) ic.lookup("java:global/j-lawyer-server/j-lawyer-server-ejb/ArchiveFileService!com.jdimension.jlawyer.services.ArchiveFileServiceLocal");
+            ArchiveFileBean afb = cases.getArchiveFile(id);
+            if (afb == null) {
+                log.error("There is no case with id " + id);
+                Response res = Response.serverError().build();
+                return res;
+            }
+
+            if (folder == null || folder.getParentId() == null || folder.getParentId().trim().isEmpty() || folder.getName() == null || folder.getName().trim().isEmpty()) {
+                log.error("Missing folder parentId or name for case " + id);
+                Response res = Response.serverError().build();
+                return res;
+            }
+
+            CaseFolder rootFolder = afb.getRootFolder();
+            if (rootFolder == null) {
+                log.error("Case has no root folder (apply a template first): " + id);
+                Response res = Response.serverError().build();
+                return res;
+            }
+
+            // verify that the parent belongs to this case by checking hierarchy root
+            List<CaseFolder> hierarchy = cases.getFolderHierarchy(folder.getParentId());
+            if (hierarchy == null || hierarchy.isEmpty() || !rootFolder.getId().equals(hierarchy.get(0).getId())) {
+                log.error("Parent folder does not belong to case " + id + ": " + folder.getParentId());
+                Response res = Response.serverError().build();
+                return res;
+            }
+
+            CaseFolder created = cases.createCaseFolder(folder.getParentId(), folder.getName());
+            RestfulCaseFolderV3 result = new RestfulCaseFolderV3();
+            result.setId(created.getId());
+            result.setParentId(created.getParentId());
+            result.setName(created.getName());
+
+            Response res = Response.ok(result).build();
+            return res;
+        } catch (Exception ex) {
+            log.error("can not create folder in case " + id, ex);
+            Response res = Response.serverError().build();
+            return res;
+        }
+    }
+
+    /**
+    * Deletes a folder from a case. Prevents deleting the root folder.
+    * @param id the case id
+    * @param folderId the folder id to delete
+    * @response 401 User not authorized
+    * @response 403 User not authenticated
+    */
+    @Override
+    @DELETE
+    @Produces(MediaType.APPLICATION_JSON+";charset=utf-8")
+    @Path("/{id}/folders/{folderId}")
+    @RolesAllowed({"writeArchiveFileRole"})
+    public Response deleteCaseFolder(@PathParam("id") String id, @PathParam("folderId") String folderId) {
+        try {
+
+            InitialContext ic = new InitialContext();
+            ArchiveFileServiceLocal cases = (ArchiveFileServiceLocal) ic.lookup("java:global/j-lawyer-server/j-lawyer-server-ejb/ArchiveFileService!com.jdimension.jlawyer.services.ArchiveFileServiceLocal");
+            ArchiveFileBean afb = cases.getArchiveFile(id);
+            if (afb == null) {
+                log.error("There is no case with id " + id);
+                Response res = Response.serverError().build();
+                return res;
+            }
+
+            CaseFolder rootFolder = afb.getRootFolder();
+            if (rootFolder == null) {
+                log.error("Case has no root folder (nothing to delete): " + id);
+                Response res = Response.serverError().build();
+                return res;
+            }
+
+            // verify that the target belongs to this case and is not the root
+            List<CaseFolder> hierarchy = cases.getFolderHierarchy(folderId);
+            if (hierarchy == null || hierarchy.isEmpty() || !rootFolder.getId().equals(hierarchy.get(0).getId())) {
+                log.error("Folder does not belong to case " + id + ": " + folderId);
+                Response res = Response.serverError().build();
+                return res;
+            }
+
+            // prevent deletion of root
+            if (rootFolder.getId().equals(folderId)) {
+                log.error("Refusing to delete root folder of case " + id);
+                Response res = Response.serverError().build();
+                return res;
+            }
+
+            cases.deleteCaseFolder(folderId);
+            Response res = Response.ok().build();
+            return res;
+        } catch (Exception ex) {
+            log.error("can not delete folder " + folderId + " from case " + id, ex);
             Response res = Response.serverError().build();
             return res;
         }

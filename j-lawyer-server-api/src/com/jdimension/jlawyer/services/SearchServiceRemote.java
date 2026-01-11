@@ -676,6 +676,7 @@ import org.jlawyer.search.SearchHit;
 public interface SearchServiceRemote {
 
     ArrayList<SearchHit> search(String queryString, int maxDocs) throws SearchException;
+    ArrayList<SearchHit> search(String queryString, int maxDocs, String caseId) throws SearchException;
 
     void reIndexAll();
 

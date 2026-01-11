@@ -666,27 +666,15 @@ package themes.colors;
 import java.awt.Color;
 import java.util.ArrayList;
 import java.util.List;
+import org.jlawyer.themes.ServerColorTheme;
 
 /**
  *
  * @author jens
  */
-public class DefaultColorTheme {
+public class DefaultColorTheme extends ServerColorTheme {
     
     private static final ArrayList<Color> highlightColors=new ArrayList<>();
-    
-    public static final Color COLOR_LOGO_RED=new Color(222, 49, 59);
-    
-    // HEX: #97bf0d    
-    public static final Color COLOR_LOGO_GREEN=new Color(151, 191, 13);
-    
-    // HEX: #0e72b5
-    public static final Color COLOR_LOGO_BLUE=new Color(14, 114, 181);
-    
-    // HEX: #666666
-    public static final Color COLOR_DARK_GREY=new Color(102, 102, 102);
-    
-    public static final Color COLOR_LIGHT_GREY=new Color(102, 102, 102).brighter().brighter();
     
     public static final float DESKTOP_ALPHA_DEFAULT=0.8f;
     public static final float DESKTOP_ALPHA_HIGHLIGHT=0.99f;

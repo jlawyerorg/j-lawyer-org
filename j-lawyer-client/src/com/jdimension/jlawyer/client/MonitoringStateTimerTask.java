@@ -677,6 +677,12 @@ public class MonitoringStateTimerTask extends java.util.TimerTask {
     
     private static final Logger log=Logger.getLogger(MonitoringStateTimerTask.class.getName());
     
+    private volatile boolean stopped = false;
+
+    public void stop() {
+        stopped = true;
+    }
+    
     
     /** Creates a new instance of SystemStateTimerTask */
     public MonitoringStateTimerTask() {
@@ -686,12 +692,17 @@ public class MonitoringStateTimerTask extends java.util.TimerTask {
 
     @Override
     public void run() {
+        
+        if (stopped) return;
+        
         try {
             ClientSettings settings=ClientSettings.getInstance();
             JLawyerServiceLocator locator=JLawyerServiceLocator.getInstance(settings.getLookupProperties());
+            
+            if (stopped) return;
             int level=locator.lookupSingletonServiceRemote().getSystemStatus();
             
-            
+            if (stopped) return;
             SystemStatusEvent e=new SystemStatusEvent(level);
                 EventBroker eb=EventBroker.getInstance();
                 eb.publishEvent(e);

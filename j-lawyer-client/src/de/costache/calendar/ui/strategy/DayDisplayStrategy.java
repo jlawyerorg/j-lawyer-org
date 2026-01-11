@@ -30,6 +30,8 @@ import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.ScrollPaneConstants;
 import javax.swing.border.EmptyBorder;
+import java.awt.event.MouseWheelListener;
+import java.awt.event.MouseWheelEvent;
 
 import de.costache.calendar.JCalendar;
 import de.costache.calendar.ui.ContentPanel;
@@ -95,14 +97,44 @@ class DayDisplayStrategy implements DisplayStrategy {
         c.add(Calendar.DATE, 1);
 
         day.getHeaderPanel().setPreferredSize(new Dimension(1440, 60));
+        // Scroll on header switches days (left/right); content area keeps vertical scroll
+        day.getHeaderPanel().addMouseWheelListener(new MouseWheelListener() {
+            @Override
+            public void mouseWheelMoved(MouseWheelEvent e) {
+                if (getType() != Type.DAY) return;
+                if (e.getWheelRotation() < 0) {
+                    moveIntervalLeft();
+                } else {
+                    moveIntervalRight();
+                }
+                parent.getOwner().getHeaderPanel().getIntervalLabel().setText(getDisplayInterval());
+                e.consume();
+            }
+        });
         displayPanel.add(day.getHeaderPanel(), BorderLayout.NORTH);
+        // Ensure vertical scroll range by setting a preferred height for the day grid
+        contentsPanel.setPreferredSize(new Dimension(0, 1440));
+
         JScrollPane content = new JScrollPane(contentsPanel);
+        content.setWheelScrollingEnabled(true);
         content.setOpaque(false);
         content.getViewport().setOpaque(false);
         content.setBorder(new EmptyBorder(0, 0, 0, 0));
         content.getViewport().setViewPosition(new Point(0, 500));
         content.setVerticalScrollBarPolicy(ScrollPaneConstants.VERTICAL_SCROLLBAR_ALWAYS);
         content.getVerticalScrollBar().setUnitIncrement(16);
+        // Ensure vertical wheel scroll works reliably over the day content
+        contentsPanel.addMouseWheelListener(new MouseWheelListener() {
+            @Override
+            public void mouseWheelMoved(MouseWheelEvent e) {
+                if (getType() != Type.DAY) return;
+                javax.swing.JScrollBar vbar = content.getVerticalScrollBar();
+                int inc = Math.max(16, vbar.getUnitIncrement());
+                int delta = e.getWheelRotation() * inc * 3;
+                vbar.setValue(vbar.getValue() + delta);
+                e.consume();
+            }
+        });
         displayPanel.add(content, BorderLayout.CENTER);
         JScrollPane contentAllDay = new JScrollPane(day.getCompleteDayPanel());
         contentAllDay.setOpaque(false);
@@ -176,7 +208,9 @@ class DayDisplayStrategy implements DisplayStrategy {
 
     @Override
     public String getDisplayInterval() {
-        return sdf.format(calendar.getConfig().getIntervalStart().getTime());
+        Date d = calendar.getConfig().getIntervalStart().getTime();
+        int kw = de.costache.calendar.util.CalendarUtil.getIsoWeekOfYear(d);
+        return sdf.format(d) + " (" + kw + ". KW)";
     }
 
     /*

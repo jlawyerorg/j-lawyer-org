@@ -8,7 +8,6 @@ import java.awt.RenderingHints;
 import java.awt.image.BufferedImage;
 import java.io.BufferedReader;
 import java.io.File;
-import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.IOException;
 import java.io.InputStream;
@@ -20,7 +19,6 @@ import java.util.Hashtable;
 
 import javax.swing.JEditorPane;
 import javax.swing.text.Document;
-import javax.swing.text.html.HTMLDocument;
 import javax.swing.text.html.HTMLEditorKit;
 import javax.swing.text.html.StyleSheet;
 
@@ -38,14 +36,17 @@ public class HtmlPane extends JEditorPane {
 	}
 
 	private void createPane() {
-		HTMLEditorKit kit = new HTMLEditorKit();
-		setEditorKit(kit);
+        HTMLEditorKit kit = new HTMLEditorKit();
 
-		// add some styles to the html
-//		StyleSheet stylesheet = kit.getStyleSheet();
-//		stylesheet.importStyleSheet(getClass().getResource("/org/jmarkdownviewer/jmdviewer/resources/github.css"));
-		StyleSheet stylesheet = kit.getStyleSheet();
-		stylesheet.importStyleSheet(getClass().getResource("/org/jmarkdownviewer/jmdviewer/resources/github-reduced.css"));
+        // Use a private StyleSheet for this pane to avoid leaking CSS rules
+        // into the shared/default HTMLEditorKit stylesheet used elsewhere.
+        StyleSheet base = kit.getStyleSheet();
+        StyleSheet mdSheet = new StyleSheet();
+        mdSheet.addStyleSheet(base);
+        mdSheet.importStyleSheet(getClass().getResource("/org/jmarkdownviewer/jmdviewer/resources/github-reduced.css"));
+        kit.setStyleSheet(mdSheet);
+
+        setEditorKit(kit);
 
 		//String imgsrc = HtmlPane.class.getResource("/org/jmarkdownviewer/jmdviewer/resources/markdown.png").toString();
 		// create some simple html as a string
@@ -56,7 +57,7 @@ public class HtmlPane extends JEditorPane {
 //				+ "<p>This is some sample text</p>\n"				
 //				+ "</body>\n</html>";
 		
-		// create a document, set it on the jeditorpane, then add the html
+		// create a document, set it on the JEditorPane, then add the html
 		Document doc = kit.createDefaultDocument();
 		setDocument(doc);
 //		setText(htmlString);

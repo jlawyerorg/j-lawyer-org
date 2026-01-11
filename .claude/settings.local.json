@@ -1,0 +1,24 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(find:*)",
+      "Bash(openspec list:*)",
+      "Bash(openspec validate:*)",
+      "Bash(mkdir:*)",
+      "Bash(openspec show:*)",
+      "Bash(openspec archive:*)",
+      "WebFetch(domain:bugs.openjdk.org)",
+      "Bash(grep:*)",
+      "WebSearch",
+      "WebFetch(domain:github.com)",
+      "WebFetch(domain:gluonhq.com)",
+      "WebFetch(domain:gist.github.com)",
+      "WebFetch(domain:documentation.red-gate.com)",
+      "Bash(ls:*)",
+      "WebFetch(domain:www.formdev.com)",
+      "WebFetch(domain:www.ej-technologies.com)"
+    ],
+    "deny": [],
+    "ask": []
+  }
+}

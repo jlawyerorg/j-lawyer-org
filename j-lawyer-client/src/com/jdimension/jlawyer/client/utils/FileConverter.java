@@ -665,6 +665,7 @@ package com.jdimension.jlawyer.client.utils;
 
 import com.jdimension.jlawyer.client.bea.BeaAccess;
 import com.jdimension.jlawyer.client.editors.documents.viewer.ImageOrientationHandler;
+import static com.jdimension.jlawyer.client.editors.documents.viewer.MarkdownPanel.decodeMarkdownBytes;
 import com.jdimension.jlawyer.client.settings.ClientSettings;
 import com.jdimension.jlawyer.client.settings.UserSettings;
 import com.jdimension.jlawyer.client.utils.einvoice.EInvoiceUtils;
@@ -673,6 +674,7 @@ import com.jdimension.jlawyer.persistence.ArchiveFileDocumentsBean;
 import com.jdimension.jlawyer.persistence.Invoice;
 import com.jdimension.jlawyer.services.JLawyerServiceLocator;
 import java.io.File;
+import java.io.FileWriter;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -682,8 +684,10 @@ import org.apache.pdfbox.multipdf.PDFMergerUtility;
 import org.jlawyer.bea.model.Attachment;
 import org.jlawyer.bea.model.Message;
 import org.jlawyer.bea.model.MessageExport;
+import org.jmarkdownviewer.jmdviewer.parser.MarkdownParser;
 import org.mustangproject.ZUGFeRD.IZUGFeRDExporter;
 import org.mustangproject.ZUGFeRD.ZUGFeRDExporterFromPDFA;
+import org.mustangproject.ZUGFeRD.ZUGFeRDExporterFromA3;
 
 /**
  *
@@ -753,7 +757,7 @@ public class FileConverter {
             org.mustangproject.Invoice i = EInvoiceUtils.getEInvoice(sourceInvoice, sender);
             
         
-            IZUGFeRDExporter ze = new ZUGFeRDExporterFromPDFA().load(pdfTempFile).setProducer("j-lawyer.org " + VersionUtils.getFullClientVersion()).setCreator(UserSettings.getInstance().getCurrentUser().getDisplayName());
+            IZUGFeRDExporter ze = new ZUGFeRDExporterFromA3().load(pdfTempFile).setProducer("j-lawyer.org " + VersionUtils.getFullClientVersion()).setCreator(UserSettings.getInstance().getCurrentUser().getDisplayName());
             ze.setTransaction(i);
             ze.export(pdfTempFile);
         }
@@ -766,6 +770,9 @@ public class FileConverter {
     }
 
     public boolean supportsInputFormat(String url) {
+        
+        if(url.toLowerCase().endsWith(".eml"))
+            return true;
 
         return supportsInputFormat(url, INPUTTYPES_LIBREOFFICE);
 
@@ -861,17 +868,48 @@ public class FileConverter {
         }
         return url;
     }
+    
+    protected String md2pdf(String url) throws Exception {
+        if (url.toLowerCase().endsWith(".md")) {
+
+            
+            File inputFile = new File(url);
+            byte[] data = FileUtils.readFile(inputFile);
+            String mdText = decodeMarkdownBytes(data);
+            
+            MarkdownParser parser = new MarkdownParser();
+            parser.parse(mdText);
+            String html = parser.getHTML();
+            html=html.replace("�", "");
+            if (html != null) {
+                File outputFile = File.createTempFile(url.substring(0, url.toLowerCase().lastIndexOf(".md")), ".html");
+                FileWriter fw=new FileWriter(outputFile);
+                fw.write(html);
+                fw.close();
+                return convertToPDF(outputFile.getAbsolutePath());
+            }
+            
+
+        }
+        return url;
+    }
 
     private FileConverter() {
     }
 
     public static class WindowsFileConverter extends FileConverter {
 
+        private static final String LO_BINARY = "libreoffice.exe";
+        private static final String OOO_BINARY = "soffice.exe";
+
         private WindowsFileConverter() {
         }
 
         @Override
         public boolean supportsInputFormat(String url) {
+            
+            if(url.toLowerCase().endsWith(".eml"))
+                return true;
 
             ClientSettings set = ClientSettings.getInstance();
             String wordProcessor = set.getConfiguration(ClientSettings.CONF_APPS_WORDPROCESSOR_KEY, ClientSettings.CONF_APPS_WORDPROCESSOR_VALUE_LO);
@@ -901,29 +939,49 @@ public class FileConverter {
                 throw new Exception("Konvertierung nach " + targetFileExtension + " ist nicht verfügbar!");
             }
 
-            String clientLocation = System.getenv("JLAWYERCLIENTHOME");
-            if (clientLocation == null) {
-                log.error("JLAWYERCLIENTHOME environment variable not set - document conversion not possible");
-                throw new Exception("Umgebungsvariable JLAWYERCLIENTHOME nicht gesetzt - Dokumentkonvertierung nicht möglich.");
+            File inputFile = new File(url);
+            File outputDir = inputFile.getParentFile();
+            String parentPath = outputDir != null ? outputDir.getAbsolutePath() : ".";
+            if (parentPath.endsWith(File.separator)) {
+                parentPath = parentPath.substring(0, parentPath.length() - 1);
             }
 
-            if (!clientLocation.endsWith(File.separator)) {
-                clientLocation = clientLocation + File.separator;
+            boolean success = false;
+            int exit = -1;
+
+            // Try soffice.exe first
+            try {
+                Process p = Runtime.getRuntime().exec(new String[]{OOO_BINARY, "--headless", "--convert-to", targetFileExtension, "--outdir", parentPath, url});
+                exit = p.waitFor();
+                if (exit == 0) {
+                    success = true;
+                }
+            } catch (Throwable ex) {
+                log.debug("soffice.exe not found, trying libreoffice.exe: " + ex.getMessage());
             }
 
-            Process p = Runtime.getRuntime().exec(new String[]{"python.exe", clientLocation + "unoconv-master\\unoconv", "-f", targetFileExtension, url});
-            int exit = p.waitFor();
-            if (exit != 0) {
-                log.error("Conversion failed with exit code " + exit + ", command line was 'python.exe " + clientLocation + "unoconv-master\\unoconv -f " + targetFileExtension + " " + url);
+            // Fallback to libreoffice.exe
+            if (!success) {
+                try {
+                    Process p = Runtime.getRuntime().exec(new String[]{LO_BINARY, "--headless", "--convert-to", targetFileExtension, "--outdir", parentPath, url});
+                    exit = p.waitFor();
+                    if (exit == 0) {
+                        success = true;
+                    }
+                } catch (Throwable ex) {
+                    log.error("libreoffice.exe also not found: " + ex.getMessage());
+                }
+            }
+
+            if (!success) {
+                log.error("Conversion failed with exit code " + exit);
                 throw new Exception("Konvertierung fehlgeschlagen: " + exit);
             }
 
-            File org = new File(url);
-            String orgName = org.getName();
-            String path = url.substring(0, url.indexOf(orgName));
-            String newPath = path + orgName.substring(0, orgName.lastIndexOf('.')) + "." + targetFileExtension;
+            String orgName = inputFile.getName();
+            String newPath = parentPath + File.separator + orgName.substring(0, orgName.lastIndexOf('.')) + "." + targetFileExtension;
             if (!(new File(newPath).exists())) {
-                throw new Exception("Konvertierung kann nur durchgeführt werden wenn kein soffice.exe/soffice.bin läuft!");
+                throw new Exception("Konvertierung fehlgeschlagen - Datei wurde nicht erstellt");
             }
 
             return newPath;
@@ -943,6 +1001,10 @@ public class FileConverter {
 
             if (url.toLowerCase().endsWith(".bea")) {
                 return bea2pdf(url);
+            }
+            
+            if (url.toLowerCase().endsWith(".md")) {
+                return md2pdf(url);
             }
             
             if (isImageFile(url)) {
@@ -1009,24 +1071,56 @@ public class FileConverter {
                 throw new Exception("Format nicht unterstützt: " + new File(url).getName());
             }
 
-            String clientLocation = System.getenv("JLAWYERCLIENTHOME");
-            if (clientLocation == null) {
-                log.error("JLAWYERCLIENTHOME environment variable not set - PDF conversion not possible");
-                throw new Exception("Umgebungsvariable JLAWYERCLIENTHOME nicht gesetzt - PDF-Konvertierung nicht möglich.");
-            }
-
-            if (!clientLocation.endsWith(File.separator)) {
-                clientLocation = clientLocation + File.separator;
+            File inputFile = new File(url);
+            File outputDir = inputFile.getParentFile();
+            String parentPath = null;
+            if (outputDir != null) {
+                parentPath = outputDir.getAbsolutePath();
+                if (parentPath.endsWith(File.separator)) {
+                    parentPath = parentPath.substring(0, parentPath.length() - 1);
+                }
             }
 
             boolean isRetry = false;
             for (int i = 0; i < 2; i++) {
-                Process p = Runtime.getRuntime().exec(new String[]{"python.exe", clientLocation + "unoconv-master\\unoconv", "-eSelectPdfVersion=3", "-f", "pdf", url});
-                int exit = p.waitFor();
+                boolean success = false;
+                String usedBinary = OOO_BINARY;
+                int exit = -1;
 
-                if (exit != 0) {
+                // Try soffice.exe first
+                try {
+                    Process p = Runtime.getRuntime().exec(new String[]{OOO_BINARY, "--headless", "--convert-to", "pdf:writer_pdf_Export:{\n" +
+                            "  \"SelectPdfVersion\":{\"type\":\"long\",\"value\":3}\n" +
+                            "}", "--outdir", parentPath, url});
+                    exit = p.waitFor();
+                    if (exit == 0) {
+                        log.info("PDF conversion succeeded with " + OOO_BINARY);
+                        success = true;
+                    }
+                } catch (Throwable ex) {
+                    log.debug("soffice.exe not found, trying libreoffice.exe: " + ex.getMessage());
+                }
+
+                // Fallback to libreoffice.exe
+                if (!success) {
+                    usedBinary = LO_BINARY;
+                    try {
+                        Process p = Runtime.getRuntime().exec(new String[]{LO_BINARY, "--headless", "--convert-to", "pdf:writer_pdf_Export:{\n" +
+                                "  \"SelectPdfVersion\":{\"type\":\"long\",\"value\":3}\n" +
+                                "}", "--outdir", parentPath, url});
+                        exit = p.waitFor();
+                        if (exit == 0) {
+                            log.info("PDF conversion succeeded with " + LO_BINARY);
+                            success = true;
+                        }
+                    } catch (Throwable ex) {
+                        log.error("libreoffice.exe also not found: " + ex.getMessage());
+                    }
+                }
+
+                if (!success) {
                     if (isRetry) {
-                        log.error("PDF conversion failed with exit code " + exit + ", command line was 'python.exe " + clientLocation + "unoconv-master\\unoconv -f pdf " + url);
+                        log.error("PDF conversion failed with exit code " + exit + " using " + usedBinary);
                         throw new Exception("Konvertierung nach PDF fehlgeschlagen: " + exit);
                     } else {
                         isRetry = true;
@@ -1034,18 +1128,15 @@ public class FileConverter {
                         try {
                             Thread.sleep(1000);
                         } catch (Throwable t) {
-
                         }
                         continue;
                     }
                 }
 
-                File org = new File(url);
-                String orgName = org.getName();
-                String path = url.substring(0, url.indexOf(orgName));
-                String pdf = path + orgName.substring(0, orgName.lastIndexOf('.')) + ".pdf";
+                String orgName = inputFile.getName();
+                String pdf = parentPath + File.separator + orgName.substring(0, orgName.lastIndexOf('.')) + ".pdf";
                 if (!(new File(pdf).exists())) {
-                    throw new Exception("Konvertierung kann nur durchgeführt werden wenn kein soffice.exe/soffice.bin läuft!");
+                    throw new Exception("Konvertierung fehlgeschlagen - PDF wurde nicht erstellt");
                 }
 
                 return pdf;
@@ -1079,16 +1170,21 @@ public class FileConverter {
                 throw new Exception("Konvertierung nach " + targetFileExtension + " ist nicht verfügbar!");
             }
 
-            Process p = Runtime.getRuntime().exec(new String[]{"unoconv", "-f", targetFileExtension, url});
+            File inputFile = new File(url);
+            File outputDir = inputFile.getParentFile();
+            String parentPath = outputDir != null ? outputDir.getAbsolutePath() : ".";
+            if (parentPath.endsWith(File.separator)) {
+                parentPath = parentPath.substring(0, parentPath.length() - 1);
+            }
+
+            Process p = Runtime.getRuntime().exec(new String[]{"libreoffice", "--headless", "--convert-to", targetFileExtension, "--outdir", parentPath, url});
             int exit = p.waitFor();
             if (exit != 0) {
                 throw new Exception("Konvertierung nach " + targetFileExtension + " fehlgeschlagen: " + exit);
             }
 
-            File org = new File(url);
-            String orgName = org.getName();
-            String path = url.substring(0, url.indexOf(orgName));
-            return path + orgName.substring(0, orgName.lastIndexOf('.')) + "." + targetFileExtension;
+            String orgName = inputFile.getName();
+            return parentPath + File.separator + orgName.substring(0, orgName.lastIndexOf('.')) + "." + targetFileExtension;
 
         }
 
@@ -1105,6 +1201,10 @@ public class FileConverter {
 
             if (url.toLowerCase().endsWith(".bea")) {
                 return bea2pdf(url);
+            }
+            
+            if (url.toLowerCase().endsWith(".md")) {
+                return md2pdf(url);
             }
             
             if (isImageFile(url)) {
@@ -1129,7 +1229,6 @@ public class FileConverter {
 
             boolean isRetry = false;
             for (int i = 0; i < 2; i++) {
-                //Process p = Runtime.getRuntime().exec(new String[]{"unoconv", "-eSelectPdfVersion=3", "-f", "pdf", url});
                 Process p = Runtime.getRuntime().exec(new String[]{"libreoffice", "--headless", "--convert-to", "pdf:writer_pdf_Export:{\n" +
 "  \"SelectPdfVersion\":{\"type\":\"long\",\"value\":3}\n" +
 "}", "--outdir", parentPath, url});
@@ -1184,16 +1283,21 @@ public class FileConverter {
                 throw new Exception("Konvertierung nach " + targetFileExtension + " ist nicht verfügbar!");
             }
 
-            Process p = Runtime.getRuntime().exec(new String[]{"/Applications/LibreOffice.app/Contents/Resources/python", "unoconv-master/unoconv", "-f", targetFileExtension, url});
+            File inputFile = new File(url);
+            File outputDir = inputFile.getParentFile();
+            String parentPath = outputDir != null ? outputDir.getAbsolutePath() : ".";
+            if (parentPath.endsWith(File.separator)) {
+                parentPath = parentPath.substring(0, parentPath.length() - 1);
+            }
+
+            Process p = Runtime.getRuntime().exec(new String[]{"/Applications/LibreOffice.app/Contents/MacOS/soffice", "--headless", "--convert-to", targetFileExtension, "--outdir", parentPath, url});
             int exit = p.waitFor();
             if (exit != 0) {
                 throw new Exception("Konvertierung nach " + targetFileExtension + " fehlgeschlagen: " + exit);
             }
 
-            File org = new File(url);
-            String orgName = org.getName();
-            String path = url.substring(0, url.indexOf(orgName));
-            return path + orgName.substring(0, orgName.lastIndexOf('.')) + "." + targetFileExtension;
+            String orgName = inputFile.getName();
+            return parentPath + File.separator + orgName.substring(0, orgName.lastIndexOf('.')) + "." + targetFileExtension;
 
         }
 
@@ -1210,6 +1314,10 @@ public class FileConverter {
 
             if (url.toLowerCase().endsWith(".bea")) {
                 return bea2pdf(url);
+            }
+            
+            if (url.toLowerCase().endsWith(".md")) {
+                return md2pdf(url);
             }
             
             if (isImageFile(url)) {
@@ -1234,8 +1342,6 @@ public class FileConverter {
 
             boolean isRetry = false;
             for (int i = 0; i < 2; i++) {
-                //Process p = Runtime.getRuntime().exec(new String[]{"/Applications/LibreOffice.app/Contents/Resources/python", "unoconv-master/unoconv", "-eSelectPdfVersion=1", "-f", "pdf", url});
-                //Process p = Runtime.getRuntime().exec(new String[]{"/Applications/LibreOffice.app/Contents/MacOS/soffice", "--headless", "--convert-to", "pdf:writer_pdf_Export", "--outdir", parentPath, url});
                 Process p = Runtime.getRuntime().exec(new String[]{"/Applications/LibreOffice.app/Contents/MacOS/soffice", "--headless", "--convert-to", "pdf:writer_pdf_Export:{\n" +
 "  \"SelectPdfVersion\":{\"type\":\"long\",\"value\":3}\n" +
 "}", "--outdir", parentPath, url});

@@ -663,16 +663,27 @@ For more information on this, and how to apply and follow the GNU AGPL, see
  */
 package com.jdimension.jlawyer.client;
 
+import java.awt.AlphaComposite;
+import java.awt.Color;
 import java.awt.Graphics;
+import java.awt.Graphics2D;
 import java.awt.Image;
+import java.awt.RenderingHints;
+import javax.swing.Timer;
 
 /**
  *
  * @author jens
  */
 public class StyledPanel extends javax.swing.JPanel {
-    
-    private Image backgroundImage=null;
+
+    private Image backgroundImage = null;
+    private Image fadeTargetImage = null;
+    private float fadeAlpha = 0f;
+    private Timer fadeTimer = null;
+    private static final int FADE_DURATION_MS = 500;
+    private static final int FADE_INTERVAL_MS = 16; // ~60 FPS
+    private Color fallbackColor = new Color(30, 40, 55); // Dark blue-gray
 
     /**
      * Creates new form StyledPanel
@@ -680,12 +691,80 @@ public class StyledPanel extends javax.swing.JPanel {
     public StyledPanel() {
         initComponents();
     }
-    
+
+    @Override
     public void paintComponent(Graphics g) {
         super.paintComponent(g);
-        if (this.getBackgroundImage() != null) {
-            g.drawImage(this.getBackgroundImage(), 0, 0, this.getWidth(), this.getHeight(), this);
+        Graphics2D g2d = (Graphics2D) g.create();
+        g2d.setRenderingHint(RenderingHints.KEY_INTERPOLATION, RenderingHints.VALUE_INTERPOLATION_BILINEAR);
+
+        // Always draw fallback color as background (needed for fade-through-dark effect)
+        g2d.setColor(fallbackColor);
+        g2d.fillRect(0, 0, this.getWidth(), this.getHeight());
+
+        // Draw current or target image based on fade progress (fade through dark background)
+        if (fadeTargetImage != null && fadeAlpha > 0f) {
+            if (fadeAlpha < 0.5f) {
+                // First half: draw old image, fading out to reveal dark background
+                float oldImageAlpha = 1f - (fadeAlpha * 2f);  // 1.0 -> 0.0
+                g2d.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, oldImageAlpha));
+                if (this.backgroundImage != null) {
+                    g2d.drawImage(this.backgroundImage, 0, 0, this.getWidth(), this.getHeight(), this);
+                }
+            } else {
+                // Second half: draw new image, fading in from dark background
+                float newImageAlpha = (fadeAlpha - 0.5f) * 2f;  // 0.0 -> 1.0
+                g2d.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, newImageAlpha));
+                g2d.drawImage(fadeTargetImage, 0, 0, this.getWidth(), this.getHeight(), this);
+            }
+        } else if (this.backgroundImage != null) {
+            // No fade in progress, draw current image normally
+            g2d.drawImage(this.backgroundImage, 0, 0, this.getWidth(), this.getHeight(), this);
         }
+
+        g2d.dispose();
+    }
+
+    /**
+     * Fades from the current background to a new image.
+     * @param newImage the new background image to fade to
+     */
+    public void fadeToImage(Image newImage) {
+        // Stop any running fade
+        if (fadeTimer != null && fadeTimer.isRunning()) {
+            fadeTimer.stop();
+        }
+
+        // If no current image, just set directly with fade from fallback
+        if (this.backgroundImage == null) {
+            this.fadeTargetImage = newImage;
+            this.fadeAlpha = 0f;
+        } else {
+            this.fadeTargetImage = newImage;
+            this.fadeAlpha = 0f;
+        }
+
+        final long startTime = System.currentTimeMillis();
+
+        fadeTimer = new Timer(FADE_INTERVAL_MS, e -> {
+            long elapsed = System.currentTimeMillis() - startTime;
+            float progress = Math.min(1f, (float) elapsed / FADE_DURATION_MS);
+
+            // Ease-out curve for smoother animation
+            fadeAlpha = 1f - (1f - progress) * (1f - progress);
+
+            repaint();
+
+            if (progress >= 1f) {
+                // Fade complete
+                fadeTimer.stop();
+                backgroundImage = fadeTargetImage;
+                fadeTargetImage = null;
+                fadeAlpha = 0f;
+                repaint();
+            }
+        });
+        fadeTimer.start();
     }
 
     /**

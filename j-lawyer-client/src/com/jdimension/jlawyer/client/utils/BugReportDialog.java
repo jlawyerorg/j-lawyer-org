@@ -665,7 +665,8 @@ package com.jdimension.jlawyer.client.utils;
 
 import com.jdimension.jlawyer.client.bea.BeaAccess;
 import com.jdimension.jlawyer.client.editors.EditorsRegistry;
-import com.jdimension.jlawyer.client.mail.SendEmailDialog;
+import com.jdimension.jlawyer.client.mail.SendEmailFrame;
+import com.jdimension.jlawyer.client.settings.ClientSettings;
 import com.jdimension.jlawyer.server.services.ServerInformation;
 import com.jdimension.jlawyer.server.utils.ServerFileUtils;
 import com.jdimension.jlawyer.services.JLawyerServiceLocator;
@@ -728,7 +729,7 @@ public class BugReportDialog extends javax.swing.JDialog {
     
     private void loadClientLog(int numberOfLines) {
         try {
-            String clientLog=System.getProperty("user.home") + File.separator + ".j-lawyer-client" + File.separator + "log" + File.separator + "client.log";
+            String clientLog=System.getProperty("user.home") + File.separator + ClientSettings.JLAWYERCLIENT_SETTINGDIR + File.separator + "log" + File.separator + "client.log";
             String logLines=ServerFileUtils.readLinesFromEnd(new File(clientLog), numberOfLines);
             SwingUtilities.invokeLater(() -> {
                 taClientLog.setText(logLines);
@@ -1112,7 +1113,7 @@ public class BugReportDialog extends javax.swing.JDialog {
         try {
             byte[] zipReport = this.getReportAsZip();
 
-            SendEmailDialog dlg = new SendEmailDialog(false, EditorsRegistry.getInstance().getMainWindow(), false);
+            SendEmailFrame dlg = new SendEmailFrame(false);
 
             SimpleDateFormat df = new SimpleDateFormat("yyyy-MM-dd_HH-mm");
             String tmpUrl = FileUtils.createTempFile(df.format(new Date()) + "_j-lawyer-Systeminfos.zip", zipReport);
@@ -1121,7 +1122,8 @@ public class BugReportDialog extends javax.swing.JDialog {
             SimpleDateFormat df2 = new SimpleDateFormat("dd.MM.yyyy HH:mm");
             dlg.setBody("Systembericht vom " + df2.format(new Date()), "", "text/plain");
 
-            FrameUtils.centerDialog(dlg, null);
+            FrameUtils.centerFrame(dlg, null);
+            EditorsRegistry.getInstance().registerFrame(dlg);
             dlg.setVisible(true);
         } catch (Exception ex) {
             log.error("Could not create zip with system information", ex);

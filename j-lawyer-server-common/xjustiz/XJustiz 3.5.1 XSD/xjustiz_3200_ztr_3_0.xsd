@@ -1,0 +1,189 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema"
+           xmlns:tns="http://www.xjustiz.de"
+           xmlns:din91379="urn:xoev-de:kosit:xoev:datentyp:din-91379_2022-08"
+           targetNamespace="http://www.xjustiz.de"
+           version="3.0.1"
+           elementFormDefault="qualified"
+           attributeFormDefault="unqualified">
+   <xs:annotation>
+      <xs:appinfo>
+         <standard>
+            <nameLang>Strukturierte Fachdaten für die Kommunikation im elektronischen Rechtsverkehr</nameLang>
+            <nameKurz>XJustiz</nameKurz>
+            <nameTechnisch>xjustiz</nameTechnisch>
+            <kennung>urn:xoev-de:blk-ag-it-standards:standard:xjustiz</kennung>
+            <beschreibung>XJustiz ist der bundesweit einheitliche Standard für den Austausch strukturierter elektronischer Informationen mit der Justiz.</beschreibung>
+         </standard>
+         <versionStandard>
+            <version>3.5.1</version>
+            <beschreibung>XJustiz beschreibt ein standardisiertes Datenaustauschformat für die elektronische Kommunikation innerhalb und mit der Justizverwaltung.</beschreibung>
+            <versionXOEVProfil>1.7.2</versionXOEVProfil>
+            <versionXOEVHandbuch>2.3.1</versionXOEVHandbuch>
+            <versionXGenerator>3.1.1</versionXGenerator>
+            <versionModellierungswerkzeug>19.0 SP3</versionModellierungswerkzeug>
+            <nameModellierungswerkzeug>MagicDraw</nameModellierungswerkzeug>
+         </versionStandard>
+      </xs:appinfo>
+   </xs:annotation>
+   <xs:include schemaLocation="xjustiz_0000_grunddatensatz_3_5.xsd"/>
+   <xs:include schemaLocation="xjustiz_3210_cl_ztr_0_1.xsd"/>
+   <xs:import schemaLocation="din-norm-91379-datatypes.xsd"
+              namespace="urn:xoev-de:kosit:xoev:datentyp:din-91379_2022-08"/>
+   <xs:element name="nachricht.ztr.sterbefall.input.3200001">
+      <xs:complexType>
+         <xs:sequence>
+            <xs:element name="nachrichtenkopf" type="tns:Type.GDS.Nachrichtenkopf"/>
+            <xs:element name="grunddaten" type="tns:Type.GDS.Grunddaten"/>
+            <xs:element name="fachdaten">
+               <xs:complexType>
+                  <xs:sequence>
+                     <xs:element name="sterbefall">
+                        <xs:complexType>
+                           <xs:sequence>
+                              <xs:element name="sterbefall_ID" type="xs:integer">
+                                 <xs:annotation>
+                                    <xs:documentation>Enthält die technische Id des Sterbefalls in ZTR.</xs:documentation>
+                                 </xs:annotation>
+                              </xs:element>
+                              <xs:element name="verstorbenePerson">
+                                 <xs:complexType>
+                                    <xs:sequence>
+                                       <xs:element name="referenzierungVerstorbenePerson"
+                                                   type="tns:Type.GDS.Ref.Rollennummer"/>
+                                       <xs:element name="geburtsstandesamt" minOccurs="0" type="din91379:datatypeE"/>
+                                       <xs:element name="geburtenregisternummer"
+                                                   minOccurs="0"
+                                                   type="din91379:datatypeE"/>
+                                    </xs:sequence>
+                                 </xs:complexType>
+                              </xs:element>
+                              <xs:element name="nachlass" minOccurs="0">
+                                 <xs:complexType>
+                                    <xs:sequence>
+                                       <xs:element name="zustaendigesNachlassgericht"
+                                                   minOccurs="0"
+                                                   type="tns:Code.GDS.Gerichte.Typ3"/>
+                                       <xs:element name="nachlassvermoegen" minOccurs="0" type="din91379:datatypeC"/>
+                                       <xs:element name="nachlasssicherung" minOccurs="0" type="din91379:datatypeC"/>
+                                    </xs:sequence>
+                                 </xs:complexType>
+                              </xs:element>
+                              <xs:element name="lebenspartner" minOccurs="0" maxOccurs="unbounded">
+                                 <xs:complexType>
+                                    <xs:sequence>
+                                       <xs:element name="referenzierungLebenspartner" type="tns:Type.GDS.Ref.Rollennummer"/>
+                                       <xs:element name="geburtsstandesamt" minOccurs="0" type="din91379:datatypeE"/>
+                                       <xs:element name="geburtenregisternummer"
+                                                   minOccurs="0"
+                                                   type="din91379:datatypeE"/>
+                                    </xs:sequence>
+                                 </xs:complexType>
+                              </xs:element>
+                              <xs:element name="auskunftgeber" minOccurs="0" maxOccurs="unbounded">
+                                 <xs:complexType>
+                                    <xs:sequence>
+                                       <xs:element name="referenzierungAuskunftgeber" type="tns:Type.GDS.Ref.Rollennummer"/>
+                                       <xs:element name="beziehungAuskunftgeber"
+                                                   minOccurs="0"
+                                                   type="din91379:datatypeC"/>
+                                    </xs:sequence>
+                                 </xs:complexType>
+                              </xs:element>
+                              <xs:element name="kinder" minOccurs="0" maxOccurs="unbounded">
+                                 <xs:complexType>
+                                    <xs:sequence>
+                                       <xs:element name="referenzierungKind" type="tns:Type.GDS.Ref.Rollennummer"/>
+                                       <xs:element name="beziehungKind" minOccurs="0" type="din91379:datatypeC"/>
+                                    </xs:sequence>
+                                 </xs:complexType>
+                              </xs:element>
+                              <xs:element name="erbfolgerelevanteInformationen"
+                                          minOccurs="0"
+                                          maxOccurs="unbounded">
+                                 <xs:complexType>
+                                    <xs:sequence>
+                                       <xs:element name="urkunde" type="tns:Type.GDS.Beurkundung"/>
+                                       <xs:element name="erblasserUrkunde" minOccurs="0">
+                                          <xs:complexType>
+                                             <xs:sequence>
+                                                <xs:element name="referenzierungTestator" type="tns:Type.GDS.Ref.Rollennummer"/>
+                                                <xs:element name="geburtsstandesamt" minOccurs="0" type="din91379:datatypeE"/>
+                                                <xs:element name="geburtenregisternummer"
+                                                            minOccurs="0"
+                                                            type="din91379:datatypeE"/>
+                                             </xs:sequence>
+                                          </xs:complexType>
+                                       </xs:element>
+                                       <xs:element name="auswahl_verwahrung">
+                                          <xs:complexType>
+                                             <xs:choice>
+                                                <xs:element name="verwahrung.notariell">
+                                                   <xs:complexType>
+                                                      <xs:sequence>
+                                                         <xs:element name="referenzierungNotar" type="tns:Type.GDS.Ref.Rollennummer"/>
+                                                         <xs:element name="amtstitelNotar" type="din91379:datatypeC"/>
+                                                      </xs:sequence>
+                                                   </xs:complexType>
+                                                </xs:element>
+                                                <xs:element name="verwahrung.gerichtlich">
+                                                   <xs:complexType>
+                                                      <xs:sequence>
+                                                         <xs:element name="verwahrgerichtID" type="tns:Code.GDS.Gerichte.Typ3"/>
+                                                         <xs:element name="aktenzeichenVerwahrgericht"
+                                                                     minOccurs="0"
+                                                                     type="tns:Type.GDS.Aktenzeichen"/>
+                                                         <xs:element name="ztrVerwahrnummer" minOccurs="0" type="din91379:datatypeC"/>
+                                                         <xs:element name="letztesEigenesVerwahrkennzeichen"
+                                                                     minOccurs="0"
+                                                                     type="din91379:datatypeC"/>
+                                                         <xs:element name="bemerkungen" minOccurs="0" type="din91379:datatypeC">
+                                                            <xs:annotation>
+                                                               <xs:documentation>Bemerkungen (§ 1 Satz 2 ZTRV)</xs:documentation>
+                                                            </xs:annotation>
+                                                         </xs:element>
+                                                      </xs:sequence>
+                                                   </xs:complexType>
+                                                </xs:element>
+                                             </xs:choice>
+                                          </xs:complexType>
+                                       </xs:element>
+                                       <xs:element name="auswahl_registrierteVerwahrstelle" minOccurs="0">
+                                          <xs:complexType>
+                                             <xs:choice>
+                                                <xs:element name="gericht" type="tns:Code.GDS.Gerichte.Typ3"/>
+                                                <xs:element name="notar" type="tns:Type.GDS.Ref.Rollennummer"/>
+                                             </xs:choice>
+                                          </xs:complexType>
+                                       </xs:element>
+                                       <xs:element name="auswahl_benachrichtigteVerwahrstelle" minOccurs="0">
+                                          <xs:complexType>
+                                             <xs:choice>
+                                                <xs:element name="gericht" type="tns:Code.GDS.Gerichte.Typ3"/>
+                                                <xs:element name="notar" type="tns:Type.GDS.Ref.Rollennummer"/>
+                                             </xs:choice>
+                                          </xs:complexType>
+                                       </xs:element>
+                                       <xs:element name="weisseKarte" minOccurs="0" type="xs:boolean">
+                                          <xs:annotation>
+                                             <xs:documentation>weiße Karte angehängt ja/nein?</xs:documentation>
+                                          </xs:annotation>
+                                       </xs:element>
+                                       <xs:element name="verwahrung51BnotK" minOccurs="0" type="xs:boolean">
+                                          <xs:annotation>
+                                             <xs:documentation>Verwahrung nach §51 BNotK - ja/nein?</xs:documentation>
+                                          </xs:annotation>
+                                       </xs:element>
+                                    </xs:sequence>
+                                 </xs:complexType>
+                              </xs:element>
+                           </xs:sequence>
+                        </xs:complexType>
+                     </xs:element>
+                  </xs:sequence>
+               </xs:complexType>
+            </xs:element>
+         </xs:sequence>
+      </xs:complexType>
+   </xs:element>
+</xs:schema>

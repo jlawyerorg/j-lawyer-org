@@ -681,6 +681,7 @@ import com.jdimension.jlawyer.client.settings.UserSettings;
 import com.jdimension.jlawyer.client.utils.ComponentUtils;
 import com.jdimension.jlawyer.client.utils.FileUtils;
 import com.jdimension.jlawyer.client.utils.FrameUtils;
+import com.jdimension.jlawyer.client.utils.StringUtils;
 import com.jdimension.jlawyer.client.utils.ThreadUtils;
 import com.jdimension.jlawyer.persistence.ArchiveFileBean;
 import com.jdimension.jlawyer.persistence.EpostQueueBean;
@@ -713,7 +714,7 @@ public class MailingStatusPanel extends javax.swing.JPanel implements ThemeableE
     private static final Logger log = Logger.getLogger(MailingStatusPanel.class.getName());
     private Image backgroundImage = null;
     private final SimpleDateFormat df = new SimpleDateFormat("dd.MM.yyyy HH:mm:ss");
-    private ArrayList<MailingQueueEntry> lastEntryList = new ArrayList<MailingQueueEntry>();
+    private ArrayList<MailingQueueEntry> lastEntryList = new ArrayList<>();
     
     private transient Timer refreshTimer=null;
 
@@ -765,8 +766,24 @@ public class MailingStatusPanel extends javax.swing.JPanel implements ThemeableE
         this.refreshList();
 
         Timer timer = new Timer();
-        TimerTask mailingTask = new MailingQueueTimerTask();
+        MailingQueueTimerTask mailingTask = new MailingQueueTimerTask();
         timer.schedule(mailingTask, 7500, 30000);
+        
+        Runtime.getRuntime().addShutdownHook(new Thread(() -> {
+            try {
+                log.info("shutting down MailingQueueTimerTask");
+                mailingTask.stop();
+                timer.cancel();
+            } catch (Throwable t) {
+                log.error("Error shutting down timer", t);
+            }
+            try {
+                if(this.refreshTimer!=null)
+                    this.refreshTimer.cancel();
+            } catch (Throwable t) {
+                log.error("Error shutting down timer", t);
+            }
+        }));
         
         this.refreshTimer=new Timer();
 
@@ -778,6 +795,7 @@ public class MailingStatusPanel extends javax.swing.JPanel implements ThemeableE
         this.lblSession.setText("");
         this.lblStatus.setText("");
         this.lblStatusDetails.setText("");
+        this.lblStatusDetails.setToolTipText("");
         this.lblStatus.setIcon(null);
         this.lblTo.setText("");
         this.selectAllToggle.setSelected(false);
@@ -1171,7 +1189,8 @@ public class MailingStatusPanel extends javax.swing.JPanel implements ThemeableE
             //this.lblTo.setText("an " + mqe.getRemoteName() + " (" + mqe.getRemoteUri() + ")");
             this.lblTo.setText(mqe.getRecipientInformation());
             this.lblStatus.setText(mqe.getDisplayableStatus() + " seit " + df.format(mqe.getLastStatusDate()));
-            this.lblStatusDetails.setText(mqe.getStatusDetailsString());
+            this.lblStatusDetails.setText(StringUtils.cutoff(mqe.getStatusDetailsString(),300));
+            this.lblStatusDetails.setToolTipText(mqe.getStatusDetailsString());
             int level = mqe.getStatusLevel();
             Icon icon = null;
             switch (level) {
@@ -1221,9 +1240,9 @@ public class MailingStatusPanel extends javax.swing.JPanel implements ThemeableE
                 else
                     epostEntries.add(((EpostQueueEntry)e).getEntry().getLetterId());
             }
-            if(faxEntries.size()>0)
+            if(!faxEntries.isEmpty())
                 locator.lookupVoipServiceRemote().deleteQueueEntries(faxEntries);
-            if(epostEntries.size()>0)
+            if(!epostEntries.isEmpty())
                 locator.lookupVoipServiceRemote().deleteEpostQueueEntries(epostEntries);
         } catch (Exception ex) {
             log.error(ex);

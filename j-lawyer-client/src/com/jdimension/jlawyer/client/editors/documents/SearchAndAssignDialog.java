@@ -670,6 +670,7 @@ import com.jdimension.jlawyer.client.editors.files.QuickArchiveFileSearchTableMo
 import com.jdimension.jlawyer.client.editors.files.QuickArchiveFileSearchThread;
 import com.jdimension.jlawyer.client.processing.ProgressableActionCallback;
 import com.jdimension.jlawyer.client.settings.ClientSettings;
+import com.jdimension.jlawyer.client.settings.UserSettings;
 import com.jdimension.jlawyer.client.utils.ComponentUtils;
 import com.jdimension.jlawyer.client.utils.FrameUtils;
 import com.jdimension.jlawyer.client.utils.ThreadUtils;
@@ -774,9 +775,46 @@ public class SearchAndAssignDialog extends javax.swing.JDialog implements Progre
 
     private void initialize() {
         ComponentUtils.decorateSplitPane(this.split);
-        this.split.setDividerLocation(0.7d);
+        // Use persisted divider if available; otherwise apply a sensible default once
+        String savedDivider = ClientSettings.getInstance()
+                .getConfiguration("split." + this.getClass().getName() + ".split", "");
+        if (savedDivider == null || savedDivider.isEmpty()) {
+            this.split.setDividerLocation(0.7d);
+        }
         ComponentUtils.restoreSplitPane(split, this.getClass(), "split");
-        ComponentUtils.persistSplitPane(split, this.getClass(), "split");
+
+        // Defer persistence and only store after explicit user interaction with the divider
+        final javax.swing.plaf.basic.BasicSplitPaneDivider divider =
+                ((javax.swing.plaf.basic.BasicSplitPaneUI) split.getUI()).getDivider();
+        final java.util.concurrent.atomic.AtomicBoolean userMoved = new java.util.concurrent.atomic.AtomicBoolean(false);
+
+        if (divider != null) {
+            divider.addMouseListener(new java.awt.event.MouseAdapter() {
+                @Override
+                public void mousePressed(java.awt.event.MouseEvent e) {
+                    userMoved.set(true);
+                }
+                @Override
+                public void mouseReleased(java.awt.event.MouseEvent e) {
+                    // persist on release to capture final location
+                    if (userMoved.get() && split.getDividerLocation() > 0) {
+                        ClientSettings s = ClientSettings.getInstance();
+                        s.setConfiguration("split." + SearchAndAssignDialog.this.getClass().getName() + ".split",
+                                String.valueOf(split.getDividerLocation()));
+                    }
+                }
+            });
+        }
+        // Also guard the property change persistence; only when userMoved is true will we store
+        split.addPropertyChangeListener(evt -> {
+            if (javax.swing.JSplitPane.DIVIDER_LOCATION_PROPERTY.equals(evt.getPropertyName())) {
+                if (userMoved.get() && split.getDividerLocation() > 0) {
+                    ClientSettings s = ClientSettings.getInstance();
+                    s.setConfiguration("split." + SearchAndAssignDialog.this.getClass().getName() + ".split",
+                            String.valueOf(split.getDividerLocation()));
+                }
+            }
+        });
 
         this.treeFolders.setCellRenderer(new CaseFolderCellRenderer());
 
@@ -1090,13 +1128,19 @@ public class SearchAndAssignDialog extends javax.swing.JDialog implements Progre
         ThreadUtils.setWaitCursor(this);
         EditorsRegistry.getInstance().updateStatus("Suche Akten...");
 
-        new Thread(new QuickArchiveFileSearchThread(this, this.txtSearchString
-                .getText(), true, TagUtils
-                        .getSelectedTags(popTagFilter
-                        ), TagUtils
-                        .getSelectedTags(popDocumentTagFilter
-                        ), this.tblResults, this
-        )).start();
+        ClientSettings settings = ClientSettings.getInstance();
+        List<String> caseIdsSyncedForUser=null;
+        try {
+            JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
+            caseIdsSyncedForUser=locator.lookupArchiveFileServiceRemote().getCaseIdsSyncedForUser(UserSettings.getInstance().getCurrentUser().getPrincipalId());
+            
+        } catch (Exception ex) {
+            log.error("Error getting case sync status", ex);
+            JOptionPane.showMessageDialog(this, "Fehler beim Ermitteln des Synchronisationsstatus: " + ex.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
+            EditorsRegistry.getInstance().clearStatus(false);
+        }
+        
+        new Thread(new QuickArchiveFileSearchThread(this, this.txtSearchString.getText(), true, TagUtils.getSelectedTags(popTagFilter), TagUtils.getSelectedTags(popDocumentTagFilter), caseIdsSyncedForUser, this.tblResults, this)).start();
 
     }//GEN-LAST:event_cmdQuickSearchActionPerformed
 

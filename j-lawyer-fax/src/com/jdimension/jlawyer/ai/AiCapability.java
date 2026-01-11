@@ -21,6 +21,7 @@ public class AiCapability implements Serializable {
     public static final String REQUESTTYPE_SUMMARIZE="summarize";
     public static final String REQUESTTYPE_EXPLAIN="explain";
     public static final String REQUESTTYPE_CHAT="chat";
+    public static final String REQUESTTYPE_VISION="vision";
     public static final String REQUESTTYPE_GENERATE="generate";
     public static final String REQUESTTYPE_EXTRACT="extract";
     
@@ -58,6 +59,7 @@ public class AiCapability implements Serializable {
         capabilities.add(REQUESTTYPE_SUMMARIZE);
         capabilities.add(REQUESTTYPE_TRANSCRIBE);
         capabilities.add(REQUESTTYPE_TRANSLATE);
+        capabilities.add(REQUESTTYPE_VISION);
     }
     
     public static List<String> capabilities() {

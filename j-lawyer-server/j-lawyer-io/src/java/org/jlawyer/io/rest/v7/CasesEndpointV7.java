@@ -663,27 +663,47 @@ For more information on this, and how to apply and follow the GNU AGPL, see
  */
 package org.jlawyer.io.rest.v7;
 
+import com.jdimension.jlawyer.persistence.AddressBean;
+import com.jdimension.jlawyer.persistence.ArchiveFileAddressesBean;
 import com.jdimension.jlawyer.persistence.ArchiveFileBean;
 import com.jdimension.jlawyer.persistence.ArchiveFileDocumentsBean;
 import com.jdimension.jlawyer.persistence.ArchiveFileDocumentsBeanFacadeLocal;
 import com.jdimension.jlawyer.persistence.ArchiveFileGroupsBean;
+import com.jdimension.jlawyer.persistence.CaseAccountEntry;
+import com.jdimension.jlawyer.persistence.CaseAccountEntryFacadeLocal;
 import com.jdimension.jlawyer.persistence.Group;
 import com.jdimension.jlawyer.persistence.InstantMessage;
+import com.jdimension.jlawyer.persistence.Invoice;
+import com.jdimension.jlawyer.persistence.InvoiceFacadeLocal;
+import com.jdimension.jlawyer.persistence.InvoicePoolFacadeLocal;
+import com.jdimension.jlawyer.persistence.InvoicePool;
+import com.jdimension.jlawyer.persistence.InvoicePosition;
+import com.jdimension.jlawyer.persistence.InvoicePositionFacadeLocal;
+import com.jdimension.jlawyer.persistence.InvoiceType;
 import com.jdimension.jlawyer.server.utils.ServerStringUtils;
+import com.jdimension.jlawyer.services.AddressServiceLocal;
 import com.jdimension.jlawyer.services.ArchiveFileServiceLocal;
+import com.jdimension.jlawyer.services.InvoiceServiceLocal;
 import com.jdimension.jlawyer.services.MessagingServiceLocal;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Date;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 import javax.annotation.security.RolesAllowed;
 import javax.ejb.Stateless;
 import javax.naming.InitialContext;
 import javax.ws.rs.Consumes;
+import javax.ws.rs.DELETE;
+import javax.ws.rs.DefaultValue;
 import javax.ws.rs.GET;
+import javax.ws.rs.POST;
 import javax.ws.rs.PUT;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
+import javax.ws.rs.QueryParam;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import org.jboss.logging.Logger;
@@ -691,9 +711,14 @@ import org.jlawyer.io.rest.v1.pojo.RestfulCaseOverviewV1;
 import org.jlawyer.io.rest.v1.pojo.RestfulCaseV2;
 import org.jlawyer.io.rest.v1.pojo.RestfulDocumentV1;
 import org.jlawyer.io.rest.v6.pojo.RestfulGroupV6;
+import org.jlawyer.io.rest.v7.pojo.RestfulCaseAccountEntryV7;
 import org.jlawyer.io.rest.v7.pojo.RestfulDocumentValidationRequestV7;
 import org.jlawyer.io.rest.v7.pojo.RestfulInstantMessageV7;
+import org.jlawyer.io.rest.v7.pojo.RestfulInvoiceDuplicateRequestV7;
+import org.jlawyer.io.rest.v7.pojo.RestfulInvoicePositionV7;
+import org.jlawyer.io.rest.v7.pojo.RestfulInvoiceV7;
 import org.jlawyer.io.rest.v7.pojo.RestfulStatusResponseV7;
+import org.jlawyer.io.rest.v7.pojo.RestfulRecycleBinDocumentV7;
 
 /**
  *
@@ -707,6 +732,14 @@ public class CasesEndpointV7 implements CasesEndpointLocalV7 {
 
     private static final Logger log = Logger.getLogger(CasesEndpointV7.class.getName());
     private static final String LOOKUP_CASES = "java:global/j-lawyer-server/j-lawyer-server-ejb/ArchiveFileService!com.jdimension.jlawyer.services.ArchiveFileServiceLocal";
+    private static final String LOOKUP_INVOICES = "java:global/j-lawyer-server/j-lawyer-server-ejb/InvoiceService!com.jdimension.jlawyer.services.InvoiceServiceLocal";
+    private static final String LOOKUP_DOCS = "java:global/j-lawyer-server/j-lawyer-server-ejb/ArchiveFileDocumentsBeanFacade!com.jdimension.jlawyer.persistence.ArchiveFileDocumentsBeanFacadeLocal";
+    private static final String LOOKUP_MESSAGING = "java:global/j-lawyer-server/j-lawyer-server-ejb/MessagingService!com.jdimension.jlawyer.services.MessagingServiceLocal";
+    private static final String LOOKUP_INVOICE_FACADE = "java:global/j-lawyer-server/j-lawyer-server-ejb/InvoiceFacade!com.jdimension.jlawyer.persistence.InvoiceFacadeLocal";
+    private static final String LOOKUP_INVOICE_POOL_FACADE = "java:global/j-lawyer-server/j-lawyer-server-ejb/InvoicePoolFacade!com.jdimension.jlawyer.persistence.InvoicePoolFacadeLocal";
+    private static final String LOOKUP_INVOICE_POSITION_FACADE = "java:global/j-lawyer-server/j-lawyer-server-ejb/InvoicePositionFacade!com.jdimension.jlawyer.persistence.InvoicePositionFacadeLocal";
+    private static final String LOOKUP_ADDRESSES = "java:global/j-lawyer-server/j-lawyer-server-ejb/AddressService!com.jdimension.jlawyer.services.AddressServiceLocal";
+    private static final String LOOKUP_ACCOUNT_ENTRIES = "java:global/j-lawyer-server/j-lawyer-server-ejb/CaseAccountEntryFacade!com.jdimension.jlawyer.persistence.CaseAccountEntryFacadeLocal";
 
     /**
      * Checks whether or not a document (as specified in the request) may
@@ -735,7 +768,7 @@ public class CasesEndpointV7 implements CasesEndpointLocalV7 {
             InitialContext ic = new InitialContext();
 
             ArchiveFileServiceLocal cases = (ArchiveFileServiceLocal) ic.lookup(LOOKUP_CASES);
-            ArchiveFileDocumentsBeanFacadeLocal docs = (ArchiveFileDocumentsBeanFacadeLocal) ic.lookup("java:global/j-lawyer-server/j-lawyer-server-ejb/ArchiveFileDocumentsBeanFacade!com.jdimension.jlawyer.persistence.ArchiveFileDocumentsBeanFacadeLocal");
+            ArchiveFileDocumentsBeanFacadeLocal docs = (ArchiveFileDocumentsBeanFacadeLocal) ic.lookup(LOOKUP_DOCS);
 
             RestfulStatusResponseV7 response = new RestfulStatusResponseV7();
 
@@ -804,7 +837,7 @@ public class CasesEndpointV7 implements CasesEndpointLocalV7 {
                 return Response.serverError().build();
             }
 
-            MessagingServiceLocal msgService = (MessagingServiceLocal) ic.lookup("java:global/j-lawyer-server/j-lawyer-server-ejb/MessagingService!com.jdimension.jlawyer.services.MessagingServiceLocal");
+            MessagingServiceLocal msgService = (MessagingServiceLocal) ic.lookup(LOOKUP_MESSAGING);
             List<InstantMessage> messages = msgService.getMessagesForCase(id);
 
             ArrayList<RestfulInstantMessageV7> msgList = new ArrayList<>();
@@ -816,6 +849,622 @@ public class CasesEndpointV7 implements CasesEndpointLocalV7 {
             return Response.ok(msgList).build();
         } catch (Exception ex) {
             log.error("can not get message for case " + id, ex);
+            return Response.serverError().build();
+        }
+    }
+
+    /**
+     * Returns a list of invoices for a given case
+     *
+     * @param id case ID
+     * @response 401 User not authorized
+     * @response 403 User not authenticated
+     */
+    @Override
+    @GET
+    @Produces(MediaType.APPLICATION_JSON + ";charset=utf-8")
+    @Consumes(MediaType.APPLICATION_JSON)
+    @Path("/{id}/invoices")
+    @RolesAllowed({"readArchiveFileRole"})
+    public Response getCaseInvoices(@PathParam("id") String id) {
+        try {
+
+            InitialContext ic = new InitialContext();
+            ArchiveFileServiceLocal cases = (ArchiveFileServiceLocal) ic.lookup(LOOKUP_CASES);
+            ArchiveFileBean currentCase = cases.getArchiveFile(id);
+            if (currentCase == null) {
+                log.error("case with id " + id + " does not exist");
+                return Response.serverError().build();
+            }
+
+            List<Invoice> invoices=cases.getInvoices(id);
+            
+            ArrayList<RestfulInvoiceV7> invoiceList = new ArrayList<>();
+            for (Invoice i : invoices) {
+                RestfulInvoiceV7 ri = RestfulInvoiceV7.fromInvoice(i);
+                invoiceList.add(ri);
+            }
+
+            return Response.ok(invoiceList).build();
+        } catch (Exception ex) {
+            log.error("can not get invoices for case " + id, ex);
+            return Response.serverError().build();
+        }
+    }
+    
+    /**
+     * Returns a list of invoice positions for a given invoice
+     *
+     * @param id invoice ID
+     * @response 401 User not authorized
+     * @response 403 User not authenticated
+     */
+    @Override
+    @GET
+    @Produces(MediaType.APPLICATION_JSON + ";charset=utf-8")
+    @Consumes(MediaType.APPLICATION_JSON)
+    @Path("/invoices/{id}/positions")
+    @RolesAllowed({"readArchiveFileRole"})
+    public Response getInvoicePositions(@PathParam("id") String id) {
+        try {
+
+            InitialContext ic = new InitialContext();
+            
+            InvoiceFacadeLocal invoiceFacade = (InvoiceFacadeLocal) ic.lookup(LOOKUP_INVOICE_FACADE);
+            Invoice found=invoiceFacade.find(id);
+            if(found==null)
+                return Response.status(Response.Status.NOT_FOUND).build();
+            
+            ArchiveFileServiceLocal cases = (ArchiveFileServiceLocal) ic.lookup(LOOKUP_CASES);
+            
+            List<InvoicePosition> positions=cases.getInvoicePositions(id);
+            
+            ArrayList<RestfulInvoicePositionV7> positionList = new ArrayList<>();
+            for (InvoicePosition i : positions) {
+                RestfulInvoicePositionV7 ri = RestfulInvoicePositionV7.fromInvoicePosition(i);
+                positionList.add(ri);
+            }
+
+            return Response.ok(positionList).build();
+        } catch (Exception ex) {
+            log.error("can not get invoice positions for invoice " + id, ex);
+            return Response.serverError().build();
+        }
+    }
+    
+    /**
+     * Creates a new invoice within an existing case. An ID for the invoice is
+     * not required in the request.
+     *
+     * @param invoice document data
+     * @response 401 User not authorized
+     * @response 403 User not authenticated
+     */
+    @Override
+    @PUT
+    @Produces(MediaType.APPLICATION_JSON+";charset=utf-8")
+    @Consumes(MediaType.APPLICATION_JSON)
+    @Path("/invoices/create")
+    @RolesAllowed({"writeArchiveFileRole"})
+    public Response createInvoice(RestfulInvoiceV7 invoice) {
+        try {
+
+            InitialContext ic = new InitialContext();
+            ArchiveFileServiceLocal cases = (ArchiveFileServiceLocal) ic.lookup(LOOKUP_CASES);
+            ArchiveFileBean currentCase = cases.getArchiveFile(invoice.getCaseId());
+            if (currentCase == null) {
+                log.error("case with id " + invoice.getCaseId() + " does not exist");
+                return Response.serverError().build();
+            }
+            
+            AddressServiceLocal addresses = (AddressServiceLocal) ic.lookup(LOOKUP_ADDRESSES);
+            AddressBean address=null;
+            if(invoice.getContactId()!=null) {
+                address=addresses.getAddress(invoice.getContactId());
+            }
+            
+            InvoiceServiceLocal invoices = (InvoiceServiceLocal) ic.lookup(LOOKUP_INVOICES);
+            InvoiceType foundType=null;
+            for(InvoiceType it: invoices.getAllInvoiceTypes()) {
+                if(it.getId().equals(invoice.getInvoiceType())) {
+                    foundType=it;
+                    break;
+                }
+            }
+            if(foundType==null) {
+                log.error("Invoice type with name '" + invoice.getInvoiceType() + "' can not be found!");
+                return Response.serverError().build();
+            }
+            
+            InvoicePool foundPool=null;
+            for(InvoicePool ip: invoices.getAllInvoicePools()) {
+                if(ip.getId().equals(invoice.getLastPoolId())) {
+                    foundPool=ip;
+                    break;
+                }
+            }
+            if(foundPool==null) {
+                log.error("Invoice pool with id '" + invoice.getLastPoolId() + "' can not be found!");
+                return Response.serverError().build();
+            }
+            
+            boolean found=false;
+            if(Invoice.PAYMENTTYPE_BANKTRANSFER.equals(invoice.getPaymentType()) || Invoice.PAYMENTTYPE_DIRECTDEBIT.equals(invoice.getPaymentType()) || Invoice.PAYMENTTYPE_OTHER.equals(invoice.getPaymentType())) {
+                found=true;
+            }
+            if(!found) {
+                log.error("Invoice with invalid payment type '" + invoice.getPaymentType());
+                return Response.serverError().build();
+            }
+            
+            Invoice newInvoice=new Invoice();
+            newInvoice.setArchiveFileKey(currentCase);
+            newInvoice.setContact(address);
+            newInvoice.setCreationDate(invoice.getCreationDate());
+            newInvoice.setCurrency(invoice.getCurrency());
+            newInvoice.setDescription(invoice.getDescription());
+            newInvoice.setDueDate(invoice.getDueDate());
+            //newInvoice.setElectronicInvoiceDocument(electronicInvoiceDocument);
+            //newInvoice.setInvoiceDocument(invoiceDocument);
+            //newInvoice.setInvoiceNumber(LOOKUP_CASES);
+            newInvoice.setInvoiceType(foundType);
+            //newInvoice.setLastPoolId(LOOKUP_CASES);
+            newInvoice.setName(invoice.getName());
+            newInvoice.setPaymentType(Invoice.PAYMENTTYPE_BANKTRANSFER);
+            newInvoice.setPeriodFrom(invoice.getPeriodFrom());
+            newInvoice.setPeriodTo(invoice.getPeriodTo());
+            newInvoice.setSender(invoice.getSender());
+            newInvoice.setSmallBusiness(invoice.isSmallBusiness());
+            newInvoice.setStatus(newInvoice.getStatusInt(invoice.getStatus()));
+            newInvoice.setTotal(invoice.getTotal());
+            newInvoice.setTotalGross(invoice.getTotalGross());
+            newInvoice.setLastPoolId(invoice.getLastPoolId());
+            
+            Invoice createdInvoice=cases.addInvoice(invoice.getCaseId(), foundPool, foundType, invoice.getCurrency());
+
+            // Setze die im Request übergebenen Felder, die von addInvoice() ignoriert wurden
+            createdInvoice.setContact(address);
+            createdInvoice.setName(invoice.getName());
+            createdInvoice.setSender(invoice.getSender());
+
+            // Update durchführen um die Felder zu speichern
+            Invoice updatedInvoice = cases.updateInvoice(invoice.getCaseId(), createdInvoice);
+
+            return Response.ok(RestfulInvoiceV7.fromInvoice(updatedInvoice)).build();
+        } catch (Exception ex) {
+            log.error("can not create invoice for case " + invoice.getCaseId(), ex);
+            return Response.serverError().build();
+        }
+    }
+
+    /**
+     * Updates an existing invoice. Automatically detects pool changes:
+     * - Pool unchanged: Preserves invoice number
+     * - Pool changed: Generates new invoice number from new pool
+     *
+     * @param id invoice ID
+     * @param invoice invoice data with lastPoolId
+     * @response 401 User not authorized
+     * @response 403 User not authenticated
+     * @response 404 Invoice not found
+     */
+    @Override
+    @POST
+    @Produces(MediaType.APPLICATION_JSON+";charset=utf-8")
+    @Consumes(MediaType.APPLICATION_JSON)
+    @Path("/invoices/{id}/update")
+    @RolesAllowed({"writeArchiveFileRole"})
+    public Response updateInvoice(@PathParam("id") String id, RestfulInvoiceV7 invoice) {
+        try {
+            InitialContext ic = new InitialContext();
+            InvoiceFacadeLocal invoiceFacade = (InvoiceFacadeLocal) ic.lookup(LOOKUP_INVOICE_FACADE);
+
+            // Check if invoice exists
+            Invoice existingInvoice = invoiceFacade.find(id);
+            if (existingInvoice == null) {
+                log.error("Invoice with id " + id + " does not exist");
+                return Response.status(Response.Status.NOT_FOUND).build();
+            }
+
+            ArchiveFileServiceLocal cases = (ArchiveFileServiceLocal) ic.lookup(LOOKUP_CASES);
+            AddressServiceLocal addresses = (AddressServiceLocal) ic.lookup(LOOKUP_ADDRESSES);
+            InvoicePoolFacadeLocal invoicePoolFacade = (InvoicePoolFacadeLocal) ic.lookup(LOOKUP_INVOICE_POOL_FACADE);
+
+            // Check if pool has changed
+            boolean poolChanged = false;
+            String newPoolId = invoice.getLastPoolId();
+            String existingPoolId = existingInvoice.getLastPoolId();
+
+            if (newPoolId != null && existingPoolId != null) {
+                poolChanged = !newPoolId.equals(existingPoolId);
+            } else if (newPoolId != null || existingPoolId != null) {
+                poolChanged = true;
+            }
+
+            // Prepare contact
+            AddressBean address = null;
+            if (invoice.getContactId() != null) {
+                address = addresses.getAddress(invoice.getContactId());
+            }
+
+            // Validate payment type
+            boolean validPaymentType = false;
+            if (Invoice.PAYMENTTYPE_BANKTRANSFER.equals(invoice.getPaymentType()) ||
+                Invoice.PAYMENTTYPE_DIRECTDEBIT.equals(invoice.getPaymentType()) ||
+                Invoice.PAYMENTTYPE_OTHER.equals(invoice.getPaymentType())) {
+                validPaymentType = true;
+            }
+            if (!validPaymentType) {
+                log.error("Invoice with invalid payment type '" + invoice.getPaymentType() + "'");
+                return Response.serverError().build();
+            }
+
+            Invoice updatedInvoice;
+
+            if (poolChanged) {
+                // Pool has changed -> use updateInvoiceType (generates new invoice number)
+                log.info("Invoice pool changed from " + existingPoolId + " to " + newPoolId + " - generating new invoice number");
+
+                InvoicePool newPool = invoicePoolFacade.find(newPoolId);
+                if (newPool == null) {
+                    log.error("Invoice pool with id '" + newPoolId + "' not found");
+                    return Response.serverError().build();
+                }
+
+                // Build invoice with all updated fields
+                Invoice invoiceToUpdate = new Invoice();
+                invoiceToUpdate.setId(id);
+                invoiceToUpdate.setContact(address);
+                invoiceToUpdate.setDescription(invoice.getDescription());
+                invoiceToUpdate.setCreationDate(invoice.getCreationDate());
+                invoiceToUpdate.setDueDate(invoice.getDueDate());
+                invoiceToUpdate.setName(invoice.getName());
+                invoiceToUpdate.setPeriodFrom(invoice.getPeriodFrom());
+                invoiceToUpdate.setPeriodTo(invoice.getPeriodTo());
+                invoiceToUpdate.setStatus(existingInvoice.getStatusInt(invoice.getStatus()));
+                invoiceToUpdate.setSmallBusiness(invoice.isSmallBusiness());
+                invoiceToUpdate.setCurrency(invoice.getCurrency());
+                invoiceToUpdate.setSender(invoice.getSender());
+                invoiceToUpdate.setPaymentType(invoice.getPaymentType());
+
+                // Use updateInvoiceType which handles pool changes and generates new invoice number
+                updatedInvoice = cases.updateInvoiceType(invoice.getCaseId(), invoiceToUpdate, newPool, existingInvoice.getInvoiceType());
+
+            } else {
+                // Pool unchanged -> use updateInvoice (preserves invoice number)
+                log.info("Invoice pool unchanged - preserving invoice number");
+
+                Invoice invoiceToUpdate = new Invoice();
+                invoiceToUpdate.setId(id);
+                invoiceToUpdate.setContact(address);
+                invoiceToUpdate.setDescription(invoice.getDescription());
+                invoiceToUpdate.setCreationDate(invoice.getCreationDate());
+                invoiceToUpdate.setDueDate(invoice.getDueDate());
+                invoiceToUpdate.setInvoiceNumber(invoice.getInvoiceNumber());
+                invoiceToUpdate.setName(invoice.getName());
+                invoiceToUpdate.setPeriodFrom(invoice.getPeriodFrom());
+                invoiceToUpdate.setPeriodTo(invoice.getPeriodTo());
+                invoiceToUpdate.setStatus(existingInvoice.getStatusInt(invoice.getStatus()));
+                invoiceToUpdate.setSmallBusiness(invoice.isSmallBusiness());
+                invoiceToUpdate.setCurrency(invoice.getCurrency());
+                invoiceToUpdate.setSender(invoice.getSender());
+                invoiceToUpdate.setPaymentType(invoice.getPaymentType());
+
+                // Use updateInvoice which preserves pool and invoice number
+                updatedInvoice = cases.updateInvoice(invoice.getCaseId(), invoiceToUpdate);
+            }
+
+            return Response.ok(RestfulInvoiceV7.fromInvoice(updatedInvoice)).build();
+
+        } catch (Exception ex) {
+            log.error("Cannot update invoice " + id, ex);
+            return Response.serverError().build();
+        }
+    }
+
+    /**
+     * Creates a new invoice position within an existing invoice. An ID for the position is
+     * not required in the request.
+     *
+     * @param id id of the invoice
+     * @param invoicePos invoice position data
+     * @response 401 User not authorized
+     * @response 403 User not authenticated
+     */
+    @Override
+    @PUT
+    @Produces(MediaType.APPLICATION_JSON+";charset=utf-8")
+    @Consumes(MediaType.APPLICATION_JSON)
+    @Path("/invoices/{id}/positions/create")
+    @RolesAllowed({"writeArchiveFileRole"})
+    public Response createInvoicePosition(@PathParam("id") String id, RestfulInvoicePositionV7 invoicePos) {
+        try {
+
+            InitialContext ic = new InitialContext();
+            InvoiceFacadeLocal invoiceFacade = (InvoiceFacadeLocal) ic.lookup(LOOKUP_INVOICE_FACADE);
+            Invoice found=invoiceFacade.find(id);
+            if(found==null)
+                return Response.status(Response.Status.NOT_FOUND).build();
+                        
+            ArchiveFileServiceLocal cases = (ArchiveFileServiceLocal) ic.lookup(LOOKUP_CASES);
+            
+            InvoicePosition newPosition=new InvoicePosition();
+            newPosition.setDescription(invoicePos.getDescription());
+            newPosition.setInvoice(found);
+            newPosition.setName(invoicePos.getName());
+            newPosition.setPosition(invoicePos.getPosition());
+            newPosition.setTaxRate(invoicePos.getTaxRate());
+            newPosition.setTotal(invoicePos.getTotal());
+            newPosition.setUnitPrice(invoicePos.getUnitPrice());
+            newPosition.setUnits(invoicePos.getUnits());
+            
+            InvoicePosition createdPosition=cases.addInvoicePosition(id, newPosition);
+
+            return Response.ok(RestfulInvoicePositionV7.fromInvoicePosition(createdPosition)).build();
+        } catch (Exception ex) {
+            log.error("can not create invoice position for invoice " + id, ex);
+            return Response.serverError().build();
+        }
+    }
+
+    /**
+     * Updates an invoice position and recalculates the invoice totals
+     *
+     * @response 200 Invoice position updated successfully
+     * @response 400 Bad request (invalid data)
+     * @response 401 User not authorized
+     * @response 403 User not authenticated
+     * @response 404 Invoice position not found
+     * @response 500 Server error
+     */
+    @Override
+    @POST
+    @Produces(MediaType.APPLICATION_JSON + ";charset=utf-8")
+    @Consumes(MediaType.APPLICATION_JSON)
+    @Path("/invoices/positions/{positionId}/update")
+    @RolesAllowed({"writeArchiveFileRole"})
+    public Response updateInvoicePosition(@PathParam("positionId") String positionId, RestfulInvoicePositionV7 restfulPosition) {
+        try {
+            if (positionId == null || positionId.isEmpty()) {
+                log.error("Position ID is required");
+                return Response.status(Response.Status.BAD_REQUEST).entity("Position ID is required").build();
+            }
+
+            if (restfulPosition == null) {
+                log.error("Invoice position data is required");
+                return Response.status(Response.Status.BAD_REQUEST).entity("Invoice position data is required").build();
+            }
+
+            InitialContext ic = new InitialContext();
+            ArchiveFileServiceLocal cases = (ArchiveFileServiceLocal) ic.lookup(LOOKUP_CASES);
+            InvoicePositionFacadeLocal positionFacade = (InvoicePositionFacadeLocal) ic.lookup(LOOKUP_INVOICE_POSITION_FACADE);
+
+            // Load existing position to get invoice
+            InvoicePosition existingPosition = positionFacade.find(positionId);
+            if (existingPosition == null) {
+                log.error("Invoice position with ID " + positionId + " not found");
+                return Response.status(Response.Status.NOT_FOUND).entity("Invoice position with ID " + positionId + " not found").build();
+            }
+
+            Invoice invoice = existingPosition.getInvoice();
+            if (invoice == null) {
+                log.error("Invoice position is not associated with an invoice");
+                return Response.status(Response.Status.BAD_REQUEST).entity("Invoice position is not associated with an invoice").build();
+            }
+
+            // Create InvoicePosition entity from DTO with ID set
+            InvoicePosition position = new InvoicePosition();
+            position.setId(positionId);
+            position.setName(restfulPosition.getName());
+            position.setDescription(restfulPosition.getDescription());
+            position.setPosition(restfulPosition.getPosition());
+            position.setTaxRate(restfulPosition.getTaxRate());
+            position.setUnits(restfulPosition.getUnits());
+            position.setUnitPrice(restfulPosition.getUnitPrice());
+            position.setTotal(restfulPosition.getTotal());
+
+            // Update via service (includes recalculation and permission check)
+            InvoicePosition updated = cases.updateInvoicePosition(invoice.getId(), position);
+
+            // Convert back to DTO
+            RestfulInvoicePositionV7 result = RestfulInvoicePositionV7.fromInvoicePosition(updated);
+
+            return Response.ok(result).build();
+
+        } catch (Exception ex) {
+            log.error("Cannot update invoice position " + positionId, ex);
+            if (ex.getMessage() != null && ex.getMessage().contains("not found")) {
+                return Response.status(Response.Status.NOT_FOUND).entity(ex.getMessage()).build();
+            }
+            return Response.serverError().entity(ex.getMessage()).build();
+        }
+    }
+
+    /**
+     * Deletes an invoice position and recalculates the invoice totals
+     *
+     * @response 200 Invoice position deleted successfully
+     * @response 400 Bad request (invalid position ID)
+     * @response 401 User not authorized
+     * @response 403 User not authenticated
+     * @response 404 Invoice position not found
+     * @response 500 Server error
+     */
+    @Override
+    @DELETE
+    @Produces(MediaType.APPLICATION_JSON + ";charset=utf-8")
+    @Path("/invoices/positions/{positionId}")
+    @RolesAllowed({"writeArchiveFileRole"})
+    public Response deleteInvoicePosition(@PathParam("positionId") String positionId) {
+        try {
+            if (positionId == null || positionId.isEmpty()) {
+                log.error("Position ID is required");
+                return Response.status(Response.Status.BAD_REQUEST).entity("Position ID is required").build();
+            }
+
+            InitialContext ic = new InitialContext();
+            ArchiveFileServiceLocal cases = (ArchiveFileServiceLocal) ic.lookup(LOOKUP_CASES);
+            InvoicePositionFacadeLocal positionFacade = (InvoicePositionFacadeLocal) ic.lookup(LOOKUP_INVOICE_POSITION_FACADE);
+
+            // Load existing position to get invoice
+            InvoicePosition position = positionFacade.find(positionId);
+            if (position == null) {
+                log.error("Invoice position with ID " + positionId + " not found");
+                return Response.status(Response.Status.NOT_FOUND).entity("Invoice position with ID " + positionId + " not found").build();
+            }
+
+            Invoice invoice = position.getInvoice();
+            if (invoice == null) {
+                log.error("Invoice position is not associated with an invoice");
+                return Response.status(Response.Status.BAD_REQUEST).entity("Invoice position is not associated with an invoice").build();
+            }
+
+            // Delete position (includes recalculation and permission check)
+            cases.removeInvoicePosition(invoice.getId(), position);
+
+            return Response.ok().build();
+
+        } catch (Exception ex) {
+            log.error("Cannot delete invoice position " + positionId, ex);
+            if (ex.getMessage() != null && ex.getMessage().contains("not found")) {
+                return Response.status(Response.Status.NOT_FOUND).entity(ex.getMessage()).build();
+            }
+            return Response.serverError().entity(ex.getMessage()).build();
+        }
+    }
+
+    /**
+     * Deletes an invoice from a case
+     *
+     * @param id Invoice ID
+     * @response 200 Invoice deleted successfully
+     * @response 400 Bad request (invalid invoice ID)
+     * @response 401 User not authorized
+     * @response 403 User not authenticated
+     * @response 404 Invoice not found
+     * @response 500 Server error
+     */
+    @Override
+    @DELETE
+    @Produces(MediaType.APPLICATION_JSON + ";charset=utf-8")
+    @Path("/invoices/{id}")
+    @RolesAllowed({"writeArchiveFileRole"})
+    public Response deleteInvoice(@PathParam("id") String id) {
+        try {
+            if (id == null || id.isEmpty()) {
+                log.error("Invoice ID is required");
+                return Response.status(Response.Status.BAD_REQUEST).entity("Invoice ID is required").build();
+            }
+
+            InitialContext ic = new InitialContext();
+            ArchiveFileServiceLocal cases = (ArchiveFileServiceLocal) ic.lookup(LOOKUP_CASES);
+            InvoiceFacadeLocal invoiceFacade = (InvoiceFacadeLocal) ic.lookup(LOOKUP_INVOICE_FACADE);
+
+            // Check if invoice exists
+            Invoice invoice = invoiceFacade.find(id);
+            if (invoice == null) {
+                log.error("Invoice with ID " + id + " not found");
+                return Response.status(Response.Status.NOT_FOUND).entity("Invoice with ID " + id + " not found").build();
+            }
+
+            // Delete invoice (includes permission check and case history entry)
+            cases.removeInvoice(id);
+
+            return Response.ok().build();
+
+        } catch (Exception ex) {
+            log.error("Cannot delete invoice " + id, ex);
+            if (ex.getMessage() != null && ex.getMessage().contains("not found")) {
+                return Response.status(Response.Status.NOT_FOUND).entity(ex.getMessage()).build();
+            }
+            return Response.serverError().entity(ex.getMessage()).build();
+        }
+    }
+
+    /**
+     * Duplicates an existing invoice
+     *
+     * @param id the invoice ID to duplicate
+     * @param request the duplicate request containing target case, pool and options
+     * @return the duplicated invoice
+     * @response 401 User not authorized
+     * @response 403 User not authenticated
+     * @response 404 Invoice not found
+     * @response 500 Server error
+     */
+    @Override
+    @PUT
+    @Produces(MediaType.APPLICATION_JSON + ";charset=utf-8")
+    @Consumes(MediaType.APPLICATION_JSON)
+    @Path("/invoices/{id}/duplicate")
+    @RolesAllowed({"writeArchiveFileRole"})
+    public Response duplicateInvoice(@PathParam("id") String id, RestfulInvoiceDuplicateRequestV7 request) {
+        try {
+            InitialContext ic = new InitialContext();
+            ArchiveFileServiceLocal cases = (ArchiveFileServiceLocal) ic.lookup(LOOKUP_CASES);
+            InvoiceFacadeLocal invoiceFacade = (InvoiceFacadeLocal) ic.lookup(LOOKUP_INVOICE_FACADE);
+            InvoicePoolFacadeLocal invoicePoolFacade = (InvoicePoolFacadeLocal) ic.lookup(LOOKUP_INVOICE_POOL_FACADE);
+
+            // Check if source invoice exists
+            Invoice sourceInvoice = invoiceFacade.find(id);
+            if (sourceInvoice == null) {
+                return Response.status(Response.Status.NOT_FOUND).build();
+            }
+
+            // Resolve InvoicePool if specified
+            InvoicePool pool = null;
+            if (request != null && request.getInvoicePoolId() != null) {
+                pool = invoicePoolFacade.find(request.getInvoicePoolId());
+            }
+
+            // Extract request parameters with defaults
+            String toCaseId = (request != null) ? request.getToCaseId() : null;
+            boolean asCredit = (request != null) && request.isAsCredit();
+            boolean markAsCopy = (request == null) || request.isMarkAsCopy();
+            Date periodFrom = (request != null) ? request.getPeriodFrom() : null;
+            Date periodTo = (request != null) ? request.getPeriodTo() : null;
+            Date due = (request != null) ? request.getDue() : null;
+
+            // Call copyInvoice
+            Invoice copiedInvoice = cases.copyInvoice(id, toCaseId, pool, asCredit, markAsCopy, periodFrom, periodTo, due);
+
+            // Return result as RestfulInvoiceV7
+            return Response.ok(RestfulInvoiceV7.fromInvoice(copiedInvoice)).build();
+
+        } catch (Exception ex) {
+            log.error("Error duplicating invoice", ex);
+            return Response.serverError().build();
+        }
+    }
+
+    /**
+     * Returns all invoices currently open or in draft for all non-archived cases
+     *
+     * @response 401 User not authorized
+     * @response 403 User not authenticated
+     */
+    @Override
+    @GET
+    @Produces(MediaType.APPLICATION_JSON+";charset=utf-8")
+    @Path("/invoices")
+    @RolesAllowed({"readArchiveFileRole"})
+    public Response getAllInvoices() {
+        //http://localhost:8080/j-lawyer-io/rest/cases/0c79112f7f000101327bf357f0b6010c/duedates
+        try {
+
+            InitialContext ic = new InitialContext();
+            InvoiceServiceLocal invoices = (InvoiceServiceLocal) ic.lookup(LOOKUP_INVOICES);
+            
+            List<Invoice> openInvoices = invoices.getInvoicesByStatus(Invoice.STATUS_NEW, Invoice.STATUS_OPEN, Invoice.STATUS_OPEN_NONENFORCEABLE, Invoice.STATUS_OPEN_REMINDER1, Invoice.STATUS_OPEN_REMINDER2, Invoice.STATUS_OPEN_REMINDER3);
+            ArrayList<RestfulInvoiceV7> invList = new ArrayList<>();
+            for (Invoice inv : openInvoices) {
+                RestfulInvoiceV7 i = RestfulInvoiceV7.fromInvoice(inv);
+                invList.add(i);
+            }
+
+            return Response.ok(invList).build();
+        } catch (Exception ex) {
+            log.error("can not get open invoices", ex);
             return Response.serverError().build();
         }
     }
@@ -892,6 +1541,118 @@ public class CasesEndpointV7 implements CasesEndpointLocalV7 {
 
     }
 
+    /**
+     * Returns cases that have a given reference in their case-contact relationships
+     *
+     * @param reference the reference text to search for
+     * @response 401 User not authorized
+     * @response 403 User not authenticated
+     */
+    @Override
+    @GET
+    @Produces(MediaType.APPLICATION_JSON + ";charset=utf-8")
+    @Path("/byreference/{reference}")
+    @RolesAllowed({"readArchiveFileRole"})
+    public Response getCasesByReference(@PathParam("reference") String reference) {
+
+        try {
+
+            InitialContext ic = new InitialContext();
+            ArchiveFileServiceLocal cases = (ArchiveFileServiceLocal) ic.lookup(LOOKUP_CASES);
+            List<ArchiveFileAddressesBean> caseContacts = cases.getArchiveFileAddressesByReference(reference);
+
+            // Extract unique cases from the case-contact relationships
+            Set<String> seenCaseIds = new HashSet<>();
+            ArrayList<RestfulCaseOverviewV1> rcoList = new ArrayList<>();
+
+            if (caseContacts != null) {
+                for (ArchiveFileAddressesBean caseContact : caseContacts) {
+                    ArchiveFileBean afb = caseContact.getArchiveFileKey();
+                    if (afb != null && !seenCaseIds.contains(afb.getId())) {
+                        seenCaseIds.add(afb.getId());
+                        RestfulCaseOverviewV1 rco = new RestfulCaseOverviewV1();
+                        rco.setId(afb.getId());
+                        rco.setExternalId(afb.getExternalId());
+                        rco.setName(afb.getName());
+                        rco.setReason(afb.getReason());
+                        rco.setFileNumber(afb.getFileNumber());
+                        rco.setDateChanged(afb.getDateChanged());
+                        rcoList.add(rco);
+                    }
+                }
+            }
+            return Response.ok(rcoList).build();
+        } catch (Exception ex) {
+            log.error("Can not list cases with reference " + reference, ex);
+            return Response.serverError().build();
+        }
+
+    }
+
+    /**
+     * Searches for cases using enhanced search functionality
+     *
+     * @param searchString the search query (required, minimum 3 characters)
+     * @param includeArchived whether to include archived cases (optional, defaults to false)
+     * @response 401 User not authorized
+     * @response 403 User not authenticated
+     */
+    @Override
+    @GET
+    @Produces(MediaType.APPLICATION_JSON + ";charset=utf-8")
+    @Path("/search")
+    @RolesAllowed({"readArchiveFileRole"})
+    public Response searchCases(@QueryParam("searchString") String searchString,
+                                 @QueryParam("includeArchived") Boolean includeArchived) {
+
+        try {
+            // Validate searchString parameter
+            if (ServerStringUtils.isEmpty(searchString)) {
+                log.error("searchString parameter is required");
+                return Response.status(Response.Status.BAD_REQUEST)
+                        .entity("{\"error\": \"searchString parameter is required\"}")
+                        .build();
+            }
+
+            // Check minimum length requirement
+            if (searchString.trim().length() < 3) {
+                log.error("searchString must be at least 3 characters long");
+                return Response.status(Response.Status.BAD_REQUEST)
+                        .entity("{\"error\": \"searchString must be at least 3 characters long\"}")
+                        .build();
+            }
+
+            // Set default value for includeArchived
+            boolean withArchive = (includeArchived != null) ? includeArchived : false;
+
+            InitialContext ic = new InitialContext();
+            ArchiveFileServiceLocal cases = (ArchiveFileServiceLocal) ic.lookup(LOOKUP_CASES);
+
+            // Call searchEnhanced with null for tagName and documentTagNames parameters
+            ArchiveFileBean[] matches = cases.searchEnhanced(searchString, withArchive, null, null);
+
+            // Convert results to RestfulCaseOverviewV1 DTOs
+            ArrayList<RestfulCaseOverviewV1> rcoList = new ArrayList<>();
+            if (matches != null) {
+                for (ArchiveFileBean afb : matches) {
+                    RestfulCaseOverviewV1 rco = new RestfulCaseOverviewV1();
+                    rco.setId(afb.getId());
+                    rco.setExternalId(afb.getExternalId());
+                    rco.setName(afb.getName());
+                    rco.setReason(afb.getReason());
+                    rco.setFileNumber(afb.getFileNumber());
+                    rco.setDateChanged(afb.getDateChanged());
+                    rcoList.add(rco);
+                }
+            }
+            return Response.ok(rcoList).build();
+        } catch (Exception ex) {
+            log.error("Can not search cases with searchString: " + searchString, ex);
+            return Response.serverError().build();
+        }
+
+    }
+
     @Override
     @GET
     @Produces(MediaType.APPLICATION_JSON + ";charset=utf-8")
@@ -910,6 +1671,7 @@ public class CasesEndpointV7 implements CasesEndpointLocalV7 {
 
             RestfulDocumentV1 d = new RestfulDocumentV1();
             d.setId(doc.getId());
+            d.setCaseId(doc.getArchiveFileKey().getId());
             d.setExternalId(doc.getExternalId());
             d.setVersion(doc.getVersion());
             d.setName(doc.getName());
@@ -945,6 +1707,7 @@ public class CasesEndpointV7 implements CasesEndpointLocalV7 {
             if (matches != null) {
                 for (ArchiveFileDocumentsBean doc : matches) {
                     RestfulDocumentV1 d = new RestfulDocumentV1();
+                    d.setCaseId(doc.getArchiveFileKey().getId());
                     d.setId(doc.getId());
                     d.setExternalId(doc.getExternalId());
                     d.setVersion(doc.getVersion());
@@ -965,6 +1728,120 @@ public class CasesEndpointV7 implements CasesEndpointLocalV7 {
         } catch (Exception ex) {
             log.error("can not get documents by tag " + tag, ex);
             return Response.serverError().build();
+        }
+    }
+
+    /**
+     * Lists all deleted documents in the recycle bin.
+     *
+     * @param caseId optional filter to only include documents of a single case
+     * @response 200 Returns a list of {@link RestfulRecycleBinDocumentV7}
+     * @response 401 User not authorized
+     * @response 403 User not authenticated
+     */
+    @Override
+    @GET
+    @Produces(MediaType.APPLICATION_JSON + ";charset=utf-8")
+    @Path("/recyclebin")
+    @RolesAllowed({"writeArchiveFileRole"})
+    public Response getRecycleBin(@QueryParam("caseId") @DefaultValue("") String caseId) {
+        try {
+            InitialContext ic = new InitialContext();
+            ArchiveFileServiceLocal cases = (ArchiveFileServiceLocal) ic.lookup(LOOKUP_CASES);
+            Collection<ArchiveFileDocumentsBean> deletedDocs = cases.getDocumentsBin();
+
+            ArrayList<RestfulRecycleBinDocumentV7> response = new ArrayList<>();
+            boolean includeAllCases = ServerStringUtils.isEmpty(caseId);
+            if (deletedDocs != null) {
+                for (ArchiveFileDocumentsBean doc : deletedDocs) {
+                    ArchiveFileBean archiveFile = doc.getArchiveFileKey();
+                    String docCaseId = archiveFile != null ? archiveFile.getId() : null;
+                    if (includeAllCases || (docCaseId != null && docCaseId.equals(caseId))) {
+                        response.add(RestfulRecycleBinDocumentV7.fromDocumentsBean(doc));
+                    }
+                }
+            }
+
+            return Response.ok(response).build();
+        } catch (Exception ex) {
+            log.error("can not load recycle bin contents", ex);
+            return Response.serverError().build();
+        }
+    }
+
+    /**
+     * Restores a document from the recycle bin.
+     *
+     * @param documentId document ID to restore
+     * @response 200 Document restored successfully
+     * @response 400 Document ID missing
+     * @response 401 User not authorized
+     * @response 403 User not authenticated
+     */
+    @Override
+    @PUT
+    @Produces(MediaType.APPLICATION_JSON + ";charset=utf-8")
+    @Path("/document/{id}/restore")
+    @RolesAllowed({"writeArchiveFileRole"})
+    public Response restoreDocumentFromRecycleBin(@PathParam("id") String documentId) {
+        RestfulStatusResponseV7 response = new RestfulStatusResponseV7();
+        try {
+            if (ServerStringUtils.isEmpty(documentId)) {
+                response.setStatus(RestfulStatusResponseV7.STATUS_ERROR);
+                response.setMessage("Document ID is required");
+                return Response.status(Response.Status.BAD_REQUEST).entity(response).build();
+            }
+
+            InitialContext ic = new InitialContext();
+            ArchiveFileServiceLocal cases = (ArchiveFileServiceLocal) ic.lookup(LOOKUP_CASES);
+            cases.restoreDocumentFromBin(documentId);
+
+            response.setStatus(RestfulStatusResponseV7.STATUS_OK);
+            response.setMessage("Document restored from recycle bin");
+            return Response.ok(response).build();
+        } catch (Exception ex) {
+            log.error("can not restore document " + documentId + " from recycle bin", ex);
+            response.setStatus(RestfulStatusResponseV7.STATUS_ERROR);
+            response.setMessage(ex.getMessage());
+            return Response.serverError().entity(response).build();
+        }
+    }
+
+    /**
+     * Permanently removes a document that is currently located in the recycle bin.
+     *
+     * @param documentId document ID to delete
+     * @response 200 Document deleted successfully
+     * @response 400 Document ID missing
+     * @response 401 User not authorized
+     * @response 403 User not authenticated
+     */
+    @Override
+    @DELETE
+    @Produces(MediaType.APPLICATION_JSON + ";charset=utf-8")
+    @Path("/document/{id}/permanent")
+    @RolesAllowed({"writeArchiveFileRole"})
+    public Response removeDocumentFromRecycleBin(@PathParam("id") String documentId) {
+        RestfulStatusResponseV7 response = new RestfulStatusResponseV7();
+        try {
+            if (ServerStringUtils.isEmpty(documentId)) {
+                response.setStatus(RestfulStatusResponseV7.STATUS_ERROR);
+                response.setMessage("Document ID is required");
+                return Response.status(Response.Status.BAD_REQUEST).entity(response).build();
+            }
+
+            InitialContext ic = new InitialContext();
+            ArchiveFileServiceLocal cases = (ArchiveFileServiceLocal) ic.lookup(LOOKUP_CASES);
+            cases.removeDocumentFromBin(documentId);
+
+            response.setStatus(RestfulStatusResponseV7.STATUS_OK);
+            response.setMessage("Document permanently removed from recycle bin");
+            return Response.ok(response).build();
+        } catch (Exception ex) {
+            log.error("can not permanently remove document " + documentId + " from recycle bin", ex);
+            response.setStatus(RestfulStatusResponseV7.STATUS_ERROR);
+            response.setMessage(ex.getMessage());
+            return Response.serverError().entity(response).build();
         }
     }
     
@@ -1029,6 +1906,239 @@ public class CasesEndpointV7 implements CasesEndpointLocalV7 {
             return Response.ok(resultList).build();
         } catch (Exception ex) {
             log.error("can not create history entry " + id, ex);
+            return Response.serverError().build();
+        }
+    }
+
+    /**
+     * Returns a list of account entries for a given case
+     *
+     * @param id case ID
+     * @response 401 User not authorized
+     * @response 403 User not authenticated
+     */
+    @GET
+    @Produces(MediaType.APPLICATION_JSON + ";charset=utf-8")
+    @Path("/{id}/accountentries")
+    @RolesAllowed({"readArchiveFileRole"})
+    public Response getCaseAccountEntries(@PathParam("id") String id) {
+        try {
+
+            InitialContext ic = new InitialContext();
+            ArchiveFileServiceLocal cases = (ArchiveFileServiceLocal) ic.lookup(LOOKUP_CASES);
+            ArchiveFileBean currentCase = cases.getArchiveFile(id);
+            if (currentCase == null) {
+                log.error("case with id " + id + " does not exist");
+                return Response.serverError().build();
+            }
+
+            List<CaseAccountEntry> entries = cases.getAccountEntries(id);
+
+            ArrayList<RestfulCaseAccountEntryV7> entryList = new ArrayList<>();
+            for (CaseAccountEntry entry : entries) {
+                RestfulCaseAccountEntryV7 re = RestfulCaseAccountEntryV7.fromCaseAccountEntry(entry);
+                entryList.add(re);
+            }
+
+            return Response.ok(entryList).build();
+        } catch (Exception ex) {
+            log.error("can not get account entries for case " + id, ex);
+            return Response.serverError().build();
+        }
+    }
+
+    /**
+     * Creates a new account entry within an existing case. An ID for the entry is
+     * not required in the request.
+     *
+     * @param id case ID
+     * @param accountEntry account entry data
+     * @response 401 User not authorized
+     * @response 403 User not authenticated
+     */
+    @PUT
+    @Produces(MediaType.APPLICATION_JSON+";charset=utf-8")
+    @Consumes(MediaType.APPLICATION_JSON)
+    @Path("/{id}/accountentries/create")
+    @RolesAllowed({"writeArchiveFileRole"})
+    public Response createAccountEntry(@PathParam("id") String id, RestfulCaseAccountEntryV7 accountEntry) {
+        try {
+
+            InitialContext ic = new InitialContext();
+            ArchiveFileServiceLocal cases = (ArchiveFileServiceLocal) ic.lookup(LOOKUP_CASES);
+            ArchiveFileBean currentCase = cases.getArchiveFile(id);
+            if (currentCase == null) {
+                log.error("case with id " + id + " does not exist");
+                return Response.serverError().build();
+            }
+
+            // Validate contact if provided
+            AddressBean contact = null;
+            if (accountEntry.getContactId() != null && !accountEntry.getContactId().isEmpty()) {
+                AddressServiceLocal addresses = (AddressServiceLocal) ic.lookup(LOOKUP_ADDRESSES);
+                contact = addresses.getAddress(accountEntry.getContactId());
+                if (contact == null) {
+                    log.error("contact with id " + accountEntry.getContactId() + " does not exist");
+                    return Response.serverError().build();
+                }
+            }
+
+            // Validate invoice if provided
+            Invoice invoice = null;
+            if (accountEntry.getInvoiceId() != null && !accountEntry.getInvoiceId().isEmpty()) {
+                InvoiceFacadeLocal invoiceFacade = (InvoiceFacadeLocal) ic.lookup(LOOKUP_INVOICE_FACADE);
+                invoice = invoiceFacade.find(accountEntry.getInvoiceId());
+                if (invoice == null) {
+                    log.error("invoice with id " + accountEntry.getInvoiceId() + " does not exist");
+                    return Response.serverError().build();
+                }
+            }
+
+            CaseAccountEntry newEntry = new CaseAccountEntry();
+            newEntry.setArchiveFileKey(currentCase);
+            newEntry.setContact(contact);
+            newEntry.setInvoice(invoice);
+            newEntry.setEntryDate(accountEntry.getEntryDate());
+            newEntry.setDescription(accountEntry.getDescription());
+            newEntry.setEarnings(accountEntry.getEarnings());
+            newEntry.setSpendings(accountEntry.getSpendings());
+            newEntry.setEscrowIn(accountEntry.getEscrowIn());
+            newEntry.setEscrowOut(accountEntry.getEscrowOut());
+            newEntry.setExpendituresIn(accountEntry.getExpendituresIn());
+            newEntry.setExpendituresOut(accountEntry.getExpendituresOut());
+
+            CaseAccountEntry createdEntry = cases.addAccountEntry(id, newEntry);
+
+            return Response.ok(RestfulCaseAccountEntryV7.fromCaseAccountEntry(createdEntry)).build();
+        } catch (Exception ex) {
+            log.error("can not create account entry for case " + id, ex);
+            return Response.serverError().build();
+        }
+    }
+
+    /**
+     * Returns a single account entry by ID
+     *
+     * @param id account entry ID
+     * @response 401 User not authorized
+     * @response 403 User not authenticated
+     * @response 404 Account entry not found
+     */
+    @GET
+    @Produces(MediaType.APPLICATION_JSON + ";charset=utf-8")
+    @Path("/accountentries/{id}")
+    @RolesAllowed({"readArchiveFileRole"})
+    public Response getAccountEntry(@PathParam("id") String id) {
+        try {
+
+            InitialContext ic = new InitialContext();
+            CaseAccountEntryFacadeLocal entryFacade = (CaseAccountEntryFacadeLocal) ic.lookup(LOOKUP_ACCOUNT_ENTRIES);
+            CaseAccountEntry found = entryFacade.find(id);
+            if (found == null) {
+                return Response.status(Response.Status.NOT_FOUND).build();
+            }
+
+            return Response.ok(RestfulCaseAccountEntryV7.fromCaseAccountEntry(found)).build();
+        } catch (Exception ex) {
+            log.error("can not get account entry " + id, ex);
+            return Response.serverError().build();
+        }
+    }
+
+    /**
+     * Updates an existing account entry
+     *
+     * @param id account entry ID
+     * @param accountEntry updated account entry data
+     * @response 401 User not authorized
+     * @response 403 User not authenticated
+     * @response 404 Account entry not found
+     */
+    @POST
+    @Produces(MediaType.APPLICATION_JSON+";charset=utf-8")
+    @Consumes(MediaType.APPLICATION_JSON)
+    @Path("/accountentries/{id}/update")
+    @RolesAllowed({"writeArchiveFileRole"})
+    public Response updateAccountEntry(@PathParam("id") String id, RestfulCaseAccountEntryV7 accountEntry) {
+        try {
+
+            InitialContext ic = new InitialContext();
+            CaseAccountEntryFacadeLocal entryFacade = (CaseAccountEntryFacadeLocal) ic.lookup(LOOKUP_ACCOUNT_ENTRIES);
+            CaseAccountEntry found = entryFacade.find(id);
+            if (found == null) {
+                return Response.status(Response.Status.NOT_FOUND).build();
+            }
+
+            // Validate contact if provided
+            AddressBean contact = null;
+            if (accountEntry.getContactId() != null && !accountEntry.getContactId().isEmpty()) {
+                AddressServiceLocal addresses = (AddressServiceLocal) ic.lookup(LOOKUP_ADDRESSES);
+                contact = addresses.getAddress(accountEntry.getContactId());
+                if (contact == null) {
+                    log.error("contact with id " + accountEntry.getContactId() + " does not exist");
+                    return Response.serverError().build();
+                }
+            }
+
+            // Validate invoice if provided
+            Invoice invoice = null;
+            if (accountEntry.getInvoiceId() != null && !accountEntry.getInvoiceId().isEmpty()) {
+                InvoiceFacadeLocal invoiceFacade = (InvoiceFacadeLocal) ic.lookup(LOOKUP_INVOICE_FACADE);
+                invoice = invoiceFacade.find(accountEntry.getInvoiceId());
+                if (invoice == null) {
+                    log.error("invoice with id " + accountEntry.getInvoiceId() + " does not exist");
+                    return Response.serverError().build();
+                }
+            }
+
+            // Update fields
+            found.setContact(contact);
+            found.setInvoice(invoice);
+            found.setEntryDate(accountEntry.getEntryDate());
+            found.setDescription(accountEntry.getDescription());
+            found.setEarnings(accountEntry.getEarnings());
+            found.setSpendings(accountEntry.getSpendings());
+            found.setEscrowIn(accountEntry.getEscrowIn());
+            found.setEscrowOut(accountEntry.getEscrowOut());
+            found.setExpendituresIn(accountEntry.getExpendituresIn());
+            found.setExpendituresOut(accountEntry.getExpendituresOut());
+
+            entryFacade.edit(found);
+
+            return Response.ok(RestfulCaseAccountEntryV7.fromCaseAccountEntry(found)).build();
+        } catch (Exception ex) {
+            log.error("can not update account entry " + id, ex);
+            return Response.serverError().build();
+        }
+    }
+
+    /**
+     * Deletes an account entry
+     *
+     * @param id account entry ID
+     * @response 401 User not authorized
+     * @response 403 User not authenticated
+     * @response 404 Account entry not found
+     */
+    @DELETE
+    @Produces(MediaType.APPLICATION_JSON+";charset=utf-8")
+    @Path("/accountentries/{id}")
+    @RolesAllowed({"writeArchiveFileRole"})
+    public Response deleteAccountEntry(@PathParam("id") String id) {
+        try {
+
+            InitialContext ic = new InitialContext();
+            CaseAccountEntryFacadeLocal entryFacade = (CaseAccountEntryFacadeLocal) ic.lookup(LOOKUP_ACCOUNT_ENTRIES);
+            CaseAccountEntry found = entryFacade.find(id);
+            if (found == null) {
+                return Response.status(Response.Status.NOT_FOUND).build();
+            }
+
+            entryFacade.remove(found);
+
+            return Response.ok().build();
+        } catch (Exception ex) {
+            log.error("can not delete account entry " + id, ex);
             return Response.serverError().build();
         }
     }

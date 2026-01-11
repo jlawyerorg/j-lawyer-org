@@ -692,7 +692,10 @@ public class CalculationPluginDialog extends javax.swing.JDialog {
     public CalculationPluginDialog(java.awt.Frame parent, boolean modal, JPanel pluginUi) {
         this(parent, modal);
         this.scrollMain.setViewportView(pluginUi);
-        
+        // pack after injecting content so width follows content's preferred size
+        this.pack();
+        // adjust size within screen limits and allow scrolling as needed
+        adjustSizeToScreen();
     }
     
     /**
@@ -706,6 +709,54 @@ public class CalculationPluginDialog extends javax.swing.JDialog {
         initComponents();
         this.scrollMain.setViewportView(pluginUi);
         this.scrollMain.getVerticalScrollBar().setUnitIncrement(16);
+        // pack after injecting content so width follows content's preferred size
+        this.pack();
+        // adjust size within screen limits and allow scrolling as needed
+        adjustSizeToScreen();
+    }
+
+    private void adjustSizeToScreen() {
+        try {
+            // Ensure horizontal scrollbars can appear when necessary
+            scrollMain.setHorizontalScrollBarPolicy(javax.swing.ScrollPaneConstants.HORIZONTAL_SCROLLBAR_AS_NEEDED);
+
+            java.awt.GraphicsConfiguration gc = getGraphicsConfiguration();
+            java.awt.Rectangle bounds;
+            if (gc != null) {
+                java.awt.Insets insets = java.awt.Toolkit.getDefaultToolkit().getScreenInsets(gc);
+                java.awt.Rectangle b = gc.getBounds();
+                bounds = new java.awt.Rectangle(
+                        b.x + insets.left,
+                        b.y + insets.top,
+                        b.width - insets.left - insets.right,
+                        b.height - insets.top - insets.bottom);
+            } else {
+                bounds = java.awt.GraphicsEnvironment.getLocalGraphicsEnvironment().getMaximumWindowBounds();
+            }
+
+            int maxW = (int) Math.floor(bounds.width * 0.9);
+            int maxH = (int) Math.floor(bounds.height * 0.9);
+
+            int curW = getWidth();
+            int curH = getHeight();
+
+            // Small extra width to compensate potential vertical scrollbar
+            int extra = 0;
+            try {
+                extra = this.scrollMain.getVerticalScrollBar().getPreferredSize().width + 4;
+            } catch (Throwable ignore) { }
+
+            int targetW = Math.min(curW + extra, maxW);
+            int targetH = Math.min(curH, maxH);
+
+            setSize(targetW, targetH);
+
+            // Center relative to owner if present, otherwise screen
+            java.awt.Window owner = getOwner();
+            setLocationRelativeTo(owner != null ? owner : null);
+        } catch (Throwable t) {
+            // best-effort sizing; ignore failures
+        }
     }
     
     public void setHeader(String h) {
@@ -736,6 +787,9 @@ public class CalculationPluginDialog extends javax.swing.JDialog {
 
         lblUpdated.setFont(lblUpdated.getFont().deriveFont(lblUpdated.getFont().getSize()-2f));
         lblUpdated.setText("aktualisiert am");
+
+        // allow horizontal scrolling when needed
+        scrollMain.setHorizontalScrollBarPolicy(javax.swing.ScrollPaneConstants.HORIZONTAL_SCROLLBAR_AS_NEEDED);
 
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(getContentPane());
         getContentPane().setLayout(layout);

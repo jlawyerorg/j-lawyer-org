@@ -665,6 +665,7 @@ package com.jdimension.jlawyer.client.editors.files;
 
 import com.jdimension.jlawyer.client.TimesheetsTimerTask;
 import com.jdimension.jlawyer.client.settings.ClientSettings;
+import com.jdimension.jlawyer.client.settings.ServerSettings;
 import com.jdimension.jlawyer.client.settings.UserSettings;
 import com.jdimension.jlawyer.client.utils.ComponentUtils;
 import com.jdimension.jlawyer.persistence.Timesheet;
@@ -678,6 +679,7 @@ import java.awt.event.KeyEvent;
 import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.Timer;
 import java.util.TimerTask;
 import javax.swing.BoxLayout;
@@ -696,6 +698,8 @@ public class TimesheetLogDialog extends javax.swing.JDialog {
     private List<Timesheet> openSheets = null;
 
     private Timer timer = new Timer();
+    
+    private String numericInputFormat=null;
 
     /**
      * Creates new form TimesheetLogDialog
@@ -707,6 +711,8 @@ public class TimesheetLogDialog extends javax.swing.JDialog {
     public TimesheetLogDialog(java.awt.Frame parent, boolean modal, String caseId) {
         super(parent, modal);
         initComponents();
+        
+        this.numericInputFormat=ServerSettings.getInstance().getSetting(ServerSettings.SERVERCONF_TIMESHEET_NUMERICINPUT, "minutes");
         
         this.txtSearchTimesheets.putClientProperty("JTextField.showClearButton", true);
         this.txtSearchTimesheets.putClientProperty("JTextField.placeholderText", "Suche: Zeiterfassungsprojekt");
@@ -732,20 +738,25 @@ public class TimesheetLogDialog extends javax.swing.JDialog {
         try {
             JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
             ArchiveFileServiceRemote afs = locator.lookupArchiveFileServiceRemote();
+            TimesheetServiceRemote tss = locator.lookupTimesheetServiceRemote();
             
             this.openSheets = afs.getOpenTimesheets(caseId);
+            ArrayList<String> timesheetIds=new ArrayList<>();
             for (Timesheet ts : openSheets) {
                 TimesheetDialogEntryPanel tsep = new TimesheetDialogEntryPanel(this);
                 tsep.setEntry(ts);
                 this.pnlOpenTimesheets.add(tsep);
+                timesheetIds.add(ts.getId());
             }
-
+            
             // will return last positions for the user, independent of status
             List<TimesheetPosition> lastPositions = afs.getLastTimesheetPositions(caseId, UserSettings.getInstance().getCurrentUser().getPrincipalId());
+            
+            Map<String,List<TimesheetPositionTemplate>> positionTemplatesPerTimesheet=tss.getPositionTemplatesForTimesheets(timesheetIds);
             for (TimesheetPosition lp : lastPositions) {
-                this.existingTimesheetLogEntry(lp);
+                this.existingTimesheetLogEntry(lp, positionTemplatesPerTimesheet);
             }
-
+            
         } catch (Exception ex) {
             log.error("Error determining open timesheet positions", ex);
             JOptionPane.showMessageDialog(this, "Fehler beim Laden der offenen Zeiterfassungseinträge: " + ex.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
@@ -885,16 +896,9 @@ public class TimesheetLogDialog extends javax.swing.JDialog {
         }
     }
 
-    public final void existingTimesheetLogEntry(TimesheetPosition tsp) {
-        List<TimesheetPositionTemplate> posTemplates = new ArrayList<>();
-        try {
-            posTemplates=this.getAllowedPositionsForTimesheet(tsp.getTimesheet().getId());
-        } catch (Exception ex) {
-            log.error("Error determining allowed timesheet positions", ex);
-            JOptionPane.showMessageDialog(this, "Fehler beim Ermitteln der Einstellungen zum Projekt '" + tsp.getTimesheet().getName() + "': " + ex.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
-        }
-        
-        TimesheetLogEntryPanel tlep = new TimesheetLogEntryPanel(this, posTemplates);
+    public final void existingTimesheetLogEntry(TimesheetPosition tsp, Map<String,List<TimesheetPositionTemplate>> positionTemplatesPerTimesheet) {
+        List<TimesheetPositionTemplate> posTemplates = positionTemplatesPerTimesheet.get(tsp.getTimesheet().getId());
+        TimesheetLogEntryPanel tlep = new TimesheetLogEntryPanel(this, posTemplates, this.numericInputFormat);
         tlep.setEntry(tsp.getTimesheet().getArchiveFileKey(), tsp.getTimesheet(), tsp);
 
         this.pnlLogs.add(tlep);
@@ -926,7 +930,7 @@ public class TimesheetLogDialog extends javax.swing.JDialog {
             return;
         }
         
-        TimesheetLogEntryPanel tlep = new TimesheetLogEntryPanel(this, posTemplates);
+        TimesheetLogEntryPanel tlep = new TimesheetLogEntryPanel(this, posTemplates, this.numericInputFormat);
         TimesheetPosition tsp = new TimesheetPosition();
         tsp.setTimesheet(timesheet);
         tsp.setDescription("");

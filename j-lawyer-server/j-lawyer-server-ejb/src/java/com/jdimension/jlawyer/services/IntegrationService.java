@@ -673,7 +673,9 @@ import com.jdimension.jlawyer.ai.AssistantException;
 import com.jdimension.jlawyer.ai.ConfigurationData;
 import com.jdimension.jlawyer.ai.InputData;
 import com.jdimension.jlawyer.ai.Message;
+import com.jdimension.jlawyer.ai.OutputData;
 import com.jdimension.jlawyer.ai.ParameterData;
+import com.jdimension.jlawyer.documents.DocumentPreview;
 import com.jdimension.jlawyer.documents.TikaConfigurator;
 import com.jdimension.jlawyer.email.EmailTemplate;
 import com.jdimension.jlawyer.events.CustomHooksServiceLocal;
@@ -683,6 +685,8 @@ import com.jdimension.jlawyer.persistence.AssistantConfig;
 import com.jdimension.jlawyer.persistence.AssistantConfigFacadeLocal;
 import com.jdimension.jlawyer.persistence.AssistantPrompt;
 import com.jdimension.jlawyer.persistence.AssistantPromptFacadeLocal;
+import com.jdimension.jlawyer.persistence.AssistantReplacement;
+import com.jdimension.jlawyer.persistence.AssistantReplacementFacadeLocal;
 import com.jdimension.jlawyer.persistence.IntegrationHook;
 import com.jdimension.jlawyer.persistence.IntegrationHookFacadeLocal;
 import com.jdimension.jlawyer.persistence.ServerSettingsBean;
@@ -691,7 +695,9 @@ import com.jdimension.jlawyer.persistence.utils.StringGenerator;
 import com.jdimension.jlawyer.pojo.FileMetadata;
 import com.jdimension.jlawyer.security.CachingCrypto;
 import com.jdimension.jlawyer.security.CryptoProvider;
+import com.jdimension.jlawyer.server.services.settings.ServerSettingsKeys;
 import com.jdimension.jlawyer.server.utils.ServerFileUtils;
+import com.jdimension.jlawyer.stirlingpdf.StirlingPdfAPI;
 import com.jdimension.jlawyer.server.utils.ServerStringUtils;
 import com.jdimension.jlawyer.storage.VirtualFile;
 import java.io.BufferedReader;
@@ -749,6 +755,8 @@ public class IntegrationService implements IntegrationServiceRemote, Integration
     @EJB
     private ArchiveFileServiceRemote archiveFileService;
     @EJB
+    private SingletonServiceLocal singleton;
+    @EJB
     private ServerSettingsBeanFacadeLocal settingsFacade;
     @EJB
     private IntegrationHookFacadeLocal hookFacade;
@@ -758,6 +766,8 @@ public class IntegrationService implements IntegrationServiceRemote, Integration
     private AssistantConfigFacadeLocal assistantFacade;
     @EJB
     private AssistantPromptFacadeLocal assistantPromptFacade;
+    @EJB
+    private AssistantReplacementFacadeLocal assistantReplacementFacade;
 
     @Inject
     @JMSConnectionFactory("java:/JmsXA")
@@ -822,7 +832,7 @@ public class IntegrationService implements IntegrationServiceRemote, Integration
         } else {
             log.error("observed directory returns null for #listFiles");
         }
-        if(!req.getAbsolutePaths().isEmpty()) {
+        if (!req.getAbsolutePaths().isEmpty()) {
             this.publishOcrRequest(req);
         }
         return fileObjects;
@@ -977,7 +987,8 @@ public class IntegrationService implements IntegrationServiceRemote, Integration
         File[] files = f.listFiles();
         ArrayList list = new ArrayList();
         for (File curFile : files) {
-            list.add(curFile.getName());
+            if(curFile.isFile())
+                list.add(curFile.getName());
         }
         Collections.sort(list, String.CASE_INSENSITIVE_ORDER);
         return list;
@@ -1053,11 +1064,26 @@ public class IntegrationService implements IntegrationServiceRemote, Integration
     }
 
     @Override
-    public String getObservedFilePreview(String fileName) throws Exception {
+    public DocumentPreview getObservedFilePreview(String fileName) throws Exception {
         byte[] data = this.getObservedFile(fileName);
         if (data == null) {
             log.error("Error creating document preview - content data for file is null");
-            return "";
+            return new DocumentPreview("");
+        }
+
+        ServerSettingsBean sb = this.settingsFacade.find(ServerSettingsKeys.SERVERCONF_STIRLINGPDF_ENDPOINT);
+        StirlingPdfAPI pdfApi = null;
+        if (sb != null && !ServerStringUtils.isEmpty(sb.getSettingValue())) {
+            pdfApi = new StirlingPdfAPI(sb.getSettingValue(), 5000, 120000);
+        }
+
+        try {
+            if (DocumentPreview.supportsPdfPreview(fileName) && pdfApi != null) {
+                byte[] pdfPreviewBytes = pdfApi.convertToPdf(fileName, data);
+                return new DocumentPreview(pdfPreviewBytes);
+            }
+        } catch (Exception ex) {
+            log.error("Error creating PDF preview for document", ex);
         }
 
         Tika tika = TikaConfigurator.newTika(fileName);
@@ -1072,13 +1098,13 @@ public class IntegrationService implements IntegrationServiceRemote, Integration
                 result = sw.toString();
             }
 
-            return result;
+            return new DocumentPreview(result);
 
         } catch (Throwable t) {
             log.error("Error creating document preview", t);
         }
 
-        return "";
+        return new DocumentPreview("");
 
     }
 
@@ -1237,7 +1263,7 @@ public class IntegrationService implements IntegrationServiceRemote, Integration
             fout.write(data);
         }
 
-        File f=new File(scanDir + fileName);
+        File f = new File(scanDir + fileName);
         if (!OcrUtils.hasMetadata(f)) {
             FileMetadata newMetadata = OcrUtils.generateMetadata(f, context.getCallerPrincipal().getName(), source);
             if (newMetadata.getOcrStatus() == FileMetadata.OCRSTATUS_OPEN) {
@@ -1403,8 +1429,8 @@ public class IntegrationService implements IntegrationServiceRemote, Integration
     @Override
     @RolesAllowed(value = {"adminRole"})
     public AssistantConfig addAssistantConfig(AssistantConfig ac) {
-        StringGenerator idGen=new StringGenerator();
-        String id=idGen.getID().toString();
+        StringGenerator idGen = new StringGenerator();
+        String id = idGen.getID().toString();
         ac.setId(id);
         this.assistantFacade.create(ac);
         return this.assistantFacade.find(id);
@@ -1426,19 +1452,24 @@ public class IntegrationService implements IntegrationServiceRemote, Integration
     @Override
     @RolesAllowed(value = {"loginRole"})
     @TransactionTimeout(value = 1, unit = TimeUnit.MINUTES)
-    public Map<AssistantConfig,List<AiCapability>> getAssistantCapabilities() throws Exception {
-        Map<AssistantConfig,List<AiCapability>> allCapabilities=new HashMap<>();
-        List<AssistantConfig> configs=this.assistantFacade.findAll();
-        CachingCrypto crypto=CryptoProvider.newCrypto();
-        for(AssistantConfig c: configs) {
-            String pwd=c.getPassword();
-            if(pwd!=null)
-                pwd=crypto.decrypt(c.getPassword());
-            
-            AssistantAPI api=new AssistantAPI(c.getUrl(), c.getUserName(), pwd, c.getConnectionTimeout(), c.getReadTimeout());
-            allCapabilities.put(c, api.getCapabilities());
+    public Map<AssistantConfig, List<AiCapability>> getAssistantCapabilities() throws Exception {
+        Map<AssistantConfig, List<AiCapability>> allCapabilities = new HashMap<>();
+        List<AssistantConfig> configs = this.assistantFacade.findAll();
+        CachingCrypto crypto = CryptoProvider.newCrypto();
+        for (AssistantConfig c : configs) {
+            String pwd = c.getPassword();
+            if (pwd != null) {
+                pwd = crypto.decrypt(c.getPassword());
+            }
+
+            try {
+                AssistantAPI api = new AssistantAPI(c.getUrl(), c.getUserName(), pwd, c.getConnectionTimeout(), c.getReadTimeout());
+                allCapabilities.put(c, api.getCapabilities());
+            } catch (Exception ex) {
+                log.error("Can not determine assistant capabilities for " + c.getName(), ex);
+            }
         }
-        
+
         return allCapabilities;
     }
 
@@ -1446,26 +1477,47 @@ public class IntegrationService implements IntegrationServiceRemote, Integration
     @RolesAllowed(value = {"loginRole"})
     @TransactionTimeout(value = 60, unit = TimeUnit.MINUTES)
     public AiRequestStatus submitAssistantRequest(AssistantConfig config, String requestType, String modelType, String prompt, List<ParameterData> params, List<InputData> inputs, List<Message> messages) throws Exception {
-        List<AssistantConfig> configs=this.assistantFacade.findAll();
-        CachingCrypto crypto=CryptoProvider.newCrypto();
-        for(AssistantConfig c: configs) {
-            if(!(c.getId().equals(config.getId()))) {
+        List<AssistantConfig> configs = this.assistantFacade.findAll();
+        CachingCrypto crypto = CryptoProvider.newCrypto();
+        for (AssistantConfig c : configs) {
+            if (!(c.getId().equals(config.getId()))) {
                 continue;
             }
-            String pwd=c.getPassword();
-            if(pwd!=null)
-                pwd=crypto.decrypt(c.getPassword());
-            
-            AssistantAPI api=new AssistantAPI(c.getUrl(), c.getUserName(), pwd, c.getConnectionTimeout(), c.getReadTimeout());
-            List<ConfigurationData> configurations=new ArrayList<>();
-            String rawConfigs=c.getConfiguration();
-            if(!ServerStringUtils.isEmpty(rawConfigs))
-                configurations=parseConfiguration(rawConfigs);
-            return api.submitRequest(requestType, modelType, prompt, configurations, params, inputs, messages);
+            String pwd = c.getPassword();
+            if (pwd != null) {
+                pwd = crypto.decrypt(c.getPassword());
+            }
+
+            AssistantAPI api = new AssistantAPI(c.getUrl(), c.getUserName(), pwd, c.getConnectionTimeout(), c.getReadTimeout());
+            List<ConfigurationData> configurations = new ArrayList<>();
+            String rawConfigs = c.getConfiguration();
+            if (!ServerStringUtils.isEmpty(rawConfigs)) {
+                configurations = parseConfiguration(rawConfigs);
+            }
+            AiRequestStatus status = api.submitRequest(requestType, modelType, prompt, configurations, params, inputs, messages);
+
+            // perform replacements in case of transcription requests
+            if (status.getResponse() != null && AiCapability.REQUESTTYPE_TRANSCRIBE.equals(status.getResponse().getRequestType()) && !status.getResponse().getOutputData().isEmpty()) {
+                for (OutputData od : status.getResponse().getOutputData()) {
+                    if (OutputData.TYPE_STRING.equals(od.getType())) {
+                        String outputString = od.getStringData();
+                        for (AssistantReplacement r : this.singleton.getAssistantReplacements()) {
+                            if (r.isCaseInsensitive()) {
+                                outputString = ServerStringUtils.replaceCaseInsensitive(outputString, r.getSearchString(), r.getReplaceWith());
+                            } else {
+                                outputString = outputString.replace(r.getSearchString(), r.getReplaceWith());
+                            }
+                        }
+                        od.setStringData(outputString);
+                    }
+                }
+            }
+
+            return status;
         }
         throw new AssistantException("Kein Assistent für diese Anfrage gefunden.");
     }
-    
+
     private static List<ConfigurationData> parseConfiguration(String configString) {
         List<ConfigurationData> configList = new ArrayList<>();
 
@@ -1484,50 +1536,52 @@ public class IntegrationService implements IntegrationServiceRemote, Integration
                 configList.add(configData);
             }
         }
-        
+
         return configList;
     }
-    
+
     @Override
     @RolesAllowed(value = {"loginRole"})
     @TransactionTimeout(value = 60, unit = TimeUnit.MINUTES)
     public AiResponse getAssistantRequestStatus(AssistantConfig config, String requestId) throws Exception {
-        List<AssistantConfig> configs=this.assistantFacade.findAll();
-        CachingCrypto crypto=CryptoProvider.newCrypto();
-        for(AssistantConfig c: configs) {
-            if(!(c.getId().equals(config.getId()))) {
+        List<AssistantConfig> configs = this.assistantFacade.findAll();
+        CachingCrypto crypto = CryptoProvider.newCrypto();
+        for (AssistantConfig c : configs) {
+            if (!(c.getId().equals(config.getId()))) {
                 continue;
             }
-            String pwd=c.getPassword();
-            if(pwd!=null)
-                pwd=crypto.decrypt(c.getPassword());
-            
-            AssistantAPI api=new AssistantAPI(c.getUrl(), c.getUserName(), pwd, c.getConnectionTimeout(), c.getReadTimeout());
+            String pwd = c.getPassword();
+            if (pwd != null) {
+                pwd = crypto.decrypt(c.getPassword());
+            }
+
+            AssistantAPI api = new AssistantAPI(c.getUrl(), c.getUserName(), pwd, c.getConnectionTimeout(), c.getReadTimeout());
             return api.getRequestStatus(requestId);
         }
         throw new AssistantException("Kein Assistent für diese Anfrage gefunden.");
-        
+
     }
-    
+
     @Override
     @RolesAllowed(value = {"loginRole"})
     @TransactionTimeout(value = 60, unit = TimeUnit.MINUTES)
     public List<AiRequestLog> getAssistantRequestLog(AssistantConfig config) throws Exception {
-        List<AssistantConfig> configs=this.assistantFacade.findAll();
-        CachingCrypto crypto=CryptoProvider.newCrypto();
-        for(AssistantConfig c: configs) {
-            if(!(c.getId().equals(config.getId()))) {
+        List<AssistantConfig> configs = this.assistantFacade.findAll();
+        CachingCrypto crypto = CryptoProvider.newCrypto();
+        for (AssistantConfig c : configs) {
+            if (!(c.getId().equals(config.getId()))) {
                 continue;
             }
-            String pwd=c.getPassword();
-            if(pwd!=null)
-                pwd=crypto.decrypt(c.getPassword());
-            
-            AssistantAPI api=new AssistantAPI(c.getUrl(), c.getUserName(), pwd, c.getConnectionTimeout(), c.getReadTimeout());
+            String pwd = c.getPassword();
+            if (pwd != null) {
+                pwd = crypto.decrypt(c.getPassword());
+            }
+
+            AssistantAPI api = new AssistantAPI(c.getUrl(), c.getUserName(), pwd, c.getConnectionTimeout(), c.getReadTimeout());
             return api.getUserRequestLog();
         }
         throw new AssistantException("Kein Assistent für diese Anfrage gefunden.");
-        
+
     }
 
     @Override
@@ -1550,19 +1604,20 @@ public class IntegrationService implements IntegrationServiceRemote, Integration
             log.error("observed directory does not exist / is not a directory");
             return false;
         }
-        
-        if(!scanDir.endsWith(File.separator))
-            scanDir=scanDir+File.separator;
-        
-        File updatedFile=new File(scanDir + fileName);
-        if(!updatedFile.exists() || !updatedFile.isFile()) {
+
+        if (!scanDir.endsWith(File.separator)) {
+            scanDir = scanDir + File.separator;
+        }
+
+        File updatedFile = new File(scanDir + fileName);
+        if (!updatedFile.exists() || !updatedFile.isFile()) {
             throw new Exception("Datei " + fileName + " existiert nicht!");
         }
 
         try (FileOutputStream fout = new FileOutputStream(scanDir + fileName)) {
             fout.write(data);
         }
-        
+
         return true;
     }
 
@@ -1573,13 +1628,30 @@ public class IntegrationService implements IntegrationServiceRemote, Integration
     }
 
     @Override
+    @RolesAllowed(value = {"loginRole"})
+    public List<AssistantReplacement> getAllAssistantReplacements() throws Exception {
+        return this.assistantReplacementFacade.findAll();
+    }
+
+    @Override
     @RolesAllowed(value = {"adminRole"})
     public AssistantPrompt addAssistantPrompt(AssistantPrompt ap) throws Exception {
-        StringGenerator idGen=new StringGenerator();
-        String id=idGen.getID().toString();
+        StringGenerator idGen = new StringGenerator();
+        String id = idGen.getID().toString();
         ap.setId(id);
         this.assistantPromptFacade.create(ap);
         return this.assistantPromptFacade.find(id);
+    }
+
+    @Override
+    @RolesAllowed(value = {"adminRole"})
+    public AssistantReplacement addAssistantReplacement(AssistantReplacement ap) throws Exception {
+        StringGenerator idGen = new StringGenerator();
+        String id = idGen.getID().toString();
+        ap.setId(id);
+        this.assistantReplacementFacade.create(ap);
+        this.singleton.flushAssistantReplacements();
+        return this.assistantReplacementFacade.find(id);
     }
 
     @Override
@@ -1591,18 +1663,33 @@ public class IntegrationService implements IntegrationServiceRemote, Integration
 
     @Override
     @RolesAllowed(value = {"adminRole"})
+    public AssistantReplacement updateAssistantReplacement(AssistantReplacement ap) throws Exception {
+        this.assistantReplacementFacade.edit(ap);
+        this.singleton.flushAssistantReplacements();
+        return ap;
+    }
+
+    @Override
+    @RolesAllowed(value = {"adminRole"})
     public void removeAssistantPrompt(AssistantPrompt ap) throws Exception {
         this.assistantPromptFacade.remove(ap);
     }
 
     @Override
+    @RolesAllowed(value = {"adminRole"})
+    public void removeAssistantReplacement(AssistantReplacement ap) throws Exception {
+        this.singleton.flushAssistantReplacements();
+        this.assistantReplacementFacade.remove(ap);
+    }
+
+    @Override
     @RolesAllowed(value = {"loginRole"})
     @TransactionTimeout(value = 10, unit = TimeUnit.SECONDS)
-    public Map<AssistantConfig,AiUser> getAssistantUserInformation() throws Exception {
-        List<AssistantConfig> configs=this.assistantFacade.findAll();
-        CachingCrypto crypto=CryptoProvider.newCrypto();
-        Map<AssistantConfig,AiUser> userInfos=new HashMap<>();
-        for(AssistantConfig c: configs) {
+    public Map<AssistantConfig, AiUser> getAssistantUserInformation() throws Exception {
+        List<AssistantConfig> configs = this.assistantFacade.findAll();
+        CachingCrypto crypto = CryptoProvider.newCrypto();
+        Map<AssistantConfig, AiUser> userInfos = new HashMap<>();
+        for (AssistantConfig c : configs) {
             try {
                 String pwd = c.getPassword();
                 if (pwd != null) {

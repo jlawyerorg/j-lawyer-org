@@ -941,7 +941,7 @@ public class FormPluginEntryPanel extends javax.swing.JPanel {
         this.mnuDownloadActionPerformed(null);
     }
     
-    private void mnuDownloadActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_mnuDownloadActionPerformed
+    public void download() {
         try {
 
             String[] depends=this.plugin.getDependsOn();
@@ -963,6 +963,10 @@ public class FormPluginEntryPanel extends javax.swing.JPanel {
         } catch (Exception ex) {
             JOptionPane.showMessageDialog(EditorsRegistry.getInstance().getMainWindow(), "Fehler beim Laden des Plugins: " + ex.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
         }
+    }
+    
+    private void mnuDownloadActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_mnuDownloadActionPerformed
+        this.download();
     }//GEN-LAST:event_mnuDownloadActionPerformed
 
     private void cmdSettingsActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdSettingsActionPerformed

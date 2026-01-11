@@ -75,6 +75,7 @@ public class JCalendar extends JPanel {
         contentPane = new ContentPanel(this);
 
         headerPane.getIntervalLabel().setText(contentPane.getStrategy().getDisplayInterval());
+        headerPane.setActive(contentPane.getStrategy().getType());
         this.setLayout(new GridBagLayout());
         final GridBagConstraints c = new GridBagConstraints();
         c.gridx = 0;
@@ -187,6 +188,7 @@ public class JCalendar extends JPanel {
 
         final DisplayStrategy strategy = DisplayStrategyFactory.getStrategy(contentPane, strategyType);
         contentPane.setStrategy(strategy);
+        headerPane.setActive(strategyType);
         if (displayDate != null) {
             setSelectedDay(displayDate);
         }

@@ -663,6 +663,8 @@ For more information on this, and how to apply and follow the GNU AGPL, see
  */
 package com.jdimension.jlawyer.services;
 
+import com.jdimension.jlawyer.persistence.BankStatementsCSVConfig;
+import com.jdimension.jlawyer.persistence.Invoice;
 import com.jdimension.jlawyer.persistence.InvoicePool;
 import com.jdimension.jlawyer.persistence.InvoicePositionTemplate;
 import com.jdimension.jlawyer.persistence.InvoiceType;
@@ -680,6 +682,8 @@ public interface InvoiceServiceRemote {
     List<InvoicePool> getAllInvoicePools() throws Exception;
     List<InvoicePositionTemplate> getAllInvoicePositionTemplates() throws Exception;
     List<InvoicePool> getInvoicePoolsForUser(String principalId) throws Exception;
+    
+    List<BankStatementsCSVConfig> getAllBankStatementsCSVConfigurations() throws Exception;
 
     InvoicePool addInvoicePool(InvoicePool ip);
     InvoicePositionTemplate addInvoicePositionTemplate(InvoicePositionTemplate tpl);
@@ -701,5 +705,13 @@ public interface InvoiceServiceRemote {
     void removeInvoiceType(InvoiceType invoiceType) throws Exception;
 
     byte[] getGiroCode(String senderPrincipalId, BigDecimal amount, String purpose) throws Exception;
+    
+    List<Invoice> getInvoicesByStatus(int... status) throws Exception;
+
+    BankStatementsCSVConfig addBankStatementsCSVConfiguration(BankStatementsCSVConfig csv) throws Exception;
+    
+    BankStatementsCSVConfig updateBankStatementsCSVConfiguration(BankStatementsCSVConfig csv) throws Exception;
+
+    void removeBankStatementsCSVConfiguration(BankStatementsCSVConfig csv) throws Exception;
     
 }

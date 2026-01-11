@@ -707,6 +707,12 @@ public class AutoUpdateTimerTask extends java.util.TimerTask {
 
     private static final Logger log = Logger.getLogger(AutoUpdateTimerTask.class.getName());
     private Component owner;
+    
+    private volatile boolean stopped = false;
+
+    public void stop() {
+        stopped = true;
+    }
 
     /**
      * Creates a new instance of AutoUpdateTimerTask
@@ -720,6 +726,7 @@ public class AutoUpdateTimerTask extends java.util.TimerTask {
 
     @Override
     public void run() {
+        if (stopped) return;
 
         int addressCount = 0;
         int archiveFileCount = 0;
@@ -728,12 +735,15 @@ public class AutoUpdateTimerTask extends java.util.TimerTask {
             ClientSettings settings = ClientSettings.getInstance();
             JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
 
+            if (stopped) return;
             AddressServiceRemote addressService = locator.lookupAddressServiceRemote();
             addressCount = addressService.getAddressCount();
 
+            if (stopped) return;
             ArchiveFileServiceRemote fileService = locator.lookupArchiveFileServiceRemote();
             archiveFileCount = fileService.getArchiveFileCount();
 
+            if (stopped) return;
             docCount = fileService.getDocumentCount();
 
         } catch (Throwable t) {
@@ -750,27 +760,30 @@ public class AutoUpdateTimerTask extends java.util.TimerTask {
             String osVersion = System.getProperty("os.version");
             osVersion = URLEncoder.encode(osVersion, "UTF-8");
 
+            if (stopped) return;
             ServerSettings set = ServerSettings.getInstance();
             String company = set.getSetting(ServerSettings.PROFILE_COMPANYNAME, "x");
             String zip = set.getSetting(ServerSettings.PROFILE_COMPANYZIP, "x");
 
+            if (stopped) return;
             String voipmode = "off";
             if (UserSettings.getInstance().getCurrentUser().isVoipEnabled()) {
                 voipmode = "on";
             }
-            String drebismode = set.getSetting(ServerSettings.SERVERCONF_DREBISMODE, "off");
             String backupmode = set.getSetting(ServerSettings.SERVERCONF_BACKUP_MODE, "off");
 
+            if (stopped) return;
             // anonymous - identify as unique installation, but we don't care about personal details.
             String installationHash = StringUtils.md5(zip + " " + company);
             String userHash = StringUtils.md5(UserSettings.getInstance().getCurrentUser().getPrincipalId());
 
-            String csession = installationHash + ",user=" + userHash + ",java=" + javaVersion + ",os=" + osName + ",osversion=" + osVersion + ",adrc=" + addressCount + ",afc=" + archiveFileCount + ",docc=" + docCount + ",j-lawyer=" + VersionUtils.getFullClientVersion() + ",drebis=" + drebismode + ",voip=" + voipmode + ",backup=" + backupmode;
+            String csession = installationHash + ",user=" + userHash + ",java=" + javaVersion + ",os=" + osName + ",osversion=" + osVersion + ",adrc=" + addressCount + ",afc=" + archiveFileCount + ",docc=" + docCount + ",j-lawyer=" + VersionUtils.getFullClientVersion() + ",drebis=off" + ",voip=" + voipmode + ",backup=" + backupmode;
 
             URL updateURL = new URL("https://www.j-lawyer.org/downloads/updatecheck.xml?csession=" + CryptoProvider.newCrypto().encrypt(csession));
             URLConnection urlCon = updateURL.openConnection();
             urlCon.setRequestProperty("User-Agent", "j-lawyer Client v" + VersionUtils.getFullClientVersion());
 
+            if (stopped) return;
             InputStream is = urlCon.getInputStream();
             InputStreamReader reader = new InputStreamReader(is);
 
@@ -778,12 +791,14 @@ public class AutoUpdateTimerTask extends java.util.TimerTask {
             int len = 0;
             StringBuilder sb = new StringBuilder();
             while ((len = reader.read(buffer)) > -1) {
+                if (stopped) return;
                 sb.append(buffer, 0, len);
             }
             reader.close();
             is.close();
             String updateContent = sb.toString();
 
+            if (stopped) return;
             DocumentBuilderFactory dbf = DocumentBuilderFactory.newInstance();
             try {
                 dbf.setAttribute(XMLConstants.ACCESS_EXTERNAL_DTD, "");
@@ -811,11 +826,13 @@ public class AutoUpdateTimerTask extends java.util.TimerTask {
             nl = doc.getElementsByTagName("news-summary");
             String newsSummary = nl.item(0).getTextContent();
 
+            if (stopped) return;
             if (VersionUtils.isVersionGreater(version, VersionUtils.getFullClientVersion())) {
                 EventBroker b = EventBroker.getInstance();
                 b.publishEvent(new AutoUpdateEvent(version, published, changelog));
             }
 
+            if (stopped) return;
             ClientSettings settings = ClientSettings.getInstance();
             String lastConfirmed = settings.getConfiguration("client.desktop.news.lastconfirmed", "dummy");
             if (!newsPublished.equals(lastConfirmed)) {
@@ -835,10 +852,11 @@ public class AutoUpdateTimerTask extends java.util.TimerTask {
             String beaEnabledVersions = nl.item(0).getTextContent();
             set.setSetting(ServerSettings.SERVERCONF_BEAENABLEDVERSIONS, beaEnabledVersions);
             
-            
+            if (stopped) return;
             NodeList services = doc.getElementsByTagName("serviceitem");
             TreeMap<String, ServiceMenuItem> serviceMap=new TreeMap<>();
             for(int s=0;s<services.getLength();s++) {
+                if (stopped) return;
                 NamedNodeMap attributes=services.item(s).getAttributes();
                 String serviceName=attributes.getNamedItem("name").getTextContent();
                 String serviceTooltip=attributes.getNamedItem("tooltip").getTextContent();
@@ -851,6 +869,8 @@ public class AutoUpdateTimerTask extends java.util.TimerTask {
                 mi.setUrl(serviceUrl);
                 serviceMap.put(mi.getOrder(), mi);
             }
+            
+            if (stopped) return;
             EventBroker b = EventBroker.getInstance();
             b.publishEvent(new ServicesEvent(serviceMap));
 
@@ -859,13 +879,16 @@ public class AutoUpdateTimerTask extends java.util.TimerTask {
         }
         
         try {
+            if (stopped) return;
             Map<String, FormPlugin> remotePlugins=FormPluginUtil.getAvailableRepositoryPlugins();
             List<FormPlugin> updatable=new ArrayList<>();
             for (Map.Entry me : remotePlugins.entrySet()) {
+                if (stopped) return;
                 if(((FormPlugin)me.getValue()).getState()==FormPlugin.STATE_INSTALLED_UPDATEAVAILABLE) {
                     updatable.add((FormPlugin)me.getValue());
                 }
             }
+            if (stopped) return;
             if(!updatable.isEmpty()) {
                 EventBroker b = EventBroker.getInstance();
                 b.publishEvent(new FormPluginUpdateEvent(updatable));

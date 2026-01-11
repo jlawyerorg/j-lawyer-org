@@ -663,6 +663,7 @@
  */
 package com.jdimension.jlawyer.client.mail.sidebar;
 
+import com.jdimension.jlawyer.client.configuration.GroupMembershipsTableModel;
 import com.jdimension.jlawyer.client.configuration.UserListCellRenderer;
 import com.jdimension.jlawyer.client.editors.files.OptionsComboBoxModel;
 import com.jdimension.jlawyer.client.settings.ClientSettings;
@@ -678,10 +679,13 @@ import com.jdimension.jlawyer.services.JLawyerServiceLocator;
 import com.jdimension.jlawyer.ui.tagging.TagToggleButton;
 import com.jdimension.jlawyer.ui.tagging.WrapLayout;
 import java.awt.Component;
+import java.awt.Point;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 import javax.swing.DefaultComboBoxModel;
+import javax.swing.JOptionPane;
+import javax.swing.table.DefaultTableModel;
 import org.apache.log4j.Logger;
 
 /**
@@ -794,8 +798,33 @@ public class NewCaseStep extends javax.swing.JPanel implements WizardStepInterfa
         } catch (Throwable t) {
             log.error("Unable to load privilege groups", t);
         }
-        
-        
+
+        // Initialize permissions table
+        String[] colNames = new String[]{"", "Gruppe"};
+        GroupMembershipsTableModel model = new GroupMembershipsTableModel(colNames, 0);
+        this.tblGroups.setModel(model);
+
+        try {
+            JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(ClientSettings.getInstance().getLookupProperties());
+            Collection<Group> allGroups = locator.lookupSecurityServiceRemote().getAllGroups();
+
+            // Add all groups to table with checkboxes initially unchecked
+            for (Group g : allGroups) {
+                ((DefaultTableModel) this.tblGroups.getModel()).addRow(new Object[]{false, g});
+            }
+
+            ComponentUtils.autoSizeColumns(tblGroups);
+        } catch (Throwable t) {
+            log.error("Unable to load privilege groups for permissions table", t);
+        }
+
+        // Add mouse listener for checkbox toggling (outside generated code to prevent removal by GUI builder)
+        this.tblGroups.addMouseListener(new java.awt.event.MouseAdapter() {
+            public void mouseClicked(java.awt.event.MouseEvent evt) {
+                tblGroupsMouseClicked(evt);
+            }
+        });
+
     }
 
     @Override
@@ -822,6 +851,15 @@ public class NewCaseStep extends javax.swing.JPanel implements WizardStepInterfa
             }
         }
         this.data.put("newcase.tags", tags);
+
+        // Collect allowed groups from permissions table
+        ArrayList<Group> allowedGroups = new ArrayList<>();
+        for (int r = 0; r < this.tblGroups.getRowCount(); r++) {
+            if (this.tblGroups.getValueAt(r, 0).equals(Boolean.TRUE)) {
+                allowedGroups.add((Group) this.tblGroups.getValueAt(r, 1));
+            }
+        }
+        this.data.put("newcase.allowedgroups", allowedGroups);
 
     }
 
@@ -864,6 +902,8 @@ public class NewCaseStep extends javax.swing.JPanel implements WizardStepInterfa
         tagPanel = new javax.swing.JPanel();
         cmbGroup = new javax.swing.JComboBox<>();
         jLabel8 = new javax.swing.JLabel();
+        jScrollPane_tblGroups = new javax.swing.JScrollPane();
+        tblGroups = new javax.swing.JTable();
 
         jLabel7.setText("jLabel7");
 
@@ -907,16 +947,41 @@ public class NewCaseStep extends javax.swing.JPanel implements WizardStepInterfa
         tagPanel.setLayout(tagPanelLayout);
         tagPanelLayout.setHorizontalGroup(
             tagPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGap(0, 876, Short.MAX_VALUE)
+            .addGap(0, 0, Short.MAX_VALUE)
         );
         tagPanelLayout.setVerticalGroup(
             tagPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGap(0, 334, Short.MAX_VALUE)
+            .addGap(0, 328, Short.MAX_VALUE)
         );
 
         cmbGroup.setModel(new javax.swing.DefaultComboBoxModel<>(new String[] { "Item 1", "Item 2", "Item 3", "Item 4" }));
 
         jLabel8.setText("Gruppe:");
+
+        tblGroups.setModel(new javax.swing.table.DefaultTableModel(
+            new Object [][] {
+
+            },
+            new String [] {
+                "", "Gruppe"
+            }
+        ) {
+            Class[] types = new Class [] {
+                java.lang.Boolean.class, java.lang.Object.class
+            };
+            boolean[] canEdit = new boolean [] {
+                true, false
+            };
+
+            public Class getColumnClass(int columnIndex) {
+                return types [columnIndex];
+            }
+
+            public boolean isCellEditable(int rowIndex, int columnIndex) {
+                return canEdit [columnIndex];
+            }
+        });
+        jScrollPane_tblGroups.setViewportView(tblGroups);
 
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(this);
         this.setLayout(layout);
@@ -925,19 +990,7 @@ public class NewCaseStep extends javax.swing.JPanel implements WizardStepInterfa
             .addGroup(layout.createSequentialGroup()
                 .addContainerGap()
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addComponent(jLabel1, javax.swing.GroupLayout.DEFAULT_SIZE, 876, Short.MAX_VALUE)
-                    .addGroup(layout.createSequentialGroup()
-                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                            .addComponent(jLabel5)
-                            .addComponent(jLabel4)
-                            .addComponent(jLabel8))
-                        .addGap(6, 6, 6)
-                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                            .addComponent(cmbLawyer, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                            .addComponent(cmbAssistant, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                            .addComponent(cmbGroup, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
-                        .addGap(0, 0, Short.MAX_VALUE))
-                    .addComponent(tagPanel, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                    .addComponent(jLabel1, javax.swing.GroupLayout.DEFAULT_SIZE, 888, Short.MAX_VALUE)
                     .addGroup(layout.createSequentialGroup()
                         .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                             .addComponent(jLabel3)
@@ -949,7 +1002,20 @@ public class NewCaseStep extends javax.swing.JPanel implements WizardStepInterfa
                             .addComponent(txtName)
                             .addGroup(layout.createSequentialGroup()
                                 .addComponent(cmbSubjectField, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                                .addGap(0, 0, Short.MAX_VALUE)))))
+                                .addGap(0, 0, Short.MAX_VALUE))))
+                    .addGroup(layout.createSequentialGroup()
+                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                            .addComponent(jLabel5)
+                            .addComponent(jLabel4)
+                            .addComponent(jLabel8))
+                        .addGap(6, 6, 6)
+                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                            .addComponent(cmbLawyer, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                            .addComponent(cmbAssistant, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                            .addComponent(cmbGroup, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
+                        .addGap(18, 18, 18)
+                        .addComponent(jScrollPane_tblGroups))
+                    .addComponent(tagPanel, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
                 .addContainerGap())
         );
         layout.setVerticalGroup(
@@ -966,26 +1032,53 @@ public class NewCaseStep extends javax.swing.JPanel implements WizardStepInterfa
                     .addComponent(jLabel3)
                     .addComponent(txtReason, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                    .addComponent(cmbSubjectField, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addComponent(jLabel6))
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                    .addComponent(jLabel4)
-                    .addComponent(cmbLawyer, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                    .addComponent(jLabel5)
-                    .addComponent(cmbAssistant, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                    .addComponent(cmbGroup, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addComponent(jLabel8))
+                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
+                    .addGroup(layout.createSequentialGroup()
+                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                            .addComponent(cmbSubjectField, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                            .addComponent(jLabel6))
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                            .addComponent(jLabel4)
+                            .addComponent(cmbLawyer, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                            .addComponent(jLabel5)
+                            .addComponent(cmbAssistant, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                            .addComponent(cmbGroup, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                            .addComponent(jLabel8)))
+                    .addComponent(jScrollPane_tblGroups, javax.swing.GroupLayout.PREFERRED_SIZE, 0, Short.MAX_VALUE))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
                 .addComponent(tagPanel, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                 .addContainerGap())
         );
     }// </editor-fold>//GEN-END:initComponents
+
+    private void tblGroupsMouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_tblGroupsMouseClicked
+        if (evt.getClickCount() == 1 && !evt.isPopupTrigger() && evt.getComponent().isEnabled()) {
+            Point p = evt.getPoint();
+            int col = this.tblGroups.columnAtPoint(p);
+
+            if (col == 0) {  // Click on checkbox column
+                int row = this.tblGroups.rowAtPoint(p);
+                Group g = (Group) this.tblGroups.getValueAt(row, 1);
+                Boolean newValue = !((Boolean) this.tblGroups.getValueAt(row, 0));
+
+                // Validation: Owner group must be set first
+                if (newValue) {
+                    if (this.cmbGroup.getSelectedIndex() == 0) {
+                        JOptionPane.showMessageDialog(this,
+                            "Um Zugriffsrechte zu aktivieren, muss zuerst eine Eigentümergruppe gesetzt werden!",
+                            "Hinweis", JOptionPane.INFORMATION_MESSAGE);
+                        return;
+                    }
+                }
+                this.tblGroups.setValueAt(newValue, row, col);
+            }
+        }
+    }//GEN-LAST:event_tblGroupsMouseClicked
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JComboBox<String> cmbAssistant;
@@ -1000,7 +1093,9 @@ public class NewCaseStep extends javax.swing.JPanel implements WizardStepInterfa
     private javax.swing.JLabel jLabel6;
     private javax.swing.JLabel jLabel7;
     private javax.swing.JLabel jLabel8;
+    private javax.swing.JScrollPane jScrollPane_tblGroups;
     private javax.swing.JPanel tagPanel;
+    private javax.swing.JTable tblGroups;
     private javax.swing.JTextField txtName;
     private javax.swing.JTextField txtReason;
     // End of variables declaration//GEN-END:variables

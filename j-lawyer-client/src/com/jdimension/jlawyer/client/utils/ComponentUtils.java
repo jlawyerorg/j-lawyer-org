@@ -665,20 +665,33 @@ package com.jdimension.jlawyer.client.utils;
 
 import com.jdimension.jlawyer.client.editors.files.OptionsComboBoxModel;
 import com.jdimension.jlawyer.client.settings.ClientSettings;
+import com.jdimension.jlawyer.client.settings.UserSettings;
 import com.jdimension.jlawyer.persistence.AppOptionGroupBean;
+import com.jdimension.jlawyer.server.services.settings.UserSettingsKeys;
+import java.awt.AWTEvent;
 import java.awt.Color;
 import java.awt.Component;
 import java.awt.Container;
 import java.awt.Graphics;
+import java.awt.Toolkit;
+import java.awt.Window;
+import java.awt.event.AWTEventListener;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseMotionAdapter;
+import java.awt.event.WindowAdapter;
+import java.awt.event.WindowEvent;
 import java.beans.PropertyChangeEvent;
+import java.lang.reflect.Field;
+import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.List;
 import javax.swing.ComboBoxModel;
 import javax.swing.JCheckBoxMenuItem;
+import javax.swing.JColorChooser;
 import javax.swing.JComboBox;
+import javax.swing.JComponent;
 import javax.swing.JDialog;
+import javax.swing.JFrame;
 import javax.swing.JList;
 import javax.swing.JPopupMenu;
 import javax.swing.JSplitPane;
@@ -686,7 +699,9 @@ import javax.swing.JTable;
 import javax.swing.JTextField;
 import javax.swing.JTree;
 import javax.swing.MenuElement;
+import javax.swing.SwingUtilities;
 import javax.swing.border.Border;
+import javax.swing.colorchooser.AbstractColorChooserPanel;
 import javax.swing.plaf.basic.BasicSplitPaneDivider;
 import javax.swing.plaf.basic.BasicSplitPaneUI;
 import javax.swing.table.TableCellRenderer;
@@ -851,7 +866,7 @@ public class ComponentUtils {
                 Object headerValue = tableColumn.getHeaderValue();
                 Component headerComp = headerRenderer.getTableCellRendererComponent(table, headerValue, false, false, 0, column);
                 int maxHeaderWidth = Math.max(preferredWidth, headerComp.getPreferredSize().width);
-                
+
                 preferredWidth = Math.max(preferredWidth, maxHeaderWidth + 6) + 15;
 
                 tableColumn.setPreferredWidth(preferredWidth);
@@ -890,6 +905,20 @@ public class ComponentUtils {
         }
     }
 
+    public static void storeFrameSize(JFrame d) {
+        try {
+            if (d != null) {
+                int width = d.getWidth();
+                int height = d.getHeight();
+                ClientSettings s = ClientSettings.getInstance();
+                s.setConfiguration(d.getClass().getName() + ".w", "" + width);
+                s.setConfiguration(d.getClass().getName() + ".h", "" + height);
+            }
+        } catch (Throwable t) {
+            log.error("can not store size of dialog", t);
+        }
+    }
+
     public static void setEnabledRecursive(Container c, boolean enabled) {
         c.setEnabled(enabled);
         for (Component child : c.getComponents()) {
@@ -900,6 +929,24 @@ public class ComponentUtils {
     }
 
     public static void restoreDialogSize(JDialog d) {
+        try {
+            if (d != null) {
+                ClientSettings s = ClientSettings.getInstance();
+                String w = s.getConfiguration(d.getClass().getName() + ".w", "" + d.getWidth());
+                String h = s.getConfiguration(d.getClass().getName() + ".h", "" + d.getHeight());
+
+                int width = Integer.parseInt(w);
+                int height = Integer.parseInt(h);
+
+                d.setSize(width, height);
+
+            }
+        } catch (Throwable t) {
+            log.error("can not restore size of dialog", t);
+        }
+    }
+
+    public static void restoreFrameSize(JFrame d) {
         try {
             if (d != null) {
                 ClientSettings s = ClientSettings.getInstance();
@@ -983,6 +1030,19 @@ public class ComponentUtils {
                 mi.setSelected(selectedItems.contains(mi.getText()));
             }
         }
+    }
+    
+    public static JSplitPane getContainingSplitPane(JComponent jc) {
+        Container container=jc.getParent();
+        while(!(container instanceof JSplitPane) && !(container==null)) {
+            container=container.getParent();
+        }
+        
+        if(container!=null && container instanceof JSplitPane) {
+            
+            return (JSplitPane)container;
+        }
+        return null;
     }
 
     public static void decorateSplitPane(JSplitPane split) {
@@ -1073,5 +1133,139 @@ public class ComponentUtils {
         ListAdaptor listAdaptor = new ListAdaptor(dataList, txt);
         AutoCompleteDocument autoCompDoc = new AutoCompleteDocument(listAdaptor, false);
         AutoCompleteDecorator.decorate(txt, autoCompDoc, listAdaptor);
+    }
+
+    // Save recent colors to Preferences
+    public static void saveRecentColors(JColorChooser chooser) {
+        Color[] colors = getRecentColors(chooser);
+        if (colors != null) {
+            StringBuilder sb = new StringBuilder();
+            for (Color c : colors) {
+                sb.append(c.getRGB()).append(",");
+            }
+            UserSettings.getInstance().setSetting(UserSettingsKeys.CONF_COLORS_RECENT, sb.toString());
+        }
+    }
+
+    // Restore recent colors from Preferences
+    public static void restoreRecentColors(JColorChooser chooser) {
+        String data = UserSettings.getInstance().getSetting(UserSettingsKeys.CONF_COLORS_RECENT, "");
+        if (!data.isEmpty()) {
+            String[] rgbValues = data.split(",");
+            Color[] colors = new Color[rgbValues.length];
+            for (int i = 0; i < rgbValues.length; i++) {
+                try {
+                    colors[i] = new Color(Integer.parseInt(rgbValues[i]));
+                } catch (NumberFormatException ignored) {
+                }
+            }
+            setRecentColors(chooser, colors);
+        }
+    }
+
+    // Access RecentSwatchPanel colors
+    private static Color[] getRecentColors(JColorChooser chooser) {
+        try {
+            for (AbstractColorChooserPanel panel : chooser.getChooserPanels()) {
+                if (panel.getClass().getName().equals("javax.swing.colorchooser.DefaultSwatchChooserPanel")) {
+                    Field recentPanelField = panel.getClass().getDeclaredField("recentSwatchPanel");
+                    recentPanelField.setAccessible(true);
+                    Object recentPanel = recentPanelField.get(panel);
+                    Field colorsField = findField(recentPanel.getClass(), "colors");
+                    colorsField.setAccessible(true);
+                    return (Color[]) colorsField.get(recentPanel);
+                }
+            }
+        } catch (Exception e) {
+            log.error(e);
+        }
+        return null;
+    }
+
+    // Set RecentSwatchPanel colors
+    private static void setRecentColors(JColorChooser chooser, Color[] colors) {
+        try {
+            for (AbstractColorChooserPanel panel : chooser.getChooserPanels()) {
+                if (panel.getClass().getName().equals("javax.swing.colorchooser.DefaultSwatchChooserPanel")) {
+                    Field recentPanelField = panel.getClass().getDeclaredField("recentSwatchPanel");
+                    recentPanelField.setAccessible(true);
+                    Object recentPanel = recentPanelField.get(panel);
+                    Field colorsField = findField(recentPanel.getClass(), "colors");
+
+                    // Replace the array
+                    colorsField.set(recentPanel, colors);
+
+                    // Repaint to update UI
+                    if (recentPanel instanceof JComponent) {
+                        ((JComponent) recentPanel).repaint();
+                    }
+
+                    ((JComponent) recentPanel).repaint();
+                }
+            }
+        } catch (Exception e) {
+            log.error(e);
+        }
+    }
+
+    private static Field findField(Class<?> clazz, String name) {
+        while (clazz != null) {
+            try {
+                Field f = clazz.getDeclaredField(name);
+                f.setAccessible(true);
+                return f;
+            } catch (NoSuchFieldException e) {
+                clazz = clazz.getSuperclass(); // climb up
+            }
+        }
+        return null;
+    }
+
+    public static void installColorChooserInterceptor() {
+
+        Toolkit.getDefaultToolkit().addAWTEventListener((AWTEvent event) -> {
+            if (event.getID() == WindowEvent.WINDOW_OPENED && event.getSource() instanceof Window) {
+                Window w = (Window) event.getSource();
+                SwingUtilities.invokeLater(() -> scanForColorChoosers(w));
+            }
+        }, AWTEvent.WINDOW_EVENT_MASK);
+
+    }
+
+    private static void scanForColorChoosers(Window window) {
+        for (Component comp : getAllComponents(window)) {
+            if (comp instanceof JColorChooser) {
+                JColorChooser chooser = (JColorChooser) comp;
+                try {
+                // Restore colors once
+                restoreRecentColors(chooser);
+                } catch (Throwable t) {
+                    log.error("Could not restore recently used colors in color chooser", t);
+                }
+                // When window closes, save colors again
+                window.addWindowListener(new WindowAdapter() {
+                    @Override
+                    public void windowClosed(WindowEvent e) {
+                        try {
+                            saveRecentColors(chooser);
+                        } catch (Throwable t) {
+                            log.error("Could not save recently used colors in color chooser", t);
+                        }
+                    }
+                });
+            }
+        }
+    }
+
+    private static java.util.List<Component> getAllComponents(Container c) {
+        java.util.List<Component> list = new java.util.ArrayList<>();
+        for (Component comp : c.getComponents()) {
+            list.add(comp);
+            if (comp instanceof Container) {
+                Container container = (Container) comp;
+                list.addAll(getAllComponents(container));
+            }
+        }
+        return list;
     }
 }

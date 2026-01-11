@@ -1,0 +1,252 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema"
+           xmlns:tns="http://www.xjustiz.de"
+           xmlns:din91379="urn:xoev-de:kosit:xoev:datentyp:din-91379_2022-08"
+           targetNamespace="http://www.xjustiz.de"
+           version="3.1.2"
+           elementFormDefault="qualified"
+           attributeFormDefault="unqualified">
+   <xs:annotation>
+      <xs:appinfo>
+         <standard>
+            <nameLang>Strukturierte Fachdaten für die Kommunikation im elektronischen Rechtsverkehr</nameLang>
+            <nameKurz>XJustiz</nameKurz>
+            <nameTechnisch>xjustiz</nameTechnisch>
+            <kennung>urn:xoev-de:blk-ag-it-standards:standard:xjustiz</kennung>
+            <beschreibung>XJustiz ist der bundesweit einheitliche Standard für den Austausch strukturierter elektronischer Informationen mit der Justiz.</beschreibung>
+         </standard>
+         <versionStandard>
+            <version>3.5.1</version>
+            <beschreibung>XJustiz beschreibt ein standardisiertes Datenaustauschformat für die elektronische Kommunikation innerhalb und mit der Justizverwaltung.</beschreibung>
+            <versionXOEVProfil>1.7.2</versionXOEVProfil>
+            <versionXOEVHandbuch>2.3.1</versionXOEVHandbuch>
+            <versionXGenerator>3.1.1</versionXGenerator>
+            <versionModellierungswerkzeug>19.0 SP3</versionModellierungswerkzeug>
+            <nameModellierungswerkzeug>MagicDraw</nameModellierungswerkzeug>
+         </versionStandard>
+      </xs:appinfo>
+   </xs:annotation>
+   <xs:include schemaLocation="xjustiz_0000_grunddatensatz_3_5.xsd"/>
+   <xs:include schemaLocation="xjustiz_2110_cl_ehug_3_0.xsd"/>
+   <xs:import schemaLocation="din-norm-91379-datatypes.xsd"
+              namespace="urn:xoev-de:kosit:xoev:datentyp:din-91379_2022-08"/>
+   <xs:complexType name="Type.EHUG.Fachdaten">
+      <xs:sequence>
+         <xs:element name="ergaenzungenGesellschaft">
+            <xs:annotation>
+               <xs:documentation>Zur eindeutigen Bestimmung des Gegners des OG-Verfahrens.</xs:documentation>
+            </xs:annotation>
+            <xs:complexType>
+               <xs:sequence>
+                  <xs:element name="ref.rollennummer" type="din91379:datatypeC">
+                     <xs:annotation>
+                        <xs:documentation>Hier ist ein Bezug zur Gesellschaft herzustellen wegen der das Verfahren durchgeführt wird.</xs:documentation>
+                     </xs:annotation>
+                  </xs:element>
+                  <xs:element name="insolvenz" type="tns:Code.EHUG.Info.BFJ"/>
+                  <xs:element name="liquidation" type="tns:Code.EHUG.Info.BFJ"/>
+                  <xs:element name="loeschung" type="tns:Code.EHUG.Info.BFJ"/>
+                  <xs:element name="auswahl_geschaeftsjahr">
+                     <xs:complexType>
+                        <xs:choice>
+                           <xs:element name="geschaeftsjahr" type="xs:gYear">
+                              <xs:annotation>
+                                 <xs:documentation>Daten aus der Meldung BAnz, wenn identisch mit dem Inhalt des Ordnungsgeldbeschlusses</xs:documentation>
+                              </xs:annotation>
+                           </xs:element>
+                           <xs:element name="abwGeschaeftsjahr">
+                              <xs:complexType>
+                                 <xs:sequence>
+                                    <xs:element name="abwGeschaeftsjahrVon" type="xs:date">
+                                       <xs:annotation>
+                                          <xs:documentation>Daten aus dem angefochtenen OG-Beschluss, nur bei Abweichung vom Kalenderjahr</xs:documentation>
+                                       </xs:annotation>
+                                    </xs:element>
+                                    <xs:element name="abwGeschaeftsjahrBis" type="xs:date">
+                                       <xs:annotation>
+                                          <xs:documentation>Daten aus dem angefochtenen OG-Beschluss, nur bei Abweichung vom Kalenderjahr</xs:documentation>
+                                       </xs:annotation>
+                                    </xs:element>
+                                 </xs:sequence>
+                              </xs:complexType>
+                           </xs:element>
+                        </xs:choice>
+                     </xs:complexType>
+                  </xs:element>
+               </xs:sequence>
+            </xs:complexType>
+         </xs:element>
+         <xs:element name="verfahrensgang.BFJ">
+            <xs:complexType>
+               <xs:sequence>
+                  <xs:element name="beschwerdeVom" type="xs:date"/>
+                  <xs:element name="eingangAm" type="xs:date"/>
+                  <xs:element name="beschlussVom" type="xs:date"/>
+                  <xs:element name="zustellung_am" type="xs:date"/>
+                  <xs:element name="festgesetztesOrdnungsgeld" type="tns:Type.GDS.Geldbetrag"/>
+                  <xs:element name="datum.offenlegung.vollstaendig" minOccurs="0" type="xs:date">
+                     <xs:annotation>
+                        <xs:documentation>Wenn kein Datum übergeben wird, ist Offenlegung noch nicht vollständig.</xs:documentation>
+                     </xs:annotation>
+                  </xs:element>
+                  <xs:element name="berichtsteil" maxOccurs="unbounded">
+                     <xs:complexType>
+                        <xs:sequence>
+                           <xs:choice>
+                              <xs:annotation>
+                                 <xs:documentation>Datenherkunft ist in der EBanz-Nachricht ersichtlich.</xs:documentation>
+                              </xs:annotation>
+                              <xs:element name="erstmeldung" type="din91379:datatypeC"/>
+                              <xs:element name="korrekturmeldung">
+                                 <xs:complexType>
+                                    <xs:sequence>
+                                       <xs:element name="korrekturgrund" type="tns:Code.EHUG.Ebanz.Meldung.BFJ">
+                                          <xs:annotation>
+                                             <xs:documentation>Unterelement von Korrekturmeldung.</xs:documentation>
+                                          </xs:annotation>
+                                       </xs:element>
+                                       <xs:element name="korrekturgrund.freitext"
+                                                   minOccurs="0"
+                                                   type="din91379:datatypeC">
+                                          <xs:annotation>
+                                             <xs:documentation>Unterelement von Korrekturmeldung zur näheren Erläuterung.</xs:documentation>
+                                          </xs:annotation>
+                                       </xs:element>
+                                    </xs:sequence>
+                                 </xs:complexType>
+                              </xs:element>
+                           </xs:choice>
+                           <xs:element name="bilanzsumme" minOccurs="0" type="din91379:datatypeC">
+                              <xs:annotation>
+                                 <xs:documentation>wenn GJ größer 2012</xs:documentation>
+                              </xs:annotation>
+                           </xs:element>
+                           <xs:element name="umsatzerloese" minOccurs="0" type="din91379:datatypeC">
+                              <xs:annotation>
+                                 <xs:documentation>wenn GJ größer 2012</xs:documentation>
+                              </xs:annotation>
+                           </xs:element>
+                           <xs:element name="mitarbeiterzahl" minOccurs="0" type="din91379:datatypeC">
+                              <xs:annotation>
+                                 <xs:documentation>wenn GJ größer 2012</xs:documentation>
+                              </xs:annotation>
+                           </xs:element>
+                        </xs:sequence>
+                     </xs:complexType>
+                  </xs:element>
+                  <xs:element name="ordnungsgeld" maxOccurs="unbounded">
+                     <xs:complexType>
+                        <xs:sequence>
+                           <xs:element name="datum.androhungsverfuegung" type="xs:date"/>
+                           <xs:element name="hoehe.angedrOG" type="tns:Type.GDS.Geldbetrag"/>
+                           <xs:element name="datum.ZU.androhung" minOccurs="0" type="xs:date">
+                              <xs:annotation>
+                                 <xs:documentation>Tatsächliches Datum aus der Urkunde, nicht Eingang bei BfJ. (Liefermöglichkeit unklar, daher kein Pflichtfeld)</xs:documentation>
+                              </xs:annotation>
+                           </xs:element>
+                           <xs:element name="uhrzeit.ZU.androhung" minOccurs="0">
+                              <xs:annotation>
+                                 <xs:documentation>Tatsächliche Uhrzeit aus der Urkunde (Liefermöglichkeit unklar, daher kein Pflichtfeld). Format: hh:mm</xs:documentation>
+                              </xs:annotation>
+                              <xs:simpleType>
+                                 <xs:restriction base="din91379:datatypeC">
+                                    <xs:pattern value="(2[0-3]|[0-1]{0,1}[0-9]):[0-5][0-9]"/>
+                                 </xs:restriction>
+                              </xs:simpleType>
+                           </xs:element>
+                           <xs:element name="art.ZU.androhung" minOccurs="0" type="tns:Code.EHUG.Post.ZU">
+                              <xs:annotation>
+                                 <xs:documentation>(Liefermöglichkeit unklar, daher kein Pflichtfeld)</xs:documentation>
+                              </xs:annotation>
+                           </xs:element>
+                           <xs:element name="eingang.einspruch" type="xs:boolean"/>
+                           <xs:element name="datum.einspruch" minOccurs="0" type="xs:date">
+                              <xs:annotation>
+                                 <xs:documentation>wenn 'eingang.einspruch' = ja</xs:documentation>
+                              </xs:annotation>
+                           </xs:element>
+                           <xs:element name="datum.einspruch.eingang" minOccurs="0" type="xs:date">
+                              <xs:annotation>
+                                 <xs:documentation>wenn 'eingang.einspruch' = ja</xs:documentation>
+                              </xs:annotation>
+                           </xs:element>
+                           <xs:element name="ablauf.nachfrist" minOccurs="0" type="xs:date">
+                              <xs:annotation>
+                                 <xs:documentation>(Liefermöglichkeit unklar, daher kein Pflichtfeld)</xs:documentation>
+                              </xs:annotation>
+                           </xs:element>
+                           <xs:element name="datum.OG-Beschluss" type="xs:date">
+                              <xs:annotation>
+                                 <xs:documentation>Bislang Feld 34 des csv</xs:documentation>
+                              </xs:annotation>
+                           </xs:element>
+                           <xs:element name="hoehe.festgOG" type="tns:Type.GDS.Geldbetrag">
+                              <xs:annotation>
+                                 <xs:documentation>Bislang Feld 35 des csv</xs:documentation>
+                              </xs:annotation>
+                           </xs:element>
+                           <xs:element name="datum.ZU.OG" type="xs:date">
+                              <xs:annotation>
+                                 <xs:documentation>Tatsächliches Datum aus der Urkunde, nicht Eingang bei BfJ = Feld 36 der CSV (Liefermöglichkeit unklar, daher kein Pflichtfeld),</xs:documentation>
+                              </xs:annotation>
+                           </xs:element>
+                           <xs:element name="art.ZU.OG" minOccurs="0" type="tns:Code.EHUG.Post.ZU">
+                              <xs:annotation>
+                                 <xs:documentation>(Liefermöglichkeit unklar, daher kein Pflichtfeld)</xs:documentation>
+                              </xs:annotation>
+                           </xs:element>
+                           <xs:element name="datum.sofBeschw" type="xs:date">
+                              <xs:annotation>
+                                 <xs:documentation>Bislang Feld 33 des csv</xs:documentation>
+                              </xs:annotation>
+                           </xs:element>
+                           <xs:element name="eingang.sofBeschw" type="xs:date">
+                              <xs:annotation>
+                                 <xs:documentation>Bislang Feld 32 des csv</xs:documentation>
+                              </xs:annotation>
+                           </xs:element>
+                           <xs:element name="datum.nichtabhilfebescheid" minOccurs="0" type="xs:date">
+                              <xs:annotation>
+                                 <xs:documentation>(Liefermöglichkeit unklar, daher kein Pflichtfeld)</xs:documentation>
+                              </xs:annotation>
+                           </xs:element>
+                           <xs:element name="az.gerichtsentscheid" minOccurs="0" type="din91379:datatypeC">
+                              <xs:annotation>
+                                 <xs:documentation>Bei weiteren Ordnungsgeldern</xs:documentation>
+                              </xs:annotation>
+                           </xs:element>
+                           <xs:element name="datum.gerichtsentscheid" minOccurs="0" type="xs:date">
+                              <xs:annotation>
+                                 <xs:documentation>Bei weiteren Ordnungsgeldern</xs:documentation>
+                              </xs:annotation>
+                           </xs:element>
+                           <xs:element name="datum.gerichtsentscheid.post" minOccurs="0" type="xs:date">
+                              <xs:annotation>
+                                 <xs:documentation>Wann ist der Gerichtsentscheid zur Post gegeben (zur Berechnung der Frist für weitere Androhungsverfügung).</xs:documentation>
+                              </xs:annotation>
+                           </xs:element>
+                        </xs:sequence>
+                     </xs:complexType>
+                  </xs:element>
+               </xs:sequence>
+            </xs:complexType>
+         </xs:element>
+      </xs:sequence>
+      <xs:attribute name="fachdatenEhugVersion"
+                    type="din91379:datatypeC"
+                    use="required"
+                    fixed="3.2"/>
+   </xs:complexType>
+   <xs:element name="nachricht.ehug.uebergabe.2100001">
+      <xs:complexType>
+         <xs:sequence>
+            <xs:element name="nachrichtenkopf" type="tns:Type.GDS.Nachrichtenkopf"/>
+            <xs:element name="grunddaten" type="tns:Type.GDS.Grunddaten"/>
+            <xs:element name="schriftgutobjekte"
+                        minOccurs="0"
+                        type="tns:Type.GDS.Schriftgutobjekte"/>
+            <xs:element name="fachdaten" type="tns:Type.EHUG.Fachdaten"/>
+         </xs:sequence>
+      </xs:complexType>
+   </xs:element>
+</xs:schema>

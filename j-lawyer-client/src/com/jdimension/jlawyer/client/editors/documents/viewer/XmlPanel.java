@@ -801,4 +801,9 @@ public class XmlPanel extends javax.swing.JPanel implements PreviewPanel {
         return this.documentId;
     }
 
+    @Override
+    public void dispose() {
+        
+    }
+
 }

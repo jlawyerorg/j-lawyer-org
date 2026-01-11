@@ -668,11 +668,14 @@ import com.jdimension.jlawyer.client.settings.ClientSettings;
 import com.jdimension.jlawyer.persistence.ArchiveFileBean;
 import com.jdimension.jlawyer.server.utils.ServerFileUtils;
 import java.awt.Component;
+import java.awt.KeyboardFocusManager;
 import java.awt.Toolkit;
 import java.awt.datatransfer.Clipboard;
 import java.awt.datatransfer.DataFlavor;
 import java.awt.datatransfer.Transferable;
 import java.awt.datatransfer.UnsupportedFlavorException;
+import java.awt.event.WindowAdapter;
+import java.awt.event.WindowEvent;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
@@ -816,20 +819,6 @@ public class FileUtils extends ServerFileUtils {
             return null;
         }
     }
-    
-    public static String getFileSizeHumanReadable(long size) {
-        DecimalFormat megaBytes = new DecimalFormat("0");
-        
-        if (size < 1024) {
-            size = 1024l;
-        }
-
-        if (size > (1024 * 1024)) {
-            return megaBytes.format(size / 1024l / 1024l) + " MB";
-        } else {
-            return megaBytes.format(size / 1024l) + " KB";
-        }
-    }
 
     public static String getNewFileName(ArchiveFileBean selectedCase, String currentFileName, boolean applyNameTemplate) {
         return getNewFileName(selectedCase, currentFileName, new java.util.Date(), applyNameTemplate);
@@ -856,17 +845,11 @@ public class FileUtils extends ServerFileUtils {
         name = name.replace("Ö", "Oe");
         name = name.replace("Ü", "Ue");
         name = name.replace("ß", "ss");
-        name=name.trim();
-        if(name.indexOf('.')==0)
-            name="Anhang_"+System.currentTimeMillis()+name;
+        name = name.trim();
+        if (name.indexOf('.') == 0) {
+            name = "Anhang_" + System.currentTimeMillis() + name;
+        }
         return name;
-    }
-
-    public static String sanitizeFolderName(String folderName) {
-        String sanitized = sanitizeFileName(folderName);
-        sanitized = sanitized.replace("  ", " ");
-        sanitized = sanitized.replace("  ", " ");
-        return sanitized;
     }
 
     public static String createTempFile(String fileName, byte[] content) throws Exception {
@@ -888,7 +871,7 @@ public class FileUtils extends ServerFileUtils {
         // cleaning up temp dir must not ever cause the client to fail
         try {
 
-            String tmpDir = System.getProperty("user.home") + System.getProperty("file.separator") + ".j-lawyer-client" + System.getProperty("file.separator") + "tmp-documents";
+            String tmpDir = System.getProperty("user.home") + System.getProperty("file.separator") + ClientSettings.JLAWYERCLIENT_SETTINGDIR + System.getProperty("file.separator") + "tmp-documents";
             File fTmpDir = new File(tmpDir);
             if (!(fTmpDir.exists())) {
                 fTmpDir.mkdirs();
@@ -930,25 +913,7 @@ public class FileUtils extends ServerFileUtils {
 
         String tmpDir = System.getProperty("java.io.tmpdir");
         if (deleteAfterDays > -1) {
-            tmpDir = System.getProperty("user.home") + System.getProperty("file.separator") + ".j-lawyer-client" + System.getProperty("file.separator") + "tmp-documents";
-        }
-
-        boolean wordOnMac = false;
-
-        if (SystemUtils.isMacOs()) {
-
-            ClientSettings set = ClientSettings.getInstance();
-            String wordProcessor = set.getConfiguration(ClientSettings.CONF_APPS_WORDPROCESSOR_KEY, ClientSettings.CONF_APPS_WORDPROCESSOR_VALUE_LO);
-            boolean wordProcessorMicrosoft = ClientSettings.CONF_APPS_WORDPROCESSOR_VALUE_MSO.equalsIgnoreCase(wordProcessor);
-
-            if (wordProcessorMicrosoft) {
-                wordOnMac = true;
-                // otherwise mac os 10.15+ will give a warning and user needs to grant access manually
-                tmpDir = "/Users/" + System.getProperty("user.name") + "/Library/Group Containers/UBF8T346G9.Office";
-                if (!(new File(tmpDir).exists()) || !(new File(tmpDir).isDirectory())) {
-                    throw new Exception("Ungültiges temporäres Verzeichnis: " + tmpDir);
-                }
-            }
+            tmpDir = System.getProperty("user.home") + System.getProperty("file.separator") + ClientSettings.JLAWYERCLIENT_SETTINGDIR + System.getProperty("file.separator") + "tmp-documents";
         }
 
         if (!tmpDir.endsWith(System.getProperty("file.separator"))) {
@@ -966,7 +931,7 @@ public class FileUtils extends ServerFileUtils {
         fileName = fileName.replace("/", "_");
         fileName = fileName.replace("\t", "");
         String tmpFile = tmpDir + fileName;
-        try ( FileOutputStream fos = new FileOutputStream(new File(tmpFile), false)) {
+        try (FileOutputStream fos = new FileOutputStream(new File(tmpFile), false)) {
             fos.write(content);
         }
 
@@ -978,15 +943,15 @@ public class FileUtils extends ServerFileUtils {
             }
         }
 
-        if (deleteOnExit || wordOnMac) {
+        if (deleteOnExit) {
             cleanupTempFile(tmpFile);
         }
 
         return tmpFile;
     }
-    
+
     public static void copyFileListToClipboard(List<File> fileList) {
-        
+
         Transferable transferable = new Transferable() {
             @Override
             public DataFlavor[] getTransferDataFlavors() {
@@ -1007,7 +972,7 @@ public class FileUtils extends ServerFileUtils {
         Toolkit.getDefaultToolkit().getSystemClipboard().setContents(transferable, (Clipboard clipboard, Transferable contents) -> {
             log.debug("lost ownership of system clipboard");
         });
-        
+
 //        Clipboard clipboard = Toolkit.getDefaultToolkit().getSystemClipboard();
 //        clipboard.setContents(transferable, null);
     }
@@ -1022,7 +987,7 @@ public class FileUtils extends ServerFileUtils {
         remDir.deleteOnExit();
 
     }
-    
+
     public static String getNewFileName(ArchiveFileBean selectedCase, String currentFileName, java.util.Date d, boolean applyNameTemplate, Component parent, String title) {
 
         if (parent == null) {
@@ -1030,20 +995,34 @@ public class FileUtils extends ServerFileUtils {
         }
 
         NewFilenameOptionPanel p = null;
-        if(selectedCase==null)
+        if (selectedCase == null) {
             p = new NewFilenameOptionPanel();
-        else
+        } else {
             p = new NewFilenameOptionPanel(selectedCase);
-        
+        }
+
         p.setFilename(currentFileName, d, applyNameTemplate);
         JOptionPane pane = new JOptionPane(p, JOptionPane.QUESTION_MESSAGE);
         JDialog dialog = pane.createDialog(parent, title);
         dialog.doLayout();
         dialog.setSize(dialog.getWidth(), dialog.getHeight() + 50);
-        
+
         // prevent user from using the 'X' button to close the dialog
         dialog.setDefaultCloseOperation(WindowConstants.DO_NOTHING_ON_CLOSE);
+
+        // Add a window listener to clear the focus before closing
+        dialog.addWindowListener(new WindowAdapter() {
+            @Override
+            public void windowClosing(WindowEvent e) {
+                KeyboardFocusManager.getCurrentKeyboardFocusManager().clearGlobalFocusOwner();
+            }
+        });
+
         dialog.setVisible(true);
+        
+        // Clear focus again before dialog closes
+        KeyboardFocusManager.getCurrentKeyboardFocusManager().clearGlobalFocusOwner();
+
         if (p.getFilename() != null) {
 
             String newName = p.getFilename();
@@ -1058,18 +1037,21 @@ public class FileUtils extends ServerFileUtils {
 
         return null;
     }
-    
+
     public static void setPosixFilePermissions(String absolutePathToFile, boolean read, boolean write, boolean execute) {
         Path path = FileSystems.getDefault().getPath(absolutePathToFile);
-        
+
         // Create a set of PosixFilePermission
         Set<PosixFilePermission> perms = new HashSet<>();
-        if(read)
+        if (read) {
             perms.add(PosixFilePermission.OWNER_READ);
-        if(write)
+        }
+        if (write) {
             perms.add(PosixFilePermission.OWNER_WRITE);
-        if(execute)
+        }
+        if (execute) {
             perms.add(PosixFilePermission.OWNER_EXECUTE);
+        }
 
         // You can also add permissions for group and others if needed
         // perms.add(PosixFilePermission.GROUP_READ);
@@ -1078,7 +1060,6 @@ public class FileUtils extends ServerFileUtils {
         // perms.add(PosixFilePermission.OTHERS_READ);
         // perms.add(PosixFilePermission.OTHERS_WRITE);
         // perms.add(PosixFilePermission.OTHERS_EXECUTE);
-
         try {
             // Set the permissions on the file
             Files.setPosixFilePermissions(path, perms);

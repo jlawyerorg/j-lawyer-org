@@ -710,6 +710,8 @@ public class TimesheetPositionEntryPanel extends javax.swing.JPanel {
         initComponents();
 
         this.dlgParent = dlgParent;
+        
+        this.lblDuration.setText("");
 
         NumberFormat nf = NumberFormat.getNumberInstance(Locale.GERMAN);
         this.taxRateFormat = (DecimalFormat) nf;
@@ -789,6 +791,8 @@ public class TimesheetPositionEntryPanel extends javax.swing.JPanel {
         this.txtUnitPrice.setValue(pos.getUnitPrice());
         this.txtStarted.setValue(pos.getStarted());
         this.txtStopped.setValue(pos.getStopped());
+        
+        this.lblDuration.setText(TimesheetUtils.formatDuration(pos.getStarted(), pos.getStopped()));
 
         if (!ComponentUtils.containsItem(cmbPrincipal, pos.getPrincipal())) {
             this.cmbPrincipal.addItem(pos.getPrincipal());
@@ -880,7 +884,7 @@ public class TimesheetPositionEntryPanel extends javax.swing.JPanel {
         if (this.txtUnitPrice.getValue() == null) {
             clone.setUnitPrice(BigDecimal.ZERO);
         } else {
-            clone.setUnitPrice(BigDecimal.valueOf(((Number) this.txtUnitPrice.getValue()).floatValue()));
+            clone.setUnitPrice(BigDecimal.valueOf(((Number) this.txtUnitPrice.getValue()).doubleValue()));
         }
 
         return clone;
@@ -911,6 +915,8 @@ public class TimesheetPositionEntryPanel extends javax.swing.JPanel {
         lblBilled = new javax.swing.JLabel();
         cmbPrincipal = new javax.swing.JComboBox<>();
         lblIndicator = new javax.swing.JLabel();
+        cmdDuplicateEntry = new javax.swing.JButton();
+        lblDuration = new javax.swing.JLabel();
 
         txtName.setFont(txtName.getFont().deriveFont(txtName.getFont().getStyle() | java.awt.Font.BOLD, txtName.getFont().getSize()-2));
         txtName.setText("jTextField1");
@@ -923,15 +929,17 @@ public class TimesheetPositionEntryPanel extends javax.swing.JPanel {
         jLabel2.setFont(jLabel2.getFont().deriveFont(jLabel2.getFont().getSize()-2f));
         jLabel2.setText("/h");
 
+        txtUnitPrice.setColumns(7);
         txtUnitPrice.setFormatterFactory(new javax.swing.text.DefaultFormatterFactory(new javax.swing.text.NumberFormatter(new java.text.DecimalFormat("#0.00"))));
         txtUnitPrice.setHorizontalAlignment(javax.swing.JTextField.RIGHT);
         txtUnitPrice.setText("0");
         txtUnitPrice.setFont(txtUnitPrice.getFont().deriveFont(txtUnitPrice.getFont().getSize()-2f));
 
         jLabel3.setFont(jLabel3.getFont().deriveFont(jLabel3.getFont().getStyle() | java.awt.Font.BOLD, jLabel3.getFont().getSize()-2));
-        jLabel3.setText("Gesamt:");
+        jLabel3.setText("∑");
 
         txtTotal.setEditable(false);
+        txtTotal.setColumns(7);
         txtTotal.setFormatterFactory(new javax.swing.text.DefaultFormatterFactory(new javax.swing.text.NumberFormatter(new java.text.DecimalFormat("#0.00"))));
         txtTotal.setHorizontalAlignment(javax.swing.JTextField.RIGHT);
         txtTotal.setText("200");
@@ -972,6 +980,17 @@ public class TimesheetPositionEntryPanel extends javax.swing.JPanel {
         lblIndicator.setBackground(new java.awt.Color(102, 204, 0));
         lblIndicator.setOpaque(true);
 
+        cmdDuplicateEntry.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/kmultiple.png"))); // NOI18N
+        cmdDuplicateEntry.setToolTipText("Eintrag duplizieren");
+        cmdDuplicateEntry.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                cmdDuplicateEntryActionPerformed(evt);
+            }
+        });
+
+        lblDuration.setFont(lblDuration.getFont().deriveFont(lblDuration.getFont().getStyle() | java.awt.Font.BOLD, lblDuration.getFont().getSize()-2));
+        lblDuration.setText("2h45m");
+
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(this);
         this.setLayout(layout);
         layout.setHorizontalGroup(
@@ -989,6 +1008,8 @@ public class TimesheetPositionEntryPanel extends javax.swing.JPanel {
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                         .addComponent(cmbTaxRate, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addComponent(cmdDuplicateEntry)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                         .addComponent(cmdRemovePosition))
                     .addGroup(layout.createSequentialGroup()
                         .addComponent(txtStarted, javax.swing.GroupLayout.PREFERRED_SIZE, 150, javax.swing.GroupLayout.PREFERRED_SIZE)
@@ -996,14 +1017,16 @@ public class TimesheetPositionEntryPanel extends javax.swing.JPanel {
                         .addComponent(jLabel4)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                         .addComponent(txtStopped, javax.swing.GroupLayout.PREFERRED_SIZE, 150, javax.swing.GroupLayout.PREFERRED_SIZE)
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 19, Short.MAX_VALUE)
-                        .addComponent(txtUnitPrice, javax.swing.GroupLayout.PREFERRED_SIZE, 120, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addComponent(lblDuration)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                        .addComponent(txtUnitPrice, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                         .addGap(2, 2, 2)
                         .addComponent(jLabel2)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
                         .addComponent(jLabel3)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addComponent(txtTotal, javax.swing.GroupLayout.PREFERRED_SIZE, 120, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addComponent(txtTotal, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                         .addComponent(lblBilled)))
                 .addContainerGap())
@@ -1016,7 +1039,8 @@ public class TimesheetPositionEntryPanel extends javax.swing.JPanel {
                     .addComponent(txtName, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                     .addComponent(cmbTaxRate, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                     .addComponent(cmdRemovePosition)
-                    .addComponent(cmbPrincipal, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
+                    .addComponent(cmbPrincipal, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(cmdDuplicateEntry))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(jScrollPane1, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
@@ -1028,7 +1052,8 @@ public class TimesheetPositionEntryPanel extends javax.swing.JPanel {
                         .addComponent(jLabel3)
                         .addComponent(txtTotal, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                         .addComponent(txtUnitPrice, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                        .addComponent(jLabel2))
+                        .addComponent(jLabel2)
+                        .addComponent(lblDuration))
                     .addComponent(lblBilled, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(jSeparator1, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
@@ -1064,6 +1089,10 @@ public class TimesheetPositionEntryPanel extends javax.swing.JPanel {
         this.updateParentTotal();
     }//GEN-LAST:event_cmbTaxRateActionPerformed
 
+    private void cmdDuplicateEntryActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdDuplicateEntryActionPerformed
+        this.dlgParent.duplicateEntry(this);
+    }//GEN-LAST:event_cmdDuplicateEntryActionPerformed
+
     public void updateParentTotal() {
         this.dlgParent.updateTotals(this);
     }
@@ -1079,6 +1108,7 @@ public class TimesheetPositionEntryPanel extends javax.swing.JPanel {
                 this.txtTotal.putClientProperty(FlatClientProperties.OUTLINE, null);
                 Date started = (Date) this.txtStarted.getValue();
                 Date stopped = (Date) this.txtStopped.getValue();
+                this.lblDuration.setText(TimesheetUtils.formatDuration(started, stopped));
                 float totalMinutes = ((float) (stopped.getTime() - started.getTime())) / 1000f / 60f;
                 double roundedMinutes = Math.ceil(totalMinutes / intervalMinutes) * intervalMinutes;
                 float roundedMinutesFloat = new Float(roundedMinutes);
@@ -1101,6 +1131,7 @@ public class TimesheetPositionEntryPanel extends javax.swing.JPanel {
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JComboBox<String> cmbPrincipal;
     private javax.swing.JComboBox<String> cmbTaxRate;
+    private javax.swing.JButton cmdDuplicateEntry;
     private javax.swing.JButton cmdRemovePosition;
     private javax.swing.JLabel jLabel2;
     private javax.swing.JLabel jLabel3;
@@ -1108,6 +1139,7 @@ public class TimesheetPositionEntryPanel extends javax.swing.JPanel {
     private javax.swing.JScrollPane jScrollPane1;
     private javax.swing.JSeparator jSeparator1;
     private javax.swing.JLabel lblBilled;
+    private javax.swing.JLabel lblDuration;
     private javax.swing.JLabel lblIndicator;
     private javax.swing.JTextArea taDescription;
     private javax.swing.JTextField txtName;

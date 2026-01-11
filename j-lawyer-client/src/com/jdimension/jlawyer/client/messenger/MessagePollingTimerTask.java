@@ -686,6 +686,12 @@ public class MessagePollingTimerTask extends java.util.TimerTask {
     private long lastMessageTimestamp=-1;
     private long lastMentionStatusChangedTimestamp=-1;
     
+    private volatile boolean stopped = false;
+
+    public void stop() {
+        stopped = true;
+    }
+    
     /**
      * Creates a new instance of MessagePollingTimerTask
      * @param latestMessage
@@ -697,6 +703,8 @@ public class MessagePollingTimerTask extends java.util.TimerTask {
 
     @Override
     public void run() {
+        if (stopped) return;
+        
         synchronized (this) {
             // load message if 
             //   never polled before
@@ -707,22 +715,28 @@ public class MessagePollingTimerTask extends java.util.TimerTask {
                 try {
                     ClientSettings settings = ClientSettings.getInstance();
                     JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
+                    
+                    if (stopped) return;
                     List<InstantMessage> newMessages=locator.lookupMessagingServiceRemote().getMessagesSince(new Date(this.lastMessageTimestamp));
                     if(newMessages!=null) {
                         if(!newMessages.isEmpty()) {
                             this.lastMessageTimestamp=newMessages.get(newMessages.size()-1).getSent().getTime();
                         }
+                        if (stopped) return;
                         EventBroker eb = EventBroker.getInstance();
                         eb.publishEvent(new NewInstantMessagesEvent(newMessages));
                     }
                     
+                    if (stopped) return;
                     List<InstantMessageMention> updatedMentions=locator.lookupMessagingServiceRemote().getUpdatedMentionsSince(new Date(this.lastMentionStatusChangedTimestamp));
                     if(updatedMentions!=null) {
                         if(!updatedMentions.isEmpty()) {
                             this.lastMentionStatusChangedTimestamp=updatedMentions.get(updatedMentions.size()-1).getStatusChanged().getTime();
                         }
+                        if (stopped) return;
                         EventBroker eb = EventBroker.getInstance();
                         for(InstantMessageMention me: updatedMentions) {
+                            if (stopped) return;
                             InstantMessageMentionChangedEvent meevt=new InstantMessageMentionChangedEvent(me.getMessage().getId(), me.getId(), me.isDone());
                             eb.publishEvent(meevt);
                         }

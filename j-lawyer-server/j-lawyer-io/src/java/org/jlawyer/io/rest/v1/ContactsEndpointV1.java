@@ -783,6 +783,8 @@ public class ContactsEndpointV1 implements ContactsEndpointLocalV1 {
                 rco.setFirstName(afb.getFirstName());
                 rco.setCompany(afb.getCompany());
                 rco.setZipCode(afb.getZipCode());
+                rco.setStreet(afb.getStreet());
+                rco.setStreetNumber(afb.getStreetNumber());
                 rcoList.add(rco);
             }
             return Response.ok(rcoList).build();
@@ -810,10 +812,10 @@ public class ContactsEndpointV1 implements ContactsEndpointLocalV1 {
             InitialContext ic = new InitialContext();
             AddressServiceLocal addresses = (AddressServiceLocal) ic.lookup("java:global/j-lawyer-server/j-lawyer-server-ejb/AddressService!com.jdimension.jlawyer.services.AddressServiceLocal");
             
-            AddressBean a=new AddressBean();
-            a = addresses.createAddress(contact.toAddressBean(a));
+            AddressBean a = new AddressBean();
+            a=contact.toAddressBean(a);
             
-            List<AddressBean> similars=addresses.similaritySearch(a, 0.85f);
+            List<AddressBean> similars=addresses.similaritySearch(a, 0.6f);
             ArrayList<RestfulContactOverviewV1> rcoList = new ArrayList<>();
             for (AddressBean sim : similars) {
                 RestfulContactOverviewV1 rco = new RestfulContactOverviewV1();
@@ -828,6 +830,8 @@ public class ContactsEndpointV1 implements ContactsEndpointLocalV1 {
                 rco.setFirstName(sim.getFirstName());
                 rco.setCompany(sim.getCompany());
                 rco.setZipCode(sim.getZipCode());
+                rco.setStreet(sim.getStreet());
+                rco.setStreetNumber(sim.getStreetNumber());
                 rcoList.add(rco);
             }
             return Response.ok(rcoList).build();
@@ -894,6 +898,7 @@ public class ContactsEndpointV1 implements ContactsEndpointLocalV1 {
             currentContact.setPhone(contact.getPhone());
             currentContact.setSalutation(contact.getSalutation());
             currentContact.setStreet(contact.getStreet());
+            currentContact.setStreetNumber(contact.getStreetNumber());
             currentContact.setTitle(contact.getTitle());
             currentContact.setTrafficInsuranceName(contact.getTrafficInsuranceName());
             currentContact.setTrafficInsuranceNumber(contact.getTrafficInsuranceNumber());

@@ -671,6 +671,8 @@ import com.google.zxing.qrcode.QRCodeWriter;
 import com.google.zxing.qrcode.decoder.ErrorCorrectionLevel;
 import com.jdimension.jlawyer.persistence.AppUserBean;
 import com.jdimension.jlawyer.persistence.AppUserBeanFacadeLocal;
+import com.jdimension.jlawyer.persistence.BankStatementsCSVConfig;
+import com.jdimension.jlawyer.persistence.BankStatementsCSVConfigFacadeLocal;
 import com.jdimension.jlawyer.persistence.Invoice;
 import com.jdimension.jlawyer.persistence.InvoiceFacadeLocal;
 import com.jdimension.jlawyer.persistence.InvoicePool;
@@ -741,6 +743,8 @@ public class InvoiceService implements InvoiceServiceRemote, InvoiceServiceLocal
     @EJB
     private InvoicePositionTemplateFacadeLocal posTemplates;
     @EJB
+    private BankStatementsCSVConfigFacadeLocal csvConfigs;
+    @EJB
     private AppUserBeanFacadeLocal users;
     @EJB
     private ServerSettingsBeanFacadeLocal settingsFacade;
@@ -786,6 +790,24 @@ public class InvoiceService implements InvoiceServiceRemote, InvoiceServiceLocal
             return s1.toUpperCase().compareTo(s2.toUpperCase());
         });
         return tpls;
+    }
+    
+    @Override
+    @RolesAllowed({"loginRole"})
+    public List<BankStatementsCSVConfig> getAllBankStatementsCSVConfigurations() throws Exception {
+        List<BankStatementsCSVConfig> configs=this.csvConfigs.findAll();
+        Collections.sort(configs, (BankStatementsCSVConfig arg0, BankStatementsCSVConfig arg1) -> {
+            String s1 = arg0.getConfigurationName();
+            if (s1 == null) {
+                s1 = "";
+            }
+            String s2 = arg1.getConfigurationName();
+            if (s2 == null) {
+                s2 = "";
+            }
+            return s1.toUpperCase().compareTo(s2.toUpperCase());
+        });
+        return configs;
     }
 
     @Override
@@ -1039,6 +1061,18 @@ public class InvoiceService implements InvoiceServiceRemote, InvoiceServiceLocal
         }
 
     }
+    
+    @Override
+    @RolesAllowed({"loginRole"})
+    public List<Invoice> getInvoicesByStatus(int... status) throws Exception {
+
+        List<Invoice> invoicesList = new ArrayList<>();
+        this.invoices.findByStatus(Invoice.STATUS_OPEN);
+        for(int s: status) {
+            invoicesList.addAll(invoices.findByStatus(s));
+        }
+        return invoicesList;
+    }
 
     private void publishOutgoingMailRequest(OutgoingMailRequest req) {
         try {
@@ -1066,6 +1100,15 @@ public class InvoiceService implements InvoiceServiceRemote, InvoiceServiceLocal
             throw new Exception("Girocode kann nicht erstellt werden - Unternehmensname des Absenders leer. Korrektur unter 'Administration' - 'Nutzer'.");
         }
         String name=sender.getCompany().trim();
+        name=ServerStringUtils.removeSonderzeichen(name);
+        name=name.replace("&", "");
+        name=name.replace("'", "");
+        name=name.replace("\"", "");
+        name=name.replace("/", "");
+        name=name.replace("\\", "");
+        name=name.replace("§", "");
+        name=name.replace("(", "");
+        name=name.replace(")", "");
         
         if (ServerStringUtils.isEmpty(sender.getBankBic())) {
             throw new Exception("Girocode kann nicht erstellt werden - BIC des Absenders ist leer. Korrektur unter 'Administration' - 'Nutzer'.");
@@ -1116,6 +1159,29 @@ public class InvoiceService implements InvoiceServiceRemote, InvoiceServiceLocal
         hints.put(EncodeHintType.ERROR_CORRECTION, ErrorCorrectionLevel.L);
         hints.put(EncodeHintType.CHARACTER_SET, "utf-8");
         return hints;
+    }
+
+    @Override
+    @RolesAllowed({"adminRole"})
+    public BankStatementsCSVConfig addBankStatementsCSVConfiguration(BankStatementsCSVConfig csv) throws Exception {
+        StringGenerator idGen = new StringGenerator();
+        String csvId = idGen.getID().toString();
+        csv.setId(csvId);
+        this.csvConfigs.create(csv);
+        return this.csvConfigs.find(csvId);
+    }
+    
+    @Override
+    @RolesAllowed({"adminRole"})
+    public BankStatementsCSVConfig updateBankStatementsCSVConfiguration(BankStatementsCSVConfig csv) throws Exception {
+        this.csvConfigs.edit(csv);
+        return this.csvConfigs.find(csv.getId());
+    }
+
+    @Override
+    @RolesAllowed({"adminRole"})
+    public void removeBankStatementsCSVConfiguration(BankStatementsCSVConfig csv) throws Exception {
+        this.csvConfigs.remove(csv);
     }
 
 }

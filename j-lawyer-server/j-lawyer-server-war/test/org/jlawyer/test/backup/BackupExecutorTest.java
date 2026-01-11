@@ -732,7 +732,7 @@ public class BackupExecutorTest {
 //        String backupDir="/usr/local/j-lawyer-server/backups";
         String mysqlPwd=System.getenv("mysqlpwd");
         //mysqlPwd="gruetze";
-        IterativeBackupExecutor ibe=new IterativeBackupExecutor(dataDir, backupDir, "root", mysqlPwd, "3306", "");
+        IterativeBackupExecutor ibe=new IterativeBackupExecutor(dataDir, backupDir, "root", mysqlPwd, "localhost", "3306", "jlawyerdb", "");
         
         try {
             BackupResult br=ibe.execute();
@@ -766,7 +766,7 @@ public class BackupExecutorTest {
         }
         String dataDir="/home/jens/dev/projects/j-lawyer-data";
         String backupDir="/home/jens/dev/projects/backups";
-        IterativeBackupExecutor ibe=new IterativeBackupExecutor(dataDir, backupDir, "root", "sulibo64", "3306", "1337");
+        IterativeBackupExecutor ibe=new IterativeBackupExecutor(dataDir, backupDir, "root", "sulibo64", "localhost", "3306", "jlawyerdb", "1337");
         
         try {
             BackupResult br=ibe.execute();

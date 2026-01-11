@@ -710,6 +710,18 @@ public class FrameUtils {
         frame.setLocation(p);
     }
 
+    public static void focusFrame(JFrame frame) {
+        // Timer needed because some window managers ignore toFront() calls during window creation
+        javax.swing.Timer timer = new javax.swing.Timer(100, e -> {
+            frame.setAlwaysOnTop(true);
+            frame.toFront();
+            frame.requestFocus();
+            frame.setAlwaysOnTop(false);
+        });
+        timer.setRepeats(false);
+        timer.start();
+    }
+
     public static void fitDialogToScreen(JDialog dlg, float percentOfScreen) {
 
         Dimension d = null; // size of what we're positioning against

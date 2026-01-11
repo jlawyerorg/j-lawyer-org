@@ -666,7 +666,6 @@ package com.jdimension.jlawyer.client.desktop;
 import com.jdimension.jlawyer.client.editors.addresses.QuickAddressSearchPanel;
 import com.jdimension.jlawyer.client.settings.ClientSettings;
 import com.jdimension.jlawyer.client.utils.StringUtils;
-import com.jdimension.jlawyer.client.utils.ThreadUtils;
 import com.jdimension.jlawyer.persistence.AppOptionGroupBean;
 import com.jdimension.jlawyer.server.constants.OptionConstants;
 import com.jdimension.jlawyer.services.AddressServiceRemote;
@@ -686,7 +685,12 @@ public class UpdateAddressTagsTask extends java.util.TimerTask {
     private static final Logger log = Logger.getLogger(UpdateAddressTagsTask.class.getName());
     private Component owner;
     private QuickAddressSearchPanel p1;
-    //private QuickAddressSearchPanel p2;
+    
+    private volatile boolean stopped = false;
+
+    public void stop() {
+        stopped = true;
+    }
 
     /**
      * Creates a new instance of UpdateAddressTagsTask
@@ -703,19 +707,26 @@ public class UpdateAddressTagsTask extends java.util.TimerTask {
 
     @Override
     public void run() {
+        if (stopped) return;
+        
         final List<String> tagsInUse2;
         try {
             ClientSettings settings = ClientSettings.getInstance();
             JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
 
+            if (stopped) return;
             AddressServiceRemote adrService = locator.lookupAddressServiceRemote();
             SystemManagementRemote sys = locator.lookupSystemManagementRemote();
+            
+            if (stopped) return;
             AppOptionGroupBean[] tagDtos = sys.getOptionGroup(OptionConstants.OPTIONGROUP_ADDRESSTAGS);
             settings.setAddressTagDtos(tagDtos);
 
+            if (stopped) return;
             List<String> tagsInUse = adrService.searchTagsInUse();
             settings.setAddressTagsInUse(tagsInUse);
 
+            if (stopped) return;
             for (AppOptionGroupBean og : tagDtos) {
                 if (!tagsInUse.contains(og.getValue())) {
                     tagsInUse.add(og.getValue());
@@ -732,6 +743,7 @@ public class UpdateAddressTagsTask extends java.util.TimerTask {
         }
 
         try {
+            if (stopped) return;
             SwingUtilities.invokeLater(() -> {
                 p1.populateTags(tagsInUse2);
             });

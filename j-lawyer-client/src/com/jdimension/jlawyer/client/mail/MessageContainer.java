@@ -717,22 +717,22 @@ public class MessageContainer {
      */
     public void setRead(boolean read) throws MessagingException {
 
-        boolean closed=!this.message.getFolder().isOpen();
+        
             if (!this.message.getFolder().isOpen()) {
+                System.out.println("open 33");
                 this.message.getFolder().open(Folder.READ_WRITE);
             }
             this.message.setFlag(Flags.Flag.SEEN, read);
             this.read = read;
-            if(closed) {
-                if(this.message.getFolder().isOpen()) {
+            
+                if(this.message.getFolder().isOpen() && !EmailUtils.isInbox(this.message.getFolder())) {
                     try {
                         EmailUtils.closeIfIMAP(this.message.getFolder());
-                        //this.message.getFolder().close(true);
                     } catch (Exception ex) {
                         log.error(ex);
                     }
                 }
-            }
+            
 
     }
 }

@@ -16,7 +16,7 @@
   <Layout>
     <DimensionLayout dim="0">
       <Group type="103" groupAlignment="0" attributes="0">
-          <Group type="102" attributes="0">
+          <Group type="102" alignment="0" attributes="0">
               <Component id="togReview1Day" min="-2" max="-2" attributes="0"/>
               <EmptySpace min="-2" pref="3" max="-2" attributes="0"/>
               <Component id="togReview2Days" min="-2" max="-2" attributes="0"/>
@@ -25,13 +25,18 @@
               <EmptySpace min="-2" pref="3" max="-2" attributes="0"/>
               <Component id="togReview2Weeks" min="-2" max="-2" attributes="0"/>
               <EmptySpace min="-2" pref="3" max="-2" attributes="0"/>
+              <Component id="togReview3Weeks" min="-2" max="-2" attributes="0"/>
+              <EmptySpace min="-2" pref="3" max="-2" attributes="0"/>
               <Component id="togReview4Weeks" min="-2" max="-2" attributes="0"/>
+              <EmptySpace min="-2" pref="3" max="-2" attributes="0"/>
+              <Component id="togReview1Month" min="-2" max="-2" attributes="0"/>
               <EmptySpace min="-2" pref="3" max="-2" attributes="0"/>
               <Component id="togReview3Months" min="-2" max="-2" attributes="0"/>
               <EmptySpace min="-2" pref="3" max="-2" attributes="0"/>
               <Component id="togReview6Months" min="-2" max="-2" attributes="0"/>
               <EmptySpace min="-2" pref="3" max="-2" attributes="0"/>
               <Component id="togReview1Year" min="-2" max="-2" attributes="0"/>
+              <EmptySpace min="0" pref="0" max="-2" attributes="0"/>
           </Group>
       </Group>
     </DimensionLayout>
@@ -46,6 +51,8 @@
               <Component id="togReview3Months" alignment="3" min="-2" max="-2" attributes="0"/>
               <Component id="togReview6Months" alignment="3" min="-2" max="-2" attributes="0"/>
               <Component id="togReview1Year" alignment="3" min="-2" max="-2" attributes="0"/>
+              <Component id="togReview1Month" alignment="3" min="-2" max="-2" attributes="0"/>
+              <Component id="togReview3Weeks" alignment="3" min="-2" max="-2" attributes="0"/>
           </Group>
       </Group>
     </DimensionLayout>
@@ -71,6 +78,17 @@
       </Properties>
       <Events>
         <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="togReview2WeeksActionPerformed"/>
+      </Events>
+    </Component>
+    <Component class="javax.swing.JToggleButton" name="togReview3Weeks">
+      <Properties>
+        <Property name="text" type="java.lang.String" value="3W"/>
+        <Property name="margin" type="java.awt.Insets" editor="org.netbeans.beaninfo.editors.InsetsEditor">
+          <Insets value="[2, 4, 2, 4]"/>
+        </Property>
+      </Properties>
+      <Events>
+        <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="togReview3WeeksActionPerformed"/>
       </Events>
     </Component>
     <Component class="javax.swing.JToggleButton" name="togReview4Weeks">
@@ -104,6 +122,17 @@
       </Properties>
       <Events>
         <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="togReview2DaysActionPerformed"/>
+      </Events>
+    </Component>
+    <Component class="javax.swing.JToggleButton" name="togReview1Month">
+      <Properties>
+        <Property name="text" type="java.lang.String" value="1M"/>
+        <Property name="margin" type="java.awt.Insets" editor="org.netbeans.beaninfo.editors.InsetsEditor">
+          <Insets value="[2, 4, 2, 4]"/>
+        </Property>
+      </Properties>
+      <Events>
+        <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="togReview1MonthActionPerformed"/>
       </Events>
     </Component>
     <Component class="javax.swing.JToggleButton" name="togReview3Months">

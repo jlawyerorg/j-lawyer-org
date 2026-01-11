@@ -85,6 +85,18 @@
                 <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="mnuImportFromSheetActionPerformed"/>
               </Events>
             </MenuItem>
+            <MenuItem class="javax.swing.JMenuItem" name="mnuExportSyncedCases">
+              <Properties>
+                <Property name="icon" type="javax.swing.Icon" editor="org.netbeans.modules.form.editors2.IconEditor">
+                  <Image iconType="3" name="/icons16/webexport.png"/>
+                </Property>
+                <Property name="text" type="java.lang.String" value="Export: Akten"/>
+                <Property name="toolTipText" type="java.lang.String" value="Exportieren von zur Synchronisation markierten Akten"/>
+              </Properties>
+              <Events>
+                <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="mnuExportSyncedCasesActionPerformed"/>
+              </Events>
+            </MenuItem>
             <MenuItem class="javax.swing.JSeparator" name="jSeparator3">
             </MenuItem>
             <MenuItem class="javax.swing.JMenuItem" name="mnuExit">
@@ -192,6 +204,17 @@
                   </Properties>
                   <Events>
                     <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="mnuAddressOptionsTitleInAddressActionPerformed"/>
+                  </Events>
+                </MenuItem>
+                <MenuItem class="javax.swing.JMenuItem" name="mnuAddressOptionsStates">
+                  <Properties>
+                    <Property name="icon" type="javax.swing.Icon" editor="org.netbeans.modules.form.editors2.IconEditor">
+                      <Image iconType="3" name="/icons/file_doc.png"/>
+                    </Property>
+                    <Property name="text" type="java.lang.String" value="Bundesl&#xe4;nder"/>
+                  </Properties>
+                  <Events>
+                    <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="mnuAddressOptionsStatesActionPerformed"/>
                   </Events>
                 </MenuItem>
                 <MenuItem class="javax.swing.JMenuItem" name="mnuAddressOptionsCountry">
@@ -457,15 +480,37 @@
                     <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="mnuWordProcessorActionPerformed"/>
                   </Events>
                 </MenuItem>
+                <MenuItem class="javax.swing.JMenuItem" name="mnuPdfStamps">
+                  <Properties>
+                    <Property name="icon" type="javax.swing.Icon" editor="org.netbeans.modules.form.editors2.IconEditor">
+                      <Image iconType="3" name="/icons16/material/approval_24dp_0E72B5.png"/>
+                    </Property>
+                    <Property name="text" type="java.lang.String" value="PDF-Stempel"/>
+                  </Properties>
+                  <Events>
+                    <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="mnuPdfStampsActionPerformed"/>
+                  </Events>
+                </MenuItem>
                 <MenuItem class="javax.swing.JMenuItem" name="mnuDocumentTags">
                   <Properties>
                     <Property name="icon" type="javax.swing.Icon" editor="org.netbeans.modules.form.editors2.IconEditor">
                       <Image iconType="3" name="/icons16/favorites.png"/>
                     </Property>
-                    <Property name="text" type="java.lang.String" value="Dokumenten-Etiketten"/>
+                    <Property name="text" type="java.lang.String" value="Etiketten konfigurieren"/>
                   </Properties>
                   <Events>
                     <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="mnuDocumentTagsActionPerformed"/>
+                  </Events>
+                </MenuItem>
+                <MenuItem class="javax.swing.JMenuItem" name="mnuDocumentTagRules">
+                  <Properties>
+                    <Property name="icon" type="javax.swing.Icon" editor="org.netbeans.modules.form.editors2.IconEditor">
+                      <Image iconType="3" name="/icons16/favorites.png"/>
+                    </Property>
+                    <Property name="text" type="java.lang.String" value="Etiketten-Automatik"/>
+                  </Properties>
+                  <Events>
+                    <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="mnuDocumentTagRulesActionPerformed"/>
                   </Events>
                 </MenuItem>
                 <MenuItem class="javax.swing.JMenuItem" name="mnuScanOptions">
@@ -492,6 +537,17 @@
                   </Properties>
                   <Events>
                     <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="mnuSearchIndexActionPerformed"/>
+                  </Events>
+                </MenuItem>
+                <MenuItem class="javax.swing.JMenuItem" name="mnuStirlingPdf">
+                  <Properties>
+                    <Property name="icon" type="javax.swing.Icon" editor="org.netbeans.modules.form.editors2.IconEditor">
+                      <Image iconType="3" name="/images/stirlingpdf-logo.png"/>
+                    </Property>
+                    <Property name="text" type="java.lang.String" value="Stirling PDF"/>
+                  </Properties>
+                  <Events>
+                    <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="mnuStirlingPdfActionPerformed"/>
                   </Events>
                 </MenuItem>
                 <MenuItem class="javax.swing.JMenuItem" name="mnuDocumentNameTemplates">
@@ -677,6 +733,17 @@
                     <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="mnuGiroCodesActionPerformed"/>
                   </Events>
                 </MenuItem>
+                <MenuItem class="javax.swing.JMenuItem" name="mnuBankstatementCsvConfigs">
+                  <Properties>
+                    <Property name="icon" type="javax.swing.Icon" editor="org.netbeans.modules.form.editors2.IconEditor">
+                      <Image iconType="3" name="/icons16/material/payments_24dp_0E72B5.png"/>
+                    </Property>
+                    <Property name="text" type="java.lang.String" value="Kontoauszug-Import"/>
+                  </Properties>
+                  <Events>
+                    <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="mnuBankstatementCsvConfigsActionPerformed"/>
+                  </Events>
+                </MenuItem>
               </SubComponents>
             </Menu>
             <Menu class="javax.swing.JMenu" name="mnuTimesheet">
@@ -728,6 +795,17 @@
                   </Properties>
                   <Events>
                     <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="mnuParallelTimesheetLogsActionPerformed"/>
+                  </Events>
+                </MenuItem>
+                <MenuItem class="javax.swing.JMenuItem" name="mnuTimesheetInput">
+                  <Properties>
+                    <Property name="icon" type="javax.swing.Icon" editor="org.netbeans.modules.form.editors2.IconEditor">
+                      <Image iconType="3" name="/icons16/material/baseline_timer_black_48dp.png"/>
+                    </Property>
+                    <Property name="text" type="java.lang.String" value="Eingabeformat"/>
+                  </Properties>
+                  <Events>
+                    <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="mnuTimesheetInputActionPerformed"/>
                   </Events>
                 </MenuItem>
               </SubComponents>
@@ -803,6 +881,17 @@
                     <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="mnuAssistantPromptsActionPerformed"/>
                   </Events>
                 </MenuItem>
+                <MenuItem class="javax.swing.JMenuItem" name="mnuAssistantReplacements">
+                  <Properties>
+                    <Property name="icon" type="javax.swing.Icon" editor="org.netbeans.modules.form.editors2.IconEditor">
+                      <Image iconType="3" name="/icons16/material/baseline_mic_black_48dp.png"/>
+                    </Property>
+                    <Property name="text" type="java.lang.String" value="automatische Ersetzungen"/>
+                  </Properties>
+                  <Events>
+                    <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="mnuAssistantReplacementsActionPerformed"/>
+                  </Events>
+                </MenuItem>
               </SubComponents>
             </Menu>
             <MenuItem class="javax.swing.JMenuItem" name="mnuVoipSoftphoneSettings">
@@ -827,17 +916,33 @@
                 <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="mnuBeaSettingsActionPerformed"/>
               </Events>
             </MenuItem>
-            <MenuItem class="javax.swing.JMenuItem" name="mnuDrebisSettings">
+          </SubComponents>
+        </Menu>
+        <Menu class="javax.swing.JMenu" name="mnuBookKeeping">
+          <Properties>
+            <Property name="text" type="java.lang.String" value="Finanzen"/>
+          </Properties>
+          <SubComponents>
+            <MenuItem class="javax.swing.JMenuItem" name="mnuImportAccountStatement">
               <Properties>
                 <Property name="icon" type="javax.swing.Icon" editor="org.netbeans.modules.form.editors2.IconEditor">
-                  <Image iconType="3" name="/icons16/drebis16.png"/>
+                  <Image iconType="3" name="/icons16/material/baseline_receipt_long_black_48dp.png"/>
                 </Property>
-                <Property name="text" type="java.lang.String" editor="org.netbeans.modules.i18n.form.FormI18nStringEditor">
-                  <ResourceString bundle="com/jdimension/jlawyer/client/JKanzleiGUI.properties" key="menu.settings.drebis" replaceFormat="java.util.ResourceBundle.getBundle(&quot;{bundleNameSlashes}&quot;).getString(&quot;{key}&quot;)"/>
-                </Property>
+                <Property name="text" type="java.lang.String" value="Buchen: Kontoauszug importieren"/>
               </Properties>
               <Events>
-                <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="mnuDrebisSettingsActionPerformed"/>
+                <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="mnuImportAccountStatementActionPerformed"/>
+              </Events>
+            </MenuItem>
+            <MenuItem class="javax.swing.JMenuItem" name="mnuPayments">
+              <Properties>
+                <Property name="icon" type="javax.swing.Icon" editor="org.netbeans.modules.form.editors2.IconEditor">
+                  <Image iconType="3" name="/icons16/material/credit_card_20dp_0E72B5.png"/>
+                </Property>
+                <Property name="text" type="java.lang.String" value="Zahlungen verwalten"/>
+              </Properties>
+              <Events>
+                <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="mnuPaymentsActionPerformed"/>
               </Events>
             </MenuItem>
           </SubComponents>
@@ -969,6 +1074,11 @@
         <Menu class="javax.swing.JMenu" name="mnuServices">
           <Properties>
             <Property name="text" type="java.lang.String" value="Services"/>
+          </Properties>
+        </Menu>
+        <Menu class="javax.swing.JMenu" name="mnuWindow">
+          <Properties>
+            <Property name="text" type="java.lang.String" value="Fenster"/>
           </Properties>
         </Menu>
         <Menu class="javax.swing.JMenu" name="mnuHelp">
@@ -1105,7 +1215,7 @@
                   <Component id="lblSystemStatus" min="-2" max="-2" attributes="0"/>
                   <EmptySpace max="-2" attributes="0"/>
                   <Component id="statusLabel" min="-2" pref="385" max="-2" attributes="0"/>
-                  <EmptySpace pref="211" max="32767" attributes="0"/>
+                  <EmptySpace pref="281" max="32767" attributes="0"/>
                   <Component id="lblTimesheetStatus" min="-2" max="-2" attributes="0"/>
                   <EmptySpace min="-2" pref="22" max="-2" attributes="0"/>
                   <Component id="lblMailingStatus" min="-2" max="-2" attributes="0"/>
@@ -1117,8 +1227,7 @@
                   <Component id="lblScanStatus" min="-2" max="-2" attributes="0"/>
                   <EmptySpace type="unrelated" max="-2" attributes="0"/>
                   <Component id="lblBeaStatus" min="-2" max="-2" attributes="0"/>
-                  <EmptySpace type="unrelated" max="-2" attributes="0"/>
-                  <Component id="lblDrebisStatus" min="-2" max="-2" attributes="0"/>
+                  <EmptySpace max="-2" attributes="0"/>
               </Group>
           </Group>
         </DimensionLayout>
@@ -1129,7 +1238,6 @@
                   <Component id="lblMailStatus" alignment="3" min="-2" max="-2" attributes="0"/>
                   <Component id="lblMailingStatus" alignment="3" min="-2" max="-2" attributes="0"/>
                   <Component id="statusLabel" alignment="3" min="-2" max="-2" attributes="0"/>
-                  <Component id="lblDrebisStatus" alignment="3" min="-2" max="-2" attributes="0"/>
                   <Component id="lblBeaStatus" alignment="3" min="-2" max="-2" attributes="0"/>
                   <Component id="lblTimesheetStatus" alignment="3" min="-2" max="-2" attributes="0"/>
                   <Component id="lblUnreadInstantMessages" alignment="3" min="-2" max="-2" attributes="0"/>
@@ -1201,20 +1309,6 @@
             </Property>
             <Property name="icon" type="javax.swing.Icon" editor="org.netbeans.modules.form.editors2.IconEditor">
               <Image iconType="3" name="/icons/printer.png"/>
-            </Property>
-            <Property name="text" type="java.lang.String" value="?"/>
-            <Property name="enabled" type="boolean" value="false"/>
-          </Properties>
-        </Component>
-        <Component class="javax.swing.JLabel" name="lblDrebisStatus">
-          <Properties>
-            <Property name="font" type="java.awt.Font" editor="org.netbeans.modules.form.editors2.FontEditor">
-              <FontInfo relative="true">
-                <Font component="lblDrebisStatus" property="font" relativeSize="true" size="0"/>
-              </FontInfo>
-            </Property>
-            <Property name="icon" type="javax.swing.Icon" editor="org.netbeans.modules.form.editors2.IconEditor">
-              <Image iconType="3" name="/icons16/drebis16.png"/>
             </Property>
             <Property name="text" type="java.lang.String" value="?"/>
             <Property name="enabled" type="boolean" value="false"/>

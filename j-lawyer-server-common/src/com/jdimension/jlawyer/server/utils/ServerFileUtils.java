@@ -674,6 +674,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.io.RandomAccessFile;
+import java.text.DecimalFormat;
 import org.apache.log4j.Logger;
 
 /**
@@ -777,6 +778,27 @@ public class ServerFileUtils {
         while(name.contains("  "))
             name = name.replace("  ", " ");
         return name.trim();
+    }
+    
+    public static String sanitizeFolderName(String folderName) {
+        String sanitized = sanitizeFileName(folderName);
+        sanitized = sanitized.replace("  ", " ");
+        sanitized = sanitized.replace("  ", " ");
+        return sanitized;
+    }
+    
+    public static String getFileSizeHumanReadable(long size) {
+        DecimalFormat megaBytes = new DecimalFormat("0");
+
+        if (size < 1024) {
+            size = 1024l;
+        }
+
+        if (size > (1024 * 1024)) {
+            return megaBytes.format(size / 1024l / 1024l) + " MB";
+        } else {
+            return megaBytes.format(size / 1024l) + " KB";
+        }
     }
     
     public static byte[] readFile(File file) throws Exception {

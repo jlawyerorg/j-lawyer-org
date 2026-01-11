@@ -701,13 +701,14 @@ public class UserSettingsKeys {
     public static final String CONF_DESKTOP_ONLYMYTAGGED = "client.desktop.onlymytagged";
     public static final String CONF_DESKTOP_LASTFILTERTAG = "client.desktop.lastfiltertag";
     public static final String CONF_DESKTOP_LASTFILTERUSERS = "client.desktop.lastfilterusers";
+    public static final String CONF_DESKTOP_LASTFILTERUSERS_TAGGED = "client.desktop.lastfilterusers.tagged";
+    public static final String CONF_DESKTOP_LASTFILTERUSERS_LASTCHANGED = "client.desktop.lastfilterusers.lastchanged";
+    public static final String CONF_DESKTOP_LASTFILTERDUESINCEDAYS = "client.desktop.lastfilterduesincedays";
+    public static final String CONF_DESKTOP_LASTFILTERDUEINDAYS = "client.desktop.lastfilterdueindays";
     public static final String CONF_DESKTOP_LASTFILTERDOCUMENTTAG = "client.desktop.lastfilterdocumenttag";
-
-    public static final String CONF_DREBIS_TAGGINGENABLED = "user.drebis.taggingenabled";
-    public static final String CONF_DREBIS_DOCUMENTTAGGINGENABLED = "user.drebis.documenttaggingenabled";
-    public static final String CONF_DREBIS_LASTTAG = "user.drebis.lasttag";
-    public static final String CONF_DREBIS_LASTDOCUMENTTAG = "user.drebis.lastdocumenttag";
     
+    public static final String CONF_COLORS_RECENT = "client.colorchooser.recent";
+
     public static final String CONF_CALENDAR_DEFAULTTAB = "user.calendar.defaulttab";
     
     public static final String CONF_SCAN_DIVIDERKEYWORD = "user.scans.dividerkeyword";
@@ -716,7 +717,6 @@ public class UserSettingsKeys {
     
     public static final String CONF_MAIL_LASTUSEDTEMPLATE = "user.mail.lastusedtemplate";
     public static final String CONF_MAIL_WARNSENDERUNKNOWN = "user.mail.unknownsender.warn";
-    public static final String CONF_DREBIS_LASTUSEDTEMPLATE = "user.drebis.lastusedtemplate";
     public static final String CONF_BEA_LASTUSEDTEMPLATE = "user.bea.lastusedtemplate";
     public static final String CONF_BEA_LASTUSEDMAILBOX = "user.bea.lastusedmailbox";
     
@@ -732,7 +732,7 @@ public class UserSettingsKeys {
 
     // will be used with a suffix indicating the event type (see CalendarSetup class)
     public static final String CONF_CALENDAR_LASTSELECTED = "user.calendar.lastcalsetup.";
-    
+    public static final String CONF_CALENDAR_LASTFILTERUSERS = "client.calendar.lastfilterusers";
     
     // for new bulk save dialog
     public static final String CONF_BULKSAVE_LASTCASETAGS_PREFIX="user.bulksave.lastcasetags.";
@@ -742,6 +742,9 @@ public class UserSettingsKeys {
     // invoice related
     public static final String INVOICE_LASTUSEDCURRENCY="invoice.currency.lastused";
     public static final String INVOICE_LASTUSEDTYPE="invoice.type.lastused";
+    
+    // bank statement related
+    public static final String BANKSTATEMENT_LASTCONFIG="bankstatement.csv.lastconfig";
     
     // E-POST related
     public static final String EPOST_LAST_SENDER_ADRLINE="epost.sender.last.adrline";

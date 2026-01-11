@@ -677,6 +677,7 @@ import com.jdimension.jlawyer.persistence.ArchiveFileTagsBean;
 import com.jdimension.jlawyer.persistence.DocumentTagsBean;
 import com.jdimension.jlawyer.services.ArchiveFileServiceRemote;
 import com.jdimension.jlawyer.services.JLawyerServiceLocator;
+import com.jdimension.jlawyer.ui.StayOpenCheckBoxMenuItem;
 
 import java.awt.Component;
 import java.awt.event.ActionEvent;
@@ -704,6 +705,12 @@ public class TaggedTimerTask extends java.util.TimerTask {
     private JButton tagMenu = null;
     private JButton tagDocumentMenu = null;
     private JTabbedPane tagsPane = null;
+    
+    private volatile boolean stopped = false;
+
+    public void stop() {
+        stopped = true;
+    }
 
     /**
      * Creates a new instance of SystemStateTimerTask
@@ -760,7 +767,7 @@ public class TaggedTimerTask extends java.util.TimerTask {
             popup.removeAll();
             boolean hasSelection = false;
             for (String t : tagsInUse) {
-                JCheckBoxMenuItem mi = new JCheckBoxMenuItem(t);
+                JCheckBoxMenuItem mi = new StayOpenCheckBoxMenuItem(t);
                 if (Arrays.asList(lastFilterTags).contains(t)) {
                     mi.setSelected(true);
                     hasSelection = true;
@@ -792,6 +799,16 @@ public class TaggedTimerTask extends java.util.TimerTask {
                         button.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons16/material/baseline_label_white_36dp.png")));
                     }
                     UserSettings.getInstance().setSettingArray(userSettingsKey, al.toArray(new String[al.size()]));
+                    // Re-show popup at the same anchor position to keep it open without shifting
+                    try {
+                        Object ax = popup.getClientProperty("jlawyer.anchorX");
+                        Object ay = popup.getClientProperty("jlawyer.anchorY");
+                        int anchorX = (ax instanceof Integer) ? ((Integer) ax).intValue() : 0;
+                        int anchorY = (ay instanceof Integer) ? ((Integer) ay).intValue() : button.getHeight();
+                        popup.show(button, anchorX, anchorY);
+                    } catch (Exception ex) {
+                        log.warn("Could not keep tag popup open at stored anchor", ex);
+                    }
                     TimerTask taggedTask = new TaggedTimerTask(EditorsRegistry.getInstance().getMainWindow(), tagsPane, resultUI, split, tagMenu, tagDocumentMenu, popTags, popDocumentTags, true, false);
                     new java.util.Timer().schedule(taggedTask, 1000);
                 });
@@ -808,6 +825,8 @@ public class TaggedTimerTask extends java.util.TimerTask {
         }
 
         running = true;
+        
+        if (stopped) return;
         
         String selectedTabTitle=null;
         if(this.tagsPane.getSelectedIndex()>-1)
@@ -829,9 +848,16 @@ public class TaggedTimerTask extends java.util.TimerTask {
             ClientSettings settings = ClientSettings.getInstance();
             JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
 
+            if (stopped) return;
             UserSettings.getInstance().migrateFrom(settings, UserSettings.CONF_DESKTOP_LASTFILTERTAG);
+            
+            if (stopped) return;
             lastFilterTags = UserSettings.getInstance().getSettingArray(UserSettings.CONF_DESKTOP_LASTFILTERTAG, new String[]{""});
+            
+            if (stopped) return;
             List<String> caseTagsInUse = settings.getArchiveFileTagsInUse();
+            
+            if (stopped) return;
             AppOptionGroupBean[] allCaseTags = settings.getArchiveFileTagDtos();
             List<String> allCaseTagsAsString = new ArrayList<>();
             for (AppOptionGroupBean aog : allCaseTags) {
@@ -842,13 +868,20 @@ public class TaggedTimerTask extends java.util.TimerTask {
                     allCaseTagsAsString.add(t);
                 }
             }
+            
+            if (stopped) return;
             if (this.rebuildPopup && !(this.popTags.isVisible())) {
                 UserSettings.getInstance().migrateFrom(settings, UserSettings.CONF_DESKTOP_LASTFILTERTAG);
                 this.buildPopup(this.tagMenu, this.popTags, allCaseTagsAsString, lastFilterTags, UserSettings.CONF_DESKTOP_LASTFILTERTAG);
             }
 
+            if (stopped) return;
             UserSettings.getInstance().migrateFrom(settings, UserSettings.CONF_DESKTOP_LASTFILTERDOCUMENTTAG);
+            
+            if (stopped) return;
             lastFilterDocumentTags = UserSettings.getInstance().getSettingArray(UserSettings.CONF_DESKTOP_LASTFILTERDOCUMENTTAG, new String[]{""});
+            
+            if (stopped) return;
             List<String> docTagsInUse = settings.getDocumentTagsInUse();
             AppOptionGroupBean[] allDocTags = settings.getDocumentTagDtos();
             List<String> allDocTagsAsString = new ArrayList<>();
@@ -860,6 +893,8 @@ public class TaggedTimerTask extends java.util.TimerTask {
                     allDocTagsAsString.add(t);
                 }
             }
+            
+            if (stopped) return;
             if (this.rebuildPopup && !(this.popDocumentTags.isVisible())) {
                 UserSettings.getInstance().migrateFrom(settings, UserSettings.CONF_DESKTOP_LASTFILTERDOCUMENTTAG);
                 this.buildPopup(this.tagDocumentMenu, this.popDocumentTags, allDocTagsAsString, lastFilterDocumentTags, UserSettings.CONF_DESKTOP_LASTFILTERDOCUMENTTAG);
@@ -882,39 +917,44 @@ public class TaggedTimerTask extends java.util.TimerTask {
             ArchiveFileServiceRemote fileService = locator.lookupArchiveFileServiceRemote();
 
             myNewList = fileService.getTagged(lastFilterTags, null, 1000);
-            UserSettings.getInstance().migrateFrom(settings, UserSettings.CONF_DESKTOP_ONLYMYTAGGED);
-            String temp = UserSettings.getInstance().getSetting(UserSettings.CONF_DESKTOP_ONLYMYTAGGED, "false");
-            if ("true".equalsIgnoreCase(temp)) {
-                String principalId = UserSettings.getInstance().getCurrentUser().getPrincipalId();
-                for (ArchiveFileBean x : myNewList) {
-                    boolean caseWithoutResponsibles=StringUtils.isEmpty(x.getLawyer()) && StringUtils.isEmpty(x.getAssistant());
-                    if (principalId.equalsIgnoreCase(x.getLawyer()) || principalId.equalsIgnoreCase(x.getAssistant()) || caseWithoutResponsibles) {
-                        filteredList.add(x);
 
+            if (stopped) return;
+            // Filter by selected users (shared with due panel); default to current user if none stored
+            String[] selectedUsers = UserSettings.getInstance().getSettingArray(UserSettings.CONF_DESKTOP_LASTFILTERUSERS_TAGGED, new String[]{});
+            if (selectedUsers.length > 0) {
+                java.util.Set<String> selected = new java.util.HashSet<>(java.util.Arrays.asList(selectedUsers));
+                filteredList.clear();
+                for (ArchiveFileBean x : myNewList) {
+                    boolean caseWithoutResponsibles = StringUtils.isEmpty(x.getLawyer()) && StringUtils.isEmpty(x.getAssistant());
+                    if (caseWithoutResponsibles || selected.contains(x.getLawyer()) || selected.contains(x.getAssistant())) {
+                        filteredList.add(x);
                     }
                 }
                 myNewList = filteredList;
             }
 
+            if (stopped) return;
             ArrayList<String> myNewListIds = new ArrayList<>();
             for (ArchiveFileBean a : myNewList) {
                 myNewListIds.add(a.getId());
             }
             tags = fileService.getTags(myNewListIds);
 
+            if (stopped) return;
             myNewDocumentList = fileService.getTaggedDocuments(lastFilterDocumentTags, 1000);
-            if ("true".equalsIgnoreCase(temp)) {
-                String principalId = UserSettings.getInstance().getCurrentUser().getPrincipalId();
+            if (selectedUsers.length > 0) {
+                java.util.Set<String> selected = new java.util.HashSet<>(java.util.Arrays.asList(selectedUsers));
+                filteredDocumentList.clear();
                 for (ArchiveFileDocumentsBean x : myNewDocumentList) {
-                    boolean caseWithoutResponsibles=StringUtils.isEmpty(x.getArchiveFileKey().getLawyer()) && StringUtils.isEmpty(x.getArchiveFileKey().getAssistant());
-                    if (principalId.equalsIgnoreCase(x.getArchiveFileKey().getLawyer()) || principalId.equalsIgnoreCase(x.getArchiveFileKey().getAssistant()) || caseWithoutResponsibles) {
+                    boolean caseWithoutResponsibles = StringUtils.isEmpty(x.getArchiveFileKey().getLawyer()) && StringUtils.isEmpty(x.getArchiveFileKey().getAssistant());
+                    if (caseWithoutResponsibles || selected.contains(x.getArchiveFileKey().getLawyer()) || selected.contains(x.getArchiveFileKey().getAssistant())) {
                         filteredDocumentList.add(x);
-
                     }
                 }
                 myNewDocumentList = filteredDocumentList;
             }
 
+            if (stopped) return;
             ArrayList<String> myNewDocumentListIds = new ArrayList<>();
             for (ArchiveFileDocumentsBean d : myNewDocumentList) {
                 myNewDocumentListIds.add(d.getId());
@@ -946,6 +986,8 @@ public class TaggedTimerTask extends java.util.TimerTask {
             final String[] caseTags = lastFilterTags.clone();
             final String[] docTags = lastFilterDocumentTags.clone();
             final String reselectTabWithTitle=selectedTabTitle;
+            
+            if (stopped) return;
             SwingUtilities.invokeAndWait(
                     new Runnable() {
                         @Override
@@ -965,6 +1007,9 @@ public class TaggedTimerTask extends java.util.TimerTask {
                             List<String> allTags = new ArrayList<>();
                             ListMultimap<String, TaggedEntryPanelTransparent> tagToTep = ArrayListMultimap.create();
                             for (ArchiveFileBean aFile : l1) {
+                                
+                                if (stopped) return;
+                                
                                 TaggedEntryPanelTransparent ep = new TaggedEntryPanelTransparent();
 
                                 TaggedEntry te = new TaggedEntry();
@@ -1006,6 +1051,9 @@ public class TaggedTimerTask extends java.util.TimerTask {
                             }
 
                             for (ArchiveFileDocumentsBean aDoc : l2) {
+                                
+                                if (stopped) return;
+                                
                                 TaggedEntryPanelTransparent ep = new TaggedEntryPanelTransparent();
                                 TaggedEntry te = new TaggedEntry();
                                 te.setFileNumber(aDoc.getArchiveFileKey().getFileNumber());
@@ -1051,6 +1099,41 @@ public class TaggedTimerTask extends java.util.TimerTask {
                                 addTagsTab(s);
                                 tagToTep.get(s).forEach(taggedEntryPanel -> addEntryToTab(s, taggedEntryPanel));
                             });
+
+                            // Format tabs with icons and tooltips based on element count
+                            int maxElementCount = 0;
+                            // First pass: find maximum element count (skip "alle" tab at index 0)
+                            for (int t = 1; t < tagsPane.getTabCount(); t++) {
+                                JScrollPane sp = (JScrollPane) tagsPane.getComponentAt(t);
+                                JViewport p = (JViewport) sp.getComponent(0);
+                                int count = ((JPanel) p.getComponent(0)).getComponentCount();
+                                if (count > maxElementCount) {
+                                    maxElementCount = count;
+                                }
+                            }
+
+                            // Second pass: set icons and tooltips
+                            if (maxElementCount > 0) {
+                                for (int t = 1; t < tagsPane.getTabCount(); t++) {
+                                    String tabTitle = tagsPane.getTitleAt(t);
+                                    JScrollPane sp = (JScrollPane) tagsPane.getComponentAt(t);
+                                    JViewport p = (JViewport) sp.getComponent(0);
+                                    int count = ((JPanel) p.getComponent(0)).getComponentCount();
+
+                                    // Set tooltip
+                                    tagsPane.setToolTipTextAt(t, count + " Elemente mit dem Etikett " + tabTitle);
+
+                                    // Calculate percentage and set icon
+                                    double percentage = (count * 100.0) / maxElementCount;
+                                    if (percentage <= 25) {
+                                        tagsPane.setIconAt(t, new javax.swing.ImageIcon(getClass().getResource("/icons16/material/arrow_circle_down_20dp_97BF0D.png")));
+                                    } else if (percentage <= 75) {
+                                        tagsPane.setIconAt(t, new javax.swing.ImageIcon(getClass().getResource("/icons16/material/arrow_circle_right_20dp_0E72B5.png")));
+                                    } else {
+                                        tagsPane.setIconAt(t, new javax.swing.ImageIcon(getClass().getResource("/icons16/material/arrow_circle_up_20dp_DE313B.png")));
+                                    }
+                                }
+                            }
 
                             split.setDividerLocation(split.getDividerLocation() + 1);
                             split.setDividerLocation(split.getDividerLocation() - 1);

@@ -22,16 +22,18 @@
               <EmptySpace max="-2" attributes="0"/>
               <Component id="cmdDelete" min="-2" max="-2" attributes="0"/>
               <EmptySpace max="-2" attributes="0"/>
+              <Component id="cmdTransferPositions" min="-2" max="-2" attributes="0"/>
+              <EmptySpace type="unrelated" max="-2" attributes="0"/>
               <Group type="103" groupAlignment="0" attributes="0">
-                  <Component id="jScrollPane1" alignment="1" max="32767" attributes="0"/>
                   <Group type="102" attributes="0">
                       <Component id="pieChart" min="-2" max="-2" attributes="0"/>
                       <EmptySpace max="-2" attributes="0"/>
                       <Component id="lblName" min="-2" max="-2" attributes="0"/>
                       <EmptySpace max="-2" attributes="0"/>
                       <Component id="lblStatus" min="-2" max="-2" attributes="0"/>
-                      <EmptySpace pref="180" max="32767" attributes="0"/>
+                      <EmptySpace max="32767" attributes="0"/>
                   </Group>
+                  <Component id="jScrollPane1" max="32767" attributes="0"/>
               </Group>
           </Group>
       </Group>
@@ -45,6 +47,7 @@
                   <Component id="cmdOpen" max="32767" attributes="0"/>
                   <Component id="cmdDelete" alignment="0" max="32767" attributes="0"/>
                   <Component id="lblStatus" alignment="0" max="32767" attributes="0"/>
+                  <Component id="cmdTransferPositions" alignment="0" max="32767" attributes="0"/>
                   <Component id="pieChart" alignment="0" max="32767" attributes="0"/>
               </Group>
               <EmptySpace max="-2" attributes="0"/>
@@ -123,6 +126,17 @@
       <Properties>
         <Property name="text" type="java.lang.String" value="pieChartLabel1"/>
       </Properties>
+    </Component>
+    <Component class="javax.swing.JButton" name="cmdTransferPositions">
+      <Properties>
+        <Property name="icon" type="javax.swing.Icon" editor="org.netbeans.modules.form.editors2.IconEditor">
+          <Image iconType="3" name="/icons/editcopy3.png"/>
+        </Property>
+        <Property name="toolTipText" type="java.lang.String" value="Zeiten in anderes Projekt verschieben"/>
+      </Properties>
+      <Events>
+        <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="cmdTransferPositionsActionPerformed"/>
+      </Events>
     </Component>
   </SubComponents>
 </Form>

@@ -677,6 +677,12 @@ import org.apache.log4j.Logger;
 public class OpenMessageMentionsTimerTask extends java.util.TimerTask {
 
     private static final Logger log = Logger.getLogger(OpenMessageMentionsTimerTask.class.getName());
+    
+    private volatile boolean stopped = false;
+
+    public void stop() {
+        stopped = true;
+    }
 
     /**
      * Creates a new instance of MessagePollingTimerTask
@@ -687,13 +693,18 @@ public class OpenMessageMentionsTimerTask extends java.util.TimerTask {
 
     @Override
     public void run() {
+        if (stopped) return;
+        
         synchronized (this) {
 
             try {
                 ClientSettings settings = ClientSettings.getInstance();
                 JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
+                
+                if (stopped) return;
                 int openMentions = locator.lookupMessagingServiceRemote().getNumberOfOpenMentions(UserSettings.getInstance().getCurrentUser().getPrincipalId());
 
+                if (stopped) return;
                 EventBroker eb = EventBroker.getInstance();
                 eb.publishEvent(new OpenMentionsEvent(openMentions));
 

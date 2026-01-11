@@ -663,6 +663,7 @@ For more information on this, and how to apply and follow the GNU AGPL, see
  */
 package com.jdimension.jlawyer.client.editors.documents.viewer;
 
+import com.jdimension.jlawyer.documents.DocumentPreview;
 import com.jdimension.jlawyer.services.SystemManagementRemote;
 import org.jlawyer.data.tree.GenericNode;
 
@@ -687,7 +688,7 @@ public class TemplatePreviewProvider implements DocumentPreviewProvider {
     
     
     @Override
-    public String getPreview() throws Exception {
+    public DocumentPreview getPreview() throws Exception {
         return this.is.getTemplatePreview(this.templateType, this.node, this.fileName);
     }
     

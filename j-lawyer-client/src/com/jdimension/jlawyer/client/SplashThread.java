@@ -663,6 +663,7 @@
  */
 package com.jdimension.jlawyer.client;
 
+import com.inet.jortho.SpellChecker;
 import com.jdimension.jlawyer.client.configuration.BackupConfigurationDialog;
 import com.jdimension.jlawyer.client.configuration.ProfileDialog;
 import com.jdimension.jlawyer.client.editors.EditorsRegistry;
@@ -676,6 +677,7 @@ import com.jdimension.jlawyer.client.settings.ClientSettings;
 import com.jdimension.jlawyer.client.settings.ServerSettings;
 import com.jdimension.jlawyer.client.settings.ThemeSettings;
 import com.jdimension.jlawyer.client.settings.UserSettings;
+import com.jdimension.jlawyer.client.utils.ComponentUtils;
 import com.jdimension.jlawyer.client.utils.FrameUtils;
 import com.jdimension.jlawyer.client.utils.ThreadUtils;
 import com.jdimension.jlawyer.client.utils.UserUtils;
@@ -693,25 +695,14 @@ import com.jdimension.jlawyer.services.SecurityServiceRemote;
 import com.jdimension.jlawyer.services.SystemManagementRemote;
 import java.awt.Image;
 import java.io.*;
-import java.net.URI;
 import java.net.URL;
 import java.net.URLConnection;
-import java.nio.file.FileSystem;
-import java.nio.file.FileSystems;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
-import java.util.concurrent.ThreadLocalRandom;
 import java.util.concurrent.TimeUnit;
-import java.util.function.Predicate;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
 import javax.swing.ImageIcon;
 import javax.swing.JFrame;
 import javax.swing.JOptionPane;
@@ -734,30 +725,34 @@ public class SplashThread implements Runnable {
 
     private static final Logger log = Logger.getLogger(SplashThread.class.getName());
 
-    private StartupSplashFrame splash = null;
+    private LoginDialog splash = null;
     private ClientSettings settings = null;
     private JFrame owner = null;
 
     private int loadedMods = 0;
     private int numberOfMods = 0;
+    
+    private String randomBackgroundFile=null;
 
     /**
      * Creates a new instance of SplashThread
      * @param splash
      * @param settings
+     * @param randomBackgroundFile
      * @param owner
      */
-    public SplashThread(StartupSplashFrame splash, ClientSettings settings, JFrame owner) {
+    public SplashThread(LoginDialog splash, ClientSettings settings, String randomBackgroundFile, JFrame owner) {
         this.splash = splash;
         this.settings = settings;
         this.owner = owner;
+        this.randomBackgroundFile=randomBackgroundFile;
     }
 
     @Override
     public void run() {
         long start = System.currentTimeMillis();
 
-        this.updateProgress(true, 1, 0, "");
+        this.updateProgress(true, 15+this.numberOfMods, 1, "");
         JLawyerServiceLocator locator = null;
         try {
             locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
@@ -773,10 +768,13 @@ public class SplashThread implements Runnable {
             this.splash.setCompanyName(serverSettings.getSetting(ServerSettings.PROFILE_COMPANYNAME, ""));
         }
 
-        this.splash.setUserInfo(UserSettings.getInstance().getCurrentUserBigIcon(), UserSettings.getInstance().getCurrentUser().getPrincipalId());
+        this.splash.setUserInfo(UserSettings.getInstance().getCurrentUserBigIcon(), UserSettings.getInstance().getCurrentUser());
+        
+        this.countModules(settings.getRootModule());
+        this.loadedMods = 0;
 
         updateStatus(java.util.ResourceBundle.getBundle("com/jdimension/jlawyer/client/SplashThread").getString("status.option.0"), true);
-        this.updateProgress(false, 7, 0, "");
+        this.updateProgress(false, 15+this.numberOfMods, 2, "");
         AppOptionGroupBean[] salutationDtos = null;
         AppOptionGroupBean[] complimentaryCloseDtos = null;
         AppOptionGroupBean[] dictateSignDtos = null;
@@ -788,6 +786,7 @@ public class SplashThread implements Runnable {
         AppOptionGroupBean[] titles = null;
         AppOptionGroupBean[] titlesInAddress = null;
         AppOptionGroupBean[] countries = null;
+        AppOptionGroupBean[] states = null;
         AppOptionGroupBean[] nationalities = null;
         AppOptionGroupBean[] legalForms = null;
         AppOptionGroupBean[] degreePrefixes = null;
@@ -805,32 +804,64 @@ public class SplashThread implements Runnable {
             SystemManagementRemote mgmt = locator.lookupSystemManagementRemote();
             ArchiveFileServiceRemote afs = locator.lookupArchiveFileServiceRemote();
             SecurityServiceRemote security = locator.lookupSecurityServiceRemote();
-            this.updateProgress(false, 9, 1, "");
+            this.updateProgress(false, 15+this.numberOfMods, 3, "");
             updateStatus(java.util.ResourceBundle.getBundle("com/jdimension/jlawyer/client/SplashThread").getString("status.option.1"), true);
-            complimentaryCloseDtos = mgmt.getOptionGroup(OptionConstants.OPTIONGROUP_COMPLIMENTARYCLOSE);
-            this.updateProgress(false, 9, 2, "");
-            updateStatus(java.util.ResourceBundle.getBundle("com/jdimension/jlawyer/client/SplashThread").getString("status.option.2"), true);
-            salutationDtos = mgmt.getOptionGroup(OptionConstants.OPTIONGROUP_SALUTATIONS);
-            this.updateProgress(false, 9, 3, "");
-            updateStatus(java.util.ResourceBundle.getBundle("com/jdimension/jlawyer/client/SplashThread").getString("status.option.3"), true);
-            dictateSignDtos = mgmt.getOptionGroup(OptionConstants.OPTIONGROUP_DICTATESIGNS);
-            timesheetIntervals = mgmt.getOptionGroup(OptionConstants.OPTIONGROUP_TIMESHEETINTERVALMINUTES);
-            this.updateProgress(false, 9, 4, "");
-            updateStatus(java.util.ResourceBundle.getBundle("com/jdimension/jlawyer/client/SplashThread").getString("status.option.4"), true);
-            subjectFieldDtos = mgmt.getOptionGroup(OptionConstants.OPTIONGROUP_SUBJECTFIELDS);
-            this.updateProgress(false, 9, 5, "");
+
+            // Batch load all option groups in a single call for improved performance
+            List<String> optionGroupNames = new ArrayList<>();
+            optionGroupNames.add(OptionConstants.OPTIONGROUP_COMPLIMENTARYCLOSE);
+            optionGroupNames.add(OptionConstants.OPTIONGROUP_SALUTATIONS);
+            optionGroupNames.add(OptionConstants.OPTIONGROUP_DICTATESIGNS);
+            optionGroupNames.add(OptionConstants.OPTIONGROUP_TIMESHEETINTERVALMINUTES);
+            optionGroupNames.add(OptionConstants.OPTIONGROUP_SUBJECTFIELDS);
+            optionGroupNames.add(OptionConstants.OPTIONGROUP_ARCHIVEFILETAGS);
+            optionGroupNames.add(OptionConstants.OPTIONGROUP_ADDRESSTAGS);
+            optionGroupNames.add(OptionConstants.OPTIONGROUP_DOCUMENTTAGS);
+            optionGroupNames.add(OptionConstants.OPTIONGROUP_TITLES);
+            optionGroupNames.add(OptionConstants.OPTIONGROUP_TITLESINADDRESS);
+            optionGroupNames.add(OptionConstants.OPTIONGROUP_COUNTRY);
+            optionGroupNames.add(OptionConstants.OPTIONGROUP_STATE);
+            optionGroupNames.add(OptionConstants.OPTIONGROUP_NATIONALITY);
+            optionGroupNames.add(OptionConstants.OPTIONGROUP_LEGALFORM);
+            optionGroupNames.add(OptionConstants.OPTIONGROUP_DEGREEPREFIX);
+            optionGroupNames.add(OptionConstants.OPTIONGROUP_DEGREESUFFIX);
+            optionGroupNames.add(OptionConstants.OPTIONGROUP_PROFESSION);
+            optionGroupNames.add(OptionConstants.OPTIONGROUP_ROLE);
+
+            HashMap<String, AppOptionGroupBean[]> optionGroups = mgmt.getOptionGroups(optionGroupNames);
+
+            complimentaryCloseDtos = optionGroups.get(OptionConstants.OPTIONGROUP_COMPLIMENTARYCLOSE);
+            salutationDtos = optionGroups.get(OptionConstants.OPTIONGROUP_SALUTATIONS);
+            dictateSignDtos = optionGroups.get(OptionConstants.OPTIONGROUP_DICTATESIGNS);
+            timesheetIntervals = optionGroups.get(OptionConstants.OPTIONGROUP_TIMESHEETINTERVALMINUTES);
+            subjectFieldDtos = optionGroups.get(OptionConstants.OPTIONGROUP_SUBJECTFIELDS);
+            afTagDtos = optionGroups.get(OptionConstants.OPTIONGROUP_ARCHIVEFILETAGS);
+            adrTagDtos = optionGroups.get(OptionConstants.OPTIONGROUP_ADDRESSTAGS);
+            docTagDtos = optionGroups.get(OptionConstants.OPTIONGROUP_DOCUMENTTAGS);
+            titles = optionGroups.get(OptionConstants.OPTIONGROUP_TITLES);
+            titlesInAddress = optionGroups.get(OptionConstants.OPTIONGROUP_TITLESINADDRESS);
+            countries = optionGroups.get(OptionConstants.OPTIONGROUP_COUNTRY);
+            states = optionGroups.get(OptionConstants.OPTIONGROUP_STATE);
+            nationalities = optionGroups.get(OptionConstants.OPTIONGROUP_NATIONALITY);
+            legalForms = optionGroups.get(OptionConstants.OPTIONGROUP_LEGALFORM);
+            degreePrefixes = optionGroups.get(OptionConstants.OPTIONGROUP_DEGREEPREFIX);
+            degreeSuffixes = optionGroups.get(OptionConstants.OPTIONGROUP_DEGREESUFFIX);
+            professions = optionGroups.get(OptionConstants.OPTIONGROUP_PROFESSION);
+            roles = optionGroups.get(OptionConstants.OPTIONGROUP_ROLE);
+
+            this.updateProgress(false, 15+this.numberOfMods, 4, "");
             updateStatus(java.util.ResourceBundle.getBundle("com/jdimension/jlawyer/client/SplashThread").getString("status.option.5"), true);
             settings.setCalendarEntryTemplates(locator.lookupCalendarServiceRemote().getCalendarEntryTemplates());
             List<String> tagsInUse = afs.searchTagsInUse();
             settings.setArchiveFileTagsInUse(tagsInUse);
             List<String> docTagsInUse = afs.searchDocumentTagsInUse();
             settings.setDocumentTagsInUse(docTagsInUse);
-            this.updateProgress(false, 9, 6, "");
+            this.updateProgress(false, 15+this.numberOfMods, 5, "");
             updateStatus(java.util.ResourceBundle.getBundle("com/jdimension/jlawyer/client/SplashThread").getString("status.option.6"), true);
-            
+
             loginEnabledUsers = security.getUsersHavingRole(UserSettings.ROLE_LOGIN);
             messagingEnabledUsers = security.getMessagingEnabledUsers();
-            
+
             List<AppUserBean> users = mgmt.getUsers();
             List<AppUserBean> lawyers = new ArrayList<>();
             List<AppUserBean> assistants = new ArrayList<>();
@@ -844,25 +875,7 @@ public class SplashThread implements Runnable {
             assistUsers = assistants.toArray(new AppUserBean[0]);
             allUsers = users.toArray(new AppUserBean[0]);
             updateStatus(java.util.ResourceBundle.getBundle("com/jdimension/jlawyer/client/SplashThread").getString("status.option.7"), true);
-            this.updateProgress(false, 9, 7, "");
-
-            this.updateProgress(false, 9, 8, "");
-            updateStatus(java.util.ResourceBundle.getBundle("com/jdimension/jlawyer/client/SplashThread").getString("status.option.8"), true);
-            afTagDtos = mgmt.getOptionGroup(OptionConstants.OPTIONGROUP_ARCHIVEFILETAGS);
-            adrTagDtos = mgmt.getOptionGroup(OptionConstants.OPTIONGROUP_ADDRESSTAGS);
-            docTagDtos = mgmt.getOptionGroup(OptionConstants.OPTIONGROUP_DOCUMENTTAGS);
-
-            this.updateProgress(false, 9, 9, "");
-            updateStatus(java.util.ResourceBundle.getBundle("com/jdimension/jlawyer/client/SplashThread").getString("status.option.9"), true);
-            titles = mgmt.getOptionGroup(OptionConstants.OPTIONGROUP_TITLES);
-            titlesInAddress = mgmt.getOptionGroup(OptionConstants.OPTIONGROUP_TITLESINADDRESS);
-            countries = mgmt.getOptionGroup(OptionConstants.OPTIONGROUP_COUNTRY);
-            nationalities = mgmt.getOptionGroup(OptionConstants.OPTIONGROUP_NATIONALITY);
-            legalForms = mgmt.getOptionGroup(OptionConstants.OPTIONGROUP_LEGALFORM);
-            degreePrefixes = mgmt.getOptionGroup(OptionConstants.OPTIONGROUP_DEGREEPREFIX);
-            degreeSuffixes = mgmt.getOptionGroup(OptionConstants.OPTIONGROUP_DEGREESUFFIX);
-            professions = mgmt.getOptionGroup(OptionConstants.OPTIONGROUP_PROFESSION);
-            roles = mgmt.getOptionGroup(OptionConstants.OPTIONGROUP_ROLE);
+            this.updateProgress(false, 15+this.numberOfMods, 6, "");
 
         } catch (Exception ex) {
             log.error("Error connecting to server", ex);
@@ -885,6 +898,7 @@ public class SplashThread implements Runnable {
         settings.setTitles(titles);
         settings.setTitlesInAddress(titlesInAddress);
         settings.setCountries(countries);
+        settings.setStates(states);
         settings.setNationalities(nationalities);
         settings.setLegalForms(legalForms);
         settings.setDegreePrefixes(degreePrefixes);
@@ -893,9 +907,8 @@ public class SplashThread implements Runnable {
         settings.setRoles(roles);
 
         updateStatus(java.util.ResourceBundle.getBundle("com/jdimension/jlawyer/client/SplashThread").getString("status.loadingdesign"), true);
-        this.countModules(settings.getRootModule());
-        this.loadedMods = 0;
-        this.updateProgress(false, this.numberOfMods, 0, "");
+        
+        this.updateProgress(false, 15+this.numberOfMods, 12, "");
         ThemeSettings theme = ThemeSettings.getInstance();
         ModuleMetadata rootModule = settings.getRootModule();
 
@@ -913,52 +926,22 @@ public class SplashThread implements Runnable {
         } else {
             rootModule.setBackgroundImage(null);
             
-            FileSystem fileSystem=null;
-            try {
+            if (randomBackgroundFile!=null) {
 
-                URI uri = Main.class.getResource("/themes/default/backgroundsrandom").toURI();
-                Path path;
-                if (uri.getScheme().equals("jar")) {
-                    fileSystem = FileSystems.newFileSystem(uri, Collections.<String, Object>emptyMap());
-                    path = fileSystem.getPath("/themes/default/backgroundsrandom");
-                    
-                } else {
-                    path = Paths.get(uri);
-                }
-
-                Predicate<String> con1 = s -> s.endsWith(".jpg");
-                Predicate<String> con2 = s -> s.endsWith(".png");
-                
-                List<String> backgroundFileNames=new ArrayList<>();
-                try (Stream<Path> walk = Files.walk(path)) {
-                    backgroundFileNames=walk
-                            .map(Path::getFileName)
-                        .map(Path::toString)
-                        .filter(con1.or(con2))
-                        .collect(Collectors.toList());
-                }
-
-                int randomNum = ThreadLocalRandom.current().nextInt(0, backgroundFileNames.size());
-                rootModule.setRandomBackgroundImage(backgroundFileNames.get(randomNum));
-            } catch (Throwable t) {
-                log.error("unable to get random background image", t);
+                rootModule.setRandomBackgroundImage(randomBackgroundFile);
+            } else {
+                log.error("random background image is null - falling back to default");
                 rootModule.setBackgroundImage("archivefiles.jpg");
                 rootModule.setRandomBackgroundImage(null);
-            } finally {
-                if(fileSystem!=null) {
-                    try {
-                        fileSystem.close();
-                    } catch (Exception ex) {
-                        log.warn("Could not close filesystem object", ex);
-                    }
-                }
             }
 
         }
 
         this.loadTheme(theme, rootModule);
 
-        ExecutorService pool = Executors.newFixedThreadPool(3);
+        // Combined thread pool for parallel startup tasks (reports, plugins, spellchecker, forms)
+        ExecutorService pool = Executors.newFixedThreadPool(4);
+
         Runnable reportsRunnable = () -> {
             updateStatus(java.util.ResourceBundle.getBundle("com/jdimension/jlawyer/client/SplashThread").getString("status.printstubs"), true);
             try {
@@ -979,14 +962,20 @@ public class SplashThread implements Runnable {
             }
         };
         pool.execute(pluginRunnable);
-        pool.shutdown();
-        try {
-            pool.awaitTermination(60, TimeUnit.SECONDS);
-        } catch (Throwable t) {
-            log.error("error loading help / plugins / reports", t);
-        }
 
-        ExecutorService pool2 = Executors.newFixedThreadPool(3);
+        Runnable spellcheckerRunnable = () -> {
+            try {
+                URL dictPath = SplashThread.class.getClassLoader().getResource("dictionaries/").toURI().toURL();
+                SpellChecker.registerDictionaries(dictPath, "de,en,fr,ru,pl,nl,it,es,ar", "de");
+
+                // Optional: Benutzer-Wörterbuch deaktivieren (oder eigenes implementieren)
+                SpellChecker.setUserDictionaryProvider(null);
+            } catch (Throwable t) {
+                log.error("Error loading spellchecker dictionaries", t);
+            }
+        };
+        pool.execute(spellcheckerRunnable);
+
         Runnable formsRunnable = () -> {
             try {
                 updateStatus(java.util.ResourceBundle.getBundle("com/jdimension/jlawyer/client/SplashThread").getString("status.forms"), true);
@@ -995,19 +984,20 @@ public class SplashThread implements Runnable {
                 log.error("Error loading forms", t);
             }
         };
-        pool2.execute(formsRunnable);
-        pool2.shutdown();
+        pool.execute(formsRunnable);
+
+        pool.shutdown();
         try {
-            pool2.awaitTermination(60, TimeUnit.SECONDS);
+            pool.awaitTermination(60, TimeUnit.SECONDS);
         } catch (Throwable t) {
             log.error("error loading help / plugins / reports / forms", t);
         }
 
         updateStatus(java.util.ResourceBundle.getBundle("com/jdimension/jlawyer/client/SplashThread").getString("status.modules"), true);
         this.loadedMods = 0;
-        this.updateProgress(false, this.numberOfMods, 0, "");
+        this.updateProgress(false, 15+this.numberOfMods, 13, "");
 
-        preloadEditors(theme, rootModule);
+        preloadEditors(theme, rootModule, 13);
 
         updateStatus(java.util.ResourceBundle.getBundle("com/jdimension/jlawyer/client/SplashThread").getString("status.done"), true);
         LauncherFactory.cleanupTempDocuments();
@@ -1059,6 +1049,7 @@ public class SplashThread implements Runnable {
             }
             gui.restoreWindowSize();
             gui.confirmOpenTimesheetPositions();
+            ComponentUtils.installColorChooserInterceptor();
             
         });
     }
@@ -1080,7 +1071,7 @@ public class SplashThread implements Runnable {
 
     private void openBackupConfigurationDialog() {
         try {
-            if (UserUtils.isCurrentUserAdmin()) {
+            if (UserUtils.isCurrentUserSysAdmin()) {
                 BackupConfigurationDialog dlg = new BackupConfigurationDialog(EditorsRegistry.getInstance().getMainWindow(), true);
                 FrameUtils.centerDialog(dlg, EditorsRegistry.getInstance().getMainWindow());
                 dlg.setVisible(true);
@@ -1096,24 +1087,18 @@ public class SplashThread implements Runnable {
     private void compileReports() {
 
         updateStatus(java.util.ResourceBundle.getBundle("com/jdimension/jlawyer/client/SplashThread").getString("status.print.0"), true);
-        this.updateProgress(false, 6, 0, "");
 
-        new Thread(new Runnable() {
-            @Override
-            public void run() {
-                List<String> reportList = List.of("reviews", "reviews_detail", "archivefile", "archivefile_address_detail", "archivefile_review_detail", "archivefile_review_event_detail", "archivefile_cost_detail");
-                for (String report : reportList) {
-                    try (InputStream is = this.getClass().getClassLoader().getResourceAsStream("reports/" + report + ".jrxml")) {
-                        FileOutputStream os = new FileOutputStream(settings.getLocalReportsDirectory() + report + ".jasper");
-                        JasperCompileManager.compileReportToStream(is, os);
-                    } catch (Throwable t) {
-                        ThreadUtils.showErrorDialog(owner, "Fehler beim Generieren der Druckvorlagen", com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR);
-                        log.error("Error compiling reports", t);
-                    }
-                }
+        // Compile reports directly in the thread pool instead of spawning a new thread
+        List<String> reportList = List.of("reviews", "reviews_detail", "archivefile", "archivefile_address_detail", "archivefile_review_detail", "archivefile_review_event_detail", "archivefile_cost_detail");
+        for (String report : reportList) {
+            try (InputStream is = this.getClass().getClassLoader().getResourceAsStream("reports/" + report + ".jrxml")) {
+                FileOutputStream os = new FileOutputStream(settings.getLocalReportsDirectory() + report + ".jasper");
+                JasperCompileManager.compileReportToStream(is, os);
+            } catch (Throwable t) {
+                ThreadUtils.showErrorDialog(owner, "Fehler beim Generieren der Druckvorlagen", com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR);
+                log.error("Error compiling reports", t);
             }
-
-        }).start();
+        }
 
     }
 
@@ -1129,8 +1114,7 @@ public class SplashThread implements Runnable {
         this.loadedMods++;
 
         this.updateStatus(java.text.MessageFormat.format(java.util.ResourceBundle.getBundle("com/jdimension/jlawyer/client/SplashThread").getString("status.loadingdesign"), new Object[]{this.loadedMods, this.numberOfMods}), true);
-        this.updateProgress(false, this.numberOfMods, this.loadedMods, "");
-
+        
         String themeName = settings.getConfiguration(ClientSettings.CONF_THEME, "default");
         if (module.getBackgroundImage() != null) {
 
@@ -1163,17 +1147,16 @@ public class SplashThread implements Runnable {
             }
         }
         for (int i = 0; i < module.getChildCount(); i++) {
-            this.updateProgress(false, module.getChildCount(), i, "");
             this.loadTheme(theme, (ModuleMetadata) module.getChildAt(i));
         }
     }
 
-    private void preloadEditors(ThemeSettings theme, ModuleMetadata module) {
+    private void preloadEditors(ThemeSettings theme, ModuleMetadata module, int progressOffset) {
 
         this.loadedMods++;
 
         this.updateStatus(java.text.MessageFormat.format(java.util.ResourceBundle.getBundle("com/jdimension/jlawyer/client/SplashThread").getString("status.loadingmodules"), new Object[]{module.getFullName()}), true);
-        this.updateProgress(false, this.numberOfMods, this.loadedMods, "");
+        this.updateProgress(false, 15+this.numberOfMods, this.loadedMods+progressOffset, "");
 
         String editorClass = ((ModuleMetadata) module).getEditorClass();
         if (editorClass != null) {
@@ -1224,7 +1207,7 @@ public class SplashThread implements Runnable {
 
         }
         for (int i = 0; i < module.getChildCount(); i++) {
-            this.preloadEditors(theme, (ModuleMetadata) module.getChildAt(i));
+            this.preloadEditors(theme, (ModuleMetadata) module.getChildAt(i), this.loadedMods+progressOffset+1);
         }
 
     }
@@ -1288,8 +1271,6 @@ public class SplashThread implements Runnable {
     }
 
     private void loadCalculations() throws Exception {
-        this.updateProgress(false, 1, 0, "");
-
         try {
             URL updateURL = new URL("https://www.j-lawyer.org/downloads/j-lawyer-calculations.xml");
             URLConnection urlCon = updateURL.openConnection();
@@ -1394,8 +1375,6 @@ public class SplashThread implements Runnable {
     }
 
     private void loadForms() throws Exception {
-        this.updateProgress(false, 1, 0, "");
-
         try {
 
             JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());

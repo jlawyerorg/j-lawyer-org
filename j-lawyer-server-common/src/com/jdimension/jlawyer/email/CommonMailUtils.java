@@ -717,6 +717,7 @@ public class CommonMailUtils {
 
         inboxAliases = new ArrayList<>();
         inboxAliases.add("Posteingang");
+        inboxAliases.add(INBOX);
 
         draftAliases = new ArrayList<>();
         draftAliases.add("Entwürfe");
@@ -726,7 +727,34 @@ public class CommonMailUtils {
         defaultAliases = new ArrayList<>();
 
     }
-    
+
+    /**
+     * Safely retrieves the content of a MimeBodyPart. Some malformed emails have
+     * empty or invalid Content-Type headers which cause IllegalArgumentException
+     * when trying to parse them with JavaMail/JAF.
+     *
+     * @param mimePart the MimeBodyPart to get content from
+     * @return the content object, or null if the content could not be retrieved
+     */
+    private static Object safeGetContent(MimeBodyPart mimePart) {
+        try {
+            // Check if content type is valid before attempting to get content
+            String contentType = mimePart.getContentType();
+            if (contentType == null || contentType.trim().isEmpty()) {
+                log.warn("Skipping MIME part with empty content type");
+                return null;
+            }
+            return mimePart.getContent();
+        } catch (IllegalArgumentException e) {
+            // This happens when the content type cannot be parsed (e.g., empty MIME type)
+            log.warn("Unable to get content of MIME part - invalid content type: " + e.getMessage());
+            return null;
+        } catch (Exception e) {
+            log.warn("Unable to get content of MIME part: " + e.getMessage());
+            return null;
+        }
+    }
+
     public static Folder getSentFolder(Store store) throws Exception {
         Folder[] accountFolders = null;
         try {
@@ -797,6 +825,13 @@ public class CommonMailUtils {
         return false;
     }
 
+    public static boolean isInbox(Folder f) {
+        if(f==null)
+            return false;
+        
+        return isInbox(f.getName());
+    }
+    
     public static boolean isInbox(String folderName) {
         ArrayList<String> aliases = getFolderAliases(INBOX);
         for (String a : aliases) {
@@ -946,12 +981,9 @@ public class CommonMailUtils {
                 if (disposition == null) {
                     MimeBodyPart mimePart = (MimeBodyPart) part;
 
-                    try {
-                        if (mimePart.getContent() instanceof Multipart) {
-                            attachmentInfos.addAll(getAttachmentInfo(mimePart.getContent()));
-                        }
-                    } catch (Throwable t) {
-                        log.warn("Unable to detect attachment names for mime part - is the mime type information empty?");
+                    Object mimeContent = safeGetContent(mimePart);
+                    if (mimeContent instanceof Multipart) {
+                        attachmentInfos.addAll(getAttachmentInfo(mimeContent));
                     }
 
                 } else if (Part.ATTACHMENT.equalsIgnoreCase(disposition)) {
@@ -965,9 +997,16 @@ public class CommonMailUtils {
                         }
                     }
                 } else if (Part.INLINE.equalsIgnoreCase(disposition)) {
-                    //Anhang wird in ein Verzeichnis gespeichert
-                    //saveFile(part.getFileName(), part.getInputStream());
-                    if (part.getFileName() != null) {
+                    // Check if inline content is a Multipart (e.g., in S/MIME signed messages)
+                    if (part instanceof MimeBodyPart) {
+                        MimeBodyPart mimePart = (MimeBodyPart) part;
+                        Object inlineContent = safeGetContent(mimePart);
+                        if (inlineContent instanceof Multipart) {
+                            attachmentInfos.addAll(getAttachmentInfo(inlineContent));
+                        } else if (part.getFileName() != null) {
+                            attachmentInfos.add(new AttachmentInfo(decodeText(part.getFileName()), true));
+                        }
+                    } else if (part.getFileName() != null) {
                         attachmentInfos.add(new AttachmentInfo(decodeText(part.getFileName()), true));
                     }
 
@@ -1023,8 +1062,9 @@ public class CommonMailUtils {
             if (disposition == null) {
                 MimeBodyPart mimePart = (MimeBodyPart) part;
 
-                if (mimePart.getContent() instanceof Multipart) {
-                    Part attPart = getAttachmentPart(name, mimePart.getContent());
+                Object mimeContent = safeGetContent(mimePart);
+                if (mimeContent instanceof Multipart) {
+                    Part attPart = getAttachmentPart(name, mimeContent);
                     if (attPart != null) {
                         return attPart;
                     }
@@ -1037,6 +1077,17 @@ public class CommonMailUtils {
                     return part;
                 }
             } else if (disposition.equalsIgnoreCase(Part.INLINE)) {
+                // Check if inline content is a Multipart (e.g., in S/MIME signed messages)
+                if (part instanceof MimeBodyPart) {
+                    MimeBodyPart mimePart = (MimeBodyPart) part;
+                    Object inlineContent = safeGetContent(mimePart);
+                    if (inlineContent instanceof Multipart) {
+                        Part attPart = getAttachmentPart(name, inlineContent);
+                        if (attPart != null) {
+                            return attPart;
+                        }
+                    }
+                }
                 if (name.equals(decodeText(part.getFileName()))) {
                     return part;
                 }
@@ -1097,37 +1148,38 @@ public class CommonMailUtils {
             if (disposition == null) {
                 MimeBodyPart mimePart = (MimeBodyPart) part;
 
-                try {
-                    if (mimePart.getContent() instanceof Multipart) {
-                        recursiveFindPart(mimePart.getContent(), mimeType, resultList);
+                Object mimeContent = safeGetContent(mimePart);
+                if (mimeContent instanceof Multipart) {
+                    recursiveFindPart(mimeContent, mimeType, resultList);
+                } else if (mimeContent != null) {
+                    try {
+                        String contentType = mimePart.getContentType();
+                        if (contentType != null && contentType.toLowerCase().startsWith(mimeType)) {
+                            resultList.add(mimeContent.toString());
+                        }
+                    } catch (Throwable t) {
+                        log.error("Unable to get content type of MIME part as result - skipping", t);
                     }
-                } catch (Throwable t) {
-                    log.error("Unable to get content of MIME part for further traversal - skipping", t);
-                }
-
-                try {
-                    if (mimePart.getContentType().toLowerCase().startsWith(mimeType)) {
-                        resultList.add(mimePart.getContent().toString());
-                    }
-                } catch (Throwable t) {
-                    log.error("Unable to get content of MIME part as result - skipping", t);
                 }
 
             } else if (disposition.equalsIgnoreCase(Part.ATTACHMENT)) {
                 //Anhang wird in ein Verzeichnis gespeichert
                 //saveFile(part.getFileName(), part.getInputStream());
             } else if (disposition.equalsIgnoreCase(Part.INLINE)) {
-                //Anhang wird in ein Verzeichnis gespeichert
-                //saveFile(part.getFileName(), part.getInputStream());
-
                 MimeBodyPart mimePart = (MimeBodyPart) part;
 
-                try {
-                    if (mimePart.isMimeType(mimeType)) {
-                        resultList.add(mimePart.getContent().toString());
+                // Check if inline content is a Multipart (e.g., in S/MIME signed messages)
+                Object inlineContent = safeGetContent(mimePart);
+                if (inlineContent instanceof Multipart) {
+                    recursiveFindPart(inlineContent, mimeType, resultList);
+                } else {
+                    try {
+                        if (mimePart.isMimeType(mimeType)) {
+                            resultList.add(mimePart.getContent().toString());
+                        }
+                    } catch (Throwable t) {
+                        log.error("Unable to get content of inline MIME part as result - skipping", t);
                     }
-                } catch (Throwable t) {
-                    log.error("Unable to get content of inline MIME part as result - skipping", t);
                 }
             }
         }

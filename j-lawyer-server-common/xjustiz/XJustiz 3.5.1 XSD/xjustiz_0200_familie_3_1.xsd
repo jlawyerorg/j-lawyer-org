@@ -1,0 +1,107 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema"
+           xmlns:tns="http://www.xjustiz.de"
+           xmlns:din91379="urn:xoev-de:kosit:xoev:datentyp:din-91379_2022-08"
+           targetNamespace="http://www.xjustiz.de"
+           version="3.1.2"
+           elementFormDefault="qualified"
+           attributeFormDefault="unqualified">
+   <xs:annotation>
+      <xs:appinfo>
+         <standard>
+            <nameLang>Strukturierte Fachdaten für die Kommunikation im elektronischen Rechtsverkehr</nameLang>
+            <nameKurz>XJustiz</nameKurz>
+            <nameTechnisch>xjustiz</nameTechnisch>
+            <kennung>urn:xoev-de:blk-ag-it-standards:standard:xjustiz</kennung>
+            <beschreibung>XJustiz ist der bundesweit einheitliche Standard für den Austausch strukturierter elektronischer Informationen mit der Justiz.</beschreibung>
+         </standard>
+         <versionStandard>
+            <version>3.5.1</version>
+            <beschreibung>XJustiz beschreibt ein standardisiertes Datenaustauschformat für die elektronische Kommunikation innerhalb und mit der Justizverwaltung.</beschreibung>
+            <versionXOEVProfil>1.7.2</versionXOEVProfil>
+            <versionXOEVHandbuch>2.3.1</versionXOEVHandbuch>
+            <versionXGenerator>3.1.1</versionXGenerator>
+            <versionModellierungswerkzeug>19.0 SP3</versionModellierungswerkzeug>
+            <nameModellierungswerkzeug>MagicDraw</nameModellierungswerkzeug>
+         </versionStandard>
+      </xs:appinfo>
+   </xs:annotation>
+   <xs:include schemaLocation="xjustiz_0000_grunddatensatz_3_5.xsd"/>
+   <xs:include schemaLocation="xjustiz_0210_cl_familie_3_0.xsd"/>
+   <xs:import schemaLocation="din-norm-91379-datatypes.xsd"
+              namespace="urn:xoev-de:kosit:xoev:datentyp:din-91379_2022-08"/>
+   <xs:element name="nachricht.fam.allgemein.0200001">
+      <xs:complexType>
+         <xs:sequence>
+            <xs:element name="nachrichtenkopf" type="tns:Type.GDS.Nachrichtenkopf"/>
+            <xs:element name="grunddaten" type="tns:Type.GDS.Grunddaten"/>
+            <xs:element name="fachdaten">
+               <xs:complexType>
+                  <xs:sequence>
+                     <xs:element name="ref.instanzdaten" minOccurs="0" maxOccurs="unbounded">
+                        <xs:annotation>
+                           <xs:documentation>Die Instanzdaten enthalten Informationen zu den Stationen, die ein Vorgang durchlaufen hat. Mit diesem Element ist nicht die juristische Bezeichnung einer Instanz gemeint.</xs:documentation>
+                        </xs:annotation>
+                        <xs:complexType>
+                           <xs:sequence>
+                              <xs:element name="ref.instanznummer" type="din91379:datatypeC">
+                                 <xs:annotation>
+                                    <xs:documentation>Das Element dient als Schlüsselfeld für interne Referenzierungen. Die Instanznummer muss für das aktuelle XML-Instanzdokument eindeutig sein und identifiziert die jeweiligen Instanzdaten.</xs:documentation>
+                                 </xs:annotation>
+                              </xs:element>
+                              <xs:element name="verfahrensgegenstand"
+                                          maxOccurs="unbounded"
+                                          type="tns:Code.FAM.Gegenstandsbezeichnung"/>
+                           </xs:sequence>
+                        </xs:complexType>
+                     </xs:element>
+                     <xs:element name="familienname" minOccurs="0" type="din91379:datatypeA"/>
+                     <xs:element name="heiratsdatum" minOccurs="0" type="xs:date"/>
+                     <xs:element name="auswahl_heiratsort" minOccurs="0">
+                        <xs:complexType>
+                           <xs:choice>
+                              <xs:element name="heiratsort.standesamt"
+                                          minOccurs="0"
+                                          type="din91379:datatypeE"/>
+                              <xs:element name="heiratsort.keinStandesamt"
+                                          minOccurs="0"
+                                          type="din91379:datatypeE"/>
+                           </xs:choice>
+                        </xs:complexType>
+                     </xs:element>
+                     <xs:element name="heiratsregister" minOccurs="0" type="din91379:datatypeE"/>
+                     <xs:element name="familienart" minOccurs="0">
+                        <xs:complexType>
+                           <xs:sequence>
+                              <xs:element name="familienart" minOccurs="0" type="tns:Code.FAM.Familienart"/>
+                              <xs:element name="ehezeit"
+                                          minOccurs="0"
+                                          type="tns:Type.GDS.Xdomea.ZeitraumType"/>
+                           </xs:sequence>
+                        </xs:complexType>
+                     </xs:element>
+                     <xs:element name="auswahl_zustelldatum" minOccurs="0">
+                        <xs:complexType>
+                           <xs:choice>
+                              <xs:element name="zustelldatum.scheidungsantrag" minOccurs="0" type="xs:date"/>
+                              <xs:element name="zustelldatum.trennungsantrag" minOccurs="0" type="xs:date"/>
+                           </xs:choice>
+                        </xs:complexType>
+                     </xs:element>
+                     <xs:element name="trennungszeitpunkt" minOccurs="0" type="din91379:datatypeC"/>
+                     <xs:element name="rechtswahl.scheidungsrecht"
+                                 minOccurs="0"
+                                 type="tns:Code.GDS.Staaten.Typ3"/>
+                     <xs:element name="scheidungsdatum" minOccurs="0" type="xs:date"/>
+                     <xs:element name="rechtskraft.entscheidung" minOccurs="0" type="xs:date"/>
+                  </xs:sequence>
+                  <xs:attribute name="fachdaten.fam.version"
+                                type="din91379:datatypeC"
+                                use="required"
+                                fixed="1.3"/>
+               </xs:complexType>
+            </xs:element>
+         </xs:sequence>
+      </xs:complexType>
+   </xs:element>
+</xs:schema>

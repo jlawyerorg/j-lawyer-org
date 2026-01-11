@@ -669,6 +669,7 @@ import com.jdimension.jlawyer.persistence.AppRoleBean;
 import com.jdimension.jlawyer.persistence.AppUserBean;
 import com.jdimension.jlawyer.persistence.ArchiveFileBean;
 import com.jdimension.jlawyer.persistence.DocumentNameTemplate;
+import com.jdimension.jlawyer.persistence.DocumentTagRule;
 import com.jdimension.jlawyer.persistence.Invoice;
 import com.jdimension.jlawyer.persistence.MappingTable;
 import com.jdimension.jlawyer.persistence.PartyTypeBean;
@@ -721,7 +722,16 @@ public interface SystemManagementLocal {
     void removeOptionGroup(String id);
     
     AppOptionGroupBean[] getOptionGroup(String optionGroup);
-    
+
+    /**
+     * Retrieves multiple option groups in a single call for improved performance.
+     * This method reduces network roundtrips by batching multiple getOptionGroup() calls into one.
+     *
+     * @param optionGroups List of option group names to retrieve
+     * @return Map where keys are option group names and values are arrays of AppOptionGroupBean for each group
+     */
+    HashMap<String, AppOptionGroupBean[]> getOptionGroups(List<String> optionGroups);
+
     GenericNode getAllTemplatesTree(int templateType) throws Exception;
 
     String getTemplatesBaseDir(int templateType) throws Exception;
@@ -734,5 +744,7 @@ public interface SystemManagementLocal {
     HashMap<String,Object> getPlaceHolderValuesUnrestricted(HashMap<String,Object> placeHolders, ArchiveFileBean aFile, List<PartiesTriplet> selectedParties, String dictateSign, GenericCalculationTable calculationTable, HashMap<String,String> formsPlaceHolderValues, AppUserBean caseLawyer, AppUserBean caseAssistant, AppUserBean author, Invoice invoice, AppUserBean invoiceSender, GenericCalculationTable invoiceTable, GenericCalculationTable timesheetsTable, GenericCalculationTable timesheetSummaryTable, byte[] giroCode, String ingoText) throws Exception;
     
     DocumentNameTemplate getDefaultDocumentNameTemplate() throws Exception;
+
+    List<DocumentTagRule> getAllDocumentTagRules();
     
 }

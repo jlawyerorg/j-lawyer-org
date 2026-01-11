@@ -663,6 +663,8 @@ For more information on this, and how to apply and follow the GNU AGPL, see
  */
 package com.jdimension.jlawyer.client.editors.documents.viewer;
 
+import com.jdimension.jlawyer.documents.DocumentPreview;
+
 /**
  *
  * @author jens
@@ -678,8 +680,8 @@ public class FixedStringPreviewProvider implements DocumentPreviewProvider {
     
     
     @Override
-    public String getPreview() throws Exception {
-        return this.text;
+    public DocumentPreview getPreview() throws Exception {
+        return new DocumentPreview(this.text);
     }
     
     

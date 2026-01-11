@@ -732,6 +732,7 @@ public class MoveAction extends ProgressableAction {
             FolderContainer target = (FolderContainer) current.getUserObject();
             Folder targetFolder = target.getFolder();
             if (!targetFolder.isOpen()) {
+                System.out.println("open 34");
                 targetFolder.open(Folder.READ_WRITE);
             }
 
@@ -767,11 +768,12 @@ public class MoveAction extends ProgressableAction {
 
             }
             
-            try {
-                EmailUtils.closeIfIMAP(targetFolder);
-                //targetFolder.close(true);
-            } catch (Throwable t) {
-                log.error(t);
+            if(!EmailUtils.isInbox(targetFolder)) {
+                try {
+                    EmailUtils.closeIfIMAP(targetFolder);
+                } catch (Throwable t) {
+                    log.error(t);
+                }
             }
 
             final DefaultMutableTreeNode currentRef = current;

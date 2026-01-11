@@ -667,7 +667,9 @@ import com.jdimension.jlawyer.persistence.AppRoleBean;
 import com.jdimension.jlawyer.persistence.AppRoleBeanFacadeLocal;
 import com.jdimension.jlawyer.persistence.AppUserBean;
 import com.jdimension.jlawyer.persistence.AppUserBeanFacadeLocal;
+import com.jdimension.jlawyer.persistence.ArchiveFileBean;
 import com.jdimension.jlawyer.persistence.ArchiveFileBeanFacadeLocal;
+import com.jdimension.jlawyer.persistence.ArchiveFileGroupsBean;
 import com.jdimension.jlawyer.persistence.ArchiveFileGroupsBeanFacadeLocal;
 import com.jdimension.jlawyer.persistence.CalendarAccess;
 import com.jdimension.jlawyer.persistence.CalendarAccessFacadeLocal;
@@ -690,6 +692,7 @@ import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Properties;
 import javax.annotation.Resource;
@@ -756,6 +759,12 @@ public class SecurityService implements SecurityServiceRemote, SecurityServiceLo
     @RolesAllowed({"loginRole"})
     public boolean isAdmin() {
         return sessionContext.isCallerInRole("adminRole");
+    }
+    
+    @Override
+    @RolesAllowed({"loginRole"})
+    public boolean isSysAdmin() {
+        return sessionContext.isCallerInRole("sysAdminRole");
     }
 
     @Override
@@ -983,6 +992,11 @@ public class SecurityService implements SecurityServiceRemote, SecurityServiceLo
                 mailboxes.add(ms);
             }
         }
+        mailboxes.sort((m1, m2) -> {
+            String name1 = m1.getDisplayName() != null ? m1.getDisplayName() : "";
+            String name2 = m2.getDisplayName() != null ? m2.getDisplayName() : "";
+            return name1.compareToIgnoreCase(name2);
+        });
         return mailboxes;
     }
 
@@ -1049,6 +1063,15 @@ public class SecurityService implements SecurityServiceRemote, SecurityServiceLo
     @Override
     @RolesAllowed({"adminRole"})
     public MailboxSetup updateMailboxSetup(MailboxSetup ms) {
+        MailboxSetup existing=this.mailboxSetupFacade.find(ms.getId());
+        
+        // do not override existing tokens with empty values
+        if(existing!=null && !ServerStringUtils.isEmpty(existing.getAuthToken()) && ServerStringUtils.isEmpty(ms.getAuthToken()))
+            ms.setAuthToken(existing.getAuthToken());
+        
+        if(existing!=null && !ServerStringUtils.isEmpty(existing.getRefreshToken()) && ServerStringUtils.isEmpty(ms.getRefreshToken()))
+            ms.setRefreshToken(existing.getRefreshToken());
+        
         this.mailboxSetupFacade.edit(ms);
         return this.mailboxSetupFacade.find(ms.getId());
     }
@@ -1096,6 +1119,52 @@ public class SecurityService implements SecurityServiceRemote, SecurityServiceLo
             
         }
         return resultList;
+    }
+
+    @Override
+    @RolesAllowed({"adminRole"})
+    public List<ArchiveFileBean> getCasesByGroup(String groupId) throws Exception {
+        Group g=this.groupFacade.find(groupId);
+        
+        HashMap<String,ArchiveFileBean> allCases=new HashMap<>();
+        
+        List<ArchiveFileGroupsBean> listByAllowed=this.caseGroupsFacade.findByGroup(g);
+        for(ArchiveFileGroupsBean gb: listByAllowed) {
+            allCases.put(gb.getArchiveFileKey().getId(), gb.getArchiveFileKey());
+        }
+            
+        List<ArchiveFileBean> listByOwner=this.archiveFileFacade.findByGroup(g);
+        for(ArchiveFileBean afb: listByOwner) {
+            allCases.put(afb.getId(), afb);
+        }
+        return new ArrayList<>(allCases.values());
+    }
+
+    @Override
+    @RolesAllowed({"adminRole"})
+    public void unlinkGroup(String groupId, String newGroupId) throws Exception {
+        
+        Group g=this.groupFacade.find(groupId);
+        Group newGroup=this.groupFacade.find(newGroupId);
+        if(newGroup==null) {
+            throw new Exception("neue Gruppe kann nicht gefunden werden");
+        }
+        if(groupId.equals(newGroupId)) {
+            throw new Exception("Zu entfernende und neue Gruppe dürfen nicht identisch sein");
+        }
+        
+        List<ArchiveFileGroupsBean> listByAllowed=this.caseGroupsFacade.findByGroup(g);
+        for(ArchiveFileGroupsBean gb: listByAllowed) {
+            gb.setAllowedGroup(newGroup);
+            this.caseGroupsFacade.edit(gb);
+        }
+            
+        List<ArchiveFileBean> listByOwner=this.archiveFileFacade.findByGroup(g);
+        for(ArchiveFileBean afb: listByOwner) {
+            afb.setGroup(newGroup);
+            this.archiveFileFacade.edit(afb);
+        }
+        
     }
 
 }

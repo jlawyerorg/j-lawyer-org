@@ -1781,12 +1781,13 @@ public class BeaMessageContentUI extends javax.swing.JPanel implements Hyperlink
 
             String url = he.getURL().toString();
             if (url.toLowerCase().startsWith("mailto:")) {
-                SendEmailDialog dlg = new SendEmailDialog(false, EditorsRegistry.getInstance().getMainWindow(), false);
-                FrameUtils.centerDialog(dlg, null);
+                SendEmailFrame dlg = new SendEmailFrame(false);
+                FrameUtils.centerFrame(dlg, null);
                 if (url.length() > 7) {
                     url = url.substring(7);
                 }
                 dlg.setTo(url);
+                EditorsRegistry.getInstance().registerFrame(dlg);
                 dlg.setVisible(true);
             } else {
                 DesktopUtils.openBrowser(url);

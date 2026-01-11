@@ -674,6 +674,7 @@ public interface OptionConstants {
     public static final String OPTIONGROUP_NATIONALITY="address.nationality";
     public static final String OPTIONGROUP_LEGALFORM="address.legalform";
     public static final String OPTIONGROUP_COUNTRY="address.country";
+    public static final String OPTIONGROUP_STATE="address.state";
     public static final String OPTIONGROUP_DEGREEPREFIX="address.degreeprefix";
     public static final String OPTIONGROUP_DEGREESUFFIX="address.degreesuffix";
     public static final String OPTIONGROUP_PROFESSION="address.profession";
@@ -692,5 +693,7 @@ public interface OptionConstants {
     public static final String OPTIONGROUP_INVOICETAXRATES="invoice.taxrates";
     
     public static final String OPTIONGROUP_TIMESHEETINTERVALMINUTES="timesheet.intervalminutes";
+    
+    public static final String OPTIONGROUP_PDFSTAMPS="document.pdfstamps";
     
 }

@@ -693,6 +693,10 @@ import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
+import java.util.concurrent.Callable;
 import javax.swing.*;
 import javax.swing.table.DefaultTableModel;
 import javax.swing.table.TableRowSorter;
@@ -715,6 +719,8 @@ public class ArchiveFileDetailLoadAction extends ProgressableAction {
     private JPanel tagPanel;
     private JPanel documentTagPanel;
     private JPanel invoicesPanel;
+    private JPanel claimLedgersPanel;
+    private JPanel paymentsPanel;
     private JPanel pnlMessages;
     private JPanel timesheetsPanel;
     private JLabel lblArchivedSince;
@@ -733,7 +739,7 @@ public class ArchiveFileDetailLoadAction extends ProgressableAction {
 
     private final SimpleDateFormat dateTimeFormat = new SimpleDateFormat("dd.MM.yyyy HH:mm", Locale.GERMAN);
 
-    public ArchiveFileDetailLoadAction(ProgressIndicator i, ArchiveFilePanel owner, String archiveFileKey, ArchiveFileBean caseDto, CaseFolderPanel caseFolders, JTable historyTarget, InvolvedPartiesPanel contactsForCasePanel, JTable tblReviews, JPanel tagPanel, JPanel documentTagPanel, JPanel invoicesPanel, JPanel timesheetsPanel, JPanel pnlMessages, boolean readOnly, boolean beaEnabled, String selectDocumentWithFileName, JLabel lblArchivedSince, boolean isArchived, JPopupMenu popDocumentFavorites, JComboBox formTypes, JPanel formsPanel, JTabbedPane tabPaneForms, JComboBox cmbGroups, JTable tblGroups, JToggleButton togCaseSync) {
+    public ArchiveFileDetailLoadAction(ProgressIndicator i, ArchiveFilePanel owner, String archiveFileKey, ArchiveFileBean caseDto, CaseFolderPanel caseFolders, JTable historyTarget, InvolvedPartiesPanel contactsForCasePanel, JTable tblReviews, JPanel tagPanel, JPanel documentTagPanel, JPanel invoicesPanel, JPanel claimLedgersPanel, JPanel paymentsPanel, JPanel timesheetsPanel, JPanel pnlMessages, boolean readOnly, boolean beaEnabled, String selectDocumentWithFileName, JLabel lblArchivedSince, boolean isArchived, JPopupMenu popDocumentFavorites, JComboBox formTypes, JPanel formsPanel, JTabbedPane tabPaneForms, JComboBox cmbGroups, JTable tblGroups, JToggleButton togCaseSync) {
         super(i, false);
 
         this.caseFolders = caseFolders;
@@ -750,6 +756,8 @@ public class ArchiveFileDetailLoadAction extends ProgressableAction {
         this.tabPaneForms = tabPaneForms;
         this.documentTagPanel = documentTagPanel;
         this.invoicesPanel = invoicesPanel;
+        this.claimLedgersPanel=claimLedgersPanel;
+        this.paymentsPanel = paymentsPanel;
         this.timesheetsPanel = timesheetsPanel;
         this.pnlMessages = pnlMessages;
         this.lblArchivedSince = lblArchivedSince;
@@ -781,76 +789,137 @@ public class ArchiveFileDetailLoadAction extends ProgressableAction {
 
     @Override
     public boolean execute() throws Exception {
+        log.info("[AKTE-LOAD] execute START: archiveFileKey=" + this.archiveFileKey);
 
         this.progress("Lade Akte...");
 
+        // Declare variables outside try block so they're accessible later
         Collection documents = null;
         List<AddressBean> addressesForCase = null;
         List<ArchiveFileAddressesBean> involvementForCase = null;
         Collection events = null;
         Collection tags = null;
+        List<Invoice> invoices = null;
+        List<ClaimLedger> ledgers = null;
+        List<Payment> payments = null;
+        List<Timesheet> timesheets = null;
+        List<DocumentFolderTemplate> allTemplates = null;
+        List<PartyTypeBean> allPartyTypes = null;
+        List<CaseSyncSettings> syncSettings = null;
 
         this.tagPanel.removeAll();
         this.documentTagPanel.removeAll();
 
-        ArchiveFileServiceRemote fileService = null;
         ClientSettings settings = ClientSettings.getInstance();
         JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
+        
+        // Lookup services once
+        ArchiveFileServiceRemote fileService = locator.lookupArchiveFileServiceRemote();
+        
+        // Create thread pool for parallel execution
+        ExecutorService executor = Executors.newFixedThreadPool(8);
+
         try {
+            this.progress("Lade Akte: Starte parallele Abfragen...");
             
-            this.progress("Lade Akte: Sofortnachrichten...");
+            // Submit all independent server calls in parallel
+            Future<List<InstantMessage>> futureMessages = executor.submit(() ->
+                locator.lookupMessagingServiceRemote().getMessagesForCase(this.archiveFileKey)
+            );
+
+            Future<Collection<Group>> futureAllGroups = executor.submit(() ->
+                locator.lookupSecurityServiceRemote().getAllGroups()
+            );
+
+            Future<Collection<Group>> futureUserGroups = executor.submit(() ->
+                locator.lookupSecurityServiceRemote().getGroupsForUser(UserSettings.getInstance().getCurrentUser().getPrincipalId())
+            );
+
+            Future<Collection<ArchiveFileGroupsBean>> futureAllowedGroups = executor.submit(() ->
+                fileService.getAllowedGroups(this.archiveFileKey)
+            );
+
+            Future<List<AddressBean>> futureAddresses = executor.submit(() ->
+                fileService.getAddressesForCase(archiveFileKey)
+            );
+
+            Future<List<ArchiveFileAddressesBean>> futureInvolvement = executor.submit(() ->
+                fileService.getInvolvementDetailsForCase(archiveFileKey, false)
+            );
+
+            Future<Collection> futureEvents = executor.submit(() ->
+                locator.lookupCalendarServiceRemote().getReviews(this.archiveFileKey)
+            );
+
+            Future<List<Invoice>> futureInvoices = executor.submit(() ->
+                fileService.getInvoices(archiveFileKey)
+            );
+
+            Future<List<ClaimLedger>> futureLedgers = executor.submit(() ->
+                fileService.getClaimLedgers(archiveFileKey)
+            );
+
+            Future<List<Payment>> futurePayments = executor.submit(() ->
+                fileService.getPayments(archiveFileKey)
+            );
+
+            Future<List<Timesheet>> futureTimesheets = executor.submit(() ->
+                fileService.getTimesheets(archiveFileKey)
+            );
+
+            Future<Collection> futureDocuments = executor.submit(() ->
+                fileService.getDocuments(this.archiveFileKey)
+            );
+
+            Future<List<DocumentFolderTemplate>> futureTemplates = executor.submit(() ->
+                fileService.getAllFolderTemplates()
+            );
+
+            Future<Collection> futureTags = executor.submit(() ->
+                fileService.getTags(archiveFileKey)
+            );
+
+            Future<List<PartyTypeBean>> futurePartyTypes = executor.submit(() ->
+                locator.lookupSystemManagementRemote().getPartyTypes()
+            );
+
+            Future<List<CaseSyncSettings>> futureSyncSettings = executor.submit(() ->
+                fileService.getCaseSyncs(archiveFileKey)
+            );
+
+            // Wait for and retrieve all results
+            this.progress("Lade Akte: Empfange Daten...");
+            
+            List<InstantMessage> instantMessages = futureMessages.get();
+            Collection<Group> allGroups = futureAllGroups.get();
+            Collection<Group> userGroups = futureUserGroups.get();
+            Collection<ArchiveFileGroupsBean> allowedGroups = futureAllowedGroups.get();
+            addressesForCase = futureAddresses.get();
+            involvementForCase = futureInvolvement.get();
+            events = futureEvents.get();
+            invoices = futureInvoices.get();
+            ledgers = futureLedgers.get();
+            payments = futurePayments.get();
+            timesheets = futureTimesheets.get();
+            documents = futureDocuments.get();
+            allTemplates = futureTemplates.get();
+            tags = futureTags.get();
+            allPartyTypes = futurePartyTypes.get();
+            syncSettings = futureSyncSettings.get();
+            
+            // Shutdown executor
+            executor.shutdown();
+
+            this.progress("Lade Akte: Verarbeite Sofortnachrichten...");
+            log.info("[AKTE-LOAD] execute: Beginne GUI-Aktualisierung - Sofortnachrichten");
             this.pnlMessages.removeAll();
-            List<InstantMessage> instantMessages=locator.lookupMessagingServiceRemote().getMessagesForCase(this.archiveFileKey);
             SwingUtilities.invokeLater(() -> {
                 for(InstantMessage im: instantMessages) {
                     this.owner.addMessageToView(im);
                 }
             });
             
-            this.progress("Lade Akte: Falldatenblätter...");
-            this.cmbFormTypes.removeAllItems();
-            List<FormTypeBean> formTypes = locator.lookupFormsServiceRemote().getAllFormTypes();
-            for (FormTypeBean ftb : formTypes) {
-                if (ftb.getUsageType().equals(FormTypeBean.TYPE_PLUGIN)) {
-                    this.cmbFormTypes.addItem(ftb);
-                }
-            }
-            if (this.cmbFormTypes.getItemCount() > 0) {
-                this.cmbFormTypes.setSelectedIndex(0);
-            }
-
-            List<ArchiveFileFormsBean> caseForms = locator.lookupFormsServiceRemote().getFormsForCase(this.archiveFileKey);
-            SimpleDateFormat dayFormat = new SimpleDateFormat("dd.MM.yyyy");
-            for (ArchiveFileFormsBean affb : caseForms) {
-                this.setProgressString("Lade Akte: Falldatenblatt " + affb.getFormType().getName() + " (" + affb.getPlaceHolder() + ")");
-                FormPlugin plugin = new FormPlugin();
-                plugin.setId(affb.getFormType().getId());
-                plugin.setCaseDto(this.caseDto);
-                plugin.setPlaceHolder(affb.getPlaceHolder());
-                FormInstancePanel formInstance = new FormInstancePanel(this.tabPaneForms, plugin);
-                Dimension maxDimension = this.formsPanel.getSize();
-                maxDimension.setSize(maxDimension.getWidth() - 100, maxDimension.getHeight() - 60);
-                formInstance.setMaximumSize(maxDimension);
-                formInstance.setPreferredSize(maxDimension);
-                formInstance.setDescription(affb.getDescription());
-                formInstance.setForm(affb);
-
-                try {
-
-                    formInstance.initialize();
-                    String tabTitle = "<html><p style=\"text-align: left; width: 130px\"><b>" + affb.getFormType().getName() + "</b><br/>" + dayFormat.format(affb.getCreationDate()) + "<br/>" + affb.getPlaceHolder() + "</p></html>";
-                    tabPaneForms.addTab(tabTitle, null, formInstance);
-
-                } catch (Throwable t) {
-                    log.error("Error loading form plugin", t);
-                    JOptionPane.showMessageDialog(this.owner, "Fehler beim Laden des Falldatenblattes: " + t.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
-                }
-            }
-            
-            this.progress("Lade Akte: Berechtigungen...");
-            fileService = locator.lookupArchiveFileServiceRemote();
-            Collection<Group> allGroups = locator.lookupSecurityServiceRemote().getAllGroups();
-            Collection<Group> userGroups = locator.lookupSecurityServiceRemote().getGroupsForUser(UserSettings.getInstance().getCurrentUser().getPrincipalId());
+            this.progress("Lade Akte: Verarbeite Berechtigungen...");
             boolean userIsInOwnerGroup = false;
             if (this.caseDto.getGroup() == null) {
                 userIsInOwnerGroup = true;
@@ -860,7 +929,6 @@ public class ArchiveFileDetailLoadAction extends ProgressableAction {
             if (this.caseDto.getGroup() != null && !userGroups.contains(this.caseDto.getGroup())) {
                 userGroups.add(this.caseDto.getGroup());
             }
-            Collection<ArchiveFileGroupsBean> allowedGroups = fileService.getAllowedGroups(this.archiveFileKey);
 
             this.cmbGroups.removeAllItems();
             this.cmbGroups.addItem("");
@@ -885,31 +953,22 @@ public class ArchiveFileDetailLoadAction extends ProgressableAction {
             }
 
             // set selected checkbox when group is allowed for this case
+            // Create HashMap for O(1) group lookup instead of O(n) linear search
+            HashMap<String, ArchiveFileGroupsBean> allowedGroupsMap = new HashMap<>();
+            for (ArchiveFileGroupsBean gm : allowedGroups) {
+                allowedGroupsMap.put(gm.getAllowedGroup().getId(), gm);
+            }
+
             for (int i = 0; i < this.tblGroups.getRowCount(); i++) {
                 Group g = (Group) this.tblGroups.getValueAt(i, 1);
-                this.tblGroups.setValueAt(false, i, 0);
-                for (ArchiveFileGroupsBean gm : allowedGroups) {
-                    if (g.getId().equals(gm.getAllowedGroup().getId())) {
-                        this.tblGroups.setValueAt(true, i, 0);
-                        break;
-                    }
-                }
+                boolean isAllowed = allowedGroupsMap.containsKey(g.getId());
+                this.tblGroups.setValueAt(isAllowed, i, 0);
             }
             this.tblGroups.setEnabled(userIsInOwnerGroup && !this.readOnly && !this.caseDto.isArchived());
             this.cmbGroups.setEnabled(userIsInOwnerGroup && !this.readOnly && !this.caseDto.isArchived());
             ComponentUtils.autoSizeColumns(tblGroups);
             
-            this.progress("Lade Akte: Beteiligte...");
-
-            addressesForCase = fileService.getAddressesForCase(archiveFileKey);
-            involvementForCase = fileService.getInvolvementDetailsForCase(archiveFileKey, false);
-            
-            this.progress("Lade Akte: Kalender...");
-            CalendarServiceRemote calService = locator.lookupCalendarServiceRemote();
-            events = calService.getReviews(this.archiveFileKey);
-            
-            this.progress("Lade Akte: Belege und Zeiterfassung...");
-            List<Invoice> invoices=fileService.getInvoices(archiveFileKey);
+            this.progress("Lade Akte: Verarbeite Belege und Zeiterfassung...");
             HashMap <String,Invoice> docToInvoice=new HashMap<>();
             this.invoicesPanel.removeAll();
             for(Invoice inv: invoices) {
@@ -919,7 +978,18 @@ public class ArchiveFileDetailLoadAction extends ProgressableAction {
                 ip.setEntry(this.caseDto, inv, addressesForCase);
                 this.invoicesPanel.add(ip);
             }
-            List<Timesheet> timesheets = fileService.getTimesheets(archiveFileKey);
+            this.claimLedgersPanel.removeAll();
+            for(ClaimLedger cl: ledgers) {
+                ClaimLedgerEntryPanel clp=new ClaimLedgerEntryPanel(this.owner);
+                clp.setEntry(this.caseDto, cl);
+                this.claimLedgersPanel.add(clp);
+            }
+            this.paymentsPanel.removeAll();
+            for(Payment pay: payments) {
+                PaymentEntryPanel pp=new PaymentEntryPanel(this.owner);
+                pp.setEntry(this.caseDto, pay, addressesForCase);
+                this.paymentsPanel.add(pp);
+            }
             this.timesheetsPanel.removeAll();
             for (Timesheet ts : timesheets) {
                 TimesheetEntryPanel tp=new TimesheetEntryPanel(this.owner);
@@ -928,8 +998,7 @@ public class ArchiveFileDetailLoadAction extends ProgressableAction {
             }
             this.owner.checkTimesheetLimits();
             
-            this.progress("Lade Akte: Dokumente...");
-            documents = fileService.getDocuments(this.archiveFileKey);
+            this.progress("Lade Akte: Verarbeite Dokumente...");
             List<String> folderIds = new ArrayList<>();
             if (this.caseDto.getRootFolder() != null) {
                 folderIds = this.caseDto.getRootFolder().getAllFolderIds();
@@ -938,23 +1007,19 @@ public class ArchiveFileDetailLoadAction extends ProgressableAction {
             caseFolders.setReadOnly(readOnly || this.caseDto.isArchived());
             caseFolders.setRootFolder(this.caseDto.getRootFolder(), folderSettings);
             caseFolders.setCase(this.caseDto);
-            
+
             caseFolders.setDocuments(new ArrayList<>(documents), docToInvoice);
             caseFolders.sort();
 
-            List<DocumentFolderTemplate> allTemplates = fileService.getAllFolderTemplates();
             ArrayList<String> allTemplateNames = new ArrayList<>();
             for (DocumentFolderTemplate t : allTemplates) {
                 allTemplateNames.add(t.getName());
             }
             this.caseFolders.setFolderTemplateNames(allTemplateNames);
             
-            this.progress("Lade Akte: Etiketten...");
-            tags = fileService.getTags(archiveFileKey);
-            
-
         } catch (Exception ex) {
-            log.error("Error connecting to server", ex);
+            log.error("[AKTE-LOAD] execute FEHLER bei Server-Kommunikation oder GUI-Update", ex);
+            executor.shutdownNow();
             JOptionPane.showMessageDialog(this.owner, ex.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
             return false;
         }
@@ -977,18 +1042,18 @@ public class ArchiveFileDetailLoadAction extends ProgressableAction {
         }
         
         this.progress("Aktualisiere Dialog: Beteiligte...");
-
+        
         this.contactsForCasePanel.removeAll();
         int i = 0;
-        List<PartyTypeBean> allPartyTypes=locator.lookupSystemManagementRemote().getPartyTypes();
+
+        // Create HashMap for O(1) address lookup instead of O(n) linear search
+        HashMap<String, AddressBean> addressMap = new HashMap<>();
+        for (AddressBean ab : addressesForCase) {
+            addressMap.put(ab.getId(), ab);
+        }
+
         for (ArchiveFileAddressesBean afab : involvementForCase) {
-            AddressBean address = null;
-            for (AddressBean ab : addressesForCase) {
-                if (ab.getId().equals(afab.getAddressKey().getId())) {
-                    address = ab;
-                    break;
-                }
-            }
+            AddressBean address = addressMap.get(afab.getAddressKey().getId());
 
             InvolvedPartyEntryPanel ep = new InvolvedPartyEntryPanel(this.caseDto, this.owner, this.contactsForCasePanel, this.getClass().getName(), this.beaEnabled, allPartyTypes);
             ep.setEntry(address, afab, false);
@@ -1062,29 +1127,23 @@ public class ArchiveFileDetailLoadAction extends ProgressableAction {
         ThreadUtils.repaintComponent(tagPanel);
 
         this.owner.updateDocumentTagsOverview();
-
+        
         SwingUtilities.invokeLater(
                 new Thread(() -> {
                     ComponentUtils.autoSizeColumns(historyTarget);
                     ComponentUtils.autoSizeColumns(tblReviews);
         }));
-        
-        this.progress("Aktualisiere Dialog: Dokumentselektion...");
-        SwingUtilities.invokeLater(
-                new Thread(() -> {
-                    try {
-                        Thread.sleep(500);
-                    } catch (InterruptedException ex) {
 
-                    }
-                    if (selectDocumentWithFileName != null) {
+        this.progress("Aktualisiere Dialog: Dokumentselektion...");
+        if (selectDocumentWithFileName != null) {
+            SwingUtilities.invokeLater(
+                    new Thread(() -> {
                         if (owner instanceof ArchiveFilePanel) {
                             ((ArchiveFilePanel) owner).selectDocument(selectDocumentWithFileName);
                         }
-                    }
-                }));
+                    }));
+        }
 
-        List<CaseSyncSettings> syncSettings=fileService.getCaseSyncs(archiveFileKey);
         boolean syncEnabled=false;
         for(CaseSyncSettings syncSet: syncSettings) {
             if(syncSet.getUser().equals(UserSettings.getInstance().getCurrentUser()))
@@ -1099,6 +1158,7 @@ public class ArchiveFileDetailLoadAction extends ProgressableAction {
         
         EditorsRegistry.getInstance().clearStatus(true);
         ThreadUtils.setDefaultCursor(this.owner);
+        log.info("[AKTE-LOAD] execute ENDE: Akte erfolgreich geladen");
 
         return true;
 

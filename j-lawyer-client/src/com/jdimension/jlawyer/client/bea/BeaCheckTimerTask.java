@@ -674,8 +674,6 @@ import org.apache.log4j.Logger;
 import org.jlawyer.bea.BeaWrapperException;
 import org.jlawyer.bea.MessageSorterFilter;
 import org.jlawyer.bea.model.Folder;
-import org.jlawyer.bea.model.Message;
-import org.jlawyer.bea.model.MessageHeader;
 import org.jlawyer.bea.model.PostBox;
 
 /**
@@ -690,9 +688,15 @@ public class BeaCheckTimerTask extends java.util.TimerTask {
     private Hashtable<PostBox, Folder> inboxFolders = new Hashtable<PostBox, Folder>();
 
     private MessageSorterFilter filter = null;
+    
+    private volatile boolean stopped = false;
+
+    public void stop() {
+        stopped = true;
+    }
 
     /**
-     * Creates a new instance of SystemStateTimerTask
+     * Creates a new instance of BeaCheckTimerTask
      */
     public BeaCheckTimerTask() {
         super();
@@ -702,6 +706,8 @@ public class BeaCheckTimerTask extends java.util.TimerTask {
 
     @Override
     public void run() {
+        
+        if (stopped) return;
 
         int unread = 0;
         try {
@@ -710,11 +716,14 @@ public class BeaCheckTimerTask extends java.util.TimerTask {
                     BeaAccess bea = BeaAccess.getInstance();
                     if (bea.isLoggedIn()) {
                         if (this.postboxes == null) {
+                            if (stopped) return;
                             this.postboxes = bea.getPostBoxes();
                         }
                         for (PostBox box : this.postboxes) {
+                            if (stopped) return;
                             Folder inbox = this.getInbox(bea, box);
 
+                            if (stopped) return;
                             List<String> messages = bea.getFolderOverviewMessageIdsWithoutCache(inbox, this.filter);
                             unread = messages.size();
                         }
@@ -723,6 +732,7 @@ public class BeaCheckTimerTask extends java.util.TimerTask {
                 } catch (Exception ex) {
                     log.error("beA: potential session loss", ex);
 
+                    if (stopped) return;
                     // de.brak.bea.application.dto.soap.types6.BeaFault: 0001 - The entered session was invalid!
                     boolean reconnect = false;
                     if (ex.getMessage() != null && ex.getMessage().contains("0001")) {
@@ -733,6 +743,7 @@ public class BeaCheckTimerTask extends java.util.TimerTask {
                         }
                     }
                     if (reconnect) {
+                        if (stopped) return;
                         SwingUtilities.invokeLater(() -> {
                             try {
                                 Object editor = EditorsRegistry.getInstance().getEditor(BeaInboxPanel.class.getName());
@@ -748,6 +759,7 @@ public class BeaCheckTimerTask extends java.util.TimerTask {
 
                     }
                 }
+                if (stopped) return;
                 EventBroker eb = EventBroker.getInstance();
                 eb.publishEvent(new BeaStatusEvent(unread));
             }

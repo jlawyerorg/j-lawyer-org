@@ -693,7 +693,7 @@ public class ServerMonitoringDialog extends javax.swing.JDialog {
         super(parent, modal);
         initComponents();
 
-        boolean currentlyAdmin = UserUtils.isCurrentUserAdmin();
+        boolean currentlyAdmin = UserUtils.isCurrentUserSysAdmin();
 
         ClientSettings settings = ClientSettings.getInstance();
         try {

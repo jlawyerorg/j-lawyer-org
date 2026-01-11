@@ -688,20 +688,22 @@ public class ArchiveFileAddressesBeanFacade extends AbstractFacade<ArchiveFileAd
     
     @Override
     public List<ArchiveFileAddressesBean> findByReferenceType(PartyTypeBean partyType) {
-        List<ArchiveFileAddressesBean> list = getEntityManager().createQuery("from ArchiveFileAddressesBean where referenceType = ?1").setParameter(1, partyType).getResultList();
-        return list;
+        return getEntityManager().createQuery("from ArchiveFileAddressesBean where referenceType = ?1").setParameter(1, partyType).getResultList();
+    }
+    
+    @Override
+    public List<ArchiveFileAddressesBean> findByReference(String reference) {
+        return em.createNamedQuery("ArchiveFileAddressesBean.findByReference").setParameter("reference", reference).getResultList();
     }
     
     @Override
     public List<ArchiveFileAddressesBean> findByArchiveFileKey(ArchiveFileBean archiveFileKey) {
-        List<ArchiveFileAddressesBean> list = getEntityManager().createQuery("from ArchiveFileAddressesBean where archiveFileKey = ?1").setParameter(1, archiveFileKey).getResultList();
-        return list;
+        return getEntityManager().createQuery("from ArchiveFileAddressesBean where archiveFileKey = ?1").setParameter(1, archiveFileKey).getResultList();
     }
     
     @Override
     public List<ArchiveFileAddressesBean> findByAddressKey(AddressBean addressKey) {
-        List<ArchiveFileAddressesBean> list = getEntityManager().createQuery("from ArchiveFileAddressesBean where addressKey = ?1").setParameter(1, addressKey).getResultList();
-        return list;
+        return getEntityManager().createQuery("from ArchiveFileAddressesBean where addressKey = ?1").setParameter(1, addressKey).getResultList();
     }
     
 }

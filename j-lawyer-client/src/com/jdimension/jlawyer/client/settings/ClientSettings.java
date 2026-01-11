@@ -663,13 +663,20 @@
  */
 package com.jdimension.jlawyer.client.settings;
 
-import com.jdimension.jlawyer.drebis.InsuranceInfo;
 import com.jdimension.jlawyer.persistence.AppOptionGroupBean;
 import com.jdimension.jlawyer.persistence.CalendarEntryTemplate;
 import com.jdimension.jlawyer.server.modules.ModuleMetadata;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
+import java.io.IOException;
+import java.nio.file.FileVisitResult;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.nio.file.SimpleFileVisitor;
+import java.nio.file.StandardCopyOption;
+import java.nio.file.attribute.BasicFileAttributes;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -681,6 +688,8 @@ import org.apache.log4j.Logger;
  * @author jens
  */
 public class ClientSettings {
+    
+    public static final String JLAWYERCLIENT_SETTINGDIR="j-lawyer-settings";
     
     public static final String CONF_LASTSERVER="connection.lastserver";
     public static final String CONF_LASTSERVERLIST="connection.lastserverlist";
@@ -707,6 +716,9 @@ public class ClientSettings {
     
     public static final String CONF_UI_SCALING="client.ui.scaling";
     public static final String CONF_UI_FONTSIZEOFFSET="client.ui.fontsizeoffset";
+    
+    // Calendar UI
+    public static final String CONF_CALENDAR_WEEKVIEW_WORKWEEK = "client.calendar.weekview.workweek";
     
     public static final String CONF_DESKTOP_MYAPPOINTMENTS_HEIGHT="client.desktop.myappointments.height";
     public static final String CONF_DESKTOP_MYAPPOINTMENTS_WIDTH="client.desktop.myappointments.width";
@@ -794,6 +806,8 @@ public class ClientSettings {
     
     public static final String CONF_CASES_EXPORT_LASTDIR="client.archivefiles.htmlexport.lastdir";
     
+    public static final String CONF_FINANCE_SEPAXML_LASTDIR="client.finance.sepaxml.lastdir";
+    
     private static final String ARRAY_DELIMITER="#####";
     
     private static final Logger log=Logger.getLogger(ClientSettings.class.getName());
@@ -814,6 +828,7 @@ public class ClientSettings {
     private AppOptionGroupBean[] titles=null;
     private AppOptionGroupBean[] titlesInAddress=null;
     private AppOptionGroupBean[] countries=null;
+    private AppOptionGroupBean[] states=null;
     private AppOptionGroupBean[] nationalities=null;
     private AppOptionGroupBean[] legalForms=null;
     private AppOptionGroupBean[] degreePrefixes=null;
@@ -828,9 +843,6 @@ public class ClientSettings {
     private List<String>adrTagsInUse=new ArrayList<>();
     private List<String>docTagsInUse=new ArrayList<>();
     
-    private ArrayList<InsuranceInfo> insurances=new ArrayList<>();
-    private ArrayList<InsuranceInfo> motorInsurances=new ArrayList<>();
-    
     private String urlForum="https://www.j-lawyer.org/?page_id=673";
     private String urlHelp="https://www.j-lawyer.org/?page_id=11";
     
@@ -839,7 +851,7 @@ public class ClientSettings {
      */
     private ClientSettings() {
         this.clientConfiguration=new Properties();
-        String clientConfFileLocation=System.getProperty("user.home") + System.getProperty("file.separator") + ".j-lawyer-client" + System.getProperty("file.separator") + "clientConfiguration.properties";
+        String clientConfFileLocation=System.getProperty("user.home") + File.separator + ClientSettings.JLAWYERCLIENT_SETTINGDIR + File.separator + "clientConfiguration.properties";
         File clientConfFile=new File(clientConfFileLocation);
         if(!clientConfFile.exists()) {
             try {
@@ -855,15 +867,56 @@ public class ClientSettings {
         }
     }
     
+    public static void migrateClientSettingsDirectory() {
+        
+        
+        
+        Path oldDir = Paths.get(System.getProperty("user.home"), ".j-lawyer-client");
+        Path newDir = Paths.get(System.getProperty("user.home"), ClientSettings.JLAWYERCLIENT_SETTINGDIR);
+        
+        Path testDir = Paths.get(System.getProperty("user.home") + File.separator + ClientSettings.JLAWYERCLIENT_SETTINGDIR, "calculations");
+        
+        System.out.println("Migrating settings from " + oldDir.toString() + " to " + newDir.toString());
+        System.out.println("new dir exists: " + Files.exists(newDir));
+        System.out.println("old dir exists: " + Files.exists(oldDir));
+        System.out.println("test dir exists: " + Files.exists(testDir));
+        
+        if (Files.exists(oldDir) && (!Files.exists(newDir) || !Files.exists(testDir))) {
+            try {
+                Files.createDirectories(newDir);
+                Files.walkFileTree(oldDir, new SimpleFileVisitor<Path>() {
+                    @Override
+                    public FileVisitResult visitFile(Path file, BasicFileAttributes attrs) throws IOException {
+                        Path targetFile = newDir.resolve(oldDir.relativize(file));
+                        Files.copy(file, targetFile, StandardCopyOption.REPLACE_EXISTING);
+                        System.out.println("copying from " + file.toString() + " to " + targetFile.toString());
+                        return FileVisitResult.CONTINUE;
+                    }
+
+                    @Override
+                    public FileVisitResult preVisitDirectory(Path dir, BasicFileAttributes attrs) throws IOException {
+                        Path targetDir = newDir.resolve(oldDir.relativize(dir));
+                        Files.createDirectories(targetDir);
+                        System.out.println("created dir " + targetDir.toString());
+                        return FileVisitResult.CONTINUE;
+                    }
+                });
+            } catch (IOException ex) {
+                System.out.println("Unable to migrate from old settings directory to new settings directory: " + ex.getMessage());
+                ex.printStackTrace();
+            }
+        }
+    }
+    
     public String getLocalReportsDirectory() {
-        String reportsDir=System.getProperty("user.home") + System.getProperty("file.separator") + ".j-lawyer-client" + System.getProperty("file.separator") + "reports" + System.getProperty("file.separator");
+        String reportsDir=System.getProperty("user.home") + File.separator + ClientSettings.JLAWYERCLIENT_SETTINGDIR + File.separator + "reports" + File.separator;
         File rdFile=new File(reportsDir);
         rdFile.mkdirs();
         return reportsDir;
     } 
     
     public void saveConfiguration() throws Exception {
-        String clientConfFileLocation=System.getProperty("user.home") + System.getProperty("file.separator") + ".j-lawyer-client" + System.getProperty("file.separator") + "clientConfiguration.properties";
+        String clientConfFileLocation=System.getProperty("user.home") + File.separator + ClientSettings.JLAWYERCLIENT_SETTINGDIR + File.separator + "clientConfiguration.properties";
         File clientConfFile=new File(clientConfFileLocation);
         try (FileOutputStream fos=new FileOutputStream(clientConfFile)) {
             this.clientConfiguration.store(fos, "j-lawyer Client configuration");
@@ -999,34 +1052,6 @@ public class ClientSettings {
     }
 
     /**
-     * @return the insurances
-     */
-    public ArrayList<InsuranceInfo> getInsurances() {
-        return insurances;
-    }
-
-    /**
-     * @param insurances the insurances to set
-     */
-    public void setInsurances(ArrayList<InsuranceInfo> insurances) {
-        this.insurances = insurances;
-    }
-
-    /**
-     * @return the motorInsurances
-     */
-    public ArrayList<InsuranceInfo> getMotorInsurances() {
-        return motorInsurances;
-    }
-
-    /**
-     * @param motorInsurances the motorInsurances to set
-     */
-    public void setMotorInsurances(ArrayList<InsuranceInfo> motorInsurances) {
-        this.motorInsurances = motorInsurances;
-    }
-
-    /**
      * @return the tagDtos
      */
     public AppOptionGroupBean[] getArchiveFileTagDtos() {
@@ -1140,6 +1165,20 @@ public class ClientSettings {
      */
     public void setCountries(AppOptionGroupBean[] countries) {
         this.countries = countries;
+    }
+
+    /**
+     * @return the states
+     */
+    public AppOptionGroupBean[] getStates() {
+        return states;
+    }
+
+    /**
+     * @param states the states to set
+     */
+    public void setStates(AppOptionGroupBean[] states) {
+        this.states = states;
     }
 
     /**

@@ -808,4 +808,9 @@ public class GifJpegPngImageWithTextPanel extends javax.swing.JPanel implements 
         ThreadUtils.updateLabelIcon(this.lblContent, imageIcon);
     }
 
+    @Override
+    public void dispose() {
+        
+    }
+
 }

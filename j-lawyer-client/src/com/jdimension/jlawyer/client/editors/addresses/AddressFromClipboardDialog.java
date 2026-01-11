@@ -674,6 +674,7 @@ import com.jdimension.jlawyer.client.utils.ComponentUtils;
 import com.jdimension.jlawyer.persistence.AssistantConfig;
 import com.jdimension.jlawyer.services.JLawyerServiceLocator;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -694,6 +695,28 @@ public class AddressFromClipboardDialog extends javax.swing.JDialog {
 
     private AiCapability extractCapability = null;
     private AssistantConfig extractConfig = null;
+
+    // Define the keys in the desired order
+    private static List<String> orderedKeys = Arrays.asList(
+            "company", "firstName", "name", "street", "streetNo",
+            "zip", "city", "country", "phone", "mobile", "email", "fax"
+    );
+
+    // Map each key to its corresponding mappingKey
+    private static Map<String, String> keyMapping = Map.ofEntries(
+            Map.entry("company", AttributeCellEditor.ATTRIBUTE_UNTERNEHMEN),
+            Map.entry("firstName", AttributeCellEditor.ATTRIBUTE_VORNAME),
+            Map.entry("name", AttributeCellEditor.ATTRIBUTE_NAME),
+            Map.entry("city", AttributeCellEditor.ATTRIBUTE_ORT),
+            Map.entry("phone", AttributeCellEditor.ATTRIBUTE_TEL),
+            Map.entry("mobile", AttributeCellEditor.ATTRIBUTE_MOBIL),
+            Map.entry("zip", AttributeCellEditor.ATTRIBUTE_PLZ),
+            Map.entry("country", AttributeCellEditor.ATTRIBUTE_LAND),
+            Map.entry("street", AttributeCellEditor.ATTRIBUTE_STRASSE),
+            Map.entry("streetNo", AttributeCellEditor.ATTRIBUTE_HAUSNR),
+            Map.entry("email", AttributeCellEditor.ATTRIBUTE_EMAIL),
+            Map.entry("fax", AttributeCellEditor.ATTRIBUTE_FAX)
+    );
 
     /**
      * Creates new form AddressFromClipboardDialog
@@ -748,6 +771,8 @@ public class AddressFromClipboardDialog extends javax.swing.JDialog {
         DefaultTableModel tm = (DefaultTableModel) this.tblAttributes.getModel();
         tm.setRowCount(0);
 
+        Map<String, String> contactAttributes = new HashMap<>();
+
         String[] lines = text.split("\n");
         for (String line : lines) {
             line = line.trim();
@@ -755,9 +780,9 @@ public class AddressFromClipboardDialog extends javax.swing.JDialog {
                 continue;
             }
 
-            String field = "";
+            String key = "";
             if (line.contains("@") || line.contains("(at)")) {
-                field = AttributeCellEditor.ATTRIBUTE_EMAIL;
+                key = "email";
                 line = line.replace("E-Mail:", "");
                 line = line.replace("Email:", "");
                 line = line.replace("Mail:", "");
@@ -766,7 +791,7 @@ public class AddressFromClipboardDialog extends javax.swing.JDialog {
                 line = line.replace(":", "");
                 line = line.trim();
             } else if (line.toLowerCase().contains("telefon") || line.toLowerCase().contains("tel:") || line.toLowerCase().contains("tel.")) {
-                field = AttributeCellEditor.ATTRIBUTE_TEL;
+                key = "phone";
                 line = line.replace("Telefonnummer", "");
                 line = line.replace("telefonnummer", "");
                 line = line.replace("Telefon", "");
@@ -779,7 +804,7 @@ public class AddressFromClipboardDialog extends javax.swing.JDialog {
                 line = line.replace(".", "");
                 line = line.trim();
             } else if (line.toLowerCase().contains("mobil")) {
-                field = AttributeCellEditor.ATTRIBUTE_MOBIL;
+                key = "mobile";
                 line = line.replace("Mobil", "");
                 line = line.replace("Mobilnummer", "");
                 line = line.replace("Handy", "");
@@ -788,7 +813,7 @@ public class AddressFromClipboardDialog extends javax.swing.JDialog {
                 line = line.replace(".", "");
                 line = line.trim();
             } else if (line.toLowerCase().contains("fax") || line.toLowerCase().contains("fax:") || line.toLowerCase().contains("telefax") || line.toLowerCase().contains("telefax:")) {
-                field = AttributeCellEditor.ATTRIBUTE_FAX;
+                key = "fax";
                 line = line.replace("Telefax", "");
                 line = line.replace("telefax", "");
                 line = line.replace("Fax", "");
@@ -797,14 +822,23 @@ public class AddressFromClipboardDialog extends javax.swing.JDialog {
                 line = line.replace(".", "");
                 line = line.trim();
             } else if (line.matches("\\d{5}")) {
-                field = AttributeCellEditor.ATTRIBUTE_PLZ;
+                key = "zip";
             } else if (line.toLowerCase().contains("strasse") || line.toLowerCase().contains("straße") || line.toLowerCase().contains("allee")) {
-                field = AttributeCellEditor.ATTRIBUTE_STRASSE;
+                key = "street";
             } else if (line.matches("\\d{1,3}[abc]?")) {
-                field = AttributeCellEditor.ATTRIBUTE_HAUSNR;
+                key = "streetNo";
             }
 
-            tm.addRow(new String[]{line, field});
+            contactAttributes.put(key, line);
+        }
+
+        // Iterate in the predefined order
+        for (String key : orderedKeys) {
+            if (contactAttributes.containsKey(key)) {
+                String value = contactAttributes.get(key);
+                String mappingKey = keyMapping.get(key);
+                tm.addRow(new String[]{value, mappingKey});
+            }
         }
 
     }
@@ -972,41 +1006,16 @@ public class AddressFromClipboardDialog extends javax.swing.JDialog {
 
                 log.info("Ingo extracted contacts and responde: ");
                 log.info(resultText);
-                
-                Map<String,String> contactAttributes=AssistantAccess.jsonStringToMap(resultText);
-                
-                for(String key: contactAttributes.keySet()) {
-                    String mappingKey=null;
-                    if(key.equalsIgnoreCase("company")) {
-                        mappingKey=AttributeCellEditor.ATTRIBUTE_UNTERNEHMEN;
-                    } else if(key.equalsIgnoreCase("firstName")) {
-                        mappingKey=AttributeCellEditor.ATTRIBUTE_VORNAME;
-                    } else if(key.equalsIgnoreCase("name")) {
-                        mappingKey=AttributeCellEditor.ATTRIBUTE_NAME;
-                    } else if(key.equalsIgnoreCase("city")) {
-                        mappingKey=AttributeCellEditor.ATTRIBUTE_ORT;
-                    } else if(key.equalsIgnoreCase("phone")) {
-                        mappingKey=AttributeCellEditor.ATTRIBUTE_TEL;
-                    } else if(key.equalsIgnoreCase("mobile")) {
-                        mappingKey=AttributeCellEditor.ATTRIBUTE_MOBIL;
-                    } else if(key.equalsIgnoreCase("zip")) {
-                        mappingKey=AttributeCellEditor.ATTRIBUTE_PLZ;
-                    } else if(key.equalsIgnoreCase("country")) {
-                        mappingKey=AttributeCellEditor.ATTRIBUTE_LAND;
-                    } else if(key.equalsIgnoreCase("street")) {
-                        mappingKey=AttributeCellEditor.ATTRIBUTE_STRASSE;
-                    } else if(key.equalsIgnoreCase("streetNo")) {
-                        mappingKey=AttributeCellEditor.ATTRIBUTE_HAUSNR;
-                    } else if(key.equalsIgnoreCase("email")) {
-                        mappingKey=AttributeCellEditor.ATTRIBUTE_EMAIL;
-                    } else if(key.equalsIgnoreCase("fax")) {
-                        mappingKey=AttributeCellEditor.ATTRIBUTE_FAX;
-                    }
-                    if(mappingKey!=null) {
-                        String value=contactAttributes.get(key);
+
+                Map<String, String> contactAttributes = AssistantAccess.jsonStringToMap(resultText);
+
+                // Iterate in the predefined order
+                for (String key : orderedKeys) {
+                    if (contactAttributes.containsKey(key)) {
+                        String value = contactAttributes.get(key);
+                        String mappingKey = keyMapping.get(key);
                         tm.addRow(new String[]{value, mappingKey});
                     }
-                    
                 }
 
             }

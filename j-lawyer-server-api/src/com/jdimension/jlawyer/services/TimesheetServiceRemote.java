@@ -665,6 +665,7 @@ package com.jdimension.jlawyer.services;
 
 import com.jdimension.jlawyer.persistence.TimesheetPositionTemplate;
 import java.util.List;
+import java.util.Map;
 import javax.ejb.Remote;
 
 /**
@@ -680,6 +681,7 @@ public interface TimesheetServiceRemote {
     void removeTimesheetPositionTemplate(TimesheetPositionTemplate tpl);
 
     List<TimesheetPositionTemplate> getPositionTemplatesForTimesheet(String timesheetId) throws Exception;
+    Map<String,List<TimesheetPositionTemplate>> getPositionTemplatesForTimesheets(List<String> timesheetIds) throws Exception;
 
     void setPositionTemplatesForTimesheet(String timesheetId, List<TimesheetPositionTemplate> positionTemplates) throws Exception;
     

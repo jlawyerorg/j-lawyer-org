@@ -908,6 +908,7 @@ public class TemplatesEndpointV6 implements TemplatesEndpointLocalV6 {
             }
             ArchiveFileDocumentsBean newDoc = casesvc.addDocumentFromTemplate(caseId, fileName, null, folder, template, placeHoldersInTemplateMap, "", null);
             RestfulDocumentV1 rdoc = new RestfulDocumentV1();
+            rdoc.setCaseId(caseId);
             rdoc.setCreationDate(newDoc.getCreationDate());
             rdoc.setChangeDate(newDoc.getChangeDate());
             rdoc.setFavorite(rdoc.isFavorite());
@@ -950,8 +951,17 @@ public class TemplatesEndpointV6 implements TemplatesEndpointLocalV6 {
             List<Map<String, String>> resultList = new ArrayList<>();
 
             for (String templateName : templates) {
+                
+                EmailTemplate tpl=intSvc.getEmailTemplate(templateName);
+                
                 Map<String, String> template = new LinkedHashMap<>();
                 template.put("name", templateName);
+                template.put("format", tpl.getFormat());
+                template.put("to", tpl.getTo());
+                template.put("cc", tpl.getCc());
+                template.put("bcc", tpl.getBcc());
+                template.put("subject", tpl.getSubject());
+                template.put("body", tpl.getBody());
                 resultList.add(template);
             }
 
@@ -1046,6 +1056,10 @@ public class TemplatesEndpointV6 implements TemplatesEndpointLocalV6 {
             // get all placeholder values for the given set of placeholders
             HashMap<String, Object> htValues = system.getPlaceHolderValues(ht, aFile, parties, "", null, formPlaceHolderValues, caseLawyer, caseAssistant, author, null, null, null, null, null, null, null);
             String subject = CommonTemplatesUtil.replacePlaceHolders(tpl.getSubject(), htValues);
+            
+            String to=CommonTemplatesUtil.replacePlaceHolders(tpl.getTo(), htValues);
+            String cc=CommonTemplatesUtil.replacePlaceHolders(tpl.getCc(), htValues);
+            String bcc=CommonTemplatesUtil.replacePlaceHolders(tpl.getBcc(), htValues);
 
             placeHolderNames = CommonTemplatesUtil.getPlaceHoldersInTemplate(tpl.getBody(), allPartyTypesPlaceholders, formPlaceHolders);
             ht = new HashMap<>();
@@ -1055,12 +1069,17 @@ public class TemplatesEndpointV6 implements TemplatesEndpointLocalV6 {
             htValues = system.getPlaceHolderValues(ht, aFile, parties, "", null, formPlaceHolderValues, caseLawyer, caseAssistant, author, null, null, null, null, null, null, null);
 
             htValues.put("{{CLOUD_LINK}}", "");
+            
+            
 
             String body = CommonTemplatesUtil.replacePlaceHolders(tpl.getBody(), htValues);
             Map<String, Object> result = new LinkedHashMap<>();
             result.put("subject", subject.trim());
             result.put("body", body);
             result.put("mimeType", tpl.getFormat());
+            result.put("to", to);
+            result.put("cc", cc);
+            result.put("bcc", bcc);
 
             return Response.ok(result).build();
 

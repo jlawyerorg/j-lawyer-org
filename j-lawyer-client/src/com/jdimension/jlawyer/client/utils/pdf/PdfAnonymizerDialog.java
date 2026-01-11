@@ -780,6 +780,7 @@ public class PdfAnonymizerDialog extends javax.swing.JDialog implements Assistan
         cmdSave = new javax.swing.JButton();
 
         setDefaultCloseOperation(javax.swing.WindowConstants.DISPOSE_ON_CLOSE);
+        setTitle("PDF schwärzen");
         addComponentListener(new java.awt.event.ComponentAdapter() {
             public void componentResized(java.awt.event.ComponentEvent evt) {
                 formComponentResized(evt);
@@ -1185,6 +1186,11 @@ public class PdfAnonymizerDialog extends javax.swing.JDialog implements Assistan
             }
         }
         this.taRemoveWords.setText(this.taRemoveWords.getText() + ", " + resultText);
+    }
+    
+    @Override
+    public void processOutput(Map<String, String> output) {
+        
     }
 
     @Override

@@ -671,9 +671,11 @@ import com.jdimension.jlawyer.ai.AiUser;
 import com.jdimension.jlawyer.ai.InputData;
 import com.jdimension.jlawyer.ai.Message;
 import com.jdimension.jlawyer.ai.ParameterData;
+import com.jdimension.jlawyer.documents.DocumentPreview;
 import com.jdimension.jlawyer.email.EmailTemplate;
 import com.jdimension.jlawyer.persistence.AssistantConfig;
 import com.jdimension.jlawyer.persistence.AssistantPrompt;
+import com.jdimension.jlawyer.persistence.AssistantReplacement;
 import com.jdimension.jlawyer.persistence.IntegrationHook;
 import com.jdimension.jlawyer.pojo.FileMetadata;
 import java.util.Collection;
@@ -708,7 +710,7 @@ public interface IntegrationServiceRemote {
 
     EmailTemplate getEmailTemplate(String fileName) throws Exception;
 
-    String getObservedFilePreview(String fileName) throws Exception;
+    DocumentPreview getObservedFilePreview(String fileName) throws Exception;
 
     boolean validateExternalStorageLocation(String location) throws Exception;
 
@@ -763,5 +765,13 @@ public interface IntegrationServiceRemote {
     Map<AssistantConfig,AiUser> getAssistantUserInformation() throws Exception;
     
     List<AiRequestLog> getAssistantRequestLog(AssistantConfig config) throws Exception;
+    
+    List<AssistantReplacement> getAllAssistantReplacements() throws Exception;
+
+    AssistantReplacement addAssistantReplacement(AssistantReplacement ap) throws Exception;
+
+    AssistantReplacement updateAssistantReplacement(AssistantReplacement ap) throws Exception;
+
+    void removeAssistantReplacement(AssistantReplacement ap) throws Exception;
     
 }

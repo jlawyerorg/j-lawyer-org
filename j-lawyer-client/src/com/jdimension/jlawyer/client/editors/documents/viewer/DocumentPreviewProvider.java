@@ -663,12 +663,14 @@ For more information on this, and how to apply and follow the GNU AGPL, see
  */
 package com.jdimension.jlawyer.client.editors.documents.viewer;
 
+import com.jdimension.jlawyer.documents.DocumentPreview;
+
 /**
  *
  * @author jens
  */
 public interface DocumentPreviewProvider {
     
-    public String getPreview() throws Exception;
+    public DocumentPreview getPreview() throws Exception;
     
 }

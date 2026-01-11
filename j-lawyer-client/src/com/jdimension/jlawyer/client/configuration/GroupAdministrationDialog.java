@@ -663,20 +663,17 @@
  */
 package com.jdimension.jlawyer.client.configuration;
 
-//import bsh.This;
-import com.jdimension.jlawyer.calendar.CalendarRegion;
 import com.jdimension.jlawyer.client.settings.ClientSettings;
+import com.jdimension.jlawyer.client.utils.FrameUtils;
+import com.jdimension.jlawyer.persistence.ArchiveFileBean;
 import com.jdimension.jlawyer.services.JLawyerServiceLocator;
-import java.util.ArrayList;
-//import com.jdimension.jkanzlei.server.persistence.AppOptionGroupDTO;
-//import com.jdimension.jkanzlei.server.services.JKanzleiServiceLocator;
-//import com.jdimension.jkanzlei.server.services.SystemManagementRemote;
-//import com.jdimension.jkanzlei.server.services.SystemManagementRemoteHome;
 import javax.swing.JOptionPane;
 import org.apache.log4j.Logger;
 import com.jdimension.jlawyer.persistence.Group;
 import com.jdimension.jlawyer.services.SecurityServiceRemote;
+import java.awt.event.KeyEvent;
 import java.util.Collection;
+import java.util.List;
 
 /**
  *
@@ -685,12 +682,6 @@ import java.util.Collection;
 public class GroupAdministrationDialog extends javax.swing.JDialog {
 
     private static Logger log = Logger.getLogger(GroupAdministrationDialog.class.getName());
-
-    private String optionGroup = null;
-
-    private ArrayList<CalendarRegion> countries = null;
-
-    private byte[] currentCertificate = null;
 
     /**
      * Creates new form GroupAdministrationDialog
@@ -719,7 +710,6 @@ public class GroupAdministrationDialog extends javax.swing.JDialog {
         } catch (Exception ex) {
             log.error("Error connecting to server", ex);
             JOptionPane.showMessageDialog(this, ex.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
-            return;
         }
 
     }
@@ -867,7 +857,7 @@ public class GroupAdministrationDialog extends javax.swing.JDialog {
     }// </editor-fold>//GEN-END:initComponents
 
     private void txtGroupKeyPressed(java.awt.event.KeyEvent evt) {//GEN-FIRST:event_txtGroupKeyPressed
-        if (evt.getKeyCode() == evt.VK_ENTER) {
+        if (evt.getKeyCode() == KeyEvent.VK_ENTER) {
             this.cmdAddActionPerformed(null);
         }
     }//GEN-LAST:event_txtGroupKeyPressed
@@ -883,6 +873,18 @@ public class GroupAdministrationDialog extends javax.swing.JDialog {
                 Object[] delGroups = this.lstGroups.getSelectedValues();
                 for (Object o : delGroups) {
                     Group dg = (Group) o;
+                    
+                    List<ArchiveFileBean> linkedCases=mgmt.getCasesByGroup(dg.getId());
+                    if(linkedCases!=null && !linkedCases.isEmpty()) {
+                        CasesUsingGroupDialog dlg=new CasesUsingGroupDialog(this, true, dg, linkedCases);
+                        FrameUtils.centerDialog(dlg, this);
+                        dlg.setVisible(true);
+                        
+                        if(dlg.isDeleteCancelled()) {
+                            continue;
+                        }
+                    }
+                    
                     mgmt.deleteGroup(dg.getId());
                     ((GroupListModel) this.lstGroups.getModel()).removeElement(o);
                 }
@@ -890,7 +892,6 @@ public class GroupAdministrationDialog extends javax.swing.JDialog {
                 this.txtGroup.setText("");
             } catch (Exception ex) {
                 log.error("Error connecting to server", ex);
-                //JOptionPane.showMessageDialog(this.owner, "Verbindungsfehler: " + ex.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
                 JOptionPane.showMessageDialog(this, ex.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
             }
         }
@@ -960,9 +961,7 @@ public class GroupAdministrationDialog extends javax.swing.JDialog {
                 
             } catch (Exception ex) {
                 log.error("Error connecting to server", ex);
-                //JOptionPane.showMessageDialog(this.owner, "Verbindungsfehler: " + ex.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
                 JOptionPane.showMessageDialog(this, ex.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
-                return;
             }
         }
     }//GEN-LAST:event_lstGroupsValueChanged
@@ -986,7 +985,6 @@ public class GroupAdministrationDialog extends javax.swing.JDialog {
         try {
             JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
 
-            //SystemManagementRemoteHome home = (SystemManagementRemoteHome)locator.getRemoteHome("ejb/SystemManagementBean", SystemManagementRemoteHome.class);
             SecurityServiceRemote mgmt = locator.lookupSecurityServiceRemote();
             Group g = (Group) this.lstGroups.getSelectedValue();
             if (g != null) {
@@ -1000,7 +998,6 @@ public class GroupAdministrationDialog extends javax.swing.JDialog {
 
         } catch (Exception ex) {
             log.error("Error connecting to server", ex);
-            //JOptionPane.showMessageDialog(this.owner, "Verbindungsfehler: " + ex.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
             JOptionPane.showMessageDialog(this, ex.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
             return;
         }

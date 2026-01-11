@@ -677,9 +677,11 @@ public class ReportResultTable implements Serializable {
     protected String tableName="Tabelle 1";
     protected String[] columnNames=null;
     protected ArrayList<Object[]> values=new ArrayList<>();
-    
+    protected boolean hasCaseIdColumn=false;
+    protected boolean hasSumRows=false;
+
     public ReportResultTable() {
-        
+
     }
 
     /**
@@ -722,5 +724,33 @@ public class ReportResultTable implements Serializable {
      */
     public void setTableName(String tableName) {
         this.tableName = tableName;
+    }
+
+    /**
+     * @return the hasCaseIdColumn
+     */
+    public boolean isHasCaseIdColumn() {
+        return hasCaseIdColumn;
+    }
+
+    /**
+     * @param hasCaseIdColumn the hasCaseIdColumn to set
+     */
+    public void setHasCaseIdColumn(boolean hasCaseIdColumn) {
+        this.hasCaseIdColumn = hasCaseIdColumn;
+    }
+
+    /**
+     * @return the hasSumRows
+     */
+    public boolean isHasSumRows() {
+        return hasSumRows;
+    }
+
+    /**
+     * @param hasSumRows the hasSumRows to set
+     */
+    public void setHasSumRows(boolean hasSumRows) {
+        this.hasSumRows = hasSumRows;
     }
 }

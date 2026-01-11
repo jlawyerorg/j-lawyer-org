@@ -672,6 +672,7 @@ import com.jdimension.jlawyer.pojo.DataBucket;
 import com.jdimension.jlawyer.security.Base64;
 import com.jdimension.jlawyer.services.ArchiveFileServiceLocal;
 import com.jdimension.jlawyer.services.CalendarServiceLocal;
+import com.jdimension.jlawyer.services.DocUtilityServiceLocal;
 import javax.annotation.security.RolesAllowed;
 import javax.ejb.Stateless;
 import javax.naming.InitialContext;
@@ -684,6 +685,7 @@ import javax.ws.rs.Produces;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import org.jboss.logging.Logger;
+import org.jlawyer.io.rest.v1.pojo.RestfulDocumentContentV1;
 import org.jlawyer.io.rest.v5.pojo.RestfulCaseHistoryV5;
 import org.jlawyer.io.rest.v6.pojo.RestfulDataBucketV6;
 import org.jlawyer.io.rest.v6.pojo.RestfulDueDateV6;
@@ -699,6 +701,7 @@ import org.jlawyer.io.rest.v6.pojo.RestfulDueDateV6;
 public class CasesEndpointV6 implements CasesEndpointLocalV6 {
 
     private static final Logger log = Logger.getLogger(CasesEndpointV6.class.getName());
+    private static final String LOOKUP_DOCUTILITY="java:global/j-lawyer-server/j-lawyer-server-ejb/DocUtilityService!com.jdimension.jlawyer.services.DocUtilityServiceLocal";
     private static final String LOOKUP_CASES="java:global/j-lawyer-server/j-lawyer-server-ejb/ArchiveFileService!com.jdimension.jlawyer.services.ArchiveFileServiceLocal";
 
     /**
@@ -854,6 +857,9 @@ public class CasesEndpointV6 implements CasesEndpointLocalV6 {
             dd.setSummary(rev.getSummary());
             dd.setCalendar(rev.getCalendarSetup().getId());
             dd.setCaseId(rev.getArchiveFileKey().getId());
+            dd.setCaseName(rev.getArchiveFileKey().getName());
+            dd.setCaseNumber(rev.getArchiveFileKey().getFileNumber());
+            dd.setCaseReason(rev.getArchiveFileKey().getReason());
             dd.setDescription(rev.getDescription());
             dd.setLocation(rev.getLocation());
             dd.setType(RestfulDueDateV6.TYPE_RESPITE);
@@ -943,6 +949,9 @@ public class CasesEndpointV6 implements CasesEndpointLocalV6 {
             dd.setSummary(rev.getSummary());
             dd.setCalendar(rev.getCalendarSetup().getId());
             dd.setCaseId(rev.getArchiveFileKey().getId());
+            dd.setCaseName(rev.getArchiveFileKey().getName());
+            dd.setCaseNumber(rev.getArchiveFileKey().getFileNumber());
+            dd.setCaseReason(rev.getArchiveFileKey().getReason());
             dd.setDescription(rev.getDescription());
             dd.setLocation(rev.getLocation());
             dd.setType(RestfulDueDateV6.TYPE_RESPITE);
@@ -955,6 +964,67 @@ public class CasesEndpointV6 implements CasesEndpointLocalV6 {
             return Response.ok(dd).build();
         } catch (Exception ex) {
             log.error("can not create due date for case " + dueDate.getCaseId(), ex);
+            return Response.serverError().build();
+        }
+    }
+    
+    /**
+     * Converts a document to PDF.
+     *
+     * @param id the documents ID
+     * @response 401 User not authorized
+     * @response 403 User not authenticated
+     */
+    @Override
+    @PUT
+    @Produces(MediaType.APPLICATION_JSON+";charset=utf-8")
+    @Path("/document/{id}/to-pdf")
+    @RolesAllowed({"writeArchiveFileRole"})
+    public Response convertToPdf(@PathParam("id") String id) {
+        try {
+
+            InitialContext ic = new InitialContext();
+            DocUtilityServiceLocal docUtility = (DocUtilityServiceLocal) ic.lookup(LOOKUP_DOCUTILITY);
+            ArchiveFileDocumentsBean pdfDoc=docUtility.convertToPdf(id);
+            
+            RestfulDocumentContentV1 doc = new RestfulDocumentContentV1();
+            doc.setCaseId(pdfDoc.getArchiveFileKey().getId());
+            doc.setExternalId(pdfDoc.getExternalId());
+            doc.setFileName(pdfDoc.getName());
+            doc.setId(pdfDoc.getId());
+            doc.setVersion(pdfDoc.getVersion());
+            if(pdfDoc.getFolder()!=null)
+                doc.setFolderId(pdfDoc.getFolder().getId());
+
+            return Response.ok(doc).build();
+        } catch (Exception ex) {
+            log.error("Can not convert document " + id + " to PDF", ex);
+            return Response.serverError().build();
+        }
+    }
+    
+    /**
+     * Performs OCR on a PDF document. Existing PDF is replaced with its OCRed equivalent.
+     *
+     * @param id the documents ID
+     * @response 401 User not authorized
+     * @response 403 User not authenticated
+     */
+    @Override
+    @PUT
+    @Produces(MediaType.APPLICATION_JSON+";charset=utf-8")
+    @Path("/document/{id}/perform-ocr")
+    @RolesAllowed({"writeArchiveFileRole"})
+    public Response performOcr(@PathParam("id") String id) {
+        try {
+
+            InitialContext ic = new InitialContext();
+            ArchiveFileServiceLocal cases = (ArchiveFileServiceLocal) ic.lookup(LOOKUP_CASES);
+            boolean ocred=cases.performOcr(id);
+
+            return Response.ok(ocred).build();
+        } catch (Exception ex) {
+            log.error("Can not perform OCR for document " + id, ex);
             return Response.serverError().build();
         }
     }

@@ -1,0 +1,1105 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SunEditor - j-lawyer.org</title>
+
+    <!-- SunEditor CSS (loaded from local resources) -->
+    <link rel="stylesheet" href="SUNEDITOR_CSS_PATH">
+
+    <style>
+        /* Liberation Sans - Helvetica/Arial Alternative */
+        @font-face {
+            font-family: 'Liberation Sans';
+            src: url('FONT_LIBERATION_SANS_REGULAR') format('woff2');
+            font-weight: normal;
+            font-style: normal;
+        }
+        @font-face {
+            font-family: 'Liberation Sans';
+            src: url('FONT_LIBERATION_SANS_BOLD') format('woff2');
+            font-weight: bold;
+            font-style: normal;
+        }
+        @font-face {
+            font-family: 'Liberation Sans';
+            src: url('FONT_LIBERATION_SANS_ITALIC') format('woff2');
+            font-weight: normal;
+            font-style: italic;
+        }
+        @font-face {
+            font-family: 'Liberation Sans';
+            src: url('FONT_LIBERATION_SANS_BOLDITALIC') format('woff2');
+            font-weight: bold;
+            font-style: italic;
+        }
+
+        /* Liberation Serif - Times New Roman Alternative */
+        @font-face {
+            font-family: 'Liberation Serif';
+            src: url('FONT_LIBERATION_SERIF_REGULAR') format('woff2');
+            font-weight: normal;
+            font-style: normal;
+        }
+        @font-face {
+            font-family: 'Liberation Serif';
+            src: url('FONT_LIBERATION_SERIF_BOLD') format('woff2');
+            font-weight: bold;
+            font-style: normal;
+        }
+        @font-face {
+            font-family: 'Liberation Serif';
+            src: url('FONT_LIBERATION_SERIF_ITALIC') format('woff2');
+            font-weight: normal;
+            font-style: italic;
+        }
+        @font-face {
+            font-family: 'Liberation Serif';
+            src: url('FONT_LIBERATION_SERIF_BOLDITALIC') format('woff2');
+            font-weight: bold;
+            font-style: italic;
+        }
+
+        /* Liberation Mono - Courier New Alternative */
+        @font-face {
+            font-family: 'Liberation Mono';
+            src: url('FONT_LIBERATION_MONO_REGULAR') format('woff2');
+            font-weight: normal;
+            font-style: normal;
+        }
+        @font-face {
+            font-family: 'Liberation Mono';
+            src: url('FONT_LIBERATION_MONO_BOLD') format('woff2');
+            font-weight: bold;
+            font-style: normal;
+        }
+        @font-face {
+            font-family: 'Liberation Mono';
+            src: url('FONT_LIBERATION_MONO_ITALIC') format('woff2');
+            font-weight: normal;
+            font-style: italic;
+        }
+        @font-face {
+            font-family: 'Liberation Mono';
+            src: url('FONT_LIBERATION_MONO_BOLDITALIC') format('woff2');
+            font-weight: bold;
+            font-style: italic;
+        }
+    </style>
+
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            font-family: Arial, 'Liberation Sans', sans-serif;
+            overflow: hidden;
+        }
+
+        /*
+         * ============================================================================
+         * WORKAROUND: JavaFX WebKit Drag Image Crash (JDK-8284580)
+         * ============================================================================
+         *
+         * PROBLEM:
+         * JavaFX WebKit crashes when the user selects text and then moves the mouse
+         * while holding down the mouse button over the selected text. WebKit interprets
+         * this as a drag operation and attempts to create a "drag image" for the
+         * selection. The crash occurs in native code:
+         *
+         *   WebCore::createDragImageForSelection()
+         *     → WebCore::createDragImageFromSnapshot()
+         *       → WebCore::BitmapImage::create()
+         *         → WebCore::PlatformImageNativeImageBackend::size()
+         *           → CRASH (NativeImage is null/invalid)
+         *
+         * This affects:
+         * - macOS ARM64 (Apple Silicon): SIGSEGV/SIGABRT
+         * - Linux x86_64: SIGSEGV in libjfxwebkit.so
+         *
+         * IMPACT:
+         * The application crashes completely when users try to:
+         * - Drag selected text to move it
+         * - Click on selected text and move the mouse (even unintentionally)
+         * - Use color pickers or other toolbar functions that involve mouse movement
+         *   after text selection
+         *
+         * THIS CSS RULE:
+         * Disables native drag behavior via CSS. This is one layer of a multi-layer
+         * fix (defense in depth). The primary fix is the JavaScript mousedown handler
+         * in setupDragPreventionHandler() that clears selections before a drag can start.
+         *
+         * See also:
+         * - setupDragPreventionHandler() in this file (JavaScript fix)
+         * - WebViewHtmlEditorPanel.java DRAG_DETECTED event filter (JavaFX fix)
+         * - https://bugs.openjdk.org/browse/JDK-8284580
+         * - https://bugs.openjdk.org/browse/JDK-8315495
+         * ============================================================================
+         */
+        * {
+            -webkit-user-drag: none !important;
+        }
+
+        #editor {
+            width: 100%;
+            height: 100vh;
+        }
+
+        /* Customize SunEditor toolbar */
+        .sun-editor {
+            height: 100%;
+            border: none;
+        }
+
+        .sun-editor .se-toolbar {
+            background-color: #f5f5f5;
+        }
+
+        /* Toolbar icon color customization */
+        .sun-editor .se-toolbar button svg {
+            fill: #0e72b5 !important;
+        }
+
+        .sun-editor .se-toolbar button i {
+            color: #0e72b5 !important;
+        }
+
+        /* Hover effect (slightly darker) */
+        .sun-editor .se-toolbar button:hover svg {
+            fill: #0a5a91 !important;
+        }
+
+        .sun-editor .se-toolbar button:hover i {
+            color: #0a5a91 !important;
+        }
+
+        /* Active/Selected button */
+        .sun-editor .se-toolbar button.active svg,
+        .sun-editor .se-toolbar button._se_command_active svg {
+            fill: #0e72b5 !important;
+        }
+
+        .sun-editor .se-toolbar button.active i,
+        .sun-editor .se-toolbar button._se_command_active i {
+            color: #0e72b5 !important;
+        }
+
+        .sun-editor .se-wrapper {
+            height: calc(100vh - 50px);
+        }
+
+        .sun-editor .se-wrapper-inner {
+            height: 100%;
+        }
+    </style>
+</head>
+<body>
+    <!-- SunEditor container -->
+    <textarea id="editor"></textarea>
+
+    <!-- SunEditor JavaScript (loaded from local resources) -->
+    <script src="SUNEDITOR_JS_PATH"></script>
+    <script src="SUNEDITOR_LANG_PATH"></script>
+
+    <script>
+        // Initialize SunEditor
+        const editor = SUNEDITOR.create('editor', {
+            lang: SUNEDITOR_LANG.de,
+            width: '100%',
+            height: '100%',
+
+            // Toolbar buttons
+            buttonList: [
+                ['undo', 'redo'],
+                ['font', 'fontSize', 'formatBlock'],
+                ['bold', 'underline', 'italic', 'strike', 'subscript', 'superscript'],
+                ['fontColor', 'hiliteColor'],
+                ['removeFormat'],
+                ['outdent', 'indent'],
+                ['align', 'horizontalRule', 'list', 'lineHeight'],
+                ['table', 'link', 'image'],
+                ['fullScreen', 'showBlocks', 'codeView']
+            ],
+
+            // Font options (common fonts available on Windows/Linux/Mac)
+            font: [
+                'Liberation Sans',
+                'Liberation Serif',
+                'Liberation Mono',
+                'Arial',
+                'Arial Black',
+                'Calibri',
+                'Cambria',
+                'Comic Sans MS',
+                'Courier New',
+                'Georgia',
+                'Helvetica',
+                'Impact',
+                'Lucida Console',
+                'Lucida Sans Unicode',
+                'Palatino Linotype',
+                'Tahoma',
+                'Times New Roman',
+                'Trebuchet MS',
+                'Verdana',
+                // Generic font families (fallbacks)
+                'sans-serif',
+                'serif',
+                'monospace',
+                'cursive',
+                'fantasy'
+            ],
+
+            // Font size options (in px)
+            fontSize: [8, 10, 12, 14, 16, 18, 20, 24, 28, 32, 36, 48, 72],
+
+            // Format block options
+            formats: ['p', 'div', 'h1', 'h2', 'h3', 'h4', 'h5', 'h6', 'blockquote', 'pre'],
+
+            // Color palette
+            colorList: [
+                ['#000000', '#ffffff', '#ff0000', '#00ff00', '#0000ff', '#ffff00', '#ff00ff', '#00ffff'],
+                ['#800000', '#808080', '#c0c0c0', '#800080', '#008000', '#808000', '#000080', '#008080'],
+                ['#ff6600', '#ff9900', '#ffcc00', '#99cc00', '#339966', '#33cccc', '#3366ff', '#6633ff', '#cc33ff']
+            ],
+
+            // Table options
+            tableCellControllerPosition: 'top',
+
+            // Image options
+            imageGalleryUrl: null,  // Disable external image gallery
+            imageUrlInput: true,     // Allow image URL input
+            imageUploadUrl: null,    // Disable image upload (for PoC)
+
+            // Paste options - NOTE: We override the paste handler completely below
+            // These settings are kept for reference but our custom handler takes precedence
+            pastePlainText: false,  // Allow HTML paste (but we handle it manually)
+
+            // Other options
+            resizingBar: false,  // Hide resizing bar (we control size via container)
+            showPathLabel: false,  // Hide path label
+            charCounter: false,    // Disable character counter
+            maxCharCount: null,     // No character limit
+
+            // Default style for editor content
+            defaultStyle: "font-family: Arial, 'Liberation Sans', sans-serif; font-size: 12px;"
+        });
+
+        // Track whether editor is ready
+        let editorReady = false;
+
+        // Debounce timer for content change notifications
+        let contentChangeTimer = null;
+
+        // Wait for editor to be fully initialized
+        editor.onload = function(core, reload) {
+            editorReady = true;
+
+            // Notify Java that editor is ready
+            if (window.javaConnector && window.javaConnector.onEditorReady) {
+                window.javaConnector.onEditorReady();
+            }
+
+            // CRITICAL FIX: Override the paste handler to preserve formatting
+            // SunEditor's default paste behavior strips formatting, so we handle it manually
+            setupCustomPasteHandler();
+
+            // WORKAROUND: Prevent JavaFX WebKit crash when creating drag image for selection.
+            // On macOS ARM64 and Linux, WebKit crashes in WebCore::createDragImageForSelection
+            // when trying to create a drag image for text selection.
+            // The CSS workaround (-webkit-user-drag: none) and JavaFX DRAG_DETECTED filter
+            // don't work because the drag is detected internally by WebKit before these can act.
+            // This JavaScript handler intercepts the dragstart event at DOM level, preventing
+            // WebKit from ever calling createDragImageForSelection.
+            // Text selection still works - only Drag & Drop of selected text is disabled.
+            // See: https://bugs.openjdk.org/browse/JDK-8284580
+            setupDragPreventionHandler();
+        };
+
+        // Register onChange handler to notify Java of content changes
+        // This is critical for macOS where we can't synchronously get content from EDT
+        // NOTE: On macOS JavaFX WebView, this handler may not fire reliably during user input.
+        // The MutationObserver below serves as a reliable backup.
+        editor.onChange = function(contents, core) {
+            // log('[onChange] SunEditor onChange fired, content length: ' + (contents ? contents.length : 0));
+            // Debounce to avoid flooding Java with updates during rapid typing
+            if (contentChangeTimer) {
+                clearTimeout(contentChangeTimer);
+            }
+            contentChangeTimer = setTimeout(function() {
+                // log('[onChange] Debounce timer expired, notifying Java');
+                if (window.javaConnector && window.javaConnector.onContentChanged) {
+                    try {
+                        window.javaConnector.onContentChanged(contents);
+                        // log('[onChange] Successfully called javaConnector.onContentChanged');
+                    } catch (e) {
+                        // log('[onChange] ERROR calling javaConnector.onContentChanged: ' + e);
+                        console.error('Error notifying Java of content change:', e);
+                    }
+                } else {
+                    // log('[onChange] javaConnector.onContentChanged not available');
+                }
+            }, 300); // 300ms debounce
+        };
+
+        // WORKAROUND for macOS JavaFX WebView: SunEditor events don't fire reliably
+        // Use MutationObserver to detect DOM changes directly
+        (function setupMutationObserver() {
+            var editorElement = editor.core.context.element.wysiwyg;
+            if (!editorElement) {
+                // log('[MutationObserver] ERROR: Could not find editor element');
+                console.warn('Could not find editor element for MutationObserver');
+                return;
+            }
+            // log('[MutationObserver] Setting up observer on editor element: ' + editorElement.tagName + '#' + editorElement.id);
+
+            // Store reference globally for debugging
+            window._mutationObserver = null;
+            window._observedElement = editorElement;
+
+            var mutationTimer = null;
+            var lastReportedLength = 0;
+            var mutationCount = 0;
+            var observer = new MutationObserver(function(mutations) {
+                mutationCount++;
+                // Log mutation types for debugging
+                // var mutationTypes = mutations.map(function(m) {
+                //     return m.type + (m.type === 'characterData' ? '(' + (m.target.textContent || '').length + ')' : '');
+                // }).join(', ');
+                // log('[MutationObserver] #' + mutationCount + ' Detected ' + mutations.length + ' mutation(s): ' + mutationTypes);
+
+                // Debounce mutation notifications
+                if (mutationTimer) {
+                    clearTimeout(mutationTimer);
+                }
+                mutationTimer = setTimeout(function() {
+                    var contents = editor.getContents();
+                    // var domContent = editorElement.innerHTML;
+                    // var contentLen = contents ? contents.length : 0;
+                    // var domLen = domContent ? domContent.length : 0;
+
+                    // Only log if content actually changed
+                    // if (contentLen !== lastReportedLength) {
+                    //     log('[MutationObserver] Content CHANGED: ' + lastReportedLength + ' -> ' + contentLen + ' (DOM innerHTML: ' + domLen + ')');
+                    //     lastReportedLength = contentLen;
+                    // } else {
+                    //     log('[MutationObserver] Content UNCHANGED at ' + contentLen + ' (DOM innerHTML: ' + domLen + ')');
+                    // }
+
+                    if (window.javaConnector && window.javaConnector.onContentChanged) {
+                        window.javaConnector.onContentChanged(contents);
+                        // log('[MutationObserver] Successfully called javaConnector.onContentChanged');
+                    } else {
+                        // log('[MutationObserver] javaConnector.onContentChanged not available');
+                    }
+                }, 300);
+            });
+
+            observer.observe(editorElement, {
+                childList: true,
+                subtree: true,
+                characterData: true,
+                characterDataOldValue: true
+            });
+            window._mutationObserver = observer;
+            // log('[MutationObserver] Observer started');
+
+            // Heartbeat: Check every 5 seconds if observer is still working
+            // Store interval handle globally so it can be cleared on dispose
+            window._heartbeatInterval = setInterval(function() {
+                var currentElement = editor.core.context.element.wysiwyg;
+                var elementChanged = (currentElement !== window._observedElement);
+                // var elementInDom = document.body.contains(window._observedElement);
+                // var instanceId = window._javaInstanceId || '?';
+                // log('[Instance ' + instanceId + '] HEARTBEAT - Total mutations: ' + mutationCount +
+                //     ', Element changed: ' + elementChanged +
+                //     ', Element in DOM: ' + elementInDom +
+                //     ', javaConnector available: ' + !!(window.javaConnector && window.javaConnector.log));
+
+                // If element changed, re-attach observer
+                if (elementChanged && currentElement) {
+                    // log('[MutationObserver] WARNING: Editor element changed! Re-attaching observer...');
+                    observer.disconnect();
+                    window._observedElement = currentElement;
+                    editorElement = currentElement;
+                    observer.observe(currentElement, {
+                        childList: true,
+                        subtree: true,
+                        characterData: true,
+                        characterDataOldValue: true
+                    });
+                    // log('[MutationObserver] Observer re-attached to new element');
+                }
+            }, 5000);
+        })();
+
+        /**
+         * ============================================================================
+         * WORKAROUND: JavaFX WebKit Drag Image Crash (JDK-8284580)
+         * ============================================================================
+         *
+         * PROBLEM:
+         * JavaFX WebKit crashes when users click on selected text and move the mouse.
+         * WebKit interprets this as a "drag selected text" operation and attempts to
+         * create a visual drag image. The image creation fails with a null pointer.
+         *
+         * CRASH SEQUENCE (from crash logs):
+         * 1. User selects text in the editor
+         * 2. User clicks on the selected text (mousedown)
+         * 3. User moves mouse while holding button (mousemove/mousedrag)
+         * 4. WebKit native code processes the mouse movement:
+         *      Java_com_sun_webkit_WebPage_twkProcessMouseEvent()
+         *        → WebCore::EventHandler::mouseMoved()
+         *          → WebCore::EventHandler::handleMouseMoveEvent()
+         *            → WebCore::EventHandler::handleMouseDraggedEvent()
+         *              → WebCore::EventHandler::handleDrag()
+         *                → WebCore::DragController::startDrag()
+         *                  → WebCore::createDragImageForSelection()
+         *                    → WebCore::createDragImageFromSnapshot()
+         *                      → WebCore::BitmapImage::create()
+         *                        → WebCore::PlatformImageNativeImageBackend::size()
+         *                          → CRASH! (NativeImage pointer is null)
+         *
+         * WHY OTHER APPROACHES FAILED:
+         * - CSS "-webkit-user-drag: none": WebKit ignores this for text selections
+         * - JavaScript "dragstart" event: Fired AFTER createDragImageForSelection crashes
+         * - JavaFX DRAG_DETECTED filter: Event never fires; drag is handled in native WebKit
+         * - HTML "draggable=false" attribute: Ignored for text selections
+         *
+         * SOLUTION:
+         * Intercept the mousedown event BEFORE WebKit processes subsequent mousemove events.
+         * If the click is on already-selected text, clear the selection immediately.
+         * This prevents WebKit from entering "drag mode" because there's no selection to drag.
+         *
+         * TIMING:
+         *   mousedown event → JavaScript clears selection → mousemove event
+         *                                                   ↓
+         *                                    WebKit sees no selection → no drag → no crash
+         *
+         * TRADE-OFF:
+         * Users cannot drag-and-drop selected text to move it. When clicking on selected
+         * text, the selection is cleared and a new selection starts. This is acceptable
+         * because:
+         * 1. Drag-to-move text is rarely used in note editors
+         * 2. Copy/paste provides the same functionality
+         * 3. The alternative is a complete application crash
+         *
+         * AFFECTED PLATFORMS:
+         * - macOS ARM64 (Apple Silicon) with JavaFX 17+
+         * - Linux x86_64 with JavaFX 17+
+         * - Possibly other platforms (applied universally for consistency)
+         *
+         * RELATED BUG REPORTS:
+         * - https://bugs.openjdk.org/browse/JDK-8284580
+         * - https://bugs.openjdk.org/browse/JDK-8315495
+         * ============================================================================
+         */
+        function setupDragPreventionHandler() {
+            const editorElement = editor.core.context.element.wysiwyg;
+
+            // CRITICAL: On mousedown, check if clicking on existing selection.
+            // If so, clear the selection to prevent WebKit from starting a drag.
+            // This must happen in capture phase, before WebKit processes the event.
+            editorElement.addEventListener('mousedown', function(e) {
+                const selection = window.getSelection();
+                if (!selection || selection.isCollapsed || selection.rangeCount === 0) {
+                    // No selection or collapsed selection - nothing to do
+                    return;
+                }
+
+                // Check if the click is within the selected range
+                const range = selection.getRangeAt(0);
+                const clickX = e.clientX;
+                const clickY = e.clientY;
+
+                // Get all rects of the selection (handles multi-line selections)
+                const rects = range.getClientRects();
+                let clickedOnSelection = false;
+
+                for (let i = 0; i < rects.length; i++) {
+                    const rect = rects[i];
+                    if (clickX >= rect.left && clickX <= rect.right &&
+                        clickY >= rect.top && clickY <= rect.bottom) {
+                        clickedOnSelection = true;
+                        break;
+                    }
+                }
+
+                if (clickedOnSelection) {
+                    // Clicking on selected text would trigger a drag - clear selection first
+                    console.log('Clearing selection on mousedown to prevent WebKit drag crash');
+                    selection.removeAllRanges();
+                    // The click will now start a new selection instead of dragging
+                }
+            }, { capture: true, passive: true });
+
+            // Keep existing dragstart prevention as additional safety layer
+            editorElement.setAttribute('draggable', 'false');
+
+            editorElement.addEventListener('dragstart', function(e) {
+                console.log('Preventing dragstart to avoid WebKit crash');
+                e.preventDefault();
+                e.stopPropagation();
+                return false;
+            }, { capture: true, passive: false });
+
+            document.addEventListener('dragstart', function(e) {
+                if (editorElement.contains(e.target)) {
+                    console.log('Preventing document dragstart to avoid WebKit crash');
+                    e.preventDefault();
+                    e.stopPropagation();
+                    return false;
+                }
+            }, { capture: true, passive: false });
+
+            // Use MutationObserver to ensure all new elements also have draggable=false
+            const dragObserver = new MutationObserver(function(mutations) {
+                mutations.forEach(function(mutation) {
+                    mutation.addedNodes.forEach(function(node) {
+                        if (node.nodeType === Node.ELEMENT_NODE) {
+                            node.setAttribute('draggable', 'false');
+                            node.querySelectorAll('*').forEach(function(el) {
+                                el.setAttribute('draggable', 'false');
+                            });
+                        }
+                    });
+                });
+            });
+            dragObserver.observe(editorElement, { childList: true, subtree: true });
+
+            console.log('Drag prevention handler installed to avoid WebKit crash');
+        }
+
+        /**
+         * Setup custom paste handler that preserves formatting from clipboard
+         */
+        function setupCustomPasteHandler() {
+            const editorElement = editor.core.context.element.wysiwyg;
+
+            // CRITICAL: Use capture phase to intercept BEFORE SunEditor
+            editorElement.addEventListener('paste', handlePaste, {
+                capture: true,  // Intercept in capture phase (before SunEditor)
+                passive: false  // Allow preventDefault
+            });
+
+            console.log('Custom paste handler installed on:', editorElement);
+        }
+
+        /**
+         * Log to both console and Java (if available)
+         */
+        function log(message, data) {
+            console.log(message, data || '');
+            if (window.javaConnector && window.javaConnector.log) {
+                try {
+                    window.javaConnector.log(message + (data ? ': ' + JSON.stringify(data).substring(0, 100) : ''));
+                } catch (e) {
+                    console.error('Error logging to Java:', e);
+                }
+            }
+        }
+
+        /**
+         * Custom paste handler that preserves HTML formatting
+         * This bypasses SunEditor completely and uses Java's clipboard API
+         */
+        function handlePaste(e) {
+            log('=== PASTE EVENT TRIGGERED ===');
+
+            // CRITICAL: Stop SunEditor from processing this event
+            e.preventDefault();
+            e.stopPropagation();
+            e.stopImmediatePropagation();
+
+            // CRITICAL FIX: JavaFX WebView cannot access HTML clipboard data
+            // Use Java's AWT Clipboard API instead via javaConnector
+            let html = null;
+            let plainText = null;
+
+            // Try to get HTML from Java clipboard API
+            if (window.javaConnector && window.javaConnector.getClipboardHTML) {
+                try {
+                    html = window.javaConnector.getClipboardHTML();
+                    log('Got HTML from Java clipboard: ' + (html ? html.length : 0) + ' chars');
+                    if (html) {
+                        log('Java HTML sample: ' + html.substring(0, 300));
+                    }
+                } catch (error) {
+                    log('ERROR getting clipboard from Java: ' + error);
+                }
+            }
+
+            // Fallback: Try JavaScript clipboard API (won't get HTML in JavaFX, but get plain text)
+            const clipboardData = e.clipboardData || window.clipboardData;
+            if (clipboardData) {
+                if (!html) {
+                    // JavaScript API won't give us HTML in JavaFX WebView, but try anyway
+                    html = clipboardData.getData('text/html');
+                }
+                plainText = clipboardData.getData('text/plain');
+
+                log('Clipboard types: ' + Array.from(clipboardData.types).join(', '));
+                log('JS HTML length: ' + (html ? html.length : 0));
+                log('Plain text length: ' + (plainText ? plainText.length : 0));
+            }
+
+            // Determine what to paste
+            let contentToInsert = '';
+
+            if (html && html.trim()) {
+                // We got HTML (from Java) - clean and use it
+                contentToInsert = cleanPastedHTML(html);
+                log('Using HTML content (first 500 chars): ' + contentToInsert.substring(0, 500));
+                log('Using HTML content (last 200 chars): ' + contentToInsert.substring(Math.max(0, contentToInsert.length - 200)));
+            } else if (plainText) {
+                // No HTML available - use plain text and wrap in paragraphs
+                log('No HTML available - using plain text');
+                contentToInsert = '<p>' + plainText
+                    .replace(/&/g, '&amp;')
+                    .replace(/</g, '&lt;')
+                    .replace(/>/g, '&gt;')
+                    .replace(/\n\n+/g, '</p><p>')
+                    .replace(/\n/g, '<br>') + '</p>';
+            } else {
+                log('ERROR: No content to paste');
+                return false;
+            }
+
+            // Insert using native browser API instead of SunEditor
+            try {
+                const selection = window.getSelection();
+                if (!selection.rangeCount) {
+                    log('ERROR: No selection range');
+                    return false;
+                }
+
+                // Delete current selection if any
+                const range = selection.getRangeAt(0);
+                range.deleteContents();
+
+                // Create a document fragment from the HTML
+                const tempDiv = document.createElement('div');
+                tempDiv.innerHTML = contentToInsert;
+
+                // Insert all nodes from the fragment
+                const fragment = document.createDocumentFragment();
+                let node;
+                while ((node = tempDiv.firstChild)) {
+                    fragment.appendChild(node);
+                }
+
+                range.insertNode(fragment);
+
+                // Move cursor to end of inserted content
+                range.collapse(false);
+                selection.removeAllRanges();
+                selection.addRange(range);
+
+                log('✓ SUCCESS: Content inserted with formatting preserved');
+
+                // Notify SunEditor that content changed (for undo/redo)
+                editor.core.history.push(false);
+
+                return false;
+            } catch (error) {
+                log('ERROR: ' + error.message);
+                console.error('Error details:', error);
+                // Fallback to SunEditor's method
+                editor.insertHTML(contentToInsert);
+            }
+
+            return false;
+        }
+
+        /**
+         * Clean pasted HTML while preserving formatting
+         */
+        function cleanPastedHTML(html) {
+            log('Cleaning HTML, original length: ' + html.length);
+
+            // CRITICAL: Strip Windows HTML Format metadata headers (fallback)
+            // These headers look like: "Version:1.0\nStartHTML:000000254\n..."
+            // This should normally be handled by Java, but we check here as a safety fallback
+            if (html.startsWith('Version:')) {
+                log('DETECTED Windows HTML Format metadata headers - stripping...');
+
+                // Look for <!--StartFragment--> and <!--EndFragment--> HTML comments
+                const fragmentStart = html.indexOf('<!--StartFragment-->');
+                const fragmentEnd = html.indexOf('<!--EndFragment-->');
+
+                if (fragmentStart !== -1 && fragmentEnd !== -1) {
+                    // Extract content between fragment markers
+                    html = html.substring(
+                        fragmentStart + '<!--StartFragment-->'.length,
+                        fragmentEnd
+                    );
+                    log('Extracted Windows HTML fragment using comment markers, new length: ' + html.length);
+                } else {
+                    // No comment markers found - try to find the start of actual HTML
+                    // Look for the first HTML tag (usually <!DOCTYPE or <html)
+                    const htmlStart = html.search(/<[!]?[a-z]/i);
+                    if (htmlStart > 0) {
+                        html = html.substring(htmlStart);
+                        log('Stripped Windows metadata by finding first HTML tag, new length: ' + html.length);
+                    }
+                }
+            }
+
+            // If it's a complete HTML document, extract just the body content
+            if (html.includes('<body')) {
+                // Parse the HTML to extract body content
+                const parser = new DOMParser();
+                const doc = parser.parseFromString(html, 'text/html');
+
+                // Extract CSS rules from style tags and convert to inline styles
+                const styleElements = doc.querySelectorAll('style');
+                const cssRules = [];
+
+                styleElements.forEach(style => {
+                    cssRules.push(style.textContent);
+                });
+
+                // Get the body content
+                const body = doc.body;
+                if (body) {
+                    // Apply CSS rules as inline styles
+                    if (cssRules.length > 0) {
+                        applyCSSRulesToElements(body, cssRules.join('\n'));
+                    }
+
+                    html = body.innerHTML;
+                    log('Extracted body content, new length: ' + html.length);
+                }
+            }
+
+            // Remove XML declarations
+            html = html.replace(/<\?xml[^>]*>/gi, '');
+
+            // Remove Office namespace tags (Word/LibreOffice)
+            html = html.replace(/<\/?[ovwxp]:[^>]*>/gi, '');
+
+            // Remove conditional comments
+            html = html.replace(/<!--\[if[^\]]*\]>[\s\S]*?<!\[endif\]-->/gi, '');
+
+            // Remove regular comments
+            html = html.replace(/<!--[\s\S]*?-->/g, '');
+
+            // Remove meta tags and script tags (but NOT style tags - we need them!)
+            html = html.replace(/<meta[^>]*>/gi, '');
+            html = html.replace(/<script[^>]*>[\s\S]*?<\/script>/gi, '');
+
+            // CRITICAL: Convert <font> attributes to inline styles
+            // LibreOffice uses <font color="#xxx"> which SunEditor doesn't preserve
+            html = convertFontTagsToStyles(html);
+
+            // Remove empty tags
+            html = html.replace(/<(\w+)[^>]*>\s*<\/\1>/gi, '');
+
+            // CRITICAL: Convert plain newlines to <br> tags BEFORE removing duplicate spaces
+            // This preserves line breaks from plain text sources that wrap content in minimal HTML
+            // First, check if the HTML has meaningful block structure
+            const hasBlockStructure = /<(p|div|br|li|tr|h[1-6])[^>]*>/i.test(html);
+
+            if (!hasBlockStructure) {
+                // No block elements - this is likely plain text wrapped in HTML
+                // Convert newlines to <br> tags
+                log('No block structure detected - converting newlines to <br>');
+                html = html.replace(/\r\n/g, '<br>').replace(/\n/g, '<br>').replace(/\r/g, '<br>');
+            }
+
+            // Remove duplicate spaces (but NOT newlines - we've already handled those)
+            // Only collapse multiple spaces, not all whitespace
+            html = html.replace(/  +/g, ' ');
+
+            log('Cleaned HTML, final length: ' + html.length);
+            return html;
+        }
+
+        /**
+         * Convert <font> tags with attributes to <span> tags with inline styles
+         * LibreOffice uses <font color="#xxx" face="..." size="..."> which SunEditor may not preserve
+         */
+        function convertFontTagsToStyles(html) {
+            log('Converting <font> tags to inline styles');
+
+            // Parse HTML into DOM for manipulation
+            const parser = new DOMParser();
+            const doc = parser.parseFromString('<div>' + html + '</div>', 'text/html');
+            const container = doc.body.firstChild;
+
+            // Find all <font> tags
+            const fontTags = container.querySelectorAll('font');
+            log('Found ' + fontTags.length + ' <font> tags to convert');
+
+            fontTags.forEach(font => {
+                const color = font.getAttribute('color');
+                const face = font.getAttribute('face');
+                const size = font.getAttribute('size');
+
+                // Build inline style
+                let styleProps = [];
+
+                if (color) {
+                    styleProps.push('color: ' + color);
+                    log('  -> Converting color: ' + color);
+                }
+
+                if (face) {
+                    styleProps.push('font-family: ' + face);
+                }
+
+                if (size) {
+                    // Convert HTML size (1-7) to pt values
+                    const sizeMap = {
+                        '1': '8pt',
+                        '2': '10pt',
+                        '3': '12pt',
+                        '4': '14pt',
+                        '5': '18pt',
+                        '6': '24pt',
+                        '7': '32pt'
+                    };
+
+                    // If size contains "pt" or "px", use as-is, otherwise map it
+                    let fontSize = size;
+                    if (!size.includes('pt') && !size.includes('px') && sizeMap[size]) {
+                        fontSize = sizeMap[size];
+                    }
+                    styleProps.push('font-size: ' + fontSize);
+                }
+
+                // Create a <span> to replace the <font>
+                const span = doc.createElement('span');
+
+                // Copy existing style attribute if any
+                const existingStyle = font.getAttribute('style');
+                if (existingStyle) {
+                    styleProps.push(existingStyle);
+                }
+
+                // Set the combined style
+                if (styleProps.length > 0) {
+                    span.setAttribute('style', styleProps.join('; '));
+                }
+
+                // Move all child nodes from <font> to <span>
+                while (font.firstChild) {
+                    span.appendChild(font.firstChild);
+                }
+
+                // Replace <font> with <span>
+                font.parentNode.replaceChild(span, font);
+            });
+
+            // Return the modified HTML
+            const result = container.innerHTML;
+            log('Converted <font> tags, colors should now be preserved');
+            return result;
+        }
+
+        /**
+         * Apply CSS rules to elements as inline styles
+         * This converts LibreOffice's CSS-based formatting to inline styles
+         */
+        function applyCSSRulesToElements(container, css) {
+            log('Applying CSS rules to elements, CSS length: ' + css.length);
+            log('CSS sample: ' + css.substring(0, 300));
+
+            // Parse CSS rules (simple parser for basic rules)
+            const rulePattern = /([^{]+)\{([^}]+)\}/g;
+            let match;
+            let ruleCount = 0;
+
+            while ((match = rulePattern.exec(css)) !== null) {
+                const selector = match[1].trim();
+                const styles = match[2].trim();
+
+                // Skip @page and other @ rules
+                if (selector.startsWith('@')) {
+                    log('Skipping @ rule: ' + selector);
+                    continue;
+                }
+
+                try {
+                    // Find elements matching this selector
+                    const elements = container.querySelectorAll(selector);
+
+                    log('Selector "' + selector + '" matched ' + elements.length + ' elements');
+
+                    if (elements.length > 0 && styles.includes('color')) {
+                        log('  -> Styles include color! Styles: ' + styles);
+                    }
+
+                    elements.forEach(element => {
+                        // Parse style properties
+                        const styleProps = styles.split(';');
+                        styleProps.forEach(prop => {
+                            const [name, value] = prop.split(':').map(s => s.trim());
+                            if (name && value && !name.startsWith('mso-')) {
+                                // Apply the style (merge with existing inline styles)
+                                element.style.setProperty(name, value);
+
+                                if (name === 'color') {
+                                    log('  -> Applied color: ' + value + ' to ' + element.tagName);
+                                }
+                            }
+                        });
+                    });
+
+                    ruleCount++;
+                } catch (e) {
+                    // Ignore selector errors (complex selectors might not work)
+                    log('Could not apply selector: ' + selector + ' - ' + e.message);
+                }
+            }
+
+            log('Applied ' + ruleCount + ' CSS rules');
+        }
+
+        // JavaScript API Bridge for Java integration
+        window.editorAPI = {
+            /**
+             * Get the current HTML content from the editor
+             * @returns {string} HTML content
+             */
+            getText: function() {
+                return editor.getContents();
+            },
+
+            /**
+             * Set HTML content in the editor
+             * @param {string} html - HTML content to set
+             */
+            setText: function(html) {
+                if (!html) {
+                    html = '';
+                }
+                editor.setContents(html);
+            },
+
+            /**
+             * Insert text/HTML at the current cursor position
+             * @param {string} text - Text or HTML to insert
+             * @param {number} pos - Position to insert at (currently ignored, inserts at cursor)
+             */
+            insert: function(text, pos) {
+                // SunEditor doesn't support inserting at arbitrary position easily
+                // So we insert at cursor position (which is the typical use case)
+                editor.insertHTML(text);
+            },
+
+            /**
+             * Get the current caret position (character offset from start)
+             * @returns {number} Caret position
+             */
+            getCaretPosition: function() {
+                try {
+                    const sel = window.getSelection();
+                    if (!sel || sel.rangeCount === 0) {
+                        return 0;
+                    }
+
+                    const range = sel.getRangeAt(0);
+                    const editorElement = editor.core.context.element.wysiwyg;
+
+                    // Check if selection is within editor
+                    if (!editorElement.contains(range.startContainer)) {
+                        return 0;
+                    }
+
+                    // Create a range from start of editor to current position
+                    const preCaretRange = range.cloneRange();
+                    preCaretRange.selectNodeContents(editorElement);
+                    preCaretRange.setEnd(range.startContainer, range.startOffset);
+
+                    return preCaretRange.toString().length;
+                } catch (e) {
+                    console.error('Error getting caret position:', e);
+                    return 0;
+                }
+            },
+
+            /**
+             * Set the caret position (character offset from start)
+             * @param {number} pos - Position to set caret to
+             */
+            setCaretPosition: function(pos) {
+                const editorElement = editor.core.context.element.wysiwyg;
+                const range = document.createRange();
+                const sel = window.getSelection();
+
+                let currentPos = 0;
+                let found = false;
+
+                // Walk through text nodes to find position
+                function walkNodes(node) {
+                    if (found) return;
+
+                    if (node.nodeType === Node.TEXT_NODE) {
+                        const textLength = node.textContent.length;
+                        if (currentPos + textLength >= pos) {
+                            range.setStart(node, pos - currentPos);
+                            range.collapse(true);
+                            found = true;
+                            return;
+                        }
+                        currentPos += textLength;
+                    } else if (node.nodeType === Node.ELEMENT_NODE) {
+                        for (let child of node.childNodes) {
+                            walkNodes(child);
+                            if (found) return;
+                        }
+                    }
+                }
+
+                walkNodes(editorElement);
+
+                if (found) {
+                    sel.removeAllRanges();
+                    sel.addRange(range);
+                    editor.core.focus();
+                }
+            },
+
+            /**
+             * Get the currently selected text
+             * @returns {string} Selected text (plain text, not HTML)
+             */
+            getSelectedText: function() {
+                const sel = window.getSelection();
+                if (!sel || sel.rangeCount === 0) {
+                    return '';
+                }
+                return sel.toString();
+            },
+
+            /**
+             * Check if editor is ready
+             * @returns {boolean} True if editor is initialized and ready
+             */
+            isReady: function() {
+                return editorReady;
+            },
+
+            /**
+             * Focus the editor
+             */
+            focus: function() {
+                editor.core.focus();
+            },
+
+            /**
+             * Get editor instance (for debugging)
+             * @returns {object} SunEditor instance
+             */
+            getEditorInstance: function() {
+                return editor;
+            }
+        };
+
+        // For debugging: log when API is ready
+        console.log('SunEditor initialized and editorAPI bridge ready');
+
+    </script>
+</body>
+</html>

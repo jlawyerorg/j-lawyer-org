@@ -663,7 +663,9 @@
  */
 package com.jdimension.jlawyer.services;
 
+import com.jdimension.jlawyer.documents.DocumentPreview;
 import com.jdimension.jlawyer.persistence.*;
+import com.jdimension.jlawyer.pojo.ClaimLedgerTotals;
 import com.jdimension.jlawyer.pojo.DataBucket;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -714,6 +716,7 @@ public interface ArchiveFileServiceRemote {
     void removeDocument(String id) throws Exception;
 
     boolean setDocumentContent(String id, byte[] content) throws Exception;
+    boolean setDocumentContent(String id, byte[] content, boolean createHistoryEntry) throws Exception;
 
     byte[] getDocumentContent(String id) throws Exception;
     
@@ -733,6 +736,8 @@ public interface ArchiveFileServiceRemote {
     
     void setDocumentTag(String documentId, DocumentTagsBean tag, boolean active) throws Exception;
 
+    void setDocumentTags(List<String> documentIds, DocumentTagsBean tag, boolean active) throws Exception;
+
     Collection<ArchiveFileTagsBean> getTags(String archiveFileId) throws Exception;
     
     HashMap<String,ArrayList<ArchiveFileTagsBean>> getTags(List<String> archiveFileId) throws Exception;
@@ -747,7 +752,7 @@ public interface ArchiveFileServiceRemote {
 
     ArchiveFileBean[] searchEnhanced(String query, boolean withArchive, String[] tagName, String[] documentTagName);
 
-    String getDocumentPreview(String id) throws Exception;
+    DocumentPreview getDocumentPreview(String id, String previewType) throws Exception;
 
     Date[] getHistoryInterval(String principalId);
 
@@ -762,9 +767,8 @@ public interface ArchiveFileServiceRemote {
     Collection<ArchiveFileBean> getAllWithMissingCalendarEntries();
     Collection<ArchiveFileBean> getAllWithMissingCalendarEntries(int type) throws Exception;
 
-    byte[] exportCaseToHtml(String caseId) throws Exception;
-    
     DataBucket loadHtmlCaseExport(String caseId) throws Exception;
+    DataBucket loadHtmlCaseExport(List<String> caseIds) throws Exception;
 
     List<ArchiveFileBean> getTagged(String[] tagName, String[] docTagName, int limit);
 
@@ -873,6 +877,8 @@ public interface ArchiveFileServiceRemote {
     void removeInvoicePosition(String invoiceId, InvoicePosition position) throws Exception;
 
     Invoice updateInvoice(String caseId, Invoice invoice) throws Exception;
+    
+    Payment updatePayment(String caseId, Payment payment) throws Exception;
 
     void removeAllInvoicePositions(String invoiceId) throws Exception;
 
@@ -884,7 +890,8 @@ public interface ArchiveFileServiceRemote {
 
     void linkInvoiceDocument(String documentId, String invoiceId) throws Exception;
 
-    Invoice copyInvoice(String invoiceId, String toCaseId, InvoicePool invoicePool) throws Exception;
+    Invoice copyInvoice(String invoiceId, String toCaseId, InvoicePool invoicePool, boolean asCredit) throws Exception;
+    Invoice copyInvoice(String invoiceId, String toCaseId, InvoicePool invoicePool, boolean asCredit, boolean markAsCopy, Date periodFrom, Date periodTo, Date due) throws Exception;
 
     Timesheet addTimesheet(String caseId, Timesheet timesheet) throws Exception;
 
@@ -900,6 +907,7 @@ public interface ArchiveFileServiceRemote {
 
     List<TimesheetPosition> getOpenTimesheetPositions(String principal) throws Exception;
     List<Timesheet> getOpenTimesheets(String caseId) throws Exception;
+    List<Timesheet> getOpenTimesheets() throws Exception;
 
     List<TimesheetPosition> getLastTimesheetPositions(String caseId, String principal) throws Exception;
 
@@ -922,8 +930,12 @@ public interface ArchiveFileServiceRemote {
     List<TimesheetPosition> getTimesheetPositionsForInvoice(String invoiceId) throws Exception;
 
     TimesheetPosition timesheetPositionAdd(String timesheetId, TimesheetPosition position) throws Exception;
+    
+    boolean transferTimesheetPositions(List<String> positionIds, String newTimesheetId) throws Exception;
 
-    ArrayList<String> getAllArchiveFileNumbers() throws Exception;
+    ArrayList<String> getAllArchiveFileNumbers(boolean activeCasesOnly) throws Exception;
+    
+    ArrayList<String> getAllReferencedFileNumbers(int minChars, boolean activeCasesOnly) throws Exception;
 
     List<String> getCaseIdsSyncedForUser(String principalId) throws Exception;
 
@@ -948,4 +960,93 @@ public interface ArchiveFileServiceRemote {
     void removeParty(String id) throws Exception;
     
     ArchiveFileAddressesBean updateParty(String caseId, ArchiveFileAddressesBean party) throws Exception;
+
+    List<Payment> getPayments(String caseId);
+
+    Payment addPayment(String caseId, Payment payment) throws Exception;
+
+    void removePayment(String paymentId) throws Exception;
+
+    Payment copyPayment(String paymentId, String toCaseId) throws Exception;
+    
+    boolean performOcr(String docId) throws Exception;
+
+    List<ClaimLedger> getClaimLedgers(String caseId);
+
+    ClaimLedger addClaimLedger(String caseId, ClaimLedger ledger) throws Exception;
+
+    List<ArchiveFileAddressesBean> getArchiveFileAddressesByReference(String reference) throws Exception;
+
+    ClaimLedger updateClaimLedger(String caseId, ClaimLedger claimLedger) throws Exception;
+
+    void removeClaimLedger(String ledgerId) throws Exception;
+
+    List<ClaimComponent> getClaimComponents(String ledgerId) throws Exception;
+
+    List<ClaimLedgerEntry> getClaimLedgerEntries(String ledgerId) throws Exception;
+
+    List<BaseInterest> getBaseInterestRates() throws Exception;
+
+    void updateBaseInterestRates() throws Exception;
+
+    ClaimComponent addClaimComponent(ClaimComponent component, List<InterestRule> interestRules, String ledgerId) throws Exception;
+
+    ClaimComponent updateClaimComponent(ClaimComponent component, List<InterestRule> interestRules) throws Exception;
+
+    void removeClaimComponent(String componentId) throws Exception;
+
+    List<InterestRule> getClaimComponentInterestRules(String componentId) throws Exception;
+
+    List<ClaimLedgerEntry> addClaimLedgerEntry(ClaimLedgerEntry entry, String ledgerId) throws Exception;
+
+    /**
+     * Updates an existing claim ledger entry.
+     *
+     * IMPORTANT: INTEREST type entries cannot be edited as they are auto-calculated.
+     * Attempting to update an INTEREST entry will throw an exception.
+     *
+     * @param entry The entry to update (must have valid ID and type != INTEREST)
+     * @return The updated entry
+     * @throws Exception if entry not found, type is INTEREST, user not authorized, or update fails
+     */
+    ClaimLedgerEntry updateClaimLedgerEntry(ClaimLedgerEntry entry) throws Exception;
+
+    /**
+     * Creates multiple payment entries from a payment split proposal.
+     * This method is used when a single payment amount needs to be allocated across multiple claim components,
+     * following the legal payment allocation order according to § 366 and § 367 BGB (German Civil Code).
+     *
+     * According to § 366 BGB, if no specific allocation is designated, payments are allocated in the following order:
+     * 1. Costs (non-interest-bearing)
+     * 2. Costs (interest-bearing)
+     * 3. Interest on costs
+     * 4. Principal of costs
+     * 5. Interest on main claim
+     * 6. Principal of main claim
+     *
+     * According to § 367 BGB, within each category, interest is paid before principal.
+     *
+     * The proposal must be valid (sum of allocations equals total amount) and must not result in overpayment.
+     * Each allocation in the proposal results in a separate ClaimLedgerEntry of type PAYMENT.
+     * All entries are created atomically within a single transaction.
+     *
+     * @param proposal The payment split proposal containing:
+     *                 - Total payment amount
+     *                 - Payment date
+     *                 - List of allocations to individual components
+     *                 - Description and comment
+     *                 - Information about whether the allocation follows legal order
+     * @return List of created ClaimLedgerEntry objects, one for each allocation in the proposal
+     * @throws Exception if:
+     *                   - The proposal is null or invalid (sum of allocations does not match total amount)
+     *                   - The claim ledger does not exist
+     *                   - The user does not have write permission for the associated case
+     *                   - The payment amount exceeds the total open balance (surplus greater than 0)
+     *                   - Any database operation fails
+     */
+    List<ClaimLedgerEntry> createPaymentSplit(PaymentSplitProposal proposal) throws Exception;
+
+    void removeClaimLedgerEntry(String entryId) throws Exception;
+
+    ClaimLedgerTotals calculateClaimLedgerTotals(String ledgerId, Date forDate) throws Exception;
 }

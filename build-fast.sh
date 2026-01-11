@@ -22,8 +22,10 @@ ant -buildfile j-lawyer-fax/build.xml jar
 check_error $?
 ant -buildfile j-lawyer-server-common/build.xml jar
 check_error $?
+export JAVA_HOME=/home/jens/bin/jdk-17.0.9-full/
 ant -Dj2ee.server.home=/home/travis -buildfile j-lawyer-server-entities/build.xml dist
 check_error $?
+export JAVA_HOME=/home/jens/bin/jdk-11.0.9.1-full/
 ant -buildfile j-lawyer-server-api/build.xml jar
 check_error $?
 # ant -Dplatforms.default_platform.home=/home/jens/bin/jdk-17.0.9-full/ -Dj2ee.server.home=/home/travis -buildfile j-lawyer-server/build.xml dist
@@ -32,6 +34,7 @@ check_error $?
 ant -buildfile j-lawyer-io-common/build.xml jar
 check_error $?
 export JAVA_HOME=/home/jens/bin/jdk-11.0.9.1-full/
+# export JAVA_HOME=/home/jens/bin/jdk-17.0.9-full/
 ant -buildfile j-lawyer-client/build.xml jar
 check_error $?
 

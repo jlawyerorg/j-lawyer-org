@@ -690,7 +690,7 @@ public class CachingDocumentLoader {
 
     private static final Logger log = Logger.getLogger(CachingDocumentLoader.class.getName());
 
-    private static final String CACHE_DIRECTORY = System.getProperty("user.home") + System.getProperty("file.separator") + ".j-lawyer-client" + System.getProperty("file.separator") + "documentcache";
+    private static final String CACHE_DIRECTORY = System.getProperty("user.home") + System.getProperty("file.separator") + ClientSettings.JLAWYERCLIENT_SETTINGDIR + System.getProperty("file.separator") + "documentcache";
     //private static final long MAX_CACHE_SIZE = 2l * 1024l * 1024l * 1024l; // 2GB
     private static final long MAX_CACHE_SIZE = 50l * 1024l * 1024l; // 2GB
 

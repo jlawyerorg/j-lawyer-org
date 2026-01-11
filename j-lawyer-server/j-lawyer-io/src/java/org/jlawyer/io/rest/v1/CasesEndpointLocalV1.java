@@ -678,6 +678,7 @@ import org.jlawyer.io.rest.v1.pojo.RestfulPartyV1;
 public interface CasesEndpointLocalV1 {
 
     Response listCases();
+    Response listActiveCases();
 
     Response getCase(String id);
     
@@ -688,9 +689,11 @@ public interface CasesEndpointLocalV1 {
     public Response updateCase(RestfulCaseV1 afb);
 
     Response getCaseDocuments(String id);
+    Response getCaseDocumentsWithTags(String id);
     Response getCaseDocumentsInTrash(String id);
     
     Response getDocumentContent(String id);
+    Response getDocumentContentAsText(String id);
     Response getDocument(String id);
 
     Response getDueDates(String id);

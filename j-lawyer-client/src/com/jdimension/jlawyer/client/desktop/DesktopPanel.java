@@ -664,15 +664,17 @@
 package com.jdimension.jlawyer.client.desktop;
 
 import com.jdimension.jlawyer.client.bea.BeaCheckTimerTask;
+import com.jdimension.jlawyer.client.bea.BeaInboxPanel;
+import com.jdimension.jlawyer.client.configuration.PopulateOptionsEditor;
 import com.jdimension.jlawyer.client.configuration.UserProfileDialog;
-import com.jdimension.jlawyer.client.drebis.DrebisCheckTimerTask;
 import com.jdimension.jlawyer.client.editors.*;
+import com.jdimension.jlawyer.client.editors.documents.ScannerPanel;
 import com.jdimension.jlawyer.client.editors.addresses.EditAddressPanel;
 import com.jdimension.jlawyer.client.editors.files.EditArchiveFilePanel;
+import com.jdimension.jlawyer.client.mail.EmailInboxPanel;
 import com.jdimension.jlawyer.client.events.AutoUpdateEvent;
 import com.jdimension.jlawyer.client.events.BeaStatusEvent;
 import com.jdimension.jlawyer.client.events.CasesChangedEvent;
-import com.jdimension.jlawyer.client.events.DrebisStatusEvent;
 import com.jdimension.jlawyer.client.events.EmailStatusEvent;
 import com.jdimension.jlawyer.client.events.Event;
 import com.jdimension.jlawyer.client.events.EventBroker;
@@ -686,6 +688,7 @@ import com.jdimension.jlawyer.client.events.ReviewAddedEvent;
 import com.jdimension.jlawyer.client.events.ReviewUpdatedEvent;
 import com.jdimension.jlawyer.client.events.ScannerStatusEvent;
 import com.jdimension.jlawyer.client.launcher.DocumentObserverTask;
+import com.jdimension.jlawyer.client.messenger.MessagingCenterPanel;
 import com.jdimension.jlawyer.client.settings.ClientSettings;
 import com.jdimension.jlawyer.client.settings.UserSettings;
 import com.jdimension.jlawyer.client.utils.ComponentUtils;
@@ -693,26 +696,37 @@ import com.jdimension.jlawyer.client.utils.DateUtils;
 import com.jdimension.jlawyer.client.utils.FrameUtils;
 import com.jdimension.jlawyer.client.utils.StringUtils;
 import com.jdimension.jlawyer.client.voip.MailingQueueEntry;
+import com.jdimension.jlawyer.client.voip.MailingStatusPanel;
 import com.jdimension.jlawyer.persistence.AppUserBean;
 import com.jdimension.jlawyer.persistence.ArchiveFileReviewsBean;
 import java.awt.Color;
+import java.awt.Cursor;
+import java.awt.Component;
 import java.awt.Font;
 import java.awt.Graphics;
 import java.awt.Image;
 import java.awt.event.ActionEvent;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
 import java.io.InputStream;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Date;
 import java.util.List;
+import java.util.ResourceBundle;
 import java.util.Timer;
 import java.util.TimerTask;
 import javax.swing.BoxLayout;
 import javax.swing.JCheckBoxMenuItem;
 import javax.swing.JFileChooser;
+import javax.swing.JLabel;
 import javax.swing.JOptionPane;
+import javax.swing.JPopupMenu;
+import javax.swing.JRadioButtonMenuItem;
+import javax.swing.JSeparator;
 import javax.swing.MenuElement;
+import javax.swing.SwingConstants;
 import org.apache.log4j.Logger;
 import themes.colors.DefaultColorTheme;
 
@@ -726,18 +740,23 @@ public class DesktopPanel extends javax.swing.JPanel implements ThemeableEditor,
 
     private Image backgroundImage = null;
 
-    private boolean initializing = false;
-    
     private transient Timer reviewsTimer=null;
     private transient Timer lastChangedTimer=null;
+    
+    private UpdateArchiveFileTagsTask tagsTask=null;
+    private transient Timer timer9=null;
+    private UpdateAddressTagsTask tagsTask2=null;
+    private transient Timer timer10=null;
+    private UpdateDocumentTagsTask tagsTask3=null;
+    private transient Timer timer11=null;
 
     /**
-     * Creates new form MainPanel
+     * Creates new form DesktopPanel
      */
     public DesktopPanel() {
-        this.initializing = true;
         initComponents();
-        
+        configureStatusLabels();
+
         this.lblNewsStatus.setText(" ");
         this.lblUpdateStatus.setText(" ");
         this.lblUpdateStatusFormPlugins.setText(" ");
@@ -752,7 +771,6 @@ public class DesktopPanel extends javax.swing.JPanel implements ThemeableEditor,
             lblScans.setFont(font.deriveFont(Font.BOLD, 24));
             lblUnreadBea.setFont(font.deriveFont(Font.BOLD, 24));
             lblUnreadMail.setFont(font.deriveFont(Font.BOLD, 24));
-            lblUnreadDrebis.setFont(font.deriveFont(Font.BOLD, 24));
             lblUnreadInstantMessages.setFont(font.deriveFont(Font.BOLD, 24));
             lblMailingStatus.setFont(font.deriveFont(Font.BOLD, 24));
             lblNewsStatus.setFont(font.deriveFont(Font.BOLD, 24));
@@ -776,22 +794,6 @@ public class DesktopPanel extends javax.swing.JPanel implements ThemeableEditor,
         
         this.jSplitPane1.setDividerLocation(0.5d);
 
-        ClientSettings settings = ClientSettings.getInstance();
-        
-        UserSettings.getInstance().migrateFrom(settings, UserSettings.CONF_DESKTOP_ONLYMYCASES);
-        String temp = UserSettings.getInstance().getSetting(UserSettings.CONF_DESKTOP_ONLYMYCASES, "false");
-        if ("true".equalsIgnoreCase(temp)) {
-            this.chkOnlyMyCases.setSelected(true);
-        }
-
-        UserSettings.getInstance().migrateFrom(settings, UserSettings.CONF_DESKTOP_ONLYMYTAGGED);
-        temp = UserSettings.getInstance().getSetting(UserSettings.CONF_DESKTOP_ONLYMYTAGGED, "false");
-        if ("true".equalsIgnoreCase(temp)) {
-            this.chkOnlyMyTagged.setSelected(true);
-        }
-
-        this.initializing = false;
-
         EventBroker b = EventBroker.getInstance();
         b.subscribeConsumer(this, Event.TYPE_UPDATE_APPLICATION);
         b.subscribeConsumer(this, Event.TYPE_UPDATE_FORMPLUGIN);
@@ -801,62 +803,60 @@ public class DesktopPanel extends javax.swing.JPanel implements ThemeableEditor,
         b.subscribeConsumer(this, Event.TYPE_MAILINGFAILED);
         b.subscribeConsumer(this, Event.TYPE_MAILSTATUS);
         b.subscribeConsumer(this, Event.TYPE_BEASTATUS);
-        b.subscribeConsumer(this, Event.TYPE_DREBISSTATUS);
         b.subscribeConsumer(this, Event.TYPE_INSTANTMESSAGING_OPENMENTIONS);
         b.subscribeConsumer(this, Event.TYPE_REVIEWADDED);
         b.subscribeConsumer(this, Event.TYPE_REVIEWUPDATED);
         b.subscribeConsumer(this, Event.TYPE_CASESCHANGED);
 
-        this.buildUsersPopup();
+        this.buildUsersPopupCalendarEntries();
+        this.buildDueSinceDaysPopup();
+        this.buildUsersPopupTagged();
+        this.buildUsersPopupLastchanged();
         
         Timer timer1 = new Timer();
-        TimerTask systemStateTask = new SystemStateTimerTask(this, this.lblAddressCount, this.lblArchiveFileCount, this.lblArchiveFileArchivedCount, this.lblDocumentCount, this.lblVoipBalance, this.lblAssistant);
+        SystemStateTimerTask systemStateTask = new SystemStateTimerTask(this, this.lblAddressCount, this.lblArchiveFileCount, this.lblArchiveFileArchivedCount, this.lblDocumentCount, this.lblVoipBalance, this.lblAssistant);
         timer1.schedule(systemStateTask, 5000, 1800000);
 
         BoxLayout boxLayout=new BoxLayout(this.pnlLastChanged, BoxLayout.Y_AXIS);
         this.pnlLastChanged.setLayout(boxLayout);
         this.lastChangedTimer = new Timer();
-        TimerTask lastChangedTask = new LastChangedTimerTask(this, this.pnlLastChanged, this.jSplitPane1);
+        LastChangedTimerTask lastChangedTask = new LastChangedTimerTask(this, this.pnlLastChanged, this.jSplitPane1);
         this.lastChangedTimer.schedule(lastChangedTask, 1000, 15l*59000l);
 
         Timer timer3 = new Timer();
-        TimerTask autoUpdateTask = new AutoUpdateTimerTask(this);
+        AutoUpdateTimerTask autoUpdateTask = new AutoUpdateTimerTask(this);
         timer3.schedule(autoUpdateTask, 20000, 24l * 60l * 60l * 1000l);
 
         this.reviewsTimer = new Timer();
-        TimerTask revDueTask = new ReviewsDueTimerTask(this, this.tabPaneDue, this.pnlRevDue, this.jSplitPane1);
+        ReviewsDueTimerTask revDueTask = new ReviewsDueTimerTask(this, this.tabPaneDue, this.pnlRevDue, this.jSplitPane1);
         reviewsTimer.schedule(revDueTask, 1000, 15l*61000l);
 
         BoxLayout boxLayout2=new BoxLayout(this.pnlTagged, BoxLayout.Y_AXIS);
         this.pnlTagged.setLayout(boxLayout2);
         Timer timer5 = new Timer();
-        TimerTask taggedTask = new TaggedTimerTask(this, this.tabPaneTagged, this.pnlTagged, this.jSplitPane2, this.cmdTagFilter, this.cmdDocumentTagFilter, this.popTagFilter, this.popDocumentTagFilter);
+        TaggedTimerTask taggedTask = new TaggedTimerTask(this, this.tabPaneTagged, this.pnlTagged, this.jSplitPane2, this.cmdTagFilter, this.cmdDocumentTagFilter, this.popTagFilter, this.popDocumentTagFilter);
         timer5.schedule(taggedTask, 1000, 3l*63000l);
 
         Timer timer6 = new Timer();
-        TimerTask docObserverTask = new DocumentObserverTask();
+        DocumentObserverTask docObserverTask = new DocumentObserverTask();
         timer6.schedule(docObserverTask, 5000, DocumentObserverTask.getDefaultInterval());
         
         Timer timer7 = new Timer();
-        TimerTask beaCheckTask=new BeaCheckTimerTask();
+        BeaCheckTimerTask beaCheckTask=new BeaCheckTimerTask();
         // perform every 9,75mins - to keep session alive
         timer7.schedule(beaCheckTask, 2500,585000);
         
-        Timer timer8 = new Timer();
-        TimerTask drebisCheckTask=new DrebisCheckTimerTask();
-        timer8.schedule(drebisCheckTask, 3500,1000l*60l*60l);
-        
         try {
-            Timer timer9 = new Timer();
-            TimerTask tagsTask = new UpdateArchiveFileTagsTask(this, (EditArchiveFilePanel) EditorsRegistry.getInstance().getEditor(EditArchiveFilePanel.class.getName()));
+            timer9 = new Timer();
+            tagsTask = new UpdateArchiveFileTagsTask(this, (EditArchiveFilePanel) EditorsRegistry.getInstance().getEditor(EditArchiveFilePanel.class.getName()));
             timer9.schedule(tagsTask, 4500, 180000);
 
-            Timer timer10 = new Timer();
-            TimerTask tagsTask2 = new UpdateAddressTagsTask(this, (EditAddressPanel) EditorsRegistry.getInstance().getEditor(EditAddressPanel.class.getName()));
+            timer10 = new Timer();
+            tagsTask2 = new UpdateAddressTagsTask(this, (EditAddressPanel) EditorsRegistry.getInstance().getEditor(EditAddressPanel.class.getName()));
             timer10.schedule(tagsTask2, 5500, 180000);
             
-            Timer timer11 = new Timer();
-            TimerTask tagsTask3 = new UpdateDocumentTagsTask(this, (EditArchiveFilePanel) EditorsRegistry.getInstance().getEditor(EditArchiveFilePanel.class.getName()));
+            timer11 = new Timer();
+            tagsTask3 = new UpdateDocumentTagsTask(this, (EditArchiveFilePanel) EditorsRegistry.getInstance().getEditor(EditArchiveFilePanel.class.getName()));
             timer11.schedule(tagsTask3, 6500, 180000);
         } catch (Throwable t) {
             log.error("Could not set up timer task for automatic tag updates", t);
@@ -874,6 +874,87 @@ public class DesktopPanel extends javax.swing.JPanel implements ThemeableEditor,
             }   
         };
         timer12.schedule(fileChooserPreload, 7500);
+        
+        
+        Runtime.getRuntime().addShutdownHook(new Thread(() -> {
+            try {
+                log.info("shutting down SystemStateTimerTask");
+                systemStateTask.stop();
+                timer1.cancel();
+            } catch (Throwable t) {
+                log.error("Error shutting down timer", t);
+            }
+            try {
+                log.info("shutting down LastChangedTimerTask");
+                lastChangedTask.stop();
+                this.lastChangedTimer.cancel();
+            } catch (Throwable t) {
+                log.error("Error shutting down timer", t);
+            }
+            try {
+                log.info("shutting down AutoUpdateTimerTask");
+                autoUpdateTask.stop();
+                timer3.cancel();
+            } catch (Throwable t) {
+                log.error("Error shutting down timer", t);
+            }
+            try {
+                log.info("shutting down ReviewsDueTimerTask");
+                revDueTask.stop();
+                reviewsTimer.cancel();
+            } catch (Throwable t) {
+                log.error("Error shutting down timer", t);
+            }
+            try {
+                log.info("shutting down TaggedTimerTask");
+                taggedTask.stop();
+                timer5.cancel();
+            } catch (Throwable t) {
+                log.error("Error shutting down timer", t);
+            }
+            try {
+                log.info("shutting down DocumentObserverTask");
+                docObserverTask.stop();
+                timer6.cancel();
+            } catch (Throwable t) {
+                log.error("Error shutting down timer", t);
+            }
+            try {
+                log.info("shutting down BeaCheckTimerTask");
+                beaCheckTask.stop();
+                timer7.cancel();
+            } catch (Throwable t) {
+                log.error("Error shutting down timer", t);
+            }
+            try {
+                log.info("shutting down UpdateArchiveFileTagsTask");
+                if(tagsTask!=null) tagsTask.stop();
+                if(timer9!=null) timer9.cancel();
+            } catch (Throwable t) {
+                log.error("Error shutting down timer", t);
+            }
+            try {
+                log.info("shutting down UpdateAddressTagsTask");
+                if(tagsTask2!=null) tagsTask2.stop();
+                if(timer10!=null) timer10.cancel();
+            } catch (Throwable t) {
+                log.error("Error shutting down timer", t);
+            }
+            try {
+                log.info("shutting down UpdateDocumentTagsTask");
+                if(tagsTask3!=null) tagsTask3.stop();
+                if(timer11!=null) timer11.cancel();
+            } catch (Throwable t) {
+                log.error("Error shutting down timer", t);
+            }
+            try {
+                log.info("shutting down JFileChooser preloader task");
+                timer12.cancel();
+            } catch (Throwable t) {
+                log.error("Error shutting down timer", t);
+            }
+        }));
+        
 
         this.jSplitPane1.setDividerLocation(0.5d);
         
@@ -887,6 +968,33 @@ public class DesktopPanel extends javax.swing.JPanel implements ThemeableEditor,
         this.lblUserName.setText(us.getCurrentUser().getPrincipalId());
         this.lblUserIcon.setIcon(us.getCurrentUserBigIcon());
     }
+
+    private void configureStatusLabels() {
+        configureStatusLabel(this.lblUnreadMail, EmailInboxPanel.class, "desktop-mail");
+        configureStatusLabel(this.lblScans, ScannerPanel.class, "desktop-scans");
+        configureStatusLabel(this.lblMailingStatus, MailingStatusPanel.class, "desktop-mailingstatus");
+        configureStatusLabel(this.lblUnreadBea, BeaInboxPanel.class, "desktop-bea");
+        configureStatusLabel(this.lblUnreadInstantMessages, MessagingCenterPanel.class, "desktop-messages");
+    }
+
+    private void configureStatusLabel(JLabel label, Class<?> editorClass, String source) {
+        if (label == null) {
+            return;
+        }
+        label.setCursor(new Cursor(Cursor.HAND_CURSOR));
+        label.setHorizontalTextPosition(SwingConstants.TRAILING);
+        label.setVerticalTextPosition(SwingConstants.CENTER);
+        label.setIconTextGap(6);
+        label.addMouseListener(new MouseAdapter() {
+            @Override
+            public void mouseClicked(MouseEvent evt) {
+                if (!label.isEnabled()) {
+                    return;
+                }
+                openModule(editorClass, source);
+            }
+        });
+    }
     
     public void updateCurrentDay() {
         
@@ -898,7 +1006,66 @@ public class DesktopPanel extends javax.swing.JPanel implements ThemeableEditor,
         
     }
     
-    private void buildUsersPopup() {
+    private void buildDueSinceDaysPopup() {
+        this.updateDueSinceDaysLabel();
+
+        int daysSince=UserSettings.getInstance().getSettingAsInt(UserSettings.CONF_DESKTOP_LASTFILTERDUESINCEDAYS, 1);
+        int inDays=UserSettings.getInstance().getSettingAsInt(UserSettings.CONF_DESKTOP_LASTFILTERDUEINDAYS, 0);
+        this.popDueSinceDays.removeAll();
+        for (int days: new int[]{-1,-3,-7,-14,-31,-180,-365}) {
+            JRadioButtonMenuItem mi = new JRadioButtonMenuItem("" + days);
+            mi.setSelected(Math.abs(days)==Math.abs(daysSince));
+            mi.setHorizontalTextPosition(SwingConstants.RIGHT);
+            mi.setHorizontalAlignment(SwingConstants.RIGHT);
+            btnGrpDueSinceDays.add(mi);
+            popDueSinceDays.add(mi);
+            
+            mi.addActionListener((ActionEvent e) -> {
+                UserSettings.getInstance().setSetting(UserSettings.CONF_DESKTOP_LASTFILTERDUESINCEDAYS, mi.getText());
+                this.updateDueSinceDaysLabel();
+                TimerTask revDueTask = new ReviewsDueTimerTask(this, this.tabPaneDue, this.pnlRevDue, this.jSplitPane1, true);
+                new java.util.Timer().schedule(revDueTask, 100);
+            });
+        }
+        
+        popDueSinceDays.add(new JSeparator());
+        
+        for (int days: new int[]{0,1,3,7,14,31}) {
+            JRadioButtonMenuItem mi = new JRadioButtonMenuItem("" + days);
+            mi.setSelected(days==inDays);
+            mi.setHorizontalTextPosition(SwingConstants.RIGHT);
+            mi.setHorizontalAlignment(SwingConstants.RIGHT);
+            btnGrpDueInDays.add(mi);
+            popDueSinceDays.add(mi);
+            
+            mi.addActionListener((ActionEvent e) -> {
+                UserSettings.getInstance().setSetting(UserSettings.CONF_DESKTOP_LASTFILTERDUEINDAYS, mi.getText());
+                this.updateDueSinceDaysLabel();
+                TimerTask revDueTask = new ReviewsDueTimerTask(this, this.tabPaneDue, this.pnlRevDue, this.jSplitPane1, true);
+                new java.util.Timer().schedule(revDueTask, 100);
+            });
+        }
+        
+
+        
+    }
+    
+    private void updateDueSinceDaysLabel() {
+        int daysSince=UserSettings.getInstance().getSettingAsInt(UserSettings.CONF_DESKTOP_LASTFILTERDUESINCEDAYS, 1);
+        if(daysSince>0)
+            daysSince=-1*daysSince;
+        
+        int inDays=UserSettings.getInstance().getSettingAsInt(UserSettings.CONF_DESKTOP_LASTFILTERDUEINDAYS, 0);
+        
+        if(inDays>0)
+            this.lblDueSinceDays.setText(daysSince + " .. +" + inDays);
+        else
+           this.lblDueSinceDays.setText(""+daysSince); 
+        
+        this.lblDueSinceDays.setToolTipText("Der Desktop schaut " + (-1*daysSince) + " Tage in die Vergangenheit und " + inDays + " Tage in die Zukunft");
+    }
+    
+    private void buildUsersPopupCalendarEntries() {
         List<AppUserBean> relevantUsers=UserSettings.getInstance().getLoginEnabledUsers();
         List<String> userNames=new ArrayList<>();
         for(AppUserBean u: relevantUsers) {
@@ -907,37 +1074,108 @@ public class DesktopPanel extends javax.swing.JPanel implements ThemeableEditor,
         StringUtils.sortIgnoreCase(userNames);
         
         String[] selectedUsers=UserSettings.getInstance().getSettingArray(UserSettings.CONF_DESKTOP_LASTFILTERUSERS, new String[]{});
-        if(selectedUsers.length==0)
-            selectedUsers=new String[]{UserSettings.getInstance().getCurrentUser().getPrincipalId()};
-        
         this.lblUserFilterCount.setText("" + selectedUsers.length);
 
         this.popUserFilter.removeAll();
-            for (AppUserBean ru : relevantUsers) {
-                JCheckBoxMenuItem mi = new JCheckBoxMenuItem(ru.getPrincipalId());
-                mi.putClientProperty("CheckBoxMenuItem.selectionBackground", DefaultColorTheme.COLOR_LOGO_GREEN);
-                mi.setIcon(UserSettings.getInstance().getUserSmallIcon(ru.getPrincipalId()));
-                mi.setSelected(Arrays.asList(selectedUsers).contains(ru.getPrincipalId()));
-                popUserFilter.add(mi);
+        for (AppUserBean ru : relevantUsers) {
+            JCheckBoxMenuItem mi = new JCheckBoxMenuItem(ru.getPrincipalId());
+            mi.putClientProperty("CheckBoxMenuItem.selectionBackground", DefaultColorTheme.COLOR_LOGO_GREEN);
+            mi.setIcon(UserSettings.getInstance().getUserSmallIcon(ru.getPrincipalId()));
+            mi.setSelected(Arrays.asList(selectedUsers).contains(ru.getPrincipalId()));
+            popUserFilter.add(mi);
 
-            }
-            for (MenuElement me : popUserFilter.getSubElements()) {
-                ((JCheckBoxMenuItem) me.getComponent()).addActionListener((ActionEvent e) -> {
-                    ArrayList<String> al = new ArrayList<>();
-                    for (MenuElement me1 : popUserFilter.getSubElements()) {
-                        JCheckBoxMenuItem mi = (JCheckBoxMenuItem) me1.getComponent();
-                        if (mi.isSelected()) {
-                            al.add(mi.getText());
-                        }
+        }
+        for (MenuElement me : popUserFilter.getSubElements()) {
+            ((JCheckBoxMenuItem) me.getComponent()).addActionListener((ActionEvent e) -> {
+                ArrayList<String> al = new ArrayList<>();
+                for (MenuElement me1 : popUserFilter.getSubElements()) {
+                    JCheckBoxMenuItem mi = (JCheckBoxMenuItem) me1.getComponent();
+                    if (mi.isSelected()) {
+                        al.add(mi.getText());
                     }
-                    this.lblUserFilterCount.setText("" + al.size());
-                    UserSettings.getInstance().setSettingArray(UserSettings.CONF_DESKTOP_LASTFILTERUSERS, al.toArray(new String[al.size()]));
-                    TimerTask revDueTask = new ReviewsDueTimerTask(this, this.tabPaneDue, this.pnlRevDue, this.jSplitPane1, true);
-                    new java.util.Timer().schedule(revDueTask, 100);
-                });
-            }
+                }
+                this.lblUserFilterCount.setText("" + al.size());
+                UserSettings.getInstance().setSettingArray(UserSettings.CONF_DESKTOP_LASTFILTERUSERS, al.toArray(new String[al.size()]));
+                TimerTask revDueTask = new ReviewsDueTimerTask(this, this.tabPaneDue, this.pnlRevDue, this.jSplitPane1, true);
+                new java.util.Timer().schedule(revDueTask, 100);
+            });
+        }
 
         
+    }
+
+    private void buildUsersPopupTagged() {
+        List<AppUserBean> relevantUsers=UserSettings.getInstance().getLoginEnabledUsers();
+        List<String> userNames=new ArrayList<>();
+        for(AppUserBean u: relevantUsers) {
+            userNames.add(u.getPrincipalId());
+        }
+        StringUtils.sortIgnoreCase(userNames);
+
+        String[] selectedUsers=UserSettings.getInstance().getSettingArray(UserSettings.CONF_DESKTOP_LASTFILTERUSERS_TAGGED, new String[]{});
+        this.lblUserFilterCountTagged.setText("" + selectedUsers.length);
+
+        this.popUserFilterTagged.removeAll();
+        for (AppUserBean ru : relevantUsers) {
+            JCheckBoxMenuItem mi = new JCheckBoxMenuItem(ru.getPrincipalId());
+            mi.putClientProperty("CheckBoxMenuItem.selectionBackground", DefaultColorTheme.COLOR_LOGO_GREEN);
+            mi.setIcon(UserSettings.getInstance().getUserSmallIcon(ru.getPrincipalId()));
+            mi.setSelected(Arrays.asList(selectedUsers).contains(ru.getPrincipalId()));
+            popUserFilterTagged.add(mi);
+        }
+        for (MenuElement me : popUserFilterTagged.getSubElements()) {
+            ((JCheckBoxMenuItem) me.getComponent()).addActionListener((ActionEvent e) -> {
+                ArrayList<String> al = new ArrayList<>();
+                for (MenuElement me1 : popUserFilterTagged.getSubElements()) {
+                    JCheckBoxMenuItem mi = (JCheckBoxMenuItem) me1.getComponent();
+                    if (mi.isSelected()) {
+                        al.add(mi.getText());
+                    }
+                }
+                this.lblUserFilterCountTagged.setText("" + al.size());
+                UserSettings.getInstance().setSettingArray(UserSettings.CONF_DESKTOP_LASTFILTERUSERS_TAGGED, al.toArray(new String[al.size()]));
+                // refresh tagged view
+                TimerTask taggedTask = new TaggedTimerTask(this, this.tabPaneTagged, this.pnlTagged, this.jSplitPane2, this.cmdTagFilter, this.cmdDocumentTagFilter, this.popTagFilter, this.popDocumentTagFilter, true);
+                new java.util.Timer().schedule(taggedTask, 100);
+            });
+        }
+    }
+    
+    private void buildUsersPopupLastchanged() {
+        List<AppUserBean> relevantUsers=UserSettings.getInstance().getLoginEnabledUsers();
+        List<String> userNames=new ArrayList<>();
+        for(AppUserBean u: relevantUsers) {
+            userNames.add(u.getPrincipalId());
+        }
+        StringUtils.sortIgnoreCase(userNames);
+
+        String[] selectedUsers=UserSettings.getInstance().getSettingArray(UserSettings.CONF_DESKTOP_LASTFILTERUSERS_LASTCHANGED, new String[]{});
+        this.lblUserFilterCountLastchanged.setText("" + selectedUsers.length);
+
+        this.popUserFilterLastchanged.removeAll();
+        for (AppUserBean ru : relevantUsers) {
+            JCheckBoxMenuItem mi = new JCheckBoxMenuItem(ru.getPrincipalId());
+            mi.putClientProperty("CheckBoxMenuItem.selectionBackground", DefaultColorTheme.COLOR_LOGO_GREEN);
+            mi.setIcon(UserSettings.getInstance().getUserSmallIcon(ru.getPrincipalId()));
+            mi.setSelected(Arrays.asList(selectedUsers).contains(ru.getPrincipalId()));
+            popUserFilterLastchanged.add(mi);
+        }
+        for (MenuElement me : popUserFilterLastchanged.getSubElements()) {
+            ((JCheckBoxMenuItem) me.getComponent()).addActionListener((ActionEvent e) -> {
+                ArrayList<String> al = new ArrayList<>();
+                for (MenuElement me1 : popUserFilterLastchanged.getSubElements()) {
+                    JCheckBoxMenuItem mi = (JCheckBoxMenuItem) me1.getComponent();
+                    if (mi.isSelected()) {
+                        al.add(mi.getText());
+                    }
+                }
+                this.lblUserFilterCountLastchanged.setText("" + al.size());
+                UserSettings.getInstance().setSettingArray(UserSettings.CONF_DESKTOP_LASTFILTERUSERS_LASTCHANGED, al.toArray(new String[al.size()]));
+                // refresh tagged view
+                LastChangedTimerTask lastChangedTask = new LastChangedTimerTask(this, this.pnlLastChanged, this.jSplitPane1, true);
+                new java.util.Timer().schedule(lastChangedTask, 100);
+            });
+        }
     }
 
     public void setUnreadMessages(int count) {
@@ -982,6 +1220,11 @@ public class DesktopPanel extends javax.swing.JPanel implements ThemeableEditor,
         popTagFilter = new javax.swing.JPopupMenu();
         popDocumentTagFilter = new javax.swing.JPopupMenu();
         popUserFilter = new javax.swing.JPopupMenu();
+        popDueSinceDays = new javax.swing.JPopupMenu();
+        btnGrpDueSinceDays = new javax.swing.ButtonGroup();
+        popUserFilterTagged = new javax.swing.JPopupMenu();
+        popUserFilterLastchanged = new javax.swing.JPopupMenu();
+        btnGrpDueInDays = new javax.swing.ButtonGroup();
         jSplitPane1 = new javax.swing.JSplitPane();
         jPanel2 = new javax.swing.JPanel();
         jLabel6 = new javax.swing.JLabel();
@@ -992,17 +1235,21 @@ public class DesktopPanel extends javax.swing.JPanel implements ThemeableEditor,
         pnlRevDue = new javax.swing.JPanel();
         jLabel8 = new javax.swing.JLabel();
         lblUserFilterCount = new javax.swing.JLabel();
+        lblDueSinceDays = new javax.swing.JLabel();
+        cmdDueSinceDays = new javax.swing.JButton();
         jSplitPane2 = new javax.swing.JSplitPane();
         jPanel1 = new javax.swing.JPanel();
         jLabel5 = new javax.swing.JLabel();
         jScrollPane3 = new javax.swing.JScrollPane();
         pnlLastChanged = new javax.swing.JPanel();
         jLabel7 = new javax.swing.JLabel();
-        chkOnlyMyCases = new javax.swing.JCheckBox();
         cmdRefreshLastChanged = new javax.swing.JButton();
+        lblUserFilterCountLastchanged = new javax.swing.JLabel();
+        cmdUserFilterLastchanged = new javax.swing.JButton();
         jPanel3 = new javax.swing.JPanel();
         jLabel9 = new javax.swing.JLabel();
-        chkOnlyMyTagged = new javax.swing.JCheckBox();
+        cmdUserFilterTagged = new javax.swing.JButton();
+        lblUserFilterCountTagged = new javax.swing.JLabel();
         cmdRefreshTagged = new javax.swing.JButton();
         cmdTagFilter = new javax.swing.JButton();
         cmdDocumentTagFilter = new javax.swing.JButton();
@@ -1014,7 +1261,6 @@ public class DesktopPanel extends javax.swing.JPanel implements ThemeableEditor,
         lblUnreadMail = new javax.swing.JLabel();
         lblUnreadBea = new javax.swing.JLabel();
         lblScans = new javax.swing.JLabel();
-        lblUnreadDrebis = new javax.swing.JLabel();
         lblMailingStatus = new javax.swing.JLabel();
         lblUnreadInstantMessages = new javax.swing.JLabel();
         lblUpdateStatus = new javax.swing.JLabel();
@@ -1055,7 +1301,7 @@ public class DesktopPanel extends javax.swing.JPanel implements ThemeableEditor,
         jLabel6.setText("Fällig");
 
         cmdUserFilter.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons16/material/baseline_supervisor_account_white_48dp.png"))); // NOI18N
-        cmdUserFilter.setToolTipText("verantwortliche Nutzer\n(Kalendereinträge ohne Verantwortliche(n) werden stets angezeigt)");
+        cmdUserFilter.setToolTipText("verantwortliche Nutzer");
         cmdUserFilter.setBorder(null);
         cmdUserFilter.setContentAreaFilled(false);
         cmdUserFilter.setCursor(new java.awt.Cursor(java.awt.Cursor.HAND_CURSOR));
@@ -1095,7 +1341,22 @@ public class DesktopPanel extends javax.swing.JPanel implements ThemeableEditor,
 
         lblUserFilterCount.setFont(lblUserFilterCount.getFont().deriveFont(lblUserFilterCount.getFont().getStyle() | java.awt.Font.BOLD, lblUserFilterCount.getFont().getSize()+2));
         lblUserFilterCount.setForeground(java.awt.Color.white);
-        lblUserFilterCount.setText("1");
+        lblUserFilterCount.setText("0");
+
+        lblDueSinceDays.setFont(lblDueSinceDays.getFont().deriveFont(lblDueSinceDays.getFont().getStyle() | java.awt.Font.BOLD, lblDueSinceDays.getFont().getSize()+2));
+        lblDueSinceDays.setForeground(new java.awt.Color(255, 255, 255));
+        lblDueSinceDays.setText("7");
+
+        cmdDueSinceDays.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons16/material/calendar_clock_20dp_FFFFFF_FILL0_wght400_GRAD0_opsz20.png"))); // NOI18N
+        cmdDueSinceDays.setToolTipText("zeige offene Kalendereinträge der letzten ... Tage");
+        cmdDueSinceDays.setBorder(null);
+        cmdDueSinceDays.setContentAreaFilled(false);
+        cmdDueSinceDays.setCursor(new java.awt.Cursor(java.awt.Cursor.HAND_CURSOR));
+        cmdDueSinceDays.addMouseListener(new java.awt.event.MouseAdapter() {
+            public void mousePressed(java.awt.event.MouseEvent evt) {
+                cmdDueSinceDaysMousePressed(evt);
+            }
+        });
 
         org.jdesktop.layout.GroupLayout jPanel2Layout = new org.jdesktop.layout.GroupLayout(jPanel2);
         jPanel2.setLayout(jPanel2Layout);
@@ -1109,7 +1370,11 @@ public class DesktopPanel extends javax.swing.JPanel implements ThemeableEditor,
                         .add(cmdRefreshRevDue)
                         .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
                         .add(jLabel6)
-                        .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED, 295, Short.MAX_VALUE)
+                        .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                        .add(cmdDueSinceDays)
+                        .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
+                        .add(lblDueSinceDays)
+                        .add(18, 18, 18)
                         .add(cmdUserFilter)
                         .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
                         .add(lblUserFilterCount)))
@@ -1119,13 +1384,16 @@ public class DesktopPanel extends javax.swing.JPanel implements ThemeableEditor,
             jPanel2Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
             .add(jPanel2Layout.createSequentialGroup()
                 .addContainerGap()
-                .add(jPanel2Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
+                .add(jPanel2Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING, false)
                     .add(cmdRefreshRevDue)
-                    .add(jLabel6)
-                    .add(lblUserFilterCount)
-                    .add(cmdUserFilter))
+                    .add(jPanel2Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.BASELINE)
+                        .add(jLabel6)
+                        .add(lblDueSinceDays, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                        .add(cmdDueSinceDays, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                    .add(cmdUserFilter, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                    .add(lblUserFilterCount, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
                 .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
-                .add(tabPaneDue, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 487, Short.MAX_VALUE)
+                .add(tabPaneDue, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 482, Short.MAX_VALUE)
                 .addContainerGap())
         );
 
@@ -1162,19 +1430,10 @@ public class DesktopPanel extends javax.swing.JPanel implements ThemeableEditor,
             .add(pnlLastChangedLayout.createSequentialGroup()
                 .addContainerGap()
                 .add(jLabel7)
-                .addContainerGap(311, Short.MAX_VALUE))
+                .addContainerGap(324, Short.MAX_VALUE))
         );
 
         jScrollPane3.setViewportView(pnlLastChanged);
-
-        chkOnlyMyCases.setFont(chkOnlyMyCases.getFont().deriveFont(chkOnlyMyCases.getFont().getStyle() | java.awt.Font.BOLD));
-        chkOnlyMyCases.setForeground(new java.awt.Color(255, 255, 255));
-        chkOnlyMyCases.setText("nur meine anzeigen");
-        chkOnlyMyCases.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                chkOnlyMyCasesActionPerformed(evt);
-            }
-        });
 
         cmdRefreshLastChanged.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons16/material/baseline_refresh_white_36dp.png"))); // NOI18N
         cmdRefreshLastChanged.setBorder(null);
@@ -1183,6 +1442,20 @@ public class DesktopPanel extends javax.swing.JPanel implements ThemeableEditor,
         cmdRefreshLastChanged.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 cmdRefreshLastChangedActionPerformed(evt);
+            }
+        });
+
+        lblUserFilterCountLastchanged.setFont(lblUserFilterCountLastchanged.getFont().deriveFont(lblUserFilterCountLastchanged.getFont().getStyle() | java.awt.Font.BOLD));
+        lblUserFilterCountLastchanged.setForeground(new java.awt.Color(255, 255, 255));
+        lblUserFilterCountLastchanged.setText("0");
+
+        cmdUserFilterLastchanged.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons16/material/baseline_supervisor_account_white_48dp.png"))); // NOI18N
+        cmdUserFilterLastchanged.setBorder(null);
+        cmdUserFilterLastchanged.setContentAreaFilled(false);
+        cmdUserFilterLastchanged.setCursor(new java.awt.Cursor(java.awt.Cursor.HAND_CURSOR));
+        cmdUserFilterLastchanged.addMouseListener(new java.awt.event.MouseAdapter() {
+            public void mousePressed(java.awt.event.MouseEvent evt) {
+                cmdUserFilterLastchangedMousePressed(evt);
             }
         });
 
@@ -1197,8 +1470,10 @@ public class DesktopPanel extends javax.swing.JPanel implements ThemeableEditor,
                         .add(cmdRefreshLastChanged)
                         .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
                         .add(jLabel5)
-                        .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                        .add(chkOnlyMyCases))
+                        .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED, 370, Short.MAX_VALUE)
+                        .add(cmdUserFilterLastchanged)
+                        .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
+                        .add(lblUserFilterCountLastchanged))
                     .add(jScrollPane3, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 0, Short.MAX_VALUE))
                 .addContainerGap())
         );
@@ -1208,11 +1483,12 @@ public class DesktopPanel extends javax.swing.JPanel implements ThemeableEditor,
                 .addContainerGap()
                 .add(jPanel1Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
                     .add(cmdRefreshLastChanged)
+                    .add(cmdUserFilterLastchanged, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 29, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
                     .add(jPanel1Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.BASELINE)
                         .add(jLabel5)
-                        .add(chkOnlyMyCases)))
+                        .add(lblUserFilterCountLastchanged)))
                 .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
-                .add(jScrollPane3, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 258, Short.MAX_VALUE)
+                .add(jScrollPane3)
                 .addContainerGap())
         );
 
@@ -1224,14 +1500,20 @@ public class DesktopPanel extends javax.swing.JPanel implements ThemeableEditor,
         jLabel9.setForeground(java.awt.Color.white);
         jLabel9.setText(bundle.getString("label.tagged")); // NOI18N
 
-        chkOnlyMyTagged.setFont(chkOnlyMyTagged.getFont().deriveFont(chkOnlyMyTagged.getFont().getStyle() | java.awt.Font.BOLD));
-        chkOnlyMyTagged.setForeground(new java.awt.Color(255, 255, 255));
-        chkOnlyMyTagged.setText("nur meine anzeigen");
-        chkOnlyMyTagged.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                chkOnlyMyTaggedActionPerformed(evt);
+        cmdUserFilterTagged.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons16/material/baseline_supervisor_account_white_48dp.png"))); // NOI18N
+        cmdUserFilterTagged.setToolTipText("verantwortliche Nutzer");
+        cmdUserFilterTagged.setBorder(null);
+        cmdUserFilterTagged.setContentAreaFilled(false);
+        cmdUserFilterTagged.setCursor(new java.awt.Cursor(java.awt.Cursor.HAND_CURSOR));
+        cmdUserFilterTagged.addMouseListener(new java.awt.event.MouseAdapter() {
+            public void mousePressed(java.awt.event.MouseEvent evt) {
+                cmdUserFilterTaggedMousePressed(evt);
             }
         });
+
+        lblUserFilterCountTagged.setFont(lblUserFilterCountTagged.getFont().deriveFont(lblUserFilterCountTagged.getFont().getStyle() | java.awt.Font.BOLD));
+        lblUserFilterCountTagged.setForeground(java.awt.Color.white);
+        lblUserFilterCountTagged.setText("0");
 
         cmdRefreshTagged.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons16/material/baseline_refresh_white_36dp.png"))); // NOI18N
         cmdRefreshTagged.setBorder(null);
@@ -1312,8 +1594,10 @@ public class DesktopPanel extends javax.swing.JPanel implements ThemeableEditor,
                         .add(cmdTagFilter)
                         .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
                         .add(cmdDocumentTagFilter)
-                        .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED, 159, Short.MAX_VALUE)
-                        .add(chkOnlyMyTagged))
+                        .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED, 120, Short.MAX_VALUE)
+                        .add(cmdUserFilterTagged)
+                        .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
+                        .add(lblUserFilterCountTagged))
                     .add(tabPaneTagged))
                 .addContainerGap())
         );
@@ -1322,14 +1606,16 @@ public class DesktopPanel extends javax.swing.JPanel implements ThemeableEditor,
             .add(jPanel3Layout.createSequentialGroup()
                 .addContainerGap()
                 .add(jPanel3Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
-                    .add(chkOnlyMyTagged)
                     .add(jLabel9)
                     .add(cmdRefreshTagged)
                     .add(jPanel3Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.TRAILING, false)
                         .add(org.jdesktop.layout.GroupLayout.LEADING, cmdDocumentTagFilter, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                        .add(org.jdesktop.layout.GroupLayout.LEADING, cmdTagFilter, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)))
+                        .add(org.jdesktop.layout.GroupLayout.LEADING, cmdTagFilter, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                    .add(jPanel3Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.TRAILING, false)
+                        .add(org.jdesktop.layout.GroupLayout.LEADING, cmdUserFilterTagged, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                        .add(org.jdesktop.layout.GroupLayout.LEADING, lblUserFilterCountTagged, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)))
                 .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
-                .add(tabPaneTagged, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 78, Short.MAX_VALUE)
+                .add(tabPaneTagged, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 76, Short.MAX_VALUE)
                 .addContainerGap())
         );
 
@@ -1358,13 +1644,6 @@ public class DesktopPanel extends javax.swing.JPanel implements ThemeableEditor,
         lblScans.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/scanner_big.png"))); // NOI18N
         lblScans.setText("0");
         lblScans.setEnabled(false);
-
-        lblUnreadDrebis.setFont(lblUnreadDrebis.getFont().deriveFont(lblUnreadDrebis.getFont().getStyle() | java.awt.Font.BOLD, lblUnreadDrebis.getFont().getSize()+2));
-        lblUnreadDrebis.setForeground(java.awt.Color.white);
-        lblUnreadDrebis.setHorizontalAlignment(javax.swing.SwingConstants.CENTER);
-        lblUnreadDrebis.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/Icons2-17.png"))); // NOI18N
-        lblUnreadDrebis.setText("?");
-        lblUnreadDrebis.setEnabled(false);
 
         lblMailingStatus.setFont(lblMailingStatus.getFont().deriveFont(lblMailingStatus.getFont().getStyle() | java.awt.Font.BOLD, lblMailingStatus.getFont().getSize()+2));
         lblMailingStatus.setForeground(new java.awt.Color(255, 0, 0));
@@ -1406,8 +1685,6 @@ public class DesktopPanel extends javax.swing.JPanel implements ThemeableEditor,
                 .add(18, 18, 18)
                 .add(lblMailingStatus)
                 .add(18, 18, 18)
-                .add(lblUnreadDrebis, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 64, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
-                .add(18, 18, 18)
                 .add(lblUnreadBea)
                 .add(18, 18, 18)
                 .add(lblUnreadInstantMessages)
@@ -1417,26 +1694,27 @@ public class DesktopPanel extends javax.swing.JPanel implements ThemeableEditor,
                 .add(lblUpdateStatusFormPlugins)
                 .addPreferredGap(org.jdesktop.layout.LayoutStyle.UNRELATED)
                 .add(lblNewsStatus)
-                .addContainerGap(org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                .addContainerGap(88, Short.MAX_VALUE))
         );
         messagesWidgetLayout.setVerticalGroup(
             messagesWidgetLayout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
-            .add(org.jdesktop.layout.GroupLayout.TRAILING, messagesWidgetLayout.createSequentialGroup()
-                .add(0, 0, Short.MAX_VALUE)
-                .add(messagesWidgetLayout.createParallelGroup(org.jdesktop.layout.GroupLayout.BASELINE)
-                    .add(lblUnreadInstantMessages, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 40, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
-                    .add(lblUpdateStatus, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 40, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
-                    .add(lblNewsStatus, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 40, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)))
             .add(messagesWidgetLayout.createSequentialGroup()
-                .add(messagesWidgetLayout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
+                .add(messagesWidgetLayout.createParallelGroup(org.jdesktop.layout.GroupLayout.TRAILING)
+                    .add(messagesWidgetLayout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
+                        .add(org.jdesktop.layout.GroupLayout.TRAILING, messagesWidgetLayout.createParallelGroup(org.jdesktop.layout.GroupLayout.BASELINE)
+                            .add(lblUnreadInstantMessages, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 40, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
+                            .add(lblUpdateStatus, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 40, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
+                            .add(lblNewsStatus, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 40, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE))
+                        .add(messagesWidgetLayout.createSequentialGroup()
+                            .add(messagesWidgetLayout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
+                                .add(lblUnreadBea)
+                                .add(lblUpdateStatusFormPlugins, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 40, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE))
+                            .add(0, 0, Short.MAX_VALUE)))
                     .add(messagesWidgetLayout.createParallelGroup(org.jdesktop.layout.GroupLayout.BASELINE)
                         .add(lblUnreadMail)
                         .add(lblScans)
-                        .add(lblMailingStatus)
-                        .add(lblUnreadDrebis)
-                        .add(lblUnreadBea))
-                    .add(lblUpdateStatusFormPlugins, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 40, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE))
-                .add(0, 0, Short.MAX_VALUE))
+                        .add(lblMailingStatus)))
+                .add(0, 1, Short.MAX_VALUE))
         );
 
         lblArchiveFileCount.setFont(lblArchiveFileCount.getFont().deriveFont(lblArchiveFileCount.getFont().getStyle() | java.awt.Font.BOLD));
@@ -1562,7 +1840,7 @@ public class DesktopPanel extends javax.swing.JPanel implements ThemeableEditor,
                         .add(lblDay, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                         .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
                         .add(desktopWidgetPanel2, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE))
-                    .add(jSplitPane1)
+                    .add(jSplitPane1, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 0, Short.MAX_VALUE)
                     .add(systemInformationWidget, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
                 .addContainerGap())
         );
@@ -1591,6 +1869,36 @@ public class DesktopPanel extends javax.swing.JPanel implements ThemeableEditor,
         // TODO add your handling code here:
     }//GEN-LAST:event_formComponentResized
 
+    private void openModule(Class<?> editorClass, String source) {
+        if (editorClass == null) {
+            log.warn("No editor class provided for source " + source);
+            return;
+        }
+
+        log.info("Opening module " + editorClass.getSimpleName() + " from " + source + " status icon");
+        try {
+            Object editor = EditorsRegistry.getInstance().getEditor(editorClass.getName());
+            if (editor == null) {
+                log.warn("EditorsRegistry returned null for " + editorClass.getName());
+                return;
+            }
+            if (editor instanceof PopulateOptionsEditor) {
+                ((PopulateOptionsEditor) editor).populateOptions();
+            }
+
+            if (editor instanceof Component) {
+                EditorsRegistry.getInstance().setMainEditorsPaneView((Component) editor);
+            } else {
+                log.warn("Editor " + editorClass.getName() + " is not a Component instance");
+            }
+        } catch (Exception ex) {
+            log.error("Failed to open editor " + editorClass.getName() + " from " + source + " status icon", ex);
+            String errorMessage = ResourceBundle.getBundle("com/jdimension/jlawyer/client/JKanzleiGUI").getString("error.loadingeditor");
+            String errorTitle = ResourceBundle.getBundle("com/jdimension/jlawyer/client/JKanzleiGUI").getString("msg.title.error");
+            JOptionPane.showMessageDialog(this, errorMessage + ex.getMessage(), errorTitle, JOptionPane.ERROR_MESSAGE);
+        }
+    }
+
     public void updateUserIcon() {
         UserSettings us = UserSettings.getInstance();
         this.lblUserIcon.setIcon(us.getCurrentUserBigIcon());
@@ -1608,22 +1916,6 @@ public class DesktopPanel extends javax.swing.JPanel implements ThemeableEditor,
         dlg.setVisible(true);
     }//GEN-LAST:event_lblUserNameMouseClicked
 
-    private void chkOnlyMyCasesActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_chkOnlyMyCasesActionPerformed
-
-        if (this.initializing) {
-            return;
-        }
-
-        UserSettings settings = UserSettings.getInstance();
-
-        boolean onlyMyCases = this.chkOnlyMyCases.isSelected();
-        settings.setSetting(UserSettings.CONF_DESKTOP_ONLYMYCASES, "" + onlyMyCases);
-
-        TimerTask lastChangedTask = new LastChangedTimerTask(this, this.pnlLastChanged, this.jSplitPane1, true);
-        new Timer().schedule(lastChangedTask, 500);
-
-    }//GEN-LAST:event_chkOnlyMyCasesActionPerformed
-
     private void cmdRefreshLastChangedActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdRefreshLastChangedActionPerformed
         Timer timer = new Timer();
 
@@ -1639,19 +1931,9 @@ public class DesktopPanel extends javax.swing.JPanel implements ThemeableEditor,
         timer.schedule(revDueTask, 10);
     }//GEN-LAST:event_cmdRefreshRevDueActionPerformed
 
-    private void chkOnlyMyTaggedActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_chkOnlyMyTaggedActionPerformed
-        if (this.initializing) {
-            return;
-        }
-
-        UserSettings settings = UserSettings.getInstance();
-
-        boolean onlyMyTagged = this.chkOnlyMyTagged.isSelected();
-        settings.setSetting(UserSettings.CONF_DESKTOP_ONLYMYTAGGED, "" + onlyMyTagged);
-
-        TimerTask taggedTask = new TaggedTimerTask(this, this.tabPaneTagged, this.pnlTagged, this.jSplitPane2, this.cmdTagFilter, this.cmdDocumentTagFilter, this.popTagFilter, this.popDocumentTagFilter, true);
-        new Timer().schedule(taggedTask, 500);
-    }//GEN-LAST:event_chkOnlyMyTaggedActionPerformed
+    private void cmdUserFilterTaggedMousePressed(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_cmdUserFilterTaggedMousePressed
+        this.popUserFilterTagged.show(this.cmdUserFilterTagged, evt.getX(), evt.getY());
+    }//GEN-LAST:event_cmdUserFilterTaggedMousePressed
 
     private void cmdRefreshTaggedActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdRefreshTaggedActionPerformed
 
@@ -1661,10 +1943,22 @@ public class DesktopPanel extends javax.swing.JPanel implements ThemeableEditor,
     }//GEN-LAST:event_cmdRefreshTaggedActionPerformed
 
     private void cmdTagFilterMousePressed(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_cmdTagFilterMousePressed
+        try {
+            this.popTagFilter.putClientProperty("jlawyer.anchorX", Integer.valueOf(evt.getX()));
+            this.popTagFilter.putClientProperty("jlawyer.anchorY", Integer.valueOf(evt.getY()));
+        } catch (Exception ex) {
+            org.apache.log4j.Logger.getLogger(DesktopPanel.class).warn("Could not store tag popup anchor", ex);
+        }
         this.popTagFilter.show(this.cmdTagFilter, evt.getX(), evt.getY());
     }//GEN-LAST:event_cmdTagFilterMousePressed
 
     private void cmdDocumentTagFilterMousePressed(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_cmdDocumentTagFilterMousePressed
+        try {
+            this.popDocumentTagFilter.putClientProperty("jlawyer.anchorX", Integer.valueOf(evt.getX()));
+            this.popDocumentTagFilter.putClientProperty("jlawyer.anchorY", Integer.valueOf(evt.getY()));
+        } catch (Exception ex) {
+            org.apache.log4j.Logger.getLogger(DesktopPanel.class).warn("Could not store document tag popup anchor", ex);
+        }
         this.popDocumentTagFilter.show(this.cmdDocumentTagFilter, evt.getX(), evt.getY());
     }//GEN-LAST:event_cmdDocumentTagFilterMousePressed
 
@@ -1672,16 +1966,27 @@ public class DesktopPanel extends javax.swing.JPanel implements ThemeableEditor,
         this.popUserFilter.show(this.cmdUserFilter, evt.getX(), evt.getY());
     }//GEN-LAST:event_cmdUserFilterMousePressed
 
+    private void cmdDueSinceDaysMousePressed(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_cmdDueSinceDaysMousePressed
+        this.popDueSinceDays.show(this.cmdDueSinceDays, evt.getX(), evt.getY());
+    }//GEN-LAST:event_cmdDueSinceDaysMousePressed
+
+    private void cmdUserFilterLastchangedMousePressed(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_cmdUserFilterLastchangedMousePressed
+        this.popUserFilterLastchanged.show(this.cmdUserFilterLastchanged, evt.getX(), evt.getY());
+    }//GEN-LAST:event_cmdUserFilterLastchangedMousePressed
+
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
-    private javax.swing.JCheckBox chkOnlyMyCases;
-    private javax.swing.JCheckBox chkOnlyMyTagged;
+    private javax.swing.ButtonGroup btnGrpDueInDays;
+    private javax.swing.ButtonGroup btnGrpDueSinceDays;
     private javax.swing.JButton cmdDocumentTagFilter;
+    private javax.swing.JButton cmdDueSinceDays;
     private javax.swing.JButton cmdRefreshLastChanged;
     private javax.swing.JButton cmdRefreshRevDue;
     private javax.swing.JButton cmdRefreshTagged;
     private javax.swing.JButton cmdTagFilter;
     private javax.swing.JButton cmdUserFilter;
+    private javax.swing.JButton cmdUserFilterLastchanged;
+    private javax.swing.JButton cmdUserFilterTagged;
     private com.jdimension.jlawyer.client.desktop.DesktopWidgetPanel desktopWidgetPanel2;
     private javax.swing.JLabel jLabel10;
     private javax.swing.JLabel jLabel5;
@@ -1703,16 +2008,18 @@ public class DesktopPanel extends javax.swing.JPanel implements ThemeableEditor,
     private javax.swing.JLabel lblAssistant;
     private javax.swing.JLabel lblDay;
     private javax.swing.JLabel lblDocumentCount;
+    private javax.swing.JLabel lblDueSinceDays;
     private javax.swing.JLabel lblMailingStatus;
     private javax.swing.JLabel lblNewsStatus;
     private javax.swing.JLabel lblScans;
     private javax.swing.JLabel lblUnreadBea;
-    private javax.swing.JLabel lblUnreadDrebis;
     private javax.swing.JLabel lblUnreadInstantMessages;
     private javax.swing.JLabel lblUnreadMail;
     private javax.swing.JLabel lblUpdateStatus;
     private javax.swing.JLabel lblUpdateStatusFormPlugins;
     private javax.swing.JLabel lblUserFilterCount;
+    private javax.swing.JLabel lblUserFilterCountLastchanged;
+    private javax.swing.JLabel lblUserFilterCountTagged;
     private javax.swing.JLabel lblUserIcon;
     private javax.swing.JLabel lblUserName;
     private javax.swing.JLabel lblVoipBalance;
@@ -1721,8 +2028,11 @@ public class DesktopPanel extends javax.swing.JPanel implements ThemeableEditor,
     private javax.swing.JPanel pnlRevDue;
     private javax.swing.JPanel pnlTagged;
     private javax.swing.JPopupMenu popDocumentTagFilter;
+    private javax.swing.JPopupMenu popDueSinceDays;
     private javax.swing.JPopupMenu popTagFilter;
     private javax.swing.JPopupMenu popUserFilter;
+    private javax.swing.JPopupMenu popUserFilterLastchanged;
+    private javax.swing.JPopupMenu popUserFilterTagged;
     private com.jdimension.jlawyer.client.desktop.DesktopWidgetPanel systemInformationWidget;
     private javax.swing.JTabbedPane tabPaneDue;
     private javax.swing.JTabbedPane tabPaneTagged;
@@ -1818,19 +2128,6 @@ public class DesktopPanel extends javax.swing.JPanel implements ThemeableEditor,
                 this.lblUnreadInstantMessages.setEnabled(false);
                 this.lblUnreadInstantMessages.setText("");
                 this.lblUnreadInstantMessages.setToolTipText(null);
-            }
-            
-            this.revalidate();
-            this.repaint();
-        } else if(e instanceof DrebisStatusEvent) {
-            
-            if(((DrebisStatusEvent) e).getMessages()>0) {
-                this.lblUnreadDrebis.setEnabled(true);
-                this.lblUnreadDrebis.setText("" + ((DrebisStatusEvent) e).getMessages());
-                this.lblUnreadDrebis.setToolTipText("es gibt ungelesene Drebis-Nachrichten");
-            } else {
-                this.lblUnreadDrebis.setText("");
-                this.lblUnreadDrebis.setToolTipText("keine ungelesenen Drebis-Nachrichten");
             }
             
             this.revalidate();

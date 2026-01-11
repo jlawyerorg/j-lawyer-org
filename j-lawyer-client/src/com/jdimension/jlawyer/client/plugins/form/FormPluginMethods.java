@@ -665,7 +665,6 @@ package com.jdimension.jlawyer.client.plugins.form;
 
 import java.util.ArrayList;
 import java.util.Hashtable;
-import javax.swing.JPanel;
 
 /**
  *
@@ -682,5 +681,7 @@ public interface FormPluginMethods {
     public void setPlaceHolderValues(String prefix, Hashtable placeHolderValues);
     
     public void setCallback(FormPluginCallback callback);
+
+    public String getAsHtml();
     
 }

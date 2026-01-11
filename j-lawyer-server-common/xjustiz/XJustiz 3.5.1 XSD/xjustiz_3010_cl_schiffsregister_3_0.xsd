@@ -1,0 +1,1770 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema"
+           xmlns:tns="http://www.xjustiz.de"
+           xmlns:xoev-code="http://xoev.de/schemata/code/1_0"
+           targetNamespace="http://www.xjustiz.de"
+           version="3.0.0"
+           elementFormDefault="unqualified"
+           attributeFormDefault="unqualified">
+   <xs:annotation>
+      <xs:appinfo>
+         <standard>
+            <nameLang>Strukturierte Fachdaten für die Kommunikation im elektronischen Rechtsverkehr</nameLang>
+            <nameKurz>XJustiz</nameKurz>
+            <nameTechnisch>xjustiz</nameTechnisch>
+            <kennung>urn:xoev-de:blk-ag-it-standards:standard:xjustiz</kennung>
+            <beschreibung>XJustiz ist der bundesweit einheitliche Standard für den Austausch strukturierter elektronischer Informationen mit der Justiz.</beschreibung>
+         </standard>
+         <versionStandard>
+            <version>3.5.1</version>
+            <beschreibung>XJustiz beschreibt ein standardisiertes Datenaustauschformat für die elektronische Kommunikation innerhalb und mit der Justizverwaltung.</beschreibung>
+            <versionXOEVProfil>1.7.2</versionXOEVProfil>
+            <versionXOEVHandbuch>2.3.1</versionXOEVHandbuch>
+            <versionXGenerator>3.1.1</versionXGenerator>
+            <versionModellierungswerkzeug>19.0 SP3</versionModellierungswerkzeug>
+            <nameModellierungswerkzeug>MagicDraw</nameModellierungswerkzeug>
+         </versionStandard>
+      </xs:appinfo>
+   </xs:annotation>
+   <xs:import schemaLocation="xoev-code.xsd"
+              namespace="http://xoev.de/schemata/code/1_0"/>
+   <xs:complexType name="Code.SCHIR.Baustoff">
+      <xs:annotation>
+         <xs:appinfo>
+            <codeliste>
+               <nameLang>SCHIR.Baustoff</nameLang>
+               <nameKurz>SCHIR.Baustoff</nameKurz>
+               <nameTechnisch>schir.baustoff</nameTechnisch>
+               <kennung>urn:xoev-de:xjustiz:codeliste:schir.baustoff</kennung>
+               <beschreibung>Codeliste der verschiedenen Schiffsbaustoffe im Fachverfahren Schiffsregister.</beschreibung>
+               <herausgebernameLang>BLK-AG IT-Standards in der Justiz</herausgebernameLang>
+               <herausgebernameKurz>AG IT-Standards</herausgebernameKurz>
+            </codeliste>
+            <versionCodeliste>
+               <version>1.0</version>
+               <versionCodelistenHandbuch>1.1</versionCodelistenHandbuch>
+            </versionCodeliste>
+            <codelistenspalten>
+               <code>
+                  <spaltennameLang>Schlüssel</spaltennameLang>
+                  <datentyp>string</datentyp>
+                  <codeSpalte>true</codeSpalte>
+                  <verwendung>required</verwendung>
+                  <empfohleneCodeSpalte>true</empfohleneCodeSpalte>
+               </code>
+               <wert>
+                  <spaltennameLang>Wert</spaltennameLang>
+                  <datentyp>string</datentyp>
+                  <codeSpalte>false</codeSpalte>
+                  <verwendung>required</verwendung>
+                  <empfohleneCodeSpalte>false</empfohleneCodeSpalte>
+               </wert>
+            </codelistenspalten>
+            <genutzteCodeSpalte>code</genutzteCodeSpalte>
+         </xs:appinfo>
+      </xs:annotation>
+      <xs:complexContent>
+         <xs:restriction base="xoev-code:Code">
+            <xs:sequence>
+               <xs:element name="code" type="tns:schir.baustoff"/>
+            </xs:sequence>
+            <xs:attribute name="listURI"
+                          type="xs:anyURI"
+                          use="optional"
+                          fixed="urn:xoev-de:xjustiz:codeliste:schir.baustoff"/>
+            <xs:attribute name="listVersionID"
+                          type="xs:normalizedString"
+                          use="optional"
+                          fixed="1.0"/>
+         </xs:restriction>
+      </xs:complexContent>
+   </xs:complexType>
+   <xs:complexType name="Code.SCHIR.Heimathafen">
+      <xs:annotation>
+         <xs:appinfo>
+            <codeliste>
+               <nameLang>SCHIR.Heimathafen</nameLang>
+               <nameKurz>SCHIR.Heimathafen</nameKurz>
+               <nameTechnisch>schir.heimathafen</nameTechnisch>
+               <kennung>urn:xoev-de:xjustiz:codeliste:schir.heimathafen</kennung>
+               <beschreibung>Codeliste der Heimathäfen im Fachverfahren Schiffsregister.</beschreibung>
+               <herausgebernameLang>BLK-AG IT-Standards in der Justiz</herausgebernameLang>
+               <herausgebernameKurz>AG IT-Standards</herausgebernameKurz>
+            </codeliste>
+            <versionCodeliste>
+               <version>1.0</version>
+               <versionCodelistenHandbuch>1.1</versionCodelistenHandbuch>
+            </versionCodeliste>
+            <codelistenspalten>
+               <code>
+                  <spaltennameLang>Schlüssel</spaltennameLang>
+                  <datentyp>string</datentyp>
+                  <codeSpalte>true</codeSpalte>
+                  <verwendung>required</verwendung>
+                  <empfohleneCodeSpalte>true</empfohleneCodeSpalte>
+               </code>
+               <wert>
+                  <spaltennameLang>Wert</spaltennameLang>
+                  <datentyp>string</datentyp>
+                  <codeSpalte>false</codeSpalte>
+                  <verwendung>required</verwendung>
+                  <empfohleneCodeSpalte>false</empfohleneCodeSpalte>
+               </wert>
+            </codelistenspalten>
+            <genutzteCodeSpalte>code</genutzteCodeSpalte>
+         </xs:appinfo>
+      </xs:annotation>
+      <xs:complexContent>
+         <xs:restriction base="xoev-code:Code">
+            <xs:sequence>
+               <xs:element name="code" type="tns:schir.heimathafen"/>
+            </xs:sequence>
+            <xs:attribute name="listURI"
+                          type="xs:anyURI"
+                          use="optional"
+                          fixed="urn:xoev-de:xjustiz:codeliste:schir.heimathafen"/>
+            <xs:attribute name="listVersionID"
+                          type="xs:normalizedString"
+                          use="optional"
+                          fixed="1.0"/>
+         </xs:restriction>
+      </xs:complexContent>
+   </xs:complexType>
+   <xs:complexType name="Code.SCHIR.Loeschgrund">
+      <xs:annotation>
+         <xs:appinfo>
+            <codeliste>
+               <nameLang>SCHIR.Loeschgrund</nameLang>
+               <nameKurz>SCHIR.Loeschgrund</nameKurz>
+               <nameTechnisch>schir.loeschgrund</nameTechnisch>
+               <kennung>urn:xoev-de:xjustiz:codeliste:schir.loeschgrund</kennung>
+               <beschreibung>Codeliste der Löschgründe im Fachverfahren Schiffsregister.</beschreibung>
+               <herausgebernameLang>BLK-AG IT-Standards in der Justiz</herausgebernameLang>
+               <herausgebernameKurz>AG IT-Standards</herausgebernameKurz>
+            </codeliste>
+            <versionCodeliste>
+               <version>1.0</version>
+               <versionCodelistenHandbuch>1.1</versionCodelistenHandbuch>
+            </versionCodeliste>
+            <codelistenspalten>
+               <code>
+                  <spaltennameLang>Schlüssel</spaltennameLang>
+                  <datentyp>string</datentyp>
+                  <codeSpalte>true</codeSpalte>
+                  <verwendung>required</verwendung>
+                  <empfohleneCodeSpalte>true</empfohleneCodeSpalte>
+               </code>
+               <wert>
+                  <spaltennameLang>Wert</spaltennameLang>
+                  <datentyp>string</datentyp>
+                  <codeSpalte>false</codeSpalte>
+                  <verwendung>required</verwendung>
+                  <empfohleneCodeSpalte>false</empfohleneCodeSpalte>
+               </wert>
+            </codelistenspalten>
+            <genutzteCodeSpalte>code</genutzteCodeSpalte>
+         </xs:appinfo>
+      </xs:annotation>
+      <xs:complexContent>
+         <xs:restriction base="xoev-code:Code">
+            <xs:sequence>
+               <xs:element name="code" type="tns:schir.loeschgrund"/>
+            </xs:sequence>
+            <xs:attribute name="listURI"
+                          type="xs:anyURI"
+                          use="optional"
+                          fixed="urn:xoev-de:xjustiz:codeliste:schir.loeschgrund"/>
+            <xs:attribute name="listVersionID"
+                          type="xs:normalizedString"
+                          use="optional"
+                          fixed="1.0"/>
+         </xs:restriction>
+      </xs:complexContent>
+   </xs:complexType>
+   <xs:complexType name="Code.SCHIR.Messbriefaussteller">
+      <xs:annotation>
+         <xs:appinfo>
+            <codeliste>
+               <nameLang>SCHIR.Messbriefaussteller</nameLang>
+               <nameKurz>SCHIR.Messbriefaussteller</nameKurz>
+               <nameTechnisch>schir.messbriefaussteller</nameTechnisch>
+               <kennung>urn:xoev-de:xjustiz:codeliste:schir.messbriefaussteller</kennung>
+               <beschreibung>Codeliste der Messbriefaussteller im Fachverfahren Schiffsregister.</beschreibung>
+               <herausgebernameLang>BLK-AG IT-Standards in der Justiz</herausgebernameLang>
+               <herausgebernameKurz>AG IT-Standards</herausgebernameKurz>
+            </codeliste>
+            <versionCodeliste>
+               <version>1.0</version>
+               <versionCodelistenHandbuch>1.1</versionCodelistenHandbuch>
+            </versionCodeliste>
+            <codelistenspalten>
+               <code>
+                  <spaltennameLang>Schlüssel</spaltennameLang>
+                  <datentyp>string</datentyp>
+                  <codeSpalte>true</codeSpalte>
+                  <verwendung>required</verwendung>
+                  <empfohleneCodeSpalte>true</empfohleneCodeSpalte>
+               </code>
+               <wert>
+                  <spaltennameLang>Wert</spaltennameLang>
+                  <datentyp>string</datentyp>
+                  <codeSpalte>false</codeSpalte>
+                  <verwendung>required</verwendung>
+                  <empfohleneCodeSpalte>false</empfohleneCodeSpalte>
+               </wert>
+            </codelistenspalten>
+            <genutzteCodeSpalte>code</genutzteCodeSpalte>
+         </xs:appinfo>
+      </xs:annotation>
+      <xs:complexContent>
+         <xs:restriction base="xoev-code:Code">
+            <xs:sequence>
+               <xs:element name="code" type="tns:schir.messbriefaussteller"/>
+            </xs:sequence>
+            <xs:attribute name="listURI"
+                          type="xs:anyURI"
+                          use="optional"
+                          fixed="urn:xoev-de:xjustiz:codeliste:schir.messbriefaussteller"/>
+            <xs:attribute name="listVersionID"
+                          type="xs:normalizedString"
+                          use="optional"
+                          fixed="1.0"/>
+         </xs:restriction>
+      </xs:complexContent>
+   </xs:complexType>
+   <xs:complexType name="Code.SCHIR.Schiffsgattung">
+      <xs:annotation>
+         <xs:appinfo>
+            <codeliste>
+               <nameLang>SCHIR.Schiffsgattung</nameLang>
+               <nameKurz>SCHIR.Schiffsgattung</nameKurz>
+               <nameTechnisch>schir.schiffsgattung</nameTechnisch>
+               <kennung>urn:xoev-de:xjustiz:codeliste:schir.schiffsgattung</kennung>
+               <beschreibung>Codeliste der verschiedenen Schiffsgattungen im Fachverfahren Schiffsregister.</beschreibung>
+               <herausgebernameLang>BLK-AG IT-Standards in der Justiz</herausgebernameLang>
+               <herausgebernameKurz>AG IT-Standards</herausgebernameKurz>
+            </codeliste>
+            <versionCodeliste>
+               <version>1.0</version>
+               <versionCodelistenHandbuch>1.1</versionCodelistenHandbuch>
+            </versionCodeliste>
+            <codelistenspalten>
+               <code>
+                  <spaltennameLang>Schlüssel</spaltennameLang>
+                  <datentyp>string</datentyp>
+                  <codeSpalte>true</codeSpalte>
+                  <verwendung>required</verwendung>
+                  <empfohleneCodeSpalte>true</empfohleneCodeSpalte>
+               </code>
+               <wert>
+                  <spaltennameLang>Wert</spaltennameLang>
+                  <datentyp>string</datentyp>
+                  <codeSpalte>false</codeSpalte>
+                  <verwendung>required</verwendung>
+                  <empfohleneCodeSpalte>false</empfohleneCodeSpalte>
+               </wert>
+               <beschreibung>
+                  <spaltennameLang>Beschreibung</spaltennameLang>
+                  <datentyp>string</datentyp>
+                  <codeSpalte>false</codeSpalte>
+                  <verwendung>optional</verwendung>
+                  <empfohleneCodeSpalte>false</empfohleneCodeSpalte>
+               </beschreibung>
+            </codelistenspalten>
+            <genutzteCodeSpalte>code</genutzteCodeSpalte>
+         </xs:appinfo>
+      </xs:annotation>
+      <xs:complexContent>
+         <xs:restriction base="xoev-code:Code">
+            <xs:sequence>
+               <xs:element name="code" type="tns:schir.schiffsgattung"/>
+            </xs:sequence>
+            <xs:attribute name="listURI"
+                          type="xs:anyURI"
+                          use="optional"
+                          fixed="urn:xoev-de:xjustiz:codeliste:schir.schiffsgattung"/>
+            <xs:attribute name="listVersionID"
+                          type="xs:normalizedString"
+                          use="optional"
+                          fixed="1.0"/>
+         </xs:restriction>
+      </xs:complexContent>
+   </xs:complexType>
+   <xs:simpleType name="schir.baustoff">
+      <xs:annotation>
+         <xs:appinfo>
+            <codeliste>
+               <nameLang>SCHIR.Baustoff</nameLang>
+               <nameKurz>SCHIR.Baustoff</nameKurz>
+               <nameTechnisch>schir.baustoff</nameTechnisch>
+               <kennung>urn:xoev-de:xjustiz:codeliste:schir.baustoff</kennung>
+               <beschreibung>Codeliste der verschiedenen Schiffsbaustoffe im Fachverfahren Schiffsregister.</beschreibung>
+               <herausgebernameLang>BLK-AG IT-Standards in der Justiz</herausgebernameLang>
+               <herausgebernameKurz>AG IT-Standards</herausgebernameKurz>
+            </codeliste>
+            <versionCodeliste>
+               <version>1.0</version>
+               <versionCodelistenHandbuch>1.1</versionCodelistenHandbuch>
+            </versionCodeliste>
+            <codelistenspalten>
+               <code>
+                  <spaltennameLang>Schlüssel</spaltennameLang>
+                  <datentyp>string</datentyp>
+                  <codeSpalte>true</codeSpalte>
+                  <verwendung>required</verwendung>
+                  <empfohleneCodeSpalte>true</empfohleneCodeSpalte>
+               </code>
+               <wert>
+                  <spaltennameLang>Wert</spaltennameLang>
+                  <datentyp>string</datentyp>
+                  <codeSpalte>false</codeSpalte>
+                  <verwendung>required</verwendung>
+                  <empfohleneCodeSpalte>false</empfohleneCodeSpalte>
+               </wert>
+            </codelistenspalten>
+         </xs:appinfo>
+      </xs:annotation>
+      <xs:restriction base="xs:token">
+         <xs:enumeration value="001">
+            <xs:annotation>
+               <xs:appinfo>
+                  <wert>Stahl</wert>
+               </xs:appinfo>
+            </xs:annotation>
+         </xs:enumeration>
+         <xs:enumeration value="002">
+            <xs:annotation>
+               <xs:appinfo>
+                  <wert>GFK (Glasfaserverstärkter Kunststoff)</wert>
+               </xs:appinfo>
+            </xs:annotation>
+         </xs:enumeration>
+         <xs:enumeration value="003">
+            <xs:annotation>
+               <xs:appinfo>
+                  <wert>Kunststoff</wert>
+               </xs:appinfo>
+            </xs:annotation>
+         </xs:enumeration>
+         <xs:enumeration value="004">
+            <xs:annotation>
+               <xs:appinfo>
+                  <wert>Holz</wert>
+               </xs:appinfo>
+            </xs:annotation>
+         </xs:enumeration>
+         <xs:enumeration value="005">
+            <xs:annotation>
+               <xs:appinfo>
+                  <wert>Aluminium</wert>
+               </xs:appinfo>
+            </xs:annotation>
+         </xs:enumeration>
+         <xs:enumeration value="006">
+            <xs:annotation>
+               <xs:appinfo>
+                  <wert>Zement</wert>
+               </xs:appinfo>
+            </xs:annotation>
+         </xs:enumeration>
+         <xs:enumeration value="007">
+            <xs:annotation>
+               <xs:appinfo>
+                  <wert>Komposit</wert>
+               </xs:appinfo>
+            </xs:annotation>
+         </xs:enumeration>
+         <xs:enumeration value="008">
+            <xs:annotation>
+               <xs:appinfo>
+                  <wert>Sonstiges</wert>
+               </xs:appinfo>
+            </xs:annotation>
+         </xs:enumeration>
+         <xs:enumeration value="009">
+            <xs:annotation>
+               <xs:appinfo>
+                  <wert>Glasfaser</wert>
+               </xs:appinfo>
+            </xs:annotation>
+         </xs:enumeration>
+         <xs:enumeration value="010">
+            <xs:annotation>
+               <xs:appinfo>
+                  <wert>Beton</wert>
+               </xs:appinfo>
+            </xs:annotation>
+         </xs:enumeration>
+         <xs:enumeration value="011">
+            <xs:annotation>
+               <xs:appinfo>
+                  <wert>Eisen</wert>
+               </xs:appinfo>
+            </xs:annotation>
+         </xs:enumeration>
+      </xs:restriction>
+   </xs:simpleType>
+   <xs:simpleType name="schir.heimathafen">
+      <xs:annotation>
+         <xs:appinfo>
+            <codeliste>
+               <nameLang>SCHIR.Heimathafen</nameLang>
+               <nameKurz>SCHIR.Heimathafen</nameKurz>
+               <nameTechnisch>schir.heimathafen</nameTechnisch>
+               <kennung>urn:xoev-de:xjustiz:codeliste:schir.heimathafen</kennung>
+               <beschreibung>Codeliste der Heimathäfen im Fachverfahren Schiffsregister.</beschreibung>
+               <herausgebernameLang>BLK-AG IT-Standards in der Justiz</herausgebernameLang>
+               <herausgebernameKurz>AG IT-Standards</herausgebernameKurz>
+            </codeliste>
+            <versionCodeliste>
+               <version>1.0</version>
+               <versionCodelistenHandbuch>1.1</versionCodelistenHandbuch>
+            </versionCodeliste>
+            <codelistenspalten>
+               <code>
+                  <spaltennameLang>Schlüssel</spaltennameLang>
+                  <datentyp>string</datentyp>
+                  <codeSpalte>true</codeSpalte>
+                  <verwendung>required</verwendung>
+                  <empfohleneCodeSpalte>true</empfohleneCodeSpalte>
+               </code>
+               <wert>
+                  <spaltennameLang>Wert</spaltennameLang>
+                  <datentyp>string</datentyp>
+                  <codeSpalte>false</codeSpalte>
+                  <verwendung>required</verwendung>
+                  <empfohleneCodeSpalte>false</empfohleneCodeSpalte>
+               </wert>
+            </codelistenspalten>
+         </xs:appinfo>
+      </xs:annotation>
+      <xs:restriction base="xs:token">
+         <xs:enumeration value="001">
+            <xs:annotation>
+               <xs:appinfo>
+                  <wert>Aachen</wert>
+               </xs:appinfo>
+            </xs:annotation>
+         </xs:enumeration>
+         <xs:enumeration value="002">
+            <xs:annotation>
+               <xs:appinfo>
+                  <wert>Amberg</wert>
+               </xs:appinfo>
+            </xs:annotation>
+         </xs:enumeration>
+         <xs:enumeration value="003">
+            <xs:annotation>
+               <xs:appinfo>
+                  <wert>Ansbach</wert>
+               </xs:appinfo>
+            </xs:annotation>
+         </xs:enumeration>
+         <xs:enumeration value="004">
+            <xs:annotation>
+               <xs:appinfo>
+                  <wert>Arnsberg</wert>
+               </xs:appinfo>
+            </xs:annotation>
+         </xs:enumeration>
+         <xs:enumeration value="005">
+            <xs:annotation>
+               <xs:appinfo>
+                  <wert>Aschaffenburg</wert>
+               </xs:appinfo>
+            </xs:annotation>
+         </xs:enumeration>
+         <xs:enumeration value="006">
+            <xs:annotation>
+               <xs:appinfo>
+                  <wert>Augsburg</wert>
+               </xs:appinfo>
+            </xs:annotation>
+         </xs:enumeration>
+         <xs:enumeration value="007">
+            <xs:annotation>
+               <xs:appinfo>
+                  <wert>Aurich</wert>
+               </xs:appinfo>
+            </xs:annotation>
+         </xs:enumeration>
+         <xs:enumeration value="008">
+            <xs:annotation>
+               <xs:appinfo>
+                  <wert>Bad Hersfeld</wert>
+               </xs:appinfo>
+            </xs:annotation>
+         </xs:enumeration>
+         <xs:enumeration value="009">
+            <xs:annotation>
+               <xs:appinfo>
+                  <wert>Bad Homburg v.d. Höhe</wert>
+               </xs:appinfo>
+            </xs:annotation>
+         </xs:enumeration>
+         <xs:enumeration value="010">
+            <xs:annotation>
+               <xs:appinfo>
+                  <wert>Bad Kreuznach</wert>
+               </xs:appinfo>
+            </xs:annotation>
+         </xs:enumeration>
+         <xs:enumeration value="011">
+            <xs:annotation>
+               <xs:appinfo>
+                  <wert>Bad Oeynhausen</wert>
+               </xs:appinfo>
+            </xs:annotation>
+         </xs:enumeration>
+         <xs:enumeration value="012">
+            <xs:annotation>
+               <xs:appinfo>
+                  <wert>Bamberg</wert>
+               </xs:appinfo>
+            </xs:annotation>
+         </xs:enumeration>
+         <xs:enumeration value="013">
+            <xs:annotation>
+               <xs:appinfo>
+                  <wert>Bayreuth</wert>
+               </xs:appinfo>
+            </xs:annotation>
+         </xs:enumeration>
+         <xs:enumeration value="014">
+            <xs:annotation>
+               <xs:appinfo>
+                  <wert>Bielefeld</wert>
+               </xs:appinfo>
+            </xs:annotation>
+         </xs:enumeration>
+         <xs:enumeration value="015">
+            <xs:annotation>
+               <xs:appinfo>
+                  <wert>Bochum</wert>
+               </xs:appinfo>
+            </xs:annotation>
+         </xs:enumeration>
+         <xs:enumeration value="016">
+            <xs:annotation>
+               <xs:appinfo>
+                  <wert>Bonn</wert>
+               </xs:appinfo>
+            </xs:annotation>
+         </xs:enumeration>
+         <xs:enumeration value="017">
+            <xs:annotation>
+               <xs:appinfo>
+                  <wert>Braunschweig</wert>
+               </xs:appinfo>
+            </xs:annotation>
+         </xs:enumeration>
+         <xs:enumeration value="018">
+            <xs:annotation>
+               <xs:appinfo>
+                  <wert>Bremen</wert>
+               </xs:appinfo>
+            </xs:annotation>
+         </xs:enumeration>
+         <xs:enumeration value="019">
+            <xs:annotation>
+               <xs:appinfo>
+                  <wert>Charlottenburg</wert>
+               </xs:appinfo>
+            </xs:annotation>
+         </xs:enumeration>
+         <xs:enumeration value="020">
+            <xs:annotation>
+               <xs:appinfo>
+                  <wert>Chemnitz</wert>
+               </xs:appinfo>
+            </xs:annotation>
+         </xs:enumeration>
+         <xs:enumeration value="021">
+            <xs:annotation>
+               <xs:appinfo>
+                  <wert>Coburg</wert>
+               </xs:appinfo>
+            </xs:annotation>
+         </xs:enumeration>
+         <xs:enumeration value="022">
+            <xs:annotation>
+               <xs:appinfo>
+                  <wert>Coesfeld</wert>
+               </xs:appinfo>
+            </xs:annotation>
+         </xs:enumeration>
+         <xs:enumeration value="023">
+            <xs:annotation>
+               <xs:appinfo>
+                  <wert>Cottbus</wert>
+               </xs:appinfo>
+            </xs:annotation>
+         </xs:enumeration>
+         <xs:enumeration value="024">
+            <xs:annotation>
+               <xs:appinfo>
+                  <wert>Darmstadt</wert>
+               </xs:appinfo>
+            </xs:annotation>
+         </xs:enumeration>
+         <xs:enumeration value="025">
+            <xs:annotation>
+               <xs:appinfo>
+                  <wert>Deggendorf</wert>
+               </xs:appinfo>
+            </xs:annotation>
+         </xs:enumeration>
+         <xs:enumeration value="026">
+            <xs:annotation>
+               <xs:appinfo>
+                  <wert>Dortmund</wert>
+               </xs:appinfo>
+            </xs:annotation>
+         </xs:enumeration>
+         <xs:enumeration value="027">
+            <xs:annotation>
+               <xs:appinfo>
+                  <wert>Dresden</wert>
+               </xs:appinfo>
+            </xs:annotation>
+         </xs:enumeration>
+         <xs:enumeration value="028">
+            <xs:annotation>
+               <xs:appinfo>
+                  <wert>Duisburg</wert>
+               </xs:appinfo>
+            </xs:annotation>
+         </xs:enumeration>
+         <xs:enumeration value="029">
+            <xs:annotation>
+               <xs:appinfo>
+                  <wert>Düren</wert>
+               </xs:appinfo>
+            </xs:annotation>
+         </xs:enumeration>
+         <xs:enumeration value="030">
+            <xs:annotation>
+               <xs:appinfo>
+                  <wert>Düsseldorf</wert>
+               </xs:appinfo>
+            </xs:annotation>
+         </xs:enumeration>
+         <xs:enumeration value="031">
+            <xs:annotation>
+               <xs:appinfo>
+                  <wert>Eschwege</wert>
+               </xs:appinfo>
+            </xs:annotation>
+         </xs:enumeration>
+         <xs:enumeration value="032">
+            <xs:annotation>
+               <xs:appinfo>
+                  <wert>Essen</wert>
+               </xs:appinfo>
+            </xs:annotation>
+         </xs:enumeration>
+         <xs:enumeration value="033">
+            <xs:annotation>
+               <xs:appinfo>
+                  <wert>Flensburg</wert>
+               </xs:appinfo>
+            </xs:annotation>
+         </xs:enumeration>
+         <xs:enumeration value="034">
+            <xs:annotation>
+               <xs:appinfo>
+                  <wert>Frankfurt (Oder)</wert>
+               </xs:appinfo>
+            </xs:annotation>
+         </xs:enumeration>
+         <xs:enumeration value="035">
+            <xs:annotation>
+               <xs:appinfo>
+                  <wert>Frankfurt am Main</wert>
+               </xs:appinfo>
+            </xs:annotation>
+         </xs:enumeration>
+         <xs:enumeration value="036">
+            <xs:annotation>
+               <xs:appinfo>
+                  <wert>Freiburg im Breisgau</wert>
+               </xs:appinfo>
+            </xs:annotation>
+         </xs:enumeration>
+         <xs:enumeration value="037">
+            <xs:annotation>
+               <xs:appinfo>
+                  <wert>Friedberg (Hessen)</wert>
+               </xs:appinfo>
+            </xs:annotation>
+         </xs:enumeration>
+         <xs:enumeration value="038">
+            <xs:annotation>
+               <xs:appinfo>
+                  <wert>Fritzlar</wert>
+               </xs:appinfo>
+            </xs:annotation>
+         </xs:enumeration>
+         <xs:enumeration value="039">
+            <xs:annotation>
+               <xs:appinfo>
+                  <wert>Fulda</wert>
+               </xs:appinfo>
+            </xs:annotation>
+         </xs:enumeration>
+         <xs:enumeration value="040">
+            <xs:annotation>
+               <xs:appinfo>
+                  <wert>Fürth</wert>
+               </xs:appinfo>
+            </xs:annotation>
+         </xs:enumeration>
+         <xs:enumeration value="041">
+            <xs:annotation>
+               <xs:appinfo>
+                  <wert>Gelsenkirchen</wert>
+               </xs:appinfo>
+            </xs:annotation>
+         </xs:enumeration>
+         <xs:enumeration value="042">
+            <xs:annotation>
+               <xs:appinfo>
+                  <wert>Gießen</wert>
+               </xs:appinfo>
+            </xs:annotation>
+         </xs:enumeration>
+         <xs:enumeration value="043">
+            <xs:annotation>
+               <xs:appinfo>
+                  <wert>Göttingen</wert>
+               </xs:appinfo>
+            </xs:annotation>
+         </xs:enumeration>
+         <xs:enumeration value="044">
+            <xs:annotation>
+               <xs:appinfo>
+                  <wert>Gütersloh</wert>
+               </xs:appinfo>
+            </xs:annotation>
+         </xs:enumeration>
+         <xs:enumeration value="045">
+            <xs:annotation>
+               <xs:appinfo>
+                  <wert>Hagen</wert>
+               </xs:appinfo>
+            </xs:annotation>
+         </xs:enumeration>
+         <xs:enumeration value="046">
+            <xs:annotation>
+               <xs:appinfo>
+                  <wert>Hamburg</wert>
+               </xs:appinfo>
+            </xs:annotation>
+         </xs:enumeration>
+         <xs:enumeration value="047">
+            <xs:annotation>
+               <xs:appinfo>
+                  <wert>Hamm</wert>
+               </xs:appinfo>
+            </xs:annotation>
+         </xs:enumeration>
+         <xs:enumeration value="048">
+            <xs:annotation>
+               <xs:appinfo>
+                  <wert>Hanau</wert>
+               </xs:appinfo>
+            </xs:annotation>
+         </xs:enumeration>
+         <xs:enumeration value="049">
+            <xs:annotation>
+               <xs:appinfo>
+                  <wert>Hannover</wert>
+               </xs:appinfo>
+            </xs:annotation>
+         </xs:enumeration>
+         <xs:enumeration value="050">
+            <xs:annotation>
+               <xs:appinfo>
+                  <wert>Hildesheim</wert>
+               </xs:appinfo>
+            </xs:annotation>
+         </xs:enumeration>
+         <xs:enumeration value="051">
+            <xs:annotation>
+               <xs:appinfo>
+                  <wert>Hof</wert>
+               </xs:appinfo>
+            </xs:annotation>
+         </xs:enumeration>
+         <xs:enumeration value="052">
+            <xs:annotation>
+               <xs:appinfo>
+                  <wert>Ingolstadt</wert>
+               </xs:appinfo>
+            </xs:annotation>
+         </xs:enumeration>
+         <xs:enumeration value="053">
+            <xs:annotation>
+               <xs:appinfo>
+                  <wert>Iserlohn</wert>
+               </xs:appinfo>
+            </xs:annotation>
+         </xs:enumeration>
+         <xs:enumeration value="054">
+            <xs:annotation>
+               <xs:appinfo>
+                  <wert>Jena</wert>
+               </xs:appinfo>
+            </xs:annotation>
+         </xs:enumeration>
+         <xs:enumeration value="055">
+            <xs:annotation>
+               <xs:appinfo>
+                  <wert>Kaiserslautern</wert>
+               </xs:appinfo>
+            </xs:annotation>
+         </xs:enumeration>
+         <xs:enumeration value="056">
+            <xs:annotation>
+               <xs:appinfo>
+                  <wert>Kassel</wert>
+               </xs:appinfo>
+            </xs:annotation>
+         </xs:enumeration>
+         <xs:enumeration value="057">
+            <xs:annotation>
+               <xs:appinfo>
+                  <wert>Kempten</wert>
+               </xs:appinfo>
+            </xs:annotation>
+         </xs:enumeration>
+         <xs:enumeration value="058">
+            <xs:annotation>
+               <xs:appinfo>
+                  <wert>Kiel</wert>
+               </xs:appinfo>
+            </xs:annotation>
+         </xs:enumeration>
+         <xs:enumeration value="059">
+            <xs:annotation>
+               <xs:appinfo>
+                  <wert>Kleve</wert>
+               </xs:appinfo>
+            </xs:annotation>
+         </xs:enumeration>
+         <xs:enumeration value="060">
+            <xs:annotation>
+               <xs:appinfo>
+                  <wert>Koblenz</wert>
+               </xs:appinfo>
+            </xs:annotation>
+         </xs:enumeration>
+         <xs:enumeration value="061">
+            <xs:annotation>
+               <xs:appinfo>
+                  <wert>Köln</wert>
+               </xs:appinfo>
+            </xs:annotation>
+         </xs:enumeration>
+         <xs:enumeration value="062">
+            <xs:annotation>
+               <xs:appinfo>
+                  <wert>Königstein im Taunus</wert>
+               </xs:appinfo>
+            </xs:annotation>
+         </xs:enumeration>
+         <xs:enumeration value="063">
+            <xs:annotation>
+               <xs:appinfo>
+                  <wert>Korbach</wert>
+               </xs:appinfo>
+            </xs:annotation>
+         </xs:enumeration>
+         <xs:enumeration value="064">
+            <xs:annotation>
+               <xs:appinfo>
+                  <wert>Krefeld</wert>
+               </xs:appinfo>
+            </xs:annotation>
+         </xs:enumeration>
+         <xs:enumeration value="065">
+            <xs:annotation>
+               <xs:appinfo>
+                  <wert>Landau in der Pfalz</wert>
+               </xs:appinfo>
+            </xs:annotation>
+         </xs:enumeration>
+         <xs:enumeration value="066">
+            <xs:annotation>
+               <xs:appinfo>
+                  <wert>Landshut</wert>
+               </xs:appinfo>
+            </xs:annotation>
+         </xs:enumeration>
+         <xs:enumeration value="067">
+            <xs:annotation>
+               <xs:appinfo>
+                  <wert>Leipzig</wert>
+               </xs:appinfo>
+            </xs:annotation>
+         </xs:enumeration>
+         <xs:enumeration value="068">
+            <xs:annotation>
+               <xs:appinfo>
+                  <wert>Lemgo</wert>
+               </xs:appinfo>
+            </xs:annotation>
+         </xs:enumeration>
+         <xs:enumeration value="069">
+            <xs:annotation>
+               <xs:appinfo>
+                  <wert>Limburg a.d. Lahn</wert>
+               </xs:appinfo>
+            </xs:annotation>
+         </xs:enumeration>
+         <xs:enumeration value="070">
+            <xs:annotation>
+               <xs:appinfo>
+                  <wert>Lübeck</wert>
+               </xs:appinfo>
+            </xs:annotation>
+         </xs:enumeration>
+         <xs:enumeration value="071">
+            <xs:annotation>
+               <xs:appinfo>
+                  <wert>Ludwigshafen am Rhein</wert>
+               </xs:appinfo>
+            </xs:annotation>
+         </xs:enumeration>
+         <xs:enumeration value="072">
+            <xs:annotation>
+               <xs:appinfo>
+                  <wert>Lüneburg</wert>
+               </xs:appinfo>
+            </xs:annotation>
+         </xs:enumeration>
+         <xs:enumeration value="073">
+            <xs:annotation>
+               <xs:appinfo>
+                  <wert>Mainz</wert>
+               </xs:appinfo>
+            </xs:annotation>
+         </xs:enumeration>
+         <xs:enumeration value="074">
+            <xs:annotation>
+               <xs:appinfo>
+                  <wert>Mannheim</wert>
+               </xs:appinfo>
+            </xs:annotation>
+         </xs:enumeration>
+         <xs:enumeration value="075">
+            <xs:annotation>
+               <xs:appinfo>
+                  <wert>Marburg</wert>
+               </xs:appinfo>
+            </xs:annotation>
+         </xs:enumeration>
+         <xs:enumeration value="076">
+            <xs:annotation>
+               <xs:appinfo>
+                  <wert>Memmingen</wert>
+               </xs:appinfo>
+            </xs:annotation>
+         </xs:enumeration>
+         <xs:enumeration value="077">
+            <xs:annotation>
+               <xs:appinfo>
+                  <wert>Mönchengladbach</wert>
+               </xs:appinfo>
+            </xs:annotation>
+         </xs:enumeration>
+         <xs:enumeration value="078">
+            <xs:annotation>
+               <xs:appinfo>
+                  <wert>Montabaur</wert>
+               </xs:appinfo>
+            </xs:annotation>
+         </xs:enumeration>
+         <xs:enumeration value="079">
+            <xs:annotation>
+               <xs:appinfo>
+                  <wert>München</wert>
+               </xs:appinfo>
+            </xs:annotation>
+         </xs:enumeration>
+         <xs:enumeration value="080">
+            <xs:annotation>
+               <xs:appinfo>
+                  <wert>Münster</wert>
+               </xs:appinfo>
+            </xs:annotation>
+         </xs:enumeration>
+         <xs:enumeration value="081">
+            <xs:annotation>
+               <xs:appinfo>
+                  <wert>Neubrandenburg</wert>
+               </xs:appinfo>
+            </xs:annotation>
+         </xs:enumeration>
+         <xs:enumeration value="082">
+            <xs:annotation>
+               <xs:appinfo>
+                  <wert>Neuruppin</wert>
+               </xs:appinfo>
+            </xs:annotation>
+         </xs:enumeration>
+         <xs:enumeration value="083">
+            <xs:annotation>
+               <xs:appinfo>
+                  <wert>Neuss</wert>
+               </xs:appinfo>
+            </xs:annotation>
+         </xs:enumeration>
+         <xs:enumeration value="084">
+            <xs:annotation>
+               <xs:appinfo>
+                  <wert>Nürnberg</wert>
+               </xs:appinfo>
+            </xs:annotation>
+         </xs:enumeration>
+         <xs:enumeration value="085">
+            <xs:annotation>
+               <xs:appinfo>
+                  <wert>Offenbach am Main</wert>
+               </xs:appinfo>
+            </xs:annotation>
+         </xs:enumeration>
+         <xs:enumeration value="086">
+            <xs:annotation>
+               <xs:appinfo>
+                  <wert>Oldenburg (Oldenburg)</wert>
+               </xs:appinfo>
+            </xs:annotation>
+         </xs:enumeration>
+         <xs:enumeration value="087">
+            <xs:annotation>
+               <xs:appinfo>
+                  <wert>Osnabrück</wert>
+               </xs:appinfo>
+            </xs:annotation>
+         </xs:enumeration>
+         <xs:enumeration value="088">
+            <xs:annotation>
+               <xs:appinfo>
+                  <wert>Paderborn</wert>
+               </xs:appinfo>
+            </xs:annotation>
+         </xs:enumeration>
+         <xs:enumeration value="089">
+            <xs:annotation>
+               <xs:appinfo>
+                  <wert>Passau</wert>
+               </xs:appinfo>
+            </xs:annotation>
+         </xs:enumeration>
+         <xs:enumeration value="090">
+            <xs:annotation>
+               <xs:appinfo>
+                  <wert>Pinneberg</wert>
+               </xs:appinfo>
+            </xs:annotation>
+         </xs:enumeration>
+         <xs:enumeration value="091">
+            <xs:annotation>
+               <xs:appinfo>
+                  <wert>Potsdam</wert>
+               </xs:appinfo>
+            </xs:annotation>
+         </xs:enumeration>
+         <xs:enumeration value="092">
+            <xs:annotation>
+               <xs:appinfo>
+                  <wert>Recklinghausen</wert>
+               </xs:appinfo>
+            </xs:annotation>
+         </xs:enumeration>
+         <xs:enumeration value="093">
+            <xs:annotation>
+               <xs:appinfo>
+                  <wert>Regensburg</wert>
+               </xs:appinfo>
+            </xs:annotation>
+         </xs:enumeration>
+         <xs:enumeration value="094">
+            <xs:annotation>
+               <xs:appinfo>
+                  <wert>Rostock</wert>
+               </xs:appinfo>
+            </xs:annotation>
+         </xs:enumeration>
+         <xs:enumeration value="095">
+            <xs:annotation>
+               <xs:appinfo>
+                  <wert>Saarbrücken</wert>
+               </xs:appinfo>
+            </xs:annotation>
+         </xs:enumeration>
+         <xs:enumeration value="096">
+            <xs:annotation>
+               <xs:appinfo>
+                  <wert>Schweinfurt</wert>
+               </xs:appinfo>
+            </xs:annotation>
+         </xs:enumeration>
+         <xs:enumeration value="097">
+            <xs:annotation>
+               <xs:appinfo>
+                  <wert>Schwerin</wert>
+               </xs:appinfo>
+            </xs:annotation>
+         </xs:enumeration>
+         <xs:enumeration value="098">
+            <xs:annotation>
+               <xs:appinfo>
+                  <wert>Siegburg</wert>
+               </xs:appinfo>
+            </xs:annotation>
+         </xs:enumeration>
+         <xs:enumeration value="099">
+            <xs:annotation>
+               <xs:appinfo>
+                  <wert>Siegen</wert>
+               </xs:appinfo>
+            </xs:annotation>
+         </xs:enumeration>
+         <xs:enumeration value="100">
+            <xs:annotation>
+               <xs:appinfo>
+                  <wert>Stadthagen</wert>
+               </xs:appinfo>
+            </xs:annotation>
+         </xs:enumeration>
+         <xs:enumeration value="101">
+            <xs:annotation>
+               <xs:appinfo>
+                  <wert>Steinfurt</wert>
+               </xs:appinfo>
+            </xs:annotation>
+         </xs:enumeration>
+         <xs:enumeration value="102">
+            <xs:annotation>
+               <xs:appinfo>
+                  <wert>Stendal</wert>
+               </xs:appinfo>
+            </xs:annotation>
+         </xs:enumeration>
+         <xs:enumeration value="103">
+            <xs:annotation>
+               <xs:appinfo>
+                  <wert>Stralsund</wert>
+               </xs:appinfo>
+            </xs:annotation>
+         </xs:enumeration>
+         <xs:enumeration value="104">
+            <xs:annotation>
+               <xs:appinfo>
+                  <wert>Straubing</wert>
+               </xs:appinfo>
+            </xs:annotation>
+         </xs:enumeration>
+         <xs:enumeration value="105">
+            <xs:annotation>
+               <xs:appinfo>
+                  <wert>Stuttgart</wert>
+               </xs:appinfo>
+            </xs:annotation>
+         </xs:enumeration>
+         <xs:enumeration value="106">
+            <xs:annotation>
+               <xs:appinfo>
+                  <wert>Tostedt</wert>
+               </xs:appinfo>
+            </xs:annotation>
+         </xs:enumeration>
+         <xs:enumeration value="107">
+            <xs:annotation>
+               <xs:appinfo>
+                  <wert>Traunstein</wert>
+               </xs:appinfo>
+            </xs:annotation>
+         </xs:enumeration>
+         <xs:enumeration value="108">
+            <xs:annotation>
+               <xs:appinfo>
+                  <wert>Ulm</wert>
+               </xs:appinfo>
+            </xs:annotation>
+         </xs:enumeration>
+         <xs:enumeration value="109">
+            <xs:annotation>
+               <xs:appinfo>
+                  <wert>Walsrode</wert>
+               </xs:appinfo>
+            </xs:annotation>
+         </xs:enumeration>
+         <xs:enumeration value="110">
+            <xs:annotation>
+               <xs:appinfo>
+                  <wert>Weiden in der Oberpfalz</wert>
+               </xs:appinfo>
+            </xs:annotation>
+         </xs:enumeration>
+         <xs:enumeration value="111">
+            <xs:annotation>
+               <xs:appinfo>
+                  <wert>Wetzlar</wert>
+               </xs:appinfo>
+            </xs:annotation>
+         </xs:enumeration>
+         <xs:enumeration value="112">
+            <xs:annotation>
+               <xs:appinfo>
+                  <wert>Wiesbaden</wert>
+               </xs:appinfo>
+            </xs:annotation>
+         </xs:enumeration>
+         <xs:enumeration value="113">
+            <xs:annotation>
+               <xs:appinfo>
+                  <wert>Wittlich</wert>
+               </xs:appinfo>
+            </xs:annotation>
+         </xs:enumeration>
+         <xs:enumeration value="114">
+            <xs:annotation>
+               <xs:appinfo>
+                  <wert>Wuppertal</wert>
+               </xs:appinfo>
+            </xs:annotation>
+         </xs:enumeration>
+         <xs:enumeration value="115">
+            <xs:annotation>
+               <xs:appinfo>
+                  <wert>Würzburg</wert>
+               </xs:appinfo>
+            </xs:annotation>
+         </xs:enumeration>
+         <xs:enumeration value="116">
+            <xs:annotation>
+               <xs:appinfo>
+                  <wert>Zweibrücken</wert>
+               </xs:appinfo>
+            </xs:annotation>
+         </xs:enumeration>
+      </xs:restriction>
+   </xs:simpleType>
+   <xs:simpleType name="schir.loeschgrund">
+      <xs:annotation>
+         <xs:appinfo>
+            <codeliste>
+               <nameLang>SCHIR.Loeschgrund</nameLang>
+               <nameKurz>SCHIR.Loeschgrund</nameKurz>
+               <nameTechnisch>schir.loeschgrund</nameTechnisch>
+               <kennung>urn:xoev-de:xjustiz:codeliste:schir.loeschgrund</kennung>
+               <beschreibung>Codeliste der Löschgründe im Fachverfahren Schiffsregister.</beschreibung>
+               <herausgebernameLang>BLK-AG IT-Standards in der Justiz</herausgebernameLang>
+               <herausgebernameKurz>AG IT-Standards</herausgebernameKurz>
+            </codeliste>
+            <versionCodeliste>
+               <version>1.0</version>
+               <versionCodelistenHandbuch>1.1</versionCodelistenHandbuch>
+            </versionCodeliste>
+            <codelistenspalten>
+               <code>
+                  <spaltennameLang>Schlüssel</spaltennameLang>
+                  <datentyp>string</datentyp>
+                  <codeSpalte>true</codeSpalte>
+                  <verwendung>required</verwendung>
+                  <empfohleneCodeSpalte>true</empfohleneCodeSpalte>
+               </code>
+               <wert>
+                  <spaltennameLang>Wert</spaltennameLang>
+                  <datentyp>string</datentyp>
+                  <codeSpalte>false</codeSpalte>
+                  <verwendung>required</verwendung>
+                  <empfohleneCodeSpalte>false</empfohleneCodeSpalte>
+               </wert>
+            </codelistenspalten>
+         </xs:appinfo>
+      </xs:annotation>
+      <xs:restriction base="xs:token">
+         <xs:enumeration value="001">
+            <xs:annotation>
+               <xs:appinfo>
+                  <wert>Heimathafenverlegung</wert>
+               </xs:appinfo>
+            </xs:annotation>
+         </xs:enumeration>
+         <xs:enumeration value="002">
+            <xs:annotation>
+               <xs:appinfo>
+                  <wert>Heimatortverlegung</wert>
+               </xs:appinfo>
+            </xs:annotation>
+         </xs:enumeration>
+         <xs:enumeration value="003">
+            <xs:annotation>
+               <xs:appinfo>
+                  <wert>Fertigstellung</wert>
+               </xs:appinfo>
+            </xs:annotation>
+         </xs:enumeration>
+         <xs:enumeration value="004">
+            <xs:annotation>
+               <xs:appinfo>
+                  <wert>Löschung des Schiffes</wert>
+               </xs:appinfo>
+            </xs:annotation>
+         </xs:enumeration>
+         <xs:enumeration value="005">
+            <xs:annotation>
+               <xs:appinfo>
+                  <wert>Löschung des Schiffes gemäß § 22/ 21 Schiffregisterordnung</wert>
+               </xs:appinfo>
+            </xs:annotation>
+         </xs:enumeration>
+      </xs:restriction>
+   </xs:simpleType>
+   <xs:simpleType name="schir.messbriefaussteller">
+      <xs:annotation>
+         <xs:appinfo>
+            <codeliste>
+               <nameLang>SCHIR.Messbriefaussteller</nameLang>
+               <nameKurz>SCHIR.Messbriefaussteller</nameKurz>
+               <nameTechnisch>schir.messbriefaussteller</nameTechnisch>
+               <kennung>urn:xoev-de:xjustiz:codeliste:schir.messbriefaussteller</kennung>
+               <beschreibung>Codeliste der Messbriefaussteller im Fachverfahren Schiffsregister.</beschreibung>
+               <herausgebernameLang>BLK-AG IT-Standards in der Justiz</herausgebernameLang>
+               <herausgebernameKurz>AG IT-Standards</herausgebernameKurz>
+            </codeliste>
+            <versionCodeliste>
+               <version>1.0</version>
+               <versionCodelistenHandbuch>1.1</versionCodelistenHandbuch>
+            </versionCodeliste>
+            <codelistenspalten>
+               <code>
+                  <spaltennameLang>Schlüssel</spaltennameLang>
+                  <datentyp>string</datentyp>
+                  <codeSpalte>true</codeSpalte>
+                  <verwendung>required</verwendung>
+                  <empfohleneCodeSpalte>true</empfohleneCodeSpalte>
+               </code>
+               <wert>
+                  <spaltennameLang>Wert</spaltennameLang>
+                  <datentyp>string</datentyp>
+                  <codeSpalte>false</codeSpalte>
+                  <verwendung>required</verwendung>
+                  <empfohleneCodeSpalte>false</empfohleneCodeSpalte>
+               </wert>
+            </codelistenspalten>
+         </xs:appinfo>
+      </xs:annotation>
+      <xs:restriction base="xs:token">
+         <xs:enumeration value="001">
+            <xs:annotation>
+               <xs:appinfo>
+                  <wert>Bundesamt für Seeschifffahrt und Hydrographie</wert>
+               </xs:appinfo>
+            </xs:annotation>
+         </xs:enumeration>
+         <xs:enumeration value="002">
+            <xs:annotation>
+               <xs:appinfo>
+                  <wert>DNV GL</wert>
+               </xs:appinfo>
+            </xs:annotation>
+         </xs:enumeration>
+         <xs:enumeration value="003">
+            <xs:annotation>
+               <xs:appinfo>
+                  <wert>American Bureau of Shipping</wert>
+               </xs:appinfo>
+            </xs:annotation>
+         </xs:enumeration>
+         <xs:enumeration value="004">
+            <xs:annotation>
+               <xs:appinfo>
+                  <wert>Bureau Veritas</wert>
+               </xs:appinfo>
+            </xs:annotation>
+         </xs:enumeration>
+         <xs:enumeration value="005">
+            <xs:annotation>
+               <xs:appinfo>
+                  <wert>China Classification Society</wert>
+               </xs:appinfo>
+            </xs:annotation>
+         </xs:enumeration>
+         <xs:enumeration value="006">
+            <xs:annotation>
+               <xs:appinfo>
+                  <wert>Croatian Register of Shipping</wert>
+               </xs:appinfo>
+            </xs:annotation>
+         </xs:enumeration>
+         <xs:enumeration value="007">
+            <xs:annotation>
+               <xs:appinfo>
+                  <wert>Det Norske Veritas</wert>
+               </xs:appinfo>
+            </xs:annotation>
+         </xs:enumeration>
+         <xs:enumeration value="008">
+            <xs:annotation>
+               <xs:appinfo>
+                  <wert>Germanischer Lloyd</wert>
+               </xs:appinfo>
+            </xs:annotation>
+         </xs:enumeration>
+         <xs:enumeration value="009">
+            <xs:annotation>
+               <xs:appinfo>
+                  <wert>Indian Register of Shipping</wert>
+               </xs:appinfo>
+            </xs:annotation>
+         </xs:enumeration>
+         <xs:enumeration value="010">
+            <xs:annotation>
+               <xs:appinfo>
+                  <wert>Korean Register of Shipping</wert>
+               </xs:appinfo>
+            </xs:annotation>
+         </xs:enumeration>
+         <xs:enumeration value="011">
+            <xs:annotation>
+               <xs:appinfo>
+                  <wert>Lloyds Register of Shipping</wert>
+               </xs:appinfo>
+            </xs:annotation>
+         </xs:enumeration>
+         <xs:enumeration value="012">
+            <xs:annotation>
+               <xs:appinfo>
+                  <wert>ClassNK</wert>
+               </xs:appinfo>
+            </xs:annotation>
+         </xs:enumeration>
+         <xs:enumeration value="013">
+            <xs:annotation>
+               <xs:appinfo>
+                  <wert>Polish Register of Shipping</wert>
+               </xs:appinfo>
+            </xs:annotation>
+         </xs:enumeration>
+         <xs:enumeration value="014">
+            <xs:annotation>
+               <xs:appinfo>
+                  <wert>Registro Italiano Navale</wert>
+               </xs:appinfo>
+            </xs:annotation>
+         </xs:enumeration>
+         <xs:enumeration value="015">
+            <xs:annotation>
+               <xs:appinfo>
+                  <wert>Russian Maritime Register of Shipping</wert>
+               </xs:appinfo>
+            </xs:annotation>
+         </xs:enumeration>
+      </xs:restriction>
+   </xs:simpleType>
+   <xs:simpleType name="schir.schiffsgattung">
+      <xs:annotation>
+         <xs:appinfo>
+            <codeliste>
+               <nameLang>SCHIR.Schiffsgattung</nameLang>
+               <nameKurz>SCHIR.Schiffsgattung</nameKurz>
+               <nameTechnisch>schir.schiffsgattung</nameTechnisch>
+               <kennung>urn:xoev-de:xjustiz:codeliste:schir.schiffsgattung</kennung>
+               <beschreibung>Codeliste der verschiedenen Schiffsgattungen im Fachverfahren Schiffsregister.</beschreibung>
+               <herausgebernameLang>BLK-AG IT-Standards in der Justiz</herausgebernameLang>
+               <herausgebernameKurz>AG IT-Standards</herausgebernameKurz>
+            </codeliste>
+            <versionCodeliste>
+               <version>1.0</version>
+               <versionCodelistenHandbuch>1.1</versionCodelistenHandbuch>
+            </versionCodeliste>
+            <codelistenspalten>
+               <code>
+                  <spaltennameLang>Schlüssel</spaltennameLang>
+                  <datentyp>string</datentyp>
+                  <codeSpalte>true</codeSpalte>
+                  <verwendung>required</verwendung>
+                  <empfohleneCodeSpalte>true</empfohleneCodeSpalte>
+               </code>
+               <wert>
+                  <spaltennameLang>Wert</spaltennameLang>
+                  <datentyp>string</datentyp>
+                  <codeSpalte>false</codeSpalte>
+                  <verwendung>required</verwendung>
+                  <empfohleneCodeSpalte>false</empfohleneCodeSpalte>
+               </wert>
+               <beschreibung>
+                  <spaltennameLang>Beschreibung</spaltennameLang>
+                  <datentyp>string</datentyp>
+                  <codeSpalte>false</codeSpalte>
+                  <verwendung>optional</verwendung>
+                  <empfohleneCodeSpalte>false</empfohleneCodeSpalte>
+               </beschreibung>
+            </codelistenspalten>
+         </xs:appinfo>
+      </xs:annotation>
+      <xs:restriction base="xs:token">
+         <xs:enumeration value="001">
+            <xs:annotation>
+               <xs:appinfo>
+                  <wert>Fahrgastschiff</wert>
+                  <beschreibung>Passenger ship</beschreibung>
+               </xs:appinfo>
+            </xs:annotation>
+         </xs:enumeration>
+         <xs:enumeration value="002">
+            <xs:annotation>
+               <xs:appinfo>
+                  <wert>Traditionsschiff</wert>
+                  <beschreibung>Traditional ship</beschreibung>
+               </xs:appinfo>
+            </xs:annotation>
+         </xs:enumeration>
+         <xs:enumeration value="003">
+            <xs:annotation>
+               <xs:appinfo>
+                  <wert>Ro-Ro-Schiff</wert>
+                  <beschreibung>Ro-Ro-ship</beschreibung>
+               </xs:appinfo>
+            </xs:annotation>
+         </xs:enumeration>
+         <xs:enumeration value="004">
+            <xs:annotation>
+               <xs:appinfo>
+                  <wert>Frachtschiff</wert>
+                  <beschreibung>Cargo ship</beschreibung>
+               </xs:appinfo>
+            </xs:annotation>
+         </xs:enumeration>
+         <xs:enumeration value="005">
+            <xs:annotation>
+               <xs:appinfo>
+                  <wert>Stückgutfrachter</wert>
+                  <beschreibung>General cargo ship</beschreibung>
+               </xs:appinfo>
+            </xs:annotation>
+         </xs:enumeration>
+         <xs:enumeration value="006">
+            <xs:annotation>
+               <xs:appinfo>
+                  <wert>Kühlschiff</wert>
+                  <beschreibung>Refrigerated cargo ship</beschreibung>
+               </xs:appinfo>
+            </xs:annotation>
+         </xs:enumeration>
+         <xs:enumeration value="007">
+            <xs:annotation>
+               <xs:appinfo>
+                  <wert>Vielzweckfrachtschiff</wert>
+                  <beschreibung>Multi-purpose cargo ship</beschreibung>
+               </xs:appinfo>
+            </xs:annotation>
+         </xs:enumeration>
+         <xs:enumeration value="008">
+            <xs:annotation>
+               <xs:appinfo>
+                  <wert>Versorgungsschiff</wert>
+                  <beschreibung>Supply vessel</beschreibung>
+               </xs:appinfo>
+            </xs:annotation>
+         </xs:enumeration>
+         <xs:enumeration value="009">
+            <xs:annotation>
+               <xs:appinfo>
+                  <wert>Autotransportschiff</wert>
+                  <beschreibung>Car carrier</beschreibung>
+               </xs:appinfo>
+            </xs:annotation>
+         </xs:enumeration>
+         <xs:enumeration value="010">
+            <xs:annotation>
+               <xs:appinfo>
+                  <wert>Bohrinselversorgungsschiff</wert>
+                  <beschreibung>Offshore supply vessel</beschreibung>
+               </xs:appinfo>
+            </xs:annotation>
+         </xs:enumeration>
+         <xs:enumeration value="011">
+            <xs:annotation>
+               <xs:appinfo>
+                  <wert>Massengutschiff</wert>
+                  <beschreibung>Bulk carrier</beschreibung>
+               </xs:appinfo>
+            </xs:annotation>
+         </xs:enumeration>
+         <xs:enumeration value="012">
+            <xs:annotation>
+               <xs:appinfo>
+                  <wert>Öltanker</wert>
+                  <beschreibung>Oil tanker</beschreibung>
+               </xs:appinfo>
+            </xs:annotation>
+         </xs:enumeration>
+         <xs:enumeration value="013">
+            <xs:annotation>
+               <xs:appinfo>
+                  <wert>Produktentankschiff</wert>
+                  <beschreibung>Product tanker</beschreibung>
+               </xs:appinfo>
+            </xs:annotation>
+         </xs:enumeration>
+         <xs:enumeration value="014">
+            <xs:annotation>
+               <xs:appinfo>
+                  <wert>Tankschiff</wert>
+                  <beschreibung>Tanker</beschreibung>
+               </xs:appinfo>
+            </xs:annotation>
+         </xs:enumeration>
+         <xs:enumeration value="015">
+            <xs:annotation>
+               <xs:appinfo>
+                  <wert>Flüssiggastanker</wert>
+                  <beschreibung>Liquefied gas tanker</beschreibung>
+               </xs:appinfo>
+            </xs:annotation>
+         </xs:enumeration>
+         <xs:enumeration value="016">
+            <xs:annotation>
+               <xs:appinfo>
+                  <wert>Chemikalientankschiff</wert>
+                  <beschreibung>Chemical tanker</beschreibung>
+               </xs:appinfo>
+            </xs:annotation>
+         </xs:enumeration>
+         <xs:enumeration value="017">
+            <xs:annotation>
+               <xs:appinfo>
+                  <wert>Fischereifahrzeug</wert>
+                  <beschreibung>Fishing vessel</beschreibung>
+               </xs:appinfo>
+            </xs:annotation>
+         </xs:enumeration>
+         <xs:enumeration value="018">
+            <xs:annotation>
+               <xs:appinfo>
+                  <wert>Schlepper</wert>
+                  <beschreibung>Tug</beschreibung>
+               </xs:appinfo>
+            </xs:annotation>
+         </xs:enumeration>
+         <xs:enumeration value="019">
+            <xs:annotation>
+               <xs:appinfo>
+                  <wert>Eisbrecher</wert>
+                  <beschreibung>Ice-breaker</beschreibung>
+               </xs:appinfo>
+            </xs:annotation>
+         </xs:enumeration>
+         <xs:enumeration value="020">
+            <xs:annotation>
+               <xs:appinfo>
+                  <wert>Personenzubringerboot</wert>
+                  <beschreibung>Crew boat</beschreibung>
+               </xs:appinfo>
+            </xs:annotation>
+         </xs:enumeration>
+         <xs:enumeration value="021">
+            <xs:annotation>
+               <xs:appinfo>
+                  <wert>Lotsenschiff</wert>
+                  <beschreibung>Pilot vessel</beschreibung>
+               </xs:appinfo>
+            </xs:annotation>
+         </xs:enumeration>
+         <xs:enumeration value="022">
+            <xs:annotation>
+               <xs:appinfo>
+                  <wert>Leichter</wert>
+                  <beschreibung>Barge</beschreibung>
+               </xs:appinfo>
+            </xs:annotation>
+         </xs:enumeration>
+         <xs:enumeration value="023">
+            <xs:annotation>
+               <xs:appinfo>
+                  <wert>Schute</wert>
+                  <beschreibung>Barge</beschreibung>
+               </xs:appinfo>
+            </xs:annotation>
+         </xs:enumeration>
+         <xs:enumeration value="024">
+            <xs:annotation>
+               <xs:appinfo>
+                  <wert>Ponton</wert>
+                  <beschreibung>Pontoon</beschreibung>
+               </xs:appinfo>
+            </xs:annotation>
+         </xs:enumeration>
+         <xs:enumeration value="025">
+            <xs:annotation>
+               <xs:appinfo>
+                  <wert>Sportboot</wert>
+                  <beschreibung>Pleasure craft</beschreibung>
+               </xs:appinfo>
+            </xs:annotation>
+         </xs:enumeration>
+         <xs:enumeration value="026">
+            <xs:annotation>
+               <xs:appinfo>
+                  <wert>Segelyacht</wert>
+                  <beschreibung>Sailing yacht</beschreibung>
+               </xs:appinfo>
+            </xs:annotation>
+         </xs:enumeration>
+         <xs:enumeration value="027">
+            <xs:annotation>
+               <xs:appinfo>
+                  <wert>Segelyacht (Katamaran)</wert>
+                  <beschreibung>Sailing Yacht (Katamaran)</beschreibung>
+               </xs:appinfo>
+            </xs:annotation>
+         </xs:enumeration>
+         <xs:enumeration value="028">
+            <xs:annotation>
+               <xs:appinfo>
+                  <wert>Motoryacht</wert>
+                  <beschreibung>Motor yacht</beschreibung>
+               </xs:appinfo>
+            </xs:annotation>
+         </xs:enumeration>
+         <xs:enumeration value="029">
+            <xs:annotation>
+               <xs:appinfo>
+                  <wert>Motorsegelyacht</wert>
+                  <beschreibung>Motor sailer</beschreibung>
+               </xs:appinfo>
+            </xs:annotation>
+         </xs:enumeration>
+         <xs:enumeration value="030">
+            <xs:annotation>
+               <xs:appinfo>
+                  <wert>Containerschiff</wert>
+                  <beschreibung>Container ship</beschreibung>
+               </xs:appinfo>
+            </xs:annotation>
+         </xs:enumeration>
+         <xs:enumeration value="031">
+            <xs:annotation>
+               <xs:appinfo>
+                  <wert>Kreuzfahrtschiff</wert>
+                  <beschreibung>Cruise vessel</beschreibung>
+               </xs:appinfo>
+            </xs:annotation>
+         </xs:enumeration>
+         <xs:enumeration value="032">
+            <xs:annotation>
+               <xs:appinfo>
+                  <wert>Sonstige</wert>
+                  <beschreibung>Other</beschreibung>
+               </xs:appinfo>
+            </xs:annotation>
+         </xs:enumeration>
+      </xs:restriction>
+   </xs:simpleType>
+</xs:schema>

@@ -668,10 +668,14 @@ import com.jdimension.jlawyer.client.editors.EditorsRegistry;
 import com.jdimension.jlawyer.client.editors.ThemeableEditor;
 import com.jdimension.jlawyer.client.editors.documents.SearchAndAssignDialog;
 import com.jdimension.jlawyer.client.editors.files.ArchiveFilePanel;
+import com.jdimension.jlawyer.client.editors.files.EditOrDuplicateEventDialog;
 import com.jdimension.jlawyer.client.events.EventBroker;
 import com.jdimension.jlawyer.client.events.ReviewUpdatedEvent;
 import com.jdimension.jlawyer.client.settings.ClientSettings;
+import com.jdimension.jlawyer.client.settings.UserSettings;
 import com.jdimension.jlawyer.client.utils.FrameUtils;
+import com.jdimension.jlawyer.client.utils.StringUtils;
+import com.jdimension.jlawyer.persistence.AppUserBean;
 import com.jdimension.jlawyer.persistence.ArchiveFileBean;
 import com.jdimension.jlawyer.persistence.ArchiveFileReviewsBean;
 import com.jdimension.jlawyer.services.CalendarServiceRemote;
@@ -693,11 +697,15 @@ import java.awt.Dimension;
 import java.awt.Image;
 import java.awt.event.ActionEvent;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Calendar;
 import java.util.Collection;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.List;
+import javax.swing.JButton;
+import javax.swing.JCheckBoxMenuItem;
 import javax.swing.JLabel;
 import javax.swing.JMenu;
 import javax.swing.JMenuBar;
@@ -706,13 +714,15 @@ import javax.swing.JOptionPane;
 import javax.swing.JPopupMenu;
 import javax.swing.JToggleButton;
 import javax.swing.JToolBar;
+import javax.swing.MenuElement;
 import org.apache.log4j.Logger;
+import themes.colors.DefaultColorTheme;
 
 /**
  *
  * @author jens
  */
-public class CalendarPanel extends javax.swing.JPanel {
+public class CalendarPanel extends javax.swing.JPanel implements NewEventEntryCallbacks {
 
     private static final Logger log = Logger.getLogger(CalendarPanel.class.getName());
 
@@ -721,17 +731,23 @@ public class CalendarPanel extends javax.swing.JPanel {
     private JMenuItem exitMenuItem;
     private JCalendar jCalendar;
 
+    private JLabel lblUserFilterCount;
+    private JPopupMenu popUserFilter;
+    private JButton cmdUserFilter;
+
     private JToolBar toolBar;
     HashMap<String, EventType> allCalTypes = new HashMap<>();
     HashSet<String> selectedCalTypes = new HashSet<>();
+    List<String> selectedUsers = new ArrayList<>();
+    private boolean userPopup = true;
 
     private JPopupMenu popup;
 
     private String detailsEditorClass;
     private transient Image backgroundImage = null;
     private String parentClass = null;
-    
-    protected int eventAlpha=255;
+
+    protected int eventAlpha = 255;
 
     private Collection<ArchiveFileReviewsBean> cachedEvents = null;
 
@@ -743,13 +759,78 @@ public class CalendarPanel extends javax.swing.JPanel {
         initComponents();
 
         initGui();
+
         bindListeners();
+    }
+
+    public CalendarPanel(boolean userPopup) {
+
+        this.userPopup = userPopup;
+
+        initComponents();
+
+        initGui();
+
+        bindListeners();
+        
+        this.cmdUserFilter.setEnabled(userPopup);
+        this.lblUserFilterCount.setEnabled(userPopup);
     }
 
     public void setParentEditor(String parentClass, String detailsEditorClass, Image backgroundImage) {
         this.detailsEditorClass = detailsEditorClass;
         this.backgroundImage = backgroundImage;
         this.parentClass = parentClass;
+    }
+
+    private void buildUsersPopup() {
+        List<AppUserBean> relevantUsers = UserSettings.getInstance().getLoginEnabledUsers();
+        List<String> userNames = new ArrayList<>();
+        for (AppUserBean u : relevantUsers) {
+            userNames.add(u.getPrincipalId());
+        }
+        StringUtils.sortIgnoreCase(userNames);
+
+        if (this.userPopup) {
+            String[] selUsersArray = UserSettings.getInstance().getSettingArray(UserSettings.CONF_CALENDAR_LASTFILTERUSERS, new String[0]);
+            if (selUsersArray.length == 0) {
+                selUsersArray = new String[]{UserSettings.getInstance().getCurrentUser().getPrincipalId()};
+            }
+            selectedUsers = Arrays.asList(selUsersArray);
+        } else {
+            selectedUsers=userNames;
+        }
+
+        this.lblUserFilterCount.setText(" " + selectedUsers.size() + " ");
+
+        this.popUserFilter.removeAll();
+        for (AppUserBean ru : relevantUsers) {
+            JCheckBoxMenuItem mi = new JCheckBoxMenuItem(ru.getPrincipalId());
+            mi.putClientProperty("CheckBoxMenuItem.selectionBackground", DefaultColorTheme.COLOR_LOGO_GREEN);
+            mi.setIcon(UserSettings.getInstance().getUserSmallIcon(ru.getPrincipalId()));
+            mi.setSelected(selectedUsers.contains(ru.getPrincipalId()));
+            popUserFilter.add(mi);
+
+        }
+        for (MenuElement me : popUserFilter.getSubElements()) {
+            ((JCheckBoxMenuItem) me.getComponent()).addActionListener((ActionEvent e) -> {
+                ArrayList<String> al = new ArrayList<>();
+                for (MenuElement me1 : popUserFilter.getSubElements()) {
+                    JCheckBoxMenuItem mi = (JCheckBoxMenuItem) me1.getComponent();
+                    if (mi.isSelected()) {
+                        al.add(mi.getText());
+                    }
+                }
+                this.lblUserFilterCount.setText(" " + al.size() + " ");
+                UserSettings.getInstance().setSettingArray(UserSettings.CONF_CALENDAR_LASTFILTERUSERS, al.toArray(new String[al.size()]));
+                selectedUsers = al;
+
+                Collection<ArchiveFileReviewsBean> cacheClone = new ArrayList<>();
+                cacheClone.addAll(cachedEvents);
+                setData(cacheClone);
+            });
+        }
+
     }
 
     private void initGui() {
@@ -764,13 +845,47 @@ public class CalendarPanel extends javax.swing.JPanel {
         //setJMenuBar(menuBar);
 
         toolBar = new JToolBar("Controls");
+
+        popUserFilter = new JPopupMenu();
+
+        lblUserFilterCount = new JLabel();
+        lblUserFilterCount.setFont(lblUserFilterCount.getFont().deriveFont(lblUserFilterCount.getFont().getStyle() | java.awt.Font.BOLD, lblUserFilterCount.getFont().getSize()));
+        lblUserFilterCount.setText(" 1 ");
+        lblUserFilterCount.setForeground(DefaultColorTheme.COLOR_LOGO_BLUE);
+        toolBar.add(lblUserFilterCount);
+
+        this.cmdUserFilter = new JButton();
+        cmdUserFilter.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons16/material/supervisor_account_24dp_0E72B5_FILL0_wght400_GRAD0_opsz24.png"))); // NOI18N
+        cmdUserFilter.setToolTipText("verantwortliche Nutzer\n(Kalendereinträge ohne Verantwortliche(n) werden stets angezeigt)");
+        cmdUserFilter.setBorder(null);
+        cmdUserFilter.setContentAreaFilled(false);
+        cmdUserFilter.setCursor(new java.awt.Cursor(java.awt.Cursor.HAND_CURSOR));
+        cmdUserFilter.addMouseListener(new java.awt.event.MouseAdapter() {
+            @Override
+            public void mousePressed(java.awt.event.MouseEvent evt) {
+                if(userPopup)
+                    popUserFilter.show(cmdUserFilter, evt.getX(), evt.getY());
+            }
+
+        });
+        toolBar.add(cmdUserFilter);
+
+        JLabel spacer = new JLabel();
+        spacer.setText("   ");
+        toolBar.add(spacer);
+
+        try {
+            this.buildUsersPopup();
+        } catch (Exception ex) {
+            log.error("Could not initialize users popup", ex);
+        }
+
 //        addButton = new JButton("Hinzufügen");
 //        removeButton = new JButton("Löschen");
 //        addButton = new JButton("Hinzufügen");
 //        addButton.setBackground(DefaultColorTheme.COLOR_LOGO_GREEN);
 //        removeButton = new JButton("Löschen");
 //        removeButton.setBackground(DefaultColorTheme.COLOR_LOGO_RED);
-
 //        Image addImg = null;
 //        Image removeImg = null;
 //        try {
@@ -815,7 +930,76 @@ public class CalendarPanel extends javax.swing.JPanel {
                 }
             }
         });
-        
+
+        JMenuItem mnuEditEvent = new JMenuItem("Eintrag bearbeiten");
+        mnuEditEvent.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons16/kate.png")));
+        mnuEditEvent.setToolTipText("Kalendereintrag bearbeiten");
+        mnuEditEvent.addActionListener((java.awt.event.ActionEvent evt) -> {
+            Collection<CalendarEvent> selected = this.jCalendar.getSelectedCalendarEvents();
+            if (!selected.isEmpty()) {
+                CalendarEvent ce = selected.iterator().next();
+
+                if (ce.getEventId() == null) {
+                    JOptionPane.showMessageDialog(this, "Der Kalendereintrag ist ungültig und kann nicht bearbeitet werden (unbekannter Bezeichner).", com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
+                    return;
+                }
+
+                try {
+                    ClientSettings settings = ClientSettings.getInstance();
+                    JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
+                    CalendarServiceRemote calService = locator.lookupCalendarServiceRemote();
+
+                    // Load full review from server to edit
+                    ArchiveFileReviewsBean review = calService.getReview(ce.getEventId());
+
+                    EditOrDuplicateEventDialog dlg = new EditOrDuplicateEventDialog(
+                            EditOrDuplicateEventDialog.MODE_EDIT,
+                            EditorsRegistry.getInstance().getMainWindow(),
+                            true,
+                            ce.getCaseDto(),
+                            review,
+                            null // no reviews table in Calendar view
+                    );
+                    dlg.setVisible(true);
+
+                    // After dialog closes, reload the edited review and update UI
+                    try {
+                        ArchiveFileReviewsBean updated = calService.getReview(ce.getEventId());
+
+                        // keep cache current
+                        if (cachedEvents != null) {
+                            ArchiveFileReviewsBean toRemove = null;
+                            for (ArchiveFileReviewsBean r : cachedEvents) {
+                                if (updated != null && updated.getId() != null && updated.getId().equals(r.getId())) {
+                                    toRemove = r;
+                                    break;
+                                }
+                            }
+                            if (toRemove != null) {
+                                cachedEvents.remove(toRemove);
+                            }
+                            if (updated != null) {
+                                cachedEvents.add(updated);
+                            }
+                        }
+
+                        // replace visual event
+                        this.jCalendar.removeCalendarEvent(ce);
+                        if (updated != null) {
+                            this.addCalendarEvent(updated);
+                        }
+
+                    } catch (Exception e2) {
+                        log.warn("Could not refresh calendar event after editing", e2);
+                    }
+                } catch (Exception ex) {
+                    log.error("Error editing review", ex);
+                    JOptionPane.showMessageDialog(this, "Fehler beim Bearbeiten: " + ex.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
+                    EditorsRegistry.getInstance().clearStatus();
+                }
+            }
+        });
+
         JMenuItem mnuMarkEventAsDone = new JMenuItem("erledigt");
         mnuMarkEventAsDone.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/agt_action_success.png")));
         mnuMarkEventAsDone.setToolTipText("Kalendereintrag als erledigt markieren");
@@ -823,21 +1007,21 @@ public class CalendarPanel extends javax.swing.JPanel {
             Collection<CalendarEvent> selected = this.jCalendar.getSelectedCalendarEvents();
             if (!selected.isEmpty()) {
                 CalendarEvent ce = selected.iterator().next();
-                
-                if(ce.getEventId()==null) {
+
+                if (ce.getEventId() == null) {
                     JOptionPane.showMessageDialog(this, "Der Kalendereintrag ist ungültig und kann nicht bearbeitet werden (unbekannter Bezeichner).", com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
                     return;
                 }
 
-                int response = JOptionPane.showConfirmDialog(this, 
-                    "Möchten Sie dieses Ereignis wirklich als erledigt markieren?", 
-                    "Bestätigung", 
-                    JOptionPane.YES_NO_OPTION, 
-                    JOptionPane.QUESTION_MESSAGE);
+                int response = JOptionPane.showConfirmDialog(this,
+                        "Möchten Sie dieses Ereignis wirklich als erledigt markieren?",
+                        "Bestätigung",
+                        JOptionPane.YES_NO_OPTION,
+                        JOptionPane.QUESTION_MESSAGE);
 
                 if (response == JOptionPane.YES_OPTION) {
                     this.jCalendar.removeCalendarEvent(ce);
-                    
+
                     ClientSettings settings = ClientSettings.getInstance();
                     try {
                         // mark event as done on the server
@@ -846,7 +1030,7 @@ public class CalendarPanel extends javax.swing.JPanel {
                         calService.markReviewDone(ce.getEventId(), true);
 
                         // publish a notification so the desktop can automatically refresh
-                        ArchiveFileReviewsBean updatedEvent=calService.getReview(ce.getEventId());
+                        ArchiveFileReviewsBean updatedEvent = calService.getReview(ce.getEventId());
                         EventBroker eb = EventBroker.getInstance();
                         eb.publishEvent(new ReviewUpdatedEvent(null, null, updatedEvent));
                     } catch (Exception ex) {
@@ -855,15 +1039,16 @@ public class CalendarPanel extends javax.swing.JPanel {
                         EditorsRegistry.getInstance().clearStatus();
                         return;
                     }
-                    
+
                     log.info("Marked vent " + ce.getEventId() + " as done");
-  
+
                 }
             }
         });
 
         popup = new JPopupMenu();
         popup.add(mnuOpenCase);
+        popup.add(mnuEditEvent);
         popup.add(mnuMarkEventAsDone);
 
         jCalendar = new JCalendar();
@@ -932,11 +1117,11 @@ public class CalendarPanel extends javax.swing.JPanel {
         }
 
     }
-    
+
     public void setSelectedDay(Date selDate) {
         this.jCalendar.setSelectedDay(selDate);
     }
-    
+
     public void setSelectedDayInDayView(Date selDate) {
         this.jCalendar.setDisplayStrategy(DisplayStrategy.Type.DAY, selDate);
     }
@@ -954,7 +1139,7 @@ public class CalendarPanel extends javax.swing.JPanel {
         if (rev.getCalendarSetup() != null) {
             if (!this.allCalTypes.containsKey(rev.getCalendarSetup().getId())) {
                 EventType t = new EventType();
-                Color opaque=new Color(rev.getCalendarSetup().getBackground());
+                Color opaque = new Color(rev.getCalendarSetup().getBackground());
                 Color backColor = new Color(opaque.getRed(), opaque.getGreen(), opaque.getBlue(), this.eventAlpha);
                 t.setBackgroundColor(backColor);
                 t.setForegroundColor(Color.WHITE);
@@ -995,7 +1180,7 @@ public class CalendarPanel extends javax.swing.JPanel {
             }
         }
 
-        if (this.selectedCalTypes.contains(rev.getCalendarSetup().getId())) {
+        if (this.selectedCalTypes.contains(rev.getCalendarSetup().getId()) && (this.selectedUsers.contains(rev.getAssignee()) || StringUtils.isEmpty(rev.getAssignee()))) {
             int hour = rev.getBeginDate().getHours();
             final int min = rev.getBeginDate().getMinutes();
             final int day = rev.getBeginDate().getDate();
@@ -1029,9 +1214,10 @@ public class CalendarPanel extends javax.swing.JPanel {
 
                 Calendar endCalendar = Calendar.getInstance();
                 endCalendar.setTime(end);
-                
-                if(endCalendar.getTimeInMillis()<=splitCalendar.getTimeInMillis())
+
+                if (endCalendar.getTimeInMillis() <= splitCalendar.getTimeInMillis()) {
                     return;
+                }
 
                 // partial day at the beginning
                 Calendar partialBegin = Calendar.getInstance();
@@ -1091,10 +1277,10 @@ public class CalendarPanel extends javax.swing.JPanel {
     private void addToRenderedCalendar(ArchiveFileReviewsBean rev, Date start, Date end, boolean allDay) {
 
         CalendarEvent calendarEvent = null;
-        if(rev.getArchiveFileKey()!=null) {
-            calendarEvent=new CalendarEvent(rev.getSummary() + " (" + rev.getArchiveFileKey().getFileNumber() + " " + rev.getArchiveFileKey().getName() + ")", start, end);
+        if (rev.getArchiveFileKey() != null) {
+            calendarEvent = new CalendarEvent(rev.getSummary() + " (" + rev.getArchiveFileKey().getFileNumber() + " " + rev.getArchiveFileKey().getName() + ")", start, end);
         } else {
-            calendarEvent=new CalendarEvent(rev.getSummary(), start, end);
+            calendarEvent = new CalendarEvent(rev.getSummary(), start, end);
         }
         calendarEvent.setDescription(rev.getDescription());
         calendarEvent.setLocation(rev.getLocation());
@@ -1147,7 +1333,6 @@ public class CalendarPanel extends javax.swing.JPanel {
 //                }
 //            }
 //        });
-
         jCalendar.addCollectionChangedListener(new ModelChangedListener() {
 
             @Override
@@ -1199,8 +1384,8 @@ public class CalendarPanel extends javax.swing.JPanel {
             dlg2.setEventType(ArchiveFileReviewsBean.EVENTTYPE_EVENT);
             dlg2.setBeginDate(event.getIntervalStart());
             dlg2.setEndDate(event.getIntervalEnd());
-            dlg2.setReviewAssignee(sel.getAssistant());
-            
+            dlg2.setReviewAssignees(sel.getAssistant(), sel.getLawyer());
+
             FrameUtils.centerDialog(dlg2, EditorsRegistry.getInstance().getMainWindow());
             dlg2.setVisible(true);
 
@@ -1241,6 +1426,11 @@ public class CalendarPanel extends javax.swing.JPanel {
      */
     public void setEventAlpha(int eventAlpha) {
         this.eventAlpha = eventAlpha;
+    }
+
+    @Override
+    public void entryAdded(ArchiveFileReviewsBean entry) {
+        this.addCalendarEvent(entry);
     }
 
 

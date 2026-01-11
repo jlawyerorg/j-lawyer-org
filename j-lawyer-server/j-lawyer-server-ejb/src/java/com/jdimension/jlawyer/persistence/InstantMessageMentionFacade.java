@@ -703,6 +703,13 @@ public class InstantMessageMentionFacade extends AbstractFacade<InstantMessageMe
     }
     
     @Override
+    public List<InstantMessageMention> findOpen(List principalIds) {
+        
+        return (List<InstantMessageMention>) em.createNamedQuery("InstantMessageMention.findOpenByPrincipals").setParameter("principals", principalIds).getResultList();
+        
+    }
+    
+    @Override
     public List<InstantMessageMention> findSince(Date since) {
         
         return (List<InstantMessageMention>) em.createNamedQuery("InstantMessageMention.findSince").setParameter("since", since).getResultList();

@@ -720,28 +720,43 @@ public class EditScanPanel extends javax.swing.JPanel {
         this.cmdOcr.setEnabled(false);
         this.cmdOcr.setToolTipText(null);
         this.noOcrFiles.clear();
-        try {
 
-            ClientSettings settings = ClientSettings.getInstance();
-            JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
-            IntegrationServiceRemote isr = locator.lookupIntegrationServiceRemote();
+        // Performance optimization: load OCR status asynchronously
+        final List<String> pdfFiles = new ArrayList<>();
+        for (String f : selectedDocuments) {
+            if (f.toLowerCase().endsWith(".pdf")) {
+                pdfFiles.add(f);
+            }
+        }
 
-            for (String f : selectedDocuments) {
-                if (f.toLowerCase().endsWith(".pdf")) {
-                    FileMetadata meta = isr.getObservedFileMetadata(f);
-                    if (meta!=null && meta.getOcrStatus()==FileMetadata.OCRSTATUS_WITHOUTOCR) {
-                        noOcrFiles.add(meta);
+        if (!pdfFiles.isEmpty()) {
+            new Thread(() -> {
+                try {
+                    ClientSettings settings = ClientSettings.getInstance();
+                    JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
+                    IntegrationServiceRemote isr = locator.lookupIntegrationServiceRemote();
+
+                    final ArrayList<FileMetadata> filesWithoutOcr = new ArrayList<>();
+                    for (String f : pdfFiles) {
+                        FileMetadata meta = isr.getObservedFileMetadata(f);
+                        if (meta != null && meta.getOcrStatus() == FileMetadata.OCRSTATUS_WITHOUTOCR) {
+                            filesWithoutOcr.add(meta);
+                        }
                     }
+
+                    // Update UI on EDT
+                    javax.swing.SwingUtilities.invokeLater(() -> {
+                        noOcrFiles.addAll(filesWithoutOcr);
+                        if (!noOcrFiles.isEmpty()) {
+                            cmdOcr.setEnabled(true);
+                            cmdOcr.setToolTipText(noOcrFiles.size() + " PDF-Dokumente sind nicht durchsuchbar - Klick für OCR/Texterkennung");
+                        }
+                    });
+
+                } catch (Exception ex) {
+                    log.error("Error loading OCR status", ex);
                 }
-            }
-            if (!noOcrFiles.isEmpty()) {
-                this.cmdOcr.setEnabled(true);
-                this.cmdOcr.setToolTipText(noOcrFiles.size() + " PDF-Dokumente sind nicht durchsuchbar - Klick für OCR/Texterkennung");
-            }
-
-        } catch (Exception ex) {
-            log.error(ex);
-
+            }, "OcrStatusLoader").start();
         }
 
     }

@@ -664,6 +664,7 @@ For more information on this, and how to apply and follow the GNU AGPL, see
 package com.jdimension.jlawyer.client.plugins.form;
 
 import com.jdimension.jlawyer.client.utils.DesktopUtils;
+import java.awt.Component;
 import java.util.Map;
 import org.apache.log4j.Logger;
 import themes.colors.DefaultColorTheme;
@@ -684,6 +685,8 @@ public class FormsManagementDialog extends javax.swing.JDialog implements FormAc
     public FormsManagementDialog(java.awt.Frame parent, boolean modal) {
         super(parent, modal);
         initComponents();
+        
+        this.jScrollPane2.getVerticalScrollBar().setUnitIncrement(16);
 
         lblGitHubLink.setForeground(DefaultColorTheme.COLOR_LOGO_BLUE);
 
@@ -719,6 +722,7 @@ public class FormsManagementDialog extends javax.swing.JDialog implements FormAc
         formPluginsPanel = new com.jdimension.jlawyer.client.plugins.form.FormPluginsPanel();
         jLabel1 = new javax.swing.JLabel();
         lblGitHubLink = new javax.swing.JLabel();
+        cmdUpdateAll = new javax.swing.JButton();
 
         setDefaultCloseOperation(javax.swing.WindowConstants.DISPOSE_ON_CLOSE);
         setTitle("Falldatenblätter verwalten");
@@ -751,6 +755,14 @@ public class FormsManagementDialog extends javax.swing.JDialog implements FormAc
             }
         });
 
+        cmdUpdateAll.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/fileimport.png"))); // NOI18N
+        cmdUpdateAll.setText("alle Updates installieren");
+        cmdUpdateAll.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                cmdUpdateAllActionPerformed(evt);
+            }
+        });
+
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(getContentPane());
         getContentPane().setLayout(layout);
         layout.setHorizontalGroup(
@@ -762,7 +774,9 @@ public class FormsManagementDialog extends javax.swing.JDialog implements FormAc
                         .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                             .addComponent(lblGitHubLink)
                             .addComponent(jLabel1))
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 388, Short.MAX_VALUE)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 137, Short.MAX_VALUE)
+                        .addComponent(cmdUpdateAll)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                         .addComponent(cmdClose))
                     .addComponent(jScrollPane2))
                 .addContainerGap())
@@ -774,7 +788,9 @@ public class FormsManagementDialog extends javax.swing.JDialog implements FormAc
                 .addComponent(jScrollPane2, javax.swing.GroupLayout.DEFAULT_SIZE, 447, Short.MAX_VALUE)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
-                    .addComponent(cmdClose)
+                    .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                        .addComponent(cmdClose)
+                        .addComponent(cmdUpdateAll))
                     .addGroup(layout.createSequentialGroup()
                         .addComponent(jLabel1)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
@@ -801,6 +817,17 @@ public class FormsManagementDialog extends javax.swing.JDialog implements FormAc
     private void lblGitHubLinkMouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_lblGitHubLinkMouseClicked
         DesktopUtils.openBrowser(this.lblGitHubLink.getText());
     }//GEN-LAST:event_lblGitHubLinkMouseClicked
+
+    private void cmdUpdateAllActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdUpdateAllActionPerformed
+        for(Component c: this.formPluginsPanel.getComponents()) {
+            if(c instanceof FormPluginEntryPanel) {
+                FormPluginEntryPanel ep=(FormPluginEntryPanel)c;
+                if(ep.getEntry().getState()==FormPlugin.STATE_INSTALLED_UPDATEAVAILABLE) {
+                    ep.download();
+                }
+            }
+        }
+    }//GEN-LAST:event_cmdUpdateAllActionPerformed
 
     /**
      * @param args the command line arguments
@@ -844,6 +871,7 @@ public class FormsManagementDialog extends javax.swing.JDialog implements FormAc
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JButton cmdClose;
+    private javax.swing.JButton cmdUpdateAll;
     private com.jdimension.jlawyer.client.plugins.form.FormPluginsPanel formPluginsPanel;
     private javax.swing.JLabel jLabel1;
     private javax.swing.JScrollPane jScrollPane2;

@@ -683,6 +683,12 @@ public class ScannerDocumentsTimerTask extends java.util.TimerTask {
     private static HashMap<FileMetadata, Date> lastFiles = new HashMap<>();
     private boolean bypassCache=false;
     
+    private volatile boolean stopped = false;
+
+    public void stop() {
+        stopped = true;
+    }
+    
     /**
      * Creates a new instance of SystemStateTimerTask
      * @param bypassCache
@@ -695,14 +701,19 @@ public class ScannerDocumentsTimerTask extends java.util.TimerTask {
 
     @Override
     public void run() {
+        if (stopped) return;
         synchronized (this) {
             try {
                 ClientSettings settings = ClientSettings.getInstance();
                 JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
+                
+                if (stopped) return;
                 HashMap<FileMetadata, Date> currentFiles = locator.lookupSingletonServiceRemote().getObservedFiles(this.bypassCache);
 
+                if (stopped) return;
                 if (areKeySetsDifferent(lastFiles, currentFiles)) {
 
+                    if (stopped) return;
                     EventBroker eb = EventBroker.getInstance();
                     eb.publishEvent(new ScannerStatusEvent(currentFiles));
                 }

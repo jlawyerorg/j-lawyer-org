@@ -678,6 +678,12 @@ public class TimesheetsHintTimerTask extends java.util.TimerTask {
     private ImageIcon blueIcon=new javax.swing.ImageIcon(getClass().getResource("/icons16/material/baseline_timer_black_48dp.png"));
     private ImageIcon greenIcon=new javax.swing.ImageIcon(getClass().getResource("/icons16/material/baseline_timer_black_48dp_green.png"));
     private boolean blue=true;
+    
+    private volatile boolean stopped = false;
+
+    public void stop() {
+        stopped = true;
+    }
 
     /**
      * Creates a new instance of TimesheetsHintTimerTask
@@ -690,9 +696,11 @@ public class TimesheetsHintTimerTask extends java.util.TimerTask {
 
     @Override
     public void run() {
+        if (stopped) return;
         SwingUtilities.invokeLater(() -> {
             boolean running=!(footerLabel.getText().trim().isEmpty());
             if(running) {
+                if (stopped) return;
                 if(blue) {
                     footerLabel.setIcon(greenIcon);
                     footerLabel.setForeground(DefaultColorTheme.COLOR_LOGO_GREEN);
@@ -703,6 +711,7 @@ public class TimesheetsHintTimerTask extends java.util.TimerTask {
                     blue=true;
                 }
             } else {
+                if (stopped) return;
                 if(!blue) {
                     footerLabel.setIcon(blueIcon);
                     footerLabel.setForeground(DefaultColorTheme.COLOR_LOGO_BLUE);

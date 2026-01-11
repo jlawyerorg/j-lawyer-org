@@ -851,6 +851,12 @@ public class ConfirmationStep extends javax.swing.JPanel implements WizardStepIn
                 locator.lookupArchiveFileServiceRemote().setTag(newCase.getId(), tag, true);
             }
 
+            // Set allowed groups for permissions
+            ArrayList<Group> allowedGroups = (ArrayList<Group>) this.data.get("newcase.allowedgroups");
+            if (allowedGroups != null && !allowedGroups.isEmpty()) {
+                locator.lookupArchiveFileServiceRemote().updateAllowedGroups(newCase.getId(), allowedGroups);
+            }
+
             label2.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/agt_action_success.png")));
 
             JLabel label3 = new JLabel();

@@ -663,6 +663,7 @@
  */
 package com.jdimension.jlawyer.client.editors.files;
 
+import com.jdimension.jlawyer.client.editors.EditorsRegistry;
 import com.jdimension.jlawyer.client.editors.documents.CachingDocumentLoader;
 import com.jdimension.jlawyer.client.mail.SendCommunicationDialog;
 import com.jdimension.jlawyer.client.processing.ProgressIndicator;
@@ -675,6 +676,7 @@ import com.jdimension.jlawyer.ui.folders.CaseFolderPanel;
 import java.io.File;
 import java.util.ArrayList;
 import javax.swing.JDialog;
+import javax.swing.JFrame;
 import javax.swing.JOptionPane;
 import javax.swing.SwingUtilities;
 import org.apache.log4j.Logger;
@@ -689,8 +691,8 @@ public class SendPDFAction extends ProgressableAction {
     private CaseFolderPanel table = null;
     private SendCommunicationDialog dlg = null;
 
-    public SendPDFAction(ProgressIndicator i, CaseFolderPanel table, SendCommunicationDialog dlg) {
-        super(i, false);
+    public SendPDFAction(ProgressIndicator i, CaseFolderPanel table, SendCommunicationDialog dlg, JFrame pushToFront) {
+        super(i, pushToFront, false);
         this.table = table;
         this.dlg = dlg;
     }
@@ -743,14 +745,20 @@ public class SendPDFAction extends ProgressableAction {
 
 
 
-        SwingUtilities.invokeLater(new Thread(() -> {
+        SwingUtilities.invokeLater(() -> {
             try {
-                FrameUtils.centerDialog((JDialog)dlg, null);
-                ((JDialog)dlg).setVisible(true);
+                if(dlg instanceof JFrame) {
+                    FrameUtils.centerFrame((JFrame)dlg, null);
+                    EditorsRegistry.getInstance().registerFrame((JFrame)dlg);
+                    ((JFrame)dlg).setVisible(true);
+                } else {
+                    FrameUtils.centerDialog((JDialog)dlg, null);
+                    ((JDialog)dlg).setVisible(true);
+                }
             } catch (Throwable t) {
                 log.error(t);
             }
-        }));
+        });
 
         return true;
 

@@ -1,0 +1,122 @@
+/* j-lawyer export – history specific layout */
+html, body {
+  margin: 0;
+  padding: 24px;
+  font-family: system-ui, -apple-system, "Segoe UI", Roboto, Arial, sans-serif;
+  background: var(--bg);
+  color: var(--fg);
+  transition: background 0.25s ease, color 0.25s ease;
+}
+
+h1 {
+  font-size: 20px;
+  margin: 0 0 6px;
+}
+
+.sub {
+  color: var(--muted);
+  margin-bottom: 18px;
+}
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+  background: var(--card);
+  border: 1px solid var(--surface-border);
+  border-radius: 10px;
+  overflow: hidden;
+  box-shadow: var(--surface-shadow);
+}
+
+th, td {
+  padding: 10px 12px;
+  border-bottom: 1px solid var(--surface-border);
+  font-size: 13px;
+  vertical-align: top;
+}
+
+th {
+  background: var(--surface-raised);
+  text-align: left;
+  color: var(--muted);
+  font-weight: 600;
+}
+
+tr:hover {
+  background: var(--surface-muted);
+}
+
+.dt {
+  white-space: nowrap;
+  color: var(--muted);
+  font-weight: 600;
+}
+
+.user {
+  color: var(--accent);
+  font-weight: 600;
+}
+
+.desc {
+  white-space: pre-wrap;
+}
+
+.badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 10px;
+  border-radius: 999px;
+  background: var(--surface-muted);
+  border: 1px solid var(--surface-border);
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--muted);
+}
+
+.badge .dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: currentColor;
+}
+
+@media (max-width: 720px) {
+  html, body {
+    padding: 16px;
+  }
+
+  table, thead, tbody, th, td, tr {
+    display: block;
+  }
+
+  thead {
+    display: none;
+  }
+
+  tr {
+    margin-bottom: 16px;
+    border: 1px solid var(--surface-border);
+    border-radius: 10px;
+    padding: 12px;
+    background: var(--card);
+  }
+
+  td {
+    border: 0;
+    padding: 6px 0;
+    position: relative;
+  }
+
+  td:before {
+    content: attr(data-label);
+    display: block;
+    font-weight: 600;
+    color: var(--muted);
+    margin-bottom: 4px;
+  }
+
+  .dt {
+    color: var(--muted);
+  }
+}

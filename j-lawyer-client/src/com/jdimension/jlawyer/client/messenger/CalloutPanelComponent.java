@@ -668,6 +668,7 @@ import com.jdimension.jlawyer.client.events.EventBroker;
 import com.jdimension.jlawyer.client.events.InstantMessageDeletedEvent;
 import com.jdimension.jlawyer.client.events.InstantMessageMentionChangedEvent;
 import com.jdimension.jlawyer.client.settings.ClientSettings;
+import com.jdimension.jlawyer.client.settings.UserSettings;
 import com.jdimension.jlawyer.client.utils.DateUtils;
 import com.jdimension.jlawyer.client.utils.UserUtils;
 import com.jdimension.jlawyer.persistence.AppUserBean;
@@ -681,7 +682,10 @@ import java.awt.Font;
 import java.awt.FontMetrics;
 import java.awt.Graphics;
 import java.awt.Graphics2D;
+import java.awt.BasicStroke;
 import java.awt.RenderingHints;
+import java.awt.Image;
+import java.awt.Frame;
 import java.awt.Toolkit;
 import java.awt.datatransfer.Clipboard;
 import java.awt.datatransfer.StringSelection;
@@ -696,6 +700,8 @@ import javax.swing.JOptionPane;
 import javax.swing.UIManager;
 import org.apache.log4j.Logger;
 import themes.colors.DefaultColorTheme;
+import com.jdimension.jlawyer.persistence.ArchiveFileBean;
+import com.jdimension.jlawyer.persistence.ArchiveFileDocumentsBean;
 
 /**
  *
@@ -707,6 +713,7 @@ public class CalloutPanelComponent extends javax.swing.JPanel {
     private static final ImageIcon ICON_COPY=new javax.swing.ImageIcon(CalloutPanelComponent.class.getResource("/icons16/material/baseline_content_copy_lightgrey_48dp.png"));
     private static final ImageIcon ICON_DELETE=new javax.swing.ImageIcon(CalloutPanelComponent.class.getResource("/icons16/material/baseline_delete_lightgrey_48dp.png"));
     private static final ImageIcon ICON_MARKREAD=new javax.swing.ImageIcon(CalloutPanelComponent.class.getResource("/icons16/material/mark_chat_read_20dp.png"));
+    private static final ImageIcon ICON_REPLY_ORIG=new javax.swing.ImageIcon(CalloutPanelComponent.class.getResource("/icons16/material/reply_20dp_CFCFCF.png"));
 
     private static int READ = 10;
     private static int UNREAD = 20;
@@ -721,6 +728,8 @@ public class CalloutPanelComponent extends javax.swing.JPanel {
     private int copyY=10;
     private int markReadX=1000;
     private int markReadY=10;
+    private int replyX=1000;
+    private int replyY=10;
     private Font defaultFont = null;
     private Font defaultFontBold = null;
     private Font miniFont = null;
@@ -814,6 +823,19 @@ public class CalloutPanelComponent extends javax.swing.JPanel {
                             updateTooltip();
                         }
                     }
+                    return;
+                }
+                if (e.getX() >= (replyX) && e.getX() <= replyX + 20
+                        && e.getY() >= (replyY) && e.getY() <= replyY + 20) {
+                    try {
+                        openReplyDialog();
+                    } catch (Exception ex) {
+                        log.error("Error opening reply dialog", ex);
+                        JOptionPane.showMessageDialog(EditorsRegistry.getInstance().getMainWindow(),
+                                "Antwort konnte nicht geöffnet werden: " + ex.getMessage(),
+                                com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR,
+                                JOptionPane.ERROR_MESSAGE);
+                    }
                 }
             }
 
@@ -848,6 +870,12 @@ public class CalloutPanelComponent extends javax.swing.JPanel {
                     setToolTipText("für alle als erledigt markieren");
                     return;
                 }
+                if (e.getX() >= (replyX) && e.getX() <= replyX + 20
+                        && e.getY() >= (replyY) && e.getY() <= replyY + 20) {
+                    setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
+                    setToolTipText("auf Nachricht antworten");
+                    return;
+                }
                 setCursor(new java.awt.Cursor(java.awt.Cursor.DEFAULT_CURSOR));
                 setToolTipText(tooltipText);
             }
@@ -861,7 +889,7 @@ public class CalloutPanelComponent extends javax.swing.JPanel {
         clipboard.setContents(strSel, null);
     }
 
-    private void updateTooltip() {
+    public void updateTooltip() {
         StringBuilder sb = new StringBuilder();
         if (this.message != null && this.message.getSent() != null) {
             sb.append("gesendet: ").append(dfSent.format(this.message.getSent())).append(" (").append(DateUtils.getHumanReadableTimeInPast(this.message.getSent())).append(")");
@@ -909,6 +937,17 @@ public class CalloutPanelComponent extends javax.swing.JPanel {
     }
     
     public void deleteMessage(String messageId) {
+        int response = JOptionPane.showConfirmDialog(
+            EditorsRegistry.getInstance().getMainWindow(),
+            "Nachricht wirklich löschen?",
+            "Nachricht löschen",
+            JOptionPane.YES_NO_OPTION,
+            JOptionPane.QUESTION_MESSAGE);
+
+        if (response != JOptionPane.YES_OPTION) {
+            return;
+        }
+
         try {
 
             ClientSettings settings = ClientSettings.getInstance();
@@ -941,7 +980,9 @@ public class CalloutPanelComponent extends javax.swing.JPanel {
         if(!(getParent() instanceof MessagePanel))
             return;
         
-        int width = ((MessagePanel) getParent()).getCalloutWidth();
+        // Use parent width for preferred sizing, actual width for painting to avoid overflow/clip issues
+        int parentWidth = ((MessagePanel) getParent()).getCalloutWidth();
+        int width = getWidth() > 0 ? getWidth() : parentWidth;
         int height = getHeight();
 
         if (this.isOwnMessage()) {
@@ -998,18 +1039,18 @@ public class CalloutPanelComponent extends javax.swing.JPanel {
                 if (metrics.stringWidth(testLine) <= messageWidth) {
                     currentLine.append(" ").append(words[i]);
                 } else {
-                    this.drawWithHighlights(currentLine.toString(), g2d, 40, yOffset, defaultFont, defaultFontBold);
+                    this.drawWithHighlights(currentLine.toString(), g2d, 40, yOffset, defaultFont, defaultFontBold, Color.WHITE, DefaultColorTheme.COLOR_LIGHT_GREY);
                     currentLine = new StringBuilder(words[i]);
                     yOffset += lineSpacing;
                 }
             }
 
-            this.drawWithHighlights(currentLine.toString(), g2d, 40, yOffset, defaultFont, defaultFontBold);
+            this.drawWithHighlights(currentLine.toString(), g2d, 40, yOffset, defaultFont, defaultFontBold, Color.WHITE, DefaultColorTheme.COLOR_LIGHT_GREY);
             yOffset += lineSpacing;
         }
 
         g2d.setFont(miniFont);
-        g2d.setColor(DefaultColorTheme.COLOR_LIGHT_GREY);
+        g2d.setColor(DefaultColorTheme.COLOR_LOGO_GREEN);
         Date sent = null;
         if (this.message == null || this.message.getSent() == null) {
             sent = new Date();
@@ -1030,26 +1071,127 @@ public class CalloutPanelComponent extends javax.swing.JPanel {
             }
         }
         
-        // delete button
-        this.deleteX=width-70;
-        
+        // Place icons right-aligned within the actual visible width
+        int rightPadding = 10;
+        int iconSize = 20;
+        int gap = 8; // tighter spacing between icons
+        boolean showMarkRead = (this.ownMessage || UserUtils.isCurrentUserAdmin());
+        int x = width - rightPadding - iconSize;
+
         // delete icon
+        this.deleteX = x;
         ICON_DELETE.paintIcon(this, g2d, this.deleteX, this.deleteY);
+        x -= (iconSize + gap);
+
         // copy icon
-        this.copyX=this.deleteX-20;
+        this.copyX = x;
         ICON_COPY.paintIcon(this, g2d, this.copyX, this.copyY);
-        
-        if(this.ownMessage || UserUtils.isCurrentUserAdmin()) {
-            // mark read icon
-            this.markReadX = this.copyX - 20;
+        x -= (iconSize + gap);
+
+        // mark read icon (optional)
+        if (showMarkRead) {
+            this.markReadX = x;
             ICON_MARKREAD.paintIcon(this, g2d, this.markReadX, this.markReadY);
+            x -= (iconSize + gap);
+        } else {
+            this.markReadX = -1;
         }
 
-        this.setPreferredSize(new Dimension(width, yOffset + lineSpacing));
+        // reply icon position
+        this.replyX = Math.max(8, x);
+        // Prefer using the provided reply icon; fallback to vector glyph if unavailable
+        try {
+            if (ICON_REPLY_ORIG != null && ICON_REPLY_ORIG.getIconWidth() > 0 && ICON_REPLY_ORIG.getIconHeight() > 0) {
+                Image scaled = ICON_REPLY_ORIG.getImage().getScaledInstance(iconSize, iconSize, Image.SCALE_SMOOTH);
+                // Use ImageIcon painting to avoid async draw issues
+                new ImageIcon(scaled).paintIcon(this, g2d, this.replyX, this.replyY);
+            } else {
+                // Fallback vector glyph
+                g2d.setColor(Color.WHITE);
+                g2d.setStroke(new BasicStroke(2.2f, BasicStroke.CAP_ROUND, BasicStroke.JOIN_ROUND));
+                int centerY = this.replyY + 10;
+                int startX = this.replyX + 18;
+                int bendX = startX - 12;
+                int bendY = centerY;
+                g2d.drawLine(startX, centerY, bendX, bendY);
+                g2d.drawLine(bendX, bendY, bendX, bendY + 8);
+                int[] xs = new int[] { bendX, bendX - 6, bendX + 2 };
+                int[] ys = new int[] { bendY, bendY + 6, bendY + 6 };
+                g2d.fillPolygon(xs, ys, 3);
+            }
+        } catch (Throwable t) {
+            log.error("Error painting reply icon", t);
+        }
+
+        this.setPreferredSize(new Dimension(parentWidth, yOffset + lineSpacing));
     }
 
-    private void drawWithHighlights(String line, Graphics2D g2d, int x, int y, Font defaultFont, Font defaultFontBold) {
+    /**
+     * Opens a send dialog prefilled to reply to the current message.
+     */
+    private void openReplyDialog() {
+        // derive parent frame
+        Frame parent = EditorsRegistry.getInstance().getMainWindow();
 
+        ArchiveFileBean caseCtx = this.message != null ? this.message.getCaseContext() : null;
+        ArrayList<ArchiveFileDocumentsBean> docCtxs = null;
+        if (this.message != null && this.message.getDocumentContext() != null) {
+            docCtxs = new ArrayList<>();
+            docCtxs.add(this.message.getDocumentContext());
+        }
+
+        SendInstantMessageDialog dlg = new SendInstantMessageDialog(parent, true, caseCtx, docCtxs);
+
+        // Build initial text: @sender + quoted original content
+        StringBuilder initial = new StringBuilder();
+        int caretPosition=-1;
+        try {
+            String sender = (this.message != null ? this.message.getSender() : null);
+            Date sent = (this.message != null ? this.message.getSent() : null);
+            String content = (this.message != null && this.message.getContent() != null) ? this.message.getContent() : "";
+
+            if (sender != null && !sender.isEmpty()) {
+                initial.append("@").append(sender).append(" ");
+            }
+            caretPosition=initial.length();
+            
+            // Visible separation between answer and quoted original
+            initial.append(System.lineSeparator());
+            initial.append(System.lineSeparator());
+            if (sent != null) {
+                initial.append("----- Ursprüngliche Nachricht vom ").append(dfSent.format(sent)).append(" -----").append(System.lineSeparator());
+            } else {
+                initial.append("----- Ursprüngliche Nachricht -----").append(System.lineSeparator());
+            }
+            
+            for (String line : content.split("\n")) {
+                initial.append("> ").append(line).append(System.lineSeparator());
+            }
+        } catch (Exception ex) {
+            log.error("Error preparing initial reply text", ex);
+        }
+        
+        String initialContent=initial.toString();
+        // need to replace the mentioning of the replying user - otherwise he is expected to confirm his own message
+        initialContent=initialContent.replace("@" + UserSettings.getInstance().getCurrentUser().getPrincipalId(), "@ " + UserSettings.getInstance().getCurrentUser().getPrincipalId());
+
+        dlg.setInitialMessageText(initialContent, caretPosition);
+        try {
+            dlg.setLocationRelativeTo(parent);
+            dlg.setVisible(true);
+        } catch (Exception ex) {
+            log.error("Error showing reply dialog", ex);
+        }
+    }
+
+    private void drawWithHighlights(String line, Graphics2D g2d, int x, int y, Font defaultFont, Font defaultFontBold, Color defaultColor, Color replyColor) {
+
+        boolean isReply=line.startsWith("> ") || line.startsWith("-----");
+        if(isReply)
+            g2d.setColor(replyColor);
+        else
+            g2d.setColor(defaultColor);
+        
         // find the first occurence of a principal
         boolean magicTextIsMe = false;
         String magicText = null;
@@ -1067,7 +1209,6 @@ public class CalloutPanelComponent extends javax.swing.JPanel {
             }
         }
 
-        g2d.setColor(Color.WHITE);
         if (magicText != null) {
             String prefix = line.substring(0, magicIndex);
             g2d.setFont(defaultFont);
@@ -1085,7 +1226,12 @@ public class CalloutPanelComponent extends javax.swing.JPanel {
             if (suffix.length() == 0) {
                 return;
             }
-            drawWithHighlights(suffix, g2d, x + prefixLength + magicTextLength, y, defaultFont, defaultFontBold);
+            if(isReply) {
+                drawWithHighlights(suffix, g2d, x + prefixLength + magicTextLength, y, defaultFont, defaultFontBold, replyColor, replyColor);
+            } else {
+                drawWithHighlights(suffix, g2d, x + prefixLength + magicTextLength, y, defaultFont, defaultFontBold, defaultColor, replyColor);
+            }
+            
         } else {
             g2d.setFont(defaultFont);
             g2d.drawString(line, x, y);
@@ -1154,6 +1300,20 @@ public class CalloutPanelComponent extends javax.swing.JPanel {
         this.updateTooltip();
     }
 
+  /**
+   * Recompute tooltip and repaint so relative timestamps change over time.
+   */
+  public void refreshRelativeTime() {
+    try {
+      // rebuild tooltip text (contains human-readable relative time)
+      updateTooltip();
+      // repaint to redraw the "vor X" timestamp in the bubble
+      repaint();
+    } catch (Exception ex) {
+      log.error("Error refreshing relative time info on callout", ex);
+    }
+  }
+
     /**
      * @return the ownMessage
      */
@@ -1201,5 +1361,6 @@ public class CalloutPanelComponent extends javax.swing.JPanel {
 
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
+    
     // End of variables declaration//GEN-END:variables
 }

@@ -700,6 +700,8 @@ import javax.sound.sampled.DataLine;
 import javax.sound.sampled.Mixer;
 import javax.sound.sampled.TargetDataLine;
 import javax.swing.JComboBox;
+import javax.swing.JDialog;
+import javax.swing.JFrame;
 import javax.swing.JLabel;
 import javax.swing.JMenuItem;
 import javax.swing.JOptionPane;
@@ -754,8 +756,21 @@ public class AssistantGenerateDialog extends javax.swing.JDialog implements Assi
      * @param parent
      * @param modal
      */
-    public AssistantGenerateDialog(ArchiveFilePanel caseView, ArchiveFileBean selectedCase, java.awt.Frame parent, boolean modal) {
+    public AssistantGenerateDialog(ArchiveFilePanel caseView, ArchiveFileBean selectedCase, JFrame parent, boolean modal) {
         super(parent, modal);
+        this.initialize(caseView, selectedCase);
+        FrameUtils.centerDialog(this, parent);
+
+    }
+    
+    public AssistantGenerateDialog(ArchiveFilePanel caseView, ArchiveFileBean selectedCase, JDialog parent, boolean modal) {
+        super(parent, modal);
+        this.initialize(caseView, selectedCase);
+        FrameUtils.centerDialog(this, parent);
+
+    }
+    
+    private void initialize(ArchiveFilePanel caseView, ArchiveFileBean selectedCase) {
         initComponents();
 
         this.progress.setIndeterminate(false);
@@ -798,7 +813,7 @@ public class AssistantGenerateDialog extends javax.swing.JDialog implements Assi
         }
 
         ComponentUtils.restoreDialogSize(this);
-        FrameUtils.centerDialog(this, parent);
+        
 
         this.cmbDevices.removeAllItems();
         AudioUtils.populateMicrophoneDevices(this.cmbDevices);
@@ -866,7 +881,6 @@ public class AssistantGenerateDialog extends javax.swing.JDialog implements Assi
         ComponentUtils.decorateSplitPane(this.jSplitPane1);
         ComponentUtils.restoreSplitPane(this.jSplitPane1, this.getClass(), "jSplitPane1");
         ComponentUtils.persistSplitPane(this.jSplitPane1, this.getClass(), "jSplitPane1");
-
     }
 
     /**
@@ -1585,5 +1599,10 @@ public class AssistantGenerateDialog extends javax.swing.JDialog implements Assi
     @Override
     public List<Message> getMessages(AiCapability c) {
         return null;
+    }
+
+    @Override
+    public void processOutput(Map<String, String> output) {
+        
     }
 }

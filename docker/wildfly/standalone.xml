@@ -145,8 +145,8 @@
                     </security>
                 </datasource>
                 <datasource jndi-name="java:/jlawyerdb" pool-name="jlawyerdb" enabled="true" use-java-context="true">
-                    <connection-url>jdbc:mysql://db:3306/jlawyerdb?serverTimezone=Europe/Berlin&amp;allowPublicKeyRetrieval=true&amp;useSSL=false</connection-url>
-                    <driver>mysql</driver>
+                    <connection-url>jdbc:mariadb://db:3306/jlawyerdb?serverTimezone=Europe/Berlin</connection-url>
+                    <driver>mariadb</driver>
                     <transaction-isolation>TRANSACTION_READ_COMMITTED</transaction-isolation>
                     <pool>
                         <min-pool-size>10</min-pool-size>
@@ -171,8 +171,8 @@
                     <driver name="h2" module="com.h2database.h2">
                         <xa-datasource-class>org.h2.jdbcx.JdbcDataSource</xa-datasource-class>
                     </driver>
-                    <driver name="mysql" module="com.mysql.driver8">
-                        <driver-class>com.mysql.cj.jdbc.Driver</driver-class>
+                    <driver name="mariadb" module="org.mariadb.driver">
+                        <driver-class>org.mariadb.jdbc.Driver</driver-class>
                     </driver>
                 </drivers>
             </datasources>

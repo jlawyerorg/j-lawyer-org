@@ -664,7 +664,9 @@ For more information on this, and how to apply and follow the GNU AGPL, see
 package org.jlawyer.io.rest.v1.pojo;
 
 import com.jdimension.jlawyer.persistence.ArchiveFileDocumentsBean;
+import java.util.ArrayList;
 import java.util.Date;
+import java.util.List;
 
 /**
  *
@@ -673,6 +675,7 @@ import java.util.Date;
 public class RestfulDocumentV1 {
 
     private String id = null;
+    private String caseId = null;
     private String externalId = null;
     private String name = null;
     private Date creationDate = null;
@@ -683,13 +686,22 @@ public class RestfulDocumentV1 {
     protected long version = 1l;
     protected int highlight1 = -1;
     protected int highlight2 = -1;
+    private List<RestfulTagV1> tags=new ArrayList<>();
 
     public RestfulDocumentV1() {
     }
 
     public static RestfulDocumentV1 fromDocumentsBean(ArchiveFileDocumentsBean d) {
+        return fromDocumentsBean(d, null);
+    }
+    
+    public static RestfulDocumentV1 fromDocumentsBean(ArchiveFileDocumentsBean d, String caseId) {
         RestfulDocumentV1 doc = new RestfulDocumentV1();
         doc.setId(d.getId());
+        if(caseId!=null)
+            doc.setCaseId(caseId);
+        else
+            doc.setCaseId(d.getArchiveFileKey().getId());
         doc.setExternalId(d.getExternalId());
         doc.setVersion(d.getVersion());
         doc.setName(d.getName());
@@ -857,6 +869,34 @@ public class RestfulDocumentV1 {
      */
     public void setExternalId(String externalId) {
         this.externalId = externalId;
+    }
+
+    /**
+     * @return the caseId
+     */
+    public String getCaseId() {
+        return caseId;
+    }
+
+    /**
+     * @param caseId the caseId to set
+     */
+    public void setCaseId(String caseId) {
+        this.caseId = caseId;
+    }
+
+    /**
+     * @return the tags
+     */
+    public List<RestfulTagV1> getTags() {
+        return tags;
+    }
+
+    /**
+     * @param tags the tags to set
+     */
+    public void setTags(List<RestfulTagV1> tags) {
+        this.tags = tags;
     }
 
 }

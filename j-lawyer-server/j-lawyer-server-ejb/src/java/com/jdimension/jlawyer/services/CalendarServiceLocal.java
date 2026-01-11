@@ -666,6 +666,7 @@ package com.jdimension.jlawyer.services;
 import com.jdimension.jlawyer.persistence.ArchiveFileReviewsBean;
 import com.jdimension.jlawyer.persistence.CalendarSetup;
 import java.util.Collection;
+import java.util.Date;
 import java.util.List;
 import javax.ejb.Local;
 
@@ -677,6 +678,9 @@ import javax.ejb.Local;
 public interface CalendarServiceLocal {
 
     Collection<ArchiveFileReviewsBean> getAllOpenReviewsUnrestricted();
+    Collection<ArchiveFileReviewsBean> getAllOpenReviews();
+    
+    Collection<ArchiveFileReviewsBean> searchReviews(int status, int type, Date fromDate, Date toDate, int limit);
     
     Collection<ArchiveFileReviewsBean> getReviewsUnrestricted(String archiveFileKey) throws Exception;
     

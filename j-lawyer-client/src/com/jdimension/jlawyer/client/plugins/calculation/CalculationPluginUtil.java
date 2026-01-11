@@ -663,6 +663,7 @@ For more information on this, and how to apply and follow the GNU AGPL, see
  */
 package com.jdimension.jlawyer.client.plugins.calculation;
 
+import com.jdimension.jlawyer.client.settings.ClientSettings;
 import com.jdimension.jlawyer.client.utils.VersionUtils;
 import groovy.lang.Binding;
 import groovy.util.GroovyScriptEngine;
@@ -680,7 +681,7 @@ public class CalculationPluginUtil {
     private static ArrayList<CalculationPlugin> pluginList = null;
 
     public static String getLocalDirectory() {
-        return System.getProperty("user.home") + System.getProperty("file.separator") + ".j-lawyer-client" + System.getProperty("file.separator") + "calculations" + File.separator + VersionUtils.getFullClientVersion();
+        return System.getProperty("user.home") + System.getProperty("file.separator") + ClientSettings.JLAWYERCLIENT_SETTINGDIR + System.getProperty("file.separator") + "calculations" + File.separator + VersionUtils.getFullClientVersion();
     }
 
     public static synchronized ArrayList<CalculationPlugin> loadLocalPlugins() {

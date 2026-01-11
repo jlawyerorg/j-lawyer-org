@@ -672,18 +672,26 @@ import com.jdimension.jlawyer.client.utils.StringUtils;
 import com.jdimension.jlawyer.persistence.AppOptionGroupBean;
 import com.jdimension.jlawyer.persistence.AppUserBean;
 import com.jdimension.jlawyer.persistence.ArchiveFileBean;
+import com.jdimension.jlawyer.persistence.ArchiveFileReviewsBean;
 import com.jdimension.jlawyer.persistence.Invoice;
 import com.jdimension.jlawyer.persistence.Timesheet;
 import com.jdimension.jlawyer.persistence.TimesheetPosition;
 import com.jdimension.jlawyer.server.constants.OptionConstants;
 import com.jdimension.jlawyer.services.JLawyerServiceLocator;
+import de.costache.calendar.NewEventEntryCallbacks;
+import de.costache.calendar.NewEventEntryDialog;
 import java.awt.Component;
+import java.awt.Dialog;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.text.DecimalFormat;
 import java.text.NumberFormat;
+import java.time.DayOfWeek;
+import java.time.LocalDate;
+import java.time.ZoneId;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Date;
 import java.util.List;
 import java.util.stream.Collectors;
 import javax.swing.BoxLayout;
@@ -695,15 +703,15 @@ import themes.colors.DefaultColorTheme;
  *
  * @author jens
  */
-public class TimesheetDialog extends javax.swing.JDialog {
+public class TimesheetDialog extends javax.swing.JDialog implements NewEventEntryCallbacks {
 
     private static final Logger log = Logger.getLogger(TimesheetDialog.class.getName());
     private static final DecimalFormat cf = new DecimalFormat("0.00");
 
-    private List<String> sortedPrincipalIds=null;
+    private List<String> sortedPrincipalIds = null;
     private Timesheet currentEntry = null;
     private ArchiveFileBean caseDto = null;
-    
+
     private List<String> taxRates = new ArrayList<>();
 
     protected NumberFormat currencyFormat = NumberFormat.getNumberInstance();
@@ -725,7 +733,7 @@ public class TimesheetDialog extends javax.swing.JDialog {
 
         initComponents();
         this.cmdAllowedPositions.setText("");
-        
+
         ComponentUtils.restoreDialogSize(this);
         ComponentUtils.decorateSplitPane(splitMain);
         ComponentUtils.restoreSplitPane(splitMain, TimesheetDialog.class, "splitMain");
@@ -736,13 +744,13 @@ public class TimesheetDialog extends javax.swing.JDialog {
 
         BoxLayout boxLayout = new BoxLayout(this.pnlTimesheetPositions, BoxLayout.Y_AXIS);
         this.pnlTimesheetPositions.setLayout(boxLayout);
-        
+
         List<AppUserBean> allUsers = UserSettings.getInstance().getLoginEnabledUsers();
         this.sortedPrincipalIds = allUsers.stream()
-                                          .map(AppUserBean::getPrincipalId)
-                                          .sorted()
-                                          .collect(Collectors.toList());
-       
+                .map(AppUserBean::getPrincipalId)
+                .sorted()
+                .collect(Collectors.toList());
+
         ClientSettings settings = ClientSettings.getInstance();
 
         try {
@@ -787,24 +795,23 @@ public class TimesheetDialog extends javax.swing.JDialog {
     }
 
     private void updateAllowedPositions() {
-        
-        if(this.currentEntry==null) {
+
+        if (this.currentEntry == null) {
             this.lblAllowedPositions.setText("");
         } else {
             ClientSettings settings = ClientSettings.getInstance();
             try {
                 JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
-                this.lblAllowedPositions.setText("" +locator.lookupTimesheetServiceRemote().getPositionTemplatesForTimesheet(this.currentEntry.getId()).size());
+                this.lblAllowedPositions.setText("" + locator.lookupTimesheetServiceRemote().getPositionTemplatesForTimesheet(this.currentEntry.getId()).size());
             } catch (Exception ex) {
                 this.lblAllowedPositions.setText("0");
                 log.error("Error determining position templates for timesheet", ex);
                 JOptionPane.showMessageDialog(this, "Fehler beim Laden der erlaubten Positionsvorlagen: " + ex.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
             }
         }
-        
-        
+
     }
-    
+
     private void clearPositionsPanel() {
         this.pnlTimesheetPositions.removeAll();
         this.pnlTimesheetPositions.doLayout();
@@ -867,7 +874,7 @@ public class TimesheetDialog extends javax.swing.JDialog {
             }
 
         }
-        
+
         this.updateAllowedPositions();
 
     }
@@ -1229,15 +1236,16 @@ public class TimesheetDialog extends javax.swing.JDialog {
     }//GEN-LAST:event_formComponentResized
 
     private void cmdCancelActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdCancelActionPerformed
-        this.currentEntry=null;
+        this.currentEntry = null;
         this.setVisible(false);
         this.dispose();
     }//GEN-LAST:event_cmdCancelActionPerformed
 
     private void fillCurrentEntry() throws Exception {
         this.currentEntry.setDescription(this.taDescription.getText());
-        if(!StringUtils.isEmpty(this.txtName.getText()))
+        if (!StringUtils.isEmpty(this.txtName.getText())) {
             this.currentEntry.setName(this.txtName.getText());
+        }
         this.currentEntry.setStatus(this.currentEntry.getStatusInt(this.cmbStatus.getSelectedItem().toString()));
         this.currentEntry.setInterval(Integer.parseInt(this.cmbTimesheetInterval.getSelectedItem().toString()));
         this.currentEntry.setLimit(BigDecimal.valueOf(this.currencyFormat.parse(this.txtTimesheetLimit.getText()).floatValue()));
@@ -1258,6 +1266,34 @@ public class TimesheetDialog extends javax.swing.JDialog {
                 newTimesheet = locator.lookupArchiveFileServiceRemote().addTimesheet(this.caseDto.getId(), newTimesheet);
                 this.currentEntry = newTimesheet;
 
+                int response = JOptionPane.showConfirmDialog(this, "Soll eine Wiedervorlage erstellt werden, die an die Abrechnung erinnert?", "Wiedervorlage erstellen", JOptionPane.YES_NO_OPTION);
+                if (response == JOptionPane.YES_OPTION) {
+                    NewEventEntryDialog dlg2 = new NewEventEntryDialog(this, this, Dialog.ModalityType.APPLICATION_MODAL, this.caseDto, false);
+                    dlg2.setEventType(ArchiveFileReviewsBean.EVENTTYPE_EVENT);
+                    dlg2.setSummary("Zeiten abrechnen");
+                    dlg2.setEventType(ArchiveFileReviewsBean.EVENTTYPE_FOLLOWUP);
+                    
+                    // Heutiges Datum
+                    LocalDate today = LocalDate.now();
+                    // Erster Tag des nächsten Monats
+                    LocalDate firstDayNextMonth = today.plusMonths(1).withDayOfMonth(1);
+                    // Wenn der erste Tag ein Samstag oder Sonntag ist → auf Montag verschieben
+                    DayOfWeek dow = firstDayNextMonth.getDayOfWeek();
+                    if (dow == DayOfWeek.SATURDAY) {
+                        firstDayNextMonth = firstDayNextMonth.plusDays(2);
+                    } else if (dow == DayOfWeek.SUNDAY) {
+                        firstDayNextMonth = firstDayNextMonth.plusDays(1);
+                    }
+                    // In java.util.Date umwandeln (Mitternacht in System-Zeitzone)
+                    Date result = Date.from(firstDayNextMonth.atStartOfDay(ZoneId.systemDefault()).toInstant());
+
+                    dlg2.setBeginDate(result);
+                    dlg2.setEndDate(result);
+                    dlg2.setReviewAssignees(this.caseDto.getAssistant(), this.caseDto.getLawyer());
+                    FrameUtils.centerDialog(dlg2, this);
+                    dlg2.setVisible(true);
+                }
+
             } catch (Exception ex) {
                 log.error("Error creating timesheet", ex);
                 JOptionPane.showMessageDialog(this, "Fehler beim Erstellen des Projekts: " + ex.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
@@ -1267,15 +1303,16 @@ public class TimesheetDialog extends javax.swing.JDialog {
 
         ClientSettings settings = ClientSettings.getInstance();
         List<TimesheetPosition> allPositions = new ArrayList<>();
-        List<Invoice> invoicesThatRequireUpdate=new ArrayList<>();
+        List<Invoice> invoicesThatRequireUpdate = new ArrayList<>();
         for (Component c : this.pnlTimesheetPositions.getComponents()) {
             if (c instanceof TimesheetPositionEntryPanel) {
                 ((TimesheetPositionEntryPanel) c).updateEntryTotal(Integer.parseInt(this.cmbTimesheetInterval.getSelectedItem().toString()));
                 allPositions.add(((TimesheetPositionEntryPanel) c).getEntry());
-                
-                Invoice inv=((TimesheetPositionEntryPanel) c).invoiceUpdateRequired();
-                if(inv!=null)
+
+                Invoice inv = ((TimesheetPositionEntryPanel) c).invoiceUpdateRequired();
+                if (inv != null) {
                     invoicesThatRequireUpdate.add(inv);
+                }
             }
         }
 
@@ -1300,13 +1337,13 @@ public class TimesheetDialog extends javax.swing.JDialog {
             JOptionPane.showMessageDialog(this, "Fehler beim Speichern des Projekts: " + ex.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
             return false;
         }
-        
-        if(!invoicesThatRequireUpdate.isEmpty()) {
-            StringBuilder sb=new StringBuilder();
+
+        if (!invoicesThatRequireUpdate.isEmpty()) {
+            StringBuilder sb = new StringBuilder();
             sb.append("<html>").append("Für folgende Belege muss ein erneuter Import der Zeiten erfolgen: ").append("<ul>");
-            ArrayList<String> listed=new ArrayList<>();
-            for(Invoice inv: invoicesThatRequireUpdate) {
-                if(!listed.contains(inv.getInvoiceNumber())) {
+            ArrayList<String> listed = new ArrayList<>();
+            for (Invoice inv : invoicesThatRequireUpdate) {
+                if (!listed.contains(inv.getInvoiceNumber())) {
                     listed.add(inv.getInvoiceNumber());
                     sb.append("<li>").append(inv.getInvoiceNumber()).append("</li>");
                 }
@@ -1314,14 +1351,14 @@ public class TimesheetDialog extends javax.swing.JDialog {
             sb.append("</ul></html>");
             JOptionPane.showMessageDialog(this, sb.toString(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_HINT, JOptionPane.INFORMATION_MESSAGE);
         }
-        
+
         return true;
     }
 
     private void cmdSaveActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdSaveActionPerformed
 
-        boolean saved=this.save();
-        if(saved) {
+        boolean saved = this.save();
+        if (saved) {
             this.setVisible(false);
             this.dispose();
         }
@@ -1366,10 +1403,11 @@ public class TimesheetDialog extends javax.swing.JDialog {
     }//GEN-LAST:event_cmbTimesheetIntervalActionPerformed
 
     private void cmdAllowedPositionsActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdAllowedPositionsActionPerformed
-        if(this.currentEntry==null) {
-            boolean saved=this.save();
-            if(!saved)
+        if (this.currentEntry == null) {
+            boolean saved = this.save();
+            if (!saved) {
                 return;
+            }
         }
         TimesheetAllowedPositionsDialog dlg = new TimesheetAllowedPositionsDialog(this, true, this.currentEntry.getId());
         dlg.setTitle("erlaubte Positionsvorlagen auswählen");
@@ -1391,21 +1429,31 @@ public class TimesheetDialog extends javax.swing.JDialog {
         BigDecimal total = BigDecimal.ZERO;
         BigDecimal totalTax = BigDecimal.ZERO;
         BigDecimal invoiceable = BigDecimal.ZERO;
+
         for (Component tsp : this.pnlTimesheetPositions.getComponents()) {
             TimesheetPositionEntryPanel tspep = (TimesheetPositionEntryPanel) tsp;
             TimesheetPosition pos = tspep.getEntry();
 
-            total = total.add(pos.getTotal());
-            totalTax = totalTax.add(pos.getTotal().multiply(pos.getTaxRate().divide(BigDecimal.valueOf(100f), 2, RoundingMode.HALF_EVEN)));
-            
-            if(!tspep.hasInvoice())
-                invoiceable=invoiceable.add(pos.getTotal());
+            // Einzelbetrag netto runden
+            BigDecimal netAmount = pos.getTotal().setScale(2, RoundingMode.HALF_UP);
+            total = total.add(netAmount);
 
+            // Steuerbetrag je Position berechnen, kaufmännisch runden
+            BigDecimal taxAmount = netAmount
+                    .multiply(pos.getTaxRate().divide(BigDecimal.valueOf(100), 4, RoundingMode.HALF_UP))
+                    .setScale(2, RoundingMode.HALF_UP);
+            totalTax = totalTax.add(taxAmount);
+
+            if (!tspep.hasInvoice()) {
+                invoiceable = invoiceable.add(netAmount);
+            }
         }
+
+// Anzeige im UI
         this.lblTimesheetTotal.setText(cf.format(total));
         this.lblTimesheetTax.setText(cf.format(totalTax));
         this.txtTimesheetTotal.setText(cf.format(total));
-        this.txtTimesheetOpen.setText(cf.format(0f));
+        this.txtTimesheetOpen.setText(cf.format(BigDecimal.ZERO)); // explizit 0 als BigDecimal
         this.txtTimesheetInvoiceable.setText(cf.format(invoiceable));
 
         if (this.chkTimesheetLimit.isSelected()) {
@@ -1424,17 +1472,17 @@ public class TimesheetDialog extends javax.swing.JDialog {
             } else {
                 this.prgTimesheetStatus.setForeground(DefaultColorTheme.COLOR_LOGO_GREEN);
             }
-            
-            float latestLimit=((Number) this.txtTimesheetLimit.getValue()).floatValue();
+
+            float latestLimit = ((Number) this.txtTimesheetLimit.getValue()).floatValue();
             try {
-                String latestValue=this.txtTimesheetLimit.getDocument().getText(0, this.txtTimesheetLimit.getDocument().getLength());
+                String latestValue = this.txtTimesheetLimit.getDocument().getText(0, this.txtTimesheetLimit.getDocument().getLength());
                 latestLimit = Float.parseFloat(latestValue);
             } catch (Throwable t) {
                 log.warn("Unable to parse timesheet limit to float", t);
             }
-            
+
             this.txtTimesheetOpen.setText(cf.format(latestLimit - total.floatValue()));
-            
+
         } else {
             this.prgTimesheetStatus.setMaximum(100);
             this.prgTimesheetStatus.setMinimum(0);
@@ -1524,5 +1572,49 @@ public class TimesheetDialog extends javax.swing.JDialog {
     private javax.swing.JFormattedTextField txtTimesheetOpen;
     private javax.swing.JFormattedTextField txtTimesheetTotal;
     // End of variables declaration//GEN-END:variables
+
+    public void duplicateEntry(TimesheetPositionEntryPanel entry) {
+
+        TimesheetPosition pos = entry.getEntry();
+
+        TimesheetPosition dup = new TimesheetPosition();
+        dup.setDescription(pos.getDescription());
+        dup.setInvoice(pos.getInvoice());
+        dup.setName(pos.getName());
+        dup.setPrincipal(pos.getPrincipal());
+        dup.setStarted(pos.getStarted());
+        dup.setStopped(pos.getStopped());
+        dup.setTaxRate(pos.getTaxRate());
+        dup.setTimesheet(pos.getTimesheet());
+        dup.setTotal(pos.getTotal());
+        dup.setUnitPrice(pos.getUnitPrice());
+
+        ClientSettings settings = ClientSettings.getInstance();
+        try {
+            JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
+            dup = locator.lookupArchiveFileServiceRemote().timesheetPositionAdd(dup.getTimesheet().getId(), dup);
+            int entryIndex = this.pnlTimesheetPositions.getComponentZOrder(entry);
+
+            TimesheetPositionEntryPanel dupPanel = new TimesheetPositionEntryPanel(this, this.taxRates, this.sortedPrincipalIds);
+            this.pnlTimesheetPositions.add(dupPanel, entryIndex + 1);
+            this.pnlTimesheetPositions.doLayout();
+            int dl = this.splitMain.getDividerLocation();
+            this.splitMain.setDividerLocation(dl + 1);
+            this.splitMain.setDividerLocation(dl);
+
+            dupPanel.setEntry(this.currentEntry.getId(), dup, Integer.parseInt(this.cmbTimesheetInterval.getSelectedItem().toString()));
+            dupPanel.updateEntryTotal(Integer.parseInt(this.cmbTimesheetInterval.getSelectedItem().toString()));
+
+        } catch (Exception ex) {
+            this.lblAllowedPositions.setText("0");
+            log.error("Error determining position templates for timesheet", ex);
+            JOptionPane.showMessageDialog(this, "Fehler beim Laden der erlaubten Positionsvorlagen: " + ex.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
+        }
+    }
+
+    @Override
+    public void entryAdded(ArchiveFileReviewsBean entry) {
+        // event is emitted by NewEventPanel
+    }
 
 }
