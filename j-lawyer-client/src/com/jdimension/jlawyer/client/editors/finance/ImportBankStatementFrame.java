@@ -1210,16 +1210,17 @@ public class ImportBankStatementFrame extends javax.swing.JFrame {
 
                 // Create a DecimalFormat with German locale (comma as decimal separator)
                 DecimalFormatSymbols symbols = new DecimalFormatSymbols(Locale.forLanguageTag(csvConfig.getLocale()));
-                DecimalFormat decf = new DecimalFormat(csvConfig.getDecimalFormat(), symbols); // No currency symbols
 
+                // Configure symbols BEFORE creating DecimalFormat (it makes a copy of symbols)
                 if (!StringUtils.isEmpty(csvConfig.getDecimalSeparator())) {
                     symbols.setDecimalSeparator(csvConfig.getDecimalSeparator().charAt(0));
                 }
-
-                decf.setGroupingUsed(csvConfig.isDecimalGrouping());
-                if (csvConfig.isDecimalGrouping() && !StringUtils.isEmpty(csvConfig.getDecimalGroupingCharacter())) {
-                    symbols.setGroupingSeparator(csvConfig.getDecimalGroupingCharacter().charAt(0));    // explicitly set!
+                if (!StringUtils.isEmpty(csvConfig.getDecimalGroupingCharacter())) {
+                    symbols.setGroupingSeparator(csvConfig.getDecimalGroupingCharacter().charAt(0));
                 }
+
+                DecimalFormat decf = new DecimalFormat(csvConfig.getDecimalFormat(), symbols);
+                decf.setGroupingUsed(csvConfig.isDecimalGrouping());
                 CSVParser parser = new CSVParserBuilder()
                         .withSeparator(delimiter) // Use the specified delimiter
                         .build();
