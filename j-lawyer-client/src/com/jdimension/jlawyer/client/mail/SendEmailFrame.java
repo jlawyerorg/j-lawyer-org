@@ -798,6 +798,7 @@ public class SendEmailFrame extends javax.swing.JFrame implements SendCommunicat
     private javax.swing.Timer autoSaveTimer = null;
     private String currentDraftDocumentId = null;
     private static final int AUTO_SAVE_INTERVAL = 60000; // 60 seconds
+    private volatile boolean autoSaveInProgress = false;
 
     private String contextDictateSign = null;
     private TextEditorPanel tp;
@@ -1237,127 +1238,154 @@ public class SendEmailFrame extends javax.swing.JFrame implements SendCommunicat
     }
 
     private void performAutoSave() {
+        // Prevent concurrent auto-saves
+        if (autoSaveInProgress) {
+            return;
+        }
+
         // Only auto-save if a case is selected
         if (this.contextArchiveFile == null) {
             return;
         }
 
-        // Check if there's content to save
-        String subject = this.txtSubject.getText();
+        // Collect UI data in EDT
+        final String subject = this.txtSubject.getText();
         EditorImplementation ed = (EditorImplementation) this.contentPanel.getComponent(0);
         // Note: No wait needed here - AutoSave runs every 60s, so a slightly stale cache is acceptable.
         // The 300ms debounce will have long since completed between auto-save intervals.
-        String body = ed.getText();
+        final String body = ed.getText();
 
         if ((subject == null || subject.trim().isEmpty()) && (body == null || body.trim().isEmpty())) {
             return; // Nothing to save
         }
 
-        try {
-            // Build MimeMessage similar to SendAction
-            MailboxSetup ms = this.getSelectedMailbox();
-            if (ms == null) {
-                return;
-            }
-
-            Session session = Session.getInstance(new Properties());
-            MimeMessage msg = new MimeMessage(session);
-
-            msg.setFrom(new InternetAddress(ms.getEmailAddress(), ms.getEmailSenderName()));
-
-            // Set recipients (even if empty for draft)
-            String toText = this.txtTo.getText();
-            String ccText = this.txtCc.getText();
-            String bccText = this.txtBcc.getText();
-
-            if (toText != null && !toText.trim().isEmpty()) {
-                msg.setRecipients(javax.mail.Message.RecipientType.TO, EmailUtils.parseAndEncodeRecipients(toText));
-            }
-            if (ccText != null && !ccText.trim().isEmpty()) {
-                msg.setRecipients(javax.mail.Message.RecipientType.CC, EmailUtils.parseAndEncodeRecipients(ccText));
-            }
-            if (bccText != null && !bccText.trim().isEmpty()) {
-                msg.setRecipients(javax.mail.Message.RecipientType.BCC, EmailUtils.parseAndEncodeRecipients(bccText));
-            }
-
-            msg.setSubject(subject != null ? subject : "");
-            msg.setSentDate(new Date());
-
-            Multipart multiPart = new MimeMultipart();
-            MimeBodyPart messageText = new MimeBodyPart();
-            String contentType = ed.getContentType();
-            messageText.setContent(body, contentType + "; charset=UTF-8");
-            multiPart.addBodyPart(messageText);
-
-            // Add attachments
-            for (String url : this.attachments.values()) {
-                MimeBodyPart att = new MimeBodyPart();
-                att.attachFile(url);
-                att.setDisposition(Part.ATTACHMENT);
-                multiPart.addBodyPart(att);
-            }
-
-            msg.setContent(multiPart);
-            msg.saveChanges();
-
-            // Convert to bytes
-            ByteArrayOutputStream bOut = new ByteArrayOutputStream();
-            msg.writeTo(bOut);
-            byte[] data = bOut.toByteArray();
-            bOut.close();
-
-            // Save or update document
-            ClientSettings settings = ClientSettings.getInstance();
-            JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
-            ArchiveFileServiceRemote afs = locator.lookupArchiveFileServiceRemote();
-
-            if (currentDraftDocumentId != null) {
-                // Update existing draft
-                afs.setDocumentContent(currentDraftDocumentId, data, false);
-            } else {
-                // Create new draft document with static filename
-                SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
-                String subjectPart = (subject != null && !subject.trim().isEmpty()) ? subject : "Kein Betreff";
-                String draftName = "ENTWURF - " + sdf.format(new Date()) + " - " + subjectPart + ".eml";
-                draftName = FileUtils.sanitizeFileName(draftName);
-
-                ArchiveFileDocumentsBean draftDoc = afs.addDocument(
-                    this.contextArchiveFile.getId(),
-                    draftName,
-                    data,
-                    "",
-                    null
-                );
-                currentDraftDocumentId = draftDoc.getId();
-
-                // Add document tag "Entwurf"
-                try {
-                    afs.setDocumentTag(draftDoc.getId(), new DocumentTagsBean(draftDoc.getId(), "Entwurf"), true);
-                } catch (Exception ex) {
-                    log.warn("Could not set document tag 'Entwurf'", ex);
-                }
-
-                // Move to folder if specified
-                if (this.contextArchiveFileFolder != null) {
-                    try {
-                        ArrayList<String> docList = new ArrayList<>();
-                        docList.add(draftDoc.getId());
-                        afs.moveDocumentsToFolder(docList, contextArchiveFileFolder.getId());
-                        draftDoc.setFolder(contextArchiveFileFolder);
-                    } catch (Exception ex) {
-                        log.warn("Could not move draft to folder", ex);
-                    }
-                }
-
-                // Publish event for draft document added
-                EventBroker eb = EventBroker.getInstance();
-                eb.publishEvent(new DocumentAddedEvent(draftDoc));
-            }
-
-        } catch (Exception ex) {
-            log.error("Auto-save draft failed", ex);
-            // Don't show error dialog - just log it to avoid interrupting user
+        final MailboxSetup ms = this.getSelectedMailbox();
+        if (ms == null) {
+            return;
         }
+
+        final String toText = this.txtTo.getText();
+        final String ccText = this.txtCc.getText();
+        final String bccText = this.txtBcc.getText();
+        final String contentType = ed.getContentType();
+        final String archiveFileId = this.contextArchiveFile.getId();
+        final CaseFolder folder = this.contextArchiveFileFolder;
+        final String existingDraftId = this.currentDraftDocumentId;
+
+        // Copy attachments to avoid concurrent modification
+        final ArrayList<String> attachmentUrls = new ArrayList<>(this.attachments.values());
+
+        autoSaveInProgress = true;
+
+        new SwingWorker<ArchiveFileDocumentsBean, Void>() {
+            @Override
+            protected ArchiveFileDocumentsBean doInBackground() throws Exception {
+                // Build MimeMessage in background thread
+                Session session = Session.getInstance(new Properties());
+                MimeMessage msg = new MimeMessage(session);
+
+                msg.setFrom(new InternetAddress(ms.getEmailAddress(), ms.getEmailSenderName()));
+
+                // Set recipients (even if empty for draft)
+                if (toText != null && !toText.trim().isEmpty()) {
+                    msg.setRecipients(javax.mail.Message.RecipientType.TO, EmailUtils.parseAndEncodeRecipients(toText));
+                }
+                if (ccText != null && !ccText.trim().isEmpty()) {
+                    msg.setRecipients(javax.mail.Message.RecipientType.CC, EmailUtils.parseAndEncodeRecipients(ccText));
+                }
+                if (bccText != null && !bccText.trim().isEmpty()) {
+                    msg.setRecipients(javax.mail.Message.RecipientType.BCC, EmailUtils.parseAndEncodeRecipients(bccText));
+                }
+
+                msg.setSubject(subject != null ? subject : "");
+                msg.setSentDate(new Date());
+
+                Multipart multiPart = new MimeMultipart();
+                MimeBodyPart messageText = new MimeBodyPart();
+                messageText.setContent(body, contentType + "; charset=UTF-8");
+                multiPart.addBodyPart(messageText);
+
+                // Add attachments
+                for (String url : attachmentUrls) {
+                    MimeBodyPart att = new MimeBodyPart();
+                    att.attachFile(url);
+                    att.setDisposition(Part.ATTACHMENT);
+                    multiPart.addBodyPart(att);
+                }
+
+                msg.setContent(multiPart);
+                msg.saveChanges();
+
+                // Convert to bytes
+                ByteArrayOutputStream bOut = new ByteArrayOutputStream();
+                msg.writeTo(bOut);
+                byte[] data = bOut.toByteArray();
+                bOut.close();
+
+                // Save or update document
+                ClientSettings settings = ClientSettings.getInstance();
+                JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
+                ArchiveFileServiceRemote afs = locator.lookupArchiveFileServiceRemote();
+
+                if (existingDraftId != null) {
+                    // Update existing draft
+                    afs.setDocumentContent(existingDraftId, data, false);
+                    return null; // No new document created
+                } else {
+                    // Create new draft document with static filename
+                    SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+                    String subjectPart = (subject != null && !subject.trim().isEmpty()) ? subject : "Kein Betreff";
+                    String draftName = "ENTWURF - " + sdf.format(new Date()) + " - " + subjectPart + ".eml";
+                    draftName = FileUtils.sanitizeFileName(draftName);
+
+                    ArchiveFileDocumentsBean draftDoc = afs.addDocument(
+                        archiveFileId,
+                        draftName,
+                        data,
+                        "",
+                        null
+                    );
+
+                    // Add document tag "Entwurf"
+                    try {
+                        afs.setDocumentTag(draftDoc.getId(), new DocumentTagsBean(draftDoc.getId(), "Entwurf"), true);
+                    } catch (Exception ex) {
+                        log.warn("Could not set document tag 'Entwurf'", ex);
+                    }
+
+                    // Move to folder if specified
+                    if (folder != null) {
+                        try {
+                            ArrayList<String> docList = new ArrayList<>();
+                            docList.add(draftDoc.getId());
+                            afs.moveDocumentsToFolder(docList, folder.getId());
+                            draftDoc.setFolder(folder);
+                        } catch (Exception ex) {
+                            log.warn("Could not move draft to folder", ex);
+                        }
+                    }
+
+                    return draftDoc;
+                }
+            }
+
+            @Override
+            protected void done() {
+                autoSaveInProgress = false;
+                try {
+                    ArchiveFileDocumentsBean newDraft = get();
+                    if (newDraft != null) {
+                        // Update draft ID and publish event in EDT
+                        currentDraftDocumentId = newDraft.getId();
+                        EventBroker eb = EventBroker.getInstance();
+                        eb.publishEvent(new DocumentAddedEvent(newDraft));
+                    }
+                } catch (Exception ex) {
+                    log.error("Auto-save draft failed", ex);
+                    // Don't show error dialog - just log it to avoid interrupting user
+                }
+            }
+        }.execute();
     }
 
     public void setCloudLink(String link) {
